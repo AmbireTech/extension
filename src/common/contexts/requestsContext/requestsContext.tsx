@@ -18,6 +18,10 @@ import { getUiType } from '@web/utils/uiType'
 
 export interface RequestsContextReturnType {
   internalRequests: any
+  requests: any[]
+  sentTxn: {
+    confirmed: boolean
+  }
   sendTxnState: {
     showing: boolean
     [key: string]: any
@@ -38,6 +42,10 @@ export interface RequestsContextReturnType {
 }
 
 const RequestsContext = createContext<RequestsContextReturnType>({
+  requests: [],
+  sentTxn: {
+    confirmed: false
+  },
   internalRequests: [],
   sendTxnState: {
     showing: false
@@ -254,6 +262,8 @@ const RequestsProvider: React.FC = ({ children }) => {
     <RequestsContext.Provider
       value={useMemo(
         () => ({
+          requests,
+          sentTxn,
           internalRequests,
           sendTxnState,
           eligibleRequests,
@@ -268,6 +278,8 @@ const RequestsProvider: React.FC = ({ children }) => {
           onDismissSendTxns
         }),
         [
+          requests,
+          sentTxn,
           internalRequests,
           sendTxnState,
           eligibleRequests,

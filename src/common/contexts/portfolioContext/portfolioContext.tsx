@@ -8,7 +8,10 @@ import useConstants from '@common/hooks/useConstants'
 import useNetwork from '@common/hooks/useNetwork'
 import useStorage from '@common/hooks/useStorage'
 import useToasts from '@common/hooks/useToast'
+import useRelayerData from '@common/hooks/useRelayerData'
+import useRequests from '@common/hooks/useRequests'
 import { fetchGet } from '@common/services/fetch'
+import useCacheStorage from '@common/hooks/useCacheStorage'
 
 interface PortfolioContextReturnType extends UsePortfolioReturnType {}
 
@@ -23,11 +26,9 @@ const PortfolioContext = createContext<PortfolioContextReturnType>({
   },
   otherBalances: [],
   tokens: [],
-  protocols: [] as any,
   extraTokens: [],
   hiddenTokens: [],
   collectibles: [],
-  requestOtherProtocolsRefresh: () => Promise.resolve(null),
   onAddExtraToken: () => {},
   onRemoveExtraToken: () => {},
   onAddHiddenToken: () => {},
@@ -35,10 +36,7 @@ const PortfolioContext = createContext<PortfolioContextReturnType>({
   balancesByNetworksLoading: {},
   isCurrNetworkBalanceLoading: false,
   areAllNetworksBalancesLoading: () => false,
-  otherProtocolsByNetworksLoading: {},
-  isCurrNetworkProtocolsLoading: false,
-  loadBalance: () => {},
-  loadProtocols: () => {}
+  loadBalance: () => {}
 })
 
 const getBalances = (network: any, protocol: any, address: any, provider?: any) =>
@@ -50,13 +48,31 @@ const getBalances = (network: any, protocol: any, address: any, provider?: any) 
     }&newBalances=true`
   )
 
+// const getBalances = (network: any, address: any, provider: any, quickResponse?: boolean) => {
+//   if (provider === '' || !provider) return null
+//   return fetchGet(
+//     `${
+//       provider === 'velcro' ? CONFIG.VELCRO_API_ENDPOINT : CONFIG.ZAPPER_API_ENDPOINT
+//     }/balance/${address}/${network}${quickResponse ? '?quick=true' : ''}`
+//   )
+// }
+
+const getCoingeckoPrices = (addresses: any) =>
+  fetchGet(`${CONFIG.COINGECKO_API_URL}/simple/price?ids=${addresses}&vs_currencies=usd`)
+
+const getCoingeckoAssetPlatforms = () => fetchGet(`${CONFIG.COINGECKO_API_URL}/asset_platforms`)
+
+const getCoingeckoPriceByContract = (id: any, addresses: any) =>
+  fetchGet(`${CONFIG.COINGECKO_API_URL}/coins/${id}/contract/${addresses}`)
+
 const PortfolioProvider: React.FC = ({ children }) => {
   const appState = useRef(AppState.currentState)
 
   const [appStateVisible, setAppStateVisible] = useState<any>(appState.current)
 
   const { network } = useNetwork()
-  const { selectedAcc } = useAccounts()
+  const { selectedAcc, account: selectedAccount, accounts } = useAccounts()
+  const { requests, eligibleRequests, sentTxn } = useRequests()
 
   // Refresh balance when app is focused
   useEffect(() => {
@@ -75,9 +91,7 @@ const PortfolioProvider: React.FC = ({ children }) => {
     tokens,
     extraTokens,
     hiddenTokens,
-    protocols,
     collectibles,
-    requestOtherProtocolsRefresh,
     onAddExtraToken,
     onRemoveExtraToken,
     onAddHiddenToken,
@@ -85,10 +99,7 @@ const PortfolioProvider: React.FC = ({ children }) => {
     balancesByNetworksLoading,
     isCurrNetworkBalanceLoading,
     areAllNetworksBalancesLoading,
-    otherProtocolsByNetworksLoading,
-    isCurrNetworkProtocolsLoading,
     loadBalance,
-    loadProtocols,
     checkIsTokenEligibleForAddingAsExtraToken
   } = usePortfolio({
     useConstants,
@@ -97,7 +108,18 @@ const PortfolioProvider: React.FC = ({ children }) => {
     useStorage,
     isVisible: appStateVisible === 'active',
     useToasts,
-    getBalances
+    getBalances,
+    getCoingeckoPrices,
+    getCoingeckoPriceByContract,
+    getCoingeckoAssetPlatforms,
+    relayerURL: CONFIG.RELAYER_URL,
+    useRelayerData,
+    eligibleRequests,
+    requests,
+    selectedAccount,
+    sentTxn,
+    useCacheStorage,
+    accounts
   })
 
   return (
@@ -109,9 +131,7 @@ const PortfolioProvider: React.FC = ({ children }) => {
           tokens,
           extraTokens,
           hiddenTokens,
-          protocols,
           collectibles,
-          requestOtherProtocolsRefresh,
           onAddExtraToken,
           onRemoveExtraToken,
           checkIsTokenEligibleForAddingAsExtraToken,
@@ -120,10 +140,7 @@ const PortfolioProvider: React.FC = ({ children }) => {
           balancesByNetworksLoading,
           isCurrNetworkBalanceLoading,
           areAllNetworksBalancesLoading,
-          otherProtocolsByNetworksLoading,
-          isCurrNetworkProtocolsLoading,
-          loadBalance,
-          loadProtocols
+          loadBalance
         }),
         [
           balance,
@@ -131,9 +148,7 @@ const PortfolioProvider: React.FC = ({ children }) => {
           tokens,
           extraTokens,
           hiddenTokens,
-          protocols,
           collectibles,
-          requestOtherProtocolsRefresh,
           onAddExtraToken,
           onRemoveExtraToken,
           checkIsTokenEligibleForAddingAsExtraToken,
@@ -142,10 +157,7 @@ const PortfolioProvider: React.FC = ({ children }) => {
           balancesByNetworksLoading,
           isCurrNetworkBalanceLoading,
           areAllNetworksBalancesLoading,
-          otherProtocolsByNetworksLoading,
-          isCurrNetworkProtocolsLoading,
-          loadBalance,
-          loadProtocols
+          loadBalance
         ]
       )}
     >

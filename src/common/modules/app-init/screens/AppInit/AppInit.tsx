@@ -89,11 +89,11 @@ const AppInit = () => {
                             <AccountsProvider>
                               <NetworkProvider>
                                 <ExtensionApprovalProvider>
-                                  <PortfolioProvider>
-                                    <GnosisProvider>
-                                      <WalletConnectProvider>
-                                        <AmbireExtensionProvider>
-                                          <RequestsProvider>
+                                  <RequestsProvider>
+                                    <PortfolioProvider>
+                                      <GnosisProvider>
+                                        <WalletConnectProvider>
+                                          <AmbireExtensionProvider>
                                             <BiometricsProvider>
                                               <VaultProvider>
                                                 <AddressBookProvider>
@@ -114,11 +114,11 @@ const AppInit = () => {
                                                 </AddressBookProvider>
                                               </VaultProvider>
                                             </BiometricsProvider>
-                                          </RequestsProvider>
-                                        </AmbireExtensionProvider>
-                                      </WalletConnectProvider>
-                                    </GnosisProvider>
-                                  </PortfolioProvider>
+                                          </AmbireExtensionProvider>
+                                        </WalletConnectProvider>
+                                      </GnosisProvider>
+                                    </PortfolioProvider>
+                                  </RequestsProvider>
                                 </ExtensionApprovalProvider>
                               </NetworkProvider>
                             </AccountsProvider>
