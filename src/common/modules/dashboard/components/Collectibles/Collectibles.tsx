@@ -11,13 +11,13 @@ import styles from './styles'
 
 interface Props {
   collectibles: UsePortfolioReturnType['collectibles']
-  isCurrNetworkProtocolsLoading: boolean
+  isCurrNetworkBalanceLoading: boolean
 }
 
-const Collectibles = ({ collectibles, isCurrNetworkProtocolsLoading }: Props) => {
+const Collectibles = ({ collectibles, isCurrNetworkBalanceLoading }: Props) => {
   const { isPrivateMode } = usePrivateMode()
 
-  if (isCurrNetworkProtocolsLoading) {
+  if (isCurrNetworkBalanceLoading) {
     return <CollectiblesListLoader />
   }
 

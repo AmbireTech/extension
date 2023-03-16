@@ -32,7 +32,7 @@ const relayerURL = CONFIG.RELAYER_URL
 const GasTankScreen = () => {
   const { t } = useTranslation()
 
-  const { isCurrNetworkBalanceLoading, isCurrNetworkProtocolsLoading } = usePortfolio()
+  const { isCurrNetworkBalanceLoading } = usePortfolio()
   const { network } = useNetwork()
   const { selectedAcc } = useAccounts()
   const { addRequest } = useRequests()
@@ -112,7 +112,7 @@ const GasTankScreen = () => {
           </View>
           <TokensList
             tokens={sortedTokens}
-            isLoading={isCurrNetworkBalanceLoading || isCurrNetworkProtocolsLoading}
+            isLoading={isCurrNetworkBalanceLoading}
             networkId={network?.id}
             chainId={network?.chainId}
             selectedAcc={selectedAcc}

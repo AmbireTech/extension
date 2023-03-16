@@ -22,13 +22,11 @@ interface Props {
   collectibles: UsePortfolioReturnType['collectibles']
   extraTokens: UsePortfolioReturnType['extraTokens']
   hiddenTokens: UsePortfolioReturnType['hiddenTokens']
-  protocols: UsePortfolioReturnType['protocols']
   explorerUrl?: NetworkType['explorerUrl']
   networkId?: NetworkId
   networkName?: NetworkType['name']
   selectedAcc: UseAccountsReturnType['selectedAcc']
   isCurrNetworkBalanceLoading: boolean
-  isCurrNetworkProtocolsLoading: boolean
   onAddExtraToken: UsePortfolioReturnType['onAddExtraToken']
   onAddHiddenToken: UsePortfolioReturnType['onAddHiddenToken']
   onRemoveExtraToken: UsePortfolioReturnType['onRemoveExtraToken']
@@ -40,13 +38,11 @@ const Assets = ({
   collectibles,
   extraTokens,
   hiddenTokens,
-  protocols,
   explorerUrl,
   networkId,
   networkName,
   selectedAcc,
   isCurrNetworkBalanceLoading,
-  isCurrNetworkProtocolsLoading,
   onAddExtraToken,
   onAddHiddenToken,
   onRemoveExtraToken,
@@ -73,12 +69,10 @@ const Assets = ({
             tokens={tokens}
             extraTokens={extraTokens}
             hiddenTokens={hiddenTokens}
-            protocols={protocols}
             networkId={networkId}
             networkName={networkName}
             selectedAcc={selectedAcc}
             isCurrNetworkBalanceLoading={!!isCurrNetworkBalanceLoading}
-            isCurrNetworkProtocolsLoading={!!isCurrNetworkProtocolsLoading}
             onAddExtraToken={onAddExtraToken}
             onAddHiddenToken={onAddHiddenToken}
             onRemoveExtraToken={onRemoveExtraToken}
@@ -94,7 +88,7 @@ const Assets = ({
         >
           <Collectibles
             collectibles={collectibles}
-            isCurrNetworkProtocolsLoading={isCurrNetworkProtocolsLoading}
+            isCurrNetworkBalanceLoading={isCurrNetworkBalanceLoading}
           />
         </AfterInteractions>
       )}

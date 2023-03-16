@@ -14,13 +14,10 @@ import colors from '@common/styles/colors'
 const DashboardScreen = () => {
   const {
     loadBalance,
-    loadProtocols,
     isCurrNetworkBalanceLoading,
-    isCurrNetworkProtocolsLoading,
     balancesByNetworksLoading,
     balance,
     otherBalances,
-    protocols,
     tokens,
     collectibles,
     extraTokens,
@@ -40,7 +37,6 @@ const DashboardScreen = () => {
 
   const handleRefresh = () => {
     loadBalance()
-    loadProtocols()
   }
 
   return (
@@ -53,7 +49,7 @@ const DashboardScreen = () => {
             onRefresh={handleRefresh}
             tintColor={colors.titan}
             progressBackgroundColor={colors.titan}
-            enabled={!isCurrNetworkBalanceLoading && !isCurrNetworkProtocolsLoading}
+            enabled={!isCurrNetworkBalanceLoading}
           />
         }
       >
@@ -74,9 +70,7 @@ const DashboardScreen = () => {
             collectibles={collectibles}
             extraTokens={extraTokens}
             hiddenTokens={hiddenTokens}
-            protocols={protocols}
             isCurrNetworkBalanceLoading={!!isCurrNetworkBalanceLoading}
-            isCurrNetworkProtocolsLoading={!!isCurrNetworkProtocolsLoading}
             explorerUrl={network?.explorerUrl}
             networkId={network?.id}
             networkName={network?.name}

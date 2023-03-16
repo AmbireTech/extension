@@ -23,14 +23,13 @@ let lendingPoolAddress: any = null
 
 interface Props {
   tokens: UsePortfolioReturnType['tokens']
-  protocols: UsePortfolioReturnType['protocols']
   networkId?: NetworkId
   selectedAcc: UseAccountsReturnType['selectedAcc']
   addRequest: (req: any) => any
   addToast: UseToastsReturnType['addToast']
 }
 
-const AAVECard = ({ tokens, protocols, networkId, selectedAcc, addRequest, addToast }: Props) => {
+const AAVECard = ({ tokens, networkId, selectedAcc, addRequest, addToast }: Props) => {
   const currentNetwork: any = useRef()
   const [isLoading, setLoading] = useState<any>(true)
   const [unavailable, setUnavailable] = useState<any>(false)
@@ -164,20 +163,22 @@ const AAVECard = ({ tokens, protocols, networkId, selectedAcc, addRequest, addTo
       const lendingPoolContract = new ethers.Contract(lendingPoolAddress, AAVELendingPool, provider)
       const reserves = await lendingPoolContract.getReservesList()
       const reservesAddresses = reserves.map((reserve: any) => reserve.toLowerCase())
+      const supportedATokens = defaultTokens
+        .filter((token: any) => token.type === 'withdraw')
+        .map((token: any) => token.address.toLowerCase())
 
-      const withdrawTokens = (protocols.find(({ label }: any) => label === 'Aave V2')?.assets || [])
-        .map(
-          // eslint-disable-next-line @typescript-eslint/no-shadow
-          ({ symbol, tokens }: any) =>
-            tokens &&
-            tokens.map((token: any) => ({
-              ...token,
-              symbol,
-              type: 'withdraw'
-            }))
-        )
-        .flat(1)
-        .filter((token: any) => token)
+      const withdrawTokens = tokens
+        .filter(({ address }) => supportedATokens.includes(address.toLowerCase()))
+        .map((token) => ({
+          ...token,
+          address: defaultTokens.find(
+            (tk) =>
+              tk.type === 'withdraw' && tk.address.toLowerCase() === token.address.toLowerCase()
+          )?.baseTokenAddress,
+          type: 'withdraw'
+        }))
+        .filter((token) => token)
+        .sort((a, b) => b.balance - a.balance)
 
       const depositTokens = tokens
         .filter(({ address }: any) => reservesAddresses.includes(address))
@@ -188,6 +189,8 @@ const AAVECard = ({ tokens, protocols, networkId, selectedAcc, addRequest, addTo
         .filter((token: any) => token)
 
       const allTokens = await Promise.all([
+        ...withdrawTokens,
+        ...depositTokens,
         ...defaultTokens.filter(
           ({ type, address }) =>
             type === 'deposit' &&
@@ -195,13 +198,13 @@ const AAVECard = ({ tokens, protocols, networkId, selectedAcc, addRequest, addTo
             !depositTokens.map(({ address }: any) => address).includes(address)
         ),
         ...defaultTokens.filter(
-          ({ type, address }) =>
+          ({ type, baseTokenAddress }) =>
             type === 'withdraw' &&
             // eslint-disable-next-line @typescript-eslint/no-shadow
-            !withdrawTokens.map(({ address }: any) => address).includes(address)
-        ),
-        ...withdrawTokens,
-        ...depositTokens
+            !withdrawTokens
+              .map(({ address }: any) => address)
+              .includes(baseTokenAddress.toLowerCase())
+        )
       ])
 
       const uniqueTokenAddresses = [...new Set(allTokens.map(({ address }) => address))]
@@ -217,13 +220,19 @@ const AAVECard = ({ tokens, protocols, networkId, selectedAcc, addRequest, addTo
       )
 
       // eslint-disable-next-line @typescript-eslint/no-shadow
-      const tokensItems = allTokens.map((token) => ({
-        ...token,
-        apr: tokensAPR[token.address],
-        icon: token.img || token.tokenImageUrl,
-        label: `${token.symbol} (${tokensAPR[token.address]}% APR)`,
-        value: token.address
-      }))
+      const tokensItems = allTokens.map((token) => {
+        const arp =
+          tokensAPR[token.address] === '0.00' && tokensAPR[token.baseTokenAddress]
+            ? tokensAPR[token.baseTokenAddress]
+            : tokensAPR[token.address]
+        return {
+          ...token,
+          apr: arp,
+          icon: token.img || token.tokenImageUrl,
+          label: `${token.symbol} (${tokensAPR[token.address]}% APR)`,
+          value: token.address
+        }
+      })
 
       // Prevent race conditions
       if (currentNetwork.current !== networkDetails.id) return
@@ -237,7 +246,7 @@ const AAVECard = ({ tokens, protocols, networkId, selectedAcc, addRequest, addTo
         error: true
       })
     }
-  }, [addToast, protocols, tokens, defaultTokens, networkDetails])
+  }, [addToast, tokens, defaultTokens, networkDetails])
 
   useEffect(() => {
     loadPool()

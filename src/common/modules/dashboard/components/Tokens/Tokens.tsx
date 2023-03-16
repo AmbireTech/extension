@@ -22,12 +22,10 @@ interface Props {
   tokens: UsePortfolioReturnType['tokens']
   extraTokens: UsePortfolioReturnType['extraTokens']
   hiddenTokens: UsePortfolioReturnType['hiddenTokens']
-  protocols: UsePortfolioReturnType['protocols']
   networkId?: NetworkId
   networkName?: NetworkType['name']
   selectedAcc: UseAccountsReturnType['selectedAcc']
   isCurrNetworkBalanceLoading: boolean
-  isCurrNetworkProtocolsLoading: boolean
   onAddExtraToken: UsePortfolioReturnType['onAddExtraToken']
   onAddHiddenToken: UsePortfolioReturnType['onAddHiddenToken']
   onRemoveExtraToken: UsePortfolioReturnType['onRemoveExtraToken']
@@ -38,12 +36,10 @@ const Tokens = ({
   tokens,
   extraTokens,
   hiddenTokens,
-  protocols,
   networkId,
   networkName,
   selectedAcc,
   isCurrNetworkBalanceLoading,
-  isCurrNetworkProtocolsLoading,
   onAddExtraToken,
   onAddHiddenToken,
   onRemoveExtraToken,
@@ -53,7 +49,6 @@ const Tokens = ({
   const { navigate } = useNavigation()
   const { hidePrivateValue } = usePrivateMode()
   const sortedTokens = tokens.sort((a, b) => b.balanceUSD - a.balanceUSD)
-  const otherProtocols = protocols.filter(({ label }) => label !== 'Tokens')
 
   const handleGoToDeposit = useCallback(() => navigate(ROUTES.receive), [navigate])
   const handleGoToSend = useCallback(
@@ -67,17 +62,9 @@ const Tokens = ({
   )
 
   const shouldShowEmptyState = useMemo(
-    () =>
-      !isCurrNetworkBalanceLoading &&
-      !tokens.length &&
-      !isCurrNetworkProtocolsLoading &&
-      !otherProtocols.length,
-    [
-      isCurrNetworkBalanceLoading,
-      isCurrNetworkProtocolsLoading,
-      tokens?.length,
-      otherProtocols?.length
-    ]
+    () => !isCurrNetworkBalanceLoading && !tokens.length,
+
+    [isCurrNetworkBalanceLoading, tokens?.length]
   )
 
   const emptyState = (
@@ -124,30 +111,6 @@ const Tokens = ({
             />
           )
         )}
-
-      {!!otherProtocols.length &&
-        otherProtocols.map(({ label, assets }, i) => (
-          <View key={`category-${i}`}>
-            {assets.map(
-              (
-                { symbol, img, tokenImageUrl, balance, balanceUSD, decimals, address }: any,
-                i: number
-              ) => (
-                <TokenItem
-                  key={`token-${address}-${i}`}
-                  img={img || tokenImageUrl}
-                  symbol={symbol}
-                  balance={balance}
-                  balanceUSD={balanceUSD}
-                  decimals={decimals}
-                  address={address}
-                  networkId={networkId}
-                  onPress={handleGoToSend}
-                />
-              )
-            )}
-          </View>
-        ))}
 
       <AddOrHideToken
         tokens={tokens}
