@@ -141,7 +141,7 @@ const MainRoutes = () => {
         <Route element={headerAlpha}>
           <Route element={footer}>
             <Route path={WEB_ROUTES.dashboard} element={<DashboardScreen />} />
-            <Route path={WEB_ROUTES.collectibles} element={<CollectibleScreen />} />
+            <Route path={WEB_ROUTES.collectible} element={<CollectibleScreen />} />
             <Route path={WEB_ROUTES.earn} element={<EarnScreen />} />
             <Route path={WEB_ROUTES.send} element={<SendScreen />} />
             <Route path={WEB_ROUTES.transactions} element={<TransactionsScreen />} />

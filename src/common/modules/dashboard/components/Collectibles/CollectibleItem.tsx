@@ -38,7 +38,7 @@ const CollectibleItem = ({
   const { navigate } = useNavigation()
 
   const handleCollectiblePress = () => {
-    navigate(ROUTES.collectibles, {
+    navigate(ROUTES.collectible, {
       state: {
         tokenId,
         network,

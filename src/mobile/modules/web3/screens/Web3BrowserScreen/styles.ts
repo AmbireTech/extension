@@ -1,5 +1,6 @@
 import { StyleSheet, ViewStyle } from 'react-native'
 
+import colors from '@common/styles/colors'
 import { SPACING_MI } from '@common/styles/spacings'
 
 interface Style {
@@ -20,7 +21,7 @@ const styles = StyleSheet.create<Style>({
   },
   webview: {
     flex: 1,
-    backgroundColor: 'transparent'
+    backgroundColor: colors.white
   },
   loadingWrapper: {
     position: 'absolute',

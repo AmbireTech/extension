@@ -126,6 +126,9 @@ const Web3BrowserScreen = () => {
             onMessage={onMessage}
             injectedJavaScriptBeforeContentLoaded={providerToInject}
             onNavigationStateChange={onNavigationStateChange}
+            // Prevents opening the Browser App when clicking on links in the webview,
+            // example: https://uniswap.org/ clicking the Launch App button
+            setSupportMultipleWindows={false}
             javaScriptEnabled
             startInLoadingState
             bounces={false}

@@ -121,8 +121,8 @@ const routesConfig: {
       default: i18n.t('Dashboard')
     })
   },
-  [ROUTES.collectibles]: {
-    route: ROUTES.collectibles,
+  [ROUTES.collectible]: {
+    route: ROUTES.collectible,
     title: Platform.select({
       default: i18n.t('Collectibles')
     })

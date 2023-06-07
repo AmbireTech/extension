@@ -5,8 +5,10 @@ import WebView from 'react-native-webview'
 
 import GradientBackgroundWrapper from '@common/components/GradientBackgroundWrapper'
 import Spinner from '@common/components/Spinner'
+import Wrapper from '@common/components/Wrapper'
 import useGnosis from '@common/hooks/useGnosis'
 import colors from '@common/styles/colors'
+import spacings from '@common/styles/spacings'
 
 import styles from './styles'
 
@@ -64,9 +66,10 @@ const SwapScreen = () => {
       <html>
         <head>
           <style type="text/css" media="screen">
-            body, html { width: 100%; height: 100%; }
+            body, html { width: 100%; height: 100%; box-sizing: border-box; padding: 0 5px }
             * { padding: 0; margin: 0; }
-            iframe { width: 100%; height: 100%; border: none; }
+            /* Fixes the annoying little vertical height scroll */
+            iframe { width: 100%; height: 99%; border: none; }
           </style>
         </head>
         <body>
@@ -93,32 +96,34 @@ const SwapScreen = () => {
 
   return (
     <GradientBackgroundWrapper>
-      {/* Note: might not work properly on Android emulator with this URL. */}
-      <WebView
-        key={hash}
-        ref={sushiSwapIframeRef}
-        source={{ html: loading ? '' : webviewHtml }}
-        javaScriptEnabled
-        injectedJavaScriptBeforeContentLoaded={INJECTED_JAVASCRIPT_BEFORE_CONTENT_LOADED}
-        injectedJavaScript={INJECTED_JAVASCRIPT}
-        containerStyle={styles.container}
-        style={styles.webview}
-        bounces={false}
-        setBuiltInZoomControls={false}
-        startInLoadingState
-        scrollEnabled
-        nestedScrollEnabled
-        cacheEnabled={false}
-        renderLoading={() => (
-          <View style={styles.loadingWrapper}>
-            <Spinner />
-          </View>
-        )}
-        onMessage={(event) => {
-          const msg = JSON.parse(event.nativeEvent.data)
-          handleIncomingMessage(msg)
-        }}
-      />
+      <Wrapper hasBottomTabNav style={spacings.ph0} scrollEnabled={false}>
+        {/* Note: might not work properly on Android emulator with this URL. */}
+        <WebView
+          key={hash}
+          ref={sushiSwapIframeRef}
+          source={{ html: loading ? '' : webviewHtml }}
+          javaScriptEnabled
+          injectedJavaScriptBeforeContentLoaded={INJECTED_JAVASCRIPT_BEFORE_CONTENT_LOADED}
+          injectedJavaScript={INJECTED_JAVASCRIPT}
+          containerStyle={styles.container}
+          style={styles.webview}
+          bounces={false}
+          setBuiltInZoomControls={false}
+          startInLoadingState
+          scrollEnabled
+          nestedScrollEnabled
+          cacheEnabled={false}
+          renderLoading={() => (
+            <View style={styles.loadingWrapper}>
+              <Spinner />
+            </View>
+          )}
+          onMessage={(event) => {
+            const msg = JSON.parse(event.nativeEvent.data)
+            handleIncomingMessage(msg)
+          }}
+        />
+      </Wrapper>
     </GradientBackgroundWrapper>
   )
 }

@@ -232,7 +232,7 @@ const FeeSelector = ({
           (b.discount || 0) - (a.discount || 0) ||
           a?.symbol.toUpperCase().localeCompare(b?.symbol.toUpperCase())
       )
-      .map(({ address, label, symbol, discount, ...rest }: any) => ({
+      .map(({ address, label, symbol, discount, icon, ...rest }: any) => ({
         label: label || symbol,
         value: symbol,
         disabled: !isTokenEligible(
@@ -242,15 +242,21 @@ const FeeSelector = ({
           isGasTankEnabled,
           network
         ),
-        icon: () => <TokenIcon withContainer networkId={network?.id} address={address} />
+        icon: () => <TokenIcon uri={icon} withContainer networkId={network?.id} address={address} />
       }))
+      .sort((a, b) => (a.label.toLowerCase() > b.label.toLowerCase() ? 1 : -1))
+      .sort((a, b) => {
+        if (a.disabled === b.disabled) return 0 // skip sorting if the same
+
+        return a.disabled ? 1 : -1
+      })
 
     const { discount = 0, symbol, nativeRate = null, decimals } = estimation.selectedFeeToken
     const feeCurrencySelect = estimation.feeInUSD ? (
       <Select
         value={currency}
         setValue={setCurrency}
-        items={assetsItems.sort((a, b) => (a.label.toLowerCase() > b.label.toLowerCase() ? 1 : -1))}
+        items={assetsItems}
         label={t('Fee currency')}
         extraText={discount ? `-${discount * 100}%` : ''}
       />

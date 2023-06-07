@@ -8,8 +8,7 @@ interface Style {
 
 const styles = StyleSheet.create<Style>({
   container: {
-    backgroundColor: 'transparent',
-    paddingHorizontal: 10
+    backgroundColor: 'transparent'
   },
   webview: {
     flex: 1,

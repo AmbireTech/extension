@@ -11,7 +11,7 @@ const COMMON_ROUTES = {
   externalSigner: 'external-signer',
   accountsImporter: 'accounts-importer',
   dashboard: 'dashboard',
-  collectibles: 'collectibles',
+  collectible: 'collectible',
   earn: 'earn',
   send: 'send',
   transactions: 'transactions',

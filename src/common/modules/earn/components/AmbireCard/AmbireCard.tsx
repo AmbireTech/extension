@@ -46,6 +46,9 @@ const secondsInYear = 60 * 60 * 24 * 365
 // setting precision as number works just fine
 const PRECISION = 1000000000000
 
+const WALLET_LOCK_PERIOD_IN_DAYS = 30
+const ADEX_LOCK_PERIOD_IN_DAYS = 20
+
 const msToDaysHours = (ms: any) => {
   const day = 24 * 60 * 60 * 1000
   const days = Math.floor(ms / day)
@@ -220,6 +223,11 @@ const AmbireCard = ({ tokens, networkId, selectedAcc, addRequest }: Props) => {
     })
   }, [leaveLog, addRequestTxn])
 
+  const lockDays = useMemo(() => {
+    if (selectedToken.label === 'WALLET') return WALLET_LOCK_PERIOD_IN_DAYS
+    return ADEX_LOCK_PERIOD_IN_DAYS
+  }, [selectedToken.label])
+
   const onTokenSelect = useCallback(
     (tokenAddress) => {
       setCustomInfo(null)
@@ -262,7 +270,7 @@ const AmbireCard = ({ tokens, networkId, selectedAcc, addRequest }: Props) => {
             ? '...'
             : xWALLETAPYPercentage
         ],
-        ['Lock', '20 day unbond period'],
+        ['Lock', `${lockDays} day unbond period`],
         ['Type', 'Variable Rate']
       ])
     },
@@ -274,7 +282,8 @@ const AmbireCard = ({ tokens, networkId, selectedAcc, addRequest }: Props) => {
       isLoadingRewards,
       selectedToken.label,
       tokensItems,
-      xWALLETAPYPercentage
+      xWALLETAPYPercentage,
+      lockDays
     ]
   )
 
