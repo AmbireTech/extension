@@ -207,7 +207,7 @@ const useSendTransaction = ({ hardwareWalletOpenBottomSheet }: Props) => {
                   : estimation.nativeAssetPriceInUSD / item.price
             }
           })
-          if (currentAccGasTankState.isEnabled) estimation.remainingFeeTokenBalances = gasTankTokens
+
           estimation.selectedFeeToken = getDefaultFeeToken(
             estimation.remainingFeeTokenBalances,
             network,

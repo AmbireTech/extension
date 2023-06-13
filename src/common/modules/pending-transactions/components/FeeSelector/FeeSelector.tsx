@@ -114,7 +114,7 @@ const mapGasTankTokens = (nativePrice: number) => (item: any) => {
     item.address === '0x0000000000000000000000000000000000000000' ? null : nativePrice / item.price
   return {
     ...item,
-    symbol: item.symbol.toUpperCase(),
+    symbol: item.symbol.toUpperCase() + ' on Gas Tank',
     balance: ethers.utils
       .parseUnits(item.balance.toFixed(item.decimals).toString(), item.decimals)
       .toString(),
@@ -211,14 +211,17 @@ const FeeSelector = ({
       mapGasTankTokens(estimation.nativeAssetPriceInUSD)
     )
 
-    // fallback to the native asset if fee tokens cannot be retrieved for whatever reason
-    const tokens = estimation.remainingFeeTokenBalances || [
-      {
-        symbol: nativeAssetSymbol,
-        decimals: 18,
-        address: '0x0000000000000000000000000000000000000000'
-      }
-    ]
+    const tokens =
+      isGasTankEnabled && gasTankTokens?.length
+        ? [...gasTankTokens, ...estimation.remainingFeeTokenBalances]
+        : // fallback to the native asset if fee tokens cannot be retrieved for whatever reason
+          estimation.remainingFeeTokenBalances || [
+            {
+              symbol: nativeAssetSymbol,
+              decimals: 18,
+              address: '0x0000000000000000000000000000000000000000'
+            }
+          ]
 
     const assetsItems = tokens
       .sort(
