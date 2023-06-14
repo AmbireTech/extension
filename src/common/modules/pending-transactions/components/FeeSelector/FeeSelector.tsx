@@ -523,13 +523,13 @@ const FeeSelector = ({
         {insufficientFee ? (
           <Text fontSize={12} appearance="danger" style={[spacings.mbTy, spacings.phSm]}>
             {t('Insufficient balance for the fee. Accepted tokens: ')}
-            {(estimation.remainingFeeTokenBalances || []).map((x: any) => x.symbol).join(', ')}
-            {/* TODO: Remove this */}
-            {isGasTankEnabled && (
+            {(estimation.remainingFeeTokenBalances || []).map((x: any) => x.symbol).join(', ')}.
+            {/* Since v3.11.0, gas tank is treated as "always enabled" */}
+            {/* {isGasTankEnabled && (
               <Text fontSize={12} appearance="danger">
                 {t('. Disable your Gas Tank to use the default fee tokens.')}
               </Text>
-            )}
+            )} */}
           </Text>
         ) : (
           <View style={spacings.mbTy}>{feeCurrencySelect}</View>
