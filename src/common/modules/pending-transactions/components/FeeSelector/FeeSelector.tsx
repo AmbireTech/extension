@@ -532,7 +532,7 @@ const FeeSelector = ({
             )}
           </View>
         </View>
-        {isGasTankEnabled && (
+        {isGasTankEnabled && estimation.selectedFeeToken.isGasTankToken && (
           <>
             <View style={[flexboxStyles.directionRow, flexboxStyles.alignCenter, spacings.mbTy]}>
               <Text style={spacings.mrMi} fontSize={12} color={colors.turquoise}>
