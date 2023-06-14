@@ -197,6 +197,7 @@ const useSendTransaction = ({ hardwareWalletOpenBottomSheet }: Props) => {
           const gasTankTokens = estimation.gasTank?.map((item) => {
             return {
               ...item,
+              isGasTankToken: true,
               symbol: `${item.symbol.toUpperCase()} on Gas Tank`,
               balance: ethers.utils
                 .parseUnits(item.balance.toFixed(item.decimals).toString(), item.decimals)
