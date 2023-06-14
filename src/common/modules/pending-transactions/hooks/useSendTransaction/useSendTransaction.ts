@@ -197,7 +197,7 @@ const useSendTransaction = ({ hardwareWalletOpenBottomSheet }: Props) => {
           const gasTankTokens = estimation.gasTank?.map((item) => {
             return {
               ...item,
-              symbol: item.symbol.toUpperCase(),
+              symbol: `${item.symbol.toUpperCase()} on Gas Tank`,
               balance: ethers.utils
                 .parseUnits(item.balance.toFixed(item.decimals).toString(), item.decimals)
                 .toString(),
@@ -207,7 +207,12 @@ const useSendTransaction = ({ hardwareWalletOpenBottomSheet }: Props) => {
                   : estimation.nativeAssetPriceInUSD / item.price
             }
           })
-
+          if (currentAccGasTankState.isEnabled) {
+            estimation.remainingFeeTokenBalances = [
+              ...estimation.remainingFeeTokenBalances,
+              ...gasTankTokens
+            ]
+          }
           estimation.selectedFeeToken = getDefaultFeeToken(
             estimation.remainingFeeTokenBalances,
             network,

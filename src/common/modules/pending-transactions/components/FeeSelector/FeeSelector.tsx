@@ -211,17 +211,13 @@ const FeeSelector = ({
       mapGasTankTokens(estimation.nativeAssetPriceInUSD)
     )
 
-    const tokens =
-      isGasTankEnabled && gasTankTokens?.length
-        ? [...gasTankTokens, ...estimation.remainingFeeTokenBalances]
-        : // fallback to the native asset if fee tokens cannot be retrieved for whatever reason
-          estimation.remainingFeeTokenBalances || [
-            {
-              symbol: nativeAssetSymbol,
-              decimals: 18,
-              address: '0x0000000000000000000000000000000000000000'
-            }
-          ]
+    const tokens = estimation.remainingFeeTokenBalances || [
+      {
+        symbol: nativeAssetSymbol,
+        decimals: 18,
+        address: '0x0000000000000000000000000000000000000000'
+      }
+    ]
 
     const assetsItems = tokens
       .sort(
