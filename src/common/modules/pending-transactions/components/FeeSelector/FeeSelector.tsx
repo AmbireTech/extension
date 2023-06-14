@@ -39,8 +39,8 @@ function getBalance(token: any) {
   return (balance / decimals) * priceInUSD
 }
 
-// CHECKPOINT: DONE
 const WalletDiscountBanner = ({
+  t,
   assetsItems,
   tokens,
   estimation,
@@ -175,7 +175,13 @@ const FeeSelector = ({
     const insufficientFee =
       estimation &&
       estimation.feeInUSD &&
-      !isTokenEligible(estimation.selectedFeeToken, feeSpeed, estimation, isGasTankEnabled, network)
+      !isTokenEligible(
+        estimation.selectedFeeToken,
+        feeSpeed,
+        estimation,
+        !!estimation.selectedFeeToken.isGasTankToken,
+        network
+      )
     if (estimation && !estimation.success)
       return (
         <Text appearance="danger" fontSize={14}>
@@ -207,11 +213,9 @@ const FeeSelector = ({
       )
     }
 
-    const { nativeAssetSymbol } = network
-    const gasTankTokens = estimation.gasTank?.map(
-      mapGasTankTokens(estimation.nativeAssetPriceInUSD)
-    )
+    estimation.gasTank?.map(mapGasTankTokens(estimation.nativeAssetPriceInUSD))
 
+    const { nativeAssetSymbol } = network
     const tokens = estimation.remainingFeeTokenBalances || [
       {
         symbol: nativeAssetSymbol,
@@ -223,8 +227,8 @@ const FeeSelector = ({
     const assetsItems = tokens
       .sort(
         (a: any, b: any) =>
-          isTokenEligible(b, SPEEDS[0], estimation, isGasTankEnabled, network) -
-            isTokenEligible(a, SPEEDS[0], estimation, isGasTankEnabled, network) ||
+          isTokenEligible(b, SPEEDS[0], estimation, !!b.isGasTankToken, network) -
+            isTokenEligible(a, SPEEDS[0], estimation, !!a.isGasTankToken, network) ||
           DISCOUNT_TOKENS_SYMBOLS.indexOf(b.symbol) - DISCOUNT_TOKENS_SYMBOLS.indexOf(a.symbol) ||
           (b.discount || 0) - (a.discount || 0) ||
           a?.symbol.toUpperCase().localeCompare(b?.symbol.toUpperCase())
@@ -236,7 +240,7 @@ const FeeSelector = ({
           { address, symbol, discount, ...rest },
           SPEEDS[0],
           estimation,
-          isGasTankEnabled,
+          !!rest.isGasTankToken,
           network
         ),
         icon: () => <TokenIcon uri={icon} withContainer networkId={network?.id} address={address} />
@@ -278,7 +282,7 @@ const FeeSelector = ({
         estimation.selectedFeeToken,
         speed,
         estimation,
-        isGasTankEnabled,
+        estimation.selectedFeeToken.isGasTankToken,
         network
       )
       return disabled || insufficientFee
@@ -406,6 +410,7 @@ const FeeSelector = ({
     return (
       <>
         {WalletDiscountBanner({
+          t,
           assetsItems,
           selectedFeeToken: estimation.selectedFeeToken,
           tokens,
@@ -420,6 +425,7 @@ const FeeSelector = ({
           style={[spacings.mbMi, flexboxStyles.directionRow, flexboxStyles.justifySpaceBetween]}
         >
           <Text fontSize={14}>{t('Transaction speed')}</Text>
+          {/* TODO: Remove this. */}
           <Text fontSize={14}>
             {t('Gas Tank: ')}
             <Text fontSize={14} color={isGasTankEnabled ? colors.turquoise : colors.pink}>
@@ -506,6 +512,7 @@ const FeeSelector = ({
           <Text fontSize={12} appearance="danger" style={[spacings.mbTy, spacings.phSm]}>
             {t('Insufficient balance for the fee. Accepted tokens: ')}
             {(estimation.remainingFeeTokenBalances || []).map((x: any) => x.symbol).join(', ')}
+            {/* TODO: Remove this */}
             {isGasTankEnabled && (
               <Text fontSize={12} appearance="danger">
                 {t('. Disable your Gas Tank to use the default fee tokens.')}
@@ -533,7 +540,7 @@ const FeeSelector = ({
             )}
           </View>
         </View>
-        {isGasTankEnabled && estimation.selectedFeeToken.isGasTankToken && (
+        {estimation.selectedFeeToken.isGasTankToken && (
           <>
             <View style={[flexboxStyles.directionRow, flexboxStyles.alignCenter, spacings.mbTy]}>
               <Text style={spacings.mrMi} fontSize={12} color={colors.turquoise}>
