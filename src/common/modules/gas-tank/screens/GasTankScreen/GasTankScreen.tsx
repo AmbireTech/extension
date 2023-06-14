@@ -93,7 +93,8 @@ const GasTankScreen = () => {
         {/* <GasTankStateToggle disabled={!gasTankBalances && !gasTankBalances?.length} /> */}
         <Text style={[spacings.mbSm, spacings.mhSm]} fontSize={12}>
           {t('The Ambire Gas Tank is your special account for paying gas and saving on gas fees.')}
-          <Text color={colors.heliotrope} fontSize={12} onPress={openBottomSheet}>{`   ${t(
+          {'   '}
+          <Text color={colors.heliotrope} fontSize={12} onPress={openBottomSheet}>{`${t(
             'learn more...'
           )}`}</Text>
         </Text>
