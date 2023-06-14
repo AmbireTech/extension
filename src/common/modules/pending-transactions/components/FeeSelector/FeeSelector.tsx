@@ -39,6 +39,7 @@ function getBalance(token: any) {
   return (balance / decimals) * priceInUSD
 }
 
+// CHECKPOINT: DONE
 const WalletDiscountBanner = ({
   assetsItems,
   tokens,
@@ -60,7 +61,7 @@ const WalletDiscountBanner = ({
       (x) =>
         DISCOUNT_TOKENS_SYMBOLS.includes(x.symbol) &&
         x.discount &&
-        isTokenEligible(x, feeSpeed, estimation, isGasTankEnabled, network)
+        isTokenEligible(x, feeSpeed, estimation, x.isGasTankToken, network)
     )
     .sort(
       (a, b) =>
@@ -292,7 +293,7 @@ const FeeSelector = ({
         { ...estimation.selectedFeeToken },
         { ...estimation, customFee: null },
         speed,
-        isGasTankEnabled,
+        !!estimation.selectedFeeToken.isGasTankToken,
         network
       )
 
@@ -356,7 +357,7 @@ const FeeSelector = ({
       estimation.selectedFeeToken,
       estimation,
       feeSpeed,
-      isGasTankEnabled,
+      !!estimation.selectedFeeToken.isGasTankToken,
       network
     )
 
@@ -364,7 +365,7 @@ const FeeSelector = ({
       { ...estimation.selectedFeeToken },
       { ...estimation, customFee: null },
       'slow',
-      isGasTankEnabled,
+      !!estimation.selectedFeeToken.isGasTankToken,
       network
     )
 
@@ -372,7 +373,7 @@ const FeeSelector = ({
       { ...estimation.selectedFeeToken },
       { ...estimation, customFee: null },
       'ape',
-      isGasTankEnabled,
+      !!estimation.selectedFeeToken.isGasTankToken,
       network
     )
 

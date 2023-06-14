@@ -302,7 +302,7 @@ const useSendTransaction = ({ hardwareWalletOpenBottomSheet }: Props) => {
       // Also it can be stable but not in USD
       feeInFeeToken,
       addedGas
-    } = getFeesData(feeToken, estimation, feeSpeed, currentAccGasTankState.isEnabled, network)
+    } = getFeesData(feeToken, estimation, feeSpeed, !!feeToken.isGasTankToken, network)
     const feeTxn =
       feeToken.symbol === network.nativeAssetSymbol
         ? // TODO: check native decimals
