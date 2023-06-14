@@ -293,7 +293,7 @@ const FeeSelector = ({
         estimation.selectedFeeToken,
         speed,
         estimation,
-        estimation.selectedFeeToken.isGasTankToken,
+        !!estimation.selectedFeeToken.isGasTankToken,
         network
       )
       return disabled || insufficientFee
