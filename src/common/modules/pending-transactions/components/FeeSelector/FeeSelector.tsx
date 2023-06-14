@@ -236,6 +236,7 @@ const FeeSelector = ({
       .map(({ address, label, symbol, discount, icon, ...rest }: any) => ({
         label: label || symbol,
         value: symbol,
+        isGasTankToken: rest.isGasTankToken,
         disabled: !isTokenEligible(
           { address, symbol, discount, ...rest },
           SPEEDS[0],
@@ -245,9 +246,19 @@ const FeeSelector = ({
         ),
         icon: () => <TokenIcon uri={icon} withContainer networkId={network?.id} address={address} />
       }))
-      .sort((a, b) => (a.label.toLowerCase() > b.label.toLowerCase() ? 1 : -1))
-      .sort((a, b) => {
-        if (a.disabled === b.disabled) return 0 // skip sorting if the same
+      // mort alphabetically
+      .sort((a: any, b: any) => (a.label.toLowerCase() > b.label.toLowerCase() ? 1 : -1))
+      // move gas tank tokens to the top
+      .sort((a: any, b: any) => {
+        // skip sorting if the same
+        if (a.isGasTankToken === b.isGasTankToken) return 0
+
+        return a.isGasTankToken ? -1 : 1
+      })
+      // move disabled tokens to the bottom
+      .sort((a: any, b: any) => {
+        // skip sorting if the same
+        if (a.disabled === b.disabled) return 0
 
         return a.disabled ? 1 : -1
       })
