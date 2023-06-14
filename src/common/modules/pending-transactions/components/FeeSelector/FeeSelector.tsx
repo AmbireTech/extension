@@ -436,13 +436,14 @@ const FeeSelector = ({
           style={[spacings.mbMi, flexboxStyles.directionRow, flexboxStyles.justifySpaceBetween]}
         >
           <Text fontSize={14}>{t('Transaction speed')}</Text>
-          {/* TODO: Remove this. */}
-          <Text fontSize={14}>
+          {/* Since v3.11.0, gas tank is treated as "always enabled" */}
+          {/* and gas tank tokens are always visible in the tokens fee list */}
+          {/* <Text fontSize={14}>
             {t('Gas Tank: ')}
             <Text fontSize={14} color={isGasTankEnabled ? colors.turquoise : colors.pink}>
               {isGasTankEnabled ? t('Enabled') : t('Disabled')}
             </Text>
-          </Text>
+          </Text> */}
         </View>
         <View style={styles.selectorsContainer}>{feeAmountSelectors}</View>
 
