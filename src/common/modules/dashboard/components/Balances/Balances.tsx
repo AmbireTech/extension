@@ -65,17 +65,6 @@ const Balances = ({
 
   const { data } = useRelayerData({ url: urlGetBalance })
 
-  const balanceLabel = useMemo(
-    () =>
-      !data
-        ? '0.00'
-        : data
-            .map(({ balanceInUSD }: any) => balanceInUSD)
-            .reduce((a: any, b: any) => a + b, 0)
-            .toFixed(2),
-    [data]
-  )
-
   useLayoutEffect(() => {
     triggerLayoutAnimation()
   }, [isLoading])
@@ -83,6 +72,14 @@ const Balances = ({
   useLayoutEffect(() => {
     triggerLayoutAnimation()
   }, [networkId])
+
+  const gasTankBalanceLabel = !data
+    ? '0.00'
+    : data
+        .map(({ balanceInUSD }: any) => balanceInUSD)
+        .reduce((a: any, b: any) => a + b, 0)
+        .toFixed(2)
+  const hasPositiveGasBalance = gasTankBalanceLabel !== '0.00'
 
   const otherPositiveBalances = otherBalances
     .filter(({ network, total }: any) => network !== networkId && total.full > 0)
@@ -187,7 +184,7 @@ const Balances = ({
           <Spinner />
         </View>
       ) : (
-        (otherPositiveBalances.length > 0 || balanceLabel !== '0.00') && (
+        (otherPositiveBalances.length > 0 || hasPositiveGasBalance) && (
           <View style={spacings.mb}>
             <Text style={[textStyles.center, spacings.mbTy]}>{t('You also have')}</Text>
             {otherPositiveBalances.map(({ network, total }: Balance, i: number) => {
@@ -215,7 +212,7 @@ const Balances = ({
                 </TouchableOpacity>
               )
             })}
-            {balanceLabel !== '0.00' && (
+            {hasPositiveGasBalance && (
               <TouchableOpacity
                 onPress={handleGoToGasTank}
                 style={[styles.otherBalancesContainer, styles.otherBalancesGasTankContainer]}
@@ -223,7 +220,7 @@ const Balances = ({
                 {!!data && (
                   <Text numberOfLines={1} style={flexboxStyles.flex1}>
                     <Text style={textStyles.highlightPrimary}>{'$ '}</Text>
-                    {balanceLabel}
+                    {gasTankBalanceLabel}
                   </Text>
                 )}
                 <GasTankIcon width={22} height={22} />
