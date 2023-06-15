@@ -115,7 +115,7 @@ const mapGasTankTokens = (nativePrice: number) => (item: any) => {
     item.address === '0x0000000000000000000000000000000000000000' ? null : nativePrice / item.price
   return {
     ...item,
-    symbol: item.symbol.toUpperCase() + ' on Gas Tank',
+    symbol: item.symbol.toUpperCase(),
     balance: ethers.utils
       .parseUnits(item.balance.toFixed(item.decimals).toString(), item.decimals)
       .toString(),
