@@ -323,7 +323,7 @@ const useSendTransaction = ({ hardwareWalletOpenBottomSheet }: Props) => {
     // either use the next non-mined nonce or the next free nonce
     // eslint-disable-next-line no-nested-ternary
     const nonce = isInt(bundle.nonce) ? bundle.nonce : replaceTx ? nextNonMinedNonce : nextFreeNonce
-    if (currentAccGasTankState.isEnabled) {
+    if (feeToken.isGasTankToken) {
       let gasLimit
       if (bundle.txns.length > 1) gasLimit = estimation.gasLimit + (bundle.extraGas || 0)
       else gasLimit = estimation.gasLimit
