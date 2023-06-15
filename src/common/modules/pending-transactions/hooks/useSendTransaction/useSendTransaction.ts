@@ -59,7 +59,7 @@ const getDefaultFeeToken = (
           a?.symbol.toUpperCase().localeCompare(b?.symbol.toUpperCase())
       )
       .find((token: any) =>
-        isTokenEligible(token, feeSpeed, estimation, currentAccGasTankState, network)
+        isTokenEligible(token, feeSpeed, estimation, !!token.isGasTankToken, network)
       ) || remainingFeeTokenBalances[0]
   )
 }
@@ -231,7 +231,7 @@ const useSendTransaction = ({ hardwareWalletOpenBottomSheet }: Props) => {
                     prevEstimation.selectedFeeToken,
                     feeSpeed,
                     estimation,
-                    currentAccGasTankState.isEnabled,
+                    !!prevEstimation.selectedFeeToken.isGasTankToken,
                     network
                   ) &&
                   prevEstimation.selectedFeeToken) ||
