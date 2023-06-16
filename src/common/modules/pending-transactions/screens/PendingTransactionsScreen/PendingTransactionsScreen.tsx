@@ -22,6 +22,7 @@ import SignActions from '@common/modules/pending-transactions/components/SignAct
 import SigningWithAccount from '@common/modules/pending-transactions/components/SigningWithAccount'
 import TransactionSummary from '@common/modules/pending-transactions/components/TransactionSummary'
 import useSendTransaction from '@common/modules/pending-transactions/hooks/useSendTransaction'
+import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexboxStyles from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
@@ -110,7 +111,7 @@ const PendingTransactionsScreen = ({
         }
         !!closeBottomSheet && closeBottomSheet()
       } else {
-        navigation?.goBack()
+        navigation.navigate(ROUTES.dashboard)
       }
     }
   })
