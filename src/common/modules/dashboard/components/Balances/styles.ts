@@ -8,6 +8,7 @@ interface Style {
   loadingContainer: ViewStyle
   spinnerWrapper: ViewStyle
   otherBalancesContainer: ViewStyle
+  otherBalancesGasTankContainer: ViewStyle
   button: ViewStyle
   buttonIcon: ViewStyle
 }
@@ -41,6 +42,11 @@ const styles = StyleSheet.create<Style>({
     borderBottomWidth: 1,
     paddingVertical: 2,
     alignItems: 'center'
+  },
+  otherBalancesGasTankContainer: {
+    borderTopColor: colors.waikawaGray,
+    borderTopWidth: 1,
+    borderBottomWidth: 0
   }
 })
 
