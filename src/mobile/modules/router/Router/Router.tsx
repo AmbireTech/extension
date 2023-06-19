@@ -6,6 +6,7 @@ import { View } from 'react-native'
 import DAppsIcon from '@common/assets/svg/DAppsIcon'
 import DashboardIcon from '@common/assets/svg/DashboardIcon'
 import EarnIcon from '@common/assets/svg/EarnIcon'
+import GasTankIcon from '@common/assets/svg/GasTankIcon'
 import SwapIcon from '@common/assets/svg/SwapIcon'
 import TransferIcon from '@common/assets/svg/TransferIcon'
 import { TAB_BAR_BLUR } from '@common/constants/router'
@@ -82,7 +83,7 @@ const ManageVaultLockStack = createNativeStackNavigator()
 const Web3Stack = createNativeStackNavigator()
 const EmailLoginStack = createNativeStackNavigator()
 const JsonLoginStack = createNativeStackNavigator()
-const GasTankStack = createNativeStackNavigator()
+const EarnStack = createNativeStackNavigator()
 const GasInformationStack = createNativeStackNavigator()
 const DataDeletionPolicyStack = createNativeStackNavigator()
 const BackupStack = createNativeStackNavigator()
@@ -145,11 +146,11 @@ const BackupStackScreen = () => {
   )
 }
 
-const GasTankStackScreen = () => {
+const EarnStackScreen = () => {
   return (
-    <GasTankStack.Navigator screenOptions={{ header: headerGamma }}>
-      <GasTankStack.Screen name={`${MOBILE_ROUTES.gasTank}-screen`} component={GasTankScreen} />
-    </GasTankStack.Navigator>
+    <EarnStack.Navigator screenOptions={{ header: headerGamma }}>
+      <EarnStack.Screen name={`${MOBILE_ROUTES.earn}-screen`} component={EarnScreen} />
+    </EarnStack.Navigator>
   )
 }
 
@@ -421,15 +422,15 @@ const TabsScreens = () => {
         component={DashboardStackScreen}
       />
       <Tab.Screen
-        name={MOBILE_ROUTES.earn}
+        name={MOBILE_ROUTES.gasTank}
         options={{
-          tabBarLabel: routesConfig[ROUTES.earn].title,
-          headerTitle: routesConfig[ROUTES.earn].title,
+          tabBarLabel: routesConfig[ROUTES.gasTank].title,
+          headerTitle: routesConfig[ROUTES.gasTank].title,
           tabBarIcon: ({ color }) => (
-            <EarnIcon color={color} width={tabsIconSize} height={tabsIconSize} />
+            <GasTankIcon color={color} width={tabsIconSize} height={tabsIconSize} />
           )
         }}
-        component={EarnScreen}
+        component={GasTankScreen}
       />
       <Tab.Screen
         name={MOBILE_ROUTES.swap}
@@ -572,8 +573,8 @@ const AppStack = () => {
         options={{ title: routesConfig[ROUTES.signMessage].title }}
       />
       <MainStack.Screen
-        name={MOBILE_ROUTES.gasTank}
-        component={GasTankStackScreen}
+        name={MOBILE_ROUTES.earn}
+        component={EarnStackScreen}
         options={{ headerShown: false }}
       />
       <MainStack.Screen

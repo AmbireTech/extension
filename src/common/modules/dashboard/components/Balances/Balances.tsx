@@ -1,7 +1,7 @@
 import networks, { NetworkId } from 'ambire-common/src/constants/networks'
 import { UseAccountsReturnType } from 'ambire-common/src/hooks/useAccounts'
 import useCacheBreak from 'ambire-common/src/hooks/useCacheBreak'
-import { UsePortfolioReturnType } from 'ambire-common/src/hooks/usePortfolio/types'
+import { Balance, UsePortfolioReturnType } from 'ambire-common/src/hooks/usePortfolio/types'
 import React, { useCallback, useLayoutEffect, useMemo } from 'react'
 import { TouchableOpacity, View } from 'react-native'
 
@@ -65,17 +65,6 @@ const Balances = ({
 
   const { data } = useRelayerData({ url: urlGetBalance })
 
-  const balanceLabel = useMemo(
-    () =>
-      !data
-        ? '0.00'
-        : data
-            .map(({ balanceInUSD }: any) => balanceInUSD)
-            .reduce((a: any, b: any) => a + b, 0)
-            .toFixed(2),
-    [data]
-  )
-
   useLayoutEffect(() => {
     triggerLayoutAnimation()
   }, [isLoading])
@@ -83,6 +72,14 @@ const Balances = ({
   useLayoutEffect(() => {
     triggerLayoutAnimation()
   }, [networkId])
+
+  const gasTankBalanceLabel = !data
+    ? '0.00'
+    : data
+        .map(({ balanceInUSD }: any) => balanceInUSD)
+        .reduce((a: any, b: any) => a + b, 0)
+        .toFixed(2)
+  const hasPositiveGasBalance = gasTankBalanceLabel !== '0.00'
 
   const otherPositiveBalances = otherBalances
     .filter(({ network, total }: any) => network !== networkId && total.full > 0)
@@ -187,11 +184,12 @@ const Balances = ({
           <Spinner />
         </View>
       ) : (
-        otherPositiveBalances.length > 0 && (
+        (otherPositiveBalances.length > 0 || hasPositiveGasBalance) && (
           <View style={spacings.mb}>
             <Text style={[textStyles.center, spacings.mbTy]}>{t('You also have')}</Text>
-            {otherPositiveBalances.map(({ network, total }: any) => {
+            {otherPositiveBalances.map(({ network, total }: Balance, i: number) => {
               const { chainId, name, id }: any = networkDetails(network)
+              const isLast = i === otherPositiveBalances.length - 1
 
               const onNetworkChange = () => {
                 triggerLayoutAnimation()
@@ -202,7 +200,7 @@ const Balances = ({
                 <TouchableOpacity
                   key={chainId}
                   onPress={onNetworkChange}
-                  style={styles.otherBalancesContainer}
+                  style={[styles.otherBalancesContainer, isLast && { borderBottomWidth: 0 }]}
                 >
                   <Text numberOfLines={1} style={flexboxStyles.flex1}>
                     <Text style={textStyles.highlightPrimary}>{'$ '}</Text>
@@ -214,21 +212,23 @@ const Balances = ({
                 </TouchableOpacity>
               )
             })}
-            <TouchableOpacity
-              onPress={handleGoToGasTank}
-              style={[styles.otherBalancesContainer, { borderBottomWidth: 0 }]}
-            >
-              {!!data && (
-                <Text numberOfLines={1} style={flexboxStyles.flex1}>
-                  <Text style={textStyles.highlightPrimary}>{'$ '}</Text>
-                  {balanceLabel}
+            {hasPositiveGasBalance && (
+              <TouchableOpacity
+                onPress={handleGoToGasTank}
+                style={[styles.otherBalancesContainer, styles.otherBalancesGasTankContainer]}
+              >
+                {!!data && (
+                  <Text numberOfLines={1} style={flexboxStyles.flex1}>
+                    <Text style={textStyles.highlightPrimary}>{'$ '}</Text>
+                    {gasTankBalanceLabel}
+                  </Text>
+                )}
+                <GasTankIcon width={22} height={22} />
+                <Text numberOfLines={1} style={spacings.plMi}>
+                  {t('Gas Tank Balance')}
                 </Text>
-              )}
-              <GasTankIcon width={22} height={22} />
-              <Text numberOfLines={1} style={spacings.plMi}>
-                {t('Gas Tank Balance')}
-              </Text>
-            </TouchableOpacity>
+              </TouchableOpacity>
+            )}
           </View>
         )
       )}
