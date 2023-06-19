@@ -238,7 +238,7 @@ const useSendTransaction = ({ hardwareWalletOpenBottomSheet }: Props) => {
                     prevEstimation.selectedFeeToken,
                     feeSpeed,
                     estimation,
-                    !!prevEstimation.selectedFeeToken.isGasTankToken,
+                    !!prevEstimation.selectedFeeToken?.isGasTankToken,
                     network
                   ) &&
                   prevEstimation.selectedFeeToken) ||
