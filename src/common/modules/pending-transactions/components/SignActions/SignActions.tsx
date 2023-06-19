@@ -73,7 +73,13 @@ const SignActions = ({
   const insufficientFee =
     estimation &&
     estimation.feeInUSD &&
-    !isTokenEligible(estimation.selectedFeeToken, feeSpeed, estimation, isGasTankEnabled, network)
+    !isTokenEligible(
+      estimation.selectedFeeToken,
+      feeSpeed,
+      estimation,
+      !!estimation.selectedFeeToken.isGasTankToken,
+      network
+    )
 
   const willFail = (estimation && !estimation.success) || insufficientFee
 
