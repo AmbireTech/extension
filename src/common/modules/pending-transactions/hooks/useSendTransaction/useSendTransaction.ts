@@ -58,6 +58,13 @@ const getDefaultFeeToken = (
           (b?.discount || 0) - (a?.discount || 0) ||
           a?.symbol.toUpperCase().localeCompare(b?.symbol.toUpperCase())
       )
+      // move gas tank tokens to the top
+      .sort((a: any, b: any) => {
+        // skip sorting if the same
+        if (a.isGasTankToken === b.isGasTankToken) return 0
+
+        return a.isGasTankToken ? -1 : 1
+      })
       .find((token: any) =>
         isTokenEligible(token, feeSpeed, estimation, !!token.isGasTankToken, network)
       ) || remainingFeeTokenBalances[0]
