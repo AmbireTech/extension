@@ -88,7 +88,7 @@ const GasTankScreen = () => {
 
   return (
     <GradientBackgroundWrapper>
-      <Wrapper hasBottomTabNav={false}>
+      <Wrapper hasBottomTabNav>
         {/* Since v3.11.0, gas tank is treated as "always enabled" */}
         {/* <GasTankStateToggle disabled={!gasTankBalances && !gasTankBalances?.length} /> */}
         <Text style={[spacings.mbSm, spacings.mhSm]} fontSize={12}>
