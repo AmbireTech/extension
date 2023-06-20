@@ -100,7 +100,7 @@ const ResetVaultScreen: React.FC<Props> = ({
                 render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
                   <InputPassword
                     onBlur={onBlur}
-                    placeholder={t('New PIN')}
+                    placeholder={t('New {{PIN_LENGTH}}-digit PIN', { PIN_LENGTH })}
                     onChangeText={onChange}
                     maxLength={PIN_LENGTH}
                     isValid={value?.length === PIN_LENGTH}
