@@ -16,6 +16,7 @@
     "start:clean:staging": "APP_ENV=staging yarn start:clean",
     "start:production": "APP_ENV=production yarn start",
     "start:clean:production": "APP_ENV=production yarn start:clean",
+    "eas-build-pre-install": "./scripts/expo-build-pre-install.sh",
     "eas-build-post-install": "./scripts/expo-build-post-install.sh",
     "build:configure": "eas build:configure",
     "build:android:development": "eas build -p android --profile development",
