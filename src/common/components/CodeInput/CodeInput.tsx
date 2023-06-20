@@ -25,10 +25,10 @@ const CodeInput: React.FC<Props> = ({
   onChange,
   enableMask = true,
   autoFocus,
-  value: _value = '',
+  value = '',
+  setValue,
   ...rest
 }) => {
-  const [value, setValue] = useState(_value)
   const inputRef = useBlurOnFulfill({ value, cellCount: CELL_COUNT })
   const [props, getCellOnLayoutHandler] = useClearByFocusCell({
     value,
@@ -48,16 +48,6 @@ const CodeInput: React.FC<Props> = ({
       autoFocusAllowed.current = false
     }
   }, [autoFocus, inputRef, keyboardShown])
-
-  useEffect(() => {
-    // TODO:
-    // onChange(value)
-
-    if (value.length >= 6) {
-      onFulfill(value)
-      setValue('')
-    }
-  }, [onChange, onFulfill, value])
 
   const renderCell: CodeFieldProps['renderCell'] = ({ index, symbol, isFocused }) => {
     let textChild = null
