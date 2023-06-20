@@ -109,6 +109,7 @@ const ResetVaultScreen: React.FC<Props> = ({
                     containerStyle={spacings.mbTy}
                     onSubmitEditing={handleSubmit(resetVault)}
                     autoFocus={isWeb}
+                    keyboardType="number-pad"
                   />
                 )}
                 name="password"
@@ -131,6 +132,7 @@ const ResetVaultScreen: React.FC<Props> = ({
                     autoCorrect={false}
                     containerStyle={spacings.mbTy}
                     onSubmitEditing={handleSubmit(resetVault)}
+                    keyboardType="number-pad"
                   />
                 )}
                 name="confirmPassword"
