@@ -20,8 +20,15 @@ interface Props extends Partial<CodeFieldProps> {
   enableMask?: boolean
 }
 
-const CodeInput: React.FC<Props> = ({ onFulfill, enableMask = true, autoFocus, ...rest }) => {
-  const [value, setValue] = useState('')
+const CodeInput: React.FC<Props> = ({
+  onFulfill,
+  onChange,
+  enableMask = true,
+  autoFocus,
+  value: _value = '',
+  ...rest
+}) => {
+  const [value, setValue] = useState(_value)
   const inputRef = useBlurOnFulfill({ value, cellCount: CELL_COUNT })
   const [props, getCellOnLayoutHandler] = useClearByFocusCell({
     value,
@@ -40,14 +47,17 @@ const CodeInput: React.FC<Props> = ({ onFulfill, enableMask = true, autoFocus, .
       inputRef.current?.focus()
       autoFocusAllowed.current = false
     }
-  }, [autoFocus, keyboardShown])
+  }, [autoFocus, inputRef, keyboardShown])
 
   useEffect(() => {
+    // TODO:
+    // onChange(value)
+
     if (value.length >= 6) {
       onFulfill(value)
       setValue('')
     }
-  }, [value])
+  }, [onChange, onFulfill, value])
 
   const renderCell: CodeFieldProps['renderCell'] = ({ index, symbol, isFocused }) => {
     let textChild = null

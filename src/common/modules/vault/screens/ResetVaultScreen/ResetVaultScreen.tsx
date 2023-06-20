@@ -1,4 +1,4 @@
-import { isValidPassword } from 'ambire-common/src/services/validations'
+import { isValidCode } from 'ambire-common/src/services/validations'
 import React from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { Keyboard, TouchableWithoutFeedback, View } from 'react-native'
@@ -91,13 +91,13 @@ const ResetVaultScreen: React.FC<Props> = ({
               </View>
               <Controller
                 control={control}
-                rules={{ validate: isValidPassword }}
+                rules={{ validate: isValidCode }}
                 render={({ field: { onChange, onBlur, value } }) => (
                   <InputPassword
                     onBlur={onBlur}
                     placeholder={t('New passphrase')}
                     onChangeText={onChange}
-                    isValid={isValidPassword(value)}
+                    isValid={isValidCode(value)}
                     value={value}
                     error={
                       errors.password &&

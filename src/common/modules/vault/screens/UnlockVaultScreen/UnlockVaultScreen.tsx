@@ -4,6 +4,7 @@ import { Controller, useForm, UseFormSetError } from 'react-hook-form'
 import { Keyboard, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native'
 
 import Button from '@common/components/Button'
+import CodeInput from '@common/components/CodeInput'
 import GradientBackgroundWrapper from '@common/components/GradientBackgroundWrapper'
 import InputPassword from '@common/components/InputPassword'
 import Text from '@common/components/Text'
@@ -126,23 +127,37 @@ const UnlockVaultScreen: React.FC<Props> = ({
 
             <Controller
               control={control}
-              render={({ field: { onChange, onBlur, value } }) => (
-                <InputPassword
-                  onBlur={onBlur}
-                  placeholder={t('Passphrase')}
-                  autoFocus={isWeb}
-                  onChangeText={onChange}
-                  isValid={isValidPassword(value)}
-                  value={value}
-                  onSubmitEditing={handleSubmit((data) => unlockVault(data, setError))}
-                  error={
-                    errors.password &&
-                    (errors.password.message ||
-                      t('Please fill in at least 8 characters for passphrase.'))
-                  }
-                  containerStyle={spacings.mbTy}
-                />
-              )}
+              render={({ field: { onChange, onBlur, value } }) =>
+                // TODO: Figure out the switch
+                true ? (
+                  <CodeInput
+                    // TODO: Pass errors
+                    onFulfill={(nextValue) => {
+                      onChange(nextValue)
+                      handleSubmit((data) => {
+                        unlockVault(data, setError)
+                      })()
+                    }}
+                    value={value}
+                  />
+                ) : (
+                  <InputPassword
+                    onBlur={onBlur}
+                    placeholder={t('Passphrase')}
+                    autoFocus={isWeb}
+                    onChangeText={onChange}
+                    isValid={isValidPassword(value)}
+                    value={value}
+                    onSubmitEditing={handleSubmit((data) => unlockVault(data, setError))}
+                    error={
+                      errors.password &&
+                      (errors.password.message ||
+                        t('Please fill in at least 8 characters for passphrase.'))
+                    }
+                    containerStyle={spacings.mbTy}
+                  />
+                )
+              }
               name="password"
             />
 
