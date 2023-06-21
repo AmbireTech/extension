@@ -113,6 +113,9 @@ const UnlockVaultScreen: React.FC<Props> = ({
     }
   }, [handleSubmit, setError, setValue, unlockVault, currentPassword])
 
+  // TODO: Figure out the switch
+  const isPinEntry = true
+
   return (
     <BackgroundWrapper>
       <TouchableWithoutFeedback
@@ -122,7 +125,7 @@ const UnlockVaultScreen: React.FC<Props> = ({
       >
         <Wrapper
           contentContainerStyle={[
-            spacings.pbLg,
+            isPinEntry ? spacings.pb0 : spacings.pbLg,
             // When locked temporarily, the component is mounted as an absolute
             // positioned overlay, which has no title. So the top margin
             // compensates the missing title and aligns the KeyStoreLogo better.
@@ -135,19 +138,15 @@ const UnlockVaultScreen: React.FC<Props> = ({
 
           <View style={[isWeb && spacings.ph, flexboxStyles.flex1, flexboxStyles.justifyEnd]}>
             <Text weight="regular" style={[spacings.phTy, text.center]} fontSize={13}>
-              {
-                // TODO: Figure out the switch
-                true
-                  ? t('Enter Ambire Key Store PIN')
-                  : t('Enter your Ambire Key Store passphrase to unlock your wallet')
-              }
+              {isPinEntry
+                ? t('Enter Ambire Key Store PIN')
+                : t('Enter your Ambire Key Store passphrase to unlock your wallet')}
             </Text>
 
             <Controller
               control={control}
               render={({ field: { onChange, onBlur, value } }) =>
-                // TODO: Figure out the switch
-                true ? (
+                isPinEntry ? (
                   <NumericPadWithBiometrics
                     retryBiometrics={handleRetryBiometrics}
                     setValue={setValue}
@@ -175,18 +174,15 @@ const UnlockVaultScreen: React.FC<Props> = ({
               name="password"
             />
 
-            {
-              // TODO: Figure out the switch
-              false && (
-                <View style={spacings.ptSm}>
-                  <Button
-                    disabled={isSubmitting || !watch('password', '')}
-                    text={isSubmitting ? t('Unlocking...') : t('Unlock')}
-                    onPress={handleSubmit((data) => unlockVault(data, setError))}
-                  />
-                </View>
-              )
-            }
+            {!isPinEntry && (
+              <View style={spacings.ptSm}>
+                <Button
+                  disabled={isSubmitting || !watch('password', '')}
+                  text={isSubmitting ? t('Unlocking...') : t('Unlock')}
+                  onPress={handleSubmit((data) => unlockVault(data, setError))}
+                />
+              </View>
+            )}
             <View style={[flexboxStyles.justifyCenter, flexboxStyles.directionRow, spacings.pvTy]}>
               <TouchableOpacity onPress={handleForgotPassword} hitSlop={FOOTER_BUTTON_HIT_SLOP}>
                 <Text weight="medium" fontSize={12}>
