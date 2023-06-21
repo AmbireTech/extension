@@ -159,6 +159,7 @@ const UnlockVaultScreen: React.FC<Props> = ({
                     setValue={setValue}
                     isDisabled={isSubmitting || currentPassword.length === PIN_LENGTH}
                     value={currentPassword}
+                    error={errors?.password?.message}
                   />
                 ) : (
                   <InputPassword

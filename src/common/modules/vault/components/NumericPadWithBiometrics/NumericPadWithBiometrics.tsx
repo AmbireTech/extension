@@ -3,13 +3,14 @@ import { View } from 'react-native'
 import { TouchableOpacity } from 'react-native-gesture-handler'
 
 import CodeInput from '@common/components/CodeInput'
+import Text from '@common/components/Text'
 import colors from '@common/styles/colors'
 import spacings from '@common/styles/spacings'
 import { Ionicons } from '@expo/vector-icons'
 
 import NumericButton from './NumericButton'
 
-const NumericPadWithBiometrics = ({ setValue, isDisabled, value, retryBiometrics }) => {
+const NumericPadWithBiometrics = ({ setValue, isDisabled, value, retryBiometrics, error }) => {
   const appendDigit = (digit) => {
     setValue('password', value + digit, {
       shouldValidate: true
@@ -19,6 +20,14 @@ const NumericPadWithBiometrics = ({ setValue, isDisabled, value, retryBiometrics
   return (
     <View style={[{ alignItems: 'center' }]}>
       <CodeInput setValue={(v) => setValue('password', v)} value={value} />
+      <Text
+        fontSize={14}
+        weight="regular"
+        appearance="danger"
+        style={{ position: 'absolute', top: 12 }}
+      >
+        {error}
+      </Text>
       <View style={{ flexDirection: 'row' }}>
         {[1, 2, 3].map((digit) => (
           <NumericButton
