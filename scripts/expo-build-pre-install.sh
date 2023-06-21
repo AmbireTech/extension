@@ -4,8 +4,9 @@
 
 mkdir -p ~/.ssh
 
-# Restore the private key from the base64 encoded file and generate the public key
-cat "$AMBIRE_COMMON_SSH_DEPLOY_KEY_BASE64" | base64 -d > ~/.ssh/id_rsa
+# Decode the base64 private key directly from the environment variable and generate the public key
+echo "$AMBIRE_COMMON_SSH_DEPLOY_KEY_BASE64" | base64 --decode > ~/.ssh/id_rsa
+
 chmod 0600 ~/.ssh/id_rsa
 ssh-keygen -y -f ~/.ssh/id_rsa > ~/.ssh/id_rsa.pub
 
