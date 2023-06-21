@@ -47,7 +47,7 @@ const NumericPadWithBiometrics = ({ setValue, isDisabled, value, retryBiometrics
               }
             ]}
           >
-            <Text weight="semiBold" fontSize={30} style={text.center}>
+            <Text weight="semiBold" fontSize={20} style={text.center}>
               {digit.toString()}
             </Text>
           </TouchableOpacity>
@@ -72,7 +72,7 @@ const NumericPadWithBiometrics = ({ setValue, isDisabled, value, retryBiometrics
               }
             ]}
           >
-            <Text weight="semiBold" fontSize={30} style={text.center}>
+            <Text weight="semiBold" fontSize={20} style={text.center}>
               {digit.toString()}
             </Text>
           </TouchableOpacity>
@@ -97,7 +97,7 @@ const NumericPadWithBiometrics = ({ setValue, isDisabled, value, retryBiometrics
               }
             ]}
           >
-            <Text weight="semiBold" fontSize={30} style={text.center}>
+            <Text weight="semiBold" fontSize={20} style={text.center}>
               {digit.toString()}
             </Text>
           </TouchableOpacity>
@@ -129,7 +129,7 @@ const NumericPadWithBiometrics = ({ setValue, isDisabled, value, retryBiometrics
               }
             ]}
           >
-            <Text weight="semiBold" fontSize={30} style={text.center}>
+            <Text weight="semiBold" fontSize={20} style={text.center}>
               {digit.toString()}
             </Text>
           </TouchableOpacity>
@@ -149,7 +149,7 @@ const NumericPadWithBiometrics = ({ setValue, isDisabled, value, retryBiometrics
             }
           ]}
         >
-          <Text weight="semiBold" fontSize={30} style={text.center}>
+          <Text weight="semiBold" fontSize={20} style={text.center}>
             <Ionicons name="finger-print-sharp" size={38} color={colors.titan} />
           </Text>
         </TouchableOpacity>
