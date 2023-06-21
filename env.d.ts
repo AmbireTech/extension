@@ -112,4 +112,9 @@ declare module '@env' {
    * {@link https://stackoverflow.com/a/46739698/1333836}
    */
   export const BROWSER_EXTENSION_PUBLIC_KEY: string
+
+  /**
+   * Deploy key for the private ambire-common repository
+   */
+  export const AMBIRE_COMMON_SSH_DEPLOY_KEY_BASE64: string
 }
