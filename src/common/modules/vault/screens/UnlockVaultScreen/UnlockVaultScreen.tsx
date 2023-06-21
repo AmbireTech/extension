@@ -52,6 +52,7 @@ const UnlockVaultScreen: React.FC<Props> = ({
     watch,
     setValue,
     setError,
+    reset,
     formState: { errors, isSubmitting }
   } = useForm({
     reValidateMode: 'onChange',
@@ -108,10 +109,16 @@ const UnlockVaultScreen: React.FC<Props> = ({
   useEffect(() => {
     // when password is 6 characters, submit the form
     if (currentPassword.length === PIN_LENGTH) {
-      handleSubmit((data) => unlockVault(data, setError))()
-      // TODO: reset form
+      setTimeout(
+        () => {
+          handleSubmit((data) => unlockVault(data, setError))()
+          reset()
+        },
+        // Slight delay to allow the user to "see" the last digit entered
+        200
+      )
     }
-  }, [handleSubmit, setError, setValue, unlockVault, currentPassword])
+  }, [handleSubmit, setError, setValue, unlockVault, currentPassword, reset])
 
   // TODO: Figure out the switch
   const isPinEntry = true
