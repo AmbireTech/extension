@@ -132,7 +132,7 @@ const UnlockVaultScreen: React.FC<Props> = ({
       >
         <Wrapper
           contentContainerStyle={[
-            isPinEntry ? spacings.pb0 : spacings.pbLg,
+            spacings.pbLg,
             // When locked temporarily, the component is mounted as an absolute
             // positioned overlay, which has no title. So the top margin
             // compensates the missing title and aligns the KeyStoreLogo better.
