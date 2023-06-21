@@ -194,7 +194,7 @@ const UnlockVaultScreen: React.FC<Props> = ({
             <View style={[flexboxStyles.justifyCenter, flexboxStyles.directionRow, spacings.pvTy]}>
               <TouchableOpacity onPress={handleForgotPassword} hitSlop={FOOTER_BUTTON_HIT_SLOP}>
                 <Text weight="medium" fontSize={12}>
-                  {t('Forgot Key Store passphrase?')}
+                  {isPinEntry ? t('Forgot Key Store PIN?') : t('Forgot Key Store passphrase?')}
                 </Text>
               </TouchableOpacity>
               {biometricsEnabled && (
