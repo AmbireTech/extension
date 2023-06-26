@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef } from 'react'
 import { View } from 'react-native'
 import {
   CodeField,
@@ -16,13 +16,11 @@ import styles from './styles'
 const CELL_COUNT = 6
 
 interface Props extends Partial<CodeFieldProps> {
-  onFulfill: (code: string) => void
   enableMask?: boolean
+  setValue: (value: string) => void
 }
 
 const CodeInput: React.FC<Props> = ({
-  onFulfill,
-  onChange,
   enableMask = true,
   autoFocus,
   value = '',
