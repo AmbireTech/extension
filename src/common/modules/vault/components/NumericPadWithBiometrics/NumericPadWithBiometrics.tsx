@@ -1,4 +1,5 @@
 import React from 'react'
+import { UseFormSetValue } from 'react-hook-form'
 import { View } from 'react-native'
 import { TouchableOpacity } from 'react-native-gesture-handler'
 
@@ -10,8 +11,24 @@ import { Ionicons } from '@expo/vector-icons'
 
 import NumericButton from './NumericButton'
 
-const NumericPadWithBiometrics = ({ setValue, isDisabled, value, retryBiometrics, error }) => {
-  const appendDigit = (digit) => {
+interface Props {
+  value: string
+  setValue: UseFormSetValue<{
+    password: string
+  }>
+  isDisabled: boolean
+  retryBiometrics: () => Promise<void>
+  error?: string
+}
+
+const NumericPadWithBiometrics: React.FC<Props> = ({
+  setValue,
+  isDisabled,
+  value,
+  retryBiometrics,
+  error
+}) => {
+  const appendDigit = (digit: number) => {
     setValue('password', value + digit, {
       shouldValidate: true
     })
