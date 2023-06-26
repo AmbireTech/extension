@@ -20,7 +20,7 @@ interface Props extends Partial<CodeFieldProps> {
   setValue: (value: string) => void
 }
 
-const CodeInput: React.FC<Props> = ({
+const InputPin: React.FC<Props> = ({
   enableMask = true,
   autoFocus,
   value = '',
@@ -39,7 +39,7 @@ const CodeInput: React.FC<Props> = ({
 
   useEffect(() => {
     // autoFocus can be a static prop and this way it will function as a regular autoFocus
-    // When CodeInput should be focused on some other action (not component render), the autoFocus can be used as a boolean state
+    // When InputPin should be focused on some other action (not component render), the autoFocus can be used as a boolean state
     //  in the parent component and trigger the focus when changing: false -> true
     if (autoFocus && !keyboardShown && autoFocusAllowed.current) {
       inputRef.current?.focus()
@@ -90,4 +90,4 @@ const CodeInput: React.FC<Props> = ({
   )
 }
 
-export default CodeInput
+export default InputPin

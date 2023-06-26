@@ -3,7 +3,7 @@ import { UseFormSetValue } from 'react-hook-form'
 import { View } from 'react-native'
 import { TouchableOpacity } from 'react-native-gesture-handler'
 
-import CodeInput from '@common/components/CodeInput'
+import InputPin from '@common/components/InputPin'
 import Text from '@common/components/Text'
 import colors from '@common/styles/colors'
 import spacings from '@common/styles/spacings'
@@ -39,7 +39,7 @@ const NumericPadWithBiometrics: React.FC<Props> = ({
     [setValue, value]
   )
 
-  const handleCodeInputSetValue = useCallback((v: string) => setValue('password', v), [setValue])
+  const handleInputPinSetValue = useCallback((v: string) => setValue('password', v), [setValue])
 
   const renderDigit = useCallback(
     (digit: number) => (
@@ -50,7 +50,7 @@ const NumericPadWithBiometrics: React.FC<Props> = ({
 
   return (
     <View style={flexbox.alignCenter}>
-      <CodeInput setValue={handleCodeInputSetValue} value={value} />
+      <InputPin setValue={handleInputPinSetValue} value={value} />
       <Text fontSize={14} weight="regular" appearance="danger" style={styles.errorMessage}>
         {error}
       </Text>
