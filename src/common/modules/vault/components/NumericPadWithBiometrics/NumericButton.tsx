@@ -7,7 +7,13 @@ import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import text from '@common/styles/utils/text'
 
-const NumericButton = ({ isDisabled, onPress, digit }) => {
+interface Props {
+  isDisabled: boolean
+  onPress: (digit: number) => void
+  digit: number
+}
+
+const NumericButton: React.FC<Props> = ({ isDisabled, onPress, digit }) => {
   const handleOnPress = () => onPress(digit)
 
   return (
