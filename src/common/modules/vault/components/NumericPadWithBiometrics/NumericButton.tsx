@@ -8,10 +8,12 @@ import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import text from '@common/styles/utils/text'
 
 const NumericButton = ({ isDisabled, onPress, digit }) => {
+  const handleOnPress = () => onPress(digit)
+
   return (
     <TouchableOpacity
       disabled={isDisabled}
-      onPress={onPress}
+      onPress={handleOnPress}
       style={[
         spacings.mhTy,
         spacings.mvTy,

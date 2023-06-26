@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useCallback } from 'react'
 import { UseFormSetValue } from 'react-hook-form'
 import { View } from 'react-native'
 import { TouchableOpacity } from 'react-native-gesture-handler'
@@ -28,11 +28,14 @@ const NumericPadWithBiometrics: React.FC<Props> = ({
   retryBiometrics,
   error
 }) => {
-  const appendDigit = (digit: number) => {
-    setValue('password', value + digit, {
-      shouldValidate: true
-    })
-  }
+  const appendDigit = useCallback(
+    (digit: number) => {
+      setValue('password', value + digit, {
+        shouldValidate: true
+      })
+    },
+    [setValue, value]
+  )
 
   return (
     <View style={[{ alignItems: 'center' }]}>
@@ -47,34 +50,19 @@ const NumericPadWithBiometrics: React.FC<Props> = ({
       </Text>
       <View style={{ flexDirection: 'row' }}>
         {[1, 2, 3].map((digit) => (
-          <NumericButton
-            isDisabled={isDisabled}
-            key={digit}
-            onPress={() => appendDigit(digit)}
-            digit={digit}
-          />
+          <NumericButton isDisabled={isDisabled} key={digit} onPress={appendDigit} digit={digit} />
         ))}
       </View>
 
       <View style={{ flexDirection: 'row' }}>
         {[4, 5, 6].map((digit) => (
-          <NumericButton
-            isDisabled={isDisabled}
-            key={digit}
-            onPress={() => appendDigit(digit)}
-            digit={digit}
-          />
+          <NumericButton isDisabled={isDisabled} key={digit} onPress={appendDigit} digit={digit} />
         ))}
       </View>
 
       <View style={{ flexDirection: 'row' }}>
         {[7, 8, 9].map((digit) => (
-          <NumericButton
-            isDisabled={isDisabled}
-            key={digit}
-            onPress={() => appendDigit(digit)}
-            digit={digit}
-          />
+          <NumericButton isDisabled={isDisabled} key={digit} onPress={appendDigit} digit={digit} />
         ))}
       </View>
 
@@ -87,12 +75,7 @@ const NumericPadWithBiometrics: React.FC<Props> = ({
         <View style={{ width: '33.33%' }} />
 
         {[0].map((digit) => (
-          <NumericButton
-            isDisabled={isDisabled}
-            key={digit}
-            onPress={() => appendDigit(digit)}
-            digit={digit}
-          />
+          <NumericButton isDisabled={isDisabled} key={digit} onPress={appendDigit} digit={digit} />
         ))}
 
         <View style={{ width: '33.33%' }}>
@@ -114,4 +97,4 @@ const NumericPadWithBiometrics: React.FC<Props> = ({
   )
 }
 
-export default NumericPadWithBiometrics
+export default React.memo(NumericPadWithBiometrics)
