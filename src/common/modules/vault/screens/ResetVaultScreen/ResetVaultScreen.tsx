@@ -1,4 +1,3 @@
-import { isValidCode } from 'ambire-common/src/services/validations'
 import React from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { Keyboard, TouchableWithoutFeedback, View } from 'react-native'
@@ -94,7 +93,6 @@ const ResetVaultScreen: React.FC<Props> = ({
                 control={control}
                 rules={{
                   required: t('PIN is required.'),
-                  // TODO: Fix ts
                   validate: { isValidPin }
                 }}
                 render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
