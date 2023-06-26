@@ -181,6 +181,10 @@ const VaultProvider: React.FC = ({ children }) => {
           // Automatically unlock after vault initialization
           setVaultStatus(VAULT_STATUS.UNLOCKED)
 
+          // Reset the forgot password state. Otherwise, the user will see the
+          // forgot password flow again when the app gets locked.
+          setShouldDisplayForgotPassword(false)
+
           if (isAndroid || isiOS) {
             setVaultPasswordType(VAULT_PASSWORD_TYPE.PIN)
           }
