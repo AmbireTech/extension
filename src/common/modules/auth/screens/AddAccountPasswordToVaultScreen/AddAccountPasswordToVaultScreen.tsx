@@ -1,9 +1,8 @@
 import { isValidPassword } from 'ambire-common/src/services/validations'
 import React, { useCallback } from 'react'
 import { Controller, useForm } from 'react-hook-form'
-import { Image, Keyboard, TouchableWithoutFeedback, View } from 'react-native'
+import { Keyboard, TouchableWithoutFeedback, View } from 'react-native'
 
-import logo from '@common/assets/images/Ambire-Wallet-logo-colored-white-vertical.png'
 import KeyStoreIcon from '@common/assets/svg/KeyStoreIcon'
 import Button from '@common/components/Button'
 import GradientBackgroundWrapper from '@common/components/GradientBackgroundWrapper'
@@ -15,7 +14,6 @@ import { useTranslation } from '@common/config/localization'
 import useDisableNavigatingBack from '@common/hooks/useDisableNavigatingBack'
 import useNavigation from '@common/hooks/useNavigation'
 import useRoute from '@common/hooks/useRoute'
-import AnimatedArrows from '@common/modules/auth/components/AnimatedArrows'
 import useEmailLogin from '@common/modules/auth/hooks/useEmailLogin'
 import useJsonLogin from '@common/modules/auth/hooks/useJsonLogin'
 import spacings, { IS_SCREEN_SIZE_S } from '@common/styles/spacings'
@@ -82,24 +80,7 @@ const AddAccountPasswordToVaultScreen = () => {
           type={WRAPPER_TYPES.KEYBOARD_AWARE_SCROLL_VIEW}
           extraHeight={220}
         >
-          <View
-            style={[
-              flexboxStyles.directionRow,
-              flexboxStyles.justifyCenter,
-              flexboxStyles.alignCenter,
-              spacings.pv
-            ]}
-          >
-            <Image
-              source={logo}
-              style={{
-                height: IS_SCREEN_SIZE_S ? 96 : 136,
-                width: 120,
-                ...(isWeb ? { modalHeight: 120 } : {})
-              }}
-              resizeMode="contain"
-            />
-            <AnimatedArrows />
+          <View style={[flexboxStyles.justifyCenter, flexboxStyles.alignCenter, spacings.pv]}>
             <KeyStoreIcon height={IS_SCREEN_SIZE_S ? 96 : 136} width={120} />
           </View>
 
