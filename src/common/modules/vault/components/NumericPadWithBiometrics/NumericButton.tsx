@@ -16,7 +16,12 @@ const NumericButton: React.FC<Props> = ({ isDisabled, onPress, digit }) => {
   const handleOnPress = () => onPress(digit)
 
   return (
-    <TouchableOpacity disabled={isDisabled} onPress={handleOnPress} style={styles.numericButton}>
+    <TouchableOpacity
+      disabled={isDisabled}
+      activeOpacity={0.8}
+      onPress={handleOnPress}
+      style={[styles.numericButton, isDisabled && { opacity: 0.3 }]}
+    >
       <Text weight="semiBold" fontSize={20} style={text.center}>
         {digit.toString()}
       </Text>

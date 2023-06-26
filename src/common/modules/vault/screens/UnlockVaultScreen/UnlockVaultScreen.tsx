@@ -215,6 +215,7 @@ const UnlockVaultScreen: React.FC<Props> = ({
                   <TouchableOpacity
                     onPress={handleRetryBiometrics}
                     hitSlop={FOOTER_BUTTON_HIT_SLOP}
+                    disabled={isSubmitting}
                   >
                     <Text weight="medium" fontSize={12}>
                       {t('Retry biometrics')}
