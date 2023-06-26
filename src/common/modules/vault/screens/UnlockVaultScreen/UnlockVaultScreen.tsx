@@ -109,10 +109,12 @@ const UnlockVaultScreen: React.FC<Props> = ({
   const BackgroundWrapper = hasGradientBackground ? GradientBackgroundWrapper : React.Fragment
 
   const currentPassword = watch('password')
+  const isPinEntry = vaultPasswordType === VAULT_PASSWORD_TYPE.PIN
 
-  // TODO: Move this in the NumericPadWithBiometrics component
-  // And flip it only when PIN is entered
   useEffect(() => {
+    // Auto-submit only when a PIN gets entered
+    if (!isPinEntry) return
+
     // when password is 6 characters, submit the form
     if (currentPassword.length === PIN_LENGTH) {
       setTimeout(
@@ -124,9 +126,7 @@ const UnlockVaultScreen: React.FC<Props> = ({
         200
       )
     }
-  }, [handleSubmit, setError, setValue, unlockVault, currentPassword, reset])
-
-  const isPinEntry = vaultPasswordType === VAULT_PASSWORD_TYPE.PIN
+  }, [handleSubmit, setError, setValue, unlockVault, currentPassword, reset, isPinEntry])
 
   return (
     <BackgroundWrapper>
