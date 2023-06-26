@@ -164,6 +164,7 @@ const UnlockVaultScreen: React.FC<Props> = ({
               render={({ field: { onChange, onBlur, value } }) =>
                 isPinEntry ? (
                   <NumericPadWithBiometrics
+                    biometricsEnabled={biometricsEnabled}
                     retryBiometrics={handleRetryBiometrics}
                     setValue={setValue}
                     isDisabled={isSubmitting || currentPassword.length === PIN_LENGTH}

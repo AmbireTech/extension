@@ -20,6 +20,7 @@ interface Props {
   }>
   isDisabled: boolean
   retryBiometrics: () => Promise<void>
+  biometricsEnabled: boolean
   error?: string
 }
 
@@ -28,6 +29,7 @@ const NumericPadWithBiometrics: React.FC<Props> = ({
   isDisabled,
   value,
   retryBiometrics,
+  biometricsEnabled,
   error
 }) => {
   const appendDigit = useCallback(
@@ -66,18 +68,20 @@ const NumericPadWithBiometrics: React.FC<Props> = ({
         {[0].map(renderDigit)}
 
         <View style={{ width: '33.33%' }}>
-          <TouchableOpacity
-            disabled={isDisabled}
-            onPress={retryBiometrics}
-            style={[spacings.mhTy, spacings.mvTy, spacings.pvTy]}
-          >
-            <Ionicons
-              name="finger-print-sharp"
-              size={25}
-              color={colors.titan}
-              style={flexbox.alignSelfCenter}
-            />
-          </TouchableOpacity>
+          {biometricsEnabled && (
+            <TouchableOpacity
+              disabled={isDisabled}
+              onPress={retryBiometrics}
+              style={[spacings.mhTy, spacings.mvTy, spacings.pvTy]}
+            >
+              <Ionicons
+                name="finger-print-sharp"
+                size={25}
+                color={colors.titan}
+                style={flexbox.alignSelfCenter}
+              />
+            </TouchableOpacity>
+          )}
         </View>
       </View>
     </View>
