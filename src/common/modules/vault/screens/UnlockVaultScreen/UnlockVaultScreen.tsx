@@ -3,6 +3,7 @@ import React, { useCallback, useEffect } from 'react'
 import { Controller, useForm, UseFormSetError } from 'react-hook-form'
 import { Keyboard, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native'
 
+import Button from '@common/components/Button'
 import GradientBackgroundWrapper from '@common/components/GradientBackgroundWrapper'
 import InputPassword from '@common/components/InputPassword'
 import Text from '@common/components/Text'
@@ -16,7 +17,11 @@ import { ROUTES } from '@common/modules/router/constants/common'
 import KeyStoreLogo from '@common/modules/vault/components/KeyStoreLogo'
 import NumericPadWithBiometrics from '@common/modules/vault/components/NumericPadWithBiometrics'
 import { VAULT_STATUS } from '@common/modules/vault/constants/vaultStatus'
-import { VaultContextReturnType } from '@common/modules/vault/contexts/vaultContext/types'
+import {
+  VAULT_PASSWORD_TYPE,
+  VaultContextReturnType
+} from '@common/modules/vault/contexts/vaultContext/types'
+import useVault from '@common/modules/vault/hooks/useVault'
 import spacings from '@common/styles/spacings'
 import flexboxStyles from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
@@ -46,6 +51,7 @@ const UnlockVaultScreen: React.FC<Props> = ({
 }) => {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
+  const { vaultPasswordType } = useVault()
   const {
     control,
     handleSubmit,
@@ -120,8 +126,7 @@ const UnlockVaultScreen: React.FC<Props> = ({
     }
   }, [handleSubmit, setError, setValue, unlockVault, currentPassword, reset])
 
-  // TODO: Figure out the switch
-  const isPinEntry = true
+  const isPinEntry = vaultPasswordType === VAULT_PASSWORD_TYPE.PIN
 
   return (
     <BackgroundWrapper>
@@ -144,7 +149,11 @@ const UnlockVaultScreen: React.FC<Props> = ({
           <KeyStoreLogo />
 
           <View style={[isWeb && spacings.ph, flexboxStyles.flex1, flexboxStyles.justifyEnd]}>
-            <Text weight="regular" style={[spacings.phTy, text.center]} fontSize={13}>
+            <Text
+              weight="regular"
+              style={[spacings.phTy, isPinEntry ? text.center : spacings.mbTy]}
+              fontSize={13}
+            >
               {isPinEntry
                 ? t('Enter Ambire Key Store PIN')
                 : t('Enter your Ambire Key Store passphrase to unlock your wallet')}
