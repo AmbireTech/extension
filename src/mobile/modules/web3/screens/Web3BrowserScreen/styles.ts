@@ -51,11 +51,14 @@ const styles = StyleSheet.create<Style>({
   },
   addressInputStyle: {
     height: 'auto',
-    fontSize: 14
+    fontSize: 14,
+    color: colors.white
   },
   addressInputWrapperStyle: {
     height: 'auto',
-    paddingVertical: SPACING_MI
+    paddingVertical: SPACING_MI,
+    backgroundColor: colors.baileyBells,
+    borderBottomColor: colors.white
   }
 })
 

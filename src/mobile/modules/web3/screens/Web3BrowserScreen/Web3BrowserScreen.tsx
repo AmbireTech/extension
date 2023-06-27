@@ -77,7 +77,7 @@ const Web3BrowserScreen = () => {
             style={[
               flexbox.directionRow,
               flexbox.alignCenter,
-              spacings.pbTy,
+              spacings.pbSm,
               spacings.prSm,
               spacings.plSm
             ]}
