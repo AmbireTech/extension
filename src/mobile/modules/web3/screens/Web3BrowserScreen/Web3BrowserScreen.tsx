@@ -28,6 +28,8 @@ const Web3BrowserScreen = () => {
   const [canGoBack, setCanGoBack] = useState(false)
   const [canGoForward, setCanGoForward] = useState(false)
   const [openedUrl, setOpenedUrl] = useState('')
+  // Keeps track of what the user is currently typing in the address bar
+  const [addressBarValue, setAddressBarValue] = useState('')
 
   const { selectedDappUrl, setWeb3ViewRef, handleWeb3Request, setSelectedDapp } = useWeb3()
   const { script: providerToInject } = useGetProviderInjection()
@@ -56,8 +58,11 @@ const Web3BrowserScreen = () => {
     setCanGoForward(navState.canGoForward)
     if (navState.url !== 'about:blank') {
       setOpenedUrl(navState.url)
+      setAddressBarValue(navState.url)
     }
   }, [])
+
+  const handleInputSubmit = useCallback(() => setOpenedUrl(addressBarValue), [addressBarValue])
 
   if (!selectedDappUrl) {
     return (
@@ -110,10 +115,11 @@ const Web3BrowserScreen = () => {
             </TouchableHighlight>
             <Input
               containerStyle={[flexbox.flex1, spacings.mb0]}
-              disabled
               inputStyle={styles.addressInputStyle}
               inputWrapperStyle={styles.addressInputWrapperStyle}
-              value={openedUrl}
+              value={addressBarValue}
+              onChangeText={setAddressBarValue}
+              onSubmitEditing={handleInputSubmit}
             />
             <TouchableHighlight
               hitSlop={HIT_SLOP}
