@@ -85,7 +85,8 @@ const DappCatalogListItem: React.FC<Props> = ({
             >
               {name}
             </Text>
-            {!inSearchMode && (
+            {/* Temporarily disabled since v3.11.0 */}
+            {/* {!inSearchMode && (
               <TouchableOpacity
                 hitSlop={{ top: 10, bottom: 10, right: 10, left: 5 }}
                 onPress={() => {
@@ -95,7 +96,7 @@ const DappCatalogListItem: React.FC<Props> = ({
               >
                 <StarIcon isFilled={isFilled} />
               </TouchableOpacity>
-            )}
+            )} */}
           </View>
           {!!description && (
             <Text color={colors.martinique_65} fontSize={12} numberOfLines={inSearchMode ? 1 : 8}>
