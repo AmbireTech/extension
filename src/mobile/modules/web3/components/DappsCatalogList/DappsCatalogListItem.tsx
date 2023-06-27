@@ -123,7 +123,7 @@ const DappCatalogListItem: React.FC<Props> = ({
             <Text
               style={[spacings.plMi, { height: 6, lineHeight: 14 }]}
               fontSize={28}
-              color={colors.titan_50}
+              color={colors.martinique}
             >
               ...
             </Text>
