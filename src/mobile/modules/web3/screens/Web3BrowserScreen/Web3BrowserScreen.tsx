@@ -15,6 +15,8 @@ import { AntDesign } from '@expo/vector-icons'
 import useWeb3 from '@mobile/modules/web3/hooks/useWeb3'
 import useGetProviderInjection from '@mobile/modules/web3/services/webview-inpage/injection-script'
 
+import BrowserBackIcon from '../../components/BrowserBackIcon'
+import BrowserForwardIcon from '../../components/BrowserForwardIcon'
 import styles from './styles'
 
 const HIT_SLOP = { bottom: 15, left: 5, right: 5, top: 15 }
@@ -94,12 +96,7 @@ const Web3BrowserScreen = () => {
               disabled={!canGoBack}
               underlayColor={colors.heliotrope}
             >
-              <AntDesign
-                color={canGoBack ? colors.white : colors.titan_50}
-                name="left"
-                size={24}
-                spot
-              />
+              <BrowserBackIcon color={canGoBack ? colors.white : colors.titan_50} />
             </TouchableHighlight>
             <TouchableHighlight
               hitSlop={HIT_SLOP}
@@ -108,11 +105,7 @@ const Web3BrowserScreen = () => {
               disabled={!canGoForward}
               underlayColor={colors.heliotrope}
             >
-              <AntDesign
-                color={canGoForward ? colors.white : colors.titan_50}
-                name="right"
-                size={24}
-              />
+              <BrowserForwardIcon color={canGoForward ? colors.white : colors.titan_50} />
             </TouchableHighlight>
             <Input
               containerStyle={[flexbox.flex1, spacings.mb0]}
