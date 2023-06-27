@@ -196,7 +196,7 @@ const Web3StackScreen = () => {
           component={Web3BrowserScreen}
           options={{
             title: routesConfig[ROUTES.web3Browser].title,
-            header: headerGamma
+            header: headerAlpha
           }}
         />
       </Web3Stack.Navigator>
