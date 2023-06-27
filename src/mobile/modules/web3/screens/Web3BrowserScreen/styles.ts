@@ -51,7 +51,7 @@ const styles = StyleSheet.create<Style>({
   },
   addressInputStyle: {
     height: 'auto',
-    fontSize: 14,
+    fontSize: 16,
     color: colors.white
   },
   addressInputWrapperStyle: {
