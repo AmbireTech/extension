@@ -11,13 +11,13 @@ import useNavigation from '@common/hooks/useNavigation'
 import colors from '@common/styles/colors'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { AntDesign } from '@expo/vector-icons'
 import useWeb3 from '@mobile/modules/web3/hooks/useWeb3'
 import useGetProviderInjection from '@mobile/modules/web3/services/webview-inpage/injection-script'
 
 import BrowserBackIcon from '../../components/BrowserBackIcon'
 import BrowserForwardIcon from '../../components/BrowserForwardIcon'
 import BrowserHomeIcon from '../../components/BrowserHomeIcon'
+import BrowserReloadIcon from '../../components/BrowserReloadIcon'
 import styles from './styles'
 
 const HIT_SLOP = { bottom: 15, left: 5, right: 5, top: 15 }
@@ -121,7 +121,7 @@ const Web3BrowserScreen = () => {
               style={[styles.webviewButtonCommon, styles.reload]}
               underlayColor={colors.heliotrope}
             >
-              <AntDesign name="reload1" size={22} color={colors.white} />
+              <BrowserReloadIcon color={colors.white} />
             </TouchableHighlight>
           </View>
           <WebView
