@@ -162,7 +162,7 @@ const VaultProvider: React.FC = ({ children }) => {
   )
 
   const resetVault = useCallback(
-    ({
+    async ({
       password,
       confirmPassword
     }: {
@@ -170,30 +170,65 @@ const VaultProvider: React.FC = ({ children }) => {
       confirmPassword: string
       nextRoute?: string
     }) => {
-      if (password === confirmPassword) {
-        requestVaultControllerMethod({
+      if (password !== confirmPassword) {
+        addToast(t("Passwords don't match."), { error: true })
+        return
+      }
+
+      try {
+        await requestVaultControllerMethod({
           method: 'resetVault',
           props: {
             password
           }
-        }).then(() => {
-          onRemoveAllAccounts()
-          // Automatically unlock after vault initialization
-          setVaultStatus(VAULT_STATUS.UNLOCKED)
-
-          // Reset the forgot password state. Otherwise, the user will see the
-          // forgot password flow again when the app gets locked.
-          setShouldDisplayForgotPassword(false)
-
-          if (isAndroid || isiOS) {
-            setVaultPasswordType(VAULT_PASSWORD_TYPE.PIN)
-          }
         })
-      } else {
-        addToast(t("Passwords don't match."), { error: true })
+
+        onRemoveAllAccounts()
+
+        if (biometricsEnabled) {
+          try {
+            await addKeystorePasswordToDeviceSecureStore(password)
+          } catch {
+            // If adding to secure store fails, try to remove the password from
+            // the secure store. Otherwise, the prev secure store entry remains
+            // and the user will NOT be able to unlock the vault with the
+            // previous password, but with manually inputting the new pass only.
+            await removeKeystorePasswordFromDeviceSecureStore()
+
+            addToast(
+              t(
+                'Updating Biometrics was unsuccessful. You can retry enabling Biometrics unlock again via the "Set Biometrics unlock" option in the menu'
+              ),
+              { error: true }
+            )
+          }
+        }
+
+        // Automatically unlock after vault initialization
+        setVaultStatus(VAULT_STATUS.UNLOCKED)
+
+        // Reset the forgot password state. Otherwise, the user will see the
+        // forgot password flow again when the app gets locked.
+        setShouldDisplayForgotPassword(false)
+
+        if (isAndroid || isiOS) {
+          setVaultPasswordType(VAULT_PASSWORD_TYPE.PIN)
+        }
+      } catch (e) {
+        addToast(t(`Resetting the Ambire Key Store failed. Error details: ${e?.message}`), {
+          error: true
+        })
       }
     },
-    [requestVaultControllerMethod, onRemoveAllAccounts, setVaultPasswordType, addToast, t]
+    [
+      addToast,
+      t,
+      requestVaultControllerMethod,
+      onRemoveAllAccounts,
+      biometricsEnabled,
+      addKeystorePasswordToDeviceSecureStore,
+      setVaultPasswordType
+    ]
   )
 
   const unlockVault = useCallback(
