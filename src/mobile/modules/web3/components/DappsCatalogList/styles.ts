@@ -36,8 +36,8 @@ const styles = StyleSheet.create<Style>({
   },
   networkIcon: {
     borderRadius: 50,
-    backgroundColor: colors.titan,
-    borderColor: colors.valhalla,
+    backgroundColor: colors.white,
+    borderColor: colors.snuff,
     borderWidth: 2
   }
 })

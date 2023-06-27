@@ -38,6 +38,7 @@ const colors = {
   valhalla_66: 'rgba(39, 42, 66, 0.66)',
   martinique: '#2D314D',
   martinique_35: '#2D314D59',
+  martinique_65: '#2D314DA6',
   hauntedDreams: '#313555',
   patriotBlue: '#333757',
   patriotBlue_75: 'rgba(51, 55, 87, 0.75)',

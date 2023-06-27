@@ -80,6 +80,7 @@ const DappCatalogListItem: React.FC<Props> = ({
               fontSize={inSearchMode ? 14 : 16}
               weight="medium"
               numberOfLines={1}
+              color={colors.martinique}
               style={[!!description && spacings.mbMi, flexbox.flex1, spacings.prSm]}
             >
               {name}
@@ -97,7 +98,7 @@ const DappCatalogListItem: React.FC<Props> = ({
             )}
           </View>
           {!!description && (
-            <Text color={colors.baileyBells} fontSize={12} numberOfLines={inSearchMode ? 1 : 8}>
+            <Text color={colors.martinique_65} fontSize={12} numberOfLines={inSearchMode ? 1 : 8}>
               {description}
             </Text>
           )}
