@@ -16,8 +16,7 @@ import text from '@common/styles/utils/text'
 import AddReferralForm, {
   AddReferralFormValues
 } from '@mobile/modules/referral/components/AddReferralForm'
-
-import useReferral from '../../hooks/useReferral'
+import useReferral from '@mobile/modules/referral/hooks/useReferral'
 
 const AddReferralScreen = () => {
   const { t } = useTranslation()
