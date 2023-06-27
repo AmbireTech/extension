@@ -57,17 +57,15 @@ const NumericPadWithBiometrics: React.FC<Props> = ({
         {error}
       </Text>
 
-      <View style={flexbox.directionRow}>{[1, 2, 3].map(renderDigit)}</View>
-      <View style={flexbox.directionRow}>{[4, 5, 6].map(renderDigit)}</View>
-      <View style={flexbox.directionRow}>{[7, 8, 9].map(renderDigit)}</View>
+      <View style={styles.numericContainer}>
+        {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(renderDigit)}
 
-      <View style={[flexbox.directionRow, { width: '100%' }]}>
         {/* So it takes up the remaining space (and aligns the row elements) */}
-        <View style={{ width: '33.33%' }} />
+        <View style={styles.numericButtonContainer} />
 
         {[0].map(renderDigit)}
 
-        <View style={{ width: '33.33%' }}>
+        <View style={styles.numericButtonContainer}>
           {biometricsEnabled && (
             <TouchableOpacity
               disabled={isDisabled}
