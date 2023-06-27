@@ -1,3 +1,4 @@
+import { isValidPassword as isValidPasswordRule } from 'ambire-common/src/services/validations'
 import React, { useEffect } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { Keyboard } from 'react-native'
@@ -20,7 +21,9 @@ import useVault from '@common/modules/vault/hooks/useVault'
 import alert from '@common/services/alert'
 import spacings from '@common/styles/spacings'
 import flexboxStyles from '@common/styles/utils/flexbox'
+import { isValidPin, PIN_LENGTH } from '@common/utils/isValidPin'
 
+import { VAULT_PASSWORD_TYPE } from '../../contexts/vaultContext/types'
 import styles from './styles'
 
 interface FormValues {
@@ -36,7 +39,8 @@ const ManageVaultLockScreen = () => {
     isValidPassword,
     addKeystorePasswordToDeviceSecureStore,
     biometricsEnabled,
-    removeKeystorePasswordFromDeviceSecureStore
+    removeKeystorePasswordFromDeviceSecureStore,
+    vaultPasswordType
   } = useVault()
   const {
     control,
@@ -57,6 +61,9 @@ const ManageVaultLockScreen = () => {
     return () => reset()
   }, [reset, isFocused])
 
+  const isPinEntry = vaultPasswordType === VAULT_PASSWORD_TYPE.PIN
+  const passwordLabel = vaultPasswordType === VAULT_PASSWORD_TYPE.PIN ? t('PIN') : t('passphrase')
+
   const handleEnable = async ({ password }: FormValues) => {
     // Dismiss the keyboard, because the validation process sometimes takes longer,
     // and having the keyboard in there all the time, is strange.
@@ -66,7 +73,12 @@ const ManageVaultLockScreen = () => {
     if (!isValidVaultPassword) {
       return setError(
         'password',
-        { type: 'focus', message: t('Wrong Ambire Key Store passphrase.') },
+        {
+          type: 'focus',
+          message: t('Wrong Ambire Key Store {{passwordLabel}}.', {
+            passwordLabel
+          })
+        },
         { shouldFocus: true }
       )
     }
@@ -95,7 +107,8 @@ const ManageVaultLockScreen = () => {
     alert(
       t('Are you sure you want to disable biometrics?'),
       t(
-        'Disabling biometrics will require you to manually input your Ambire Key Store passphrase when needed.'
+        'Disabling biometrics will require you to manually input your Ambire Key Store {{passwordLabel}} when needed.',
+        { passwordLabel }
       ),
       [
         {
@@ -154,17 +167,28 @@ const ManageVaultLockScreen = () => {
       <>
         <Text type="small" style={spacings.mb}>
           {t(
-            'You can opt-in to use your phone biometrics to unlock your Ambire Key Store. To enable it, enter your Ambire Key Store passphrase.'
+            'You can opt-in to use your phone biometrics to unlock your Ambire Key Store. To enable it, enter your Ambire Key Store {{passwordLabel}}.',
+            { passwordLabel }
           )}
         </Text>
         <Controller
           control={control}
-          rules={{ required: t('Please fill in a passphrase.') as string }}
+          rules={{
+            required: t('Please fill in a {{passwordLabel}}.', { passwordLabel }) as string,
+            validate: isPinEntry ? { isValidPin } : { isValidPasswordRule }
+          }}
           render={({ field: { onChange, onBlur, value } }) => (
             <InputPassword
-              placeholder={t('Ambire Key Store passphrase')}
+              placeholder={
+                isPinEntry
+                  ? t('Enter {{PIN_LENGTH}}-digit PIN', { PIN_LENGTH })
+                  : t('Ambire Key Store {{passwordLabel}}', { passwordLabel })
+              }
               onBlur={onBlur}
               onChangeText={onChange}
+              isValid={isPinEntry ? value?.length === PIN_LENGTH : isValidPasswordRule(value)}
+              maxLength={isPinEntry ? PIN_LENGTH : undefined}
+              keyboardType={isPinEntry ? 'number-pad' : 'default'}
               value={value}
               disabled={isSubmitting}
               error={!!errors.password && errors.password.message}

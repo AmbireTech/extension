@@ -15,10 +15,17 @@ import useNavigation from '@common/hooks/useNavigation'
 import { HEADER_HEIGHT } from '@common/modules/header/components/Header/styles'
 import { ROUTES } from '@common/modules/router/constants/common'
 import KeyStoreLogo from '@common/modules/vault/components/KeyStoreLogo'
+import NumericPadWithBiometrics from '@common/modules/vault/components/NumericPadWithBiometrics'
 import { VAULT_STATUS } from '@common/modules/vault/constants/vaultStatus'
-import { VaultContextReturnType } from '@common/modules/vault/contexts/vaultContext/types'
+import {
+  VAULT_PASSWORD_TYPE,
+  VaultContextReturnType
+} from '@common/modules/vault/contexts/vaultContext/types'
+import useVault from '@common/modules/vault/hooks/useVault'
 import spacings from '@common/styles/spacings'
 import flexboxStyles from '@common/styles/utils/flexbox'
+import text from '@common/styles/utils/text'
+import { PIN_LENGTH } from '@common/utils/isValidPin'
 
 const FOOTER_BUTTON_HIT_SLOP = { top: 10, bottom: 15 }
 
@@ -44,12 +51,14 @@ const UnlockVaultScreen: React.FC<Props> = ({
 }) => {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
+  const { vaultPasswordType } = useVault()
   const {
     control,
     handleSubmit,
     watch,
     setValue,
     setError,
+    reset,
     formState: { errors, isSubmitting }
   } = useForm({
     reValidateMode: 'onChange',
@@ -99,6 +108,26 @@ const UnlockVaultScreen: React.FC<Props> = ({
 
   const BackgroundWrapper = hasGradientBackground ? GradientBackgroundWrapper : React.Fragment
 
+  const currentPassword = watch('password')
+  const isPinEntry = vaultPasswordType === VAULT_PASSWORD_TYPE.PIN
+
+  useEffect(() => {
+    // Auto-submit only when a PIN gets entered
+    if (!isPinEntry) return
+
+    // when password is 6 characters, submit the form
+    if (currentPassword.length === PIN_LENGTH) {
+      setTimeout(
+        () => {
+          handleSubmit((data) => unlockVault(data, setError))()
+          reset()
+        },
+        // Slight delay to allow the user to "see" the last digit entered
+        200
+      )
+    }
+  }, [handleSubmit, setError, setValue, unlockVault, currentPassword, reset, isPinEntry])
+
   return (
     <BackgroundWrapper>
       <TouchableWithoutFeedback
@@ -120,43 +149,62 @@ const UnlockVaultScreen: React.FC<Props> = ({
           <KeyStoreLogo />
 
           <View style={[isWeb && spacings.ph, flexboxStyles.flex1, flexboxStyles.justifyEnd]}>
-            <Text weight="regular" style={[spacings.mbTy, spacings.phTy]} fontSize={13}>
-              {t('Enter your Ambire Key Store passphrase to unlock your wallet')}
+            <Text
+              weight="regular"
+              style={[spacings.phTy, isPinEntry ? text.center : spacings.mbTy]}
+              fontSize={13}
+            >
+              {isPinEntry
+                ? t('Enter Ambire Key Store PIN')
+                : t('Enter your Ambire Key Store passphrase to unlock your wallet')}
             </Text>
 
             <Controller
               control={control}
-              render={({ field: { onChange, onBlur, value } }) => (
-                <InputPassword
-                  onBlur={onBlur}
-                  placeholder={t('Passphrase')}
-                  autoFocus={isWeb}
-                  onChangeText={onChange}
-                  isValid={isValidPassword(value)}
-                  value={value}
-                  onSubmitEditing={handleSubmit((data) => unlockVault(data, setError))}
-                  error={
-                    errors.password &&
-                    (errors.password.message ||
-                      t('Please fill in at least 8 characters for passphrase.'))
-                  }
-                  containerStyle={spacings.mbTy}
-                />
-              )}
+              render={({ field: { onChange, onBlur, value } }) =>
+                isPinEntry ? (
+                  <NumericPadWithBiometrics
+                    biometricsEnabled={biometricsEnabled}
+                    retryBiometrics={handleRetryBiometrics}
+                    setValue={setValue}
+                    isDisabled={isSubmitting || currentPassword.length === PIN_LENGTH}
+                    value={currentPassword}
+                    error={errors?.password?.message}
+                  />
+                ) : (
+                  <InputPassword
+                    onBlur={onBlur}
+                    placeholder={t('Passphrase')}
+                    autoFocus={isWeb}
+                    onChangeText={onChange}
+                    isValid={isValidPassword(value)}
+                    value={value}
+                    onSubmitEditing={handleSubmit((data) => unlockVault(data, setError))}
+                    error={
+                      errors.password &&
+                      (errors.password.message ||
+                        t('Please fill in at least 8 characters for passphrase.'))
+                    }
+                    containerStyle={spacings.mbTy}
+                  />
+                )
+              }
               name="password"
             />
 
-            <View style={spacings.ptSm}>
-              <Button
-                disabled={isSubmitting || !watch('password', '')}
-                text={isSubmitting ? t('Unlocking...') : t('Unlock')}
-                onPress={handleSubmit((data) => unlockVault(data, setError))}
-              />
-            </View>
+            {!isPinEntry && (
+              <View style={spacings.ptSm}>
+                <Button
+                  disabled={isSubmitting || !watch('password', '')}
+                  text={isSubmitting ? t('Unlocking...') : t('Unlock')}
+                  onPress={handleSubmit((data) => unlockVault(data, setError))}
+                />
+              </View>
+            )}
             <View style={[flexboxStyles.justifyCenter, flexboxStyles.directionRow, spacings.pvTy]}>
               <TouchableOpacity onPress={handleForgotPassword} hitSlop={FOOTER_BUTTON_HIT_SLOP}>
                 <Text weight="medium" fontSize={12}>
-                  {t('Forgot Key Store passphrase?')}
+                  {isPinEntry ? t('Forgot Key Store PIN?') : t('Forgot Key Store passphrase?')}
                 </Text>
               </TouchableOpacity>
               {biometricsEnabled && (
@@ -167,6 +215,7 @@ const UnlockVaultScreen: React.FC<Props> = ({
                   <TouchableOpacity
                     onPress={handleRetryBiometrics}
                     hitSlop={FOOTER_BUTTON_HIT_SLOP}
+                    disabled={isSubmitting}
                   >
                     <Text weight="medium" fontSize={12}>
                       {t('Retry biometrics')}
