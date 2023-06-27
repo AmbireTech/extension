@@ -7,6 +7,7 @@ import GradientBackgroundWrapper from '@common/components/GradientBackgroundWrap
 import Input from '@common/components/Input'
 import Spinner from '@common/components/Spinner'
 import Wrapper from '@common/components/Wrapper'
+import useNavigation from '@common/hooks/useNavigation'
 import colors from '@common/styles/colors'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -19,6 +20,7 @@ import styles from './styles'
 const HIT_SLOP = { bottom: 15, left: 5, right: 5, top: 15 }
 
 const Web3BrowserScreen = () => {
+  const { goBack } = useNavigation()
   const webViewRef = useRef<WebView | null>(null)
   const [canGoBack, setCanGoBack] = useState(false)
   const [canGoForward, setCanGoForward] = useState(false)
@@ -77,6 +79,14 @@ const Web3BrowserScreen = () => {
               spacings.plSm
             ]}
           >
+            <TouchableHighlight
+              hitSlop={HIT_SLOP}
+              onPress={goBack}
+              style={[styles.webviewButtonCommon, styles.left]}
+              underlayColor={colors.heliotrope}
+            >
+              <AntDesign color={colors.white} name="home" size={24} spot />
+            </TouchableHighlight>
             <TouchableHighlight
               hitSlop={HIT_SLOP}
               onPress={webViewRef.current?.goBack}
