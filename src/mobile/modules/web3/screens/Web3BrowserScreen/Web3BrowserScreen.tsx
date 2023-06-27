@@ -17,6 +17,7 @@ import useGetProviderInjection from '@mobile/modules/web3/services/webview-inpag
 
 import BrowserBackIcon from '../../components/BrowserBackIcon'
 import BrowserForwardIcon from '../../components/BrowserForwardIcon'
+import BrowserHomeIcon from '../../components/BrowserHomeIcon'
 import styles from './styles'
 
 const HIT_SLOP = { bottom: 15, left: 5, right: 5, top: 15 }
@@ -87,7 +88,7 @@ const Web3BrowserScreen = () => {
               style={[styles.webviewButtonCommon, styles.left]}
               underlayColor={colors.heliotrope}
             >
-              <AntDesign color={colors.white} name="home" size={24} spot />
+              <BrowserHomeIcon color={colors.white} />
             </TouchableHighlight>
             <TouchableHighlight
               hitSlop={HIT_SLOP}
