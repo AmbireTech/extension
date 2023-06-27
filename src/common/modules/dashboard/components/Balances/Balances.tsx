@@ -2,11 +2,10 @@ import networks, { NetworkId } from 'ambire-common/src/constants/networks'
 import { UseAccountsReturnType } from 'ambire-common/src/hooks/useAccounts'
 import useCacheBreak from 'ambire-common/src/hooks/useCacheBreak'
 import { Balance, UsePortfolioReturnType } from 'ambire-common/src/hooks/usePortfolio/types'
-import React, { useCallback, useLayoutEffect, useMemo } from 'react'
+import React, { useCallback, useLayoutEffect } from 'react'
 import { TouchableOpacity, View } from 'react-native'
 
 import GasTankIcon from '@common/assets/svg/GasTankIcon'
-import PrivacyIcon from '@common/assets/svg/PrivacyIcon'
 import ReceiveIcon from '@common/assets/svg/ReceiveIcon'
 import SendIcon from '@common/assets/svg/SendIcon'
 import Button from '@common/components/Button'
@@ -25,7 +24,6 @@ import spacings from '@common/styles/spacings'
 import flexboxStyles from '@common/styles/utils/flexbox'
 import textStyles from '@common/styles/utils/text'
 
-import Rewards from '../Rewards'
 import styles from './styles'
 
 const networkDetails = (network: any) => networks.find(({ id }) => id === network)
@@ -92,34 +90,18 @@ const Balances = ({
 
   const content = (
     <>
-      <View style={flexboxStyles.directionRow}>
-        <View
-          style={[
-            flexboxStyles.flex1,
-            flexboxStyles.alignEnd,
-            flexboxStyles.justifyCenter,
-            spacings.mbTy
-          ]}
-        >
-          <TouchableOpacity
-            style={spacings.mrSm}
-            onPress={togglePrivateMode}
-            hitSlop={{ top: 10, bottom: 10, left: 2, right: 2 }}
-          >
-            <PrivacyIcon isActive={isPrivateMode} />
-          </TouchableOpacity>
-        </View>
-        <Rewards />
-        <View style={flexboxStyles.flex1} />
-      </View>
-
       {isCurrNetworkBalanceLoading ? (
         <View style={styles.spinnerWrapper}>
           <Spinner />
         </View>
       ) : (
-        <Text fontSize={42} weight="regular" style={spacings.mbTy}>
-          <Text fontSize={26} weight="regular" style={[textStyles.highlightPrimary]}>
+        <Text
+          fontSize={42}
+          weight="regular"
+          style={[spacings.mtTy, spacings.mbMd]}
+          onPress={togglePrivateMode}
+        >
+          <Text fontSize={26} weight="regular">
             ${' '}
           </Text>
           {isPrivateMode ? (
@@ -203,7 +185,7 @@ const Balances = ({
                   style={[styles.otherBalancesContainer, isLast && { borderBottomWidth: 0 }]}
                 >
                   <Text numberOfLines={1} style={flexboxStyles.flex1}>
-                    <Text style={textStyles.highlightPrimary}>{'$ '}</Text>
+                    <Text>{'$ '}</Text>
                     {hidePrivateValue(`${total.truncated}.${total.decimals}`)}
                   </Text>
                   <Text>{` ${t('on')} `}</Text>
@@ -219,7 +201,7 @@ const Balances = ({
               >
                 {!!data && (
                   <Text numberOfLines={1} style={flexboxStyles.flex1}>
-                    <Text style={textStyles.highlightPrimary}>{'$ '}</Text>
+                    <Text>{'$ '}</Text>
                     {gasTankBalanceLabel}
                   </Text>
                 )}
