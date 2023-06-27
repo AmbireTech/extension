@@ -47,9 +47,11 @@ const colors = {
   chetwode_50: '#6770b37f',
   baileyBells: '#898DCB',
   titan: '#EBECFF',
+  titanWhite: '#F4F5FF',
   titan_05: 'rgba(235, 236, 255, 0.05)',
   titan_25: 'rgba(235, 236, 255, 0.25)',
   titan_50: 'rgba(235, 236, 255, 0.5)',
+  snuff: '#DFE0F0',
 
   zircon: '#F7F8FF',
   mischka: '#D6D7E1',

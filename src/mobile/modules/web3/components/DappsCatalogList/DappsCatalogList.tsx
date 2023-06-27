@@ -7,11 +7,12 @@ import Wrapper, { WRAPPER_TYPES } from '@common/components/Wrapper'
 import useNavigation from '@common/hooks/useNavigation'
 import useNetwork from '@common/hooks/useNetwork'
 import { ROUTES } from '@common/modules/router/constants/common'
-import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import DappCatalogItemItem from '@mobile/modules/web3/components/DappsCatalogList/DappsCatalogListItem'
 import useDapps from '@mobile/modules/web3/hooks/useDapps'
 import useWeb3 from '@mobile/modules/web3/hooks/useWeb3'
+
+import styles from './styles'
 
 const DappsCatalogList = () => {
   const { navigate } = useNavigation()
@@ -121,7 +122,7 @@ const DappsCatalogList = () => {
     <Wrapper
       hasBottomTabNav
       type={WRAPPER_TYPES.FLAT_LIST}
-      style={spacings.mbTy}
+      style={styles.catalogWrapper}
       data={sortFiltered(catalogListData)}
       renderItem={renderItem}
       initialNumToRender={7}

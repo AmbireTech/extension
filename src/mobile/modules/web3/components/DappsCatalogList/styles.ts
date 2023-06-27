@@ -9,11 +9,18 @@ interface Style {
   disabledItem: ViewStyle
   dappIcon: ImageStyle
   networkIcon: ViewStyle
+  catalogWrapper: ViewStyle
 }
 
 const styles = StyleSheet.create<Style>({
+  catalogWrapper: {
+    backgroundColor: colors.titanWhite,
+    ...spacings.pv
+  },
   catalogItem: {
-    backgroundColor: colors.valhalla,
+    backgroundColor: colors.white,
+    borderColor: colors.snuff,
+    borderWidth: 1,
     ...common.borderRadiusPrimary,
     ...spacings.mbTy,
     ...spacings.phTy,
