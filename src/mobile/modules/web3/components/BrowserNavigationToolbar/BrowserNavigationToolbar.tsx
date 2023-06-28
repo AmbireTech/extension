@@ -1,5 +1,4 @@
 import React from 'react'
-import { useTranslation } from 'react-i18next'
 import { TextInputProps, TouchableHighlight, View } from 'react-native'
 import ErrorBoundary from 'react-native-error-boundary'
 
@@ -32,6 +31,7 @@ interface Props {
   onGoHome?: () => void
   onReload?: () => void
   addressBarValue?: string
+  addressBarPlaceholder?: string
   onChangeAddressBarValue: (value: string) => void
   onSubmitEditingAddressBar: () => void
   addressInputProps?: Partial<TextInputProps>
@@ -47,12 +47,11 @@ const BrowserNavigationToolbar: React.FC<Props> = ({
   onGoForward,
   onReload,
   addressBarValue,
+  addressBarPlaceholder,
   onChangeAddressBarValue,
   onSubmitEditingAddressBar,
   addressInputProps = {}
 }) => {
-  const { t } = useTranslation()
-
   return (
     <View
       style={[
@@ -107,7 +106,7 @@ const BrowserNavigationToolbar: React.FC<Props> = ({
         value={addressBarValue}
         onChangeText={onChangeAddressBarValue}
         onSubmitEditing={onSubmitEditingAddressBar}
-        placeholder={t('Search or type URL')}
+        placeholder={addressBarPlaceholder}
         placeholderTextColor={colors.white}
         {...addressInputProps}
       />

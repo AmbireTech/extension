@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Keyboard,
   TextInputProps,
@@ -21,6 +22,7 @@ import useDapps from '@mobile/modules/web3/hooks/useDapps'
 import useWeb3 from '@mobile/modules/web3/hooks/useWeb3'
 
 const DappsCatalogScreen = () => {
+  const { t } = useTranslation()
   const {
     search,
     // categories,
@@ -90,6 +92,7 @@ const DappsCatalogScreen = () => {
             onSubmitEditingAddressBar={handleOnSubmitEditingAddressBar}
             addressBarValue={search}
             addressInputProps={addressInputProps}
+            addressBarPlaceholder={t('Search or type URL')}
           />
 
           <DappsCatalogList />

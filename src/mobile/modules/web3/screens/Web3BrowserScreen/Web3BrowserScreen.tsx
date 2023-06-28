@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { StyleSheet, View } from 'react-native'
 import ErrorBoundary from 'react-native-error-boundary'
 import { WebView, WebViewNavigation } from 'react-native-webview'
@@ -16,6 +17,7 @@ import useGetProviderInjection from '@mobile/modules/web3/services/webview-inpag
 import styles from './styles'
 
 const Web3BrowserScreen = () => {
+  const { t } = useTranslation()
   const { goBack } = useNavigation()
   const webViewRef = useRef<WebView | null>(null)
   const [canGoBack, setCanGoBack] = useState(false)
@@ -81,6 +83,7 @@ const Web3BrowserScreen = () => {
             onGoForward={webViewRef.current?.goForward}
             onReload={webViewRef.current?.reload}
             addressBarValue={addressBarValue}
+            addressBarPlaceholder={t('Type URL')}
             onChangeAddressBarValue={setAddressBarValue}
             onSubmitEditingAddressBar={handleInputSubmit}
           />
