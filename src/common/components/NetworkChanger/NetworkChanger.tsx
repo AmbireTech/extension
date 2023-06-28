@@ -97,7 +97,7 @@ const NetworkChanger: React.FC<Props> = () => {
   return (
     <>
       <Title style={textStyles.center} type="small">
-        {t('Change network')}
+        {t('Change Network')}
       </Title>
       <View style={styles.networksContainer}>
         <View style={styles.networkBtnContainerActive} />

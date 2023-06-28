@@ -31,17 +31,17 @@ const NetworkChangerItem = ({ idx, name, iconName, isActive, onPress }: Props) =
       disabled={isActive}
       activeOpacity={0.6}
     >
+      <View style={styles.networkBtnIcon}>
+        <NetworkIcon name={iconName} width={40} height={40} />
+      </View>
       <Text
         weight="regular"
         color={isActive ? colors.titan : colors.titan_50}
-        style={[flexboxStyles.flex1, textStyles.center]}
+        style={flexboxStyles.flex1}
         numberOfLines={1}
       >
         {name}
       </Text>
-      <View style={styles.networkBtnIcon}>
-        <NetworkIcon name={iconName} />
-      </View>
     </TouchableOpacity>
   )
 }

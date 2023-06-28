@@ -6,7 +6,6 @@ import React, { useCallback, useLayoutEffect, useMemo } from 'react'
 import { TouchableOpacity, View } from 'react-native'
 
 import GasTankIcon from '@common/assets/svg/GasTankIcon'
-import PrivacyIcon from '@common/assets/svg/PrivacyIcon'
 import ReceiveIcon from '@common/assets/svg/ReceiveIcon'
 import SendIcon from '@common/assets/svg/SendIcon'
 import Button from '@common/components/Button'
@@ -25,7 +24,6 @@ import spacings from '@common/styles/spacings'
 import flexboxStyles from '@common/styles/utils/flexbox'
 import textStyles from '@common/styles/utils/text'
 
-import Rewards from '../Rewards'
 import styles from './styles'
 
 const networkDetails = (network: any) => networks.find(({ id }) => id === network)
@@ -33,26 +31,24 @@ const networkDetails = (network: any) => networks.find(({ id }) => id === networ
 interface Props {
   balanceTruncated: any
   balanceDecimals: any
-  otherBalances: UsePortfolioReturnType['otherBalances']
+  allBalances: UsePortfolioReturnType['allBalances']
   networkId?: NetworkId
   account: UseAccountsReturnType['selectedAcc']
   setNetwork: (networkIdentifier: string | number) => void
   isLoading: boolean
   isCurrNetworkBalanceLoading: boolean
-  otherBalancesLoading: boolean
+  allBalancesLoading: boolean
 }
 
 const relayerURL = CONFIG.RELAYER_URL
 
 const Balances = ({
-  balanceTruncated,
-  balanceDecimals,
-  otherBalances,
+  allBalances,
   networkId,
   account,
   isLoading,
   isCurrNetworkBalanceLoading,
-  otherBalancesLoading,
+  allBalancesLoading,
   setNetwork
 }: Props) => {
   const { t } = useTranslation()
@@ -81,10 +77,19 @@ const Balances = ({
         .toFixed(2)
   const hasPositiveGasBalance = gasTankBalanceLabel !== '0.00'
 
-  const otherPositiveBalances = otherBalances
-    .filter(({ network, total }: any) => network !== networkId && total.full > 0)
+  const allPositiveBalances = allBalances
+    .filter(({ total }: any) => total.full > 0)
     // Exclude displaying balances for networks we don't support
     .filter(({ network }) => !!networkDetails(network))
+
+  const totalBalance = useMemo(() => {
+    let balance = 0
+    allPositiveBalances.forEach(({ total }) => {
+      balance += Number(total.full)
+    })
+    balance += Number(gasTankBalanceLabel)
+    return balance
+  }, [allPositiveBalances, gasTankBalanceLabel])
 
   const handleGoToSend = useCallback(() => navigate(ROUTES.send), [navigate])
   const handleGoToReceive = useCallback(() => navigate(ROUTES.receive), [navigate])
@@ -92,34 +97,18 @@ const Balances = ({
 
   const content = (
     <>
-      <View style={flexboxStyles.directionRow}>
-        <View
-          style={[
-            flexboxStyles.flex1,
-            flexboxStyles.alignEnd,
-            flexboxStyles.justifyCenter,
-            spacings.mbTy
-          ]}
-        >
-          <TouchableOpacity
-            style={spacings.mrSm}
-            onPress={togglePrivateMode}
-            hitSlop={{ top: 10, bottom: 10, left: 2, right: 2 }}
-          >
-            <PrivacyIcon isActive={isPrivateMode} />
-          </TouchableOpacity>
-        </View>
-        <Rewards />
-        <View style={flexboxStyles.flex1} />
-      </View>
-
       {isCurrNetworkBalanceLoading ? (
         <View style={styles.spinnerWrapper}>
           <Spinner />
         </View>
       ) : (
-        <Text fontSize={42} weight="regular" style={spacings.mbTy}>
-          <Text fontSize={26} weight="regular" style={[textStyles.highlightPrimary]}>
+        <Text
+          fontSize={42}
+          weight="regular"
+          style={[spacings.mtTy, spacings.mbMd]}
+          onPress={togglePrivateMode}
+        >
+          <Text fontSize={26} weight="regular">
             ${' '}
           </Text>
           {isPrivateMode ? (
@@ -134,10 +123,10 @@ const Balances = ({
           ) : (
             <>
               <Text fontSize={42} weight="regular">
-                {balanceTruncated}
+                {Number(totalBalance.toFixed(2).split('.')[0])}
               </Text>
               <Text fontSize={26} weight="regular">
-                .{balanceDecimals}
+                .{Number(totalBalance.toFixed(2).split('.')[1])}
               </Text>
             </>
           )}
@@ -179,17 +168,17 @@ const Balances = ({
         </Button>
       </View>
 
-      {otherBalancesLoading ? (
+      {allBalancesLoading ? (
         <View style={spacings.mb}>
           <Spinner />
         </View>
       ) : (
-        (otherPositiveBalances.length > 0 || hasPositiveGasBalance) && (
+        (allPositiveBalances.length > 0 || hasPositiveGasBalance) && (
           <View style={spacings.mb}>
-            <Text style={[textStyles.center, spacings.mbTy]}>{t('You also have')}</Text>
-            {otherPositiveBalances.map(({ network, total }: Balance, i: number) => {
+            <Text style={[textStyles.center, spacings.mbTy]}>{t('You have')}</Text>
+            {allPositiveBalances.map(({ network, total }: Balance, i: number) => {
               const { chainId, name, id }: any = networkDetails(network)
-              const isLast = i === otherPositiveBalances.length - 1
+              const isLast = i === allPositiveBalances.length - 1
 
               const onNetworkChange = () => {
                 triggerLayoutAnimation()
@@ -200,10 +189,10 @@ const Balances = ({
                 <TouchableOpacity
                   key={chainId}
                   onPress={onNetworkChange}
-                  style={[styles.otherBalancesContainer, isLast && { borderBottomWidth: 0 }]}
+                  style={[styles.allBalancesContainer, isLast && { borderBottomWidth: 0 }]}
                 >
                   <Text numberOfLines={1} style={flexboxStyles.flex1}>
-                    <Text style={textStyles.highlightPrimary}>{'$ '}</Text>
+                    <Text>{'$ '}</Text>
                     {hidePrivateValue(`${total.truncated}.${total.decimals}`)}
                   </Text>
                   <Text>{` ${t('on')} `}</Text>
@@ -215,11 +204,11 @@ const Balances = ({
             {hasPositiveGasBalance && (
               <TouchableOpacity
                 onPress={handleGoToGasTank}
-                style={[styles.otherBalancesContainer, styles.otherBalancesGasTankContainer]}
+                style={[styles.allBalancesContainer, styles.allBalancesGasTankContainer]}
               >
                 {!!data && (
                   <Text numberOfLines={1} style={flexboxStyles.flex1}>
-                    <Text style={textStyles.highlightPrimary}>{'$ '}</Text>
+                    <Text>{'$ '}</Text>
                     {gasTankBalanceLabel}
                   </Text>
                 )}

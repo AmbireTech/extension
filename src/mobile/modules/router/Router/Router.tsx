@@ -9,9 +9,11 @@ import EarnIcon from '@common/assets/svg/EarnIcon'
 import GasTankIcon from '@common/assets/svg/GasTankIcon'
 import SwapIcon from '@common/assets/svg/SwapIcon'
 import TransferIcon from '@common/assets/svg/TransferIcon'
+import Text from '@common/components/Text'
 import { TAB_BAR_BLUR } from '@common/constants/router'
 import { ConnectionStates } from '@common/contexts/netInfoContext'
 import useNetInfo from '@common/hooks/useNetInfo'
+import useRequests from '@common/hooks/useRequests'
 import useStorageController from '@common/hooks/useStorageController'
 import { AUTH_STATUS } from '@common/modules/auth/constants/authStatus'
 import { EmailLoginProvider } from '@common/modules/auth/contexts/emailLoginContext'
@@ -388,6 +390,7 @@ const DashboardStackScreen = () => {
 }
 
 const TabsScreens = () => {
+  const { eligibleRequests } = useRequests()
   const tabsIconSize = IS_SCREEN_SIZE_L ? 44 : 24
   return (
     <Tab.Navigator
@@ -449,7 +452,16 @@ const TabsScreens = () => {
           tabBarLabel: routesConfig[ROUTES.transactions].title,
           headerTitle: routesConfig[ROUTES.transactions].title,
           tabBarIcon: ({ color }) => (
-            <TransferIcon color={color} width={tabsIconSize} height={tabsIconSize} />
+            <View>
+              <TransferIcon color={color} width={tabsIconSize} height={tabsIconSize} />
+              {eligibleRequests.length > 0 && (
+                <View style={styles.transactionsBadge}>
+                  <Text fontSize={10} weight="medium">
+                    {eligibleRequests.length}
+                  </Text>
+                </View>
+              )}
+            </View>
           )
         }}
         component={TransactionsScreen}

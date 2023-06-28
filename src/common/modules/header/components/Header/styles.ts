@@ -15,6 +15,7 @@ interface Styles {
   navIconContainerSmall: ViewStyle
   title: TextStyle
   switcherContainer: ViewStyle
+  headerNetworkIcon: ViewStyle
   networkIcon: ViewStyle
 }
 
@@ -54,6 +55,12 @@ const styles = StyleSheet.create<Styles>({
     justifyContent: 'center',
     alignItems: 'center',
     flexDirection: 'row'
+  },
+  headerNetworkIcon: {
+    width: 24,
+    height: 24,
+    borderRadius: 50,
+    backgroundColor: colors.titan_05
   },
   networkIcon: {
     width: 40,

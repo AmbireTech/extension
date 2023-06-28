@@ -4,8 +4,11 @@ import { isWeb } from '@common/config/env'
 import colors from '@common/styles/colors'
 import spacings, { SPACING_TY } from '@common/styles/spacings'
 import commonStyles from '@common/styles/utils/common'
+import flexbox from '@common/styles/utils/flexbox'
 
 interface Style {
+  tokenButtonContainer: ViewStyle
+  tokenButtonIconWrapper: ViewStyle
   rewardFlag: ViewStyle
   tableContainer: ViewStyle
   tableRow: ViewStyle
@@ -14,6 +17,27 @@ interface Style {
 }
 
 const styles = StyleSheet.create<Style>({
+  tokenButtonContainer: {
+    flexDirection: 'row',
+    backgroundColor: colors.howl,
+    ...spacings.pv,
+    ...spacings.phSm,
+    ...spacings.mbTy,
+    ...commonStyles.borderRadiusPrimary,
+    borderWidth: 1,
+    borderColor: colors.heliotrope
+  },
+  tokenButtonIconWrapper: {
+    backgroundColor: colors.titan_05,
+    overflow: 'hidden',
+    ...commonStyles.borderRadiusPrimary,
+    ...flexbox.center,
+    ...spacings.mrSm,
+    width: 34,
+    height: 34,
+    // To match the height of the TokenItem icon
+    marginBottom: 9
+  },
   rewardFlag: {
     position: 'absolute',
     top: 0,
