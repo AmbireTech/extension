@@ -81,11 +81,7 @@ export function fetchJson({
   return _fetchData<any>(connection, body, processJsonFunc)
 }
 
-/**
- * Extends the default JsonRpcProvider by giving us option to customize the origin header
- */
-
-class CustomJsonRpcProvider extends JsonRpcProvider {
+class DappJsonRpcProvider extends JsonRpcProvider {
   origin: string = ''
 
   url: string = ''
@@ -175,4 +171,4 @@ class CustomJsonRpcProvider extends JsonRpcProvider {
   }
 }
 
-export default CustomJsonRpcProvider
+export default DappJsonRpcProvider
