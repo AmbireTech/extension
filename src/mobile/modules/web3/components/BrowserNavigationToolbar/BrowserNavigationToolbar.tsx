@@ -25,10 +25,11 @@ const HIT_SLOP = { bottom: 15, left: 5, right: 5, top: 15 }
 interface Props {
   canGoHome?: boolean
   canReload?: boolean
-  onGoBack?: boolean
-  onGoForward?: boolean
   canGoBack?: boolean
   canGoForward?: boolean
+  onGoBack?: () => void
+  onGoForward?: () => void
+  onGoHome?: () => void
   onReload?: () => void
   addressBarValue?: string
   onChangeAddressBarValue: (value: string) => void
@@ -39,10 +40,11 @@ interface Props {
 const BrowserNavigationToolbar: React.FC<Props> = ({
   canGoHome = false,
   canReload = false,
-  onGoBack = false,
-  onGoForward = false,
   canGoBack = false,
   canGoForward = false,
+  onGoHome,
+  onGoBack,
+  onGoForward,
   onReload,
   addressBarValue,
   onChangeAddressBarValue,
@@ -64,7 +66,7 @@ const BrowserNavigationToolbar: React.FC<Props> = ({
     >
       <TouchableHighlight
         hitSlop={HIT_SLOP}
-        onPress={onGoBack}
+        onPress={onGoHome}
         style={styles.webviewButtonCommon}
         underlayColor={colors.heliotrope}
         disabled={!canGoHome}
@@ -73,7 +75,7 @@ const BrowserNavigationToolbar: React.FC<Props> = ({
       </TouchableHighlight>
       <TouchableHighlight
         hitSlop={HIT_SLOP}
-        onPress={onGoForward}
+        onPress={onGoBack}
         style={styles.webviewButtonCommon}
         disabled={!canGoBack}
         underlayColor={colors.heliotrope}

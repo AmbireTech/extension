@@ -1,26 +1,19 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { StyleSheet, TouchableHighlight, View } from 'react-native'
+import { StyleSheet, View } from 'react-native'
 import ErrorBoundary from 'react-native-error-boundary'
 import { WebView, WebViewNavigation } from 'react-native-webview'
 
 import GradientBackgroundWrapper from '@common/components/GradientBackgroundWrapper'
-import Input from '@common/components/Input'
 import Spinner from '@common/components/Spinner'
 import Wrapper from '@common/components/Wrapper'
 import useNavigation from '@common/hooks/useNavigation'
-import colors from '@common/styles/colors'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import BrowserNavigationToolbar from '@mobile/modules/web3/components/BrowserNavigationToolbar'
 import useWeb3 from '@mobile/modules/web3/hooks/useWeb3'
 import useGetProviderInjection from '@mobile/modules/web3/services/webview-inpage/injection-script'
 
-import BrowserBackIcon from '../../components/BrowserBackIcon'
-import BrowserForwardIcon from '../../components/BrowserForwardIcon'
-import BrowserHomeIcon from '../../components/BrowserHomeIcon'
-import BrowserReloadIcon from '../../components/BrowserReloadIcon'
 import styles from './styles'
-
-const HIT_SLOP = { bottom: 15, left: 5, right: 5, top: 15 }
 
 const Web3BrowserScreen = () => {
   const { goBack } = useNavigation()
@@ -78,59 +71,19 @@ const Web3BrowserScreen = () => {
     <ErrorBoundary>
       <GradientBackgroundWrapper>
         <Wrapper style={spacings.ph0} hasBottomTabNav>
-          <View
-            style={[
-              flexbox.directionRow,
-              flexbox.alignCenter,
-              spacings.ptTy,
-              spacings.pb,
-              spacings.pr,
-              spacings.plSm
-            ]}
-          >
-            <TouchableHighlight
-              hitSlop={HIT_SLOP}
-              onPress={goBack}
-              style={styles.webviewButtonCommon}
-              underlayColor={colors.heliotrope}
-            >
-              <BrowserHomeIcon color={colors.white} />
-            </TouchableHighlight>
-            <TouchableHighlight
-              hitSlop={HIT_SLOP}
-              onPress={webViewRef.current?.goBack}
-              style={styles.webviewButtonCommon}
-              disabled={!canGoBack}
-              underlayColor={colors.heliotrope}
-            >
-              <BrowserBackIcon color={canGoBack ? colors.white : colors.titan_50} />
-            </TouchableHighlight>
-            <TouchableHighlight
-              hitSlop={HIT_SLOP}
-              onPress={webViewRef.current?.goForward}
-              style={styles.webviewButtonCommon}
-              disabled={!canGoForward}
-              underlayColor={colors.heliotrope}
-            >
-              <BrowserForwardIcon color={canGoForward ? colors.white : colors.titan_50} />
-            </TouchableHighlight>
-            <TouchableHighlight
-              hitSlop={HIT_SLOP}
-              onPress={webViewRef.current?.reload}
-              style={[styles.webviewButtonCommon, styles.reload]}
-              underlayColor={colors.heliotrope}
-            >
-              <BrowserReloadIcon color={colors.white} />
-            </TouchableHighlight>
-            <Input
-              containerStyle={[flexbox.flex1, spacings.mb0]}
-              inputStyle={styles.addressInputStyle}
-              inputWrapperStyle={styles.addressInputWrapperStyle}
-              value={addressBarValue}
-              onChangeText={setAddressBarValue}
-              onSubmitEditing={handleInputSubmit}
-            />
-          </View>
+          <BrowserNavigationToolbar
+            canGoHome
+            canReload
+            canGoBack={canGoBack}
+            canGoForward={canGoForward}
+            onGoHome={goBack}
+            onGoBack={webViewRef.current?.goBack}
+            onGoForward={webViewRef.current?.goForward}
+            onReload={webViewRef.current?.reload}
+            addressBarValue={addressBarValue}
+            onChangeAddressBarValue={setAddressBarValue}
+            onSubmitEditingAddressBar={handleInputSubmit}
+          />
           <WebView
             ref={webViewRef}
             source={providerToInject ? { uri: openedUrl || selectedDappUrl } : { html: '' }}
