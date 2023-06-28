@@ -15,7 +15,8 @@ interface Style {
 const styles = StyleSheet.create<Style>({
   catalogWrapper: {
     backgroundColor: colors.titanWhite,
-    ...spacings.pv
+    ...spacings.pv,
+    ...spacings.mbMd
   },
   catalogItem: {
     backgroundColor: colors.white,
