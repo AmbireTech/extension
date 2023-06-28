@@ -13,7 +13,6 @@ const BrowserForwardIcon: React.FC<Props> = ({ width = 28, height = 28, color = 
   <Svg width={width} height={height} viewBox="0 0 28 28">
     <Path fill="none" d="M0 0h28v28H0z" />
     <Path
-      data-name="Path 2999"
       d="M9 23.071 18.071 14 9 4.929"
       fill="none"
       stroke={color}

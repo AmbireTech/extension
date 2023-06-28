@@ -13,7 +13,6 @@ const BrowserBackIcon: React.FC<Props> = ({ width = 28, height = 28, color = col
   <Svg width={width} height={height} viewBox="0 0 28 28">
     <Path fill="none" d="M0 0h28v28H0z" />
     <Path
-      data-name="Path 2999"
       d="M18.071 4.929 9 14l9.071 9.071"
       fill="none"
       stroke={color}
