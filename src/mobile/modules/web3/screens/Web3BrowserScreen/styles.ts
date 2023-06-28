@@ -1,15 +1,13 @@
 import { StyleSheet, ViewStyle } from 'react-native'
 
 import colors from '@common/styles/colors'
-import { SPACING_MI } from '@common/styles/spacings'
+import spacings, { SPACING_TY } from '@common/styles/spacings'
 
 interface Style {
   container: ViewStyle
   webview: ViewStyle
   loadingWrapper: ViewStyle
   webviewButtonCommon: ViewStyle
-  left: ViewStyle
-  right: ViewStyle
   reload: ViewStyle
   addressInputStyle: ViewStyle
   addressInputWrapperStyle: ViewStyle
@@ -33,19 +31,12 @@ const styles = StyleSheet.create<Style>({
   },
   webviewButtonCommon: {
     borderRadius: 22,
-    padding: SPACING_MI
-  },
-  left: {
-    alignItems: 'center',
-    justifyContent: 'center'
-  },
-  right: {
-    marginRight: SPACING_MI,
+    padding: 1,
     alignItems: 'center',
     justifyContent: 'center'
   },
   reload: {
-    marginLeft: SPACING_MI,
+    marginRight: SPACING_TY,
     alignItems: 'center',
     justifyContent: 'center'
   },
@@ -56,7 +47,7 @@ const styles = StyleSheet.create<Style>({
   },
   addressInputWrapperStyle: {
     height: 'auto',
-    paddingVertical: SPACING_MI,
+    paddingVertical: 7,
     backgroundColor: colors.baileyBells,
     borderBottomColor: colors.white
   }

@@ -83,14 +83,14 @@ const Web3BrowserScreen = () => {
               flexbox.directionRow,
               flexbox.alignCenter,
               spacings.pbSm,
-              spacings.prSm,
+              spacings.pr,
               spacings.plSm
             ]}
           >
             <TouchableHighlight
               hitSlop={HIT_SLOP}
               onPress={goBack}
-              style={[styles.webviewButtonCommon, styles.left]}
+              style={styles.webviewButtonCommon}
               underlayColor={colors.heliotrope}
             >
               <BrowserHomeIcon color={colors.white} />
@@ -98,7 +98,7 @@ const Web3BrowserScreen = () => {
             <TouchableHighlight
               hitSlop={HIT_SLOP}
               onPress={webViewRef.current?.goBack}
-              style={[styles.webviewButtonCommon, styles.left]}
+              style={styles.webviewButtonCommon}
               disabled={!canGoBack}
               underlayColor={colors.heliotrope}
             >
@@ -107,11 +107,19 @@ const Web3BrowserScreen = () => {
             <TouchableHighlight
               hitSlop={HIT_SLOP}
               onPress={webViewRef.current?.goForward}
-              style={[styles.webviewButtonCommon, styles.right]}
+              style={styles.webviewButtonCommon}
               disabled={!canGoForward}
               underlayColor={colors.heliotrope}
             >
               <BrowserForwardIcon color={canGoForward ? colors.white : colors.titan_50} />
+            </TouchableHighlight>
+            <TouchableHighlight
+              hitSlop={HIT_SLOP}
+              onPress={webViewRef.current?.reload}
+              style={[styles.webviewButtonCommon, styles.reload]}
+              underlayColor={colors.heliotrope}
+            >
+              <BrowserReloadIcon color={colors.white} />
             </TouchableHighlight>
             <Input
               containerStyle={[flexbox.flex1, spacings.mb0]}
@@ -121,14 +129,6 @@ const Web3BrowserScreen = () => {
               onChangeText={setAddressBarValue}
               onSubmitEditing={handleInputSubmit}
             />
-            <TouchableHighlight
-              hitSlop={HIT_SLOP}
-              onPress={webViewRef.current?.reload}
-              style={[styles.webviewButtonCommon, styles.reload]}
-              underlayColor={colors.heliotrope}
-            >
-              <BrowserReloadIcon color={colors.white} />
-            </TouchableHighlight>
           </View>
           <WebView
             ref={webViewRef}
