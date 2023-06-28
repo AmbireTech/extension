@@ -8,10 +8,10 @@ import React, { createContext, useCallback, useEffect, useMemo, useRef, useState
 
 import useAccounts from '@common/hooks/useAccounts'
 import useNetwork from '@common/hooks/useNetwork'
+import CustomJsonRpcProvider from '@common/services/CustomJsonRpcProvider/CustomJsonRpcProvider'
 import getHostname from '@common/utils/getHostname'
 import { delayPromise } from '@common/utils/promises'
 import ApprovalBottomSheets from '@mobile/modules/web3/components/ApprovalBottomSheets'
-import DappJsonRpcProvider from '@mobile/modules/web3/services/dappProvider/DappJsonRpcProvider'
 import providerController from '@mobile/modules/web3/services/webview-background/provider/provider'
 import { Approval } from '@mobile/modules/web3/services/webview-background/services/notification'
 import sessionService, {
@@ -128,7 +128,7 @@ const Web3Provider: React.FC<any> = ({ children }) => {
             const net: NetworkType =
               networks.find((n) => n.id === rpcNetwork) || (network as NetworkType)
             if (!dappUrls[rpcNetwork].startsWith('wss:')) {
-              const provider = new DappJsonRpcProvider(
+              const provider = new CustomJsonRpcProvider(
                 { url: dappUrls[rpcNetwork], origin: tabSessionData?.params?.origin },
                 {
                   name: net?.name,
