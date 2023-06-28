@@ -64,7 +64,7 @@ const setProvider = (_id: NetworkId) => {
 
   const { id: name, chainId, ensName } = network as NetworkType
 
-  if (url.startsWith('wss:')) {
+  if (url && url?.startsWith('wss:')) {
     return new providers.WebSocketProvider(url, {
       name: ensName || name,
       chainId
