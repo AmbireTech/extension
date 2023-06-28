@@ -1,7 +1,9 @@
 import React, { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { RefreshControl } from 'react-native'
 
 import GradientBackgroundWrapper from '@common/components/GradientBackgroundWrapper'
+import Text from '@common/components/Text'
 import Wrapper from '@common/components/Wrapper'
 import useAccounts from '@common/hooks/useAccounts'
 import useNetwork from '@common/hooks/useNetwork'
@@ -10,6 +12,8 @@ import Assets from '@common/modules/dashboard/components/Assets'
 import Balances from '@common/modules/dashboard/components/Balances'
 import { AssetsToggleProvider } from '@common/modules/dashboard/contexts/assetsToggleContext'
 import colors from '@common/styles/colors'
+import spacings from '@common/styles/spacings'
+import text from '@common/styles/utils/text'
 
 const DashboardScreen = () => {
   const {
@@ -18,8 +22,7 @@ const DashboardScreen = () => {
     isCurrNetworkBalanceLoading,
     isCurrNetworkProtocolsLoading,
     balancesByNetworksLoading,
-    balance,
-    otherBalances,
+    allBalances,
     protocols,
     tokens,
     collectibles,
@@ -32,10 +35,11 @@ const DashboardScreen = () => {
   } = usePortfolio()
   const { network, setNetwork } = useNetwork()
   const { selectedAcc } = useAccounts()
+  const { t } = useTranslation()
 
-  const otherBalancesLoading = useMemo(
-    () => Object.entries(balancesByNetworksLoading).find((ntw) => ntw[0] !== network?.id && ntw[1]),
-    [balancesByNetworksLoading, network?.id]
+  const allBalancesLoading = useMemo(
+    () => Object.entries(balancesByNetworksLoading).find((ntw) => ntw[1]),
+    [balancesByNetworksLoading]
   )
 
   const handleRefresh = () => {
@@ -58,16 +62,19 @@ const DashboardScreen = () => {
         }
       >
         <Balances
-          balanceTruncated={balance.total?.truncated}
-          balanceDecimals={balance.total?.decimals}
-          otherBalances={otherBalances}
-          isLoading={isCurrNetworkBalanceLoading && !!otherBalancesLoading}
+          allBalances={allBalances}
+          isLoading={isCurrNetworkBalanceLoading && !!allBalancesLoading}
           isCurrNetworkBalanceLoading={!!isCurrNetworkBalanceLoading}
-          otherBalancesLoading={!!otherBalancesLoading}
+          allBalancesLoading={!!allBalancesLoading}
           networkId={network?.id}
           setNetwork={setNetwork}
           account={selectedAcc}
         />
+        {!(isCurrNetworkBalanceLoading && !!allBalancesLoading) && (
+          <Text style={[text.center, spacings.mbSm]}>
+            {t('On {{networkName}}', { networkName: network?.name })}
+          </Text>
+        )}
         <AssetsToggleProvider>
           <Assets
             tokens={tokens}

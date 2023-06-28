@@ -2,7 +2,7 @@ import networks, { NetworkId } from 'ambire-common/src/constants/networks'
 import { UseAccountsReturnType } from 'ambire-common/src/hooks/useAccounts'
 import useCacheBreak from 'ambire-common/src/hooks/useCacheBreak'
 import { Balance, UsePortfolioReturnType } from 'ambire-common/src/hooks/usePortfolio/types'
-import React, { useCallback, useLayoutEffect } from 'react'
+import React, { useCallback, useLayoutEffect, useMemo } from 'react'
 import { TouchableOpacity, View } from 'react-native'
 
 import GasTankIcon from '@common/assets/svg/GasTankIcon'
@@ -31,26 +31,24 @@ const networkDetails = (network: any) => networks.find(({ id }) => id === networ
 interface Props {
   balanceTruncated: any
   balanceDecimals: any
-  otherBalances: UsePortfolioReturnType['otherBalances']
+  allBalances: UsePortfolioReturnType['allBalances']
   networkId?: NetworkId
   account: UseAccountsReturnType['selectedAcc']
   setNetwork: (networkIdentifier: string | number) => void
   isLoading: boolean
   isCurrNetworkBalanceLoading: boolean
-  otherBalancesLoading: boolean
+  allBalancesLoading: boolean
 }
 
 const relayerURL = CONFIG.RELAYER_URL
 
 const Balances = ({
-  balanceTruncated,
-  balanceDecimals,
-  otherBalances,
+  allBalances,
   networkId,
   account,
   isLoading,
   isCurrNetworkBalanceLoading,
-  otherBalancesLoading,
+  allBalancesLoading,
   setNetwork
 }: Props) => {
   const { t } = useTranslation()
@@ -79,10 +77,18 @@ const Balances = ({
         .toFixed(2)
   const hasPositiveGasBalance = gasTankBalanceLabel !== '0.00'
 
-  const otherPositiveBalances = otherBalances
-    .filter(({ network, total }: any) => network !== networkId && total.full > 0)
+  const allPositiveBalances = allBalances
+    .filter(({ total }: any) => total.full > 0)
     // Exclude displaying balances for networks we don't support
     .filter(({ network }) => !!networkDetails(network))
+
+  const totalBalance = useMemo(() => {
+    let balance = 0
+    allPositiveBalances.forEach(({ total }) => {
+      balance += Number(total.full)
+    })
+    return balance
+  }, [allPositiveBalances])
 
   const handleGoToSend = useCallback(() => navigate(ROUTES.send), [navigate])
   const handleGoToReceive = useCallback(() => navigate(ROUTES.receive), [navigate])
@@ -116,10 +122,10 @@ const Balances = ({
           ) : (
             <>
               <Text fontSize={42} weight="regular">
-                {balanceTruncated}
+                {Number(totalBalance.toFixed(2).split('.')[0])}
               </Text>
               <Text fontSize={26} weight="regular">
-                .{balanceDecimals}
+                .{Number(totalBalance.toFixed(2).split('.')[1])}
               </Text>
             </>
           )}
@@ -161,17 +167,17 @@ const Balances = ({
         </Button>
       </View>
 
-      {otherBalancesLoading ? (
+      {allBalancesLoading ? (
         <View style={spacings.mb}>
           <Spinner />
         </View>
       ) : (
-        (otherPositiveBalances.length > 0 || hasPositiveGasBalance) && (
+        (allPositiveBalances.length > 0 || hasPositiveGasBalance) && (
           <View style={spacings.mb}>
-            <Text style={[textStyles.center, spacings.mbTy]}>{t('You also have')}</Text>
-            {otherPositiveBalances.map(({ network, total }: Balance, i: number) => {
+            <Text style={[textStyles.center, spacings.mbTy]}>{t('You have')}</Text>
+            {allPositiveBalances.map(({ network, total }: Balance, i: number) => {
               const { chainId, name, id }: any = networkDetails(network)
-              const isLast = i === otherPositiveBalances.length - 1
+              const isLast = i === allPositiveBalances.length - 1
 
               const onNetworkChange = () => {
                 triggerLayoutAnimation()
@@ -182,7 +188,7 @@ const Balances = ({
                 <TouchableOpacity
                   key={chainId}
                   onPress={onNetworkChange}
-                  style={[styles.otherBalancesContainer, isLast && { borderBottomWidth: 0 }]}
+                  style={[styles.allBalancesContainer, isLast && { borderBottomWidth: 0 }]}
                 >
                   <Text numberOfLines={1} style={flexboxStyles.flex1}>
                     <Text>{'$ '}</Text>
@@ -197,7 +203,7 @@ const Balances = ({
             {hasPositiveGasBalance && (
               <TouchableOpacity
                 onPress={handleGoToGasTank}
-                style={[styles.otherBalancesContainer, styles.otherBalancesGasTankContainer]}
+                style={[styles.allBalancesContainer, styles.allBalancesGasTankContainer]}
               >
                 {!!data && (
                   <Text numberOfLines={1} style={flexboxStyles.flex1}>

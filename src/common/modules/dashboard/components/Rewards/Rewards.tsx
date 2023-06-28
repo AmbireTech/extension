@@ -134,7 +134,7 @@ const Rewards = () => {
       return '...'
     }
 
-    return t('{{amount}}', {
+    return t('{{amount}} $WALLET', {
       amount: hidePrivateValue(pendingTokensTotal)
     })
   }, [

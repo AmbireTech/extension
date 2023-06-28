@@ -7,8 +7,8 @@ import spacings from '@common/styles/spacings'
 interface Style {
   loadingContainer: ViewStyle
   spinnerWrapper: ViewStyle
-  otherBalancesContainer: ViewStyle
-  otherBalancesGasTankContainer: ViewStyle
+  allBalancesContainer: ViewStyle
+  allBalancesGasTankContainer: ViewStyle
   button: ViewStyle
   buttonIcon: ViewStyle
 }
@@ -35,7 +35,7 @@ const styles = StyleSheet.create<Style>({
     justifyContent: 'center',
     ...spacings.mbTy
   },
-  otherBalancesContainer: {
+  allBalancesContainer: {
     flexDirection: 'row',
     width: 275,
     borderBottomColor: colors.waikawaGray,
@@ -43,7 +43,7 @@ const styles = StyleSheet.create<Style>({
     paddingVertical: 2,
     alignItems: 'center'
   },
-  otherBalancesGasTankContainer: {
+  allBalancesGasTankContainer: {
     borderTopColor: colors.waikawaGray,
     borderTopWidth: 1,
     borderBottomWidth: 0
