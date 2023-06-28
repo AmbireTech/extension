@@ -7,7 +7,6 @@ import Wrapper, { WRAPPER_TYPES } from '@common/components/Wrapper'
 import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useNavigation from '@common/hooks/useNavigation'
-import AmbireLogo from '@common/modules/auth/components/AmbireLogo'
 import PrivateKeyForm from '@common/modules/auth/components/PrivateKeyForm'
 import RecoveryPhraseForm from '@common/modules/auth/components/RecoveryPhraseForm'
 import { triggerLayoutAnimation } from '@common/services/layoutAnimation'
@@ -48,8 +47,7 @@ const ExternalSignerScreen = () => {
           type={WRAPPER_TYPES.KEYBOARD_AWARE_SCROLL_VIEW}
           extraHeight={220}
         >
-          <AmbireLogo shouldExpand={false} />
-          <View style={[spacings.mbLg, spacings.ph]}>
+          <View style={[spacings.mbLg, spacings.ph, flexboxStyles.flex1, flexboxStyles.justifyEnd]}>
             <Segments
               defaultValue={formType}
               segments={segments}
@@ -63,7 +61,7 @@ const ExternalSignerScreen = () => {
               fontSize={14}
             />
           </View>
-          <View style={[flexboxStyles.flex1, flexboxStyles.justifyEnd]}>
+          <View>
             {formType === FORM_TYPE.PRIVATE_KEY && <PrivateKeyForm />}
             {formType === FORM_TYPE.RECOVERY_PHRASE && <RecoveryPhraseForm />}
           </View>

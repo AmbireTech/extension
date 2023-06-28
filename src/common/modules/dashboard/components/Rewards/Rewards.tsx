@@ -13,6 +13,7 @@ import { Linking, ScrollView, TouchableOpacity, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import RewardsFlag from '@common/assets/svg/RewardFlag/RewardFlag'
+import RewardsIcon from '@common/assets/svg/RewardsIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
 import Text from '@common/components/Text'
@@ -130,7 +131,7 @@ const Rewards = () => {
       currentClaimStatus.loading && !currentClaimStatus.lastUpdated
     const isRewardsDataLoadingAndNoPrevData = rewardsIsLoading && !rewardsLastUpdated
     if (isCurrentClaimStatusLoadingAndNoPrevData || isRewardsDataLoadingAndNoPrevData) {
-      return '... $WALLET'
+      return '...'
     }
 
     return t('{{amount}} $WALLET', {
@@ -186,13 +187,30 @@ const Rewards = () => {
 
   return (
     <>
-      <Button
-        onPress={openBottomSheet}
-        type="outline"
-        size="small"
-        text={renderRewardsButtonText()}
-        style={flexboxStyles.alignSelfCenter}
-      />
+      <View style={styles.tokenButtonContainer}>
+        <View style={styles.tokenButtonIconWrapper}>
+          <RewardsIcon />
+        </View>
+        <View style={[flexboxStyles.flex1]}>
+          <Text fontSize={16} numberOfLines={1}>
+            {hidePrivateValue(t('Wallet Rewards'))}
+          </Text>
+          <Text style={textStyles.highlightPrimary}>
+            ${hidePrivateValue(renderRewardsButtonText())}
+          </Text>
+        </View>
+
+        <View style={spacings.plSm}>
+          <Button
+            onPress={openBottomSheet}
+            type="secondary"
+            hasBottomSpacing={false}
+            style={[flexboxStyles.alignSelfCenter, { backgroundColor: colors.titan_05 }]}
+            size="small"
+            text={t('Open')}
+          />
+        </View>
+      </View>
       <BottomSheet
         id="rewards"
         sheetRef={sheetRef}

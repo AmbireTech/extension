@@ -10,6 +10,7 @@ interface Style {
   tabBarContainer: ViewStyle
   backdropBlurWrapper: ViewStyle
   tabBarContainerWeb: ViewStyle
+  transactionsBadge: ViewStyle
 }
 
 const tabBarContainerBackground = !isiOS ? { backgroundColor: colors.valhalla } : {}
@@ -121,6 +122,17 @@ const styles = StyleSheet.create<Style>({
     width: '100%',
     backgroundColor: colors.martinique,
     overflow: 'hidden'
+  },
+  transactionsBadge: {
+    borderRadius: 50,
+    backgroundColor: colors.pink,
+    width: 16,
+    height: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'absolute',
+    top: -7,
+    right: -9
   }
 })
 

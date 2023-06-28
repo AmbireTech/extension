@@ -7,13 +7,13 @@ import LeftArrowIcon from '@common/assets/svg/LeftArrowIcon'
 import Blockies from '@common/components/Blockies'
 import CopyText from '@common/components/CopyText'
 import NavIconWrapper from '@common/components/NavIconWrapper'
+import NetworkIcon from '@common/components/NetworkIcon'
 import Text from '@common/components/Text'
 import { isiOS } from '@common/config/env'
 import useAccounts from '@common/hooks/useAccounts'
 import useHeaderBottomSheet from '@common/hooks/useHeaderBottomSheet'
 import useNetwork from '@common/hooks/useNetwork'
 import usePrivateMode from '@common/hooks/usePrivateMode'
-import colors from '@common/styles/colors'
 import spacings from '@common/styles/spacings'
 import flexboxStyles from '@common/styles/utils/flexbox'
 import { DrawerHeaderProps } from '@react-navigation/drawer'
@@ -40,21 +40,33 @@ const Header: React.FC<Props> = ({
   const title = getHeaderTitle(options, route.name)
   const { network } = useNetwork()
   const { selectedAcc } = useAccounts()
-  const { openHeaderBottomSheet } = useHeaderBottomSheet()
+  const { openHeaderAccountsBottomSheet, openHeaderNetworksBottomSheet } = useHeaderBottomSheet()
   const { hidePrivateValue } = usePrivateMode()
   const renderBottomSheetSwitcher = (
-    <TouchableOpacity style={styles.switcherContainer} onPress={openHeaderBottomSheet}>
-      <Blockies borderRadius={13} seed={selectedAcc} />
+    <View style={[flexboxStyles.directionRow, flexboxStyles.flex1]}>
+      <TouchableOpacity style={styles.switcherContainer} onPress={openHeaderAccountsBottomSheet}>
+        <Blockies borderRadius={13} size={6} seed={selectedAcc} />
 
-      <View style={[flexboxStyles.flex1, spacings.mhTy]}>
-        <Text weight="regular">{network?.name}</Text>
-        <Text color={colors.baileyBells} fontSize={12} numberOfLines={1} ellipsizeMode="middle">
-          {hidePrivateValue(selectedAcc)}
-        </Text>
-      </View>
+        <View style={[flexboxStyles.flex1, spacings.mhTy]}>
+          <Text fontSize={14} weight="regular" numberOfLines={1} ellipsizeMode="middle">
+            {hidePrivateValue(selectedAcc)}
+          </Text>
+        </View>
 
-      <CopyText text={selectedAcc} />
-    </TouchableOpacity>
+        <CopyText text={selectedAcc} width={22} />
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.switcherContainer} onPress={openHeaderNetworksBottomSheet}>
+        <View style={styles.headerNetworkIcon}>
+          <NetworkIcon name={network?.id} width={24} height={24} />
+        </View>
+
+        <View style={[flexboxStyles.flex1, spacings.mhTy]}>
+          <Text weight="regular" fontSize={14} numberOfLines={1}>
+            {network?.name}
+          </Text>
+        </View>
+      </TouchableOpacity>
+    </View>
   )
 
   const renderHeaderLeft = () => {
@@ -116,7 +128,7 @@ const Header: React.FC<Props> = ({
         </Text>
       )}
 
-      {mode === 'title' && <View style={navIconContainer}>{renderHeaderRight}</View>}
+      {mode === 'title' && !isiOS && <View style={navIconContainer}>{renderHeaderRight}</View>}
       {isiOS && mode === 'title' && <View style={navIconContainer} />}
     </View>
   )

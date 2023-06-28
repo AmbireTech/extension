@@ -16,8 +16,7 @@ import text from '@common/styles/utils/text'
 import AddReferralForm, {
   AddReferralFormValues
 } from '@mobile/modules/referral/components/AddReferralForm'
-
-import useReferral from '../../hooks/useReferral'
+import useReferral from '@mobile/modules/referral/hooks/useReferral'
 
 const AddReferralScreen = () => {
   const { t } = useTranslation()
@@ -75,8 +74,8 @@ const AddReferralScreen = () => {
         extraHeight={220}
       >
         <AmbireLogo shouldExpand={false} />
-        <View style={[flexboxStyles.flex1, flexboxStyles.justifyCenter]}>
-          <View style={[spacings.mbLg, spacings.phTy]}>
+        <View style={[flexboxStyles.flex1, flexboxStyles.justifyEnd]}>
+          <View style={[spacings.mb, spacings.phTy]}>
             <Text
               weight="light"
               style={[spacings.mb, text.center]}
@@ -90,7 +89,7 @@ const AddReferralScreen = () => {
           <AddReferralForm initialValue={initialValue} onSubmit={handleSubmit} />
 
           <Trans>
-            <Text weight="light" color={colors.titan} fontSize={16} style={spacings.mtLg}>
+            <Text weight="light" color={colors.titan} fontSize={16} style={spacings.mv}>
               <Text weight="light" color={colors.titan} fontSize={16}>
                 {"Don't have an invitation reference? "}
               </Text>

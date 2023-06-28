@@ -12,21 +12,20 @@ interface Styles {
   networkBtnIcon: ViewProps
 }
 
-const ICON_WRAPPER_SIZE = 32
-// Active item height is a bit smaller than the item itself
-const ACTIVE_ITEM_HEIGHT_GAP = 10
-export const SINGLE_ITEM_HEIGHT = 52
+const ICON_WRAPPER_SIZE = 40
+export const SINGLE_ITEM_HEIGHT = 50
 
 const styles = StyleSheet.create<Styles>({
   networksContainer: {
     height: SINGLE_ITEM_HEIGHT * 5,
-    ...spacings.mbTy
+    ...spacings.mbMd
   },
   networkBtnContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingLeft: ICON_WRAPPER_SIZE + SPACING_MD,
+    paddingLeft: SPACING_MD,
     ...spacings.prMd,
+    height: SINGLE_ITEM_HEIGHT,
     ...spacings.pvTy
   },
   networkBtnContainerActive: {
@@ -34,9 +33,11 @@ const styles = StyleSheet.create<Styles>({
     backgroundColor: colors.howl,
     position: 'absolute',
     width: '100%',
-    top: SINGLE_ITEM_HEIGHT * 2 + ACTIVE_ITEM_HEIGHT_GAP / 2,
+    top: SINGLE_ITEM_HEIGHT * 2,
     left: 0,
-    height: SINGLE_ITEM_HEIGHT - ACTIVE_ITEM_HEIGHT_GAP
+    height: SINGLE_ITEM_HEIGHT,
+    borderWidth: 1,
+    borderColor: colors.turquoise
   },
   networkBtnContainerActiveWeb: {
     backgroundColor: colors.howl,
@@ -48,7 +49,8 @@ const styles = StyleSheet.create<Styles>({
     backgroundColor: colors.valhalla,
     borderRadius: 13,
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
+    ...spacings.mrMd
   }
 })
 

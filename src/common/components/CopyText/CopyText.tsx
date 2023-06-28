@@ -10,9 +10,11 @@ import useToast from '@common/hooks/useToast'
 interface Props {
   text: string
   style?: TouchableOpacityProps['style']
+  width?: number
+  height?: number
 }
 
-const CopyText: React.FC<Props> = ({ text, style }) => {
+const CopyText: React.FC<Props> = ({ text, style, width, height }) => {
   const { t } = useTranslation()
   const { addToast } = useToast()
 
@@ -23,7 +25,7 @@ const CopyText: React.FC<Props> = ({ text, style }) => {
 
   return (
     <NavIconWrapper onPress={handleCopyText} style={style}>
-      <CopyIcon />
+      <CopyIcon {...(width ? { width } : {})} {...(height ? { height } : {})} />
     </NavIconWrapper>
   )
 }

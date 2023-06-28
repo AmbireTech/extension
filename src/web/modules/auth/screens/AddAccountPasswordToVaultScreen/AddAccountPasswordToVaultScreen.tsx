@@ -1,21 +1,17 @@
 import { isValidPassword } from 'ambire-common/src/services/validations'
 import React, { useCallback } from 'react'
 import { Controller, useForm } from 'react-hook-form'
-import { Image, Keyboard, View } from 'react-native'
+import { Keyboard, View } from 'react-native'
 
-import logo from '@common/assets/images/Ambire-Wallet-logo-colored-white-vertical.png'
 import KeyStoreIcon from '@common/assets/svg/KeyStoreIcon'
 import Button from '@common/components/Button'
-import GradientBackgroundWrapper from '@common/components/GradientBackgroundWrapper'
 import InputPassword from '@common/components/InputPassword'
 import Text from '@common/components/Text'
-import Wrapper from '@common/components/Wrapper'
 import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useDisableNavigatingBack from '@common/hooks/useDisableNavigatingBack'
 import useNavigation from '@common/hooks/useNavigation'
 import useRoute from '@common/hooks/useRoute'
-import AnimatedArrows from '@common/modules/auth/components/AnimatedArrows'
 import useEmailLogin from '@common/modules/auth/hooks/useEmailLogin'
 import useJsonLogin from '@common/modules/auth/hooks/useJsonLogin'
 import colors from '@common/styles/colors'
@@ -78,24 +74,7 @@ const AddAccountPasswordToVaultScreen = () => {
   return (
     <>
       <AuthLayoutWrapperMainContent>
-        <View
-          style={[
-            flexboxStyles.directionRow,
-            flexboxStyles.justifyCenter,
-            flexboxStyles.alignCenter,
-            spacings.pv
-          ]}
-        >
-          <Image
-            source={logo}
-            style={{
-              height: IS_SCREEN_SIZE_S ? 96 : 136,
-              width: 120,
-              ...(isWeb ? { modalHeight: 120 } : {})
-            }}
-            resizeMode="contain"
-          />
-          <AnimatedArrows />
+        <View style={[flexboxStyles.justifyCenter, flexboxStyles.alignCenter, spacings.pv]}>
           <KeyStoreIcon height={IS_SCREEN_SIZE_S ? 96 : 136} width={120} />
         </View>
 

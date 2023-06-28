@@ -16,6 +16,7 @@ import flexboxStyles from '@common/styles/utils/flexbox'
 import textStyles from '@common/styles/utils/text'
 
 import TokensListLoader from '../Loaders/TokensListLoader'
+import Rewards from '../Rewards'
 import TokenItem from './TokenItem'
 
 interface Props {
@@ -101,6 +102,8 @@ const Tokens = ({
       {!!isCurrNetworkBalanceLoading && <TokensListLoader />}
 
       {!!shouldShowEmptyState && emptyState}
+
+      {!isCurrNetworkBalanceLoading && !shouldShowEmptyState && <Rewards />}
 
       {!isCurrNetworkBalanceLoading &&
         !shouldShowEmptyState &&
