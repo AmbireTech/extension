@@ -116,7 +116,7 @@ const Header: React.FC<Props> = ({
         </Text>
       )}
 
-      {mode === 'title' && <View style={navIconContainer}>{renderHeaderRight}</View>}
+      {mode === 'title' && !isiOS && <View style={navIconContainer}>{renderHeaderRight}</View>}
       {isiOS && mode === 'title' && <View style={navIconContainer} />}
     </View>
   )
