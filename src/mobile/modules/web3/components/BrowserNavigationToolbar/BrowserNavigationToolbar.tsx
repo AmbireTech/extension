@@ -1,6 +1,6 @@
 import React from 'react'
 import { useTranslation } from 'react-i18next'
-import { TouchableHighlight, View } from 'react-native'
+import { TextInputProps, TouchableHighlight, View } from 'react-native'
 import ErrorBoundary from 'react-native-error-boundary'
 
 import GradientBackgroundWrapper from '@common/components/GradientBackgroundWrapper'
@@ -22,13 +22,27 @@ import BrowserReloadIcon from '../BrowserReloadIcon'
 
 const HIT_SLOP = { bottom: 15, left: 5, right: 5, top: 15 }
 
-const BrowserNavigationToolbar = ({
-  canGoHome,
-  canReload,
-  onGoBack,
-  onGoForward,
-  canGoBack,
-  canGoForward,
+interface Props {
+  canGoHome?: boolean
+  canReload?: boolean
+  onGoBack?: boolean
+  onGoForward?: boolean
+  canGoBack?: boolean
+  canGoForward?: boolean
+  onReload?: () => void
+  addressBarValue?: string
+  onChangeAddressBarValue: (value: string) => void
+  onSubmitEditingAddressBar: () => void
+  addressInputProps?: Partial<TextInputProps>
+}
+
+const BrowserNavigationToolbar: React.FC<Props> = ({
+  canGoHome = false,
+  canReload = false,
+  onGoBack = false,
+  onGoForward = false,
+  canGoBack = false,
+  canGoForward = false,
   onReload,
   addressBarValue,
   onChangeAddressBarValue,

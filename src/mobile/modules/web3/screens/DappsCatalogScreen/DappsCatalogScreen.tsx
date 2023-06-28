@@ -1,5 +1,11 @@
 import React, { useCallback, useMemo } from 'react'
-import { Keyboard, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native'
+import {
+  Keyboard,
+  TextInputProps,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View
+} from 'react-native'
 
 import CloseIconRound from '@common/assets/svg/CloseIconRound'
 import SearchIcon from '@common/assets/svg/SearchIcon'
@@ -17,13 +23,13 @@ import useWeb3 from '@mobile/modules/web3/hooks/useWeb3'
 const DappsCatalogScreen = () => {
   const {
     search,
-    categories,
-    categoryFilter,
+    // categories,
+    // categoryFilter,
     filteredCatalog,
     searchDappItem,
     searchDappUrlOrHostnameItem,
-    onSearchChange,
-    onCategorySelect
+    onSearchChange
+    // onCategorySelect
   } = useDapps()
   const { setSelectedDapp } = useWeb3()
   const { navigate } = useNavigation()
@@ -31,7 +37,7 @@ const DappsCatalogScreen = () => {
   // Dapp favorites are temporarily disabled since v3.11.0 */
   // const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
 
-  const addressInputProps = useMemo(
+  const addressInputProps = useMemo<Partial<TextInputProps>>(
     () => ({
       leftIcon: () => (
         <TouchableOpacity
