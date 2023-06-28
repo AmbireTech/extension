@@ -1,23 +1,16 @@
 import React from 'react'
 import { TextInputProps, TouchableHighlight, View } from 'react-native'
-import ErrorBoundary from 'react-native-error-boundary'
 
-import GradientBackgroundWrapper from '@common/components/GradientBackgroundWrapper'
 import Input from '@common/components/Input'
-import Spinner from '@common/components/Spinner'
-import Wrapper from '@common/components/Wrapper'
-import useNavigation from '@common/hooks/useNavigation'
 import colors from '@common/styles/colors'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useWeb3 from '@mobile/modules/web3/hooks/useWeb3'
-import useGetProviderInjection from '@mobile/modules/web3/services/webview-inpage/injection-script'
+import BrowserBackIcon from '@mobile/modules/web3/components/BrowserBackIcon'
+import BrowserForwardIcon from '@mobile/modules/web3/components/BrowserForwardIcon'
+import BrowserHomeIcon from '@mobile/modules/web3/components/BrowserHomeIcon'
+import BrowserReloadIcon from '@mobile/modules/web3/components/BrowserReloadIcon'
 
-import styles from '../../screens/Web3BrowserScreen/styles'
-import BrowserBackIcon from '../BrowserBackIcon'
-import BrowserForwardIcon from '../BrowserForwardIcon'
-import BrowserHomeIcon from '../BrowserHomeIcon'
-import BrowserReloadIcon from '../BrowserReloadIcon'
+import styles from './styles'
 
 const HIT_SLOP = { bottom: 15, left: 5, right: 5, top: 15 }
 
