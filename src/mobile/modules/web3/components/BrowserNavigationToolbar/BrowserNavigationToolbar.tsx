@@ -32,7 +32,8 @@ const BrowserNavigationToolbar = ({
   onReload,
   addressBarValue,
   onChangeAddressBarValue,
-  onSubmitEditingAddressBar
+  onSubmitEditingAddressBar,
+  addressInputProps = {}
 }) => {
   const { t } = useTranslation()
 
@@ -92,6 +93,7 @@ const BrowserNavigationToolbar = ({
         onSubmitEditing={onSubmitEditingAddressBar}
         placeholder={t('Search or type URL')}
         placeholderTextColor={colors.white}
+        {...addressInputProps}
       />
     </View>
   )

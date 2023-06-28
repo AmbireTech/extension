@@ -85,7 +85,7 @@ const DappCatalogListItem: React.FC<Props> = ({
             >
               {name}
             </Text>
-            {/* Temporarily disabled since v3.11.0 */}
+            {/* Dapp favorites are temporarily disabled since v3.11.0 */}
             {/* {!inSearchMode && (
               <TouchableOpacity
                 hitSlop={{ top: 10, bottom: 10, right: 10, left: 5 }}
