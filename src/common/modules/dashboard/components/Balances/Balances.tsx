@@ -123,7 +123,7 @@ const Balances = ({
           ) : (
             <>
               <Text fontSize={42} weight="regular">
-                {Number(totalBalance.toFixed(2).split('.')[0])}
+                {Number(totalBalance.toFixed(2).split('.')[0]).toLocaleString('en-US')}
               </Text>
               <Text fontSize={26} weight="regular">
                 .{Number(totalBalance.toFixed(2).split('.')[1])}
