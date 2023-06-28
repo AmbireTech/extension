@@ -113,8 +113,10 @@ const Balances = ({
     allPositiveBalances.forEach(({ total }) => {
       balance += Number(total.full)
     })
+    balance += Number(balanceLabel)
+
     return balance
-  }, [allPositiveBalances])
+  }, [allPositiveBalances, balanceLabel])
 
   const handleGoToSend = useCallback(() => navigate(ROUTES.send), [navigate])
   const handleGoToReceive = useCallback(() => navigate(ROUTES.receive), [navigate])

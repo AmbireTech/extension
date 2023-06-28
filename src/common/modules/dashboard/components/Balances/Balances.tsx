@@ -87,8 +87,9 @@ const Balances = ({
     allPositiveBalances.forEach(({ total }) => {
       balance += Number(total.full)
     })
+    balance += Number(gasTankBalanceLabel)
     return balance
-  }, [allPositiveBalances])
+  }, [allPositiveBalances, gasTankBalanceLabel])
 
   const handleGoToSend = useCallback(() => navigate(ROUTES.send), [navigate])
   const handleGoToReceive = useCallback(() => navigate(ROUTES.receive), [navigate])
