@@ -31,6 +31,7 @@ const colors = {
   vulcan: '#12131F',
   mirage: '#181A29',
   howl: '#1E2033',
+  thunder: '#231F20',
   howl_65: 'rgba(30, 32, 51, 0.65)',
   clay: '#24263D',
   valhalla: '#272A42',
