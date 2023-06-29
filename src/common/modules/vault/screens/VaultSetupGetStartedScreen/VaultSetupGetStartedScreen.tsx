@@ -28,23 +28,21 @@ const VaultSetupGetStartedScreen = () => {
   const data = useMemo(() => {
     return [
       {
+        title: 'Setup your Key Store PIN',
         icon: <KeyStoreIcon height={90} />,
-        text: t(
-          'Ambire Key Store will protect your Ambire wallet with email password or external signer on this device.'
-        )
+        text: t('Protect your account passwords or external signers with PIN on this device')
       },
       {
+        title: 'Sign transactions using PIN or biometrics',
         icon: <PasswordIcon height={90} />,
-        text: t(
-          'First, pick your Ambire Key Store passphrase. It is unique for this device and it should be different from your account password.'
-        )
+        text: t('You can unlock wallet and sign transactions using Key Store PIN only')
       },
       {
+        title: 'Your PIN is unique to this device',
         icon: <FingerprintIcon height={90} />,
-        text: t(
-          'You will use your passphrase to unlock the {{name}} and sign transactions on this device.',
-          { name: isWeb ? t('Ambire extension') : t('Ambire Wallet') }
-        )
+        text: t('Use your PIN to unlock Ambire and sign transactions', {
+          name: isWeb ? t('Ambire extension') : t('Ambire Wallet')
+        })
       }
     ]
   }, [t])
@@ -52,18 +50,21 @@ const VaultSetupGetStartedScreen = () => {
   const renderItem = useCallback(({ item }) => {
     const Icon = item.icon
     return (
-      <View
-        style={[
-          !IS_SCREEN_SIZE_S && spacings.phLg,
-          spacings.pvTy,
-          flexbox.alignCenter,
-          { height: IS_SCREEN_SIZE_S ? 275 : 330 }
-        ]}
-      >
-        <View style={spacings.mbSm}>{Icon}</View>
-        <Text fontSize={16} style={[text.center, spacings.ph]}>
-          {item.text}
+      <View style={{ height: IS_SCREEN_SIZE_S ? 350 : 400 }}>
+        <Text
+          weight="medium"
+          color={colors.titan}
+          fontSize={18}
+          style={[text.center, spacings.mbLg]}
+        >
+          {item.title}
         </Text>
+        <View style={[!IS_SCREEN_SIZE_S && spacings.phLg, spacings.pvTy, flexbox.alignCenter]}>
+          <View style={spacings.mbSm}>{Icon}</View>
+          <Text fontSize={16} style={[text.center, spacings.ph]}>
+            {item.text}
+          </Text>
+        </View>
       </View>
     )
   }, [])
@@ -80,16 +81,6 @@ const VaultSetupGetStartedScreen = () => {
         <AmbireLogo />
 
         <View style={[spacings.phTy]}>
-          <Text
-            weight="light"
-            color={colors.titan}
-            fontSize={16}
-            style={[text.center, spacings.mbLg]}
-          >
-            {t('Welcome to the {{name}}. Let’s set up your Key Store passphrase.', {
-              name: isWeb ? t('Ambire Wallet extension') : t('Ambire Wallet')
-            })}
-          </Text>
           <AppIntroSlider
             dotStyle={styles.dotStyle}
             activeDotStyle={styles.activeDotStyle}
