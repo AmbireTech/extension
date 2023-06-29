@@ -23,13 +23,12 @@ const styles = StyleSheet.create<Style>({
     justifyContent: 'center'
   },
   addressInputStyle: {
-    height: 'auto',
+    height: 38,
     fontSize: 16,
     color: colors.white
   },
   addressInputWrapperStyle: {
-    height: 'auto',
-    paddingVertical: 7,
+    height: 40,
     backgroundColor: colors.baileyBells,
     borderBottomColor: colors.white
   }
