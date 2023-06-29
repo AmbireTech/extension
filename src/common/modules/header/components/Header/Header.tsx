@@ -3,17 +3,18 @@ import { TouchableOpacity, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import BurgerIcon from '@common/assets/svg/BurgerIcon'
+import CloseIcon from '@common/assets/svg/CloseIcon'
 import LeftArrowIcon from '@common/assets/svg/LeftArrowIcon'
 import Blockies from '@common/components/Blockies'
 import CopyText from '@common/components/CopyText'
 import NavIconWrapper from '@common/components/NavIconWrapper'
 import NetworkIcon from '@common/components/NetworkIcon'
 import Text from '@common/components/Text'
-import { isiOS } from '@common/config/env'
 import useAccounts from '@common/hooks/useAccounts'
 import useHeaderBottomSheet from '@common/hooks/useHeaderBottomSheet'
 import useNetwork from '@common/hooks/useNetwork'
 import usePrivateMode from '@common/hooks/usePrivateMode'
+import colors from '@common/styles/colors'
 import spacings from '@common/styles/spacings'
 import flexboxStyles from '@common/styles/utils/flexbox'
 import { DrawerHeaderProps } from '@react-navigation/drawer'
@@ -21,10 +22,11 @@ import { getHeaderTitle } from '@react-navigation/elements'
 
 import styles from './styles'
 
-interface Props extends DrawerHeaderProps {
+interface Props extends Partial<DrawerHeaderProps> {
   mode?: 'title' | 'bottom-sheet'
   withHamburger?: boolean
   withHeaderRight?: boolean
+  options?: any
 }
 
 const Header: React.FC<Props> = ({
@@ -42,6 +44,7 @@ const Header: React.FC<Props> = ({
   const { selectedAcc } = useAccounts()
   const { openHeaderAccountsBottomSheet, openHeaderNetworksBottomSheet } = useHeaderBottomSheet()
   const { hidePrivateValue } = usePrivateMode()
+
   const renderBottomSheetSwitcher = (
     <View style={[flexboxStyles.directionRow, flexboxStyles.flex1]}>
       <TouchableOpacity style={styles.switcherContainer} onPress={openHeaderAccountsBottomSheet}>
@@ -70,6 +73,8 @@ const Header: React.FC<Props> = ({
   )
 
   const renderHeaderLeft = () => {
+    if (options.hideHeaderLeft) return <></>
+
     if (typeof options.headerLeft === 'function') {
       return options.headerLeft({})
     }
@@ -92,7 +97,18 @@ const Header: React.FC<Props> = ({
     return null
   }
 
-  const renderHeaderRight = null
+  const renderHeaderRight = () => {
+    if (!withHeaderRight && !options.withHeaderRight) return <></>
+
+    return (
+      <TouchableOpacity
+        onPress={options.onRightHeaderPress ? options.onRightHeaderPress : () => {}}
+        style={styles.closeIcon}
+      >
+        <CloseIcon color={colors.pink} />
+      </TouchableOpacity>
+    )
+  }
 
   // On the left and on the right side, there is always reserved space
   // for the nav bar buttons. And so that in case a title is present,
@@ -119,17 +135,18 @@ const Header: React.FC<Props> = ({
         }
       ]}
     >
-      <View style={navIconContainer}>{renderHeaderLeft()}</View>
+      <View style={[styles.wrapper]}>
+        <View style={navIconContainer}>{renderHeaderLeft()}</View>
 
-      {mode === 'bottom-sheet' && renderBottomSheetSwitcher}
-      {mode === 'title' && (
-        <Text fontSize={18} weight="regular" style={styles.title} numberOfLines={1}>
-          {title}
-        </Text>
-      )}
+        {mode === 'bottom-sheet' && renderBottomSheetSwitcher}
+        {mode === 'title' && (
+          <Text fontSize={18} weight="regular" style={styles.title} numberOfLines={1}>
+            {title}
+          </Text>
+        )}
 
-      {mode === 'title' && !isiOS && <View style={navIconContainer}>{renderHeaderRight}</View>}
-      {isiOS && mode === 'title' && <View style={navIconContainer} />}
+        {mode === 'title' && <View style={navIconContainer}>{renderHeaderRight()}</View>}
+      </View>
     </View>
   )
 }
