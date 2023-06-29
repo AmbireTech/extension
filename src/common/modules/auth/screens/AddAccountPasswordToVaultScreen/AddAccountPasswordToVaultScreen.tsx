@@ -85,15 +85,14 @@ const AddAccountPasswordToVaultScreen = () => {
           </View>
 
           <View style={[isWeb && spacings.ph, flexboxStyles.flex1, flexboxStyles.justifyEnd]}>
-            <Text weight="regular" style={[spacings.mbMi, spacings.phTy]} fontSize={13}>
+            <Text weight="regular" style={[spacings.mbTy, spacings.phTy]} fontSize={14}>
               {t(
-                'When you add your account password to the Key Store, you will be able to sign transactions on this device using your passphrase only.'
+                'Add your account password to the Key Store and you can sign transactions and unlock wallet using PIN only.'
               )}
             </Text>
-            <Text weight="regular" style={[spacings.mb, spacings.phTy]} fontSize={13}>
+            <Text weight="regular" style={[spacings.mb, spacings.phTy]} fontSize={14}>
               {t(
-                'If you reset your passphrase or {{action}}, the Key Store will be removed from the device, however you can still use your account password on any other device.',
-                { action: isWeb ? t('remove the extension') : t('uninstall the app') }
+                'If you delete the app, the Key Store and PIN will be lost, but you can still use your account password on any other device.'
               )}
             </Text>
 
