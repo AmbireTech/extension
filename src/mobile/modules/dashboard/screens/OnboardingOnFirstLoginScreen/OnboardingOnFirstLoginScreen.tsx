@@ -55,7 +55,10 @@ const OnboardingOnFirstLoginScreen = () => {
   const renderItem = useCallback(
     ({ item }) => (
       <SafeAreaView style={[{ backgroundColor: item.backgroundColor }, flexbox.flex1]}>
-        <AmbireLogoHorizontal style={[flexbox.alignSelfCenter, spacings.mtSm]} />
+        <AmbireLogoHorizontal
+          color={colors.thunder}
+          style={[flexbox.alignSelfCenter, spacings.mtSm]}
+        />
         <Text weight="semiBold" color={item.titleTextColor} fontSize={40} style={styles.titleText}>
           {item.titleText}
         </Text>
@@ -107,7 +110,10 @@ const OnboardingOnFirstLoginScreen = () => {
       return (
         <View style={[StyleSheet.absoluteFill, styles.fallbackBackground]}>
           <SafeAreaView style={[flexbox.flex1, spacings.mhLg]}>
-            <AmbireLogoHorizontal style={[flexbox.alignSelfCenter, spacings.mtSm, spacings.mbLg]} />
+            <AmbireLogoHorizontal
+              color={colors.thunder}
+              style={[flexbox.alignSelfCenter, spacings.mtSm, spacings.mbLg]}
+            />
             <View style={[flexbox.flex1, flexbox.justifyCenter]}>
               <AnimatedLottieView
                 style={[{ width: 173, height: 173 }, flexbox.alignSelfCenter]}
