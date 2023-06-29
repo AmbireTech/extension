@@ -1,5 +1,5 @@
 import usePrevious from 'ambire-common/src/hooks/usePrevious'
-import React, { useEffect, useLayoutEffect } from 'react'
+import React, { useEffect, useLayoutEffect, useRef } from 'react'
 import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
@@ -46,6 +46,7 @@ const PendingTransactionsScreen = ({
   const { account } = useAccounts()
   const { network } = useNetwork()
   const { currentAccGasTankState } = useGasTank()
+  const preventNavToDashboard = useRef(false)
   const {
     ref: hardwareWalletSheetRef,
     open: hardwareWalletOpenBottomSheet,
@@ -119,8 +120,10 @@ const PendingTransactionsScreen = ({
           })
         }
         !!closeBottomSheet && closeBottomSheet()
-      } else {
+      } else if (!preventNavToDashboard.current) {
         navigation.navigate(ROUTES.dashboard)
+      } else {
+        navigation.goBack()
       }
     }
   })
@@ -246,7 +249,10 @@ const PendingTransactionsScreen = ({
             textDecorationLine: 'underline',
             color: colors.pink
           }}
-          cancelOnPress={rejectTxn}
+          cancelOnPress={() => {
+            preventNavToDashboard.current = true
+            rejectTxn()
+          }}
         >
           <Text style={spacings.pv} fontSize={16} weight="regular">
             {t(

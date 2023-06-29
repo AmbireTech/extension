@@ -13,6 +13,7 @@ import Panel from '@common/components/Panel'
 import Text from '@common/components/Text'
 import Title from '@common/components/Title'
 import { isWeb } from '@common/config/env'
+import useNavigation from '@common/hooks/useNavigation'
 import colors from '@common/styles/colors'
 import spacings from '@common/styles/spacings'
 import flexboxStyles from '@common/styles/utils/flexbox'
@@ -49,7 +50,7 @@ const SignActions = ({
     }
   })
   const { t } = useTranslation()
-
+  const { goBack } = useNavigation()
   // reset this every time the signing status changes
   useEffect(() => {
     !signingStatus && resetField('code')
@@ -193,16 +194,13 @@ const SignActions = ({
           </View>
         )
       }
-      <View style={styles.buttonsContainer}>
-        {!!rejectTxn && <View style={styles.buttonWrapper}>{rejectButton}</View>}
-        <View style={styles.buttonWrapper}>
-          <Button
-            text={t('Sign')}
-            onPress={handleRequestSignConfirmation}
-            disabled={!estimation || !!signingStatus}
-          />
-        </View>
-      </View>
+
+      <Button
+        text={t('Sign Now')}
+        onPress={handleRequestSignConfirmation}
+        disabled={!estimation || !!signingStatus}
+      />
+      <Button text={t('Add to cart')} type="outline" onPress={goBack} hasBottomSpacing={false} />
     </Panel>
   )
 }
