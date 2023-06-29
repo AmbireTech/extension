@@ -23,6 +23,7 @@ import SigningWithAccount from '@common/modules/pending-transactions/components/
 import TransactionSummary from '@common/modules/pending-transactions/components/TransactionSummary'
 import useSendTransaction from '@common/modules/pending-transactions/hooks/useSendTransaction'
 import { ROUTES } from '@common/modules/router/constants/common'
+import colors from '@common/styles/colors'
 import spacings from '@common/styles/spacings'
 import flexboxStyles from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
@@ -49,6 +50,11 @@ const PendingTransactionsScreen = ({
     ref: hardwareWalletSheetRef,
     open: hardwareWalletOpenBottomSheet,
     close: hardwareWalletCloseBottomSheet
+  } = useModalize()
+  const {
+    ref: rejectTxnSheetRef,
+    open: rejectTxnOpenBottomSheet,
+    close: rejectTxnCloseBottomSheet
   } = useModalize()
 
   if (getUiType().isNotification) {
@@ -80,10 +86,13 @@ const PendingTransactionsScreen = ({
   useLayoutEffect(() => {
     if (!isInBottomSheet) {
       navigation?.setOptions({
-        headerTitle: t('Pending Transactions: {{numTxns}}', { numTxns: bundle?.txns?.length })
+        headerTitle: t('Pending Transactions: {{numTxns}}', { numTxns: bundle?.txns?.length }),
+        withHeaderRight: true,
+        hideHeaderLeft: true,
+        onRightHeaderPress: rejectTxnOpenBottomSheet
       })
     }
-  }, [navigation, bundle?.txns?.length, t, isInBottomSheet])
+  }, [navigation, bundle?.txns?.length, t, isInBottomSheet, rejectTxnOpenBottomSheet])
 
   useEffect(() => {
     return () => {
@@ -225,6 +234,29 @@ const PendingTransactionsScreen = ({
             }}
             shouldWrap={false}
           />
+        </BottomSheet>
+        <BottomSheet
+          id="close-txn-bottom-sheet"
+          sheetRef={rejectTxnSheetRef}
+          closeBottomSheet={() => {
+            rejectTxnCloseBottomSheet()
+          }}
+          cancelText={t('Reject')}
+          cancelTextStyles={{
+            textDecorationLine: 'underline',
+            color: colors.pink
+          }}
+          cancelOnPress={rejectTxn}
+        >
+          <Text style={spacings.pv} fontSize={16} weight="regular">
+            {t(
+              'You can add more transactions to your cart and sign them all together (thus saving on network fees)'
+            )}
+          </Text>
+          <Text fontSize={16} weight="regular" style={[spacings.pbTy, spacings.mbLg]}>
+            {t('Alternatively, you can reject transaction.')}
+          </Text>
+          <Button text={t('Add to cart')} type="outline" onPress={() => navigation.goBack()} />
         </BottomSheet>
       </Wrapper>
     </GradientWrapper>

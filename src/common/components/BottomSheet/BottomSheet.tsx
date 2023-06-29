@@ -1,7 +1,7 @@
 import usePrevious from 'ambire-common/src/hooks/usePrevious'
 import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { BackHandler, View, ViewStyle } from 'react-native'
+import { BackHandler, TextStyle, View, ViewStyle } from 'react-native'
 import { Modalize, ModalizeProps } from 'react-native-modalize'
 
 import Button from '@common/components/Button'
@@ -22,6 +22,8 @@ interface Props {
   children?: React.ReactNode
   // Preferences
   cancelText?: string
+  cancelTextStyles?: TextStyle
+  cancelOnPress?: () => void
   displayCancel?: boolean
   adjustToContentHeight?: boolean
   style?: ViewStyle
@@ -38,6 +40,8 @@ const BottomSheet: React.FC<Props> = ({
   children,
   displayCancel = true,
   cancelText: _cancelText,
+  cancelTextStyles = {},
+  cancelOnPress,
   closeBottomSheet = () => {},
   adjustToContentHeight = !isWeb,
   style = {},
@@ -143,8 +147,9 @@ const BottomSheet: React.FC<Props> = ({
             {displayCancel && (
               <Button
                 type="ghost"
-                onPress={closeBottomSheet}
-                style={styles.cancelBtn}
+                onPress={cancelOnPress || closeBottomSheet}
+                style={[styles.cancelBtn]}
+                textStyle={cancelTextStyles}
                 text={_cancelText || (t('Cancel') as string)}
                 hitSlop={{ top: 15, bottom: 15 }}
               />

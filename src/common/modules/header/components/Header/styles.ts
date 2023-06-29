@@ -11,30 +11,35 @@ export const HEADER_HEIGHT = Platform.select({
 
 interface Styles {
   container: ViewStyle
+  wrapper: ViewStyle
   navIconContainerRegular: ViewStyle
   navIconContainerSmall: ViewStyle
   title: TextStyle
   switcherContainer: ViewStyle
   headerNetworkIcon: ViewStyle
   networkIcon: ViewStyle
+  closeIcon: ViewStyle
 }
 
 const styles = StyleSheet.create<Styles>({
   container: {
-    paddingBottom: 15,
-    flexDirection: 'row',
     backgroundColor: colors.wooed,
-    alignItems: 'center',
-    paddingHorizontal: 20,
     ...(isWeb ? { height: 80 } : {})
+  },
+  wrapper: {
+    paddingHorizontal: 20,
+    paddingBottom: 15,
+    flexDirection: 'row'
   },
   navIconContainerRegular: {
     width: 40,
-    alignItems: 'center'
+    alignItems: 'center',
+    justifyContent: 'center'
   },
   navIconContainerSmall: {
     width: 24,
-    alignItems: 'center'
+    alignItems: 'center',
+    justifyContent: 'center'
   },
   title: {
     textAlign: 'center',
@@ -67,6 +72,15 @@ const styles = StyleSheet.create<Styles>({
     height: 40,
     backgroundColor: colors.clay,
     ...commonStyles.borderRadiusPrimary
+  },
+  closeIcon: {
+    ...commonStyles.borderRadiusPrimary,
+    borderWidth: 1,
+    borderColor: colors.pink,
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center'
   }
 })
 
