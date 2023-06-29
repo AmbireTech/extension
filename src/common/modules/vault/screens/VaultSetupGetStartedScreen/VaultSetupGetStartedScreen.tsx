@@ -40,9 +40,7 @@ const VaultSetupGetStartedScreen = () => {
       {
         title: 'Your PIN is unique to this device',
         icon: <FingerprintIcon height={90} />,
-        text: t('Use your PIN to unlock Ambire and sign transactions', {
-          name: isWeb ? t('Ambire extension') : t('Ambire Wallet')
-        })
+        text: t('Use your PIN to unlock Ambire and sign transactions')
       }
     ]
   }, [t])
