@@ -98,6 +98,8 @@ const Header: React.FC<Props> = ({
   }
 
   const renderHeaderRight = () => {
+    if (!withHeaderRight && !options.withHeaderRight) return <></>
+
     return (
       <TouchableOpacity
         onPress={options.onRightHeaderPress ? options.onRightHeaderPress : () => {}}
@@ -143,9 +145,7 @@ const Header: React.FC<Props> = ({
           </Text>
         )}
 
-        {mode === 'title' && (withHeaderRight || options.withHeaderRight) && (
-          <View style={navIconContainer}>{renderHeaderRight()}</View>
-        )}
+        {mode === 'title' && <View style={navIconContainer}>{renderHeaderRight()}</View>}
       </View>
     </View>
   )
