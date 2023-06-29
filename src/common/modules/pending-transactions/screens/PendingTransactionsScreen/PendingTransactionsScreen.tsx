@@ -250,7 +250,7 @@ const PendingTransactionsScreen = ({
         >
           <Text style={spacings.pv} fontSize={16} weight="regular">
             {t(
-              'You can add more transactions to your cart and sign them all together (thus saving on network fees)'
+              'You can add more transactions to your cart and sign them all together (thus saving on network fees).'
             )}
           </Text>
           <Text fontSize={16} weight="regular" style={[spacings.pbTy, spacings.mbLg]}>
