@@ -1,28 +1,30 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { StyleSheet, TouchableHighlight, View } from 'react-native'
+import { useTranslation } from 'react-i18next'
+import { StyleSheet, View } from 'react-native'
 import ErrorBoundary from 'react-native-error-boundary'
 import { WebView, WebViewNavigation } from 'react-native-webview'
 
 import GradientBackgroundWrapper from '@common/components/GradientBackgroundWrapper'
-import Input from '@common/components/Input'
 import Spinner from '@common/components/Spinner'
 import Wrapper from '@common/components/Wrapper'
-import colors from '@common/styles/colors'
+import useNavigation from '@common/hooks/useNavigation'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { AntDesign } from '@expo/vector-icons'
+import BrowserNavigationToolbar from '@mobile/modules/web3/components/BrowserNavigationToolbar'
 import useWeb3 from '@mobile/modules/web3/hooks/useWeb3'
 import useGetProviderInjection from '@mobile/modules/web3/services/webview-inpage/injection-script'
 
 import styles from './styles'
 
-const HIT_SLOP = { bottom: 15, left: 5, right: 5, top: 15 }
-
 const Web3BrowserScreen = () => {
+  const { t } = useTranslation()
+  const { goBack } = useNavigation()
   const webViewRef = useRef<WebView | null>(null)
   const [canGoBack, setCanGoBack] = useState(false)
   const [canGoForward, setCanGoForward] = useState(false)
   const [openedUrl, setOpenedUrl] = useState('')
+  // Keeps track of what the user is currently typing in the address bar
+  const [addressBarValue, setAddressBarValue] = useState('')
 
   const { selectedDappUrl, setWeb3ViewRef, handleWeb3Request, setSelectedDapp } = useWeb3()
   const { script: providerToInject } = useGetProviderInjection()
@@ -51,8 +53,11 @@ const Web3BrowserScreen = () => {
     setCanGoForward(navState.canGoForward)
     if (navState.url !== 'about:blank') {
       setOpenedUrl(navState.url)
+      setAddressBarValue(navState.url)
     }
   }, [])
+
+  const handleInputSubmit = useCallback(() => setOpenedUrl(addressBarValue), [addressBarValue])
 
   if (!selectedDappUrl) {
     return (
@@ -68,58 +73,20 @@ const Web3BrowserScreen = () => {
     <ErrorBoundary>
       <GradientBackgroundWrapper>
         <Wrapper style={spacings.ph0} hasBottomTabNav>
-          <View
-            style={[
-              flexbox.directionRow,
-              flexbox.alignCenter,
-              spacings.pbTy,
-              spacings.prSm,
-              spacings.plSm
-            ]}
-          >
-            <TouchableHighlight
-              hitSlop={HIT_SLOP}
-              onPress={webViewRef.current?.goBack}
-              style={[styles.webviewButtonCommon, styles.left]}
-              disabled={!canGoBack}
-              underlayColor={colors.heliotrope}
-            >
-              <AntDesign
-                color={canGoBack ? colors.white : colors.titan_50}
-                name="left"
-                size={24}
-                spot
-              />
-            </TouchableHighlight>
-            <TouchableHighlight
-              hitSlop={HIT_SLOP}
-              onPress={webViewRef.current?.goForward}
-              style={[styles.webviewButtonCommon, styles.right]}
-              disabled={!canGoForward}
-              underlayColor={colors.heliotrope}
-            >
-              <AntDesign
-                color={canGoForward ? colors.white : colors.titan_50}
-                name="right"
-                size={24}
-              />
-            </TouchableHighlight>
-            <Input
-              containerStyle={[flexbox.flex1, spacings.mb0]}
-              disabled
-              inputStyle={styles.addressInputStyle}
-              inputWrapperStyle={styles.addressInputWrapperStyle}
-              value={openedUrl}
-            />
-            <TouchableHighlight
-              hitSlop={HIT_SLOP}
-              onPress={webViewRef.current?.reload}
-              style={[styles.webviewButtonCommon, styles.reload]}
-              underlayColor={colors.heliotrope}
-            >
-              <AntDesign name="reload1" size={22} color={colors.white} />
-            </TouchableHighlight>
-          </View>
+          <BrowserNavigationToolbar
+            canGoHome
+            canReload
+            canGoBack={canGoBack}
+            canGoForward={canGoForward}
+            onGoHome={goBack}
+            onGoBack={webViewRef.current?.goBack}
+            onGoForward={webViewRef.current?.goForward}
+            onReload={webViewRef.current?.reload}
+            addressBarValue={addressBarValue}
+            addressBarPlaceholder={t('Type URL')}
+            onChangeAddressBarValue={setAddressBarValue}
+            onSubmitEditingAddressBar={handleInputSubmit}
+          />
           <WebView
             ref={webViewRef}
             source={providerToInject ? { uri: openedUrl || selectedDappUrl } : { html: '' }}
