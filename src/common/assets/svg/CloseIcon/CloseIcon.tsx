@@ -7,7 +7,7 @@ import colors from '@common/styles/colors'
 interface Props extends SvgProps {
   width?: number
   height?: number
-  color: ColorValue
+  color?: ColorValue
 }
 
 const CloseIcon: React.FC<Props> = ({ width = 40, height = 40, color }) => (
