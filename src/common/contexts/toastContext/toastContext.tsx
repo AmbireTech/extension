@@ -3,6 +3,7 @@ import {
   UseToastsOptions,
   UseToastsReturnType as UseToastsReturnTypeCommon
 } from 'ambire-common/src/hooks/useToasts'
+import LottieView from 'lottie-react-native'
 import React, { useCallback, useMemo, useState } from 'react'
 import { Linking, TouchableOpacity, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
@@ -18,10 +19,11 @@ import { HEADER_HEIGHT } from '@common/modules/header/components/Header/styles'
 import colors from '@common/styles/colors'
 import spacings, { SPACING_MD, SPACING_TY } from '@common/styles/spacings'
 import flexboxStyles from '@common/styles/utils/flexbox'
-import textUtils from '@common/styles/utils/text'
+import textStyles from '@common/styles/utils/text'
 import { Portal } from '@gorhom/portal'
 
 import styles from './styles'
+import SuccessAnimation from './success-animation.json'
 
 // Magic spacing for positioning the toast list
 // to match exactly the area of the header + its bottom spacing
@@ -148,8 +150,9 @@ const ToastProvider: React.FC = ({ children }) => {
         closeBottomSheet={closeBottomSheet}
         displayCancel={false}
       >
-        <View style={[spacings.phLg, spacings.pv]}>
-          <Text fontSize={16} weight="regular" style={textUtils.center}>
+        <View style={[spacings.phLg, spacings.pt, spacings.pbLg, flexboxStyles.alignCenter]}>
+          <LottieView source={SuccessAnimation} style={{ width: 193, height: 193 }} autoPlay loop />
+          <Text fontSize={16} weight="regular" style={[textStyles.center, spacings.mb]}>
             {bottomSheetText}
           </Text>
         </View>
