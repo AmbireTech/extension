@@ -70,7 +70,7 @@ const RequestsProvider: React.FC = ({ children }) => {
   const { network }: any = useNetwork()
   const { navigate } = useNavigation()
   const { vaultStatus } = useVault()
-  const { addToast } = useToast()
+  const { addToast, addBottomSheet } = useToast()
   const { t } = useTranslation()
 
   const { requests: gnosisRequests, resolveMany: gnosisResolveMany } = useGnosisSafe()
@@ -165,12 +165,9 @@ const RequestsProvider: React.FC = ({ children }) => {
         return
       }
       setSentTxn((txn: any) => [...txn, { confirmed: false, hash }])
-      addToast(t('Transaction signed and sent successfully!') as string, {
-        onClick: () => navigate(ROUTES.transactions),
-        timeout: 15000
-      })
+      addBottomSheet({ text: t('Transaction signed and sent successfully!') })
     },
-    [addToast, t, navigate]
+    [addBottomSheet, t, addToast]
   )
 
   const confirmSentTx = useCallback(
