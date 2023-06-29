@@ -1,17 +1,24 @@
-import { ToastType, UseToastsOptions, UseToastsReturnType } from 'ambire-common/src/hooks/useToasts'
+import {
+  ToastType,
+  UseToastsOptions,
+  UseToastsReturnType as UseToastsReturnTypeCommon
+} from 'ambire-common/src/hooks/useToasts'
 import React, { useCallback, useMemo, useState } from 'react'
 import { Linking, TouchableOpacity, View } from 'react-native'
+import { useModalize } from 'react-native-modalize'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import CheckIcon from '@common/assets/svg/CheckIcon'
 import CloseIconRound from '@common/assets/svg/CloseIconRound'
 import ErrorIcon from '@common/assets/svg/ErrorIcon'
+import BottomSheet from '@common/components/BottomSheet'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
 import { HEADER_HEIGHT } from '@common/modules/header/components/Header/styles'
 import colors from '@common/styles/colors'
 import spacings, { SPACING_MD, SPACING_TY } from '@common/styles/spacings'
 import flexboxStyles from '@common/styles/utils/flexbox'
+import textUtils from '@common/styles/utils/text'
 import { Portal } from '@gorhom/portal'
 
 import styles from './styles'
@@ -21,8 +28,13 @@ import styles from './styles'
 const ADDITIONAL_TOP_SPACING_MOBILE = SPACING_TY
 const ADDITIONAL_TOP_SPACING_WEB = SPACING_MD
 
+interface UseToastsReturnType extends UseToastsReturnTypeCommon {
+  addBottomSheet: ({ text }: { text: string }) => void
+}
+
 const ToastContext = React.createContext<UseToastsReturnType>({
   addToast: () => -1,
+  addBottomSheet: () => {},
   removeToast: () => {}
 })
 
@@ -37,6 +49,16 @@ let id = 0
 const ToastProvider: React.FC = ({ children }) => {
   const [toasts, setToasts] = useState<ToastType[]>([])
   const insets = useSafeAreaInsets()
+  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
+  const [bottomSheetText, setBottomSheetText] = useState('')
+
+  const addBottomSheet = useCallback<UseToastsReturnType['addBottomSheet']>(
+    ({ text }) => {
+      setBottomSheetText(text)
+      openBottomSheet()
+    },
+    [openBottomSheet]
+  )
 
   const removeToast = useCallback<UseToastsReturnType['removeToast']>((tId) => {
     setToasts((_toasts) => _toasts.filter((_t) => _t.id !== tId))
@@ -78,9 +100,10 @@ const ToastProvider: React.FC = ({ children }) => {
       value={useMemo(
         () => ({
           addToast,
-          removeToast
+          removeToast,
+          addBottomSheet
         }),
-        [addToast, removeToast]
+        [addToast, removeToast, addBottomSheet]
       )}
     >
       <Portal hostName="global">
@@ -119,6 +142,18 @@ const ToastProvider: React.FC = ({ children }) => {
         </View>
       </Portal>
       {children}
+      <BottomSheet
+        id={`toast-bottom-sheet-${id}`}
+        sheetRef={sheetRef}
+        closeBottomSheet={closeBottomSheet}
+        displayCancel={false}
+      >
+        <View style={[spacings.phLg, spacings.pv]}>
+          <Text fontSize={16} weight="regular" style={textUtils.center}>
+            {bottomSheetText}
+          </Text>
+        </View>
+      </BottomSheet>
     </ToastContext.Provider>
   )
 }
