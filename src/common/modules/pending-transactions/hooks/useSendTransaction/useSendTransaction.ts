@@ -216,10 +216,19 @@ const useSendTransaction = ({ hardwareWalletOpenBottomSheet }: Props) => {
             }
           })
           if (currentAccGasTankState.isEnabled) {
-            estimation.remainingFeeTokenBalances = [
+            // Combine the fee tokens and gas tank tokens, since in v3.11.0
+            // both should be visible in the fee selector.
+            const nextCombinedRemainingFeeTokenBalances = [
               ...(estimation.remainingFeeTokenBalances || []),
               ...(gasTankTokens || [])
             ]
+
+            // In case there are no eligible tokens fallback to `gasTankTokens`,
+            // which also covers the case when a transaction is meant to fail
+            // (the `remainingFeeTokenBalances` being empty array breaks the logic)
+            estimation.remainingFeeTokenBalances = nextCombinedRemainingFeeTokenBalances.length
+              ? nextCombinedRemainingFeeTokenBalances
+              : gasTankTokens
           }
           estimation.selectedFeeToken = getDefaultFeeToken(
             estimation.remainingFeeTokenBalances,
