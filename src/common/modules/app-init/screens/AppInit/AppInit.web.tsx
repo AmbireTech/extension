@@ -5,7 +5,6 @@ import React from 'react'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { BrowserRouter, HashRouter } from 'react-router-dom'
 
-import AttentionGrabberProvider from '@common/components/AttentionGrabber'
 import { AccountsProvider } from '@common/contexts/accountsContext'
 import { AddressBookProvider } from '@common/contexts/addressBookContext'
 import { AmbireExtensionProvider } from '@common/contexts/ambireExtensionContext'
@@ -71,17 +70,15 @@ const AppInit = () => {
                                           <RequestsProvider>
                                             <BiometricsProvider>
                                               <AddressBookProvider>
-                                                <AttentionGrabberProvider>
-                                                  <PrivateModeProvider>
-                                                    <GasTankProvider>
-                                                      <HeaderBottomSheetProvider>
-                                                        <LinkingProvider>
-                                                          <AppRouter />
-                                                        </LinkingProvider>
-                                                      </HeaderBottomSheetProvider>
-                                                    </GasTankProvider>
-                                                  </PrivateModeProvider>
-                                                </AttentionGrabberProvider>
+                                                <PrivateModeProvider>
+                                                  <GasTankProvider>
+                                                    <HeaderBottomSheetProvider>
+                                                      <LinkingProvider>
+                                                        <AppRouter />
+                                                      </LinkingProvider>
+                                                    </HeaderBottomSheetProvider>
+                                                  </GasTankProvider>
+                                                </PrivateModeProvider>
                                                 <PortalHost name="global" />
                                               </AddressBookProvider>
                                             </BiometricsProvider>

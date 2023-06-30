@@ -4,7 +4,6 @@ import { areRpcProvidersInitialized, initRpcProviders } from 'ambire-common/src/
 import React from 'react'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 
-import AttentionGrabberProvider from '@common/components/AttentionGrabber'
 import { AccountsProvider } from '@common/contexts/accountsContext'
 import { AddressBookProvider } from '@common/contexts/addressBookContext'
 import { BiometricsProvider } from '@common/contexts/biometricsContext'
@@ -78,15 +77,13 @@ const AppInit = () => {
                                         <RequestsProvider>
                                           <BiometricsProvider>
                                             <AddressBookProvider>
-                                              <AttentionGrabberProvider>
-                                                <PrivateModeProvider>
-                                                  <HeaderBottomSheetProvider>
-                                                    <LinkingProvider>
-                                                      <AppRouter />
-                                                    </LinkingProvider>
-                                                  </HeaderBottomSheetProvider>
-                                                </PrivateModeProvider>
-                                              </AttentionGrabberProvider>
+                                              <PrivateModeProvider>
+                                                <HeaderBottomSheetProvider>
+                                                  <LinkingProvider>
+                                                    <AppRouter />
+                                                  </LinkingProvider>
+                                                </HeaderBottomSheetProvider>
+                                              </PrivateModeProvider>
                                               <PortalHost name="global" />
                                             </AddressBookProvider>
                                           </BiometricsProvider>
