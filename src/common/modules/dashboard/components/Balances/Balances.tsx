@@ -29,8 +29,6 @@ import styles from './styles'
 const networkDetails = (network: any) => networks.find(({ id }) => id === network)
 
 interface Props {
-  balanceTruncated: any
-  balanceDecimals: any
   allBalances: UsePortfolioReturnType['allBalances']
   networkId?: NetworkId
   account: UseAccountsReturnType['selectedAcc']
