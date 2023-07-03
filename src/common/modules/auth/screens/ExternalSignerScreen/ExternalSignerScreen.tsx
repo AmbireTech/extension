@@ -1,6 +1,7 @@
 import React, { useLayoutEffect, useState } from 'react'
 import { Keyboard, LayoutAnimation, TouchableWithoutFeedback, View } from 'react-native'
 
+import AmbireLogoHorizontal from '@common/components/AmbireLogoHorizontal'
 import GradientBackgroundWrapper from '@common/components/GradientBackgroundWrapper'
 import Segments from '@common/components/Segments'
 import Wrapper, { WRAPPER_TYPES } from '@common/components/Wrapper'
@@ -12,6 +13,8 @@ import RecoveryPhraseForm from '@common/modules/auth/components/RecoveryPhraseFo
 import { triggerLayoutAnimation } from '@common/services/layoutAnimation'
 import spacings from '@common/styles/spacings'
 import flexboxStyles from '@common/styles/utils/flexbox'
+
+import styles from './styles'
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export enum FORM_TYPE {
@@ -47,7 +50,8 @@ const ExternalSignerScreen = () => {
           type={WRAPPER_TYPES.KEYBOARD_AWARE_SCROLL_VIEW}
           extraHeight={220}
         >
-          <View style={[spacings.mbLg, spacings.ph, flexboxStyles.flex1, flexboxStyles.justifyEnd]}>
+          <AmbireLogoHorizontal width={132} height={60} style={styles.horizontalLogo} />
+          <View style={[spacings.mbLg, spacings.ph]}>
             <Segments
               defaultValue={formType}
               segments={segments}
