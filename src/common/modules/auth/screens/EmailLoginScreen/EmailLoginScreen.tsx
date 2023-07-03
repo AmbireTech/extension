@@ -1,6 +1,7 @@
 import React, { useLayoutEffect, useState } from 'react'
 import { Keyboard, LayoutAnimation, TouchableWithoutFeedback, View } from 'react-native'
 
+import AmbireLogoHorizontal from '@common/components/AmbireLogoHorizontal'
 import GradientBackgroundWrapper from '@common/components/GradientBackgroundWrapper'
 import Segments from '@common/components/Segments'
 import Text from '@common/components/Text'
@@ -15,6 +16,8 @@ import { triggerLayoutAnimation } from '@common/services/layoutAnimation'
 import colors from '@common/styles/colors'
 import spacings from '@common/styles/spacings'
 import flexboxStyles from '@common/styles/utils/flexbox'
+
+import styles from './styles'
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export enum FORM_TYPE {
@@ -47,10 +50,9 @@ const EmailLoginScreen = () => {
           type={WRAPPER_TYPES.KEYBOARD_AWARE_SCROLL_VIEW}
           extraHeight={220}
         >
-          <View style={[flexboxStyles.flex1, flexboxStyles.justifyEnd]}>
-            {formType === FORM_TYPE.EMAIL_LOGIN && <EmailLoginForm />}
-            {formType === FORM_TYPE.CREATE_ACCOUNT && <CreateAccountForm />}
-          </View>
+          <AmbireLogoHorizontal width={132} height={60} style={styles.horizontalLogo} />
+          {formType === FORM_TYPE.EMAIL_LOGIN && <EmailLoginForm />}
+          {formType === FORM_TYPE.CREATE_ACCOUNT && <CreateAccountForm />}
           {formType === FORM_TYPE.CREATE_ACCOUNT && (
             <Text
               onPress={() => {
