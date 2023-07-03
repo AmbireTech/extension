@@ -50,11 +50,9 @@ const EmailLoginScreen = () => {
           type={WRAPPER_TYPES.KEYBOARD_AWARE_SCROLL_VIEW}
           extraHeight={220}
         >
-          <View style={flexboxStyles.flex1}>
-            <AmbireLogoHorizontal width={132} height={60} style={styles.horizontalLogo} />
-            {formType === FORM_TYPE.EMAIL_LOGIN && <EmailLoginForm />}
-            {formType === FORM_TYPE.CREATE_ACCOUNT && <CreateAccountForm />}
-          </View>
+          <AmbireLogoHorizontal width={132} height={60} style={styles.horizontalLogo} />
+          {formType === FORM_TYPE.EMAIL_LOGIN && <EmailLoginForm />}
+          {formType === FORM_TYPE.CREATE_ACCOUNT && <CreateAccountForm />}
           {formType === FORM_TYPE.CREATE_ACCOUNT && (
             <Text
               onPress={() => {
