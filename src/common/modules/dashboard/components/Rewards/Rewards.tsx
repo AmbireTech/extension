@@ -193,7 +193,7 @@ const Rewards = () => {
         </View>
         <View style={[flexboxStyles.flex1]}>
           <Text fontSize={16} numberOfLines={1}>
-            {hidePrivateValue(t('Wallet Rewards'))}
+            {t('$WALLET Rewards')}
           </Text>
           <Text style={textStyles.highlightPrimary}>
             ${hidePrivateValue(renderRewardsButtonText())}
