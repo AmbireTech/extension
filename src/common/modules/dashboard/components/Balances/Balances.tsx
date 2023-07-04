@@ -137,13 +137,13 @@ const Balances = ({
           <Text weight="regular" fontSize={14} style={styles.buttonText}>
             {t('Send')}
           </Text>
-          <SendIcon style={styles.buttonIcon} />
+          <SendIcon />
         </TouchableOpacity>
         <TouchableOpacity onPress={handleGoToReceive} activeOpacity={0.8} style={styles.button}>
           <Text weight="regular" fontSize={14} style={styles.buttonText}>
             {t('Receive')}
           </Text>
-          <ReceiveIcon style={styles.buttonIcon} />
+          <ReceiveIcon />
         </TouchableOpacity>
       </View>
 
