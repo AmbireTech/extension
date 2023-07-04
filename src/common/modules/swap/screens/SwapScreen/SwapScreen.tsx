@@ -1,7 +1,7 @@
 import usePrevious from 'ambire-common/src/hooks/usePrevious'
-import React, { useEffect, useState } from 'react'
-import { View } from 'react-native'
-import WebView from 'react-native-webview'
+import React, { useCallback, useEffect, useState } from 'react'
+import { Linking, View } from 'react-native'
+import WebView, { WebViewNavigation } from 'react-native-webview'
 
 import GradientBackgroundWrapper from '@common/components/GradientBackgroundWrapper'
 import Spinner from '@common/components/Spinner'
@@ -94,6 +94,18 @@ const SwapScreen = () => {
     }
   }, [loading])
 
+  const handleOnShouldStartLoadWithRequest = useCallback((navState: WebViewNavigation) => {
+    if (navState.url !== 'about:blank' && navState.url !== SWAP_URL) {
+      Linking.openURL(navState.url)
+
+      // Prevent the WebView from navigating to the new URL
+      return false
+    }
+
+    // Allow allowed URLs to be loaded in WebView
+    return true
+  }, [])
+
   return (
     <GradientBackgroundWrapper>
       <Wrapper hasBottomTabNav style={spacings.ph0} scrollEnabled={false}>
@@ -113,6 +125,7 @@ const SwapScreen = () => {
           scrollEnabled
           nestedScrollEnabled
           cacheEnabled={false}
+          onShouldStartLoadWithRequest={handleOnShouldStartLoadWithRequest}
           renderLoading={() => (
             <View style={styles.loadingWrapper}>
               <Spinner />
