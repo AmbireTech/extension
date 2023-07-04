@@ -165,7 +165,10 @@ const RequestsProvider: React.FC = ({ children }) => {
         return
       }
       setSentTxn((txn: any) => [...txn, { confirmed: false, hash }])
-      addBottomSheet({ text: t('Transaction signed and sent successfully!') })
+      addBottomSheet({
+        text: t('You successfully signed and sent your transaction!'),
+        buttonText: t('Woo-hoo!')
+      })
     },
     [addBottomSheet, t, addToast]
   )
