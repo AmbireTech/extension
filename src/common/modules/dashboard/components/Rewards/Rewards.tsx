@@ -196,7 +196,7 @@ const Rewards = () => {
             {t('$WALLET Rewards')}
           </Text>
           <Text style={textStyles.highlightPrimary}>
-            ${hidePrivateValue(renderRewardsButtonText())}
+            {hidePrivateValue(renderRewardsButtonText())}
           </Text>
         </View>
 
