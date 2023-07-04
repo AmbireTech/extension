@@ -14,7 +14,7 @@ import useNetwork from '@common/hooks/useNetwork'
 import useRoute from '@common/hooks/useRoute'
 import useToast from '@common/hooks/useToast'
 import PendingTransactionsScreen from '@common/modules/pending-transactions/screens/PendingTransactionsScreen'
-import { ROUTES } from '@common/modules/router/constants/common'
+import { MOBILE_ROUTES, ROUTES } from '@common/modules/router/constants/common'
 import SignMessageScreen from '@common/modules/sign-message/screens/SignMessageScreen'
 import { VAULT_STATUS } from '@common/modules/vault/constants/vaultStatus'
 import useVault from '@common/modules/vault/hooks/useVault'
@@ -281,8 +281,18 @@ const RequestsProvider: React.FC = ({ children }) => {
           ) {
             openBottomSheetSendTxn()
           } else {
-            const shouldNavigate = path !== ROUTES.ambireAccountLoginPasswordConfirm
-            if (shouldNavigate) {
+            const shouldNavigateToPendingTransaction = ![
+              // Skip navigating if user is in the middle of adding another acc
+              `${MOBILE_ROUTES.auth}-screen`,
+              `${MOBILE_ROUTES.ambireAccountJsonLogin}-screen`,
+              `${MOBILE_ROUTES.ambireAccountLogin}-screen`,
+              MOBILE_ROUTES.ambireAccountLoginPasswordConfirm,
+              MOBILE_ROUTES.ambireAccountJsonLoginPasswordConfirm,
+              MOBILE_ROUTES.hardwareWallet,
+              MOBILE_ROUTES.externalSigner
+            ].includes(path || '')
+
+            if (shouldNavigateToPendingTransaction) {
               navigate(ROUTES.pendingTransactions)
             }
           }
