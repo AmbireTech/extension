@@ -104,7 +104,7 @@ const Balances = ({
         <Text
           fontSize={42}
           weight="regular"
-          style={[spacings.mtTy, spacings.mbMd]}
+          style={[spacings.mtTy, spacings.mbMd, { lineHeight: 60 }]}
           onPress={togglePrivateMode}
         >
           <Text fontSize={26} weight="regular">
