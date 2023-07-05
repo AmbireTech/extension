@@ -134,7 +134,7 @@ const Balances = ({
           <Text weight="regular" fontSize={14} style={styles.buttonText}>
             {t('Send')}
           </Text>
-          <SendIcon />
+          <SendIcon width={12.954} height={9.559} />
         </TouchableOpacity>
         <TouchableOpacity onPress={handleGoToReceive} activeOpacity={0.8} style={styles.button}>
           <Text weight="regular" fontSize={14} style={styles.buttonText}>
