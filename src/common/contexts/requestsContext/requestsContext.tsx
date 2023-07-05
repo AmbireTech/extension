@@ -11,9 +11,10 @@ import useExtensionWallet from '@common/hooks/useExtensionWallet'
 import useGnosisSafe from '@common/hooks/useGnosis'
 import useNavigation from '@common/hooks/useNavigation'
 import useNetwork from '@common/hooks/useNetwork'
+import useRoute from '@common/hooks/useRoute'
 import useToast from '@common/hooks/useToast'
 import PendingTransactionsScreen from '@common/modules/pending-transactions/screens/PendingTransactionsScreen'
-import { ROUTES } from '@common/modules/router/constants/common'
+import { MOBILE_ROUTES, ROUTES } from '@common/modules/router/constants/common'
 import SignMessageScreen from '@common/modules/sign-message/screens/SignMessageScreen'
 import { VAULT_STATUS } from '@common/modules/vault/constants/vaultStatus'
 import useVault from '@common/modules/vault/hooks/useVault'
@@ -69,6 +70,7 @@ const RequestsProvider: React.FC = ({ children }) => {
   const { accounts, selectedAcc } = useAccounts()
   const { network }: any = useNetwork()
   const { navigate } = useNavigation()
+  const { path } = useRoute()
   const { vaultStatus } = useVault()
   const { addToast, addBottomSheet } = useToast()
   const { t } = useTranslation()
@@ -279,7 +281,20 @@ const RequestsProvider: React.FC = ({ children }) => {
           ) {
             openBottomSheetSendTxn()
           } else {
-            navigate(ROUTES.pendingTransactions)
+            const shouldNavigateToPendingTransaction = ![
+              // Skip navigating if user is in the middle of adding another acc
+              `${MOBILE_ROUTES.auth}-screen`,
+              `${MOBILE_ROUTES.ambireAccountJsonLogin}-screen`,
+              `${MOBILE_ROUTES.ambireAccountLogin}-screen`,
+              MOBILE_ROUTES.ambireAccountLoginPasswordConfirm,
+              MOBILE_ROUTES.ambireAccountJsonLoginPasswordConfirm,
+              MOBILE_ROUTES.hardwareWallet,
+              MOBILE_ROUTES.externalSigner
+            ].includes(path || '')
+
+            if (shouldNavigateToPendingTransaction) {
+              navigate(ROUTES.pendingTransactions)
+            }
           }
         }
       }, 1)
@@ -290,7 +305,8 @@ const RequestsProvider: React.FC = ({ children }) => {
     eligibleRequests,
     extensionWallet,
     navigate,
-    openBottomSheetSendTxn
+    openBottomSheetSendTxn,
+    path
   ])
 
   return (
