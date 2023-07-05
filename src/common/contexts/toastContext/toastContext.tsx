@@ -13,6 +13,7 @@ import CheckIcon from '@common/assets/svg/CheckIcon'
 import CloseIconRound from '@common/assets/svg/CloseIconRound'
 import ErrorIcon from '@common/assets/svg/ErrorIcon'
 import BottomSheet from '@common/components/BottomSheet'
+import Button from '@common/components/Button'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
 import { HEADER_HEIGHT } from '@common/modules/header/components/Header/styles'
@@ -31,7 +32,7 @@ const ADDITIONAL_TOP_SPACING_MOBILE = SPACING_TY
 const ADDITIONAL_TOP_SPACING_WEB = SPACING_MD
 
 interface UseToastsReturnType extends UseToastsReturnTypeCommon {
-  addBottomSheet: ({ text }: { text: string }) => void
+  addBottomSheet: ({ text, buttonText }: { text: string; buttonText?: string }) => void
 }
 
 const ToastContext = React.createContext<UseToastsReturnType>({
@@ -53,10 +54,12 @@ const ToastProvider: React.FC = ({ children }) => {
   const insets = useSafeAreaInsets()
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const [bottomSheetText, setBottomSheetText] = useState('')
+  const [bottomSheetButtonText, setBottomSheetButtonText] = useState('')
 
   const addBottomSheet = useCallback<UseToastsReturnType['addBottomSheet']>(
-    ({ text }) => {
+    ({ text, buttonText }) => {
       setBottomSheetText(text)
+      setBottomSheetButtonText(buttonText || '')
       openBottomSheet()
     },
     [openBottomSheet]
@@ -150,12 +153,28 @@ const ToastProvider: React.FC = ({ children }) => {
         closeBottomSheet={closeBottomSheet}
         displayCancel={false}
       >
-        <View style={[spacings.phLg, spacings.pt, spacings.pbLg, flexboxStyles.alignCenter]}>
+        <View
+          style={[
+            spacings.phLg,
+            spacings.pt,
+            !bottomSheetButtonText && spacings.pbLg,
+            flexboxStyles.alignCenter
+          ]}
+        >
           <LottieView source={SuccessAnimation} style={{ width: 193, height: 193 }} autoPlay loop />
-          <Text fontSize={16} weight="regular" style={[textStyles.center, spacings.mb]}>
+          <Text fontSize={16} weight="regular" style={[textStyles.center, spacings.mbLg]}>
             {bottomSheetText}
           </Text>
         </View>
+        {!!bottomSheetButtonText && (
+          <Button
+            type="outline"
+            style={spacings.mbLg}
+            // @ts-ignore
+            onPress={closeBottomSheet}
+            text={bottomSheetButtonText}
+          />
+        )}
       </BottomSheet>
     </ToastContext.Provider>
   )
