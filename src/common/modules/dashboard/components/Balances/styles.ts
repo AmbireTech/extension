@@ -26,7 +26,8 @@ const styles = StyleSheet.create<Style>({
     ...spacings.phSm
   },
   buttonText: {
-    marginRight: 8
+    marginRight: 8,
+    lineHeight: 21
   },
   loadingContainer: {
     // Reserves some initial height, so that it covers the common space,
