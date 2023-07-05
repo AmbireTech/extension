@@ -121,7 +121,7 @@ const Rewards = () => {
       (currentClaimStatus.error || rewardsErrMsg) &&
       (!currentClaimStatus.lastUpdated || !rewardsLastUpdated)
     if (hasErrorAndNoPrevValues) {
-      return t('Rewards')
+      return t('...')
     }
 
     // Display loading state only if prev data is missing for any of both data sets.
@@ -135,7 +135,7 @@ const Rewards = () => {
     }
 
     return t('{{amount}} $WALLET', {
-      amount: hidePrivateValue(pendingTokensTotal)
+      amount: hidePrivateValue(Math.round(pendingTokensTotal))
     })
   }, [
     currentClaimStatus.error,
@@ -193,10 +193,10 @@ const Rewards = () => {
         </View>
         <View style={[flexboxStyles.flex1]}>
           <Text fontSize={16} numberOfLines={1}>
-            {hidePrivateValue(t('Wallet Rewards'))}
+            {t('Rewards')}
           </Text>
           <Text style={textStyles.highlightPrimary}>
-            ${hidePrivateValue(renderRewardsButtonText())}
+            {hidePrivateValue(renderRewardsButtonText())}
           </Text>
         </View>
 
@@ -235,7 +235,7 @@ const Rewards = () => {
         <Text type="caption" style={[spacings.mbSm, textStyles.center]}>
           <Text type="caption">
             {t(
-              'You are receiving $WALLETS for holding funds on your Ambire wallet as an early user. '
+              'You are receiving $WALLET tokens for holding funds on your Ambire wallet as an early user. '
             )}
           </Text>
           <Text onPress={handleReadMore} underline type="caption">
@@ -344,7 +344,7 @@ const Rewards = () => {
           {!!stakedAmount && (
             <View style={[styles.tableRow, flexboxStyles.directionRow]}>
               <View style={[spacings.prTy, flexboxStyles.flex1]}>
-                <Text>{t('Staked WALLET')}</Text>
+                <Text>{t('Staked $WALLET')}</Text>
               </View>
               <View style={[spacings.plTy, styles.tableRowValue]}>
                 <Text color={colors.turquoise} style={textStyles.right}>
