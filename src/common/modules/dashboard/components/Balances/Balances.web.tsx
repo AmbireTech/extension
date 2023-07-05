@@ -205,7 +205,7 @@ const Balances = ({
             >
               {t('Send')}
             </Text>
-            <SendIcon style={styles.buttonIcon} />
+            <SendIcon width={13} height={13} style={styles.buttonIcon} />
           </View>
         </Button>
         <Button
