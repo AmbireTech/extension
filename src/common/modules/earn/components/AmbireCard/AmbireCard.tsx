@@ -13,13 +13,13 @@ import { BigNumber, constants, Contract, utils } from 'ethers'
 import { formatUnits, Interface, parseUnits } from 'ethers/lib/utils'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import isEqual from 'react-fast-compare'
-import { View } from 'react-native'
 
 import AmbireLogo from '@common/assets/images/Ambire.png'
 import Button from '@common/components/Button'
 import Text from '@common/components/Text'
 import CONFIG from '@common/config/env'
 import useRelayerData from '@common/hooks/useRelayerData'
+import getRewardsSource from '@common/modules/dashboard/helpers/getRewardsSource'
 import Card from '@common/modules/earn/components/Card'
 import { CARDS } from '@common/modules/earn/contexts/cardsVisibilityContext'
 import { getTokenIcon } from '@common/services/icons'
@@ -48,6 +48,8 @@ const PRECISION = 1000000000000
 
 const WALLET_LOCK_PERIOD_IN_DAYS = 30
 const ADEX_LOCK_PERIOD_IN_DAYS = 20
+
+const source = getRewardsSource()
 
 const msToDaysHours = (ms: any) => {
   const day = 24 * 60 * 60 * 1000
@@ -113,7 +115,7 @@ const AmbireCard = ({ tokens, networkId, selectedAcc, addRequest }: Props) => {
   const {
     isLoading: isLoadingRewards,
     rewards: { xWALLETAPYPercentage }
-  } = useRewards({ relayerURL: CONFIG.RELAYER_URL, accountId: selectedAcc, useRelayerData })
+  } = useRewards({ relayerURL: CONFIG.RELAYER_URL, accountId: selectedAcc, useRelayerData, source })
 
   const walletToken = useMemo(
     () => tokens.find(({ address }: any) => address === WALLET_TOKEN_ADDRESS),
