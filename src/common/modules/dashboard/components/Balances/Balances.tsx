@@ -21,6 +21,7 @@ import { ROUTES } from '@common/modules/router/constants/common'
 import { triggerLayoutAnimation } from '@common/services/layoutAnimation'
 import colors from '@common/styles/colors'
 import spacings from '@common/styles/spacings'
+import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexboxStyles from '@common/styles/utils/flexbox'
 import textStyles from '@common/styles/utils/text'
 
@@ -103,7 +104,7 @@ const Balances = ({
         <Text
           fontSize={42}
           weight="regular"
-          style={[spacings.mtTy, spacings.mbMd]}
+          style={[spacings.mtTy, spacings.mbMd, { lineHeight: 60 }]}
           onPress={togglePrivateMode}
         >
           <Text fontSize={26} weight="regular">
@@ -132,38 +133,18 @@ const Balances = ({
       )}
 
       <View style={[flexboxStyles.directionRow, spacings.mb]}>
-        <Button
-          style={styles.button}
-          textStyle={[{ color: colors.titan }, flexboxStyles.alignSelfCenter]}
-          type="secondary"
-          hasBottomSpacing={false}
-          onPress={handleGoToSend}
-        >
-          <View style={[flexboxStyles.directionRow, flexboxStyles.center]}>
-            <Text
-              style={[textStyles.center, flexboxStyles.flex1, flexboxStyles.center, spacings.mlTy]}
-            >
-              {t('Send')}
-            </Text>
-            <SendIcon width={22} height={22} style={styles.buttonIcon} />
-          </View>
-        </Button>
-        <Button
-          style={styles.button}
-          textStyle={[{ color: colors.titan }, flexboxStyles.alignSelfCenter]}
-          type="secondary"
-          hasBottomSpacing={false}
-          onPress={handleGoToReceive}
-        >
-          <View style={[flexboxStyles.directionRow, flexboxStyles.center]}>
-            <Text
-              style={[textStyles.center, flexboxStyles.flex1, flexboxStyles.center, spacings.mlMi]}
-            >
-              {t('Receive')}
-            </Text>
-            <ReceiveIcon width={22} height={22} style={styles.buttonIcon} />
-          </View>
-        </Button>
+        <TouchableOpacity onPress={handleGoToSend} activeOpacity={0.8} style={styles.button}>
+          <Text weight="regular" fontSize={14} style={styles.buttonText}>
+            {t('Send')}
+          </Text>
+          <SendIcon />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={handleGoToReceive} activeOpacity={0.8} style={styles.button}>
+          <Text weight="regular" fontSize={14} style={styles.buttonText}>
+            {t('Receive')}
+          </Text>
+          <ReceiveIcon />
+        </TouchableOpacity>
       </View>
 
       {allBalancesLoading ? (

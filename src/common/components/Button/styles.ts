@@ -63,7 +63,7 @@ const styles = StyleSheet.create<Style>({
 
   // Button sizes (regular/small)
   buttonContainerStylesSizeRegular: {
-    minHeight: 50,
+    minHeight: 56,
     ...spacings.pvMi,
     ...spacings.phSm,
     ...spacings.mb
@@ -78,7 +78,8 @@ const styles = StyleSheet.create<Style>({
   // Default button text styles
   buttonText: {
     fontFamily: FONT_FAMILIES.REGULAR,
-    textAlign: 'center'
+    textAlign: 'center',
+    lineHeight: 22
   },
 
   // Button text styles by type

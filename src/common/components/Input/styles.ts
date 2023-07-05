@@ -24,15 +24,15 @@ const styles = StyleSheet.create<Style>({
   inputWrapper: {
     flexDirection: 'row',
     borderBottomWidth: 2,
-    height: 50
+    height: 56
   },
   input: {
     // Centers the content (used because of the borderBottomWidth)
-    paddingTop: 2,
+    paddingTop: 4,
     fontSize: 16,
     fontFamily: isWeb ? FONT_FAMILIES.MEDIUM : FONT_FAMILIES.LIGHT,
     flex: 1,
-    height: 48,
+    height: 54,
     ...spacings.phTy
   },
   infoText: {
