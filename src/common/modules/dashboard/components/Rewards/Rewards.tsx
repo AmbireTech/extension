@@ -24,6 +24,7 @@ import useNetwork from '@common/hooks/useNetwork'
 import usePrivateMode from '@common/hooks/usePrivateMode'
 import useRelayerData from '@common/hooks/useRelayerData'
 import useRequests from '@common/hooks/useRequests'
+import getRewardsSource from '@common/modules/dashboard/helpers/getRewardsSource'
 import alert from '@common/services/alert'
 import { triggerLayoutAnimation } from '@common/services/layoutAnimation'
 import colors from '@common/styles/colors'
@@ -32,6 +33,8 @@ import flexboxStyles from '@common/styles/utils/flexbox'
 import textStyles from '@common/styles/utils/text'
 
 import styles from './styles'
+
+const source = getRewardsSource()
 
 const Rewards = () => {
   const { t } = useTranslation()
@@ -47,7 +50,8 @@ const Rewards = () => {
   } = useRewards({
     relayerURL: CONFIG.RELAYER_URL,
     accountId: selectedAcc,
-    useRelayerData
+    useRelayerData,
+    source
   })
   const {
     walletTokenAPYPercentage,
@@ -78,7 +82,8 @@ const Rewards = () => {
     addRequest,
     totalLifetimeRewards,
     walletUsdPrice,
-    rewardsLastUpdated
+    rewardsLastUpdated,
+    source
   })
   const { stakedAmount } = useStakedWalletToken({ accountId: selectedAcc })
   const { hidePrivateValue } = usePrivateMode()
