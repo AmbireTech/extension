@@ -240,13 +240,13 @@ const AAVECard = ({ tokens, protocols, networkId, selectedAcc, addRequest, addTo
   }, [addToast, protocols, tokens, defaultTokens, networkDetails])
 
   useEffect(() => {
-    loadPool()
-  }, [loadPool])
-
-  useEffect(() => {
     currentNetwork.current = networkId
     setLoading(true)
   }, [networkId])
+
+  useEffect(() => {
+    loadPool()
+  }, [loadPool])
 
   return (
     <Card
