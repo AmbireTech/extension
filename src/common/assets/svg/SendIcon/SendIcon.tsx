@@ -7,7 +7,12 @@ interface Props extends SvgProps {
   color?: string
 }
 
-const SendIcon: React.FC<Props> = ({ width = 18, height = 18, color = colors.titan, ...rest }) => (
+const SendIcon: React.FC<Props> = ({
+  width = 18,
+  height = 13.28,
+  color = colors.titan,
+  ...rest
+}) => (
   <Svg width={width} height={height} viewBox="0 0 12.954 9.559" {...rest}>
     <Path
       fill="none"
