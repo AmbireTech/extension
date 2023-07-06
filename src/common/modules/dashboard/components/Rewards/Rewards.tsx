@@ -235,7 +235,7 @@ const Rewards = () => {
             </View>
             <View style={[spacings.plTy, styles.tableRowValue]}>
               <Text color={colors.turquoise} style={textStyles.right}>
-                {rewards[RewardIds.BALANCE_REWARDS]}
+                {Math.round(rewards[RewardIds.BALANCE_REWARDS])}
               </Text>
               <Text type="small" style={textStyles.right}>
                 {walletTokenAPYPercentage} APY
@@ -249,7 +249,7 @@ const Rewards = () => {
               </View>
               <View style={[spacings.plTy, styles.tableRowValue]}>
                 <Text color={colors.turquoise} style={textStyles.right}>
-                  {currentClaimStatus.loading ? '...' : claimableNow}
+                  {currentClaimStatus.loading ? '...' : Math.round(claimableNow)}
                 </Text>
                 <Text type="small" style={textStyles.right}>
                   <Text type="small" color={colors.heliotrope}>
