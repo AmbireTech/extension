@@ -196,11 +196,11 @@ const Rewards = () => {
         <View style={styles.tokenButtonIconWrapper}>
           <RewardsIcon />
         </View>
-        <View style={[flexboxStyles.flex1]}>
-          <Text fontSize={16} numberOfLines={1}>
+        <View style={[flexboxStyles.flex1, flexboxStyles.justifyCenter]}>
+          <Text fontSize={14} numberOfLines={1}>
             {t('Rewards')}
           </Text>
-          <Text style={textStyles.highlightPrimary}>
+          <Text fontSize={12} style={textStyles.highlightPrimary}>
             {hidePrivateValue(renderRewardsButtonText())}
           </Text>
         </View>
