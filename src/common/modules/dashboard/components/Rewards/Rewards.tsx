@@ -9,7 +9,7 @@ import { RewardIds } from 'ambire-common/src/hooks/useRewards/types'
 import useStakedWalletToken from 'ambire-common/src/hooks/useStakedWalletToken'
 import React, { useCallback, useLayoutEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Linking, ScrollView, TouchableOpacity, View } from 'react-native'
+import { Linking, TouchableOpacity, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import RewardsFlag from '@common/assets/svg/RewardFlag/RewardFlag'
@@ -18,7 +18,7 @@ import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
 import Text from '@common/components/Text'
 import Title from '@common/components/Title'
-import CONFIG, { isWeb } from '@common/config/env'
+import CONFIG from '@common/config/env'
 import useAccounts from '@common/hooks/useAccounts'
 import useNetwork from '@common/hooks/useNetwork'
 import usePrivateMode from '@common/hooks/usePrivateMode'
@@ -85,7 +85,6 @@ const Rewards = () => {
     rewardsLastUpdated,
     source
   })
-  const { stakedAmount } = useStakedWalletToken({ accountId: selectedAcc })
   const { hidePrivateValue } = usePrivateMode()
 
   useLayoutEffect(() => {
@@ -222,20 +221,10 @@ const Rewards = () => {
         closeBottomSheet={closeBottomSheet}
         displayCancel={false}
       >
-        <Title style={textStyles.center}>{t('$WALLET token distribution')}</Title>
-        {isWeb && multiplierBadges.length < 7 ? (
-          <View style={[flexboxStyles.directionRow, flexboxStyles.justifyCenter, spacings.mb]}>
-            {multiplierBadges.map(renderBadge)}
-          </View>
-        ) : (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={[flexboxStyles.directionRow, flexboxStyles.center, spacings.mb]}
-          >
-            {multiplierBadges.map(renderBadge)}
-          </ScrollView>
-        )}
+        <Title style={textStyles.center}>{t('WALLET token distribution')}</Title>
+        <View style={[flexboxStyles.directionRow, flexboxStyles.justifyCenter, spacings.mb]}>
+          {multiplierBadges.map(renderBadge)}
+        </View>
 
         <Text type="caption" style={[spacings.mbSm, textStyles.center]}>
           <Text type="caption">
@@ -275,12 +264,7 @@ const Rewards = () => {
               </Text>
             </View>
           </View>
-          <View
-            style={[
-              styles.tableRow,
-              (shouldDisplayMintableVesting || !!stakedAmount) && styles.tableRowBorder
-            ]}
-          >
+          <View style={[styles.tableRow, shouldDisplayMintableVesting && styles.tableRowBorder]}>
             <View style={[flexboxStyles.directionRow, spacings.mb]}>
               <View style={[spacings.prTy, flexboxStyles.flex1]}>
                 <Text>{t('Claimable now: early users + ADX Staking bonus')}</Text>
@@ -321,7 +305,7 @@ const Rewards = () => {
           </View>
 
           {shouldDisplayMintableVesting && (
-            <View style={[styles.tableRow, !!stakedAmount && styles.tableRowBorder]}>
+            <View style={styles.tableRow}>
               <View style={[flexboxStyles.directionRow, spacings.mb]}>
                 <View style={[spacings.prTy, flexboxStyles.flex1]}>
                   <Text>{t('Claimable early supporters vesting')}</Text>
@@ -344,21 +328,6 @@ const Rewards = () => {
                 size="small"
                 text={t('Claim')}
               />
-            </View>
-          )}
-          {!!stakedAmount && (
-            <View style={[styles.tableRow, flexboxStyles.directionRow]}>
-              <View style={[spacings.prTy, flexboxStyles.flex1]}>
-                <Text>{t('Staked $WALLET')}</Text>
-              </View>
-              <View style={[spacings.plTy, styles.tableRowValue]}>
-                <Text color={colors.turquoise} style={textStyles.right}>
-                  {stakedAmount}
-                </Text>
-                <Text type="small" style={textStyles.right}>
-                  {xWALLETAPYPercentage} APY
-                </Text>
-              </View>
             </View>
           )}
         </View>
