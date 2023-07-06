@@ -367,4 +367,4 @@ const Rewards = () => {
   )
 }
 
-export default Rewards
+export default React.memo(Rewards)
