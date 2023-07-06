@@ -210,7 +210,7 @@ const Rewards = () => {
             onPress={openBottomSheet}
             type="secondary"
             hasBottomSpacing={false}
-            style={[flexboxStyles.alignSelfCenter, { backgroundColor: colors.titan_05 }]}
+            style={styles.rewardTokenButton}
             size="small"
             text={t('Open')}
           />

@@ -7,6 +7,7 @@ import commonStyles from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
 interface Style {
+  rewardTokenButton: ViewStyle
   tokenButtonContainer: ViewStyle
   tokenButtonIconWrapper: ViewStyle
   rewardFlag: ViewStyle
@@ -17,6 +18,12 @@ interface Style {
 }
 
 const styles = StyleSheet.create<Style>({
+  rewardTokenButton: {
+    ...flexbox.alignSelfCenter,
+    backgroundColor: colors.titan_05,
+    // So it matches the height of the token item send button
+    minHeight: 36
+  },
   tokenButtonContainer: {
     flexDirection: 'row',
     backgroundColor: colors.howl,
