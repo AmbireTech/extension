@@ -11,6 +11,10 @@ import { useTranslation } from 'react-i18next'
 import { Linking, TouchableOpacity, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
+import RewardBadgeBetaTester from '@common/assets/svg/RewardBadgeBetaTester'
+import RewardBadgeCryptoTesters from '@common/assets/svg/RewardBadgeCryptoTesters'
+import RewardBadgeLobster from '@common/assets/svg/RewardBadgeLobster'
+import RewardBadgePowerUser from '@common/assets/svg/RewardBadgePowerUser'
 import RewardsFlag from '@common/assets/svg/RewardFlag/RewardFlag'
 import RewardsIcon from '@common/assets/svg/RewardsIcon'
 import BottomSheet from '@common/components/BottomSheet'
@@ -164,18 +168,16 @@ const Rewards = () => {
       <TouchableOpacity
         onPress={handleLinkOpen}
         key={name}
-        style={[
-          flexboxStyles.center,
-          spacings.mhMi,
-          { width: 73, height: 84 },
-          !isUnlocked && { opacity: 0.3 }
-        ]}
+        style={[flexboxStyles.center, spacings.mhMi, !isUnlocked && { opacity: 0.3 }]}
       >
-        <Text fontSize={25}>{icon}</Text>
-        <Text fontSize={16} weight="semiBold">
+        {id === 'beta-tester' && <RewardBadgeBetaTester />}
+        {id === 'lobsters' && <RewardBadgeLobster />}
+        {id === 'cryptoTesters' && <RewardBadgeCryptoTesters />}
+        {id === 'powerUserMultiplier' && <RewardBadgePowerUser />}
+        {/* <Text fontSize={16} weight="semiBold">
           x{multiplier}
-        </Text>
-        <RewardsFlag color={color} style={styles.rewardFlag} />
+        </Text> */}
+        {/* <RewardsFlag color={color} style={styles.rewardFlag} /> */}
       </TouchableOpacity>
     )
   }
@@ -212,7 +214,7 @@ const Rewards = () => {
         closeBottomSheet={closeBottomSheet}
         displayCancel={false}
       >
-        <Title style={textStyles.center}>{t('WALLET token distribution')}</Title>
+        <Title style={[textStyles.center, spacings.mtTy]}>{t('WALLET token distribution')}</Title>
         <View style={[flexboxStyles.directionRow, flexboxStyles.justifyCenter, spacings.mb]}>
           {multiplierBadges.map(renderBadge)}
         </View>
@@ -220,7 +222,7 @@ const Rewards = () => {
         <Text type="caption" style={[spacings.mbSm, textStyles.center]}>
           <Text type="caption">
             {t(
-              'You are receiving $WALLET tokens for holding funds on your Ambire wallet as an early user. '
+              'You are receiving $WALLETs for holding funds on your Ambire wallet as an early user. '
             )}
           </Text>
           <Text onPress={handleReadMore} underline type="caption">
