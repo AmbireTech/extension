@@ -20,7 +20,7 @@ const styles = StyleSheet.create<Style>({
   tokenButtonContainer: {
     flexDirection: 'row',
     backgroundColor: colors.howl,
-    ...spacings.pv,
+    ...spacings.pvSm,
     ...spacings.phSm,
     ...spacings.mbTy,
     ...commonStyles.borderRadiusPrimary,
@@ -35,8 +35,7 @@ const styles = StyleSheet.create<Style>({
     ...spacings.mrSm,
     width: 34,
     height: 34,
-    // To match the height of the TokenItem icon
-    marginBottom: 9
+    alignSelf: 'center'
   },
   rewardFlag: {
     position: 'absolute',
