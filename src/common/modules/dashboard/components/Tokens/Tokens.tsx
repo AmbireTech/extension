@@ -82,8 +82,8 @@ const Tokens = ({
   )
 
   const emptyState = (
-    <View style={[spacings.phLg, spacings.mbSm, flexboxStyles.center]}>
-      <Text style={[spacings.mbSm, textStyles.center]}>
+    <View style={[spacings.phLg, spacings.pvTy, spacings.mbMi, flexboxStyles.center]}>
+      <Text style={[spacings.mb, textStyles.center]}>
         {t("Welcome! You don't have any funds on this account.")}
       </Text>
       <Button
