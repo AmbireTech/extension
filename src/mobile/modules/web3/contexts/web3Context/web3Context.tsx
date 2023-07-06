@@ -97,7 +97,6 @@ const Web3Provider: React.FC<any> = ({ children }) => {
 
   useEffect(() => {
     if ((!selectedDappUrl && !!prevSelectedDappUrl) || (!web3ViewRef && !!prevWeb3ViewRef)) {
-      rejectAllApprovals()
       setApproval(null)
       setSession(null)
       setTabSessionData(null)

@@ -1,9 +1,7 @@
 import usePrevious from 'ambire-common/src/hooks/usePrevious'
-import React, { useEffect, useLayoutEffect, useRef } from 'react'
+import React, { useContext, useEffect, useLayoutEffect } from 'react'
 import { View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
-import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
 import GradientBackgroundWrapper from '@common/components/GradientBackgroundWrapper'
 import Spinner from '@common/components/Spinner'
@@ -21,14 +19,12 @@ import FeeSelector from '@common/modules/pending-transactions/components/FeeSele
 import SignActions from '@common/modules/pending-transactions/components/SignActions'
 import SigningWithAccount from '@common/modules/pending-transactions/components/SigningWithAccount'
 import TransactionSummary from '@common/modules/pending-transactions/components/TransactionSummary'
-import useSendTransaction from '@common/modules/pending-transactions/hooks/useSendTransaction'
+import { PendingTransactionsContext } from '@common/modules/pending-transactions/contexts/pendingTransactionsContext'
 import { ROUTES } from '@common/modules/router/constants/common'
-import colors from '@common/styles/colors'
 import spacings from '@common/styles/spacings'
 import flexboxStyles from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import isInt from '@common/utils/isInt'
-import HardwareWalletSelectConnection from '@mobile/modules/hardware-wallet/components/HardwareWalletSelectConnection'
 import { getUiType } from '@web/utils/uiType'
 
 const relayerURL = CONFIG.RELAYER_URL
@@ -46,22 +42,10 @@ const PendingTransactionsScreen = ({
   const { account } = useAccounts()
   const { network } = useNetwork()
   const { currentAccGasTankState } = useGasTank()
-  const preventNavToDashboard = useRef(false)
-  const {
-    ref: hardwareWalletSheetRef,
-    open: hardwareWalletOpenBottomSheet,
-    close: hardwareWalletCloseBottomSheet
-  } = useModalize()
-  const {
-    ref: rejectTxnSheetRef,
-    open: rejectTxnOpenBottomSheet,
-    close: rejectTxnCloseBottomSheet
-  } = useModalize()
 
-  if (getUiType().isNotification) {
-    navigation.navigate = () => null
-    navigation.goBack = () => null
-  }
+  const { transaction, preventNavToDashboard, rejectTxnOpenBottomSheet } = useContext(
+    PendingTransactionsContext
+  )
 
   const {
     bundle,
@@ -78,9 +62,12 @@ const PendingTransactionsScreen = ({
     rejectTxnReplace,
     setSigningStatus,
     setReplaceTx
-  } = useSendTransaction({
-    hardwareWalletOpenBottomSheet
-  })
+  } = transaction
+
+  if (getUiType().isNotification) {
+    navigation.navigate = () => null
+    navigation.goBack = () => null
+  }
 
   const prevBundle: any = usePrevious(bundle)
 
@@ -106,19 +93,11 @@ const PendingTransactionsScreen = ({
         })
       }
     }
-  }, [everythingToSign, resolveMany, sendTxnState.showing, setSendTxnState, t])
+  }, [everythingToSign, resolveMany, sendTxnState.showing, setSendTxnState, t, isInBottomSheet])
 
   useEffect(() => {
     if (prevBundle?.txns?.length && !bundle?.txns?.length) {
       if (isInBottomSheet) {
-        if (sendTxnState.showing) {
-          setSendTxnState({ showing: false })
-        }
-        if (everythingToSign.length) {
-          resolveMany([everythingToSign[0].id], {
-            message: t('Ambire user rejected the signature request')
-          })
-        }
         !!closeBottomSheet && closeBottomSheet()
       } else if (!preventNavToDashboard.current) {
         navigation.navigate(ROUTES.dashboard)
@@ -207,6 +186,8 @@ const PendingTransactionsScreen = ({
               </Text>
             ) : (
               <SignActions
+                isInBottomSheet={isInBottomSheet}
+                closeBottomSheet={closeBottomSheet}
                 bundle={bundle}
                 mustReplaceNonce={mustReplaceNonce}
                 setSigningStatus={setSigningStatus}
@@ -223,47 +204,6 @@ const PendingTransactionsScreen = ({
             )}
           </>
         )}
-        <BottomSheet
-          id="pending-transactions-hardware-wallet"
-          sheetRef={hardwareWalletSheetRef}
-          closeBottomSheet={() => {
-            hardwareWalletCloseBottomSheet()
-          }}
-        >
-          <HardwareWalletSelectConnection
-            onSelectDevice={(device: any) => {
-              approveTxn({ device })
-              hardwareWalletCloseBottomSheet()
-            }}
-            shouldWrap={false}
-          />
-        </BottomSheet>
-        <BottomSheet
-          id="close-txn-bottom-sheet"
-          sheetRef={rejectTxnSheetRef}
-          closeBottomSheet={() => {
-            rejectTxnCloseBottomSheet()
-          }}
-          cancelText={t('Reject')}
-          cancelTextStyles={{
-            textDecorationLine: 'underline',
-            color: colors.pink
-          }}
-          cancelOnPress={() => {
-            preventNavToDashboard.current = true
-            rejectTxn()
-          }}
-        >
-          <Text style={spacings.pv} fontSize={16} weight="regular">
-            {t(
-              'You can add more transactions to your cart and sign them all together (thus saving on network fees).'
-            )}
-          </Text>
-          <Text fontSize={16} weight="regular" style={[spacings.pbTy, spacings.mbLg]}>
-            {t('Alternatively, you can reject transaction.')}
-          </Text>
-          <Button text={t('Add to cart')} type="outline" onPress={() => navigation.goBack()} />
-        </BottomSheet>
       </Wrapper>
     </GradientWrapper>
   )

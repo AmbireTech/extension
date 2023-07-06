@@ -30,6 +30,7 @@ import GasInformationScreen from '@common/modules/gas-tank/screens/GasInformatio
 import GasTankScreen from '@common/modules/gas-tank/screens/GasTankScreen'
 import { headerAlpha, headerBeta, headerGamma } from '@common/modules/header/config/headerConfig'
 import NoConnectionScreen from '@common/modules/no-connection/screens/NoConnectionScreen'
+import { PendingTransactionsProvider } from '@common/modules/pending-transactions/contexts/pendingTransactionsContext'
 import PendingTransactionsScreen from '@common/modules/pending-transactions/screens/PendingTransactionsScreen'
 import ProviderScreen from '@common/modules/receive/screens/ProviderScreen'
 import ReceiveScreen from '@common/modules/receive/screens/ReceiveScreen'
@@ -525,6 +526,14 @@ const AppStack = () => {
     }
   }, [getItem, hasCompletedOnboarding])
 
+  const renderPendingTransactionsScreen = useCallback<(props: any) => JSX.Element>((props) => {
+    return (
+      <PendingTransactionsProvider>
+        <PendingTransactionsScreen {...props} />
+      </PendingTransactionsProvider>
+    )
+  }, [])
+
   return (
     <MainStack.Navigator screenOptions={{ header: headerBeta }}>
       <MainStack.Screen
@@ -576,7 +585,7 @@ const AppStack = () => {
       />
       <MainStack.Screen
         name={MOBILE_ROUTES.pendingTransactions}
-        component={PendingTransactionsScreen}
+        component={renderPendingTransactionsScreen}
         options={{ title: routesConfig[ROUTES.pendingTransactions].title }}
       />
       <MainStack.Screen

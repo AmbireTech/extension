@@ -24,6 +24,8 @@ import { delayPromise } from '@common/utils/promises'
 import styles from './styles'
 
 const SignActions = ({
+  isInBottomSheet,
+  closeBottomSheet,
   estimation,
   feeSpeed,
   approveTxn,
@@ -200,7 +202,18 @@ const SignActions = ({
         onPress={handleRequestSignConfirmation}
         disabled={!estimation || !!signingStatus}
       />
-      <Button text={t('Add to cart')} type="outline" onPress={goBack} hasBottomSpacing={false} />
+      <Button
+        text={t('Add to cart')}
+        type="outline"
+        onPress={() => {
+          if (isInBottomSheet) {
+            !!closeBottomSheet && closeBottomSheet()
+          } else {
+            goBack()
+          }
+        }}
+        hasBottomSpacing={false}
+      />
     </Panel>
   )
 }

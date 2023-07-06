@@ -1,6 +1,6 @@
 // TODO: fill in the missing types
 import usePrevious from 'ambire-common/src/hooks/usePrevious'
-import React, { createContext, useCallback, useEffect, useMemo, useState } from 'react'
+import React, { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useModalize } from 'react-native-modalize'
 
 import BottomSheet from '@common/components/BottomSheet'
@@ -13,6 +13,7 @@ import useNavigation from '@common/hooks/useNavigation'
 import useNetwork from '@common/hooks/useNetwork'
 import useRoute from '@common/hooks/useRoute'
 import useToast from '@common/hooks/useToast'
+import { PendingTransactionsProvider } from '@common/modules/pending-transactions/contexts/pendingTransactionsContext'
 import PendingTransactionsScreen from '@common/modules/pending-transactions/screens/PendingTransactionsScreen'
 import { MOBILE_ROUTES, ROUTES } from '@common/modules/router/constants/common'
 import SignMessageScreen from '@common/modules/sign-message/screens/SignMessageScreen'
@@ -74,6 +75,8 @@ const RequestsProvider: React.FC = ({ children }) => {
   const { vaultStatus } = useVault()
   const { addToast, addBottomSheet } = useToast()
   const { t } = useTranslation()
+  const [sendTxnBottomSheetBackdropPressedUniqueId, setSendTxnBottomSheetBackdropPressedUniqueId] =
+    useState<any>(null)
 
   const { requests: gnosisRequests, resolveMany: gnosisResolveMany } = useGnosisSafe()
   const { requests: approvalRequests, resolveMany: approvalResolveMany } = useWeb3Approval()
@@ -280,7 +283,8 @@ const RequestsProvider: React.FC = ({ children }) => {
             }
           } else if (
             eligibleRequests.filter((r) => r?.reqSrc === APPROVAL_REQUESTS_STORAGE_KEY).length &&
-            (isiOS || isAndroid)
+            (isiOS || isAndroid) &&
+            path === `${MOBILE_ROUTES.web3Browser}-screen`
           ) {
             openBottomSheetSendTxn()
           } else {
@@ -346,6 +350,7 @@ const RequestsProvider: React.FC = ({ children }) => {
       )}
     >
       {children}
+
       <BottomSheet
         id="bottom-sheet-send-txn"
         sheetRef={sheetRefSendTxn}
@@ -354,8 +359,21 @@ const RequestsProvider: React.FC = ({ children }) => {
         }}
         style={{ backgroundColor: colors.martinique }}
         displayCancel={false}
+        onBackdropPress={() => {
+          // this func prevent the auto closing of the bottom sheet when the backdrop is pressed
+          // instead it updates the value of setSendTxnBottomSheetBackdropPressedUniqueId with sth unique
+          // to be handled in the PendingTransactionsProvider by comparing the new val with its prev val
+          // and triggering the addToCart/Reject txn Bottom Sheet
+          setSendTxnBottomSheetBackdropPressedUniqueId(new Date().getTime())
+        }}
       >
-        <PendingTransactionsScreen isInBottomSheet closeBottomSheet={closeBottomSheetSendTxn} />
+        <PendingTransactionsProvider
+          isInBottomSheet
+          closeBottomSheetSendTxn={closeBottomSheetSendTxn}
+          sendTxnBottomSheetBackdropPressedUniqueId={sendTxnBottomSheetBackdropPressedUniqueId}
+        >
+          <PendingTransactionsScreen isInBottomSheet closeBottomSheet={closeBottomSheetSendTxn} />
+        </PendingTransactionsProvider>
       </BottomSheet>
       <BottomSheet
         id="bottom-sheet-sign-msg"
