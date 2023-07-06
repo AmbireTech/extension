@@ -1,8 +1,6 @@
 import React from 'react'
 import Svg, { Circle, Defs, G, LinearGradient, Path, Stop, SvgProps } from 'react-native-svg'
 
-import colors from '@common/styles/colors'
-
 interface Props extends SvgProps {
   width?: number
   height?: number
