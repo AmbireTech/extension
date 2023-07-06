@@ -6,7 +6,6 @@ import {
 import useClaimableWalletToken from 'ambire-common/src/hooks/useClaimableWalletToken'
 import useRewards from 'ambire-common/src/hooks/useRewards'
 import { RewardIds } from 'ambire-common/src/hooks/useRewards/types'
-import useStakedWalletToken from 'ambire-common/src/hooks/useStakedWalletToken'
 import React, { useCallback, useLayoutEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Linking, TouchableOpacity, View } from 'react-native'
@@ -53,14 +52,7 @@ const Rewards = () => {
     useRelayerData,
     source
   })
-  const {
-    walletTokenAPYPercentage,
-    adxTokenAPYPercentage,
-    xWALLETAPYPercentage,
-    walletUsdPrice,
-    multipliers,
-    totalLifetimeRewards
-  } = rewards
+  const { walletTokenAPYPercentage, walletUsdPrice, multipliers, totalLifetimeRewards } = rewards
   const {
     currentClaimStatus,
     claimableNow,
@@ -72,8 +64,7 @@ const Rewards = () => {
     claimableNowUsd,
     mintableVestingUsd,
     shouldDisplayMintableVesting,
-    claimingDisabled,
-    vestingEntry
+    claimingDisabled
   } = useClaimableWalletToken({
     relayerURL: CONFIG.RELAYER_URL,
     useRelayerData,
@@ -240,7 +231,7 @@ const Rewards = () => {
         <View style={styles.tableContainer}>
           <View style={[styles.tableRow, flexboxStyles.directionRow, styles.tableRowBorder]}>
             <View style={[spacings.prTy, flexboxStyles.flex1]}>
-              <Text>{t('Early users Incentive')}</Text>
+              <Text>{t('Early users Incentive total (Early users + ADX Staking bonus)')}</Text>
             </View>
             <View style={[spacings.plTy, styles.tableRowValue]}>
               <Text color={colors.turquoise} style={textStyles.right}>
@@ -251,23 +242,10 @@ const Rewards = () => {
               </Text>
             </View>
           </View>
-          <View style={[styles.tableRow, flexboxStyles.directionRow, styles.tableRowBorder]}>
-            <View style={[spacings.prTy, flexboxStyles.flex1]}>
-              <Text>{t('ADX Staking Bonus')}</Text>
-            </View>
-            <View style={[spacings.plTy, styles.tableRowValue]}>
-              <Text color={colors.turquoise} style={textStyles.right}>
-                {rewards[RewardIds.ADX_REWARDS]}
-              </Text>
-              <Text type="small" style={textStyles.right}>
-                {adxTokenAPYPercentage} APY
-              </Text>
-            </View>
-          </View>
           <View style={[styles.tableRow, shouldDisplayMintableVesting && styles.tableRowBorder]}>
             <View style={[flexboxStyles.directionRow, spacings.mb]}>
               <View style={[spacings.prTy, flexboxStyles.flex1]}>
-                <Text>{t('Claimable now: early users + ADX Staking bonus')}</Text>
+                <Text>{t('Claimable now')}</Text>
               </View>
               <View style={[spacings.plTy, styles.tableRowValue]}>
                 <Text color={colors.turquoise} style={textStyles.right}>
