@@ -103,7 +103,7 @@ const Tokens = ({
 
       {!!shouldShowEmptyState && emptyState}
 
-      {!isCurrNetworkBalanceLoading && !shouldShowEmptyState && <Rewards />}
+      {!isCurrNetworkBalanceLoading && <Rewards />}
 
       {!isCurrNetworkBalanceLoading &&
         !shouldShowEmptyState &&
