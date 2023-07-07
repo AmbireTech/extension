@@ -2,7 +2,7 @@ import networks, { NetworkId } from 'ambire-common/src/constants/networks'
 import { UseAccountsReturnType } from 'ambire-common/src/hooks/useAccounts'
 import useCacheBreak from 'ambire-common/src/hooks/useCacheBreak'
 import { Balance, UsePortfolioReturnType } from 'ambire-common/src/hooks/usePortfolio/types'
-import React, { useCallback, useLayoutEffect, useMemo } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import { TouchableOpacity, View } from 'react-native'
 
 import GasTankIcon from '@common/assets/svg/GasTankIcon'
@@ -17,11 +17,11 @@ import useNavigation from '@common/hooks/useNavigation'
 import usePrivateMode from '@common/hooks/usePrivateMode'
 import useRelayerData from '@common/hooks/useRelayerData'
 import { ROUTES } from '@common/modules/router/constants/common'
-import { triggerLayoutAnimation } from '@common/services/layoutAnimation'
 import spacings from '@common/styles/spacings'
 import flexboxStyles from '@common/styles/utils/flexbox'
 import textStyles from '@common/styles/utils/text'
 
+import BalanceLoader from './BalanceLoader'
 import styles from './styles'
 
 const networkDetails = (network: any) => networks.find(({ id }) => id === network)
@@ -85,10 +85,8 @@ const Balances = ({
 
   const content = (
     <>
-      {isCurrNetworkBalanceLoading ? (
-        <View style={styles.spinnerWrapper}>
-          <Spinner />
-        </View>
+      {isLoading || isCurrNetworkBalanceLoading ? (
+        <BalanceLoader />
       ) : (
         <Text
           fontSize={42}
@@ -191,17 +189,7 @@ const Balances = ({
     </>
   )
 
-  return (
-    <View style={flexboxStyles.alignCenter}>
-      {isLoading ? (
-        <View style={[styles.loadingContainer, flexboxStyles.center]}>
-          <Spinner />
-        </View>
-      ) : (
-        content
-      )}
-    </View>
-  )
+  return <View style={flexboxStyles.alignCenter}>{content}</View>
 }
 
 export default React.memo(Balances)
