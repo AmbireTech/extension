@@ -7,6 +7,7 @@ import commonStyles from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
 interface Style {
+  rewardTokenButton: ViewStyle
   tokenButtonContainer: ViewStyle
   tokenButtonIconWrapper: ViewStyle
   rewardFlag: ViewStyle
@@ -17,10 +18,16 @@ interface Style {
 }
 
 const styles = StyleSheet.create<Style>({
+  rewardTokenButton: {
+    ...flexbox.alignSelfCenter,
+    backgroundColor: colors.titan_05,
+    // So it matches the height of the token item send button
+    minHeight: 36
+  },
   tokenButtonContainer: {
     flexDirection: 'row',
     backgroundColor: colors.howl,
-    ...spacings.pv,
+    ...spacings.pvSm,
     ...spacings.phSm,
     ...spacings.mbTy,
     ...commonStyles.borderRadiusPrimary,
@@ -35,8 +42,7 @@ const styles = StyleSheet.create<Style>({
     ...spacings.mrSm,
     width: 34,
     height: 34,
-    // To match the height of the TokenItem icon
-    marginBottom: 9
+    alignSelf: 'center'
   },
   rewardFlag: {
     position: 'absolute',
@@ -46,7 +52,6 @@ const styles = StyleSheet.create<Style>({
   },
   tableContainer: {
     marginHorizontal: isWeb ? 0 : -1 * SPACING_TY,
-    backgroundColor: colors.valhalla,
     ...commonStyles.borderRadiusPrimary,
     ...spacings.ph,
     ...spacings.pvTy
