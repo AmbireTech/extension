@@ -73,11 +73,21 @@ const AddOrHideTokenForm: React.FC<Props> = ({
       return addToast(`Invalid address: ${inputText}`, { error: true })
 
     if (enableSymbolSearch && inputText) {
-      const foundByAddressOrSymbol = tokens.find(
+      const lowerCaseInputText = inputText.toLowerCase()
+
+      const fullMatch = tokens.find(
         (i) =>
-          i.symbol.toLowerCase().includes(inputText.toLowerCase()) ||
-          i.address.toLowerCase().includes(inputText.toLowerCase())
+          i.symbol.toLowerCase() === lowerCaseInputText ||
+          i.address.toLowerCase() === lowerCaseInputText
       )
+
+      const partialMatch = tokens.find(
+        (i) =>
+          i.symbol.toLowerCase().includes(lowerCaseInputText) ||
+          i.address.toLowerCase().includes(lowerCaseInputText)
+      )
+
+      const foundByAddressOrSymbol = fullMatch || partialMatch
 
       if (foundByAddressOrSymbol) {
         inputText = foundByAddressOrSymbol?.address
