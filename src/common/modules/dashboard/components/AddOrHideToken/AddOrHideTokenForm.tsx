@@ -74,8 +74,8 @@ const AddOrHideTokenForm: React.FC<Props> = ({
     if (enableSymbolSearch) {
       const foundByAddressOrSymbol = tokens.find(
         (i) =>
-          i.symbol.toLowerCase() === inputText.toLowerCase() ||
-          i.address.toLowerCase() === inputText.toLowerCase()
+          i.symbol.toLowerCase().includes(inputText.toLowerCase()) ||
+          i.address.toLowerCase().includes(inputText.toLowerCase())
       )
 
       if (foundByAddressOrSymbol) {
