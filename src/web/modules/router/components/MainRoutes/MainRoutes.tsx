@@ -15,6 +15,7 @@ import {
   headerGamma as defaultHeaderGamma
 } from '@common/modules/header/config/headerConfig'
 import NoConnectionScreen from '@common/modules/no-connection/screens/NoConnectionScreen'
+import { PendingTransactionsProvider } from '@common/modules/pending-transactions/contexts/pendingTransactionsContext'
 import PendingTransactionsScreen from '@common/modules/pending-transactions/screens/PendingTransactionsScreen'
 import ProviderScreen from '@common/modules/receive/screens/ProviderScreen'
 import ReceiveScreen from '@common/modules/receive/screens/ReceiveScreen'
@@ -93,6 +94,12 @@ const footer = (
   </>
 )
 
+const pendingTransactions = (
+  <PendingTransactionsProvider>
+    <Outlet />
+  </PendingTransactionsProvider>
+)
+
 const MainRoutes = () => {
   return (
     <Routes>
@@ -150,7 +157,9 @@ const MainRoutes = () => {
         </Route>
         <Route element={headerBeta}>
           <Route path={WEB_ROUTES.menu} element={<NavMenu />} />
-          <Route path={WEB_ROUTES.pendingTransactions} element={<PendingTransactionsScreen />} />
+          <Route element={pendingTransactions}>
+            <Route path={WEB_ROUTES.pendingTransactions} element={<PendingTransactionsScreen />} />
+          </Route>
           <Route path={WEB_ROUTES.receive} element={<ReceiveScreen />} />
           <Route path={WEB_ROUTES.provider} element={<ProviderScreen />} />
           <Route path={WEB_ROUTES.signMessage} element={<SignMessageScreen />} />

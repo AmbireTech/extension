@@ -90,8 +90,11 @@ const BottomSheet: React.FC<Props> = ({
           isVisible={isBackdropVisible}
           isBottomSheetVisible={isOpen}
           onPress={() => {
-            closeBottomSheet()
-            !!onBackdropPress && onBackdropPress()
+            if (onBackdropPress) {
+              onBackdropPress()
+            } else {
+              closeBottomSheet()
+            }
           }}
         />
       )}
