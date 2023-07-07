@@ -246,6 +246,11 @@ const Rewards = () => {
             <View style={[flexboxStyles.directionRow, spacings.mb]}>
               <View style={[spacings.prTy, flexboxStyles.flex1]}>
                 <Text>{t('Claimable now')}</Text>
+                {claimingDisabled && (
+                  <Text type="caption" appearance="danger">
+                    {claimDisabledReason || disabledReason}
+                  </Text>
+                )}
               </View>
               <View style={[spacings.plTy, styles.tableRowValue]}>
                 <Text color={colors.turquoise} style={textStyles.right}>
@@ -259,27 +264,18 @@ const Rewards = () => {
                 </Text>
               </View>
             </View>
-            <View style={flexboxStyles.directionRow}>
-              <Button
-                disabled={claimingDisabled}
-                onPress={handleClaimWithBurn}
-                size="small"
-                text={t('Claim with Burn')}
-                containerStyle={[spacings.mrMi, flexboxStyles.flex1]}
-              />
-              <Button
-                disabled={claimingDisabled}
-                onPress={handleClaimInxWallet}
-                size="small"
-                text={t('Claim in xWALLET')}
-                containerStyle={[spacings.mlMi, flexboxStyles.flex1]}
-              />
-            </View>
-            {claimingDisabled && (
-              <Text type="caption" appearance="danger" style={spacings.mhTy}>
-                {claimDisabledReason || disabledReason}
-              </Text>
-            )}
+            <Button
+              disabled={claimingDisabled}
+              onPress={handleClaimWithBurn}
+              text={t('Claim with Burn')}
+              style={spacings.mbSm}
+            />
+            <Button
+              disabled={claimingDisabled}
+              onPress={handleClaimInxWallet}
+              text={t('Claim in xWALLET')}
+              style={shouldDisplayMintableVesting && spacings.mbMi}
+            />
           </View>
 
           {shouldDisplayMintableVesting && (
@@ -303,8 +299,8 @@ const Rewards = () => {
               <Button
                 onPress={handleClaimVesting}
                 disabled={!!disabledReason}
-                size="small"
                 text={t('Claim')}
+                hasBottomSpacing={false}
               />
             </View>
           )}

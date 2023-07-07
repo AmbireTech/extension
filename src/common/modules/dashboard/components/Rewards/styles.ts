@@ -52,7 +52,6 @@ const styles = StyleSheet.create<Style>({
   },
   tableContainer: {
     marginHorizontal: isWeb ? 0 : -1 * SPACING_TY,
-    backgroundColor: colors.valhalla,
     ...commonStyles.borderRadiusPrimary,
     ...spacings.ph,
     ...spacings.pvTy
