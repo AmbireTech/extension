@@ -222,7 +222,7 @@ const Rewards = () => {
         closeBottomSheet={closeBottomSheet}
         displayCancel={false}
       >
-        <Title style={textStyles.center}>{t('Wallet token distribution')}</Title>
+        <Title style={textStyles.center}>{t('$WALLET token distribution')}</Title>
         {isWeb && multiplierBadges.length < 7 ? (
           <View style={[flexboxStyles.directionRow, flexboxStyles.justifyCenter, spacings.mb]}>
             {multiplierBadges.map(renderBadge)}
@@ -367,4 +367,4 @@ const Rewards = () => {
   )
 }
 
-export default Rewards
+export default React.memo(Rewards)
