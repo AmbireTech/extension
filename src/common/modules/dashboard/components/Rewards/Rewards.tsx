@@ -165,11 +165,7 @@ const Rewards = () => {
     const handleLinkOpen = () => Linking.openURL(link)
 
     return (
-      <TouchableOpacity
-        onPress={handleLinkOpen}
-        key={name}
-        style={[flexboxStyles.center, spacings.mhMi, !isUnlocked && { opacity: 0.3 }]}
-      >
+      <TouchableOpacity onPress={handleLinkOpen} key={name} style={!isUnlocked && { opacity: 0.3 }}>
         {id === 'beta-tester' && <RewardBadgeBetaTester />}
         {id === 'lobsters' && <RewardBadgeLobster />}
         {id === 'cryptoTesters' && <RewardBadgeCryptoTesters />}
@@ -214,12 +210,14 @@ const Rewards = () => {
         closeBottomSheet={closeBottomSheet}
         displayCancel={false}
       >
-        <Title style={[textStyles.center, spacings.mtTy]}>{t('WALLET token distribution')}</Title>
-        <View style={[flexboxStyles.directionRow, flexboxStyles.justifyCenter, spacings.mb]}>
+        <Title style={[textStyles.center, spacings.mtTy, spacings.mbTy]}>
+          {t('WALLET token distribution')}
+        </Title>
+        <View style={[flexboxStyles.directionRow, flexboxStyles.justifyCenter, spacings.mbTy]}>
           {multiplierBadges.map(renderBadge)}
         </View>
 
-        <Text type="caption" style={[spacings.mbSm, textStyles.center]}>
+        <Text type="caption" style={[spacings.mb, textStyles.center]}>
           <Text type="caption">
             {t(
               'You are receiving $WALLETs for holding funds on your Ambire wallet as an early user. '
