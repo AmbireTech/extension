@@ -23,6 +23,7 @@ import getRewardsSource from '@common/modules/dashboard/helpers/getRewardsSource
 import Card from '@common/modules/earn/components/Card'
 import { CARDS } from '@common/modules/earn/contexts/cardsVisibilityContext'
 import { getTokenIcon } from '@common/services/icons'
+import { rpcProviders } from '@common/services/providers'
 import spacings from '@common/styles/spacings'
 
 const ADX_TOKEN_ADDRESS = '0xade00c28244d5ce17d72e40330b1c318cd12b7c3'
@@ -345,7 +346,7 @@ const AmbireCard = ({ tokens, networkId, selectedAcc, addRequest }: Props) => {
         // Prevent init if the card is unavailable for current network
         if (networkId !== 'ethereum') return
 
-        const provider = getProvider(networkId)
+        const provider = rpcProviders['ethereum-ambire-earn']
 
         const tokenAddress =
           selectedToken.label === 'ADX' ? ADX_TOKEN_ADDRESS : WALLET_TOKEN_ADDRESS
