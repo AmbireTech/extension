@@ -6,6 +6,7 @@ import {
 import useClaimableWalletToken from 'ambire-common/src/hooks/useClaimableWalletToken'
 import useRewards from 'ambire-common/src/hooks/useRewards'
 import { RewardIds } from 'ambire-common/src/hooks/useRewards/types'
+import { formatFloatTokenAmount } from 'ambire-common/src/services/formatter'
 import React, { useCallback, useLayoutEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Linking, TouchableOpacity, View } from 'react-native'
@@ -134,7 +135,7 @@ const Rewards = () => {
     }
 
     return t('{{amount}} $WALLET', {
-      amount: hidePrivateValue(Math.round(pendingTokensTotal))
+      amount: hidePrivateValue(formatFloatTokenAmount(Math.floor(pendingTokensTotal), true, 0))
     })
   }, [
     currentClaimStatus.error,
@@ -235,7 +236,7 @@ const Rewards = () => {
             </View>
             <View style={[spacings.plTy, styles.tableRowValue]}>
               <Text color={colors.turquoise} style={textStyles.right}>
-                {Math.round(rewards[RewardIds.BALANCE_REWARDS])}
+                {formatFloatTokenAmount(Math.floor(rewards[RewardIds.BALANCE_REWARDS]), true, 0)}
               </Text>
               <Text type="small" style={textStyles.right}>
                 {walletTokenAPYPercentage} APY
@@ -254,7 +255,9 @@ const Rewards = () => {
               </View>
               <View style={[spacings.plTy, styles.tableRowValue]}>
                 <Text color={colors.turquoise} style={textStyles.right}>
-                  {currentClaimStatus.loading ? '...' : Math.round(claimableNow)}
+                  {currentClaimStatus.loading
+                    ? '...'
+                    : formatFloatTokenAmount(Math.floor(claimableNow), true, 0)}
                 </Text>
                 <Text type="small" style={textStyles.right}>
                   <Text type="small" color={colors.heliotrope}>
