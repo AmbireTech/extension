@@ -82,12 +82,6 @@ const Rewards = () => {
   })
   const { hidePrivateValue } = usePrivateMode()
 
-  useLayoutEffect(() => {
-    // Solves 2 issues: 1) the annoying jump in the beginning between the
-    // loading and the loaded state; 2) the annoying jump when value updates.
-    triggerLayoutAnimation()
-  }, [pendingTokensTotal])
-
   const handleClaimWithBurn = () => {
     const handleConfirm = () => {
       closeBottomSheet()

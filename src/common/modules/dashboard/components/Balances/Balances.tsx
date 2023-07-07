@@ -57,14 +57,6 @@ const Balances = ({
 
   const { data } = useRelayerData({ url: urlGetBalance })
 
-  useLayoutEffect(() => {
-    triggerLayoutAnimation()
-  }, [isLoading])
-
-  useLayoutEffect(() => {
-    triggerLayoutAnimation()
-  }, [networkId])
-
   const gasTankBalanceLabel = !data
     ? '0.00'
     : data
@@ -157,7 +149,6 @@ const Balances = ({
               const isLast = i === allPositiveBalances.length - 1
 
               const onNetworkChange = () => {
-                triggerLayoutAnimation()
                 setNetwork(network)
               }
 
