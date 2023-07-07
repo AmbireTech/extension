@@ -65,9 +65,10 @@ const AddOrHideTokenForm: React.FC<Props> = ({
       ? 'an ERC20'
       : 'a valid'
 
-  const onInput = async (_inputText: string) => {
-    let inputText = _inputText
+  const onInput = async (inputText: string) => {
+    let foundByAddressOrSymbol
     setTokenDetails(null)
+    setShowError('')
 
     if (inputText.length === ADDRESS_LENGTH && !isValidAddress(inputText))
       return addToast(`Invalid address: ${inputText}`, { error: true })
@@ -87,11 +88,17 @@ const AddOrHideTokenForm: React.FC<Props> = ({
           i.address.toLowerCase().includes(lowerCaseInputText)
       )
 
-      const foundByAddressOrSymbol = fullMatch || partialMatch
+      foundByAddressOrSymbol = fullMatch || partialMatch
 
       if (foundByAddressOrSymbol) {
-        inputText = foundByAddressOrSymbol?.address
-      } else if (inputText.length >= TOKEN_SYMBOL_MIN_LENGTH) {
+        setTokenDetails({
+          ...foundByAddressOrSymbol,
+          name: `${foundByAddressOrSymbol.symbol} on ${foundByAddressOrSymbol.network}`
+        })
+        return
+      }
+
+      if (inputText.length >= TOKEN_SYMBOL_MIN_LENGTH) {
         setShowError(
           t(
             "The address/symbol you entered does not appear to correspond to you assets list or it's already hidden."
