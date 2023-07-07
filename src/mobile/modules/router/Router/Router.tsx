@@ -6,11 +6,14 @@ import { View } from 'react-native'
 import DAppsIcon from '@common/assets/svg/DAppsIcon'
 import DashboardIcon from '@common/assets/svg/DashboardIcon'
 import EarnIcon from '@common/assets/svg/EarnIcon'
+import GasTankIcon from '@common/assets/svg/GasTankIcon'
 import SwapIcon from '@common/assets/svg/SwapIcon'
 import TransferIcon from '@common/assets/svg/TransferIcon'
+import Text from '@common/components/Text'
 import { TAB_BAR_BLUR } from '@common/constants/router'
 import { ConnectionStates } from '@common/contexts/netInfoContext'
 import useNetInfo from '@common/hooks/useNetInfo'
+import useRequests from '@common/hooks/useRequests'
 import useStorageController from '@common/hooks/useStorageController'
 import { AUTH_STATUS } from '@common/modules/auth/constants/authStatus'
 import { EmailLoginProvider } from '@common/modules/auth/contexts/emailLoginContext'
@@ -27,6 +30,7 @@ import GasInformationScreen from '@common/modules/gas-tank/screens/GasInformatio
 import GasTankScreen from '@common/modules/gas-tank/screens/GasTankScreen'
 import { headerAlpha, headerBeta, headerGamma } from '@common/modules/header/config/headerConfig'
 import NoConnectionScreen from '@common/modules/no-connection/screens/NoConnectionScreen'
+import { PendingTransactionsProvider } from '@common/modules/pending-transactions/contexts/pendingTransactionsContext'
 import PendingTransactionsScreen from '@common/modules/pending-transactions/screens/PendingTransactionsScreen'
 import ProviderScreen from '@common/modules/receive/screens/ProviderScreen'
 import ReceiveScreen from '@common/modules/receive/screens/ReceiveScreen'
@@ -82,7 +86,7 @@ const ManageVaultLockStack = createNativeStackNavigator()
 const Web3Stack = createNativeStackNavigator()
 const EmailLoginStack = createNativeStackNavigator()
 const JsonLoginStack = createNativeStackNavigator()
-const GasTankStack = createNativeStackNavigator()
+const EarnStack = createNativeStackNavigator()
 const GasInformationStack = createNativeStackNavigator()
 const DataDeletionPolicyStack = createNativeStackNavigator()
 const BackupStack = createNativeStackNavigator()
@@ -145,11 +149,11 @@ const BackupStackScreen = () => {
   )
 }
 
-const GasTankStackScreen = () => {
+const EarnStackScreen = () => {
   return (
-    <GasTankStack.Navigator screenOptions={{ header: headerGamma }}>
-      <GasTankStack.Screen name={`${MOBILE_ROUTES.gasTank}-screen`} component={GasTankScreen} />
-    </GasTankStack.Navigator>
+    <EarnStack.Navigator screenOptions={{ header: headerGamma }}>
+      <EarnStack.Screen name={`${MOBILE_ROUTES.earn}-screen`} component={EarnScreen} />
+    </EarnStack.Navigator>
   )
 }
 
@@ -195,7 +199,7 @@ const Web3StackScreen = () => {
           component={Web3BrowserScreen}
           options={{
             title: routesConfig[ROUTES.web3Browser].title,
-            header: headerGamma
+            header: headerAlpha
           }}
         />
       </Web3Stack.Navigator>
@@ -387,6 +391,7 @@ const DashboardStackScreen = () => {
 }
 
 const TabsScreens = () => {
+  const { eligibleRequests } = useRequests()
   const tabsIconSize = IS_SCREEN_SIZE_L ? 44 : 24
   return (
     <Tab.Navigator
@@ -421,15 +426,15 @@ const TabsScreens = () => {
         component={DashboardStackScreen}
       />
       <Tab.Screen
-        name={MOBILE_ROUTES.earn}
+        name={MOBILE_ROUTES.gasTank}
         options={{
-          tabBarLabel: routesConfig[ROUTES.earn].title,
-          headerTitle: routesConfig[ROUTES.earn].title,
+          tabBarLabel: routesConfig[ROUTES.gasTank].title,
+          headerTitle: routesConfig[ROUTES.gasTank].title,
           tabBarIcon: ({ color }) => (
-            <EarnIcon color={color} width={tabsIconSize} height={tabsIconSize} />
+            <GasTankIcon color={color} width={tabsIconSize} height={tabsIconSize} />
           )
         }}
-        component={EarnScreen}
+        component={GasTankScreen}
       />
       <Tab.Screen
         name={MOBILE_ROUTES.swap}
@@ -448,7 +453,16 @@ const TabsScreens = () => {
           tabBarLabel: routesConfig[ROUTES.transactions].title,
           headerTitle: routesConfig[ROUTES.transactions].title,
           tabBarIcon: ({ color }) => (
-            <TransferIcon color={color} width={tabsIconSize} height={tabsIconSize} />
+            <View>
+              <TransferIcon color={color} width={tabsIconSize} height={tabsIconSize} />
+              {eligibleRequests.length > 0 && (
+                <View style={styles.transactionsBadge}>
+                  <Text fontSize={10} weight="medium">
+                    {eligibleRequests.length}
+                  </Text>
+                </View>
+              )}
+            </View>
           )
         }}
         component={TransactionsScreen}
@@ -512,6 +526,14 @@ const AppStack = () => {
     }
   }, [getItem, hasCompletedOnboarding])
 
+  const renderPendingTransactionsScreen = useCallback<(props: any) => JSX.Element>((props) => {
+    return (
+      <PendingTransactionsProvider>
+        <PendingTransactionsScreen {...props} />
+      </PendingTransactionsProvider>
+    )
+  }, [])
+
   return (
     <MainStack.Navigator screenOptions={{ header: headerBeta }}>
       <MainStack.Screen
@@ -563,7 +585,7 @@ const AppStack = () => {
       />
       <MainStack.Screen
         name={MOBILE_ROUTES.pendingTransactions}
-        component={PendingTransactionsScreen}
+        component={renderPendingTransactionsScreen}
         options={{ title: routesConfig[ROUTES.pendingTransactions].title }}
       />
       <MainStack.Screen
@@ -572,8 +594,8 @@ const AppStack = () => {
         options={{ title: routesConfig[ROUTES.signMessage].title }}
       />
       <MainStack.Screen
-        name={MOBILE_ROUTES.gasTank}
-        component={GasTankStackScreen}
+        name={MOBILE_ROUTES.earn}
+        component={EarnStackScreen}
         options={{ headerShown: false }}
       />
       <MainStack.Screen

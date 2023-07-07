@@ -1,15 +1,18 @@
 import React from 'react'
 import { View } from 'react-native'
 
+import AmbireLogoHorizontal from '@common/components/AmbireLogoHorizontal'
 import Button from '@common/components/Button'
 import GradientBackgroundWrapper from '@common/components/GradientBackgroundWrapper'
 import Text from '@common/components/Text'
 import Wrapper from '@common/components/Wrapper'
 import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
-import AmbireLogo from '@common/modules/auth/components/AmbireLogo'
 import useJsonLogin from '@common/modules/auth/hooks/useJsonLogin'
 import spacings from '@common/styles/spacings'
+import flexbox from '@common/styles/utils/flexbox'
+
+import styles from './styles'
 
 const JsonLoginScreen = () => {
   const { t } = useTranslation()
@@ -18,7 +21,7 @@ const JsonLoginScreen = () => {
   return (
     <GradientBackgroundWrapper>
       <Wrapper contentContainerStyle={spacings.pbLg}>
-        <AmbireLogo />
+        <AmbireLogoHorizontal width={132} height={60} style={styles.horizontalLogo} />
         <Button
           disabled={inProgress}
           text={inProgress ? t('Importing...') : t('Select File')}

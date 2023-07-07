@@ -6,27 +6,30 @@ import CustomJsonRpcProvider from '@common/services/CustomJsonRpcProvider'
 // TODO: move these in .env
 // currently here to avoid publishing a new build for the mobile apps and avoid the stores review process
 const RPC_URL_ETHEREUM =
-  'https://rpc.ankr.com/eth/5eab0eb2ce05138695963ae1853b2ed0de083e1132f204704b6e7c32f7ea8a73'
+  'https://rpc.ankr.com/eth/0e066bd7837ff1978d6aa30b9f29407deb0276d74f46393e474c2530916c8943'
+// Ambire Earn uses a separate RPC provider that gets initiated separately
+const RPC_URL_ETHEREUM_AMBIRE_EARN =
+  'https://unufri-ethereum.adex.network/v3/099fc58e0de9451d80b18d7c74caa7c1'
 const RPC_URL_POLYGON =
-  'https://rpc.ankr.com/polygon/5eab0eb2ce05138695963ae1853b2ed0de083e1132f204704b6e7c32f7ea8a73'
+  'https://rpc.ankr.com/polygon/0e066bd7837ff1978d6aa30b9f29407deb0276d74f46393e474c2530916c8943'
 const RPC_URL_AVALANCHE =
-  'https://rpc.ankr.com/avalanche/5eab0eb2ce05138695963ae1853b2ed0de083e1132f204704b6e7c32f7ea8a73'
+  'https://rpc.ankr.com/avalanche/0e066bd7837ff1978d6aa30b9f29407deb0276d74f46393e474c2530916c8943'
 const RPC_URL_BNB_CHAIN =
-  'https://rpc.ankr.com/bsc/5eab0eb2ce05138695963ae1853b2ed0de083e1132f204704b6e7c32f7ea8a73'
+  'https://rpc.ankr.com/bsc/0e066bd7837ff1978d6aa30b9f29407deb0276d74f46393e474c2530916c8943'
 const RPC_URL_FANTOM =
-  'https://rpc.ankr.com/fantom/5eab0eb2ce05138695963ae1853b2ed0de083e1132f204704b6e7c32f7ea8a73'
+  'https://rpc.ankr.com/fantom/0e066bd7837ff1978d6aa30b9f29407deb0276d74f46393e474c2530916c8943'
 const RPC_URL_MOONBEAM =
-  'https://rpc.ankr.com/moonbeam/5eab0eb2ce05138695963ae1853b2ed0de083e1132f204704b6e7c32f7ea8a73'
+  'https://rpc.ankr.com/moonbeam/0e066bd7837ff1978d6aa30b9f29407deb0276d74f46393e474c2530916c8943'
 const RPC_URL_MOONRIVER = 'https://rpc.api.moonriver.moonbeam.network'
 const RPC_URL_ARBITRUM =
-  'https://rpc.ankr.com/arbitrum/5eab0eb2ce05138695963ae1853b2ed0de083e1132f204704b6e7c32f7ea8a73'
+  'https://rpc.ankr.com/arbitrum/0e066bd7837ff1978d6aa30b9f29407deb0276d74f46393e474c2530916c8943'
 const RPC_URL_GNOSIS =
-  'https://rpc.ankr.com/gnosis/5eab0eb2ce05138695963ae1853b2ed0de083e1132f204704b6e7c32f7ea8a73'
+  'https://rpc.ankr.com/gnosis/0e066bd7837ff1978d6aa30b9f29407deb0276d74f46393e474c2530916c8943'
 const RPC_URL_KUCOIN = 'https://rpc-mainnet.kcc.network'
 const RPC_URL_OPTIMISM =
-  'https://rpc.ankr.com/optimism/5eab0eb2ce05138695963ae1853b2ed0de083e1132f204704b6e7c32f7ea8a73'
+  'https://rpc.ankr.com/optimism/0e066bd7837ff1978d6aa30b9f29407deb0276d74f46393e474c2530916c8943'
 const RPC_URL_ANDROMEDA =
-  'https://rpc.ankr.com/metis/5eab0eb2ce05138695963ae1853b2ed0de083e1132f204704b6e7c32f7ea8a73'
+  'https://rpc.ankr.com/metis/0e066bd7837ff1978d6aa30b9f29407deb0276d74f46393e474c2530916c8943'
 const RPC_URL_RINKEBY = 'https://rinkeby.infura.io/v3/4409badb714444b299066870e0f7b631'
 const RPC_URL_CRONOS = 'https://evm-cronos.crypto.org'
 const RPC_URL_AURORA = 'https://mainnet.aurora.dev'
@@ -85,5 +88,14 @@ if (!Object.keys(rpcProviders).length) {
     rpcProviders[networkId] = setProvider(networkId)
   })
 }
+
+// @ts-ignore
+rpcProviders['ethereum-ambire-earn'] = new providers.StaticJsonRpcProvider(
+  RPC_URL_ETHEREUM_AMBIRE_EARN,
+  {
+    name: 'ethereum-ambire-earn',
+    chainId: 1
+  }
+)
 
 export { rpcProviders }

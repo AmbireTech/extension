@@ -24,9 +24,10 @@ interface Props {
   label?: string
   extraText?: string
   hasArrow?: boolean
+  disabled?: boolean
 }
 
-const Select = ({ value, setValue, items, label, extraText, hasArrow = true }: Props) => {
+const Select = ({ value, disabled, setValue, items, label, extraText, hasArrow = true }: Props) => {
   const [searchValue, setSearchValue] = useState('')
   const { t } = useTranslation()
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
@@ -79,12 +80,13 @@ const Select = ({ value, setValue, items, label, extraText, hasArrow = true }: P
           Keyboard.dismiss()
           openBottomSheet()
         }}
+        disabled={disabled}
       >
         <View pointerEvents="none">
           <Input
             value={item?.label}
             leftIcon={item?.icon}
-            containerStyle={spacings.mbSm}
+            containerStyle={[spacings.mbSm, disabled && { opacity: 0.6 }]}
             button={
               hasArrow ? (
                 <View pointerEvents="none">

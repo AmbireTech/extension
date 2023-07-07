@@ -53,7 +53,6 @@ const Assets = ({
   onRemoveHiddenToken
 }: Props) => {
   const { type } = useContext(AssetsToggleContext)
-
   const handleGoToBlockExplorer = () => Linking.openURL(`${explorerUrl}/address/${selectedAcc}`)
 
   return (

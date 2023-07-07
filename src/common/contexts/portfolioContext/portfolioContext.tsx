@@ -21,7 +21,7 @@ const PortfolioContext = createContext<PortfolioContextReturnType>({
     },
     network: ''
   },
-  otherBalances: [],
+  allBalances: [],
   tokens: [],
   protocols: [] as any,
   extraTokens: [],
@@ -71,7 +71,7 @@ const PortfolioProvider: React.FC = ({ children }) => {
 
   const {
     balance,
-    otherBalances,
+    allBalances,
     tokens,
     extraTokens,
     hiddenTokens,
@@ -105,7 +105,7 @@ const PortfolioProvider: React.FC = ({ children }) => {
       value={useMemo(
         () => ({
           balance,
-          otherBalances,
+          allBalances,
           tokens,
           extraTokens,
           hiddenTokens,
@@ -127,7 +127,7 @@ const PortfolioProvider: React.FC = ({ children }) => {
         }),
         [
           balance,
-          otherBalances,
+          allBalances,
           tokens,
           extraTokens,
           hiddenTokens,

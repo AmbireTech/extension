@@ -23,7 +23,7 @@ const EarnScreen = () => {
   const { addToast } = useToast()
   return (
     <GradientBackgroundWrapper>
-      <Wrapper hasBottomTabNav>
+      <Wrapper hasBottomTabNav={false}>
         {!!isCurrNetworkBalanceLoading && !dataLoaded && (
           <View
             style={[flexboxStyles.flex1, flexboxStyles.alignCenter, flexboxStyles.justifyCenter]}

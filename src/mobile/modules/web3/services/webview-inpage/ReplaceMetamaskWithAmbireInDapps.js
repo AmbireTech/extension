@@ -18,6 +18,29 @@ const replaceMetamaskWithAmbireInDapps = `
           const text = childNode.nodeValue;
           const replacedText = text.replace(new RegExp(textToFind, 'gi'), replacementText);
 
+          if (/^walletconnect$/i.test(text.trim())) {
+            if(childNode.parentElement.tagName === 'BUTTON') {
+              childNode.parentElement.style.display = 'none';
+            } else {
+              let buttonWithWalletConnect = childNode.parentElement.closest('button');
+              if (buttonWithWalletConnect) {
+                function isChildOf(parentElement, childElement) {
+                  let node = childElement.parentNode;
+                  while (node !== null) {
+                    if (node === parentElement) {
+                      return true;
+                    }
+                    node = node.parentNode;
+                  }
+                  return false;
+                }
+                if (isChildOf(buttonWithWalletConnect, childNode.parentElement)) {
+                  buttonWithWalletConnect.style.display = 'none';
+                }
+              }
+            }
+          }
+
           if (/^metamask$/i.test(text.trim())) {
             function lookForMMIcon() {
               let ancestorNode = childNode.parentNode;

@@ -1,9 +1,8 @@
 import { isValidPassword } from 'ambire-common/src/services/validations'
 import React, { useCallback } from 'react'
 import { Controller, useForm } from 'react-hook-form'
-import { Image, Keyboard, TouchableWithoutFeedback, View } from 'react-native'
+import { Keyboard, TouchableWithoutFeedback, View } from 'react-native'
 
-import logo from '@common/assets/images/Ambire-Wallet-logo-colored-white-vertical.png'
 import KeyStoreIcon from '@common/assets/svg/KeyStoreIcon'
 import Button from '@common/components/Button'
 import GradientBackgroundWrapper from '@common/components/GradientBackgroundWrapper'
@@ -15,7 +14,6 @@ import { useTranslation } from '@common/config/localization'
 import useDisableNavigatingBack from '@common/hooks/useDisableNavigatingBack'
 import useNavigation from '@common/hooks/useNavigation'
 import useRoute from '@common/hooks/useRoute'
-import AnimatedArrows from '@common/modules/auth/components/AnimatedArrows'
 import useEmailLogin from '@common/modules/auth/hooks/useEmailLogin'
 import useJsonLogin from '@common/modules/auth/hooks/useJsonLogin'
 import spacings, { IS_SCREEN_SIZE_S } from '@common/styles/spacings'
@@ -82,37 +80,19 @@ const AddAccountPasswordToVaultScreen = () => {
           type={WRAPPER_TYPES.KEYBOARD_AWARE_SCROLL_VIEW}
           extraHeight={220}
         >
-          <View
-            style={[
-              flexboxStyles.directionRow,
-              flexboxStyles.justifyCenter,
-              flexboxStyles.alignCenter,
-              spacings.pv
-            ]}
-          >
-            <Image
-              source={logo}
-              style={{
-                height: IS_SCREEN_SIZE_S ? 96 : 136,
-                width: 120,
-                ...(isWeb ? { modalHeight: 120 } : {})
-              }}
-              resizeMode="contain"
-            />
-            <AnimatedArrows />
+          <View style={[flexboxStyles.justifyCenter, flexboxStyles.alignCenter, spacings.pv]}>
             <KeyStoreIcon height={IS_SCREEN_SIZE_S ? 96 : 136} width={120} />
           </View>
 
           <View style={[isWeb && spacings.ph, flexboxStyles.flex1, flexboxStyles.justifyEnd]}>
-            <Text weight="regular" style={[spacings.mbMi, spacings.phTy]} fontSize={13}>
+            <Text weight="regular" style={[spacings.mbTy, spacings.phTy]} fontSize={14}>
               {t(
-                'When you add your account password to the Key Store, you will be able to sign transactions on this device using your passphrase only.'
+                'Add your account password to the Key Store and you can sign transactions and unlock wallet using PIN only.'
               )}
             </Text>
-            <Text weight="regular" style={[spacings.mb, spacings.phTy]} fontSize={13}>
+            <Text weight="regular" style={[spacings.mb, spacings.phTy]} fontSize={14}>
               {t(
-                'If you reset your passphrase or {{action}}, the Key Store will be removed from the device, however you can still use your account password on any other device.',
-                { action: isWeb ? t('remove the extension') : t('uninstall the app') }
+                'If you delete the app, the Key Store and PIN will be lost, but you can still use your account password on any other device.'
               )}
             </Text>
 

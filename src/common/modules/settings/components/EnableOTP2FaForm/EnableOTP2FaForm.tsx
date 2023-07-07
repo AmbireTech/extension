@@ -59,7 +59,7 @@ const EnableOTP2FaForm: React.FC<Props> = () => {
       <>
         <Text appearance="danger" fontSize={15} weight="regular" style={spacings.mb}>
           {t(
-            'The time is up. There is a 5 minute security threshold within you need to complete your set up. Please trigger the 2FA enable process again to reset your session.'
+            'The time is up. There is a 3 minute security threshold within you need to complete your set up. Please trigger the 2FA enable process again to reset your session.'
           )}
         </Text>
         <Button text={t('Cancel')} onPress={goBack} />
@@ -80,10 +80,10 @@ const EnableOTP2FaForm: React.FC<Props> = () => {
       {!!secret && (
         <>
           <Text fontSize={15} weight="regular" style={spacings.mbMi}>
-            Email sent! For security, you have a 5-minute timer to complete the process.
+            Email sent! For security, you have a 3-minute timer to complete the process.
           </Text>
           <View style={[flexbox.center, spacings.mbLg]}>
-            <CountdownTimer seconds={300} setTimeIsUp={handleTimeIsUp} />
+            <CountdownTimer seconds={180} setTimeIsUp={handleTimeIsUp} />
           </View>
         </>
       )}

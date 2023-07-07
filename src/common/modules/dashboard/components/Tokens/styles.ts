@@ -17,7 +17,7 @@ const styles = StyleSheet.create<Style>({
   tokenItemContainer: {
     flexDirection: 'row',
     backgroundColor: colors.howl,
-    ...spacings.pv,
+    ...spacings.pvSm,
     ...spacings.phSm,
     ...spacings.mbTy,
     ...commonStyles.borderRadiusPrimary

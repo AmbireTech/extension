@@ -98,13 +98,7 @@ const AccountChanger: React.FC<Props> = ({ closeBottomSheet }) => {
       <TouchableOpacity
         onPress={onChangeAccount}
         key={account?.id}
-        style={[
-          flexboxStyles.directionRow,
-          spacings.mbTy,
-          spacings.phSm,
-          spacings.pvTy,
-          isActive && styles.accountContainerActive
-        ]}
+        style={[styles.accountContainer, isActive && styles.accountContainerActive]}
       >
         <View>
           <Blockies size={8} borderRadius={30} borderColor={colors.valhalla} seed={account?.id} />
@@ -134,10 +128,10 @@ const AccountChanger: React.FC<Props> = ({ closeBottomSheet }) => {
   return (
     <>
       <Title style={textStyles.center} type="small">
-        {t('Change account')}
+        {t('Change Account')}
       </Title>
       {accounts.map(renderAccount)}
-      <Button onPress={handleGoToAddAccount} style={spacings.mt} text={t('Add Account')} />
+      <Button onPress={handleGoToAddAccount} style={spacings.mt} text={t('Add New Account')} />
     </>
   )
 }

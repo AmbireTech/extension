@@ -58,8 +58,15 @@ const getDefaultFeeToken = (
           (b?.discount || 0) - (a?.discount || 0) ||
           a?.symbol.toUpperCase().localeCompare(b?.symbol.toUpperCase())
       )
+      // move gas tank tokens to the top
+      .sort((a: any, b: any) => {
+        // skip sorting if the same
+        if (a.isGasTankToken === b.isGasTankToken) return 0
+
+        return a.isGasTankToken ? -1 : 1
+      })
       .find((token: any) =>
-        isTokenEligible(token, feeSpeed, estimation, currentAccGasTankState, network)
+        isTokenEligible(token, feeSpeed, estimation, !!token.isGasTankToken, network)
       ) || remainingFeeTokenBalances[0]
   )
 }
@@ -197,7 +204,8 @@ const useSendTransaction = ({ hardwareWalletOpenBottomSheet }: Props) => {
           const gasTankTokens = estimation.gasTank?.map((item) => {
             return {
               ...item,
-              symbol: item.symbol.toUpperCase(),
+              isGasTankToken: true,
+              symbol: `${item.symbol.toUpperCase()} on Gas Tank`,
               balance: ethers.utils
                 .parseUnits(item.balance.toFixed(item.decimals).toString(), item.decimals)
                 .toString(),
@@ -207,7 +215,21 @@ const useSendTransaction = ({ hardwareWalletOpenBottomSheet }: Props) => {
                   : estimation.nativeAssetPriceInUSD / item.price
             }
           })
-          if (currentAccGasTankState.isEnabled) estimation.remainingFeeTokenBalances = gasTankTokens
+          if (currentAccGasTankState.isEnabled) {
+            // Combine the fee tokens and gas tank tokens, since in v3.11.0
+            // both should be visible in the fee selector.
+            const nextCombinedRemainingFeeTokenBalances = [
+              ...(estimation.remainingFeeTokenBalances || []),
+              ...(gasTankTokens || [])
+            ]
+
+            // In case there are no eligible tokens fallback to `gasTankTokens`,
+            // which also covers the case when a transaction is meant to fail
+            // (the `remainingFeeTokenBalances` being empty array breaks the logic)
+            estimation.remainingFeeTokenBalances = nextCombinedRemainingFeeTokenBalances.length
+              ? nextCombinedRemainingFeeTokenBalances
+              : gasTankTokens
+          }
           estimation.selectedFeeToken = getDefaultFeeToken(
             estimation.remainingFeeTokenBalances,
             network,
@@ -225,7 +247,7 @@ const useSendTransaction = ({ hardwareWalletOpenBottomSheet }: Props) => {
                     prevEstimation.selectedFeeToken,
                     feeSpeed,
                     estimation,
-                    currentAccGasTankState.isEnabled,
+                    !!prevEstimation.selectedFeeToken?.isGasTankToken,
                     network
                   ) &&
                   prevEstimation.selectedFeeToken) ||
@@ -296,7 +318,7 @@ const useSendTransaction = ({ hardwareWalletOpenBottomSheet }: Props) => {
       // Also it can be stable but not in USD
       feeInFeeToken,
       addedGas
-    } = getFeesData(feeToken, estimation, feeSpeed, currentAccGasTankState.isEnabled, network)
+    } = getFeesData(feeToken, estimation, feeSpeed, !!feeToken.isGasTankToken, network)
     const feeTxn =
       feeToken.symbol === network.nativeAssetSymbol
         ? // TODO: check native decimals
@@ -317,7 +339,7 @@ const useSendTransaction = ({ hardwareWalletOpenBottomSheet }: Props) => {
     // either use the next non-mined nonce or the next free nonce
     // eslint-disable-next-line no-nested-ternary
     const nonce = isInt(bundle.nonce) ? bundle.nonce : replaceTx ? nextNonMinedNonce : nextFreeNonce
-    if (currentAccGasTankState.isEnabled) {
+    if (feeToken.isGasTankToken) {
       let gasLimit
       if (bundle.txns.length > 1) gasLimit = estimation.gasLimit + (bundle.extraGas || 0)
       else gasLimit = estimation.gasLimit
