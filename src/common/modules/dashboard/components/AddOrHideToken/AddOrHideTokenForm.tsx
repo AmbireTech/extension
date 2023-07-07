@@ -1,6 +1,7 @@
 import { NetworkId, NetworkType } from 'ambire-common/src/constants/networks'
 import { Token, UsePortfolioReturnType } from 'ambire-common/src/hooks/usePortfolio'
 import { isValidAddress } from 'ambire-common/src/services/address'
+import { isNumber } from 'lodash'
 import React, { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { View } from 'react-native'
@@ -54,7 +55,7 @@ const AddOrHideTokenForm: React.FC<Props> = ({
     }
   })
 
-  const disabled = !tokenDetails || !(tokenDetails.symbol && tokenDetails.decimals)
+  const disabled = !tokenDetails || !(tokenDetails.symbol && isNumber(tokenDetails.decimals))
 
   const tokenStandard =
     // eslint-disable-next-line no-nested-ternary
