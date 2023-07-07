@@ -16,7 +16,6 @@ import RewardBadgeBetaTester from '@common/assets/svg/RewardBadgeBetaTester'
 import RewardBadgeCryptoTesters from '@common/assets/svg/RewardBadgeCryptoTesters'
 import RewardBadgeLobster from '@common/assets/svg/RewardBadgeLobster'
 import RewardBadgePowerUser from '@common/assets/svg/RewardBadgePowerUser'
-import RewardsFlag from '@common/assets/svg/RewardFlag/RewardFlag'
 import RewardsIcon from '@common/assets/svg/RewardsIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
@@ -171,10 +170,6 @@ const Rewards = () => {
         {id === 'lobsters' && <RewardBadgeLobster />}
         {id === 'cryptoTesters' && <RewardBadgeCryptoTesters />}
         {id === 'powerUserMultiplier' && <RewardBadgePowerUser />}
-        {/* <Text fontSize={16} weight="semiBold">
-          x{multiplier}
-        </Text> */}
-        {/* <RewardsFlag color={color} style={styles.rewardFlag} /> */}
       </TouchableOpacity>
     )
   }
