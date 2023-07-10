@@ -141,6 +141,7 @@ interface ResponseV1 {
 }
 
 export function normalizeResponse(response: ResponseV2): ResponseV1 {
+  console.log('response identity', response.data.identity)
   const v1Response: ResponseV1 = {
     [response.data.identity]: {
       products: [],
@@ -155,20 +156,25 @@ export function normalizeResponse(response: ResponseV2): ResponseV1 {
 
   // Normalizing tokens
   if (response.data.tokens) {
-    const tokenAssets: TokenV1[] = response.data.tokens.map((token) => {
-      return {
-        type: 'wallet',
-        network: response.data.network,
-        address: token.address,
-        decimals: token.decimals,
-        symbol: token.symbol,
-        price: token.price,
-        balance: token.balance,
-        balanceRaw: token.balanceRaw,
-        balanceUSD: token.balanceUSD,
-        tokenImageUrl: token.tokenImageUrl
-      }
-    })
+    const tokenAssets: TokenV1[] = response.data.tokens
+      .map((token) => {
+        if (token) {
+          return {
+            type: 'wallet',
+            network: response.data.network,
+            address: token.address,
+            decimals: token.decimals,
+            symbol: token.symbol,
+            price: token.price,
+            balance: token.balance,
+            balanceRaw: token.balanceRaw,
+            balanceUSD: token.balanceUSD,
+            tokenImageUrl: token.tokenImageUrl
+          }
+        }
+      })
+      .filter(Boolean) // This will filter out any undefined elements in the array
+
     v1Response[response.data.identity].products.push({
       label: 'Tokens',
       assets: tokenAssets
@@ -177,45 +183,54 @@ export function normalizeResponse(response: ResponseV2): ResponseV1 {
 
   // Normalizing NFTs
   if (response.data.nfts) {
-    const nftAssets: NFTV1[] = response.data.nfts.map((nft) => {
-      return {
-        type: 'nft',
-        network: response.data.network,
-        address: nft.address,
-        decimals: nft.decimals,
-        symbol: nft.symbol,
-        price: nft.price,
-        balance: nft.balance,
-        balanceRaw: nft.balance, // As NFTs usually don't have decimal places, raw balance is same as balance.
-        balanceUSD: nft.balanceUSD,
-        tokenImageUrl: nft.assets[0]?.token_url || '', // Assuming there's at least one asset.
-        category: 'NFT',
-        shouldDisplay: nft.shouldDisplay,
-        collectionId: nft.collectionId,
-        collectionName: nft.collectionName,
-        collectionHidden: nft.collectionHidden,
-        collectionImg: nft.assets[0]?.token_url || '', // Assuming there's at least one asset.
-        collection: {
-          id: nft.collection.id,
-          name: nft.collection.name,
-          hidden: nft.collection.hidden,
-          floorPrice: 0, // Placeholder, as we don't have floor price in the v2 response
-          floorPriceUSD: 0, // Placeholder, as we don't have floor price in USD in the v2 response
-          owners: 0, // Placeholder, as we don't have owner information in the v2 response
-          items: nft.assets.length,
-          volume24h: 0, // Placeholder, as we don't have 24h volume in the v2 response
-          volume24hUSD: 0 // Placeholder, as we don't have 24h volume in USD in the v2 response
-        },
-        assets: nft.assets.map((asset) => {
+    const nftAssets: NFTV1[] = response.data.nfts
+      .map((nft) => {
+        if (nft && nft.assets && nft.assets.length > 0) {
           return {
-            tokenId: asset.tokenId,
-            balance: asset.balance,
-            assetImg: asset.token_url,
-            balanceUSD: 0 // Placeholder, as we don't have asset-specific balance in USD in the v2 response
+            type: 'nft',
+            network: response.data.network,
+            address: nft.address,
+            decimals: nft.decimals,
+            symbol: nft.symbol,
+            price: nft.price,
+            balance: nft.balance,
+            balanceRaw: nft.balance, // As NFTs usually don't have decimal places, raw balance is same as balance.
+            balanceUSD: nft.balanceUSD,
+            tokenImageUrl: nft.assets[0].token_url,
+            category: 'NFT',
+            shouldDisplay: nft.shouldDisplay,
+            collectionId: nft.collectionId,
+            collectionName: nft.collectionName,
+            collectionHidden: nft.collectionHidden,
+            collectionImg: nft.assets[0].token_url,
+            collection: {
+              id: nft.collection.id,
+              name: nft.collection.name,
+              hidden: nft.collection.hidden,
+              floorPrice: 0, // Placeholder, as we don't have floor price in the v2 response
+              floorPriceUSD: 0, // Placeholder, as we don't have floor price in USD in the v2 response
+              owners: 0, // Placeholder, as we don't have owner information in the v2 response
+              items: nft.assets.length,
+              volume24h: 0, // Placeholder, as we don't have 24h volume in the v2 response
+              volume24hUSD: 0 // Placeholder, as we don't have 24h volume in USD in the v2 response
+            },
+            assets: nft.assets
+              .map((asset) => {
+                if (asset) {
+                  return {
+                    tokenId: asset.tokenId,
+                    balance: asset.balance,
+                    assetImg: asset.token_url,
+                    balanceUSD: 0 // Placeholder, as we don't have asset-specific balance in USD in the v2 response
+                  }
+                }
+              })
+              .filter(Boolean) // This will filter out any undefined elements in the array
           }
-        })
-      }
-    })
+        }
+      })
+      .filter(Boolean) // This will filter out any undefined elements in the array
+
     v1Response[response.data.identity].products.push({
       label: 'Collectibles',
       assets: nftAssets
