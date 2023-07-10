@@ -10,6 +10,8 @@ import useStorage from '@common/hooks/useStorage'
 import useToasts from '@common/hooks/useToast'
 import { fetchGet } from '@common/services/fetch'
 
+import { normalizeResponse } from './normalize'
+
 interface PortfolioContextReturnType extends UsePortfolioReturnType {}
 
 const PortfolioContext = createContext<PortfolioContextReturnType>({
@@ -41,14 +43,25 @@ const PortfolioContext = createContext<PortfolioContextReturnType>({
   loadProtocols: () => {}
 })
 
-const getBalances = (network: any, protocol: any, address: any, provider?: any) =>
-  fetchGet(
-    `${
-      provider === 'velcro' ? CONFIG.VELCRO_API_ENDPOINT : CONFIG.ZAPPER_API_ENDPOINT
-    }/protocols/${protocol}/balances?addresses[]=${address}&network=${network}&api_key=${
-      CONFIG.ZAPPER_API_KEY
-    }&newBalances=true`
-  )
+const VELCRO_API_ENDPOINT_V2 = 'https://velcro.ambire.com/v2'
+// velcro.ambire.com/v2/
+// balance/0xC2E6dFcc2C6722866aD65F211D5757e1D2879337/ethereum?newBalances=true&available_on_coingecko=true
+
+const getBalances = (
+  network: any,
+  protocol: any,
+  address: any,
+  provider?: any,
+  quickResponse = false
+) => {
+  const url = `${
+    provider === 'velcro' ? VELCRO_API_ENDPOINT_V2 : CONFIG.ZAPPER_API_ENDPOINT
+  }/balance/${address}/${network}${quickResponse ? '?quick=true' : ''}`
+
+  console.log('url', url)
+
+  fetchGet(url).then((response) => normalizeResponse(response))
+}
 
 const PortfolioProvider: React.FC = ({ children }) => {
   const appState = useRef(AppState.currentState)
