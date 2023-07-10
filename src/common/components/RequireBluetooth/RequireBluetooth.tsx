@@ -15,6 +15,7 @@ import Button from '@common/components/Button'
 import RequireLocation from '@common/components/RequireLocation'
 import Text from '@common/components/Text'
 import { isAndroid } from '@common/config/env'
+import requestPermissionFlagging from '@common/services/requestPermissionFlagging'
 import spacings from '@common/styles/spacings'
 
 /**
@@ -39,12 +40,14 @@ const RequireBluetooth: React.FC<any> = ({ children }) => {
   const requestAndroidPermissions = useCallback(async () => {
     if (!SHOULD_ASK_FOR_EXTRA_PERMISSIONS) return
 
-    // Since Android 12 (API level 31), the following extra permissions are needed
-    // {@link https://github.com/dotintent/react-native-ble-plx/issues/998#issuecomment-1187040049}
-    const permissions = await PermissionsAndroid.requestMultiple([
-      PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
-      PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT
-    ])
+    const permissions = await requestPermissionFlagging(() =>
+      // Since Android 12 (API level 31), the following extra permissions are needed
+      // {@link https://github.com/dotintent/react-native-ble-plx/issues/998#issuecomment-1187040049}
+      PermissionsAndroid.requestMultiple([
+        PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
+        PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT
+      ])
+    )
 
     const allPermissionsGranted = Object.values(permissions).every(
       (permission) => permission === PermissionsAndroid.RESULTS.GRANTED
@@ -72,6 +75,11 @@ const RequireBluetooth: React.FC<any> = ({ children }) => {
     // the foreground. This is because the user can revoke permissions while
     // the app is in the background and also - can grant permissions.
     const subscription = AppState.addEventListener('change', (nextAppState) => {
+      const isNotInTheMiddleOfAskingForPermissionOrLocalAuth =
+        !global.isAskingForPermission && !global.isAskingForLocalAuth
+
+      if (!isNotInTheMiddleOfAskingForPermissionOrLocalAuth) return
+
       if (appState.current.match(/inactive|background/) && nextAppState === 'active') {
         // app has come to the foreground
         requestAndroidPermissions()
