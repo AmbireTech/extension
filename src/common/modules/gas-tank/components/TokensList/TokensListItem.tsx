@@ -25,7 +25,7 @@ const TokensListItem = ({ type = 'deposit', token, networkId }: Props) => {
       <View style={spacings.prTy}>
         <TokenIcon
           withContainer
-          uri={token.img || token.tokenImageUrl}
+          uri={token.img || token.icon || token.tokenImageUrl}
           networkId={networkId}
           address={token.address}
         />

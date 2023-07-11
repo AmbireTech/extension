@@ -5918,9 +5918,9 @@ ajv@^8.0.0, ajv@^8.1.0, ajv@^8.6.3, ajv@^8.9.0:
     require-from-string "^2.0.2"
     uri-js "^4.2.2"
 
-"ambire-common@git+ssh://git@github.com:AmbireTech/ambire-common.git#v0.21.14":
-  version "0.21.14"
-  resolved "git+ssh://git@github.com:AmbireTech/ambire-common.git#f9fed047f878ad056209a99086e05d159c21b3d7"
+"ambire-common@git+ssh://git@github.com:AmbireTech/ambire-common.git#v0.21.15":
+  version "0.21.15"
+  resolved "git+ssh://git@github.com:AmbireTech/ambire-common.git#0b6c02f5af53603ab1217f640651718369b7cd9d"
 
 anser@^1.4.9:
   version "1.4.10"
