@@ -47,20 +47,26 @@ const VELCRO_API_ENDPOINT_V2 = 'https://velcro.ambire.com/v2'
 // velcro.ambire.com/v2/
 // balance/0xC2E6dFcc2C6722866aD65F211D5757e1D2879337/ethereum?newBalances=true&available_on_coingecko=true
 
-const getBalances = (
+const getBalances = async (
   network: any,
   protocol: any,
   address: any,
   provider?: any,
   quickResponse = false
 ) => {
-  const url = `${
+  const urlv2 = `${
     provider === 'velcro' ? VELCRO_API_ENDPOINT_V2 : CONFIG.ZAPPER_API_ENDPOINT
   }/balance/${address}/${network}${quickResponse ? '?quick=true' : ''}`
+  const urlv1 = `${
+    provider === 'velcro' ? CONFIG.VELCRO_API_ENDPOINT : CONFIG.ZAPPER_API_ENDPOINT
+  }/protocols/${protocol}/balances?addresses[]=${address}&network=${network}&api_key=${
+    CONFIG.ZAPPER_API_KEY
+  }&newBalances=true`
 
-  console.log('url', url)
+  const r = await fetchGet(urlv2)
+  return normalizeResponse(r)
 
-  fetchGet(url).then((response) => normalizeResponse(response))
+  // return fetchGet(urlv1)
 }
 
 const PortfolioProvider: React.FC = ({ children }) => {
