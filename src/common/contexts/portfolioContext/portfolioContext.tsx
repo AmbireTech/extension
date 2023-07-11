@@ -64,7 +64,7 @@ const getBalances = async (
   }&newBalances=true`
 
   const r = await fetchGet(urlv2)
-  return normalizeResponse(r, protocol)
+  return normalizeResponse(r, protocol, network)
 
   // const r = await fetchGet(urlv1)
   // console.log('r', r)
