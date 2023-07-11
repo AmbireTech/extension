@@ -148,7 +148,7 @@ interface ResponseV1 {
   }
 }
 
-export function normalizeResponse(response: ResponseV2, protocol): ResponseV1 {
+export function normalizeResponse(response: ResponseV2, protocol, network): ResponseV1 {
   try {
     // console.log('response identity', response)
     const v1Response: ResponseV1 = {
@@ -204,7 +204,7 @@ export function normalizeResponse(response: ResponseV2, protocol): ResponseV1 {
         }
       })
 
-      // console.log('tokenAssets', tokenAssets)
+      if (network === 'polygon') console.log('tokenAssets', tokenAssets)
 
       v1Response[response.data.identity].products.push({
         label: 'Tokens',
@@ -213,7 +213,7 @@ export function normalizeResponse(response: ResponseV2, protocol): ResponseV1 {
     }
 
     // Normalizing NFTs
-    if (response.data.nfts && protocol === 'nfts') {
+    if (response.data.nfts && protocol === 'nft') {
       const nftAssets: NFTV1[] = response.data.nfts
         .map((nft) => {
           return {
@@ -275,12 +275,13 @@ export function normalizeResponse(response: ResponseV2, protocol): ResponseV1 {
         .filter(Boolean) // This will filter out any undefined elements in the array
 
       v1Response[response.data.identity].products.push({
-        label: 'Collectibles',
-        assets: nftAssets
+        label: 'NFTs',
+        assets: nftAssets,
+        meta: []
       })
     }
 
-    console.log('v1Response', v1Response)
+    if (network === 'polygon') console.log('v1Response', v1Response)
 
     return v1Response
   } catch (e) {
