@@ -150,11 +150,28 @@ interface ResponseV1 {
 
 export function normalizeResponse(response: ResponseV2): ResponseV1 {
   try {
-    console.log('response identity', response)
+    // console.log('response identity', response)
     const v1Response: ResponseV1 = {
       [response.data.identity]: {
         products: [],
-        meta: [],
+        // TODO: What are these?
+        meta: [
+          {
+            label: 'Total',
+            value: 0,
+            type: 'dollar'
+          },
+          {
+            label: 'Assets',
+            value: 0,
+            type: 'dollar'
+          },
+          {
+            label: 'Debt',
+            value: 0,
+            type: 'dollar'
+          }
+        ],
         systemInfo: {
           source: 5, // TODO: static source value?
           updateAt: response.data.resultTime,
@@ -165,7 +182,7 @@ export function normalizeResponse(response: ResponseV2): ResponseV1 {
 
     // Normalizing tokens
     if (response.data.tokens) {
-      console.log('tokens v2', response.data.tokens)
+      // console.log('tokens v2', response.data.tokens)
       const tokenAssets: TokenV1[] = response.data.tokens.map((token) => {
         return {
           type: 'wallet', // "wallet" (v1) vs "token" (v2)
@@ -187,7 +204,7 @@ export function normalizeResponse(response: ResponseV2): ResponseV1 {
         }
       })
 
-      console.log('tokenAssets', tokenAssets)
+      // console.log('tokenAssets', tokenAssets)
 
       v1Response[response.data.identity].products.push({
         label: 'Tokens',
@@ -231,7 +248,15 @@ export function normalizeResponse(response: ResponseV2): ResponseV1 {
                   items: nft.assets.length,
                   volume24h: 0, // Placeholder, as we don't have 24h volume in the v2 response
                   volume24hUSD: 0 // Placeholder, as we don't have 24h volume in USD in the v2 response
-                }
+                },
+                assets: nft.assets.map((asset) => {
+                  return {
+                    tokenId: asset.tokenId,
+                    balance: asset.balance,
+                    assetImg: asset.token_url,
+                    balanceUSD: 0 // Placeholder, as we don't have asset-specific balance in USD in the v2 response
+                  }
+                })
                 // TODO:
                 // assets: nft.assets.map((asset) => {
                 //   if (asset) {
