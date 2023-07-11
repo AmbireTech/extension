@@ -148,7 +148,7 @@ interface ResponseV1 {
   }
 }
 
-export function normalizeResponse(response: ResponseV2): ResponseV1 {
+export function normalizeResponse(response: ResponseV2, protocol): ResponseV1 {
   try {
     // console.log('response identity', response)
     const v1Response: ResponseV1 = {
@@ -181,7 +181,7 @@ export function normalizeResponse(response: ResponseV2): ResponseV1 {
     }
 
     // Normalizing tokens
-    if (response.data.tokens) {
+    if (response.data.tokens && protocol === 'tokens') {
       // console.log('tokens v2', response.data.tokens)
       const tokenAssets: TokenV1[] = response.data.tokens.map((token) => {
         return {
@@ -213,7 +213,7 @@ export function normalizeResponse(response: ResponseV2): ResponseV1 {
     }
 
     // Normalizing NFTs
-    if (response.data.nfts) {
+    if (response.data.nfts && protocol === 'nfts') {
       const nftAssets: NFTV1[] = response.data.nfts
         .map((nft) => {
           return {

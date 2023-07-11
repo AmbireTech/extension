@@ -64,9 +64,11 @@ const getBalances = async (
   }&newBalances=true`
 
   const r = await fetchGet(urlv2)
-  return normalizeResponse(r)
+  return normalizeResponse(r, protocol)
 
-  // return fetchGet(urlv1)
+  // const r = await fetchGet(urlv1)
+  // console.log('r', r)
+  // return r
 }
 
 const PortfolioProvider: React.FC = ({ children }) => {
