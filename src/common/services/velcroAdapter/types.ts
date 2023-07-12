@@ -1,6 +1,6 @@
 export interface VelcroV2Asset {
   tokenId: string
-  balance: number
+  balance: string
   original_owner: string
   token_url: string
   data: {
@@ -23,7 +23,7 @@ export interface VelcroV2NFT {
   decimals: number
   symbol: string
   price: number
-  balance: number
+  balance: string
   balanceUSD: number
   shouldDisplay: boolean
   collectionId: string
