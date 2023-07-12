@@ -33,7 +33,8 @@ export function adaptVelcroV2ResponseToV1Structure(
           }
         ],
         systemInfo: {
-          source: 5, // TODO: "provider" in v2, but how to migrate it?
+          // Matches the "provider" logic in v2, not used in the application logic
+          source: 5,
           updateAt,
           // Assumes update interval of 10 minutes, not used in the application logic
           nextUpdate: updateAt + 600000
@@ -41,7 +42,7 @@ export function adaptVelcroV2ResponseToV1Structure(
       }
     }
 
-    // Normalizing tokens
+    // Handling tokens separately, since in v2 both tokens and NFTs come together
     if (response.data.tokens && protocol === 'tokens') {
       const tokenAssets: VelcroV1Token[] = response.data.tokens.map((token) => {
         return {
@@ -71,56 +72,54 @@ export function adaptVelcroV2ResponseToV1Structure(
       })
     }
 
-    // Normalizing NFTs
+    // Handling NFTs separately, since in v2 both tokens and NFTs come together
     if (response.data.nfts && protocol === 'nft') {
-      const nftAssets: VelcroV1NFT[] = response.data.nfts
-        .map((nft) => {
-          return {
-            type: 'nft',
-            balanceUSD: nft.balanceUSD,
-            balance: +nft.balance,
-            tokens: [
-              {
-                type: nft.type,
-                network: response.data.network,
-                address: nft.address,
-                decimals: nft.decimals,
-                symbol: nft.symbol,
-                price: nft.price,
-                balance: +nft.balance,
-                balanceRaw: nft.balance,
-                balanceUSD: nft.balanceUSD,
-                tokenImageUrl: nft.assets[0].token_url,
-                category: 'NFT',
-                shouldDisplay: nft.shouldDisplay,
-                collectionId: nft.collectionId,
-                collectionName: nft.collectionName,
-                collectionHidden: nft.collectionHidden,
-                collectionImg: nft.assets[0].token_url,
-                collection: {
-                  id: nft.collection.id,
-                  name: nft.collection.name,
-                  hidden: nft.collection.hidden,
-                  floorPrice: 0, // Placeholder, as we don't have floor price in the v2 response
-                  floorPriceUSD: 0, // Placeholder, as we don't have floor price in USD in the v2 response
-                  owners: 1, // Placeholder, as we don't have owner information in the v2 response
-                  items: nft.assets.length,
-                  volume24h: 0, // Placeholder, as we don't have 24h volume in the v2 response
-                  volume24hUSD: 0 // Placeholder, as we don't have 24h volume in USD in the v2 response
-                },
-                assets: nft.assets.map((asset) => {
-                  return {
-                    tokenId: asset.tokenId,
-                    balance: +asset.balance,
-                    assetImg: asset.token_url,
-                    balanceUSD: 0 // Placeholder, as we don't have asset-specific balance in USD in the v2 response
-                  }
-                })
-              }
-            ]
-          }
-        })
-        .filter(Boolean) // This will filter out any undefined elements in the array
+      const nftAssets: VelcroV1NFT[] = response.data.nfts.map((nft) => {
+        return {
+          type: 'nft',
+          balanceUSD: nft.balanceUSD,
+          balance: +nft.balance,
+          tokens: [
+            {
+              type: nft.type,
+              network: response.data.network,
+              address: nft.address,
+              decimals: nft.decimals,
+              symbol: nft.symbol,
+              price: nft.price,
+              balance: +nft.balance,
+              balanceRaw: nft.balance,
+              balanceUSD: nft.balanceUSD,
+              tokenImageUrl: nft.assets[0].token_url,
+              category: 'NFT',
+              shouldDisplay: nft.shouldDisplay,
+              collectionId: nft.collectionId,
+              collectionName: nft.collectionName,
+              collectionHidden: nft.collectionHidden,
+              collectionImg: nft.assets[0].token_url,
+              collection: {
+                id: nft.collection.id,
+                name: nft.collection.name,
+                hidden: nft.collection.hidden,
+                floorPrice: 0, // Placeholder, as we don't have floor price in the v2 response
+                floorPriceUSD: 0, // Placeholder, as we don't have floor price in USD in the v2 response
+                owners: 1, // Placeholder, as we don't have owner information in the v2 response
+                items: nft.assets.length,
+                volume24h: 0, // Placeholder, as we don't have 24h volume in the v2 response
+                volume24hUSD: 0 // Placeholder, as we don't have 24h volume in USD in the v2 response
+              },
+              assets: nft.assets.map((asset) => {
+                return {
+                  tokenId: asset.tokenId,
+                  balance: +asset.balance,
+                  assetImg: asset.token_url,
+                  balanceUSD: 0 // Placeholder, as we don't have asset-specific balance in USD in the v2 response
+                }
+              })
+            }
+          ]
+        }
+      })
 
       v1Response[response.data.identity].products.push({
         label: 'NFTs',
