@@ -2,15 +2,19 @@ import { VelcroV1NFT, VelcroV1Response, VelcroV1Token, VelcroV2Response } from '
 
 export function adaptVelcroV2ResponseToV1Structure(
   response: VelcroV2Response,
-  protocol,
-  network
+  protocol: 'tokens' | 'nft'
 ): VelcroV1Response {
   try {
-    // console.log('response identity', response)
+    const updateAt =
+      response.data.cache && response.data.cacheTime
+        ? response.data.cacheTime
+        : response.data.resultTime
+
     const v1Response: VelcroV1Response = {
       [response.data.identity]: {
         products: [],
-        // TODO: What are these?
+        // Not displayed anywhere in the app, but part of the application logic,
+        // so we need to keep it in the response as a placeholder
         meta: [
           {
             label: 'Total',
@@ -29,23 +33,23 @@ export function adaptVelcroV2ResponseToV1Structure(
           }
         ],
         systemInfo: {
-          source: 5, // TODO: static source value?
-          updateAt: response.data.resultTime,
-          nextUpdate: response.data.resultTime + 600000 // TODO: Assume update interval of 10 minutes?
+          source: 5, // TODO: "provider" in v2, but how to migrate it?
+          updateAt,
+          // Assumes update interval of 10 minutes, not used in the application logic
+          nextUpdate: updateAt + 600000
         }
       }
     }
 
     // Normalizing tokens
     if (response.data.tokens && protocol === 'tokens') {
-      // console.log('tokens v2', response.data.tokens)
       const tokenAssets: VelcroV1Token[] = response.data.tokens.map((token) => {
         return {
-          type: 'wallet', // "wallet" (v1) vs "token" (v2)
-          balanceUSD: token.balanceUSD,
+          type: 'wallet', // "wallet" in v1 is changed to "token" in v2
+          balanceUSD: token.balanceUSD, // not used in the application logic, keep it for consistency
           tokens: [
             {
-              type: 'base', // "base" (v1) vs "token" (v2)
+              type: 'base', // "base" in v1 is changed to "token" in v2
               network: response.data.network,
               address: token.address,
               decimals: token.decimals,
@@ -60,11 +64,10 @@ export function adaptVelcroV2ResponseToV1Structure(
         }
       })
 
-      if (network === 'ethereum') console.log('tokenAssets', tokenAssets)
-
       v1Response[response.data.identity].products.push({
         label: 'Tokens',
-        assets: tokenAssets
+        assets: tokenAssets,
+        meta: [] // not used in the application logic, kept as a placeholder
       })
     }
 
@@ -75,17 +78,17 @@ export function adaptVelcroV2ResponseToV1Structure(
           return {
             type: 'nft',
             balanceUSD: nft.balanceUSD,
-            balance: nft.balance,
+            balance: +nft.balance,
             tokens: [
               {
-                type: 'nft',
+                type: nft.type,
                 network: response.data.network,
                 address: nft.address,
                 decimals: nft.decimals,
                 symbol: nft.symbol,
                 price: nft.price,
-                balance: nft.balance,
-                balanceRaw: nft.balance.toString(), // As NFTs usually don't have decimal places, raw balance is same as balance.
+                balance: +nft.balance,
+                balanceRaw: nft.balance,
                 balanceUSD: nft.balanceUSD,
                 tokenImageUrl: nft.assets[0].token_url,
                 category: 'NFT',
@@ -100,7 +103,7 @@ export function adaptVelcroV2ResponseToV1Structure(
                   hidden: nft.collection.hidden,
                   floorPrice: 0, // Placeholder, as we don't have floor price in the v2 response
                   floorPriceUSD: 0, // Placeholder, as we don't have floor price in USD in the v2 response
-                  owners: 0, // Placeholder, as we don't have owner information in the v2 response
+                  owners: 1, // Placeholder, as we don't have owner information in the v2 response
                   items: nft.assets.length,
                   volume24h: 0, // Placeholder, as we don't have 24h volume in the v2 response
                   volume24hUSD: 0 // Placeholder, as we don't have 24h volume in USD in the v2 response
@@ -108,22 +111,11 @@ export function adaptVelcroV2ResponseToV1Structure(
                 assets: nft.assets.map((asset) => {
                   return {
                     tokenId: asset.tokenId,
-                    balance: asset.balance,
+                    balance: +asset.balance,
                     assetImg: asset.token_url,
                     balanceUSD: 0 // Placeholder, as we don't have asset-specific balance in USD in the v2 response
                   }
                 })
-                // TODO:
-                // assets: nft.assets.map((asset) => {
-                //   if (asset) {
-                //     return {
-                //       tokenId: asset.tokenId,
-                //       balance: asset.balance,
-                //       assetImg: asset.token_url,
-                //       balanceUSD: 0 // Placeholder, as we don't have asset-specific balance in USD in the v2 response
-                //     }
-                //   }
-                // })
               }
             ]
           }
@@ -133,11 +125,9 @@ export function adaptVelcroV2ResponseToV1Structure(
       v1Response[response.data.identity].products.push({
         label: 'NFTs',
         assets: nftAssets,
-        meta: []
+        meta: [] // not used in the application logic
       })
     }
-
-    if (network === 'ethereum') console.log('v1Response', v1Response)
 
     return v1Response
   } catch (e) {
