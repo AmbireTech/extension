@@ -9,8 +9,7 @@ import useNetwork from '@common/hooks/useNetwork'
 import useStorage from '@common/hooks/useStorage'
 import useToasts from '@common/hooks/useToast'
 import { fetchGet } from '@common/services/fetch'
-
-import { normalizeResponse } from './normalize'
+import { adaptVelcroV2ResponseToV1Structure } from '@common/services/velcroAdapter/velcroAdapter'
 
 interface PortfolioContextReturnType extends UsePortfolioReturnType {}
 
@@ -64,7 +63,7 @@ const getBalances = async (
   }&newBalances=true`
 
   const r = await fetchGet(urlv2)
-  return normalizeResponse(r, protocol, network)
+  return adaptVelcroV2ResponseToV1Structure(r, protocol, network)
 
   // const r = await fetchGet(urlv1)
   // console.log('r', r)
