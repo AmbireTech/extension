@@ -85,7 +85,7 @@ const Balances = ({
 
   const content = (
     <>
-      {isLoading || isCurrNetworkBalanceLoading ? (
+      {isLoading || isCurrNetworkBalanceLoading || allBalancesLoading ? (
         <BalanceLoader />
       ) : (
         <Text
