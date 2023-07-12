@@ -65,6 +65,8 @@ export interface VelcroV2Response {
     tokens: VelcroV2Token[]
     nfts: VelcroV2NFT[]
     resultTime: number
+    cache?: boolean
+    cacheTime?: number
     provider: string
     error: null | string
     identity: string
@@ -134,6 +136,7 @@ export interface VelcroV1Response {
     products: {
       label: string
       assets: (VelcroV1Token | VelcroV1NFT)[]
+      meta: []
     }[]
     meta: {
       label: string
