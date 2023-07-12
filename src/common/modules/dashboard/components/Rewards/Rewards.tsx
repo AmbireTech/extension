@@ -7,7 +7,7 @@ import useClaimableWalletToken from 'ambire-common/src/hooks/useClaimableWalletT
 import useRewards from 'ambire-common/src/hooks/useRewards'
 import { RewardIds } from 'ambire-common/src/hooks/useRewards/types'
 import { formatFloatTokenAmount } from 'ambire-common/src/services/formatter'
-import React, { useCallback, useLayoutEffect } from 'react'
+import React, { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Linking, TouchableOpacity, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
@@ -29,7 +29,6 @@ import useRelayerData from '@common/hooks/useRelayerData'
 import useRequests from '@common/hooks/useRequests'
 import getRewardsSource from '@common/modules/dashboard/helpers/getRewardsSource'
 import alert from '@common/services/alert'
-import { triggerLayoutAnimation } from '@common/services/layoutAnimation'
 import colors from '@common/styles/colors'
 import spacings from '@common/styles/spacings'
 import flexboxStyles from '@common/styles/utils/flexbox'
@@ -278,7 +277,11 @@ const Rewards = () => {
                 </View>
                 <View style={[spacings.plTy, styles.tableRowValue]}>
                   <Text color={colors.turquoise} style={textStyles.right}>
-                    {currentClaimStatus.mintableVesting}
+                    {formatFloatTokenAmount(
+                      Math.floor(currentClaimStatus.mintableVesting),
+                      true,
+                      0
+                    )}
                   </Text>
                   <Text type="small" style={textStyles.right}>
                     <Text type="small" color={colors.heliotrope}>
