@@ -1,4 +1,5 @@
-import usePortfolio, { UsePortfolioReturnType } from 'ambire-common/src/hooks/usePortfolio'
+import { Account } from 'ambire-common/src/hooks/useAccounts'
+import usePortfolio, { Network, UsePortfolioReturnType } from 'ambire-common/src/hooks/usePortfolio'
 import React, { createContext, useEffect, useMemo, useRef, useState } from 'react'
 import { AppState } from 'react-native'
 
@@ -42,32 +43,21 @@ const PortfolioContext = createContext<PortfolioContextReturnType>({
   loadProtocols: () => {}
 })
 
-const VELCRO_API_ENDPOINT_V2 = 'https://velcro.ambire.com/v2'
-// velcro.ambire.com/v2/
-// balance/0xC2E6dFcc2C6722866aD65F211D5757e1D2879337/ethereum?newBalances=true&available_on_coingecko=true
-
 const getBalances = async (
-  network: any,
-  protocol: any,
-  address: any,
-  provider?: any,
+  network: Network,
+  protocol: 'nft' | 'tokens',
+  address: Account['id'],
+  provider?: 'velcro' | 'zapper' | string,
   quickResponse = false
 ) => {
-  const urlv2 = `${
-    provider === 'velcro' ? VELCRO_API_ENDPOINT_V2 : CONFIG.ZAPPER_API_ENDPOINT
-  }/balance/${address}/${network}${quickResponse ? '?quick=true' : ''}`
-  const urlv1 = `${
-    provider === 'velcro' ? CONFIG.VELCRO_API_ENDPOINT : CONFIG.ZAPPER_API_ENDPOINT
-  }/protocols/${protocol}/balances?addresses[]=${address}&network=${network}&api_key=${
-    CONFIG.ZAPPER_API_KEY
-  }&newBalances=true`
+  const baseUrl = provider === 'velcro' ? CONFIG.VELCRO_API_ENDPOINT : CONFIG.ZAPPER_API_ENDPOINT
+  // TODO: Figure out these 3 params
+  const params = `quick=${quickResponse}&newBalances=true&available_on_coingecko=false`
 
-  const r = await fetchGet(urlv2)
-  return adaptVelcroV2ResponseToV1Structure(r, protocol, network)
+  const url = `${baseUrl}/balance/${address}/${network}?${params}`
+  const response = await fetchGet(url)
 
-  // const r = await fetchGet(urlv1)
-  // console.log('r', r)
-  // return r
+  return adaptVelcroV2ResponseToV1Structure(response, protocol)
 }
 
 const PortfolioProvider: React.FC = ({ children }) => {
