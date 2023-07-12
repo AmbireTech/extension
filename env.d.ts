@@ -67,7 +67,6 @@ declare module '@env' {
 
   export const ZAPPER_API_ENDPOINT: EnvTypes['ZAPPER_API_ENDPOINT']
   export const ZAPPER_API_KEY: EnvTypes['ZAPPER_API_KEY']
-  export const VELCRO_API_ENDPOINT: EnvTypes['VELCRO_API_ENDPOINT']
 
   export const RAMP_HOST_API_KEY: EnvTypes['RAMP_HOST_API_KEY']
   export const TRANSAK_API_KEY_STAGING: EnvTypes['TRANSAK_API_KEY']
