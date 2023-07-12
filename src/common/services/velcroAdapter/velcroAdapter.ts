@@ -130,6 +130,6 @@ export function adaptVelcroV2ResponseToV1Structure(
 
     return v1Response
   } catch (e) {
-    console.log('ERRROR', e)
+    throw new Error('Error adapting Velcro v2 response to v1 structure')
   }
 }
