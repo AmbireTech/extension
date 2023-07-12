@@ -132,9 +132,9 @@ const CollectibleScreen = () => {
         addressConfirmed,
         isKnownAddress,
         metadata,
-        constants!.humanizerInfo,
         selectedNetwork,
-        network
+        network,
+        constants!.humanizerInfo
       )
 
       setTransferDisabled(!isAddressValid.success)
@@ -172,6 +172,7 @@ const CollectibleScreen = () => {
           metadata,
           selectedNetwork,
           network,
+          constants!.humanizerInfo,
           isUDAddress,
           isEnsAddress
         )
@@ -196,7 +197,8 @@ const CollectibleScreen = () => {
     selectedAcc,
     network,
     addressConfirmed,
-    isKnownAddress
+    isKnownAddress,
+    constants
   ])
 
   const fetchMetadata = useCallback(async () => {
