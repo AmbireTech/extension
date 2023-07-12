@@ -48,11 +48,15 @@ const getBalances = async (
   protocol: 'nft' | 'tokens',
   address: Account['id'],
   provider?: 'velcro' | 'zapper' | string,
-  quickResponse = false
+  quick = false
 ) => {
   const baseUrl = provider === 'velcro' ? CONFIG.VELCRO_API_ENDPOINT : CONFIG.ZAPPER_API_ENDPOINT
-  // TODO: Figure out these 3 params
-  const params = `quick=${quickResponse}&newBalances=true&available_on_coingecko=false`
+  // Part of the caching mechanism in velcro v2, not used in the mobile app or browser extension yet
+  const newBalances = true
+  // Part of the assets migration logic, in order to strip scam tokens, not used in the application
+  // logic since asset migration is not available on the mobile app or browser extension yet
+  const availableOnCoingecko = false
+  const params = `quick=${quick}&newBalances=${newBalances}&available_on_coingecko=${availableOnCoingecko}`
 
   const url = `${baseUrl}/balance/${address}/${network}?${params}`
   const response = await fetchGet(url)
