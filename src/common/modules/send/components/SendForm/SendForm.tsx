@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import isEqual from 'react-fast-compare'
 import { Keyboard, TouchableWithoutFeedback, View } from 'react-native'
 
@@ -81,6 +81,9 @@ const SendForm = ({
 }: Props) => {
   const { t } = useTranslation()
 
+  const pricePerOne = selectedAsset?.balanceUSD / selectedAsset?.balance
+  const [amountInUsd, setAmountInUsd] = useState(pricePerOne * amount)
+
   const amountLabel = (
     <View style={[flexboxStyles.directionRow, spacings.mbMi]}>
       <Text style={spacings.mr}>{t('Available Amount:')}</Text>
@@ -93,6 +96,27 @@ const SendForm = ({
       </View>
     </View>
   )
+
+  const handleOnTokenAmountChange = (valueInTokenAmount) => {
+    onAmountChange(valueInTokenAmount)
+    setAmountInUsd((pricePerOne * valueInTokenAmount).toFixed(2))
+  }
+
+  const handleOnUsdAmountChange = (valueInUsd: any) => {
+    const valueInAmount = parseFloat(
+      ((valueInUsd * selectedAsset.balance) / selectedAsset?.balanceUSD).toFixed(
+        selectedAsset.decimals
+      )
+    )
+
+    onAmountChange(valueInAmount.toString())
+    setAmountInUsd(valueInUsd)
+  }
+
+  const handleSetMaxAmount = () => {
+    setMaxAmount()
+    handleOnUsdAmountChange(selectedAsset?.balanceUSD)
+  }
 
   return (
     <TouchableWithoutFeedback
@@ -114,17 +138,31 @@ const SendForm = ({
               />
             </View>
             {amountLabel}
-            <NumberInput
-              onChangeText={onAmountChange}
-              containerStyle={spacings.mbTy}
-              value={amount.toString()}
-              button={t('MAX')}
-              placeholder={t('0')}
-              onButtonPress={setMaxAmount}
-              error={
-                validationFormMgs.messages?.amount ? validationFormMgs.messages.amount : undefined
-              }
-            />
+            <View style={flexboxStyles.directionRow}>
+              <NumberInput
+                onChangeText={handleOnTokenAmountChange}
+                containerStyle={spacings.mbTy}
+                value={amount.toString()}
+                // button={t('$')}
+                placeholder={t('0')}
+                // onButtonPress={setMaxAmount}
+                containerStyle={flexboxStyles.flex1}
+                error={
+                  validationFormMgs.messages?.amount ? validationFormMgs.messages.amount : undefined
+                }
+              />
+              <NumberInput
+                onChangeText={handleOnUsdAmountChange}
+                containerStyle={[spacings.mbTy, flexboxStyles.flex1]}
+                value={amountInUsd.toString()}
+                button={t('MAX')}
+                placeholder={t('0')}
+                onButtonPress={handleSetMaxAmount}
+                error={
+                  validationFormMgs.messages?.amount ? validationFormMgs.messages.amount : undefined
+                }
+              />
+            </View>
             <Recipient
               setAddress={setAddress}
               address={address}
