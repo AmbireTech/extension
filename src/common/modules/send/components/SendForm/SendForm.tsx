@@ -1,3 +1,4 @@
+import { isNumber } from 'lodash'
 import React, { useState } from 'react'
 import isEqual from 'react-fast-compare'
 import { Keyboard, TouchableWithoutFeedback, View } from 'react-native'
@@ -81,8 +82,13 @@ const SendForm = ({
 }: Props) => {
   const { t } = useTranslation()
 
-  const pricePerOne = selectedAsset?.balanceUSD / selectedAsset?.balance
-  const [amountInUsd, setAmountInUsd] = useState(pricePerOne * amount)
+  const pricePerOne =
+    isNumber(selectedAsset?.balanceUSD) &&
+    isNumber(selectedAsset?.balance) &&
+    selectedAsset?.balance !== 0
+      ? +(selectedAsset?.balanceUSD / selectedAsset?.balance).toFixed(selectedAsset?.decimals)
+      : 0
+  const [amountInUsd, setAmountInUsd] = useState((pricePerOne * amount).toFixed(2))
 
   const amountLabel = (
     <View style={[flexboxStyles.directionRow, spacings.mbMi]}>
@@ -97,19 +103,26 @@ const SendForm = ({
     </View>
   )
 
-  const handleOnTokenAmountChange = (valueInTokenAmount) => {
+  const handleOnTokenAmountChange = (valueInTokenAmount: string) => {
     onAmountChange(valueInTokenAmount)
-    setAmountInUsd((pricePerOne * valueInTokenAmount).toFixed(2))
+
+    const nextAmountInUsd = (pricePerOne * +valueInTokenAmount).toFixed(2)
+    setAmountInUsd(nextAmountInUsd)
   }
 
-  const handleOnUsdAmountChange = (valueInUsd: any) => {
-    const valueInAmount = parseFloat(
-      ((valueInUsd * selectedAsset.balance) / selectedAsset?.balanceUSD).toFixed(
-        selectedAsset.decimals
-      )
-    )
+  const handleOnUsdAmountChange = (valueInUsd: string) => {
+    if (selectedAsset?.balanceUSD === 0) {
+      onAmountChange(selectedAsset?.balance.toString())
+      setAmountInUsd(0)
+      return
+    }
 
-    onAmountChange(valueInAmount.toString())
+    const valueInAmount = (
+      (+valueInUsd * selectedAsset.balance) /
+      selectedAsset?.balanceUSD
+    ).toFixed(selectedAsset.decimals)
+
+    onAmountChange(valueInAmount)
     setAmountInUsd(valueInUsd)
   }
 
@@ -158,9 +171,6 @@ const SendForm = ({
                 button={t('MAX')}
                 placeholder={t('0')}
                 onButtonPress={handleSetMaxAmount}
-                error={
-                  validationFormMgs.messages?.amount ? validationFormMgs.messages.amount : undefined
-                }
               />
             </View>
             <Recipient
