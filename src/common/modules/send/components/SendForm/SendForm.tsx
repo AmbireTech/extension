@@ -168,6 +168,11 @@ const SendForm = ({
                 onChangeText={handleOnUsdAmountChange}
                 containerStyle={[spacings.mbTy, flexboxStyles.flex1]}
                 value={amountInUsd.toString()}
+                leftIcon={() => (
+                  <Text weight="medium" fontSize={20} style={{ lineHeight: 28, paddingLeft: 5 }}>
+                    {t('$')}
+                  </Text>
+                )}
                 button={t('MAX')}
                 placeholder={t('0')}
                 onButtonPress={handleSetMaxAmount}
