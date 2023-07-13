@@ -106,7 +106,7 @@ const SendForm = ({
 
   const handleOnUsdAmountChange = useCallback(
     (valueInUsd: string) => {
-      if (selectedAsset?.balanceUSD === 0 || isNumber(selectedAsset?.balanceUSD)) {
+      if (selectedAsset?.balanceUSD === 0 || !isNumber(selectedAsset?.balanceUSD)) {
         onAmountChange(selectedAsset?.balance.toString())
         setAmountInUsd(0)
         return
