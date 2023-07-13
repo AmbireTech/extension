@@ -1,5 +1,5 @@
 import { isNumber } from 'lodash'
-import React, { useState } from 'react'
+import React, { useCallback, useState } from 'react'
 import isEqual from 'react-fast-compare'
 import { Keyboard, TouchableWithoutFeedback, View } from 'react-native'
 
@@ -88,9 +88,47 @@ const SendForm = ({
     isNumber(selectedAsset?.balanceUSD) &&
     isNumber(selectedAsset?.balance) &&
     selectedAsset?.balance !== 0
-      ? +(selectedAsset?.balanceUSD / selectedAsset?.balance).toFixed(selectedAsset?.decimals)
+      ? // This is handled by the above isNumber check, but ESLint doesn't know that
+        // eslint-disable-next-line no-unsafe-optional-chaining
+        +(selectedAsset?.balanceUSD / selectedAsset?.balance).toFixed(selectedAsset?.decimals)
       : 0
   const [amountInUsd, setAmountInUsd] = useState((pricePerOne * amount).toFixed(2))
+
+  const handleOnTokenAmountChange = useCallback(
+    (valueInTokenAmount: string) => {
+      onAmountChange(valueInTokenAmount)
+
+      const nextAmountInUsd = (pricePerOne * +valueInTokenAmount).toFixed(2)
+      setAmountInUsd(nextAmountInUsd)
+    },
+    [onAmountChange, pricePerOne]
+  )
+
+  const handleOnUsdAmountChange = useCallback(
+    (valueInUsd: string) => {
+      if (selectedAsset?.balanceUSD === 0 || isNumber(selectedAsset?.balanceUSD)) {
+        onAmountChange(selectedAsset?.balance.toString())
+        setAmountInUsd(0)
+        return
+      }
+
+      const valueInAmount = (
+        (+valueInUsd * selectedAsset.balance) /
+        // This is handled by the above isNumber check, but ESLint doesn't know that
+        // eslint-disable-next-line no-unsafe-optional-chaining
+        selectedAsset?.balanceUSD
+      ).toFixed(selectedAsset.decimals)
+
+      onAmountChange(valueInAmount)
+      setAmountInUsd(valueInUsd)
+    },
+    [onAmountChange, selectedAsset?.balance, selectedAsset?.balanceUSD, selectedAsset?.decimals]
+  )
+
+  const handleSetMaxAmount = useCallback(() => {
+    setMaxAmount()
+    handleOnUsdAmountChange(selectedAsset?.balanceUSD)
+  }, [handleOnUsdAmountChange, selectedAsset?.balanceUSD, setMaxAmount])
 
   const amountLabel = (
     <View style={[flexboxStyles.directionRow, spacings.mbMi]}>
@@ -104,34 +142,6 @@ const SendForm = ({
       </View>
     </View>
   )
-
-  const handleOnTokenAmountChange = (valueInTokenAmount: string) => {
-    onAmountChange(valueInTokenAmount)
-
-    const nextAmountInUsd = (pricePerOne * +valueInTokenAmount).toFixed(2)
-    setAmountInUsd(nextAmountInUsd)
-  }
-
-  const handleOnUsdAmountChange = (valueInUsd: string) => {
-    if (selectedAsset?.balanceUSD === 0) {
-      onAmountChange(selectedAsset?.balance.toString())
-      setAmountInUsd(0)
-      return
-    }
-
-    const valueInAmount = (
-      (+valueInUsd * selectedAsset.balance) /
-      selectedAsset?.balanceUSD
-    ).toFixed(selectedAsset.decimals)
-
-    onAmountChange(valueInAmount)
-    setAmountInUsd(valueInUsd)
-  }
-
-  const handleSetMaxAmount = () => {
-    setMaxAmount()
-    handleOnUsdAmountChange(selectedAsset?.balanceUSD)
-  }
 
   return (
     <TouchableWithoutFeedback
