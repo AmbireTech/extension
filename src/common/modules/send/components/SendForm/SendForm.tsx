@@ -13,7 +13,6 @@ import Text from '@common/components/Text'
 import Title from '@common/components/Title'
 import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
-import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import commonStyles from '@common/styles/utils/common'
 import flexboxStyles from '@common/styles/utils/flexbox'
@@ -160,16 +159,6 @@ const SendForm = ({
                 containerStyle={[spacings.mbTy, flexboxStyles.flex1]}
                 value={amount.toString()}
                 placeholder={t('0')}
-                // TODO: With or without?
-                // leftIcon={() => (
-                //   <Text
-                //     weight="medium"
-                //     fontSize={14}
-                //     style={{ lineHeight: 28, paddingLeft: 5, paddingTop: 2 }}
-                //   >
-                //     {selectedAsset?.symbol}
-                //   </Text>
-                // )}
                 inputBackgroundStyle={styles.amountInTokenInputBackgroundStyle}
                 error={
                   validationFormMgs.messages?.amount ? validationFormMgs.messages.amount : undefined
@@ -181,7 +170,7 @@ const SendForm = ({
                 inputBackgroundStyle={styles.amountInUSDInputBackgroundStyle}
                 value={amountInUsd.toString()}
                 leftIcon={() => (
-                  <Text weight="medium" fontSize={20} style={{ lineHeight: 28, paddingLeft: 5 }}>
+                  <Text weight="medium" fontSize={16} style={styles.amountInUsdIcon}>
                     {t('$')}
                   </Text>
                 )}
