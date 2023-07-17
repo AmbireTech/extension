@@ -18,7 +18,7 @@ interface Props {
   selectedAssetDecimals: number
   selectedAssetSymbol: string
   maxAmount: string | number
-  errorMessage: string
+  errorMessage?: string
   onAmountChange: (value: any) => void
   setMaxAmount: () => void
 }
