@@ -72,7 +72,9 @@ const AddOrHideToken = ({
   return (
     <>
       <TouchableOpacity style={[styles.btnContainer, spacings.mbTy]} onPress={openBottomSheet}>
-        <Text fontSize={16}>{t('Add or Hide Token')}</Text>
+        <Text fontSize={14} style={{ lineHeight: 24 }}>
+          {t('Add or Hide Token')}
+        </Text>
       </TouchableOpacity>
 
       <BottomSheet id="add-token" sheetRef={sheetRef} closeBottomSheet={closeBottomSheet}>
