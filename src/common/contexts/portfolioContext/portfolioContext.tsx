@@ -1,4 +1,5 @@
-import usePortfolio, { UsePortfolioReturnType } from 'ambire-common/src/hooks/usePortfolio'
+import { Account } from 'ambire-common/src/hooks/useAccounts'
+import usePortfolio, { Network, UsePortfolioReturnType } from 'ambire-common/src/hooks/usePortfolio'
 import React, { createContext, useEffect, useMemo, useRef, useState } from 'react'
 import { AppState } from 'react-native'
 
@@ -9,6 +10,7 @@ import useNetwork from '@common/hooks/useNetwork'
 import useStorage from '@common/hooks/useStorage'
 import useToasts from '@common/hooks/useToast'
 import { fetchGet } from '@common/services/fetch'
+import { adaptVelcroV2ResponseToV1Structure } from '@common/services/velcroAdapter/velcroAdapter'
 
 interface PortfolioContextReturnType extends UsePortfolioReturnType {}
 
@@ -41,14 +43,26 @@ const PortfolioContext = createContext<PortfolioContextReturnType>({
   loadProtocols: () => {}
 })
 
-const getBalances = (network: any, protocol: any, address: any, provider?: any) =>
-  fetchGet(
-    `${
-      provider === 'velcro' ? CONFIG.VELCRO_API_ENDPOINT : CONFIG.ZAPPER_API_ENDPOINT
-    }/protocols/${protocol}/balances?addresses[]=${address}&network=${network}&api_key=${
-      CONFIG.ZAPPER_API_KEY
-    }&newBalances=true`
-  )
+const getBalances = async (
+  network: Network,
+  protocol: 'nft' | 'tokens',
+  address: Account['id'],
+  provider?: 'velcro' | 'zapper' | string,
+  quick = false
+) => {
+  const baseUrl = provider === 'velcro' ? CONFIG.VELCRO_API_ENDPOINT : CONFIG.ZAPPER_API_ENDPOINT
+  // Part of the caching mechanism in velcro v2, not used in the mobile app or browser extension yet
+  const newBalances = true
+  // Part of the assets migration logic, in order to strip scam tokens, not used in the application
+  // logic since asset migration is not available on the mobile app or browser extension yet
+  const availableOnCoingecko = false
+  const params = `quick=${quick}&newBalances=${newBalances}&available_on_coingecko=${availableOnCoingecko}`
+
+  const url = `${baseUrl}/balance/${address}/${network}?${params}`
+  const response = await fetchGet(url)
+
+  return adaptVelcroV2ResponseToV1Structure(response, protocol)
+}
 
 const PortfolioProvider: React.FC = ({ children }) => {
   const appState = useRef(AppState.currentState)

@@ -6,7 +6,8 @@ import {
   TextInputProps,
   TouchableOpacity,
   TouchableOpacityProps,
-  View
+  View,
+  ViewProps
 } from 'react-native'
 
 import Text from '@common/components/Text'
@@ -32,6 +33,7 @@ export interface InputProps extends TextInputProps {
   containerStyle?: any
   inputStyle?: any
   inputWrapperStyle?: any
+  inputBackgroundStyle?: ViewProps['style']
   infoTextStyle?: any
   leftIcon?: () => JSX.Element | JSX.Element
 }
@@ -51,6 +53,7 @@ const Input = ({
   containerStyle,
   inputStyle,
   inputWrapperStyle,
+  inputBackgroundStyle = {},
   infoTextStyle,
   leftIcon,
   ...rest
@@ -94,7 +97,7 @@ const Input = ({
   return (
     <View style={[styles.inputContainer, containerStyle]}>
       {!!label && <Text style={styles.label}>{label}</Text>}
-      <View style={[commonStyles.borderRadiusPrimary, commonStyles.hidden]}>
+      <View style={[commonStyles.borderRadiusPrimary, commonStyles.hidden, inputBackgroundStyle]}>
         <View style={inputWrapperStyles}>
           {!!leftIcon && <View style={styles.leftIcon}>{leftIcon()}</View>}
           <TextInput

@@ -14,7 +14,7 @@ const styles = StyleSheet.create<Style>({
   btnContainer: {
     ...flexboxStyles.center,
     ...spacings.phTy,
-    ...spacings.pvLg,
+    ...spacings.pv,
     ...commonStyles.borderRadiusPrimary,
     borderWidth: 1,
     borderColor: colors.waikawaGray,
