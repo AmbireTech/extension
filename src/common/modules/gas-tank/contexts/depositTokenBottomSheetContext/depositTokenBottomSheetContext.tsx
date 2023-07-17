@@ -160,7 +160,7 @@ const DepositTokenBottomSheetProvider = ({
                 />
               </View>
               <Text fontSize={16} numberOfLines={1}>
-                {token.symbol}
+                {token.symbol.toUpperCase()}
               </Text>
             </View>
             <InputSendToken

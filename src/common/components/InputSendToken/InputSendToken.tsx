@@ -96,7 +96,7 @@ const SendForm = ({
         <Text numberOfLines={1} style={{ flex: 1, textAlign: 'right' }} ellipsizeMode="tail">
           {maxAmount}
         </Text>
-        {!!selectedAssetSymbol && <Text>{` ${selectedAssetSymbol}`}</Text>}
+        {!!selectedAssetSymbol && <Text>{` ${selectedAssetSymbol.toUpperCase()}`}</Text>}
       </View>
     </View>
   )
