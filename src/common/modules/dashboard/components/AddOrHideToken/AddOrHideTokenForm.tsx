@@ -138,6 +138,9 @@ const AddOrHideTokenForm: React.FC<Props> = ({
     setShowError('')
   })
 
+  const buttonSubmitText = mode === MODES.ADD_TOKEN ? t('Add') : t('Hide')
+  const buttonSubmittingText = mode === MODES.ADD_TOKEN ? t('Adding...') : t('Hiding...')
+
   return (
     <>
       <Controller
@@ -169,7 +172,7 @@ const AddOrHideTokenForm: React.FC<Props> = ({
       {!showError && tokenDetails && <TokenItem {...tokenDetails} />}
 
       <Button
-        text={isSubmitting ? t('Adding...') : t('Add')}
+        text={isSubmitting ? buttonSubmittingText : buttonSubmitText}
         disabled={isSubmitting || disabled}
         onPress={handleOnPress}
         hasBottomSpacing={false}
