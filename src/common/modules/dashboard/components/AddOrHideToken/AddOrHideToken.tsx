@@ -106,13 +106,13 @@ const AddOrHideToken = ({
                 networkId={networkId}
                 networkName={networkName}
               />
-              <HiddenOrExtraTokens
+              {/* <HiddenOrExtraTokens
                 mode={MODES.ADD_TOKEN}
                 hiddenTokens={hiddenTokens}
                 extraTokens={extraTokens}
                 onRemoveExtraToken={onRemoveExtraToken}
                 onRemoveHiddenToken={onRemoveHiddenToken}
-              />
+              /> */}
             </>
           )}
           {formType === MODES.HIDE_TOKEN && (
@@ -129,8 +129,10 @@ const AddOrHideToken = ({
                 networkId={networkId}
                 networkName={networkName}
               />
+              {/* TODO: Switch */}
               <HiddenOrExtraTokens
                 mode={MODES.HIDE_TOKEN}
+                tokens={tokens}
                 hiddenTokens={hiddenTokens}
                 extraTokens={extraTokens}
                 onRemoveExtraToken={onRemoveExtraToken}
