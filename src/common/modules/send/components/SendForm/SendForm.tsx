@@ -108,7 +108,13 @@ const SendForm = ({
     (valueInUsd: string) => {
       if (selectedAsset?.balanceUSD === 0 || !isNumber(selectedAsset?.balanceUSD)) {
         onAmountChange(selectedAsset?.balance.toString())
-        setAmountInUsd(0)
+        setAmountInUsd('')
+        return
+      }
+
+      if (+valueInUsd === 0) {
+        onAmountChange('')
+        setAmountInUsd(valueInUsd)
         return
       }
 
