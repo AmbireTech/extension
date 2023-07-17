@@ -18,12 +18,12 @@ interface Props {
   selectedAssetDecimals: number
   selectedAssetSymbol: string
   maxAmount: string | number
-  errorMessage?: string
+  errorMessage: string
   onAmountChange: (value: any) => void
   setMaxAmount: () => void
 }
 
-const InputSendToken = ({
+const SendForm = ({
   amount,
   selectedAssetBalanceUSD,
   selectedAssetBalance,
@@ -58,7 +58,7 @@ const InputSendToken = ({
 
   const handleOnUsdAmountChange = useCallback(
     (valueInUsd: string) => {
-      if (selectedAssetBalanceUSD === 0 || !isNumber(selectedAssetBalanceUSD)) {
+      if (+selectedAssetBalanceUSD === 0 || !isNumber(selectedAssetBalanceUSD)) {
         onAmountChange(selectedAssetBalance.toString())
         setAmountInUsd('')
         return
@@ -132,4 +132,4 @@ const InputSendToken = ({
   )
 }
 
-export default React.memo(InputSendToken, isEqual)
+export default React.memo(SendForm, isEqual)
