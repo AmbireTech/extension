@@ -2,7 +2,7 @@ import { NetworkId, NetworkType } from 'ambire-common/src/constants/networks'
 import { UseAccountsReturnType } from 'ambire-common/src/hooks/useAccounts'
 import { Token } from 'ambire-common/src/hooks/usePortfolio'
 import { UsePortfolioReturnType } from 'ambire-common/src/hooks/usePortfolio/types'
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { LayoutAnimation, TouchableOpacity, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
@@ -49,10 +49,15 @@ const AddOrHideToken = ({
   onRemoveExtraToken,
   onRemoveHiddenToken
 }: Props) => {
-  console.log('render AddOrHideToken')
   const { t } = useTranslation()
-
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
+  const allTokens = [...hiddenTokens, ...tokens]
+  const [sortedTokens, setSortedTokens] = useState<Token[]>(
+    allTokens.sort((a, b) => b.balanceUSD - a.balanceUSD)
+  )
+  useEffect(() => {
+    setSortedTokens(allTokens.sort((a, b) => b.balanceUSD - a.balanceUSD))
+  }, [allTokens.length])
 
   const [formType, setFormType] = useState<MODES>(MODES.ADD_TOKEN)
 
@@ -72,16 +77,32 @@ const AddOrHideToken = ({
   }
 
   // TODO: Move to state?
-  const tokensWithHiddenTokens = [...tokens, ...hiddenTokens]
-  const sortedTokens = useMemo(
-    () => tokensWithHiddenTokens.sort((a, b) => b.balanceUSD - a.balanceUSD),
-    [tokensWithHiddenTokens.length]
-  )
+  // const tokensWithHiddenTokens = [...hiddenTokens, ...tokens]
+  // const sortedTokens = useMemo(
+  //   () => tokensWithHiddenTokens.sort((a, b) => b.balanceUSD - a.balanceUSD),
+  //   [tokensWithHiddenTokens.length]
+  // )
 
-  const toggleTokenHide = useCallback(
-    (token) => (token.isHidden ? onRemoveHiddenToken(token.address) : onAddHiddenToken(token)),
-    [onAddHiddenToken, onRemoveHiddenToken]
-  )
+  const toggleTokenHide = useCallback((token) => {
+    const nextIsHiddenState = !token.isHidden
+
+    // TODO: Track updates!
+
+    setSortedTokens((prevTokens) => {
+      return prevTokens.map((t) => {
+        if (t.address === token.address) {
+          return { ...t, isHidden: nextIsHiddenState }
+        }
+
+        return t
+      })
+    })
+  }, [])
+
+  // TODO: Handle updates
+  const handleUpdates = useCallback(() => {
+    // return token.isHidden ? onRemoveHiddenToken(token.address) : onAddHiddenToken(token)
+  }, [])
 
   return (
     <>
@@ -91,7 +112,12 @@ const AddOrHideToken = ({
         </Text>
       </TouchableOpacity>
 
-      <BottomSheet id="add-token" sheetRef={sheetRef} closeBottomSheet={closeBottomSheet}>
+      <BottomSheet
+        id="add-token"
+        sheetRef={sheetRef}
+        closeBottomSheet={closeBottomSheet}
+        onClosed={handleUpdates}
+      >
         <Segments
           defaultValue={formType}
           segments={segments}
