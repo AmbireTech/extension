@@ -1,7 +1,6 @@
 import { Token } from 'ambire-common/src/hooks/usePortfolio'
 import React from 'react'
-import { View } from 'react-native'
-import { TouchableOpacity } from 'react-native-gesture-handler'
+import { TouchableOpacity, View } from 'react-native'
 
 import Button from '@common/components/Button'
 import Text from '@common/components/Text'
@@ -36,14 +35,12 @@ const TokenItem: React.FC<Props> = ({
         {/* TODO: Display network */}
         <Text>{symbol}</Text>
       </View>
-      {!!onPress && (
-        <Ionicons
-          name={isHidden ? 'ios-eye-off' : 'ios-eye'}
-          style={spacings.mlSm}
-          size={30}
-          color={isHidden ? colors.radicalRed : colors.turquoise}
-        />
-      )}
+      <Ionicons
+        name={isHidden ? 'ios-eye-off' : 'ios-eye'}
+        style={spacings.mlSm}
+        size={30}
+        color={isHidden ? colors.radicalRed : colors.turquoise}
+      />
     </TouchableOpacity>
   )
 }

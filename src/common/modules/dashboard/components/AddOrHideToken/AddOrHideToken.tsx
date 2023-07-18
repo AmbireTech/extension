@@ -19,6 +19,7 @@ import textStyles from '@common/styles/utils/text'
 import AddOrHideTokenForm from './AddOrHideTokenForm'
 import { MODES } from './constants'
 import HiddenOrExtraTokens from './HiddenOrExtraTokens'
+import HideTokenList from './HideTokenList'
 import styles from './styles'
 
 const segments = [{ value: MODES.ADD_TOKEN }, { value: MODES.HIDE_TOKEN }]
@@ -67,6 +68,10 @@ const AddOrHideToken = ({
     }
 
     return cases[formMode]()
+  }
+
+  const handleOnToggleHideToken = (token) => {
+    return token.isHidden ? onRemoveHiddenToken(token.address) : onAddHiddenToken(token)
   }
 
   return (
@@ -121,22 +126,19 @@ const AddOrHideToken = ({
                 {t('Hide Token')}
               </Title>
 
-              <AddOrHideTokenForm
+              {/* <AddOrHideTokenForm
                 enableSymbolSearch
                 mode={MODES.HIDE_TOKEN}
                 onSubmit={handleOnSubmit}
                 tokens={tokens}
                 networkId={networkId}
                 networkName={networkName}
-              />
+              /> */}
               {/* TODO: Switch */}
-              <HiddenOrExtraTokens
-                mode={MODES.HIDE_TOKEN}
-                tokens={tokens}
+              <HideTokenList
                 hiddenTokens={hiddenTokens}
-                extraTokens={extraTokens}
-                onRemoveExtraToken={onRemoveExtraToken}
-                onRemoveHiddenToken={onRemoveHiddenToken}
+                tokens={tokens}
+                onToggleHideToken={handleOnToggleHideToken}
               />
             </>
           )}
