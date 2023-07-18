@@ -2,9 +2,10 @@ import {
   TokenWithIsHiddenFlag,
   UsePortfolioReturnType
 } from 'ambire-common/src/hooks/usePortfolio/types'
-import React from 'react'
+import React, { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
-import spacings from '@common/styles/spacings'
+import Input from '@common/components/Input'
 
 import TokenItem from './TokenItem'
 
@@ -19,6 +20,21 @@ const HideTokenList: React.FC<Props> = ({
   onRemoveHiddenToken,
   onAddHiddenToken
 }: Props) => {
+  const { t } = useTranslation()
+  const [searchValue, setSearchValue] = useState('')
+  const [filteredTokens, setFilteredTokens] = useState(tokens)
+
+  useEffect(() => {
+    setFilteredTokens(
+      tokens.filter((token) => {
+        const isAddressMatch = token.address.toLowerCase() === searchValue.toLowerCase()
+        const isSymbolMatch = token.symbol.toLowerCase().includes(searchValue.toLowerCase())
+
+        return isAddressMatch || isSymbolMatch
+      })
+    )
+  }, [searchValue, tokens])
+
   const renderItem = (token: TokenWithIsHiddenFlag) => (
     <TokenItem
       key={token.address}
@@ -38,7 +54,16 @@ const HideTokenList: React.FC<Props> = ({
   // VirtualizedLists should never be nested inside plain ScrollViews with the
   // same orientation because it can break windowing and other functionality
   // - use another VirtualizedList-backed container instead.
-  return tokens.map(renderItem)
+  return (
+    <>
+      <Input
+        placeholder={t('Search by token symbol or address')}
+        value={searchValue}
+        onChangeText={setSearchValue}
+      />
+      {filteredTokens.map(renderItem)}
+    </>
+  )
 }
 
 export default React.memo(HideTokenList)
