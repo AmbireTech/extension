@@ -1,4 +1,5 @@
 import {
+  Token,
   TokenWithIsHiddenFlag,
   UsePortfolioReturnType
 } from 'ambire-common/src/hooks/usePortfolio/types'
@@ -11,15 +12,10 @@ import TokenItem from './TokenItem'
 
 interface Props {
   tokens: UsePortfolioReturnType['tokens']
-  onRemoveHiddenToken: UsePortfolioReturnType['onRemoveHiddenToken']
-  onAddHiddenToken: UsePortfolioReturnType['onAddHiddenToken']
+  toggleTokenHide: (token: Token) => any
 }
 
-const HideTokenList: React.FC<Props> = ({
-  tokens = [],
-  onRemoveHiddenToken,
-  onAddHiddenToken
-}: Props) => {
+const HideTokenList: React.FC<Props> = ({ tokens = [], toggleTokenHide }: Props) => {
   const { t } = useTranslation()
   const [searchValue, setSearchValue] = useState('')
   const [filteredTokens, setFilteredTokens] = useState(tokens)
@@ -40,9 +36,7 @@ const HideTokenList: React.FC<Props> = ({
       key={token.address}
       address={token.address}
       isHidden={token.isHidden}
-      onPress={() =>
-        token.isHidden ? onRemoveHiddenToken(token.address) : onAddHiddenToken(token)
-      }
+      onPress={() => toggleTokenHide(token)}
       tokenImageUrl={token.tokenImageUrl}
       symbol={token.symbol}
       network={token.network}

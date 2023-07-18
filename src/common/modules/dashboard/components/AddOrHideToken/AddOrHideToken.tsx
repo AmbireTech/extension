@@ -2,7 +2,7 @@ import { NetworkId, NetworkType } from 'ambire-common/src/constants/networks'
 import { UseAccountsReturnType } from 'ambire-common/src/hooks/useAccounts'
 import { Token } from 'ambire-common/src/hooks/usePortfolio'
 import { UsePortfolioReturnType } from 'ambire-common/src/hooks/usePortfolio/types'
-import React, { useState } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import { LayoutAnimation, TouchableOpacity, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
@@ -49,6 +49,7 @@ const AddOrHideToken = ({
   onRemoveExtraToken,
   onRemoveHiddenToken
 }: Props) => {
+  console.log('render AddOrHideToken')
   const { t } = useTranslation()
 
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
@@ -71,7 +72,16 @@ const AddOrHideToken = ({
   }
 
   // TODO: Move to state?
-  const sortedTokens = [...tokens, ...hiddenTokens].sort((a, b) => b.balanceUSD - a.balanceUSD)
+  const tokensWithHiddenTokens = [...tokens, ...hiddenTokens]
+  const sortedTokens = useMemo(
+    () => tokensWithHiddenTokens.sort((a, b) => b.balanceUSD - a.balanceUSD),
+    [tokensWithHiddenTokens.length]
+  )
+
+  const toggleTokenHide = useCallback(
+    (token) => (token.isHidden ? onRemoveHiddenToken(token.address) : onAddHiddenToken(token)),
+    [onAddHiddenToken, onRemoveHiddenToken]
+  )
 
   return (
     <>
@@ -124,21 +134,7 @@ const AddOrHideToken = ({
               <Title type="small" style={textStyles.center}>
                 {t('Hide Token')}
               </Title>
-
-              {/* <AddOrHideTokenForm
-                enableSymbolSearch
-                mode={MODES.HIDE_TOKEN}
-                onSubmit={handleOnSubmit}
-                tokens={tokens}
-                networkId={networkId}
-                networkName={networkName}
-              /> */}
-              {/* TODO: Switch */}
-              <HideTokenList
-                tokens={sortedTokens}
-                onRemoveHiddenToken={onRemoveHiddenToken}
-                onAddHiddenToken={onAddHiddenToken}
-              />
+              <HideTokenList tokens={sortedTokens} toggleTokenHide={toggleTokenHide} />
             </>
           )}
         </View>
