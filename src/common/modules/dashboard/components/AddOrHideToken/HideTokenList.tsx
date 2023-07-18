@@ -3,7 +3,6 @@ import {
   UsePortfolioReturnType
 } from 'ambire-common/src/hooks/usePortfolio/types'
 import React from 'react'
-import { FlatList } from 'react-native'
 
 import spacings from '@common/styles/spacings'
 
@@ -20,19 +19,21 @@ const HideTokenList: React.FC<Props> = ({
   onRemoveHiddenToken,
   onAddHiddenToken
 }: Props) => {
-  const renderItem = ({ item }: { item: TokenWithIsHiddenFlag }) => (
+  const renderItem = (token: TokenWithIsHiddenFlag) => (
     <TokenItem
-      key={item.address}
-      address={item.address}
-      isHidden={item.isHidden}
-      onPress={() => (item.isHidden ? onRemoveHiddenToken(item.address) : onAddHiddenToken(item))}
-      tokenImageUrl={item.tokenImageUrl}
-      symbol={item.symbol}
-      network={item.network}
+      key={token.address}
+      address={token.address}
+      isHidden={token.isHidden}
+      onPress={() =>
+        token.isHidden ? onRemoveHiddenToken(token.address) : onAddHiddenToken(token)
+      }
+      tokenImageUrl={token.tokenImageUrl}
+      symbol={token.symbol}
+      network={token.network}
     />
   )
 
-  return <FlatList data={tokens} keyExtractor={(item) => item.address} renderItem={renderItem} />
+  return tokens.map(renderItem)
 }
 
 export default React.memo(HideTokenList)

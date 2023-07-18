@@ -70,6 +70,7 @@ const AddOrHideToken = ({
     return cases[formMode]()
   }
 
+  // TODO: Move to state?
   const sortedTokens = [...tokens, ...hiddenTokens].sort((a, b) => b.balanceUSD - a.balanceUSD)
 
   return (
