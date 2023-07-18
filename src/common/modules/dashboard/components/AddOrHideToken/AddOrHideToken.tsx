@@ -137,7 +137,7 @@ const AddOrHideToken = ({
               {/* TODO: Switch */}
               <HideTokenList
                 hiddenTokens={hiddenTokens}
-                tokens={tokens}
+                tokens={[...tokens, ...hiddenTokens]}
                 onToggleHideToken={handleOnToggleHideToken}
               />
             </>
