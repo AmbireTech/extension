@@ -33,6 +33,11 @@ const HideTokenList: React.FC<Props> = ({
     />
   )
 
+  // Not in a FlatList, because it causes the following error when this
+  // component is used inside a bottom sheet component:
+  // VirtualizedLists should never be nested inside plain ScrollViews with the
+  // same orientation because it can break windowing and other functionality
+  // - use another VirtualizedList-backed container instead.
   return tokens.map(renderItem)
 }
 
