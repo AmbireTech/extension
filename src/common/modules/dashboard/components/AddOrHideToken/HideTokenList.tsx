@@ -1,37 +1,38 @@
-import { UsePortfolioReturnType } from 'ambire-common/src/hooks/usePortfolio/types'
+import {
+  TokenWithIsHiddenFlag,
+  UsePortfolioReturnType
+} from 'ambire-common/src/hooks/usePortfolio/types'
 import React from 'react'
-import { View } from 'react-native'
+import { FlatList } from 'react-native'
 
 import spacings from '@common/styles/spacings'
 
-import { MODES } from './constants'
 import TokenItem from './TokenItem'
 
 interface Props {
-  mode: MODES
-  extraTokens: UsePortfolioReturnType['extraTokens']
-  hiddenTokens: UsePortfolioReturnType['hiddenTokens']
-  onRemoveExtraToken: UsePortfolioReturnType['onRemoveExtraToken']
+  tokens: UsePortfolioReturnType['tokens']
   onRemoveHiddenToken: UsePortfolioReturnType['onRemoveHiddenToken']
+  onAddHiddenToken: UsePortfolioReturnType['onAddHiddenToken']
 }
 
-const HideTokenList: React.FC<Props> = ({ onToggleHideToken, tokens = [] }: Props) => {
-  return (
-    <View style={spacings.mt}>
-      {tokens.map((token) => {
-        // const isHidden = !!hiddenTokens.find((t) => t.address === token.address)
-        return (
-          <TokenItem
-            key={token.address}
-            isHidden={token.isHidden}
-            // TODO: Implement toggle
-            onPress={() => onToggleHideToken(token)}
-            {...token}
-          />
-        )
-      })}
-    </View>
+const HideTokenList: React.FC<Props> = ({
+  tokens = [],
+  onRemoveHiddenToken,
+  onAddHiddenToken
+}: Props) => {
+  const renderItem = ({ item }: { item: TokenWithIsHiddenFlag }) => (
+    <TokenItem
+      key={item.address}
+      address={item.address}
+      isHidden={item.isHidden}
+      onPress={() => (item.isHidden ? onRemoveHiddenToken(item.address) : onAddHiddenToken(item))}
+      tokenImageUrl={item.tokenImageUrl}
+      symbol={item.symbol}
+      network={item.network}
+    />
   )
+
+  return <FlatList data={tokens} keyExtractor={(item) => item.address} renderItem={renderItem} />
 }
 
 export default React.memo(HideTokenList)

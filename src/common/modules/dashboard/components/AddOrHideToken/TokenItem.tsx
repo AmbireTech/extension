@@ -11,7 +11,7 @@ import flexboxStyles from '@common/styles/utils/flexbox'
 import textStyles from '@common/styles/utils/text'
 import { Ionicons } from '@expo/vector-icons'
 
-interface Props extends Token {
+interface Props extends Partial<Token> {
   isHidden: boolean
   onPress?: () => void
 }
@@ -19,8 +19,8 @@ interface Props extends Token {
 const TokenItem: React.FC<Props> = ({
   tokenImageUrl,
   address,
-  network,
   symbol,
+  network,
   onPress,
   isHidden
 }) => {
@@ -33,7 +33,9 @@ const TokenItem: React.FC<Props> = ({
 
       <View style={[spacings.mlTy, flexboxStyles.flex1, flexboxStyles.justifyCenter]}>
         {/* TODO: Display network */}
-        <Text>{symbol}</Text>
+        <Text>
+          {symbol} ({network})
+        </Text>
       </View>
       <Ionicons
         name={isHidden ? 'ios-eye-off' : 'ios-eye'}

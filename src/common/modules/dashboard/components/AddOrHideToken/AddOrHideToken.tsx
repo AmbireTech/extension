@@ -70,10 +70,6 @@ const AddOrHideToken = ({
     return cases[formMode]()
   }
 
-  const handleOnToggleHideToken = (token) => {
-    return token.isHidden ? onRemoveHiddenToken(token.address) : onAddHiddenToken(token)
-  }
-
   const sortedTokens = [...tokens, ...hiddenTokens].sort((a, b) => b.balanceUSD - a.balanceUSD)
 
   return (
@@ -138,9 +134,9 @@ const AddOrHideToken = ({
               /> */}
               {/* TODO: Switch */}
               <HideTokenList
-                hiddenTokens={hiddenTokens}
                 tokens={sortedTokens}
-                onToggleHideToken={handleOnToggleHideToken}
+                onRemoveHiddenToken={onRemoveHiddenToken}
+                onAddHiddenToken={onAddHiddenToken}
               />
             </>
           )}
