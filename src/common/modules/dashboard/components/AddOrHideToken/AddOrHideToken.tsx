@@ -74,6 +74,8 @@ const AddOrHideToken = ({
     return token.isHidden ? onRemoveHiddenToken(token.address) : onAddHiddenToken(token)
   }
 
+  const sortedTokens = [...tokens, ...hiddenTokens].sort((a, b) => b.balanceUSD - a.balanceUSD)
+
   return (
     <>
       <TouchableOpacity style={[styles.btnContainer, spacings.mbTy]} onPress={openBottomSheet}>
@@ -137,7 +139,7 @@ const AddOrHideToken = ({
               {/* TODO: Switch */}
               <HideTokenList
                 hiddenTokens={hiddenTokens}
-                tokens={[...tokens, ...hiddenTokens]}
+                tokens={sortedTokens}
                 onToggleHideToken={handleOnToggleHideToken}
               />
             </>

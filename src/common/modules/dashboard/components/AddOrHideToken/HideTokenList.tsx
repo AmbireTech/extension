@@ -15,11 +15,7 @@ interface Props {
   onRemoveHiddenToken: UsePortfolioReturnType['onRemoveHiddenToken']
 }
 
-const HideTokenList: React.FC<Props> = ({
-  onToggleHideToken,
-  // hiddenTokens = [],
-  tokens = []
-}: Props) => {
+const HideTokenList: React.FC<Props> = ({ onToggleHideToken, tokens = [] }: Props) => {
   return (
     <View style={spacings.mt}>
       {tokens.map((token) => {
