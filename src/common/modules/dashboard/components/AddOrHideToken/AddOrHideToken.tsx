@@ -52,6 +52,7 @@ const AddOrHideToken = ({
   const { t } = useTranslation()
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const tokensWithHidden = [...hiddenTokens, ...tokens]
+  const [tokenHideChanges, setTokenHideChanges] = useState<Token[]>([])
   const [sortedTokens, setSortedTokens] = useState<Token[]>(
     tokensWithHidden.sort((a, b) => b.balanceUSD - a.balanceUSD)
   )
@@ -88,10 +89,19 @@ const AddOrHideToken = ({
   //   [tokensWithHiddenTokens.length]
   // )
 
-  const toggleTokenHide = useCallback((token) => {
+  const toggleTokenHide = useCallback<(t: Token) => any>((token) => {
     const nextIsHiddenState = !token.isHidden
 
     // TODO: Track updates!
+    setTokenHideChanges((prevChanges) => {
+      const hasChange = prevChanges.find((c) => c.address === token.address)
+
+      if (hasChange) {
+        return prevChanges.filter((c) => c.address !== token.address)
+      }
+
+      return [...prevChanges, { ...token, isHidden: nextIsHiddenState }]
+    })
 
     setSortedTokens((prevTokens) => {
       return prevTokens.map((t) => {
@@ -106,8 +116,12 @@ const AddOrHideToken = ({
 
   // TODO: Handle updates
   const handleUpdates = useCallback(() => {
-    // return token.isHidden ? onRemoveHiddenToken(token.address) : onAddHiddenToken(token)
-  }, [])
+    tokenHideChanges.forEach((token: Token) => {
+      token.isHidden ? onRemoveHiddenToken(token.address) : onAddHiddenToken(token)
+    })
+    setSortedTokens(tokensWithHidden.sort((a, b) => b.balanceUSD - a.balanceUSD))
+    setTokenHideChanges([])
+  }, [onAddHiddenToken, onRemoveHiddenToken, tokenHideChanges, tokensWithHidden])
 
   return (
     <>
