@@ -82,13 +82,6 @@ const AddOrHideToken = ({
     return cases[formMode]()
   }
 
-  // TODO: Move to state?
-  // const tokensWithHiddenTokens = [...hiddenTokens, ...tokens]
-  // const sortedTokens = useMemo(
-  //   () => tokensWithHiddenTokens.sort((a, b) => b.balanceUSD - a.balanceUSD),
-  //   [tokensWithHiddenTokens.length]
-  // )
-
   const toggleTokenHide = useCallback<(t: Token) => any>((token) => {
     const nextIsHiddenState = !token.isHidden
 
