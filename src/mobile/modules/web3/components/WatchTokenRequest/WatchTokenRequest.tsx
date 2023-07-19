@@ -49,7 +49,7 @@ const WatchTokenRequest = ({
   const [isAdding, setIsAdding] = useState(false)
   const { network } = useNetwork()
 
-  const { onAddExtraToken, checkIsTokenEligibleForAddingAsExtraToken } = usePortfolio()
+  const { onAddExtraToken, checkIsTokenEligibleForAddingAsExtraToken, extraTokens } = usePortfolio()
   const { getTokenDetails } = useToken()
   const [tokenEligibleStatus, setTokenEligibleStatus] = useState<
     ReturnType<UsePortfolioReturnType['checkIsTokenEligibleForAddingAsExtraToken']>
@@ -89,7 +89,7 @@ const WatchTokenRequest = ({
             })
           )
 
-        setTokenEligibleStatus(checkIsTokenEligibleForAddingAsExtraToken(token))
+        setTokenEligibleStatus(checkIsTokenEligibleForAddingAsExtraToken(token, extraTokens))
       } catch {
         setLoadingTokenDetails(false)
         setError(
