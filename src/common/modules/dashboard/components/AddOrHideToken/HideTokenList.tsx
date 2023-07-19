@@ -33,7 +33,11 @@ const HideTokenList: React.FC<Props> = ({ tokens = [], toggleTokenHide }: Props)
 
   const renderItem = (token: TokenWithIsHiddenFlag) => (
     <TokenItem
-      key={token.address}
+      // Since the visible and hidden token lists are separate and they update
+      // in async manner, for a split second we might have the same token in
+      // both lists. This causes a warning in React, because the key is not
+      // unique. To avoid this, we add the isHidden flag to the key.
+      key={token.address + token.isHidden}
       address={token.address}
       isHidden={token.isHidden}
       onPress={() => toggleTokenHide(token)}
