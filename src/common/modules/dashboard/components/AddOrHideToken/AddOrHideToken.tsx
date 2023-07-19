@@ -133,6 +133,7 @@ const AddOrHideToken = ({
         sheetRef={sheetRef}
         closeBottomSheet={closeBottomSheet}
         onClosed={handleUpdates}
+        cancelText={t('Close')}
       >
         <Segments
           defaultValue={formType}
