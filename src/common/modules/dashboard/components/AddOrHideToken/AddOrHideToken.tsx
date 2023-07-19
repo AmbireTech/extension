@@ -51,13 +51,18 @@ const AddOrHideToken = ({
 }: Props) => {
   const { t } = useTranslation()
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
-  const allTokens = [...hiddenTokens, ...tokens]
+  const tokensWithHidden = [...hiddenTokens, ...tokens]
   const [sortedTokens, setSortedTokens] = useState<Token[]>(
-    allTokens.sort((a, b) => b.balanceUSD - a.balanceUSD)
+    tokensWithHidden.sort((a, b) => b.balanceUSD - a.balanceUSD)
   )
+
+  // Tokens and hidden tokens get updated asynchronously, so we need to update
+  // the sorted tokens when they change. Track only the length changes, since
+  // the tokens attributes that change themselves are not used in the component.
   useEffect(() => {
-    setSortedTokens(allTokens.sort((a, b) => b.balanceUSD - a.balanceUSD))
-  }, [allTokens.length])
+    setSortedTokens(tokensWithHidden.sort((a, b) => b.balanceUSD - a.balanceUSD))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tokensWithHidden.length])
 
   const [formType, setFormType] = useState<MODES>(MODES.ADD_TOKEN)
 
