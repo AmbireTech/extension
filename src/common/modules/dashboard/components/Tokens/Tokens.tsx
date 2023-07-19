@@ -156,7 +156,6 @@ const Tokens = ({
         tokens={sortedTokens}
         networkId={networkId}
         networkName={networkName}
-        selectedAcc={selectedAcc}
         extraTokens={extraTokens}
         hiddenTokens={hiddenTokens}
         onAddExtraToken={onAddExtraToken}

@@ -1,5 +1,4 @@
 import { NetworkId, NetworkType } from 'ambire-common/src/constants/networks'
-import { UseAccountsReturnType } from 'ambire-common/src/hooks/useAccounts'
 import { Token } from 'ambire-common/src/hooks/usePortfolio'
 import { UsePortfolioReturnType } from 'ambire-common/src/hooks/usePortfolio/types'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
@@ -19,7 +18,6 @@ import textStyles from '@common/styles/utils/text'
 import AddOrHideTokenForm from './AddOrHideTokenForm'
 import { MODES } from './constants'
 import ExtraTokensList from './ExtraTokensList'
-import HiddenOrExtraTokens from './HiddenOrExtraTokens'
 import HideTokenList from './HideTokenList'
 import styles from './styles'
 
@@ -31,7 +29,6 @@ interface Props {
   hiddenTokens: UsePortfolioReturnType['hiddenTokens']
   networkId?: NetworkId
   networkName?: NetworkType['name']
-  selectedAcc: UseAccountsReturnType['selectedAcc']
   onAddExtraToken: UsePortfolioReturnType['onAddExtraToken']
   onAddHiddenToken: UsePortfolioReturnType['onAddHiddenToken']
   onRemoveExtraToken: UsePortfolioReturnType['onRemoveExtraToken']
@@ -44,7 +41,6 @@ const AddOrHideToken = ({
   hiddenTokens,
   networkId,
   networkName,
-  selectedAcc,
   onAddExtraToken,
   onAddHiddenToken,
   onRemoveExtraToken,
@@ -75,7 +71,7 @@ const AddOrHideToken = ({
         closeBottomSheet()
       },
       [MODES.HIDE_TOKEN]: () => {
-        onAddHiddenToken(token)
+        onAddHiddenToken([token])
         closeBottomSheet()
       }
     }
@@ -156,7 +152,6 @@ const AddOrHideToken = ({
               <Title type="small" style={textStyles.center}>
                 {t('Add Token')}
               </Title>
-
               <AddOrHideTokenForm
                 mode={MODES.ADD_TOKEN}
                 onSubmit={handleOnSubmit}
@@ -164,7 +159,6 @@ const AddOrHideToken = ({
                 networkId={networkId}
                 networkName={networkName}
               />
-
               <ExtraTokensList tokens={extraTokens} onRemoveExtraToken={onRemoveExtraToken} />
             </>
           )}
