@@ -153,10 +153,9 @@ const Tokens = ({
         ))}
 
       <AddOrHideToken
-        tokens={tokens}
+        tokens={sortedTokens}
         networkId={networkId}
         networkName={networkName}
-        selectedAcc={selectedAcc}
         extraTokens={extraTokens}
         hiddenTokens={hiddenTokens}
         onAddExtraToken={onAddExtraToken}

@@ -15,7 +15,7 @@ interface Props extends Token {
   onPress?: () => void
 }
 
-const TokenItem: React.FC<Props> = ({
+const FoundTokenItem: React.FC<Props> = ({
   tokenImageUrl,
   address,
   network,
@@ -50,4 +50,4 @@ const TokenItem: React.FC<Props> = ({
   )
 }
 
-export default React.memo(TokenItem)
+export default React.memo(FoundTokenItem)
