@@ -106,7 +106,7 @@ const domReadyCall = (callback: any) => {
   }
 }
 
-const $ = document.querySelector.bind(document)
+const $document = document.querySelector.bind(document)
 
 export class EthereumProvider extends EventEmitter {
   chainId: string | null = null
@@ -187,11 +187,13 @@ export class EthereumProvider extends EventEmitter {
     domReadyCall(() => {
       const origin = location.origin
       const icon =
-        ($('head > link[rel~="icon"]') as HTMLLinkElement)?.href ||
-        ($('head > meta[itemprop="image"]') as HTMLMetaElement)?.content
+        ($document('head > link[rel~="icon"]') as HTMLLinkElement)?.href ||
+        ($document('head > meta[itemprop="image"]') as HTMLMetaElement)?.content
 
       const name =
-        document.title || ($('head > meta[name="title"]') as HTMLMetaElement)?.content || origin
+        document.title ||
+        ($document('head > meta[name="title"]') as HTMLMetaElement)?.content ||
+        origin
 
       this._bcm.request({
         method: 'tabCheckin',
