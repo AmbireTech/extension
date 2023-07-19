@@ -175,7 +175,6 @@ const AddOrHideTokenForm: React.FC<Props> = ({
         text={isSubmitting ? buttonSubmittingText : buttonSubmitText}
         disabled={isSubmitting || disabled}
         onPress={handleOnPress}
-        hasBottomSpacing={false}
       />
     </>
   )

@@ -18,6 +18,7 @@ import textStyles from '@common/styles/utils/text'
 
 import AddOrHideTokenForm from './AddOrHideTokenForm'
 import { MODES } from './constants'
+import ExtraTokensList from './ExtraTokensList'
 import HiddenOrExtraTokens from './HiddenOrExtraTokens'
 import HideTokenList from './HideTokenList'
 import styles from './styles'
@@ -149,7 +150,7 @@ const AddOrHideToken = ({
           }}
           fontSize={14}
         />
-        <View style={[flexboxStyles.flex1, flexboxStyles.justifyEnd, spacings.mtMd]}>
+        <View style={[flexboxStyles.flex1, flexboxStyles.justifyEnd, spacings.mtMd, spacings.mbTy]}>
           {formType === MODES.ADD_TOKEN && (
             <>
               <Title type="small" style={textStyles.center}>
@@ -163,13 +164,8 @@ const AddOrHideToken = ({
                 networkId={networkId}
                 networkName={networkName}
               />
-              {/* <HiddenOrExtraTokens
-                mode={MODES.ADD_TOKEN}
-                hiddenTokens={hiddenTokens}
-                extraTokens={extraTokens}
-                onRemoveExtraToken={onRemoveExtraToken}
-                onRemoveHiddenToken={onRemoveHiddenToken}
-              /> */}
+
+              <ExtraTokensList tokens={extraTokens} onRemoveExtraToken={onRemoveExtraToken} />
             </>
           )}
           {formType === MODES.HIDE_TOKEN && (
