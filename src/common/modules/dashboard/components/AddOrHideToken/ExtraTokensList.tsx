@@ -1,15 +1,15 @@
-import { Token, UsePortfolioReturnType } from 'ambire-common/src/hooks/usePortfolio/types'
+import { Token, TokenWithIsHiddenFlag } from 'ambire-common/src/hooks/usePortfolio/types'
 import React from 'react'
 
 import ExtraTokensListItem from './ExtraTokensListItem'
 
 interface Props {
-  tokens: UsePortfolioReturnType['tokens']
+  tokens: TokenWithIsHiddenFlag[]
   onRemoveExtraToken: (tokenAddress: Token['address']) => any
 }
 
 const ExtraTokensList: React.FC<Props> = ({ tokens = [], onRemoveExtraToken }: Props) => {
-  const renderItem = (token: Token) => (
+  const renderItem = (token: TokenWithIsHiddenFlag) => (
     <ExtraTokensListItem
       // Since the visible and hidden token lists are separate and they update
       // in async manner, for a split second we might have the same token in

@@ -1,4 +1,4 @@
-import { Token } from 'ambire-common/src/hooks/usePortfolio'
+import { TokenWithIsHiddenFlag } from 'ambire-common/src/hooks/usePortfolio'
 import React from 'react'
 import { TouchableOpacity, View } from 'react-native'
 
@@ -9,7 +9,7 @@ import spacings from '@common/styles/spacings'
 import flexboxStyles from '@common/styles/utils/flexbox'
 import { AntDesign } from '@expo/vector-icons'
 
-interface Props extends Partial<Token> {
+interface Props extends Partial<TokenWithIsHiddenFlag> {
   onPress?: () => void
 }
 

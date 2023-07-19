@@ -1,8 +1,4 @@
-import {
-  Token,
-  TokenWithIsHiddenFlag,
-  UsePortfolioReturnType
-} from 'ambire-common/src/hooks/usePortfolio/types'
+import { Token, TokenWithIsHiddenFlag } from 'ambire-common/src/hooks/usePortfolio/types'
 import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -12,7 +8,7 @@ import spacings from '@common/styles/spacings'
 import HideTokenListItem from './HideTokenListItem'
 
 interface Props {
-  tokens: UsePortfolioReturnType['tokens']
+  tokens: TokenWithIsHiddenFlag[]
   toggleTokenHide: (token: Token) => any
 }
 

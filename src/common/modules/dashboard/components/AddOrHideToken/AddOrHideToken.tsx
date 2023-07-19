@@ -1,6 +1,9 @@
 import { NetworkId, NetworkType } from 'ambire-common/src/constants/networks'
 import { Token } from 'ambire-common/src/hooks/usePortfolio'
-import { UsePortfolioReturnType } from 'ambire-common/src/hooks/usePortfolio/types'
+import {
+  TokenWithIsHiddenFlag,
+  UsePortfolioReturnType
+} from 'ambire-common/src/hooks/usePortfolio/types'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { LayoutAnimation, TouchableOpacity, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
@@ -24,7 +27,7 @@ import styles from './styles'
 const segments = [{ value: MODES.ADD_TOKEN }, { value: MODES.HIDE_TOKEN }]
 
 interface Props {
-  tokens: UsePortfolioReturnType['tokens']
+  tokens: TokenWithIsHiddenFlag[]
   extraTokens: UsePortfolioReturnType['extraTokens']
   hiddenTokens: UsePortfolioReturnType['hiddenTokens']
   networkId?: NetworkId
@@ -49,7 +52,7 @@ const AddOrHideToken = ({
   const { t } = useTranslation()
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const tokensWithHidden = useMemo(() => [...hiddenTokens, ...tokens], [hiddenTokens, tokens])
-  const [tokenHideChanges, setTokenHideChanges] = useState<Token[]>([])
+  const [tokenHideChanges, setTokenHideChanges] = useState<TokenWithIsHiddenFlag[]>([])
   const [sortedTokens, setSortedTokens] = useState<Token[]>(
     tokensWithHidden.sort((a, b) => b.balanceUSD - a.balanceUSD)
   )
@@ -79,7 +82,7 @@ const AddOrHideToken = ({
     return cases[formMode]()
   }
 
-  const toggleTokenHide = useCallback<(t: Token) => any>((token) => {
+  const toggleTokenHide = useCallback<(t: TokenWithIsHiddenFlag) => any>((token) => {
     const nextIsHiddenState = !token.isHidden
 
     setTokenHideChanges((prevChanges) => {
