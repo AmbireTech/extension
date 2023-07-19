@@ -2,7 +2,7 @@ import { NetworkId, NetworkType } from 'ambire-common/src/constants/networks'
 import { UseAccountsReturnType } from 'ambire-common/src/hooks/useAccounts'
 import { Token } from 'ambire-common/src/hooks/usePortfolio'
 import { UsePortfolioReturnType } from 'ambire-common/src/hooks/usePortfolio/types'
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { LayoutAnimation, TouchableOpacity, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
@@ -51,7 +51,7 @@ const AddOrHideToken = ({
 }: Props) => {
   const { t } = useTranslation()
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
-  const tokensWithHidden = [...hiddenTokens, ...tokens]
+  const tokensWithHidden = useMemo(() => [...hiddenTokens, ...tokens], [hiddenTokens, tokens])
   const [tokenHideChanges, setTokenHideChanges] = useState<Token[]>([])
   const [sortedTokens, setSortedTokens] = useState<Token[]>(
     tokensWithHidden.sort((a, b) => b.balanceUSD - a.balanceUSD)
@@ -92,7 +92,6 @@ const AddOrHideToken = ({
   const toggleTokenHide = useCallback<(t: Token) => any>((token) => {
     const nextIsHiddenState = !token.isHidden
 
-    // TODO: Track updates!
     setTokenHideChanges((prevChanges) => {
       const hasChange = prevChanges.find((c) => c.address === token.address)
 
@@ -114,10 +113,9 @@ const AddOrHideToken = ({
     })
   }, [])
 
-  // TODO: Handle updates
   const handleUpdates = useCallback(() => {
     tokenHideChanges.forEach((token: Token) => {
-      token.isHidden ? onRemoveHiddenToken(token.address) : onAddHiddenToken(token)
+      token.isHidden ? onAddHiddenToken(token) : onRemoveHiddenToken(token.address)
     })
     setSortedTokens(tokensWithHidden.sort((a, b) => b.balanceUSD - a.balanceUSD))
     setTokenHideChanges([])
