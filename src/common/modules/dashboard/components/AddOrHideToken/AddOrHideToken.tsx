@@ -107,9 +107,15 @@ const AddOrHideToken = ({
   }, [])
 
   const handleUpdates = useCallback(() => {
-    tokenHideChanges.forEach((token: Token) => {
-      token.isHidden ? onAddHiddenToken(token) : onRemoveHiddenToken(token.address)
-    })
+    const hiddenTokensToAdd = tokenHideChanges.filter((token) => token.isHidden)
+    const addressesToRemove = tokenHideChanges
+      .filter((token) => !token.isHidden)
+      .map((token) => token.address)
+
+    if (hiddenTokensToAdd.length) onAddHiddenToken(hiddenTokensToAdd)
+    if (addressesToRemove.length) onRemoveHiddenToken(addressesToRemove)
+
+    // Reset states
     setSortedTokens(tokensWithHidden.sort((a, b) => b.balanceUSD - a.balanceUSD))
     setTokenHideChanges([])
   }, [onAddHiddenToken, onRemoveHiddenToken, tokenHideChanges, tokensWithHidden])
