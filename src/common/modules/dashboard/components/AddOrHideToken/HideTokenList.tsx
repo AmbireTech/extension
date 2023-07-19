@@ -7,6 +7,7 @@ import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import Input from '@common/components/Input'
+import spacings from '@common/styles/spacings'
 
 import TokenItem from './TokenItem'
 
@@ -58,6 +59,7 @@ const HideTokenList: React.FC<Props> = ({ tokens = [], toggleTokenHide }: Props)
         placeholder={t('Search by token symbol or address')}
         value={searchValue}
         onChangeText={setSearchValue}
+        containerStyle={spacings.mbSm}
       />
       {filteredTokens.map(renderItem)}
     </>
