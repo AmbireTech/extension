@@ -5,7 +5,7 @@ import { View } from 'react-native'
 import spacings from '@common/styles/spacings'
 
 import { MODES } from './constants'
-import TokenItem from './TokenItem'
+import TokenItem from './HideTokenListItem'
 
 interface Props {
   mode: MODES
@@ -15,6 +15,7 @@ interface Props {
   onRemoveHiddenToken: UsePortfolioReturnType['onRemoveHiddenToken']
 }
 
+// TODO: Should be refactored
 const HiddenOrExtraTokens: React.FC<Props> = ({
   mode,
   extraTokens,

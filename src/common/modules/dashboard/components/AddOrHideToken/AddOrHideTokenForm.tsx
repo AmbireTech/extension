@@ -15,7 +15,7 @@ import useToken from '@common/hooks/useToken'
 import spacings from '@common/styles/spacings'
 
 import { MODES } from './constants'
-import TokenItem from './TokenItem'
+import TokenItem from './HideTokenListItem'
 
 const ADDRESS_LENGTH = 42
 const TOKEN_SYMBOL_MIN_LENGTH = 3
@@ -169,6 +169,7 @@ const AddOrHideTokenForm: React.FC<Props> = ({
         </View>
       )}
 
+      {/* TODO: Should be different */}
       {!showError && tokenDetails && <TokenItem {...tokenDetails} />}
 
       <Button

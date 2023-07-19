@@ -14,7 +14,7 @@ import { Trans, useTranslation } from '@common/config/localization'
 import useNetwork from '@common/hooks/useNetwork'
 import usePortfolio from '@common/hooks/usePortfolio'
 import useToken from '@common/hooks/useToken'
-import TokenItem from '@common/modules/dashboard/components/AddOrHideToken/TokenItem'
+import FoundTokenItem from '@common/modules/dashboard/components/AddOrHideToken/FoundTokenItem'
 import colors from '@common/styles/colors'
 import spacings from '@common/styles/spacings'
 import flexboxStyles from '@common/styles/utils/flexbox'
@@ -207,7 +207,7 @@ const WatchTokenRequest = ({
                   </Text>
                 )}
 
-                {extraToken && <TokenItem {...extraToken} />}
+                {extraToken && <FoundTokenItem {...extraToken} />}
               </View>
 
               {tokenEligibleStatus.isEligible && (

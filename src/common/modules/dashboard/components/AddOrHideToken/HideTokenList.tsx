@@ -9,7 +9,7 @@ import { useTranslation } from 'react-i18next'
 import Input from '@common/components/Input'
 import spacings from '@common/styles/spacings'
 
-import TokenItem from './TokenItem'
+import HideTokenListItem from './HideTokenListItem'
 
 interface Props {
   tokens: UsePortfolioReturnType['tokens']
@@ -33,7 +33,7 @@ const HideTokenList: React.FC<Props> = ({ tokens = [], toggleTokenHide }: Props)
   }, [searchValue, tokens])
 
   const renderItem = (token: TokenWithIsHiddenFlag) => (
-    <TokenItem
+    <HideTokenListItem
       // Since the visible and hidden token lists are separate and they update
       // in async manner, for a split second we might have the same token in
       // both lists. This causes a warning in React, because the key is not

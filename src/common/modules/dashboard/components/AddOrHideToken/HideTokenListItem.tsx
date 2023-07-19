@@ -14,7 +14,7 @@ interface Props extends Partial<Token> {
   onPress?: () => void
 }
 
-const TokenItem: React.FC<Props> = ({
+const HideTokenListItem: React.FC<Props> = ({
   tokenImageUrl,
   address,
   symbol,
@@ -44,4 +44,4 @@ const TokenItem: React.FC<Props> = ({
   )
 }
 
-export default React.memo(TokenItem)
+export default React.memo(HideTokenListItem)
