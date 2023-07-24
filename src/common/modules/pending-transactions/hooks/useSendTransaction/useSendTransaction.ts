@@ -513,11 +513,33 @@ const useSendTransaction = ({ hardwareWalletOpenBottomSheet }: Props) => {
     let approveTxnPromise
 
     if (signerType === SIGNER_TYPES.quickAcc) {
-      approveTxnPromise = await approveTxnImplQuickAcc({ code })
+      try {
+        approveTxnPromise = await approveTxnImplQuickAcc({ code })
+      } catch (error) {
+        addToast(
+          i18n.t('Transaction error: {{error}}', {
+            error: error?.message || 'Signing failed for unknown reason.'
+          }) as string,
+          { error: true }
+        )
+        setSigningStatus(null)
+        return
+      }
     }
 
     if (signerType === SIGNER_TYPES.external) {
-      approveTxnPromise = await approveTxnImplExternalSigner()
+      try {
+        approveTxnPromise = await approveTxnImplExternalSigner()
+      } catch (error) {
+        addToast(
+          i18n.t('Transaction error: {{error}}', {
+            error: error?.message || 'Signing failed for unknown reason.'
+          }) as string,
+          { error: true }
+        )
+        setSigningStatus(null)
+        return
+      }
     }
 
     // TODO: If possible move the signing with HW in the vault
@@ -528,7 +550,18 @@ const useSendTransaction = ({ hardwareWalletOpenBottomSheet }: Props) => {
         return
       }
 
-      approveTxnPromise = await approveTxnImplHW({ device })
+      try {
+        approveTxnPromise = await approveTxnImplHW({ device })
+      } catch (error) {
+        addToast(
+          i18n.t('Transaction error: {{error}}', {
+            error: error?.message || 'Signing failed for unknown reason.'
+          }) as string,
+          { error: true }
+        )
+        setSigningStatus(null)
+        return
+      }
     }
 
     try {
