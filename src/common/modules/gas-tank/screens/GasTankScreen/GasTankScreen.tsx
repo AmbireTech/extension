@@ -120,8 +120,6 @@ const GasTankScreen = () => {
               networkName={network?.name}
             />
           </View>
-          {/* // TODO: Empty state? */}
-          {/* // balanceByTokensDisabled={!gasTankBalances && !gasTankBalances?.length} */}
           {!!(balancesRes && balancesRes.length) && (
             <>
               <Text style={spacings.mbSm}>{t('Gas tank balance by tokens')}</Text>
