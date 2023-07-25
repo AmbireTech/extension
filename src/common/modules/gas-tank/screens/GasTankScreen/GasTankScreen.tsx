@@ -10,7 +10,6 @@ import Button from '@common/components/Button'
 import GradientBackgroundWrapper from '@common/components/GradientBackgroundWrapper'
 import Panel from '@common/components/Panel'
 import Text from '@common/components/Text'
-import Title from '@common/components/Title'
 import Wrapper from '@common/components/Wrapper'
 import CONFIG from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
@@ -21,14 +20,12 @@ import useRelayerData from '@common/hooks/useRelayerData'
 import useRequests from '@common/hooks/useRequests'
 import useToast from '@common/hooks/useToast'
 import GasTankBalance from '@common/modules/gas-tank/components/GasTankBalance'
-import GasTankStateToggle from '@common/modules/gas-tank/components/GasTankStateToggle'
 import GasTankTotalSave from '@common/modules/gas-tank/components/GasTankTotalSave'
 import TokensList from '@common/modules/gas-tank/components/TokensList'
 import TransactionHistoryList from '@common/modules/gas-tank/components/TransactionsHistoryList'
 import colors from '@common/styles/colors'
 import spacings from '@common/styles/spacings'
 import flexboxStyles from '@common/styles/utils/flexbox'
-import text from '@common/styles/utils/text'
 
 import TokensListItem from '../../components/TokensList/TokensListItem'
 
@@ -121,7 +118,7 @@ const GasTankScreen = () => {
             <GasTankTotalSave
               totalSave={totalSaved || '0.00'}
               totalCashBack={totalCashBack || '0.00'}
-              networkId={network?.id}
+              networkName={network?.name}
             />
           </View>
           {balancesRes && balancesRes.length && (
