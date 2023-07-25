@@ -1,9 +1,11 @@
+import { formatFloatTokenAmount } from 'ambire-common/src/services/formatter'
 import React, { useContext } from 'react'
 import { View } from 'react-native'
 
 import Button from '@common/components/Button'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
+import usePrivateMode from '@common/hooks/usePrivateMode'
 import { DepositTokenBottomSheetContext } from '@common/modules/gas-tank/contexts/depositTokenBottomSheetContext'
 import spacings from '@common/styles/spacings'
 import flexboxStyles from '@common/styles/utils/flexbox'
@@ -20,6 +22,8 @@ type Props = {
 const TokensListItem = ({ type = 'deposit', token, networkId }: Props) => {
   const { openDepositToken } = useContext(DepositTokenBottomSheetContext)
   const balanceUSD = token.balanceUSD || token.balanceInUSD || 0.0
+  const { hidePrivateValue } = usePrivateMode()
+
   return (
     <View style={styles.tokenItemContainer}>
       <View style={spacings.prTy}>
@@ -38,7 +42,9 @@ const TokensListItem = ({ type = 'deposit', token, networkId }: Props) => {
           </Text>
           <View style={[flexboxStyles.flex1, spacings.mrSm]}>
             <Text fontSize={14} style={textStyles.center} numberOfLines={1}>
-              {token.balance}
+              {hidePrivateValue(
+                formatFloatTokenAmount(token.balance, true, Math.min(token.decimals, 6))
+              )}
             </Text>
           </View>
           <View>
