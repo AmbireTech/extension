@@ -48,7 +48,9 @@ const TokenItem = ({
 
       <View style={[styles.tokenValue, flexboxStyles.flex1]}>
         <Text fontSize={14} numberOfLines={1}>
-          {hidePrivateValue(formatFloatTokenAmount(balance, true, decimals))}
+          {hidePrivateValue(
+            formatFloatTokenAmount(Number(balance).toFixed(balance < 1 ? 8 : 4), true, decimals)
+          )}
         </Text>
         <Text fontSize={12} style={textStyles.highlightPrimary}>
           ${hidePrivateValue(balanceUSD?.toFixed(2))}
