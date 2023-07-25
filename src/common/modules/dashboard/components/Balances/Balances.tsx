@@ -174,7 +174,7 @@ const Balances = ({
                 {!!data && (
                   <Text numberOfLines={1} style={flexboxStyles.flex1}>
                     <Text>{'$ '}</Text>
-                    {gasTankBalanceLabel}
+                    {hidePrivateValue(gasTankBalanceLabel)}
                   </Text>
                 )}
                 <GasTankIcon width={22} height={22} />
