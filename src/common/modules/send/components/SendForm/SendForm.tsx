@@ -1,10 +1,10 @@
-import { isNumber } from 'lodash'
-import React, { useCallback, useState } from 'react'
+import React from 'react'
 import isEqual from 'react-fast-compare'
 import { Keyboard, TouchableWithoutFeedback, View } from 'react-native'
 
 import Button from '@common/components/Button'
 import Checkbox from '@common/components/Checkbox'
+import InputSendToken from '@common/components/InputSendToken'
 import NumberInput from '@common/components/NumberInput'
 import Panel from '@common/components/Panel'
 import Recipient from '@common/components/Recipient'
@@ -84,71 +84,6 @@ const SendForm = ({
 }: Props) => {
   const { t } = useTranslation()
 
-  const pricePerOne =
-    isNumber(selectedAsset?.balanceUSD) &&
-    isNumber(selectedAsset?.balance) &&
-    selectedAsset?.balance !== 0
-      ? // This is handled by the above isNumber check, but ESLint doesn't know that
-        // eslint-disable-next-line no-unsafe-optional-chaining
-        +(selectedAsset?.balanceUSD / selectedAsset?.balance).toFixed(selectedAsset?.decimals)
-      : 0
-  const [amountInUsd, setAmountInUsd] = useState((pricePerOne * amount).toFixed(2))
-
-  const handleOnTokenAmountChange = useCallback(
-    (valueInTokenAmount: string) => {
-      onAmountChange(valueInTokenAmount)
-
-      const nextAmountInUsd = (pricePerOne * +valueInTokenAmount).toFixed(2)
-      setAmountInUsd(nextAmountInUsd)
-    },
-    [onAmountChange, pricePerOne]
-  )
-
-  const handleOnUsdAmountChange = useCallback(
-    (valueInUsd: string) => {
-      if (selectedAsset?.balanceUSD === 0 || !isNumber(selectedAsset?.balanceUSD)) {
-        onAmountChange(selectedAsset?.balance.toString())
-        setAmountInUsd('')
-        return
-      }
-
-      if (+valueInUsd === 0) {
-        onAmountChange('')
-        setAmountInUsd(valueInUsd)
-        return
-      }
-
-      const valueInAmount = (
-        (+valueInUsd * selectedAsset.balance) /
-        // This is handled by the above isNumber check, but ESLint doesn't know that
-        // eslint-disable-next-line no-unsafe-optional-chaining
-        selectedAsset?.balanceUSD
-      ).toFixed(selectedAsset.decimals)
-
-      onAmountChange(valueInAmount)
-      setAmountInUsd(valueInUsd)
-    },
-    [onAmountChange, selectedAsset?.balance, selectedAsset?.balanceUSD, selectedAsset?.decimals]
-  )
-
-  const handleSetMaxAmount = useCallback(() => {
-    setMaxAmount()
-    handleOnUsdAmountChange(selectedAsset?.balanceUSD)
-  }, [handleOnUsdAmountChange, selectedAsset?.balanceUSD, setMaxAmount])
-
-  const amountLabel = (
-    <View style={[flexboxStyles.directionRow, spacings.mbMi]}>
-      <Text style={spacings.mr}>{t('Available Amount:')}</Text>
-
-      <View style={[flexboxStyles.directionRow, flexboxStyles.flex1]}>
-        <Text numberOfLines={1} style={{ flex: 1, textAlign: 'right' }} ellipsizeMode="tail">
-          {maxAmount}
-        </Text>
-        {!!selectedAsset && <Text>{` ${selectedAsset?.symbol}`}</Text>}
-      </View>
-    </View>
-  )
-
   return (
     <TouchableWithoutFeedback
       onPress={() => {
@@ -168,33 +103,17 @@ const SendForm = ({
                 setValue={setAsset}
               />
             </View>
-            {amountLabel}
-            <View style={flexboxStyles.directionRow}>
-              <NumberInput
-                onChangeText={handleOnTokenAmountChange}
-                containerStyle={[spacings.mbTy, flexboxStyles.flex1]}
-                value={amount.toString()}
-                placeholder={t('0')}
-                inputBackgroundStyle={styles.amountInTokenInputBackgroundStyle}
-                error={
-                  validationFormMgs.messages?.amount ? validationFormMgs.messages.amount : undefined
-                }
-              />
-              <NumberInput
-                onChangeText={handleOnUsdAmountChange}
-                containerStyle={[spacings.mbTy, flexboxStyles.flex1]}
-                inputBackgroundStyle={styles.amountInUSDInputBackgroundStyle}
-                value={amountInUsd.toString()}
-                leftIcon={() => (
-                  <Text weight="medium" fontSize={16} style={styles.amountInUsdIcon}>
-                    {t('$')}
-                  </Text>
-                )}
-                button={t('MAX')}
-                placeholder={t('0')}
-                onButtonPress={handleSetMaxAmount}
-              />
-            </View>
+            <InputSendToken
+              amount={amount}
+              selectedAssetBalanceUSD={selectedAsset?.balanceUSD}
+              selectedAssetBalance={selectedAsset?.balance}
+              selectedAssetDecimals={selectedAsset?.decimals}
+              selectedAssetSymbol={selectedAsset?.symbol}
+              maxAmount={maxAmount}
+              errorMessage={validationFormMgs?.messages?.amount}
+              onAmountChange={onAmountChange}
+              setMaxAmount={setMaxAmount}
+            />
             <Recipient
               setAddress={setAddress}
               address={address}

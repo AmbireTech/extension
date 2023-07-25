@@ -84,6 +84,14 @@ target 'ambire' do
         end
       end
     end
+
+    # On an M1 Mac, opening the .xcworkspace in xCode and running the project
+    # via simulator works, but in order for the yarn ios (expo run:ios) to work,
+    # this configuration is needed, see:
+    # https://github.com/facebook/react-native/issues/32704#issuecomment-1048457543
+    installer.pods_project.build_configurations.each do |config|
+      config.build_settings["EXCLUDED_ARCHS[sdk=iphonesimulator*]"] = "arm64"
+    end
   end
 
 end

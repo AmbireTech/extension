@@ -255,7 +255,7 @@ const domReadyCall = (callback) => {
   }
 }
 
-const $ = document.querySelector.bind(document)
+const $document = document.querySelector.bind(document)
 
 window.handleBackgroundMessage = function ({ event, data }) {
   if (window.ethereum._pushEventHandlers[event]) {
@@ -332,8 +332,9 @@ class EthereumProvider extends EventEmitter {
     domReadyCall(async () => {
       const origin = location?.origin
       const icon =
-        $('head > link[rel~="icon"]')?.href || $('head > meta[itemprop="image"]')?.content
-      const name = document.title || $('head > meta[name="title"]')?.content || origin
+        $document('head > link[rel~="icon"]')?.href ||
+        $document('head > meta[itemprop="image"]')?.content
+      const name = document.title || $document('head > meta[name="title"]')?.content || origin
 
       await (function () {
         const id = Date.now() + Math.random()
