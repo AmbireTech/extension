@@ -42,7 +42,11 @@ const GasTankScreen = () => {
   const { addToast } = useToast()
   const portfolio = usePortfolio()
 
-  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
+  const {
+    ref: sheetRefInfo,
+    open: openBottomSheetInfo,
+    close: closeBottomSheetInfo
+  } = useModalize()
   const {
     ref: sheetRefTopUp,
     open: openBottomSheetTopUp,
@@ -102,7 +106,7 @@ const GasTankScreen = () => {
         <Text style={[spacings.mbSm, spacings.mhSm]} fontSize={12}>
           {t('The Ambire Gas Tank is your special account for paying gas and saving on gas fees.')}
           {'   '}
-          <Text color={colors.heliotrope} fontSize={12} onPress={openBottomSheet}>{`${t(
+          <Text color={colors.heliotrope} fontSize={12} onPress={openBottomSheetInfo}>{`${t(
             'learn more...'
           )}`}</Text>
         </Text>
@@ -173,8 +177,8 @@ const GasTankScreen = () => {
 
       <BottomSheet
         id="gas-tank-info"
-        sheetRef={sheetRef}
-        closeBottomSheet={closeBottomSheet}
+        sheetRef={sheetRefInfo}
+        closeBottomSheet={closeBottomSheetInfo}
         cancelText="Close"
       >
         <View
