@@ -23,6 +23,7 @@ interface Props {
   selectedAcc: UseAccountsReturnType['selectedAcc']
   addRequest: any
   addToast: UseToastsReturnType['addToast']
+  closeBottomSheetTopUp: () => any
 }
 
 const TokensList = ({
@@ -32,7 +33,8 @@ const TokensList = ({
   chainId,
   selectedAcc,
   addRequest,
-  addToast
+  addToast,
+  closeBottomSheetTopUp
 }: Props) => {
   const { t } = useTranslation()
   if (isLoading) {
@@ -55,6 +57,7 @@ const TokensList = ({
       selectedAcc={selectedAcc}
       addRequest={addRequest}
       addToast={addToast}
+      closeBottomSheetTopUp={closeBottomSheetTopUp}
     >
       <View>
         <Title style={[spacings.mtSm, text.center]}>{t('Available fee tokens')}</Title>

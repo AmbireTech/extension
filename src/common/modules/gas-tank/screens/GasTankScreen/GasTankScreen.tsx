@@ -162,6 +162,7 @@ const GasTankScreen = () => {
               selectedAcc={selectedAcc}
               addRequest={addRequest}
               addToast={addToast}
+              closeBottomSheetTopUp={closeBottomSheetTopUp}
             />
           </BottomSheet>
         </Panel>
