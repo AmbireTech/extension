@@ -10,6 +10,7 @@ import Button from '@common/components/Button'
 import GradientBackgroundWrapper from '@common/components/GradientBackgroundWrapper'
 import Panel from '@common/components/Panel'
 import Text from '@common/components/Text'
+import Title from '@common/components/Title'
 import Wrapper from '@common/components/Wrapper'
 import CONFIG from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
@@ -173,7 +174,7 @@ const GasTankScreen = () => {
       </Wrapper>
 
       <BottomSheet
-        id="gas-tank"
+        id="gas-tank-info"
         sheetRef={sheetRef}
         closeBottomSheet={closeBottomSheet}
         cancelText="Close"
@@ -183,20 +184,19 @@ const GasTankScreen = () => {
             flexboxStyles.directionRow,
             flexboxStyles.alignCenter,
             flexboxStyles.justifyCenter,
-            spacings.mb
+            spacings.mb,
+            spacings.mtTy
           ]}
         >
           <GasTankIcon />
-          <Text fontSize={16} style={spacings.plMi}>
-            {t('Ambire Gas Tank')}
-          </Text>
+          <Title style={[spacings.plMi, spacings.pb0]}>{t('Ambire Gas Tank')}</Title>
         </View>
-        <Text style={spacings.mbSm} fontSize={12} weight="regular">
+        <Text style={spacings.mbSm} weight="regular">
           {t(
             'The Ambire Gas Tank is your special account for paying gas and saving on gas fees. By filling up your Gas Tank, you are setting aside, or prepaying for network fees. You can add more tokens to your Gas Tank at any time.'
           )}
         </Text>
-        <Text fontSize={12} weight="regular">
+        <Text weight="regular" style={spacings.mb}>
           {t('Please note that only the listed tokens are eligible for filling up your gas tank.')}
         </Text>
       </BottomSheet>
