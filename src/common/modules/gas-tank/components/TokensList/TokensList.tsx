@@ -6,10 +6,12 @@ import { View } from 'react-native'
 
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
+import Title from '@common/components/Title'
 import { useTranslation } from '@common/config/localization'
 import { DepositTokenBottomSheetProvider } from '@common/modules/gas-tank/contexts/depositTokenBottomSheetContext'
 import spacings from '@common/styles/spacings'
 import flexboxStyles from '@common/styles/utils/flexbox'
+import text from '@common/styles/utils/text'
 
 import TokensListItem from './TokensListItem'
 
@@ -55,9 +57,7 @@ const TokensList = ({
       addToast={addToast}
     >
       <View>
-        <Text style={spacings.mbTy} fontSize={12}>
-          {t('Available fee tokens')}
-        </Text>
+        <Title style={[spacings.mtSm, text.center]}>{t('Available fee tokens')}</Title>
         {!!tokens &&
           tokens.map((token, i: number) => (
             <TokensListItem
