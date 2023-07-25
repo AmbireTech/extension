@@ -152,6 +152,7 @@ const DepositTokenBottomSheetProvider = ({
       <BottomSheet
         id="deposit-token-bottom-sheet"
         sheetRef={sheetRef}
+        withOverlay
         closeBottomSheet={() => {
           closeBottomSheet()
           setToken(null)
