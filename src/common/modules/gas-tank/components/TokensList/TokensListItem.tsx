@@ -48,7 +48,7 @@ const TokensListItem = ({ type = 'deposit', token, networkId }: Props) => {
             </Text>
           </View>
           <View>
-            <Text fontSize={14}>${balanceUSD?.toFixed(2)}</Text>
+            <Text fontSize={14}>${hidePrivateValue(balanceUSD?.toFixed(2))}</Text>
           </View>
         </>
       )}
