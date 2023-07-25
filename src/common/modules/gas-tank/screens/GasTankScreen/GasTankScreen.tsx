@@ -109,12 +109,10 @@ const GasTankScreen = () => {
         <Panel>
           <View style={[flexboxStyles.directionRow, flexboxStyles.alignCenter, spacings.mb]}>
             <GasTankBalance
-              data={balancesRes && balancesRes.length ? balancesRes : []}
+              onPress={openBottomSheetTopUp}
               totalBalance={
                 gasTankBalances ? formatFloatTokenAmount(gasTankBalances, true, 2) : '0.00'
               }
-              networkId={network?.id}
-              balanceByTokensDisabled={!gasTankBalances && !gasTankBalances?.length}
             />
             <GasTankTotalSave
               totalSave={totalSaved || '0.00'}
@@ -122,7 +120,9 @@ const GasTankScreen = () => {
               networkName={network?.name}
             />
           </View>
-          {balancesRes && balancesRes.length && (
+          {/* // TODO: Empty state? */}
+          {/* // balanceByTokensDisabled={!gasTankBalances && !gasTankBalances?.length} */}
+          {!!(balancesRes && balancesRes.length) && (
             <>
               <Text style={spacings.mbSm}>{t('Gas tank balance by tokens')}</Text>
               {balancesRes
