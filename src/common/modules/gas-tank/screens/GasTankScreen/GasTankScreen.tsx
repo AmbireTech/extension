@@ -6,9 +6,11 @@ import { useModalize } from 'react-native-modalize'
 
 import GasTankIcon from '@common/assets/svg/GasTankIcon'
 import BottomSheet from '@common/components/BottomSheet'
+import Button from '@common/components/Button'
 import GradientBackgroundWrapper from '@common/components/GradientBackgroundWrapper'
 import Panel from '@common/components/Panel'
 import Text from '@common/components/Text'
+import Title from '@common/components/Title'
 import Wrapper from '@common/components/Wrapper'
 import CONFIG from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
@@ -26,6 +28,9 @@ import TransactionHistoryList from '@common/modules/gas-tank/components/Transact
 import colors from '@common/styles/colors'
 import spacings from '@common/styles/spacings'
 import flexboxStyles from '@common/styles/utils/flexbox'
+import text from '@common/styles/utils/text'
+
+import TokensListItem from '../../components/TokensList/TokensListItem'
 
 const relayerURL = CONFIG.RELAYER_URL
 
@@ -40,6 +45,11 @@ const GasTankScreen = () => {
   const portfolio = usePortfolio()
 
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
+  const {
+    ref: sheetRefTopUp,
+    open: openBottomSheetTopUp,
+    close: closeBottomSheetTopUp
+  } = useModalize()
 
   const {
     balancesRes,
@@ -114,15 +124,46 @@ const GasTankScreen = () => {
               networkId={network?.id}
             />
           </View>
-          <TokensList
-            tokens={sortedTokens}
-            isLoading={isCurrNetworkBalanceLoading || isCurrNetworkProtocolsLoading}
-            networkId={network?.id}
-            chainId={network?.chainId}
-            selectedAcc={selectedAcc}
-            addRequest={addRequest}
-            addToast={addToast}
+          {balancesRes && balancesRes.length && (
+            <>
+              <Text style={spacings.mbSm}>{t('Gas tank balance by tokens')}</Text>
+              {balancesRes
+                ?.sort((a: any, b: any) => b.balance - a.balance)
+                ?.map((token: any, i: number) => (
+                  <TokensListItem
+                    // eslint-disable-next-line react/no-array-index-key
+                    key={`token-${token.address}-${i}`}
+                    type="balance"
+                    token={token}
+                    networkId={network?.id}
+                  />
+                ))}
+            </>
+          )}
+          <Button
+            type="outline"
+            accentColor={colors.heliotrope}
+            text={t('Top Up')}
+            style={spacings.mtSm}
+            hasBottomSpacing={false}
+            onPress={openBottomSheetTopUp}
           />
+          <BottomSheet
+            id="gas-tank-top-up"
+            sheetRef={sheetRefTopUp}
+            closeBottomSheet={closeBottomSheetTopUp}
+            cancelText="Close"
+          >
+            <TokensList
+              tokens={sortedTokens}
+              isLoading={isCurrNetworkBalanceLoading || isCurrNetworkProtocolsLoading}
+              networkId={network?.id}
+              chainId={network?.chainId}
+              selectedAcc={selectedAcc}
+              addRequest={addRequest}
+              addToast={addToast}
+            />
+          </BottomSheet>
         </Panel>
         <Panel>
           <TransactionHistoryList
