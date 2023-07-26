@@ -5,6 +5,7 @@ import WebView, { WebViewNavigation } from 'react-native-webview'
 
 import GradientBackgroundWrapper from '@common/components/GradientBackgroundWrapper'
 import Spinner from '@common/components/Spinner'
+import Text from '@common/components/Text'
 import Wrapper from '@common/components/Wrapper'
 import useGnosis from '@common/hooks/useGnosis'
 import colors from '@common/styles/colors'
@@ -59,7 +60,7 @@ const INJECTED_JAVASCRIPT = `
 `
 
 const SwapScreen = () => {
-  const { sushiSwapIframeRef, hash, handleIncomingMessage } = useGnosis()
+  const { sushiSwapIframeRef, hash, handleIncomingMessage, eventsCount } = useGnosis()
   const [loading, setLoading] = useState(false)
   const webviewHtml = `
     <!DOCTYPE html>
@@ -109,6 +110,8 @@ const SwapScreen = () => {
   return (
     <GradientBackgroundWrapper>
       <Wrapper hasBottomTabNav style={spacings.ph0} scrollEnabled={false}>
+        {/* TODO: Debug display only */}
+        <Text>Events: {eventsCount}</Text>
         {/* Note: might not work properly on Android emulator with this URL. */}
         <WebView
           key={hash}
