@@ -4,6 +4,7 @@ import { View } from 'react-native'
 
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import usePrivateMode from '@common/hooks/usePrivateMode'
 import colors from '@common/styles/colors'
 import spacings from '@common/styles/spacings'
 import flexboxStyles from '@common/styles/utils/flexbox'
@@ -16,6 +17,7 @@ interface Props {
 
 const GasTankTotalSave = ({ totalSave, totalCashBack, networkName }: Props) => {
   const { t } = useTranslation()
+  const { hidePrivateValue } = usePrivateMode()
 
   return (
     <View style={flexboxStyles.flex1}>
@@ -28,7 +30,7 @@ const GasTankTotalSave = ({ totalSave, totalCashBack, networkName }: Props) => {
             <Text fontSize={10} weight="regular" color={colors.turquoise}>
               $
             </Text>
-            {totalSave}
+            {hidePrivateValue(totalSave)}
           </Text>
         </View>
         <View style={[flexboxStyles.directionRow, spacings.mbTy, flexboxStyles.alignCenter]}>
@@ -39,7 +41,7 @@ const GasTankTotalSave = ({ totalSave, totalCashBack, networkName }: Props) => {
             <Text fontSize={10} weight="regular" color={colors.turquoise}>
               $
             </Text>
-            {totalCashBack}
+            {hidePrivateValue(totalCashBack)}
           </Text>
         </View>
         {!!networkName && (

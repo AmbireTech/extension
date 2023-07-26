@@ -4,6 +4,7 @@ import { TouchableOpacity, View } from 'react-native'
 import GasTankIcon from '@common/assets/svg/GasTankIcon'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import usePrivateMode from '@common/hooks/usePrivateMode'
 import spacings from '@common/styles/spacings'
 import flexboxStyles from '@common/styles/utils/flexbox'
 import textStyles from '@common/styles/utils/text'
@@ -17,6 +18,7 @@ interface Props {
 
 const GasTankBalance = ({ totalBalance, onPress }: Props) => {
   const { t } = useTranslation()
+  const { hidePrivateValue } = usePrivateMode()
 
   return (
     <TouchableOpacity style={styles.container} activeOpacity={0.6} onPress={onPress}>
@@ -30,7 +32,7 @@ const GasTankBalance = ({ totalBalance, onPress }: Props) => {
         <Text fontSize={20} weight="regular" style={textStyles.highlightPrimary}>
           ${' '}
         </Text>
-        {totalBalance}
+        {hidePrivateValue(totalBalance)}
       </Text>
     </TouchableOpacity>
   )
