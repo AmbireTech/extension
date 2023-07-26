@@ -30,9 +30,7 @@ const TransactionHistoryList = ({
 
   return (
     <View>
-      <Text style={spacings.mbSm} fontSize={12}>
-        {t('Gas Tank top ups history')}
-      </Text>
+      <Text style={spacings.mbSm}>{t('Gas Tank top ups history')}</Text>
       <View style={[flexboxStyles.directionRow, spacings.mbTy]}>
         <InfoIcon color={colors.mustard} />
         <Text fontSize={11} style={[flexboxStyles.flex1, spacings.plTy]} color={colors.mustard}>

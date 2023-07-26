@@ -1,4 +1,4 @@
-import { NetworkId } from 'ambire-common/src/constants/networks'
+import { NetworkType } from 'ambire-common/src/constants/networks'
 import React from 'react'
 import { View } from 'react-native'
 
@@ -11,10 +11,10 @@ import flexboxStyles from '@common/styles/utils/flexbox'
 interface Props {
   totalSave: string
   totalCashBack: string
-  networkId?: NetworkId
+  networkName?: NetworkType['name']
 }
 
-const GasTankTotalSave = ({ totalSave, totalCashBack, networkId }: Props) => {
+const GasTankTotalSave = ({ totalSave, totalCashBack, networkName }: Props) => {
   const { t } = useTranslation()
 
   return (
@@ -26,7 +26,7 @@ const GasTankTotalSave = ({ totalSave, totalCashBack, networkId }: Props) => {
           </Text>
           <Text fontSize={10} weight="regular" numberOfLines={1}>
             <Text fontSize={10} weight="regular" color={colors.turquoise}>
-              ${' '}
+              $
             </Text>
             {totalSave}
           </Text>
@@ -36,16 +36,16 @@ const GasTankTotalSave = ({ totalSave, totalCashBack, networkId }: Props) => {
             {t('Cashback')}:
           </Text>
           <Text fontSize={10} weight="regular" numberOfLines={1}>
-            <Text fontSize={10} weight="regular" color={colors.heliotrope}>
-              ${' '}
+            <Text fontSize={10} weight="regular" color={colors.turquoise}>
+              $
             </Text>
             {totalCashBack}
           </Text>
         </View>
-        {!!networkId && (
+        {!!networkName && (
           <Text color={colors.chetwode} fontSize={10}>
-            {t('From gas fees on {{networkId}}', {
-              networkId: networkId?.toUpperCase()
+            {t('From gas fees on {{networkName}}', {
+              networkName
             })}
           </Text>
         )}
