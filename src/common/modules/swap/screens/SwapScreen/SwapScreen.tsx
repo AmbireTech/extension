@@ -1,8 +1,11 @@
 import usePrevious from 'ambire-common/src/hooks/usePrevious'
+import { isNull } from 'lodash'
 import React, { useCallback, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Linking, View } from 'react-native'
 import WebView, { WebViewNavigation } from 'react-native-webview'
 
+import Button from '@common/components/Button'
 import GradientBackgroundWrapper from '@common/components/GradientBackgroundWrapper'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
@@ -10,6 +13,7 @@ import Wrapper from '@common/components/Wrapper'
 import useGnosis from '@common/hooks/useGnosis'
 import colors from '@common/styles/colors'
 import spacings from '@common/styles/spacings'
+import text from '@common/styles/utils/text'
 
 import styles from './styles'
 
@@ -60,8 +64,10 @@ const INJECTED_JAVASCRIPT = `
 `
 
 const SwapScreen = () => {
+  const { t } = useTranslation()
   const { sushiSwapIframeRef, hash, handleIncomingMessage, eventsCount } = useGnosis()
   const [loading, setLoading] = useState(false)
+  const [connected, setConnected] = useState<null | boolean>(null)
   const webviewHtml = `
     <!DOCTYPE html>
       <html>
@@ -107,11 +113,45 @@ const SwapScreen = () => {
     return true
   }, [])
 
+  // Checks if the connection to the swap webview is successful based on
+  // the number of events received from the webview.
+  useEffect(() => {
+    if (eventsCount > 3) {
+      setConnected(true)
+      return
+    }
+
+    setConnected(null)
+    const checkEventsCount = setTimeout(() => {
+      setConnected(eventsCount > 3)
+    }, 10000)
+
+    // Cleanup the timeout when hash changes or the component unmounts
+    return () => clearTimeout(checkEventsCount)
+  }, [eventsCount, hash]) // Re-run the effect when `eventsCount` or `hash` changes
+
   return (
     <GradientBackgroundWrapper>
       <Wrapper hasBottomTabNav style={spacings.ph0} scrollEnabled={false}>
-        {/* TODO: Debug display only */}
-        <Text>Events: {eventsCount}</Text>
+        <View style={[styles.statusContainer, spacings.mh]}>
+          {isNull(connected) ? (
+            <Text style={[text.center, spacings.ph]}>Connecting...</Text>
+          ) : connected ? null : (
+            // TODO: Connected status?
+            // <Text style={[text.center, spacings.ph]}>Connected!</Text>
+            <>
+              <Text appearance="warning" style={[text.center, spacings.ph, spacings.mb]}>
+                {t('Connection Unsuccessful!')}
+              </Text>
+              <Text appearance="warning" style={[text.center, spacings.ph, spacings.mb]}>
+                {t(
+                  'Your device might be fully incompatible. Alternatively, exchange tokens using Ambire dApp catalogue.'
+                )}
+              </Text>
+              <Button type="primary" text="dApp Catalog" />
+            </>
+          )}
+        </View>
         {/* Note: might not work properly on Android emulator with this URL. */}
         <WebView
           key={hash}
@@ -121,7 +161,7 @@ const SwapScreen = () => {
           injectedJavaScriptBeforeContentLoaded={INJECTED_JAVASCRIPT_BEFORE_CONTENT_LOADED}
           injectedJavaScript={INJECTED_JAVASCRIPT}
           containerStyle={styles.container}
-          style={styles.webview}
+          style={[styles.webview, !connected && { opacity: 0.2 }]}
           bounces={false}
           setBuiltInZoomControls={false}
           startInLoadingState

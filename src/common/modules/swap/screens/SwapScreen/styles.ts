@@ -4,6 +4,7 @@ interface Style {
   container: ViewStyle
   webview: ViewStyle
   loadingWrapper: ViewStyle
+  statusContainer: ViewStyle
 }
 
 const styles = StyleSheet.create<Style>({
@@ -21,6 +22,14 @@ const styles = StyleSheet.create<Style>({
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center'
+  },
+  statusContainer: {
+    position: 'absolute',
+    zIndex: 1,
+    top: 5,
+    left: 0,
+    right: 0,
+    bottom: 0
   }
 })
 
