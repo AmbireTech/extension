@@ -41,14 +41,16 @@ const TokensListItem = ({ type = 'deposit', token, networkId }: Props) => {
             {token.symbol.toUpperCase()}
           </Text>
           <View style={[flexboxStyles.flex1, spacings.mrSm]}>
-            <Text fontSize={14} style={textStyles.center} numberOfLines={1}>
+            <Text fontSize={14} style={textStyles.right} numberOfLines={1}>
               {hidePrivateValue(
                 formatFloatTokenAmount(token.balance, true, Math.min(token.decimals, 6))
               )}
             </Text>
           </View>
-          <View>
-            <Text fontSize={14}>${hidePrivateValue(balanceUSD?.toFixed(2))}</Text>
+          <View style={{ minWidth: 70 }}>
+            <Text fontSize={14} style={textStyles.right}>
+              ${hidePrivateValue(balanceUSD?.toFixed(2))}
+            </Text>
           </View>
         </>
       )}
