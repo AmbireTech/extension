@@ -1,4 +1,4 @@
-import networks, { NetworkId } from 'ambire-common/src/constants/networks'
+import networks, { NetworkId, NetworkType } from 'ambire-common/src/constants/networks'
 import { UseAccountsReturnType } from 'ambire-common/src/hooks/useAccounts'
 import useCacheBreak from 'ambire-common/src/hooks/useCacheBreak'
 import { Balance, UsePortfolioReturnType } from 'ambire-common/src/hooks/usePortfolio/types'
@@ -29,6 +29,7 @@ const networkDetails = (network: any) => networks.find(({ id }) => id === networ
 interface Props {
   allBalances: UsePortfolioReturnType['allBalances']
   networkId?: NetworkId
+  networkName?: NetworkType['name']
   account: UseAccountsReturnType['selectedAcc']
   setNetwork: (networkIdentifier: string | number) => void
   isLoading: boolean
@@ -41,6 +42,7 @@ const relayerURL = CONFIG.RELAYER_URL
 const Balances = ({
   allBalances,
   networkId,
+  networkName,
   account,
   isLoading,
   isCurrNetworkBalanceLoading,
@@ -70,6 +72,10 @@ const Balances = ({
     // Exclude displaying balances for networks we don't support
     .filter(({ network }) => !!networkDetails(network))
 
+  const hasPositiveBalanceOnTheCurrentNetwork = allPositiveBalances
+    .map(({ network }) => network)
+    .includes(networkId)
+
   const totalBalance = useMemo(() => {
     let balance = 0
     allPositiveBalances.forEach(({ total }) => {
@@ -82,6 +88,10 @@ const Balances = ({
   const handleGoToSend = useCallback(() => navigate(ROUTES.send), [navigate])
   const handleGoToReceive = useCallback(() => navigate(ROUTES.receive), [navigate])
   const handleGoToGasTank = useCallback(() => navigate(ROUTES.gasTank), [navigate])
+
+  const shouldDisplayOnSelectedNetworkLabel =
+    allPositiveBalances.length > 1 ||
+    (allPositiveBalances.length > 0 && !hasPositiveBalanceOnTheCurrentNetwork)
 
   const content = (
     <>
@@ -140,50 +150,57 @@ const Balances = ({
         </View>
       ) : (
         (allPositiveBalances.length > 0 || hasPositiveGasBalance) && (
-          <View style={spacings.mb}>
-            <Text style={[textStyles.center, spacings.mbTy]}>{t('You have')}</Text>
-            {allPositiveBalances.map(({ network, total }: Balance, i: number) => {
-              const { chainId, name, id }: any = networkDetails(network)
-              const isLast = i === allPositiveBalances.length - 1
+          <>
+            <View style={spacings.mb}>
+              <Text style={[textStyles.center, spacings.mbTy]}>{t('You have')}</Text>
+              {allPositiveBalances.map(({ network, total }: Balance, i: number) => {
+                const { chainId, name, id }: any = networkDetails(network)
+                const isLast = i === allPositiveBalances.length - 1
 
-              const onNetworkChange = () => {
-                setNetwork(network)
-              }
+                const onNetworkChange = () => {
+                  setNetwork(network)
+                }
 
-              return (
+                return (
+                  <TouchableOpacity
+                    key={chainId}
+                    onPress={onNetworkChange}
+                    style={[styles.allBalancesContainer, isLast && { borderBottomWidth: 0 }]}
+                  >
+                    <Text numberOfLines={1} style={flexboxStyles.flex1}>
+                      <Text>{'$ '}</Text>
+                      {hidePrivateValue(`${total.truncated}.${total.decimals}`)}
+                    </Text>
+                    <Text>{` ${t('on')} `}</Text>
+                    <NetworkIcon name={id} width={24} height={24} />
+                    <Text numberOfLines={1}>{` ${name}`}</Text>
+                  </TouchableOpacity>
+                )
+              })}
+              {hasPositiveGasBalance && (
                 <TouchableOpacity
-                  key={chainId}
-                  onPress={onNetworkChange}
-                  style={[styles.allBalancesContainer, isLast && { borderBottomWidth: 0 }]}
+                  onPress={handleGoToGasTank}
+                  style={[styles.allBalancesContainer, styles.allBalancesGasTankContainer]}
                 >
-                  <Text numberOfLines={1} style={flexboxStyles.flex1}>
-                    <Text>{'$ '}</Text>
-                    {hidePrivateValue(`${total.truncated}.${total.decimals}`)}
+                  {!!data && (
+                    <Text numberOfLines={1} style={flexboxStyles.flex1}>
+                      <Text>{'$ '}</Text>
+                      {hidePrivateValue(gasTankBalanceLabel)}
+                    </Text>
+                  )}
+                  <GasTankIcon width={22} height={22} />
+                  <Text numberOfLines={1} style={spacings.plMi}>
+                    {t('Gas Tank Balance')}
                   </Text>
-                  <Text>{` ${t('on')} `}</Text>
-                  <NetworkIcon name={id} width={24} height={24} />
-                  <Text numberOfLines={1}>{` ${name}`}</Text>
                 </TouchableOpacity>
-              )
-            })}
-            {hasPositiveGasBalance && (
-              <TouchableOpacity
-                onPress={handleGoToGasTank}
-                style={[styles.allBalancesContainer, styles.allBalancesGasTankContainer]}
-              >
-                {!!data && (
-                  <Text numberOfLines={1} style={flexboxStyles.flex1}>
-                    <Text>{'$ '}</Text>
-                    {hidePrivateValue(gasTankBalanceLabel)}
-                  </Text>
-                )}
-                <GasTankIcon width={22} height={22} />
-                <Text numberOfLines={1} style={spacings.plMi}>
-                  {t('Gas Tank Balance')}
-                </Text>
-              </TouchableOpacity>
+              )}
+            </View>
+            {shouldDisplayOnSelectedNetworkLabel && (
+              <Text style={[textStyles.center, spacings.mbSm]}>
+                {t('On {{networkName}}', { networkName })}
+              </Text>
             )}
-          </View>
+          </>
         )
       )}
     </>

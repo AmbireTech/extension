@@ -22,14 +22,21 @@ const GasTankBalance = ({ totalBalance, onPress }: Props) => {
 
   return (
     <TouchableOpacity style={styles.container} activeOpacity={0.6} onPress={onPress}>
-      <View style={[flexboxStyles.directionRow, flexboxStyles.alignCenter]}>
+      <View
+        style={[
+          flexboxStyles.directionRow,
+          flexboxStyles.alignCenter,
+          spacings.prTy,
+          spacings.plMi
+        ]}
+      >
         <GasTankIcon width={21} height={21} />
-        <Text fontSize={10} style={[spacings.plMi]}>
+        <Text fontSize={10} style={styles.balanceLabel}>
           {t('Balance on All Networks')}
         </Text>
       </View>
-      <Text fontSize={32} weight="regular" numberOfLines={1}>
-        <Text fontSize={20} weight="regular" style={textStyles.highlightPrimary}>
+      <Text fontSize={32} weight="regular" numberOfLines={1} style={styles.balanceTotal}>
+        <Text fontSize={20} weight="regular">
           ${' '}
         </Text>
         {hidePrivateValue(totalBalance)}

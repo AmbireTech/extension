@@ -27,10 +27,7 @@ const GasTankTotalSave = ({ totalSave, totalCashBack, networkName }: Props) => {
             {t('Total Saved')}:
           </Text>
           <Text fontSize={10} weight="regular" numberOfLines={1}>
-            <Text fontSize={10} weight="regular" color={colors.turquoise}>
-              $
-            </Text>
-            {hidePrivateValue(totalSave)}
+            ${hidePrivateValue(totalSave)}
           </Text>
         </View>
         <View style={[flexboxStyles.directionRow, spacings.mbTy, flexboxStyles.alignCenter]}>
@@ -38,10 +35,7 @@ const GasTankTotalSave = ({ totalSave, totalCashBack, networkName }: Props) => {
             {t('Cashback')}:
           </Text>
           <Text fontSize={10} weight="regular" numberOfLines={1}>
-            <Text fontSize={10} weight="regular" color={colors.turquoise}>
-              $
-            </Text>
-            {hidePrivateValue(totalCashBack)}
+            ${hidePrivateValue(totalCashBack)}
           </Text>
         </View>
         {!!networkName && (

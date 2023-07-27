@@ -104,10 +104,9 @@ const GasTankScreen = () => {
         {/* Since v3.11.0, gas tank is treated as "always enabled" */}
         {/* <GasTankStateToggle disabled={!gasTankBalances && !gasTankBalances?.length} /> */}
         <Text style={[spacings.mbSm, spacings.mhSm]} fontSize={12}>
-          {t('The Ambire Gas Tank is your special account for paying gas and saving on gas fees.')}
-          {'   '}
+          {t('The Ambire Gas Tank is your special account for paying gas and saving on gas fees. ')}
           <Text color={colors.heliotrope} fontSize={12} onPress={openBottomSheetInfo}>{`${t(
-            'learn more...'
+            'Learn more.'
           )}`}</Text>
         </Text>
         <Panel>
@@ -172,6 +171,7 @@ const GasTankScreen = () => {
             feeAssetsRes={feeAssetsRes || []}
             explorerUrl={network?.explorerUrl || ''}
             networkId={network?.id}
+            networkName={network?.name}
           />
         </Panel>
       </Wrapper>
