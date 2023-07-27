@@ -13,6 +13,7 @@ import Wrapper from '@common/components/Wrapper'
 import useGnosis from '@common/hooks/useGnosis'
 import colors from '@common/styles/colors'
 import spacings from '@common/styles/spacings'
+import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 
 import styles from './styles'
@@ -133,25 +134,32 @@ const SwapScreen = () => {
   return (
     <GradientBackgroundWrapper>
       <Wrapper hasBottomTabNav style={spacings.ph0} scrollEnabled={false}>
-        <View style={[styles.statusContainer, spacings.mh]}>
-          {isNull(connected) ? (
-            <Text style={[text.center, spacings.ph]}>Connecting...</Text>
-          ) : connected ? null : (
-            // TODO: Connected status?
-            // <Text style={[text.center, spacings.ph]}>Connected!</Text>
-            <>
+        {isNull(connected) ? (
+          <View style={[styles.statusContainer, flexbox.center]}>
+            <View style={[styles.statusContainerContent, flexbox.center]}>
+              <Spinner />
+              <Text weight="regular" fontSize={16} style={[text.center, spacings.mtLg]}>
+                {t('Connecting...')}
+              </Text>
+            </View>
+          </View>
+        ) : connected ? null : (
+          // TODO: Connected status?
+          // <Text style={[text.center, spacings.ph]}>Connected!</Text>
+          <View style={[styles.statusContainer, flexbox.center]}>
+            <View style={[styles.statusContainerContent, flexbox.center]}>
               <Text appearance="warning" style={[text.center, spacings.ph, spacings.mb]}>
                 {t('Connection Unsuccessful!')}
               </Text>
               <Text appearance="warning" style={[text.center, spacings.ph, spacings.mb]}>
                 {t(
-                  'Your device might be fully incompatible. Alternatively, exchange tokens using Ambire dApp catalogue.'
+                  'Your device might not be fully compatible. Alternatively, you can exchange tokens using the Ambire dApp catalogue.'
                 )}
               </Text>
               <Button type="primary" text="dApp Catalog" />
-            </>
-          )}
-        </View>
+            </View>
+          </View>
+        )}
         {/* Note: might not work properly on Android emulator with this URL. */}
         <WebView
           key={hash}
