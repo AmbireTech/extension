@@ -31,6 +31,7 @@ type DepositTokenBottomSheetContextProps = {
   selectedAcc: UseAccountsReturnType['selectedAcc']
   addRequest: any
   addToast: UseToastsReturnType['addToast']
+  closeBottomSheetTopUp: () => any
 }
 
 type DepositTokenBottomSheetContextData = {
@@ -47,7 +48,8 @@ const DepositTokenBottomSheetProvider = ({
   networkId,
   chainId,
   addRequest,
-  addToast
+  addToast,
+  closeBottomSheetTopUp
 }: DepositTokenBottomSheetContextProps) => {
   const { t } = useTranslation()
 
@@ -120,12 +122,22 @@ const DepositTokenBottomSheetProvider = ({
       // Timeout of 400ms because of the animated transition between screens (addRequest opens PendingTransactions screen)
       setTimeout(() => {
         closeBottomSheet()
+        closeBottomSheetTopUp()
       }, 400)
     } catch (e: any) {
       console.error(e)
       addToast(`Error: ${e.message || e}`, { error: true })
     }
-  }, [selectedAcc, token, bigNumberHexAmount, chainId, addRequest, addToast, closeBottomSheet])
+  }, [
+    selectedAcc,
+    token,
+    bigNumberHexAmount,
+    chainId,
+    addRequest,
+    addToast,
+    closeBottomSheet,
+    closeBottomSheetTopUp
+  ])
 
   return (
     <DepositTokenBottomSheetContext.Provider
@@ -140,6 +152,7 @@ const DepositTokenBottomSheetProvider = ({
       <BottomSheet
         id="deposit-token-bottom-sheet"
         sheetRef={sheetRef}
+        withOverlay
         closeBottomSheet={() => {
           closeBottomSheet()
           setToken(null)

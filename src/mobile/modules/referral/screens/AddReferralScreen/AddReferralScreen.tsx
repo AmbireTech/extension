@@ -1,6 +1,9 @@
 import React, { useCallback } from 'react'
 import { View } from 'react-native'
+import { useModalize } from 'react-native-modalize'
 
+import BottomSheet from '@common/components/BottomSheet'
+import Button from '@common/components/Button'
 import GradientBackgroundWrapper from '@common/components/GradientBackgroundWrapper'
 import Text from '@common/components/Text'
 import Wrapper, { WRAPPER_TYPES } from '@common/components/Wrapper'
@@ -13,15 +16,14 @@ import colors from '@common/styles/colors'
 import spacings from '@common/styles/spacings'
 import flexboxStyles from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
-import AddReferralForm, {
-  AddReferralFormValues
-} from '@mobile/modules/referral/components/AddReferralForm'
+import AddReferralForm, { AddReferralFormValues } from '@mobile/modules/referral/components/AddReferralForm'
 import useReferral from '@mobile/modules/referral/hooks/useReferral'
 
 const AddReferralScreen = () => {
   const { t } = useTranslation()
   const { addToast } = useToast()
   const { navigate } = useNavigation()
+  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const { setPendingReferral, getPendingReferral, checkIfAddressIsEligibleForReferral } =
     useReferral()
 
@@ -43,6 +45,7 @@ const AddReferralScreen = () => {
         addToast(t('Invitation reference added successfully!'))
 
         setPendingReferral(values)
+        closeBottomSheet()
 
         navigate(ROUTES.getStarted, { replace: true })
       } catch (e) {
@@ -56,10 +59,17 @@ const AddReferralScreen = () => {
         )
       }
     },
-    [checkIfAddressIsEligibleForReferral, setPendingReferral, navigate, addToast, t]
+    [
+      closeBottomSheet,
+      checkIfAddressIsEligibleForReferral,
+      setPendingReferral,
+      navigate,
+      addToast,
+      t
+    ]
   )
 
-  const handleSkip = useCallback(() => {
+  const handleProceedWithoutReferral = useCallback(() => {
     navigate(ROUTES.getStarted, { replace: true })
   }, [navigate])
 
@@ -69,45 +79,39 @@ const AddReferralScreen = () => {
   return (
     <GradientBackgroundWrapper>
       <Wrapper
-        contentContainerStyle={spacings.pbLg}
+        contentContainerStyle={[spacings.pbLg, flexboxStyles.justifyCenter]}
         type={WRAPPER_TYPES.KEYBOARD_AWARE_SCROLL_VIEW}
         extraHeight={220}
       >
-        <AmbireLogo shouldExpand={false} />
-        <View style={[flexboxStyles.flex1, flexboxStyles.justifyEnd]}>
-          <View style={[spacings.mb, spacings.phTy]}>
-            <Text
-              weight="light"
-              style={[spacings.mb, text.center]}
-              color={colors.titan}
-              fontSize={20}
-            >
-              {t('Who invited you to Ambire?')}
-            </Text>
-          </View>
+        <View style={spacings.mbLg}>
+          <AmbireLogo shouldExpand={false} />
 
-          <AddReferralForm initialValue={initialValue} onSubmit={handleSubmit} />
-
+          <Button
+            style={spacings.mtTy}
+            onPress={handleProceedWithoutReferral}
+            text={t('Proceed to Wallet')}
+            containerStyle={spacings.mbLg}
+          />
           <Trans>
-            <Text weight="light" color={colors.titan} fontSize={16} style={spacings.mv}>
-              <Text weight="light" color={colors.titan} fontSize={16}>
-                {"Don't have an invitation reference? "}
-              </Text>
-              <Text
-                weight="light"
-                color={colors.titan}
-                fontSize={16}
-                underline
-                onPress={handleSkip}
-              >
-                Continue
-              </Text>
-              <Text weight="light" color={colors.titan} fontSize={16}>
-                {' without one.'}
+            <Text color={colors.titan} style={spacings.mbLg}>
+              <Text color={colors.titan}>{'Somebody invited you to Ambire? '}</Text>
+              <Text color={colors.turquoise} underline onPress={openBottomSheet}>
+                Continue with referral address.
               </Text>
             </Text>
           </Trans>
         </View>
+
+        <BottomSheet id="add-referral" sheetRef={sheetRef} closeBottomSheet={closeBottomSheet}>
+          <Text
+            style={[spacings.mbLg, spacings.mt, text.center]}
+            color={colors.titan}
+            fontSize={16}
+          >
+            {t('Enter referral address')}
+          </Text>
+          <AddReferralForm initialValue={initialValue} onSubmit={handleSubmit} />
+        </BottomSheet>
       </Wrapper>
     </GradientBackgroundWrapper>
   )

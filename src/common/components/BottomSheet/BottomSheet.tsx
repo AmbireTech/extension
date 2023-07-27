@@ -28,6 +28,7 @@ interface Props {
   adjustToContentHeight?: boolean
   style?: ViewStyle
   flatListProps?: ModalizeProps['flatListProps']
+  withOverlay?: boolean
 }
 
 const ANIMATION_DURATION: number = 250
@@ -47,7 +48,8 @@ const BottomSheet: React.FC<Props> = ({
   style = {},
   onClosed,
   onBackdropPress,
-  flatListProps
+  flatListProps,
+  withOverlay = false
 }) => {
   const [isOpen, setIsOpen] = useState(false)
   const prevIsOpen = usePrevious(isOpen)
@@ -111,7 +113,7 @@ const BottomSheet: React.FC<Props> = ({
         threshold={100}
         adjustToContentHeight={adjustToContentHeight}
         disableScrollIfPossible={false}
-        withOverlay={false}
+        withOverlay={withOverlay}
         onBackButtonPress={() => true}
         {...(!flatListProps
           ? {
