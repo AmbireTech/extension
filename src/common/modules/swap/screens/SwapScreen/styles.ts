@@ -37,7 +37,7 @@ const styles = StyleSheet.create<Style>({
     bottom: 110
   },
   statusContainerContent: {
-    height: 250,
+    minHeight: 250,
     width: DEVICE_WIDTH - SPACING_SM * 2,
     backgroundColor: colors.clay,
     borderRadius: BORDER_RADIUS_PRIMARY,

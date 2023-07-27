@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { Linking, View } from 'react-native'
 import WebView, { WebViewNavigation } from 'react-native-webview'
 
+import ErrorIcon from '@common/assets/svg/ErrorIcon'
 import Button from '@common/components/Button'
 import GradientBackgroundWrapper from '@common/components/GradientBackgroundWrapper'
 import Spinner from '@common/components/Spinner'
@@ -147,16 +148,31 @@ const SwapScreen = () => {
           // TODO: Connected status?
           // <Text style={[text.center, spacings.ph]}>Connected!</Text>
           <View style={[styles.statusContainer, flexbox.center]}>
-            <View style={[styles.statusContainerContent, flexbox.center]}>
-              <Text appearance="warning" style={[text.center, spacings.ph, spacings.mb]}>
+            <View
+              style={[
+                styles.statusContainerContent,
+                flexbox.justifyCenter,
+                spacings.ph,
+                spacings.pvLg
+              ]}
+            >
+              <View style={[flexbox.center, spacings.mbLg]}>
+                <ErrorIcon width={40} height={40} />
+              </View>
+              <Text fontSize={18} style={[text.center, spacings.ph, spacings.mbMd]}>
                 {t('Connection Unsuccessful!')}
               </Text>
-              <Text appearance="warning" style={[text.center, spacings.ph, spacings.mb]}>
+              <Text style={[text.center, spacings.ph, spacings.mbLg]}>
                 {t(
-                  'Your device might not be fully compatible. Alternatively, you can exchange tokens using the Ambire dApp catalogue.'
+                  'Your device might be fully incompatible. Alternatively, exchange tokens using Ambire dApp catalogue.'
                 )}
               </Text>
-              <Button type="primary" text="dApp Catalog" />
+              <Button
+                type="outline"
+                accentColor={colors.turquoise}
+                text="dApp Catalog"
+                hasBottomSpacing={false}
+              />
             </View>
           </View>
         )}
