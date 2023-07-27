@@ -18,6 +18,7 @@ export interface GnosisContextReturnType {
     [key: string]: any
   }
   handleIncomingMessage: (msg: any) => any
+  eventsCount: number
 }
 
 const GnosisContext = createContext<GnosisContextReturnType>({
@@ -26,7 +27,8 @@ const GnosisContext = createContext<GnosisContextReturnType>({
   requests: [],
   resolveMany: () => {},
   handlers: {},
-  handleIncomingMessage: () => {}
+  handleIncomingMessage: () => {},
+  eventsCount: 0
 })
 
 const isValidMessage = (msg: any) => {
