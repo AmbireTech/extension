@@ -36,7 +36,7 @@ const GasTankBalance = ({ totalBalance, onPress }: Props) => {
         </Text>
       </View>
       <Text fontSize={32} weight="regular" numberOfLines={1} style={styles.balanceTotal}>
-        <Text fontSize={20} weight="regular" style={textStyles.highlightPrimary}>
+        <Text fontSize={20} weight="regular">
           ${' '}
         </Text>
         {hidePrivateValue(totalBalance)}
