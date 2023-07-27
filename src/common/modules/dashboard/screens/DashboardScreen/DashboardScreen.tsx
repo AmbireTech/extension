@@ -67,14 +67,10 @@ const DashboardScreen = () => {
           isCurrNetworkBalanceLoading={!!isCurrNetworkBalanceLoading}
           allBalancesLoading={!!allBalancesLoading}
           networkId={network?.id}
+          networkName={network?.name}
           setNetwork={setNetwork}
           account={selectedAcc}
         />
-        {!(isCurrNetworkBalanceLoading && !!allBalancesLoading) && (
-          <Text style={[text.center, spacings.mbSm]}>
-            {t('On {{networkName}}', { networkName: network?.name })}
-          </Text>
-        )}
         <AssetsToggleProvider>
           <Assets
             tokens={tokens}
