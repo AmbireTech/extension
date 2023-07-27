@@ -12,6 +12,8 @@ import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import Wrapper from '@common/components/Wrapper'
 import useGnosis from '@common/hooks/useGnosis'
+import useNavigation from '@common/hooks/useNavigation'
+import { MOBILE_ROUTES } from '@common/modules/router/constants/common'
 import colors from '@common/styles/colors'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -67,6 +69,7 @@ const INJECTED_JAVASCRIPT = `
 
 const SwapScreen = () => {
   const { t } = useTranslation()
+  const { navigate } = useNavigation()
   const { sushiSwapIframeRef, hash, handleIncomingMessage, eventsCount } = useGnosis()
   const [loading, setLoading] = useState(false)
   const [connected, setConnected] = useState<null | boolean>(null)
@@ -164,7 +167,7 @@ const SwapScreen = () => {
               </Text>
               <Text style={[text.center, spacings.ph, spacings.mbLg]}>
                 {t(
-                  'Your device might be fully incompatible. Alternatively, exchange tokens using Ambire dApp catalogue.'
+                  'Your device might experience difficulties with the integrated Swap feature. In this case we recommend exchanging tokens via dApps in the Ambire dApp catalog.'
                 )}
               </Text>
               <Button
@@ -172,6 +175,7 @@ const SwapScreen = () => {
                 accentColor={colors.turquoise}
                 text="dApp Catalog"
                 hasBottomSpacing={false}
+                onPress={() => navigate(MOBILE_ROUTES.dappsCatalog)}
               />
             </View>
           </View>
