@@ -172,6 +172,7 @@ const GasTankScreen = () => {
             feeAssetsRes={feeAssetsRes || []}
             explorerUrl={network?.explorerUrl || ''}
             networkId={network?.id}
+            networkName={network?.name}
           />
         </Panel>
       </Wrapper>
