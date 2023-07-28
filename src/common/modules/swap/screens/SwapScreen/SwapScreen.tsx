@@ -148,8 +148,6 @@ const SwapScreen = () => {
             </View>
           </View>
         ) : connected ? null : (
-          // TODO: Connected status?
-          // <Text style={[text.center, spacings.ph]}>Connected!</Text>
           <View style={[styles.statusContainer, flexbox.center]}>
             <View
               style={[
@@ -180,7 +178,6 @@ const SwapScreen = () => {
             </View>
           </View>
         )}
-        {/* Note: might not work properly on Android emulator with this URL. */}
         <WebView
           key={hash}
           ref={sushiSwapIframeRef}
