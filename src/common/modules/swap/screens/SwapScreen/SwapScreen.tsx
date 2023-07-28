@@ -189,6 +189,7 @@ const SwapScreen = () => {
           style={[styles.webview, !connected && { opacity: 0.2 }]}
           bounces={false}
           setBuiltInZoomControls={false}
+          scalesPageToFit={false}
           startInLoadingState
           scrollEnabled
           nestedScrollEnabled
