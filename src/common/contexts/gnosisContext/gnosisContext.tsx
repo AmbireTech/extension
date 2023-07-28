@@ -18,6 +18,7 @@ export interface GnosisContextReturnType {
     [key: string]: any
   }
   handleIncomingMessage: (msg: any) => any
+  eventsCount: number
 }
 
 const GnosisContext = createContext<GnosisContextReturnType>({
@@ -26,7 +27,8 @@ const GnosisContext = createContext<GnosisContextReturnType>({
   requests: [],
   resolveMany: () => {},
   handlers: {},
-  handleIncomingMessage: () => {}
+  handleIncomingMessage: () => {},
+  eventsCount: 0
 })
 
 const isValidMessage = (msg: any) => {
@@ -43,6 +45,7 @@ const STORAGE_KEY = 'gnosis_safe_state'
 const GnosisProvider: React.FC = ({ children }) => {
   const sushiSwapIframeRef: any = useRef(null)
   const [hash, setHash] = useState('')
+  const [eventsCount, setEventsCount] = useState(0)
 
   const verbose = 0
   const { network } = useNetwork()
@@ -56,6 +59,7 @@ const GnosisProvider: React.FC = ({ children }) => {
   useEffect(() => {
     const newHash = CONFIG.SWAP_URL + network?.chainId + selectedAcc
     setHash(newHash)
+    setEventsCount(0)
   }, [network?.chainId, selectedAcc])
 
   const handlePersonalSign = useCallback(
@@ -265,6 +269,7 @@ const GnosisProvider: React.FC = ({ children }) => {
       const hasHandler = canHandleMessage(msg)
 
       if (validMessage && hasHandler) {
+        setEventsCount((prevEventsCount) => prevEventsCount + 1)
         const handler = handlers[msg.method]
         try {
           const response = await handler(msg)
@@ -326,9 +331,10 @@ const GnosisProvider: React.FC = ({ children }) => {
           hash,
           requests,
           resolveMany,
-          handleIncomingMessage
+          handleIncomingMessage,
+          eventsCount
         }),
-        [handlers, requests, hash, resolveMany, handleIncomingMessage]
+        [handlers, requests, hash, resolveMany, handleIncomingMessage, eventsCount]
       )}
     >
       {children}

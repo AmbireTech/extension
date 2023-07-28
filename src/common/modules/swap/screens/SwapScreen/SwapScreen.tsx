@@ -1,14 +1,23 @@
 import usePrevious from 'ambire-common/src/hooks/usePrevious'
+import { isNull } from 'lodash'
 import React, { useCallback, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Linking, View } from 'react-native'
 import WebView, { WebViewNavigation } from 'react-native-webview'
 
+import ErrorIcon from '@common/assets/svg/ErrorIcon'
+import Button from '@common/components/Button'
 import GradientBackgroundWrapper from '@common/components/GradientBackgroundWrapper'
 import Spinner from '@common/components/Spinner'
+import Text from '@common/components/Text'
 import Wrapper from '@common/components/Wrapper'
 import useGnosis from '@common/hooks/useGnosis'
+import useNavigation from '@common/hooks/useNavigation'
+import { MOBILE_ROUTES } from '@common/modules/router/constants/common'
 import colors from '@common/styles/colors'
 import spacings from '@common/styles/spacings'
+import flexbox from '@common/styles/utils/flexbox'
+import text from '@common/styles/utils/text'
 
 import styles from './styles'
 
@@ -59,8 +68,11 @@ const INJECTED_JAVASCRIPT = `
 `
 
 const SwapScreen = () => {
-  const { sushiSwapIframeRef, hash, handleIncomingMessage } = useGnosis()
+  const { t } = useTranslation()
+  const { navigate } = useNavigation()
+  const { sushiSwapIframeRef, hash, handleIncomingMessage, eventsCount } = useGnosis()
   const [loading, setLoading] = useState(false)
+  const [connected, setConnected] = useState<null | boolean>(null)
   const webviewHtml = `
     <!DOCTYPE html>
       <html>
@@ -106,10 +118,66 @@ const SwapScreen = () => {
     return true
   }, [])
 
+  // Checks if the connection to the swap webview is successful based on
+  // the number of events received from the webview.
+  useEffect(() => {
+    if (eventsCount > 3) {
+      setConnected(true)
+      return
+    }
+
+    setConnected(null)
+    const checkEventsCount = setTimeout(() => {
+      setConnected(eventsCount > 3)
+    }, 10000)
+
+    // Cleanup the timeout when hash changes or the component unmounts
+    return () => clearTimeout(checkEventsCount)
+  }, [eventsCount, hash]) // Re-run the effect when `eventsCount` or `hash` changes
+
   return (
     <GradientBackgroundWrapper>
       <Wrapper hasBottomTabNav style={spacings.ph0} scrollEnabled={false}>
-        {/* Note: might not work properly on Android emulator with this URL. */}
+        {isNull(connected) ? (
+          <View style={[styles.statusContainer, flexbox.center]}>
+            <View style={[styles.statusContainerContent, flexbox.center]}>
+              <Spinner />
+              <Text weight="regular" fontSize={16} style={[text.center, spacings.mtLg]}>
+                {t('Connecting...')}
+              </Text>
+            </View>
+          </View>
+        ) : connected ? null : (
+          <View style={[styles.statusContainer, flexbox.center]}>
+            <View
+              style={[
+                styles.statusContainerContent,
+                flexbox.justifyCenter,
+                spacings.ph,
+                spacings.pvLg
+              ]}
+            >
+              <View style={[flexbox.center, spacings.mbLg]}>
+                <ErrorIcon width={40} height={40} />
+              </View>
+              <Text fontSize={18} style={[text.center, spacings.ph, spacings.mbMd]}>
+                {t('Connection Unsuccessful!')}
+              </Text>
+              <Text style={[text.center, spacings.ph, spacings.mbLg]}>
+                {t(
+                  'Your device might experience difficulties with the integrated Swap feature. In this case we recommend exchanging tokens via dApps in the Ambire dApp catalog.'
+                )}
+              </Text>
+              <Button
+                type="outline"
+                accentColor={colors.turquoise}
+                text={t('dApp Catalog')}
+                hasBottomSpacing={false}
+                onPress={() => navigate(MOBILE_ROUTES.dappsCatalog)}
+              />
+            </View>
+          </View>
+        )}
         <WebView
           key={hash}
           ref={sushiSwapIframeRef}
@@ -118,7 +186,7 @@ const SwapScreen = () => {
           injectedJavaScriptBeforeContentLoaded={INJECTED_JAVASCRIPT_BEFORE_CONTENT_LOADED}
           injectedJavaScript={INJECTED_JAVASCRIPT}
           containerStyle={styles.container}
-          style={styles.webview}
+          style={[styles.webview, !connected && { opacity: 0.2 }]}
           bounces={false}
           setBuiltInZoomControls={false}
           startInLoadingState
