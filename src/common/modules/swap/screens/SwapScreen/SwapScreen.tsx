@@ -171,7 +171,7 @@ const SwapScreen = () => {
               <Button
                 type="outline"
                 accentColor={colors.turquoise}
-                text="dApp Catalog"
+                text={t('dApp Catalog')}
                 hasBottomSpacing={false}
                 onPress={() => navigate(MOBILE_ROUTES.dappsCatalog)}
               />
