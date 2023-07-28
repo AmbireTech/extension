@@ -175,6 +175,14 @@ const EmailLoginProvider: React.FC<any> = ({ children }: any) => {
         })
       } else if (pendingLoginAccount && !password) {
         addToast('Password is required', { error: true })
+      } else if (!pendingLoginAccount.meta.primaryKeyBackup) {
+        addToast(
+          'No key backup found. You need to import this account from JSON or if you opted in for Ambire cloud - please try to log in again later. In case you lost your JSON backup, you can recover your account from the Ambire web wallet.',
+          {
+            error: true,
+            timeout: 30000
+          }
+        )
       } else {
         try {
           const wallet = await Wallet.fromEncryptedJson(
