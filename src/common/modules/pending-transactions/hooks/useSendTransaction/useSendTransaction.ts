@@ -34,7 +34,7 @@ const REESTIMATE_INTERVAL = 15000
 const ERC20 = new Interface(erc20Abi)
 
 const WALLET_TOKEN_SYMBOLS = [
-  // Temporary disable prioritization of $WALLET tokens as of v3.11.11
+  // Temporarily disable prioritization of $WALLET tokens as of v3.11.11
   // 'xWALLET', 'WALLET'
 ]
 
