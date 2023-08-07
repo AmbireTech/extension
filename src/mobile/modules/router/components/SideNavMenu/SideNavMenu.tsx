@@ -84,6 +84,8 @@ const SideNavMenu: React.FC<DrawerContentComponentProps> = (props) => {
     { name: t('Terms of Service'), url: termsAndPrivacyURL }
   ]
 
+  const PRIVACY_POLICY_URL = 'https://www.ambire.com/privacy-policy'
+
   const additionalInfo = [
     { name: t('Data Deletion Policy'), route: ROUTES.dataDeletionPolicy },
     { name: t('Backup Account'), route: ROUTES.backup },
@@ -173,6 +175,11 @@ const SideNavMenu: React.FC<DrawerContentComponentProps> = (props) => {
           </TouchableOpacity>
         ))}
         <View style={[spacings.mlTy, spacings.mbSm]}>
+          <TouchableOpacity onPress={() => Linking.openURL(PRIVACY_POLICY_URL)}>
+            <Text style={spacings.mbSm} color={colors.titan_50}>
+              {t('Privacy Policy')}
+            </Text>
+          </TouchableOpacity>
           {additionalInfo.map(({ name, route }) => (
             <TouchableOpacity key={name} onPress={() => handleNavigate(route)}>
               <Text style={spacings.mbSm} color={colors.titan_50}>
