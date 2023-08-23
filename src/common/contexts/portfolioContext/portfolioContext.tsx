@@ -61,6 +61,8 @@ const getBalances = async (
   const url = `${baseUrl}/balance/${address}/${network}?${params}`
   const response = await fetchGet(url)
 
+  if (!response.success) throw new Error(response.message)
+
   return adaptVelcroV2ResponseToV1Structure(response, protocol)
 }
 
