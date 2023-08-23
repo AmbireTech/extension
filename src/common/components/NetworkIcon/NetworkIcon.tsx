@@ -23,6 +23,8 @@ import MoonbeamLogo from '@common/assets/svg/MoonbeamLogo'
 import MoonbeamMonochromeIcon from '@common/assets/svg/MoonbeamMonochromeIcon'
 import MoonriverLogo from '@common/assets/svg/MoonriverLogo'
 import MoonriverMonochromeIcon from '@common/assets/svg/MoonriverMonochromeIcon'
+import OkcLogo from '@common/assets/svg/OkcLogo'
+import OkcMonochromeIcon from '@common/assets/svg/OkcMonochromeIcon'
 import OptimismLogo from '@common/assets/svg/OptimismLogo'
 import OptimismMonochromeIcon from '@common/assets/svg/OptimismMonochromeIcon'
 import PolygonLogo from '@common/assets/svg/PolygonLogo'
@@ -49,7 +51,8 @@ const icons: { [key: string]: any } = {
   [NETWORKS.base]: BaseLogo,
   [NETWORKS.gnosis]: GnosisLogo,
   [NETWORKS.kucoin]: KCCKuCoinLogo,
-  [NETWORKS.andromeda]: AndromedaLogo
+  [NETWORKS.andromeda]: AndromedaLogo,
+  [NETWORKS.okc]: OkcLogo
 }
 
 const iconsMonochrome: { [key: string]: any } = {
@@ -65,7 +68,8 @@ const iconsMonochrome: { [key: string]: any } = {
   [NETWORKS.base]: BaseMonochromeIcon,
   [NETWORKS.gnosis]: GnosisMonochromeIcon,
   [NETWORKS.kucoin]: KCCKuCoinMonochromeIcon,
-  [NETWORKS.andromeda]: AndromedaMonochromeIcon
+  [NETWORKS.andromeda]: AndromedaMonochromeIcon,
+  [NETWORKS.okc]: OkcMonochromeIcon
 }
 
 const NetworkIcon = ({ name, type = 'regular', ...rest }: Props) => {
