@@ -30,6 +30,8 @@ const RPC_URL_OPTIMISM =
   'https://rpc.ankr.com/optimism/0e066bd7837ff1978d6aa30b9f29407deb0276d74f46393e474c2530916c8943'
 const RPC_URL_ANDROMEDA =
   'https://rpc.ankr.com/metis/0e066bd7837ff1978d6aa30b9f29407deb0276d74f46393e474c2530916c8943'
+const RPC_URL_BASE =
+  'https://rpc.ankr.com/base/0e066bd7837ff1978d6aa30b9f29407deb0276d74f46393e474c2530916c8943'
 const RPC_URL_RINKEBY = 'https://rinkeby.infura.io/v3/4409badb714444b299066870e0f7b631'
 const RPC_URL_CRONOS = 'https://evm-cronos.crypto.org'
 const RPC_URL_AURORA = 'https://mainnet.aurora.dev'
