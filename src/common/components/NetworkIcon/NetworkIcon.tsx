@@ -7,6 +7,8 @@ import ArbitrumLogo from '@common/assets/svg/ArbitrumLogo'
 import ArbitrumMonochromeIcon from '@common/assets/svg/ArbitrumMonochromeIcon'
 import AvalancheLogo from '@common/assets/svg/AvalancheLogo'
 import AvalancheMonochromeIcon from '@common/assets/svg/AvalancheMonochromeIcon'
+import BaseLogo from '@common/assets/svg/BaseLogo'
+import BaseMonochromeIcon from '@common/assets/svg/BaseMonochromeIcon'
 import BinanceLogo from '@common/assets/svg/BinanceLogo'
 import BinanceMonochromeIcon from '@common/assets/svg/BinanceMonochromeIcon'
 import EthereumLogo from '@common/assets/svg/EthereumLogo'
@@ -36,7 +38,6 @@ type Props = {
 
 const icons: { [key: string]: any } = {
   [NETWORKS.ethereum]: EthereumLogo,
-  [NETWORKS.rinkeby]: EthereumLogo,
   [NETWORKS.polygon]: PolygonLogo,
   [NETWORKS.avalanche]: AvalancheLogo,
   [NETWORKS['binance-smart-chain']]: BinanceLogo,
@@ -45,6 +46,7 @@ const icons: { [key: string]: any } = {
   [NETWORKS.moonriver]: MoonriverLogo,
   [NETWORKS.arbitrum]: ArbitrumLogo,
   [NETWORKS.optimism]: OptimismLogo,
+  [NETWORKS.base]: BaseLogo,
   [NETWORKS.gnosis]: GnosisLogo,
   [NETWORKS.kucoin]: KCCKuCoinLogo,
   [NETWORKS.andromeda]: AndromedaLogo
@@ -52,7 +54,6 @@ const icons: { [key: string]: any } = {
 
 const iconsMonochrome: { [key: string]: any } = {
   [NETWORKS.ethereum]: EthereumMonochromeIcon,
-  [NETWORKS.rinkeby]: EthereumMonochromeIcon,
   [NETWORKS.polygon]: PolygonMonochromeIcon,
   [NETWORKS.avalanche]: AvalancheMonochromeIcon,
   [NETWORKS['binance-smart-chain']]: BinanceMonochromeIcon,
@@ -61,6 +62,7 @@ const iconsMonochrome: { [key: string]: any } = {
   [NETWORKS.moonriver]: MoonriverMonochromeIcon,
   [NETWORKS.arbitrum]: ArbitrumMonochromeIcon,
   [NETWORKS.optimism]: OptimismMonochromeIcon,
+  [NETWORKS.base]: BaseMonochromeIcon,
   [NETWORKS.gnosis]: GnosisMonochromeIcon,
   [NETWORKS.kucoin]: KCCKuCoinMonochromeIcon,
   [NETWORKS.andromeda]: AndromedaMonochromeIcon
