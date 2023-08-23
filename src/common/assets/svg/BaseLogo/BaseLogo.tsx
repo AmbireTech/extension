@@ -7,7 +7,7 @@ interface Props extends SvgProps {
 }
 
 const BaseLogo: React.FC<Props> = ({ width = 32, height = 32, ...rest }) => (
-  <Svg width={width} height={height} viewBox="0 0 20 20" {...rest}>
+  <Svg width={width} height={height} viewBox="0 0 32 32" {...rest}>
     <G transform="translate(-627 -433)">
       <Circle cx="10" cy="10" r="10" transform="translate(633 439)" fill="#2151f5" />
       <Path
