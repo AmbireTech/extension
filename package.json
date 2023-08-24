@@ -78,7 +78,7 @@
     "@types/w3c-web-hid": "^1.0.3",
     "@unstoppabledomains/resolution": "^7.1.4",
     "@yfi/sdk": "1.1.1",
-    "adex-protocol-eth": "git+https://git@github.com/AmbireTech/adex-protocol-eth.git#e507e75ac4ddbec2aa4a444c675b38ee9d26190c",
+    "adex-protocol-eth": "git+https://git@github.com/AmbireTech/adex-protocol-eth.git#2d9d53f835e73ed80d4f5d38ab773c5d38a3ba8b",
     "ambire-common": "git+ssh://git@github.com:AmbireTech/ambire-common.git#c1c98a5ef0f8f3ba8e0c3e867e1b83d82ac30f5d",
     "babel-plugin-module-resolver": "4.1.0",
     "babel-plugin-transform-inline-environment-variables": "^0.4.3",
