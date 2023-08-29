@@ -5824,9 +5824,9 @@ acorn@^8.1.0, acorn@^8.2.4, acorn@^8.5.0, acorn@^8.7.1, acorn@^8.8.1:
   resolved "https://registry.yarnpkg.com/acorn/-/acorn-8.8.2.tgz#1b2f25db02af965399b9776b0c2c391276d37c4a"
   integrity sha512-xjIYgE8HBrkpd/sJqOGNspf8uHG+NOHGOw6a/Urj8taM2EXfdNAH2oFcPeIFfsv3+kz/mJrS5VuMqbNLjCa2vw==
 
-"adex-protocol-eth@git+https://git@github.com/AmbireTech/adex-protocol-eth.git#e507e75ac4ddbec2aa4a444c675b38ee9d26190c":
+"adex-protocol-eth@git+https://git@github.com/AmbireTech/adex-protocol-eth.git#2d9d53f835e73ed80d4f5d38ab773c5d38a3ba8b":
   version "5.2.18"
-  resolved "git+https://git@github.com/AmbireTech/adex-protocol-eth.git#e507e75ac4ddbec2aa4a444c675b38ee9d26190c"
+  resolved "git+https://git@github.com/AmbireTech/adex-protocol-eth.git#2d9d53f835e73ed80d4f5d38ab773c5d38a3ba8b"
   dependencies:
     "@openzeppelin/test-helpers" "^0.5.10"
     "@truffle/hdwallet-provider" "^1.4.2"
@@ -5918,9 +5918,9 @@ ajv@^8.0.0, ajv@^8.1.0, ajv@^8.6.3, ajv@^8.9.0:
     require-from-string "^2.0.2"
     uri-js "^4.2.2"
 
-"ambire-common@git+ssh://git@github.com:AmbireTech/ambire-common.git#v0.21.20":
-  version "0.21.20"
-  resolved "git+ssh://git@github.com:AmbireTech/ambire-common.git#452782665175e8e5ad985f91fe7b556d78ece2f9"
+"ambire-common@git+ssh://git@github.com:AmbireTech/ambire-common.git#v0.21.21":
+  version "0.21.21"
+  resolved "git+ssh://git@github.com:AmbireTech/ambire-common.git#4abf402d41ae97e91c6387ce186049f5f654a618"
 
 anser@^1.4.9:
   version "1.4.10"
