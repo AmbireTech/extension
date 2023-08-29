@@ -30,9 +30,11 @@ const RPC_URL_OPTIMISM =
   'https://rpc.ankr.com/optimism/0e066bd7837ff1978d6aa30b9f29407deb0276d74f46393e474c2530916c8943'
 const RPC_URL_ANDROMEDA =
   'https://rpc.ankr.com/metis/0e066bd7837ff1978d6aa30b9f29407deb0276d74f46393e474c2530916c8943'
-const RPC_URL_RINKEBY = 'https://rinkeby.infura.io/v3/4409badb714444b299066870e0f7b631'
+const RPC_URL_BASE =
+  'https://rpc.ankr.com/base/0e066bd7837ff1978d6aa30b9f29407deb0276d74f46393e474c2530916c8943'
 const RPC_URL_CRONOS = 'https://evm-cronos.crypto.org'
 const RPC_URL_AURORA = 'https://mainnet.aurora.dev'
+const RPC_URL_OKC = 'https://exchainrpc.okex.org'
 const RPC_URL_ETHEREUM_POW = 'https://mainnet.ethereumpow.org'
 
 const RPC_URLS: {
@@ -49,10 +51,11 @@ const RPC_URLS: {
   [NETWORKS.gnosis]: RPC_URL_GNOSIS,
   [NETWORKS.kucoin]: RPC_URL_KUCOIN,
   [NETWORKS.optimism]: RPC_URL_OPTIMISM,
+  [NETWORKS.base]: RPC_URL_BASE,
   [NETWORKS.andromeda]: RPC_URL_ANDROMEDA,
-  [NETWORKS.rinkeby]: RPC_URL_RINKEBY,
   [NETWORKS.cronos]: RPC_URL_CRONOS,
   [NETWORKS.aurora]: RPC_URL_AURORA,
+  [NETWORKS.okc]: RPC_URL_OKC,
   [NETWORKS['ethereum-pow']]: RPC_URL_ETHEREUM_POW
 }
 
