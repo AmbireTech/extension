@@ -85,7 +85,8 @@ export default function useEOA() {
         baseIdentityAddr,
         privileges,
         signerType,
-        ...(!!referral && { referralAddr: referral.hexAddress, registeredFrom: Platform.OS })
+        registeredFrom: Platform.OS,
+        ...(!!referral && { referralAddr: referral.hexAddress })
       })
 
       if (
