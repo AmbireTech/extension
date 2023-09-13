@@ -14,7 +14,7 @@ import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
 import { useTranslation } from '@common/config/localization'
 import useNetwork from '@common/hooks/useNetwork'
-import { CardsVisibilityContext } from '@common/modules/earn/contexts/cardsVisibilityContext'
+import { CARDS, CardsVisibilityContext } from '@common/modules/earn/contexts/cardsVisibilityContext'
 import { LINEAR_OPACITY_ANIMATION, triggerLayoutAnimation } from '@common/services/layoutAnimation'
 import colors from '@common/styles/colors'
 import spacings from '@common/styles/spacings'
@@ -155,8 +155,18 @@ const Card = ({
     if (!assetsItems.length) return
 
     if (!token) {
-      setToken(assetsItems[0].value)
+      let defaultToken = assetsItems[0]
 
+      // For the Ambire card, bypass the default sorting and always set the
+      // $WALLET token by default
+      if (name === CARDS.Ambire) {
+        const walletToken = assetsItems.find(({ label }: { label: string }) => label === 'WALLET')
+        if (walletToken) {
+          defaultToken = walletToken
+        }
+      }
+
+      setToken(defaultToken.value)
       return
     }
 
@@ -170,7 +180,7 @@ const Card = ({
 
       setToken(nextToken.value)
     }
-  }, [assetsItems, prevTokens, token])
+  }, [assetsItems, name, prevTokens, token])
 
   const amountLabel = (
     <View style={[flexboxStyles.directionRow, spacings.mbMi]}>
