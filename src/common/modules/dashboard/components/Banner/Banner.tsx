@@ -27,29 +27,37 @@ interface Props {
 const Banner: React.FC<Props> = ({ data }) => {
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
 
-  const split = data.text.split(pattern)
-
   // Iterates over the `resources` and creates an anchor tag for each key-value
   // pair. The key is used as a unique identifier for each anchor tag and the
   // label and href properties are used to create the text and link for each
   // anchor tag, respectively. The resulting object is an associative array of
   // anchor tags, where the keys are the same as the keys in `resources`
-  const links = Object.entries(data.resources).reduce((anchors, [key, { label, href } = {}]) => {
-    const anc = (
-      <Text
-        weight="regular"
-        fontSize={16}
-        color={colors.malibu}
-        key={key}
-        onPress={() => Linking.openURL(href)}
-      >
-        {label}
-      </Text>
-    )
+  const links: { [key: string]: JSX.Element } = Object.entries(data.resources).reduce(
+    (
+      anchors: { [key: string]: JSX.Element },
+      // The default value ensures that the destructured object always has
+      // a `label` and `href` property, even if they are undefined,
+      // otherwise TypeScript complains about the missing properties.
+      [key = '', { label = '', href = '' } = { label: '', href: '' }]
+    ) => {
+      const anc = (
+        <Text
+          weight="regular"
+          fontSize={16}
+          color={colors.malibu}
+          key={key}
+          onPress={() => Linking.openURL(href)}
+        >
+          {label}
+        </Text>
+      )
 
-    anchors[key] = anc
-    return anchors
-  }, {})
+      return { ...anchors, [key]: anc }
+    },
+    {}
+  )
+
+  const split = data.text.split(pattern)
 
   return (
     <>
