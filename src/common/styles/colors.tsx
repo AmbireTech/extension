@@ -48,6 +48,7 @@ const colors = {
   chetwode: '#6770B3',
   chetwode_50: '#6770b37f',
   baileyBells: '#898DCB',
+  malibu: '#7DA8FF',
   titan: '#EBECFF',
   titanWhite: '#F4F5FF',
   titan_05: 'rgba(235, 236, 255, 0.05)',
