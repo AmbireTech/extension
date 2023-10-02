@@ -10,6 +10,7 @@ import useNetwork from '@common/hooks/useNetwork'
 import usePortfolio from '@common/hooks/usePortfolio'
 import Assets from '@common/modules/dashboard/components/Assets'
 import Balances from '@common/modules/dashboard/components/Balances'
+import Banner from '@common/modules/dashboard/components/Banner/Banner'
 import { AssetsToggleProvider } from '@common/modules/dashboard/contexts/assetsToggleContext'
 import colors from '@common/styles/colors'
 import spacings from '@common/styles/spacings'
@@ -61,6 +62,7 @@ const DashboardScreen = () => {
           />
         }
       >
+        <Banner />
         <Balances
           allBalances={allBalances}
           isLoading={isCurrNetworkBalanceLoading && !!allBalancesLoading}
