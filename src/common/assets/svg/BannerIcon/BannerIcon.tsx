@@ -1,15 +1,10 @@
 import React from 'react'
 import Svg, { Defs, LinearGradient, Path, Stop, SvgProps } from 'react-native-svg'
 
-import colors from '@common/styles/colors'
+interface Props extends SvgProps {}
 
-interface Props extends SvgProps {
-  width?: number
-  height?: number
-}
-
-const BannerIcon: React.FC<Props> = ({ width = 43, height = 48 }) => (
-  <Svg width={width} height={height} viewBox="0 0 43 48">
+const BannerIcon: React.FC<Props> = ({ width = 43, height = 48, ...rest }) => (
+  <Svg width={width} height={height} viewBox="0 0 43 48" {...rest}>
     <Defs>
       <LinearGradient
         id="a"
