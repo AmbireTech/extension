@@ -25,7 +25,7 @@ interface Props {
   data: Promo
 }
 
-const Banner: React.FC<Props> = ({ data }) => {
+const PromoBanner: React.FC<Props> = ({ data }) => {
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const [promoBannerIdsRead, setPromoBannerIdsRead] = useStorage<string[]>({
     key: 'promoBannerIdsRead',
@@ -104,4 +104,4 @@ const Banner: React.FC<Props> = ({ data }) => {
   )
 }
 
-export default React.memo(Banner)
+export default React.memo(PromoBanner)
