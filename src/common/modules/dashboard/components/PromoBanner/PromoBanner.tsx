@@ -25,13 +25,11 @@ interface Props {}
 
 const PromoBanner: React.FC<Props> = () => {
   const {
+    promoBannerIdsRead,
+    setPromoBannerIdsRead,
     rewards: { promo }
   } = useRewards()
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
-  const [promoBannerIdsRead, setPromoBannerIdsRead] = useStorage<string[]>({
-    key: 'promoBannerIdsRead',
-    defaultValue: []
-  })
 
   const handleOpen = useCallback(() => {
     if (promo?.id) {

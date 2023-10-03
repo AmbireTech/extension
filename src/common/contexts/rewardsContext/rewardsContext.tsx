@@ -13,11 +13,7 @@ export interface RewardsContextReturnType extends UseRewardsReturnType {
   setPromoBannerIdsRead: (item: string[] | null) => void
 }
 
-const RewardsContext = createContext<RewardsContextReturnType>({
-  // TODO:
-  promoBannerIdsRead: [],
-  setPromoBannerIdsRead: () => {}
-})
+const RewardsContext = createContext<RewardsContextReturnType>({} as RewardsContextReturnType)
 
 const source = getRewardsSource()
 
