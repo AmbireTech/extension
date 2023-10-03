@@ -1,20 +1,15 @@
 import React, { useMemo } from 'react'
-import { useTranslation } from 'react-i18next'
 import { RefreshControl } from 'react-native'
 
 import GradientBackgroundWrapper from '@common/components/GradientBackgroundWrapper'
-import Text from '@common/components/Text'
 import Wrapper from '@common/components/Wrapper'
 import useAccounts from '@common/hooks/useAccounts'
 import useNetwork from '@common/hooks/useNetwork'
 import usePortfolio from '@common/hooks/usePortfolio'
 import Assets from '@common/modules/dashboard/components/Assets'
 import Balances from '@common/modules/dashboard/components/Balances'
-import Banner from '@common/modules/dashboard/components/Banner/Banner'
 import { AssetsToggleProvider } from '@common/modules/dashboard/contexts/assetsToggleContext'
 import colors from '@common/styles/colors'
-import spacings from '@common/styles/spacings'
-import text from '@common/styles/utils/text'
 
 const DashboardScreen = () => {
   const {
@@ -36,7 +31,6 @@ const DashboardScreen = () => {
   } = usePortfolio()
   const { network, setNetwork } = useNetwork()
   const { selectedAcc } = useAccounts()
-  const { t } = useTranslation()
 
   const allBalancesLoading = useMemo(
     () => Object.entries(balancesByNetworksLoading).find((ntw) => ntw[1]),
@@ -62,7 +56,6 @@ const DashboardScreen = () => {
           />
         }
       >
-        <Banner />
         <Balances
           allBalances={allBalances}
           isLoading={isCurrNetworkBalanceLoading && !!allBalancesLoading}
