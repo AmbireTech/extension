@@ -4,7 +4,6 @@ import {
   MULTIPLIERS_READ_MORE_URL
 } from 'ambire-common/src/constants/multiplierBadges'
 import useClaimableWalletToken from 'ambire-common/src/hooks/useClaimableWalletToken'
-import useRewards from 'ambire-common/src/hooks/useRewards'
 import { RewardIds } from 'ambire-common/src/hooks/useRewards/types'
 import { formatFloatTokenAmount } from 'ambire-common/src/services/formatter'
 import React, { useCallback } from 'react'
@@ -27,6 +26,7 @@ import useNetwork from '@common/hooks/useNetwork'
 import usePrivateMode from '@common/hooks/usePrivateMode'
 import useRelayerData from '@common/hooks/useRelayerData'
 import useRequests from '@common/hooks/useRequests'
+import useRewards from '@common/hooks/useRewards'
 import getRewardsSource from '@common/modules/dashboard/helpers/getRewardsSource'
 import alert from '@common/services/alert'
 import colors from '@common/styles/colors'
@@ -49,12 +49,7 @@ const Rewards = () => {
     lastUpdated: rewardsLastUpdated,
     isLoading: rewardsIsLoading,
     errMsg: rewardsErrMsg
-  } = useRewards({
-    relayerURL: CONFIG.RELAYER_URL,
-    accountId: selectedAcc,
-    useRelayerData,
-    source
-  })
+  } = useRewards()
   const { walletTokenAPYPercentage, walletUsdPrice, multipliers, totalLifetimeRewards } = rewards
   const {
     currentClaimStatus,
