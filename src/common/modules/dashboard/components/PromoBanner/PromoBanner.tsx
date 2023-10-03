@@ -96,7 +96,9 @@ const PromoBanner: React.FC<Props> = () => {
       </TouchableOpacity>
       <BottomSheet id="banner" sheetRef={sheetRef} closeBottomSheet={closeBottomSheet}>
         <PromoBannerFrame style={[spacings.mtSm, spacings.mb, flexbox.alignSelfCenter]}>
-          <Text fontSize={40}>{promo.icon}</Text>
+          <Text fontSize={40} style={styles.emojiTitle}>
+            {promo.icon}
+          </Text>
         </PromoBannerFrame>
         <Text fontSize={20} weight="medium" style={spacings.mbSm}>
           {promo.title}

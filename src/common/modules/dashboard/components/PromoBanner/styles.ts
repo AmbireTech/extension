@@ -3,6 +3,7 @@ import { StyleSheet, TextStyle, ViewStyle } from 'react-native'
 interface Style {
   button: ViewStyle
   emoji: TextStyle
+  emojiTitle: TextStyle
   bannerIcon: ViewStyle
   content: ViewStyle
 }
@@ -25,6 +26,9 @@ const styles = StyleSheet.create<Style>({
     textAlign: 'center',
     width: 36,
     lineHeight: 38
+  },
+  emojiTitle: {
+    lineHeight: 70
   },
   bannerIcon: {
     position: 'absolute'
