@@ -8,6 +8,7 @@ import useNetwork from '@common/hooks/useNetwork'
 import usePortfolio from '@common/hooks/usePortfolio'
 import Assets from '@common/modules/dashboard/components/Assets'
 import Balances from '@common/modules/dashboard/components/Balances'
+import PromoBanner from '@common/modules/dashboard/components/PromoBanner'
 import { AssetsToggleProvider } from '@common/modules/dashboard/contexts/assetsToggleContext'
 import colors from '@common/styles/colors'
 
@@ -56,6 +57,7 @@ const DashboardScreen = () => {
           />
         }
       >
+        <PromoBanner />
         <Balances
           allBalances={allBalances}
           isLoading={isCurrNetworkBalanceLoading && !!allBalancesLoading}
