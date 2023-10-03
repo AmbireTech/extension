@@ -1,5 +1,7 @@
 import { StyleSheet, TextStyle, ViewStyle } from 'react-native'
 
+import { isAndroid } from '@common/config/env'
+
 interface Style {
   button: ViewStyle
   emoji: TextStyle
@@ -28,7 +30,7 @@ const styles = StyleSheet.create<Style>({
     lineHeight: 38
   },
   emojiTitle: {
-    lineHeight: 70
+    lineHeight: isAndroid ? 70 : 60
   },
   bannerIcon: {
     position: 'absolute'
