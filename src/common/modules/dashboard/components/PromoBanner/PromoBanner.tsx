@@ -2,11 +2,10 @@ import React, { useCallback } from 'react'
 import { Linking, TouchableOpacity } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
-import BannerIcon from '@common/assets/svg/BannerIcon/BannerIcon'
+import PromoBannerButton from '@common/assets/svg/PromoBannerButton'
 import BottomSheet from '@common/components/BottomSheet'
 import Text from '@common/components/Text'
 import useRewards from '@common/hooks/useRewards'
-import useStorage from '@common/hooks/useStorage'
 import colors from '@common/styles/colors'
 import spacings from '@common/styles/spacings'
 import text from '@common/styles/utils/text'
@@ -85,7 +84,7 @@ const PromoBanner: React.FC<Props> = () => {
         style={styles.button}
       >
         <>
-          <BannerIcon
+          <PromoBannerButton
             width={BANNER_WIDTH}
             height={BANNER_HEIGHT}
             style={styles.bannerIcon}

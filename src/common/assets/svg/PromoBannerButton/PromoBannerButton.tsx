@@ -3,7 +3,7 @@ import Svg, { Defs, LinearGradient, Path, Stop, SvgProps } from 'react-native-sv
 
 interface Props extends SvgProps {}
 
-const BannerIcon: React.FC<Props> = ({ width = 43, height = 48, color, ...rest }) => (
+const PromoBannerButton: React.FC<Props> = ({ width = 43, height = 48, color, ...rest }) => (
   <Svg width={width} height={height} viewBox="0 0 43 48" {...rest}>
     <Defs>
       <LinearGradient
@@ -27,4 +27,4 @@ const BannerIcon: React.FC<Props> = ({ width = 43, height = 48, color, ...rest }
   </Svg>
 )
 
-export default BannerIcon
+export default PromoBannerButton
