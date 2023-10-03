@@ -10,7 +10,6 @@ import PromoBannerFrame from '@common/modules/dashboard/components/PromoBannerFr
 import colors from '@common/styles/colors'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import text from '@common/styles/utils/text'
 
 import styles, { BANNER_HEIGHT, BANNER_WIDTH } from './styles'
 
