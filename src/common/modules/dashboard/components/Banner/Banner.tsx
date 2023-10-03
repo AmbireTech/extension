@@ -1,11 +1,12 @@
 import { Promo } from 'ambire-common/src/hooks/useRewards/types'
-import React from 'react'
+import React, { useCallback } from 'react'
 import { Linking, TouchableOpacity } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import BannerIcon from '@common/assets/svg/BannerIcon/BannerIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import Text from '@common/components/Text'
+import useStorage from '@common/hooks/useStorage'
 import colors from '@common/styles/colors'
 import spacings from '@common/styles/spacings'
 import text from '@common/styles/utils/text'
@@ -26,6 +27,16 @@ interface Props {
 
 const Banner: React.FC<Props> = ({ data }) => {
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
+  const [promoBannerIdsRead, setPromoBannerIdsRead] = useStorage<string[]>({
+    key: 'promoBannerIdsRead',
+    defaultValue: []
+  })
+
+  const handleOpen = useCallback(() => {
+    setPromoBannerIdsRead((ids) => [...ids, data.id])
+
+    openBottomSheet()
+  }, [data.id, openBottomSheet, setPromoBannerIdsRead])
 
   // Iterates over the `resources` and creates an anchor tag for each key-value
   // pair. The key is used as a unique identifier for each anchor tag and the
@@ -57,13 +68,14 @@ const Banner: React.FC<Props> = ({ data }) => {
     {}
   )
 
+  const isRead = promoBannerIdsRead?.includes(data?.id)
   const split = data.text.split(pattern)
 
   return (
     <>
       <TouchableOpacity
         // @ts-ignore mismatched types, but all good
-        onPress={openBottomSheet}
+        onPress={handleOpen}
         style={[styles.button]}
       >
         <>
@@ -71,18 +83,12 @@ const Banner: React.FC<Props> = ({ data }) => {
             width={BANNER_WIDTH}
             height={BANNER_HEIGHT}
             style={{ position: 'absolute' }}
+            color={isRead ? colors.chetwode : undefined}
           />
           <Text fontSize={30}>{data.icon}</Text>
         </>
       </TouchableOpacity>
-      <BottomSheet
-        id="banner"
-        sheetRef={sheetRef}
-        closeBottomSheet={closeBottomSheet}
-        onClosed={() => {
-          // Mark as read
-        }}
-      >
+      <BottomSheet id="banner" sheetRef={sheetRef} closeBottomSheet={closeBottomSheet}>
         <Text fontSize={40} style={[text.center, spacings.mt, spacings.mb]}>
           {data.icon}
         </Text>
