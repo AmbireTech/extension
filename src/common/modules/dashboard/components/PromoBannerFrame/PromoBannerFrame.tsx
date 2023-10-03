@@ -48,4 +48,4 @@ const PromoBannerFrame: React.FC<Props> = ({
   </Svg>
 )
 
-export default PromoBannerFrame
+export default React.memo(PromoBannerFrame)

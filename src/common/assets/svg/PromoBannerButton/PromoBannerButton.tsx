@@ -27,4 +27,4 @@ const PromoBannerButton: React.FC<Props> = ({ width = 43, height = 48, color, ..
   </Svg>
 )
 
-export default PromoBannerButton
+export default React.memo(PromoBannerButton)
