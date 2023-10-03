@@ -3,7 +3,7 @@ import Svg, { Defs, LinearGradient, Path, Stop, SvgProps } from 'react-native-sv
 
 interface Props extends SvgProps {}
 
-const BannerIcon: React.FC<Props> = ({ width = 43, height = 48, ...rest }) => (
+const BannerIcon: React.FC<Props> = ({ width = 43, height = 48, color, ...rest }) => (
   <Svg width={width} height={height} viewBox="0 0 43 48" {...rest}>
     <Defs>
       <LinearGradient
@@ -14,8 +14,8 @@ const BannerIcon: React.FC<Props> = ({ width = 43, height = 48, ...rest }) => (
         y2=".927"
         gradientUnits="objectBoundingBox"
       >
-        <Stop offset="0" stopColor="#27e8a7" />
-        <Stop offset="1" stopColor="#ae60ff" />
+        <Stop offset="0" stopColor={color || '#27e8a7'} />
+        <Stop offset="1" stopColor={color || '#ae60ff'} />
       </LinearGradient>
     </Defs>
     <Path d="M13 5h30v38H13a8 8 0 0 1-8-8V13a8 8 0 0 1 8-8Z" fill="#1e2033" />
