@@ -6,8 +6,10 @@ import PromoBannerButton from '@common/assets/svg/PromoBannerButton'
 import BottomSheet from '@common/components/BottomSheet'
 import Text from '@common/components/Text'
 import useRewards from '@common/hooks/useRewards'
+import PromoBannerFrame from '@common/modules/dashboard/components/PromoBannerFrame'
 import colors from '@common/styles/colors'
 import spacings from '@common/styles/spacings'
+import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 
 import styles, { BANNER_HEIGHT, BANNER_WIDTH } from './styles'
@@ -96,14 +98,14 @@ const PromoBanner: React.FC<Props> = () => {
         </>
       </TouchableOpacity>
       <BottomSheet id="banner" sheetRef={sheetRef} closeBottomSheet={closeBottomSheet}>
-        <Text fontSize={40} style={[text.center, spacings.mt, spacings.mb]}>
-          {promo.icon}
-        </Text>
+        <PromoBannerFrame style={[spacings.mtSm, spacings.mb, flexbox.alignSelfCenter]}>
+          <Text fontSize={40}>{promo.icon}</Text>
+        </PromoBannerFrame>
         <Text fontSize={20} weight="medium" style={spacings.mbSm}>
           {promo.title}
         </Text>
 
-        <Text fontSize={16} style={{ marginBottom: 100 }} color={colors.titan}>
+        <Text fontSize={16} weight="regular" style={styles.content}>
           {split.map((x) => links[x] || x)}
         </Text>
       </BottomSheet>

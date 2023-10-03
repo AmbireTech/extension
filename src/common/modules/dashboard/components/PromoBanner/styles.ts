@@ -6,6 +6,7 @@ interface Style {
   button: ViewStyle
   emoji: TextStyle
   bannerIcon: ViewStyle
+  content: ViewStyle
 }
 
 export const BANNER_WIDTH = 43
@@ -29,6 +30,9 @@ const styles = StyleSheet.create<Style>({
   },
   bannerIcon: {
     position: 'absolute'
+  },
+  content: {
+    marginBottom: 100
   }
 })
 
