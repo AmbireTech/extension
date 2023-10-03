@@ -1,5 +1,7 @@
 import { StyleSheet, ViewStyle } from 'react-native'
 
+import { SPACING } from '@common/styles/spacings'
+
 interface Style {
   button: ViewStyle
 }
@@ -14,9 +16,9 @@ const styles = StyleSheet.create<Style>({
     position: 'absolute',
     justifyContent: 'center',
     alignItems: 'center',
-    top: 0,
-    right: -20,
-    zIndex: 100
+    top: 95,
+    right: -1 * SPACING,
+    zIndex: 10
   }
 })
 
