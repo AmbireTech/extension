@@ -84,16 +84,18 @@ const PromoBanner: React.FC<Props> = () => {
       <TouchableOpacity
         // @ts-ignore mismatched types, but all good
         onPress={handleOpen}
-        style={[styles.button]}
+        style={styles.button}
       >
         <>
           <BannerIcon
             width={BANNER_WIDTH}
             height={BANNER_HEIGHT}
-            style={{ position: 'absolute' }}
+            style={styles.bannerIcon}
             color={isRead ? colors.chetwode : undefined}
           />
-          <Text fontSize={30}>{promo.icon}</Text>
+          <Text fontSize={28} style={styles.emoji}>
+            {promo.icon}
+          </Text>
         </>
       </TouchableOpacity>
       <BottomSheet id="banner" sheetRef={sheetRef} closeBottomSheet={closeBottomSheet}>
