@@ -1,7 +1,5 @@
 import { StyleSheet, TextStyle, ViewStyle } from 'react-native'
 
-import { SPACING } from '@common/styles/spacings'
-
 interface Style {
   button: ViewStyle
   emoji: TextStyle
@@ -20,12 +18,12 @@ const styles = StyleSheet.create<Style>({
     justifyContent: 'center',
     alignItems: 'flex-end',
     top: 95,
-    right: -1 * SPACING,
+    right: 0,
     zIndex: 10
   },
   emoji: {
     textAlign: 'center',
-    width: 40,
+    width: 36,
     lineHeight: 38
   },
   bannerIcon: {

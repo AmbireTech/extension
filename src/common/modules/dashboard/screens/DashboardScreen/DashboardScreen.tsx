@@ -45,6 +45,7 @@ const DashboardScreen = () => {
 
   return (
     <GradientBackgroundWrapper>
+      <PromoBanner />
       <Wrapper
         hasBottomTabNav
         refreshControl={
@@ -57,7 +58,6 @@ const DashboardScreen = () => {
           />
         }
       >
-        <PromoBanner />
         <Balances
           allBalances={allBalances}
           isLoading={isCurrNetworkBalanceLoading && !!allBalancesLoading}
