@@ -84,17 +84,15 @@ const PromoBanner: React.FC<Props> = () => {
         onPress={handleOpen}
         style={styles.button}
       >
-        <>
-          <PromoBannerButton
-            width={BANNER_WIDTH}
-            height={BANNER_HEIGHT}
-            style={styles.bannerIcon}
-            color={isRead ? colors.chetwode : undefined}
-          />
-          <Text fontSize={28} style={styles.emoji}>
-            {promo.icon}
-          </Text>
-        </>
+        <PromoBannerButton
+          width={BANNER_WIDTH}
+          height={BANNER_HEIGHT}
+          style={styles.bannerIcon}
+          color={isRead ? colors.chetwode : undefined}
+        />
+        <Text fontSize={28} style={styles.emoji}>
+          {promo.icon}
+        </Text>
       </TouchableOpacity>
       <BottomSheet id="banner" sheetRef={sheetRef} closeBottomSheet={closeBottomSheet}>
         <PromoBannerFrame style={[spacings.mtSm, spacings.mb, flexbox.alignSelfCenter]}>
