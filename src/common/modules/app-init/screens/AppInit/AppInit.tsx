@@ -19,6 +19,7 @@ import { NetworkProvider } from '@common/contexts/networkContext'
 import { PortfolioProvider } from '@common/contexts/portfolioContext'
 import { PrivateModeProvider } from '@common/contexts/privateModeContext'
 import { RequestsProvider } from '@common/contexts/requestsContext'
+import { RewardsProvider } from '@common/contexts/rewardsContext'
 import { StorageProvider } from '@common/contexts/storageContext'
 import { ThemeProvider } from '@common/contexts/themeContext'
 import { ToastProvider } from '@common/contexts/toastContext'
@@ -71,26 +72,28 @@ const AppInit = () => {
                             <NetworkProvider>
                               <Web3Provider>
                                 <PortfolioProvider>
-                                  <GnosisProvider>
-                                    <GasTankProvider>
-                                      <VaultProvider>
-                                        <RequestsProvider>
-                                          <BiometricsProvider>
-                                            <AddressBookProvider>
-                                              <PrivateModeProvider>
-                                                <HeaderBottomSheetProvider>
-                                                  <LinkingProvider>
-                                                    <AppRouter />
-                                                  </LinkingProvider>
-                                                </HeaderBottomSheetProvider>
-                                              </PrivateModeProvider>
-                                              <PortalHost name="global" />
-                                            </AddressBookProvider>
-                                          </BiometricsProvider>
-                                        </RequestsProvider>
-                                      </VaultProvider>
-                                    </GasTankProvider>
-                                  </GnosisProvider>
+                                  <RewardsProvider>
+                                    <GnosisProvider>
+                                      <GasTankProvider>
+                                        <VaultProvider>
+                                          <RequestsProvider>
+                                            <BiometricsProvider>
+                                              <AddressBookProvider>
+                                                <PrivateModeProvider>
+                                                  <HeaderBottomSheetProvider>
+                                                    <LinkingProvider>
+                                                      <AppRouter />
+                                                    </LinkingProvider>
+                                                  </HeaderBottomSheetProvider>
+                                                </PrivateModeProvider>
+                                                <PortalHost name="global" />
+                                              </AddressBookProvider>
+                                            </BiometricsProvider>
+                                          </RequestsProvider>
+                                        </VaultProvider>
+                                      </GasTankProvider>
+                                    </GnosisProvider>
+                                  </RewardsProvider>
                                 </PortfolioProvider>
                               </Web3Provider>
                             </NetworkProvider>
