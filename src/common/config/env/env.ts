@@ -5,7 +5,6 @@ import { Platform } from 'react-native'
 
 import {
   APP_RELAYRLESS,
-  COINGECKO_API_URL,
   CONSTANTS_ENDPOINT,
   EnvTypes,
   PAYTRIE_PARTNER_URL,
@@ -62,6 +61,7 @@ interface Config extends EnvTypes {
    */
   APP_RELAYRLESS: boolean
   TRANSAK_ENV: 'STAGING' | 'PRODUCTION'
+  COINGECKO_API_URL: string
 }
 
 const CONFIG: Config = {
