@@ -38,6 +38,7 @@ type Props = {
   [key: string]: any
 }
 
+// TODO: add sepolia logo
 const icons: { [key: string]: any } = {
   [NETWORKS.ethereum]: EthereumLogo,
   [NETWORKS.polygon]: PolygonLogo,
@@ -52,7 +53,8 @@ const icons: { [key: string]: any } = {
   [NETWORKS.gnosis]: GnosisLogo,
   [NETWORKS.kucoin]: KCCKuCoinLogo,
   [NETWORKS.andromeda]: AndromedaLogo,
-  [NETWORKS.okc]: OkcLogo
+  [NETWORKS.okc]: OkcLogo,
+  [NETWORKS.mumbai]: PolygonLogo
 }
 
 const iconsMonochrome: { [key: string]: any } = {
@@ -69,7 +71,8 @@ const iconsMonochrome: { [key: string]: any } = {
   [NETWORKS.gnosis]: GnosisMonochromeIcon,
   [NETWORKS.kucoin]: KCCKuCoinMonochromeIcon,
   [NETWORKS.andromeda]: AndromedaMonochromeIcon,
-  [NETWORKS.okc]: OkcMonochromeIcon
+  [NETWORKS.okc]: OkcMonochromeIcon,
+  [NETWORKS.mumbai]: PolygonMonochromeIcon
 }
 
 const NetworkIcon = ({ name, type = 'regular', ...rest }: Props) => {

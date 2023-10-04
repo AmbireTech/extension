@@ -56,6 +56,7 @@ const DashboardScreen = () => {
         }
       >
         <Balances
+          balance={balance}
           otherBalances={otherBalances}
           isLoading={isCurrNetworkBalanceLoading && !!allBalancesLoading}
           isCurrNetworkBalanceLoading={!!isCurrNetworkBalanceLoading}

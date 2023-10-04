@@ -41,37 +41,19 @@ const PortfolioContext = createContext<PortfolioContextReturnType>({
   loadBalance: () => {}
 })
 
-const getBalances = async (
+const getBalances = (
   network: Network,
-  protocol: 'nft' | 'tokens',
   address: Account['id'],
-  provider?: 'velcro' | 'zapper' | string,
-  quick = false
+  provider: 'velcro' | 'zapper' | '',
+  quickResponse = false
 ) => {
-  const baseUrl = provider === 'velcro' ? CONFIG.VELCRO_API_ENDPOINT : CONFIG.ZAPPER_API_ENDPOINT
-  // Part of the caching mechanism in velcro v2, not used in the mobile app or browser extension yet
-  const newBalances = true
-  // Part of the assets migration logic, in order to strip scam tokens, not used in the application
-  // logic since asset migration is not available on the mobile app or browser extension yet
-  const availableOnCoingecko = false
-  const params = `quick=${quick}&newBalances=${newBalances}&available_on_coingecko=${availableOnCoingecko}`
-
-  const url = `${baseUrl}/balance/${address}/${network}?${params}`
-  const response = await fetchGet(url)
-
-  if (!response.success) throw new Error(response.message)
-
-  return adaptVelcroV2ResponseToV1Structure(response, protocol)
+  if (provider === '' || !provider) return null
+  return fetchGet(
+    `${
+      provider === 'velcro' ? CONFIG.VELCRO_API_ENDPOINT : CONFIG.ZAPPER_API_ENDPOINT
+    }/balance/${address}/${network}${quickResponse ? '?quick=true' : ''}`
+  )
 }
-
-// const getBalances = (network: any, address: any, provider: any, quickResponse?: boolean) => {
-//   if (provider === '' || !provider) return null
-//   return fetchGet(
-//     `${
-//       provider === 'velcro' ? CONFIG.VELCRO_API_ENDPOINT : CONFIG.ZAPPER_API_ENDPOINT
-//     }/balance/${address}/${network}${quickResponse ? '?quick=true' : ''}`
-//   )
-// }
 
 const getCoingeckoPrices = (addresses: any) =>
   fetchGet(`${CONFIG.COINGECKO_API_URL}/simple/price?ids=${addresses}&vs_currencies=usd`)
@@ -103,7 +85,7 @@ const PortfolioProvider: React.FC = ({ children }) => {
 
   const {
     balance,
-    allBalances,
+    otherBalances,
     tokens,
     extraTokens,
     hiddenTokens,
@@ -143,7 +125,7 @@ const PortfolioProvider: React.FC = ({ children }) => {
       value={useMemo(
         () => ({
           balance,
-          allBalances,
+          otherBalances,
           tokens,
           extraTokens,
           hiddenTokens,
@@ -160,7 +142,7 @@ const PortfolioProvider: React.FC = ({ children }) => {
         }),
         [
           balance,
-          allBalances,
+          otherBalances,
           tokens,
           extraTokens,
           hiddenTokens,

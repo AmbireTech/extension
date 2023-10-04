@@ -41,6 +41,7 @@ const relayerURL = CONFIG.RELAYER_URL
 
 const Balances = ({
   otherBalances,
+  balance,
   networkId,
   networkName,
   account,
@@ -67,7 +68,7 @@ const Balances = ({
         .toFixed(2)
   const hasPositiveGasBalance = gasTankBalanceLabel !== '0.00'
 
-  const allPositiveBalances = otherBalances
+  const allPositiveBalances = [...otherBalances, balance]
     .filter(({ total }: any) => total.full > 0)
     // Exclude displaying balances for networks we don't support
     .filter(({ network }) => !!networkDetails(network))
