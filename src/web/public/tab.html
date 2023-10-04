@@ -1,21 +1,36 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
-    <link rel="stylesheet" href="style.css">
-    <link rel="manifest" href="manifest.json">
-    <meta charset="utf-8"/>
-    <meta httpequiv="X-UA-Compatible" content="IE=edge"/>
-    <meta name="viewport" content="width=device-width,initial-scale=1user-scalable=no">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-touch-fullscreen" content="yes">
-    <meta name="apple-mobile-web-app-title" content="ambire-mobile-wallet">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="manifest.json" />
+    <meta charset="utf-8" />
+    <meta httpequiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width,initial-scale=1user-scalable=no" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-touch-fullscreen" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="ambire-mobile-wallet" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <title>Ambire Tab</title>
+
+    <link rel="stylesheet" href="style.css" />
+    <style>
+      /* Temporary, until the zoom is globally removed in src/web/public/style.css */
+      html {
+        zoom: 1;
+        -ms-zoom: 1;
+      }
+      /* Temporary, until the responsiveness is handled in better way */
+      html,
+      body,
+      #root {
+        min-width: 1250px;
+        overflow: auto;
+      }
+    </style>
     <script src="browser-polyfill.js"></script>
   </head>
   <body>
     <div id="root"></div>
-    <script src="app.js"></script>
+    <script src="main.js"></script>
   </body>
 </html>

@@ -16,7 +16,7 @@ import { useTranslation } from '@common/config/localization'
 import { DetailedBundleContext } from '@common/modules/send/contexts/detailedBundleContext'
 import BundleSimplePreview from '@common/modules/transactions/components/BundleSimplePreview'
 import colors from '@common/styles/colors'
-import spacings from '@common/styles/spacings'
+import spacings, { IS_SCREEN_SIZE_S } from '@common/styles/spacings'
 import flexboxStyles from '@common/styles/utils/flexbox'
 import textStyles from '@common/styles/utils/text'
 
@@ -199,7 +199,7 @@ const TransactionsSectionList = ({
             ]}
           >
             {!!titleIcon && titleIcon}
-            <Text fontSize={16} weight="medium">
+            <Text fontSize={IS_SCREEN_SIZE_S ? 14 : 16} weight="medium">
               {title}
             </Text>
           </View>

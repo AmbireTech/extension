@@ -2,6 +2,7 @@ import { StyleSheet, ViewStyle } from 'react-native'
 
 import colors from '@common/styles/colors'
 import spacings from '@common/styles/spacings'
+import common from '@common/styles/utils/common'
 
 interface Style {
   container: ViewStyle
@@ -35,9 +36,11 @@ const styles = StyleSheet.create<Style>({
     ...spacings.pvTy,
     ...spacings.phTy,
     height: 'auto',
-    minHeight: 50,
+    minHeight: 20,
+    opacity: 0.96,
     width: '100%',
-    flex: 1
+    flex: 1,
+    ...common.shadowPrimary
   },
   error: {
     backgroundColor: colors.pigPink,

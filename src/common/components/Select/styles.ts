@@ -23,7 +23,7 @@ const styles = StyleSheet.create<Style>({
     backgroundColor: colors.howl,
     ...commonStyles.borderRadiusPrimary,
     borderWidth: 0,
-    height: 50,
+    height: 56,
     ...spacings.mbSm
   },
   labelStyle: {
@@ -38,7 +38,7 @@ const styles = StyleSheet.create<Style>({
   listItemContainerStyle: {
     ...spacings.mh,
     ...spacings.phTy,
-    height: 50,
+    height: 56,
     backgroundColor: 'transparent',
     ...commonStyles.borderRadiusPrimary
   },
@@ -57,7 +57,7 @@ const styles = StyleSheet.create<Style>({
   searchTextInputStyle: {
     marginTop: 10,
     width: '100%',
-    height: 50,
+    height: 56,
     borderRadius: 13,
     backgroundColor: colors.howl,
     borderWidth: 0,

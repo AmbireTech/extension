@@ -1,4 +1,4 @@
-import { BarCodeScanner } from 'expo-barcode-scanner'
+import { BarCodeScanner, PermissionStatus } from 'expo-barcode-scanner'
 import { Camera } from 'expo-camera'
 import * as IntentLauncher from 'expo-intent-launcher'
 import LottieView from 'lottie-react-native'
@@ -18,6 +18,7 @@ import flexboxStyles from '@common/styles/utils/flexbox'
 import textStyles from '@common/styles/utils/text'
 
 import Button from '../Button'
+import Spinner from '../Spinner'
 import Wrapper from '../Wrapper'
 import CameraAnimation from './camera-animation.json'
 import styles from './styles'
@@ -52,7 +53,7 @@ const cameraDimensions = (ratio?: string | null) => {
 const QRCodeScanner = ({ onScan }: Props) => {
   const cameraRef: any = useRef(null)
 
-  const [hasPermission, setHasPermission] = useState<null | boolean>(null)
+  const [permission, setPermission] = useState<PermissionStatus | null>(null)
   const [scanned, setScanned] = useState<boolean>(false)
   const [ratio, setRatio] = useState<string | null>(null)
   const insets = useSafeAreaInsets()
@@ -62,18 +63,13 @@ const QRCodeScanner = ({ onScan }: Props) => {
   useEffect(() => {
     ;(async () => {
       const { status } = await requestPermissionFlagging(Camera.requestCameraPermissionsAsync)
-      setHasPermission(status === 'granted')
+      setPermission(status)
     })()
   }, [])
 
   const handleBarCodeScan = ({ data }: any) => {
     setScanned(true)
     !!onScan && onScan(data)
-  }
-
-  const requestCameraPermissionAgain = async () => {
-    const { status } = await requestPermissionFlagging(Camera.requestCameraPermissionsAsync)
-    setHasPermission(status === 'granted')
   }
 
   const handleGoToSettings = () =>
@@ -106,15 +102,23 @@ const QRCodeScanner = ({ onScan }: Props) => {
 
   return (
     <Wrapper
-      contentContainerStyle={[
-        flexboxStyles.flex1,
-        !!hasPermission && flexboxStyles.alignCenter,
-        !!hasPermission && flexboxStyles.justifyCenter,
-        !!hasPermission && { marginBottom: insets.bottom },
-        !hasPermission && spacings.mbLg
-      ]}
+      contentContainerStyle={
+        permission === PermissionStatus.GRANTED
+          ? [
+              flexboxStyles.flex1,
+              flexboxStyles.alignCenter,
+              flexboxStyles.justifyCenter,
+              { marginBottom: insets.bottom }
+            ]
+          : [flexboxStyles.flex1, flexboxStyles.justifySpaceBetween]
+      }
     >
-      {!!hasPermission && (
+      {!permission && (
+        <View style={[flexboxStyles.center, spacings.mt]}>
+          <Spinner />
+        </View>
+      )}
+      {permission && permission === PermissionStatus.GRANTED && (
         <View>
           <View style={styles.cameraWrapper}>
             <View style={[styles.borderTopLeft]}>
@@ -153,40 +157,34 @@ const QRCodeScanner = ({ onScan }: Props) => {
         </View>
       )}
 
-      {hasPermission === false && (
+      {permission && permission !== PermissionStatus.GRANTED && (
         <>
-          <AmbireLogo />
-          <Text style={spacings.mbMi} fontSize={12}>
-            {t('The request for accessing the phone camera was denied.')}
-          </Text>
-          {Platform.OS === 'android' && (
+          <AmbireLogo shouldExpand={false} />
+          <View>
+            <Text style={spacings.mbMi} fontSize={12}>
+              {t('The request for accessing the phone camera was previously denied.')}
+            </Text>
+            {Platform.OS === 'ios' && (
+              <Text style={spacings.mbSm} fontSize={12}>
+                {t(
+                  "To enable camera access for Ambire, please follow these steps:\n\n1. Tap the 'Open Settings' button below.\n\n2. Toggle the switch next to 'Camera' to the right to allow Ambire to access your camera."
+                )}
+              </Text>
+            )}
+            {Platform.OS === 'android' && (
+              <Text fontSize={12}>
+                {t(
+                  "To enable camera access for Ambire, please follow these steps:\n\n1. Tap the 'Open Settings' button below..\n\n2. Tap 'Permissions' and toggle the switch next to 'Camera' to the right to allow Ambire to access your camera."
+                )}
+              </Text>
+            )}
             <Button
               style={spacings.mtSm}
               type="outline"
-              text={t('Request Camera Permission')}
-              onPress={requestCameraPermissionAgain}
+              text={t('Open Settings')}
+              onPress={handleGoToSettings}
             />
-          )}
-          {Platform.OS === 'ios' && (
-            <Text style={spacings.mbSm} fontSize={12}>
-              {t(
-                'To be able to scan the login QR code, go to: Settings/Ambire app and check Alow Camera Access.'
-              )}
-            </Text>
-          )}
-          {Platform.OS === 'android' && (
-            <Text fontSize={12}>
-              {t(
-                "Or if you've previously chosen don't ask again - to be able to scan the login QR code, first go to Settings. Then - select Ambire app from the list of installed apps. Finally, check alow camera access."
-              )}
-            </Text>
-          )}
-          <Button
-            style={spacings.mtSm}
-            type="outline"
-            text={t('Open Settings')}
-            onPress={handleGoToSettings}
-          />
+          </View>
         </>
       )}
     </Wrapper>

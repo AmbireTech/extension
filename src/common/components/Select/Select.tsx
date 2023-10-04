@@ -23,9 +23,11 @@ interface Props {
   setValue?: (value: any) => void
   label?: string
   extraText?: string
+  hasArrow?: boolean
+  disabled?: boolean
 }
 
-const Select = ({ value, setValue, items, label, extraText }: Props) => {
+const Select = ({ value, disabled, setValue, items, label, extraText, hasArrow = true }: Props) => {
   const [searchValue, setSearchValue] = useState('')
   const { t } = useTranslation()
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
@@ -54,16 +56,16 @@ const Select = ({ value, setValue, items, label, extraText }: Props) => {
           spacings.phTy,
           spacings.pvMi,
           commonStyles.borderRadiusPrimary,
-          { backgroundColor: _item.value === value ? colors.howl : 'transparent' }
+          { backgroundColor: _item.value === value ? colors.howl : 'transparent' },
+          { opacity: _item?.disabled ? 0.3 : 1 }
         ]}
         activeOpacity={0.6}
         onPress={onSelect}
+        disabled={_item?.disabled}
       >
         {!!_item.icon && _item.icon()}
         <View style={[flexboxStyles.flex1, spacings.phTy]}>
-          <Text style={flexboxStyles.flex1} numberOfLines={1}>
-            {_item.label}
-          </Text>
+          <Text numberOfLines={1}>{_item.label}</Text>
         </View>
         {_item.value === value && <CheckIcon />}
       </TouchableOpacity>
@@ -78,25 +80,30 @@ const Select = ({ value, setValue, items, label, extraText }: Props) => {
           Keyboard.dismiss()
           openBottomSheet()
         }}
+        disabled={disabled}
       >
         <View pointerEvents="none">
           <Input
             value={item?.label}
             leftIcon={item?.icon}
-            containerStyle={spacings.mbSm}
+            containerStyle={[spacings.mbSm, disabled && { opacity: 0.6 }]}
             button={
-              <View pointerEvents="none">
-                {!!extraText && (
-                  <View style={styles.extra}>
-                    <Text fontSize={12} color={colors.heliotrope}>
-                      {extraText}
-                    </Text>
-                  </View>
-                )}
-                <NavIconWrapper onPress={() => null}>
-                  <DownArrowIcon width={34} height={34} />
-                </NavIconWrapper>
-              </View>
+              hasArrow ? (
+                <View pointerEvents="none">
+                  {!!extraText && (
+                    <View style={styles.extra}>
+                      <Text fontSize={12} color={colors.heliotrope}>
+                        {extraText}
+                      </Text>
+                    </View>
+                  )}
+                  <NavIconWrapper onPress={() => null}>
+                    <DownArrowIcon width={34} height={34} />
+                  </NavIconWrapper>
+                </View>
+              ) : (
+                <></>
+              )
             }
           />
         </View>

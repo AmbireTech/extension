@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Keyboard, TouchableOpacity, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
@@ -9,7 +9,7 @@ import UnstoppableDomainIcon from '@common/assets/svg/UnstoppableDomainIcon'
 import Input, { InputProps } from '@common/components/Input'
 import Title from '@common/components/Title'
 import { isWeb } from '@common/config/env'
-import spacings, { DEVICE_HEIGHT, DEVICE_WIDTH, SPACING } from '@common/styles/spacings'
+import spacings from '@common/styles/spacings'
 import flexboxStyles from '@common/styles/utils/flexbox'
 import textStyles from '@common/styles/utils/text'
 
@@ -25,6 +25,16 @@ const RecipientInput: React.FC<Props> = ({ onChangeText, isValidUDomain, isValid
   const { t } = useTranslation()
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
 
+  const setValidationLabel = useMemo(() => {
+    if (isValidUDomain) {
+      return t('Valid Unstoppable domainsⓇ domain')
+    }
+    if (isValidEns) {
+      return t('Valid Ethereum Name ServicesⓇ domain')
+    }
+    return ''
+  }, [isValidUDomain, isValidEns, t])
+
   const handleOnScan = useCallback(
     (code: string) => {
       if (onChangeText) onChangeText(code)
@@ -38,12 +48,6 @@ const RecipientInput: React.FC<Props> = ({ onChangeText, isValidUDomain, isValid
     Keyboard.dismiss()
     openBottomSheet()
   }, [openBottomSheet])
-
-  // Wraps the container in order to fit the whole horizontal space available
-  const qrCodeScannerContainerStyle = {
-    width: DEVICE_WIDTH - SPACING * 2,
-    height: DEVICE_HEIGHT / 2
-  }
 
   return (
     <>
@@ -67,14 +71,13 @@ const RecipientInput: React.FC<Props> = ({ onChangeText, isValidUDomain, isValid
         }}
         onButtonPress={() => null}
         onChangeText={onChangeText}
+        validLabel={setValidationLabel}
         {...rest}
       />
       {!isWeb && (
         <BottomSheet id="add-token" sheetRef={sheetRef} closeBottomSheet={closeBottomSheet}>
           <Title style={textStyles.center}>{t('Scan recipient QR code')}</Title>
-          <View style={qrCodeScannerContainerStyle}>
-            <QRCodeScanner onScan={handleOnScan} />
-          </View>
+          <QRCodeScanner onScan={handleOnScan} />
         </BottomSheet>
       )}
     </>

@@ -54,16 +54,6 @@ const Recipient: React.FC<Props> = ({
     openBottomSheetAddrDisplay()
   }
 
-  const setValidationLabel = () => {
-    if (uDAddress) {
-      return t('Valid Unstoppable domainsⓇ domain')
-    }
-    if (ensAddress) {
-      return t('Valid Ethereum Name ServicesⓇ domain')
-    }
-    return ''
-  }
-
   return (
     <>
       <RecipientInput
@@ -75,7 +65,6 @@ const Recipient: React.FC<Props> = ({
           'Please double-check the recipient address, blockchain transactions are not reversible.'
         )}
         isValid={address.length > 1 && !addressValidationMsg && (!!uDAddress || !!ensAddress)}
-        validLabel={setValidationLabel()}
         error={address.length > 1 && addressValidationMsg}
         value={address}
         onChangeText={setAddress}

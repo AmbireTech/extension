@@ -4,6 +4,7 @@ import { Keyboard, TouchableWithoutFeedback, View } from 'react-native'
 
 import Button from '@common/components/Button'
 import Checkbox from '@common/components/Checkbox'
+import InputSendToken from '@common/components/InputSendToken'
 import NumberInput from '@common/components/NumberInput'
 import Panel from '@common/components/Panel'
 import Recipient from '@common/components/Recipient'
@@ -16,6 +17,8 @@ import spacings from '@common/styles/spacings'
 import commonStyles from '@common/styles/utils/common'
 import flexboxStyles from '@common/styles/utils/flexbox'
 import textStyles from '@common/styles/utils/text'
+
+import styles from './styles'
 
 interface Props {
   isHidden: boolean
@@ -81,19 +84,6 @@ const SendForm = ({
 }: Props) => {
   const { t } = useTranslation()
 
-  const amountLabel = (
-    <View style={[flexboxStyles.directionRow, spacings.mbMi]}>
-      <Text style={spacings.mr}>{t('Available Amount:')}</Text>
-
-      <View style={[flexboxStyles.directionRow, flexboxStyles.flex1]}>
-        <Text numberOfLines={1} style={{ flex: 1, textAlign: 'right' }} ellipsizeMode="tail">
-          {maxAmount}
-        </Text>
-        {!!selectedAsset && <Text>{` ${selectedAsset?.symbol}`}</Text>}
-      </View>
-    </View>
-  )
-
   return (
     <TouchableWithoutFeedback
       onPress={() => {
@@ -113,17 +103,16 @@ const SendForm = ({
                 setValue={setAsset}
               />
             </View>
-            {amountLabel}
-            <NumberInput
-              onChangeText={onAmountChange}
-              containerStyle={spacings.mbTy}
-              value={amount.toString()}
-              button={t('MAX')}
-              placeholder={t('0')}
-              onButtonPress={setMaxAmount}
-              error={
-                validationFormMgs.messages?.amount ? validationFormMgs.messages.amount : undefined
-              }
+            <InputSendToken
+              amount={amount}
+              selectedAssetBalanceUSD={selectedAsset?.balanceUSD}
+              selectedAssetBalance={selectedAsset?.balance}
+              selectedAssetDecimals={selectedAsset?.decimals}
+              selectedAssetSymbol={selectedAsset?.symbol}
+              maxAmount={maxAmount}
+              errorMessage={validationFormMgs?.messages?.amount}
+              onAmountChange={onAmountChange}
+              setMaxAmount={setMaxAmount}
             />
             <Recipient
               setAddress={setAddress}

@@ -1,16 +1,14 @@
 import { StyleSheet, TextStyle, ViewStyle } from 'react-native'
 
-import colors from '@common/styles/colors'
+import { isWeb } from '@common/config/env'
+import { FONT_FAMILIES } from '@common/hooks/useFonts'
 import spacings from '@common/styles/spacings'
 
 interface Style {
   inputContainer: ViewStyle
   inputWrapper: ViewStyle
   input: ViewStyle
-  focused: ViewStyle
   button: ViewStyle
-  error: ViewStyle
-  valid: ViewStyle
   infoText: TextStyle
   errorText: TextStyle
   validText: TextStyle
@@ -25,30 +23,17 @@ const styles = StyleSheet.create<Style>({
   },
   inputWrapper: {
     flexDirection: 'row',
-    backgroundColor: colors.howl,
     borderBottomWidth: 2,
-    borderBottomColor: colors.howl,
-    height: 50
+    height: 56
   },
   input: {
     // Centers the content (used because of the borderBottomWidth)
-    paddingTop: 2,
-    backgroundColor: colors.howl,
-    color: colors.titan,
+    paddingTop: 4,
     fontSize: 16,
-    fontFamily: 'Poppins_300Light',
+    fontFamily: isWeb ? FONT_FAMILIES.MEDIUM : FONT_FAMILIES.LIGHT,
     flex: 1,
-    height: 48,
+    height: 54,
     ...spacings.phTy
-  },
-  focused: {
-    borderBottomColor: colors.titan
-  },
-  error: {
-    borderBottomColor: colors.pink
-  },
-  valid: {
-    borderBottomColor: colors.turquoise
   },
   infoText: {
     opacity: 0.5,

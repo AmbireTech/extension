@@ -10,12 +10,13 @@ import { useTranslation } from '@common/config/localization'
 import useNavigation from '@common/hooks/useNavigation'
 import usePrivateMode from '@common/hooks/usePrivateMode'
 import AddOrHideToken from '@common/modules/dashboard/components/AddOrHideToken'
-import { ROUTES } from '@common/modules/router/config/routesConfig'
+import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexboxStyles from '@common/styles/utils/flexbox'
 import textStyles from '@common/styles/utils/text'
 
 import TokensListLoader from '../Loaders/TokensListLoader'
+import Rewards from '../Rewards'
 import TokenItem from './TokenItem'
 
 interface Props {
@@ -68,9 +69,9 @@ const Tokens = ({
   )
 
   const emptyState = (
-    <View style={[spacings.phLg, spacings.mbSm, flexboxStyles.center]}>
-      <Text style={[spacings.mbSm, textStyles.center]}>
-        {t("Welcome! You don't have any funds on this account.")}
+    <View style={[spacings.phLg, spacings.pvTy, spacings.mbMi, flexboxStyles.center]}>
+      <Text style={[spacings.mb, textStyles.center]}>
+        {t("Welcome! You don't have any funds on this network.")}
       </Text>
       <Button
         style={{
@@ -88,6 +89,8 @@ const Tokens = ({
       {!!isCurrNetworkBalanceLoading && <TokensListLoader />}
 
       {!!shouldShowEmptyState && emptyState}
+
+      {!isCurrNetworkBalanceLoading && <Rewards />}
 
       {!isCurrNetworkBalanceLoading &&
         !shouldShowEmptyState &&
@@ -113,10 +116,9 @@ const Tokens = ({
         )}
 
       <AddOrHideToken
-        tokens={tokens}
+        tokens={sortedTokens}
         networkId={networkId}
         networkName={networkName}
-        selectedAcc={selectedAcc}
         extraTokens={extraTokens}
         hiddenTokens={hiddenTokens}
         onAddExtraToken={onAddExtraToken}

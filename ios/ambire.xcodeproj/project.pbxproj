@@ -13,6 +13,7 @@
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
 		B18059E884C0ABDD17F3DC3D /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAC715A2D49A985799AEE119 /* ExpoModulesProvider.swift */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
+		D411E7D229F0112E005E3802 /* EthereumProvider.js in Resources */ = {isa = PBXBuildFile; fileRef = D4902BD429EFDA7100C8F26F /* EthereumProvider.js */; };
 		DCC2FAFED60C43045CA20CB2 /* libPods-ambire.a in Frameworks */ = {isa = PBXBuildFile; fileRef = F02FAC98B93BE0CE693E15CA /* libPods-ambire.a */; };
 /* End PBXBuildFile section */
 
@@ -28,6 +29,7 @@
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = ambire/SplashScreen.storyboard; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
 		C1FFD9000F7B8283AAE8F4F7 /* Pods-ambire.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ambire.debug.xcconfig"; path = "Target Support Files/Pods-ambire/Pods-ambire.debug.xcconfig"; sourceTree = "<group>"; };
+		D4902BD429EFDA7100C8F26F /* EthereumProvider.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = EthereumProvider.js; sourceTree = "<group>"; };
 		DB6B54968DEBEA8C22CFA296 /* Pods-ambire.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ambire.release.xcconfig"; path = "Target Support Files/Pods-ambire/Pods-ambire.release.xcconfig"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F02FAC98B93BE0CE693E15CA /* libPods-ambire.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-ambire.a"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -81,6 +83,7 @@
 		83CBB9F61A601CBA00E9B192 = {
 			isa = PBXGroup;
 			children = (
+				D4902BD429EFDA7100C8F26F /* EthereumProvider.js */,
 				13B07FAE1A68108700A75B9A /* ambire */,
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
@@ -197,6 +200,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D411E7D229F0112E005E3802 /* EthereumProvider.js in Resources */,
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,

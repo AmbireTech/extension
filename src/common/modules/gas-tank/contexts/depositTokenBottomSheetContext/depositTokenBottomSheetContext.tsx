@@ -12,13 +12,12 @@ import { useModalize } from 'react-native-modalize'
 
 import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
-import NumberInput from '@common/components/NumberInput'
+import InputSendToken from '@common/components/InputSendToken'
 import Text from '@common/components/Text'
 import Title from '@common/components/Title'
 import TokenIcon from '@common/components/TokenIcon'
 import { useTranslation } from '@common/config/localization'
 import spacings from '@common/styles/spacings'
-import flexboxStyles from '@common/styles/utils/flexbox'
 import textStyles from '@common/styles/utils/text'
 
 import styles from './styles'
@@ -32,6 +31,7 @@ type DepositTokenBottomSheetContextProps = {
   selectedAcc: UseAccountsReturnType['selectedAcc']
   addRequest: any
   addToast: UseToastsReturnType['addToast']
+  closeBottomSheetTopUp: () => any
 }
 
 type DepositTokenBottomSheetContextData = {
@@ -48,7 +48,8 @@ const DepositTokenBottomSheetProvider = ({
   networkId,
   chainId,
   addRequest,
-  addToast
+  addToast,
+  closeBottomSheetTopUp
 }: DepositTokenBottomSheetContextProps) => {
   const { t } = useTranslation()
 
@@ -121,25 +122,22 @@ const DepositTokenBottomSheetProvider = ({
       // Timeout of 400ms because of the animated transition between screens (addRequest opens PendingTransactions screen)
       setTimeout(() => {
         closeBottomSheet()
+        closeBottomSheetTopUp()
       }, 400)
     } catch (e: any) {
       console.error(e)
       addToast(`Error: ${e.message || e}`, { error: true })
     }
-  }, [selectedAcc, token, bigNumberHexAmount, chainId, addRequest, addToast, closeBottomSheet])
-
-  const amountLabel = (
-    <View style={[flexboxStyles.directionRow, spacings.mbMi]}>
-      <Text style={spacings.mr}>{t('Available Amount:')}</Text>
-
-      <View style={[flexboxStyles.directionRow, flexboxStyles.flex1]}>
-        <Text numberOfLines={1} style={{ flex: 1, textAlign: 'right' }} ellipsizeMode="tail">
-          {maxAmount}
-        </Text>
-        {!!token && <Text>{` ${token?.symbol}`}</Text>}
-      </View>
-    </View>
-  )
+  }, [
+    selectedAcc,
+    token,
+    bigNumberHexAmount,
+    chainId,
+    addRequest,
+    addToast,
+    closeBottomSheet,
+    closeBottomSheetTopUp
+  ])
 
   return (
     <DepositTokenBottomSheetContext.Provider
@@ -154,6 +152,7 @@ const DepositTokenBottomSheetProvider = ({
       <BottomSheet
         id="deposit-token-bottom-sheet"
         sheetRef={sheetRef}
+        withOverlay
         closeBottomSheet={() => {
           closeBottomSheet()
           setToken(null)
@@ -174,20 +173,22 @@ const DepositTokenBottomSheetProvider = ({
                 />
               </View>
               <Text fontSize={16} numberOfLines={1}>
-                {token.symbol}
+                {token.symbol.toUpperCase()}
               </Text>
             </View>
-            {amountLabel}
-            <NumberInput
-              onChangeText={onAmountChange}
-              containerStyle={spacings.mb}
-              value={amount.toString()}
-              button={t('MAX')}
-              placeholder={t('0')}
-              onButtonPress={setMaxAmount}
-              error={isValidSendTransferAmount.message}
+            <InputSendToken
+              selectedAssetBalance={token.balance}
+              selectedAssetBalanceUSD={token.balanceUSD}
+              selectedAssetDecimals={token.decimals}
+              selectedAssetSymbol={token.symbol}
+              onAmountChange={onAmountChange}
+              setMaxAmount={setMaxAmount}
+              amount={+amount}
+              maxAmount={maxAmount}
+              errorMessage={isValidSendTransferAmount.message}
             />
             <Button
+              style={spacings.mt}
               text={t('Send')}
               disabled={!amount || !isValidSendTransferAmount.success}
               onPress={handleDepositToken}

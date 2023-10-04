@@ -1,4 +1,5 @@
 import React from 'react'
+import { View } from 'react-native'
 
 import Text from '@common/components/Text'
 import CONFIG, {
@@ -18,7 +19,7 @@ const AppVersion: React.FC = () => {
   const { t } = useTranslation()
 
   return (
-    <>
+    <View style={spacings.mbLg}>
       <Text style={styles.text} fontSize={10}>
         {t('Ambire v{{APP_VERSION}}', { APP_VERSION })}
       </Text>
@@ -41,7 +42,7 @@ const AppVersion: React.FC = () => {
       <Text style={[styles.text, spacings.mbTy]} fontSize={10}>
         {t('{{APP_ENV}} env', { APP_ENV: CONFIG.APP_ENV })}
       </Text>
-    </>
+    </View>
   )
 }
 

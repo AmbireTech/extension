@@ -8,20 +8,20 @@ module.exports = {
     'no-underscore-dangle': 'off'
   },
   env: {
-    "browser": true,
-    "node": true
+    browser: true,
+    node: true
   },
   parserOptions: {
     project: './tsconfig.json'
   },
-  'globals': {
-    'process': 'readonly',
-    'chrome': 'readonly',
-    'injectWeb3': 'readonly',
-    'browser': 'readonly',
-    '__dirname': 'readonly',
-    'chromeTargetConfig': 'writable',
-    'firefoxTargetConfig': 'writable',
-    'Web3': true
+  globals: {
+    process: 'readonly',
+    chrome: 'readonly',
+    injectWeb3: 'readonly',
+    browser: 'readonly',
+    __dirname: 'readonly',
+    chromeTargetConfig: 'writable',
+    firefoxTargetConfig: 'writable',
+    Web3: true
   }
 }

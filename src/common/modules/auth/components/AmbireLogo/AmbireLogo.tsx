@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { Image, TouchableWithoutFeedback, View } from 'react-native'
 
 import logo from '@common/assets/images/Ambire-Wallet-logo-colored-white-vertical.png'
+import AmbireLogoHorizontal from '@common/components/AmbireLogoHorizontal'
 import AppVersion from '@common/components/AppVersion'
 import { isWeb } from '@common/config/env'
 import spacings, { IS_SCREEN_SIZE_S } from '@common/styles/spacings'
@@ -22,15 +23,7 @@ const AmbireLogo = ({ shouldExpand = true, isResponsive = true }: Props) => {
   return (
     <View style={[styles.logoWrapper, shouldExpand && flexboxStyles.flex1]}>
       <TouchableWithoutFeedback onPress={handleOnLogoPress}>
-        <Image
-          source={logo}
-          style={{
-            height: isResponsive && IS_SCREEN_SIZE_S ? 96 : 136,
-            width: 120,
-            ...(isWeb ? { modalHeight: 120 } : {})
-          }}
-          resizeMode="contain"
-        />
+        <AmbireLogoHorizontal width={132} height={60} />
       </TouchableWithoutFeedback>
       {tapCount >= 7 && (
         <View style={[styles.logoWrapper, spacings.pb0]}>

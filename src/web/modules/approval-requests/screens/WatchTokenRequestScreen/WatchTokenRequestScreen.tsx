@@ -11,16 +11,16 @@ import Text from '@common/components/Text'
 import Title from '@common/components/Title'
 import Wrapper from '@common/components/Wrapper'
 import { Trans, useTranslation } from '@common/config/localization'
-import useExtensionApproval from '@common/hooks/useExtensionApproval'
 import useNetwork from '@common/hooks/useNetwork'
 import usePortfolio from '@common/hooks/usePortfolio'
 import useToken from '@common/hooks/useToken'
-import TokenItem from '@common/modules/dashboard/components/AddOrHideToken/TokenItem'
+import TokenItem from '@common/modules/dashboard/components/AddOrHideToken/HideTokenListItem'
 import colors from '@common/styles/colors'
 import spacings from '@common/styles/spacings'
 import flexboxStyles from '@common/styles/utils/flexbox'
 import textStyles from '@common/styles/utils/text'
 import ManifestImage from '@web/components/ManifestImage'
+import useApproval from '@web/hooks/useApproval'
 
 import styles from './styles'
 
@@ -31,8 +31,8 @@ const WatchTokenRequestScreen = () => {
   const [extraToken, setExtraToken] = useState<Token | null>(null)
   const [isAdding, setIsAdding] = useState(false)
   const { network } = useNetwork()
-  const { approval, resolveApproval, rejectApproval } = useExtensionApproval()
-  const { onAddExtraToken, checkIsTokenEligibleForAddingAsExtraToken } = usePortfolio()
+  const { approval, resolveApproval, rejectApproval } = useApproval()
+  const { onAddExtraToken, checkIsTokenEligibleForAddingAsExtraToken, extraTokens } = usePortfolio()
   const { getTokenDetails } = useToken()
   const [tokenEligibleStatus, setTokenEligibleStatus] = useState<
     ReturnType<UsePortfolioReturnType['checkIsTokenEligibleForAddingAsExtraToken']>
@@ -65,7 +65,7 @@ const WatchTokenRequestScreen = () => {
             })
           )
 
-        setTokenEligibleStatus(checkIsTokenEligibleForAddingAsExtraToken(token))
+        setTokenEligibleStatus(checkIsTokenEligibleForAddingAsExtraToken(token, extraTokens))
       } catch {
         setLoadingTokenDetails(false)
         setError(

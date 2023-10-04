@@ -21,12 +21,12 @@ const CheckIcon: React.FC<Props> = ({ width = 18, height = 18, color }) => (
       <Path
         d="M.964,11.679A.964.964,0,0,1,0,10.714V.964a.964.964,0,0,1,1.929,0v9.75A.964.964,0,0,1,.964,11.679Z"
         transform="translate(11.44 0) rotate(45)"
-        fill="#fff"
+        fill={colors.titan}
       />
       <Path
         d="M.964,6.429A.964.964,0,0,1,0,5.464V.964a.964.964,0,0,1,1.929,0v4.5A.964.964,0,0,1,.964,6.429Z"
         transform="translate(0 5.076) rotate(-45)"
-        fill="#fff"
+        fill={colors.titan}
       />
     </G>
   </Svg>

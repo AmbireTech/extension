@@ -24,7 +24,7 @@ import useAmbireExtension from '@common/hooks/useAmbireExtension'
 import useNavigation from '@common/hooks/useNavigation'
 import usePrivateMode from '@common/hooks/usePrivateMode'
 import useRelayerData from '@common/hooks/useRelayerData'
-import { ROUTES } from '@common/modules/router/config/routesConfig'
+import { ROUTES } from '@common/modules/router/constants/common'
 import { triggerLayoutAnimation } from '@common/services/layoutAnimation'
 import colors from '@common/styles/colors'
 import spacings from '@common/styles/spacings'
@@ -37,28 +37,24 @@ import styles from './styles'
 const networkDetails = (network: any) => networks.find(({ id }) => id === network)
 
 interface Props {
-  balanceTruncated: any
-  balanceDecimals: any
-  otherBalances: UsePortfolioReturnType['otherBalances']
+  allBalances: UsePortfolioReturnType['allBalances']
   networkId?: NetworkId
   account: UseAccountsReturnType['selectedAcc']
   setNetwork: (networkIdentifier: string | number) => void
   isLoading: boolean
   isCurrNetworkBalanceLoading: boolean
-  otherBalancesLoading: boolean
+  allBalancesLoading: boolean
 }
 
 const relayerURL = CONFIG.RELAYER_URL
 
 const Balances = ({
-  balanceTruncated,
-  balanceDecimals,
-  otherBalances,
+  allBalances,
   networkId,
   account,
   isLoading,
   isCurrNetworkBalanceLoading,
-  otherBalancesLoading,
+  allBalancesLoading,
   setNetwork
 }: Props) => {
   const { t } = useTranslation()
@@ -103,10 +99,24 @@ const Balances = ({
     triggerLayoutAnimation()
   }, [networkId])
 
-  const otherPositiveBalances = otherBalances
-    .filter(({ network, total }: any) => network !== networkId && total.full > 0)
-    // Exclude displaying balances for networks we don't support
-    .filter(({ network }) => !!networkDetails(network))
+  const allPositiveBalances = useMemo(
+    () =>
+      allBalances
+        .filter(({ total }: any) => total.full > 0)
+        // Exclude displaying balances for networks we don't support
+        .filter(({ network }) => !!networkDetails(network)),
+    [allBalances]
+  )
+
+  const totalBalance = useMemo(() => {
+    let balance = 0
+    allPositiveBalances.forEach(({ total }) => {
+      balance += Number(total.full)
+    })
+    balance += Number(balanceLabel)
+
+    return balance
+  }, [allPositiveBalances, balanceLabel])
 
   const handleGoToSend = useCallback(() => navigate(ROUTES.send), [navigate])
   const handleGoToReceive = useCallback(() => navigate(ROUTES.receive), [navigate])
@@ -171,10 +181,10 @@ const Balances = ({
           ) : (
             <>
               <Text fontSize={42} weight="regular">
-                {balanceTruncated}
+                {Number(totalBalance.toFixed(2).split('.')[0]).toLocaleString('en-US')}
               </Text>
               <Text fontSize={26} weight="regular">
-                .{balanceDecimals}
+                .{Number(totalBalance.toFixed(2).split('.')[1])}
               </Text>
             </>
           )}
@@ -195,7 +205,7 @@ const Balances = ({
             >
               {t('Send')}
             </Text>
-            <SendIcon width={22} height={22} style={styles.buttonIcon} />
+            <SendIcon width={12.954} height={9.559} style={styles.buttonIcon} />
           </View>
         </Button>
         <Button
@@ -216,16 +226,16 @@ const Balances = ({
         </Button>
       </View>
 
-      {otherBalancesLoading && !isWeb ? (
+      {allBalancesLoading && !isWeb ? (
         <View style={spacings.mb}>
           <Spinner />
         </View>
       ) : (
-        otherPositiveBalances.length > 0 &&
+        allPositiveBalances.length > 0 &&
         !isWeb && (
           <View style={spacings.mb}>
-            <Text style={[textStyles.center, spacings.mbTy]}>{t('You also have')}</Text>
-            {otherPositiveBalances.map(({ network, total }: any) => {
+            <Text style={[textStyles.center, spacings.mbTy]}>{t('You have')}</Text>
+            {allPositiveBalances.map(({ network, total }: any) => {
               const { chainId, name, id }: any = networkDetails(network)
 
               const onNetworkChange = () => {
@@ -237,7 +247,7 @@ const Balances = ({
                 <TouchableOpacity
                   key={chainId}
                   onPress={onNetworkChange}
-                  style={styles.otherBalancesContainer}
+                  style={styles.allBalancesContainer}
                 >
                   <Text numberOfLines={1} style={flexboxStyles.flex1}>
                     <Text style={textStyles.highlightPrimary}>{'$ '}</Text>
@@ -251,7 +261,7 @@ const Balances = ({
             })}
             <TouchableOpacity
               onPress={handleGoToGasTank}
-              style={[styles.otherBalancesContainer, { borderBottomWidth: 0 }]}
+              style={[styles.allBalancesContainer, { borderBottomWidth: 0 }]}
             >
               {!!data && (
                 <Text numberOfLines={1} style={flexboxStyles.flex1}>

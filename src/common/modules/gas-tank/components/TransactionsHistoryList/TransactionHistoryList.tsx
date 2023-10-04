@@ -1,11 +1,10 @@
-import { NetworkId } from 'ambire-common/src/constants/networks'
-import { UseAccountsReturnType } from 'ambire-common/src/hooks/useAccounts'
+import { NetworkId, NetworkType } from 'ambire-common/src/constants/networks'
 import React from 'react'
 import { View } from 'react-native'
 
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import Text from '@common/components/Text'
-import { Trans, useTranslation } from '@common/config/localization'
+import { useTranslation } from '@common/config/localization'
 import colors from '@common/styles/colors'
 import spacings from '@common/styles/spacings'
 import flexboxStyles from '@common/styles/utils/flexbox'
@@ -18,21 +17,21 @@ interface Props {
   feeAssetsRes: any[]
   explorerUrl: string
   networkId?: NetworkId
+  networkName?: NetworkType['name']
 }
 
 const TransactionHistoryList = ({
   gasTankFilledTxns,
   feeAssetsRes,
   explorerUrl,
-  networkId
+  networkId,
+  networkName
 }: Props) => {
   const { t } = useTranslation()
 
   return (
     <View>
-      <Text style={spacings.mbSm} fontSize={12}>
-        {t('Gas Tank top ups history')}
-      </Text>
+      <Text style={spacings.mbSm}>{t('Gas Tank top ups history')}</Text>
       <View style={[flexboxStyles.directionRow, spacings.mbTy]}>
         <InfoIcon color={colors.mustard} />
         <Text fontSize={11} style={[flexboxStyles.flex1, spacings.plTy]} color={colors.mustard}>
@@ -54,8 +53,8 @@ const TransactionHistoryList = ({
       {!gasTankFilledTxns.length && (
         <View style={spacings.pvSm}>
           <Text fontSize={12} style={[spacings.phSm, textStyles.center]}>
-            {t('No top ups were made via Gas Tank on {{network}}.', {
-              network: networkId?.toLocaleUpperCase()
+            {t('No top ups were made via Gas Tank on {{networkName}}.', {
+              networkName
             })}
           </Text>
         </View>

@@ -1,4 +1,4 @@
-import { ROUTES } from '@common/modules/router/config/routesConfig'
+import { ROUTES } from '@common/modules/router/constants/common'
 import { useNavigationState } from '@react-navigation/native'
 
 const defaultRoute: string = ROUTES.dashboard

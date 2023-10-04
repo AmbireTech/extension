@@ -7,12 +7,16 @@ import Button from '@common/components/Button'
 import Input from '@common/components/Input'
 import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
+import useTheme from '@common/hooks/useTheme'
 import useEmailLogin from '@common/modules/auth/hooks/useEmailLogin'
+import colors from '@common/styles/colors'
 import spacings from '@common/styles/spacings'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 import { delayPromise } from '@common/utils/promises'
 
-const EmailLoginScreen = () => {
+const EmailLoginForm: React.FC<any> = () => {
   const { t } = useTranslation()
+  const { themeType } = useTheme()
   const {
     control,
     handleSubmit,
@@ -93,7 +97,7 @@ const EmailLoginScreen = () => {
         disabled={
           (!!requiresEmailConfFor && !pendingLoginAccount) || isSubmitting || !watch('email', '')
         }
-        type="outline"
+        type="primary"
         text={
           // eslint-disable-next-line no-nested-ternary
           requiresEmailConfFor && !pendingLoginAccount
@@ -108,10 +112,15 @@ const EmailLoginScreen = () => {
         onPress={handleFormSubmit}
       />
       {!!requiresEmailConfFor && (
-        <Button type="ghost" text={t('Cancel Login Attempt')} onPress={handleCancelLoginAttempts} />
+        <Button
+          type={themeType === THEME_TYPES.LIGHT ? 'outline' : 'ghost'}
+          accentColor={themeType === THEME_TYPES.LIGHT ? colors.howl : undefined}
+          text={t('Cancel Login Attempt')}
+          onPress={handleCancelLoginAttempts}
+        />
       )}
     </>
   )
 }
 
-export default EmailLoginScreen
+export default EmailLoginForm

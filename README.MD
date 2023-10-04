@@ -173,4 +173,4 @@ When releasing a new version, here are the steps:
 
    iOS: Change the key `EXUpdatesRuntimeVersion` in the `Expo.plist` file
 
-   Android: Change the `<meta-data>` element with `expo.modules.updates.EXPO_RUNTIME_VERSION` attribute in AndroidManifest.xml file
+   Android: Change the `expo_runtime_version` string in the strings.xml file

@@ -1,13 +1,12 @@
 import usePrevious from 'ambire-common/src/hooks/usePrevious'
-import React, { useEffect, useLayoutEffect } from 'react'
+import React, { useContext, useEffect, useLayoutEffect } from 'react'
 import { View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
-import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
 import GradientBackgroundWrapper from '@common/components/GradientBackgroundWrapper'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
+import Title from '@common/components/Title'
 import Wrapper, { WRAPPER_TYPES } from '@common/components/Wrapper'
 import CONFIG from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
@@ -20,32 +19,33 @@ import FeeSelector from '@common/modules/pending-transactions/components/FeeSele
 import SignActions from '@common/modules/pending-transactions/components/SignActions'
 import SigningWithAccount from '@common/modules/pending-transactions/components/SigningWithAccount'
 import TransactionSummary from '@common/modules/pending-transactions/components/TransactionSummary'
-import useSendTransaction from '@common/modules/pending-transactions/hooks/useSendTransaction'
+import { PendingTransactionsContext } from '@common/modules/pending-transactions/contexts/pendingTransactionsContext'
+import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexboxStyles from '@common/styles/utils/flexbox'
+import text from '@common/styles/utils/text'
 import isInt from '@common/utils/isInt'
-import HardwareWalletSelectConnection from '@mobile/modules/hardware-wallet/components/HardwareWalletSelectConnection'
 import { getUiType } from '@web/utils/uiType'
 
 const relayerURL = CONFIG.RELAYER_URL
 
-const PendingTransactionsScreen = () => {
+const PendingTransactionsScreen = ({
+  isInBottomSheet,
+  closeBottomSheet
+}: {
+  isInBottomSheet?: boolean
+  closeBottomSheet?: (dest?: 'default' | 'alwaysOpen' | undefined) => void
+}) => {
   const { t } = useTranslation()
   const navigation = useNavigation()
   const { setSendTxnState, sendTxnState, resolveMany, everythingToSign } = useRequests()
   const { account } = useAccounts()
   const { network } = useNetwork()
   const { currentAccGasTankState } = useGasTank()
-  const {
-    ref: hardwareWalletSheetRef,
-    open: hardwareWalletOpenBottomSheet,
-    close: hardwareWalletCloseBottomSheet
-  } = useModalize()
 
-  if (getUiType().isNotification) {
-    navigation.navigate = () => null
-    navigation.goBack = () => null
-  }
+  const { transaction, preventNavToDashboard, rejectTxnOpenBottomSheet } = useContext(
+    PendingTransactionsContext
+  )
 
   const {
     bundle,
@@ -60,18 +60,27 @@ const PendingTransactionsScreen = () => {
     setFeeSpeed,
     approveTxn,
     rejectTxnReplace,
+    setSigningStatus,
     setReplaceTx
-  } = useSendTransaction({
-    hardwareWalletOpenBottomSheet
-  })
+  } = transaction
+
+  if (getUiType().isNotification) {
+    navigation.navigate = () => null
+    navigation.goBack = () => null
+  }
 
   const prevBundle: any = usePrevious(bundle)
 
   useLayoutEffect(() => {
-    navigation?.setOptions({
-      headerTitle: t('Pending Transactions: {{numTxns}}', { numTxns: bundle?.txns?.length })
-    })
-  }, [navigation, bundle?.txns?.length, t])
+    if (!isInBottomSheet) {
+      navigation?.setOptions({
+        headerTitle: t('Pending Transactions: {{numTxns}}', { numTxns: bundle?.txns?.length }),
+        withHeaderRight: true,
+        hideHeaderLeft: true,
+        onRightHeaderPress: rejectTxnOpenBottomSheet
+      })
+    }
+  }, [navigation, bundle?.txns?.length, t, isInBottomSheet, rejectTxnOpenBottomSheet])
 
   useEffect(() => {
     return () => {
@@ -84,11 +93,17 @@ const PendingTransactionsScreen = () => {
         })
       }
     }
-  }, [everythingToSign, resolveMany, sendTxnState.showing, setSendTxnState, t])
+  }, [everythingToSign, resolveMany, sendTxnState.showing, setSendTxnState, t, isInBottomSheet])
 
   useEffect(() => {
     if (prevBundle?.txns?.length && !bundle?.txns?.length) {
-      navigation?.goBack()
+      if (isInBottomSheet) {
+        !!closeBottomSheet && closeBottomSheet()
+      } else if (!preventNavToDashboard.current) {
+        navigation.navigate(ROUTES.dashboard)
+      } else {
+        navigation.goBack()
+      }
     }
   })
 
@@ -103,9 +118,20 @@ const PendingTransactionsScreen = () => {
       </GradientBackgroundWrapper>
     )
 
+  const GradientWrapper = isInBottomSheet ? React.Fragment : GradientBackgroundWrapper
+
   return (
-    <GradientBackgroundWrapper>
-      <Wrapper type={WRAPPER_TYPES.KEYBOARD_AWARE_SCROLL_VIEW} extraHeight={190}>
+    <GradientWrapper>
+      <Wrapper
+        type={WRAPPER_TYPES.KEYBOARD_AWARE_SCROLL_VIEW}
+        extraHeight={190}
+        style={isInBottomSheet && spacings.ph0}
+      >
+        {isInBottomSheet && (
+          <Title style={text.center}>
+            {t('Pending Transactions: {{numTxns}}', { numTxns: bundle?.txns?.length })}
+          </Title>
+        )}
         <SigningWithAccount />
         <TransactionSummary bundle={bundle} estimation={estimation} />
         {!!canProceed && (
@@ -160,8 +186,11 @@ const PendingTransactionsScreen = () => {
               </Text>
             ) : (
               <SignActions
+                isInBottomSheet={isInBottomSheet}
+                closeBottomSheet={closeBottomSheet}
                 bundle={bundle}
                 mustReplaceNonce={mustReplaceNonce}
+                setSigningStatus={setSigningStatus}
                 replaceTx={replaceTx}
                 setReplaceTx={setReplaceTx}
                 estimation={estimation}
@@ -175,23 +204,8 @@ const PendingTransactionsScreen = () => {
             )}
           </>
         )}
-        <BottomSheet
-          id="pending-transactions-hardware-wallet"
-          sheetRef={hardwareWalletSheetRef}
-          closeBottomSheet={() => {
-            hardwareWalletCloseBottomSheet()
-          }}
-        >
-          <HardwareWalletSelectConnection
-            onSelectDevice={(device: any) => {
-              approveTxn({ device })
-              hardwareWalletCloseBottomSheet()
-            }}
-            shouldWrap={false}
-          />
-        </BottomSheet>
       </Wrapper>
-    </GradientBackgroundWrapper>
+    </GradientWrapper>
   )
 }
 

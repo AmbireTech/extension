@@ -40,11 +40,11 @@ function getBalance(token: any) {
 }
 
 const WalletDiscountBanner = ({
+  t,
   assetsItems,
   tokens,
   estimation,
   setCurrency,
-  navigate,
   feeSpeed,
   isGasTankEnabled,
   network
@@ -61,7 +61,7 @@ const WalletDiscountBanner = ({
       (x) =>
         DISCOUNT_TOKENS_SYMBOLS.includes(x.symbol) &&
         x.discount &&
-        isTokenEligible(x, feeSpeed, estimation, isGasTankEnabled, network)
+        isTokenEligible(x, feeSpeed, estimation, x.isGasTankToken, network)
     )
     .sort(
       (a, b) =>
@@ -147,7 +147,7 @@ const FeeSelector = ({
 
   useEffect(() => {
     if (currency) {
-      const tokens = estimation.remainingFeeTokenBalances || [
+      const tokens = estimation?.remainingFeeTokenBalances || [
         { symbol: network.nativeAssetSymbol, decimals: 18 }
       ]
       const token = tokens.find(({ symbol }: any) => symbol === currency)
@@ -175,7 +175,13 @@ const FeeSelector = ({
     const insufficientFee =
       estimation &&
       estimation.feeInUSD &&
-      !isTokenEligible(estimation.selectedFeeToken, feeSpeed, estimation, isGasTankEnabled, network)
+      !isTokenEligible(
+        estimation.selectedFeeToken,
+        feeSpeed,
+        estimation,
+        !!estimation.selectedFeeToken.isGasTankToken,
+        network
+      )
     if (estimation && !estimation.success)
       return (
         <Text appearance="danger" fontSize={14}>
@@ -207,51 +213,63 @@ const FeeSelector = ({
       )
     }
 
-    const { nativeAssetSymbol } = network
-    const gasTankTokens = estimation.gasTank?.map(
-      mapGasTankTokens(estimation.nativeAssetPriceInUSD)
-    )
+    estimation.gasTank?.map(mapGasTankTokens(estimation.nativeAssetPriceInUSD))
 
-    const tokens =
-      isGasTankEnabled && gasTankTokens?.length
-        ? gasTankTokens
-        : // fallback to the native asset if fee tokens cannot be retrieved for whatever reason
-          estimation.remainingFeeTokenBalances || [
-            {
-              symbol: nativeAssetSymbol,
-              decimals: 18,
-              address: '0x0000000000000000000000000000000000000000'
-            }
-          ]
+    const { nativeAssetSymbol } = network
+    const tokens = estimation.remainingFeeTokenBalances || [
+      {
+        symbol: nativeAssetSymbol,
+        decimals: 18,
+        address: '0x0000000000000000000000000000000000000000'
+      }
+    ]
 
     const assetsItems = tokens
       .sort(
         (a: any, b: any) =>
-          isTokenEligible(b, SPEEDS[0], estimation, isGasTankEnabled, network) -
-            isTokenEligible(a, SPEEDS[0], estimation, isGasTankEnabled, network) ||
+          isTokenEligible(b, SPEEDS[0], estimation, !!b.isGasTankToken, network) -
+            isTokenEligible(a, SPEEDS[0], estimation, !!a.isGasTankToken, network) ||
           DISCOUNT_TOKENS_SYMBOLS.indexOf(b.symbol) - DISCOUNT_TOKENS_SYMBOLS.indexOf(a.symbol) ||
           (b.discount || 0) - (a.discount || 0) ||
           a?.symbol.toUpperCase().localeCompare(b?.symbol.toUpperCase())
       )
-      .map(({ address, label, symbol, discount, ...rest }: any) => ({
+      .map(({ address, label, symbol, discount, icon, ...rest }: any) => ({
         label: label || symbol,
         value: symbol,
+        isGasTankToken: rest.isGasTankToken,
         disabled: !isTokenEligible(
           { address, symbol, discount, ...rest },
           SPEEDS[0],
           estimation,
-          isGasTankEnabled,
+          !!rest.isGasTankToken,
           network
         ),
-        icon: () => <TokenIcon withContainer networkId={network?.id} address={address} />
+        icon: () => <TokenIcon uri={icon} withContainer networkId={network?.id} address={address} />
       }))
+      // mort alphabetically
+      .sort((a: any, b: any) => (a.label.toLowerCase() > b.label.toLowerCase() ? 1 : -1))
+      // move gas tank tokens to the top
+      .sort((a: any, b: any) => {
+        // skip sorting if the same
+        if (a.isGasTankToken === b.isGasTankToken) return 0
+
+        return a.isGasTankToken ? -1 : 1
+      })
+      // move disabled tokens to the bottom
+      .sort((a: any, b: any) => {
+        // skip sorting if the same
+        if (a.disabled === b.disabled) return 0
+
+        return a.disabled ? 1 : -1
+      })
 
     const { discount = 0, symbol, nativeRate = null, decimals } = estimation.selectedFeeToken
     const feeCurrencySelect = estimation.feeInUSD ? (
       <Select
         value={currency}
         setValue={setCurrency}
-        items={assetsItems.sort((a, b) => (a.label.toLowerCase() > b.label.toLowerCase() ? 1 : -1))}
+        items={assetsItems}
+        disabled={disabled}
         label={t('Fee currency')}
         extraText={discount ? `-${discount * 100}%` : ''}
       />
@@ -275,7 +293,7 @@ const FeeSelector = ({
         estimation.selectedFeeToken,
         speed,
         estimation,
-        isGasTankEnabled,
+        !!estimation.selectedFeeToken.isGasTankToken,
         network
       )
       return disabled || insufficientFee
@@ -290,7 +308,7 @@ const FeeSelector = ({
         { ...estimation.selectedFeeToken },
         { ...estimation, customFee: null },
         speed,
-        isGasTankEnabled,
+        !!estimation.selectedFeeToken.isGasTankToken,
         network
       )
 
@@ -311,7 +329,8 @@ const FeeSelector = ({
             }}
             style={[
               styles.feeSelector,
-              !estimation.customFee && feeSpeed === speed && styles.selected
+              !estimation.customFee && feeSpeed === speed && styles.selected,
+              !!disabled && { opacity: 0.6 }
             ]}
             disabled={checkIsSelectorDisabled(speed)}
           >
@@ -353,7 +372,7 @@ const FeeSelector = ({
       estimation.selectedFeeToken,
       estimation,
       feeSpeed,
-      isGasTankEnabled,
+      !!estimation.selectedFeeToken.isGasTankToken,
       network
     )
 
@@ -361,7 +380,7 @@ const FeeSelector = ({
       { ...estimation.selectedFeeToken },
       { ...estimation, customFee: null },
       'slow',
-      isGasTankEnabled,
+      !!estimation.selectedFeeToken.isGasTankToken,
       network
     )
 
@@ -369,7 +388,7 @@ const FeeSelector = ({
       { ...estimation.selectedFeeToken },
       { ...estimation, customFee: null },
       'ape',
-      isGasTankEnabled,
+      !!estimation.selectedFeeToken.isGasTankToken,
       network
     )
 
@@ -402,6 +421,7 @@ const FeeSelector = ({
     return (
       <>
         {WalletDiscountBanner({
+          t,
           assetsItems,
           selectedFeeToken: estimation.selectedFeeToken,
           tokens,
@@ -416,12 +436,14 @@ const FeeSelector = ({
           style={[spacings.mbMi, flexboxStyles.directionRow, flexboxStyles.justifySpaceBetween]}
         >
           <Text fontSize={14}>{t('Transaction speed')}</Text>
-          <Text fontSize={14}>
+          {/* Since v3.11.0, gas tank is treated as "always enabled" */}
+          {/* and gas tank tokens are always visible in the tokens fee list */}
+          {/* <Text fontSize={14}>
             {t('Gas Tank: ')}
             <Text fontSize={14} color={isGasTankEnabled ? colors.turquoise : colors.pink}>
               {isGasTankEnabled ? t('Enabled') : t('Disabled')}
             </Text>
-          </Text>
+          </Text> */}
         </View>
         <View style={styles.selectorsContainer}>{feeAmountSelectors}</View>
 
@@ -430,6 +452,7 @@ const FeeSelector = ({
           setEnableEdit={() => setEditCustomFee(true)}
           setCustomFee={setCustomFee}
           value={estimation.customFee}
+          disabled={disabled}
           symbol={symbol}
           info={
             (isUnderpriced || isOverpriced) && (
@@ -500,12 +523,13 @@ const FeeSelector = ({
         {insufficientFee ? (
           <Text fontSize={12} appearance="danger" style={[spacings.mbTy, spacings.phSm]}>
             {t('Insufficient balance for the fee. Accepted tokens: ')}
-            {(estimation.remainingFeeTokenBalances || []).map((x: any) => x.symbol).join(', ')}
-            {isGasTankEnabled && (
+            {(estimation.remainingFeeTokenBalances || []).map((x: any) => x.symbol).join(', ')}.
+            {/* Since v3.11.0, gas tank is treated as "always enabled" */}
+            {/* {isGasTankEnabled && (
               <Text fontSize={12} appearance="danger">
                 {t('. Disable your Gas Tank to use the default fee tokens.')}
               </Text>
-            )}
+            )} */}
           </Text>
         ) : (
           <View style={spacings.mbTy}>{feeCurrencySelect}</View>
@@ -528,7 +552,7 @@ const FeeSelector = ({
             )}
           </View>
         </View>
-        {isGasTankEnabled && (
+        {estimation.selectedFeeToken.isGasTankToken && (
           <>
             <View style={[flexboxStyles.directionRow, flexboxStyles.alignCenter, spacings.mbTy]}>
               <Text style={spacings.mrMi} fontSize={12} color={colors.turquoise}>

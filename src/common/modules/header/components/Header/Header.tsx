@@ -3,18 +3,17 @@ import { TouchableOpacity, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import BurgerIcon from '@common/assets/svg/BurgerIcon'
+import CloseIcon from '@common/assets/svg/CloseIcon'
 import LeftArrowIcon from '@common/assets/svg/LeftArrowIcon'
-import ScanIcon from '@common/assets/svg/ScanIcon'
 import Blockies from '@common/components/Blockies'
 import CopyText from '@common/components/CopyText'
 import NavIconWrapper from '@common/components/NavIconWrapper'
+import NetworkIcon from '@common/components/NetworkIcon'
 import Text from '@common/components/Text'
-import { isAndroid, isiOS } from '@common/config/env'
 import useAccounts from '@common/hooks/useAccounts'
 import useHeaderBottomSheet from '@common/hooks/useHeaderBottomSheet'
 import useNetwork from '@common/hooks/useNetwork'
 import usePrivateMode from '@common/hooks/usePrivateMode'
-import { ROUTES } from '@common/modules/router/config/routesConfig'
 import colors from '@common/styles/colors'
 import spacings from '@common/styles/spacings'
 import flexboxStyles from '@common/styles/utils/flexbox'
@@ -23,16 +22,17 @@ import { getHeaderTitle } from '@react-navigation/elements'
 
 import styles from './styles'
 
-interface Props extends DrawerHeaderProps {
+interface Props extends Partial<DrawerHeaderProps> {
   mode?: 'title' | 'bottom-sheet'
   withHamburger?: boolean
-  withScanner?: boolean
+  withHeaderRight?: boolean
+  options?: any
 }
 
 const Header: React.FC<Props> = ({
   mode = 'bottom-sheet',
   withHamburger = false,
-  withScanner = false,
+  withHeaderRight = false,
   navigation,
   route,
   options
@@ -42,24 +42,39 @@ const Header: React.FC<Props> = ({
   const title = getHeaderTitle(options, route.name)
   const { network } = useNetwork()
   const { selectedAcc } = useAccounts()
-  const { openHeaderBottomSheet } = useHeaderBottomSheet()
+  const { openHeaderAccountsBottomSheet, openHeaderNetworksBottomSheet } = useHeaderBottomSheet()
   const { hidePrivateValue } = usePrivateMode()
+
   const renderBottomSheetSwitcher = (
-    <TouchableOpacity style={styles.switcherContainer} onPress={openHeaderBottomSheet}>
-      <Blockies borderRadius={13} seed={selectedAcc} />
+    <View style={[flexboxStyles.directionRow, flexboxStyles.flex1]}>
+      <TouchableOpacity style={styles.switcherContainer} onPress={openHeaderAccountsBottomSheet}>
+        <Blockies borderRadius={13} size={6} seed={selectedAcc} />
 
-      <View style={[flexboxStyles.flex1, spacings.mhTy]}>
-        <Text weight="regular">{network?.name}</Text>
-        <Text color={colors.baileyBells} fontSize={12} numberOfLines={1} ellipsizeMode="middle">
-          {hidePrivateValue(selectedAcc)}
-        </Text>
-      </View>
+        <View style={[flexboxStyles.flex1, spacings.mhTy]}>
+          <Text fontSize={14} weight="regular" numberOfLines={1} ellipsizeMode="middle">
+            {hidePrivateValue(selectedAcc)}
+          </Text>
+        </View>
 
-      <CopyText text={selectedAcc} />
-    </TouchableOpacity>
+        <CopyText text={selectedAcc} width={22} />
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.switcherContainer} onPress={openHeaderNetworksBottomSheet}>
+        <View style={styles.headerNetworkIcon}>
+          <NetworkIcon name={network?.id} width={24} height={24} />
+        </View>
+
+        <View style={[flexboxStyles.flex1, spacings.mhTy]}>
+          <Text weight="regular" fontSize={14} numberOfLines={1}>
+            {network?.name}
+          </Text>
+        </View>
+      </TouchableOpacity>
+    </View>
   )
 
   const renderHeaderLeft = () => {
+    if (options.hideHeaderLeft) return <></>
+
     if (typeof options.headerLeft === 'function') {
       return options.headerLeft({})
     }
@@ -82,11 +97,18 @@ const Header: React.FC<Props> = ({
     return null
   }
 
-  const renderHeaderRight = withScanner ? (
-    <NavIconWrapper onPress={() => navigation.navigate(ROUTES.connect)}>
-      <ScanIcon />
-    </NavIconWrapper>
-  ) : null
+  const renderHeaderRight = () => {
+    if (!withHeaderRight && !options.withHeaderRight) return <></>
+
+    return (
+      <TouchableOpacity
+        onPress={options.onRightHeaderPress ? options.onRightHeaderPress : () => {}}
+        style={styles.closeIcon}
+      >
+        <CloseIcon color={colors.pink} />
+      </TouchableOpacity>
+    )
+  }
 
   // On the left and on the right side, there is always reserved space
   // for the nav bar buttons. And so that in case a title is present,
@@ -113,17 +135,18 @@ const Header: React.FC<Props> = ({
         }
       ]}
     >
-      <View style={navIconContainer}>{renderHeaderLeft()}</View>
+      <View style={[styles.wrapper]}>
+        <View style={navIconContainer}>{renderHeaderLeft()}</View>
 
-      {mode === 'bottom-sheet' && renderBottomSheetSwitcher}
-      {mode === 'title' && (
-        <Text fontSize={18} weight="regular" style={styles.title} numberOfLines={1}>
-          {title}
-        </Text>
-      )}
+        {mode === 'bottom-sheet' && renderBottomSheetSwitcher}
+        {mode === 'title' && (
+          <Text fontSize={18} weight="regular" style={styles.title} numberOfLines={1}>
+            {title}
+          </Text>
+        )}
 
-      {isAndroid && <View style={navIconContainer}>{renderHeaderRight}</View>}
-      {isiOS && mode === 'title' && <View style={navIconContainer} />}
+        {mode === 'title' && <View style={navIconContainer}>{renderHeaderRight()}</View>}
+      </View>
     </View>
   )
 }

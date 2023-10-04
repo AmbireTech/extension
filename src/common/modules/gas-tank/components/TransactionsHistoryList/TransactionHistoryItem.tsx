@@ -48,28 +48,35 @@ const TransactionHistoryItem = ({ txn, explorerUrl, feeAssetsRes, networkId }: P
             spacings.prMi
           ]}
         >
-          <Text fontSize={12} color={colors.titan_50} numberOfLines={1} style={spacings.mr}>
-            {txn.submittedAt && toLocaleDateTime(new Date(txn.submittedAt)).toString()}
-          </Text>
-          <TokenIcon
-            uri={tokenDetails.icon}
-            networkId={networkId}
-            address={txn.address}
-            width={20}
-            height={20}
-          />
-          <Text fontSize={11} weight="medium" numberOfLines={1} style={spacings.plMi}>
-            {tokenDetails.symbol.toUpperCase()}
-          </Text>
-          <Text
-            fontSize={11}
-            weight="medium"
-            style={[spacings.plMi, flexboxStyles.flex1]}
-            numberOfLines={1}
+          <View style={[flexboxStyles.flex1, spacings.mrMi]}>
+            <Text fontSize={12} color={colors.titan_50} numberOfLines={1}>
+              {txn.submittedAt && toLocaleDateTime(new Date(txn.submittedAt)).toString()}
+            </Text>
+          </View>
+          <View
+            style={[
+              flexboxStyles.flex1,
+              flexboxStyles.directionRow,
+              flexboxStyles.alignCenter,
+              spacings.mrMi,
+              { justifyContent: 'flex-end' }
+            ]}
           >
-            {tokenDetails &&
-              `${formatUnits(txn.value.toString(), tokenDetails.decimals).toString()}`}
-          </Text>
+            <TokenIcon
+              uri={tokenDetails.icon}
+              networkId={networkId}
+              address={txn.address}
+              width={20}
+              height={20}
+            />
+            <Text fontSize={11} weight="medium" numberOfLines={1} style={spacings.plMi}>
+              {tokenDetails.symbol.toUpperCase()}
+            </Text>
+            <Text fontSize={11} weight="medium" style={spacings.plMi} numberOfLines={1}>
+              {tokenDetails &&
+                `${formatUnits(txn.value.toString(), tokenDetails.decimals).toString()}`}
+            </Text>
+          </View>
         </View>
         <TouchableOpacity
           onPress={() => Linking.openURL(`${explorerUrl}/tx/${txn.txId}`)}

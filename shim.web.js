@@ -1,1 +1,2 @@
-// No shims needed for the browser extension.
+// The @metamask/obs-store lib needs stream
+import 'stream-browserify'

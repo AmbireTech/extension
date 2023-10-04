@@ -1,0 +1,3 @@
+import HardwareWalletSelectorScreen from './HardwareWalletSelectorScreen'
+
+export default HardwareWalletSelectorScreen

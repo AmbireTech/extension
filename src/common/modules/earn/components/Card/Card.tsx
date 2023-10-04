@@ -1,3 +1,4 @@
+import usePrevious from 'ambire-common/src/hooks/usePrevious'
 import { ethers } from 'ethers'
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { BackHandler, Image, TouchableOpacity, View } from 'react-native'
@@ -13,7 +14,7 @@ import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
 import { useTranslation } from '@common/config/localization'
 import useNetwork from '@common/hooks/useNetwork'
-import { CardsVisibilityContext } from '@common/modules/earn/contexts/cardsVisibilityContext'
+import { CARDS, CardsVisibilityContext } from '@common/modules/earn/contexts/cardsVisibilityContext'
 import { LINEAR_OPACITY_ANIMATION, triggerLayoutAnimation } from '@common/services/layoutAnimation'
 import colors from '@common/styles/colors'
 import spacings from '@common/styles/spacings'
@@ -35,11 +36,13 @@ const Card = ({
   onValidate,
   warning,
   areDepositsDisabled,
-  iconStyle
+  iconStyle,
+  customInfo
 }: any) => {
   const [segment, setSegment] = useState<Segment>(areDepositsDisabled ? 'Withdraw' : 'Deposit')
   const { network }: any = useNetwork()
   const [tokens, setTokens] = useState<any>([])
+  const prevTokens = usePrevious(tokens)
   const [token, setToken] = useState<any>()
   const [amount, setAmount] = useState<any>(0)
   const [disabled, setDisabled] = useState<any>(true)
@@ -146,12 +149,38 @@ const Card = ({
         value,
         icon: () => <TokenIcon withContainer uri={icon} networkId={network?.id} address={address} />
       })),
-    [tokens]
+    [network?.id, tokens]
   )
-
   useEffect(() => {
-    if (assetsItems.length && !token) setToken(assetsItems[0]?.value)
-  }, [assetsItems])
+    if (!assetsItems.length) return
+
+    if (!token) {
+      let defaultToken = assetsItems[0]
+
+      // For the Ambire card, bypass the default sorting and always set the
+      // $WALLET token by default
+      if (name === CARDS.Ambire) {
+        const walletToken = assetsItems.find(({ label }: { label: string }) => label === 'WALLET')
+        if (walletToken) {
+          defaultToken = walletToken
+        }
+      }
+
+      setToken(defaultToken.value)
+      return
+    }
+
+    if (assetsItems.every(({ value }) => value !== token)) {
+      // Try persisting the currently selected by it's label, instead of address.
+      // Use case: WALLET and ADX tokens withdraw and deposit addresses are
+      // different. However, they are displayed with the same label. So try to
+      // match the label and persist the currently selected one.
+      const prevTokenLabel = prevTokens?.find(({ value }) => value === token)?.label
+      const nextToken = assetsItems.find(({ label }) => label === prevTokenLabel) || assetsItems[0]
+
+      setToken(nextToken.value)
+    }
+  }, [assetsItems, name, prevTokens, token])
 
   const amountLabel = (
     <View style={[flexboxStyles.directionRow, spacings.mbMi]}>
@@ -212,26 +241,32 @@ const Card = ({
               />
             </View>
           </View>
-          <NumberInput
-            onChangeText={setAmount}
-            keyboardType="numeric"
-            autoCorrect={false}
-            value={amount.toString()}
-            button={t('MAX')}
-            onButtonPress={setMaxAmount}
-            disabled={Number(currentToken?.balance || 0) === 0}
-            labelComponent={amountLabel}
-          />
-          <Button
-            disabled={
-              disabled ||
-              amount <= 0 ||
-              amount > Number(currentToken?.balance || 0) ||
-              (areDepositsDisabled && segment === 'Deposit')
-            }
-            onPress={() => onValidate(segment, token, amount)}
-            text={segment}
-          />
+          {!!customInfo && segment === 'Withdraw' ? (
+            customInfo
+          ) : (
+            <>
+              <NumberInput
+                onChangeText={setAmount}
+                keyboardType="numeric"
+                autoCorrect={false}
+                value={amount.toString()}
+                button={t('MAX')}
+                onButtonPress={setMaxAmount}
+                disabled={Number(currentToken?.balance || 0) === 0}
+                labelComponent={amountLabel}
+              />
+              <Button
+                disabled={
+                  disabled ||
+                  amount <= 0 ||
+                  amount > Number(currentToken?.balance || 0) ||
+                  (areDepositsDisabled && segment === 'Deposit')
+                }
+                onPress={() => onValidate(segment, token, amount)}
+                text={segment}
+              />
+            </>
+          )}
           {!disabled && (
             <View style={spacings.pt}>
               <Text style={spacings.mbTy} fontSize={16} color={colors.baileyBells} weight="medium">

@@ -33,7 +33,10 @@ const REESTIMATE_INTERVAL = 15000
 
 const ERC20 = new Interface(erc20Abi)
 
-const WALLET_TOKEN_SYMBOLS = ['xWALLET', 'WALLET']
+const WALLET_TOKEN_SYMBOLS: string[] = [
+  // Temporarily disable prioritization of $WALLET tokens as of v3.11.11
+  // 'xWALLET', 'WALLET'
+]
 
 const getDefaultFeeToken = (
   remainingFeeTokenBalances: any,
@@ -58,8 +61,15 @@ const getDefaultFeeToken = (
           (b?.discount || 0) - (a?.discount || 0) ||
           a?.symbol.toUpperCase().localeCompare(b?.symbol.toUpperCase())
       )
+      // move gas tank tokens to the top
+      .sort((a: any, b: any) => {
+        // skip sorting if the same
+        if (a.isGasTankToken === b.isGasTankToken) return 0
+
+        return a.isGasTankToken ? -1 : 1
+      })
       .find((token: any) =>
-        isTokenEligible(token, feeSpeed, estimation, currentAccGasTankState, network)
+        isTokenEligible(token, feeSpeed, estimation, !!token.isGasTankToken, network)
       ) || remainingFeeTokenBalances[0]
   )
 }
@@ -197,7 +207,8 @@ const useSendTransaction = ({ hardwareWalletOpenBottomSheet }: Props) => {
           const gasTankTokens = estimation.gasTank?.map((item) => {
             return {
               ...item,
-              symbol: item.symbol.toUpperCase(),
+              isGasTankToken: true,
+              symbol: `${item.symbol.toUpperCase()} on Gas Tank`,
               balance: ethers.utils
                 .parseUnits(item.balance.toFixed(item.decimals).toString(), item.decimals)
                 .toString(),
@@ -207,7 +218,21 @@ const useSendTransaction = ({ hardwareWalletOpenBottomSheet }: Props) => {
                   : estimation.nativeAssetPriceInUSD / item.price
             }
           })
-          if (currentAccGasTankState.isEnabled) estimation.remainingFeeTokenBalances = gasTankTokens
+          if (currentAccGasTankState.isEnabled) {
+            // Combine the fee tokens and gas tank tokens, since in v3.11.0
+            // both should be visible in the fee selector.
+            const nextCombinedRemainingFeeTokenBalances = [
+              ...(estimation.remainingFeeTokenBalances || []),
+              ...(gasTankTokens || [])
+            ]
+
+            // In case there are no eligible tokens fallback to `gasTankTokens`,
+            // which also covers the case when a transaction is meant to fail
+            // (the `remainingFeeTokenBalances` being empty array breaks the logic)
+            estimation.remainingFeeTokenBalances = nextCombinedRemainingFeeTokenBalances.length
+              ? nextCombinedRemainingFeeTokenBalances
+              : gasTankTokens
+          }
           estimation.selectedFeeToken = getDefaultFeeToken(
             estimation.remainingFeeTokenBalances,
             network,
@@ -225,7 +250,7 @@ const useSendTransaction = ({ hardwareWalletOpenBottomSheet }: Props) => {
                     prevEstimation.selectedFeeToken,
                     feeSpeed,
                     estimation,
-                    currentAccGasTankState.isEnabled,
+                    !!prevEstimation.selectedFeeToken?.isGasTankToken,
                     network
                   ) &&
                   prevEstimation.selectedFeeToken) ||
@@ -296,7 +321,7 @@ const useSendTransaction = ({ hardwareWalletOpenBottomSheet }: Props) => {
       // Also it can be stable but not in USD
       feeInFeeToken,
       addedGas
-    } = getFeesData(feeToken, estimation, feeSpeed, currentAccGasTankState.isEnabled, network)
+    } = getFeesData(feeToken, estimation, feeSpeed, !!feeToken.isGasTankToken, network)
     const feeTxn =
       feeToken.symbol === network.nativeAssetSymbol
         ? // TODO: check native decimals
@@ -317,7 +342,7 @@ const useSendTransaction = ({ hardwareWalletOpenBottomSheet }: Props) => {
     // either use the next non-mined nonce or the next free nonce
     // eslint-disable-next-line no-nested-ternary
     const nonce = isInt(bundle.nonce) ? bundle.nonce : replaceTx ? nextNonMinedNonce : nextFreeNonce
-    if (currentAccGasTankState.isEnabled) {
+    if (feeToken.isGasTankToken) {
       let gasLimit
       if (bundle.txns.length > 1) gasLimit = estimation.gasLimit + (bundle.extraGas || 0)
       else gasLimit = estimation.gasLimit
@@ -491,11 +516,33 @@ const useSendTransaction = ({ hardwareWalletOpenBottomSheet }: Props) => {
     let approveTxnPromise
 
     if (signerType === SIGNER_TYPES.quickAcc) {
-      approveTxnPromise = await approveTxnImplQuickAcc({ code })
+      try {
+        approveTxnPromise = await approveTxnImplQuickAcc({ code })
+      } catch (error) {
+        addToast(
+          i18n.t('Transaction error: {{error}}', {
+            error: error?.message || 'Signing failed for unknown reason.'
+          }) as string,
+          { error: true }
+        )
+        setSigningStatus(null)
+        return
+      }
     }
 
     if (signerType === SIGNER_TYPES.external) {
-      approveTxnPromise = await approveTxnImplExternalSigner()
+      try {
+        approveTxnPromise = await approveTxnImplExternalSigner()
+      } catch (error) {
+        addToast(
+          i18n.t('Transaction error: {{error}}', {
+            error: error?.message || 'Signing failed for unknown reason.'
+          }) as string,
+          { error: true }
+        )
+        setSigningStatus(null)
+        return
+      }
     }
 
     // TODO: If possible move the signing with HW in the vault
@@ -506,7 +553,18 @@ const useSendTransaction = ({ hardwareWalletOpenBottomSheet }: Props) => {
         return
       }
 
-      approveTxnPromise = await approveTxnImplHW({ device })
+      try {
+        approveTxnPromise = await approveTxnImplHW({ device })
+      } catch (error) {
+        addToast(
+          i18n.t('Transaction error: {{error}}', {
+            error: error?.message || 'Signing failed for unknown reason.'
+          }) as string,
+          { error: true }
+        )
+        setSigningStatus(null)
+        return
+      }
     }
 
     try {

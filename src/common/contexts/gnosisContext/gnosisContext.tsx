@@ -18,6 +18,7 @@ export interface GnosisContextReturnType {
     [key: string]: any
   }
   handleIncomingMessage: (msg: any) => any
+  eventsCount: number
 }
 
 const GnosisContext = createContext<GnosisContextReturnType>({
@@ -26,7 +27,8 @@ const GnosisContext = createContext<GnosisContextReturnType>({
   requests: [],
   resolveMany: () => {},
   handlers: {},
-  handleIncomingMessage: () => {}
+  handleIncomingMessage: () => {},
+  eventsCount: 0
 })
 
 const isValidMessage = (msg: any) => {
@@ -43,6 +45,7 @@ const STORAGE_KEY = 'gnosis_safe_state'
 const GnosisProvider: React.FC = ({ children }) => {
   const sushiSwapIframeRef: any = useRef(null)
   const [hash, setHash] = useState('')
+  const [eventsCount, setEventsCount] = useState(0)
 
   const verbose = 0
   const { network } = useNetwork()
@@ -54,9 +57,10 @@ const GnosisProvider: React.FC = ({ children }) => {
   })
 
   useEffect(() => {
-    const newHash = CONFIG.SWAP_URL + network.chainId + selectedAcc
+    const newHash = CONFIG.SWAP_URL + network?.chainId + selectedAcc
     setHash(newHash)
-  }, [network.chainId, selectedAcc])
+    setEventsCount(0)
+  }, [network?.chainId, selectedAcc])
 
   const handlePersonalSign = useCallback(
     (msg: any) => {
@@ -237,22 +241,20 @@ const GnosisProvider: React.FC = ({ children }) => {
     [selectedAcc, network?.chainId, network?.id, handlePersonalSign, handleSendTransactions]
   )
 
-  const send = useCallback(
-    (data: any, requestId: any, error?: any) => {
-      const sdkVersion = getSDKVersion()
-      const msg = error
-        ? MessageFormatter.makeErrorResponse(requestId, error, sdkVersion)
-        : MessageFormatter.makeResponse(requestId, data, sdkVersion)
+  const send = useCallback((data: any, requestId: any, error?: any) => {
+    const sdkVersion = getSDKVersion()
+    const msg = error
+      ? MessageFormatter.makeErrorResponse(requestId, error, sdkVersion)
+      : MessageFormatter.makeResponse(requestId, data, sdkVersion)
 
-      sushiSwapIframeRef?.current?.injectJavaScript(`
+    sushiSwapIframeRef?.current?.injectJavaScript(`
       (function() {
-        window.postMessage(${JSON.stringify(msg)}, '*');
-        document.getElementById("${hash}").contentWindow.postMessage(${JSON.stringify(msg)}, '*');
+        document.getElementById("uniswap").contentWindow.postMessage(${JSON.stringify(msg)}, '*');
       })();
+
+      true;
     `)
-    },
-    [hash]
-  )
+  }, [])
 
   const canHandleMessage = useCallback(
     (msg: any) => {
@@ -267,6 +269,7 @@ const GnosisProvider: React.FC = ({ children }) => {
       const hasHandler = canHandleMessage(msg)
 
       if (validMessage && hasHandler) {
+        setEventsCount((prevEventsCount) => prevEventsCount + 1)
         const handler = handlers[msg.method]
         try {
           const response = await handler(msg)
@@ -328,9 +331,10 @@ const GnosisProvider: React.FC = ({ children }) => {
           hash,
           requests,
           resolveMany,
-          handleIncomingMessage
+          handleIncomingMessage,
+          eventsCount
         }),
-        [handlers, requests, hash, resolveMany, handleIncomingMessage]
+        [handlers, requests, hash, resolveMany, handleIncomingMessage, eventsCount]
       )}
     >
       {children}

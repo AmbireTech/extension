@@ -1,9 +1,10 @@
-import { NetworkId } from 'ambire-common/src/constants/networks'
+import { NetworkType } from 'ambire-common/src/constants/networks'
 import React from 'react'
 import { View } from 'react-native'
 
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import usePrivateMode from '@common/hooks/usePrivateMode'
 import colors from '@common/styles/colors'
 import spacings from '@common/styles/spacings'
 import flexboxStyles from '@common/styles/utils/flexbox'
@@ -11,11 +12,12 @@ import flexboxStyles from '@common/styles/utils/flexbox'
 interface Props {
   totalSave: string
   totalCashBack: string
-  networkId?: NetworkId
+  networkName?: NetworkType['name']
 }
 
-const GasTankTotalSave = ({ totalSave, totalCashBack, networkId }: Props) => {
+const GasTankTotalSave = ({ totalSave, totalCashBack, networkName }: Props) => {
   const { t } = useTranslation()
+  const { hidePrivateValue } = usePrivateMode()
 
   return (
     <View style={flexboxStyles.flex1}>
@@ -25,10 +27,7 @@ const GasTankTotalSave = ({ totalSave, totalCashBack, networkId }: Props) => {
             {t('Total Saved')}:
           </Text>
           <Text fontSize={10} weight="regular" numberOfLines={1}>
-            <Text fontSize={10} weight="regular" color={colors.turquoise}>
-              ${' '}
-            </Text>
-            {totalSave}
+            ${hidePrivateValue(totalSave)}
           </Text>
         </View>
         <View style={[flexboxStyles.directionRow, spacings.mbTy, flexboxStyles.alignCenter]}>
@@ -36,16 +35,13 @@ const GasTankTotalSave = ({ totalSave, totalCashBack, networkId }: Props) => {
             {t('Cashback')}:
           </Text>
           <Text fontSize={10} weight="regular" numberOfLines={1}>
-            <Text fontSize={10} weight="regular" color={colors.heliotrope}>
-              ${' '}
-            </Text>
-            {totalCashBack}
+            ${hidePrivateValue(totalCashBack)}
           </Text>
         </View>
-        {!!networkId && (
+        {!!networkName && (
           <Text color={colors.chetwode} fontSize={10}>
-            {t('From gas fees on {{networkId}}', {
-              networkId: networkId?.toUpperCase()
+            {t('From gas fees on {{networkName}}', {
+              networkName
             })}
           </Text>
         )}

@@ -44,8 +44,6 @@ const SendScreen = () => {
       <Wrapper
         keyboardDismissMode="on-drag"
         type={isiOS ? WRAPPER_TYPES.KEYBOARD_AWARE_SCROLL_VIEW : WRAPPER_TYPES.SCROLL_VIEW}
-        extraHeight={250}
-        hasBottomTabNav
       >
         {isLoading && (
           <View

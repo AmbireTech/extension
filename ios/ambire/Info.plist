@@ -17,7 +17,7 @@
 	<key>CFBundlePackageType</key>
 	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>
-	<string>2.6</string>
+	<string>3.10</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleURLTypes</key>
@@ -32,7 +32,7 @@
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
-	<string>30</string>
+	<string>42</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSAppTransportSecurity</key>
@@ -53,7 +53,7 @@
 	<key>NSBluetoothPeripheralUsageDescription</key>
 	<string>To connect and communicate with hardware wallet devices that manage your $(PRODUCT_NAME) account.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>To login to your $(PRODUCT_NAME) account by scanning $(PRODUCT_NAME)-compatible QR codes.</string>
+	<string>To provide an alternative method for entering recipient addresses by scanning QR codes.</string>
 	<key>NSFaceIDUsageDescription</key>
 	<string>To use it as an alternative method of authentication in addition to using your $(PRODUCT_NAME) Key Store password.</string>
 	<key>UILaunchStoryboardName</key>

@@ -5,6 +5,7 @@ const handleCollectibleUri = (uri: string) => {
     ? uri.replace('data:application/json;utf8,', '')
     : uri
 
+  if (uri.split('/').length === 1) return `https://ipfs.io/ipfs/${uri}`
   if (uri.split('/')[0] === 'data:image') return uri
   if (uri.startsWith('ipfs://'))
     return uri.replace(/ipfs:\/\/ipfs\/|ipfs:\/\//g, 'https://ipfs.io/ipfs/')

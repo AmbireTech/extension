@@ -12,7 +12,6 @@ import { ScrollView } from 'react-native-gesture-handler'
 import Title from '@common/components/Title'
 import { isAndroid, isRelayerless } from '@common/config/env'
 import useNetwork from '@common/hooks/useNetwork'
-import useToast from '@common/hooks/useToast'
 import textStyles from '@common/styles/utils/text'
 
 import NetworkChangerItem from './NetworkChangerItem'
@@ -25,7 +24,6 @@ interface Props {
 const NetworkChanger: React.FC<Props> = () => {
   const { t } = useTranslation()
   const { network, setNetwork } = useNetwork()
-  const { addToast } = useToast()
   const scrollRef: any = useRef(null)
 
   const allVisibleNetworks = useMemo(
@@ -44,11 +42,8 @@ const NetworkChanger: React.FC<Props> = () => {
       if (_network.chainId === network?.chainId) return
 
       setNetwork(_network.chainId)
-      addToast(t('Network changed to {{network}}', { network: _network.name }) as string, {
-        timeout: 3000
-      })
     },
-    [network?.chainId, setNetwork, addToast, t]
+    [network?.chainId, setNetwork]
   )
 
   const handleChangeNetworkByScrolling = useCallback(
@@ -102,7 +97,7 @@ const NetworkChanger: React.FC<Props> = () => {
   return (
     <>
       <Title style={textStyles.center} type="small">
-        {t('Change network')}
+        {t('Change Network')}
       </Title>
       <View style={styles.networksContainer}>
         <View style={styles.networkBtnContainerActive} />

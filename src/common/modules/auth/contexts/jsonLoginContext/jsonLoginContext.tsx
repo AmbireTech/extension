@@ -2,7 +2,6 @@ import { Account } from 'ambire-common/src/hooks/useAccounts'
 import { validateImportedAccountProps } from 'ambire-common/src/services/validations'
 import { Wallet } from 'ethers'
 import * as DocumentPicker from 'expo-document-picker'
-import * as FileSystem from 'expo-file-system'
 import React, { createContext, useCallback, useMemo, useState } from 'react'
 import { Keyboard } from 'react-native'
 
@@ -12,15 +11,17 @@ import useAccounts from '@common/hooks/useAccounts'
 import useEOA from '@common/hooks/useEOA'
 import useNavigation from '@common/hooks/useNavigation'
 import useToast from '@common/hooks/useToast'
-import { ROUTES } from '@common/modules/router/config/routesConfig'
+import { ROUTES } from '@common/modules/router/constants/common'
 import useVault from '@common/modules/vault/hooks/useVault'
+import { getFileContentAsJson } from '@common/services/file'
 
 type FormProps = {
   password?: string
+  file: any
 }
 
 type JsonLoginContextData = {
-  handleLogin: ({ password }: FormProps) => Promise<void>
+  handleLogin: ({ password, file }: FormProps) => Promise<void>
   cancelLoginAttempts: () => void
   error: string | null
   inProgress: boolean
@@ -48,12 +49,12 @@ const JsonLoginProvider: React.FC<any> = ({ children }: any) => {
   const { onEOASelected } = useEOA()
 
   const handleLogin = useCallback(
-    async ({ password }: { password?: string }) => {
+    async ({ password, file }: { password?: string; file?: any }) => {
       Keyboard.dismiss()
       setError('')
       setInProgress(true)
 
-      if (pendingLoginWithQuickAccountData) {
+      if (pendingLoginWithQuickAccountData && !file) {
         try {
           const wallet = await Wallet.fromEncryptedJson(
             JSON.parse(pendingLoginWithQuickAccountData.primaryKeyBackup),
@@ -85,25 +86,20 @@ const JsonLoginProvider: React.FC<any> = ({ children }: any) => {
         return
       }
 
-      const document = await DocumentPicker.getDocumentAsync({ type: 'application/json' })
-      if (document.type !== 'success') {
-        setInProgress(false)
-        return setError(t('JSON file was not selected or something went wrong selecting it.'))
-      }
-
+      let document
       let fileContent
+
       try {
-        if (isWeb) {
-          fileContent = await fetch(document.uri, {
-            headers: {
-              'Content-Type': 'application/json',
-              Accept: 'application/json'
-            }
-          })
-          fileContent = await fileContent.json()
-        } else {
-          fileContent = await FileSystem.readAsStringAsync(document.uri)
-          fileContent = JSON.parse(fileContent)
+        if (!file) {
+          document = await DocumentPicker.getDocumentAsync({ type: 'application/json' })
+          if (document.type !== 'success') {
+            setInProgress(false)
+            return setError(t('JSON file was not selected or something went wrong selecting it.'))
+          }
+
+          fileContent = (await getFileContentAsJson(document.uri)) as unknown as Account
+        } else if (!!file && isWeb) {
+          fileContent = file
         }
       } catch (exception) {
         setInProgress(false)

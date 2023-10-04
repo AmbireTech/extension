@@ -10,18 +10,28 @@ import Checkbox from '@common/components/Checkbox'
 import Input from '@common/components/Input'
 import InputPassword from '@common/components/InputPassword'
 import Text from '@common/components/Text'
+import Title from '@common/components/Title'
 import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import { ambireCloudURL, termsAndPrivacyURL } from '@common/modules/auth/constants/URLs'
 import useCreateAccount from '@common/modules/auth/hooks/useCreateAccount'
 import { triggerLayoutAnimation } from '@common/services/layoutAnimation'
+import colors from '@common/styles/colors'
 import spacings from '@common/styles/spacings'
+import text from '@common/styles/utils/text'
 
 const days = Math.ceil(accountPresets.quickAccTimelock / 86400)
 
-const AddNewAccountScreen = () => {
+const AddNewAccountScreen: React.FC<any> = () => {
   const { t } = useTranslation()
-  const { handleAddNewAccount, err, addAccErr } = useCreateAccount()
+  const {
+    handleAddNewAccount,
+    err,
+    addAccErr,
+    requiresEmailConfFor,
+    resendTimeLeft,
+    sendConfirmationEmail
+  } = useCreateAccount()
   const {
     control,
     handleSubmit,
@@ -42,6 +52,45 @@ const AddNewAccountScreen = () => {
   const handleFormSubmit = useCallback(() => {
     handleSubmit(handleAddNewAccount)()
   }, [])
+
+  if (requiresEmailConfFor) {
+    return (
+      <View>
+        <Title type="small" style={text.center}>
+          {t('Email confirmation required')}
+        </Title>
+        <Controller
+          control={control}
+          rules={{ validate: isEmail }}
+          render={({ field: { onChange, onBlur, value } }) => (
+            <Input
+              onBlur={onBlur}
+              placeholder={t('Email')}
+              onChangeText={onChange}
+              value={value}
+              autoFocus={isWeb}
+              isValid={isEmail(value)}
+              error={errors.email && (t('Please fill in a valid email.') as string)}
+              keyboardType="email-address"
+              containerStyle={spacings.mbTy}
+              disabled
+              info={`We sent an email to ${value}. Please check your inbox for "Welcome to Ambire Wallet" email and click "Verify".`}
+            />
+          )}
+          name="email"
+        />
+        <View style={spacings.ptSm}>
+          <Button
+            type="ghost"
+            text={resendTimeLeft === 0 ? t('Resend') : t(`Resend in ${resendTimeLeft / 1000} secs`)}
+            onPress={sendConfirmationEmail}
+            textStyle={!resendTimeLeft && { color: colors.turquoise }}
+            disabled={!!resendTimeLeft}
+          />
+        </View>
+      </View>
+    )
+  }
 
   return (
     <>

@@ -5,9 +5,9 @@ import Events from 'events'
 import { v4 as uuidv4 } from 'uuid'
 
 import { isDev } from '@common/config/env'
-import { BROWSER_EXTENSION_REQUESTS_STORAGE_KEY } from '@common/contexts/extensionApprovalContext/types'
 import colors from '@common/styles/colors'
 import { IS_CHROME, IS_LINUX } from '@web/constants/common'
+import { APPROVAL_REQUESTS_STORAGE_KEY } from '@web/contexts/approvalContext/types'
 import winMgr, { WINDOW_SIZE } from '@web/extension-services/background/webapi/window'
 
 import storage from '../webapi/storage'
@@ -180,7 +180,7 @@ class NotificationService extends Events {
     if (approval?.data?.approvalComponent === 'SendTransaction') {
       // Removes all cached signing requests (otherwise they will be shown again
       // in the browser extension UI, when it gets opened by the user)
-      browser.storage.local.set({ [BROWSER_EXTENSION_REQUESTS_STORAGE_KEY]: JSON.stringify([]) })
+      browser.storage.local.set({ [APPROVAL_REQUESTS_STORAGE_KEY]: JSON.stringify([]) })
     }
 
     if (approval && this.approvals.length > 1) {
@@ -286,7 +286,7 @@ class NotificationService extends Events {
 
     // Removes all cached signing requests (otherwise they will be shown again
     // in the browser extension UI, when it gets opened by the user)
-    browser.storage.local.set({ [BROWSER_EXTENSION_REQUESTS_STORAGE_KEY]: JSON.stringify([]) })
+    browser.storage.local.set({ [APPROVAL_REQUESTS_STORAGE_KEY]: JSON.stringify([]) })
   }
 
   unLock = () => {

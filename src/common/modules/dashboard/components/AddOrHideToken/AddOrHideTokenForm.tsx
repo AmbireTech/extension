@@ -1,6 +1,7 @@
 import { NetworkId, NetworkType } from 'ambire-common/src/constants/networks'
 import { Token, UsePortfolioReturnType } from 'ambire-common/src/hooks/usePortfolio'
 import { isValidAddress } from 'ambire-common/src/services/address'
+import { isNumber } from 'lodash'
 import React, { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { View } from 'react-native'
@@ -14,7 +15,7 @@ import useToken from '@common/hooks/useToken'
 import spacings from '@common/styles/spacings'
 
 import { MODES } from './constants'
-import TokenItem from './TokenItem'
+import FoundTokenItem from './FoundTokenItem'
 
 const ADDRESS_LENGTH = 42
 const TOKEN_SYMBOL_MIN_LENGTH = 3
@@ -54,7 +55,7 @@ const AddOrHideTokenForm: React.FC<Props> = ({
     }
   })
 
-  const disabled = !tokenDetails || !(tokenDetails.symbol && tokenDetails.decimals)
+  const disabled = !tokenDetails || !(tokenDetails.symbol && isNumber(tokenDetails.decimals))
 
   const tokenStandard =
     // eslint-disable-next-line no-nested-ternary
@@ -64,23 +65,40 @@ const AddOrHideTokenForm: React.FC<Props> = ({
       ? 'an ERC20'
       : 'a valid'
 
-  const onInput = async (_inputText: string) => {
-    let inputText = _inputText
+  const onInput = async (inputText: string) => {
+    let foundByAddressOrSymbol
     setTokenDetails(null)
+    setShowError('')
 
     if (inputText.length === ADDRESS_LENGTH && !isValidAddress(inputText))
       return addToast(`Invalid address: ${inputText}`, { error: true })
 
-    if (enableSymbolSearch) {
-      const foundByAddressOrSymbol = tokens.find(
+    if (enableSymbolSearch && inputText) {
+      const lowerCaseInputText = inputText.toLowerCase()
+
+      const fullMatch = tokens.find(
         (i) =>
-          i.symbol.toLowerCase() === inputText.toLowerCase() ||
-          i.address.toLowerCase() === inputText.toLowerCase()
+          i.symbol.toLowerCase() === lowerCaseInputText ||
+          i.address.toLowerCase() === lowerCaseInputText
       )
 
+      const partialMatch = tokens.find(
+        (i) =>
+          i.symbol.toLowerCase().includes(lowerCaseInputText) ||
+          i.address.toLowerCase().includes(lowerCaseInputText)
+      )
+
+      foundByAddressOrSymbol = fullMatch || partialMatch
+
       if (foundByAddressOrSymbol) {
-        inputText = foundByAddressOrSymbol?.address
-      } else if (inputText.length >= TOKEN_SYMBOL_MIN_LENGTH) {
+        setTokenDetails({
+          ...foundByAddressOrSymbol,
+          name: `${foundByAddressOrSymbol.symbol} on ${foundByAddressOrSymbol.network}`
+        })
+        return
+      }
+
+      if (inputText.length >= TOKEN_SYMBOL_MIN_LENGTH) {
         setShowError(
           t(
             "The address/symbol you entered does not appear to correspond to you assets list or it's already hidden."
@@ -120,6 +138,9 @@ const AddOrHideTokenForm: React.FC<Props> = ({
     setShowError('')
   })
 
+  const buttonSubmitText = mode === MODES.ADD_TOKEN ? t('Add') : t('Hide')
+  const buttonSubmittingText = mode === MODES.ADD_TOKEN ? t('Adding...') : t('Hiding...')
+
   return (
     <>
       <Controller
@@ -148,10 +169,10 @@ const AddOrHideTokenForm: React.FC<Props> = ({
         </View>
       )}
 
-      {!showError && tokenDetails && <TokenItem {...tokenDetails} />}
+      {!showError && tokenDetails && <FoundTokenItem {...tokenDetails} />}
 
       <Button
-        text={isSubmitting ? t('Adding...') : t('Add')}
+        text={isSubmitting ? buttonSubmittingText : buttonSubmitText}
         disabled={isSubmitting || disabled}
         onPress={handleOnPress}
       />

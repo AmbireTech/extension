@@ -1,8 +1,10 @@
 import { NetworkId, NetworkType } from 'ambire-common/src/constants/networks'
-import { UseAccountsReturnType } from 'ambire-common/src/hooks/useAccounts'
 import { Token } from 'ambire-common/src/hooks/usePortfolio'
-import { UsePortfolioReturnType } from 'ambire-common/src/hooks/usePortfolio/types'
-import React, { useState } from 'react'
+import {
+  TokenWithIsHiddenFlag,
+  UsePortfolioReturnType
+} from 'ambire-common/src/hooks/usePortfolio/types'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { LayoutAnimation, TouchableOpacity, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
@@ -18,18 +20,18 @@ import textStyles from '@common/styles/utils/text'
 
 import AddOrHideTokenForm from './AddOrHideTokenForm'
 import { MODES } from './constants'
-import HiddenOrExtraTokens from './HiddenOrExtraTokens'
+import ExtraTokensList from './ExtraTokensList'
+import HideTokenList from './HideTokenList'
 import styles from './styles'
 
 const segments = [{ value: MODES.ADD_TOKEN }, { value: MODES.HIDE_TOKEN }]
 
 interface Props {
-  tokens: UsePortfolioReturnType['tokens']
+  tokens: TokenWithIsHiddenFlag[]
   extraTokens: UsePortfolioReturnType['extraTokens']
   hiddenTokens: UsePortfolioReturnType['hiddenTokens']
   networkId?: NetworkId
   networkName?: NetworkType['name']
-  selectedAcc: UseAccountsReturnType['selectedAcc']
   onAddExtraToken: UsePortfolioReturnType['onAddExtraToken']
   onAddHiddenToken: UsePortfolioReturnType['onAddHiddenToken']
   onRemoveExtraToken: UsePortfolioReturnType['onRemoveExtraToken']
@@ -42,15 +44,26 @@ const AddOrHideToken = ({
   hiddenTokens,
   networkId,
   networkName,
-  selectedAcc,
   onAddExtraToken,
   onAddHiddenToken,
   onRemoveExtraToken,
   onRemoveHiddenToken
 }: Props) => {
   const { t } = useTranslation()
-
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
+  const tokensWithHidden = useMemo(() => [...hiddenTokens, ...tokens], [hiddenTokens, tokens])
+  const [tokenHideChanges, setTokenHideChanges] = useState<TokenWithIsHiddenFlag[]>([])
+  const [sortedTokens, setSortedTokens] = useState<Token[]>(
+    tokensWithHidden.sort((a, b) => b.balanceUSD - a.balanceUSD)
+  )
+
+  // Tokens and hidden tokens get updated asynchronously, so we need to update
+  // the sorted tokens when they change. Track only the length changes, since
+  // the tokens attributes that change themselves are not used in the component.
+  useEffect(() => {
+    setSortedTokens(tokensWithHidden.sort((a, b) => b.balanceUSD - a.balanceUSD))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tokensWithHidden.length])
 
   const [formType, setFormType] = useState<MODES>(MODES.ADD_TOKEN)
 
@@ -61,7 +74,7 @@ const AddOrHideToken = ({
         closeBottomSheet()
       },
       [MODES.HIDE_TOKEN]: () => {
-        onAddHiddenToken(token)
+        onAddHiddenToken([token])
         closeBottomSheet()
       }
     }
@@ -69,13 +82,59 @@ const AddOrHideToken = ({
     return cases[formMode]()
   }
 
+  const toggleTokenHide = useCallback<(t: TokenWithIsHiddenFlag) => any>((token) => {
+    const nextIsHiddenState = !token.isHidden
+
+    setTokenHideChanges((prevChanges) => {
+      const hasChange = prevChanges.find((c) => c.address === token.address)
+
+      if (hasChange) {
+        return prevChanges.filter((c) => c.address !== token.address)
+      }
+
+      return [...prevChanges, { ...token, isHidden: nextIsHiddenState }]
+    })
+
+    setSortedTokens((prevTokens) => {
+      return prevTokens.map((t) => {
+        if (t.address === token.address) {
+          return { ...t, isHidden: nextIsHiddenState }
+        }
+
+        return t
+      })
+    })
+  }, [])
+
+  const handleUpdates = useCallback(() => {
+    const hiddenTokensToAdd = tokenHideChanges.filter((token) => token.isHidden)
+    const addressesToRemove = tokenHideChanges
+      .filter((token) => !token.isHidden)
+      .map((token) => token.address)
+
+    if (hiddenTokensToAdd.length) onAddHiddenToken(hiddenTokensToAdd)
+    if (addressesToRemove.length) onRemoveHiddenToken(addressesToRemove)
+
+    // Reset states
+    setSortedTokens(tokensWithHidden.sort((a, b) => b.balanceUSD - a.balanceUSD))
+    setTokenHideChanges([])
+  }, [onAddHiddenToken, onRemoveHiddenToken, tokenHideChanges, tokensWithHidden])
+
   return (
     <>
       <TouchableOpacity style={[styles.btnContainer, spacings.mbTy]} onPress={openBottomSheet}>
-        <Text fontSize={16}>{t('Add or Hide Token')}</Text>
+        <Text fontSize={14} style={{ lineHeight: 24 }}>
+          {t('Add or Hide Token')}
+        </Text>
       </TouchableOpacity>
 
-      <BottomSheet id="add-token" sheetRef={sheetRef} closeBottomSheet={closeBottomSheet}>
+      <BottomSheet
+        id="add-token"
+        sheetRef={sheetRef}
+        closeBottomSheet={closeBottomSheet}
+        onClosed={handleUpdates}
+        cancelText={t('Close')}
+      >
         <Segments
           defaultValue={formType}
           segments={segments}
@@ -90,13 +149,12 @@ const AddOrHideToken = ({
           }}
           fontSize={14}
         />
-        <View style={[flexboxStyles.flex1, flexboxStyles.justifyEnd, spacings.mtMd]}>
+        <View style={[flexboxStyles.flex1, flexboxStyles.justifyEnd, spacings.mtMd, spacings.mbTy]}>
           {formType === MODES.ADD_TOKEN && (
             <>
               <Title type="small" style={textStyles.center}>
                 {t('Add Token')}
               </Title>
-
               <AddOrHideTokenForm
                 mode={MODES.ADD_TOKEN}
                 onSubmit={handleOnSubmit}
@@ -104,13 +162,7 @@ const AddOrHideToken = ({
                 networkId={networkId}
                 networkName={networkName}
               />
-              <HiddenOrExtraTokens
-                mode={MODES.ADD_TOKEN}
-                hiddenTokens={hiddenTokens}
-                extraTokens={extraTokens}
-                onRemoveExtraToken={onRemoveExtraToken}
-                onRemoveHiddenToken={onRemoveHiddenToken}
-              />
+              <ExtraTokensList tokens={extraTokens} onRemoveExtraToken={onRemoveExtraToken} />
             </>
           )}
           {formType === MODES.HIDE_TOKEN && (
@@ -118,22 +170,7 @@ const AddOrHideToken = ({
               <Title type="small" style={textStyles.center}>
                 {t('Hide Token')}
               </Title>
-
-              <AddOrHideTokenForm
-                enableSymbolSearch
-                mode={MODES.HIDE_TOKEN}
-                onSubmit={handleOnSubmit}
-                tokens={tokens}
-                networkId={networkId}
-                networkName={networkName}
-              />
-              <HiddenOrExtraTokens
-                mode={MODES.HIDE_TOKEN}
-                hiddenTokens={hiddenTokens}
-                extraTokens={extraTokens}
-                onRemoveExtraToken={onRemoveExtraToken}
-                onRemoveHiddenToken={onRemoveHiddenToken}
-              />
+              <HideTokenList tokens={sortedTokens} toggleTokenHide={toggleTokenHide} />
             </>
           )}
         </View>

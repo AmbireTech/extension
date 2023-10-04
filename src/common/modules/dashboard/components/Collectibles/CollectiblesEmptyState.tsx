@@ -29,7 +29,7 @@ const CollectiblesEmptyState = ({ isPrivateMode, collectiblesLength }: Props) =>
         <Text style={[spacings.phTy, textStyles.center]} fontSize={14}>
           {!!isPrivateMode && !!collectiblesLength
             ? t("You can't see collectibles in private mode")
-            : t("You don't have any collectables (NFTs) yet")}
+            : t("You don't have any collectibles (NFTs) yet")}
         </Text>
       </View>
       <View style={[styles.emptyStateItem]}>

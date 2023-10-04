@@ -2,7 +2,7 @@ import React from 'react'
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder'
 
 import colors from '@common/styles/colors'
-import { SPACING, SPACING_MI, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
+import { SPACING, SPACING_MI, SPACING_SM } from '@common/styles/spacings'
 
 const TokensListLoader = () => {
   const LoaderItem = (
@@ -12,8 +12,7 @@ const TokensListLoader = () => {
       paddingVertical={SPACING}
       backgroundColor={colors.chetwode_50}
       borderRadius={13}
-      marginBottom={SPACING_TY}
-      height={83}
+      height={70}
     >
       <SkeletonPlaceholder.Item width={34} height={34} borderRadius={13} marginRight={15} />
       <SkeletonPlaceholder.Item flex={1} justifyContent="center">

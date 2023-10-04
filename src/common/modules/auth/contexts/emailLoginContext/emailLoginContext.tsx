@@ -8,7 +8,7 @@ import useAccounts from '@common/hooks/useAccounts'
 import useNavigation from '@common/hooks/useNavigation'
 import useStorageController from '@common/hooks/useStorageController'
 import useToast from '@common/hooks/useToast'
-import { ROUTES } from '@common/modules/router/config/routesConfig'
+import { ROUTES } from '@common/modules/router/constants/common'
 import useVault from '@common/modules/vault/hooks/useVault'
 import { fetchCaught } from '@common/services/fetch'
 
@@ -175,6 +175,14 @@ const EmailLoginProvider: React.FC<any> = ({ children }: any) => {
         })
       } else if (pendingLoginAccount && !password) {
         addToast('Password is required', { error: true })
+      } else if (!pendingLoginAccount.meta.primaryKeyBackup) {
+        addToast(
+          'No key backup found. You need to import this account from JSON or if you opted in for Ambire cloud - please try to log in again later. In case you lost your JSON backup, you can recover your account from the Ambire web wallet.',
+          {
+            error: true,
+            timeout: 30000
+          }
+        )
       } else {
         try {
           const wallet = await Wallet.fromEncryptedJson(

@@ -1,13 +1,11 @@
 import { StyleSheet, TextStyle } from 'react-native'
 
 import { isWeb } from '@common/config/env'
-import colors from '@common/styles/colors'
 
 // Only on web we scale up the font because the extension width allows us to fit more content horizontally
 export const TEXT_SCALE = isWeb ? 2 : 0
 
 interface Style {
-  text: TextStyle
   textRegular: TextStyle
   textSmall: TextStyle
   textCaption: TextStyle
@@ -16,9 +14,6 @@ interface Style {
 }
 
 const styles = StyleSheet.create<Style>({
-  text: {
-    color: colors.titan
-  },
   textRegular: {
     fontSize: 14 + TEXT_SCALE,
     lineHeight: 21,

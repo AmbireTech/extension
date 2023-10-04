@@ -1,14 +1,21 @@
-// @ts-nocheck
+/* eslint-disable no-param-reassign */
 // Script that is injected into dapp's context through content-script. it mounts ethereum to window
 
+import networks, { NetworkId } from 'ambire-common/src/constants/networks'
 import { ethErrors, serializeError } from 'eth-rpc-errors'
+import { intToHex } from 'ethereumjs-util'
+import { providers } from 'ethers'
 import { EventEmitter } from 'events'
+import { forIn, isUndefined } from 'lodash'
 
+import { delayPromise } from '@common/utils/promises'
+import { ETH_RPC_METHODS_AMBIRE_MUST_HANDLE } from '@web/constants/common'
+import { DAPP_PROVIDER_URLS } from '@web/extension-services/inpage/config/dapp-providers'
 import DedupePromise from '@web/extension-services/inpage/services/dedupePromise'
 import PushEventHandlers from '@web/extension-services/inpage/services/pushEventsHandlers'
 import ReadyPromise from '@web/extension-services/inpage/services/readyPromise'
 import BroadcastChannelMessage from '@web/extension-services/message/broadcastChannelMessage'
-import { logInfoWithPrefix } from '@web/utils/logger'
+import { logInfoWithPrefix, logWarnWithPrefix } from '@web/utils/logger'
 
 declare const channelName: any
 
@@ -25,7 +32,69 @@ interface StateProvider {
   isPermanentlyDisconnected: boolean
 }
 
-const domReadyCall = (callback) => {
+// keep isMetaMask and remove isAmbire
+const impersonateMetamaskWhitelist = [
+  // layerzero
+  'bitcoinbridge.network',
+  'bridge.liquidswap.com',
+  'theaptosbridge.com',
+  'app.actafi.org',
+
+  // rainbow
+  'goal3.xyz',
+  'enso.finance',
+  'telx.network',
+  'link3.to',
+  'hypercerts.org',
+
+  'quickswap.exchange'
+]
+
+// keep isAmbire and remove isMetaMask
+const ambireHostList: string[] = []
+
+const isIncludesHost = (current: string, target: string) => {
+  return current === target || current.endsWith(`.${target}`)
+}
+
+const isInHostList = (list: string[], host: string) => {
+  return list.some((target) => isIncludesHost(host, target))
+}
+
+export const getProviderMode = (host: string) => {
+  if (isInHostList(impersonateMetamaskWhitelist, host)) {
+    return 'metamask'
+  }
+  if (isInHostList(ambireHostList, host)) {
+    return 'ambire'
+  }
+  return 'default'
+}
+
+export const patchProvider = (provider: any) => {
+  const mode = getProviderMode(window.location.hostname)
+  try {
+    if (mode === 'metamask') {
+      delete provider.isAmbire
+      provider.isMetaMask = true
+      return
+    }
+    if (mode === 'ambire') {
+      delete provider.isMetaMask
+      provider.isAmbire = true
+      return
+    }
+    if (mode === 'default') {
+      provider.isMetaMask = true
+      provider.isAmbire = true
+      return
+    }
+  } catch (e) {
+    console.error(e)
+  }
+}
+
+const domReadyCall = (callback: any) => {
   if (document.readyState === 'complete') {
     callback()
   } else {
@@ -37,7 +106,7 @@ const domReadyCall = (callback) => {
   }
 }
 
-const $ = document.querySelector.bind(document)
+const $document = document.querySelector.bind(document)
 
 export class EthereumProvider extends EventEmitter {
   chainId: string | null = null
@@ -50,9 +119,15 @@ export class EthereumProvider extends EventEmitter {
    */
   networkVersion: string | null = null
 
+  dAppOwnProviders: {
+    [key in NetworkId]?: providers.JsonRpcProvider | providers.WebSocketProvider | null
+  } = {}
+
   isAmbire = true
 
   isMetaMask = true
+
+  _isAmbire = true
 
   _isReady = false
 
@@ -112,11 +187,13 @@ export class EthereumProvider extends EventEmitter {
     domReadyCall(() => {
       const origin = location.origin
       const icon =
-        ($('head > link[rel~="icon"]') as HTMLLinkElement)?.href ||
-        ($('head > meta[itemprop="image"]') as HTMLMetaElement)?.content
+        ($document('head > link[rel~="icon"]') as HTMLLinkElement)?.href ||
+        ($document('head > meta[itemprop="image"]') as HTMLMetaElement)?.content
 
       const name =
-        document.title || ($('head > meta[name="title"]') as HTMLMetaElement)?.content || origin
+        document.title ||
+        ($document('head > meta[name="title"]') as HTMLMetaElement)?.content ||
+        origin
 
       this._bcm.request({
         method: 'tabCheckin',
@@ -143,6 +220,43 @@ export class EthereumProvider extends EventEmitter {
       })
 
       this._pushEventHandlers.accountsChanged(accounts)
+
+      // eslint-disable-next-line no-restricted-globals
+      const { hostname } = location
+      if (DAPP_PROVIDER_URLS[hostname]) {
+        // eslint-disable-next-line no-restricted-syntax
+        forIn(DAPP_PROVIDER_URLS[hostname], async (providerUrl, networkId) => {
+          const network = networks.find((n) => n.id === networkId)
+          if (!network || !providerUrl) return
+
+          try {
+            this.dAppOwnProviders[network.id] = providerUrl.startsWith('wss:')
+              ? new providers.WebSocketProvider(providerUrl, {
+                  name: network.name,
+                  chainId: network.chainId
+                })
+              : new providers.JsonRpcProvider(providerUrl, {
+                  name: network.name,
+                  chainId: network.chainId
+                })
+
+            // Acts as a mechanism to check if the provider credentials work
+            // eslint-disable-next-line no-await-in-loop
+            await Promise.race([
+              this.dAppOwnProviders[network.id]?.getNetwork(),
+              // Timeouts after 3 secs because sometimes the provider call hangs with no response
+              delayPromise(3000)
+            ])
+            logInfoWithPrefix(`👌 The dApp's own provider initiated for ${network.name} network.`)
+          } catch (e) {
+            this.dAppOwnProviders[network.id] = null
+            logWarnWithPrefix(
+              `The dApp's own provider for ${network.name} network failed to init.`,
+              e
+            )
+          }
+        })
+      }
     } catch {
       //
     } finally {
@@ -194,9 +308,41 @@ export class EthereumProvider extends EventEmitter {
 
     this._requestPromiseCheckVisibility()
 
-    return this._requestPromise.call(() => {
+    return this._requestPromise.call(async () => {
+      if (
+        data.method.startsWith('eth_') &&
+        !ETH_RPC_METHODS_AMBIRE_MUST_HANDLE.includes(data.method)
+      ) {
+        const network = networks.find((n) => intToHex(n.chainId) === this.chainId)
+        if (network?.id && this.dAppOwnProviders[network.id]) {
+          if (data.method !== 'eth_call') {
+            logInfoWithPrefix('[⏩ forwarded request]', data)
+          }
+
+          try {
+            const result = await Promise.race([
+              this.dAppOwnProviders[network.id]?.send(data.method, data.params),
+              // Timeouts after 3 secs because sometimes the provider call hangs with no response
+              delayPromise(3000)
+            ])
+
+            if (data.method !== 'eth_call') {
+              logInfoWithPrefix('[⏩ forwarded request: success]', data.method, result)
+            }
+
+            // Otherwise, if no result comes, do not return, fallback to our provider.
+            if (!isUndefined(result)) return result
+          } catch (err) {
+            //  Do not throw on error because there is fallback to our provider.
+            if (data.method !== 'eth_call') {
+              logWarnWithPrefix('[⏩ forwarded request: error]', data.method, err)
+            }
+          }
+        }
+      }
+
       if (data.method !== 'eth_call') {
-        logInfoWithPrefix('[request]', JSON.stringify(data, null, 2))
+        logInfoWithPrefix('[request]', data)
       }
 
       return this._bcm
@@ -311,10 +457,11 @@ declare global {
 }
 
 const provider = new EthereumProvider()
+patchProvider(provider)
 let cacheOtherProvider: EthereumProvider | null = null
 const ambireProvider = new Proxy(provider, {
   deleteProperty: (target, prop) => {
-    if (prop === 'on' || prop === 'isAmbire') {
+    if (typeof prop === 'string' && ['on', 'isAmbire', 'isMetaMask', '_isAmbire'].includes(prop)) {
       // @ts-ignore
       delete target[prop]
     }
@@ -322,17 +469,30 @@ const ambireProvider = new Proxy(provider, {
   }
 })
 
-provider.requestInternalMethods({ method: 'isDefaultWallet' }).then((isDefaultWallet) => {
-  // TODO: Take (ans switch this setting from the Ambire settings)
-  isDefaultWallet = true
-  // ambireProvider.on('defaultWalletChanged', switchWalletNotice)
+// TODO: Take (ans switch this setting from the Ambire settings)
+const isDefaultWallet = true
+// ambireProvider.on('defaultWalletChanged', switchWalletNotice)
 
-  let finalProvider: EthereumProvider | null = null
-  if (isDefaultWallet || !cacheOtherProvider) {
-    finalProvider = ambireProvider
+let finalProvider: EthereumProvider | null = null
+
+if (window.ethereum && !window.ethereum._isAmbire) {
+  provider.requestInternalMethods({
+    method: 'hasOtherProvider',
+    params: []
+  })
+  cacheOtherProvider = window.ethereum
+}
+
+if (isDefaultWallet || !cacheOtherProvider) {
+  finalProvider = ambireProvider
+  try {
+    const customizeEthereum = {
+      ...window.ethereum
+    }
     Object.keys(finalProvider).forEach((key) => {
-      window.ethereum[key] = (finalProvider as EthereumProvider)[key]
+      customizeEthereum[key] = finalProvider[key]
     })
+    patchProvider(customizeEthereum)
     Object.defineProperty(window, 'ethereum', {
       set() {
         provider.requestInternalMethods({
@@ -345,38 +505,40 @@ provider.requestInternalMethods({ method: 'isDefaultWallet' }).then((isDefaultWa
         return finalProvider
       }
     })
+  } catch (e) {
+    // think that defineProperty failed means there is any other wallet
+    provider.requestInternalMethods({
+      method: 'hasOtherProvider',
+      params: []
+    })
+    console.error(e)
+    window.ethereum = finalProvider
+  }
+  if (!window.web3) {
     window.web3 = {
       currentProvider: ambireProvider
     }
-    finalProvider._isReady = true
-    // finalProvider.on('ambire:chainChanged', switchChainNotice)
-  } else {
-    finalProvider = cacheOtherProvider
-    // @ts-ignore
-    delete ambireProvider.on
-    // @ts-ignore
-    delete ambireProvider.isAmbire
-    Object.keys(finalProvider).forEach((key) => {
-      window.ethereum[key] = (finalProvider as EthereumProvider)[key]
-    })
-    const keys = ['selectedAddress', 'chainId', 'networkVersion']
-    keys.forEach((key) => {
-      Object.defineProperty(cacheOtherProvider, key, {
-        get() {
-          return window.ethereum[key]
-        },
-        set(val) {
-          window.ethereum[key] = val
-        }
-      })
-    })
   }
-  provider._cacheEventListenersBeforeReady.forEach(([event, handler]) => {
-    ;(finalProvider as EthereumProvider).on(event, handler)
+  finalProvider._isReady = true
+  // finalProvider.on('ambire:chainChanged', switchChainNotice)
+} else {
+  finalProvider = cacheOtherProvider
+  // @ts-ignore
+  delete ambireProvider.on
+  // @ts-ignore
+  delete ambireProvider.isAmbire
+  // @ts-ignore
+  delete ambireProvider._isAmbire
+  Object.keys(finalProvider).forEach((key) => {
+    // @ts-ignore
+    window.ethereum[key] = (finalProvider as EthereumProvider)[key]
   })
-  provider._cacheRequestsBeforeReady.forEach(({ resolve, reject, data }) => {
-    ;(finalProvider as EthereumProvider).request(data).then(resolve).catch(reject)
-  })
+}
+provider._cacheEventListenersBeforeReady.forEach(([event, handler]) => {
+  ;(finalProvider as EthereumProvider).on(event, handler)
+})
+provider._cacheRequestsBeforeReady.forEach(({ resolve, reject, data }) => {
+  ;(finalProvider as EthereumProvider).request(data).then(resolve).catch(reject)
 })
 
 if (window.ethereum) {
@@ -389,21 +551,32 @@ if (window.ethereum) {
 
 window.ethereum = ambireProvider
 
-Object.defineProperty(window, 'ethereum', {
-  set(val) {
-    provider.requestInternalMethods({
-      method: 'hasOtherProvider',
-      params: []
-    })
-    cacheOtherProvider = val
-  },
-  get() {
-    return ambireProvider
-  }
-})
+try {
+  Object.defineProperty(window, 'ethereum', {
+    set(val) {
+      if (val?._isAmbire) {
+        return
+      }
+      provider.requestInternalMethods({
+        method: 'hasOtherProvider',
+        params: []
+      })
+      cacheOtherProvider = val
+    },
+    get() {
+      return ambireProvider
+    }
+  })
+} catch (e) {
+  console.error(e)
+  // To prevent Object.defineProperty from other wallet, inject ethereum provider directly
+  window.ethereum = ambireProvider
+}
 
-window.web3 = {
-  currentProvider: window.ethereum
+if (!window.web3) {
+  window.web3 = {
+    currentProvider: window.ethereum
+  }
 }
 
 window.dispatchEvent(new Event('ethereum#initialized'))

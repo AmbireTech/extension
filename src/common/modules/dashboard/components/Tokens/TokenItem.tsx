@@ -38,19 +38,23 @@ const TokenItem = ({
 }: Props) => {
   return (
     <View style={isWeb ? styles.tokenItemContainerWeb : styles.tokenItemContainer}>
-      <View style={spacings.prSm}>
+      <View style={[spacings.prSm, flexboxStyles.justifyCenter]}>
         <TokenIcon withContainer uri={img} networkId={networkId} address={address} />
       </View>
 
-      <Text fontSize={16} style={[spacings.prSm, styles.tokenSymbol]} numberOfLines={2}>
+      <Text fontSize={14} style={[spacings.prSm, styles.tokenSymbol]} numberOfLines={2}>
         {symbol}
       </Text>
 
       <View style={[styles.tokenValue, flexboxStyles.flex1]}>
-        <Text fontSize={16} numberOfLines={1}>
-          {hidePrivateValue(formatFloatTokenAmount(balance, true, decimals))}
+        <Text fontSize={14} numberOfLines={1}>
+          {hidePrivateValue(
+            formatFloatTokenAmount(Number(balance).toFixed(balance < 1 ? 8 : 4), true, decimals)
+          )}
         </Text>
-        <Text style={textStyles.highlightPrimary}>${hidePrivateValue(balanceUSD?.toFixed(2))}</Text>
+        <Text fontSize={12} style={textStyles.highlightPrimary}>
+          ${hidePrivateValue(balanceUSD?.toFixed(2))}
+        </Text>
       </View>
 
       <View style={spacings.plSm}>

@@ -9,18 +9,18 @@ import Text from '@common/components/Text'
 import Title from '@common/components/Title'
 import Wrapper from '@common/components/Wrapper'
 import { Trans, useTranslation } from '@common/config/localization'
-import useExtensionApproval from '@common/hooks/useExtensionApproval'
 import colors from '@common/styles/colors'
 import spacings from '@common/styles/spacings'
 import flexboxStyles from '@common/styles/utils/flexbox'
 import textStyles from '@common/styles/utils/text'
 import ManifestImage from '@web/components/ManifestImage'
+import useApproval from '@web/hooks/useApproval'
 
 import styles from './styles'
 
 const GetEncryptionPublicKeyRequestScreen = () => {
   const { t } = useTranslation()
-  const { approval, rejectApproval } = useExtensionApproval()
+  const { approval, rejectApproval } = useApproval()
 
   const handleDeny = useCallback(
     () => rejectApproval(t('User rejected the request.')),

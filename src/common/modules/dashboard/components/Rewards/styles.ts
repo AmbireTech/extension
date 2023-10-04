@@ -4,8 +4,12 @@ import { isWeb } from '@common/config/env'
 import colors from '@common/styles/colors'
 import spacings, { SPACING_TY } from '@common/styles/spacings'
 import commonStyles from '@common/styles/utils/common'
+import flexbox from '@common/styles/utils/flexbox'
 
 interface Style {
+  rewardTokenButton: ViewStyle
+  tokenButtonContainer: ViewStyle
+  tokenButtonIconWrapper: ViewStyle
   rewardFlag: ViewStyle
   tableContainer: ViewStyle
   tableRow: ViewStyle
@@ -14,6 +18,32 @@ interface Style {
 }
 
 const styles = StyleSheet.create<Style>({
+  rewardTokenButton: {
+    ...flexbox.alignSelfCenter,
+    backgroundColor: colors.titan_05,
+    // So it matches the height of the token item send button
+    minHeight: 36
+  },
+  tokenButtonContainer: {
+    flexDirection: 'row',
+    backgroundColor: colors.howl,
+    ...spacings.pvSm,
+    ...spacings.phSm,
+    ...spacings.mbTy,
+    ...commonStyles.borderRadiusPrimary,
+    borderWidth: 1,
+    borderColor: colors.heliotrope
+  },
+  tokenButtonIconWrapper: {
+    backgroundColor: colors.titan_05,
+    overflow: 'hidden',
+    ...commonStyles.borderRadiusPrimary,
+    ...flexbox.center,
+    ...spacings.mrSm,
+    width: 34,
+    height: 34,
+    alignSelf: 'center'
+  },
   rewardFlag: {
     position: 'absolute',
     top: 0,
@@ -22,7 +52,6 @@ const styles = StyleSheet.create<Style>({
   },
   tableContainer: {
     marginHorizontal: isWeb ? 0 : -1 * SPACING_TY,
-    backgroundColor: colors.valhalla,
     ...commonStyles.borderRadiusPrimary,
     ...spacings.ph,
     ...spacings.pvTy

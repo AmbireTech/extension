@@ -8,6 +8,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     ...spacings.pt,
     paddingBottom: 40
+  },
+  horizontalLogo: {
+    alignSelf: 'center',
+    marginBottom: 40
   }
 })
 

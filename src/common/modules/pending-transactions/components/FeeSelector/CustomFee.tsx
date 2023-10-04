@@ -15,22 +15,37 @@ type Props = {
   isEditEnabled: boolean
   symbol: string
   info?: any
+  disabled?: boolean
   setCustomFee: (val: any) => any
   setEnableEdit: () => void
 }
 
-const CustomFee = ({ setCustomFee, value, isEditEnabled, setEnableEdit, symbol, info }: Props) => {
+const CustomFee = ({
+  setCustomFee,
+  value,
+  isEditEnabled,
+  setEnableEdit,
+  symbol,
+  info,
+  disabled
+}: Props) => {
   const { t } = useTranslation()
 
   const handleEnableEdit = () => {
     !!setEnableEdit && setEnableEdit()
   }
 
-  if (!isEditEnabled) {
+  if (!isEditEnabled || !!disabled) {
     return (
       <TouchableOpacity
-        style={[spacings.mbSm, flexboxStyles.directionRow, flexboxStyles.alignCenter]}
+        style={[
+          spacings.mbSm,
+          flexboxStyles.directionRow,
+          flexboxStyles.alignCenter,
+          !!disabled && { opacity: 0.6 }
+        ]}
         onPress={handleEnableEdit}
+        disabled={disabled}
       >
         <View style={spacings.mrMi}>
           <EditIcon />

@@ -9,7 +9,7 @@ import TransakLogo from '@common/assets/svg/TransakLogo'
 import CONFIG from '@common/config/env'
 import useNavigation from '@common/hooks/useNavigation'
 import useToast from '@common/hooks/useToast'
-import { ROUTES } from '@common/modules/router/config/routesConfig'
+import { ROUTES } from '@common/modules/router/constants/common'
 import { fetchGet } from '@common/services/fetch'
 
 type UseProvidersProps = {
@@ -133,16 +133,17 @@ const useProviders = ({ walletAddress, networkId }: UseProvidersProps): UseProvi
   }
 
   const providers = [
-    {
-      Icon: KriptomatLogo,
-      name: 'Kriptomat',
-      type: 'Credit Card',
-      fees: '2.45%',
-      limits: 'up to 5000 EUR/day',
-      currencies: 'USD, EUR, GBP',
-      networks: ['ethereum', 'polygon', 'avalanche', 'binance-smart-chain'],
-      onClick: () => openKriptomat('Kriptomat')
-    },
+    // Hidden since v3.11.0, so it's consistent with the web app
+    // {
+    //   Icon: KriptomatLogo,
+    //   name: 'Kriptomat',
+    //   type: 'Credit Card',
+    //   fees: '2.45%',
+    //   limits: 'up to 5000 EUR/day',
+    //   currencies: 'USD, EUR, GBP',
+    //   networks: ['ethereum', 'polygon', 'avalanche', 'binance-smart-chain'],
+    //   onClick: () => openKriptomat('Kriptomat')
+    // },
     {
       Icon: RampLogo,
       name: 'Ramp',
@@ -162,26 +163,27 @@ const useProviders = ({ walletAddress, networkId }: UseProvidersProps): UseProvi
       currencies: 'CAD',
       networks: ['ethereum', 'polygon', 'binance-smart-chain'],
       onClick: () => openPayTrie('PayTrie')
-    },
-    {
-      Icon: TransakLogo,
-      name: 'Transak',
-      type: 'Credit/Debit card & Bank Transfer (depends on location)',
-      fees: 'from 0.5%',
-      limits: 'up to 15,000 EUR/day',
-      currencies: 'GBP, EUR, USD and many more',
-      networks: [
-        'ethereum',
-        'polygon',
-        'avalanche',
-        'arbitrum',
-        'binance-smart-chain',
-        'moonriver',
-        'moonbeam',
-        'optimism'
-      ],
-      onClick: () => openTransak('Transak')
     }
+    // Hidden since v3.11.0, so it's consistent with the web app
+    // {
+    //   Icon: TransakLogo,
+    //   name: 'Transak',
+    //   type: 'Credit/Debit card & Bank Transfer (depends on location)',
+    //   fees: 'from 0.5%',
+    //   limits: 'up to 15,000 EUR/day',
+    //   currencies: 'GBP, EUR, USD and many more',
+    //   networks: [
+    //     'ethereum',
+    //     'polygon',
+    //     'avalanche',
+    //     'arbitrum',
+    //     'binance-smart-chain',
+    //     'moonriver',
+    //     'moonbeam',
+    //     'optimism'
+    //   ],
+    //   onClick: () => openTransak('Transak')
+    // }
   ]
 
   return {

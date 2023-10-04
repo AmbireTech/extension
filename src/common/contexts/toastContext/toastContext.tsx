@@ -1,26 +1,43 @@
-import { ToastType, UseToastsOptions, UseToastsReturnType } from 'ambire-common/src/hooks/useToasts'
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import {
+  ToastType,
+  UseToastsOptions,
+  UseToastsReturnType as UseToastsReturnTypeCommon
+} from 'ambire-common/src/hooks/useToasts'
+import LottieView from 'lottie-react-native'
+import React, { useCallback, useMemo, useState } from 'react'
 import { Linking, TouchableOpacity, View } from 'react-native'
+import { useModalize } from 'react-native-modalize'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import CheckIcon from '@common/assets/svg/CheckIcon'
 import CloseIconRound from '@common/assets/svg/CloseIconRound'
 import ErrorIcon from '@common/assets/svg/ErrorIcon'
+import BottomSheet from '@common/components/BottomSheet'
+import Button from '@common/components/Button'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
-import { useTranslation } from '@common/config/localization'
-import { TAB_BAR_HEIGHT } from '@common/constants/router'
-import { navigationRef } from '@common/services/navigation'
-import { isRouteWithTabBar } from '@common/services/router'
+import { HEADER_HEIGHT } from '@common/modules/header/components/Header/styles'
 import colors from '@common/styles/colors'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_MD, SPACING_TY } from '@common/styles/spacings'
 import flexboxStyles from '@common/styles/utils/flexbox'
+import textStyles from '@common/styles/utils/text'
 import { Portal } from '@gorhom/portal'
 
 import styles from './styles'
+import SuccessAnimation from './success-animation.json'
+
+// Magic spacing for positioning the toast list
+// to match exactly the area of the header + its bottom spacing
+const ADDITIONAL_TOP_SPACING_MOBILE = SPACING_TY
+const ADDITIONAL_TOP_SPACING_WEB = SPACING_MD
+
+interface UseToastsReturnType extends UseToastsReturnTypeCommon {
+  addBottomSheet: ({ text, buttonText }: { text: string; buttonText?: string }) => void
+}
 
 const ToastContext = React.createContext<UseToastsReturnType>({
   addToast: () => -1,
+  addBottomSheet: () => {},
   removeToast: () => {}
 })
 
@@ -34,51 +51,19 @@ let id = 0
 
 const ToastProvider: React.FC = ({ children }) => {
   const [toasts, setToasts] = useState<ToastType[]>([])
-  const [hasTabBar, setHasTabBar] = useState(false)
   const insets = useSafeAreaInsets()
-  const { t } = useTranslation()
+  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
+  const [bottomSheetText, setBottomSheetText] = useState('')
+  const [bottomSheetButtonText, setBottomSheetButtonText] = useState('')
 
-  useEffect(() => {
-    // TODO: Temporarily assume that always has tab bar, since the notification
-    // position will be anyways different in the upcoming versions.
-    if (isWeb) {
-      setHasTabBar(true)
-      return
-    }
-
-    let intervalAttemptingToSubscribe: ReturnType<typeof setInterval>
-    let navigationRefSubscription = () => {}
-
-    const setNavigationRefSubscription = () => {
-      if (!navigationRef?.current?.isReady()) return
-
-      const triggerSetHasTabBar = () => {
-        const routeName = navigationRef?.current?.getCurrentRoute()?.name
-
-        setHasTabBar(isRouteWithTabBar(routeName as string))
-      }
-
-      // Set the tab bar flag for the current state (route)
-      triggerSetHasTabBar()
-      // Update the tab bar flag when the navigator's state changes
-      navigationRefSubscription = navigationRef?.current?.addListener('state', triggerSetHasTabBar)
-
-      // Once the initial calculation + the subscription are set, the interval jon has done.
-      clearInterval(intervalAttemptingToSubscribe)
-    }
-
-    intervalAttemptingToSubscribe = setInterval(setNavigationRefSubscription, 500)
-    // Trigger immediately on purpose, because you never know when the
-    // navigation ref will be ready (navigationRef?.current?.isReady()).
-    // Might happen almost immediately (for the mobile app),
-    // or with a slight delay (for the web extension).
-    setNavigationRefSubscription()
-
-    return () => {
-      clearInterval(intervalAttemptingToSubscribe)
-      navigationRefSubscription() // unsubscribe
-    }
-  }, [])
+  const addBottomSheet = useCallback<UseToastsReturnType['addBottomSheet']>(
+    ({ text, buttonText }) => {
+      setBottomSheetText(text)
+      setBottomSheetButtonText(buttonText || '')
+      openBottomSheet()
+    },
+    [openBottomSheet]
+  )
 
   const removeToast = useCallback<UseToastsReturnType['removeToast']>((tId) => {
     setToasts((_toasts) => _toasts.filter((_t) => _t.id !== tId))
@@ -110,26 +95,26 @@ const ToastProvider: React.FC = ({ children }) => {
     [removeToast]
   )
 
-  // -4 is a magic number
-  // 44 is the height of the bottom tab navigation
-  const tabBarHeight = hasTabBar ? TAB_BAR_HEIGHT : 0
-  const bottomInset =
-    insets.bottom > 0 ? insets.bottom - 4 + tabBarHeight : insets.bottom + tabBarHeight
+  const topInset =
+    insets.top +
+    HEADER_HEIGHT +
+    (isWeb ? ADDITIONAL_TOP_SPACING_WEB : ADDITIONAL_TOP_SPACING_MOBILE)
 
   return (
     <ToastContext.Provider
       value={useMemo(
         () => ({
           addToast,
-          removeToast
+          removeToast,
+          addBottomSheet
         }),
-        [addToast, removeToast]
+        [addToast, removeToast, addBottomSheet]
       )}
     >
       <Portal hostName="global">
-        <View style={[styles.container, { bottom: bottomInset }]}>
+        <View style={[styles.container, { top: topInset }]}>
           {/* eslint-disable-next-line @typescript-eslint/no-shadow */}
-          {[...toasts].reverse().map(({ id, url, error, sticky, badge, text, onClick }) => (
+          {toasts.map(({ id, url, error, sticky, badge, text, onClick }) => (
             <View style={styles.toastWrapper} key={id}>
               <TouchableOpacity
                 style={[styles.toast, error && styles.error]}
@@ -147,10 +132,7 @@ const ToastProvider: React.FC = ({ children }) => {
                   <View style={spacings.prTy}>{error ? <ErrorIcon /> : <CheckIcon />}</View>
                 )}
                 <View style={flexboxStyles.flex1}>
-                  <Text weight="medium" color={colors.patriotBlue} fontSize={12}>
-                    {error ? t('Oops') : t('Success')}
-                  </Text>
-                  <Text numberOfLines={7} color={colors.patriotBlue} fontSize={12}>
+                  <Text numberOfLines={7} color={colors.patriotBlue} weight="regular" fontSize={12}>
                     {text}
                   </Text>
                 </View>
@@ -165,6 +147,35 @@ const ToastProvider: React.FC = ({ children }) => {
         </View>
       </Portal>
       {children}
+      <BottomSheet
+        id={`toast-bottom-sheet-${id}`}
+        sheetRef={sheetRef}
+        closeBottomSheet={closeBottomSheet}
+        displayCancel={false}
+      >
+        <View
+          style={[
+            spacings.phLg,
+            spacings.pt,
+            !bottomSheetButtonText && spacings.pbLg,
+            flexboxStyles.alignCenter
+          ]}
+        >
+          <LottieView source={SuccessAnimation} style={{ width: 193, height: 193 }} autoPlay loop />
+          <Text fontSize={16} weight="regular" style={[textStyles.center, spacings.mbLg]}>
+            {bottomSheetText}
+          </Text>
+        </View>
+        {!!bottomSheetButtonText && (
+          <Button
+            type="outline"
+            style={spacings.mbLg}
+            // @ts-ignore
+            onPress={closeBottomSheet}
+            text={bottomSheetButtonText}
+          />
+        )}
+      </BottomSheet>
     </ToastContext.Provider>
   )
 }

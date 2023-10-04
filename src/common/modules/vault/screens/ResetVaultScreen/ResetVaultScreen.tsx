@@ -1,4 +1,3 @@
-import { isValidPassword } from 'ambire-common/src/services/validations'
 import React from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { Keyboard, TouchableWithoutFeedback, View } from 'react-native'
@@ -19,6 +18,7 @@ import { VAULT_STATUS } from '@common/modules/vault/constants/vaultStatus'
 import { VaultContextReturnType } from '@common/modules/vault/contexts/vaultContext/types'
 import spacings from '@common/styles/spacings'
 import flexboxStyles from '@common/styles/utils/flexbox'
+import { isValidPin, PIN_LENGTH } from '@common/utils/isValidPin'
 
 interface Props {
   hasGradientBackground?: boolean
@@ -81,7 +81,7 @@ const ResetVaultScreen: React.FC<Props> = ({
               <View style={spacings.phTy}>
                 <Text weight="regular" style={spacings.mbMi} fontSize={13}>
                   {t(
-                    'Ambire does not keep a copy of your Key Store passphrase. If you’re having trouble unlocking your {{name}}, you will need to create a new Key Store passphrase.',
+                    'Ambire does not keep a copy of your Key Store PIN. If you’re having trouble unlocking your {{name}}, you will need to create a new Key Store PIN.',
                     { name: isWeb ? t('extension') : t('app') }
                   )}
                 </Text>
@@ -91,21 +91,23 @@ const ResetVaultScreen: React.FC<Props> = ({
               </View>
               <Controller
                 control={control}
-                rules={{ validate: isValidPassword }}
-                render={({ field: { onChange, onBlur, value } }) => (
+                rules={{
+                  required: t('PIN is required.'),
+                  validate: { isValidPin }
+                }}
+                render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
                   <InputPassword
                     onBlur={onBlur}
-                    placeholder={t('New passphrase')}
+                    placeholder={t('New {{PIN_LENGTH}}-digit PIN', { PIN_LENGTH })}
                     onChangeText={onChange}
-                    isValid={isValidPassword(value)}
+                    maxLength={PIN_LENGTH}
+                    isValid={value?.length === PIN_LENGTH}
                     value={value}
-                    error={
-                      errors.password &&
-                      (t('Please fill in at least 8 characters for passphrase.') as string)
-                    }
+                    error={error && error.message}
                     containerStyle={spacings.mbTy}
                     onSubmitEditing={handleSubmit(resetVault)}
                     autoFocus={isWeb}
+                    keyboardType="number-pad"
                   />
                 )}
                 name="password"
@@ -118,15 +120,17 @@ const ResetVaultScreen: React.FC<Props> = ({
                 render={({ field: { onChange, onBlur, value } }) => (
                   <Input
                     onBlur={onBlur}
-                    placeholder={t('Repeat passphrase')}
+                    placeholder={t('Repeat PIN')}
                     onChangeText={onChange}
                     value={value}
+                    maxLength={PIN_LENGTH}
                     isValid={!!value && watch('password', '') === value}
                     secureTextEntry
-                    error={errors.confirmPassword && (t("Passphrases don't match.") as string)}
+                    error={errors.confirmPassword && (t("PINs don't match.") as string)}
                     autoCorrect={false}
                     containerStyle={spacings.mbTy}
                     onSubmitEditing={handleSubmit(resetVault)}
+                    keyboardType="number-pad"
                   />
                 )}
                 name="confirmPassword"
@@ -137,7 +141,7 @@ const ResetVaultScreen: React.FC<Props> = ({
                   disabled={isSubmitting || !watch('password', '') || !watch('confirmPassword', '')}
                   text={
                     // eslint-disable-next-line no-nested-ternary
-                    isSubmitting ? t('Resetting...') : t('Reset Ambire Key Store')
+                    isSubmitting ? t('Resetting...') : t('Reset PIN')
                   }
                   onPress={handleSubmit(resetVault)}
                 />

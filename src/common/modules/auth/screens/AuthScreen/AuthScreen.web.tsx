@@ -8,13 +8,13 @@ import Wrapper from '@common/components/Wrapper'
 import { useTranslation } from '@common/config/localization'
 import useNavigation from '@common/hooks/useNavigation'
 import AmbireLogo from '@common/modules/auth/components/AmbireLogo'
-import { ROUTES } from '@common/modules/router/config/routesConfig'
+import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import textStyles from '@common/styles/utils/text'
 
 interface ButtonProps extends Omit<ButtonDefaultProps, 'onPress'> {
-  routeName: ROUTES
-  onPress: (nextRoute: ROUTES) => void
+  routeName: keyof typeof WEB_ROUTES
+  onPress: (nextRoute: keyof typeof WEB_ROUTES) => void
 }
 
 const AuthButton = React.memo(
@@ -39,15 +39,14 @@ const AuthScreen = () => {
         <View>
           <AuthButton
             text={t('Login With Email')}
-            routeName={ROUTES.ambireAccountLogin}
+            routeName={WEB_ROUTES.ambireAccountLogin}
             onPress={handleAuthButtonPress}
             hasBottomSpacing={false}
           />
           <AuthButton
-            text={t('Hardware Wallet (coming soon)')}
-            routeName={ROUTES.hardwareWallet}
+            text={t('Hardware Wallet')}
+            routeName={WEB_ROUTES.hardwareWalletSelect}
             onPress={handleAuthButtonPress}
-            disabled // temporary disabled until we have this feature
             style={spacings.mbLg}
           />
           <Text style={[textStyles.center, spacings.mb]} weight="regular" fontSize={18}>
@@ -56,13 +55,13 @@ const AuthScreen = () => {
           <AuthButton
             text={t('Import From JSON')}
             type="outline"
-            routeName={ROUTES.ambireAccountJsonLogin}
+            routeName={WEB_ROUTES.ambireAccountJsonLogin}
             onPress={handleAuthButtonPress}
           />
           <AuthButton
             text={t('Login with External Signer')}
             type="outline"
-            routeName={ROUTES.externalSigner}
+            routeName={WEB_ROUTES.externalSigner}
             onPress={handleAuthButtonPress}
           />
         </View>

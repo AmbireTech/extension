@@ -14,7 +14,7 @@ import useNavigation from '@common/hooks/useNavigation'
 import useNetwork from '@common/hooks/useNetwork'
 import useStorage from '@common/hooks/useStorage'
 import useToast from '@common/hooks/useToast'
-import { ROUTES } from '@common/modules/router/config/routesConfig'
+import { ROUTES } from '@common/modules/router/constants/common'
 import useVault from '@common/modules/vault/hooks/useVault'
 import { SIGNER_TYPES } from '@common/modules/vault/services/VaultController/types'
 import { fetchPost } from '@common/services/fetch'
@@ -37,7 +37,8 @@ const useSignMessage = ({
   messagesToSign,
   resolve,
   onConfirmationCodeRequired,
-  openBottomSheetHardwareWallet
+  openBottomSheetHardwareWallet,
+  isInBottomSheet
 }: UseSignMessageProps): UseSignMessageReturnType => {
   const { network } = useNetwork()
   const { addToast } = useToast()
@@ -231,7 +232,7 @@ const useSignMessage = ({
               addToast('Invalid signature!', { error: true })
             }
 
-            if (messagesToSign.length === 1) {
+            if (messagesToSign.length === 1 && !isInBottomSheet) {
               navigate(ROUTES.dashboard)
             }
 
@@ -269,7 +270,8 @@ const useSignMessage = ({
       isTypedData,
       addSignedMessage,
       dApp,
-      requestedChainId
+      requestedChainId,
+      isInBottomSheet
     ]
   )
 

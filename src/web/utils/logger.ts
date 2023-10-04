@@ -20,4 +20,12 @@ export const logInfoWithPrefix = (event: any, ...args: any) => {
   )
 }
 
+export const logWarnWithPrefix = (event: any, ...args: any) => {
+  logger.warn(
+    `%c [Ambire] (${new Date().toLocaleTimeString()}) ${event}`,
+    `font-weight: bold; background-color: ${colors.mustard}; color: white;`,
+    ...args
+  )
+}
+
 export default logger

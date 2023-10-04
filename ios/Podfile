@@ -1,12 +1,32 @@
 require_relative '../node_modules/expo/scripts/autolinking'
 require_relative '../node_modules/react-native/scripts/react_native_pods'
 require_relative '../node_modules/@react-native-community/cli-platform-ios/native_modules'
+
+def min_ios_version_supported
+  return '12.4'
+end
+
 platform :ios, '13.0'
 install! 'cocoapods', :deterministic_uuids => false
 
 require 'json'
 podfile_properties = JSON.parse(File.read('./Podfile.properties.json')) rescue {}
 inhibit_all_warnings!
+
+# Force pods to match minimum iOS version for React Native
+# Fixes build issue on Xcode Cloud where some pods
+# Use iOS > 12 calls despite being set as iOS 11
+def __apply_Xcode_14_3_RC_post_install_workaround(installer)
+  installer.pods_project.targets.each do |target|
+    target.build_configurations.each do |config|
+      current_target = config.build_settings['IPHONEOS_DEPLOYMENT_TARGET']
+      minimum_target = min_ios_version_supported
+      if current_target.to_f < minimum_target.to_f
+        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = minimum_target
+      end
+    end
+  end
+end
 
 target 'ambire' do
   use_expo_modules!
@@ -51,6 +71,7 @@ target 'ambire' do
       :mac_catalyst_enabled => false
     )
     __apply_Xcode_12_5_M1_post_install_workaround(installer)
+    __apply_Xcode_14_3_RC_post_install_workaround(installer)
 
     # This is necessary for Xcode 14, because it signs resource bundles by
     # default when building for devices.
@@ -62,6 +83,14 @@ target 'ambire' do
           config.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'
         end
       end
+    end
+
+    # On an M1 Mac, opening the .xcworkspace in xCode and running the project
+    # via simulator works, but in order for the yarn ios (expo run:ios) to work,
+    # this configuration is needed, see:
+    # https://github.com/facebook/react-native/issues/32704#issuecomment-1048457543
+    installer.pods_project.build_configurations.each do |config|
+      config.build_settings["EXCLUDED_ARCHS[sdk=iphonesimulator*]"] = "arm64"
     end
   end
 

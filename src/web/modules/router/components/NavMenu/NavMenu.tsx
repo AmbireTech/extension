@@ -17,16 +17,16 @@ import AppVersion from '@common/components/AppVersion'
 import GradientBackgroundWrapper from '@common/components/GradientBackgroundWrapper'
 import Text from '@common/components/Text'
 import Wrapper from '@common/components/Wrapper'
-import { isAndroid, isiOS, isWeb } from '@common/config/env'
+import { isWeb } from '@common/config/env'
 import useNavigation from '@common/hooks/useNavigation'
 import useRoute from '@common/hooks/useRoute'
 import { termsAndPrivacyURL } from '@common/modules/auth/constants/URLs'
 import ConnectedDapps from '@common/modules/nav-menu/components/ConnectedDapps'
 import GasIndicator from '@common/modules/nav-menu/components/GasIndicator'
 import ManageVaultLockButton from '@common/modules/nav-menu/components/ManageVaultLockButton'
-import Theme from '@common/modules/nav-menu/components/Theme'
+// import Theme from '@common/modules/nav-menu/components/Theme'
 import styles from '@common/modules/nav-menu/styles'
-import { ROUTES } from '@common/modules/router/config/routesConfig'
+import { ROUTES } from '@common/modules/router/constants/common'
 import useVault from '@common/modules/vault/hooks/useVault'
 import colors from '@common/styles/colors'
 import spacings from '@common/styles/spacings'
@@ -34,9 +34,9 @@ import flexboxStyles from '@common/styles/utils/flexbox'
 
 const HELP_CENTER_URL = 'https://help.ambire.com/hc/en-us/categories/4404980091538-Ambire-Wallet'
 const REPORT_ISSUE_URL = 'https://help.ambire.com/hc/en-us/requests/new'
-const TELEGRAM_URL = 'https://t.me/AmbireWallet'
+const TELEGRAM_URL = 'https://t.me/AmbireOfficial'
 const TWITTER_URL = 'https://twitter.com/AmbireWallet'
-const DISCORD_URL = 'https://discord.gg/nMBGJsb'
+const DISCORD_URL = 'https://discord.gg/QQb4xc4ksJ'
 
 const NavMenu = () => {
   const { t } = useTranslation()
@@ -48,11 +48,8 @@ const NavMenu = () => {
 
   const menu = [
     { Icon: DashboardIcon, name: t('Dashboard'), route: ROUTES.dashboard },
-    // TODO: Temporary disabled for iOS since v1.9.2 as part of the Apple app review feedback
-    ...(!isiOS ? [{ Icon: EarnIcon, name: t('Earn'), route: ROUTES.earn }] : []),
+    { Icon: EarnIcon, name: t('Earn'), route: ROUTES.earn },
     { Icon: SendIcon, name: t('Send'), route: ROUTES.send },
-    // TODO: Temporary disabled for iOS since v1.6.0 as part of the Apple app review feedback
-    ...(isAndroid ? [{ Icon: SwapIcon, name: t('Swap'), route: ROUTES.swap }] : []),
     { Icon: TransferIcon, name: t('Transactions'), route: ROUTES.transactions },
     // TODO: Not implemented yet.
     // { Icon: CrossChainIcon, name: t('Cross-chain'), route: '' },
@@ -134,7 +131,8 @@ const NavMenu = () => {
               <View style={[spacings.mlTy, spacings.mbSm]}>
                 <ConnectedDapps />
                 {!isWeb && <ManageVaultLockButton handleNavigate={handleNavigate} />}
-                <Theme />
+                {/* TODO: Temporary disabled since v3.1.1 to be consistent with the mobile app */}
+                {/* <Theme /> */}
                 {settings.map((s) => (
                   <TouchableOpacity key={s.name} onPress={() => handleNavigate(s.route)}>
                     <Text style={spacings.mbSm} color={colors.titan_50}>

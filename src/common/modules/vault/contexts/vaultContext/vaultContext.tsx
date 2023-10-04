@@ -1,13 +1,15 @@
 import React, { createContext, useCallback, useEffect, useMemo, useState } from 'react'
+import { UseFormSetError } from 'react-hook-form'
 import { StyleSheet } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 import GradientBackgroundWrapper from '@common/components/GradientBackgroundWrapper'
+import { isAndroid, isiOS } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useAccounts from '@common/hooks/useAccounts'
-import useExtensionApproval from '@common/hooks/useExtensionApproval'
 import useExtensionWallet from '@common/hooks/useExtensionWallet'
 import useNavigation from '@common/hooks/useNavigation'
+import useStorage from '@common/hooks/useStorage'
 import useStorageController from '@common/hooks/useStorageController'
 import useToast from '@common/hooks/useToast'
 import { AUTH_STATUS } from '@common/modules/auth/constants/authStatus'
@@ -22,10 +24,11 @@ import { Controller } from '@common/modules/vault/services/VaultController'
 import { VaultItem } from '@common/modules/vault/services/VaultController/types'
 import flexboxStyles from '@common/styles/utils/flexbox'
 import { isExtension } from '@web/constants/browserapi'
+import useApproval from '@web/hooks/useApproval'
 import { getUiType } from '@web/utils/uiType'
 
 import styles from './styles'
-import { vaultContextDefaults, VaultContextReturnType } from './types'
+import { VAULT_PASSWORD_TYPE, vaultContextDefaults, VaultContextReturnType } from './types'
 
 const VaultContext = createContext<VaultContextReturnType>(vaultContextDefaults)
 
@@ -36,7 +39,7 @@ const VaultProvider: React.FC = ({ children }) => {
   const { extensionWallet } = useExtensionWallet()
   const { onRemoveAllAccounts } = useAccounts()
   const { getItem, setItem, storageControllerInstance } = useStorageController()
-  const { resolveApproval } = useExtensionApproval()
+  const { resolveApproval } = useApproval()
   const {
     biometricsEnabled,
     getKeystorePassword,
@@ -46,6 +49,11 @@ const VaultProvider: React.FC = ({ children }) => {
   const [shouldLockWhenInactive, setShouldLockWhenInactive] = useState(true)
   const { authStatus } = useAuth()
   const [shouldDisplayForgotPassword, setShouldDisplayForgotPassword] = useState(false)
+  const [vaultPasswordType, setVaultPasswordType] = useStorage({
+    key: 'vaultPasswordType',
+    isStringStorage: true,
+    defaultValue: VAULT_PASSWORD_TYPE.PASSPHRASE
+  })
 
   /**
    * For the extension, we need to get vault status from background.
@@ -83,6 +91,7 @@ const VaultProvider: React.FC = ({ children }) => {
     const vault = getItem('vault')
     if (!vault) {
       setVaultStatus(VAULT_STATUS.NOT_INITIALIZED)
+      setVaultPasswordType(VAULT_PASSWORD_TYPE.PIN)
       return
     }
 
@@ -93,7 +102,7 @@ const VaultProvider: React.FC = ({ children }) => {
         setVaultStatus(isUnlocked ? VAULT_STATUS.UNLOCKED : VAULT_STATUS.LOCKED)
       })
       .catch(() => setVaultStatus(VAULT_STATUS.LOCKED))
-  }, [vaultController, getItem, requestVaultControllerMethod])
+  }, [vaultController, getItem, requestVaultControllerMethod, setVaultPasswordType])
 
   const createVault = useCallback<VaultContextReturnType['createVault']>(
     async ({ password, confirmPassword, optInForBiometricsUnlock, nextRoute }) => {
@@ -107,6 +116,10 @@ const VaultProvider: React.FC = ({ children }) => {
           method: 'createVault',
           props: { password }
         })
+
+        if (isiOS || isAndroid) {
+          setVaultPasswordType(VAULT_PASSWORD_TYPE.PIN)
+        }
       } catch {
         addToast(t('Error creating Ambire Key Store. Please try again later or contact support.'), {
           error: true
@@ -149,7 +162,7 @@ const VaultProvider: React.FC = ({ children }) => {
   )
 
   const resetVault = useCallback(
-    ({
+    async ({
       password,
       confirmPassword
     }: {
@@ -157,26 +170,73 @@ const VaultProvider: React.FC = ({ children }) => {
       confirmPassword: string
       nextRoute?: string
     }) => {
-      if (password === confirmPassword) {
-        requestVaultControllerMethod({
+      if (password !== confirmPassword) {
+        addToast(t("Passwords don't match."), { error: true })
+        return
+      }
+
+      try {
+        await requestVaultControllerMethod({
           method: 'resetVault',
           props: {
             password
           }
-        }).then(() => {
-          onRemoveAllAccounts()
-          // Automatically unlock after vault initialization
-          setVaultStatus(VAULT_STATUS.UNLOCKED)
         })
-      } else {
-        addToast(t("Passwords don't match."), { error: true })
+
+        onRemoveAllAccounts()
+
+        if (biometricsEnabled) {
+          try {
+            await addKeystorePasswordToDeviceSecureStore(password)
+          } catch {
+            // If adding to secure store fails, try to remove the password from
+            // the secure store. Otherwise, the prev secure store entry remains
+            // and the user will NOT be able to unlock the vault with the
+            // previous password, but with manually inputting the new pass only.
+            await removeKeystorePasswordFromDeviceSecureStore()
+
+            addToast(
+              t(
+                'Updating Biometrics was unsuccessful. You can retry enabling Biometrics unlock again via the "Set Biometrics unlock" option in the menu'
+              ),
+              { error: true }
+            )
+          }
+        }
+
+        // Automatically unlock after vault initialization
+        setVaultStatus(VAULT_STATUS.UNLOCKED)
+
+        // Reset the forgot password state. Otherwise, the user will see the
+        // forgot password flow again when the app gets locked.
+        setShouldDisplayForgotPassword(false)
+
+        if (isAndroid || isiOS) {
+          setVaultPasswordType(VAULT_PASSWORD_TYPE.PIN)
+        }
+      } catch (e) {
+        addToast(t(`Resetting the Ambire Key Store failed. Error details: ${e?.message}`), {
+          error: true
+        })
       }
     },
-    [t, addToast, onRemoveAllAccounts, requestVaultControllerMethod]
+    [
+      addToast,
+      t,
+      requestVaultControllerMethod,
+      onRemoveAllAccounts,
+      biometricsEnabled,
+      addKeystorePasswordToDeviceSecureStore,
+      setVaultPasswordType
+    ]
   )
 
   const unlockVault = useCallback(
-    async ({ password: incomingPassword }: { password?: string } = {}) => {
+    async (
+      // eslint-disable-next-line default-param-last
+      { password: incomingPassword }: { password?: string } = {},
+      setError: UseFormSetError<{ password: string }>
+    ) => {
       let password = incomingPassword
 
       if (biometricsEnabled && !password) {
@@ -207,16 +267,10 @@ const VaultProvider: React.FC = ({ children }) => {
           }
         })
         .catch((e) => {
-          addToast(e?.message || e, { error: true })
+          setError('password', { message: e?.message || e })
         })
     },
-    [
-      addToast,
-      biometricsEnabled,
-      getKeystorePassword,
-      requestVaultControllerMethod,
-      resolveApproval
-    ]
+    [biometricsEnabled, getKeystorePassword, requestVaultControllerMethod, resolveApproval]
   )
 
   const lockVault = useCallback(
@@ -402,6 +456,7 @@ const VaultProvider: React.FC = ({ children }) => {
       value={useMemo(
         () => ({
           vaultStatus,
+          vaultPasswordType,
           createVault,
           resetVault,
           unlockVault,
@@ -424,6 +479,7 @@ const VaultProvider: React.FC = ({ children }) => {
         }),
         [
           vaultStatus,
+          vaultPasswordType,
           createVault,
           resetVault,
           unlockVault,

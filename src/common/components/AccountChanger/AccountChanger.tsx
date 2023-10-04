@@ -9,10 +9,11 @@ import CopyText from '@common/components/CopyText'
 import NavIconWrapper from '@common/components/NavIconWrapper'
 import Text from '@common/components/Text'
 import Title from '@common/components/Title'
+import { isWeb } from '@common/config/env'
 import useAccounts from '@common/hooks/useAccounts'
 import useExtensionWallet from '@common/hooks/useExtensionWallet'
 import useNavigation from '@common/hooks/useNavigation'
-import { ROUTES } from '@common/modules/router/config/routesConfig'
+import { ROUTES } from '@common/modules/router/constants/common'
 import useVault from '@common/modules/vault/hooks/useVault'
 import alert from '@common/services/alert'
 import colors from '@common/styles/colors'
@@ -44,7 +45,7 @@ const AccountChanger: React.FC<Props> = ({ closeBottomSheet }) => {
   const handleGoToAddAccount = useCallback(() => {
     closeBottomSheet()
 
-    navigate(ROUTES.auth)
+    navigate(isWeb ? ROUTES.getStarted : ROUTES.auth)
   }, [closeBottomSheet, navigate])
 
   const handleChangeAccount = (accountId: any) => {
@@ -97,13 +98,7 @@ const AccountChanger: React.FC<Props> = ({ closeBottomSheet }) => {
       <TouchableOpacity
         onPress={onChangeAccount}
         key={account?.id}
-        style={[
-          flexboxStyles.directionRow,
-          spacings.mbTy,
-          spacings.phSm,
-          spacings.pvTy,
-          isActive && styles.accountContainerActive
-        ]}
+        style={[styles.accountContainer, isActive && styles.accountContainerActive]}
       >
         <View>
           <Blockies size={8} borderRadius={30} borderColor={colors.valhalla} seed={account?.id} />
@@ -133,10 +128,10 @@ const AccountChanger: React.FC<Props> = ({ closeBottomSheet }) => {
   return (
     <>
       <Title style={textStyles.center} type="small">
-        {t('Change account')}
+        {t('Change Account')}
       </Title>
       {accounts.map(renderAccount)}
-      <Button onPress={handleGoToAddAccount} style={spacings.mt} text={t('Add Account')} />
+      <Button onPress={handleGoToAddAccount} style={spacings.mt} text={t('Add New Account')} />
     </>
   )
 }

@@ -5,7 +5,7 @@
     "jsx": "react-native",
     "module": "ESNext",
     "lib": ["ESNext", "DOM"],
-    "types": ["chrome", "firefox-webext-browser", "reflect-metadata"],
+    "types": ["chrome", "firefox-webext-browser", "reflect-metadata", "jest"],
     "paths": {
       "@common/*": ["src/common/*"],
       "@mobile/*": ["src/mobile/*"],

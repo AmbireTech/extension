@@ -6,10 +6,13 @@ import {
   TextInputProps,
   TouchableOpacity,
   TouchableOpacityProps,
-  View
+  View,
+  ViewProps
 } from 'react-native'
 
 import Text from '@common/components/Text'
+import { isWeb } from '@common/config/env'
+import useTheme from '@common/hooks/useTheme'
 import colors from '@common/styles/colors'
 import spacings from '@common/styles/spacings'
 import commonStyles from '@common/styles/utils/common'
@@ -23,11 +26,14 @@ export interface InputProps extends TextInputProps {
   label?: string
   isValid?: boolean
   validLabel?: string
-  button?: string | JSX.Element
+  button?: string | JSX.Element | null
   buttonProps?: TouchableOpacityProps
   onButtonPress?: () => void
   disabled?: boolean
   containerStyle?: any
+  inputStyle?: any
+  inputWrapperStyle?: any
+  inputBackgroundStyle?: ViewProps['style']
   infoTextStyle?: any
   leftIcon?: () => JSX.Element | JSX.Element
 }
@@ -45,11 +51,15 @@ const Input = ({
   onButtonPress = () => {},
   disabled,
   containerStyle,
+  inputStyle,
+  inputWrapperStyle,
+  inputBackgroundStyle = {},
   infoTextStyle,
   leftIcon,
   ...rest
 }: InputProps) => {
   const [isFocused, setIsFocused] = useState<boolean>(false)
+  const { theme } = useTheme()
 
   const handleOnFocus = (e: NativeSyntheticEvent<TextInputFocusEventData>) => {
     setIsFocused(true)
@@ -62,23 +72,37 @@ const Input = ({
 
   const hasButton = !!button
 
+  const inputWrapperStyles = [
+    styles.inputWrapper,
+    {
+      backgroundColor: theme.inputBackground,
+      borderBottomColor: theme.inputBorder
+    },
+    !!error && { borderBottomColor: theme.inputBorderInvalid },
+    isFocused && { borderBottomColor: theme.inputBorderFocused },
+    isValid && { borderBottomColor: theme.inputBorderValid },
+    disabled && styles.disabled,
+    inputWrapperStyle
+  ]
+
+  const inputStyles = [
+    styles.input,
+    !!hasButton && spacings.pr0,
+    {
+      color: theme.buttonText
+    },
+    inputStyle
+  ]
+
   return (
     <View style={[styles.inputContainer, containerStyle]}>
       {!!label && <Text style={styles.label}>{label}</Text>}
-      <View style={[commonStyles.borderRadiusPrimary, commonStyles.hidden]}>
-        <View
-          style={[
-            styles.inputWrapper,
-            disabled && styles.disabled,
-            !!error && styles.error,
-            isFocused && styles.focused,
-            isValid && styles.valid
-          ]}
-        >
+      <View style={[commonStyles.borderRadiusPrimary, commonStyles.hidden, inputBackgroundStyle]}>
+        <View style={inputWrapperStyles}>
           {!!leftIcon && <View style={styles.leftIcon}>{leftIcon()}</View>}
           <TextInput
-            placeholderTextColor={colors.waikawaGray}
-            style={[styles.input, !!hasButton && spacings.pr0]}
+            placeholderTextColor={theme.buttonPlaceholderText}
+            style={inputStyles}
             autoCapitalize="none"
             autoCorrect={false}
             editable={!disabled}
@@ -110,7 +134,12 @@ const Input = ({
       </View>
 
       {!!error && (
-        <Text style={styles.errorText} fontSize={12} appearance="danger">
+        <Text
+          style={styles.errorText}
+          weight={isWeb ? 'regular' : undefined}
+          fontSize={12}
+          appearance="danger"
+        >
           {error}
         </Text>
       )}

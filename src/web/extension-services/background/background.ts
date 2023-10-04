@@ -89,6 +89,7 @@ browser.runtime.onConnect.addListener(async (port) => {
 
     const origin = getOriginFromUrl(port.sender.url)
     const session = sessionService.getOrCreateSession(sessionId, origin)
+
     const req = { data, session, origin }
     // for background push to respective page
     req.session!.setPortMessage(pm)

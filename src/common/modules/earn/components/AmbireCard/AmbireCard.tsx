@@ -7,8 +7,6 @@ import supplyControllerABI from 'ambire-common/src/constants/ADXSupplyController
 import networks, { NetworkId } from 'ambire-common/src/constants/networks'
 import { UseAccountsReturnType } from 'ambire-common/src/hooks/useAccounts'
 import { UsePortfolioReturnType } from 'ambire-common/src/hooks/usePortfolio/types'
-import useRewards from 'ambire-common/src/hooks/useRewards'
-import { getProvider } from 'ambire-common/src/services/provider'
 import { BigNumber, constants, Contract, utils } from 'ethers'
 import { formatUnits, Interface, parseUnits } from 'ethers/lib/utils'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
@@ -17,16 +15,17 @@ import isEqual from 'react-fast-compare'
 import AmbireLogo from '@common/assets/images/Ambire.png'
 import Button from '@common/components/Button'
 import Text from '@common/components/Text'
-import CONFIG from '@common/config/env'
-import useRelayerData from '@common/hooks/useRelayerData'
+import useRewards from '@common/hooks/useRewards'
 import Card from '@common/modules/earn/components/Card'
 import { CARDS } from '@common/modules/earn/contexts/cardsVisibilityContext'
 import { getTokenIcon } from '@common/services/icons'
+import { rpcProviders } from '@common/services/providers'
+import spacings from '@common/styles/spacings'
 
 const ADX_TOKEN_ADDRESS = '0xade00c28244d5ce17d72e40330b1c318cd12b7c3'
 const ADX_STAKING_TOKEN_ADDRESS = '0xb6456b57f03352be48bf101b46c1752a0813491a'
 const ADX_STAKING_POOL_INTERFACE = new Interface(AdexStakingPool)
-const ADDR_ADX_SUPPLY_CONTROLLER = '0x515629338229dd5f8cea3f4f3cc8185ba21fa30b'
+const ADDR_ADX_SUPPLY_CONTROLLER = '0x9B370599B2bf61806DDca1379257F26377472BEe'
 
 const WALLET_TOKEN_ADDRESS = '0x88800092ff476844f74dc2fc427974bbee2794ae'
 const WALLET_STAKING_ADDRESS = '0x47cd7e91c3cbaaf266369fe8518345fc4fc12935'
@@ -43,6 +42,9 @@ const secondsInYear = 60 * 60 * 24 * 365
 // For some reason RN doesn't accept: 1_000_000_000_000 or '1_000_000_000_000'
 // setting precision as number works just fine
 const PRECISION = 1000000000000
+
+const WALLET_LOCK_PERIOD_IN_DAYS = 30
+const ADEX_LOCK_PERIOD_IN_DAYS = 20
 
 const msToDaysHours = (ms: any) => {
   const day = 24 * 60 * 60 * 1000
@@ -108,7 +110,7 @@ const AmbireCard = ({ tokens, networkId, selectedAcc, addRequest }: Props) => {
   const {
     isLoading: isLoadingRewards,
     rewards: { xWALLETAPYPercentage }
-  } = useRewards({ relayerURL: CONFIG.RELAYER_URL, accountId: selectedAcc, useRelayerData })
+  } = useRewards()
 
   const walletToken = useMemo(
     () => tokens.find(({ address }: any) => address === WALLET_TOKEN_ADDRESS),
@@ -218,6 +220,11 @@ const AmbireCard = ({ tokens, networkId, selectedAcc, addRequest }: Props) => {
     })
   }, [leaveLog, addRequestTxn])
 
+  const lockDays = useMemo(() => {
+    if (selectedToken.label === 'WALLET') return WALLET_LOCK_PERIOD_IN_DAYS
+    return ADEX_LOCK_PERIOD_IN_DAYS
+  }, [selectedToken.label])
+
   const onTokenSelect = useCallback(
     (tokenAddress) => {
       setCustomInfo(null)
@@ -228,15 +235,17 @@ const AmbireCard = ({ tokens, networkId, selectedAcc, addRequest }: Props) => {
       if (token && token.type === 'withdraw' && leaveLog && parseFloat(leaveLog.walletValue) > 0) {
         setCustomInfo(
           <>
-            <Text>
+            <Text weight="medium" style={spacings.mbSm}>
               {msToDaysHours(lockedRemainingTime)}
-              <Text>{' until '}</Text>
-              <Text>
+              <Text weight="medium">{' until '}</Text>
+              <Text weight="medium">
                 {parseFloat(leaveLog.walletValue).toFixed(4)} {selectedToken.label}
               </Text>
-              <Text>{' becomes available for withdraw'}</Text>
+              <Text weight="medium">{' becomes available for withdraw.'}</Text>
             </Text>
-            <Text>{`* Because of pending to withdraw, you are not able to unstaking more ${selectedToken.label} until unbond period is end.`}</Text>
+            <Text
+              style={spacings.mbSm}
+            >{`* Because of funds that are pending withdrawal, you are not able to unstake more ${selectedToken.label} tokens until the unbond period is over.`}</Text>
 
             <Button
               type="outline"
@@ -258,7 +267,7 @@ const AmbireCard = ({ tokens, networkId, selectedAcc, addRequest }: Props) => {
             ? '...'
             : xWALLETAPYPercentage
         ],
-        ['Lock', '20 day unbond period'],
+        ['Lock', `${lockDays} day unbond period`],
         ['Type', 'Variable Rate']
       ])
     },
@@ -270,7 +279,8 @@ const AmbireCard = ({ tokens, networkId, selectedAcc, addRequest }: Props) => {
       isLoadingRewards,
       selectedToken.label,
       tokensItems,
-      xWALLETAPYPercentage
+      xWALLETAPYPercentage,
+      lockDays
     ]
   )
 
@@ -330,7 +340,7 @@ const AmbireCard = ({ tokens, networkId, selectedAcc, addRequest }: Props) => {
         // Prevent init if the card is unavailable for current network
         if (networkId !== 'ethereum') return
 
-        const provider = getProvider(networkId)
+        const provider = rpcProviders['ethereum-ambire-earn']
 
         const tokenAddress =
           selectedToken.label === 'ADX' ? ADX_TOKEN_ADDRESS : WALLET_TOKEN_ADDRESS

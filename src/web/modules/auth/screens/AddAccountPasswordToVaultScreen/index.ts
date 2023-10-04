@@ -1,0 +1,3 @@
+import AddAccountPasswordToVaultScreen from './AddAccountPasswordToVaultScreen'
+
+export default AddAccountPasswordToVaultScreen

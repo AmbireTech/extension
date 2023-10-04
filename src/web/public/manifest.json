@@ -30,6 +30,15 @@
       "exclude_matches": ["*://doInWebPack.lan/*", "*://wallet.ambire.com/*"],
       "run_at": "document_start",
       "js": ["browser-polyfill.js", "content-script.js"]
+    },
+    {
+      "matches": [
+        "*://connect.trezor.io/*/popup.html",
+        "https://connect.onekey.so/popup.html"
+      ],
+      "js": [
+        "vendor/trezor/trezor-content-script.js"
+      ]
     }
   ],
   "web_accessible_resources": [

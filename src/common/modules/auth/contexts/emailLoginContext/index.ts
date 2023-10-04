@@ -1,3 +1,1 @@
-import { EmailLoginContext, EmailLoginProvider } from './emailLoginContext'
-
-export { EmailLoginContext, EmailLoginProvider }
+export * from './emailLoginContext'

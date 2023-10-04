@@ -14,7 +14,7 @@ const customIcons: any = {
   '0xe9415e904143e42007865e6864f7f632bd054a08':
     'https://raw.githubusercontent.com/AmbireTech/ambire-brand/main/logos/Ambire_logo_250x250.png', // Polygons test Wallet
   '0xade00c28244d5ce17d72e40330b1c318cd12b7c3':
-    'https://raw.githubusercontent.com/sushiswap/icons/master/token/adx.jpg' // ADX-TOKEN
+    'https://raw.githubusercontent.com/AmbireTech/ambire-brand/main/official-logos/Ambire-AdEx/Ambire_AdEx_Symbol_color_white_bg.png' // ADX-TOKEN
 }
 
 const zapperStorageTokenIcons = 'https://storage.googleapis.com/zapper-fi-assets/tokens'

@@ -48,7 +48,7 @@ const containerStylesSizes: { [key in ButtonSizes]: ViewStyle } = {
 const noGradient = ['transparent', 'transparent']
 
 const gradientColors: { [key in ButtonTypes]: string[] } = {
-  primary: [colors.violet, colors.violet, colors.electricViolet],
+  primary: [colors.violet, colors.heliotrope],
   secondary: noGradient,
   danger: noGradient,
   outline: noGradient,
@@ -57,7 +57,7 @@ const gradientColors: { [key in ButtonTypes]: string[] } = {
 
 const gradientColorsPressed: { [key in ButtonTypes]: string[] } = {
   ...gradientColors,
-  primary: [colors.violet, colors.heliotrope],
+  primary: [colors.heliotrope, colors.violet],
   outline: [colors.martinique, colors.martinique]
 }
 
@@ -68,7 +68,7 @@ const gradientDisabledColors: { [key in ButtonTypes]: string[] } = {
 }
 
 const gradientColorsLocations: { [key in ButtonTypes]: number[] | undefined } = {
-  primary: [0, 0.25, 1],
+  primary: [0, 1],
   secondary: undefined,
   danger: undefined,
   outline: undefined,

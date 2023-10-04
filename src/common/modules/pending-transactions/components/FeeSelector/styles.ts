@@ -44,7 +44,7 @@ const styles = StyleSheet.create<Style>({
     alignItems: 'center'
   },
   selected: {
-    borderColor: colors.heliotrope
+    borderColor: colors.turquoise
   }
 })
 

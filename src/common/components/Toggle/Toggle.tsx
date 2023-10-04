@@ -7,14 +7,9 @@ import colors from '@common/styles/colors'
 import spacings from '@common/styles/spacings'
 
 import styles from './styles'
+import { ToggleProps } from './types'
 
-type Props = {
-  isOn: boolean
-  onToggle: (isOn: boolean) => void
-  label?: string
-}
-
-const Toggle = ({ isOn, onToggle, label }: Props) => {
+const Toggle = ({ isOn, onToggle, label }: ToggleProps) => {
   return (
     <View style={styles.container}>
       {!!label && (

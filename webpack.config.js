@@ -1,17 +1,16 @@
-/* eslint-disable no-restricted-syntax */
 // The 'react-native-dotenv' package doesn't work in the NodeJS context (and
 // with commonjs imports), so alternatively, use 'dotend' package to load the
 // environment variables from the .env file.
 require('dotenv').config()
 
 const createExpoWebpackConfigAsync = require('@expo/webpack-config')
-
+const webpack = require('webpack')
 const path = require('path')
 const CopyPlugin = require('copy-webpack-plugin')
 const expoEnv = require('@expo/webpack-config/env')
-// eslint-disable-next-line import/no-extraneous-dependencies
-const webpack = require('webpack')
+
 const appJSON = require('./app.json')
+const AssetReplacePlugin = require('./plugins/AssetReplacePlugin')
 
 module.exports = async function (env, argv) {
   function processManifest(content) {
@@ -88,6 +87,18 @@ module.exports = async function (env, argv) {
     return style
   }
 
+  const locations = env.locations || (await (0, expoEnv.getPathsAsync)(env.projectRoot))
+  const templatePath = (fileName = '') => path.join(__dirname, './src/web', fileName)
+  const templatePaths = {
+    get: templatePath,
+    folder: templatePath(),
+    indexHtml: templatePath('index.html'),
+    manifest: templatePath('manifest.json'),
+    serveJson: templatePath('serve.json'),
+    favicon: templatePath('favicon.ico')
+  }
+  locations.template = templatePaths
+
   const config = await createExpoWebpackConfigAsync(
     {
       ...env,
@@ -96,133 +107,129 @@ module.exports = async function (env, argv) {
     argv
   )
 
-  // Customize webpack only for web
-  if (process.env.WEB_ENGINE) {
-    config.resolve.alias.web = path.resolve(__dirname, 'src/web')
+  // config.resolve.alias['react-native-webview'] = 'react-native-web-webview'
+  config.resolve.alias['@ledgerhq/devices/hid-framing'] = '@ledgerhq/devices/lib/hid-framing'
 
-    const locations = env.locations || (await (0, expoEnv.getPathsAsync)(env.projectRoot))
-    const templatePath = (fileName = '') => path.join(__dirname, './src/web', fileName)
-    const templatePaths = {
-      get: templatePath,
-      folder: templatePath(),
-      indexHtml: templatePath('index.html'),
-      manifest: templatePath('manifest.json'),
-      serveJson: templatePath('serve.json'),
-      favicon: templatePath('favicon.ico')
-    }
-    locations.template = templatePaths
+  config.entry = {
+    main: config.entry[0], // the app entry
+    background: './src/web/extension-services/background/background.ts', // custom entry needed for the extension
+    'content-script': './src/web/extension-services/content-script/content-script.ts', // custom entry needed for the extension
+    inpage: './src/web/extension-services/inpage/inpage.ts' // custom entry needed for the extension
+  }
 
-    // Alias the 'react-native-webview' package, in order to add support
-    // (web implementation) of React Native's WebView. See:
-    // {@link https://github.com/react-native-web-community/react-native-web-webview}
-    config.resolve.alias['react-native-webview'] = 'react-native-web-webview'
+  // The files in the /web directory should be transpiled not just copied
+  const excludeCopyPlugin = config.plugins.findIndex(
+    (plugin) => plugin.constructor.name === 'CopyPlugin'
+  )
+  if (excludeCopyPlugin !== -1) {
+    config.plugins.splice(excludeCopyPlugin, 1)
+  }
+  // Not needed because output directory cleanup is handled in the run script
+  const excludeCleanWebpackPlugin = config.plugins.findIndex(
+    (plugin) => plugin.constructor.name === 'CleanWebpackPlugin'
+  )
+  if (excludeCleanWebpackPlugin !== -1) {
+    config.plugins.splice(excludeCleanWebpackPlugin, 1)
+  }
+  const excludeHtmlWebpackPlugin = config.plugins.findIndex(
+    (plugin) => plugin.constructor.name === 'HtmlWebpackPlugin'
+  )
+  if (excludeHtmlWebpackPlugin !== -1) {
+    config.plugins.splice(excludeHtmlWebpackPlugin, 1)
+  }
+  // Not needed because a custom manifest.json transpilation is implemented below
+  const excludeExpoPwaManifestWebpackPlugin = config.plugins.findIndex(
+    (plugin) => plugin.constructor.name === 'ExpoPwaManifestWebpackPlugin'
+  )
+  if (excludeExpoPwaManifestWebpackPlugin !== -1) {
+    config.plugins.splice(excludeExpoPwaManifestWebpackPlugin, 1)
+  }
 
-    // The files in the /web directory should be transpiled not just copied
-    const excludeCopyPlugin = config.plugins.findIndex(
-      (plugin) => plugin.constructor.name === 'CopyPlugin'
-    )
-    if (excludeCopyPlugin !== -1) {
-      config.plugins.splice(excludeCopyPlugin, 1)
-    }
-    // Not needed because output directory cleanup is handled in the run script
-    const excludeCleanWebpackPlugin = config.plugins.findIndex(
-      (plugin) => plugin.constructor.name === 'CleanWebpackPlugin'
-    )
-    if (excludeCleanWebpackPlugin !== -1) {
-      config.plugins.splice(excludeCleanWebpackPlugin, 1)
-    }
-    const excludeHtmlWebpackPlugin = config.plugins.findIndex(
-      (plugin) => plugin.constructor.name === 'HtmlWebpackPlugin'
-    )
-    if (excludeHtmlWebpackPlugin !== -1) {
-      config.plugins.splice(excludeHtmlWebpackPlugin, 1)
-    }
-    // Not needed because a custom manifest.json transpilation is implemented below
-    const excludeExpoPwaManifestWebpackPlugin = config.plugins.findIndex(
-      (plugin) => plugin.constructor.name === 'ExpoPwaManifestWebpackPlugin'
-    )
-    if (excludeExpoPwaManifestWebpackPlugin !== -1) {
-      config.plugins.splice(excludeExpoPwaManifestWebpackPlugin, 1)
-    }
-
-    if (config.mode === 'development') {
-      // By removing this plugin and overriding the devServer obj the default dev server config will be used in dev mode
-      const excludeHotModuleReplacementPlugin = config.plugins.findIndex(
-        (plugin) => plugin.constructor.name === 'HotModuleReplacementPlugin'
-      )
-      if (excludeHotModuleReplacementPlugin !== -1) {
-        config.plugins.splice(excludeHotModuleReplacementPlugin, 1)
-      }
-
-      config.devServer = {
-        ...config.devServer, // use the default webpack devServer config
-        hot: true
-      }
-      // writeToDisk: output dev bundled files (in /webkit-dev or /gecko-dev) to import them as unpacked extension in the browser
-      config.devServer.writeToDisk = true
-    }
-
-    config.entry = {
-      ...config.entry, // default entries
-      background: './src/web/extension-services/background/background.ts', // custom entry needed for the extension
-      'content-script': './src/web/extension-services/content-script/content-script.ts', // custom entry needed for the extension
-      inpage: './src/web/extension-services/inpage/inpage.ts' // custom entry needed for the extension
-    }
-
-    config.plugins = [
-      ...config.plugins,
-      new webpack.ProvidePlugin({
-        Buffer: ['buffer', 'Buffer'] // buffer polyfill, used by web3
-      }),
-      new CopyPlugin({
-        patterns: [
-          {
-            from: './src/web/assets',
-            to: 'assets'
-          },
-          {
-            from: './src/web/public/style.css',
-            to: 'style.css',
-            transform(content) {
-              if (process.env.WEB_ENGINE === 'gecko') {
-                return processStyleGecko(content)
-              }
-
-              return content
+  config.plugins = [
+    ...config.plugins,
+    new webpack.ProvidePlugin({
+      Buffer: ['buffer', 'Buffer'],
+      process: 'process'
+    }),
+    new AssetReplacePlugin({
+      '#PAGEPROVIDER#': 'inpage'
+    }),
+    new CopyPlugin({
+      patterns: [
+        {
+          from: './src/web/assets',
+          to: 'assets'
+        },
+        {
+          from: './src/web/vendor',
+          to: 'vendor'
+        },
+        {
+          from: './src/web/public/style.css',
+          to: 'style.css',
+          transform(content) {
+            if (process.env.WEB_ENGINE === 'gecko') {
+              return processStyleGecko(content)
             }
-          },
-          {
-            from: './src/web/public/manifest.json',
-            to: 'manifest.json',
-            transform: processManifest
-          },
-          {
-            from: './node_modules/webextension-polyfill/dist/browser-polyfill.js',
-            to: 'browser-polyfill.js'
-          },
-          {
-            from: './src/web/public/index.html',
-            to: 'index.html'
-          },
-          {
-            from: './src/web/public/notification.html',
-            to: 'notification.html'
-          },
-          {
-            from: './src/web/public/tab.html',
-            to: 'tab.html'
+
+            return content
           }
-        ]
-      })
-    ]
+        },
+        {
+          from: './src/web/public/manifest.json',
+          to: 'manifest.json',
+          transform: processManifest
+        },
+        {
+          from: './node_modules/webextension-polyfill/dist/browser-polyfill.js',
+          to: 'browser-polyfill.js'
+        },
+        {
+          from: './src/web/public/index.html',
+          to: 'index.html'
+        },
+        {
+          from: './src/web/public/notification.html',
+          to: 'notification.html'
+        },
+        {
+          from: './src/web/public/tab.html',
+          to: 'tab.html'
+        },
+        {
+          from: './src/web/public/trezor-usb-permissions.html',
+          to: 'trezor-usb-permissions.html'
+        }
+      ]
+    })
+  ]
 
-    // Disables chunking, minimization, and other optimizations that alter the default transpilation of the extension services files.
-    config.optimization = {}
+  // Disables chunking, minimization, and other optimizations that alter the default transpilation of the extension services files.
+  config.optimization = { minimize: false }
+  if (config.mode === 'development') {
+    // writeToDisk: output dev bundled files (in /webkit-dev or /gecko-dev) to import them as unpacked extension in the browser
+    config.devServer.devMiddleware.writeToDisk = true
+  }
 
-    config.output = {
-      // possible output paths: /webkit-dev, /gecko-dev, /webkit-prod, gecko-prod
-      path: path.resolve(__dirname, `${process.env.WEBPACK_BUILD_OUTPUT_PATH}`)
+  config.ignoreWarnings = [
+    {
+      // Ignore any warnings that include the text 'Failed to parse source map'.
+      // As far as we could debug, these are not critical and lib specific.
+      // Webpack can't find source maps for specific packages, which is fine.
+      message: /Failed to parse source map/
     }
+  ]
+
+  config.resolve.fallback = {}
+  config.resolve.fallback.stream = require.resolve('stream-browserify')
+  config.resolve.fallback.crypto = require.resolve('crypto-browserify')
+
+  config.output = {
+    // possible output paths: /webkit-dev, /gecko-dev, /webkit-prod, gecko-prod
+    path: path.resolve(__dirname, `${process.env.WEBPACK_BUILD_OUTPUT_PATH}`),
+    // Defaults to using 'auto', but this is causing problems in some environments
+    // like in certain browsers, when building (and running) in extension context.
+    publicPath: ''
   }
 
   return config

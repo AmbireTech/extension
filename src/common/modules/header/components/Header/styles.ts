@@ -1,6 +1,6 @@
 import { Platform, StyleSheet, TextStyle, ViewStyle } from 'react-native'
 
-import { isAndroid, isWeb } from '@common/config/env'
+import { isWeb } from '@common/config/env'
 import colors from '@common/styles/colors'
 import commonStyles from '@common/styles/utils/common'
 
@@ -11,29 +11,35 @@ export const HEADER_HEIGHT = Platform.select({
 
 interface Styles {
   container: ViewStyle
+  wrapper: ViewStyle
   navIconContainerRegular: ViewStyle
   navIconContainerSmall: ViewStyle
   title: TextStyle
   switcherContainer: ViewStyle
+  headerNetworkIcon: ViewStyle
   networkIcon: ViewStyle
+  closeIcon: ViewStyle
 }
 
 const styles = StyleSheet.create<Styles>({
   container: {
-    paddingBottom: 15,
-    flexDirection: 'row',
     backgroundColor: colors.wooed,
-    alignItems: 'center',
-    paddingHorizontal: 20,
     ...(isWeb ? { height: 80 } : {})
+  },
+  wrapper: {
+    paddingHorizontal: 20,
+    paddingBottom: 15,
+    flexDirection: 'row'
   },
   navIconContainerRegular: {
     width: 40,
-    alignItems: 'center'
+    alignItems: 'center',
+    justifyContent: 'center'
   },
   navIconContainerSmall: {
     width: 24,
-    alignItems: 'center'
+    alignItems: 'center',
+    justifyContent: 'center'
   },
   title: {
     textAlign: 'center',
@@ -50,17 +56,31 @@ const styles = StyleSheet.create<Styles>({
     paddingLeft: 10,
     paddingRight: 15,
     marginLeft: 10,
-    marginRight: isAndroid ? 10 : 0,
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     flexDirection: 'row'
+  },
+  headerNetworkIcon: {
+    width: 24,
+    height: 24,
+    borderRadius: 50,
+    backgroundColor: colors.titan_05
   },
   networkIcon: {
     width: 40,
     height: 40,
     backgroundColor: colors.clay,
     ...commonStyles.borderRadiusPrimary
+  },
+  closeIcon: {
+    ...commonStyles.borderRadiusPrimary,
+    borderWidth: 1,
+    borderColor: colors.pink,
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center'
   }
 })
 

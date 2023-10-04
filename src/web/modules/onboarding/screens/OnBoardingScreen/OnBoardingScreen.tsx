@@ -1,23 +1,43 @@
 import React, { useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 
-import GradientBackgroundWrapper from '@common/components/GradientBackgroundWrapper'
-import Title from '@common/components/Title'
-import Wrapper from '@common/components/Wrapper'
+import Text from '@common/components/Text'
+import { THEME_TYPES } from '@common/styles/themeConfig'
+import {
+  AuthLayoutWrapperMainContent,
+  AuthLayoutWrapperSideContent
+} from '@web/components/AuthLayoutWrapper/AuthLayoutWrapper'
+import ConfettiLogo from '@web/modules/onboarding/components/ConfettiLogo'
+import PinExtension from '@web/modules/onboarding/components/PinExtension/PinExtension'
 import { ONBOARDING_VALUES } from '@web/modules/onboarding/contexts/onboardingContext/types'
 import useOnboarding from '@web/modules/onboarding/hooks/useOnboarding'
 
+import styles from './styles'
+
 const OnBoardingScreen = () => {
+  const { t } = useTranslation()
+
   const { setOnboardingStatus } = useOnboarding()
   useEffect(() => {
     setOnboardingStatus(ONBOARDING_VALUES.ON_BOARDED)
   }, [setOnboardingStatus])
 
   return (
-    <GradientBackgroundWrapper>
-      <Wrapper>
-        <Title>On Boarding screen</Title>
-      </Wrapper>
-    </GradientBackgroundWrapper>
+    <>
+      <AuthLayoutWrapperMainContent>
+        <ConfettiLogo />
+        <Text
+          shouldScale={false}
+          fontSize={20}
+          weight="medium"
+          style={styles.title}
+        >
+          {t('You are ready!')}
+        </Text>
+        <PinExtension style={styles.pinExtension} />
+      </AuthLayoutWrapperMainContent>
+      <AuthLayoutWrapperSideContent backgroundType="beta" style={styles.sideContent} />
+    </>
   )
 }
 

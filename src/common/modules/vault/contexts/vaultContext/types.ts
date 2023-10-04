@@ -1,5 +1,5 @@
 import { isWeb } from '@common/config/env'
-import { ROUTES } from '@common/modules/router/config/routesConfig'
+import { ROUTES } from '@common/modules/router/constants/common'
 import { VAULT_STATUS } from '@common/modules/vault/constants/vaultStatus'
 import {
   useVaultBiometricsDefaults,
@@ -7,8 +7,15 @@ import {
 } from '@common/modules/vault/hooks/useVaultBiometrics/types'
 import { VaultItem } from '@common/modules/vault/services/VaultController/types'
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
+export enum VAULT_PASSWORD_TYPE {
+  PASSPHRASE = 'PASSPHRASE',
+  PIN = 'PIN'
+}
+
 export interface VaultContextReturnType extends UseVaultBiometricsReturnType {
   vaultStatus: VAULT_STATUS
+  vaultPasswordType: VAULT_PASSWORD_TYPE
   createVault: ({
     password,
     confirmPassword,
@@ -61,6 +68,7 @@ export interface VaultContextReturnType extends UseVaultBiometricsReturnType {
 
 export const vaultContextDefaults: VaultContextReturnType = {
   vaultStatus: VAULT_STATUS.LOADING,
+  vaultPasswordType: VAULT_PASSWORD_TYPE.PASSPHRASE,
   createVault: () => Promise.resolve(),
   resetVault: () => {},
   unlockVault: () => Promise.resolve(false),

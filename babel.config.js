@@ -1,6 +1,7 @@
 module.exports = function (api) {
   api.cache(true)
-  return {
+
+  const config = {
     presets: ['babel-preset-expo'],
     plugins: [
       ['@babel/plugin-proposal-export-namespace-from'],
@@ -12,7 +13,44 @@ module.exports = function (api) {
           path: '.env'
         }
       ],
-      ['react-native-reanimated/plugin'],
+      ['react-native-reanimated/plugin']
+    ]
+  }
+
+  const webConfig = {
+    ...config,
+    plugins: [
+      ...config.plugins,
+      [
+        'module-resolver',
+        {
+          root: ['./src'],
+          extensions: [
+            '.ios.ts',
+            '.android.ts',
+            '.ts',
+            '.ios.tsx',
+            '.android.tsx',
+            '.tsx',
+            '.jsx',
+            '.js',
+            '.json'
+          ],
+          alias: {
+            // absolute imports
+            '@common': './src/common',
+            '@mobile': './src/mobile',
+            '@web': './src/web'
+          }
+        }
+      ]
+    ]
+  }
+
+  const mobileConfig = {
+    ...config,
+    plugins: [
+      ...config.plugins,
       [
         'module-resolver',
         {
@@ -34,11 +72,11 @@ module.exports = function (api) {
             // alias for better crypto performance on mobile
             '@ethersproject/pbkdf2': './src/common/config/alias/pbkdf2.js',
             // node's crypto polyfill for React Native
-            'crypto': 'react-native-quick-crypto',
+            crypto: 'react-native-quick-crypto',
             // stream-browserify: used by react-native-quick-crypto
-            'stream': 'stream-browserify',
+            stream: 'stream-browserify',
             // @craftzdog/react-native-buffer: used by react-native-quick-crypto
-            'buffer': '@craftzdog/react-native-buffer',
+            buffer: '@craftzdog/react-native-buffer',
 
             // absolute imports
             '@common': './src/common',
@@ -49,4 +87,8 @@ module.exports = function (api) {
       ]
     ]
   }
+
+  const isMobile = !process.env.WEB_ENGINE
+
+  return isMobile ? mobileConfig : webConfig
 }

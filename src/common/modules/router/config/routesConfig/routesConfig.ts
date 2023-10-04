@@ -1,48 +1,11 @@
 import { Platform } from 'react-native'
 
 import i18n from '@common/config/localization/localization'
-
-export enum ROUTES {
-  unlockVault = 'unlock-vault',
-  resetVault = 'reset-vault',
-  noConnection = 'no-connection',
-  getStarted = 'get-started',
-  createVault = 'create-vault',
-  auth = 'auth',
-  ambireAccountLogin = 'ambire-account-login',
-  ambireAccountLoginPasswordConfirm = 'ambire-account-login-password-confirm',
-  ambireAccountJsonLogin = 'ambire-account-json-login',
-  ambireAccountJsonLoginPasswordConfirm = 'ambire-account-json-login-password-confirm',
-  qrCodeLogin = 'qr-code-login',
-  hardwareWallet = 'hardware-wallet',
-  externalSigner = 'external-signer',
-  dashboard = 'dashboard',
-  collectibles = 'collectibles',
-  earn = 'earn',
-  send = 'send',
-  transactions = 'transactions',
-  gasTank = 'gas-tank',
-  pendingTransactions = 'pending-transactions',
-  receive = 'receive',
-  provider = 'provider',
-  signMessage = 'sign-message',
-  gasInformation = 'gas-information',
-  signers = 'signers',
-  permissionRequest = 'permission-request',
-  switchNetwork = 'switch-network',
-  watchAsset = 'watch-asset',
-  menu = 'menu',
-  manageVaultLock = 'manage-vault-lock',
-  getEncryptionPublicKeyRequest = 'get-encryption-public-key-request',
-  dataDeletionPolicy = 'data-deletion-policy',
-  connect = 'connect',
-  swap = 'swap',
-  onboarding = 'onboarding'
-}
+import { ROUTES } from '@common/modules/router/constants/common'
 
 const routesConfig: {
-  [key in ROUTES]: {
-    route: ROUTES
+  [key in keyof typeof ROUTES]: {
+    route: keyof typeof ROUTES
     title: string
   }
 } = {
@@ -65,11 +28,33 @@ const routesConfig: {
       default: i18n.t('No Connection')
     })
   },
+  [ROUTES.addReferral]: {
+    route: ROUTES.addReferral,
+    // Next screen has title, this makes the transition smoother (no logo jump effect)
+    title: ' '
+  },
   [ROUTES.getStarted]: {
     route: ROUTES.getStarted,
     title: Platform.select({
-      default: i18n.t('Welcome')
+      default: i18n.t('Welcome'),
+      web: ''
     })
+  },
+  [ROUTES.onboardingOnFirstLogin]: {
+    route: ROUTES.onboardingOnFirstLogin,
+    title: ''
+  },
+  [ROUTES.authEmailAccount]: {
+    route: ROUTES.authEmailAccount,
+    title: ''
+  },
+  [ROUTES.authEmailLogin]: {
+    route: ROUTES.authEmailLogin,
+    title: ''
+  },
+  [ROUTES.authEmailRegister]: {
+    route: ROUTES.authEmailRegister,
+    title: ''
   },
   [ROUTES.createVault]: {
     route: ROUTES.createVault,
@@ -87,7 +72,8 @@ const routesConfig: {
   [ROUTES.ambireAccountLogin]: {
     route: ROUTES.ambireAccountLogin,
     title: Platform.select({
-      default: i18n.t('Login')
+      default: i18n.t('Login'),
+      web: ''
     })
   },
   [ROUTES.ambireAccountLoginPasswordConfirm]: {
@@ -100,7 +86,8 @@ const routesConfig: {
   [ROUTES.ambireAccountJsonLogin]: {
     route: ROUTES.ambireAccountJsonLogin,
     title: Platform.select({
-      default: i18n.t('Import from JSON')
+      web: i18n.t('Import From JSON File'),
+      default: i18n.t('Import From File')
     })
   },
   [ROUTES.ambireAccountJsonLoginPasswordConfirm]: {
@@ -110,16 +97,16 @@ const routesConfig: {
       default: i18n.t('Login')
     })
   },
-  [ROUTES.qrCodeLogin]: {
-    route: ROUTES.qrCodeLogin,
-    title: Platform.select({
-      default: i18n.t('Import with QR Code')
-    })
-  },
   [ROUTES.hardwareWallet]: {
     route: ROUTES.hardwareWallet,
     title: Platform.select({
       default: i18n.t('Login with Hardware Wallet')
+    })
+  },
+  [ROUTES.hardwareWalletLedger]: {
+    route: ROUTES.hardwareWalletLedger,
+    title: Platform.select({
+      default: i18n.t('Connect a Ledger Device')
     })
   },
   [ROUTES.externalSigner]: {
@@ -134,8 +121,8 @@ const routesConfig: {
       default: i18n.t('Dashboard')
     })
   },
-  [ROUTES.collectibles]: {
-    route: ROUTES.collectibles,
+  [ROUTES.collectible]: {
+    route: ROUTES.collectible,
     title: Platform.select({
       default: i18n.t('Collectibles')
     })
@@ -260,9 +247,27 @@ const routesConfig: {
   },
   [ROUTES.onboarding]: {
     route: ROUTES.onboarding,
-    title: Platform.select({
-      default: i18n.t('Onboarding')
-    })
+    title: ''
+  },
+  [ROUTES.backup]: {
+    route: ROUTES.backup,
+    title: ''
+  },
+  [ROUTES.web3Browser]: {
+    route: ROUTES.web3Browser,
+    title: ''
+  },
+  [ROUTES.dappsCatalog]: {
+    route: ROUTES.dappsCatalog,
+    title: i18n.t('dApps')
+  },
+  [ROUTES.enableOtp2FA]: {
+    route: ROUTES.enableOtp2FA,
+    title: i18n.t('Enable 2FA')
+  },
+  [ROUTES.disableOtp2FA]: {
+    route: ROUTES.disableOtp2FA,
+    title: i18n.t('Disable 2FA')
   }
 }
 

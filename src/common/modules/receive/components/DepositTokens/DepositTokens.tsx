@@ -70,7 +70,7 @@ const DepositTokens = ({ selectedAcc, networkId }: Props) => {
             <View style={styles.qrCodeWrapper}>
               <QRCode
                 value={selectedAcc}
-                size={DEVICE_WIDTH / 3.3}
+                size={200}
                 quietZone={10}
                 getRef={qrCodeRef}
                 onError={() => setQrCodeError(t('Failed to load QR code!') as string)}

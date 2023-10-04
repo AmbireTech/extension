@@ -13,6 +13,7 @@ import Panel from '@common/components/Panel'
 import Text from '@common/components/Text'
 import Title from '@common/components/Title'
 import { isWeb } from '@common/config/env'
+import useNavigation from '@common/hooks/useNavigation'
 import colors from '@common/styles/colors'
 import spacings from '@common/styles/spacings'
 import flexboxStyles from '@common/styles/utils/flexbox'
@@ -23,6 +24,8 @@ import { delayPromise } from '@common/utils/promises'
 import styles from './styles'
 
 const SignActions = ({
+  isInBottomSheet,
+  closeBottomSheet,
   estimation,
   feeSpeed,
   approveTxn,
@@ -33,7 +36,8 @@ const SignActions = ({
   network,
   mustReplaceNonce,
   replaceTx,
-  setReplaceTx
+  setReplaceTx,
+  setSigningStatus
 }: any) => {
   const {
     control,
@@ -48,7 +52,7 @@ const SignActions = ({
     }
   })
   const { t } = useTranslation()
-
+  const { goBack } = useNavigation()
   // reset this every time the signing status changes
   useEffect(() => {
     !signingStatus && resetField('code')
@@ -72,7 +76,13 @@ const SignActions = ({
   const insufficientFee =
     estimation &&
     estimation.feeInUSD &&
-    !isTokenEligible(estimation.selectedFeeToken, feeSpeed, estimation, isGasTankEnabled, network)
+    !isTokenEligible(
+      estimation.selectedFeeToken,
+      feeSpeed,
+      estimation,
+      !!estimation.selectedFeeToken.isGasTankToken,
+      network
+    )
 
   const willFail = (estimation && !estimation.success) || insufficientFee
 
@@ -151,7 +161,9 @@ const SignActions = ({
           />
         )}
         <View style={styles.buttonsContainer}>
-          <View style={styles.buttonWrapper}>{rejectButton}</View>
+          <View style={styles.buttonWrapper}>
+            <Button type="danger" text={t('Cancel')} onPress={() => setSigningStatus(null)} />
+          </View>
           <View style={styles.buttonWrapper}>
             <Button
               text={isSubmitting ? t('Confirming...') : t('Confirm')}
@@ -184,16 +196,24 @@ const SignActions = ({
           </View>
         )
       }
-      <View style={styles.buttonsContainer}>
-        {!!rejectTxn && <View style={styles.buttonWrapper}>{rejectButton}</View>}
-        <View style={styles.buttonWrapper}>
-          <Button
-            text={t('Sign')}
-            onPress={handleRequestSignConfirmation}
-            disabled={!estimation || !!signingStatus}
-          />
-        </View>
-      </View>
+
+      <Button
+        text={t('Sign Now')}
+        onPress={handleRequestSignConfirmation}
+        disabled={!estimation || !!signingStatus}
+      />
+      <Button
+        text={t('Add to cart')}
+        type="outline"
+        onPress={() => {
+          if (isInBottomSheet) {
+            !!closeBottomSheet && closeBottomSheet()
+          } else {
+            goBack()
+          }
+        }}
+        hasBottomSpacing={false}
+      />
     </Panel>
   )
 }

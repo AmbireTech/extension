@@ -1,29 +1,16 @@
 import * as Linking from 'expo-linking'
 import React, { createContext, useCallback, useEffect } from 'react'
 
-import { isAndroid, isWeb } from '@common/config/env'
-import useWalletConnect from '@common/hooks/useWalletConnect'
+import { isWeb } from '@common/config/env'
 
 export interface LinkingContextReturnType {}
 
 const LinkingContext = createContext<LinkingContextReturnType>({})
 
 const LinkingProvider: React.FC<any> = ({ children }) => {
-  const { handleConnect } = useWalletConnect()
-
-  const handleIncomingURL = useCallback(
-    (url: string | null) => {
-      if (!url) return
-
-      // Handle incoming WalletConnect URI (coming from a deep link)
-      if (isAndroid && url.startsWith('wc:')) {
-        handleConnect(url)
-      } else if (url.includes('uri=wc:')) {
-        handleConnect(url.slice(url.indexOf('wc:')))
-      }
-    },
-    [handleConnect]
-  )
+  const handleIncomingURL = useCallback((url: string | null) => {
+    // Handle deep links here
+  }, [])
 
   useEffect(() => {
     // Mobile specific deep linking mechanism

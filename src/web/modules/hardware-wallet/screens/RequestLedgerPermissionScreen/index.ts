@@ -1,0 +1,3 @@
+import RequestLedgerPermissionScreen from './RequestLedgerPermissionScreen'
+
+export default RequestLedgerPermissionScreen

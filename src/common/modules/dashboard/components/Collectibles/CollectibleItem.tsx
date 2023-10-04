@@ -6,7 +6,7 @@ import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import useNavigation from '@common/hooks/useNavigation'
 import handleCollectibleUri from '@common/modules/dashboard/helpers/handleCollectibleUri'
-import { ROUTES } from '@common/modules/router/config/routesConfig'
+import { ROUTES } from '@common/modules/router/constants/common'
 import colors from '@common/styles/colors'
 import spacings from '@common/styles/spacings'
 import flexboxStyles from '@common/styles/utils/flexbox'
@@ -38,7 +38,7 @@ const CollectibleItem = ({
   const { navigate } = useNavigation()
 
   const handleCollectiblePress = () => {
-    navigate(ROUTES.collectibles, {
+    navigate(ROUTES.collectible, {
       state: {
         tokenId,
         network,

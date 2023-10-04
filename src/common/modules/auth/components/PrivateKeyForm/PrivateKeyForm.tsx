@@ -10,7 +10,7 @@ import useToast from '@common/hooks/useToast'
 import useExternalSignerLogin from '@common/modules/auth/hooks/useExternalSignerLogin'
 import { delayPromise } from '@common/utils/promises'
 
-const PrivateKeyForm = () => {
+const PrivateKeyForm: React.FC<any> = () => {
   const { t } = useTranslation()
   const { addExternalSigner } = useExternalSignerLogin()
   const { addToast } = useToast()

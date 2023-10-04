@@ -4,33 +4,39 @@ import {
   MULTIPLIERS_READ_MORE_URL
 } from 'ambire-common/src/constants/multiplierBadges'
 import useClaimableWalletToken from 'ambire-common/src/hooks/useClaimableWalletToken'
-import useRewards from 'ambire-common/src/hooks/useRewards'
 import { RewardIds } from 'ambire-common/src/hooks/useRewards/types'
-import useStakedWalletToken from 'ambire-common/src/hooks/useStakedWalletToken'
-import React, { useCallback, useLayoutEffect } from 'react'
+import { formatFloatTokenAmount } from 'ambire-common/src/services/formatter'
+import React, { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Linking, ScrollView, TouchableOpacity, View } from 'react-native'
+import { Linking, TouchableOpacity, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
-import RewardsFlag from '@common/assets/svg/RewardFlag/RewardFlag'
+import RewardBadgeBetaTester from '@common/assets/svg/RewardBadgeBetaTester'
+import RewardBadgeCryptoTesters from '@common/assets/svg/RewardBadgeCryptoTesters'
+import RewardBadgeLobster from '@common/assets/svg/RewardBadgeLobster'
+import RewardBadgePowerUser from '@common/assets/svg/RewardBadgePowerUser'
+import RewardsIcon from '@common/assets/svg/RewardsIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
 import Text from '@common/components/Text'
 import Title from '@common/components/Title'
-import CONFIG, { isWeb } from '@common/config/env'
+import CONFIG from '@common/config/env'
 import useAccounts from '@common/hooks/useAccounts'
 import useNetwork from '@common/hooks/useNetwork'
 import usePrivateMode from '@common/hooks/usePrivateMode'
 import useRelayerData from '@common/hooks/useRelayerData'
 import useRequests from '@common/hooks/useRequests'
+import useRewards from '@common/hooks/useRewards'
+import getRewardsSource from '@common/modules/dashboard/helpers/getRewardsSource'
 import alert from '@common/services/alert'
-import { triggerLayoutAnimation } from '@common/services/layoutAnimation'
 import colors from '@common/styles/colors'
 import spacings from '@common/styles/spacings'
 import flexboxStyles from '@common/styles/utils/flexbox'
 import textStyles from '@common/styles/utils/text'
 
 import styles from './styles'
+
+const source = getRewardsSource()
 
 const Rewards = () => {
   const { t } = useTranslation()
@@ -43,19 +49,8 @@ const Rewards = () => {
     lastUpdated: rewardsLastUpdated,
     isLoading: rewardsIsLoading,
     errMsg: rewardsErrMsg
-  } = useRewards({
-    relayerURL: CONFIG.RELAYER_URL,
-    accountId: selectedAcc,
-    useRelayerData
-  })
-  const {
-    walletTokenAPYPercentage,
-    adxTokenAPYPercentage,
-    xWALLETAPYPercentage,
-    walletUsdPrice,
-    multipliers,
-    totalLifetimeRewards
-  } = rewards
+  } = useRewards()
+  const { walletTokenAPYPercentage, walletUsdPrice, multipliers, totalLifetimeRewards } = rewards
   const {
     currentClaimStatus,
     claimableNow,
@@ -67,8 +62,7 @@ const Rewards = () => {
     claimableNowUsd,
     mintableVestingUsd,
     shouldDisplayMintableVesting,
-    claimingDisabled,
-    vestingEntry
+    claimingDisabled
   } = useClaimableWalletToken({
     relayerURL: CONFIG.RELAYER_URL,
     useRelayerData,
@@ -77,16 +71,10 @@ const Rewards = () => {
     addRequest,
     totalLifetimeRewards,
     walletUsdPrice,
-    rewardsLastUpdated
+    rewardsLastUpdated,
+    source
   })
-  const { stakedAmount } = useStakedWalletToken({ accountId: selectedAcc })
   const { hidePrivateValue } = usePrivateMode()
-
-  useLayoutEffect(() => {
-    // Solves 2 issues: 1) the annoying jump in the beginning between the
-    // loading and the loaded state; 2) the annoying jump when value updates.
-    triggerLayoutAnimation()
-  }, [pendingTokensTotal])
 
   const handleClaimWithBurn = () => {
     const handleConfirm = () => {
@@ -120,7 +108,7 @@ const Rewards = () => {
       (currentClaimStatus.error || rewardsErrMsg) &&
       (!currentClaimStatus.lastUpdated || !rewardsLastUpdated)
     if (hasErrorAndNoPrevValues) {
-      return t('Rewards')
+      return t('...')
     }
 
     // Display loading state only if prev data is missing for any of both data sets.
@@ -130,11 +118,11 @@ const Rewards = () => {
       currentClaimStatus.loading && !currentClaimStatus.lastUpdated
     const isRewardsDataLoadingAndNoPrevData = rewardsIsLoading && !rewardsLastUpdated
     if (isCurrentClaimStatusLoadingAndNoPrevData || isRewardsDataLoadingAndNoPrevData) {
-      return '... $WALLET'
+      return '...'
     }
 
     return t('{{amount}} $WALLET', {
-      amount: hidePrivateValue(pendingTokensTotal)
+      amount: hidePrivateValue(formatFloatTokenAmount(Math.floor(pendingTokensTotal), true, 0))
     })
   }, [
     currentClaimStatus.error,
@@ -165,59 +153,58 @@ const Rewards = () => {
     const handleLinkOpen = () => Linking.openURL(link)
 
     return (
-      <TouchableOpacity
-        onPress={handleLinkOpen}
-        key={name}
-        style={[
-          flexboxStyles.center,
-          spacings.mhMi,
-          { width: 73, height: 84 },
-          !isUnlocked && { opacity: 0.3 }
-        ]}
-      >
-        <Text fontSize={25}>{icon}</Text>
-        <Text fontSize={16} weight="semiBold">
-          x{multiplier}
-        </Text>
-        <RewardsFlag color={color} style={styles.rewardFlag} />
+      <TouchableOpacity onPress={handleLinkOpen} key={name} style={!isUnlocked && { opacity: 0.3 }}>
+        {id === 'beta-tester' && <RewardBadgeBetaTester />}
+        {id === 'lobsters' && <RewardBadgeLobster />}
+        {id === 'cryptoTesters' && <RewardBadgeCryptoTesters />}
+        {id === 'powerUserMultiplier' && <RewardBadgePowerUser />}
       </TouchableOpacity>
     )
   }
 
   return (
     <>
-      <Button
-        onPress={openBottomSheet}
-        type="outline"
-        size="small"
-        text={renderRewardsButtonText()}
-        style={flexboxStyles.alignSelfCenter}
-      />
+      <View style={styles.tokenButtonContainer}>
+        <View style={styles.tokenButtonIconWrapper}>
+          <RewardsIcon />
+        </View>
+        <View style={[flexboxStyles.flex1, flexboxStyles.justifyCenter]}>
+          <Text fontSize={14} numberOfLines={1}>
+            {t('Rewards')}
+          </Text>
+          <Text fontSize={12} style={textStyles.highlightPrimary}>
+            {hidePrivateValue(renderRewardsButtonText())}
+          </Text>
+        </View>
+
+        <View style={spacings.plSm}>
+          <Button
+            onPress={openBottomSheet}
+            type="secondary"
+            hasBottomSpacing={false}
+            style={styles.rewardTokenButton}
+            size="small"
+            text={t('Open')}
+          />
+        </View>
+      </View>
       <BottomSheet
         id="rewards"
         sheetRef={sheetRef}
         closeBottomSheet={closeBottomSheet}
         displayCancel={false}
       >
-        <Title style={textStyles.center}>{t('Wallet token distribution')}</Title>
-        {isWeb && multiplierBadges.length < 7 ? (
-          <View style={[flexboxStyles.directionRow, flexboxStyles.justifyCenter, spacings.mb]}>
-            {multiplierBadges.map(renderBadge)}
-          </View>
-        ) : (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={[flexboxStyles.directionRow, flexboxStyles.center, spacings.mb]}
-          >
-            {multiplierBadges.map(renderBadge)}
-          </ScrollView>
-        )}
+        <Title style={[textStyles.center, spacings.mtTy, spacings.mbTy]}>
+          {t('WALLET token distribution')}
+        </Title>
+        <View style={[flexboxStyles.directionRow, flexboxStyles.justifyCenter, spacings.mbTy]}>
+          {multiplierBadges.map(renderBadge)}
+        </View>
 
-        <Text type="caption" style={[spacings.mbSm, textStyles.center]}>
+        <Text type="caption" style={[spacings.mb, textStyles.center]}>
           <Text type="caption">
             {t(
-              'You are receiving $WALLETS for holding funds on your Ambire wallet as an early user. '
+              'You are receiving $WALLETs for holding funds on your Ambire wallet as an early user. '
             )}
           </Text>
           <Text onPress={handleReadMore} underline type="caption">
@@ -228,43 +215,32 @@ const Rewards = () => {
         <View style={styles.tableContainer}>
           <View style={[styles.tableRow, flexboxStyles.directionRow, styles.tableRowBorder]}>
             <View style={[spacings.prTy, flexboxStyles.flex1]}>
-              <Text>{t('Early users Incentive')}</Text>
+              <Text>{t('Early users Incentive total (Early users + ADX Staking bonus)')}</Text>
             </View>
             <View style={[spacings.plTy, styles.tableRowValue]}>
               <Text color={colors.turquoise} style={textStyles.right}>
-                {rewards[RewardIds.BALANCE_REWARDS]}
+                {formatFloatTokenAmount(Math.floor(rewards[RewardIds.BALANCE_REWARDS]), true, 0)}
               </Text>
               <Text type="small" style={textStyles.right}>
                 {walletTokenAPYPercentage} APY
               </Text>
             </View>
           </View>
-          <View style={[styles.tableRow, flexboxStyles.directionRow, styles.tableRowBorder]}>
-            <View style={[spacings.prTy, flexboxStyles.flex1]}>
-              <Text>{t('ADX Staking Bonus')}</Text>
-            </View>
-            <View style={[spacings.plTy, styles.tableRowValue]}>
-              <Text color={colors.turquoise} style={textStyles.right}>
-                {rewards[RewardIds.ADX_REWARDS]}
-              </Text>
-              <Text type="small" style={textStyles.right}>
-                {adxTokenAPYPercentage} APY
-              </Text>
-            </View>
-          </View>
-          <View
-            style={[
-              styles.tableRow,
-              (shouldDisplayMintableVesting || !!stakedAmount) && styles.tableRowBorder
-            ]}
-          >
+          <View style={[styles.tableRow, shouldDisplayMintableVesting && styles.tableRowBorder]}>
             <View style={[flexboxStyles.directionRow, spacings.mb]}>
               <View style={[spacings.prTy, flexboxStyles.flex1]}>
-                <Text>{t('Claimable now: early users + ADX Staking bonus')}</Text>
+                <Text>{t('Claimable now')}</Text>
+                {claimingDisabled && (
+                  <Text type="caption" appearance="danger">
+                    {claimDisabledReason || disabledReason}
+                  </Text>
+                )}
               </View>
               <View style={[spacings.plTy, styles.tableRowValue]}>
                 <Text color={colors.turquoise} style={textStyles.right}>
-                  {currentClaimStatus.loading ? '...' : claimableNow}
+                  {currentClaimStatus.loading
+                    ? '...'
+                    : formatFloatTokenAmount(Math.floor(claimableNow), true, 0)}
                 </Text>
                 <Text type="small" style={textStyles.right}>
                   <Text type="small" color={colors.heliotrope}>
@@ -274,38 +250,33 @@ const Rewards = () => {
                 </Text>
               </View>
             </View>
-            <View style={flexboxStyles.directionRow}>
-              <Button
-                disabled={claimingDisabled}
-                onPress={handleClaimWithBurn}
-                size="small"
-                text={t('Claim with Burn')}
-                containerStyle={[spacings.mrMi, flexboxStyles.flex1]}
-              />
-              <Button
-                disabled={claimingDisabled}
-                onPress={handleClaimInxWallet}
-                size="small"
-                text={t('Claim in xWALLET')}
-                containerStyle={[spacings.mlMi, flexboxStyles.flex1]}
-              />
-            </View>
-            {claimingDisabled && (
-              <Text type="caption" appearance="danger" style={spacings.mhTy}>
-                {claimDisabledReason || disabledReason}
-              </Text>
-            )}
+            <Button
+              disabled={claimingDisabled}
+              onPress={handleClaimWithBurn}
+              text={t('Claim with Burn')}
+              style={spacings.mbSm}
+            />
+            <Button
+              disabled={claimingDisabled}
+              onPress={handleClaimInxWallet}
+              text={t('Claim in xWALLET')}
+              style={shouldDisplayMintableVesting && spacings.mbMi}
+            />
           </View>
 
           {shouldDisplayMintableVesting && (
-            <View style={[styles.tableRow, !!stakedAmount && styles.tableRowBorder]}>
+            <View style={styles.tableRow}>
               <View style={[flexboxStyles.directionRow, spacings.mb]}>
                 <View style={[spacings.prTy, flexboxStyles.flex1]}>
                   <Text>{t('Claimable early supporters vesting')}</Text>
                 </View>
                 <View style={[spacings.plTy, styles.tableRowValue]}>
                   <Text color={colors.turquoise} style={textStyles.right}>
-                    {currentClaimStatus.mintableVesting}
+                    {formatFloatTokenAmount(
+                      Math.floor(currentClaimStatus.mintableVesting),
+                      true,
+                      0
+                    )}
                   </Text>
                   <Text type="small" style={textStyles.right}>
                     <Text type="small" color={colors.heliotrope}>
@@ -318,24 +289,9 @@ const Rewards = () => {
               <Button
                 onPress={handleClaimVesting}
                 disabled={!!disabledReason}
-                size="small"
                 text={t('Claim')}
+                hasBottomSpacing={false}
               />
-            </View>
-          )}
-          {!!stakedAmount && (
-            <View style={[styles.tableRow, flexboxStyles.directionRow]}>
-              <View style={[spacings.prTy, flexboxStyles.flex1]}>
-                <Text>{t('Staked WALLET')}</Text>
-              </View>
-              <View style={[spacings.plTy, styles.tableRowValue]}>
-                <Text color={colors.turquoise} style={textStyles.right}>
-                  {stakedAmount}
-                </Text>
-                <Text type="small" style={textStyles.right}>
-                  {xWALLETAPYPercentage} APY
-                </Text>
-              </View>
             </View>
           )}
         </View>
@@ -344,4 +300,4 @@ const Rewards = () => {
   )
 }
 
-export default Rewards
+export default React.memo(Rewards)

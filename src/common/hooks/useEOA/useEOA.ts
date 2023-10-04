@@ -2,12 +2,14 @@ import accountPresets from 'ambire-common/src/constants/accountPresets'
 import { generateAddress2 } from 'ethereumjs-util'
 import { getAddress, hexZeroPad } from 'ethers/lib/utils'
 import { useCallback } from 'react'
+import { Platform } from 'react-native'
 
 import CONFIG from '@common/config/env'
 import useAccounts from '@common/hooks/useAccounts'
 import useToast from '@common/hooks/useToast'
 import { getProxyDeployBytecode } from '@common/modules/auth/services/IdentityProxyDeploy'
 import { fetchPost } from '@common/services/fetch'
+import useReferral from '@mobile/modules/referral/hooks/useReferral'
 
 const relayerURL = CONFIG.RELAYER_URL
 
@@ -16,6 +18,7 @@ const relayerURL = CONFIG.RELAYER_URL
 export default function useEOA() {
   const { onAddAccount } = useAccounts()
   const { addToast } = useToast()
+  const { getPendingReferral, removePendingReferral } = useReferral()
 
   const getAccountByAddr = useCallback(async (idAddr, signerAddr) => {
     // In principle, we need these values to be able to operate in relayerless mode,
@@ -74,18 +77,25 @@ export default function useEOA() {
     )
 
     if (relayerURL) {
+      const referral = getPendingReferral()
+
       const createResp = await fetchPost(`${relayerURL}/identity/${identityAddr}`, {
         salt,
         identityFactoryAddr,
         baseIdentityAddr,
         privileges,
-        signerType
+        signerType,
+        registeredFrom: Platform.OS,
+        ...(!!referral && { referralAddr: referral.hexAddress })
       })
+
       if (
         !createResp.success &&
         !(createResp.message && createResp.message.includes('already exists'))
       )
         throw createResp
+
+      removePendingReferral()
     }
 
     return {

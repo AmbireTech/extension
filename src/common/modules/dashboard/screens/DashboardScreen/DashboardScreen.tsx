@@ -8,6 +8,7 @@ import useNetwork from '@common/hooks/useNetwork'
 import usePortfolio from '@common/hooks/usePortfolio'
 import Assets from '@common/modules/dashboard/components/Assets'
 import Balances from '@common/modules/dashboard/components/Balances'
+import PromoBanner from '@common/modules/dashboard/components/PromoBanner'
 import { AssetsToggleProvider } from '@common/modules/dashboard/contexts/assetsToggleContext'
 import colors from '@common/styles/colors'
 
@@ -30,9 +31,9 @@ const DashboardScreen = () => {
   const { network, setNetwork } = useNetwork()
   const { selectedAcc } = useAccounts()
 
-  const otherBalancesLoading = useMemo(
-    () => Object.entries(balancesByNetworksLoading).find((ntw) => ntw[0] !== network?.id && ntw[1]),
-    [balancesByNetworksLoading, network?.id]
+  const allBalancesLoading = useMemo(
+    () => Object.entries(balancesByNetworksLoading).find((ntw) => ntw[1]),
+    [balancesByNetworksLoading]
   )
 
   const handleRefresh = () => {
@@ -41,6 +42,7 @@ const DashboardScreen = () => {
 
   return (
     <GradientBackgroundWrapper>
+      <PromoBanner />
       <Wrapper
         hasBottomTabNav
         refreshControl={
@@ -54,13 +56,12 @@ const DashboardScreen = () => {
         }
       >
         <Balances
-          balanceTruncated={balance.total?.truncated}
-          balanceDecimals={balance.total?.decimals}
           otherBalances={otherBalances}
-          isLoading={isCurrNetworkBalanceLoading && !!otherBalancesLoading}
+          isLoading={isCurrNetworkBalanceLoading && !!allBalancesLoading}
           isCurrNetworkBalanceLoading={!!isCurrNetworkBalanceLoading}
-          otherBalancesLoading={!!otherBalancesLoading}
+          otherBalancesLoading={!!allBalancesLoading}
           networkId={network?.id}
+          networkName={network?.name}
           setNetwork={setNetwork}
           account={selectedAcc}
         />

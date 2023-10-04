@@ -35,8 +35,7 @@ const styles = StyleSheet.create<Styles>({
   },
   containerInnerWrapper: {
     paddingBottom: SPACING_MD,
-    paddingHorizontal: isWeb ? SPACING_LG : SPACING,
-    flex: 1
+    paddingHorizontal: isWeb ? SPACING_LG : SPACING
   },
   closeBtn: {
     position: 'absolute',

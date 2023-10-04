@@ -1,7 +1,7 @@
 import usePrevious from 'ambire-common/src/hooks/usePrevious'
 import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { BackHandler, View } from 'react-native'
+import { BackHandler, TextStyle, View, ViewStyle } from 'react-native'
 import { Modalize, ModalizeProps } from 'react-native-modalize'
 
 import Button from '@common/components/Button'
@@ -17,13 +17,18 @@ interface Props {
   id?: string
   sheetRef: React.RefObject<Modalize>
   closeBottomSheet: (dest?: 'alwaysOpen' | 'default' | undefined) => void
+  onBackdropPress?: () => void
   onClosed?: () => void
   children?: React.ReactNode
   // Preferences
   cancelText?: string
+  cancelTextStyles?: TextStyle
+  cancelOnPress?: () => void
   displayCancel?: boolean
   adjustToContentHeight?: boolean
+  style?: ViewStyle
   flatListProps?: ModalizeProps['flatListProps']
+  withOverlay?: boolean
 }
 
 const ANIMATION_DURATION: number = 250
@@ -36,10 +41,15 @@ const BottomSheet: React.FC<Props> = ({
   children,
   displayCancel = true,
   cancelText: _cancelText,
+  cancelTextStyles = {},
+  cancelOnPress,
   closeBottomSheet = () => {},
   adjustToContentHeight = !isWeb,
+  style = {},
   onClosed,
-  flatListProps
+  onBackdropPress,
+  flatListProps,
+  withOverlay = false
 }) => {
   const [isOpen, setIsOpen] = useState(false)
   const prevIsOpen = usePrevious(isOpen)
@@ -81,24 +91,29 @@ const BottomSheet: React.FC<Props> = ({
         <Backdrop
           isVisible={isBackdropVisible}
           isBottomSheetVisible={isOpen}
-          onPress={closeBottomSheet}
+          onPress={() => {
+            if (onBackdropPress) {
+              onBackdropPress()
+            } else {
+              closeBottomSheet()
+            }
+          }}
         />
       )}
       <Modalize
         ref={sheetRef}
-        modalStyle={styles.bottomSheet}
+        modalStyle={[styles.bottomSheet, style]}
         rootStyle={styles.root}
         handleStyle={styles.dragger}
         handlePosition="inside"
         useNativeDriver={!isWeb}
         avoidKeyboardLikeIOS
-        modalTopOffset={HEADER_HEIGHT + 10}
         {...(!isWeb ? { modalTopOffset: HEADER_HEIGHT + 10 } : {})}
         {...(isWeb ? { modalHeight: DEVICE_HEIGHT - HEADER_HEIGHT - 10 } : {})}
         threshold={100}
         adjustToContentHeight={adjustToContentHeight}
         disableScrollIfPossible={false}
-        withOverlay={false}
+        withOverlay={withOverlay}
         onBackButtonPress={() => true}
         {...(!flatListProps
           ? {
@@ -111,8 +126,10 @@ const BottomSheet: React.FC<Props> = ({
         {...(flatListProps
           ? {
               flatListProps: {
-                ...flatListProps,
-                contentContainerStyle: styles.containerInnerWrapper
+                bounces: false,
+                keyboardShouldPersistTaps: 'handled',
+                contentContainerStyle: styles.containerInnerWrapper,
+                ...flatListProps
               }
             }
           : {})}
@@ -135,8 +152,9 @@ const BottomSheet: React.FC<Props> = ({
             {displayCancel && (
               <Button
                 type="ghost"
-                onPress={closeBottomSheet}
-                style={styles.cancelBtn}
+                onPress={cancelOnPress || closeBottomSheet}
+                style={[styles.cancelBtn]}
+                textStyle={cancelTextStyles}
                 text={_cancelText || (t('Cancel') as string)}
                 hitSlop={{ top: 15, bottom: 15 }}
               />

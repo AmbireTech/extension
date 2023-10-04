@@ -3,12 +3,12 @@ import React, { useCallback, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Linking, TouchableOpacity, View } from 'react-native'
 
+import DAppsIcon from '@common/assets/svg/DAppsIcon'
 import DashboardIcon from '@common/assets/svg/DashboardIcon'
 import DepositIcon from '@common/assets/svg/DepositIcon'
 import DiscordIcon from '@common/assets/svg/DiscordIcon'
 import EarnIcon from '@common/assets/svg/EarnIcon'
 import GasTankIcon from '@common/assets/svg/GasTankIcon'
-import LockIcon from '@common/assets/svg/LockIcon'
 import SendIcon from '@common/assets/svg/SendIcon'
 import SwapIcon from '@common/assets/svg/SwapIcon'
 import TelegramIcon from '@common/assets/svg/TelegramIcon'
@@ -16,15 +16,12 @@ import TransferIcon from '@common/assets/svg/TransferIcon'
 import TwitterIcon from '@common/assets/svg/TwitterIcon'
 import AppVersion from '@common/components/AppVersion'
 import Text from '@common/components/Text'
-import { isAndroid, isiOS, isWeb } from '@common/config/env'
 import { termsAndPrivacyURL } from '@common/modules/auth/constants/URLs'
-import ConnectedDapps from '@common/modules/nav-menu/components/ConnectedDapps'
 import GasIndicator from '@common/modules/nav-menu/components/GasIndicator'
 import ManageVaultLockButton from '@common/modules/nav-menu/components/ManageVaultLockButton'
-import Theme from '@common/modules/nav-menu/components/Theme'
+// import Theme from '@common/modules/nav-menu/components/Theme'
 import styles from '@common/modules/nav-menu/styles'
-import { ROUTES } from '@common/modules/router/config/routesConfig'
-import useVault from '@common/modules/vault/hooks/useVault'
+import { ROUTES } from '@common/modules/router/constants/common'
 import colors from '@common/styles/colors'
 import spacings from '@common/styles/spacings'
 import flexboxStyles from '@common/styles/utils/flexbox'
@@ -37,15 +34,14 @@ import {
 
 const HELP_CENTER_URL = 'https://help.ambire.com/hc/en-us/categories/4404980091538-Ambire-Wallet'
 const REPORT_ISSUE_URL = 'https://help.ambire.com/hc/en-us/requests/new'
-const TELEGRAM_URL = 'https://t.me/AmbireWallet'
+const TELEGRAM_URL = 'https://t.me/AmbireOfficial'
 const TWITTER_URL = 'https://twitter.com/AmbireWallet'
-const DISCORD_URL = 'https://discord.gg/nMBGJsb'
+const DISCORD_URL = 'https://discord.gg/QQb4xc4ksJ'
 
 const SideNavMenu: React.FC<DrawerContentComponentProps> = (props) => {
   const { t } = useTranslation()
   const { navigation } = props
   const { name: routeName } = useGetSelectedRoute()
-  const { lockVault } = useVault()
   const scrollRef: any = useRef(null)
 
   const isDrawerOpen = useDrawerStatus() === 'open'
@@ -71,15 +67,15 @@ const SideNavMenu: React.FC<DrawerContentComponentProps> = (props) => {
 
   const menu = [
     { Icon: DashboardIcon, name: t('Dashboard'), route: ROUTES.dashboard },
-    // TODO: Temporary disabled for iOS since v1.9.2 as part of the Apple app review feedback
-    ...(!isiOS ? [{ Icon: EarnIcon, name: t('Earn'), route: ROUTES.earn }] : []),
+    { Icon: EarnIcon, name: t('Earn'), route: ROUTES.earn },
     { Icon: SendIcon, name: t('Send'), route: ROUTES.send },
     { Icon: SwapIcon, name: t('Swap'), route: ROUTES.swap },
     { Icon: TransferIcon, name: t('Transactions'), route: ROUTES.transactions },
     // TODO: Not implemented yet.
     // { Icon: CrossChainIcon, name: t('Cross-chain'), route: '' },
     { Icon: DepositIcon, name: t('Deposit'), route: ROUTES.receive },
-    { Icon: GasTankIcon, name: t('Gas Tank'), route: ROUTES.gasTank }
+    { Icon: GasTankIcon, name: t('Gas Tank'), route: ROUTES.gasTank },
+    { Icon: DAppsIcon, name: t('dApps'), route: ROUTES.dappsCatalog }
   ]
 
   const help = [
@@ -88,8 +84,12 @@ const SideNavMenu: React.FC<DrawerContentComponentProps> = (props) => {
     { name: t('Terms of Service'), url: termsAndPrivacyURL }
   ]
 
+  const PRIVACY_POLICY_URL = 'https://www.ambire.com/privacy-policy'
+
   const additionalInfo = [
-    ...(!isWeb ? [{ name: t('Data Deletion Policy'), route: ROUTES.dataDeletionPolicy }] : [])
+    { name: t('Data Deletion Policy'), route: ROUTES.dataDeletionPolicy },
+    { name: t('Backup Account'), route: ROUTES.backup },
+    { name: t('Replay Onboarding'), route: ROUTES.onboardingOnFirstLogin }
   ]
 
   const settings = [
@@ -108,38 +108,20 @@ const SideNavMenu: React.FC<DrawerContentComponentProps> = (props) => {
     <DrawerContentScrollView
       {...props}
       alwaysBounceVertical={false}
-      style={!isWeb && spacings.mt}
+      style={spacings.mt}
       ref={scrollRef}
     >
-      <View
-        style={[
-          spacings.mh,
-          isWeb ? spacings.mbTy : spacings.mbSm,
-          isWeb ? spacings.mtMi : spacings.mbTy
-        ]}
-      >
+      <View style={[spacings.mh, spacings.mbSm, spacings.mbTy]}>
         <GasIndicator handleNavigate={handleNavigate} />
       </View>
-      {isWeb && (
-        <View style={[styles.quickActionsContainer, spacings.phLg, spacings.mbTy]}>
-          <TouchableOpacity
-            style={[styles.lockBtn, flexboxStyles.directionRow, flexboxStyles.alignCenter]}
-            onPress={() => lockVault()}
-          >
-            <LockIcon height={20} color={colors.chetwode} />
-            <Text color={colors.chetwode} weight="regular">
-              {t('Lock')}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      )}
       <View style={spacings.mhLg}>
         <Text fontSize={16} weight="medium" underline style={spacings.mbTy}>
           {t('Menu')}
         </Text>
         <View style={[spacings.mlTy, spacings.mbMd]}>
           {menu.map(({ Icon, name, route }) => {
-            const isActive = routeName === route
+            const isActive = routeName.includes(route)
+
             return (
               <TouchableOpacity
                 key={name}
@@ -147,7 +129,18 @@ const SideNavMenu: React.FC<DrawerContentComponentProps> = (props) => {
                 style={[styles.menuItem]}
               >
                 {isActive && <View style={styles.activeMenuItem} />}
-                {!!Icon && <Icon color={isActive ? colors.titan : colors.titan_50} />}
+                {!!Icon && (
+                  <View
+                    style={{
+                      width: 24,
+                      height: 24,
+                      justifyContent: 'center',
+                      alignItems: 'center'
+                    }}
+                  >
+                    <Icon color={isActive ? colors.titan : colors.titan_50} />
+                  </View>
+                )}
                 <Text style={spacings.mlTy} color={isActive ? colors.titan : colors.titan_50}>
                   {name}
                 </Text>
@@ -160,9 +153,9 @@ const SideNavMenu: React.FC<DrawerContentComponentProps> = (props) => {
           {t('Settings')}
         </Text>
         <View style={[spacings.mlTy, spacings.mbSm]}>
-          {isAndroid && <ConnectedDapps />}
-          {!isWeb && <ManageVaultLockButton handleNavigate={handleNavigate} />}
-          <Theme />
+          <ManageVaultLockButton handleNavigate={handleNavigate} />
+          {/* TODO: Temporary disabled since v3.1.1 as part of the Apple app review feedback */}
+          {/* <Theme /> */}
           {settings.map((s) => (
             <TouchableOpacity
               key={s.name}
@@ -182,6 +175,11 @@ const SideNavMenu: React.FC<DrawerContentComponentProps> = (props) => {
           </TouchableOpacity>
         ))}
         <View style={[spacings.mlTy, spacings.mbSm]}>
+          <TouchableOpacity onPress={() => Linking.openURL(PRIVACY_POLICY_URL)}>
+            <Text style={spacings.mbSm} color={colors.titan_50}>
+              {t('Privacy Policy')}
+            </Text>
+          </TouchableOpacity>
           {additionalInfo.map(({ name, route }) => (
             <TouchableOpacity key={name} onPress={() => handleNavigate(route)}>
               <Text style={spacings.mbSm} color={colors.titan_50}>

@@ -7,6 +7,7 @@ import { Observable } from 'rxjs'
 
 import Button from '@common/components/Button'
 import Text from '@common/components/Text'
+import requestPermissionFlagging from '@common/services/requestPermissionFlagging'
 import spacings from '@common/styles/spacings'
 import TransportBLE from '@ledgerhq/react-native-hw-transport-ble'
 
@@ -46,16 +47,15 @@ const RequireLocation: React.FC<any> = ({ children }) => {
   }, [])
 
   const requestPermissions = useCallback(async () => {
-    const status = await PermissionsAndroid.request(
-      PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-      {
+    const status = await requestPermissionFlagging(() =>
+      PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION, {
         title: t('Location permission required'),
         message: t(
           'Ambire requires location permission to pair your device through Bluetooth. Ambire does not access your location information.'
         ),
         buttonNegative: t('Cancel'),
         buttonPositive: t('Allow')
-      }
+      })
     )
 
     setPermissionStatus(status)

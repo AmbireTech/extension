@@ -1,4 +1,3 @@
-import { isValidPassword } from 'ambire-common/src/services/validations'
 import React from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { Keyboard, TouchableWithoutFeedback, View } from 'react-native'
@@ -20,6 +19,7 @@ import useVault from '@common/modules/vault/hooks/useVault'
 import colors from '@common/styles/colors'
 import spacings from '@common/styles/spacings'
 import flexboxStyles from '@common/styles/utils/flexbox'
+import { isValidPin, PIN_LENGTH } from '@common/utils/isValidPin'
 
 const CreateNewVaultScreen = () => {
   const { t } = useTranslation()
@@ -62,28 +62,28 @@ const CreateNewVaultScreen = () => {
               color={colors.titan}
               fontSize={13}
             >
-              {t(
-                'The Ambire Key Store passphrase should be unique for this device and it should be different from your account password.'
-              )}
+              {t('The Ambire Key Store PIN should be unique for this device.')}
             </Text>
 
             <Controller
               control={control}
-              rules={{ validate: isValidPassword }}
-              render={({ field: { onChange, onBlur, value } }) => (
+              rules={{
+                required: t('PIN is required.'),
+                validate: { isValidPin }
+              }}
+              render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
                 <InputPassword
                   onBlur={onBlur}
-                  placeholder={t('Enter Passphrase')}
+                  placeholder={t('Enter {{PIN_LENGTH}}-digit PIN', { PIN_LENGTH })}
                   onChangeText={onChange}
-                  isValid={isValidPassword(value)}
+                  maxLength={PIN_LENGTH}
+                  isValid={value?.length === PIN_LENGTH}
                   autoFocus={isWeb}
                   value={value}
-                  error={
-                    errors.password &&
-                    (t('Please fill in at least 8 characters for passphrase.') as string)
-                  }
+                  error={error && error.message}
                   containerStyle={spacings.mbTy}
                   onSubmitEditing={handleSubmit(createVault)}
+                  keyboardType="number-pad"
                 />
               )}
               name="password"
@@ -96,15 +96,16 @@ const CreateNewVaultScreen = () => {
               render={({ field: { onChange, onBlur, value } }) => (
                 <Input
                   onBlur={onBlur}
-                  placeholder={t('Repeat Passphrase')}
+                  placeholder={t('Repeat PIN')}
                   onChangeText={onChange}
                   value={value}
                   isValid={!!value && watch('password', '') === value}
                   secureTextEntry
-                  error={errors.confirmPassword && (t("Passphrases don't match.") as string)}
+                  error={errors.confirmPassword && (t("PINs don't match.") as string)}
                   autoCorrect={false}
                   onSubmitEditing={handleSubmit(createVault)}
                   containerStyle={spacings.mbSm}
+                  keyboardType="number-pad"
                 />
               )}
               name="confirmPassword"

@@ -10,18 +10,18 @@ import PortMessage from '@web/extension-services/message/portMessage'
 
 const channelName = nanoid()
 
-fetch(chrome.runtime.getURL('inpage.js'))
-  .then()
-  .then((response) => response.text())
-  .then((inpageSrcCode) => {
-    const ele = document.createElement('script')
-    const container = document.head || document.documentElement
-    let content = `var channelName = '${channelName}';`
-    content += inpageSrcCode
-    ele.textContent = content
-    container.insertBefore(ele, container.children[0])
-    container.removeChild(ele)
-  })
+// the script element with src won't execute immediately
+// use inline script element instead!
+const container = document.head || document.documentElement
+const ele = document.createElement('script')
+// in prevent of webpack optimized code do some magic(e.g. double/sigle quote wrap),
+// seperate content assignment to two line
+// use AssetReplacePlugin to replace pageprovider content
+let content = `var channelName = '${channelName}';`
+content += '#PAGEPROVIDER#'
+ele.textContent = content
+container.insertBefore(ele, container.children[0])
+container.removeChild(ele)
 
 const pm = new PortMessage().connect()
 

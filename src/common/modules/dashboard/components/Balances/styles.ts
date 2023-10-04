@@ -1,27 +1,33 @@
-import { StyleSheet, ViewStyle } from 'react-native'
+import { StyleSheet, TextStyle, ViewStyle } from 'react-native'
 
-import { isWeb } from '@common/config/env'
 import colors from '@common/styles/colors'
 import spacings from '@common/styles/spacings'
+import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 
 interface Style {
   loadingContainer: ViewStyle
   spinnerWrapper: ViewStyle
-  otherBalancesContainer: ViewStyle
+  allBalancesContainer: ViewStyle
+  allBalancesGasTankContainer: ViewStyle
   button: ViewStyle
-  buttonIcon: ViewStyle
+  buttonText: TextStyle
 }
 
 const styles = StyleSheet.create<Style>({
   button: {
-    minWidth: 100,
-    alignItems: isWeb ? 'center' : 'flex-end',
+    flexDirection: 'row',
+    minWidth: 120,
+    alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: colors.martinique,
-    ...spacings.mhMi,
-    ...spacings.ph0
+    borderRadius: BORDER_RADIUS_PRIMARY,
+    height: 50,
+    marginHorizontal: 8,
+    ...spacings.phSm
   },
-  buttonIcon: {
-    marginRight: 3
+  buttonText: {
+    marginRight: 8,
+    lineHeight: 21
   },
   loadingContainer: {
     // Reserves some initial height, so that it covers the common space,
@@ -34,13 +40,18 @@ const styles = StyleSheet.create<Style>({
     justifyContent: 'center',
     ...spacings.mbTy
   },
-  otherBalancesContainer: {
+  allBalancesContainer: {
     flexDirection: 'row',
     width: 275,
     borderBottomColor: colors.waikawaGray,
     borderBottomWidth: 1,
     paddingVertical: 2,
     alignItems: 'center'
+  },
+  allBalancesGasTankContainer: {
+    borderTopColor: colors.waikawaGray,
+    borderTopWidth: 1,
+    borderBottomWidth: 0
   }
 })
 
