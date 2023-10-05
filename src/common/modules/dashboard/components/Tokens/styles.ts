@@ -8,14 +8,20 @@ import flexboxStyles from '@common/styles/utils/flexbox'
 interface Style {
   tokenItemContainer: ViewStyle
   tokenItemContainerWeb: ViewStyle
+  tokenContentContainer: ViewStyle
   tokenValue: ViewStyle
   sendContainer: ViewStyle
+  pendingContainer: ViewStyle
+  pendingContainerWrapper: ViewStyle
+  pendingBalance: TextStyle
+  onChainBalance: TextStyle
   tokenSymbol: TextStyle
+  balance: TextStyle
+  pendingItem: ViewStyle
 }
 
 const styles = StyleSheet.create<Style>({
   tokenItemContainer: {
-    flexDirection: 'row',
     backgroundColor: colors.howl,
     ...spacings.pvSm,
     ...spacings.phSm,
@@ -23,7 +29,6 @@ const styles = StyleSheet.create<Style>({
     ...commonStyles.borderRadiusPrimary
   },
   tokenItemContainerWeb: {
-    flexDirection: 'row',
     backgroundColor: colors.howl,
     ...spacings.pvTy,
     ...spacings.phSm,
@@ -31,12 +36,18 @@ const styles = StyleSheet.create<Style>({
     ...commonStyles.borderRadiusPrimary,
     ...flexboxStyles.alignCenter
   },
+  tokenContentContainer: {
+    flexDirection: 'row'
+  },
+  balance: {
+    color: colors.turquoise
+  },
   tokenSymbol: {
     // Magic number, so that the token name always takes up to 35% of the row,
     // otherwise - aligning the symbol and value with flex 1 both
     // results inconsistent rendering behavior with edge cases - long token name
     // and very tiny value (with many decimals). So this is the sweet spot.
-    maxWidth: '35%'
+    maxWidth: '40%'
   },
   tokenValue: {
     alignItems: 'flex-end'
@@ -47,6 +58,28 @@ const styles = StyleSheet.create<Style>({
     height: 36,
     ...flexboxStyles.center,
     ...commonStyles.borderRadiusPrimary
+  },
+  pendingContainer: {
+    ...spacings.mtSm
+  },
+  pendingContainerWrapper: {
+    alignItems: 'center'
+  },
+  pendingItem: {
+    borderColor: colors.mustard,
+    borderWidth: 1,
+    color: colors.mustard,
+    borderRadius: 20,
+    ...flexboxStyles.flex1,
+    ...spacings.phMi,
+    ...spacings.pvMi,
+    ...spacings.mbMi
+  },
+  pendingBalance: {
+    color: colors.mustard
+  },
+  onChainBalance: {
+    color: colors.turquoise_40
   }
 })
 

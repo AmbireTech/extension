@@ -1,5 +1,6 @@
 const colors = {
   turquoise: '#27E8A7',
+  turquoise_40: 'rgba(39, 232, 167, 0.4)',
   onahau: '#C8FFFE',
   greenHaze: '#009e69',
 
