@@ -97,7 +97,18 @@ const Tokens = ({
         !!sortedTokens.length &&
         sortedTokens.map(
           (
-            { address, symbol, img, tokenImageUrl, balance, balanceUSD, decimals }: any,
+            {
+              address,
+              symbol,
+              img,
+              tokenImageUrl,
+              balance,
+              balanceUSD,
+              decimals,
+              latest,
+              pending,
+              unconfirmed
+            }: any,
             i: number
           ) => (
             <TokenItem

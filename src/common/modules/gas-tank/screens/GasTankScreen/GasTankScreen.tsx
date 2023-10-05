@@ -155,7 +155,7 @@ const GasTankScreen = () => {
           >
             <TokensList
               tokens={sortedTokens}
-              isLoading={isCurrNetworkBalanceLoading || isCurrNetworkProtocolsLoading}
+              isLoading={isCurrNetworkBalanceLoading}
               networkId={network?.id}
               chainId={network?.chainId}
               selectedAcc={selectedAcc}
