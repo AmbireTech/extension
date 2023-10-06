@@ -1,4 +1,5 @@
 import networks, { NetworkId, NETWORKS, NetworkType } from 'ambire-common/src/constants/networks'
+import { initUnstoppableDomainsResolution } from 'ambire-common/src/services/unstoppableDomains'
 import { providers } from 'ethers'
 
 import CustomJsonRpcProvider from '@common/services/CustomJsonRpcProvider'
@@ -7,7 +8,7 @@ import CustomJsonRpcProvider from '@common/services/CustomJsonRpcProvider'
 // currently here to avoid publishing a new build for the mobile apps and avoid the stores review process
 const RPC_URL_ETHEREUM =
   'https://rpc.ankr.com/eth/0e066bd7837ff1978d6aa30b9f29407deb0276d74f46393e474c2530916c8943'
-// Ambire Earn uses a separate RPC provider that gets initiated separately
+// Ambire Earn uses a separate RPC provider
 const RPC_URL_ETHEREUM_AMBIRE_EARN =
   'https://unufri-ethereum.adex.network/v3/099fc58e0de9451d80b18d7c74caa7c1'
 const RPC_URL_POLYGON =
@@ -90,15 +91,20 @@ if (!Object.keys(rpcProviders).length) {
   ;(Object.keys(NETWORKS) as Array<keyof typeof NETWORKS>).forEach((networkId: NetworkId) => {
     rpcProviders[networkId] = setProvider(networkId)
   })
-}
 
-// @ts-ignore
-rpcProviders['ethereum-ambire-earn'] = new providers.StaticJsonRpcProvider(
-  RPC_URL_ETHEREUM_AMBIRE_EARN,
-  {
-    name: 'ethereum-ambire-earn',
-    chainId: 1
-  }
-)
+  // Ambire Earn uses a separate RPC provider that gets initiated separately.
+  // @ts-ignore
+  rpcProviders['ethereum-ambire-earn'] = new providers.StaticJsonRpcProvider(
+    RPC_URL_ETHEREUM_AMBIRE_EARN,
+    {
+      name: 'ethereum-ambire-earn',
+      chainId: 1
+    }
+  )
+
+  // Initiate Unstoppable domains resolution with the Ambire RPC providers,
+  // since it does not resolve all domains with it's default ones.
+  initUnstoppableDomainsResolution(RPC_URLS)
+}
 
 export { rpcProviders }
