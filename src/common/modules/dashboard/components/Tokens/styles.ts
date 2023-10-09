@@ -50,7 +50,8 @@ const styles = StyleSheet.create<Style>({
     maxWidth: '40%'
   },
   tokenValue: {
-    alignItems: 'flex-end'
+    ...flexboxStyles.justifySpaceBetween,
+    ...flexboxStyles.alignEnd
   },
   sendContainer: {
     backgroundColor: colors.titan_05,

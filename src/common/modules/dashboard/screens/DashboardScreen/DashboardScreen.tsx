@@ -31,13 +31,9 @@ const DashboardScreen = () => {
   const { network, setNetwork } = useNetwork()
   const { selectedAcc } = useAccounts()
 
-  const allBalancesLoading = useMemo(
-    () => Object.entries(balancesByNetworksLoading).find((ntw) => ntw[1]),
-    [balancesByNetworksLoading]
-  )
-
   const handleRefresh = () => {
-    loadBalance()
+    // TODO: Handle refresh here.
+    // loadBalance()
   }
 
   return (
@@ -58,9 +54,9 @@ const DashboardScreen = () => {
         <Balances
           balance={balance}
           otherBalances={otherBalances}
-          isLoading={isCurrNetworkBalanceLoading && !!allBalancesLoading}
+          isLoading={isCurrNetworkBalanceLoading && !!balancesByNetworksLoading}
           isCurrNetworkBalanceLoading={!!isCurrNetworkBalanceLoading}
-          otherBalancesLoading={!!allBalancesLoading}
+          otherBalancesLoading={!!balancesByNetworksLoading}
           networkId={network?.id}
           networkName={network?.name}
           setNetwork={setNetwork}

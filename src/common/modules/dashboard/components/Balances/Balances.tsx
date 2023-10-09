@@ -96,9 +96,9 @@ const Balances = ({
 
   const content = (
     <>
-      {isLoading || isCurrNetworkBalanceLoading || otherBalancesLoading ? (
+      {!otherBalances.length && otherBalancesLoading ? (
         <BalanceLoader />
-      ) : (
+      ) : otherBalances.length > 0 ? (
         <Text
           fontSize={42}
           weight="regular"
@@ -128,7 +128,7 @@ const Balances = ({
             </>
           )}
         </Text>
-      )}
+      ) : null}
 
       <View style={[flexboxStyles.directionRow, spacings.mb]}>
         <TouchableOpacity onPress={handleGoToSend} activeOpacity={0.8} style={styles.button}>
@@ -145,7 +145,7 @@ const Balances = ({
         </TouchableOpacity>
       </View>
 
-      {otherBalancesLoading ? (
+      {!otherBalances.length && otherBalancesLoading ? (
         <View style={spacings.mb}>
           <Spinner />
         </View>

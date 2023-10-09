@@ -17,6 +17,7 @@ import textStyles from '@common/styles/utils/text'
 
 import TokensListLoader from '../Loaders/TokensListLoader'
 import Rewards from '../Rewards'
+import Pending from './Pending'
 import TokenItem from './TokenItem'
 
 interface Props {
@@ -25,7 +26,6 @@ interface Props {
   hiddenTokens: UsePortfolioReturnType['hiddenTokens']
   networkId?: NetworkId
   networkName?: NetworkType['name']
-  selectedAcc: UseAccountsReturnType['selectedAcc']
   isCurrNetworkBalanceLoading: boolean
   onAddExtraToken: UsePortfolioReturnType['onAddExtraToken']
   onAddHiddenToken: UsePortfolioReturnType['onAddHiddenToken']
@@ -39,7 +39,6 @@ const Tokens = ({
   hiddenTokens,
   networkId,
   networkName,
-  selectedAcc,
   isCurrNetworkBalanceLoading,
   onAddExtraToken,
   onAddHiddenToken,
@@ -64,7 +63,6 @@ const Tokens = ({
 
   const shouldShowEmptyState = useMemo(
     () => !isCurrNetworkBalanceLoading && !tokens.length,
-
     [isCurrNetworkBalanceLoading, tokens?.length]
   )
 
@@ -86,7 +84,7 @@ const Tokens = ({
 
   return (
     <>
-      {!!isCurrNetworkBalanceLoading && <TokensListLoader />}
+      {!!isCurrNetworkBalanceLoading && !tokens.length && <TokensListLoader />}
 
       {!!shouldShowEmptyState && emptyState}
 
@@ -105,6 +103,7 @@ const Tokens = ({
               balance,
               balanceUSD,
               decimals,
+              price,
               latest,
               pending,
               unconfirmed
@@ -120,8 +119,21 @@ const Tokens = ({
               decimals={decimals}
               address={address}
               networkId={networkId}
+              price={price}
+              pending={pending}
+              unconfirmed={unconfirmed}
               onPress={handleGoToSend}
               hidePrivateValue={hidePrivateValue}
+              wrapperEndChildren={
+                <Pending
+                  balance={balance}
+                  hidePrivateValue={hidePrivateValue}
+                  decimals={decimals}
+                  pending={pending}
+                  unconfirmed={unconfirmed}
+                  latest={latest}
+                />
+              }
             />
           )
         )}

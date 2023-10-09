@@ -70,7 +70,6 @@ const Assets = ({
             hiddenTokens={hiddenTokens}
             networkId={networkId}
             networkName={networkName}
-            selectedAcc={selectedAcc}
             isCurrNetworkBalanceLoading={!!isCurrNetworkBalanceLoading}
             onAddExtraToken={onAddExtraToken}
             onAddHiddenToken={onAddHiddenToken}

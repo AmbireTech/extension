@@ -11,6 +11,7 @@ import styles from './styles'
 interface Props {
   hidePrivateValue: UsePrivateModeReturnType['hidePrivateValue']
   decimals: number
+  balance: number
   latest: { balance: number }
   pending: { balanceIncrease: number; difference: number }
   unconfirmed: { balanceIncrease: number; difference: number }
