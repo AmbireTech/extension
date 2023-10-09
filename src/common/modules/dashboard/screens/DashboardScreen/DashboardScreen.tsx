@@ -32,8 +32,7 @@ const DashboardScreen = () => {
   const { selectedAcc } = useAccounts()
 
   const handleRefresh = () => {
-    // TODO: Handle refresh here.
-    // loadBalance()
+    loadBalance()
   }
 
   return (

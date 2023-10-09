@@ -29,7 +29,6 @@ const Collectibles = ({ collectibles, isCurrNetworkBalanceLoading }: Props) => {
       />
     )
   }
-  console.log(collectibles)
 
   return (
     <View style={styles.itemsContainer}>

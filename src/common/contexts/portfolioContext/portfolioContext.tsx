@@ -95,17 +95,16 @@ const PortfolioProvider: React.FC = ({ children }) => {
     onRemoveHiddenToken,
     balancesByNetworksLoading,
     isCurrNetworkBalanceLoading,
-    loading,
-    cache,
     resultTime,
     onAddHiddenCollectible,
     onRemoveHiddenCollectible,
     setHiddenCollectibles,
     hiddenCollectibles,
+    loadBalance,
     checkIsTokenEligibleForAddingAsExtraToken
   } = usePortfolio({
     useConstants,
-    currentNetwork: network?.id as string,
+    currentNetwork: network?.id as Network,
     account: selectedAcc,
     useStorage,
     isVisible: appStateVisible === 'active',
@@ -143,7 +142,8 @@ const PortfolioProvider: React.FC = ({ children }) => {
           onRemoveHiddenToken,
           balancesByNetworksLoading,
           isCurrNetworkBalanceLoading,
-          resultTime
+          resultTime,
+          loadBalance
         }),
         [
           balance,
@@ -159,7 +159,8 @@ const PortfolioProvider: React.FC = ({ children }) => {
           onRemoveHiddenToken,
           balancesByNetworksLoading,
           isCurrNetworkBalanceLoading,
-          resultTime
+          resultTime,
+          loadBalance
         ]
       )}
     >
