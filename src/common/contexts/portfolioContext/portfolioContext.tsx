@@ -13,7 +13,6 @@ import useRequests from '@common/hooks/useRequests'
 import useStorage from '@common/hooks/useStorage'
 import useToasts from '@common/hooks/useToast'
 import { fetchGet } from '@common/services/fetch'
-import { adaptVelcroV2ResponseToV1Structure } from '@common/services/velcroAdapter/velcroAdapter'
 
 interface PortfolioContextReturnType extends UsePortfolioReturnType {}
 
@@ -58,7 +57,7 @@ const getBalances = (
 const getCoingeckoPrices = (addresses: any) =>
   fetchGet(`${CONFIG.COINGECKO_API_URL}/simple/price?ids=${addresses}&vs_currencies=usd`)
 
-const getCoingeckoAssetPlatforms = () => fetchGet(`${CONFIG.COINGECKO_API_URL}/asset_platforms`)
+const getCoingeckoCoin = (id: string) => fetchGet(`${CONFIG.COINGECKO_API_URL}/coins/${id}`)
 
 const getCoingeckoPriceByContract = (id: any, addresses: any) =>
   fetchGet(`${CONFIG.COINGECKO_API_URL}/coins/${id}/contract/${addresses}`)
@@ -96,8 +95,13 @@ const PortfolioProvider: React.FC = ({ children }) => {
     onRemoveHiddenToken,
     balancesByNetworksLoading,
     isCurrNetworkBalanceLoading,
-    areAllNetworksBalancesLoading,
-    loadBalance,
+    loading,
+    cache,
+    resultTime,
+    onAddHiddenCollectible,
+    onRemoveHiddenCollectible,
+    setHiddenCollectibles,
+    hiddenCollectibles,
     checkIsTokenEligibleForAddingAsExtraToken
   } = usePortfolio({
     useConstants,
@@ -109,7 +113,7 @@ const PortfolioProvider: React.FC = ({ children }) => {
     getBalances,
     getCoingeckoPrices,
     getCoingeckoPriceByContract,
-    getCoingeckoAssetPlatforms,
+    getCoingeckoCoin,
     relayerURL: CONFIG.RELAYER_URL,
     useRelayerData,
     eligibleRequests,
@@ -117,7 +121,9 @@ const PortfolioProvider: React.FC = ({ children }) => {
     selectedAccount,
     sentTxn,
     useCacheStorage,
-    accounts
+    accounts,
+    // TODO: should implement this as well
+    requestPendingState: false
   })
 
   return (
@@ -137,8 +143,7 @@ const PortfolioProvider: React.FC = ({ children }) => {
           onRemoveHiddenToken,
           balancesByNetworksLoading,
           isCurrNetworkBalanceLoading,
-          areAllNetworksBalancesLoading,
-          loadBalance
+          resultTime
         }),
         [
           balance,
@@ -154,8 +159,7 @@ const PortfolioProvider: React.FC = ({ children }) => {
           onRemoveHiddenToken,
           balancesByNetworksLoading,
           isCurrNetworkBalanceLoading,
-          areAllNetworksBalancesLoading,
-          loadBalance
+          resultTime
         ]
       )}
     >
