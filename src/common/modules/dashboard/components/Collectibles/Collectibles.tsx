@@ -17,7 +17,7 @@ interface Props {
 const Collectibles = ({ collectibles, isCurrNetworkBalanceLoading }: Props) => {
   const { isPrivateMode } = usePrivateMode()
 
-  if (isCurrNetworkBalanceLoading) {
+  if (isCurrNetworkBalanceLoading && !collectibles?.length) {
     return <CollectiblesListLoader />
   }
 
@@ -29,18 +29,19 @@ const Collectibles = ({ collectibles, isCurrNetworkBalanceLoading }: Props) => {
       />
     )
   }
+  console.log(collectibles)
 
   return (
     <View style={styles.itemsContainer}>
-      {collectibles.map(({ network, address, collectionName, collectionImg, assets }) =>
-        (assets || []).map(({ tokenId, assetName, assetImg, balanceUSD }: any) => (
+      {collectibles.map(({ network, address, collectionName, assets, balanceUSD }) =>
+        (assets || []).map(({ tokenId, assetName, data }: any) => (
           <CollectibleItem
             key={tokenId}
             tokenId={tokenId}
             network={network}
             address={address}
-            assetImg={assetImg}
-            collectionImg={collectionImg}
+            assetImg={data && data.image}
+            collectionImg={data && data.image}
             collectionName={collectionName}
             assetName={assetName}
             balanceUSD={balanceUSD}

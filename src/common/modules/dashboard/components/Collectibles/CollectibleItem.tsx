@@ -95,7 +95,7 @@ const CollectibleItem = ({
               <Text fontSize={10} color={colors.heliotrope}>
                 $
               </Text>
-              <Text fontSize={10}>{balanceUSD.toFixed(2)}</Text>
+              <Text fontSize={10}>{Number(balanceUSD).toFixed(2)}</Text>
             </Text>
           </View>
         </View>
