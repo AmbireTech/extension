@@ -2,6 +2,7 @@ import { UsePortfolioReturnType } from 'ambire-common/src/hooks/usePortfolio/typ
 import React from 'react'
 import { View } from 'react-native'
 
+import useNetwork from '@common/hooks/useNetwork'
 import usePrivateMode from '@common/hooks/usePrivateMode'
 
 import CollectiblesListLoader from '../Loaders/CollectiblesListLoader'
@@ -16,6 +17,7 @@ interface Props {
 
 const Collectibles = ({ collectibles, isCurrNetworkBalanceLoading }: Props) => {
   const { isPrivateMode } = usePrivateMode()
+  const { network } = useNetwork()
 
   if (isCurrNetworkBalanceLoading && !collectibles?.length) {
     return <CollectiblesListLoader />
@@ -32,13 +34,13 @@ const Collectibles = ({ collectibles, isCurrNetworkBalanceLoading }: Props) => {
 
   return (
     <View style={styles.itemsContainer}>
-      {collectibles.map(({ network, address, collectionName, assets, balanceUSD }) =>
+      {collectibles.map(({ address, collectionName, assets, balanceUSD }) =>
         (assets || []).map(({ tokenId, assetName, data }: any) => (
           <CollectibleItem
             key={tokenId}
             tokenId={tokenId}
-            network={network}
             address={address}
+            network={network.id}
             assetImg={data && data.image}
             collectionImg={data && data.image}
             collectionName={collectionName}
