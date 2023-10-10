@@ -37,7 +37,10 @@ const PortfolioContext = createContext<PortfolioContextReturnType>({
   balancesByNetworksLoading: {},
   isCurrNetworkBalanceLoading: false,
   areAllNetworksBalancesLoading: () => false,
-  loadBalance: () => {}
+  loadBalance: () => {},
+  onAddHiddenCollectible: () => {},
+  onRemoveHiddenCollectible: () => {},
+  hiddenCollectibles: []
 })
 
 const getBalances = (
@@ -98,7 +101,6 @@ const PortfolioProvider: React.FC = ({ children }) => {
     resultTime,
     onAddHiddenCollectible,
     onRemoveHiddenCollectible,
-    setHiddenCollectibles,
     hiddenCollectibles,
     loadBalance,
     checkIsTokenEligibleForAddingAsExtraToken
@@ -143,7 +145,10 @@ const PortfolioProvider: React.FC = ({ children }) => {
           balancesByNetworksLoading,
           isCurrNetworkBalanceLoading,
           resultTime,
-          loadBalance
+          loadBalance,
+          onAddHiddenCollectible,
+          onRemoveHiddenCollectible,
+          hiddenCollectibles
         }),
         [
           balance,
@@ -160,7 +165,10 @@ const PortfolioProvider: React.FC = ({ children }) => {
           balancesByNetworksLoading,
           isCurrNetworkBalanceLoading,
           resultTime,
-          loadBalance
+          loadBalance,
+          onAddHiddenCollectible,
+          onRemoveHiddenCollectible,
+          hiddenCollectibles
         ]
       )}
     >

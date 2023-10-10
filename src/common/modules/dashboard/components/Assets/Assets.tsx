@@ -22,6 +22,7 @@ interface Props {
   collectibles: UsePortfolioReturnType['collectibles']
   extraTokens: UsePortfolioReturnType['extraTokens']
   hiddenTokens: UsePortfolioReturnType['hiddenTokens']
+  hiddenCollectibles: UsePortfolioReturnType['hiddenCollectibles']
   explorerUrl?: NetworkType['explorerUrl']
   networkId?: NetworkId
   networkName?: NetworkType['name']
@@ -29,8 +30,10 @@ interface Props {
   isCurrNetworkBalanceLoading: boolean
   onAddExtraToken: UsePortfolioReturnType['onAddExtraToken']
   onAddHiddenToken: UsePortfolioReturnType['onAddHiddenToken']
+  onAddHiddenCollectible: UsePortfolioReturnType['onAddHiddenCollectible']
   onRemoveExtraToken: UsePortfolioReturnType['onRemoveExtraToken']
   onRemoveHiddenToken: UsePortfolioReturnType['onRemoveHiddenToken']
+  onRemoveHiddenCollectible: UsePortfolioReturnType['onRemoveHiddenCollectible']
 }
 
 const Assets = ({
@@ -38,6 +41,7 @@ const Assets = ({
   collectibles,
   extraTokens,
   hiddenTokens,
+  hiddenCollectibles,
   explorerUrl,
   networkId,
   networkName,
@@ -46,7 +50,9 @@ const Assets = ({
   onAddExtraToken,
   onAddHiddenToken,
   onRemoveExtraToken,
-  onRemoveHiddenToken
+  onRemoveHiddenToken,
+  onAddHiddenCollectible,
+  onRemoveHiddenCollectible
 }: Props) => {
   const { type } = useContext(AssetsToggleContext)
   const handleGoToBlockExplorer = () => Linking.openURL(`${explorerUrl}/address/${selectedAcc}`)
@@ -87,6 +93,9 @@ const Assets = ({
           <Collectibles
             collectibles={collectibles}
             isCurrNetworkBalanceLoading={isCurrNetworkBalanceLoading}
+            hiddenCollectibles={hiddenCollectibles}
+            onAddHiddenCollectible={onAddHiddenCollectible}
+            onRemoveHiddenCollectible={onRemoveHiddenCollectible}
           />
         </AfterInteractions>
       )}

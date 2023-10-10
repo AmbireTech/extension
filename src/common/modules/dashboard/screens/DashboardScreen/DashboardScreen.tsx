@@ -23,10 +23,13 @@ const DashboardScreen = () => {
     collectibles,
     extraTokens,
     hiddenTokens,
+    hiddenCollectibles,
     onAddExtraToken,
     onAddHiddenToken,
     onRemoveExtraToken,
-    onRemoveHiddenToken
+    onRemoveHiddenToken,
+    onAddHiddenCollectible,
+    onRemoveHiddenCollectible
   } = usePortfolio()
   const { network, setNetwork } = useNetwork()
   const { selectedAcc } = useAccounts()
@@ -67,6 +70,7 @@ const DashboardScreen = () => {
             collectibles={collectibles}
             extraTokens={extraTokens}
             hiddenTokens={hiddenTokens}
+            hiddenCollectibles={hiddenCollectibles}
             isCurrNetworkBalanceLoading={!!isCurrNetworkBalanceLoading}
             explorerUrl={network?.explorerUrl}
             networkId={network?.id}
@@ -76,6 +80,8 @@ const DashboardScreen = () => {
             onAddHiddenToken={onAddHiddenToken}
             onRemoveExtraToken={onRemoveExtraToken}
             onRemoveHiddenToken={onRemoveHiddenToken}
+            onAddHiddenCollectible={onAddHiddenCollectible}
+            onRemoveHiddenCollectible={onRemoveHiddenCollectible}
           />
         </AssetsToggleProvider>
       </Wrapper>
