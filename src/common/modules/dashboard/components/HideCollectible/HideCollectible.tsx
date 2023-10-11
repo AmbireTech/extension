@@ -59,34 +59,46 @@ const HideCollectible = ({
 
   const [formType, setFormType] = useState<MODES>(MODES.HIDE_COLLECTIBLE)
 
-  const handleOnSubmit = (token: Token, formMode: MODES) => {
-    const cases: { [key in MODES]: () => void } = {
-      [MODES.HIDE_COLLECTIBLE]: () => {
-        onAddHiddenCollectible([token])
-        closeBottomSheet()
-      }
+  const toggleCollectibleHide = useCallback<
+    (hiddenCollectible: TokenWithIsHiddenFlag, assetId: string) => any
+  >((hiddenCollectible, assetId) => {
+    const nextIsHiddenState = hiddenCollectible.assets.map(
+      (asset: any) => asset.tokenId === assetId && { ...asset, isHidden: !asset.isHidden }
+    )
+    const updatedHiddenCollectible = {
+      ...hiddenCollectible,
+      assets: hiddenCollectible.assets.map(
+        (asset: any) => asset.tokenId === assetId && { ...asset, isHidden: true }
+      )
     }
 
-    return cases[formMode]()
-  }
-
-  const toggleCollectibleHide = useCallback<(t: TokenWithIsHiddenFlag) => any>((token) => {
-    // const nextIsHiddenState = !token.isHidden
-
     setTokenHideChanges((prevChanges) => {
-      const hasChange = prevChanges.find((c) => c.address === token.address)
+      // todo: for some reason here we update an nft
+      // which is already hidden
+      const hasChange = prevChanges.find(
+        (c) =>
+          c.address === hiddenCollectible.address &&
+          c.assets.map(({ tokenId }: any) => tokenId === assetId)
+      )
 
       if (hasChange) {
-        return prevChanges.filter((c) => c.address !== token.address)
+        return prevChanges.filter(
+          (c) =>
+            c.address !== hiddenCollectible.address &&
+            c.assets.find(({ tokenId }: any) => tokenId !== assetId)
+        )
       }
 
-      return [...prevChanges, { ...token, isHidden: nextIsHiddenState }]
+      return [...prevChanges, updatedHiddenCollectible]
     })
 
-    setSortedCollectibles((prevTokens) => {
-      return prevTokens.map((t) => {
-        if (t.address === token.address) {
-          return { ...t, isHidden: nextIsHiddenState }
+    setSortedCollectibles((prevCollectibles) => {
+      return prevCollectibles.map((t) => {
+        if (
+          t.address === hiddenCollectible.address &&
+          t.assets.find(({ tokenId }: any) => tokenId !== assetId)
+        ) {
+          return updatedHiddenCollectible
         }
 
         return t
@@ -95,17 +107,28 @@ const HideCollectible = ({
   }, [])
 
   const handleUpdates = useCallback(() => {
-    const hiddenTokensToAdd = tokenHideChanges.filter((token) => token.isHidden)
-    const addressesToRemove = tokenHideChanges
-      .filter((token) => !token.isHidden)
-      .map((token) => token.address)
+    const hiddenCollectiblesToAdd = tokenHideChanges.filter((token) =>
+      token.assets.find((asset) => asset.isHidden)
+    )
+    const addressesAndTokenIdsToRemove = tokenHideChanges
+      .filter((token) => token.assets.find((asset) => !asset.isHidden))
+      .flatMap((token) =>
+        token.assets.map(({ tokenId }: any) => ({
+          address: token.address,
+          tokenId
+        }))
+      )
 
-    if (hiddenTokensToAdd.length) onAddHiddenCollectible(hiddenTokensToAdd)
-    if (addressesToRemove.length) onRemoveHiddenCollectible(addressesToRemove)
+    if (hiddenCollectiblesToAdd.length)
+      hiddenCollectiblesToAdd.map((token) => onAddHiddenCollectible(token, token.assets[0].tokenId))
+    if (addressesAndTokenIdsToRemove.length)
+      addressesAndTokenIdsToRemove.map(({ address, tokenId }) =>
+        onRemoveHiddenCollectible(address, tokenId)
+      )
 
     // Reset states
     setSortedCollectibles(collectiblesWithHidden.sort((a, b) => b.balanceUSD - a.balanceUSD))
-    setTokenHideChanges([])
+    // setTokenHideChanges([])
   }, [onAddHiddenCollectible, onRemoveHiddenCollectible, tokenHideChanges, collectiblesWithHidden])
 
   return (

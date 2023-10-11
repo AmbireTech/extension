@@ -9,7 +9,7 @@ import HideCollectibleListItem from './HideCollectibleListItem'
 
 interface Props {
   collectibles: TokenWithIsHiddenFlag[]
-  toggleCollectibleHide: (token: Token) => any
+  toggleCollectibleHide: (token: Token, tokenId: string) => any
 }
 
 const HideCollectibleList: React.FC<Props> = ({
@@ -31,7 +31,7 @@ const HideCollectibleList: React.FC<Props> = ({
     )
   }, [searchValue, collectibles])
 
-  const renderItem = (asset: any, i: number) => (
+  const renderItem = (collectible: any, asset: any, i: number) => (
     <HideCollectibleListItem
       // Since the visible and hidden token lists are separate and they update
       // in async manner, for a split second we might have the same token in
@@ -41,6 +41,7 @@ const HideCollectibleList: React.FC<Props> = ({
       isHidden={asset.isHidden}
       assetName={asset.data && asset.data.name}
       assetImg={asset.data && asset.data.image}
+      onPress={() => toggleCollectibleHide(collectible, asset.tokenId)}
     />
   )
 
@@ -57,7 +58,9 @@ const HideCollectibleList: React.FC<Props> = ({
         onChangeText={setSearchValue}
         containerStyle={spacings.mbSm}
       />
-      {filteredCollectibles.map((collectible) => (collectible.assets || []).map(renderItem))}
+      {filteredCollectibles.map((collectible, i) =>
+        (collectible.assets || []).map((asset) => renderItem(collectible, asset, i))
+      )}
     </>
   )
 }
