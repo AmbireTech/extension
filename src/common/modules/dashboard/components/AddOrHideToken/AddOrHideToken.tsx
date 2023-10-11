@@ -74,7 +74,7 @@ const AddOrHideToken = ({
         closeBottomSheet()
       },
       [MODES.HIDE_TOKEN]: () => {
-        onAddHiddenToken([token])
+        onAddHiddenToken(token)
         closeBottomSheet()
       }
     }
@@ -112,8 +112,12 @@ const AddOrHideToken = ({
       .filter((token) => !token.isHidden)
       .map((token) => token.address)
 
-    if (hiddenTokensToAdd.length) onAddHiddenToken(hiddenTokensToAdd)
-    if (addressesToRemove.length) onRemoveHiddenToken(addressesToRemove)
+    if (hiddenTokensToAdd.length) {
+      hiddenTokensToAdd.map((_token) => onAddHiddenToken(_token))
+    }
+    if (addressesToRemove.length) {
+      addressesToRemove.map((address) => onRemoveHiddenToken(address))
+    }
 
     // Reset states
     setSortedTokens(tokensWithHidden.sort((a, b) => b.balanceUSD - a.balanceUSD))
