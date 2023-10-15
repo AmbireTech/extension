@@ -62,30 +62,26 @@ const HideCollectible = ({
   const toggleCollectibleHide = useCallback<
     (hiddenCollectible: TokenWithIsHiddenFlag, assetId: string) => any
   >((hiddenCollectible, assetId) => {
-    const nextIsHiddenState = hiddenCollectible.assets.map(
-      (asset: any) => asset.tokenId === assetId && { ...asset, isHidden: !asset.isHidden }
-    )
     const updatedHiddenCollectible = {
       ...hiddenCollectible,
       assets: hiddenCollectible.assets.map(
-        (asset: any) => asset.tokenId === assetId && { ...asset, isHidden: true }
+        (asset: any) =>
+          asset.tokenId === assetId.toString() && { ...asset, isHidden: !asset.isHidden }
       )
     }
 
     setTokenHideChanges((prevChanges) => {
-      // todo: for some reason here we update an nft
-      // which is already hidden
       const hasChange = prevChanges.find(
         (c) =>
           c.address === hiddenCollectible.address &&
-          c.assets.map(({ tokenId }: any) => tokenId === assetId)
+          c.assets.map(({ tokenId }: string) => tokenId === assetId.toString())
       )
 
       if (hasChange) {
         return prevChanges.filter(
           (c) =>
             c.address !== hiddenCollectible.address &&
-            c.assets.find(({ tokenId }: any) => tokenId !== assetId)
+            c.assets.find(({ tokenId }: string) => tokenId !== assetId.toString())
         )
       }
 
@@ -96,7 +92,7 @@ const HideCollectible = ({
       return prevCollectibles.map((t) => {
         if (
           t.address === hiddenCollectible.address &&
-          t.assets.find(({ tokenId }: any) => tokenId !== assetId)
+          t.assets.find(({ tokenId }: string) => tokenId === assetId.toString())
         ) {
           return updatedHiddenCollectible
         }
@@ -128,7 +124,7 @@ const HideCollectible = ({
 
     // Reset states
     setSortedCollectibles(collectiblesWithHidden.sort((a, b) => b.balanceUSD - a.balanceUSD))
-    // setTokenHideChanges([])
+    setTokenHideChanges([])
   }, [onAddHiddenCollectible, onRemoveHiddenCollectible, tokenHideChanges, collectiblesWithHidden])
 
   return (
@@ -162,15 +158,10 @@ const HideCollectible = ({
         />
         <View style={[flexboxStyles.flex1, flexboxStyles.justifyEnd, spacings.mtMd, spacings.mbTy]}>
           {formType === MODES.HIDE_COLLECTIBLE && (
-            <>
-              <Title type="small" style={textStyles.center}>
-                {t('Hide Collectible')}
-              </Title>
-              <HideCollectibleList
-                collectibles={sortedCollectibles}
-                toggleCollectibleHide={toggleCollectibleHide}
-              />
-            </>
+            <HideCollectibleList
+              collectibles={sortedCollectibles}
+              toggleCollectibleHide={toggleCollectibleHide}
+            />
           )}
         </View>
       </BottomSheet>

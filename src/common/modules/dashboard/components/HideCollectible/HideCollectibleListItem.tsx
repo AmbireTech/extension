@@ -2,10 +2,8 @@ import { TokenWithIsHiddenFlag } from 'ambire-common/src/hooks/usePortfolio'
 import React from 'react'
 import { TouchableOpacity, View } from 'react-native'
 
-import FastImage from '@common/components/FastImage'
+import CollectibleIcon from '@common/components/CollectibleIcon'
 import Text from '@common/components/Text'
-import TokenIcon from '@common/components/TokenIcon'
-import handleCollectibleUri from '@common/modules/dashboard/helpers/handleCollectibleUri'
 import colors from '@common/styles/colors'
 import spacings from '@common/styles/spacings'
 import flexboxStyles from '@common/styles/utils/flexbox'
@@ -24,12 +22,7 @@ const HideCollectibleListItem: React.FC<Props> = ({ assetImg, assetName, onPress
       onPress={onPress}
       style={[flexboxStyles.directionRow, spacings.pvTy, flexboxStyles.alignCenter]}
     >
-      <TokenIcon
-        withContainer
-        uri={handleCollectibleUri(assetImg)}
-        address=""
-        networkId="network"
-      />
+      <CollectibleIcon uri={assetImg} width={15} height={15} style={{ borderRadius: 50 }} />
 
       <View style={[spacings.mlTy, flexboxStyles.flex1, flexboxStyles.justifyCenter]}>
         <Text>{assetName}</Text>

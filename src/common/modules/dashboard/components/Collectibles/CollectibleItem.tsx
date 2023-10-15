@@ -1,11 +1,9 @@
-import React, { useState } from 'react'
-import { Image, TouchableOpacity, View } from 'react-native'
+import React from 'react'
+import { TouchableOpacity, View } from 'react-native'
 
-import FastImage from '@common/components/FastImage'
-import Spinner from '@common/components/Spinner'
+import CollectibleIcon from '@common/components/CollectibleIcon/CollectibleIcon'
 import Text from '@common/components/Text'
 import useNavigation from '@common/hooks/useNavigation'
-import handleCollectibleUri from '@common/modules/dashboard/helpers/handleCollectibleUri'
 import { ROUTES } from '@common/modules/router/constants/common'
 import colors from '@common/styles/colors'
 import spacings from '@common/styles/spacings'
@@ -34,7 +32,6 @@ const CollectibleItem = ({
   assetName,
   balanceUSD
 }: Props) => {
-  const [isAssetImageLoading, setIsAssetImageLoading] = useState(true)
   const { navigate } = useNavigation()
 
   const handleCollectiblePress = () => {
@@ -50,25 +47,18 @@ const CollectibleItem = ({
   return (
     <View style={styles.itemWrapper}>
       <TouchableOpacity style={styles.item} activeOpacity={0.6} onPress={handleCollectiblePress}>
-        {isAssetImageLoading ? (
-          <View style={styles.collectibleImageLoadingWrapper}>
-            <Spinner />
-          </View>
-        ) : (
-          <FastImage
-            style={styles.collectibleImage}
-            source={{ uri: handleCollectibleUri(assetImg) }}
-          />
-        )}
+        <View style={styles.collectibleImage}>
+          <CollectibleIcon uri={assetImg} />
+        </View>
         <View style={[spacings.phTy, spacings.pbTy]}>
           <View
             style={[flexboxStyles.directionRow, flexboxStyles.alignCenter, flexboxStyles.flex1]}
           >
-            <Image
+            <CollectibleIcon
               style={styles.collectionImage}
-              source={{ uri: handleCollectibleUri(collectionImg) }}
-              onLoad={() => setIsAssetImageLoading(false)}
-              onError={() => setIsAssetImageLoading(false)}
+              width={15}
+              height={15}
+              uri={collectionImg}
             />
 
             <Text numberOfLines={1} style={flexboxStyles.flex1} fontSize={10}>
