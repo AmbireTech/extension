@@ -195,14 +195,16 @@ const AAVECard = ({ tokens, networkId, selectedAcc, addRequest, addToast }: Prop
           ({ type, address }) =>
             type === 'deposit' &&
             // eslint-disable-next-line @typescript-eslint/no-shadow
-            !depositTokens.map(({ address }: any) => address).includes(address)
+            !depositTokens
+              .map(({ address }: any) => address.toLowerCase())
+              .includes(address.toLowerCase())
         ),
         ...defaultTokens.filter(
           ({ type, baseTokenAddress }) =>
             type === 'withdraw' &&
             // eslint-disable-next-line @typescript-eslint/no-shadow
             !withdrawTokens
-              .map(({ address }: any) => address)
+              .map(({ address }: any) => address.toLowerCase())
               .includes(baseTokenAddress.toLowerCase())
         )
       ])
