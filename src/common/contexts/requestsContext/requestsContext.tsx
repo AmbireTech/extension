@@ -50,6 +50,7 @@ export interface RequestsContextReturnType {
   resolveMany: (ids: any, resolution: any) => void
   showSendTxns: (replacementBundle: any, replaceByDefault?: boolean) => void
   onDismissSendTxns: () => void
+  requestPendingState: React.MutableRefObject<boolean>
 }
 
 const RequestsContext = createContext<RequestsContextReturnType>({
@@ -72,7 +73,8 @@ const RequestsContext = createContext<RequestsContextReturnType>({
   confirmSentTx: () => {},
   resolveMany: () => {},
   showSendTxns: () => {},
-  onDismissSendTxns: () => {}
+  onDismissSendTxns: () => {},
+  requestPendingState: { current: false }
 })
 
 const RequestsProvider: React.FC = ({ children }) => {
@@ -105,6 +107,10 @@ const RequestsProvider: React.FC = ({ children }) => {
   const [internalRequests, setInternalRequests] = useState<any>([])
   // Keeping track of sent transactions
   const [sentTxn, setSentTxn] = useState<any[]>([])
+
+  // Keep track if we have a pending request in order to listen for it in portfolio
+  // and display pending balance
+  const requestPendingState = useRef(false)
 
   const addRequest = useCallback(
     (req: any) => setInternalRequests((reqs: any) => [...reqs, req]),
@@ -193,6 +199,7 @@ const RequestsProvider: React.FC = ({ children }) => {
         // eslint-disable-next-line @typescript-eslint/no-shadow
         const tx = sentTxn.find((tx: any) => tx.hash === txHash)
         tx.confirmed = true
+        requestPendingState.current = false
         // eslint-disable-next-line @typescript-eslint/no-shadow
         return [...sentTxn.filter((tx: any) => tx.hash !== txHash), tx]
       }),
@@ -341,7 +348,8 @@ const RequestsProvider: React.FC = ({ children }) => {
           confirmSentTx,
           resolveMany,
           showSendTxns,
-          onDismissSendTxns
+          onDismissSendTxns,
+          requestPendingState
         }),
         [
           requests,
@@ -357,7 +365,8 @@ const RequestsProvider: React.FC = ({ children }) => {
           confirmSentTx,
           resolveMany,
           showSendTxns,
-          onDismissSendTxns
+          onDismissSendTxns,
+          requestPendingState
         ]
       )}
     >

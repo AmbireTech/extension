@@ -72,7 +72,7 @@ const PortfolioProvider: React.FC = ({ children }) => {
 
   const { network } = useNetwork()
   const { selectedAcc, account: selectedAccount, accounts } = useAccounts()
-  const { requests, eligibleRequests, sentTxn } = useRequests()
+  const { requests, eligibleRequests, sentTxn, requestPendingState } = useRequests()
 
   // Refresh balance when app is focused
   useEffect(() => {
@@ -123,8 +123,7 @@ const PortfolioProvider: React.FC = ({ children }) => {
     sentTxn,
     useCacheStorage,
     accounts,
-    // TODO: should implement this as well
-    requestPendingState: false
+    requestPendingState
   })
 
   return (
