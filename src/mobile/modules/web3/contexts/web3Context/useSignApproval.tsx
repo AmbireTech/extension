@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from 'react'
 
 import useAccounts from '@common/hooks/useAccounts'
 import useNetwork from '@common/hooks/useNetwork'
+import useRequests from '@common/hooks/useRequests'
 
 import { APPROVAL_REQUESTS_STORAGE_KEY, UseSignApprovalProps } from './types'
 
@@ -13,6 +14,7 @@ const useSignApproval = ({ approval, resolveApproval, rejectApproval }: UseSignA
   const { selectedAcc: selectedAccount } = useAccounts()
   const { network } = useNetwork()
   const [requests, setRequests] = useState([])
+  const { setRequests: setInAppRequests } = useRequests()
 
   // handles eth_sign and personal_sign
   const handleSignText = useCallback(
@@ -37,6 +39,7 @@ const useSignApproval = ({ approval, resolveApproval, rejectApproval }: UseSignA
 
       const request = {
         id,
+        dateAdded: new Date().valueOf(),
         type: method,
         reqSrc: APPROVAL_REQUESTS_STORAGE_KEY,
         txn: messageToSign,
@@ -50,8 +53,21 @@ const useSignApproval = ({ approval, resolveApproval, rejectApproval }: UseSignA
           ? prevRequests
           : [...prevRequests, request]
       )
+      // @ts-ignore
+      setInAppRequests((prevRequests) =>
+        prevRequests.find((x: any) => x.id === request.id)
+          ? prevRequests
+          : [...prevRequests, request]
+      )
     },
-    [network?.chainId, selectedAccount, setRequests, rejectApproval, resolveApproval]
+    [
+      network?.chainId,
+      selectedAccount,
+      setRequests,
+      setInAppRequests,
+      rejectApproval,
+      resolveApproval
+    ]
   )
 
   // handles eth_signTypedData, eth_signTypedData_v1, eth_signTypedData_v3 and eth_signTypedData_v4
@@ -77,6 +93,7 @@ const useSignApproval = ({ approval, resolveApproval, rejectApproval }: UseSignA
 
       const request = {
         id,
+        dateAdded: new Date().valueOf(),
         type: method,
         reqSrc: APPROVAL_REQUESTS_STORAGE_KEY,
         txn: messageToSign,
@@ -90,8 +107,21 @@ const useSignApproval = ({ approval, resolveApproval, rejectApproval }: UseSignA
           ? prevRequests
           : [...prevRequests, request]
       )
+      // @ts-ignore
+      setInAppRequests((prevRequests) =>
+        prevRequests.find((x: any) => x.id === request.id)
+          ? prevRequests
+          : [...prevRequests, request]
+      )
     },
-    [network?.chainId, selectedAccount, setRequests, rejectApproval, resolveApproval]
+    [
+      network?.chainId,
+      selectedAccount,
+      setRequests,
+      setInAppRequests,
+      rejectApproval,
+      resolveApproval
+    ]
   )
 
   // handles eth_sendTransaction, gs_multi_send, ambire_sendBatchTransaction
@@ -111,6 +141,7 @@ const useSignApproval = ({ approval, resolveApproval, rejectApproval }: UseSignA
       for (const ix in txs) {
         const request = {
           id,
+          dateAdded: new Date().valueOf(),
           type: 'eth_sendTransaction',
           reqSrc: APPROVAL_REQUESTS_STORAGE_KEY,
           isBatch: txs.length > 1,
@@ -125,9 +156,15 @@ const useSignApproval = ({ approval, resolveApproval, rejectApproval }: UseSignA
             ? prevRequests
             : [...prevRequests, request]
         )
+        // @ts-ignore
+        setInAppRequests((prevRequests) =>
+          prevRequests.find((x: any) => x.id === request.id)
+            ? prevRequests
+            : [...prevRequests, request]
+        )
       }
     },
-    [network?.chainId, selectedAccount, setRequests, rejectApproval]
+    [network?.chainId, selectedAccount, setRequests, setInAppRequests, rejectApproval]
   )
 
   // resolves the requests and returns a response to the background service
@@ -153,8 +190,10 @@ const useSignApproval = ({ approval, resolveApproval, rejectApproval }: UseSignA
       }
       // @ts-ignore
       setRequests((prevRequests) => prevRequests.filter((x) => !ids.includes(x.id)))
+      // @ts-ignore
+      setInAppRequests((prevRequests) => prevRequests.filter((x) => !ids.includes(x.id)))
     },
-    [requests, approval?.id, setRequests, rejectApproval, resolveApproval]
+    [requests, approval?.id, setRequests, setInAppRequests, rejectApproval, resolveApproval]
   )
 
   useEffect(() => {

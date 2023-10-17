@@ -44,6 +44,7 @@ const YearnTesseractCard = ({ tokens, networkId, selectedAcc, addRequest, addToa
   const addRequestTxn = (id: any, txn: any, extraGas = 0) =>
     addRequest({
       id,
+      dateAdded: new Date().valueOf(),
       type: 'eth_sendTransaction',
       chainId: networkDetails.chainId,
       account: selectedAcc,

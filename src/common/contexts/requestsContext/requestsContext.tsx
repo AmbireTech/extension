@@ -28,7 +28,6 @@ import { getUiType } from '@web/utils/uiType'
 import useWeb3Approval from './useWeb3Approval'
 
 export interface RequestsContextReturnType {
-  internalRequests: any
   requests: any[]
   sentTxn: {
     confirmed: boolean
@@ -51,6 +50,7 @@ export interface RequestsContextReturnType {
   showSendTxns: (replacementBundle: any, replaceByDefault?: boolean) => void
   onDismissSendTxns: () => void
   requestPendingState: React.MutableRefObject<boolean>
+  setRequests: () => void
 }
 
 const RequestsContext = createContext<RequestsContextReturnType>({
@@ -58,7 +58,6 @@ const RequestsContext = createContext<RequestsContextReturnType>({
   sentTxn: {
     confirmed: false
   },
-  internalRequests: [],
   sendTxnState: {
     showing: false
   },
@@ -74,7 +73,8 @@ const RequestsContext = createContext<RequestsContextReturnType>({
   resolveMany: () => {},
   showSendTxns: () => {},
   onDismissSendTxns: () => {},
-  requestPendingState: { current: false }
+  requestPendingState: { current: false },
+  setRequests: () => {}
 })
 
 const RequestsProvider: React.FC = ({ children }) => {
@@ -85,6 +85,7 @@ const RequestsProvider: React.FC = ({ children }) => {
   const { vaultStatus } = useVault()
   const { addToast, addBottomSheet } = useToast()
   const { t } = useTranslation()
+  const [allRequests, setRequests] = useState([])
   const [sendTxnBottomSheetBackdropPressedUniqueId, setSendTxnBottomSheetBackdropPressedUniqueId] =
     useState<any>(null)
 
@@ -104,7 +105,6 @@ const RequestsProvider: React.FC = ({ children }) => {
   } = useModalize()
 
   const { extensionWallet } = useExtensionWallet()
-  const [internalRequests, setInternalRequests] = useState<any>([])
   // Keeping track of sent transactions
   const [sentTxn, setSentTxn] = useState<any[]>([])
 
@@ -112,17 +112,22 @@ const RequestsProvider: React.FC = ({ children }) => {
   // and display pending balance
   const requestPendingState = useRef(false)
 
-  const addRequest = useCallback(
-    (req: any) => setInternalRequests((reqs: any) => [...reqs, req]),
-    []
-  )
+  const addRequest = useCallback((req: any) => setRequests((reqs: any) => [...reqs, req]), [])
+
+  // Filter all requests by dateAdded,
+  // whether or not they are saved in local storage and add them on first render
+  useEffect(() => {
+    const storageRequests = [...gnosisRequests, ...approvalRequests]
+    if (storageRequests.length) {
+      const newRequests = storageRequests.sort((a, b) => a.dateAdded - b.dateAdded)
+      setRequests((reqs) => [...reqs, ...newRequests])
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const requests = useMemo(
-    () =>
-      [...internalRequests, ...gnosisRequests, ...approvalRequests].filter(({ account }) =>
-        accounts.find(({ id }: any) => id === account)
-      ),
-    [internalRequests, gnosisRequests, approvalRequests, accounts]
+    () => allRequests.filter(({ account }) => accounts.find(({ id }: any) => id === account)),
+    [allRequests, accounts]
   )
 
   // Filter only the sign message requests
@@ -211,7 +216,7 @@ const RequestsProvider: React.FC = ({ children }) => {
     (ids: any, resolution: any) => {
       gnosisResolveMany(ids, resolution)
       approvalResolveMany(ids, resolution)
-      setInternalRequests((reqs: any) => reqs.filter((x: any) => !ids.includes(x.id)))
+      setRequests((reqs: any) => reqs.filter((x: any) => !ids.includes(x.id)))
     },
     [gnosisResolveMany, approvalResolveMany]
   )
@@ -337,7 +342,6 @@ const RequestsProvider: React.FC = ({ children }) => {
         () => ({
           requests,
           sentTxn,
-          internalRequests,
           sendTxnState,
           eligibleRequests,
           everythingToSign,
@@ -349,12 +353,12 @@ const RequestsProvider: React.FC = ({ children }) => {
           resolveMany,
           showSendTxns,
           onDismissSendTxns,
-          requestPendingState
+          requestPendingState,
+          setRequests
         }),
         [
           requests,
           sentTxn,
-          internalRequests,
           sendTxnState,
           eligibleRequests,
           everythingToSign,
@@ -366,7 +370,8 @@ const RequestsProvider: React.FC = ({ children }) => {
           resolveMany,
           showSendTxns,
           onDismissSendTxns,
-          requestPendingState
+          requestPendingState,
+          setRequests
         ]
       )}
     >

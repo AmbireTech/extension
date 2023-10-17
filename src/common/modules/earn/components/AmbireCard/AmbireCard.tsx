@@ -87,6 +87,7 @@ const AmbireCard = ({ tokens, networkId, selectedAcc, addRequest }: Props) => {
     (id, txn, extraGas = 0) =>
       addRequest({
         id,
+        dateAdded: new Date().valueOf(),
         type: 'eth_sendTransaction',
         chainId: networkDetails.chainId,
         account: selectedAcc,

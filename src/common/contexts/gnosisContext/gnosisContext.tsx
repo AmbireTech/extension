@@ -6,6 +6,7 @@ import React, { createContext, useCallback, useEffect, useMemo, useRef, useState
 import CONFIG from '@common/config/env'
 import useAccounts from '@common/hooks/useAccounts'
 import useNetwork from '@common/hooks/useNetwork'
+import useRequests from '@common/hooks/useRequests'
 import useStorage from '@common/hooks/useStorage'
 import { getSDKVersion, MessageFormatter, Methods } from '@gnosis.pm/safe-apps-sdk'
 
@@ -50,7 +51,9 @@ const GnosisProvider: React.FC = ({ children }) => {
   const verbose = 0
   const { network } = useNetwork()
   const { selectedAcc } = useAccounts()
-  const [requests, setRequests] = useStorage({
+  const { setRequests } = useRequests()
+
+  const [stateStorage, setStateStorage] = useStorage({
     key: STORAGE_KEY,
     defaultValue: [],
     setInit: (initialRequests: any) => (!Array.isArray(initialRequests) ? [] : initialRequests)
@@ -81,20 +84,27 @@ const GnosisProvider: React.FC = ({ children }) => {
 
       const request = {
         id,
+        dateAdded: new Date().valueOf(),
         forwardId: msg.id,
         type: 'personal_sign',
         txn: message,
         chainId: network.chainId,
         account: selectedAcc
       }
-
+      // @ts-ignore
+      setStateStorage((prevRequests: any) =>
+        prevRequests.find((x: any) => x.id === request.id)
+          ? prevRequests
+          : [...prevRequests, request]
+      )
+      // @ts-ignore
       setRequests((prevRequests: any) =>
         prevRequests.find((x: any) => x.id === request.id)
           ? prevRequests
           : [...prevRequests, request]
       )
     },
-    [network?.chainId, selectedAcc, setRequests]
+    [network?.chainId, selectedAcc, setStateStorage, setRequests]
   )
 
   const handleSendTransactions = useCallback(
@@ -121,6 +131,7 @@ const GnosisProvider: React.FC = ({ children }) => {
         const id = `gs_${data.id}:${ix}`
         const request = {
           id,
+          dateAdded: new Date().valueOf(),
           forwardId: msg.id,
           type: 'eth_sendTransaction',
           isBatch: txs.length > 1,
@@ -129,6 +140,13 @@ const GnosisProvider: React.FC = ({ children }) => {
           account: selectedAcc
         }
         // is reducer really needed here?
+        // @ts-ignore
+        setStateStorage((prevRequests: any) =>
+          prevRequests.find((x: any) => x.id === request.id)
+            ? prevRequests
+            : [...prevRequests, request]
+        )
+        // @ts-ignore
         setRequests((prevRequests: any) =>
           prevRequests.find((x: any) => x.id === request.id)
             ? prevRequests
@@ -136,7 +154,7 @@ const GnosisProvider: React.FC = ({ children }) => {
         )
       }
     },
-    [network?.chainId, selectedAcc, setRequests]
+    [network?.chainId, selectedAcc, setStateStorage, setRequests]
   )
 
   const handlers: any = useMemo(
@@ -287,10 +305,11 @@ const GnosisProvider: React.FC = ({ children }) => {
 
   const resolveMany = useCallback(
     (ids: any, resolution: any) => {
-      for (const req of requests.filter((x: any) => ids.includes(x.id))) {
+      for (const req of stateStorage.filter((x: any) => ids.includes(x.id))) {
         if (!req.isBatch || req.id.endsWith(':0')) {
           const replyData: any = {
             id: req.forwardId,
+            dateAdded: new Date().valueOf(),
             success: null,
             txId: null,
             error: null
@@ -316,10 +335,12 @@ const GnosisProvider: React.FC = ({ children }) => {
           }
         }
       }
-
+      // @ts-ignore
+      setStateStorage((prevRequests: any) => prevRequests.filter((x: any) => !ids.includes(x.id)))
+      // @ts-ignore
       setRequests((prevRequests: any) => prevRequests.filter((x: any) => !ids.includes(x.id)))
     },
-    [requests, setRequests, send]
+    [stateStorage, setStateStorage, send, setRequests]
   )
 
   return (
@@ -329,12 +350,12 @@ const GnosisProvider: React.FC = ({ children }) => {
           sushiSwapIframeRef,
           handlers,
           hash,
-          requests,
+          requests: stateStorage,
           resolveMany,
           handleIncomingMessage,
           eventsCount
         }),
-        [handlers, requests, hash, resolveMany, handleIncomingMessage, eventsCount]
+        [handlers, stateStorage, hash, resolveMany, handleIncomingMessage, eventsCount]
       )}
     >
       {children}
