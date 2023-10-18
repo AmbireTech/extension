@@ -6,12 +6,10 @@ import colors from '@common/styles/colors'
 interface Props extends SvgProps {
   width?: number
   height?: number
-  style?: any
-  rest?: any
 }
 
-const MissingCollectibleIcon: React.FC<Props> = ({ width = '92', height = '92', style, rest }) => (
-  <Svg width={width} height={height} viewBox="0 0 92 92" style={style} {...rest}>
+const MissingCollectibleIcon: React.FC<Props> = ({ width = '92', height = '92', ...rest }) => (
+  <Svg width={width} height={height} viewBox="0 0 92 92" {...rest}>
     <Defs>
       <ClipPath id="a">
         <Path
