@@ -25,7 +25,7 @@ const PortfolioContext = createContext<PortfolioContextReturnType>({
     },
     network: ''
   },
-  allBalances: [],
+  otherBalances: [],
   tokens: [],
   extraTokens: [],
   hiddenTokens: [],
@@ -36,17 +36,17 @@ const PortfolioContext = createContext<PortfolioContextReturnType>({
   onRemoveHiddenToken: () => {},
   balancesByNetworksLoading: {},
   isCurrNetworkBalanceLoading: false,
-  areAllNetworksBalancesLoading: () => false,
   loadBalance: () => {},
   onAddHiddenCollectible: () => {},
   onRemoveHiddenCollectible: () => {},
-  hiddenCollectibles: []
+  hiddenCollectibles: [],
+  resultTime: 0
 })
 
 const getBalances = (
   network: Network,
   address: Account['id'],
-  provider: 'velcro' | 'zapper' | '',
+  provider: string | undefined,
   quickResponse = false
 ) => {
   if (provider === '' || !provider) return null
