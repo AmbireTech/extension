@@ -1,7 +1,6 @@
-import { NetworkId, NetworkType } from 'ambire-common/src/constants/networks'
-import { Token } from 'ambire-common/src/hooks/usePortfolio'
 import {
-  TokenWithIsHiddenFlag,
+  Collectible,
+  CollectibleWithIsHiddenFlag,
   UsePortfolioReturnType
 } from 'ambire-common/src/hooks/usePortfolio/types'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
@@ -11,23 +10,20 @@ import { useModalize } from 'react-native-modalize'
 import BottomSheet from '@common/components/BottomSheet'
 import Segments from '@common/components/Segments'
 import Text from '@common/components/Text'
-import Title from '@common/components/Title'
 import { useTranslation } from '@common/config/localization'
 import { triggerLayoutAnimation } from '@common/services/layoutAnimation'
 import spacings from '@common/styles/spacings'
 import flexboxStyles from '@common/styles/utils/flexbox'
-import textStyles from '@common/styles/utils/text'
 
 import { MODES } from './constants'
-import HideCollectibleForm from './HideCollectibleForm'
 import HideCollectibleList from './HideCollectibleList'
 import styles from './styles'
 
 const segments = [{ value: MODES.HIDE_COLLECTIBLE }]
 
 interface Props {
-  collectibles: TokenWithIsHiddenFlag[]
-  hiddenCollectibles: UsePortfolioReturnType['hiddenTokens']
+  collectibles: CollectibleWithIsHiddenFlag[]
+  hiddenCollectibles: UsePortfolioReturnType['hiddenCollectibles']
   onAddHiddenCollectible: UsePortfolioReturnType['onAddHiddenCollectible']
   onRemoveHiddenCollectible: UsePortfolioReturnType['onRemoveHiddenCollectible']
 }
@@ -44,8 +40,8 @@ const HideCollectible = ({
     () => [...hiddenCollectibles, ...collectibles],
     [hiddenCollectibles, collectibles]
   )
-  const [tokenHideChanges, setTokenHideChanges] = useState<TokenWithIsHiddenFlag[]>([])
-  const [sortedCollectibles, setSortedCollectibles] = useState<Token[]>(
+  const [tokenHideChanges, setTokenHideChanges] = useState<CollectibleWithIsHiddenFlag[]>([])
+  const [sortedCollectibles, setSortedCollectibles] = useState<Collectible[]>(
     collectiblesWithHidden.sort((a, b) => b.balanceUSD - a.balanceUSD)
   )
 
@@ -60,7 +56,7 @@ const HideCollectible = ({
   const [formType, setFormType] = useState<MODES>(MODES.HIDE_COLLECTIBLE)
 
   const toggleCollectibleHide = useCallback<
-    (hiddenCollectible: TokenWithIsHiddenFlag, assetId: string) => any
+    (hiddenCollectible: CollectibleWithIsHiddenFlag, assetId: string) => any
   >((hiddenCollectible, assetId) => {
     const updatedHiddenCollectible = {
       ...hiddenCollectible,
@@ -74,30 +70,30 @@ const HideCollectible = ({
       const hasChange = prevChanges.find(
         (c) =>
           c.address === hiddenCollectible.address &&
-          c.assets.map(({ tokenId }: string) => tokenId === assetId.toString())
+          c.assets.map(({ tokenId }: { tokenId: string }) => tokenId === assetId.toString())
       )
 
       if (hasChange) {
         return prevChanges.filter(
           (c) =>
             c.address !== hiddenCollectible.address &&
-            c.assets.find(({ tokenId }: string) => tokenId !== assetId.toString())
+            c.assets.find(({ tokenId }: { tokenId: string }) => tokenId !== assetId.toString())
         )
       }
 
       return [...prevChanges, updatedHiddenCollectible]
     })
 
-    setSortedCollectibles((prevCollectibles) => {
-      return prevCollectibles.map((t) => {
+    setSortedCollectibles((prevCollectibles: Collectible[]) => {
+      return prevCollectibles.map((c) => {
         if (
-          t.address === hiddenCollectible.address &&
-          t.assets.find(({ tokenId }: string) => tokenId === assetId.toString())
+          c.address === hiddenCollectible.address &&
+          c.assets.find(({ tokenId }: { tokenId: string }) => tokenId === assetId.toString())
         ) {
           return updatedHiddenCollectible
         }
 
-        return t
+        return c
       })
     })
   }, [])

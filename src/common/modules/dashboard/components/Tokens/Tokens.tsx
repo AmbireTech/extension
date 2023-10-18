@@ -1,5 +1,4 @@
 import { NetworkId, NetworkType } from 'ambire-common/src/constants/networks'
-import { UseAccountsReturnType } from 'ambire-common/src/hooks/useAccounts'
 import { UsePortfolioReturnType } from 'ambire-common/src/hooks/usePortfolio/types'
 import React, { useCallback, useMemo } from 'react'
 import { View } from 'react-native'

@@ -1,4 +1,7 @@
-import { Token, TokenWithIsHiddenFlag } from 'ambire-common/src/hooks/usePortfolio/types'
+import {
+  Collectible,
+  CollectibleWithIsHiddenFlag
+} from 'ambire-common/src/hooks/usePortfolio/types'
 import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -8,8 +11,8 @@ import spacings from '@common/styles/spacings'
 import HideCollectibleListItem from './HideCollectibleListItem'
 
 interface Props {
-  collectibles: TokenWithIsHiddenFlag[]
-  toggleCollectibleHide: (token: Token, tokenId: string) => any
+  collectibles: Collectible[]
+  toggleCollectibleHide: (hiddenCollectible: CollectibleWithIsHiddenFlag, tokenId: string) => any
 }
 
 const HideCollectibleList: React.FC<Props> = ({
