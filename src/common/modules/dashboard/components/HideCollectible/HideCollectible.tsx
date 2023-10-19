@@ -102,21 +102,20 @@ const HideCollectible = ({
     const hiddenCollectiblesToAdd = tokenHideChanges.filter((token) =>
       token.assets.find((asset) => asset.isHidden)
     )
-    const addressesAndTokenIdsToRemove = tokenHideChanges
-      .filter((token) => token.assets.find((asset) => !asset.isHidden))
-      .flatMap((token) =>
-        token.assets.map(({ tokenId }: any) => ({
-          address: token.address,
-          tokenId
-        }))
-      )
+    const assetsToAdd = hiddenCollectiblesToAdd.flatMap((token) =>
+      token.assets.map(({ tokenId }: { tokenId: string }) => tokenId)
+    )
 
-    if (hiddenCollectiblesToAdd.length)
-      hiddenCollectiblesToAdd.map((token) => onAddHiddenCollectible(token, token.assets[0].tokenId))
-    if (addressesAndTokenIdsToRemove.length)
-      addressesAndTokenIdsToRemove.map(({ address, tokenId }) =>
-        onRemoveHiddenCollectible(address, tokenId)
-      )
+    const addressesToRemove = tokenHideChanges
+      .filter((token) => token.assets.find((asset) => !asset.isHidden))
+      .map((token) => token.address)
+
+    const tokenIdsToRemove = tokenHideChanges
+      .filter((token) => token.assets.find((asset) => !asset.isHidden))
+      .flatMap((token) => token.assets.map(({ tokenId }: { tokenId: string }) => tokenId))
+
+    if (hiddenCollectiblesToAdd.length) onAddHiddenCollectible(hiddenCollectiblesToAdd, assetsToAdd)
+    if (addressesToRemove.length) onRemoveHiddenCollectible(addressesToRemove, tokenIdsToRemove)
 
     // Reset states
     setSortedCollectibles(collectiblesWithHidden.sort((a, b) => b.balanceUSD - a.balanceUSD))

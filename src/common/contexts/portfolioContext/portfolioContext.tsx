@@ -40,7 +40,8 @@ const PortfolioContext = createContext<PortfolioContextReturnType>({
   onAddHiddenCollectible: () => {},
   onRemoveHiddenCollectible: () => {},
   hiddenCollectibles: [],
-  resultTime: 0
+  resultTime: 0,
+  checkIsTokenEligibleForAddingAsExtraToken: () => {}
 })
 
 const getBalances = (
