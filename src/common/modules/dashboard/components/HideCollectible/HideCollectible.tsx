@@ -117,10 +117,9 @@ const HideCollectible = ({
     if (hiddenCollectiblesToAdd.length) onAddHiddenCollectible(hiddenCollectiblesToAdd, assetsToAdd)
     if (addressesToRemove.length) onRemoveHiddenCollectible(addressesToRemove, tokenIdsToRemove)
 
-    // Reset states
-    setSortedCollectibles(collectiblesWithHidden.sort((a, b) => b.balanceUSD - a.balanceUSD))
+    // Reset states of hide changes
     setTokenHideChanges([])
-  }, [onAddHiddenCollectible, onRemoveHiddenCollectible, tokenHideChanges, collectiblesWithHidden])
+  }, [onAddHiddenCollectible, onRemoveHiddenCollectible, tokenHideChanges])
 
   return (
     <>
