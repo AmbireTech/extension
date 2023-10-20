@@ -21,8 +21,12 @@ type Props = {
   decimals: number
   address: string
   networkId: string | undefined
+  price: number
+  pending: { balanceIncrease: number; difference: number }
+  unconfirmed: { balanceIncrease: number; difference: number }
   onPress: (symbol: string) => any
   hidePrivateValue: UsePrivateModeReturnType['hidePrivateValue']
+  wrapperEndChildren: any
 }
 
 const TokenItem = ({
@@ -33,39 +37,54 @@ const TokenItem = ({
   decimals,
   address,
   networkId,
+  price,
+  pending,
+  unconfirmed,
   onPress,
-  hidePrivateValue
+  hidePrivateValue,
+  wrapperEndChildren
 }: Props) => {
   return (
     <View style={isWeb ? styles.tokenItemContainerWeb : styles.tokenItemContainer}>
-      <View style={[spacings.prSm, flexboxStyles.justifyCenter]}>
-        <TokenIcon withContainer uri={img} networkId={networkId} address={address} />
-      </View>
+      <View style={styles.tokenContentContainer}>
+        <View style={[spacings.prSm, flexboxStyles.justifyCenter]}>
+          <TokenIcon withContainer uri={img} networkId={networkId} address={address} />
+        </View>
 
-      <Text fontSize={14} style={[spacings.prSm, styles.tokenSymbol]} numberOfLines={2}>
-        {symbol}
-      </Text>
+        <View style={[spacings.prSm, styles.tokenSymbol]}>
+          <Text fontSize={14} numberOfLines={2}>
+            {symbol}
+          </Text>
+          <Text
+            fontSize={12}
+            style={[styles.balance, (unconfirmed || pending) && styles.pendingBalance]}
+            numberOfLines={1}
+          >
+            {hidePrivateValue(
+              formatFloatTokenAmount(Number(balance).toFixed(balance < 1 ? 8 : 4), true, decimals)
+            )}
+          </Text>
+        </View>
+        <View style={[styles.tokenValue, flexboxStyles.flex1]}>
+          <Text fontSize={12} style={(unconfirmed || pending) && styles.pendingBalance}>
+            ${hidePrivateValue(balanceUSD?.toFixed(2))}
+          </Text>
+          <Text fontSize={12} style={textStyles.highlightPrimary}>
+            ${price ? hidePrivateValue(price.toFixed(price < 1 ? 5 : 2)) : '-'}
+          </Text>
+        </View>
 
-      <View style={[styles.tokenValue, flexboxStyles.flex1]}>
-        <Text fontSize={14} numberOfLines={1}>
-          {hidePrivateValue(
-            formatFloatTokenAmount(Number(balance).toFixed(balance < 1 ? 8 : 4), true, decimals)
-          )}
-        </Text>
-        <Text fontSize={12} style={textStyles.highlightPrimary}>
-          ${hidePrivateValue(balanceUSD?.toFixed(2))}
-        </Text>
+        <View style={spacings.plSm}>
+          <TouchableOpacity
+            onPress={onPress ? () => onPress(symbol) : () => null}
+            hitSlop={{ bottom: 10, top: 10, left: 5, right: 5 }}
+            style={styles.sendContainer}
+          >
+            <SendIcon />
+          </TouchableOpacity>
+        </View>
       </View>
-
-      <View style={spacings.plSm}>
-        <TouchableOpacity
-          onPress={onPress ? () => onPress(symbol) : () => null}
-          hitSlop={{ bottom: 10, top: 10, left: 5, right: 5 }}
-          style={styles.sendContainer}
-        >
-          <SendIcon />
-        </TouchableOpacity>
-      </View>
+      {wrapperEndChildren}
     </View>
   )
 }

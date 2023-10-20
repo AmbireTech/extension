@@ -43,6 +43,8 @@ const styles = StyleSheet.create<Style>({
     backgroundColor: colors.howl
   },
   collectibleImage: {
+    alignItems: 'center',
+    justifyContent: 'center',
     width: '100%',
     aspectRatio: 1,
     ...spacings.mbMi

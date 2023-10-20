@@ -31,6 +31,7 @@ const useTransactions = () => {
       bundle.txns.slice(0, -1).forEach((txn: any, index: any) => {
         addRequest({
           id: `replace_${index}`,
+          dateAdded: new Date().valueOf(),
           chainId: network.chainId,
           account: selectedAcc,
           type: 'eth_sendTransaction',

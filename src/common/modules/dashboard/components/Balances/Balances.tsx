@@ -27,26 +27,27 @@ import styles from './styles'
 const networkDetails = (network: any) => networks.find(({ id }) => id === network)
 
 interface Props {
-  allBalances: UsePortfolioReturnType['allBalances']
+  otherBalances: UsePortfolioReturnType['otherBalances']
   networkId?: NetworkId
   networkName?: NetworkType['name']
   account: UseAccountsReturnType['selectedAcc']
   setNetwork: (networkIdentifier: string | number) => void
   isLoading: boolean
   isCurrNetworkBalanceLoading: boolean
-  allBalancesLoading: boolean
+  otherBalancesLoading: boolean
 }
 
 const relayerURL = CONFIG.RELAYER_URL
 
 const Balances = ({
-  allBalances,
+  otherBalances,
+  balance,
   networkId,
   networkName,
   account,
   isLoading,
   isCurrNetworkBalanceLoading,
-  allBalancesLoading,
+  otherBalancesLoading,
   setNetwork
 }: Props) => {
   const { t } = useTranslation()
@@ -67,7 +68,7 @@ const Balances = ({
         .toFixed(2)
   const hasPositiveGasBalance = gasTankBalanceLabel !== '0.00'
 
-  const allPositiveBalances = allBalances
+  const allPositiveBalances = [...otherBalances, balance]
     .filter(({ total }: any) => total.full > 0)
     // Exclude displaying balances for networks we don't support
     .filter(({ network }) => !!networkDetails(network))
@@ -95,9 +96,9 @@ const Balances = ({
 
   const content = (
     <>
-      {isLoading || isCurrNetworkBalanceLoading || allBalancesLoading ? (
+      {!otherBalances.length && otherBalancesLoading ? (
         <BalanceLoader />
-      ) : (
+      ) : otherBalances.length > 0 ? (
         <Text
           fontSize={42}
           weight="regular"
@@ -127,7 +128,7 @@ const Balances = ({
             </>
           )}
         </Text>
-      )}
+      ) : null}
 
       <View style={[flexboxStyles.directionRow, spacings.mb]}>
         <TouchableOpacity onPress={handleGoToSend} activeOpacity={0.8} style={styles.button}>
@@ -144,7 +145,7 @@ const Balances = ({
         </TouchableOpacity>
       </View>
 
-      {allBalancesLoading ? (
+      {!otherBalances.length && otherBalancesLoading ? (
         <View style={spacings.mb}>
           <Spinner />
         </View>

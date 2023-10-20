@@ -16,22 +16,22 @@ import { CardsVisibilityProvider } from '@common/modules/earn/contexts/cardsVisi
 import flexboxStyles from '@common/styles/utils/flexbox'
 
 const EarnScreen = () => {
-  const { isCurrNetworkBalanceLoading, tokens, protocols, dataLoaded } = usePortfolio()
+  const { isCurrNetworkBalanceLoading, tokens } = usePortfolio()
   const { network } = useNetwork()
   const { selectedAcc } = useAccounts()
   const { addRequest } = useRequests()
   const { addToast } = useToast()
   return (
     <GradientBackgroundWrapper>
-      <Wrapper hasBottomTabNav={false}>
-        {!!isCurrNetworkBalanceLoading && !dataLoaded && (
+      <Wrapper hasBottomTabNav>
+        {!!isCurrNetworkBalanceLoading && (
           <View
             style={[flexboxStyles.flex1, flexboxStyles.alignCenter, flexboxStyles.justifyCenter]}
           >
             <Spinner />
           </View>
         )}
-        {!(!!isCurrNetworkBalanceLoading && !dataLoaded) && (
+        {!isCurrNetworkBalanceLoading && (
           <CardsVisibilityProvider>
             <>
               <AmbireCard
@@ -42,7 +42,6 @@ const EarnScreen = () => {
               />
               <AAVECard
                 tokens={tokens}
-                protocols={protocols}
                 networkId={network?.id}
                 selectedAcc={selectedAcc}
                 addRequest={addRequest}

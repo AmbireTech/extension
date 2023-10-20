@@ -135,8 +135,14 @@ const useSendTransaction = ({ hardwareWalletOpenBottomSheet }: Props) => {
   const { network }: any = useNetwork()
   const { account } = useAccounts()
   const { currentAccGasTankState } = useGasTank()
-  const { onBroadcastedTxn, setSendTxnState, resolveMany, sendTxnState, eligibleRequests } =
-    useRequests()
+  const {
+    onBroadcastedTxn,
+    setSendTxnState,
+    resolveMany,
+    sendTxnState,
+    eligibleRequests,
+    requestPendingState
+  } = useRequests()
   const { signTxnQuckAcc, signTxnExternalSigner, getSignerType } = useVault()
 
   const [replaceTx, setReplaceTx] = useState(!!sendTxnState.replaceByDefault)
@@ -569,6 +575,7 @@ const useSendTransaction = ({ hardwareWalletOpenBottomSheet }: Props) => {
 
     try {
       const bundleResult = await approveTxnPromise
+      requestPendingState.current = true
       // special case for approveTxnImplQuickAcc
       if (!bundleResult) return
 

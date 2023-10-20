@@ -113,6 +113,7 @@ const AddOrHideToken = ({
       .map((token) => token.address)
 
     if (hiddenTokensToAdd.length) onAddHiddenToken(hiddenTokensToAdd)
+
     if (addressesToRemove.length) onRemoveHiddenToken(addressesToRemove)
 
     // Reset states

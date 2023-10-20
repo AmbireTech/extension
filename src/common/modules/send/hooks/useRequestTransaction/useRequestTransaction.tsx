@@ -142,6 +142,7 @@ export default function useRequestTransaction() {
       const txn = {
         to: selectedAsset.address,
         value: '0',
+        dateAdded: new Date().valueOf(),
         data: ERC20.encodeFunctionData('transfer', [recipientAddress, bigNumberHexAmount])
       }
 

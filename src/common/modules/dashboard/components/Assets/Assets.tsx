@@ -22,17 +22,18 @@ interface Props {
   collectibles: UsePortfolioReturnType['collectibles']
   extraTokens: UsePortfolioReturnType['extraTokens']
   hiddenTokens: UsePortfolioReturnType['hiddenTokens']
-  protocols: UsePortfolioReturnType['protocols']
+  hiddenCollectibles: UsePortfolioReturnType['hiddenCollectibles']
   explorerUrl?: NetworkType['explorerUrl']
   networkId?: NetworkId
   networkName?: NetworkType['name']
   selectedAcc: UseAccountsReturnType['selectedAcc']
   isCurrNetworkBalanceLoading: boolean
-  isCurrNetworkProtocolsLoading: boolean
   onAddExtraToken: UsePortfolioReturnType['onAddExtraToken']
   onAddHiddenToken: UsePortfolioReturnType['onAddHiddenToken']
+  onAddHiddenCollectible: UsePortfolioReturnType['onAddHiddenCollectible']
   onRemoveExtraToken: UsePortfolioReturnType['onRemoveExtraToken']
   onRemoveHiddenToken: UsePortfolioReturnType['onRemoveHiddenToken']
+  onRemoveHiddenCollectible: UsePortfolioReturnType['onRemoveHiddenCollectible']
 }
 
 const Assets = ({
@@ -40,17 +41,18 @@ const Assets = ({
   collectibles,
   extraTokens,
   hiddenTokens,
-  protocols,
+  hiddenCollectibles,
   explorerUrl,
   networkId,
   networkName,
   selectedAcc,
   isCurrNetworkBalanceLoading,
-  isCurrNetworkProtocolsLoading,
   onAddExtraToken,
   onAddHiddenToken,
   onRemoveExtraToken,
-  onRemoveHiddenToken
+  onRemoveHiddenToken,
+  onAddHiddenCollectible,
+  onRemoveHiddenCollectible
 }: Props) => {
   const { type } = useContext(AssetsToggleContext)
   const handleGoToBlockExplorer = () => Linking.openURL(`${explorerUrl}/address/${selectedAcc}`)
@@ -72,12 +74,9 @@ const Assets = ({
             tokens={tokens}
             extraTokens={extraTokens}
             hiddenTokens={hiddenTokens}
-            protocols={protocols}
             networkId={networkId}
             networkName={networkName}
-            selectedAcc={selectedAcc}
             isCurrNetworkBalanceLoading={!!isCurrNetworkBalanceLoading}
-            isCurrNetworkProtocolsLoading={!!isCurrNetworkProtocolsLoading}
             onAddExtraToken={onAddExtraToken}
             onAddHiddenToken={onAddHiddenToken}
             onRemoveExtraToken={onRemoveExtraToken}
@@ -93,7 +92,10 @@ const Assets = ({
         >
           <Collectibles
             collectibles={collectibles}
-            isCurrNetworkProtocolsLoading={isCurrNetworkProtocolsLoading}
+            isCurrNetworkBalanceLoading={isCurrNetworkBalanceLoading}
+            hiddenCollectibles={hiddenCollectibles}
+            onAddHiddenCollectible={onAddHiddenCollectible}
+            onRemoveHiddenCollectible={onRemoveHiddenCollectible}
           />
         </AfterInteractions>
       )}

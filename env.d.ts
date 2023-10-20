@@ -40,6 +40,11 @@ declare module '@env' {
     VELCRO_API_ENDPOINT: string
 
     /**
+     * Used for updating the prices from Coingecko
+     */
+    // COINGECKO_API_URL: string
+
+    /**
      * Ramp Network enables exchange of traditional currencies into cryptocurrencies
      */
     RAMP_HOST_API_KEY: string
@@ -67,6 +72,8 @@ declare module '@env' {
 
   export const ZAPPER_API_ENDPOINT: EnvTypes['ZAPPER_API_ENDPOINT']
   export const ZAPPER_API_KEY: EnvTypes['ZAPPER_API_KEY']
+  export const VELCRO_API_ENDPOINT: EnvTypes['VELCRO_API_ENDPOINT']
+  // export const COINGECKO_API_URL: EnvTypes['COINGECKO_API_URL']
 
   export const RAMP_HOST_API_KEY: EnvTypes['RAMP_HOST_API_KEY']
   export const TRANSAK_API_KEY_STAGING: EnvTypes['TRANSAK_API_KEY']
