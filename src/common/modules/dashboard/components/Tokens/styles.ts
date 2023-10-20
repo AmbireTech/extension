@@ -43,7 +43,7 @@ const styles = StyleSheet.create<Style>({
     color: colors.turquoise
   },
   tokenSymbol: {
-    // Magic number, so that the token name always takes up to 35% of the row,
+    // Magic number, so that the token name always takes up to 40% of the row,
     // otherwise - aligning the symbol and value with flex 1 both
     // results inconsistent rendering behavior with edge cases - long token name
     // and very tiny value (with many decimals). So this is the sweet spot.
