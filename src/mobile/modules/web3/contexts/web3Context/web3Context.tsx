@@ -35,7 +35,7 @@ async function asyncForEach(array: any[], callback: (item: any) => any) {
 
 const Web3Context = createContext<Web3ContextData>({
   approval: null,
-  requests: null,
+  requests: [],
   selectedDapp: null,
   selectedDappUrl: '',
   checkHasPermission: () => false,
