@@ -117,13 +117,23 @@ const RequestsProvider: React.FC = ({ children }) => {
   // Filter all requests by dateAdded,
   // whether or not they are saved in local storage and add them on first render
   useEffect(() => {
-    const storageRequests = [...gnosisRequests, ...approvalRequests]
+    const storageRequests = [...(gnosisRequests || []), ...(approvalRequests || [])]
     if (storageRequests.length) {
-      const newRequests = storageRequests.sort((a, b) => a.dateAdded - b.dateAdded)
-      setRequests((reqs) => [...reqs, ...newRequests])
+      setRequests((reqs: any[]) => {
+        const combinedRequests = [...reqs, ...(gnosisRequests || []), ...(approvalRequests || [])]
+        const uniqueRequests: any[] = []
+
+        combinedRequests.forEach((request) => {
+          if (!uniqueRequests.some((req) => req.id === request.id)) {
+            uniqueRequests.push(request)
+          }
+        })
+
+        return uniqueRequests.sort((a, b) => a.dateAdded - b.dateAdded)
+      })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [gnosisRequests?.length, approvalRequests?.length])
 
   const requests = useMemo(
     () => allRequests.filter(({ account }) => accounts.find(({ id }: any) => id === account)),

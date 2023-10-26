@@ -70,12 +70,12 @@ const AppInit = () => {
                         <AuthProvider>
                           <AccountsProvider>
                             <NetworkProvider>
-                              <VaultProvider>
-                                <RequestsProvider>
-                                  <Web3Provider>
-                                    <PortfolioProvider>
-                                      <RewardsProvider>
-                                        <GnosisProvider>
+                              <Web3Provider>
+                                <VaultProvider>
+                                  <GnosisProvider>
+                                    <RequestsProvider>
+                                      <PortfolioProvider>
+                                        <RewardsProvider>
                                           <GasTankProvider>
                                             <BiometricsProvider>
                                               <AddressBookProvider>
@@ -90,12 +90,12 @@ const AppInit = () => {
                                               </AddressBookProvider>
                                             </BiometricsProvider>
                                           </GasTankProvider>
-                                        </GnosisProvider>
-                                      </RewardsProvider>
-                                    </PortfolioProvider>
-                                  </Web3Provider>
-                                </RequestsProvider>
-                              </VaultProvider>
+                                        </RewardsProvider>
+                                      </PortfolioProvider>
+                                    </RequestsProvider>
+                                  </GnosisProvider>
+                                </VaultProvider>
+                              </Web3Provider>
                             </NetworkProvider>
                           </AccountsProvider>
                         </AuthProvider>

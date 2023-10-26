@@ -51,7 +51,6 @@ const GnosisProvider: React.FC = ({ children }) => {
   const verbose = 0
   const { network } = useNetwork()
   const { selectedAcc } = useAccounts()
-  const { setRequests } = useRequests()
 
   const [stateStorage, setStateStorage] = useStorage({
     key: STORAGE_KEY,
@@ -97,14 +96,8 @@ const GnosisProvider: React.FC = ({ children }) => {
           ? prevRequests
           : [...prevRequests, request]
       )
-      // @ts-ignore
-      setRequests((prevRequests: any) =>
-        prevRequests.find((x: any) => x.id === request.id)
-          ? prevRequests
-          : [...prevRequests, request]
-      )
     },
-    [network?.chainId, selectedAcc, setStateStorage, setRequests]
+    [network?.chainId, selectedAcc, setStateStorage]
   )
 
   const handleSendTransactions = useCallback(
@@ -146,15 +139,9 @@ const GnosisProvider: React.FC = ({ children }) => {
             ? prevRequests
             : [...prevRequests, request]
         )
-        // @ts-ignore
-        setRequests((prevRequests: any) =>
-          prevRequests.find((x: any) => x.id === request.id)
-            ? prevRequests
-            : [...prevRequests, request]
-        )
       }
     },
-    [network?.chainId, selectedAcc, setStateStorage, setRequests]
+    [network?.chainId, selectedAcc, setStateStorage]
   )
 
   const handlers: any = useMemo(
@@ -337,10 +324,8 @@ const GnosisProvider: React.FC = ({ children }) => {
       }
       // @ts-ignore
       setStateStorage((prevRequests: any) => prevRequests.filter((x: any) => !ids.includes(x.id)))
-      // @ts-ignore
-      setRequests((prevRequests: any) => prevRequests.filter((x: any) => !ids.includes(x.id)))
     },
-    [stateStorage, setStateStorage, send, setRequests]
+    [stateStorage, setStateStorage, send]
   )
 
   return (
