@@ -60,7 +60,7 @@ interface Props {
   addRequest: (req: any) => any
 }
 
-const attachMetaIfNeeded = (req, shareValue, rewards, leaveLog = null) => {
+const attachMetaIfNeeded = (req: any, shareValue: any, rewards: any, leaveLog = null) => {
   let meta
   const shouldAttachMeta = [WALLET_TOKEN_ADDRESS, WALLET_STAKING_ADDRESS].includes(
     req.txn.to.toLowerCase()
