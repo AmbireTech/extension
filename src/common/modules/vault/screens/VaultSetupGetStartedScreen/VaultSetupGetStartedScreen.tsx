@@ -1,15 +1,17 @@
-import React, { useCallback, useMemo } from 'react'
+import React, { useCallback, useMemo, useRef, useState } from 'react'
 import { View } from 'react-native'
 import AppIntroSlider from 'react-native-app-intro-slider'
+import { TouchableOpacity } from 'react-native-gesture-handler'
 
 import FingerprintIcon from '@common/assets/svg/FingerprintIcon'
 import KeyStoreIcon from '@common/assets/svg/KeyStoreIcon'
+import LeftArrowIcon from '@common/assets/svg/LeftArrowIcon'
 import PasswordIcon from '@common/assets/svg/PasswordIcon'
+import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import Button from '@common/components/Button'
 import GradientBackgroundWrapper from '@common/components/GradientBackgroundWrapper'
 import Text from '@common/components/Text'
 import Wrapper, { WRAPPER_TYPES } from '@common/components/Wrapper'
-import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useNavigation from '@common/hooks/useNavigation'
 import AmbireLogo from '@common/modules/auth/components/AmbireLogo'
@@ -24,6 +26,11 @@ import styles from './styles'
 const VaultSetupGetStartedScreen = () => {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
+  // activeIndex is not always updated on slide change
+  // so in order to ensure that we have the correct index
+  // this state is needed on slide changes
+  const [slide, setSlide] = useState(0)
+  const refSlider = useRef(null)
 
   const data = useMemo(() => {
     return [
@@ -78,17 +85,53 @@ const VaultSetupGetStartedScreen = () => {
       >
         <AmbireLogo />
 
-        <View style={[spacings.phTy]}>
+        <View style={[spacings.phTy, flexbox.directionRow, flexbox.alignCenter]}>
+          <TouchableOpacity
+            disabled={slide === 0 || slide < 0}
+            onPress={() => {
+              setSlide(slide - 1)
+              refSlider.current?.goToSlide(refSlider.current.state.activeIndex - 1)
+            }}
+          >
+            <LeftArrowIcon
+              style={[slide === 0 || slide < 0 ? { opacity: 0.6 } : { opacity: 1 }]}
+              width={35}
+              height={35}
+              color={colors.white}
+            />
+          </TouchableOpacity>
           <AppIntroSlider
+            ref={(ref) => (refSlider.current = ref)}
             dotStyle={styles.dotStyle}
             activeDotStyle={styles.activeDotStyle}
             keyExtractor={keyExtractor}
             renderItem={renderItem}
             data={data}
+            showPrevButton={false}
+            showNextButton={false}
             onDone={() => null}
             renderNextButton={() => <></>}
             renderDoneButton={() => <></>}
+            onSlideChange={(index) => setSlide(index)}
           />
+          <TouchableOpacity
+            disabled={slide === data.length - 1 || slide > data.length - 1}
+            onPress={() => {
+              setSlide(slide + 1)
+              refSlider.current?.goToSlide(refSlider.current.state.activeIndex + 1)
+            }}
+          >
+            <RightArrowIcon
+              style={[
+                slide === data.length - 1 || slide > data.length - 1
+                  ? { opacity: 0.6 }
+                  : { opacity: 1 }
+              ]}
+              width={35}
+              height={35}
+              color={colors.white}
+            />
+          </TouchableOpacity>
         </View>
 
         <Button
