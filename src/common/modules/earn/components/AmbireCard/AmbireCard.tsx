@@ -60,6 +60,20 @@ interface Props {
   addRequest: (req: any) => any
 }
 
+const attachMetaIfNeeded = (req: any, shareValue: any, rewards: any, leaveLog = null) => {
+  let meta
+  const shouldAttachMeta = [WALLET_TOKEN_ADDRESS, WALLET_STAKING_ADDRESS].includes(
+    req.txn.to.toLowerCase()
+  )
+  if (shouldAttachMeta) {
+    const { walletUsdPrice: walletTokenUsdPrice, xWALLETAPY: APY } = rewards
+    let walletValue = null
+    if (leaveLog && leaveLog.walletValue) walletValue = leaveLog.walletValue
+    meta = { xWallet: { APY, shareValue, walletTokenUsdPrice, walletValue } }
+  }
+  return !meta ? req : { ...req, meta: { ...(req.meta && req.meta), ...meta } }
+}
+
 const AmbireCard = ({ tokens, networkId, selectedAcc, addRequest }: Props) => {
   const [isLoading, setLoading] = useState<any>(true)
   const [details, setDetails] = useState<any>([])
@@ -83,18 +97,27 @@ const AmbireCard = ({ tokens, networkId, selectedAcc, addRequest }: Props) => {
 
   const networkDetails: any = networks.find(({ id }) => id === networkId)
 
+  const { isLoading: isLoadingRewards, rewards } = useRewards()
+
   const addRequestTxn = useCallback(
-    (id, txn, extraGas = 0) =>
-      addRequest({
-        id,
-        dateAdded: new Date().valueOf(),
-        type: 'eth_sendTransaction',
-        chainId: networkDetails.chainId,
-        account: selectedAcc,
-        txn,
-        extraGas
-      }),
-    [networkDetails.chainId, selectedAcc, addRequest]
+    (id, txn, extraGas = 0) => {
+      const request = attachMetaIfNeeded(
+        {
+          id,
+          dateAdded: new Date().valueOf(),
+          type: 'eth_sendTransaction',
+          chainId: networkDetails.chainId,
+          account: selectedAcc,
+          txn,
+          extraGas
+        },
+        shareValue,
+        rewards,
+        leaveLog
+      )
+      addRequest(request)
+    },
+    [networkDetails.chainId, rewards, shareValue, leaveLog, selectedAcc, addRequest]
   )
 
   const balanceRaw = useMemo(
@@ -107,11 +130,6 @@ const AmbireCard = ({ tokens, networkId, selectedAcc, addRequest }: Props) => {
         : 0,
     [stakingTokenBalanceRaw, shareValue]
   )
-
-  const {
-    isLoading: isLoadingRewards,
-    rewards: { xWALLETAPYPercentage }
-  } = useRewards()
 
   const walletToken = useMemo(
     () => tokens.find(({ address }: any) => address === WALLET_TOKEN_ADDRESS),
@@ -266,7 +284,7 @@ const AmbireCard = ({ tokens, networkId, selectedAcc, addRequest }: Props) => {
               : '...'
             : isLoadingRewards
             ? '...'
-            : xWALLETAPYPercentage
+            : rewards?.xWALLETAPYPercentage
         ],
         ['Lock', `${lockDays} day unbond period`],
         ['Type', 'Variable Rate']
@@ -280,8 +298,8 @@ const AmbireCard = ({ tokens, networkId, selectedAcc, addRequest }: Props) => {
       isLoadingRewards,
       selectedToken.label,
       tokensItems,
-      xWALLETAPYPercentage,
-      lockDays
+      lockDays,
+      rewards?.xWALLETAPYPercentage
     ]
   )
 

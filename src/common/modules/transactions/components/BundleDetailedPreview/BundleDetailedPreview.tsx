@@ -80,6 +80,7 @@ const BundleDetailedPreview = ({ bundle = {}, mined = false, feeAssets }: any) =
           account={bundle.identity}
           mined={mined}
           addressLabel={!!bundle.meta && bundle?.meta?.addressLabel}
+          meta={!!bundle.meta && bundle.meta}
         />
       ))}
       {!!bundle.executed && !bundle.executed?.success && (

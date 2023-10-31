@@ -88,6 +88,7 @@ const BundleSimplePreview = ({
           disableExpand
           hasBottomSpacing={i < numOfDisplayedTxns - 1}
           addressLabel={!!bundle.meta && bundle?.meta?.addressLabel}
+          meta={!!bundle.meta && bundle.meta}
         />
       ))}
       {!!bundle.executed && !bundle.executed?.success && (
