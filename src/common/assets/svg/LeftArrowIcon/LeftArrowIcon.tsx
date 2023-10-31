@@ -14,9 +14,10 @@ const LeftArrowIcon: React.FC<Props> = ({
   width = 40,
   height = 40,
   withRect = true,
-  color = colors.titan
+  color = colors.titan,
+  ...rest
 }) => (
-  <Svg width={width} height={height} viewBox="0 0 40 40">
+  <Svg width={width} height={height} viewBox="0 0 40 40" {...rest}>
     <G data-name="left-arrow icon" transform="translate(157 -213) rotate(90)">
       {withRect && (
         <Rect

@@ -14,9 +14,10 @@ const RightArrowIcon: React.FC<Props> = ({
   width = 40,
   height = 40,
   withRect = true,
-  color = colors.titan
+  color = colors.titan,
+  ...rest
 }) => (
-  <Svg width={width} height={height} viewBox="0 0 40 40">
+  <Svg width={width} height={height} viewBox="0 0 40 40" {...rest}>
     <G transform="translate(32 8) rotate(90)">
       {withRect && (
         <Rect

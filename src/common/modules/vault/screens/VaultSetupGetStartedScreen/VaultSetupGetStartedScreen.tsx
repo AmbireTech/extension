@@ -93,7 +93,12 @@ const VaultSetupGetStartedScreen = () => {
               refSlider.current?.goToSlide(refSlider.current.state.activeIndex - 1)
             }}
           >
-            <LeftArrowIcon width={35} height={35} color={colors.white} />
+            <LeftArrowIcon
+              style={[slide === 0 || slide < 0 ? { opacity: 0.6 } : { opacity: 1 }]}
+              width={35}
+              height={35}
+              color={colors.white}
+            />
           </TouchableOpacity>
           <AppIntroSlider
             ref={(ref) => (refSlider.current = ref)}
@@ -116,7 +121,16 @@ const VaultSetupGetStartedScreen = () => {
               refSlider.current?.goToSlide(refSlider.current.state.activeIndex + 1)
             }}
           >
-            <RightArrowIcon width={35} height={35} color={colors.white} />
+            <RightArrowIcon
+              style={[
+                slide === data.length - 1 || slide > data.length - 1
+                  ? { opacity: 0.6 }
+                  : { opacity: 1 }
+              ]}
+              width={35}
+              height={35}
+              color={colors.white}
+            />
           </TouchableOpacity>
         </View>
 
