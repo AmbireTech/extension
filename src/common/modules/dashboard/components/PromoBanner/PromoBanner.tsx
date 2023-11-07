@@ -5,6 +5,7 @@ import { useModalize } from 'react-native-modalize'
 import PromoBannerButton from '@common/assets/svg/PromoBannerButton'
 import BottomSheet from '@common/components/BottomSheet'
 import Text from '@common/components/Text'
+import { useTranslation } from '@common/config/localization'
 import useRewards from '@common/hooks/useRewards'
 import PromoBannerFrame from '@common/modules/dashboard/components/PromoBannerFrame'
 import colors from '@common/styles/colors'
@@ -24,6 +25,7 @@ const pattern = new RegExp(/\${{(\w+)}}/, 'gi')
 interface Props {}
 
 const PromoBanner: React.FC<Props> = () => {
+  const { t } = useTranslation()
   const {
     promoBannerIdsRead,
     setPromoBannerIdsRead,
@@ -94,7 +96,12 @@ const PromoBanner: React.FC<Props> = () => {
           {promo.icon}
         </Text>
       </TouchableOpacity>
-      <BottomSheet id="banner" sheetRef={sheetRef} closeBottomSheet={closeBottomSheet}>
+      <BottomSheet
+        id="banner"
+        sheetRef={sheetRef}
+        closeBottomSheet={closeBottomSheet}
+        cancelText={t('Close')}
+      >
         <PromoBannerFrame style={[spacings.mtSm, spacings.mb, flexbox.alignSelfCenter]}>
           <Text fontSize={40} style={styles.emojiTitle}>
             {promo.icon}
