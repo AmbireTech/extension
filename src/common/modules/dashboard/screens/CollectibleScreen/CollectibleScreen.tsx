@@ -88,6 +88,7 @@ const CollectibleScreen = () => {
       const req: any = {
         id: `transfer_nft_${Date.now()}`,
         type: 'eth_sendTransaction',
+        dateAdded: new Date().valueOf(),
         chainId: selectedNetwork?.chainId,
         account: selectedAcc,
         txn: {

@@ -110,6 +110,7 @@ const DepositTokenBottomSheetProvider = ({
 
       const req: any = {
         id: `transfer_${Date.now()}`,
+        dateAdded: new Date().valueOf(),
         type: 'eth_sendTransaction',
         chainId,
         account: selectedAcc,

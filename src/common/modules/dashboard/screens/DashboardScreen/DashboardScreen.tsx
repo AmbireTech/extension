@@ -15,32 +15,27 @@ import colors from '@common/styles/colors'
 const DashboardScreen = () => {
   const {
     loadBalance,
-    loadProtocols,
     isCurrNetworkBalanceLoading,
-    isCurrNetworkProtocolsLoading,
     balancesByNetworksLoading,
-    allBalances,
-    protocols,
+    balance,
+    otherBalances,
     tokens,
     collectibles,
     extraTokens,
     hiddenTokens,
+    hiddenCollectibles,
     onAddExtraToken,
     onAddHiddenToken,
     onRemoveExtraToken,
-    onRemoveHiddenToken
+    onRemoveHiddenToken,
+    onAddHiddenCollectible,
+    onRemoveHiddenCollectible
   } = usePortfolio()
   const { network, setNetwork } = useNetwork()
   const { selectedAcc } = useAccounts()
 
-  const allBalancesLoading = useMemo(
-    () => Object.entries(balancesByNetworksLoading).find((ntw) => ntw[1]),
-    [balancesByNetworksLoading]
-  )
-
   const handleRefresh = () => {
     loadBalance()
-    loadProtocols()
   }
 
   return (
@@ -54,15 +49,16 @@ const DashboardScreen = () => {
             onRefresh={handleRefresh}
             tintColor={colors.titan}
             progressBackgroundColor={colors.titan}
-            enabled={!isCurrNetworkBalanceLoading && !isCurrNetworkProtocolsLoading}
+            enabled={!isCurrNetworkBalanceLoading}
           />
         }
       >
         <Balances
-          allBalances={allBalances}
-          isLoading={isCurrNetworkBalanceLoading && !!allBalancesLoading}
+          balance={balance}
+          otherBalances={otherBalances}
+          isLoading={isCurrNetworkBalanceLoading && !!balancesByNetworksLoading}
           isCurrNetworkBalanceLoading={!!isCurrNetworkBalanceLoading}
-          allBalancesLoading={!!allBalancesLoading}
+          otherBalancesLoading={!!balancesByNetworksLoading}
           networkId={network?.id}
           networkName={network?.name}
           setNetwork={setNetwork}
@@ -74,9 +70,8 @@ const DashboardScreen = () => {
             collectibles={collectibles}
             extraTokens={extraTokens}
             hiddenTokens={hiddenTokens}
-            protocols={protocols}
+            hiddenCollectibles={hiddenCollectibles}
             isCurrNetworkBalanceLoading={!!isCurrNetworkBalanceLoading}
-            isCurrNetworkProtocolsLoading={!!isCurrNetworkProtocolsLoading}
             explorerUrl={network?.explorerUrl}
             networkId={network?.id}
             networkName={network?.name}
@@ -85,6 +80,8 @@ const DashboardScreen = () => {
             onAddHiddenToken={onAddHiddenToken}
             onRemoveExtraToken={onRemoveExtraToken}
             onRemoveHiddenToken={onRemoveHiddenToken}
+            onAddHiddenCollectible={onAddHiddenCollectible}
+            onRemoveHiddenCollectible={onRemoveHiddenCollectible}
           />
         </AssetsToggleProvider>
       </Wrapper>

@@ -37,6 +37,7 @@ const useSignApproval = ({ approval, resolveApproval, rejectApproval }: UseSignA
 
       const request = {
         id,
+        dateAdded: new Date().valueOf(),
         type: method,
         reqSrc: APPROVAL_REQUESTS_STORAGE_KEY,
         txn: messageToSign,
@@ -77,6 +78,7 @@ const useSignApproval = ({ approval, resolveApproval, rejectApproval }: UseSignA
 
       const request = {
         id,
+        dateAdded: new Date().valueOf(),
         type: method,
         reqSrc: APPROVAL_REQUESTS_STORAGE_KEY,
         txn: messageToSign,
@@ -111,6 +113,7 @@ const useSignApproval = ({ approval, resolveApproval, rejectApproval }: UseSignA
       for (const ix in txs) {
         const request = {
           id,
+          dateAdded: new Date().valueOf(),
           type: 'eth_sendTransaction',
           reqSrc: APPROVAL_REQUESTS_STORAGE_KEY,
           isBatch: txs.length > 1,

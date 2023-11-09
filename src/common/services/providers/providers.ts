@@ -37,6 +37,10 @@ const RPC_URL_CRONOS = 'https://evm-cronos.crypto.org'
 const RPC_URL_AURORA = 'https://mainnet.aurora.dev'
 const RPC_URL_OKC = 'https://exchainrpc.okex.org'
 const RPC_URL_ETHEREUM_POW = 'https://mainnet.ethereumpow.org'
+const RPC_URL_MUMBAI =
+  'https://rpc.ankr.com/polygon_mumbai/0e066bd7837ff1978d6aa30b9f29407deb0276d74f46393e474c2530916c8943'
+const RPC_URL_SEPOLIA =
+  'https://rpc.ankr.com/eth_sepolia/0e066bd7837ff1978d6aa30b9f29407deb0276d74f46393e474c2530916c8943'
 
 const RPC_URLS: {
   [key in NETWORKS]: string
@@ -57,7 +61,9 @@ const RPC_URLS: {
   [NETWORKS.cronos]: RPC_URL_CRONOS,
   [NETWORKS.aurora]: RPC_URL_AURORA,
   [NETWORKS.okc]: RPC_URL_OKC,
-  [NETWORKS['ethereum-pow']]: RPC_URL_ETHEREUM_POW
+  [NETWORKS['ethereum-pow']]: RPC_URL_ETHEREUM_POW,
+  [NETWORKS.mumbai]: RPC_URL_MUMBAI,
+  [NETWORKS.sepolia]: RPC_URL_SEPOLIA
 }
 
 // @ts-ignore
