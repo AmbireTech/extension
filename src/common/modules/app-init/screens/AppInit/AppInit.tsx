@@ -71,12 +71,12 @@ const AppInit = () => {
                           <AccountsProvider>
                             <NetworkProvider>
                               <Web3Provider>
-                                <PortfolioProvider>
-                                  <RewardsProvider>
-                                    <GnosisProvider>
-                                      <GasTankProvider>
-                                        <VaultProvider>
-                                          <RequestsProvider>
+                                <GnosisProvider>
+                                  <VaultProvider>
+                                    <RequestsProvider>
+                                      <PortfolioProvider>
+                                        <RewardsProvider>
+                                          <GasTankProvider>
                                             <BiometricsProvider>
                                               <AddressBookProvider>
                                                 <PrivateModeProvider>
@@ -89,12 +89,12 @@ const AppInit = () => {
                                                 <PortalHost name="global" />
                                               </AddressBookProvider>
                                             </BiometricsProvider>
-                                          </RequestsProvider>
-                                        </VaultProvider>
-                                      </GasTankProvider>
-                                    </GnosisProvider>
-                                  </RewardsProvider>
-                                </PortfolioProvider>
+                                          </GasTankProvider>
+                                        </RewardsProvider>
+                                      </PortfolioProvider>
+                                    </RequestsProvider>
+                                  </VaultProvider>
+                                </GnosisProvider>
                               </Web3Provider>
                             </NetworkProvider>
                           </AccountsProvider>

@@ -113,12 +113,12 @@ const AddOrHideToken = ({
       .map((token) => token.address)
 
     if (hiddenTokensToAdd.length) onAddHiddenToken(hiddenTokensToAdd)
+
     if (addressesToRemove.length) onRemoveHiddenToken(addressesToRemove)
 
-    // Reset states
-    setSortedTokens(tokensWithHidden.sort((a, b) => b.balanceUSD - a.balanceUSD))
+    // Reset token hide changes state
     setTokenHideChanges([])
-  }, [onAddHiddenToken, onRemoveHiddenToken, tokenHideChanges, tokensWithHidden])
+  }, [onAddHiddenToken, onRemoveHiddenToken, tokenHideChanges])
 
   return (
     <>

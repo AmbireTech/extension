@@ -28,7 +28,10 @@ import { getUiType } from '@web/utils/uiType'
 import useWeb3Approval from './useWeb3Approval'
 
 export interface RequestsContextReturnType {
-  internalRequests: any
+  requests: any[]
+  sentTxn: {
+    confirmed: boolean
+  }
   sendTxnState: {
     showing: boolean
     [key: string]: any
@@ -46,10 +49,15 @@ export interface RequestsContextReturnType {
   resolveMany: (ids: any, resolution: any) => void
   showSendTxns: (replacementBundle: any, replaceByDefault?: boolean) => void
   onDismissSendTxns: () => void
+  requestPendingState: React.MutableRefObject<boolean>
+  setRequests: () => void
 }
 
 const RequestsContext = createContext<RequestsContextReturnType>({
-  internalRequests: [],
+  requests: [],
+  sentTxn: {
+    confirmed: false
+  },
   sendTxnState: {
     showing: false
   },
@@ -64,7 +72,9 @@ const RequestsContext = createContext<RequestsContextReturnType>({
   confirmSentTx: () => {},
   resolveMany: () => {},
   showSendTxns: () => {},
-  onDismissSendTxns: () => {}
+  onDismissSendTxns: () => {},
+  requestPendingState: { current: false },
+  setRequests: () => {}
 })
 
 const RequestsProvider: React.FC = ({ children }) => {
@@ -75,6 +85,7 @@ const RequestsProvider: React.FC = ({ children }) => {
   const { vaultStatus } = useVault()
   const { addToast, addBottomSheet } = useToast()
   const { t } = useTranslation()
+  const [allRequests, setRequests] = useState([])
   const [sendTxnBottomSheetBackdropPressedUniqueId, setSendTxnBottomSheetBackdropPressedUniqueId] =
     useState<any>(null)
 
@@ -94,21 +105,39 @@ const RequestsProvider: React.FC = ({ children }) => {
   } = useModalize()
 
   const { extensionWallet } = useExtensionWallet()
-  const [internalRequests, setInternalRequests] = useState<any>([])
   // Keeping track of sent transactions
   const [sentTxn, setSentTxn] = useState<any[]>([])
 
-  const addRequest = useCallback(
-    (req: any) => setInternalRequests((reqs: any) => [...reqs, req]),
-    []
-  )
+  // Keep track if we have a pending request in order to listen for it in portfolio
+  // and display pending balance
+  const requestPendingState = useRef(false)
+
+  const addRequest = useCallback((req: any) => setRequests((reqs: any) => [...reqs, req]), [])
+
+  // Filter all requests by dateAdded,
+  // whether or not they are saved in local storage and add them on first render
+  useEffect(() => {
+    const storageRequests = [...(gnosisRequests || []), ...(approvalRequests || [])]
+    if (storageRequests.length) {
+      setRequests((reqs: any[]) => {
+        const combinedRequests = [...reqs, ...(gnosisRequests || []), ...(approvalRequests || [])]
+        const uniqueRequests: any[] = []
+
+        combinedRequests.forEach((request) => {
+          if (!uniqueRequests.some((req) => req.id === request.id)) {
+            uniqueRequests.push(request)
+          }
+        })
+
+        return uniqueRequests.sort((a, b) => a.dateAdded - b.dateAdded)
+      })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gnosisRequests?.length, approvalRequests?.length])
 
   const requests = useMemo(
-    () =>
-      [...internalRequests, ...gnosisRequests, ...approvalRequests].filter(({ account }) =>
-        accounts.find(({ id }: any) => id === account)
-      ),
-    [internalRequests, gnosisRequests, approvalRequests, accounts]
+    () => allRequests.filter(({ account }) => accounts.find(({ id }: any) => id === account)),
+    [allRequests, accounts]
   )
 
   // Filter only the sign message requests
@@ -185,6 +214,7 @@ const RequestsProvider: React.FC = ({ children }) => {
         // eslint-disable-next-line @typescript-eslint/no-shadow
         const tx = sentTxn.find((tx: any) => tx.hash === txHash)
         tx.confirmed = true
+        requestPendingState.current = false
         // eslint-disable-next-line @typescript-eslint/no-shadow
         return [...sentTxn.filter((tx: any) => tx.hash !== txHash), tx]
       }),
@@ -196,7 +226,7 @@ const RequestsProvider: React.FC = ({ children }) => {
     (ids: any, resolution: any) => {
       gnosisResolveMany(ids, resolution)
       approvalResolveMany(ids, resolution)
-      setInternalRequests((reqs: any) => reqs.filter((x: any) => !ids.includes(x.id)))
+      setRequests((reqs: any) => reqs.filter((x: any) => !ids.includes(x.id)))
     },
     [gnosisResolveMany, approvalResolveMany]
   )
@@ -320,7 +350,8 @@ const RequestsProvider: React.FC = ({ children }) => {
     <RequestsContext.Provider
       value={useMemo(
         () => ({
-          internalRequests,
+          requests,
+          sentTxn,
           sendTxnState,
           eligibleRequests,
           everythingToSign,
@@ -331,10 +362,13 @@ const RequestsProvider: React.FC = ({ children }) => {
           confirmSentTx,
           resolveMany,
           showSendTxns,
-          onDismissSendTxns
+          onDismissSendTxns,
+          requestPendingState,
+          setRequests
         }),
         [
-          internalRequests,
+          requests,
+          sentTxn,
           sendTxnState,
           eligibleRequests,
           everythingToSign,
@@ -345,7 +379,9 @@ const RequestsProvider: React.FC = ({ children }) => {
           confirmSentTx,
           resolveMany,
           showSendTxns,
-          onDismissSendTxns
+          onDismissSendTxns,
+          requestPendingState,
+          setRequests
         ]
       )}
     >

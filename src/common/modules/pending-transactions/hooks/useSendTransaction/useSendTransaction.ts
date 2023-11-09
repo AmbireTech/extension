@@ -135,8 +135,14 @@ const useSendTransaction = ({ hardwareWalletOpenBottomSheet }: Props) => {
   const { network }: any = useNetwork()
   const { account } = useAccounts()
   const { currentAccGasTankState } = useGasTank()
-  const { onBroadcastedTxn, setSendTxnState, resolveMany, sendTxnState, eligibleRequests } =
-    useRequests()
+  const {
+    onBroadcastedTxn,
+    setSendTxnState,
+    resolveMany,
+    sendTxnState,
+    eligibleRequests,
+    requestPendingState
+  } = useRequests()
   const { signTxnQuckAcc, signTxnExternalSigner, getSignerType } = useVault()
 
   const [replaceTx, setReplaceTx] = useState(!!sendTxnState.replaceByDefault)
@@ -460,7 +466,8 @@ const useSendTransaction = ({ hardwareWalletOpenBottomSheet }: Props) => {
         ...(!canSkip2FA && { code }),
         // This can be a boolean but it can also contain the new signer/primaryKeyBackup, which instructs /second-key to update acc upon successful signature
         recoveryMode: finalBundle.recoveryMode,
-        canSkip2FA
+        canSkip2FA,
+        meta: (!!finalBundle.meta && finalBundle.meta) || null
       }
     )
     if (!success) {
@@ -569,6 +576,7 @@ const useSendTransaction = ({ hardwareWalletOpenBottomSheet }: Props) => {
 
     try {
       const bundleResult = await approveTxnPromise
+      requestPendingState.current = true
       // special case for approveTxnImplQuickAcc
       if (!bundleResult) return
 

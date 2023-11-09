@@ -110,7 +110,8 @@ const TxnPreview = ({
   mined,
   disableExpand,
   hasBottomSpacing = true,
-  addressLabel = null
+  addressLabel = null,
+  meta = null
 }: any) => {
   const { constants } = useConstants()
   const [isExpanded, setExpanded] = useState(false)
@@ -125,7 +126,8 @@ const TxnPreview = ({
 
   const extendedSummary = getTransactionSummary(constants!.humanizerInfo, txn, network, account, {
     mined,
-    extended: true
+    extended: true,
+    meta
   })
 
   const summary = extendedSummary.map((entry: any, idx: number) => {
