@@ -28,7 +28,13 @@ const TransactionHistoryList = ({
   networkName
 }: Props) => {
   const { t } = useTranslation()
-
+  // NOTE<Bobby>: filter all gas tank top up transaction with
+  // a value of 0. ERC-20 token top ups also have value here
+  // so it is safe. We do this to filter out txns to the feeCollector
+  // that are not actually top ups
+  const filtered = gasTankFilledTxns
+    ? gasTankFilledTxns.filter((txn) => txn.value.toString() != 0)
+    : []
   return (
     <View>
       <Text style={spacings.mbSm}>{t('Gas Tank top ups history')}</Text>
@@ -40,8 +46,8 @@ const TransactionHistoryList = ({
           )}
         </Text>
       </View>
-      {!!gasTankFilledTxns.length &&
-        gasTankFilledTxns.map((txn) => (
+      {!!filtered.length &&
+        filtered.map((txn) => (
           <TransactionHistoryItem
             key={txn._id}
             txn={txn}
@@ -50,7 +56,7 @@ const TransactionHistoryList = ({
             networkId={networkId}
           />
         ))}
-      {!gasTankFilledTxns.length && (
+      {!filtered.length && (
         <View style={spacings.pvSm}>
           <Text fontSize={12} style={[spacings.phSm, textStyles.center]}>
             {t('No top ups were made via Gas Tank on {{networkName}}.', {
