@@ -36,7 +36,10 @@ function parseExtendedSummaryItem(item: any, i: any, networkDetails: any, t: any
 
   if (item.length === 1) return <Text fontSize={12}>{`${item} `}</Text>
 
-  if (i === 0) return <Text fontSize={12}>{`${item} `}</Text>
+  if (i === 0)
+    return (
+      <Text fontSize={12} style={[styles.action, styles[item.toLowerCase()]]}>{`${item} `}</Text>
+    )
 
   if (!item.type) return <Text fontSize={12}>{`${item} `}</Text>
 
