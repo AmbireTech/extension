@@ -126,7 +126,7 @@ const CreateNewVaultScreen = () => {
 
             <Button
               disabled={isSubmitting || !watch('password', '') || !watch('confirmPassword', '')}
-              text={isSubmitting ? t('Setting up...') : t('Setup Ambire Key Store')}
+              text={isSubmitting ? t('Setting up...') : t('Set up Ambire Key Store')}
               onPress={handleSubmit(createVault)}
             />
           </View>
