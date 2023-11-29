@@ -1,21 +1,19 @@
 import React, { useLayoutEffect, useState } from 'react'
-import { Keyboard, LayoutAnimation, TouchableWithoutFeedback, View } from 'react-native'
+import { Keyboard, LayoutAnimation, TouchableWithoutFeedback } from 'react-native'
 
 import AmbireLogoHorizontal from '@common/components/AmbireLogoHorizontal'
 import GradientBackgroundWrapper from '@common/components/GradientBackgroundWrapper'
-import Segments from '@common/components/Segments'
 import Text from '@common/components/Text'
 import Wrapper, { WRAPPER_TYPES } from '@common/components/Wrapper'
 import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useNavigation from '@common/hooks/useNavigation'
-import AmbireLogo from '@common/modules/auth/components/AmbireLogo'
+import useRoute from '@common/hooks/useRoute'
 import CreateAccountForm from '@common/modules/auth/components/CreateAccountForm'
 import EmailLoginForm from '@common/modules/auth/components/EmailLoginForm'
 import { triggerLayoutAnimation } from '@common/services/layoutAnimation'
 import colors from '@common/styles/colors'
 import spacings from '@common/styles/spacings'
-import flexboxStyles from '@common/styles/utils/flexbox'
 
 import styles from './styles'
 
@@ -29,8 +27,10 @@ const segments = [{ value: FORM_TYPE.EMAIL_LOGIN }, { value: FORM_TYPE.CREATE_AC
 
 const EmailLoginScreen = () => {
   const { t } = useTranslation()
+  const route = useRoute()
+  const { type } = route.params ?? { type: FORM_TYPE.EMAIL_LOGIN }
   const navigation = useNavigation()
-  const [formType, setFormType] = useState<FORM_TYPE>(FORM_TYPE.EMAIL_LOGIN)
+  const [formType, setFormType] = useState<FORM_TYPE>(type || FORM_TYPE.EMAIL_LOGIN)
 
   useLayoutEffect(() => {
     navigation.setOptions({

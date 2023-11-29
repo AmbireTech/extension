@@ -14,6 +14,7 @@ import Title from '@common/components/Title'
 import Wrapper from '@common/components/Wrapper'
 import { useTranslation } from '@common/config/localization'
 import useNavigation from '@common/hooks/useNavigation'
+import { FORM_TYPE } from '@common/modules/auth/screens/EmailLoginScreen/EmailLoginScreen'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings, { IS_SCREEN_SIZE_S } from '@common/styles/spacings'
 import flexboxStyles from '@common/styles/utils/flexbox'
@@ -23,14 +24,15 @@ interface ButtonProps extends Omit<ButtonDefaultProps, 'onPress'> {
   routeName: ROUTES
   Icon: React.ReactElement
   text: string
-  onPress: (nextRoute: ROUTES) => void
+  routeState?: any
+  onPress: (nextRoute: ROUTES, routeState?: any) => void
 }
 
 const AuthButton = React.memo(
-  ({ text, Icon, type = 'primary', routeName, onPress }: ButtonProps) => {
+  ({ text, Icon, type = 'primary', routeName, routeState, onPress }: ButtonProps) => {
     const handleButtonPress = useCallback(() => {
-      !!onPress && onPress(routeName)
-    }, [onPress, routeName])
+      !!onPress && onPress(routeName, routeState)
+    }, [onPress, routeName, routeState])
 
     return (
       <Panel type="filled" contentContainerStyle={[spacings.ph, spacings.pb, spacings.ptMi]}>
@@ -45,7 +47,10 @@ const AuthScreen = () => {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
-  const handleAuthButtonPress = useCallback((nextRoute: ROUTES) => navigate(nextRoute), [navigate])
+  const handleAuthButtonPress = useCallback(
+    (nextRoute: ROUTES, state?: any) => navigate(nextRoute, state),
+    [navigate]
+  )
 
   return (
     <GradientBackgroundWrapper>
@@ -58,6 +63,7 @@ const AuthScreen = () => {
             text={t('Proceed With Email')}
             Icon={<EmailIcon />}
             routeName={ROUTES.ambireAccountLogin}
+            routeState={{ state: { type: FORM_TYPE.CREATE_ACCOUNT } }}
             onPress={handleAuthButtonPress}
           />
           <AuthButton
