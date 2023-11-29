@@ -51,6 +51,7 @@ const TransactionsScreen = () => {
         <View style={styles.sectionViewWrapper}>
           <TransactionsSectionList
             data={data}
+            feeAssets={feeAssets}
             errMsg={errMsg}
             isLoading={isLoading}
             speedup={speedup}
