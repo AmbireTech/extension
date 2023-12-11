@@ -1,5 +1,5 @@
 import { isValidPassword } from 'ambire-common/src/services/validations'
-import React, { useCallback, useEffect } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { Controller, useForm, UseFormSetError } from 'react-hook-form'
 import { Keyboard, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native'
 
@@ -17,6 +17,7 @@ import { ROUTES } from '@common/modules/router/constants/common'
 import KeyStoreLogo from '@common/modules/vault/components/KeyStoreLogo'
 import NumericPadWithBiometrics from '@common/modules/vault/components/NumericPadWithBiometrics'
 import { VAULT_STATUS } from '@common/modules/vault/constants/vaultStatus'
+import { BIOMETRICS_CHANGED_ERR_MSG } from '@common/modules/vault/contexts/vaultContext'
 import {
   VAULT_PASSWORD_TYPE,
   VaultContextReturnType
@@ -36,7 +37,8 @@ interface Props {
   // require cycle (this component is also used in the vaultContext).
   unlockVault: (
     { password }: { password: string },
-    setError: UseFormSetError<{ password: string }>
+    setError: UseFormSetError<{ password: string }>,
+    biometricsHasChanged: boolean
   ) => Promise<any>
   vaultStatus: VaultContextReturnType['vaultStatus']
   biometricsEnabled: VaultContextReturnType['biometricsEnabled']
@@ -52,6 +54,7 @@ const UnlockVaultScreen: React.FC<Props> = ({
   const { t } = useTranslation()
   const { navigate } = useNavigation()
   const { vaultPasswordType } = useVault()
+  const [biometricsHasChanged, setBiometricsHasChanged] = useState(false)
   const {
     control,
     handleSubmit,
@@ -68,6 +71,17 @@ const UnlockVaultScreen: React.FC<Props> = ({
   })
 
   useEffect(() => {
+    // If we encounter this error, it signifies a permanent change in the
+    // biometrics. Capture this event by setting a flag in the component state.
+    // Why? Because unlike form errors, which reset with every change, this
+    // flag should remain permanently flipped because it reflects the permanent
+    // alteration in the biometrics.
+    if (errors.password?.message === BIOMETRICS_CHANGED_ERR_MSG) {
+      setBiometricsHasChanged(true)
+    }
+  }, [errors.password?.message])
+
+  useEffect(() => {
     if (!biometricsEnabled) {
       return
     }
@@ -79,13 +93,20 @@ const UnlockVaultScreen: React.FC<Props> = ({
     // not when the app comes back in active state. Which messes up
     // the biometrics prompt (it freezes and the promise never resolves).
     if (vaultStatus === VAULT_STATUS.LOCKED) {
-      handleSubmit((data) => unlockVault(data, setError))()
+      // Always assume that biometrics has not been changed when trying to
+      // unlock the fault the first time. There's no way to know this,
+      // other than trying to unlock and hitting the biometrics changed error.
+      handleSubmit((data) => unlockVault(data, setError, false))()
     }
   }, [biometricsEnabled, handleSubmit, setError, unlockVault, vaultStatus])
 
   const handleRetryBiometrics = useCallback(() => {
     setValue('password', '')
-    return handleSubmit((data) => unlockVault(data, setError))()
+    // Always assume that biometrics has not been changed when re-trying
+    // to unlock with biometrics. Otherwise, the retry won't really... retry
+    // because passing `true` here will trigger the re-enable biometrics flow
+    // instead of actually re-trying to unlock with biometrics.
+    return handleSubmit((data) => unlockVault(data, setError, false))()
   }, [setValue, handleSubmit, unlockVault, setError])
 
   const handleForgotPassword = useCallback(() => {
@@ -119,14 +140,22 @@ const UnlockVaultScreen: React.FC<Props> = ({
     if (currentPassword.length === PIN_LENGTH) {
       setTimeout(
         () => {
-          handleSubmit((data) => unlockVault(data, setError))()
+          handleSubmit((data) => unlockVault(data, setError, biometricsHasChanged))()
           reset()
         },
         // Slight delay to allow the user to "see" the last digit entered
         200
       )
     }
-  }, [handleSubmit, setError, setValue, unlockVault, currentPassword, reset, isPinEntry])
+  }, [
+    handleSubmit,
+    setError,
+    unlockVault,
+    currentPassword,
+    reset,
+    isPinEntry,
+    biometricsHasChanged
+  ])
 
   return (
     <BackgroundWrapper>
@@ -179,7 +208,9 @@ const UnlockVaultScreen: React.FC<Props> = ({
                     onChangeText={onChange}
                     isValid={isValidPassword(value)}
                     value={value}
-                    onSubmitEditing={handleSubmit((data) => unlockVault(data, setError))}
+                    onSubmitEditing={handleSubmit((data) =>
+                      unlockVault(data, setError, biometricsHasChanged)
+                    )}
                     error={
                       errors.password &&
                       (errors.password.message ||
@@ -197,7 +228,9 @@ const UnlockVaultScreen: React.FC<Props> = ({
                 <Button
                   disabled={isSubmitting || !watch('password', '')}
                   text={isSubmitting ? t('Unlocking...') : t('Unlock')}
-                  onPress={handleSubmit((data) => unlockVault(data, setError))}
+                  onPress={handleSubmit((data) =>
+                    unlockVault(data, setError, biometricsHasChanged)
+                  )}
                 />
               </View>
             )}
