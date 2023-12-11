@@ -31,7 +31,7 @@ import styles from './styles'
 import { VAULT_PASSWORD_TYPE, vaultContextDefaults, VaultContextReturnType } from './types'
 
 export const BIOMETRICS_CHANGED_ERR_MSG =
-  'Device biometrics updated. Please enter PIN to re-enable biometric unlock.'
+  'Device biometrics updated. Please enter password to re-enable biometric unlock.'
 
 const VaultContext = createContext<VaultContextReturnType>(vaultContextDefaults)
 
