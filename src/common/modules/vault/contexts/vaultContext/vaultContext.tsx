@@ -271,9 +271,12 @@ const VaultProvider: React.FC = ({ children }) => {
         // That's the standard flow for pulling the password from Biometrics
         try {
           const passwordComingFromBiometrics = await getKeystorePassword()
-          if (passwordComingFromBiometrics) {
-            password = passwordComingFromBiometrics
-          }
+          // If Biometrics change, the `getKeystorePassword` throws on Android,
+          // but it does not throw iOS. It returns `null`. So double-check
+          // if there actually is a password coming from Biometrics.
+          if (!passwordComingFromBiometrics) throw new Error('No password coming from Biometrics')
+
+          password = passwordComingFromBiometrics
         } catch (e) {
           // Authentication manually canceled by the user. That's fine.
           // Resolve to allow continuing forward, instead or rejecting,
