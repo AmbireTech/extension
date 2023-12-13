@@ -35,7 +35,7 @@ const VaultSetupGetStartedScreen = () => {
   const data = useMemo(() => {
     return [
       {
-        title: 'Setup your Key Store PIN',
+        title: 'Set up your Key Store PIN',
         icon: <KeyStoreIcon height={90} />,
         text: t('Protect your account passwords or external signers with PIN on this device')
       },

@@ -9,12 +9,24 @@ interface Style {
   listItem: ViewStyle
   expandedContainer: ViewStyle
   openIconWrapper: ViewStyle
+  action: ViewStyle
+  unknown: ViewStyle
+  cancel: ViewStyle
 }
 
 const styles = StyleSheet.create<Style>({
   container: {
     backgroundColor: colors.howl,
     ...commonStyles.borderRadiusPrimary
+  },
+  action: {
+    color: colors.greenHaze
+  },
+  unknown: {
+    color: colors.mustard
+  },
+  cancel: {
+    color: colors.pink
   },
   listItem: {
     flexDirection: 'row',

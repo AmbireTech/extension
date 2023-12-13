@@ -24,6 +24,7 @@ import styles from './styles'
 
 const TransactionsSectionList = ({
   data,
+  feeAssets,
   errMsg,
   isLoading,
   speedup,
@@ -97,6 +98,7 @@ const TransactionsSectionList = ({
   const renderConfirmedTxns = ({ item }: any) => (
     <BundleSimplePreview
       bundle={item}
+      feeAssets={feeAssets}
       mined
       setOpenedBundle={handleSetOpenedBundle}
       setMined={handleSetMined}
