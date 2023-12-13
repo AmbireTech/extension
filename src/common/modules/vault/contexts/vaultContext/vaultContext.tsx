@@ -30,6 +30,9 @@ import { getUiType } from '@web/utils/uiType'
 import styles from './styles'
 import { VAULT_PASSWORD_TYPE, vaultContextDefaults, VaultContextReturnType } from './types'
 
+export const BIOMETRICS_CHANGED_ERR_MSG =
+  'Device biometrics updated. Please enter password to re-enable biometric unlock.'
+
 const VaultContext = createContext<VaultContextReturnType>(vaultContextDefaults)
 
 const VaultProvider: React.FC = ({ children }) => {
@@ -235,22 +238,61 @@ const VaultProvider: React.FC = ({ children }) => {
     async (
       // eslint-disable-next-line default-param-last
       { password: incomingPassword }: { password?: string } = {},
-      setError: UseFormSetError<{ password: string }>
+      setError: UseFormSetError<{ password: string }>,
+      biometricsHasChanged: boolean
     ) => {
       let password = incomingPassword
 
-      if (biometricsEnabled && !password) {
+      // If biometrics have changed, re-enable them before unlocking the vault
+      // by re-adding the password to the device secure store
+      if (biometricsHasChanged && biometricsEnabled) {
+        try {
+          if (!password) {
+            throw new Error('Biometrics re-enable failed because a password is missing.')
+          }
+
+          await addKeystorePasswordToDeviceSecureStore(password)
+        } catch (e) {
+          const errorMsg =
+            e?.code === 'ERR_SECURESTORE_AUTH_CANCELLED' // canceled by the user
+              ? t(
+                  'Re-enabling Biometrics was canceled. You can enabling Biometrics unlock later via the "Set Biometrics unlock" option in the menu'
+                )
+              : t(
+                  'Re-enabling Biometrics was unsuccessful. You can retry enabling Biometrics unlock later via the "Set Biometrics unlock" option in the menu'
+                )
+
+          // No matter what the error is, allow continuing forward (do not return),
+          // otherwise there would be not way manually unlocking the vault
+          // (even with a valid password) and no way to access the app.
+          addToast(t(errorMsg), { error: true })
+        }
+      } else if (biometricsEnabled && !password) {
+        // That's the standard flow for pulling the password from Biometrics
         try {
           const passwordComingFromBiometrics = await getKeystorePassword()
-          if (passwordComingFromBiometrics) {
-            password = passwordComingFromBiometrics
-          }
+          // If Biometrics change, the `getKeystorePassword` throws on Android,
+          // but it does not throw iOS. It returns `null`. So double-check
+          // if there actually is a password coming from Biometrics.
+          if (!passwordComingFromBiometrics) throw new Error('No password coming from Biometrics')
+
+          password = passwordComingFromBiometrics
         } catch (e) {
-          // Resolve to allow continue forward, instead or rejecting,
+          // Authentication manually canceled by the user. That's fine.
+          // Resolve to allow continuing forward, instead or rejecting,
           // otherwise it fires a warn (unhandled promise rejection).
           // Which technically should not be handled, because canceling
           // unlock is a valid scenario.
-          return Promise.resolve()
+          if (e?.code === 'ERR_SECURESTORE_AUTH_CANCELLED') {
+            return Promise.resolve()
+          }
+
+          // For all other cases, assume that the biometrics have changed.
+          // Note: the `e?.code` incoming is "E_SECURESTORE_DECRYPT_ERROR" and
+          // the `e?.message` says "Could not decrypt the item in SecureStore"
+          setError('password', { message: BIOMETRICS_CHANGED_ERR_MSG })
+          return // stop the execution here, do not return anything, because
+          // the above handles the error in the form
         }
       }
 
@@ -270,7 +312,15 @@ const VaultProvider: React.FC = ({ children }) => {
           setError('password', { message: e?.message || e })
         })
     },
-    [biometricsEnabled, getKeystorePassword, requestVaultControllerMethod, resolveApproval]
+    [
+      addKeystorePasswordToDeviceSecureStore,
+      addToast,
+      biometricsEnabled,
+      getKeystorePassword,
+      requestVaultControllerMethod,
+      resolveApproval,
+      t
+    ]
   )
 
   const lockVault = useCallback(
