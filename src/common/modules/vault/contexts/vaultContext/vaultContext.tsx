@@ -253,34 +253,8 @@ const VaultProvider: React.FC = ({ children }) => {
     ) => {
       let password = incomingPassword
 
-      // If biometrics have changed, re-enable them before unlocking the vault
-      // by re-adding the password to the device secure store
-      if (_biometricsHasChanged && biometricsEnabled) {
-        try {
-          if (!password) {
-            throw new Error('Biometrics re-enable failed because a password is missing.')
-          }
-
-          await addKeystorePasswordToDeviceSecureStore(password)
-        } catch (e) {
-          const errorMsg = [
-            'ERR_SECURESTORE_AUTH_CANCELLED',
-            'E_SECURESTORE_GETVALUEFAIL'
-          ].includes(e?.code) // canceled by the user
-            ? t(
-                'Re-enabling Biometrics was canceled. You can enabling Biometrics unlock later via the "Set Biometrics unlock" option in the menu'
-              )
-            : t(
-                'Re-enabling Biometrics was unsuccessful. You can retry enabling Biometrics unlock later via the "Set Biometrics unlock" option in the menu'
-              )
-
-          // No matter what the error is, allow continuing forward (do not return),
-          // otherwise there would be not way manually unlocking the vault
-          // (even with a valid password) and no way to access the app.
-          addToast(t(errorMsg), { error: true })
-        }
-      } else if (biometricsEnabled && !password) {
-        // That's the standard flow for pulling the password from Biometrics
+      // That's the standard flow for pulling the password from Biometrics
+      if (biometricsEnabled && !password && !_biometricsHasChanged) {
         try {
           const passwordComingFromBiometrics = await getKeystorePassword()
           // If Biometrics change, the `getKeystorePassword` throws on Android,
@@ -311,6 +285,51 @@ const VaultProvider: React.FC = ({ children }) => {
           return // stop the execution here, do not return anything, because
           // the above handles the error in the form
         }
+      }
+
+      // If biometrics have changed, re-enable them before unlocking the vault
+      // by re-adding the password to the device secure store
+      if (biometricsEnabled && _biometricsHasChanged) {
+        // Do not even attempt to unlock, because when biometrics change,
+        // user needs to manually input the password to re-enable biometrics.
+        // Do nothing until a password is provided.
+        if (!password) return
+
+        // Attempt to unlock with the password provided
+        try {
+          await requestVaultControllerMethod({ method: 'unlockVault', props: { password } })
+        } catch (e) {
+          setError('password', { message: e?.message || e })
+          return // stop the execution here, do not return anything, because
+          // the above handles the error in the form
+        }
+
+        // Update the correct password in the secure store with the new biometrics
+        try {
+          await addKeystorePasswordToDeviceSecureStore(password)
+        } catch (e) {
+          const errorMsg = [
+            'ERR_SECURESTORE_AUTH_CANCELLED',
+            'E_SECURESTORE_GETVALUEFAIL'
+          ].includes(e?.code) // canceled by the user
+            ? t(
+                'Re-enabling Biometrics was canceled. You can enabling Biometrics unlock later via the "Set Biometrics unlock" option in the menu'
+              )
+            : t(
+                'Re-enabling Biometrics was unsuccessful. You can retry enabling Biometrics unlock later via the "Set Biometrics unlock" option in the menu'
+              )
+
+          // No matter what the error is, allow continuing forward (do not return),
+          // otherwise there would be not way manually unlocking the vault
+          // (even with a valid password) and no way to access the app.
+          addToast(t(errorMsg), { error: true })
+        }
+      }
+
+      // Should never happen, but just in case
+      if (!password) {
+        setError('password', { message: t('Password is required.') })
+        return
       }
 
       return requestVaultControllerMethod({
