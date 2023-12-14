@@ -1,5 +1,5 @@
 import React, { createContext, useCallback, useEffect, useMemo, useState } from 'react'
-import { UseFormSetError } from 'react-hook-form'
+import { FormProvider, useForm, UseFormSetError } from 'react-hook-form'
 import { StyleSheet } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
@@ -16,6 +16,7 @@ import { AUTH_STATUS } from '@common/modules/auth/constants/authStatus'
 import useAuth from '@common/modules/auth/hooks/useAuth'
 import { KEY_LOCK_KEYSTORE_WHEN_INACTIVE } from '@common/modules/vault/constants/storageKeys'
 import { VAULT_STATUS } from '@common/modules/vault/constants/vaultStatus'
+import useBiometricsHasChanged from '@common/modules/vault/hooks/useBiometricsHasChanged'
 import useLockWhenInactive from '@common/modules/vault/hooks/useLockWhenInactive'
 import useVaultBiometrics from '@common/modules/vault/hooks/useVaultBiometrics'
 import ResetVaultScreen from '@common/modules/vault/screens/ResetVaultScreen'
@@ -43,6 +44,15 @@ const VaultProvider: React.FC = ({ children }) => {
   const { onRemoveAllAccounts } = useAccounts()
   const { getItem, setItem, storageControllerInstance } = useStorageController()
   const { resolveApproval } = useApproval()
+  const methods = useForm({
+    reValidateMode: 'onChange',
+    defaultValues: {
+      password: ''
+    }
+  })
+  const { biometricsHasChanged } = useBiometricsHasChanged(
+    methods.formState.errors.password?.message
+  )
   const {
     biometricsEnabled,
     getKeystorePassword,
@@ -239,13 +249,13 @@ const VaultProvider: React.FC = ({ children }) => {
       // eslint-disable-next-line default-param-last
       { password: incomingPassword }: { password?: string } = {},
       setError: UseFormSetError<{ password: string }>,
-      biometricsHasChanged: boolean
+      _biometricsHasChanged: boolean
     ) => {
       let password = incomingPassword
 
       // If biometrics have changed, re-enable them before unlocking the vault
       // by re-adding the password to the device secure store
-      if (biometricsHasChanged && biometricsEnabled) {
+      if (_biometricsHasChanged && biometricsEnabled) {
         try {
           if (!password) {
             throw new Error('Biometrics re-enable failed because a password is missing.')
@@ -253,14 +263,16 @@ const VaultProvider: React.FC = ({ children }) => {
 
           await addKeystorePasswordToDeviceSecureStore(password)
         } catch (e) {
-          const errorMsg =
-            e?.code === 'ERR_SECURESTORE_AUTH_CANCELLED' // canceled by the user
-              ? t(
-                  'Re-enabling Biometrics was canceled. You can enabling Biometrics unlock later via the "Set Biometrics unlock" option in the menu'
-                )
-              : t(
-                  'Re-enabling Biometrics was unsuccessful. You can retry enabling Biometrics unlock later via the "Set Biometrics unlock" option in the menu'
-                )
+          const errorMsg = [
+            'ERR_SECURESTORE_AUTH_CANCELLED',
+            'E_SECURESTORE_GETVALUEFAIL'
+          ].includes(e?.code) // canceled by the user
+            ? t(
+                'Re-enabling Biometrics was canceled. You can enabling Biometrics unlock later via the "Set Biometrics unlock" option in the menu'
+              )
+            : t(
+                'Re-enabling Biometrics was unsuccessful. You can retry enabling Biometrics unlock later via the "Set Biometrics unlock" option in the menu'
+              )
 
           // No matter what the error is, allow continuing forward (do not return),
           // otherwise there would be not way manually unlocking the vault
@@ -287,10 +299,15 @@ const VaultProvider: React.FC = ({ children }) => {
             return Promise.resolve()
           }
 
-          // For all other cases, assume that the biometrics have changed.
-          // Note: the `e?.code` incoming is "E_SECURESTORE_DECRYPT_ERROR" and
-          // the `e?.message` says "Could not decrypt the item in SecureStore"
-          setError('password', { message: BIOMETRICS_CHANGED_ERR_MSG })
+          const message =
+            e?.code === 'E_SECURESTORE_GETVALUEFAIL' // failed to confirm biometrics
+              ? 'Biometric confirmation failed. Please retry or use password to unlock.'
+              : // For all other cases, assume that the biometrics have changed.
+                // Note: the `e?.code` incoming is "E_SECURESTORE_DECRYPT_ERROR" and
+                // the `e?.message` says "Could not decrypt the item in SecureStore"
+                BIOMETRICS_CHANGED_ERR_MSG
+
+          setError('password', { message })
           return // stop the execution here, do not return anything, because
           // the above handles the error in the form
         }
@@ -485,7 +502,9 @@ const VaultProvider: React.FC = ({ children }) => {
     vaultStatus,
     shouldLockWhenInactive,
     lock: handleLockWhenInactive,
-    promptToUnlock: unlockVault,
+    // Always pass `{}`, because the this mechanism will always try to unlock
+    // the vault with Biometrics (and pull the password from the secure store).
+    promptToUnlock: () => unlockVault({}, methods.setError, biometricsHasChanged),
     biometricsEnabled
   })
 
@@ -552,41 +571,43 @@ const VaultProvider: React.FC = ({ children }) => {
         ]
       )}
     >
-      {/* The temporarily locked state is implemented as an overlay. Why not */}
-      {/* a separate route (as a modal)? It was conflicting with the async */}
-      {/* navigation actions that were happening on some occasions */}
-      {/* (like waiting for email confirm and on confirm - redirecting). */}
-      {/* Implementing it as an overlay prevents all these problems, */}
-      {/* all redirects are happening below overlay and when the overlay */}
-      {/* gets dismissed - the current route is always up to date. */}
-      {vaultStatus === VAULT_STATUS.LOCKED_TEMPORARILY && (
-        <GradientBackgroundWrapper style={[StyleSheet.absoluteFill, styles.lockedContainer]}>
-          <SafeAreaView
-            style={
-              // otherwise, the content disappears when the parent is absolute
-              flexboxStyles.flex1
-            }
-          >
-            {shouldDisplayForgotPassword ? (
-              <ResetVaultScreen
-                onGoBack={handleToggleForgotPassword}
-                vaultStatus={vaultStatus}
-                resetVault={resetVault}
-                hasGradientBackground={false}
-              />
-            ) : (
-              <UnlockVaultScreen
-                onForgotPassword={handleToggleForgotPassword}
-                unlockVault={unlockVault}
-                vaultStatus={vaultStatus}
-                biometricsEnabled={biometricsEnabled}
-                hasGradientBackground={false}
-              />
-            )}
-          </SafeAreaView>
-        </GradientBackgroundWrapper>
-      )}
-      {children}
+      <FormProvider {...methods}>
+        {/* The temporarily locked state is implemented as an overlay. Why not */}
+        {/* a separate route (as a modal)? It was conflicting with the async */}
+        {/* navigation actions that were happening on some occasions */}
+        {/* (like waiting for email confirm and on confirm - redirecting). */}
+        {/* Implementing it as an overlay prevents all these problems, */}
+        {/* all redirects are happening below overlay and when the overlay */}
+        {/* gets dismissed - the current route is always up to date. */}
+        {vaultStatus === VAULT_STATUS.LOCKED_TEMPORARILY && (
+          <GradientBackgroundWrapper style={[StyleSheet.absoluteFill, styles.lockedContainer]}>
+            <SafeAreaView
+              style={
+                // otherwise, the content disappears when the parent is absolute
+                flexboxStyles.flex1
+              }
+            >
+              {shouldDisplayForgotPassword ? (
+                <ResetVaultScreen
+                  onGoBack={handleToggleForgotPassword}
+                  vaultStatus={vaultStatus}
+                  resetVault={resetVault}
+                  hasGradientBackground={false}
+                />
+              ) : (
+                <UnlockVaultScreen
+                  onForgotPassword={handleToggleForgotPassword}
+                  unlockVault={unlockVault}
+                  vaultStatus={vaultStatus}
+                  biometricsEnabled={biometricsEnabled}
+                  hasGradientBackground={false}
+                />
+              )}
+            </SafeAreaView>
+          </GradientBackgroundWrapper>
+        )}
+        {children}
+      </FormProvider>
     </VaultContext.Provider>
   )
 }
