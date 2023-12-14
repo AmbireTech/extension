@@ -1,6 +1,6 @@
 import { isValidPassword } from 'ambire-common/src/services/validations'
-import React, { useCallback, useEffect, useState } from 'react'
-import { Controller, useForm, UseFormSetError } from 'react-hook-form'
+import React, { useCallback, useEffect } from 'react'
+import { Controller, FieldError, useFormContext, UseFormSetError } from 'react-hook-form'
 import { Keyboard, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native'
 
 import Button from '@common/components/Button'
@@ -17,11 +17,11 @@ import { ROUTES } from '@common/modules/router/constants/common'
 import KeyStoreLogo from '@common/modules/vault/components/KeyStoreLogo'
 import NumericPadWithBiometrics from '@common/modules/vault/components/NumericPadWithBiometrics'
 import { VAULT_STATUS } from '@common/modules/vault/constants/vaultStatus'
-import { BIOMETRICS_CHANGED_ERR_MSG } from '@common/modules/vault/contexts/vaultContext'
 import {
   VAULT_PASSWORD_TYPE,
   VaultContextReturnType
 } from '@common/modules/vault/contexts/vaultContext/types'
+import useBiometricsHasChanged from '@common/modules/vault/hooks/useBiometricsHasChanged'
 import useVault from '@common/modules/vault/hooks/useVault'
 import spacings from '@common/styles/spacings'
 import flexboxStyles from '@common/styles/utils/flexbox'
@@ -54,7 +54,6 @@ const UnlockVaultScreen: React.FC<Props> = ({
   const { t } = useTranslation()
   const { navigate } = useNavigation()
   const { vaultPasswordType } = useVault()
-  const [biometricsHasChanged, setBiometricsHasChanged] = useState(false)
   const {
     control,
     handleSubmit,
@@ -63,23 +62,10 @@ const UnlockVaultScreen: React.FC<Props> = ({
     setError,
     reset,
     formState: { errors, isSubmitting }
-  } = useForm({
-    reValidateMode: 'onChange',
-    defaultValues: {
-      password: ''
-    }
-  })
-
-  useEffect(() => {
-    // If we encounter this error, it signifies a permanent change in the
-    // biometrics. Capture this event by setting a flag in the component state.
-    // Why? Because unlike form errors, which reset with every change, this
-    // flag should remain permanently flipped because it reflects the permanent
-    // alteration in the biometrics.
-    if (errors.password?.message === BIOMETRICS_CHANGED_ERR_MSG) {
-      setBiometricsHasChanged(true)
-    }
-  }, [errors.password?.message])
+  } = useFormContext()
+  const { biometricsHasChanged } = useBiometricsHasChanged(
+    errors.password?.message as FieldError['message']
+  )
 
   useEffect(() => {
     if (!biometricsEnabled) {
