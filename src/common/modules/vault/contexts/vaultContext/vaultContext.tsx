@@ -18,7 +18,6 @@ import { KEY_LOCK_KEYSTORE_WHEN_INACTIVE } from '@common/modules/vault/constants
 import { VAULT_STATUS } from '@common/modules/vault/constants/vaultStatus'
 import useBiometricsHasChanged from '@common/modules/vault/hooks/useBiometricsHasChanged'
 import useLockWhenInactive from '@common/modules/vault/hooks/useLockWhenInactive'
-import useVault from '@common/modules/vault/hooks/useVault'
 import useVaultBiometrics from '@common/modules/vault/hooks/useVaultBiometrics'
 import ResetVaultScreen from '@common/modules/vault/screens/ResetVaultScreen'
 import UnlockVaultScreen from '@common/modules/vault/screens/UnlockVaultScreen'
