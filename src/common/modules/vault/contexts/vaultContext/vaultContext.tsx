@@ -253,14 +253,16 @@ const VaultProvider: React.FC = ({ children }) => {
 
           await addKeystorePasswordToDeviceSecureStore(password)
         } catch (e) {
-          const errorMsg =
-            e?.code === 'ERR_SECURESTORE_AUTH_CANCELLED' // canceled by the user
-              ? t(
-                  'Re-enabling Biometrics was canceled. You can enabling Biometrics unlock later via the "Set Biometrics unlock" option in the menu'
-                )
-              : t(
-                  'Re-enabling Biometrics was unsuccessful. You can retry enabling Biometrics unlock later via the "Set Biometrics unlock" option in the menu'
-                )
+          const errorMsg = [
+            'ERR_SECURESTORE_AUTH_CANCELLED',
+            'E_SECURESTORE_GETVALUEFAIL'
+          ].includes(e?.code) // canceled by the user
+            ? t(
+                'Re-enabling Biometrics was canceled. You can enabling Biometrics unlock later via the "Set Biometrics unlock" option in the menu'
+              )
+            : t(
+                'Re-enabling Biometrics was unsuccessful. You can retry enabling Biometrics unlock later via the "Set Biometrics unlock" option in the menu'
+              )
 
           // No matter what the error is, allow continuing forward (do not return),
           // otherwise there would be not way manually unlocking the vault
@@ -287,10 +289,15 @@ const VaultProvider: React.FC = ({ children }) => {
             return Promise.resolve()
           }
 
-          // For all other cases, assume that the biometrics have changed.
-          // Note: the `e?.code` incoming is "E_SECURESTORE_DECRYPT_ERROR" and
-          // the `e?.message` says "Could not decrypt the item in SecureStore"
-          setError('password', { message: BIOMETRICS_CHANGED_ERR_MSG })
+          const message =
+            e?.code === 'E_SECURESTORE_GETVALUEFAIL' // failed to confirm biometrics
+              ? 'Biometric confirmation failed. Please retry or use password to unlock.'
+              : // For all other cases, assume that the biometrics have changed.
+                // Note: the `e?.code` incoming is "E_SECURESTORE_DECRYPT_ERROR" and
+                // the `e?.message` says "Could not decrypt the item in SecureStore"
+                BIOMETRICS_CHANGED_ERR_MSG
+
+          setError('password', { message })
           return // stop the execution here, do not return anything, because
           // the above handles the error in the form
         }
