@@ -1,7 +1,6 @@
 {
   "name": "ambire-mobile-wallet",
   "main": "index.js",
-  "version": "1.0.0",
   "scripts": {
     "android": "EAS_BUILD_PLATFORM=android bash ./scripts/expo-build-post-install.sh && expo run:android",
     "android:staging": "APP_ENV=staging yarn android",
@@ -144,7 +143,7 @@
     "react-fast-compare": "^3.2.0",
     "react-hook-form": "^7.21.0",
     "react-i18next": "^11.14.3",
-    "react-native": "^0.71.0",
+    "react-native": "0.71.11",
     "react-native-android-location-services-dialog-box": "2.8.2",
     "react-native-app-intro-slider": "^4.0.4",
     "react-native-ble-plx": "^2.0.3",
@@ -234,7 +233,7 @@
     "i18next-scanner": "^3.1.0",
     "i18next-scanner-typescript": "^1.0.6",
     "jest-puppeteer": "4.4.0",
-    "metro-react-native-babel-preset": "0.73.7",
+    "metro-react-native-babel-preset": "0.73.10",
     "node-polyfill-webpack-plugin": "2.0.1",
     "prettier": "^2.4.1",
     "puppeteer": "5.5.0",
@@ -248,9 +247,11 @@
   },
   "resolutions": {
     "@types/react": "~18.0.24",
-    "expo-modules-autolinking": "~0.10.1",
+    "expo-modules-autolinking": "~1.2.0",
     "@babel/core": "^7.20.2",
-    "babel-loader": "8.3.0"
+    "babel-loader": "8.3.0",
+    "@expo/config-plugins": "~6.0.0",
+    "@expo/prebuild-config": "~6.0.0"
   },
   "private": true
 }

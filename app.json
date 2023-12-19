@@ -1,9 +1,11 @@
 {
-  "name": "Ambire",
+  "name": "ambire",
   "expo": {
     "slug": "ambire-mobile-wallet",
     "version": "3.13.1",
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "runtimeVersion": "11",
     "jsEngine": "hermes",
     "updates": {
@@ -29,6 +31,10 @@
       "eas": {
         "projectId": "e6f855d0-5ac3-40e0-8127-740906e7a593"
       }
-    }
+    },
+    "plugins": [
+      "expo-localization",
+      "sentry-expo"
+    ]
   }
 }
