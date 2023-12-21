@@ -5,7 +5,7 @@ import { getFeesData, isTokenEligible, toHexAmount } from 'ambire-common/src/hel
 import { getProvider } from 'ambire-common/src/services/provider'
 import { toBundleTxn } from 'ambire-common/src/services/requestToBundleTxn'
 import { ethers } from 'ethers'
-import { Interface } from 'ethers/lib/utils'
+import { AbiCoder, Interface } from 'ethers/lib/utils'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import CONFIG from '@common/config/env'
@@ -360,14 +360,32 @@ const useSendTransaction = ({ hardwareWalletOpenBottomSheet }: Props) => {
         value = fToken && estimation.feeInNative[feeSpeed] * fToken.nativeRate
       }
 
+      const lastTxn = bundle.txns[bundle.txns.length - 1]
+      const abiCoder = new AbiCoder()
+      const gasTankValue = ethers.utils
+        .parseUnits(value.toFixed(feeToken.decimals), feeToken.decimals)
+        .toString()
+
+      try {
+        // if the decode works, it means it is the gas tank txn
+        // If so, delete it
+        abiCoder.decode(['string', 'uint256', 'string'], lastTxn[2])
+        bundle.txns.pop()
+      } catch (e) {
+        // all's good
+      }
+
+      // add the gas tank transaction
+      // since it calls the relayer, it consumes only an extra 295 gas
+      // the data is the encoded gas tank parameters
+      bundle.txns.push([
+        accountPresets.feeCollector,
+        '0',
+        abiCoder.encode(['string', 'uint256', 'string'], ['gasTank', gasTankValue, feeToken.id])
+      ])
+
       return new Bundle({
         ...bundle,
-        gasTankFee: {
-          assetId: feeToken.id,
-          value: ethers.utils
-            .parseUnits(value.toFixed(feeToken.decimals), feeToken.decimals)
-            .toString()
-        },
         txns: [...bundle.txns],
         gasLimit,
         nonce
