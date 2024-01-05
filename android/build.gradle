@@ -3,6 +3,7 @@ import org.apache.tools.ant.taskdefs.condition.Os
 
 buildscript {
     ext {
+        buildToolsVersion = "33.0.0"        
         minSdkVersion = 24
         compileSdkVersion = 33
         targetSdkVersion = 33
@@ -16,7 +17,24 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath("com.android.tools.build:gradle:7.3.1")
+        classpath("com.android.tools.build:gradle:7.4.1")
         classpath("com.facebook.react:react-native-gradle-plugin")
+    }
+}
+
+allprojects {
+    repositories {
+        
+        // * Other repositories here *
+
+        // * Add a new maven block after other repositories / blocks *
+        maven {
+            // expo-camera bundles a custom com.google.android:cameraview
+            url "$rootDir/../node_modules/expo-camera/android/maven"
+        }
+        maven {
+            // Android JSC is installed from npm
+            url("$rootDir/../node_modules/jsc-android/dist")
+        }
     }
 }

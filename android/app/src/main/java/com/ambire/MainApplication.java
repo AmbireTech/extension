@@ -4,6 +4,8 @@ import android.app.Application;
 import android.content.res.Configuration;
 import androidx.annotation.NonNull;
 
+import com.ambire.wallet.BuildConfig;
+
 import com.facebook.react.PackageList;
 import com.facebook.react.ReactApplication;
 import com.facebook.react.ReactNativeHost;
@@ -21,9 +23,10 @@ import com.swmansion.reanimated.ReanimatedJSIModulePackage;
 import java.util.List;
 
 public class MainApplication extends Application implements ReactApplication {
-  private final ReactNativeHost mReactNativeHost = new DefaultReactNativeHost(
-    this,
-    new ReactNativeHostWrapper(this, new ReactNativeHost(this) {
+  private final ReactNativeHost mReactNativeHost = 
+
+  new ReactNativeHostWrapper(
+    this, new DefaultReactNativeHost(this) {
     @Override
     public boolean getUseDeveloperSupport() {
       return BuildConfig.DEBUG;
@@ -48,18 +51,8 @@ public class MainApplication extends Application implements ReactApplication {
       return new ReanimatedJSIModulePackage();
     }
 
-    @Override
-    protected boolean isNewArchEnabled() {
-      return BuildConfig.IS_NEW_ARCHITECTURE_ENABLED;
-    }
+  });
 
-    @Override
-    protected Boolean isHermesEnabled() {
-      return BuildConfig.IS_HERMES_ENABLED;
-    }
-  }));
-
-  
 
   @Override
   public ReactNativeHost getReactNativeHost() {

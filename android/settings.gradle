@@ -7,4 +7,5 @@ apply from: new File(["node", "--print", "require.resolve('@react-native-communi
 applyNativeModulesSettingsGradle(settings)
 
 include ':app'
+
 includeBuild('../node_modules/react-native-gradle-plugin')
