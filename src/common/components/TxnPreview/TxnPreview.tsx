@@ -101,6 +101,21 @@ function parseExtendedSummaryItem(item: any, i: any, networkDetails: any, t: any
     return <Text>{` ${item.name} `}</Text>
   }
 
+  if (item.type === 'link') {
+    return (
+      <Text fontSize={12}>
+        <Text>{`${item.text} `}</Text>
+        <TouchableOpacity
+          onPress={() => Linking.openURL(item.link)}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          style={styles.openIconWrapper}
+        >
+          <OpenIcon width={16} height={16} />
+        </TouchableOpacity>
+      </Text>
+    )
+  }
+
   return null
 }
 
