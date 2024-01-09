@@ -6,41 +6,28 @@ import CustomJsonRpcProvider from '@common/services/CustomJsonRpcProvider'
 
 // TODO: move these in .env
 // currently here to avoid publishing a new build for the mobile apps and avoid the stores review process
-const RPC_URL_ETHEREUM =
-  'https://rpc.ankr.com/eth/0e066bd7837ff1978d6aa30b9f29407deb0276d74f46393e474c2530916c8943'
+const RPC_URL_ETHEREUM = 'https://invictus.ambire.com/ethereum'
 // Ambire Earn uses a separate RPC provider
 const RPC_URL_ETHEREUM_AMBIRE_EARN =
   'https://unufri-ethereum.adex.network/v3/099fc58e0de9451d80b18d7c74caa7c1'
-const RPC_URL_POLYGON =
-  'https://rpc.ankr.com/polygon/0e066bd7837ff1978d6aa30b9f29407deb0276d74f46393e474c2530916c8943'
-const RPC_URL_AVALANCHE =
-  'https://rpc.ankr.com/avalanche/0e066bd7837ff1978d6aa30b9f29407deb0276d74f46393e474c2530916c8943'
-const RPC_URL_BNB_CHAIN =
-  'https://rpc.ankr.com/bsc/0e066bd7837ff1978d6aa30b9f29407deb0276d74f46393e474c2530916c8943'
-const RPC_URL_FANTOM =
-  'https://rpc.ankr.com/fantom/0e066bd7837ff1978d6aa30b9f29407deb0276d74f46393e474c2530916c8943'
-const RPC_URL_MOONBEAM =
-  'https://rpc.ankr.com/moonbeam/0e066bd7837ff1978d6aa30b9f29407deb0276d74f46393e474c2530916c8943'
-const RPC_URL_MOONRIVER = 'https://rpc.api.moonriver.moonbeam.network'
-const RPC_URL_ARBITRUM =
-  'https://rpc.ankr.com/arbitrum/0e066bd7837ff1978d6aa30b9f29407deb0276d74f46393e474c2530916c8943'
-const RPC_URL_GNOSIS =
-  'https://rpc.ankr.com/gnosis/0e066bd7837ff1978d6aa30b9f29407deb0276d74f46393e474c2530916c8943'
-const RPC_URL_KUCOIN = 'https://rpc-mainnet.kcc.network'
-const RPC_URL_OPTIMISM =
-  'https://rpc.ankr.com/optimism/0e066bd7837ff1978d6aa30b9f29407deb0276d74f46393e474c2530916c8943'
-const RPC_URL_ANDROMEDA =
-  'https://rpc.ankr.com/metis/0e066bd7837ff1978d6aa30b9f29407deb0276d74f46393e474c2530916c8943'
-const RPC_URL_BASE =
-  'https://rpc.ankr.com/base/0e066bd7837ff1978d6aa30b9f29407deb0276d74f46393e474c2530916c8943'
+const RPC_URL_POLYGON = 'https://invictus.ambire.com/polygon'
+const RPC_URL_AVALANCHE = 'https://invictus.ambire.com/avalanche'
+const RPC_URL_BNB_CHAIN = 'https://invictus.ambire.com/binance-smart-chain'
+const RPC_URL_FANTOM = 'https://invictus.ambire.com/fantom'
+const RPC_URL_MOONBEAM = 'https://invictus.ambire.com/moonbeam'
+const RPC_URL_MOONRIVER = 'https://invictus.ambire.com/moonriver'
+const RPC_URL_ARBITRUM = 'https://invictus.ambire.com/arbitrum'
+const RPC_URL_GNOSIS = 'https://invictus.ambire.com/gnosis'
+const RPC_URL_KUCOIN = 'https://invictus.ambire.com/kucoin'
+const RPC_URL_OPTIMISM = 'https://invictus.ambire.com/optimism'
+const RPC_URL_ANDROMEDA = 'https://invictus.ambire.com/andromeda'
+const RPC_URL_BASE = 'https://invictus.ambire.com/base'
 const RPC_URL_CRONOS = 'https://evm-cronos.crypto.org'
 const RPC_URL_AURORA = 'https://mainnet.aurora.dev'
 const RPC_URL_OKC = 'https://exchainrpc.okex.org'
 const RPC_URL_ETHEREUM_POW = 'https://mainnet.ethereumpow.org'
-const RPC_URL_MUMBAI =
-  'https://rpc.ankr.com/polygon_mumbai/0e066bd7837ff1978d6aa30b9f29407deb0276d74f46393e474c2530916c8943'
-const RPC_URL_SEPOLIA =
-  'https://rpc.ankr.com/eth_sepolia/0e066bd7837ff1978d6aa30b9f29407deb0276d74f46393e474c2530916c8943'
+const RPC_URL_MUMBAI = 'https://invictus.ambire.com/mumbai'
+const RPC_URL_SEPOLIA = 'https://invictus.ambire.com/sepolia'
 
 const RPC_URLS: {
   [key in NETWORKS]: string
