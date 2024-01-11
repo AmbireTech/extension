@@ -10,7 +10,8 @@
     "jsEngine": "hermes",
     "updates": {
       "enabled": true,
-      "fallbackToCacheTimeout": 45000
+      "fallbackToCacheTimeout": 45000,
+      "url": "https://u.expo.dev/e6f855d0-5ac3-40e0-8127-740906e7a593"
     },
     "hooks": {
       "postPublish": [
@@ -35,6 +36,7 @@
     "plugins": [
       "expo-localization",
       "sentry-expo"
-    ]
+    ],
+    "android": {}
   }
 }
