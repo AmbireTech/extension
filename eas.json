@@ -45,8 +45,7 @@
       },
       "android": {
         "buildType": "apk"
-      },
-      "channel": "production:simulator"
+      }
     },
     "staging:simulator": {
       "extends": "staging",
@@ -55,8 +54,7 @@
       },
       "android": {
         "buildType": "apk"
-      },
-      "channel": "staging:simulator"
+      }
     },
     "development:simulator": {
       "extends": "development",
@@ -65,8 +63,7 @@
       },
       "android": {
         "buildType": "apk"
-      },
-      "channel": "development:simulator"
+      }
     }
   },
   "submit": {
