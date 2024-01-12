@@ -24,12 +24,7 @@
         "APP_ENV": "staging"
       }
     },
-    "preview": {
-      "distribution": "internal",
-      "channel": "preview"
-    },
     "development": {
-      "developmentClient": true,
       "extends": "production",
       "distribution": "internal",
       "android": {
