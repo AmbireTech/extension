@@ -220,7 +220,7 @@
     "babel-loader": "8.3.0",
     "copy-webpack-plugin": "^10.2.0",
     "dotenv": "^16.0.3",
-    "eas-cli": "^3.13.2",
+    "eas-cli": "^6.0.0",
     "eslint": "^8.19.9",
     "eslint-config-airbnb": "19.0.1",
     "eslint-config-airbnb-typescript": "16.0.0",
