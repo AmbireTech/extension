@@ -45,6 +45,9 @@
       },
       "android": {
         "buildType": "apk"
+      },
+      "env": {
+        "NO_FLIPPER": "1"
       }
     },
     "staging:simulator": {
