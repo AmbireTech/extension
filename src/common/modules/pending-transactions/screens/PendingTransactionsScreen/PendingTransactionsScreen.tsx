@@ -21,6 +21,7 @@ import SigningWithAccount from '@common/modules/pending-transactions/components/
 import TransactionSummary from '@common/modules/pending-transactions/components/TransactionSummary'
 import { PendingTransactionsContext } from '@common/modules/pending-transactions/contexts/pendingTransactionsContext'
 import { ROUTES } from '@common/modules/router/constants/common'
+import isGasTankCommitment from '@common/services/isGasTankCommitment'
 import spacings from '@common/styles/spacings'
 import flexboxStyles from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
@@ -64,6 +65,9 @@ const PendingTransactionsScreen = ({
     setReplaceTx
   } = transaction
 
+  const filteredBundle = bundle.txns.filter((txn) => !isGasTankCommitment(txn))
+  bundle.txns = filteredBundle
+
   if (getUiType().isNotification) {
     navigation.navigate = () => null
     navigation.goBack = () => null
@@ -74,7 +78,9 @@ const PendingTransactionsScreen = ({
   useLayoutEffect(() => {
     if (!isInBottomSheet) {
       navigation?.setOptions({
-        headerTitle: t('Pending Transactions: {{numTxns}}', { numTxns: bundle?.txns?.length }),
+        headerTitle: t('Pending Transactions: {{numTxns}}', {
+          numTxns: bundle?.txns?.length
+        }),
         withHeaderRight: true,
         hideHeaderLeft: true,
         onRightHeaderPress: rejectTxnOpenBottomSheet
