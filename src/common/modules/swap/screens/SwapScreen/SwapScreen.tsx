@@ -161,17 +161,17 @@ const SwapScreen = () => {
                 <ErrorIcon width={40} height={40} />
               </View>
               <Text fontSize={18} style={[text.center, spacings.ph, spacings.mbMd]}>
-                {t('Connection Unsuccessful!')}
+                {t('The device is not fully compatible')}
               </Text>
               <Text style={[text.center, spacings.ph, spacings.mbLg]}>
                 {t(
-                  'Your device might experience difficulties with the integrated Swap feature. In this case we recommend exchanging tokens via dApps in the Ambire dApp catalog.'
+                  "Your device doesn't fully support the integrated Swap feature at the moment. We're actively working to make more devices compatible. Meanwhile, please use UniSwap from our dApp catalog as an alternative."
                 )}
               </Text>
               <Button
                 type="outline"
                 accentColor={colors.turquoise}
-                text={t('dApp Catalog')}
+                text={t('Open UniSwap')}
                 hasBottomSpacing={false}
                 onPress={() =>
                   navigate(MOBILE_ROUTES.dappsCatalog, { state: { selectedDappId: 'uniswap' } })
