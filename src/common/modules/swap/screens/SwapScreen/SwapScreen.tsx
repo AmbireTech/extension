@@ -158,7 +158,7 @@ const SwapScreen = () => {
               ]}
             >
               <View style={[flexbox.center, spacings.mbLg]}>
-                <ErrorIcon width={40} height={40} />
+                <ErrorIcon color={colors.heliotrope} width={40} height={40} />
               </View>
               <Text fontSize={18} style={[text.center, spacings.ph, spacings.mbMd]}>
                 {t('The device is not fully compatible')}
