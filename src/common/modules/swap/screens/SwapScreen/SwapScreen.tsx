@@ -173,7 +173,9 @@ const SwapScreen = () => {
                 accentColor={colors.turquoise}
                 text={t('dApp Catalog')}
                 hasBottomSpacing={false}
-                onPress={() => navigate(MOBILE_ROUTES.dappsCatalog)}
+                onPress={() =>
+                  navigate(MOBILE_ROUTES.dappsCatalog, { state: { selectedDappId: 'uniswap' } })
+                }
               />
             </View>
           </View>
