@@ -1,5 +1,7 @@
 import { StyleSheet, ViewStyle } from 'react-native'
 
+import colors from '@common/styles/colors'
+
 interface Style {
   container: ViewStyle
   webview: ViewStyle
@@ -8,7 +10,7 @@ interface Style {
 
 const styles = StyleSheet.create<Style>({
   container: {
-    backgroundColor: 'transparent'
+    backgroundColor: colors.white
   },
   webview: {
     flex: 1,
