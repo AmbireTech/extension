@@ -1,5 +1,4 @@
 import { DappManifestData } from 'ambire-common/src/hooks/useDapps'
-import { nanoid } from 'nanoid'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
