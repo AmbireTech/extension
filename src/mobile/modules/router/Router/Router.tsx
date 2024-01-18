@@ -14,6 +14,7 @@ import { TAB_BAR_BLUR } from '@common/constants/router'
 import { ConnectionStates } from '@common/contexts/netInfoContext'
 import useNetInfo from '@common/hooks/useNetInfo'
 import useRequests from '@common/hooks/useRequests'
+import useRoute from '@common/hooks/useRoute'
 import useStorageController from '@common/hooks/useStorageController'
 import { AUTH_STATUS } from '@common/modules/auth/constants/authStatus'
 import { EmailLoginProvider } from '@common/modules/auth/contexts/emailLoginContext'
@@ -183,12 +184,14 @@ const ManageVaultLockStackScreen = () => {
 }
 
 const Web3StackScreen = () => {
+  const { params } = useRoute()
   return (
     <DappsProvider>
       <Web3Stack.Navigator screenOptions={{ headerShown: true }}>
         <Web3Stack.Screen
           name={`${MOBILE_ROUTES.dappsCatalog}-screen`}
           component={DappsCatalogScreen}
+          initialParams={params}
           options={{
             title: routesConfig[ROUTES.dappsCatalog].title,
             header: headerAlpha

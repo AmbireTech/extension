@@ -18,6 +18,8 @@ import colors from '@common/styles/colors'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
+import { delayPromise } from '@common/utils/promises'
+import { useIsFocused } from '@react-navigation/native'
 
 import styles from './styles'
 
@@ -70,6 +72,7 @@ const INJECTED_JAVASCRIPT = `
 const SwapScreen = () => {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
+  const isFocused = useIsFocused()
   const { sushiSwapIframeRef, hash, handleIncomingMessage, eventsCount } = useGnosis()
   const [loading, setLoading] = useState(false)
   const [connected, setConnected] = useState<null | boolean>(null)
@@ -173,9 +176,18 @@ const SwapScreen = () => {
                 accentColor={colors.turquoise}
                 text={t('Open UniSwap')}
                 hasBottomSpacing={false}
-                onPress={() =>
-                  navigate(MOBILE_ROUTES.dappsCatalog, { state: { selectedDappId: 'uniswap' } })
-                }
+                onPress={async () => {
+                  // initially ${MOBILE_ROUTES.dappsCatalog}-screen accessible by the router because it is nested in MOBILE_ROUTES.dappsCatalog stack.
+                  // if ${MOBILE_ROUTES.dappsCatalog}-screen not found default to MOBILE_ROUTES.dappsCatalog which will auto open the ${MOBILE_ROUTES.dappsCatalog}-screen
+                  // once entered in MOBILE_ROUTES.dappsCatalog, ${MOBILE_ROUTES.dappsCatalog}-screen will be visible to the router for subsequent navigation
+                  navigate(`${MOBILE_ROUTES.dappsCatalog}-screen`, {
+                    state: { selectedDappId: 'uniswap' }
+                  })
+                  await delayPromise(400)
+                  if (isFocused) {
+                    navigate(MOBILE_ROUTES.dappsCatalog, { state: { selectedDappId: 'uniswap' } })
+                  }
+                }}
               />
             </View>
           </View>
