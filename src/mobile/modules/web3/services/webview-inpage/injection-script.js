@@ -28,29 +28,6 @@ const commonScript = `
   const IS_METAMASK = ${IS_METAMASK};
 `
 
-// TODO: This is temporary, needed only for build #42, in order to fix the issue
-// with an over the air update (provider string is part of the build). Remove
-// this fix after the next build!
-const temporaryBuild42fixForProviderOverridingJQuery = (_providerStr) => {
-  // Replaces `const $ = ...` to `const $document = ...`
-  let providerStr = _providerStr.replace(
-    /const \$ = document\.querySelector\.bind\(document\)/g,
-    'const $document = document.querySelector.bind(document)'
-  )
-
-  // Replaces usages of `$` to `$document`
-  providerStr = providerStr.replace(
-    /\$\('head > link\[rel~="icon"\]'\)\?\.href \|\| \$\('head > meta\[itemprop="image"\]'\)\?\.content/g,
-    '$document(\'head > link[rel~="icon"]\')?.href || $document(\'head > meta[itemprop="image"]\')?.content'
-  )
-  providerStr = providerStr.replace(
-    /document\.title \|\| \$\('head > meta\[name="title"\]'\)\?\.content \|\| origin/g,
-    'document.title || $document(\'head > meta[name="title"]\')?.content || origin'
-  )
-
-  return providerStr
-}
-
 const useGetProviderInjection = () => {
   const [provider, setProvider] = useState('')
 
@@ -60,7 +37,7 @@ const useGetProviderInjection = () => {
           .then((ethereumProviderScript) => {
             setProvider(`
             ${commonScript}
-            ${temporaryBuild42fixForProviderOverridingJQuery(ethereumProviderScript)}
+            ${ethereumProviderScript}
 
             true;
           `)
@@ -72,7 +49,7 @@ const useGetProviderInjection = () => {
           .then((ethereumProviderScript) => {
             setProvider(`
             ${commonScript}
-            ${temporaryBuild42fixForProviderOverridingJQuery(ethereumProviderScript)}
+            ${ethereumProviderScript}
 
             true;
           `)
