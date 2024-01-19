@@ -48,14 +48,17 @@ const Web3BrowserScreen = () => {
     }
   }
 
-  const onNavigationStateChange = useCallback((navState: WebViewNavigation) => {
-    setCanGoBack(navState.canGoBack)
-    setCanGoForward(navState.canGoForward)
-    if (navState.url !== 'about:blank') {
-      setOpenedUrl(navState.url)
-      setAddressBarValue(navState.url)
-    }
-  }, [])
+  const onNavigationStateChange = useCallback(
+    (navState: WebViewNavigation) => {
+      setCanGoBack(navState.canGoBack)
+      setCanGoForward(navState.canGoForward)
+
+      if (navState.url !== 'about:blank' && navState.url !== openedUrl) {
+        setAddressBarValue(navState.url)
+      }
+    },
+    [openedUrl]
+  )
 
   const handleInputSubmit = useCallback(() => setOpenedUrl(addressBarValue), [addressBarValue])
 
