@@ -278,7 +278,7 @@ class EthereumProvider extends EventEmitter {
 
   isAmbire = true
 
-  isMetaMask = IS_METAMASK
+  isMetaMask = false
 
   _isAmbire = true
 
@@ -503,7 +503,6 @@ class EthereumProvider extends EventEmitter {
 
 const provider = new EthereumProvider()
 patchProvider(provider)
-let cacheOtherProvider = null
 const ambireProvider = new Proxy(provider, {
   deleteProperty: (target, prop) => {
     if (typeof prop === 'string' && ['on', 'isAmbire', 'isMetaMask', '_isAmbire'].includes(prop)) {
@@ -513,24 +512,16 @@ const ambireProvider = new Proxy(provider, {
   }
 })
 
-const requestHasOtherProvider = () => {
-  return provider.requestInternalMethods({
-    method: 'hasOtherProvider',
-    params: []
-  })
-}
-
-const setAmbireProvider = (isDefaultWallet) => {
+const setAmbireProvider = () => {
   try {
     Object.defineProperty(window, 'ethereum', {
-      configurable: !isDefaultWallet,
+      configurable: false,
       enumerable: true,
       set(val) {
         if (val?._isAmbire) {
           return
         }
-        requestHasOtherProvider()
-        cacheOtherProvider = val
+
         return ambireProvider
       },
       get() {
@@ -552,60 +543,29 @@ const setAmbireProvider = (isDefaultWallet) => {
           }
         }
 
-        return isDefaultWallet ? ambireProvider : cacheOtherProvider || ambireProvider
+        return ambireProvider
       }
     })
   } catch (e) {
-    // think that defineProperty failed means there is any other wallet
-    requestHasOtherProvider()
     console.error(e)
     window.ethereum = ambireProvider
   }
 }
 
-const setOtherProvider = (otherProvider) => {
-  if (window.ethereum === otherProvider) {
-    return
-  }
-  const existingProvider = Object.getOwnPropertyDescriptor(window, 'ethereum')
-  if (existingProvider?.configurable) {
-    Object.defineProperty(window, 'ethereum', {
-      value: otherProvider,
-      writable: false,
-      configurable: false,
-      enumerable: true
-    })
-  } else {
-    window.ethereum = otherProvider
-  }
-}
-
-const initProvider = (isDefaultWallet) => {
+const initProvider = () => {
   ambireProvider._isReady = true
-  let finalProvider = null
+  patchProvider(ambireProvider)
+  setAmbireProvider()
 
-  if (window.ethereum && !window.ethereum._isAmbire) {
-    requestHasOtherProvider()
-    cacheOtherProvider = window.ethereum
-  }
-
-  if (isDefaultWallet || !cacheOtherProvider) {
-    finalProvider = ambireProvider
-    patchProvider(ambireProvider)
-    setAmbireProvider(isDefaultWallet)
-  } else {
-    finalProvider = cacheOtherProvider
-    setOtherProvider(cacheOtherProvider)
-  }
   if (!window.web3) {
     window.web3 = {
-      currentProvider: finalProvider
+      currentProvider: ambireProvider
     }
   }
   window.ambire = ambireProvider
 }
 
-initProvider(true)
+initProvider()
 
 const announceEip6963Provider = (p) => {
   const info = {

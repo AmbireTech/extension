@@ -133,5 +133,8 @@ export const DAPP_PROVIDER_URLS: { [key: string]: { [key in NETWORKS]?: string }
     [NETWORKS.optimism]: 'https://opt-mainnet.g.alchemy.com/v2/nkwspVwpu6Yyst5x9MI5bm4lUysOEUAS',
     [NETWORKS.polygon]: 'https://polygon-mainnet.g.alchemy.com/v2/exQuQ4Bh3aTvZz22vXMG9DOoK6RG8Fgm',
     [NETWORKS.arbitrum]: 'https://arb-mainnet.g.alchemy.com/v2/jm6UWDyOE-KOydCL_jFQwu_7VkAWUXJb'
+  },
+  'mean.finance': {
+    [NETWORKS.polygon]: 'https://polygon-rpc.com'
   }
 }
