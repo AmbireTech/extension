@@ -107,10 +107,7 @@ export default function useRequestTransaction() {
       }
 
       // Clears the param so that it doesn't get cached (used) again
-      // @ts-ignore-next-line
-      navigation.setParams({
-        tokenAddressOrSymbol: undefined
-      })
+      navigation.setParams({ tokenAddressOrSymbol: undefined } as any)
     }
   }, [params?.tokenAddressOrSymbol, tokens, navigation])
 
