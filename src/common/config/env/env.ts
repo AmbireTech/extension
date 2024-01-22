@@ -30,7 +30,7 @@ export const APP_ID = Application.applicationId
  * Internal app version, example: 1.0.0 (follows semantic versioning).
  * Fallback to the appJSON version, because in web mode Constants are missing.
  */
-export const APP_VERSION = Constants?.manifest?.version || appJSON.expo.version
+export const APP_VERSION = Constants?.expoConfig?.version || appJSON.expo.version
 /**
  * The internal build version of the native build (binary).
  * This is the Info.plist value for `CFBundleVersion` on iOS and
@@ -38,9 +38,9 @@ export const APP_VERSION = Constants?.manifest?.version || appJSON.expo.version
  */
 export const BUILD_NUMBER = Application.nativeBuildVersion || 'N/A'
 
-export const RELEASE_CHANNEL = Updates.releaseChannel || 'N/A'
+export const RELEASE_CHANNEL = Updates.channel || 'N/A'
 export const RUNTIME_VERSION = Updates.runtimeVersion || 'N/A'
-export const EXPO_SDK = Constants?.manifest?.sdkVersion || 'N/A'
+export const EXPO_SDK = Constants?.expoConfig?.sdkVersion || 'N/A'
 
 export const isiOS = Platform.OS === 'ios'
 export const isAndroid = Platform.OS === 'android'

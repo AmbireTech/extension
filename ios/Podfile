@@ -7,7 +7,23 @@ def min_ios_version_supported
 end
 
 platform :ios, '13.0'
-install! 'cocoapods', :deterministic_uuids => false
+prepare_react_native_project!
+
+pod 'glog', :podspec => '../node_modules/react-native/third-party-podspecs/glog.podspec', :modular_headers => false
+# If you are using a `react-native-flipper` your iOS build will fail when `NO_FLIPPER=1` is set.
+# because `react-native-flipper` depends on (FlipperKit,...) that will be excluded
+#
+# To fix this you can also exclude `react-native-flipper` using a `react-native.config.js`
+# ```js
+# module.exports = {
+#   dependencies: {
+#     ...(process.env.NO_FLIPPER ? { 'react-native-flipper': { platforms: { ios: null } } } : {}),
+# ```
+linkage = ENV['USE_FRAMEWORKS']
+if linkage != nil
+  Pod::UI.puts "Configuring Pod with #{linkage}ally linked Frameworks".green
+  use_frameworks! :linkage => linkage.to_sym
+end
 
 require 'json'
 podfile_properties = JSON.parse(File.read('./Podfile.properties.json')) rescue {}
@@ -47,7 +63,7 @@ target 'ambire' do
     # Hermes is now enabled by default. Disable by setting this flag to false.
     # Upcoming versions of React Native may rely on get_default_flags(), but
     # we make it explicit here to aid in the React Native upgrade process.
-    :hermes_enabled => true,
+    :hermes_enabled => flags[:hermes_enabled],
     # Use Flipper only for debug builds. Otherwise, it conflicts with the
     # OpenSSL framework dep of the react-native-quick-crypto package.
     # The debug builds run fine, but the release ones fail with:
@@ -55,9 +71,7 @@ target 'ambire' do
     # Another solution is to manually add the "OpenSSL.framework" pod in xCode ->
     # General -> "Frameworks, Libraries and Embedded Content". But it works
     # only for the release builds, not for the debug ones (which fail).
-    :flipper_configuration => ENV['CI'] ?
-    FlipperConfiguration.disabled :
-    FlipperConfiguration.enabled,
+    :flipper_configuration => ENV['NO_FLIPPER'] == "1" ? FlipperConfiguration.disabled : FlipperConfiguration.enabled,
     :fabric_enabled => flags[:fabric_enabled],
     # An absolute path to your application root.
     :app_path => "#{Pod::Config.instance.installation_root}/.."
@@ -93,5 +107,4 @@ target 'ambire' do
       config.build_settings["EXCLUDED_ARCHS[sdk=iphonesimulator*]"] = "arm64"
     end
   end
-
 end

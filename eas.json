@@ -1,25 +1,25 @@
 {
   "cli": {
-    "version": ">= 3.13.2"
+    "version": ">= 6.0.0"
   },
   "build": {
     "production": {
-      "node": "16.13.0",
+      "node": "18.19.0",
       "ios": {
         "credentialsSource": "local"
       },
       "android": {
         "credentialsSource": "local"
       },
-      "releaseChannel": "default",
       "env": {
         "APP_ENV": "production"
-      }
+      },
+      "channel": "default"
     },
     "staging": {
       "extends": "production",
       "distribution": "internal",
-      "releaseChannel": "staging",
+      "channel": "staging",
       "env": {
         "APP_ENV": "staging"
       }
@@ -33,7 +33,7 @@
       "ios": {
         "buildConfiguration": "Debug"
       },
-      "releaseChannel": "development",
+      "channel": "development",
       "env": {
         "APP_ENV": "development"
       }
@@ -45,6 +45,9 @@
       },
       "android": {
         "buildType": "apk"
+      },
+      "env": {
+        "NO_FLIPPER": "1"
       }
     },
     "staging:simulator": {
