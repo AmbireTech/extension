@@ -58,12 +58,15 @@ target 'ambire' do
   # Flags change depending on the env values.
   flags = get_default_flags()
 
+  require 'json'
+  podfile_properties = JSON.parse(File.read(File.join(__dir__, 'Podfile.properties.json'))) rescue {}
+
   use_react_native!(
     :path => config[:reactNativePath],
     # Hermes is now enabled by default. Disable by setting this flag to false.
     # Upcoming versions of React Native may rely on get_default_flags(), but
     # we make it explicit here to aid in the React Native upgrade process.
-    :hermes_enabled => flags[:hermes_enabled],
+    :hermes_enabled => podfile_properties['expo.jsEngine'] == nil || podfile_properties['expo.jsEngine'] == 'hermes',
     # Use Flipper only for debug builds. Otherwise, it conflicts with the
     # OpenSSL framework dep of the react-native-quick-crypto package.
     # The debug builds run fine, but the release ones fail with:

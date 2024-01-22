@@ -3,13 +3,19 @@
   "expo": {
     "slug": "ambire-mobile-wallet",
     "version": "3.14.0",
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "splash": {
+      "image": "./ios/ambire/Images.xcassets/SplashScreen.imageset/splash-logo-1x.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#313555"
+    },
     "runtimeVersion": "1",
     "jsEngine": "hermes",
     "updates": {
-      "enabled": true,
-      "fallbackToCacheTimeout": 45000,
-      "url": "https://u.expo.dev/e6f855d0-5ac3-40e0-8127-740906e7a593"
+      "enabled": false,
+      "url": "https://u.expo.dev/58802506-2680-49c2-a7a2-3af290426f05"
     },
     "hooks": {
       "postPublish": [
@@ -28,10 +34,14 @@
     },
     "extra": {
       "eas": {
-        "projectId": "e6f855d0-5ac3-40e0-8127-740906e7a593"
+        "projectId": "58802506-2680-49c2-a7a2-3af290426f05"
       }
     },
-    "plugins": ["expo-localization", "sentry-expo"],
-    "android": {}
+    "plugins": [
+      "expo-localization",
+      "sentry-expo"
+    ],
+    "android": {},
+    "owner": "goodmorningambire"
   }
 }
