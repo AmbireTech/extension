@@ -1,5 +1,6 @@
 import React, { useEffect, useLayoutEffect } from 'react'
 import { View } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import WebView from 'react-native-webview'
 
 import GradientBackgroundWrapper from '@common/components/GradientBackgroundWrapper'
@@ -15,6 +16,7 @@ const ProviderScreen = () => {
   const { params } = useRoute()
   const { name, uri } = params
   const { goBack, setOptions } = useNavigation()
+  const insets = useSafeAreaInsets()
 
   useEffect(() => {
     if (!uri) {
@@ -38,7 +40,7 @@ const ProviderScreen = () => {
           injectedJavaScriptBeforeContentLoadedForMainFrameOnly
           setSupportMultipleWindows
           javaScriptEnabled
-          containerStyle={styles.container}
+          containerStyle={[styles.container, { paddingBottom: insets.bottom }]}
           style={styles.webview}
           bounces={false}
           setBuiltInZoomControls={false}

@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react'
+import React, { useCallback, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   Keyboard,
@@ -13,6 +13,7 @@ import SearchIcon from '@common/assets/svg/SearchIcon'
 import GradientBackgroundWrapper from '@common/components/GradientBackgroundWrapper'
 import { isWeb } from '@common/config/env'
 import useNavigation from '@common/hooks/useNavigation'
+import useRoute from '@common/hooks/useRoute'
 import { ROUTES } from '@common/modules/router/constants/common'
 import colors from '@common/styles/colors'
 import flexbox from '@common/styles/utils/flexbox'
@@ -34,7 +35,30 @@ const DappsCatalogScreen = () => {
     // onCategorySelect
   } = useDapps()
   const { setSelectedDapp } = useWeb3()
-  const { navigate } = useNavigation()
+  const { navigate, setParams } = useNavigation()
+  const { params } = useRoute()
+
+  // Check whether there is a selectedDappId passed to that screen
+  // if passed directly load that selectedDapp in the WebView without showing the catalog items
+  useEffect(() => {
+    const shouldTriggerRedirect = params?.selectedDappId && filteredCatalog.length > 0
+    if (!shouldTriggerRedirect) return
+
+    const item = filteredCatalog.find(({ id }) => id === params?.selectedDappId)
+    if (!item) return
+
+    setSelectedDapp(item)
+    onSearchChange(item.name)
+    setParams({ selectedDappId: undefined } as any)
+    navigate(`${ROUTES.web3Browser}-screen`)
+  }, [
+    filteredCatalog,
+    navigate,
+    setParams,
+    onSearchChange,
+    params?.selectedDappId,
+    setSelectedDapp
+  ])
 
   // Dapp favorites are temporarily disabled since v3.11.0 */
   // const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()

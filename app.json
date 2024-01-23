@@ -7,7 +7,6 @@
       "**/*"
     ],
     "splash": {
-      "image": "./ios/ambire/Images.xcassets/SplashScreen.imageset/splash-logo-1x.png",
       "resizeMode": "contain",
       "backgroundColor": "#313555"
     },

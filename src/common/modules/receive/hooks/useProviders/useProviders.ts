@@ -52,7 +52,7 @@ const useProviders = ({ walletAddress, networkId }: UseProvidersProps): UseProvi
     navigate(ROUTES.provider, {
       state: {
         name,
-        uri: `https://buy.ramp.network/?userAddress=${walletAddress}&hostApiKey=${RAMP_HOST_API_KEY}&swapAsset=${assetsList[networkId]}&finalUrl=ambire://&hostAppName=Ambire&hostLogoUrl=https://www.ambire.com/ambire-logo.png`
+        uri: `https://app.ramp.network/?userAddress=${walletAddress}&hostApiKey=${RAMP_HOST_API_KEY}&swapAsset=${assetsList[networkId]}&hostAppName=Ambire&hostLogoUrl=https://www.ambire.com/ambire-logo.png`
       }
     })
   }

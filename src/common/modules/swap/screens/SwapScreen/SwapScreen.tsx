@@ -18,6 +18,8 @@ import colors from '@common/styles/colors'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
+import { delayPromise } from '@common/utils/promises'
+import { useIsFocused } from '@react-navigation/native'
 
 import styles from './styles'
 
@@ -70,6 +72,7 @@ const INJECTED_JAVASCRIPT = `
 const SwapScreen = () => {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
+  const isFocused = useIsFocused()
   const { sushiSwapIframeRef, hash, handleIncomingMessage, eventsCount } = useGnosis()
   const [loading, setLoading] = useState(false)
   const [connected, setConnected] = useState<null | boolean>(null)
@@ -158,22 +161,33 @@ const SwapScreen = () => {
               ]}
             >
               <View style={[flexbox.center, spacings.mbLg]}>
-                <ErrorIcon width={40} height={40} />
+                <ErrorIcon color={colors.heliotrope} width={40} height={40} />
               </View>
               <Text fontSize={18} style={[text.center, spacings.ph, spacings.mbMd]}>
-                {t('Connection Unsuccessful!')}
+                {t('The device is not fully compatible')}
               </Text>
               <Text style={[text.center, spacings.ph, spacings.mbLg]}>
                 {t(
-                  'Your device might experience difficulties with the integrated Swap feature. In this case we recommend exchanging tokens via dApps in the Ambire dApp catalog.'
+                  "Your device doesn't fully support the integrated Swap feature at the moment. We're actively working to make more devices compatible. Meanwhile, please use UniSwap from our dApp catalog as an alternative."
                 )}
               </Text>
               <Button
                 type="outline"
                 accentColor={colors.turquoise}
-                text={t('dApp Catalog')}
+                text={t('Open UniSwap')}
                 hasBottomSpacing={false}
-                onPress={() => navigate(MOBILE_ROUTES.dappsCatalog)}
+                onPress={async () => {
+                  // initially ${MOBILE_ROUTES.dappsCatalog}-screen accessible by the router because it is nested in MOBILE_ROUTES.dappsCatalog stack.
+                  // if ${MOBILE_ROUTES.dappsCatalog}-screen not found default to MOBILE_ROUTES.dappsCatalog which will auto open the ${MOBILE_ROUTES.dappsCatalog}-screen
+                  // once entered in MOBILE_ROUTES.dappsCatalog, ${MOBILE_ROUTES.dappsCatalog}-screen will be visible to the router for subsequent navigation
+                  navigate(`${MOBILE_ROUTES.dappsCatalog}-screen`, {
+                    state: { selectedDappId: 'uniswap' }
+                  })
+                  await delayPromise(400)
+                  if (isFocused) {
+                    navigate(MOBILE_ROUTES.dappsCatalog, { state: { selectedDappId: 'uniswap' } })
+                  }
+                }}
               />
             </View>
           </View>
