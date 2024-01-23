@@ -23,10 +23,10 @@ import com.swmansion.reanimated.ReanimatedJSIModulePackage;
 import java.util.List;
 
 public class MainApplication extends Application implements ReactApplication {
-  private final ReactNativeHost mReactNativeHost = 
+  private final ReactNativeHost mReactNativeHost =
 
   new ReactNativeHostWrapper(
-    this, new DefaultReactNativeHost(this) {
+    this, new ReactNativeHostWrapper(this, new DefaultReactNativeHost(this) {
     @Override
     public boolean getUseDeveloperSupport() {
       return BuildConfig.DEBUG;
@@ -51,7 +51,7 @@ public class MainApplication extends Application implements ReactApplication {
       return new ReanimatedJSIModulePackage();
     }
 
-  });
+  }));
 
 
   @Override
