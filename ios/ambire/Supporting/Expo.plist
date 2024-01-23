@@ -3,15 +3,15 @@
 <plist version="1.0">
   <dict>
     <key>EXUpdatesURL</key>
-    <string>https://u.expo.dev/e6f855d0-5ac3-40e0-8127-740906e7a593</string>
+    <string>https://u.expo.dev/58802506-2680-49c2-a7a2-3af290426f05</string>
     <key>EXUpdatesAutoSetup</key>
     <false/>
     <key>EXUpdatesEnabled</key>
-    <true/>
+    <false/>
     <key>EXUpdatesCheckOnLaunch</key>
     <string>ALWAYS</string>
     <key>EXUpdatesLaunchWaitMs</key>
-    <integer>45000</integer>
+    <integer>0</integer>
     <key>EXUpdatesRuntimeVersion</key>
     <string>1</string>
   </dict>

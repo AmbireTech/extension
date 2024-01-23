@@ -41,7 +41,8 @@
     "production:simulator": {
       "extends": "production",
       "ios": {
-        "simulator": true
+        "simulator": true,
+        "cocoapods": "1.14.3"
       },
       "android": {
         "buildType": "apk"
