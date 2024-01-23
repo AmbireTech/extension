@@ -13,7 +13,8 @@
     "runtimeVersion": "1",
     "jsEngine": "hermes",
     "updates": {
-      "enabled": false,
+      "enabled": true,
+      "fallbackToCacheTimeout": 45000,
       "url": "https://u.expo.dev/58802506-2680-49c2-a7a2-3af290426f05"
     },
     "hooks": {

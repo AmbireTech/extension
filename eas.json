@@ -6,13 +6,15 @@
     "production": {
       "node": "18.19.0",
       "ios": {
-        "credentialsSource": "local"
+        "credentialsSource": "local",
+        "cocoapods": "1.14.3"
       },
       "android": {
         "credentialsSource": "local"
       },
       "env": {
-        "APP_ENV": "production"
+        "APP_ENV": "production",
+        "NO_FLIPPER": "1"
       },
       "channel": "default"
     },
@@ -41,14 +43,10 @@
     "production:simulator": {
       "extends": "production",
       "ios": {
-        "simulator": true,
-        "cocoapods": "1.14.3"
+        "simulator": true
       },
       "android": {
         "buildType": "apk"
-      },
-      "env": {
-        "NO_FLIPPER": "1"
       }
     },
     "staging:simulator": {
