@@ -4,6 +4,9 @@
 /* eslint-disable no-restricted-globals */
 /* eslint-disable no-param-reassign */
 /* eslint-disable max-classes-per-file */
+
+const delayPromise = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+
 const intToHex = function (i) {
   if (!Number.isSafeInteger(i) || i < 0) {
     throw new Error(`Received an invalid integer type: ${i}`)
@@ -181,6 +184,10 @@ class ReadyPromise {
   }
 }
 
+const ambireId = 'ambire-eip-6963-id'
+let doesWebpageReadOurProvider
+let isEIP6963
+
 // keep isMetaMask and remove isAmbire
 const impersonateMetamaskWhitelist = [
   // layerzero
@@ -198,7 +205,6 @@ const impersonateMetamaskWhitelist = [
 
   'quickswap.exchange'
 ]
-
 // keep isAmbire and remove isMetaMask
 const ambireHostList = []
 
@@ -236,7 +242,6 @@ const patchProvider = (provider) => {
     if (mode === 'default') {
       provider.isMetaMask = true
       provider.isAmbire = true
-      return
     }
   } catch (e) {
     console.error(e)
@@ -264,7 +269,6 @@ window.handleBackgroundMessage = function ({ event, data }) {
 
   window.ethereum.emit(event, data)
 }
-
 class EthereumProvider extends EventEmitter {
   chainId = null
 
@@ -312,14 +316,7 @@ class EthereumProvider extends EventEmitter {
 
   _requestPromise = new ReadyPromise(1)
 
-  _dedupePromise = new DedupePromise([
-    'personal_sign',
-    'wallet_addEthereumChain',
-    'eth_signTypedData',
-    'eth_signTypedData_v1',
-    'eth_signTypedData_v3',
-    'eth_signTypedData_v4'
-  ])
+  _dedupePromise = new DedupePromise([])
 
   constructor() {
     super()
@@ -353,7 +350,7 @@ class EthereumProvider extends EventEmitter {
       this._requestPromise.check(1)
     })
     try {
-      const { chainId, accounts, networkVersion, isUnlocked } = await this.request({
+      const { chainId, accounts, networkVersion, isUnlocked } = await this.requestInternalMethods({
         method: 'getProviderState'
       })
       if (isUnlocked) {
@@ -445,14 +442,10 @@ class EthereumProvider extends EventEmitter {
         )
       ).then((result) => callback(null, result))
     }
-    if (typeof payload === 'object') {
-      const { method, params, ...rest } = payload
-      this.request({ method, params })
-        .then((result) => callback(null, { ...rest, method, result }))
-        .catch((error) => callback(error, { ...rest, method, error }))
-    } else {
-      callback(null)
-    }
+    const { method, params, ...rest } = payload
+    this.request({ method, params })
+      .then((result) => callback(null, { ...rest, method, result }))
+      .catch((error) => callback(error, { ...rest, method, error }))
   }
 
   send = (payload, callback) => {
@@ -493,6 +486,7 @@ class EthereumProvider extends EventEmitter {
       ['enable', 'eth_requestAccounts'],
       ['net_version', 'net_version']
     ]
+    // eslint-disable-next-line no-restricted-syntax, @typescript-eslint/naming-convention
     for (const [_method, method] of legacyMethods) {
       this[_method] = () => this.request({ method })
     }
@@ -509,119 +503,125 @@ class EthereumProvider extends EventEmitter {
 
 const provider = new EthereumProvider()
 patchProvider(provider)
-let cacheOtherProvider = null
 const ambireProvider = new Proxy(provider, {
   deleteProperty: (target, prop) => {
     if (typeof prop === 'string' && ['on', 'isAmbire', 'isMetaMask', '_isAmbire'].includes(prop)) {
-      // @ts-ignore
       delete target[prop]
     }
     return true
   }
 })
 
-const isDefaultWallet = true
-
-let finalProvider = null
-
-if (window.ethereum && !window.ethereum._isAmbire) {
-  provider.requestInternalMethods({
-    method: 'hasOtherProvider',
-    params: []
-  })
-  cacheOtherProvider = window.ethereum
-}
-
-if (isDefaultWallet || !cacheOtherProvider) {
-  finalProvider = ambireProvider
+const setAmbireProvider = () => {
   try {
-    const customizeEthereum = {
-      ...window.ethereum
-    }
-    Object.keys(finalProvider).forEach((key) => {
-      customizeEthereum[key] = finalProvider[key]
-    })
-    patchProvider(customizeEthereum)
     Object.defineProperty(window, 'ethereum', {
-      set() {
-        provider.requestInternalMethods({
-          method: 'hasOtherProvider',
-          params: []
-        })
-        return finalProvider
+      configurable: false,
+      enumerable: true,
+      set(val) {
+        if (val?._isAmbire) {
+          return
+        }
+
+        return ambireProvider
       },
       get() {
-        return finalProvider
+        // script to determine whether the page is a dapp or not
+        // (only pages that are dapps should read the ethereum provider)
+        // the provider is called from multiple instances (current page and other extensions)
+        // we need only the calls from the current page
+        if (!doesWebpageReadOurProvider) {
+          try {
+            throw new Error()
+          } catch (error) {
+            const stack = error.stack // Parse the stack trace to get the caller info
+            if (stack) {
+              const callerPage = stack.split('\n')[2].trim()
+              if (callerPage.includes(window.location.hostname)) {
+                doesWebpageReadOurProvider = true
+              }
+            }
+          }
+        }
+
+        return ambireProvider
       }
     })
   } catch (e) {
-    // think that defineProperty failed means there is any other wallet
-    provider.requestInternalMethods({
-      method: 'hasOtherProvider',
-      params: []
-    })
     console.error(e)
-    window.ethereum = finalProvider
+    window.ethereum = ambireProvider
   }
+}
+
+const initProvider = () => {
+  ambireProvider._isReady = true
+  patchProvider(ambireProvider)
+  setAmbireProvider()
+
   if (!window.web3) {
     window.web3 = {
       currentProvider: ambireProvider
     }
   }
-  finalProvider._isReady = true
-  // finalProvider.on('ambire:chainChanged', switchChainNotice)
-} else {
-  finalProvider = cacheOtherProvider
-  delete ambireProvider.on
-  delete ambireProvider.isAmbire
-  delete ambireProvider._isAmbire
-  Object.keys(finalProvider).forEach((key) => {
-    window.ethereum[key] = finalProvider[key]
-  })
-}
-provider._cacheEventListenersBeforeReady.forEach(([event, handler]) => {
-  finalProvider.on(event, handler)
-})
-provider._cacheRequestsBeforeReady.forEach(({ resolve, reject, data }) => {
-  finalProvider.request(data).then(resolve).catch(reject)
-})
-
-if (window.ethereum) {
-  cacheOtherProvider = window.ethereum
-  provider.requestInternalMethods({
-    method: 'hasOtherProvider',
-    params: []
-  })
+  window.ambire = ambireProvider
 }
 
-window.ethereum = ambireProvider
+initProvider()
 
-try {
-  Object.defineProperty(window, 'ethereum', {
-    set(val) {
-      if (val?._isAmbire) {
-        return
-      }
-      provider.requestInternalMethods({
-        method: 'hasOtherProvider',
-        params: []
-      })
-      cacheOtherProvider = val
-    },
-    get() {
-      return ambireProvider
-    }
-  })
-} catch (e) {
-  console.error(e)
-  // To prevent Object.defineProperty from other wallet, inject ethereum provider directly
-  window.ethereum = ambireProvider
-}
-
-if (!window.web3) {
-  window.web3 = {
-    currentProvider: window.ethereum
+const announceEip6963Provider = (p) => {
+  const info = {
+    uuid: ambireId,
+    name: 'Ambire',
+    icon: ambireSvg,
+    rdns: 'com.ambire.wallet'
   }
+
+  window.dispatchEvent(
+    new CustomEvent('eip6963:announceProvider', {
+      detail: Object.freeze({ info, provider: p })
+    })
+  )
 }
+
+window.addEventListener('eip6963:requestProvider', () => {
+  announceEip6963Provider(ambireProvider)
+})
+
+announceEip6963Provider(ambireProvider)
 
 window.dispatchEvent(new Event('ethereum#initialized'))
+
+//
+// MetaMask text and icon replacement for dApps using legacy connect only
+//
+
+const runReplacementScript = async () => {
+  const hasWalletConnectInPage = isWordInPage('walletconnect') || isWordInPage('wallet connect')
+  const hasMetaMaskInPage = isWordInPage('metamask')
+  const hasCoinbaseWalletInPage = isWordInPage('coinbasewallet') || isWordInPage('coinbase wallet')
+
+  // most of the dapps read the provider but some don't till connection
+  if (
+    !doesWebpageReadOurProvider &&
+    !(hasWalletConnectInPage && hasMetaMaskInPage && hasCoinbaseWalletInPage)
+  )
+    return
+
+  await delayPromise(30) // wait for DOM update
+
+  if (isEIP6963) return
+
+  if (hasWalletConnectInPage) replaceMMImgInPage()
+
+  const hasTrustWalletInPage = isWordInPage('trustwallet') || isWordInPage('trust wallet')
+  const isW3Modal = isWordInPage('connect your wallet') && isWordInPage('scan with your wallet')
+
+  if (!hasMetaMaskInPage) return
+  if (!(hasWalletConnectInPage || hasCoinbaseWalletInPage || hasTrustWalletInPage || isW3Modal))
+    return
+
+  replaceMMBrandInPage(ambireSvg)
+}
+
+document.addEventListener('click', runReplacementScript)
+const observer = new MutationObserver(runReplacementScript)
+observer.observe(document, { childList: true, subtree: true, attributes: true })
