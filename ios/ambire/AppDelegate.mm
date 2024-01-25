@@ -1,6 +1,7 @@
 #import "AppDelegate.h"
 #import <React/RCTAppSetupUtils.h>
 #import <EXSplashScreen/EXSplashScreenService.h>
+#import <EXUpdates/EXUpdatesAppController.h>
 
 #import <React/RCTBridge.h>
 #import <React/RCTBundleURLProvider.h>
@@ -21,7 +22,25 @@
   // They will be passed down to the ViewController used by React Native.
   self.initialProps = @{};
 
+  #ifdef DEBUG
+    [self initializeReactNativeApp];
+  #else
+    // Get the main UIWindow
+    UIWindow *mainWindow = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
+    // Initialize the EXUpdates module, needed for `expo-updates` and OTA to work properly
+    EXUpdatesAppController *controller = [EXUpdatesAppController sharedInstance];
+    controller.delegate = self;
+    // Start the EXUpdatesAppController
+    [controller startAndShowLaunchScreen:self.window];
+  #endif
   return [super application:application didFinishLaunchingWithOptions:launchOptions];
+}
+
+- (RCTBridge *)initializeReactNativeApp
+{
+  // Initialize the React Native bridge for development builds
+  RCTBridge *bridge = [[RCTBridge alloc] initWithDelegate:self launchOptions:self.launchOptions];
+  return bridge;
 }
 
 - (NSURL *)sourceURLForBridge:(RCTBridge *)bridge
@@ -29,8 +48,13 @@
 #if DEBUG
   return [[RCTBundleURLProvider sharedSettings] jsBundleURLForBundleRoot:@"index"];
 #else
-  return [[NSBundle mainBundle] URLForResource:@"main" withExtension:@"jsbundle"];
+  // For release builds, use the launch asset URL from EXUpdatesAppController
+  return [[EXUpdatesAppController sharedInstance] launchAssetUrl];
 #endif
+}
+
+- (void)appController:(EXUpdatesAppController *)appController didStartWithSuccess:(BOOL)success {
+  appController.bridge = [self initializeReactNativeApp];
 }
 
 /// This method controls whether the `concurrentRoot`feature of React18 is turned on or off.

@@ -59,6 +59,9 @@ react {
 
 }
 
+ext {
+  hermesEnabled = (findProperty('expo.jsEngine') ?: "hermes") == "hermes"
+}
 // apply from: new File(["node", "--print", "require.resolve('react-native/package.json')"].execute(null, rootDir).text.trim(), "../react.gradle")
 
 /**
@@ -91,7 +94,7 @@ android {
         applicationId "com.ambire.wallet"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 44
+        versionCode 45
         versionName "3.14.0"
     }
     splits {
@@ -114,6 +117,7 @@ android {
         debug {
             signingConfig signingConfigs.debug
             buildConfigField "boolean", "IS_NEW_ARCHITECTURE_ENABLED", "false"
+            buildConfigField "boolean", "IS_HERMES_ENABLED", "true"
         }
         release {
             // Caution! In production, you need to generate your own keystore file.
@@ -161,6 +165,7 @@ dependencies {
     def isGifEnabled = (findProperty('expo.gif.enabled') ?: "") == "true";
     def isWebpEnabled = (findProperty('expo.webp.enabled') ?: "") == "true";
     def isWebpAnimatedEnabled = (findProperty('expo.webp.animated') ?: "") == "true";
+    def hermesEnabled = (findProperty('hermesEnabled') ?: "") == "true";
 
     // If your app supports Android versions before Ice Cream Sandwich (API level 14)
     // All fresco packages should use the same version
