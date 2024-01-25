@@ -41,7 +41,9 @@
       "expo-localization",
       "sentry-expo"
     ],
-    "android": {},
+    "android": {
+      "jsEngine": "hermes"
+    },
     "owner": "goodmorningambire"
   }
 }
