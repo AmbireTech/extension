@@ -17,7 +17,7 @@ import styles from './styles'
 
 const AppVersion: React.FC = () => {
   const { t } = useTranslation()
-
+  console.log(EXPO_SDK)
   return (
     <View style={spacings.mbLg}>
       <Text style={styles.text} fontSize={10}>
