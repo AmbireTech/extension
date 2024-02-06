@@ -14,10 +14,11 @@ react {
     // reactNativeDir = file("../node_modules/react-native")
     //   The folder where the react-native Codegen package is. Default is ../node_modules/react-native-codegen
     // codegenDir = file("../node_modules/react-native-codegen")
+    codegenDir = new File(["node", "--print", "require.resolve('@react-native/codegen/package.json')"].execute(null, rootDir).text.trim()).getParentFile().getAbsoluteFile()
     //   The cli.js file which is the React Native CLI entrypoint. Default is ../node_modules/react-native/cli.js
-    def reactNativePackageJsonPath = ["node", "--print", "require.resolve('react-native/package.json')"].execute(null, rootDir).text.trim()
-    def reactNativePackageDir = new File(reactNativePackageJsonPath).getParentFile()
-    cliFile = file("$reactNativePackageDir/cli.js")
+    // def reactNativePackageJsonPath = ["node", "--print", "require.resolve('react-native/package.json')"].execute(null, rootDir).text.trim()
+    // def reactNativePackageDir = new File(reactNativePackageJsonPath).getParentFile()
+    // cliFile = file("$reactNativePackageDir/cli.js")
     /* Variants */
     //   The list of variants to that are debuggable. For those we're going to
     //   skip the bundling of the JS bundle and the assets. By default is just 'debug'.
@@ -29,7 +30,8 @@ react {
     //
     //   The command to run when bundling. By default is 'bundle'
     // bundleCommand = "ram-bundle"
-    //
+    cliFile = new File(["node", "--print", "require.resolve('@expo/cli')"].execute(null, rootDir).text.trim())
+    bundleCommand = "export:embed"
     //   The path to the CLI configuration file. Default is empty.
     // bundleConfig = file(../rn-cli.config.js)
     //
@@ -113,6 +115,8 @@ android {
             signingConfig signingConfigs.debug
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
+            buildConfigField("boolean", "REACT_NATIVE_UNSTABLE_USE_RUNTIME_SCHEDULER_ALWAYS", (findProperty("reactNative.unstable_useRuntimeSchedulerAlways") ?: true).toString())
+
         }
     }
 
