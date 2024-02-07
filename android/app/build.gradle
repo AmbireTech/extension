@@ -108,7 +108,7 @@ android {
         applicationId "com.ambire.wallet"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 45
+        versionCode 46
         versionName "3.14.0"
     }
     splits {
