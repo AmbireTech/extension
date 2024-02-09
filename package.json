@@ -120,7 +120,7 @@
     "expo-sharing": "~11.5.0",
     "expo-splash-screen": "~0.20.5",
     "expo-status-bar": "~1.6.0",
-    "expo-updates": "~0.18.19",
+    "expo-updates": "0.19.0",
     "gridplus-sdk": "1.2.4",
     "hdkey": "^0.7.1",
     "https-browserify": "~0.0.0",
