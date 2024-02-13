@@ -40,7 +40,7 @@ export const BUILD_NUMBER = Application.nativeBuildVersion || 'N/A'
 
 export const RELEASE_CHANNEL = Updates.channel || 'N/A'
 export const RUNTIME_VERSION = Updates.runtimeVersion || 'N/A'
-export const EXPO_SDK = Constants?.expoConfig?.sdkVersion || 'N/A'
+export const EXPO_SDK = Constants?.expoConfig?.sdkVersion || appJSON.expo.sdkVersion
 
 export const isiOS = Platform.OS === 'ios'
 export const isAndroid = Platform.OS === 'android'
