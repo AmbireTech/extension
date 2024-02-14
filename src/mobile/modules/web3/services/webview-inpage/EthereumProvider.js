@@ -185,8 +185,67 @@ class ReadyPromise {
 }
 
 const ambireId = 'ambire-eip-6963-id'
-let doesWebpageReadOurProvider
-let isEIP6963
+let doesWebpageReadOurProvider = false
+let isEIP6963 = false
+
+//
+// MetaMask text and icon replacement for dApps using legacy connect only
+//
+
+const runReplacementScript = () => {
+  const hasMetaMaskInPage = isWordInPage('metamask')
+  if (!doesWebpageReadOurProvider && !hasMetaMaskInPage) return
+  const hasWalletConnectInPage = isWordInPage('walletconnect') || isWordInPage('wallet connect')
+  const hasCoinbaseWalletInPage =
+    isWordInPage('coinbasewallet') || isWordInPage('coinbase wallet') || isWordInPage('coinbase')
+
+  // most of the dapps read the provider but some don't till connection
+  if (!doesWebpageReadOurProvider && !(hasWalletConnectInPage && hasCoinbaseWalletInPage)) return
+  ;(async () => {
+    if (!isEIP6963) {
+      await delayPromise(30)
+    }
+    if (isEIP6963) return
+    if (hasWalletConnectInPage) replaceMMImgInPage()
+    const hasTrustWalletInPage = isWordInPage('trustwallet') || isWordInPage('trust wallet')
+    const isW3Modal = isWordInPage('connect your wallet') && isWordInPage('scan with your wallet')
+
+    if (!hasMetaMaskInPage) return
+
+    if (!(hasWalletConnectInPage || hasCoinbaseWalletInPage || hasTrustWalletInPage || isW3Modal)) {
+      return
+    }
+
+    replaceMMBrandInPage(ambireSvg)
+  })()
+}
+
+let observer = null
+let clickListener = document.addEventListener('click', runReplacementScript)
+
+function cleanupObserver() {
+  if (observer) {
+    observer.disconnect()
+    observer = null
+  }
+}
+
+function cleanup() {
+  cleanupObserver()
+  if (clickListener) {
+    document.removeEventListener('click', runReplacementScript)
+  }
+}
+
+function setupObserver(options) {
+  cleanupObserver()
+  observer = new MutationObserver(runReplacementScript)
+  observer.observe(document, options)
+}
+setupObserver({ childList: true })
+
+window.addEventListener('beforeunload', cleanup)
+window.addEventListener('unload', cleanup)
 
 // keep isMetaMask and remove isAmbire
 const impersonateMetamaskWhitelist = [
@@ -527,20 +586,10 @@ const setAmbireProvider = () => {
       get() {
         // script to determine whether the page is a dapp or not
         // (only pages that are dapps should read the ethereum provider)
-        // the provider is called from multiple instances (current page and other extensions)
-        // we need only the calls from the current page
         if (!doesWebpageReadOurProvider) {
-          try {
-            throw new Error()
-          } catch (error) {
-            const stack = error.stack // Parse the stack trace to get the caller info
-            if (stack) {
-              const callerPage = stack.split('\n')[2].trim()
-              if (callerPage.includes(window.location.hostname)) {
-                doesWebpageReadOurProvider = true
-              }
-            }
-          }
+          doesWebpageReadOurProvider = true
+          clickListener = document.addEventListener('click', runReplacementScript)
+          setupObserver({ childList: true, subtree: true, attributes: true })
         }
 
         return ambireProvider
@@ -583,45 +632,10 @@ const announceEip6963Provider = (p) => {
 }
 
 window.addEventListener('eip6963:requestProvider', () => {
+  isEIP6963 = true
   announceEip6963Provider(ambireProvider)
 })
 
 announceEip6963Provider(ambireProvider)
 
 window.dispatchEvent(new Event('ethereum#initialized'))
-
-//
-// MetaMask text and icon replacement for dApps using legacy connect only
-//
-
-const runReplacementScript = async () => {
-  const hasWalletConnectInPage = isWordInPage('walletconnect') || isWordInPage('wallet connect')
-  const hasMetaMaskInPage = isWordInPage('metamask')
-  const hasCoinbaseWalletInPage = isWordInPage('coinbasewallet') || isWordInPage('coinbase wallet')
-
-  // most of the dapps read the provider but some don't till connection
-  if (
-    !doesWebpageReadOurProvider &&
-    !(hasWalletConnectInPage && hasMetaMaskInPage && hasCoinbaseWalletInPage)
-  )
-    return
-
-  await delayPromise(30) // wait for DOM update
-
-  if (isEIP6963) return
-
-  if (hasWalletConnectInPage) replaceMMImgInPage()
-
-  const hasTrustWalletInPage = isWordInPage('trustwallet') || isWordInPage('trust wallet')
-  const isW3Modal = isWordInPage('connect your wallet') && isWordInPage('scan with your wallet')
-
-  if (!hasMetaMaskInPage) return
-  if (!(hasWalletConnectInPage || hasCoinbaseWalletInPage || hasTrustWalletInPage || isW3Modal))
-    return
-
-  replaceMMBrandInPage(ambireSvg)
-}
-
-document.addEventListener('click', runReplacementScript)
-const observer = new MutationObserver(runReplacementScript)
-observer.observe(document, { childList: true, subtree: true, attributes: true })

@@ -40,7 +40,7 @@ export const BUILD_NUMBER = Application.nativeBuildVersion || 'N/A'
 
 export const RELEASE_CHANNEL = Updates.channel || 'N/A'
 export const RUNTIME_VERSION = Updates.runtimeVersion || 'N/A'
-export const EXPO_SDK = Constants?.expoConfig?.sdkVersion || 'N/A'
+export const EXPO_SDK = Constants?.expoConfig?.sdkVersion || appJSON.expo.sdkVersion
 
 export const isiOS = Platform.OS === 'ios'
 export const isAndroid = Platform.OS === 'android'
@@ -71,7 +71,7 @@ const CONFIG: Config = {
   ZAPPER_API_ENDPOINT,
   ZAPPER_API_KEY,
   VELCRO_API_ENDPOINT: 'https://velcro.ambire.com/v2',
-  COINGECKO_API_URL: 'https://api.coingecko.com/api/v3',
+  COINGECKO_API_URL: 'https://cena.ambire.com/api/v3',
   RAMP_HOST_API_KEY,
   PAYTRIE_PARTNER_URL,
   TRANSAK_API_KEY: TRANSAK_API_KEY_STAGING,

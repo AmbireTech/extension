@@ -1,6 +1,13 @@
 require_relative '../node_modules/expo/scripts/autolinking'
-require_relative '../node_modules/react-native/scripts/react_native_pods'
 require_relative '../node_modules/@react-native-community/cli-platform-ios/native_modules'
+require File.join(File.dirname(`node --print "require.resolve('react-native/package.json')"`), "scripts/react_native_pods")
+
+# Resolve react_native_pods.rb with node to allow for hoisting
+require Pod::Executable.execute_command('node', ['-p',
+  'require.resolve(
+    "react-native/scripts/react_native_pods.rb",
+    {paths: [process.argv[1]]},
+  )', __dir__]).strip
 
 def min_ios_version_supported
   return '12.4'
@@ -29,6 +36,8 @@ require 'json'
 podfile_properties = JSON.parse(File.read('./Podfile.properties.json')) rescue {}
 inhibit_all_warnings!
 
+ENV['EX_DEV_CLIENT_NETWORK_INSPECTOR'] = podfile_properties['EX_DEV_CLIENT_NETWORK_INSPECTOR']
+
 # Force pods to match minimum iOS version for React Native
 # Fixes build issue on Xcode Cloud where some pods
 # Use iOS > 12 calls despite being set as iOS 11
@@ -53,6 +62,7 @@ target 'ambire' do
       Pod::UI.warn e
     end
   end
+
   config = use_native_modules!
 
   # Flags change depending on the env values.
@@ -64,8 +74,6 @@ target 'ambire' do
   use_react_native!(
     :path => config[:reactNativePath],
     # Hermes is now enabled by default. Disable by setting this flag to false.
-    # Upcoming versions of React Native may rely on get_default_flags(), but
-    # we make it explicit here to aid in the React Native upgrade process.
     :hermes_enabled => podfile_properties['expo.jsEngine'] == nil || podfile_properties['expo.jsEngine'] == 'hermes',
     # Use Flipper only for debug builds. Otherwise, it conflicts with the
     # OpenSSL framework dep of the react-native-quick-crypto package.
@@ -81,10 +89,10 @@ target 'ambire' do
   )
 
   post_install do |installer|
+    # https://github.com/facebook/react-native/blob/main/packages/react-native/scripts/react_native_pods.rb#L197-L202
     react_native_post_install(
       installer,
-      # Set `mac_catalyst_enabled` to `true` in order to apply patches
-      # necessary for Mac Catalyst builds
+      config[:reactNativePath],
       :mac_catalyst_enabled => false
     )
     __apply_Xcode_12_5_M1_post_install_workaround(installer)
