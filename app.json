@@ -1,14 +1,22 @@
 {
-  "name": "Ambire",
+  "name": "ambire",
   "expo": {
     "slug": "ambire-mobile-wallet",
-    "version": "3.13.8",
-    "assetBundlePatterns": ["**/*"],
-    "runtimeVersion": "11",
+    "version": "3.15.4",
+    "sdkVersion": "49.0.0",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#313555"
+    },
+    "runtimeVersion": "1",
     "jsEngine": "hermes",
     "updates": {
       "enabled": true,
-      "fallbackToCacheTimeout": 45000
+      "fallbackToCacheTimeout": 45000,
+      "url": "https://u.expo.dev/58802506-2680-49c2-a7a2-3af290426f05"
     },
     "hooks": {
       "postPublish": [
@@ -27,8 +35,16 @@
     },
     "extra": {
       "eas": {
-        "projectId": "e6f855d0-5ac3-40e0-8127-740906e7a593"
+        "projectId": "58802506-2680-49c2-a7a2-3af290426f05"
       }
-    }
+    },
+    "plugins": [
+      "expo-localization",
+      "sentry-expo"
+    ],
+    "android": {
+      "jsEngine": "hermes"
+    },
+    "owner": "goodmorningambire"
   }
 }

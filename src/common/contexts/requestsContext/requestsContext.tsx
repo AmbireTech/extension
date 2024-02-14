@@ -317,6 +317,8 @@ const RequestsProvider: React.FC = ({ children }) => {
             path === `${MOBILE_ROUTES.web3Browser}-screen`
           ) {
             openBottomSheetSendTxn()
+          } else if ((isiOS || isAndroid) && path === MOBILE_ROUTES.swap) {
+            openBottomSheetSendTxn()
           } else {
             const shouldNavigateToPendingTransaction = ![
               // Skip navigating if user is in the middle of adding another acc

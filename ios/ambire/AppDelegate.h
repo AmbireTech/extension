@@ -1,10 +1,13 @@
 #import <Foundation/Foundation.h>
-#import <EXUpdates/EXUpdatesAppController.h>
-#import <React/RCTBridgeDelegate.h>
+#import <RCTAppDelegate.h>
+#import <Expo/Expo.h>
 #import <UIKit/UIKit.h>
 
-#import <Expo/Expo.h>
 
-@interface AppDelegate : EXAppDelegateWrapper <RCTBridgeDelegate, EXUpdatesAppControllerDelegate>
+#import "ExpoModulesCore-Swift.h"
+#import "EXUpdatesInterface-Swift.h"
+#import "EXUpdates-Swift.h"
+
+@interface AppDelegate : EXAppDelegateWrapper<EXUpdatesAppControllerDelegate>
 
 @end
