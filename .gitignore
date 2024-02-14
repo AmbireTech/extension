@@ -225,6 +225,8 @@ captures/
 # Uncomment the following lines if you do not want to check your keystore files in.
 #*.jks
 #*.keystore
+*.keystore
+!debug.keystore
 
 # External native build folder generated in Android Studio 2.2 and later
 .externalNativeBuild
@@ -260,9 +262,7 @@ lint/tmp/
 .cxx/
 
 ### ReactNative.Buck Stack ###
-buck-out/
 .buckconfig.local
-.buckd/
 .buckversion
 .fakebuckversion
 
@@ -500,3 +500,6 @@ credentials.json
 # Mobile injection provider
 /ios/EthereumProvider.js
 /android/app/src/main/assets/EthereumProvider.js
+
+# Temporary files created by Metro to check the health of the file watcher
+.metro-health-check*

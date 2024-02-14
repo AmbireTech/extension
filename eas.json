@@ -1,25 +1,27 @@
 {
   "cli": {
-    "version": ">= 3.13.2"
+    "version": ">= 6.0.0"
   },
   "build": {
     "production": {
-      "node": "16.13.0",
+      "node": "18.19.0",
       "ios": {
-        "credentialsSource": "local"
+        "credentialsSource": "local",
+        "cocoapods": "1.14.3"
       },
       "android": {
         "credentialsSource": "local"
       },
-      "releaseChannel": "default",
       "env": {
-        "APP_ENV": "production"
-      }
+        "APP_ENV": "production",
+        "NO_FLIPPER": "1"
+      },
+      "channel": "default"
     },
     "staging": {
       "extends": "production",
       "distribution": "internal",
-      "releaseChannel": "staging",
+      "channel": "staging",
       "env": {
         "APP_ENV": "staging"
       }
@@ -33,7 +35,7 @@
       "ios": {
         "buildConfiguration": "Debug"
       },
-      "releaseChannel": "development",
+      "channel": "development",
       "env": {
         "APP_ENV": "development"
       }

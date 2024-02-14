@@ -30,7 +30,7 @@ export const APP_ID = Application.applicationId
  * Internal app version, example: 1.0.0 (follows semantic versioning).
  * Fallback to the appJSON version, because in web mode Constants are missing.
  */
-export const APP_VERSION = Constants?.manifest?.version || appJSON.expo.version
+export const APP_VERSION = Constants?.expoConfig?.version || appJSON.expo.version
 /**
  * The internal build version of the native build (binary).
  * This is the Info.plist value for `CFBundleVersion` on iOS and
@@ -38,9 +38,9 @@ export const APP_VERSION = Constants?.manifest?.version || appJSON.expo.version
  */
 export const BUILD_NUMBER = Application.nativeBuildVersion || 'N/A'
 
-export const RELEASE_CHANNEL = Updates.releaseChannel || 'N/A'
+export const RELEASE_CHANNEL = Updates.channel || 'N/A'
 export const RUNTIME_VERSION = Updates.runtimeVersion || 'N/A'
-export const EXPO_SDK = Constants?.manifest?.sdkVersion || 'N/A'
+export const EXPO_SDK = Constants?.expoConfig?.sdkVersion || appJSON.expo.sdkVersion
 
 export const isiOS = Platform.OS === 'ios'
 export const isAndroid = Platform.OS === 'android'
@@ -71,7 +71,7 @@ const CONFIG: Config = {
   ZAPPER_API_ENDPOINT,
   ZAPPER_API_KEY,
   VELCRO_API_ENDPOINT: 'https://velcro.ambire.com/v2',
-  COINGECKO_API_URL: 'https://api.coingecko.com/api/v3',
+  COINGECKO_API_URL: 'https://cena.ambire.com/api/v3',
   RAMP_HOST_API_KEY,
   PAYTRIE_PARTNER_URL,
   TRANSAK_API_KEY: TRANSAK_API_KEY_STAGING,

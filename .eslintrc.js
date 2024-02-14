@@ -1,5 +1,5 @@
 module.exports = {
-  extends: ['./node_modules/ambire-common/.eslintrc.js'],
+  extends: ['./node_modules/ambire-common/.eslintrc.js', '@tsconfig/react-native/tsconfig.json'],
   rules: {
     'import/extensions': 'off',
     'class-methods-use-this': 'off',

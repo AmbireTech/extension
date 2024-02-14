@@ -2,17 +2,17 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
   <dict>
-    <key>EXUpdatesURL</key>
-    <string>https://exp.host/@ambire/ambire-mobile-wallet</string>
-    <key>EXUpdatesAutoSetup</key>
-    <false/>
-    <key>EXUpdatesEnabled</key>
-    <true/>
     <key>EXUpdatesCheckOnLaunch</key>
     <string>ALWAYS</string>
+    <key>EXUpdatesEnabled</key>
+    <true/>
     <key>EXUpdatesLaunchWaitMs</key>
     <integer>45000</integer>
     <key>EXUpdatesRuntimeVersion</key>
-    <string>11</string>
+    <string>1</string>
+    <key>EXUpdatesURL</key>
+    <string>https://u.expo.dev/58802506-2680-49c2-a7a2-3af290426f05</string>
+    <key>EXUpdatesAutoSetup</key>
+    <false/>
   </dict>
 </plist>

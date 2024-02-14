@@ -11,8 +11,9 @@ interface Props extends SvgProps {
 
 const BrowserHomeIcon: React.FC<Props> = ({ width = 28, height = 28, color = colors.titan }) => (
   <Svg width={width} height={height} viewBox="0 0 28 28">
-    <Path d="M0 0h28v28H0z" />
+    <Path fill="none" d="M0 0h28v28H0z" />
     <Path
+      fill="none"
       stroke={color}
       strokeLinecap="round"
       strokeLinejoin="round"
@@ -20,6 +21,7 @@ const BrowserHomeIcon: React.FC<Props> = ({ width = 28, height = 28, color = col
       d="m7.202 11.734 6.8-5.287 6.8 5.287v8.313a1.511 1.511 0 0 1-1.511 1.511H8.713a1.511 1.511 0 0 1-1.511-1.511Z"
     />
     <Path
+      fill="none"
       stroke={color}
       strokeLinecap="round"
       strokeLinejoin="round"
