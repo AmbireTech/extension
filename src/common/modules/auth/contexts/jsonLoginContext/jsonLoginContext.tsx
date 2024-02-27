@@ -92,12 +92,13 @@ const JsonLoginProvider: React.FC<any> = ({ children }: any) => {
       try {
         if (!file) {
           document = await DocumentPicker.getDocumentAsync({ type: 'application/json' })
-          if (document.type !== 'success') {
+          if (document.canceled) {
             setInProgress(false)
             return setError(t('JSON file was not selected or something went wrong selecting it.'))
           }
-
-          fileContent = (await getFileContentAsJson(document.uri)) as unknown as Account
+          
+          const assetUri = document?.assets[0].uri;
+          fileContent = (await getFileContentAsJson(assetUri)) as unknown as Account
         } else if (!!file && isWeb) {
           fileContent = file
         }
