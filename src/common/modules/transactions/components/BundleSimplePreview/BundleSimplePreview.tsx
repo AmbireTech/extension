@@ -51,6 +51,17 @@ const BundleSimplePreview = ({
     bundle.network,
     bundle.identity
   )
+
+  const lastTxnExtendedSummary = getTransactionSummary(
+    constants!.humanizerInfo,
+    lastTxn,
+    bundle.network,
+    bundle.identity,
+    {
+      extended: true
+    }
+  )
+
   const hasFeeMatch = bundle.txns.length > 1 && lastTxnSummary.match(new RegExp(TO_GAS_TANK, 'i'))
 
   const toLocaleDateTime = (date: any) =>
@@ -62,14 +73,21 @@ const BundleSimplePreview = ({
   }
 
   const txns =
-    (hasFeeMatch && !bundle.gasTankFee) || isGasTankCommitment(lastTxn)
+    (hasFeeMatch && !bundle.gasTankFee) || (hasFeeMatch && !bundle.gasTankFee.value && bundle.gasTankFee.cashback) || isGasTankCommitment(lastTxn)
       ? bundle.txns.slice(0, -1)
       : bundle.txns
 
   const numOfDisplayedTxns = txns.length > 2 ? 2 : txns.length
 
+  const feeToken =
+    bundle.feeToken ||
+    (hasFeeMatch &&
+      bundle.gasTankFee &&
+      lastTxnExtendedSummary.flat()[1] &&
+      lastTxnExtendedSummary.flat()[1].symbol.toLowerCase()) ||
+    null
   const feeTokenDetails = feeAssets
-    ? feeAssets.find((i: any) => i.symbol === bundle.feeToken)
+    ? feeAssets.find((i: any) => i.symbol === feeToken)
     : null
   const savedGas = feeTokenDetails ? getAddedGas(feeTokenDetails) : null
   const splittedLastTxnSummary = lastTxnSummary.split(' ')
@@ -141,7 +159,19 @@ const BundleSimplePreview = ({
             </Text>
           </View>
         ) : null}
-        {!!bundle.gasTankFee && feeTokenDetails !== null && !!mined && (
+        {!!bundle.gasTankFee && cashback && !bundle.gasTankFee.cashback.value && hasFeeMatch && feeTokenDetails !== null && !!mined && (
+          <>
+            {(
+              <View style={[flexboxStyles.directionRow, spacings.mbTy, flexboxStyles.alignCenter]}>
+                <Text style={flexboxStyles.flex1} weight="medium" fontSize={12}>
+                  {t('Fee (Cashback)')}
+                </Text>
+                <Text fontSize={12}>${formatFloatTokenAmount(cashback, true, 6)}</Text>
+              </View>
+            )}
+          </>
+        )}
+        {!!bundle.gasTankFee && bundle.gasTankFee?.value && feeTokenDetails !== null && !!mined && (
           <>
             {!!savedGas && (
               <View style={[flexboxStyles.directionRow, spacings.mbTy, flexboxStyles.alignCenter]}>
