@@ -80,6 +80,7 @@ const BundleSimplePreview = ({
   const numOfDisplayedTxns = txns.length > 2 ? 2 : txns.length
 
   const feeToken =
+  (bundle.feeToken && bundle.feeToken.symbol && bundle.feeToken.symbol.toLowerCase()) || 
     bundle.feeToken ||
     (hasFeeMatch &&
       bundle.gasTankFee &&
@@ -159,7 +160,7 @@ const BundleSimplePreview = ({
             </Text>
           </View>
         ) : null}
-        {!!bundle.gasTankFee && cashback && !bundle.gasTankFee.cashback.value && hasFeeMatch && feeTokenDetails !== null && !!mined && (
+        {!!bundle.gasTankFee && !!cashback && !bundle.gasTankFee.cashback.value && hasFeeMatch && feeTokenDetails !== null && !!mined && (
           <>
             {(
               <View style={[flexboxStyles.directionRow, spacings.mbTy, flexboxStyles.alignCenter]}>
