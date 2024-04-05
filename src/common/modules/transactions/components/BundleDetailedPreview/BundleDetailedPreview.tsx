@@ -132,7 +132,7 @@ const BundleDetailedPreview = ({ bundle = {}, mined = false, feeAssets }: any) =
             {(
               <View style={[flexboxStyles.directionRow, spacings.mbTy, flexboxStyles.alignCenter]}>
                 <Text style={flexboxStyles.flex1} weight="medium" fontSize={12}>
-                  {t('Fee (Cashback)')}
+                  {t('Fee')}
                 </Text>
                 <Text fontSize={12}>${formatFloatTokenAmount(cashback, true, 6)}</Text>
               </View>
