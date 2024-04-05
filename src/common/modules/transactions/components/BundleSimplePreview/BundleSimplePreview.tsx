@@ -167,7 +167,7 @@ const BundleSimplePreview = ({
                 <Text style={flexboxStyles.flex1} weight="medium" fontSize={12}>
                   {t('Fee')}
                 </Text>
-                <Text fontSize={12}>${formatFloatTokenAmount(cashback, true, 6)}</Text>
+                <Text fontSize={12}>${formatFloatTokenAmount(bundle.feeInUSDPerGas * bundle.gasLimit - cashback, true, 6)}</Text>
               </View>
             )}
           </>
