@@ -12,6 +12,7 @@ import Panel from '@common/components/Panel'
 import Text from '@common/components/Text'
 import TxnPreview from '@common/components/TxnPreview'
 import useConstants from '@common/hooks/useConstants'
+import isGasTankCommitment from '@common/services/isGasTankCommitment'
 import colors from '@common/styles/colors'
 import spacings from '@common/styles/spacings'
 import flexboxStyles from '@common/styles/utils/flexbox'
@@ -41,12 +42,32 @@ const BundleDetailedPreview = ({ bundle = {}, mined = false, feeAssets }: any) =
     bundle.network,
     bundle.identity
   )
+
+  const lastTxnExtendedSummary = getTransactionSummary(
+    constants!.humanizerInfo,
+    lastTxn,
+    bundle.network,
+    bundle.identity,
+    {
+      extended: true
+    }
+  )
+
   const hasFeeMatch = bundle.txns.length > 1 && lastTxnSummary.match(new RegExp(TO_GAS_TANK, 'i'))
-  const txns = hasFeeMatch && !bundle.gasTankFee ? bundle.txns.slice(0, -1) : bundle.txns
+  const txns = (hasFeeMatch && !bundle.gasTankFee) || (hasFeeMatch && !bundle.gasTankFee.value && bundle.gasTankFee.cashback) || isGasTankCommitment(lastTxn) ? bundle.txns.slice(0, -1) : bundle.txns
   const toLocaleDateTime = (date: any) =>
     `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`
+
+  const feeToken =
+  (bundle.feeToken && bundle.feeToken.symbol && bundle.feeToken.symbol.toLowerCase()) ||
+    bundle.feeToken ||
+    (hasFeeMatch &&
+      bundle.gasTankFee &&
+      lastTxnExtendedSummary.flat()[1] &&
+      lastTxnExtendedSummary.flat()[1].symbol.toLowerCase()) ||
+    null
   const feeTokenDetails = feeAssets
-    ? feeAssets.find((i: any) => i.symbol === bundle.feeToken)
+    ? feeAssets.find((i: any) => i.symbol === feeToken)
     : null
   const savedGas = feeTokenDetails ? getAddedGas(feeTokenDetails) : null
   const splittedLastTxnSummary = lastTxnSummary.split(' ')
@@ -106,7 +127,19 @@ const BundleDetailedPreview = ({ bundle = {}, mined = false, feeAssets }: any) =
             </Text>
           </View>
         ) : null}
-        {!!bundle.gasTankFee && feeTokenDetails !== null && !!mined && (
+        {!!bundle.gasTankFee && !!cashback && !bundle.gasTankFee.cashback.value && hasFeeMatch && feeTokenDetails !== null && !!mined && (
+          <>
+            {(
+              <View style={[flexboxStyles.directionRow, spacings.mbTy, flexboxStyles.alignCenter]}>
+                <Text style={flexboxStyles.flex1} weight="medium" fontSize={12}>
+                  {t('Fee')}
+                </Text>
+                <Text fontSize={12}>${formatFloatTokenAmount(cashback, true, 6)}</Text>
+              </View>
+            )}
+          </>
+        )}
+        {!!bundle.gasTankFee && bundle.gasTankFee?.value && feeTokenDetails !== null && !!mined && (
           <>
             {!!savedGas && (
               <View style={[flexboxStyles.directionRow, spacings.mbTy, flexboxStyles.alignCenter]}>
