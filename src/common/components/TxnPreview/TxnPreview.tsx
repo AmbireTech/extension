@@ -150,12 +150,14 @@ const TxnPreview = ({
 
   const summary = extendedSummary.map((entry: any, idx: number) => {
     if (Array.isArray(entry)) {
-      return entry.map((item, i) => (
+      return <View style={[flexboxStyles.directionRow, flexboxStyles.wrap, flexboxStyles.alignCenter]}>
+       {entry.map((item, i) => (
         // eslint-disable-next-line react/no-array-index-key
         <React.Fragment key={`item-${i}`}>
           {parseExtendedSummaryItem(item, i, networkDetails, t)}
         </React.Fragment>
-      ))
+        ))}
+      </View>
     }
     if (typeof entry === 'object') {
       return (
