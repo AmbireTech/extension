@@ -1,17 +1,10 @@
 import React, { useEffect, useState } from 'react'
-import { Image, TouchableOpacity, View, ViewStyle } from 'react-native'
+import { View, ViewStyle } from 'react-native'
 
 import MissingCollectibleIcon from '@common/assets/svg/MissingCollectibleIcon'
 import FastImage from '@common/components/FastImage'
 import Spinner from '@common/components/Spinner'
-import Text from '@common/components/Text'
-import useNavigation from '@common/hooks/useNavigation'
 import handleCollectibleUri from '@common/modules/dashboard/helpers/handleCollectibleUri'
-import { ROUTES } from '@common/modules/router/constants/common'
-import colors from '@common/styles/colors'
-import spacings from '@common/styles/spacings'
-import flexboxStyles from '@common/styles/utils/flexbox'
-import { checkIfImageExists } from '@common/utils/checkIfImageExists'
 
 type Props = {
   uri: string
@@ -26,15 +19,10 @@ const CollectibleIcon = ({ uri, width, height, style }: Props) => {
 
   useEffect(() => {
     ;(async () => {
-      const hasLoadedUri = await checkIfImageExists(uri)
-      if (hasLoadedUri) {
-        const url = await handleCollectibleUri(uri)
-        setValidUri(url as string) // the `hasLoadedUri` handles if `uri` is defined
-        setIsAssetImageLoading(false)
-        return
-      }
-
+      const url = await handleCollectibleUri(uri)
+      setValidUri(url as string)
       setIsAssetImageLoading(false)
+      
     })()
   }, [uri])
 
@@ -45,7 +33,7 @@ const CollectibleIcon = ({ uri, width, height, style }: Props) => {
       style={{ width: width || '100%', aspectRatio: 1, height, ...style }}
       source={{ uri: validUri }}
       onLoad={() => setIsAssetImageLoading(false)}
-      onError={() => setIsAssetImageLoading(false)}
+      onError={() => { setIsAssetImageLoading(false), setValidUri('') }}
     />
   ) : (
     <View style={{ alignItems: 'center', justifyContent: 'center' }}>
