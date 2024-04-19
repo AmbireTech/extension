@@ -150,7 +150,7 @@ const TxnPreview = ({
 
   const summary = extendedSummary.map((entry: any, idx: number) => {
     if (Array.isArray(entry)) {
-      return <View style={[flexboxStyles.directionRow, flexboxStyles.wrap, flexboxStyles.alignCenter]}>
+      return <View style={[flexboxStyles.directionRow, flexboxStyles.wrap, flexboxStyles.alignCenter]} key={entry}>
        {entry.map((item, i) => (
         // eslint-disable-next-line react/no-array-index-key
         <React.Fragment key={`item-${i}`}>
