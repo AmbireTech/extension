@@ -54,7 +54,6 @@ const icons: { [key: string]: any } = {
   [NETWORKS.kucoin]: KCCKuCoinLogo,
   [NETWORKS.andromeda]: AndromedaLogo,
   [NETWORKS.okc]: OkcLogo,
-  [NETWORKS.mumbai]: PolygonLogo,
   [NETWORKS.sepolia]: SepoliaLogo
 }
 
@@ -73,7 +72,6 @@ const iconsMonochrome: { [key: string]: any } = {
   [NETWORKS.kucoin]: KCCKuCoinMonochromeIcon,
   [NETWORKS.andromeda]: AndromedaMonochromeIcon,
   [NETWORKS.okc]: OkcMonochromeIcon,
-  [NETWORKS.mumbai]: PolygonMonochromeIcon,
   [NETWORKS.sepolia]: SepoliaLogo
 }
 
