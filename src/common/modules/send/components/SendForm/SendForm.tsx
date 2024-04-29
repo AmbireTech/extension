@@ -57,8 +57,6 @@ interface Props {
   setSWAddressConfirmed: React.Dispatch<React.SetStateAction<boolean>>
 }
 
-const unsupportedSWPlatforms = ['Binance', 'Huobi', 'KuCoin', 'Gate.io', 'FTX']
-
 const SendForm = ({
   isHidden,
   asset,
@@ -131,9 +129,8 @@ const SendForm = ({
                 <Text fontSize={12} onPress={() => setSWAddressConfirmed(!sWAddressConfirmed)}>
                   {
                     t(
-                      'I confirm this address is not a {{platforms}} address: These platforms do not support {{token}} deposits from smart wallets.',
+                      'I confirm this address is not Binance, Coinbase or another centralized exchange. These platforms do not support {{token}} deposits from smart wallets.',
                       {
-                        platforms: unsupportedSWPlatforms.join(' / '),
                         token: selectedAsset?.symbol
                       }
                     ) as string
