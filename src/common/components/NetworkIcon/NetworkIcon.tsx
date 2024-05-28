@@ -29,6 +29,8 @@ import OptimismLogo from '@common/assets/svg/OptimismLogo'
 import OptimismMonochromeIcon from '@common/assets/svg/OptimismMonochromeIcon'
 import PolygonLogo from '@common/assets/svg/PolygonLogo'
 import PolygonMonochromeIcon from '@common/assets/svg/PolygonMonochromeIcon'
+import ScrollLogo from '@common/assets/svg/ScrollLogo'
+import ScrollMonochromeIcon from '@common/assets/svg/ScrollMonochromeIcon'
 import SepoliaLogo from '@common/assets/svg/SepoliaLogo'
 
 export type NetworkIconNameType = keyof typeof NETWORKS
@@ -54,6 +56,7 @@ const icons: { [key: string]: any } = {
   [NETWORKS.kucoin]: KCCKuCoinLogo,
   [NETWORKS.andromeda]: AndromedaLogo,
   [NETWORKS.okc]: OkcLogo,
+  [NETWORKS.scroll]: ScrollLogo,
   [NETWORKS.sepolia]: SepoliaLogo
 }
 
@@ -72,6 +75,7 @@ const iconsMonochrome: { [key: string]: any } = {
   [NETWORKS.kucoin]: KCCKuCoinMonochromeIcon,
   [NETWORKS.andromeda]: AndromedaMonochromeIcon,
   [NETWORKS.okc]: OkcMonochromeIcon,
+  [NETWORKS.scroll]: ScrollMonochromeIcon,
   [NETWORKS.sepolia]: SepoliaLogo
 }
 
