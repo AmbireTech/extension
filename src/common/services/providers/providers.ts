@@ -25,6 +25,7 @@ const RPC_URL_BASE = 'https://invictus.ambire.com/base'
 const RPC_URL_CRONOS = 'https://evm-cronos.crypto.org'
 const RPC_URL_AURORA = 'https://mainnet.aurora.dev'
 const RPC_URL_OKC = 'https://exchainrpc.okex.org'
+const RPC_URL_SCROLL = 'https://invictus.ambire.com/scroll'
 const RPC_URL_ETHEREUM_POW = 'https://mainnet.ethereumpow.org'
 const RPC_URL_SEPOLIA = 'https://invictus.ambire.com/sepolia'
 
@@ -47,6 +48,7 @@ const RPC_URLS: {
   [NETWORKS.cronos]: RPC_URL_CRONOS,
   [NETWORKS.aurora]: RPC_URL_AURORA,
   [NETWORKS.okc]: RPC_URL_OKC,
+  [NETWORKS.scroll]: RPC_URL_SCROLL,
   [NETWORKS['ethereum-pow']]: RPC_URL_ETHEREUM_POW,
   [NETWORKS.sepolia]: RPC_URL_SEPOLIA
 }
