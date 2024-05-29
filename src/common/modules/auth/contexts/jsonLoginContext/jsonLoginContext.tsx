@@ -96,8 +96,8 @@ const JsonLoginProvider: React.FC<any> = ({ children }: any) => {
             setInProgress(false)
             return setError(t('JSON file was not selected or something went wrong selecting it.'))
           }
-          
-          const assetUri = document?.assets[0].uri;
+
+          const assetUri = document?.assets[0].uri
           fileContent = (await getFileContentAsJson(assetUri)) as unknown as Account
         } else if (!!file && isWeb) {
           fileContent = file
@@ -147,7 +147,7 @@ const JsonLoginProvider: React.FC<any> = ({ children }: any) => {
         setInProgress(false)
         return setError(
           t(
-            'This Ambire account was created using a Web3 wallet. It cannot be imported from JSON in the Ambire {{app}}. To access this account, please use the "Login with External Signer" method.',
+            'This Ambire account was created using a Web3 wallet. It cannot be imported from JSON in the Ambire {{app}}. To access this account, please use the "Proceed With Hot Account" method.',
             { app: isWeb ? t('browser extension') : t('mobile app') }
           )
         )

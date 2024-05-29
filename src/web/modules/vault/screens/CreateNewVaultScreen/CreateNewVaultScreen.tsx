@@ -120,7 +120,7 @@ const CreateNewVaultScreen = () => {
         </Text>
         <Text weight="light" style={spacings.mbTy} color={colors.titan} fontSize={13}>
           {t(
-            '1.  Ambire Key Store will protect your Ambire wallet with email password or external signer on this device.'
+            '1.  Ambire Key Store will protect your Ambire wallet with email password or imported hot account on this device.'
           )}
         </Text>
         <Text weight="light" style={spacings.mbTy} color={colors.titan} fontSize={13}>
