@@ -59,7 +59,7 @@ const AuthScreen = () => {
             onPress={handleAuthButtonPress}
           />
           <AuthButton
-            text={t('Login with External Signer')}
+            text={t('Login with Hot Account')}
             type="outline"
             routeName={WEB_ROUTES.externalSigner}
             onPress={handleAuthButtonPress}
