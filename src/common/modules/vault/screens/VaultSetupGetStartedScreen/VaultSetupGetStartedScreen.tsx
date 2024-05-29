@@ -37,7 +37,7 @@ const VaultSetupGetStartedScreen = () => {
       {
         title: 'Set up your Key Store PIN',
         icon: <KeyStoreIcon height={90} />,
-        text: t('Protect your account passwords or external signers with PIN on this device')
+        text: t('Protect your account passwords or imported hot accounts with PIN on this device')
       },
       {
         title: 'Sign transactions using PIN or biometrics',

@@ -74,7 +74,7 @@ const AuthScreen = () => {
             style={spacings.mbLg}
           />
           <AuthButton
-            text={t('Proceed With External Signer')}
+            text={t('Proceed With Hot Account')}
             Icon={<ImportIcon />}
             routeName={ROUTES.externalSigner}
             onPress={handleAuthButtonPress}

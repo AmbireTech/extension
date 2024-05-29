@@ -112,7 +112,7 @@ const routesConfig: {
   [ROUTES.externalSigner]: {
     route: ROUTES.externalSigner,
     title: Platform.select({
-      default: i18n.t('Login with External Signer')
+      default: i18n.t('Login with Hot Account')
     })
   },
   [ROUTES.dashboard]: {
