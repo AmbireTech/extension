@@ -6521,9 +6521,9 @@ acorn@^8.8.2, acorn@^8.9.0:
   resolved "https://registry.yarnpkg.com/acorn/-/acorn-8.11.2.tgz#ca0d78b51895be5390a5903c5b3bdcdaf78ae40b"
   integrity sha512-nc0Axzp/0FILLEVsm4fNwLCwMttvhEI263QtVPQcbpfZZ3ts0hLsZGOpE6czNlid7CJ9MlyH8reXkpsf3YUY4w==
 
-"adex-protocol-eth@git+https://git@github.com/AmbireTech/adex-protocol-eth.git#2d9d53f835e73ed80d4f5d38ab773c5d38a3ba8b":
+"adex-protocol-eth@git+https://git@github.com/AmbireTech/adex-protocol-eth.git#b708132c5a819bee053e15c0802b30ba865ab2ce":
   version "5.2.18"
-  resolved "git+https://git@github.com/AmbireTech/adex-protocol-eth.git#2d9d53f835e73ed80d4f5d38ab773c5d38a3ba8b"
+  resolved "git+https://git@github.com/AmbireTech/adex-protocol-eth.git#b708132c5a819bee053e15c0802b30ba865ab2ce"
   dependencies:
     "@openzeppelin/test-helpers" "^0.5.10"
     "@truffle/hdwallet-provider" "^1.4.2"
