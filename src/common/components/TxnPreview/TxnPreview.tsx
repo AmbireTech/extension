@@ -148,6 +148,10 @@ const TxnPreview = ({
     meta
   })
 
+  const isChangePrivs = Array.isArray(extendedSummary) &&
+  Array.isArray(extendedSummary[0]) &&
+  extendedSummary[0][0] === 'Authorize signer'
+
   const summary = extendedSummary.map((entry: any, idx: number) => {
     if (Array.isArray(entry)) {
       return <View style={[flexboxStyles.directionRow, flexboxStyles.wrap, flexboxStyles.alignCenter]} key={entry}>
@@ -207,7 +211,7 @@ const TxnPreview = ({
               {t('This is the first failing transaction.')}
             </Text>
           )}
-          {!isFirstFailing && !mined && !isKnown(constants!.humanizerInfo, txn, account) && (
+          {!isFirstFailing && !isChangePrivs && !mined && !isKnown(constants!.humanizerInfo, txn, account) && (
             <Text appearance="danger" fontSize={10}>
               {t('Warning: interacting with an unknown contract or address.')}
             </Text>
