@@ -184,7 +184,7 @@ const DepositTokenBottomSheetProvider = ({
               selectedAssetSymbol={token.symbol}
               onAmountChange={onAmountChange}
               setMaxAmount={setMaxAmount}
-              amount={+amount}
+              amount={amount}
               maxAmount={maxAmount}
               errorMessage={isValidSendTransferAmount.message}
             />
