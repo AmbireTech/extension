@@ -5,7 +5,6 @@ import { Keyboard, TouchableWithoutFeedback, View } from 'react-native'
 import Button from '@common/components/Button'
 import Checkbox from '@common/components/Checkbox'
 import InputSendToken from '@common/components/InputSendToken'
-import NumberInput from '@common/components/NumberInput'
 import Panel from '@common/components/Panel'
 import Recipient from '@common/components/Recipient'
 import Select from '@common/components/Select'
@@ -15,10 +14,7 @@ import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import spacings from '@common/styles/spacings'
 import commonStyles from '@common/styles/utils/common'
-import flexboxStyles from '@common/styles/utils/flexbox'
 import textStyles from '@common/styles/utils/text'
-
-import styles from './styles'
 
 interface Props {
   isHidden: boolean
