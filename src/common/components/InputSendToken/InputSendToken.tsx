@@ -71,12 +71,11 @@ const SendForm = ({
       }
 
       const valueInAmount = (
-        (+valueInUsd * selectedAssetBalance) /
+        (Number(valueInUsd) * Number(maxAmount)) /
         // This is handled by the above isNumber check, but ESLint doesn't know that
         // eslint-disable-next-line no-unsafe-optional-chaining
-        selectedAssetBalanceUSD
-      ).toFixed(selectedAssetDecimals)
-
+        Number(selectedAssetBalanceUSD)
+      ).toString()
       onAmountChange(valueInAmount)
       setAmountInUsd(valueInUsd)
     },
