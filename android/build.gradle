@@ -3,10 +3,9 @@ import org.apache.tools.ant.taskdefs.condition.Os
 
 buildscript {
     ext {
-        buildToolsVersion = "33.0.0"        
         minSdkVersion = 24
-        compileSdkVersion = 33
-        targetSdkVersion = 33
+        compileSdkVersion = 34
+        targetSdkVersion = 34
         androidXCore = "1.7.0"
         kotlinVersion = findProperty('android.kotlinVersion') ?: '1.8.10'
 
@@ -18,21 +17,23 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath("com.android.tools.build:gradle:7.4.2")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion")
+
+        classpath('com.android.tools.build:gradle:8.2.0')
         classpath("com.facebook.react:react-native-gradle-plugin")
     }
 }
 
 allprojects {
     def REACT_NATIVE_VERSION = new File(['node', '--print',"JSON.parse(require('fs').readFileSync(require.resolve('react-native/package.json'), 'utf-8')).version"].execute(null, rootDir).text.trim())
-
     configurations.all {
         resolutionStrategy {
             force "com.facebook.react:react-native:" + REACT_NATIVE_VERSION
         }
     }
+
     repositories {
-        
+
         // * Other repositories here *
 
         // * Add a new maven block after other repositories / blocks *
@@ -45,4 +46,18 @@ allprojects {
             url("$rootDir/../node_modules/jsc-android/dist")
         }
     }
+
+    // {@link https://stackoverflow.com/a/77738936}
+    subprojects {
+        afterEvaluate { project ->
+            if (project.hasProperty('android')) {
+                project.android {
+                    if (namespace == null) {
+                        namespace project.group
+                    }
+                }
+            }
+        }
+    }
+    
 }
