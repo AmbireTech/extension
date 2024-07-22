@@ -1,20 +1,12 @@
-import {
-  MultiplierBadge,
-  multiplierBadges,
-  MULTIPLIERS_READ_MORE_URL
-} from 'ambire-common/src/constants/multiplierBadges'
 import useClaimableWalletToken from 'ambire-common/src/hooks/useClaimableWalletToken'
 import { RewardIds } from 'ambire-common/src/hooks/useRewards/types'
 import { formatFloatTokenAmount } from 'ambire-common/src/services/formatter'
 import React, { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Linking, TouchableOpacity, View } from 'react-native'
+import { Linking, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
-import RewardBadgeBetaTester from '@common/assets/svg/RewardBadgeBetaTester'
-import RewardBadgeCryptoTesters from '@common/assets/svg/RewardBadgeCryptoTesters'
-import RewardBadgeLobster from '@common/assets/svg/RewardBadgeLobster'
-import RewardBadgePowerUser from '@common/assets/svg/RewardBadgePowerUser'
+import InfoIcon from '@common/assets/svg/InfoIcon'
 import RewardsIcon from '@common/assets/svg/RewardsIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
@@ -37,6 +29,7 @@ import textStyles from '@common/styles/utils/text'
 import styles from './styles'
 
 const source = getRewardsSource()
+const MULTIPLIERS_READ_MORE_URL = 'https://blog.ambire.com/stop-early-user-incentives/'
 
 const Rewards = () => {
   const { t } = useTranslation()
@@ -50,7 +43,7 @@ const Rewards = () => {
     isLoading: rewardsIsLoading,
     errMsg: rewardsErrMsg
   } = useRewards()
-  const { walletTokenAPYPercentage, walletUsdPrice, multipliers, totalLifetimeRewards } = rewards
+  const { walletTokenAPYPercentage, walletUsdPrice, totalLifetimeRewards } = rewards
   const {
     currentClaimStatus,
     claimableNow,
@@ -148,20 +141,6 @@ const Rewards = () => {
 
   const handleReadMore = () => Linking.openURL(MULTIPLIERS_READ_MORE_URL).finally(closeBottomSheet)
 
-  const renderBadge = ({ id, multiplier, icon, name, color, link }: MultiplierBadge) => {
-    const isUnlocked = multipliers && multipliers.map(({ name }) => name).includes(id)
-    const handleLinkOpen = () => Linking.openURL(link)
-
-    return (
-      <TouchableOpacity onPress={handleLinkOpen} key={name} style={!isUnlocked && { opacity: 0.3 }}>
-        {id === 'beta-tester' && <RewardBadgeBetaTester />}
-        {id === 'lobsters' && <RewardBadgeLobster />}
-        {id === 'cryptoTesters' && <RewardBadgeCryptoTesters />}
-        {id === 'powerUserMultiplier' && <RewardBadgePowerUser />}
-      </TouchableOpacity>
-    )
-  }
-
   return (
     <>
       <View style={styles.tokenButtonContainer}>
@@ -197,21 +176,17 @@ const Rewards = () => {
         <Title style={[textStyles.center, spacings.mtTy, spacings.mbTy]}>
           {t('WALLET token distribution')}
         </Title>
-        <View style={[flexboxStyles.directionRow, flexboxStyles.justifyCenter, spacings.mbTy]}>
-          {multiplierBadges.map(renderBadge)}
-        </View>
 
-        <Text type="caption" style={[spacings.mb, textStyles.center]}>
-          <Text type="caption">
-            {t(
-              'You are receiving $WALLETs for holding funds on your Ambire wallet as an early user. '
-            )}
+        <View style={[styles.tableContainer, styles.warningRewardsContainer, spacings.mbTy]}>
+          <Text type="caption" fontSize={13} weight='medium'> 
+            <InfoIcon width={15} height={15} color={colors.heliotrope} style={spacings.mrMi} />
+            {t('We are preparing for the public launch of our browser extension. Following a recent governance vote, early users $WALLET rewards are no longer available in the Web and Mobile versions of Ambire Wallet.')} 
           </Text>
-          <Text onPress={handleReadMore} underline type="caption">
+          
+          <Text onPress={handleReadMore} color={colors.heliotrope} underline type="caption" fontSize={13} weight='medium' style={textStyles.right}>
             {t('Read More')}
           </Text>
-        </Text>
-
+        </View>
         <View style={styles.tableContainer}>
           <View style={[styles.tableRow, flexboxStyles.directionRow, styles.tableRowBorder]}>
             <View style={[spacings.prTy, flexboxStyles.flex1]}>
