@@ -30,6 +30,7 @@ import styles from './styles'
 
 const source = getRewardsSource()
 const MULTIPLIERS_READ_MORE_URL = 'https://blog.ambire.com/stop-early-user-incentives/'
+const AMBIRE_LINK = 'https://www.ambire.com'
 
 const Rewards = () => {
   const { t } = useTranslation()
@@ -140,6 +141,7 @@ const Rewards = () => {
   }
 
   const handleReadMore = () => Linking.openURL(MULTIPLIERS_READ_MORE_URL).finally(closeBottomSheet)
+  const handleAmbireLinkClick = () => Linking.openURL(AMBIRE_LINK).finally(closeBottomSheet)
 
   return (
     <>
@@ -180,8 +182,15 @@ const Rewards = () => {
         <View style={[styles.tableContainer, styles.warningRewardsContainer, spacings.mbTy]}>
           <Text type="caption" fontSize={13} weight='medium'> 
             <InfoIcon width={15} height={15} color={colors.heliotrope} style={spacings.mrMi} />
-            {t('We are preparing for the public launch of our browser extension. Following a recent governance vote, early users $WALLET rewards are no longer available in the Web and Mobile versions of Ambire Wallet.')} 
+            {t('We are preparing for the public launch of ')} 
+
+            <Text onPress={handleAmbireLinkClick} color={colors.heliotrope} weight='medium'>
+              {t('our browser extension')}
+            </Text>
+
+            {t('. Following a recent governance vote, early users $WALLET rewards are no longer available in the Web and Mobile versions of Ambire Wallet.')}
           </Text>
+
           
           <Text onPress={handleReadMore} color={colors.heliotrope} underline type="caption" fontSize={13} weight='medium' style={textStyles.right}>
             {t('Read More')}
