@@ -15,6 +15,7 @@ interface Style {
   tableRow: ViewStyle
   tableRowBorder: ViewStyle
   tableRowValue: ViewStyle
+  warningRewardsContainer: ViewStyle
 }
 
 const styles = StyleSheet.create<Style>({
@@ -65,6 +66,15 @@ const styles = StyleSheet.create<Style>({
   },
   tableRowValue: {
     width: 160
+  },
+  warningRewardsContainer: {
+    marginHorizontal: SPACING_TY,
+    marginVertical: 0,
+    borderWidth: 1,
+    padding: 0,
+    ...spacings.phTy,
+    ...spacings.pvTy,
+    borderColor: colors.heliotrope
   }
 })
 
