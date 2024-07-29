@@ -3,7 +3,7 @@
   "expo": {
     "slug": "ambire-mobile-wallet",
     "version": "3.15.17",
-    "sdkVersion": "49.0.0",
+    "sdkVersion": "50.0.0",
     "assetBundlePatterns": [
       "**/*"
     ],
@@ -40,7 +40,9 @@
     },
     "plugins": [
       "expo-localization",
-      "sentry-expo"
+      "sentry-expo",
+      "expo-font",
+      "expo-secure-store"
     ],
     "android": {
       "jsEngine": "hermes"

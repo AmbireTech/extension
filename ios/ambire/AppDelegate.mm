@@ -55,7 +55,7 @@
 }
 
 - (void)appController:(EXUpdatesAppController *)appController didStartWithSuccess:(BOOL)success {
-  appController.bridge = [self initializeReactNativeApp];
+  [self initializeReactNativeApp];
 }
 
 @end

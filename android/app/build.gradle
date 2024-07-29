@@ -1,4 +1,5 @@
 apply plugin: "com.android.application"
+apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
 
 /**
@@ -30,7 +31,7 @@ react {
     //
     //   The command to run when bundling. By default is 'bundle'
     // bundleCommand = "ram-bundle"
-    cliFile = new File(["node", "--print", "require.resolve('@expo/cli')"].execute(null, rootDir).text.trim())
+    cliFile = new File(["node", "--print", "require.resolve('@expo/cli', { paths: [require.resolve('expo/package.json')] })"].execute(null, rootDir).text.trim())
     bundleCommand = "export:embed"
     //   The path to the CLI configuration file. Default is empty.
     // bundleConfig = file(../rn-cli.config.js)
@@ -81,7 +82,8 @@ def jscFlavor = 'org.webkit:android-jsc:+'
 
 
 android {
-    compileSdkVersion rootProject.ext.compileSdkVersion
+    buildToolsVersion rootProject.ext.buildToolsVersion
+    compileSdk rootProject.ext.compileSdkVersion
 
     namespace "com.ambire.wallet"
     defaultConfig {
@@ -90,8 +92,14 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 48
         versionName "3.15.0"
+        compileOptions {
+            sourceCompatibility JavaVersion.VERSION_17
+            targetCompatibility JavaVersion.VERSION_17
+        }
+        kotlinOptions {
+            jvmTarget = '17'
+        }
     }
-
     buildFeatures {
         buildConfig true
     }
@@ -139,6 +147,10 @@ android {
         pickFirst 'lib/x86_64/libturbomodulejsijni.so'
         pickFirst 'lib/armeabi-v7a/libturbomodulejsijni.so'
         pickFirst 'lib/arm64-v8a/libturbomodulejsijni.so'
+
+        jniLibs {
+            useLegacyPackaging (findProperty('expo.useLegacyPackaging')?.toBoolean() ?: false)
+        }
     }
 
     lintOptions {
@@ -150,40 +162,29 @@ android {
 dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
-    //TODOv48: is this the way to enable gifm webp and webp animated?
+
     def isGifEnabled = (findProperty('expo.gif.enabled') ?: "") == "true";
     def isWebpEnabled = (findProperty('expo.webp.enabled') ?: "") == "true";
     def isWebpAnimatedEnabled = (findProperty('expo.webp.animated') ?: "") == "true";
     def hermesEnabled = (findProperty('hermesEnabled') ?: "") == "true";
 
-    // If your app supports Android versions before Ice Cream Sandwich (API level 14)
-    // All fresco packages should use the same version
-    if (isGifEnabled || isWebpEnabled) {
-        implementation 'com.facebook.fresco:fresco:2.0.0'
-        implementation 'com.facebook.fresco:imagepipeline-okhttp3:2.0.0'
-    }
-
     if (isGifEnabled) {
         // For animated gif support
-        implementation 'com.facebook.fresco:animated-gif:2.0.0'
+        implementation("com.facebook.fresco:animated-gif:${reactAndroidLibs.versions.fresco.get()}")
     }
 
     if (isWebpEnabled) {
         // For webp support
-        implementation 'com.facebook.fresco:webpsupport:2.0.0'
+        implementation("com.facebook.fresco:webpsupport:${reactAndroidLibs.versions.fresco.get()}")
         if (isWebpAnimatedEnabled) {
             // Animated webp support
-            implementation 'com.facebook.fresco:animated-webp:2.0.0'
+            implementation("com.facebook.fresco:animated-webp:${reactAndroidLibs.versions.fresco.get()}")
         }
     }
 
-    debugImplementation("com.facebook.flipper:flipper:${FLIPPER_VERSION}")
-    debugImplementation("com.facebook.flipper:flipper-network-plugin:${FLIPPER_VERSION}") {
-        exclude group:'com.squareup.okhttp3', module:'okhttp'
-    }
-    debugImplementation("com.facebook.flipper:flipper-fresco-plugin:${FLIPPER_VERSION}")
+    implementation("com.facebook.react:flipper-integration")
 
-    debugImplementation("com.facebook.flipper:flipper-fresco-plugin:${FLIPPER_VERSION}")
+
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")
     } else {
@@ -204,4 +205,5 @@ allprojects {
     }
 }
 
-apply from: file("../../node_modules/@react-native-community/cli-platform-android/native_modules.gradle"); applyNativeModulesAppBuildGradle(project)
+apply from: new File(["node", "--print", "require.resolve('@react-native-community/cli-platform-android/package.json', { paths: [require.resolve('react-native/package.json')] })"].execute(null, rootDir).text.trim(), "../native_modules.gradle");
+applyNativeModulesAppBuildGradle(project)
