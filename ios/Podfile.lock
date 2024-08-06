@@ -236,7 +236,7 @@ PODS:
   - nanopb/encode (2.30910.0)
   - OpenSSL-Universal (1.1.1100)
   - PromisesObjC (2.4.0)
-  - Protobuf (3.27.2)
+  - Protobuf (3.27.3)
   - RCT-Folly (2022.05.16.00):
     - boost
     - DoubleConversion
@@ -1125,10 +1125,11 @@ PODS:
     - glog
     - RCT-Folly (= 2022.05.16.00)
     - React-Core
-  - react-native-quick-crypto (0.6.1):
+  - react-native-quick-crypto (0.7.0):
+    - glog
     - OpenSSL-Universal
+    - RCT-Folly (= 2022.05.16.00)
     - React
-    - React-callinvoker
     - React-Core
   - react-native-randombytes (3.6.1):
     - React-Core
@@ -1338,7 +1339,7 @@ PODS:
     - React-Core
     - React-hermes
     - Sentry/HybridSDK (= 8.21.0)
-  - RNSVG (14.1.0):
+  - RNSVG (15.4.0):
     - React-Core
   - SDWebImage (5.11.1):
     - SDWebImage/Core (= 5.11.1)
@@ -1792,7 +1793,7 @@ SPEC CHECKSUMS:
   nanopb: 438bc412db1928dac798aa6fd75726007be04262
   OpenSSL-Universal: ebc357f1e6bc71fa463ccb2fe676756aff50e88c
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
-  Protobuf: fb2c13674723f76ff6eede14f78847a776455fa2
+  Protobuf: c1cbc880ea7c4e9b157e113515c720a22ee7cf50
   RCT-Folly: 7169b2b1c44399c76a47b5deaaba715eeeb476c0
   RCTRequired: d362a61864a64315aee00faea8dee6cf5b3f4aad
   RCTTypeSafety: 09baf60faeab02492dc8bf04ce5af1dda645b86d
@@ -1821,7 +1822,7 @@ SPEC CHECKSUMS:
   react-native-mmkv: e97c0c79403fb94577e5d902ab1ebd42b0715b43
   react-native-netinfo: 3aa5637c18834966e0c932de8ae1ae56fea20a97
   react-native-quick-base64: e1ea036b3dec44c6da2439bd62881a09de614b23
-  react-native-quick-crypto: 455c1b411db006dba1026a30681ececb19180187
+  react-native-quick-crypto: a289ec9498d55221106016f0f68c4a1123a22b36
   react-native-randombytes: 421f1c7d48c0af8dbcd471b0324393ebf8fe7846
   react-native-safe-area-context: 0ee144a6170530ccc37a0fd9388e28d06f516a89
   react-native-webview: ff06d1fe175ff827882ec88b696a7efcafa7e98d
@@ -1855,7 +1856,7 @@ SPEC CHECKSUMS:
   RNReanimated: 4f0931c29b1535a3a40a6c06797b1d9d39f50754
   RNScreens: 17e2f657f1b09a71ec3c821368a04acbb7ebcb46
   RNSentry: 5381e9284aec59a546e4a7d40e33ad0839b99c1e
-  RNSVG: ba3e7232f45e34b7b47e74472386cf4e1a676d0a
+  RNSVG: cb24fb322de8c1ebf59904e7aca0447bb8dbed5a
   SDWebImage: a7f831e1a65eb5e285e3fb046a23fcfbf08e696d
   SDWebImageWebPCoder: 908b83b6adda48effe7667cd2b7f78c897e5111d
   Sentry: ebc12276bd17613a114ab359074096b6b3725203

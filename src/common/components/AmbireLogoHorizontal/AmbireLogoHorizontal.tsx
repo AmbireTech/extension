@@ -13,6 +13,11 @@ const AmbireLogoHorizontal: React.FC<Props> = ({
   color = colors.titan,
   ...rest
 }) => {
+
+  // Temporary fix for the onClick event
+  // Discussion here:
+  // {@ link} https://github.com/expo/expo/issues/26829
+  if (rest.onClick) delete rest.onClick
   return (
     <Svg width={width} height={height} viewBox="0 0 84.872 40" {...rest}>
       <Defs>
