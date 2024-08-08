@@ -11,7 +11,7 @@
       "resizeMode": "contain",
       "backgroundColor": "#313555"
     },
-    "runtimeVersion": "1",
+    "runtimeVersion": "3.16.0",
     "jsEngine": "hermes",
     "updates": {
       "enabled": true,
