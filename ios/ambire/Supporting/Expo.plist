@@ -12,7 +12,5 @@
     <string>1</string>
     <key>EXUpdatesURL</key>
     <string>https://u.expo.dev/58802506-2680-49c2-a7a2-3af290426f05</string>
-    <key>EXUpdatesAutoSetup</key>
-    <false/>
   </dict>
 </plist>

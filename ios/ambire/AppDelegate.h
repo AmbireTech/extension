@@ -8,6 +8,6 @@
 #import "EXUpdatesInterface-Swift.h"
 #import "EXUpdates-Swift.h"
 
-@interface AppDelegate : EXAppDelegateWrapper<EXUpdatesAppControllerDelegate>
+@interface AppDelegate : EXAppDelegateWrapper
 
 @end
