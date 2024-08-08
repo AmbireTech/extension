@@ -4,7 +4,6 @@
   },
   "build": {
     "production": {
-      "node": "18.19.0",
       "ios": {
         "credentialsSource": "local",
         "cocoapods": "1.14.3"
