@@ -229,9 +229,9 @@ const AmbireCard = ({ tokens, networkId, selectedAcc, addRequest }: Props) => {
   const onWithdraw = useCallback(() => {
     const { shares, unlocksAt }: any = leaveLog
     addRequestTxn(`withdraw_staking_pool_${Date.now()}`, {
-      to: WALLET_STAKING_ADDRESS,
+      to: addresses.stakingTokenAddress,
       value: '0x0',
-      data: WALLET_STAKING_POOL_INTERFACE.encodeFunctionData('withdraw', [
+      data: addresses.stakingPoolInterface.encodeFunctionData('withdraw', [
         shares.toHexString(),
         unlocksAt.toHexString(),
         false
