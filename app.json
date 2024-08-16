@@ -42,7 +42,8 @@
       "expo-localization",
       "sentry-expo",
       "expo-font",
-      "expo-secure-store"
+      "expo-secure-store",
+      "react-native-ble-plx"
     ],
     "android": {
       "jsEngine": "hermes"
