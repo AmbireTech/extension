@@ -1,5 +1,7 @@
 # Ambire Mobile Wallet
 
+## For the extension, please use `v2` branch
+
 Hybrid (React Native) Mobile App. This project is built with Expo's bare workflow, allowing developers to extend the default Vanilla React Native with additional expo modules in the form of installable expo libraries. Bare template projects come with expo installed and configured, so you're ready to install and use any package from the Expo SDK. A complete list of all expo packages can be found here: https://docs.expo.dev/versions/latest/
 
 ## React Native Environment Setup
