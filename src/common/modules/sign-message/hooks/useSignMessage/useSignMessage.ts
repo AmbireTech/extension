@@ -146,6 +146,8 @@ const useSignMessage = ({
 
   const approveWithHW = useCallback(
     async ({ device }: { device: any }) => {
+      try {
+
       if (!device) {
         !!openBottomSheetHardwareWallet && openBottomSheetHardwareWallet()
         return
@@ -163,14 +165,16 @@ const useSignMessage = ({
       )
 
       if (!wallet) {
-        return
+        handleSigningErr({ message: 'No wallet found' })
       }
 
       // It would be great if we could pass the full data cause then web3 wallets/hw wallets can display the full text
       // Unfortunately that isn't possible, because isValidSignature only takes a bytes32 hash; so to sign this with
       // a personal message, we need to be signing the hash itself as binary data such that we match 'Ethereum signed message:\n32<hash binary data>' on the contract
 
-      const sig = await (isTypedData
+      let sig;
+      try {
+        sig = await (isTypedData
         ? signMessage712(
             wallet,
             account.id,
@@ -180,7 +184,9 @@ const useSignMessage = ({
             dataV4.message
           )
         : signMessage(wallet, account.id, account.signer, getMessageAsBytes(msgToSign.txn)))
-
+      } catch (e) {
+        handleSigningErr(e)
+      }
       const provider = getProvider(requestedNetwork?.id as NetworkType['id'])
       const isValidSig = await verifyMessage({
         provider,
@@ -191,6 +197,11 @@ const useSignMessage = ({
       })
 
       return { sig, isValidSig }
+
+    } catch (e) {
+      handleSigningErr(e)
+      throw e
+    }
     },
     [account, dataV4, isTypedData, msgToSign, openBottomSheetHardwareWallet, requestedNetwork?.id]
   )
@@ -206,7 +217,9 @@ const useSignMessage = ({
           ? account.signer?.one
           : account.signer?.address
         signerType = await getSignerType({ addr: signerAddr })
-      } catch (error) {}
+      } catch (error) {
+        signerType = SIGNER_TYPES.hardware
+      }
 
       let approveMsgPromise
 

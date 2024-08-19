@@ -54,7 +54,13 @@ function getWalletNew({ chainId, signer, signerExtra }: any, device: any) {
 
 export function getWallet({ signer, signerExtra, chainId }: any, device: any) {
   const id = `${signer.address || signer.one}${chainId}`
-  if (wallets[id]) return wallets[id]
-  // eslint-disable-next-line no-return-assign
-  return (wallets[id] = getWalletNew({ signer, signerExtra, chainId }, device))
+
+  try {
+    if (wallets[id]) return wallets[id]
+    // eslint-disable-next-line no-return-assign
+    return (wallets[id] = getWalletNew({ signer, signerExtra, chainId }, device))
+  } catch (e) {
+    console.error('Error getting wallet:', e)
+    throw new Error('Failed to get or create wallet')
+  }
 }
