@@ -178,6 +178,7 @@ const useSignMessage = ({
       // a personal message, we need to be signing the hash itself as binary data such that we match 'Ethereum signed message:\n32<hash binary data>' on the contract
 
       let sig;
+      let isValidSig
       try {
         sig = await (isTypedData
         ? signMessage712(
@@ -189,24 +190,28 @@ const useSignMessage = ({
             dataV4.message
           )
         : signMessage(wallet, account.id, account.signer, getMessageAsBytes(msgToSign.txn)))
+
+        if (!sig) {
+          handleSigningErr({ message: 'No signature found' })
+        }
+        const provider = getProvider(requestedNetwork?.id as NetworkType['id'])
+        isValidSig = await verifyMessage({
+          provider,
+          signer: account.id,
+          message: isTypedData ? null : getMessageAsBytes(msgToSign.txn),
+          typedData: isTypedData ? dataV4 : null,
+          signature: sig
+        })
+        return { sig, isValidSig }
       } catch (e) {
         console.log('error signing', e)
         handleSigningErr(e)
       }
-      const provider = getProvider(requestedNetwork?.id as NetworkType['id'])
-      const isValidSig = await verifyMessage({
-        provider,
-        signer: account.id,
-        message: isTypedData ? null : getMessageAsBytes(msgToSign.txn),
-        typedData: isTypedData ? dataV4 : null,
-        signature: sig
-      })
-
-      return { sig, isValidSig }
+      
+    return { sig, isValidSig }
 
     } catch (e) {
       handleSigningErr(e)
-      throw e
     }
     },
     [account, dataV4, isTypedData, msgToSign, openBottomSheetHardwareWallet, requestedNetwork?.id]
