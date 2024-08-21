@@ -153,19 +153,24 @@ const useSignMessage = ({
         return
       }
 
-      // if quick account, wallet = await fromEncryptedBackup
-      // and just pass the signature as secondSig to signMsgHash
-      const wallet = getWallet(
-        {
-          signer: account.signer,
-          signerExtra: account.signerExtra,
-          chainId: 1 // does not matter
-        },
-        device
-      )
+      let wallet
+      try {
+        // if quick account, wallet = await fromEncryptedBackup
+        // and just pass the signature as secondSig to signMsgHash
+        wallet = getWallet(
+          {
+            signer: account.signer,
+            signerExtra: account.signerExtra,
+            chainId: 1 // does not matter
+          },
+          device
+        )
 
-      if (!wallet) {
-        handleSigningErr({ message: 'No wallet found' })
+        if (!wallet) {
+          handleSigningErr({ message: 'No wallet found' })
+        }
+      } catch (walletErr) {
+        handleSigningErr(walletErr)
       }
 
       // It would be great if we could pass the full data cause then web3 wallets/hw wallets can display the full text
@@ -185,6 +190,7 @@ const useSignMessage = ({
           )
         : signMessage(wallet, account.id, account.signer, getMessageAsBytes(msgToSign.txn)))
       } catch (e) {
+        console.log('error signing', e)
         handleSigningErr(e)
       }
       const provider = getProvider(requestedNetwork?.id as NetworkType['id'])
