@@ -146,31 +146,41 @@ const useSignMessage = ({
 
   const approveWithHW = useCallback(
     async ({ device }: { device: any }) => {
+      try {
+
       if (!device) {
         !!openBottomSheetHardwareWallet && openBottomSheetHardwareWallet()
         return
       }
 
-      // if quick account, wallet = await fromEncryptedBackup
-      // and just pass the signature as secondSig to signMsgHash
-      const wallet = getWallet(
-        {
-          signer: account.signer,
-          signerExtra: account.signerExtra,
-          chainId: 1 // does not matter
-        },
-        device
-      )
+      let wallet
+      try {
+        // if quick account, wallet = await fromEncryptedBackup
+        // and just pass the signature as secondSig to signMsgHash
+        wallet = getWallet(
+          {
+            signer: account.signer,
+            signerExtra: account.signerExtra,
+            chainId: 1 // does not matter
+          },
+          device
+        )
 
-      if (!wallet) {
-        return
+        if (!wallet) {
+          handleSigningErr({ message: 'No wallet found' })
+        }
+      } catch (walletErr) {
+        handleSigningErr(walletErr)
       }
 
       // It would be great if we could pass the full data cause then web3 wallets/hw wallets can display the full text
       // Unfortunately that isn't possible, because isValidSignature only takes a bytes32 hash; so to sign this with
       // a personal message, we need to be signing the hash itself as binary data such that we match 'Ethereum signed message:\n32<hash binary data>' on the contract
 
-      const sig = await (isTypedData
+      let sig;
+      let isValidSig
+      try {
+        sig = await (isTypedData
         ? signMessage712(
             wallet,
             account.id,
@@ -181,16 +191,28 @@ const useSignMessage = ({
           )
         : signMessage(wallet, account.id, account.signer, getMessageAsBytes(msgToSign.txn)))
 
-      const provider = getProvider(requestedNetwork?.id as NetworkType['id'])
-      const isValidSig = await verifyMessage({
-        provider,
-        signer: account.id,
-        message: isTypedData ? null : getMessageAsBytes(msgToSign.txn),
-        typedData: isTypedData ? dataV4 : null,
-        signature: sig
-      })
+        if (!sig) {
+          handleSigningErr({ message: 'No signature found' })
+        }
+        const provider = getProvider(requestedNetwork?.id as NetworkType['id'])
+        isValidSig = await verifyMessage({
+          provider,
+          signer: account.id,
+          message: isTypedData ? null : getMessageAsBytes(msgToSign.txn),
+          typedData: isTypedData ? dataV4 : null,
+          signature: sig
+        })
+        return { sig, isValidSig }
+      } catch (e) {
+        console.log('error signing', e)
+        handleSigningErr(e)
+      }
+      
+    return { sig, isValidSig }
 
-      return { sig, isValidSig }
+    } catch (e) {
+      handleSigningErr(e)
+    }
     },
     [account, dataV4, isTypedData, msgToSign, openBottomSheetHardwareWallet, requestedNetwork?.id]
   )
@@ -206,7 +228,9 @@ const useSignMessage = ({
           ? account.signer?.one
           : account.signer?.address
         signerType = await getSignerType({ addr: signerAddr })
-      } catch (error) {}
+      } catch (error) {
+        signerType = SIGNER_TYPES.hardware
+      }
 
       let approveMsgPromise
 

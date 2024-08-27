@@ -40,7 +40,12 @@ const closeTransport = async (device: any) => {
   const TransportBLE = (await import('@ledgerhq/react-native-hw-transport-ble')).default
 
   if (device.connectionType === 'Bluetooth') {
-    TransportBLE.disconnect(device.id)
+    try {
+      TransportBLE.disconnectDevice(device.id)
+    } catch (err) {
+      console.log('err', err)
+      throw err
+    }
   }
 }
 

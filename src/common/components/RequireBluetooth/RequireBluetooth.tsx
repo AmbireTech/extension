@@ -18,6 +18,7 @@ import { isAndroid } from '@common/config/env'
 import requestPermissionFlagging from '@common/services/requestPermissionFlagging'
 import spacings from '@common/styles/spacings'
 
+const BLEMANAGER = new BleManager()
 /**
  * Since Android 12 (API level 31), additional Bluetooth permissions are
  * required to connect to devices. Because of a possible bug in the Android
@@ -94,7 +95,7 @@ const RequireBluetooth: React.FC<any> = ({ children }) => {
   }, [requestAndroidPermissions])
 
   useEffect(() => {
-    const subscription = new BleManager().onStateChange((state) => {
+    const subscription = BLEMANAGER.onStateChange((state) => {
       setInBluetoothPoweredOn(state === 'PoweredOn')
 
       // On state change, assume that the module is no longer in process of
