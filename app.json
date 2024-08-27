@@ -2,8 +2,8 @@
   "name": "ambire",
   "expo": {
     "slug": "ambire-mobile-wallet",
-    "version": "3.15.20",
-    "sdkVersion": "49.0.0",
+    "version": "3.16.0",
+    "sdkVersion": "50.0.0",
     "assetBundlePatterns": [
       "**/*"
     ],
@@ -11,7 +11,7 @@
       "resizeMode": "contain",
       "backgroundColor": "#313555"
     },
-    "runtimeVersion": "1",
+    "runtimeVersion": "3.16.0",
     "jsEngine": "hermes",
     "updates": {
       "enabled": true,
@@ -40,7 +40,10 @@
     },
     "plugins": [
       "expo-localization",
-      "sentry-expo"
+      "sentry-expo",
+      "expo-font",
+      "expo-secure-store",
+      "react-native-ble-plx"
     ],
     "android": {
       "jsEngine": "hermes"

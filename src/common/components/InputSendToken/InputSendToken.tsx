@@ -11,6 +11,8 @@ import flexboxStyles from '@common/styles/utils/flexbox'
 
 import styles from './styles'
 
+const TOLERANCE = 1e-6
+
 interface Props {
   amount: number
   selectedAssetBalanceUSD: string
@@ -71,12 +73,34 @@ const SendForm = ({
       }
 
       const valueInAmount = (
-        (Number(valueInUsd) * Number(maxAmount)) /
+        (Number(valueInUsd) * Number(selectedAssetBalance)) /
         // This is handled by the above isNumber check, but ESLint doesn't know that
         // eslint-disable-next-line no-unsafe-optional-chaining
         Number(selectedAssetBalanceUSD)
-      ).toString()
-      onAmountChange(valueInAmount)
+      ).toFixed(selectedAssetDecimals)
+
+      const constrainedValueInAmount = Math.min(Number(valueInAmount), Number(maxAmount)).toString()
+
+       /**
+       * Due to the nature of floating-point arithmetic, calculations involving 
+       * decimal numbers can result in minor precision errors. These errors can 
+       * cause the calculated constrainedValueInAmount to be slightly less than 
+       * or greater than the intended value. 
+       * 
+       * To prevent these small discrepancies from causing the amount to be 
+       * incorrectly flagged as exceeding maxAmount, we introduce a small 
+       * tolerance value (TOLERANCE). If the absolute difference between 
+       * constrainedValueInAmount and maxAmount is less than this tolerance, 
+       * we treat them as equal and use maxAmount as the final value. 
+       * This ensures that minor precision errors do not lead to incorrect 
+       * validation failures.
+       */
+      if (Math.abs(Number(constrainedValueInAmount) - Number(maxAmount)) < TOLERANCE) {
+        onAmountChange(maxAmount.toString())
+      } else {
+        onAmountChange(constrainedValueInAmount)
+      }
+
       setAmountInUsd(valueInUsd)
     },
     [onAmountChange, selectedAssetBalance, selectedAssetBalanceUSD, selectedAssetDecimals]
