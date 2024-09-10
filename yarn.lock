@@ -4668,7 +4668,7 @@
     readable-stream "^2.2.2"
     through2 "^2.0.3"
 
-"@metamask/react-native-webview@^14.0.2":
+"@metamask/react-native-webview@14.0.2":
   version "14.0.2"
   resolved "https://registry.yarnpkg.com/@metamask/react-native-webview/-/react-native-webview-14.0.2.tgz#f21938c80e5edc0ea3be4f114eb6769f5c62888c"
   integrity sha512-InIp5w9622VP7jaovrSnWxxXOYuFUfASGhi/tFFkg7V3+FMs4g3V1fMpmrgZa/b5WLTELk9wgpETE9lg8Z8xfw==
