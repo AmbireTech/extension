@@ -1,7 +1,6 @@
 import React, { useEffect, useLayoutEffect } from 'react'
 import { View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import WebView from 'react-native-webview'
 
 import GradientBackgroundWrapper from '@common/components/GradientBackgroundWrapper'
 import Spinner from '@common/components/Spinner'
@@ -9,6 +8,7 @@ import Wrapper from '@common/components/Wrapper'
 import useNavigation from '@common/hooks/useNavigation'
 import useRoute from '@common/hooks/useRoute'
 import spacings from '@common/styles/spacings'
+import WebView from '@metamask/react-native-webview'
 
 import styles from './styles'
 
