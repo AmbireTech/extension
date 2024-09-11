@@ -2,7 +2,7 @@
   "name": "ambire",
   "expo": {
     "slug": "ambire-mobile-wallet",
-    "version": "3.16.1",
+    "version": "3.17.0",
     "sdkVersion": "50.0.0",
     "assetBundlePatterns": [
       "**/*"
@@ -11,7 +11,7 @@
       "resizeMode": "contain",
       "backgroundColor": "#313555"
     },
-    "runtimeVersion": "3.16.0",
+    "runtimeVersion": "3.17.0",
     "jsEngine": "hermes",
     "updates": {
       "enabled": true,
