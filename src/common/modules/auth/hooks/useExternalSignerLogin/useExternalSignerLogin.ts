@@ -34,7 +34,6 @@ const useExternalSignerLogin = () => {
         try {
           wallet = new Wallet(signer)
         } catch (e) {
-          wallet = null
           !isWeb && Keyboard.dismiss()
           addToast('Invalid private key format. Please double-check and try again.', {
             error: true,
