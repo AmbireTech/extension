@@ -30,20 +30,22 @@ const useExternalSignerLogin = () => {
           return
         }
 
-        const wallet = new Wallet(signer)
-
-        if (!wallet) {
+        let wallet: Wallet | null = null
+        try {
+          wallet = new Wallet(signer)
+        } catch (e) {
           !isWeb && Keyboard.dismiss()
-          addToast('Incorrect private key format.', {
+          addToast('Invalid private key format. Please double-check and try again.', {
             error: true,
             timeout: 4000
           })
           return
         }
+       
 
         // the public addr of the signer
         const addr = await wallet.getAddress()
-
+          
         await addToVault({
           addr,
           item: {
@@ -51,11 +53,12 @@ const useExternalSignerLogin = () => {
             type: 'external'
           }
         })
-
+        
         await onEOASelected(addr, { type: 'Web3' })
+        
       } catch (e) {
         !isWeb && Keyboard.dismiss()
-        addToast(e.message || e, {
+        addToast(e?.message || e, {
           error: true,
           timeout: 4000
         })
