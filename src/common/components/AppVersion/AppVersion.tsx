@@ -40,7 +40,7 @@ const AppVersion: React.FC = () => {
         </Text>
       )}
       <Text style={[styles.text, spacings.mbTy]} fontSize={10}>
-        {t('{{APP_ENV}} env', { APP_ENV: CONFIG.APP_ENV })}
+        {t('{{APP_ENV}} env {{RELAYER_URL}}', { APP_ENV: CONFIG.APP_ENV, RELAYER_URL: CONFIG.RELAYER_URL.startsWith('https://staging') ? '(s)' : '(p)' })}
       </Text>
     </View>
   )
