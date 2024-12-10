@@ -140,6 +140,14 @@ const MainRoutes = () => {
                     </TransferControllerStateProvider>
                   }
                 />
+                <Route
+                  path={WEB_ROUTES.topUpGasTank}
+                  element={
+                    <TransferControllerStateProvider isTopUp>
+                      <TransferScreen />
+                    </TransferControllerStateProvider>
+                  }
+                />
                 <Route path={WEB_ROUTES.swapAndBridge} element={<SwapAndBridgeScreen />} />
                 <Route element={<SettingsRoutesProvider />}>
                   <Route path={WEB_ROUTES.generalSettings} element={<GeneralSettingsScreen />} />

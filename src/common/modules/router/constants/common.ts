@@ -11,6 +11,7 @@ const COMMON_ROUTES = {
   collectible: 'collectible',
   earn: 'earn',
   transfer: 'transfer',
+  topUpGasTank: 'top-up-gas-tank',
   signAccountOp: 'sign-account-op',
   transactions: 'transactions',
   signedMessages: 'signed-messages',

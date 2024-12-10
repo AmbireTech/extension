@@ -29,12 +29,17 @@ export const getInfoFromSearch = (search: string | undefined) => {
 
   return {
     addr: params.get('address'),
-    networkId: params.get('networkId'),
-    isTopUp: typeof params.get('isTopUp') === 'string'
+    networkId: params.get('networkId')
   }
 }
 
-const TransferControllerStateProvider: React.FC<any> = ({ children }) => {
+const TransferControllerStateProvider = ({
+  children,
+  isTopUp
+}: {
+  children: any
+  isTopUp?: boolean
+}) => {
   const { account } = useSelectedAccountControllerState()
   const { networks } = useNetworksControllerState()
   const { contacts } = useAddressBookControllerState()
@@ -52,7 +57,6 @@ const TransferControllerStateProvider: React.FC<any> = ({ children }) => {
     () =>
       portfolio?.tokens.filter((token) => {
         const hasAmount = Number(getTokenAmount(token)) > 0
-        const isTopUp = selectedTokenFromUrl?.isTopUp
 
         if (isTopUp) {
           const tokenNetwork = networks.find((network) => network.id === token.networkId)
@@ -67,7 +71,7 @@ const TransferControllerStateProvider: React.FC<any> = ({ children }) => {
 
         return hasAmount && !token.flags.onGasTank && !token.flags.rewardsType
       }) || [],
-    [portfolio?.tokens, networks, selectedTokenFromUrl?.isTopUp]
+    [portfolio?.tokens, networks, isTopUp]
   )
 
   useEffect(() => {
@@ -148,10 +152,8 @@ const TransferControllerStateProvider: React.FC<any> = ({ children }) => {
 
   useEffect(() => {
     if (!transferCtrl) return
-    transferCtrl.update({
-      isTopUp: !!selectedTokenFromUrl?.isTopUp
-    })
-  }, [selectedTokenFromUrl?.isTopUp, transferCtrl])
+    transferCtrl.update({ isTopUp })
+  }, [isTopUp, transferCtrl])
 
   // If the user sends the max amount of a token it will disappear from the list of tokens
   // and we need to select another token
