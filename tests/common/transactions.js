@@ -147,7 +147,11 @@ export async function makeValidTransaction(
     shouldTopUpGasTank = false
   } = {}
 ) {
-  await page.waitForFunction(() => window.location.href.includes('/transfer'))
+  if (shouldTopUpGasTank) {
+    await page.waitForFunction(() => window.location.href.includes('/top-up-gas-tank'))
+  } else {
+    await page.waitForFunction(() => window.location.href.includes('/transfer'))
+  }
 
   if (shouldTopUpGasTank) {
     await prepareGasTankTopUp(page, recipient, tokenAmount)

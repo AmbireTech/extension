@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react'
+import React, { FC, useCallback, useState } from 'react'
 import { Modalize } from 'react-native-modalize'
 
 import { Account } from '@ambire-common/interfaces/account'
@@ -26,12 +26,17 @@ const AccountKeysBottomSheet: FC<Props> = ({
 }) => {
   const [currentKeyDetails, setCurrentKeyDetails] = useState<AccountKeyType | null>(null)
 
-  const closeCurrentKeyDetails = () => setCurrentKeyDetails(null)
+  const closeCurrentKeyDetails = useCallback(() => setCurrentKeyDetails(null), [])
 
-  const closeBottomSheetWrapped = () => {
+  const closeBottomSheetWrapped = useCallback(() => {
     closeCurrentKeyDetails()
     closeBottomSheet()
-  }
+  }, [closeBottomSheet, closeCurrentKeyDetails])
+
+  const handleOpenAccountBottomSheet = useCallback(() => {
+    closeBottomSheetWrapped()
+    openAddAccountBottomSheet && openAddAccountBottomSheet()
+  }, [closeBottomSheetWrapped, openAddAccountBottomSheet])
 
   return (
     <BottomSheet id="account-keys" sheetRef={sheetRef} closeBottomSheet={closeBottomSheetWrapped}>
@@ -39,7 +44,7 @@ const AccountKeysBottomSheet: FC<Props> = ({
         <AccountKeys
           setCurrentKeyDetails={setCurrentKeyDetails}
           account={account}
-          openAddAccountBottomSheet={openAddAccountBottomSheet}
+          openAddAccountBottomSheet={handleOpenAccountBottomSheet}
           keyIconColor={iconColors.black}
           showExportImport={showExportImport}
         />

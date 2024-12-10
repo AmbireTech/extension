@@ -217,14 +217,17 @@ const AccountKey: React.FC<Props> = ({
                     <Button
                       style={spacings.mb0}
                       onPress={exportKey}
-                      size="tiny"
+                      size="small"
                       disabled={!canExportKey}
                       type="secondary"
+                      text={t('Export')}
                     >
-                      <Text style={[spacings.mrTy]} fontSize={12}>
-                        {t('Export')}
-                      </Text>
-                      <ExportIcon color={theme.secondaryText} width={16} height={16} />
+                      <ExportIcon
+                        style={[spacings.mlTy]}
+                        color={theme.secondaryText}
+                        width={16}
+                        height={16}
+                      />
                     </Button>
                   </View>
                   {!canExportKey && (
@@ -271,11 +274,19 @@ const AccountKey: React.FC<Props> = ({
               </View>
             ) : (
               <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                <Button style={spacings.mb0} onPress={importKey} size="tiny" type="secondary">
-                  <Text style={[spacings.mrTy]} fontSize={12}>
-                    {t('Import')}
-                  </Text>
-                  <ImportIcon color={theme.secondaryText} width={16} height={16} />
+                <Button
+                  style={spacings.mb0}
+                  onPress={importKey}
+                  size="small"
+                  type="secondary"
+                  text={t('Import')}
+                >
+                  <ImportIcon
+                    style={[spacings.mlTy]}
+                    color={theme.primary}
+                    width={16}
+                    height={16}
+                  />
                 </Button>
               </View>
             )}
@@ -283,13 +294,23 @@ const AccountKey: React.FC<Props> = ({
         )}
       </View>
       {canExportOrImportKey && isImporting && openAddAccountBottomSheet && (
-        <View style={[spacings.phSm, flexbox.directionRow, flexbox.alignCenter, spacings.mbSm]}>
+        <View
+          style={[
+            spacings.phSm,
+            flexbox.directionRow,
+            flexbox.alignCenter,
+            flexbox.justifySpaceBetween,
+            spacings.mbSm
+          ]}
+        >
           <Text>{t('To import this key, you will need to reimport the account')}</Text>
-          <Button style={[spacings.mb0, spacings.mlTy]} onPress={reimportAccount} size="tiny">
-            <Text color="#fff" fontSize={12}>
-              {t('Reimport Account')}
-            </Text>
-          </Button>
+          <Button
+            style={[spacings.mb0, spacings.mlTy]}
+            onPress={reimportAccount}
+            size="small"
+            text={t('Reimport Account')}
+            hasBottomSpacing={false}
+          />
         </View>
       )}
     </View>

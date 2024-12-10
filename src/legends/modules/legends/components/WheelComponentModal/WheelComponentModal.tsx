@@ -85,13 +85,12 @@ const WheelComponentModal: React.FC<WheelComponentProps> = ({ isOpen, setIsOpen 
       setWheelState('unlocked')
       // Don't await this, we don't want to block the UI
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      onLegendComplete()
       return true
     } catch (error) {
       console.error('Error fetching transaction status:', error)
       return false
     }
-  }, [connectedAccount, onLegendComplete, unlockChainAnimation])
+  }, [connectedAccount, unlockChainAnimation])
 
   const unlockWheel = useCallback(async () => {
     // Switch to Base chain
@@ -117,10 +116,10 @@ const WheelComponentModal: React.FC<WheelComponentProps> = ({ isOpen, setIsOpen 
         }
       ])
 
+      addToast('The wheel will be unlocked shortly. ETA 10s', 'info')
       const receipt = await getCallsStatus(callsId)
 
       if (receipt && receipt.status === '0x1') {
-        addToast('The wheel will be unlocked shortly. ETA 10s', 'info')
         const transactionFound = await checkTransactionStatus()
         if (!transactionFound) {
           const checkStatusWithTimeout = async (attempts: number) => {
@@ -173,8 +172,11 @@ const WheelComponentModal: React.FC<WheelComponentProps> = ({ isOpen, setIsOpen 
     }, 10000)
   }, [prizeNumber, wheelState])
 
-  const closeModal = () => {
+  const closeModal = async () => {
     setIsOpen(false)
+    if (wheelState === 'spun') {
+      await onLegendComplete()
+    }
   }
 
   const onButtonClick = async () => {
@@ -183,7 +185,7 @@ const WheelComponentModal: React.FC<WheelComponentProps> = ({ isOpen, setIsOpen 
     } else if (wheelState === 'unlocked') {
       await spinWheel()
     } else if (wheelState === 'spun' || wheelState === 'error') {
-      closeModal()
+      await closeModal()
     }
   }
 

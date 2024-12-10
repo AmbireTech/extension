@@ -1,9 +1,13 @@
 import React, { FC, useMemo, useState } from 'react'
 
+import CopyIcon from '@common/assets/svg/CopyIcon'
 import Input from '@legends/components/Input'
+import useLegendsContext from '@legends/hooks/useLegendsContext'
 import useToast from '@legends/hooks/useToast'
 import { useInviteEOA } from '@legends/modules/legends/hooks'
+import { CardFromResponse } from '@legends/modules/legends/types'
 
+import styles from './Action.module.scss'
 import CardActionWrapper from './CardActionWrapper'
 
 type Props = {
@@ -20,6 +24,7 @@ const SummonAcc: FC<Props> = ({ buttonText, onComplete }) => {
     setEoaAddress,
     isEOAAddressValid: isValid
   } = useInviteEOA()
+
   const [isInProgress, setIsInProgress] = useState(false)
 
   const inputValidation = useMemo(() => {

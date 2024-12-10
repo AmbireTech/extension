@@ -165,3 +165,33 @@
   font-size: 1rem;
   color: $secondaryAccent;
 }
+
+
+.link {
+  color: $success;
+  text-decoration: none;
+  cursor: pointer;
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.copyField {
+  background-color: $primaryBackground;
+  border: 1px solid $primaryBorder;
+  border-radius: .5rem;
+  padding: .5rem;
+  display: flex;
+  align-items: start;
+}
+
+.copyIcon {
+  cursor: pointer;
+}
+
+.copySectionWrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}

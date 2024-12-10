@@ -6,8 +6,8 @@
   width: 100%;
   text-transform: uppercase;
   background-color: $primaryBackground;
-  border: 2px solid $tertiaryBorder;
-  box-shadow: 0 2.5px 0 $tertiaryBorder;
+  border: 2px solid $secondaryText;
+  box-shadow: 0 2.5px 0 $secondaryText;
   color: $secondaryText;
   font-weight: 600;
 
@@ -24,7 +24,7 @@
 @mixin primary-button {
   @include button;
   height: 3.375rem;
-  color: $secondaryText;
+  color: $secondaryAccent;
 
   &:not(:disabled) {
     &:hover {

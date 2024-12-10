@@ -8,6 +8,7 @@ import usePrevious from '@common/hooks/usePrevious'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import colors from '@common/styles/colors'
+import common from '@common/styles/utils/common'
 import { Portal } from '@gorhom/portal'
 
 import getStyles from './styles'

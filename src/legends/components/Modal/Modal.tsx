@@ -1,5 +1,5 @@
 import React, { FC, useEffect } from 'react'
-import ReactDOM from 'react-dom'
+import { createPortal } from 'react-dom'
 
 import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -66,7 +66,7 @@ const Modal = ({
     </div>
   )
 
-  return ReactDOM.createPortal(modalContent, document.getElementById('modal-root') as HTMLElement)
+  return createPortal(modalContent, document.getElementById('modal-root') as HTMLElement)
 }
 
 Modal.Heading = Heading

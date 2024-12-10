@@ -1,5 +1,5 @@
 import { ActivityTransaction, LegendActivity } from '@legends/contexts/recentActivityContext/types'
-import { CardFromResponse, CardStatus } from '@legends/modules/legends/types'
+import { CardActionType, CardFromResponse, CardStatus } from '@legends/modules/legends/types'
 
 interface WheelSpinOfTheDayParams {
   legends: CardFromResponse[] | null
@@ -26,7 +26,9 @@ export const isWheelSpinTodayDone = ({ legends, activity }: WheelSpinOfTheDayPar
   const cardwheelOfFortune =
     legends.find((card: CardFromResponse) => {
       return (
-        card.action.predefinedId === 'wheelOfFortune' && card.card.status === CardStatus.completed
+        card.action.type === CardActionType.predefined &&
+        card.action.predefinedId === 'wheelOfFortune' &&
+        card.card.status === CardStatus.completed
       )
     }) ||
     (activity && activity.length

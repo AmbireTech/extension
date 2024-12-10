@@ -22,7 +22,6 @@ const NETWORK_ICONS: { [key in Networks]: React.ReactNode } = {
 }
 
 const Stacked: React.FC<StackedProps> = ({ chains }) => {
-  console.log(chains)
   return <div className={styles.itemNetworks}>{chains.map((chain) => NETWORK_ICONS[chain])}</div>
 }
 

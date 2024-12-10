@@ -119,7 +119,8 @@ const TokenDetails = ({
           const canTopUp = !!assets.find(
             (a) => getAddress(a.address) === getAddress(address) && a.network === networkId
           )
-          if (canTopUp) navigate(`transfer?networkId=${networkId}&address=${address}&isTopUp`)
+          if (canTopUp)
+            navigate(`${WEB_ROUTES.topUpGasTank}?networkId=${networkId}&address=${address}`)
           else addToast('We have disabled top ups with this token.', { type: 'error' })
         },
         isDisabled: !canToToppedUp || !isSmartAccount,
