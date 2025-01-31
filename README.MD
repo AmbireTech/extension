@@ -37,40 +37,44 @@ Make sure your code editor has plugins that support the following configuration 
 
 ### Development-optimized Builds
 
-Start the browser extension for webkit browsers (tested mostly on Chrome and Brave):
+- Start the browser extension for webkit browsers (tested mostly on Chrome and Brave):
 
-```bash
-yarn web:webkit
-```
+  ```bash
+  yarn web:webkit
+  ```
 
-Start the browser extension for gecko browsers (tested mostly on Firefox):
+  Then follow the instructions to load an unpacked extension [here](https://developer.chrome.com/docs/extensions/get-started/tutorial/hello-world#load-unpacked).
 
-```bash
-yarn web:gecko
-```
+- Start the browser extension for gecko browsers (tested mostly on Firefox):
 
-Start the browser extension for the Safari browser:
+  ```bash
+  yarn web:gecko
+  ```
 
-```bash
-yarn web:safari
-```
+  Then follow the instructions to temporarily install an extension in Firefox [here](https://extensionworkshop.com/documentation/develop/temporary-installation-in-firefox/).
 
-Two new folders will be created:
+  - Start the browser extension for the Safari browser:
 
-1. build/safari-dev (dev build folder)
-1. safari-extension/wallet-dev (Xcode project)
-   then in the Safari browser:
-1. Developer -> Developer settings...
-1. Check the “Allow unsigned extensions” option. (Note: This setting may not persist after Safari is restarted.)​
-1. Then the extension should be automatically added and pinned in the browser.
+  ```bash
+  yarn web:safari
+  ```
 
-NOTE: You can manage the available extensions from: Safari -> Settings... -> Extensions
+  Two new folders will be created:
 
-NOTE: The development script for Safari relies on the fswatch tool to automatically reload the Safari build when the development server is reloaded. If fswatch is not already installed on your system, you can install it using Homebrew with the following command:
+  1.  build/safari-dev (dev build folder)
+  1.  safari-extension/wallet-dev (Xcode project)
+      then in the Safari browser:
+  1.  Developer -> Developer settings...
+  1.  Check the “Allow unsigned extensions” option. (Note: This setting may not persist after Safari is restarted.)​
+  1.  Then the extension should be automatically added and pinned in the browser.
 
-```bash
-brew install fswatch
-```
+  NOTE: You can manage the available extensions from: Safari -> Settings... -> Extensions
+
+  NOTE: The development script for Safari relies on the fswatch tool to automatically reload the Safari build when the development server is reloaded. If fswatch is not already installed on your system, you can install it using Homebrew with the following command:
+
+  ```bash
+  brew install fswatch
+  ```
 
 ### Production-optimized Builds
 
