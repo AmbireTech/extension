@@ -33,7 +33,9 @@ Create ".env" file in the root directory and fill in all variables, see ".env-sa
 
 Make sure your code editor has plugins that support the following configuration files: `.editorconfig`, `.prettierrc`, `tsconfig.json`, `eslintrc.js`, [`import-sorter.json`](https://github.com/SoominHan/import-sorter).
 
-## Development-optimized Builds
+## Browser Extensions
+
+### Development-optimized Builds
 
 Start the browser extension for webkit browsers (tested mostly on Chrome and Brave):
 
@@ -70,17 +72,7 @@ NOTE: The development script for Safari relies on the fswatch tool to automatica
 brew install fswatch
 ```
 
-## Translations (Beta)
-
-To scan the project for translation labels and to update translations JSON files, run:
-
-```bash
-yarn translations:scan
-```
-
-PS: Secondary languages not implemented / translated / fully tested yet.
-
-## Production-optimized Builds
+### Production-optimized Builds
 
 - For webkit browsers:
 
@@ -116,3 +108,59 @@ PS: Secondary languages not implemented / translated / fully tested yet.
   1.  For both targets (macOS and extension): General - Identity - Version: X.X (should match the version in the app.json file, example: `4.36`) and Build: X (integer, bump up on every next build submitted to the App Store Connect, example: `3`)
   1.  For the macOS target: General - App Category: "Utilities"
   1.  For the extension target: General - Identity - Bundle Identifier: `com.ambire.app.wallet.extension`
+
+## Mobile Apps
+
+The Ambire v2 compatible mobile apps are yet to be developed. Coming sometime in the near future 🤞
+
+## Benzin
+
+Ambire's transaction explorer, that makes human readable ERC-4337 transactions and contract interactions.
+
+Comes not only as integrated module in the Ambire extension(s), but as a standalone web app also.
+
+### Development-optimized Build
+
+```bash
+yarn web:benzin
+```
+
+And find the resulting build in the "build/benzin-dev" folder.
+
+### Production-optimized Build
+
+```bash
+yarn build:web:benzin
+```
+
+And find the resulting build in the "build/benzin-prod" folder.
+
+## Ambire Legends
+
+Ambire Legends is a gamified testing web3 app for the Ambire browser extensions. It is designed to users you discover the power of Smart Accounts via an epic onchain adventure. [Read more](https://legends.ambire.com/).
+
+### Development-optimized Build
+
+```bash
+yarn web:legends
+```
+
+And find the resulting build in the "build/legends-dev" folder.
+
+```bash
+yarn build:web:legends
+```
+
+And find the resulting build in the "build/legends-prod" folder.
+
+## Others
+
+### Translations (Beta)
+
+To scan the project for translation labels and to update translations JSON files, run:
+
+```bash
+yarn translations:scan
+```
+
+PS: Secondary languages not implemented / translated / fully tested yet.
