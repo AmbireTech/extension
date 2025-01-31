@@ -155,6 +155,47 @@ And find the resulting build in the "build/legends-prod" folder.
 
 ## Others
 
+### Browser Extensions E2E Tests
+
+#### Configuration
+
+The best approach here is to follow `.github/workflows/tests.yml`. It contains all the necessary instructions for CI, which are also applicable locally. Make sure to:
+
+- Set all necessary .env variables (marked as end-to-end tests configuration).
+- See [#1409](https://github.com/AmbireTech/ambire-app/pull/1409) for more details.
+
+#### Running against production
+
+To build the webkit production version of the extension and run the E2E tests against the /webkit-prod folder, run:
+
+```bash
+yarn run test:e2e:web
+```
+
+#### Running against development
+
+For debugging, to use the hot-reloaded webpack dev webkit build and to allow running individual tests easily run:
+
+```bash
+yarn test:e2e:web:dev
+```
+
+When debugging or writing a new test, it is easier to use this command, as the project is hot-reloaded with every change you make to the codebase (e.g., adding a new selector or debugging a state), eliminating the need for a complete production build (as before). Additionally, you can run tests for a single or multiple test files.
+
+Here's how to run the tests for a single test file:
+
+```json
+{
+  "test:e2e:web:dev": "WEBPACK_BUILD_OUTPUT_PATH=webkit-dev jest --config=./tests/jest.config.js -- ./tests/basic_account/ba_transactions.test.js"
+}
+```
+
+If you are fixing a failing CI test and want to mimic CI at 100%, you should configure the display server:
+
+First, run `Xvfb -ac :99 -screen 0 1280x1024x16 > /dev/null 2>&1 &`, then set the `DISPLAY` variable with `export DISPLAY=:99.0`. By doing this, when Jest & Puppeteer are running, they will use the newly created virtual display instead of your local display. If you want to switch back to your local display, you should run export `DISPLAY=:0`.
+
+See [#2438](https://github.com/AmbireTech/ambire-app/pull/2438) for more details.
+
 ### Translations (Beta)
 
 To scan the project for translation labels and to update translations JSON files, run:
