@@ -1,94 +1,53 @@
-# Ambire Mobile Wallet
+# Ambire Wallet
 
-Hybrid (React Native) Mobile App. This project is built with Expo's bare workflow, allowing developers to extend the default Vanilla React Native with additional expo modules in the form of installable expo libraries. Bare template projects come with expo installed and configured, so you're ready to install and use any package from the Expo SDK. A complete list of all expo packages can be found here: https://docs.expo.dev/versions/latest/
+Ambire is a Web3 wallet that makes self-custody easy and secure. It's the first hybrid Account abstraction wallet to support Basic (EOA) and Smart Accounts, improving security and user experience. [Read more.](https://www.ambire.com/)
 
-## React Native Environment Setup
+## Environment Setup
 
-Read about the environment setup and prerequisites [here](https://reactnative.dev/docs/environment-setup).
+Built in a hybrid approach (with React Native and React Native Web) so that in a single codebase we can support building cross-browser extensions, mobile apps and web apps.
+
+This project is built with Expo's bare workflow, allowing us to extend the default Vanilla React Native with additional expo modules in the form of installable expo libraries.
+
+More about the environment setup and prerequisites [here](https://reactnative.dev/docs/environment-setup).
 
 ## Install
 
-First run:
+Install all dependencies:
 
 ```bash
 yarn install
+```
+
+Install the [ambire-common](https://github.com/AmbireTech/ambire-common) submodule, a common ground for the Ambire apps, run:
+
+```bash
 git submodule init
 git submodule update
 ```
-
-- iOS: Then run:
-
-  ```
-  cd ios && pod install
-  ```
-
-  from the root folder of the project. This command links the native iOS packages using CocoaPods.
-
-- Android:
-
-  No additional steps required.
 
 ## Environment Variables
 
 Create ".env" file in the root directory and fill in all variables, see ".env-sample" for a reference.
 
-To provide the EAS build jobs with access to the environment variables, use [EAS secrets](https://docs.expo.dev/build-reference/variables/#using-secrets-in-environment-variables).
-
-### Upload all local .env file variables to EAS (as secrets)
-
-```bash
-yarn eas:secret:push
-```
-
-### List all current .env variables (secrets) on EAS
-
-```bash
-yarn eas:secret:list
-```
-
 ## Editor Config
 
 Make sure your code editor has plugins that support the following configuration files: `.editorconfig`, `.prettierrc`, `tsconfig.json`, `eslintrc.js`, [`import-sorter.json`](https://github.com/SoominHan/import-sorter).
 
-## Start
+## Development-optimized Builds
 
-iOS:
-
-```bash
-yarn ios
-```
-
-Note: This command runs `expo run:ios`.
-
-Android:
-
-```bash
-yarn android
-```
-
-Note: This command runs `expo run:android`.
-
-Development server (Metro bundler):
-
-```bash
-yarn start
-```
-
-Note: This command runs `react-native start`.
-
-Browser extension (web app) for webkit browsers (tested on Chrome only)::
+Start the browser extension for webkit browsers (tested mostly on Chrome and Brave):
 
 ```bash
 yarn web:webkit
 ```
 
-Browser extension (web app) for gecko browsers (tested on Firefox only)::
+Start the browser extension for gecko browsers (tested mostly on Firefox):
 
 ```bash
 yarn web:gecko
 ```
 
-Browser extension (web app) for the Safari browser (tested on Safari only)::
+Start the browser extension for the Safari browser:
 
 ```bash
 yarn web:safari
@@ -121,102 +80,39 @@ yarn translations:scan
 
 PS: Secondary languages not implemented / translated / fully tested yet.
 
-## Publishing over the air updates
+## Production-optimized Builds
 
-When doing over the air updates, be careful. Adding new packages requires a new build if they require native "linking".
-
-```bash
-yarn publish:production
-```
-
-## Building the app on EAS
-
-Create `credentials.json` file in the root directory. See `credentials-sample.json` as an example. Fill-in the required credentials. Then:
-
-- iOS: Create `ios/certs` directory and place there the 1) Provisioning Profile (`profile.mobileprovision` file) 2) Distribution Certificate (`dist.p12` file) and (optionally) 3) Push Notifications Service Key (`AuthKey_XXX.p8` file). Then run:
+- For webkit browsers:
 
   ```bash
-  yarn build:ios:production
+  yarn build:web:webkit
   ```
 
-- Android: Create `android/keystores` directory and place there the `release.keystore` file. Then run:
+  And find the resulting build in the "build/webkit-prod" folder.
+
+- For gecko browsers:
 
   ```bash
-  yarn build:android:production
+  yarn build:web:gecko
   ```
 
-## Building the iOS app locally on a real device
+  And find the resulting build in the "build/gecko-prod" folder.
 
-Add the Apple Distribution Certificate (`dist.p12` file) and the Apple Development Certificate (`test.dist.p12` file) to your macOS Keychain.
+- For the Safari browser:
 
-Open the app in xCode. Go to "Signing & Capabilities". Then:
+  ```bash
+  yarn build:web:safari
+  ```
 
-- For the "Signing (Debug)" import the Apple Development Provisioning Profile (`test.profile.mobileprovision` file).
-- For the "Signing (Release)" import the Apple Distribution Provisioning Profile (`profile.mobileprovision` file).
+  Two new folders will be created:
 
-FIXME: building the iOS app locally with the Release build configuration fails. It works only with the Debug build configuration. The issue is caused by a conflict between the `OpenSSL-Universal` pod versions of Flipper and the react-native-quick-crypto packages.
+  1.  "build/safari-prod" (production build folder)
+  1.  "safari-extension/wallet" (the Xcode project)
 
-For the CI builds, running in Release build configuration, the Flipper is not included (skipped by env variable in ios/Podfile). The workaround for the local builds with Release build configuration is commenting out `use_flipper!(...` in the Podfile and running "pod install" in the ios directory.
+  Then, in xCode manually do (TODO: automate these steps, it turned out to be a huge challenge):
 
-## Building the browser extension (web app) locally
-
-For webkit browsers (tested on Chrome only):
-
-```bash
-yarn build:web:webkit
-```
-
-For gecko browsers (tested on Firefox only):
-
-```bash
-yarn build:web:gecko
-```
-
-For the Safari browser (tested on Safari only):
-
-```bash
-yarn build:web:safari
-```
-
-Two new folders will be created:
-
-1. build/safari-prod (prod build folder)
-1. safari-extension/wallet (Xcode project)
-
-Then, in xCode manually do:
-
-1. Delete "walletTests" and "walletUITests" targets.
-1. For both targets (macOS and extension): Signing & Capabilities: Team: "Ambire Tech Ltd", Signing Certificate: Development
-1. For both targets (macOS and extension): General - Identity - Version: X.X (should match the version in the app.json file, example: `4.36`) and Build: X (integer, bump up on every next build submitted to the App Store Connect, example: `3`)
-1. For the macOS target: General - App Category: "Utilities"
-1. For the extension target: General - Identity - Bundle Identifier: `com.ambire.app.wallet.extension`
-
-TODO: Automate the above steps.
-
-## Versioning
-
-When releasing a new version, here are the steps:
-
-1. Our internal app version: X.X.X (example: `1.4.2`). Follows semantic versioning.
-
-   Change in app.json -> `version`
-
-1. Native version: X.X (example: `1.4`). This one is mostly for labeling within the App Store and Google Play. Keep synced with our internal app version when creating a new build. But it could also be behind, if the next internal version we're about to ship doesn't require creating a new build.
-
-   iOS: Change `CFBundleShortVersionString` in the `ios/ambire/Info.plist` file
-
-   Android: Change `versionName` string in the `android/app/build.gradle` file
-
-1. Native build version. Integer. Bump up If the next internal version we're about to ship requires creating a new build (example: `4`):
-
-   iOS: `CFBundleVersion` in the `ios/ambire/Info.plist` file
-
-   Android: `versionCode` in the `android/app/build.gradle` file
-
-1. Runtime version. Integer. Bump up If the next internal version we're about to ship requires creating a new build and shipping it over the air will break the previous (existing) builds: (example: `1`)
-
-   For both platforms: change `runtimeVersion` key in `app.json`. Then run: `yarn build:configure`.
-
-   iOS: Change the key `EXUpdatesRuntimeVersion` in the `Expo.plist` file
-
-   Android: Change the `expo_runtime_version` string in the strings.xml file
+  1.  Delete "walletTests" and "walletUITests" targets.
+  1.  For both targets (macOS and extension): Signing & Capabilities: Team: "Ambire Tech Ltd", Signing Certificate: Development
+  1.  For both targets (macOS and extension): General - Identity - Version: X.X (should match the version in the app.json file, example: `4.36`) and Build: X (integer, bump up on every next build submitted to the App Store Connect, example: `3`)
+  1.  For the macOS target: General - App Category: "Utilities"
+  1.  For the extension target: General - Identity - Bundle Identifier: `com.ambire.app.wallet.extension`
