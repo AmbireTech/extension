@@ -53,7 +53,7 @@ Make sure your code editor has plugins that support the following configuration 
 
   Then follow the instructions to temporarily install an extension in Firefox [here](https://extensionworkshop.com/documentation/develop/temporary-installation-in-firefox/).
 
-  - Start the browser extension for the Safari browser:
+- Start the browser extension for the Safari browser:
 
   ```bash
   yarn web:safari
@@ -61,12 +61,14 @@ Make sure your code editor has plugins that support the following configuration 
 
   Two new folders will be created:
 
-  1.  build/safari-dev (dev build folder)
-  1.  safari-extension/wallet-dev (Xcode project)
-      then in the Safari browser:
-  1.  Developer -> Developer settings...
-  1.  Check the “Allow unsigned extensions” option. (Note: This setting may not persist after Safari is restarted.)​
-  1.  Then the extension should be automatically added and pinned in the browser.
+  - build/safari-dev (dev build folder)
+  - safari-extension/wallet-dev (Xcode project)
+
+  then in the Safari browser:
+
+  - Developer -> Developer settings...
+  - Check the “Allow unsigned extensions” option. (Note: This setting may not persist after Safari is restarted.)​
+  - Then the extension should be automatically added and pinned in the browser.
 
   NOTE: You can manage the available extensions from: Safari -> Settings... -> Extensions
 
@@ -102,16 +104,16 @@ Make sure your code editor has plugins that support the following configuration 
 
   Two new folders will be created:
 
-  1.  "build/safari-prod" (production build folder)
-  1.  "safari-extension/wallet" (the Xcode project)
+  - "build/safari-prod" (production build folder)
+  - "safari-extension/wallet" (the Xcode project)
 
   Then, in xCode manually do (TODO: automate these steps, it turned out to be a huge challenge):
 
-  1.  Delete "walletTests" and "walletUITests" targets.
-  1.  For both targets (macOS and extension): Signing & Capabilities: Team: "Ambire Tech Ltd", Signing Certificate: Development
-  1.  For both targets (macOS and extension): General - Identity - Version: X.X (should match the version in the app.json file, example: `4.36`) and Build: X (integer, bump up on every next build submitted to the App Store Connect, example: `3`)
-  1.  For the macOS target: General - App Category: "Utilities"
-  1.  For the extension target: General - Identity - Bundle Identifier: `com.ambire.app.wallet.extension`
+  - Delete "walletTests" and "walletUITests" targets.
+  - For both targets (macOS and extension): Signing & Capabilities: Team: "Ambire Tech Ltd", Signing Certificate: Development
+  - For both targets (macOS and extension): General - Identity - Version: X.X (should match the version in the app.json file, example: `4.36`) and Build: X (integer, bump up on every next build submitted to the App Store Connect, example: `3`)
+  - For the macOS target: General - App Category: "Utilities"
+  - For the extension target: General - Identity - Bundle Identifier: `com.ambire.app.wallet.extension`
 
 ## Mobile Apps
 
