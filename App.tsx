@@ -10,6 +10,7 @@ import { ExtensionWalletProvider } from '@common/contexts/extensionWalletContext
 import AppInit from '@common/modules/app-init/screens/AppInit'
 import colors from '@common/styles/colors'
 import flexboxStyles from '@common/styles/utils/flexbox'
+import * as Sentry from '@sentry/react-native'
 
 SplashScreen.preventAutoHideAsync().catch(console.warn) // TODO: log a sentry error
 
@@ -27,4 +28,4 @@ const App = () => {
   )
 }
 
-export default App
+export default Sentry.wrap(App);

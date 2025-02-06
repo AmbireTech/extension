@@ -1,15 +1,11 @@
-// Learn more https://docs.expo.io/guides/customizing-metro
-const { getDefaultConfig } = require('expo/metro-config')
+const { getSentryExpoConfig } = require('@sentry/react-native/metro');
 
 /**
- * Metro configuration
- * https://facebook.github.io/metro/docs/configuration
+ * Sentry Expo Configuration
+ * https://docs.expo.dev/guides/using-sentry/#update-metro-configuration
  *
- * @type {import('metro-config').MetroConfig}
  */
-const config = getDefaultConfig(__dirname)
-
-config.transformer.assetPlugins = ['expo-asset/tools/hashAssetFiles']
+const config = getSentryExpoConfig(__dirname);
 
 module.exports = config
 
