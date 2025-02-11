@@ -67,7 +67,7 @@ interface Config extends EnvTypes {
 const CONFIG: Config = {
   APP_ENV: APP_ENV.DEV,
   APP_RELAYRLESS: APP_RELAYRLESS === 'true',
-  RELAYER_URL: 'https://staging-relayer.ambire.com',
+  RELAYER_URL: 'https://relayer.ambire.com',
   ZAPPER_API_ENDPOINT,
   ZAPPER_API_KEY,
   VELCRO_API_ENDPOINT: 'https://velcro.ambire.com/v2',
