@@ -17,6 +17,8 @@ import Text from '@common/components/Text'
 import Title from '@common/components/Title'
 import TokenIcon from '@common/components/TokenIcon'
 import { useTranslation } from '@common/config/localization'
+import useConstants from '@common/hooks/useConstants'
+import useNetwork from '@common/hooks/useNetwork'
 import spacings from '@common/styles/spacings'
 import textStyles from '@common/styles/utils/text'
 
@@ -52,6 +54,8 @@ const DepositTokenBottomSheetProvider = ({
   closeBottomSheetTopUp
 }: DepositTokenBottomSheetContextProps) => {
   const { t } = useTranslation()
+  const { constants } = useConstants()
+  const { network } = useNetwork()
 
   const [token, setToken] = useState<any>(null)
   const [amount, setAmount] = useState<number | string>('')
@@ -108,17 +112,73 @@ const DepositTokenBottomSheetProvider = ({
         txn.data = '0x'
       }
 
-      const req: any = {
-        id: `transfer_${Date.now()}`,
-        dateAdded: new Date().valueOf(),
-        type: 'eth_sendTransaction',
-        chainId,
-        account: selectedAcc,
-        txn,
-        meta: null
-      }
+      const isNativeTopUp = Number(token.address) === 0
 
-      addRequest(req)
+      if (isNativeTopUp) {
+        const WETHAbi = constants?.humanizerInfo?.abis?.WETH
+
+        if (!WETHAbi) {
+          addToast('Error during top up (Wrapped Native ABI not found)', { error: true })
+          return
+        }
+        
+        const WETHInterface = new Interface(WETHAbi)
+        const wrappedNativeAddress = network.nativeAsset.wrappedAddr
+        
+        if (!wrappedNativeAddress) {
+          addToast('Error during top up (Wrapped Native address not found for this network)', { error: true })
+          return
+        }
+
+        const deposit = WETHInterface.encodeFunctionData('deposit')
+        const now = Date.now()
+        const wrapRequest = {
+          id: `transfer_${now}`,
+          dateAdded: new Date().valueOf(),
+          type: 'eth_sendTransaction',
+          chainId: network.chainId,
+          account: selectedAcc,
+          txn: {
+            to: wrappedNativeAddress,
+            value: bigNumberHexAmount,
+            data: deposit
+          },
+
+          meta: null
+        }
+        const topUpRequest = {
+          id: `transfer_${now + 1}`,
+          dateAdded: new Date().valueOf(),
+          type: 'eth_sendTransaction',
+          chainId: network.chainId,
+          account: selectedAcc,
+          txn: {
+            to: wrappedNativeAddress,
+            value: '0',
+            data: ERC20.encodeFunctionData('transfer', [recipientAddress, bigNumberHexAmount])
+          },
+          meta: null
+        }
+
+        addRequest(wrapRequest)
+        addRequest(topUpRequest)
+        setAmount(0)
+
+        // return
+      } else {
+        const req: any = {
+          id: `transfer_${Date.now()}`,
+          dateAdded: new Date().valueOf(),
+          type: 'eth_sendTransaction',
+          chainId,
+          account: selectedAcc,
+          txn,
+          meta: null
+        }
+        
+        addRequest(req)
+      }
+      
 
       // Timeout of 400ms because of the animated transition between screens (addRequest opens PendingTransactions screen)
       setTimeout(() => {
