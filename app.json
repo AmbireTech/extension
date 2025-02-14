@@ -2,7 +2,7 @@
   "name": "ambire",
   "expo": {
     "slug": "ambire-mobile-wallet",
-    "version": "3.19.0",
+    "version": "3.19.1",
     "sdkVersion": "50.0.0",
     "assetBundlePatterns": [
       "**/*"
@@ -35,7 +35,8 @@
         "@sentry/react-native/expo",
         {
           "project": "ambire",
-          "organization": "ambire"
+          "organization": "ambire",
+          "url": "https://sentry.io"
         }
       ]
     ],
