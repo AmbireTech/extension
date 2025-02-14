@@ -91,8 +91,8 @@ android {
         applicationId "com.ambire.wallet"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 52
-        versionName "3.18.0"
+        versionCode 53
+        versionName "3.19.0"
         compileOptions {
             sourceCompatibility JavaVersion.VERSION_17
             targetCompatibility JavaVersion.VERSION_17
