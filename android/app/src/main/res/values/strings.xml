@@ -2,5 +2,5 @@
   <string name="app_name">Ambire</string>
   <string name="expo_splash_screen_resize_mode">native</string>
   <string name="expo_splash_screen_status_bar_translucent">true</string>
-  <string name="expo_runtime_version">3.17.0</string>
+  <string name="expo_runtime_version">3.19.0</string>
 </resources>

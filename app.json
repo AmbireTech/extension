@@ -2,7 +2,7 @@
   "name": "ambire",
   "expo": {
     "slug": "ambire-mobile-wallet",
-    "version": "3.17.5",
+    "version": "3.19.2",
     "sdkVersion": "50.0.0",
     "assetBundlePatterns": [
       "**/*"
@@ -11,24 +11,12 @@
       "resizeMode": "contain",
       "backgroundColor": "#313555"
     },
-    "runtimeVersion": "3.17.0",
+    "runtimeVersion": "3.19.0",
     "jsEngine": "hermes",
     "updates": {
       "enabled": true,
       "fallbackToCacheTimeout": 45000,
       "url": "https://u.expo.dev/58802506-2680-49c2-a7a2-3af290426f05"
-    },
-    "hooks": {
-      "postPublish": [
-        {
-          "file": "sentry-expo/upload-sourcemaps",
-          "config": {
-            "organization": "ambire",
-            "project": "ambire",
-            "authToken": "94f0f4e891314cb79d2a094b3e1af571944170fe8d54435c95a539b039673db3"
-          }
-        }
-      ]
     },
     "ios": {
       "bundleIdentifier": "com.ambire.app.wallet"
@@ -40,10 +28,17 @@
     },
     "plugins": [
       "expo-localization",
-      "sentry-expo",
       "expo-font",
       "expo-secure-store",
-      "react-native-ble-plx"
+      "react-native-ble-plx",
+      [
+        "@sentry/react-native/expo",
+        {
+          "project": "ambire",
+          "organization": "ambire",
+          "url": "https://sentry.io"
+        }
+      ]
     ],
     "android": {
       "jsEngine": "hermes"

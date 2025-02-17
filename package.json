@@ -29,9 +29,9 @@
     "build:android:production:simulator": "eas build --platform android --profile production:simulator",
     "build:web:webkit": "rm -rf ./webkit-prod && APP_ENV=production WEB_ENGINE=webkit WEBPACK_BUILD_OUTPUT_PATH=webkit-prod expo build:web",
     "build:web:gecko": "rm -rf ./gecko-prod && APP_ENV=production WEB_ENGINE=gecko WEBPACK_BUILD_OUTPUT_PATH=gecko-prod expo build:web",
-    "publish:development": "eas update --channel development",
-    "publish:staging": "APP_ENV=staging eas update --channel staging",
-    "publish:production": "APP_ENV=production eas update --channel default",
+    "publish:development": "eas update --channel development && SENTRY_URL=$SENTRY_DSN npx sentry-expo-upload-sourcemaps dist",
+    "publish:staging": "APP_ENV=staging eas update --channel staging && SENTRY_URL=$SENTRY_DSN npx sentry-expo-upload-sourcemaps dist",
+    "publish:production": "APP_ENV=production eas update --channel default && SENTRY_URL=$SENTRY_DSN npx sentry-expo-upload-sourcemaps dist",
     "translations:scan": "i18next-scanner --config ./scripts/i18next-scanner.config.js './src/**/*.{js,jsx,ts,tsx}'",
     "lint:fix": "eslint ./src/** --ext .js,.jsx,.ts,.tsx --fix",
     "expo:doctor": "expo doctor",
@@ -39,7 +39,8 @@
     "expo:install": "expo install",
     "eas:secret:list": "eas secret:list",
     "eas:secret:push": "eas secret:push --scope project --env-file .env",
-    "test:e2e:web": "jest --config=./src/web/jest.config.js"
+    "test:e2e:web": "jest --config=./src/web/jest.config.js",
+    "postinstall": "patch-package"
   },
   "engines": {
     "node": ">=18.20.3 <19.0.0",
@@ -139,6 +140,7 @@
     "mini-css-extract-plugin": "^2.7.6",
     "nanoid": "4.0.0",
     "p-queue": "^7.3.4",
+    "patch-package": "^8.0.0",
     "path-browserify": "0.0.0",
     "process": "^0.11.0",
     "puppeteer": "5.5.0",
@@ -184,7 +186,6 @@
     "readable-stream": "1.0.33",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.5.5",
-    "sentry-expo": "~7.2.0",
     "stream-browserify": "^3.0.0",
     "string_decoder": "~0.10.25",
     "timers-browserify": "^1.0.1",

@@ -35,7 +35,7 @@ const HideTokenListItem: React.FC<Props> = ({
         </Text>
       </View>
       <Ionicons
-        name={isHidden ? 'ios-eye-off' : 'ios-eye'}
+        name={isHidden ? 'eye-off' : 'eye'}
         style={spacings.mlSm}
         size={26}
         color={isHidden ? colors.radicalRed : colors.turquoise}
