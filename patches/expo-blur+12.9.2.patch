@@ -1,0 +1,48 @@
+diff --git a/node_modules/expo-blur/android/.gradle/8.8/checksums/checksums.lock b/node_modules/expo-blur/android/.gradle/8.8/checksums/checksums.lock
+new file mode 100644
+index 0000000..e962f06
+Binary files /dev/null and b/node_modules/expo-blur/android/.gradle/8.8/checksums/checksums.lock differ
+diff --git a/node_modules/expo-blur/android/.gradle/8.8/dependencies-accessors/gc.properties b/node_modules/expo-blur/android/.gradle/8.8/dependencies-accessors/gc.properties
+new file mode 100644
+index 0000000..e69de29
+diff --git a/node_modules/expo-blur/android/.gradle/8.8/fileChanges/last-build.bin b/node_modules/expo-blur/android/.gradle/8.8/fileChanges/last-build.bin
+new file mode 100644
+index 0000000..f76dd23
+Binary files /dev/null and b/node_modules/expo-blur/android/.gradle/8.8/fileChanges/last-build.bin differ
+diff --git a/node_modules/expo-blur/android/.gradle/8.8/fileHashes/fileHashes.bin b/node_modules/expo-blur/android/.gradle/8.8/fileHashes/fileHashes.bin
+new file mode 100644
+index 0000000..d59ef4b
+Binary files /dev/null and b/node_modules/expo-blur/android/.gradle/8.8/fileHashes/fileHashes.bin differ
+diff --git a/node_modules/expo-blur/android/.gradle/8.8/fileHashes/fileHashes.lock b/node_modules/expo-blur/android/.gradle/8.8/fileHashes/fileHashes.lock
+new file mode 100644
+index 0000000..d6b4b05
+Binary files /dev/null and b/node_modules/expo-blur/android/.gradle/8.8/fileHashes/fileHashes.lock differ
+diff --git a/node_modules/expo-blur/android/.gradle/8.8/gc.properties b/node_modules/expo-blur/android/.gradle/8.8/gc.properties
+new file mode 100644
+index 0000000..e69de29
+diff --git a/node_modules/expo-blur/android/.gradle/buildOutputCleanup/buildOutputCleanup.lock b/node_modules/expo-blur/android/.gradle/buildOutputCleanup/buildOutputCleanup.lock
+new file mode 100644
+index 0000000..7d2fc49
+Binary files /dev/null and b/node_modules/expo-blur/android/.gradle/buildOutputCleanup/buildOutputCleanup.lock differ
+diff --git a/node_modules/expo-blur/android/.gradle/buildOutputCleanup/cache.properties b/node_modules/expo-blur/android/.gradle/buildOutputCleanup/cache.properties
+new file mode 100644
+index 0000000..b815af1
+--- /dev/null
++++ b/node_modules/expo-blur/android/.gradle/buildOutputCleanup/cache.properties
+@@ -0,0 +1,2 @@
++#Tue Feb 11 17:44:50 EET 2025
++gradle.version=8.8
+diff --git a/node_modules/expo-blur/android/.gradle/vcs-1/gc.properties b/node_modules/expo-blur/android/.gradle/vcs-1/gc.properties
+new file mode 100644
+index 0000000..e69de29
+diff --git a/node_modules/expo-blur/android/build.gradle b/node_modules/expo-blur/android/build.gradle
+index 0747618..18f35d2 100644
+--- a/node_modules/expo-blur/android/build.gradle
++++ b/node_modules/expo-blur/android/build.gradle
+@@ -105,5 +105,5 @@ dependencies {
+     implementation project(':expo-modules-core')
+     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:${getKotlinVersion()}"
+   }
+-  implementation 'com.github.Dimezis:BlurView:version-2.0.3'
++  implementation 'com.github.Dimezis:BlurView:version-2.0.6'
+ }

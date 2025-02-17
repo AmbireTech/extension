@@ -28,7 +28,7 @@ const HideCollectibleListItem: React.FC<Props> = ({ assetImg, assetName, onPress
         <Text>{assetName}</Text>
       </View>
       <Ionicons
-        name={isHidden ? 'ios-eye-off' : 'ios-eye'}
+        name={isHidden ? 'eye-off' : 'eye'}
         style={spacings.mlSm}
         size={26}
         color={isHidden ? colors.radicalRed : colors.turquoise}
