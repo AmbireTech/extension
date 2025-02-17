@@ -2,7 +2,7 @@
   "name": "ambire",
   "expo": {
     "slug": "ambire-mobile-wallet",
-    "version": "3.19.1",
+    "version": "3.19.2",
     "sdkVersion": "50.0.0",
     "assetBundlePatterns": [
       "**/*"
