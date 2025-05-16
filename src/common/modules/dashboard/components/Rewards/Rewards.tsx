@@ -243,7 +243,7 @@ const Rewards = () => {
             <Button
               disabled={claimingDisabled}
               onPress={handleClaimInxWallet}
-              text={t('Claim in xWALLET')}
+              text={t('Claim in stkWALLET')}
               style={shouldDisplayMintableVesting && spacings.mbMi}
             />
           </View>
