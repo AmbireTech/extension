@@ -439,14 +439,14 @@ class LedgerController implements ExternalSignerController {
     )
   }
 
-  async sign7702(derivationPath: string, chainId: bigint, implementation: Hex, nonce: bigint) {
+  async sign7702(derivationPath: string, chainId: bigint, delegationAddr: Hex, nonce: bigint) {
     if (!this.signerEth) throw new ExternalSignerError(normalizeLedgerMessage())
 
     return this.#handleLedgerSubscription<LedgerSignature>(
       this.signerEth.signDelegationAuthorization(
         derivationPath,
         Number(chainId),
-        implementation,
+        delegationAddr,
         Number(nonce)
       ).observable,
       {
