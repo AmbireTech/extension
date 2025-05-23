@@ -1,6 +1,7 @@
 import { Observable, Subscription } from 'rxjs'
 
 import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
+import { Hex } from '@ambire-common/interfaces/hex'
 import { ExternalSignerController } from '@ambire-common/interfaces/keystore'
 import { TypedMessage } from '@ambire-common/interfaces/userRequest'
 import { normalizeLedgerMessage } from '@ambire-common/libs/ledger/ledger'
@@ -9,9 +10,9 @@ import hexStringToUint8Array from '@ambire-common/utils/hexStringToUint8Array'
 import { ContextModuleBuilder } from '@ledgerhq/context-module'
 import {
   DeviceManagementKitBuilder,
-  DeviceModelId as LedgerDeviceModels,
   DiscoveredDevice,
   LEDGER_VENDOR_ID,
+  DeviceModelId as LedgerDeviceModels,
   UserInteractionRequired
 } from '@ledgerhq/device-management-kit'
 import {
@@ -434,6 +435,23 @@ class LedgerController implements ExternalSignerController {
       {
         onCompleted: (output) => output,
         errorMessage: 'Failed to sign typed data with Ledger device'
+      }
+    )
+  }
+
+  async sign7702(derivationPath: string, chainId: bigint, implementation: Hex, nonce: bigint) {
+    if (!this.signerEth) throw new ExternalSignerError(normalizeLedgerMessage())
+
+    return this.#handleLedgerSubscription<LedgerSignature>(
+      this.signerEth.signDelegationAuthorization(
+        derivationPath,
+        Number(chainId),
+        implementation,
+        Number(nonce)
+      ).observable,
+      {
+        onCompleted: (output) => output,
+        errorMessage: 'Failed to sign message with Ledger device'
       }
     )
   }

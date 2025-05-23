@@ -8,6 +8,7 @@ import {
   KeystoreSignerInterface,
   TxnRequest
 } from '@ambire-common/interfaces/keystore'
+import { EIP7702Signature } from '@ambire-common/interfaces/signatures'
 import { addHexPrefix } from '@ambire-common/utils/addHexPrefix'
 import { getHdPathFromTemplate } from '@ambire-common/utils/hdPath'
 import hexStringToUint8Array from '@ambire-common/utils/hexStringToUint8Array'
@@ -144,8 +145,28 @@ class LedgerSigner implements KeystoreSignerInterface {
   }
 
   // eslint-disable-next-line class-methods-use-this
-  sign7702(hex: string): { yParity: Hex; r: Hex; s: Hex } {
-    throw new Error('not support', { cause: hex })
+  async sign7702(hex: string): Promise<EIP7702Signature> {
+    throw new Error('not supported')
+
+    // if (!stripHexPrefix(hex)) {
+    //   throw new ExternalSignerError(
+    //     'Request for signing an empty message detected. Signing empty messages with Ambire is disallowed.'
+    //   )
+    // }
+
+    // await this.#prepareForSigning()
+
+    // try {
+    //   const path = getHdPathFromTemplate(this.key.meta.hdPathTemplate, this.key.meta.index)
+    //   const signature = await this.controller!.sing7702(path, stripHexPrefix(hex))
+
+    //   return this.#normalizeSignature(signature)
+    // } catch (e: any) {
+    //   throw new ExternalSignerError(
+    //     e?.message ||
+    //       'Signing the message failed. Please try again or contact Ambire support if issue persists.'
+    //   )
+    // }
   }
 
   // eslint-disable-next-line class-methods-use-this
