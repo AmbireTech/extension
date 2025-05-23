@@ -444,7 +444,7 @@ class LedgerController implements ExternalSignerController {
 
     return this.#handleLedgerSubscription<LedgerSignature>(
       this.signerEth.signDelegationAuthorization(
-        derivationPath,
+        getHdPathWithoutRoot(derivationPath),
         Number(chainId),
         delegationAddr,
         Number(nonce)

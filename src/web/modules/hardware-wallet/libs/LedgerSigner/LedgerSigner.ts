@@ -145,28 +145,25 @@ class LedgerSigner implements KeystoreSignerInterface {
   }
 
   // eslint-disable-next-line class-methods-use-this
-  async sign7702(hex: string): Promise<EIP7702Signature> {
-    throw new Error('not supported')
+  async sign7702(chainId: bigint, delegationAddr: Hex, nonce: bigint): Promise<EIP7702Signature> {
+    await this.#prepareForSigning()
 
-    // if (!stripHexPrefix(hex)) {
-    //   throw new ExternalSignerError(
-    //     'Request for signing an empty message detected. Signing empty messages with Ambire is disallowed.'
-    //   )
-    // }
+    try {
+      const path = getHdPathFromTemplate(this.key.meta.hdPathTemplate, this.key.meta.index)
+      const signature = await this.controller!.sign7702(path, chainId, delegationAddr, nonce)
+      const v = Signature.getNormalizedV(signature.v)
 
-    // await this.#prepareForSigning()
-
-    // try {
-    //   const path = getHdPathFromTemplate(this.key.meta.hdPathTemplate, this.key.meta.index)
-    //   const signature = await this.controller!.sing7702(path, stripHexPrefix(hex))
-
-    //   return this.#normalizeSignature(signature)
-    // } catch (e: any) {
-    //   throw new ExternalSignerError(
-    //     e?.message ||
-    //       'Signing the message failed. Please try again or contact Ambire support if issue persists.'
-    //   )
-    // }
+      return {
+        r: signature.r,
+        s: signature.s,
+        yParity: v === 27 ? '0x00' : '0x01'
+      }
+    } catch (e: any) {
+      throw new ExternalSignerError(
+        e?.message ||
+          'Signing the message failed. Please try again or contact Ambire support if issue persists.'
+      )
+    }
   }
 
   // eslint-disable-next-line class-methods-use-this
