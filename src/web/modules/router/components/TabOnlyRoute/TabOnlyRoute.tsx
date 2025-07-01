@@ -21,9 +21,14 @@ const TabOnlyRoute = () => {
   useEffect(() => {
     if (!isTab && isExtension) {
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      openInternalPageInTab(`${path?.substring(1)}${search}`, params)
+      openInternalPageInTab({
+        route: `${path?.substring(1)}${search}`,
+        searchParams: params,
+        shouldCloseCurrentWindow: true,
+        windowId: state.actionWindow.windowProps?.createdFromWindowId
+      })
     }
-  }, [path, search, params])
+  }, [path, search, params, state.actionWindow.windowProps?.createdFromWindowId])
 
   if (isActionWindow && state.currentAction) {
     return <Outlet />

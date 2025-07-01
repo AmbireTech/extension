@@ -7,6 +7,7 @@ import BottomSheet from '@common/components/BottomSheet'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import ImageIcon from '@web/assets/svg/ImageIcon'
@@ -42,7 +43,7 @@ const CollectibleModal = ({
   hideSendNft?: boolean
 }) => {
   const { t } = useTranslation()
-  const { styles, theme } = useTheme(getStyles)
+  const { styles, theme, themeType } = useTheme(getStyles)
   const { networks } = useNetworksControllerState()
 
   const ModalInner = useCallback(() => {
@@ -115,7 +116,10 @@ const CollectibleModal = ({
             // !hideSendNft && spacings.mbSm,
             {
               borderRadius: BORDER_RADIUS_PRIMARY,
-              backgroundColor: theme.secondaryBackground,
+              backgroundColor:
+                themeType === THEME_TYPES.DARK
+                  ? theme.primaryBackground
+                  : theme.secondaryBackground,
               width: '100%'
             }
           ]}
@@ -143,7 +147,6 @@ const CollectibleModal = ({
       </>
     )
   }, [
-    hideSendNft,
     networks,
     selectedCollectible,
     styles.image,
@@ -162,7 +165,7 @@ const CollectibleModal = ({
       sheetRef={modalRef}
       closeBottomSheet={handleClose}
       style={styles.modal}
-      backgroundColor="primaryBackground"
+      backgroundColor={themeType === THEME_TYPES.DARK ? 'secondaryBackground' : 'primaryBackground'}
       autoWidth
     >
       <ModalInner />

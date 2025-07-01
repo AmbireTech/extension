@@ -26,6 +26,7 @@ interface Props {
   sizeMultiplierSize?: number
   marginRight: number
   hideLinks?: boolean
+  chainId: bigint
 }
 
 const InnerToken: FC<Props> = ({
@@ -36,7 +37,8 @@ const InnerToken: FC<Props> = ({
   network,
   sizeMultiplierSize = 1,
   marginRight,
-  hideLinks = false
+  hideLinks = false,
+  chainId
 }) => {
   const { t } = useTranslation()
   const openExplorer = useCallback(async () => {
@@ -122,7 +124,12 @@ const InnerToken: FC<Props> = ({
           />
           <Text fontSize={textSize} weight="medium" appearance="primaryText" style={spacings.mlMi}>
             {tokenInfo?.symbol || (
-              <HumanizerAddress fontSize={textSize} address={address} hideLinks={hideLinks} />
+              <HumanizerAddress
+                chainId={chainId}
+                fontSize={textSize}
+                address={address}
+                hideLinks={hideLinks}
+              />
             )}
           </Text>
         </View>
@@ -140,7 +147,12 @@ const InnerToken: FC<Props> = ({
           />
           <Text fontSize={textSize} weight="medium" appearance="primaryText" style={spacings.mhMi}>
             {tokenInfo?.symbol || (
-              <HumanizerAddress fontSize={textSize} address={address} hideLinks={hideLinks} />
+              <HumanizerAddress
+                chainId={chainId}
+                fontSize={textSize}
+                address={address}
+                hideLinks={hideLinks}
+              />
             )}
           </Text>
           {network && <OpenIcon width={14} height={14} />}

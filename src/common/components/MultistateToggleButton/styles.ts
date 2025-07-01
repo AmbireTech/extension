@@ -1,7 +1,7 @@
 import { StyleSheet, ViewStyle } from 'react-native'
 
 import spacings, { SPACING_MI } from '@common/styles/spacings'
-import { ThemeProps } from '@common/styles/themeConfig'
+import { THEME_TYPES, ThemeProps, ThemeType } from '@common/styles/themeConfig'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
@@ -12,7 +12,7 @@ interface Style {
   activeElement: ViewStyle
 }
 
-const getStyles = (theme: ThemeProps) =>
+const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
   StyleSheet.create<Style>({
     container: {
       ...spacings.mrSm,
@@ -20,7 +20,8 @@ const getStyles = (theme: ThemeProps) =>
       paddingHorizontal: SPACING_MI / 2,
       paddingVertical: SPACING_MI / 2,
       borderRadius: BORDER_RADIUS_PRIMARY,
-      backgroundColor: theme.tertiaryBackground
+      backgroundColor:
+        themeType === THEME_TYPES.DARK ? theme.secondaryBackground : theme.tertiaryBackground
     },
     element: {
       ...spacings.pvMi,
@@ -33,11 +34,11 @@ const getStyles = (theme: ThemeProps) =>
     },
     activeElement: {
       backgroundColor: theme.primaryBackground,
-      color: theme.primaryText,
+      color: themeType === THEME_TYPES.DARK ? theme.primary : theme.primaryText,
       shadowColor: theme.tertiaryText,
       shadowOffset: { width: 0, height: 1 },
       shadowRadius: 4,
-      shadowOpacity: 0.25
+      shadowOpacity: themeType === THEME_TYPES.DARK ? 0 : 0.25
     }
   })
 

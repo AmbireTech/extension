@@ -6,7 +6,9 @@ import { useTranslation } from '@common/config/localization'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
+import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { createTab } from '@web/extension-services/background/webapi/tab'
@@ -30,7 +32,7 @@ interface Props {
 const ITEM_HEIGHT = 44
 
 const RouteItem: FC<Props> = ({ routeItem, index, routeItemsLength }) => {
-  const { theme } = useTheme()
+  const { theme, themeType } = useTheme()
   const { t } = useTranslation()
   const { navigate } = useNavigation()
   const { addToast } = useToast()
@@ -67,18 +69,42 @@ const RouteItem: FC<Props> = ({ routeItem, index, routeItemsLength }) => {
               height: ITEM_HEIGHT,
               paddingHorizontal: 9, // this way it gets equal to ITEM_HEIGHT (when square), and flexible otherwise
               borderRadius: BORDER_RADIUS_PRIMARY,
-              backgroundColor: hovered ? '#141833CC' : '#141833',
+              backgroundColor: hovered
+                ? themeType === THEME_TYPES.DARK
+                  ? '#1b2b2c'
+                  : '#141833CC'
+                : themeType === THEME_TYPES.DARK
+                ? theme.primaryBackground
+                : theme.primaryText,
               ...flexbox.center,
               ...spacings.mbTy
             }}
           >
-            <routeItem.icon
-              color={hovered ? '#c197ff' : theme.primaryBackground}
-              height={ITEM_HEIGHT}
-            />
+            <View
+              style={[
+                flexbox.center,
+                flexbox.alignCenter,
+                routeItem.route === WEB_ROUTES.swapAndBridge && { width: 70, height: 24 }
+              ]}
+            >
+              <routeItem.icon
+                color={
+                  themeType === THEME_TYPES.DARK
+                    ? theme.primary
+                    : hovered
+                    ? '#c197ff'
+                    : theme.primaryBackground
+                }
+                height={ITEM_HEIGHT}
+              />
+            </View>
           </View>
           <Text
-            color={theme.primaryBackground}
+            color={
+              themeType === THEME_TYPES.DARK
+                ? theme.primaryBackgroundInverted
+                : theme.primaryBackground
+            }
             weight="regular"
             fontSize={12}
             style={routeItem.disabled && { opacity: 0.4 }}

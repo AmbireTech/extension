@@ -90,7 +90,6 @@ const KeyStoreSetupForm = ({ agreedWithTerms, children }: Props) => {
       {children}
       <Button
         testID="create-keystore-pass-btn"
-        textStyle={{ fontSize: 14 }}
         size="large"
         disabled={
           formState.isSubmitting || isKeystoreSetupLoading || !formState.isValid || !agreedWithTerms

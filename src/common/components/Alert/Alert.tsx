@@ -9,6 +9,7 @@ import WarningIcon from '@common/assets/svg/WarningIcon'
 import Button, { Props as ButtonProps } from '@common/components/Button'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@web/utils/uiType'
@@ -50,11 +51,18 @@ interface AlertTextProps extends TextProps {
 }
 
 const AlertText: React.FC<AlertTextProps> = ({ children, size = 'md', type = 'info', ...rest }) => {
+  const { themeType } = useTheme()
   const isSmall = size === 'sm' || isPopup
   const fontSize = !isSmall ? DEFAULT_MD_FONT_SIZE : DEFAULT_SM_FONT_SIZE
 
   return (
-    <Text selectable fontSize={fontSize - 2} weight="regular" appearance={`${type}Text`} {...rest}>
+    <Text
+      selectable
+      fontSize={fontSize - 2}
+      weight="regular"
+      appearance={themeType === THEME_TYPES.DARK ? 'secondaryText' : `${type}Text`}
+      {...rest}
+    >
       {children}
     </Text>
   )

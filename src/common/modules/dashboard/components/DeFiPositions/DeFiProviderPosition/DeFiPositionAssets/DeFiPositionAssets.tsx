@@ -23,17 +23,12 @@ const COLUMNS_WITH_APY = [
   { label: 'USD VALUE', flex: 0.5 }
 ]
 
-const POSITIONS_WITH_APY = ['Aave']
-
 const DeFiPositionAssets: FC<{
-  providerName: string
   assets: Position['assets']
   label: string
   chainId: bigint
-}> = ({ assets, providerName, label, chainId }) => {
-  const shouldDisplayAPY = POSITIONS_WITH_APY.some((position) =>
-    providerName.toLowerCase().includes(position.toLowerCase())
-  )
+}> = ({ assets, label, chainId }) => {
+  const shouldDisplayAPY = assets.some((a) => !!a?.additionalData?.APY)
 
   const columns = useMemo(() => {
     return [
@@ -49,7 +44,7 @@ const DeFiPositionAssets: FC<{
     <View>
       <DeFiPositionAssetsHeader columns={columns} />
       <View style={spacings.ptMi}>
-        {assets.map(({ symbol, amount, decimals, address, additionalData, value }) => {
+        {assets.map(({ symbol, amount, decimals, address, additionalData, value, iconUrl }) => {
           return (
             <View
               style={[flexbox.directionRow, spacings.phSm, spacings.pvTy, flexbox.alignCenter]}
@@ -59,6 +54,7 @@ const DeFiPositionAssets: FC<{
                 <TokenIcon
                   width={24}
                   height={24}
+                  uri={iconUrl}
                   withContainer={false}
                   chainId={chainId}
                   address={address}

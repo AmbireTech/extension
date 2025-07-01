@@ -13,8 +13,10 @@ import Search from '@common/components/Search'
 import Text from '@common/components/Text'
 import useAccountsList from '@common/hooks/useAccountsList'
 import useElementSize from '@common/hooks/useElementSize'
+import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import useBackgroundService from '@web/hooks/useBackgroundService'
@@ -34,6 +36,7 @@ const AccountsSettingsScreen = () => {
   const { minElementWidthSize, maxElementWidthSize } = useElementSize(accountsContainerRef)
   const { setCurrentSettingsPage } = useContext(SettingsRoutesContext)
   const { dispatch } = useBackgroundService()
+  const { themeType } = useTheme()
   const {
     ref: sheetRefExportImportKey,
     open: openExportImportKey,
@@ -164,7 +167,9 @@ const AccountsSettingsScreen = () => {
         id="remove-account-seed-sheet"
         type="modal"
         sheetRef={sheetRefRemoveAccount}
-        backgroundColor="primaryBackground"
+        backgroundColor={
+          themeType === THEME_TYPES.DARK ? 'secondaryBackground' : 'primaryBackground'
+        }
         closeBottomSheet={() => {
           setAccountToRemove(null)
           closeRemoveAccount()

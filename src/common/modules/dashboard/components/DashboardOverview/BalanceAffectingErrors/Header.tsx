@@ -5,15 +5,16 @@ import { Pressable, View } from 'react-native'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@web/extension-services/background/webapi/tab'
 
 const Header: FC = () => {
-  const { theme } = useTheme()
+  const { theme, themeType } = useTheme()
   const { t } = useTranslation()
 
   const openHelpCenter = useCallback(
-    () => openInTab('https://help.ambire.com/hc/en-us/requests/new', false),
+    () => openInTab({ url: 'https://help.ambire.com/hc/en-us/requests/new' }),
     []
   )
   return (
@@ -23,10 +24,7 @@ const Header: FC = () => {
         flexbox.alignCenter,
         flexbox.justifySpaceBetween,
         spacings.mbSm,
-        spacings.pbTy,
-        {
-          backgroundColor: theme.primaryBackground
-        }
+        spacings.pbTy
       ]}
     >
       <Text fontSize={20} weight="medium" color={theme.primaryText}>
@@ -40,9 +38,9 @@ const Header: FC = () => {
           <Text
             fontSize={14}
             weight="medium"
-            color={theme.primary}
+            color={themeType === THEME_TYPES.DARK ? theme.linkText : theme.primary}
             style={{
-              textDecorationColor: theme.primary,
+              textDecorationColor: themeType === THEME_TYPES.DARK ? theme.linkText : theme.primary,
               textDecorationLine: 'underline'
             }}
           >

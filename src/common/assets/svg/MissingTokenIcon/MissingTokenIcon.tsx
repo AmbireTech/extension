@@ -1,7 +1,5 @@
 import React from 'react'
-import Svg, { Circle, G, Path, Rect, SvgProps } from 'react-native-svg'
-
-import colors from '@common/styles/colors'
+import Svg, { Circle, G, Path, SvgProps } from 'react-native-svg'
 
 interface Props extends SvgProps {
   width?: number
@@ -9,23 +7,8 @@ interface Props extends SvgProps {
   withRect?: boolean
 }
 
-const MissingTokenIcon: React.FC<Props> = ({
-  width = 34,
-  height = 34,
-  withRect = false,
-  ...rest
-}) => (
+const MissingTokenIcon: React.FC<Props> = ({ width = 34, height = 34, ...rest }) => (
   <Svg width={width} height={height} viewBox="0 0 34 34" {...rest}>
-    {!!withRect && (
-      <Rect
-        width="34"
-        height="34"
-        rx="13"
-        transform="rotate(-90 17 17)"
-        fill={colors.titan}
-        opacity=".05"
-      />
-    )}
     <G transform="translate(-420 -531)">
       <Circle cx="11" cy="11" r="11" transform="translate(426 537)" fill="#d49c00" />
       <Path

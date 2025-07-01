@@ -78,6 +78,7 @@ const DashboardBannerBottomSheet: FC<Props> = ({ id, sheetRef, closeBottomSheet 
                 getIsBridgeRoute(route.route) &&
                 (route.routeStatus === 'in-progress' ||
                   route.routeStatus === 'completed' ||
+                  route.routeStatus === 'refunded' ||
                   route.routeStatus === 'failed')
             )
 

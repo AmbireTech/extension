@@ -1,6 +1,6 @@
 import { StyleSheet, ViewStyle } from 'react-native'
 
-import spacings, { SPACING_TY } from '@common/styles/spacings'
+import spacings from '@common/styles/spacings'
 import { ThemeProps } from '@common/styles/themeConfig'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -11,7 +11,6 @@ interface Style {
   menuItem: ViewStyle
   separatorWrapper: ViewStyle
   separator: ViewStyle
-  maximizeButton: ViewStyle
 }
 
 const isPopup = getUiType().isPopup
@@ -40,12 +39,6 @@ const getStyles = (theme: ThemeProps) =>
       height: 1,
       backgroundColor: theme.secondaryBorder,
       ...common.borderRadiusPrimary
-    },
-    maximizeButton: {
-      ...spacings.phSm,
-      ...spacings.pv,
-      // to enlarge the vertical clickable area a little beyond the container
-      marginTop: -SPACING_TY
     }
   })
 

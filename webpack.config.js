@@ -22,7 +22,7 @@ const isSafari = process.env.WEB_ENGINE === 'webkit-safari'
 const outputPath = process.env.WEBPACK_BUILD_OUTPUT_PATH
 const isExtension =
   outputPath.includes('webkit') || outputPath.includes('gecko') || outputPath.includes('safari')
-const isBenzin = outputPath.includes('benzin')
+const isAmbireExplorer = outputPath.includes('benzin')
 const isLegends = outputPath.includes('legends')
 
 // style.css output file for WEB_ENGINE: GECKO
@@ -331,6 +331,18 @@ module.exports = async function (env, argv) {
       new CopyPlugin({ patterns: extensionCopyPatterns })
     ]
 
+    // Some dependencies, such as @metamask/eth-sig-util v7+ and v8+, ship .cjs
+    // files and define "exports" fields in their package.json. In multi-entry
+    // builds (like ours), Webpack 5 can get confused and attempt to emit the
+    // same .cjs file into multiple chunks, causing the error:
+    // "Multiple chunks emit assets to the same filename index..cjs".
+    // This rule tells Webpack to treat .cjs files as regular JS (not ESM),
+    // which prevents chunk emission conflicts.
+    config.module.rules.push({
+      test: /\.cjs$/,
+      type: 'javascript/auto'
+    })
+
     if (isWebkit) {
       // This plugin enables code-splitting support for the service worker, allowing it to import chunks dynamically.
       config.plugins.push(
@@ -409,8 +421,19 @@ module.exports = async function (env, argv) {
             ascii_only: true,
             comments: false
           }
+
+          // Disable mangling:
+          // 1) For Firefox, to ensure bit-for-bit deterministic builds across
+          // platforms (e.g. x64 vs arm64). This avoids differences in
+          // variable/function names (e.g. P vs x) that can cause review rejections.
+          // 2) For Webkit as well avoid issues with GridPlus SDK - signing
+          // EIP-712 messages fail with PROD build on Linux (work just fine on DEV)
+          // because the mangling messes up the gridplus-sdk package somehow.
+          // The drawback is larger bundle size.
+          terserRealOptions.mangle = false
         }
 
+        // Disable parallel to avoid nondeterminism in some environments
         terserPlugin.options.parallel = false
       }
     }
@@ -422,7 +445,7 @@ module.exports = async function (env, argv) {
 
     return config
   }
-  if (isBenzin) {
+  if (isAmbireExplorer) {
     if (process.env.APP_ENV === 'development') {
       config.optimization = { minimize: false }
     } else {

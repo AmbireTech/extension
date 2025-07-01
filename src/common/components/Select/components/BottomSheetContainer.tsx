@@ -13,10 +13,17 @@ const { isPopup } = getUiType()
 
 type Props = Pick<RenderSelectedOptionParams, 'isMenuOpen' | 'toggleMenu'> & {
   id?: string
+  setIsMenuOpen: (isOpen: boolean) => void
   children: React.ReactNode
 }
 
-const BottomSheetContainer: FC<Props> = ({ id, isMenuOpen, toggleMenu, children }) => {
+const BottomSheetContainer: FC<Props> = ({
+  id,
+  isMenuOpen,
+  setIsMenuOpen,
+  toggleMenu,
+  children
+}) => {
   const { theme } = useTheme()
   const { ref: sheetRef, open: openSheet, close: closeSheet } = useModalize()
 
@@ -32,7 +39,13 @@ const BottomSheetContainer: FC<Props> = ({ id, isMenuOpen, toggleMenu, children 
     <BottomSheet
       id={id}
       sheetRef={sheetRef}
-      closeBottomSheet={toggleMenu}
+      closeBottomSheet={toggleMenu as () => void}
+      onClosed={() => {
+        // Always set isMenuOpen to false when the BottomSheet is closed
+        // Fixes the issue where the state is not updated when the BottomSheet is closed
+        // by dragging it down
+        setIsMenuOpen(false)
+      }}
       containerInnerWrapperStyles={{
         flex: 1
       }}

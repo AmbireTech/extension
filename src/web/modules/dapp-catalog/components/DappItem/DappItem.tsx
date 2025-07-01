@@ -13,7 +13,6 @@ import Text from '@common/components/Text'
 import Tooltip from '@common/components/Tooltip'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import { iconColors } from '@common/styles/themeConfig'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import ManifestImage from '@web/components/ManifestImage'
@@ -26,7 +25,7 @@ import { getUiType } from '@web/utils/uiType'
 import getStyles from './styles'
 
 const DappItem = (dapp: Dapp) => {
-  const { url, name, icon, description, isConnected, favorite, blacklisted } = dapp
+  const { id, url, name, icon, description, isConnected, favorite, blacklisted } = dapp
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const { styles, theme } = useTheme(getStyles)
   const { dispatch } = useBackgroundService()
@@ -52,7 +51,7 @@ const DappItem = (dapp: Dapp) => {
       >
         <AnimatedPressable
           style={[styles.container, animStyle]}
-          onPress={() => openInTab(url, false)}
+          onPress={() => openInTab({ url })}
           {...bindAnim}
         >
           <View style={[flexbox.directionRow, spacings.mbSm]}>
@@ -74,7 +73,7 @@ const DappItem = (dapp: Dapp) => {
                   onPress={() => {
                     dispatch({
                       type: 'DAPP_CONTROLLER_UPDATE_DAPP',
-                      params: { url, dapp: { favorite: !favorite } }
+                      params: { id, dapp: { favorite: !favorite } }
                     })
                   }}
                 >
@@ -88,7 +87,7 @@ const DappItem = (dapp: Dapp) => {
                         width={16}
                         height={16}
                         strokeWidth="2"
-                        color={iconHovered ? iconColors.secondary : iconColors.primary}
+                        color={iconHovered ? theme.iconSecondary : theme.iconPrimary}
                       />
                     )}
                   </Pressable>

@@ -53,6 +53,12 @@
       transition-duration: 0.2s !important;
       /*Ease-out for scrolling, big difference when changed*/
     }
+
+    :global(.swiper-slide) {
+      @include breakpoint-from(medium-desktop) {
+        width: 17.3125rem;
+      }
+    }
   }
 
   .slide {

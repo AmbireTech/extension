@@ -4,6 +4,7 @@ import 'reflect-metadata'
 import { ethErrors } from 'eth-rpc-errors'
 import { toBeHex } from 'ethers'
 import cloneDeep from 'lodash/cloneDeep'
+import { nanoid } from 'nanoid'
 
 import { ORIGINS_WHITELISTED_TO_ALL_ACCOUNTS } from '@ambire-common/consts/dappCommunication'
 import { MainController } from '@ambire-common/controllers/main/main'
@@ -89,14 +90,14 @@ export class ProviderController {
       : []
   }
 
-  getDappNetwork = (origin: string) => {
+  getDappNetwork = (id: string) => {
     const defaultNetwork = this.mainCtrl.networks.networks.find((n) => n.chainId === 1n)
     if (!defaultNetwork)
       throw new Error(
         'Missing default network data, which should never happen. Please contact support.'
       )
 
-    const dappChainId = this.mainCtrl.dapps.getDapp(origin)?.chainId
+    const dappChainId = this.mainCtrl.dapps.getDapp(id)?.chainId
     if (!dappChainId) return defaultNetwork
 
     return (
@@ -109,21 +110,21 @@ export class ProviderController {
     const {
       method,
       params,
-      session: { origin }
+      session: { id }
     } = request
 
-    const chainId = this.getDappNetwork(origin).chainId
+    const chainId = this.getDappNetwork(id).chainId
     const provider = this.mainCtrl.providers.providers[chainId.toString()]
 
-    if (!this.mainCtrl.dapps.hasPermission(origin) && !SAFE_RPC_METHODS.includes(method)) {
+    if (!this.mainCtrl.dapps.hasPermission(id) && !SAFE_RPC_METHODS.includes(method)) {
       throw ethErrors.provider.unauthorized()
     }
 
     return provider.send(method, params)
   }
 
-  ethRequestAccounts = async ({ session: { origin } }: DappProviderRequest) => {
-    if (!this.mainCtrl.dapps.hasPermission(origin) || !this.isUnlocked) {
+  ethRequestAccounts = async ({ session: { id, origin } }: DappProviderRequest) => {
+    if (!this.mainCtrl.dapps.hasPermission(id) || !this.isUnlocked) {
       throw ethErrors.provider.unauthorized()
     }
 
@@ -134,11 +135,8 @@ export class ProviderController {
     return account
   }
 
-  getPortfolioBalance = async ({
-    params: [chainParams],
-    session: { origin }
-  }: DappProviderRequest) => {
-    if (!this.mainCtrl.dapps.hasPermission(origin) || !this.isUnlocked) {
+  getPortfolioBalance = async ({ params: [chainParams], session: { id } }: DappProviderRequest) => {
+    if (!this.mainCtrl.dapps.hasPermission(id) || !this.isUnlocked) {
       throw ethErrors.provider.unauthorized()
     }
 
@@ -177,11 +175,11 @@ export class ProviderController {
   // specifications.
   walletCustomGetAssets = async ({
     params: { account, assetFilter: _assetFilter },
-    session: { origin }
+    session: { id }
   }: DappProviderRequest) => {
     const assetFilter = _assetFilter as { [a: string]: string[] }
 
-    if (!this.mainCtrl.dapps.hasPermission(origin) || !this.isUnlocked) {
+    if (!this.mainCtrl.dapps.hasPermission(id) || !this.isUnlocked) {
       throw ethErrors.provider.unauthorized()
     }
 
@@ -230,16 +228,16 @@ export class ProviderController {
   }
 
   @Reflect.metadata('SAFE', true)
-  ethAccounts = async ({ session: { origin } }: DappProviderRequest) => {
-    if (!this.mainCtrl.dapps.hasPermission(origin) || !this.isUnlocked) {
+  ethAccounts = async ({ session: { id, origin } }: DappProviderRequest) => {
+    if (!this.mainCtrl.dapps.hasPermission(id) || !this.isUnlocked) {
       return []
     }
 
     return this._internalGetAccounts(origin)
   }
 
-  ethCoinbase = async ({ session: { origin } }: DappProviderRequest) => {
-    if (!this.mainCtrl.dapps.hasPermission(origin) || !this.isUnlocked) {
+  ethCoinbase = async ({ session: { id } }: DappProviderRequest) => {
+    if (!this.mainCtrl.dapps.hasPermission(id) || !this.isUnlocked) {
       return null
     }
 
@@ -247,9 +245,9 @@ export class ProviderController {
   }
 
   @Reflect.metadata('SAFE', true)
-  ethChainId = async ({ session: { origin } }: DappProviderRequest) => {
-    if (this.mainCtrl.dapps.hasPermission(origin)) {
-      return networkChainIdToHex(this.mainCtrl.dapps.getDapp(origin)?.chainId || 1)
+  ethChainId = async ({ session: { id } }: DappProviderRequest) => {
+    if (this.mainCtrl.dapps.hasPermission(id)) {
+      return networkChainIdToHex(this.mainCtrl.dapps.getDapp(id)?.chainId || 1)
     }
     return networkChainIdToHex(1)
   }
@@ -262,7 +260,7 @@ export class ProviderController {
   }
 
   @Reflect.metadata('SAFE', true)
-  netVersion = ({ session: { origin } }: any) => this.getDappNetwork(origin).chainId.toString()
+  netVersion = ({ session: { id } }: any) => this.getDappNetwork(id).chainId.toString()
 
   @Reflect.metadata('SAFE', true)
   web3ClientVersion = () => {
@@ -308,10 +306,7 @@ export class ProviderController {
       return false
     }
   ])
-  walletAddEthereumChain = async ({
-    params: [chainParams],
-    session: { origin, name }
-  }: ProviderRequest) => {
+  walletAddEthereumChain = async ({ params: [chainParams], session: { id } }: ProviderRequest) => {
     let chainId = chainParams.chainId
     if (typeof chainId === 'string') {
       chainId = Number(chainId)
@@ -323,14 +318,14 @@ export class ProviderController {
       throw new Error('This chain is not supported by Ambire yet.')
     }
 
-    this.mainCtrl.dapps.updateDapp(origin, { chainId })
+    this.mainCtrl.dapps.updateDapp(id, { chainId })
     await this.mainCtrl.dapps.broadcastDappSessionEvent(
       'chainChanged',
       {
         chain: `0x${network.chainId.toString(16)}`,
         networkVersion: `${network.chainId}`
       },
-      origin
+      id
     )
 
     return null
@@ -338,7 +333,7 @@ export class ProviderController {
 
   // explain to the dapp what features the wallet has for the selected account
   walletGetCapabilities = async (data: any) => {
-    if (!this.mainCtrl.dapps.hasPermission(data.session.origin) || !this.isUnlocked) {
+    if (!this.mainCtrl.dapps.hasPermission(data.session.id) || !this.isUnlocked) {
       throw ethErrors.provider.unauthorized()
     }
 
@@ -439,7 +434,7 @@ export class ProviderController {
       bundler: bundlerName
     }
 
-    const dappNetwork = this.getDappNetwork(data.session.origin)
+    const dappNetwork = this.getDappNetwork(data.session.id)
     const network = this.mainCtrl.networks.networks.filter(
       (n) => n.chainId === dappNetwork.chainId
     )[0]
@@ -556,13 +551,13 @@ export class ProviderController {
       bundler: bundlerName
     }
 
-    const dappNetwork = this.getDappNetwork(data.session.origin)
+    const dappNetwork = this.getDappNetwork(data.session.id)
     const network = this.mainCtrl.networks.networks.filter(
       (n) => n.chainId === dappNetwork.chainId
     )[0]
     const chainId = Number(network.chainId)
 
-    const link = `https://benzin.ambire.com/${getBenzinUrlParams({
+    const link = `https://explorer.ambire.com/${getBenzinUrlParams({
       txnId: identifiedBy.type === 'Transaction' ? identifiedBy.identifier : null,
       chainId,
       identifiedBy
@@ -581,7 +576,7 @@ export class ProviderController {
       if (!params[0]?.chainId) {
         throw ethErrors.rpc.invalidParams('chainId is required')
       }
-      const dapp = mainCtrl.dapps.getDapp(session.origin)
+      const dapp = mainCtrl.dapps.getDapp(session.id)
       const { chainId } = params[0]
       const network = mainCtrl.networks.networks.find(
         (n: any) => Number(n.chainId) === Number(chainId)
@@ -600,34 +595,36 @@ export class ProviderController {
   ])
   walletSwitchEthereumChain = async ({
     params: [chainParams],
-    session: { origin, name }
+    session: { id, origin, name }
   }: ProviderRequest) => {
     let chainId = chainParams.chainId
-    if (typeof chainId === 'string') {
-      chainId = Number(chainId)
-    }
+    if (typeof chainId === 'string') chainId = Number(chainId)
+
     const network = this.mainCtrl.networks.networks.find((n) => Number(n.chainId) === chainId)
+    if (!network) throw new Error('This chain is not supported by Ambire yet.')
 
-    if (!network) {
-      throw new Error('This chain is not supported by Ambire yet.')
+    const dapp = this.mainCtrl.dapps.getDapp(id)
+
+    if (!dapp) return null
+
+    if (dapp?.chainId !== chainId) {
+      this.mainCtrl.dapps.updateDapp(id, { chainId })
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+      ;(async () => {
+        await notificationManager.create({
+          title: 'Successfully switched network',
+          message: `Network switched to ${network.name} for ${name || origin}.`
+        })
+      })()
+      await this.mainCtrl.dapps.broadcastDappSessionEvent(
+        'chainChanged',
+        {
+          chain: `0x${network.chainId.toString(16)}`,
+          networkVersion: `${network.chainId}`
+        },
+        id
+      )
     }
-
-    this.mainCtrl.dapps.updateDapp(origin, { chainId })
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    ;(async () => {
-      await notificationManager.create({
-        title: 'Successfully switched network',
-        message: `Network switched to ${network.name} for ${name || origin}.`
-      })
-    })()
-    await this.mainCtrl.dapps.broadcastDappSessionEvent(
-      'chainChanged',
-      {
-        chain: `0x${network.chainId.toString(16)}`,
-        networkVersion: `${network.chainId}`
-      },
-      origin
-    )
 
     return null
   }
@@ -640,20 +637,84 @@ export class ProviderController {
     result: requestRes
   })
 
-  walletRequestPermissions = ({ params: permissions }: DappProviderRequest) => {
+  walletRequestPermissions = ({ params: permissions, session }: DappProviderRequest) => {
     const result: Web3WalletPermission[] = []
+
     if (permissions && 'eth_accounts' in permissions[0]) {
-      result.push({ parentCapability: 'eth_accounts' })
+      const dapp = this.mainCtrl.dapps.getDapp(session.id)
+      const grantedPermissionId = dapp?.grantedPermissionId || nanoid(21)
+      const grantedPermissionAt = dapp?.grantedPermissionAt || Date.now()
+      const account = this._internalGetAccounts(session.origin)
+
+      result.push({
+        id: grantedPermissionId,
+        parentCapability: 'eth_accounts',
+        invoker: session.origin,
+        caveats: [{ type: 'restrictReturnedAccounts', value: account }],
+        date: grantedPermissionAt
+      })
+
+      // TODO: Undecided yet if we should support this `parentCapability` permission too
+      // const chainIds = this.mainCtrl.networks.networks.map((n) => networkChainIdToHex(n.chainId))
+      // result.push({
+      //   id: grantedPermissionId,
+      //   parentCapability: 'endowment:permitted-chains',
+      //   invoker: session.origin,
+      //   caveats: [{ type: 'restrictNetworkSwitching', value: chainIds }],
+      //   date: grantedPermissionAt
+      // })
+
+      this.mainCtrl.dapps.updateDapp(session.id, { grantedPermissionId, grantedPermissionAt })
     }
+
     return result
   }
 
+  /**
+   * Revokes the current dapp permissions. Experimental, but supported in MetaMask. Specified by MIP-2:
+   * {@link https://github.com/MetaMask/metamask-improvement-proposals/blob/main/MIPs/mip-2.md}
+   */
   @Reflect.metadata('SAFE', true)
-  walletGetPermissions = ({ session: { origin } }: DappProviderRequest) => {
+  walletRevokePermissions = async ({ session: { id } }: DappProviderRequest) => {
+    await this.mainCtrl.dapps.broadcastDappSessionEvent('disconnect', undefined, id)
+    this.mainCtrl.dapps.updateDapp(id, {
+      isConnected: false,
+      grantedPermissionId: undefined,
+      grantedPermissionAt: undefined
+    })
+    return null
+  }
+
+  @Reflect.metadata('SAFE', true)
+  walletGetPermissions = ({ session: { id, origin } }: DappProviderRequest) => {
     const result: Web3WalletPermission[] = []
-    if (this.mainCtrl.dapps.getDapp(origin) && this.isUnlocked) {
-      result.push({ parentCapability: 'eth_accounts' })
+    const { grantedPermissionId, grantedPermissionAt } = this.mainCtrl.dapps.getDapp(id) || {}
+
+    // Do not check if extension is unlocked, always return the permissions if one are granted
+    const hasGrantedPermission =
+      !!grantedPermissionId && !!grantedPermissionAt && this.mainCtrl.dapps.hasPermission(id)
+    if (hasGrantedPermission) {
+      const account = this._internalGetAccounts(origin)
+
+      result.push({
+        id: grantedPermissionId,
+        parentCapability: 'eth_accounts',
+        invoker: origin,
+        caveats: [{ type: 'restrictReturnedAccounts', value: account }],
+        date: grantedPermissionAt
+      })
+
+      // TODO: Undecided yet if we should support this `parentCapability` permission too
+      // const chainIds = this.mainCtrl.networks.networks.map((n) => networkChainIdToHex(n.chainId))
+      // result.push({
+      //   id: grantedPermissionId,
+      //   parentCapability: 'endowment:permitted-chains',
+      //   invoker: origin,
+      //   caveats: [{ type: 'restrictNetworkSwitching', value: chainIds }],
+      //   date: grantedPermissionAt
+      // })
     }
+
     return result
   }
 

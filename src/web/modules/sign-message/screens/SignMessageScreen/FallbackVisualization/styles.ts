@@ -1,7 +1,7 @@
 import { StyleSheet, TextStyle, ViewStyle } from 'react-native'
 
 import spacings from '@common/styles/spacings'
-import { ThemeProps } from '@common/styles/themeConfig'
+import { THEME_TYPES, ThemeProps, ThemeType } from '@common/styles/themeConfig'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -12,7 +12,7 @@ interface Style {
   toggleButton: ViewStyle
 }
 
-const getStyles = (theme: ThemeProps) =>
+const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
   StyleSheet.create<Style>({
     toggleButton: {
       position: 'absolute',
@@ -20,7 +20,8 @@ const getStyles = (theme: ThemeProps) =>
     },
     container: {
       ...common.borderRadiusPrimary,
-      backgroundColor: theme.primaryBackground,
+      backgroundColor:
+        themeType === THEME_TYPES.DARK ? theme.tertiaryBackground : theme.primaryBackground,
       ...flexbox.flex1,
       minHeight: 200,
       ...spacings.pvSm,

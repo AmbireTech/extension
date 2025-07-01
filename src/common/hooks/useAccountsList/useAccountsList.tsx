@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form'
 import { FlatList } from 'react-native'
 
 import { Account as AccountType } from '@ambire-common/interfaces/account'
-import { findAccountDomainFromPartialDomain } from '@common/utils/domains'
+import { findAccountDomainFromPartialDomain } from '@ambire-common/utils/domains'
 import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
 import useDomainsControllerState from '@web/hooks/useDomainsController/useDomainsController'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'

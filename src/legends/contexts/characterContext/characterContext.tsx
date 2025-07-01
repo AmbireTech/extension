@@ -4,6 +4,7 @@ import { RELAYER_URL } from '@env'
 import LevelUpModal from '@legends/components/LevelUpModal'
 import Spinner from '@legends/components/Spinner'
 import useAccountContext from '@legends/hooks/useAccountContext'
+import { CURRENT_SEASON } from '@legends/modules/legends/constants'
 import { getDidEvolve } from '@legends/utils/character'
 
 type Character = {
@@ -39,11 +40,7 @@ type CharacterContextValue = {
 const CharacterContext = createContext<CharacterContextValue>({} as CharacterContextValue)
 
 const CharacterContextProvider: React.FC<any> = ({ children }) => {
-  const {
-    connectedAccount,
-    nonV2Account,
-    isLoading: isConnectedAccountLoading
-  } = useAccountContext()
+  const { connectedAccount, isLoading: isConnectedAccountLoading } = useAccountContext()
   const [character, setCharacter] = useState<Character | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [levelUpData, setLevelUpData] = useState<LevelUpData>(null)
@@ -112,11 +109,6 @@ const CharacterContextProvider: React.FC<any> = ({ children }) => {
   )
 
   const getCharacter = useCallback(async () => {
-    if (nonV2Account) {
-      setIsLoading(true)
-      setCharacter(null)
-      return
-    }
     if (!connectedAccount) {
       setCharacter(null)
       setIsLoading(true)
@@ -127,8 +119,9 @@ const CharacterContextProvider: React.FC<any> = ({ children }) => {
 
     try {
       setIsLoading(true)
-      const characterResponse = await fetch(`${RELAYER_URL}/legends/nft-meta/${connectedAccount}`)
-
+      const characterResponse = await fetch(
+        `${RELAYER_URL}/legends/nft-meta/${connectedAccount}/${CURRENT_SEASON}`
+      )
       const characterJson = await characterResponse.json()
 
       if (characterJson.characterType === 'unknown') {
@@ -155,20 +148,15 @@ const CharacterContextProvider: React.FC<any> = ({ children }) => {
     } finally {
       setIsLoading(false)
     }
-  }, [character, nonV2Account, connectedAccount, handleLevelUpIfNeeded, saveLastKnownLevel])
+  }, [character, connectedAccount, handleLevelUpIfNeeded, saveLastKnownLevel])
 
   useEffect(() => {
-    if (
-      (character && character.address === connectedAccount) ||
-      isConnectedAccountLoading ||
-      connectedAccount === nonV2Account
-    )
-      return
+    if ((character && character.address === connectedAccount) || isConnectedAccountLoading) return
 
     getCharacter().catch(() => {
       setError(`Couldn't load the requested character: ${connectedAccount}`)
     })
-  }, [character, connectedAccount, getCharacter, isConnectedAccountLoading, nonV2Account])
+  }, [character, connectedAccount, getCharacter, isConnectedAccountLoading])
 
   const contextValue = useMemo(
     () => ({

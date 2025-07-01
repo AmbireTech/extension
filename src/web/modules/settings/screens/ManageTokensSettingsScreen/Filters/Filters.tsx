@@ -8,7 +8,9 @@ import Search from '@common/components/Search'
 import Select from '@common/components/Select'
 import { SelectValue } from '@common/components/Select/types'
 import Text from '@common/components/Text'
+import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 
@@ -31,7 +33,7 @@ const ALL_NETWORKS_OPTION = {
 const Filters: FC<Props> = ({ control, networkFilter, setNetworkFilterValue }) => {
   const { t } = useTranslation()
   const { networks } = useNetworksControllerState()
-
+  const { themeType, theme } = useTheme()
   const networksOptions: SelectValue[] = useMemo(
     () => [
       ALL_NETWORKS_OPTION,
@@ -64,6 +66,9 @@ const Filters: FC<Props> = ({ control, networkFilter, setNetworkFilterValue }) =
             networkFilter
               ? networksOptions.filter((opt) => opt.value === networkFilter)[0]
               : ALL_NETWORKS_OPTION
+          }
+          selectStyle={
+            themeType === THEME_TYPES.DARK ? { backgroundColor: theme.tertiaryBackground } : {}
           }
           setValue={setNetworkFilterValue}
           containerStyle={{ width: 260, marginBottom: 0, ...spacings.mrTy }}

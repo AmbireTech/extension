@@ -10,7 +10,7 @@ export const getLeaderboard = async (
     )
     const body = (await res.json()) as LeaderboardResponse
 
-    if (!body?.leaderboard) throw new Error('Invalid response')
+    if (!body?.season1Leaderboard) throw new Error('Invalid response')
 
     return body
   } catch (e) {

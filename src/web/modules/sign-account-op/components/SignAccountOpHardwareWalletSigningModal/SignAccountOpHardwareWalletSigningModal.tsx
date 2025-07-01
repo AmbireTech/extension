@@ -27,6 +27,7 @@ interface Props {
   } | null
   signedTransactionsCount?: number | null
   accountOp: AccountOp
+  actionType?: 'swapAndBridge' | 'transfer'
 }
 
 const SignAccountOpHardwareWalletSigningModal: React.FC<Props> = ({
@@ -36,7 +37,8 @@ const SignAccountOpHardwareWalletSigningModal: React.FC<Props> = ({
   signAccountOpStatusType,
   shouldSignAuth,
   signedTransactionsCount,
-  accountOp
+  accountOp,
+  actionType
 }: Props) => {
   const { dispatch } = useBackgroundService()
   const { addToast } = useToast()
@@ -83,15 +85,23 @@ const SignAccountOpHardwareWalletSigningModal: React.FC<Props> = ({
   }, [accountOp?.calls.length, addToast, prevTransactionCount, signedTransactionsCount])
 
   useEffect(() => {
-    if (shouldBeVisible && isPopup && currentlyInvolvedSignOrBroadcastKeyType === 'trezor') {
+    if (
+      shouldBeVisible &&
+      isPopup &&
+      actionType &&
+      currentlyInvolvedSignOrBroadcastKeyType === 'trezor'
+    ) {
       // If the user needs to sign using a hardware wallet, we need to open the
       // screen in an action window and close the popup
       dispatch({
-        type: 'SWAP_AND_BRIDGE_CONTROLLER_OPEN_SIGNING_ACTION_WINDOW'
+        type: 'OPEN_SIGNING_ACTION_WINDOW',
+        params: {
+          type: actionType
+        }
       })
       window.close()
     }
-  }, [currentlyInvolvedSignOrBroadcastKeyType, dispatch, shouldBeVisible])
+  }, [actionType, currentlyInvolvedSignOrBroadcastKeyType, dispatch, shouldBeVisible])
 
   if (!currentlyInvolvedSignOrBroadcastKeyType) return null
 

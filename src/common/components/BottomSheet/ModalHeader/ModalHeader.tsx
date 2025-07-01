@@ -3,6 +3,7 @@ import { TouchableOpacity, View, ViewStyle } from 'react-native'
 
 import CloseIcon from '@common/assets/svg/CloseIcon'
 import BackButton from '@common/components/BackButton'
+import { PanelBackButton } from '@common/components/Panel/Panel'
 import Text from '@common/components/Text'
 import spacings from '@common/styles/spacings'
 
@@ -35,7 +36,7 @@ const ModalHeader: FC<Props> = ({
         <View style={styles.sideContainer}>
           {!!handleClose && withBackButton && (
             <View style={styles.backButton}>
-              <BackButton onPress={handleClose} />
+              <PanelBackButton onPress={handleClose} />
             </View>
           )}
         </View>

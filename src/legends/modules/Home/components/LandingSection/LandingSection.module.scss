@@ -100,7 +100,7 @@
   }
 }
 
-.v2 {
+.v2, .nonV2 {
     .logoGlass {
         &:hover {
             animation-timing-function: ease-in-out;
@@ -117,13 +117,6 @@
     .heroSection {   
         .kicker {
             color: $green-900;
-        }
-
-        .logoGlass {
-            animation: 
-        moveToTopRight 1.5s linear infinite,
-        fadeOutSmooth 1.5s linear infinite;
-    will-change: transform, opacity;
         }
     }
 

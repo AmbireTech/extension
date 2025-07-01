@@ -1,19 +1,18 @@
-import { Network } from '@ambire-common/interfaces/network'
 import { SwapAndBridgeToToken } from '@ambire-common/interfaces/swapAndBridge'
 import { TokenResult } from '@ambire-common/libs/portfolio'
 
-const getTokenId = (token: SwapAndBridgeToToken | TokenResult, networks: Network[] = []) => {
-  const socketAPIToken = token as SwapAndBridgeToToken
-  if (!(socketAPIToken as any).chainId || !(socketAPIToken as any).flags)
-    return `${token.address}.${token.symbol}`
+const getTokenId = (token: SwapAndBridgeToToken | TokenResult) => {
+  let id = `${token.address}.${token.chainId}`
 
-  const portfolioToken = token as TokenResult
-  const { onGasTank, rewardsType } = portfolioToken.flags
-  const network = networks.find((n) => n.chainId === portfolioToken.chainId)
+  // If it's a SwapAndBridgeToToken (no flags), just return address + chainId
+  if (!('flags' in token)) return id
 
-  return `${portfolioToken.address}.${portfolioToken.chainId}.${portfolioToken.symbol}.${String(
-    onGasTank
-  )}.${rewardsType || ''}.${network?.name || ''}`
+  const { onGasTank, rewardsType } = token.flags
+
+  if (onGasTank) id += '.onGasTank'
+  if (rewardsType) id += `.rewardsType=${rewardsType}`
+
+  return id
 }
 
 export { getTokenId }

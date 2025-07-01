@@ -1,16 +1,16 @@
 import { StyleSheet, ViewStyle } from 'react-native'
 
-import { ThemeProps } from '@common/styles/themeConfig'
+import { THEME_TYPES, ThemeProps, ThemeType } from '@common/styles/themeConfig'
 
 interface Style {
   container: ViewStyle
 }
 
-const getStyles = (theme: ThemeProps) =>
+const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
   StyleSheet.create<Style>({
     container: {
       borderBottomColor: theme.secondaryBorder,
-      borderBottomWidth: 1
+      borderBottomWidth: themeType === THEME_TYPES.DARK ? 0 : 1
     }
   })
 

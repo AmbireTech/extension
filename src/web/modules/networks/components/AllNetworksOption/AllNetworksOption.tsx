@@ -7,6 +7,7 @@ import NetworksIcon from '@common/assets/svg/NetworksIcon'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import { AnimatedPressable, useMultiHover } from '@web/hooks/useHover'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
@@ -14,7 +15,7 @@ import getStyles from '@web/modules/networks/screens/styles'
 
 const AllNetworksOption = ({ onPress }: { onPress: (chainId: bigint | null) => void }) => {
   const { t } = useTranslation()
-  const { theme, styles } = useTheme(getStyles)
+  const { themeType, theme, styles } = useTheme(getStyles)
   const { portfolio: selectedAccountPortfolio, dashboardNetworkFilter } =
     useSelectedAccountControllerState()
 
@@ -27,8 +28,11 @@ const AllNetworksOption = ({ onPress }: { onPress: (chainId: bigint | null) => v
       },
       {
         property: 'borderColor',
-        from: `${String(theme.secondaryBorder)}00`,
-        to: theme.secondaryBorder
+        from:
+          themeType === THEME_TYPES.DARK
+            ? `${String(theme.primaryLight)}00`
+            : `${String(theme.secondaryBorder)}00`,
+        to: themeType === THEME_TYPES.DARK ? theme.primaryLight80 : theme.secondaryBorder
       }
     ],
     forceHoveredStyle: !dashboardNetworkFilter

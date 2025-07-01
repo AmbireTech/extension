@@ -90,14 +90,16 @@ const FallbackVisualization: FC<{
               const isInfiniteAmount = parseInt(i.value, 10)?.toString(16) === '1'.padEnd(65, '0')
 
               if (isValidAddress(i.value))
-                componentToReturn = <HumanizerAddress address={i.value} />
+                componentToReturn = (
+                  <HumanizerAddress chainId={messageToSign.chainId} address={i.value} />
+                )
               else if (isProbablyADateWIthinRange)
                 componentToReturn = new Date(parseInt(i.value, 10) * 1000).toUTCString()
               else if (isInfiniteAmount)
                 componentToReturn = (
                   <View style={[flexbox.directionRow, flexbox.alignCenter]}>
                     <Text weight="semiBold" style={[spacings.mrTy]}>
-                      Infinite amount
+                      {t('Infinite amount')}
                     </Text>
                     <WarningFilledIcon width={16} height={16} />
                   </View>

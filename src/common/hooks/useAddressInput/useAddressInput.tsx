@@ -30,6 +30,7 @@ const useAddressInput = ({
 }: Props) => {
   const fieldValueRef = useRef(addressState.fieldValue)
   const fieldValue = addressState.fieldValue
+  const [hasDomainResolveFailed, setHasDomainResolveFailed] = useState(false)
   const [debouncedValidation, setDebouncedValidation] = useState({
     isError: true,
     message: ''
@@ -41,6 +42,7 @@ const useAddressInput = ({
         address: addressState.fieldValue,
         isRecipientDomainResolving: addressState.isDomainResolving,
         isValidEns: !!addressState.ensAddress,
+        hasDomainResolveFailed,
         overwriteError,
         overwriteValidLabel
       }),
@@ -54,11 +56,11 @@ const useAddressInput = ({
   )
 
   const resolveDomains = useCallback(
-    (trimmedAddress: string) => {
+    async (trimmedAddress: string) => {
       let ensAddress = ''
 
       // Keep the promise all as we may add more domain resolvers in the future
-      Promise.all([
+      await Promise.all([
         resolveENSDomain(trimmedAddress)
           .then((newEnsAddress: string) => {
             ensAddress = newEnsAddress
@@ -67,26 +69,22 @@ const useAddressInput = ({
               handleCacheResolvedDomain(ensAddress, fieldValue, 'ens')
             }
           })
-          .catch(() => {
+          .catch((e) => {
+            if (fieldValueRef.current !== fieldValue) return
+
+            setHasDomainResolveFailed(true)
             ensAddress = ''
-            addToast('Something went wrong while attempting to resolve the ENS domain.', {
-              type: 'error'
-            })
+            console.error('Failed to resolve ENS domain:', e)
           })
       ])
-        .catch(() => {
-          ensAddress = ''
-          addToast('Something went wrong while resolving domain.', { type: 'error' })
-        })
-        .finally(() => {
-          // The promises may resolve after the component is unmounted.
-          if (fieldValueRef.current !== fieldValue) return
 
-          setAddressState({
-            ensAddress,
-            isDomainResolving: false
-          })
-        })
+      // The promises may resolve after the component is unmounted.
+      if (fieldValueRef.current !== fieldValue) return
+
+      setAddressState({
+        ensAddress,
+        isDomainResolving: false
+      })
     },
     [addToast, handleCacheResolvedDomain, fieldValue, setAddressState]
   )
@@ -134,6 +132,8 @@ const useAddressInput = ({
       dotIndexInAddress !== -1 &&
       dotIndexInAddress !== 0 &&
       dotIndexInAddress !== trimmedAddress.length - 1
+
+    setHasDomainResolveFailed(false)
 
     if (!trimmedAddress || !canBeDomain) {
       setAddressState({

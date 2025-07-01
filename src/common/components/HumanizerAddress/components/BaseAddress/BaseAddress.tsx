@@ -78,7 +78,7 @@ const BaseAddress: FC<Props> = ({
       }
       // Close the action-window if this address is opened in one, otherwise
       // the user will have to minimize it to see the explorer.
-      await openInTab(targetUrl, isActionWindow)
+      await openInTab({ url: targetUrl, shouldCloseCurrentWindow: isActionWindow })
     } catch {
       addToast(t('Failed to open explorer'), {
         type: 'error'

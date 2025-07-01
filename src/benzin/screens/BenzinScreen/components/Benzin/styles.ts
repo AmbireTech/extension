@@ -1,20 +1,20 @@
-import { StyleSheet, ViewStyle } from 'react-native'
+import { ImageStyle, StyleSheet, ViewStyle } from 'react-native'
 
 import spacings from '@common/styles/spacings'
+import { THEME_TYPES, ThemeProps, ThemeType } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 
 interface Style {
-  backgroundImage: ViewStyle
+  backgroundImage: ImageStyle
   container: ViewStyle
   content: ViewStyle
 }
 
-const getStyles = () =>
+const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
   StyleSheet.create<Style>({
     backgroundImage: {
-      ...flexbox.flex1,
-      width: '100%',
-      height: '100%'
+      ...StyleSheet.absoluteFillObject,
+      opacity: themeType === THEME_TYPES.DARK ? 0.8 : 1
     },
     container: {
       ...flexbox.flex1,

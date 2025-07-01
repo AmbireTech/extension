@@ -5,7 +5,6 @@ import { View } from 'react-native'
 import AddIcon from '@common/assets/svg/AddIcon'
 import Button from '@common/components/Button'
 import Text from '@common/components/Text'
-import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -15,7 +14,6 @@ type Props = {
 
 const Header: FC<Props> = ({ openAddTokenBottomSheet }) => {
   const { t } = useTranslation()
-  const { theme } = useTheme()
 
   return (
     <View
@@ -42,10 +40,10 @@ const Header: FC<Props> = ({ openAddTokenBottomSheet }) => {
         text={t('Add custom token')}
         onPress={openAddTokenBottomSheet}
       >
-        <AddIcon color={theme.primaryBackground} />
+        <AddIcon width={22} height={22} style={spacings.mrTy} />
       </Button>
     </View>
   )
 }
 
-export default Header
+export default React.memo(Header)

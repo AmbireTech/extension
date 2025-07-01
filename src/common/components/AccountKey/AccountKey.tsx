@@ -23,6 +23,7 @@ import Tooltip from '@common/components/Tooltip'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { setStringAsync } from '@common/utils/clipboard'
@@ -70,7 +71,7 @@ const AccountKey: React.FC<Props> = ({
 }) => {
   const [isImporting, setIsImporting] = useState<boolean>(false)
   const { t } = useTranslation()
-  const { theme } = useTheme()
+  const { theme, themeType } = useTheme()
   const { addToast } = useToast()
   const { dispatch } = useBackgroundService()
   const [isEditing, setIsEditing] = useState(false)
@@ -121,7 +122,8 @@ const AccountKey: React.FC<Props> = ({
     <View
       style={[
         {
-          backgroundColor: theme.secondaryBackground,
+          backgroundColor:
+            themeType === THEME_TYPES.DARK ? theme.primaryBackground : theme.secondaryBackground,
           borderRadius: BORDER_RADIUS_PRIMARY
         },
         isLast ? spacings.mb0 : spacings.mbTy
@@ -333,7 +335,9 @@ const AccountKey: React.FC<Props> = ({
         sheetRef={sheetRefExportKey}
         id="confirm-password-bottom-sheet"
         type="modal"
-        backgroundColor="primaryBackground"
+        backgroundColor={
+          themeType === THEME_TYPES.DARK ? 'secondaryBackground' : 'primaryBackground'
+        }
         closeBottomSheet={closeExportKey}
         scrollViewProps={{ contentContainerStyle: { flex: 1 } }}
         containerInnerWrapperStyles={{ flex: 1 }}

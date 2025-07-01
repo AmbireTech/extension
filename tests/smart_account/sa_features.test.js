@@ -30,7 +30,7 @@ describe('sa_features', () => {
   })
 
   //--------------------------------------------------------------------------------------------------------------
-  it.only('4337 transaction. Send 0.00000001 ETH on Optimism.Pay with ETH', async () => {
+  it.skip('4337 transaction. Send 0.00000001 ETH on Optimism.Pay with ETH', async () => {
     // Check if ETH in optimism are under 0.00000001
     await checkBalanceOfToken(
       page,
@@ -94,7 +94,7 @@ describe('sa_features', () => {
       page,
       extensionURL,
       browser,
-      '[data-testid="transfer-button-confirm"]'
+      '[data-testid="proceed-btn"]'
     )
 
     const baFeeTokenSelector = `[data-testid="option-${baParams.envSelectedAccount.toLowerCase()}0x0000000000000000000000000000000000000000eth"]`

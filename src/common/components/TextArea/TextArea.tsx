@@ -12,7 +12,6 @@ import {
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
-import colors from '@common/styles/colors'
 
 import getStyles from './styles'
 
@@ -129,7 +128,7 @@ const TextArea = ({
           style={[styles.bottomLabel, bottomLabelStyle]}
           weight="regular"
           fontSize={12}
-          color={colors.greenHaze}
+          color={theme.successText}
         >
           {validLabel}
         </Text>

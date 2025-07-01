@@ -3,7 +3,9 @@ import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
+import { SigningStatus } from '@ambire-common/controllers/signAccountOp/signAccountOp'
 import { SwapAndBridgeFormStatus } from '@ambire-common/controllers/swapAndBridge/swapAndBridge'
+import { Key } from '@ambire-common/interfaces/keystore'
 import Alert from '@common/components/Alert'
 import BackButton from '@common/components/BackButton'
 import Spinner from '@common/components/Spinner'
@@ -17,13 +19,13 @@ import useBackgroundService from '@web/hooks/useBackgroundService'
 import useMainControllerState from '@web/hooks/useMainControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControllerState'
-import SwapAndBridgeEstimation from '@web/modules/swap-and-bridge/components/Estimation'
+import BatchAdded from '@web/modules/sign-account-op/components/OneClick/BatchModal/BatchAdded'
+import Buttons from '@web/modules/sign-account-op/components/OneClick/Buttons'
+import Estimation from '@web/modules/sign-account-op/components/OneClick/Estimation'
 import RoutesModal from '@web/modules/swap-and-bridge/components/RoutesModal'
 import useSwapAndBridgeForm from '@web/modules/swap-and-bridge/hooks/useSwapAndBridgeForm'
 import { getUiType } from '@web/utils/uiType'
 
-import BatchAdded from '../../components/BatchModal/BatchAdded'
-import Buttons from '../../components/Buttons'
 import TrackProgress from '../../components/Estimation/TrackProgress'
 import FromToken from '../../components/FromToken'
 import PriceImpactWarningModal from '../../components/PriceImpactWarningModal'
@@ -57,7 +59,9 @@ const SwapAndBridgeScreen = () => {
     closeEstimationModalWrapped,
     setIsAutoSelectRouteDisabled,
     isBridge,
-    setShowAddedToBatch
+    setShowAddedToBatch,
+    networkUserRequests,
+    isLocalStateOutOfSync
   } = useSwapAndBridgeForm()
   const {
     sessionIds,
@@ -66,7 +70,9 @@ const SwapAndBridgeScreen = () => {
     shouldEnableRoutesSelection,
     updateQuoteStatus,
     signAccountOpController,
-    isAutoSelectRouteDisabled
+    isAutoSelectRouteDisabled,
+    hasProceeded,
+    swapSignErrors
   } = useSwapAndBridgeControllerState()
   const { portfolio } = useSelectedAccountControllerState()
 
@@ -74,15 +80,6 @@ const SwapAndBridgeScreen = () => {
   const prevPendingRoutes: any[] | undefined = usePrevious(pendingRoutes)
   const scrollViewRef: any = useRef(null)
   const { dispatch } = useBackgroundService()
-
-  useEffect(() => {
-    if (!signAccountOpController || isAutoSelectRouteDisabled) return
-    if (signAccountOpController.estimation.status === EstimationStatus.Error) {
-      dispatch({
-        type: 'SWAP_AND_BRIDGE_CONTROLLER_ON_ESTIMATION_FAILURE'
-      })
-    }
-  })
 
   const handleBackButtonPress = useCallback(() => {
     navigate(ROUTES.dashboard)
@@ -136,25 +133,72 @@ const SwapAndBridgeScreen = () => {
     })
     if (isActionWindow) {
       dispatch({
-        type: 'SWAP_AND_BRIDGE_CONTROLLER_CLOSE_SIGNING_ACTION_WINDOW'
+        type: 'CLOSE_SIGNING_ACTION_WINDOW',
+        params: {
+          type: 'swapAndBridge'
+        }
       })
     } else {
       navigate(ROUTES.dashboard)
     }
   }, [dispatch, navigate, sessionId])
 
+  /**
+   * Single click broadcast
+   */
+  const handleBroadcastAccountOp = useCallback(() => {
+    dispatch({
+      type: 'MAIN_CONTROLLER_HANDLE_SIGN_AND_BROADCAST_ACCOUNT_OP',
+      params: {
+        updateType: 'Swap&Bridge'
+      }
+    })
+  }, [dispatch])
+
+  const handleUpdateStatus = useCallback(
+    (status: SigningStatus) => {
+      dispatch({
+        type: 'SWAP_AND_BRIDGE_CONTROLLER_SIGN_ACCOUNT_OP_UPDATE_STATUS',
+        params: {
+          status
+        }
+      })
+    },
+    [dispatch]
+  )
+  const updateController = useCallback(
+    (params: { signingKeyAddr?: Key['addr']; signingKeyType?: Key['type'] }) => {
+      dispatch({
+        type: 'SWAP_AND_BRIDGE_CONTROLLER_SIGN_ACCOUNT_OP_UPDATE',
+        params
+      })
+    },
+    [dispatch]
+  )
+
   const buttons = useMemo(() => {
     return (
       <>
         {isTab && <BackButton onPress={handleBackButtonPress} />}
         <Buttons
+          signAccountOpErrors={swapSignErrors}
           isNotReadyToProceed={isNotReadyToProceed}
           handleSubmitForm={handleSubmitForm}
           isBridge={isBridge}
+          networkUserRequests={networkUserRequests}
+          isLocalStateOutOfSync={isLocalStateOutOfSync}
         />
       </>
     )
-  }, [handleBackButtonPress, handleSubmitForm, isBridge, isNotReadyToProceed])
+  }, [
+    handleBackButtonPress,
+    handleSubmitForm,
+    isBridge,
+    isNotReadyToProceed,
+    swapSignErrors,
+    networkUserRequests,
+    isLocalStateOutOfSync
+  ])
 
   if (!sessionIds.includes(sessionId)) {
     // If the portfolio has loaded we can skip the spinner as initializing the screen
@@ -181,6 +225,9 @@ const SwapAndBridgeScreen = () => {
   if (displayedView === 'batch') {
     return (
       <BatchAdded
+        title={t('Swap & Bridge')}
+        primaryButtonText={t('Open dashboard')}
+        secondaryButtonText={t('Add more')}
         onPrimaryButtonPress={onBatchAddedPrimaryButtonPress}
         onSecondaryButtonPress={onBatchAddedSecondaryButtonPress}
       />
@@ -222,9 +269,15 @@ const SwapAndBridgeScreen = () => {
         />
       </Content>
       <RoutesModal sheetRef={routesModalRef} closeBottomSheet={closeRoutesModal} />
-      <SwapAndBridgeEstimation
-        closeEstimationModal={closeEstimationModalWrapped}
+      <Estimation
+        updateType="Swap&Bridge"
         estimationModalRef={estimationModalRef}
+        closeEstimationModal={closeEstimationModalWrapped}
+        updateController={updateController}
+        handleUpdateStatus={handleUpdateStatus}
+        handleBroadcastAccountOp={handleBroadcastAccountOp}
+        hasProceeded={hasProceeded}
+        signAccountOpController={signAccountOpController}
       />
       <PriceImpactWarningModal
         sheetRef={priceImpactModalRef}

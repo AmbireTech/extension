@@ -13,8 +13,10 @@ import { NO_FEE_OPTIONS } from './consts'
 import { FeeOption } from './types'
 
 const sortBasedOnUSDValue = (a: FeePaymentOption, b: FeePaymentOption) => {
-  const aPrice = a.token.priceIn?.[0]?.price
-  const bPrice = b.token.priceIn?.[0]?.price
+  if (!a || !b) return 0
+
+  const aPrice = a.token?.priceIn?.[0]?.price
+  const bPrice = b.token?.priceIn?.[0]?.price
 
   if (!aPrice || !bPrice) return 0
   const aBalance = formatUnits(a.availableAmount, a.token.decimals)
@@ -42,7 +44,7 @@ const sortFeeOptions = (
     signAccountOpState.accountOp.accountAddr,
     signAccountOpState.rbfAccountOps[a.paidBy]
   )
-  const aSlow = signAccountOpState.feeSpeeds[aId].find((speed) => speed.type === 'slow')
+  const aSlow = signAccountOpState.feeSpeeds[aId]?.find((speed) => speed.type === 'slow')
   if (!aSlow) return 1
   const aCanCoverFee = a.availableAmount >= aSlow.amount
 
@@ -51,7 +53,7 @@ const sortFeeOptions = (
     signAccountOpState.accountOp.accountAddr,
     signAccountOpState.rbfAccountOps[b.paidBy]
   )
-  const bSlow = signAccountOpState.feeSpeeds[bId].find((speed) => speed.type === 'slow')
+  const bSlow = signAccountOpState.feeSpeeds[bId]?.find((speed) => speed.type === 'slow')
   if (!bSlow) return -1
   const bCanCoverFee = b.availableAmount >= bSlow.amount
 
@@ -59,17 +61,15 @@ const sortFeeOptions = (
   if (!aCanCoverFee && bCanCoverFee) return 1
   if (!signAccountOpState) sortBasedOnUSDValue(a, b)
 
-  // native options should be on top for 7702 EOAs as they are the cheapest
-  // use a is7702 hack to do this but long term it should be refactored
-  if ('is7702' in signAccountOpState.baseAccount && signAccountOpState.baseAccount.is7702) {
-    if (a.token.address === ZERO_ADDRESS && b.token.address !== ZERO_ADDRESS) return -1
-    if (a.token.address !== ZERO_ADDRESS && b.token.address === ZERO_ADDRESS) return 1
-  }
-
-  // gas tank after native
+  // gas tank first
   if (a.token.flags.onGasTank && !b.token.flags.onGasTank) return -1
   if (!a.token.flags.onGasTank && b.token.flags.onGasTank) return 1
 
+  // native second
+  if (a.token.address === ZERO_ADDRESS && b.token.address !== ZERO_ADDRESS) return -1
+  if (a.token.address !== ZERO_ADDRESS && b.token.address === ZERO_ADDRESS) return 1
+
+  // based on value after
   return sortBasedOnUSDValue(a, b)
 }
 

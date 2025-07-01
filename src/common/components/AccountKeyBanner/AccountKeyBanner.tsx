@@ -6,7 +6,6 @@ import LedgerLetterIcon from '@common/assets/svg/LedgerLetterIcon'
 import SingleKeyIcon from '@common/assets/svg/SingleKeyIcon'
 import TrezorLockIcon from '@common/assets/svg/TrezorLockIcon'
 import useTheme from '@common/hooks/useTheme'
-import { iconColors } from '@common/styles/themeConfig'
 
 import Wrapper from './Wrapper'
 
@@ -36,7 +35,7 @@ const AccountKeyBanner = ({ type }: { type: Key['type'] }) => {
 
   return (
     <Wrapper text="Internal">
-      <SingleKeyIcon color={iconColors.primary} width={16} height={16} />
+      <SingleKeyIcon color={theme.secondaryText} width={14} height={14} />
     </Wrapper>
   )
 }

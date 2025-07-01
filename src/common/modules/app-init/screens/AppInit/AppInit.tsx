@@ -6,7 +6,6 @@ import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { BiometricsProvider } from '@common/contexts/biometricsContext'
 import { ConstantsProvider } from '@common/contexts/constantsContext'
 import { KeyboardProvider } from '@common/contexts/keyboardContext'
-import { LoaderProvider } from '@common/contexts/loaderContext'
 import { NetInfoProvider } from '@common/contexts/netInfoContext'
 import { PrivateModeProvider } from '@common/contexts/privateModeContext'
 import { StorageProvider } from '@common/contexts/storageContext'
@@ -41,33 +40,31 @@ const AppInit = () => {
       theme={navigationContainerDarkTheme}
     >
       <PortalProvider>
-        <LoaderProvider>
-          <StorageProvider>
-            <ThemeProvider>
-              <SafeAreaProvider>
-                <KeyboardProvider>
-                  <NetInfoProvider>
-                    <ToastProvider>
-                      <ConstantsProvider>
-                        <AuthProvider>
-                          {/* TODO: v2 */}
-                          {/* <Web3Provider> */}
-                          <BiometricsProvider>
-                            <PrivateModeProvider>
-                              <AppRouter />
-                            </PrivateModeProvider>
-                            <PortalHost name="global" />
-                          </BiometricsProvider>
-                          {/* </Web3Provider> */}
-                        </AuthProvider>
-                      </ConstantsProvider>
-                    </ToastProvider>
-                  </NetInfoProvider>
-                </KeyboardProvider>
-              </SafeAreaProvider>
-            </ThemeProvider>
-          </StorageProvider>
-        </LoaderProvider>
+        <StorageProvider>
+          <ThemeProvider>
+            <SafeAreaProvider>
+              <KeyboardProvider>
+                <NetInfoProvider>
+                  <ToastProvider>
+                    <ConstantsProvider>
+                      <AuthProvider>
+                        {/* TODO: v2 */}
+                        {/* <Web3Provider> */}
+                        <BiometricsProvider>
+                          <PrivateModeProvider>
+                            <AppRouter />
+                          </PrivateModeProvider>
+                          <PortalHost name="global" />
+                        </BiometricsProvider>
+                        {/* </Web3Provider> */}
+                      </AuthProvider>
+                    </ConstantsProvider>
+                  </ToastProvider>
+                </NetInfoProvider>
+              </KeyboardProvider>
+            </SafeAreaProvider>
+          </ThemeProvider>
+        </StorageProvider>
       </PortalProvider>
     </NavigationContainer>
   )

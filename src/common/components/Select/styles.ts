@@ -1,9 +1,8 @@
 import { ImageStyle, StyleSheet, ViewProps, ViewStyle } from 'react-native'
 
 import { BOTTOM_SHEET_Z_INDEX } from '@common/components/BottomSheet/styles'
-import colors from '@common/styles/colors'
 import spacings, { SPACING_MI, SPACING_TY } from '@common/styles/spacings'
-import { ThemeProps } from '@common/styles/themeConfig'
+import { THEME_TYPES, ThemeProps, ThemeType } from '@common/styles/themeConfig'
 import common, { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -33,7 +32,7 @@ export const SELECT_SIZE_TO_HEIGHT = {
 }
 export const MAX_MENU_HEIGHT = 400
 
-const getStyles = (theme: ThemeProps) =>
+const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
   StyleSheet.create<Style>({
     selectContainer: {
       width: '100%',
@@ -48,8 +47,9 @@ const getStyles = (theme: ThemeProps) =>
     select: {
       width: '100%',
       ...common.borderRadiusPrimary,
-      backgroundColor: theme.secondaryBackground,
-      borderWidth: 1,
+      backgroundColor:
+        themeType === THEME_TYPES.DARK ? theme.primaryBackground : theme.secondaryBackground,
+      borderWidth: themeType === THEME_TYPES.DARK ? 0 : 1,
       ...common.hidden,
       borderColor: 'transparent',
       ...flexbox.alignCenter,
@@ -64,11 +64,12 @@ const getStyles = (theme: ThemeProps) =>
       ...spacings.ph
     },
     menuContainer: {
-      backgroundColor: theme.primaryBackground,
+      backgroundColor:
+        themeType === THEME_TYPES.DARK ? theme.secondaryBackground : theme.primaryBackground,
       ...spacings.mvMi,
       ...common.borderRadiusPrimary,
       overflow: 'hidden',
-      borderWidth: 1,
+      borderWidth: themeType === THEME_TYPES.DARK ? 0 : 1,
       borderColor: theme.secondaryBorder,
       ...common.shadowSecondary,
       position: 'absolute',
@@ -108,11 +109,11 @@ const getStyles = (theme: ThemeProps) =>
       width: '100%',
       height: 50,
       borderRadius: 13,
-      backgroundColor: colors.howl,
+      backgroundColor: theme.secondaryBackground,
       borderWidth: 0,
       fontSize: 16,
       ...spacings.phTy,
-      color: colors.titan
+      color: theme.secondaryText
     },
     optionIcon: {
       width: 30,
@@ -129,13 +130,17 @@ const getStyles = (theme: ThemeProps) =>
       borderTopWidth: 1,
       borderBottomWidth: 0,
       borderRadius: 0,
-      borderColor: theme.secondaryBorder
+      borderColor: themeType === THEME_TYPES.DARK ? theme.primaryBorder : theme.secondaryBorder,
+      backgroundColor:
+        themeType === THEME_TYPES.DARK ? theme.tertiaryBackground : theme.secondaryBackground
     },
     bottomSearchInputWrapperStyle: {
       borderWidth: 0,
       borderBottomWidth: 1,
       borderRadius: 0,
-      borderColor: theme.secondaryBorder
+      borderColor: themeType === THEME_TYPES.DARK ? theme.primaryBorder : theme.secondaryBorder,
+      backgroundColor:
+        themeType === THEME_TYPES.DARK ? theme.tertiaryBackground : theme.secondaryBackground
     }
   })
 

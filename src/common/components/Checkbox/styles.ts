@@ -1,6 +1,5 @@
 import { StyleSheet, ViewStyle } from 'react-native'
 
-import colors from '@common/styles/colors'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -30,7 +29,6 @@ const styles = StyleSheet.create<Style>({
     overflow: 'hidden',
     borderRadius: 3,
     borderWidth: 2,
-    borderColor: colors.greenHaze,
     alignItems: 'center',
     justifyContent: 'center',
     width: 20,

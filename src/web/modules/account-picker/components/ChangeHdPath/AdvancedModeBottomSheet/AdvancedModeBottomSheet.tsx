@@ -13,6 +13,7 @@ import { SelectValue } from '@common/components/Select/types'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -40,7 +41,7 @@ const CustomHDPathBottomSheet: FC<Props> = ({
   options,
   value
 }) => {
-  const { theme } = useTheme()
+  const { theme, themeType } = useTheme()
   const { t } = useTranslation()
   const {
     control,
@@ -88,7 +89,7 @@ const CustomHDPathBottomSheet: FC<Props> = ({
       id="custom-hd-path"
       sheetRef={sheetRef}
       closeBottomSheet={closeBottomSheetWrapped}
-      backgroundColor="primaryBackground"
+      backgroundColor={themeType === THEME_TYPES.DARK ? 'secondaryBackground' : 'primaryBackground'}
       style={{ ...spacings.ph0, ...spacings.pv0, width: 672 }}
     >
       <View
@@ -137,16 +138,25 @@ const CustomHDPathBottomSheet: FC<Props> = ({
                 key={option.value}
                 onPress={() => handleOptionPress(option)}
                 disabled={disabled}
-                style={[
+                style={({ hovered }: any) => [
                   flexbox.center,
                   flexbox.directionRow,
                   common.borderRadiusPrimary,
                   { width: 200, height: 56 },
                   {
+                    borderWidth: 1,
+                    borderColor: 'transparent',
                     backgroundColor: isActive
                       ? `${String(theme.primary)}14`
+                      : themeType === THEME_TYPES.DARK
+                      ? theme.tertiaryBackground
                       : theme.secondaryBackground
-                  }
+                  },
+                  !!hovered &&
+                    !isActive && {
+                      borderColor:
+                        themeType === THEME_TYPES.DARK ? theme.primaryLight80 : theme.primary
+                    }
                 ]}
               >
                 <Text

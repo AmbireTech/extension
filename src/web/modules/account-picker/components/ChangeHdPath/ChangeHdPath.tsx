@@ -5,8 +5,8 @@ import { DERIVATION_OPTIONS, HD_PATH_TEMPLATE_TYPE } from '@ambire-common/consts
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import Button from '@common/components/Button'
 import { SelectValue } from '@common/components/Select/types'
-import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import { FONT_FAMILIES } from '@common/hooks/useFonts'
 import spacings from '@common/styles/spacings'
 import useAccountPickerControllerState from '@web/hooks/useAccountPickerControllerState'
 import useBackgroundService from '@web/hooks/useBackgroundService'
@@ -54,16 +54,14 @@ const ChangeHdPath: React.FC<Props> = ({ setPage, disabled }) => {
       <Button
         testID="change-hd-path-btn"
         size="small"
-        type="ghost"
+        type="ghost2"
         onPress={() => openBottomSheet()}
         hasBottomSpacing={false}
         disabled={disabled}
-        style={spacings.pr0}
+        text={t('Advanced mode')}
+        textStyle={{ fontSize: 14, fontFamily: FONT_FAMILIES.REGULAR }}
       >
-        <Text fontSize={14} appearance="secondaryText" style={spacings.mrTy}>
-          {t('Advanced mode')}
-        </Text>
-        <SettingsIcon width={16} />
+        <SettingsIcon width={16} style={spacings.mlTy} />
       </Button>
 
       <AdvancedModeBottomSheet

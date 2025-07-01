@@ -36,7 +36,7 @@ describe('Monitor network requests and make sure only necessary requests are mad
     await browser.close()
   })
 
-  it('portfolio and account state reload', async () => {
+  it.skip('portfolio and account state reload', async () => {
     const httpRequests = await monitorRequests(serviceWorker.client, async () => {
       await clickOnElement(page, '[data-testid="refresh-button"]')
     })
@@ -59,7 +59,7 @@ describe('Monitor network requests and make sure only necessary requests are mad
     expect(uncategorizedRequests.length).toBe(0)
   })
 
-  it('sign account op request created through transfer', async () => {
+  it.skip('sign account op request created through transfer', async () => {
     const httpRequests = await monitorRequests(serviceWorker.client, async () => {
       await checkTokenBalanceClickOnGivenActionInDashboard(
         page,

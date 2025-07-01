@@ -4,6 +4,7 @@ import { Session } from '@ambire-common/classes/session'
 import { MainController } from '@ambire-common/controllers/main/main'
 import { DappProviderRequest } from '@ambire-common/interfaces/dapp'
 import { isDev } from '@common/config/env'
+import { WalletStateController } from '@web/extension-services/background/controllers/wallet-state'
 import { ProviderController } from '@web/extension-services/background/provider/ProviderController'
 import rpcFlow from '@web/extension-services/background/provider/rpcFlow'
 import { openInternalPageInTab } from '@web/extension-services/background/webapi/tab'
@@ -11,6 +12,7 @@ import { openInternalPageInTab } from '@web/extension-services/background/webapi
 const handleProviderRequests = async (
   request: DappProviderRequest & { session: Session },
   mainCtrl: MainController,
+  walletStateCtrl: WalletStateController,
   requestId: number
 ): Promise<any> => {
   const { method, params, session } = request
@@ -20,7 +22,7 @@ const handleProviderRequests = async (
   }
 
   if (method === 'contentScriptReady') {
-    await mainCtrl.dapps.broadcastDappSessionEvent('tabCheckin', undefined, session.origin, true)
+    await mainCtrl.dapps.broadcastDappSessionEvent('tabCheckin', undefined, session.id, true)
     const providerController = new ProviderController(mainCtrl)
     const isUnlocked = mainCtrl.keystore.isUnlocked
     const chainId = await providerController.ethChainId(request)
@@ -40,18 +42,19 @@ const handleProviderRequests = async (
         accounts: isUnlocked ? await providerController.ethAccounts(request) : [],
         networkVersion
       },
-      session.origin
+      session.id
     )
     return
   }
 
   if (method === 'tabCheckin') {
     mainCtrl.dapps.setSessionProp(session.sessionId, {
-      origin: request.origin,
       name: params.name,
       icon: params.icon
     })
-    mainCtrl.dapps.updateDapp(params.origin, { name: params.name })
+    mainCtrl.dapps.updateDapp(mainCtrl.dapps.dappSessions[session.sessionId].id, {
+      name: params.name
+    })
     mainCtrl.dapps.resetSessionLastHandledRequestsId(session.sessionId)
     return
   }
@@ -72,6 +75,8 @@ const handleProviderRequests = async (
   )
 
   if (method === 'getProviderState') {
+    await walletStateCtrl.initialLoadPromise
+
     const providerController = new ProviderController(mainCtrl)
     const isUnlocked = mainCtrl.keystore.isUnlocked
     const chainId = await providerController.ethChainId(request)
@@ -87,7 +92,8 @@ const handleProviderRequests = async (
       chainId,
       isUnlocked,
       accounts: isUnlocked ? await providerController.ethAccounts(request) : [],
-      networkVersion
+      networkVersion,
+      logLevel: walletStateCtrl.logLevel
     }
   }
 
@@ -116,7 +122,10 @@ const handleProviderRequests = async (
       throw new Error('This page is restricted from directly opening Ambire extension pages')
     }
 
-    await openInternalPageInTab(params.route, {}, false)
+    await openInternalPageInTab({
+      route: params.route,
+      windowId: mainCtrl.actions.actionWindow.windowProps?.createdFromWindowId
+    })
     return null
   }
 

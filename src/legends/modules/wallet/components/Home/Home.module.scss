@@ -130,7 +130,7 @@
       }
 
       .item {
-        min-width: 9rem;
+        min-width: 7.25rem;
         padding: 0.25rem 0.5rem;
         
         border-radius: $secondaryBorderRadius;
@@ -241,6 +241,13 @@
 
   @include breakpoint-down-from(tablet) {
     margin-left: 0;
+
+       .walletInfo {
+        .walletLevelInfoWrapper {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+        }
+      }
   }
 }
 

@@ -1,11 +1,11 @@
 import React from 'react'
 
-import InfoIcon from '@common/assets/svg/InfoIcon'
 import Tooltip from '@common/components/Tooltip'
 import DisconnectIcon from '@legends/common/assets/svg/DisconnectIcon'
 import Address from '@legends/components/Address'
 import useAccountContext from '@legends/hooks/useAccountContext'
 import useCharacterContext from '@legends/hooks/useCharacterContext'
+import useLeaderboardContext from '@legends/hooks/useLeaderboardContext'
 
 import styles from './AccountInfo.module.scss'
 
@@ -22,6 +22,8 @@ const AccountInfo = ({
   displayTooltip?: boolean
 }) => {
   const { connectedAccount, disconnectAccount } = useAccountContext()
+  const { season1LeaderboardData } = useLeaderboardContext()
+
   const { character } = useCharacterContext()
 
   return (
@@ -67,7 +69,9 @@ const AccountInfo = ({
           )}
         </div>
         {!removeAvatarAndLevel && (
-          <p className={`${styles.levelAndRank} ${styles.activityDot}`}>Level {character!.level}</p>
+          <p className={`${styles.levelAndRank} ${styles.activityDot}`}>
+            Level {season1LeaderboardData?.currentUser?.level}
+          </p>
         )}
       </div>
     </div>

@@ -3,6 +3,7 @@ import { StyleSheet, TextStyle, ViewStyle } from 'react-native'
 import { IS_MOBILE_UP_BENZIN_BREAKPOINT } from '@benzin/screens/BenzinScreen/styles'
 import spacings from '@common/styles/spacings'
 import { ThemeProps } from '@common/styles/themeConfig'
+import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
 interface Style {
@@ -11,6 +12,8 @@ interface Style {
   circle: ViewStyle
   nextCircle: ViewStyle
   title: TextStyle
+  arrow: ViewStyle
+  arrowHovered: ViewStyle
 }
 
 const iconStyle: ViewStyle = {
@@ -44,6 +47,16 @@ const getStyles = (theme: ThemeProps) =>
       ...(IS_MOBILE_UP_BENZIN_BREAKPOINT ? spacings.mb : spacings.mbSm),
       textTransform: 'capitalize',
       lineHeight: 18 // must be the same as font-size
+    },
+    arrow: {
+      ...spacings.pvTy,
+      ...spacings.phMi,
+      ...spacings.mlMi,
+      color: theme.linkText
+    },
+    arrowHovered: {
+      backgroundColor: `${String(theme.linkText)}14`,
+      ...common.borderRadiusPrimary
     }
   })
 

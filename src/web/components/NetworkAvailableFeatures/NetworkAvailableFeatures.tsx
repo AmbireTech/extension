@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import DeployHelper from '@ambire-common/../contracts/compiled/DeployHelper.json'
+import { Session } from '@ambire-common/classes/session'
 import { AMBIRE_ACCOUNT_FACTORY, SINGLETON } from '@ambire-common/consts/deploy'
 import { NetworkFeature } from '@ambire-common/interfaces/network'
 import { SignUserRequest } from '@ambire-common/interfaces/userRequest'
@@ -45,7 +46,7 @@ const NetworkAvailableFeatures = ({ chainId, features, withRetryButton, handleRe
   const { pathname } = useRoute()
   const { account } = useSelectedAccountControllerState()
   const { networks } = useNetworksControllerState()
-  const { dispatch } = useBackgroundService()
+  const { dispatch, windowId } = useBackgroundService()
   const { addToast } = useToast()
   const [checkedDeploy, setCheckedDeploy] = useState<boolean>(false)
 
@@ -119,6 +120,7 @@ const NetworkAvailableFeatures = ({ chainId, features, withRetryButton, handleRe
 
     const userRequest: SignUserRequest = {
       id: new Date().getTime(),
+      session: new Session({ windowId }),
       meta: {
         isSignAction: true,
         chainId: selectedNetwork.chainId,

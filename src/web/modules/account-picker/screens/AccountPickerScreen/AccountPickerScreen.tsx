@@ -11,7 +11,6 @@ import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import useTheme from '@common/hooks/useTheme'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import Header from '@common/modules/header/components/Header'
-import colors from '@common/styles/colors'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import {
@@ -140,7 +139,6 @@ const AccountPickerScreen = () => {
             <Button
               testID="button-import-account"
               hasBottomSpacing={false}
-              textStyle={{ fontSize: 14 }}
               onPress={onImportReady}
               size="large"
               disabled={isImportDisabled}
@@ -152,9 +150,7 @@ const AccountPickerScreen = () => {
                   : t('Import accounts')
               }
             >
-              <View style={spacings.pl}>
-                <RightArrowIcon color={colors.titan} />
-              </View>
+              <RightArrowIcon style={spacings.ml} />
             </Button>
           </AccountsOnPageList>
         </Panel>

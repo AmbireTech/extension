@@ -10,8 +10,9 @@ const YouTubeVideo: FC<Props> = ({ src, className }) => (
     src={src}
     title="YouTube Video Player"
     className={className ?? ''}
-    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+    allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
     allowFullScreen
+    sandbox="allow-same-origin allow-scripts allow-popups allow-presentation"
   />
 )
 

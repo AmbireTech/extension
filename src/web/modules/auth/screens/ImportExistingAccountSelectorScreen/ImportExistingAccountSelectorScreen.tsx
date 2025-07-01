@@ -20,6 +20,7 @@ import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNav
 import Header from '@common/modules/header/components/Header'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import {
   TabLayoutContainer,
@@ -40,7 +41,7 @@ type ButtonType = {
 }
 
 const ImportExistingAccountSelectorScreen = () => {
-  const { theme } = useTheme(getStyles)
+  const { theme, themeType } = useTheme(getStyles)
   const { t } = useTranslation()
   const wrapperRef = useRef<View | null>(null)
 
@@ -148,24 +149,25 @@ const ImportExistingAccountSelectorScreen = () => {
                     type="gray"
                     onPress={onPress}
                     testID={`import-method-${title.toLocaleLowerCase().split(' ').join('-')}`}
+                    childrenContainerStyle={{
+                      ...flexbox.directionRow,
+                      ...flexbox.alignCenter,
+                      ...flexbox.justifySpaceBetween,
+                      ...flexbox.flex1
+                    }}
                   >
-                    <View
-                      style={[
-                        flexbox.directionRow,
-                        flexbox.alignCenter,
-                        flexbox.justifySpaceBetween,
-                        flexbox.flex1,
-                        spacings.phSm
-                      ]}
-                    >
-                      <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                        <IconComponent width={24} />
-                        <Text style={spacings.mlSm} fontSize={14} weight="medium">
-                          {t(title)}
-                        </Text>
-                      </View>
-                      <RightArrowIcon />
+                    <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+                      <IconComponent
+                        width={24}
+                        {...(themeType === THEME_TYPES.DARK ? { color: theme.primaryText } : {})}
+                      />
+                      <Text style={spacings.mlSm} fontSize={14} weight="medium">
+                        {t(title)}
+                      </Text>
                     </View>
+                    <RightArrowIcon
+                      {...(themeType === THEME_TYPES.DARK ? { color: theme.primaryText } : {})}
+                    />
                   </Button>
                 ))}
               <Animated.View
@@ -179,24 +181,25 @@ const ImportExistingAccountSelectorScreen = () => {
                       type="gray"
                       onPress={onPress}
                       testID={`import-method-${title.toLocaleLowerCase().split(' ').join('-')}`}
+                      childrenContainerStyle={{
+                        ...flexbox.directionRow,
+                        ...flexbox.alignCenter,
+                        ...flexbox.justifySpaceBetween,
+                        ...flexbox.flex1
+                      }}
                     >
-                      <View
-                        style={[
-                          flexbox.directionRow,
-                          flexbox.alignCenter,
-                          flexbox.justifySpaceBetween,
-                          flexbox.flex1,
-                          spacings.phSm
-                        ]}
-                      >
-                        <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                          <IconComponent width={24} />
-                          <Text style={spacings.mlSm} fontSize={14} weight="medium">
-                            {t(title)}
-                          </Text>
-                        </View>
-                        <RightArrowIcon />
+                      <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+                        <IconComponent
+                          width={24}
+                          {...(themeType === THEME_TYPES.DARK ? { color: theme.primaryText } : {})}
+                        />
+                        <Text style={spacings.mlSm} fontSize={14} weight="medium">
+                          {t(title)}
+                        </Text>
                       </View>
+                      <RightArrowIcon
+                        {...(themeType === THEME_TYPES.DARK ? { color: theme.primaryText } : {})}
+                      />
                     </Button>
                   ))}
               </Animated.View>

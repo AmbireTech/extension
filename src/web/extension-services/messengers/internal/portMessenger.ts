@@ -7,14 +7,18 @@ export type Port = chrome.runtime.Port & { id: string }
 
 type MessageType = '> ui' | '> ui-error' | '> ui-toast' | '> background'
 
+export type MessageMeta = { windowId?: number; [key: string]: any }
+
 export type SendType = <TMessageType extends MessageType>(
   type: MessageType,
-  message: TMessageType extends '> background' ? ActionType : PortMessageType
+  message: TMessageType extends '> background' ? ActionType : PortMessageType,
+  meta?: MessageMeta
 ) => void
 
 type ListenCallbackType = <TMessageType extends MessageType>(
   type: MessageType,
-  message: TMessageType extends '> background' ? ActionType : PortMessageType
+  message: TMessageType extends '> background' ? ActionType : PortMessageType,
+  meta?: MessageMeta
 ) => Promise<any> | void
 
 export type PortMessageType = {
@@ -61,16 +65,20 @@ export class PortMessenger {
       if (!data.messageType || !data.message) return
 
       const message = parse(data.message)
-      callback(data.messageType, message)
+
+      let meta = {}
+      if (data.meta) meta = parse(data.meta)
+
+      callback(data.messageType, message, meta)
     })
   }
 
-  send: SendType = (type, message) => {
+  send: SendType = (type, message, meta = {}) => {
     if (!this.ports.length) return
 
     try {
       this.ports.forEach((port) => {
-        port.postMessage({ messageType: type, message: stringify(message) })
+        port.postMessage({ messageType: type, message: stringify(message), meta: stringify(meta) })
       })
     } catch (error) {
       console.error('Error in port.postMessage', error)

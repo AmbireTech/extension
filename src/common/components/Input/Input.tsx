@@ -15,6 +15,7 @@ import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 import useHover, { AnimatedPressable } from '@web/hooks/useHover'
 
 import getStyles from './styles'
@@ -84,7 +85,7 @@ const Input = ({
   ...rest
 }: InputProps) => {
   const [isFocused, setIsFocused] = useState<boolean>(false)
-  const { theme, styles } = useTheme(getStyles)
+  const { theme, styles, themeType } = useTheme(getStyles)
   const [bindAnim, animStyle] = useHover({ preset: 'opacityInverted' })
 
   const handleOnFocus = (e: NativeSyntheticEvent<TextInputFocusEventData>) => {
@@ -102,7 +103,10 @@ const Input = ({
 
   const borderWrapperStyles = [
     styles.borderWrapper,
-    isFocused && { borderColor: theme.infoBackground },
+    isFocused && {
+      borderColor:
+        themeType === THEME_TYPES.DARK ? `${theme.linkText as string}35` : theme.infoBackground
+    },
     isValid && { borderColor: theme.successBackground },
     !!error && { borderColor: theme.errorBackground },
     borderless && { borderColor: 'transparent', borderWidth: 0 },
@@ -112,10 +116,13 @@ const Input = ({
   const inputWrapperStyles = [
     styles.inputWrapper,
     {
-      backgroundColor: theme.secondaryBackground,
+      backgroundColor:
+        themeType === THEME_TYPES.DARK ? theme.primaryBackground : theme.secondaryBackground,
       borderColor: theme.secondaryBorder
     },
-    isFocused && { borderColor: theme.primary },
+    isFocused && {
+      borderColor: themeType === THEME_TYPES.DARK ? theme.linkText : theme.primary
+    },
     isValid && { borderColor: theme.successDecorative },
     !!error && { borderColor: theme.errorDecorative },
     disabled && styles.disabled,

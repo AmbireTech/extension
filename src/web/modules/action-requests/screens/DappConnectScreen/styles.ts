@@ -1,7 +1,7 @@
 import { StyleSheet, ViewStyle } from 'react-native'
 
 import spacings, { SPACING_SM } from '@common/styles/spacings'
-import { ThemeProps } from '@common/styles/themeConfig'
+import { THEME_TYPES, ThemeProps, ThemeType } from '@common/styles/themeConfig'
 import common, { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -13,7 +13,7 @@ interface Styles {
   securityChecksContainer: ViewStyle
 }
 
-const getStyles = (theme: ThemeProps) =>
+const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
   StyleSheet.create<Styles>({
     container: {
       ...flexbox.alignCenter,
@@ -25,9 +25,9 @@ const getStyles = (theme: ThemeProps) =>
       ...common.fullWidth,
       borderRadius: BORDER_RADIUS_PRIMARY,
       overflow: 'hidden',
-      shadowColor: '#6770B3',
+      shadowColor: themeType === THEME_TYPES.DARK ? '#00000052' : '#6770B3',
       shadowOffset: { width: 0, height: SPACING_SM },
-      shadowOpacity: 0.3,
+      shadowOpacity: themeType === THEME_TYPES.DARK ? 1 : 0.3,
       shadowRadius: SPACING_SM,
       elevation: SPACING_SM
     },
@@ -36,7 +36,8 @@ const getStyles = (theme: ThemeProps) =>
       ...flexbox.alignStart
     },
     contentBody: {
-      backgroundColor: theme.primaryBackground
+      backgroundColor:
+        themeType === THEME_TYPES.DARK ? theme.tertiaryBackground : theme.primaryBackground
     },
     securityChecksContainer: {
       backgroundColor: theme.secondaryBackground,

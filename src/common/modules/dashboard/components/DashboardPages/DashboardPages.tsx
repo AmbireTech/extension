@@ -1,7 +1,7 @@
 import { nanoid } from 'nanoid'
 import React, { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { NativeScrollEvent, NativeSyntheticEvent, View } from 'react-native'
+import { Animated, NativeScrollEvent, NativeSyntheticEvent, View } from 'react-native'
 import { useSearchParams } from 'react-router-dom'
 
 import usePrevious from '@common/hooks/usePrevious'
@@ -21,11 +21,12 @@ import Tokens from '../Tokens'
 
 interface Props {
   onScroll: (event: NativeSyntheticEvent<NativeScrollEvent>) => void
+  animatedOverviewHeight: Animated.Value
 }
 
 const { isTab } = getUiType()
 
-const DashboardPages = ({ onScroll }: Props) => {
+const DashboardPages = ({ onScroll, animatedOverviewHeight }: Props) => {
   const { t } = useTranslation()
   const route = useRoute()
   const [sessionId] = useState(nanoid())
@@ -93,6 +94,7 @@ const DashboardPages = ({ onScroll }: Props) => {
         onScroll={onScroll}
         initTab={initTab}
         dashboardNetworkFilterName={dashboardNetworkFilterName}
+        animatedOverviewHeight={animatedOverviewHeight}
       />
       <Collections
         openTab={openTab}
@@ -102,6 +104,7 @@ const DashboardPages = ({ onScroll }: Props) => {
         onScroll={onScroll}
         networks={networks}
         dashboardNetworkFilterName={dashboardNetworkFilterName}
+        animatedOverviewHeight={animatedOverviewHeight}
       />
 
       <DeFiPositions
@@ -111,6 +114,7 @@ const DashboardPages = ({ onScroll }: Props) => {
         onScroll={onScroll}
         initTab={initTab}
         dashboardNetworkFilterName={dashboardNetworkFilterName}
+        animatedOverviewHeight={animatedOverviewHeight}
       />
 
       <Activity
@@ -120,6 +124,7 @@ const DashboardPages = ({ onScroll }: Props) => {
         onScroll={onScroll}
         initTab={initTab}
         dashboardNetworkFilterName={dashboardNetworkFilterName}
+        animatedOverviewHeight={animatedOverviewHeight}
       />
     </View>
   )

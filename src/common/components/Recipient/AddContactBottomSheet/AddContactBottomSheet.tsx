@@ -11,6 +11,7 @@ import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useHover, { AnimatedPressable } from '@web/hooks/useHover'
@@ -26,7 +27,7 @@ const { isPopup } = getUiType()
 
 const AddContactBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet, address }) => {
   const { t } = useTranslation()
-  const { theme } = useTheme()
+  const { theme, themeType } = useTheme()
   const { addToast } = useToast()
   const { dispatch } = useBackgroundService()
   const [bindCloseBtnAnim, closeBtnAnimStyle] = useHover({ preset: 'opacityInverted' })
@@ -56,7 +57,7 @@ const AddContactBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet, address 
         overflow: 'hidden',
         width: isPopup ? '100%' : 640
       }}
-      backgroundColor="primaryBackground"
+      backgroundColor={themeType === THEME_TYPES.DARK ? 'secondaryBackground' : 'primaryBackground'}
     >
       <View
         style={[
@@ -65,7 +66,10 @@ const AddContactBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet, address 
           flexbox.justifySpaceBetween,
           spacings.pvXl,
           spacings.phLg,
-          { backgroundColor: theme.secondaryBackground }
+          {
+            backgroundColor:
+              themeType === THEME_TYPES.DARK ? theme.tertiaryBackground : theme.secondaryBackground
+          }
         ]}
       >
         <Text fontSize={20} weight="medium">
@@ -111,7 +115,10 @@ const AddContactBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet, address 
           flexbox.justifySpaceBetween,
           spacings.pvXl,
           spacings.phLg,
-          { backgroundColor: theme.secondaryBackground }
+          {
+            backgroundColor:
+              themeType === THEME_TYPES.DARK ? theme.tertiaryBackground : theme.secondaryBackground
+          }
         ]}
       >
         <Button

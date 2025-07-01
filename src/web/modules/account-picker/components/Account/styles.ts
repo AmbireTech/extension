@@ -17,7 +17,6 @@ const getStyles = (theme: ThemeProps) =>
       ...flexbox.directionRow,
       ...spacings.pvTy,
       ...flexbox.flex1,
-      ...common.borderRadiusPrimary,
       ...spacings.ph,
       ...spacings.pv,
       width: '100%',

@@ -14,6 +14,7 @@ const Select = ({
   menuOptionHeight,
   attemptToFetchMoreOptions,
   emptyListPlaceholderText,
+  onSearch,
   ...props
 }: SelectProps) => {
   const selectData = useSelectInternal({
@@ -24,7 +25,8 @@ const Select = ({
     data: [{ data: options, title: '', key: 'default' }] as SectionedSelectProps['sections'],
     menuOptionHeight,
     attemptToFetchMoreOptions,
-    mode: props.mode
+    mode: props.mode,
+    onSearch
   })
   const {
     listRef,

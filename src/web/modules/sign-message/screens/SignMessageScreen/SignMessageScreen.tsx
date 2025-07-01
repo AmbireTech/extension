@@ -12,7 +12,7 @@ import { EIP_1271_NOT_SUPPORTED_BY } from '@ambire-common/libs/signMessage/signM
 import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
 import Spinner from '@common/components/Spinner'
 import useTheme from '@common/hooks/useTheme'
-import spacings from '@common/styles/spacings'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import HeaderAccountAndNetworkInfo from '@web/components/HeaderAccountAndNetworkInfo'
 import SmallNotificationWindowWrapper from '@web/components/SmallNotificationWindowWrapper'
@@ -46,7 +46,7 @@ const SignMessageScreen = () => {
   const [makeItSmartConfirmed, setMakeItSmartConfirmed] = useState(false)
   const [doNotAskMeAgain, setDoNotAskMeAgain] = useState(false)
   const actionState = useActionsControllerState()
-  const { styles, theme } = useTheme(getStyles)
+  const { styles, theme, themeType } = useTheme(getStyles)
 
   const signMessageAction = useMemo(() => {
     if (actionState.currentAction?.type !== 'signMessage') return undefined
@@ -241,7 +241,15 @@ const SignMessageScreen = () => {
     <SmallNotificationWindowWrapper>
       <TabLayoutContainer
         width="full"
-        header={<HeaderAccountAndNetworkInfo backgroundColor={theme.primaryBackground as string} />}
+        header={
+          <HeaderAccountAndNetworkInfo
+            backgroundColor={
+              themeType === THEME_TYPES.DARK
+                ? (theme.secondaryBackground as string)
+                : (theme.primaryBackground as string)
+            }
+          />
+        }
         footer={
           <ActionFooter
             onReject={handleReject}

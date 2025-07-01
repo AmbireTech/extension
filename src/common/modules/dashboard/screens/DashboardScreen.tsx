@@ -71,7 +71,7 @@ const DashboardScreen = () => {
       // This is done, because hiding the overview will subtract the height of the overview from the height of the
       // scroll view, thus a shorter scroll container may no longer be scrollable after hiding the overview
       // and if that happens, the user will not be able to scroll up to expand the overview again.
-      const scrollDownThreshold = dashboardOverviewSize.height + 20
+      const scrollDownThreshold = dashboardOverviewSize.height
       // scrollUpThreshold must be a constant value and not dependent on the height of the overview,
       // because the height will change as the overview animates from small to large.
       const scrollUpThreshold = 200
@@ -126,7 +126,7 @@ const DashboardScreen = () => {
             setDashboardOverviewSize={setDashboardOverviewSize}
             onGasTankButtonPosition={handleGasTankButtonPosition}
           />
-          <DashboardPages onScroll={onScroll} />
+          <DashboardPages onScroll={onScroll} animatedOverviewHeight={animatedOverviewHeight} />
         </View>
         <DAppFooter />
       </View>

@@ -17,4 +17,4 @@ const AaveIcon: FC<SvgProps> = ({ width = 28, height = 28 }) => {
   )
 }
 
-export default AaveIcon
+export default React.memo(AaveIcon)

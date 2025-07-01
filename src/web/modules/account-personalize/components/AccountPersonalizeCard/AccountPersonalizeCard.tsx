@@ -23,6 +23,7 @@ type Props = {
     accounts: Account[]
   }>
   hasBottomSpacing?: boolean
+  disableEdit?: boolean
   onSave: (value: string) => void
 }
 
@@ -31,6 +32,7 @@ const AccountPersonalizeCard = ({
   index,
   control,
   hasBottomSpacing = true,
+  disableEdit,
   onSave
 }: Props) => {
   const { addr: address, preferences } = account
@@ -65,6 +67,7 @@ const AccountPersonalizeCard = ({
                     testID={`edit-name-field-${index}`}
                     height={24}
                     textProps={{ weight: 'medium' }}
+                    disabled={disableEdit}
                     onSave={onSave}
                   />
                 )}

@@ -1,16 +1,20 @@
 import React, { FC, useCallback, useEffect, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
-import { FlatListProps, View } from 'react-native'
+import { Animated, FlatListProps, View } from 'react-native'
 
 import Text from '@common/components/Text'
+import useNavigation from '@common/hooks/useNavigation'
+import usePrevious from '@common/hooks/usePrevious'
 import useTheme from '@common/hooks/useTheme'
 import DashboardBanners from '@common/modules/dashboard/components/DashboardBanners'
 import DashboardPageScrollContainer from '@common/modules/dashboard/components/DashboardPageScrollContainer'
 import TabsAndSearch from '@common/modules/dashboard/components/TabsAndSearch'
 import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tab/Tab'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 import { getDoesNetworkMatch } from '@common/utils/search'
 import { openInTab } from '@web/extension-services/background/webapi/tab'
+import useBackgroundService from '@web/hooks/useBackgroundService'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import { getUiType } from '@web/utils/uiType'
@@ -26,6 +30,7 @@ interface Props {
   sessionId: string
   onScroll: FlatListProps<any>['onScroll']
   dashboardNetworkFilterName: string | null
+  animatedOverviewHeight: Animated.Value
 }
 
 const { isPopup } = getUiType()
@@ -36,19 +41,44 @@ const DeFiPositions: FC<Props> = ({
   initTab,
   sessionId,
   onScroll,
-  dashboardNetworkFilterName
+  dashboardNetworkFilterName,
+  animatedOverviewHeight
 }) => {
   const { control, watch, setValue } = useForm({ mode: 'all', defaultValues: { search: '' } })
   const { t } = useTranslation()
-  const { theme } = useTheme()
+  const { theme, themeType } = useTheme()
   const searchValue = watch('search')
   const { networks } = useNetworksControllerState()
   const { defiPositions, areDefiPositionsLoading, dashboardNetworkFilter } =
     useSelectedAccountControllerState()
+  const { setSearchParams } = useNavigation()
+
+  const { dispatch } = useBackgroundService()
+  const prevInitTab: any = usePrevious(initTab)
 
   useEffect(() => {
     setValue('search', '')
   }, [openTab, setValue])
+
+  useEffect(() => {
+    if (!prevInitTab?.defi && initTab?.defi) {
+      dispatch({ type: 'DEFI_CONTOLLER_ADD_SESSION', params: { sessionId } })
+      setSearchParams((prev) => {
+        prev.set('sessionId', sessionId)
+        return prev
+      })
+    }
+
+    if (prevInitTab?.defi && !initTab?.defi) {
+      dispatch({ type: 'DEFI_CONTOLLER_REMOVE_SESSION', params: { sessionId } })
+    }
+  }, [dispatch, setSearchParams, prevInitTab?.defi, initTab?.defi, sessionId])
+
+  useEffect(() => {
+    return () => {
+      dispatch({ type: 'DEFI_CONTOLLER_REMOVE_SESSION', params: { sessionId } })
+    }
+  }, [sessionId, dispatch])
 
   const filteredPositions = useMemo(
     () =>
@@ -111,8 +141,10 @@ const DeFiPositions: FC<Props> = ({
               <Text
                 fontSize={14}
                 appearance="primary"
+                color={themeType === THEME_TYPES.DARK ? theme.linkText : theme.primary}
                 onPress={() => {
-                  openInTab('https://help.ambire.com/hc/en-us', false)
+                  // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                  openInTab({ url: 'https://help.ambire.com/hc/en-us' })
                 }}
               >
                 {t('open a ticket.')}
@@ -168,6 +200,7 @@ const DeFiPositions: FC<Props> = ({
       initialNumToRender={isPopup ? 10 : 20}
       windowSize={9} // Larger values can cause performance issues.
       onScroll={onScroll}
+      animatedOverviewHeight={animatedOverviewHeight}
     />
   )
 }

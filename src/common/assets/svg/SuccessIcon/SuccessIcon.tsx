@@ -1,20 +1,21 @@
 import React, { FC } from 'react'
 import { G, Path, Svg, SvgProps } from 'react-native-svg'
 
-import colors from '@common/styles/colors'
+import useTheme from '@common/hooks/useTheme'
 
 const SuccessIcon: FC<SvgProps & { withCirc?: boolean }> = ({
   width = 24,
   height = 24,
-  color = colors.martinique,
+  color,
   withCirc = true
 }) => {
+  const { theme } = useTheme()
   return (
     <Svg width={width} height={height} viewBox="0 0 21.5 21.5">
       {withCirc ? (
         <G
           fill="none"
-          stroke={color}
+          stroke={color || theme.iconSecondary}
           strokeLinecap="round"
           strokeLinejoin="round"
           strokeWidth="1.5"
@@ -25,7 +26,7 @@ const SuccessIcon: FC<SvgProps & { withCirc?: boolean }> = ({
       ) : (
         <G
           fill="none"
-          stroke={color}
+          stroke={color || theme.iconSecondary}
           strokeLinecap="round"
           strokeLinejoin="round"
           strokeWidth="1.5"
@@ -37,4 +38,4 @@ const SuccessIcon: FC<SvgProps & { withCirc?: boolean }> = ({
   )
 }
 
-export default SuccessIcon
+export default React.memo(SuccessIcon)

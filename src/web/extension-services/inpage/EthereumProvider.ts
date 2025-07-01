@@ -10,7 +10,7 @@ import DedupePromise from '@web/extension-services/inpage/services/dedupePromise
 import PushEventHandlers from '@web/extension-services/inpage/services/pushEventsHandlers'
 import ReadyPromise from '@web/extension-services/inpage/services/readyPromise'
 import { initializeMessenger } from '@web/extension-services/messengers/initializeMessenger'
-import { logInfoWithPrefix, logWarnWithPrefix } from '@web/utils/logger'
+import logger, { LOG_LEVELS, logInfoWithPrefix, logWarnWithPrefix } from '@web/utils/logger'
 
 export interface StateProvider {
   accounts: string[] | null
@@ -32,6 +32,45 @@ const domReadyCall = (callback: any) => {
   } else {
     callback()
   }
+}
+
+function getIconWithRetry(delay = 1000): Promise<string> {
+  const tryFind = (): string | null => {
+    const linkIcon = document.querySelector('link[rel~="icon"]') as HTMLLinkElement | null
+    if (linkIcon?.href) {
+      try {
+        return new URL(linkIcon.href, document.baseURI).href
+      } catch {
+        // silent fail
+      }
+    }
+
+    const metaImage = document.querySelector('meta[itemprop="image"]') as HTMLMetaElement | null
+    if (metaImage?.content) {
+      try {
+        return new URL(metaImage.content, document.baseURI).href
+      } catch {
+        // silent fail
+      }
+    }
+
+    return null
+  }
+
+  return new Promise((resolve) => {
+    const icon = tryFind()
+    // eslint-disable-next-line no-promise-executor-return
+    if (icon) return resolve(icon)
+
+    setTimeout(() => {
+      const secondTry = tryFind()
+      if (secondTry) {
+        resolve(secondTry)
+      } else {
+        resolve(new URL('/favicon.ico', document.baseURI).href)
+      }
+    }, delay)
+  })
 }
 
 export class EthereumProvider extends EventEmitter {
@@ -111,17 +150,14 @@ export class EthereumProvider extends EventEmitter {
     document.addEventListener('visibilitychange', this.#requestPromiseCheckVisibility)
 
     const id = this.#requestId++
-    domReadyCall(() => {
+    domReadyCall(async () => {
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
       providerRequestTransport.send(
         {
           id,
           method: 'tabCheckin',
           params: {
-            // @ts-ignore
-            icon:
-              ($('head > link[rel~="icon"]') as HTMLLinkElement)?.href ||
-              ($('head > meta[itemprop="image"]') as HTMLMetaElement)?.content,
+            icon: await getIconWithRetry(),
             name:
               document.title ||
               ($('head > meta[name="title"]') as HTMLMetaElement)?.content ||
@@ -137,9 +173,10 @@ export class EthereumProvider extends EventEmitter {
     })
 
     try {
-      const { chainId, accounts, networkVersion, isUnlocked }: any =
+      const { chainId, accounts, networkVersion, isUnlocked, logLevel }: any =
         await this.requestInternalMethods({ method: 'getProviderState' })
 
+      this.setLogLevel(logLevel)
       if (isUnlocked) {
         this._isUnlocked = true
         this._state.isUnlocked = true
@@ -403,5 +440,9 @@ export class EthereumProvider extends EventEmitter {
 
   on = (event: string | symbol, handler: (...args: any[]) => void) => {
     return super.on(event, handler)
+  }
+
+  setLogLevel = (nextLogLevel: LOG_LEVELS) => {
+    logger.setLevel(nextLogLevel)
   }
 }

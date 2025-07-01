@@ -9,6 +9,7 @@ import Text from '@common/components/Text'
 import Tooltip from '@common/components/Tooltip'
 import useTheme from '@common/hooks/useTheme'
 import { SPACING_MI, SPACING_TY } from '@common/styles/spacings'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import ManifestImage from '@web/components/ManifestImage'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
@@ -66,7 +67,7 @@ const NetworkIcon = ({
 
   const iconScale = useMemo(() => scale || (size < 28 ? 0.8 : 0.6), [size, scale])
 
-  const { theme } = useTheme()
+  const { theme, themeType } = useTheme()
   const Icon = icons[networkName]
 
   const renderDefaultIcon = useCallback(
@@ -116,7 +117,10 @@ const NetworkIcon = ({
           {
             borderRadius: 50,
             overflow: 'hidden',
-            backgroundColor: theme.tertiaryBackground
+            backgroundColor:
+              themeType === THEME_TYPES.DARK
+                ? theme.primaryBackgroundInverted
+                : theme.tertiaryBackground
           },
           style
         ]}
@@ -130,6 +134,7 @@ const NetworkIcon = ({
             iconScale={iconScale}
             isRound
             fallback={() => renderDefaultIcon()}
+            imageStyle={themeType === THEME_TYPES.DARK ? { backgroundColor: 'transparent' } : {}}
           />
         )}
       </View>

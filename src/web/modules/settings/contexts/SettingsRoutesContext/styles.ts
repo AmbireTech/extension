@@ -1,7 +1,7 @@
 import { StyleSheet, ViewStyle } from 'react-native'
 
 import spacings from '@common/styles/spacings'
-import { ThemeProps } from '@common/styles/themeConfig'
+import { THEME_TYPES, ThemeProps, ThemeType } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import { TAB_CONTENT_WIDTH } from '@web/constants/spacings'
 
@@ -16,7 +16,7 @@ interface Style {
 
 export const SETTINGS_HEADER_HEIGHT = 64
 
-const getStyles = (theme: ThemeProps) =>
+const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
   StyleSheet.create<Style>({
     background: {
       ...flexbox.alignCenter,
@@ -42,7 +42,9 @@ const getStyles = (theme: ThemeProps) =>
       ...spacings.mbLg,
       ...flexbox.flex1,
       width: TAB_CONTENT_WIDTH,
-      maxHeight: '100%'
+      maxHeight: '100%',
+      backgroundColor: theme.primaryBackground,
+      borderWidth: themeType === THEME_TYPES.DARK ? 0 : 1
     },
     sideContainer: {
       opacity: 0,

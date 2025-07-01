@@ -1,5 +1,6 @@
 import React from 'react'
 
+import Alert from '@legends/components/Alert'
 import OverachieverBanner from '@legends/components/OverachieverBanner'
 import Page from '@legends/components/Page'
 import Spinner from '@legends/components/Spinner'
@@ -20,7 +21,7 @@ const GROUP_SORT = [
 ]
 
 const Legends = () => {
-  const { legends, isLoading } = useLegendsContext()
+  const { legends, isLoading, error } = useLegendsContext()
 
   const processedLegends = legends
     .sort((a, b) => {
@@ -41,7 +42,10 @@ const Legends = () => {
     <Page containerSize="lg">
       <OverachieverBanner />
       {!isLoading ? (
-        <div>
+        <div className={styles.wrapper}>
+          {error && (
+            <Alert type="error" title={error} className={styles.error} />
+          )}
           {Object.entries(processedLegends).map(([groupName, cards]) => (
             <div key={groupName} className={styles.group}>
               <h2 className={styles.groupName}>

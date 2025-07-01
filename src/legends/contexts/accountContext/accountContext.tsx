@@ -147,12 +147,16 @@ const AccountContextProvider = ({ children }: { children: React.ReactNode }) => 
   // while on Account disconnect, we simply reload the Legends, which resets all the hooks state.
   useEffect(() => {
     const onAccountsChanged = async (accounts: string[]) => {
+      setIsLoading(true);
       if (!accounts.length) {
         handleDisconnectFromWallet()
+        setIsLoading(false);
         return
       }
 
       await validateAndSetAccount(accounts[0])
+      setIsLoading(false);
+
     }
 
     getConnectedAccount()

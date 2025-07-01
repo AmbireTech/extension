@@ -2,10 +2,13 @@
 
 import { ethErrors } from 'eth-rpc-errors'
 
-class PushEventHandlers {
-  #provider
+import { EthereumProvider } from '@web/extension-services/inpage/EthereumProvider'
+import { LOG_LEVELS } from '@web/utils/logger'
 
-  constructor(provider) {
+class PushEventHandlers {
+  #provider: EthereumProvider
+
+  constructor(provider: EthereumProvider) {
     this.#provider = provider
   }
 
@@ -68,6 +71,10 @@ class PushEventHandlers {
       this.#provider.networkVersion = networkVersion
       this._emit('networkChanged', networkVersion)
     }
+  }
+
+  logLevelUpdate = (nextLogLevel: LOG_LEVELS) => {
+    this.#provider.setLogLevel(nextLogLevel)
   }
 }
 

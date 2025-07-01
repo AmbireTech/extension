@@ -1,6 +1,8 @@
 import React, { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Dimensions, FlatList, FlatListProps, ViewStyle } from 'react-native'
+import { Animated, Dimensions, FlatList, FlatListProps, ViewStyle } from 'react-native'
 
+import { isWeb } from '@common/config/env'
+import { OVERVIEW_CONTENT_MAX_HEIGHT } from '@common/modules/dashboard/screens/DashboardScreen'
 import spacings from '@common/styles/spacings'
 import commonWebStyles from '@web/styles/utils/common'
 import { getUiType } from '@web/utils/uiType'
@@ -11,6 +13,7 @@ import { TabType } from '../TabsAndSearch/Tabs/Tab/Tab'
 interface Props extends FlatListProps<any> {
   tab: TabType
   openTab: TabType
+  animatedOverviewHeight: Animated.Value
 }
 
 // We do this instead of unmounting the component to prevent component rerendering when switching tabs.
@@ -33,7 +36,12 @@ const getFlatListStyle = (tab: TabType, openTab: TabType, allBannersLength: numb
 
 const { isPopup } = getUiType()
 
-const DashboardPageScrollContainer: FC<Props> = ({ tab, openTab, ...rest }) => {
+const DashboardPageScrollContainer: FC<Props> = ({
+  tab,
+  openTab,
+  animatedOverviewHeight,
+  ...rest
+}) => {
   const [hasScrollBar, setHasScrollBar] = useState(false)
   const allBanners = useBanners()
   const flatlistRef = useRef<FlatList | null>(null)
@@ -54,15 +62,24 @@ const DashboardPageScrollContainer: FC<Props> = ({ tab, openTab, ...rest }) => {
     ]
   }, [allBanners.length, hasScrollBar])
 
+  // Reset scroll position when switching tabs (new)
   useEffect(() => {
     if (!flatlistRef.current) return
 
-    // Fixes weird behaviour that occurs when you scroll in one tab and then move to another and back.
-    flatlistRef.current?.scrollToOffset({
-      offset: 0,
-      animated: false
-    })
-  }, [openTab])
+    if (openTab === tab) {
+      // Scroll to top
+      flatlistRef.current?.scrollToOffset({ offset: 0, animated: false })
+
+      // Expand overview
+      Animated.spring(animatedOverviewHeight, {
+        toValue: OVERVIEW_CONTENT_MAX_HEIGHT,
+        bounciness: 0,
+        speed: 2.8,
+        overshootClamping: true,
+        useNativeDriver: !isWeb
+      }).start()
+    }
+  }, [animatedOverviewHeight, openTab, tab])
 
   const handleContentSizeChange = useCallback((contentWidth: number) => {
     const windowWidth = Dimensions.get('window').width

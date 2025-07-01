@@ -1,9 +1,11 @@
 import crypto from 'crypto'
-import * as SDK from 'gridplus-sdk'
+import { Client as GridPlusSDKClient, Constants as GridPlusSDKConstants } from 'gridplus-sdk'
 
 import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
 import { ExternalKey, ExternalSignerController } from '@ambire-common/interfaces/keystore'
 import { browser } from '@web/constants/browserapi'
+
+export { GridPlusSDKConstants }
 
 const LATTICE_APP_NAME = 'Ambire Wallet (browser)' // should be 6-23 characters
 const LATTICE_MANAGER_URL = 'https://lattice.gridplus.io'
@@ -13,7 +15,7 @@ const SDK_TIMEOUT = 120000
 const CONNECT_TIMEOUT = 20000
 
 class LatticeController implements ExternalSignerController {
-  walletSDK?: SDK.Client | null
+  walletSDK?: GridPlusSDKClient | null
 
   creds: any
 
@@ -211,7 +213,7 @@ class LatticeController implements ExternalSignerController {
       }
     }
     */
-    this.walletSDK = new SDK.Client(setupData)
+    this.walletSDK = new GridPlusSDKClient(setupData)
     // Return a boolean indicating whether we provided state data.
     // If we have, we can skip `connect`.
     return !!setupData.stateData

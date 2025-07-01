@@ -7,7 +7,6 @@ import Button from '@common/components/Button'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import { iconColors } from '@common/styles/themeConfig'
 
 import getStyles from './styles'
 
@@ -24,6 +23,7 @@ export interface Props {
   secondaryButtonTestID?: string
   buttonsContainerStyle?: ViewStyle
   hideHeader?: boolean
+  style?: ViewStyle
 }
 
 const DualChoiceModal: FC<Props> = ({
@@ -38,9 +38,10 @@ const DualChoiceModal: FC<Props> = ({
   secondaryButtonTestID,
   primaryButtonTestID,
   buttonsContainerStyle,
-  hideHeader
+  hideHeader,
+  style
 }) => {
-  const { styles } = useTheme(getStyles)
+  const { styles, theme } = useTheme(getStyles)
 
   return (
     <View>
@@ -56,10 +57,10 @@ const DualChoiceModal: FC<Props> = ({
           )}
         </View>
       )}
-      <View style={styles.modalInnerContainer}>
+      <View style={[styles.modalInnerContainer, style]}>
         {!!Icon && (
           <View>
-            <Icon style={spacings.mrLg} color={iconColors.primary} />
+            <Icon style={spacings.mrLg} color={theme.iconPrimary} />
           </View>
         )}
         <Text appearance="secondaryText">{description}</Text>

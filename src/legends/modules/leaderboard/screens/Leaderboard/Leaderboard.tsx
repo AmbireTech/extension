@@ -101,34 +101,35 @@ const LeaderboardContainer: React.FC = () => {
             Complete quests, earn XP and climb the leaderboard to secure Ambire rewards.
           </p>
         </div>
-        <div className={styles.tabs}>
-          <button
-            type="button"
-            className={`${styles.tab} ${!activeTab ? styles.active : ''}`}
-            onClick={() => setActiveTab(0)}
-          >
-            Total XP
-          </button>
-          <button
-            type="button"
-            className={`${styles.tab} ${activeTab === 1 ? styles.active : ''}`}
-            onClick={() => setActiveTab(1)}
-          >
-            Season 0
-          </button>
-          <button
-            type="button"
-            className={`${styles.tab} ${activeTab === 2 ? styles.active : ''}`}
-            onClick={() => setActiveTab(2)}
-          >
-            <Ribbon className={styles.ribbon} />
-            Season 1<span className={styles.current}>current</span>
-          </button>
-        </div>
+        {error && <Alert className={styles.leaderboardError} type="error" title={error} />}
         {loading && <Spinner />}
-        {error && <Alert type="error" title={error} />}
+      
         {leaderboardData && leaderboardData.length ? (
           <>
+            <div className={styles.tabs}>
+              <button
+                type="button"
+                className={`${styles.tab} ${!activeTab ? styles.active : ''}`}
+                onClick={() => setActiveTab(0)}
+              >
+                Total XP
+              </button>
+              <button
+                type="button"
+                className={`${styles.tab} ${activeTab === 1 ? styles.active : ''}`}
+                onClick={() => setActiveTab(1)}
+              >
+                Season 0
+              </button>
+              <button
+                type="button"
+                className={`${styles.tab} ${activeTab === 2 ? styles.active : ''}`}
+                onClick={() => setActiveTab(2)}
+              >
+                <Ribbon className={styles.ribbon} />
+                Season 1<span className={styles.current}>current</span>
+              </button>
+            </div>
             <Podium data={leaderboardData.slice(0, 3)} />
             <div ref={tableRef} className={styles.table}>
               <div className={styles.header}>

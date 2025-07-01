@@ -10,7 +10,9 @@ import PrivateKeyExport from '@common/components/ExportKey/PrivateKeyExport'
 import SmartAccountExport from '@common/components/ExportKey/SmartAccountExport'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import eventBus from '@web/extension-services/event/eventBus'
@@ -37,7 +39,7 @@ const ExportKey = ({
   const keystoreState = useKeystoreControllerState()
   const [privateKey, setPrivateKey] = useState<string | null>(null)
   const [blurred, setBlurred] = useState<boolean>(true)
-
+  const { themeType } = useTheme()
   const {
     ref: sheetRefConfirmPassword,
     open: openConfirmPassword,
@@ -114,14 +116,16 @@ const ExportKey = ({
         sheetRef={sheetRefConfirmPassword}
         id="confirm-password-bottom-sheet"
         type="modal"
-        backgroundColor="primaryBackground"
+        backgroundColor={
+          themeType === THEME_TYPES.DARK ? 'secondaryBackground' : 'primaryBackground'
+        }
         closeBottomSheet={closeConfirmPassword}
         scrollViewProps={{ contentContainerStyle: { flex: 1 } }}
         containerInnerWrapperStyles={{ flex: 1 }}
         style={{ maxWidth: 432, minHeight: 432, ...spacings.pvLg }}
       >
         <PasswordConfirmation
-          text={t('Please enter your extension password to reveal your recovery phrase.')}
+          text={t('Please enter your extension password to reveal your private key.')}
           onPasswordConfirmed={onPasswordConfirmed}
           onBackButtonPress={closeConfirmPassword}
         />

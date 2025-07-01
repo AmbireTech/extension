@@ -9,6 +9,7 @@ import Tooltip from '@common/components/Tooltip'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { getGasTankTokenDetails } from '@common/utils/getGasTankTokenDetails'
@@ -28,7 +29,7 @@ type Props = {
 const GasTankButton = ({ onPress, onPosition, portfolio, account, hasGasTank }: Props) => {
   const { t } = useTranslation()
   const buttonRef = useRef(null)
-  const { theme } = useTheme()
+  const { theme, themeType } = useTheme()
   const { networks } = useNetworksControllerState()
 
   const [bindGasTankBtnAim, removeTankBtnStyle] = useCustomHover({
@@ -86,28 +87,71 @@ const GasTankButton = ({ onPress, onPosition, portfolio, account, hasGasTank }: 
         {...bindGasTankBtnAim}
         testID="dashboard-gas-tank-button"
       >
-        <GasTankIcon width={20} color="white" />
+        <GasTankIcon
+          width={20}
+          color={
+            themeType === THEME_TYPES.DARK
+              ? theme.primaryBackgroundInverted
+              : theme.primaryBackground
+          }
+        />
         {hasGasTank ? (
           totalBalanceGasTankDetails.balanceFormatted ? (
             <>
-              <Text style={[spacings.mlTy]} color="white" weight="number_bold" fontSize={12}>
+              <Text
+                testID='dashboard-gas-tank-balance'
+                style={[spacings.mlTy]}
+                color={
+                  themeType === THEME_TYPES.DARK
+                    ? theme.primaryBackgroundInverted
+                    : theme.primaryBackground
+                }
+                weight="number_bold"
+                fontSize={12}
+              >
                 {`${totalBalanceGasTankDetails.balanceFormatted} ${
                   totalBalanceGasTankDetails.token?.symbol || ''
                 }`}
               </Text>
-              <Text style={[spacings.mlTy, { opacity: 0.57 }]} fontSize={12} color="white">
+              <Text
+                style={[spacings.mlTy, { opacity: 0.57 }]}
+                fontSize={12}
+                color={
+                  themeType === THEME_TYPES.DARK
+                    ? theme.primaryBackgroundInverted
+                    : theme.primaryBackground
+                }
+              >
                 {t('on Gas Tank')}
               </Text>
             </>
           ) : (
-            <Text style={[spacings.mhTy]} color="white" weight="number_bold" fontSize={12}>
+            <Text
+              style={[spacings.mhTy]}
+              color={
+                themeType === THEME_TYPES.DARK
+                  ? theme.primaryBackgroundInverted
+                  : theme.primaryBackground
+              }
+              weight="number_bold"
+              fontSize={12}
+            >
               {t('Top up Gas Tank')}
             </Text>
           )
         ) : (
           // @ts-ignore
           <View dataSet={{ tooltipId: 'gas-tank-soon' }}>
-            <Text style={[spacings.mhTy]} color="white" weight="number_bold" fontSize={12}>
+            <Text
+              style={[spacings.mhTy]}
+              color={
+                themeType === THEME_TYPES.DARK
+                  ? theme.primaryBackgroundInverted
+                  : theme.primaryBackground
+              }
+              weight="number_bold"
+              fontSize={12}
+            >
               {t('Gas Tank Soon')}
             </Text>
           </View>

@@ -142,7 +142,7 @@ const SeedPhraseImportScreen = () => {
             <View>
               <Button
                 testID="clear-seed-phrase-btn"
-                type="ghost"
+                type="ghost2"
                 size="small"
                 onPress={() => {
                   setValue('seed', '')
@@ -244,6 +244,7 @@ const SeedPhraseImportScreen = () => {
                     rules={{ required: enablePassphrase }}
                     render={({ field: { onChange, onBlur, value } }) => (
                       <InputPassword
+                        testID="input-passphrase"
                         onBlur={onBlur}
                         onChangeText={onChange}
                         value={value}

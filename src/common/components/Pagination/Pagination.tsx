@@ -1,13 +1,15 @@
 import React, { FC } from 'react'
-import { TouchableOpacity, View, ViewStyle } from 'react-native'
+import { Pressable, View, ViewStyle } from 'react-native'
 
 import LeftArrowIcon from '@common/assets/svg/LeftArrowIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import usePagination, { DOTS } from '@common/hooks/usePagination'
+import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 import PaginationItem from './PaginationItem'
+import getStyles from './styles'
 
 export const SMALL_PAGE_STEP = 1
 export const LARGE_PAGE_STEP = 10
@@ -33,6 +35,7 @@ const Pagination: FC<Props> = ({
   style,
   hideLastPage
 }) => {
+  const { styles, theme } = useTheme(getStyles)
   const paginationRange = usePagination({
     currentPage: page,
     maxPages,
@@ -67,24 +70,35 @@ const Pagination: FC<Props> = ({
 
   return (
     <View style={[flexbox.directionRow, flexbox.justifyEnd, flexbox.alignCenter, style]}>
-      <TouchableOpacity
+      <Pressable
         onPress={handleLargePageStepDecrement}
         disabled={page === 1 || isPrevDisabled || isDisabled}
-        style={[spacings.mrTy, (page === 1 || isPrevDisabled || isDisabled) && { opacity: 0.4 }]}
+        style={[
+          styles.arrowButtonWrapper,
+          spacings.mrTy,
+          (page === 1 || isPrevDisabled || isDisabled) && { opacity: 0.4 }
+        ]}
       >
-        <View style={flexbox.directionRow}>
-          <LeftArrowIcon />
-          <LeftArrowIcon />
-        </View>
-      </TouchableOpacity>
-      <TouchableOpacity
+        {({ hovered }: any) => (
+          <View style={flexbox.directionRow}>
+            <LeftArrowIcon color={hovered ? theme.primaryBackgroundInverted : theme.iconPrimary} />
+            <LeftArrowIcon color={hovered ? theme.primaryBackgroundInverted : theme.iconPrimary} />
+          </View>
+        )}
+      </Pressable>
+      <Pressable
         onPress={handleSmallPageStepDecrement}
         disabled={page === 1 || isPrevDisabled || isDisabled}
-        style={(page === 1 || isPrevDisabled || isDisabled) && { opacity: 0.4 }}
+        style={[
+          styles.arrowButtonWrapper,
+          (page === 1 || isPrevDisabled || isDisabled) && { opacity: 0.4 }
+        ]}
       >
-        <LeftArrowIcon />
-      </TouchableOpacity>
-      <View style={[flexbox.directionRow, spacings.phSm]}>
+        {({ hovered }: any) => (
+          <LeftArrowIcon color={hovered ? theme.primaryBackgroundInverted : theme.iconPrimary} />
+        )}
+      </Pressable>
+      <View style={[flexbox.directionRow, spacings.phTy]}>
         {paginationRange.map((pageNumber) => {
           if (typeof pageNumber !== 'number' || String(pageNumber).includes(DOTS)) {
             return <PaginationItem key={pageNumber} />
@@ -101,23 +115,31 @@ const Pagination: FC<Props> = ({
           )
         })}
       </View>
-      <TouchableOpacity
-        style={[spacings.mrTy, (isNextDisabled || isDisabled) && { opacity: 0.4 }]}
+      <Pressable
+        style={[
+          styles.arrowButtonWrapper,
+          spacings.mrTy,
+          (isNextDisabled || isDisabled) && { opacity: 0.4 }
+        ]}
         disabled={isNextDisabled || isDisabled}
         onPress={handleSmallPageStepIncrement}
       >
-        <RightArrowIcon />
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={(isNextDisabled || isDisabled) && { opacity: 0.4 }}
+        {({ hovered }: any) => (
+          <RightArrowIcon color={hovered ? theme.primaryBackgroundInverted : theme.iconPrimary} />
+        )}
+      </Pressable>
+      <Pressable
+        style={[styles.arrowButtonWrapper, (isNextDisabled || isDisabled) && { opacity: 0.4 }]}
         disabled={isNextDisabled || isDisabled}
         onPress={handleLargePageStepIncrement}
       >
-        <View style={flexbox.directionRow}>
-          <RightArrowIcon />
-          <RightArrowIcon />
-        </View>
-      </TouchableOpacity>
+        {({ hovered }: any) => (
+          <View style={flexbox.directionRow}>
+            <RightArrowIcon color={hovered ? theme.primaryBackgroundInverted : theme.iconPrimary} />
+            <RightArrowIcon color={hovered ? theme.primaryBackgroundInverted : theme.iconPrimary} />
+          </View>
+        )}
+      </Pressable>
     </View>
   )
 }

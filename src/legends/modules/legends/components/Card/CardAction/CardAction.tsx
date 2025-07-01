@@ -46,7 +46,7 @@ const CardActionComponent: FC<CardActionComponentProps> = ({ meta, action, butto
     }
 
     if (action.predefinedId === CARD_PREDEFINED_ID.feedback) {
-      return <Feedback />
+      return <Feedback meta={meta} />
     }
 
     return null

@@ -8,10 +8,8 @@ import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
 import Tooltip from '@common/components/Tooltip'
 import useTheme from '@common/hooks/useTheme'
-import colors from '@common/styles/colors'
 import spacings from '@common/styles/spacings'
 import { BigIntMath } from '@common/utils/bigint'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import { getTokenId } from '@web/utils/token'
 
 import getStyles from './styles'
@@ -23,9 +21,8 @@ interface Props {
 }
 
 const PendingTokenSummary = ({ token, chainId, hasBottomSpacing = true }: Props) => {
-  const { styles } = useTheme(getStyles)
-  const { networks } = useNetworksControllerState()
-  const tokenId = getTokenId(token, networks)
+  const { styles, theme } = useTheme(getStyles)
+  const tokenId = getTokenId(token)
   const { formattedAmount, fullAmount } = useMemo(() => {
     if (token.simulationAmount === undefined || token.decimals === undefined) {
       return {
@@ -64,11 +61,11 @@ const PendingTokenSummary = ({ token, chainId, hasBottomSpacing = true }: Props)
   }, [token.simulationAmount])
 
   const amountToSendTextColor = useMemo(() => {
-    if (token.simulationAmount! < 0) return colors.radicalRed
-    if (token.simulationAmount! > 0) return colors.greenHaze
+    if (token.simulationAmount! < 0) return theme.errorDecorative
+    if (token.simulationAmount! > 0) return theme.successDecorative
 
-    return colors.martinique
-  }, [token.simulationAmount])
+    return theme.secondaryText
+  }, [token.simulationAmount, theme])
 
   return (
     <View style={[styles.container, !hasBottomSpacing && spacings.mb0]}>

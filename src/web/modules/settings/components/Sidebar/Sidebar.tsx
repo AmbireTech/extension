@@ -11,7 +11,6 @@ import CustomTokensIcon from '@common/assets/svg/CustomTokensIcon'
 import EmailVaultIcon from '@common/assets/svg/EmailVaultIcon'
 import HelpIcon from '@common/assets/svg/HelpIcon'
 import KeyStoreSettingsIcon from '@common/assets/svg/KeyStoreSettingsIcon'
-import LeftArrowIcon from '@common/assets/svg/LeftArrowIcon'
 import NetworksIcon from '@common/assets/svg/NetworksIcon'
 import PasswordRecoverySettingsIcon from '@common/assets/svg/PasswordRecoverySettingsIcon'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
@@ -20,12 +19,10 @@ import SignedMessageIcon from '@common/assets/svg/SignedMessageIcon'
 import TransactionHistoryIcon from '@common/assets/svg/TransactionHistoryIcon'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
-import useNavigation from '@common/hooks/useNavigation/useNavigation.web'
-import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
-import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
+import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
-import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 import SettingsLink from '@web/modules/settings/components/SettingsLink'
 
@@ -127,41 +124,16 @@ const OTHER_LINKS = [
 
 const Sidebar = ({ activeLink }: { activeLink?: string }) => {
   const keystoreState = useKeystoreControllerState()
-  const { theme, styles } = useTheme(getStyles)
+  const { theme, themeType, styles } = useTheme(getStyles)
   const { t } = useTranslation()
-  const { state } = useRoute()
-  const { navigate } = useNavigation()
-  const isTransferPreviousPage = state?.prevRoute?.pathname?.includes(ROUTES.transfer)
-  const [bindAnim, animStyle] = useCustomHover({
-    property: 'backgroundColor',
-    values: {
-      from: theme.secondaryBackground,
-      to: theme.tertiaryBackground
-    }
-  })
 
   return (
     <View style={{ ...spacings.pbLg, position: 'relative', height: '100%' }}>
-      <AnimatedPressable
-        style={[styles.backToDashboardButton, animStyle]}
-        onPress={() => {
-          if (isTransferPreviousPage) {
-            navigate(ROUTES.transfer)
-            return
-          }
-
-          navigate(WEB_ROUTES.dashboard)
-        }}
-        {...bindAnim}
-      >
-        <LeftArrowIcon color={theme.secondaryText} />
-        <Text fontSize={16} weight="medium" appearance="secondaryText" style={spacings.mlLg}>
-          {isTransferPreviousPage ? t('Send') : t('Dashboard')}
+      <View style={styles.settingsTitleWrapper}>
+        <Text style={[spacings.ml]} fontSize={20} weight="medium">
+          {t('Settings')}
         </Text>
-      </AnimatedPressable>
-      <Text style={[spacings.ml, spacings.mbMd]} fontSize={20} weight="medium">
-        {t('Settings')}
-      </Text>
+      </View>
       <ScrollableWrapper>
         {SETTINGS_LINKS.map((_link, i) => {
           // If the KeyStore device password is not configured yet, redirect to DevicePassword->Set route under the hood,
@@ -185,7 +157,8 @@ const Sidebar = ({ activeLink }: { activeLink?: string }) => {
           style={{
             width: '100%',
             borderBottomWidth: 1,
-            borderColor: theme.secondaryBorder,
+            borderColor:
+              themeType === THEME_TYPES.DARK ? theme.primaryBorder : theme.secondaryBorder,
             ...spacings.mv
           }}
         />

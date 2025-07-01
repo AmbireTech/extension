@@ -6,6 +6,7 @@ interface Styles {
   shadowPrimary: ViewStyle
   shadowSecondary: ViewStyle
   shadowTertiary: ViewStyle
+  shadowTertiaryDarkMode: ViewStyle
   borderRadiusPrimary: ViewStyle
   borderRadiusSecondary: ViewStyle
   borderRadiusTertiary: ViewStyle
@@ -41,6 +42,15 @@ const commonStyles: Styles = {
   },
   shadowTertiary: {
     shadowColor: '#767DAD4D',
+    shadowOffset: {
+      width: 0,
+      height: 12
+    },
+    shadowRadius: 24,
+    elevation: 7
+  },
+  shadowTertiaryDarkMode: {
+    shadowColor: '#00000052',
     shadowOffset: {
       width: 0,
       height: 12

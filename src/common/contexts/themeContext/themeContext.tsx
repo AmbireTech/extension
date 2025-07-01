@@ -1,96 +1,93 @@
-import React, { createContext, useEffect, useMemo, useState } from 'react'
+import React, { createContext, useCallback, useEffect, useMemo } from 'react'
 import { useColorScheme } from 'react-native'
 
-import useRoute from '@common/hooks/useRoute'
-import useStorage from '@common/hooks/useStorage'
-import { ROUTES } from '@common/modules/router/constants/common'
 import ThemeColors, {
-  lightOnlyRoutesOnWeb,
+  DEFAULT_THEME,
   THEME_TYPES,
-  ThemeProps
+  ThemeProps,
+  ThemeType
 } from '@common/styles/themeConfig'
-
-// Change the default theme to `auto` once the light theme is ready
-const DEFAULT_THEME = THEME_TYPES.LIGHT
+import { isExtension } from '@web/constants/browserapi'
+import useBackgroundService from '@web/hooks/useBackgroundService'
+import useWalletStateController from '@web/hooks/useWalletStateController'
 
 export interface ThemeContextReturnType {
   theme: ThemeProps
-  themeType: THEME_TYPES
-  setThemeType: (item: THEME_TYPES) => void
+  themeType: THEME_TYPES.DARK | THEME_TYPES.LIGHT
+  selectedThemeType: ThemeType
+  setThemeType: (item: ThemeType) => void
 }
 
 const ThemeContext = createContext<ThemeContextReturnType>({
-  themeType: THEME_TYPES.DARK,
-  setThemeType: () => {},
-  theme: {} as ThemeProps
+  theme: {} as ThemeProps,
+  themeType: DEFAULT_THEME,
+  selectedThemeType: DEFAULT_THEME,
+  setThemeType: () => {}
 })
 
-const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const colorScheme = useColorScheme()
-  const { path } = useRoute()
+const ThemeProvider: React.FC<{
+  children: React.ReactNode
+  forceThemeType?: ThemeType
+}> = ({ children, forceThemeType }) => {
+  const systemThemeType = useColorScheme()
+  const { dispatch } = useBackgroundService() || {}
 
-  const [themeType, setThemeType] = useStorage<THEME_TYPES>({
-    key: 'theme',
-    defaultValue: DEFAULT_THEME,
-    isStringStorage: true
-  })
-
-  const [sessionTheme, setSessionTheme] = useState(themeType || DEFAULT_THEME)
+  const { themeType: selectedThemeType } = useWalletStateController() || {}
 
   useEffect(() => {
-    if (lightOnlyRoutesOnWeb.includes(path?.substring(1) as keyof typeof ROUTES)) {
-      setSessionTheme(THEME_TYPES.LIGHT)
-    } else if (
-      sessionTheme !== themeType ||
-      !lightOnlyRoutesOnWeb.includes(path?.substring(1) as keyof typeof ROUTES)
-    ) {
-      setSessionTheme(themeType as THEME_TYPES)
+    if (!isExtension) return
+
+    const storedFallbackSelectedThemeType = localStorage.getItem('fallbackSelectedThemeType')
+
+    if (!storedFallbackSelectedThemeType || storedFallbackSelectedThemeType !== selectedThemeType) {
+      localStorage.setItem('fallbackSelectedThemeType', selectedThemeType)
     }
-  }, [path, themeType, setSessionTheme, sessionTheme])
+  }, [selectedThemeType])
 
-  // In Ambire v2.x the theme type was stored wrapped in quotes (by mistake).
-  // Since migrating to v3.x we need to remove the quotes from the theme type.
-  const isMigrationNeeded =
-    !!themeType && themeType[0] === '"' && themeType[themeType.length - 1] === '"'
-  const [hasMigrated, setHasMigrated] = useState<boolean>(!isMigrationNeeded)
+  const themeType = useMemo(() => {
+    const type = forceThemeType || selectedThemeType
+
+    if (type === THEME_TYPES.SYSTEM) {
+      return systemThemeType as THEME_TYPES.LIGHT | THEME_TYPES.DARK
+    }
+
+    return type
+  }, [selectedThemeType, systemThemeType, forceThemeType])
 
   useEffect(() => {
-    if (hasMigrated) return
-
-    // Removes the wrapping quotes from the `themeType` coming from the storage
-    const migratedThemeType = themeType!.slice(1, -1) as THEME_TYPES
-    setThemeType(migratedThemeType)
-
-    setHasMigrated(true)
-  }, [hasMigrated, setHasMigrated, setThemeType, themeType])
+    if (themeType === THEME_TYPES.DARK) {
+      document.body.classList.add('dark-scrollbar')
+      document.body.classList.remove('light-scrollbar')
+    } else {
+      document.body.classList.add('light-scrollbar')
+      document.body.classList.remove('dark-scrollbar')
+    }
+  }, [themeType])
 
   const theme = useMemo(() => {
-    const type = sessionTheme === THEME_TYPES.AUTO ? colorScheme : sessionTheme
-
-    const currentTheme: any = {}
-    // eslint-disable-next-line no-restricted-syntax
-    for (const key of Object.keys(ThemeColors)) {
-      // @ts-ignore
-      currentTheme[key] = ThemeColors[key][type] || ThemeColors[key][DEFAULT_THEME]
-    }
+    const currentTheme = Object.fromEntries(
+      Object.entries(ThemeColors).map(([key, value]) => [
+        key,
+        value[themeType] || value[DEFAULT_THEME]
+      ])
+    ) as ThemeProps
 
     return currentTheme
-  }, [sessionTheme, colorScheme])
+  }, [themeType])
 
-  return (
-    <ThemeContext.Provider
-      value={useMemo(
-        () => ({
-          theme,
-          themeType: sessionTheme,
-          setThemeType
-        }),
-        [setThemeType, theme, sessionTheme]
-      )}
-    >
-      {hasMigrated && children}
-    </ThemeContext.Provider>
+  const setThemeType = useCallback(
+    (type: THEME_TYPES) => {
+      dispatch({ type: 'SET_THEME_TYPE', params: { themeType: type } })
+    },
+    [dispatch]
   )
+
+  const value = useMemo(
+    () => ({ theme, selectedThemeType, themeType, setThemeType }),
+    [theme, selectedThemeType, themeType, setThemeType]
+  )
+
+  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
 }
 
 export { ThemeContext, ThemeProvider }

@@ -17,8 +17,10 @@ import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
 import { useTranslation } from '@common/config/localization'
+import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings, { SPACING_2XL, SPACING_SM } from '@common/styles/spacings'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
@@ -49,7 +51,7 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
   const { addToast } = useToast()
   const { validTokens, customTokens, temporaryTokens } = usePortfolioControllerState()
   const { portfolio: selectedAccountPortfolio } = useSelectedAccountControllerState()
-
+  const { themeType } = useTheme()
   const [network, setNetwork] = useState<Network>(
     networks.find((n) => n.chainId.toString() === '1') || networks[0]
   )
@@ -224,10 +226,8 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
       id="add-custom-token"
       sheetRef={sheetRef}
       closeBottomSheet={handleCloseAndReset}
-      style={{
-        maxWidth: 720
-      }}
-      backgroundColor="primaryBackground"
+      style={{ maxWidth: 720 }}
+      backgroundColor={themeType === THEME_TYPES.DARK ? 'secondaryBackground' : 'primaryBackground'}
     >
       <Text fontSize={20} style={spacings.mbXl} weight="medium">
         {t('Add Token')}

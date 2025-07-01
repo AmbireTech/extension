@@ -33,6 +33,9 @@ const LeaderboardContextProvider = ({ children }: { children: React.ReactNode })
       setError(null)
       const response = await getLeaderboard(connectedAccount ?? undefined)
 
+      if (userLeaderboardData && userLeaderboardData?.account !== connectedAccount) {
+        setLoading(true)
+      }
       if (response) {
         const { fullLeaderboard, season0Leaderboard, season1Leaderboard } = response
 

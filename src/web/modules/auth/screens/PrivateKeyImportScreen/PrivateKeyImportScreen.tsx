@@ -121,10 +121,11 @@ const PrivateKeyImportScreen = () => {
                 value={agreedToBackupWarning}
                 onValueChange={() => setAgreedToBackupWarning((prev) => !prev)}
                 testID="backup-warning-checkbox"
-                uncheckedBorderColor={theme.primaryText}
                 style={spacings.mlTy}
                 label={
-                  <Text fontSize={14}>{t('I know I must keep a secure backup of my key.')}</Text>
+                  <Text fontSize={14} appearance="secondaryText">
+                    {t('I know I must keep a secure backup of my key.')}
+                  </Text>
                 }
               />
             </View>

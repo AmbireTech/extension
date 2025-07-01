@@ -9,7 +9,7 @@ interface MobileDisclaimerModalProps {
 }
 
 const MobileDisclaimerModal = ({
-  shouldClose,
+  shouldClose = false,
   modalOpened,
   closeModal
 }: MobileDisclaimerModalProps) => {
@@ -39,6 +39,7 @@ const MobileDisclaimerModal = ({
   }
 
   const shouldShow = isOpen || !isAccepted
+
   return (
     <div className={`${styles.backdrop} ${shouldShow ? '' : styles.hidden}`}>
       <div className={styles.modal}>

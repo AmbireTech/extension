@@ -38,17 +38,16 @@
   display: flex;
   position: relative;
   margin-bottom: 3rem;
-  background: linear-gradient(
-    147.96deg,
-    $secondaryBackground 43.03%,
-    rgba(19, 43, 37, 0.988) 87.21%
-  );
+background: linear-gradient(147.96deg, #191B1F 43.03%, rgba(19, 21, 43, 0.99) 87.21%);
+
   border-radius: 1rem;
-  padding: 2.75rem 2.5rem 1.25rem 2.375rem;
+  padding: 0rem 2.5rem 0rem 2.375rem;
   margin: 0 auto;
   margin-bottom: 8.5rem;
   margin-top: 1.875rem;
 
+
+ 
   .logoAndBalanceWrapper {
     display: inline-block;
     position: relative;
@@ -84,7 +83,7 @@
     }
 
     .accountInfo {
-      margin-bottom: 6.5625rem;
+      margin-bottom: 4.6875rem;
       padding: 0;
       font-size: 1.25rem;
     }
@@ -100,10 +99,28 @@
       margin-bottom: 6.5625rem;
     }
 
+    .currentSeasonBadge {
+        margin-bottom: 1.5rem;
+        width: fit-content;
+        background-color: $purple-700;
+        padding: .35rem .7rem;
+        border-bottom-right-radius: .5rem;
+        border-bottom-left-radius: .5rem;
+        box-shadow: 0px 4px 4px 0px #00000040 inset;
+        gap: .3125rem;
+        display: flex;
+        color: $whiteText;
+        font-size: .75rem;
+        font-weight: 500;
+        line-height: 100%;
+        letter-spacing: .0375rem;
+        align-items: flex-end;
+    }
     .characterLevelInfoWrapper {
       display: flex;
       gap: 2.1875rem;
       align-items: flex-start;
+
       .characterItemWrapper {
         display: flex;
 
@@ -239,25 +256,15 @@
   }
 
   .character {
-    position: absolute;
-    z-index: 0;
-    right: 0rem;
-    top: -4rem;
-
+    margin-left: 5.3125rem;
     .characterRelativeWrapper {
       position: relative;
 
       .characterImage {
         position: relative;
         z-index: 2;
-        // width: 29.0625rem;
-        // height: 34.4375rem;
-
-        width: 18.75rem;
-        height: 25.9375rem;
-
-        width: 21.75rem;
-        height: 28.9375rem;
+        width: 15.9375rem;
+        height: 15.9375rem;
         object-fit: contain;
       }
     }
@@ -277,16 +284,33 @@
     transform: scaleX(-1);
   }
 
+  
   @include breakpoint-down-from(medium-desktop) {
     margin-left: 3rem;
     margin-right: 3rem;
     width: calc(100% - 6rem);
   }
 
-  @include breakpoint-down-from(small-desktop) {
-    padding-top: 1rem;
+  @include breakpoint-from(small-desktop) {
+    .currentSeasonBadge {
+      top: -2.75rem;
+    }
+  }
 
+  @include breakpoint-down-from(small-desktop) {
+    padding-bottom: 1rem;
+    .character {
+      margin-left: 0;
+    }
+    
+    
+    .characterLevelInfoWrapper {
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
     .characterInfo {
+
       .characterName {
         font-size: 3rem;
       }
@@ -313,47 +337,8 @@
 
   @include breakpoint-down-from(tablet) {
     margin-left: 0;
+
+    
   }
 }
 
-// Custom colors for the character background gradient
-
-// sorceress: rgba(19, 43, 37, 0.988)
-// vitalik rgba(20, 15, 23, 0.4)
-// trump: rgba(#6a320a, 0.488)
-// orc: rgba(#1c1e0f, 0.988)
-// penguin: rgba(#2e2927, 0.988)
-// slime: rgba(22, 32, 2, 0.588)
-
-.wrappernecromancer {
-  background: linear-gradient(
-    147.96deg,
-    $secondaryBackground 43.03%,
-    rgba(rgb(46 11 21), 0.988) 87.21%
-  );
-
-  .characterBlurEffect {
-    filter: blur(6.2px);
-    background-position: 2rem -9rem;
-  }
-}
-.wrapperslime {
-  background: linear-gradient(
-    147.96deg,
-    $secondaryBackground 43.03%,
-    rgba(22, 32, 2, 0.588) 87.21%
-  );
-
-  .characterBlurEffect {
-    background-position: 2rem -12rem;
-  }
-}
-.wrapperpenguin {
-  background: linear-gradient(147.96deg, $secondaryBackground 43.03%, rgba(#2e2927, 0.988) 87.21%);
-}
-.wrappershapeshifter {
-  background: linear-gradient(147.96deg, $secondaryBackground 43.03%, rgba(#6a320a, 0.488) 87.21%);
-}
-.wrapperorc {
-  background: linear-gradient(147.96deg, $secondaryBackground 43.03%, rgba(#1c1e0f, 0.988) 87.21%);
-}

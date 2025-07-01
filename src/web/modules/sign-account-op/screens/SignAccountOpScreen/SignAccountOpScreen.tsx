@@ -13,6 +13,7 @@ import useSign from '@common/hooks/useSign'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import { setStringAsync } from '@common/utils/clipboard'
 import HeaderAccountAndNetworkInfo from '@web/components/HeaderAccountAndNetworkInfo'
@@ -43,7 +44,7 @@ const SignAccountOpScreen = () => {
   const { dispatch } = useBackgroundService()
   const { t } = useTranslation()
   const { addToast } = useToast()
-  const { styles, theme } = useTheme(getStyles)
+  const { styles, theme, themeType } = useTheme(getStyles)
 
   const handleUpdateStatus = useCallback(
     (status: SigningStatus) => {
@@ -68,7 +69,10 @@ const SignAccountOpScreen = () => {
 
   const handleBroadcast = useCallback(() => {
     dispatch({
-      type: 'MAIN_CONTROLLER_HANDLE_SIGN_AND_BROADCAST_ACCOUNT_OP'
+      type: 'MAIN_CONTROLLER_HANDLE_SIGN_AND_BROADCAST_ACCOUNT_OP',
+      params: {
+        updateType: 'Main'
+      }
     })
   }, [dispatch])
   const {
@@ -91,8 +95,8 @@ const SignAccountOpScreen = () => {
     feePayerKeyType,
     shouldDisplayLedgerConnectModal,
     network,
-    actionLoaded,
-    setActionLoaded,
+    initDispatchedForId,
+    setInitDispatchedForId,
     isSignDisabled
   } = useSign({
     handleUpdateStatus,
@@ -107,9 +111,8 @@ const SignAccountOpScreen = () => {
   }, [actionsState.currentAction])
 
   useEffect(() => {
-    // we're checking for actionLoaded as we're closing the current and
-    // opening a new window each time a new action comes. If we're not
-    // checking for actionLoaded, two dispatches occur for the same id:
+    // Check if the action is already initialized to avoid double dispatching
+    // Without this check two dispatches occur for the same id:
     // - one from the current window before it gets closed
     // - one from the new window
     // leading into two threads trying to initialize the same signAccountOp
@@ -117,14 +120,14 @@ const SignAccountOpScreen = () => {
     // gasPrice controller that sets an interval for fetching gas price
     // each 12s and that interval gets persisted into memory, causing double
     // fetching
-    if (accountOpAction?.id && !actionLoaded) {
-      setActionLoaded(true)
+    if (accountOpAction?.id && initDispatchedForId !== accountOpAction.id) {
+      setInitDispatchedForId(accountOpAction.id)
       dispatch({
         type: 'MAIN_CONTROLLER_SIGN_ACCOUNT_OP_INIT',
         params: { actionId: accountOpAction.id }
       })
     }
-  }, [accountOpAction?.id, actionLoaded, dispatch, setActionLoaded])
+  }, [accountOpAction?.id, initDispatchedForId, dispatch, setInitDispatchedForId])
 
   const handleRejectAccountOp = useCallback(() => {
     if (!accountOpAction) return
@@ -134,10 +137,10 @@ const SignAccountOpScreen = () => {
       params: {
         err: 'User rejected the transaction request.',
         actionId: accountOpAction.id,
-        shouldOpenNextAction: true
+        shouldOpenNextAction: actionsState.visibleActionsQueue.length > 1
       }
     })
-  }, [dispatch, accountOpAction])
+  }, [dispatch, accountOpAction, actionsState.visibleActionsQueue.length])
 
   const handleAddToCart = useCallback(() => {
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -199,10 +202,18 @@ const SignAccountOpScreen = () => {
       />
       <TabLayoutContainer
         width="full"
-        backgroundColor="#F7F8FC"
+        backgroundColor={theme.quinaryBackground}
         withHorizontalPadding={false}
         style={spacings.phMd}
-        header={<HeaderAccountAndNetworkInfo backgroundColor={theme.primaryBackground as string} />}
+        header={
+          <HeaderAccountAndNetworkInfo
+            backgroundColor={
+              themeType === THEME_TYPES.DARK
+                ? (theme.tertiaryBackground as string)
+                : (theme.primaryBackground as string)
+            }
+          />
+        }
         renderDirectChildren={() => (
           <View style={styles.footer}>
             {!estimationFailed ? (
@@ -221,7 +232,8 @@ const SignAccountOpScreen = () => {
                 <View
                   style={{
                     height: 1,
-                    backgroundColor: theme.secondaryBorder,
+                    backgroundColor:
+                      themeType === THEME_TYPES.DARK ? theme.primaryBorder : theme.secondaryBorder,
                     ...spacings.mvLg
                   }}
                 />

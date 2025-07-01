@@ -1,7 +1,7 @@
 import { ImageStyle, StyleSheet, ViewStyle } from 'react-native'
 
 import spacings from '@common/styles/spacings'
-import { ThemeProps } from '@common/styles/themeConfig'
+import { THEME_TYPES, ThemeProps, ThemeType } from '@common/styles/themeConfig'
 import common from '@common/styles/utils/common'
 
 interface Style {
@@ -10,12 +10,13 @@ interface Style {
   pfpSelectorItem: ImageStyle
 }
 
-const getStyles = (theme: ThemeProps) =>
+const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
   StyleSheet.create<Style>({
     container: {
-      backgroundColor: theme.primaryBackground,
+      backgroundColor:
+        themeType === THEME_TYPES.DARK ? theme.secondaryBackground : theme.primaryBackground,
       borderColor: theme.secondaryBorder,
-      borderWidth: 1,
+      borderWidth: themeType === THEME_TYPES.DARK ? 0 : 1,
       ...common.borderRadiusPrimary,
       ...spacings.phTy,
       ...spacings.pvTy,

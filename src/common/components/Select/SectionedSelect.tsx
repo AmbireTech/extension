@@ -18,6 +18,7 @@ const SectionedSelect = ({
   stickySectionHeadersEnabled,
   emptyListPlaceholderText,
   attemptToFetchMoreOptions,
+  onSearch,
   testID,
   menuPosition,
   ...props
@@ -30,6 +31,7 @@ const SectionedSelect = ({
     stickySectionHeadersEnabled,
     data: sections,
     attemptToFetchMoreOptions,
+    onSearch,
     menuPosition
   })
   const {

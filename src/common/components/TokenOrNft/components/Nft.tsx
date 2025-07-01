@@ -66,7 +66,7 @@ const Nft: FC<Props> = ({
           fontSize={textSize}
           address={address}
           highestPriorityAlias={`${nftInfo?.name || 'NFT'} #${tokenId}`}
-          explorerChainId={network.chainId}
+          chainId={network.chainId}
         />
       </View>
     </View>

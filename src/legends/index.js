@@ -1,3 +1,4 @@
+import './instrument'
 import './styles/global.scss'
 import { createElement } from 'react'
 import { createRoot } from 'react-dom/client'

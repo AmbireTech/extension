@@ -75,16 +75,16 @@ const FilterButton = React.memo(({ value, active, style, onPress }: FilterButton
 
 const { isPopup } = getUiType()
 
-const sortDApps = (a?: Dapp, b?: Dapp) => {
-  // Display favorite dApps first
-  if (a?.favorite && !b?.favorite) return -1
-  if (!a?.favorite && b?.favorite) return 1
-  // Display connect dApps second
-  if (a?.isConnected && !b?.isConnected) return -1
-  if (!a?.isConnected && b?.isConnected) return 1
-
-  return 0
+const getSortPriority = (dapp?: Dapp): number => {
+  if (dapp?.url?.startsWith('https://rewards.ambire.com')) return 0
+  // Display favorite dApps after Ambire Rewards
+  if (dapp?.favorite) return 1
+  // Display connected dApps after favorites
+  if (dapp?.isConnected) return 2
+  return 3
 }
+
+const sortDApps = (a?: Dapp, b?: Dapp) => getSortPriority(a) - getSortPriority(b)
 
 const DappCatalogScreen = () => {
   const { control, watch, setValue } = useForm({

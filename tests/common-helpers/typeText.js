@@ -3,5 +3,5 @@ export async function typeText(page, selector, text) {
   const whereToType = await page.$(selector)
   await whereToType.click({ clickCount: 3 })
   await whereToType.press('Backspace')
-  await whereToType.type(text, { delay: 50 })
+  await whereToType.type(text, { delay: 90 })
 }

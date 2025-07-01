@@ -76,8 +76,8 @@ const getAndFormatTokenDetails = (
   const amountish = BigInt(amount)
   const amountishLatest = BigInt(latestAmount || 0n)
 
-  const balance = parseFloat(formatUnits(amountish, decimals))
-  const balanceLatest = parseFloat(formatUnits(amountishLatest, decimals))
+  const balance = formatUnits(amountish, decimals)
+  const balanceLatest = formatUnits(amountishLatest, decimals)
   const priceUSD = priceIn.find(
     ({ baseCurrency }: { baseCurrency: string }) => baseCurrency.toLowerCase() === 'usd'
   )?.price
@@ -104,8 +104,8 @@ const getAndFormatTokenDetails = (
   // are strings. Please decide on the type of the values when refactoring.
   return {
     balance,
-    balanceFormatted: formatDecimals(balance, 'amount'),
-    balanceLatestFormatted: formatDecimals(balanceLatest, 'amount'),
+    balanceFormatted: formatDecimals(parseFloat(balance), 'amount'),
+    balanceLatestFormatted: formatDecimals(parseFloat(balanceLatest), 'amount'),
     priceUSD,
     priceUSDFormatted: formatDecimals(priceUSD, 'price'),
     balanceUSD,

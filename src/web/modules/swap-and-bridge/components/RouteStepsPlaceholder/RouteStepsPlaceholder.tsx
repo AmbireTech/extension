@@ -9,7 +9,6 @@ import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import { iconColors } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import RouteStepsArrow from '@web/modules/swap-and-bridge/components/RouteStepsArrow'
 import RouteStepsToken from '@web/modules/swap-and-bridge/components/RouteStepsToken'
@@ -46,7 +45,7 @@ const RouteStepsPlaceholder = ({
             height={14}
             style={spacings.mrTy}
             strokeWidth="2.2"
-            color={iconColors.warning}
+            color={theme.warningDecorative}
           />
           <Text appearance="warningText" weight="medium" fontSize={12}>
             {t('No route found!')}
@@ -55,7 +54,7 @@ const RouteStepsPlaceholder = ({
       )
 
     return null
-  }, [t, withBadge])
+  }, [t, withBadge, theme.warningDecorative])
 
   const getBadgeStyle = useMemo(() => {
     if (withBadge === 'loading') return { backgroundColor: '#54597A14' }

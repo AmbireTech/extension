@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
-import { FlatListProps, Pressable, View } from 'react-native'
+import { Animated, FlatListProps, Pressable, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { PINNED_TOKENS } from '@ambire-common/consts/pinnedTokens'
@@ -41,6 +41,7 @@ interface Props {
   }
   onScroll: FlatListProps<any>['onScroll']
   dashboardNetworkFilterName: string | null
+  animatedOverviewHeight: Animated.Value
 }
 
 // if any of the post amount (during simulation) or the current state
@@ -62,6 +63,7 @@ const Tokens = ({
   initTab,
   sessionId,
   onScroll,
+  animatedOverviewHeight,
   dashboardNetworkFilterName
 }: Props) => {
   const { t } = useTranslation()
@@ -328,16 +330,13 @@ const Tokens = ({
     ]
   )
 
-  const keyExtractor = useCallback(
-    (tokenOrElement: any) => {
-      if (typeof tokenOrElement === 'string') {
-        return tokenOrElement
-      }
+  const keyExtractor = useCallback((tokenOrElement: any) => {
+    if (typeof tokenOrElement === 'string') {
+      return tokenOrElement
+    }
 
-      return getTokenId(tokenOrElement, networks)
-    },
-    [networks]
-  )
+    return getTokenId(tokenOrElement)
+  }, [])
 
   useEffect(() => {
     setValue('search', '')
@@ -349,6 +348,7 @@ const Tokens = ({
         tab="tokens"
         openTab={openTab}
         ListHeaderComponent={<DashboardBanners />}
+        animatedOverviewHeight={animatedOverviewHeight}
         data={[
           'header',
           !sortedTokens.length && !portfolio?.isAllReady

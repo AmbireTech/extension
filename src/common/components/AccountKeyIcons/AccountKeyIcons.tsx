@@ -2,15 +2,29 @@ import React from 'react'
 import { View } from 'react-native'
 
 import { Account as AccountInterface } from '@ambire-common/interfaces/account'
+import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 
 import AccountKeyBanner from '../AccountKeyBanner'
 import AccountKeyIcon from '../AccountKeyIcon/AccountKeyIcon'
 
-const AccountKeyIconOrBanner = ({ type, isExtended }: { type: string; isExtended: boolean }) => {
-  return isExtended ? <AccountKeyBanner type={type} /> : <AccountKeyIcon type={type} />
+const AccountKeyIconOrBanner = ({
+  type,
+  isExtended,
+  color
+}: {
+  type: string
+  isExtended: boolean
+  color: string
+}) => {
+  return isExtended ? (
+    <AccountKeyBanner type={type} />
+  ) : (
+    <AccountKeyIcon type={type} color={color} />
+  )
 }
 
 const AccountKeyIcons = ({
@@ -21,6 +35,7 @@ const AccountKeyIcons = ({
   isExtended: boolean
 }) => {
   const { keys } = useKeystoreControllerState()
+  const { theme, themeType } = useTheme()
   const associatedKeys = account?.associatedKeys || []
   const importedKeyTypes = Array.from(
     new Set(keys.filter(({ addr }) => associatedKeys.includes(addr)).map((key) => key.type))
@@ -36,12 +51,28 @@ const AccountKeyIcons = ({
               key={type || 'internal'}
               style={[index !== importedKeyTypes.length - 1 ? spacings.mrTy : spacings.mr0]}
             >
-              <AccountKeyIconOrBanner type={type || 'internal'} isExtended={isExtended} />
+              <AccountKeyIconOrBanner
+                type={type || 'internal'}
+                isExtended={isExtended}
+                color={
+                  themeType === THEME_TYPES.DARK
+                    ? (theme.primaryBackgroundInverted as string)
+                    : (theme.primaryBackground as string)
+                }
+              />
             </View>
           )
         })
       ) : (
-        <AccountKeyIconOrBanner type="none" isExtended={isExtended} />
+        <AccountKeyIconOrBanner
+          type="none"
+          isExtended={isExtended}
+          color={
+            themeType === THEME_TYPES.DARK
+              ? (theme.primaryBackgroundInverted as string)
+              : (theme.primaryBackground as string)
+          }
+        />
       )}
     </View>
   )

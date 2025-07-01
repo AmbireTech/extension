@@ -8,7 +8,6 @@ import { useTranslation } from '@common/config/localization'
 import useElementSize from '@common/hooks/useElementSize'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING, SPACING_TY } from '@common/styles/spacings'
-import { iconColors } from '@common/styles/themeConfig'
 import { Portal } from '@gorhom/portal'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import { useCustomHover } from '@web/hooks/useHover'
@@ -62,7 +61,7 @@ interface Props {
 
 const SettingsModal: React.FC<Props> = ({ handleToggleSettingsMenu, settingModalVisible }) => {
   const { t } = useTranslation()
-  const { styles } = useTheme(getStyles)
+  const { styles, theme } = useTheme(getStyles)
   const settingButtonRef: any = useRef(null)
   const settingMenuRef: any = useRef(null)
   const { routePriority } = useSwapAndBridgeControllerState()
@@ -116,7 +115,11 @@ const SettingsModal: React.FC<Props> = ({ handleToggleSettingsMenu, settingModal
             <SettingsIcon
               width={SETTINGS_ICON_SIZE}
               height={SETTINGS_ICON_SIZE}
-              color={isHovered || settingModalVisible ? iconColors.dark : iconColors.primary}
+              color={
+                isHovered || settingModalVisible
+                  ? theme.primaryBackgroundInverted
+                  : theme.iconSecondary
+              }
             />
           </Animated.View>
         </Pressable>

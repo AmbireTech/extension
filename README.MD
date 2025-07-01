@@ -178,7 +178,7 @@ And find the resulting zips in the "build" folder as `ambire-extension-<VERSION>
 
 The Ambire v2 compatible mobile apps are yet to be developed. Coming sometime in the near future 🤞
 
-## Benzin
+## Explorer (Old name: Benzin)
 
 Ambire's transaction explorer, that makes human readable ERC-4337 transactions and contract interactions.
 

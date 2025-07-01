@@ -85,7 +85,7 @@ export async function prepareTransaction(
   }
 
   if (shouldSendButtonBeDisabled) {
-    const isDisabled = await isAriaDisabled(page, SELECTORS.transferButtonConfirm)
+    const isDisabled = await isAriaDisabled(page, SELECTORS.proceedBtn)
 
     expect(isDisabled).toBe(true)
   }
@@ -130,7 +130,7 @@ async function handleTransaction(
     page,
     extensionURL,
     browser,
-    SELECTORS.transferButtonConfirm
+    SELECTORS.proceedBtn
   )
 
   if (shouldQueueAndSignLater) {
@@ -492,7 +492,7 @@ export async function sendFundsGreaterThanBalance(page, extensionURL) {
   await typeText(page, amountField, balance1)
 
   // Verify that the message "The amount is greater than the asset's balance:" exist on the page
-  const targetText = "The amount is greater than the asset's balance:"
+  const targetText = 'Insufficient amount.'
   // Wait until the specified text appears on the page
   await page.waitForFunction(
     (text) => {
@@ -529,122 +529,4 @@ export async function sendFundsToSmartContract(page, extensionURL) {
     {},
     targetText
   )
-}
-
-//--------------------------------------------------------------------------------------------------------------
-export async function signMessage(page, extensionURL, browser, signerAddress) {
-  /* Allow permissions for read and write in clipboard */
-  const context = browser.defaultBrowserContext()
-  await context.overridePermissions('https://sigtool.ambire.com', [
-    'clipboard-read',
-    'clipboard-write'
-  ])
-  await page.goto('https://sigtool.ambire.com/#dummyTodo', { waitUntil: 'load' })
-
-  // Click on 'connect wallet' button
-  await clickOnElement(page, 'button[class="button-connect"]')
-  // Select 'MetaMask/Ambire' connect button
-  await clickOnElement(page, '>>>[class^="name"]')
-
-  // Wait for the new page to be created and click on 'Connect' button
-  const newTarget = await browser.waitForTarget(
-    (target) => target.url() === `${extensionURL}/action-window.html#/dapp-connect-request`
-  )
-  const newPage = await newTarget.page()
-  const actionWindowDappReqRecorder = new PuppeteerScreenRecorder(newPage, {
-    followNewTab: true
-  })
-  await actionWindowDappReqRecorder.start(getRecordingName('action_window_dap_req'))
-
-  await clickOnElement(newPage, '[data-testid="dapp-connect-button"]')
-
-  await actionWindowDappReqRecorder.stop()
-
-  // Type message in the 'Message' field
-  const textMessage = 'text message'
-  await typeText(page, '[placeholder="Message (Hello world)"]', textMessage)
-
-  // Click on "Sign" button
-  await clickOnElement(page, 'xpath///span[contains(text(), "Sign")]', false)
-
-  // Wait for the new window to be created and switch to it
-  const actionWindowTarget = await browser.waitForTarget(
-    (target) => target.url() === `${extensionURL}/action-window.html#/sign-message`
-  )
-  const actionWindowPage = await actionWindowTarget.page()
-
-  const actionWindowSignMsgRecorder = new PuppeteerScreenRecorder(actionWindowPage, {
-    followNewTab: true
-  })
-  await actionWindowSignMsgRecorder.start(getRecordingName('action_window_sign_msg'))
-
-  actionWindowPage.setDefaultTimeout(120000)
-
-  await actionWindowPage.setViewport({ width: 1000, height: 1000 })
-
-  await new Promise((resolve) => {
-    setTimeout(resolve, 1000)
-  })
-  // Click on "Sign" button
-  await clickOnElement(actionWindowPage, '[data-testid="button-sign"]')
-
-  await actionWindowSignMsgRecorder.stop()
-
-  await page.waitForSelector('.signatureResult-signature')
-  // Get the Message signature text
-  const messageSignature = await page.evaluate(() => {
-    const message = document.querySelector('.signatureResult-signature')
-    return message.textContent
-  })
-
-  // !THIS IS NOT WORKING WITH PUPPETEER. IT CAN'T BE COPIED IN CLIPBOARD. THAT'S WHY copiedAddress
-  // IS TAKEN FROM selectedAccount OBJECT IN LOCAL STORAGE!
-  // Click on a button that triggers a copy to clipboard.
-  await page.click('.copyButton')
-
-  // Click on "Verify" tab
-  await clickOnElement(page, 'xpath///a[contains(text(), "Verify")]')
-  // Fill copied address in the Signer field
-  await typeText(page, '[placeholder="Signer address (0x....)"]', signerAddress)
-  // Fill copied address in the Message field
-  await typeText(page, '[placeholder="Message (Hello world)"]', textMessage)
-  // Fill copied address in the Hexadecimal signature field
-  await typeText(page, '[placeholder="Hexadecimal signature (0x....)"]', messageSignature)
-  // Select Polygon option in the dropdown
-  await clickOnElement(page, '[class="dropdown  "]')
-
-  const [optionPolygon] = await page.$x(
-    '//*[contains(@class, "networkName") and contains(text(), "Polygon")]'
-  )
-  await optionPolygon.click()
-
-  // Click on "Verify" button
-  await clickOnElement(page, '#verifyButton')
-
-  // Verify that sign message is valid
-  // Wait until the 'Signature is Valid' text appears on the page
-  await page.waitForFunction(
-    (text) => {
-      const element = document.querySelector('body')
-      return element && element.textContent.includes(text)
-    },
-    {},
-    'Signature is Valid'
-  )
-
-  // this is sign message validation  with @ambire/signature-validator
-  // const provider = new ethers.JsonRpcProvider('https://invictus.ambire.com/polygon')
-
-  // async function run() {
-  //   const isValidSig = await verifyMessage({
-  //     signer: signerAddress,
-  //     message: textMessage,
-  //     signature: messageSignature,
-  //     provider
-  //   })
-  //   return isValidSig
-  // }
-
-  // const isValid = await run()
-  // expect(isValid).toBe(true)
 }

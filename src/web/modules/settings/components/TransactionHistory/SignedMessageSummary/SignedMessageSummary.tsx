@@ -2,18 +2,20 @@ import React, { useMemo } from 'react'
 import { ScrollView, View, ViewStyle } from 'react-native'
 
 import { SignedMessage } from '@ambire-common/controllers/activity/types'
-import { stringify } from '@ambire-common/libs/richJson/richJson'
+import { humanizeMessage } from '@ambire-common/libs/humanizer'
 import { ENTRY_POINT_AUTHORIZATION_REQUEST_ID } from '@ambire-common/libs/userOperation/userOperation'
 import ManifestFallbackIcon from '@common/assets/svg/ManifestFallbackIcon'
 import ExpandableCard from '@common/components/ExpandableCard'
-import { visualizeContent } from '@common/components/HumanizedVisualization/HumanizedVisualization'
+import HumanizedVisualization from '@common/components/HumanizedVisualization/HumanizedVisualization'
 import Text from '@common/components/Text'
 import Tooltip from '@common/components/Tooltip'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import ManifestImage from '@web/components/ManifestImage'
+import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
+import FallbackVisualization from '@web/modules/sign-message/screens/SignMessageScreen/FallbackVisualization'
 
 import getStyles from './styles'
 
@@ -22,29 +24,25 @@ interface Props {
   style?: ViewStyle
 }
 
-const getParsedSignedMessageContent = (content: SignedMessage['content']) => {
-  if (content.kind === 'message') {
-    return visualizeContent(content.kind, content.message)
-  }
-  if (content.kind === 'authorization-7702') {
-    return JSON.stringify(
-      {
-        chainId: content.chainId.toString(),
-        nonce: content.nonce.toString(),
-        implementation: content.contractAddr.toString(),
-        resultHash: visualizeContent(content.kind, content.message)
-      },
-      null,
-      4
-    )
-  }
-
-  return stringify(content, { pretty: true })
-}
-
 const SignedMessageSummary = ({ signedMessage, style }: Props) => {
   const { styles } = useTheme(getStyles)
   const { t } = useTranslation()
+  const { networks } = useNetworksControllerState()
+
+  const humanizedMessage = useMemo(() => {
+    return humanizeMessage(signedMessage)
+  }, [signedMessage])
+
+  const network = useMemo(
+    () =>
+      networks.find((n) => {
+        return signedMessage?.content.kind === 'typedMessage' &&
+          signedMessage?.content.domain.chainId
+          ? n.chainId.toString() === signedMessage?.content.domain.chainId.toString()
+          : n.chainId === signedMessage?.chainId
+      }),
+    [networks, signedMessage]
+  )
 
   const dAppName = useMemo(() => {
     if (signedMessage.fromActionId === ENTRY_POINT_AUTHORIZATION_REQUEST_ID) {
@@ -114,19 +112,25 @@ const SignedMessageSummary = ({ signedMessage, style }: Props) => {
         </View>
       }
       expandedContent={
-        <ScrollView contentContainerStyle={styles.rawMessage}>
-          <Text
-            appearance="secondaryText"
-            fontSize={14}
-            weight="regular"
-            style={styles.rawMessageTitle}
-          >
-            {t('Raw message')}:
-          </Text>
-          <Text selectable appearance="secondaryText" fontSize={14} weight="regular">
-            {getParsedSignedMessageContent(signedMessage.content)}
-          </Text>
-        </ScrollView>
+        <View style={spacings.mhLg}>
+          <View>
+            {humanizedMessage?.fullVisualization && (
+              <HumanizedVisualization
+                data={humanizedMessage?.fullVisualization}
+                chainId={network?.chainId || 1n}
+                style={[{ marginBottom: SPACING }]}
+                isHistory
+              />
+            )}
+          </View>
+          <ScrollView contentContainerStyle={styles.rawMessage}>
+            <FallbackVisualization
+              setHasReachedBottom={() => {}}
+              hasReachedBottom={true}
+              messageToSign={signedMessage}
+            />
+          </ScrollView>
+        </View>
       }
     />
   )

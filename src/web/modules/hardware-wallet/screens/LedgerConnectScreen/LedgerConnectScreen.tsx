@@ -42,16 +42,20 @@ const LedgerConnectScreen = () => {
   const route = useRoute()
 
   const onPressNext = async () => {
-    setIsGrantingPermission(true)
-    setAuthorizeButtonPressed(true)
     try {
+      // Request Ledger access first, before any state updates to prevent error:
+      // "Failed to execute 'requestDevice' on 'HID': Must be handling a user
+      // gesture to show a permission request." on Vivaldi browser.
       await requestLedgerDeviceAccess()
+
+      setIsGrantingPermission(true)
+      setAuthorizeButtonPressed(true)
 
       const params = new URLSearchParams(route?.search)
       const actionId = params.get('actionId')
       if (actionId) {
         dispatch({ type: 'ACTIONS_CONTROLLER_SET_CURRENT_ACTION_BY_ID', params: { actionId } })
-        closeCurrentWindow()
+        await closeCurrentWindow()
       } else {
         dispatch({ type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LEDGER' })
       }
@@ -105,7 +109,7 @@ const LedgerConnectScreen = () => {
             ]}
           >
             <DriveIcon style={spacings.mrLg} />
-            <LeftPointerArrowIcon style={spacings.mrLg} />
+            <LeftPointerArrowIcon style={spacings.mrLg} color={theme.iconPrimary} />
             <AmbireDevice />
           </View>
           <Text style={[spacings.mbLg, text.center]} appearance="secondaryText">

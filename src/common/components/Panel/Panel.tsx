@@ -34,12 +34,17 @@ export const getPanelPaddings = (
 }
 
 const PanelBackButton = ({ onPress, style }: { onPress: () => void; style?: ViewStyle }) => {
-  const { styles } = useTheme(getStyles)
+  const { styles, theme } = useTheme(getStyles)
   return (
     <Pressable testID="panel-back-btn" onPress={onPress} style={[spacings.pvTy, style]}>
       {({ hovered }: any) => (
-        <View style={[styles.backBtnWrapper, hovered && { backgroundColor: '#767DAD1F' }]}>
-          <LeftArrowIcon />
+        <View
+          style={[
+            styles.backBtnWrapper,
+            hovered && { backgroundColor: theme.quaternaryBackground }
+          ]}
+        >
+          <LeftArrowIcon color={hovered ? theme.primaryBackgroundInverted : theme.iconPrimary} />
         </View>
       )}
     </Pressable>
@@ -79,7 +84,7 @@ const Panel: React.FC<Props> = ({
   const { maxWidthSize, minHeightSize } = useWindowSize()
 
   const renderProgress = () => (
-    <View style={[flexbox.directionRow]}>
+    <View style={[flexbox.directionRow, { position: 'absolute', top: 0, width: '100%' }]}>
       {[...Array(totalSteps)].map((_, index) => (
         <View
           key={`step-${index.toString()}`}

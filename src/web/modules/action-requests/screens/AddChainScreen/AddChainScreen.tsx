@@ -7,15 +7,16 @@ import { View } from 'react-native'
 import { DappRequestAction } from '@ambire-common/controllers/actions/actions'
 import { AddNetworkRequestParams, Network, NetworkFeature } from '@ambire-common/interfaces/network'
 import { getFeatures } from '@ambire-common/libs/networks/networks'
-import CheckIcon2 from '@common/assets/svg/CheckIcon2'
 import ManifestFallbackIcon from '@common/assets/svg/ManifestFallbackIcon'
 import Alert from '@common/components/Alert'
 import Button from '@common/components/Button'
 import NetworkIcon from '@common/components/NetworkIcon'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
+import SuccessAnimation from '@common/components/SuccessAnimation'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import HeaderAccountAndNetworkInfo from '@web/components/HeaderAccountAndNetworkInfo'
 import ManifestImage from '@web/components/ManifestImage'
@@ -30,9 +31,7 @@ import useBackgroundService from '@web/hooks/useBackgroundService'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import ActionFooter from '@web/modules/action-requests/components/ActionFooter'
 import validateRequestParams from '@web/modules/action-requests/screens/AddChainScreen/validateRequestParams'
-import BackgroundShapes from '@web/modules/swap-and-bridge/components/Estimation/BackgroundShapes'
 
-import animation from './animation.json'
 import getStyles from './styles'
 
 /**
@@ -42,7 +41,7 @@ import getStyles from './styles'
  */
 const AddChainScreen = () => {
   const { t } = useTranslation()
-  const { styles, theme } = useTheme(getStyles)
+  const { styles, theme, themeType } = useTheme(getStyles)
   const { dispatch } = useBackgroundService()
   const state = useActionsControllerState()
   const [areParamsValid, setAreParamsValid] = useState<boolean | null>(null)
@@ -52,6 +51,9 @@ const AddChainScreen = () => {
   const [rpcUrlIndex, setRpcUrlIndex] = useState<number>(0)
   const [existingNetwork, setExistingNetwork] = useState<Network | null | undefined>(undefined)
   const actionButtonPressedRef = useRef(false)
+  const [successStateText, setSuccessStateText] = useState<string>(
+    t('already added to your wallet.')
+  )
 
   const dappAction = useMemo(() => {
     if (state.currentAction?.type !== 'dappRequest') return undefined
@@ -72,20 +74,23 @@ const AddChainScreen = () => {
   const requestSession = useMemo(() => userRequest?.session, [userRequest?.session])
 
   const networkAlreadyAdded = useMemo(
-    () => networks.find((network) => network.chainId === BigInt(requestData.chainId)) || null,
-    [networks, requestData.chainId]
+    () =>
+      networks.find(
+        (network) => requestData?.chainId && network.chainId === BigInt(requestData.chainId)
+      ) || null,
+    [networks, requestData?.chainId]
   )
 
   // existingNetwork must be set in a useEffect and can't be a useMemo. That is because we must
   // set its value only once and never change it. Otherwise the screen rerenders when a network is
   // added/enabled with the wrong state.
   useEffect(() => {
-    if (existingNetwork || existingNetwork === null || !requestData.chainId) return
+    if (existingNetwork || existingNetwork === null || !requestData?.chainId) return
     const matchingNetwork =
       disabledNetworks.find((network) => network.chainId === BigInt(requestData.chainId)) || null
 
     setExistingNetwork(matchingNetwork)
-  }, [disabledNetworks, existingNetwork, requestData.chainId])
+  }, [disabledNetworks, existingNetwork, requestData?.chainId])
 
   useEffect(() => {
     setAreParamsValid(validateRequestParams(requestKind, requestData))
@@ -160,15 +165,14 @@ const AddChainScreen = () => {
 
   useEffect(() => {
     if (!dappAction) return
-    if (statuses.addNetwork === 'SUCCESS' || statuses.updateNetwork === 'SUCCESS') {
-      dispatch({
-        type: 'MAIN_CONTROLLER_RESOLVE_USER_REQUEST',
-        params: { data: null, id: dappAction.id }
-      })
+    if (statuses.addNetwork === 'SUCCESS') {
+      setSuccessStateText(t('successfully added to your wallet.'))
+    } else if (statuses.updateNetwork === 'SUCCESS') {
+      setSuccessStateText(t('successfully enabled.'))
     } else if (statuses.addNetwork === 'ERROR' || statuses.updateNetwork === 'ERROR') {
       actionButtonPressedRef.current = false
     }
-  }, [dispatch, statuses.addNetwork, dappAction, statuses.updateNetwork])
+  }, [dispatch, t, statuses.addNetwork, dappAction, statuses.updateNetwork])
 
   const handleDenyButtonPress = useCallback(() => {
     if (!dappAction) return
@@ -232,7 +236,15 @@ const AddChainScreen = () => {
   return (
     <TabLayoutContainer
       width="full"
-      header={<HeaderAccountAndNetworkInfo backgroundColor={theme.primaryBackground as string} />}
+      header={
+        <HeaderAccountAndNetworkInfo
+          backgroundColor={
+            themeType === THEME_TYPES.DARK
+              ? (theme.tertiaryBackground as string)
+              : (theme.primaryBackground as string)
+          }
+        />
+      }
       footer={
         networkAlreadyAdded ? (
           <View style={flexbox.flex1}>
@@ -269,28 +281,14 @@ const AddChainScreen = () => {
       <TabLayoutWrapperMainContent style={spacings.mbLg} withScroll={false}>
         {networkAlreadyAdded ? (
           <View style={[flexbox.flex1, flexbox.alignCenter, spacings.mt2Xl]}>
-            <View style={styles.boxWrapper}>
-              <BackgroundShapes style={[styles.backgroundShapes, spacings.mhSm]} />
-              <View style={styles.animationContainer}>
-                <LottieView animationData={animation} style={styles.lottieView} loop />
-                <CheckIcon2
-                  style={[
-                    styles.checkIcon,
-                    {
-                      transform: [{ translateX: -0.5 * 64 }, { translateY: -0.5 * 64 }]
-                    }
-                  ]}
-                />
-              </View>
-              <View style={[flexbox.alignCenter, flexbox.justifyCenter]}>
-                <Text fontSize={20} weight="medium">
-                  {networkAlreadyAdded.name} Network
-                </Text>
-                <Text fontSize={15} appearance="secondaryText">
-                  {t('already added to your wallet.')}
-                </Text>
-              </View>
-            </View>
+            <SuccessAnimation>
+              <Text fontSize={20} weight="medium" style={spacings.mb}>
+                {networkAlreadyAdded.name} {t('Network')}
+              </Text>
+              <Text fontSize={15} appearance="secondaryText">
+                {successStateText}
+              </Text>
+            </SuccessAnimation>
           </View>
         ) : (
           <>
@@ -358,7 +356,12 @@ const AddChainScreen = () => {
                     nativeAssetSymbol={networkDetails.nativeAssetSymbol}
                     nativeAssetName={networkDetails.nativeAssetName}
                     explorerUrl={networkDetails.explorerUrl}
-                    style={{ backgroundColor: theme.primaryBackground }}
+                    style={{
+                      backgroundColor:
+                        themeType === THEME_TYPES.DARK
+                          ? theme.secondaryBackground
+                          : theme.primaryBackground
+                    }}
                     type="vertical"
                   />
                 </ScrollableWrapper>

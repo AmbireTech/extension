@@ -2,7 +2,6 @@ import React, { ReactElement, ReactNode, useMemo } from 'react'
 import { ColorValue, View, ViewStyle } from 'react-native'
 
 import ScrollableWrapper, { WrapperProps } from '@common/components/ScrollableWrapper'
-import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import { breakpointsByWindowWidth } from '@common/hooks/useWindowSize/breakpoints'
@@ -125,7 +124,6 @@ export const TabLayoutWrapperMainContent: React.FC<TabLayoutWrapperMainContentPr
 }: TabLayoutWrapperMainContentProps) => {
   const { styles } = useTheme(getStyles)
   const { isOnboardingRoute } = useOnboardingNavigation()
-  const { path } = useRoute()
   const { minHeightSize } = useWindowSize()
 
   if (withScroll) {

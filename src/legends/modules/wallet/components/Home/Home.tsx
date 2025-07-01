@@ -8,14 +8,8 @@ import walletCoin from './assets/wallet-coin.png'
 import styles from './Home.module.scss'
 
 const Home = () => {
-  const { claimableRewards, walletTokenInfo, isLoadingWalletTokenInfo } =
-    usePortfolioControllerState()
-  const stakedWallet =
-    walletTokenInfo &&
-    walletTokenInfo.stkWalletTotalSupply != null &&
-    walletTokenInfo.totalSupply != null
-      ? (walletTokenInfo.stkWalletTotalSupply / walletTokenInfo.totalSupply) * 100
-      : null
+  const { walletTokenInfo, isLoadingWalletTokenInfo } = usePortfolioControllerState()
+  const stakedWallet = walletTokenInfo && walletTokenInfo.percentageStakedWallet
 
   return (
     <>
@@ -35,7 +29,9 @@ const Home = () => {
                 <div className={styles.walletItem}>
                   <div className={styles.walletInfoWrapper}>Circulating supply</div>
                   <span className={styles.item}>
-                    {walletTokenInfo?.circulatingSupply
+                    {isLoadingWalletTokenInfo
+                      ? 'Loading...'
+                      : walletTokenInfo?.circulatingSupply
                       ? Math.floor(Number(walletTokenInfo.circulatingSupply)).toLocaleString(
                           'en-US'
                         )
@@ -57,18 +53,32 @@ const Home = () => {
                 <div className={styles.walletInfoWrapper} />
               </div>
             </div>
-            {claimableRewards?.priceIn[0].price && (
-              <div className={styles.walletItemWrapper}>
-                <div className={styles.walletItem}>
-                  <div className={styles.walletInfoWrapper}>Current price</div>
-                  <span className={styles.item}>
-                    {claimableRewards?.priceIn[0].price !== undefined
-                      ? Number(claimableRewards.priceIn[0].price).toFixed(3)
-                      : ''}
-                  </span>
-                </div>
+            <div className={styles.walletItemWrapper}>
+              <div className={styles.walletItem}>
+                APY
+                <span className={styles.item}>
+                  {isLoadingWalletTokenInfo
+                    ? 'Loading...'
+                    : walletTokenInfo?.apy === null
+                    ? 0
+                    : `${walletTokenInfo?.apy.toFixed(2)}%`}
+                </span>
+                <div className={styles.walletInfoWrapper} />
               </div>
-            )}
+            </div>
+
+            <div className={styles.walletItemWrapper}>
+              <div className={styles.walletItem}>
+                <div className={styles.walletInfoWrapper}>Current price</div>
+                <span className={styles.item}>
+                  {isLoadingWalletTokenInfo
+                    ? 'Loading...'
+                    : walletTokenInfo?.walletPrice !== undefined
+                    ? `$${Number(walletTokenInfo?.walletPrice).toFixed(3)}`
+                    : ''}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
         <div

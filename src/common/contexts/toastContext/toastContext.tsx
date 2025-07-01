@@ -21,7 +21,6 @@ export interface ToastOptions {
   badge?: string
   isTypeLabelHidden?: boolean
   url?: string
-  onClick?: () => void
 }
 
 export interface Toast extends ToastOptions {
@@ -96,7 +95,7 @@ const ToastProvider = ({ children }: Props) => {
     >
       <Portal hostName="global">
         <View style={[styles.container, { top: topInset }]}>
-          {toasts.map(({ id, type, text, url, onClick, isTypeLabelHidden = true }) => (
+          {toasts.map(({ id, type, text, url, isTypeLabelHidden = true }) => (
             <ToastComponent
               key={id}
               id={id}
@@ -105,7 +104,6 @@ const ToastProvider = ({ children }: Props) => {
               removeToast={removeToast}
               isTypeLabelHidden={isTypeLabelHidden}
               url={url}
-              onClick={onClick}
             />
           ))}
         </View>

@@ -1,6 +1,5 @@
 import { StyleSheet, TextStyle, ViewStyle } from 'react-native'
 
-import colors from '@common/styles/colors'
 import spacings, { SPACING_MD } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
@@ -22,8 +21,7 @@ const styles = StyleSheet.create<Styles>({
   },
   waitingEmailConfirmationText: {
     ...flexbox.alignSelfCenter,
-    marginBottom: 60,
-    color: colors.violet
+    marginBottom: 60
   },
   cancelLoginAttemptText: flexbox.alignSelfCenter
 })

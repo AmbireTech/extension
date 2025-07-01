@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { Animated, View } from 'react-native'
 
@@ -14,6 +14,7 @@ import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexboxStyles from '@common/styles/utils/flexbox'
 import { setStringAsync } from '@common/utils/clipboard'
 import useHover, { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
@@ -26,7 +27,7 @@ const AccountButton = () => {
   const { t } = useTranslation()
   const { addToast } = useToast()
   const { navigate } = useNavigation()
-  const { theme, styles } = useTheme(getStyles)
+  const { theme, styles, themeType } = useTheme(getStyles)
 
   const { account } = useSelectedAccountControllerState()
   const [bindAddressAnim, addressAnimStyle] = useHover({
@@ -76,7 +77,11 @@ const AccountButton = () => {
               numberOfLines={1}
               weight="semiBold"
               style={[spacings.mlTy, spacings.mrTy]}
-              color={theme.primaryBackground}
+              color={
+                themeType === THEME_TYPES.DARK
+                  ? theme.primaryBackgroundInverted
+                  : theme.primaryBackground
+              }
               fontSize={14}
             >
               {account.preferences.label}
@@ -88,7 +93,11 @@ const AccountButton = () => {
             <RightArrowIcon
               style={styles.accountButtonRightIcon}
               width={12}
-              color={theme.primaryBackground}
+              color={
+                themeType === THEME_TYPES.DARK
+                  ? theme.primaryBackgroundInverted
+                  : theme.primaryBackground
+              }
             />
           </Animated.View>
         </>
@@ -98,10 +107,27 @@ const AccountButton = () => {
         onPress={handleCopyText}
         {...bindAddressAnim}
       >
-        <Text color={theme.primaryBackground} style={spacings.mrMi} weight="medium" fontSize={14}>
+        <Text
+          color={
+            themeType === THEME_TYPES.DARK
+              ? theme.secondaryBackgroundInverted
+              : theme.secondaryBackground
+          }
+          style={spacings.mrMi}
+          weight="medium"
+          fontSize={14}
+        >
           ({shortenAddress(account.addr, 13)})
         </Text>
-        <CopyIcon width={20} height={20} color={theme.primaryBackground} />
+        <CopyIcon
+          width={20}
+          height={20}
+          color={
+            themeType === THEME_TYPES.DARK
+              ? theme.secondaryBackgroundInverted
+              : theme.secondaryBackground
+          }
+        />
       </AnimatedPressable>
     </View>
   )

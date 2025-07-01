@@ -17,6 +17,9 @@ import { openInTab } from '@web/extension-services/background/webapi/tab'
 import { AnimatedPressable, useMultiHover } from '@web/hooks/useHover'
 import { getUiType } from '@web/utils/uiType'
 
+import { parseTextLinks } from './helpers'
+import { ParsedTextLink } from './types'
+
 const { isPopup } = getUiType()
 
 const TOAST_CLOSE_BACKGROUND_COLOR = {
@@ -66,28 +69,18 @@ const Toast = ({
   type = 'success',
   id,
   removeToast,
-  isTypeLabelHidden,
-  url,
-  onClick
+  isTypeLabelHidden
 }: ToastType & {
   removeToast: (id: number) => void
 }) => {
   const { theme } = useTheme()
-  const isClickable = !!url || !!onClick
+  const parsedText = parseTextLinks(text)
 
   const Icon = ICON_MAP[type]
 
   const [bindAnim, animStyle] = useMultiHover({
     values: ANIMATION_VALUES
   })
-
-  const onPress = async () => {
-    if (url) {
-      await openInTab(url, false)
-    } else if (onClick) {
-      onClick()
-    }
-  }
 
   return (
     <View
@@ -107,7 +100,7 @@ const Toast = ({
           flexbox.directionRow,
           common.borderRadiusPrimary,
           {
-            borderWidth: 2,
+            borderWidth: 1,
             backgroundColor: theme[`${type}Background`],
             borderColor: theme[`${type}Decorative`]
           }
@@ -128,17 +121,27 @@ const Toast = ({
                 {type}:{' '}
               </Text>
             )}
-            <Text
-              selectable
-              appearance={`${type}Text`}
-              fontSize={14}
-              weight="semiBold"
-              // @ts-ignore
-              style={isClickable ? { textDecorationLine: 'underline', cursor: 'pointer' } : {}}
-              onPress={onPress}
-              disabled={!isClickable}
-            >
-              {text}
+            <Text selectable appearance={`${type}Text`} fontSize={14} weight="semiBold">
+              {parsedText.map((element: string | ParsedTextLink) => {
+                if (typeof element === 'string') {
+                  return element
+                }
+
+                return (
+                  <Text
+                    key={`link-${element.index}`}
+                    appearance={type ? `${type}Text` : 'infoText'}
+                    fontSize={14}
+                    weight="semiBold"
+                    style={{ textDecorationLine: 'underline', cursor: 'pointer' } as any}
+                    onPress={async () => {
+                      await openInTab({ url: element.url })
+                    }}
+                  >
+                    {element.text}
+                  </Text>
+                )
+              })}
             </Text>
           </Text>
           <AnimatedPressable

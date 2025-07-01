@@ -8,7 +8,7 @@ import spacings, {
   SPACING_TY,
   SPACING_XL
 } from '@common/styles/spacings'
-import { ThemeProps } from '@common/styles/themeConfig'
+import { THEME_TYPES, ThemeProps, ThemeType } from '@common/styles/themeConfig'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
@@ -28,10 +28,11 @@ interface Style {
 
 const { isTab } = getUiType()
 
-const getStyles = (theme: ThemeProps) =>
+const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
   StyleSheet.create<Style>({
     content: {
-      backgroundColor: theme.secondaryBackground,
+      backgroundColor:
+        themeType === THEME_TYPES.DARK ? theme.primaryBackground : theme.secondaryBackground,
       paddingTop: isTab ? SPACING_XL : SPACING_MD,
       paddingBottom: isTab ? SPACING : SPACING_TY,
       ...common.borderRadiusPrimary,
@@ -58,14 +59,13 @@ const getStyles = (theme: ThemeProps) =>
     supportedNetworks: {
       flexDirection: 'row',
       flexWrap: 'wrap',
-      justifyContent: 'center',
-      // So that, ideally, 4 network items fit on a row (if their name is not huge)
-      marginHorizontal: -(SPACING_MI / 2)
+      justifyContent: 'center'
     },
     supportedNetwork: {
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: theme.primaryBackground,
+      backgroundColor:
+        themeType === THEME_TYPES.DARK ? theme.tertiaryBackground : theme.primaryBackground,
       borderWidth: 1,
       borderColor: theme.secondaryBorder,
       ...spacings.phMi,

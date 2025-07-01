@@ -1,9 +1,8 @@
 /* eslint-disable no-console */
-import { ethers, ZeroAddress, zeroPadValue } from 'ethers'
+import { ethers, JsonRpcProvider } from 'ethers'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import LegendsNFT from '@contracts/compiled/LegendsNFTImplementation.json'
-import { LEGENDS_NFT_ADDRESS } from '@env'
+import { REWARDS_NFT_ADDRESS } from '@legends/constants/addresses'
 import { RETRY_OR_SUPPORT_MESSAGE } from '@legends/constants/errors/messages'
 import { BASE_CHAIN_ID } from '@legends/constants/networks'
 import useAccountContext from '@legends/hooks/useAccountContext'
@@ -11,6 +10,7 @@ import useCharacterContext from '@legends/hooks/useCharacterContext'
 import useErc5792 from '@legends/hooks/useErc5792'
 import useSwitchNetwork from '@legends/hooks/useSwitchNetwork'
 import useToast from '@legends/hooks/useToast'
+import { CURRENT_SEASON } from '@legends/modules/legends/constants'
 import { humanizeError } from '@legends/modules/legends/utils/errors/humanizeError'
 
 enum CharacterLoadingMessage {
@@ -20,39 +20,10 @@ enum CharacterLoadingMessage {
   Minted = 'Finalizing details...'
 }
 
-const MINT_TOPIC = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef'
-const BASE_BLOCK_TIME_SECONDS = 2
-const ONE_MINUTE_IN_BLOCK_TIME = (1 * 60) / BASE_BLOCK_TIME_SECONDS
-
-async function getMintingTimestamp(provider: any, accountAddress: string, tokenId: number) {
-  const currentBlock = await provider.getBlockNumber()
-  const hexTokenId = `0x${tokenId.toString(16)}`
-  const filter = {
-    address: LEGENDS_NFT_ADDRESS,
-    topics: [
-      MINT_TOPIC,
-      zeroPadValue(ZeroAddress, 32),
-      zeroPadValue(accountAddress, 32),
-      zeroPadValue(hexTokenId, 32)
-    ],
-    fromBlock: currentBlock - ONE_MINUTE_IN_BLOCK_TIME,
-    toBlock: currentBlock
-  }
-
-  const events = await provider.getLogs(filter)
-
-  if (events.length > 0) {
-    const mintEvent = events[0]
-    const block = await provider.getBlock(mintEvent.blockNumber)
-    if (!block) return 0
-
-    return block.timestamp * 1000 // ms
-  }
-
-  return 'past-block-watch'
-}
-
-type MintedAt = number | 'past-block-watch' | null
+const REWARDS_NFT_ABI = [
+  'function mint(uint type, uint season) public returns()',
+  'function nftTypes(address identity, uint season) public view returns(uint)'
+]
 
 let pollAttempts = 0
 
@@ -66,7 +37,6 @@ const useMintCharacter = () => {
   const [isCheckingMintStatus, setIsCheckingMintStatus] = useState(true)
   const [isMinting, setIsMinting] = useState(false)
   const [isMinted, setIsMinted] = useState(false)
-  const [mintedAt, setMintedAt] = useState<MintedAt>(null)
   const [loadingMessage, setLoadingMessage] = useState<CharacterLoadingMessage>(
     CharacterLoadingMessage.Initial
   )
@@ -78,45 +48,28 @@ const useMintCharacter = () => {
     characterRef.current = character
   }, [character])
 
-  const getCharacterNFTData = useCallback(async () => {
+  const getCharacterNFTData = useCallback(async (): Promise<{
+    isMinted: boolean
+    nftId?: bigint
+  }> => {
     if (!connectedAccount)
       return {
-        mintedAt: null,
         isMinted: false
       }
+    // @TODO this should be switched to base
+    const provider = new JsonRpcProvider('https://invictus.ambire.com/base')
 
-    const provider = new ethers.BrowserProvider(window.ambire)
-
-    const signer = await provider.getSigner()
-
-    const abi = LegendsNFT.abi
-    const nftContract = new ethers.Contract(LEGENDS_NFT_ADDRESS, abi, signer)
+    const nftContract = new ethers.Contract(REWARDS_NFT_ADDRESS, REWARDS_NFT_ABI, provider)
 
     try {
-      let mintedAtTimestamp: MintedAt = null
-      // Check if the user already owns an NFT
-      const characterMinted = await nftContract.balanceOf(signer.getAddress())
-
-      if (characterMinted) {
-        const nftTokenId = await nftContract.tokenOfOwnerByIndex(signer.getAddress(), 0)
-
-        mintedAtTimestamp = await getMintingTimestamp(provider, connectedAccount, nftTokenId).catch(
-          (e) => {
-            console.error(e)
-
-            return null
-          }
-        )
-      }
-
+      const nftId = await nftContract.nftTypes(connectedAccount, CURRENT_SEASON)
       return {
-        mintedAt: mintedAtTimestamp,
-        isMinted: characterMinted
+        isMinted: !!nftId,
+        nftId
       }
     } catch (e) {
       console.error('Error checking mint status:', e)
       return {
-        mintedAt: null,
         isMinted: false
       }
     }
@@ -150,6 +103,7 @@ const useMintCharacter = () => {
   const mintCharacter = useCallback(
     async (type: number) => {
       try {
+        // @TODO this should be ethereum eventually
         await switchNetwork(BASE_CHAIN_ID)
         setIsMinting(true)
         setLoadingMessage(CharacterLoadingMessage.Signing)
@@ -158,14 +112,12 @@ const useMintCharacter = () => {
 
         const signer = await provider.getSigner()
 
-        const abi = LegendsNFT.abi
-
         // Create a contract instance
-        const nftContract = new ethers.Contract(LEGENDS_NFT_ADDRESS, abi, signer)
+        const nftContract = new ethers.Contract(REWARDS_NFT_ADDRESS, REWARDS_NFT_ABI, signer)
         const sendCallsIdentifier = await sendCalls(chainId, await signer.getAddress(), [
           {
-            to: LEGENDS_NFT_ADDRESS,
-            data: nftContract.interface.encodeFunctionData('mint', [type])
+            to: REWARDS_NFT_ADDRESS,
+            data: nftContract.interface.encodeFunctionData('mint', [type, CURRENT_SEASON])
           }
         ])
 
@@ -190,14 +142,13 @@ const useMintCharacter = () => {
         console.log('Error during minting process:', e)
       }
     },
-    [addToast, pollForCharacterAfterMint, sendCalls, getCallsStatus, chainId]
+    [addToast, pollForCharacterAfterMint, sendCalls, getCallsStatus, chainId, switchNetwork]
   )
 
   useEffect(() => {
     setIsCheckingMintStatus(true)
     getCharacterNFTData()
-      .then(({ mintedAt: newMintedAt, isMinted: newIsMinted }) => {
-        setMintedAt(newMintedAt)
+      .then(({ isMinted: newIsMinted }) => {
         setIsMinted(newIsMinted)
         if (newIsMinted) {
           setLoadingMessage(CharacterLoadingMessage.Minted)
@@ -205,7 +156,6 @@ const useMintCharacter = () => {
       })
       .catch((e) => {
         setIsMinted(false)
-        setMintedAt(null)
         console.error(e)
       })
       .finally(() => {
@@ -215,7 +165,6 @@ const useMintCharacter = () => {
 
   return {
     isMinting,
-    mintedAt,
     loadingMessage,
     mintCharacter,
     isMinted,

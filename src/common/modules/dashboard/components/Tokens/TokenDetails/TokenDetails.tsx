@@ -23,7 +23,6 @@ import useToast from '@common/hooks/useToast'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
-import { iconColors } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import { RELAYER_URL } from '@env'
 import { createTab } from '@web/extension-services/background/webapi/tab'
@@ -72,7 +71,7 @@ const TokenDetails = ({
   const isGasTankOrRewardsToken = isGasTankToken || isRewardsToken
   const isAmountZero = token && getTokenAmount(token) === 0n
   const canToToppedUp = token?.flags.canTopUpGasTank
-  const tokenId = token ? getTokenId(token, networks) : ''
+  const tokenId = token ? getTokenId(token) : ''
   const isNetworkNotSupportedForSwapAndBridge = !getIsNetworkSupported(supportedChainIds, network)
   const shouldDisableSwapAndBridge =
     isNetworkNotSupportedForSwapAndBridge || isGasTankOrRewardsToken || isAmountZero
@@ -138,15 +137,16 @@ const TokenDetails = ({
       //   strokeWidth: 1
       // },
       // TODO: Temporarily moved to the "Deposit" place as of v4.49.0, due to aesthetic reasons solely.
-      {
-        id: 'earn',
-        text: t('Earn'),
-        icon: EarnIcon,
-        onPress: () => {},
-        isDisabled: true,
-        tooltipText: notImplementedYetTooltipText,
-        strokeWidth: 1
-      },
+      // Note: Earn is not implemented yet, so it is disabled.
+      // {
+      //   id: 'earn',
+      //   text: t('Earn'),
+      //   icon: EarnIcon,
+      //   onPress: () => {},
+      //   isDisabled: true,
+      //   tooltipText: notImplementedYetTooltipText,
+      //   strokeWidth: 1
+      // },
       {
         id: 'top-up',
         text: t('Top Up Gas Tank'),
@@ -176,17 +176,18 @@ const TokenDetails = ({
         strokeWidth: 1,
         testID: 'top-up-button'
       },
-      {
-        id: 'withdraw',
-        text: t('Withdraw'),
-        icon: WithdrawIcon,
-        onPress: () => {},
-        isDisabled: true,
-        tooltipText: isGasTankToken
-          ? t('Gas Tank deposits cannot be withdrawn.')
-          : notImplementedYetTooltipText,
-        strokeWidth: 1
-      },
+      // Note: Withdraw is not implemented yet, so it is disabled.
+      // {
+      //   id: 'withdraw',
+      //   text: t('Withdraw'),
+      //   icon: WithdrawIcon,
+      //   onPress: () => {},
+      //   isDisabled: true,
+      //   tooltipText: isGasTankToken
+      //     ? t('Gas Tank deposits cannot be withdrawn.')
+      //     : notImplementedYetTooltipText,
+      //   strokeWidth: 1
+      // },
       {
         id: 'info',
         text: t('Token Info'),
@@ -359,7 +360,7 @@ const TokenDetails = ({
             <View style={styles.balance}>
               <Text
                 style={spacings.mtMi}
-                color={iconColors.danger}
+                color={theme.errorDecorative}
                 fontSize={12}
                 weight="number_regular"
                 numberOfLines={1}

@@ -107,11 +107,16 @@
       }
     }
   }
+  .noWalletTitle {
+    font-weight: 400;
+    font-size: 1.5rem;
+    line-height: 2.75rem;
+    color: $secondaryText;
+  }
     .button {
       @include primary-button;
       min-width: 30.875rem;
-      width: max-content;
-      height: 4rem;
+      width: fit-content;
       font-size: 1.25rem; 
       font-weight: 400; 
       margin-bottom: 2rem;

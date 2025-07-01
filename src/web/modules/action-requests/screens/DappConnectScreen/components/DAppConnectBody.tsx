@@ -11,7 +11,6 @@ import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING, SPACING_LG, SPACING_MI } from '@common/styles/spacings'
-import { iconColors } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@web/extension-services/background/webapi/tab'
 
@@ -76,7 +75,7 @@ const DAppConnectBody: FC<{
               <ErrorIcon
                 width={12}
                 height={12}
-                color={iconColors.danger}
+                color={theme.errorDecorative}
                 style={{ marginRight: -SPACING_MI, marginLeft: SPACING_MI }}
               />
             </Badge>
@@ -106,7 +105,9 @@ const DAppConnectBody: FC<{
                   color={theme.errorDecorative}
                   style={{ lineHeight: 18 * responsiveSizeMultiplier }}
                   underline
-                  onPress={() => openInTab('https://help.ambire.com/hc/en-us/requests/new', false)}
+                  onPress={() =>
+                    openInTab({ url: 'https://help.ambire.com/hc/en-us/requests/new' })
+                  }
                 >
                   let us know.
                 </Text>

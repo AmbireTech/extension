@@ -33,4 +33,4 @@ const UniswapIcon: FC<SvgProps> = ({ width = 28, height = 28 }) => {
   )
 }
 
-export default UniswapIcon
+export default React.memo(UniswapIcon)

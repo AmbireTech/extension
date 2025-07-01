@@ -103,12 +103,6 @@ const Card: FC<Props> = ({ cardData }) => {
         nonConnectedAcc={nonConnectedAcc}
         treasureChestStreak={treasureChestStreak}
       />
-      {/* Modals */}
-      <OnCompleteModal
-        isVisible={isOnCompleteModalVisible}
-        handleClose={closeCompleteModal}
-        predefinedId={predefinedId}
-      />
       <ActionModal
         {...cardData}
         isOpen={isActionModalOpen}

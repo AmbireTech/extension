@@ -5,6 +5,20 @@ import React from 'react'
 
 import alternativeAnimation from './alternativeAnimation.json'
 import animation from './animation.json'
+import animationTertiary from './animationTertiary.json'
+
+const animationMap = {
+  primary: animation,
+  secondary: alternativeAnimation,
+  tertiary: animationTertiary
+}
+
+type ConfettiAnimationProps = {
+  width: number
+  height: number
+  style?: React.CSSProperties
+  type?: 'primary' | 'secondary' | 'tertiary'
+} & Omit<LottieComponentProps, 'animationData'>
 
 const ConfettiAnimation = ({
   width,
@@ -12,16 +26,11 @@ const ConfettiAnimation = ({
   style = {},
   type = 'primary',
   ...rest
-}: {
-  width: number
-  height: number
-  style?: React.CSSProperties
-  type?: 'primary' | 'secondary'
-} & Omit<LottieComponentProps, 'animationData'>) => {
+}: ConfettiAnimationProps) => {
   return (
     <LottieView
       {...rest}
-      animationData={type === 'primary' ? animation : alternativeAnimation}
+      animationData={animationMap[type]}
       style={{
         width,
         height,
@@ -30,7 +39,6 @@ const ConfettiAnimation = ({
         alignSelf: 'center',
         ...style
       }}
-      loop
     />
   )
 }

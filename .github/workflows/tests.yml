@@ -82,8 +82,7 @@ jobs:
           VELCRO_URL: ${{ vars.VELCRO_URL }}
           SOCKET_API_KEY: ${{ vars.SOCKET_API_KEY }}
           LI_FI_API_KEY: ${{ vars.LI_FI_API_KEY }}
-          BROWSER_EXTENSION_DEFAULT_LOG_LEVEL_PROD: ${{ vars.BROWSER_EXTENSION_DEFAULT_LOG_LEVEL_PROD }}
-          BROWSER_EXTENSION_DEFAULT_LOG_LEVEL_DEV: ${{ vars.BROWSER_EXTENSION_DEFAULT_LOG_LEVEL_DEV }}
+          REACT_APP_PIMLICO_API_KEY: ${{ vars.REACT_APP_PIMLICO_API_KEY }}
           KEYSTORE_PASS: ${{ secrets.KEYSTORE_PASS }}
           SEED: ${{ secrets.SEED }}
           BA_PRIVATE_KEY: ${{ secrets.BA_PRIVATE_KEY }}

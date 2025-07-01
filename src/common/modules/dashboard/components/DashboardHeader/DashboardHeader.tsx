@@ -6,6 +6,7 @@ import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexboxStyles from '@common/styles/utils/flexbox'
 import useHover from '@web/hooks/useHover'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
@@ -21,7 +22,7 @@ const DashboardHeader = () => {
   const { account } = useSelectedAccountControllerState()
   const [bindBurgerAnim, burgerAnimStyle] = useHover({ preset: 'opacity' })
   const { navigate } = useNavigation()
-  const { theme } = useTheme(getStyles)
+  const { theme, themeType } = useTheme(getStyles)
 
   if (!account) return null
 
@@ -47,7 +48,15 @@ const DashboardHeader = () => {
           {...bindBurgerAnim}
         >
           <Animated.View style={burgerAnimStyle}>
-            <BurgerIcon color={theme.primaryBackground} width={20} height={20} />
+            <BurgerIcon
+              color={
+                themeType === THEME_TYPES.DARK
+                  ? theme.primaryBackgroundInverted
+                  : theme.primaryBackground
+              }
+              width={20}
+              height={20}
+            />
           </Animated.View>
         </Pressable>
       </View>

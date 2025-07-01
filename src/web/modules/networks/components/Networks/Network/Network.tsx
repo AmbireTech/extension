@@ -9,6 +9,7 @@ import Text from '@common/components/Text'
 import Tooltip from '@common/components/Tooltip'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import { AnimatedPressable, DURATIONS, useCustomHover, useMultiHover } from '@web/hooks/useHover'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
@@ -24,7 +25,7 @@ interface Props {
 }
 
 const Network: FC<Props> = ({ chainId, openBlockExplorer, openSettingsBottomSheet, onPress }) => {
-  const { theme, styles } = useTheme(getStyles)
+  const { themeType, theme, styles } = useTheme(getStyles)
   const { networks } = useNetworksControllerState()
   const { portfolio, dashboardNetworkFilter } = useSelectedAccountControllerState()
   const [bindAnim, animStyle, isHovered, triggerHover] = useMultiHover({
@@ -36,8 +37,11 @@ const Network: FC<Props> = ({ chainId, openBlockExplorer, openSettingsBottomShee
       },
       {
         property: 'borderColor',
-        from: `${String(theme.secondaryBorder)}00`,
-        to: theme.secondaryBorder
+        from:
+          themeType === THEME_TYPES.DARK
+            ? `${String(theme.primaryLight)}00`
+            : `${String(theme.secondaryBorder)}00`,
+        to: themeType === THEME_TYPES.DARK ? theme.primaryLight80 : theme.secondaryBorder
       }
     ],
     forceHoveredStyle: dashboardNetworkFilter === chainId

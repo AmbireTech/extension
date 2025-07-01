@@ -20,6 +20,7 @@ import Tooltip from '@common/components/Tooltip'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import useAccountPickerControllerState from '@web/hooks/useAccountPickerControllerState'
 import useBackgroundService from '@web/hooks/useBackgroundService'
@@ -59,7 +60,7 @@ const AccountsOnPageList = ({
   const [hasReachedBottom, setHasReachedBottom] = useState<null | boolean>(null)
   const [containerHeight, setContainerHeight] = useState(0)
   const [contentHeight, setContentHeight] = useState(0)
-  const { styles, theme } = useTheme(getStyles)
+  const { styles, theme, themeType } = useTheme(getStyles)
 
   const slots = useMemo(() => {
     return groupBy(
@@ -116,14 +117,12 @@ const AccountsOnPageList = ({
     ({
       accounts,
       isLastSlot = false,
-      byType = ['basic', 'smart'],
-      withQuaternaryBackground = false
+      byType = ['basic', 'smart']
     }: {
       accounts: AccountOnPage[]
       isLastSlot?: boolean
       slotIndex?: number
       byType?: ('basic' | 'linked' | 'smart')[]
-      withQuaternaryBackground?: boolean
     }) => {
       const filteredAccounts = accounts.filter((a) => byType.includes(getType(a)))
 
@@ -136,7 +135,6 @@ const AccountsOnPageList = ({
 
         return (
           <Account
-            withQuaternaryBackground={withQuaternaryBackground}
             key={acc.account.addr}
             account={acc.account}
             type={getType(acc)}
@@ -270,8 +268,14 @@ const AccountsOnPageList = ({
                 <View
                   style={[
                     styles.smartAccountWrapper,
-                    // @ts-ignore
-                    { background: 'linear-gradient(81deg, #F7F8FC 0%, #F1E8FF 100%)' }
+                    {
+                      borderWidth: themeType === THEME_TYPES.DARK ? 0 : 1,
+                      // @ts-ignore
+                      background:
+                        themeType === THEME_TYPES.DARK
+                          ? 'linear-gradient(81deg, #AD8FFF33 0%, #39F7EF33 100%)'
+                          : 'linear-gradient(81deg, #F7F8FC 0%, #F1E8FF 100%)'
+                    }
                   ]}
                 >
                   <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbSm]}>
@@ -309,8 +313,14 @@ const AccountsOnPageList = ({
                             id="linked-accounts-warning"
                             border={`1px solid ${theme.warningDecorative as any}`}
                             style={{
-                              backgroundColor: theme.warningBackground as any,
-                              color: theme.warningText as any
+                              backgroundColor:
+                                themeType === THEME_TYPES.DARK
+                                  ? theme.warningDecorative
+                                  : (theme.warningBackground as any),
+                              color:
+                                themeType === THEME_TYPES.DARK
+                                  ? theme.primaryBackground
+                                  : (theme.warningText as any)
                             }}
                             content="Do not add linked accounts you are not aware of!"
                           />
@@ -326,8 +336,7 @@ const AccountsOnPageList = ({
                           accounts: slots[key],
                           isLastSlot: i === Object.keys(slots).length - 1,
                           slotIndex: 1,
-                          byType: ['smart', 'linked'],
-                          withQuaternaryBackground: true
+                          byType: ['smart', 'linked']
                         })}
                       </View>
                     )

@@ -115,7 +115,7 @@ const Content: FC<ContentProps> = ({ children, buttons, scrollViewRef }) => {
       contentContainerStyle={{
         ...spacings.pv0,
         ...paddingHorizontalStyle,
-        ...(!isPopup ? spacings.pt2Xl : {}),
+        ...(isTab ? spacings.pt2Xl : {}),
         flexGrow: 1
       }}
       wrapperRef={scrollViewRef}

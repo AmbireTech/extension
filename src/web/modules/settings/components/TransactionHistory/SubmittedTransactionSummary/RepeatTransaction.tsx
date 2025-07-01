@@ -2,6 +2,7 @@ import React, { FC, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TouchableOpacity } from 'react-native'
 
+import { Session } from '@ambire-common/classes/session'
 import { UserRequest } from '@ambire-common/interfaces/userRequest'
 import { SubmittedAccountOp } from '@ambire-common/libs/accountOp/submittedAccountOp'
 import RepeatIcon from '@common/assets/svg/RepeatIcon'
@@ -30,7 +31,7 @@ const RepeatTransaction: FC<Props> = ({
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { dispatch } = useBackgroundService()
+  const { dispatch, windowId } = useBackgroundService()
 
   const handleRepeatTransaction = useCallback(() => {
     if (!rawCalls) return
@@ -42,6 +43,7 @@ const RepeatTransaction: FC<Props> = ({
     const userRequest: UserRequest = {
       id: new Date().getTime(),
       action: userTx,
+      session: new Session({ windowId }),
       meta: {
         isSignAction: true,
         chainId,

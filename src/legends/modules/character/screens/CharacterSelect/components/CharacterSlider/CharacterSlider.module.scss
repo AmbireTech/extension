@@ -1,19 +1,19 @@
 @import '@legends/styles/base';
 
-$centerSlideSize: 28.25rem;
-$adjacentSlideSize: 17.5rem;
+$centerSlideSize: 18.125rem;
+$adjacentSlideSize: 14.5rem;
 $smallerSlideSize: 12rem;
 
 .wrapper {
   position: relative;
   text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: 6rem;
 
   :global(.swiper) {
     @include container;
     position: relative;
     display: flex;
-    height: 31rem;
+    height: 23rem;
 
     :global(.swiper-wrapper) {
       align-items: center;
@@ -49,7 +49,7 @@ $smallerSlideSize: 12rem;
 
         &.left {
           .image {
-            transform: translateX(-20%);
+            transform: translateX(-15%);
           }
         }
       }
@@ -68,7 +68,7 @@ $smallerSlideSize: 12rem;
         &::before {
           content: '';
           position: absolute;
-          bottom: -8rem;
+          bottom: -4rem;
           left: 52%;
           transform: translateX(-50%);
           width: 15.125rem;
@@ -87,7 +87,7 @@ $smallerSlideSize: 12rem;
         &::after {
           content: '';
           position: absolute;
-          bottom: -8.5rem;
+          bottom: -4.5rem;
           left: 52%;
           transform: translateX(-50%);
           width: 18rem;
@@ -109,7 +109,7 @@ $smallerSlideSize: 12rem;
         .extraBorder {
           content: '';
           position: absolute;
-          bottom: -9.2rem;
+          bottom: -5.2rem;
           left: 52%;
           transform: translateX(-50%);
           width: 22rem;

@@ -2,8 +2,6 @@ import { StyleSheet, TextStyle } from 'react-native'
 
 import { isWeb } from '@common/config/env'
 
-import colors from '../colors'
-
 interface Styles {
   highlightPrimary: TextStyle
   center: TextStyle
@@ -16,9 +14,6 @@ interface Styles {
 }
 
 const textStyles: Styles = {
-  highlightPrimary: {
-    color: colors.heliotrope
-  },
   center: {
     textAlign: 'center'
   },

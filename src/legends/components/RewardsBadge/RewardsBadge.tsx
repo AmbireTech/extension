@@ -22,18 +22,42 @@ const RewardsBadge: React.FC = () => {
   const claimWalletCard = legends?.find((card) =>
     isMatchingPredefinedId(card.action, CARD_PREDEFINED_ID.claimRewards)
   )
-  const { userLeaderboardData } = useLeaderboardContext()
+  const { season1LeaderboardData, isLeaderboardLoading } = useLeaderboardContext()
 
   const { accountPortfolio, claimableRewardsError, isLoadingClaimableRewards } =
     usePortfolioControllerState()
   const openClaimModal = () => setIsOpen(true)
   const closeClaimModal = () => setIsOpen(false)
 
-  const rewardsDisabledState = Number(claimWalletCard?.meta?.availableToClaim) === 0
+  const isRewardsLoading =
+    isLoadingClaimableRewards ||
+    isLoading ||
+    isLeaderboardLoading ||
+    !season1LeaderboardData ||
+    !accountPortfolio ||
+    !accountPortfolio?.isReady
+
   const { amountFormatted } = accountPortfolio || {}
   const isNotAvailableForRewards =
-    Number((amountFormatted ?? '0').replace(/[^0-9.-]+/g, '')) < 500 ||
-    (userLeaderboardData?.level ?? 0) <= 2
+    ((accountPortfolio || accountPortfolio?.isReady) &&
+      amountFormatted &&
+      Number((amountFormatted ?? '0').replace(/[^0-9.-]+/g, '')) < 500) ||
+    (season1LeaderboardData?.currentUser?.level ?? 0) <= 2
+
+  const rewardsDisabledState =
+    !claimWalletCard ||
+    (claimWalletCard && !claimWalletCard.meta?.availableToClaim) ||
+    (claimWalletCard &&
+      claimWalletCard.meta &&
+      Number(claimWalletCard?.meta?.availableToClaim) === 0)
+
+  const shouldShowIcon = rewardsDisabledState || isRewardsLoading || claimableRewardsError
+  const hasNoRewardsAvailable =
+    claimWalletCard?.meta?.availableToClaim !== undefined &&
+    Number(claimWalletCard?.meta?.availableToClaim) === 0
+  const isEligible = !isNotAvailableForRewards
+  const shouldShowHourglass =
+    !isRewardsLoading && isEligible && (!claimWalletCard || hasNoRewardsAvailable)
 
   const handleMouseMove = (e: React.MouseEvent) => {
     const card = cardRef.current
@@ -100,49 +124,87 @@ const RewardsBadge: React.FC = () => {
             <img
               src={rewardsCoverImg}
               className={`${styles.rewardsCoverImg} ${
-                (rewardsDisabledState || isLoadingClaimableRewards || claimableRewardsError) &&
-                styles.rewardsCoverImgDisabled
+                shouldShowIcon && styles.rewardsCoverImgDisabled
               }`}
               alt="rewards-cover"
             />
-            {(rewardsDisabledState || isLoadingClaimableRewards || claimableRewardsError) &&
-              (Number(claimWalletCard?.meta?.availableToClaim) === 0 &&
-              !isNotAvailableForRewards ? (
+            {shouldShowIcon &&
+              (shouldShowHourglass ? (
                 <HourGlassIcon className={styles.lockIcon} width={29} height={37} />
               ) : (
                 <LockIcon className={styles.lockIcon} width={29} height={37} />
               ))}
           </div>
           <div className={styles.rewardsInfo}>
-            {isLoadingClaimableRewards || isLoading ? (
-              <p>Loading rewards...</p>
-            ) : claimableRewardsError ? (
-              <p>Error loading rewards</p>
-            ) : rewardsDisabledState ? (
-              <p className={styles.rewardsTitle}>
-                {Number(claimWalletCard?.meta?.availableToClaim) === 0 &&
-                !isNotAvailableForRewards ? (
-                  "You haven't accumulated $WALLET rewards yet."
-                ) : (
+            {(() => {
+              // Loading state
+              if (isRewardsLoading) {
+                return <p>Loading rewards...</p>
+              }
+
+              // Error state
+              if (claimableRewardsError) {
+                return <p>Error loading rewards</p>
+              }
+
+              // Extract level and balance eligibility
+              const userLevel = season1LeaderboardData?.currentUser?.level ?? 0
+              const hasMinBalance =
+                amountFormatted && Number((amountFormatted ?? '0').replace(/[^0-9.-]+/g, '')) >= 500
+              const hasMinLevel = userLevel > 2
+
+              // Lvl reached, Usd < 500
+              if (hasMinLevel && !hasMinBalance) {
+                return (
+                  <p className={styles.rewardsTitle}>
+                    Keep your account balance over $500 to accumulate rewards.
+                  </p>
+                )
+              }
+
+              // Lvl not reached, Usd > 500
+              if (!hasMinLevel && hasMinBalance) {
+                return (
+                  <p className={styles.rewardsTitle}>
+                    Reach level 3 to start accumulating rewards.
+                  </p>
+                )
+              }
+
+              // Lvl not reached, Usd < 500
+              if (!hasMinLevel && !hasMinBalance) {
+                return (
+                  <p className={styles.rewardsTitle}>
+                    Keep your account balance over $500 and reach level 3 to start accumulating rewards.
+                  </p>
+                )
+              }
+
+              // Lvl reached, Usd > 500
+              if (hasMinLevel && hasMinBalance) {
+                // If eligible but no rewards
+                if (!claimWalletCard || hasNoRewardsAvailable) {
+                  return (
+                    <p className={styles.rewardsTitle}>
+                      You are currently accumulating rewards for this season
+                    </p>
+                  )
+                }
+                // Active state with rewards
+                return (
                   <>
-                    You need to reach Level 3 and keep a minimum balance of
-                    <br />
-                    $500 on the supported networks to start accruing rewards.
+                    <p className={styles.rewardsTitle}>$WALLET Rewards</p>
+                    <p className={styles.rewardsAmount}>
+                      {claimWalletCard?.meta?.availableToClaim
+                        ? Math.floor(Number(claimWalletCard?.meta?.availableToClaim))
+                            .toLocaleString('en-US', { useGrouping: true })
+                            .replace(/,/g, ' ')
+                        : '0'}
+                    </p>
                   </>
-                )}
-              </p>
-            ) : (
-              <>
-                <p className={styles.rewardsTitle}>$WALLET Rewards</p>
-                <p className={styles.rewardsAmount}>
-                  {claimWalletCard?.meta?.availableToClaim
-                    ? Math.floor(Number(claimWalletCard?.meta?.availableToClaim))
-                        .toLocaleString('en-US', { useGrouping: true })
-                        .replace(/,/g, ' ')
-                    : '0'}
-                </p>
-              </>
-            )}
+                )
+              }
+            })()}
           </div>
         </div>
       </div>

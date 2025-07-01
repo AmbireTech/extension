@@ -22,8 +22,10 @@ import { SelectValue } from '@common/components/Select/types'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import spacings from '@common/styles/spacings'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
 import useActivityControllerState from '@web/hooks/useActivityControllerState'
@@ -67,6 +69,7 @@ const HistorySettingsPage: FC<Props> = ({ HistoryComponent, historyType, session
   const { maxWidthSize } = useWindowSize()
   const { setCurrentSettingsPage } = useContext(SettingsRoutesContext)
   const [, setSearchParams] = useSearchParams()
+  const { theme, themeType } = useTheme()
 
   useEffect(() => {
     setCurrentSettingsPage(historyType)
@@ -215,6 +218,9 @@ const HistorySettingsPage: FC<Props> = ({ HistoryComponent, historyType, session
           containerStyle={{ width: maxWidthSize('xl') ? 420 : 340, ...spacings.mr }}
           options={accountsOptions}
           value={accountsOptions.filter((opt) => opt.value === account.addr)[0]}
+          selectStyle={
+            themeType === THEME_TYPES.DARK ? { backgroundColor: theme.tertiaryBackground } : {}
+          }
         />
         {historyType !== 'messages' && (
           <Select
@@ -223,6 +229,9 @@ const HistorySettingsPage: FC<Props> = ({ HistoryComponent, historyType, session
             options={networksOptions}
             value={
               networksOptions.filter((opt) => opt.value === network?.name)[0] ?? ALL_NETWORKS_OPTION
+            }
+            selectStyle={
+              themeType === THEME_TYPES.DARK ? { backgroundColor: theme.tertiaryBackground } : {}
             }
           />
         )}

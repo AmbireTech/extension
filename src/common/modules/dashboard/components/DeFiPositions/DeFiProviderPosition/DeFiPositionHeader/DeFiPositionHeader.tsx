@@ -9,6 +9,7 @@ import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import getStyles from '@common/modules/dashboard/components/DeFiPositions/DeFiProviderPosition/styles'
 import spacings from '@common/styles/spacings'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@web/extension-services/background/webapi/tab'
 import useDappsControllerState from '@web/hooks/useDappsControllerState'
@@ -48,15 +49,21 @@ const DeFiPositionHeader: FC<Props> = ({
   chainId,
   positionInUSD,
   isExpanded,
-  healthRate
+  healthRate,
+  iconUrl,
+  siteUrl
 }) => {
   const {
     state: { dapps }
   } = useDappsControllerState()
-  const { styles, theme } = useTheme(getStyles)
+  const { styles, theme, themeType } = useTheme(getStyles)
   const [bindAnim, animStyle] = useCustomHover({
     property: 'backgroundColor',
-    values: { from: theme.quaternaryBackgroundSolid, to: theme.secondaryBackground },
+    values: {
+      from:
+        themeType === THEME_TYPES.DARK ? theme.tertiaryBackground : theme.quaternaryBackgroundSolid,
+      to: theme.secondaryBackground
+    },
     forceHoveredStyle: isExpanded
   })
   const [bindOpenIconAnim, openIconAnimStyle] = useHover({
@@ -72,7 +79,7 @@ const DeFiPositionHeader: FC<Props> = ({
 
   const openDAppUrl = useCallback(async () => {
     try {
-      await openInTab(dappUrl, false)
+      await openInTab({ url: siteUrl || dappUrl! })
     } catch (e) {
       console.error(e)
     }
@@ -85,7 +92,7 @@ const DeFiPositionHeader: FC<Props> = ({
       {...bindAnim}
     >
       <View style={styles.providerData}>
-        <ProtocolIcon providerName={providerName} chainId={chainId} />
+        <ProtocolIcon iconUrl={iconUrl} providerName={providerName} chainId={chainId} />
         <Text fontSize={16} weight="semiBold" style={spacings.mrMi}>
           {providerName}
         </Text>

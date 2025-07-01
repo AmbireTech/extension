@@ -83,7 +83,7 @@ const DappControl = ({
                     onPress={() => {
                       dispatch({
                         type: 'DAPP_CONTROLLER_UPDATE_DAPP',
-                        params: { url: dapp.url, dapp: { favorite: !dapp.favorite } }
+                        params: { id: dapp.id, dapp: { favorite: !dapp.favorite } }
                       })
                     }}
                     style={[flexbox.alignSelfStart, spacings.mrLg]}
@@ -120,7 +120,7 @@ const DappControl = ({
               onPress={() => {
                 dispatch({
                   type: 'DAPPS_CONTROLLER_DISCONNECT_DAPP',
-                  params: dapp.url
+                  params: dapp.id
                 })
               }}
             >

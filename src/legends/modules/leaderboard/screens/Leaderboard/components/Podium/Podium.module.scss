@@ -21,11 +21,10 @@
     width: 5rem;
     height: 5rem;
     margin-bottom: 0.5rem;
-    border-radius: 2.5rem;
+    border-radius: 50%;
     background-color: $blue-200;
     max-width: 100%;
-    height: auto;
-    object-fit: contain;
+    object-fit: cover;
   }
 
   .contentWrapper {
@@ -113,6 +112,7 @@
 
     .avatar {
       width: 4rem;
+      height: 4rem;
       border: 0.125rem solid $silverDecorative;
       margin-bottom: .6875rem;
 
@@ -131,6 +131,7 @@
     }
     .avatar {
       width: 4rem;
+      height: 4rem;
       border: 0.125rem solid $bronzeDecorative;
       margin-bottom: 1.25rem;
     }

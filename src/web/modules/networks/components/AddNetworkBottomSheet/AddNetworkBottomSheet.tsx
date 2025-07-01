@@ -37,7 +37,7 @@ const AddNetworkBottomSheet = ({ sheetRef, closeBottomSheet }: Props) => {
         renderIcon={<ChainlistIcon width={23} height={32} color={theme.secondaryText} />}
         title={t('Go to Chainlist')}
         text={t('Add any EVM network')}
-        onPress={() => openInTab('https://chainlist.org/')}
+        onPress={() => openInTab({ url: 'https://chainlist.org/', shouldCloseCurrentWindow: true })}
       />
       <Option
         renderIcon={<SettingsIcon width={20} height={20} color={theme.secondaryText} />}

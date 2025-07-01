@@ -14,10 +14,12 @@ const DeFiProviderPosition: FC<PositionsByProvider> = ({
   positionInUSD,
   type,
   chainId,
+  iconUrl,
+  siteUrl,
   positions
 }) => {
   const [isExpanded, setIsExpanded] = useState(false)
-  const { styles, theme } = useTheme(getStyles)
+  const { styles } = useTheme(getStyles)
 
   const positionInUSDFormatted = formatDecimals(positionInUSD, 'value')
 
@@ -26,15 +28,7 @@ const DeFiProviderPosition: FC<PositionsByProvider> = ({
   }, [])
 
   return (
-    <View
-      style={[
-        styles.container,
-        !!isExpanded && styles.expandedContainer,
-        {
-          backgroundColor: isExpanded ? theme.secondaryBackground : theme.primaryBackground
-        }
-      ]}
-    >
+    <View style={[styles.container, !!isExpanded && styles.expandedContainer]}>
       <DeFiPositionHeader
         providerName={providerName}
         chainId={chainId}
@@ -42,6 +36,8 @@ const DeFiProviderPosition: FC<PositionsByProvider> = ({
         isExpanded={isExpanded}
         positionInUSD={positionInUSDFormatted}
         healthRate={positions.length === 1 ? positions[0].additionalData.healthRate : undefined}
+        iconUrl={iconUrl}
+        siteUrl={siteUrl}
       />
       {isExpanded &&
         positions.map(({ id, assets, additionalData }, index) => (
@@ -54,6 +50,7 @@ const DeFiProviderPosition: FC<PositionsByProvider> = ({
             providerName={providerName}
             chainId={chainId}
             additionalData={additionalData}
+            siteUrl={siteUrl}
             positionInUSD={formatDecimals(additionalData.positionInUSD || 0, 'value')}
           />
         ))}

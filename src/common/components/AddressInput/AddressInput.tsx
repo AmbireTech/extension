@@ -1,26 +1,19 @@
 import React, { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Keyboard, TouchableOpacity, View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
+import { View } from 'react-native'
 
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import CopyIcon from '@common/assets/svg/CopyIcon'
 import EnsIcon from '@common/assets/svg/EnsIcon'
-import ScanIcon from '@common/assets/svg/ScanIcon'
 import Input, { InputProps } from '@common/components/Input'
 import Text from '@common/components/Text'
-import Title from '@common/components/Title'
-import { isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import textStyles from '@common/styles/utils/text'
 import { setStringAsync } from '@common/utils/clipboard'
 import useHover, { AnimatedPressable } from '@web/hooks/useHover'
 
-import BottomSheet from '../BottomSheet'
-import QRCodeScanner from '../QRCodeScanner'
 import getStyles from './styles'
 
 export interface AddressValidation {
@@ -49,25 +42,10 @@ const AddressInput: React.FC<Props> = ({
   const { t } = useTranslation()
   const { addToast } = useToast()
   const { styles } = useTheme(getStyles)
-  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const [bindAnim, animStyle] = useHover({ preset: 'opacityInverted' })
 
   const { message, isError } = validation
   const isValidationInDomainResolvingState = message === 'Resolving domain...'
-
-  const handleOnScan = useCallback(
-    (code: string) => {
-      if (onChangeText) onChangeText(code)
-
-      closeBottomSheet()
-    },
-    [onChangeText, closeBottomSheet]
-  )
-
-  const handleOnButtonPress = useCallback(() => {
-    Keyboard.dismiss()
-    openBottomSheet()
-  }, [openBottomSheet])
 
   const handleCopyResolvedAddress = useCallback(async () => {
     const address = ensAddress
@@ -140,20 +118,9 @@ const AddressInput: React.FC<Props> = ({
                 <EnsIcon isActive={!!ensAddress} />
               </View>
             </View>
-            {!isWeb && (
-              <TouchableOpacity style={spacings.prTy} onPress={handleOnButtonPress}>
-                <ScanIcon isFilled={false} />
-              </TouchableOpacity>
-            )}
           </>
         }
       />
-      {!isWeb && (
-        <BottomSheet id="add-token" sheetRef={sheetRef} closeBottomSheet={closeBottomSheet}>
-          <Title style={textStyles.center}>{t('Scan recipient QR code')}</Title>
-          <QRCodeScanner onScan={handleOnScan} />
-        </BottomSheet>
-      )}
     </>
   )
 }

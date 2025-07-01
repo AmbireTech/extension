@@ -24,7 +24,7 @@ const WHEEL_PRIZE_DATA: {
     },
     {
       from: -247,
-      to: -279
+      to: -275
     }
   ],
   20: [

@@ -58,4 +58,15 @@ const isSafari = () => {
   }
 }
 
-export { engine, platform, isExtension, browser, getFirefoxVersion, isOpera, isSafari }
+const isVivaldi = async () => {
+  try {
+    const currentWindow = await browser.windows.getCurrent()
+    // Hackish way to detect if client's web browser is Vivaldi
+    // {@link https://stackoverflow.com/a/77047611/1333836}
+    return !!currentWindow?.vivExtData
+  } catch (error) {
+    return false
+  }
+}
+
+export { engine, platform, isExtension, browser, getFirefoxVersion, isOpera, isSafari, isVivaldi }

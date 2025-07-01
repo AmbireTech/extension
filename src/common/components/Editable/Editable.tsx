@@ -26,6 +26,7 @@ interface Props {
   testID?: string
   children?: ReactNode
   onSetIsEditing?: (isEditing: boolean) => void
+  disabled?: boolean
 }
 
 const Editable: FC<Props> = ({
@@ -41,7 +42,8 @@ const Editable: FC<Props> = ({
   maxLength = 20,
   testID,
   children,
-  onSetIsEditing
+  onSetIsEditing,
+  disabled
 }) => {
   const { theme } = useTheme()
   const { t } = useTranslation()
@@ -77,7 +79,7 @@ const Editable: FC<Props> = ({
 
   return (
     <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter, { height }]}>
-      {isEditing ? (
+      {isEditing && !disabled ? (
         <Input
           value={actualValue}
           // Prevents the input from being too small
@@ -116,47 +118,53 @@ const Editable: FC<Props> = ({
           {actualValue || fallbackValue}
         </Text>
       )}
-      <Pressable
-        onPress={() => {
-          if (isEditing) {
-            handleSave()
-            return
-          }
-          setIsEditing(true)
-          !!onSetIsEditing && onSetIsEditing(true)
-        }}
-        style={[spacings.mlTy]}
-        testID={`edit-btn-for-${testID}`}
-      >
-        {({ hovered }: any) => (
-          <>
-            {!isEditing && (
-              <EditPenIcon
-                color={hovered ? theme.primaryText : theme.primary}
-                width={iconSize}
-                height={iconSize}
-              />
-            )}
-            {isEditing && (actualValue === initialValue || !actualValue) && (
-              <CloseIcon
-                width={iconSize}
-                height={iconSize}
-                color={hovered ? theme.primaryText : theme.secondaryText}
-              />
-            )}
-            {isEditing && actualValue !== initialValue && !!actualValue && (
-              <View
-                style={[flexbox.directionRow, flexbox.alignCenter, { opacity: hovered ? 0.8 : 1 }]}
-              >
-                <CheckIcon width={iconSize} height={iconSize} style={spacings.mrMi} />
-                <Text fontSize={12} weight="medium" color={theme.successText}>
-                  {t('Save')}
-                </Text>
-              </View>
-            )}
-          </>
-        )}
-      </Pressable>
+      {!disabled && (
+        <Pressable
+          onPress={() => {
+            if (isEditing) {
+              handleSave()
+              return
+            }
+            setIsEditing(true)
+            !!onSetIsEditing && onSetIsEditing(true)
+          }}
+          style={[spacings.mlTy]}
+          testID={`edit-btn-for-${testID}`}
+        >
+          {({ hovered }: any) => (
+            <>
+              {!isEditing && (
+                <EditPenIcon
+                  color={hovered ? theme.primaryText : theme.primary}
+                  width={iconSize}
+                  height={iconSize}
+                />
+              )}
+              {isEditing && (actualValue === initialValue || !actualValue) && (
+                <CloseIcon
+                  width={iconSize}
+                  height={iconSize}
+                  color={hovered ? theme.primaryText : theme.secondaryText}
+                />
+              )}
+              {isEditing && actualValue !== initialValue && !!actualValue && (
+                <View
+                  style={[
+                    flexbox.directionRow,
+                    flexbox.alignCenter,
+                    { opacity: hovered ? 0.8 : 1 }
+                  ]}
+                >
+                  <CheckIcon width={iconSize} height={iconSize} style={spacings.mrMi} />
+                  <Text fontSize={12} weight="medium" color={theme.successText}>
+                    {t('Save')}
+                  </Text>
+                </View>
+              )}
+            </>
+          )}
+        </Pressable>
+      )}
       {children}
     </View>
   )

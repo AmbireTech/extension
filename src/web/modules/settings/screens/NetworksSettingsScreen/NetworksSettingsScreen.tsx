@@ -15,6 +15,7 @@ import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import spacings from '@common/styles/spacings'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import NetworkAvailableFeatures from '@web/components/NetworkAvailableFeatures'
@@ -35,7 +36,7 @@ const NetworksSettingsScreen = () => {
   const { allNetworks } = useNetworksControllerState()
 
   const { setCurrentSettingsPage } = useContext(SettingsRoutesContext)
-  const { theme } = useTheme()
+  const { theme, themeType } = useTheme()
   const [selectedChainId, setSelectedChainId] = useState(() => {
     const parsedSearchParams = new URLSearchParams(searchParams)
     if (parsedSearchParams.has('chainId'))
@@ -82,7 +83,7 @@ const NetworksSettingsScreen = () => {
   }, [])
 
   const navigateToChainlist = useCallback(async () => {
-    await openInTab('https://chainlist.org/', false)
+    await openInTab({ url: 'https://chainlist.org/' })
   }, [])
 
   return (
@@ -205,7 +206,9 @@ const NetworksSettingsScreen = () => {
           contentContainerStyle: { flex: 1 }
         }}
         containerInnerWrapperStyles={{ flex: 1 }}
-        backgroundColor="primaryBackground"
+        backgroundColor={
+          themeType === THEME_TYPES.DARK ? 'secondaryBackground' : 'primaryBackground'
+        }
         style={{ ...spacings.ph0, ...spacings.pv0, overflow: 'hidden' }}
         autoOpen={shouldOpenBottomSheet}
       >

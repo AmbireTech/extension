@@ -14,8 +14,10 @@ import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useNavigation from '@common/hooks/useNavigation'
+import useTheme from '@common/hooks/useTheme'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings, { SPACING_3XL, SPACING_XL } from '@common/styles/spacings'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import useBackgroundService from '@web/hooks/useBackgroundService'
@@ -31,6 +33,7 @@ const DevicePasswordRecoverySettingsScreen = () => {
   const { t } = useTranslation()
   const { setCurrentSettingsPage } = useContext(SettingsRoutesContext)
   const { navigate } = useNavigation()
+  const { themeType } = useTheme()
   const {
     ref: confirmationModalRef,
     open: openConfirmationModal,
@@ -151,7 +154,6 @@ const DevicePasswordRecoverySettingsScreen = () => {
         />
         <Button
           style={{ alignSelf: 'flex-start', paddingHorizontal: SPACING_XL }}
-          textStyle={{ fontSize: 14 }}
           disabled={
             ev.currentState === EmailVaultState.Loading ||
             isSubmitting ||
@@ -182,7 +184,9 @@ const DevicePasswordRecoverySettingsScreen = () => {
         />
       </View>
       <BottomSheet
-        backgroundColor="primaryBackground"
+        backgroundColor={
+          themeType === THEME_TYPES.DARK ? 'secondaryBackground' : 'primaryBackground'
+        }
         id="backup-password-confirmation-modal"
         sheetRef={confirmationModalRef}
         style={{ paddingVertical: SPACING_3XL }}
@@ -193,7 +197,9 @@ const DevicePasswordRecoverySettingsScreen = () => {
       </BottomSheet>
       <BottomSheet
         id="backup-password-success-modal"
-        backgroundColor="primaryBackground"
+        backgroundColor={
+          themeType === THEME_TYPES.DARK ? 'secondaryBackground' : 'primaryBackground'
+        }
         sheetRef={successModalRef}
         autoWidth
       >

@@ -6,6 +6,7 @@ import { useModalize } from 'react-native-modalize'
 import { Contact } from '@ambire-common/controllers/addressBook/addressBook'
 import { TransferController } from '@ambire-common/controllers/transfer/transfer'
 import { TokenResult } from '@ambire-common/libs/portfolio'
+import { findAccountDomainFromPartialDomain } from '@ambire-common/utils/domains'
 import AccountsFilledIcon from '@common/assets/svg/AccountsFilledIcon'
 import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
@@ -20,7 +21,6 @@ import useTheme from '@common/hooks/useTheme'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { findAccountDomainFromPartialDomain } from '@common/utils/domains'
 import useAddressBookControllerState from '@web/hooks/useAddressBookControllerState'
 import useDomainsControllerState from '@web/hooks/useDomainsController/useDomainsController'
 import useHover, { AnimatedPressable } from '@web/hooks/useHover'
@@ -42,7 +42,7 @@ interface Props extends InputProps {
   isRecipientHumanizerKnownTokenOrSmartContract: boolean
   isRecipientAddressUnknown: boolean
   isRecipientAddressUnknownAgreed: TransferController['isRecipientAddressUnknownAgreed']
-  onRecipientAddressUnknownCheckboxClick: () => void
+  onRecipientCheckboxClick: () => void
   validation: AddressValidation
   isRecipientDomainResolving: boolean
   isSWWarningVisible: boolean
@@ -149,7 +149,7 @@ const Recipient: React.FC<Props> = ({
   ensAddress,
   addressValidationMsg,
   isRecipientAddressUnknownAgreed,
-  onRecipientAddressUnknownCheckboxClick,
+  onRecipientCheckboxClick,
   isRecipientHumanizerKnownTokenOrSmartContract,
   isRecipientAddressUnknown,
   validation,
@@ -354,7 +354,7 @@ const Recipient: React.FC<Props> = ({
       />
       <View style={styles.inputBottom}>
         <ConfirmAddress
-          onRecipientAddressUnknownCheckboxClick={onRecipientAddressUnknownCheckboxClick}
+          onRecipientCheckboxClick={onRecipientCheckboxClick}
           isRecipientHumanizerKnownTokenOrSmartContract={
             isRecipientHumanizerKnownTokenOrSmartContract
           }

@@ -1,0 +1,54 @@
+@import '@legends/styles/base.scss';
+
+.container {
+  position: static;
+  margin-left: auto;
+  top: 0rem;
+  right: 0;
+  width: fit-content;
+  display: flex;
+  align-items: center;
+  margin-right: 1rem;
+
+  background: rgba($neutral-600, 0.2);
+
+  color: $mainText;
+  font-family: sans-serif;
+
+  border-bottom-right-radius: 1rem;
+  border-bottom-left-radius: 1rem;
+  padding-top: 0;
+  padding-right: 1rem;
+  padding-bottom: .75rem;
+  padding-left: 0;
+  gap: .25rem;
+
+   @include breakpoint-down-from(tablet) {
+    top: -2rem;
+  }
+}
+
+.icon-placeholder {
+  width: 3.75rem;
+  height: 3.625rem;
+}
+
+
+.title {
+  margin-top: 1rem;
+  margin-bottom: .25rem;
+  font-weight: 500;
+  font-size: .75rem;
+  line-height: 100%;
+  letter-spacing: 0.05em;
+  color: $mainText;
+}
+
+.read-more-link {
+  color: $purple-500; 
+  text-decoration: none;
+  font-weight: 500;
+  font-size: .75rem;
+  line-height: 100%;
+  letter-spacing: 0.05em;
+} 

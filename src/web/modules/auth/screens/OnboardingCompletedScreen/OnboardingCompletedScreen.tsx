@@ -2,7 +2,6 @@ import React, { useCallback, useEffect } from 'react'
 import { View } from 'react-native'
 
 import AmbireLogo from '@common/assets/svg/AmbireLogo'
-import PinExtensionIcon from '@common/assets/svg/PinExtensionIcon'
 import Button from '@common/components/Button'
 import Panel from '@common/components/Panel'
 import Text from '@common/components/Text'
@@ -17,11 +16,11 @@ import {
   TabLayoutContainer,
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
+import { engine } from '@web/constants/browserapi'
 import { TAB_CONTENT_WIDTH } from '@web/constants/spacings'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useWalletStateController from '@web/hooks/useWalletStateController'
-
-import getStyles from './styles'
+import PinExtension from '@web/modules/auth/components/PinExtension'
 
 export const CARD_WIDTH = 400
 
@@ -30,7 +29,7 @@ const OnboardingCompletedScreen = () => {
   const { dispatch } = useBackgroundService()
   const { isPinned } = useWalletStateController()
 
-  const { theme, styles } = useTheme(getStyles)
+  const { theme } = useTheme()
 
   useEffect(() => {
     dispatch({ type: 'SET_IS_SETUP_COMPLETE', params: { isSetupComplete: true } })
@@ -42,21 +41,17 @@ const OnboardingCompletedScreen = () => {
 
   return (
     <>
-      {!isPinned && (
-        <View style={styles.pinExtensionIcon}>
-          <PinExtensionIcon />
-        </View>
-      )}
+      <PinExtension />
       <TabLayoutContainer
         backgroundColor={theme.secondaryBackground}
         header={<Header customTitle={' '} />}
       >
         <TabLayoutWrapperMainContent>
           <Panel type="onboarding" spacingsSize="small" style={{ overflow: 'visible' }}>
-            <View style={[flexbox.flex1, flexbox.alignCenter, spacings.pt2Xl]}>
+            <View style={[flexbox.flex1, flexbox.alignCenter, spacings.pt3Xl]}>
               <View style={[flexbox.alignCenter, flexbox.justifyCenter]}>
                 <ConfettiAnimation width={TAB_CONTENT_WIDTH} height={380} autoPlay={false} />
-                <AmbireLogo height={96} />
+                <AmbireLogo height={96} withWrapper />
               </View>
               <Text
                 style={[spacings.mtLg, spacings.mb, text.center]}
@@ -65,20 +60,25 @@ const OnboardingCompletedScreen = () => {
               >
                 {t('Ambire Wallet is ready to use')}
               </Text>
-              {!isPinned && (
+              {!isPinned ? (
                 <Text appearance="secondaryText" weight="medium" style={[text.center]}>
                   {t('Pin the Ambire Extension to your toolbar for easy access.')}
                 </Text>
+              ) : (
+                <Text appearance="secondaryText" weight="medium" style={[text.center]}>
+                  {t('You can access your accounts from the dashboard via the extension icon.')}
+                </Text>
               )}
-
-              <View style={[flexbox.flex1, flexbox.justifyEnd]}>
-                <Button
-                  testID="onboarding-completed-open-dashboard-btn"
-                  text={t('Open dashboard')}
-                  hasBottomSpacing={false}
-                  onPress={handleOpenDashboardPress}
-                />
-              </View>
+              {engine !== 'gecko' && (
+                <View style={[flexbox.flex1, flexbox.justifyEnd]}>
+                  <Button
+                    testID="onboarding-completed-open-dashboard-btn"
+                    text={t('Open dashboard')}
+                    hasBottomSpacing={false}
+                    onPress={handleOpenDashboardPress}
+                  />
+                </View>
+              )}
             </View>
           </Panel>
         </TabLayoutWrapperMainContent>

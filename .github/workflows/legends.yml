@@ -29,6 +29,7 @@ jobs:
         env:
           RELAYER_URL: 'https://relayer.ambire.com'
           LEGENDS_NFT_ADDRESS: ${{ vars.LEGENDS_NFT_ADDRESS }}
+          SENTRY_DSN_LEGENDS: ${{ vars.SENTRY_DSN_LEGENDS }}
 
         run: yarn build:web:legends
 
@@ -37,6 +38,15 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.LEGENDS_DEPLOY_KEY }}
 
+      - name: Upload source maps to Sentry
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        run: |
+          curl -sL https://sentry.io/get-cli/ | bash
+          VERSION=$(node -p "require('./src/ambire-common/package.json').version")
+          sentry-cli releases new legends@$VERSION --project legends
+          sentry-cli releases files legends@$VERSION upload-sourcemaps ./build/legends-prod/ --ext .js --ext .map --rewrite --project legends
+          sentry-cli releases finalize legends@$VERSION --project legends
       - name: Deploy to Legends Repo gh-pages 🚀🌕
         run: |
           git config --global user.name "github-actions[bot]"

@@ -14,8 +14,6 @@ const getStyles = () =>
     container: {
       ...flexbox.directionRow,
       ...flexbox.justifySpaceBetween,
-      ...flexbox.alignCenter,
-      ...spacings.prSm,
       marginBottom: SPACING_TY,
       ...commonStyles.borderRadiusPrimary,
       overflow: 'hidden',

@@ -39,8 +39,7 @@ const getStyles = (theme: ThemeProps) =>
       ...spacings.pb
     },
     rawMessage: {
-      ...spacings.pbSm,
-      ...spacings.mlLg
+      ...spacings.pbSm
     },
     rawMessageTitle: {
       ...spacings.mb

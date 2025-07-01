@@ -1,5 +1,4 @@
 import { hexlify, Signature, Transaction, TransactionLike } from 'ethers'
-import * as SDK from 'gridplus-sdk'
 
 import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
 import { EIP7702Auth } from '@ambire-common/consts/7702'
@@ -13,7 +12,7 @@ import { addHexPrefix } from '@ambire-common/utils/addHexPrefix'
 import { getHDPathIndices } from '@ambire-common/utils/hdPath'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import wait from '@ambire-common/utils/wait'
-import LatticeController from '@web/modules/hardware-wallet/controllers/LatticeController'
+import LatticeController, { GridPlusSDKConstants } from '@web/modules/hardware-wallet/controllers/LatticeController'
 
 class LatticeSigner implements KeystoreSignerInterface {
   key: ExternalKey
@@ -123,9 +122,9 @@ class LatticeSigner implements KeystoreSignerInterface {
         data: {
           signerPath,
           payload: unsignedSerializedTxn,
-          curveType: SDK.Constants.SIGNING.CURVES.SECP256K1,
-          hashType: SDK.Constants.SIGNING.HASHES.KECCAK256,
-          encodingType: SDK.Constants.SIGNING.ENCODINGS.EVM
+          curveType: GridPlusSDKConstants.SIGNING.CURVES.SECP256K1,
+          hashType: GridPlusSDKConstants.SIGNING.HASHES.KECCAK256,
+          encodingType: GridPlusSDKConstants.SIGNING.ENCODINGS.EVM
         }
       })
 
@@ -187,11 +186,13 @@ class LatticeSigner implements KeystoreSignerInterface {
     await this.#prepareForSigning()
 
     const req = {
-      currency: 'ETH_MSG',
+      currency: 'ETH_MSG' as const,
       data: {
         protocol,
         payload,
-        signerPath: getHDPathIndices(this.key.meta.hdPathTemplate, this.key.meta.index)
+        signerPath: getHDPathIndices(this.key.meta.hdPathTemplate, this.key.meta.index),
+        curveType: GridPlusSDKConstants.SIGNING.CURVES.SECP256K1,
+        hashType: GridPlusSDKConstants.SIGNING.HASHES.KECCAK256
       }
     }
 

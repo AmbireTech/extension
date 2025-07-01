@@ -5,6 +5,7 @@ import {
   SignAccountOpController,
   SigningStatus
 } from '@ambire-common/controllers/signAccountOp/signAccountOp'
+import { Key } from '@ambire-common/interfaces/keystore'
 import usePrevious from '@common/hooks/usePrevious'
 import useMainControllerState from '@web/hooks/useMainControllerState'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
@@ -14,7 +15,7 @@ import { getIsSignLoading } from '@web/modules/sign-account-op/utils/helpers'
 type Props = {
   handleUpdateStatus: (status: SigningStatus) => void
   handleBroadcast: () => void
-  handleUpdate: (params: { signingKeyAddr?: string; signingKeyType?: string }) => void
+  handleUpdate: (params: { signingKeyAddr?: Key['addr']; signingKeyType?: Key['type'] }) => void
   signAccountOpState: SignAccountOpController | null
   isOneClickSign?: boolean
 }
@@ -36,7 +37,7 @@ const useSign = ({
   const [slowPaymasterRequest, setSlowPaymasterRequest] = useState<boolean>(true)
   const [acknowledgedWarnings, setAcknowledgedWarnings] = useState<string[]>([])
   const { ref: warningModalRef, open: openWarningModal, close: closeWarningModal } = useModalize()
-  const [actionLoaded, setActionLoaded] = useState<boolean>(false)
+  const [initDispatchedForId, setInitDispatchedForId] = useState<number | string | null>(null)
 
   const hasEstimation = useMemo(
     () =>
@@ -123,12 +124,7 @@ const useSign = ({
 
   const handleDismissLedgerConnectModal = useCallback(() => {
     setShouldDisplayLedgerConnectModal(false)
-
-    // Resume if paused (might happen if user have acknowledged warnings, but
-    // opts in to sign with Ledger, but a Ledger is NOT connected yet).
-    if (signAccountOpState?.status?.type === SigningStatus.UpdatesPaused)
-      handleUpdateStatus(SigningStatus.ReadyToSign)
-  }, [signAccountOpState?.status?.type, handleUpdateStatus])
+  }, [])
 
   const warningToPromptBeforeSign = useMemo(
     () =>
@@ -161,7 +157,6 @@ const useSign = ({
 
       if (isLedgerKeyInvolvedInTheJustChosenKeys && !isLedgerConnected) {
         setShouldDisplayLedgerConnectModal(true)
-        handleUpdateStatus(SigningStatus.UpdatesPaused)
         return
       }
 
@@ -179,7 +174,7 @@ const useSign = ({
   )
 
   const handleChangeSigningKey = useCallback(
-    (signingKeyAddr: string, _chosenSigningKeyType: string) => {
+    (signingKeyAddr: Key['addr'], _chosenSigningKeyType: Key['type']) => {
       handleUpdate({ signingKeyAddr, signingKeyType: _chosenSigningKeyType })
 
       // Explicitly pass the currently selected signing key type, because
@@ -293,8 +288,8 @@ const useSign = ({
     shouldDisplayLedgerConnectModal,
     network,
     notReadyToSignButAlsoNotDone,
-    actionLoaded,
-    setActionLoaded,
+    initDispatchedForId,
+    setInitDispatchedForId,
     isSignDisabled
   }
 }

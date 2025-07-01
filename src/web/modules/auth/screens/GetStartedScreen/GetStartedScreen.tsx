@@ -82,7 +82,7 @@ const GetStartedScreen = () => {
             <View
               style={[flexbox.justifyCenter, flexbox.alignCenter, flexbox.flex1, spacings.mbSm]}
             >
-              <AmbireLogo height={96} />
+              <AmbireLogo height={96} withWrapper />
               <Text style={[spacings.mtLg, text.center]} weight="medium" appearance="secondaryText">
                 {t('The Web3 wallet that makes self-custody easy and secure.')}
               </Text>
@@ -105,11 +105,9 @@ const GetStartedScreen = () => {
                 type="ghost"
                 hasBottomSpacing={false}
                 onPress={() => handleAuthButtonPress('view-only')}
+                text={t('Watch an address')}
               >
-                <>
-                  <Text appearance="primary">{t('Watch an address')}</Text>
-                  <ViewModeIcon color={theme.primary} height={16} />
-                </>
+                <ViewModeIcon color={theme.primary} width={24} style={spacings.mlTy} />
               </Button>
             </View>
           </View>

@@ -32,6 +32,7 @@ type Props = Pick<
 > & {
   signAccountOpState: SignAccountOpController | null
   autoOpen?: 'warnings'
+  actionType?: 'swapAndBridge' | 'transfer'
 }
 
 const Modals: FC<Props> = ({
@@ -46,7 +47,8 @@ const Modals: FC<Props> = ({
   warningToPromptBeforeSign,
   acknowledgeWarning,
   dismissWarning,
-  autoOpen
+  autoOpen,
+  actionType
 }) => {
   const { styles } = useTheme(getStyles)
   const { t } = useTranslation()
@@ -117,6 +119,7 @@ const Modals: FC<Props> = ({
         shouldSignAuth={signAccountOpState.shouldSignAuth}
         signedTransactionsCount={signAccountOpState.signedTransactionsCount}
         accountOp={signAccountOpState.accountOp}
+        actionType={actionType}
       />
     )
   }

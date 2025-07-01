@@ -5,7 +5,9 @@ import { View } from 'react-native'
 import { SubmittedAccountOp } from '@ambire-common/libs/accountOp/submittedAccountOp'
 import NetworkBadge from '@common/components/NetworkBadge'
 import Text from '@common/components/Text'
-import spacings from '@common/styles/spacings'
+import useTheme from '@common/hooks/useTheme'
+import spacings, { SPACING_TY } from '@common/styles/spacings'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@web/utils/uiType'
 
@@ -28,7 +30,7 @@ const SubmittedOn = ({
 }: Props) => {
   const { t } = useTranslation()
   const date = new Date(timestamp)
-
+  const { theme, themeType } = useTheme()
   return (
     <View
       style={[
@@ -40,16 +42,22 @@ const SubmittedOn = ({
     >
       <Text fontSize={fontSize} appearance="secondaryText" weight="semiBold">
         {t('Submitted ')}
+
         <NetworkBadge
           chainId={chainId}
           withOnPrefix
           fontSize={fontSize}
           weight="semiBold"
-          style={{ ...spacings.pv0, paddingLeft: 0 }}
+          style={{
+            ...spacings.pv0,
+            ...spacings.pl0,
+            ...spacings.pr0,
+            borderWidth: 0
+          }}
           iconSize={iconSize}
           renderNetworkName={(networkName) => {
             if (isPopup)
-              return networkName.length > 10 ? `${networkName.slice(0, 10)}...` : networkName
+              return networkName.length > 7 ? `${networkName.slice(0, 7)}...` : networkName
 
             return networkName
           }}

@@ -1,8 +1,10 @@
-import { Animated, Pressable, ViewStyle } from 'react-native'
+import { Animated, Pressable, Text, ViewStyle } from 'react-native'
 
 import useCustomHover from './useCustomHover'
 
 export const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
+
+export const AnimatedText = Animated.createAnimatedComponent(Text)
 
 type Preset = 'opacity' | 'opacityInverted'
 

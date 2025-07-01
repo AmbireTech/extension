@@ -50,12 +50,13 @@ const getStyles = (theme: ThemeProps) =>
       ...flexbox.flex1,
       height: INPUT_HEIGHT,
       borderWidth: 0,
-      color: theme.secondaryText,
       ...spacings.ph
     },
     nativeInput: {
       height: '100%',
-      fontFamily: isWeb ? FONT_FAMILIES.REGULAR : FONT_FAMILIES.LIGHT
+      fontFamily: isWeb ? FONT_FAMILIES.REGULAR : FONT_FAMILIES.LIGHT,
+      color: theme.secondaryText,
+      fontSize: 14
     },
     bottomLabel: {
       ...spacings.phMi,

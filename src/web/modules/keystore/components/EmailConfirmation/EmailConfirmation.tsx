@@ -23,7 +23,7 @@ const EmailConfirmation: FC<Props> = ({ email, handleCancelLoginAttempt }) => {
       <Text fontSize={14} weight="regular" style={styles.sentEmailText}>
         {t('We sent an email to {{email}}, please check your inbox and click Verify.', { email })}
       </Text>
-      <Text fontSize={14} style={styles.waitingEmailConfirmationText}>
+      <Text fontSize={14} style={styles.waitingEmailConfirmationText} appearance="primary">
         {t('Waiting for Email Confirmation')}
       </Text>
 

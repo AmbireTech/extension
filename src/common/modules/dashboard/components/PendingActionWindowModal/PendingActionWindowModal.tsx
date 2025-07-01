@@ -6,7 +6,6 @@ import PendingActionWindowIcon from '@common/assets/svg/PendingActionWindowIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import DualChoiceModal from '@common/components/DualChoiceModal'
 import spacings from '@common/styles/spacings'
-import { closeCurrentWindow } from '@web/extension-services/background/webapi/window'
 import useActionsControllerState from '@web/hooks/useActionsControllerState'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import { getUiType } from '@web/utils/uiType'
@@ -20,7 +19,6 @@ const PendingActionWindowModal = () => {
   const { actionWindow, currentAction } = useActionsControllerState()
   const onPrimaryButtonPress = useCallback(() => {
     dispatch({ type: 'ACTIONS_CONTROLLER_FOCUS_ACTION_WINDOW' })
-    closeCurrentWindow()
   }, [dispatch])
 
   const title = useMemo(() => {

@@ -34,7 +34,7 @@ const RoutesModal = ({
   closeBottomSheet: (dest?: 'default' | 'alwaysOpen' | undefined) => void
 }) => {
   const { t } = useTranslation()
-  const { styles } = useTheme(getStyles)
+  const { styles, theme } = useTheme(getStyles)
   const { quote, shouldEnableRoutesSelection, signAccountOpController } =
     useSwapAndBridgeControllerState()
   const { dispatch } = useBackgroundService()
@@ -120,11 +120,11 @@ const RoutesModal = ({
       return (
         <Pressable
           key={item.routeId}
-          style={[
+          style={({ hovered }: any) => [
             styles.itemContainer,
             index + 1 === quote?.routes?.length && spacings.mb0,
             isDisabled && styles.disabledItem,
-            isSelected && styles.selectedItem,
+            (isSelected || hovered) && styles.selectedItem,
             isEstimationLoading && !isEstimatingRoute && styles.otherItemLoading
           ]}
           onPress={() => handleSelectRoute(item)}
@@ -140,19 +140,13 @@ const RoutesModal = ({
                 right: 0,
                 bottom: 0,
                 zIndex: 2,
-                backgroundColor: '#54597ACC',
+                backgroundColor: theme.backdrop,
                 ...flexbox.alignCenter,
                 ...flexbox.justifyCenter,
                 ...common.borderRadiusPrimary
               }}
             >
-              <Spinner
-                style={{
-                  width: 64,
-                  height: 64
-                }}
-                variant="white"
-              />
+              <Spinner style={{ width: 64, height: 64 }} variant="white" />
             </View>
           )}
           <RouteStepsPreview
@@ -174,7 +168,8 @@ const RoutesModal = ({
       styles.selectedItem,
       styles.otherItemLoading,
       quote?.routes?.length,
-      handleSelectRoute
+      handleSelectRoute,
+      theme
     ]
   )
 

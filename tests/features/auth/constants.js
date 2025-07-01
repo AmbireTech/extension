@@ -57,3 +57,6 @@ export const TREZOR_EMULATOR_OPTIONS = {
     experimental_features: true
   }
 }
+
+export const PIN_THE_AMBIRE_EXTENSION = "//*[contains(text(), 'Pin the Ambire extension')]"
+export const MODAL_BACKDROP = '#modalBackdrop'

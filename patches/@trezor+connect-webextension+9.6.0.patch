@@ -1,0 +1,13 @@
+diff --git a/node_modules/@trezor/connect-webextension/build/trezor-connect-webextension.js b/node_modules/@trezor/connect-webextension/build/trezor-connect-webextension.js
+index a669305..ce4619a 100644
+--- a/node_modules/@trezor/connect-webextension/build/trezor-connect-webextension.js
++++ b/node_modules/@trezor/connect-webextension/build/trezor-connect-webextension.js
+@@ -2860,7 +2860,7 @@ class PopupManager extends (events_default()) {
+         // create new window above instead of opening new tab
+         if (currentWindow.type !== 'normal') {
+           chrome.windows.create({
+-            url
++            url, type: 'popup'
+           }, newWindow => {
+             chrome.tabs.query({
+               windowId: newWindow?.id,

@@ -1,6 +1,6 @@
 import React, { FC, useCallback, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FlatListProps, View } from 'react-native'
+import { Animated, FlatListProps, View } from 'react-native'
 
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import Button from '@common/components/Button'
@@ -28,6 +28,7 @@ interface Props {
   sessionId: string
   onScroll: FlatListProps<any>['onScroll']
   dashboardNetworkFilterName: string | null
+  animatedOverviewHeight: Animated.Value
 }
 
 const { isPopup } = getUiType()
@@ -40,7 +41,8 @@ const ActivityPositions: FC<Props> = ({
   setOpenTab,
   initTab,
   onScroll,
-  dashboardNetworkFilterName
+  dashboardNetworkFilterName,
+  animatedOverviewHeight
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
@@ -189,6 +191,7 @@ const ActivityPositions: FC<Props> = ({
       initialNumToRender={isPopup ? 10 : 20}
       windowSize={9} // Larger values can cause performance issues.
       onScroll={onScroll}
+      animatedOverviewHeight={animatedOverviewHeight}
     />
   )
 }

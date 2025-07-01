@@ -5,12 +5,11 @@ import { View } from 'react-native'
 import { Dapp, DappProviderRequest } from '@ambire-common/interfaces/dapp'
 import ErrorFilledIcon from '@common/assets/svg/ErrorFilledIcon'
 import ManifestFallbackIcon from '@common/assets/svg/ManifestFallbackIcon'
-import WarningFilledIcon from '@common/assets/svg/WarningFilledIcon'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import spacings, { SPACING, SPACING_LG, SPACING_MD } from '@common/styles/spacings'
-import common from '@common/styles/utils/common'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import ManifestImage from '@web/components/ManifestImage'
 import useDappsControllerState from '@web/hooks/useDappsControllerState'
@@ -31,7 +30,7 @@ const DAppConnectHeader: FC<Props> = ({
   securityCheck
 }) => {
   const { t } = useTranslation()
-  const { styles, theme } = useTheme(getStyles)
+  const { styles, theme, themeType } = useTheme(getStyles)
   const { state } = useDappsControllerState()
   const { minHeightSize } = useWindowSize()
   // When the user connects to a dApp, the dApp is added to the list of dApps.
@@ -67,7 +66,11 @@ const DAppConnectHeader: FC<Props> = ({
         styles.contentHeader,
         {
           backgroundColor:
-            securityCheck === 'BLACKLISTED' ? theme.errorBackground : theme.tertiaryBackground
+            securityCheck === 'BLACKLISTED'
+              ? theme.errorBackground
+              : themeType === THEME_TYPES.DARK
+              ? theme.secondaryBackground
+              : theme.tertiaryBackground
         },
         spacingsStyle
       ]}

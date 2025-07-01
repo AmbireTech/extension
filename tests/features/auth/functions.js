@@ -4,7 +4,13 @@ import { buildSelector } from '../../common-helpers/buildSelector'
 import { typeText } from '../../common-helpers/typeText'
 import { checkStorageKeysExist } from '../../common-helpers/checkStorageKeysExist'
 import { setAmbKeyStore } from '../../common-helpers/setAmbKeyStore'
-import { URL_ACCOUNT_SELECT, TEST_ACCOUNT_NAMES, INVALID_SEED_PHRASE_ERROR_MSG } from './constants'
+import {
+  URL_ACCOUNT_SELECT,
+  TEST_ACCOUNT_NAMES,
+  INVALID_SEED_PHRASE_ERROR_MSG,
+  PIN_THE_AMBIRE_EXTENSION,
+  MODAL_BACKDROP
+} from './constants'
 
 /* eslint-disable no-promise-executor-return */
 export async function wait(ms) {
@@ -347,6 +353,14 @@ export async function createHotWalletWithSeedPhrase(page, serviceWorker, extensi
   await clickOnElement(page, `${SELECTORS.saveAndContinueBtn}:not([disabled])`)
 
   await page.waitForFunction(() => window.location.href.includes('/dashboard'))
+
+  // in the case of "Pin the Ambire extension" popup
+  const popup = await page.$x(PIN_THE_AMBIRE_EXTENSION, {
+    timeout: 5000
+  })
+  if (popup.length > 0) {
+    await clickOnElement(page, MODAL_BACKDROP)
+  }
 
   await page.goto(`${extensionURL}${URL_ACCOUNT_SELECT}`, { waitUntil: 'load' })
 

@@ -8,6 +8,8 @@ type RouteConfig = {
     route: string
     title: string
     name: string
+    /** Should the prefix 'Ambire' be prepended to the title. True by default */
+    withTitlePrefix?: boolean
   }
 }
 
@@ -143,16 +145,17 @@ const routesConfig: RouteConfig = {
   [ROUTES.signAccountOp]: {
     route: ROUTES.signAccountOp,
     title: Platform.select({
-      default: i18n.t('Sign Account Operation')
+      default: i18n.t('Transaction Builder')
     }),
-    name: Platform.select({ default: i18n.t('Sign Account Operation') })
+    name: Platform.select({ default: i18n.t('Transaction Builder') })
   },
   [ROUTES.transfer]: {
     route: ROUTES.transfer,
     title: Platform.select({
-      default: i18n.t('Send Crypto')
+      default: i18n.t('Send')
     }),
-    name: Platform.select({ default: i18n.t('Send Crypto') })
+    name: Platform.select({ default: i18n.t('Send') }),
+    withTitlePrefix: false
   },
   [ROUTES.transactions]: {
     route: ROUTES.transactions,
@@ -298,7 +301,8 @@ const routesConfig: RouteConfig = {
     title: Platform.select({
       default: i18n.t('Swap and Bridge')
     }),
-    name: Platform.select({ default: i18n.t('Swap and Bridge') })
+    name: Platform.select({ default: i18n.t('Swap and Bridge') }),
+    withTitlePrefix: false
   },
   [ROUTES.generalSettings]: {
     route: ROUTES.generalSettings,
@@ -378,8 +382,8 @@ const routesConfig: RouteConfig = {
   },
   [ROUTES.dappConnectRequest]: {
     route: ROUTES.dappConnectRequest,
-    title: Platform.select({ default: i18n.t('Dapp Connect Request') }),
-    name: Platform.select({ default: i18n.t('Dapp Connect Request') })
+    title: Platform.select({ default: i18n.t('App Connect Request') }),
+    name: Platform.select({ default: i18n.t('App Connect Request') })
   },
   [ROUTES.addChain]: {
     route: ROUTES.addChain,

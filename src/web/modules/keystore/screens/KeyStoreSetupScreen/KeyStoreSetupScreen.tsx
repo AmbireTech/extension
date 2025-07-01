@@ -13,6 +13,8 @@ import useTheme from '@common/hooks/useTheme'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import Header from '@common/modules/header/components/Header'
 import spacings from '@common/styles/spacings'
+import { THEME_TYPES } from '@common/styles/themeConfig'
+import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import {
   TabLayoutContainer,
@@ -25,7 +27,7 @@ const KeyStoreSetupScreen = () => {
   const { t } = useTranslation()
 
   const { goToPrevRoute } = useOnboardingNavigation()
-  const { theme } = useTheme()
+  const { theme, themeType } = useTheme()
   const [agreedWithTerms, setAgreedWithTerms] = useState(true)
   const { ref: termsModalRef, open: openTermsModal, close: closeTermsModal } = useModalize()
   const animation = useRef(new Animated.Value(0)).current
@@ -66,16 +68,23 @@ const KeyStoreSetupScreen = () => {
                 testID="keystore-setup-checkbox"
                 value={agreedWithTerms}
                 onValueChange={setAgreedWithTerms}
-                uncheckedBorderColor={theme.primaryText}
                 style={[spacings.mlSm, spacings.pt2Xl]}
                 label={
                   <Trans>
-                    <Text fontSize={14}>I agree to the </Text>
+                    <Text fontSize={14} appearance="secondaryText">
+                      I agree to the{' '}
+                    </Text>
                     <TouchableOpacity
                       testID="terms-of-service-btn"
                       onPress={() => openTermsModal()}
                     >
-                      <Text fontSize={14} underline color={theme.infoDecorative}>
+                      <Text
+                        fontSize={14}
+                        underline
+                        color={
+                          themeType === THEME_TYPES.DARK ? theme.primary : theme.infoDecorative
+                        }
+                      >
                         Terms of Service
                       </Text>
                     </TouchableOpacity>
@@ -91,7 +100,9 @@ const KeyStoreSetupScreen = () => {
         id="terms-modal"
         style={{ maxWidth: 800 }}
         closeBottomSheet={closeTermsModal}
-        backgroundColor="primaryBackground"
+        backgroundColor={
+          themeType === THEME_TYPES.DARK ? 'secondaryBackground' : 'primaryBackground'
+        }
         sheetRef={termsModalRef}
       >
         <View style={[flexbox.alignCenter, flexbox.justifyCenter]}>
@@ -106,6 +117,7 @@ const KeyStoreSetupScreen = () => {
           primaryButtonText={t('Ok')}
           onPrimaryButtonPress={closeTermsModal}
           primaryButtonTestID="terms-accept-btn"
+          style={common.borderRadiusPrimary}
         />
       </BottomSheet>
     </TabLayoutContainer>

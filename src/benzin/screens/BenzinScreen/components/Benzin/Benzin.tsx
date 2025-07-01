@@ -1,6 +1,6 @@
 import { randomBytes } from 'ethers'
 import React, { memo, useMemo } from 'react'
-import { ImageBackground, ScrollView, View } from 'react-native'
+import { Image, ScrollView, View } from 'react-native'
 
 // @ts-ignore
 import meshGradientLarge from '@benzin/assets/images/mesh-gradient-large.png'
@@ -88,11 +88,12 @@ const Benzin = ({ state }: { state: ReturnType<typeof useBenzin> }) => {
   } = state
 
   return (
-    <ImageBackground
-      style={styles.backgroundImage}
-      source={maxWidthSize('xl') ? meshGradientLarge : meshGradient}
-      resizeMode="cover"
-    >
+    <View style={flexbox.flex1}>
+      <Image
+        style={styles.backgroundImage}
+        source={maxWidthSize('xl') ? (meshGradientLarge as any) : (meshGradient as any)}
+        resizeMode="cover"
+      />
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.content}>
           <Header activeStep={activeStep} network={network} stepsState={stepsState} />
@@ -114,7 +115,7 @@ const Benzin = ({ state }: { state: ReturnType<typeof useBenzin> }) => {
           )}
         </View>
       </ScrollView>
-    </ImageBackground>
+    </View>
   )
 }
 

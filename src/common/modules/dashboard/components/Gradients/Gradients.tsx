@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react'
 import { Animated } from 'react-native'
 
+import useTheme from '@common/hooks/useTheme'
 import { getAvatarColors } from '@common/utils/avatars'
 import { getUiType } from '@web/utils/uiType'
 
@@ -121,6 +122,7 @@ const Gradients = ({
             outputRange: [-100, width]
           }),
           zIndex: 1,
+
           width: width / 3,
           height: height * 1.5,
           transform: [{ scale: scaleInterpolate }]

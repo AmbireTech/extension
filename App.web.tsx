@@ -2,12 +2,9 @@
 import '@common/config/localization'
 
 import React from 'react'
-import { GestureHandlerRootView } from 'react-native-gesture-handler'
 
 import { isWeb } from '@common/config/env'
 import AppInit from '@common/modules/app-init/screens/AppInit'
-import colors from '@common/styles/colors'
-import flexboxStyles from '@common/styles/utils/flexbox'
 import { isExtension } from '@web/constants/browserapi'
 
 // eslint-disable-next-line no-console
@@ -31,11 +28,7 @@ const App = () => {
   // the window is an extension window and if it is web (not android or ios)
   if (!isExtension && isWeb) return 'Extension build successful! You can now close this window.'
 
-  return (
-    <GestureHandlerRootView style={[flexboxStyles.flex1, { backgroundColor: colors.white }]}>
-      <AppInit />
-    </GestureHandlerRootView>
-  )
+  return <AppInit />
 }
 
 export default App

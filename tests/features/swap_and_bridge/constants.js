@@ -1,3 +1,7 @@
+export const SELECT_ROUTE = "//*[text()='Select route']"
+export const NO_ROUTE_FOUND = "//*[text()='No routes found!']"
+export const BATCH_BTN = '[data-tooltip-id="batch-btn-tooltip"]'
+
 export const TOKEN_ADDRESS = Object.freeze({
   '8453.WALLET': '0x0BbbEad62f7647AE8323d2cb243A0DB74B7C2b80',
   '8453.USDC': '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',

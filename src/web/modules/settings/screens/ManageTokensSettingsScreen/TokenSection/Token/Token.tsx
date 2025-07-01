@@ -85,7 +85,7 @@ const Token: FC<Props> = ({
         const network = networks.find(({ chainId: nChainId }) => nChainId === chainId)
         if (!network) return
 
-        await openInTab(`${network.explorerUrl}/address/${address}`, false)
+        await openInTab({ url: `${network.explorerUrl}/address/${address}` })
       }
     },
     [address, chainId, networks, removeCustomToken]

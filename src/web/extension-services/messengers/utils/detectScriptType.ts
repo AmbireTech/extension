@@ -1,19 +1,26 @@
-/**
- * Detects and returns what context the script is in.
- */
-export function detectScriptType() {
+export function detectScriptType(): 'background' | 'contentScript' | 'popup' | 'inpage' {
   const hasChromeRuntime = typeof chrome !== 'undefined' && chrome.runtime
   const hasWindow = typeof window !== 'undefined'
 
-  if (hasChromeRuntime && hasWindow) {
-    if (window.location.pathname.includes('background')) return 'background'
-    if (window.location.pathname.includes('contentscript')) return 'contentScript'
-    if (window.location.pathname.includes('popup')) return 'popup'
+  // Background scripts don't have `window`
+  if (hasChromeRuntime && !hasWindow) return 'background'
+
+  if (hasWindow) {
+    // If this is a real extension context, chrome.runtime.id should be defined
+    const isRealExtensionContext = hasChromeRuntime && chrome.runtime?.id
+
+    const pathname = window.location.pathname
+
+    if (pathname.includes('background')) return 'background'
+    if (pathname.includes('popup')) return 'popup'
+    if (pathname.includes('contentscript')) return 'contentScript'
+
+    // If it's not a real extension context, fallback to inpage
+    if (!isRealExtensionContext) return 'inpage'
+
+    // If we still can't tell but it has chrome.runtime.id, it's probably a content script
     return 'contentScript'
   }
-  if (hasChromeRuntime && !hasWindow) return 'background'
-  if (!hasChromeRuntime && hasWindow) return 'inpage'
+
   throw new Error('Undetected script.')
 }
-
-export type ScriptType = ReturnType<typeof detectScriptType>

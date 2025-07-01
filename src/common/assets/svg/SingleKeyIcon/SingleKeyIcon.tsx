@@ -1,17 +1,15 @@
 import React, { FC } from 'react'
 import { G, Path, Svg, SvgProps } from 'react-native-svg'
 
-const SingleKeyIcon: FC<SvgProps> = ({
-  width = 17.41,
-  height = 17.41,
-  color = 'none',
-  stroke = '#fff'
-}) => {
+import useTheme from '@common/hooks/useTheme'
+
+const SingleKeyIcon: FC<SvgProps> = ({ width = 17.41, height = 17.41, color }) => {
+  const { theme } = useTheme()
   return (
     <Svg viewBox="0 0 17.414 17.408" width={width} height={height}>
       <G
-        fill={color}
-        stroke={stroke}
+        fill="none"
+        stroke={color || theme.iconPrimary}
         strokeLinecap="round"
         strokeLinejoin="round"
         strokeWidth="1.5"

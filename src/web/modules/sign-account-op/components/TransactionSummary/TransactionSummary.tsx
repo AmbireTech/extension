@@ -1,5 +1,5 @@
 import { formatUnits } from 'ethers'
-import React, { useCallback, useMemo } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { View, ViewStyle } from 'react-native'
 
 import humanizerInfo from '@ambire-common/consts/humanizer/humanizerInfo.json'
@@ -54,11 +54,17 @@ const TransactionSummary = ({
   const { t } = useTranslation()
   const { dispatch } = useBackgroundService()
   const { styles } = useTheme(getStyles)
+  /**
+   * It takes some time to remove the call from the controller state, so we optimistically
+   * set this state to true, which hides it immediately.
+   */
+  const [isCallRemovedOptimistic, setIsCallRemovedOptimistic] = useState(false)
+
   const foundCallSignature = useMemo(() => {
     let foundSigHash: string | undefined
     Object.values(humanizerInfo.abis).some((abi) => {
       Object.values(abi).some((s) => {
-        if (s.selector === call.data.slice(0, 10)) {
+        if (call.data && s.selector === call.data.slice(0, 10)) {
           foundSigHash = s.signature
           return true
         }
@@ -74,12 +80,39 @@ const TransactionSummary = ({
   })
 
   const handleRemoveCall = useCallback(() => {
-    !!call.id &&
-      dispatch({
-        type: 'MAIN_CONTROLLER_REJECT_SIGN_ACCOUNT_OP_CALL',
-        params: { callId: call.id }
-      })
+    if (!call.id || isCallRemovedOptimistic) return
+
+    setIsCallRemovedOptimistic(true)
+    dispatch({
+      type: 'MAIN_CONTROLLER_REJECT_SIGN_ACCOUNT_OP_CALL',
+      params: { callId: call.id }
+    })
   }, [dispatch, call.id])
+
+  useEffect(() => {
+    let isMounted = true
+    // If for some reason the removal fails, we reset the optimistic state after 1 second
+    // A failure is considered if this component is still mounted, as that would mean the call was not removed
+    // from the controller state
+    if (isCallRemovedOptimistic) {
+      const timeout = setTimeout(() => {
+        if (!isMounted) return
+
+        setIsCallRemovedOptimistic(false)
+      }, 1000)
+
+      return () => {
+        isMounted = false
+        clearTimeout(timeout)
+      }
+    }
+
+    return () => {
+      isMounted = false
+    }
+  }, [isCallRemovedOptimistic])
+
+  if (isCallRemovedOptimistic) return null
 
   return (
     <ExpandableCard
@@ -118,6 +151,7 @@ const TransactionSummary = ({
             <AnimatedPressable
               style={deleteIconAnimStyle}
               onPress={handleRemoveCall}
+              disabled={isCallRemovedOptimistic}
               {...bindDeleteIconAnim}
               testID={`delete-txn-call-${index}`}
             >

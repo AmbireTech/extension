@@ -15,6 +15,7 @@ declare module '@env' {
     NFT_CDN_URL: string
     LEGENDS_NFT_ADDRESS: string
     USE_SWAP_KEY: string
+    SENTRY_DSN_LEGENDS?: string
   }
 
   /**
@@ -40,18 +41,6 @@ declare module '@env' {
    * Takes in RPC url, contract address and token Id so we can use the complete proxy URL as source for image components.
    */
   export const NFT_CDN_URL: EnvTypes['NFT_CDN_URL']
-
-  /**
-   * Possible log level descriptors, may be string, lower or upper case, or number.
-   * There are 6 levels: 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'silent'.
-   * This disables all logging below the given level, so that after a
-   * log.setLevel("warn") call log.warn("something") or log.error("something")
-   * will output messages, but log.info("something") will not.
-   */
-  export const BROWSER_EXTENSION_DEFAULT_LOG_LEVEL_PROD: log.LogLevelDesc
-
-  /** See `BROWSER_EXTENSION_DEFAULT_LOG_LEVEL_PROD` */
-  export const BROWSER_EXTENSION_DEFAULT_LOG_LEVEL_DEV: log.LogLevelDesc
 
   /**
    * This value can be used to control the state of the controller logs.
@@ -109,4 +98,9 @@ declare module '@env' {
    * Should we use the swap key for dev purposes to avoid the rate limit
    */
   export const USE_SWAP_KEY: EnvTypes['USE_SWAP_KEY']
+
+  /**
+   * Sentry is application monitoring and error tracking app
+   */
+  export const SENTRY_DSN_LEGENDS: EnvTypes['SENTRY_DSN_LEGENDS']
 }

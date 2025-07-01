@@ -13,6 +13,7 @@ export interface StepRowProps {
   renderValue?: () => JSX.Element
   isValueSmall?: boolean
   error?: boolean
+  collapsedByDefault?: boolean
 }
 
 const StepRow: FC<StepRowProps> = ({ label, value, renderValue, isValueSmall, error }) => (

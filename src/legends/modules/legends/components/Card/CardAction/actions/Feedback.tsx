@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 
 import { BrowserProvider, hashMessage, Interface } from 'ethers'
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import { Linking } from 'react-native'
 
 import { LEGENDS_CONTRACT_ADDRESS } from '@legends/constants/addresses'
@@ -12,6 +12,7 @@ import useErc5792 from '@legends/hooks/useErc5792'
 import useSwitchNetwork from '@legends/hooks/useSwitchNetwork'
 import useToast from '@legends/hooks/useToast'
 import { useCardActionContext } from '@legends/modules/legends/components/ActionModal'
+import { CardFromResponse } from '@legends/modules/legends/types'
 import { humanizeError } from '@legends/modules/legends/utils/errors/humanizeError'
 
 import Input from '../../../../../../components/Input/Input'
@@ -20,7 +21,10 @@ import CardActionWrapper from './CardActionWrapper'
 
 const iface = new Interface(['function claimXpFromFeedback(string)'])
 
-const Feedback = () => {
+interface Props {
+  meta: CardFromResponse['meta']
+}
+const Feedback = ({ meta }: Props) => {
   const [isInProgress, setIsInProgress] = useState(false)
   const [isFeedbackFormOpen, setIsFeedbackFormOpen] = useState(false)
   const [surveyCode, setSurveyCode] = useState<string>('')
@@ -29,7 +33,6 @@ const Feedback = () => {
   const { addToast } = useToast()
   const switchNetwork = useSwitchNetwork()
   const { connectedAccount, v1Account } = useAccountContext()
-  const disabledButton = Boolean(!connectedAccount || v1Account)
 
   const openForm = useCallback(() => {
     if (!connectedAccount) return addToast('No account connected')
@@ -38,7 +41,7 @@ const Feedback = () => {
     const queryParam = `${hashMessage(`${connectedAccount}ambire salt`)}`
     const queryParamName = 'ambro'
     Linking.openURL(
-      `https://survey.typeform.com/to/nbSnXDPw#${queryParamName}=${queryParam}`
+      `https://survey.typeform.com/to/eSdGAYPK#${queryParamName}=${queryParam}`
     ).catch(() => {
       addToast('Cannot open survey')
     })
@@ -98,19 +101,26 @@ const Feedback = () => {
     }
   }
 
+  const btnText = useMemo(() => {
+    if (meta?.notMetLvlThreshold) return 'Minimum level 10 threshold not met.'
+    if (!connectedAccount || v1Account)
+      return 'Switch to a new account to unlock Rewards quests. Ambire legacy Web accounts (V1) are not supported.'
+    return isFeedbackFormOpen ? 'Claim xp' : 'Open feedback form'
+  }, [meta?.notMetLvlThreshold, connectedAccount, v1Account, isFeedbackFormOpen])
+
+  const isButtonDisabled = useMemo(() => {
+    if (!connectedAccount || v1Account) return true
+    if (meta?.notMetLvlThreshold) return true
+    if (isFeedbackFormOpen && !surveyCode) return true
+    return false
+  }, [meta?.notMetLvlThreshold, connectedAccount, v1Account, isFeedbackFormOpen, surveyCode])
   return (
     <CardActionWrapper
       onButtonClick={onButtonClick}
       isLoading={isInProgress}
       loadingText="Signing..."
-      disabled={disabledButton || (isFeedbackFormOpen && !surveyCode)}
-      buttonText={
-        disabledButton
-          ? 'Switch to a new account to unlock Rewards quests. Ambire legacy Web accounts (V1) are not supported.'
-          : isFeedbackFormOpen
-          ? 'Claim xp'
-          : 'Open feedback form'
-      }
+      disabled={isButtonDisabled}
+      buttonText={btnText}
     >
       <div className={styles.wrapper}>
         {isFeedbackFormOpen && (

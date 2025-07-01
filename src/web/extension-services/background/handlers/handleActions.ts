@@ -4,10 +4,11 @@ import { BIP44_STANDARD_DERIVATION_TEMPLATE } from '@ambire-common/consts/deriva
 import { MainController } from '@ambire-common/controllers/main/main'
 import {
   SIGN_ACCOUNT_OP_MAIN,
-  SIGN_ACCOUNT_OP_SWAP
+  SIGN_ACCOUNT_OP_SWAP,
+  SIGN_ACCOUNT_OP_TRANSFER,
+  SignAccountOpType
 } from '@ambire-common/controllers/signAccountOp/helper'
 import { KeyIterator } from '@ambire-common/libs/keyIterator/keyIterator'
-import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import { browser } from '@web/constants/browserapi'
 import { Action } from '@web/extension-services/background/actions'
 import AutoLockController from '@web/extension-services/background/controllers/auto-lock'
@@ -27,7 +28,8 @@ export const handleActions = async (
     mainCtrl,
     walletStateCtrl,
     autoLockCtrl,
-    extensionUpdateCtrl
+    extensionUpdateCtrl,
+    windowId
   }: {
     pm: PortMessenger
     port: Port
@@ -35,6 +37,7 @@ export const handleActions = async (
     walletStateCtrl: WalletStateController
     autoLockCtrl: AutoLockController
     extensionUpdateCtrl: ExtensionUpdateController
+    windowId?: number
   }
 ) => {
   // @ts-ignore
@@ -195,26 +198,27 @@ export const handleActions = async (
         params.amount,
         params.recipientAddress,
         params.selectedToken,
-        params.actionExecutionType
+        params.actionExecutionType,
+        windowId
       )
 
     case 'MAIN_CONTROLLER_BUILD_CLAIM_WALLET_USER_REQUEST':
-      return await mainCtrl.buildClaimWalletUserRequest(params.token)
+      return await mainCtrl.buildClaimWalletUserRequest(params.token, windowId)
     case 'MAIN_CONTROLLER_BUILD_MINT_VESTING_USER_REQUEST':
-      return await mainCtrl.buildMintVestingUserRequest(params.token)
+      return await mainCtrl.buildMintVestingUserRequest(params.token, windowId)
     case 'MAIN_CONTROLLER_ADD_USER_REQUEST':
-      return await mainCtrl.addUserRequest(
-        params.userRequest,
-        params.actionPosition,
-        params.actionExecutionType,
-        params.allowAccountSwitch
-      )
+      return await mainCtrl.addUserRequests([params.userRequest], {
+        actionPosition: params.actionPosition,
+        actionExecutionType: params.actionExecutionType,
+        allowAccountSwitch: params.allowAccountSwitch,
+        skipFocus: params.skipFocus
+      })
     case 'MAIN_CONTROLLER_REMOVE_USER_REQUEST':
-      return mainCtrl.removeUserRequest(params.id)
+      return mainCtrl.removeUserRequests([params.id])
     case 'MAIN_CONTROLLER_RESOLVE_USER_REQUEST':
       return mainCtrl.resolveUserRequest(params.data, params.id)
     case 'MAIN_CONTROLLER_REJECT_USER_REQUEST':
-      return mainCtrl.rejectUserRequest(params.err, params.id)
+      return mainCtrl.rejectUserRequests(params.err, [params.id])
     case 'MAIN_CONTROLLER_REJECT_SIGN_ACCOUNT_OP_CALL': {
       return mainCtrl.rejectSignAccountOpCall(params.callId)
     }
@@ -257,9 +261,16 @@ export const handleActions = async (
     case 'MAIN_CONTROLLER_SIGN_ACCOUNT_OP_UPDATE_STATUS':
       return mainCtrl?.signAccountOp?.updateStatus(params.status)
     case 'MAIN_CONTROLLER_HANDLE_SIGN_AND_BROADCAST_ACCOUNT_OP': {
-      const signAccountOpType = params?.isSwapAndBridge
-        ? SIGN_ACCOUNT_OP_SWAP
-        : SIGN_ACCOUNT_OP_MAIN
+      let signAccountOpType: SignAccountOpType
+
+      if (params.updateType === 'Main') {
+        signAccountOpType = SIGN_ACCOUNT_OP_MAIN
+      } else if (params.updateType === 'Swap&Bridge') {
+        signAccountOpType = SIGN_ACCOUNT_OP_SWAP
+      } else {
+        signAccountOpType = SIGN_ACCOUNT_OP_TRANSFER
+      }
+
       return await mainCtrl.handleSignAndBroadcastAccountOp(signAccountOpType)
     }
     case 'MAIN_CONTROLLER_SIGN_ACCOUNT_OP_INIT':
@@ -267,8 +278,15 @@ export const handleActions = async (
     case 'MAIN_CONTROLLER_SIGN_ACCOUNT_OP_DESTROY':
       return mainCtrl.destroySignAccOp()
     case 'SIGN_ACCOUNT_OP_UPDATE': {
-      if (params.updateType === 'Main') return mainCtrl?.signAccountOp?.update(params)
-      return mainCtrl?.swapAndBridge?.signAccountOpController?.update(params)
+      if (params.updateType === 'Main') {
+        return mainCtrl?.signAccountOp?.update(params)
+      }
+      if (params.updateType === 'Swap&Bridge') {
+        return mainCtrl?.swapAndBridge?.signAccountOpController?.update(params)
+      }
+
+      // 'Transfer&TopUp'
+      return mainCtrl?.transfer?.signAccountOpController?.update(params)
     }
 
     case 'SELECTED_ACCOUNT_SET_DASHBOARD_NETWORK_FILTER': {
@@ -278,7 +296,9 @@ export const handleActions = async (
 
     case 'SWAP_AND_BRIDGE_CONTROLLER_INIT_FORM':
       return await mainCtrl.swapAndBridge.initForm(params.sessionId, {
-        preselectedFromToken: params.preselectedFromToken
+        preselectedFromToken: params.preselectedFromToken,
+        preselectedToToken: params.preselectedToToken ?? undefined,
+        fromAmount: params.fromAmount ?? undefined
       })
     case 'SWAP_AND_BRIDGE_CONTROLLER_UNLOAD_SCREEN':
       return mainCtrl.swapAndBridge.unloadScreen(params.sessionId, params.forceUnload)
@@ -288,16 +308,19 @@ export const handleActions = async (
       return await mainCtrl.swapAndBridge.switchFromAndToTokens()
     case 'SWAP_AND_BRIDGE_CONTROLLER_ADD_TO_TOKEN_BY_ADDRESS':
       return await mainCtrl.swapAndBridge.addToTokenByAddress(params.address)
+    case 'SWAP_AND_BRIDGE_CONTROLLER_SEARCH_TO_TOKEN':
+      return await mainCtrl.swapAndBridge.searchToToken(params.searchTerm)
     case 'SWAP_AND_BRIDGE_CONTROLLER_SELECT_ROUTE':
       return await mainCtrl.swapAndBridge.selectRoute(params.route, params.isAutoSelectDisabled)
     case 'SWAP_AND_BRIDGE_CONTROLLER_BUILD_USER_REQUEST': {
-      return await mainCtrl.buildSwapAndBridgeUserRequest()
-    }
-    case 'SWAP_AND_BRIDGE_CONTROLLER_ON_ESTIMATION_FAILURE': {
-      return await mainCtrl.swapAndBridge.onEstimationFailure()
+      return await mainCtrl.buildSwapAndBridgeUserRequest(
+        params.openActionWindow,
+        undefined,
+        windowId
+      )
     }
     case 'SWAP_AND_BRIDGE_CONTROLLER_ACTIVE_ROUTE_BUILD_NEXT_USER_REQUEST':
-      return await mainCtrl.buildSwapAndBridgeUserRequest(params.activeRouteId)
+      return await mainCtrl.buildSwapAndBridgeUserRequest(true, params.activeRouteId, windowId)
     case 'SWAP_AND_BRIDGE_CONTROLLER_UPDATE_QUOTE': {
       await mainCtrl.swapAndBridge.updateQuote({
         skipPreviousQuoteRemoval: true,
@@ -320,38 +343,72 @@ export const handleActions = async (
       return mainCtrl?.swapAndBridge.setIsAutoSelectRouteDisabled(params.isDisabled)
     case 'SWAP_AND_BRIDGE_CONTROLLER_DESTROY_SIGN_ACCOUNT_OP':
       return mainCtrl?.swapAndBridge.destroySignAccountOp()
-    case 'SWAP_AND_BRIDGE_CONTROLLER_OPEN_SIGNING_ACTION_WINDOW':
+    case 'OPEN_SIGNING_ACTION_WINDOW': {
       if (!mainCtrl.selectedAccount.account) throw new Error('No selected account')
 
-      return mainCtrl.actions.addOrUpdateAction(
-        {
-          id: `${mainCtrl.selectedAccount.account.addr}-swap-and-bridge-sign`,
-          type: 'swapAndBridge',
-          userRequest: {
-            meta: {
-              accountAddr: mainCtrl.selectedAccount.account.addr
+      const idSuffix = params.type === 'swapAndBridge' ? 'swap-and-bridge-sign' : 'transfer-sign'
+
+      return mainCtrl.actions.addOrUpdateActions(
+        [
+          {
+            id: `${mainCtrl.selectedAccount.account.addr}-${idSuffix}`,
+            type: params.type,
+            userRequest: {
+              meta: {
+                accountAddr: mainCtrl.selectedAccount.account.addr
+              }
             }
           }
-        },
-        'last',
-        'open-action-window'
+        ],
+        {
+          position: 'last',
+          executionType: 'open-action-window',
+          baseWindowId: windowId
+        }
       )
-    case 'SWAP_AND_BRIDGE_CONTROLLER_CLOSE_SIGNING_ACTION_WINDOW':
+    }
+    case 'CLOSE_SIGNING_ACTION_WINDOW': {
       if (!mainCtrl.selectedAccount.account) throw new Error('No selected account')
-      return mainCtrl.actions.removeAction(
-        `${mainCtrl.selectedAccount.account.addr}-swap-and-bridge-sign`
-      )
+
+      const idSuffix = params.type === 'swapAndBridge' ? 'swap-and-bridge-sign' : 'transfer-sign'
+
+      return mainCtrl.actions.removeActions([
+        `${mainCtrl.selectedAccount.account.addr}-${idSuffix}`
+      ])
+    }
+    case 'TRANSFER_CONTROLLER_UPDATE_FORM':
+      return mainCtrl.transfer.update(params.formValues)
+    case 'TRANSFER_CONTROLLER_RESET_FORM':
+      return mainCtrl.transfer.resetForm()
+    case 'TRANSFER_CONTROLLER_UNLOAD_SCREEN':
+      return mainCtrl.transfer.unloadScreen(false)
+    case 'TRANSFER_CONTROLLER_DESTROY_LATEST_BROADCASTED_ACCOUNT_OP':
+      return mainCtrl.transfer.destroyLatestBroadcastedAccountOp()
+    case 'TRANSFER_CONTROLLER_HAS_USER_PROCEEDED':
+      return mainCtrl.transfer.setUserProceeded(params.proceeded)
+    case 'TRANSFER_CONTROLLER_SHOULD_SKIP_TRANSACTION_QUEUED_MODAL':
+      mainCtrl.transfer.shouldSkipTransactionQueuedModal = params.shouldSkip
+      return
+    case 'TRANSFER_CONTROLLER_SIGN_ACCOUNT_OP_UPDATE':
+      return mainCtrl?.transfer?.signAccountOpController?.update(params)
+    case 'TRANSFER_CONTROLLER_SIGN_ACCOUNT_OP_UPDATE_STATUS':
+      return mainCtrl?.transfer?.signAccountOpController?.updateStatus(params.status)
     case 'MAIN_CONTROLLER_REMOVE_ACTIVE_ROUTE':
       return mainCtrl.removeActiveRoute(params.activeRouteId)
 
     case 'ACTIONS_CONTROLLER_REMOVE_FROM_ACTIONS_QUEUE':
-      return mainCtrl.actions.removeAction(params.id, params.shouldOpenNextAction)
+      return mainCtrl.actions.removeActions([params.id], params.shouldOpenNextAction)
     case 'ACTIONS_CONTROLLER_FOCUS_ACTION_WINDOW':
       return mainCtrl.actions.focusActionWindow()
     case 'ACTIONS_CONTROLLER_SET_CURRENT_ACTION_BY_ID':
-      return mainCtrl.actions.setCurrentActionById(params.actionId)
+      return mainCtrl.actions.setCurrentActionById(params.actionId, {
+        baseWindowId: windowId
+      })
     case 'ACTIONS_CONTROLLER_SET_CURRENT_ACTION_BY_INDEX':
-      return mainCtrl.actions.setCurrentActionByIndex(params.index)
+      return mainCtrl.actions.setCurrentActionByIndex(params.index, {
+        ...params.params,
+        baseWindowId: windowId
+      })
     case 'ACTIONS_CONTROLLER_SET_WINDOW_LOADED':
       return mainCtrl.actions.setWindowLoaded()
 
@@ -362,6 +419,15 @@ export const handleActions = async (
     }
     case 'MAIN_CONTROLLER_UPDATE_SELECTED_ACCOUNT_PORTFOLIO': {
       return await mainCtrl.updateSelectedAccountPortfolio(params?.forceUpdate, params?.network)
+    }
+
+    case 'DEFI_CONTOLLER_ADD_SESSION': {
+      mainCtrl.defiPositions.addSession(params.sessionId)
+      break
+    }
+    case 'DEFI_CONTOLLER_REMOVE_SESSION': {
+      mainCtrl.defiPositions.removeSession(params.sessionId)
+      break
     }
 
     case 'PORTFOLIO_CONTROLLER_GET_TEMPORARY_TOKENS': {
@@ -522,22 +588,19 @@ export const handleActions = async (
       break
     }
     case 'CHANGE_CURRENT_DAPP_NETWORK': {
-      mainCtrl.dapps.updateDapp(params.origin, { chainId: params.chainId })
+      mainCtrl.dapps.updateDapp(params.id, { chainId: params.chainId })
       await mainCtrl.dapps.broadcastDappSessionEvent(
         'chainChanged',
         {
           chain: `0x${params.chainId.toString(16)}`,
           networkVersion: `${params.chainId}`
         },
-        params.origin
+        params.id
       )
       break
     }
-    case 'DAPP_CONTROLLER_ADD_DAPP': {
-      return mainCtrl.dapps.addDapp(params)
-    }
     case 'DAPP_CONTROLLER_UPDATE_DAPP': {
-      return mainCtrl.dapps.updateDapp(params.url, params.dapp)
+      return mainCtrl.dapps.updateDapp(params.id, params.dapp)
     }
     case 'DAPP_CONTROLLER_REMOVE_DAPP': {
       await mainCtrl.dapps.broadcastDappSessionEvent('disconnect', undefined, params)
@@ -560,10 +623,19 @@ export const handleActions = async (
         } catch (e) {
           pm.send('> ui', {
             method: 'navigate',
-            params: { route: WEB_ROUTES.dashboard }
+            params: { route: '/' }
           })
         }
       }
+      break
+    }
+
+    case 'SET_THEME_TYPE': {
+      await walletStateCtrl.setThemeType(params.themeType)
+      break
+    }
+    case 'SET_LOG_LEVEL': {
+      await walletStateCtrl.setLogLevel(params.logLevel)
       break
     }
 

@@ -69,7 +69,7 @@ const GasTankInfoModal = ({
             <Text style={spacings.mbTy} appearance="secondaryText">
               {t('You have a total of ')}
               <Text weight="semiBold" appearance="secondaryText">
-                ${balanceFormatted} ${token?.symbol || ''}
+                {balanceFormatted} {token?.symbol || 'USDC'}
               </Text>
               {t(' on your Gas Tank.')}
             </Text>

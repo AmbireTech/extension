@@ -7,6 +7,7 @@ import Text from '@common/components/Text'
 import Tooltip from '@common/components/Tooltip'
 import useTheme from '@common/hooks/useTheme'
 import { SPACING_MI } from '@common/styles/spacings'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 
 interface Props {
   isSmart: boolean
@@ -15,7 +16,7 @@ interface Props {
 }
 
 const TypeBadge: FC<Props> = ({ isSmart, size, showTooltip = false }) => {
-  const { theme } = useTheme()
+  const { theme, themeType } = useTheme()
   const badgePreset = BADGE_PRESETS['smart-account']
   const tooltipId = nanoid(6)
 
@@ -34,10 +35,11 @@ const TypeBadge: FC<Props> = ({ isSmart, size, showTooltip = false }) => {
           zIndex: 2,
           borderRadius: 50,
           borderWidth: size === 'big' ? 3 : 2,
-          borderColor: theme.primaryBackground
+          borderColor:
+            themeType === THEME_TYPES.DARK ? theme.secondaryBackground : theme.primaryBackground
         }}
       >
-        <Text color="#fff" weight="semiBold" fontSize={size === 'big' ? 10 : 9}>
+        <Text color={theme.primaryBackground} weight="semiBold" fontSize={size === 'big' ? 10 : 9}>
           SA
         </Text>
       </View>
@@ -46,4 +48,4 @@ const TypeBadge: FC<Props> = ({ isSmart, size, showTooltip = false }) => {
   ) : null
 }
 
-export default TypeBadge
+export default React.memo(TypeBadge)

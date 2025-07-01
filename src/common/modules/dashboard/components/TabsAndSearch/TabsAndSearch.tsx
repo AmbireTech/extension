@@ -11,6 +11,7 @@ import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs
 import Tabs from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tabs'
 import useBanners from '@common/modules/dashboard/hooks/useBanners'
 import spacings from '@common/styles/spacings'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import { AnimatedPressable, useMultiHover } from '@web/hooks/useHover'
 import DURATIONS from '@web/hooks/useHover/durations'
@@ -46,7 +47,7 @@ const TabsAndSearch: FC<Props> = ({ openTab, setOpenTab, searchControl, sessionI
   const [, setSearchParams] = useSearchParams()
   const searchRef = useRef<any>(null)
   const searchButtonRef = useRef<any>(null)
-  const { styles, theme } = useTheme(getStyles)
+  const { styles, theme, themeType } = useTheme(getStyles)
   const { t } = useTranslation()
   const allBanners = useBanners()
   const [isSearchVisible, setIsSearchVisible] = useState(false)
@@ -55,7 +56,7 @@ const TabsAndSearch: FC<Props> = ({ openTab, setOpenTab, searchControl, sessionI
       {
         property: 'backgroundColor',
         from: theme.secondaryBackground,
-        to: theme.tertiaryBackground,
+        to: themeType === THEME_TYPES.DARK ? '#1b2b2c' : theme.tertiaryBackground,
         duration: DURATIONS.REGULAR
       },
       {
@@ -118,7 +119,10 @@ const TabsAndSearch: FC<Props> = ({ openTab, setOpenTab, searchControl, sessionI
               onHoverIn={bindControlPositionAnim.onHoverIn}
               onHoverOut={bindControlPositionAnim.onHoverOut}
             >
-              <SearchIcon color={theme.tertiaryText} width={16} />
+              <SearchIcon
+                color={themeType === THEME_TYPES.DARK ? theme.primary : theme.tertiaryText}
+                width={16}
+              />
             </AnimatedPressable>
           )}
           {isSearchVisible && (

@@ -35,6 +35,8 @@
     max-width: 44.5rem;
     margin: 0 auto 1rem;
     color: $mainText;
+      margin-bottom: 6rem;
+
   }
 }
 .saveButton {
@@ -46,5 +48,9 @@
 @media screen and (max-height: 900px) {
   .wrapper {
     padding-top: 4rem;
+    .description {
+      margin-bottom: 3rem;
+    }
   }
+
 }

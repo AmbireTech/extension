@@ -16,7 +16,7 @@ import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNav
 import Header from '@common/modules/header/components/Header'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { getAddressFromAddressState } from '@common/utils/domains'
+import { getAddressFromAddressState } from '@ambire-common/utils/domains'
 import { RELAYER_URL } from '@env'
 import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
 import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
@@ -181,7 +181,7 @@ const ViewOnlyScreen = () => {
                   style={[spacings.ptTy, animStyle]}
                   {...bindAnim}
                 >
-                  <Text fontSize={14} underline>
+                  <Text fontSize={14} underline appearance="secondaryText">
                     {t('+ Add another address')}
                   </Text>
                 </AnimatedPressable>

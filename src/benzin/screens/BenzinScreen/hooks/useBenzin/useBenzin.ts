@@ -100,7 +100,7 @@ const useBenzin = ({ onOpenExplorer, extensionAccOp }: Props = {}) => {
       let address = window.location.href
 
       if (chainId) {
-        address = `https://benzin.ambire.com/${getBenzinUrlParams({
+        address = `https://explorer.ambire.com/${getBenzinUrlParams({
           chainId,
           txnId: stepsState.txnId,
           identifiedBy

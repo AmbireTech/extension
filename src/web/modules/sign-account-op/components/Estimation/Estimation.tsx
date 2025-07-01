@@ -1,30 +1,37 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { View } from 'react-native'
+import { Pressable, View } from 'react-native'
 
 import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
 import { getFeeSpeedIdentifier } from '@ambire-common/controllers/signAccountOp/helper'
 import { FeeSpeed, SpeedCalc } from '@ambire-common/controllers/signAccountOp/signAccountOp'
 import { Warning } from '@ambire-common/interfaces/signAccountOp'
 import { FeePaymentOption } from '@ambire-common/libs/estimate/interfaces'
+import { ZERO_ADDRESS } from '@ambire-common/services/socket/constants'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import AssetIcon from '@common/assets/svg/AssetIcon'
 import FeeIcon from '@common/assets/svg/FeeIcon'
+import InfoIcon from '@common/assets/svg/InfoIcon'
 import ManifestFallbackIcon from '@common/assets/svg/ManifestFallbackIcon'
 import Alert from '@common/components/Alert'
 import Select, { SectionedSelect } from '@common/components/Select'
 import { SelectValue } from '@common/components/Select/types'
 import Text from '@common/components/Text'
+import Tooltip from '@common/components/Tooltip'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import spacings from '@common/styles/spacings'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import ManifestImage from '@web/components/ManifestImage'
+import { openInTab } from '@web/extension-services/background/webapi/tab'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 
 import EstimationSkeleton from './components/EstimationSkeleton'
+import PayOption from './components/PayOption'
 import { NO_FEE_OPTIONS } from './consts'
 import { getDefaultFeeOption, mapFeeOptions, sortFeeOptions } from './helpers'
+import getStyles from './styles'
 import { Props } from './types'
 
 const FEE_SECTION_LIST_MENU_HEADER_HEIGHT = 34
@@ -92,7 +99,7 @@ const Estimation = ({
 }: Props) => {
   const { dispatch } = useBackgroundService()
   const { t } = useTranslation()
-  const { theme } = useTheme()
+  const { theme, themeType, styles } = useTheme(getStyles)
   const { minWidthSize } = useWindowSize()
 
   const feeTokenPriceUnavailableWarning = useMemo(() => {
@@ -196,7 +203,10 @@ const Estimation = ({
       signAccountOpState.accountOp.accountAddr,
       signAccountOpState.rbfAccountOps[signAccountOpState.selectedOption.paidBy]
     )
-    return signAccountOpState.feeSpeeds[identifier]
+
+    // The fallback array covers a corner case, that I could not reproduce,
+    // but theoretically is possible - fan speed with this identifier to be missing
+    return signAccountOpState.feeSpeeds[identifier] || []
   }, [
     signAccountOpState?.feeSpeeds,
     signAccountOpState?.selectedOption,
@@ -256,6 +266,7 @@ const Estimation = ({
   const onFeeSelect = useCallback(
     ({ value }: { value: string }) => {
       if (!Object.values(FeeSpeed).includes(value as FeeSpeed)) {
+        // eslint-disable-next-line no-console
         console.error('Invalid fee speed')
         return
       }
@@ -299,6 +310,35 @@ const Estimation = ({
       }
     ]
   }, [payOptionsPaidByEOA, payOptionsPaidByUsOrGasTank, t, theme.secondaryText])
+
+  const serviceFee = useMemo(() => {
+    const fees = signAccountOpState?.accountOp.meta?.swapTxn?.serviceFee || []
+    if (fees.length === 0) return null
+    return fees[0]
+  }, [signAccountOpState])
+
+  const nativeFeeOption = signAccountOpState?.estimation.availableFeeOptions.find(
+    (feeOption) =>
+      feeOption.paidBy === signAccountOpState.accountOp.accountAddr &&
+      feeOption.token.address === ZERO_ADDRESS
+  )
+
+  const paidByNativeValue = useMemo(() => {
+    if (!serviceFee || !signAccountOpState?.estimation.availableFeeOptions.length || !hasEstimation)
+      return null
+
+    if (!nativeFeeOption) return
+
+    const mappedFeeOption = mapFeeOptions(nativeFeeOption, signAccountOpState)
+    mappedFeeOption.label = (
+      <PayOption
+        amount={BigInt(serviceFee.amount)}
+        amountUsd={serviceFee.amountUSD}
+        feeOption={nativeFeeOption}
+      />
+    )
+    return mappedFeeOption
+  }, [hasEstimation, signAccountOpState, serviceFee])
 
   const renderFeeOptionSectionHeader = useCallback(
     ({ section }: any) => {
@@ -425,7 +465,7 @@ const Estimation = ({
             // @ts-ignore
             setValue={onFeeSelect}
             options={feeSpeedOptions}
-            selectStyle={{ height: 32 }}
+            selectStyle={{ height: 32, borderWidth: themeType === THEME_TYPES.DARK ? 0 : 1 }}
             menuOptionHeight={32}
             // Display a wider menu if the fee token price is unavailable
             // as the native amount takes up more space
@@ -451,9 +491,66 @@ const Estimation = ({
           defaultFeeOption.label === NO_FEE_OPTIONS.label
         }
         defaultValue={payValue ?? undefined}
+        selectStyle={{
+          borderWidth: themeType === THEME_TYPES.DARK ? 0 : 1
+        }}
         withSearch={!!payOptionsPaidByUsOrGasTank.length || !!payOptionsPaidByEOA.length}
         stickySectionHeadersEnabled
       />
+      {serviceFee && paidByNativeValue && nativeFeeOption && (
+        <>
+          <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
+            <Text fontSize={12} style={spacings.mvTy}>
+              {t('+ Additional bridge fee')}
+            </Text>
+            <InfoIcon
+              width={16}
+              height={16}
+              data-tooltip-id="bridge-fee-icon"
+              style={spacings.mlTy}
+            />
+            <Tooltip id="bridge-fee-icon" clickable>
+              <View>
+                <Text fontSize={14} appearance="secondaryText" style={spacings.mbMi}>
+                  {t(
+                    `The selected bridge provider demands an additional service fee, paid out in ${paidByNativeValue.token.symbol}. This additional fee is not included in the gas fee displayed above or the quote. `
+                  )}
+                  <Pressable
+                    onPress={() => {
+                      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                      openInTab({ url: 'https://help.ambire.com/hc/en-us/articles/20618326653596' })
+                    }}
+                  >
+                    <Text fontSize={14} weight="medium" appearance="primary">
+                      {t('Learn more')}
+                    </Text>
+                  </Pressable>
+                </Text>
+              </View>
+            </Tooltip>
+          </View>
+          <Select
+            options={[paidByNativeValue]}
+            containerStyle={spacings.mb0}
+            value={paidByNativeValue}
+            disabled
+            defaultValue={paidByNativeValue}
+            selectStyle={{
+              borderWidth: themeType === THEME_TYPES.DARK ? 0 : 1
+            }}
+            renderSelectedOption={() => (
+              <View style={styles.nativeBridgeFeeContainer}>
+                <PayOption
+                  amount={BigInt(serviceFee.amount)}
+                  amountUsd={serviceFee.amountUSD}
+                  feeOption={nativeFeeOption}
+                />
+              </View>
+            )}
+            withSearch={false}
+          />
+        </>
+      )}
     </>
   )
 }

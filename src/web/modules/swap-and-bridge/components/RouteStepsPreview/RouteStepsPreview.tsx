@@ -3,14 +3,17 @@ import React, { Fragment, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
-import { SwapAndBridgeStep } from '@ambire-common/interfaces/swapAndBridge'
+import {
+  SwapAndBridgeActiveRoute,
+  SwapAndBridgeStep
+} from '@ambire-common/interfaces/swapAndBridge'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import { iconColors } from '@common/styles/themeConfig'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import formatTime from '@common/utils/formatTime'
@@ -26,7 +29,8 @@ const RouteStepsPreview = ({
   currentStep = 0,
   loadingEnabled,
   isSelected,
-  isDisabled
+  isDisabled,
+  routeStatus
 }: {
   steps: SwapAndBridgeStep[]
   totalGasFeesInUsd?: number
@@ -35,8 +39,9 @@ const RouteStepsPreview = ({
   loadingEnabled?: boolean
   isSelected?: boolean
   isDisabled?: boolean
+  routeStatus?: SwapAndBridgeActiveRoute['routeStatus']
 }) => {
-  const { theme } = useTheme()
+  const { theme, themeType } = useTheme()
   const { t } = useTranslation()
 
   const shouldWarnForLongEstimation = useMemo(() => {
@@ -60,6 +65,20 @@ const RouteStepsPreview = ({
     return fromAmount
   }, [steps])
 
+  const formattedRefundedAmount = useMemo(() => {
+    if (!routeStatus || routeStatus !== 'refunded') return ''
+
+    const fromStep = steps?.[0]
+    if (!fromStep) return ''
+
+    const toAmount = `${formatDecimals(
+      Number(formatUnits(fromStep.toAmount, fromStep.toAsset.decimals)),
+      'amount'
+    )}`
+
+    return toAmount
+  }, [steps, routeStatus])
+
   const formattedToAmount = useMemo(() => {
     const toStep = steps?.[steps.length - 1]
     if (!toStep) return ''
@@ -75,6 +94,14 @@ const RouteStepsPreview = ({
 
     return toAmount
   }, [steps])
+
+  const getLastStepType = (step: SwapAndBridgeStep) => {
+    if (step.userTxIndex && step.userTxIndex < currentStep) {
+      return routeStatus && routeStatus === 'refunded' ? 'warning' : 'success'
+    }
+
+    return 'default'
+  }
 
   return (
     <View style={[flexbox.flex1, common.fullWidth]}>
@@ -98,11 +125,11 @@ const RouteStepsPreview = ({
                     chainId={BigInt(step.fromAsset.chainId)}
                     address={step.fromAsset.address}
                     symbol={step.fromAsset.symbol}
-                    amount={isOnlyOneStep ? formattedFromAmount : ''}
+                    amount={isOnlyOneStep ? formattedFromAmount : formattedRefundedAmount}
                   />
                   <RouteStepsArrow
                     containerStyle={flexbox.flex1}
-                    type={step.userTxIndex < currentStep ? 'success' : 'default'}
+                    type={getLastStepType(step)}
                     badge={
                       <>
                         <TokenIcon
@@ -183,7 +210,7 @@ const RouteStepsPreview = ({
             <View style={[flexbox.directionRow, flexbox.alignCenter]}>
               {!!shouldWarnForLongEstimation && (
                 <WarningIcon
-                  color={iconColors.warning}
+                  color={theme.warningDecorative}
                   width={14}
                   height={14}
                   style={spacings.mrMi}
@@ -206,7 +233,13 @@ const RouteStepsPreview = ({
             <Text
               fontSize={12}
               weight="medium"
-              appearance={!isDisabled ? 'primary' : 'warningText'}
+              color={
+                !isDisabled
+                  ? themeType === THEME_TYPES.DARK
+                    ? theme.primaryLight
+                    : theme.primary
+                  : theme.warningText
+              }
               style={[
                 spacings.phTy,
                 {

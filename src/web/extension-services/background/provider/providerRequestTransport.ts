@@ -32,7 +32,7 @@ export type RPCMethod = keyof typeof RpcMethods | string
 
 export type RequestArguments = {
   method: RPCMethod
-  params?: Array<unknown>
+  params?: Array<any> | { [key: string]: any }
 }
 export type RequestResponse =
   | {

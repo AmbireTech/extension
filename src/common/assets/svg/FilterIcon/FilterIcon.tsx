@@ -1,18 +1,14 @@
 import React, { FC } from 'react'
 import { Path, Svg, SvgProps } from 'react-native-svg'
 
-import { iconColors } from '@common/styles/themeConfig'
+import useTheme from '@common/hooks/useTheme'
 
-const FilterIcon: FC<SvgProps> = ({
-  width = 24,
-  height = 24,
-  color = iconColors.primary,
-  ...rest
-}) => {
+const FilterIcon: FC<SvgProps> = ({ width = 24, height = 24, color, ...rest }) => {
+  const { theme } = useTheme()
   return (
     <Svg fill="none" viewBox="0 0 24 24" width={width} height={height} {...rest}>
       <Path
-        stroke={color}
+        stroke={color || theme.iconPrimary}
         strokeLinecap="round"
         strokeLinejoin="round"
         strokeMiterlimit="10"
@@ -23,4 +19,4 @@ const FilterIcon: FC<SvgProps> = ({
   )
 }
 
-export default FilterIcon
+export default React.memo(FilterIcon)

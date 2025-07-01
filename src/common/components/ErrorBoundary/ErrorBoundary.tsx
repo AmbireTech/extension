@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { Trans } from 'react-i18next'
 import { Pressable, TouchableOpacity, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
@@ -7,14 +7,18 @@ import CopyIcon from '@common/assets/svg/CopyIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import { useTranslation } from '@common/config/localization'
+import { ThemeProvider } from '@common/contexts/themeContext'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
+import GestureHandler from '@common/modules/app-init/screens/AppInit/GestureHandler'
 import spacings from '@common/styles/spacings'
+import { DEFAULT_THEME, THEME_TYPES, ThemeType } from '@common/styles/themeConfig'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { setStringAsync } from '@common/utils/clipboard'
 import { PortalHost } from '@gorhom/portal'
+import { isExtension } from '@web/constants/browserapi'
 import { openInTab } from '@web/extension-services/background/webapi/tab'
 import { getUiType } from '@web/utils/uiType'
 
@@ -29,7 +33,22 @@ interface Props {
 }
 
 const ErrorBoundary = ({ error }: Props) => {
-  const { theme } = useTheme()
+  const [themeType] = useState(
+    (isExtension && localStorage.getItem('fallbackSelectedThemeType')) || DEFAULT_THEME
+  )
+
+  return (
+    // The global theme provider is rendered below the ErrorBoundary as it requires state from other contexts.
+    // To ensure that the ErrorBoundary has access to the theme and wraps as many components as possible,
+    // we render a ThemeProvider with a forced theme type.
+    <ThemeProvider forceThemeType={themeType as ThemeType}>
+      <ErrorBoundaryInner error={error} />
+    </ThemeProvider>
+  )
+}
+
+const ErrorBoundaryInner = ({ error }: Props) => {
+  const { theme, themeType } = useTheme()
   const { t } = useTranslation()
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const { addToast } = useToast()
@@ -46,18 +65,14 @@ const ErrorBoundary = ({ error }: Props) => {
     }
   }, [addToast, error.stack, t])
 
-  // Please note that we also need to render `<PortalHost name="global" />` here.
-  // If an error occurs, AppInit -> PortalHost will not be rendered because `ErrorBoundary` is a top-level component,
-  // which prevents PortalHost from being rendered as well.
-  // We attempted to render PortalHost as a top-level component, but this approach does not work.
-  // Therefore, we need to render it in two places: here and in AppInit.
-  // This is not an issue, as either ErrorBoundary or the remaining components will be mounted,
-  // ensuring that PortalHost is only rendered once.
+  // PortalHost must be rendered here since ErrorBoundary is top-level and prevents
+  // AppInit's PortalHost from rendering on error. Rendering in both places ensures
+  // only one instance is mounted (either here or AppInit, never both).
+  // The same applies to GestureHandler which depends on the ThemeProvider.
   return (
-    <>
+    <GestureHandler>
       <PortalHost name="global" />
       <BottomSheet
-        id="error-boundary-bottom-sheet"
         sheetRef={sheetRef}
         closeBottomSheet={closeBottomSheet}
         type="modal"
@@ -88,8 +103,15 @@ const ErrorBoundary = ({ error }: Props) => {
         <Text style={{ ...spacings.mbTy, textAlign: 'center' }}>
           <Trans i18nKey="errorBoundaryHeading">
             Please share it with{' '}
-            <TouchableOpacity onPress={() => openInTab('https://help.ambire.com/hc')}>
-              <Text weight="medium" color={theme.primary}>
+            <TouchableOpacity
+              onPress={() =>
+                openInTab({ url: 'https://help.ambire.com/hc', shouldCloseCurrentWindow: true })
+              }
+            >
+              <Text
+                weight="medium"
+                color={themeType === THEME_TYPES.DARK ? theme.linkText : theme.primary}
+              >
                 our support team
               </Text>
             </TouchableOpacity>{' '}
@@ -176,21 +198,28 @@ const ErrorBoundary = ({ error }: Props) => {
           >
             <Text fontSize={14} style={text.center}>
               {t('Try reloading the page. If the issue persists, restart your browser or ')}
-              <TouchableOpacity onPress={() => openInTab('https://help.ambire.com/hc')}>
-                <Text fontSize={14} weight="medium" color={theme.primary}>
+              <TouchableOpacity
+                onPress={() =>
+                  openInTab({ url: 'https://help.ambire.com/hc', shouldCloseCurrentWindow: true })
+                }
+              >
+                <Text
+                  fontSize={14}
+                  weight="medium"
+                  color={themeType === THEME_TYPES.DARK ? theme.linkText : theme.primary}
+                >
                   {t('contact Support')}
                 </Text>
               </TouchableOpacity>
               {t(' for assistance.')}
             </Text>
           </View>
-          <TouchableOpacity
-            style={{
-              ...spacings.mbXl
-            }}
-            onPress={() => openBottomSheet()}
-          >
-            <Text fontSize={12} underline>
+          <TouchableOpacity style={{ ...spacings.mbXl }} onPress={() => openBottomSheet()}>
+            <Text
+              fontSize={12}
+              underline
+              color={themeType === THEME_TYPES.DARK ? theme.linkText : theme.primary}
+            >
               {t('Show Details')}
             </Text>
           </TouchableOpacity>
@@ -205,7 +234,7 @@ const ErrorBoundary = ({ error }: Props) => {
           />
         </View>
       </View>
-    </>
+    </GestureHandler>
   )
 }
 

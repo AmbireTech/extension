@@ -10,7 +10,6 @@ import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
-import { iconColors } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import { AnimatedPressable, DURATIONS, useMultiHover } from '@web/hooks/useHover'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
@@ -35,7 +34,7 @@ const SelectNetwork = () => {
   const { theme } = useTheme()
   const [searchParams] = useSearchParams()
 
-  const [bindNetworkButtonAnim, networkButtonAnimStyle] = useMultiHover({
+  const [bindNetworkButtonAnim, networkButtonAnimStyle, isHovered] = useMultiHover({
     values: [
       {
         property: 'backgroundColor',
@@ -114,13 +113,20 @@ const SelectNetwork = () => {
       >
         {dashboardNetworkFilter ? (
           <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-            <FilterIcon color={iconColors.dark} style={spacings.prTy} width={14} height={14} />
+            <FilterIcon
+              color={theme.primaryBackgroundInverted}
+              style={spacings.prTy}
+              width={14}
+              height={14}
+            />
             <Text fontSize={14}>{filterByNetworkName}</Text>
           </View>
         ) : (
-          <Text fontSize={14}>{t('All Networks')}</Text>
+          <Text fontSize={14} color={isHovered ? theme.primaryText : theme.secondaryText}>
+            {t('All Networks')}
+          </Text>
         )}
-        <RightArrowIcon height={12} color={iconColors.dark} />
+        <RightArrowIcon height={12} color={isHovered ? theme.primaryText : theme.secondaryText} />
       </AnimatedPressable>
     </View>
   )

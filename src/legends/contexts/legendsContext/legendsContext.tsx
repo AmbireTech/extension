@@ -32,6 +32,7 @@ const LegendsContextProvider = ({ children }: { children: React.ReactNode }) => 
   const { getActivity } = useActivityContext()
   const { updateLeaderboard } = useLeaderboardContext()
   const noConnectionAcc = Boolean(!connectedAccount || nonV2Account)
+  const [legendsAcc, setLegendsAcc] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [legends, setLegends] = useState<CardFromResponse[]>([])
@@ -61,24 +62,30 @@ const LegendsContextProvider = ({ children }: { children: React.ReactNode }) => 
 
   const getLegends = useCallback(async () => {
     setError(null)
+
+    if (legendsAcc !== connectedAccount) {
+      setIsLoading(true)
+    }
     try {
       const rawCards = await fetch(
         `${RELAYER_URL}/legends/cards${!noConnectionAcc ? `?identity=${connectedAccount}` : ''}`
       )
       const cards = await rawCards.json()
       const sortedCards = sortCards(cards)
+      setLegendsAcc(connectedAccount)
       setLegends(sortedCards)
     } catch (e: any) {
       console.error(e)
+      setError('Internal error while fetching quests. Please reload the page or try again later.')
       throw e
     } finally {
       setIsLoading(false)
     }
-  }, [connectedAccount, noConnectionAcc])
+  }, [connectedAccount, legendsAcc, noConnectionAcc])
 
   useEffect(() => {
     getLegends().catch(() => {
-      setError('Internal error while fetching legends. Please reload the page or try again later.')
+      setError('Internal error while fetching quests. Please reload the page or try again later.')
     })
   }, [getLegends])
 
@@ -131,6 +138,7 @@ const LegendsContextProvider = ({ children }: { children: React.ReactNode }) => 
     () => ({
       legends,
       isLoading,
+      setIsLoading,
       error,
       completedCount,
       getLegends,
@@ -142,6 +150,7 @@ const LegendsContextProvider = ({ children }: { children: React.ReactNode }) => 
     [
       legends,
       isLoading,
+      setIsLoading,
       error,
       completedCount,
       getLegends,

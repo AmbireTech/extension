@@ -7,13 +7,12 @@ import PendingToBeConfirmedIcon from '@common/assets/svg/PendingToBeConfirmedIco
 import Banner, { BannerButton } from '@common/components/Banner'
 import useNavigation from '@common/hooks/useNavigation'
 import useToast from '@common/hooks/useToast'
+import DashboardBannerBottomSheet from '@common/modules/dashboard/components/DashboardBanners/DashboardBannerBottomSheet'
 import { ROUTES } from '@common/modules/router/constants/common'
 import useActionsControllerState from '@web/hooks/useActionsControllerState'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useMainControllerState from '@web/hooks/useMainControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
-
-import DashboardBannerBottomSheet from '../DashboardBannerBottomSheet'
 
 const ERROR_ACTIONS = [
   'reject-accountOp',
@@ -178,37 +177,42 @@ const DashboardBanner = ({ banner }: { banner: BannerType }) => {
     ]
   )
 
+  const dismissAction = actions.find((action: Action) => action.label === 'Dismiss')
+
   const renderButtons = useMemo(
     () =>
-      actions.map((action: Action) => {
-        const isReject =
-          ERROR_ACTIONS.includes(action.actionName) ||
-          ('meta' in action && 'isHideStyle' in action.meta && action.meta.isHideStyle)
-        let actionText = action.label
-        let isDisabled = false
+      actions
+        .filter((action: Action) => action.label !== 'Dismiss')
+        .map((action: Action) => {
+          const isReject =
+            ERROR_ACTIONS.includes(action.actionName) ||
+            ('meta' in action && 'isHideStyle' in action.meta && action.meta.isHideStyle)
+          let actionText = action.label
+          let isDisabled = false
 
-        if (action.actionName === 'proceed-bridge') {
-          if (statuses.buildSwapAndBridgeUserRequest !== 'INITIAL') {
-            actionText = 'Preparing...'
+          if (action.actionName === 'proceed-bridge') {
+            if (statuses.buildSwapAndBridgeUserRequest !== 'INITIAL') {
+              actionText = 'Preparing...'
+              isDisabled = true
+            }
+          } else if (action.actionName === 'reload-selected-account' && !portfolio.isAllReady) {
             isDisabled = true
+            actionText = 'Retrying...'
           }
-        } else if (action.actionName === 'reload-selected-account' && !portfolio.isAllReady) {
-          isDisabled = true
-          actionText = 'Retrying...'
-        }
 
-        return (
-          <BannerButton
-            testID={`banner-button-${actionText.toLowerCase()}`}
-            key={action.actionName}
-            isReject={isReject}
-            text={actionText}
-            disabled={isDisabled}
-            onPress={() => handleActionPress(action)}
-          />
-        )
-      }),
-    [actions, handleActionPress, portfolio.isAllReady, statuses.buildSwapAndBridgeUserRequest]
+          return (
+            <BannerButton
+              testID={`banner-button-${actionText.toLowerCase()}`}
+              key={action.actionName}
+              isReject={isReject}
+              text={actionText}
+              disabled={isDisabled}
+              type={type}
+              onPress={() => handleActionPress(action)}
+            />
+          )
+        }),
+    [actions, type, handleActionPress, portfolio.isAllReady, statuses.buildSwapAndBridgeUserRequest]
   )
 
   return (
@@ -219,6 +223,7 @@ const DashboardBanner = ({ banner }: { banner: BannerType }) => {
         type={type}
         text={text}
         renderButtons={renderButtons}
+        onClosePress={dismissAction ? () => handleActionPress(dismissAction) : undefined}
       />
       <DashboardBannerBottomSheet
         id={String(banner.id)}

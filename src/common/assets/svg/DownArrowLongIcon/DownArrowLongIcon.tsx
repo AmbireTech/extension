@@ -1,19 +1,15 @@
 import React, { FC } from 'react'
 import { Path, Svg, SvgProps } from 'react-native-svg'
 
-import { iconColors } from '@common/styles/themeConfig'
+import useTheme from '@common/hooks/useTheme'
 
-const DownArrowLongIcon: FC<SvgProps> = ({
-  width,
-  height,
-  color = iconColors.secondary,
-  style = {}
-}) => {
+const DownArrowLongIcon: FC<SvgProps> = ({ width, height, color, style = {} }) => {
+  const { theme } = useTheme()
   return (
     <Svg width={width} height={height} style={style} viewBox="0 0 12.621 13.5">
       <Path
         fill="none"
-        stroke={color}
+        stroke={color || theme.iconSecondary}
         strokeLinecap="round"
         strokeLinejoin="round"
         strokeWidth="1.5"
@@ -23,4 +19,4 @@ const DownArrowLongIcon: FC<SvgProps> = ({
   )
 }
 
-export default DownArrowLongIcon
+export default React.memo(DownArrowLongIcon)

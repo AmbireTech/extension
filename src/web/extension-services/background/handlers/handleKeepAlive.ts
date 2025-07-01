@@ -51,5 +51,10 @@ export const handleKeepAlive = () => {
     }
   )
   // Notifies all open extension tabs/windows/popups that the service worker/background script has reactivated
-  browser.runtime.sendMessage({ action: 'sw-started' })
+  browser.runtime.sendMessage({ action: 'sw-started' }).catch(() => {
+    // Upon restarting the extension or initial boot-up, there may or they may
+    // NOT be any open extension tabs/windows/popups to "receive" this message,
+    // which is fine. Safe to ignore, to prevent errors in the service worker.
+    // Warn! If this logic actually fails, this will swallow it!
+  })
 }

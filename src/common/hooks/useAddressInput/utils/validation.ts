@@ -6,6 +6,7 @@ type AddressInputValidation = {
   address: string
   isRecipientDomainResolving: boolean
   isValidEns: boolean
+  hasDomainResolveFailed: boolean
   overwriteError?: string | boolean
   overwriteValidLabel?: string
 }
@@ -13,6 +14,7 @@ type AddressInputValidation = {
 const getAddressInputValidation = ({
   address,
   isRecipientDomainResolving,
+  hasDomainResolveFailed = false,
   isValidEns,
   overwriteError,
   overwriteValidLabel
@@ -45,6 +47,13 @@ const getAddressInputValidation = ({
     return {
       message: overwriteValidLabel,
       isError: false
+    }
+  }
+  if (hasDomainResolveFailed) {
+    return {
+      // Change ENS to domain if we add more resolvers
+      message: 'Failed to resolve ENS. Please try again later or enter a hex address.',
+      isError: true
     }
   }
   if (isValidEns) {

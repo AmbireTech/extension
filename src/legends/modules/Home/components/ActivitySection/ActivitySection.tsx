@@ -44,7 +44,7 @@ const ActivitySection = () => {
                 )
 
                 return (
-                  <tr key={txId}>
+                  <tr key={txId + submittedAt}>
                     <td>
                       <div className={styles.linksWrapper}>
                         {new Date(submittedAt).toLocaleString([], {
@@ -58,7 +58,7 @@ const ActivitySection = () => {
                         {!!network && (
                           <>
                             <a
-                              href={`https://benzin.ambire.com/?chainId=${
+                              href={`https://explorer.ambire.com/?chainId=${
                                 network.chainId
                               }&txnId=${txId}${userOpHash ? `&userOpHash=${userOpHash}` : ''}`}
                               target="_blank"

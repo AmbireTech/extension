@@ -13,6 +13,7 @@ import { isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import useBalanceAffectingErrors from '@common/modules/dashboard/hooks/useBalanceAffectingErrors'
 import spacings from '@common/styles/spacings'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 
@@ -34,7 +35,7 @@ const BalanceAffectingErrors: FC<Props> = ({
   isLoadingTakingTooLong
 }) => {
   const { t } = useTranslation()
-  const { theme } = useTheme()
+  const { theme, themeType } = useTheme()
   const { balanceAffectingErrors, portfolio } = useSelectedAccountControllerState()
 
   const areErrorsOutdatedAndPortfolioIsReady = useMemo(() => {
@@ -138,7 +139,9 @@ const BalanceAffectingErrors: FC<Props> = ({
       <BottomSheet
         style={{ maxWidth: 720, ...spacings.pvLg, ...spacings.phXl, width: '100%' }}
         id="portfolio-errors"
-        backgroundColor="primaryBackground"
+        backgroundColor={
+          themeType === THEME_TYPES.DARK ? 'secondaryBackground' : 'primaryBackground'
+        }
         sheetRef={sheetRef}
         closeBottomSheet={closeBottomSheetWrapped}
         flatListProps={{

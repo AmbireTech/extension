@@ -1,8 +1,5 @@
 import React, { createContext, useCallback, useEffect, useMemo, useState } from 'react'
 
-import { isExtension } from '@web/constants/browserapi'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-
 import { StorageController } from './storageController'
 
 const StorageContext = createContext<{
@@ -16,7 +13,6 @@ const StorageContext = createContext<{
 })
 
 const StorageProvider: React.FC = ({ children }: any) => {
-  const { dispatch } = useBackgroundService()
   const storageControllerInstance = useMemo(() => new StorageController(), [])
   const [isInitialized, setIsInitialized] = useState(storageControllerInstance.isInitialized)
 

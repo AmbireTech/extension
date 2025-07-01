@@ -4,6 +4,7 @@ import { Image, Pressable, View } from 'react-native'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 
 import getStyles from '../styles'
@@ -19,7 +20,7 @@ const formatOptionString = (optionString: string): string => {
   return formattedString
 }
 
-const Option = React.memo(({ item }: { item: SelectValue }) => {
+const Option = React.memo(({ item, ...rest }: { item: SelectValue }) => {
   const { styles } = useTheme(getStyles)
 
   // Attempt to create a dynamic testID using the label or value if they contain a string.
@@ -79,7 +80,7 @@ const MenuOption = React.memo(
     size: SelectProps['size']
     mode: SelectProps['mode']
   }) => {
-    const { theme, styles } = useTheme(getStyles)
+    const { theme, styles, themeType } = useTheme(getStyles)
 
     const onPressWrapped = useCallback(() => {
       if (disabled) return
@@ -98,8 +99,16 @@ const MenuOption = React.memo(
           size && styles[`${size}MenuOption`],
           mode === 'bottomSheet' && styles.sheetMenuOption,
           !!height && { height },
-          isSelected && { backgroundColor: theme.tertiaryBackground },
-          isHighlighted && !disabled && { backgroundColor: theme.secondaryBackground },
+          isSelected && {
+            backgroundColor: themeType === THEME_TYPES.DARK ? '#FFFFFF1F' : theme.tertiaryBackground
+          },
+          isHighlighted &&
+            !disabled && {
+              backgroundColor:
+                themeType === THEME_TYPES.DARK
+                  ? theme.tertiaryBackground
+                  : theme.secondaryBackground
+            },
           // @ts-ignore
           disabled && { opacity: 0.6, cursor: 'not-allowed' }
         ]}

@@ -1,7 +1,7 @@
 import { StyleSheet, ViewStyle } from 'react-native'
 
 import spacings from '@common/styles/spacings'
-import { ThemeProps } from '@common/styles/themeConfig'
+import { THEME_TYPES, ThemeProps, ThemeType } from '@common/styles/themeConfig'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -10,7 +10,7 @@ interface Style {
   container: ViewStyle
 }
 
-const getStyles = (theme: ThemeProps) =>
+const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
   StyleSheet.create<Style>({
     footerContainer: {
       ...spacings.phSm,
@@ -23,12 +23,8 @@ const getStyles = (theme: ThemeProps) =>
       ...spacings.phSm,
       ...spacings.pvSm,
       ...common.borderRadiusPrimary,
-      shadowOffset: {
-        width: 0,
-        height: -3
-      },
-      shadowColor: '#CACDE699',
-      shadowOpacity: 1,
+      shadowOffset: { width: 0, height: -3 },
+      shadowColor: themeType === THEME_TYPES.DARK ? '#00000099' : '#CACDE699',
       shadowRadius: 6
     }
   })

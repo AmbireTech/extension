@@ -4,7 +4,6 @@ import { TokenResult } from '@ambire-common/libs/portfolio'
 import { SelectValue } from '@common/components/Select/types'
 import SendToken from '@common/components/SendToken'
 import useBackgroundService from '@web/hooks/useBackgroundService'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControllerState'
 import useSwapAndBridgeForm from '@web/modules/swap-and-bridge/hooks/useSwapAndBridgeForm'
 import { getTokenId } from '@web/utils/token'
@@ -27,7 +26,6 @@ const FromToken: FC<Props> = ({
   setIsAutoSelectRouteDisabled,
   onFromAmountChange
 }) => {
-  const { networks } = useNetworksControllerState()
   const { dispatch } = useBackgroundService()
 
   const {
@@ -44,7 +42,7 @@ const FromToken: FC<Props> = ({
   const handleChangeFromToken = useCallback(
     ({ value }: SelectValue) => {
       const tokenToSelect = portfolioTokenList.find(
-        (tokenRes: TokenResult) => getTokenId(tokenRes, networks) === value
+        (tokenRes: TokenResult) => getTokenId(tokenRes) === value
       )
 
       setIsAutoSelectRouteDisabled(false)
@@ -67,13 +65,13 @@ const FromToken: FC<Props> = ({
         params: { fromSelectedToken: tokenToSelect }
       })
     },
-    [portfolioTokenList, setIsAutoSelectRouteDisabled, toSelectedToken, dispatch, networks]
+    [portfolioTokenList, setIsAutoSelectRouteDisabled, toSelectedToken, dispatch]
   )
 
   const handleSetMaxFromAmount = useCallback(() => {
     dispatch({
       type: 'SWAP_AND_BRIDGE_CONTROLLER_UPDATE_FORM',
-      params: { fromAmount: maxFromAmount, fromAmountFieldMode: 'token' }
+      params: { shouldSetMaxAmount: true }
     })
   }, [maxFromAmount, dispatch])
 

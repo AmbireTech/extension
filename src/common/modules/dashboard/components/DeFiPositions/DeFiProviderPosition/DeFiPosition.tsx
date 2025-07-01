@@ -1,4 +1,4 @@
-import React, { FC } from 'react'
+import React, { FC, useMemo } from 'react'
 import { View } from 'react-native'
 
 import { AssetType, Position, PositionsByProvider } from '@ambire-common/libs/defiPositions/types'
@@ -10,7 +10,7 @@ import flexbox from '@common/styles/utils/flexbox'
 import DeFiPositionAssets from './DeFiPositionAssets'
 import Badge from './DeFiPositionHeader/Badge'
 
-type Props = Omit<PositionsByProvider, 'positions' | 'positionInUSD'> &
+type Props = Omit<PositionsByProvider, 'iconUrl' | 'positions' | 'positionInUSD'> &
   Position & {
     positionInUSD?: string
     withTopBorder?: boolean
@@ -19,33 +19,34 @@ type Props = Omit<PositionsByProvider, 'positions' | 'positionInUSD'> &
 const ASSET_TYPE_TO_LABEL = {
   [AssetType.Borrow]: 'Borrowed',
   [AssetType.Collateral]: 'Collateral',
-  [AssetType.Liquidity]: 'Supplied'
+  [AssetType.Liquidity]: 'Supplied',
+  [AssetType.Reward]: 'Rewards'
 }
-
-const POSITION_TYPE_TO_NAME = {
-  lending: 'Net Worth',
-  'liquidity-pool': 'Liquidity Pool'
-}
-
-const UUID_4_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
 
 const DeFiPosition: FC<Props> = ({
-  type,
   withTopBorder,
-  id,
-  providerName,
   chainId,
   positionInUSD,
   additionalData,
   assets
 }) => {
-  const { inRange } = additionalData
+  const { inRange, name, positionIndex } = additionalData
   const suppliedAssets = assets.filter(
     (asset) => asset.type === AssetType.Liquidity || asset.type === AssetType.Collateral
   )
   const borrowedAssets = assets.filter((asset) => asset.type === AssetType.Borrow)
-  const isIdGeneratedByUs = UUID_4_REGEX.test(id)
+
+  const rewardAssets = assets.filter((asset) => asset.type === AssetType.Reward)
+
   const { theme } = useTheme()
+
+  const description = useMemo(() => {
+    try {
+      if (Number(positionIndex)) return `#${positionIndex}`
+    } catch (error) {
+      return positionIndex
+    }
+  }, [positionIndex])
 
   return (
     <View
@@ -64,18 +65,21 @@ const DeFiPosition: FC<Props> = ({
           flexbox.justifySpaceBetween
         ]}
       >
-        <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-          <Text fontSize={14} weight="semiBold">
-            {POSITION_TYPE_TO_NAME[type]}
-          </Text>
-          {!isIdGeneratedByUs && (
+        <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1]}>
+          <View>
+            <Text fontSize={14} weight="semiBold">
+              {name}
+            </Text>
+          </View>
+          {!!positionIndex && (
             <Text
               fontSize={12}
               appearance="secondaryText"
               style={[spacings.mlMi, spacings.mrTy]}
               selectable
+              numberOfLines={1}
             >
-              #{id}
+              {description}
             </Text>
           )}
           {typeof inRange === 'boolean' && (
@@ -85,14 +89,13 @@ const DeFiPosition: FC<Props> = ({
             />
           )}
         </View>
-        <Text fontSize={14} weight="semiBold">
+        <Text fontSize={14} weight="semiBold" style={spacings.ml}>
           {positionInUSD || '$-'}
         </Text>
       </View>
       {suppliedAssets.length > 0 && (
         <DeFiPositionAssets
           chainId={chainId}
-          providerName={providerName}
           assets={suppliedAssets}
           label={ASSET_TYPE_TO_LABEL[AssetType.Liquidity]}
         />
@@ -100,9 +103,15 @@ const DeFiPosition: FC<Props> = ({
       {borrowedAssets.length > 0 && (
         <DeFiPositionAssets
           chainId={chainId}
-          providerName={providerName}
           assets={borrowedAssets}
           label={ASSET_TYPE_TO_LABEL[AssetType.Borrow]}
+        />
+      )}
+      {rewardAssets.length > 0 && (
+        <DeFiPositionAssets
+          chainId={chainId}
+          assets={rewardAssets}
+          label={ASSET_TYPE_TO_LABEL[AssetType.Reward]}
         />
       )}
     </View>

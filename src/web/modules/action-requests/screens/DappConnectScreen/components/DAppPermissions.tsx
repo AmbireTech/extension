@@ -7,7 +7,6 @@ import TransactionsIcon from '@common/assets/svg/TransactionsIcon'
 import VisibilityIcon from '@common/assets/svg/VisibilityIcon'
 import Text, { Props as TextProps } from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
-import colors from '@common/styles/colors'
 import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -90,11 +89,11 @@ const DAppPermissions: FC<{
         {t('Connecting with this app will:')}
       </Text>
       <DAppPermissionWrapper responsiveSizeMultiplier={responsiveSizeMultiplier}>
-        <DAppPermissionIcon backgroundColor={colors.lightAzureBlue}>
+        <DAppPermissionIcon backgroundColor={theme.info2Background}>
           <VisibilityIcon
             width={responsiveSizeMultiplier * 24}
             height={responsiveSizeMultiplier * 24}
-            color={colors.azureBlue}
+            color={theme.info2Decorative}
           />
         </DAppPermissionIcon>
         <DAppPermissionText style={spacings.ptMi}>

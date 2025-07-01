@@ -44,6 +44,7 @@ export type CommonSelectProps = {
   testID?: string
   extraSearchProps?: { [key: string]: string }
   attemptToFetchMoreOptions?: (search: string) => void
+  onSearch?: (search: string) => void
   renderSelectedOption?: ({
     toggleMenu,
     isMenuOpen,

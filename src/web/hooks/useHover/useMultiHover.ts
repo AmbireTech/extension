@@ -85,32 +85,62 @@ const useMultiHover = ({ values, forceHoveredStyle = false }: Props) => {
     })
   }, [animatedValues])
 
-  // Animate on hover
   useEffect(() => {
-    if (!animatedValues) return
+    if (!animatedValues || !forceHoveredStyle) return
 
     animatedValues.forEach(
-      ({ property, value, from, to, duration: valueDuration }: AnimationValuesExtended) => {
+      ({ property, value, to, duration: valueDuration }: AnimationValuesExtended) => {
         const toValue = !INTERPOLATE_PROPERTIES.includes(property) ? (to as number) : 1
-        const fromValue = !INTERPOLATE_PROPERTIES.includes(property) ? (from as number) : 0
-
-        Animated.timing(value, {
-          toValue: isHovered || forceHoveredStyle ? toValue : fromValue,
-          duration: valueDuration,
-          useNativeDriver: true
-        }).start()
+        value.stopAnimation()
+        Animated.timing(value, { toValue, duration: valueDuration, useNativeDriver: true }).start()
       }
     )
-  }, [isHovered, forceHoveredStyle, animatedValues])
+  }, [forceHoveredStyle, animatedValues])
 
   // Bind the events
   const bind = useMemo(
     () => ({
       onHoverIn: () => {
-        setIsHovered(true)
+        if (!animatedValues || forceHoveredStyle) return
+
+        animatedValues.forEach(
+          ({ property, value, to, duration: valueDuration }: AnimationValuesExtended) => {
+            const toValue = !INTERPOLATE_PROPERTIES.includes(property) ? (to as number) : 1
+
+            // Stop any ongoing animation to prevent overlap.
+            // This ensures a clean transition and avoids conflicting animations
+            // that could leave the value in an unpredictable state
+            value.stopAnimation()
+            Animated.timing(value, {
+              toValue,
+              duration: valueDuration,
+              useNativeDriver: true
+            }).start()
+          }
+        )
+        // Defer state update to avoid interfering with hover event timing
+        requestAnimationFrame(() => setIsHovered(false))
       },
       onHoverOut: () => {
-        setIsHovered(false)
+        if (!animatedValues || forceHoveredStyle) return
+
+        animatedValues.forEach(
+          ({ property, value, from, duration: valueDuration }: AnimationValuesExtended) => {
+            const toValue = !INTERPOLATE_PROPERTIES.includes(property) ? (from as number) : 0
+
+            // Stop any ongoing animation to prevent overlap.
+            // This ensures a clean transition and avoids conflicting animations
+            // that could leave the value in an unpredictable state
+            value.stopAnimation()
+            Animated.timing(value, {
+              toValue,
+              duration: valueDuration,
+              useNativeDriver: true
+            }).start()
+          }
+        )
+        // Defer state update to avoid interfering with hover event timing
+        requestAnimationFrame(() => setIsHovered(false))
       },
       onPressIn: () => {
         const opacity = animatedValues.find(({ property }) => property === 'opacity')
@@ -126,7 +156,7 @@ const useMultiHover = ({ values, forceHoveredStyle = false }: Props) => {
       // @TODO: Remove
       onPressOut: () => {}
     }),
-    [animatedValues]
+    [animatedValues, forceHoveredStyle]
   )
 
   const style = useMemo(() => {
@@ -137,22 +167,13 @@ const useMultiHover = ({ values, forceHoveredStyle = false }: Props) => {
         return {
           ...acc,
           [property]: shouldInterpolate
-            ? value.interpolate({
-                inputRange: [0, 1],
-                outputRange: [from as string, to as string]
-              })
+            ? value.interpolate({ inputRange: [0, 1], outputRange: [from as string, to as string] })
             : value
         }
       }, {})
 
     // Prevents the hook from returning an empty style object on the first render
-    return memoizedValues.reduce(
-      (acc, { property, from }) => ({
-        ...acc,
-        [property]: from
-      }),
-      {}
-    )
+    return memoizedValues.reduce((acc, { property, from }) => ({ ...acc, [property]: from }), {})
   }, [animatedValues, memoizedValues])
 
   const triggerHover = useCallback(() => {

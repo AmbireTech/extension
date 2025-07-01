@@ -1,10 +1,14 @@
 import { MainController } from '@ambire-common/controllers/main/main'
-import colors from '@common/styles/colors'
+import ThemeColors from '@common/styles/themeConfig'
 import { browser } from '@web/constants/browserapi'
 import { setExtensionIcon } from '@web/extension-services/background/webapi/icon'
 
+import { WalletStateController } from './wallet-state'
+
 export class BadgesController {
   #mainCtrl: MainController
+
+  #walletStateCtrl: WalletStateController
 
   #swapAndBridgeBannersCount: number = 0
 
@@ -30,8 +34,9 @@ export class BadgesController {
     this.setBadges(this.badgesCount)
   }
 
-  constructor(mainCtrl: MainController) {
+  constructor(mainCtrl: MainController, walletStateCtrl: WalletStateController) {
     this.#mainCtrl = mainCtrl
+    this.#walletStateCtrl = walletStateCtrl
 
     this.#mainCtrl.onUpdate(() => {
       this.badgesCount = this.#mainCtrl.actions.visibleActionsQueue.filter(
@@ -76,11 +81,15 @@ export class BadgesController {
   }
 
   setBadges = (badgesCount: number) => {
-    if (badgesCount <= 0) {
-      browser.action.setBadgeText({ text: '' })
-    } else {
-      browser.action.setBadgeText({ text: `${badgesCount}` })
-      browser.action.setBadgeBackgroundColor({ color: colors.turquoise })
+    try {
+      if (badgesCount <= 0) {
+        browser.action.setBadgeText({ text: '' })
+      } else {
+        browser.action.setBadgeText({ text: `${badgesCount}` })
+        browser.action.setBadgeBackgroundColor({ color: ThemeColors.successDecorative.light })
+      }
+    } catch (error) {
+      console.error(error)
     }
   }
 

@@ -19,6 +19,16 @@ body,
   flex: 1;
 }
 
+.light-scrollbar {
+  --scroll-thumb-color: #6770b360;
+  --scroll-track-color: #dddff766;
+}
+
+.dark-scrollbar {
+  --scroll-thumb-color: #ffffff1f;
+  --scroll-track-color: #202022;
+}
+
 /* Sets specific size for the extension popup, otherwise, it shrinks to fit the content */
 .body-extension-popup {
   width: 600px;
@@ -49,11 +59,11 @@ input {
 }
 
 ::-webkit-scrollbar-track {
-  background: #dddff766;
+  background: var(--scroll-track-color);
   border-radius: 13px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #6770b360;
+  background: var(--scroll-thumb-color);
   border-radius: 13px;
 }

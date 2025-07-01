@@ -5,6 +5,12 @@
   margin-bottom: 2.75rem;
 }
 
+.wrapper {
+  @include breakpoint-down-from(small-desktop) {
+    margin-left: 3rem;
+  }
+}
+
 .groupName {
   color: $secondaryText;
   font-size: 2rem;

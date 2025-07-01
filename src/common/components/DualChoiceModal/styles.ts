@@ -1,7 +1,7 @@
 import { StyleSheet, ViewStyle } from 'react-native'
 
 import spacings from '@common/styles/spacings'
-import { ThemeProps } from '@common/styles/themeConfig'
+import { THEME_TYPES, ThemeProps, ThemeType } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 
 interface Styles {
@@ -11,7 +11,7 @@ interface Styles {
   button: ViewStyle
 }
 
-const getStyles = (theme: ThemeProps) =>
+const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
   StyleSheet.create<Styles>({
     modalHeader: {
       ...spacings.pvXl,
@@ -21,7 +21,8 @@ const getStyles = (theme: ThemeProps) =>
       ...flexbox.directionRow
     },
     modalInnerContainer: {
-      backgroundColor: theme.primaryBackground,
+      backgroundColor:
+        themeType === THEME_TYPES.DARK ? theme.tertiaryBackground : theme.primaryBackground,
       ...spacings.pv2Xl,
       ...flexbox.directionRow,
       ...flexbox.alignCenter,

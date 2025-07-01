@@ -17,7 +17,9 @@ runs:
 
     - name: Get Yarn Cache Directory Path
       id: yarn-cache-dir-path
-      run: echo "dir=$(yarn cache dir)" >> $GITHUB_OUTPUT
+      run: |
+        echo "dir=$(yarn cache dir)" >> $GITHUB_OUTPUT
+        echo "version=$(yarn --version)" >> $GITHUB_OUTPUT
       shell: bash
 
     - name: Restore Dependencies Cache
@@ -27,11 +29,10 @@ runs:
         path: |
           node_modules
           ${{ steps.yarn-cache-dir-path.outputs.dir }}
-        key: ${{ runner.os }}-${{ hashFiles('yarn.lock') }}
-        restore-keys: ${{ runner.os }}-
+        key: ${{ runner.os }}-yarn-${{ steps.yarn-cache-dir-path.outputs.version }}-${{ hashFiles('yarn.lock') }}
 
     - name: Install Dependencies
-      run: yarn
+      run: yarn install --frozen-lockfile
       shell: bash
 
     - name: Cache Dependencies
@@ -41,4 +42,4 @@ runs:
         path: |
           node_modules
           ${{ steps.yarn-cache-dir-path.outputs.dir }}
-        key: ${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+        key: ${{ runner.os }}-yarn-${{ steps.yarn-cache-dir-path.outputs.version }}-${{ hashFiles('yarn.lock') }}

@@ -222,7 +222,7 @@ export const entryPointTxnSplit: {
         )
       )
 
-      const url: string = `https://benzin.ambire.com/?chainId=${network.chainId}&txnId=${txId}&userOpHash=${finalHash}`
+      const url: string = `https://explorer.ambire.com/?chainId=${network.chainId}&txnId=${txId}&userOpHash=${finalHash}`
       return {
         to: sender,
         data: '0x',
@@ -294,7 +294,7 @@ export const entryPointTxnSplit: {
         )
       )
 
-      const url: string = `https://benzin.ambire.com/?chainId=${network.chainId}&txnId=${txId}&userOpHash=${finalHash}`
+      const url: string = `https://explorer.ambire.com/?chainId=${network.chainId}&txnId=${txId}&userOpHash=${finalHash}`
       return {
         to: sender,
         data: '0x',

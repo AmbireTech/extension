@@ -2,10 +2,8 @@ import React, { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
-import CloseIcon from '@common/assets/svg/CloseIcon'
 import Button, { Props as ButtonProps } from '@common/components/Button'
 import Tooltip from '@common/components/Tooltip'
-import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -33,7 +31,6 @@ const ActionFooter = ({
   resolveButtonTestID
 }: Props) => {
   const { t } = useTranslation()
-  const { theme } = useTheme()
 
   // Wrapped on purpose, because the `onResolve` should be called without any arguments
   const handleOnResolve = useCallback(() => onResolve(), [onResolve])
@@ -49,11 +46,7 @@ const ActionFooter = ({
           onPress={onReject}
           testID={rejectButtonTestID}
           style={flexbox.alignSelfStart}
-        >
-          <View style={spacings.pl}>
-            <CloseIcon color={theme.errorDecorative} />
-          </View>
-        </Button>
+        />
       </View>
       <ActionsPagination />
       <View style={flexbox.flex1}>

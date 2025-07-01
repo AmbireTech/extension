@@ -9,7 +9,7 @@ import useAddressInput from '@common/hooks/useAddressInput'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { getAddressFromAddressState } from '@common/utils/domains'
+import { getAddressFromAddressState } from '@ambire-common/utils/domains'
 import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 

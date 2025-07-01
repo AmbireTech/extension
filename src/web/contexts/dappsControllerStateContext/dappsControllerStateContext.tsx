@@ -3,13 +3,12 @@ import React, { createContext, useEffect, useMemo, useState } from 'react'
 
 import { DappsController } from '@ambire-common/controllers/dapps/dapps'
 import { Dapp } from '@ambire-common/interfaces/dapp'
+import { getDappIdFromUrl } from '@ambire-common/libs/dapps/helpers'
 import { isValidURL } from '@ambire-common/services/validations'
 import { getCurrentTab } from '@web/extension-services/background/webapi/tab'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useControllerState from '@web/hooks/useControllerState'
 import getOriginFromUrl from '@web/utils/getOriginFromUrl'
-
-// @ts-ignore
 
 const DappsControllerStateContext = createContext<{
   state: DappsController
@@ -26,22 +25,25 @@ const DappsControllerStateProvider: React.FC<any> = ({ children }) => {
   const state = useControllerState(controller, async (newState: DappsController) => {
     const tab = await getCurrentTab()
     if (!tab.id || !tab.url) return
-    const domain = getOriginFromUrl(tab.url)
-    // @ts-ignore
-    const currentSession = newState.dappSessions?.[`${tab.id}-${domain}`] || {}
+    const origin = getOriginFromUrl(tab.url)
+    const dappId = getDappIdFromUrl(tab.url)
 
-    const dapp = newState.dapps.find((d) => d.url === currentSession.origin || d.url === domain)
+    // @ts-ignore
+    const currentSession = newState.dappSessions?.[`${tab.id}-${origin}`] || {}
+
+    const dapp = newState.dapps.find((d) => d.id === currentSession.id || d.id === dappId)
 
     if (dapp) {
       setCurrentDapp(dapp)
     } else if (
       currentSession.name &&
       currentSession.origin &&
-      isValidURL(currentSession.origin) &&
+      isValidURL(tab.url) &&
       currentSession.isWeb3App
     ) {
       setCurrentDapp({
-        url: currentSession.origin,
+        id: dappId,
+        url: tab.url,
         name: currentSession.name,
         icon: currentSession.icon,
         isConnected: false,

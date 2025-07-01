@@ -21,7 +21,6 @@ const getStyles = (theme: ThemeProps) =>
       ...common.borderRadiusPrimary,
       ...spacings.ph,
       ...spacings.pv,
-      borderWidth: 1,
       borderColor: `${String(theme.primary)}14`
     }
   })

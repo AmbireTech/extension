@@ -1,7 +1,7 @@
 import { StyleSheet, ViewStyle } from 'react-native'
 
 import spacings from '@common/styles/spacings'
-import { ThemeProps } from '@common/styles/themeConfig'
+import { THEME_TYPES, ThemeProps, ThemeType } from '@common/styles/themeConfig'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -14,7 +14,7 @@ type Styles = {
   positionData: ViewStyle
 }
 
-const getStyles = (theme: ThemeProps) =>
+const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
   StyleSheet.create<Styles>({
     container: {
       ...common.borderRadiusPrimary,
@@ -24,7 +24,7 @@ const getStyles = (theme: ThemeProps) =>
       borderColor: 'transparent'
     },
     expandedContainer: {
-      borderColor: theme.primary
+      borderColor: themeType === THEME_TYPES.DARK ? theme.linkText : theme.primary
     },
     header: {
       ...flexbox.directionRow,

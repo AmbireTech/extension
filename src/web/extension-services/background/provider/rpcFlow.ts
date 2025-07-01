@@ -4,7 +4,7 @@ import 'reflect-metadata'
 import { ethErrors } from 'eth-rpc-errors'
 
 import { MainController } from '@ambire-common/controllers/main/main'
-import { Dapp, DappProviderRequest } from '@ambire-common/interfaces/dapp'
+import { DappProviderRequest } from '@ambire-common/interfaces/dapp'
 import { ProviderController } from '@web/extension-services/background/provider/ProviderController'
 import { RequestRes } from '@web/extension-services/background/provider/types'
 import PromiseFlow from '@web/utils/promiseFlow'
@@ -41,7 +41,7 @@ const flowContext = flow
   // unlock the wallet before proceeding with the request
   .use(async ({ request, mainCtrl, mapMethod }, next) => {
     const {
-      session: { origin }
+      session: { origin, id }
     } = request
 
     const providerCtrl = new ProviderController(mainCtrl)
@@ -49,7 +49,7 @@ const flowContext = flow
     if (!Reflect.getMetadata('SAFE', providerCtrl, mapMethod)) {
       const isUnlocked = mainCtrl.keystore.isReadyToStoreKeys ? mainCtrl.keystore.isUnlocked : true
 
-      if (!isUnlocked && mainCtrl.dapps.hasPermission(origin)) {
+      if (!isUnlocked && mainCtrl.dapps.hasPermission(id)) {
         try {
           if (lockedOrigins[origin] === undefined) {
             lockedOrigins[origin] = await new Promise((resolve: (value: any) => void, reject) => {
@@ -71,11 +71,11 @@ const flowContext = flow
   // if dApp not connected - prompt connect action window
   .use(async ({ request, mainCtrl, mapMethod }, next) => {
     const {
-      session: { origin, name, icon }
+      session: { id, origin, name, icon }
     } = request
     const providerCtrl = new ProviderController(mainCtrl)
     if (!Reflect.getMetadata('SAFE', providerCtrl, mapMethod)) {
-      if (!mainCtrl.dapps.hasPermission(origin)) {
+      if (!mainCtrl.dapps.hasPermission(id)) {
         try {
           if (connectOrigins[origin] === undefined) {
             connectOrigins[origin] = new Promise((resolve: (value: any) => void, reject) => {
@@ -91,6 +91,7 @@ const flowContext = flow
 
           const isBlacklisted = await mainCtrl.phishing.getIsBlacklisted(origin)
           mainCtrl.dapps.addDapp({
+            id,
             name,
             url: origin,
             icon,
@@ -99,11 +100,11 @@ const flowContext = flow
             chainId: 1,
             isConnected: true,
             blacklisted: isBlacklisted
-          } as Dapp)
+          })
           await mainCtrl.dapps.broadcastDappSessionEvent(
             'chainChanged',
             { chain: '0x1', networkVersion: '1' },
-            origin
+            id
           )
         } finally {
           delete connectOrigins[origin]

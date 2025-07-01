@@ -9,6 +9,7 @@
     background-color: $primaryBackground;
     flex: 1;
 
+
     .container {
       padding: 1rem;
       @include container;
@@ -17,6 +18,8 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
+        @include container;
+
 
         .sidebarButton {
           font-size: 1.25rem;
@@ -47,7 +50,7 @@
   @include breakpoint-from(large-tablet) {
     .scroll {
       .container {
-        padding: 2rem 0;
+        padding: 3.375rem 0;
 
         .header {
           .account {
@@ -77,4 +80,12 @@
 
     }
   }
+}
+
+.bannerContainer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
 }

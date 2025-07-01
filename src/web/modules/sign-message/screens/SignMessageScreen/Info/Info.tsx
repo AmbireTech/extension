@@ -74,7 +74,7 @@ const Info: FC<Props> = () => {
               fontSize={14}
               style={{ maxWidth: '100%' }}
               address={messageToSign.content.domain.verifyingContract}
-              explorerChainId={messageToSign.chainId}
+              chainId={messageToSign.chainId}
             />
             <Text fontSize={14} appearance="secondaryText" style={spacings.mlTy}>
               {t('Will verify this signature')}

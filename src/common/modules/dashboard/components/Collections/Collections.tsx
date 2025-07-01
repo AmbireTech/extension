@@ -1,7 +1,7 @@
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
-import { FlatListProps, View } from 'react-native'
+import { Animated, FlatListProps, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { Network } from '@ambire-common/interfaces/network'
@@ -30,6 +30,7 @@ interface Props {
   onScroll: FlatListProps<any>['onScroll']
   networks: Network[]
   dashboardNetworkFilterName: string | null
+  animatedOverviewHeight: Animated.Value
 }
 
 const { isPopup } = getUiType()
@@ -41,7 +42,8 @@ const Collections: FC<Props> = ({
   sessionId,
   onScroll,
   networks,
-  dashboardNetworkFilterName
+  dashboardNetworkFilterName,
+  animatedOverviewHeight
 }) => {
   const { portfolio, dashboardNetworkFilter } = useSelectedAccountControllerState()
   const { ref: modalRef, open: openModal, close: closeModal } = useModalize()
@@ -197,6 +199,7 @@ const Collections: FC<Props> = ({
         initialNumToRender={isPopup ? 4 : 10}
         windowSize={15}
         bounces={false}
+        animatedOverviewHeight={animatedOverviewHeight}
       />
     </>
   )

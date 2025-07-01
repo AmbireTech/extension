@@ -25,7 +25,6 @@ import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountCont
 import { getUiType } from '@web/utils/uiType'
 
 import getStyles from './styles'
-import { SUBMENU_OPTION_7702, SUBMENU_OPTIONS } from './submenuOptions'
 
 const { isTab } = getUiType()
 
@@ -130,9 +129,19 @@ const Account = ({
     return canBecomeSmarter(account, getAccKeys(account))
   }, [account, getAccKeys])
 
+  const submenuOptions = useMemo(
+    () => [
+      { label: 'Manage keys', value: 'keys' },
+      { label: 'Remove account', value: 'remove', style: { color: theme.errorDecorative } }
+    ],
+    [theme.errorDecorative]
+  )
+
+  const submenuOptions7702 = useMemo(() => ({ label: 'Smart settings', value: 'toSmarter' }), [])
+
   const submenu = useMemo(() => {
-    return add7702option ? [SUBMENU_OPTION_7702, ...SUBMENU_OPTIONS] : SUBMENU_OPTIONS
-  }, [add7702option])
+    return add7702option ? [submenuOptions7702, ...submenuOptions] : submenuOptions
+  }, [add7702option, submenuOptions, submenuOptions7702])
 
   const Container = React.memo(({ children }: any) => {
     return isSelectable ? (
@@ -180,7 +189,7 @@ const Account = ({
                   textProps={{
                     weight: 'medium'
                   }}
-                  minWidth={100}
+                  minWidth={120}
                   maxLength={40}
                 >
                   {!!withKeyType && (

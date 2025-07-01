@@ -61,9 +61,21 @@ const formatScreenWidth = (w: number) => {
 }
 
 const calculateWindowSizeAndPosition = async (
-  customSize?: CustomSize,
-  windowId?: number
+  baseWindow: chrome.windows.Window,
+  customSize?: CustomSize
 ): Promise<{ width: number; height: number; left: number; top: number }> => {
+  // In CI (headless: true), the calculated window position is always outside the visible screen, causing window.open() to fail with:
+  // "Invalid value for bounds. Bounds must be at least 50% within visible screen space".
+  // To fix this, we return hardcoded position values to ensure it works.
+  if (process.env.IS_TESTING === 'true') {
+    return {
+      width: 1100,
+      height: 800,
+      left: 0,
+      top: 0
+    }
+  }
+
   let screenWidth = 0
   let screenHeight = 0
 
@@ -94,14 +106,9 @@ const calculateWindowSizeAndPosition = async (
   let leftPosition = (screenWidth - desiredWidth) / 2
   let topPosition = (screenHeight - desiredHeight) / 2
 
-  const baseWindow = windowId
-    ? await chrome.windows.get(windowId, { populate: true })
-    : await chrome.windows.getCurrent({ populate: true, windowTypes: ['normal', 'panel', 'app'] })
-
-  const queryParams = windowId ? { active: true, windowId } : { active: true, currentWindow: true }
-
-  const [activeTab] =
-    [(baseWindow.tabs || []).find((t) => t.active)] || (await chrome.tabs.query(queryParams))
+  const [activeTab] = (baseWindow.tabs || []).find((t) => t.active)
+    ? [(baseWindow.tabs || []).find((t) => t.active)]
+    : await chrome.tabs.query({ active: true, windowId: baseWindow.id })
 
   let leftOffset = 0
   let topOffset = 0
@@ -132,9 +139,35 @@ const calculateWindowSizeAndPosition = async (
   }
 }
 
-const create = async (url: string, customSize?: CustomSize): Promise<WindowProps> => {
-  const window = await chrome.windows.getCurrent({ windowTypes: ['normal', 'panel', 'app'] })
-  const { width, height, left, top } = await calculateWindowSizeAndPosition(customSize, window.id)
+const create = async (
+  url: string,
+  customSize?: CustomSize,
+  baseWindowId?: number
+): Promise<WindowProps> => {
+  let baseWindow: chrome.windows.Window | undefined
+
+  if (baseWindowId) {
+    const window = await chrome.windows.get(baseWindowId, { populate: true }).catch((e) => {
+      console.error(e)
+      return undefined
+    })
+    if (window && window.id) baseWindow = window
+  }
+
+  if (!baseWindow || !baseWindow.id) {
+    console.warn(
+      baseWindowId
+        ? `No baseWindow with id: ${baseWindowId} was found in windowManager.open(); using the current window as the reference for positioning.`
+        : 'No baseWindowId provided to windowManager.open(); using the current window as the reference for positioning.'
+    )
+
+    baseWindow = await chrome.windows.getCurrent({
+      windowTypes: ['normal', 'panel', 'app'],
+      populate: true
+    })
+  }
+
+  const { width, height, left, top } = await calculateWindowSizeAndPosition(baseWindow, customSize)
 
   const win = await chrome.windows.create({
     focused: true,
@@ -147,17 +180,17 @@ const create = async (url: string, customSize?: CustomSize): Promise<WindowProps
     state: 'normal'
   })
 
-  return win && win.id
-    ? {
-        id: win.id,
-        width,
-        height,
-        left,
-        top,
-        focused: true,
-        createdFromWindowId: window.id
-      }
-    : null
+  if (!win || !win.id) return null
+
+  return {
+    id: win.id,
+    width,
+    height,
+    left,
+    top,
+    focused: true,
+    createdFromWindowId: baseWindow.id
+  }
 }
 
 const remove = async (winId: number, pm: PortMessenger) => {
@@ -165,7 +198,7 @@ const remove = async (winId: number, pm: PortMessenger) => {
   // As a workaround, we first unfocus the window, then change the route. On the next chrome.windows.create call,
   // if a blank window exists, we close it before opening a new one. This prevents stacking multiple blank windows in the background.
   if (IS_FIREFOX) {
-    const windows = await chrome.windows.getAll()
+    const windows = await chrome.windows.getAll({ populate: true })
     const windowToRemove = windows.find((w) => w.id === winId)
 
     if (
@@ -173,43 +206,115 @@ const remove = async (winId: number, pm: PortMessenger) => {
       windowToRemove.type === 'popup' && // if an action window is opened
       pm.ports.some((p) => p.name === 'popup') // if the extension popup is opened
     ) {
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      chrome.windows.update(winId, { focused: false, top: 0, left: 0, width: 0, height: 0 })
-      const tabs = await chrome.tabs.query({ windowId: winId })
-      if (tabs[0].id) await chrome.tabs.update(tabs[0].id, { url: 'about:blank' })
+      chrome.windows
+        .update(winId, { focused: false, top: 0, left: 0, width: 0, height: 0 })
+        .catch((e) => console.error(e))
+      const firstTab = windowToRemove.tabs?.[0]
+      if (firstTab?.id)
+        await chrome.tabs.update(firstTab.id, { url: 'about:blank' }).catch((e) => console.error(e))
       event.emit('windowRemoved', winId)
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       return
     }
   }
 
-  await chrome.windows.remove(winId)
+  await chrome.windows.remove(winId).catch((e) => console.error(e))
 }
 
 const open = async (
-  options: { route?: string; customSize?: CustomSize } = {}
+  options: { route?: string; customSize?: CustomSize; baseWindowId?: number } = {}
 ): Promise<WindowProps> => {
-  const { route, customSize } = options
+  const { route, customSize, baseWindowId } = options
 
   const url = `action-window.html${route ? `#/${route}` : ''}`
-  return create(url, customSize)
+  return create(url, customSize, baseWindowId)
 }
 
+// Focuses an existing window. In some cases, the passed window
+// cannot be focused (e.g., on Arc browser). If the window cannot be focused
+// within 1 second, a new window is created and the old one is removed.
 const focus = async (windowProps: WindowProps): Promise<WindowProps> => {
-  if (windowProps) {
-    const { id, width, height, createdFromWindowId } = windowProps
-    const { left, top } = await calculateWindowSizeAndPosition(
-      { width: windowProps.width, height: windowProps.height },
-      createdFromWindowId
-    )
+  if (!windowProps) throw new Error('windowProps is undefined')
 
-    const newWindowProps = { width, height, left, top, focused: true }
+  const { id, width, height, createdFromWindowId } = windowProps
 
-    await chrome.windows.update(id, newWindowProps)
+  let baseWindow: chrome.windows.Window | undefined
 
-    return { id, createdFromWindowId, ...newWindowProps }
+  if (createdFromWindowId) {
+    baseWindow = await chrome.windows.get(createdFromWindowId, { populate: true }).catch((e) => {
+      console.error(e)
+      return undefined
+    })
   }
 
-  throw new Error('windowProps is undefined')
+  if (!baseWindow || !baseWindow.id) {
+    baseWindow = await chrome.windows.getCurrent({ populate: true })
+  }
+
+  const { left, top } = await calculateWindowSizeAndPosition(baseWindow, { width, height })
+
+  const updatedProps = { width, height, left, top, focused: true }
+
+  return new Promise<WindowProps>((resolve, reject) => {
+    let isFocused = false
+    let timeoutId: NodeJS.Timeout
+
+    const cleanup = () => {
+      // eslint-disable-next-line @typescript-eslint/no-use-before-define
+      chrome.windows.onFocusChanged.removeListener(focusListener)
+      if (timeoutId) clearTimeout(timeoutId)
+    }
+
+    const focusListener = async (winId: number) => {
+      if (winId === id) {
+        const win = await chrome.windows.get(id).catch((e) => {
+          console.error(e)
+          return undefined
+        })
+        // In some Arc browser instances, the window never gets focused
+        // therefore we need a fallback logic that will open a new window
+        // and close the unfocused one
+        if (win && win.focused) {
+          isFocused = true
+          resolve({ id, createdFromWindowId, ...updatedProps })
+          cleanup()
+        }
+      }
+    }
+
+    chrome.windows.onFocusChanged.addListener(focusListener)
+
+    // Attempt to focus the window
+    chrome.windows
+      .update(id, updatedProps)
+      .then((focusedWindow) => {
+        if (focusedWindow && focusedWindow.focused) {
+          isFocused = true
+          cleanup()
+          resolve({ id, createdFromWindowId, ...updatedProps })
+        }
+      })
+      .catch((error) => {
+        cleanup()
+        reject(error)
+      })
+
+    // Handle focus timeout - fallback to creating new window
+    timeoutId = setTimeout(async () => {
+      cleanup()
+
+      if (!isFocused) {
+        try {
+          // Create new window and remove the old one
+          const newWindow = await open()
+          await chrome.windows.remove(id)
+          resolve(newWindow)
+        } catch (error) {
+          reject(error)
+        }
+      }
+    }, 1000)
+  })
 }
 
 const closeCurrentWindow = async () => {
@@ -225,8 +330,8 @@ const closeCurrentWindow = async () => {
     try {
       const win = await chrome.windows.getCurrent()
       await chrome.windows.remove(win.id!)
-    } catch (error) {
-      // silent fail
+    } catch (e) {
+      console.error(e)
     }
   } else {
     windowObj.close()

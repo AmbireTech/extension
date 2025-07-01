@@ -12,6 +12,7 @@ import Text from '@common/components/Text'
 import { FONT_FAMILIES } from '@common/hooks/useFonts'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import MaxAmount from '@web/modules/swap-and-bridge/components/MaxAmount'
@@ -60,137 +61,180 @@ const SendToken: FC<Props> = ({
   maxAmountDisabled
 }) => {
   const { portfolio } = useSelectedAccountControllerState()
-  const { theme, styles } = useTheme(getStyles)
+  const { theme, styles, themeType } = useTheme(getStyles)
   const { t } = useTranslation()
   const heading = title ?? t('Send')
 
-  const dollarIcon = useCallback(() => {
-    if (fromAmountFieldMode === 'token') return null
-
-    return (
-      <Text
-        fontSize={20}
-        weight="medium"
-        style={{ marginBottom: 3 }}
-        appearance={fromAmountInFiat ? 'primaryText' : 'secondaryText'}
-      >
-        $
-      </Text>
-    )
-  }, [fromAmountFieldMode, fromAmountInFiat])
   return (
-    <View style={spacings.mbXl}>
+    <View style={spacings.mbLg}>
       <Text appearance="secondaryText" fontSize={16} weight="medium" style={spacings.mbTy}>
         {heading}
       </Text>
       <View
         style={[
-          styles.container,
-          spacings.pr2Xl,
-          !!validateFromAmount.message && styles.containerWarning
+          styles.outerContainer,
+          validateFromAmount?.message ? styles.outerContainerWarning : {}
         ]}
       >
-        <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
-          <Select
-            setValue={handleChangeFromToken}
-            options={fromTokenOptions}
-            value={fromTokenValue}
-            testID={selectTestId}
-            bottomSheetTitle={t('Send token')}
-            searchPlaceholder={t('Token name or address...')}
-            emptyListPlaceholderText={t('No tokens found.')}
-            containerStyle={{ ...flexbox.flex1, ...spacings.mb0 }}
-            selectStyle={{
-              backgroundColor: '#54597A14',
-              borderWidth: 0
-            }}
-            mode="bottomSheet"
-          />
-          <NumberInput
-            value={fromAmountValue}
-            onChangeText={onFromAmountChange}
-            placeholder="0"
-            borderless
-            inputWrapperStyle={{ backgroundColor: 'transparent' }}
-            nativeInputStyle={{
-              fontFamily: FONT_FAMILIES.MEDIUM,
-              fontSize: 20,
-              textAlign: 'right'
-            }}
-            disabled={fromTokenAmountSelectDisabled}
-            containerStyle={[spacings.mb0, flexbox.flex1]}
-            leftIcon={dollarIcon}
-            leftIconStyle={spacings.plXl}
-            inputStyle={spacings.ph0}
-            error={validateFromAmount.message || ''}
-            errorType="warning"
-            testID={inputTestId}
-          />
-        </View>
         <View
-          style={[
-            flexbox.directionRow,
-            flexbox.alignCenter,
-            flexbox.justifySpaceBetween,
-            spacings.ptSm
-          ]}
+          style={[styles.container, validateFromAmount?.message ? styles.containerWarning : {}]}
         >
-          {!fromTokenAmountSelectDisabled && (
-            <MaxAmount
-              isLoading={!portfolio?.isReadyToVisualize}
-              maxAmount={Number(maxFromAmount)}
-              selectedTokenSymbol={fromSelectedToken?.symbol || ''}
-              onMaxButtonPress={handleSetMaxFromAmount}
-              disabled={maxAmountDisabled}
+          <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
+            <Select
+              setValue={handleChangeFromToken}
+              options={fromTokenOptions}
+              value={fromTokenValue}
+              testID={selectTestId}
+              bottomSheetTitle={t('Send token')}
+              searchPlaceholder={t('Token name or address...')}
+              emptyListPlaceholderText={t('No tokens found.')}
+              containerStyle={{ ...flexbox.flex1, ...spacings.mb0 }}
+              selectStyle={{
+                backgroundColor:
+                  themeType === THEME_TYPES.DARK ? theme.primaryBackground : '#54597A14',
+                borderWidth: 0
+              }}
+              mode="bottomSheet"
             />
-          )}
-          {fromSelectedToken?.priceIn.length !== 0 ? (
-            <>
-              <Pressable
-                onPress={handleSwitchFromAmountFieldMode}
-                style={[
-                  flexbox.directionRow,
-                  flexbox.alignCenter,
-                  flexbox.alignSelfStart,
-                  {
-                    position: 'absolute',
-                    right: -32,
-                    top: -8
-                  }
-                ]}
-                disabled={fromTokenAmountSelectDisabled}
-              >
-                {({ hovered }: any) => (
+            <NumberInput
+              value={fromAmountValue}
+              onChangeText={onFromAmountChange}
+              placeholder="0"
+              borderless
+              inputWrapperStyle={{ backgroundColor: 'transparent' }}
+              nativeInputStyle={{
+                fontFamily: FONT_FAMILIES.MEDIUM,
+                fontSize: 20,
+                textAlign: 'right'
+              }}
+              disabled={fromTokenAmountSelectDisabled}
+              containerStyle={[
+                spacings.mb0,
+                flexbox.flex1,
+                {
+                  overflow: 'hidden'
+                }
+              ]}
+              inputStyle={spacings.ph0}
+              testID={inputTestId}
+              childrenBelowInput={
+                fromAmountFieldMode === 'fiat' && (
                   <View
                     style={{
-                      backgroundColor: hovered ? '#6000FF14' : theme.infoBackground,
-                      borderRadius: 50,
-                      paddingHorizontal: 5,
-                      paddingVertical: 5,
-                      ...spacings.mrTy
+                      position: 'absolute',
+                      right: 0,
+                      top: -2,
+                      zIndex: -1,
+                      width: '100%',
+                      height: '100%',
+                      flexDirection: 'row',
+                      justifyContent: 'flex-end',
+                      alignItems: 'center'
                     }}
                   >
-                    <FlipIcon width={11} height={11} color={theme.primary} />
+                    <Text
+                      fontSize={20}
+                      weight="medium"
+                      style={{ zIndex: 3 }}
+                      appearance="secondaryText"
+                    >
+                      $
+                      <Text
+                        fontSize={20}
+                        weight="medium"
+                        style={{ opacity: 0 }}
+                        appearance="secondaryText"
+                      >
+                        {fromAmountValue || '0'}
+                      </Text>
+                    </Text>
                   </View>
-                )}
-              </Pressable>
-              <Text fontSize={12} appearance="primary" weight="medium" testID="switch-currency-sab">
-                {fromAmountFieldMode === 'token'
-                  ? `${
-                      fromAmountInFiat
-                        ? formatDecimals(parseFloat(fromAmountInFiat || '0'), 'price')
-                        : '$0'
-                    }`
-                  : `${fromAmount ? formatDecimals(parseFloat(fromAmount), 'amount') : 0} ${
-                      fromSelectedToken?.symbol
-                    }`}
-              </Text>
-            </>
-          ) : (
-            <View />
-          )}
+                )
+              }
+            />
+          </View>
+          <View
+            style={[
+              flexbox.directionRow,
+              flexbox.alignCenter,
+              flexbox.justifySpaceBetween,
+              spacings.ptSm
+            ]}
+          >
+            {!fromTokenAmountSelectDisabled && (
+              <MaxAmount
+                isLoading={!portfolio?.isReadyToVisualize}
+                maxAmount={Number(maxFromAmount)}
+                selectedTokenSymbol={fromSelectedToken?.symbol || ''}
+                onMaxButtonPress={handleSetMaxFromAmount}
+                disabled={maxAmountDisabled}
+              />
+            )}
+            {fromSelectedToken?.priceIn.length !== 0 ? (
+              <>
+                <Pressable
+                  onPress={handleSwitchFromAmountFieldMode}
+                  style={[
+                    flexbox.directionRow,
+                    flexbox.alignCenter,
+                    flexbox.alignSelfStart,
+                    {
+                      position: 'absolute',
+                      right: -32,
+                      top: -8
+                    }
+                  ]}
+                  disabled={fromTokenAmountSelectDisabled}
+                >
+                  {({ hovered }: any) => (
+                    <View
+                      style={{
+                        backgroundColor:
+                          themeType === THEME_TYPES.DARK
+                            ? hovered
+                              ? theme.primary20
+                              : `${theme.primary as string}14`
+                            : hovered
+                            ? '#6000FF14'
+                            : theme.infoBackground,
+                        borderRadius: 50,
+                        paddingHorizontal: 5,
+                        paddingVertical: 5,
+                        ...spacings.mrTy
+                      }}
+                    >
+                      <FlipIcon width={11} height={11} color={theme.primary} />
+                    </View>
+                  )}
+                </Pressable>
+                <Text
+                  fontSize={12}
+                  color={themeType === THEME_TYPES.DARK ? theme.linkText : theme.primary}
+                  weight="medium"
+                  testID="switch-currency-sab"
+                >
+                  {fromAmountFieldMode === 'token'
+                    ? `${
+                        fromAmountInFiat
+                          ? formatDecimals(parseFloat(fromAmountInFiat || '0'), 'price')
+                          : '$0'
+                      }`
+                    : `${fromAmount ? formatDecimals(parseFloat(fromAmount), 'amount') : 0} ${
+                        fromSelectedToken?.symbol
+                      }`}
+                </Text>
+              </>
+            ) : (
+              <View />
+            )}
+          </View>
         </View>
       </View>
+      {validateFromAmount?.message && (
+        <Text fontSize={12} style={[spacings.mlMi, spacings.mtMi]} appearance="errorText">
+          {validateFromAmount?.message}
+        </Text>
+      )}
     </View>
   )
 }

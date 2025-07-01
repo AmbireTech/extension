@@ -9,6 +9,7 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import useMainControllerState from '@web/hooks/useMainControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
+import useSignAccountOpControllerState from '@web/hooks/useSignAccountOpControllerState'
 import ActionsPagination from '@web/modules/action-requests/components/ActionsPagination'
 
 import getStyles from './styles'
@@ -38,12 +39,18 @@ const Footer = ({
   const { styles, theme } = useTheme(getStyles)
   const { userRequests } = useMainControllerState()
   const { account } = useSelectedAccountControllerState()
+  const { accountOp } = useSignAccountOpControllerState() || {}
+  const chainId = accountOp?.chainId
 
   const batchCount = useMemo(() => {
     return userRequests.filter((r) => {
-      return r.action.kind === 'calls' && r.meta.accountAddr === account?.addr
+      return (
+        r.action.kind === 'calls' &&
+        r.meta.accountAddr === account?.addr &&
+        r.meta.chainId === chainId
+      )
     }).length
-  }, [account?.addr, userRequests])
+  }, [account?.addr, userRequests, chainId])
 
   return (
     <View style={styles.container}>

@@ -6,18 +6,25 @@ import common from '@common/styles/utils/common'
 
 const getStyles = (theme: ThemeProps) =>
   StyleSheet.create({
+    outerContainer: {
+      borderWidth: 2,
+      borderRadius: 8,
+      borderColor: 'transparent'
+    },
+    outerContainerWarning: {
+      borderColor: theme.errorBackground
+    },
     container: {
       backgroundColor: theme.secondaryBackground,
       ...common.borderRadiusPrimary,
-      ...spacings.ptMd,
-      ...spacings.prMd,
+      ...spacings.pt,
+      ...spacings.pr2Xl,
       ...spacings.pbSm,
       ...spacings.pl
     },
     containerWarning: {
       borderWidth: 1,
-      borderColor: theme.warningDecorative,
-      backgroundColor: theme.warningBackground
+      borderColor: theme.errorDecorative
     }
   })
 export default getStyles

@@ -9,7 +9,7 @@ import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
 import Title from '@common/components/Title'
 import { Trans, useTranslation } from '@common/config/localization'
-import colors from '@common/styles/colors'
+import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexboxStyles from '@common/styles/utils/flexbox'
 import textStyles from '@common/styles/utils/text'
@@ -24,7 +24,7 @@ const GetEncryptionPublicKeyRequestScreen = () => {
   const { t } = useTranslation()
   const { dispatch } = useBackgroundService()
   const state = useActionsControllerState()
-
+  const { theme } = useTheme()
   const dappAction = useMemo(() => {
     return state.currentAction as DappRequestAction
   }, [state.currentAction])
@@ -63,7 +63,7 @@ const GetEncryptionPublicKeyRequestScreen = () => {
                 <Text fontSize={14} weight="regular">
                   {'The App '}
                 </Text>
-                <Text fontSize={14} weight="regular" color={colors.heliotrope}>
+                <Text fontSize={14} weight="regular" color={theme.primaryLight}>
                   {userRequest?.session?.name || ''}
                 </Text>
                 <Text fontSize={14} weight="regular">

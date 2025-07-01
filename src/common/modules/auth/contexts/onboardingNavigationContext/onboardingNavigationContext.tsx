@@ -1,13 +1,16 @@
 /* eslint-disable no-restricted-syntax */
-import React, { createContext, useCallback, useEffect, useMemo, useState } from 'react'
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { NavigateOptions } from 'react-router-dom'
 
+import { Account } from '@ambire-common/interfaces/account'
+import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
 import useNavigation from '@common/hooks/useNavigation'
 import usePrevious from '@common/hooks/usePrevious'
 import useRoute from '@common/hooks/useRoute'
 import { AUTH_STATUS } from '@common/modules/auth/constants/authStatus'
 import useAuth from '@common/modules/auth/hooks/useAuth'
 import { ONBOARDING_WEB_ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
+import { ControllersStateLoadedContext } from '@web/contexts/controllersStateLoadedContext'
 import useAccountPickerControllerState from '@web/hooks/useAccountPickerControllerState'
 import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
 import useBackgroundService from '@web/hooks/useBackgroundService'
@@ -23,11 +26,15 @@ const OnboardingNavigationContext = createContext<{
   goToNextRoute: (routeName?: OnboardingRoute, routeParams?: NavigateOptions) => void
   goToPrevRoute: () => void
   setTriggeredHwWalletFlow: React.Dispatch<React.SetStateAction<HwWalletsNeedingRedirect>>
+  setAccountsToPersonalize: React.Dispatch<React.SetStateAction<Account[]>>
+  accountsToPersonalize: Account[]
 }>({
   isOnboardingRoute: false,
   goToNextRoute: () => {},
   goToPrevRoute: () => {},
-  setTriggeredHwWalletFlow: () => null
+  setTriggeredHwWalletFlow: () => null,
+  setAccountsToPersonalize: () => null,
+  accountsToPersonalize: []
 })
 
 class RouteNode {
@@ -47,6 +54,15 @@ class RouteNode {
   }
 }
 
+const getAccountsToPersonalizeFromSession = (): Account[] => {
+  try {
+    const stored = sessionStorage.getItem('accountsToPersonalize')
+    return stored ? parse(stored) : []
+  } catch {
+    return []
+  }
+}
+
 const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode }) => {
   const { hasPasswordSecret } = useKeystoreControllerState()
   const { path, params } = useRoute()
@@ -61,6 +77,29 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
     () => ONBOARDING_WEB_ROUTES.includes((path || '').substring(1)),
     [path]
   )
+  const { areControllerStatesLoaded } = useContext(ControllersStateLoadedContext)
+
+  // session storage is needed here to prevent state reset on account-personalize page reload
+  const [accountsToPersonalize, setAccountsToPersonalize] = useState<Account[]>(() => {
+    const currentRoute = path?.substring(1)
+    if (currentRoute === WEB_ROUTES.accountPersonalize) return getAccountsToPersonalizeFromSession()
+
+    return []
+  })
+
+  useEffect(() => {
+    const currentRoute = path?.substring(1)
+    if (currentRoute === WEB_ROUTES.accountPersonalize)
+      sessionStorage.setItem('accountsToPersonalize', stringify(accountsToPersonalize))
+  }, [accountsToPersonalize, path])
+
+  useEffect(() => {
+    const currentRoute = path?.substring(1)
+    if (currentRoute !== WEB_ROUTES.accountPersonalize) {
+      sessionStorage.removeItem('accountsToPersonalize')
+      if (accountsToPersonalize.length) setAccountsToPersonalize([])
+    }
+  }, [path, accountsToPersonalize.length])
 
   const onboardingRoutesTree = useMemo(() => {
     const nextAccountPickerRoutes =
@@ -199,8 +238,7 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
 
   const goToNextRoute = useCallback(
     (routeName?: OnboardingRoute, routeParams?: NavigateOptions) => {
-      const currentRoute = path?.substring(1)
-      if (!currentRoute) return
+      const currentRoute = path?.substring(1) || '/'
 
       let nextRoute: RouteNode | null = null
       if (routeName && ONBOARDING_WEB_ROUTES.includes(routeName)) {
@@ -212,15 +250,27 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
       }
 
       if (nextRoute) {
-        navigate(nextRoute.name, {
-          state: { ...routeParams, internal: true }
-        })
+        if (nextRoute.name === '/') {
+          dispatch({ type: 'OPEN_EXTENSION_POPUP' })
+        } else {
+          navigate(nextRoute.name, {
+            state: { ...routeParams, internal: true }
+          })
+        }
         if (!history.includes(currentRoute)) {
           setHistory((prevHistory) => [...prevHistory, currentRoute])
         }
       }
     },
-    [onboardingRoutesTree, findNextEnabledRoute, navigate, deepSearchRouteNode, path, history]
+    [
+      onboardingRoutesTree,
+      findNextEnabledRoute,
+      navigate,
+      deepSearchRouteNode,
+      path,
+      history,
+      dispatch
+    ]
   )
 
   const goToPrevRoute = useCallback(() => {
@@ -353,9 +403,37 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
     }
   }, [goToPrevRoute, history, deepSearchRouteNode, onboardingRoutesTree])
 
+  useEffect(() => {
+    const currentRoute = path?.substring(1)
+    if (!currentRoute) return
+    if (!areControllerStatesLoaded) return
+
+    if (
+      !hasPasswordSecret &&
+      authStatus === AUTH_STATUS.AUTHENTICATED &&
+      !ONBOARDING_WEB_ROUTES.includes(currentRoute)
+    ) {
+      goToNextRoute(WEB_ROUTES.keyStoreSetup)
+    }
+  }, [authStatus, path, goToNextRoute, hasPasswordSecret, areControllerStatesLoaded])
+
   const value = useMemo(
-    () => ({ isOnboardingRoute, goToNextRoute, goToPrevRoute, setTriggeredHwWalletFlow }),
-    [isOnboardingRoute, goToPrevRoute, goToNextRoute, setTriggeredHwWalletFlow]
+    () => ({
+      isOnboardingRoute,
+      goToNextRoute,
+      goToPrevRoute,
+      setTriggeredHwWalletFlow,
+      setAccountsToPersonalize,
+      accountsToPersonalize
+    }),
+    [
+      isOnboardingRoute,
+      goToPrevRoute,
+      goToNextRoute,
+      setTriggeredHwWalletFlow,
+      setAccountsToPersonalize,
+      accountsToPersonalize
+    ]
   )
   return (
     <OnboardingNavigationContext.Provider value={value}>

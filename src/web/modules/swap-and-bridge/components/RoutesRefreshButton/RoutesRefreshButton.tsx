@@ -9,7 +9,6 @@ import Text from '@common/components/Text'
 import Tooltip from '@common/components/Tooltip'
 import usePrevious from '@common/hooks/usePrevious'
 import useTheme from '@common/hooks/useTheme'
-import { iconColors } from '@common/styles/themeConfig'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControllerState'
 
@@ -115,7 +114,7 @@ const RoutesRefreshButton = ({ width = 32, height = 32 }: SvgProps) => {
             cx="11"
             cy="11"
             r={radius - 1.5}
-            stroke={iconColors.primary}
+            stroke={theme.iconPrimary}
             fill="none"
             strokeWidth={strokeWidth}
           />

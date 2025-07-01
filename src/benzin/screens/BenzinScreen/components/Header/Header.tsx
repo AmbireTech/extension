@@ -5,7 +5,7 @@ import { Network } from '@ambire-common/interfaces/network'
 import { StepsData } from '@benzin/screens/BenzinScreen/hooks/useSteps'
 import { ActiveStepType } from '@benzin/screens/BenzinScreen/interfaces/steps'
 import { IS_MOBILE_UP_BENZIN_BREAKPOINT } from '@benzin/screens/BenzinScreen/styles'
-import AmbireLogo from '@common/assets/svg/AmbireLogoWithText'
+import AmbireLogoHorizontal from '@common/components/AmbireLogoHorizontal'
 import NetworkIcon from '@common/components/NetworkIcon'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
@@ -36,9 +36,9 @@ const Header: FC<Props> = ({ activeStep, network, stepsState }) => {
         ]}
       >
         <View style={styles.logoWrapper}>
-          <AmbireLogo
-            width={180 / (IS_MOBILE_UP_BENZIN_BREAKPOINT ? 1 : 1.8)}
-            height={59 / (IS_MOBILE_UP_BENZIN_BREAKPOINT ? 1 : 1.8)}
+          <AmbireLogoHorizontal
+            width={165 / (IS_MOBILE_UP_BENZIN_BREAKPOINT ? 1 : 1.8)}
+            height={56 / (IS_MOBILE_UP_BENZIN_BREAKPOINT ? 1 : 1.8)}
           />
         </View>
         <Text

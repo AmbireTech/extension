@@ -141,37 +141,45 @@ const MigrateRewardsModal: React.FC<MigrateRewardsModalProps> = ({
 
         <div className={styles.contentWrapper}>
           <h2 className={styles.title}>Migrate xWALLET</h2>
-          <div className={styles.content}>
-            <div>
-              <p className={styles.sectionTitle}>Your xWALLET</p>
-              <div className={styles.sectionContent}>
-                <p>
-                  {formatDecimals(
-                    Number(
-                      parseFloat(formatUnits(walletBalance, xWalletClaimableBalance.decimals))
-                    ),
-                    'amount'
-                  )}
-                </p>
-                <p className={styles.usdValue}>
-                  {
-                    getAndFormatTokenDetails(
-                      {
-                        ...xWalletClaimableBalance,
-                        amount: walletBalance,
-                        flags: { rewardsType: 'wallet-rewards' }
-                      },
-                      [{ chainId: 1 }]
-                    ).balanceUSDFormatted
-                  }{' '}
-                </p>
+          {walletBalance ? (
+            <div className={styles.content}>
+              <div>
+                <p className={styles.sectionTitle}>Your xWALLET</p>
+                <div className={styles.sectionContent}>
+                  <p>
+                    {walletBalance &&
+                      formatDecimals(
+                        Number(
+                          parseFloat(formatUnits(walletBalance, xWalletClaimableBalance.decimals))
+                        ),
+                        'amount'
+                      )}
+                  </p>
+                  <p className={styles.usdValue}>
+                    {walletBalance &&
+                      getAndFormatTokenDetails(
+                        {
+                          ...xWalletClaimableBalance,
+                          amount: walletBalance,
+                          flags: { rewardsType: 'wallet-rewards' }
+                        },
+                        [{ chainId: 1 }]
+                      ).balanceUSDFormatted}{' '}
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
+          ) : (
+            <p className={styles.noWalletTitle}>No xWALLET found</p>
+          )}
 
           <CardActionButton
             onButtonClick={onButtonClick}
-            buttonText="Migrate xWALLET"
+            buttonText={
+              disabledButton
+                ? 'Switch to a new account to unlock Rewards quests.'
+                : 'Migrate xWALLET'
+            }
             className={styles.button}
             disabled={disabledButton || isSigning || isLoading}
           />

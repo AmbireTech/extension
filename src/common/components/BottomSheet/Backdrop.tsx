@@ -27,7 +27,7 @@ const Backdrop = ({
   customZIndex,
   withBlur = true
 }: Props) => {
-  const { styles } = useTheme(getStyles)
+  const { styles, theme } = useTheme(getStyles)
 
   const opacity = React.useRef(new Animated.Value(0)).current
 
@@ -84,7 +84,7 @@ const Backdrop = ({
             style={[
               StyleSheet.absoluteFillObject,
               {
-                backgroundColor: 'rgba(45, 49, 77, 0.6)'
+                backgroundColor: theme.backdrop
               }
             ]}
           />

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-floating-promises */
-import React, { createContext, useEffect, useMemo, useRef } from 'react'
+import React, { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { ErrorRef } from '@ambire-common/controllers/eventEmitter/eventEmitter'
 import { ToastOptions } from '@common/contexts/toastContext'
@@ -18,11 +18,11 @@ import eventBus from '@web/extension-services/event/eventBus'
 import { PortMessenger } from '@web/extension-services/messengers'
 import { getUiType } from '@web/utils/uiType'
 
-let dispatch: BackgroundServiceContextReturnType['dispatch']
+let globalDispatch: BackgroundServiceContextReturnType['dispatch']
 let pm: PortMessenger
 const actionsBeforeBackgroundReady: Action[] = []
 let backgroundReady: boolean
-let connectPort: () => void = () => {}
+let connectPort: () => Promise<void> = () => Promise.resolve()
 // Facilitate communication between the different parts of the browser extension.
 // Utilizes the PortMessenger class to establish a connection between the popup
 // and background pages, and the eventBus to emit and listen for events.
@@ -31,7 +31,7 @@ let connectPort: () => void = () => {}
 // based on the state of the background process and for sending dApps-initiated
 // actions to the background for further processing.
 if (isExtension) {
-  connectPort = () => {
+  connectPort = async () => {
     pm = new PortMessenger()
     backgroundReady = false
 
@@ -45,12 +45,16 @@ if (isExtension) {
     pm.addListener(pm.ports[0].id, (messageType, { method, params, forceEmit }) => {
       if (method === 'portReady') {
         backgroundReady = true
-        actionsBeforeBackgroundReady.forEach((a) => dispatch(a))
+        actionsBeforeBackgroundReady.forEach((a) => globalDispatch(a))
         actionsBeforeBackgroundReady.length = 0
         return
       }
       if (messageType === '> ui') {
-        eventBus.emit(method, params, forceEmit)
+        if (method === 'closePopup' && getUiType().isPopup) {
+          closeCurrentWindow()
+        } else {
+          eventBus.emit(method, params, forceEmit)
+        }
       }
       if (messageType === '> ui-error') {
         eventBus.emit('error', params)
@@ -70,7 +74,7 @@ if (isExtension) {
 
 const ACTIONS_TO_DISPATCH_EVEN_WHEN_HIDDEN = ['INIT_CONTROLLER_STATE']
 
-dispatch = (action) => {
+globalDispatch = (action, windowId?: number) => {
   // Dispatch the action only when the tab or popup is focused or active.
   // Otherwise, multiple dispatches could occur if the same screen is open in multiple tabs/popup windows,
   // causing unpredictable background/controllers state behavior.
@@ -83,7 +87,7 @@ dispatch = (action) => {
   if (!backgroundReady) {
     actionsBeforeBackgroundReady.push(action)
   } else {
-    pm.send('> background', action)
+    pm.send('> background', action, { windowId })
   }
 }
 
@@ -97,9 +101,24 @@ const BackgroundServiceProvider: React.FC<any> = ({ children }) => {
   const timer: any = useRef()
   const isFocused = useIsScreenFocused()
   const { navigate } = useNavigation()
+  const [windowId, setWindowId] = useState<number | undefined>()
+
+  useEffect(() => {
+    if (!isExtension) return
+    ;(async () => {
+      if (getUiType().isPopup) {
+        const win = await chrome.windows.getCurrent()
+        setWindowId(win.id)
+      } else if (getUiType().isTab) {
+        const tab = await chrome.tabs.getCurrent()
+        if (tab) setWindowId(tab.windowId)
+      }
+    })()
+  }, [])
+
   useEffect(() => {
     const url = `${window.location.origin}${route.pathname}${route.search}${route.hash}`
-    dispatch({ type: 'UPDATE_PORT_URL', params: { url } })
+    globalDispatch({ type: 'UPDATE_PORT_URL', params: { url } })
   }, [route])
 
   useEffect(() => {
@@ -198,8 +217,17 @@ const BackgroundServiceProvider: React.FC<any> = ({ children }) => {
     return () => eventBus.removeEventListener('navigate', onNavigate)
   }, [addToast, navigate])
 
+  const dispatch = useCallback(
+    (action: Action) => {
+      globalDispatch(action, windowId)
+    },
+    [windowId]
+  )
+
   return (
-    <BackgroundServiceContext.Provider value={useMemo(() => ({ dispatch }), [])}>
+    <BackgroundServiceContext.Provider
+      value={useMemo(() => ({ dispatch, windowId }), [dispatch, windowId])}
+    >
       {children}
     </BackgroundServiceContext.Provider>
   )
