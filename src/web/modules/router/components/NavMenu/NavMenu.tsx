@@ -2,7 +2,10 @@ import React, { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Pressable, ScrollView, View } from 'react-native'
 
+import BugIcon from '@common/assets/svg/BugIcon'
+import BulbIcon from '@common/assets/svg/BulbIcon'
 import DiscordIcon from '@common/assets/svg/DiscordIcon'
+import HelpIcon from '@common/assets/svg/HelpIcon'
 import LockFilledIcon from '@common/assets/svg/LockFilledIcon'
 import MaximizeIcon from '@common/assets/svg/MaximizeIcon'
 import TelegramIcon from '@common/assets/svg/TelegramIcon'
@@ -16,9 +19,9 @@ import useTheme from '@common/hooks/useTheme'
 import Header from '@common/modules/header/components/Header'
 import getHeaderStyles from '@common/modules/header/components/Header/styles'
 import HeaderBackButton from '@common/modules/header/components/HeaderBackButton'
-import { WEB_ROUTES } from '@common/modules/router/constants/common'
-import spacings from '@common/styles/spacings'
-import common from '@common/styles/utils/common'
+import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
+import spacings, { SPACING_SM } from '@common/styles/spacings'
+import common, { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import {
@@ -42,6 +45,29 @@ export const SOCIAL = [
   { Icon: TwitterIcon, url: TWITTER_URL, label: 'Twitter' },
   { Icon: TelegramIcon, url: TELEGRAM_URL, label: 'Telegram' },
   { Icon: DiscordIcon, url: DISCORD_URL, label: 'Discord' }
+]
+
+const OTHER_LINKS = [
+  {
+    key: 'help-center',
+    Icon: React.memo(HelpIcon),
+    label: 'Help Center',
+    path: 'https://help.ambire.com/hc/en-us',
+    isExternal: true
+  },
+  {
+    key: 'report-issue',
+    Icon: React.memo(BugIcon),
+    label: 'Report an issue',
+    path: 'https://help.ambire.com/hc/en-us/requests/new',
+    isExternal: true
+  },
+  {
+    key: 'about',
+    Icon: BulbIcon,
+    label: 'About',
+    path: ROUTES.settingsAbout
+  }
 ]
 
 const { isTab, isPopup } = getUiType()
@@ -182,26 +208,34 @@ const NavMenu = () => {
           <View style={styles.separatorWrapper}>
             <View style={styles.separator} />
           </View>
-          <View style={[flexbox.directionRow, spacings.ph, spacings.pb]}>
-            {SOCIAL.map(({ Icon, url, label }) => (
+          <View style={[flexbox.directionRow, flexbox.justifySpaceBetween, spacings.plMd, spacings.pb]}>
+            <View style={[flexbox.directionRow, flexbox.flex1]}>
+            {OTHER_LINKS.map(({ Icon, path, label, isExternal }, i) => (
               <Pressable
                 style={() => [
                   flexbox.directionRow,
                   flexbox.alignCenter,
-                  flexbox.flex1,
-                  spacings.ph,
-                  spacings.pvTy,
-                  common.borderRadiusPrimary
+                  spacings.mrMd,
+                  common.borderRadiusPrimary,
                 ]}
-                key={url}
-                onPress={() => createTab(url)}
+                key={path}
+                onPress={() => {
+                  if (isExternal) {
+                    createTab(path)
+                  } else {
+                    navigate(path)
+                  }
+                }}
               >
                 {({ hovered }: any) => (
                   <>
+                   <View style={{ backgroundColor: theme.secondaryBackground, paddingVertical: SPACING_SM /2 ,paddingHorizontal: SPACING_SM / 2, borderRadius: BORDER_RADIUS_PRIMARY, ...flexbox.justifyCenter, ...spacings.mrTy }}>
                     <Icon
-                      style={spacings.mrSm}
+                      width={20}
+                      height={20}
                       color={hovered ? theme.iconSecondary : theme.iconPrimary}
-                    />
+                      />
+                    </View>
                     <Text
                       fontSize={14}
                       weight="medium"
@@ -213,6 +247,29 @@ const NavMenu = () => {
                 )}
               </Pressable>
             ))}
+          </View>
+          <View style={[flexbox.directionRow, flexbox.wrap]}>
+            {SOCIAL.map(({ Icon, url, label }) => (
+              <Pressable
+              style={() => [
+                flexbox.directionRow,
+                flexbox.alignCenter,
+                flexbox.flex1,
+            
+                common.borderRadiusPrimary
+              ]}
+              key={url}
+              onPress={() => createTab(url)}
+              >
+                {({ hovered }: any) => (
+                  <Icon
+                    style={spacings.mrSm}
+                    color={hovered ? theme.iconSecondary : theme.iconPrimary}
+                  />
+                )}
+              </Pressable>
+            ))}
+            </View>
           </View>
         </View>
       </View>

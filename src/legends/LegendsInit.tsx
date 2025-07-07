@@ -1,7 +1,7 @@
 import React from 'react'
-import ErrorBoundary from 'react-native-error-boundary'
 
 import { PortalHost, PortalProvider } from '@gorhom/portal'
+import * as Sentry from '@sentry/react'
 import { EthereumProvider } from '@web/extension-services/inpage/EthereumProvider'
 
 import ErrorPage from './components/ErrorPage'
@@ -16,9 +16,11 @@ declare global {
   }
 }
 
+const errorComponent = <ErrorPage />
+
 const LegendsInit = () => {
   return (
-    <ErrorBoundary FallbackComponent={() => <ErrorPage />}>
+    <Sentry.ErrorBoundary fallback={errorComponent}>
       <PortalProvider>
         <ToastContextProvider>
           <AccountContextProvider>
@@ -29,7 +31,7 @@ const LegendsInit = () => {
         </ToastContextProvider>
         <PortalHost name="global" />
       </PortalProvider>
-    </ErrorBoundary>
+    </Sentry.ErrorBoundary>
   )
 }
 

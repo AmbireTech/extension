@@ -215,16 +215,20 @@ const TransactionSummary = ({
           paddingHorizontal: 42 * sizeMultiplier[size] // magic number
         }}
       >
-        {call.warnings?.map((warning) => {
-          return (
-            <Label
-              size={size}
-              key={warning.content + warning.level}
-              text={warning.content}
-              type="warning"
-            />
-          )
-        })}
+        {!call.validationError ? (
+          call.warnings?.map((warning) => {
+            return (
+              <Label
+                size={size}
+                key={warning.content + warning.level}
+                text={warning.content}
+                type="warning"
+              />
+            )
+          })
+        ) : (
+          <Label size={size} key={call.validationError} text={call.validationError} type="error" />
+        )}
       </View>
     </ExpandableCard>
   )

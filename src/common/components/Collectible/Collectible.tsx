@@ -75,7 +75,13 @@ const Collectible: FC<Props> = ({
       {...bindAnim}
     >
       <Animated.View
-        style={[flexbox.flex1, { transform: [{ scale: animStyle.scaleX as number }] }]}
+        style={[
+          flexbox.flex1,
+          {
+            transform: [{ scale: animStyle.scaleX as number }],
+            backgroundColor: theme.secondaryBackground
+          }
+        ]}
       >
         <ManifestImage
           uri={imageUrl}

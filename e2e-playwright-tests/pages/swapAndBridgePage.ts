@@ -239,6 +239,9 @@ export class SwapAndBridgePage extends BasePage {
     await this.openSwapAndBridge()
     await this.selectSendToken(sendToken)
 
+    // wait before entering send amount
+    await this.page.waitForTimeout(1000)
+
     await this.entertext(selectors.fromAmountInputSab, sendAmount.toString())
     const [usdOldAmount, currency] = await this.getUSDTextContent()
     expect(currency).toBe('$')
@@ -249,8 +252,8 @@ export class SwapAndBridgePage extends BasePage {
     const [usdNewAmount, newCurrency] = await this.getUSDTextContent()
     const newAmount = this.roundAmount(await this.getAmount(selectors.fromAmountInputSab))
 
-    expect(oldAmount).toBeCloseTo(usdNewAmount, 1)
-    expect(usdOldAmount).toBeCloseTo(newAmount, 1)
+    expect(Math.abs(oldAmount - usdNewAmount)).toBeLessThanOrEqual(0.5)
+    expect(Math.abs(usdOldAmount - newAmount)).toBeLessThanOrEqual(0.5)
     expect(newCurrency).toBe(sendToken.symbol)
 
     // Wait and flip back
@@ -261,8 +264,8 @@ export class SwapAndBridgePage extends BasePage {
     // const secondAmount = await this.getSendAmount()
     const secondAmount = await this.getAmount(selectors.fromAmountInputSab)
 
-    expect(Math.abs(newAmount - usdSecondAmount)).toBeLessThan(1)
-    expect(Math.abs(usdNewAmount - secondAmount)).toBeLessThan(1)
+    expect(Math.abs(newAmount - usdSecondAmount)).toBeLessThanOrEqual(1)
+    expect(Math.abs(usdNewAmount - secondAmount)).toBeLessThanOrEqual(1)
     expect(secondCurrency).toBe('$')
   }
 

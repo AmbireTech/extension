@@ -43,7 +43,7 @@ const ContactsList = () => {
             <TitleAndIcon title={t('Contacts')} icon={AccountsFilledIcon} />
             {manuallyAddedContacts.map((contact) => (
               <AddressBookContact
-                testID={`name-${contact.name.toLowerCase().replace(/\s+/g, '-')}`}
+                testID={`contact-name-text`}
                 key={`${contact.address}-${!contact.isWalletAccount ? 'wallet' : 'address'}`}
                 name={contact.name}
                 address={contact.address}

@@ -95,7 +95,6 @@ const InviteAcc: FC<Props> = ({
   const { validation } = useAddressInput({
     addressState,
     setAddressState: setAddressStateKeyValue,
-    addToast,
     handleCacheResolvedDomain,
     overwriteError: overwriteErrorMessage,
     overwriteValidLabel: overwriteSuccessMessage

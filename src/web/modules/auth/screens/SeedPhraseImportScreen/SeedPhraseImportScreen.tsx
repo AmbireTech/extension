@@ -9,6 +9,7 @@ import BrushIcon from '@common/assets/svg/BrushIcon'
 import Button from '@common/components/Button'
 import InputPassword from '@common/components/InputPassword'
 import Panel from '@common/components/Panel'
+import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
 import TextArea from '@common/components/TextArea'
 import Toggle from '@common/components/Toggle'
@@ -139,7 +140,7 @@ const SeedPhraseImportScreen = () => {
           totalSteps={2}
         >
           <View style={[flexbox.justifySpaceBetween, flexbox.flex1]}>
-            <View>
+            <ScrollableWrapper>
               <Button
                 testID="clear-seed-phrase-btn"
                 type="ghost2"
@@ -256,16 +257,17 @@ const SeedPhraseImportScreen = () => {
                   />
                 </View>
               ) : null}
+            </ScrollableWrapper>
+            <View style={spacings.pt}>
+              <Button
+                testID="import-button"
+                size="large"
+                text={t('Confirm')}
+                hasBottomSpacing={false}
+                onPress={handleFormSubmit}
+                disabled={!isValid || seedPhraseStatus === 'invalid'}
+              />
             </View>
-
-            <Button
-              testID="import-button"
-              size="large"
-              text={t('Confirm')}
-              hasBottomSpacing={false}
-              onPress={handleFormSubmit}
-              disabled={!isValid || seedPhraseStatus === 'invalid'}
-            />
           </View>
         </Panel>
       </TabLayoutWrapperMainContent>

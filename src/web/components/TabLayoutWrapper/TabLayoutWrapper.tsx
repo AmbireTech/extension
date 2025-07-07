@@ -126,12 +126,13 @@ export const TabLayoutWrapperMainContent: React.FC<TabLayoutWrapperMainContentPr
   const { isOnboardingRoute } = useOnboardingNavigation()
   const { minHeightSize } = useWindowSize()
 
-  if (withScroll) {
+  if (withScroll && !isOnboardingRoute) {
     return (
       <ScrollableWrapper
         contentContainerStyle={[
           styles.contentContainer,
           isOnboardingRoute && (minHeightSize('l') ? spacings.pv0 : spacings.pt2Xl),
+          isTab && minHeightSize('m') && spacings.mt0,
           contentContainerStyle
         ]}
         showsVerticalScrollIndicator={false}
@@ -144,7 +145,15 @@ export const TabLayoutWrapperMainContent: React.FC<TabLayoutWrapperMainContentPr
   }
 
   return (
-    <View ref={wrapperRef} style={[styles.contentContainer, contentContainerStyle]}>
+    <View
+      ref={wrapperRef}
+      style={[
+        styles.contentContainer,
+        isOnboardingRoute && (minHeightSize('l') ? spacings.pv0 : spacings.pt2Xl),
+        isTab && minHeightSize('m') && spacings.mt0,
+        contentContainerStyle
+      ]}
+    >
       {children}
     </View>
   )

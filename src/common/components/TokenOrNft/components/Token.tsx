@@ -6,7 +6,6 @@ import { Linking, Pressable, View } from 'react-native'
 import { getCoinGeckoTokenUrl } from '@ambire-common/consts/coingecko'
 import { Network } from '@ambire-common/interfaces/network'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
-import OpenIcon from '@common/assets/svg/OpenIcon'
 import HumanizerAddress from '@common/components/HumanizerAddress'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
@@ -152,10 +151,10 @@ const InnerToken: FC<Props> = ({
                 fontSize={textSize}
                 address={address}
                 hideLinks={hideLinks}
+                hideLogo
               />
             )}
           </Text>
-          {network && <OpenIcon width={14} height={14} />}
         </Pressable>
       )}
     </>

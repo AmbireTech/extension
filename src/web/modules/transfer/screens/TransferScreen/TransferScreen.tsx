@@ -107,7 +107,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
         params: { formValues: { amount: newAmount } }
       })
     },
-    forceUpdateOnChangeList: [state.amountUpdateCounter, state.amountFieldMode]
+    forceUpdateOnChangeList: [state.programmaticUpdateCounter, state.amountFieldMode]
   })
   const [addressStateFieldValue, setAddressStateFieldValue] = useSyncedState<string>({
     backgroundState: addressState.fieldValue,
@@ -116,7 +116,8 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
         type: 'TRANSFER_CONTROLLER_UPDATE_FORM',
         params: { formValues: { addressState: { fieldValue: newAddress } } }
       })
-    }
+    },
+    forceUpdateOnChangeList: [state.programmaticUpdateCounter]
   })
 
   const isLocalStateOutOfSync =
@@ -288,7 +289,6 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     overwriteValidLabel: validationFormMsgs?.recipientAddress.success
       ? validationFormMsgs.recipientAddress.message
       : '',
-    addToast,
     handleCacheResolvedDomain
   })
 

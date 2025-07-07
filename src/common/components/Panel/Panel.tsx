@@ -21,6 +21,7 @@ interface Props extends ViewProps {
   step?: number
   totalSteps?: number
   panelWidth?: number
+  panelRef?: React.MutableRefObject<any>
 }
 
 export const getPanelPaddings = (
@@ -78,6 +79,7 @@ const Panel: React.FC<Props> = ({
   step = 0,
   totalSteps = 2,
   panelWidth = 400,
+  panelRef,
   ...rest
 }) => {
   const { styles, theme } = useTheme(getStyles)
@@ -103,10 +105,12 @@ const Panel: React.FC<Props> = ({
   if (type === 'onboarding') {
     return (
       <View
+        ref={panelRef}
         style={[
           styles.onboardingContainer,
           {
             width: '100%',
+            minHeight: minHeightSize(620) ? 444 : 486,
             maxWidth: panelWidth,
             alignSelf: 'center',
             maxHeight: minHeightSize('l') ? '95%' : '92%'
@@ -141,7 +145,11 @@ const Panel: React.FC<Props> = ({
   }
 
   return (
-    <View style={[styles.container, getPanelPaddings(maxWidthSize, spacingsSize), style]} {...rest}>
+    <View
+      ref={panelRef}
+      style={[styles.container, getPanelPaddings(maxWidthSize, spacingsSize), style]}
+      {...rest}
+    >
       {!!title && (
         <Text
           fontSize={maxWidthSize('xl') ? 20 : 18}

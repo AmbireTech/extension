@@ -45,7 +45,7 @@ const KeyStoreSetupScreen = () => {
       backgroundColor={theme.secondaryBackground}
       header={<Header mode="custom-inner-content" withAmbireLogo />}
     >
-      <TabLayoutWrapperMainContent>
+      <TabLayoutWrapperMainContent withScroll={false}>
         <Panel
           type="onboarding"
           title={t('Set extension password')}
@@ -55,45 +55,39 @@ const KeyStoreSetupScreen = () => {
           step={2}
           totalSteps={2}
         >
-          <View>
-            <Text
-              weight="medium"
-              appearance="secondaryText"
-              style={[spacings.mbXl, spacings.phSm, { textAlign: 'center' }]}
-            >
-              {t('Used to access your local wallet and encrypt your data.')}
-            </Text>
-            <KeyStoreSetupForm agreedWithTerms={agreedWithTerms}>
-              <Checkbox
-                testID="keystore-setup-checkbox"
-                value={agreedWithTerms}
-                onValueChange={setAgreedWithTerms}
-                style={[spacings.mlSm, spacings.pt2Xl]}
-                label={
-                  <Trans>
-                    <Text fontSize={14} appearance="secondaryText">
-                      I agree to the{' '}
-                    </Text>
-                    <TouchableOpacity
-                      testID="terms-of-service-btn"
-                      onPress={() => openTermsModal()}
+          <Text
+            weight="medium"
+            appearance="secondaryText"
+            style={[spacings.mbXl, spacings.phSm, { textAlign: 'center' }]}
+          >
+            {t('Used to access your local wallet and encrypt your data.')}
+          </Text>
+
+          <KeyStoreSetupForm agreedWithTerms={agreedWithTerms}>
+            <Checkbox
+              testID="keystore-setup-checkbox"
+              value={agreedWithTerms}
+              onValueChange={setAgreedWithTerms}
+              style={[spacings.mlSm, spacings.ptXl, spacings.mb0]}
+              label={
+                <Trans>
+                  <Text fontSize={14} appearance="secondaryText">
+                    I agree to the{' '}
+                  </Text>
+                  <TouchableOpacity testID="terms-of-service-btn" onPress={() => openTermsModal()}>
+                    <Text
+                      fontSize={14}
+                      underline
+                      color={themeType === THEME_TYPES.DARK ? theme.primary : theme.infoDecorative}
                     >
-                      <Text
-                        fontSize={14}
-                        underline
-                        color={
-                          themeType === THEME_TYPES.DARK ? theme.primary : theme.infoDecorative
-                        }
-                      >
-                        Terms of Service
-                      </Text>
-                    </TouchableOpacity>
-                    .
-                  </Trans>
-                }
-              />
-            </KeyStoreSetupForm>
-          </View>
+                      Terms of Service
+                    </Text>
+                  </TouchableOpacity>
+                  .
+                </Trans>
+              }
+            />
+          </KeyStoreSetupForm>
         </Panel>
       </TabLayoutWrapperMainContent>
       <BottomSheet

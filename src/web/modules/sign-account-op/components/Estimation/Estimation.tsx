@@ -95,7 +95,8 @@ const Estimation = ({
   isSponsored,
   sponsor,
   updateType,
-  slowRequest
+  slowRequest,
+  bundlerNonceDiscrepancy
 }: Props) => {
   const { dispatch } = useBackgroundService()
   const { t } = useTranslation()
@@ -338,7 +339,7 @@ const Estimation = ({
       />
     )
     return mappedFeeOption
-  }, [hasEstimation, signAccountOpState, serviceFee])
+  }, [hasEstimation, signAccountOpState, serviceFee, nativeFeeOption])
 
   const renderFeeOptionSectionHeader = useCallback(
     ({ section }: any) => {
@@ -550,6 +551,13 @@ const Estimation = ({
             withSearch={false}
           />
         </>
+      )}
+      {bundlerNonceDiscrepancy && (
+        <View style={[flexbox.directionRow, flexbox.alignEnd, spacings.mt]}>
+          <Text fontSize={12} appearance="warningText">
+            {t(bundlerNonceDiscrepancy.title)}
+          </Text>
+        </View>
       )}
     </>
   )

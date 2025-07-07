@@ -1,7 +1,8 @@
-import { getAddress, ZeroAddress } from 'ethers'
+import { ZeroAddress } from 'ethers'
 import React, { FC, useEffect, useMemo, useState } from 'react'
 
 import { HumanizerMetaAddress } from '@ambire-common/libs/humanizer/interfaces'
+import { getAddressCaught } from '@ambire-common/utils/getAddressCaught'
 import { Props as TextProps } from '@common/components/Text'
 import { isExtension } from '@web/constants/browserapi'
 import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
@@ -31,7 +32,7 @@ const HumanizerAddressInner: FC<Props> = ({
   const { portfolio } = useSelectedAccountControllerState()
   const accountsState = useAccountsControllerState()
   const { contacts = [] } = useAddressBookControllerState()
-  const checksummedAddress = useMemo(() => getAddress(address), [address])
+  const checksummedAddress = getAddressCaught(address)
   const [fetchedAddressLabel, setFetchedAddressLabel] = useState<null | string>(null)
 
   const localAddressLabel = useMemo(() => {

@@ -3,13 +3,12 @@ import { Controller, UseFormSetValue, UseFormTrigger, UseFormWatch } from 'react
 import { View } from 'react-native'
 
 import { AddressStateOptional } from '@ambire-common/interfaces/domains'
+import { getAddressFromAddressState } from '@ambire-common/utils/domains'
 import DeleteIcon from '@common/assets/svg/DeleteIcon'
 import AddressInput from '@common/components/AddressInput'
 import useAddressInput from '@common/hooks/useAddressInput'
-import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { getAddressFromAddressState } from '@ambire-common/utils/domains'
 import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 
@@ -39,7 +38,6 @@ const AddressField: FC<Props> = ({
   setValue,
   trigger
 }) => {
-  const { addToast } = useToast()
   const { dispatch } = useBackgroundService()
   const accountsState = useAccountsControllerState()
   const accounts = watch('accounts')
@@ -102,7 +100,6 @@ const AddressField: FC<Props> = ({
     setAddressState,
     overwriteError,
     handleRevalidate,
-    addToast,
     handleCacheResolvedDomain
   })
 

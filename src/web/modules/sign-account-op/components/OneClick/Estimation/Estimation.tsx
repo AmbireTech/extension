@@ -72,7 +72,8 @@ const OneClickEstimation = ({
     warningModalRef,
     dismissWarning,
     acknowledgeWarning,
-    slowPaymasterRequest
+    slowPaymasterRequest,
+    bundlerNonceDiscrepancy
   } = useSign({
     signAccountOpState: signAccountOpController,
     handleBroadcast: handleBroadcastAccountOp,
@@ -122,6 +123,13 @@ const OneClickEstimation = ({
               <View style={[flexbox.directionRow, flexbox.alignEnd, spacings.mt]}>
                 <Text fontSize={12} appearance="errorText">
                   {t(signingErrors[0].title)}
+                </Text>
+              </View>
+            )}
+            {bundlerNonceDiscrepancy && (
+              <View style={[flexbox.directionRow, flexbox.alignEnd, spacings.mt]}>
+                <Text fontSize={12} appearance="warningText">
+                  {t(bundlerNonceDiscrepancy.title)}
                 </Text>
               </View>
             )}

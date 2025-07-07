@@ -8,12 +8,15 @@ export abstract class BasePage {
 
   abstract init(param?): Promise<void> // ⛔ Must be implemented in subclasses
 
-  async navigateToHome() {
-    await this.page.goto('/')
+  async navigateToURL(url: string) {
+    await this.page.goto(`${url}`)
   }
 
   async click(selector: string, index?: number): Promise<void> {
-    await this.page.getByTestId(selector).nth(index ?? 0).click()
+    await this.page
+      .getByTestId(selector)
+      .nth(index ?? 0)
+      .click()
   }
 
   async clickOnMenuToken(token: Token, menuSelector: string = selectors.tokensSelect) {
@@ -56,6 +59,10 @@ export abstract class BasePage {
     await this.page.locator(locator).pressSequentially(text)
   }
 
+  async clearFieldInput(selector: string): Promise<void> {
+    await this.page.getByTestId(selector).fill('')
+  }
+
   async getText(selector: string): Promise<string> {
     return await this.page.getByTestId(selector).innerText()
   }
@@ -69,14 +76,14 @@ export abstract class BasePage {
   }
 
   async handleNewPage(locator: Locator) {
-    const context = this.page.context();
+    const context = this.page.context()
 
     const [actionWindowPagePromise] = await Promise.all([
       context.waitForEvent('page'),
-      locator.first().click({ timeout: 5000 })  // trigger opening
-    ]);
+      locator.first().click({ timeout: 5000 }) // trigger opening
+    ])
 
-    return actionWindowPagePromise;
+    return actionWindowPagePromise
   }
 
   async pause() {
@@ -95,5 +102,9 @@ export abstract class BasePage {
 
   async compareText(selector: string, text: string) {
     await expect(this.page.getByTestId(selector)).toContainText(text)
+  }
+
+  async isVisible(selector: string): Promise<boolean> {
+    return this.page.getByTestId(selector).isVisible()
   }
 }

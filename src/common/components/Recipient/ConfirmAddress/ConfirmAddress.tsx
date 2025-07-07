@@ -62,6 +62,7 @@ const ConfirmAddress = ({
       </View>
       <AnimatedPressable style={animStyle} onPress={onAddToAddressBook} {...bindAnim}>
         <Text
+          testID='send-form-add-to-address-book-button'
           style={{
             textDecorationLine: 'underline',
             ...spacings.mbTy

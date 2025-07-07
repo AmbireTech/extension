@@ -7,6 +7,7 @@ import { EntropyGenerator } from '@ambire-common/libs/entropyGenerator/entropyGe
 import Button from '@common/components/Button'
 import Checkbox from '@common/components/Checkbox'
 import Panel from '@common/components/Panel'
+import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useExtraEntropy from '@common/hooks/useExtraEntropy'
@@ -17,6 +18,7 @@ import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
+import text from '@common/styles/utils/text'
 import {
   TabLayoutContainer,
   TabLayoutWrapperMainContent
@@ -109,10 +111,10 @@ const CreateSeedPhrasePrepareScreen = () => {
           withBackButton
           onBackButtonPress={goToPrevRoute}
         >
-          <View>
-            <Text weight="medium" appearance="secondaryText" style={[spacings.mbXl]}>
-              {t('Before you begin, check these security tips.')}
-            </Text>
+          <Text weight="medium" appearance="secondaryText" style={[spacings.mbXl, text.center]}>
+            {t('Before you begin, check these security tips.')}
+          </Text>
+          <ScrollableWrapper style={flexbox.flex1} contentContainerStyle={{ flexGrow: 1 }}>
             {CHECKBOXES.map(({ id, label }, index) => (
               <View
                 key={id}
@@ -145,13 +147,14 @@ const CreateSeedPhrasePrepareScreen = () => {
                 </Pressable>
               </View>
             ))}
+          </ScrollableWrapper>
+          <View style={spacings.pt}>
             <Button
               testID="review-seed-phrase-btn"
               disabled={!allCheckboxesChecked}
               accessibilityRole="button"
               size="large"
               text={t('Create recovery phrase')}
-              style={spacings.mt2Xl}
               hasBottomSpacing={false}
               onPress={handleSubmit}
             />

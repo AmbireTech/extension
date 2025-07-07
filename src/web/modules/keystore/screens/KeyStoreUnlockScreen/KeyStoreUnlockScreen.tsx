@@ -31,6 +31,7 @@ import { getUiType } from '@web/utils/uiType'
 import getStyles from './styles'
 
 const FOOTER_BUTTON_HIT_SLOP = { top: 10, bottom: 15 }
+const MIN_PANEL_SIZE = 480
 
 const isPopup = getUiType().isPopup
 
@@ -101,7 +102,8 @@ const KeyStoreUnlockScreen = () => {
     if (isPopup) return POPUP_WIDTH
     if (height > MAX_SIZE) return POPUP_WIDTH
 
-    return height - 2 * SPACING
+    const size = height - 2 * SPACING
+    return size < MIN_PANEL_SIZE ? MIN_PANEL_SIZE : size
   }, [height])
 
   return (
@@ -134,10 +136,16 @@ const KeyStoreUnlockScreen = () => {
     >
       <Container
         contentContainerStyle={[flexbox.alignCenter, spacings.pv0]}
+        style={flexbox.flex1}
         wrapperRef={contentContainerRef}
-        withScroll={false}
+        withScroll
       >
-        <View style={[styles.container, { width: panelSize, height: panelSize }]}>
+        <View
+          style={[
+            styles.container,
+            { aspectRatio: 1, minHeight: MIN_PANEL_SIZE, maxHeight: panelSize }
+          ]}
+        >
           <View style={styles.backgroundWrapper}>
             <View style={styles.backgroundSVG}>
               <UnlockScreenBackground />
@@ -167,7 +175,7 @@ const KeyStoreUnlockScreen = () => {
             <View style={[flexbox.flex1, flexbox.alignCenter, flexbox.justifyCenter]}>
               <AmbireLogoWithTextMonochrome
                 width={122}
-                height={height < 530 && !isPopup ? 90 : 128}
+                height={height < 550 && !isPopup ? 90 : 128}
               />
             </View>
             <View>

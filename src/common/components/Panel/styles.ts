@@ -1,5 +1,6 @@
 import { StyleSheet, ViewStyle } from 'react-native'
 
+import spacings from '@common/styles/spacings'
 import { THEME_TYPES, ThemeProps, ThemeType } from '@common/styles/themeConfig'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -27,7 +28,8 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) => {
       ...(themeType === THEME_TYPES.DARK ? common.shadowTertiaryDarkMode : common.shadowTertiary),
       ...flexbox.alignSelfCenter,
       minHeight: 486,
-      overflow: 'hidden'
+      overflow: 'hidden',
+      ...spacings.mbMd
     },
     innerContainer: {
       ...flexbox.alignSelfCenter,

@@ -136,7 +136,6 @@ const TokenIcon: React.FC<Props> = ({
         />
       ) : uriStatus === UriStatus.IMAGE_MISSING ? (
         <MissingTokenIcon
-          withRect={withContainer}
           width={withContainer ? containerWidth : width}
           height={withContainer ? containerHeight : height}
         />

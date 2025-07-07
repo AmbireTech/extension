@@ -1,6 +1,6 @@
-import { getAddress } from 'ethers'
 import { useEffect } from 'react'
 
+import { getAddressCaught } from '@ambire-common/utils/getAddressCaught'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useDomainsControllerState from '@web/hooks/useDomainsController/useDomainsController'
 
@@ -9,7 +9,7 @@ interface Props {
 }
 
 const useReverseLookup = ({ address }: Props) => {
-  const checksummedAddress = getAddress(address)
+  const checksummedAddress = getAddressCaught(address)
   const { dispatch } = useBackgroundService()
   const { domains, loadingAddresses } = useDomainsControllerState()
   const isLoading = loadingAddresses.includes(checksummedAddress)

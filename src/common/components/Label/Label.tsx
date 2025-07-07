@@ -44,6 +44,7 @@ const Label = ({
     textStyles.capitalize,
     textStyles.left,
     type === 'warning' && styles.warningText,
+    type === 'error' && styles.errorText,
     customTextStyle
   ]
 
@@ -60,6 +61,13 @@ const Label = ({
         {type === 'warning' && (
           <WarningIcon
             color={theme.warningDecorative}
+            width={20 * sizeMultiplier[size]}
+            height={19 * sizeMultiplier[size]}
+          />
+        )}
+        {type === 'error' && (
+          <WarningIcon
+            color={theme.errorDecorative}
             width={20 * sizeMultiplier[size]}
             height={19 * sizeMultiplier[size]}
           />

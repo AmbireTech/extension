@@ -1,4 +1,7 @@
-import React, { FC } from 'react'
+import React, { FC, useEffect } from 'react'
+import { useRouteError } from 'react-router-dom'
+
+import * as Sentry from '@sentry/react'
 
 import styles from './ErrorPage.module.scss'
 
@@ -8,9 +11,14 @@ type Props = {
 }
 
 const ErrorPage: FC<Props> = ({ title = 'Oops. Something went wrong!', error }) => {
+  const originalError = useRouteError() as Error
   const onButtonClick = () => {
     window.location.reload()
   }
+
+  useEffect(() => {
+    Sentry.captureException(originalError)
+  }, [originalError])
 
   return (
     <div className={styles.wrapper}>

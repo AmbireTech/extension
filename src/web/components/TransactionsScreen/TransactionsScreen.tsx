@@ -26,7 +26,7 @@ import { getUiType } from '@web/utils/uiType'
 
 import getStyles from './styles'
 
-const { isTab, isPopup } = getUiType()
+const { isTab } = getUiType()
 
 type WrapperProps = {
   children: React.ReactNode
@@ -107,7 +107,7 @@ const Wrapper: FC<WrapperProps> = ({ children, title, handleGoBack, buttons }) =
 
 const Content: FC<ContentProps> = ({ children, buttons, scrollViewRef }) => {
   const { styles } = useTheme(getStyles)
-  const { maxWidthSize } = useWindowSize()
+  const { maxWidthSize, minHeightSize } = useWindowSize()
   const paddingHorizontalStyle = useMemo(() => getTabLayoutPadding(maxWidthSize), [maxWidthSize])
 
   return (
@@ -115,7 +115,7 @@ const Content: FC<ContentProps> = ({ children, buttons, scrollViewRef }) => {
       contentContainerStyle={{
         ...spacings.pv0,
         ...paddingHorizontalStyle,
-        ...(isTab ? spacings.pt2Xl : {}),
+        ...(isTab ? (minHeightSize('m') ? {} : spacings.pt2Xl) : {}),
         flexGrow: 1
       }}
       wrapperRef={scrollViewRef}

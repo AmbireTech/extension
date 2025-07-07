@@ -94,9 +94,7 @@ const CollectibleModal = ({
           </Text>
           <Pressable
             style={spacings.mlTy}
-            onPress={() =>
-              createTab(`${networkData?.explorerUrl}/address/${address}/${String(id)}`)
-            }
+            onPress={() => createTab(`${networkData?.explorerUrl}/nft/${address}/${String(id)}`)}
           >
             {({ hovered }: any) => (
               <OpenIcon

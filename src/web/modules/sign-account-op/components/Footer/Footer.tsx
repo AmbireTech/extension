@@ -3,6 +3,7 @@ import { View } from 'react-native'
 
 import BatchIcon from '@common/assets/svg/BatchIcon'
 import Button from '@common/components/Button'
+import Tooltip from '@common/components/Tooltip'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
@@ -23,6 +24,7 @@ type Props = {
   isAddToCartDisplayed: boolean
   isAddToCartDisabled: boolean
   inProgressButtonText: string
+  buttonTooltipText?: string
 }
 
 const Footer = ({
@@ -31,6 +33,7 @@ const Footer = ({
   onSign,
   isSignLoading,
   isSignDisabled,
+  buttonTooltipText,
   isAddToCartDisplayed,
   isAddToCartDisabled,
   inProgressButtonText
@@ -91,16 +94,20 @@ const Footer = ({
             <BatchIcon style={spacings.mlTy} />
           </Button>
         )}
-        <Button
-          testID="transaction-button-sign"
-          type="primary"
-          disabled={isSignDisabled}
-          text={isSignLoading ? inProgressButtonText : t('Sign')}
-          onPress={onSign}
-          hasBottomSpacing={false}
-          style={{ width: 160 }}
-          size="large"
-        />
+        {/* @ts-ignore */}
+        <View dataSet={{ tooltipId: 'sign-button-tooltip' }}>
+          <Button
+            testID="transaction-button-sign"
+            type="primary"
+            disabled={isSignDisabled}
+            text={isSignLoading ? inProgressButtonText : t('Sign')}
+            onPress={onSign}
+            hasBottomSpacing={false}
+            style={{ width: 160 }}
+            size="large"
+          />
+        </View>
+        {!!buttonTooltipText && <Tooltip content={buttonTooltipText} id="sign-button-tooltip" />}
       </View>
     </View>
   )

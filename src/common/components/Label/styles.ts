@@ -7,6 +7,7 @@ import flexbox from '@common/styles/utils/flexbox'
 interface Style {
   container: ViewStyle
   warningText: TextStyle
+  errorText: TextStyle
 }
 
 const getStyles = (theme: ThemeProps) =>
@@ -18,6 +19,9 @@ const getStyles = (theme: ThemeProps) =>
     },
     warningText: {
       color: theme.warningText
+    },
+    errorText: {
+      color: theme.errorText
     }
   })
 

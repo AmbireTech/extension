@@ -45,6 +45,7 @@ const ToToken: FC<Props> = ({ isAutoSelectRouteDisabled, setIsAutoSelectRouteDis
     toTokenShortList,
     toTokenSearchResults,
     toTokenSearchTerm,
+    fromSelectedToken,
     quote,
     formStatus,
     toChainId,
@@ -172,13 +173,18 @@ const ToToken: FC<Props> = ({ isAutoSelectRouteDisabled, setIsAutoSelectRouteDis
   const handleChangeToToken = useCallback(
     ({ address: toSelectedTokenAddr }: SelectValue) => {
       setIsAutoSelectRouteDisabled(false)
+      const isSameAsFromToken = toSelectedTokenAddr === fromSelectedToken?.address
 
       dispatch({
         type: 'SWAP_AND_BRIDGE_CONTROLLER_UPDATE_FORM',
-        params: { toSelectedTokenAddr }
+        params: {
+          toSelectedTokenAddr,
+          // Reset the from token if it's the same. undefined acts as "do nothing", null as reset
+          fromSelectedToken: isSameAsFromToken ? null : undefined
+        }
       })
     },
-    [setIsAutoSelectRouteDisabled, dispatch]
+    [setIsAutoSelectRouteDisabled, fromSelectedToken?.address, dispatch]
   )
 
   const handleAddToTokenByAddress = useCallback(

@@ -18,6 +18,10 @@ type Props = {
   isSponsored: boolean
   sponsor: Sponsor | undefined
   updateType: 'Main' | 'Swap&Bridge' | 'Transfer&TopUp'
+  bundlerNonceDiscrepancy?: {
+    id: string
+    title: string
+  }
 }
 
 export type { FeeOption, Props }

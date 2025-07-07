@@ -1,12 +1,12 @@
-import { test as testBase } from '@playwright/test'
-
+import { AuthPage } from 'pages/authPage'
 import { DashboardPage } from 'pages/dashboardPage'
 import { GasTankPage } from 'pages/gasTankPage'
 import { SettingsPage } from 'pages/settingsPage'
-import { TransferPage } from 'pages/transferPage'
-import { AuthPage } from 'pages/authPage'
-import { SwapAndBridgePage } from 'pages/swapAndBridgePage'
 import { SignMessagePage } from 'pages/signMessagePage'
+import { SwapAndBridgePage } from 'pages/swapAndBridgePage'
+import { TransferPage } from 'pages/transferPage'
+
+import { test as testBase } from '@playwright/test'
 
 type PageObjects = {
   authPage: AuthPage

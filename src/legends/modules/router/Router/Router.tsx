@@ -15,6 +15,7 @@ import Home from '@legends/modules/Home'
 import Leaderboard from '@legends/modules/leaderboard/screens/Leaderboard'
 import Legends from '@legends/modules/legends/screens/Legends'
 import Wallet from '@legends/modules/wallet'
+import * as Sentry from '@sentry/react'
 
 import { LEGENDS_ROUTES } from '../constants'
 import { LEGENDS_LEGACY_ROUTES } from '../constants/routes'
@@ -53,7 +54,9 @@ const PrivateArea: FC<{ children: ReactNode }> = ({ children }) => {
   )
 }
 
-const router = createHashRouter([
+const sentryCreateHashRouter = Sentry.wrapCreateBrowserRouterV6(createHashRouter)
+
+const router = sentryCreateHashRouter([
   {
     errorElement: <ErrorPage />,
     children: [

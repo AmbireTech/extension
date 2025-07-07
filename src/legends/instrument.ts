@@ -1,3 +1,4 @@
+import CONFIG from '@common/config/env'
 import { SENTRY_DSN_LEGENDS } from '@env'
 import * as Sentry from '@sentry/react'
 
@@ -13,5 +14,6 @@ if (SENTRY_DSN_LEGENDS)
     // https://docs.sentry.io/platforms/javascript/guides/react/configuration/options/#sendDefaultPii
     sendDefaultPii: false,
     release: `legends@${version}`,
-    integrations: []
+    integrations: [],
+    environment: CONFIG.APP_ENV || 'unknown'
   })

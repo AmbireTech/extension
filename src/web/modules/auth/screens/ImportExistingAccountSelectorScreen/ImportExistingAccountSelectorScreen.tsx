@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { Animated, View } from 'react-native'
+import { Animated, ScrollView, View } from 'react-native'
 import { SvgProps } from 'react-native-svg'
 
 import DiagonalRightArrowIcon from '@common/assets/svg/DiagonalRightArrowIcon'
@@ -140,7 +140,7 @@ const ImportExistingAccountSelectorScreen = () => {
           title={t('Select import method')}
         >
           <View style={[flexbox.justifySpaceBetween, flexbox.flex1]}>
-            <View style={[flexbox.justifySpaceBetween]}>
+            <ScrollView contentContainerStyle={[flexbox.justifySpaceBetween]}>
               {buttons
                 .slice(0, VISIBLE_BUTTONS_COUNT)
                 .map(({ title, onPress, icon: IconComponent }) => (
@@ -203,7 +203,7 @@ const ImportExistingAccountSelectorScreen = () => {
                     </Button>
                   ))}
               </Animated.View>
-            </View>
+            </ScrollView>
             {buttons.length > VISIBLE_BUTTONS_COUNT && (
               <Button
                 hasBottomSpacing={false}

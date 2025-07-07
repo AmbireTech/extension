@@ -201,5 +201,5 @@ export async function bootstrapWithStorage(
     }
   }
 
-  return { page, context }
+  return { page, context, extensionURL }
 }

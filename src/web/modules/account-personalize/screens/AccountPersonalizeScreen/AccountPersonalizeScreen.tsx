@@ -41,7 +41,7 @@ const AccountPersonalizeScreen = () => {
   const { t } = useTranslation()
   const { goToNextRoute, goToPrevRoute, setAccountsToPersonalize, accountsToPersonalize } =
     useOnboardingNavigation()
-  const { styles, theme } = useTheme(getStyles)
+  const { theme } = useTheme(getStyles)
   const { dispatch } = useBackgroundService()
   const accountPickerState = useAccountPickerControllerState()
   const accountsState = useAccountsControllerState()
@@ -284,7 +284,7 @@ const AccountPersonalizeScreen = () => {
                   noBorder
                   noBackgroundShapes
                   width={352}
-                  height={170}
+                  height={156}
                   style={{ ...spacings.pv0, ...spacings.ph0, ...spacings.mbXl }}
                   animationContainerStyle={{ width: 200, height: 140 }}
                 >

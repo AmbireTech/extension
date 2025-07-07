@@ -1,68 +1,108 @@
-import { expect } from '@playwright/test'
 import { bootstrapWithStorage } from 'common-helpers/bootstrap'
 import { baParams } from 'constants/env'
-import Token from 'interfaces/token'
 import selectors from 'constants/selectors'
+import Token from 'interfaces/token'
+
+import { expect } from '@playwright/test'
+
 import { BasePage } from './basePage'
 
 export class TransferPage extends BasePage {
+  extensionURL: string
+
   async init(param) {
-    const { page } = await bootstrapWithStorage('transfer', param)
+    const { page, extensionURL } = await bootstrapWithStorage('transfer', param)
     this.page = page
+
+    this.extensionURL = extensionURL
   }
 
   async navigateToTransfer() {
-    const sendButton = this.page.getByTestId(selectors.dashboardButtonSend)
-    await sendButton.click()
+    await this.click(selectors.dashboardButtonSend)
   }
 
-  async fillRecipient(address: string) {
-    const addressField = this.page.getByTestId(selectors.addressEnsField)
-    await addressField.fill(address)
-    const checkbox = this.page.getByTestId(selectors.recipientAddressUnknownCheckbox)
-    await checkbox.click()
+  async navigateToDashboard() {
+    await this.navigateToURL(`${this.extensionURL}/tab.html#/`)
+  }
+
+  async openAddressBookPage() {
+    await this.click(selectors.dashboardHumburgerBtn)
+
+    // go to Address book page and assert url
+    await this.page.locator('//div[contains(text(),"Address Book")]').first().click()
+    await this.checkUrl('/settings/address-book')
+  }
+
+  async fillAmount(token: Token) {
+    await this.clickOnMenuToken(token)
+    // Amount
+    await this.page.waitForTimeout(1000) // without pause it misses the amount field and continues on
+    await this.entertext(selectors.amountField, '0.001')
+  }
+
+  async fillRecipient(address: string, isUnknownAddress: boolean = true) {
+    // clear input if any
+    await this.clearFieldInput(selectors.addressEnsField)
+    await this.entertext(selectors.addressEnsField, address)
+
+    // if address is unknown checkbox has to be checked
+    if (isUnknownAddress) {
+      await this.click(selectors.recipientAddressUnknownCheckbox)
+    }
   }
 
   async fillForm(token: Token, recipientAddress: string) {
     // Choose token
-    await this.clickOnMenuToken(token)
-
-    // Amount
-    const amountField = this.page.getByTestId(selectors.amountField)
-    await amountField.fill('0.001')
-
+    await this.fillAmount(token)
     // Address
     await this.fillRecipient(recipientAddress)
   }
 
   async signAndValidate(feeToken: Token, payWithGasTank?: boolean) {
     // Proceed
-    const proceedButton = this.page.getByTestId(selectors.proceedBtn)
-    await proceedButton.click()
+    await this.click(selectors.proceedBtn)
 
     // Select Fee token and payer
     await this.clickOnMenuFeeToken(baParams.envSelectedAccount, feeToken, payWithGasTank)
 
     // Sign & Broadcast
-    const sign = this.page.getByTestId(selectors.signButton)
-    await sign.click()
+    await this.click(selectors.signButton)
 
     // Validate
-    const txnStatus = await this.page.getByTestId(selectors.txnStatus).textContent()
-    expect(txnStatus).toEqual('Transfer done!')
-  }
-
-  async send(token: Token, recipientAddress: string, feeToken: Token, payWithGasTank?: boolean) {
-    await this.navigateToTransfer()
-    await this.fillForm(token, recipientAddress)
-    await this.signAndValidate(feeToken, payWithGasTank)
+    await this.compareText(selectors.txnStatus, 'Transfer done!')
   }
 
   async addToBatch() {
-    const batchButton = this.page.getByTestId(selectors.batchBtn)
-    await batchButton.click()
+    await this.click(selectors.batchBtn)
+    await this.click(selectors.batchModalGotIt)
+  }
 
-    const gotIt = this.page.getByTestId(selectors.batchModalGotIt)
-    await gotIt.click()
+  async addUnknownRecepientToAddressBook(recepientAddress: string, contactName: string) {
+    await this.fillRecipient(recepientAddress)
+
+    // open Add new contact form
+    const addNewContactModal = await this.isVisible(selectors.formAddContactNameField)
+    // work around; sometimes the one click does not open the modal
+    if (!addNewContactModal) {
+      await this.click(selectors.sendFormAddToAddresBook)
+    }
+
+    // add new contact
+    await this.page.waitForTimeout(500)
+    await this.entertext(selectors.formAddContactNameField, contactName)
+    await this.click(selectors.formAddToContactsButton)
+
+    // assert snackbar notification
+    await expect(this.page.locator(selectors.contactSuccessfullyAddedSnackbar)).toHaveText(
+      'Contact added to Address Book'
+    )
+  }
+
+  async assertAddedContact(contactName: string, contactAddress: string) {
+    const addedContactName = this.page.locator(`//div[contains(text(),"${contactName}")]`)
+    const addedContactAddress = this.page.locator(`//div[contains(text(),"${contactAddress}")]`)
+
+    await expect(addedContactName).toContainText(contactName)
+    await expect(addedContactAddress).toContainText(contactAddress)
   }
 }

@@ -1,13 +1,7 @@
 import React from 'react'
 import Svg, { Circle, G, Path, SvgProps } from 'react-native-svg'
 
-interface Props extends SvgProps {
-  width?: number
-  height?: number
-  withRect?: boolean
-}
-
-const MissingTokenIcon: React.FC<Props> = ({ width = 34, height = 34, ...rest }) => (
+const MissingTokenIcon: React.FC<SvgProps> = ({ width = 34, height = 34, ...rest }) => (
   <Svg width={width} height={height} viewBox="0 0 34 34" {...rest}>
     <G transform="translate(-420 -531)">
       <Circle cx="11" cy="11" r="11" transform="translate(426 537)" fill="#d49c00" />

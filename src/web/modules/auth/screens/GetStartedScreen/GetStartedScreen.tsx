@@ -5,6 +5,7 @@ import AmbireLogo from '@common/assets/svg/AmbireLogo'
 import ViewModeIcon from '@common/assets/svg/ViewModeIcon'
 import Button from '@common/components/Button'
 import Panel from '@common/components/Panel'
+import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useNavigation from '@common/hooks/useNavigation'
@@ -87,7 +88,7 @@ const GetStartedScreen = () => {
                 {t('The Web3 wallet that makes self-custody easy and secure.')}
               </Text>
             </View>
-            <View style={[flexbox.justifySpaceBetween]}>
+            <ScrollableWrapper contentContainerStyle={[flexbox.justifySpaceBetween]}>
               <Button
                 testID="create-new-account-btn"
                 type="primary"
@@ -109,7 +110,7 @@ const GetStartedScreen = () => {
               >
                 <ViewModeIcon color={theme.primary} width={24} style={spacings.mlTy} />
               </Button>
-            </View>
+            </ScrollableWrapper>
           </View>
         </Panel>
       </TabLayoutWrapperMainContent>

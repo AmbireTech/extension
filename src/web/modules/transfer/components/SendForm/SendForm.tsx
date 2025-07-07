@@ -22,7 +22,6 @@ import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
-import useSyncedState from '@web/hooks/useSyncedState'
 import useTransferControllerState from '@web/hooks/useTransferControllerState'
 import { getTokenId } from '@web/utils/token'
 
@@ -118,7 +117,7 @@ const SendForm = ({
         formValues: { shouldSetMaxAmount: true }
       }
     })
-  }, [maxAmount, dispatch])
+  }, [dispatch])
 
   const switchAmountFieldMode = useCallback(() => {
     dispatch({

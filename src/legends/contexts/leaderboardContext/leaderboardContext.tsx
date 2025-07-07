@@ -56,7 +56,9 @@ const LeaderboardContextProvider = ({ children }: { children: React.ReactNode })
   }, [connectedAccount])
 
   useEffect(() => {
-    updateLeaderboard()
+    updateLeaderboard().catch(() => {
+      // Do nothing as the error is already handled
+    })
   }, [connectedAccount, updateLeaderboard])
 
   const value: LeaderboardContextType = useMemo(

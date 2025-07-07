@@ -170,7 +170,7 @@ const SendToken: FC<Props> = ({
                 disabled={maxAmountDisabled}
               />
             )}
-            {fromSelectedToken?.priceIn.length !== 0 ? (
+            {fromSelectedToken && fromSelectedToken.priceIn.length !== 0 ? (
               <>
                 <Pressable
                   onPress={handleSwitchFromAmountFieldMode}

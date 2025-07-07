@@ -16,6 +16,7 @@ interface Props extends TextProps {
   highestPriorityAlias?: string
   marginRight?: number
   hideLinks?: boolean
+  hideLogo?: boolean
   chainId: bigint
 }
 const HUMANIZER_META = humanizerInfo as HumanizerMeta
@@ -25,6 +26,7 @@ const HumanizerAddress: FC<Props> = ({
   highestPriorityAlias,
   marginRight,
   hideLinks = false,
+  hideLogo = false,
   chainId,
   ...rest
 }) => {
@@ -37,7 +39,9 @@ const HumanizerAddress: FC<Props> = ({
 
   return (
     <View style={{ ...flexbox.directionRow, marginRight }}>
-      {addressInfo?.logo && <Image source={{ uri: addressInfo.logo }} style={styles.logo} />}
+      {!!addressInfo?.logo && !hideLogo && (
+        <Image source={{ uri: addressInfo.logo }} style={styles.logo} />
+      )}
       <HumanizerAddressInner
         address={address}
         humanizerInfo={addressInfo}

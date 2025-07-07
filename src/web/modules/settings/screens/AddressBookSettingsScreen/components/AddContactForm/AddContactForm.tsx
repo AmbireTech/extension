@@ -7,7 +7,6 @@ import AddressInput from '@common/components/AddressInput'
 import Button from '@common/components/Button'
 import Input from '@common/components/Input'
 import useAddressInput from '@common/hooks/useAddressInput'
-import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
 import useAddressBookControllerState from '@web/hooks/useAddressBookControllerState'
@@ -19,7 +18,6 @@ const AddContactForm = () => {
   const { t } = useTranslation()
   const { dispatch } = useBackgroundService()
   const { contacts } = useAddressBookControllerState()
-  const { addToast } = useToast()
   const { accounts } = useAccountsControllerState()
   const {
     control,
@@ -95,7 +93,6 @@ const AddContactForm = () => {
     setAddressState,
     handleRevalidate,
     overwriteError: customValidation,
-    addToast,
     handleCacheResolvedDomain
   })
 

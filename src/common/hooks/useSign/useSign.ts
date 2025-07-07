@@ -267,6 +267,12 @@ const useSign = ({
     )
   }, [isViewOnly, isSignLoading, notReadyToSignButAlsoNotDone, signAccountOpState?.readyToSign])
 
+  const bundlerNonceDiscrepancy = useMemo(
+    () =>
+      signAccountOpState?.warnings.find((warning) => warning.id === 'bundler-nonce-discrepancy'),
+    [signAccountOpState?.warnings]
+  )
+
   return {
     renderedButNotNecessarilyVisibleModal,
     isViewOnly,
@@ -290,7 +296,8 @@ const useSign = ({
     notReadyToSignButAlsoNotDone,
     initDispatchedForId,
     setInitDispatchedForId,
-    isSignDisabled
+    isSignDisabled,
+    bundlerNonceDiscrepancy
   }
 }
 

@@ -107,7 +107,7 @@ test.describe('swapAndBridgePage Smart Account', () => {
 
     await swapAndBridgePage.switchUSDValueOnSwapAndBridge(usdce, 0.34)
     await swapAndBridgePage.switchUSDValueOnSwapAndBridge(dai, 0.2)
-    await swapAndBridgePage.switchUSDValueOnSwapAndBridge(usdc, 0.012)
+    await swapAndBridgePage.switchUSDValueOnSwapAndBridge(usdc, 0.02)
     await swapAndBridgePage.switchUSDValueOnSwapAndBridge(xwallet, 1)
     await swapAndBridgePage.switchUSDValueOnSwapAndBridge(dai, 0.51)
     await swapAndBridgePage.switchUSDValueOnSwapAndBridge(xwallet, 0.9)

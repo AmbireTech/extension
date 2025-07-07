@@ -5,6 +5,7 @@ import { KeystoreSeed } from '@ambire-common/interfaces/keystore'
 import CopyIcon from '@common/assets/svg/CopyIcon'
 import Button from '@common/components/Button'
 import Panel from '@common/components/Panel'
+import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
@@ -107,7 +108,7 @@ const CreateSeedPhraseWriteScreen = () => {
           }}
         >
           {!!seedArray.length && (
-            <View>
+            <>
               <Text
                 weight="medium"
                 appearance="secondaryText"
@@ -115,15 +116,16 @@ const CreateSeedPhraseWriteScreen = () => {
               >
                 {t('Write down and secure the recovery phrase for your account.')}
               </Text>
-              <View
-                style={{
+
+              <ScrollableWrapper
+                style={flexbox.flex1}
+                contentContainerStyle={{
                   ...flexbox.directionRow,
                   ...flexbox.wrap,
                   ...flexbox.justifyCenter,
                   borderWidth: 1,
                   borderColor: theme.secondaryBorder,
-                  ...common.borderRadiusPrimary,
-                  overflow: 'hidden'
+                  ...common.borderRadiusPrimary
                 }}
               >
                 {seedArray.map((word, index) => (
@@ -146,7 +148,7 @@ const CreateSeedPhraseWriteScreen = () => {
                         fontSize={12}
                         appearance="tertiaryText"
                         weight="medium"
-                        style={{ lineHeight: 14 }}
+                        style={{ lineHeight: 11 }}
                       >
                         {index + 1}.
                       </Text>
@@ -154,12 +156,13 @@ const CreateSeedPhraseWriteScreen = () => {
                     <Text fontSize={14} weight="medium" style={{ lineHeight: 19 }}>
                       {word}
                     </Text>
-                    <Text fontSize={12} style={{ lineHeight: 14 }}>
+                    <Text fontSize={12} style={{ lineHeight: 11 }}>
                       {' '}
                     </Text>
                   </View>
                 ))}
-              </View>
+              </ScrollableWrapper>
+
               <View
                 style={[
                   flexbox.directionRow,
@@ -167,7 +170,7 @@ const CreateSeedPhraseWriteScreen = () => {
                   flexbox.alignCenter,
                   spacings.ptTy,
                   common.borderRadiusPrimary,
-                  spacings.mbXl
+                  spacings.mbLg
                 ]}
               >
                 <Button
@@ -189,7 +192,7 @@ const CreateSeedPhraseWriteScreen = () => {
                 hasBottomSpacing={false}
                 onPress={handleSubmit}
               />
-            </View>
+            </>
           )}
           {!seedArray.length && (
             <View style={[flexbox.flex1, flexbox.alignCenter, flexbox.justifyCenter]}>
