@@ -15,7 +15,7 @@ jobs:
       group: ${{ github.workflow }}-${{ github.ref }}
     steps:
       - name: Checkout code 🛎️
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Add SSH key to checkout a private repo
         uses: webfactory/ssh-agent@v0.5.4
