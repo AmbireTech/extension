@@ -7,7 +7,6 @@ import flexbox from '@common/styles/utils/flexbox'
 
 interface Style {
   container: ViewStyle
-  containerHovered: ViewStyle
   tokenButtonIconWrapper: ViewStyle
 }
 
@@ -18,12 +17,10 @@ const getStyles = (theme: ThemeProps) =>
       ...flexbox.directionRow,
       ...flexbox.justifySpaceBetween,
       ...spacings.pvTy,
-      ...spacings.phTy,
-      ...common.borderRadiusPrimary
+      ...spacings.phTy
+      // ...common.borderRadiusPrimary
     },
-    containerHovered: {
-      backgroundColor: theme.secondaryBackground
-    },
+    // TODO: remove this as well as the wrapper in TokenItem
     tokenButtonIconWrapper: {
       backgroundColor: theme.secondaryBackground,
       ...common.borderRadiusPrimary,
