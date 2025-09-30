@@ -29,7 +29,11 @@ const selectors = {
     networkBase: '//div[text()="Base"]',
     nftTitle: 'collection-item',
     nftsTitle: '[data-testid^="collection-item"]',
-    searchForNetwork: 'search-for-network-field'
+    searchForNetwork: 'search-for-network-field',
+    hideTokenButton: 'hide-token-button',
+    yesHideItButton: 'yes-hide-it-text',
+    hideTokenModalTitle: 'hide-token-modal-title',
+    hideTokenModalDescription: 'hide-token-modal-description'
   },
   settings: {
     createNewRecoveryPhraseButton: 'create-new-recovery-phrase',
@@ -41,7 +45,11 @@ const selectors = {
     validENSDomainText: '//div[contains(text(),"Valid ENS domain")]',
     addedSuccessfullyText: '//div[contains(text(),"Added successfully")]',
     accessAccFromDashboardInfoText: '//div[contains(text(),"access your accounts")]',
-    addAccountButton: 'add-account-modal'
+    addAccountButton: 'add-account-modal',
+    hiddenTokenName: 'hidden-token-name',
+    hiddenTokenNetwork: 'hidden-token-network',
+    unhideTokenButton: 'unhide-button',
+    youDontHaveInfoText: 'you-dont-have-any-text' // there can be multiple on same page
   },
   account: 'account',
   importBtn: 'import-button',

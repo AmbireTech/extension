@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import AmbireLogo from '@common/assets/svg/AmbireLogo/AmbireLogo'
@@ -18,6 +18,7 @@ import useCharacterContext from '@legends/hooks/useCharacterContext'
 import useLeaderboardContext from '@legends/hooks/useLeaderboardContext'
 import useLegendsContext from '@legends/hooks/useLegendsContext'
 import usePortfolioControllerState from '@legends/hooks/usePortfolioControllerState/usePortfolioControllerState'
+import CharacterSelect from '@legends/modules/character/screens/CharacterSelect'
 import { Networks } from '@legends/modules/legends/types'
 import { LEGENDS_ROUTES } from '@legends/modules/router/constants/routes'
 
@@ -26,6 +27,7 @@ import startsBackground from './starsBackground.png'
 import unknownCharacterImg from './unknown-character.png'
 
 const CharacterSection = () => {
+  const [isClaimModalOpen, setIsClaimModalOpen] = useState(false)
   const { character, isCharacterNotMinted } = useCharacterContext()
 
   const navigate = useNavigate()
@@ -49,7 +51,8 @@ const CharacterSection = () => {
     )
 
   const redirectToCharacterSelect = () => {
-    navigate(LEGENDS_ROUTES.characterSelect)
+    // navigate(LEGENDS_ROUTES.characterSelect)
+    setIsClaimModalOpen(true)
   }
 
   const currentLevel = season1LeaderboardData?.currentUser?.level ?? 1
@@ -61,6 +64,7 @@ const CharacterSection = () => {
 
   return (
     <>
+      {isClaimModalOpen && <CharacterSelect onClose={() => setIsClaimModalOpen(false)} />}
       <div className={styles.overachieverWrapper}>
         <OverachieverBanner wrapperClassName={styles.overachieverBanner} />
       </div>

@@ -38,10 +38,12 @@ const HideTokenModal = ({
       containerInnerWrapperStyles={{ flex: 1 }}
       style={styles.modal}
     >
-      <Text style={spacings.mbSm} weight="semiBold">
+      <Text testID="hide-token-modal-title" style={spacings.mbSm} weight="semiBold">
         {t('Are you sure you want to hide this token?')}
       </Text>
-      <Text>{t('You can always unhide it from the Settings menu > Custom tokens.')}</Text>
+      <Text testID="hide-token-modal-description">
+        {t('You can always unhide it from the Settings menu > Custom tokens.')}
+      </Text>
 
       <Pressable
         onPress={() => setDoNotShowModalAgain(!doNotShowModalAgain)}
@@ -62,6 +64,7 @@ const HideTokenModal = ({
       >
         <Button text={t('Cancel')} type="secondary" onPress={handleClose} />
         <Button
+          testID="yes-hide-it-text"
           type="primary"
           text={t('Yes, hide it!')}
           onPress={() => {

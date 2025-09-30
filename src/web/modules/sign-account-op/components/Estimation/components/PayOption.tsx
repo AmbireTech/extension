@@ -23,12 +23,14 @@ const PayOption = ({
   feeOption,
   amountUsd,
   disabledReason,
+  disabledTextAppearance = 'errorText',
   amount
 }: {
   feeOption: FeePaymentOption
   amountUsd: string
   amount: bigint
   disabledReason?: string
+  disabledTextAppearance?: 'errorText' | 'infoText'
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
@@ -106,7 +108,12 @@ const PayOption = ({
           </Text>
 
           {disabledReason ? (
-            <Text weight="medium" fontSize={10} numberOfLines={1} appearance="errorText">
+            <Text
+              weight="medium"
+              fontSize={10}
+              numberOfLines={1}
+              appearance={disabledTextAppearance}
+            >
               {disabledReason}
             </Text>
           ) : (

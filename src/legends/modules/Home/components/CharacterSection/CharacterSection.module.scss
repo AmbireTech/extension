@@ -633,8 +633,8 @@
       .accountInfo {
         font-size: 1.125rem;
         padding: 0;
-        justify-content: start;
         margin-bottom: 1.5rem;
+        width: fit-content;
         
         .accountInfoAddress {
           color: $secondaryText;
@@ -719,7 +719,7 @@
     border-radius: 1rem;
 
     position: absolute;
-    bottom: -0.3rem;
+    bottom: 1.2rem;
     left: 50%;
     transform: translateX(-50%);
     border-radius: 50%;

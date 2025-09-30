@@ -116,14 +116,14 @@ const Token: FC<Props> = ({
           width={28}
           height={28}
         />
-        <Text weight="medium" selectable style={spacings.mrTy}>
+        <Text testID="hidden-token-name" weight="medium" selectable style={spacings.mrTy}>
           {symbol}
         </Text>
         {flags.isCustom && <Badge text="Custom" />}
       </View>
       <View style={[flexbox.directionRow, flexbox.alignCenter, { flex: 1.5 }]}>
         <NetworkIcon id={chainId.toString()} style={spacings.mrTy} />
-        <Text>
+        <Text testID="hidden-token-network">
           {networks.find(({ chainId: nChainId }) => nChainId === chainId)?.name ||
             'Unknown Network'}
         </Text>
@@ -139,6 +139,7 @@ const Token: FC<Props> = ({
       >
         {isHidden ? (
           <Button
+            testID="unhide-button"
             type="secondary"
             size="small"
             style={{ width: 80 }}

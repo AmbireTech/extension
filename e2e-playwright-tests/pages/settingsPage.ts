@@ -28,6 +28,14 @@ export class SettingsPage extends BasePage {
     await this.checkUrl('/settings/accounts')
   }
 
+  async openCustomTokensPage() {
+    await this.openSettingsGeneral()
+
+    // go to Add account page and assert url
+    await this.page.locator('//div[contains(text(),"Custom tokens")]').first().click()
+    await this.checkUrl('/settings/manage-tokens')
+  }
+
   async lockKeystore(): Promise<void> {
     await this.openSettingsGeneral()
 
@@ -216,6 +224,24 @@ export class SettingsPage extends BasePage {
     // assert info text
     await expect(this.page.locator(selectors.settings.accessAccFromDashboardInfoText)).toHaveText(
       'You can access your accounts from the dashboard via the extension icon.'
+    )
+  }
+
+  async unhideToken() {
+    await this.click(selectors.settings.unhideTokenButton)
+    // assert snackbar
+    const snackbarNotification = this.page.locator(
+      '//span[contains(text(),"Token is now visible.")]'
+    )
+    await expect(snackbarNotification).toContainText(
+      'Token is now visible. You can hide it again from the dashboard.'
+    )
+
+    // assert no hidden tokens message on page; in this case hidden tokens message is second
+    await this.compareText(
+      selectors.settings.youDontHaveInfoText,
+      "You don't have any hidden tokens",
+      1
     )
   }
 }

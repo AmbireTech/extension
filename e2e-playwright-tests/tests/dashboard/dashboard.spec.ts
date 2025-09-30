@@ -244,4 +244,53 @@ test.describe('dashboard', () => {
       await pages.dashboard.checkOpenTicketPage()
     })
   })
+
+  test('Hide WALLET token from dashboard; then unhide it in settings', async ({ pages }) => {
+    const wallet = tokens.wallet.base
+
+    await test.step('open hide wallet modal', async () => {
+      await pages.dashboard.click(`token-balance-${wallet.address}.${wallet.chainId}`)
+      await pages.dashboard.click(selectors.dashboard.hideTokenButton)
+    })
+
+    await test.step('assert hide token modal text and confirm hide token', async () => {
+      await pages.basePage.compareText(
+        selectors.dashboard.hideTokenModalTitle,
+        'Are you sure you want to hide this token?'
+      )
+      await pages.basePage.compareText(
+        selectors.dashboard.hideTokenModalDescription,
+        'You can always unhide it from the Settings menu > Custom tokens.'
+      )
+
+      await pages.basePage.click(selectors.dashboard.yesHideItButton)
+    })
+
+    await test.step('assert WALLET token not visible on Dashboard', async () => {
+      await pages.basePage.expectElementNotVisible(
+        `token-balance-${wallet.address}.${wallet.chainId}`
+      )
+    })
+
+    await test.step('navigate to settings > custom tokens page', async () => {
+      await pages.settings.openCustomTokensPage()
+    })
+
+    await test.step('WALLET token should be visible under hidden token list', async () => {
+      await pages.basePage.compareText(selectors.settings.hiddenTokenName, 'WALLET')
+      await pages.basePage.compareText(selectors.settings.hiddenTokenNetwork, 'Base')
+    })
+
+    await test.step('unhide WALLET token', async () => {
+      await pages.settings.unhideToken()
+    })
+
+    await test.step('navigate to Dashboard', async () => {
+      await pages.dashboard.navigateToDashboard()
+    })
+
+    await test.step('assert WALLET token is visible on Dashboard', async () => {
+      await pages.settings.isVisible(`token-balance-${wallet.address}.${wallet.chainId}`)
+    })
+  })
 })

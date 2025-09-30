@@ -76,6 +76,8 @@ const mapFeeOptions = (
   signAccountOpState: ISignAccountOpController
 ) => {
   let disabledReason: string | undefined
+  let disabledTextAppearance: 'errorText' | 'infoText' | undefined
+
   const gasTankKey = feeOption.token.flags.onGasTank ? 'gasTank' : ''
   const speedCoverage: FeeSpeed[] = []
   const id = getFeeSpeedIdentifier(
@@ -102,6 +104,20 @@ const mapFeeOptions = (
     }
   }
 
+  // TODO: TBD, should we refactor and move `disabledReason` logic together with `speedCoverage` into controller.
+  // Note: `accountKeyStoreKeys` can simultaneously store hardware keys and hot wallet keys.
+  // In this case, the `isExternal` check will still resolve to `true`, and we will disable ERC-20 fee options.
+  // We decided to leave it as is, since it's rare to import both a hardware wallet and its seed phrase as a hot wallet.
+  // Additionally, we expect hardware wallets to support EIP-7702 soon, so we prefer not to complicate the UX.
+  const isExternal = signAccountOpState.accountKeyStoreKeys.find(
+    (keyStoreKey) => keyStoreKey.addr === feeOption.paidBy && keyStoreKey.isExternallyStored
+  )
+
+  if (isExternal && feeOption.token.address !== ZERO_ADDRESS) {
+    disabledReason = 'Coming soon for Hardware wallets'
+    disabledTextAppearance = 'infoText'
+  }
+
   return {
     value:
       feeOption.paidBy +
@@ -114,6 +130,7 @@ const mapFeeOptions = (
         amountUsd={feeSpeedUsd}
         feeOption={feeOption}
         disabledReason={disabledReason}
+        disabledTextAppearance={disabledTextAppearance}
       />
     ),
     paidBy: feeOption.paidBy,

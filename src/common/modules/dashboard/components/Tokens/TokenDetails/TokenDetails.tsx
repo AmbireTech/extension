@@ -361,7 +361,12 @@ const TokenDetails = ({
                   onPress={handleHideTokenFromButton}
                   style={animStyleHide}
                 >
-                  <Text style={styles.hideTokenButton} weight="medium" fontSize={12}>
+                  <Text
+                    testID="hide-token-button"
+                    style={styles.hideTokenButton}
+                    weight="medium"
+                    fontSize={12}
+                  >
                     {t('Hide token')}
                   </Text>
                 </AnimatedPressable>

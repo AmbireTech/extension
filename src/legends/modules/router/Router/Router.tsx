@@ -61,10 +61,6 @@ const router = sentryCreateHashRouter([
     errorElement: <ErrorPage />,
     children: [
       {
-        path: LEGENDS_ROUTES.characterSelect,
-        element: <CharacterSelect />
-      },
-      {
         element: (
           <PrivateArea>
             <PrivateRoute />

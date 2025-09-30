@@ -92,7 +92,7 @@ export class DashboardPage extends BasePage {
     try {
       expect(tokenBalance).toBeGreaterThanOrEqual(minBalance)
     } catch (e) {
-      error = `${token.symbol} balance is only: ${tokenBalance}.`
+      error = `${token.symbol}-${token.chainId} balance is only: ${tokenBalance}.`
     }
     return { token, error }
   }

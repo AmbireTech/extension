@@ -1,19 +1,20 @@
 @import '@legends/styles/base';
 
-$centerSlideSize: 18.125rem;
-$adjacentSlideSize: 14.5rem;
-$smallerSlideSize: 12rem;
+$centerSlideSize: 17.9904rem;
+$adjacentSlideSize: 13.125rem;
+$smallerSlideSize: 11rem;
 
 .wrapper {
   position: relative;
   text-align: center;
-  margin-bottom: 6rem;
+  margin-bottom: 5.625rem;
 
   :global(.swiper) {
     @include container;
     position: relative;
     display: flex;
-    height: 23rem;
+    height: 18rem;
+    
 
     :global(.swiper-wrapper) {
       align-items: center;
@@ -25,7 +26,6 @@ $smallerSlideSize: 12rem;
     align-items: center;
     justify-content: center;
     position: relative;
-    margin-bottom: 2rem;
 
     .slide {
       position: relative;
@@ -33,7 +33,7 @@ $smallerSlideSize: 12rem;
       align-items: center;
       justify-content: center;
       transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
-      filter: brightness(0) contrast(90%); // Simulate $primaryText color with background
+      filter: brightness(0) contrast(90%); 
       flex-shrink: 0;
       width: $smallerSlideSize;
       height: $smallerSlideSize;
@@ -56,8 +56,9 @@ $smallerSlideSize: 12rem;
 
       &.selected {
         position: relative;
-        z-index: 10;
+        z-index: 12;
         filter: none;
+
 
         .image {
           width: $centerSlideSize;
@@ -68,65 +69,21 @@ $smallerSlideSize: 12rem;
         &::before {
           content: '';
           position: absolute;
-          bottom: -4rem;
+          bottom: -2.7rem;
           left: 52%;
           transform: translateX(-50%);
-          width: 15.125rem;
-          height: 3.3125rem;
+          width: 11.6875rem;
+          height: 1.8125rem;
           border-radius: 50%;
           background-color: $mainBg;
           z-index: 1;
+          background: linear-gradient(180deg, #BDF0FF 17.31%, #6A6C43 100%);
+          filter: blur(3.6px)
 
-          border: 0.25rem solid transparent;
-          background-clip: padding-box, border-box;
-          background-origin: padding-box, border-box;
-          background-image: linear-gradient($mainBg, $mainBg),
-            linear-gradient(8.85deg, #5d83ff 9.6%, #6735ff 90.76%);
+        
         }
 
-        &::after {
-          content: '';
-          position: absolute;
-          bottom: -4.5rem;
-          left: 52%;
-          transform: translateX(-50%);
-          width: 18rem;
-          height: 4rem;
-          border-radius: 50%;
-          background-color: transparent;
-          z-index: 0;
-
-          background: linear-gradient(8.85deg, #5d83ff 9.6%, #6735ff 90.76%);
-          -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-          -webkit-mask-composite: xor;
-          mask-composite: exclude;
-
-          background-origin: border-box;
-          background-clip: border-box;
-          padding: 2px;
-        }
-
-        .extraBorder {
-          content: '';
-          position: absolute;
-          bottom: -5.2rem;
-          left: 52%;
-          transform: translateX(-50%);
-          width: 22rem;
-          height: 5rem;
-          border-radius: 50%;
-          background-color: transparent;
-          z-index: 0;
-
-          background: linear-gradient(8.85deg, #5d83ff 9.6%, #6735ff 90.76%);
-          -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-          -webkit-mask-composite: xor;
-          mask-composite: exclude;
-
-          background-origin: border-box;
-          background-clip: border-box;
-          padding: 2px;
-        }
+      
       }
 
       .image {
@@ -147,11 +104,11 @@ $smallerSlideSize: 12rem;
   }
 
   .name {
-    font-size: 2.25rem;
-    font-weight: 600;
+    font-size: 1.5rem;
+    font-weight: 400;
     line-height: 2.25rem;
-    color: $primaryText;
     font-family: $secondaryFont;
+    color: $green-500;
   }
 
   .description {
