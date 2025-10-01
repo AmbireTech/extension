@@ -26,12 +26,9 @@ import getStyles from './styles'
 
 type Props = {
   token: TokenResult
-  /** optional node rendered where Claim button used to be (right side of the main row) */
   extraActions?: React.ReactNode
-  /** optional css gradient string (applied as background; uses same @ts-ignore "background" trick as before) */
   gradientStyle?: string
-  /** optional label replacing the default "on" / wording area (eg. "Projected Rewards") */
-  label?: string
+  label?: string | React.ReactNode
   borderRadius?: number
 }
 
