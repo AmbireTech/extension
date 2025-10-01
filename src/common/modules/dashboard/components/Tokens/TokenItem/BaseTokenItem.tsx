@@ -78,7 +78,7 @@ const BaseTokenItem = ({ token, extraActions, gradientStyle, label, borderRadius
 
   const textColor = useMemo(() => {
     // if a gradient (rewards/vesting style) is provided, use white text for contrast
-    if (gradientStyle) return 'white'
+    if (gradientStyle) return '#FFFFFF'
     if (!isPending) return theme.primaryText
     return pendingToBeSigned ? theme.warningText : theme.info2Text
   }, [
@@ -133,7 +133,7 @@ const BaseTokenItem = ({ token, extraActions, gradientStyle, label, borderRadius
               />
             </View>
 
-            <View style={[flexboxStyles.flex1, spacings.pr]}>
+            <View style={[flexboxStyles.flex1, spacings.mr]}>
               <View
                 style={[
                   flexboxStyles.flex1,
@@ -168,12 +168,18 @@ const BaseTokenItem = ({ token, extraActions, gradientStyle, label, borderRadius
                 </View>
 
                 {/* area for optional actions (Claim button etc) */}
-                {extraActions ? <View style={spacings.mlMi}>{extraActions}</View> : null}
+                {extraActions ? <View>{extraActions}</View> : null}
               </View>
             </View>
           </View>
 
-          <Text selectable fontSize={16} weight="number_regular" style={{ flex: 0.7 }}>
+          <Text
+            selectable
+            fontSize={16}
+            color={gradientStyle ? '#FFFFFF' : textColor}
+            weight="number_regular"
+            style={{ flex: 0.7 }}
+          >
             {priceUSDFormatted}
           </Text>
 
@@ -181,7 +187,7 @@ const BaseTokenItem = ({ token, extraActions, gradientStyle, label, borderRadius
             selectable
             fontSize={16}
             weight="number_bold"
-            color={textColor}
+            color={gradientStyle ? '#CD97FF' : textColor}
             style={{ flex: 0.4, textAlign: 'right' }}
           >
             {isPending ? pendingBalanceUSDFormatted : balanceUSDFormatted}

@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useCallback } from 'react'
 import { Pressable } from 'react-native'
 
 import { TokenResult } from '@ambire-common/libs/portfolio'
@@ -12,6 +12,8 @@ import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountCont
 
 import BaseTokenItem from './BaseTokenItem'
 
+const INFO_BTN_URL = 'https://help.ambire.com/hc/en-us/articles/22678327778460 '
+
 const ProjectedRewardsTokenItem = ({ token }: { token: TokenResult }) => {
   const { t } = useTranslation()
   const { theme, themeType } = useTheme()
@@ -24,26 +26,36 @@ const ProjectedRewardsTokenItem = ({ token }: { token: TokenResult }) => {
   const apy = projectedRewards && projectedRewards.result?.apy ? projectedRewards.result.apy : 0
   const apyFormatted = Number(apy).toFixed(2)
 
+  const handleDetailsPress = useCallback(() => {
+    window.open(INFO_BTN_URL, '_blank')
+  }, [])
+
   return (
     <BaseTokenItem
       token={token}
       extraActions={
         <Pressable
-          onPress={() => console.log('Learn more about projected rewards')}
+          onPress={handleDetailsPress}
           style={({ hovered }: any) => [
             flexbox.center,
             flexbox.directionRow,
             common.borderRadiusPrimary,
-            { width: 109, height: 38 },
+            { minWidth: 70, height: 38 },
             {
               borderWidth: 1,
               borderColor: 'transparent',
-              backgroundColor: '#F4F4F780'
+              backgroundColor: hovered
+                ? themeType === THEME_TYPES.DARK
+                  ? '#888C9F50'
+                  : '#F4F4F760'
+                : themeType === THEME_TYPES.DARK
+                ? '#888C9F40'
+                : '#F4F4F750'
             }
           ]}
         >
           <Text fontSize={14} weight="medium" color={theme.primary}>
-            {t('Learn more')}
+            {t('Info')}
           </Text>
         </Pressable>
       }
@@ -53,7 +65,11 @@ const ProjectedRewardsTokenItem = ({ token }: { token: TokenResult }) => {
           : 'linear-gradient(81deg, #D6DBF3 0%, #6000FF 100%)'
       }
       label={
-        <Text fontSize={12} weight="regular">
+        <Text
+          fontSize={12}
+          color={themeType === THEME_TYPES.DARK ? '#CADBEB' : '#32333E'}
+          weight="regular"
+        >
           {t('Projected APY: ')}
           <Text fontSize={12} color="#00FFC8">
             {`${apyFormatted}%`}
