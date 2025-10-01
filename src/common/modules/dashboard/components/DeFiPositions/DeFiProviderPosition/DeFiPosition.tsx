@@ -43,6 +43,7 @@ const DeFiPosition: FC<Props> = ({
   const description = useMemo(() => {
     try {
       if (Number(positionIndex)) return `#${positionIndex}`
+      return positionIndex
     } catch (error) {
       return positionIndex
     }

@@ -22,8 +22,7 @@ const ButtonWithLoader: FC<Props> = ({
       style={[
         {
           minWidth: 160,
-          ...spacings.mlLg,
-          paddingHorizontal: SPACING_XL + SPACING_TY
+          ...spacings.mlLg
         },
         style
       ]}

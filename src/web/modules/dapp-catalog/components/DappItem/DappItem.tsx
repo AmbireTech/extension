@@ -40,7 +40,19 @@ const DappItem = (dapp: Dapp) => {
     }
   })
 
-  const fallbackIcon = useCallback(() => <ManifestFallbackIcon />, [])
+  const getInitials = useCallback((fullName: string) => {
+    const words = fullName.split(' ').filter((word) => word.length > 0)
+    return words.length > 0 ? words[0][0].toUpperCase() : ''
+  }, [])
+
+  const fallbackIcon = useCallback(
+    () => (
+      <View style={styles.fallbackWrapper}>
+        <Text color={theme.infoText}>{getInitials(name)}</Text>
+      </View>
+    ),
+    [name, getInitials, styles.fallbackWrapper, theme.infoText]
+  )
 
   return (
     <View style={styles.dappItemWrapper}>

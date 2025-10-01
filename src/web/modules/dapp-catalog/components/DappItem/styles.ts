@@ -7,10 +7,19 @@ import common from '@common/styles/utils/common'
 interface Style {
   dappItemWrapper: ViewStyle
   container: ViewStyle
+  fallbackWrapper: ViewStyle
 }
 
 const getStyles = (theme: ThemeProps) =>
   StyleSheet.create<Style>({
+    fallbackWrapper: {
+      width: 30,
+      height: 30,
+      borderRadius: '50%',
+      backgroundColor: theme.primaryLight80,
+      alignItems: 'center',
+      justifyContent: 'center'
+    },
     dappItemWrapper: {
       width: '33.33%',
       height: 146,
