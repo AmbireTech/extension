@@ -21,8 +21,8 @@ const ProjectedRewardsTokenItem = ({ token }: { token: TokenResult }) => {
     latest: { projectedRewards }
   } = portfolio
 
-  const apyFormatted = projectedRewards ? projectedRewards.result?.apy.toFixed(2) : 0
-  console.log('apyFormatted:', apyFormatted)
+  const apy = projectedRewards && projectedRewards.result?.apy ? projectedRewards.result.apy : 0
+  const apyFormatted = Number(apy).toFixed(2)
 
   return (
     <BaseTokenItem
