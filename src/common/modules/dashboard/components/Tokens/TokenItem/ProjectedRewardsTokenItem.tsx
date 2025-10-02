@@ -1,7 +1,8 @@
-import React, { useCallback } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import { Pressable } from 'react-native'
 
 import { TokenResult } from '@ambire-common/libs/portfolio'
+import { PortfolioProjectedRewardsResult } from '@ambire-common/libs/portfolio/interfaces'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
@@ -23,8 +24,19 @@ const ProjectedRewardsTokenItem = ({ token }: { token: TokenResult }) => {
     latest: { projectedRewards }
   } = portfolio
 
-  const apy = projectedRewards && projectedRewards.result?.apy ? projectedRewards.result.apy : 0
-  const apyFormatted = Number(apy).toFixed(2)
+  const projectedRewardsResults = useMemo(
+    () =>
+      projectedRewards && projectedRewards.result
+        ? (projectedRewards.result as PortfolioProjectedRewardsResult)
+        : null,
+    [projectedRewards]
+  )
+
+  const apy = useMemo(
+    () =>
+      projectedRewardsResults && projectedRewardsResults.apy ? projectedRewardsResults.apy : 0,
+    [projectedRewardsResults]
+  )
 
   const handleDetailsPress = useCallback(() => {
     window.open(INFO_BTN_URL, '_blank')
@@ -40,7 +52,7 @@ const ProjectedRewardsTokenItem = ({ token }: { token: TokenResult }) => {
             flexbox.center,
             flexbox.directionRow,
             common.borderRadiusPrimary,
-            { minWidth: 70, height: 38 },
+            { width: 70, height: 38 },
             {
               borderWidth: 1,
               borderColor: 'transparent',
@@ -72,7 +84,7 @@ const ProjectedRewardsTokenItem = ({ token }: { token: TokenResult }) => {
         >
           {t('Projected APY: ')}
           <Text fontSize={12} color="#00FFC8">
-            {`${apyFormatted}%`}
+            {`${Number(apy).toFixed(2)}%`}
           </Text>
         </Text>
       }
