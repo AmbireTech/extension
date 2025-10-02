@@ -20,7 +20,6 @@ const getStyles = (theme: ThemeProps) =>
       ...spacings.phTy
       // ...common.borderRadiusPrimary
     },
-    // TODO: remove this as well as the wrapper in TokenItem
     tokenButtonIconWrapper: {
       backgroundColor: theme.secondaryBackground,
       ...common.borderRadiusPrimary,

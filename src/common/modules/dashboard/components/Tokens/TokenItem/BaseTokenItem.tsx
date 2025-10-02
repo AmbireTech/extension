@@ -5,6 +5,7 @@ import { useModalize } from 'react-native-modalize'
 import { TokenResult } from '@ambire-common/libs/portfolio'
 import BatchIcon from '@common/assets/svg/BatchIcon'
 import PendingToBeConfirmedIcon from '@common/assets/svg/PendingToBeConfirmedIcon'
+import RewardsIcon from '@common/assets/svg/RewardsIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
@@ -13,6 +14,7 @@ import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
 import spacings, { SPACING_2XL, SPACING_TY } from '@common/styles/spacings'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexboxStyles from '@common/styles/utils/flexbox'
 import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
@@ -43,7 +45,7 @@ const BaseTokenItem = ({ token, extraActions, gradientStyle, label, borderRadius
     property: 'backgroundColor',
     values: {
       from: theme.primaryBackground,
-      to: themeType === 'dark' ? theme.tertiaryBackground : theme.secondaryBackground
+      to: themeType === THEME_TYPES.DARK ? theme.tertiaryBackground : theme.secondaryBackground
     }
   })
 
@@ -77,18 +79,26 @@ const BaseTokenItem = ({ token, extraActions, gradientStyle, label, borderRadius
   const isPending = !!hasPendingBadges
 
   const textColor = useMemo(() => {
-    // if a gradient (rewards/vesting style) is provided, use white text for contrast
-    if (gradientStyle) return '#FFFFFF'
     if (!isPending) return theme.primaryText
     return pendingToBeSigned ? theme.warningText : theme.info2Text
-  }, [
-    gradientStyle,
-    isPending,
-    pendingToBeSigned,
-    theme.primaryText,
-    theme.warningText,
-    theme.info2Text
-  ])
+  }, [isPending, pendingToBeSigned, theme.primaryText, theme.warningText, theme.info2Text])
+
+  const gradientBorderStyle = gradientStyle
+    ? {
+        border: '2px solid transparent',
+        borderRadius: borderRadius || BORDER_RADIUS_PRIMARY,
+        padding: 1,
+        background: `
+        linear-gradient(${String(theme.primaryBackground)}, ${String(
+          theme.primaryBackground
+        )}) padding-box,
+        ${gradientStyle} border-box
+      `,
+        WebkitBackgroundClip: 'padding-box, border-box',
+        backgroundClip: 'padding-box, border-box',
+        borderImageSlice: 1
+      }
+    : animStyle
 
   return (
     <AnimatedPressable
@@ -96,10 +106,7 @@ const BaseTokenItem = ({ token, extraActions, gradientStyle, label, borderRadius
       style={[
         styles.container,
         { borderRadius: borderRadius || BORDER_RADIUS_PRIMARY },
-        gradientStyle
-          ? // @ts-ignore - using background CSS gradient for web preview like in the original component
-            { background: gradientStyle }
-          : animStyle
+        gradientBorderStyle
       ]}
       {...bindAnim}
     >
@@ -121,16 +128,22 @@ const BaseTokenItem = ({ token, extraActions, gradientStyle, label, borderRadius
         >
           <View style={[flexboxStyles.directionRow, { flex: 1.5 }]}>
             <View style={[spacings.mr, flexboxStyles.justifyCenter]}>
-              <TokenIcon
-                withContainer
-                address={address}
-                chainId={chainId}
-                onGasTank={onGasTank}
-                containerHeight={40}
-                containerWidth={40}
-                width={28}
-                height={28}
-              />
+              {gradientStyle ? (
+                <View style={styles.tokenButtonIconWrapper}>
+                  <RewardsIcon width={40} height={40} />
+                </View>
+              ) : (
+                <TokenIcon
+                  withContainer
+                  address={address}
+                  chainId={chainId}
+                  onGasTank={onGasTank}
+                  containerHeight={40}
+                  containerWidth={40}
+                  width={28}
+                  height={28}
+                />
+              )}
             </View>
 
             <View style={[flexboxStyles.flex1, spacings.mr]}>
@@ -176,7 +189,7 @@ const BaseTokenItem = ({ token, extraActions, gradientStyle, label, borderRadius
           <Text
             selectable
             fontSize={16}
-            color={gradientStyle ? '#FFFFFF' : textColor}
+            color={textColor}
             weight="number_regular"
             style={{ flex: 0.7 }}
           >
@@ -187,7 +200,7 @@ const BaseTokenItem = ({ token, extraActions, gradientStyle, label, borderRadius
             selectable
             fontSize={16}
             weight="number_bold"
-            color={gradientStyle ? '#CD97FF' : textColor}
+            color={textColor}
             style={{ flex: 0.4, textAlign: 'right' }}
           >
             {isPending ? pendingBalanceUSDFormatted : balanceUSDFormatted}
