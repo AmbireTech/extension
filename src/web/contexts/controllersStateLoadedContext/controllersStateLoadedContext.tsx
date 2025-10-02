@@ -6,6 +6,7 @@ import useActivityControllerState from '@web/hooks/useActivityControllerState'
 import useAddressBookControllerState from '@web/hooks/useAddressBookControllerState'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useBannersControllerState from '@web/hooks/useBannersControllerState'
+import useContractNamesControllerState from '@web/hooks/useContractNamesController/useContractNamesController'
 import useDappsControllerState from '@web/hooks/useDappsControllerState'
 import useDomainsControllerState from '@web/hooks/useDomainsController/useDomainsController'
 import useEmailVaultControllerState from '@web/hooks/useEmailVaultControllerState'
@@ -64,6 +65,7 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
   const addressBookState = useAddressBookControllerState()
   const domainsControllerState = useDomainsControllerState()
   const inviteControllerState = useInviteControllerState()
+  const contractNamesState = useContractNamesControllerState()
   const bannersState = useBannersControllerState()
 
   const swapAndBridgeControllerState = useSwapAndBridgeControllerState()
@@ -156,6 +158,10 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
     () => !!Object.keys(featureFlagsControllerState).length,
     [featureFlagsControllerState]
   )
+  const hasContractNamesControllerState: boolean = useMemo(
+    () => !!Object.keys(contractNamesState).length,
+    [contractNamesState]
+  )
   const hasBannersState: boolean = useMemo(() => !!Object.keys(bannersState).length, [bannersState])
 
   useEffect(() => {
@@ -190,6 +196,7 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
       hasSwapAndBridgeState &&
       hasExtensionUpdateState &&
       hasFeatureFlagsControllerState &&
+      hasContractNamesControllerState &&
       hasBannersState
     ) {
       clearTimeout(timeout)
@@ -232,6 +239,7 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
     hasSwapAndBridgeState,
     hasExtensionUpdateState,
     hasFeatureFlagsControllerState,
+    hasContractNamesControllerState,
     hasBannersState,
     dispatch,
     startTime

@@ -1,12 +1,11 @@
 import React, { FC, useEffect, useMemo } from 'react'
 
+import BaseAddress from '@common/components/HumanizerAddress/components/BaseAddress'
 import Spinner from '@common/components/Spinner'
 import { Props as TextProps } from '@common/components/Text'
 import useReverseLookup from '@common/hooks/useReverseLookup'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useContractNamesControllerState from '@web/hooks/useContractNamesController/useContractNamesController'
-
-import BaseAddress from '../BaseAddress'
 
 interface Props extends TextProps {
   address: string
@@ -15,42 +14,33 @@ interface Props extends TextProps {
 
 const AddressName: FC<Props> = ({ address, chainId, ...rest }) => {
   const { ens, isLoading } = useReverseLookup({ address })
-  const { contractNames, loadingAddresses } = useContractNamesControllerState()
+  const { contractNames } = useContractNamesControllerState()
   const { dispatch } = useBackgroundService()
-  const foundContractName = useMemo(() => {
-    const name = contractNames?.[address]?.name
-    if (!name) return
-    return name
-  }, [contractNames, address])
+
+  const contract = useMemo(() => {
+    return contractNames[address]
+  }, [address, contractNames])
+
+  const contractName = useMemo(() => {
+    return contract?.name
+  }, [contract])
 
   useEffect(() => {
-    if (
-      !contractNames[address]?.name &&
-      !loadingAddresses.some((l) => l.address.toLowerCase() === address.toLowerCase())
-    )
-      dispatch({
-        type: 'CONTRACT_NAMES_CONTROLLER_GET_NAME',
-        params: {
-          address,
-          chainId
-        }
-      })
-  }, [dispatch, address, chainId, contractNames, loadingAddresses])
-  if (isLoading)
-    return (
-      <Spinner
-        style={{
-          width: 16,
-          height: 16
-        }}
-      />
-    )
+    if (contractName) return
+
+    dispatch({
+      type: 'CONTRACT_NAMES_CONTROLLER_GET_NAME',
+      params: { address, chainId }
+    })
+  }, [dispatch, address, chainId, contractName])
+
+  if (isLoading) return <Spinner style={{ width: 16, height: 16 }} />
 
   return (
     <BaseAddress address={address} {...rest}>
-      {ens || foundContractName || address}
+      {ens || contractName || address}
     </BaseAddress>
   )
 }
 
-export default AddressName
+export default React.memo(AddressName)
