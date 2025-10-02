@@ -284,8 +284,15 @@ const TokenDetails = ({
     address
   } = token
 
-  const { priceUSDFormatted, balanceUSDFormatted, isRewards, isVesting, networkData, balance } =
-    getAndFormatTokenDetails(token, networks)
+  const {
+    priceUSDFormatted,
+    balanceUSDFormatted,
+    isRewards,
+    isVesting,
+    isProjectedRewards,
+    networkData,
+    balance
+  } = getAndFormatTokenDetails(token, networks)
 
   const hideToken = useCallback(() => {
     if (!token) return
@@ -354,24 +361,28 @@ const TokenDetails = ({
                 <CopyTokenAddress address={address} isRewards={isRewards} isVesting={isVesting} />
               </Text>
             </View>
-            {!onGasTank && !isRewards && !isVesting && !token.flags.defiTokenType && (
-              <View style={[flexbox.alignSelfEnd]}>
-                <AnimatedPressable
-                  {...bindAnimHide}
-                  onPress={handleHideTokenFromButton}
-                  style={animStyleHide}
-                >
-                  <Text
-                    testID="hide-token-button"
-                    style={styles.hideTokenButton}
-                    weight="medium"
-                    fontSize={12}
+            {!onGasTank &&
+              !isRewards &&
+              !isVesting &&
+              !isProjectedRewards &&
+              !token.flags.defiTokenType && (
+                <View style={[flexbox.alignSelfEnd]}>
+                  <AnimatedPressable
+                    {...bindAnimHide}
+                    onPress={handleHideTokenFromButton}
+                    style={animStyleHide}
                   >
-                    {t('Hide token')}
-                  </Text>
-                </AnimatedPressable>
-              </View>
-            )}
+                    <Text
+                      testID="hide-token-button"
+                      style={styles.hideTokenButton}
+                      weight="medium"
+                      fontSize={12}
+                    >
+                      {t('Hide token')}
+                    </Text>
+                  </AnimatedPressable>
+                </View>
+              )}
           </View>
           <View style={styles.balance}>
             <Text
