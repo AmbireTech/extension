@@ -5,6 +5,7 @@ type LeaderboardEntry = {
     level?: number
     xp: number
     weight?: number
+    projectedRewards?: number
     image: string
     image_avatar: string
   }>
@@ -14,6 +15,7 @@ type LeaderboardEntry = {
     level?: number
     xp: number
     weight?: number
+    projectedRewards?: number
     image: string
     image_avatar: string
   }

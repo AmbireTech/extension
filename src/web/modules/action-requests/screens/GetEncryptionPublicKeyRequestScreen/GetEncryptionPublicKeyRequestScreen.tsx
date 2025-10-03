@@ -17,6 +17,7 @@ import HeaderAccountAndNetworkInfo from '@web/components/HeaderAccountAndNetwork
 import ManifestImage from '@web/components/ManifestImage'
 import useActionsControllerState from '@web/hooks/useActionsControllerState'
 import useBackgroundService from '@web/hooks/useBackgroundService'
+import useDappInfo from '@web/hooks/useDappInfo'
 
 import styles from './styles'
 
@@ -31,10 +32,12 @@ const GetEncryptionPublicKeyRequestScreen = () => {
   )
 
   const userRequest = useMemo(() => {
-    if (!dappAction) return null
+    if (!dappAction) return undefined
 
-    return dappAction?.userRequest || null
+    return dappAction?.userRequest || undefined
   }, [dappAction])
+
+  const { name, icon } = useDappInfo(userRequest)
 
   const handleDeny = useCallback(() => {
     if (!dappAction) return
@@ -51,11 +54,7 @@ const GetEncryptionPublicKeyRequestScreen = () => {
       <ScrollableWrapper hasBottomTabNav={false}>
         <Panel>
           <View style={[spacings.pvSm, flexboxStyles.alignCenter]}>
-            <ManifestImage
-              uri={userRequest?.session?.icon}
-              size={64}
-              fallback={() => <ManifestFallbackIcon />}
-            />
+            <ManifestImage uri={icon} size={64} fallback={() => <ManifestFallbackIcon />} />
           </View>
 
           <Title style={[textStyles.center, spacings.phSm, spacings.pbLg]}>
@@ -69,7 +68,7 @@ const GetEncryptionPublicKeyRequestScreen = () => {
                   {'The App '}
                 </Text>
                 <Text fontSize={14} weight="regular" color={theme.primaryLight}>
-                  {userRequest?.session?.name || ''}
+                  {name}
                 </Text>
                 <Text fontSize={14} weight="regular">
                   {

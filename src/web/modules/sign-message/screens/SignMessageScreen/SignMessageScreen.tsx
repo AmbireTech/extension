@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { StyleSheet, View } from 'react-native'
 
-import { SignMessageAction } from '@ambire-common/controllers/actions/actions'
+import { SignMessageAction } from '@ambire-common/interfaces/actions'
 import { Key } from '@ambire-common/interfaces/keystore'
 import { PlainTextMessage, TypedMessage } from '@ambire-common/interfaces/userRequest'
 import { isSmartAccount } from '@ambire-common/libs/account/account'
@@ -23,6 +23,7 @@ import SmallNotificationWindowWrapper from '@web/components/SmallNotificationWin
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import useActionsControllerState from '@web/hooks/useActionsControllerState'
 import useBackgroundService from '@web/hooks/useBackgroundService'
+import useDappInfo from '@web/hooks/useDappInfo/useDappInfo'
 import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
@@ -69,6 +70,8 @@ const SignMessageScreen = () => {
 
     return signMessageAction.userRequest
   }, [signMessageAction])
+
+  const { name, icon } = useDappInfo(userRequest)
 
   const isAuthorization = useMemo(() => {
     if (!signMessageAction) return false
@@ -128,10 +131,7 @@ const SignMessageScreen = () => {
     dispatch({
       type: 'MAIN_CONTROLLER_SIGN_MESSAGE_INIT',
       params: {
-        dapp: {
-          name: userRequest?.session?.name || '',
-          icon: userRequest?.session?.icon || ''
-        },
+        dapp: { name, icon },
         messageToSign: {
           accountAddr: userRequest.meta.accountAddr,
           chainId: userRequest.meta.chainId,
@@ -141,7 +141,14 @@ const SignMessageScreen = () => {
         }
       }
     })
-  }, [dispatch, userRequest, signMessageAction, signMessageState.messageToSign?.fromActionId])
+  }, [
+    dispatch,
+    userRequest,
+    signMessageAction,
+    signMessageState.messageToSign?.fromActionId,
+    name,
+    icon
+  ])
 
   useEffect(() => {
     return () => {

@@ -72,6 +72,15 @@ const PortfolioControllerStateProvider: React.FC<any> = ({ children }) => {
     walletPrice: number
   } | null>(null)
   const [walletTokenPrice, setWalletTokenPrice] = useState<number | null>(null)
+  const [rewardsProjectionData, setRewardsProjectionData] = useState<{
+    currentSeasonSnapshots: { week: number; balance: number }[]
+    currentWeek: number
+    numberOfWeeksSinceStartOfSeason: number
+    supportedChainIds: number[]
+    totalRewardsPool: number
+    totalWeightNonUser: number
+    userLevel: number
+  } | null>(null)
 
   const updateAdditionalPortfolio = useCallback(async () => {
     if (!connectedAccount) {
@@ -85,7 +94,7 @@ const PortfolioControllerStateProvider: React.FC<any> = ({ children }) => {
       )
 
       const additionalPortfolioJson = await additionalPortfolioResponse.json()
-
+      console.log('additionalPortfolioJson', additionalPortfolioJson.data)
       const xWalletClaimableBalanceData =
         additionalPortfolioJson?.data?.rewards?.xWalletClaimableBalance
       const claimableBalance = additionalPortfolioJson?.data?.rewards?.stkWalletClaimableBalance
@@ -96,6 +105,7 @@ const PortfolioControllerStateProvider: React.FC<any> = ({ children }) => {
 
       setWalletTokenPrice(walletTokenInfoData.price)
 
+      setRewardsProjectionData(additionalPortfolioJson?.data?.rewardsProjectionData)
       setClaimableRewards(claimableBalance)
       setXWalletClaimableBalance(xWalletClaimableBalanceData)
       setIsLoadingClaimableRewards(false)
@@ -210,7 +220,8 @@ const PortfolioControllerStateProvider: React.FC<any> = ({ children }) => {
           isLoadingWalletTokenInfo,
           xWalletClaimableBalance,
           walletTokenInfo,
-          walletTokenPrice
+          walletTokenPrice,
+          rewardsProjectionData
         }),
         [
           accountPortfolio,
@@ -221,7 +232,8 @@ const PortfolioControllerStateProvider: React.FC<any> = ({ children }) => {
           isLoadingWalletTokenInfo,
           xWalletClaimableBalance,
           walletTokenInfo,
-          walletTokenPrice
+          walletTokenPrice,
+          rewardsProjectionData
         ]
       )}
     >
@@ -231,3 +243,15 @@ const PortfolioControllerStateProvider: React.FC<any> = ({ children }) => {
 }
 
 export { PortfolioControllerStateProvider, PortfolioControllerStateContext }
+
+function usePortfolioControllerState() {
+  const context = React.useContext(PortfolioControllerStateContext)
+  if (context === undefined) {
+    throw new Error(
+      'usePortfolioControllerState must be used within PortfolioControllerStateProvider'
+    )
+  }
+  return context
+}
+
+export default usePortfolioControllerState

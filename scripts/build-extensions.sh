@@ -17,25 +17,37 @@ fi
 # Read the build target
 TARGET="$1"
 
+# The order of the commands is crucial! Injecting the debug ids
+# before creating the release will result in an empty release!
 upload_source_maps_for_build() {
   local ENGINE="$1"
-  
-  echo "Uploading source maps for $ENGINE build"
 
-  sentry-cli releases new extension-$ENGINE@$VERSION --project=$SENTRY_PROJECT
+  # Only create a new release if auth token is available
+  if [ -n "$SENTRY_AUTH_TOKEN" ]; then
+    sentry-cli releases new extension-$ENGINE@$VERSION --project=$SENTRY_PROJECT
+  else
+    echo "SENTRY_AUTH_TOKEN not available, skipping creating new Sentry release"
+  fi
+
+  # Always inject debug IDs (doesn't require auth token), so that the build is
+  # deterministic enough to pass the Firefox review process.
+  echo "Injecting debug IDs for $ENGINE build"
   sentry-cli sourcemaps inject build/$ENGINE-prod/ --release=extension-$ENGINE@$VERSION --project=$SENTRY_PROJECT
-  sentry-cli sourcemaps upload --release=extension-$ENGINE@$VERSION --project=$SENTRY_PROJECT build/$ENGINE-prod/
-  sentry-cli releases finalize extension-$ENGINE@$VERSION --project=$SENTRY_PROJECT
+
+  # Only upload to Sentry if auth token is available
+  if [ -n "$SENTRY_AUTH_TOKEN" ]; then
+    echo "Uploading source maps for $ENGINE build to Sentry"
+    sentry-cli sourcemaps upload --release=extension-$ENGINE@$VERSION --project=$SENTRY_PROJECT build/$ENGINE-prod/
+    sentry-cli releases finalize extension-$ENGINE@$VERSION --project=$SENTRY_PROJECT
+  else
+    echo "SENTRY_AUTH_TOKEN not available, skipping source map upload to Sentry"
+  fi
 }
 
-# Injects debug ids and uploads source maps to Sentry
+# Injects debug ids and optionally uploads source maps to Sentry
 # Must be done before separating the source maps from the build directories
 prepare_and_upload_sourcemaps() {
-  # Skip if SENTRY_AUTH_TOKEN is not defined
-  if [ -z "$SENTRY_AUTH_TOKEN" ]; then
-    echo "SENTRY_AUTH_TOKEN not defined, skipping Sentry source map upload"
-    return
-  fi
+  # Always install sentry-cli for debug ID injection, even without auth token
 
   # Check if sentry-cli is installed, if not install it
   if command -v sentry-cli &> /dev/null; then
@@ -47,7 +59,7 @@ prepare_and_upload_sourcemaps() {
   echo "Installing sentry-cli..."
   curl -sL https://sentry.io/get-cli/ | SENTRY_CLI_VERSION="2.46.0" sh
 
-  SENTRY_PROJECT=extension  
+  SENTRY_PROJECT=extension
   sentry-cli --version
 
   # Decide what to build
@@ -72,13 +84,13 @@ prepare_and_upload_sourcemaps() {
 build_webkit() {
   echo "Step 1: Building the webkit extension"
   yarn build:web:webkit
-  
+
 }
 
 # Function to build and zip Gecko
 build_gecko() {
   echo "Step 1: Building the gecko extension"
-  yarn build:web:gecko  
+  yarn build:web:gecko
 }
 
 # Decide what to build
@@ -95,7 +107,7 @@ case "$TARGET" in
     ;;
 esac
 
-echo "Step 2: Injecting debug ids and uploading source maps to Sentry"
+echo "Step 2: Injecting debug ids and optionally uploading source maps to Sentry"
 prepare_and_upload_sourcemaps
 
 echo "Step 3: Separating source maps from the build directories"

@@ -52,8 +52,6 @@ const AddOrUpdateNetworkScreen = () => {
 
   const requestKind = useMemo(() => userRequest?.action?.kind, [userRequest?.action?.kind])
 
-  const requestSession = useMemo(() => userRequest?.session, [userRequest?.session])
-
   const areParamsValid = useMemo(
     () => validateRequestParams(requestKind, requestData),
     [requestData, requestKind]
@@ -283,7 +281,7 @@ const AddOrUpdateNetworkScreen = () => {
             features={features}
             networkDetails={networkDetails}
             networkAlreadyAdded={networkAlreadyAdded}
-            requestSession={requestSession}
+            userRequest={userRequest}
             actionButtonPressedRef={actionButtonPressedRef}
             rpcUrls={rpcUrls}
             rpcUrlIndex={rpcUrlIndex}
@@ -315,7 +313,6 @@ const AddOrUpdateNetworkScreen = () => {
           statuses={statuses}
           features={features}
           networkDetails={networkDetails}
-          requestSession={requestSession}
           actionButtonPressedRef={actionButtonPressedRef}
           rpcUrls={rpcUrls}
           rpcUrlIndex={rpcUrlIndex}

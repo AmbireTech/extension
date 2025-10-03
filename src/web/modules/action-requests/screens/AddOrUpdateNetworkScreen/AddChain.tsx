@@ -2,11 +2,11 @@ import React from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
-import { Session } from '@ambire-common/classes/session'
 import { Statuses } from '@ambire-common/interfaces/eventEmitter'
 import { AddNetworkRequestParams, Network, NetworkFeature } from '@ambire-common/interfaces/network'
 import { DappUserRequest } from '@ambire-common/interfaces/userRequest'
 import ManifestFallbackIcon from '@common/assets/svg/ManifestFallbackIcon'
+import Alert from '@common/components/Alert'
 import NetworkIcon from '@common/components/NetworkIcon'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
@@ -19,6 +19,7 @@ import ManifestImage from '@web/components/ManifestImage'
 import NetworkAvailableFeatures from '@web/components/NetworkAvailableFeatures'
 import NetworkDetails from '@web/components/NetworkDetails'
 import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
+import useDappInfo from '@web/hooks/useDappInfo'
 
 import ActionFooter from '../../components/ActionFooter'
 import getStyles from './styles'
@@ -31,7 +32,6 @@ type AddChainProps = {
   statuses: Statuses<'addNetwork' | 'updateNetwork'> & Statuses<string>
   features: NetworkFeature[]
   networkDetails: AddNetworkRequestParams
-  requestSession: Session | undefined
   actionButtonPressedRef: React.MutableRefObject<boolean>
   rpcUrls: string[]
   rpcUrlIndex: number
@@ -48,7 +48,6 @@ const AddChain = ({
   statuses,
   features,
   networkDetails,
-  requestSession,
   actionButtonPressedRef,
   rpcUrls,
   rpcUrlIndex,
@@ -58,6 +57,7 @@ const AddChain = ({
 }: AddChainProps) => {
   const { styles, theme, themeType } = useTheme(getStyles)
   const { t } = useTranslation()
+  const { name, icon } = useDappInfo(userRequest)
 
   return (
     <TabLayoutContainer
@@ -98,7 +98,7 @@ const AddChain = ({
           <View style={styles.dappInfoContainer}>
             {!existingNetwork && (
               <ManifestImage
-                uri={requestSession?.icon}
+                uri={icon}
                 size={50}
                 fallback={() => <ManifestFallbackIcon />}
                 containerStyle={spacings.mrMd}
@@ -106,7 +106,7 @@ const AddChain = ({
             )}
 
             {!existingNetwork ? (
-              <Trans values={{ name: requestSession?.name || 'The App' }}>
+              <Trans values={{ name: name || 'The App' }}>
                 <Text>
                   <Text fontSize={20} appearance="secondaryText">
                     {t('Allow ')}
@@ -179,11 +179,9 @@ const AddChain = ({
             <View style={[flexbox.flex1, flexbox.alignCenter, flexbox.justifyCenter]}>
               <Alert
                 title={t('Invalid Request Params')}
-                text={t(
-                  `${
-                    userRequest?.session?.name || 'The App'
-                  } provided invalid params for adding a new network.`
-                )}
+                text={t('{{name}} provided invalid params for adding a new network.', {
+                  name: name || 'The App'
+                })}
                 type="error"
               />
             </View>

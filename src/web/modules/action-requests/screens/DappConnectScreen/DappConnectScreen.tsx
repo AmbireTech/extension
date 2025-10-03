@@ -13,6 +13,7 @@ import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWr
 import eventBus from '@web/extension-services/event/eventBus'
 import useActionsControllerState from '@web/hooks/useActionsControllerState'
 import useBackgroundService from '@web/hooks/useBackgroundService'
+import useDappInfo from '@web/hooks/useDappInfo'
 import useDappsControllerState from '@web/hooks/useDappsControllerState'
 import ActionFooter from '@web/modules/action-requests/components/ActionFooter'
 
@@ -49,13 +50,7 @@ const DappConnectScreen = () => {
     return dappAction.userRequest
   }, [dappAction])
 
-  const dappRefFromTheDappsController = useMemo(() => {
-    return dapps.find((d) => getDappIdFromUrl(d.url) === userRequest?.session?.id)
-  }, [userRequest?.session?.id, dapps])
-
-  const name = useMemo(() => {
-    return dappRefFromTheDappsController?.name || userRequest?.session?.name
-  }, [userRequest?.session?.name, dappRefFromTheDappsController])
+  const { name, icon } = useDappInfo(userRequest)
 
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -155,7 +150,7 @@ const DappConnectScreen = () => {
           <DAppConnectHeader
             name={name}
             origin={userRequest?.session?.origin}
-            icon={userRequest?.session?.icon}
+            icon={icon}
             securityCheck={securityCheck}
             responsiveSizeMultiplier={responsiveSizeMultiplier}
           />

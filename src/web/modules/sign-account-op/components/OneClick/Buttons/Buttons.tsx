@@ -50,8 +50,12 @@ const Buttons: FC<Props> = ({
       return signAccountOpErrors[0].title
     }
 
+    if (callsCount && isBridge) {
+      return t('Cannot proceed with the bridge while other transactions are waiting for signing.')
+    }
+
     return ''
-  }, [signAccountOpErrors])
+  }, [signAccountOpErrors, isBridge, callsCount, t])
 
   const batchDisabledReason = useMemo(() => {
     if (isBridge) return t('Batching is not available for bridges.')

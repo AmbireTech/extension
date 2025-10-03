@@ -2,9 +2,9 @@ import React from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
-import { Session } from '@ambire-common/classes/session'
 import { Statuses } from '@ambire-common/interfaces/eventEmitter'
 import { AddNetworkRequestParams, Network, NetworkFeature } from '@ambire-common/interfaces/network'
+import { DappUserRequest } from '@ambire-common/interfaces/userRequest'
 import ArrowRightIcon from '@common/assets/svg/ArrowRightIcon'
 import ManifestFallbackIcon from '@common/assets/svg/ManifestFallbackIcon'
 import Banner from '@common/components/Banner'
@@ -17,6 +17,7 @@ import HeaderAccountAndNetworkInfo from '@web/components/HeaderAccountAndNetwork
 import ManifestImage from '@web/components/ManifestImage'
 import NetworkAvailableFeatures from '@web/components/NetworkAvailableFeatures'
 import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
+import useDappInfo from '@web/hooks/useDappInfo'
 
 import ActionFooter from '../../components/ActionFooter'
 import RpcCard from './RpcCard'
@@ -31,7 +32,7 @@ type UpdateChainProps = {
   features: NetworkFeature[]
   networkDetails: AddNetworkRequestParams
   networkAlreadyAdded: Network
-  requestSession: Session | undefined
+  userRequest: DappUserRequest | undefined
   actionButtonPressedRef: React.MutableRefObject<boolean>
   rpcUrls: string[]
   rpcUrlIndex: number
@@ -46,13 +47,14 @@ const UpdateChain = ({
   features,
   networkDetails,
   networkAlreadyAdded,
-  requestSession,
+  userRequest,
   actionButtonPressedRef,
   rpcUrls,
   rpcUrlIndex
 }: UpdateChainProps) => {
   const { styles, theme, themeType } = useTheme(getStyles)
   const { t } = useTranslation()
+  const { name, icon } = useDappInfo(userRequest)
 
   return (
     <TabLayoutContainer
@@ -93,13 +95,13 @@ const UpdateChain = ({
 
           <View style={styles.dappInfoContainer}>
             <ManifestImage
-              uri={requestSession?.icon}
+              uri={icon}
               size={50}
               fallback={() => <ManifestFallbackIcon />}
               containerStyle={spacings.mrMd}
             />
 
-            <Trans values={{ name: requestSession?.name || 'The App' }}>
+            <Trans values={{ name: name || 'The App' }}>
               <Text>
                 <Text fontSize={20} appearance="secondaryText">
                   {t('Allow ')}
