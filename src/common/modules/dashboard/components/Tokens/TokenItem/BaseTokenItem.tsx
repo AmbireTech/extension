@@ -85,7 +85,7 @@ const BaseTokenItem = ({ token, extraActions, gradientStyle, label, borderRadius
 
   const gradientBorderStyle = gradientStyle
     ? {
-        border: '2px solid transparent',
+        border: '1px solid transparent',
         borderRadius: borderRadius || BORDER_RADIUS_PRIMARY,
         padding: 1,
         background: `
@@ -179,9 +179,8 @@ const BaseTokenItem = ({ token, extraActions, gradientStyle, label, borderRadius
                       : label}
                   </Text>
                 </View>
-
                 {/* area for optional actions (Claim button etc) */}
-                {extraActions ? <View>{extraActions}</View> : null}
+                {extraActions}
               </View>
             </View>
           </View>
