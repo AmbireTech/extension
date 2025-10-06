@@ -293,4 +293,19 @@ test.describe('dashboard', () => {
       await pages.settings.isVisible(`token-balance-${wallet.address}.${wallet.chainId}`)
     })
   })
+
+  test('Click on Info button for Projected Rewards token', async ({ pages }) => {
+    await test.step('assert Info button is visible', async () => {
+      await pages.basePage.isVisible(selectors.dashboard.projectedRewardsInfoButton)
+    })
+
+    await test.step('click on Info button', async () => {
+      await pages.basePage.click(selectors.dashboard.projectedRewardsInfoButton)
+    })
+
+    await test.step('assert new tab is opened', async () => {
+      const allPages = pages.basePage.context.pages()
+      expect(allPages.length).toBe(2)
+    })
+  })
 })

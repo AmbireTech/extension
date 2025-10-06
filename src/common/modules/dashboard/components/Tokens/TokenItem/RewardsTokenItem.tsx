@@ -28,6 +28,7 @@ const RewardsTokenItem = ({ token }: { token: TokenResult }) => {
       token={token}
       extraActions={
         <Pressable
+          testID="projected-rewards-claim-button"
           onPress={sendClaimTransaction}
           style={({ hovered }: any) => [
             flexbox.center,

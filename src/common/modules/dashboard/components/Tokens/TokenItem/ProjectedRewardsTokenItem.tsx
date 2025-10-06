@@ -24,6 +24,7 @@ const ProjectedRewardsTokenItem = ({ token }: { token: TokenResult }) => {
       token={token}
       extraActions={
         <Pressable
+          testID="projected-rewards-info-button"
           onPress={handleDetailsPress}
           style={({ hovered }: any) => [
             flexbox.center,
