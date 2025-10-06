@@ -177,7 +177,6 @@ const CharacterSection = () => {
                     </div>
                   )}
                   <div className={styles.characterNameWrapper}>
-                    <p className={styles.characterName}>{character.characterName}</p>
                     <p className={styles.characterLevel}>
                       Level
                       <p className={styles.characterLevelText}>{character.level}</p>
