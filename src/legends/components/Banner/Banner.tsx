@@ -9,10 +9,11 @@ const Banner: React.FC = () => {
       <img className={styles.iconPlaceholder} src={governance} alt="Governance banner icon" />
       <div className={styles.textContent}>
         <div className={styles.title}>
-          🛒 Vote is live: Add Bitrefill to Ambire’s App Catalog + 20% cashback on your first order!
+          🗳️ Should we extend Ambire Rewards Season 1 until December 15, 2025? Vote until October
+          5th.
         </div>
         <a
-          href="https://snapshot.box/#/s:ambire.eth/proposal/0xe9c25d55ec5277147a5a75ec082830bc5feaeb257b66e6409ff3788872867ac0"
+          href="https://snapshot.box/#/s:ambire.eth/proposal/0x95c6d26b2bbf628f62a85a27d9a9ee5b19d0ea864385d3da40aff2b97025008b"
           className={styles.readMoreLink}
           target="_blank"
           rel="noreferrer"

@@ -4,6 +4,7 @@ import { useLocation } from 'react-router-dom'
 import { faBars } from '@fortawesome/free-solid-svg-icons/faBars'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import AccountInfo from '@legends/components/AccountInfo'
+import Banner from '@legends/components/Banner'
 import Sidebar from '@legends/components/Sidebar'
 import useAccountContext from '@legends/hooks/useAccountContext'
 import useCharacterContext from '@legends/hooks/useCharacterContext'
@@ -25,7 +26,7 @@ const Page = ({
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const { pathname } = useLocation()
 
-  const { connectedAccount, nonV2Account } = useAccountContext()
+  const { connectedAccount } = useAccountContext()
   const { isCharacterNotMinted } = useCharacterContext()
 
   const openSidebar = () => setIsSidebarOpen(true)
@@ -37,12 +38,13 @@ const Page = ({
         <Sidebar handleClose={closeSidebar} isOpen={isSidebarOpen} />
 
         <div ref={pageRef} className={`${styles.scroll} ${styles.containerfull}`} style={style}>
+          <Banner />
           <div className={`${styles.container} ${customContainerSizeClass}`}>
             <div className={styles.header}>
               <button className={styles.sidebarButton} type="button" onClick={openSidebar}>
                 <FontAwesomeIcon icon={faBars} />
               </button>
-              {connectedAccount && !nonV2Account && !isCharacterNotMinted && (
+              {connectedAccount && !isCharacterNotMinted && (
                 <div className={styles.account}>
                   <AccountInfo removeAvatarAndLevel={isCharacterNotMinted} />
                 </div>

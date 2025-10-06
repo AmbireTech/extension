@@ -109,14 +109,14 @@ const BitrefillClaim = ({ meta }: Props) => {
     )
   if (meta?.allCollected) {
     return (
-      <div className={styles.bitrefillCode}>
-        <p>All codes have already been collected</p>
+      <div className={styles.infoText}>
+        <p>All codes have already been collected!</p>
       </div>
     )
   }
   if (isInProgress)
     return (
-      <div className={styles.bitrefillCode}>
+      <div className={styles.infoText}>
         <p>Loading...</p>
       </div>
     )

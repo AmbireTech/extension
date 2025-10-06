@@ -69,3 +69,16 @@
     }
   }
 }
+
+.infoText {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  p {
+    font-weight: 300;
+    font-style: Light;
+    font-size: 2rem;
+
+    color: $primaryText;
+  }
+}

@@ -37,11 +37,11 @@ const getBadge = (rank: number) => {
   }
 }
 
-function prettifyWeight(weight: number) {
-  if (weight > 1_000) return `${(weight / 1_000).toFixed(2)}K`
-  if (weight > 1_000_000) return `${(weight / 1_000_000).toFixed(2)}M`
-  if (weight > 1_000_000_000) return `${(weight / 1_000_000_000).toFixed(2)}B`
-  return Math.floor(weight)
+function prettifyProjectedRewards(amount: number) {
+  if (amount > 1_000_000_000) return `${(amount / 1_000_000_000).toFixed(2)}B`
+  if (amount > 1_000_000) return `${(amount / 1_000_000).toFixed(2)}M`
+  if (amount > 1_000) return `${(amount / 1_000).toFixed(2)}K`
+  return Math.floor(amount)
 }
 
 const Row: FC<Props> = ({
@@ -113,7 +113,9 @@ const Row: FC<Props> = ({
       <h5 className={styles.cell}>{level}</h5>
       {typeof projectedRewards !== 'undefined' && (
         <h5 className={`${styles.cell} ${styles.weight}`}>
-          {typeof projectedRewards === 'number' ? prettifyWeight(projectedRewards) : 'Loading...'}
+          {typeof projectedRewards === 'number'
+            ? prettifyProjectedRewards(projectedRewards)
+            : 'Loading...'}
         </h5>
       )}
       <h5 className={styles.cell}>{formattedXp}</h5>

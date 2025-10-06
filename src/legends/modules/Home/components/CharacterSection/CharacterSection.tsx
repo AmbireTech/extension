@@ -8,7 +8,6 @@ import InfoIcon from '@common/assets/svg/InfoIcon'
 import MultiplicationIcon from '@common/assets/svg/MultiplicationIcon'
 import StkWalletIcon from '@common/assets/svg/StkWalletIcon'
 import Tooltip from '@common/components/Tooltip'
-import HourGlassIcon from '@legends/common/assets/svg/HourGlassIcon'
 import LockIcon from '@legends/common/assets/svg/LockIcon'
 import UnionIcon from '@legends/common/assets/svg/UnionIcon'
 import AccountInfo from '@legends/components/AccountInfo'
@@ -27,6 +26,8 @@ import startsBackground from './starsBackground.png'
 import substractGradientBackground from './substract-gradient.png'
 import substractBackground from './substract.png'
 import unknownCharacterImg from './unknown-character.png'
+
+const THRESHOLD_AMOUNT_TO_HIDE_BALANCE_DECIMALS = 500
 
 const CharacterSection = () => {
   const [isClaimModalOpen, setIsClaimModalOpen] = useState(false)
@@ -52,13 +53,26 @@ const CharacterSection = () => {
     !accountPortfolio?.isReady
 
   const { amountFormatted, amount } = accountPortfolio || {}
+  // Helper to format balance with/without decimals
+  const formatBalance = (value: string | number | undefined) => {
+    const num = Number((value ?? '0').toString().replace(/[^0-9.-]+/g, ''))
+    if (num >= THRESHOLD_AMOUNT_TO_HIDE_BALANCE_DECIMALS) {
+      return num.toLocaleString(undefined, {
+        maximumFractionDigits: 0
+      })
+    }
+    return num.toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    })
+  }
   const isNotAvailableForRewards =
     ((accountPortfolio || accountPortfolio?.isReady) &&
       amountFormatted &&
       Number((amountFormatted ?? '0').replace(/[^0-9.-]+/g, '')) < 500) ||
     (season1LeaderboardData?.currentUser?.level ?? 0) <= 2
 
-  const shouldShowIcon = isRewardsLoading || !!claimableRewardsError || isNotAvailableForRewards
+  const shouldShowIcon = !!claimableRewardsError || isNotAvailableForRewards
 
   const formatXp = (xp: number) => {
     return xp && xp.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
@@ -235,7 +249,7 @@ const CharacterSection = () => {
                   />
                 </div>
                 <span className={styles.balanceAmount}>
-                  {accountPortfolio?.isReady ? amountFormatted : 'Loading...'}
+                  {accountPortfolio?.isReady ? `$${formatBalance(amountFormatted)}` : 'Loading...'}
                 </span>
               </div>
               <div className={styles.logoAndBalanceWrapper}>
@@ -329,7 +343,7 @@ const CharacterSection = () => {
                           }}
                           place="bottom"
                           id="projected-rewards-info"
-                          content="Projected rewards based on season weekly balance snapshot. End results might vary."
+                          content="Projected rewards based on season weekly balance snapshot. End results might vary. This number is only an estimate — it will fluctuate as the season progresses, new users join, and balances shift."
                         />
                       </div>
                       <div className={styles.rewardsProjectionStats}>
@@ -339,14 +353,30 @@ const CharacterSection = () => {
                         </p>
                         <p className={styles.projectionStatValue}>
                           {projectedAmount?.walletRewards
-                            ? projectedAmount.walletRewards.toLocaleString(undefined, {
-                                minimumFractionDigits: 3,
-                                maximumFractionDigits: 3
-                              })
+                            ? Number(projectedAmount.walletRewards) >=
+                              THRESHOLD_AMOUNT_TO_HIDE_BALANCE_DECIMALS
+                              ? Number(projectedAmount.walletRewards).toLocaleString(undefined, {
+                                  maximumFractionDigits: 0
+                                })
+                              : Number(projectedAmount.walletRewards).toLocaleString(undefined, {
+                                  minimumFractionDigits: 3,
+                                  maximumFractionDigits: 3
+                                })
                             : '0.000'}
                         </p>
                         <p className={styles.projectionStatPriceValue}>
-                          {balanceInUsd ? `$${Number(balanceInUsd).toFixed(2)}` : '$0.00'}
+                          {balanceInUsd
+                            ? `$${
+                                Number(balanceInUsd) >= THRESHOLD_AMOUNT_TO_HIDE_BALANCE_DECIMALS
+                                  ? Number(balanceInUsd).toLocaleString(undefined, {
+                                      maximumFractionDigits: 0
+                                    })
+                                  : Number(balanceInUsd).toLocaleString(undefined, {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: 2
+                                    })
+                              }`
+                            : '$0.00'}
                         </p>
                       </div>
 
@@ -359,6 +389,21 @@ const CharacterSection = () => {
                             color="currentColor"
                             className={styles.infoIcon}
                             data-tooltip-id="apy-info"
+                          />
+                          <Tooltip
+                            style={{
+                              backgroundColor: '#101114',
+                              color: '#F4F4F7',
+                              fontFamily: 'FunnelDisplay',
+                              fontSize: 11,
+                              lineHeight: '16px',
+                              fontWeight: 300,
+                              maxWidth: 244,
+                              boxShadow: '0px 0px 12.1px 0px #191B20'
+                            }}
+                            place="bottom"
+                            id="apy-info"
+                            content="Annual Percentage Yield. This percentage reflects moving average of APR (Annual Percentage Rate) for $stkWALLET rewards based on your portfolio balance and level. This percentage does not guarantee future performance and is subject to change."
                           />
                         </div>
                         <p className={styles.apyValue}>{projectedAmount?.apy.toFixed(2)}%</p>

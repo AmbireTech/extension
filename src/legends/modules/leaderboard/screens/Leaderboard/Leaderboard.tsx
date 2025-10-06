@@ -188,7 +188,7 @@ const LeaderboardContainer: React.FC = () => {
                       }}
                       place="bottom"
                       id="weight-info"
-                      content="Projected weight based on last week's balance snapshot. End results might vary."
+                      content="Your projected $stkWALLET rewards at the end of the season. This number is only an estimate — it will fluctuate as the season progresses, new users join, and balances shift"
                     />
                   </div>
                 )}
