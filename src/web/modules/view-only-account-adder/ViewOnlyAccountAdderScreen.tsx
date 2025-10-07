@@ -17,7 +17,6 @@ import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNav
 import Header from '@common/modules/header/components/Header'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { RELAYER_URL } from '@env'
 import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
 import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
 import useBackgroundService from '@web/hooks/useBackgroundService'
@@ -91,14 +90,9 @@ const ViewOnlyScreen = () => {
   )
 
   const handleFormSubmit = useCallback(async () => {
-    const accountsToAddPromises = accounts.map(async (account, i) => {
+    const accountsToAdd = accounts.map((account, i) => {
       const address = getAddressFromAddressState(account)
-
-      const { creation, initialPrivileges, associatedKeys } = await getIdentity(
-        address,
-        fetch,
-        RELAYER_URL
-      )
+      const { creation, initialPrivileges, associatedKeys } = getIdentity(address)
 
       const addr = getAddress(address)
       const domainName = account.ensAddress ? account.fieldValue : null
@@ -117,7 +111,6 @@ const ViewOnlyScreen = () => {
     })
 
     try {
-      const accountsToAdd = await Promise.all(accountsToAddPromises)
       setIsLoading(true)
       dispatch({
         type: 'MAIN_CONTROLLER_ADD_VIEW_ONLY_ACCOUNTS',
