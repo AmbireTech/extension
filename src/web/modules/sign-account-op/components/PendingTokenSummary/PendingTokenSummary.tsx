@@ -1,9 +1,11 @@
 import { formatUnits } from 'ethers'
 import React, { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import { TokenResult } from '@ambire-common/libs/portfolio/interfaces'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
+import WarningFilledIcon from '@common/assets/svg/WarningFilledIcon'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
 import Tooltip from '@common/components/Tooltip'
@@ -19,8 +21,8 @@ interface Props {
   chainId: bigint | undefined
   hasBottomSpacing?: boolean
 }
-
 const PendingTokenSummary = ({ token, chainId, hasBottomSpacing = true }: Props) => {
+  const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
   const tokenId = getTokenId(token)
   const { formattedAmount, fullAmount } = useMemo(() => {
@@ -101,6 +103,18 @@ const PendingTokenSummary = ({ token, chainId, hasBottomSpacing = true }: Props)
         </Text>
         {!!priceInUsd && <Text fontSize={16} weight="medium">{` ($${priceInUsd}) `}</Text>}
       </Text>
+      {!token.flags.isKnown && (
+        <View
+          // @ts-ignore
+          style={{ cursor: 'pointer' }}
+          dataSet={{
+            tooltipId: `token-amount-${tokenId}`
+          }}
+        >
+          <WarningFilledIcon />
+          <Tooltip content={t('This might be a scam token')} id={`token-amount-${tokenId}`} />
+        </View>
+      )}
     </View>
   )
 }
