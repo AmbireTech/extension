@@ -112,8 +112,7 @@ const PendingTokenSummary = ({ token, chainId, hasBottomSpacing = true }: Props)
           }}
         >
           <WarningFilledIcon />
-          {/* TODO: change the text */}
-          <Tooltip content={t('This might be a scam token')} id={`token-amount-${tokenId}`} />
+          <Tooltip content={t('This may be a suspicious token.')} id={`token-amount-${tokenId}`} />
         </View>
       )}
     </View>
