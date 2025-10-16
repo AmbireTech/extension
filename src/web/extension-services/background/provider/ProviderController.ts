@@ -364,6 +364,12 @@ export class ProviderController {
           },
           atomic: {
             status: 'unsupported'
+          },
+          eil_cross_chain_signing: {
+            supported: false
+          },
+          send_raw_user_operation: {
+            supported: false
           }
         }
         return
@@ -396,6 +402,12 @@ export class ProviderController {
         },
         atomic: {
           status: baseAccount.getAtomicStatus()
+        },
+        eil_cross_chain_signing: {
+          supported: baseAccount.canEilCrossChainSign()
+        },
+        send_raw_user_operation: {
+          supported: baseAccount.canSendRawUserOperation()
         }
       }
     })
