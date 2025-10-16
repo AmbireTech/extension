@@ -2,6 +2,7 @@ import React, { useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { TokenResult } from '@ambire-common/libs/portfolio'
+import { PortfolioProjectedRewardsResult } from '@ambire-common/libs/portfolio/interfaces'
 import Text from '@common/components/Text'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
 import useBackgroundService from '@web/hooks/useBackgroundService'
@@ -37,7 +38,11 @@ const TokenItem = ({ token }: { token: TokenResult }) => {
     latest: { projectedRewards }
   } = portfolio
 
-  const apyFormatted = projectedRewards ? projectedRewards.result?.apy.toFixed(2) : 0
+  const projectedRewardsApy =
+    (projectedRewards &&
+      projectedRewards.result &&
+      (projectedRewards.result as PortfolioProjectedRewardsResult).apy) ||
+    0
 
   const projectedRewardsDescription = useMemo(
     () =>
@@ -47,11 +52,11 @@ const TokenItem = ({ token }: { token: TokenResult }) => {
         <Text fontSize={12} weight="regular">
           {t('Projected APY: ')}
           <Text fontSize={12} appearance="primary">
-            {`${apyFormatted}%`}
+            {`${projectedRewardsApy.toFixed(2)}%`}
           </Text>
         </Text>
       ),
-    [apyFormatted, t, token.amount, projectedRewards]
+    [projectedRewardsApy, t, token.amount, projectedRewards]
   )
 
   const sendTransaction = useCallback(
