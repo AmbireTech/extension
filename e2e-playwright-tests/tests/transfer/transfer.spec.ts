@@ -166,7 +166,7 @@ test.describe('transfer', () => {
     await test.step('add new contact', async () => {
       await pages.transfer.click(selectors.addContactFormButton)
       await pages.transfer.entertext(selectors.contactNameField, newContactName)
-      await pages.transfer.entertext(selectors.addressEnsField, newContactAddress)
+      await pages.transfer.entertext(selectors.getStarted.addressEnsField, newContactAddress)
       await pages.transfer.click(selectors.addToAddressBookButton)
     })
 

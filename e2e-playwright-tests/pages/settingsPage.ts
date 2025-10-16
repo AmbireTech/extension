@@ -244,4 +244,43 @@ export class SettingsPage extends BasePage {
       1
     )
   }
+
+  // TODO: could be improved to pass network dynamically
+  async addCustomToken(tokenAdress: string, network: string, tokenName: string) {
+    await this.click(selectors.settings.customTokens.addCustomTokenButton)
+
+    // assert at token modal
+    await this.compareText(selectors.settings.customTokens.addTokenModalTitle, 'Add Token')
+
+    // choose network; ETH is selected by default; clicking it opens dropdown
+    await this.click(selectors.settings.customTokens.ethNetworkOption)
+    await this.click(selectors.settings.customTokens.arbitrumNetworkOption)
+
+    // add token address; assert token name and confirmation pill (appears if address is valid)
+    await this.entertext(selectors.settings.customTokens.tokenAddressField, tokenAdress)
+    await this.compareText(selectors.settings.customTokens.customNameTokenText, tokenName)
+    await this.compareText(selectors.settings.customTokens.confirmedPillText, 'Confirmed')
+
+    // add token and assert snackbar
+    await this.click(selectors.settings.customTokens.addTokenButton)
+
+    await expect(this.page.locator(selectors.settings.customTokens.addedTokenSnackbar)).toHaveText(
+      `Added token ${tokenAdress} on ${network} to your portfolio`
+    )
+  }
+
+  async removeCustomToken() {
+    await this.click(selectors.settings.customTokens.removeCustomTokenButton)
+
+    // assert snackbar
+    await expect(
+      this.page.locator(selectors.settings.customTokens.tokenRemovedSnackbar)
+    ).toHaveText('Token removed')
+
+    // assert no custom tokens message on page
+    await this.compareText(
+      selectors.settings.youDontHaveInfoText,
+      "You don't have any custom tokens"
+    )
+  }
 }

@@ -29,8 +29,8 @@ export class TransferPage extends BasePage {
 
   async fillRecipient(address: string, isUnknownAddress: boolean = true) {
     // clear input if any
-    await this.clearFieldInput(selectors.addressEnsField)
-    await this.entertext(selectors.addressEnsField, address)
+    await this.clearFieldInput(selectors.getStarted.addressEnsField)
+    await this.entertext(selectors.getStarted.addressEnsField, address)
     await this.page.waitForTimeout(1000)
     // if address is unknown checkbox has to be checked
     if (isUnknownAddress) {

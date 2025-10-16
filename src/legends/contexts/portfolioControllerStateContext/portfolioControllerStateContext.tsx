@@ -94,7 +94,6 @@ const PortfolioControllerStateProvider: React.FC<any> = ({ children }) => {
       )
 
       const additionalPortfolioJson = await additionalPortfolioResponse.json()
-      console.log('additionalPortfolioJson', additionalPortfolioJson.data)
       const xWalletClaimableBalanceData =
         additionalPortfolioJson?.data?.rewards?.xWalletClaimableBalance
       const claimableBalance = additionalPortfolioJson?.data?.rewards?.stkWalletClaimableBalance

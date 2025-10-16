@@ -8,6 +8,7 @@ import { SwapAndBridgeFormStatus } from '@ambire-common/controllers/swapAndBridg
 import { Key } from '@ambire-common/interfaces/keystore'
 import Alert from '@common/components/Alert'
 import BackButton from '@common/components/BackButton'
+import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import Spinner from '@common/components/Spinner'
 import useNavigation from '@common/hooks/useNavigation'
 import usePrevious from '@common/hooks/usePrevious'
@@ -19,6 +20,7 @@ import useBackgroundService from '@web/hooks/useBackgroundService'
 import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControllerState'
+import useSimulationError from '@web/modules/portfolio/hooks/SimulationError/useSimulationError'
 import BatchAdded from '@web/modules/sign-account-op/components/OneClick/BatchModal/BatchAdded'
 import Buttons from '@web/modules/sign-account-op/components/OneClick/Buttons'
 import Estimation from '@web/modules/sign-account-op/components/OneClick/Estimation'
@@ -26,7 +28,6 @@ import RoutesModal from '@web/modules/swap-and-bridge/components/RoutesModal'
 import useSwapAndBridgeForm from '@web/modules/swap-and-bridge/hooks/useSwapAndBridgeForm'
 import { getUiType } from '@web/utils/uiType'
 
-import useSimulationError from '@web/modules/portfolio/hooks/SimulationError/useSimulationError'
 import TrackProgress from '../../components/Estimation/TrackProgress'
 import FromToken from '../../components/FromToken'
 import PriceImpactWarningModal from '../../components/PriceImpactWarningModal'
@@ -240,7 +241,7 @@ const SwapAndBridgeScreen = () => {
   }
 
   return (
-    <Wrapper title={t('Swap & Bridge')} handleGoBack={onBackButtonPress} buttons={buttons}>
+    <Wrapper title={t('Swap & Bridge')} buttons={buttons}>
       <Content scrollViewRef={scrollViewRef} buttons={buttons}>
         {isHealthy === false && (
           <Alert
@@ -253,15 +254,22 @@ const SwapAndBridgeScreen = () => {
           />
         )}
         <Form>
-          <FromToken
-            fromTokenOptions={fromTokenOptions}
-            fromTokenValue={fromTokenValue}
-            fromAmountValue={fromAmountValue}
-            fromTokenAmountSelectDisabled={fromTokenAmountSelectDisabled}
-            onFromAmountChange={onFromAmountChange}
-            setIsAutoSelectRouteDisabled={setIsAutoSelectRouteDisabled}
-            simulationFailed={!!fromChainSimulationError}
-          />
+          <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mb]}>
+            {!isTab && <PanelBackButton onPress={onBackButtonPress} style={spacings.mrSm} />}
+            <PanelTitle title={t('Swap & Bridge')} />
+            {!isTab && <View style={{ width: 40 }} />}
+          </View>
+          <View style={spacings.mbLg}>
+            <FromToken
+              fromTokenOptions={fromTokenOptions}
+              fromTokenValue={fromTokenValue}
+              fromAmountValue={fromAmountValue}
+              fromTokenAmountSelectDisabled={fromTokenAmountSelectDisabled}
+              onFromAmountChange={onFromAmountChange}
+              setIsAutoSelectRouteDisabled={setIsAutoSelectRouteDisabled}
+              simulationFailed={!!fromChainSimulationError}
+            />
+          </View>
           <ToToken
             isAutoSelectRouteDisabled={isAutoSelectRouteDisabled}
             setIsAutoSelectRouteDisabled={setIsAutoSelectRouteDisabled}

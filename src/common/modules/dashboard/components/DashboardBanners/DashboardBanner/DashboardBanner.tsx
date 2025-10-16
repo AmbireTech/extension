@@ -130,13 +130,6 @@ const DashboardBanner = ({
           break
         }
 
-        case 'hide-activity-banner':
-          dispatch({
-            type: 'ACTIVITY_CONTROLLER_HIDE_BANNER',
-            params: action.meta
-          })
-          break
-
         // The "Reload" handler was removed since v5.16.1, because `browser.runtime.reload()`
         // was causing some funky Chrome glitches, see the deprecation notes in
         // ExtensionUpdateController.applyUpdate() for more details.

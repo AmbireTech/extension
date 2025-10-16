@@ -22,8 +22,7 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
   StyleSheet.create<Style>({
     form: {
       ...spacings.ph,
-      ...spacings.pb,
-      ...spacings.ptMd,
+      ...spacings.pv,
       ...spacings.mbSm,
       borderRadius: 12,
       backgroundColor: theme.primaryBackground,

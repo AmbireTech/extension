@@ -21,10 +21,11 @@ import useBackgroundService from '@web/hooks/useBackgroundService'
 import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
 
 import ManageContact from './ManageContact'
+import getStyles from './styles'
 
 interface Props {
   address: string
-  name: string
+  name?: string
   isManageable?: boolean
   isEditable?: boolean
   onPress?: () => void
@@ -50,7 +51,7 @@ const AddressBookContact: FC<Props> = ({
   const ContainerElement = onPress ? AnimatedPressable : View
 
   const { t } = useTranslation()
-  const { theme } = useTheme()
+  const { theme } = useTheme(getStyles)
   const { addToast } = useToast()
   const { dispatch } = useBackgroundService()
   const { accounts } = useAccountsControllerState()
@@ -72,10 +73,7 @@ const AddressBookContact: FC<Props> = ({
   const onSave = (newName: string) => {
     dispatch({
       type: 'ADDRESS_BOOK_CONTROLLER_RENAME_CONTACT',
-      params: {
-        address,
-        newName
-      }
+      params: { address, newName }
     })
     addToast(t('Successfully renamed contact'))
   }
@@ -144,9 +142,11 @@ const AddressBookContact: FC<Props> = ({
               onSave={onSave}
             />
           ) : (
-            <Text fontSize={fontSize} weight="medium">
-              {name}
-            </Text>
+            <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+              <Text fontSize={fontSize} weight="medium" style={!name && spacings.mrTy}>
+                {name || 'New address'}
+              </Text>
+            </View>
           )}
           <View style={[flexbox.directionRow, flexbox.alignCenter]}>
             <DomainBadge ens={ens} />
@@ -154,11 +154,11 @@ const AddressBookContact: FC<Props> = ({
           </View>
         </View>
       </View>
-      {isManageable ? (
+      {isManageable && name ? (
         <ManageContact tooltipRef={tooltipRef} address={address} name={name} />
       ) : null}
     </ContainerElement>
   )
 }
 
-export default AddressBookContact
+export default React.memo(AddressBookContact)

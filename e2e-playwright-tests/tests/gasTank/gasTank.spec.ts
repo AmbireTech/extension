@@ -27,7 +27,7 @@ test.describe('gasTank - Basic Account', () => {
     })
 
     await test.step('top up gas tank', async () => {
-      await pages.gasTank.topUpGasTank(sendToken, '0.05')
+      await pages.gasTank.topUpGasTank(sendToken, '0.1')
     })
 
     await test.step('assert new gas tank balance', async () => {

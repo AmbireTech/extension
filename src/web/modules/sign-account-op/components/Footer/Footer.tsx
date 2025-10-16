@@ -3,6 +3,8 @@ import { View } from 'react-native'
 
 import { getCallsCount } from '@ambire-common/utils/userRequest'
 import BatchIcon from '@common/assets/svg/BatchIcon'
+import InfoIcon from '@common/assets/svg/InfoIcon'
+import InformationIcon from '@common/assets/svg/InformationIcon'
 import Button from '@common/components/Button'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
 import Tooltip from '@common/components/Tooltip'
@@ -10,6 +12,7 @@ import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
 import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import useSignAccountOpControllerState from '@web/hooks/useSignAccountOpControllerState'
@@ -61,6 +64,22 @@ const Footer = ({
     return getCallsCount(requests)
   }, [account?.addr, userRequests, chainId])
 
+  const startBatchingInfo = useMemo(
+    () =>
+      t(
+        'Start a batch and sign later. This feature allows you to add more actions to this transaction and sign them all together later.'
+      ),
+    [t]
+  )
+
+  const [bindAnim, animStyle] = useCustomHover({
+    property: 'backgroundColor',
+    values: {
+      from: 'transparent',
+      to: theme.quaternaryBackground
+    }
+  })
+
   return (
     <View style={styles.container}>
       <View style={[!isAddToCartDisplayed && flexbox.flex1, flexbox.alignStart]}>
@@ -80,25 +99,36 @@ const Footer = ({
         style={[flexbox.directionRow, !isAddToCartDisplayed && flexbox.flex1, flexbox.justifyEnd]}
       >
         {isAddToCartDisplayed && (
-          <Button
-            testID="queue-and-sign-later-button"
-            type="outline"
-            accentColor={theme.primary}
-            text={
-              batchCount > 1
-                ? t('Add to batch ({{batchCount}})', {
-                    batchCount
-                  })
-                : t('Start a batch')
-            }
-            onPress={onAddToCart}
-            disabled={isAddToCartDisabled}
-            hasBottomSpacing={false}
-            style={{ minWidth: 160, ...spacings.ph, ...spacings.mr }}
-            size="large"
-          >
-            <BatchIcon style={spacings.mlTy} />
-          </Button>
+          <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+            <Button
+              testID="queue-and-sign-later-button"
+              type="outline"
+              accentColor={theme.primary}
+              text={
+                batchCount > 1
+                  ? t('Add to batch ({{batchCount}})', {
+                      batchCount
+                    })
+                  : t('Start a batch')
+              }
+              onPress={onAddToCart}
+              disabled={isAddToCartDisabled}
+              hasBottomSpacing={false}
+              style={{ minWidth: 160, ...spacings.ph }}
+              size="large"
+            >
+              <BatchIcon style={spacings.mlTy} />
+            </Button>
+            {/* @ts-ignore */}
+            <View style={spacings.mlTy} dataSet={{ tooltipId: 'start-batch-info-tooltip' }}>
+              <AnimatedPressable
+                style={[spacings.phTy, spacings.pvTy, { borderRadius: 50 }, animStyle]}
+                {...bindAnim}
+              >
+                <InfoIcon color={theme.tertiaryText} width={20} height={20} />
+              </AnimatedPressable>
+            </View>
+          </View>
         )}
         {/* @ts-ignore */}
         <View dataSet={{ tooltipId: 'sign-button-tooltip' }}>
@@ -113,6 +143,7 @@ const Footer = ({
           />
         </View>
         {!!buttonTooltipText && <Tooltip content={buttonTooltipText} id="sign-button-tooltip" />}
+        <Tooltip content={startBatchingInfo} id="start-batch-info-tooltip" />
       </View>
     </View>
   )

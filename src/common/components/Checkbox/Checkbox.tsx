@@ -64,7 +64,7 @@ const Checkbox = ({
           <Text
             shouldScale={false}
             onPress={onChange}
-            weight="regular"
+            appearance="secondaryText"
             fontSize={12}
             {...labelProps}
           >

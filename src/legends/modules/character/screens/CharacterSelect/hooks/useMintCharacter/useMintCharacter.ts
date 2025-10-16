@@ -91,6 +91,8 @@ const useMintCharacter = () => {
       pollAttempts++
 
       if (characterRef.current) {
+        setIsMinting(false)
+        setIsMinted(true)
         return
       }
 

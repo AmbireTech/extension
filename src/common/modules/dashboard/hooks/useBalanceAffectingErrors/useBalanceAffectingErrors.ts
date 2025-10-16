@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useModalize } from 'react-native-modalize'
 
@@ -8,11 +8,10 @@ import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountCont
 
 const useBalanceAffectingErrors = () => {
   const { t } = useTranslation()
-  const { balanceAffectingErrors, portfolio, portfolioStartedLoadingAtTimestamp } =
-    useSelectedAccountControllerState()
+  const { balanceAffectingErrors, portfolio } = useSelectedAccountControllerState()
+  const isLoadingTakingTooLong = portfolio.shouldShowPartialResult
   const { isOffline } = useMainControllerState()
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
-  const [isLoadingTakingTooLong, setIsLoadingTakingTooLong] = useState(false)
   /** Because errors change frequently due to background updates we have to store a snapshot
    * of the errors when the user clicks on the warning icon to display the errors in the bottom sheet.
    * Otherwise the user may want to screenshot the errors and the errors may change.
@@ -82,37 +81,6 @@ const useBalanceAffectingErrors = () => {
     setBalanceAffectingErrorsSnapshot([])
     closeBottomSheet()
   }, [closeBottomSheet])
-
-  // Compare the current timestamp with the timestamp when the loading started
-  // and if it takes more than 5 seconds, set isLoadingTakingTooLong to true
-  useEffect(() => {
-    if (!portfolioStartedLoadingAtTimestamp) {
-      setIsLoadingTakingTooLong(false)
-      return
-    }
-
-    const checkIsLoadingTakingTooLong = () => {
-      const takesMoreThan5Seconds = Date.now() - portfolioStartedLoadingAtTimestamp > 5000
-
-      setIsLoadingTakingTooLong(takesMoreThan5Seconds)
-    }
-
-    checkIsLoadingTakingTooLong()
-
-    const interval = setInterval(() => {
-      if (portfolio?.isAllReady) {
-        clearInterval(interval)
-        setIsLoadingTakingTooLong(false)
-        return
-      }
-
-      checkIsLoadingTakingTooLong()
-    }, 500)
-
-    return () => {
-      clearInterval(interval)
-    }
-  }, [portfolio?.isAllReady, portfolioStartedLoadingAtTimestamp])
 
   return {
     sheetRef,

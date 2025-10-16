@@ -2,6 +2,10 @@
 import { nanoid } from 'nanoid'
 
 import { EthereumProvider } from '@web/extension-services/inpage/EthereumProvider'
+import {
+  isCrossOriginFrame,
+  isTooDeepFrameInTheFrameHierarchy
+} from '@web/extension-services/utils/frames'
 
 const ambireId = nanoid()
 
@@ -38,6 +42,7 @@ const foundDappRpcUrls: string[] = []
 let isDapp = false
 
 ;(function () {
+  if (isCrossOriginFrame() || isTooDeepFrameInTheFrameHierarchy()) return
   const originalFetch = window.fetch.bind(window)
   window.fetch = async function (...args) {
     const [resource, config] = args

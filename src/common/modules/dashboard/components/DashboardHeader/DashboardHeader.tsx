@@ -2,6 +2,7 @@ import React from 'react'
 import { Animated, Pressable, View } from 'react-native'
 
 import BurgerIcon from '@common/assets/svg/BurgerIcon'
+import ReceiveIcon from '@common/assets/svg/ReceiveIcon'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
@@ -18,9 +19,10 @@ import getStyles from './styles'
 
 const { isPopup } = getUiType()
 
-const DashboardHeader = () => {
+const DashboardHeader = ({ openReceiveModal }: { openReceiveModal: () => void }) => {
   const { account } = useSelectedAccountControllerState()
   const [bindBurgerAnim, burgerAnimStyle] = useHover({ preset: 'opacity' })
+  const [bindReceiveAnim, receiveAnimStyle] = useHover({ preset: 'opacity' })
   const { navigate } = useNavigation()
   const { theme, themeType } = useTheme(getStyles)
 
@@ -38,7 +40,27 @@ const DashboardHeader = () => {
       <View
         style={[flexboxStyles.directionRow, flexboxStyles.flex1, flexboxStyles.justifySpaceBetween]}
       >
-        <AccountButton />
+        <View style={[flexboxStyles.directionRow]}>
+          <AccountButton />
+          <Pressable
+            testID="dashboard-button-receive"
+            style={[spacings.mlSm, spacings.pvTy, flexboxStyles.alignSelfCenter]}
+            onPress={() => openReceiveModal()}
+            {...bindReceiveAnim}
+          >
+            <Animated.View style={receiveAnimStyle}>
+              <ReceiveIcon
+                color={
+                  themeType === THEME_TYPES.DARK
+                    ? theme.primaryBackgroundInverted
+                    : theme.primaryBackground
+                }
+                width={25}
+                height={25}
+              />
+            </Animated.View>
+          </Pressable>
+        </View>
         <Pressable
           testID="dashboard-hamburger-btn"
           style={[spacings.ml, spacings.phTy, spacings.pvTy, flexboxStyles.alignSelfCenter]}

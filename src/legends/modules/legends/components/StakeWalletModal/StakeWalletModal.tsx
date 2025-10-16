@@ -87,6 +87,7 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
   const switchNetwork = useSwitchNetwork()
   const { addToast } = useToast()
   const [isWarningModalOpen, setIsWarningModalOpen] = useState(false)
+  const [isWarningModalUnstakePeriodOpen, setIsWarningModalUnstakePeriodOpen] = useState(false)
 
   const handleEsc = useCallback(() => {
     if (isWarningModalOpen) setIsWarningModalOpen(false)
@@ -192,8 +193,7 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
         const uncollected = allCommitments
           .filter(([maxTokens]) => maxTokens)
           .map(([, commitment]) => commitment)
-          .sort(([a, b]) => a.unlocksAt - b.unlocksAt)
-
+          .sort((a, b) => Number(a.unlocksAt - b.unlocksAt))
         const firstUncollected = uncollected[0]
         if (!firstUncollected) return
         const { maxTokens, unlocksAt, shares } = firstUncollected
@@ -353,15 +353,15 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
     const minutes = totalMinutes % 60
     return `${days}d ${hours}h ${minutes}m`
   }
+
   const displayWarningOrUnstake = useCallback(() => {
     if (!onchainData || !inputAmount) return
-    const walletsInXwallet = +formatUnits(onchainData.shareValue * onchainData.xWalletBalance, 36)
-    const walletsInStkWallet = +formatUnits(onchainData.stkWalletBalance)
-    const totalStakedWallets = walletsInStkWallet + walletsInXwallet
+    // Always show unstake period modal first
+    setIsWarningModalUnstakePeriodOpen(true)
 
-    if (Number(inputAmount) > totalStakedWallets * 0.65) setIsWarningModalOpen(true)
-    else requestWithdrawAction(inputAmount)
-  }, [onchainData, inputAmount, setIsWarningModalOpen, requestWithdrawAction])
+    // Otherwise, the confirm button in the unstake period modal will call requestWithdrawAction directly
+  }, [onchainData, inputAmount, setIsWarningModalOpen])
+
   const buttonState = useMemo((): { text: string; action?: () => any } => {
     if (!isConnected || isCharacterNotMinted) return { text: rewardsButtonText }
     if (isLoadingLogs || isLoadingOnchainData) return { text: 'Loading...' }
@@ -399,9 +399,11 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
     onchainData?.lockedShares,
     onchainData?.stkWalletBalance,
     onchainData?.walletBalance,
-    requestWithdrawAction,
     stakeAction,
-    withdrawAction
+    withdrawAction,
+    displayWarningOrUnstake,
+    isCharacterNotMinted,
+    rewardsButtonText
   ])
 
   const formatToken = useCallback(
@@ -640,6 +642,51 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
           </button>
         </div>
       </div>
+
+      <Modal
+        isOpen={isWarningModalUnstakePeriodOpen}
+        handleClose={() => setIsWarningModalUnstakePeriodOpen(false)}
+        className={styles.warningModal}
+      >
+        <Modal.Heading className={styles.heading}>Confirm Unstake</Modal.Heading>
+        <WarningIcon height={45} width={45} strokeWidth={1} color="#E7AA27" />
+        <p className={styles.infoText}>
+          You are аbout to unstake your $stkWALLET tokens. There is a 30-days unstaking period
+          during which you won&apos;t be accruing $stkWALLET.
+        </p>
+        <div className={styles.buttonWrapper}>
+          <button
+            type="button"
+            className={styles.cancelButton}
+            onClick={() => setIsWarningModalUnstakePeriodOpen(false)}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            className={styles.confirmButton}
+            onClick={() => {
+              setIsWarningModalUnstakePeriodOpen(false)
+              const walletsInXwallet = +formatUnits(
+                onchainData.shareValue * onchainData.xWalletBalance,
+                36
+              )
+              const walletsInStkWallet = +formatUnits(onchainData.stkWalletBalance)
+              const totalStakedWallets = walletsInStkWallet + walletsInXwallet
+
+              // After confirming unstake period, show warning modal if needed
+              if (Number(inputAmount) > totalStakedWallets * 0.65) {
+                setIsWarningModalOpen(true)
+              } else {
+                void requestWithdrawAction(inputAmount)
+              }
+            }}
+          >
+            Confirm
+          </button>
+        </div>
+      </Modal>
+
       <Modal
         isOpen={isWarningModalOpen}
         handleClose={() => setIsWarningModalOpen(false)}
@@ -664,7 +711,7 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
             className={styles.confirmButton}
             onClick={() => {
               setIsWarningModalOpen(false)
-              requestWithdrawAction(inputAmount)
+              void requestWithdrawAction(inputAmount)
             }}
           >
             Confirm

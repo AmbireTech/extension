@@ -12,7 +12,26 @@ import { ISignAccountOpController } from '@ambire-common/interfaces/signAccountO
 import usePrevious from '@common/hooks/usePrevious'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import useLedger from '@web/modules/hardware-wallet/hooks/useLedger'
+import { OneClickEstimationProps } from '@web/modules/sign-account-op/components/OneClick/Estimation/Estimation'
 import { getIsSignLoading } from '@web/modules/sign-account-op/utils/helpers'
+
+const PRIMARY_BUTTON_LABELS: Record<
+  OneClickEstimationProps['updateType'] | 'Sign',
+  { default: string; isLoading: string }
+> = {
+  'Swap&Bridge': {
+    default: 'Swap',
+    isLoading: 'Swapping...'
+  },
+  'Transfer&TopUp': {
+    default: 'Send',
+    isLoading: 'Sending...'
+  },
+  Sign: {
+    default: 'Begin signing',
+    isLoading: 'Signing...'
+  }
+}
 
 type Props = {
   handleUpdateStatus: (status: SigningStatus) => void
@@ -20,6 +39,7 @@ type Props = {
   handleUpdate: (params: SignAccountOpUpdateProps) => void
   signAccountOpState: ISignAccountOpController | null
   isOneClickSign?: boolean
+  updateType?: OneClickEstimationProps['updateType'] | 'Sign'
 }
 
 const useSign = ({
@@ -27,7 +47,8 @@ const useSign = ({
   signAccountOpState,
   handleBroadcast,
   handleUpdate,
-  isOneClickSign
+  isOneClickSign,
+  updateType = 'Sign'
 }: Props) => {
   const { t } = useTranslation()
   const { networks } = useNetworksControllerState()
@@ -276,10 +297,14 @@ const useSign = ({
     ])
 
   const primaryButtonText = useMemo(() => {
-    if (isAtLeastOneOfTheKeysInvolvedExternal) return t('Begin signing')
+    const buttonLabelType = isAtLeastOneOfTheKeysInvolvedExternal ? 'Sign' : updateType
 
-    return isSignLoading ? t('Signing...') : t('Sign')
-  }, [isAtLeastOneOfTheKeysInvolvedExternal, isSignLoading, t])
+    return t(
+      isSignLoading
+        ? PRIMARY_BUTTON_LABELS[buttonLabelType].isLoading
+        : PRIMARY_BUTTON_LABELS[buttonLabelType].default
+    )
+  }, [isAtLeastOneOfTheKeysInvolvedExternal, isSignLoading, t, updateType])
 
   // When being done, there is a corner case if the sign succeeds, but the broadcast fails.
   // If so, the "Sign" button should NOT be disabled, so the user can retry broadcasting.

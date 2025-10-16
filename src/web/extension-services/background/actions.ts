@@ -242,11 +242,6 @@ type MainControllerActivityResetSignedMessagesAction = {
   type: 'MAIN_CONTROLLER_ACTIVITY_RESET_SIGNED_MESSAGES_FILTERS'
   params: { sessionId: string }
 }
-type MainControllerActivityHideBanner = {
-  type: 'ACTIVITY_CONTROLLER_HIDE_BANNER'
-  params: { addr: string; chainId: bigint; timestamp: number }
-}
-
 type MainControllerReloadSelectedAccount = {
   type: 'MAIN_CONTROLLER_RELOAD_SELECTED_ACCOUNT'
   params?: { chainId?: bigint | string }
@@ -788,6 +783,7 @@ export type Action =
   | MainControllerAddNetwork
   | KeystoreControllerUpdateKeyPreferencesAction
   | MainControllerUpdateNetworkAction
+  | MainControllerUpdateNetworksAction
   | MainControllerAccountPickerSetPageAction
   | MainControllerAccountPickerFindAndSetLinkedAccountsAction
   | MainControllerAccountPickerSetHdPathTemplateAction
@@ -796,7 +792,6 @@ export type Action =
   | MainControllerRemoveAccount
   | RequestsControllerAddUserRequestAction
   | MainControllerLockAction
-  | MainControllerOnPopupOpenAction
   | RequestsControllerBuildRequestAction
   | RequestsControllerRemoveUserRequestAction
   | RequestsControllerResolveUserRequestAction
@@ -880,7 +875,6 @@ export type Action =
   | ImportSmartAccountJson
   | KeystoreControllerSendSeedToUiAction
   | KeystoreControllerSendTempSeedToUiAction
-  | MainControllerActivityHideBanner
   | KeystoreControllerDeleteSeedAction
   | PhishingControllerGetIsBlacklistedAndSendToUiAction
   | ExtensionUpdateControllerApplyUpdate

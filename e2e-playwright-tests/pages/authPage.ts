@@ -24,11 +24,13 @@ export class AuthPage extends BasePage {
     await this.page.getByTestId(selectors.createKeystorePassBtn).click()
   }
 
-  async importViewOnlyAccount(account): Promise<void> {
-    await this.page.locator(locators.watchAnAddress).click()
-    await this.page.locator(locators.viewOnlyInputAddressField).pressSequentially(account)
-    await this.page.locator(locators.importViewOnlyButton).click()
+  // TODO: imporove method assertions
+  async importViewOnlyAccount(account: string): Promise<void> {
+    await this.click(selectors.getStarted.watchAddress)
+    await this.entertext(selectors.getStarted.addressEnsField, account)
+    await this.click(selectors.getStarted.viewOnlyBtnImport)
     await this.setExtensionPassword()
+    // assertion on Dashboard after login
     await this.page.locator(locators.confirmationMessageForViewOnly).isVisible()
     await this.page.locator(locators.completeButton).click()
     await this.page.locator(locators.confirmationMessageAmbireWallet).isVisible()
@@ -53,6 +55,7 @@ export class AuthPage extends BasePage {
     await this.page.locator(locators.savedPhraseButton).click()
   }
 
+  // TODO: imporove method assertions
   async createNewAccount(): Promise<void> {
     await this.page.locator(locators.createNewAccountButton).click()
     for (let index = 0; index < 3; index++) {
@@ -62,6 +65,7 @@ export class AuthPage extends BasePage {
     await this.page.locator(locators.createRecoveryPhraseButton).click()
     await this.verifyRecoveryPhraseScreen()
     await this.setExtensionPassword()
+    // assertion on Dashboard after login
     await this.page.locator(locators.confirmationMessageForViewOnly).isVisible()
     await this.page.locator(locators.addMoreAccountsButton).isVisible()
     await this.page.locator(locators.completeButton).click()
@@ -69,13 +73,15 @@ export class AuthPage extends BasePage {
     await this.page.locator(locators.openDashboardButton).click()
   }
 
+  // TODO: imporove method assertions
   async importExistingAccount(): Promise<void> {
-    await this.page.locator(locators.importExistingAccountButton).click()
-    await this.page.locator(locators.importFromPrivateKeyButton).click()
-    await this.typeTextInInputField(locators.inputPrivateKey, BA_PRIVATE_KEY)
-    await this.page.locator(locators.warningCheckbox).click()
-    await this.page.locator(locators.importConfirmButton).click()
+    await this.click(selectors.getStarted.importExistingAccBtn)
+    await this.click(selectors.getStarted.importMethodPrivateBtn)
+    await this.entertext(selectors.getStarted.enterPrivateKeyField, BA_PRIVATE_KEY)
+    await this.click(selectors.getStarted.warningCheckbox)
+    await this.click(selectors.getStarted.importBtn)
     await this.setExtensionPassword()
+    // assertion on Dashboard after login
     await this.page.locator(locators.confirmationMessageForViewOnly).isVisible()
     await this.page.locator(locators.addMoreAccountsButton).isVisible()
     await this.page.locator(locators.completeButton).click()
@@ -83,16 +89,21 @@ export class AuthPage extends BasePage {
     await this.page.locator(locators.openDashboardButton).click()
   }
 
+  // TODO: imporove method assertions
   async importExistingAccountByRecoveryPhrase(passphrase: string): Promise<void> {
-    await this.page.locator(locators.importExistingAccountButton).click()
-    await this.page.locator(locators.importFromRecoveryPhraseButton).click()
-    await this.typeTextInInputField(locators.inputSeetField, passphrase)
-    await this.page.locator(locators.recoveryPhraseAdvancedModeToggle).isVisible()
+    await this.click(selectors.getStarted.importExistingAccBtn)
+    await this.click(selectors.getStarted.importMethodRecoveryPhrase)
+    await this.entertext(selectors.getStarted.enterSeedPhraseField, passphrase)
+    // enter phrase and recovery phrase
+    // await this.click(selectors.getStarted.advancedPassPhraseSwitch) // TODO: added selector is not working
     await this.page.locator(locators.recoveryPhraseAdvancedModeToggle).click()
-    await this.typeTextInInputField(locators.inputPassphrase, passphrase)
-    await this.page.locator(locators.importConfirmButton).click()
+    await this.entertext(selectors.getStarted.recoveryPhrasePassphraseField, passphrase)
+    // import
+    await this.click(selectors.getStarted.importBtn)
+    // set pass and name
     await this.setExtensionPassword()
     await this.personalizeAccountName()
+    // assertion on Dashboard after login
     await this.page.locator(locators.addMoreAccountsButton).isVisible()
     await this.page.locator(locators.completeButton).click()
     await this.page.locator(locators.confirmationMessageAmbireWallet).isVisible()
@@ -106,13 +117,19 @@ export class AuthPage extends BasePage {
     await this.page.locator(locators.saveMessageText).isVisible()
   }
 
+  // TODO: imporove method assertions
   async importCoupleOfViewOnlyAccount(account1: string, account2: string): Promise<void> {
-    await this.page.locator(locators.watchAnAddress).click()
-    await this.page.locator(locators.viewOnlyInputAddressField).pressSequentially(account1)
-    await this.page.locator(locators.addMoreAdressesButton).click()
-    await this.page.locator(locators.viewOnlySecondInputAddressField).pressSequentially(account2)
-    await this.page.locator(locators.importViewOnlyButton).click()
+    await this.click(selectors.getStarted.watchAddress)
+    // add address 1
+    await this.entertext(selectors.getStarted.addressEnsField, account1)
+    // add address 2
+    await this.click(selectors.getStarted.addOneMoreAddress)
+    await this.entertext(selectors.getStarted.addressEnsField, account2, 1)
+    // import
+    await this.click(selectors.getStarted.viewOnlyBtnImport)
+    // set pass and name
     await this.setExtensionPassword()
+    // assertion on Dashboard after login
     await this.page.locator(locators.confirmationMessageForViewOnly).isVisible()
     await this.personalizeAccountName()
     await this.page.locator(locators.completeButton).click()
@@ -170,18 +187,21 @@ export class AuthPage extends BasePage {
     await this.page.locator(locators.openDashboardButton).click()
   }
 
+  // TODO: imporove method assertions
   async importAccountFromJSONFile(): Promise<void> {
     const saAccounts = JSON.parse(process.env.SA_ACCOUNT_JSON || '{}')
     const jsonBuffer = Buffer.from(JSON.stringify(saAccounts))
-    await this.page.locator(locators.importExistingAccountButton).click()
-    await this.page.locator(locators.showMoreButton).click()
-    await this.page.locator(locators.importJSONBackupFileButton).click()
+    // await this.page.locator(locators.importExistingAccountButton).click()
+    await this.click(selectors.getStarted.importExistingAccBtn)
+    await this.click(selectors.getStarted.showMoreBtn)
+    await this.click(selectors.getStarted.importMethodJSON)
     const fileInput = this.page.locator('input[type="file"]')
     await fileInput.setInputFiles({
       name: 'sa.json',
       mimeType: 'application/json',
       buffer: jsonBuffer
     })
+    // assertion on Dashboard after login
     await this.setExtensionPassword()
     await this.page.locator(locators.completeButton).click()
     await this.page.locator(locators.confirmationMessageAmbireWallet).isVisible()

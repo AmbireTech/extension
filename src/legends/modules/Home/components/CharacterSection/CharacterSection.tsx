@@ -282,10 +282,11 @@ const CharacterSection = () => {
 
                 // Extract level and balance eligibility
                 const userLevel = season1LeaderboardData?.currentUser?.level ?? 0
-                const hasMinBalance =
-                  amountFormatted &&
-                  Number((amountFormatted ?? '0').replace(/[^0-9.-]+/g, '')) >= 500
-                const hasMinLevel = userLevel > 2
+
+                const hasMinBalance = [...(parsedSnapshotsBalance || []), amount || 0].some(
+                  (x) => x > rewardsProjectionData?.minBalance
+                )
+                const hasMinLevel = userLevel >= rewardsProjectionData?.minLvl
 
                 // Lvl reached, Usd < 500
                 if (hasMinLevel && !hasMinBalance) {

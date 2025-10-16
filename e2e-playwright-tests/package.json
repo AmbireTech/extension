@@ -9,6 +9,7 @@
     "test:auth": "playwright test --workers=3 --retries=1 --grep auth",
     "show-trace": "playwright show-trace",
     "balance:test": "npx playwright test -g @balanceCheck",
+    "stability": "npx playwright test -g @stability",
     "postinstall": "patch-package"
   },
   "author": "Filip",

@@ -2,6 +2,23 @@ import { buildSelector } from '@helpers/buildSelector'
 
 // TODO: this should be refactored; we should have single file with selector IDs
 const selectors = {
+  getStarted: {
+    watchAddress: 'watch-an-address-button',
+    addOneMoreAddress: 'add-one-more-address',
+    importExistingAccBtn: 'import-existing-account-btn',
+    importMethodPrivateBtn: 'import-method-private-key',
+    importMethodRecoveryPhrase: 'import-method-recovery-phrase',
+    importMethodJSON: 'import-method-json-backup-file',
+    enterSeedPhraseField: 'enter-seed-phrase-field',
+    enterPrivateKeyField: 'enter-private-key-field',
+    advancedPassPhraseSwitch: 'enable-passphrase-toggle',
+    recoveryPhrasePassphraseField: 'input-passphrase',
+    warningCheckbox: 'backup-warning-checkbox',
+    addressEnsField: 'address-ens-field',
+    showMoreBtn: 'show-more-btn',
+    viewOnlyBtnImport: 'view-only-button-import',
+    importBtn: 'import-button'
+  },
   dashboard: {
     tokensTabButton: 'tokens-defi',
     noTokensText: 'no-tokens-text',
@@ -42,25 +59,39 @@ const selectors = {
     importAccountButton: 'import-account',
     connectHardwareWallet: 'connect-hardware-wallet',
     watchAnAddressButton: 'watch-an-address-button',
-    viewOnlyAddressField: 'view-only-address-field-0',
+    viewOnlyAddressField: 'address-ens-field',
     viewOnlyImportButton: 'view-only-button-import',
     validENSDomainText: '//div[contains(text(),"Valid ENS domain")]',
     addedSuccessfullyText: '//div[contains(text(),"Added successfully")]',
     accessAccFromDashboardInfoText: '//div[contains(text(),"access your accounts")]',
     addAccountButton: 'add-account-modal',
-    hiddenTokenName: 'hidden-token-name',
-    hiddenTokenNetwork: 'hidden-token-network',
+    hiddenTokenName: 'hidden-token-name', // works for custom tokens section
+    hiddenTokenNetwork: 'hidden-token-network', // works for custom tokens section
     unhideTokenButton: 'unhide-button',
-    youDontHaveInfoText: 'you-dont-have-any-text' // there can be multiple on same page
+    youDontHaveInfoText: 'you-dont-have-any-text', // there can be multiple on same page
+    customTokens: {
+      addCustomTokenButton: 'add-custom-token-button',
+      addTokenModalTitle: 'add-token-modal-title-text',
+      ethNetworkOption: 'option-Ethereum',
+      opMainnetNetworkOption: 'option-OP-Mainnet',
+      bnbNetworkOption: 'option-BNB-Chain',
+      polygonNetworkOption: 'option-Polygon',
+      mantleNetworkOption: 'option-Mantle',
+      baseNetworkOption: 'option-Base',
+      arbitrumNetworkOption: 'option-Arbitrum',
+      tokenAddressField: 'token-address-field',
+      customNameTokenText: 'custom-token-name', // visible after entering valid address
+      confirmedPillText: 'confirmed-pill-text',
+      addTokenButton: 'add-token-button',
+      addedTokenSnackbar: '//span[contains(text(),"Added token")]',
+      tokenRemovedSnackbar: '//span[contains(text(),"Token removed")]',
+      removeCustomTokenButton: 'remove-button'
+    }
   },
   account: 'account',
-  importBtn: 'import-button',
-  importPrivateBtn: 'button-import-private-key',
-  importExistingAccBtn: 'create-existing-account-btn',
   importMethodTrezor: 'import-method-trezor',
   trezorConnectConfirmTerms: '@analytics/continue-button',
   saveAndContinueBtn: 'button-save-and-continue',
-  enterSeedPhraseField: 'enter-seed-phrase-field',
   buttonProceedSeedPhrase: 'button-proceed-seed-phrase',
   doNotSaveSeedBtn: 'do-not-save-seed-button',
   saveAsDefaultSeedBtn: 'save-seed-button',
@@ -72,11 +103,7 @@ const selectors = {
   editBtnForEditNameField: 'edit-btn-for-edit-name-field',
   editFieldNameField: 'edit-name-field',
   getStartedBtnAdd: 'get-started-button-add',
-  addressEnsField: 'address-ens-field',
   addToAddressBookButton: 'add-to-address-book-button',
-  viewOnlyAddressField: 'view-only-address-field',
-  viewOnlyBtnImport: 'view-only-button-import',
-  addOneMoreAddress: 'add-one-more-address',
   addContactFormButton: 'add-contact-form-modal',
   contactNameField: 'contact-name-field',
   contactNameText: 'contact-name-text', // TODO: selector could be more precise
@@ -85,7 +112,6 @@ const selectors = {
   formAddContactNameField: 'form-contact-name-field',
   formAddToContactsButton: 'form-add-to-contacts-button',
   buttonAddAccount: 'button-add-account',
-  watchAddress: 'watch-address',
   checkbox: 'checkbox',
   addAccount: 'add-account',
   buttonImportAccount: 'button-import-account',

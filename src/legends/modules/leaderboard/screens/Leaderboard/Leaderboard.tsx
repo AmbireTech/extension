@@ -199,9 +199,11 @@ const LeaderboardContainer: React.FC = () => {
                   key={item.account}
                   {...item}
                   projectedRewards={
-                    connectedAccount === item.account
-                      ? projectedAmount?.walletRewards
-                      : item.projectedRewards
+                    activeTab === 2
+                      ? connectedAccount === item.account
+                        ? projectedAmount?.walletRewards
+                        : item.projectedRewards || 'Loading...'
+                      : undefined
                   }
                   stickyPosition={stickyPosition}
                   currentUserRef={currentUserRef}

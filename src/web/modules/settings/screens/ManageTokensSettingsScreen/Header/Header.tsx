@@ -35,6 +35,7 @@ const Header: FC<Props> = ({ openAddTokenBottomSheet }) => {
         </Text>
       </View>
       <Button
+        testID="add-custom-token-button"
         childrenPosition="left"
         style={{ width: 220 }}
         text={t('Add custom token')}

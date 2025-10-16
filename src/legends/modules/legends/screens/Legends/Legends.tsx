@@ -41,7 +41,9 @@ const Legends = () => {
 
   return (
     <Page containerSize="lg">
-      <OverachieverBanner />
+      <div className={styles.overachieverWrapper}>
+        <OverachieverBanner />
+      </div>
       <V1AccountBanner />
       {!isLoading ? (
         <div className={styles.wrapper}>

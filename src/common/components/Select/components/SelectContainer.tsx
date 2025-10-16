@@ -82,7 +82,7 @@ const SelectContainer: FC<Props> = ({
         </Text>
       )}
       {renderSelectedOption ? (
-        renderSelectedOption({ toggleMenu, isMenuOpen, selectRef })
+        renderSelectedOption({ toggleMenu, setIsMenuOpen, isMenuOpen, selectRef })
       ) : (
         <SelectedMenuOption
           disabled={disabled}

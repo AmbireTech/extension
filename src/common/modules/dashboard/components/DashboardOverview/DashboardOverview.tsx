@@ -26,7 +26,7 @@ import BalanceAffectingErrors from './BalanceAffectingErrors'
 import RefreshIcon from './RefreshIcon'
 import getStyles from './styles'
 
-const THRESHOLD_AMOUNT_TO_HIDE_BALANCE_DECIMALS = 100000
+const THRESHOLD_AMOUNT_TO_HIDE_BALANCE_DECIMALS = 10000
 
 interface Props {
   openReceiveModal: () => void
@@ -145,7 +145,7 @@ const DashboardOverview: FC<Props> = ({
             selectedAccount={account?.addr || null}
           />
           <View style={{ zIndex: 2 }}>
-            <DashboardHeader />
+            <DashboardHeader openReceiveModal={openReceiveModal} />
             <Animated.View
               style={{
                 ...styles.overview,
@@ -261,7 +261,7 @@ const DashboardOverview: FC<Props> = ({
                   />
                 </View>
               </View>
-              <Routes openReceiveModal={openReceiveModal} />
+              <Routes />
             </Animated.View>
           </View>
         </Animated.View>

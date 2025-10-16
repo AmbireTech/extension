@@ -149,6 +149,7 @@ const Token: FC<Props> = ({
           />
         ) : (
           <Button
+            testID="remove-button"
             type="secondary"
             size="small"
             style={{ width: 80 }}

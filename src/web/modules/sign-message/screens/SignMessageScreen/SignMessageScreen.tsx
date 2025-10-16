@@ -34,7 +34,6 @@ import SigningKeySelect from '@web/modules/sign-message/components/SignKeySelect
 
 import Authorization7702 from './Contents/authorization7702'
 import Main from './Contents/main'
-import getStyles from './styles'
 
 const SignMessageScreen = () => {
   const { t } = useTranslation()
@@ -51,7 +50,7 @@ const SignMessageScreen = () => {
   const [makeItSmartConfirmed, setMakeItSmartConfirmed] = useState(false)
   const [doNotAskMeAgain, setDoNotAskMeAgain] = useState(false)
   const actionState = useActionsControllerState()
-  const { styles, theme, themeType } = useTheme(getStyles)
+  const { theme, themeType } = useTheme()
 
   const signMessageAction = useMemo(() => {
     if (actionState.currentAction?.type !== 'signMessage') return undefined
@@ -274,6 +273,15 @@ const SignMessageScreen = () => {
             resolveDisabled={signStatus === 'LOADING' || isScrollToBottomForced || isViewOnly}
             resolveButtonTestID="button-sign"
             rejectButtonText={rejectButtonText}
+            {...(isViewOnly
+              ? {
+                  resolveNode: (
+                    <View style={[{ flex: 3 }, flexbox.directionRow, flexbox.justifyEnd]}>
+                      <NoKeysToSignAlert type="short" isTransaction={false} />
+                    </View>
+                  )
+                }
+              : {})}
           />
         }
         backgroundColor={
@@ -306,11 +314,6 @@ const SignMessageScreen = () => {
             setHasReachedBottom={setHasReachedBottom}
             shouldDisplayEIP1271Warning={shouldDisplayEIP1271Warning}
           />
-        )}
-        {isViewOnly && (
-          <View style={styles.noKeysToSignAlert}>
-            <NoKeysToSignAlert style={{ width: '100%' }} isTransaction={false} />
-          </View>
         )}
       </TabLayoutContainer>
     </SmallNotificationWindowWrapper>
