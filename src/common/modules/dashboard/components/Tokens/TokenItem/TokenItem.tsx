@@ -41,7 +41,7 @@ const TokenItem = ({ token }: { token: TokenResult }) => {
 
   const projectedRewardsDescription = useMemo(
     () =>
-      !projectedRewards && token.amount > 0n ? (
+      projectedRewards && token.amount > 0n ? (
         'Projected rewards'
       ) : (
         <Text fontSize={12} weight="regular">
