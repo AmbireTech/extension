@@ -1,6 +1,8 @@
-import React, { useCallback } from 'react'
+import React, { useCallback, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { TokenResult } from '@ambire-common/libs/portfolio'
+import Text from '@common/components/Text'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
@@ -15,6 +17,7 @@ const { isPopup } = getUiType()
 const INFO_BTN_URL = 'https://help.ambire.com/hc/en-us/articles/22678327778460 '
 
 const TokenItem = ({ token }: { token: TokenResult }) => {
+  const { t } = useTranslation()
   const { dispatch } = useBackgroundService()
   const { portfolio } = useSelectedAccountControllerState()
 
@@ -29,6 +32,27 @@ const TokenItem = ({ token }: { token: TokenResult }) => {
   const handleDetailsPress = useCallback(() => {
     window.open(INFO_BTN_URL, '_blank')
   }, [])
+
+  const {
+    latest: { projectedRewards }
+  } = portfolio
+
+  const apyFormatted = projectedRewards ? projectedRewards.result?.apy.toFixed(2) : 0
+
+  const projectedRewardsDescription = useMemo(
+    () =>
+      !projectedRewards && token.amount > 0n ? (
+        'Projected rewards'
+      ) : (
+        <Text fontSize={12} weight="regular">
+          {t('Projected APY: ')}
+          <Text fontSize={12} appearance="primary">
+            {`${apyFormatted}%`}
+          </Text>
+        </Text>
+      ),
+    [apyFormatted, t, token.amount, projectedRewards]
+  )
 
   const sendTransaction = useCallback(
     (type: 'claimWalletRequest' | 'mintVestingRequest') => {
@@ -46,7 +70,7 @@ const TokenItem = ({ token }: { token: TokenResult }) => {
         token={token}
         onPress={handleDetailsPress}
         actionButtonText="Info"
-        description="Projected rewards"
+        description={projectedRewardsDescription}
       />
     )
   if (isRewards)

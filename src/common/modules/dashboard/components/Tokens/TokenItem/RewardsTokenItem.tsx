@@ -20,7 +20,7 @@ const RewardsTokenItem = ({
   token: TokenResult
   onPress: () => void
   actionButtonText: string
-  description: string
+  description: string | React.ReactNode
 }) => {
   const { t } = useTranslation()
 
@@ -50,7 +50,7 @@ const RewardsTokenItem = ({
       gradientStyle={GRADIENT_STYLE}
       label={
         <Text fontSize={12} weight="regular">
-          {t('{{description}}', { description })}
+          {typeof description === 'string' ? t('{{description}}', { description }) : description}
         </Text>
       }
       borderRadius={16}

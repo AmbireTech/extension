@@ -89,8 +89,8 @@ const BaseTokenItem = ({ token, extraActions, gradientStyle, label, borderRadius
         borderRadius: borderRadius || BORDER_RADIUS_PRIMARY,
         padding: 1,
         background: `
-        linear-gradient(${String(theme.primaryBackground)}, ${String(
-          theme.primaryBackground
+        linear-gradient(${String(theme.secondaryBackground)}, ${String(
+          theme.secondaryBackground
         )}) padding-box,
         ${gradientStyle} border-box
       `,
