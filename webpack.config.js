@@ -335,6 +335,10 @@ module.exports = async function (env, argv) {
       new CopyPlugin({ patterns: extensionCopyPatterns })
     ]
 
+    // Provides a global variable to all files where globalIsAmbireNext is declared including
+    // content scripts and injected files
+    config.plugins.push(new webpack.DefinePlugin({ globalIsAmbireNext: isAmbireNext }))
+
     // Some dependencies, such as @metamask/eth-sig-util v7+ and v8+, ship .cjs
     // files and define "exports" fields in their package.json. In multi-entry
     // builds (like ours), Webpack 5 can get confused and attempt to emit the

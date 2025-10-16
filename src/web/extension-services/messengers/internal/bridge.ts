@@ -5,6 +5,8 @@ import { tabMessenger } from '@web/extension-services/messengers/internal/tab'
 import { windowMessenger } from '@web/extension-services/messengers/internal/window'
 import { detectScriptType } from '@web/extension-services/messengers/utils/detectScriptType'
 
+declare const globalIsAmbireNext: boolean
+
 const messenger = tabMessenger.available ? tabMessenger : windowMessenger
 const scriptId = Date.now()
 
@@ -93,6 +95,10 @@ export async function setupBridgeMessengerRelay() {
   // next tick
   setTimeout(() => {
     // Notify the background that the content script is ready to receive messages
-    tabMessenger.send('ambireProviderRequest', { id: 0, method: 'contentScriptReady' }, { id: 0 })
+    tabMessenger.send(
+      globalIsAmbireNext ? 'ambireNextBuildProviderRequest' : 'ambireProviderRequest',
+      { id: 0, method: 'contentScriptReady' },
+      { id: 0 }
+    )
   }, 0)
 }
