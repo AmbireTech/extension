@@ -289,6 +289,11 @@ export class ProviderController {
     return handleSignMessage(requestRes)
   }
 
+  @Reflect.metadata('ACTION_REQUEST', ['SignTypedData', false])
+  walletSignUserOperations = async ({ requestRes }: ProviderRequest) => {
+    return handleSignMessage(requestRes)
+  }
+
   @Reflect.metadata('ACTION_REQUEST', [
     'AddChain',
     ({ request }: { request: ProviderRequest; mainCtrl: MainController }) => {

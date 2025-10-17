@@ -77,6 +77,8 @@ const FallbackVisualization: FC<{
           appearance="secondaryText"
           style={spacings.mb}
         >
+          {content.kind === 'signUserOperations' &&
+            JSON.stringify(content.chainIdWithUserOps, null, 4)}
           {content.kind === 'typedMessage' &&
             showRawTypedMessage &&
             JSON.stringify(content, null, 4)}

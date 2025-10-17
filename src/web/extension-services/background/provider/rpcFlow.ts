@@ -31,7 +31,7 @@ const flowContext = flow
       }
 
       throw ethErrors.rpc.methodNotFound({
-        message: `method [${method}] doesn't has corresponding handler`,
+        message: `method [${method}] doesn't have corresponding handler`,
         data: { method, params }
       })
     }

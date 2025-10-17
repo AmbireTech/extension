@@ -61,7 +61,7 @@ const SignMessageScreen = () => {
   const userRequest = useMemo(() => {
     if (!signMessageAction) return undefined
     if (
-      !['typedMessage', 'message', 'authorization-7702'].includes(
+      !['typedMessage', 'message', 'authorization-7702', 'signUserOperations'].includes(
         signMessageAction.userRequest.action.kind
       )
     )

@@ -89,12 +89,14 @@ const Main = ({
               {signMessageState.messageToSign?.content.kind === 'message' && t('Standard')}
               {signMessageState.messageToSign?.content.kind === 'authorization-7702' &&
                 t('EIP-7702')}{' '}
-              {t('Type')}
+              {signMessageState.messageToSign?.content.kind === 'signUserOperations' &&
+                t('Sign user operations')}
             </Text>
           </View>
         </View>
-        <NetworkBadge chainId={signMessageState.messageToSign?.chainId} withOnPrefix />
-        {/* @TODO: Replace with Badge; add size prop to badge; add tooltip  */}
+        {signMessageState.messageToSign?.content.kind !== 'signUserOperations' && (
+          <NetworkBadge chainId={signMessageState.messageToSign?.chainId} withOnPrefix />
+        )}
       </View>
       <View style={styles.container}>
         <View style={spacings.mbLg}>
@@ -129,7 +131,7 @@ const Main = ({
                   data={humanizedMessage.fullVisualization}
                   chainId={network?.chainId || 1n}
                 />
-              ) : (
+              ) : signMessageState.messageToSign?.content.kind !== 'signUserOperations' ? (
                 <>
                   <View style={spacings.mrTy}>
                     <ErrorOutlineIcon width={24} height={24} />
@@ -145,6 +147,17 @@ const Main = ({
                     {t('Please read the whole message as we are unable to translate it!')}
                   </Text>
                 </>
+              ) : (
+                <Text fontSize={maxWidthSize('xl') ? 16 : 12}>
+                  <Text
+                    fontSize={maxWidthSize('xl') ? 16 : 12}
+                    appearance="successText"
+                    weight="semiBold"
+                  >
+                    {t('Signing user operations: ')}
+                  </Text>
+                  {t('Please read the whole data before signing it!')}
+                </Text>
               )
             }
             expandedContent={
