@@ -8,6 +8,7 @@ import { SwapAndBridgeFormStatus } from '@ambire-common/controllers/swapAndBridg
 import { getIsTokenEligibleForSwapAndBridge } from '@ambire-common/libs/swapAndBridge/swapAndBridge'
 import { getSanitizedAmount } from '@ambire-common/libs/transfer/amount'
 import { safeTokenAmountAndNumberMultiplication } from '@ambire-common/utils/numbers/formatters'
+import { getCallsCount } from '@ambire-common/utils/userRequest'
 import useGetTokenSelectProps from '@common/hooks/useGetTokenSelectProps'
 import useNavigation from '@common/hooks/useNavigation'
 import { ROUTES } from '@common/modules/router/constants/common'
@@ -21,7 +22,6 @@ import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControll
 import useSyncedState from '@web/hooks/useSyncedState'
 import { getTokenId } from '@web/utils/token'
 import { getUiType } from '@web/utils/uiType'
-import { getCallsCount } from '@ambire-common/utils/userRequest'
 
 type SessionId = ReturnType<typeof nanoid>
 
@@ -270,6 +270,7 @@ const useSwapAndBridgeForm = () => {
     if (!quote || !quote.selectedRoute) return null
 
     let inputValueInUsd = 0
+    const outputValueInUsd = quote.selectedRoute.outputValueInUsd
 
     try {
       inputValueInUsd = Number(fromAmountInFiat)
@@ -287,7 +288,9 @@ const useSwapAndBridgeForm = () => {
 
       if (bigintFromAmount !== BigInt(quote.selectedRoute.fromAmount)) return null
 
-      const difference = Math.abs(inputValueInUsd - quote.selectedRoute.outputValueInUsd)
+      // Can be negative if the output is higher
+      // (possible during arbitrage swaps)
+      const difference = inputValueInUsd - outputValueInUsd
 
       const percentageDiff = (difference / inputValueInUsd) * 100
 
@@ -311,12 +314,10 @@ const useSwapAndBridgeForm = () => {
         Number(inputValueInUsd) < 400
           ? 1.05
           : Number((0.005 / Math.ceil(Number(inputValueInUsd) / 20000)).toPrecision(2)) * 100 + 0.01
-      const possibleSlippage = (1 - Number(minInUsd) / quote.selectedRoute.outputValueInUsd) * 100
+      const possibleSlippage = (1 - Number(minInUsd) / outputValueInUsd) * 100
       // @precautionary if
       const diffBetweenQuoteAndMinAmount =
-        quote.selectedRoute.outputValueInUsd > Number(minInUsd)
-          ? quote.selectedRoute.outputValueInUsd - Number(minInUsd)
-          : 0
+        outputValueInUsd > Number(minInUsd) ? outputValueInUsd - Number(minInUsd) : 0
       if (possibleSlippage > allowedSlippage && diffBetweenQuoteAndMinAmount > 50) {
         return {
           type: 'slippageImpact',
