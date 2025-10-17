@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 
-import { BrowserProvider, hashMessage, Interface } from 'ethers'
+import { hashMessage, Interface } from 'ethers'
 import React, { useCallback, useMemo, useState } from 'react'
 import { Linking } from 'react-native'
 
@@ -10,6 +10,7 @@ import { BASE_CHAIN_ID } from '@legends/constants/networks'
 import useAccountContext from '@legends/hooks/useAccountContext'
 import useCharacterContext from '@legends/hooks/useCharacterContext'
 import useErc5792 from '@legends/hooks/useErc5792'
+import useProviderContext from '@legends/hooks/useProviderContext'
 import useSwitchNetwork from '@legends/hooks/useSwitchNetwork'
 import useToast from '@legends/hooks/useToast'
 import { useCardActionContext } from '@legends/modules/legends/components/ActionModal'
@@ -33,6 +34,7 @@ const Feedback = ({ meta }: Props) => {
   const { onComplete, handleClose } = useCardActionContext()
   const { addToast } = useToast()
   const switchNetwork = useSwitchNetwork()
+  const { browserProvider } = useProviderContext()
   const { connectedAccount, v1Account } = useAccountContext()
   const { isCharacterNotMinted } = useCharacterContext()
 
@@ -51,12 +53,12 @@ const Feedback = ({ meta }: Props) => {
 
   const claimXp = useCallback(async () => {
     try {
+      if (!browserProvider) throw new Error('No connected wallet')
       if (!connectedAccount) throw new Error('No connected account')
       if (!surveyCode) throw new Error('No survey code')
       setIsInProgress(true)
       await switchNetwork(BASE_CHAIN_ID)
-      const provider = new BrowserProvider(window.ambire)
-      const signer = await provider.getSigner(connectedAccount)
+      const signer = await browserProvider.getSigner(connectedAccount)
 
       const useSponsorship = false
 
@@ -84,6 +86,7 @@ const Feedback = ({ meta }: Props) => {
       setIsInProgress(false)
     }
   }, [
+    browserProvider,
     connectedAccount,
     sendCalls,
     surveyCode,

@@ -15,6 +15,7 @@ import useCharacterContext from '@legends/hooks/useCharacterContext/useCharacter
 import useErc5792 from '@legends/hooks/useErc5792'
 import useEscModal from '@legends/hooks/useEscModal'
 import useLegendsContext from '@legends/hooks/useLegendsContext'
+import useProviderContext from '@legends/hooks/useProviderContext'
 import useSwitchNetwork from '@legends/hooks/useSwitchNetwork'
 import useToast from '@legends/hooks/useToast'
 import { checkTransactionStatus } from '@legends/modules/legends/helpers'
@@ -39,6 +40,7 @@ const POST_UNLOCK_STATES = ['unlocked', 'spinning', 'spun', 'error']
 
 const WheelComponentModal: React.FC<WheelComponentProps> = ({ isOpen, handleClose }) => {
   const switchNetwork = useSwitchNetwork()
+  const { browserProvider } = useProviderContext()
   const [prizeNumber, setPrizeNumber] = useState<null | number>(30)
   const [wheelState, setWheelState] = useState<
     'locked' | 'unlocking' | 'unlocked' | 'spinning' | 'spun' | 'error'
@@ -82,10 +84,10 @@ const WheelComponentModal: React.FC<WheelComponentProps> = ({ isOpen, handleClos
 
   const unlockWheel = useCallback(async () => {
     try {
+      if (!browserProvider) return
       await switchNetwork(BASE_CHAIN_ID)
 
-      const provider = new ethers.BrowserProvider(window.ambire)
-      const signer = await provider.getSigner()
+      const signer = await browserProvider.getSigner()
 
       stopSpinnerTeaseAnimation()
       setWheelState('unlocking')
@@ -141,6 +143,7 @@ const WheelComponentModal: React.FC<WheelComponentProps> = ({ isOpen, handleClos
       setWheelState('locked')
     }
   }, [
+    browserProvider,
     switchNetwork,
     stopSpinnerTeaseAnimation,
     sendCalls,

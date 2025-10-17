@@ -1,7 +1,7 @@
 import { delayPromise } from '@common/utils/promises'
 import { RELAYER_URL } from '@env'
 import HumanReadableError from '@legends/classes/HumanReadableError'
-import { ERROR_MESSAGES } from '@legends/constants/errors/messages'
+import useProviderContext from '@legends/hooks/useProviderContext'
 
 export const ERRORS = {
   txFailed: 'tx-failed',
@@ -28,6 +28,7 @@ type Receipt = {
 }
 
 const useErc5792 = () => {
+  const { provider } = useProviderContext()
   // all fields below marked as string should be HEX!
   const sendCalls = async (
     chainId: string,
@@ -35,7 +36,9 @@ const useErc5792 = () => {
     calls: { to: string; data: string; value?: string }[],
     useSponsorship = true
   ) => {
-    const sendCallsIdentifier: any = await window.ambire.request({
+    if (!provider) return ''
+
+    const sendCallsIdentifier: any = await provider.request({
       method: 'wallet_sendCalls',
       params: [
         {
@@ -65,11 +68,13 @@ const useErc5792 = () => {
     callsId: string,
     is4337Required: boolean = true
   ): Promise<Receipt> => {
+    if (!provider) return
+
     let receipt = null
     // eslint-disable-next-line no-constant-condition
     while (true) {
       // eslint-disable-next-line no-await-in-loop
-      const callStatus: any = await window.ambire.request({
+      const callStatus: any = await provider.request({
         method: 'wallet_getCallsStatus',
         params: [callsId]
       })

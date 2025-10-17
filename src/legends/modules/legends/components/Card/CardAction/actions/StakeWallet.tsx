@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import { BrowserProvider, Contract, Interface, JsonRpcProvider } from 'ethers'
+import { Contract, Interface, JsonRpcProvider } from 'ethers'
 import React, { useCallback, useEffect, useState } from 'react'
 
 import { STK_WALLET, WALLET_TOKEN } from '@ambire-common/consts/addresses'
@@ -9,6 +9,7 @@ import { ETHEREUM_CHAIN_ID } from '@legends/constants/networks'
 import useAccountContext from '@legends/hooks/useAccountContext'
 import useCharacterContext from '@legends/hooks/useCharacterContext/useCharacterContext'
 import useErc5792 from '@legends/hooks/useErc5792'
+import useProviderContext from '@legends/hooks/useProviderContext'
 import useSwitchNetwork from '@legends/hooks/useSwitchNetwork'
 import useToast from '@legends/hooks/useToast'
 import { useCardActionContext } from '@legends/modules/legends/components/ActionModal'
@@ -31,6 +32,7 @@ const StakeWallet = () => {
   const { onComplete, handleClose } = useCardActionContext()
 
   const { addToast } = useToast()
+  const { provider, browserProvider } = useProviderContext()
   const { connectedAccount, v1Account } = useAccountContext()
   const switchNetwork = useSwitchNetwork()
   const { isCharacterNotMinted } = useCharacterContext()
@@ -61,12 +63,13 @@ const StakeWallet = () => {
 
   const stakeWallet = useCallback(async () => {
     try {
+      if (!browserProvider) throw new HumanReadableError('No connected wallet.')
       if (!connectedAccount) throw new HumanReadableError('No connected account.')
       if (!walletBalance) throw new HumanReadableError('Insufficient $WALLET balance')
 
       setIsInProgress(true)
-      const provider = new BrowserProvider(window.ambire)
-      const signer = await provider.getSigner(connectedAccount)
+
+      const signer = await browserProvider.getSigner(connectedAccount)
 
       const useSponsorship = false
 
@@ -97,6 +100,7 @@ const StakeWallet = () => {
       setIsInProgress(false)
     }
   }, [
+    browserProvider,
     connectedAccount,
     walletBalance,
     sendCalls,
@@ -108,8 +112,9 @@ const StakeWallet = () => {
   ])
 
   const onButtonClick = useCallback(async () => {
+    if (!provider) return
     if (!walletBalance) {
-      await window.ambire
+      await provider
         .request({
           method: 'open-wallet-route',
           params: { route: 'swap-and-bridge' }
@@ -121,7 +126,7 @@ const StakeWallet = () => {
     }
     await switchNetwork(ETHEREUM_CHAIN_ID)
     await stakeWallet()
-  }, [switchNetwork, stakeWallet, walletBalance])
+  }, [provider, switchNetwork, stakeWallet, walletBalance])
 
   return (
     <CardActionWrapper
