@@ -41,10 +41,7 @@ const AccountContextProvider = ({ children }: { children: React.ReactNode }) => 
   const getConnectedAccount = useCallback(async (): Promise<string | null> => {
     if (!provider) return null
 
-    const accounts = await provider.request({
-      method: 'eth_accounts',
-      params: []
-    })
+    const accounts = await provider.request({ method: 'eth_accounts', params: [] })
     setAllAccounts(accounts as string[])
 
     // @ts-ignore

@@ -24,17 +24,19 @@ type EIP6963ProviderInfo = {
 }
 
 type EIP6963AnnounceProviderEvent = {
-  detail: {
-    info: EIP6963ProviderInfo
-    provider: EthereumProvider
-  }
+  detail: EIP6963ProviderDetails
+}
+
+type EIP6963ProviderDetails = {
+  info: EIP6963ProviderInfo
+  provider: EthereumProvider
 }
 
 const LOCAL_STORAGE_CONNECTED_WALLET = 'connectedWallet'
 
 const ProviderContextProvider = ({ children }: { children: React.ReactNode }) => {
-  const [providers, setProviders] = useState<Record<WalletType, EthereumProvider>>(
-    {} as Record<WalletType, EthereumProvider>
+  const [providers, setProviders] = useState<Record<WalletType, EIP6963ProviderDetails>>(
+    {} as Record<WalletType, EIP6963ProviderDetails>
   )
   const [provider, setProvider] = useState<EthereumProvider | null>(null)
   const [browserProvider, setBrowserProvider] = useState<ethers.BrowserProvider | null>(null)
@@ -43,19 +45,19 @@ const ProviderContextProvider = ({ children }: { children: React.ReactNode }) =>
   )
 
   useEffect(() => {
-    const detected: Record<WalletType, EthereumProvider> = {} as Record<
+    const detected: Record<WalletType, EIP6963ProviderDetails> = {} as Record<
       WalletType,
-      EthereumProvider
+      EIP6963ProviderDetails
     >
 
     const handler = (event: CustomEvent<EIP6963AnnounceProviderEvent['detail']>) => {
-      const { info, provider: eipProvider } = event.detail
+      const { detail } = event
 
-      if (info.rdns === 'com.ambire.wallet') {
-        detected.ambire = eipProvider
+      if (detail.info.rdns === 'com.ambire.wallet') {
+        detected.ambire = detail
       }
-      if (info.rdns === 'com.ambire-next.wallet') {
-        detected['ambire-next'] = eipProvider
+      if (detail.info.rdns === 'com.ambire-next.wallet') {
+        detected['ambire-next'] = detail
       }
 
       setProviders((p) => ({ ...p, ...detected }))
@@ -76,10 +78,13 @@ const ProviderContextProvider = ({ children }: { children: React.ReactNode }) =>
         const detectedProvider = providers[connectedWallet]
 
         if (detectedProvider) {
-          const accs = await detectedProvider.request({ method: 'eth_requestAccounts', params: [] })
+          const accs = await detectedProvider.provider.request({
+            method: 'eth_requestAccounts',
+            params: []
+          })
           if (accs) {
-            setProvider(detectedProvider)
-            setBrowserProvider(new ethers.BrowserProvider(detectedProvider))
+            setProvider(detectedProvider.provider)
+            setBrowserProvider(new ethers.BrowserProvider(detectedProvider.provider))
           }
         }
       }
@@ -101,10 +106,13 @@ const ProviderContextProvider = ({ children }: { children: React.ReactNode }) =>
     if (detectedProvidersCount === 1) {
       const key = Object.keys(providers)[0] as WalletType
       const detectedProvider = providers[key]
-      const accs = await detectedProvider.request({ method: 'eth_requestAccounts', params: [] })
+      const accs = await detectedProvider.provider.request({
+        method: 'eth_requestAccounts',
+        params: []
+      })
       if (accs) {
-        setProvider(detectedProvider)
-        setBrowserProvider(new ethers.BrowserProvider(detectedProvider))
+        setProvider(detectedProvider.provider)
+        setBrowserProvider(new ethers.BrowserProvider(detectedProvider.provider))
         setConnectedWallet(key)
         localStorage.setItem(LOCAL_STORAGE_CONNECTED_WALLET, key)
       }
@@ -122,11 +130,6 @@ const ProviderContextProvider = ({ children }: { children: React.ReactNode }) =>
     localStorage.removeItem(LOCAL_STORAGE_CONNECTED_WALLET)
   }, [])
 
-  console.log('providersContext', {
-    provider,
-    isConnected: !!connectedWallet && !!provider,
-    hasAnyAmbireExtensionInstalled: !!Object.keys(providers).length
-  })
   const contextValue: ProviderContextType = useMemo(
     () => ({
       provider,
