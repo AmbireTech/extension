@@ -41,7 +41,7 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
     },
     nonTabButtons: {
       ...flexbox.flex1,
-      ...spacings.pbLg,
+      ...spacings.pb,
       ...flexbox.justifyEnd
     },
     headerSideContainer: { width: isTab ? 300 : 170, minWidth: isTab ? 300 : 160 }

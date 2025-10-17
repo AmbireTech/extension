@@ -50,7 +50,7 @@ const OneClickEstimation = ({
   errors,
   updateType,
   serviceFee
-}: Props) => {
+}: OneClickEstimationProps) => {
   const { t } = useTranslation()
   const { theme, themeType } = useTheme()
 

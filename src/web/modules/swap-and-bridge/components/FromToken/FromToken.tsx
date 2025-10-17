@@ -5,7 +5,6 @@ import { TokenResult } from '@ambire-common/libs/portfolio'
 import { SelectValue } from '@common/components/Select/types'
 import SendToken from '@common/components/SendToken'
 import Text from '@common/components/Text'
-import spacings from '@common/styles/spacings'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControllerState'
 import useSwapAndBridgeForm from '@web/modules/swap-and-bridge/hooks/useSwapAndBridgeForm'
@@ -91,7 +90,7 @@ const FromToken: FC<Props> = ({
 
   return (
     <>
-      <Text appearance="secondaryText" fontSize={16} weight="medium" style={spacings.mbMi}>
+      <Text appearance="secondaryText" fontSize={16} weight="medium">
         {t('Send')}
       </Text>
       <SendToken

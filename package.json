@@ -52,6 +52,7 @@
     "eas:secret:list": "eas secret:list",
     "eas:secret:push": "eas secret:push --scope project --env-file .env",
     "test": "jest --config=./jest.config.js --passWithNoTests",
+    "extension:type:check": "tsc --noEmit --project tsconfig.typecheck-extension.json",
     "postinstall": "patch-package"
   },
   "engines": {

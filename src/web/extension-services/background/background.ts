@@ -649,89 +649,92 @@ const init = async () => {
 
   // listen for messages from UI
   browser.runtime.onConnect.addListener(async (port: Port) => {
-    if (['popup', 'tab', 'action-window'].includes(port.name)) {
+    const [name, id] = port.name.split(':') as [Port['name'], Port['id']]
+    if (['popup', 'tab', 'action-window'].includes(name)) {
+      const isAlreadyAdded = pm.ports.some((p) => p.id === id)
       // eslint-disable-next-line no-param-reassign
-      port.id = nanoid()
-      pm.addPort(port)
-      mainCtrl.ui.addView({ id: port.id, type: port.name })
+      port.id = id || nanoid()
+      // eslint-disable-next-line no-param-reassign
+      port.name = name
+      pm.addOrUpdatePort(port, () => {
+        mainCtrl.ui.addView({ id: port.id, type: port.name })
 
-      mainCtrl.phishing.updateIfNeeded()
+        pm.addListener(
+          port.id,
+          // @ts-ignore
+          async (messageType, action: Action, meta: MessageMeta = {}) => {
+            const { type } = action
+            const { windowId } = meta
 
-      pm.addListener(
-        port.id,
-        // @ts-ignore
-        async (messageType, action: Action, meta: MessageMeta = {}) => {
-          const { type } = action
-          const { windowId } = meta
+            try {
+              if (messageType === '> background' && type) {
+                await handleActions(action, {
+                  pm,
+                  port,
+                  mainCtrl,
+                  walletStateCtrl,
+                  autoLockCtrl,
+                  extensionUpdateCtrl,
+                  windowId
+                })
+              }
+            } catch (err: any) {
+              console.error(`${type} action failed:`, err)
+              captureBackgroundException(err, {
+                extra: {
+                  action: stringify(action),
+                  portId: port.id,
+                  windowId
+                }
+              })
+              const shortenedError =
+                err.message.length > 150 ? `${err.message.slice(0, 150)}...` : err.message
 
-          try {
-            if (messageType === '> background' && type) {
-              await handleActions(action, {
-                pm,
-                port,
-                mainCtrl,
-                walletStateCtrl,
-                autoLockCtrl,
-                extensionUpdateCtrl,
-                windowId
+              let message = `Something went wrong! Please contact support. Error: ${shortenedError}`
+              // Emit the raw error only if it's a custom error
+              if (err instanceof EmittableError || err instanceof ExternalSignerError) {
+                message = err.message
+              }
+
+              pm.send('> ui-error', {
+                method: type,
+                params: {
+                  errors: [
+                    {
+                      message,
+                      level: 'major',
+                      error: err
+                    }
+                  ]
+                }
               })
             }
-          } catch (err: any) {
-            console.error(`${type} action failed:`, err)
-            captureBackgroundException(err, {
-              extra: {
-                action: JSON.stringify(action),
-                portId: port.id,
-                windowId
-              }
-            })
-            const shortenedError =
-              err.message.length > 150 ? `${err.message.slice(0, 150)}...` : err.message
-
-            let message = `Something went wrong! Please contact support. Error: ${shortenedError}`
-            // Emit the raw error only if it's a custom error
-            if (err instanceof EmittableError || err instanceof ExternalSignerError) {
-              message = err.message
-            }
-
-            pm.send('> ui-error', {
-              method: type,
-              params: {
-                errors: [
-                  {
-                    message,
-                    level: 'major',
-                    error: err
-                  }
-                ]
-              }
-            })
           }
-        }
-      )
+        )
 
-      port.onDisconnect.addListener(() => {
-        pm.dispose(port.id)
-        pm.removePort(port.id)
-        mainCtrl.ui.removeView(port.id)
+        pm.addDisconnectListener(port.id, (disconnectedPort) => {
+          mainCtrl.ui.removeView(port.id)
+          handleCleanUpOnPortDisconnect({ port, mainCtrl })
 
-        handleCleanUpOnPortDisconnect({ port, mainCtrl })
-
-        // The selectedAccount portfolio is reset onLoad of the popup
-        // (from the background) while the portfolio update is triggered
-        // by a useEffect. If that useEffect doesn't trigger, the portfolio
-        // state will remain reset until an automatic update is triggered.
-        // Example: the user has the dashboard opened in tab, opens the popup
-        // and closes it immediately.
-        if (port.name === 'popup') {
-          mainCtrl.portfolio.forceEmitUpdate()
-        }
-        if (port.name === 'tab' || port.name === 'action-window') {
-          // eslint-disable-next-line @typescript-eslint/no-floating-promises
-          ledgerCtrl.cleanUp()
-          trezorCtrl.cleanUp()
-        }
+          // The selectedAccount portfolio is reset onLoad of the popup
+          // (from the background) while the portfolio update is triggered
+          // by a useEffect. If that useEffect doesn't trigger, the portfolio
+          // state will remain reset until an automatic update is triggered.
+          // Example: the user has the dashboard opened in tab, opens the popup
+          // and closes it immediately.
+          if (disconnectedPort.name === 'popup') mainCtrl.portfolio.forceEmitUpdate()
+          if (disconnectedPort.name === 'tab' || disconnectedPort.name === 'action-window') {
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
+            ledgerCtrl.cleanUp()
+            trezorCtrl.cleanUp()
+          }
+        })
       })
+
+      // ignore executions if the port was already added (identified by id)
+      if (isAlreadyAdded) return
+
+      mainCtrl.phishing.updateIfNeeded()
     }
   })
 }

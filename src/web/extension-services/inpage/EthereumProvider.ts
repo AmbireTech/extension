@@ -10,6 +10,10 @@ import DedupePromise from '@web/extension-services/inpage/services/dedupePromise
 import PushEventHandlers from '@web/extension-services/inpage/services/pushEventsHandlers'
 import ReadyPromise from '@web/extension-services/inpage/services/readyPromise'
 import { initializeMessenger } from '@web/extension-services/messengers/initializeMessenger'
+import {
+  isCrossOriginFrame,
+  isTooDeepFrameInTheFrameHierarchy
+} from '@web/extension-services/utils/frames'
 import logger, { LOG_LEVELS, logInfoWithPrefix, logWarnWithPrefix } from '@web/utils/logger'
 
 export interface StateProvider {
@@ -219,6 +223,7 @@ export class EthereumProvider extends EventEmitter {
   }
 
   initialize = async () => {
+    if (isCrossOriginFrame() || isTooDeepFrameInTheFrameHierarchy()) return
     document.addEventListener('visibilitychange', this.#requestPromiseCheckVisibility)
 
     const id = this.#requestId++
@@ -274,6 +279,8 @@ export class EthereumProvider extends EventEmitter {
   }
 
   #handleBackgroundMessage = async ({ event, data }: any) => {
+    if (isCrossOriginFrame() || isTooDeepFrameInTheFrameHierarchy()) return
+
     if (event === 'tabCheckin') {
       const id = this.#requestId++
       const params = {

@@ -58,10 +58,8 @@ const RouteInfo: FC<Props> = ({
         flexbox.alignCenter,
         flexbox.justifySpaceBetween,
         spacings.mh,
-        {
-          height: 25 // Prevents layout shifts
-        },
-        spacings.mbLg
+        { height: 25 }, // Prevents layout shifts,
+        spacings.mtTy
       ]}
     >
       {swapSignErrors.length > 0 && (
@@ -78,8 +76,7 @@ const RouteInfo: FC<Props> = ({
             flexbox.directionRow,
             flexbox.alignCenter,
             flexbox.justifySpaceBetween,
-            { width: '100%' },
-            spacings.mtTy
+            { width: '100%' }
           ]}
         >
           <View style={[flexbox.directionRow, flexbox.alignCenter]}>
