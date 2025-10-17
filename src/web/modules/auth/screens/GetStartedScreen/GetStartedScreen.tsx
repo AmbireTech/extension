@@ -96,13 +96,13 @@ const GetStartedScreen = () => {
                 onPress={() => handleAuthButtonPress('create-new-account')}
               />
               <Button
-                testID="create-existing-account-btn"
+                testID="import-existing-account-btn"
                 type="secondary"
                 text={t('Import existing account')}
                 onPress={() => handleAuthButtonPress('import-existing-account')}
               />
               <Button
-                testID="view-only-address-btn"
+                testID="watch-an-address-button"
                 type="ghost"
                 hasBottomSpacing={false}
                 onPress={() => handleAuthButtonPress('view-only')}

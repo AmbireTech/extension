@@ -45,7 +45,7 @@ import GasTankInfoModal from '@web/modules/transfer/components/GasTankInfoModal'
 import SendForm from '@web/modules/transfer/components/SendForm/SendForm'
 import { getUiType } from '@web/utils/uiType'
 
-const { isPopup, isTab, isActionWindow } = getUiType()
+const { isTab, isActionWindow } = getUiType()
 
 const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   const { dispatch } = useBackgroundService()
@@ -159,12 +159,10 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     })
   }, [dispatch, navigate])
 
-  const { sessionHandler, onPrimaryButtonPress } = useTrackAccountOp({
+  const { sessionHandler } = useTrackAccountOp({
     address: latestBroadcastedAccountOp?.accountAddr,
     chainId: latestBroadcastedAccountOp?.chainId,
-    sessionId: 'transfer',
-    submittedAccountOp,
-    navigateOut
+    sessionId: 'transfer'
   })
 
   const explorerLink = useMemo(() => {
@@ -315,10 +313,10 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     const callsCount = getCallsCount(isSendingBatch ? accountUserRequests : networkUserRequests)
 
     if (!callsCount) {
-      return t('Send')
+      return t('Proceed')
     }
 
-    return t('Send ({{count}})', {
+    return t('Proceed ({{count}})', {
       count: callsCount
     })
   }, [accountUserRequests, isSendingBatch, networkUserRequests, t])
@@ -458,19 +456,6 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     [state.isTopUp, gasTankLabelWithInfo, t]
   )
 
-  // Title shown before SendToken component
-  const formTitle = useMemo(() => {
-    if (state.isTopUp) {
-      if (isPopup) {
-        return t('Top Up')
-      }
-
-      return gasTankLabelWithInfo
-    }
-
-    return t('Send')
-  }, [state.isTopUp, t, gasTankLabelWithInfo])
-
   const buttons = useMemo(() => {
     return (
       <>
@@ -521,7 +506,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   if (displayedView === 'track') {
     return (
       <TrackProgress
-        onPrimaryButtonPress={onPrimaryButtonPress}
+        onPrimaryButtonPress={navigateOut}
         secondaryButtonText={t('Add more')}
         handleClose={() => {
           dispatch({
@@ -589,11 +574,12 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   }
 
   return (
-    <Wrapper title={headerTitle} handleGoBack={handleGoBackPress} buttons={buttons}>
+    <Wrapper title={headerTitle} buttons={buttons}>
       <Content buttons={buttons}>
         {state?.isInitialized ? (
           <Form>
             <SendForm
+              handleGoBack={handleGoBackPress}
               addressInputState={addressInputState}
               hasGasTank={hasGasTank}
               amountErrorMessage={validationFormMsgs.amount.message || ''}
@@ -602,8 +588,6 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
                 isRecipientHumanizerKnownTokenOrSmartContract
               }
               isSWWarningVisible={isSWWarningVisible}
-              recipientMenuClosedAutomaticallyRef={recipientMenuClosedAutomatically}
-              formTitle={formTitle}
               amountFieldValue={amountFieldValue}
               setAmountFieldValue={setAmountFieldValue}
               addressStateFieldValue={addressStateFieldValue}

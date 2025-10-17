@@ -248,8 +248,6 @@ export const handleActions = async (
       return mainCtrl.activity.resetAccountsOpsFilters(params.sessionId)
     case 'MAIN_CONTROLLER_ACTIVITY_RESET_SIGNED_MESSAGES_FILTERS':
       return mainCtrl.activity.resetSignedMessagesFilters(params.sessionId)
-    case 'ACTIVITY_CONTROLLER_HIDE_BANNER':
-      return await mainCtrl.activity.hideBanner(params)
 
     case 'MAIN_CONTROLLER_SIGN_ACCOUNT_OP_UPDATE':
       return mainCtrl?.signAccountOp?.update(params)

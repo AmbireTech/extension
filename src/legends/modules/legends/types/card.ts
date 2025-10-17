@@ -121,6 +121,7 @@ export interface CardFromResponse {
     initial7702Xp?: number
     code?: string
     allCollected?: boolean
+    activeProposals?: { id: string; title: string; created: number; end: number }[]
   }
   contentSteps?: string[]
   contentImageV2?: string

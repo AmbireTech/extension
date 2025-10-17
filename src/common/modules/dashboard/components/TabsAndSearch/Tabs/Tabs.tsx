@@ -78,7 +78,7 @@ const Tabs: React.FC<Props> = ({ openTab, setOpenTab, handleChangeQuery }) => {
         const withBadge = type === 'activity' && !isActive && (!!pendingBanner || !!failedBanner)
         let badge
         let badgeText
-        let badgeTextAppearance: TextAppearance = 'info2Text'
+        let badgeTextAppearance: TextAppearance
 
         if (failedBanner) {
           badge = (
@@ -99,6 +99,7 @@ const Tabs: React.FC<Props> = ({ openTab, setOpenTab, handleChangeQuery }) => {
         if (pendingBanner) {
           badge = <Spinner style={{ width: 18, height: 18 }} variant="info2" />
           badgeText = pendingBanner.meta!.accountOpsCount
+          badgeTextAppearance = 'info2Text'
         }
 
         if (type === 'activity' && !isActive && failedBanner) {

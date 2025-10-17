@@ -44,6 +44,11 @@ jobs:
         run: git submodule update
         shell: bash
 
+      - name: Get version from app.json
+        id: version
+        run: echo "VERSION=$(grep '"version"' ./app.json | head -n1 | cut -d':' -f2 | tr -d ' ",')" >> $GITHUB_OUTPUT
+        shell: bash
+
       - name: Get Node version
         id: node-version
         run: echo "NODE_VERSION=$(cat .nvmrc)" >> $GITHUB_OUTPUT
@@ -94,11 +99,11 @@ jobs:
       - name: Upload source code 📦
         uses: actions/upload-artifact@v4
         with:
-          name: extension-source-code
+          name: ambire-extension-v${{ steps.version.outputs.VERSION }}-gecko-SOURCE-CODE
           path: ./extension-source-code.zip
 
       - name: Upload extension builds 📦
         uses: actions/upload-artifact@v4
         with:
-          name: extension-builds-and-source-maps-gecko
+          name: ambire-extension-v${{ steps.version.outputs.VERSION }}-gecko-with-sourcemaps
           path: ./build/*.zip

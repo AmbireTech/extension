@@ -2,7 +2,7 @@
 import 'reflect-metadata'
 
 import { ethErrors } from 'eth-rpc-errors'
-import { toBeHex, TransactionReceipt } from 'ethers'
+import { isAddress, toBeHex, TransactionReceipt } from 'ethers'
 import cloneDeep from 'lodash/cloneDeep'
 import { nanoid } from 'nanoid'
 
@@ -643,7 +643,17 @@ export class ProviderController {
     return null
   }
 
-  @Reflect.metadata('ACTION_REQUEST', ['WalletWatchAsset', false])
+  @Reflect.metadata('ACTION_REQUEST', [
+    'WalletWatchAsset',
+    ({ request }: { request: ProviderRequest; mainCtrl: MainController }) => {
+      const tokenAddress = request.params?.options?.address
+
+      if (!tokenAddress) throw ethErrors.rpc.invalidParams('Token address is required')
+      if (!isAddress(tokenAddress)) throw ethErrors.rpc.invalidParams('Invalid token address')
+
+      return false // Return false to allow action window to open (address is valid)
+    }
+  ])
   walletWatchAsset = () => true
 
   @Reflect.metadata('ACTION_REQUEST', ['GetEncryptionPublicKey', false])

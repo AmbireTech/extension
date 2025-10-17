@@ -1,3 +1,4 @@
+import { getAddress } from 'ethers'
 import React, { FC, useMemo } from 'react'
 import { Image, View } from 'react-native'
 
@@ -33,7 +34,7 @@ const HumanizerAddress: FC<Props> = ({
   const { styles } = useTheme(getStyles)
 
   const addressInfo: any = useMemo(
-    () => HUMANIZER_META.knownAddresses[address.toLocaleLowerCase()],
+    () => HUMANIZER_META.knownAddresses[getAddress(address)],
     [address]
   )
 

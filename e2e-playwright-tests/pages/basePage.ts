@@ -81,8 +81,11 @@ export class BasePage {
     return this.page.getByTestId(selector).innerText()
   }
 
-  async entertext(selector: string, text: string): Promise<void> {
-    await this.page.getByTestId(selector).fill(text)
+  async entertext(selector: string, text: string, index?: number): Promise<void> {
+    await this.page
+      .getByTestId(selector)
+      .nth(index ?? 0)
+      .fill(text)
   }
 
   async getValue(selector: string): Promise<string> {

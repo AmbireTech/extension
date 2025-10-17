@@ -16,7 +16,6 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import formatTime from '@common/utils/formatTime'
-import useActivityControllerState from '@web/hooks/useActivityControllerState'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControllerState'
 import TrackProgressWrapper from '@web/modules/sign-account-op/components/OneClick/TrackProgress'
@@ -41,7 +40,6 @@ const TrackProgress: FC<Props> = ({ handleClose }) => {
   const { navigate } = useNavigation()
   const { dispatch } = useBackgroundService()
   const { activeRoutes } = useSwapAndBridgeControllerState()
-  const { accountsOps } = useActivityControllerState()
 
   const lastCompletedRoute = activeRoutes[activeRoutes.length - 1]
   const steps = lastCompletedRoute?.route?.steps
@@ -68,14 +66,6 @@ const TrackProgress: FC<Props> = ({ handleClose }) => {
     }
   }, [firstStep, steps])
 
-  const submittedAccountOp = useMemo(() => {
-    if (!accountsOps.swapAndBridge || !accountsOps.swapAndBridge.result) return null
-
-    return accountsOps.swapAndBridge.result.items.find(
-      (accOp) => accOp.txnId === lastCompletedRoute.userTxHash
-    )
-  }, [accountsOps.swapAndBridge, lastCompletedRoute.userTxHash])
-
   const navigateOut = useCallback(() => {
     if (isActionWindow) {
       dispatch({
@@ -89,14 +79,12 @@ const TrackProgress: FC<Props> = ({ handleClose }) => {
     }
   }, [dispatch, navigate])
 
-  const { onPrimaryButtonPress, sessionHandler } = useTrackAccountOp({
+  const { sessionHandler } = useTrackAccountOp({
     address: lastCompletedRoute.route?.userAddress,
     chainId: lastCompletedRoute.route?.fromChainId
       ? BigInt(lastCompletedRoute.route.fromChainId)
       : undefined,
-    sessionId: 'swapAndBridge',
-    submittedAccountOp,
-    navigateOut
+    sessionId: 'swapAndBridge'
   })
 
   useEffect(() => {
@@ -141,7 +129,7 @@ const TrackProgress: FC<Props> = ({ handleClose }) => {
 
   return (
     <TrackProgressWrapper
-      onPrimaryButtonPress={onPrimaryButtonPress}
+      onPrimaryButtonPress={navigateOut}
       secondaryButtonText={t('Start a new swap?')}
       handleClose={handleClose}
       routeStatus={lastCompletedRoute?.routeStatus}

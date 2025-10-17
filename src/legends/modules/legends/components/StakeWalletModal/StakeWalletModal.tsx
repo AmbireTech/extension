@@ -193,8 +193,7 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
         const uncollected = allCommitments
           .filter(([maxTokens]) => maxTokens)
           .map(([, commitment]) => commitment)
-          .sort(([a, b]) => a.unlocksAt - b.unlocksAt)
-
+          .sort((a, b) => Number(a.unlocksAt - b.unlocksAt))
         const firstUncollected = uncollected[0]
         if (!firstUncollected) return
         const { maxTokens, unlocksAt, shares } = firstUncollected

@@ -24,7 +24,7 @@ import Modals from '@web/modules/sign-account-op/components/Modals/Modals'
 import SigningKeySelect from '@web/modules/sign-message/components/SignKeySelect'
 import { getUiType } from '@web/utils/uiType'
 
-type Props = {
+export type OneClickEstimationProps = {
   closeEstimationModal: () => void
   handleBroadcastAccountOp: () => void
   handleUpdateStatus: (status: SigningStatus) => void
@@ -50,7 +50,7 @@ const OneClickEstimation = ({
   errors,
   updateType,
   serviceFee
-}: Props) => {
+}: OneClickEstimationProps) => {
   const { t } = useTranslation()
   const { theme, themeType } = useTheme()
 
@@ -88,7 +88,8 @@ const OneClickEstimation = ({
     handleBroadcast: handleBroadcastAccountOp,
     handleUpdate: updateController,
     handleUpdateStatus,
-    isOneClickSign: true
+    isOneClickSign: true,
+    updateType
   })
 
   return (

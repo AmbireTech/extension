@@ -31,7 +31,8 @@ const Modal = ({
   isOpen,
   handleClose,
   isClosable = true,
-  showCloseButton = true
+  showCloseButton = true,
+  wrapperClassName
 }: ModalProps) => {
   const modalRef = React.useRef<HTMLDivElement>(null)
 
@@ -57,7 +58,7 @@ const Modal = ({
   })
 
   const modalContent = (
-    <div className={`${styles.wrapper} ${isOpen ? styles.open : ''}`}>
+    <div className={`${styles.wrapper} ${isOpen ? styles.open : ''} ${wrapperClassName || ''}`}>
       <div ref={modalRef} className={`${styles.modal} ${className}`}>
         {isClosable && showCloseButton && (
           <button onClick={closeModal} type="button" className={styles.closeButton}>
