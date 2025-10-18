@@ -281,6 +281,9 @@ const useSwapAndBridgeForm = () => {
 
     if (!fromSelectedToken) return null
 
+    // if we're receiving more dollars than giving, then no checks
+    if (outputValueInUsd > quote.selectedRoute.inputValueInUsd) return null
+
     try {
       const sanitizedFromAmount = getSanitizedAmount(fromAmount, fromSelectedToken!.decimals)
 
