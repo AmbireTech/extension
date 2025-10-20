@@ -2,7 +2,7 @@
 import 'reflect-metadata'
 
 import { ethErrors } from 'eth-rpc-errors'
-import { isAddress, toBeHex, TransactionReceipt } from 'ethers'
+import { getAddress, isAddress, toBeHex, TransactionReceipt } from 'ethers'
 import cloneDeep from 'lodash/cloneDeep'
 import { nanoid } from 'nanoid'
 
@@ -19,7 +19,8 @@ import { getBaseAccount } from '@ambire-common/libs/account/getBaseAccount'
 import {
   AccountOpIdentifiedBy,
   fetchTxnId,
-  isIdentifiedByMultipleTxn
+  isIdentifiedByMultipleTxn,
+  SubmittedAccountOp
 } from '@ambire-common/libs/accountOp/submittedAccountOp'
 import { getBundlerByName, getDefaultBundler } from '@ambire-common/services/bundlers/getBundler'
 import { getRpcProvider } from '@ambire-common/services/provider'
@@ -29,6 +30,11 @@ import { APP_VERSION } from '@common/config/env'
 import { SAFE_RPC_METHODS } from '@web/constants/common'
 import { notificationManager } from '@web/extension-services/background/webapi/notification'
 
+import { Hex } from '@ambire-common/interfaces/hex'
+import { SignUserOperation } from '@ambire-common/interfaces/userOperation'
+import { AccountOpStatus } from '@ambire-common/libs/accountOp/types'
+import { UserOperation } from '@ambire-common/libs/userOperation/types'
+import { BundlerSwitcher } from '@ambire-common/services/bundlers/bundlerSwitcher'
 import { createTab } from '../webapi/tab'
 import { RequestRes, Web3WalletPermission } from './types'
 
@@ -370,10 +376,10 @@ export class ProviderController {
           atomic: {
             status: 'unsupported'
           },
-          eil_cross_chain_signing: {
+          eilCrossChainSigning: {
             supported: false
           },
-          send_raw_user_operation: {
+          sendRawUserOperation: {
             supported: false
           }
         }
@@ -408,10 +414,10 @@ export class ProviderController {
         atomic: {
           status: baseAccount.getAtomicStatus()
         },
-        eil_cross_chain_signing: {
+        eilCrossChainSigning: {
           supported: baseAccount.canEilCrossChainSign()
         },
-        send_raw_user_operation: {
+        sendRawUserOperation: {
           supported: baseAccount.canSendRawUserOperation()
         }
       }
@@ -594,6 +600,90 @@ export class ProviderController {
       identifiedBy
     })}`
 
+    await createTab(link)
+  }
+
+  ethSendRawUserOperation = async (data: any) => {
+    if (!data.params || !data.params.length) {
+      throw ethErrors.rpc.invalidParams('params is required but got []')
+    }
+
+    const chainIdAndUserOp: { chainId: Hex; userOperation: SignUserOperation } = data.params[0]
+    if (!chainIdAndUserOp.chainId || !chainIdAndUserOp.userOperation)
+      throw ethErrors.rpc.invalidParams('wrong data passed')
+
+    const chainId = BigInt(chainIdAndUserOp.chainId)
+    const network = this.mainCtrl.networks.networks.find((net) => net.chainId === chainId)
+    if (!network)
+      throw ethErrors.rpc.invalidRequest(`Network with chain id ${chainId.toString()} not found`)
+
+    const bundlerSwitcher = new BundlerSwitcher(network, () => false)
+    const bundler = bundlerSwitcher.getBundler()
+
+    // chainIdAndUserOp
+    const requiredProperties = [
+      'sender',
+      'nonce',
+      'callData',
+      'callGasLimit',
+      'verificationGasLimit',
+      'preVerificationGas',
+      'maxFeePerGas',
+      'maxPriorityFeePerGas',
+      'signature'
+    ]
+    const userOp: UserOperation = {
+      ...chainIdAndUserOp.userOperation,
+      signature: chainIdAndUserOp.userOperation.signature as string,
+      requestType: 'standard',
+      bundler: bundler.getName()
+    }
+
+    // validate
+    for (let k = 0; k < requiredProperties.length; k++) {
+      const prop = requiredProperties[k]
+      if (!(userOp as any)[prop])
+        throw ethErrors.rpc.invalidRequest(`Missing user operation property ${prop}`)
+    }
+
+    // the selected account should be the sender
+    if (
+      !this.mainCtrl.selectedAccount.account ||
+      getAddress(userOp.sender) !== getAddress(this.mainCtrl.selectedAccount.account.addr)
+    ) {
+      throw ethErrors.rpc.invalidRequest('Sender is not the selected account')
+    }
+
+    const userOperationHash = await bundler.broadcast(
+      { ...userOp, bundler: bundler.getName(), requestType: 'standard' },
+      network
+    )
+    const identifiedBy: AccountOpIdentifiedBy = {
+      type: 'UserOperation',
+      identifier: userOperationHash,
+      bundler: bundler.getName()
+    }
+    const submittedAccountOp: SubmittedAccountOp = {
+      accountAddr: userOp.sender,
+      chainId,
+      calls: [], // TODO<eil>
+      nonce: BigInt(userOp.nonce), // TODO<eil>,
+      gasLimit: Number(userOp.callGasLimit),
+      signature: userOp.signature,
+      signingKeyAddr: null, // TODO<eil, find the signed-message>
+      signingKeyType: null, // TODO<eil, find the signed-message>
+      gasFeePayment: null,
+      status: AccountOpStatus.BroadcastedButNotConfirmed,
+      identifiedBy,
+      timestamp: new Date().getTime(),
+      isSingletonDeploy: false
+    }
+    this.mainCtrl.activity.addAccountOp(submittedAccountOp).catch((e) => e)
+
+    const link = `https://explorer.ambire.com/${getBenzinUrlParams({
+      chainId,
+      identifiedBy
+    })}`
     await createTab(link)
   }
 
