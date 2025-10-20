@@ -13,7 +13,7 @@ import Spinner from '@common/components/Spinner'
 import useNavigation from '@common/hooks/useNavigation'
 import usePrevious from '@common/hooks/usePrevious'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_MD, SPACING_MI } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { Content, Form, Wrapper } from '@web/components/TransactionsScreen'
 import useBackgroundService from '@web/hooks/useBackgroundService'
@@ -259,7 +259,7 @@ const SwapAndBridgeScreen = () => {
             <PanelTitle title={t('Swap & Bridge')} />
             {!isTab && <View style={{ width: 40 }} />}
           </View>
-          <View style={spacings.mbLg}>
+          <View style={{ marginBottom: SPACING_MD + SPACING_MI / 2 }}>
             <FromToken
               fromTokenOptions={fromTokenOptions}
               fromTokenValue={fromTokenValue}

@@ -659,7 +659,7 @@ const init = async () => {
       pm.addOrUpdatePort(port, () => {
         mainCtrl.ui.addView({ id: port.id, type: port.name })
 
-        pm.addListener(
+        pm.addConnectListener(
           port.id,
           // @ts-ignore
           async (messageType, action: Action, meta: MessageMeta = {}) => {
@@ -682,7 +682,7 @@ const init = async () => {
               console.error(`${type} action failed:`, err)
               captureBackgroundException(err, {
                 extra: {
-                  action: JSON.stringify(action),
+                  action: stringify(action),
                   portId: port.id,
                   windowId
                 }
