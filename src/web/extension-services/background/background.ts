@@ -659,7 +659,7 @@ const init = async () => {
       pm.addOrUpdatePort(port, () => {
         mainCtrl.ui.addView({ id: port.id, type: port.name })
 
-        pm.addListener(
+        pm.addConnectListener(
           port.id,
           // @ts-ignore
           async (messageType, action: Action, meta: MessageMeta = {}) => {
