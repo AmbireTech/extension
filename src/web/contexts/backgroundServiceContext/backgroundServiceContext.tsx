@@ -47,7 +47,7 @@ if (isExtension) {
     pm.connect({ id: portId, name: portName })
     // connect to the portMessenger initialized in the background
     // @ts-ignore
-    pm.addListener(pm.ports[0].id, (messageType, { method, params, forceEmit }) => {
+    pm.addConnectListener(pm.ports[0].id, (messageType, { method, params, forceEmit }) => {
       if (method === 'portReady') {
         backgroundReady = true
         actionsBeforeBackgroundReady.forEach((a) => globalDispatch(a))
