@@ -3,12 +3,6 @@
 /* eslint-disable @typescript-eslint/return-await */
 import { BIP44_STANDARD_DERIVATION_TEMPLATE } from '@ambire-common/consts/derivation'
 import { MainController } from '@ambire-common/controllers/main/main'
-import {
-  SIGN_ACCOUNT_OP_MAIN,
-  SIGN_ACCOUNT_OP_SWAP,
-  SIGN_ACCOUNT_OP_TRANSFER,
-  SignAccountOpType
-} from '@ambire-common/controllers/signAccountOp/helper'
 import { KeyIterator } from '@ambire-common/libs/keyIterator/keyIterator'
 import wait from '@ambire-common/utils/wait'
 import { browser } from '@web/constants/browserapi'
@@ -254,17 +248,7 @@ export const handleActions = async (
     case 'MAIN_CONTROLLER_SIGN_ACCOUNT_OP_UPDATE_STATUS':
       return mainCtrl?.signAccountOp?.updateStatus(params.status)
     case 'MAIN_CONTROLLER_HANDLE_SIGN_AND_BROADCAST_ACCOUNT_OP': {
-      let signAccountOpType: SignAccountOpType
-
-      if (params.updateType === 'Main') {
-        signAccountOpType = SIGN_ACCOUNT_OP_MAIN
-      } else if (params.updateType === 'Swap&Bridge') {
-        signAccountOpType = SIGN_ACCOUNT_OP_SWAP
-      } else {
-        signAccountOpType = SIGN_ACCOUNT_OP_TRANSFER
-      }
-
-      return await mainCtrl.handleSignAndBroadcastAccountOp(signAccountOpType)
+      return await mainCtrl.handleSignAndBroadcastAccountOp(params.type)
     }
     case 'MAIN_CONTROLLER_SIGN_ACCOUNT_OP_INIT':
       return mainCtrl.initSignAccOp(params.actionId)

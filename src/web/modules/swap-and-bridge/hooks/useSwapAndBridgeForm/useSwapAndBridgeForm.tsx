@@ -8,6 +8,7 @@ import { SwapAndBridgeFormStatus } from '@ambire-common/controllers/swapAndBridg
 import { getIsTokenEligibleForSwapAndBridge } from '@ambire-common/libs/swapAndBridge/swapAndBridge'
 import { getSanitizedAmount } from '@ambire-common/libs/transfer/amount'
 import { safeTokenAmountAndNumberMultiplication } from '@ambire-common/utils/numbers/formatters'
+import { getCallsCount } from '@ambire-common/utils/userRequest'
 import useGetTokenSelectProps from '@common/hooks/useGetTokenSelectProps'
 import useNavigation from '@common/hooks/useNavigation'
 import { ROUTES } from '@common/modules/router/constants/common'
@@ -21,7 +22,6 @@ import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControll
 import useSyncedState from '@web/hooks/useSyncedState'
 import { getTokenId } from '@web/utils/token'
 import { getUiType } from '@web/utils/uiType'
-import { getCallsCount } from '@ambire-common/utils/userRequest'
 
 type SessionId = ReturnType<typeof nanoid>
 
@@ -479,7 +479,6 @@ const useSwapAndBridgeForm = () => {
 
   useEffect(() => {
     const broadcastStatus = mainCtrlStatuses.signAndBroadcastAccountOp
-
     if (broadcastStatus === 'SUCCESS' && activeRoutes.length) {
       setHasBroadcasted(true)
     }
