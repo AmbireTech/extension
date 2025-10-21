@@ -12,7 +12,18 @@ type Props = {
 }
 
 const LandingSection: FC<Props> = ({ nonV2acc = false }) => {
-  const { connectProvider } = useProviderContext()
+  const { connectProvider, hasAnyAmbireExtensionInstalled } = useProviderContext()
+
+  const onButtonClick = async () => {
+    if (hasAnyAmbireExtensionInstalled) {
+      await connectProvider()
+    } else {
+      window.open(
+        'https://chromewebstore.google.com/detail/ambire-wallet/ehgjhhccekdedpbkifaojjaefeohnoea',
+        '_blank'
+      )
+    }
+  }
 
   return (
     <section className={`${styles.wrapper} ${nonV2acc ? styles.nonV2 : styles.v2}`}>
@@ -25,9 +36,9 @@ const LandingSection: FC<Props> = ({ nonV2acc = false }) => {
         </h1>
 
         {!nonV2acc && (
-          <button className={styles.button} type="button" onClick={connectProvider}>
+          <button className={styles.button} type="button" onClick={onButtonClick}>
             <img src={ambireLogoSmall} alt="Ambire Logo" className={styles.logoSmall} />
-            {'Connect Ambire'}{' '}
+            {!hasAnyAmbireExtensionInstalled ? 'Get the Extension' : 'Connect Ambire'}{' '}
           </button>
         )}
 

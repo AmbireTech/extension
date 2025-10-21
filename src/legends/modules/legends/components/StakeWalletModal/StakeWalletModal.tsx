@@ -256,7 +256,7 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
         console.log(e)
         addToast('Failed to go to internal swap.', { type: 'error' })
       })
-  }, [addToast])
+  }, [addToast, provider])
 
   const requestWithdrawAction = useCallback(
     async (dataFromInput: string) => {
