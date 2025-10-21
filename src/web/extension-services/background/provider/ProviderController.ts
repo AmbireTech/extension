@@ -297,7 +297,17 @@ export class ProviderController {
 
   @Reflect.metadata('ACTION_REQUEST', ['SignTypedData', false])
   walletSignUserOperations = async ({ requestRes }: ProviderRequest) => {
-    return handleSignMessage(requestRes)
+    if (requestRes) {
+      if (requestRes?.error) {
+        throw ethErrors.rpc.invalidParams({
+          message: requestRes?.error
+        })
+      }
+
+      return JSON.stringify(requestRes.hash)
+    }
+
+    throw new Error('Internal error: request result not found', requestRes)
   }
 
   @Reflect.metadata('ACTION_REQUEST', [
@@ -608,8 +618,8 @@ export class ProviderController {
       throw ethErrors.rpc.invalidParams('params is required but got []')
     }
 
-    const chainIdAndUserOp: { chainId: Hex; userOperation: SignUserOperation } = data.params[0]
-    if (!chainIdAndUserOp.chainId || !chainIdAndUserOp.userOperation)
+    const chainIdAndUserOp: { chainId: Hex; userOp: SignUserOperation } = data.params[0]
+    if (!chainIdAndUserOp.chainId || !chainIdAndUserOp.userOp)
       throw ethErrors.rpc.invalidParams('wrong data passed')
 
     const chainId = BigInt(chainIdAndUserOp.chainId)
@@ -617,7 +627,9 @@ export class ProviderController {
     if (!network)
       throw ethErrors.rpc.invalidRequest(`Network with chain id ${chainId.toString()} not found`)
 
-    const bundlerSwitcher = new BundlerSwitcher(network, () => false)
+    const bundlerSwitcher = new BundlerSwitcher(network, () => false, {
+      canDelegate: !!chainIdAndUserOp.userOp.eip7702Auth
+    })
     const bundler = bundlerSwitcher.getBundler()
 
     // chainIdAndUserOp
@@ -633,8 +645,8 @@ export class ProviderController {
       'signature'
     ]
     const userOp: UserOperation = {
-      ...chainIdAndUserOp.userOperation,
-      signature: chainIdAndUserOp.userOperation.signature as string,
+      ...chainIdAndUserOp.userOp,
+      signature: chainIdAndUserOp.userOp.signature as string,
       requestType: 'standard',
       bundler: bundler.getName()
     }
