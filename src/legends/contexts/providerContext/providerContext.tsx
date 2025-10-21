@@ -100,21 +100,25 @@ const ProviderContextProvider = ({ children }: { children: React.ReactNode }) =>
 
   const selectProvider = useCallback(
     async (walletId: WalletType, shouldCloseModal?: boolean) => {
-      const detectedProvider = providers[walletId]
-      const accs: any = await detectedProvider.provider.request({
-        method: 'eth_requestAccounts',
-        params: []
-      })
+      try {
+        const detectedProvider = providers[walletId]
+        const accs: any = await detectedProvider.provider.request({
+          method: 'eth_requestAccounts',
+          params: []
+        })
 
-      if (accs && accs.length > 0) {
-        setProvider(detectedProvider.provider)
-        setBrowserProvider(new ethers.BrowserProvider(detectedProvider.provider))
-        setConnectedWallet(walletId)
-        localStorage.setItem(LOCAL_STORAGE_CONNECTED_WALLET, walletId)
-      }
+        if (accs && accs.length > 0) {
+          setProvider(detectedProvider.provider)
+          setBrowserProvider(new ethers.BrowserProvider(detectedProvider.provider))
+          setConnectedWallet(walletId)
+          localStorage.setItem(LOCAL_STORAGE_CONNECTED_WALLET, walletId)
+        }
 
-      if (shouldCloseModal) {
-        closeModal()
+        if (shouldCloseModal) {
+          closeModal()
+        }
+      } catch (e: any) {
+        console.error('Error selecting provider:', e)
       }
     },
     [closeModal, providers]
