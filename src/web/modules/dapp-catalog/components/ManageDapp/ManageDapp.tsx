@@ -4,7 +4,7 @@ import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 import { IHandles } from 'react-native-modalize/lib/options'
 
-import predefinedDapps from '@ambire-common/consts/dappCatalog.json'
+import predefinedDapps from '@ambire-common/consts/legacyDappCatalog.json'
 import { Dapp } from '@ambire-common/interfaces/dapp'
 import { Network } from '@ambire-common/interfaces/network'
 import { getDappIdFromUrl } from '@ambire-common/libs/dapps/helpers'

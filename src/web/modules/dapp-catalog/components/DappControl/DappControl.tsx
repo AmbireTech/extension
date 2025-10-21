@@ -2,7 +2,7 @@ import React, { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Pressable, View } from 'react-native'
 
-import predefinedDapps from '@ambire-common/consts/dappCatalog.json'
+import predefinedDapps from '@ambire-common/consts/legacyDappCatalog.json'
 import { Dapp } from '@ambire-common/interfaces/dapp'
 import CloseIcon from '@common/assets/svg/CloseIcon'
 import DAppsIcon from '@common/assets/svg/DAppsIcon'
