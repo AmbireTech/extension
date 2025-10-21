@@ -34,6 +34,7 @@ type Props = {
   label?: string | React.ReactNode
   borderRadius?: number
   decimalRulesType?: FormatType
+  hasBottomSpacing?: boolean
 }
 
 const BaseTokenItem = ({
@@ -42,7 +43,8 @@ const BaseTokenItem = ({
   gradientStyle,
   label,
   borderRadius,
-  decimalRulesType = 'amount'
+  decimalRulesType = 'amount',
+  hasBottomSpacing = false
 }: Props) => {
   const { portfolio } = useSelectedAccountControllerState()
   const { networks } = useNetworksControllerState()
@@ -114,7 +116,10 @@ const BaseTokenItem = ({
       onPress={() => openBottomSheet()}
       style={[
         styles.container,
-        { borderRadius: borderRadius || BORDER_RADIUS_PRIMARY },
+        {
+          borderRadius: borderRadius || BORDER_RADIUS_PRIMARY,
+          marginBottom: hasBottomSpacing ? SPACING_TY : 0
+        },
         gradientBorderStyle
       ]}
       {...bindAnim}

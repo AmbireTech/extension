@@ -28,6 +28,7 @@ const RewardsTokenItem = ({
     <BaseTokenItem
       token={token}
       decimalRulesType="noDecimal"
+      hasBottomSpacing
       extraActions={
         <Pressable
           testID="projected-rewards-claim-button"
