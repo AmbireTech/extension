@@ -1,8 +1,12 @@
 import crypto from 'crypto'
-import { Client as GridPlusSDKClient, Constants as GridPlusSDKConstants } from 'gridplus-sdk'
+import { Client as GridPlusSDKClient, Constants as GridPlusSDKConstants, Utils } from 'gridplus-sdk'
+// TODO: Add to deps
+import { Hash } from 'ox'
 
 import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
 import { ExternalKey, ExternalSignerController } from '@ambire-common/interfaces/keystore'
+// TODO: Add to deps
+import { RLP } from '@ethereumjs/rlp'
 import { browser } from '@web/constants/browserapi'
 
 export { GridPlusSDKConstants }
@@ -85,6 +89,73 @@ class LatticeController implements ExternalSignerController {
 
     await this._connect()
     return 'JUST_UNLOCKED'
+  }
+
+  async signAuthorization({ address, chainId, nonce } = {}): Promise<any> {
+    if (!this.walletSDK)
+      throw new ExternalSignerError('Lattice not connected', {
+        sendCrashReport: true
+      })
+
+    // Use the parameters passed in, or defaults
+    const authAddress = address || '0x0000000000219ab540356cBB839Cbe05303d7705'
+    const authChainId = chainId || 1
+    const authNonce = nonce || 0
+
+    // TODO: Dirty way of implementing this. Copy the exact payload-building logic
+    // from the functional API's signAuthorization
+    const MAGIC = Buffer.from([0x05]) // EIP-7702 magic byte
+    const message = Buffer.concat([
+      MAGIC,
+      Buffer.from(RLP.encode([authChainId, authAddress, authNonce]))
+    ])
+    const payload = {
+      // TODO: Double-check this part.
+      signerPath: [44, 60, 0, 0, 0], // Default ETH derivation path
+      curveType: GridPlusSDKConstants.SIGNING.CURVES.SECP256K1,
+      hashType: GridPlusSDKConstants.SIGNING.HASHES.KECCAK256,
+      encodingType: GridPlusSDKConstants.SIGNING.ENCODINGS.EIP7702_AUTH,
+      payload: message
+    }
+
+    try {
+      const response = await this.walletSDK.sign({ data: payload })
+
+      if (response.sig && response.pubkey) {
+        // Calculate the correct y-parity value using GridPlus SDK's utility
+        const messageHash = Buffer.from(Hash.keccak256(message))
+        const yParity = Utils.getYParity(messageHash, response.sig, response.pubkey)
+
+        // Handle both Buffer and string formats for r and s (copied from functional API)
+        const rValue = Buffer.isBuffer(response.sig.r)
+          ? `0x${response.sig.r.toString('hex')}`
+          : response.sig.r
+        const sValue = Buffer.isBuffer(response.sig.s)
+          ? `0x${response.sig.s.toString('hex')}`
+          : response.sig.s
+
+        // Create a complete Authorization object with all required signature components
+        const result = {
+          address: authAddress,
+          chainId: authChainId,
+          nonce: authNonce,
+          yParity: `0x${yParity.toString(16)}`, // Convert to hex string
+          r: rValue,
+          s: sValue,
+          messageHash
+        }
+
+        return result
+      }
+
+      throw new ExternalSignerError('Failed to get signature from device', {
+        sendCrashReport: true
+      })
+    } catch (error: any) {
+      throw new ExternalSignerError(error?.message || 'signAuthorization failed', {
+        sendCrashReport: true
+      })
+    }
   }
 
   _resetDefaults() {

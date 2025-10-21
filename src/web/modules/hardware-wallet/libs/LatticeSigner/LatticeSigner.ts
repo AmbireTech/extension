@@ -12,7 +12,9 @@ import { addHexPrefix } from '@ambire-common/utils/addHexPrefix'
 import { getHDPathIndices } from '@ambire-common/utils/hdPath'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import wait from '@ambire-common/utils/wait'
-import LatticeController, { GridPlusSDKConstants } from '@web/modules/hardware-wallet/controllers/LatticeController'
+import LatticeController, {
+  GridPlusSDKConstants
+} from '@web/modules/hardware-wallet/controllers/LatticeController'
 
 class LatticeSigner implements KeystoreSignerInterface {
   key: ExternalKey
@@ -232,9 +234,21 @@ class LatticeSigner implements KeystoreSignerInterface {
     return addHexPrefix(`${res.sig.r}${res.sig.s}${res.sig.v.toString('hex')}`)
   }
 
-  // eslint-disable-next-line class-methods-use-this
-  sign7702(hex: string): { yParity: Hex; r: Hex; s: Hex } {
-    throw new Error('not supported', { cause: hex })
+  // TODO: Currently, dirty, sync the changes to all instances
+  async sign7702(
+    chainId: bigint,
+    contractAddr: Hex,
+    nonce: bigint
+  ): Promise<{ yParity: Hex; r: Hex; s: Hex }> {
+    await this.#prepareForSigning()
+
+    const { yParity, r, s } = await this.controller?.signAuthorization({
+      chainId,
+      contractAddr,
+      nonce
+    })
+
+    return { yParity, r, s }
   }
 
   // eslint-disable-next-line class-methods-use-this
