@@ -5,7 +5,7 @@ import { SelectedAccountPortfolioTokenResult } from '@ambire-common/interfaces/s
 import { AccountOp } from '@ambire-common/libs/accountOp/accountOp'
 import { FormattedPendingAmounts, PendingAmounts } from '@ambire-common/libs/portfolio/interfaces'
 import { calculatePendingAmounts } from '@ambire-common/libs/portfolio/pendingAmountsHelper'
-import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
+import formatDecimals, { FormatType } from '@ambire-common/utils/formatDecimals/formatDecimals'
 import { safeTokenAmountAndNumberMultiplication } from '@ambire-common/utils/numbers/formatters'
 
 /**
@@ -68,7 +68,8 @@ const getAndFormatTokenDetails = (
     simulationAmount
   }: SelectedAccountPortfolioTokenResult,
   networks: Network[],
-  simulatedAccountOp?: AccountOp
+  simulatedAccountOp?: AccountOp,
+  options: { decimalRulesType: FormatType } = { decimalRulesType: 'amount' }
 ) => {
   const isRewards = rewardsType === 'wallet-rewards'
   const isVesting = rewardsType === 'wallet-vesting'
@@ -106,8 +107,8 @@ const getAndFormatTokenDetails = (
   // are strings. Please decide on the type of the values when refactoring.
   return {
     balance,
-    balanceFormatted: formatDecimals(parseFloat(balance), 'amount'),
-    balanceLatestFormatted: formatDecimals(parseFloat(balanceLatest), 'amount'),
+    balanceFormatted: formatDecimals(parseFloat(balance), options.decimalRulesType),
+    balanceLatestFormatted: formatDecimals(parseFloat(balanceLatest), options.decimalRulesType),
     priceUSD,
     priceUSDFormatted: formatDecimals(priceUSD, 'price'),
     balanceUSD,

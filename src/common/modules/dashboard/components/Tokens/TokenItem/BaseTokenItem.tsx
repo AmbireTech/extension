@@ -3,6 +3,7 @@ import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { TokenResult } from '@ambire-common/libs/portfolio'
+import { FormatType } from '@ambire-common/utils/formatDecimals/formatDecimals'
 import BatchIcon from '@common/assets/svg/BatchIcon'
 import PendingToBeConfirmedIcon from '@common/assets/svg/PendingToBeConfirmedIcon'
 import RewardsIcon from '@common/assets/svg/RewardsIcon'
@@ -32,9 +33,17 @@ type Props = {
   gradientStyle?: string
   label?: string | React.ReactNode
   borderRadius?: number
+  decimalRulesType?: FormatType
 }
 
-const BaseTokenItem = ({ token, extraActions, gradientStyle, label, borderRadius }: Props) => {
+const BaseTokenItem = ({
+  token,
+  extraActions,
+  gradientStyle,
+  label,
+  borderRadius,
+  decimalRulesType = 'amount'
+}: Props) => {
   const { portfolio } = useSelectedAccountControllerState()
   const { networks } = useNetworksControllerState()
   const { t } = useTranslation()
@@ -74,7 +83,7 @@ const BaseTokenItem = ({ token, extraActions, gradientStyle, label, borderRadius
     pendingToBeSignedFormatted,
     pendingToBeConfirmed,
     pendingToBeConfirmedFormatted
-  } = getAndFormatTokenDetails(token, networks, simulatedAccountOp)
+  } = getAndFormatTokenDetails(token, networks, simulatedAccountOp, { decimalRulesType })
 
   const isPending = !!hasPendingBadges
 
