@@ -3,6 +3,9 @@ import React, { createContext, useCallback, useEffect, useMemo, useState } from 
 
 import { EthereumProvider } from '@web/extension-services/inpage/EthereumProvider'
 
+import SelectProviderModal from './SelectProviderModal'
+import { EIP6963AnnounceProviderEvent, Providers, WalletType } from './types'
+
 type ProviderContextType = {
   provider: EthereumProvider | null
   browserProvider: ethers.BrowserProvider | null
@@ -14,41 +17,19 @@ type ProviderContextType = {
 
 const ProviderContext = createContext<ProviderContextType>({} as ProviderContextType)
 
-type WalletType = 'ambire' | 'ambire-next'
-
-type EIP6963ProviderInfo = {
-  uuid: string
-  name: string
-  icon: string
-  rdns: string
-}
-
-type EIP6963AnnounceProviderEvent = {
-  detail: EIP6963ProviderDetails
-}
-
-type EIP6963ProviderDetails = {
-  info: EIP6963ProviderInfo
-  provider: EthereumProvider
-}
-
 const LOCAL_STORAGE_CONNECTED_WALLET = 'connectedWallet'
 
 const ProviderContextProvider = ({ children }: { children: React.ReactNode }) => {
-  const [providers, setProviders] = useState<Record<WalletType, EIP6963ProviderDetails>>(
-    {} as Record<WalletType, EIP6963ProviderDetails>
-  )
+  const [providers, setProviders] = useState<Providers>({} as Providers)
   const [provider, setProvider] = useState<EthereumProvider | null>(null)
   const [browserProvider, setBrowserProvider] = useState<ethers.BrowserProvider | null>(null)
   const [connectedWallet, setConnectedWallet] = useState<WalletType | null>(
     (localStorage.getItem(LOCAL_STORAGE_CONNECTED_WALLET) as WalletType) || null
   )
+  const [isConnectModalOpen, setIsConnectModalOpen] = useState(false)
 
   useEffect(() => {
-    const detected: Record<WalletType, EIP6963ProviderDetails> = {} as Record<
-      WalletType,
-      EIP6963ProviderDetails
-    >
+    const detected: Providers = {} as Providers
 
     const handler = (event: CustomEvent<EIP6963AnnounceProviderEvent['detail']>) => {
       const { detail } = event
@@ -77,12 +58,15 @@ const ProviderContextProvider = ({ children }: { children: React.ReactNode }) =>
       if (connectedWallet && !provider) {
         const detectedProvider = providers[connectedWallet]
 
-        if (detectedProvider) {
-          const accs = await detectedProvider.provider.request({
-            method: 'eth_requestAccounts',
+        if (detectedProvider && detectedProvider.provider.isConnected()) {
+          const accs: any = await detectedProvider.provider.request({
+            // Purposefuly using eth_accounts to avoid popup on reconnect
+            method: 'eth_accounts',
             params: []
           })
-          if (accs) {
+
+          // Auto-connect only if the wallet hasn't disconnected manually
+          if (accs && accs.length > 0) {
             setProvider(detectedProvider.provider)
             setBrowserProvider(new ethers.BrowserProvider(detectedProvider.provider))
           }
@@ -92,36 +76,48 @@ const ProviderContextProvider = ({ children }: { children: React.ReactNode }) =>
   }, [connectedWallet, provider, providers])
 
   const openModal = useCallback(() => {
-    console.log('open modal to select wallet')
+    setIsConnectModalOpen(true)
   }, [])
+
+  const closeModal = useCallback(() => {
+    setIsConnectModalOpen(false)
+  }, [])
+
+  const selectProvider = useCallback(
+    async (walletId: WalletType, shouldCloseModal?: boolean) => {
+      const detectedProvider = providers[walletId]
+      const accs: any = await detectedProvider.provider.request({
+        method: 'eth_requestAccounts',
+        params: []
+      })
+
+      if (accs && accs.length > 0) {
+        setProvider(detectedProvider.provider)
+        setBrowserProvider(new ethers.BrowserProvider(detectedProvider.provider))
+        setConnectedWallet(walletId)
+        localStorage.setItem(LOCAL_STORAGE_CONNECTED_WALLET, walletId)
+      }
+
+      if (shouldCloseModal) {
+        closeModal()
+      }
+    },
+    [closeModal, providers]
+  )
 
   const connectProvider = useCallback(async () => {
     if (provider) return
 
     const detectedProvidersCount = Object.keys(providers).length
+
     if (!detectedProvidersCount) {
       openModal()
-    }
-
-    if (detectedProvidersCount === 1) {
-      const key = Object.keys(providers)[0] as WalletType
-      const detectedProvider = providers[key]
-      const accs = await detectedProvider.provider.request({
-        method: 'eth_requestAccounts',
-        params: []
-      })
-      if (accs) {
-        setProvider(detectedProvider.provider)
-        setBrowserProvider(new ethers.BrowserProvider(detectedProvider.provider))
-        setConnectedWallet(key)
-        localStorage.setItem(LOCAL_STORAGE_CONNECTED_WALLET, key)
-      }
-    }
-
-    if (detectedProvidersCount > 1) {
+    } else if (detectedProvidersCount === 1) {
+      await selectProvider(Object.keys(providers)[0] as WalletType)
+    } else if (detectedProvidersCount > 1) {
       openModal()
     }
-  }, [providers, openModal, provider])
+  }, [provider, providers, openModal, selectProvider])
 
   const disconnectProvider = useCallback(() => {
     setProvider(null)
@@ -142,7 +138,17 @@ const ProviderContextProvider = ({ children }: { children: React.ReactNode }) =>
     [provider, browserProvider, providers, connectedWallet, connectProvider, disconnectProvider]
   )
 
-  return <ProviderContext.Provider value={contextValue}>{children}</ProviderContext.Provider>
+  return (
+    <ProviderContext.Provider value={contextValue}>
+      {children}
+      <SelectProviderModal
+        isConnectModalOpen={isConnectModalOpen}
+        setIsConnectModalOpen={setIsConnectModalOpen}
+        providers={providers}
+        selectProvider={selectProvider}
+      />
+    </ProviderContext.Provider>
+  )
 }
 
 export { ProviderContextProvider, ProviderContext }
