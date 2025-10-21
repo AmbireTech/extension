@@ -1,6 +1,7 @@
 import { ethers } from 'ethers'
 import React, { createContext, useCallback, useEffect, useMemo, useState } from 'react'
 
+import Spinner from '@legends/components/Spinner'
 import { EthereumProvider } from '@web/extension-services/inpage/EthereumProvider'
 
 import SelectProviderModal from './SelectProviderModal'
@@ -26,6 +27,7 @@ const ProviderContextProvider = ({ children }: { children: React.ReactNode }) =>
   const [connectedWallet, setConnectedWallet] = useState<WalletType | null>(
     (localStorage.getItem(LOCAL_STORAGE_CONNECTED_WALLET) as WalletType) || null
   )
+  const [isInitialLoadingDone, setIsInitialLoadingDone] = useState(false)
   const [isConnectModalOpen, setIsConnectModalOpen] = useState(false)
 
   useEffect(() => {
@@ -55,25 +57,38 @@ const ProviderContextProvider = ({ children }: { children: React.ReactNode }) =>
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     ;(async () => {
-      if (connectedWallet && !provider) {
-        const detectedProvider = providers[connectedWallet]
-
-        if (detectedProvider && detectedProvider.provider.isConnected()) {
-          const accs: any = await detectedProvider.provider.request({
-            // Purposefuly using eth_accounts to avoid popup on reconnect
-            method: 'eth_accounts',
-            params: []
-          })
-
-          // Auto-connect only if the wallet hasn't disconnected manually
-          if (accs && accs.length > 0) {
-            setProvider(detectedProvider.provider)
-            setBrowserProvider(new ethers.BrowserProvider(detectedProvider.provider))
-          }
-        }
+      // Not installed, already done or no past connection
+      if ((!window.ambire && !window.ambireNext) || isInitialLoadingDone || !connectedWallet) {
+        setIsInitialLoadingDone(true)
+        return
       }
+
+      // Waiting for the providers to be detected
+      if (Object.keys(providers).length === 0) return
+
+      const detectedProvider = providers[connectedWallet]
+
+      // Previously connected wallet is not installed anymore
+      if (!detectedProvider) {
+        setIsInitialLoadingDone(true)
+        return
+      }
+
+      const accs: any = await detectedProvider.provider.request({
+        // Purposefuly using eth_accounts to avoid popup on reconnect
+        method: 'eth_accounts',
+        params: []
+      })
+
+      // Auto-connect only if the wallet hasn't disconnected manually
+      if (accs && accs.length > 0) {
+        setProvider(detectedProvider.provider)
+        setBrowserProvider(new ethers.BrowserProvider(detectedProvider.provider))
+      }
+
+      setIsInitialLoadingDone(true)
     })()
-  }, [connectedWallet, provider, providers])
+  }, [connectedWallet, isInitialLoadingDone, provider, providers])
 
   const openModal = useCallback(() => {
     setIsConnectModalOpen(true)
@@ -135,12 +150,12 @@ const ProviderContextProvider = ({ children }: { children: React.ReactNode }) =>
       connectProvider,
       disconnectProvider
     }),
-    [provider, browserProvider, providers, connectedWallet, connectProvider, disconnectProvider]
+    [provider, browserProvider, connectedWallet, providers, connectProvider, disconnectProvider]
   )
 
   return (
     <ProviderContext.Provider value={contextValue}>
-      {children}
+      {isInitialLoadingDone ? children : <Spinner isCentered />}
       <SelectProviderModal
         isConnectModalOpen={isConnectModalOpen}
         setIsConnectModalOpen={setIsConnectModalOpen}
