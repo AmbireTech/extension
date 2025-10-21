@@ -716,7 +716,7 @@ export class ProviderController {
       timestamp: new Date().getTime(),
       isSingletonDeploy: false
     }
-    this.mainCtrl.activity.addAccountOp(submittedAccountOp).catch((e) => e)
+    await this.mainCtrl.activity.addAccountOp(submittedAccountOp).catch((e) => e)
 
     const link = `https://explorer.ambire.com/${getBenzinUrlParams({
       chainId,
