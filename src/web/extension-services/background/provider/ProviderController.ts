@@ -2,7 +2,7 @@
 import 'reflect-metadata'
 
 import { ethErrors } from 'eth-rpc-errors'
-import { getAddress, isAddress, toBeHex, TransactionReceipt } from 'ethers'
+import { getAddress, Interface, isAddress, toBeHex, TransactionReceipt, ZeroAddress } from 'ethers'
 import cloneDeep from 'lodash/cloneDeep'
 import { nanoid } from 'nanoid'
 
@@ -33,6 +33,7 @@ import { notificationManager } from '@web/extension-services/background/webapi/n
 import { Hex } from '@ambire-common/interfaces/hex'
 import { SignUserOperation } from '@ambire-common/interfaces/userOperation'
 import { AccountOpStatus } from '@ambire-common/libs/accountOp/types'
+import { BROADCAST_OPTIONS } from '@ambire-common/libs/broadcast/broadcast'
 import { UserOperation } from '@ambire-common/libs/userOperation/types'
 import { BundlerSwitcher } from '@ambire-common/services/bundlers/bundlerSwitcher'
 import { createTab } from '../webapi/tab'
@@ -666,6 +667,19 @@ export class ProviderController {
       throw ethErrors.rpc.invalidRequest('Sender is not the selected account')
     }
 
+    let calls = []
+    try {
+      const ambireInterface = new Interface([
+        'function executeBySender((address to, uint256 value, bytes data)[] calls) payable'
+      ])
+      const decoded = ambireInterface.decodeFunctionData('executeBySender', userOp.callData)
+      calls = decoded[0]
+    } catch (e) {
+      throw ethErrors.rpc.invalidRequest('callData must be pointed to executeBySender')
+    }
+    if (!calls.length)
+      throw ethErrors.rpc.invalidRequest('callData must be pointed to executeBySender')
+
     const userOperationHash = await bundler.broadcast(
       { ...userOp, bundler: bundler.getName(), requestType: 'standard' },
       network
@@ -678,13 +692,25 @@ export class ProviderController {
     const submittedAccountOp: SubmittedAccountOp = {
       accountAddr: userOp.sender,
       chainId,
-      calls: [], // TODO<eil>
-      nonce: BigInt(userOp.nonce), // TODO<eil>,
+      calls: calls.map((call: any) => ({ to: call[0], value: call[1], data: call[2] })),
+      nonce: BigInt(userOp.nonce),
       gasLimit: Number(userOp.callGasLimit),
       signature: userOp.signature,
-      signingKeyAddr: null, // TODO<eil, find the signed-message>
-      signingKeyType: null, // TODO<eil, find the signed-message>
-      gasFeePayment: null,
+      signingKeyAddr: null,
+      signingKeyType: null,
+      gasFeePayment: {
+        isGasTank: false,
+        paidBy: userOp.sender,
+        paidByKeyType: null,
+        inToken: ZeroAddress,
+        amount:
+          (BigInt(userOp.maxFeePerGas) + BigInt(userOp.verificationGasLimit)) *
+            BigInt(userOp.callGasLimit) +
+          BigInt(userOp.preVerificationGas),
+        simulatedGasLimit: BigInt(userOp.callGasLimit),
+        gasPrice: BigInt(userOp.maxFeePerGas),
+        broadcastOption: BROADCAST_OPTIONS.byBundler
+      },
       status: AccountOpStatus.BroadcastedButNotConfirmed,
       identifiedBy,
       timestamp: new Date().getTime(),
