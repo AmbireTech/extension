@@ -15,6 +15,13 @@ export type SendType = <TMessageType extends MessageType>(
   meta?: MessageMeta
 ) => void
 
+export type SendPortType = <TMessageType extends MessageType>(
+  port: Port,
+  type: MessageType,
+  message: TMessageType extends '> background' ? ActionType : PortMessageType,
+  meta?: MessageMeta
+) => void
+
 type ListenCallbackType = <TMessageType extends MessageType>(
   type: MessageType,
   message: TMessageType extends '> background' ? ActionType : PortMessageType,
@@ -61,7 +68,7 @@ export class PortMessenger {
       this.ports.push(port)
     }
 
-    this.send('> ui', { method: 'portReady', params: {} })
+    this.sendToPort(port, '> ui', { method: 'portReady', params: {} })
     onPortAddOrUpdate(port)
   }
 
@@ -80,7 +87,7 @@ export class PortMessenger {
     if (name) this.ports[0].name = name as Port['name']
   }
 
-  addListener(portId: string, callback: ListenCallbackType) {
+  addConnectListener(portId: string, callback: ListenCallbackType) {
     const port = this.ports.find((p) => p.id === portId)
     if (!port) return
 
@@ -124,6 +131,7 @@ export class PortMessenger {
     this.#portDisconnectListeners.set(portId, listener)
   }
 
+  // sends a message to all ports
   send: SendType = (type, message, meta = {}) => {
     if (!this.ports.length) return
 
@@ -132,6 +140,15 @@ export class PortMessenger {
         port.postMessage({ messageType: type, message: stringify(message), meta: stringify(meta) })
       })
     } catch (error) {
+      console.error('Error in port.postMessage', error)
+    }
+  }
+
+  // sends a message to a specific port
+  sendToPort: SendPortType = (port, type, message, meta = {}) => {
+    try {
+      port.postMessage({ messageType: type, message: stringify(message), meta: stringify(meta) })
+    } catch (error: any) {
       console.error('Error in port.postMessage', error)
     }
   }

@@ -158,13 +158,70 @@ const LeaderboardContainer: React.FC = () => {
               </button>
             </div>
             <Podium data={leaderboardData.slice(0, 3)} />
-            <div ref={tableRef} className={styles.table}>
+            <div
+              ref={tableRef}
+              className={`${styles.table} ${leaderboardData[0].reward ? styles.withReward : ''}`}
+            >
               <div className={styles.header}>
                 <div className={styles.cell}>
                   <h5>#</h5>
                   <h5 className={styles.playerCell}>player</h5>
                 </div>
                 {leaderboardData.some((i) => i.level) && <h5 className={styles.cell}>Level</h5>}
+                {leaderboardData.some((i) => i.reward) && (
+                  <div className={styles.cell}>
+                    <h5 className={styles.weightText}>Reward</h5>
+                    <InfoIcon
+                      width={10}
+                      height={10}
+                      color="currentColor"
+                      className={styles.infoIcon}
+                      data-tooltip-id="reward-info"
+                    />
+                    <Tooltip
+                      style={{
+                        backgroundColor: '#101114',
+                        color: '#F4F4F7',
+                        fontFamily: 'FunnelDisplay',
+                        fontSize: 11,
+                        lineHeight: '16px',
+                        fontWeight: 300,
+                        maxWidth: 244,
+                        boxShadow: '0px 0px 12.1px 0px #191B20'
+                      }}
+                      place="bottom"
+                      id="reward-info"
+                      content="$WALLET rewards for the season"
+                    />
+                  </div>
+                )}
+                {leaderboardData.some((i) => i.reward) && (
+                  <div className={styles.cell}>
+                    <h5 className={styles.weightText}>$Reward</h5>
+                    <InfoIcon
+                      width={10}
+                      height={10}
+                      color="currentColor"
+                      className={styles.infoIcon}
+                      data-tooltip-id="dollar-reward-info"
+                    />
+                    <Tooltip
+                      style={{
+                        backgroundColor: '#101114',
+                        color: '#F4F4F7',
+                        fontFamily: 'FunnelDisplay',
+                        fontSize: 11,
+                        lineHeight: '16px',
+                        fontWeight: 300,
+                        maxWidth: 244,
+                        boxShadow: '0px 0px 12.1px 0px #191B20'
+                      }}
+                      place="bottom"
+                      id="dollar-reward-info"
+                      content="The $ value of $WALLET rewards for the season"
+                    />
+                  </div>
+                )}
                 {leaderboardData.some((i) => i.projectedRewards) && (
                   <div className={styles.cell}>
                     <h5 className={styles.weightText}>Rewards</h5>

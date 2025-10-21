@@ -1,6 +1,7 @@
 import { HD_PATH_TEMPLATE_TYPE } from '@ambire-common/consts/derivation'
 import { Filters, Pagination } from '@ambire-common/controllers/activity/activity'
 import { Contact } from '@ambire-common/controllers/addressBook/addressBook'
+import { SignAccountOpType } from '@ambire-common/controllers/signAccountOp/helper'
 import { FeeSpeed, SigningStatus } from '@ambire-common/controllers/signAccountOp/signAccountOp'
 import { Account, AccountPreferences, AccountStates } from '@ambire-common/interfaces/account'
 import {
@@ -407,9 +408,7 @@ type MainControllerSignAccountOpUpdateStatus = {
 }
 type MainControllerHandleSignAndBroadcastAccountOp = {
   type: 'MAIN_CONTROLLER_HANDLE_SIGN_AND_BROADCAST_ACCOUNT_OP'
-  params: {
-    updateType: 'Main' | 'Swap&Bridge' | 'Transfer&TopUp'
-  }
+  params: { type: SignAccountOpType }
 }
 
 type MainControllerLockAction = {
