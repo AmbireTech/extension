@@ -6,6 +6,7 @@ import { View } from 'react-native'
 import { FeePaymentOption } from '@ambire-common/libs/estimate/interfaces'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
+import GasTankIcon from '@common/assets/svg/GasTankIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import Avatar from '@common/components/Avatar'
 import Text from '@common/components/Text'
@@ -13,11 +14,14 @@ import TokenIcon from '@common/components/TokenIcon'
 import Tooltip from '@common/components/Tooltip'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import useSignAccountOpControllerState from '@web/hooks/useSignAccountOpControllerState'
+
+import getStyles from './styles'
 
 const PayOption = ({
   feeOption,
@@ -33,7 +37,7 @@ const PayOption = ({
   disabledTextAppearance?: 'errorText' | 'infoText'
 }) => {
   const { t } = useTranslation()
-  const { theme } = useTheme()
+  const { styles, theme, themeType } = useTheme(getStyles)
   const { accounts } = useAccountsControllerState()
   const { account } = useSelectedAccountControllerState()
   const { networks } = useNetworksControllerState()
@@ -86,25 +90,45 @@ const PayOption = ({
       ]}
     >
       <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter, spacings.mrTy]}>
-        <TokenIcon
-          containerStyle={{
-            width: iconSize,
-            height: iconSize
-          }}
-          width={iconSize}
-          height={iconSize}
-          networkSize={12}
-          address={feeOption.token.address}
-          chainId={feeOption.token.chainId}
-          onGasTank={feeOption.token.flags.onGasTank}
-          skeletonAppearance="secondaryBackground"
-        />
+        {feeOption.token.flags.onGasTank ? (
+          <View style={styles.gasTankIconWrapper}>
+            <GasTankIcon
+              color={themeType === THEME_TYPES.DARK ? '#8B3DFF' : theme.primaryLight}
+              width={24}
+              height={24}
+            />
+          </View>
+        ) : (
+          <TokenIcon
+            containerStyle={{
+              width: iconSize,
+              height: iconSize
+            }}
+            width={iconSize}
+            height={iconSize}
+            networkSize={12}
+            address={feeOption.token.address}
+            chainId={feeOption.token.chainId}
+            onGasTank={feeOption.token.flags.onGasTank}
+            skeletonAppearance="secondaryBackground"
+          />
+        )}
 
         <View style={[flexbox.flex1, spacings.mlTy]}>
           <Text weight="semiBold" fontSize={12} numberOfLines={1}>
             {formattedAmount} {feeOption.token.symbol}{' '}
-            <Text fontSize={12}>{feeOption.token.flags.onGasTank ? t('from ') : t('on ')}</Text>
-            <Text fontSize={12}>{feeTokenNetworkName}</Text>
+            {feeOption.token.flags.onGasTank ? (
+              <View style={styles.gasTankBadge}>
+                <Text fontSize={10} color="white" weight="medium">
+                  {t('Gas Tank')}
+                </Text>
+              </View>
+            ) : (
+              <>
+                <Text fontSize={12}>{t('on ')}</Text>
+                <Text fontSize={12}>{feeTokenNetworkName}</Text>
+              </>
+            )}
           </Text>
 
           {disabledReason ? (

@@ -33,7 +33,6 @@ test.describe('settings', () => {
   test('add custom token - USDCe from Arbitrum network', async ({ pages }) => {
     const usdceArbitrum = tokens.usdce.arbitrum
 
-    await pages.auth.pause()
     await test.step('open Custom tokens page from settings', async () => {
       await pages.settings.openCustomTokensPage()
     })

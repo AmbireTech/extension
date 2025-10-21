@@ -16,7 +16,7 @@ import { OneClickEstimationProps } from '@web/modules/sign-account-op/components
 import { getIsSignLoading } from '@web/modules/sign-account-op/utils/helpers'
 
 const PRIMARY_BUTTON_LABELS: Record<
-  OneClickEstimationProps['updateType'] | 'Sign',
+  OneClickEstimationProps['updateType'] | 'Sign' | 'HW',
   { default: string; isLoading: string }
 > = {
   'Swap&Bridge': {
@@ -28,6 +28,10 @@ const PRIMARY_BUTTON_LABELS: Record<
     isLoading: 'Sending...'
   },
   Sign: {
+    default: 'Sign',
+    isLoading: 'Signing...'
+  },
+  HW: {
     default: 'Begin signing',
     isLoading: 'Signing...'
   }
@@ -39,7 +43,7 @@ type Props = {
   handleUpdate: (params: SignAccountOpUpdateProps) => void
   signAccountOpState: ISignAccountOpController | null
   isOneClickSign?: boolean
-  updateType?: OneClickEstimationProps['updateType'] | 'Sign'
+  updateType?: OneClickEstimationProps['updateType'] | undefined
 }
 
 const useSign = ({
@@ -48,7 +52,7 @@ const useSign = ({
   handleBroadcast,
   handleUpdate,
   isOneClickSign,
-  updateType = 'Sign'
+  updateType = undefined
 }: Props) => {
   const { t } = useTranslation()
   const { networks } = useNetworksControllerState()
@@ -268,9 +272,12 @@ const useSign = ({
     [signAccountOpState?.accountKeyStoreKeys]
   )
 
-  const isAtLeastOneOfTheKeysInvolvedExternal =
-    (!!signingKeyType && signingKeyType !== 'internal') ||
-    (!!feePayerKeyType && feePayerKeyType !== 'internal')
+  const isAtLeastOneOfTheKeysInvolvedExternal = useMemo(
+    () =>
+      (!!signingKeyType && signingKeyType !== 'internal') ||
+      (!!feePayerKeyType && feePayerKeyType !== 'internal'),
+    [feePayerKeyType, signingKeyType]
+  )
 
   const renderedButNotNecessarilyVisibleModal: 'warnings' | 'ledger-connect' | 'hw-sign' | null =
     useMemo(() => {
@@ -297,7 +304,7 @@ const useSign = ({
     ])
 
   const primaryButtonText = useMemo(() => {
-    const buttonLabelType = isAtLeastOneOfTheKeysInvolvedExternal ? 'Sign' : updateType
+    const buttonLabelType = updateType || (isAtLeastOneOfTheKeysInvolvedExternal ? 'HW' : 'Sign')
 
     return t(
       isSignLoading
