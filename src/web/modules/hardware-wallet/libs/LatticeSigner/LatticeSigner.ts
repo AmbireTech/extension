@@ -1,4 +1,14 @@
-import { hexlify, Signature, Transaction, TransactionLike } from 'ethers'
+import {
+  getAddress,
+  hexlify,
+  Signature,
+  toBeHex,
+  toBigInt,
+  toNumber,
+  Transaction,
+  TransactionLike,
+  zeroPadValue
+} from 'ethers'
 
 import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
 import { EIP7702Auth } from '@ambire-common/consts/7702'
@@ -15,6 +25,54 @@ import wait from '@ambire-common/utils/wait'
 import LatticeController, {
   GridPlusSDKConstants
 } from '@web/modules/hardware-wallet/controllers/LatticeController'
+
+// tiny helpers using ethers v6 only
+const yFrom = (vOrY: number | string | bigint): 0 | 1 => {
+  const n = typeof vOrY === 'string' ? toNumber(vOrY) : toNumber(vOrY as number)
+  // handle 27/28, 0/1, 35/36, etc.
+  return n === 27 || n === 28 ? ((n - 27) as 0 | 1) : ((n & 1) as 0 | 1)
+}
+
+const pad32 = (h: string) => hexlify(zeroPadValue(h as any, 32)) as `0x${string}`
+
+export type Eip7702AuthInput = {
+  address: string
+  chainId: number | string | bigint
+  nonce: number | string | bigint
+  r: string
+  s: string
+  yParity?: number | string | bigint
+  v?: number | string | bigint // allowed on input but will be dropped
+}
+
+export type Eip7702Auth = {
+  address: string
+  chainId: bigint
+  nonce: bigint
+  yParity: 0 | 1
+  r: `0x${string}`
+  s: `0x${string}`
+}
+
+export function normalizeEip7702Auth(inp: Eip7702AuthInput): Eip7702Auth {
+  const address = getAddress(inp.address) // checksum + validates
+  const chainId = toBigInt(inp.chainId)
+  const nonce = toBigInt(inp.nonce)
+
+  const yParity =
+    inp.yParity !== undefined
+      ? yFrom(inp.yParity)
+      : inp.v !== undefined
+      ? yFrom(inp.v)
+      : (() => {
+          throw new Error('authorization.yParity/v missing')
+        })()
+
+  const r = pad32(inp.r)
+  const s = pad32(inp.s)
+
+  return { address, chainId, nonce, yParity, r, s }
+}
 
 class LatticeSigner implements KeystoreSignerInterface {
   key: ExternalKey
@@ -252,9 +310,84 @@ class LatticeSigner implements KeystoreSignerInterface {
   }
 
   // eslint-disable-next-line class-methods-use-this
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  signTransactionTypeFour(txnRequest: TxnRequest, eip7702Auth: EIP7702Auth): Hex {
-    throw new Error('not supported', { cause: txnRequest })
+  signTransactionTypeFour = async (
+    txnRequest: TxnRequest,
+    eip7702Auth: EIP7702Auth
+  ): Promise<Hex> => {
+    await this.#prepareForSigning()
+
+    // TODO: Check firmware version for EIP-7702 support?
+    const fwVersion = this.controller!.walletSDK!.getFwVersion()
+    if (fwVersion?.major === 0 && fwVersion?.minor <= 14) {
+      throw new ExternalSignerError(
+        'Unable to sign the transaction because your Lattice1 device firmware is outdated. Please update to the latest firmware and try again.'
+      )
+    }
+
+    try {
+      const signerPath = getHDPathIndices(this.key.meta.hdPathTemplate, this.key.meta.index)
+
+      // Create the EIP-7702 transaction with authorization list
+      const eip7702Txn = {
+        ...txnRequest,
+        type: 'eip7702' as const,
+        authorizationList: [normalizeEip7702Auth(eip7702Auth)]
+      }
+
+      // Serialize the transaction using ethers
+      const unsignedTxn: TransactionLike = { ...eip7702Txn, type: 4 } // Type 4 for EIP-7702
+      const unsignedSerializedTxn = Transaction.from(unsignedTxn).unsignedSerialized
+
+      const res = await this.controller!.walletSDK!.sign({
+        data: {
+          signerPath,
+          payload: unsignedSerializedTxn,
+          curveType: GridPlusSDKConstants.SIGNING.CURVES.SECP256K1,
+          hashType: GridPlusSDKConstants.SIGNING.HASHES.KECCAK256,
+          encodingType: GridPlusSDKConstants.SIGNING.ENCODINGS.EIP7702_AUTH_LIST
+        }
+      })
+
+      // Ensure we got a signature back
+      if (!res?.sig || !res.sig.r || !res.sig.s || !res.sig.v) {
+        throw new ExternalSignerError('latticeSigner: no signature returned', {
+          sendCrashReport: true
+        })
+      }
+
+      // GridPlus SDK's type for the signature is any, either because of bad
+      // types, either because of bad typescript import/export configuration.
+      type MissingSignatureType = {
+        v: Uint8Array
+        r: Uint8Array
+        s: Uint8Array
+      }
+      const { r, s, v } = res.sig as MissingSignatureType
+
+      const signature = Signature.from({
+        r: hexlify(r),
+        s: hexlify(s),
+        v: Signature.getNormalizedV(Number(v))
+      })
+      const signedTxn = Transaction.from({
+        ...unsignedTxn,
+        signature
+      })
+
+      await this.#validateSigningKey(signedTxn.from)
+
+      return signedTxn.serialized
+    } catch (error: any) {
+      const errorMessage = error?.message || error?.err
+
+      throw new ExternalSignerError(
+        // An `error.err` message might come from the Lattice .sign() failure
+        errorMessage || 'latticeSigner: EIP-7702 signing failed for unknown reason',
+        {
+          sendCrashReport: !errorMessage
+        }
+      )
+    }
   }
 }
 
