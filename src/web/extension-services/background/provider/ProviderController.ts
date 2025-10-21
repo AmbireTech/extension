@@ -717,12 +717,7 @@ export class ProviderController {
       isSingletonDeploy: false
     }
     await this.mainCtrl.activity.addAccountOp(submittedAccountOp).catch((e) => e)
-
-    const link = `https://explorer.ambire.com/${getBenzinUrlParams({
-      chainId,
-      identifiedBy
-    })}`
-    await createTab(link)
+    return userOperationHash
   }
 
   @Reflect.metadata('ACTION_REQUEST', [
