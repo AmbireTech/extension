@@ -2,7 +2,7 @@ import React, { useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { TokenResult } from '@ambire-common/libs/portfolio'
-import { PortfolioProjectedRewardsResult } from '@ambire-common/libs/portfolio/interfaces'
+import { ProjectedRewardsTokenResult } from '@ambire-common/libs/portfolio/interfaces'
 import Text from '@common/components/Text'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
 import useBackgroundService from '@web/hooks/useBackgroundService'
@@ -34,19 +34,17 @@ const TokenItem = ({ token }: { token: TokenResult }) => {
     window.open(INFO_BTN_URL, '_blank')
   }, [])
 
-  const {
-    latest: { projectedRewards }
-  } = portfolio
-
-  const projectedRewardsApy =
-    (projectedRewards &&
-      projectedRewards.result &&
-      (projectedRewards.result as PortfolioProjectedRewardsResult).apy) ||
-    0
+  const projectedRewardsApy = useMemo(() => {
+    if (isProjectedRewards) {
+      const projectedRewardsToken = token as ProjectedRewardsTokenResult
+      return projectedRewardsToken.apy ?? 0
+    }
+    return 0
+  }, [isProjectedRewards, token])
 
   const projectedRewardsDescription = useMemo(
     () =>
-      projectedRewards && token.amount > 0n ? (
+      isProjectedRewards && token.amount > 0n ? (
         'Projected rewards'
       ) : (
         <Text fontSize={12} weight="regular">
@@ -56,7 +54,7 @@ const TokenItem = ({ token }: { token: TokenResult }) => {
           </Text>
         </Text>
       ),
-    [projectedRewardsApy, t, token.amount, projectedRewards]
+    [isProjectedRewards, projectedRewardsApy, t, token.amount]
   )
 
   const sendTransaction = useCallback(
