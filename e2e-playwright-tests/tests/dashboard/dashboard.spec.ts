@@ -305,7 +305,8 @@ test.describe('dashboard', () => {
 
     await test.step('assert new tab is opened', async () => {
       const allPages = pages.basePage.context.pages()
-      expect(allPages.length).toBe(2)
+      // 1 original + 1 new tab + 1 verifying you're human tab = 3
+      expect(allPages.length).toBe(3)
     })
   })
 })
