@@ -25,7 +25,6 @@ import Modal from '@legends/components/Modal'
 import { ERROR_MESSAGES } from '@legends/constants/errors/messages'
 import { ETHEREUM_CHAIN_ID } from '@legends/constants/networks'
 import useAccountContext from '@legends/hooks/useAccountContext'
-import useCharacterContext from '@legends/hooks/useCharacterContext/useCharacterContext'
 import useErc5792 from '@legends/hooks/useErc5792'
 import useEscModal from '@legends/hooks/useEscModal'
 import usePortfolioControllerState from '@legends/hooks/usePortfolioControllerState/usePortfolioControllerState'
@@ -81,7 +80,6 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
     shares: bigint
   }>(null)
   const { connectedAccount, v1Account } = useAccountContext()
-  const { isCharacterNotMinted } = useCharacterContext()
   const { walletTokenInfo } = usePortfolioControllerState()
   const { sendCalls, getCallsStatus, chainId } = useErc5792()
   const switchNetwork = useSwitchNetwork()
@@ -100,8 +98,7 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
 
   const rewardsButtonText = getRewardsButtonText({
     connectedAccount,
-    v1Account: !!v1Account,
-    isCharacterNotMinted: !!isCharacterNotMinted
+    v1Account: !!v1Account
   })
 
   useEffect(() => {
@@ -363,7 +360,7 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
   }, [onchainData, inputAmount, setIsWarningModalOpen])
 
   const buttonState = useMemo((): { text: string; action?: () => any } => {
-    if (!isConnected || isCharacterNotMinted) return { text: rewardsButtonText }
+    if (!isConnected) return { text: rewardsButtonText }
     if (isLoadingLogs || isLoadingOnchainData) return { text: 'Loading...' }
     if (isSigning) return { text: 'Signing...' }
     if (activeTab === 'stake')
@@ -402,7 +399,6 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
     stakeAction,
     withdrawAction,
     displayWarningOrUnstake,
-    isCharacterNotMinted,
     rewardsButtonText
   ])
 
