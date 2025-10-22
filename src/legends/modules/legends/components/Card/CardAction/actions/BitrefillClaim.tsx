@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 
-import { BrowserProvider, Interface } from 'ethers'
+import { Interface } from 'ethers'
 import React, { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Pressable } from 'react-native'
@@ -11,6 +11,7 @@ import { ERROR_MESSAGES } from '@legends/constants/errors/messages'
 import { BASE_CHAIN_ID } from '@legends/constants/networks'
 import useAccountContext from '@legends/hooks/useAccountContext'
 import useErc5792 from '@legends/hooks/useErc5792'
+import useProviderContext from '@legends/hooks/useProviderContext'
 import useSwitchNetwork from '@legends/hooks/useSwitchNetwork'
 import useToast from '@legends/hooks/useToast'
 import { useCardActionContext } from '@legends/modules/legends/components/ActionModal'
@@ -31,16 +32,18 @@ const BitrefillClaim = ({ meta }: Props) => {
   const { onComplete } = useCardActionContext()
   const { addToast } = useToast()
   const switchNetwork = useSwitchNetwork()
+  const { browserProvider } = useProviderContext()
   const { connectedAccount, v1Account } = useAccountContext()
   const { t } = useTranslation()
 
   const claimCode = useCallback(async () => {
     try {
+      if (!browserProvider) throw new Error('No connected wallet')
       if (!connectedAccount) throw new Error('No connected account')
       setIsInProgress(true)
       await switchNetwork(BASE_CHAIN_ID)
-      const provider = new BrowserProvider(window.ambire)
-      const signer = await provider.getSigner(connectedAccount)
+
+      const signer = await browserProvider.getSigner(connectedAccount)
 
       const useSponsorship = false
 

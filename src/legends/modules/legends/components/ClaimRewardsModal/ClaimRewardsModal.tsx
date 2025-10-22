@@ -1,5 +1,4 @@
 /* eslint-disable no-console */
-import { BrowserProvider } from 'ethers'
 import React, { useCallback } from 'react'
 import { createPortal } from 'react-dom'
 
@@ -14,6 +13,7 @@ import useErc5792 from '@legends/hooks/useErc5792'
 import useEscModal from '@legends/hooks/useEscModal'
 import useLegendsContext from '@legends/hooks/useLegendsContext'
 import usePortfolioControllerState from '@legends/hooks/usePortfolioControllerState/usePortfolioControllerState'
+import useProviderContext from '@legends/hooks/useProviderContext'
 import useSwitchNetwork from '@legends/hooks/useSwitchNetwork'
 import useToast from '@legends/hooks/useToast'
 import smokeAndLights from '@legends/modules/leaderboard/screens/Leaderboard/Smoke-and-lights.png'
@@ -42,6 +42,7 @@ const ClaimRewardsModal: React.FC<ClaimRewardsModalProps> = ({
   meta,
   card
 }) => {
+  const { browserProvider } = useProviderContext()
   const { character } = useCharacterContext()
   const { claimableRewards } = usePortfolioControllerState()
   const { sendCalls, getCallsStatus, chainId } = useErc5792()
@@ -63,12 +64,12 @@ const ClaimRewardsModal: React.FC<ClaimRewardsModalProps> = ({
   useEscModal(isOpen, closeModal)
 
   const onButtonClick = useCallback(async () => {
+    if (!browserProvider) return
     if (!action || !action.calls) return
     await switchNetwork(ETHEREUM_CHAIN_ID)
 
     try {
-      const provider = new BrowserProvider(window.ambire)
-      const signer = await provider.getSigner()
+      const signer = await browserProvider.getSigner()
 
       const formattedCalls = action.calls.map(([to, value, data]) => {
         return { to, value, data }
@@ -92,6 +93,7 @@ const ClaimRewardsModal: React.FC<ClaimRewardsModalProps> = ({
       addToast(message, { type: 'error' })
     }
   }, [
+    browserProvider,
     switchNetwork,
     action,
     onLegendComplete,

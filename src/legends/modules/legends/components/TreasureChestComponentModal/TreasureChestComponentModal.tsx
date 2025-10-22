@@ -1,4 +1,3 @@
-import { BrowserProvider } from 'ethers'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 
@@ -13,6 +12,7 @@ import useAccountContext from '@legends/hooks/useAccountContext'
 import useErc5792 from '@legends/hooks/useErc5792'
 import useEscModal from '@legends/hooks/useEscModal'
 import useLegendsContext from '@legends/hooks/useLegendsContext'
+import useProviderContext from '@legends/hooks/useProviderContext'
 import useSwitchNetwork from '@legends/hooks/useSwitchNetwork'
 import useToast from '@legends/hooks/useToast'
 import { CARD_PREDEFINED_ID } from '@legends/modules/legends/constants'
@@ -39,6 +39,7 @@ const TreasureChestComponentModal: React.FC<TreasureChestComponentModalProps> = 
   handleClose
 }) => {
   const { addToast } = useToast()
+  const { browserProvider } = useProviderContext()
   const { connectedAccount, v1Account } = useAccountContext()
   const { onLegendComplete } = useLegendsContext()
   const nonConnectedAcc = Boolean(!connectedAccount || v1Account)
@@ -132,13 +133,13 @@ const TreasureChestComponentModal: React.FC<TreasureChestComponentModalProps> = 
   )
 
   const unlockChest = useCallback(async () => {
+    if (!browserProvider) return
     setChestState('unlocking')
 
     try {
       await switchNetwork(BASE_CHAIN_ID)
 
-      const provider = new BrowserProvider(window.ambire)
-      const signer = await provider.getSigner()
+      const signer = await browserProvider.getSigner()
 
       const formattedCalls = action.calls.map(([to, value, data]) => {
         return { to, value, data }
@@ -193,6 +194,7 @@ const TreasureChestComponentModal: React.FC<TreasureChestComponentModalProps> = 
       addToast(message, { type: 'error' })
     }
   }, [
+    browserProvider,
     switchNetwork,
     stopChainAnimation,
     connectedAccount,
@@ -277,8 +279,8 @@ const TreasureChestComponentModal: React.FC<TreasureChestComponentModalProps> = 
               return (
                 <div
                   key={point}
-                  className={`${styles.day} 
-                    ${isCurrentDay ? styles.current : ''} 
+                  className={`${styles.day}
+                    ${isCurrentDay ? styles.current : ''}
                     ${isPassedDay ? styles.passed : ''}`}
                 >
                   <div className={styles.icon}>

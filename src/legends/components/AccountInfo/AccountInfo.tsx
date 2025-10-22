@@ -6,6 +6,7 @@ import Address from '@legends/components/Address'
 import useAccountContext from '@legends/hooks/useAccountContext'
 import useCharacterContext from '@legends/hooks/useCharacterContext'
 import useLeaderboardContext from '@legends/hooks/useLeaderboardContext'
+import useProviderContext from '@legends/hooks/useProviderContext'
 
 import styles from './AccountInfo.module.scss'
 
@@ -19,7 +20,8 @@ const AccountInfo = ({
   addressClassName?: string
   displayTooltip?: boolean
 }) => {
-  const { connectedAccount, disconnectAccount } = useAccountContext()
+  const { disconnectProvider } = useProviderContext()
+  const { connectedAccount } = useAccountContext()
   const { season1LeaderboardData } = useLeaderboardContext()
 
   const { character } = useCharacterContext()
@@ -42,7 +44,7 @@ const AccountInfo = ({
             maxAddressLength={12}
           />
           <DisconnectIcon
-            onClick={disconnectAccount}
+            onClick={disconnectProvider}
             className={styles.disconnectIcon}
             data-tooltip-id="disconnect-info"
           />
