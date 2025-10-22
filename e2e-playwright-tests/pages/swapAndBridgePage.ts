@@ -217,13 +217,16 @@ export class SwapAndBridgePage extends BasePage {
   }
 
   async signTransactionPage(page): Promise<void> {
-    const signButton = page.locator(SELECTORS.signTransactionButton)
+    const signButton = page.getByTestId(selectors.signTransactionButton)
 
     try {
       await expect(signButton).toBeVisible({ timeout: 5000 })
-      await expect(signButton).toBeEnabled()
-      await clickOnElement(page, SELECTORS.signTransactionButton)
-      await page.waitForTimeout(1500)
+      await expect(signButton).toBeEnabled({ timeout: 5000 })
+      await page.getByTestId(selectors.signTransactionButton).click()
+      await page.waitForTimeout(3000)
+
+      // close transaction progress pop up
+      await page.locator(selectors.closeTransactionProgressPopUpButton).click()
     } catch (error) {
       console.warn("⚠️ The 'Sign' button is not clickable, but it should be.")
     }
@@ -410,8 +413,6 @@ export class SwapAndBridgePage extends BasePage {
   }
 
   async verifyBatchTransactionDetails(page): Promise<void> {
-    await this.pause()
-
     // check first row
     const firstRow = await page.getByTestId('recipient-address-0').innerText() // grab entire row on transaction page
     const firstRouteSelector = firstRow.trim().split(/\s+/).pop() || '' // grab last item from row e.g. LI.FI

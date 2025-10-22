@@ -9,6 +9,7 @@ import { ActionExecutionType } from '@ambire-common/interfaces/actions'
 import { AddressStateOptional } from '@ambire-common/interfaces/domains'
 import { Key } from '@ambire-common/interfaces/keystore'
 import { AccountOpStatus } from '@ambire-common/libs/accountOp/types'
+import { getSanitizedAmount } from '@ambire-common/libs/transfer/amount'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
 import { getAddressFromAddressState } from '@ambire-common/utils/domains'
 import { getCallsCount } from '@ambire-common/utils/userRequest'
@@ -44,6 +45,7 @@ import useTrackAccountOp from '@web/modules/sign-account-op/hooks/OneClick/useTr
 import GasTankInfoModal from '@web/modules/transfer/components/GasTankInfoModal'
 import SendForm from '@web/modules/transfer/components/SendForm/SendForm'
 import { getUiType } from '@web/utils/uiType'
+import { parseUnits } from 'ethers'
 
 const { isTab, isActionWindow } = getUiType()
 
@@ -234,9 +236,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   const handleBroadcastAccountOp = useCallback(() => {
     dispatch({
       type: 'MAIN_CONTROLLER_HANDLE_SIGN_AND_BROADCAST_ACCOUNT_OP',
-      params: {
-        updateType: 'Transfer&TopUp'
-      }
+      params: { type: 'one-click-transfer' }
     })
   }, [dispatch])
 
@@ -374,6 +374,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
                 type: 'transferRequest',
                 params: {
                   amount: state.amount,
+                  amountInFiat: parseUnits(getSanitizedAmount(state.amountInFiat, 6), 6),
                   selectedToken: state.selectedToken,
                   recipientAddress: isTopUp
                     ? FEE_COLLECTOR
@@ -396,6 +397,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
             type: 'transferRequest',
             params: {
               amount: state.amount,
+              amountInFiat: parseUnits(getSanitizedAmount(state.amountInFiat, 6), 6),
               selectedToken: state.selectedToken,
               recipientAddress: isTopUp ? FEE_COLLECTOR : getAddressFromAddressState(addressState),
               actionExecutionType
@@ -414,6 +416,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
       isFormValid,
       state.selectedToken,
       state.amount,
+      state.amountInFiat,
       visibleActionsQueue,
       dispatch,
       addToast,
