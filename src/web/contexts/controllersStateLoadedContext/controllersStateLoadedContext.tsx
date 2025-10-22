@@ -208,7 +208,7 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
         setAreControllerStatesLoaded(true)
       }, wait)
     }
-  }, [areControllerStatesLoaded, isViewReady, controllers])
+  }, [areControllerStatesLoaded, isViewReady, controllers, walletState?.extensionVersion])
 
   const contextValue = useMemo(
     () => ({ areControllerStatesLoaded, isStatesLoadingTakingTooLong }),
