@@ -224,6 +224,7 @@
     "secp256k1": "^5.0.1",
     "sentry-expo": "~6.0.0",
     "setimmediate": "^1.0.5",
+    "siwe": "3.0.0",
     "stream-browserify": "^3.0.0",
     "string_decoder": "~0.10.25",
     "swiper": "^11.1.14",

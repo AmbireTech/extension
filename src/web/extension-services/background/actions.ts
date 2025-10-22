@@ -1,6 +1,7 @@
 import { HD_PATH_TEMPLATE_TYPE } from '@ambire-common/consts/derivation'
 import { Filters, Pagination } from '@ambire-common/controllers/activity/activity'
 import { Contact } from '@ambire-common/controllers/addressBook/addressBook'
+import { SignAccountOpType } from '@ambire-common/controllers/signAccountOp/helper'
 import { FeeSpeed, SigningStatus } from '@ambire-common/controllers/signAccountOp/signAccountOp'
 import { Account, AccountPreferences, AccountStates } from '@ambire-common/interfaces/account'
 import {
@@ -24,6 +25,7 @@ import {
 import { AddNetworkRequestParams, ChainId, Network } from '@ambire-common/interfaces/network'
 import { BuildRequest } from '@ambire-common/interfaces/requests'
 import { CashbackStatus } from '@ambire-common/interfaces/selectedAccount'
+import { SignMessageUpdateParams } from '@ambire-common/interfaces/signMessage'
 import {
   SwapAndBridgeActiveRoute,
   SwapAndBridgeRoute,
@@ -222,6 +224,10 @@ type MainControllerSignMessageInitAction = {
 type MainControllerSignMessageResetAction = {
   type: 'MAIN_CONTROLLER_SIGN_MESSAGE_RESET'
 }
+type MainControllerSignMessageUpdate = {
+  type: 'MAIN_CONTROLLER_SIGN_MESSAGE_UPDATE'
+  params: SignMessageUpdateParams
+}
 type MainControllerHandleSignMessage = {
   type: 'MAIN_CONTROLLER_HANDLE_SIGN_MESSAGE'
   params: { keyAddr: Key['addr']; keyType: Key['type'] }
@@ -407,9 +413,7 @@ type MainControllerSignAccountOpUpdateStatus = {
 }
 type MainControllerHandleSignAndBroadcastAccountOp = {
   type: 'MAIN_CONTROLLER_HANDLE_SIGN_AND_BROADCAST_ACCOUNT_OP'
-  params: {
-    updateType: 'Main' | 'Swap&Bridge' | 'Transfer&TopUp'
-  }
+  params: { type: SignAccountOpType }
 }
 
 type MainControllerLockAction = {
@@ -800,6 +804,7 @@ export type Action =
   | MainControllerRejectAccountOpAction
   | MainControllerSignMessageInitAction
   | MainControllerSignMessageResetAction
+  | MainControllerSignMessageUpdate
   | MainControllerHandleSignMessage
   | MainControllerActivitySetAccOpsFiltersAction
   | MainControllerActivitySetSignedMessagesFiltersAction
