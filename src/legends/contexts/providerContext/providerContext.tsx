@@ -59,49 +59,54 @@ const ProviderContextProvider = ({ children }: { children: React.ReactNode }) =>
     let isMounted = true
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     ;(async () => {
-      // Not installed, already done or no past connection
-      if ((!window.ambire && !window.ambireNext) || isInitialLoadingDone || !connectedWallet) {
+      try {
+        // Not installed, already done or no past connection
+        if ((!window.ambire && !window.ambireNext) || isInitialLoadingDone || !connectedWallet) {
+          setIsInitialLoadingDone(true)
+          return
+        }
+
+        // Waiting for the providers to be detected
+        if (Object.keys(providers).length === 0) return
+
+        const detectedProvider = providers[connectedWallet]
+
+        // Previously connected wallet is not installed anymore
+        if (!detectedProvider) {
+          setIsInitialLoadingDone(true)
+          return
+        }
+
+        const accs: any = await Promise.race([
+          detectedProvider.provider.request({
+            // Purposefuly using eth_accounts to avoid popup on reconnect
+            method: 'eth_accounts',
+            params: []
+          }),
+          new Promise((_, reject) => {
+            raceTimeoutRef.current = setTimeout(() => {
+              if (!isMounted) return
+
+              setConnectedWallet(null)
+              localStorage.removeItem(LOCAL_STORAGE_CONNECTED_WALLET)
+              reject(new Error('Timeout while fetching accounts'))
+            }, 500)
+          })
+        ])
+
+        if (!isMounted) return
+
+        // Auto-connect only if the wallet hasn't disconnected manually
+        if (accs && accs.length > 0) {
+          setProvider(detectedProvider.provider)
+          setBrowserProvider(new ethers.BrowserProvider(detectedProvider.provider))
+        }
+
         setIsInitialLoadingDone(true)
-        return
-      }
-
-      // Waiting for the providers to be detected
-      if (Object.keys(providers).length === 0) return
-
-      const detectedProvider = providers[connectedWallet]
-
-      // Previously connected wallet is not installed anymore
-      if (!detectedProvider) {
+      } catch (e: any) {
+        console.error('Error during auto-connect:', e)
         setIsInitialLoadingDone(true)
-        return
       }
-
-      const accs: any = await Promise.race([
-        detectedProvider.provider.request({
-          // Purposefuly using eth_accounts to avoid popup on reconnect
-          method: 'eth_accounts',
-          params: []
-        }),
-        new Promise((_, reject) => {
-          raceTimeoutRef.current = setTimeout(() => {
-            if (!isMounted) return
-
-            setConnectedWallet(null)
-            localStorage.removeItem(LOCAL_STORAGE_CONNECTED_WALLET)
-            reject(new Error('Timeout while fetching accounts'))
-          }, 500)
-        })
-      ])
-
-      if (!isMounted) return
-
-      // Auto-connect only if the wallet hasn't disconnected manually
-      if (accs && accs.length > 0) {
-        setProvider(detectedProvider.provider)
-        setBrowserProvider(new ethers.BrowserProvider(detectedProvider.provider))
-      }
-
-      setIsInitialLoadingDone(true)
     })()
 
     return () => {
