@@ -15,6 +15,7 @@ import Alert from '@legends/components/Alert'
 import OverachieverBanner from '@legends/components/OverachieverBanner'
 import Stacked from '@legends/components/Stacked'
 import { LEGENDS_SUPPORTED_NETWORKS_BY_CHAIN_ID } from '@legends/constants/networks'
+import useAccountContext from '@legends/hooks/useAccountContext'
 import useCharacterContext from '@legends/hooks/useCharacterContext'
 import useLeaderboardContext from '@legends/hooks/useLeaderboardContext'
 import useLegendsContext from '@legends/hooks/useLegendsContext'
@@ -31,7 +32,8 @@ const THRESHOLD_AMOUNT_TO_HIDE_BALANCE_DECIMALS = 500
 
 const CharacterSection = () => {
   const [isClaimModalOpen, setIsClaimModalOpen] = useState(false)
-  const { character, isCharacterNotMinted } = useCharacterContext()
+
+  const { character } = useCharacterContext()
 
   const {
     accountPortfolio,
@@ -148,12 +150,8 @@ const CharacterSection = () => {
         <OverachieverBanner wrapperClassName={styles.overachieverBanner} />
       </div>
 
-      <section
-        className={`${styles.wrapper}${
-          isCharacterNotMinted ? ` ${styles.unknownCharacterWrapper}` : ''
-        }`}
-      >
-        {!isCharacterNotMinted && (
+      <section className={styles.wrapper}>
+        {
           <>
             <div className={styles.characterWrapper}>
               <div
@@ -167,15 +165,6 @@ const CharacterSection = () => {
                   <UnionIcon /> Season 1
                 </div>
                 <div className={styles.characterRelativeWrapper}>
-                  {isCharacterNotMinted && (
-                    <div className={styles.claimRewardsBubble}>
-                      <p className={styles.claimRewardsBubbleText}>
-                        {characterXp > 0
-                          ? 'Claim your rewards & mint a cool NFT!'
-                          : 'Mint a cool NFT!'}
-                      </p>
-                    </div>
-                  )}
                   <div className={styles.characterNameWrapper}>
                     <p className={styles.characterLevel}>
                       Level
@@ -184,8 +173,8 @@ const CharacterSection = () => {
                   </div>
                   <img
                     className={styles.characterImage}
-                    src={isCharacterNotMinted ? unknownCharacterImg : character?.image}
-                    alt={isCharacterNotMinted ? 'unknown' : character?.characterName}
+                    src={character?.image}
+                    alt={character?.characterName}
                   />
                   <div className={styles.characterPodium} />
                 </div>
@@ -414,64 +403,7 @@ const CharacterSection = () => {
               })()}
             </div>{' '}
           </>
-        )}
-
-        {isCharacterNotMinted && (
-          <div className={styles.unknownCharacterContentWrapper}>
-            <div className={styles.unknownCharacterContent}>
-              <div className={styles.currentSeasonBadge}>
-                {' '}
-                <UnionIcon /> Season 1
-              </div>
-              <AccountInfo
-                removeAvatarAndLevel
-                wrapperClassName={styles.accountInfo}
-                addressClassName={styles.accountInfoAddress}
-              />
-              <div className={styles.unknownCharacterLevelInfoWrapper}>
-                {characterXp > 0 ? (
-                  <p className={styles.claimableXpText}>
-                    You have{' '}
-                    <span className={styles.claimableBalance}>
-                      {characterXp.toLocaleString()} XP
-                    </span>{' '}
-                    available to claim
-                  </p>
-                ) : (
-                  <p className={styles.claimableXpText}>Join Rewards to start accumulating XP</p>
-                )}
-
-                <button
-                  type="button"
-                  className={styles.claimXpButton}
-                  onClick={redirectToCharacterSelect}
-                >
-                  {characterXp > 0 ? 'Claim' : 'Join'}
-                </button>
-              </div>
-            </div>
-
-            <div className={styles.character}>
-              <div className={styles.characterRelativeWrapper}>
-                {isCharacterNotMinted && (
-                  <div className={styles.claimRewardsBubble}>
-                    <p className={styles.claimRewardsBubbleText}>
-                      {characterXp > 0
-                        ? 'Claim your rewards & mint a cool NFT!'
-                        : 'Mint a cool NFT!'}
-                    </p>
-                  </div>
-                )}
-                <img
-                  className={styles.characterImage}
-                  src={isCharacterNotMinted ? unknownCharacterImg : character?.image}
-                  alt={isCharacterNotMinted ? 'unknown' : character?.characterName}
-                />
-                <div className={styles.characterPodium} />
-              </div>
-            </div>
-          </div>
-        )}
+        }
       </section>
     </>
   )

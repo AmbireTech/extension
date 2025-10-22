@@ -7,7 +7,6 @@ import AccountInfo from '@legends/components/AccountInfo'
 import Banner from '@legends/components/Banner'
 import Sidebar from '@legends/components/Sidebar'
 import useAccountContext from '@legends/hooks/useAccountContext'
-import useCharacterContext from '@legends/hooks/useCharacterContext'
 import useLegendsContext from '@legends/hooks/useLegendsContext'
 import { LEGENDS_ROUTES } from '@legends/modules/router/constants'
 
@@ -31,7 +30,6 @@ const Page = ({
   const { pathname } = useLocation()
 
   const { connectedAccount } = useAccountContext()
-  const { isCharacterNotMinted } = useCharacterContext()
 
   const openSidebar = () => setIsSidebarOpen(true)
   const closeSidebar = () => setIsSidebarOpen(false)
@@ -51,9 +49,9 @@ const Page = ({
               <button className={styles.sidebarButton} type="button" onClick={openSidebar}>
                 <FontAwesomeIcon icon={faBars} />
               </button>
-              {connectedAccount && !isCharacterNotMinted && (
+              {connectedAccount && (
                 <div className={styles.account}>
-                  <AccountInfo removeAvatarAndLevel={isCharacterNotMinted} />
+                  <AccountInfo />
                 </div>
               )}
             </div>
