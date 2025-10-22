@@ -51,7 +51,7 @@ const selectors = {
     yesHideItButton: 'yes-hide-it-text',
     hideTokenModalTitle: 'hide-token-modal-title',
     hideTokenModalDescription: 'hide-token-modal-description',
-    projectedRewardsInfoButton: 'projected-rewards-info-button',
+    projectedRewardsInfoButton: 'rewards-button',
     projectedRewardsClaimButton: 'projected-rewards-claim-button'
   },
   settings: {

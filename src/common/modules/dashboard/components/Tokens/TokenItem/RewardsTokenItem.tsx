@@ -31,7 +31,7 @@ const RewardsTokenItem = ({
       hasBottomSpacing
       extraActions={
         <Pressable
-          testID="projected-rewards-claim-button"
+          testID="rewards-button"
           onPress={onPress}
           style={({ hovered }: any) => [
             flexbox.center,
