@@ -52,7 +52,7 @@ type Controllers = {
 
 type ControllersToWait = Omit<
   Controllers,
-  'signAccountOp' | 'autoLock' | 'transfer' | 'defiPositions'
+  'signAccountOp' | 'autoLock' | 'transfer' | 'defiPositions' | 'autoLogin'
 >
 
 const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {

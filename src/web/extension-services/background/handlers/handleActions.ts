@@ -222,6 +222,9 @@ export const handleActions = async (
     }
     case 'MAIN_CONTROLLER_SIGN_MESSAGE_RESET':
       return mainCtrl.signMessage.reset()
+    case 'MAIN_CONTROLLER_SIGN_MESSAGE_UPDATE': {
+      return mainCtrl.signMessage.update(params)
+    }
     case 'MAIN_CONTROLLER_HANDLE_SIGN_MESSAGE': {
       mainCtrl.signMessage.setSigningKey(params.keyAddr, params.keyType)
       return await mainCtrl.handleSignMessage()
