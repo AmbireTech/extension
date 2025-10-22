@@ -40,6 +40,7 @@ export const getGasTankTokenDetails = (
 
   return {
     token,
-    balanceFormatted: getAndFormatTokenDetails(token, networks).balanceFormatted
+    balanceFormatted: getAndFormatTokenDetails(token, networks).balanceFormatted,
+    balanceUSDFormatted: getAndFormatTokenDetails(token, networks).balanceUSDFormatted
   }
 }
