@@ -4,6 +4,7 @@ import {
   CRASH_ANALYTICS_ENABLED_DEFAULT,
   CRASH_ANALYTICS_ENABLED_STORAGE_KEY
 } from '@common/config/analytics/CrashAnalytics.web'
+import { APP_VERSION } from '@common/config/env'
 import { DEFAULT_THEME, ThemeType } from '@common/styles/themeConfig'
 import { browser, isSafari } from '@web/constants/browserapi'
 import { storage } from '@web/extension-services/background/webapi/storage'
@@ -26,6 +27,8 @@ export class WalletStateController extends EventEmitter {
 
   // Holds the initial load promise, so that one can wait until it completes
   initialLoadPromise: Promise<void>
+
+  extensionVersion: string = APP_VERSION
 
   #onLogLevelUpdateCallback: (logLevel: LOG_LEVELS) => Promise<void>
 
