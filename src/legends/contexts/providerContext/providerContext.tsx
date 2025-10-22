@@ -76,7 +76,7 @@ const ProviderContextProvider = ({ children }: { children: React.ReactNode }) =>
         return
       }
 
-      const accs: any = Promise.race([
+      const accs: any = await Promise.race([
         detectedProvider.provider.request({
           // Purposefuly using eth_accounts to avoid popup on reconnect
           method: 'eth_accounts',
@@ -84,6 +84,8 @@ const ProviderContextProvider = ({ children }: { children: React.ReactNode }) =>
         }),
         new Promise((_, reject) => {
           raceTimeoutRef.current = setTimeout(() => {
+            if (!isMounted) return
+
             setConnectedWallet(null)
             localStorage.removeItem(LOCAL_STORAGE_CONNECTED_WALLET)
             reject(new Error('Timeout while fetching accounts'))
