@@ -21,6 +21,7 @@ const ProviderContext = createContext<ProviderContextType>({} as ProviderContext
 const LOCAL_STORAGE_CONNECTED_WALLET = 'connectedWallet'
 
 const ProviderContextProvider = ({ children }: { children: React.ReactNode }) => {
+  const raceTimeoutRef = React.useRef<NodeJS.Timeout | null>(null)
   const [providers, setProviders] = useState<Providers>({} as Providers)
   const [provider, setProvider] = useState<EthereumProvider | null>(null)
   const [browserProvider, setBrowserProvider] = useState<ethers.BrowserProvider | null>(null)
@@ -55,6 +56,7 @@ const ProviderContextProvider = ({ children }: { children: React.ReactNode }) =>
   }, [])
 
   useEffect(() => {
+    let isMounted = true
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     ;(async () => {
       // Not installed, already done or no past connection
@@ -74,11 +76,22 @@ const ProviderContextProvider = ({ children }: { children: React.ReactNode }) =>
         return
       }
 
-      const accs: any = await detectedProvider.provider.request({
-        // Purposefuly using eth_accounts to avoid popup on reconnect
-        method: 'eth_accounts',
-        params: []
-      })
+      const accs: any = Promise.race([
+        detectedProvider.provider.request({
+          // Purposefuly using eth_accounts to avoid popup on reconnect
+          method: 'eth_accounts',
+          params: []
+        }),
+        new Promise((_, reject) => {
+          raceTimeoutRef.current = setTimeout(() => {
+            setConnectedWallet(null)
+            localStorage.removeItem(LOCAL_STORAGE_CONNECTED_WALLET)
+            reject(new Error('Timeout while fetching accounts'))
+          }, 500)
+        })
+      ])
+
+      if (!isMounted) return
 
       // Auto-connect only if the wallet hasn't disconnected manually
       if (accs && accs.length > 0) {
@@ -88,6 +101,13 @@ const ProviderContextProvider = ({ children }: { children: React.ReactNode }) =>
 
       setIsInitialLoadingDone(true)
     })()
+
+    return () => {
+      isMounted = false
+      if (raceTimeoutRef.current) {
+        clearTimeout(raceTimeoutRef.current)
+      }
+    }
   }, [connectedWallet, isInitialLoadingDone, provider, providers])
 
   const openModal = useCallback(() => {
