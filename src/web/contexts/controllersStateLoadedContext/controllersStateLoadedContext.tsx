@@ -2,6 +2,7 @@ import React, { createContext, useEffect, useMemo, useRef, useState } from 'reac
 
 import { ControllerInterface } from '@ambire-common/interfaces/controller'
 import { captureMessage } from '@common/config/analytics/CrashAnalytics.web'
+import { APP_VERSION } from '@common/config/env'
 import { ControllersMappingType } from '@web/extension-services/background/types'
 import useAccountPickerControllerState from '@web/hooks/useAccountPickerControllerState'
 import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
@@ -173,7 +174,9 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
     errorDataRef.current = {
       loadingControllers,
       isPopup,
-      isPopupReady: isViewReady
+      isPopupReady: isViewReady,
+      backgroundVersion: walletState?.extensionVersion,
+      uiVersion: APP_VERSION
     }
 
     // Don't clear this timeout to ensure that the state will be set
