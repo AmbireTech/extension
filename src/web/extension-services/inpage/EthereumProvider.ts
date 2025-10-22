@@ -218,7 +218,10 @@ export class EthereumProvider extends EventEmitter {
     this.initialize()
     this.shimLegacy()
     this.#pushEventHandlers = new PushEventHandlers(this)
-    this.#backgroundMessenger.reply('broadcast', this.#handleBackgroundMessage)
+    this.#backgroundMessenger.reply(
+      globalIsAmbireNext ? 'broadcast-next' : 'broadcast',
+      this.#handleBackgroundMessage
+    )
     this.#providerId = Date.now()
   }
 
@@ -246,7 +249,7 @@ export class EthereumProvider extends EventEmitter {
     try {
       const { chainId, accounts, networkVersion, isUnlocked, logLevel }: any =
         await this.requestInternalMethods({ method: 'getProviderState' })
-
+      console.log('getProviderState', globalIsAmbireNext, logLevel)
       this.setLogLevel(logLevel)
       if (isUnlocked) {
         this._isUnlocked = true
