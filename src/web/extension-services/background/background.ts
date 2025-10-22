@@ -18,7 +18,7 @@ import { getAccountKeysCount } from '@ambire-common/libs/keys/keys'
 import { KeystoreSigner } from '@ambire-common/libs/keystoreSigner/keystoreSigner'
 import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
 import wait from '@ambire-common/utils/wait'
-import CONFIG, { isDev, isProd } from '@common/config/env'
+import CONFIG, { isAmbireNext, isDev, isProd } from '@common/config/env'
 import {
   BROWSER_EXTENSION_LOG_UPDATED_CONTROLLER_STATE_ONLY,
   BROWSER_EXTENSION_MEMORY_INTENSIVE_LOGS,
@@ -252,7 +252,7 @@ providerRequestTransport.reply(async ({ method, id, providerId, params }, meta) 
   const session = mainCtrl.dapps.getOrCreateDappSession({ tabId, windowId, origin })
 
   await mainCtrl.dapps.initialLoadPromise
-  mainCtrl.dapps.setSessionMessenger(session.sessionId, bridgeMessenger)
+  mainCtrl.dapps.setSessionMessenger(session.sessionId, bridgeMessenger, isAmbireNext)
 
   try {
     const res = await handleProviderRequests(
