@@ -431,7 +431,6 @@ const useSwapAndBridgeForm = () => {
 
   useEffect(() => {
     const broadcastStatus = mainCtrlStatuses.signAndBroadcastAccountOp
-
     if (broadcastStatus === 'SUCCESS' && activeRoutes.length) {
       setHasBroadcasted(true)
     }

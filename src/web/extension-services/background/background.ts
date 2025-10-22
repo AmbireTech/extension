@@ -302,13 +302,17 @@ const init = async () => {
     isUnlocked: boolean
     ctrlOnUpdateIsDirtyFlags: { [key: string]: boolean }
     autoLockIntervalId?: ReturnType<typeof setInterval>
+    userBalances: Record<string, number>
   } = {
     /**
       ctrlOnUpdateIsDirtyFlags will be set to true for a given ctrl when it receives an update in the ctrl.onUpdate callback.
       While the flag is truthy and there are new updates coming for that ctrl in the same tick, they will be debounced and only one event will be executed at the end
     */
     isUnlocked: false,
-    ctrlOnUpdateIsDirtyFlags: {}
+    ctrlOnUpdateIsDirtyFlags: {},
+    // used for caching the biggest seen user balance so we can later send it to cena
+    // further commented down below
+    userBalances: {}
   }
 
   const pm = new PortMessenger()
@@ -355,6 +359,43 @@ const init = async () => {
         // eslint-disable-next-line no-param-reassign
         url = urlObj.toString().replace(/%2C/g, ',')
       }
+    }
+
+    // we want to calculate the TVL of our users
+    // we can achieve this by making a relayer (server-side trusted environment) script that gets the balances of all our users
+    // but doing this with all our users would be 'expensive'.
+    // we already calculate the user balance in the extension, but is not 100% trusted as any user can modify it
+    // that why we will use the user balance from the extension as a 'hint' so we can determine
+    // on which accounts we should execute the 'expensive' script on the backend
+    // those addresses should be 1) loaded with key in the extension 2) have more than $0 balance
+    const currentAccount = mainCtrl.selectedAccount.account
+    const hasCurrentAccountKeys =
+      currentAccount &&
+      getAccountKeysCount({
+        accountAddr: currentAccount.addr,
+        keys: mainCtrl.keystore.keys,
+        accounts: mainCtrl.accounts.accounts
+      })
+    // we use any cena request, because if we narrow it down to one route we might not have the full balance loaded
+    // on the relayer side we will simply use middleware that captures all routes and looks for the specific params with balance
+    // we want to attach the data only if the user has keys for the account
+    const currentBalance = mainCtrl.selectedAccount.portfolio.totalBalance
+    if (
+      currentAccount &&
+      (backgroundState.userBalances[currentAccount?.addr] || 0) < currentBalance
+    )
+      backgroundState.userBalances[currentAccount?.addr] = currentBalance
+
+    const shouldAttachBalance =
+      url.toString().startsWith('https://cena.ambire.com/') && hasCurrentAccountKeys
+    if (shouldAttachBalance) {
+      const urlObj = new URL(url.toString())
+      const balance = backgroundState.userBalances[currentAccount?.addr] || 0
+
+      urlObj.searchParams.append('panVal', JSON.stringify({ a: currentAccount.addr, b: balance }))
+
+      // eslint-disable-next-line no-param-reassign
+      url = decodeURIComponent(urlObj.toString())
     }
 
     // Use the native fetch (instead of node-fetch or whatever else) since

@@ -50,7 +50,7 @@ const SignAccountOpHardwareWalletSigningModal: React.FC<Props> = ({
     if (signAccountOpStatusType === SigningStatus.UpdatesPaused) return false
 
     const isCurrentlyBroadcastingWithExternalKey =
-      signAndBroadcastAccountOpStatus === 'BROADCASTING' &&
+      signAndBroadcastAccountOpStatus === 'LOADING' &&
       !!feePayerKeyType &&
       feePayerKeyType !== 'internal'
     const isCurrentlySigningWithExternalKey =
