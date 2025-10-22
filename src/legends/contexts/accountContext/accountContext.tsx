@@ -3,6 +3,7 @@ import React, { createContext, useCallback, useEffect, useMemo } from 'react'
 import { isAmbireV1LinkedAccount } from '@ambire-common/libs/account/account'
 import { getIdentity } from '@ambire-common/libs/accountPicker/accountPicker'
 import { RELAYER_URL } from '@env'
+import useProviderContext from '@legends/hooks/useProviderContext'
 import useToast from '@legends/hooks/useToast'
 
 type AccountContextType = {
@@ -12,27 +13,21 @@ type AccountContextType = {
   chainId: bigint | null
   isLoading: boolean
   error: string | null
-  requestAccounts: () => void
-  disconnectAccount: () => void
 }
 
 const accountContext = createContext<AccountContextType>({} as AccountContextType)
 
 const LOCAL_STORAGE_ACC_KEY = 'connectedAccount'
-const LOCAL_STORAGE_IS_DISCONNECTED = 'isDisconnected'
 
 const AccountContextProvider = ({ children }: { children: React.ReactNode }) => {
   const { addToast } = useToast()
-  const [isDisconnected, setIsDisconnected] = React.useState<boolean>(() => {
-    const isDappDisconnected = localStorage.getItem(LOCAL_STORAGE_IS_DISCONNECTED)
+  const { isConnected, provider, disconnectProvider } = useProviderContext()
 
-    return isDappDisconnected === 'true'
-  })
   // We keep only V2 accounts
   const [connectedAccount, setConnectedAccount] = React.useState<string | null>(() => {
     const storedAccount = localStorage.getItem(LOCAL_STORAGE_ACC_KEY)
 
-    if (!window.ambire) return null
+    if (!isConnected) return null
 
     return storedAccount || null
   })
@@ -43,36 +38,20 @@ const AccountContextProvider = ({ children }: { children: React.ReactNode }) => 
   const [isLoading, setIsLoading] = React.useState(true)
   const [error, setError] = React.useState<string | null>(null)
 
-  const requestAccounts = useCallback(async () => {
-    if (!window.ambire) return
-
-    if (isDisconnected) {
-      setIsDisconnected(false)
-      localStorage.setItem(LOCAL_STORAGE_IS_DISCONNECTED, 'false')
-    }
-    await window.ambire.request({
-      method: 'eth_requestAccounts',
-      params: []
-    })
-  }, [isDisconnected])
-
   const getConnectedAccount = useCallback(async (): Promise<string | null> => {
-    if (!window.ambire || isDisconnected) return null
+    if (!provider) return null
 
-    const accounts = await window.ambire.request({
-      method: 'eth_accounts',
-      params: []
-    })
+    const accounts = await provider.request({ method: 'eth_accounts', params: [] })
     setAllAccounts(accounts as string[])
 
     // @ts-ignore
     return accounts[0]
-  }, [isDisconnected])
+  }, [provider])
 
   const getChainId = useCallback(async (): Promise<bigint | null> => {
-    if (!window.ambire) return null
+    if (!provider) return null
 
-    const connectedOnChainId = await window.ambire.request({
+    const connectedOnChainId = await provider.request({
       method: 'eth_chainId',
       params: []
     })
@@ -80,7 +59,7 @@ const AccountContextProvider = ({ children }: { children: React.ReactNode }) => 
     if (typeof connectedOnChainId !== 'string') return null
 
     return BigInt(connectedOnChainId)
-  }, [])
+  }, [provider])
 
   const validateAndSetAccount = useCallback(
     async (address: string) => {
@@ -113,21 +92,23 @@ const AccountContextProvider = ({ children }: { children: React.ReactNode }) => 
     [addToast]
   )
 
-  const handleDisconnectFromWallet = useCallback(async () => {
+  const handleDisconnectFromWallet = useCallback(() => {
     setConnectedAccount(null)
     setV1Account(null)
     setIsLoading(false)
     setAllAccounts([])
     localStorage.removeItem(LOCAL_STORAGE_ACC_KEY)
-  }, [])
-
-  const disconnectAccount = useCallback(async () => {
-    setIsDisconnected(true)
-    localStorage.setItem(LOCAL_STORAGE_IS_DISCONNECTED, 'true')
-    handleDisconnectFromWallet()
-  }, [handleDisconnectFromWallet])
+    disconnectProvider()
+  }, [disconnectProvider])
 
   useEffect(() => {
+    if (!isConnected && connectedAccount) {
+      handleDisconnectFromWallet()
+    }
+  }, [connectedAccount, handleDisconnectFromWallet, isConnected])
+
+  useEffect(() => {
+    if (!provider) return
     getChainId()
       .then((newChainId) => {
         if (newChainId) setChainId(newChainId)
@@ -136,27 +117,28 @@ const AccountContextProvider = ({ children }: { children: React.ReactNode }) => 
 
     const onChainChanged = (newChainId: string) => setChainId(BigInt(newChainId))
 
-    window.ambire?.on('chainChanged', onChainChanged)
+    provider.on('chainChanged', onChainChanged)
 
     return () => {
-      window.ambire?.removeListener('chainChanged', onChainChanged)
+      provider.removeListener('chainChanged', onChainChanged)
     }
-  }, [getChainId])
+  }, [getChainId, provider])
 
   // On Account connect or change set the new Legends address and fetch its portfolio,
   // while on Account disconnect, we simply reload the Legends, which resets all the hooks state.
   useEffect(() => {
+    if (!provider) return
+
     const onAccountsChanged = async (accounts: string[]) => {
-      setIsLoading(true);
+      setIsLoading(true)
       if (!accounts.length) {
         handleDisconnectFromWallet()
-        setIsLoading(false);
+        setIsLoading(false)
         return
       }
 
       await validateAndSetAccount(accounts[0])
-      setIsLoading(false);
-
+      setIsLoading(false)
     }
 
     getConnectedAccount()
@@ -172,34 +154,23 @@ const AccountContextProvider = ({ children }: { children: React.ReactNode }) => 
       .catch(() => console.error('Error fetching connected account'))
 
     // The `accountsChanged` event is fired when the account is connected, changed or disconnected by the extension.
-    window.ambire?.on('accountsChanged', onAccountsChanged)
+    provider.on('accountsChanged', onAccountsChanged)
 
     return () => {
-      window.ambire?.removeListener('accountsChanged', onAccountsChanged)
+      provider.removeListener('accountsChanged', onAccountsChanged)
     }
-  }, [getConnectedAccount, handleDisconnectFromWallet, validateAndSetAccount])
+  }, [provider, getConnectedAccount, handleDisconnectFromWallet, validateAndSetAccount])
 
   const contextValue: AccountContextType = useMemo(
     () => ({
       connectedAccount,
       v1Account,
       error,
-      requestAccounts,
-      disconnectAccount,
       allAccounts,
       chainId,
       isLoading
     }),
-    [
-      connectedAccount,
-      v1Account,
-      allAccounts,
-      error,
-      requestAccounts,
-      disconnectAccount,
-      chainId,
-      isLoading
-    ]
+    [connectedAccount, v1Account, allAccounts, error, chainId, isLoading]
   )
 
   return <accountContext.Provider value={contextValue}>{children}</accountContext.Provider>

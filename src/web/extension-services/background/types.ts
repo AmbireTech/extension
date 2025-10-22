@@ -2,6 +2,7 @@ import AccountPickerController from '@ambire-common/controllers/accountPicker/ac
 import { AccountsController } from '@ambire-common/controllers/accounts/accounts'
 import { ActivityController } from '@ambire-common/controllers/activity/activity'
 import { AddressBookController } from '@ambire-common/controllers/addressBook/addressBook'
+import { AutoLoginController } from '@ambire-common/controllers/autoLogin/autoLogin'
 import { BannerController } from '@ambire-common/controllers/banner/banner'
 import { ContractNamesController } from '@ambire-common/controllers/contractNames/contractNames'
 import { DappsController } from '@ambire-common/controllers/dapps/dapps'
@@ -53,7 +54,8 @@ export const controllersNestedInMainMapping = {
   featureFlags: FeatureFlagsController,
   defiPositions: DefiPositionsController,
   banner: BannerController,
-  ui: UiController
+  ui: UiController,
+  autoLogin: AutoLoginController
 
   // Add the rest of the controllers that are part of the main controller:
   // - key is the name of the controller
