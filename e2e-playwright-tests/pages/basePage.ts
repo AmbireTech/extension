@@ -94,7 +94,7 @@ export class BasePage {
 
   async handleNewPage(locator: Locator): Promise<Page> {
     const context = this.page.context()
-
+    console.log("AT THE START")
     // setup listeners
     const contextPagePromise = context.waitForEvent('page', { timeout: 12000 })
     const popupPromise = this.page.waitForEvent('popup', { timeout: 12000 })
@@ -115,6 +115,7 @@ export class BasePage {
 
     // wait for page to be ready
     await newPage.waitForLoadState('domcontentloaded')
+    console.log("AT THE END")
 
     return newPage
   }
