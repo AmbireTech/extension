@@ -95,13 +95,28 @@ export class BasePage {
   async handleNewPage(locator: Locator): Promise<Page> {
     const context = this.page.context()
 
-    const [actionWindowPagePromise] = await Promise.all([
-      context.waitForEvent('page', { timeout: 5000 }),
-      locator.first().click({ timeout: 5000 }) // trigger opening
-    ])
+    // setup listeners
+    const contextPagePromise = context.waitForEvent('page', { timeout: 12000 })
+    const popupPromise = this.page.waitForEvent('popup', { timeout: 12000 })
 
-    await actionWindowPagePromise.waitForLoadState('domcontentloaded')
-    return actionWindowPagePromise
+    // const [actionWindowPagePromise] = await Promise.all([
+    //   context.waitForEvent('page', { timeout: 10000 }),
+    //   locator.first().click({ timeout: 5000 }) // trigger opening
+    // ])
+
+    // await actionWindowPagePromise.waitForLoadState('domcontentloaded')
+    // return actionWindowPagePromise
+
+    await locator.first().waitFor({ state: 'visible' })
+    await locator.first().click()
+
+    // use whichever event fires first
+    const newPage = await Promise.race([contextPagePromise, popupPromise])
+
+    // wait for page to be ready
+    await newPage.waitForLoadState('domcontentloaded')
+
+    return newPage
   }
 
   async pause() {
