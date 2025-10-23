@@ -107,7 +107,7 @@ const flowContext = flow
             chainId: 1,
             isConnected: true,
             blacklisted: isBlacklisted,
-            networkNames: [],
+            chainIds: [],
             isFeatured: false,
             isCustom: true,
             tvl: null,
