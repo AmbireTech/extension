@@ -60,7 +60,9 @@ const Info: FC<Props> = () => {
               {dapp?.name || t('The App')}
             </Text>
             <Text fontSize={maxWidthSize('xl') ? 16 : 14} appearance="secondaryText">
-              {t('is requesting your signature ')}
+              {messageToSign?.content.kind === 'siwe'
+                ? t('wants to prove you own this account ')
+                : t('is requesting your signature ')}
             </Text>
           </View>
         </View>

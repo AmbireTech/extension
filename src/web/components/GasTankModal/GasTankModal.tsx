@@ -15,7 +15,6 @@ import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
-import Tooltip from '@common/components/Tooltip'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
@@ -73,15 +72,6 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
   // Note: total balance Gas Tank details
   const { token, balanceFormatted } = useMemo(
     () => getGasTankTokenDetails(portfolio, account, networks, 'amount'),
-    [account, networks, portfolio]
-  )
-
-  const savedGasTankDetails = useMemo(
-    () => getGasTankTokenDetails(portfolio, account, networks, 'saved'),
-    [account, networks, portfolio]
-  )
-  const cashbackGasTankDetails = useMemo(
-    () => getGasTankTokenDetails(portfolio, account, networks, 'cashback'),
     [account, networks, portfolio]
   )
 
@@ -206,52 +196,25 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
                 </View>
               </View>
               <View style={styles.rightPartWrapper}>
-                <View style={styles.rightPartInnerWrapper}>
-                  <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mrTy]}>
-                    <Text fontSize={12} appearance="successText">
-                      {`${t('Total Saved')} `}
-                    </Text>
-                    <InfoIcon
-                      color={theme.successDecorative}
-                      width={12}
-                      data-tooltip-id="saved-tooltip"
-                    />
-                    <Tooltip
-                      id="saved-tooltip"
-                      content={String(
-                        t(
-                          "The total amount of funds you've saved on gas fees by using the Gas tank."
-                        )
-                      )}
-                    />
-                  </View>
-                  <Text fontSize={14} appearance="successText">
-                    {`${savedGasTankDetails.balanceFormatted} ${
-                      savedGasTankDetails.token?.symbol || ''
-                    }`}
-                  </Text>
-                </View>
-                <View style={styles.rightPartInnerWrapper}>
-                  <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mrTy]}>
-                    <Text fontSize={12} appearance="primary">
-                      {`${t('Total Cashback')} `}
-                    </Text>
-                    <InfoIcon color={theme.primary} width={12} data-tooltip-id="cashback-tooltip" />
-                    <Tooltip
-                      id="cashback-tooltip"
-                      content={String(
-                        t(
-                          'The total amount returned to your Gas Tank balance based on the difference between estimated and actual gas prices paid.'
-                        )
-                      )}
-                    />
-                  </View>
-                  <Text fontSize={14} appearance="primary">
-                    {`${cashbackGasTankDetails.balanceFormatted} ${
-                      cashbackGasTankDetails.token?.symbol || ''
-                    }`}
-                  </Text>
-                </View>
+                <Button
+                  testID={
+                    hasGasTank
+                      ? 'top-up-gas-tank-modal-button'
+                      : 'create-smart-account-gas-tank-modal-button'
+                  }
+                  type="primary"
+                  text={hasGasTank ? t('Top up') : t('Ok, create a Smart Account')}
+                  size="large"
+                  hasBottomSpacing={false}
+                  textStyle={[spacings.prTy]}
+                  onPress={() =>
+                    hasGasTank
+                      ? navigate('top-up-gas-tank')
+                      : navigate('account-select?triggerAddAccountBottomSheet=true')
+                  }
+                >
+                  {hasGasTank && <TopUpIcon strokeWidth={1} width={20} height={20} />}
+                </Button>
               </View>
             </View>
             <View>
@@ -343,27 +306,6 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
           </View>
         </View>
       )}
-      <View style={styles.buttonWrapper}>
-        <Button
-          testID={
-            hasGasTank
-              ? 'top-up-gas-tank-modal-button'
-              : 'create-smart-account-gas-tank-modal-button'
-          }
-          type="primary"
-          text={hasGasTank ? t('Top up') : t('Ok, create a Smart Account')}
-          size="large"
-          hasBottomSpacing={false}
-          textStyle={[spacings.prTy]}
-          onPress={() =>
-            hasGasTank
-              ? navigate('top-up-gas-tank')
-              : navigate('account-select?triggerAddAccountBottomSheet=true')
-          }
-        >
-          {hasGasTank && <TopUpIcon strokeWidth={1} width={20} height={20} />}
-        </Button>
-      </View>
     </BottomSheet>
   )
 }
