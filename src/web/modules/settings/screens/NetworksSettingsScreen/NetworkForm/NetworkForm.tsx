@@ -177,7 +177,8 @@ const NetworkForm = ({
       nativeAssetName: '',
       explorerUrl: '',
       coingeckoPlatformId: '',
-      coingeckoNativeAssetId: ''
+      coingeckoNativeAssetId: '',
+      customBundlerUrl: ''
     },
     values: {
       name: selectedNetwork?.name || '',
@@ -187,7 +188,8 @@ const NetworkForm = ({
       nativeAssetName: selectedNetwork?.nativeAssetName || '',
       explorerUrl: selectedNetwork?.explorerUrl || '',
       coingeckoPlatformId: (selectedNetwork?.platformId as string) || '',
-      coingeckoNativeAssetId: (selectedNetwork?.nativeAssetId as string) || ''
+      coingeckoNativeAssetId: (selectedNetwork?.nativeAssetId as string) || '',
+      customBundlerUrl: (selectedNetwork?.erc4337.customBundlerUrl as string) || ''
     }
   })
   const [rpcUrls, setRpcUrls] = useState(selectedNetwork?.rpcUrls || [])
@@ -327,7 +329,7 @@ const NetworkForm = ({
     // when resetting the form.
     const subscription = watch(async (value, { name }) => {
       if (name && !value[name]) {
-        if (name !== 'rpcUrl') {
+        if (name !== 'rpcUrl' && name !== 'customBundlerUrl') {
           setError(name, { type: 'custom-error', message: 'Field is required' })
           return
         }
@@ -435,12 +437,17 @@ const NetworkForm = ({
       if (selectedChainId === 'add-custom-network') {
         emptyFields = Object.keys(formFields).filter(
           (key) =>
-            !['rpcUrl', 'rpcUrls', 'coingeckoPlatformId', 'coingeckoNativeAssetId'].includes(key) &&
-            !formFields[key].length
+            ![
+              'rpcUrl',
+              'rpcUrls',
+              'coingeckoPlatformId',
+              'coingeckoNativeAssetId',
+              'customBundlerUrl'
+            ].includes(key) && !formFields[key].length
         )
       } else {
         emptyFields = Object.keys(formFields).filter(
-          (key) => ['explorerUrl'].includes(key) && !formFields[key].length
+          (key) => ['explorerUrl', 'customBundlerUrl'].includes(key) && !formFields[key].length
         )
       }
 
@@ -468,7 +475,8 @@ const NetworkForm = ({
             rpcUrls,
             selectedRpcUrl,
             chainId: BigInt(networkFormValues.chainId),
-            iconUrls: []
+            iconUrls: [],
+            customBundlerUrl: networkFormValues.customBundlerUrl
           }
         })
       } else {
@@ -793,6 +801,24 @@ const NetworkForm = ({
                     />
                   )}
                   name="coingeckoNativeAssetId"
+                />
+              </View>
+              <View style={[flexbox.directionRow, flexbox.alignStart]}>
+                <Controller
+                  control={control}
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <Input
+                      onBlur={onBlur}
+                      onChangeText={onChange}
+                      value={value}
+                      inputWrapperStyle={{ height: 40 }}
+                      inputStyle={{ height: 40 }}
+                      containerStyle={{ ...spacings.mb, ...spacings.mrMi, flex: 1 }}
+                      label={t('Custom bundler url (Experimental)')}
+                      error={handleErrors(errors.customBundlerUrl)}
+                    />
+                  )}
+                  name="customBundlerUrl"
                 />
               </View>
             </ScrollableWrapper>
