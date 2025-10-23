@@ -148,4 +148,11 @@ export class DashboardPage extends BasePage {
 
     expect(newTab.url()).toContain('help.ambire.com/hc/en-us')
   }
+
+  async checkInfoPageRedirection() {
+    const infoButton = this.page.getByTestId(selectors.dashboard.projectedRewardsInfoButton)
+
+    const newTab = await this.handleNewPage(infoButton)
+    expect(newTab.url()).toContain('What-is-stkWALLET')
+  }
 }
