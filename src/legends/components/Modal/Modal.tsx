@@ -16,6 +16,7 @@ type ModalProps = ComponentProps & {
   handleClose?: () => void
   isClosable?: boolean
   showCloseButton?: boolean
+  wrapperClassName?: string
 }
 
 const Heading: FC<ComponentProps> = ({ children, className }) => {

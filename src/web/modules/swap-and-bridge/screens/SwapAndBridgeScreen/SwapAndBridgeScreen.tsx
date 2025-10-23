@@ -152,9 +152,7 @@ const SwapAndBridgeScreen = () => {
   const handleBroadcastAccountOp = useCallback(() => {
     dispatch({
       type: 'MAIN_CONTROLLER_HANDLE_SIGN_AND_BROADCAST_ACCOUNT_OP',
-      params: {
-        updateType: 'Swap&Bridge'
-      }
+      params: { type: 'one-click-swap-and-bridge' }
     })
   }, [dispatch])
 

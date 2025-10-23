@@ -1,13 +1,15 @@
-import { formatUnits, getAddress, parseUnits } from 'ethers'
+import { getAddress } from 'ethers'
 import { nanoid } from 'nanoid'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useModalize } from 'react-native-modalize'
 import { useLocation } from 'react-router-dom'
 
 import { SwapAndBridgeFormStatus } from '@ambire-common/controllers/swapAndBridge/swapAndBridge'
-import { getIsTokenEligibleForSwapAndBridge } from '@ambire-common/libs/swapAndBridge/swapAndBridge'
-import { getSanitizedAmount } from '@ambire-common/libs/transfer/amount'
-import { safeTokenAmountAndNumberMultiplication } from '@ambire-common/utils/numbers/formatters'
+import {
+  calculateAmountWarnings,
+  getIsTokenEligibleForSwapAndBridge
+} from '@ambire-common/libs/swapAndBridge/swapAndBridge'
+import { getCallsCount } from '@ambire-common/utils/userRequest'
 import useGetTokenSelectProps from '@common/hooks/useGetTokenSelectProps'
 import useNavigation from '@common/hooks/useNavigation'
 import { ROUTES } from '@common/modules/router/constants/common'
@@ -21,7 +23,6 @@ import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControll
 import useSyncedState from '@web/hooks/useSyncedState'
 import { getTokenId } from '@web/utils/token'
 import { getUiType } from '@web/utils/uiType'
-import { getCallsCount } from '@ambire-common/utils/userRequest'
 
 type SessionId = ReturnType<typeof nanoid>
 
@@ -267,71 +268,22 @@ const useSwapAndBridgeForm = () => {
 
     if (formStatus !== SwapAndBridgeFormStatus.ReadyToSubmit) return null
 
-    if (!quote || !quote.selectedRoute) return null
+    if (!quote || !fromSelectedToken?.decimals) return null
 
-    let inputValueInUsd = 0
-
-    try {
-      inputValueInUsd = Number(fromAmountInFiat)
-    } catch (error) {
-      // silent fail
-    }
-    if (!inputValueInUsd) return null
-
-    if (!fromSelectedToken) return null
-
-    try {
-      const sanitizedFromAmount = getSanitizedAmount(fromAmount, fromSelectedToken!.decimals)
-
-      const bigintFromAmount = parseUnits(sanitizedFromAmount, fromSelectedToken!.decimals)
-
-      if (bigintFromAmount !== BigInt(quote.selectedRoute.fromAmount)) return null
-
-      const difference = Math.abs(inputValueInUsd - quote.selectedRoute.outputValueInUsd)
-
-      const percentageDiff = (difference / inputValueInUsd) * 100
-
-      if (percentageDiff >= 5) {
-        return {
-          type: 'highPriceImpact',
-          percentageDiff
-        }
-      }
-
-      // try to calculate the slippage
-      const minAmountOutInWei = BigInt(
-        quote.selectedRoute.userTxs[quote.selectedRoute.userTxs.length - 1].minAmountOut
-      )
-      const minInUsd = safeTokenAmountAndNumberMultiplication(
-        minAmountOutInWei,
-        quote.selectedRoute.toToken.decimals,
-        Number(quote.selectedRoute.toToken.priceUSD)
-      )
-      const allowedSlippage =
-        Number(inputValueInUsd) < 400
-          ? 1.05
-          : Number((0.005 / Math.ceil(Number(inputValueInUsd) / 20000)).toPrecision(2)) * 100 + 0.01
-      const possibleSlippage = (1 - Number(minInUsd) / quote.selectedRoute.outputValueInUsd) * 100
-      // @precautionary if
-      const diffBetweenQuoteAndMinAmount =
-        quote.selectedRoute.outputValueInUsd > Number(minInUsd)
-          ? quote.selectedRoute.outputValueInUsd - Number(minInUsd)
-          : 0
-      if (possibleSlippage > allowedSlippage && diffBetweenQuoteAndMinAmount > 50) {
-        return {
-          type: 'slippageImpact',
-          possibleSlippage,
-          minInUsd: Number(minInUsd),
-          minInToken: formatUnits(minAmountOutInWei, quote.selectedRoute.toToken.decimals),
-          symbol: quote.selectedRoute.toToken.symbol
-        }
-      }
-
-      return null
-    } catch (error) {
-      return null
-    }
-  }, [quote, formStatus, fromAmount, fromAmountInFiat, fromSelectedToken, updateQuoteStatus])
+    return calculateAmountWarnings(
+      quote.selectedRoute,
+      fromAmountInFiat,
+      fromAmount,
+      fromSelectedToken.decimals
+    )
+  }, [
+    quote,
+    formStatus,
+    fromAmount,
+    fromAmountInFiat,
+    fromSelectedToken?.decimals,
+    updateQuoteStatus
+  ])
 
   const openEstimationModalAndDispatch = useCallback(() => {
     dispatch({
@@ -479,7 +431,6 @@ const useSwapAndBridgeForm = () => {
 
   useEffect(() => {
     const broadcastStatus = mainCtrlStatuses.signAndBroadcastAccountOp
-
     if (broadcastStatus === 'SUCCESS' && activeRoutes.length) {
       setHasBroadcasted(true)
     }
