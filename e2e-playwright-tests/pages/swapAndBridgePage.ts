@@ -1,4 +1,3 @@
-import { clickOnElement } from 'common-helpers/clickOnElement'
 import { typeText } from 'common-helpers/typeText'
 import locators from 'constants/locators'
 import selectors, { SELECTORS } from 'constants/selectors'
@@ -223,7 +222,7 @@ export class SwapAndBridgePage extends BasePage {
       await expect(signButton).toBeVisible({ timeout: 5000 })
       await expect(signButton).toBeEnabled({ timeout: 5000 })
       await page.getByTestId(selectors.signTransactionButton).click()
-      await page.waitForTimeout(3000)
+      await page.waitForTimeout(5000)
 
       // close transaction progress pop up
       await page.locator(selectors.closeTransactionProgressPopUpButton).click()
@@ -359,7 +358,7 @@ export class SwapAndBridgePage extends BasePage {
     await this.monitorRequests()
 
     // Sometimes the button needs a bit to become enabled
-    await this.page.waitForTimeout(1000)
+    await this.expectButtonEnabled(selectors.signButton)
 
     await this.click(selectors.signButton)
     await expect(this.page.getByText('Confirming your trade')).toBeVisible({ timeout: 10000 })
@@ -405,11 +404,11 @@ export class SwapAndBridgePage extends BasePage {
   }
 
   async signBatchTransactionsPage(page): Promise<void> {
-    const signButton = page.locator(SELECTORS.signTransactionButton)
+    const signButton = page.getByTestId(selectors.signTransactionButton)
     await expect(signButton).toBeVisible({ timeout: 5000 })
-    await expect(signButton).toBeEnabled()
+    await expect(signButton).toBeEnabled({ timeout: 5000 })
     await this.verifyBatchTransactionDetails(page)
-    await page.waitForTimeout(1500)
+    await page.waitForTimeout(3000)
   }
 
   async verifyBatchTransactionDetails(page): Promise<void> {
