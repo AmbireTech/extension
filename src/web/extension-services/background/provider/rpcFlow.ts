@@ -101,11 +101,18 @@ const flowContext = flow
             name,
             url: origin,
             icon,
-            description: 'Custom app automatically added when connected for the first time.',
+            description: '',
+            category: null,
             favorite: false,
             chainId: 1,
             isConnected: true,
-            blacklisted: isBlacklisted
+            blacklisted: isBlacklisted,
+            networkNames: [],
+            isFeatured: false,
+            isCustom: true,
+            tvl: null,
+            geckoId: null,
+            twitter: null
           })
           await mainCtrl.dapps.broadcastDappSessionEvent(
             'chainChanged',

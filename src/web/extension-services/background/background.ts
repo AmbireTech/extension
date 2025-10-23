@@ -18,7 +18,7 @@ import { getAccountKeysCount } from '@ambire-common/libs/keys/keys'
 import { KeystoreSigner } from '@ambire-common/libs/keystoreSigner/keystoreSigner'
 import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
 import wait from '@ambire-common/utils/wait'
-import CONFIG, { isAmbireNext, isDev, isProd } from '@common/config/env'
+import CONFIG, { APP_VERSION, isAmbireNext, isDev, isProd } from '@common/config/env'
 import {
   BROWSER_EXTENSION_LOG_UPDATED_CONTROLLER_STATE_ONLY,
   BROWSER_EXTENSION_MEMORY_INTENSIVE_LOGS,
@@ -406,6 +406,7 @@ const init = async () => {
   }
 
   mainCtrl = new MainController({
+    appVersion: APP_VERSION,
     platform,
     storageAPI: storage,
     fetch: fetchWithAnalytics,

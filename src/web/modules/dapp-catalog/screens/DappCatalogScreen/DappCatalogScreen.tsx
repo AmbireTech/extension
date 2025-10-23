@@ -75,17 +75,6 @@ const FilterButton = React.memo(({ value, active, style, onPress }: FilterButton
 
 const { isPopup } = getUiType()
 
-const getSortPriority = (dapp?: Dapp): number => {
-  if (dapp?.url?.startsWith('https://rewards.ambire.com')) return 0
-  // Display favorite dApps after Ambire Rewards
-  if (dapp?.favorite) return 1
-  // Display connected dApps after favorites
-  if (dapp?.isConnected) return 2
-  return 3
-}
-
-const sortDApps = (a?: Dapp, b?: Dapp) => getSortPriority(a) - getSortPriority(b)
-
 const DappCatalogScreen = () => {
   const { control, watch, setValue } = useForm({
     defaultValues: {
@@ -114,22 +103,6 @@ const DappCatalogScreen = () => {
 
     return allDapps
   }, [state.dapps, search, debouncedSearch, predefinedFilter])
-
-  const sortedByFavoriteDApps = useMemo(() => {
-    if (!initialDAppListState.length) return []
-
-    return filteredDapps.sort((a, b) => {
-      // Display favorite dApps first, but keep the initial order.
-      // Otherwise adding a dApp to favorites would immediately
-      // move it to the top of the list, which feels weird.
-      // This way, the dApp will be moved to the top only after
-      // the user refreshes the page.
-      const dAppA = initialDAppListState.find((dapp) => dapp.url === a.url)
-      const dAppB = initialDAppListState.find((dapp) => dapp.url === b.url)
-
-      return sortDApps(dAppA, dAppB)
-    })
-  }, [filteredDapps, initialDAppListState])
 
   const handleSelectPredefinedFilter = useCallback(
     (type: 'all' | 'favorites' | 'connected') => {
@@ -197,7 +170,7 @@ const DappCatalogScreen = () => {
             !!isPopup && { paddingRight: SPACING_SM - SPACING_MI / 2 }
           ]}
           numColumns={3}
-          data={sortedByFavoriteDApps}
+          data={filteredDapps}
           renderItem={renderItem}
           keyExtractor={(item: Dapp) => item.url.toString()}
           ListEmptyComponent={
