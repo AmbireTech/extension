@@ -4,6 +4,7 @@ import { Client as GridPlusSDKClient, Constants as GridPlusSDKConstants, Utils }
 import { Hash } from 'ox'
 
 import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
+import { Hex } from '@ambire-common/interfaces/hex'
 import { ExternalKey, ExternalSignerController } from '@ambire-common/interfaces/keystore'
 import { DEFAULT_ETH_DERIVATION } from '@ambire-common/utils/hdPath'
 // TODO: Add to deps
@@ -93,20 +94,20 @@ class LatticeController implements ExternalSignerController {
   }
 
   async signAuthorization({
-    contractAddr,
+    contract,
     chainId,
     nonce
   }: {
-    contractAddr: string
-    chainId: number
-    nonce: number
+    contract: Hex
+    chainId: bigint
+    nonce: bigint
   }): Promise<any> {
     if (!this.walletSDK)
       throw new ExternalSignerError('Lattice not connected', {
         sendCrashReport: true
       })
 
-    const authAddress = contractAddr
+    const authAddress = contract
     const authChainId = chainId
     const authNonce = nonce
 

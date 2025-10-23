@@ -8,6 +8,7 @@ import {
   KeystoreSignerInterface,
   TxnRequest
 } from '@ambire-common/interfaces/keystore'
+import { EIP7702Signature } from '@ambire-common/interfaces/signatures'
 import { addHexPrefix } from '@ambire-common/utils/addHexPrefix'
 import { getHDPathIndices } from '@ambire-common/utils/hdPath'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
@@ -232,17 +233,20 @@ class LatticeSigner implements KeystoreSignerInterface {
     return addHexPrefix(`${res.sig.r}${res.sig.s}${res.sig.v.toString('hex')}`)
   }
 
-  // TODO: Currently, dirty, sync the changes to all instances
-  async sign7702(
-    chainId: bigint,
-    contractAddr: Hex,
+  async sign7702({
+    chainId,
+    contract,
+    nonce
+  }: {
+    chainId: bigint
+    contract: Hex
     nonce: bigint
-  ): Promise<{ yParity: Hex; r: Hex; s: Hex }> {
+  }): Promise<EIP7702Signature> {
     await this.#prepareForSigning()
 
-    const { yParity, r, s } = await this.controller?.signAuthorization({
+    const { yParity, r, s } = await this.controller!.signAuthorization({
       chainId,
-      contractAddr,
+      contract,
       nonce
     })
 
