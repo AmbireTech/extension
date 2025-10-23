@@ -27,7 +27,8 @@ export enum RpcMethods {
   wallet_getCallsStatus = 'wallet_getCallsStatus',
   wallet_showCallsStatus = 'wallet_showCallsStatus',
   wallet_signUserOperations = 'wallet_signUserOperations',
-  eth_sendRawUserOperation = 'eth_sendRawUserOperation'
+  eth_sendRawUserOperation = 'eth_sendRawUserOperation',
+  wallet_getCurrentAutoLoginPolicy = 'wallet_getCurrentAutoLoginPolicy'
 }
 
 export type RPCMethod = keyof typeof RpcMethods | string
@@ -84,11 +85,13 @@ export function createTransport<TPayload, TResponse>({
   }
 }
 
+declare const globalIsAmbireNext: boolean
+
 /**
  * Creates a transport that can be used to send and receive RPC messages between
  * extension scripts (commonly inpage <-> background entries).
  */
 export const providerRequestTransport = createTransport<ProviderRequestPayload, ProviderResponse>({
   messenger: bridgeMessenger,
-  topic: 'ambireProviderRequest'
+  topic: globalIsAmbireNext ? 'ambireNextBuildProviderRequest' : 'ambireProviderRequest'
 })

@@ -34,6 +34,7 @@ import SigningKeySelect from '@web/modules/sign-message/components/SignKeySelect
 
 import Authorization7702 from './Contents/authorization7702'
 import Main from './Contents/main'
+import SignInWithEthereum from './Contents/signInWithEthereum'
 
 const SignMessageScreen = () => {
   const { t } = useTranslation()
@@ -61,7 +62,7 @@ const SignMessageScreen = () => {
   const userRequest = useMemo(() => {
     if (!signMessageAction) return undefined
     if (
-      !['typedMessage', 'message', 'authorization-7702', 'signUserOperations'].includes(
+      !['typedMessage', 'message', 'authorization-7702', 'siwe', 'signUserOperations'].includes(
         signMessageAction.userRequest.action.kind
       )
     )
@@ -78,6 +79,12 @@ const SignMessageScreen = () => {
     if (!signMessageAction.userRequest.meta.show7702Info) return false
 
     return true
+  }, [signMessageAction])
+
+  const isSiwe = useMemo(() => {
+    if (!signMessageAction) return false
+
+    return signMessageAction.userRequest.action.kind === 'siwe'
   }, [signMessageAction])
 
   const selectedAccountKeyStoreKeys = useMemo(
@@ -210,6 +217,7 @@ const SignMessageScreen = () => {
   )
 
   const resolveButtonText = useMemo(() => {
+    if (isSiwe) return t('Sign in')
     if (isScrollToBottomForced) return t('Read the message')
 
     if (signStatus === 'LOADING') return t('Signing...')
@@ -217,7 +225,7 @@ const SignMessageScreen = () => {
     if (isAuthorization && !makeItSmartConfirmed) return 'Add smart features'
 
     return t('Sign')
-  }, [isScrollToBottomForced, signStatus, t, isAuthorization, makeItSmartConfirmed])
+  }, [isSiwe, t, isScrollToBottomForced, signStatus, isAuthorization, makeItSmartConfirmed])
 
   const rejectButtonText = useMemo(() => {
     if (isAuthorization && doNotAskMeAgain) return 'Skip'
@@ -240,6 +248,14 @@ const SignMessageScreen = () => {
   const onDoNotAskMeAgainChange = useCallback(() => {
     setDoNotAskMeAgain(!doNotAskMeAgain)
   }, [doNotAskMeAgain])
+
+  const view = useMemo(() => {
+    if (isAuthorization && !makeItSmartConfirmed) return 'authorization-7702'
+
+    if (isSiwe) return 'siwe'
+
+    return 'sign-message'
+  }, [isAuthorization, isSiwe, makeItSmartConfirmed])
 
   // In the split second when the action window opens, but the state is not yet
   // initialized, to prevent a flash of the fallback visualization, show a
@@ -299,13 +315,14 @@ const SignMessageScreen = () => {
           handleClose={() => setIsChooseSignerShown(false)}
           account={account}
         />
-        {isAuthorization && !makeItSmartConfirmed ? (
+        {view === 'authorization-7702' && (
           <Authorization7702
             onDoNotAskMeAgainChange={onDoNotAskMeAgainChange}
             doNotAskMeAgain={doNotAskMeAgain}
             displayFullInformation
           />
-        ) : (
+        )}
+        {view === 'sign-message' && (
           <Main
             shouldDisplayLedgerConnectModal={shouldDisplayLedgerConnectModal}
             isLedgerConnected={isLedgerConnected}
@@ -313,6 +330,13 @@ const SignMessageScreen = () => {
             hasReachedBottom={hasReachedBottom}
             setHasReachedBottom={setHasReachedBottom}
             shouldDisplayEIP1271Warning={shouldDisplayEIP1271Warning}
+          />
+        )}
+        {view === 'siwe' && (
+          <SignInWithEthereum
+            shouldDisplayLedgerConnectModal={shouldDisplayLedgerConnectModal}
+            isLedgerConnected={isLedgerConnected}
+            handleDismissLedgerConnectModal={handleDismissLedgerConnectModal}
           />
         )}
       </TabLayoutContainer>
