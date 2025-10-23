@@ -153,6 +153,6 @@ export class DashboardPage extends BasePage {
     const infoButton = this.page.getByTestId(selectors.dashboard.projectedRewardsInfoButton)
 
     const newTab = await this.handleNewPage(infoButton)
-    expect(newTab.url()).toContain('What-is-stkWALLET')
+    expect(newTab.url()).toContain('help.ambire.com/hc/en-us/articles')
   }
 }
