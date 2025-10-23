@@ -21,6 +21,7 @@ import {
   fetchTxnId,
   isIdentifiedByMultipleTxn
 } from '@ambire-common/libs/accountOp/submittedAccountOp'
+import { networkChainIdToHex } from '@ambire-common/libs/networks/networks'
 import { getBundlerByName, getDefaultBundler } from '@ambire-common/services/bundlers/getBundler'
 import { getRpcProvider } from '@ambire-common/services/provider'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
@@ -46,16 +47,6 @@ const handleSignMessage = (requestRes: RequestRes) => {
   }
 
   throw new Error('Internal error: request result not found', requestRes)
-}
-
-const networkChainIdToHex = (chainId: number | bigint) => {
-  try {
-    // Remove leading zero in hex representation
-    // to match the format expected by dApps (e.g., "0xa" instead of "0x0a")
-    return toBeHex(chainId).replace(/^0x0/, '0x')
-  } catch (error) {
-    return `0x${chainId.toString(16)}`
-  }
 }
 
 export class ProviderController {
