@@ -2,6 +2,7 @@ import React, { FC } from 'react'
 
 import LockIcon from '@legends/common/assets/svg/LockIcon'
 import ZapIcon from '@legends/common/assets/svg/ZapIcon'
+import useCharacterContext from '@legends/hooks/useCharacterContext'
 import smokeAndLights from '@legends/modules/leaderboard/screens/Leaderboard/Smoke-and-lights.png'
 import { CARD_PREDEFINED_ID } from '@legends/modules/legends/constants'
 import { CardFromResponse, CardStatus, CardType } from '@legends/modules/legends/types'
@@ -12,7 +13,7 @@ import CompletedRibbon from './CompletedRibbon'
 
 type Props = Pick<
   CardFromResponse,
-  'shortTitle' | 'xp' | 'imageV2' | 'card' | 'action' | 'timesCollectedToday'
+  'shortTitle' | 'xp' | 'imageV2' | 'card' | 'action' | 'timesCollectedToday' | 'id'
 > & {
   openActionModal: () => void
   disabled: boolean
@@ -36,10 +37,12 @@ const CardContent: FC<Props> = ({
   openActionModal,
   disabled,
   treasureChestStreak,
-  nonConnectedAcc
+  nonConnectedAcc,
+  id
 }) => {
-  const isCompleted = card.status === CardStatus.completed
-
+  const { isCharacterNotMinted } = useCharacterContext()
+  const isCompleted =
+    card.status === CardStatus.completed || (id === 'nft' && !isCharacterNotMinted)
   const isTreasureChestCard = isMatchingPredefinedId(action, CARD_PREDEFINED_ID.chest)
 
   const FIXED_CARD_FREQUENCY = {

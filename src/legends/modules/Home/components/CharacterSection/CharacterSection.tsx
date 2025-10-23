@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React from 'react'
 
 import { STK_WALLET } from '@ambire-common/consts/addresses'
 import { getTokenBalanceInUSD } from '@ambire-common/libs/portfolio/helpers'
@@ -10,29 +10,23 @@ import StkWalletIcon from '@common/assets/svg/StkWalletIcon'
 import Tooltip from '@common/components/Tooltip'
 import LockIcon from '@legends/common/assets/svg/LockIcon'
 import UnionIcon from '@legends/common/assets/svg/UnionIcon'
-import AccountInfo from '@legends/components/AccountInfo'
 import Alert from '@legends/components/Alert'
 import OverachieverBanner from '@legends/components/OverachieverBanner'
 import Stacked from '@legends/components/Stacked'
 import { LEGENDS_SUPPORTED_NETWORKS_BY_CHAIN_ID } from '@legends/constants/networks'
-import useAccountContext from '@legends/hooks/useAccountContext'
 import useCharacterContext from '@legends/hooks/useCharacterContext'
 import useLeaderboardContext from '@legends/hooks/useLeaderboardContext'
 import useLegendsContext from '@legends/hooks/useLegendsContext'
 import usePortfolioControllerState from '@legends/hooks/usePortfolioControllerState/usePortfolioControllerState'
-import CharacterSelect from '@legends/modules/character/screens/CharacterSelect'
 
 import styles from './CharacterSection.module.scss'
 import startsBackground from './starsBackground.png'
 import substractGradientBackground from './substract-gradient.png'
 import substractBackground from './substract.png'
-import unknownCharacterImg from './unknown-character.png'
 
 const THRESHOLD_AMOUNT_TO_HIDE_BALANCE_DECIMALS = 500
 
 const CharacterSection = () => {
-  const [isClaimModalOpen, setIsClaimModalOpen] = useState(false)
-
   const { character } = useCharacterContext()
 
   const {
@@ -79,7 +73,6 @@ const CharacterSection = () => {
   const formatXp = (xp: number) => {
     return xp && xp.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
   }
-  const initial7702Xp = legends.find((card) => card.id === 'eip7702')?.meta?.initial7702Xp || 0
 
   if (!character)
     return (
@@ -91,16 +84,9 @@ const CharacterSection = () => {
       />
     )
 
-  const redirectToCharacterSelect = () => {
-    setIsClaimModalOpen(true)
-  }
-
   const currentLevel = season1LeaderboardData?.currentUser?.level ?? 1
   const xpForNextLevel = Math.ceil(((currentLevel + 1) * 4.5) ** 2)
   const startXpForCurrentLevel = Math.ceil((currentLevel * 4.5) ** 2)
-
-  // Helper: get XP for not minted state (if needed)
-  const characterXp = (character?.xp ?? 0) + initial7702Xp
 
   const currentTotalBalanceOnSupportedChains = amount || undefined
 
@@ -144,8 +130,6 @@ const CharacterSection = () => {
 
   return (
     <>
-      {isClaimModalOpen && <CharacterSelect onClose={() => setIsClaimModalOpen(false)} />}
-
       <div className={styles.overachieverWrapper}>
         <OverachieverBanner wrapperClassName={styles.overachieverBanner} />
       </div>
