@@ -244,10 +244,12 @@ class LatticeSigner implements KeystoreSignerInterface {
   }): Promise<EIP7702Signature> {
     await this.#prepareForSigning()
 
+    const signerPath = getHDPathIndices(this.key.meta.hdPathTemplate, this.key.meta.index)
     const { yParity, r, s } = await this.controller!.signAuthorization({
       chainId,
       contract,
-      nonce
+      nonce,
+      signerPath
     })
 
     return { yParity, r, s }

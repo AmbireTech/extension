@@ -6,7 +6,6 @@ import { Hash } from 'ox'
 import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
 import { Hex } from '@ambire-common/interfaces/hex'
 import { ExternalKey, ExternalSignerController } from '@ambire-common/interfaces/keystore'
-import { DEFAULT_ETH_DERIVATION } from '@ambire-common/utils/hdPath'
 // TODO: Add to deps
 import { RLP } from '@ethereumjs/rlp'
 import { browser } from '@web/constants/browserapi'
@@ -96,11 +95,13 @@ class LatticeController implements ExternalSignerController {
   async signAuthorization({
     contract,
     chainId,
-    nonce
+    nonce,
+    signerPath
   }: {
     contract: Hex
     chainId: bigint
     nonce: bigint
+    signerPath: number[]
   }): Promise<any> {
     if (!this.walletSDK)
       throw new ExternalSignerError('Lattice not connected', {
@@ -119,7 +120,7 @@ class LatticeController implements ExternalSignerController {
       Buffer.from(RLP.encode([authChainId, authAddress, authNonce]))
     ])
     const payload = {
-      signerPath: DEFAULT_ETH_DERIVATION,
+      signerPath,
       curveType: GridPlusSDKConstants.SIGNING.CURVES.SECP256K1,
       hashType: GridPlusSDKConstants.SIGNING.HASHES.KECCAK256,
       encodingType: GridPlusSDKConstants.SIGNING.ENCODINGS.EIP7702_AUTH,
