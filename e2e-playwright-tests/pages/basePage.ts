@@ -92,14 +92,15 @@ export class BasePage {
     return this.page.getByTestId(selector).inputValue()
   }
 
-  async handleNewPage(locator: Locator) {
+  async handleNewPage(locator: Locator): Promise<Page> {
     const context = this.page.context()
 
     const [actionWindowPagePromise] = await Promise.all([
-      context.waitForEvent('page'),
+      context.waitForEvent('page', { timeout: 5000 }),
       locator.first().click({ timeout: 5000 }) // trigger opening
     ])
 
+    await actionWindowPagePromise.waitForLoadState('domcontentloaded')
     return actionWindowPagePromise
   }
 
