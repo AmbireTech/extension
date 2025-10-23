@@ -92,19 +92,26 @@ class LatticeController implements ExternalSignerController {
     return 'JUST_UNLOCKED'
   }
 
-  async signAuthorization({ address, chainId, nonce } = {}): Promise<any> {
+  async signAuthorization({
+    contractAddr,
+    chainId,
+    nonce
+  }: {
+    contractAddr: string
+    chainId: number
+    nonce: number
+  }): Promise<any> {
     if (!this.walletSDK)
       throw new ExternalSignerError('Lattice not connected', {
         sendCrashReport: true
       })
 
-    // Use the parameters passed in, or defaults
-    const authAddress = address || '0x0000000000219ab540356cBB839Cbe05303d7705'
-    const authChainId = chainId || 1
-    const authNonce = nonce || 0
+    const authAddress = contractAddr
+    const authChainId = chainId
+    const authNonce = nonce
 
-    // TODO: Dirty way of implementing this. Copy the exact payload-building logic
-    // from the functional API's signAuthorization
+    // TODO: Dirty way of implementing this. This below is copy-paste from the
+    // GridPlus `signAuthorization` in their functional API
     const MAGIC = Buffer.from([0x05]) // EIP-7702 magic byte
     const message = Buffer.concat([
       MAGIC,
@@ -121,10 +128,10 @@ class LatticeController implements ExternalSignerController {
     try {
       const response = await this.walletSDK.sign({ data: payload })
 
-      if (response.sig && response.pubkey) {
+      if (response.sig && (response as any).pubkey) {
         // Calculate the correct y-parity value using GridPlus SDK's utility
         const messageHash = Buffer.from(Hash.keccak256(message))
-        const yParity = Utils.getYParity(messageHash, response.sig, response.pubkey)
+        const yParity = Utils.getYParity(messageHash, response.sig, (response as any).pubkey)
 
         // Handle both Buffer and string formats for r and s (copied from functional API)
         const rValue = Buffer.isBuffer(response.sig.r)
@@ -148,9 +155,7 @@ class LatticeController implements ExternalSignerController {
         return result
       }
 
-      throw new ExternalSignerError('Failed to get signature from device', {
-        sendCrashReport: true
-      })
+      throw new Error('Failed to get signature from device')
     } catch (error: any) {
       throw new ExternalSignerError(error?.message || 'signAuthorization failed', {
         sendCrashReport: true

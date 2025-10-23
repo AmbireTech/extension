@@ -1,14 +1,4 @@
-import {
-  getAddress,
-  hexlify,
-  Signature,
-  toBeHex,
-  toBigInt,
-  toNumber,
-  Transaction,
-  TransactionLike,
-  zeroPadValue
-} from 'ethers'
+import { hexlify, Signature, toBeHex, Transaction, TransactionLike } from 'ethers'
 
 import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
 import { EIP7702Auth } from '@ambire-common/consts/7702'
@@ -22,57 +12,7 @@ import { addHexPrefix } from '@ambire-common/utils/addHexPrefix'
 import { getHDPathIndices } from '@ambire-common/utils/hdPath'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import wait from '@ambire-common/utils/wait'
-import LatticeController, {
-  GridPlusSDKConstants
-} from '@web/modules/hardware-wallet/controllers/LatticeController'
-
-// tiny helpers using ethers v6 only
-const yFrom = (vOrY: number | string | bigint): 0 | 1 => {
-  const n = typeof vOrY === 'string' ? toNumber(vOrY) : toNumber(vOrY as number)
-  // handle 27/28, 0/1, 35/36, etc.
-  return n === 27 || n === 28 ? ((n - 27) as 0 | 1) : ((n & 1) as 0 | 1)
-}
-
-const pad32 = (h: string) => hexlify(zeroPadValue(h as any, 32)) as `0x${string}`
-
-export type Eip7702AuthInput = {
-  address: string
-  chainId: number | string | bigint
-  nonce: number | string | bigint
-  r: string
-  s: string
-  yParity?: number | string | bigint
-  v?: number | string | bigint // allowed on input but will be dropped
-}
-
-export type Eip7702Auth = {
-  address: string
-  chainId: bigint
-  nonce: bigint
-  yParity: 0 | 1
-  r: `0x${string}`
-  s: `0x${string}`
-}
-
-export function normalizeEip7702Auth(inp: Eip7702AuthInput): Eip7702Auth {
-  const address = getAddress(inp.address) // checksum + validates
-  const chainId = toBigInt(inp.chainId)
-  const nonce = toBigInt(inp.nonce)
-
-  const yParity =
-    inp.yParity !== undefined
-      ? yFrom(inp.yParity)
-      : inp.v !== undefined
-      ? yFrom(inp.v)
-      : (() => {
-          throw new Error('authorization.yParity/v missing')
-        })()
-
-  const r = pad32(inp.r)
-  const s = pad32(inp.s)
-
-  return { address, chainId, nonce, yParity, r, s }
-}
+import LatticeController, { GridPlusSDKConstants } from '@web/modules/hardware-wallet/controllers/LatticeController'
 
 class LatticeSigner implements KeystoreSignerInterface {
   key: ExternalKey
@@ -325,18 +265,32 @@ class LatticeSigner implements KeystoreSignerInterface {
     }
 
     try {
-      const signerPath = getHDPathIndices(this.key.meta.hdPathTemplate, this.key.meta.index)
+      const maxPriorityFeePerGas = txnRequest.maxPriorityFeePerGas ?? txnRequest.gasPrice
+      const maxFeePerGas = txnRequest.maxFeePerGas ?? txnRequest.gasPrice
+      const authorizationSignature = Signature.from({
+        r: eip7702Auth.r,
+        s: eip7702Auth.s,
+        v: Signature.getNormalizedV(eip7702Auth.v) // or just eip7702Auth.v if already normalized
+      })
 
-      // Create the EIP-7702 transaction with authorization list
-      const eip7702Txn = {
+      const finalTxnRequest = {
         ...txnRequest,
-        type: 'eip7702' as const,
-        authorizationList: [normalizeEip7702Auth(eip7702Auth)]
+        maxPriorityFeePerGas: maxPriorityFeePerGas ? toBeHex(maxPriorityFeePerGas) : '0x',
+        maxFeePerGas: maxFeePerGas ? toBeHex(maxFeePerGas) : '0x',
+        authorizationList: [
+          {
+            address: eip7702Auth.address,
+            nonce: BigInt(eip7702Auth.nonce),
+            chainId: BigInt(eip7702Auth.chainId),
+            signature: authorizationSignature
+          }
+        ]
       }
 
       // Serialize the transaction using ethers
-      const unsignedTxn: TransactionLike = { ...eip7702Txn, type: 4 } // Type 4 for EIP-7702
-      const unsignedSerializedTxn = Transaction.from(unsignedTxn).unsignedSerialized
+      const unsignedTxn: TransactionLike = { ...finalTxnRequest, type: 4 }
+      const unsignedSerializedTxn = Transaction.from(unsignedTxn).unsignedSerialized as Hex
+      const signerPath = getHDPathIndices(this.key.meta.hdPathTemplate, this.key.meta.index)
 
       const res = await this.controller!.walletSDK!.sign({
         data: {
@@ -355,15 +309,7 @@ class LatticeSigner implements KeystoreSignerInterface {
         })
       }
 
-      // GridPlus SDK's type for the signature is any, either because of bad
-      // types, either because of bad typescript import/export configuration.
-      type MissingSignatureType = {
-        v: Uint8Array
-        r: Uint8Array
-        s: Uint8Array
-      }
-      const { r, s, v } = res.sig as MissingSignatureType
-
+      const { r, s, v } = res.sig
       const signature = Signature.from({
         r: hexlify(r),
         s: hexlify(s),
@@ -376,7 +322,7 @@ class LatticeSigner implements KeystoreSignerInterface {
 
       await this.#validateSigningKey(signedTxn.from)
 
-      return signedTxn.serialized
+      return signedTxn.serialized as Hex
     } catch (error: any) {
       const errorMessage = error?.message || error?.err
 
