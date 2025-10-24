@@ -149,10 +149,10 @@ export class DashboardPage extends BasePage {
     expect(newTab.url()).toContain('help.ambire.com/hc/en-us')
   }
 
-  async checkInfoPageRedirection() {
+  async checkRewardsPageRedirection() {
     const infoButton = this.page.getByTestId(selectors.dashboard.projectedRewardsInfoButton)
 
     const newTab = await this.handleNewPage(infoButton)
-    expect(newTab.url()).toContain('help.ambire.com/hc/en-us/articles')
+    expect(newTab.url()).toContain('https://rewards.ambire.com/')
   }
 }

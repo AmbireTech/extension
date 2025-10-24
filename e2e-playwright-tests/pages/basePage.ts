@@ -94,30 +94,32 @@ export class BasePage {
 
   async handleNewPage(locator: Locator): Promise<Page> {
     const context = this.page.context()
-    console.log("AT THE START")
-    // setup listeners
-    const contextPagePromise = context.waitForEvent('page', { timeout: 12000 })
-    const popupPromise = this.page.waitForEvent('popup', { timeout: 12000 })
+    console.log("AT THE START 2")
 
-    // const [actionWindowPagePromise] = await Promise.all([
-    //   context.waitForEvent('page', { timeout: 10000 }),
-    //   locator.first().click({ timeout: 5000 }) // trigger opening
-    // ])
+    const [actionWindowPagePromise] = await Promise.all([
+      context.waitForEvent('page', { timeout: 10000 }),
+      locator.first().click({ timeout: 5000 }) // trigger opening
+    ])
 
-    // await actionWindowPagePromise.waitForLoadState('domcontentloaded')
-    // return actionWindowPagePromise
+    await actionWindowPagePromise.waitForLoadState('domcontentloaded')
+    console.log("AT THE END 2")
 
-    await locator.first().waitFor({ state: 'visible' })
-    await locator.first().click()
+    return actionWindowPagePromise
 
-    // use whichever event fires first
-    const newPage = await Promise.race([contextPagePromise, popupPromise])
+    //     // setup listeners
+    //     const contextPagePromise = context.waitForEvent('page', { timeout: 12000 })
+    //     const popupPromise = this.page.waitForEvent('popup', { timeout: 12000 })
 
-    // wait for page to be ready
-    await newPage.waitForLoadState('domcontentloaded')
-    console.log("AT THE END")
+    // await locator.first().waitFor({ state: 'visible' })
+    // await locator.first().click()
 
-    return newPage
+    // // use whichever event fires first
+    // const newPage = await Promise.race([contextPagePromise, popupPromise])
+
+    // // wait for page to be ready
+    // await newPage.waitForLoadState('domcontentloaded')
+
+    // return newPage
   }
 
   async pause() {

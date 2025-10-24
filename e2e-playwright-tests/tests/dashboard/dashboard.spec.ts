@@ -294,13 +294,13 @@ test.describe('dashboard', () => {
     })
   })
 
-  test('Click on Info button for Projected Rewards token', async ({ pages }) => {
+  test('Check redirection to Ambire rewards page', async ({ pages }) => {
     await test.step('assert Info button is visible', async () => {
       await pages.basePage.isVisible(selectors.dashboard.projectedRewardsInfoButton)
     })
 
-    await test.step('click on Info button and check redirection to Info page', async () => {
-      await pages.dashboard.checkInfoPageRedirection()
+    await test.step('click on Info button and check redirection', async () => {
+      await pages.dashboard.checkRewardsPageRedirection()
     })
   })
 })
