@@ -1,12 +1,12 @@
 import crypto from 'crypto'
 import { Client as GridPlusSDKClient, Constants as GridPlusSDKConstants, Utils } from 'gridplus-sdk'
-// TODO: Add to deps
+// TODO: Remove when migrating away from the Client API to the GridPlus functional API
 import { Hash } from 'ox'
 
 import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
 import { Hex } from '@ambire-common/interfaces/hex'
 import { ExternalKey, ExternalSignerController } from '@ambire-common/interfaces/keystore'
-// TODO: Add to deps
+// TODO: Remove when migrating away from the Client API to the GridPlus functional API
 import { RLP } from '@ethereumjs/rlp'
 import { browser } from '@web/constants/browserapi'
 
