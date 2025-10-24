@@ -147,7 +147,9 @@ const DappItem = (dapp: Dapp) => {
                     <View
                       style={[
                         spacings.phTy,
-                        { borderLeftWidth: 1, borderColor: theme.secondaryBorder }
+                        flexbox.alignCenter,
+                        flexbox.justifyCenter,
+                        { height: 20, borderLeftWidth: 1, borderColor: theme.secondaryBorder }
                       ]}
                     >
                       <Text fontSize={12} weight="semiBold" appearance="secondaryText">
@@ -159,7 +161,9 @@ const DappItem = (dapp: Dapp) => {
                     <Pressable
                       style={[
                         spacings.phTy,
-                        { borderLeftWidth: 1, borderColor: theme.secondaryBorder }
+                        flexbox.alignCenter,
+                        flexbox.justifyCenter,
+                        { height: 20, borderLeftWidth: 1, borderColor: theme.secondaryBorder }
                       ]}
                       onPress={() => openInTab({ url: `https://x.com/${twitter}` })}
                     >
