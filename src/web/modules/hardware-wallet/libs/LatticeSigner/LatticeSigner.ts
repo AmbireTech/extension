@@ -121,7 +121,7 @@ class LatticeSigner implements KeystoreSignerInterface {
       const type = typeof txnRequest.maxFeePerGas === 'bigint' ? 2 : 0
       const unsignedTxn: TransactionLike = { ...txnRequest, type }
 
-      const unsignedSerializedTxn = Transaction.from(unsignedTxn).unsignedSerialized
+      const unsignedSerializedTxn = Transaction.from(unsignedTxn).unsignedSerialized as Hex
 
       const res = await this.controller!.walletSDK!.sign({
         // Prior to general signing, request data was sent to the device in
@@ -139,25 +139,15 @@ class LatticeSigner implements KeystoreSignerInterface {
       })
 
       // Ensure we got a signature back
-      if (!res?.sig || !res.sig.r || !res.sig.s || !res.sig.v) {
+      if (!res?.sig)
         throw new ExternalSignerError('latticeSigner: no signature returned', {
           sendCrashReport: true
         })
-      }
-
-      // GridPlus SDK's type for the signature is any, either because of bad
-      // types, either because of bad typescript import/export configuration.
-      type MissingSignatureType = {
-        v: Uint8Array
-        r: Uint8Array
-        s: Uint8Array
-      }
-      const { r, s, v } = res.sig as MissingSignatureType
 
       const signature = Signature.from({
-        r: hexlify(r),
-        s: hexlify(s),
-        v: Signature.getNormalizedV(hexlify(v))
+        r: hexlify(res.sig.r),
+        s: hexlify(res.sig.s),
+        v: Signature.getNormalizedV(Number(res.sig.v))
       })
       const signedTxn = Transaction.from({
         ...unsignedTxn,
@@ -296,17 +286,15 @@ class LatticeSigner implements KeystoreSignerInterface {
       })
 
       // Ensure we got a signature back
-      if (!res?.sig || !res.sig.r || !res.sig.s || !res.sig.v) {
+      if (!res?.sig)
         throw new ExternalSignerError('latticeSigner: no signature returned', {
           sendCrashReport: true
         })
-      }
 
-      const { r, s, v } = res.sig
       const signature = Signature.from({
-        r: hexlify(r),
-        s: hexlify(s),
-        v: Signature.getNormalizedV(Number(v))
+        r: hexlify(res.sig.r),
+        s: hexlify(res.sig.s),
+        v: Signature.getNormalizedV(Number(res.sig.v))
       })
       const signedTxn = Transaction.from({
         ...unsignedTxn,
