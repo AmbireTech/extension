@@ -257,7 +257,7 @@ class LatticeSigner implements KeystoreSignerInterface {
       const authorizationSignature = Signature.from({
         r: eip7702Auth.r,
         s: eip7702Auth.s,
-        v: Signature.getNormalizedV(eip7702Auth.v) // or just eip7702Auth.v if already normalized
+        v: BigInt(eip7702Auth.v)
       })
 
       const finalTxnRequest = {
