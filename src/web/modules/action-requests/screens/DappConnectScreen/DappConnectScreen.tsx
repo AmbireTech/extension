@@ -3,7 +3,6 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { View } from 'react-native'
 
 import { isDappRequestAction } from '@ambire-common/libs/actions/actions'
-import { getDappIdFromUrl } from '@ambire-common/libs/dapps/helpers'
 import wait from '@ambire-common/utils/wait'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'

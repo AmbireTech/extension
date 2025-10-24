@@ -4,10 +4,8 @@ import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 import { IHandles } from 'react-native-modalize/lib/options'
 
-import predefinedDapps from '@ambire-common/consts/legacyDappCatalog.json'
 import { Dapp } from '@ambire-common/interfaces/dapp'
 import { Network } from '@ambire-common/interfaces/network'
-import { getDappIdFromUrl } from '@ambire-common/libs/dapps/helpers'
 import DeleteIcon from '@common/assets/svg/DeleteIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
@@ -21,7 +19,6 @@ import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import useBackgroundService from '@web/hooks/useBackgroundService'
-import useDappsControllerState from '@web/hooks/useDappsControllerState'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import DappControl from '@web/modules/dapp-catalog/components/DappControl'
 
@@ -52,7 +49,6 @@ const ManageDapp = ({
   const { t } = useTranslation()
   const { ref: dialogRef, open: openDialog, close: closeDialog } = useModalize()
   const { networks } = useNetworksControllerState()
-  const { state } = useDappsControllerState()
 
   const [network, setNetwork] = useState<Network>(
     networks.filter((n) => Number(n.chainId) === dapp?.chainId)[0] ||
@@ -90,13 +86,6 @@ const ManageDapp = ({
     },
     [networks, dapp?.id, dispatch]
   )
-
-  const shouldShowRemoveDappFromCatalog = useMemo(() => {
-    return (
-      !!state.dapps?.find((d) => d.id === dapp?.id) &&
-      !predefinedDapps.find((d) => getDappIdFromUrl(d.url) === dapp?.id)
-    )
-  }, [dapp?.id, state.dapps])
 
   const promptRemoveDApp = useCallback(() => {
     openDialog()
@@ -146,10 +135,7 @@ const ManageDapp = ({
         />
       </View>
       <View
-        style={[
-          styles.networkSelectorContainer,
-          shouldShowRemoveDappFromCatalog ? spacings.mb3Xl : spacings.mb0
-        ]}
+        style={[styles.networkSelectorContainer, dapp?.isCustom ? spacings.mb3Xl : spacings.mb0]}
       >
         <Text fontSize={14} style={flexbox.flex1}>
           {t('Select App Network')}
@@ -163,7 +149,7 @@ const ManageDapp = ({
           value={networksOptions.filter((opt) => opt.value === network.name)[0]}
         />
       </View>
-      {!!shouldShowRemoveDappFromCatalog && (
+      {!!dapp?.isCustom && (
         <View style={flexbox.alignCenter}>
           <Button
             size="small"

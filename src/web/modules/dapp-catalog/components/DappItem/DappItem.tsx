@@ -4,7 +4,7 @@ import { Pressable, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { Dapp } from '@ambire-common/interfaces/dapp'
-import ManifestFallbackIcon from '@common/assets/svg/ManifestFallbackIcon'
+import ConnectedIcon from '@common/assets/svg/ConnectedIcon'
 import OpenIcon from '@common/assets/svg/OpenIcon'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import StarIcon from '@common/assets/svg/StarIcon'
@@ -15,6 +15,7 @@ import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
+import text from '@common/styles/utils/text'
 import ManifestImage from '@web/components/ManifestImage'
 import { openInTab } from '@web/extension-services/background/webapi/tab'
 import useBackgroundService from '@web/hooks/useBackgroundService'
@@ -78,20 +79,36 @@ const DappItem = (dapp: Dapp) => {
               />
             </View>
             <View style={[flexbox.flex1, flexbox.justifySpaceBetween]}>
-              <View
-                style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifySpaceBetween]}
-              >
-                <Pressable
-                  onPress={() => {
-                    dispatch({
-                      type: 'DAPP_CONTROLLER_UPDATE_DAPP',
-                      params: { id, dapp: { favorite: !favorite } }
-                    })
-                  }}
-                >
-                  <StarIcon isFilled={favorite} style={spacings.mrTy} />
-                </Pressable>
+              <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+                <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+                  <Text
+                    weight="semiBold"
+                    fontSize={14}
+                    appearance="primaryText"
+                    numberOfLines={1}
+                    style={[text.left, spacings.mrTy]}
+                  >
+                    {name}
+                  </Text>
+                  <Pressable
+                    onPress={() => {
+                      dispatch({
+                        type: 'DAPP_CONTROLLER_UPDATE_DAPP',
+                        params: { id, dapp: { favorite: !favorite } }
+                      })
+                    }}
+                    style={spacings.mrTy}
+                  >
+                    <StarIcon isFilled={favorite} />
+                  </Pressable>
+                  {!!isConnected && <ConnectedIcon />}
+                </View>
                 {!!blacklisted && <Badge text={t('Blacklisted')} type="error" />}
+                {!!hovered && (
+                  <View>
+                    <OpenIcon width={16} height={16} />
+                  </View>
+                )}
                 {!!hovered && (
                   <Pressable onPress={openBottomSheet as any} style={spacings.mlTy}>
                     {({ hovered: iconHovered }: any) => (
@@ -105,9 +122,6 @@ const DappItem = (dapp: Dapp) => {
                   </Pressable>
                 )}
               </View>
-              <Text weight="semiBold" fontSize={14} appearance="primaryText" numberOfLines={1}>
-                {name}
-              </Text>
             </View>
           </View>
 
@@ -121,14 +135,6 @@ const DappItem = (dapp: Dapp) => {
             {description}
           </Text>
           {!!getUiType().isPopup && <Tooltip id={url} delayShow={900} />}
-          <View style={[flexbox.alignEnd, flexbox.directionRow, flexbox.flex1]}>
-            {!!isConnected && <Badge text={t('Connected')} type="success" style={spacings.mrTy} />}
-            {hovered && (
-              <View style={{ marginLeft: 'auto' }}>
-                <OpenIcon width={16} height={16} />
-              </View>
-            )}
-          </View>
         </AnimatedPressable>
       </div>
       <ManageDapp

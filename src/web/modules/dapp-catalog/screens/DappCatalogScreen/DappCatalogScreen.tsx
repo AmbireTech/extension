@@ -169,7 +169,7 @@ const DappCatalogScreen = () => {
             !!isPopup && spacings.plSm,
             !!isPopup && { paddingRight: SPACING_SM - SPACING_MI / 2 }
           ]}
-          numColumns={3}
+          // numColumns={3}
           data={filteredDapps}
           renderItem={renderItem}
           keyExtractor={(item: Dapp) => item.url.toString()}

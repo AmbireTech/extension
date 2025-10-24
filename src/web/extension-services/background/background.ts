@@ -249,7 +249,7 @@ providerRequestTransport.reply(async ({ method, id, providerId, params }, meta) 
   }
 
   const origin = getOriginFromUrl(meta.sender.url)
-  const session = mainCtrl.dapps.getOrCreateDappSession({ tabId, windowId, origin })
+  const session = await mainCtrl.dapps.getOrCreateDappSession({ tabId, windowId, origin })
 
   await mainCtrl.dapps.initialLoadPromise
   mainCtrl.dapps.setSessionMessenger(session.sessionId, bridgeMessenger, isAmbireNext)

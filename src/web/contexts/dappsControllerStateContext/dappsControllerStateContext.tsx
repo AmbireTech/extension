@@ -26,7 +26,7 @@ const DappsControllerStateProvider: React.FC<any> = ({ children }) => {
     if (!tab || !tab.id || !tab.url) return
 
     const origin = getOriginFromUrl(tab.url)
-    const dappId = getDappIdFromUrl(tab.url)
+    const dappId = getDappIdFromUrl(tab.url, newState.dapps)
     const currentSession = newState.dappSessions?.[`${tab.id}-${origin}`] || {}
     const dapp = newState.dapps.find((d) => d.id === currentSession.id || d.id === dappId)
 
@@ -46,7 +46,14 @@ const DappsControllerStateProvider: React.FC<any> = ({ children }) => {
         isConnected: false,
         description: '',
         chainId: 1,
-        favorite: false
+        favorite: false,
+        category: null,
+        twitter: null,
+        tvl: null,
+        chainIds: [],
+        geckoId: null,
+        isCustom: true,
+        isFeatured: false
       })
     }
   }, [])

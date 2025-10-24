@@ -190,12 +190,12 @@ const routesConfig: RouteConfig = {
   [ROUTES.appCatalog]: {
     route: ROUTES.appCatalog,
     title: Platform.select({
-      web: i18n.t('App Catalog'),
-      default: i18n.t('App Catalog')
+      web: i18n.t('Apps'),
+      default: i18n.t('Apps')
     }),
     name: Platform.select({
-      web: i18n.t('App Catalog'),
-      default: i18n.t('App Catalog')
+      web: i18n.t('Apps'),
+      default: i18n.t('Apps')
     })
   },
   [ROUTES.watchAsset]: {
@@ -237,11 +237,6 @@ const routesConfig: RouteConfig = {
     name: Platform.select({
       default: i18n.t('Swap')
     })
-  },
-  [ROUTES.appCatalog]: {
-    route: ROUTES.appCatalog,
-    title: i18n.t('App Catalog'),
-    name: i18n.t('App Catalog')
   },
   [ROUTES.accountSelect]: {
     route: ROUTES.accountSelect,

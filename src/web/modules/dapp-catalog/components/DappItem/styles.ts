@@ -21,7 +21,7 @@ const getStyles = (theme: ThemeProps) =>
       justifyContent: 'center'
     },
     dappItemWrapper: {
-      width: '33.33%',
+      flex: 1,
       height: 146,
       ...spacings.phMi,
       ...spacings.pvMi
