@@ -1,6 +1,7 @@
 import selectors from 'constants/selectors'
 import BootstrapContext from 'interfaces/bootstrapContext'
 import Token from 'interfaces/token'
+import { lcov } from 'node:test/reporters'
 
 import { BrowserContext, expect, Locator, Page, Request as PWRequest } from '@playwright/test'
 
@@ -94,32 +95,31 @@ export class BasePage {
 
   async handleNewPage(locator: Locator): Promise<Page> {
     const context = this.page.context()
-    console.log("AT THE START 2")
 
-    const [actionWindowPagePromise] = await Promise.all([
-      context.waitForEvent('page', { timeout: 10000 }),
-      locator.first().click({ timeout: 5000 }) // trigger opening
-    ])
+    // const [actionWindowPagePromise] = await Promise.all([
+    //   context.waitForEvent('page', { timeout: 10000 }),
+    //   locator.first().click({ timeout: 5000 }) // trigger opening
+    // ])
 
-    await actionWindowPagePromise.waitForLoadState('domcontentloaded')
-    console.log("AT THE END 2")
+    // await actionWindowPagePromise.waitForLoadState('domcontentloaded')
 
-    return actionWindowPagePromise
+    // return actionWindowPagePromise
 
-    //     // setup listeners
-    //     const contextPagePromise = context.waitForEvent('page', { timeout: 12000 })
-    //     const popupPromise = this.page.waitForEvent('popup', { timeout: 12000 })
+    await locator.waitFor({ state: 'visible' })
+    await expect(locator).toBeEnabled()
 
-    // await locator.first().waitFor({ state: 'visible' })
-    // await locator.first().click()
+    const newPagePromise = context.waitForEvent('page', { timeout: 10000 })
 
-    // // use whichever event fires first
-    // const newPage = await Promise.race([contextPagePromise, popupPromise])
+    // initiate new page event
+    await locator.click({ timeout: 5000 })
 
-    // // wait for page to be ready
-    // await newPage.waitForLoadState('domcontentloaded')
+    // Wait for the newly opened page to be available
+    const actionWindowPage = await newPagePromise
 
-    // return newPage
+    // Wait until the new page is fully loaded (optional but recommended)
+    await actionWindowPage.waitForLoadState('domcontentloaded')
+    console.log('new page initiated')
+    return actionWindowPage
   }
 
   async pause() {
