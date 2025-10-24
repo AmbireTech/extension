@@ -211,7 +211,10 @@ export class SwapAndBridgePage extends BasePage {
     await this.handlePriceWarningModals()
 
     await this.click(selectors.goDashboardButton)
-    const newPage = await this.handleNewPage(this.page.getByTestId(selectors.bannerButtonOpen))
+
+    const openTransactionButton = this.page.getByTestId(selectors.bannerButtonOpen).first()
+
+    const newPage = await this.handleNewPage(openTransactionButton)
     await this.signTransactionPage(newPage)
   }
 
@@ -399,7 +402,10 @@ export class SwapAndBridgePage extends BasePage {
     await this.handlePriceWarningModals()
 
     await this.click(selectors.goDashboardButton)
-    const newPage = await this.handleNewPage(this.page.getByTestId(selectors.bannerButtonOpen))
+
+    const openTransactionButton = this.page.getByTestId(selectors.bannerButtonOpen).first()
+
+    const newPage = await this.handleNewPage(openTransactionButton)
     await this.signBatchTransactionsPage(newPage)
   }
 

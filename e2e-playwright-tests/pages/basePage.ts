@@ -1,7 +1,6 @@
 import selectors from 'constants/selectors'
 import BootstrapContext from 'interfaces/bootstrapContext'
 import Token from 'interfaces/token'
-import { lcov } from 'node:test/reporters'
 
 import { BrowserContext, expect, Locator, Page, Request as PWRequest } from '@playwright/test'
 
