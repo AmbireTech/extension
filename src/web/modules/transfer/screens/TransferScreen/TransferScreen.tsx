@@ -1,3 +1,4 @@
+import { parseUnits } from 'ethers'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import { Pressable, View } from 'react-native'
@@ -45,7 +46,6 @@ import useTrackAccountOp from '@web/modules/sign-account-op/hooks/OneClick/useTr
 import GasTankInfoModal from '@web/modules/transfer/components/GasTankInfoModal'
 import SendForm from '@web/modules/transfer/components/SendForm/SendForm'
 import { getUiType } from '@web/utils/uiType'
-import { parseUnits } from 'ethers'
 
 const { isTab, isActionWindow } = getUiType()
 
@@ -299,6 +299,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     overwriteValidLabel: validationFormMsgs?.recipientAddress.success
       ? validationFormMsgs.recipientAddress.message
       : '',
+    overwriteSeverity: validationFormMsgs.recipientAddress.severity,
     handleCacheResolvedDomain
   })
 

@@ -24,6 +24,7 @@ import getStyles from './styles'
 export interface AddressValidation {
   isError: boolean
   message: string
+  severity?: 'warning' | 'info'
 }
 
 interface Props extends InputProps {
@@ -53,7 +54,8 @@ const AddressInput: React.FC<Props> = ({
   const { addToast } = useToast()
   const { styles, theme } = useTheme(getStyles)
   const { contacts } = useAddressBookControllerState()
-  const { message, isError } = validation
+  const { message, isError, severity } = validation
+  console.log('AddressInput', validation)
   const isValidationInDomainResolvingState = message === 'Resolving domain...'
   const inputRef = useRef<TextInput | null>(null)
   const [bindAnim, animStyle] = useHover({ preset: 'opacityInverted' })
@@ -93,12 +95,20 @@ const AddressInput: React.FC<Props> = ({
         onChangeText={onChangeText}
         testID="address-ens-field"
         containerStyle={containerStyle}
-        validLabel={!isError && !isValidationInDomainResolvingState ? message : ''}
+        validLabel={
+          !isError && severity !== 'info' && !isValidationInDomainResolvingState ? message : ''
+        }
         error={isError ? message : ''}
         isValid={!isError && !isValidationInDomainResolvingState}
         placeholder={placeholder || t('Address / ENS')}
         bottomLabelStyle={styles.bottomLabel}
-        info={isValidationInDomainResolvingState ? t('Resolving domain...') : ''}
+        info={
+          severity === 'info'
+            ? message
+            : isValidationInDomainResolvingState
+            ? t('Resolving domain...')
+            : ''
+        }
         childrenBeforeButtons={
           childrenBeforeButtons ||
           (!withDetails && (
