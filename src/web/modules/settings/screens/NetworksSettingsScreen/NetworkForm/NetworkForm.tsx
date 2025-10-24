@@ -30,6 +30,7 @@ import {
   handleErrors
 } from '@web/modules/settings/screens/NetworksSettingsScreen/NetworkForm/helpers'
 
+import WarningIcon from '@common/assets/svg/WarningIcon'
 import getStyles from './styles'
 
 type RpcSelectorItemType = {
@@ -147,7 +148,7 @@ const NetworkForm = ({
   const { addToast } = useToast()
   const { allNetworks, networkToAddOrUpdate, statuses } = useNetworksControllerState()
   const [isValidatingRPC, setValidatingRPC] = useState<boolean>(false)
-  const { styles } = useTheme(getStyles)
+  const { theme, styles } = useTheme(getStyles)
 
   const selectedNetwork = useMemo(
     () => allNetworks.find((network) => network.chainId.toString() === selectedChainId.toString()),
@@ -807,6 +808,20 @@ const NetworkForm = ({
                       onBlur={onBlur}
                       onChangeText={onChange}
                       value={value}
+                      leftIcon={() => {
+                        return (
+                          <>
+                            <WarningIcon
+                              color={theme.warningDecorative}
+                              data-tooltip-id="customBundlerId"
+                            />
+                            <Tooltip
+                              id="customBundlerId"
+                              content="The custom bundler is an experimental feature. The extension might not work well with it. Also, the Ambire Paymaster is disabled for custom bundlers (only native payments allowed). Proceed with caution"
+                            />
+                          </>
+                        )
+                      }}
                       inputWrapperStyle={{ height: 40 }}
                       inputStyle={{ height: 40 }}
                       containerStyle={{ ...spacings.mb, ...spacings.mrMi, flex: 1 }}
