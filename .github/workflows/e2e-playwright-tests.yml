@@ -105,11 +105,29 @@ jobs:
           docker pull ghcr.io/trezor/trezor-user-env
           docker compose -f ./docker-compose-mac.yml up --force-recreate -d
 
+      - name: Get Playwright version
+        id: playwright-version
+        run: |
+          PLAYWRIGHT_VERSION=$(grep @playwright/test package.json \
+            | head -1 \
+            | awk -F: '{ print $2 }' \
+            | sed 's/[", ^]//g')
+          echo "Playwright version: $PLAYWRIGHT_VERSION"
+          echo "PLAYWRIGHT_VERSION=$PLAYWRIGHT_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Cache Playwright
+        id: cache-playwright
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-browsers-${{ steps.playwright-version.outputs.PLAYWRIGHT_VERSION }}
+
       - name: Install e2e test dependencies
         working-directory: ./e2e-playwright-tests
         run: npm ci
 
       - name: Install Playwright browsers
+        if: steps.cache-playwright.outputs.cache-hit != 'true'
         working-directory: ./e2e-playwright-tests
         run: npx playwright install --with-deps chromium
 
