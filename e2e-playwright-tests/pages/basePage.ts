@@ -104,9 +104,11 @@ export class BasePage {
 
     // return actionWindowPagePromise
 
+    // wait for locator before click
     await locator.waitFor({ state: 'visible' })
     await expect(locator).toBeEnabled()
 
+    // setup listener for new page event
     const newPagePromise = context.waitForEvent('page', { timeout: 10000 })
 
     // initiate new page event
@@ -115,9 +117,8 @@ export class BasePage {
     // Wait for the newly opened page to be available
     const actionWindowPage = await newPagePromise
 
-    // Wait until the new page is fully loaded (optional but recommended)
+    // wait for new page to load
     await actionWindowPage.waitForLoadState('domcontentloaded')
-    console.log('new page initiated')
     return actionWindowPage
   }
 
