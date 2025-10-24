@@ -121,10 +121,9 @@ jobs:
 
       - name: Cache Playwright
         id: cache-playwright
-        working-directory: ./e2e-playwright-tests
         uses: actions/cache@v4
         with:
-          path: ~/.cache/ms-playwright
+          path: ./e2e-playwright-tests/.cache/ms-playwright
           key: playwright-browsers-${{ steps.playwright-version.outputs.PLAYWRIGHT_VERSION }}
 
       - name: Install Playwright browsers
