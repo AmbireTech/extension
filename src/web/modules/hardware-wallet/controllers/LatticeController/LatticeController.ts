@@ -20,6 +20,8 @@ const SDK_TIMEOUT = 120000
 const CONNECT_TIMEOUT = 20000
 
 class LatticeController implements ExternalSignerController {
+  type = 'lattice'
+
   walletSDK?: GridPlusSDKClient | null
 
   creds: any
