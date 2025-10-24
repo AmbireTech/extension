@@ -22,16 +22,14 @@ const getStyles = (theme: ThemeProps) =>
     },
     dappItemWrapper: {
       flex: 1,
-      height: 146,
-      ...spacings.phMi,
-      ...spacings.pvMi
+      ...spacings.mbTy
     },
     container: {
       width: '100%',
       height: '100%',
       ...common.borderRadiusPrimary,
-      ...spacings.phTy,
-      ...spacings.pvTy
+      ...spacings.phSm,
+      ...spacings.pvSm
     }
   })
 

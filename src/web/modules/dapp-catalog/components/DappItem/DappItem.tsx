@@ -5,7 +5,6 @@ import { useModalize } from 'react-native-modalize'
 
 import { Dapp } from '@ambire-common/interfaces/dapp'
 import ConnectedIcon from '@common/assets/svg/ConnectedIcon'
-import OpenIcon from '@common/assets/svg/OpenIcon'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import StarIcon from '@common/assets/svg/StarIcon'
 import Badge from '@common/components/Badge'
@@ -20,13 +19,14 @@ import ManifestImage from '@web/components/ManifestImage'
 import { openInTab } from '@web/extension-services/background/webapi/tab'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
+import TrustedIcon from '@web/modules/action-requests/screens/DappConnectScreen/components/TrustedIcon'
 import ManageDapp from '@web/modules/dapp-catalog/components/ManageDapp'
 import { getUiType } from '@web/utils/uiType'
 
 import getStyles from './styles'
 
 const DappItem = (dapp: Dapp) => {
-  const { id, url, name, icon, description, isConnected, favorite, blacklisted } = dapp
+  const { id, url, name, icon, description, isConnected, favorite, blacklisted, isCustom } = dapp
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const { styles, theme } = useTheme(getStyles)
   const { dispatch } = useBackgroundService()
@@ -67,8 +67,20 @@ const DappItem = (dapp: Dapp) => {
           onPress={() => openInTab({ url })}
           {...bindAnim}
         >
-          <View style={[flexbox.directionRow, spacings.mbSm]}>
+          <View style={[flexbox.directionRow, spacings.mbTy]}>
             <View style={spacings.mrTy}>
+              {!isCustom && !blacklisted && (
+                <View
+                  style={{
+                    position: 'absolute',
+                    right: -4,
+                    top: -3,
+                    zIndex: 1
+                  }}
+                >
+                  <TrustedIcon width={16} height={16} />
+                </View>
+              )}
               <ManifestImage
                 uri={icon || ''}
                 size={40}
@@ -78,9 +90,9 @@ const DappItem = (dapp: Dapp) => {
                 imageStyle={{ borderRadius: BORDER_RADIUS_PRIMARY }}
               />
             </View>
-            <View style={[flexbox.flex1, flexbox.justifySpaceBetween]}>
+            <View style={[flexbox.flex1]}>
               <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+                <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1]}>
                   <Text
                     weight="semiBold"
                     fontSize={14}
@@ -101,27 +113,33 @@ const DappItem = (dapp: Dapp) => {
                   >
                     <StarIcon isFilled={favorite} />
                   </Pressable>
-                  {!!isConnected && <ConnectedIcon />}
+                  {!!isConnected && <ConnectedIcon style={spacings.mrTy} />}
+                  {!!blacklisted && (
+                    <Badge text={t('Blacklisted')} type="error" style={spacings.mrTy} />
+                  )}
                 </View>
-                {!!blacklisted && <Badge text={t('Blacklisted')} type="error" />}
-                {!!hovered && (
-                  <View>
-                    <OpenIcon width={16} height={16} />
-                  </View>
-                )}
                 {!!hovered && (
                   <Pressable onPress={openBottomSheet as any} style={spacings.mlTy}>
                     {({ hovered: iconHovered }: any) => (
                       <SettingsIcon
-                        width={16}
-                        height={16}
-                        strokeWidth="2"
+                        width={18}
+                        height={18}
+                        strokeWidth="1.8"
                         color={iconHovered ? theme.iconSecondary : theme.iconPrimary}
                       />
                     )}
                   </Pressable>
                 )}
               </View>
+              <Text
+                weight="medium"
+                fontSize={11}
+                appearance="secondaryText"
+                numberOfLines={1}
+                style={[text.left, spacings.mrTy]}
+              >
+                {id}
+              </Text>
             </View>
           </View>
 
