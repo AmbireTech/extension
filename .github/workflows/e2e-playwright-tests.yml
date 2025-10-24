@@ -109,7 +109,27 @@ jobs:
         working-directory: ./e2e-playwright-tests
         run: npm ci
 
+      - name: Get Playwright version
+        id: playwright-version
+        working-directory: ./e2e-playwright-tests
+        run: |
+          PLAYWRIGHT_VERSION=$(grep @playwright/test package.json \
+            | head -1 \
+            | awk -F: '{ print $2 }' \
+            | sed 's/[", ^]//g')
+          echo "Playwright version: $PLAYWRIGHT_VERSION"
+          echo "PLAYWRIGHT_VERSION=$PLAYWRIGHT_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Cache Playwright
+        id: cache-playwright
+        working-directory: ./e2e-playwright-tests
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-browsers-${{ steps.playwright-version.outputs.PLAYWRIGHT_VERSION }}
+
       - name: Install Playwright browsers
+        if: steps.cache-playwright.outputs.cache-hit != 'true'
         working-directory: ./e2e-playwright-tests
         run: npx playwright install --with-deps chromium
 
