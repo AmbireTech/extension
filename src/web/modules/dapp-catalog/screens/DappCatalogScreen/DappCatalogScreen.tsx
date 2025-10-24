@@ -77,9 +77,7 @@ const { isPopup } = getUiType()
 
 const DappCatalogScreen = () => {
   const { control, watch, setValue } = useForm({
-    defaultValues: {
-      search: ''
-    }
+    defaultValues: { search: '' }
   })
 
   const { t } = useTranslation()
@@ -164,12 +162,10 @@ const DappCatalogScreen = () => {
         <ScrollableWrapper
           type={WRAPPER_TYPES.FLAT_LIST}
           contentContainerStyle={[
-            { marginHorizontal: -SPACING_MI, marginTop: -SPACING_MI },
             spacings.pbTy,
             !!isPopup && spacings.plSm,
             !!isPopup && { paddingRight: SPACING_SM - SPACING_MI / 2 }
           ]}
-          // numColumns={3}
           data={filteredDapps}
           renderItem={renderItem}
           keyExtractor={(item: Dapp) => item.url.toString()}

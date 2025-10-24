@@ -66,13 +66,7 @@ const DappsControllerStateProvider: React.FC<any> = ({ children }) => {
 
   return (
     <DappsControllerStateContext.Provider
-      value={useMemo(
-        () => ({
-          state,
-          currentDapp
-        }),
-        [state, currentDapp]
-      )}
+      value={useMemo(() => ({ state, currentDapp }), [state, currentDapp])}
     >
       {children}
     </DappsControllerStateContext.Provider>

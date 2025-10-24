@@ -7,11 +7,12 @@ import { Dapp } from '@ambire-common/interfaces/dapp'
 import ConnectedIcon from '@common/assets/svg/ConnectedIcon'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import StarIcon from '@common/assets/svg/StarIcon'
+import XIcon from '@common/assets/svg/XIcon'
 import Badge from '@common/components/Badge'
 import Text from '@common/components/Text'
 import Tooltip from '@common/components/Tooltip'
 import useTheme from '@common/hooks/useTheme'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_TY } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
@@ -21,12 +22,38 @@ import useBackgroundService from '@web/hooks/useBackgroundService'
 import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
 import TrustedIcon from '@web/modules/action-requests/screens/DappConnectScreen/components/TrustedIcon'
 import ManageDapp from '@web/modules/dapp-catalog/components/ManageDapp'
-import { getUiType } from '@web/utils/uiType'
 
 import getStyles from './styles'
 
+function formatTVL(tvl: number) {
+  let formatted
+  if (tvl >= 1_000_000_000) {
+    formatted = `${(tvl / 1_000_000_000).toFixed(1).replace(/\.0$/, '')}B`
+  } else if (tvl >= 1_000_000) {
+    formatted = `${(tvl / 1_000_000).toFixed(1).replace(/\.0$/, '')}M`
+  } else if (tvl >= 1_000) {
+    formatted = `${(tvl / 1_000).toFixed(1).replace(/\.0$/, '')}k`
+  } else {
+    formatted = tvl.toString()
+  }
+
+  return `TVL: ${formatted}`
+}
+
 const DappItem = (dapp: Dapp) => {
-  const { id, url, name, icon, description, isConnected, favorite, blacklisted, isCustom } = dapp
+  const {
+    id,
+    url,
+    name,
+    icon,
+    description,
+    isConnected,
+    favorite,
+    blacklisted,
+    isCustom,
+    tvl,
+    twitter
+  } = dapp
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const { styles, theme } = useTheme(getStyles)
   const { dispatch } = useBackgroundService()
@@ -77,6 +104,8 @@ const DappItem = (dapp: Dapp) => {
                     top: -3,
                     zIndex: 1
                   }}
+                  // @ts-ignore
+                  dataSet={{ tooltipId: id, tooltipContent: 'Verified app' }}
                 >
                   <TrustedIcon width={16} height={16} />
                 </View>
@@ -113,7 +142,30 @@ const DappItem = (dapp: Dapp) => {
                   >
                     <StarIcon isFilled={favorite} />
                   </Pressable>
-                  {!!isConnected && <ConnectedIcon style={spacings.mrTy} />}
+                  {!!isConnected && <ConnectedIcon style={spacings.mrTy} width={18} height={18} />}
+                  {!!tvl && (
+                    <View
+                      style={[
+                        spacings.phTy,
+                        { borderLeftWidth: 1, borderColor: theme.secondaryBorder }
+                      ]}
+                    >
+                      <Text fontSize={12} weight="semiBold" appearance="secondaryText">
+                        {formatTVL(tvl)}
+                      </Text>
+                    </View>
+                  )}
+                  {!!twitter && (
+                    <Pressable
+                      style={[
+                        spacings.phTy,
+                        { borderLeftWidth: 1, borderColor: theme.secondaryBorder }
+                      ]}
+                      onPress={() => openInTab({ url: `https://x.com/${twitter}` })}
+                    >
+                      <XIcon />
+                    </Pressable>
+                  )}
                   {!!blacklisted && (
                     <Badge text={t('Blacklisted')} type="error" style={spacings.mrTy} />
                   )}
@@ -143,16 +195,18 @@ const DappItem = (dapp: Dapp) => {
             </View>
           </View>
 
-          <Text
-            fontSize={12}
-            appearance="secondaryText"
-            numberOfLines={isConnected ? 2 : 3}
-            // @ts-ignore
-            dataSet={{ tooltipId: url, tooltipContent: description }}
-          >
+          <Text fontSize={12} appearance="secondaryText" numberOfLines={isConnected ? 2 : 3}>
             {description}
           </Text>
-          {!!getUiType().isPopup && <Tooltip id={url} delayShow={900} />}
+          <Tooltip
+            id={id}
+            delayShow={500}
+            style={{
+              fontSize: 12,
+              backgroundColor: theme.successBackground as string,
+              padding: SPACING_TY
+            }}
+          />
         </AnimatedPressable>
       </div>
       <ManageDapp
