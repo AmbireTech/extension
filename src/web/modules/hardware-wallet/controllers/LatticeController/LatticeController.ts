@@ -114,8 +114,9 @@ class LatticeController implements ExternalSignerController {
     const authChainId = chainId
     const authNonce = nonce
 
-    // TODO: Dirty way of implementing this. This below is copy-paste from the
-    // GridPlus `signAuthorization` in their functional API
+    // Preparing the EIP-7702 authorization payload is copied from the gridplus-sdk signAuthorization method:
+    // {@link https://github.com/GridPlus/gridplus-sdk/blob/8e0b1f53d975fbd3e1daa9cf65b50db54926ad50/src/api/signing.ts#L119-L142)
+    // TODO: Use directly their `signAuthorization` when migrating away from the Client API to the GridPlus functional API
     const MAGIC = Buffer.from([0x05]) // EIP-7702 magic byte
     const message = Buffer.concat([
       MAGIC,
@@ -132,6 +133,9 @@ class LatticeController implements ExternalSignerController {
     try {
       const response = await this.walletSDK.sign({ data: payload })
 
+      // Creating the signature components for the authorization is copied from the gridplus-sdk signAuthorization method:
+      // https://github.com/GridPlus/gridplus-sdk/blob/8e0b1f53d975fbd3e1daa9cf65b50db54926ad50/src/api/signing.ts#L149-L171
+      // TODO: Use directly their `signAuthorization` when migrating away from the Client API to the GridPlus functional API
       if (response.sig && (response as any).pubkey) {
         // Calculate the correct y-parity value using GridPlus SDK's utility
         const messageHash = Buffer.from(Hash.keccak256(message))
@@ -159,11 +163,16 @@ class LatticeController implements ExternalSignerController {
         return result
       }
 
-      throw new Error('Failed to get signature from device')
+      throw new Error(
+        'Problem occurred when trying to create the signature components for the EIP-7702 authorization.'
+      )
     } catch (error: any) {
-      throw new ExternalSignerError(error?.message || 'signAuthorization failed', {
-        sendCrashReport: true
-      })
+      throw new ExternalSignerError(
+        error?.message || 'Signing the EIP-7702 authorization failed.',
+        {
+          sendCrashReport: true
+        }
+      )
     }
   }
 
