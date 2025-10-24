@@ -6,6 +6,7 @@ import { ExternalKey, KeystoreSignerInterface } from '@ambire-common/interfaces/
 import { addHexPrefix } from '@ambire-common/utils/addHexPrefix'
 import { getHDPathIndices } from '@ambire-common/utils/hdPath'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
+import { stripHexPrefix } from '@ambire-common/utils/stripHexPrefix'
 import wait from '@ambire-common/utils/wait'
 import LatticeController, {
   GridPlusSDKConstants
@@ -204,7 +205,7 @@ class LatticeSigner implements KeystoreSignerInterface {
     }
 
     const res = await this.controller!.walletSDK!.sign(req)
-    if (!res.sig)
+    if (!res.sig || typeof res.sig.v === 'undefined')
       throw new ExternalSignerError(
         'Required signature data was found missing. Please try again later or contact Ambire support.',
         {
@@ -216,7 +217,10 @@ class LatticeSigner implements KeystoreSignerInterface {
     // signature and then use the #validateSigningKey instead.
     await this.#validateKeyExistsInTheCurrentWallet()
 
-    return addHexPrefix(`${res.sig.r}${res.sig.s}${res.sig.v.toString('hex')}`)
+    const strippedR = stripHexPrefix(res.sig.r)
+    const strippedS = stripHexPrefix(res.sig.s)
+    const strippedV = stripHexPrefix(toBeHex(Signature.getNormalizedV(res.sig.v)))
+    return addHexPrefix(`${strippedR}${strippedS}${strippedV}`)
   }
 
   sign7702: KeystoreSignerInterface['sign7702'] = async ({ chainId, contract, nonce }) => {
