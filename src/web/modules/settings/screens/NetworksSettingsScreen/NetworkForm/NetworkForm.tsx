@@ -189,7 +189,7 @@ const NetworkForm = ({
       explorerUrl: selectedNetwork?.explorerUrl || '',
       coingeckoPlatformId: (selectedNetwork?.platformId as string) || '',
       coingeckoNativeAssetId: (selectedNetwork?.nativeAssetId as string) || '',
-      customBundlerUrl: (selectedNetwork?.erc4337.customBundlerUrl as string) || ''
+      customBundlerUrl: (selectedNetwork?.customBundlerUrl as string) || ''
     }
   })
   const [rpcUrls, setRpcUrls] = useState(selectedNetwork?.rpcUrls || [])
@@ -437,17 +437,12 @@ const NetworkForm = ({
       if (selectedChainId === 'add-custom-network') {
         emptyFields = Object.keys(formFields).filter(
           (key) =>
-            ![
-              'rpcUrl',
-              'rpcUrls',
-              'coingeckoPlatformId',
-              'coingeckoNativeAssetId',
-              'customBundlerUrl'
-            ].includes(key) && !formFields[key].length
+            !['rpcUrl', 'rpcUrls', 'coingeckoPlatformId', 'coingeckoNativeAssetId'].includes(key) &&
+            !formFields[key].length
         )
       } else {
         emptyFields = Object.keys(formFields).filter(
-          (key) => ['explorerUrl', 'customBundlerUrl'].includes(key) && !formFields[key].length
+          (key) => ['explorerUrl'].includes(key) && !formFields[key].length
         )
       }
 
@@ -486,7 +481,8 @@ const NetworkForm = ({
             network: {
               rpcUrls,
               selectedRpcUrl,
-              explorerUrl: networkFormValues.explorerUrl
+              explorerUrl: networkFormValues.explorerUrl,
+              customBundlerUrl: networkFormValues.customBundlerUrl
             },
             chainId: BigInt(networkFormValues.chainId)
           }
