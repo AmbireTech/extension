@@ -1,19 +1,15 @@
 import { hexlify, Signature, toBeHex, Transaction, TransactionLike } from 'ethers'
 
 import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
-import { EIP7702Auth } from '@ambire-common/consts/7702'
 import { Hex } from '@ambire-common/interfaces/hex'
-import {
-  ExternalKey,
-  KeystoreSignerInterface,
-  TxnRequest
-} from '@ambire-common/interfaces/keystore'
-import { EIP7702Signature } from '@ambire-common/interfaces/signatures'
+import { ExternalKey, KeystoreSignerInterface } from '@ambire-common/interfaces/keystore'
 import { addHexPrefix } from '@ambire-common/utils/addHexPrefix'
 import { getHDPathIndices } from '@ambire-common/utils/hdPath'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import wait from '@ambire-common/utils/wait'
-import LatticeController, { GridPlusSDKConstants } from '@web/modules/hardware-wallet/controllers/LatticeController'
+import LatticeController, {
+  GridPlusSDKConstants
+} from '@web/modules/hardware-wallet/controllers/LatticeController'
 
 class LatticeSigner implements KeystoreSignerInterface {
   key: ExternalKey
@@ -233,15 +229,7 @@ class LatticeSigner implements KeystoreSignerInterface {
     return addHexPrefix(`${res.sig.r}${res.sig.s}${res.sig.v.toString('hex')}`)
   }
 
-  async sign7702({
-    chainId,
-    contract,
-    nonce
-  }: {
-    chainId: bigint
-    contract: Hex
-    nonce: bigint
-  }): Promise<EIP7702Signature> {
+  sign7702: KeystoreSignerInterface['sign7702'] = async ({ chainId, contract, nonce }) => {
     await this.#prepareForSigning()
 
     const signerPath = getHDPathIndices(this.key.meta.hdPathTemplate, this.key.meta.index)
@@ -255,11 +243,10 @@ class LatticeSigner implements KeystoreSignerInterface {
     return { yParity, r, s }
   }
 
-  // eslint-disable-next-line class-methods-use-this
-  signTransactionTypeFour = async (
-    txnRequest: TxnRequest,
-    eip7702Auth: EIP7702Auth
-  ): Promise<Hex> => {
+  signTransactionTypeFour: KeystoreSignerInterface['signTransactionTypeFour'] = async ({
+    txnRequest,
+    eip7702Auth
+  }) => {
     await this.#prepareForSigning()
 
     // TODO: Check firmware version for EIP-7702 support?
