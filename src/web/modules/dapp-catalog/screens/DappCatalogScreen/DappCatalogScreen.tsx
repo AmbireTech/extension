@@ -34,10 +34,10 @@ import { getUiType } from '@web/utils/uiType'
 import getStyles from './styles'
 
 type FilterButtonType = {
-  value: 'all' | 'favorites' | 'connected'
+  value: 'favorites' | 'connected'
   icon: React.JSX.Element
   active?: boolean
-  onPress: (type: 'all' | 'favorites' | 'connected') => void
+  onPress: (type: 'favorites' | 'connected') => void
   style?: ViewStyle
   textColor?: ColorValue
   hoveredStyle?: ViewStyle
@@ -119,35 +119,36 @@ const FilterButton = React.memo(
 const { isPopup } = getUiType()
 
 const DappCatalogScreen = () => {
-  const { control, watch, setValue } = useForm({
-    defaultValues: { search: '' }
-  })
-
+  const { control, watch, setValue } = useForm({ defaultValues: { search: '' } })
   const { t } = useTranslation()
   const { state } = useDappsControllerState()
-  const [predefinedFilter, setPredefinedFilter] = useState<
-    'all' | 'favorites' | 'connected' | null
-  >(null)
   const search = watch('search')
   const debouncedSearch = useDebounce({ value: search, delay: 350 })
   const [initialDAppListState, setInitialDAppListState] = useState<Dapp[]>([])
   const [network, setNetwork] = useState<Network | null>(null)
   const [category, setCategory] = useState<string | null>(null)
+  const [favoritesSelected, setFavoritesSelected] = useState(false)
+  const [connectedSelected, setConnectedSelected] = useState(false)
   const { allNetworks } = useNetworksControllerState()
   const { theme } = useTheme()
 
   const filteredDapps = useMemo(() => {
-    const allDapps = state.dapps
-    if (search && debouncedSearch) {
-      if (predefinedFilter) setPredefinedFilter(null)
-      return allDapps.filter((dapp) => dapp.name.toLowerCase().includes(search.toLowerCase()))
-    }
-    if (!predefinedFilter) setPredefinedFilter('all')
-    if (predefinedFilter === 'favorites') return allDapps.filter((dapp) => !!dapp.favorite)
-    if (predefinedFilter === 'connected') return allDapps.filter((dapp) => dapp.isConnected)
+    if (!state?.dapps?.length) return []
 
-    return allDapps
-  }, [state.dapps, search, debouncedSearch, predefinedFilter])
+    return state.dapps.filter((dapp) => {
+      const searchMatch =
+        !debouncedSearch ||
+        dapp.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        dapp.url.toLowerCase().includes(debouncedSearch.toLowerCase())
+
+      const networkMatch = !network || dapp.chainIds?.includes(Number(network.chainId))
+      const categoryMatch = !category || dapp.category?.toLowerCase() === category.toLowerCase()
+      const favoritesMatch = !favoritesSelected || dapp.favorite
+      const connectedMatch = !connectedSelected || dapp.isConnected
+
+      return searchMatch && networkMatch && categoryMatch && favoritesMatch && connectedMatch
+    })
+  }, [state.dapps, debouncedSearch, network, category, favoritesSelected, connectedSelected])
 
   const handleSetNetworkValue = useCallback(
     (networkOption: SelectValue) => {
@@ -156,7 +157,6 @@ const DappCatalogScreen = () => {
         return
       }
       setNetwork(allNetworks.filter((n) => n.name === networkOption.value)[0])
-      setPredefinedFilter('all')
       setValue('search', '')
     },
     [allNetworks, setValue]
@@ -170,7 +170,7 @@ const DappCatalogScreen = () => {
           {t('All networks')}
         </Text>
       ),
-      icon: <NetworksIcon width={18} height={18} color={theme.iconPrimary} />
+      icon: <NetworksIcon width={17} height={17} color={theme.iconPrimary} />
     }),
     [theme, t]
   )
@@ -198,7 +198,6 @@ const DappCatalogScreen = () => {
         return
       }
       setCategory(categoryOption.value as string)
-      setPredefinedFilter('all')
       setValue('search', '')
     },
     [setValue]
@@ -232,8 +231,9 @@ const DappCatalogScreen = () => {
   )
 
   const handleSelectPredefinedFilter = useCallback(
-    (type: 'all' | 'favorites' | 'connected') => {
-      setPredefinedFilter(type)
+    (type: 'favorites' | 'connected') => {
+      if (type === 'favorites') setFavoritesSelected((p) => !p)
+      if (type === 'connected') setConnectedSelected((p) => !p)
       setValue('search', '')
     },
     [setValue]
@@ -323,23 +323,19 @@ const DappCatalogScreen = () => {
             />
             <FilterButton
               value="favorites"
-              active={predefinedFilter === 'favorites'}
+              active={favoritesSelected}
               onPress={handleSelectPredefinedFilter}
-              icon={<StarIcon isFilled={predefinedFilter === 'favorites'} />}
+              icon={<StarIcon isFilled={favoritesSelected} />}
             />
             <FilterButton
               value="connected"
-              active={predefinedFilter === 'connected'}
+              active={connectedSelected}
               onPress={handleSelectPredefinedFilter}
               icon={
                 <ConnectedIcon
                   width={18}
                   height={18}
-                  color={
-                    predefinedFilter === 'connected'
-                      ? theme.primaryBackground
-                      : theme.successDecorative
-                  }
+                  color={connectedSelected ? theme.primaryBackground : theme.successDecorative}
                 />
               }
               hoveredStyle={{ borderColor: theme.successDecorative }}

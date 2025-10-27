@@ -115,7 +115,7 @@ const DappItem = (dapp: Dapp) => {
                 size={40}
                 fallback={fallbackIcon}
                 containerStyle={{ backgroundColor: theme.primaryBackground }}
-                iconScale={0.8}
+                iconScale={1}
                 imageStyle={{ borderRadius: BORDER_RADIUS_PRIMARY }}
               />
             </View>
@@ -205,10 +205,12 @@ const DappItem = (dapp: Dapp) => {
           <Tooltip
             id={id}
             delayShow={500}
+            border={`1px solid ${theme.successDecorative as string}`}
             style={{
               fontSize: 12,
               backgroundColor: theme.successBackground as string,
-              padding: SPACING_TY
+              padding: SPACING_TY,
+              color: theme.successDecorative as string
             }}
           />
         </AnimatedPressable>
