@@ -24,11 +24,12 @@ const getStyles = (theme: ThemeProps) =>
       overflow: 'hidden'
     },
     filterButtonHovered: {
-      borderColor: theme.primary
+      borderColor: theme.primary,
+      backgroundColor: theme.secondaryBackground
     },
     filterButtonActive: {
-      backgroundColor: theme.primary,
-      borderColor: theme.primary
+      backgroundColor: theme.primaryLight,
+      borderColor: theme.primaryLight
     }
   })
 

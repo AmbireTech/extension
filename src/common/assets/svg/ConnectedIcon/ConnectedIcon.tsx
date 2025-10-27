@@ -14,7 +14,7 @@ const ConnectedIcon: React.FC<SvgProps> = ({ width = 20, height = 20, color, ...
             d="M29.714,17.506,24,11.792l1.714-1.714a4.041,4.041,0,1,1,5.714,5.714Z"
             transform="translate(-24 -7.221)"
             fill="none"
-            stroke={theme.successDecorative}
+            stroke={color || theme.successDecorative}
             strokeLinecap="round"
             strokeLinejoin="round"
             strokeWidth="1.5"
@@ -23,7 +23,7 @@ const ConnectedIcon: React.FC<SvgProps> = ({ width = 20, height = 20, color, ...
             d="M37,8.857,39.857,6"
             transform="translate(-29.572 -6)"
             fill="none"
-            stroke={theme.successDecorative}
+            stroke={color || theme.successDecorative}
             strokeLinecap="round"
             strokeLinejoin="round"
             strokeWidth="1.5"
@@ -34,7 +34,7 @@ const ConnectedIcon: React.FC<SvgProps> = ({ width = 20, height = 20, color, ...
             d="M11.792,24l5.714,5.714-1.714,1.714a4.041,4.041,0,1,1-5.714-5.714Z"
             transform="translate(-7.221 -22.857)"
             fill="none"
-            stroke={theme.successDecorative}
+            stroke={color || theme.successDecorative}
             strokeLinecap="round"
             strokeLinejoin="round"
             strokeWidth="1.5"
@@ -43,7 +43,7 @@ const ConnectedIcon: React.FC<SvgProps> = ({ width = 20, height = 20, color, ...
             d="M6,39.857,8.857,37"
             transform="translate(-6 -28.429)"
             fill="none"
-            stroke={theme.successDecorative}
+            stroke={color || theme.successDecorative}
             strokeLinecap="round"
             strokeLinejoin="round"
             strokeWidth="1.5"
@@ -52,7 +52,7 @@ const ConnectedIcon: React.FC<SvgProps> = ({ width = 20, height = 20, color, ...
             d="M18.286,22,16,24.286"
             transform="translate(-10.286 -22)"
             fill="none"
-            stroke={theme.successDecorative}
+            stroke={color || theme.successDecorative}
             strokeLinecap="round"
             strokeLinejoin="round"
             strokeWidth="1.5"
@@ -62,7 +62,7 @@ const ConnectedIcon: React.FC<SvgProps> = ({ width = 20, height = 20, color, ...
             d="M24.286,28,22,30.286"
             transform="translate(-12.858 -24.572)"
             fill="none"
-            stroke={theme.successDecorative}
+            stroke={color || theme.successDecorative}
             strokeLinecap="round"
             strokeLinejoin="round"
             strokeWidth="1.5"

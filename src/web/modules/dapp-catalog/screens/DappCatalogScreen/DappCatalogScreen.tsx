@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
-import { View, ViewStyle } from 'react-native'
+import { ColorValue, View, ViewStyle } from 'react-native'
 
 import { Dapp } from '@ambire-common/interfaces/dapp'
 import { Network } from '@ambire-common/interfaces/network'
@@ -18,8 +18,7 @@ import Text from '@common/components/Text'
 import useDebounce from '@common/hooks/useDebounce'
 import useTheme from '@common/hooks/useTheme'
 import Header from '@common/modules/header/components/Header'
-import spacings, { SPACING_MI, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
+import spacings, { SPACING_MI, SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import {
@@ -40,75 +39,82 @@ type FilterButtonType = {
   active?: boolean
   onPress: (type: 'all' | 'favorites' | 'connected') => void
   style?: ViewStyle
+  textColor?: ColorValue
+  hoveredStyle?: ViewStyle
+  hoveredTextColor?: ColorValue
+  activeStyle?: ViewStyle
+  activeTextColor?: ColorValue
 }
 
-const ALL_NETWORKS_OPTION = {
-  value: 'all',
-  label: (
-    <Text weight="medium" fontSize={12} numberOfLines={1} appearance="secondaryText">
-      All networks
-    </Text>
-  ),
-  icon: <NetworksIcon width={18} height={18} />
-}
+const FilterButton = React.memo(
+  ({
+    value,
+    icon,
+    active,
+    style,
+    textColor,
+    hoveredStyle,
+    hoveredTextColor,
+    activeStyle,
+    activeTextColor,
+    onPress
+  }: FilterButtonType) => {
+    const { styles, theme } = useTheme(getStyles)
 
-const ALL_CATEGORIES_OPTION = {
-  value: 'all',
-  label: (
-    <Text weight="medium" fontSize={12} numberOfLines={1} appearance="secondaryText">
-      All categories
-    </Text>
-  )
-}
+    const buttonColors = useMemo(
+      () => ({
+        filterButton: [
+          {
+            property: 'borderColor',
+            from: theme.secondaryBorder,
+            to: theme.primary
+          }
+        ]
+      }),
+      [theme]
+    )
 
-const FilterButton = React.memo(({ value, icon, active, style, onPress }: FilterButtonType) => {
-  const { styles, theme } = useTheme(getStyles)
+    const [bind, animatedStyle, isHovered] = useMultiHover({
+      values: buttonColors.filterButton as any
+    })
 
-  const buttonColors = useMemo(
-    () => ({
-      filterButton: [
-        {
-          property: 'borderColor',
-          from: theme.secondaryBorder,
-          to: theme.primary
-        }
-      ]
-    }),
-    [theme]
-  )
-
-  const [bind, animatedStyle] = useMultiHover({
-    values: buttonColors.filterButton as any
-  })
-
-  return (
-    <AnimatedPressable
-      {...bind}
-      style={[
-        styles.filterButton,
-        animatedStyle,
-        active && styles.filterButtonHovered,
-        active && styles.filterButtonActive,
-        style
-      ]}
-      onPress={() => onPress(value)}
-    >
-      {({ hovered }: any) => (
-        <>
-          <Text
-            fontSize={12}
-            weight="medium"
-            style={spacings.mrTy}
-            color={active ? '#FFF' : hovered ? theme.primary : theme.secondaryText}
-          >
-            {`${value.charAt(0).toUpperCase()}${value.slice(1)}`}
-          </Text>
-          {icon}
-        </>
-      )}
-    </AnimatedPressable>
-  )
-})
+    return (
+      <AnimatedPressable
+        {...bind}
+        style={[
+          styles.filterButton,
+          animatedStyle,
+          isHovered && styles.filterButtonHovered,
+          active && styles.filterButtonActive,
+          style,
+          isHovered && hoveredStyle,
+          active && activeStyle
+        ]}
+        onPress={() => onPress(value)}
+      >
+        {({ hovered }: any) => (
+          <>
+            <Text
+              fontSize={12}
+              weight="medium"
+              style={spacings.mrTy}
+              color={
+                active
+                  ? activeTextColor || theme.primaryBackground
+                  : hovered
+                  ? hoveredTextColor || theme.primary
+                  : textColor || theme.secondaryText
+              }
+            >
+              {`${value.charAt(0).toUpperCase()}${value.slice(1)}`}
+            </Text>
+            {icon}
+          </>
+        )}
+      </AnimatedPressable>
+    )
+  }
+)
 
 const { isPopup } = getUiType()
 
@@ -128,7 +134,7 @@ const DappCatalogScreen = () => {
   const [network, setNetwork] = useState<Network | null>(null)
   const [category, setCategory] = useState<string | null>(null)
   const { allNetworks } = useNetworksControllerState()
-  const { theme, themeType } = useTheme()
+  const { theme } = useTheme()
 
   const filteredDapps = useMemo(() => {
     const allDapps = state.dapps
@@ -143,10 +149,6 @@ const DappCatalogScreen = () => {
     return allDapps
   }, [state.dapps, search, debouncedSearch, predefinedFilter])
 
-  if (search) {
-    console.log(filteredDapps)
-  }
-
   const handleSetNetworkValue = useCallback(
     (networkOption: SelectValue) => {
       if (networkOption.value === 'all') {
@@ -158,6 +160,19 @@ const DappCatalogScreen = () => {
       setValue('search', '')
     },
     [allNetworks, setValue]
+  )
+
+  const ALL_NETWORKS_OPTION = useMemo(
+    () => ({
+      value: 'all',
+      label: (
+        <Text weight="medium" fontSize={12} numberOfLines={1} appearance="secondaryText">
+          {t('All networks')}
+        </Text>
+      ),
+      icon: <NetworksIcon width={18} height={18} color={theme.iconPrimary} />
+    }),
+    [theme, t]
   )
 
   const networksOptions: SelectValue[] = useMemo(
@@ -173,7 +188,7 @@ const DappCatalogScreen = () => {
         icon: <NetworkIcon size={18} key={n.chainId.toString()} id={n.chainId.toString()} />
       }))
     ],
-    [allNetworks]
+    [allNetworks, ALL_NETWORKS_OPTION]
   )
 
   const handleSetCategoryValue = useCallback(
@@ -189,6 +204,18 @@ const DappCatalogScreen = () => {
     [setValue]
   )
 
+  const ALL_CATEGORIES_OPTION = useMemo(
+    () => ({
+      value: 'all',
+      label: (
+        <Text weight="medium" fontSize={12} numberOfLines={1} appearance="secondaryText">
+          {t('All categories')}
+        </Text>
+      )
+    }),
+    [t]
+  )
+
   const categoryOptions: SelectValue[] = useMemo(
     () => [
       ALL_CATEGORIES_OPTION,
@@ -201,7 +228,7 @@ const DappCatalogScreen = () => {
         )
       }))
     ],
-    [state.categories]
+    [state.categories, ALL_CATEGORIES_OPTION]
   )
 
   const handleSelectPredefinedFilter = useCallback(
@@ -244,19 +271,28 @@ const DappCatalogScreen = () => {
             <Select
               setValue={handleSetNetworkValue}
               containerStyle={{ width: 164, marginBottom: 0 }}
+              menuOptionHeight={32}
               options={networksOptions}
+              menuProps={{ width: 200 }}
               value={
                 networksOptions.filter((opt) => opt.value === network?.name)[0] ??
                 ALL_NETWORKS_OPTION
               }
+              clearValue={() => setNetwork(null)}
+              withClearButton={!!network && network?.name !== ALL_NETWORKS_OPTION.value}
               size="sm"
               selectBorderWrapperStyle={{ borderRadius: 50 }}
               selectStyle={{
                 borderRadius: 50,
                 height: 32,
-                ...(themeType === THEME_TYPES.DARK
-                  ? { backgroundColor: theme.tertiaryBackground }
+                backgroundColor: theme.primaryBackground,
+                ...(network && network.name !== ALL_CATEGORIES_OPTION.value
+                  ? { borderColor: theme.primaryLight }
                   : {})
+              }}
+              hoveredSelectStyle={{
+                backgroundColor: theme.secondaryBackground,
+                borderColor: theme.primaryLight
               }}
             />
             <Select
@@ -266,14 +302,23 @@ const DappCatalogScreen = () => {
               value={
                 categoryOptions.filter((opt) => opt.value === category)[0] ?? ALL_CATEGORIES_OPTION
               }
+              menuOptionHeight={32}
+              clearValue={() => setCategory(null)}
+              withClearButton={!!category && category !== ALL_CATEGORIES_OPTION.value}
               size="sm"
+              menuProps={{ width: 230 }}
               selectBorderWrapperStyle={{ borderRadius: 50 }}
               selectStyle={{
                 borderRadius: 50,
                 height: 32,
-                ...(themeType === THEME_TYPES.DARK
-                  ? { backgroundColor: theme.tertiaryBackground }
+                backgroundColor: theme.primaryBackground,
+                ...(category && category !== ALL_CATEGORIES_OPTION.value
+                  ? { borderColor: theme.primaryLight }
                   : {})
+              }}
+              hoveredSelectStyle={{
+                backgroundColor: theme.secondaryBackground,
+                borderColor: theme.primaryLight
               }}
             />
             <FilterButton
@@ -286,7 +331,20 @@ const DappCatalogScreen = () => {
               value="connected"
               active={predefinedFilter === 'connected'}
               onPress={handleSelectPredefinedFilter}
-              icon={<ConnectedIcon />}
+              icon={
+                <ConnectedIcon
+                  width={18}
+                  height={18}
+                  color={
+                    predefinedFilter === 'connected'
+                      ? theme.primaryBackground
+                      : theme.successDecorative
+                  }
+                />
+              }
+              hoveredStyle={{ borderColor: theme.successDecorative }}
+              hoveredTextColor={theme.successDecorative}
+              activeStyle={{ borderColor: theme.primaryLight }}
             />
           </View>
         </View>

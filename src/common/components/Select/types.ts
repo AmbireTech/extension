@@ -24,6 +24,7 @@ export type CommonSelectProps = {
   id?: string
   value?: SelectValue | null
   setValue?: (value: SelectValue) => void
+  clearValue?: () => void
   handleSearch?: (search: string) => void
   defaultValue?: {}
   placeholder?: string
@@ -35,13 +36,24 @@ export type CommonSelectProps = {
   containerStyle?: ViewStyle
   selectBorderWrapperStyle?: ViewStyle
   selectStyle?: ViewStyle
+  hoveredSelectStyle?: ViewStyle
   labelStyle?: TextStyle
   emptyListPlaceholderText?: string
   disabled?: boolean
   menuOptionHeight?: number
   menuStyle?: ViewStyle
+  menuProps?: {
+    x?: number
+    y?: number
+    height?: number
+    width?: number
+    position?: 'top' | 'bottom'
+    maxDynamicHeight?: number
+    windowHeight?: number
+  }
   menuLeftHorizontalOffset?: number
   withSearch?: boolean
+  withClearButton?: boolean
   searchPlaceholder?: string
   testID?: string
   extraSearchProps?: { [key: string]: string }
