@@ -2,7 +2,7 @@ import { saParams } from 'constants/env'
 
 import { test } from '../../../fixtures/pageObjects'
 
-test.describe('network management', () => {
+test.describe('network management', { tag: '@networkManagement' }, () => {
   test.beforeEach(async ({ pages }) => {
     await pages.initWithStorage(saParams)
   })

@@ -1,13 +1,11 @@
-import { baParams } from 'constants/env'
-
-import { expect } from '@playwright/test'
+import { saParams } from 'constants/env'
 
 import tokens from '../../constants/tokens'
 import { test } from '../../fixtures/pageObjects'
 
-test.describe('gasTank - Basic Account', () => {
+test.describe('gasTank - Smart Account', { tag: '@gasTank' }, () => {
   test.beforeEach(async ({ pages }) => {
-    await pages.initWithStorage(baParams)
+    await pages.initWithStorage(saParams)
   })
 
   test.afterEach(async ({ context }) => {
