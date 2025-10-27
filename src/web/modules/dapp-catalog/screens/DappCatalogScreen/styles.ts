@@ -16,7 +16,7 @@ const getStyles = (theme: ThemeProps) =>
       borderRadius: 50,
       borderWidth: 1,
       borderColor: theme.secondaryBorder,
-      ...spacings.ph,
+      ...spacings.phTy,
       height: 32,
       ...flexbox.directionRow,
       ...flexbox.alignCenter,

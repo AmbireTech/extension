@@ -45,7 +45,7 @@ type FilterButtonType = {
 const ALL_NETWORKS_OPTION = {
   value: 'all',
   label: (
-    <Text weight="medium" fontSize={12} numberOfLines={1}>
+    <Text weight="medium" fontSize={12} numberOfLines={1} appearance="secondaryText">
       All networks
     </Text>
   ),
@@ -55,7 +55,7 @@ const ALL_NETWORKS_OPTION = {
 const ALL_CATEGORIES_OPTION = {
   value: 'all',
   label: (
-    <Text weight="medium" fontSize={12} numberOfLines={1}>
+    <Text weight="medium" fontSize={12} numberOfLines={1} appearance="secondaryText">
       All categories
     </Text>
   )
@@ -142,6 +142,10 @@ const DappCatalogScreen = () => {
 
     return allDapps
   }, [state.dapps, search, debouncedSearch, predefinedFilter])
+
+  if (search) {
+    console.log(filteredDapps)
+  }
 
   const handleSetNetworkValue = useCallback(
     (networkOption: SelectValue) => {
@@ -239,7 +243,7 @@ const DappCatalogScreen = () => {
           <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifySpaceBetween]}>
             <Select
               setValue={handleSetNetworkValue}
-              containerStyle={{ width: 164, marginBottom: 0, marginRight: SPACING_TY }}
+              containerStyle={{ width: 164, marginBottom: 0 }}
               options={networksOptions}
               value={
                 networksOptions.filter((opt) => opt.value === network?.name)[0] ??
@@ -257,7 +261,7 @@ const DappCatalogScreen = () => {
             />
             <Select
               setValue={handleSetCategoryValue}
-              containerStyle={{ width: 134, marginBottom: 0, marginRight: SPACING_TY }}
+              containerStyle={{ width: 164, marginBottom: 0 }}
               options={categoryOptions}
               value={
                 categoryOptions.filter((opt) => opt.value === category)[0] ?? ALL_CATEGORIES_OPTION
@@ -275,7 +279,6 @@ const DappCatalogScreen = () => {
             <FilterButton
               value="favorites"
               active={predefinedFilter === 'favorites'}
-              style={spacings.mrTy}
               onPress={handleSelectPredefinedFilter}
               icon={<StarIcon isFilled={predefinedFilter === 'favorites'} />}
             />
