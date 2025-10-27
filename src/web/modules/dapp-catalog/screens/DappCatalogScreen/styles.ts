@@ -2,6 +2,7 @@ import { StyleSheet, ViewStyle } from 'react-native'
 
 import spacings from '@common/styles/spacings'
 import { ThemeProps } from '@common/styles/themeConfig'
+import flexbox from '@common/styles/utils/flexbox'
 
 interface Style {
   filterButton: ViewStyle
@@ -16,7 +17,10 @@ const getStyles = (theme: ThemeProps) =>
       borderWidth: 1,
       borderColor: theme.secondaryBorder,
       ...spacings.ph,
-      ...spacings.pvTy,
+      height: 32,
+      ...flexbox.directionRow,
+      ...flexbox.alignCenter,
+      ...flexbox.justifyCenter,
       overflow: 'hidden'
     },
     filterButtonHovered: {

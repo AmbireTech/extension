@@ -33,6 +33,7 @@ export type CommonSelectProps = {
   mode?: 'select' | 'bottomSheet'
   menuPosition?: 'top' | 'bottom'
   containerStyle?: ViewStyle
+  selectBorderWrapperStyle?: ViewStyle
   selectStyle?: ViewStyle
   labelStyle?: TextStyle
   emptyListPlaceholderText?: string

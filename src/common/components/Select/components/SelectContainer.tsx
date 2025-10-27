@@ -29,6 +29,7 @@ const SelectContainer: FC<Props> = ({
   value,
   placeholder,
   containerStyle,
+  selectBorderWrapperStyle,
   selectStyle,
   labelStyle,
   menuStyle,
@@ -91,6 +92,7 @@ const SelectContainer: FC<Props> = ({
           toggleMenu={toggleMenu}
           value={value}
           placeholder={placeholder}
+          selectBorderWrapperStyle={selectBorderWrapperStyle}
           selectStyle={selectStyle}
           size={size}
         />

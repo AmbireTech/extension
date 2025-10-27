@@ -16,7 +16,7 @@ import { Option } from './MenuOption'
 
 type SelectedMenuOptionProps = Pick<
   SelectProps,
-  'disabled' | 'value' | 'placeholder' | 'selectStyle' | 'size'
+  'disabled' | 'value' | 'placeholder' | 'selectStyle' | 'selectBorderWrapperStyle' | 'size'
 > & {
   isMenuOpen: boolean
   selectRef: React.RefObject<View>
@@ -31,6 +31,7 @@ const SelectedMenuOption: FC<SelectedMenuOptionProps> = ({
   value,
   placeholder,
   selectStyle,
+  selectBorderWrapperStyle,
   size
 }) => {
   const { t } = useTranslation()
@@ -54,7 +55,8 @@ const SelectedMenuOption: FC<SelectedMenuOptionProps> = ({
         isMenuOpen && {
           borderColor:
             themeType === THEME_TYPES.DARK ? `${theme.linkText as string}35` : theme.infoBackground
-        }
+        },
+        selectBorderWrapperStyle
       ]}
       onPress={onPressWrapped}
     >
