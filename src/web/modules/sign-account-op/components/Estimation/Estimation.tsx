@@ -27,7 +27,7 @@ import ManifestImage from '@web/components/ManifestImage'
 import { openInTab } from '@web/extension-services/background/webapi/tab'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 
-import Button from '@common/components/Button'
+import BundlerWarning from './components/bundlerWarning'
 import EstimationSkeleton from './components/EstimationSkeleton'
 import PayOption from './components/PayOption'
 import { NO_FEE_OPTIONS } from './consts'
@@ -552,35 +552,10 @@ const Estimation = ({
           />
         </>
       )}
-      {bundlerNonceDiscrepancy && (
-        <View
-          style={[
-            flexbox.directionRow,
-            spacings.mt,
-            flexbox.alignCenter,
-            flexbox.justifySpaceBetween
-          ]}
-        >
-          <Text fontSize={12} appearance="warningText">
-            {t(bundlerNonceDiscrepancy.title)}
-          </Text>
-          <Button
-            type="warning"
-            text={t('Retry')}
-            onPress={() => {
-              dispatch({
-                type: 'SIGN_ACCOUNT_OP_REESTIMATE',
-                params: {
-                  type: signAccountOpState.type
-                }
-              })
-            }}
-            hasBottomSpacing={false}
-            size="tiny"
-            style={{ width: 98 }}
-          />
-        </View>
-      )}
+      <BundlerWarning
+        signAccountOpState={signAccountOpState}
+        bundlerNonceDiscrepancy={bundlerNonceDiscrepancy}
+      />
     </>
   )
 }

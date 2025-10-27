@@ -287,14 +287,14 @@ export const handleActions = async (
     }
     case 'SIGN_ACCOUNT_OP_REESTIMATE': {
       if (params.type === 'default') {
-        return mainCtrl?.signAccountOp?.simulate()
+        return mainCtrl?.signAccountOp?.retry('simulate')
       }
       if (params.type === 'one-click-swap-and-bridge') {
-        return mainCtrl?.swapAndBridge?.signAccountOpController?.estimate()
+        return mainCtrl?.swapAndBridge?.signAccountOpController?.retry('estimate')
       }
 
       // transfer
-      return mainCtrl?.transfer?.signAccountOpController?.estimate()
+      return mainCtrl?.transfer?.signAccountOpController?.retry('estimate')
     }
 
     case 'SELECTED_ACCOUNT_SET_DASHBOARD_NETWORK_FILTER': {
