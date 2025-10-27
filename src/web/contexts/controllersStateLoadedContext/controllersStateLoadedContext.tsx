@@ -1,10 +1,13 @@
-import React, { createContext, useEffect, useMemo, useState } from 'react'
+import React, { createContext, useEffect, useMemo, useRef, useState } from 'react'
 
+import { ControllerInterface } from '@ambire-common/interfaces/controller'
+import { captureMessage } from '@common/config/analytics/CrashAnalytics.web'
+import { APP_VERSION } from '@common/config/env'
+import { ControllersMappingType } from '@web/extension-services/background/types'
 import useAccountPickerControllerState from '@web/hooks/useAccountPickerControllerState'
 import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
 import useActivityControllerState from '@web/hooks/useActivityControllerState'
 import useAddressBookControllerState from '@web/hooks/useAddressBookControllerState'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import useBannersControllerState from '@web/hooks/useBannersControllerState'
 import useContractNamesControllerState from '@web/hooks/useContractNamesController/useContractNamesController'
 import useDappsControllerState from '@web/hooks/useDappsControllerState'
@@ -38,237 +41,182 @@ const ControllersStateLoadedContext = createContext<{
 
 const { isPopup } = getUiType()
 
+const isStateLoaded = (state: any) => {
+  if (!state || !Object.keys(state).length) return false
+  if ('isReady' in state) return state.isReady === true
+  return true
+}
+
+type Controllers = {
+  [K in keyof ControllersMappingType]: ControllerInterface<ControllersMappingType[K]>
+}
+
+type ControllersToWait = Omit<
+  Controllers,
+  'signAccountOp' | 'autoLock' | 'transfer' | 'defiPositions' | 'autoLogin'
+>
+
 const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
-  const [startTime] = useState(() => Date.now())
-
+  const startTimeRef = useRef(Date.now())
+  const timeoutRef = useRef<NodeJS.Timeout>()
+  const errorDataRef = useRef<any>(null)
+  // Safeguard against a potential race condition where one of the controller
+  // states might not update properly and the `areControllerStatesLoaded`
+  // might get stuck in `false` state forever. If the timeout gets reached,
+  // the app displays feedback to the user (via the
+  // `isStatesLoadingTakingTooLong` flag).
   const [areControllerStatesLoaded, setAreControllerStatesLoaded] = useState(false)
-  const [shouldWaitForMainCtrlStatus, setShouldWaitForMainCtrlStatus] = useState(false)
   const [isStatesLoadingTakingTooLong, setIsStatesLoadingTakingTooLong] = useState(false)
-  const { dispatch } = useBackgroundService()
-  const accountPickerState = useAccountPickerControllerState()
-  const keystoreState = useKeystoreControllerState()
-  const mainState = useMainControllerState()
-  const storageCtrl = useStorageControllerState()
-  const uiCtrl = useUiControllerState()
-  const networksState = useNetworksControllerState()
-  const providersState = useProvidersControllerState()
-  const accountsState = useAccountsControllerState()
-  const selectedAccountState = useSelectedAccountControllerState()
+
+  const accountPicker = useAccountPickerControllerState()
+  const keystore = useKeystoreControllerState()
+  const main = useMainControllerState()
+  const storage = useStorageControllerState()
+  const ui = useUiControllerState()
+  const networks = useNetworksControllerState()
+  const providers = useProvidersControllerState()
+  const accounts = useAccountsControllerState()
+  const selectedAccount = useSelectedAccountControllerState()
   const walletState = useWalletStateController()
-  const signMessageState = useSignMessageControllerState()
-  const requestsState = useRequestsControllerState()
-  const activityState = useActivityControllerState()
-  const portfolioState = usePortfolioControllerState()
-  const emailVaultState = useEmailVaultControllerState()
-  const phishingState = usePhishingControllerState()
-  const { state: dappsState } = useDappsControllerState()
-  const addressBookState = useAddressBookControllerState()
-  const domainsControllerState = useDomainsControllerState()
-  const inviteControllerState = useInviteControllerState()
-  const contractNamesState = useContractNamesControllerState()
-  const bannersState = useBannersControllerState()
+  const signMessage = useSignMessageControllerState()
+  const requests = useRequestsControllerState()
+  const activity = useActivityControllerState()
+  const portfolio = usePortfolioControllerState()
+  const emailVault = useEmailVaultControllerState()
+  const phishing = usePhishingControllerState()
+  const dapps = useDappsControllerState().state
+  const addressBook = useAddressBookControllerState()
+  const domains = useDomainsControllerState()
+  const invite = useInviteControllerState()
+  const contractNames = useContractNamesControllerState()
+  const banner = useBannersControllerState()
+  const swapAndBridge = useSwapAndBridgeControllerState()
+  const extensionUpdate = useExtensionUpdateControllerState()
+  const featureFlags = useFeatureFlagsControllerState()
 
-  const swapAndBridgeControllerState = useSwapAndBridgeControllerState()
-  const extensionUpdateControllerState = useExtensionUpdateControllerState()
-  const featureFlagsControllerState = useFeatureFlagsControllerState()
+  const controllers: ControllersToWait = useMemo(
+    () => ({
+      accountPicker,
+      keystore,
+      main,
+      storage,
+      ui,
+      networks,
+      providers,
+      accounts,
+      selectedAccount,
+      walletState,
+      signMessage,
+      requests,
+      activity,
+      portfolio,
+      emailVault,
+      phishing,
+      dapps,
+      addressBook,
+      domains,
+      invite,
+      contractNames,
+      banner,
+      swapAndBridge,
+      extensionUpdate,
+      featureFlags
+    }),
+    [
+      accountPicker,
+      keystore,
+      main,
+      storage,
+      ui,
+      networks,
+      providers,
+      accounts,
+      selectedAccount,
+      walletState,
+      signMessage,
+      requests,
+      activity,
+      portfolio,
+      emailVault,
+      phishing,
+      dapps,
+      addressBook,
+      domains,
+      invite,
+      contractNames,
+      banner,
+      swapAndBridge,
+      extensionUpdate,
+      featureFlags
+    ]
+  )
 
-  const hasMainState: boolean = useMemo(
-    () => !!Object.keys(mainState).length && !!mainState?.isReady,
-    [mainState]
-  )
-  const hasStorageState: boolean = useMemo(() => !!Object.keys(storageCtrl).length, [storageCtrl])
-  const hasUiState: boolean = useMemo(() => !!Object.keys(uiCtrl).length, [uiCtrl])
-  const hasNetworksState: boolean = useMemo(
-    () => !!Object.keys(networksState).length,
-    [networksState]
-  )
-  const hasProvidersState: boolean = useMemo(
-    () => !!Object.keys(providersState).length,
-    [providersState]
-  )
-  const hasAccountsState: boolean = useMemo(
-    () => !!Object.keys(accountsState).length,
-    [accountsState]
-  )
-  const hasSelectedAccountState: boolean = useMemo(
-    () => !!Object.keys(selectedAccountState).length,
-    [selectedAccountState]
-  )
-  const hasWalletState: boolean = useMemo(
-    () => !!Object.keys(walletState).length && !!walletState?.isReady,
-    [walletState]
-  )
-  const hasAccountPickerState: boolean = useMemo(
-    () => !!Object.keys(accountPickerState).length,
-    [accountPickerState]
-  )
-  const hasKeystoreState: boolean = useMemo(
-    () => !!Object.keys(keystoreState).length,
-    [keystoreState]
-  )
-  const hasSignMessageState: boolean = useMemo(
-    () => !!Object.keys(signMessageState).length,
-    [signMessageState]
-  )
-  const hasRequestsState: boolean = useMemo(
-    () => !!Object.keys(requestsState).length,
-    [requestsState]
-  )
-  const hasPortfolioState: boolean = useMemo(
-    () => !!Object.keys(portfolioState).length,
-    [portfolioState]
-  )
-  const hasActivityState: boolean = useMemo(
-    () => !!Object.keys(activityState).length,
-    [activityState]
-  )
-  const hasEmailVaultState: boolean = useMemo(
-    () => !!Object.keys(emailVaultState).length && !!emailVaultState?.isReady,
-    [emailVaultState]
-  )
-  const hasPhishingState: boolean = useMemo(
-    () => !!Object.keys(phishingState).length,
-    [phishingState]
-  )
-  const hasDappsState: boolean = useMemo(
-    () => !!Object.keys(dappsState).length && dappsState.isReady,
-    [dappsState]
-  )
-  const hasDomainsState: boolean = useMemo(
-    () => !!Object.keys(domainsControllerState).length,
-    [domainsControllerState]
-  )
-  const hasAddressBookState: boolean = useMemo(
-    () => !!Object.keys(addressBookState).length,
-    [addressBookState]
-  )
-  const hasInviteState: boolean = useMemo(
-    () => !!Object.keys(inviteControllerState).length,
-    [inviteControllerState]
-  )
-  const hasSwapAndBridgeState: boolean = useMemo(
-    () => !!Object.keys(swapAndBridgeControllerState).length,
-    [swapAndBridgeControllerState]
-  )
-  const hasExtensionUpdateState: boolean = useMemo(
-    () => !!Object.keys(extensionUpdateControllerState).length,
-    [extensionUpdateControllerState]
-  )
-  const hasFeatureFlagsControllerState: boolean = useMemo(
-    () => !!Object.keys(featureFlagsControllerState).length,
-    [featureFlagsControllerState]
-  )
-  const hasContractNamesControllerState: boolean = useMemo(
-    () => !!Object.keys(contractNamesState).length,
-    [contractNamesState]
-  )
-  const hasBannersState: boolean = useMemo(() => !!Object.keys(bannersState).length, [bannersState])
+  const isViewReady = useMemo(() => {
+    if (!isPopup) return true
+
+    const popupView = controllers.ui?.views?.find((v) => v.type === 'popup')
+
+    return !!popupView?.isReady
+  }, [controllers.ui])
 
   useEffect(() => {
     if (areControllerStatesLoaded) return
-    // Safeguard against a potential race condition where one of the controller
-    // states might not update properly and the `areControllerStatesLoaded`
-    // might get stuck in `false` state forever. If the timeout gets reached,
-    // the app displays feedback to the user (via the
-    // `isStatesLoadingTakingTooLong` flag).
-    const timeout = setTimeout(() => setIsStatesLoadingTakingTooLong(true), 10000)
-    if (
-      hasMainState &&
-      hasStorageState &&
-      hasUiState &&
-      hasNetworksState &&
-      hasProvidersState &&
-      hasAccountsState &&
-      hasSelectedAccountState &&
-      hasWalletState &&
-      hasAccountPickerState &&
-      hasKeystoreState &&
-      hasSignMessageState &&
-      hasRequestsState &&
-      hasPortfolioState &&
-      hasActivityState &&
-      hasEmailVaultState &&
-      hasPhishingState &&
-      hasDappsState &&
-      hasDomainsState &&
-      hasAddressBookState &&
-      hasInviteState &&
-      hasSwapAndBridgeState &&
-      hasExtensionUpdateState &&
-      hasFeatureFlagsControllerState &&
-      hasContractNamesControllerState &&
-      hasBannersState
-    ) {
-      clearTimeout(timeout)
-      if (isPopup) {
-        setShouldWaitForMainCtrlStatus(true)
-      } else {
-        const elapsed = Date.now() - startTime
-        const wait = Math.max(0, 400 - elapsed)
 
-        // Don't clear this timeout to ensure that the state will be set
-        setTimeout(() => {
-          setAreControllerStatesLoaded(true)
-        }, wait)
-      }
+    const status: Record<string, boolean> = {}
+    const loadingControllers: string[] = []
+
+    Object.entries(controllers).forEach(([name, state]) => {
+      const ready = isStateLoaded(state)
+      status[name] = ready
+      if (!ready) loadingControllers.push(name)
+    })
+
+    errorDataRef.current = {
+      loadingControllers,
+      isPopup,
+      isPopupReady: isViewReady,
+      backgroundVersion: walletState?.extensionVersion,
+      uiVersion: APP_VERSION
     }
 
-    return () => clearTimeout(timeout)
-  }, [
-    hasMainState,
-    hasStorageState,
-    hasUiState,
-    hasNetworksState,
-    hasProvidersState,
-    hasAccountsState,
-    hasSelectedAccountState,
-    hasWalletState,
-    hasAccountPickerState,
-    hasKeystoreState,
-    hasSignMessageState,
-    hasRequestsState,
-    hasPortfolioState,
-    hasActivityState,
-    hasEmailVaultState,
-    hasPhishingState,
-    hasDappsState,
-    areControllerStatesLoaded,
-    hasDomainsState,
-    hasAddressBookState,
-    hasInviteState,
-    hasSwapAndBridgeState,
-    hasExtensionUpdateState,
-    hasFeatureFlagsControllerState,
-    hasContractNamesControllerState,
-    hasBannersState,
-    dispatch,
-    startTime
-  ])
-
-  useEffect(() => {
-    if (areControllerStatesLoaded || !shouldWaitForMainCtrlStatus) return
-    if (!hasUiState) return
-
-    const popupView = uiCtrl.views.find((v) => v.type === 'popup')
-    if (!popupView || !popupView.isReady) return
-
-    const elapsed = Date.now() - startTime
-    const wait = Math.max(0, 400 - elapsed)
-
     // Don't clear this timeout to ensure that the state will be set
-    setTimeout(() => {
-      setAreControllerStatesLoaded(true)
-      setShouldWaitForMainCtrlStatus(false)
-    }, wait)
-  }, [shouldWaitForMainCtrlStatus, hasUiState, uiCtrl.views, startTime, areControllerStatesLoaded])
+    // Also start it only once
+    if (!timeoutRef.current) {
+      timeoutRef.current = setTimeout(() => {
+        // Done like this because state read in setTimeout
+        // is from the time it was set, not when it executes
+        const errorData = errorDataRef.current || {}
+
+        setIsStatesLoadingTakingTooLong(true)
+        captureMessage('ControllersStateLoadedProvider: states loading taking too long', {
+          level: 'warning',
+          extra: errorData
+        })
+        console.error('ControllersStateLoadedProvider: states loading taking too long', errorData)
+      }, 10000)
+    }
+
+    const shouldLoad = !loadingControllers.length && isViewReady
+
+    if (shouldLoad) {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current)
+
+      const elapsed = Date.now() - startTimeRef.current
+      const wait = Math.max(0, 400 - elapsed)
+
+      setTimeout(() => {
+        setAreControllerStatesLoaded(true)
+      }, wait)
+    }
+  }, [areControllerStatesLoaded, isViewReady, controllers, walletState?.extensionVersion])
+
+  const contextValue = useMemo(
+    () => ({ areControllerStatesLoaded, isStatesLoadingTakingTooLong }),
+    [areControllerStatesLoaded, isStatesLoadingTakingTooLong]
+  )
 
   return (
-    <ControllersStateLoadedContext.Provider
-      value={useMemo(
-        () => ({ areControllerStatesLoaded, isStatesLoadingTakingTooLong }),
-        [areControllerStatesLoaded, isStatesLoadingTakingTooLong]
-      )}
-    >
+    <ControllersStateLoadedContext.Provider value={contextValue}>
       {children}
     </ControllersStateLoadedContext.Provider>
   )

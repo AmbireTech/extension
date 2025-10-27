@@ -144,6 +144,7 @@ const Step: FC<StepProps> = ({
         {!!title && (
           <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifySpaceBetween]}>
             <Text
+              testID="transaction-confirmed-text"
               appearance={getTitleAppearance()}
               fontSize={16}
               weight="medium"

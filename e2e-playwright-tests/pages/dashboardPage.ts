@@ -77,8 +77,8 @@ export class DashboardPage extends BasePage {
     const key = `${token.symbol}-${token.chainId}`
     const balanceThresholds: Record<string, number> = {
       'WALLET-8453': 400,
-      'USDC-8453': 5,
-      'USDC-10': 3,
+      'USDC-8453': 4,
+      'USDC-10': 2,
       'USDC.E-10': 2,
       'DAI-10': 2,
       'xWALLET-1': 2

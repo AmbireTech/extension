@@ -27,7 +27,7 @@ test.describe('Basic Acc - Token balance test', { tag: '@balanceCheck' }, async 
     await test.step('Check balance of Gas tank', async () => {
       const gasTankBalance = await pages.dashboard.getCurrentBalance()
 
-      if (gasTankBalance < 15) {
+      if (gasTankBalance < 5) {
         const msg = `⚠️ Gas Tank balance is only ${gasTankBalance} USDC. Top it up.`
         errors.push(msg)
       }

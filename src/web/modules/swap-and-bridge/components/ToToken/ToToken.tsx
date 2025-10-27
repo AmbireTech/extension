@@ -244,7 +244,7 @@ const ToToken: FC<Props> = ({
   return (
     <View>
       <View
-        style={[flexbox.directionRow, flexbox.alignEnd, flexbox.justifySpaceBetween, spacings.mbTy]}
+        style={[flexbox.directionRow, flexbox.alignEnd, flexbox.justifySpaceBetween, spacings.mbMi]}
       >
         <SwitchTokensButton
           onPress={handleSwitchFromAndToTokens}

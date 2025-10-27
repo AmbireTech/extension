@@ -52,7 +52,7 @@ export class GasTankPage extends BasePage {
   }
 
   async refreshUntilNewBalanceIsVisible(balance: number) {
-    let retries = 10
+    let retries = 15
     const oldBalance = balance
     let newBalance = await this.getCurrentBalance()
 

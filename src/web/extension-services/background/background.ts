@@ -18,7 +18,7 @@ import { getAccountKeysCount } from '@ambire-common/libs/keys/keys'
 import { KeystoreSigner } from '@ambire-common/libs/keystoreSigner/keystoreSigner'
 import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
 import wait from '@ambire-common/utils/wait'
-import CONFIG, { isDev, isProd } from '@common/config/env'
+import CONFIG, { isAmbireNext, isDev, isProd } from '@common/config/env'
 import {
   BROWSER_EXTENSION_LOG_UPDATED_CONTROLLER_STATE_ONLY,
   BROWSER_EXTENSION_MEMORY_INTENSIVE_LOGS,
@@ -252,7 +252,7 @@ providerRequestTransport.reply(async ({ method, id, providerId, params }, meta) 
   const session = mainCtrl.dapps.getOrCreateDappSession({ tabId, windowId, origin })
 
   await mainCtrl.dapps.initialLoadPromise
-  mainCtrl.dapps.setSessionMessenger(session.sessionId, bridgeMessenger)
+  mainCtrl.dapps.setSessionMessenger(session.sessionId, bridgeMessenger, isAmbireNext)
 
   try {
     const res = await handleProviderRequests(
@@ -302,13 +302,17 @@ const init = async () => {
     isUnlocked: boolean
     ctrlOnUpdateIsDirtyFlags: { [key: string]: boolean }
     autoLockIntervalId?: ReturnType<typeof setInterval>
+    userBalances: Record<string, number>
   } = {
     /**
       ctrlOnUpdateIsDirtyFlags will be set to true for a given ctrl when it receives an update in the ctrl.onUpdate callback.
       While the flag is truthy and there are new updates coming for that ctrl in the same tick, they will be debounced and only one event will be executed at the end
     */
     isUnlocked: false,
-    ctrlOnUpdateIsDirtyFlags: {}
+    ctrlOnUpdateIsDirtyFlags: {},
+    // used for caching the biggest seen user balance so we can later send it to cena
+    // further commented down below
+    userBalances: {}
   }
 
   const pm = new PortMessenger()
@@ -355,6 +359,43 @@ const init = async () => {
         // eslint-disable-next-line no-param-reassign
         url = urlObj.toString().replace(/%2C/g, ',')
       }
+    }
+
+    // we want to calculate the TVL of our users
+    // we can achieve this by making a relayer (server-side trusted environment) script that gets the balances of all our users
+    // but doing this with all our users would be 'expensive'.
+    // we already calculate the user balance in the extension, but is not 100% trusted as any user can modify it
+    // that why we will use the user balance from the extension as a 'hint' so we can determine
+    // on which accounts we should execute the 'expensive' script on the backend
+    // those addresses should be 1) loaded with key in the extension 2) have more than $0 balance
+    const currentAccount = mainCtrl.selectedAccount.account
+    const hasCurrentAccountKeys =
+      currentAccount &&
+      getAccountKeysCount({
+        accountAddr: currentAccount.addr,
+        keys: mainCtrl.keystore.keys,
+        accounts: mainCtrl.accounts.accounts
+      })
+    // we use any cena request, because if we narrow it down to one route we might not have the full balance loaded
+    // on the relayer side we will simply use middleware that captures all routes and looks for the specific params with balance
+    // we want to attach the data only if the user has keys for the account
+    const currentBalance = mainCtrl.selectedAccount.portfolio.totalBalance
+    if (
+      currentAccount &&
+      (backgroundState.userBalances[currentAccount?.addr] || 0) < currentBalance
+    )
+      backgroundState.userBalances[currentAccount?.addr] = currentBalance
+
+    const shouldAttachBalance =
+      url.toString().startsWith('https://cena.ambire.com/') && hasCurrentAccountKeys
+    if (shouldAttachBalance) {
+      const urlObj = new URL(url.toString())
+      const balance = backgroundState.userBalances[currentAccount?.addr] || 0
+
+      urlObj.searchParams.append('panVal', JSON.stringify({ a: currentAccount.addr, b: balance }))
+
+      // eslint-disable-next-line no-param-reassign
+      url = decodeURIComponent(urlObj.toString())
     }
 
     // Use the native fetch (instead of node-fetch or whatever else) since
@@ -649,89 +690,92 @@ const init = async () => {
 
   // listen for messages from UI
   browser.runtime.onConnect.addListener(async (port: Port) => {
-    if (['popup', 'tab', 'action-window'].includes(port.name)) {
+    const [name, id] = port.name.split(':') as [Port['name'], Port['id']]
+    if (['popup', 'tab', 'action-window'].includes(name)) {
+      const isAlreadyAdded = pm.ports.some((p) => p.id === id)
       // eslint-disable-next-line no-param-reassign
-      port.id = nanoid()
-      pm.addPort(port)
-      mainCtrl.ui.addView({ id: port.id, type: port.name })
+      port.id = id || nanoid()
+      // eslint-disable-next-line no-param-reassign
+      port.name = name
+      pm.addOrUpdatePort(port, () => {
+        mainCtrl.ui.addView({ id: port.id, type: port.name })
 
-      mainCtrl.phishing.updateIfNeeded()
+        pm.addConnectListener(
+          port.id,
+          // @ts-ignore
+          async (messageType, action: Action, meta: MessageMeta = {}) => {
+            const { type } = action
+            const { windowId } = meta
 
-      pm.addListener(
-        port.id,
-        // @ts-ignore
-        async (messageType, action: Action, meta: MessageMeta = {}) => {
-          const { type } = action
-          const { windowId } = meta
+            try {
+              if (messageType === '> background' && type) {
+                await handleActions(action, {
+                  pm,
+                  port,
+                  mainCtrl,
+                  walletStateCtrl,
+                  autoLockCtrl,
+                  extensionUpdateCtrl,
+                  windowId
+                })
+              }
+            } catch (err: any) {
+              console.error(`${type} action failed:`, err)
+              captureBackgroundException(err, {
+                extra: {
+                  action: stringify(action),
+                  portId: port.id,
+                  windowId
+                }
+              })
+              const shortenedError =
+                err.message.length > 150 ? `${err.message.slice(0, 150)}...` : err.message
 
-          try {
-            if (messageType === '> background' && type) {
-              await handleActions(action, {
-                pm,
-                port,
-                mainCtrl,
-                walletStateCtrl,
-                autoLockCtrl,
-                extensionUpdateCtrl,
-                windowId
+              let message = `Something went wrong! Please contact support. Error: ${shortenedError}`
+              // Emit the raw error only if it's a custom error
+              if (err instanceof EmittableError || err instanceof ExternalSignerError) {
+                message = err.message
+              }
+
+              pm.send('> ui-error', {
+                method: type,
+                params: {
+                  errors: [
+                    {
+                      message,
+                      level: 'major',
+                      error: err
+                    }
+                  ]
+                }
               })
             }
-          } catch (err: any) {
-            console.error(`${type} action failed:`, err)
-            captureBackgroundException(err, {
-              extra: {
-                action: JSON.stringify(action),
-                portId: port.id,
-                windowId
-              }
-            })
-            const shortenedError =
-              err.message.length > 150 ? `${err.message.slice(0, 150)}...` : err.message
-
-            let message = `Something went wrong! Please contact support. Error: ${shortenedError}`
-            // Emit the raw error only if it's a custom error
-            if (err instanceof EmittableError || err instanceof ExternalSignerError) {
-              message = err.message
-            }
-
-            pm.send('> ui-error', {
-              method: type,
-              params: {
-                errors: [
-                  {
-                    message,
-                    level: 'major',
-                    error: err
-                  }
-                ]
-              }
-            })
           }
-        }
-      )
+        )
 
-      port.onDisconnect.addListener(() => {
-        pm.dispose(port.id)
-        pm.removePort(port.id)
-        mainCtrl.ui.removeView(port.id)
+        pm.addDisconnectListener(port.id, (disconnectedPort) => {
+          mainCtrl.ui.removeView(port.id)
+          handleCleanUpOnPortDisconnect({ port, mainCtrl })
 
-        handleCleanUpOnPortDisconnect({ port, mainCtrl })
-
-        // The selectedAccount portfolio is reset onLoad of the popup
-        // (from the background) while the portfolio update is triggered
-        // by a useEffect. If that useEffect doesn't trigger, the portfolio
-        // state will remain reset until an automatic update is triggered.
-        // Example: the user has the dashboard opened in tab, opens the popup
-        // and closes it immediately.
-        if (port.name === 'popup') {
-          mainCtrl.portfolio.forceEmitUpdate()
-        }
-        if (port.name === 'tab' || port.name === 'action-window') {
-          // eslint-disable-next-line @typescript-eslint/no-floating-promises
-          ledgerCtrl.cleanUp()
-          trezorCtrl.cleanUp()
-        }
+          // The selectedAccount portfolio is reset onLoad of the popup
+          // (from the background) while the portfolio update is triggered
+          // by a useEffect. If that useEffect doesn't trigger, the portfolio
+          // state will remain reset until an automatic update is triggered.
+          // Example: the user has the dashboard opened in tab, opens the popup
+          // and closes it immediately.
+          if (disconnectedPort.name === 'popup') mainCtrl.portfolio.forceEmitUpdate()
+          if (disconnectedPort.name === 'tab' || disconnectedPort.name === 'action-window') {
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
+            ledgerCtrl.cleanUp()
+            trezorCtrl.cleanUp()
+          }
+        })
       })
+
+      // ignore executions if the port was already added (identified by id)
+      if (isAlreadyAdded) return
+
+      mainCtrl.phishing.updateIfNeeded()
     }
   })
 }

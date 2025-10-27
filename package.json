@@ -52,6 +52,7 @@
     "eas:secret:list": "eas secret:list",
     "eas:secret:push": "eas secret:push --scope project --env-file .env",
     "test": "jest --config=./jest.config.js --passWithNoTests",
+    "extension:type:check": "tsc --noEmit --project tsconfig.typecheck-extension.json",
     "postinstall": "patch-package"
   },
   "engines": {
@@ -223,6 +224,7 @@
     "secp256k1": "^5.0.1",
     "sentry-expo": "~6.0.0",
     "setimmediate": "^1.0.5",
+    "siwe": "3.0.0",
     "stream-browserify": "^3.0.0",
     "string_decoder": "~0.10.25",
     "swiper": "^11.1.14",

@@ -58,10 +58,8 @@ const RouteInfo: FC<Props> = ({
         flexbox.alignCenter,
         flexbox.justifySpaceBetween,
         spacings.mh,
-        {
-          height: 25 // Prevents layout shifts
-        },
-        spacings.mbLg
+        { height: 25 }, // Prevents layout shifts,
+        spacings.mtTy
       ]}
     >
       {swapSignErrors.length > 0 && (
@@ -78,8 +76,7 @@ const RouteInfo: FC<Props> = ({
             flexbox.directionRow,
             flexbox.alignCenter,
             flexbox.justifySpaceBetween,
-            { width: '100%' },
-            spacings.mtTy
+            { width: '100%' }
           ]}
         >
           <View style={[flexbox.directionRow, flexbox.alignCenter]}>
@@ -115,11 +112,36 @@ const RouteInfo: FC<Props> = ({
                   ]}
                 >
                   <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                    <Text appearance="tertiaryText" fontSize={14} weight="medium">
-                      {t('Ambire fee: {{fee}}', {
-                        fee: isOG ? "0% - you're an OG 🎉" : `${FEE_PERCENT}%`
-                      })}
-                    </Text>
+                    <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+                      <Text
+                        appearance={quote?.withConvenienceFee || isOG ? 'tertiaryText' : 'primary'}
+                        fontSize={14}
+                        weight="medium"
+                      >
+                        {t('Ambire fee: {{fee}}{{ogText}}', {
+                          fee: `${quote?.withConvenienceFee ? FEE_PERCENT : 0}%`,
+                          ogText: isOG ? " - you're an OG 🎉" : ''
+                        })}
+                      </Text>
+                      {!quote?.withConvenienceFee && !isOG && (
+                        <>
+                          <InfoIcon
+                            width={16}
+                            height={16}
+                            data-tooltip-id="no-convenience-fee"
+                            style={spacings.mlTy}
+                            color={theme.primary}
+                          />
+
+                          <Tooltip
+                            content={t(
+                              'Ambire charges a small convenience fee on some transactions to support ongoing development and operations. This transaction is exempt from that fee.'
+                            )}
+                            id="no-convenience-fee"
+                          />
+                        </>
+                      )}
+                    </View>
                     {quote?.selectedRoute?.serviceTime ? (
                       <Text
                         appearance="tertiaryText"
