@@ -14,6 +14,7 @@ import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableW
 import Search from '@common/components/Search'
 import Select from '@common/components/Select'
 import { SelectValue } from '@common/components/Select/types'
+import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import useDebounce from '@common/hooks/useDebounce'
 import useTheme from '@common/hooks/useTheme'
@@ -258,109 +259,134 @@ const DappCatalogScreen = () => {
       header={<Header mode="title" withAmbireLogo />}
       withHorizontalPadding={!isPopup}
     >
-      <View style={[flexbox.flex1]}>
-        <View style={[!!isPopup && spacings.phSm, spacings.pvSm]}>
-          <Search
-            placeholder={t('Search for an app')}
-            control={control}
-            setValue={setValue}
-            autoFocus
-            containerStyle={spacings.mbTy}
-          />
-          <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifySpaceBetween]}>
-            <Select
-              setValue={handleSetNetworkValue}
-              containerStyle={{ width: 164, marginBottom: 0 }}
-              menuOptionHeight={32}
-              options={networksOptions}
-              menuProps={{ width: 200 }}
-              value={
-                networksOptions.filter((opt) => opt.value === network?.name)[0] ??
-                ALL_NETWORKS_OPTION
-              }
-              clearValue={() => setNetwork(null)}
-              withClearButton={!!network && network?.name !== ALL_NETWORKS_OPTION.value}
-              size="sm"
-              selectBorderWrapperStyle={{ borderRadius: 50 }}
-              selectStyle={{
-                borderRadius: 50,
-                height: 32,
-                backgroundColor: theme.primaryBackground,
-                ...(network && network.name !== ALL_CATEGORIES_OPTION.value
-                  ? { borderColor: theme.primaryLight }
-                  : {})
-              }}
-              hoveredSelectStyle={{
-                backgroundColor: theme.secondaryBackground,
-                borderColor: theme.primaryLight
-              }}
-            />
-            <Select
-              setValue={handleSetCategoryValue}
-              containerStyle={{ width: 164, marginBottom: 0 }}
-              options={categoryOptions}
-              value={
-                categoryOptions.filter((opt) => opt.value === category)[0] ?? ALL_CATEGORIES_OPTION
-              }
-              menuOptionHeight={32}
-              clearValue={() => setCategory(null)}
-              withClearButton={!!category && category !== ALL_CATEGORIES_OPTION.value}
-              size="sm"
-              menuProps={{ width: 230 }}
-              selectBorderWrapperStyle={{ borderRadius: 50 }}
-              selectStyle={{
-                borderRadius: 50,
-                height: 32,
-                backgroundColor: theme.primaryBackground,
-                ...(category && category !== ALL_CATEGORIES_OPTION.value
-                  ? { borderColor: theme.primaryLight }
-                  : {})
-              }}
-              hoveredSelectStyle={{
-                backgroundColor: theme.secondaryBackground,
-                borderColor: theme.primaryLight
-              }}
-            />
-            <FilterButton
-              value="favorites"
-              active={favoritesSelected}
-              onPress={handleSelectPredefinedFilter}
-              icon={<StarIcon isFilled={favoritesSelected} />}
-            />
-            <FilterButton
-              value="connected"
-              active={connectedSelected}
-              onPress={handleSelectPredefinedFilter}
-              icon={
-                <ConnectedIcon
-                  width={18}
-                  height={18}
-                  color={connectedSelected ? theme.primaryBackground : theme.successDecorative}
-                />
-              }
-              hoveredStyle={{ borderColor: theme.successDecorative }}
-              hoveredTextColor={theme.successDecorative}
-              activeStyle={{ borderColor: theme.primaryLight }}
-            />
+      {state.isUpdatingDapps ? (
+        <View style={[flexbox.flex1, spacings.phSm, spacings.pvSm]}>
+          <SkeletonLoader width="100%" height={36} style={spacings.mbTy} />
+          <View
+            style={[
+              flexbox.directionRow,
+              flexbox.alignCenter,
+              flexbox.justifySpaceBetween,
+              spacings.mb
+            ]}
+          >
+            <SkeletonLoader width="27%" height={32} />
+            <SkeletonLoader width="32%" height={32} />
+            <SkeletonLoader width="15%" height={32} />
+            <SkeletonLoader width="18%" height={32} />
           </View>
+          <SkeletonLoader width="100%" height={75} style={spacings.mbTy} />
+          <SkeletonLoader width="100%" height={75} style={spacings.mbTy} />
+          <SkeletonLoader width="100%" height={75} style={spacings.mbTy} />
+          <SkeletonLoader width="100%" height={75} style={spacings.mbTy} />
+          <SkeletonLoader width="100%" height={75} style={spacings.mbTy} />
         </View>
-        <ScrollableWrapper
-          type={WRAPPER_TYPES.FLAT_LIST}
-          contentContainerStyle={[
-            spacings.pbTy,
-            !!isPopup && spacings.plSm,
-            !!isPopup && { paddingRight: SPACING_SM - SPACING_MI / 2 }
-          ]}
-          data={filteredDapps}
-          renderItem={renderItem}
-          keyExtractor={(item: Dapp) => item.url.toString()}
-          ListEmptyComponent={
-            <View style={[flexbox.flex1, flexbox.alignCenter, flexbox.justifyCenter]}>
-              <Text style={text.center}>{t('No app found')}</Text>
+      ) : (
+        <View style={[flexbox.flex1]}>
+          <View style={[!!isPopup && spacings.phSm, spacings.pvSm]}>
+            <Search
+              placeholder={t('Search for an app')}
+              control={control}
+              setValue={setValue}
+              autoFocus
+              containerStyle={spacings.mbTy}
+            />
+            <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifySpaceBetween]}>
+              <Select
+                setValue={handleSetNetworkValue}
+                containerStyle={{ width: 164, marginBottom: 0 }}
+                menuOptionHeight={32}
+                options={networksOptions}
+                menuProps={{ width: 200 }}
+                value={
+                  networksOptions.filter((opt) => opt.value === network?.name)[0] ??
+                  ALL_NETWORKS_OPTION
+                }
+                clearValue={() => setNetwork(null)}
+                withClearButton={!!network && network?.name !== ALL_NETWORKS_OPTION.value}
+                size="sm"
+                selectBorderWrapperStyle={{ borderRadius: 50 }}
+                selectStyle={{
+                  borderRadius: 50,
+                  height: 32,
+                  backgroundColor: theme.primaryBackground,
+                  ...(network && network.name !== ALL_CATEGORIES_OPTION.value
+                    ? { borderColor: theme.primaryLight }
+                    : {})
+                }}
+                hoveredSelectStyle={{
+                  backgroundColor: theme.secondaryBackground,
+                  borderColor: theme.primaryLight
+                }}
+              />
+              <Select
+                setValue={handleSetCategoryValue}
+                containerStyle={{ width: 164, marginBottom: 0 }}
+                options={categoryOptions}
+                value={
+                  categoryOptions.filter((opt) => opt.value === category)[0] ??
+                  ALL_CATEGORIES_OPTION
+                }
+                menuOptionHeight={32}
+                clearValue={() => setCategory(null)}
+                withClearButton={!!category && category !== ALL_CATEGORIES_OPTION.value}
+                size="sm"
+                menuProps={{ width: 230 }}
+                selectBorderWrapperStyle={{ borderRadius: 50 }}
+                selectStyle={{
+                  borderRadius: 50,
+                  height: 32,
+                  backgroundColor: theme.primaryBackground,
+                  ...(category && category !== ALL_CATEGORIES_OPTION.value
+                    ? { borderColor: theme.primaryLight }
+                    : {})
+                }}
+                hoveredSelectStyle={{
+                  backgroundColor: theme.secondaryBackground,
+                  borderColor: theme.primaryLight
+                }}
+              />
+              <FilterButton
+                value="favorites"
+                active={favoritesSelected}
+                onPress={handleSelectPredefinedFilter}
+                icon={<StarIcon isFilled={favoritesSelected} />}
+              />
+              <FilterButton
+                value="connected"
+                active={connectedSelected}
+                onPress={handleSelectPredefinedFilter}
+                icon={
+                  <ConnectedIcon
+                    width={18}
+                    height={18}
+                    color={connectedSelected ? theme.primaryBackground : theme.successDecorative}
+                  />
+                }
+                hoveredStyle={{ borderColor: theme.successDecorative }}
+                hoveredTextColor={theme.successDecorative}
+                activeStyle={{ borderColor: theme.primaryLight }}
+              />
             </View>
-          }
-        />
-      </View>
+          </View>
+          <ScrollableWrapper
+            type={WRAPPER_TYPES.FLAT_LIST}
+            contentContainerStyle={[
+              spacings.pbTy,
+              !!isPopup && spacings.plSm,
+              !!isPopup && { paddingRight: SPACING_SM - SPACING_MI / 2 }
+            ]}
+            data={filteredDapps}
+            renderItem={renderItem}
+            keyExtractor={(item: Dapp) => item.url.toString()}
+            ListEmptyComponent={
+              <View style={[flexbox.flex1, flexbox.alignCenter, flexbox.justifyCenter]}>
+                <Text style={text.center}>{t('No app found')}</Text>
+              </View>
+            }
+          />
+        </View>
+      )}
     </TabLayoutContainer>
   )
 }
