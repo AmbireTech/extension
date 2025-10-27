@@ -73,7 +73,28 @@ export class DashboardPage extends BasePage {
     return amountNumber
   }
 
-  async checkTokenBalance(token: Token) {
+  async checkBATokenBalance(token: Token) {
+    const key = `${token.symbol}-${token.chainId}`
+    const balanceThresholds: Record<string, number> = {
+      'WALLET-8453': 400,
+      'USDC-10': 2,
+      'xWALLET-1': 2
+    }
+
+    const minBalance = balanceThresholds[key] ?? 0
+    const tokenBalance = await this.getDashboardTokenBalance(token)
+
+    let error: string | undefined
+
+    try {
+      expect(tokenBalance).toBeGreaterThanOrEqual(minBalance)
+    } catch (e) {
+      error = `${token.symbol}-${token.chainId} balance for BA is only: ${tokenBalance}.`
+    }
+    return { token, error }
+  }
+
+  async checkSATokenBalance(token: Token) {
     const key = `${token.symbol}-${token.chainId}`
     const balanceThresholds: Record<string, number> = {
       'WALLET-8453': 400,
@@ -92,7 +113,7 @@ export class DashboardPage extends BasePage {
     try {
       expect(tokenBalance).toBeGreaterThanOrEqual(minBalance)
     } catch (e) {
-      error = `${token.symbol}-${token.chainId} balance is only: ${tokenBalance}.`
+      error = `${token.symbol}-${token.chainId} balance for SA is only: ${tokenBalance}.`
     }
     return { token, error }
   }
