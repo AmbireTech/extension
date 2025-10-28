@@ -14,7 +14,6 @@ import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableW
 import Search from '@common/components/Search'
 import Select from '@common/components/Select'
 import { SelectValue } from '@common/components/Select/types'
-import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import useDebounce from '@common/hooks/useDebounce'
 import useTheme from '@common/hooks/useTheme'
@@ -32,6 +31,7 @@ import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import DappItem from '@web/modules/dapp-catalog/components/DappItem'
 import { getUiType } from '@web/utils/uiType'
 
+import DappsSkeletonLoader from '../../components/DappsSkeletonLoader'
 import getStyles from './styles'
 
 type FilterButtonType = {
@@ -260,33 +260,14 @@ const DappCatalogScreen = () => {
       withHorizontalPadding={!isPopup}
     >
       {state.isUpdatingDapps ? (
-        <View style={[flexbox.flex1, spacings.phSm, spacings.pvSm]}>
-          <SkeletonLoader width="100%" height={36} style={spacings.mbTy} />
-          <View
-            style={[
-              flexbox.directionRow,
-              flexbox.alignCenter,
-              flexbox.justifySpaceBetween,
-              spacings.mb
-            ]}
-          >
-            <SkeletonLoader width="27%" height={32} />
-            <SkeletonLoader width="32%" height={32} />
-            <SkeletonLoader width="15%" height={32} />
-            <SkeletonLoader width="18%" height={32} />
-          </View>
-          <SkeletonLoader width="100%" height={75} style={spacings.mbTy} />
-          <SkeletonLoader width="100%" height={75} style={spacings.mbTy} />
-          <SkeletonLoader width="100%" height={75} style={spacings.mbTy} />
-          <SkeletonLoader width="100%" height={75} style={spacings.mbTy} />
-          <SkeletonLoader width="100%" height={75} style={spacings.mbTy} />
-        </View>
+        <DappsSkeletonLoader />
       ) : (
         <View style={[flexbox.flex1]}>
           <View style={[!!isPopup && spacings.phSm, spacings.pvSm]}>
             <Search
               placeholder={t('Search for an app')}
               control={control}
+              // @ts-ignore
               setValue={setValue}
               autoFocus
               containerStyle={spacings.mbTy}
