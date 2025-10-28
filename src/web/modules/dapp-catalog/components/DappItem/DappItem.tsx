@@ -94,7 +94,7 @@ const DappItem = (dapp: Dapp) => {
           onPress={() => openInTab({ url })}
           {...bindAnim}
         >
-          <View style={[flexbox.directionRow, spacings.mbTy]}>
+          <View style={[flexbox.directionRow, !!description && spacings.mbTy]}>
             <View style={spacings.mrTy}>
               {!isCustom && !blacklisted && (
                 <View

@@ -1,7 +1,7 @@
 import { StyleSheet, ViewStyle } from 'react-native'
 
 import spacings from '@common/styles/spacings'
-import { ThemeProps } from '@common/styles/themeConfig'
+import { THEME_TYPES, ThemeProps, ThemeType } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 
 interface Style {
@@ -10,7 +10,7 @@ interface Style {
   filterButtonActive: ViewStyle
 }
 
-const getStyles = (theme: ThemeProps) =>
+const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
   StyleSheet.create<Style>({
     filterButton: {
       borderRadius: 50,
@@ -28,8 +28,8 @@ const getStyles = (theme: ThemeProps) =>
       backgroundColor: theme.secondaryBackground
     },
     filterButtonActive: {
-      backgroundColor: theme.primaryLight,
-      borderColor: theme.primaryLight
+      backgroundColor: themeType === THEME_TYPES.DARK ? theme.primary : theme.primaryLight,
+      borderColor: themeType === THEME_TYPES.DARK ? theme.primary : theme.primaryLight
     }
   })
 

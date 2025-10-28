@@ -86,7 +86,7 @@ const SelectedMenuOption: FC<SelectedMenuOptionProps> = ({
                 : theme.secondaryBorder
             },
             selectStyle,
-            hovered && hoveredSelectStyle
+            (hovered || isMenuOpen) && hoveredSelectStyle
           ]}
         >
           <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter, spacings.prTy]}>

@@ -19,6 +19,7 @@ import useDebounce from '@common/hooks/useDebounce'
 import useTheme from '@common/hooks/useTheme'
 import Header from '@common/modules/header/components/Header'
 import spacings, { SPACING_MI, SPACING_SM } from '@common/styles/spacings'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import {
@@ -131,7 +132,7 @@ const DappCatalogScreen = () => {
   const [favoritesSelected, setFavoritesSelected] = useState(false)
   const [connectedSelected, setConnectedSelected] = useState(false)
   const { allNetworks } = useNetworksControllerState()
-  const { theme } = useTheme()
+  const { theme, themeType } = useTheme()
 
   const filteredDapps = useMemo(() => {
     if (!state?.dapps?.length) return []
@@ -291,13 +292,17 @@ const DappCatalogScreen = () => {
                   borderRadius: 50,
                   height: 32,
                   backgroundColor: theme.primaryBackground,
+                  borderWidth: 1,
                   ...(network && network.name !== ALL_CATEGORIES_OPTION.value
-                    ? { borderColor: theme.primaryLight }
+                    ? {
+                        borderColor:
+                          themeType === THEME_TYPES.DARK ? theme.primary : theme.primaryLight
+                      }
                     : {})
                 }}
                 hoveredSelectStyle={{
                   backgroundColor: theme.secondaryBackground,
-                  borderColor: theme.primaryLight
+                  borderColor: themeType === THEME_TYPES.DARK ? theme.primary : theme.primaryLight
                 }}
               />
               <Select
@@ -318,13 +323,17 @@ const DappCatalogScreen = () => {
                   borderRadius: 50,
                   height: 32,
                   backgroundColor: theme.primaryBackground,
+                  borderWidth: 1,
                   ...(category && category !== ALL_CATEGORIES_OPTION.value
-                    ? { borderColor: theme.primaryLight }
+                    ? {
+                        borderColor:
+                          themeType === THEME_TYPES.DARK ? theme.primary : theme.primaryLight
+                      }
                     : {})
                 }}
                 hoveredSelectStyle={{
                   backgroundColor: theme.secondaryBackground,
-                  borderColor: theme.primaryLight
+                  borderColor: themeType === THEME_TYPES.DARK ? theme.primary : theme.primaryLight
                 }}
               />
               <FilterButton
@@ -346,7 +355,9 @@ const DappCatalogScreen = () => {
                 }
                 hoveredStyle={{ borderColor: theme.successDecorative }}
                 hoveredTextColor={theme.successDecorative}
-                activeStyle={{ borderColor: theme.primaryLight }}
+                activeStyle={{
+                  borderColor: themeType === THEME_TYPES.DARK ? theme.primary : theme.primaryLight
+                }}
               />
             </View>
           </View>
