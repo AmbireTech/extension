@@ -94,7 +94,7 @@ test.describe('Smart Acc - Token balance test', { tag: '@balanceCheck' }, async 
       for (let i = 0; i < tokensList.length; i++) {
         const token = tokensList[i]
         const result = await pages.dashboard.checkSATokenBalance(token)
-        results.push(result)
+          results.push(result)
       }
 
       const failed = results.filter((r) => r.error)

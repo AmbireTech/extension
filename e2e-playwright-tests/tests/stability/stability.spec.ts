@@ -42,8 +42,8 @@ test.describe('stability', { tag: '@stability' }, () => {
     })
 
     await test.step('tokens are found using previous hints', async () => {
-      const daiToken = pages.stability.getDashboardTokenSelector(tokens.dai.arbitrum)
-      await expect(daiToken).toBeVisible()
+      const xwalletToken = pages.stability.getDashboardTokenSelector(tokens.eth.ethereum)
+      await expect(xwalletToken).toBeVisible()
 
       const usdcToken = pages.stability.getDashboardTokenSelector(tokens.usdc.optimism)
       await expect(usdcToken).toBeVisible()
