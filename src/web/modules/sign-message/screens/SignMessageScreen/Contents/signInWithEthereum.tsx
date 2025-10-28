@@ -12,7 +12,7 @@ import Text from '@common/components/Text'
 import Toggle from '@common/components/Toggle'
 import Tooltip from '@common/components/Tooltip'
 import useTheme from '@common/hooks/useTheme'
-import spacings, { SPACING, SPACING_MD, SPACING_SM, SPACING_XL } from '@common/styles/spacings'
+import spacings, { SPACING, SPACING_LG, SPACING_MD, SPACING_SM } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
@@ -220,7 +220,7 @@ const SignInWithEthereum = ({
       <View style={styles.container}>
         <View
           style={{
-            marginBottom: SPACING_XL * responsiveSizeMultiplier
+            marginBottom: SPACING_LG * responsiveSizeMultiplier
           }}
         >
           <Info />

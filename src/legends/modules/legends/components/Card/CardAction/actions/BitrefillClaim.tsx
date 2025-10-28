@@ -10,7 +10,6 @@ import { LEGENDS_CONTRACT_ADDRESS } from '@legends/constants/addresses'
 import { ERROR_MESSAGES } from '@legends/constants/errors/messages'
 import { BASE_CHAIN_ID } from '@legends/constants/networks'
 import useAccountContext from '@legends/hooks/useAccountContext'
-import useCharacterContext from '@legends/hooks/useCharacterContext'
 import useErc5792 from '@legends/hooks/useErc5792'
 import useProviderContext from '@legends/hooks/useProviderContext'
 import useSwitchNetwork from '@legends/hooks/useSwitchNetwork'
@@ -35,7 +34,6 @@ const BitrefillClaim = ({ meta }: Props) => {
   const switchNetwork = useSwitchNetwork()
   const { browserProvider } = useProviderContext()
   const { connectedAccount, v1Account } = useAccountContext()
-  const { isCharacterNotMinted } = useCharacterContext()
   const { t } = useTranslation()
 
   const claimCode = useCallback(async () => {
@@ -75,16 +73,15 @@ const BitrefillClaim = ({ meta }: Props) => {
   }, [connectedAccount, sendCalls, chainId, getCallsStatus, onComplete, addToast, switchNetwork])
 
   const btnText = useMemo(() => {
-    if (isCharacterNotMinted) return 'Join Rewards to start accumulating XP'
     if (!connectedAccount || v1Account)
       return 'Switch to a new account to unlock Rewards quests. Ambire legacy Web accounts (V1) are not supported.'
     return 'Claim code'
-  }, [connectedAccount, v1Account, isCharacterNotMinted])
+  }, [connectedAccount, v1Account])
 
   const isButtonDisabled = useMemo(() => {
-    if (!connectedAccount || v1Account || isCharacterNotMinted) return true
+    if (!connectedAccount || v1Account) return true
     return false
-  }, [connectedAccount, v1Account, isCharacterNotMinted])
+  }, [connectedAccount, v1Account])
 
   const copyText = useCallback(async () => {
     await navigator.clipboard.writeText(meta?.code || '')

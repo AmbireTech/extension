@@ -6,7 +6,7 @@ on:
       - v2
       - main
   pull_request:
-    types: ['ready_for_review', 'synchronize']
+    types: ['opened', 'ready_for_review', 'synchronize']
     branches:
       - v2
       - main
@@ -112,25 +112,19 @@ jobs:
       - name: Get Playwright version
         id: playwright-version
         working-directory: ./e2e-playwright-tests
-        run: |
-          PLAYWRIGHT_VERSION=$(grep @playwright/test package.json \
-            | head -1 \
-            | awk -F: '{ print $2 }' \
-            | sed 's/[", ^]//g')
-          echo "Playwright version: $PLAYWRIGHT_VERSION"
-          echo "PLAYWRIGHT_VERSION=$PLAYWRIGHT_VERSION" >> $GITHUB_OUTPUT
+        run: echo "PLAYWRIGHT_VERSION=$(node -p 'require("./node_modules/@playwright/test/package.json").version')" >> $GITHUB_ENV
 
       - name: Cache Playwright
-        id: cache-playwright
+        id: playwright-cache
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-browsers-${{ steps.playwright-version.outputs.PLAYWRIGHT_VERSION }}
+          key: ${{ runner.os }}-playwright-${{ env.PLAYWRIGHT_VERSION }}
 
       - name: Install Playwright browsers
-        if: steps.cache-playwright.outputs.cache-hit != 'true'
         working-directory: ./e2e-playwright-tests
         run: npx playwright install --with-deps chromium
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
 
       - name: Run Balance Check test for SA and BA
         working-directory: ./e2e-playwright-tests

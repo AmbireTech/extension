@@ -40,7 +40,7 @@ const Character = () => {
       )}
 
       <QuestsSection />
-      {connectedAccount && !v1Account && !isCharacterNotMinted && <ActivitySection />}
+      {connectedAccount && !v1Account && <ActivitySection />}
 
       {(!connectedAccount || !v1Account || isCharacterNotMinted) && <FaqSection />}
     </Page>
