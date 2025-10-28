@@ -122,6 +122,7 @@ export interface CardFromResponse {
     code?: string
     allCollected?: boolean
     activeProposals?: { id: string; title: string; created: number; end: number }[]
+    revealedMascotLetter?: boolean
   }
   contentSteps?: string[]
   contentImageV2?: string
