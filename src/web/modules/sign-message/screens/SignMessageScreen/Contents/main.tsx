@@ -11,7 +11,7 @@ import NetworkBadge from '@common/components/NetworkBadge'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
-import spacings, { SPACING_MD, SPACING_TY } from '@common/styles/spacings'
+import spacings, { SPACING_LG, SPACING_MD, SPACING_TY } from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import { TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
@@ -105,7 +105,11 @@ const Main = ({
         {/* @TODO: Replace with Badge; add size prop to badge; add tooltip  */}
       </View>
       <View style={styles.container}>
-        <View style={spacings.mbLg}>
+        <View
+          style={{
+            marginBottom: SPACING_LG * responsiveSizeMultiplier
+          }}
+        >
           <Info />
           {shouldDisplayEIP1271Warning && (
             <Alert
