@@ -1,4 +1,4 @@
-import { baParams } from 'constants/env'
+import { saParams } from 'constants/env'
 import fetch from 'node-fetch'
 
 import { expect } from '@playwright/test'
@@ -9,7 +9,7 @@ import { test } from '../../fixtures/pageObjects'
 
 test.describe('stability', { tag: '@stability' }, () => {
   test.beforeEach(async ({ pages }) => {
-    await pages.initWithStorage(baParams, { shouldUnlockManually: true })
+    await pages.initWithStorage(saParams, { shouldUnlockManually: true })
   })
 
   test.afterEach(async ({ context }) => {
@@ -42,8 +42,8 @@ test.describe('stability', { tag: '@stability' }, () => {
     })
 
     await test.step('tokens are found using previous hints', async () => {
-      const xwalletToken = pages.stability.getDashboardTokenSelector(tokens.eth.ethereum)
-      await expect(xwalletToken).toBeVisible()
+      const daiToken = pages.stability.getDashboardTokenSelector(tokens.dai.arbitrum)
+      await expect(daiToken).toBeVisible()
 
       const usdcToken = pages.stability.getDashboardTokenSelector(tokens.usdc.optimism)
       await expect(usdcToken).toBeVisible()
