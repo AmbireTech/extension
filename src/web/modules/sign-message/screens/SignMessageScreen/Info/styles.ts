@@ -14,14 +14,10 @@ interface Style {
 const getStyles = (theme: ThemeProps) =>
   StyleSheet.create<Style>({
     image: {
-      width: 48,
-      height: 48,
       alignSelf: 'flex-start',
       borderRadius: BORDER_RADIUS_PRIMARY
     },
     fallbackIcon: {
-      width: 48,
-      height: 48,
       backgroundColor: theme.secondaryBackground,
       alignSelf: 'flex-start',
       ...spacings.pvMi,
@@ -31,8 +27,6 @@ const getStyles = (theme: ThemeProps) =>
     verifyingContract: {
       backgroundColor: theme.secondaryBackground,
       borderRadius: BORDER_RADIUS_PRIMARY,
-      ...spacings.phSm,
-      ...spacings.pvSm,
       ...flexbox.flex1,
       ...flexbox.directionRow,
       ...flexbox.alignCenter,
