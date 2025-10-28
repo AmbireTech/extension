@@ -8,7 +8,6 @@ import CloseIcon from '@legends/components/CloseIcon'
 import { ERROR_MESSAGES } from '@legends/constants/errors/messages'
 import { ETHEREUM_CHAIN_ID } from '@legends/constants/networks'
 import useAccountContext from '@legends/hooks/useAccountContext'
-import useCharacterContext from '@legends/hooks/useCharacterContext/useCharacterContext'
 import useErc5792 from '@legends/hooks/useErc5792'
 import useEscModal from '@legends/hooks/useEscModal'
 import useLegendsContext from '@legends/hooks/useLegendsContext'
@@ -55,14 +54,12 @@ const MigrateRewardsModal: React.FC<MigrateRewardsModalProps> = ({
   const { addToast } = useToast()
   const { browserProvider } = useProviderContext()
   const { connectedAccount, v1Account } = useAccountContext()
-  const { isCharacterNotMinted } = useCharacterContext()
   const switchNetwork = useSwitchNetwork()
-  const disabledButton = Boolean(!connectedAccount || v1Account || isCharacterNotMinted)
+  const disabledButton = Boolean(!connectedAccount || v1Account)
 
   const buttonText = getRewardsButtonText({
     connectedAccount,
-    v1Account: !!v1Account,
-    isCharacterNotMinted: !!isCharacterNotMinted
+    v1Account: !!v1Account
   })
 
   const [migratableXWalletBalance, setMigratableXWalletBalance] = useState<bigint | null>(null)

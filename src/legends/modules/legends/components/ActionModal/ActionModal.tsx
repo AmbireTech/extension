@@ -10,6 +10,7 @@ import React, {
 import { createPortal } from 'react-dom'
 
 import Modal from '@legends/components/Modal'
+import CharacterSelect from '@legends/modules/character/screens/CharacterSelect'
 import MobileDisclaimerModal from '@legends/modules/Home/components/MobileDisclaimerModal'
 import CardActionComponent from '@legends/modules/legends/components/Card/CardAction'
 import { CardActionComponentProps } from '@legends/modules/legends/components/Card/CardAction/CardAction'
@@ -154,6 +155,10 @@ const ActionModal: FC<ActionModalProps> = ({
 
   if (predefinedId === CARD_PREDEFINED_ID.chest) {
     return <TreasureChestComponentModal isOpen={isOpen} handleClose={closeActionModalWrapped} />
+  }
+
+  if (predefinedId === CARD_PREDEFINED_ID.nft) {
+    return <CharacterSelect isOpen={isOpen} onClose={closeActionModalWrapped} />
   }
 
   return (

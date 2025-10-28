@@ -1,6 +1,6 @@
 import { Contract, JsonRpcProvider } from 'ethers'
 import React, { useEffect, useState } from 'react'
-import { Navigate, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 
 import { LEGENDS_NFT_ADDRESS } from '@env'
 import Modal from '@legends/components/Modal'
@@ -19,9 +19,10 @@ import useMintCharacter from './hooks/useMintCharacter'
 
 interface CharacterSelectProps {
   onClose: () => void
+  isOpen: boolean
 }
 
-const CharacterSelect = ({ onClose }: CharacterSelectProps) => {
+const CharacterSelect = ({ onClose, isOpen }: CharacterSelectProps) => {
   const navigate = useNavigate()
   const [characterId, setCharacterId] = useState(1)
   const { connectedAccount, v1Account } = useAccountContext()
@@ -77,6 +78,9 @@ const CharacterSelect = ({ onClose }: CharacterSelectProps) => {
       .catch((e) => console.log('Failed to get info about NFT balance', e))
   }, [connectedAccount])
 
+  if (!isOpen) {
+    return null
+  }
   return (
     <Modal className={styles.wrapper} isOpen handleClose={onClose}>
       <div
