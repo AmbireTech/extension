@@ -148,14 +148,7 @@ const DappCatalogScreen = () => {
       const favoritesMatch = !favoritesSelected || dapp.favorite
       const connectedMatch = !connectedSelected || dapp.isConnected
 
-      return (
-        searchMatch &&
-        networkMatch &&
-        categoryMatch &&
-        favoritesMatch &&
-        connectedMatch &&
-        !(dapp.isCustom && !debouncedSearch?.length && !connectedSelected && !dapp.favorite)
-      )
+      return searchMatch && networkMatch && categoryMatch && favoritesMatch && connectedMatch
     })
   }, [state.dapps, debouncedSearch, network, category, favoritesSelected, connectedSelected])
 
