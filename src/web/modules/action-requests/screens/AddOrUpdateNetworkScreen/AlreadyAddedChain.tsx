@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import { Statuses } from '@ambire-common/interfaces/eventEmitter'
-import { Network, NetworkFeature } from '@ambire-common/interfaces/network'
+import { Network } from '@ambire-common/interfaces/network'
 import SuccessAnimation from '@common/components/SuccessAnimation'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
