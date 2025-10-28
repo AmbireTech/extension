@@ -148,7 +148,14 @@ const DappCatalogScreen = () => {
       const favoritesMatch = !favoritesSelected || dapp.favorite
       const connectedMatch = !connectedSelected || dapp.isConnected
 
-      return searchMatch && networkMatch && categoryMatch && favoritesMatch && connectedMatch
+      return (
+        searchMatch &&
+        networkMatch &&
+        categoryMatch &&
+        favoritesMatch &&
+        connectedMatch &&
+        !(dapp.isCustom && !debouncedSearch?.length && !connectedSelected && !dapp.favorite)
+      )
     })
   }, [state.dapps, debouncedSearch, network, category, favoritesSelected, connectedSelected])
 
@@ -241,7 +248,12 @@ const DappCatalogScreen = () => {
     [setValue]
   )
 
-  const renderItem = useCallback(({ item }: { item: Dapp }) => <DappItem {...item} />, [])
+  const renderItem = useCallback(
+    ({ item }: { item: Dapp }) => (
+      <DappItem {...item} withConnectIcon={item.isConnected && connectedSelected} />
+    ),
+    [connectedSelected]
+  )
 
   useEffect(() => {
     const shouldDoInitialSet = !initialDAppListState.length && state.dapps.length

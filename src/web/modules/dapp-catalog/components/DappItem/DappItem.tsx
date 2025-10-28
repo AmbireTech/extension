@@ -40,7 +40,7 @@ function formatTVL(tvl: number) {
   return `TVL: ${formatted}`
 }
 
-const DappItem = (dapp: Dapp) => {
+const DappItem = (dapp: Dapp & { withConnectIcon: boolean }) => {
   const {
     id,
     url,
@@ -52,7 +52,8 @@ const DappItem = (dapp: Dapp) => {
     blacklisted,
     isCustom,
     tvl,
-    twitter
+    twitter,
+    withConnectIcon
   } = dapp
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const { styles, theme } = useTheme(getStyles)
@@ -142,7 +143,9 @@ const DappItem = (dapp: Dapp) => {
                   >
                     <StarIcon isFilled={favorite} />
                   </Pressable>
-                  {!!isConnected && <ConnectedIcon style={spacings.mrTy} width={18} height={18} />}
+                  {!!withConnectIcon && (
+                    <ConnectedIcon style={spacings.mrTy} width={18} height={18} />
+                  )}
                   {!!tvl && (
                     <View
                       style={[

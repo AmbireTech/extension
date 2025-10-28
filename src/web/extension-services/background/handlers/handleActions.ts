@@ -619,7 +619,6 @@ export const handleActions = async (
       return mainCtrl.dapps.updateDapp(params.id, params.dapp)
     }
     case 'DAPP_CONTROLLER_REMOVE_DAPP': {
-      await mainCtrl.dapps.broadcastDappSessionEvent('disconnect', undefined, params)
       return mainCtrl.dapps.removeDapp(params)
     }
     case 'PHISHING_CONTROLLER_GET_IS_BLACKLISTED_AND_SEND_TO_UI': {
