@@ -2,6 +2,7 @@
 
 import { Interface } from 'ethers'
 import React, { useCallback, useMemo, useState } from 'react'
+import { Pressable } from 'react-native'
 
 import { LEGENDS_CONTRACT_ADDRESS } from '@legends/constants/addresses'
 import { ERROR_MESSAGES } from '@legends/constants/errors/messages'
@@ -91,33 +92,47 @@ const MascotRevealLetter = ({ meta }: Props) => {
     return false
   }, [connectedAccount, v1Account, isCharacterNotMinted])
 
-  if (meta?.revealedMascotLetter)
-    return (
-      <div className={styles.totalTextContainer}>
-        <div className={styles.mascotLetterContainer}>
-          <p>Letter:</p>
-          <div className={styles.mascotLetter}>
-            <p style={{ fontWeight: 'bold' }}>O</p>
+  const infoComponent = useMemo(() => {
+    if (meta?.revealedMascotLetter)
+      return (
+        <div className={styles.totalTextContainer}>
+          <div className={styles.mascotLetterContainer}>
+            <p>Letter:</p>
+            <div className={styles.mascotLetter}>
+              <p style={{ fontWeight: 'bold' }}>O</p>
+            </div>
           </div>
         </div>
-      </div>
-    )
+      )
 
-  if (isInProgress)
+    if (isInProgress)
+      return (
+        <div className={styles.infoText}>
+          <p>Loading...</p>
+        </div>
+      )
+
     return (
-      <div className={styles.infoText}>
-        <p>Loading...</p>
-      </div>
+      <CardActionWrapper
+        onButtonClick={revealLetter}
+        isLoading={isInProgress}
+        loadingText="Signing..."
+        disabled={isButtonDisabled}
+        buttonText={btnText}
+      />
     )
-
+  }, [meta?.revealedMascotLetter, isInProgress, revealLetter, isButtonDisabled, btnText])
   return (
-    <CardActionWrapper
-      onButtonClick={revealLetter}
-      isLoading={isInProgress}
-      loadingText="Signing..."
-      disabled={isButtonDisabled}
-      buttonText={btnText}
-    />
+    <>
+      <div style={{ textAlign: 'right' }}>
+        <p className={styles.link}>
+          <Pressable onPress={() => window.open('https://x.com/ambire/status/1982787127105486860')}>
+            Discover more about the campaign.
+          </Pressable>
+        </p>
+      </div>
+      {infoComponent}
+    </>
   )
 }
 
