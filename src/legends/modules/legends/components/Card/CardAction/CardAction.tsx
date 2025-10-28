@@ -11,6 +11,7 @@ import { getRewardsButtonText } from '@legends/utils/getRewardsButtonText'
 import { InviteAcc, SendAccOp } from './actions'
 import BitrefillClaim from './actions/BitrefillClaim'
 import Feedback from './actions/Feedback'
+import MascotRevealLetter from './actions/MascotRevealLetter'
 
 export type CardActionComponentProps = {
   action: CardAction
@@ -64,6 +65,9 @@ const CardActionComponent: FC<CardActionComponentProps> = ({ meta, action, butto
 
     if (action.predefinedId === CARD_PREDEFINED_ID.bitrefill) {
       return <BitrefillClaim meta={meta} />
+    }
+    if (action.predefinedId === CARD_PREDEFINED_ID.mascot) {
+      return <MascotRevealLetter meta={meta} />
     }
 
     return null

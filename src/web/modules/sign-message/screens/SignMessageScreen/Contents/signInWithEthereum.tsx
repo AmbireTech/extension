@@ -6,16 +6,19 @@ import { AUTO_LOGIN_DURATION_OPTIONS } from '@ambire-common/controllers/autoLogi
 import { SiweMessage } from '@ambire-common/interfaces/userRequest'
 import Alert from '@common/components/Alert'
 import NetworkBadge from '@common/components/NetworkBadge'
+import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Select from '@common/components/Select'
 import Text from '@common/components/Text'
 import Toggle from '@common/components/Toggle'
+import Tooltip from '@common/components/Tooltip'
 import useTheme from '@common/hooks/useTheme'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING, SPACING_MD, SPACING_SM, SPACING_XL } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
+import useResponsiveActionWindow from '@web/hooks/useResponsiveActionWindow'
 import useSignMessageControllerState from '@web/hooks/useSignMessageControllerState'
 import HardwareWalletSigningModal from '@web/modules/hardware-wallet/components/HardwareWalletSigningModal'
 import LedgerConnectModal from '@web/modules/hardware-wallet/components/LedgerConnectModal'
@@ -28,30 +31,58 @@ interface Props {
   handleDismissLedgerConnectModal: () => void
 }
 
-const Label = ({ children }: { children: React.ReactNode }) => {
+const Label = ({
+  children,
+  responsiveSizeMultiplier
+}: {
+  children: React.ReactNode
+  responsiveSizeMultiplier: number
+}) => {
   return (
-    <Text weight="medium" fontSize={14} appearance="primaryText">
+    <Text weight="medium" fontSize={14 * responsiveSizeMultiplier} appearance="primaryText">
       {children}
     </Text>
   )
 }
 
-const Value = ({ children }: { children: React.ReactNode }) => {
+const Value = ({
+  children,
+  tooltipId = '',
+  responsiveSizeMultiplier
+}: {
+  children: React.ReactNode
+  tooltipId?: string
+  responsiveSizeMultiplier: number
+}) => {
   return (
-    <Text appearance="secondaryText" fontSize={14}>
+    <Text
+      appearance="secondaryText"
+      fontSize={14 * responsiveSizeMultiplier}
+      dataSet={{
+        tooltipId
+      }}
+    >
       {children}
     </Text>
   )
 }
 
-const Row = ({ children }: { children: React.ReactNode }) => {
+const Row = ({
+  children,
+  responsiveSizeMultiplier
+}: {
+  children: React.ReactNode
+  responsiveSizeMultiplier: number
+}) => {
   return (
     <View
       style={[
         flexbox.directionRow,
         flexbox.justifySpaceBetween,
         flexbox.alignCenter,
-        spacings.mbSm
+        {
+          marginBottom: SPACING_SM * responsiveSizeMultiplier
+        }
       ]}
     >
       {children}
@@ -70,6 +101,7 @@ const SignInWithEthereum = ({
   const { styles } = useTheme(getStyles)
   const { theme } = useTheme()
   const { networks } = useNetworksControllerState()
+  const { responsiveSizeMultiplier } = useResponsiveActionWindow()
   const { dispatch } = useBackgroundService()
 
   const siweMessageToSign = useMemo(() => {
@@ -162,66 +194,114 @@ const SignInWithEthereum = ({
   )
 
   return (
-    <TabLayoutWrapperMainContent style={spacings.mbLg}>
+    <TabLayoutWrapperMainContent>
       <View
         style={[
           flexbox.directionRow,
           flexbox.alignCenter,
           flexbox.justifySpaceBetween,
-          spacings.mbXl
+          {
+            marginBottom: SPACING_MD * responsiveSizeMultiplier
+          }
         ]}
       >
         <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-          <Text weight="medium" fontSize={24} style={[spacings.mrSm]}>
+          <Text weight="medium" fontSize={24 * responsiveSizeMultiplier} style={spacings.mrSm}>
             {t('Sign-in request')}
           </Text>
         </View>
-        <NetworkBadge chainId={signMessageState.messageToSign?.chainId} withOnPrefix />
+        <NetworkBadge
+          chainId={signMessageState.messageToSign?.chainId}
+          responsiveSizeMultiplier={responsiveSizeMultiplier}
+          withOnPrefix
+        />
         {/* @TODO: Replace with Badge; add size prop to badge; add tooltip  */}
       </View>
       <View style={styles.container}>
-        <View style={spacings.mbLg}>
+        <View
+          style={{
+            marginBottom: SPACING_XL * responsiveSizeMultiplier
+          }}
+        >
           <Info />
         </View>
         <View
-          style={[
-            spacings.pvSm,
-            spacings.phSm,
-            spacings.mb,
-            {
+          style={{
+            flexGrow: 0,
+            flexShrink: 1
+          }}
+        >
+          <ScrollableWrapper
+            style={{
               backgroundColor: theme.primaryBackground,
               borderWidth: 1,
               borderColor: theme.secondaryBorder,
-              borderRadius: BORDER_RADIUS_PRIMARY
-            }
-          ]}
-        >
-          <View style={spacings.mbSm}>
-            <Label>{t('Message')}</Label>
-            <Value>{siweMessageToSign.parsedMessage.statement}</Value>
-          </View>
-          {rows.map((row) => (
-            <Row key={row.label}>
-              <Label>{t(row.label)}</Label>
-              {row.label === 'Resources' && Array.isArray(row.value) ? (
-                <View style={flexbox.alignEnd}>
-                  {row.value.map((resource: string) => (
-                    <Value key={resource}>{resource}</Value>
-                  ))}
-                </View>
-              ) : (
-                <Value>{row.value}</Value>
-              )}
-            </Row>
-          ))}
+              paddingHorizontal: SPACING_SM * responsiveSizeMultiplier,
+              paddingVertical: SPACING * responsiveSizeMultiplier,
+              marginBottom: SPACING * responsiveSizeMultiplier,
+              borderRadius: BORDER_RADIUS_PRIMARY,
+              minHeight: 200
+            }}
+            contentContainerStyle={flexbox.flex1}
+          >
+            <View
+              style={{
+                marginBottom: SPACING_SM * responsiveSizeMultiplier
+              }}
+            >
+              <Label responsiveSizeMultiplier={responsiveSizeMultiplier}>{t('Message')}</Label>
+              <Value responsiveSizeMultiplier={responsiveSizeMultiplier}>
+                {siweMessageToSign.parsedMessage.statement}
+              </Value>
+            </View>
+            {rows.map((row) => (
+              <Row responsiveSizeMultiplier={responsiveSizeMultiplier} key={row.label}>
+                <Label responsiveSizeMultiplier={responsiveSizeMultiplier}>{t(row.label)}</Label>
+                {row.label === 'Resources' && Array.isArray(row.value) && (
+                  <View style={flexbox.alignEnd}>
+                    {row.value.map((resource: string) => (
+                      <Value responsiveSizeMultiplier={responsiveSizeMultiplier} key={resource}>
+                        {resource}
+                      </Value>
+                    ))}
+                  </View>
+                )}
+                {row.label === 'Nonce' && typeof row.value === 'string' && (
+                  <>
+                    <Value responsiveSizeMultiplier={responsiveSizeMultiplier} tooltipId="nonce">
+                      {row.value.length > 45 ? `${row.value.slice(0, 45)}...` : row.value}
+                    </Value>
+                    <Tooltip
+                      content={row.value}
+                      id="nonce"
+                      // @ts-ignore
+                      style={{
+                        ...flexbox.wrap,
+                        ...flexbox.flex1,
+                        wordBreak: 'break-all'
+                      }}
+                    />
+                  </>
+                )}
+                {row.label !== 'Resources' && row.label !== 'Nonce' && (
+                  <Value responsiveSizeMultiplier={responsiveSizeMultiplier}>{row.value}</Value>
+                )}
+              </Row>
+            ))}
+          </ScrollableWrapper>
         </View>
+
         {siweMessageToSign.autoLoginStatus !== 'unsupported' &&
           siweMessageToSign.siweValidityStatus === 'valid' && (
             <View style={[flexbox.directionRow, flexbox.justifyEnd, flexbox.alignCenter]}>
               <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifyEnd]}>
                 <Toggle isOn={isAutoLoginEnabledByUser} onToggle={updateIsAutoLoginEnabled} />
 
-                <Text fontSize={14} appearance="secondaryText" style={spacings.mrSm}>
+                <Text
+                  fontSize={14 * responsiveSizeMultiplier}
+                  appearance="secondaryText"
+                  style={spacings.mrSm}
+                >
                   {t('Auto-login on this network for the next')}
                 </Text>
               </View>

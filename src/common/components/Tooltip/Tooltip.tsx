@@ -6,7 +6,10 @@ import useTheme from '@common/hooks/useTheme'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import { Portal } from '@gorhom/portal'
 
-type Props = ITooltip & { tooltipRef?: any; withPortal?: boolean }
+type Props = ITooltip & {
+  tooltipRef?: any
+  withPortal?: boolean
+}
 
 const TooltipInner = ({ tooltipRef, style, border, ...rest }: Props) => {
   const { theme } = useTheme()
