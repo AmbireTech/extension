@@ -294,19 +294,14 @@ test.describe('dashboard', () => {
     })
   })
 
-  test('Click on Info button for Projected Rewards token', async ({ pages }) => {
+  test('Check redirection to Ambire rewards page', async ({ pages }) => {
     await test.step('assert Info button is visible', async () => {
       await pages.basePage.isVisible(selectors.dashboard.projectedRewardsInfoButton)
     })
 
-    await test.step('click on Info button', async () => {
-      await pages.basePage.click(selectors.dashboard.projectedRewardsInfoButton)
-    })
-
-    await test.step('assert new tab is opened', async () => {
-      const allPages = pages.basePage.context.pages()
-      // 1 original + 1 new tab + 1 verifying you're human tab = 3
-      expect(allPages.length).toBe(3)
+    await test.step('click on Info button and check redirection', async () => {
+      await pages.auth.pause()
+      await pages.dashboard.checkRewardsPageRedirection()
     })
   })
 })
