@@ -6,7 +6,7 @@ on:
       - v2
       - main
   pull_request:
-    types: ['ready_for_review', 'synchronize']
+    types: ['opened', 'ready_for_review', 'synchronize']
     branches:
       - v2
       - main
