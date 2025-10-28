@@ -2,7 +2,7 @@ import { baParams, KEYSTORE_PASS } from 'constants/env'
 
 import { test } from '../../../fixtures/pageObjects'
 
-test.describe('keystore', () => {
+test.describe('keystore', { tag: '@keystore' }, () => {
   test.beforeEach(async ({ pages }) => {
     await pages.initWithStorage(baParams)
   })

@@ -6,7 +6,6 @@ import { isDappRequestAction } from '@ambire-common/libs/actions/actions'
 import wait from '@ambire-common/utils/wait'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
-import useWindowSize from '@common/hooks/useWindowSize'
 import Header from '@common/modules/header/components/Header'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import eventBus from '@web/extension-services/event/eventBus'
@@ -14,6 +13,7 @@ import useActionsControllerState from '@web/hooks/useActionsControllerState'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useDappInfo from '@web/hooks/useDappInfo'
 import useDappsControllerState from '@web/hooks/useDappsControllerState'
+import useResponsiveActionWindow from '@web/hooks/useResponsiveActionWindow'
 import ActionFooter from '@web/modules/action-requests/components/ActionFooter'
 
 import DAppConnectBody from './components/DAppConnectBody'
@@ -30,7 +30,7 @@ const DappConnectScreen = () => {
     state: { dapps }
   } = useDappsControllerState()
   const [isAuthorizing, setIsAuthorizing] = useState(false)
-  const { minHeightSize } = useWindowSize()
+  const { responsiveSizeMultiplier } = useResponsiveActionWindow()
   const securityCheckCalled = useRef(false)
   const [securityCheck, setSecurityCheck] = useState<'BLACKLISTED' | 'NOT_BLACKLISTED' | 'LOADING'>(
     'LOADING'
@@ -98,16 +98,6 @@ const DappConnectScreen = () => {
       params: { data: null, id: dappAction.id }
     })
   }, [dappAction, dispatch])
-
-  const responsiveSizeMultiplier = useMemo(() => {
-    if (minHeightSize(690)) return 0.75
-    if (minHeightSize(720)) return 0.8
-    if (minHeightSize(750)) return 0.85
-    if (minHeightSize(780)) return 0.9
-    if (minHeightSize(810)) return 0.95
-
-    return 1
-  }, [minHeightSize])
 
   const resolveButtonText = useMemo(() => {
     if (securityCheck === 'LOADING') return t('Loading...')
