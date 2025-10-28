@@ -1,4 +1,4 @@
-import { baParams } from 'constants/env'
+import { saParams } from 'constants/env'
 import fetch from 'node-fetch'
 
 import { expect } from '@playwright/test'
@@ -9,7 +9,7 @@ import { test } from '../../fixtures/pageObjects'
 
 test.describe('stability', { tag: '@stability' }, () => {
   test.beforeEach(async ({ pages }) => {
-    await pages.initWithStorage(baParams, { shouldUnlockManually: true })
+    await pages.initWithStorage(saParams, { shouldUnlockManually: true })
   })
 
   test.afterEach(async ({ context }) => {

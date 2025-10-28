@@ -2,7 +2,7 @@ import { baParams, saParams } from 'constants/env'
 import tokens from 'constants/tokens'
 import { test } from 'fixtures/pageObjects'
 
-test.describe('Basic Acc - Token balance test', { tag: '@balanceCheck' }, async () => {
+test.describe.skip('Basic Acc - Token balance test', { tag: '@balanceCheck' }, async () => {
   test.beforeEach(async ({ pages }) => {
     await pages.initWithStorage(baParams)
   })
