@@ -30,7 +30,7 @@ const BundlerWarning = ({
     <View
       style={[flexbox.directionRow, spacings.mt, flexbox.alignCenter, flexbox.justifySpaceBetween]}
     >
-      <Text fontSize={12} appearance="warningText">
+      <Text fontSize={12} appearance="warningText" style={spacings.mr}>
         {t(bundlerNonceDiscrepancy.title)}
       </Text>
       <Button
