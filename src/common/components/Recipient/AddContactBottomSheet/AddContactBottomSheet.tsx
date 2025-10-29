@@ -139,7 +139,7 @@ const AddContactBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet, address 
           }}
           disabled={!address || name.length === 0 || name.length > 32}
           hasBottomSpacing={false}
-          text={!name.length ? t('Name your Contact') : t('Add to Contacts')}
+          text={!name.length ? t('Name your contact') : t('Add to contacts')}
           onPress={handleAddContact}
         />
       </View>
@@ -147,4 +147,4 @@ const AddContactBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet, address 
   )
 }
 
-export default AddContactBottomSheet
+export default React.memo(AddContactBottomSheet)

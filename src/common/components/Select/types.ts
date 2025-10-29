@@ -15,6 +15,7 @@ export type SelectValue = {
 
 export type RenderSelectedOptionParams = {
   toggleMenu: () => void
+  setIsMenuOpen: (isMenuOpen: boolean) => void
   isMenuOpen: boolean
   selectRef: any
 }

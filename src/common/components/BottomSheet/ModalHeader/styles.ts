@@ -8,6 +8,7 @@ interface Style {
   sideContainer: ViewStyle
   backButton: ViewStyle
   closeIcon: ViewStyle
+  rightSideContainer: ViewStyle
 }
 
 const getStyles = () =>
@@ -24,6 +25,11 @@ const getStyles = () =>
       width: 120,
       minWidth: 120,
       ...flexbox.justifyCenter
+    },
+    rightSideContainer: {
+      minWidth: 120,
+      ...flexbox.directionRow,
+      ...flexbox.alignCenter
     },
     backButton: {
       ...flexbox.alignSelfStart

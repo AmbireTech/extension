@@ -89,14 +89,14 @@ const GasTankButton = ({ onPress, onPosition, portfolio, account }: Props) => {
   // Purposely don't disable the button (but block the onPress action) in
   // case of a tooltip, because it should be clickable to show the tooltip.
   const doesHaveTooltip = buttonState === 'soon'
-  const disabled = !hasGasTank && !doesHaveTooltip
+  const disabled = (!hasGasTank && !doesHaveTooltip) || buttonState === 'error'
   const handleOnPress = useCallback(() => {
     if (doesHaveTooltip) return
 
     return onPress()
   }, [doesHaveTooltip, onPress])
 
-  if (!portfolio.isAllReady) {
+  if (!portfolio.isReadyToVisualize) {
     return <SkeletonLoader lowOpacity width={160} height={28} borderRadius={8} />
   }
 
@@ -144,9 +144,7 @@ const GasTankButton = ({ onPress, onPosition, portfolio, account }: Props) => {
               weight="number_medium"
               fontSize={12}
             >
-              {`${totalBalanceGasTankDetails.balanceFormatted} ${
-                totalBalanceGasTankDetails.token?.symbol || ''
-              }`}
+              {`${totalBalanceGasTankDetails.balanceUSDFormatted}`}
             </Text>
             <Text
               style={[spacings.mlMi, { opacity: 0.57, lineHeight: GAS_TANK_BUTTON_LINE_HEIGHT }]}
@@ -204,7 +202,7 @@ const GasTankButton = ({ onPress, onPosition, portfolio, account }: Props) => {
             weight="number_bold"
             fontSize={12}
           >
-            {t('Gas Tank Error')}
+            {t('Gas Tank Unavailable')}
           </Text>
         )}
       </AnimatedPressable>

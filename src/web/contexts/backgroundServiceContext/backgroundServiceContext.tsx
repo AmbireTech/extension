@@ -1,7 +1,9 @@
+import { nanoid } from 'nanoid'
 /* eslint-disable @typescript-eslint/no-floating-promises */
 import React, { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { ErrorRef } from '@ambire-common/interfaces/eventEmitter'
+import { captureMessage } from '@common/config/analytics/CrashAnalytics.web'
 import { ToastOptions } from '@common/contexts/toastContext'
 import useIsScreenFocused from '@common/hooks/useIsScreenFocused'
 import useNavigation from '@common/hooks/useNavigation'
@@ -23,6 +25,7 @@ let pm: PortMessenger
 const actionsBeforeBackgroundReady: Action[] = []
 let backgroundReady: boolean
 let connectPort: () => Promise<void> = () => Promise.resolve()
+const MAX_RETRIES = 4
 // Facilitate communication between the different parts of the browser extension.
 // Utilizes the PortMessenger class to establish a connection between the popup
 // and background pages, and the eventBus to emit and listen for events.
@@ -31,6 +34,8 @@ let connectPort: () => Promise<void> = () => Promise.resolve()
 // based on the state of the background process and for sending dApps-initiated
 // actions to the background for further processing.
 if (isExtension) {
+  const portId = nanoid()
+  let retries = 0
   connectPort = async () => {
     pm = new PortMessenger()
     backgroundReady = false
@@ -39,10 +44,10 @@ if (isExtension) {
     if (getUiType().isTab) portName = 'tab'
     if (getUiType().isActionWindow) portName = 'action-window'
 
-    pm.connect(portName)
+    pm.connect({ id: portId, name: portName })
     // connect to the portMessenger initialized in the background
     // @ts-ignore
-    pm.addListener(pm.ports[0].id, (messageType, { method, params, forceEmit }) => {
+    pm.addConnectListener(pm.ports[0].id, (messageType, { method, params, forceEmit }) => {
       if (method === 'portReady') {
         backgroundReady = true
         actionsBeforeBackgroundReady.forEach((a) => globalDispatch(a))
@@ -64,9 +69,23 @@ if (isExtension) {
       }
     })
 
+    // Use at least 1000ms; on slower PCs, background responses can be slightly delayed,
+    // causing multiple recursive connectPort calls and slowing down window initialization.
+    // Once MAX_RETRIES is reached, it will stop retrying and wait indefinitely for the background to send 'portReady'
+    // because if the 'portReady' res from the background is delayed more than 1000ms the connection will never resolve calling the recursion forever
     setTimeout(() => {
-      if (!backgroundReady) connectPort()
-    }, 150)
+      if (!backgroundReady && retries === MAX_RETRIES) {
+        captureMessage(
+          `Error: Failed to connect with the service worker after maximum retries. Window type: ${portName}`,
+          { level: 'fatal' }
+        )
+      }
+
+      if (!backgroundReady && retries < MAX_RETRIES) {
+        retries++
+        connectPort()
+      }
+    }, 1000)
   }
 
   connectPort()

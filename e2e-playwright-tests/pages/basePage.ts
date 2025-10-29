@@ -81,23 +81,45 @@ export class BasePage {
     return this.page.getByTestId(selector).innerText()
   }
 
-  async entertext(selector: string, text: string): Promise<void> {
-    await this.page.getByTestId(selector).fill(text)
+  async entertext(selector: string, text: string, index?: number): Promise<void> {
+    await this.page
+      .getByTestId(selector)
+      .nth(index ?? 0)
+      .fill(text)
   }
 
   async getValue(selector: string): Promise<string> {
     return this.page.getByTestId(selector).inputValue()
   }
 
-  async handleNewPage(locator: Locator) {
+  async handleNewPage(locator: Locator): Promise<Page> {
     const context = this.page.context()
 
-    const [actionWindowPagePromise] = await Promise.all([
-      context.waitForEvent('page'),
-      locator.first().click({ timeout: 5000 }) // trigger opening
-    ])
+    // const [actionWindowPagePromise] = await Promise.all([
+    //   context.waitForEvent('page', { timeout: 10000 }),
+    //   locator.first().click({ timeout: 5000 }) // trigger opening
+    // ])
 
-    return actionWindowPagePromise
+    // await actionWindowPagePromise.waitForLoadState('domcontentloaded')
+
+    // return actionWindowPagePromise
+
+    // wait for locator before click
+    await locator.waitFor({ state: 'visible' })
+    await expect(locator).toBeEnabled()
+
+    // setup listener for new page event
+    const newPagePromise = context.waitForEvent('page', { timeout: 10000 })
+
+    // initiate new page event
+    await locator.click({ timeout: 5000 })
+
+    // Wait for the newly opened page to be available
+    const actionWindowPage = await newPagePromise
+
+    // wait for new page to load
+    await actionWindowPage.waitForLoadState('domcontentloaded')
+    return actionWindowPage
   }
 
   async pause() {

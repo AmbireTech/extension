@@ -6,19 +6,26 @@ on:
       - v2
       - main
   pull_request:
+    types: ['opened', 'ready_for_review', 'synchronize']
     branches:
       - v2
       - main
+  workflow_dispatch:
+
+  concurrency:
+  group: e2e-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   e2e-tests:
     runs-on: ubuntu-latest
     environment: testing
+    # This will run for pushes, PRs (ready_for_review/synchronize), and manual dispatch
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false || github.event_name == 'workflow_dispatch'
 
     env:
       IS_TESTING: 'true'
       E2E_DEBUG: ${{ vars.E2E_DEBUG }}
-      # DISPLAY: ':99.0'
       RELAYER_URL: ${{ vars.RELAYER_URL }}
       VELCRO_URL: ${{ vars.VELCRO_URL }}
       LI_FI_API_KEY: ${{ vars.LI_FI_API_KEY }}
@@ -67,7 +74,7 @@ jobs:
       - name: Checkout full Git history
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Fixes GitCommitInfo timeout
+          fetch-depth: 0
 
       - name: Add SSH key to checkout a private repo
         uses: webfactory/ssh-agent@v0.5.4
@@ -106,9 +113,22 @@ jobs:
         working-directory: ./e2e-playwright-tests
         run: npm ci
 
+      - name: Get Playwright version
+        id: playwright-version
+        working-directory: ./e2e-playwright-tests
+        run: echo "PLAYWRIGHT_VERSION=$(node -p 'require("./node_modules/@playwright/test/package.json").version')" >> $GITHUB_ENV
+
+      - name: Cache Playwright
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ env.PLAYWRIGHT_VERSION }}
+
       - name: Install Playwright browsers
         working-directory: ./e2e-playwright-tests
         run: npx playwright install --with-deps chromium
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
 
       - name: Run Balance Check test for SA and BA
         working-directory: ./e2e-playwright-tests

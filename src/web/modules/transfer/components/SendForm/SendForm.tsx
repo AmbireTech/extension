@@ -1,8 +1,9 @@
-import React, { ReactNode, useCallback, useEffect, useMemo } from 'react'
+import React, { useCallback, useEffect, useMemo } from 'react'
 import { View } from 'react-native'
 
 import { TokenResult } from '@ambire-common/libs/portfolio'
 import { getTokenAmount } from '@ambire-common/libs/portfolio/helpers'
+import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import Recipient from '@common/components/Recipient'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import SendToken from '@common/components/SendToken'
@@ -13,16 +14,19 @@ import useAddressInput from '@common/hooks/useAddressInput'
 import useGetTokenSelectProps from '@common/hooks/useGetTokenSelectProps'
 import useRoute from '@common/hooks/useRoute'
 import spacings from '@common/styles/spacings'
+import flexbox from '@common/styles/utils/flexbox'
 import { getInfoFromSearch } from '@web/contexts/transferControllerStateContext'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import useTransferControllerState from '@web/hooks/useTransferControllerState'
 import { getTokenId } from '@web/utils/token'
+import { getUiType } from '@web/utils/uiType'
 
+import useSimulationError from '@web/modules/portfolio/hooks/SimulationError/useSimulationError'
 import styles from './styles'
-import useSimulationError from "@web/modules/portfolio/hooks/SimulationError/useSimulationError";
 
+const isTab = getUiType().isTab
 const SendForm = ({
   addressInputState,
   hasGasTank,
@@ -30,12 +34,11 @@ const SendForm = ({
   isRecipientAddressUnknown,
   isSWWarningVisible,
   isRecipientHumanizerKnownTokenOrSmartContract,
-  recipientMenuClosedAutomaticallyRef,
-  formTitle,
   amountFieldValue,
   setAmountFieldValue,
   addressStateFieldValue,
-  setAddressStateFieldValue
+  setAddressStateFieldValue,
+  handleGoBack
 }: {
   addressInputState: ReturnType<typeof useAddressInput>
   hasGasTank: boolean
@@ -43,12 +46,11 @@ const SendForm = ({
   isRecipientAddressUnknown: boolean
   isSWWarningVisible: boolean
   isRecipientHumanizerKnownTokenOrSmartContract: boolean
-  recipientMenuClosedAutomaticallyRef: React.MutableRefObject<boolean>
-  formTitle: string | ReactNode
   amountFieldValue: string
   setAmountFieldValue: (value: string) => void
   addressStateFieldValue: string
   setAddressStateFieldValue: (value: string) => void
+  handleGoBack: () => void
 }) => {
   const { validation } = addressInputState
   const { state, tokens } = useTransferControllerState()
@@ -155,37 +157,11 @@ const SendForm = ({
     <ScrollableWrapper
       contentContainerStyle={[styles.container, isTopUp ? styles.topUpContainer : {}]}
     >
-      {(!state.selectedToken && tokens.length) || !portfolio?.isReadyToVisualize ? (
-        <View>
-          <Text appearance="secondaryText" fontSize={14} weight="regular" style={spacings.mbMi}>
-            {!portfolio?.isReadyToVisualize
-              ? t('Loading tokens...')
-              : t(`Select ${isTopUp ? 'Gas Tank ' : ''}Token`)}
-          </Text>
-          <SkeletonLoader width="100%" height={120} style={spacings.mbLg} />
-        </View>
-      ) : (
-        <SendToken
-          fromTokenOptions={options}
-          fromTokenValue={tokenSelectValue}
-          fromAmountValue={amountFieldValue}
-          fromTokenAmountSelectDisabled={disableForm || amountSelectDisabled}
-          handleChangeFromToken={({ value }) => handleChangeToken(value as string)}
-          fromSelectedToken={selectedToken}
-          fromAmount={controllerAmount}
-          fromAmountInFiat={amountInFiat}
-          fromAmountFieldMode={amountFieldMode}
-          maxFromAmount={maxAmount}
-          validateFromAmount={{ success: !amountErrorMessage, message: amountErrorMessage }}
-          onFromAmountChange={setAmountFieldValue}
-          handleSwitchFromAmountFieldMode={switchAmountFieldMode}
-          handleSetMaxFromAmount={setMaxAmount}
-          inputTestId="amount-field"
-          selectTestId="tokens-select"
-          title={formTitle}
-          simulationFailed={!!simulationError}
-        />
-      )}
+      <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mb]}>
+        {!isTab && <PanelBackButton onPress={handleGoBack} style={spacings.mrSm} />}
+        <PanelTitle title={isTopUp ? t('Top up Gas Tank') : t('Send')} />
+        {!isTab && <View style={{ width: 40 }} />}
+      </View>
       <View>
         {!isTopUp && (
           <Recipient
@@ -205,10 +181,35 @@ const SendForm = ({
             isSWWarningVisible={isSWWarningVisible}
             isSWWarningAgreed={isSWWarningAgreed}
             selectedTokenSymbol={selectedToken?.symbol}
-            recipientMenuClosedAutomaticallyRef={recipientMenuClosedAutomaticallyRef}
           />
         )}
       </View>
+      <Text appearance="secondaryText" fontSize={14} weight="medium" style={spacings.mbMi}>
+        {!portfolio?.isReadyToVisualize ? t('Loading tokens...') : t('Select token')}
+      </Text>
+      {(!state.selectedToken && tokens.length) || !portfolio?.isReadyToVisualize ? (
+        <SkeletonLoader width="100%" height={115} />
+      ) : (
+        <SendToken
+          fromTokenOptions={options}
+          fromTokenValue={tokenSelectValue}
+          fromAmountValue={amountFieldValue}
+          fromTokenAmountSelectDisabled={disableForm || amountSelectDisabled}
+          handleChangeFromToken={({ value }) => handleChangeToken(value as string)}
+          fromSelectedToken={selectedToken}
+          fromAmount={controllerAmount}
+          fromAmountInFiat={amountInFiat}
+          fromAmountFieldMode={amountFieldMode}
+          maxFromAmount={maxAmount}
+          validateFromAmount={{ success: !amountErrorMessage, message: amountErrorMessage }}
+          onFromAmountChange={setAmountFieldValue}
+          handleSwitchFromAmountFieldMode={switchAmountFieldMode}
+          handleSetMaxFromAmount={setMaxAmount}
+          inputTestId="amount-field"
+          selectTestId="tokens-select"
+          simulationFailed={!!simulationError}
+        />
+      )}
     </ScrollableWrapper>
   )
 }

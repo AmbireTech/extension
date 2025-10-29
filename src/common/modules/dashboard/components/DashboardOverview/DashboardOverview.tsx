@@ -145,7 +145,7 @@ const DashboardOverview: FC<Props> = ({
             selectedAccount={account?.addr || null}
           />
           <View style={{ zIndex: 2 }}>
-            <DashboardHeader />
+            <DashboardHeader openReceiveModal={openReceiveModal} />
             <Animated.View
               style={{
                 ...styles.overview,
@@ -168,7 +168,7 @@ const DashboardOverview: FC<Props> = ({
                     { height: BALANCE_HEIGHT }
                   ]}
                 >
-                  {!portfolio?.isAllReady ? (
+                  {!portfolio?.isReadyToVisualize ? (
                     <SkeletonLoader
                       lowOpacity
                       width={180}
@@ -226,11 +226,11 @@ const DashboardOverview: FC<Props> = ({
                     style={[spacings.mlTy, refreshButtonAnimStyle]}
                     onPress={reloadAccount}
                     {...bindRefreshButtonAnim}
-                    disabled={!portfolio?.isAllReady}
+                    disabled={!portfolio.isAllReady || portfolio.isReloading}
                     testID="refresh-button"
                   >
                     <RefreshIcon
-                      spin={!portfolio?.isAllReady}
+                      spin={!portfolio.isAllReady || portfolio.isReloading}
                       color={
                         themeType === THEME_TYPES.DARK
                           ? theme.primaryBackgroundInverted
@@ -261,7 +261,7 @@ const DashboardOverview: FC<Props> = ({
                   />
                 </View>
               </View>
-              <Routes openReceiveModal={openReceiveModal} />
+              <Routes />
             </Animated.View>
           </View>
         </Animated.View>

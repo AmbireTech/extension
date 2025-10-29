@@ -1,7 +1,7 @@
 import React, { FC } from 'react'
 import { Defs, LinearGradient, Path, Rect, Stop, Svg, SvgProps } from 'react-native-svg'
 
-const EnsCircularIcon: FC<SvgProps> = ({ width = 18, height = 18 }) => {
+const EnsCircularIcon: FC<SvgProps> = ({ width = 16, height = 16 }) => {
   return (
     <Svg width={width} height={height} viewBox="0 0 18 18">
       <Defs>

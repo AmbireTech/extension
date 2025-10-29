@@ -24,6 +24,7 @@ const isExtension =
   outputPath.includes('webkit') || outputPath.includes('gecko') || outputPath.includes('safari')
 const isAmbireExplorer = outputPath.includes('benzin')
 const isLegends = outputPath.includes('legends')
+const isAmbireNext = process.env.AMBIRE_NEXT === 'true'
 
 // style.css output file for WEB_ENGINE: GECKO
 function processStyleGecko(content) {
@@ -42,16 +43,27 @@ module.exports = async function (env, argv) {
     const manifest = JSON.parse(content.toString())
     if (config.mode === 'development') {
       manifest.name = `${manifest.name} (DEV build)`
-      const devBuildIcons = {}
+    }
+    if (isAmbireNext) {
+      manifest.name = 'Ambire Web3 Wallet (NEXT build)'
+      manifest.short_name = 'Ambire Next'
+      manifest.action.default_title = 'Ambire Next'
+    }
+
+    // Customize extension icons to emphasize the different build
+    if (config.mode === 'development' || isAmbireNext) {
+      const buildIcons = {}
+      const suffix = isAmbireNext ? '-next-build-ONLY' : '-dev-build-ONLY'
       Object.keys(manifest.icons).forEach((size) => {
         const iconPath = manifest.icons[size]
         const dotIndex = iconPath.lastIndexOf('.')
         const prefix = iconPath.slice(0, dotIndex)
         const extension = iconPath.slice(dotIndex)
-        devBuildIcons[size] = `${prefix}-dev-build-ONLY${extension}`
+        buildIcons[size] = `${prefix}${suffix}${extension}`
       })
-      manifest.icons = devBuildIcons
+      manifest.icons = buildIcons
     }
+
     // Note: Safari allows up to 100 characters, all others allow up to 132 characters
     manifest.description =
       'Fast & secure Web3 wallet to supercharge your account on Ethereum and EVM networks.'
@@ -322,6 +334,10 @@ module.exports = async function (env, argv) {
       }),
       new CopyPlugin({ patterns: extensionCopyPatterns })
     ]
+
+    // Provides a global variable to all files where globalIsAmbireNext is declared including
+    // content scripts and injected files
+    config.plugins.push(new webpack.DefinePlugin({ globalIsAmbireNext: isAmbireNext }))
 
     // Some dependencies, such as @metamask/eth-sig-util v7+ and v8+, ship .cjs
     // files and define "exports" fields in their package.json. In multi-entry

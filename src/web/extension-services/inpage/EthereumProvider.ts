@@ -10,6 +10,10 @@ import DedupePromise from '@web/extension-services/inpage/services/dedupePromise
 import PushEventHandlers from '@web/extension-services/inpage/services/pushEventsHandlers'
 import ReadyPromise from '@web/extension-services/inpage/services/readyPromise'
 import { initializeMessenger } from '@web/extension-services/messengers/initializeMessenger'
+import {
+  isCrossOriginFrame,
+  isTooDeepFrameInTheFrameHierarchy
+} from '@web/extension-services/utils/frames'
 import logger, { LOG_LEVELS, logInfoWithPrefix, logWarnWithPrefix } from '@web/utils/logger'
 
 export interface StateProvider {
@@ -214,11 +218,15 @@ export class EthereumProvider extends EventEmitter {
     this.initialize()
     this.shimLegacy()
     this.#pushEventHandlers = new PushEventHandlers(this)
-    this.#backgroundMessenger.reply('broadcast', this.#handleBackgroundMessage)
+    this.#backgroundMessenger.reply(
+      globalIsAmbireNext ? 'broadcast-next' : 'broadcast',
+      this.#handleBackgroundMessage
+    )
     this.#providerId = Date.now()
   }
 
   initialize = async () => {
+    if (isCrossOriginFrame() || isTooDeepFrameInTheFrameHierarchy()) return
     document.addEventListener('visibilitychange', this.#requestPromiseCheckVisibility)
 
     const id = this.#requestId++
@@ -241,7 +249,7 @@ export class EthereumProvider extends EventEmitter {
     try {
       const { chainId, accounts, networkVersion, isUnlocked, logLevel }: any =
         await this.requestInternalMethods({ method: 'getProviderState' })
-
+      console.log('getProviderState', globalIsAmbireNext, logLevel)
       this.setLogLevel(logLevel)
       if (isUnlocked) {
         this._isUnlocked = true
@@ -274,6 +282,8 @@ export class EthereumProvider extends EventEmitter {
   }
 
   #handleBackgroundMessage = async ({ event, data }: any) => {
+    if (isCrossOriginFrame() || isTooDeepFrameInTheFrameHierarchy()) return
+
     if (event === 'tabCheckin') {
       const id = this.#requestId++
       const params = {

@@ -102,7 +102,7 @@ const PrivateKeyImportScreen = () => {
                 name="privateKey"
                 render={({ field: { onChange, onBlur, value } }) => (
                   <Input
-                    testID="enter-seed-phrase-field"
+                    testID="enter-private-key-field"
                     onBlur={onBlur}
                     autoFocus
                     placeholder={t('Input private key')}

@@ -121,6 +121,8 @@ export interface CardFromResponse {
     initial7702Xp?: number
     code?: string
     allCollected?: boolean
+    activeProposals?: { id: string; title: string; created: number; end: number }[]
+    revealedMascotLetter?: boolean
   }
   contentSteps?: string[]
   contentImageV2?: string

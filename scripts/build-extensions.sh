@@ -131,8 +131,15 @@ for dir in */; do
   if [ -d "$dir" ]; then
     # Remove -prod suffix and add prefix with version
     clean_name=$(echo "${dir%/}" | sed 's/-prod//g')
+
+    if [ "$AMBIRE_NEXT" = "true" ]; then
+      zip_name="ambire-extension-v${VERSION}-next-${clean_name}.zip"
+    else
+      zip_name="ambire-extension-v${VERSION}-${clean_name}.zip"
+    fi
+
     # Create zip with contents of directory, not the directory itself
-    (cd "$dir" && zip -r "../ambire-extension-v${VERSION}-${clean_name}.zip" .)
+    (cd "$dir" && zip -r "../${zip_name}" .)
   fi
 done
 

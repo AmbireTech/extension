@@ -13,7 +13,6 @@ import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import Header from '@common/modules/header/components/Header'
 import getHeaderStyles from '@common/modules/header/components/Header/styles'
-import HeaderBackButton from '@common/modules/header/components/HeaderBackButton'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
@@ -31,7 +30,6 @@ const { isTab } = getUiType()
 type WrapperProps = {
   children: React.ReactNode
   title: string | React.ReactNode
-  handleGoBack: () => void
   buttons: React.ReactNode
 }
 
@@ -45,7 +43,7 @@ type FormProps = {
   children: React.ReactNode
 }
 
-const Wrapper: FC<WrapperProps> = ({ children, title, handleGoBack, buttons }) => {
+const Wrapper: FC<WrapperProps> = ({ children, title, buttons }) => {
   const { theme, styles } = useTheme(getStyles)
   const { styles: headerStyles } = useTheme(getHeaderStyles)
   const { account } = useSelectedAccountControllerState()
@@ -62,8 +60,8 @@ const Wrapper: FC<WrapperProps> = ({ children, title, handleGoBack, buttons }) =
               { maxWidth: tabLayoutWidths.xl, ...flexbox.justifySpaceBetween }
             ]}
           >
-            <View style={styles.headerSideContainer}>
-              {isTab && account && (
+            <View style={[styles.headerSideContainer, { width: 'auto', flex: 1 }]}>
+              {account && (
                 <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1]}>
                   <Avatar pfp={account.preferences.pfp} isSmart={isSmartAccount(account)} />
                   <View style={flexbox.flex1}>
@@ -80,17 +78,18 @@ const Wrapper: FC<WrapperProps> = ({ children, title, handleGoBack, buttons }) =
                         isLoading={isLoading}
                         ens={ens}
                         address={account.addr}
-                        plainAddressMaxLength={18}
+                        plainAddressMaxLength={20}
                       />
                     </View>
                   </View>
                 </View>
               )}
-              {!isTab && <HeaderBackButton forceBack onGoBackPress={handleGoBack} />}
             </View>
-            <Text fontSize={isTab ? 24 : 20} weight="medium">
-              {title}
-            </Text>
+            {!account && (
+              <Text fontSize={isTab ? 24 : 20} weight="medium">
+                {title}
+              </Text>
+            )}
             <View style={[styles.headerSideContainer, { alignItems: 'flex-end' }]}>
               <AmbireLogoHorizontalWithOG />
             </View>

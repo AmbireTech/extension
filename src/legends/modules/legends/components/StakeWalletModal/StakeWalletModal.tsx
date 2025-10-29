@@ -1,6 +1,5 @@
 import {
   AbiCoder,
-  BrowserProvider,
   Contract,
   formatUnits,
   Interface,
@@ -25,10 +24,10 @@ import Modal from '@legends/components/Modal'
 import { ERROR_MESSAGES } from '@legends/constants/errors/messages'
 import { ETHEREUM_CHAIN_ID } from '@legends/constants/networks'
 import useAccountContext from '@legends/hooks/useAccountContext'
-import useCharacterContext from '@legends/hooks/useCharacterContext/useCharacterContext'
 import useErc5792 from '@legends/hooks/useErc5792'
 import useEscModal from '@legends/hooks/useEscModal'
 import usePortfolioControllerState from '@legends/hooks/usePortfolioControllerState/usePortfolioControllerState'
+import useProviderContext from '@legends/hooks/useProviderContext'
 import useSwitchNetwork from '@legends/hooks/useSwitchNetwork'
 import useToast from '@legends/hooks/useToast'
 import { humanizeError } from '@legends/modules/legends/utils/errors/humanizeError'
@@ -80,8 +79,8 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
     maxTokens: bigint
     shares: bigint
   }>(null)
+  const { provider, browserProvider } = useProviderContext()
   const { connectedAccount, v1Account } = useAccountContext()
-  const { isCharacterNotMinted } = useCharacterContext()
   const { walletTokenInfo } = usePortfolioControllerState()
   const { sendCalls, getCallsStatus, chainId } = useErc5792()
   const switchNetwork = useSwitchNetwork()
@@ -100,8 +99,7 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
 
   const rewardsButtonText = getRewardsButtonText({
     connectedAccount,
-    v1Account: !!v1Account,
-    isCharacterNotMinted: !!isCharacterNotMinted
+    v1Account: !!v1Account
   })
 
   useEffect(() => {
@@ -110,10 +108,10 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
       return
     }
     setIsLoadingOnchainData(true)
-    const provider = new JsonRpcProvider('https://invictus.ambire.com/ethereum')
-    const walletContract = new Contract(WALLET_TOKEN, walletIface, provider)
-    const xWalletContract = new Contract(WALLET_STAKING_ADDR, xWalletIface, provider)
-    const stkWalletContract = new Contract(STK_WALLET, stkWalletIface, provider)
+    const ethereumProvider = new JsonRpcProvider('https://invictus.ambire.com/ethereum')
+    const walletContract = new Contract(WALLET_TOKEN, walletIface, ethereumProvider)
+    const xWalletContract = new Contract(WALLET_STAKING_ADDR, xWalletIface, ethereumProvider)
+    const stkWalletContract = new Contract(STK_WALLET, stkWalletIface, ethereumProvider)
     Promise.all([
       walletContract.balanceOf(connectedAccount),
       xWalletContract.shareValue(),
@@ -173,8 +171,8 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
         return { owner, shares, unlocksAt, maxTokens }
       })
       .filter(({ owner }) => owner === connectedAccount)
-    const provider = new JsonRpcProvider('https://invictus.ambire.com/ethereum')
-    const xWalletContract = new Contract(WALLET_STAKING_ADDR, xWalletIface, provider)
+    const ethereumProvider = new JsonRpcProvider('https://invictus.ambire.com/ethereum')
+    const xWalletContract = new Contract(WALLET_STAKING_ADDR, xWalletIface, ethereumProvider)
 
     Promise.all(
       parsedLogs.map(({ shares, owner, unlocksAt }) => {
@@ -193,8 +191,7 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
         const uncollected = allCommitments
           .filter(([maxTokens]) => maxTokens)
           .map(([, commitment]) => commitment)
-          .sort(([a, b]) => a.unlocksAt - b.unlocksAt)
-
+          .sort((a, b) => Number(a.unlocksAt - b.unlocksAt))
         const firstUncollected = uncollected[0]
         if (!firstUncollected) return
         const { maxTokens, unlocksAt, shares } = firstUncollected
@@ -207,6 +204,7 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
   const stakeAction = useCallback(
     async (dataFromInput: string) => {
       try {
+        if (!browserProvider) throw new HumanReadableError('No connected wallet.')
         if (!connectedAccount) throw new HumanReadableError('No connected account.')
 
         await switchNetwork(ETHEREUM_CHAIN_ID)
@@ -219,7 +217,7 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
           { to: STK_WALLET, data: stkWalletIface.encodeFunctionData('enter', [amount]) }
         ]
         setIsSigning(true)
-        const signer = await new BrowserProvider(window.ambire).getSigner(connectedAccount)
+        const signer = await browserProvider.getSigner(connectedAccount)
 
         const txId = await sendCalls(chainId, await signer.getAddress(), calls, false)
         await getCallsStatus(txId)
@@ -233,19 +231,20 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
       }
     },
     [
+      browserProvider,
       addToast,
       chainId,
       connectedAccount,
       getCallsStatus,
       handleClose,
-      inputAmount,
       sendCalls,
       switchNetwork
     ]
   )
 
   const goToSwap = useCallback(() => {
-    window.ambire
+    if (!provider) return
+    provider
       .request({
         method: 'open-wallet-route',
         params: { route: 'swap-and-bridge' }
@@ -254,11 +253,12 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
         console.log(e)
         addToast('Failed to go to internal swap.', { type: 'error' })
       })
-  }, [addToast])
+  }, [addToast, provider])
 
   const requestWithdrawAction = useCallback(
     async (dataFromInput: string) => {
       try {
+        if (!browserProvider) throw new HumanReadableError('No connected wallet.')
         if (!connectedAccount) throw new HumanReadableError('No connected account.')
         if (!onchainData) throw new HumanReadableError('We were unable to fetch unstaking data.')
         await switchNetwork(ETHEREUM_CHAIN_ID)
@@ -273,7 +273,7 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
         ]
 
         setIsSigning(true)
-        const signer = await new BrowserProvider(window.ambire).getSigner(connectedAccount)
+        const signer = await browserProvider.getSigner(connectedAccount)
 
         const txId = await sendCalls(chainId, await signer.getAddress(), calls, false)
         await getCallsStatus(txId)
@@ -288,13 +288,12 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
       }
     },
     [
+      browserProvider,
       addToast,
       chainId,
       connectedAccount,
-      firstToCollect,
       getCallsStatus,
       handleClose,
-      inputAmount,
       onchainData,
       sendCalls,
       switchNetwork
@@ -303,6 +302,7 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
 
   const withdrawAction = useCallback(async () => {
     try {
+      if (!browserProvider) throw new HumanReadableError('No connected wallet.')
       if (!firstToCollect) throw new HumanReadableError('Enter a valid amount.')
       if (!connectedAccount) throw new HumanReadableError('No connected account.')
       if (!onchainData) throw new HumanReadableError('We were unable to fetch unstaking data.')
@@ -322,7 +322,7 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
       ]
 
       setIsSigning(true)
-      const signer = await new BrowserProvider(window.ambire).getSigner(connectedAccount)
+      const signer = await browserProvider.getSigner(connectedAccount)
 
       const txId = await sendCalls(chainId, await signer.getAddress(), calls, false)
       await getCallsStatus(txId)
@@ -336,6 +336,7 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
       setIsSigning(false)
     }
   }, [
+    browserProvider,
     addToast,
     chainId,
     connectedAccount,
@@ -364,7 +365,7 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
   }, [onchainData, inputAmount, setIsWarningModalOpen])
 
   const buttonState = useMemo((): { text: string; action?: () => any } => {
-    if (!isConnected || isCharacterNotMinted) return { text: rewardsButtonText }
+    if (!isConnected) return { text: rewardsButtonText }
     if (isLoadingLogs || isLoadingOnchainData) return { text: 'Loading...' }
     if (isSigning) return { text: 'Signing...' }
     if (activeTab === 'stake')
@@ -403,7 +404,6 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
     stakeAction,
     withdrawAction,
     displayWarningOrUnstake,
-    isCharacterNotMinted,
     rewardsButtonText
   ])
 

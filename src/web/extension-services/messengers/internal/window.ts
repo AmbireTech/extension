@@ -3,6 +3,8 @@ import { createMessenger } from '@web/extension-services/messengers/internal/cre
 import { isValidReply } from '@web/extension-services/messengers/internal/isValidReply'
 import { isValidSend } from '@web/extension-services/messengers/internal/isValidSend'
 
+declare const globalIsAmbireNext: boolean
+
 /**
  * Creates a "window messenger" that can be used to communicate between
  * scripts where `window` is defined.
@@ -20,7 +22,8 @@ export const windowMessenger = createMessenger({
     // Since the window messenger cannot reply asynchronously, we must include the direction in our message ('> {topic}')...
     window.postMessage({ topic: `> ${topic}`, payload, id }, '*')
 
-    if (topic.includes('broadcast')) return Promise.resolve(null) as any
+    if (topic.includes(globalIsAmbireNext ? 'broadcast-next' : 'broadcast'))
+      return Promise.resolve(null) as any
 
     // ... and also set up an event listener to listen for the response ('< {topic}').
     return new Promise((resolve, reject) => {
@@ -46,7 +49,7 @@ export const windowMessenger = createMessenger({
       // eslint-disable-next-line eqeqeq
       if (sender != window) return
 
-      if (topic.includes('broadcast')) {
+      if (topic.includes(globalIsAmbireNext ? 'broadcast-next' : 'broadcast')) {
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         callback(event.data.payload, {
           topic: event.data.topic,

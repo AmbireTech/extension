@@ -1,8 +1,7 @@
 import { Contract, JsonRpcProvider } from 'ethers'
 import React, { useEffect, useState } from 'react'
-import { Navigate, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 
-import LeftArrowIcon from '@common/assets/svg/LeftArrowIcon'
 import { LEGENDS_NFT_ADDRESS } from '@env'
 import Modal from '@legends/components/Modal'
 import Spinner from '@legends/components/Spinner'
@@ -18,7 +17,12 @@ import CharacterLoadingModal from './components/CharacterLoadingModal'
 import CharacterSlider from './components/CharacterSlider'
 import useMintCharacter from './hooks/useMintCharacter'
 
-const CharacterSelect = ({ onClose }) => {
+interface CharacterSelectProps {
+  onClose: () => void
+  isOpen: boolean
+}
+
+const CharacterSelect = ({ onClose, isOpen }: CharacterSelectProps) => {
   const navigate = useNavigate()
   const [characterId, setCharacterId] = useState(1)
   const { connectedAccount, v1Account } = useAccountContext()
@@ -32,8 +36,10 @@ const CharacterSelect = ({ onClose }) => {
     useMintCharacter()
 
   useEffect(() => {
-    if (isMinted) navigate(LEGENDS_ROUTES.home)
-  }, [character, isMinted, connectedAccount, isLoading, isMinting, navigate])
+    if (isMinted) {
+      onClose()
+    }
+  }, [character, isMinted, connectedAccount, isLoading, isMinting, onClose])
 
   const onCharacterChange = (id: number) => {
     setCharacterId(id)
@@ -72,6 +78,9 @@ const CharacterSelect = ({ onClose }) => {
       .catch((e) => console.log('Failed to get info about NFT balance', e))
   }, [connectedAccount])
 
+  if (!isOpen) {
+    return null
+  }
   return (
     <Modal className={styles.wrapper} isOpen handleClose={onClose}>
       <div
@@ -116,7 +125,11 @@ const CharacterSelect = ({ onClose }) => {
           </Modal.Text>
 
           <button
-            onClick={() => setIsOpenNewNftAlert(false)}
+            onClick={() => {
+              setHasStartedMinting(true)
+
+              setIsOpenNewNftAlert(false)
+            }}
             type="button"
             className={styles.button}
           >

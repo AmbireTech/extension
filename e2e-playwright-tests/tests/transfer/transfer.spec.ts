@@ -5,7 +5,7 @@ import { test } from 'fixtures/pageObjects'
 
 import { expect, Page } from '@playwright/test'
 
-test.describe('transfer', () => {
+test.describe('transfer', { tag: '@transfer' }, () => {
   test.beforeEach(async ({ pages }) => {
     await pages.initWithStorage(baParams)
   })
@@ -166,7 +166,7 @@ test.describe('transfer', () => {
     await test.step('add new contact', async () => {
       await pages.transfer.click(selectors.addContactFormButton)
       await pages.transfer.entertext(selectors.contactNameField, newContactName)
-      await pages.transfer.entertext(selectors.addressEnsField, newContactAddress)
+      await pages.transfer.entertext(selectors.getStarted.addressEnsField, newContactAddress)
       await pages.transfer.click(selectors.addToAddressBookButton)
     })
 

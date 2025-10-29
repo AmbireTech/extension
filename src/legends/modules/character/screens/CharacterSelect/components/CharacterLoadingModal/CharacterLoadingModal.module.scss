@@ -1,5 +1,9 @@
 @import '@legends/styles/base.scss';
 
+
+.modalWrapper {
+  z-index: 10001;
+}
 .modal {
   min-width: 40rem;
 }

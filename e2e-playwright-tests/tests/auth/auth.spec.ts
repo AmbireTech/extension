@@ -8,7 +8,7 @@ import { expect } from '@playwright/test'
 import { emulatorOptions } from '../../constants/trezor'
 import { getController, initTrezorConnect, setup } from '../../utils/trezorEmulator'
 
-test.describe('auth', () => {
+test.describe('auth', { tag: '@auth' }, () => {
   test.beforeEach(async ({ pages }) => {
     await pages.initWithoutStorage()
   })
@@ -109,7 +109,7 @@ test.describe('trezor', () => {
     const page = pages.auth.page
 
     await test.step('start importing existing Trezor accounts in our Onboarding flow', async () => {
-      await page.getByTestId(selectors.importExistingAccBtn).click()
+      await page.getByTestId(selectors.getStarted.importExistingAccBtn).click()
       await page.getByTestId(selectors.importMethodTrezor).click()
 
       await page.getByTestId(selectors.enterPassField).fill(KEYSTORE_PASS)

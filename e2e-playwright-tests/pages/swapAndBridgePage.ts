@@ -1,4 +1,3 @@
-import { clickOnElement } from 'common-helpers/clickOnElement'
 import { typeText } from 'common-helpers/typeText'
 import locators from 'constants/locators'
 import selectors, { SELECTORS } from 'constants/selectors'
@@ -191,6 +190,10 @@ export class SwapAndBridgePage extends BasePage {
       timeout: 10000
     })
     await this.click(selectors.addToBatchButton)
+
+    // approve high impact modal
+    await this.handlePriceWarningModals()
+
     await this.click(selectors.goDashboardButton)
     await this.click(selectors.bannerButtonReject) // TODO: this ID gives 4 results on Dashboard page
     await expect(this.page.getByText('Transaction waiting to be').first()).not.toBeVisible()
@@ -200,7 +203,7 @@ export class SwapAndBridgePage extends BasePage {
     // "Select route" step may take more time to appear, as it depends on the Li.Fi response.
     await this.page.waitForSelector(locators.selectRouteButton, {
       state: 'visible',
-      timeout: 10000
+      timeout: 12000
     })
     await this.click(selectors.addToBatchButton)
 
@@ -208,18 +211,24 @@ export class SwapAndBridgePage extends BasePage {
     await this.handlePriceWarningModals()
 
     await this.click(selectors.goDashboardButton)
-    const newPage = await this.handleNewPage(this.page.getByTestId(selectors.bannerButtonOpen))
+
+    const openTransactionButton = this.page.getByTestId(selectors.bannerButtonOpen).first()
+
+    const newPage = await this.handleNewPage(openTransactionButton)
     await this.signTransactionPage(newPage)
   }
 
   async signTransactionPage(page): Promise<void> {
-    const signButton = page.locator(SELECTORS.signTransactionButton)
+    const signButton = page.getByTestId(selectors.signTransactionButton)
 
     try {
       await expect(signButton).toBeVisible({ timeout: 5000 })
-      await expect(signButton).toBeEnabled()
-      await clickOnElement(page, SELECTORS.signTransactionButton)
-      await page.waitForTimeout(1500)
+      await expect(signButton).toBeEnabled({ timeout: 5000 })
+      await page.getByTestId(selectors.signTransactionButton).click()
+      await page.waitForTimeout(5000)
+
+      // close transaction progress pop up
+      await page.locator(selectors.closeTransactionProgressPopUpButton).click()
     } catch (error) {
       console.warn("⚠️ The 'Sign' button is not clickable, but it should be.")
     }
@@ -247,9 +256,8 @@ export class SwapAndBridgePage extends BasePage {
 
     const [usdNewAmount, newCurrency] = await this.getUSDTextContent()
     const newAmount = this.roundAmount(await this.getAmount(selectors.fromAmountInputSab))
-
-    expect(Math.abs(oldAmount - usdNewAmount)).toBeLessThanOrEqual(0.6)
-    expect(Math.abs(usdOldAmount - newAmount)).toBeLessThanOrEqual(0.6)
+    expect(Math.abs(oldAmount - usdNewAmount)).toBeLessThanOrEqual(0.2)
+    expect(Math.abs(usdOldAmount - newAmount)).toBeLessThanOrEqual(0.2)
     expect(newCurrency).toBe(sendToken.symbol)
 
     // Wait and flip back
@@ -260,8 +268,8 @@ export class SwapAndBridgePage extends BasePage {
     // const secondAmount = await this.getSendAmount()
     const secondAmount = await this.getAmount(selectors.fromAmountInputSab)
 
-    expect(Math.abs(newAmount - usdSecondAmount)).toBeLessThanOrEqual(1)
-    expect(Math.abs(usdNewAmount - secondAmount)).toBeLessThanOrEqual(1)
+    expect(Math.abs(newAmount - usdSecondAmount)).toBeLessThanOrEqual(0.2)
+    expect(Math.abs(usdNewAmount - secondAmount)).toBeLessThanOrEqual(0.2)
     expect(secondCurrency).toBe('$')
   }
 
@@ -353,7 +361,7 @@ export class SwapAndBridgePage extends BasePage {
     await this.monitorRequests()
 
     // Sometimes the button needs a bit to become enabled
-    await this.page.waitForTimeout(1000)
+    await this.expectButtonEnabled(selectors.signButton)
 
     await this.click(selectors.signButton)
     await expect(this.page.getByText('Confirming your trade')).toBeVisible({ timeout: 10000 })
@@ -371,7 +379,7 @@ export class SwapAndBridgePage extends BasePage {
     ).toEqual(true)
 
     // assert transaction successful
-    await expect(this.page.getByText('Nice trade!')).toBeVisible({ timeout: 80000 }) // sometimes confirmation takes more time (around 1 min)
+    await expect(this.page.getByText('Nice trade!')).toBeVisible({ timeout: 120000 }) // sometimes confirmation takes more time (around 1 min)
     await this.click(selectors.closeProgressModalButton)
   }
 
@@ -389,42 +397,71 @@ export class SwapAndBridgePage extends BasePage {
   async batchActionWithSign(): Promise<void> {
     await this.page.getByTestId(selectors.addToBatchButton).isEnabled()
     await this.click(selectors.addToBatchButton)
+
+    // approve high impact modal
+    await this.handlePriceWarningModals()
+
     await this.click(selectors.goDashboardButton)
-    const newPage = await this.handleNewPage(this.page.getByTestId(selectors.bannerButtonOpen))
+
+    const openTransactionButton = this.page.getByTestId(selectors.bannerButtonOpen).first()
+
+    const newPage = await this.handleNewPage(openTransactionButton)
     await this.signBatchTransactionsPage(newPage)
   }
 
   async signBatchTransactionsPage(page): Promise<void> {
-    const signButton = page.locator(SELECTORS.signTransactionButton)
+    const signButton = page.getByTestId(selectors.signTransactionButton)
     await expect(signButton).toBeVisible({ timeout: 5000 })
-    await expect(signButton).toBeEnabled()
+    await expect(signButton).toBeEnabled({ timeout: 5000 })
     await this.verifyBatchTransactionDetails(page)
-    await page.waitForTimeout(1500)
+    await page.waitForTimeout(3000)
   }
 
   async verifyBatchTransactionDetails(page): Promise<void> {
-    const entireRow = await page.getByTestId('recipient-address-1').innerText() // grab entire row on transaction page
-    const routeSelector = entireRow.trim().split(/\s+/).pop() || '' // grab last item from row e.g. LI.FI
+    // check first row
+    const firstRow = await page.getByTestId('recipient-address-0').innerText() // grab entire row on transaction page
+    const firstRouteSelector = firstRow.trim().split(/\s+/).pop() || '' // grab last item from row e.g. LI.FI
 
-    // possible routes: socket (Socket gateway), LIFI, BungeeInbox (rare case)
-    switch (routeSelector) {
-      case 'WALLET':
-        await expect(page.getByTestId('recipient-address-1')).toHaveText(/WALLET/)
-        await expect(page.getByTestId('recipient-address-3')).toHaveText(/WALLET/)
-        break
-      case 'LI.FI':
-        await expect(page.getByTestId('recipient-address-1')).toHaveText(/LI.FI/)
-        await expect(page.getByTestId('recipient-address-3')).toHaveText(/LI.FI/)
-        break
-      case 'BungeeInbox':
-        // TODO: define assertion; atm could not rep on FE
-        break
-      default:
-        throw new Error(`Unexpected route: ${routeSelector}`)
-    }
-
+    await expect(page.getByTestId('recipient-address-0')).toHaveText(/Grant approval/) // for either LI.FI or Socket transaction name is GrantApproval with amount and token name
     await expect(page.getByTestId('recipient-address-0')).toHaveText(/0\.01/)
+    await expect(page.getByTestId('recipient-address-0')).toHaveText(/USDC/)
+    expect(['LI.FI', 'SocketGateway']).toContain(firstRouteSelector)
+
+    // check second row
+    const secondRow = await page.getByTestId('recipient-address-1').innerText()
+    const secondRouteSelector = secondRow.trim().split(/\s+/).pop() || ''
+
+    if (secondRouteSelector === 'WALLET') {
+      await expect(page.getByTestId('recipient-address-1')).toHaveText(/Swap/) // in case its socket route transaction name is Swap with amount
+      await expect(page.getByTestId('recipient-address-1')).toHaveText(/0\.01/)
+    } else if (secondRouteSelector === 'LI.FI') {
+      await expect(page.getByTestId('recipient-address-1')).toHaveText(/Swap\/Bridge/) // in case its LIFI route transaction name is Swap/Bridge
+    }
+    expect(['LI.FI', 'SocketGateway']).toContain(secondRouteSelector)
+
+    // check third row
+    const thirdRow = await page.getByTestId('recipient-address-2').innerText()
+    const thirdRouteSelector = thirdRow.trim().split(/\s+/).pop() || ''
+
+    await expect(page.getByTestId('recipient-address-2')).toHaveText(/Grant approval/) // for either LI.FI or Socket transaction name is GrantApproval with amount and token name
     await expect(page.getByTestId('recipient-address-2')).toHaveText(/0\.01/)
+    await expect(page.getByTestId('recipient-address-2')).toHaveText(/USDC/)
+    expect(['LI.FI', 'SocketGateway']).toContain(thirdRouteSelector)
+
+    // check fourth row
+    const fourthRow = await page.getByTestId('recipient-address-3').innerText()
+    const fourthRouteSelector = fourthRow.trim().split(/\s+/).pop() || ''
+
+    if (secondRouteSelector === 'WALLET') {
+      await expect(page.getByTestId('recipient-address-3')).toHaveText(/Swap/) // in case of Socket route transaction name is Swap with amount and token name
+      await expect(page.getByTestId('recipient-address-3')).toHaveText(/0\.01/)
+      await expect(page.getByTestId('recipient-address-3')).toHaveText(/USDC/)
+    } else if (secondRouteSelector === 'LI.FI') {
+      await expect(page.getByTestId('recipient-address-3')).toHaveText(/Swap\/Bridge/) // in case of LIFI route transaction name is Swap/Bridge
+    }
+    expect(['LI.FI', 'SocketGateway']).toContain(fourthRouteSelector)
+
+    // sign transaction
     await page.getByTestId(selectors.signTransactionButton).click()
   }
 

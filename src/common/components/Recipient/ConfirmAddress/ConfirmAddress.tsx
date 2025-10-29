@@ -1,79 +1,79 @@
 import React from 'react'
-import { View } from 'react-native'
+import { Pressable, View } from 'react-native'
 
 import { ITransferController } from '@ambire-common/interfaces/transfer'
-import { TokenResult } from '@ambire-common/libs/portfolio'
+import AddIcon from '@common/assets/svg/AddIcon'
 import Checkbox from '@common/components/Checkbox'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
-import useHover, { AnimatedPressable } from '@web/hooks/useHover'
+import flexbox from '@common/styles/utils/flexbox'
+
+import getStyles from './styles'
 
 type Props = {
-  onAddToAddressBook: () => any
   isRecipientAddressUnknown: boolean
   isRecipientHumanizerKnownTokenOrSmartContract: boolean
   isRecipientAddressUnknownAgreed: ITransferController['isRecipientAddressUnknownAgreed']
   onRecipientCheckboxClick: () => void
   addressValidationMsg: string
   isSWWarningVisible: boolean
-  isSWWarningAgreed: boolean
   isRecipientAddressSameAsSender: boolean
-  selectedTokenSymbol?: TokenResult['symbol']
+  onAddToAddressBookPress: () => void
 }
 
 const ConfirmAddress = ({
-  onAddToAddressBook,
   onRecipientCheckboxClick,
   isRecipientHumanizerKnownTokenOrSmartContract,
   isRecipientAddressUnknown,
   isRecipientAddressUnknownAgreed,
   addressValidationMsg,
   isSWWarningVisible,
-  isRecipientAddressSameAsSender
+  isRecipientAddressSameAsSender,
+  onAddToAddressBookPress
 }: Props) => {
   const { t } = useTranslation()
-  const [bindAnim, animStyle] = useHover({
-    preset: 'opacityInverted'
-  })
-  const { theme, themeType } = useTheme()
+  const { styles, theme } = useTheme(getStyles)
 
   return !isRecipientHumanizerKnownTokenOrSmartContract &&
     !!isRecipientAddressUnknown &&
     !isRecipientAddressSameAsSender &&
     addressValidationMsg !== 'Invalid address.' ? (
-    <>
-      <View style={spacings.mb}>
-        <Checkbox
-          value={isRecipientAddressUnknownAgreed}
-          onValueChange={onRecipientCheckboxClick}
-          label={
-            isSWWarningVisible
-              ? t(
-                  'I confirm sending to this address and that it’s not a CEX (which won’t support ETH deposits from smart wallets).'
-                )
-              : t('Confirm sending to this address.')
-          }
-          style={spacings.mb0}
-          testID="recipient-address-unknown-checkbox"
-        />
-      </View>
-      <AnimatedPressable style={animStyle} onPress={onAddToAddressBook} {...bindAnim}>
+    <View
+      style={[spacings.mb, flexbox.directionRow, flexbox.alignCenter, flexbox.justifySpaceBetween]}
+    >
+      <Checkbox
+        value={isRecipientAddressUnknownAgreed}
+        onValueChange={onRecipientCheckboxClick}
+        label={
+          isSWWarningVisible
+            ? t(
+                'I confirm sending to this address and that it’s not a CEX (which won’t support ETH deposits from smart wallets).'
+              )
+            : t('Confirm sending to this address.')
+        }
+        style={spacings.mb0}
+        testID="recipient-address-unknown-checkbox"
+      />
+      <Pressable
+        style={({ hovered }: any) => [
+          styles.addressBookButton,
+          hovered && { backgroundColor: theme.primary20 }
+        ]}
+        onPress={onAddToAddressBookPress}
+      >
+        <AddIcon width={16} height={16} style={spacings.mrMi} color={theme.primary} />
         <Text
+          fontSize={12}
+          weight="medium"
+          appearance="primary"
           testID="send-form-add-to-address-book-button"
-          style={{
-            textDecorationLine: 'underline',
-            ...spacings.mbTy
-          }}
-          fontSize={14}
-          color={themeType === THEME_TYPES.DARK ? theme.linkText : theme.primary}
         >
-          {t('+ Add to Address Book')}
+          {t('Add to address book')}
         </Text>
-      </AnimatedPressable>
-    </>
+      </Pressable>
+    </View>
   ) : null
 }
 

@@ -2,6 +2,23 @@ import { buildSelector } from '@helpers/buildSelector'
 
 // TODO: this should be refactored; we should have single file with selector IDs
 const selectors = {
+  getStarted: {
+    watchAddress: 'watch-an-address-button',
+    addOneMoreAddress: 'add-one-more-address',
+    importExistingAccBtn: 'import-existing-account-btn',
+    importMethodPrivateBtn: 'import-method-private-key',
+    importMethodRecoveryPhrase: 'import-method-recovery-phrase',
+    importMethodJSON: 'import-method-json-backup-file',
+    enterSeedPhraseField: 'enter-seed-phrase-field',
+    enterPrivateKeyField: 'enter-private-key-field',
+    advancedPassPhraseSwitch: 'enable-passphrase-toggle',
+    recoveryPhrasePassphraseField: 'input-passphrase',
+    warningCheckbox: 'backup-warning-checkbox',
+    addressEnsField: 'address-ens-field',
+    showMoreBtn: 'show-more-btn',
+    viewOnlyBtnImport: 'view-only-button-import',
+    importBtn: 'import-button'
+  },
   dashboard: {
     tokensTabButton: 'tokens-defi',
     noTokensText: 'no-tokens-text',
@@ -33,14 +50,16 @@ const selectors = {
     hideTokenButton: 'hide-token-button',
     yesHideItButton: 'yes-hide-it-text',
     hideTokenModalTitle: 'hide-token-modal-title',
-    hideTokenModalDescription: 'hide-token-modal-description'
+    hideTokenModalDescription: 'hide-token-modal-description',
+    projectedRewardsInfoButton: 'rewards-button',
+    projectedRewardsClaimButton: 'projected-rewards-claim-button'
   },
   settings: {
     createNewRecoveryPhraseButton: 'create-new-recovery-phrase',
     importAccountButton: 'import-account',
     connectHardwareWallet: 'connect-hardware-wallet',
     watchAnAddressButton: 'watch-an-address-button',
-    viewOnlyAddressField: 'view-only-address-field-0',
+    viewOnlyAddressField: 'address-ens-field',
     viewOnlyImportButton: 'view-only-button-import',
     validENSDomainText: '//div[contains(text(),"Valid ENS domain")]',
     addedSuccessfullyText: '//div[contains(text(),"Added successfully")]',
@@ -70,13 +89,9 @@ const selectors = {
     }
   },
   account: 'account',
-  importBtn: 'import-button',
-  importPrivateBtn: 'button-import-private-key',
-  importExistingAccBtn: 'create-existing-account-btn',
   importMethodTrezor: 'import-method-trezor',
   trezorConnectConfirmTerms: '@analytics/continue-button',
   saveAndContinueBtn: 'button-save-and-continue',
-  enterSeedPhraseField: 'enter-seed-phrase-field',
   buttonProceedSeedPhrase: 'button-proceed-seed-phrase',
   doNotSaveSeedBtn: 'do-not-save-seed-button',
   saveAsDefaultSeedBtn: 'save-seed-button',
@@ -88,11 +103,7 @@ const selectors = {
   editBtnForEditNameField: 'edit-btn-for-edit-name-field',
   editFieldNameField: 'edit-name-field',
   getStartedBtnAdd: 'get-started-button-add',
-  addressEnsField: 'address-ens-field',
   addToAddressBookButton: 'add-to-address-book-button',
-  viewOnlyAddressField: 'view-only-address-field',
-  viewOnlyBtnImport: 'view-only-button-import',
-  addOneMoreAddress: 'add-one-more-address',
   addContactFormButton: 'add-contact-form-modal',
   contactNameField: 'contact-name-field',
   contactNameText: 'contact-name-text', // TODO: selector could be more precise
@@ -101,7 +112,6 @@ const selectors = {
   formAddContactNameField: 'form-contact-name-field',
   formAddToContactsButton: 'form-add-to-contacts-button',
   buttonAddAccount: 'button-add-account',
-  watchAddress: 'watch-address',
   checkbox: 'checkbox',
   addAccount: 'add-account',
   buttonImportAccount: 'button-import-account',
@@ -212,6 +222,8 @@ const selectors = {
   goDashboardButton: 'go-dashboard-button',
   txnConfirmed: 'txn-confirmed',
   maxAmountButton: 'max-amount-button',
+  transactionConfirmedText: 'transaction-confirmed-text',
+  closeTransactionProgressPopUpButton: '//div[contains(text(),"Close")]',
   // Top up
   modalGasTankBalance: 'gas-tank-balance',
   topUpButton: 'top-up-gas-tank-modal-button',

@@ -4,7 +4,7 @@ import { test } from 'fixtures/pageObjects'
 
 import { expect } from '@playwright/test' // your extended test with authPage
 
-test.describe('swapAndBridge Smart Account', () => {
+test.describe('swapAndBridge Smart Account', { tag: '@swapAndBridge' }, () => {
   test.beforeEach(async ({ pages }) => {
     await pages.initWithStorage(saParams)
   })
@@ -121,12 +121,10 @@ test.describe('swapAndBridge Smart Account', () => {
     const usdc = tokens.usdc.base
     const xwallet = tokens.xwallet.ethereum
 
-    await pages.swapAndBridge.switchUSDValueOnSwapAndBridge(usdce, 0.34)
+    await pages.swapAndBridge.switchUSDValueOnSwapAndBridge(usdce, 0.2)
     await pages.swapAndBridge.switchUSDValueOnSwapAndBridge(dai, 0.2)
-    await pages.swapAndBridge.switchUSDValueOnSwapAndBridge(usdc, 0.02)
-    await pages.swapAndBridge.switchUSDValueOnSwapAndBridge(xwallet, 1)
-    await pages.swapAndBridge.switchUSDValueOnSwapAndBridge(dai, 0.51)
-    await pages.swapAndBridge.switchUSDValueOnSwapAndBridge(xwallet, 0.9)
+    await pages.swapAndBridge.switchUSDValueOnSwapAndBridge(usdc, 0.2)
+    await pages.swapAndBridge.switchUSDValueOnSwapAndBridge(xwallet, 0.2)
   })
 
   test('should auto-refresh active route after 60s during Swap & Bridge with a Smart Account', async ({
