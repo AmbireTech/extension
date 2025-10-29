@@ -5,7 +5,7 @@ import { ScrollView, View } from 'react-native'
 
 import { AddressState } from '@ambire-common/interfaces/domains'
 import { getDefaultAccountPreferences } from '@ambire-common/libs/account/account'
-import { getIdentity } from '@ambire-common/libs/accountPicker/accountPicker'
+import { normalizeIdentityResponse } from '@ambire-common/libs/accountPicker/accountPicker'
 import { getAddressFromAddressState } from '@ambire-common/utils/domains'
 import Button from '@common/components/Button'
 import Panel from '@common/components/Panel'
@@ -92,7 +92,9 @@ const ViewOnlyScreen = () => {
   const handleFormSubmit = useCallback(async () => {
     const accountsToAdd = accounts.map((account, i) => {
       const address = getAddressFromAddressState(account)
-      const { creation, initialPrivileges, associatedKeys } = getIdentity(address)
+      // Use defaults, fetch identity later so account import isn’t blocked by failures
+      const identityDefaults = normalizeIdentityResponse(address)
+      const { creation, initialPrivileges, associatedKeys } = identityDefaults
 
       const addr = getAddress(address)
       const domainName = account.ensAddress ? account.fieldValue : null
