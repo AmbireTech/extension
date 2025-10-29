@@ -120,7 +120,7 @@ const Footer = ({
               <BatchIcon style={spacings.mlTy} />
             </Button>
             {/* @ts-ignore */}
-            <View style={spacings.mlTy} dataSet={{ tooltipId: 'start-batch-info-tooltip' }}>
+            <View style={spacings.mlMi} dataSet={{ tooltipId: 'start-batch-info-tooltip' }}>
               <AnimatedPressable
                 style={[spacings.phTy, spacings.pvTy, { borderRadius: 50 }, animStyle]}
                 {...bindAnim}
