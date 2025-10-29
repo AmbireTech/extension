@@ -262,7 +262,7 @@ const DappCatalogScreen = () => {
       header={<Header mode="title" withAmbireLogo />}
       withHorizontalPadding={!isPopup}
     >
-      {state.isUpdatingDapps ? (
+      {state.isFetchingAndUpdatingDapps ? (
         <DappsSkeletonLoader />
       ) : (
         <View style={[flexbox.flex1]}>
