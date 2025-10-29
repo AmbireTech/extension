@@ -21,7 +21,7 @@ const LOCAL_STORAGE_ACC_KEY = 'connectedAccount'
 
 const AccountContextProvider = ({ children }: { children: React.ReactNode }) => {
   const { addToast } = useToast()
-  const { isConnected, provider, disconnectProvider } = useProviderContext()
+  const { isConnected, provider } = useProviderContext()
 
   // We keep only V2 accounts
   const [connectedAccount, setConnectedAccount] = React.useState<string | null>(() => {
@@ -98,8 +98,7 @@ const AccountContextProvider = ({ children }: { children: React.ReactNode }) => 
     setIsLoading(false)
     setAllAccounts([])
     localStorage.removeItem(LOCAL_STORAGE_ACC_KEY)
-    disconnectProvider()
-  }, [disconnectProvider])
+  }, [])
 
   useEffect(() => {
     if (!isConnected && connectedAccount) {
