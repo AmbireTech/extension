@@ -58,7 +58,7 @@ const handleProviderRequests = async (
   if (method === 'tabCheckin') {
     const existingDapp =
       mainCtrl.dapps.getDapp(session.id) || mainCtrl.dapps.getDappByDomain(session.id)
-
+    console.log('tabCheckin', existingDapp)
     mainCtrl.dapps.setSessionProp(session.sessionId, {
       name: existingDapp?.name || params.name,
       icon: existingDapp?.icon || params.icon

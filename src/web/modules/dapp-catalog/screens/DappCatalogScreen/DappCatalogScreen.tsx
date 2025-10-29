@@ -241,12 +241,7 @@ const DappCatalogScreen = () => {
     [setValue]
   )
 
-  const renderItem = useCallback(
-    ({ item }: { item: Dapp }) => (
-      <DappItem {...item} withConnectIcon={item.isConnected && connectedSelected} />
-    ),
-    [connectedSelected]
-  )
+  const renderItem = useCallback(({ item }: { item: Dapp }) => <DappItem {...item} />, [])
 
   useEffect(() => {
     const shouldDoInitialSet = !initialDAppListState.length && state.dapps.length

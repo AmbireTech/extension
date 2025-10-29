@@ -256,20 +256,19 @@ providerRequestTransport.reply(async ({ method, id, providerId, params }, meta) 
     return
   }
 
-  const origin = getOriginFromUrl(meta.sender.url)
-  const session = await mainCtrl.dapps.getOrCreateDappSession({ tabId, windowId, origin })
+  console.log('meta.sender.url', meta.sender.url)
+  const session = await mainCtrl.dapps.getOrCreateDappSession({
+    tabId,
+    windowId,
+    url: meta.sender.url
+  })
 
   await mainCtrl.dapps.initialLoadPromise
   mainCtrl.dapps.setSessionMessenger(session.sessionId, bridgeMessenger, isAmbireNext)
 
   try {
     const res = await handleProviderRequests(
-      {
-        method,
-        params,
-        session,
-        origin
-      },
+      { method, params, session },
       mainCtrl,
       walletStateCtrl,
       autoLockCtrl,
