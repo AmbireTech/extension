@@ -1,5 +1,4 @@
 import React, { useMemo, useState } from 'react'
-import { useLocation } from 'react-router-dom'
 
 import { faBars } from '@fortawesome/free-solid-svg-icons/faBars'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -8,7 +7,6 @@ import Banner from '@legends/components/Banner'
 import Sidebar from '@legends/components/Sidebar'
 import useAccountContext from '@legends/hooks/useAccountContext'
 import useLegendsContext from '@legends/hooks/useLegendsContext'
-import { LEGENDS_ROUTES } from '@legends/modules/router/constants'
 
 import styles from './Page.module.scss'
 
@@ -26,9 +24,6 @@ const Page = ({
   const customContainerSizeClass = styles[`container${containerSize}`] || ''
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const { legends } = useLegendsContext()
-
-  const { pathname } = useLocation()
-
   const { connectedAccount } = useAccountContext()
 
   const openSidebar = () => setIsSidebarOpen(true)
