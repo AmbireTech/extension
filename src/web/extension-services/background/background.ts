@@ -60,7 +60,6 @@ import LatticeSigner from '@web/modules/hardware-wallet/libs/LatticeSigner'
 import LedgerSigner from '@web/modules/hardware-wallet/libs/LedgerSigner'
 import TrezorSigner from '@web/modules/hardware-wallet/libs/TrezorSigner'
 import { getExtensionInstanceId } from '@web/utils/analytics'
-import getOriginFromUrl from '@web/utils/getOriginFromUrl'
 import { LOG_LEVELS, logInfoWithPrefix } from '@web/utils/logger'
 
 import {
@@ -256,7 +255,6 @@ providerRequestTransport.reply(async ({ method, id, providerId, params }, meta) 
     return
   }
 
-  console.log('meta.sender.url', meta.sender.url)
   const session = await mainCtrl.dapps.getOrCreateDappSession({
     tabId,
     windowId,

@@ -8,7 +8,6 @@ import { getCurrentTab } from '@web/extension-services/background/webapi/tab'
 import { getCurrentWindow } from '@web/extension-services/background/webapi/window'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useControllerState from '@web/hooks/useControllerState'
-import getOriginFromUrl from '@web/utils/getOriginFromUrl'
 
 const DappsControllerStateContext = createContext<{
   state: IDappsController
@@ -29,16 +28,14 @@ const DappsControllerStateProvider: React.FC<any> = ({ children }) => {
 
       if (!tab || !tab.id || !tab.url) return
 
-      const origin = getOriginFromUrl(tab.url)
       const dappId = getDappIdFromUrl(tab.url)
-      const currentSession = newState.dappSessions?.[`${window.id}-${tab.id}-${origin}`] || {}
+      const currentSession = newState.dappSessions?.[`${window.id}-${tab.id}-${dappId}`] || {}
       const dapp = newState.dapps.find((d) => d.id === currentSession.id || d.id === dappId)
 
       if (dapp) {
         setCurrentDapp(dapp)
       } else if (
-        currentSession.name &&
-        currentSession.origin &&
+        Object.keys(currentSession).length &&
         isValidURL(tab.url) &&
         currentSession.isWeb3App
       ) {
