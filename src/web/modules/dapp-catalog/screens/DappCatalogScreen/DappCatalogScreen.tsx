@@ -17,8 +17,9 @@ import { SelectValue } from '@common/components/Select/types'
 import Text from '@common/components/Text'
 import useDebounce from '@common/hooks/useDebounce'
 import useTheme from '@common/hooks/useTheme'
+import useWindowSize from '@common/hooks/useWindowSize'
 import Header from '@common/modules/header/components/Header'
-import spacings, { SPACING_MI, SPACING_SM } from '@common/styles/spacings'
+import spacings, { SPACING_MI, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
@@ -34,6 +35,8 @@ import { getUiType } from '@web/utils/uiType'
 
 import DappsSkeletonLoader from '../../components/DappsSkeletonLoader'
 import getStyles from './styles'
+
+const { isPopup } = getUiType()
 
 type FilterButtonType = {
   value: 'favorites' | 'connected'
@@ -118,8 +121,6 @@ const FilterButton = React.memo(
   }
 )
 
-const { isPopup } = getUiType()
-
 const DappCatalogScreen = () => {
   const { control, watch, setValue } = useForm({ defaultValues: { search: '' } })
   const { t } = useTranslation()
@@ -133,6 +134,7 @@ const DappCatalogScreen = () => {
   const [connectedSelected, setConnectedSelected] = useState(false)
   const { allNetworks } = useNetworksControllerState()
   const { theme, themeType } = useTheme()
+  const { maxWidthSize } = useWindowSize()
 
   const filteredDapps = useMemo(() => {
     if (!state?.dapps?.length) return []
@@ -264,19 +266,40 @@ const DappCatalogScreen = () => {
         <DappsSkeletonLoader />
       ) : (
         <View style={[flexbox.flex1]}>
-          <View style={[!!isPopup && spacings.phSm, spacings.pvSm]}>
+          <View
+            style={[
+              !!isPopup && spacings.phSm,
+              spacings.pvSm,
+              maxWidthSize(830) && flexbox.directionRow,
+              maxWidthSize(830) && flexbox.alignCenter
+            ]}
+          >
             <Search
               placeholder={t('Search for an app')}
               control={control}
               // @ts-ignore
               setValue={setValue}
               autoFocus
-              containerStyle={spacings.mbTy}
+              containerStyle={{
+                marginBottom: !maxWidthSize(830) ? SPACING_TY : 0,
+                marginRight: !maxWidthSize(830) ? 0 : SPACING_SM,
+                ...flexbox.flex1
+              }}
             />
-            <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifySpaceBetween]}>
+            <View
+              style={[
+                flexbox.directionRow,
+                flexbox.alignCenter,
+                !maxWidthSize(830) && flexbox.justifySpaceBetween
+              ]}
+            >
               <Select
                 setValue={handleSetNetworkValue}
-                containerStyle={{ width: 164, marginBottom: 0 }}
+                containerStyle={{
+                  width: 164,
+                  marginBottom: 0,
+                  marginRight: !maxWidthSize(830) ? 0 : SPACING_SM
+                }}
                 menuOptionHeight={32}
                 options={networksOptions}
                 menuProps={{ width: 200 }}
@@ -307,7 +330,11 @@ const DappCatalogScreen = () => {
               />
               <Select
                 setValue={handleSetCategoryValue}
-                containerStyle={{ width: 164, marginBottom: 0 }}
+                containerStyle={{
+                  width: 164,
+                  marginBottom: 0,
+                  marginRight: !maxWidthSize(830) ? 0 : SPACING_SM
+                }}
                 options={categoryOptions}
                 value={
                   categoryOptions.filter((opt) => opt.value === category)[0] ??
@@ -341,6 +368,7 @@ const DappCatalogScreen = () => {
                 active={favoritesSelected}
                 onPress={handleSelectPredefinedFilter}
                 icon={<StarIcon isFilled={favoritesSelected} />}
+                style={{ marginRight: !maxWidthSize(830) ? 0 : SPACING_SM }}
               />
               <FilterButton
                 value="connected"
