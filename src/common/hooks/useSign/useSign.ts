@@ -330,7 +330,8 @@ const useSign = ({
 
   const bundlerNonceDiscrepancy = useMemo(
     () =>
-      signAccountOpState?.warnings.find((warning) => warning.id === 'bundler-nonce-discrepancy'),
+      signAccountOpState?.warnings.find((warning) => warning.id === 'bundler-nonce-discrepancy') ||
+      signAccountOpState?.warnings.find((warning) => warning.id === 'bundler-failure'),
     [signAccountOpState?.warnings]
   )
 
