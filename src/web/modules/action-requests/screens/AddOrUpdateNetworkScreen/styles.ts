@@ -1,8 +1,7 @@
 import { StyleSheet, ViewStyle } from 'react-native'
 
-import spacings from '@common/styles/spacings'
 import { THEME_TYPES, ThemeProps, ThemeType } from '@common/styles/themeConfig'
-import common from '@common/styles/utils/common'
+import common, { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
 interface Style {
@@ -16,13 +15,11 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
   StyleSheet.create<Style>({
     dappInfoContainer: {
       ...flexbox.directionRow,
-      ...flexbox.alignCenter,
-      ...spacings.mbMd
+      ...flexbox.alignCenter
     },
     dappInfoContent: {
       ...flexbox.directionRow,
       ...flexbox.alignCenter,
-      ...spacings.phMd,
       ...flexbox.flex1
     },
     separator: {
@@ -32,14 +29,13 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       marginHorizontal: 10
     },
     boxWrapper: {
-      ...spacings.pvMd,
-      ...spacings.phMd,
+      borderRadius: BORDER_RADIUS_PRIMARY,
+      overflow: 'hidden',
       ...common.borderRadiusPrimary,
       ...(themeType === THEME_TYPES.DARK ? common.shadowTertiaryDarkMode : common.shadowTertiary),
       backgroundColor:
         themeType === THEME_TYPES.DARK ? theme.secondaryBackground : theme.primaryBackground,
-      width: 421,
-      height: 343
+      minHeight: 200
     }
   })
 

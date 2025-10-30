@@ -12,12 +12,10 @@ import styles from './AccountInfo.module.scss'
 
 // TODO: Add logic to handle account switching from the dropdown
 const AccountInfo = ({
-  removeAvatarAndLevel = false,
   wrapperClassName,
   addressClassName,
   displayTooltip = false
 }: {
-  removeAvatarAndLevel?: boolean
   wrapperClassName?: string
   addressClassName?: string
   displayTooltip?: boolean
@@ -34,11 +32,9 @@ const AccountInfo = ({
         connectedAccount ? styles.connected : ''
       } ${wrapperClassName}`}
     >
-      {!removeAvatarAndLevel && (
-        <div className={styles.avatarWrapper}>
-          <img alt="avatar" className={styles.avatar} src={character!.image_avatar} />
-        </div>
-      )}
+      <div className={styles.avatarWrapper}>
+        <img alt="avatar" className={styles.avatar} src={character!.image_avatar} />
+      </div>
       <div className={styles.account}>
         <div className={styles.accountAndArrowWrapper}>
           <Address
@@ -70,11 +66,10 @@ const AccountInfo = ({
             />
           )}
         </div>
-        {!removeAvatarAndLevel && (
-          <p className={`${styles.levelAndRank} ${styles.activityDot}`}>
-            Level {season1LeaderboardData?.currentUser?.level}
-          </p>
-        )}
+
+        <p className={`${styles.levelAndRank} ${styles.activityDot}`}>
+          Level {season1LeaderboardData?.currentUser?.level || 0}
+        </p>
       </div>
     </div>
   )
