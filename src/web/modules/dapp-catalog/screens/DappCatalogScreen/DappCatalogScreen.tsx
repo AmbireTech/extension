@@ -9,6 +9,7 @@ import ConnectedIcon from '@common/assets/svg/ConnectedIcon'
 import NetworksIcon from '@common/assets/svg/NetworksIcon'
 import StarIcon from '@common/assets/svg/StarIcon'
 import BackButton from '@common/components/BackButton'
+import Button from '@common/components/Button'
 import NetworkIcon from '@common/components/NetworkIcon'
 import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
 import Search from '@common/components/Search'
@@ -245,6 +246,14 @@ const DappCatalogScreen = () => {
 
   const renderItem = useCallback(({ item }: { item: Dapp }) => <DappItem {...item} />, [])
 
+  const handleResetFilters = useCallback(() => {
+    setValue('search', '')
+    setNetwork(null)
+    setCategory(null)
+    setFavoritesSelected(false)
+    setConnectedSelected(false)
+  }, [setValue])
+
   useEffect(() => {
     const shouldDoInitialSet = !initialDAppListState.length && state.dapps.length
     const aDAppWasRemoved = initialDAppListState.length > state.dapps.length
@@ -252,6 +261,28 @@ const DappCatalogScreen = () => {
       setInitialDAppListState(state.dapps)
     }
   }, [initialDAppListState, state.dapps])
+
+  const noAppsFoundText = useMemo(() => {
+    const filters = []
+    if (debouncedSearch) filters.push(`Search - "${debouncedSearch}"`)
+    if (network) filters.push(`Network - "${network.name}"`)
+    if (category && category !== ALL_CATEGORIES_OPTION.value)
+      filters.push(`Category - "${category}"`)
+    if (favoritesSelected) filters.push('"Favorites"')
+    if (connectedSelected) filters.push('"Connected"')
+
+    return {
+      mainText: filters.length ? 'No apps found matching your selected filters.' : 'No apps found',
+      filtersText: filters.length ? `Active filters: ${filters.join(', ')}` : ''
+    }
+  }, [
+    ALL_CATEGORIES_OPTION,
+    category,
+    connectedSelected,
+    debouncedSearch,
+    favoritesSelected,
+    network
+  ])
 
   return (
     <TabLayoutContainer
@@ -400,8 +431,27 @@ const DappCatalogScreen = () => {
             renderItem={renderItem}
             keyExtractor={(item: Dapp) => item.url.toString()}
             ListEmptyComponent={
-              <View style={[flexbox.flex1, flexbox.alignCenter, flexbox.justifyCenter]}>
-                <Text style={text.center}>{t('No app found')}</Text>
+              <View style={[flexbox.flex1, flexbox.alignCenter, flexbox.justifyCenter, spacings]}>
+                <View style={{ maxWidth: 400 }}>
+                  <Text style={[text.center, !!noAppsFoundText.filtersText && spacings.mbLg]}>
+                    <Text weight="medium" style={[text.center, spacings.mbSm, { lineHeight: 30 }]}>
+                      {noAppsFoundText.mainText}
+                    </Text>
+                    {!!noAppsFoundText.filtersText && '\n'}
+                    <Text fontSize={14} appearance="secondaryText" style={text.center}>
+                      {noAppsFoundText.filtersText}
+                    </Text>
+                  </Text>
+                </View>
+                {!!noAppsFoundText.filtersText && (
+                  <Button
+                    text={t('Reset filters')}
+                    onPress={handleResetFilters}
+                    size="small"
+                    style={{ height: 40 }}
+                    hasBottomSpacing={false}
+                  />
+                )}
               </View>
             }
           />
