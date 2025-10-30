@@ -520,6 +520,9 @@ type DomainsControllerSaveResolvedReverseLookupAction = {
   }
 }
 
+type DappsControllerFetchAndUpdateDappsAction = {
+  type: 'DAPPS_CONTROLLER_FETCH_AND_UPDATE_DAPPS'
+}
 type DappsControllerRemoveConnectedSiteAction = {
   type: 'DAPPS_CONTROLLER_DISCONNECT_DAPP'
   params: Dapp['id']
@@ -846,6 +849,7 @@ export type Action =
   | EmailVaultControllerDismissBannerAction
   | DomainsControllerReverseLookupAction
   | DomainsControllerSaveResolvedReverseLookupAction
+  | DappsControllerFetchAndUpdateDappsAction
   | DappsControllerRemoveConnectedSiteAction
   | DappsControllerUpdateDappAction
   | DappsControllerRemoveDappAction
