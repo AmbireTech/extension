@@ -7,6 +7,7 @@ import useBannersControllerState from '@web/hooks/useBannersControllerState'
 import useEmailVaultControllerState from '@web/hooks/useEmailVaultControllerState'
 import useExtensionUpdateControllerState from '@web/hooks/useExtensionUpdateControllerState'
 import useMainControllerState from '@web/hooks/useMainControllerState'
+import usePortfolioControllerState from '@web/hooks/usePortfolioControllerState/usePortfolioControllerState'
 import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControllerState'
@@ -34,6 +35,7 @@ export default function useBanners(): [BannerInterface[], BannerInterface[]] {
   const { banners: actionBanners = [] } = useActionsControllerState()
   const { banners: swapAndBridgeBanners = [] } = useSwapAndBridgeControllerState()
   const { extensionUpdateBanner } = useExtensionUpdateControllerState()
+  const { hasFundedHotAccount } = usePortfolioControllerState()
   const { banners: selectedAccountBanners } = useSelectedAccountControllerState()
 
   const controllerBanners = useMemo(() => {
@@ -43,7 +45,7 @@ export default function useBanners(): [BannerInterface[], BannerInterface[]] {
       ...actionBanners,
       ...(isOffline && portfolio.isAllReady ? [OFFLINE_BANNER] : []),
       ...(isOffline ? [] : [...swapAndBridgeBanners]),
-      ...getCurrentAccountBanners(emailVaultBanners, account?.addr),
+      ...getCurrentAccountBanners(hasFundedHotAccount ? emailVaultBanners : [], account?.addr),
       ...selectedAccountBanners,
       ...extensionUpdateBanner
     ]
@@ -54,6 +56,7 @@ export default function useBanners(): [BannerInterface[], BannerInterface[]] {
     isOffline,
     portfolio.isAllReady,
     swapAndBridgeBanners,
+    hasFundedHotAccount,
     emailVaultBanners,
     account?.addr,
     selectedAccountBanners,

@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 
-import { BrowserProvider, hashMessage, Interface } from 'ethers'
+import { hashMessage, Interface } from 'ethers'
 import React, { useCallback, useMemo, useState } from 'react'
 import { Linking } from 'react-native'
 
@@ -8,8 +8,8 @@ import { LEGENDS_CONTRACT_ADDRESS } from '@legends/constants/addresses'
 import { ERROR_MESSAGES } from '@legends/constants/errors/messages'
 import { BASE_CHAIN_ID } from '@legends/constants/networks'
 import useAccountContext from '@legends/hooks/useAccountContext'
-import useCharacterContext from '@legends/hooks/useCharacterContext'
 import useErc5792 from '@legends/hooks/useErc5792'
+import useProviderContext from '@legends/hooks/useProviderContext'
 import useSwitchNetwork from '@legends/hooks/useSwitchNetwork'
 import useToast from '@legends/hooks/useToast'
 import { useCardActionContext } from '@legends/modules/legends/components/ActionModal'
@@ -33,8 +33,8 @@ const Feedback = ({ meta }: Props) => {
   const { onComplete, handleClose } = useCardActionContext()
   const { addToast } = useToast()
   const switchNetwork = useSwitchNetwork()
+  const { browserProvider } = useProviderContext()
   const { connectedAccount, v1Account } = useAccountContext()
-  const { isCharacterNotMinted } = useCharacterContext()
 
   const openForm = useCallback(() => {
     if (!connectedAccount) return addToast('No account connected')
@@ -51,12 +51,12 @@ const Feedback = ({ meta }: Props) => {
 
   const claimXp = useCallback(async () => {
     try {
+      if (!browserProvider) throw new Error('No connected wallet')
       if (!connectedAccount) throw new Error('No connected account')
       if (!surveyCode) throw new Error('No survey code')
       setIsInProgress(true)
       await switchNetwork(BASE_CHAIN_ID)
-      const provider = new BrowserProvider(window.ambire)
-      const signer = await provider.getSigner(connectedAccount)
+      const signer = await browserProvider.getSigner(connectedAccount)
 
       const useSponsorship = false
 
@@ -84,6 +84,7 @@ const Feedback = ({ meta }: Props) => {
       setIsInProgress(false)
     }
   }, [
+    browserProvider,
     connectedAccount,
     sendCalls,
     surveyCode,
@@ -104,32 +105,18 @@ const Feedback = ({ meta }: Props) => {
   }
 
   const btnText = useMemo(() => {
-    if (isCharacterNotMinted) return 'Join Rewards to start accumulating XP'
     if (meta?.notMetLvlThreshold) return 'Minimum level 10 threshold not met.'
     if (!connectedAccount || v1Account)
       return 'Switch to a new account to unlock Rewards quests. Ambire legacy Web accounts (V1) are not supported.'
     return isFeedbackFormOpen ? 'Claim xp' : 'Open feedback form'
-  }, [
-    meta?.notMetLvlThreshold,
-    connectedAccount,
-    v1Account,
-    isFeedbackFormOpen,
-    isCharacterNotMinted
-  ])
+  }, [meta?.notMetLvlThreshold, connectedAccount, v1Account, isFeedbackFormOpen])
 
   const isButtonDisabled = useMemo(() => {
-    if (!connectedAccount || v1Account || isCharacterNotMinted) return true
+    if (!connectedAccount || v1Account) return true
     if (meta?.notMetLvlThreshold) return true
     if (isFeedbackFormOpen && !surveyCode) return true
     return false
-  }, [
-    meta?.notMetLvlThreshold,
-    connectedAccount,
-    v1Account,
-    isFeedbackFormOpen,
-    surveyCode,
-    isCharacterNotMinted
-  ])
+  }, [meta?.notMetLvlThreshold, connectedAccount, v1Account, isFeedbackFormOpen, surveyCode])
   return (
     <CardActionWrapper
       onButtonClick={onButtonClick}

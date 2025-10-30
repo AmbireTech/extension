@@ -259,7 +259,9 @@ const LeaderboardContainer: React.FC = () => {
                     activeTab === 2
                       ? connectedAccount === item.account
                         ? projectedAmount?.walletRewards
-                        : item.projectedRewards || 'Loading...'
+                        : typeof item.projectedRewards === 'number'
+                        ? item.projectedRewards
+                        : 'Loading...'
                       : undefined
                   }
                   stickyPosition={stickyPosition}
