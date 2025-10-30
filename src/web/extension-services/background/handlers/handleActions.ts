@@ -203,9 +203,6 @@ export const handleActions = async (
       // Since these accounts are view-only, directly add them in the
       // MainController, bypassing the AccountPicker flow.
       await mainCtrl.accounts.addAccounts(params.accounts)
-      // Needed but not critical, postponed to be last with retry mechanism if it
-      // fails, see Accounts controller - #viewOnlyAccountGetIdentityInterval
-      await mainCtrl.accounts.setViewOnlyAccountIdentitiesIfNeeded()
       break
     }
     case 'MAIN_CONTROLLER_REMOVE_ACCOUNT': {
