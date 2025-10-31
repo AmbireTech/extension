@@ -149,8 +149,8 @@ const BackgroundServiceProvider: React.FC<any> = ({ children }) => {
 
     const keepAlive = async () => {
       try {
-        const res = await chrome.runtime.sendMessage('ping')
-        if (res === 'pong') hasConnectedToTheBackground.current = true
+        const res = await chrome.runtime.sendMessage('ambire-extension-ping')
+        if (res === 'ambire-extension-pong') hasConnectedToTheBackground.current = true
       } catch (error) {
         console.error(error)
       }

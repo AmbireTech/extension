@@ -38,11 +38,11 @@ export const handleKeepAlive = () => {
 
     wakeup = setInterval(Highlander, timer)
   } else {
-    saveTimestamp()
-    // Save the timestamp immediately and then every `SAVE_TIMESTAMP_INTERVAL`
-    // miliseconds. This keeps the service worker alive.
-    const SAVE_TIMESTAMP_INTERVAL_MS = 2 * 1000
-    setInterval(saveTimestamp, SAVE_TIMESTAMP_INTERVAL_MS)
+    // saveTimestamp()
+    // // Save the timestamp immediately and then every `SAVE_TIMESTAMP_INTERVAL`
+    // // miliseconds. This keeps the service worker alive.
+    // const SAVE_TIMESTAMP_INTERVAL_MS = 2 * 1000
+    // setInterval(saveTimestamp, SAVE_TIMESTAMP_INTERVAL_MS)
   }
 
   // Notifies all open extension tabs/windows/popups that the service worker/background script has reactivated
