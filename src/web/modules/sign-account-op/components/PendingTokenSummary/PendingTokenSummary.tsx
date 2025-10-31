@@ -119,7 +119,7 @@ const PendingTokenSummary = ({ token, chainId, hasBottomSpacing = true }: Props)
       {token.flags.isSuspected && (
         <View
           // @ts-ignore
-          style={{ cursor: 'pointer' }}
+          style={[spacings.mlMi, { cursor: 'pointer' }]}
           dataSet={{
             tooltipId: `token-amount-${tokenId}`
           }}
