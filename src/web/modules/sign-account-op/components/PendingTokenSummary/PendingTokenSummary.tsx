@@ -116,7 +116,7 @@ const PendingTokenSummary = ({ token, chainId, hasBottomSpacing = true }: Props)
         </Text>
         {!!priceInUsd && <Text fontSize={16} weight="medium">{` ($${priceInUsd}) `}</Text>}
       </Text>
-      {token.flags.isSuspected && (
+      {token.flags.suspectedType && (
         <View
           // @ts-ignore
           style={[spacings.mlMi, { cursor: 'pointer' }]}
