@@ -18,8 +18,8 @@ const RewardsTokenItem = ({
   description
 }: {
   token: TokenResult
-  onPress: () => void
-  actionButtonText: string
+  onPress?: () => void
+  actionButtonText?: string
   description: string | React.ReactNode
 }) => {
   const { t } = useTranslation()
@@ -30,24 +30,27 @@ const RewardsTokenItem = ({
       decimalRulesType="noDecimal"
       hasBottomSpacing
       extraActions={
-        <Pressable
-          testID="rewards-button"
-          onPress={onPress}
-          style={({ hovered }: any) => [
-            flexbox.center,
-            flexbox.directionRow,
-            common.borderRadiusPrimary,
-            {
-              width: 70,
-              background: GRADIENT_STYLE,
-              opacity: hovered ? 0.8 : 1
-            }
-          ]}
-        >
-          <Text fontSize={14} weight="medium" color="white">
-            {t('{{actionButtonText}}', { actionButtonText })}
-          </Text>
-        </Pressable>
+        onPress &&
+        actionButtonText && (
+          <Pressable
+            testID="rewards-button"
+            onPress={onPress}
+            style={({ hovered }: any) => [
+              flexbox.center,
+              flexbox.directionRow,
+              common.borderRadiusPrimary,
+              {
+                width: 70,
+                background: GRADIENT_STYLE,
+                opacity: hovered ? 0.8 : 1
+              }
+            ]}
+          >
+            <Text fontSize={14} weight="medium" color="white">
+              {t('{{actionButtonText}}', { actionButtonText })}
+            </Text>
+          </Pressable>
+        )
       }
       gradientStyle={GRADIENT_STYLE}
       label={
