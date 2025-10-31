@@ -66,8 +66,7 @@ const PayOption = ({
     if (!signAccountOpState) return
 
     return signAccountOpState.warnings.find(
-      ({ id }) =>
-        id === 'bundler-failure' || id === 'estimation-retry' || id === 'feeTokenPriceUnavailable'
+      ({ id }) => id === 'estimation-retry' || id === 'feeTokenPriceUnavailable'
     )
   }, [signAccountOpState])
 
