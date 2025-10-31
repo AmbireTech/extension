@@ -2,6 +2,8 @@ import React, { useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { TokenResult } from '@ambire-common/libs/portfolio'
+import { ProjectedRewardsTokenResult } from '@ambire-common/libs/portfolio/interfaces'
+import Text from '@common/components/Text'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
@@ -32,6 +34,26 @@ const TokenItem = ({ token }: { token: TokenResult }) => {
     window.open(INFO_BTN_URL, '_blank')
   }, [])
 
+  const projectedRewardsUserXp = useMemo(() => {
+    if (isProjectedRewards) {
+      const projectedRewardsToken = token as ProjectedRewardsTokenResult
+      return projectedRewardsToken.userXp
+    }
+    return 0
+  }, [isProjectedRewards, token])
+
+  const projectedRewardsDescription = useMemo(
+    () => (
+      <Text fontSize={12} weight="regular">
+        {t('Projected rewards ')}
+        <Text fontSize={12} appearance="primary">
+          {projectedRewardsUserXp}
+        </Text>
+      </Text>
+    ),
+    [projectedRewardsUserXp, t]
+  )
+
   const sendTransaction = useCallback(
     (type: 'claimWalletRequest' | 'mintVestingRequest') => {
       dispatch({
@@ -42,7 +64,8 @@ const TokenItem = ({ token }: { token: TokenResult }) => {
     [dispatch, token]
   )
 
-  if (isProjectedRewards) return <RewardsTokenItem token={token} description="Projected rewards" />
+  if (isProjectedRewards)
+    return <RewardsTokenItem token={token} description={projectedRewardsDescription} />
   if (isRewards)
     return (
       <RewardsTokenItem
