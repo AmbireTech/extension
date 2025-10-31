@@ -493,7 +493,7 @@ const init = async () => {
           console.error('Failed to create notification', err)
         })
     }
-    mainCtrl.keystore.lock()
+    mainCtrl.lock()
   })
   const extensionUpdateCtrl = new ExtensionUpdateController()
 
