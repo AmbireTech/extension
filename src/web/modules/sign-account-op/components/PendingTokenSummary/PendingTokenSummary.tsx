@@ -70,7 +70,7 @@ const PendingTokenSummary = ({ token, chainId, hasBottomSpacing = true }: Props)
   }, [token.simulationAmount, theme])
 
   const suspiciousTokenTooltipContent = useMemo(() => {
-    const reason = token.flags.isSuspected
+    const reason = token.flags.suspectedType
     if (!reason) return null
 
     if (reason === 'no-latin-symbol')
@@ -80,7 +80,7 @@ const PendingTokenSummary = ({ token, chainId, hasBottomSpacing = true }: Props)
     if (reason === 'suspected') return 'This may be a suspicious token.'
 
     return null
-  }, [token.flags.isSuspected])
+  }, [token.flags.suspectedType])
 
   return (
     <View style={[styles.container, !hasBottomSpacing && spacings.mb0]}>
