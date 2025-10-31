@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 
 import { TokenResult } from '@ambire-common/libs/portfolio'
 import { ProjectedRewardsTokenResult } from '@ambire-common/libs/portfolio/interfaces'
+import Badge from '@common/components/Badge'
 import Text from '@common/components/Text'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
 import useBackgroundService from '@web/hooks/useBackgroundService'
@@ -37,7 +38,9 @@ const TokenItem = ({ token }: { token: TokenResult }) => {
   const projectedRewardsUserXp = useMemo(() => {
     if (isProjectedRewards) {
       const projectedRewardsToken = token as ProjectedRewardsTokenResult
-      return projectedRewardsToken.userXp
+      return Number(projectedRewardsToken.userXp).toLocaleString('en-US', {
+        maximumFractionDigits: 0
+      })
     }
     return 0
   }, [isProjectedRewards, token])
@@ -46,9 +49,7 @@ const TokenItem = ({ token }: { token: TokenResult }) => {
     () => (
       <Text fontSize={12} weight="regular">
         {t('Projected rewards ')}
-        <Text fontSize={12} appearance="primary">
-          {projectedRewardsUserXp}
-        </Text>
+        <Badge text={`${projectedRewardsUserXp} XP`} type="projectedRewards" weight="semiBold" />
       </Text>
     ),
     [projectedRewardsUserXp, t]
