@@ -187,8 +187,8 @@ const routesConfig: RouteConfig = {
       default: i18n.t('App Wants to Connect')
     })
   },
-  [ROUTES.appCatalog]: {
-    route: ROUTES.appCatalog,
+  [ROUTES.apps]: {
+    route: ROUTES.apps,
     title: Platform.select({
       web: i18n.t('Apps'),
       default: i18n.t('Apps')

@@ -37,7 +37,7 @@ function formatTVL(tvl: number) {
     formatted = tvl.toString()
   }
 
-  return `TVL: ${formatted}`
+  return `TVL: $${formatted}`
 }
 
 const DappItem = (dapp: Dapp) => {
@@ -174,7 +174,7 @@ const DappItem = (dapp: Dapp) => {
                     <Badge text={t('Blacklisted')} type="error" style={spacings.mrTy} />
                   )}
                 </View>
-                {!!hovered && (
+                {!!hovered && !!isConnected && (
                   <Pressable onPress={openBottomSheet as any} style={spacings.mlTy}>
                     {({ hovered: iconHovered }: any) => (
                       <SettingsIcon
