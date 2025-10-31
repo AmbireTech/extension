@@ -18,6 +18,7 @@ import useCharacterContext from '@legends/hooks/useCharacterContext'
 import useLeaderboardContext from '@legends/hooks/useLeaderboardContext'
 import useLegendsContext from '@legends/hooks/useLegendsContext'
 import usePortfolioControllerState from '@legends/hooks/usePortfolioControllerState/usePortfolioControllerState'
+import { Networks } from '@legends/modules/legends/types'
 
 import styles from './CharacterSection.module.scss'
 import startsBackground from './starsBackground.png'
@@ -65,7 +66,8 @@ const CharacterSection = () => {
   const isNotAvailableForRewards =
     ((accountPortfolio || accountPortfolio?.isReady) &&
       amountFormatted &&
-      Number((amountFormatted ?? '0').replace(/[^0-9.-]+/g, '')) < 500) ||
+      Number((amountFormatted ?? '0').replace(/[^0-9.-]+/g, '')) <
+        (rewardsProjectionData?.minBalance || 0)) ||
     (season1LeaderboardData?.currentUser?.level ?? 0) <= 2
 
   const shouldShowIcon = !!claimableRewardsError || isNotAvailableForRewards
@@ -90,7 +92,7 @@ const CharacterSection = () => {
 
   const currentTotalBalanceOnSupportedChains = amount || undefined
 
-  const parsedSnapshotsBalance = rewardsProjectionData?.currentSeasonSnapshots.map(
+  const parsedSnapshotsBalance = (rewardsProjectionData?.currentSeasonSnapshots || []).map(
     (snapshot: { week: number; balance: number }) => snapshot.balance
   )
 
@@ -119,7 +121,7 @@ const CharacterSection = () => {
     symbol: 'stkWALLET',
     name: 'Staked $WALLET',
     decimals: 18,
-    priceIn: [{ baseCurrency: 'usd', price: rewardsProjectionData?.walletPrice }],
+    priceIn: [{ baseCurrency: 'usd', price: rewardsProjectionData?.walletPrice || 0 }],
     flags: {
       onGasTank: false,
       rewardsType: 'wallet-projected-rewards' as const,
@@ -257,15 +259,16 @@ const CharacterSection = () => {
                 const userLevel = season1LeaderboardData?.currentUser?.level ?? 0
 
                 const hasMinBalance = [...(parsedSnapshotsBalance || []), amount || 0].some(
-                  (x) => x > rewardsProjectionData?.minBalance
+                  (x) => x > (rewardsProjectionData?.minBalance || 0)
                 )
-                const hasMinLevel = userLevel >= rewardsProjectionData?.minLvl
+                const hasMinLevel = userLevel >= (rewardsProjectionData?.minLvl || 0)
 
                 // Lvl reached, Usd < 500
                 if (hasMinLevel && !hasMinBalance) {
                   return (
                     <p className={styles.rewardsTitle}>
-                      Keep your account balance over $500 to accumulate rewards.
+                      Keep your account balance over ${rewardsProjectionData?.minBalance} to
+                      accumulate rewards.
                     </p>
                   )
                 }
@@ -274,7 +277,7 @@ const CharacterSection = () => {
                 if (!hasMinLevel && hasMinBalance) {
                   return (
                     <p className={styles.rewardsTitle}>
-                      Reach level 3 to start accumulating rewards.
+                      Reach level {rewardsProjectionData?.minLvl} to start accumulating rewards.
                     </p>
                   )
                 }
@@ -283,8 +286,8 @@ const CharacterSection = () => {
                 if (!hasMinLevel && !hasMinBalance) {
                   return (
                     <p className={styles.rewardsTitle}>
-                      Keep your account balance over $500 and reach level 3 to start accumulating
-                      rewards.
+                      Keep your account balance over ${rewardsProjectionData?.minBalance} and reach
+                      level {rewardsProjectionData?.minLvl} to start accumulating rewards.
                     </p>
                   )
                 }
