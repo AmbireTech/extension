@@ -23,6 +23,7 @@ import Estimation from '@web/modules/sign-account-op/components/Estimation'
 import Modals from '@web/modules/sign-account-op/components/Modals/Modals'
 import SigningKeySelect from '@web/modules/sign-message/components/SignKeySelect'
 import { getUiType } from '@web/utils/uiType'
+import BundlerWarning from '../../Estimation/components/bundlerWarning'
 
 export type OneClickEstimationProps = {
   closeEstimationModal: () => void
@@ -150,13 +151,10 @@ const OneClickEstimation = ({
                   </Text>
                 </View>
               ))}
-            {bundlerNonceDiscrepancy && (
-              <View style={[flexbox.directionRow, flexbox.alignEnd, spacings.mt]}>
-                <Text fontSize={12} appearance="warningText">
-                  {t(bundlerNonceDiscrepancy.title)}
-                </Text>
-              </View>
-            )}
+            <BundlerWarning
+              signAccountOpState={signAccountOpController}
+              bundlerNonceDiscrepancy={bundlerNonceDiscrepancy}
+            />
             <View
               style={{
                 height: 1,

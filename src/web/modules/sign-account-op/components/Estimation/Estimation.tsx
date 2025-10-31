@@ -27,6 +27,7 @@ import ManifestImage from '@web/components/ManifestImage'
 import { openInTab } from '@web/extension-services/background/webapi/tab'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 
+import BundlerWarning from './components/bundlerWarning'
 import EstimationSkeleton from './components/EstimationSkeleton'
 import PayOption from './components/PayOption'
 import { NO_FEE_OPTIONS } from './consts'
@@ -551,13 +552,10 @@ const Estimation = ({
           />
         </>
       )}
-      {bundlerNonceDiscrepancy && (
-        <View style={[flexbox.directionRow, flexbox.alignEnd, spacings.mt]}>
-          <Text fontSize={12} appearance="warningText">
-            {t(bundlerNonceDiscrepancy.title)}
-          </Text>
-        </View>
-      )}
+      <BundlerWarning
+        signAccountOpState={signAccountOpState}
+        bundlerNonceDiscrepancy={bundlerNonceDiscrepancy}
+      />
     </>
   )
 }

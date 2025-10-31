@@ -6,8 +6,8 @@ import { FeeSpeed, SigningStatus } from '@ambire-common/controllers/signAccountO
 import { Account, AccountPreferences, AccountStates } from '@ambire-common/interfaces/account'
 import {
   AccountOpAction,
-  Action as ActionFromActionsQueue,
   ActionExecutionType,
+  Action as ActionFromActionsQueue,
   ActionPosition,
   OpenActionWindowParams
 } from '@ambire-common/interfaces/actions'
@@ -400,6 +400,12 @@ type SignAccountOpUpdateAction = {
     signingKeyAddr?: Key['addr']
     signingKeyType?: Key['type']
     gasUsedTooHighAgreed?: boolean
+  }
+}
+type SignAccountOpReestimateAction = {
+  type: 'SIGN_ACCOUNT_OP_REESTIMATE'
+  params: {
+    type: SignAccountOpType
   }
 }
 type MainControllerSignAccountOpUpdateStatus = {
@@ -885,6 +891,7 @@ export type Action =
   | ExtensionUpdateControllerApplyUpdate
   | OpenExtensionPopupAction
   | SignAccountOpUpdateAction
+  | SignAccountOpReestimateAction
   | SwapAndBridgeControllerMarkSelectedRouteAsFailed
   | SwapAndBridgeControllerDestroySignAccountOp
   | SwapAndBridgeControllerOpenSigningActionWindow
