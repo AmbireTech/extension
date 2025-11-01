@@ -2,24 +2,29 @@
 
 <div align="center">
   <a href="https://chromewebstore.google.com/detail/ambire-wallet/ehgjhhccekdedpbkifaojjaefeohnoea" target="_blank">
-    <img src="./mockups/mockup-dashboard.png" alt="Ambire Wallet Dashboard" />
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="./mockups/mockup-dashboard-dark.png">
+      <source media="(prefers-color-scheme: light)" srcset="./mockups/mockup-dashboard-light.png">
+      <img src="./mockups/mockup-dashboard-light.png" alt="Ambire Wallet Dashboard" width="672" height="672" />
+    </picture>
   </a>
 
   <p>
-    The secure & easy-to-use Web3 wallet. EIP-7702 ready.<br />
-    <a href="https://chromewebstore.google.com/detail/ambire-wallet/ehgjhhccekdedpbkifaojjaefeohnoea" target="_blank">
-      <strong>Download Extension for Webkit Browsers 🔥</strong>
+    Your Web3 wallet that just works. EIP-7702 ready.<br>
+    <em>A self-custodial browser wallet extension built for Ethereum and EVM networks.</em><br />
+    <a href="https://www.ambire.com/get-extension" target="_blank">
+      <strong>Download Ambire extension 🔥</strong>
     </a>
     <br />
-    <em>(Chrome, Brave, Opera, Edge, Arc)</em>
+    <em>(Chrome, Firefox, Brave, Opera, Edge, Arc)</em>
     <br /><br />
-    💌 Request Invite Code:
+    👥 Join the community:
     <a href="https://discord.com/invite/Ambire" target="_blank">Discord</a> |
     <a href="https://t.me/AmbireOfficial" target="_blank">Telegram</a>
     <br />
     🐞
     <a href="https://github.com/AmbireTech/extension/issues">Report a Bug</a> ·
-    <a href="https://forum.ambire.com/" target="_blank">Request Features</a>
+    <a href="https://help.ambire.com/hc/en-us/requests/new" target="_blank">Get help</a>
   </p>
 </div>
 

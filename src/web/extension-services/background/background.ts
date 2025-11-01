@@ -18,7 +18,7 @@ import { getAccountKeysCount } from '@ambire-common/libs/keys/keys'
 import { KeystoreSigner } from '@ambire-common/libs/keystoreSigner/keystoreSigner'
 import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
 import wait from '@ambire-common/utils/wait'
-import CONFIG, { isDev, isProd } from '@common/config/env'
+import CONFIG, { isAmbireNext, isDev, isProd } from '@common/config/env'
 import {
   BROWSER_EXTENSION_LOG_UPDATED_CONTROLLER_STATE_ONLY,
   BROWSER_EXTENSION_MEMORY_INTENSIVE_LOGS,
@@ -144,8 +144,35 @@ function captureBackgroundExceptionFromControllerError(error: ErrorRef, controll
   })
 }
 
-const INVICTUS_ERROR_PREFIX = 'Invictus RPC error'
-const INVICTUS_200_ERROR_PREFIX = 'Invictus RPC error (2XX)'
+const prefixes = {
+  invictus: {
+    normal: 'Invictus RPC error',
+    status200: 'Invictus RPC error (2XX)'
+  },
+  customRpc: {
+    normal: 'Custom RPC error',
+    status200: 'Custom RPC error (2XX)'
+  }
+}
+
+const getMessagePrefix = (extraData: { [key: string]: any }) => {
+  const { providerUrl, isProviderInvictus, statusCode, shortMessage } = extraData
+  let is200Status = false
+
+  if (statusCode === undefined && shortMessage !== 'missing revert data') {
+    // Ethers doesn't return a status code for 2XX responses, so we treat undefined as 2XX
+    // and have handling just in case statusCode is explicitly set to 200-299
+    is200Status = true
+  } else if (typeof statusCode === 'number' && statusCode >= 200 && statusCode < 300) {
+    is200Status = true
+  }
+
+  const providerUrlPart = providerUrl ? `(${providerUrl})` : ''
+  const prefixSet = isProviderInvictus ? prefixes.invictus : prefixes.customRpc
+  const prefix = is200Status ? prefixSet.status200 : prefixSet.normal
+
+  return `${prefix} ${providerUrlPart}: `
+}
 
 /**
  * In Sentry we can "fingerprint" errors by their message. This function is used to
@@ -165,32 +192,13 @@ function formatErrorsBeforeSendingToSentry(
       // except the message. We need to use the contexts to get the extra info.
       // Note: this is possible because of the extraErrorDataIntegration from Sentry
       const extraData = contexts?.ProviderError || {}
-      const {
-        isProviderInvictus,
-        error: nestedError,
-        statusCode,
-        providerUrl,
-        data,
-        info,
-        transaction
-      } = extraData
+      const { error: nestedError, code, data, info, transaction } = extraData
 
-      if (
-        isProviderInvictus &&
-        // Check if it's a relevant provider error
-        (data || info || nestedError || transaction) &&
-        !message.startsWith(INVICTUS_ERROR_PREFIX) &&
-        !message.startsWith(INVICTUS_200_ERROR_PREFIX)
-      ) {
-        // Ethers doesn't return a status code for 2XX responses, so we treat undefined as 2XX
-        // and have handling just in case statusCode is explicitly set to 200-299
-        const is200Status =
-          !statusCode || (typeof statusCode === 'number' && statusCode >= 200 && statusCode < 300)
-        const providerUrlPart = providerUrl ? `(${providerUrl})` : ''
+      if (data || info || nestedError || code || transaction) {
+        const prefix = getMessagePrefix(extraData)
+
         // eslint-disable-next-line no-param-reassign
-        error.value = `${
-          is200Status ? INVICTUS_200_ERROR_PREFIX : INVICTUS_ERROR_PREFIX
-        } ${providerUrlPart}: ${message}`
+        error.value = `${prefix}${message}`
       }
     }
   })
@@ -252,7 +260,7 @@ providerRequestTransport.reply(async ({ method, id, providerId, params }, meta) 
   const session = mainCtrl.dapps.getOrCreateDappSession({ tabId, windowId, origin })
 
   await mainCtrl.dapps.initialLoadPromise
-  mainCtrl.dapps.setSessionMessenger(session.sessionId, bridgeMessenger)
+  mainCtrl.dapps.setSessionMessenger(session.sessionId, bridgeMessenger, isAmbireNext)
 
   try {
     const res = await handleProviderRequests(
@@ -487,7 +495,7 @@ const init = async () => {
           console.error('Failed to create notification', err)
         })
     }
-    mainCtrl.keystore.lock()
+    mainCtrl.lock()
   })
   const extensionUpdateCtrl = new ExtensionUpdateController()
 

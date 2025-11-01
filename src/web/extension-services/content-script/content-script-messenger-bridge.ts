@@ -8,7 +8,9 @@ import {
   isTooDeepFrameInTheFrameHierarchy
 } from '@web/extension-services/utils/frames'
 
-// eslint-disable-next-line import/newline-after-import
+declare const globalIsAmbireNext: boolean
+
+  // eslint-disable-next-line import/newline-after-import
 ;(() => {
   if (isCrossOriginFrame() || isTooDeepFrameInTheFrameHierarchy()) return
 
@@ -38,7 +40,10 @@ import {
           lastRestartLockTime = now
           try {
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            tabMessenger.send('ambireProviderRequest', { method: 'registerUserActivity' })
+            tabMessenger.send(
+              globalIsAmbireNext ? 'ambireNextBuildProviderRequest' : 'ambireProviderRequest',
+              { method: 'registerUserActivity' }
+            )
           } catch (error) {
             console.error('Failed to send registerUserActivity to the service worker')
           }

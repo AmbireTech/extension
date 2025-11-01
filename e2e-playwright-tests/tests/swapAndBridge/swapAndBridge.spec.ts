@@ -4,7 +4,7 @@ import { test } from 'fixtures/pageObjects'
 
 import { expect } from '@playwright/test' // your extended test with authPage
 
-test.describe('swapAndBridge Smart Account', () => {
+test.describe('swapAndBridge Smart Account', { tag: '@swapAndBridge' }, () => {
   test.beforeEach(async ({ pages }) => {
     await pages.initWithStorage(saParams)
   })

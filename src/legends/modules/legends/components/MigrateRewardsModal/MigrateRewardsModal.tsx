@@ -1,12 +1,5 @@
 /* eslint-disable no-console */
-import {
-  BrowserProvider,
-  Contract,
-  formatEther,
-  formatUnits,
-  Interface,
-  JsonRpcProvider
-} from 'ethers'
+import { Contract, formatEther, formatUnits, Interface, JsonRpcProvider } from 'ethers'
 import React, { useCallback, useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 
@@ -15,11 +8,11 @@ import CloseIcon from '@legends/components/CloseIcon'
 import { ERROR_MESSAGES } from '@legends/constants/errors/messages'
 import { ETHEREUM_CHAIN_ID } from '@legends/constants/networks'
 import useAccountContext from '@legends/hooks/useAccountContext'
-import useCharacterContext from '@legends/hooks/useCharacterContext/useCharacterContext'
 import useErc5792 from '@legends/hooks/useErc5792'
 import useEscModal from '@legends/hooks/useEscModal'
 import useLegendsContext from '@legends/hooks/useLegendsContext'
 import usePortfolioControllerState from '@legends/hooks/usePortfolioControllerState/usePortfolioControllerState'
+import useProviderContext from '@legends/hooks/useProviderContext'
 import useSwitchNetwork from '@legends/hooks/useSwitchNetwork'
 import useToast from '@legends/hooks/useToast'
 import { humanizeError } from '@legends/modules/legends/utils/errors/humanizeError'
@@ -59,15 +52,14 @@ const MigrateRewardsModal: React.FC<MigrateRewardsModalProps> = ({
   const { onLegendComplete } = useLegendsContext()
 
   const { addToast } = useToast()
+  const { browserProvider } = useProviderContext()
   const { connectedAccount, v1Account } = useAccountContext()
-  const { isCharacterNotMinted } = useCharacterContext()
   const switchNetwork = useSwitchNetwork()
-  const disabledButton = Boolean(!connectedAccount || v1Account || isCharacterNotMinted)
+  const disabledButton = Boolean(!connectedAccount || v1Account)
 
   const buttonText = getRewardsButtonText({
     connectedAccount,
-    v1Account: !!v1Account,
-    isCharacterNotMinted: !!isCharacterNotMinted
+    v1Account: !!v1Account
   })
 
   const [migratableXWalletBalance, setMigratableXWalletBalance] = useState<bigint | null>(null)
@@ -104,12 +96,12 @@ const MigrateRewardsModal: React.FC<MigrateRewardsModalProps> = ({
   useEscModal(isOpen, closeModal)
 
   const onButtonClick = useCallback(async () => {
+    if (!browserProvider) return
     if (!action || !action.calls) return
     await switchNetwork(ETHEREUM_CHAIN_ID)
 
     try {
-      const provider = new BrowserProvider(window.ambire)
-      const signer = await provider.getSigner()
+      const signer = await browserProvider.getSigner()
 
       const formattedCalls = action.calls.map(([to, value, data]) => {
         return { to, value, data }
@@ -140,6 +132,7 @@ const MigrateRewardsModal: React.FC<MigrateRewardsModalProps> = ({
       addToast(message, { type: 'error' })
     }
   }, [
+    browserProvider,
     switchNetwork,
     action,
     getCallsStatus,

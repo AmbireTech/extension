@@ -1,7 +1,7 @@
 import { baParams } from 'constants/env'
 import { test } from 'fixtures/pageObjects'
 
-test.describe('signMessage', () => {
+test.describe('signMessage', { tag: '@signMessage' }, () => {
   test.beforeEach(async ({ pages }) => {
     await pages.initWithStorage(baParams)
   })

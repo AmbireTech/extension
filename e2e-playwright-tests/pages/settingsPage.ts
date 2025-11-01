@@ -114,7 +114,10 @@ export class SettingsPage extends BasePage {
     const chainlistTab = await this.handleNewPage(addNetworkFromChainlist)
 
     // open connect page
-    const connectWalletButton = chainlistTab.locator('//button[contains(text(),"Connect Wallet")]') // there are multiple Connect wallet buttons on page
+    const connectWalletButton = chainlistTab
+      .locator('//button[contains(text(),"Connect Wallet")]')
+      .first() // there are multiple Connect wallet buttons on page
+
     const connectPage = await this.handleNewPage(connectWalletButton)
 
     // confirm conection request
