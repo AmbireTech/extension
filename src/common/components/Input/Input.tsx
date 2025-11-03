@@ -128,6 +128,7 @@ const Input = ({
     },
     isValid && { borderColor: theme.successDecorative },
     !!error && { borderColor: theme.errorDecorative },
+    info && { borderColor: theme.warningText },
     disabled && styles.disabled,
     borderless && { borderColor: 'transparent', borderWidth: 0 },
     inputWrapperStyle
@@ -235,7 +236,7 @@ const Input = ({
       {!!info && (
         <Text
           weight="regular"
-          appearance="secondaryText"
+          appearance="warningText"
           style={[styles.bottomLabel, bottomLabelStyle]}
           fontSize={10}
         >
