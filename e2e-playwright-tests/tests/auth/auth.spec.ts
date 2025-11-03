@@ -1,4 +1,4 @@
-import { BA_PASSPHRASE, KEYSTORE_PASS, SA_PASSPHRASE } from 'constants/env'
+import { KEYSTORE_PASS, SEED } from 'constants/env'
 import mainConstants from 'constants/mainConstants'
 import selectors from 'constants/selectors'
 import { test } from 'fixtures/pageObjects' // your extended test with auth
@@ -36,13 +36,13 @@ test.describe('auth', { tag: '@auth' }, () => {
   test('import one Basic Account from a 12 words seed phrase and personalize them', async ({
     pages
   }) => {
-    await pages.auth.importExistingAccountByRecoveryPhrase(BA_PASSPHRASE)
+    await pages.auth.importExistingAccountByRecoveryPhrase(SEED)
   })
 
   test('import one Smart Account from a 12 words seed phrase and personalize them', async ({
     pages
   }) => {
-    await pages.auth.importExistingAccountByRecoveryPhrase(SA_PASSPHRASE)
+    await pages.auth.importExistingAccountByRecoveryPhrase(SEED)
   })
 
   test('import a couple of view-only accounts (at once) and personalize some of them', async ({
