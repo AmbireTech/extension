@@ -21,7 +21,7 @@ const getStyles = (theme: ThemeProps) =>
       // ...common.borderRadiusPrimary
     },
     tokenButtonIconWrapper: {
-      backgroundColor: theme.primaryBackground,
+      backgroundColor: theme.projectRewards,
       ...common.borderRadiusPrimary,
       ...flexbox.center,
       width: 40,

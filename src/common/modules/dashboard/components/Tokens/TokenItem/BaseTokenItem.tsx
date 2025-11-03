@@ -1,12 +1,11 @@
 import React, { useMemo } from 'react'
-import { View } from 'react-native'
+import { Image, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { TokenResult } from '@ambire-common/libs/portfolio'
 import { FormatType } from '@ambire-common/utils/formatDecimals/formatDecimals'
 import BatchIcon from '@common/assets/svg/BatchIcon'
 import PendingToBeConfirmedIcon from '@common/assets/svg/PendingToBeConfirmedIcon'
-import RewardsIcon from '@common/assets/svg/RewardsIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
@@ -26,6 +25,8 @@ import { getTokenId } from '@web/utils/token'
 import TokenDetails from '../TokenDetails'
 import PendingBadge from './PendingBadge'
 import getStyles from './styles'
+
+const rewardsImage = require('@common/assets/images/AmbireLogoLikeCoin.png')
 
 type Props = {
   token: TokenResult
@@ -111,6 +112,8 @@ const BaseTokenItem = ({
     return pendingToBeSigned ? theme.warningText : theme.info2Text
   }, [isPending, pendingToBeSigned, theme.primaryText, theme.warningText, theme.info2Text])
 
+  console.log('balanceFormatted', balanceFormatted)
+
   return (
     <AnimatedPressable
       onPress={() => openBottomSheet()}
@@ -147,7 +150,7 @@ const BaseTokenItem = ({
             <View style={[spacings.mr, flexboxStyles.justifyCenter]}>
               {rewardsStyle ? (
                 <View style={styles.tokenButtonIconWrapper}>
-                  <RewardsIcon width={40} height={40} />
+                  <Image source={rewardsImage} style={{ width: 33, height: 33 }} />
                 </View>
               ) : (
                 <TokenIcon
@@ -183,7 +186,13 @@ const BaseTokenItem = ({
                     dataSet={{ tooltipId: `${tokenId}-balance` }}
                     testID={`token-balance-${tokenId}`}
                   >
-                    {isPending ? pendingBalanceFormatted : balanceFormatted} {symbol}{' '}
+                    <Text
+                      weight="number_bold"
+                      color={rewardsStyle ? theme.projectRewards : textColor}
+                    >
+                      {isPending ? pendingBalanceFormatted : balanceFormatted}
+                    </Text>{' '}
+                    {symbol}{' '}
                   </Text>
 
                   <Tooltip

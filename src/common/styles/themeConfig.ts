@@ -204,7 +204,7 @@ const ThemeColors = {
   },
   projectRewards: {
     [THEME_TYPES.DARK]: '#D7FF00',
-    [THEME_TYPES.LIGHT]: '#6000FF'
+    [THEME_TYPES.LIGHT]: '#8B3DFF'
   }
 }
 
