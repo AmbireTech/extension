@@ -212,6 +212,7 @@ const selectors = {
   removeNetworkConfirmButton: 'remove-network-confirm-btn',
   signButton: 'sign-button',
   backButton: 'back-button',
+  submitButton: 'button-submit',
   txnStatus: 'txn-status',
   batchModalGotIt: 'queue-modal-got-it-button',
   signButtonSwap: 'swap-button-sign',

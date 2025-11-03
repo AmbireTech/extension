@@ -35,35 +35,24 @@ jobs:
       REACT_APP_CANDIDE_API_KEY: ${{ vars.REACT_APP_CANDIDE_API_KEY }}
       KEYSTORE_PASS: ${{ secrets.KEYSTORE_PASS }}
       SEED: ${{ secrets.SEED }}
-      BA_PRIVATE_KEY: ${{ secrets.BA_PRIVATE_KEY }}
-      BA_PASSPHRASE: ${{ secrets.BA_PASSPHRASE }}
+      SEED_24_WORDS: ${{ secrets.SEED_24_WORDS }}
+      PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
       BA_ACCOUNTS: ${{ vars.BA_ACCOUNTS }}
       BA_KEYSTORE_UID: ${{ vars.BA_KEYSTORE_UID }}
       BA_KEYS: ${{ vars.BA_KEYS }}
       BA_SECRETS: ${{ secrets.BA_SECRETS }}
       BA_SEEDS: ${{ vars.BA_SEEDS }}
-      BA_NETWORK_WITH_ASSETS: ${{ vars.BA_NETWORK_WITH_ASSETS }}
-      BA_NETWORK_WITH_POSITIONS: ${{ vars.BA_NETWORK_WITH_POSITIONS }}
-      BA_ONBOARDING_STATE: ${{ vars.BA_ONBOARDING_STATE }}
-      BA_PREVIOUSHINTS: ${{ vars.BA_PREVIOUSHINTS }}
+      BA_LEARNED_ASSETS: ${{ vars.BA_LEARNED_ASSETS }}
       BA_SELECTED_ACCOUNT: ${{ vars.BA_SELECTED_ACCOUNT }}
-      BA_TERMSTATE: ${{ vars.BA_TERMSTATE }}
       SA_ACCOUNTS: ${{ vars.SA_ACCOUNTS }}
-      SA_ACCOUNT_JSON: ${{ secrets.SA_ACCOUNT_JSON }}
-      SA_IS_ONBOARDED: ${{ vars.SA_IS_ONBOARDED }}
       SA_KEYSTORE_UID: ${{ vars.SA_KEYSTORE_UID }}
       SA_KEYS: ${{ vars.SA_KEYS }}
       SA_SECRETS: ${{ secrets.SA_SECRETS }}
       SA_SEEDS: ${{ vars.SA_SEEDS }}
-      SA_ONBOARDING_STATE: ${{ vars.SA_ONBOARDING_STATE }}
-      SA_PREVIOUSHINTS: ${{ vars.SA_PREVIOUSHINTS }}
+      SA_LEARNED_ASSETS: ${{ vars.SA_LEARNED_ASSETS }}
       SA_SELECTED_ACCOUNT: ${{ vars.SA_SELECTED_ACCOUNT }}
-      SA_TERMSTATE: ${{ vars.SA_TERMSTATE }}
-      SA_NETWORK_WITH_ASSETS: ${{ vars.SA_NETWORK_WITH_ASSETS }}
-      SA_NETWORK_WITH_POSITIONS: ${{ vars.SA_NETWORK_WITH_POSITIONS }}
-      SA_PASSPHRASE: ${{ secrets.SA_PASSPHRASE }}
+      SA_ACCOUNT_JSON: ${{ secrets.SA_ACCOUNT_JSON }}
       DEFAULT_INVITATION_CODE_DEV: ${{ vars.DEFAULT_INVITATION_CODE_DEV }}
-      SEED_24_WORDS: ${{ secrets.SEED_24_WORDS }}
       SHOULD_RUN_TREZOR_TESTS: 'true'
       PLAYWRIGHT_SKIP_GIT_METADATA: '1' # Optional fix to avoid Git fetch timeout
       # Enables Playwright to intercept network requests initiated by Service Workers.
