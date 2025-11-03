@@ -208,9 +208,7 @@ class LatticeSigner implements KeystoreSignerInterface {
     if (!res.sig || typeof res.sig.v === 'undefined')
       throw new ExternalSignerError(
         'Required signature data was found missing. Please try again later or contact Ambire support.',
-        {
-          sendCrashReport: true
-        }
+        { sendCrashReport: true }
       )
 
     // TODO: Figure out how to retrieve the signing key address from the
