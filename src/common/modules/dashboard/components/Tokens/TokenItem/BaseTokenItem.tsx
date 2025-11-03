@@ -36,6 +36,7 @@ type Props = {
   borderRadius?: number
   decimalRulesType?: FormatType
   hasBottomSpacing?: boolean
+  onPress?: () => void
 }
 
 const BaseTokenItem = ({
@@ -46,7 +47,8 @@ const BaseTokenItem = ({
   label,
   borderRadius,
   decimalRulesType = 'amount',
-  hasBottomSpacing = false
+  hasBottomSpacing = false,
+  onPress
 }: Props) => {
   const { portfolio } = useSelectedAccountControllerState()
   const { networks } = useNetworksControllerState()
@@ -112,11 +114,9 @@ const BaseTokenItem = ({
     return pendingToBeSigned ? theme.warningText : theme.info2Text
   }, [isPending, pendingToBeSigned, theme.primaryText, theme.warningText, theme.info2Text])
 
-  console.log('balanceFormatted', balanceFormatted)
-
   return (
     <AnimatedPressable
-      onPress={() => openBottomSheet()}
+      onPress={() => (rewardsStyle && onPress ? onPress() : openBottomSheet())}
       style={[
         styles.container,
         {

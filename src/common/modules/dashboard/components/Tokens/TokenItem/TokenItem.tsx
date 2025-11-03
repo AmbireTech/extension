@@ -16,7 +16,7 @@ import RewardsTokenItem from './RewardsTokenItem'
 
 const { isPopup } = getUiType()
 
-const INFO_BTN_URL = 'https://rewards.ambire.com'
+const INFO_BTN_URL = 'https://rewards.ambire.com/#/wallet'
 
 const TokenItem = ({ token }: { token: TokenResult }) => {
   const { t } = useTranslation()
@@ -66,7 +66,13 @@ const TokenItem = ({ token }: { token: TokenResult }) => {
   )
 
   if (isProjectedRewards)
-    return <RewardsTokenItem token={token} description={projectedRewardsDescription} />
+    return (
+      <RewardsTokenItem
+        onPress={handleDetailsPress}
+        token={token}
+        description={projectedRewardsDescription}
+      />
+    )
   if (isRewards)
     return (
       <RewardsTokenItem
