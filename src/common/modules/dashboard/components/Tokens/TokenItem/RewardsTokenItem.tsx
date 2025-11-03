@@ -52,7 +52,7 @@ const RewardsTokenItem = ({
           </Pressable>
         )
       }
-      gradientStyle={GRADIENT_STYLE}
+      rewardsStyle={GRADIENT_STYLE}
       label={
         <Text fontSize={12} weight="regular">
           {typeof description === 'string' ? t('{{description}}', { description }) : description}
