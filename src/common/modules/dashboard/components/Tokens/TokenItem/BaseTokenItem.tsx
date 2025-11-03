@@ -52,12 +52,28 @@ const BaseTokenItem = ({
   const { styles, theme, themeType } = useTheme(getStyles)
 
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
-  const [bindAnim, animStyle] = useCustomHover({
-    property: 'backgroundColor',
-    values: {
-      from: theme.primaryBackground,
-      to: themeType === THEME_TYPES.DARK ? theme.tertiaryBackground : theme.secondaryBackground
+
+  const isDark = themeType === THEME_TYPES.DARK
+  const hasGradient = Boolean(gradientStyle)
+  const getColors = () => {
+    if (!hasGradient) {
+      return {
+        from: theme.primaryBackground,
+        to: isDark ? theme.tertiaryBackground : theme.secondaryBackground
+      }
     }
+
+    return {
+      from: isDark ? theme.tertiaryBackground : theme.secondaryBackground,
+      to: isDark ? theme.secondaryBackground : theme.tertiaryBackground
+    }
+  }
+
+  const { from, to } = getColors()
+
+  const [bindAnim, animStyle, isHovered] = useCustomHover({
+    property: 'backgroundColor',
+    values: { from, to }
   })
 
   const tokenId = getTokenId(token)
@@ -94,182 +110,185 @@ const BaseTokenItem = ({
     return pendingToBeSigned ? theme.warningText : theme.info2Text
   }, [isPending, pendingToBeSigned, theme.primaryText, theme.warningText, theme.info2Text])
 
-  const gradientBorderStyle = gradientStyle
-    ? {
-        border: '1px solid transparent',
-        borderRadius: borderRadius || BORDER_RADIUS_PRIMARY,
-        padding: 1,
-        background: `
-        linear-gradient(${String(theme.secondaryBackground)}, ${String(
-          theme.secondaryBackground
-        )}) padding-box,
-        ${gradientStyle} border-box
-      `,
-        WebkitBackgroundClip: 'padding-box, border-box',
-        backgroundClip: 'padding-box, border-box',
-        borderImageSlice: 1
-      }
-    : animStyle
-
   return (
-    <AnimatedPressable
-      onPress={() => openBottomSheet()}
-      style={[
-        styles.container,
-        {
-          borderRadius: borderRadius || BORDER_RADIUS_PRIMARY,
-          marginBottom: hasBottomSpacing ? SPACING_TY : 0
-        },
-        gradientBorderStyle
-      ]}
-      {...bindAnim}
-    >
-      <BottomSheet
-        id={`token-details-${address}`}
-        sheetRef={sheetRef}
-        closeBottomSheet={closeBottomSheet}
+    <>
+      <AnimatedPressable
+        onPress={() => openBottomSheet()}
+        style={[
+          styles.container,
+          {
+            borderRadius: borderRadius || BORDER_RADIUS_PRIMARY,
+            marginBottom: hasBottomSpacing ? SPACING_TY : 0,
+            ...(gradientStyle && {
+              boxShadow: `0 ${isHovered ? 2 : 3}px 0 0 ${String(theme.iconPrimary2)}`
+            })
+          },
+          animStyle
+        ]}
+        {...bindAnim}
       >
-        <TokenDetails token={token} handleClose={closeBottomSheet} />
-      </BottomSheet>
-
-      <View style={flexboxStyles.flex1}>
-        <View
-          style={[
-            flexboxStyles.directionRow,
-            flexboxStyles.flex1,
-            gradientStyle ? flexboxStyles.alignCenter : {}
-          ]}
+        <BottomSheet
+          id={`token-details-${address}`}
+          sheetRef={sheetRef}
+          closeBottomSheet={closeBottomSheet}
         >
-          <View style={[flexboxStyles.directionRow, { flex: 1.5 }]}>
-            <View style={[spacings.mr, flexboxStyles.justifyCenter]}>
-              {gradientStyle ? (
-                <View style={styles.tokenButtonIconWrapper}>
-                  <RewardsIcon width={40} height={40} />
-                </View>
-              ) : (
-                <TokenIcon
-                  withContainer
-                  address={address}
-                  chainId={chainId}
-                  onGasTank={onGasTank}
-                  containerHeight={40}
-                  containerWidth={40}
-                  width={28}
-                  height={28}
-                />
-              )}
-            </View>
+          <TokenDetails token={token} handleClose={closeBottomSheet} />
+        </BottomSheet>
 
-            <View style={[flexboxStyles.flex1, spacings.mr]}>
-              <View
-                style={[
-                  flexboxStyles.flex1,
-                  flexboxStyles.directionRow,
-                  flexboxStyles.justifySpaceBetween
-                ]}
-              >
-                <View>
-                  <Text
-                    selectable
-                    style={spacings.mrTy}
-                    color={textColor}
-                    fontSize={16}
-                    weight="number_bold"
-                    numberOfLines={1}
-                    // @ts-ignore
-                    dataSet={{ tooltipId: `${tokenId}-balance` }}
-                    testID={`token-balance-${tokenId}`}
-                  >
-                    {isPending ? pendingBalanceFormatted : balanceFormatted} {symbol}{' '}
-                  </Text>
-
-                  <Tooltip
-                    content={String(isPending ? pendingBalance : balance)}
-                    id={`${tokenId}-balance`}
+        <View style={flexboxStyles.flex1}>
+          <View
+            style={[
+              flexboxStyles.directionRow,
+              flexboxStyles.flex1,
+              gradientStyle ? flexboxStyles.alignCenter : {}
+            ]}
+          >
+            <View style={[flexboxStyles.directionRow, { flex: 1.5 }]}>
+              <View style={[spacings.mr, flexboxStyles.justifyCenter]}>
+                {gradientStyle ? (
+                  <View style={styles.tokenButtonIconWrapper}>
+                    <RewardsIcon width={40} height={40} />
+                  </View>
+                ) : (
+                  <TokenIcon
+                    withContainer
+                    address={address}
+                    chainId={chainId}
+                    onGasTank={onGasTank}
+                    containerHeight={40}
+                    containerWidth={40}
+                    width={28}
+                    height={28}
                   />
-                  <Text weight="regular" style={[spacings.mrMi]} fontSize={12}>
-                    {!label
-                      ? networkData && t('on {{network}}', { network: networkData.name })
-                      : label}
-                  </Text>
+                )}
+              </View>
+
+              <View style={[flexboxStyles.flex1, spacings.mr]}>
+                <View
+                  style={[
+                    flexboxStyles.flex1,
+                    flexboxStyles.directionRow,
+                    flexboxStyles.justifySpaceBetween
+                  ]}
+                >
+                  <View>
+                    <Text
+                      selectable
+                      style={spacings.mrTy}
+                      color={textColor}
+                      fontSize={16}
+                      weight="number_bold"
+                      numberOfLines={1}
+                      // @ts-ignore
+                      dataSet={{ tooltipId: `${tokenId}-balance` }}
+                      testID={`token-balance-${tokenId}`}
+                    >
+                      {isPending ? pendingBalanceFormatted : balanceFormatted} {symbol}{' '}
+                    </Text>
+
+                    <Tooltip
+                      content={String(isPending ? pendingBalance : balance)}
+                      id={`${tokenId}-balance`}
+                    />
+                    <Text weight="regular" style={[spacings.mrMi]} fontSize={12}>
+                      {!label
+                        ? networkData && t('on {{network}}', { network: networkData.name })
+                        : label}
+                    </Text>
+                  </View>
+                  {/* area for optional actions (Claim button etc) */}
+                  {extraActions}
                 </View>
-                {/* area for optional actions (Claim button etc) */}
-                {extraActions}
               </View>
             </View>
+
+            <Text
+              selectable
+              fontSize={16}
+              color={textColor}
+              weight="number_regular"
+              style={{ flex: 0.7 }}
+            >
+              {priceUSDFormatted}
+            </Text>
+
+            <Text
+              selectable
+              fontSize={16}
+              weight="number_bold"
+              color={textColor}
+              style={{ flex: 0.4, textAlign: 'right' }}
+            >
+              {isPending ? pendingBalanceUSDFormatted : balanceUSDFormatted}
+            </Text>
           </View>
 
-          <Text
-            selectable
-            fontSize={16}
-            color={textColor}
-            weight="number_regular"
-            style={{ flex: 0.7 }}
-          >
-            {priceUSDFormatted}
-          </Text>
+          {isPending && (
+            <View style={[{ marginLeft: SPACING_2XL + SPACING_TY }, spacings.mtSm]}>
+              <View>
+                {!!pendingToBeSigned && !!pendingToBeSignedFormatted && (
+                  <PendingBadge
+                    amount={pendingToBeSigned}
+                    amountFormatted={pendingToBeSignedFormatted}
+                    label="awaiting signature"
+                    backgroundColor={theme.warningBackground}
+                    textColor={theme.warningText}
+                    Icon={BatchIcon}
+                  />
+                )}
+                {!!pendingToBeConfirmed && !!pendingToBeConfirmedFormatted && (
+                  <PendingBadge
+                    amount={pendingToBeConfirmed}
+                    amountFormatted={pendingToBeConfirmedFormatted}
+                    label="confirming"
+                    backgroundColor={theme.info2Background}
+                    textColor={theme.info2Text}
+                    Icon={PendingToBeConfirmedIcon}
+                  />
+                )}
+              </View>
 
-          <Text
-            selectable
-            fontSize={16}
-            weight="number_bold"
-            color={textColor}
-            style={{ flex: 0.4, textAlign: 'right' }}
-          >
-            {isPending ? pendingBalanceUSDFormatted : balanceUSDFormatted}
-          </Text>
+              <View style={[flexboxStyles.directionRow, flexboxStyles.alignCenter]}>
+                <Text
+                  selectable
+                  style={[spacings.mrMi, { opacity: 0.7 }]}
+                  color={theme.successText}
+                  fontSize={14}
+                  weight="number_bold"
+                  numberOfLines={1}
+                >
+                  {balanceLatestFormatted}
+                </Text>
+                <Text
+                  selectable
+                  style={{ opacity: 0.7 }}
+                  color={theme.successText}
+                  fontSize={12}
+                  numberOfLines={1}
+                >
+                  {t('(Onchain)')}
+                </Text>
+              </View>
+            </View>
+          )}
         </View>
-
-        {isPending && (
-          <View style={[{ marginLeft: SPACING_2XL + SPACING_TY }, spacings.mtSm]}>
-            <View>
-              {!!pendingToBeSigned && !!pendingToBeSignedFormatted && (
-                <PendingBadge
-                  amount={pendingToBeSigned}
-                  amountFormatted={pendingToBeSignedFormatted}
-                  label="awaiting signature"
-                  backgroundColor={theme.warningBackground}
-                  textColor={theme.warningText}
-                  Icon={BatchIcon}
-                />
-              )}
-              {!!pendingToBeConfirmed && !!pendingToBeConfirmedFormatted && (
-                <PendingBadge
-                  amount={pendingToBeConfirmed}
-                  amountFormatted={pendingToBeConfirmedFormatted}
-                  label="confirming"
-                  backgroundColor={theme.info2Background}
-                  textColor={theme.info2Text}
-                  Icon={PendingToBeConfirmedIcon}
-                />
-              )}
-            </View>
-
-            <View style={[flexboxStyles.directionRow, flexboxStyles.alignCenter]}>
-              <Text
-                selectable
-                style={[spacings.mrMi, { opacity: 0.7 }]}
-                color={theme.successText}
-                fontSize={14}
-                weight="number_bold"
-                numberOfLines={1}
-              >
-                {balanceLatestFormatted}
-              </Text>
-              <Text
-                selectable
-                style={{ opacity: 0.7 }}
-                color={theme.successText}
-                fontSize={12}
-                numberOfLines={1}
-              >
-                {t('(Onchain)')}
-              </Text>
-            </View>
-          </View>
-        )}
-      </View>
-    </AnimatedPressable>
+      </AnimatedPressable>
+      {/* {gradientStyle && (
+        <View
+          style={{
+            position: 'absolute',
+            bottom: 5,
+            left: 0,
+            right: 0,
+            height: 30,
+            backgroundColor: '#8000ff',
+            borderBottomLeftRadius: borderRadius || 12,
+            borderBottomRightRadius: borderRadius || 12,
+            zIndex: -1
+          }}
+        />
+      )} */}
+    </>
   )
 }
 
