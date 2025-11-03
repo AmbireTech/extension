@@ -68,7 +68,7 @@ const CharacterSection = () => {
       amountFormatted &&
       Number((amountFormatted ?? '0').replace(/[^0-9.-]+/g, '')) <
         (rewardsProjectionData?.minBalance || 0)) ||
-    (season1LeaderboardData?.currentUser?.level ?? 0) <= 2
+    (season1LeaderboardData?.currentUser?.level ?? 0) < (rewardsProjectionData?.minLvl || 0)
 
   const shouldShowIcon = !!claimableRewardsError || isNotAvailableForRewards
 
