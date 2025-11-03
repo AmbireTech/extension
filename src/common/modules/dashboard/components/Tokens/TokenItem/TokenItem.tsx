@@ -38,7 +38,7 @@ const TokenItem = ({ token }: { token: TokenResult }) => {
   const projectedRewardsUserXp = useMemo(() => {
     if (isProjectedRewards) {
       const projectedRewardsToken = token as ProjectedRewardsTokenResult
-      return Number(projectedRewardsToken.userXp).toLocaleString('en-US', {
+      return Number(projectedRewardsToken.userXp || 0).toLocaleString('en-US', {
         maximumFractionDigits: 0
       })
     }
