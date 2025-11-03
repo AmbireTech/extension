@@ -127,13 +127,8 @@ export async function bootstrapWithStorage(
 
   const {
     parsedKeystoreAccounts: accounts,
-    parsedNetworksWithAssetsByAccount: networksWithAssetsByAccount,
-    parsedNetworksWithPositionsByAccount: networksWithPositionsByAccounts,
-    parsedOnboardingState: onboardingState,
-    parsedPreviousHints: previousHints,
+    parsedLearnedAssets: learnedAssets,
     envSelectedAccount: selectedAccount,
-    envTermState: termsState,
-    invite,
     parsedKeystoreUID: keyStoreUid,
     parsedKeystoreKeys: keystoreKeys,
     parsedKeystoreSecrets: keystoreSecrets,
@@ -143,15 +138,9 @@ export async function bootstrapWithStorage(
 
   const storageParamsMapped = {
     accounts,
-    networksWithAssetsByAccount,
-    networksWithPositionsByAccounts,
-    onboardingState,
-    previousHints,
+    learnedAssets,
     selectedAccount,
-    termsState,
-    invite,
     isE2EStorageSet: true,
-    isPinned: 'true',
     isSetupComplete: 'true',
     ...(!shouldUnlockKeystoreManually && {
       keyStoreUid,

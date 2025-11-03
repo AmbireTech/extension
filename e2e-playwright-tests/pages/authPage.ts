@@ -1,4 +1,4 @@
-import { BA_PRIVATE_KEY, KEYSTORE_PASS } from 'constants/env'
+import { PRIVATE_KEY, KEYSTORE_PASS } from 'constants/env'
 import locators from 'constants/locators'
 import selectors from 'constants/selectors'
 import BootstrapContext from 'interfaces/bootstrapContext'
@@ -22,6 +22,11 @@ export class AuthPage extends BasePage {
     await this.page.getByTestId(selectors.enterPassField).fill(KEYSTORE_PASS)
     await this.page.getByTestId(selectors.repeatPassField).fill(KEYSTORE_PASS)
     await this.page.getByTestId(selectors.createKeystorePassBtn).click()
+  }
+
+  async decryptBackup(): Promise<void> {
+    await this.page.getByTestId(selectors.passphraseField).fill(KEYSTORE_PASS)
+    await this.page.getByTestId(selectors.submitButton).click()
   }
 
   // TODO: imporove method assertions
@@ -77,7 +82,7 @@ export class AuthPage extends BasePage {
   async importExistingAccount(): Promise<void> {
     await this.click(selectors.getStarted.importExistingAccBtn)
     await this.click(selectors.getStarted.importMethodPrivateBtn)
-    await this.entertext(selectors.getStarted.enterPrivateKeyField, BA_PRIVATE_KEY)
+    await this.entertext(selectors.getStarted.enterPrivateKeyField, PRIVATE_KEY)
     await this.click(selectors.getStarted.warningCheckbox)
     await this.click(selectors.getStarted.importBtn)
     await this.setExtensionPassword()
@@ -201,8 +206,9 @@ export class AuthPage extends BasePage {
       mimeType: 'application/json',
       buffer: jsonBuffer
     })
-    // assertion on Dashboard after login
+    await this.decryptBackup()
     await this.setExtensionPassword()
+    // assertion on Dashboard after login
     await this.page.locator(locators.completeButton).click()
     await this.page.locator(locators.confirmationMessageAmbireWallet).isVisible()
     await this.page.locator(locators.openDashboardButton).click()
