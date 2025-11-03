@@ -12,7 +12,7 @@ on:
       - main
   workflow_dispatch:
 
-  concurrency:
+concurrency:
   group: e2e-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
 
