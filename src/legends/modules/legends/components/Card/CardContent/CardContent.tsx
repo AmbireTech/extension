@@ -1,4 +1,4 @@
-import React, { FC } from 'react'
+import React, { FC, useMemo } from 'react'
 
 import LockIcon from '@legends/common/assets/svg/LockIcon'
 import ZapIcon from '@legends/common/assets/svg/ZapIcon'
@@ -49,6 +49,40 @@ const CardContent: FC<Props> = ({
     ...CARD_FREQUENCY,
     [CardType.oneTime]: 'OneTime'
   }
+
+  const xpComponent = useMemo(() => {
+    if (!Array.isArray(xp)) return
+    if (xp.some((x) => x.linearMultiplier))
+      return (
+        <>
+          Per $100
+          <br />
+          <span className={styles.xp}>
+            {(Math.max(...xp.map((x) => x.linearMultiplier || 0)) * 100).toFixed(2)}
+          </span>
+        </>
+      )
+    if (xp.length > 1)
+      return (
+        <>
+          Up to <br />
+          <span className={styles.xp}>{Math.max(...xp.map((x) => x.to || 0))}</span>
+        </>
+      )
+    if (xp[0].from !== xp[0].to)
+      return (
+        <>
+          Up to <br />
+          <span className={styles.xp}>{xp[0].to}</span>
+        </>
+      )
+    return (
+      <>
+        Earn <br />
+        <span className={styles.xp}>{xp[0].to}</span>
+      </>
+    )
+  }, [xp])
 
   return (
     <div
@@ -120,22 +154,7 @@ const CardContent: FC<Props> = ({
           </div>
           <div>
             <div className={styles.rewardTitle}>
-              {Array.isArray(xp) && xp.length > 1 ? (
-                <>
-                  Up to <br />
-                  <span className={styles.xp}>{Math.max(...xp.map((x) => x.to))}</span>
-                </>
-              ) : xp[0].from !== xp[0].to ? (
-                <>
-                  Up to <br />
-                  <span className={styles.xp}>{xp[0].to}</span>
-                </>
-              ) : (
-                <>
-                  Earn <br />
-                  <span className={styles.xp}>{xp[0].to}</span>
-                </>
-              )}
+              {xpComponent}
               <span className={styles.xpText}>XP</span>
             </div>
           </div>
