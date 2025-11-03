@@ -34,6 +34,7 @@ interface Props extends InputProps {
   validation: AddressValidation
   label?: string
   onClearButtonPress?: () => void
+  renderConfirmAddress?: () => React.ReactNode
 }
 
 const AddressInput: React.FC<Props> = ({
@@ -48,6 +49,7 @@ const AddressInput: React.FC<Props> = ({
   childrenBeforeButtons,
   onClearButtonPress,
   value,
+  renderConfirmAddress,
   ...rest
 }) => {
   const { t } = useTranslation()
@@ -55,7 +57,7 @@ const AddressInput: React.FC<Props> = ({
   const { styles, theme } = useTheme(getStyles)
   const { contacts } = useAddressBookControllerState()
   const { message, isError, severity } = validation
-  console.log('AddressInput', validation)
+
   const isValidationInDomainResolvingState = message === 'Resolving domain...'
   const inputRef = useRef<TextInput | null>(null)
   const [bindAnim, animStyle] = useHover({ preset: 'opacityInverted' })
@@ -109,6 +111,7 @@ const AddressInput: React.FC<Props> = ({
             ? t('Resolving domain...')
             : ''
         }
+        renderConfirmAddress={renderConfirmAddress}
         childrenBeforeButtons={
           childrenBeforeButtons ||
           (!withDetails && (

@@ -53,6 +53,7 @@ export interface InputProps extends TextInputProps {
   childrenBelowInput?: React.ReactNode
   borderless?: boolean
   customInputContent?: React.ReactNode
+  renderConfirmAddress?: () => React.ReactNode
 }
 
 const Input = ({
@@ -85,6 +86,7 @@ const Input = ({
   inputBorderWrapperRef,
   customInputContent,
   editable,
+  renderConfirmAddress,
   ...rest
 }: InputProps) => {
   const [isFocused, setIsFocused] = useState<boolean>(false)
@@ -211,38 +213,43 @@ const Input = ({
         </View>
         {childrenBelowInput}
       </View>
-      {!!error && (
-        <Text
-          style={[styles.bottomLabel, bottomLabelStyle]}
-          weight={isWeb ? 'regular' : undefined}
-          fontSize={10}
-          appearance={errorType === 'warning' ? 'warningText' : 'errorText'}
-        >
-          {error}
-        </Text>
-      )}
+      <View style={styles.errorContainer}>
+        <View>
+          {!!error && (
+            <Text
+              style={[styles.bottomLabel, bottomLabelStyle]}
+              weight={isWeb ? 'regular' : undefined}
+              fontSize={10}
+              appearance={errorType === 'warning' ? 'warningText' : 'errorText'}
+            >
+              {error}
+            </Text>
+          )}
 
-      {!!isValid && !!validLabel && !error && (
-        <Text
-          style={[styles.bottomLabel, bottomLabelStyle]}
-          weight="regular"
-          fontSize={12}
-          color={theme.successText}
-        >
-          {validLabel}
-        </Text>
-      )}
+          {!!isValid && !!validLabel && !error && (
+            <Text
+              style={[styles.bottomLabel, bottomLabelStyle]}
+              weight="regular"
+              fontSize={12}
+              color={theme.successText}
+            >
+              {validLabel}
+            </Text>
+          )}
 
-      {!!info && (
-        <Text
-          weight="regular"
-          appearance="warningText"
-          style={[styles.bottomLabel, bottomLabelStyle]}
-          fontSize={10}
-        >
-          {info}
-        </Text>
-      )}
+          {!!info && (
+            <Text
+              weight="regular"
+              appearance="warningText"
+              style={[styles.bottomLabel, bottomLabelStyle]}
+              fontSize={10}
+            >
+              {info}
+            </Text>
+          )}
+        </View>
+        {renderConfirmAddress && renderConfirmAddress()}
+      </View>
     </View>
   )
 }

@@ -43,19 +43,6 @@ const ConfirmAddress = ({
     <View
       style={[spacings.mb, flexbox.directionRow, flexbox.alignCenter, flexbox.justifySpaceBetween]}
     >
-      <Checkbox
-        value={isRecipientAddressUnknownAgreed}
-        onValueChange={onRecipientCheckboxClick}
-        label={
-          isSWWarningVisible
-            ? t(
-                'I confirm sending to this address and that it’s not a CEX (which won’t support ETH deposits from smart wallets).'
-              )
-            : t('Confirm sending to this address.')
-        }
-        style={spacings.mb0}
-        testID="recipient-address-unknown-checkbox"
-      />
       <Pressable
         style={({ hovered }: any) => [
           styles.addressBookButton,

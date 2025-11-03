@@ -73,6 +73,7 @@ const SelectedMenuOption: React.FC<{
   disabled?: boolean
   setIsMenuOpen: (isMenuOpen: boolean) => void
   filteredContacts: Contact[]
+  renderConfirmAddress?: () => React.ReactNode
 }> = ({
   selectRef,
   filteredContacts,
@@ -83,7 +84,8 @@ const SelectedMenuOption: React.FC<{
   address,
   setAddress,
   disabled,
-  setIsMenuOpen
+  setIsMenuOpen,
+  renderConfirmAddress
 }) => {
   const [isFocused, setIsFocused] = useState(false)
   const prevFilteredContactsLength = usePrevious(filteredContacts.length)
@@ -126,6 +128,7 @@ const SelectedMenuOption: React.FC<{
       withDetails
       onChangeText={setAddress}
       disabled={disabled}
+      renderConfirmAddress={renderConfirmAddress}
       onFocus={() => {
         setIsFocused(true)
         if (filteredContacts.length) {
@@ -321,6 +324,20 @@ const Recipient: React.FC<Props> = ({
           address={address}
           setAddress={setAddress}
           disabled={disabled}
+          renderConfirmAddress={() => (
+            <ConfirmAddress
+              onRecipientCheckboxClick={onRecipientCheckboxClick}
+              isRecipientHumanizerKnownTokenOrSmartContract={
+                isRecipientHumanizerKnownTokenOrSmartContract
+              }
+              isRecipientAddressUnknown={isRecipientAddressUnknown}
+              isRecipientAddressUnknownAgreed={isRecipientAddressUnknownAgreed}
+              isRecipientAddressSameAsSender={actualAddress === account?.addr}
+              addressValidationMsg={addressValidationMsg}
+              isSWWarningVisible={isSWWarningVisible}
+              onAddToAddressBookPress={openBottomSheet}
+            />
+          )}
         />
       )
     },
@@ -331,7 +348,16 @@ const Recipient: React.FC<Props> = ({
       isRecipientDomainResolving,
       address,
       setAddress,
-      disabled
+      disabled,
+      onRecipientCheckboxClick,
+      isRecipientHumanizerKnownTokenOrSmartContract,
+      isRecipientAddressUnknown,
+      isRecipientAddressUnknownAgreed,
+      actualAddress,
+      account?.addr,
+      addressValidationMsg,
+      isSWWarningVisible,
+      openBottomSheet
     ]
   )
 
@@ -352,20 +378,7 @@ const Recipient: React.FC<Props> = ({
         emptyListPlaceholderText={t('No contacts found')}
         menuPosition="bottom"
       />
-      <View style={styles.inputBottom}>
-        <ConfirmAddress
-          onRecipientCheckboxClick={onRecipientCheckboxClick}
-          isRecipientHumanizerKnownTokenOrSmartContract={
-            isRecipientHumanizerKnownTokenOrSmartContract
-          }
-          isRecipientAddressUnknown={isRecipientAddressUnknown}
-          isRecipientAddressUnknownAgreed={isRecipientAddressUnknownAgreed}
-          isRecipientAddressSameAsSender={actualAddress === account?.addr}
-          addressValidationMsg={addressValidationMsg}
-          isSWWarningVisible={isSWWarningVisible}
-          onAddToAddressBookPress={openBottomSheet}
-        />
-      </View>
+
       <AddContactBottomSheet
         sheetRef={sheetRef}
         address={ensAddress || address}
