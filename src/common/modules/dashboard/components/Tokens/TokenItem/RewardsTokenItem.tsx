@@ -1,11 +1,9 @@
 import React from 'react'
-import { Pressable } from 'react-native'
 
 import { TokenResult } from '@ambire-common/libs/portfolio'
+import Button from '@common/components/Button'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
-import common from '@common/styles/utils/common'
-import flexbox from '@common/styles/utils/flexbox'
 
 import BaseTokenItem from './BaseTokenItem'
 
@@ -26,6 +24,7 @@ const RewardsTokenItem = ({
 
   return (
     <BaseTokenItem
+      rewardsStyle
       token={token}
       onPress={onPress && onPress}
       decimalRulesType="noDecimal"
@@ -33,27 +32,16 @@ const RewardsTokenItem = ({
       extraActions={
         onPress &&
         actionButtonText && (
-          <Pressable
+          <Button
+            size="small"
+            type="claimRewards"
+            hasBottomSpacing={false}
             testID="rewards-button"
             onPress={onPress}
-            style={({ hovered }: any) => [
-              flexbox.center,
-              flexbox.directionRow,
-              common.borderRadiusPrimary,
-              {
-                width: 70,
-                background: GRADIENT_STYLE,
-                opacity: hovered ? 0.8 : 1
-              }
-            ]}
-          >
-            <Text fontSize={14} weight="medium" color="white">
-              {t('{{actionButtonText}}', { actionButtonText })}
-            </Text>
-          </Pressable>
+            text={t('{{actionButtonText}}', { actionButtonText })}
+          />
         )
       }
-      rewardsStyle={GRADIENT_STYLE}
       label={
         <Text fontSize={12} weight="regular">
           {typeof description === 'string' ? t('{{description}}', { description }) : description}

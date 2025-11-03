@@ -31,7 +31,7 @@ const rewardsImage = require('@common/assets/images/AmbireLogoLikeCoin.png')
 type Props = {
   token: TokenResult
   extraActions?: React.ReactNode
-  rewardsStyle?: string
+  rewardsStyle?: boolean
   label?: string | React.ReactNode
   borderRadius?: number
   decimalRulesType?: FormatType
@@ -42,7 +42,6 @@ type Props = {
 const BaseTokenItem = ({
   token,
   extraActions,
-  // TODO: rename rewardsStyle to rewardsStyle
   rewardsStyle,
   label,
   borderRadius,
@@ -171,7 +170,8 @@ const BaseTokenItem = ({
                 style={[
                   flexboxStyles.flex1,
                   flexboxStyles.directionRow,
-                  flexboxStyles.justifySpaceBetween
+                  flexboxStyles.justifySpaceBetween,
+                  flexboxStyles.alignCenter
                 ]}
               >
                 <View>

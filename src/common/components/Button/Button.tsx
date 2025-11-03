@@ -27,6 +27,7 @@ type ButtonTypes =
   | 'info3'
   | 'success'
   | 'gray'
+  | 'claimRewards'
 
 type ButtonSizes = 'regular' | 'small' | 'large' | 'tiny'
 export interface Props extends PressableProps {
@@ -99,7 +100,8 @@ const ButtonInnerContainer = ({
       info2: [],
       success: [],
       gray: [],
-      info3: []
+      info3: [],
+      claimRewards: []
     }),
     [themeType, theme]
   )
@@ -253,6 +255,18 @@ const Button = ({
           from: theme.quaternaryBackground,
           to: themeType === THEME_TYPES.DARK ? `${theme.linkText as string}80` : theme.primaryLight
         }
+      ],
+      claimRewards: [
+        {
+          property: 'backgroundColor',
+          from: `${String(theme.projectRewards)}10`,
+          to: `${String(theme.projectRewards)}20`
+        },
+        {
+          property: 'borderColor',
+          from: theme.projectRewards,
+          to: theme.projectRewards
+        }
       ]
     }),
     [themeType, theme]
@@ -297,7 +311,8 @@ const Button = ({
     gray: {
       backgroundColor: theme.quaternaryBackground,
       borderWidth: 0
-    }
+    },
+    claimRewards: styles.buttonContainerSecondary
   }
 
   const containerStylesSizes: { [key in ButtonSizes]: ViewStyle } = {
@@ -401,6 +416,13 @@ const Button = ({
           property: 'color',
           from: theme.primaryText,
           to: theme.primaryText
+        }
+      ],
+      claimRewards: [
+        {
+          property: 'color',
+          from: theme.projectRewards,
+          to: theme.projectRewards
         }
       ]
     }),
