@@ -55,8 +55,14 @@ const CardContent: FC<Props> = ({
     if (xp.some((x) => x.linearMultiplier))
       return (
         <>
-          Per $100
-          <br />
+          <p
+            style={{
+              color: '#F7BA2F',
+              fontWeight: 500
+            }}
+          >
+            Per $100
+          </p>
           <span className={styles.xp}>
             {(Math.max(...xp.map((x) => x.linearMultiplier || 0)) * 100).toFixed(2)}
           </span>
