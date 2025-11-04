@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Pressable, View } from 'react-native'
+import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { Dapp } from '@ambire-common/interfaces/dapp'
@@ -68,6 +68,21 @@ const DappItem = (dapp: Dapp) => {
     }
   })
 
+  const [bindStarIconAnimation, starIconAnimationStyle] = useCustomHover({
+    property: 'scaleX',
+    values: { from: 1, to: 1.175 }
+  })
+
+  const [bindXIconAnimation, xIconAnimationStyle] = useCustomHover({
+    property: 'scaleX',
+    values: { from: 1, to: 1.175 }
+  })
+
+  const [bindSettingsIconAnimation, settingsIconAnimationStyle] = useCustomHover({
+    property: 'scaleX',
+    values: { from: 1, to: 1.175 }
+  })
+
   const getInitials = useCallback((fullName: string) => {
     const words = fullName.split(' ').filter((word) => word.length > 0)
     return words.length > 0 ? words[0][0].toUpperCase() : ''
@@ -131,17 +146,23 @@ const DappItem = (dapp: Dapp) => {
                   >
                     {name}
                   </Text>
-                  <Pressable
+                  <AnimatedPressable
+                    {...bindStarIconAnimation}
+                    style={[
+                      spacings.mrTy,
+                      {
+                        transform: [{ scale: starIconAnimationStyle.scaleX as number }]
+                      }
+                    ]}
                     onPress={() => {
                       dispatch({
                         type: 'DAPP_CONTROLLER_UPDATE_DAPP',
                         params: { id, dapp: { favorite: !favorite } }
                       })
                     }}
-                    style={spacings.mrTy}
                   >
                     <StarIcon isFilled={favorite} />
-                  </Pressable>
+                  </AnimatedPressable>
                   {!!isConnected && <ConnectedIcon style={spacings.mrTy} width={18} height={18} />}
                   {!!tvl && (
                     <View
@@ -158,33 +179,49 @@ const DappItem = (dapp: Dapp) => {
                     </View>
                   )}
                   {!!twitter && (
-                    <Pressable
+                    <View
                       style={[
                         spacings.phTy,
                         flexbox.alignCenter,
                         flexbox.justifyCenter,
                         { height: 20, borderLeftWidth: 1, borderColor: theme.secondaryBorder }
                       ]}
-                      onPress={() => openInTab({ url: `https://x.com/${twitter}` })}
                     >
-                      <XIcon />
-                    </Pressable>
+                      <AnimatedPressable
+                        style={[
+                          {
+                            transform: [{ scale: xIconAnimationStyle.scaleX as number }]
+                          }
+                        ]}
+                        {...bindXIconAnimation}
+                        onPress={() => openInTab({ url: `https://x.com/${twitter}` })}
+                      >
+                        <XIcon width={13} />
+                      </AnimatedPressable>
+                    </View>
                   )}
                   {!!blacklisted && (
                     <Badge text={t('Blacklisted')} type="error" style={spacings.mrTy} />
                   )}
                 </View>
                 {!!hovered && !!isConnected && (
-                  <Pressable onPress={openBottomSheet as any} style={spacings.mlTy}>
-                    {({ hovered: iconHovered }: any) => (
-                      <SettingsIcon
-                        width={18}
-                        height={18}
-                        strokeWidth="1.8"
-                        color={iconHovered ? theme.iconSecondary : theme.iconPrimary}
-                      />
-                    )}
-                  </Pressable>
+                  <AnimatedPressable
+                    {...bindSettingsIconAnimation}
+                    onPress={openBottomSheet as any}
+                    style={[
+                      spacings.mlTy,
+                      {
+                        transform: [{ scale: settingsIconAnimationStyle.scaleX as number }]
+                      }
+                    ]}
+                  >
+                    <SettingsIcon
+                      width={18}
+                      height={18}
+                      strokeWidth="1.8"
+                      color={theme.iconPrimary}
+                    />
+                  </AnimatedPressable>
                 )}
               </View>
               <Text
