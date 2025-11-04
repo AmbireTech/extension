@@ -1,11 +1,41 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 
 import { TokenResult } from '@ambire-common/libs/portfolio'
-import Button from '@common/components/Button'
+import Button, { Props } from '@common/components/Button'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import useTheme from '@common/hooks/useTheme'
 
 import BaseTokenItem from './BaseTokenItem'
+
+export interface ClaimButtonProps extends Omit<Props, 'type'> {}
+
+const ClaimButton = ({ style, textStyle, ...rest }: ClaimButtonProps) => {
+  const { theme } = useTheme()
+
+  const claimStyles = useMemo(
+    () => ({
+      container: {
+        backgroundColor: `${String(theme.projectedRewards)}10`,
+        borderColor: theme.projectedRewards,
+        borderWidth: 1
+      },
+      text: {
+        color: theme.projectedRewards
+      }
+    }),
+    [theme]
+  )
+
+  return (
+    <Button
+      {...rest}
+      type="secondary"
+      style={[claimStyles.container, style]}
+      textStyle={[claimStyles.text, textStyle]}
+    />
+  )
+}
 
 const RewardsTokenItem = ({
   token,
@@ -30,9 +60,8 @@ const RewardsTokenItem = ({
       extraActions={
         onPress &&
         actionButtonText && (
-          <Button
+          <ClaimButton
             size="small"
-            type="claimRewards"
             hasBottomSpacing={false}
             onPress={onPress}
             text={t('{{actionButtonText}}', { actionButtonText })}
