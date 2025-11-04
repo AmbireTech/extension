@@ -259,13 +259,13 @@ const Button = ({
       claimRewards: [
         {
           property: 'backgroundColor',
-          from: `${String(theme.projectRewards)}10`,
-          to: `${String(theme.projectRewards)}20`
+          from: `${String(theme.projectedRewards)}10`,
+          to: `${String(theme.projectedRewards)}20`
         },
         {
           property: 'borderColor',
-          from: theme.projectRewards,
-          to: theme.projectRewards
+          from: theme.projectedRewards,
+          to: theme.projectedRewards
         }
       ]
     }),
@@ -421,8 +421,8 @@ const Button = ({
       claimRewards: [
         {
           property: 'color',
-          from: theme.projectRewards,
-          to: theme.projectRewards
+          from: theme.projectedRewards,
+          to: theme.projectedRewards
         }
       ]
     }),

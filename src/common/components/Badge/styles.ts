@@ -69,8 +69,8 @@ const getStyles = (theme: ThemeProps) =>
     },
     projectedRewards: {
       ...label,
-      borderColor: `${String(theme.projectRewards)}10`,
-      backgroundColor: `${String(theme.projectRewards)}10`
+      borderColor: `${String(theme.projectedRewards)}10`,
+      backgroundColor: `${String(theme.projectedRewards)}10`
     }
   })
 

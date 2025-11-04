@@ -45,8 +45,8 @@ const getBadgeTypes = (theme: ThemeProps) => ({
     iconColor: theme.successText
   },
   projectedRewards: {
-    color: theme.projectRewards,
-    iconColor: theme.projectRewards
+    color: theme.projectedRewards,
+    iconColor: theme.projectedRewards
   },
   new: {
     color: '#fff',

@@ -197,7 +197,7 @@ const BaseTokenItem = ({
                   >
                     <Text
                       weight="number_bold"
-                      color={rewardsStyle ? theme.projectRewards : textColor}
+                      color={rewardsStyle ? theme.projectedRewards : textColor}
                     >
                       {isPending ? pendingBalanceFormatted : balanceFormatted}
                     </Text>{' '}

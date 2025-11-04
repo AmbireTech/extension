@@ -24,7 +24,7 @@ const RewardsTokenItem = ({
     <BaseTokenItem
       rewardsStyle
       token={token}
-      onPress={onPress && onPress}
+      onPress={onPress}
       decimalRulesType="noDecimal"
       hasBottomSpacing
       extraActions={
