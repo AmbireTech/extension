@@ -71,6 +71,14 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     amountInFiat
   } = state
 
+  const amountInFiatBigInt = useMemo(() => {
+    try {
+      return parseUnits(getSanitizedAmount(amountInFiat, 6), 6)
+    } catch (e) {
+      return 0n
+    }
+  }, [amountInFiat])
+
   const { navigate } = useNavigation()
   const { t } = useTranslation()
   const { visibleActionsQueue } = useActionsControllerState()
@@ -374,7 +382,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
                 type: 'transferRequest',
                 params: {
                   amount: state.amount,
-                  amountInFiat: parseUnits(getSanitizedAmount(state.amountInFiat, 6), 6),
+                  amountInFiat: amountInFiatBigInt, // used only for topUp calcs
                   selectedToken: state.selectedToken,
                   recipientAddress: isTopUp
                     ? FEE_COLLECTOR
@@ -397,7 +405,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
             type: 'transferRequest',
             params: {
               amount: state.amount,
-              amountInFiat: parseUnits(getSanitizedAmount(state.amountInFiat, 6), 6),
+              amountInFiat: amountInFiatBigInt, // used only for topUp calcs
               selectedToken: state.selectedToken,
               recipientAddress: isTopUp ? FEE_COLLECTOR : getAddressFromAddressState(addressState),
               actionExecutionType
@@ -416,7 +424,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
       isFormValid,
       state.selectedToken,
       state.amount,
-      state.amountInFiat,
+      amountInFiatBigInt,
       visibleActionsQueue,
       dispatch,
       addToast,

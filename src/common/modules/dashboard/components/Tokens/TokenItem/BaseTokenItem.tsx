@@ -1,12 +1,11 @@
 import React, { useMemo } from 'react'
-import { View } from 'react-native'
+import { Image, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { TokenResult } from '@ambire-common/libs/portfolio'
 import { FormatType } from '@ambire-common/utils/formatDecimals/formatDecimals'
 import BatchIcon from '@common/assets/svg/BatchIcon'
 import PendingToBeConfirmedIcon from '@common/assets/svg/PendingToBeConfirmedIcon'
-import RewardsIcon from '@common/assets/svg/RewardsIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
@@ -27,24 +26,30 @@ import TokenDetails from '../TokenDetails'
 import PendingBadge from './PendingBadge'
 import getStyles from './styles'
 
+const rewardsImage = require('@common/assets/images/AmbireLogoLikeCoin.png')
+
 type Props = {
   token: TokenResult
   extraActions?: React.ReactNode
-  gradientStyle?: string
+  rewardsStyle?: boolean
   label?: string | React.ReactNode
   borderRadius?: number
   decimalRulesType?: FormatType
   hasBottomSpacing?: boolean
+  onPress?: () => void
+  wrapperTestID?: string
 }
 
 const BaseTokenItem = ({
   token,
   extraActions,
-  gradientStyle,
+  rewardsStyle,
   label,
   borderRadius,
   decimalRulesType = 'amount',
-  hasBottomSpacing = false
+  hasBottomSpacing = false,
+  onPress,
+  wrapperTestID
 }: Props) => {
   const { portfolio } = useSelectedAccountControllerState()
   const { networks } = useNetworksControllerState()
@@ -52,12 +57,34 @@ const BaseTokenItem = ({
   const { styles, theme, themeType } = useTheme(getStyles)
 
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
-  const [bindAnim, animStyle] = useCustomHover({
-    property: 'backgroundColor',
-    values: {
-      from: theme.primaryBackground,
-      to: themeType === THEME_TYPES.DARK ? theme.tertiaryBackground : theme.secondaryBackground
+
+  const isDark = themeType === THEME_TYPES.DARK
+  const hasRewardsStyle = Boolean(rewardsStyle)
+  const getColors = useMemo(() => {
+    if (!hasRewardsStyle) {
+      return {
+        from: theme.primaryBackground,
+        to: isDark ? theme.tertiaryBackground : theme.secondaryBackground
+      }
     }
+
+    return {
+      from: isDark ? theme.tertiaryBackground : theme.secondaryBackground,
+      to: isDark ? theme.secondaryBackground : theme.tertiaryBackground
+    }
+  }, [
+    hasRewardsStyle,
+    isDark,
+    theme.secondaryBackground,
+    theme.tertiaryBackground,
+    theme.primaryBackground
+  ])
+
+  const { from, to } = getColors
+
+  const [bindAnim, animStyle, isHovered] = useCustomHover({
+    property: 'backgroundColor',
+    values: { from, to }
   })
 
   const tokenId = getTokenId(token)
@@ -94,33 +121,20 @@ const BaseTokenItem = ({
     return pendingToBeSigned ? theme.warningText : theme.info2Text
   }, [isPending, pendingToBeSigned, theme.primaryText, theme.warningText, theme.info2Text])
 
-  const gradientBorderStyle = gradientStyle
-    ? {
-        border: '1px solid transparent',
-        borderRadius: borderRadius || BORDER_RADIUS_PRIMARY,
-        padding: 1,
-        background: `
-        linear-gradient(${String(theme.secondaryBackground)}, ${String(
-          theme.secondaryBackground
-        )}) padding-box,
-        ${gradientStyle} border-box
-      `,
-        WebkitBackgroundClip: 'padding-box, border-box',
-        backgroundClip: 'padding-box, border-box',
-        borderImageSlice: 1
-      }
-    : animStyle
-
   return (
     <AnimatedPressable
-      onPress={() => openBottomSheet()}
+      testID={wrapperTestID || undefined}
+      onPress={() => (rewardsStyle && onPress ? onPress() : openBottomSheet())}
       style={[
         styles.container,
         {
           borderRadius: borderRadius || BORDER_RADIUS_PRIMARY,
-          marginBottom: hasBottomSpacing ? SPACING_TY : 0
+          marginBottom: hasBottomSpacing ? SPACING_TY : 0,
+          ...(rewardsStyle && {
+            boxShadow: `0 ${isHovered ? 2 : 3}px 0 0 ${String(theme.iconPrimary2)}`
+          })
         },
-        gradientBorderStyle
+        animStyle
       ]}
       {...bindAnim}
     >
@@ -137,14 +151,14 @@ const BaseTokenItem = ({
           style={[
             flexboxStyles.directionRow,
             flexboxStyles.flex1,
-            gradientStyle ? flexboxStyles.alignCenter : {}
+            rewardsStyle ? flexboxStyles.alignCenter : {}
           ]}
         >
           <View style={[flexboxStyles.directionRow, { flex: 1.5 }]}>
             <View style={[spacings.mr, flexboxStyles.justifyCenter]}>
-              {gradientStyle ? (
+              {rewardsStyle ? (
                 <View style={styles.tokenButtonIconWrapper}>
-                  <RewardsIcon width={40} height={40} />
+                  <Image source={rewardsImage} style={{ width: 33, height: 33 }} />
                 </View>
               ) : (
                 <TokenIcon
@@ -165,7 +179,8 @@ const BaseTokenItem = ({
                 style={[
                   flexboxStyles.flex1,
                   flexboxStyles.directionRow,
-                  flexboxStyles.justifySpaceBetween
+                  flexboxStyles.justifySpaceBetween,
+                  flexboxStyles.alignCenter
                 ]}
               >
                 <View>
@@ -180,7 +195,13 @@ const BaseTokenItem = ({
                     dataSet={{ tooltipId: `${tokenId}-balance` }}
                     testID={`token-balance-${tokenId}`}
                   >
-                    {isPending ? pendingBalanceFormatted : balanceFormatted} {symbol}{' '}
+                    <Text
+                      weight="number_bold"
+                      color={rewardsStyle ? theme.projectedRewards : textColor}
+                    >
+                      {isPending ? pendingBalanceFormatted : balanceFormatted}
+                    </Text>{' '}
+                    {symbol}{' '}
                   </Text>
 
                   <Tooltip
