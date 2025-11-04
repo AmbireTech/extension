@@ -126,7 +126,10 @@ const Tokens = ({
           )
           const isPinned = PINNED_TOKENS.find(
             ({ address, chainId }) =>
-              token.address.toLowerCase() === address.toLowerCase() && token.chainId === chainId
+              token.address.toLowerCase() === address.toLowerCase() &&
+              token.chainId === chainId &&
+              // exclude projected rewards from pinned tokens
+              token.flags.rewardsType !== 'wallet-projected-rewards'
           )
 
           return (

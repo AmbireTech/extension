@@ -201,6 +201,10 @@ const ThemeColors = {
   iconPrimary2: {
     [THEME_TYPES.DARK]: '#6000FF',
     [THEME_TYPES.LIGHT]: '#6000FF'
+  },
+  projectedRewards: {
+    [THEME_TYPES.DARK]: '#D7FF00',
+    [THEME_TYPES.LIGHT]: '#8B3DFF'
   }
 }
 

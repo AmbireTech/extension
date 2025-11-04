@@ -17,6 +17,7 @@ import ErrorFilledIcon from '@common/assets/svg/ErrorFilledIcon'
 import InformationIcon from '@common/assets/svg/InformationIcon'
 import WarningFilledIcon from '@common/assets/svg/WarningFilledIcon'
 import Button from '@common/components/Button'
+import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import Tooltip from '@common/components/Tooltip'
@@ -47,6 +48,7 @@ type Props = {
   hideBackgroundAndBorders?: boolean
   titleSize?: number
   responsiveSizeMultiplier?: number
+  withScroll?: boolean
 }
 
 const NetworkAvailableFeatures = ({
@@ -56,7 +58,8 @@ const NetworkAvailableFeatures = ({
   handleRetry,
   hideBackgroundAndBorders = false,
   titleSize,
-  responsiveSizeMultiplier = 1
+  responsiveSizeMultiplier = 1,
+  withScroll = false
 }: Props) => {
   const { t } = useTranslation()
   const { theme, styles } = useTheme(getStyles)
@@ -156,8 +159,10 @@ const NetworkAvailableFeatures = ({
 
   const iconSize = 14 * responsiveSizeMultiplier
 
+  const Wrapper = withScroll ? ScrollableWrapper : View
+
   return (
-    <View style={!hideBackgroundAndBorders ? styles.container : undefined}>
+    <Wrapper style={!hideBackgroundAndBorders ? styles.container : undefined}>
       <Text
         fontSize={titleSize || 18 * responsiveSizeMultiplier}
         weight="medium"
@@ -282,7 +287,7 @@ const NetworkAvailableFeatures = ({
         )}
         <Tooltip id="feature-message-tooltip" />
       </View>
-    </View>
+    </Wrapper>
   )
 }
 

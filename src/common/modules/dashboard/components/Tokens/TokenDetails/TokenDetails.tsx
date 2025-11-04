@@ -1,19 +1,17 @@
 import { getAddress } from 'ethers'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Pressable, View } from 'react-native'
+import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { getCoinGeckoTokenApiUrl, getCoinGeckoTokenUrl } from '@ambire-common/consts/coingecko'
 import { TokenResult } from '@ambire-common/libs/portfolio'
 import { getTokenAmount } from '@ambire-common/libs/portfolio/helpers'
 import { getIsNetworkSupported } from '@ambire-common/libs/swapAndBridge/swapAndBridge'
-import EarnIcon from '@common/assets/svg/EarnIcon'
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import SendIcon from '@common/assets/svg/SendIcon'
 import SwapAndBridgeIcon from '@common/assets/svg/SwapAndBridgeIcon'
 import TopUpIcon from '@common/assets/svg/TopUpIcon'
-import WithdrawIcon from '@common/assets/svg/WithdrawIcon'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
 import useNavigation from '@common/hooks/useNavigation'
@@ -96,9 +94,10 @@ const TokenDetails = ({
       tokenType: isGasTankToken ? t('Gas Tank') : t('Reward')
     }
   )
-  const notImplementedYetTooltipText = t('Coming sometime in {{year}}.', {
-    year: new Date().getFullYear()
-  })
+  // TODO: Temporarily moved to the "Deposit" place as of v4.49.0, due to aesthetic reasons solely.
+  // const notImplementedYetTooltipText = t('Coming sometime in {{year}}.', {
+  //   year: new Date().getFullYear()
+  // })
 
   useEffect(() => {
     storage
@@ -284,8 +283,15 @@ const TokenDetails = ({
     address
   } = token
 
-  const { priceUSDFormatted, balanceUSDFormatted, isRewards, isVesting, networkData, balance } =
-    getAndFormatTokenDetails(token, networks)
+  const {
+    priceUSDFormatted,
+    balanceUSDFormatted,
+    isRewards,
+    isVesting,
+    isProjectedRewards,
+    networkData,
+    balance
+  } = getAndFormatTokenDetails(token, networks)
 
   const hideToken = useCallback(() => {
     if (!token) return
@@ -354,24 +360,28 @@ const TokenDetails = ({
                 <CopyTokenAddress address={address} isRewards={isRewards} isVesting={isVesting} />
               </Text>
             </View>
-            {!onGasTank && !isRewards && !isVesting && !token.flags.defiTokenType && (
-              <View style={[flexbox.alignSelfEnd]}>
-                <AnimatedPressable
-                  {...bindAnimHide}
-                  onPress={handleHideTokenFromButton}
-                  style={animStyleHide}
-                >
-                  <Text
-                    testID="hide-token-button"
-                    style={styles.hideTokenButton}
-                    weight="medium"
-                    fontSize={12}
+            {!onGasTank &&
+              !isRewards &&
+              !isVesting &&
+              !isProjectedRewards &&
+              !token.flags.defiTokenType && (
+                <View style={[flexbox.alignSelfEnd]}>
+                  <AnimatedPressable
+                    {...bindAnimHide}
+                    onPress={handleHideTokenFromButton}
+                    style={animStyleHide}
                   >
-                    {t('Hide token')}
-                  </Text>
-                </AnimatedPressable>
-              </View>
-            )}
+                    <Text
+                      testID="hide-token-button"
+                      style={styles.hideTokenButton}
+                      weight="medium"
+                      fontSize={12}
+                    >
+                      {t('Hide token')}
+                    </Text>
+                  </AnimatedPressable>
+                </View>
+              )}
           </View>
           <View style={styles.balance}>
             <Text
