@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
@@ -8,10 +8,8 @@ import { DappUserRequest } from '@ambire-common/interfaces/userRequest'
 import ArrowRightIcon from '@common/assets/svg/ArrowRightIcon'
 import ManifestFallbackIcon from '@common/assets/svg/ManifestFallbackIcon'
 import Banner from '@common/components/Banner'
-import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
-import useWindowSize from '@common/hooks/useWindowSize'
 import { SPACING, SPACING_LG, SPACING_MD, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
@@ -19,7 +17,6 @@ import HeaderAccountAndNetworkInfo from '@web/components/HeaderAccountAndNetwork
 import ManifestImage from '@web/components/ManifestImage'
 import NetworkAvailableFeatures from '@web/components/NetworkAvailableFeatures'
 import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
-import { getTabLayoutPadding } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import useDappInfo from '@web/hooks/useDappInfo'
 import useResponsiveActionWindow from '@web/hooks/useResponsiveActionWindow'
 
@@ -59,10 +56,7 @@ const UpdateChain = ({
   const { styles, theme, themeType } = useTheme(getStyles)
   const { t } = useTranslation()
   const { name, icon } = useDappInfo(userRequest)
-  const { maxWidthSize } = useWindowSize()
   const { responsiveSizeMultiplier } = useResponsiveActionWindow({ maxBreakpoints: 2 })
-
-  const paddingHorizontalStyle = useMemo(() => getTabLayoutPadding(maxWidthSize), [maxWidthSize])
 
   return (
     <TabLayoutContainer
@@ -94,7 +88,6 @@ const UpdateChain = ({
         />
       }
       backgroundColor={theme.quinaryBackground}
-      withHorizontalPadding={false}
     >
       <TabLayoutWrapperMainContent
         style={{
@@ -103,7 +96,7 @@ const UpdateChain = ({
         withScroll={false}
       >
         <>
-          <View style={paddingHorizontalStyle}>
+          <View>
             <Text
               weight="medium"
               fontSize={20 * responsiveSizeMultiplier}
@@ -157,19 +150,14 @@ const UpdateChain = ({
             </Text>
           </View>
 
-          <ScrollableWrapper
-            style={{
-              marginBottom: SPACING_SM * responsiveSizeMultiplier,
-              paddingBottom: SPACING_TY * responsiveSizeMultiplier
-            }}
-            contentContainerStyle={[
+          <View
+            style={[
               flexbox.directionRow,
               flexbox.flex1,
               flexbox.justifySpaceBetween,
-              // It's added here so the shadow of the cards is not cut off
-              paddingHorizontalStyle,
               {
-                paddingBottom: SPACING_LG * responsiveSizeMultiplier
+                marginBottom: SPACING_SM * responsiveSizeMultiplier,
+                paddingBottom: SPACING_TY * responsiveSizeMultiplier
               }
             ]}
           >
@@ -182,13 +170,15 @@ const UpdateChain = ({
                 withRetryButton={!!rpcUrls.length && rpcUrlIndex < rpcUrls.length - 1}
                 handleRetry={handleRetryWithDifferentRpcUrl}
                 responsiveSizeMultiplier={responsiveSizeMultiplier}
+                withScroll
               />
             </RpcCard>
             <ArrowRightIcon
               style={{
                 // Align-self center, instead of aligning the parent, to avoid weird behaviour when the
                 // container is scrollable
-                alignSelf: 'center'
+                alignSelf: 'center',
+                marginHorizontal: SPACING_MD * responsiveSizeMultiplier
               }}
             />
             <RpcCard title="New RPC URL" url={networkDetails.selectedRpcUrl} isNew>
@@ -200,16 +190,14 @@ const UpdateChain = ({
                 withRetryButton={!!rpcUrls.length && rpcUrlIndex < rpcUrls.length - 1}
                 handleRetry={handleRetryWithDifferentRpcUrl}
                 responsiveSizeMultiplier={responsiveSizeMultiplier}
+                withScroll
               />
             </RpcCard>
-          </ScrollableWrapper>
+          </View>
           <View
-            style={[
-              paddingHorizontalStyle,
-              {
-                marginBottom: SPACING * responsiveSizeMultiplier
-              }
-            ]}
+            style={{
+              marginBottom: SPACING * responsiveSizeMultiplier
+            }}
           >
             <Banner
               title={t(
