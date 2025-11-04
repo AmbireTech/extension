@@ -1,8 +1,13 @@
 import crypto from 'crypto'
-import { Client as GridPlusSDKClient, Constants as GridPlusSDKConstants } from 'gridplus-sdk'
+import { Client as GridPlusSDKClient, Constants as GridPlusSDKConstants, Utils } from 'gridplus-sdk'
+// TODO: Remove when migrating away from the Client API to the GridPlus functional API
+import { Hash } from 'ox'
 
 import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
+import { Hex } from '@ambire-common/interfaces/hex'
 import { ExternalKey, ExternalSignerController } from '@ambire-common/interfaces/keystore'
+// TODO: Remove when migrating away from the Client API to the GridPlus functional API
+import { RLP } from '@ethereumjs/rlp'
 import { browser } from '@web/constants/browserapi'
 
 export { GridPlusSDKConstants }
@@ -15,6 +20,8 @@ const SDK_TIMEOUT = 120000
 const CONNECT_TIMEOUT = 20000
 
 class LatticeController implements ExternalSignerController {
+  type = 'lattice'
+
   walletSDK?: GridPlusSDKClient | null
 
   creds: any
@@ -85,6 +92,88 @@ class LatticeController implements ExternalSignerController {
 
     await this._connect()
     return 'JUST_UNLOCKED'
+  }
+
+  async signAuthorization({
+    contract,
+    chainId,
+    nonce,
+    signerPath
+  }: {
+    contract: Hex
+    chainId: bigint
+    nonce: bigint
+    signerPath: number[]
+  }): Promise<any> {
+    if (!this.walletSDK)
+      throw new ExternalSignerError('Lattice not connected', {
+        sendCrashReport: true
+      })
+
+    const authAddress = contract
+    const authChainId = chainId
+    const authNonce = nonce
+
+    // Preparing the EIP-7702 authorization payload is copied from the gridplus-sdk signAuthorization method:
+    // {@link https://github.com/GridPlus/gridplus-sdk/blob/8e0b1f53d975fbd3e1daa9cf65b50db54926ad50/src/api/signing.ts#L119-L142)
+    // TODO: Use directly their `signAuthorization` when migrating away from the Client API to the GridPlus functional API
+    const MAGIC = Buffer.from([0x05]) // EIP-7702 magic byte
+    const message = Buffer.concat([
+      MAGIC,
+      Buffer.from(RLP.encode([authChainId, authAddress, authNonce]))
+    ])
+    const payload = {
+      signerPath,
+      curveType: GridPlusSDKConstants.SIGNING.CURVES.SECP256K1,
+      hashType: GridPlusSDKConstants.SIGNING.HASHES.KECCAK256,
+      encodingType: GridPlusSDKConstants.SIGNING.ENCODINGS.EIP7702_AUTH,
+      payload: message
+    }
+
+    try {
+      const response = await this.walletSDK.sign({ data: payload })
+
+      // Creating the signature components for the authorization is copied from the gridplus-sdk signAuthorization method:
+      // https://github.com/GridPlus/gridplus-sdk/blob/8e0b1f53d975fbd3e1daa9cf65b50db54926ad50/src/api/signing.ts#L149-L171
+      // TODO: Use directly their `signAuthorization` when migrating away from the Client API to the GridPlus functional API
+      if (response.sig && (response as any).pubkey) {
+        // Calculate the correct y-parity value using GridPlus SDK's utility
+        const messageHash = Buffer.from(Hash.keccak256(message))
+        const yParity = Utils.getYParity(messageHash, response.sig, (response as any).pubkey)
+
+        // Handle both Buffer and string formats for r and s (copied from functional API)
+        const rValue = Buffer.isBuffer(response.sig.r)
+          ? `0x${response.sig.r.toString('hex')}`
+          : response.sig.r
+        const sValue = Buffer.isBuffer(response.sig.s)
+          ? `0x${response.sig.s.toString('hex')}`
+          : response.sig.s
+
+        // Create a complete Authorization object with all required signature components
+        const result = {
+          address: authAddress,
+          chainId: authChainId,
+          nonce: authNonce,
+          yParity: `0x${yParity.toString(16)}`, // Convert to hex string
+          r: rValue,
+          s: sValue,
+          messageHash
+        }
+
+        return result
+      }
+
+      throw new Error(
+        'Problem occurred when trying to create the signature components for the EIP-7702 authorization.'
+      )
+    } catch (error: any) {
+      throw new ExternalSignerError(
+        error?.message || 'Signing the EIP-7702 authorization failed.',
+        {
+          sendCrashReport: true
+        }
+      )
+    }
   }
 
   _resetDefaults() {
