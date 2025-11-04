@@ -838,19 +838,19 @@ browser.runtime.onInstalled.addListener(({ reason }: any) => {
 })
 
 // Ensures controllers are initialized if the service worker is inactive and gets reactivated when the extension popup opens.
-browser.runtime.onMessage.addListener(
-  async (message: any, _: chrome.runtime.MessageSender, sendResponse: (response?: any) => void) => {
-    // init the ctrls if not already initialized
-    init().catch((err) => {
-      captureBackgroundException(err)
-      console.error(err)
-    })
+browser.runtime.onMessage.addListener(async (message: any) => {
+  // init the ctrls if not already initialized
+  init().catch((err) => {
+    captureBackgroundException(err)
+    console.error(err)
+  })
 
-    // The extension UI periodically sends "ping" messages. Responding here wakes up
-    // the service worker and keeps it alive as long as a view (popup, window, or tab) remains open.
-    if (message === 'ping') sendResponse('pong')
-  }
-)
+  // The extension UI periodically sends "ping" messages. Responding here wakes up
+  // the service worker and keeps it alive as long as a view (popup, window, or tab) remains open.
+  if (message === 'ambire-extension-ping') return 'ambire-extension-pong'
+
+  return null
+})
 
 try {
   browser.tabs.onRemoved.addListener(async (tabId: number) => {
