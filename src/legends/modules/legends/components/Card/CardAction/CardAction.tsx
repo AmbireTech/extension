@@ -1,7 +1,6 @@
 import React, { FC, useCallback } from 'react'
 
 import useAccountContext from '@legends/hooks/useAccountContext'
-import useCharacterContext from '@legends/hooks/useCharacterContext/useCharacterContext'
 import useProviderContext from '@legends/hooks/useProviderContext'
 import CardActionButton from '@legends/modules/legends/components/Card/CardAction/actions/CardActionButton'
 import { CARD_PREDEFINED_ID } from '@legends/modules/legends/constants'
@@ -11,6 +10,7 @@ import { getRewardsButtonText } from '@legends/utils/getRewardsButtonText'
 import { InviteAcc, SendAccOp } from './actions'
 import BitrefillClaim from './actions/BitrefillClaim'
 import Feedback from './actions/Feedback'
+import MascotRevealLetter from './actions/MascotRevealLetter'
 
 export type CardActionComponentProps = {
   action: CardAction
@@ -21,15 +21,13 @@ export type CardActionComponentProps = {
 
 const CardActionComponent: FC<CardActionComponentProps> = ({ meta, action, buttonText }) => {
   const { connectedAccount, v1Account } = useAccountContext()
+  const disabledButton = Boolean(!connectedAccount || v1Account)
   const { provider } = useProviderContext()
-  const { isCharacterNotMinted } = useCharacterContext()
-  const disabledButton = Boolean(!connectedAccount || v1Account || isCharacterNotMinted)
 
   const getButtonText = () =>
     getRewardsButtonText({
       connectedAccount,
-      v1Account: !!v1Account,
-      isCharacterNotMinted: !!isCharacterNotMinted
+      v1Account: !!v1Account
     })
 
   const handleWalletRouteButtonPress = useCallback(async () => {
@@ -64,6 +62,9 @@ const CardActionComponent: FC<CardActionComponentProps> = ({ meta, action, butto
 
     if (action.predefinedId === CARD_PREDEFINED_ID.bitrefill) {
       return <BitrefillClaim meta={meta} />
+    }
+    if (action.predefinedId === CARD_PREDEFINED_ID.mascot) {
+      return <MascotRevealLetter meta={meta} />
     }
 
     return null

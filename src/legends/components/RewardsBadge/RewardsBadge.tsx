@@ -24,8 +24,12 @@ const RewardsBadge: React.FC = () => {
   )
   const { season1LeaderboardData, isLeaderboardLoading } = useLeaderboardContext()
 
-  const { accountPortfolio, claimableRewardsError, isLoadingClaimableRewards } =
-    usePortfolioControllerState()
+  const {
+    accountPortfolio,
+    claimableRewardsError,
+    isLoadingClaimableRewards,
+    rewardsProjectionData
+  } = usePortfolioControllerState()
   const openClaimModal = () => setIsOpen(true)
   const closeClaimModal = () => setIsOpen(false)
 
@@ -41,7 +45,8 @@ const RewardsBadge: React.FC = () => {
   const isNotAvailableForRewards =
     ((accountPortfolio || accountPortfolio?.isReady) &&
       amountFormatted &&
-      Number((amountFormatted ?? '0').replace(/[^0-9.-]+/g, '')) < 500) ||
+      Number((amountFormatted ?? '0').replace(/[^0-9.-]+/g, '')) <
+        (rewardsProjectionData?.minBalance || 0)) ||
     (season1LeaderboardData?.currentUser?.level ?? 0) <= 2
 
   const rewardsDisabledState =
@@ -150,14 +155,17 @@ const RewardsBadge: React.FC = () => {
               // Extract level and balance eligibility
               const userLevel = season1LeaderboardData?.currentUser?.level ?? 0
               const hasMinBalance =
-                amountFormatted && Number((amountFormatted ?? '0').replace(/[^0-9.-]+/g, '')) >= 500
+                amountFormatted &&
+                Number((amountFormatted ?? '0').replace(/[^0-9.-]+/g, '')) >=
+                  (rewardsProjectionData?.minBalance || 0)
               const hasMinLevel = userLevel > 2
 
               // Lvl reached, Usd < 500
               if (hasMinLevel && !hasMinBalance) {
                 return (
                   <p className={styles.rewardsTitle}>
-                    Keep your account balance over $500 to accumulate rewards.
+                    Keep your account balance over ${rewardsProjectionData?.minBalance} to
+                    accumulate rewards.
                   </p>
                 )
               }
@@ -166,7 +174,7 @@ const RewardsBadge: React.FC = () => {
               if (!hasMinLevel && hasMinBalance) {
                 return (
                   <p className={styles.rewardsTitle}>
-                    Reach level 3 to start accumulating rewards.
+                    Reach level {rewardsProjectionData?.minLvl} to start accumulating rewards.
                   </p>
                 )
               }
@@ -175,7 +183,8 @@ const RewardsBadge: React.FC = () => {
               if (!hasMinLevel && !hasMinBalance) {
                 return (
                   <p className={styles.rewardsTitle}>
-                    Keep your account balance over $500 and reach level 3 to start accumulating rewards.
+                    Keep your account balance over ${rewardsProjectionData?.minBalance} and reach
+                    level {rewardsProjectionData?.minLvl} to start accumulating rewards.
                   </p>
                 )
               }

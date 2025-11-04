@@ -24,7 +24,13 @@ import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import { ROUTES } from '@common/modules/router/constants/common'
-import spacings from '@common/styles/spacings'
+import spacings, {
+  SPACING,
+  SPACING_LG,
+  SPACING_MD,
+  SPACING_SM,
+  SPACING_TY
+} from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import useBackgroundService from '@web/hooks/useBackgroundService'
@@ -40,6 +46,7 @@ type Props = {
   handleRetry?: () => void
   hideBackgroundAndBorders?: boolean
   titleSize?: number
+  responsiveSizeMultiplier?: number
 }
 
 const NetworkAvailableFeatures = ({
@@ -48,7 +55,8 @@ const NetworkAvailableFeatures = ({
   withRetryButton,
   handleRetry,
   hideBackgroundAndBorders = false,
-  titleSize = 18
+  titleSize,
+  responsiveSizeMultiplier = 1
 }: Props) => {
   const { t } = useTranslation()
   const { theme, styles } = useTheme(getStyles)
@@ -146,9 +154,15 @@ const NetworkAvailableFeatures = ({
     [features, withRetryButton]
   )
 
+  const iconSize = 14 * responsiveSizeMultiplier
+
   return (
     <View style={!hideBackgroundAndBorders ? styles.container : undefined}>
-      <Text fontSize={titleSize} weight="medium" style={spacings.mbMd}>
+      <Text
+        fontSize={titleSize || 18 * responsiveSizeMultiplier}
+        weight="medium"
+        style={spacings.mbMd}
+      >
         {t('Available features')}
       </Text>
       <View>
@@ -157,25 +171,43 @@ const NetworkAvailableFeatures = ({
             return (
               <View
                 key={feature.id}
-                style={[flexbox.directionRow, i !== features.length - 1 && spacings.mb]}
+                style={[
+                  flexbox.directionRow,
+                  i !== features.length - 1 && {
+                    marginBottom: SPACING * responsiveSizeMultiplier
+                  }
+                ]}
               >
                 <View style={[spacings.mrTy, feature.level !== 'initial' && { marginTop: 3 }]}>
                   {feature.level === 'initial' && (
-                    <Text fontSize={14} weight="semiBold" appearance="secondaryText">
+                    <Text
+                      fontSize={14 * responsiveSizeMultiplier}
+                      weight="semiBold"
+                      appearance="secondaryText"
+                    >
                       ?
                     </Text>
                   )}
-                  {feature.level === 'loading' && <Spinner style={{ width: 14, height: 14 }} />}
-                  {feature.level === 'success' && <CheckIcon width={14} height={14} />}
-                  {feature.level === 'warning' && <WarningFilledIcon width={14} height={14} />}
-                  {feature.level === 'danger' && <ErrorFilledIcon width={14} height={14} />}
+                  {feature.level === 'loading' && (
+                    <Spinner style={{ width: iconSize, height: iconSize }} />
+                  )}
+                  {feature.level === 'success' && <CheckIcon width={iconSize} height={iconSize} />}
+                  {feature.level === 'warning' && (
+                    <WarningFilledIcon width={iconSize} height={iconSize} />
+                  )}
+                  {feature.level === 'danger' && (
+                    <ErrorFilledIcon width={iconSize} height={iconSize} />
+                  )}
                 </View>
                 <View style={[flexbox.directionRow, flexbox.flex1, flexbox.alignCenter]}>
                   <Text
-                    fontSize={14}
+                    fontSize={14 * responsiveSizeMultiplier}
                     weight="medium"
                     appearance="secondaryText"
-                    style={{ ...spacings.mrTy, overflow: 'visible' }}
+                    style={{
+                      marginRight: SPACING_TY * responsiveSizeMultiplier,
+                      overflow: 'visible'
+                    }}
                     numberOfLines={3}
                   >
                     {feature.title}
@@ -188,7 +220,7 @@ const NetworkAvailableFeatures = ({
                           <Text
                             weight="medium"
                             underline
-                            fontSize={14}
+                            fontSize={14 * responsiveSizeMultiplier}
                             color={theme.primary}
                             onPress={handleDeploy}
                           >
@@ -200,8 +232,8 @@ const NetworkAvailableFeatures = ({
                       <View style={{ width: 1 }}>
                         <View style={{ position: 'absolute', top: -11.5, left: 6 }}>
                           <InformationIcon
-                            width={14}
-                            height={14}
+                            width={iconSize}
+                            height={iconSize}
                             dataSet={{
                               tooltipId: 'feature-message-tooltip',
                               tooltipContent: feature.msg
@@ -216,8 +248,24 @@ const NetworkAvailableFeatures = ({
             )
           })}
         {!!shouldRenderRetryButton && (
-          <View style={[spacings.pvMd, spacings.phLg, flexbox.alignCenter]}>
-            <Text style={[text.center, spacings.mbSm]} fontSize={14}>
+          <View
+            style={[
+              flexbox.alignCenter,
+              {
+                paddingVertical: SPACING_MD * responsiveSizeMultiplier,
+                paddingHorizontal: SPACING_LG * responsiveSizeMultiplier
+              }
+            ]}
+          >
+            <Text
+              style={[
+                text.center,
+                {
+                  marginBottom: SPACING_SM * responsiveSizeMultiplier
+                }
+              ]}
+              fontSize={14}
+            >
               {t(
                 "You can retry retrieving the network's available features\nusing a different RPC URL."
               )}

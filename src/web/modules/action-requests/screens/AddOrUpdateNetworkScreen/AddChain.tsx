@@ -11,7 +11,7 @@ import NetworkIcon from '@common/components/NetworkIcon'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
-import spacings from '@common/styles/spacings'
+import { SPACING, SPACING_LG, SPACING_MD } from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import HeaderAccountAndNetworkInfo from '@web/components/HeaderAccountAndNetworkInfo'
@@ -20,6 +20,7 @@ import NetworkAvailableFeatures from '@web/components/NetworkAvailableFeatures'
 import NetworkDetails from '@web/components/NetworkDetails'
 import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
 import useDappInfo from '@web/hooks/useDappInfo'
+import useResponsiveActionWindow from '@web/hooks/useResponsiveActionWindow'
 
 import ActionFooter from '../../components/ActionFooter'
 import getStyles from './styles'
@@ -58,6 +59,7 @@ const AddChain = ({
   const { styles, theme, themeType } = useTheme(getStyles)
   const { t } = useTranslation()
   const { name, icon } = useDappInfo(userRequest)
+  const { responsiveSizeMultiplier } = useResponsiveActionWindow({ maxBreakpoints: 2 })
 
   return (
     <TabLayoutContainer
@@ -89,45 +91,77 @@ const AddChain = ({
       }
       backgroundColor={theme.quinaryBackground}
     >
-      <TabLayoutWrapperMainContent style={spacings.mbLg} withScroll={false}>
+      <TabLayoutWrapperMainContent
+        style={{
+          marginBottom: SPACING_LG * responsiveSizeMultiplier
+        }}
+        withScroll={false}
+      >
         <>
-          <Text weight="medium" fontSize={20} style={spacings.mbMd}>
+          <Text
+            weight="medium"
+            fontSize={20 * responsiveSizeMultiplier}
+            style={{
+              marginBottom: SPACING_MD * responsiveSizeMultiplier
+            }}
+          >
             {t('Add new network')}
           </Text>
 
-          <View style={styles.dappInfoContainer}>
+          <View
+            style={[
+              styles.dappInfoContainer,
+              {
+                marginBottom: SPACING_MD * responsiveSizeMultiplier,
+                paddingHorizontal: SPACING_MD * responsiveSizeMultiplier
+              }
+            ]}
+          >
             {!existingNetwork && (
               <ManifestImage
                 uri={icon}
-                size={50}
+                size={50 * responsiveSizeMultiplier}
                 fallback={() => <ManifestFallbackIcon />}
-                containerStyle={spacings.mrMd}
+                containerStyle={{
+                  marginRight: SPACING_MD * responsiveSizeMultiplier
+                }}
               />
             )}
 
             {!existingNetwork ? (
               <Trans values={{ name: name || 'The App' }}>
                 <Text>
-                  <Text fontSize={20} appearance="secondaryText">
+                  <Text fontSize={20 * responsiveSizeMultiplier} appearance="secondaryText">
                     {t('Allow ')}
                   </Text>
-                  <Text fontSize={20} weight="semiBold">
+                  <Text fontSize={20 * responsiveSizeMultiplier} weight="semiBold">
                     {'{{name}} '}
                   </Text>
-                  <Text fontSize={20} appearance="secondaryText">
+                  <Text fontSize={20 * responsiveSizeMultiplier} appearance="secondaryText">
                     {t('to add a network')}
                   </Text>
                 </Text>
               </Trans>
             ) : (
               <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
-                <NetworkIcon id={String(existingNetwork.chainId)} size={50} style={spacings.mrMd} />
+                <NetworkIcon
+                  id={String(existingNetwork.chainId)}
+                  size={50 * responsiveSizeMultiplier}
+                  style={{
+                    marginRight: SPACING_MD * responsiveSizeMultiplier
+                  }}
+                />
 
                 <View style={flexbox.flex1}>
-                  <Text fontSize={20} weight="semiBold">
+                  <Text fontSize={20 * responsiveSizeMultiplier} weight="semiBold">
                     {existingNetwork.name}
                   </Text>
-                  <Text appearance="secondaryText" weight="medium" numberOfLines={2}>
+                  <Text
+                    fontSize={16 * responsiveSizeMultiplier}
+                    appearance="secondaryText"
+                    weight="medium"
+                    numberOfLines={2}
+                  >
                     {t("found in Ambire Wallet but it's disabled. Do you wish to enable it?")}
                   </Text>
                 </View>
@@ -135,33 +169,56 @@ const AddChain = ({
             )}
           </View>
           {!existingNetwork && (
-            <Text fontSize={14} weight="medium" appearance="secondaryText" style={spacings.mb}>
+            <Text
+              fontSize={14 * responsiveSizeMultiplier}
+              weight="medium"
+              appearance="secondaryText"
+              style={{
+                marginBottom: SPACING * responsiveSizeMultiplier
+              }}
+            >
               {t('Ambire Wallet does not verify custom networks.')}
             </Text>
           )}
           {!!areParamsValid && !!networkDetails && (
-            <View style={[flexbox.directionRow, flexbox.flex1]}>
-              <View style={styles.boxWrapper}>
-                <ScrollableWrapper style={flexbox.flex1} contentContainerStyle={{ flexGrow: 1 }}>
-                  <NetworkDetails
-                    name={networkDetails.name || userRequest?.action?.params?.[0]?.chainName}
-                    iconUrls={networkDetails?.iconUrls || []}
-                    chainId={networkDetails.chainId}
-                    rpcUrls={networkDetails.rpcUrls}
-                    selectedRpcUrl={rpcUrls[rpcUrlIndex]}
-                    nativeAssetSymbol={networkDetails.nativeAssetSymbol}
-                    nativeAssetName={networkDetails.nativeAssetName}
-                    explorerUrl={networkDetails.explorerUrl}
-                    style={{
-                      backgroundColor:
-                        themeType === THEME_TYPES.DARK
-                          ? theme.secondaryBackground
-                          : theme.primaryBackground
-                    }}
-                    type="vertical"
-                  />
-                </ScrollableWrapper>
-              </View>
+            <View
+              style={[
+                flexbox.directionRow,
+                flexbox.flex1,
+                {
+                  marginBottom: SPACING_LG * responsiveSizeMultiplier
+                }
+              ]}
+            >
+              <ScrollableWrapper
+                style={[
+                  styles.boxWrapper,
+                  {
+                    width: '50%',
+                    height: 'fit-content',
+                    maxHeight: '100%'
+                  }
+                ]}
+              >
+                <NetworkDetails
+                  name={networkDetails.name || userRequest?.action?.params?.[0]?.chainName}
+                  iconUrls={networkDetails?.iconUrls || []}
+                  chainId={networkDetails.chainId}
+                  rpcUrls={networkDetails.rpcUrls}
+                  selectedRpcUrl={rpcUrls[rpcUrlIndex]}
+                  nativeAssetSymbol={networkDetails.nativeAssetSymbol}
+                  nativeAssetName={networkDetails.nativeAssetName}
+                  explorerUrl={networkDetails.explorerUrl}
+                  style={{
+                    backgroundColor:
+                      themeType === THEME_TYPES.DARK
+                        ? theme.secondaryBackground
+                        : theme.primaryBackground
+                  }}
+                  responsiveSizeMultiplier={responsiveSizeMultiplier}
+                  type="vertical"
+                />
+              </ScrollableWrapper>
               <View style={styles.separator} />
               <ScrollableWrapper style={flexbox.flex1} contentContainerStyle={{ flexGrow: 1 }}>
                 {!!networkDetails && (
@@ -170,6 +227,7 @@ const AddChain = ({
                     chainId={networkDetails.chainId}
                     withRetryButton={!!rpcUrls.length && rpcUrlIndex < rpcUrls.length - 1}
                     handleRetry={handleRetryWithDifferentRpcUrl}
+                    responsiveSizeMultiplier={responsiveSizeMultiplier}
                   />
                 )}
               </ScrollableWrapper>

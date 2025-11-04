@@ -2,14 +2,13 @@
 
 import { Interface } from 'ethers'
 import React, { useCallback, useMemo, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import { Pressable } from 'react-native'
 
-import CopyIcon from '@common/assets/svg/CopyIcon'
 import { LEGENDS_CONTRACT_ADDRESS } from '@legends/constants/addresses'
 import { ERROR_MESSAGES } from '@legends/constants/errors/messages'
 import { BASE_CHAIN_ID } from '@legends/constants/networks'
 import useAccountContext from '@legends/hooks/useAccountContext'
+import useCharacterContext from '@legends/hooks/useCharacterContext'
 import useErc5792 from '@legends/hooks/useErc5792'
 import useProviderContext from '@legends/hooks/useProviderContext'
 import useSwitchNetwork from '@legends/hooks/useSwitchNetwork'
@@ -21,12 +20,12 @@ import { humanizeError } from '@legends/modules/legends/utils/errors/humanizeErr
 import styles from './Action.module.scss'
 import CardActionWrapper from './CardActionWrapper'
 
-const iface = new Interface(['function claimBitrefillCode()'])
+const iface = new Interface(['function revealMascotLetter()'])
 
 interface Props {
   meta: CardFromResponse['meta']
 }
-const BitrefillClaim = ({ meta }: Props) => {
+const MascotRevealLetter = ({ meta }: Props) => {
   const [isInProgress, setIsInProgress] = useState(false)
   const { sendCalls, getCallsStatus, chainId } = useErc5792()
   const { onComplete } = useCardActionContext()
@@ -34,9 +33,9 @@ const BitrefillClaim = ({ meta }: Props) => {
   const switchNetwork = useSwitchNetwork()
   const { browserProvider } = useProviderContext()
   const { connectedAccount, v1Account } = useAccountContext()
-  const { t } = useTranslation()
+  const { isCharacterNotMinted } = useCharacterContext()
 
-  const claimCode = useCallback(async () => {
+  const revealLetter = useCallback(async () => {
     try {
       if (!browserProvider) throw new Error('No connected wallet')
       if (!connectedAccount) throw new Error('No connected account')
@@ -53,7 +52,7 @@ const BitrefillClaim = ({ meta }: Props) => {
         [
           {
             to: LEGENDS_CONTRACT_ADDRESS,
-            data: iface.encodeFunctionData('claimBitrefillCode', []),
+            data: iface.encodeFunctionData('revealMascotLetter', []),
             value: '0'
           }
         ],
@@ -70,66 +69,71 @@ const BitrefillClaim = ({ meta }: Props) => {
     } finally {
       setIsInProgress(false)
     }
-  }, [connectedAccount, sendCalls, chainId, getCallsStatus, onComplete, addToast, switchNetwork])
+  }, [
+    browserProvider,
+    connectedAccount,
+    switchNetwork,
+    sendCalls,
+    chainId,
+    getCallsStatus,
+    onComplete,
+    addToast
+  ])
 
   const btnText = useMemo(() => {
+    if (isCharacterNotMinted) return 'Join Rewards to start accumulating XP'
     if (!connectedAccount || v1Account)
       return 'Switch to a new account to unlock Rewards quests. Ambire legacy Web accounts (V1) are not supported.'
-    return 'Claim code'
-  }, [connectedAccount, v1Account])
+    return 'Reveal letter'
+  }, [connectedAccount, v1Account, isCharacterNotMinted])
 
   const isButtonDisabled = useMemo(() => {
-    if (!connectedAccount || v1Account) return true
+    if (!connectedAccount || v1Account || isCharacterNotMinted) return true
     return false
-  }, [connectedAccount, v1Account])
+  }, [connectedAccount, v1Account, isCharacterNotMinted])
 
-  const copyText = useCallback(async () => {
-    await navigator.clipboard.writeText(meta?.code || '')
-    addToast(t('Code copied to clipboard'))
-  }, [meta?.code, addToast, t])
-
-  if (meta?.code)
-    return (
-      <div className={styles.totalTextContainer}>
-        <div className={styles.codeContainer}>
-          <p>Code:</p>
-          <Pressable onPress={copyText}>
-            <div className={styles.bitrefillCode}>
-              <p style={{ fontWeight: 'bold' }}>{meta.code}</p>
-              <CopyIcon
-                color="#7C51FF"
-                width="1.5rem"
-                height="1.5rem"
-                style={{ marginLeft: '1.25rem' }}
-              />
+  const infoComponent = useMemo(() => {
+    if (meta?.revealedMascotLetter)
+      return (
+        <div className={styles.totalTextContainer}>
+          <div className={styles.mascotLetterContainer}>
+            <p>Letter:</p>
+            <div className={styles.mascotLetter}>
+              <p style={{ fontWeight: 'bold' }}>O</p>
             </div>
-          </Pressable>
+          </div>
         </div>
-      </div>
-    )
-  if (meta?.allCollected) {
-    return (
-      <div className={styles.infoText}>
-        <p>All codes have already been collected!</p>
-      </div>
-    )
-  }
-  if (isInProgress)
-    return (
-      <div className={styles.infoText}>
-        <p>Loading...</p>
-      </div>
-    )
+      )
 
+    if (isInProgress)
+      return (
+        <div className={styles.infoText}>
+          <p>Loading...</p>
+        </div>
+      )
+
+    return (
+      <CardActionWrapper
+        onButtonClick={revealLetter}
+        isLoading={isInProgress}
+        loadingText="Signing..."
+        disabled={isButtonDisabled}
+        buttonText={btnText}
+      />
+    )
+  }, [meta?.revealedMascotLetter, isInProgress, revealLetter, isButtonDisabled, btnText])
   return (
-    <CardActionWrapper
-      onButtonClick={claimCode}
-      isLoading={isInProgress}
-      loadingText="Signing..."
-      disabled={isButtonDisabled}
-      buttonText={btnText}
-    />
+    <>
+      <div style={{ textAlign: 'right' }}>
+        <p className={styles.link}>
+          <Pressable onPress={() => window.open('https://x.com/ambire/status/1982787127105486860')}>
+            Discover more about the campaign.
+          </Pressable>
+        </p>
+      </div>
+      {infoComponent}
+    </>
   )
 }
 
-export default BitrefillClaim
+export default MascotRevealLetter
