@@ -7,8 +7,6 @@ import { useTranslation } from '@common/config/localization'
 
 import BaseTokenItem from './BaseTokenItem'
 
-const GRADIENT_STYLE = 'linear-gradient(90deg, #B082FF 0%, #5F02FF 100%)'
-
 const RewardsTokenItem = ({
   token,
   onPress,

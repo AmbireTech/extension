@@ -57,9 +57,9 @@ const BaseTokenItem = ({
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
 
   const isDark = themeType === THEME_TYPES.DARK
-  const hasGradient = Boolean(rewardsStyle)
+  const hasRewardsStyle = Boolean(rewardsStyle)
   const getColors = () => {
-    if (!hasGradient) {
+    if (!hasRewardsStyle) {
       return {
         from: theme.primaryBackground,
         to: isDark ? theme.tertiaryBackground : theme.secondaryBackground
