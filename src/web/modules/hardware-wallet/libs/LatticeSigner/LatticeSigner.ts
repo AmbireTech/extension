@@ -8,6 +8,7 @@ import { getHDPathIndices } from '@ambire-common/utils/hdPath'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import { stripHexPrefix } from '@ambire-common/utils/stripHexPrefix'
 import wait from '@ambire-common/utils/wait'
+import { isAmbireNext } from '@common/config/env'
 import LatticeController, {
   GridPlusSDKConstants
 } from '@web/modules/hardware-wallet/controllers/LatticeController'
@@ -168,7 +169,9 @@ class LatticeSigner implements KeystoreSignerInterface {
       const signature = Signature.from({
         r: hexlify(res.sig.r),
         s: hexlify(res.sig.s),
-        v: Signature.getNormalizedV(Number(res.sig.v))
+        // TODO: temporarily, in the gridplus-sdk pre-release, v is BigInt, look for all #gridplus-sdk-temporary
+        // @ts-ignore
+        v: Signature.getNormalizedV(isAmbireNext ? Number(res.sig.v) : hexlify(res.sig.v))
       })
       const signedTxn = Transaction.from({
         ...unsignedTxn,
@@ -237,7 +240,10 @@ class LatticeSigner implements KeystoreSignerInterface {
 
     const strippedR = stripHexPrefix(res.sig.r)
     const strippedS = stripHexPrefix(res.sig.s)
-    const strippedV = stripHexPrefix(toBeHex(Signature.getNormalizedV(res.sig.v)))
+    // TODO: temporarily, in the gridplus-sdk pre-release, v is BigInt, look for all #gridplus-sdk-temporary
+    const strippedV = isAmbireNext
+      ? stripHexPrefix(toBeHex(Signature.getNormalizedV(res.sig.v)))
+      : res.sig.v.toString('hex')
     return addHexPrefix(`${strippedR}${strippedS}${strippedV}`)
   }
 
