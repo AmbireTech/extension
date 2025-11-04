@@ -55,9 +55,10 @@ export enum CardStatus {
 export type Networks = '1' | '10' | '8453' | '534352' | '42161' | '56'
 export interface CardXp {
   type: CardXpType
-  from: number
-  to: number
-  minUsdThreshold: number
+  from?: number
+  to?: number
+  minUsdThreshold?: number
+  linearMultiplier?: number
   chains: Networks[] | null
 }
 
