@@ -66,6 +66,35 @@ class LatticeSigner implements KeystoreSignerInterface {
       )
   }
 
+  #checkFirmwareFor1559Support = async () => {
+    const fwVersion = this.controller!.walletSDK!.getFwVersion()
+
+    // EIP1559 and EIP2930 support was added to Lattice in firmware v0.11.0,
+    // "general signing" was introduced in v0.14.0. In order to avoid supporting
+    // legacy firmware, throw an error and prompt user to update.
+    // Consensus: accept only firmware higher than 0.15.x
+    if (fwVersion?.major === 0 && fwVersion?.minor <= 14) {
+      throw new ExternalSignerError(
+        'This action requires Lattice1 firmware v0.15.0 or later. Please update your device to the latest firmware and try again.'
+      )
+    }
+  }
+
+  #checkFirmwareFor7702Support = async () => {
+    const fwVersion = this.controller!.walletSDK!.getFwVersion()
+
+    // EIP-7702 support was added to Lattice in firmware v0.18.9
+    const doesFirmwareSupports7702 =
+      fwVersion.major < 0 ||
+      (fwVersion.major === 0 &&
+        (fwVersion.minor < 18 || (fwVersion.minor === 18 && fwVersion.fix < 9)))
+    if (doesFirmwareSupports7702) {
+      throw new ExternalSignerError(
+        'This action requires EIP-7702 support, available in Lattice1 firmware v0.18.9 and later. Please update your device to the latest firmware and try again.'
+      )
+    }
+  }
+
   /**
    * Checks if the key (address) the Lattice1 signed with is the same as the key
    * (address) address we expect. They could differ if the Lattice1 active wallet
@@ -104,16 +133,7 @@ class LatticeSigner implements KeystoreSignerInterface {
 
   signRawTransaction: KeystoreSignerInterface['signRawTransaction'] = async (txnRequest) => {
     await this.#prepareForSigning()
-
-    // EIP1559 and EIP2930 support was added to Lattice in firmware v0.11.0,
-    // "general signing" was introduced in v0.14.0. In order to avoid supporting
-    // legacy firmware, throw an error and prompt user to update.
-    const fwVersion = this.controller!.walletSDK!.getFwVersion()
-    if (fwVersion?.major === 0 && fwVersion?.minor <= 14) {
-      throw new ExternalSignerError(
-        'Unable to sign the transaction because your Lattice1 device firmware is outdated. Please update to the latest firmware and try again.'
-      )
-    }
+    await this.#checkFirmwareFor1559Support()
 
     try {
       const signerPath = getHDPathIndices(this.key.meta.hdPathTemplate, this.key.meta.index)
@@ -223,6 +243,7 @@ class LatticeSigner implements KeystoreSignerInterface {
 
   sign7702: KeystoreSignerInterface['sign7702'] = async ({ chainId, contract, nonce }) => {
     await this.#prepareForSigning()
+    await this.#checkFirmwareFor7702Support()
 
     const signerPath = getHDPathIndices(this.key.meta.hdPathTemplate, this.key.meta.index)
     const { yParity, r, s } = await this.controller!.signAuthorization({
@@ -240,14 +261,7 @@ class LatticeSigner implements KeystoreSignerInterface {
     eip7702Auth
   }) => {
     await this.#prepareForSigning()
-
-    // TODO: Check firmware version for EIP-7702 support?
-    const fwVersion = this.controller!.walletSDK!.getFwVersion()
-    if (fwVersion?.major === 0 && fwVersion?.minor <= 14) {
-      throw new ExternalSignerError(
-        'Unable to sign the transaction because your Lattice1 device firmware is outdated. Please update to the latest firmware and try again.'
-      )
-    }
+    await this.#checkFirmwareFor7702Support()
 
     try {
       const maxPriorityFeePerGas = txnRequest.maxPriorityFeePerGas ?? txnRequest.gasPrice
