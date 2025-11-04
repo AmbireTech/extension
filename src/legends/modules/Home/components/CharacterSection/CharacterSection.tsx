@@ -1,5 +1,4 @@
 import React, { useState } from 'react'
-import { Pressable } from 'react-native'
 
 import { STK_WALLET } from '@ambire-common/consts/addresses'
 import { getTokenBalanceInUSD } from '@ambire-common/libs/portfolio/helpers'
@@ -91,7 +90,8 @@ const CharacterSection = () => {
 
   const currentLevel = season1LeaderboardData?.currentUser?.level ?? 1
   const xpForNextLevel = Math.ceil(((currentLevel + 1) * 4.5) ** 2)
-  const startXpForCurrentLevel = Math.ceil((currentLevel * 4.5) ** 2)
+
+  const startXpForCurrentLevel = currentLevel === 1 ? 0 : Math.ceil((currentLevel * 4.5) ** 2)
 
   const currentTotalBalanceOnSupportedChains = amount || undefined
 
@@ -163,13 +163,23 @@ const CharacterSection = () => {
                     </p>
                   </div>
                   {isCharacterNotMinted ? (
-                    <Pressable onPress={() => isCharacterNotMinted && setIsPickCharacterOpen(true)}>
+                    <div
+                      role="button"
+                      onClick={() => isCharacterNotMinted && setIsPickCharacterOpen(true)}
+                      className={styles.defaultCharacter}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          isCharacterNotMinted && setIsPickCharacterOpen(true)
+                        }
+                      }}
+                      tabIndex={0}
+                    >
                       <img
                         className={styles.characterImage}
                         src={character?.image}
                         alt={character?.characterName}
                       />
-                    </Pressable>
+                    </div>
                   ) : (
                     <img
                       className={styles.characterImage}
