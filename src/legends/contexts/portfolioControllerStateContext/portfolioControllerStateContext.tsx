@@ -43,6 +43,16 @@ const PortfolioControllerStateContext = createContext<{
   } | null
   walletTokenPrice: number | null
   isLoadingWalletTokenInfo: boolean
+  rewardsProjectionData?: {
+    userLevel: number
+    numberOfWeeksSinceStartOfSeason: number
+    totalWeightNonUser: number
+    walletPrice: number
+    totalRewardsPool: number
+    minLvl: number
+    minBalance: number
+    currentSeasonSnapshots: { week: number; balance: number }[]
+  }
 }>({
   updateAccountPortfolio: () => {},
   claimableRewardsError: null,

@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 
 import { STK_WALLET } from '@ambire-common/consts/addresses'
 import { getTokenBalanceInUSD } from '@ambire-common/libs/portfolio/helpers'
@@ -18,6 +18,8 @@ import useCharacterContext from '@legends/hooks/useCharacterContext'
 import useLeaderboardContext from '@legends/hooks/useLeaderboardContext'
 import useLegendsContext from '@legends/hooks/useLegendsContext'
 import usePortfolioControllerState from '@legends/hooks/usePortfolioControllerState/usePortfolioControllerState'
+import CharacterSelect from '@legends/modules/character/screens/CharacterSelect'
+import { Networks } from '@legends/modules/legends/types'
 
 import styles from './CharacterSection.module.scss'
 import startsBackground from './starsBackground.png'
@@ -27,7 +29,8 @@ import substractBackground from './substract.png'
 const THRESHOLD_AMOUNT_TO_HIDE_BALANCE_DECIMALS = 500
 
 const CharacterSection = () => {
-  const { character } = useCharacterContext()
+  const { character, isCharacterNotMinted } = useCharacterContext()
+  const [isPickCharacterOpen, setIsPickCharacterOpen] = useState(false)
 
   const {
     accountPortfolio,
@@ -65,8 +68,9 @@ const CharacterSection = () => {
   const isNotAvailableForRewards =
     ((accountPortfolio || accountPortfolio?.isReady) &&
       amountFormatted &&
-      Number((amountFormatted ?? '0').replace(/[^0-9.-]+/g, '')) < 500) ||
-    (season1LeaderboardData?.currentUser?.level ?? 0) <= 2
+      Number((amountFormatted ?? '0').replace(/[^0-9.-]+/g, '')) <
+        (rewardsProjectionData?.minBalance || 0)) ||
+    (season1LeaderboardData?.currentUser?.level ?? 0) < (rewardsProjectionData?.minLvl || 0)
 
   const shouldShowIcon = !!claimableRewardsError || isNotAvailableForRewards
 
@@ -86,11 +90,12 @@ const CharacterSection = () => {
 
   const currentLevel = season1LeaderboardData?.currentUser?.level ?? 1
   const xpForNextLevel = Math.ceil(((currentLevel + 1) * 4.5) ** 2)
-  const startXpForCurrentLevel = Math.ceil((currentLevel * 4.5) ** 2)
+
+  const startXpForCurrentLevel = currentLevel === 1 ? 0 : Math.ceil((currentLevel * 4.5) ** 2)
 
   const currentTotalBalanceOnSupportedChains = amount || undefined
 
-  const parsedSnapshotsBalance = rewardsProjectionData?.currentSeasonSnapshots.map(
+  const parsedSnapshotsBalance = (rewardsProjectionData?.currentSeasonSnapshots || []).map(
     (snapshot: { week: number; balance: number }) => snapshot.balance
   )
 
@@ -102,14 +107,12 @@ const CharacterSection = () => {
       currentTotalBalanceOnSupportedChains ?? 0,
       rewardsProjectionData?.numberOfWeeksSinceStartOfSeason,
       rewardsProjectionData?.totalWeightNonUser,
-      rewardsProjectionData?.walletPrice,
       rewardsProjectionData?.totalRewardsPool,
       rewardsProjectionData?.minLvl,
       rewardsProjectionData?.minBalance
     )
 
-  const projectedAmountFormatted =
-    projectedAmount && Math.round(projectedAmount.walletRewards * 1e18)
+  const projectedAmountFormatted = projectedAmount && Math.round(projectedAmount * 1e18)
   const balanceInUsd = getTokenBalanceInUSD({
     chainId: BigInt(1),
     amount: BigInt(projectedAmountFormatted || 1),
@@ -119,7 +122,7 @@ const CharacterSection = () => {
     symbol: 'stkWALLET',
     name: 'Staked $WALLET',
     decimals: 18,
-    priceIn: [{ baseCurrency: 'usd', price: rewardsProjectionData?.walletPrice }],
+    priceIn: [{ baseCurrency: 'usd', price: rewardsProjectionData?.walletPrice || 0 }],
     flags: {
       onGasTank: false,
       rewardsType: 'wallet-projected-rewards' as const,
@@ -130,6 +133,8 @@ const CharacterSection = () => {
 
   return (
     <>
+      <CharacterSelect isOpen={isPickCharacterOpen} onClose={() => setIsPickCharacterOpen(false)} />
+
       <div className={styles.overachieverWrapper}>
         <OverachieverBanner wrapperClassName={styles.overachieverBanner} />
       </div>
@@ -155,11 +160,32 @@ const CharacterSection = () => {
                       <p className={styles.characterLevelText}>{character.level}</p>
                     </p>
                   </div>
-                  <img
-                    className={styles.characterImage}
-                    src={character?.image}
-                    alt={character?.characterName}
-                  />
+                  {isCharacterNotMinted ? (
+                    <div
+                      role="button"
+                      onClick={() => isCharacterNotMinted && setIsPickCharacterOpen(true)}
+                      className={styles.defaultCharacter}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          isCharacterNotMinted && setIsPickCharacterOpen(true)
+                        }
+                      }}
+                      tabIndex={0}
+                    >
+                      <img
+                        className={styles.characterImage}
+                        src={character?.image}
+                        alt={character?.characterName}
+                      />
+                    </div>
+                  ) : (
+                    <img
+                      className={styles.characterImage}
+                      src={character?.image}
+                      alt={character?.characterName}
+                    />
+                  )}
+
                   <div className={styles.characterPodium} />
                 </div>
               </div>
@@ -257,15 +283,16 @@ const CharacterSection = () => {
                 const userLevel = season1LeaderboardData?.currentUser?.level ?? 0
 
                 const hasMinBalance = [...(parsedSnapshotsBalance || []), amount || 0].some(
-                  (x) => x > rewardsProjectionData?.minBalance
+                  (x) => x > (rewardsProjectionData?.minBalance || 0)
                 )
-                const hasMinLevel = userLevel >= rewardsProjectionData?.minLvl
+                const hasMinLevel = userLevel >= (rewardsProjectionData?.minLvl || 0)
 
                 // Lvl reached, Usd < 500
                 if (hasMinLevel && !hasMinBalance) {
                   return (
                     <p className={styles.rewardsTitle}>
-                      Keep your account balance over $500 to accumulate rewards.
+                      Keep your account balance over ${rewardsProjectionData?.minBalance} to
+                      accumulate rewards.
                     </p>
                   )
                 }
@@ -274,7 +301,7 @@ const CharacterSection = () => {
                 if (!hasMinLevel && hasMinBalance) {
                   return (
                     <p className={styles.rewardsTitle}>
-                      Reach level 3 to start accumulating rewards.
+                      Reach level {rewardsProjectionData?.minLvl} to start accumulating rewards.
                     </p>
                   )
                 }
@@ -283,8 +310,8 @@ const CharacterSection = () => {
                 if (!hasMinLevel && !hasMinBalance) {
                   return (
                     <p className={styles.rewardsTitle}>
-                      Keep your account balance over $500 and reach level 3 to start accumulating
-                      rewards.
+                      Keep your account balance over ${rewardsProjectionData?.minBalance} and reach
+                      level {rewardsProjectionData?.minLvl} to start accumulating rewards.
                     </p>
                   )
                 }
@@ -325,13 +352,12 @@ const CharacterSection = () => {
                           $stkWALLET
                         </p>
                         <p className={styles.projectionStatValue}>
-                          {projectedAmount?.walletRewards
-                            ? Number(projectedAmount.walletRewards) >=
-                              THRESHOLD_AMOUNT_TO_HIDE_BALANCE_DECIMALS
-                              ? Number(projectedAmount.walletRewards).toLocaleString(undefined, {
+                          {projectedAmount
+                            ? Number(projectedAmount) >= THRESHOLD_AMOUNT_TO_HIDE_BALANCE_DECIMALS
+                              ? Number(projectedAmount).toLocaleString(undefined, {
                                   maximumFractionDigits: 0
                                 })
-                              : Number(projectedAmount.walletRewards).toLocaleString(undefined, {
+                              : Number(projectedAmount).toLocaleString(undefined, {
                                   minimumFractionDigits: 3,
                                   maximumFractionDigits: 3
                                 })
@@ -351,35 +377,6 @@ const CharacterSection = () => {
                               }`
                             : '$0.00'}
                         </p>
-                      </div>
-
-                      <div className={styles.apyWrapper}>
-                        <div className={styles.apyTitleWrapper}>
-                          <p className={styles.rewardsProjectionTitle}>APY</p>{' '}
-                          <InfoIcon
-                            width={12}
-                            height={12}
-                            color="currentColor"
-                            className={styles.infoIcon}
-                            data-tooltip-id="apy-info"
-                          />
-                          <Tooltip
-                            style={{
-                              backgroundColor: '#101114',
-                              color: '#F4F4F7',
-                              fontFamily: 'FunnelDisplay',
-                              fontSize: 11,
-                              lineHeight: '16px',
-                              fontWeight: 300,
-                              maxWidth: 244,
-                              boxShadow: '0px 0px 12.1px 0px #191B20'
-                            }}
-                            place="bottom"
-                            id="apy-info"
-                            content="Annual Percentage Yield. This percentage reflects moving average of APR (Annual Percentage Rate) for $stkWALLET rewards based on your portfolio balance and level. This percentage does not guarantee future performance and is subject to change."
-                          />
-                        </div>
-                        <p className={styles.apyValue}>{projectedAmount?.apy.toFixed(2)}%</p>
                       </div>
                     </>
                   )

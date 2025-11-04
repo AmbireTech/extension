@@ -1,15 +1,41 @@
-import React from 'react'
-import { Pressable } from 'react-native'
+import React, { useMemo } from 'react'
 
 import { TokenResult } from '@ambire-common/libs/portfolio'
+import Button, { Props } from '@common/components/Button'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
-import common from '@common/styles/utils/common'
-import flexbox from '@common/styles/utils/flexbox'
+import useTheme from '@common/hooks/useTheme'
 
 import BaseTokenItem from './BaseTokenItem'
 
-const GRADIENT_STYLE = 'linear-gradient(90deg, #B082FF 0%, #5F02FF 100%)'
+export interface ClaimButtonProps extends Omit<Props, 'type'> {}
+
+const ClaimButton = ({ style, textStyle, ...rest }: ClaimButtonProps) => {
+  const { theme } = useTheme()
+
+  const claimStyles = useMemo(
+    () => ({
+      container: {
+        backgroundColor: `${String(theme.projectedRewards)}10`,
+        borderColor: theme.projectedRewards,
+        borderWidth: 1
+      },
+      text: {
+        color: theme.projectedRewards
+      }
+    }),
+    [theme]
+  )
+
+  return (
+    <Button
+      {...rest}
+      type="secondary"
+      style={[claimStyles.container, style]}
+      textStyle={[claimStyles.text, textStyle]}
+    />
+  )
+}
 
 const RewardsTokenItem = ({
   token,
@@ -18,44 +44,37 @@ const RewardsTokenItem = ({
   description
 }: {
   token: TokenResult
-  onPress: () => void
-  actionButtonText: string
+  onPress?: () => void
+  actionButtonText?: string
   description: string | React.ReactNode
 }) => {
   const { t } = useTranslation()
 
   return (
     <BaseTokenItem
+      rewardsStyle
       token={token}
+      onPress={onPress}
       decimalRulesType="noDecimal"
       hasBottomSpacing
       extraActions={
-        <Pressable
-          testID="rewards-button"
-          onPress={onPress}
-          style={({ hovered }: any) => [
-            flexbox.center,
-            flexbox.directionRow,
-            common.borderRadiusPrimary,
-            {
-              width: 70,
-              background: GRADIENT_STYLE,
-              opacity: hovered ? 0.8 : 1
-            }
-          ]}
-        >
-          <Text fontSize={14} weight="medium" color="white">
-            {t('{{actionButtonText}}', { actionButtonText })}
-          </Text>
-        </Pressable>
+        onPress &&
+        actionButtonText && (
+          <ClaimButton
+            size="small"
+            hasBottomSpacing={false}
+            onPress={onPress}
+            text={t('{{actionButtonText}}', { actionButtonText })}
+          />
+        )
       }
-      gradientStyle={GRADIENT_STYLE}
       label={
         <Text fontSize={12} weight="regular">
           {typeof description === 'string' ? t('{{description}}', { description }) : description}
         </Text>
       }
       borderRadius={16}
+      wrapperTestID="rewards-button"
     />
   )
 }

@@ -3,6 +3,7 @@ import { formatUnits } from 'ethers'
 import { getFeeSpeedIdentifier } from '@ambire-common/controllers/signAccountOp/helper'
 import { FeeSpeed } from '@ambire-common/controllers/signAccountOp/signAccountOp'
 import { ISignAccountOpController } from '@ambire-common/interfaces/signAccountOp'
+import { canBecomeSmarter } from '@ambire-common/libs/account/account'
 import { FeePaymentOption } from '@ambire-common/libs/estimate/interfaces'
 import { ZERO_ADDRESS } from '@ambire-common/services/socket/constants'
 
@@ -112,9 +113,13 @@ const mapFeeOptions = (
   const isExternal = signAccountOpState.accountKeyStoreKeys.find(
     (keyStoreKey) => keyStoreKey.addr === feeOption.paidBy && keyStoreKey.isExternallyStored
   )
+  const canNotBecomeSmarter = !canBecomeSmarter(
+    signAccountOpState.account,
+    signAccountOpState.accountKeyStoreKeys
+  )
 
-  if (isExternal && feeOption.token.address !== ZERO_ADDRESS) {
-    disabledReason = 'Coming soon for Hardware wallets'
+  if (isExternal && canNotBecomeSmarter && feeOption.token.address !== ZERO_ADDRESS) {
+    disabledReason = 'Coming soon for more hardware wallets'
     disabledTextAppearance = 'infoText'
   }
 

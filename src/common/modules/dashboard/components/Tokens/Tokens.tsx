@@ -119,16 +119,17 @@ const Tokens = ({
           if (isGasTankTokenOnCustomNetwork(token, networks)) return false
           if (token?.flags.isHidden) return false
 
-          // We want to show the token with zero amount if it is projected rewards
-          const hasTokenAmount =
-            token.flags.rewardsType === 'wallet-projected-rewards' || hasAmount(token)
+          const hasTokenAmount = hasAmount(token)
           const isCustom = customTokens.find(
             ({ address, chainId }) =>
               token.address.toLowerCase() === address.toLowerCase() && token.chainId === chainId
           )
           const isPinned = PINNED_TOKENS.find(
             ({ address, chainId }) =>
-              token.address.toLowerCase() === address.toLowerCase() && token.chainId === chainId
+              token.address.toLowerCase() === address.toLowerCase() &&
+              token.chainId === chainId &&
+              // exclude projected rewards from pinned tokens
+              token.flags.rewardsType !== 'wallet-projected-rewards'
           )
 
           return (

@@ -16,12 +16,20 @@ const Banner: React.FC<Props> = ({ activeProposals }) => {
       <div className={styles.textContent}>
         {activeProposals.length === 1 ? (
           <div className={styles.title}>
-            🗳️ {activeProposals[0].title} Vote until{' '}
-            {new Date(activeProposals[0].end * 1000).toLocaleString('en', {
-              month: 'long',
-              day: 'numeric'
-            })}
-            !
+            🗳️ {activeProposals[0].title}{' '}
+            <a
+              href={`https://snapshot.box/#/s:ambire.eth/proposal/${activeProposals[0].id}`}
+              className={styles.readMoreLink}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Vote until{' '}
+              {new Date(activeProposals[0].end * 1000).toLocaleString('en', {
+                month: 'long',
+                day: 'numeric'
+              })}
+              !
+            </a>
           </div>
         ) : (
           <>
