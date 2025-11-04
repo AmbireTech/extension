@@ -3,6 +3,8 @@ import { createMessenger } from '@web/extension-services/messengers/internal/cre
 import { isValidReply } from '@web/extension-services/messengers/internal/isValidReply'
 import { isValidSend } from '@web/extension-services/messengers/internal/isValidSend'
 
+declare const globalIsAmbireNext: boolean
+
 /**
  * Send a message to either a specific tab or to the runtime. Needed since we
  * want to communicate between different parts of the extension,
@@ -31,7 +33,7 @@ export const tabMessenger = createMessenger({
     payload: TPayload,
     { id, tabId }: { id?: number | string; tabId?: number } = {}
   ) {
-    if (topic.includes('broadcast')) {
+    if (topic.includes(globalIsAmbireNext ? 'broadcast-next' : 'broadcast')) {
       sendMessage({ topic: `> ${topic}`, payload, id }, { tabId })
       return Promise.resolve(null) as any
     }
@@ -65,7 +67,7 @@ export const tabMessenger = createMessenger({
     ) => {
       if (!isValidSend({ message, topic })) return
 
-      if (topic.includes('broadcast')) {
+      if (topic.includes(globalIsAmbireNext ? 'broadcast-next' : 'broadcast')) {
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         callback(message.payload, {
           id: message.id,

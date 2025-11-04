@@ -1,4 +1,3 @@
-import { clickOnElement } from 'common-helpers/clickOnElement'
 import { typeText } from 'common-helpers/typeText'
 import locators from 'constants/locators'
 import selectors, { SELECTORS } from 'constants/selectors'
@@ -204,7 +203,7 @@ export class SwapAndBridgePage extends BasePage {
     // "Select route" step may take more time to appear, as it depends on the Li.Fi response.
     await this.page.waitForSelector(locators.selectRouteButton, {
       state: 'visible',
-      timeout: 10000
+      timeout: 12000
     })
     await this.click(selectors.addToBatchButton)
 
@@ -212,7 +211,10 @@ export class SwapAndBridgePage extends BasePage {
     await this.handlePriceWarningModals()
 
     await this.click(selectors.goDashboardButton)
-    const newPage = await this.handleNewPage(this.page.getByTestId(selectors.bannerButtonOpen))
+
+    const openTransactionButton = this.page.getByTestId(selectors.bannerButtonOpen).first()
+
+    const newPage = await this.handleNewPage(openTransactionButton)
     await this.signTransactionPage(newPage)
   }
 
@@ -223,7 +225,7 @@ export class SwapAndBridgePage extends BasePage {
       await expect(signButton).toBeVisible({ timeout: 5000 })
       await expect(signButton).toBeEnabled({ timeout: 5000 })
       await page.getByTestId(selectors.signTransactionButton).click()
-      await page.waitForTimeout(3000)
+      await page.waitForTimeout(5000)
 
       // close transaction progress pop up
       await page.locator(selectors.closeTransactionProgressPopUpButton).click()
@@ -359,7 +361,7 @@ export class SwapAndBridgePage extends BasePage {
     await this.monitorRequests()
 
     // Sometimes the button needs a bit to become enabled
-    await this.page.waitForTimeout(1000)
+    await this.expectButtonEnabled(selectors.signButton)
 
     await this.click(selectors.signButton)
     await expect(this.page.getByText('Confirming your trade')).toBeVisible({ timeout: 10000 })
@@ -400,16 +402,19 @@ export class SwapAndBridgePage extends BasePage {
     await this.handlePriceWarningModals()
 
     await this.click(selectors.goDashboardButton)
-    const newPage = await this.handleNewPage(this.page.getByTestId(selectors.bannerButtonOpen))
+
+    const openTransactionButton = this.page.getByTestId(selectors.bannerButtonOpen).first()
+
+    const newPage = await this.handleNewPage(openTransactionButton)
     await this.signBatchTransactionsPage(newPage)
   }
 
   async signBatchTransactionsPage(page): Promise<void> {
-    const signButton = page.locator(SELECTORS.signTransactionButton)
+    const signButton = page.getByTestId(selectors.signTransactionButton)
     await expect(signButton).toBeVisible({ timeout: 5000 })
-    await expect(signButton).toBeEnabled()
+    await expect(signButton).toBeEnabled({ timeout: 5000 })
     await this.verifyBatchTransactionDetails(page)
-    await page.waitForTimeout(1500)
+    await page.waitForTimeout(3000)
   }
 
   async verifyBatchTransactionDetails(page): Promise<void> {
