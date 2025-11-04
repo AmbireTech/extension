@@ -60,6 +60,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     isRecipientHumanizerKnownTokenOrSmartContract,
     isSWWarningVisible,
     isRecipientAddressUnknown,
+    isRecipientAddressUnknownAgreed,
     isFormValid,
     signAccountOpController,
     latestBroadcastedAccountOp,
@@ -474,6 +475,9 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
           signAccountOpErrors={[]}
           networkUserRequests={networkUserRequests}
           isLocalStateOutOfSync={isLocalStateOutOfSync}
+          isRecipientAddressUnknown={isRecipientAddressUnknown}
+          isRecipientAddressUnknownAgreed={isRecipientAddressUnknownAgreed}
+          recipientAddress={getAddressFromAddressState(addressState)}
         />
       </>
     )
@@ -484,6 +488,9 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     isTransferFormValid,
     networkUserRequests,
     isLocalStateOutOfSync,
+    isRecipientAddressUnknown,
+    isRecipientAddressUnknownAgreed,
+    addressState,
     addTransaction
   ])
 
