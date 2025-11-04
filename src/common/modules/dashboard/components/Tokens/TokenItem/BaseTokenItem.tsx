@@ -37,6 +37,7 @@ type Props = {
   decimalRulesType?: FormatType
   hasBottomSpacing?: boolean
   onPress?: () => void
+  wrapperTestID?: string
 }
 
 const BaseTokenItem = ({
@@ -47,7 +48,8 @@ const BaseTokenItem = ({
   borderRadius,
   decimalRulesType = 'amount',
   hasBottomSpacing = false,
-  onPress
+  onPress,
+  wrapperTestID
 }: Props) => {
   const { portfolio } = useSelectedAccountControllerState()
   const { networks } = useNetworksControllerState()
@@ -115,6 +117,7 @@ const BaseTokenItem = ({
 
   return (
     <AnimatedPressable
+      testID={wrapperTestID || undefined}
       onPress={() => (rewardsStyle && onPress ? onPress() : openBottomSheet())}
       style={[
         styles.container,

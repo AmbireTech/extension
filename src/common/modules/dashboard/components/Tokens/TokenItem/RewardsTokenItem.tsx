@@ -34,7 +34,6 @@ const RewardsTokenItem = ({
             size="small"
             type="claimRewards"
             hasBottomSpacing={false}
-            testID="rewards-button"
             onPress={onPress}
             text={t('{{actionButtonText}}', { actionButtonText })}
           />
@@ -46,6 +45,7 @@ const RewardsTokenItem = ({
         </Text>
       }
       borderRadius={16}
+      wrapperTestID="rewards-button"
     />
   )
 }
