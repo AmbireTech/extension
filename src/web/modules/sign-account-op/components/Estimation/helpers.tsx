@@ -113,12 +113,12 @@ const mapFeeOptions = (
   const isExternal = signAccountOpState.accountKeyStoreKeys.find(
     (keyStoreKey) => keyStoreKey.addr === feeOption.paidBy && keyStoreKey.isExternallyStored
   )
-  const canNotBecomeSmarted = !canBecomeSmarter(
+  const canNotBecomeSmarter = !canBecomeSmarter(
     signAccountOpState.account,
     signAccountOpState.accountKeyStoreKeys
   )
 
-  if (isExternal && canNotBecomeSmarted && feeOption.token.address !== ZERO_ADDRESS) {
+  if (isExternal && canNotBecomeSmarter && feeOption.token.address !== ZERO_ADDRESS) {
     disabledReason = 'Coming soon for more hardware wallets'
     disabledTextAppearance = 'infoText'
   }
