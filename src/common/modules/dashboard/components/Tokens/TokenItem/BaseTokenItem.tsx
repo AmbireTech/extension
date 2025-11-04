@@ -60,7 +60,7 @@ const BaseTokenItem = ({
 
   const isDark = themeType === THEME_TYPES.DARK
   const hasRewardsStyle = Boolean(rewardsStyle)
-  const getColors = () => {
+  const getColors = useMemo(() => {
     if (!hasRewardsStyle) {
       return {
         from: theme.primaryBackground,
@@ -72,9 +72,15 @@ const BaseTokenItem = ({
       from: isDark ? theme.tertiaryBackground : theme.secondaryBackground,
       to: isDark ? theme.secondaryBackground : theme.tertiaryBackground
     }
-  }
+  }, [
+    hasRewardsStyle,
+    isDark,
+    theme.secondaryBackground,
+    theme.tertiaryBackground,
+    theme.primaryBackground
+  ])
 
-  const { from, to } = getColors()
+  const { from, to } = getColors
 
   const [bindAnim, animStyle, isHovered] = useCustomHover({
     property: 'backgroundColor',
