@@ -43,19 +43,12 @@ const ThemeProvider: React.FC<{
   }, [selectedThemeType])
 
   const themeType = useMemo(() => {
-    let type
+    const type =
+      forceThemeType ?? selectedThemeType ?? localStorage.getItem('fallbackSelectedThemeType')
 
-    if (forceThemeType) {
-      type = forceThemeType
-    } else {
-      type = selectedThemeType || localStorage.getItem('fallbackSelectedThemeType')
-    }
-
-    if (type === THEME_TYPES.SYSTEM) {
-      return systemThemeType as THEME_TYPES.LIGHT | THEME_TYPES.DARK
-    }
-
-    return type
+    return type === THEME_TYPES.SYSTEM
+      ? (systemThemeType as THEME_TYPES.LIGHT | THEME_TYPES.DARK)
+      : type
   }, [selectedThemeType, systemThemeType, forceThemeType])
 
   useEffect(() => {
