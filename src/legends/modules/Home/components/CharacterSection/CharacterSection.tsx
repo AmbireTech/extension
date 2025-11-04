@@ -91,7 +91,8 @@ const CharacterSection = () => {
 
   const currentLevel = season1LeaderboardData?.currentUser?.level ?? 1
   const xpForNextLevel = Math.ceil(((currentLevel + 1) * 4.5) ** 2)
-  const startXpForCurrentLevel = Math.ceil((currentLevel * 4.5) ** 2)
+
+  const startXpForCurrentLevel = currentLevel === 1 ? 0 : Math.ceil((currentLevel * 4.5) ** 2)
 
   const currentTotalBalanceOnSupportedChains = amount || undefined
 
