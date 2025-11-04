@@ -1,4 +1,5 @@
-import React from 'react'
+import React, { useState } from 'react'
+import { Pressable } from 'react-native'
 
 import { STK_WALLET } from '@ambire-common/consts/addresses'
 import { getTokenBalanceInUSD } from '@ambire-common/libs/portfolio/helpers'
@@ -18,6 +19,7 @@ import useCharacterContext from '@legends/hooks/useCharacterContext'
 import useLeaderboardContext from '@legends/hooks/useLeaderboardContext'
 import useLegendsContext from '@legends/hooks/useLegendsContext'
 import usePortfolioControllerState from '@legends/hooks/usePortfolioControllerState/usePortfolioControllerState'
+import CharacterSelect from '@legends/modules/character/screens/CharacterSelect'
 import { Networks } from '@legends/modules/legends/types'
 
 import styles from './CharacterSection.module.scss'
@@ -28,7 +30,8 @@ import substractBackground from './substract.png'
 const THRESHOLD_AMOUNT_TO_HIDE_BALANCE_DECIMALS = 500
 
 const CharacterSection = () => {
-  const { character } = useCharacterContext()
+  const { character, isCharacterNotMinted } = useCharacterContext()
+  const [isPickCharacterOpen, setIsPickCharacterOpen] = useState(false)
 
   const {
     accountPortfolio,
@@ -68,7 +71,7 @@ const CharacterSection = () => {
       amountFormatted &&
       Number((amountFormatted ?? '0').replace(/[^0-9.-]+/g, '')) <
         (rewardsProjectionData?.minBalance || 0)) ||
-    (season1LeaderboardData?.currentUser?.level ?? 0) <= 2
+    (season1LeaderboardData?.currentUser?.level ?? 0) < (rewardsProjectionData?.minLvl || 0)
 
   const shouldShowIcon = !!claimableRewardsError || isNotAvailableForRewards
 
@@ -132,6 +135,8 @@ const CharacterSection = () => {
 
   return (
     <>
+      <CharacterSelect isOpen={isPickCharacterOpen} onClose={() => setIsPickCharacterOpen(false)} />
+
       <div className={styles.overachieverWrapper}>
         <OverachieverBanner wrapperClassName={styles.overachieverBanner} />
       </div>
@@ -157,11 +162,22 @@ const CharacterSection = () => {
                       <p className={styles.characterLevelText}>{character.level}</p>
                     </p>
                   </div>
-                  <img
-                    className={styles.characterImage}
-                    src={character?.image}
-                    alt={character?.characterName}
-                  />
+                  {isCharacterNotMinted ? (
+                    <Pressable onPress={() => isCharacterNotMinted && setIsPickCharacterOpen(true)}>
+                      <img
+                        className={styles.characterImage}
+                        src={character?.image}
+                        alt={character?.characterName}
+                      />
+                    </Pressable>
+                  ) : (
+                    <img
+                      className={styles.characterImage}
+                      src={character?.image}
+                      alt={character?.characterName}
+                    />
+                  )}
+
                   <div className={styles.characterPodium} />
                 </div>
               </div>
