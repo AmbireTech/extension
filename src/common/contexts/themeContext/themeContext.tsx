@@ -31,21 +31,25 @@ const ThemeProvider: React.FC<{
 }> = ({ children, forceThemeType }) => {
   const systemThemeType = useColorScheme()
   const { dispatch } = useBackgroundService() || {}
-
   const { themeType: selectedThemeType } = useWalletStateController() || {}
 
   useEffect(() => {
     if (!isExtension) return
+    if (!selectedThemeType) return
 
-    const storedFallbackSelectedThemeType = localStorage.getItem('fallbackSelectedThemeType')
-
-    if (!storedFallbackSelectedThemeType || storedFallbackSelectedThemeType !== selectedThemeType) {
+    if (localStorage.getItem('fallbackSelectedThemeType') !== selectedThemeType) {
       localStorage.setItem('fallbackSelectedThemeType', selectedThemeType)
     }
   }, [selectedThemeType])
 
   const themeType = useMemo(() => {
-    const type = forceThemeType || selectedThemeType
+    let type
+
+    if (forceThemeType) {
+      type = forceThemeType
+    } else {
+      type = selectedThemeType || localStorage.getItem('fallbackSelectedThemeType')
+    }
 
     if (type === THEME_TYPES.SYSTEM) {
       return systemThemeType as THEME_TYPES.LIGHT | THEME_TYPES.DARK
