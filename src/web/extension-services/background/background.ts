@@ -144,8 +144,35 @@ function captureBackgroundExceptionFromControllerError(error: ErrorRef, controll
   })
 }
 
-const INVICTUS_ERROR_PREFIX = 'Invictus RPC error'
-const INVICTUS_200_ERROR_PREFIX = 'Invictus RPC error (2XX)'
+const prefixes = {
+  invictus: {
+    normal: 'Invictus RPC error',
+    status200: 'Invictus RPC error (2XX)'
+  },
+  customRpc: {
+    normal: 'Custom RPC error',
+    status200: 'Custom RPC error (2XX)'
+  }
+}
+
+const getMessagePrefix = (extraData: { [key: string]: any }) => {
+  const { providerUrl, isProviderInvictus, statusCode, shortMessage } = extraData
+  let is200Status = false
+
+  if (statusCode === undefined && shortMessage !== 'missing revert data') {
+    // Ethers doesn't return a status code for 2XX responses, so we treat undefined as 2XX
+    // and have handling just in case statusCode is explicitly set to 200-299
+    is200Status = true
+  } else if (typeof statusCode === 'number' && statusCode >= 200 && statusCode < 300) {
+    is200Status = true
+  }
+
+  const providerUrlPart = providerUrl ? `(${providerUrl})` : ''
+  const prefixSet = isProviderInvictus ? prefixes.invictus : prefixes.customRpc
+  const prefix = is200Status ? prefixSet.status200 : prefixSet.normal
+
+  return `${prefix} ${providerUrlPart}: `
+}
 
 /**
  * In Sentry we can "fingerprint" errors by their message. This function is used to
@@ -165,32 +192,13 @@ function formatErrorsBeforeSendingToSentry(
       // except the message. We need to use the contexts to get the extra info.
       // Note: this is possible because of the extraErrorDataIntegration from Sentry
       const extraData = contexts?.ProviderError || {}
-      const {
-        isProviderInvictus,
-        error: nestedError,
-        statusCode,
-        providerUrl,
-        data,
-        info,
-        transaction
-      } = extraData
+      const { error: nestedError, code, data, info, transaction } = extraData
 
-      if (
-        isProviderInvictus &&
-        // Check if it's a relevant provider error
-        (data || info || nestedError || transaction) &&
-        !message.startsWith(INVICTUS_ERROR_PREFIX) &&
-        !message.startsWith(INVICTUS_200_ERROR_PREFIX)
-      ) {
-        // Ethers doesn't return a status code for 2XX responses, so we treat undefined as 2XX
-        // and have handling just in case statusCode is explicitly set to 200-299
-        const is200Status =
-          !statusCode || (typeof statusCode === 'number' && statusCode >= 200 && statusCode < 300)
-        const providerUrlPart = providerUrl ? `(${providerUrl})` : ''
+      if (data || info || nestedError || code || transaction) {
+        const prefix = getMessagePrefix(extraData)
+
         // eslint-disable-next-line no-param-reassign
-        error.value = `${
-          is200Status ? INVICTUS_200_ERROR_PREFIX : INVICTUS_ERROR_PREFIX
-        } ${providerUrlPart}: ${message}`
+        error.value = `${prefix}${message}`
       }
     }
   })
@@ -487,7 +495,7 @@ const init = async () => {
           console.error('Failed to create notification', err)
         })
     }
-    mainCtrl.keystore.lock()
+    mainCtrl.lock()
   })
   const extensionUpdateCtrl = new ExtensionUpdateController()
 
@@ -830,19 +838,19 @@ browser.runtime.onInstalled.addListener(({ reason }: any) => {
 })
 
 // Ensures controllers are initialized if the service worker is inactive and gets reactivated when the extension popup opens.
-browser.runtime.onMessage.addListener(
-  async (message: any, _: chrome.runtime.MessageSender, sendResponse: (response?: any) => void) => {
-    // init the ctrls if not already initialized
-    init().catch((err) => {
-      captureBackgroundException(err)
-      console.error(err)
-    })
+browser.runtime.onMessage.addListener(async (message: any) => {
+  // init the ctrls if not already initialized
+  init().catch((err) => {
+    captureBackgroundException(err)
+    console.error(err)
+  })
 
-    // The extension UI periodically sends "ping" messages. Responding here wakes up
-    // the service worker and keeps it alive as long as a view (popup, window, or tab) remains open.
-    if (message === 'ping') sendResponse('pong')
-  }
-)
+  // The extension UI periodically sends "ping" messages. Responding here wakes up
+  // the service worker and keeps it alive as long as a view (popup, window, or tab) remains open.
+  if (message === 'ambire-extension-ping') return 'ambire-extension-pong'
+
+  return null
+})
 
 try {
   browser.tabs.onRemoved.addListener(async (tabId: number) => {

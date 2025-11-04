@@ -1,13 +1,7 @@
 import { Signature, Transaction, TransactionLike } from 'ethers'
 
 import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
-import { EIP7702Auth } from '@ambire-common/consts/7702'
-import { Hex } from '@ambire-common/interfaces/hex'
-import {
-  ExternalKey,
-  KeystoreSignerInterface,
-  TxnRequest
-} from '@ambire-common/interfaces/keystore'
+import { ExternalKey, KeystoreSignerInterface } from '@ambire-common/interfaces/keystore'
 import { addHexPrefix } from '@ambire-common/utils/addHexPrefix'
 import { getHdPathFromTemplate } from '@ambire-common/utils/hdPath'
 import hexStringToUint8Array from '@ambire-common/utils/hexStringToUint8Array'
@@ -168,14 +162,16 @@ class LedgerSigner implements KeystoreSignerInterface {
     }
   }
 
-  // eslint-disable-next-line class-methods-use-this
-  sign7702(hex: string): { yParity: Hex; r: Hex; s: Hex } {
-    throw new Error('not support', { cause: hex })
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  sign7702: KeystoreSignerInterface['sign7702'] = ({ chainId, contract, nonce }) => {
+    throw new Error('not support', { cause: contract })
   }
 
-  // eslint-disable-next-line class-methods-use-this
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  signTransactionTypeFour(txnRequest: TxnRequest, eip7702Auth: EIP7702Auth): Hex {
+  signTransactionTypeFour: KeystoreSignerInterface['signTransactionTypeFour'] = ({
+    txnRequest,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    eip7702Auth
+  }) => {
     throw new Error('not supported', { cause: txnRequest })
   }
 

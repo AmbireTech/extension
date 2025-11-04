@@ -122,22 +122,13 @@ test.describe('dashboard', () => {
       await pages.basePage.click(selectors.dashboard.nftTabButton)
     })
 
-    await test.step('search NFTs by network - Base', async () => {
-      await pages.dashboard.search('Base', 'collectibles')
+    await test.step('search NFTs by network - Ethereum', async () => {
+      await pages.dashboard.search('Ethereum', 'collectibles')
     })
 
     await test.step('assert search result are visible', async () => {
       // 8 NFTs should be visible for SA
-      const expectedTitles = [
-        'Ambire Legends',
-        'finance-cake.com - 135.000$ Win',
-        'Win 135.000$: cakesv4.finance',
-        't.ly/claimcake - 135.000$ Win',
-        'Rewards: t.ly/pancakeswap.finance',
-        'pudgyz.com - 233.000$ Drop',
-        'Win 135.000$: cakesv4.finance',
-        'finance-cake.com - 135.000$ Win'
-      ]
+      const expectedTitles = ['Ambire Rewards']
 
       const collectibleTitle = pages.basePage.page.getByTestId(selectors.dashboard.nftTitle) // returns all items on page
 
@@ -152,12 +143,12 @@ test.describe('dashboard', () => {
       await pages.basePage.click(selectors.dashboard.nftTabButton)
     })
 
-    await test.step('search by NFT name - Ambire Legends', async () => {
-      await pages.dashboard.search('Ambire Legends', 'collectibles')
+    await test.step('search by NFT name - Ambire Rewards', async () => {
+      await pages.dashboard.search('Ambire Rewards', 'collectibles')
     })
 
     await test.step('assert search result', async () => {
-      await pages.basePage.compareText(selectors.dashboard.nftTitle, 'Ambire Legends')
+      await pages.basePage.compareText(selectors.dashboard.nftTitle, 'Ambire Rewards')
     })
   })
 
@@ -167,21 +158,12 @@ test.describe('dashboard', () => {
     })
 
     await test.step('select Base network via dropdown', async () => {
-      await pages.dashboard.searchByNetworkDropdown('Base', 'collectibles')
+      await pages.dashboard.searchByNetworkDropdown('Ethereum', 'collectibles')
     })
 
     await test.step('assert search result', async () => {
       // 8 NFTs should be visible for SA
-      const expectedTitles = [
-        'Ambire Legends',
-        'finance-cake.com - 135.000$ Win',
-        'Win 135.000$: cakesv4.finance',
-        't.ly/claimcake - 135.000$ Win',
-        'Rewards: t.ly/pancakeswap.finance',
-        'pudgyz.com - 233.000$ Drop',
-        'Win 135.000$: cakesv4.finance',
-        'finance-cake.com - 135.000$ Win'
-      ]
+      const expectedTitles = ['Ambire Rewards']
 
       const collectibleTitle = pages.basePage.page.getByTestId(selectors.dashboard.nftTitle) // returns all items on page
 

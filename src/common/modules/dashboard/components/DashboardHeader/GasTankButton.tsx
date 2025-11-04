@@ -96,7 +96,7 @@ const GasTankButton = ({ onPress, onPosition, portfolio, account }: Props) => {
     return onPress()
   }, [doesHaveTooltip, onPress])
 
-  if (!portfolio.isAllReady) {
+  if (!portfolio.isReadyToVisualize) {
     return <SkeletonLoader lowOpacity width={160} height={28} borderRadius={8} />
   }
 

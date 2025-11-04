@@ -6,11 +6,10 @@ import { calculateRewardsForSeason } from '@ambire-common/utils/rewards'
 import EqualIcon from '@common/assets/svg/EqualIcon'
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import MultiplicationIcon from '@common/assets/svg/MultiplicationIcon'
-import StkWalletIcon from '@common/assets/svg/StkWalletIcon'
+import WalletIcon from '@common/assets/svg/WalletIcon'
 import Tooltip from '@common/components/Tooltip'
 import LockIcon from '@legends/common/assets/svg/LockIcon'
 import UnionIcon from '@legends/common/assets/svg/UnionIcon'
-import AccountInfo from '@legends/components/AccountInfo'
 import Alert from '@legends/components/Alert'
 import OverachieverBanner from '@legends/components/OverachieverBanner'
 import Stacked from '@legends/components/Stacked'
@@ -20,18 +19,18 @@ import useLeaderboardContext from '@legends/hooks/useLeaderboardContext'
 import useLegendsContext from '@legends/hooks/useLegendsContext'
 import usePortfolioControllerState from '@legends/hooks/usePortfolioControllerState/usePortfolioControllerState'
 import CharacterSelect from '@legends/modules/character/screens/CharacterSelect'
+import { Networks } from '@legends/modules/legends/types'
 
 import styles from './CharacterSection.module.scss'
 import startsBackground from './starsBackground.png'
 import substractGradientBackground from './substract-gradient.png'
 import substractBackground from './substract.png'
-import unknownCharacterImg from './unknown-character.png'
 
 const THRESHOLD_AMOUNT_TO_HIDE_BALANCE_DECIMALS = 500
 
 const CharacterSection = () => {
-  const [isClaimModalOpen, setIsClaimModalOpen] = useState(false)
   const { character, isCharacterNotMinted } = useCharacterContext()
+  const [isPickCharacterOpen, setIsPickCharacterOpen] = useState(false)
 
   const {
     accountPortfolio,
@@ -69,15 +68,15 @@ const CharacterSection = () => {
   const isNotAvailableForRewards =
     ((accountPortfolio || accountPortfolio?.isReady) &&
       amountFormatted &&
-      Number((amountFormatted ?? '0').replace(/[^0-9.-]+/g, '')) < 500) ||
-    (season1LeaderboardData?.currentUser?.level ?? 0) <= 2
+      Number((amountFormatted ?? '0').replace(/[^0-9.-]+/g, '')) <
+        (rewardsProjectionData?.minBalance || 0)) ||
+    (season1LeaderboardData?.currentUser?.level ?? 0) < (rewardsProjectionData?.minLvl || 0)
 
   const shouldShowIcon = !!claimableRewardsError || isNotAvailableForRewards
 
   const formatXp = (xp: number) => {
     return xp && xp.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
   }
-  const initial7702Xp = legends.find((card) => card.id === 'eip7702')?.meta?.initial7702Xp || 0
 
   if (!character)
     return (
@@ -89,20 +88,14 @@ const CharacterSection = () => {
       />
     )
 
-  const redirectToCharacterSelect = () => {
-    setIsClaimModalOpen(true)
-  }
-
   const currentLevel = season1LeaderboardData?.currentUser?.level ?? 1
   const xpForNextLevel = Math.ceil(((currentLevel + 1) * 4.5) ** 2)
-  const startXpForCurrentLevel = Math.ceil((currentLevel * 4.5) ** 2)
 
-  // Helper: get XP for not minted state (if needed)
-  const characterXp = (character?.xp ?? 0) + initial7702Xp
+  const startXpForCurrentLevel = currentLevel === 1 ? 0 : Math.ceil((currentLevel * 4.5) ** 2)
 
   const currentTotalBalanceOnSupportedChains = amount || undefined
 
-  const parsedSnapshotsBalance = rewardsProjectionData?.currentSeasonSnapshots.map(
+  const parsedSnapshotsBalance = (rewardsProjectionData?.currentSeasonSnapshots || []).map(
     (snapshot: { week: number; balance: number }) => snapshot.balance
   )
 
@@ -131,7 +124,7 @@ const CharacterSection = () => {
     symbol: 'stkWALLET',
     name: 'Staked $WALLET',
     decimals: 18,
-    priceIn: [{ baseCurrency: 'usd', price: rewardsProjectionData?.walletPrice }],
+    priceIn: [{ baseCurrency: 'usd', price: rewardsProjectionData?.walletPrice || 0 }],
     flags: {
       onGasTank: false,
       rewardsType: 'wallet-projected-rewards' as const,
@@ -142,18 +135,14 @@ const CharacterSection = () => {
 
   return (
     <>
-      {isClaimModalOpen && <CharacterSelect onClose={() => setIsClaimModalOpen(false)} />}
+      <CharacterSelect isOpen={isPickCharacterOpen} onClose={() => setIsPickCharacterOpen(false)} />
 
       <div className={styles.overachieverWrapper}>
         <OverachieverBanner wrapperClassName={styles.overachieverBanner} />
       </div>
 
-      <section
-        className={`${styles.wrapper}${
-          isCharacterNotMinted ? ` ${styles.unknownCharacterWrapper}` : ''
-        }`}
-      >
-        {!isCharacterNotMinted && (
+      <section className={styles.wrapper}>
+        {
           <>
             <div className={styles.characterWrapper}>
               <div
@@ -167,26 +156,38 @@ const CharacterSection = () => {
                   <UnionIcon /> Season 1
                 </div>
                 <div className={styles.characterRelativeWrapper}>
-                  {isCharacterNotMinted && (
-                    <div className={styles.claimRewardsBubble}>
-                      <p className={styles.claimRewardsBubbleText}>
-                        {characterXp > 0
-                          ? 'Claim your rewards & mint a cool NFT!'
-                          : 'Mint a cool NFT!'}
-                      </p>
-                    </div>
-                  )}
                   <div className={styles.characterNameWrapper}>
                     <p className={styles.characterLevel}>
                       Level
                       <p className={styles.characterLevelText}>{character.level}</p>
                     </p>
                   </div>
-                  <img
-                    className={styles.characterImage}
-                    src={isCharacterNotMinted ? unknownCharacterImg : character?.image}
-                    alt={isCharacterNotMinted ? 'unknown' : character?.characterName}
-                  />
+                  {isCharacterNotMinted ? (
+                    <div
+                      role="button"
+                      onClick={() => isCharacterNotMinted && setIsPickCharacterOpen(true)}
+                      className={styles.defaultCharacter}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          isCharacterNotMinted && setIsPickCharacterOpen(true)
+                        }
+                      }}
+                      tabIndex={0}
+                    >
+                      <img
+                        className={styles.characterImage}
+                        src={character?.image}
+                        alt={character?.characterName}
+                      />
+                    </div>
+                  ) : (
+                    <img
+                      className={styles.characterImage}
+                      src={character?.image}
+                      alt={character?.characterName}
+                    />
+                  )}
+
                   <div className={styles.characterPodium} />
                 </div>
               </div>
@@ -284,15 +285,16 @@ const CharacterSection = () => {
                 const userLevel = season1LeaderboardData?.currentUser?.level ?? 0
 
                 const hasMinBalance = [...(parsedSnapshotsBalance || []), amount || 0].some(
-                  (x) => x > rewardsProjectionData?.minBalance
+                  (x) => x > (rewardsProjectionData?.minBalance || 0)
                 )
-                const hasMinLevel = userLevel >= rewardsProjectionData?.minLvl
+                const hasMinLevel = userLevel >= (rewardsProjectionData?.minLvl || 0)
 
                 // Lvl reached, Usd < 500
                 if (hasMinLevel && !hasMinBalance) {
                   return (
                     <p className={styles.rewardsTitle}>
-                      Keep your account balance over $500 to accumulate rewards.
+                      Keep your account balance over ${rewardsProjectionData?.minBalance} to
+                      accumulate rewards.
                     </p>
                   )
                 }
@@ -301,7 +303,7 @@ const CharacterSection = () => {
                 if (!hasMinLevel && hasMinBalance) {
                   return (
                     <p className={styles.rewardsTitle}>
-                      Reach level 3 to start accumulating rewards.
+                      Reach level {rewardsProjectionData?.minLvl} to start accumulating rewards.
                     </p>
                   )
                 }
@@ -310,8 +312,8 @@ const CharacterSection = () => {
                 if (!hasMinLevel && !hasMinBalance) {
                   return (
                     <p className={styles.rewardsTitle}>
-                      Keep your account balance over $500 and reach level 3 to start accumulating
-                      rewards.
+                      Keep your account balance over ${rewardsProjectionData?.minBalance} and reach
+                      level {rewardsProjectionData?.minLvl} to start accumulating rewards.
                     </p>
                   )
                 }
@@ -348,8 +350,8 @@ const CharacterSection = () => {
                       </div>
                       <div className={styles.rewardsProjectionStats}>
                         <p className={styles.projectionStatLabel}>
-                          <StkWalletIcon width={34} height={34} />
-                          $stkWALLET
+                          <WalletIcon width={34} height={34} />
+                          $WALLET
                         </p>
                         <p className={styles.projectionStatValue}>
                           {projectedAmount?.walletRewards
@@ -414,64 +416,7 @@ const CharacterSection = () => {
               })()}
             </div>{' '}
           </>
-        )}
-
-        {isCharacterNotMinted && (
-          <div className={styles.unknownCharacterContentWrapper}>
-            <div className={styles.unknownCharacterContent}>
-              <div className={styles.currentSeasonBadge}>
-                {' '}
-                <UnionIcon /> Season 1
-              </div>
-              <AccountInfo
-                removeAvatarAndLevel
-                wrapperClassName={styles.accountInfo}
-                addressClassName={styles.accountInfoAddress}
-              />
-              <div className={styles.unknownCharacterLevelInfoWrapper}>
-                {characterXp > 0 ? (
-                  <p className={styles.claimableXpText}>
-                    You have{' '}
-                    <span className={styles.claimableBalance}>
-                      {characterXp.toLocaleString()} XP
-                    </span>{' '}
-                    available to claim
-                  </p>
-                ) : (
-                  <p className={styles.claimableXpText}>Join Rewards to start accumulating XP</p>
-                )}
-
-                <button
-                  type="button"
-                  className={styles.claimXpButton}
-                  onClick={redirectToCharacterSelect}
-                >
-                  {characterXp > 0 ? 'Claim' : 'Join'}
-                </button>
-              </div>
-            </div>
-
-            <div className={styles.character}>
-              <div className={styles.characterRelativeWrapper}>
-                {isCharacterNotMinted && (
-                  <div className={styles.claimRewardsBubble}>
-                    <p className={styles.claimRewardsBubbleText}>
-                      {characterXp > 0
-                        ? 'Claim your rewards & mint a cool NFT!'
-                        : 'Mint a cool NFT!'}
-                    </p>
-                  </div>
-                )}
-                <img
-                  className={styles.characterImage}
-                  src={isCharacterNotMinted ? unknownCharacterImg : character?.image}
-                  alt={isCharacterNotMinted ? 'unknown' : character?.characterName}
-                />
-                <div className={styles.characterPodium} />
-              </div>
-            </div>
-          </div>
-        )}
+        }
       </section>
     </>
   )

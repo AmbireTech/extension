@@ -7,7 +7,6 @@ import HumanReadableError from '@legends/classes/HumanReadableError'
 import { ERROR_MESSAGES } from '@legends/constants/errors/messages'
 import { ETHEREUM_CHAIN_ID } from '@legends/constants/networks'
 import useAccountContext from '@legends/hooks/useAccountContext'
-import useCharacterContext from '@legends/hooks/useCharacterContext/useCharacterContext'
 import useErc5792 from '@legends/hooks/useErc5792'
 import useProviderContext from '@legends/hooks/useProviderContext'
 import useSwitchNetwork from '@legends/hooks/useSwitchNetwork'
@@ -35,13 +34,11 @@ const StakeWallet = () => {
   const { provider, browserProvider } = useProviderContext()
   const { connectedAccount, v1Account } = useAccountContext()
   const switchNetwork = useSwitchNetwork()
-  const { isCharacterNotMinted } = useCharacterContext()
-  const disabledButton = Boolean(!connectedAccount || v1Account || isCharacterNotMinted)
+  const disabledButton = Boolean(!connectedAccount || v1Account)
 
   const buttonText = getRewardsButtonText({
     connectedAccount,
-    v1Account: !!v1Account,
-    isCharacterNotMinted: !!isCharacterNotMinted
+    v1Account: !!v1Account
   })
 
   const [walletBalance, setWalletBalance] = useState(null)
