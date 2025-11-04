@@ -1467,7 +1467,7 @@
     "@ethereumjs/rlp" "^5.0.2"
     ethereum-cryptography "^2.2.1"
 
-"@ethersproject/abi@5.8.0", "@ethersproject/abi@^5.8.0":
+"@ethersproject/abi@5.8.0", "@ethersproject/abi@^5.7.0", "@ethersproject/abi@^5.8.0":
   version "5.8.0"
   resolved "https://registry.yarnpkg.com/@ethersproject/abi/-/abi-5.8.0.tgz#e79bb51940ac35fe6f3262d7fe2cdb25ad5f07d9"
   integrity sha512-b9YS/43ObplgyV6SlyQsG53/vkSal0MNA1fskSC4mbnCMi8R+NkcH8K9FPYNESf6jUefBUniE4SOKms0E/KK1Q==
@@ -9327,7 +9327,7 @@ ethers@5.8.0, ethers@^5.4.7, ethers@^5.6.5:
     "@ethersproject/web" "5.8.0"
     "@ethersproject/wordlists" "5.8.0"
 
-ethers@6.14.1:
+ethers@6.14.1, ethers@^6.13.4:
   version "6.14.1"
   resolved "https://registry.yarnpkg.com/ethers/-/ethers-6.14.1.tgz#96b5e967d9c3c66c6b64304d8e7669a761d6fca3"
   integrity sha512-JnFiPFi3sK2Z6y7jZ3qrafDMwiXmU+6cNZ0M+kPq+mTy9skqEzwqAdFW3nb/em2xjlIVXX6Lz8ID6i3LmS4+fQ==
@@ -10482,7 +10482,7 @@ graphql@16.6.0:
   resolved "https://registry.npmjs.org/graphql/-/graphql-16.6.0.tgz"
   integrity sha512-KPIBPDlW7NxrbT/eh4qPXz5FiFdL5UbaA0XUNz2Rp3Z3hqBSkbj0GVjwFDztsWVauZUWsbKHgMg++sk8UX0bkw==
 
-"gridplus-sdk@https://pkg.pr.new/GridPlus/gridplus-sdk@e3d6ac0":
+"gridplus-sdk-e3d6ac0@https://pkg.pr.new/GridPlus/gridplus-sdk@e3d6ac0":
   version "4.0.0"
   resolved "https://pkg.pr.new/GridPlus/gridplus-sdk@e3d6ac0#74c6bbc00d5f23a5798554178f18c101c384efce"
   dependencies:
@@ -10509,6 +10509,35 @@ graphql@16.6.0:
     uuid "^10.0.0"
     viem "^2.31.4"
     zod "^3.23.8"
+
+gridplus-sdk@3.4.0:
+  version "3.4.0"
+  resolved "https://registry.yarnpkg.com/gridplus-sdk/-/gridplus-sdk-3.4.0.tgz#62c4b00c4572e261d347e719ae60a9384a54e640"
+  integrity sha512-iRG0ertMSAV1dgiKWAbvVr9DTOflcsrTk43Yhc/mdKuTv11VYpYNPaeHJ4Y3NmwRokSN70I0FnGkzEQX1lVDWQ==
+  dependencies:
+    "@ethereumjs/common" "^4.4.0"
+    "@ethereumjs/rlp" "^5.0.2"
+    "@ethereumjs/tx" "^5.4.0"
+    "@ethersproject/abi" "^5.7.0"
+    "@metamask/eth-sig-util" "^8.0.0"
+    "@types/uuid" "^10.0.0"
+    aes-js "^3.1.2"
+    bech32 "^2.0.0"
+    bignumber.js "^9.1.2"
+    bitwise "^2.2.1"
+    bn.js "^5.2.1"
+    bs58check "^4.0.0"
+    buffer "^6.0.3"
+    cbor "^10.0.2"
+    cbor-bigdecimal "^10.0.2"
+    crc-32 "^1.2.2"
+    elliptic "6.5.7"
+    ethers "^6.13.4"
+    hash.js "^1.1.7"
+    js-sha3 "^0.9.3"
+    lodash "^4.17.21"
+    secp256k1 "5.0.1"
+    uuid "^10.0.0"
 
 handle-thing@^2.0.0:
   version "2.0.1"
@@ -12307,6 +12336,11 @@ js-sha3@0.8.0:
   version "0.8.0"
   resolved "https://registry.yarnpkg.com/js-sha3/-/js-sha3-0.8.0.tgz#b9b7a5da73afad7dedd0f8c463954cbde6818840"
   integrity sha512-gF1cRrHhIzNfToc802P800N8PpXS+evLLXfsVpowqmAFR9uwbi89WvXg2QspOmXL8QL86J4T1EpFu+yUkwJY3Q==
+
+js-sha3@^0.9.3:
+  version "0.9.3"
+  resolved "https://registry.yarnpkg.com/js-sha3/-/js-sha3-0.9.3.tgz#f0209432b23a66a0f6c7af592c26802291a75c2a"
+  integrity sha512-BcJPCQeLg6WjEx3FE591wVAevlli8lxsxm9/FzV4HXkV49TmBH38Yvrpce6fjbADGMKFrBMGTqrVz3qPIZ88Gg==
 
 "js-tokens@^3.0.0 || ^4.0.0", js-tokens@^4.0.0:
   version "4.0.0"
