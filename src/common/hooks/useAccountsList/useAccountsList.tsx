@@ -32,13 +32,20 @@ const useAccountsList = ({
       accounts.filter((account) => {
         if (!search) return true
 
-        const doesAddressMatch = account.addr.toLowerCase().includes(search.toLowerCase())
+        const normalizedSearch = search.toLowerCase().trim()
+        // Split search query by whitespace to allow matching multiple words
+        const searchWords = normalizedSearch.split(/\s+/).filter((word) => word.length > 0)
+        if (!searchWords.length) return false
+
+        const doesAddressMatch = searchWords.some((word) =>
+          account.addr.toLowerCase().includes(word)
+        )
         const doesDomainMatch = findAccountDomainFromPartialDomain(account.addr, search, domains)
-        const doesLabelMatch = account.preferences.label
-          .toLowerCase()
-          .includes(search.toLowerCase())
+        const doesLabelMatch = searchWords.some((word) =>
+          account.preferences.label.toLowerCase().includes(word)
+        )
         const doesSmartAccountMatch =
-          isSmartAccount(account) && search.toLowerCase().includes('smart')
+          isSmartAccount(account) && searchWords.some((word) => word === 'smart')
 
         return doesAddressMatch || doesLabelMatch || doesSmartAccountMatch || doesDomainMatch
       }),
