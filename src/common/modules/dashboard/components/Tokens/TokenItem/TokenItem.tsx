@@ -48,7 +48,7 @@ const TokenItem = ({ token }: { token: TokenResult }) => {
   const projectedRewardsDescription = useMemo(
     () => (
       <Text fontSize={12} weight="regular">
-        {t('Projected rewards ')}
+        {t('Projected rewards for ')}
         <Badge text={`${projectedRewardsUserXp} XP`} type="projectedRewards" weight="semiBold" />
       </Text>
     ),
