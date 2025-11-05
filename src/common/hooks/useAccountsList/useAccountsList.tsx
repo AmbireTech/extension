@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form'
 import { FlatList } from 'react-native'
 
 import { Account as AccountType } from '@ambire-common/interfaces/account'
+import { isSmartAccount } from '@ambire-common/libs/account/account'
 import { findAccountDomainFromPartialDomain } from '@ambire-common/utils/domains'
 import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
 import useDomainsControllerState from '@web/hooks/useDomainsController/useDomainsController'
@@ -36,19 +37,10 @@ const useAccountsList = ({
         const doesLabelMatch = account.preferences.label
           .toLowerCase()
           .includes(search.toLowerCase())
-        const isSmartAccount = !!account?.creation
         const doesSmartAccountMatch =
-          isSmartAccount && 'smart account'.includes(search.toLowerCase())
-        const doesBasicAccountMatch =
-          !isSmartAccount && 'basic account'.includes(search.toLowerCase())
+          isSmartAccount(account) && search.toLowerCase().includes('smart')
 
-        return (
-          doesAddressMatch ||
-          doesLabelMatch ||
-          doesSmartAccountMatch ||
-          doesBasicAccountMatch ||
-          doesDomainMatch
-        )
+        return doesAddressMatch || doesLabelMatch || doesSmartAccountMatch || doesDomainMatch
       }),
     [accounts, domains, search]
   )
