@@ -1,3 +1,4 @@
+import Fuse from 'fuse.js'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
@@ -7,7 +8,6 @@ import { Contact } from '@ambire-common/controllers/addressBook/addressBook'
 import { ITransferController } from '@ambire-common/interfaces/transfer'
 import { TokenResult } from '@ambire-common/libs/portfolio'
 import { validateAddress } from '@ambire-common/services/validations'
-import { findAccountDomainFromPartialDomain } from '@ambire-common/utils/domains'
 import AccountsFilledIcon from '@common/assets/svg/AccountsFilledIcon'
 import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
@@ -179,28 +179,34 @@ const Recipient: React.FC<Props> = ({
     navigate(ROUTES.addressBook)
   }, [navigate])
 
-  const filteredContacts = useMemo(
+  const searchableContacts = useMemo(
     () =>
-      contacts.filter((contact) => {
-        if (!actualAddress) return true
-
-        const lowercaseActualAddress = actualAddress.toLowerCase()
-        const lowercaseName = contact.name.toLowerCase()
-        const lowercaseAddress = contact.address.toLowerCase()
-        const doesDomainMatch = findAccountDomainFromPartialDomain(
-          contact.address,
-          actualAddress,
-          domains
-        )
-
-        return (
-          lowercaseAddress.includes(lowercaseActualAddress) ||
-          lowercaseName.includes(lowercaseActualAddress) ||
-          doesDomainMatch
-        )
-      }),
-    [contacts, actualAddress, domains]
+      contacts.map((contact) => ({
+        contact,
+        searchableText: [
+          contact.address.toLowerCase(),
+          contact.name.toLowerCase(),
+          domains[contact.address]?.ens?.toLowerCase().trim() || ''
+        ]
+          .filter(Boolean)
+          .join(' ')
+      })),
+    [contacts, domains]
   )
+
+  const filteredContacts = useMemo(() => {
+    if (!actualAddress) return contacts
+
+    const fuse = new Fuse(searchableContacts, {
+      keys: ['searchableText'],
+      threshold: 0.3,
+      ignoreLocation: true,
+      minMatchCharLength: 1
+    })
+
+    const results = fuse.search(actualAddress)
+    return results.map((result) => result.item.contact)
+  }, [contacts, actualAddress, searchableContacts])
 
   const setAddressWrapped = useCallback(
     ({ value: newAddress }: Pick<SelectValue, 'value'>) => {
