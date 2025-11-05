@@ -44,6 +44,10 @@ const getBadgeTypes = (theme: ThemeProps) => ({
     color: theme.secondaryText,
     iconColor: theme.successText
   },
+  projectedRewards: {
+    color: theme.projectedRewards,
+    iconColor: theme.projectedRewards
+  },
   new: {
     color: '#fff',
     iconColor: '#fff'
@@ -87,6 +91,7 @@ const Badge = ({
         type === 'info2' && styles.info2Badge,
         type === 'error' && styles.errorBadge,
         type === 'new' && styles.newBadge,
+        type === 'projectedRewards' && styles.projectedRewards,
         {
           height: sizeMultiplier * 20
         },

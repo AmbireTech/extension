@@ -5,7 +5,7 @@ import { ScrollView, View } from 'react-native'
 
 import { AddressState } from '@ambire-common/interfaces/domains'
 import { getDefaultAccountPreferences } from '@ambire-common/libs/account/account'
-import { getIdentity } from '@ambire-common/libs/accountPicker/accountPicker'
+import { normalizeIdentityResponse } from '@ambire-common/libs/accountPicker/accountPicker'
 import { getAddressFromAddressState } from '@ambire-common/utils/domains'
 import Button from '@common/components/Button'
 import Panel from '@common/components/Panel'
@@ -17,7 +17,6 @@ import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNav
 import Header from '@common/modules/header/components/Header'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { RELAYER_URL } from '@env'
 import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
 import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
 import useBackgroundService from '@web/hooks/useBackgroundService'
@@ -91,14 +90,11 @@ const ViewOnlyScreen = () => {
   )
 
   const handleFormSubmit = useCallback(async () => {
-    const accountsToAddPromises = accounts.map(async (account, i) => {
+    const accountsToAdd = accounts.map((account, i) => {
       const address = getAddressFromAddressState(account)
-
-      const { creation, initialPrivileges, associatedKeys } = await getIdentity(
-        address,
-        fetch,
-        RELAYER_URL
-      )
+      // Use defaults, fetch identity later so account import isn’t blocked by failures
+      const identityDefaults = normalizeIdentityResponse(address)
+      const { creation, initialPrivileges, associatedKeys } = identityDefaults
 
       const addr = getAddress(address)
       const domainName = account.ensAddress ? account.fieldValue : null
@@ -117,7 +113,6 @@ const ViewOnlyScreen = () => {
     })
 
     try {
-      const accountsToAdd = await Promise.all(accountsToAddPromises)
       setIsLoading(true)
       dispatch({
         type: 'MAIN_CONTROLLER_ADD_VIEW_ONLY_ACCOUNTS',

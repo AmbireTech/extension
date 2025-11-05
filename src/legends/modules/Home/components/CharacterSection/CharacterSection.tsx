@@ -1,5 +1,4 @@
 import React, { useState } from 'react'
-import { Pressable } from 'react-native'
 
 import { STK_WALLET } from '@ambire-common/consts/addresses'
 import { getTokenBalanceInUSD } from '@ambire-common/libs/portfolio/helpers'
@@ -91,7 +90,8 @@ const CharacterSection = () => {
 
   const currentLevel = season1LeaderboardData?.currentUser?.level ?? 1
   const xpForNextLevel = Math.ceil(((currentLevel + 1) * 4.5) ** 2)
-  const startXpForCurrentLevel = Math.ceil((currentLevel * 4.5) ** 2)
+
+  const startXpForCurrentLevel = currentLevel === 1 ? 0 : Math.ceil((currentLevel * 4.5) ** 2)
 
   const currentTotalBalanceOnSupportedChains = amount || undefined
 
@@ -107,14 +107,12 @@ const CharacterSection = () => {
       currentTotalBalanceOnSupportedChains ?? 0,
       rewardsProjectionData?.numberOfWeeksSinceStartOfSeason,
       rewardsProjectionData?.totalWeightNonUser,
-      rewardsProjectionData?.walletPrice,
       rewardsProjectionData?.totalRewardsPool,
       rewardsProjectionData?.minLvl,
       rewardsProjectionData?.minBalance
     )
 
-  const projectedAmountFormatted =
-    projectedAmount && Math.round(projectedAmount.walletRewards * 1e18)
+  const projectedAmountFormatted = projectedAmount && Math.round(projectedAmount * 1e18)
   const balanceInUsd = getTokenBalanceInUSD({
     chainId: BigInt(1),
     amount: BigInt(projectedAmountFormatted || 1),
@@ -163,13 +161,23 @@ const CharacterSection = () => {
                     </p>
                   </div>
                   {isCharacterNotMinted ? (
-                    <Pressable onPress={() => isCharacterNotMinted && setIsPickCharacterOpen(true)}>
+                    <div
+                      role="button"
+                      onClick={() => isCharacterNotMinted && setIsPickCharacterOpen(true)}
+                      className={styles.defaultCharacter}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          isCharacterNotMinted && setIsPickCharacterOpen(true)
+                        }
+                      }}
+                      tabIndex={0}
+                    >
                       <img
                         className={styles.characterImage}
                         src={character?.image}
                         alt={character?.characterName}
                       />
-                    </Pressable>
+                    </div>
                   ) : (
                     <img
                       className={styles.characterImage}
@@ -344,13 +352,12 @@ const CharacterSection = () => {
                           $stkWALLET
                         </p>
                         <p className={styles.projectionStatValue}>
-                          {projectedAmount?.walletRewards
-                            ? Number(projectedAmount.walletRewards) >=
-                              THRESHOLD_AMOUNT_TO_HIDE_BALANCE_DECIMALS
-                              ? Number(projectedAmount.walletRewards).toLocaleString(undefined, {
+                          {projectedAmount
+                            ? Number(projectedAmount) >= THRESHOLD_AMOUNT_TO_HIDE_BALANCE_DECIMALS
+                              ? Number(projectedAmount).toLocaleString(undefined, {
                                   maximumFractionDigits: 0
                                 })
-                              : Number(projectedAmount.walletRewards).toLocaleString(undefined, {
+                              : Number(projectedAmount).toLocaleString(undefined, {
                                   minimumFractionDigits: 3,
                                   maximumFractionDigits: 3
                                 })
@@ -370,35 +377,6 @@ const CharacterSection = () => {
                               }`
                             : '$0.00'}
                         </p>
-                      </div>
-
-                      <div className={styles.apyWrapper}>
-                        <div className={styles.apyTitleWrapper}>
-                          <p className={styles.rewardsProjectionTitle}>APY</p>{' '}
-                          <InfoIcon
-                            width={12}
-                            height={12}
-                            color="currentColor"
-                            className={styles.infoIcon}
-                            data-tooltip-id="apy-info"
-                          />
-                          <Tooltip
-                            style={{
-                              backgroundColor: '#101114',
-                              color: '#F4F4F7',
-                              fontFamily: 'FunnelDisplay',
-                              fontSize: 11,
-                              lineHeight: '16px',
-                              fontWeight: 300,
-                              maxWidth: 244,
-                              boxShadow: '0px 0px 12.1px 0px #191B20'
-                            }}
-                            place="bottom"
-                            id="apy-info"
-                            content="Annual Percentage Yield. This percentage reflects moving average of APR (Annual Percentage Rate) for $stkWALLET rewards based on your portfolio balance and level. This percentage does not guarantee future performance and is subject to change."
-                          />
-                        </div>
-                        <p className={styles.apyValue}>{projectedAmount?.apy.toFixed(2)}%</p>
                       </div>
                     </>
                   )

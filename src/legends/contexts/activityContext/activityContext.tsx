@@ -1,8 +1,8 @@
 import React, { createContext, useCallback, useEffect, useMemo, useState } from 'react'
 
+import { RELAYER_URL } from '@env'
 import useAccountContext from '@legends/hooks/useAccountContext'
 
-import { RELAYER_URL } from '@env'
 import { ActivityResponse } from './types'
 
 type ActivityContextType = {
@@ -30,7 +30,7 @@ const ActivityContextProvider: React.FC<any> = ({ children }) => {
       setIsLoading(true)
 
       const activityResponse = await fetch(
-        `${RELAYER_URL}/legends/activity/${connectedAccount}?page=${currentPage}`
+        `${RELAYER_URL}/legends/activity/${connectedAccount}/latest?page=${currentPage}`
       )
       if (!activityResponse.ok) {
         throw new Error('Failed to fetch Character activity!')
