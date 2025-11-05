@@ -2,6 +2,7 @@ import { ethers } from 'ethers'
 import React, { createContext, useCallback, useEffect, useMemo, useState } from 'react'
 
 import Spinner from '@legends/components/Spinner'
+import * as Sentry from '@sentry/react'
 import { EthereumProvider } from '@web/extension-services/inpage/EthereumProvider'
 
 import SelectProviderModal from './SelectProviderModal'
@@ -90,7 +91,7 @@ const ProviderContextProvider = ({ children }: { children: React.ReactNode }) =>
               setConnectedWallet(null)
               localStorage.removeItem(LOCAL_STORAGE_CONNECTED_WALLET)
               reject(new Error('Timeout while fetching accounts'))
-            }, 500)
+            }, 1500)
           })
         ])
 
@@ -105,6 +106,7 @@ const ProviderContextProvider = ({ children }: { children: React.ReactNode }) =>
         setIsInitialLoadingDone(true)
       } catch (e: any) {
         console.error('Error during auto-connect:', e)
+        Sentry.captureException(e)
         setIsInitialLoadingDone(true)
       }
     })()
