@@ -234,7 +234,8 @@ export class EthereumProvider extends EventEmitter {
       const params = {
         icon: await getIconWithRetry(),
         name: await getDappName(),
-        origin: location.origin
+        origin: location.origin,
+        href: location.href
       }
 
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -249,7 +250,7 @@ export class EthereumProvider extends EventEmitter {
     try {
       const { chainId, accounts, networkVersion, isUnlocked, logLevel }: any =
         await this.requestInternalMethods({ method: 'getProviderState' })
-      console.log('getProviderState', globalIsAmbireNext, logLevel)
+
       this.setLogLevel(logLevel)
       if (isUnlocked) {
         this._isUnlocked = true
@@ -289,7 +290,8 @@ export class EthereumProvider extends EventEmitter {
       const params = {
         icon: await getIconWithRetry(),
         name: await getDappName(),
-        origin: location.origin
+        origin: location.origin,
+        href: location.href
       }
 
       // eslint-disable-next-line @typescript-eslint/no-floating-promises

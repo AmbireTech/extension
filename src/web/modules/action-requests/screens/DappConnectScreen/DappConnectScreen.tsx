@@ -12,7 +12,6 @@ import eventBus from '@web/extension-services/event/eventBus'
 import useActionsControllerState from '@web/hooks/useActionsControllerState'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useDappInfo from '@web/hooks/useDappInfo'
-import useDappsControllerState from '@web/hooks/useDappsControllerState'
 import useResponsiveActionWindow from '@web/hooks/useResponsiveActionWindow'
 import ActionFooter from '@web/modules/action-requests/components/ActionFooter'
 
@@ -26,9 +25,7 @@ const DappConnectScreen = () => {
   const { theme, styles } = useTheme(getStyles)
   const { dispatch } = useBackgroundService()
   const state = useActionsControllerState()
-  const {
-    state: { dapps }
-  } = useDappsControllerState()
+
   const [isAuthorizing, setIsAuthorizing] = useState(false)
   const { responsiveSizeMultiplier } = useResponsiveActionWindow()
   const securityCheckCalled = useRef(false)
@@ -138,7 +135,7 @@ const DappConnectScreen = () => {
         <View style={styles.content}>
           <DAppConnectHeader
             name={name}
-            origin={userRequest?.session?.origin}
+            id={userRequest?.session?.id}
             icon={icon}
             securityCheck={securityCheck}
             responsiveSizeMultiplier={responsiveSizeMultiplier}
