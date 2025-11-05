@@ -233,6 +233,7 @@
     "string_decoder": "~0.10.25",
     "swiper": "^11.1.14",
     "timers-browserify": "^1.0.1",
+    "tldts": "7.0.17",
     "toggle-switch-react-native": "^3.3.0",
     "ts-toolbelt": "^9.6.0",
     "tslib": "^2.8.1",

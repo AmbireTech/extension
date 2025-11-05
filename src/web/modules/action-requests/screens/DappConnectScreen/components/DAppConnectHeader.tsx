@@ -23,7 +23,7 @@ type Props = Partial<DappProviderRequest['session']> & {
 }
 
 const DAppConnectHeader: FC<Props> = ({
-  origin,
+  id,
   name = 'Unknown App',
   icon,
   responsiveSizeMultiplier,
@@ -38,8 +38,6 @@ const DAppConnectHeader: FC<Props> = ({
   // the dApp will be marked as trusted for a split second before the window closes.
   const [initialDappsList, setInitialDappsList] = useState<Dapp[]>([])
 
-  const hostname = origin ? new URL(origin).hostname : ''
-
   useEffect(() => {
     if (!initialDappsList.length && state.dapps.length) {
       setInitialDappsList(state.dapps)
@@ -47,10 +45,10 @@ const DAppConnectHeader: FC<Props> = ({
   }, [initialDappsList, state.dapps])
 
   const isDAppTrusted = useMemo(() => {
-    if (!hostname) return false
+    if (!id) return false
 
-    return initialDappsList.some((dapp) => dapp.url.includes(hostname))
-  }, [hostname, initialDappsList])
+    return initialDappsList.some((dapp) => dapp.id === id)
+  }, [id, initialDappsList])
 
   const spacingsStyle = useMemo(() => {
     return {
@@ -130,7 +128,7 @@ const DAppConnectHeader: FC<Props> = ({
             {name}
           </Text>
           <Text fontSize={14 * responsiveSizeMultiplier} appearance="secondaryText">
-            {hostname}
+            {id}
           </Text>
         </View>
       </View>
