@@ -1,10 +1,10 @@
+import Fuse from 'fuse.js'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { FlatList } from 'react-native'
 
 import { Account as AccountType } from '@ambire-common/interfaces/account'
 import { isSmartAccount } from '@ambire-common/libs/account/account'
-import { findAccountDomainFromPartialDomain } from '@ambire-common/utils/domains'
 import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
 import useDomainsControllerState from '@web/hooks/useDomainsController/useDomainsController'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
@@ -27,40 +27,35 @@ const useAccountsList = ({
   const { account: selectedAccount } = useSelectedAccountControllerState()
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  const filteredAccounts = useMemo(
+  const searchableAccounts = useMemo(
     () =>
-      accounts.filter((account) => {
-        if (!search) return true
-
-        const normalizedSearch = search.toLowerCase().trim()
-        const allWords = normalizedSearch.split(/\s+/).filter((word) => word.length > 0)
-        if (!allWords.length) return false
-
-        // Prevent overly broad matches from short words in multi-word queries
-        // (e.g., "elmo a" shouldn't match everything "a"), while still allowing
-        // partial single-word searches as users type (to prevent "no results" at first)
-        const searchWords =
-          allWords.length === 1
-            ? allWords
-            : allWords.some((w) => w.length > 3)
-            ? allWords.filter((w) => w.length >= 3)
-            : allWords
-        if (!searchWords.length) return false
-
-        const doesAddressMatch = searchWords.some((word) =>
-          account.addr.toLowerCase().includes(word)
-        )
-        const doesDomainMatch = findAccountDomainFromPartialDomain(account.addr, search, domains)
-        const doesLabelMatch = searchWords.some((word) =>
-          account.preferences.label.toLowerCase().includes(word)
-        )
-        const doesSmartAccountMatch =
-          isSmartAccount(account) && searchWords.some((word) => word === 'smart')
-
-        return doesAddressMatch || doesLabelMatch || doesSmartAccountMatch || doesDomainMatch
-      }),
-    [accounts, domains, search]
+      accounts.map((account) => ({
+        account,
+        searchableText: [
+          account.addr.toLowerCase(),
+          account.preferences.label.toLowerCase(),
+          domains[account.addr]?.ens?.toLowerCase().trim() || '',
+          isSmartAccount(account) ? 'smart' : ''
+        ]
+          .filter(Boolean)
+          .join(' ')
+      })),
+    [accounts, domains]
   )
+
+  const filteredAccounts = useMemo(() => {
+    if (!search) return accounts
+
+    const fuse = new Fuse(searchableAccounts, {
+      keys: ['searchableText'],
+      threshold: 0.3, // 0 = exact match, 1 = match anything
+      ignoreLocation: true,
+      minMatchCharLength: 1
+    })
+
+    const results = fuse.search(search)
+    return results.map((result) => result.item.account)
+  }, [accounts, searchableAccounts, search])
 
   const selectedAccountIndex = accounts.findIndex(
     (account) => account.addr === selectedAccount?.addr
