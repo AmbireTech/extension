@@ -38,7 +38,10 @@ const ProviderContextProvider = ({ children }: { children: React.ReactNode }) =>
    */
   const autoSelectProvider = useCallback(
     (latestProviders: Providers) => {
-      if (!connectedWallet) return
+      if (!connectedWallet) {
+        setIsInitialLoadingDone(true)
+        return
+      }
 
       if (selectProviderTimeoutRef.current) {
         clearTimeout(selectProviderTimeoutRef.current)
