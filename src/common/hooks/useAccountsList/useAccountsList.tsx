@@ -33,8 +33,18 @@ const useAccountsList = ({
         if (!search) return true
 
         const normalizedSearch = search.toLowerCase().trim()
-        // Split search query by whitespace to allow matching multiple words
-        const searchWords = normalizedSearch.split(/\s+/).filter((word) => word.length > 0)
+        const allWords = normalizedSearch.split(/\s+/).filter((word) => word.length > 0)
+        if (!allWords.length) return false
+
+        // Prevent overly broad matches from short words in multi-word queries
+        // (e.g., "elmo a" shouldn't match everything "a"), while still allowing
+        // partial single-word searches as users type (to prevent "no results" at first)
+        const searchWords =
+          allWords.length === 1
+            ? allWords
+            : allWords.some((w) => w.length > 3)
+            ? allWords.filter((w) => w.length >= 3)
+            : allWords
         if (!searchWords.length) return false
 
         const doesAddressMatch = searchWords.some((word) =>
