@@ -19,7 +19,7 @@ import { getAccountKeysCount } from '@ambire-common/libs/keys/keys'
 import { KeystoreSigner } from '@ambire-common/libs/keystoreSigner/keystoreSigner'
 import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
 import wait from '@ambire-common/utils/wait'
-import CONFIG, { isAmbireNext, isDev, isProd } from '@common/config/env'
+import CONFIG, { APP_VERSION, isAmbireNext, isDev, isProd } from '@common/config/env'
 import {
   BROWSER_EXTENSION_LOG_UPDATED_CONTROLLER_STATE_ONLY,
   BROWSER_EXTENSION_MEMORY_INTENSIVE_LOGS,
@@ -61,7 +61,6 @@ import LatticeSigner from '@web/modules/hardware-wallet/libs/LatticeSigner'
 import LedgerSigner from '@web/modules/hardware-wallet/libs/LedgerSigner'
 import TrezorSigner from '@web/modules/hardware-wallet/libs/TrezorSigner'
 import { getExtensionInstanceId } from '@web/utils/analytics'
-import getOriginFromUrl from '@web/utils/getOriginFromUrl'
 import { LOG_LEVELS, logInfoWithPrefix } from '@web/utils/logger'
 
 import {
@@ -259,20 +258,18 @@ providerRequestTransport.reply(async ({ method, id, providerId, params }, meta) 
     return
   }
 
-  const origin = getOriginFromUrl(meta.sender.url)
-  const session = mainCtrl.dapps.getOrCreateDappSession({ tabId, windowId, origin })
+  const session = await mainCtrl.dapps.getOrCreateDappSession({
+    tabId,
+    windowId,
+    url: meta.sender.url
+  })
 
   await mainCtrl.dapps.initialLoadPromise
   mainCtrl.dapps.setSessionMessenger(session.sessionId, bridgeMessenger, isAmbireNext)
 
   try {
     const res = await handleProviderRequests(
-      {
-        method,
-        params,
-        session,
-        origin
-      },
+      { method, params, session },
       mainCtrl,
       walletStateCtrl,
       autoLockCtrl,
@@ -417,6 +414,7 @@ const init = async () => {
   }
 
   mainCtrl = new MainController({
+    appVersion: APP_VERSION,
     platform,
     storageAPI: storage,
     fetch: fetchWithAnalytics,

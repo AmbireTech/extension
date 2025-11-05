@@ -38,7 +38,7 @@ const Routes = () => {
       testID: 'dashboard-button-apps',
       icon: DAppsIcon,
       label: t('Apps'),
-      route: WEB_ROUTES.appCatalog,
+      route: WEB_ROUTES.apps,
       isExternal: false,
       scale: 0.95,
       scaleOnHover: 1.02
