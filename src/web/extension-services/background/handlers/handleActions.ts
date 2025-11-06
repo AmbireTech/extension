@@ -609,6 +609,10 @@ export const handleActions = async (
       return await mainCtrl.invite.revokeOG()
     }
 
+    case 'DAPPS_CONTROLLER_FETCH_AND_UPDATE_DAPPS': {
+      await mainCtrl.dapps.fetchAndUpdateDapps()
+      break
+    }
     case 'DAPPS_CONTROLLER_DISCONNECT_DAPP': {
       await mainCtrl.dapps.broadcastDappSessionEvent('disconnect', undefined, params)
       mainCtrl.dapps.updateDapp(params, { isConnected: false })
@@ -630,7 +634,6 @@ export const handleActions = async (
       return mainCtrl.dapps.updateDapp(params.id, params.dapp)
     }
     case 'DAPP_CONTROLLER_REMOVE_DAPP': {
-      await mainCtrl.dapps.broadcastDappSessionEvent('disconnect', undefined, params)
       return mainCtrl.dapps.removeDapp(params)
     }
     case 'PHISHING_CONTROLLER_GET_IS_BLACKLISTED_AND_SEND_TO_UI': {

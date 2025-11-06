@@ -15,23 +15,22 @@ const getStyles = (theme: ThemeProps) =>
     fallbackWrapper: {
       width: 30,
       height: 30,
+      // @ts-ignore
       borderRadius: '50%',
       backgroundColor: theme.primaryLight80,
       alignItems: 'center',
       justifyContent: 'center'
     },
     dappItemWrapper: {
-      width: '33.33%',
-      height: 146,
-      ...spacings.phMi,
-      ...spacings.pvMi
+      flex: 1,
+      ...spacings.mbTy
     },
     container: {
       width: '100%',
       height: '100%',
       ...common.borderRadiusPrimary,
-      ...spacings.phTy,
-      ...spacings.pvTy
+      ...spacings.phSm,
+      ...spacings.pvSm
     }
   })
 

@@ -27,13 +27,17 @@ const SelectContainer: FC<Props> = ({
   label,
   bottomSheetTitle,
   value,
+  clearValue,
   placeholder,
   containerStyle,
+  selectBorderWrapperStyle,
   selectStyle,
+  hoveredSelectStyle,
   labelStyle,
   menuStyle,
   disabled,
   withSearch = true,
+  withClearButton,
   searchPlaceholder,
   isMenuOpen,
   selectRef,
@@ -86,12 +90,16 @@ const SelectContainer: FC<Props> = ({
       ) : (
         <SelectedMenuOption
           disabled={disabled}
+          clearValue={clearValue}
           isMenuOpen={isMenuOpen}
           selectRef={selectRef}
           toggleMenu={toggleMenu}
           value={value}
+          withClearButton={withClearButton}
           placeholder={placeholder}
+          selectBorderWrapperStyle={selectBorderWrapperStyle}
           selectStyle={selectStyle}
+          hoveredSelectStyle={hoveredSelectStyle}
           size={size}
         />
       )}

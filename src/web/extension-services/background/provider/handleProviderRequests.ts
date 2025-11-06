@@ -56,13 +56,17 @@ const handleProviderRequests = async (
   }
 
   if (method === 'tabCheckin') {
+    const existingDapp =
+      mainCtrl.dapps.getDapp(session.id) || mainCtrl.dapps.getDappByDomain(session.origin)
     mainCtrl.dapps.setSessionProp(session.sessionId, {
-      name: params.name,
-      icon: params.icon
+      name: existingDapp?.name || params.name,
+      icon: existingDapp?.icon || params.icon
     })
-    mainCtrl.dapps.updateDapp(mainCtrl.dapps.dappSessions[session.sessionId].id, {
-      name: params.name
-    })
+    if (!existingDapp) {
+      mainCtrl.dapps.updateDapp(mainCtrl.dapps.dappSessions[session.sessionId].id, {
+        name: params.name
+      })
+    }
     mainCtrl.dapps.resetSessionLastHandledRequestsId(session.sessionId)
     return
   }
