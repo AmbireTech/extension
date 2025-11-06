@@ -41,9 +41,9 @@ const Select = ({
   return (
     <SelectContainer
       value={value}
-      setValue={setValue}
       {...selectData}
       {...props}
+      menuProps={{ ...selectData.menuProps, ...(props.menuProps || {}) }}
       id={testID}
       testID={testID}
     >

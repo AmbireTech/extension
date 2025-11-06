@@ -2,7 +2,6 @@ import React, { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Pressable, View } from 'react-native'
 
-import predefinedDapps from '@ambire-common/consts/dappCatalog.json'
 import { Dapp } from '@ambire-common/interfaces/dapp'
 import CloseIcon from '@common/assets/svg/CloseIcon'
 import DAppsIcon from '@common/assets/svg/DAppsIcon'
@@ -52,11 +51,6 @@ const DappControl = ({
 
   const showDisconnectButton = !!dapp?.isConnected && (isHovered || inModal)
 
-  const isPredefinedDapp = useMemo(
-    () => predefinedDapps.find((d) => d.url === dapp?.url),
-    [dapp?.url]
-  )
-
   return (
     <View>
       <View style={styles.titleWrapper}>
@@ -78,7 +72,7 @@ const DappControl = ({
                 <Text fontSize={12} weight="medium" numberOfLines={1} style={spacings.mrTy}>
                   {dapp.name}
                 </Text>
-                {(!!dapp.isConnected || !!isPredefinedDapp) && (
+                {!!dapp.isConnected && (
                   <Pressable
                     onPress={() => {
                       dispatch({

@@ -9,6 +9,7 @@ import { nanoid } from 'nanoid'
 
 import EmittableError from '@ambire-common/classes/EmittableError'
 import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
+import { ProviderError } from '@ambire-common/classes/ProviderError'
 import EventEmitter from '@ambire-common/controllers/eventEmitter/eventEmitter'
 import { MainController } from '@ambire-common/controllers/main/main'
 import { ErrorRef } from '@ambire-common/interfaces/eventEmitter'
@@ -18,7 +19,7 @@ import { getAccountKeysCount } from '@ambire-common/libs/keys/keys'
 import { KeystoreSigner } from '@ambire-common/libs/keystoreSigner/keystoreSigner'
 import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
 import wait from '@ambire-common/utils/wait'
-import CONFIG, { isAmbireNext, isDev, isProd } from '@common/config/env'
+import CONFIG, { APP_VERSION, isAmbireNext, isDev, isProd } from '@common/config/env'
 import {
   BROWSER_EXTENSION_LOG_UPDATED_CONTROLLER_STATE_ONLY,
   BROWSER_EXTENSION_MEMORY_INTENSIVE_LOGS,
@@ -60,7 +61,6 @@ import LatticeSigner from '@web/modules/hardware-wallet/libs/LatticeSigner'
 import LedgerSigner from '@web/modules/hardware-wallet/libs/LedgerSigner'
 import TrezorSigner from '@web/modules/hardware-wallet/libs/TrezorSigner'
 import { getExtensionInstanceId } from '@web/utils/analytics'
-import getOriginFromUrl from '@web/utils/getOriginFromUrl'
 import { LOG_LEVELS, logInfoWithPrefix } from '@web/utils/logger'
 
 import {
@@ -144,66 +144,36 @@ function captureBackgroundExceptionFromControllerError(error: ErrorRef, controll
   })
 }
 
-const prefixes = {
-  invictus: {
-    normal: 'Invictus RPC error',
-    status200: 'Invictus RPC error (2XX)'
-  },
-  customRpc: {
-    normal: 'Custom RPC error',
-    status200: 'Custom RPC error (2XX)'
-  }
+// THESE MUST BE LOWERCASE
+const IGNORED_SHORT_MESSAGE_SUBSTRINGS = ['missing revert data']
+const IGNORED_ERROR_SUBSTRINGS = ['failed to fetch', 'network error']
+
+const checkSubstrings = (text: string, substrings: string[]) =>
+  substrings.some((substring) => text.toLowerCase().includes(substring))
+
+const isIgnoredError = (message?: string, shortMessage?: string) => {
+  return (
+    (!!message && checkSubstrings(message, IGNORED_ERROR_SUBSTRINGS)) ||
+    (!!shortMessage && checkSubstrings(shortMessage, IGNORED_SHORT_MESSAGE_SUBSTRINGS))
+  )
 }
 
-const getMessagePrefix = (extraData: { [key: string]: any }) => {
-  const { providerUrl, isProviderInvictus, statusCode, shortMessage } = extraData
-  let is200Status = false
+const getErrorType = (error: any) => {
+  const { statusCode, shortMessage, message } = error
 
-  if (statusCode === undefined && shortMessage !== 'missing revert data') {
-    // Ethers doesn't return a status code for 2XX responses, so we treat undefined as 2XX
-    // and have handling just in case statusCode is explicitly set to 200-299
-    is200Status = true
-  } else if (typeof statusCode === 'number' && statusCode >= 200 && statusCode < 300) {
-    is200Status = true
-  }
-
-  const providerUrlPart = providerUrl ? `(${providerUrl})` : ''
-  const prefixSet = isProviderInvictus ? prefixes.invictus : prefixes.customRpc
-  const prefix = is200Status ? prefixSet.status200 : prefixSet.normal
-
-  return `${prefix} ${providerUrlPart}: `
-}
-
-/**
- * In Sentry we can "fingerprint" errors by their message. This function is used to
- * modify the error messages before sending them to Sentry, so they can be grouped.
- * We do it here so the prefixes are not floating around in the application.
- */
-function formatErrorsBeforeSendingToSentry(
-  errors: Sentry.Exception[],
-  contexts?: Sentry.Event['contexts']
-) {
-  errors.forEach((error) => {
-    const message = error.value
-
-    // Format errors of type ProviderError
-    if (error.type === 'ProviderError' && typeof message === 'string') {
-      // The error object is very plain and doesn't contain any custom properties
-      // except the message. We need to use the contexts to get the extra info.
-      // Note: this is possible because of the extraErrorDataIntegration from Sentry
-      const extraData = contexts?.ProviderError || {}
-      const { error: nestedError, code, data, info, transaction } = extraData
-
-      if (data || info || nestedError || code || transaction) {
-        const prefix = getMessagePrefix(extraData)
-
-        // eslint-disable-next-line no-param-reassign
-        error.value = `${prefix}${message}`
-      }
+  if (typeof statusCode === 'number') {
+    if (statusCode >= 200 && statusCode < 300) {
+      return '2xx'
     }
-  })
 
-  return errors
+    return 'non-2xx'
+  }
+
+  if (message.includes('rpc-timeout')) return 'rpc-timeout'
+
+  // Ethers doesn't return a status code for 2XX responses, so we treat undefined as 2XX
+  // and have handling just in case statusCode is explicitly set to 200-299
+  return isIgnoredError(message, shortMessage) ? 'ignored-error' : '2xx'
 }
 
 let isInitialized = false
@@ -217,15 +187,47 @@ if (CONFIG.SENTRY_DSN_BROWSER_EXTENSION) {
   Sentry.init({
     ...CRASH_ANALYTICS_BACKGROUND_CONFIG,
     integrations: [Sentry.extraErrorDataIntegration()],
-    beforeSend(event) {
-      const errors = formatErrorsBeforeSendingToSentry(
-        event.exception?.values ?? [],
-        event.contexts
-      )
+    beforeSend(event, hint) {
+      const error = hint.originalException
 
-      if (errors.length > 0 && event.exception?.values) {
+      // Custom handling for ProviderError to adjust event data and fingerprinting
+      // Docs: https://docs.sentry.io/platforms/javascript/enriching-events/fingerprinting/#group-errors-with-greater-granularity
+      if (error instanceof ProviderError) {
+        const errorType = getErrorType(error)
+
+        if (errorType === 'ignored-error') {
+          // Drop ignored errors
+          return null
+        }
+
+        // Always delete breadcrumbs to reduce event size.
         // eslint-disable-next-line no-param-reassign
-        event.exception.values = errors
+        delete event.breadcrumbs
+
+        if (errorType !== '2xx') {
+          // We don't care about any data for non-2XX errors
+          // We only want to know how many of them happened and group them accordingly
+
+          // eslint-disable-next-line no-param-reassign
+          delete event.user
+          // eslint-disable-next-line no-param-reassign
+          delete event.extra
+          // eslint-disable-next-line no-param-reassign
+          delete event.contexts
+        }
+
+        // eslint-disable-next-line no-param-reassign
+        event.extra = {
+          ...(event.extra || {}),
+          providerUrl: error.providerUrl
+        }
+
+        // eslint-disable-next-line no-param-reassign
+        event.fingerprint = [
+          '{{ default }}',
+          error.isProviderInvictus ? error.providerUrl || 'invictus' : 'custom-rpc',
+          errorType
+        ]
       }
 
       // We don't want to miss errors that occur before the controllers are initialized
@@ -256,20 +258,18 @@ providerRequestTransport.reply(async ({ method, id, providerId, params }, meta) 
     return
   }
 
-  const origin = getOriginFromUrl(meta.sender.url)
-  const session = mainCtrl.dapps.getOrCreateDappSession({ tabId, windowId, origin })
+  const session = await mainCtrl.dapps.getOrCreateDappSession({
+    tabId,
+    windowId,
+    url: meta.sender.url
+  })
 
   await mainCtrl.dapps.initialLoadPromise
   mainCtrl.dapps.setSessionMessenger(session.sessionId, bridgeMessenger, isAmbireNext)
 
   try {
     const res = await handleProviderRequests(
-      {
-        method,
-        params,
-        session,
-        origin
-      },
+      { method, params, session },
       mainCtrl,
       walletStateCtrl,
       autoLockCtrl,
@@ -414,6 +414,7 @@ const init = async () => {
   }
 
   mainCtrl = new MainController({
+    appVersion: APP_VERSION,
     platform,
     storageAPI: storage,
     fetch: fetchWithAnalytics,

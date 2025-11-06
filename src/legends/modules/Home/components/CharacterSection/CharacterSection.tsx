@@ -107,14 +107,12 @@ const CharacterSection = () => {
       currentTotalBalanceOnSupportedChains ?? 0,
       rewardsProjectionData?.numberOfWeeksSinceStartOfSeason,
       rewardsProjectionData?.totalWeightNonUser,
-      rewardsProjectionData?.walletPrice,
       rewardsProjectionData?.totalRewardsPool,
       rewardsProjectionData?.minLvl,
       rewardsProjectionData?.minBalance
     )
 
-  const projectedAmountFormatted =
-    projectedAmount && Math.round(projectedAmount.walletRewards * 1e18)
+  const projectedAmountFormatted = projectedAmount && Math.round(projectedAmount * 1e18)
   const balanceInUsd = getTokenBalanceInUSD({
     chainId: BigInt(1),
     amount: BigInt(projectedAmountFormatted || 1),
@@ -354,13 +352,12 @@ const CharacterSection = () => {
                           $WALLET
                         </p>
                         <p className={styles.projectionStatValue}>
-                          {projectedAmount?.walletRewards
-                            ? Number(projectedAmount.walletRewards) >=
-                              THRESHOLD_AMOUNT_TO_HIDE_BALANCE_DECIMALS
-                              ? Number(projectedAmount.walletRewards).toLocaleString(undefined, {
+                          {projectedAmount
+                            ? Number(projectedAmount) >= THRESHOLD_AMOUNT_TO_HIDE_BALANCE_DECIMALS
+                              ? Number(projectedAmount).toLocaleString(undefined, {
                                   maximumFractionDigits: 0
                                 })
-                              : Number(projectedAmount.walletRewards).toLocaleString(undefined, {
+                              : Number(projectedAmount).toLocaleString(undefined, {
                                   minimumFractionDigits: 3,
                                   maximumFractionDigits: 3
                                 })
@@ -380,35 +377,6 @@ const CharacterSection = () => {
                               }`
                             : '$0.00'}
                         </p>
-                      </div>
-
-                      <div className={styles.apyWrapper}>
-                        <div className={styles.apyTitleWrapper}>
-                          <p className={styles.rewardsProjectionTitle}>APY</p>{' '}
-                          <InfoIcon
-                            width={12}
-                            height={12}
-                            color="currentColor"
-                            className={styles.infoIcon}
-                            data-tooltip-id="apy-info"
-                          />
-                          <Tooltip
-                            style={{
-                              backgroundColor: '#101114',
-                              color: '#F4F4F7',
-                              fontFamily: 'FunnelDisplay',
-                              fontSize: 11,
-                              lineHeight: '16px',
-                              fontWeight: 300,
-                              maxWidth: 244,
-                              boxShadow: '0px 0px 12.1px 0px #191B20'
-                            }}
-                            place="bottom"
-                            id="apy-info"
-                            content="Annual Percentage Yield. This percentage reflects moving average of APR (Annual Percentage Rate) for $stkWALLET rewards based on your portfolio balance and level. This percentage does not guarantee future performance and is subject to change."
-                          />
-                        </div>
-                        <p className={styles.apyValue}>{projectedAmount?.apy.toFixed(2)}%</p>
                       </div>
                     </>
                   )

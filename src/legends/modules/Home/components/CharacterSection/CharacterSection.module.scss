@@ -120,13 +120,6 @@
       align-items: center;
       margin-bottom: 1.875rem;
 
-      .rewardsProjectionTitle {
-        color: #8e98a8;
-        font-size: 0.875rem;
-        line-height: 1rem;
-        font-weight: 300;
-      }
-
       .infoIcon {
         margin-left: 0.375rem;
         color: #8e98a8;
@@ -169,39 +162,6 @@
         font-size: 1.125rem;
         font-weight: 500;
         color: #8947c0;
-      }
-    }
-
-    .apyWrapper {
-      display: flex;
-      gap: 1rem;
-      margin-top: 2.6875rem;
-      align-items: center;
-      z-index: 3;
-
-      .apyTitleWrapper {
-        display: flex;
-        align-items: center;
-
-        .apyTitle {
-          color: #8e98a8;
-          font-size: 0.875rem;
-          line-height: 1rem;
-          font-weight: 300;
-        }
-
-        .infoIcon {
-          margin-left: 0.375rem;
-          color: #8e98a8;
-          vertical-align: middle;
-        }
-      }
-
-      .apyValue {
-        color: #03fac4;
-        font-size: 0.875rem;
-        font-weight: 400;
-        // line-height: 2.75rem;
       }
     }
   }

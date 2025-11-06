@@ -14,6 +14,7 @@ interface Style {
   warningBadge: ViewStyle
   errorBadge: ViewStyle
   newBadge: ViewStyle
+  projectedRewards: ViewStyle
 }
 
 const label: ViewStyle = {
@@ -65,6 +66,11 @@ const getStyles = (theme: ThemeProps) =>
       borderColor: theme.infoDecorative,
       // @ts-ignore
       backgroundImage: 'linear-gradient(90deg, #6000FF 0%, #FFA000 100%)'
+    },
+    projectedRewards: {
+      ...label,
+      borderColor: `${String(theme.projectedRewards)}10`,
+      backgroundColor: `${String(theme.projectedRewards)}10`
     }
   })
 

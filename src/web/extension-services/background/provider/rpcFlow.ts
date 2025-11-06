@@ -74,14 +74,14 @@ const flowContext = flow
   // if dApp not connected - prompt connect action window
   .use(async ({ request, mainCtrl, mapMethod }, next) => {
     const {
-      session: { id, origin, name, icon }
+      session: { id, origin: url, name, icon }
     } = request
     const providerCtrl = new ProviderController(mainCtrl)
     if (!Reflect.getMetadata('SAFE', providerCtrl, mapMethod)) {
       if (!mainCtrl.dapps.hasPermission(id)) {
         try {
-          if (connectOrigins[origin] === undefined) {
-            connectOrigins[origin] = new Promise((resolve: (value: any) => void, reject) => {
+          if (connectOrigins[url] === undefined) {
+            connectOrigins[url] = new Promise((resolve: (value: any) => void, reject) => {
               mainCtrl.requests.build({
                 type: 'dappRequest',
                 params: {
@@ -93,27 +93,10 @@ const flowContext = flow
           } else if (mainCtrl.requests.actions.currentAction) {
             await mainCtrl.requests.actions.focusActionWindow()
           }
-          await connectOrigins[origin]
-
-          const isBlacklisted = await mainCtrl.phishing.getIsBlacklisted(origin)
-          mainCtrl.dapps.addDapp({
-            id,
-            name,
-            url: origin,
-            icon,
-            description: 'Custom app automatically added when connected for the first time.',
-            favorite: false,
-            chainId: 1,
-            isConnected: true,
-            blacklisted: isBlacklisted
-          })
-          await mainCtrl.dapps.broadcastDappSessionEvent(
-            'chainChanged',
-            { chain: '0x1', networkVersion: '1' },
-            id
-          )
+          await connectOrigins[url]
+          await mainCtrl.dapps.addDapp({ id, name, url, icon, chainId: 1, isConnected: true })
         } finally {
-          delete connectOrigins[origin]
+          delete connectOrigins[url]
         }
       }
     }
