@@ -26,7 +26,7 @@ const NETWORK_ICONS: { [networkId: string]: React.ReactNode } = {
 
 function getText({ from, to, linearMultiplier }: Partial<CardXp>): string {
   if (linearMultiplier) return `${linearMultiplier} XP per $1 used`
-  if (from !== to) `${from} - ${to} XP`
+  if (from !== to) return `${from} - ${to} XP`
   return `${from} XP`
 }
 
