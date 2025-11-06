@@ -205,7 +205,13 @@ module.exports = async function (env, argv) {
     '@web': path.resolve(__dirname, 'src/web'),
     '@benzin': path.resolve(__dirname, 'src/benzin'),
     '@legends': path.resolve(__dirname, 'src/legends'),
-    react: path.resolve(__dirname, 'node_modules/react')
+    react: path.resolve(__dirname, 'node_modules/react'),
+    // TODO: Temporarily, for Ambire Next, use a pre-release version of gridplus-sdk that supports EIP-7702, look for all #gridplus-sdk-temporary
+    ...(isAmbireNext
+      ? {
+          'gridplus-sdk': path.resolve(__dirname, 'node_modules/gridplus-sdk-e3d6ac0')
+        }
+      : {})
   }
 
   config.resolve.fallback = {
@@ -334,6 +340,10 @@ module.exports = async function (env, argv) {
       }),
       new CopyPlugin({ patterns: extensionCopyPatterns })
     ]
+
+    // Provides a global variable to all files where globalIsAmbireNext is declared including
+    // content scripts and injected files
+    config.plugins.push(new webpack.DefinePlugin({ globalIsAmbireNext: isAmbireNext }))
 
     // Some dependencies, such as @metamask/eth-sig-util v7+ and v8+, ship .cjs
     // files and define "exports" fields in their package.json. In multi-entry

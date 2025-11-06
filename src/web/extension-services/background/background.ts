@@ -9,6 +9,7 @@ import { nanoid } from 'nanoid'
 
 import EmittableError from '@ambire-common/classes/EmittableError'
 import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
+import { ProviderError } from '@ambire-common/classes/ProviderError'
 import EventEmitter from '@ambire-common/controllers/eventEmitter/eventEmitter'
 import { MainController } from '@ambire-common/controllers/main/main'
 import { ErrorRef } from '@ambire-common/interfaces/eventEmitter'
@@ -18,7 +19,7 @@ import { getAccountKeysCount } from '@ambire-common/libs/keys/keys'
 import { KeystoreSigner } from '@ambire-common/libs/keystoreSigner/keystoreSigner'
 import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
 import wait from '@ambire-common/utils/wait'
-import CONFIG, { isDev, isProd } from '@common/config/env'
+import CONFIG, { APP_VERSION, isAmbireNext, isDev, isProd } from '@common/config/env'
 import {
   BROWSER_EXTENSION_LOG_UPDATED_CONTROLLER_STATE_ONLY,
   BROWSER_EXTENSION_MEMORY_INTENSIVE_LOGS,
@@ -60,7 +61,6 @@ import LatticeSigner from '@web/modules/hardware-wallet/libs/LatticeSigner'
 import LedgerSigner from '@web/modules/hardware-wallet/libs/LedgerSigner'
 import TrezorSigner from '@web/modules/hardware-wallet/libs/TrezorSigner'
 import { getExtensionInstanceId } from '@web/utils/analytics'
-import getOriginFromUrl from '@web/utils/getOriginFromUrl'
 import { LOG_LEVELS, logInfoWithPrefix } from '@web/utils/logger'
 
 import {
@@ -144,58 +144,36 @@ function captureBackgroundExceptionFromControllerError(error: ErrorRef, controll
   })
 }
 
-const INVICTUS_ERROR_PREFIX = 'Invictus RPC error'
-const INVICTUS_200_ERROR_PREFIX = 'Invictus RPC error (2XX)'
+// THESE MUST BE LOWERCASE
+const IGNORED_SHORT_MESSAGE_SUBSTRINGS = ['missing revert data']
+const IGNORED_ERROR_SUBSTRINGS = ['failed to fetch', 'network error']
 
-/**
- * In Sentry we can "fingerprint" errors by their message. This function is used to
- * modify the error messages before sending them to Sentry, so they can be grouped.
- * We do it here so the prefixes are not floating around in the application.
- */
-function formatErrorsBeforeSendingToSentry(
-  errors: Sentry.Exception[],
-  contexts?: Sentry.Event['contexts']
-) {
-  errors.forEach((error) => {
-    const message = error.value
+const checkSubstrings = (text: string, substrings: string[]) =>
+  substrings.some((substring) => text.toLowerCase().includes(substring))
 
-    // Format errors of type ProviderError
-    if (error.type === 'ProviderError' && typeof message === 'string') {
-      // The error object is very plain and doesn't contain any custom properties
-      // except the message. We need to use the contexts to get the extra info.
-      // Note: this is possible because of the extraErrorDataIntegration from Sentry
-      const extraData = contexts?.ProviderError || {}
-      const {
-        isProviderInvictus,
-        error: nestedError,
-        statusCode,
-        providerUrl,
-        data,
-        info,
-        transaction
-      } = extraData
+const isIgnoredError = (message?: string, shortMessage?: string) => {
+  return (
+    (!!message && checkSubstrings(message, IGNORED_ERROR_SUBSTRINGS)) ||
+    (!!shortMessage && checkSubstrings(shortMessage, IGNORED_SHORT_MESSAGE_SUBSTRINGS))
+  )
+}
 
-      if (
-        isProviderInvictus &&
-        // Check if it's a relevant provider error
-        (data || info || nestedError || transaction) &&
-        !message.startsWith(INVICTUS_ERROR_PREFIX) &&
-        !message.startsWith(INVICTUS_200_ERROR_PREFIX)
-      ) {
-        // Ethers doesn't return a status code for 2XX responses, so we treat undefined as 2XX
-        // and have handling just in case statusCode is explicitly set to 200-299
-        const is200Status =
-          !statusCode || (typeof statusCode === 'number' && statusCode >= 200 && statusCode < 300)
-        const providerUrlPart = providerUrl ? `(${providerUrl})` : ''
-        // eslint-disable-next-line no-param-reassign
-        error.value = `${
-          is200Status ? INVICTUS_200_ERROR_PREFIX : INVICTUS_ERROR_PREFIX
-        } ${providerUrlPart}: ${message}`
-      }
+const getErrorType = (error: any) => {
+  const { statusCode, shortMessage, message } = error
+
+  if (typeof statusCode === 'number') {
+    if (statusCode >= 200 && statusCode < 300) {
+      return '2xx'
     }
-  })
 
-  return errors
+    return 'non-2xx'
+  }
+
+  if (message.includes('rpc-timeout')) return 'rpc-timeout'
+
+  // Ethers doesn't return a status code for 2XX responses, so we treat undefined as 2XX
+  // and have handling just in case statusCode is explicitly set to 200-299
+  return isIgnoredError(message, shortMessage) ? 'ignored-error' : '2xx'
 }
 
 let isInitialized = false
@@ -209,15 +187,47 @@ if (CONFIG.SENTRY_DSN_BROWSER_EXTENSION) {
   Sentry.init({
     ...CRASH_ANALYTICS_BACKGROUND_CONFIG,
     integrations: [Sentry.extraErrorDataIntegration()],
-    beforeSend(event) {
-      const errors = formatErrorsBeforeSendingToSentry(
-        event.exception?.values ?? [],
-        event.contexts
-      )
+    beforeSend(event, hint) {
+      const error = hint.originalException
 
-      if (errors.length > 0 && event.exception?.values) {
+      // Custom handling for ProviderError to adjust event data and fingerprinting
+      // Docs: https://docs.sentry.io/platforms/javascript/enriching-events/fingerprinting/#group-errors-with-greater-granularity
+      if (error instanceof ProviderError) {
+        const errorType = getErrorType(error)
+
+        if (errorType === 'ignored-error') {
+          // Drop ignored errors
+          return null
+        }
+
+        // Always delete breadcrumbs to reduce event size.
         // eslint-disable-next-line no-param-reassign
-        event.exception.values = errors
+        delete event.breadcrumbs
+
+        if (errorType !== '2xx') {
+          // We don't care about any data for non-2XX errors
+          // We only want to know how many of them happened and group them accordingly
+
+          // eslint-disable-next-line no-param-reassign
+          delete event.user
+          // eslint-disable-next-line no-param-reassign
+          delete event.extra
+          // eslint-disable-next-line no-param-reassign
+          delete event.contexts
+        }
+
+        // eslint-disable-next-line no-param-reassign
+        event.extra = {
+          ...(event.extra || {}),
+          providerUrl: error.providerUrl
+        }
+
+        // eslint-disable-next-line no-param-reassign
+        event.fingerprint = [
+          '{{ default }}',
+          error.isProviderInvictus ? error.providerUrl || 'invictus' : 'custom-rpc',
+          errorType
+        ]
       }
 
       // We don't want to miss errors that occur before the controllers are initialized
@@ -248,20 +258,18 @@ providerRequestTransport.reply(async ({ method, id, providerId, params }, meta) 
     return
   }
 
-  const origin = getOriginFromUrl(meta.sender.url)
-  const session = mainCtrl.dapps.getOrCreateDappSession({ tabId, windowId, origin })
+  const session = await mainCtrl.dapps.getOrCreateDappSession({
+    tabId,
+    windowId,
+    url: meta.sender.url
+  })
 
   await mainCtrl.dapps.initialLoadPromise
-  mainCtrl.dapps.setSessionMessenger(session.sessionId, bridgeMessenger)
+  mainCtrl.dapps.setSessionMessenger(session.sessionId, bridgeMessenger, isAmbireNext)
 
   try {
     const res = await handleProviderRequests(
-      {
-        method,
-        params,
-        session,
-        origin
-      },
+      { method, params, session },
       mainCtrl,
       walletStateCtrl,
       autoLockCtrl,
@@ -406,6 +414,7 @@ const init = async () => {
   }
 
   mainCtrl = new MainController({
+    appVersion: APP_VERSION,
     platform,
     storageAPI: storage,
     fetch: fetchWithAnalytics,
@@ -487,7 +496,7 @@ const init = async () => {
           console.error('Failed to create notification', err)
         })
     }
-    mainCtrl.keystore.lock()
+    mainCtrl.lock()
   })
   const extensionUpdateCtrl = new ExtensionUpdateController()
 
@@ -830,19 +839,19 @@ browser.runtime.onInstalled.addListener(({ reason }: any) => {
 })
 
 // Ensures controllers are initialized if the service worker is inactive and gets reactivated when the extension popup opens.
-browser.runtime.onMessage.addListener(
-  async (message: any, _: chrome.runtime.MessageSender, sendResponse: (response?: any) => void) => {
-    // init the ctrls if not already initialized
-    init().catch((err) => {
-      captureBackgroundException(err)
-      console.error(err)
-    })
+browser.runtime.onMessage.addListener(async (message: any) => {
+  // init the ctrls if not already initialized
+  init().catch((err) => {
+    captureBackgroundException(err)
+    console.error(err)
+  })
 
-    // The extension UI periodically sends "ping" messages. Responding here wakes up
-    // the service worker and keeps it alive as long as a view (popup, window, or tab) remains open.
-    if (message === 'ping') sendResponse('pong')
-  }
-)
+  // The extension UI periodically sends "ping" messages. Responding here wakes up
+  // the service worker and keeps it alive as long as a view (popup, window, or tab) remains open.
+  if (message === 'ambire-extension-ping') return 'ambire-extension-pong'
+
+  return null
+})
 
 try {
   browser.tabs.onRemoved.addListener(async (tabId: number) => {

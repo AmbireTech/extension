@@ -112,28 +112,30 @@ const Buttons: FC<Props> = ({
     <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifyEnd]}>
       {!isActionWindow && (
         <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-          <Button
-            data-tooltip-id="batch-btn-tooltip"
-            hasBottomSpacing={false}
-            text={
-              callsCount > 0 && !batchDisabledReason
-                ? t('Add to batch ({{count}})', {
-                    count: callsCount
-                  })
-                : t('Start a batch')
-            }
-            disabled={startBatchingDisabled}
-            type="secondary"
-            style={{ minWidth: 160, ...spacings.phMd }}
-            onPress={() => {
-              if (isLocalStateOutOfSync) return
+          {/* @ts-ignore */}
+          <View dataSet={{ tooltipId: 'batch-btn-tooltip' }}>
+            <Button
+              hasBottomSpacing={false}
+              text={
+                callsCount > 0 && !batchDisabledReason
+                  ? t('Add to batch ({{count}})', {
+                      count: callsCount
+                    })
+                  : t('Start a batch')
+              }
+              disabled={startBatchingDisabled}
+              type="secondary"
+              style={{ minWidth: 160, ...spacings.phMd }}
+              onPress={() => {
+                if (isLocalStateOutOfSync) return
 
-              handleSubmitForm(false)
-            }}
-            testID="batch-btn"
-          >
-            <BatchIcon style={spacings.mlTy} />
-          </Button>
+                handleSubmitForm(false)
+              }}
+              testID="batch-btn"
+            >
+              <BatchIcon style={spacings.mlTy} />
+            </Button>
+          </View>
           {/* @ts-ignore */}
           <View style={spacings.mlTy} dataSet={{ tooltipId: 'start-batch-info-tooltip' }}>
             <AnimatedPressable

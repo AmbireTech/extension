@@ -218,7 +218,10 @@ export class EthereumProvider extends EventEmitter {
     this.initialize()
     this.shimLegacy()
     this.#pushEventHandlers = new PushEventHandlers(this)
-    this.#backgroundMessenger.reply('broadcast', this.#handleBackgroundMessage)
+    this.#backgroundMessenger.reply(
+      globalIsAmbireNext ? 'broadcast-next' : 'broadcast',
+      this.#handleBackgroundMessage
+    )
     this.#providerId = Date.now()
   }
 
@@ -231,7 +234,8 @@ export class EthereumProvider extends EventEmitter {
       const params = {
         icon: await getIconWithRetry(),
         name: await getDappName(),
-        origin: location.origin
+        origin: location.origin,
+        href: location.href
       }
 
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -286,7 +290,8 @@ export class EthereumProvider extends EventEmitter {
       const params = {
         icon: await getIconWithRetry(),
         name: await getDappName(),
-        origin: location.origin
+        origin: location.origin,
+        href: location.href
       }
 
       // eslint-disable-next-line @typescript-eslint/no-floating-promises

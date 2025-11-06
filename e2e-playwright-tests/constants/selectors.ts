@@ -50,7 +50,9 @@ const selectors = {
     hideTokenButton: 'hide-token-button',
     yesHideItButton: 'yes-hide-it-text',
     hideTokenModalTitle: 'hide-token-modal-title',
-    hideTokenModalDescription: 'hide-token-modal-description'
+    hideTokenModalDescription: 'hide-token-modal-description',
+    projectedRewardsInfoButton: 'rewards-button',
+    projectedRewardsClaimButton: 'projected-rewards-claim-button'
   },
   settings: {
     createNewRecoveryPhraseButton: 'create-new-recovery-phrase',
@@ -210,6 +212,7 @@ const selectors = {
   removeNetworkConfirmButton: 'remove-network-confirm-btn',
   signButton: 'sign-button',
   backButton: 'back-button',
+  submitButton: 'button-submit',
   txnStatus: 'txn-status',
   batchModalGotIt: 'queue-modal-got-it-button',
   signButtonSwap: 'swap-button-sign',

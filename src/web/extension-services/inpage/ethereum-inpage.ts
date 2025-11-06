@@ -1,5 +1,9 @@
+declare const globalIsAmbireNext: boolean
+
 if (/Opera|OPR\//i.test(navigator.userAgent)) {
-  window.ethereum = new Proxy(window.ambire, { get: (t, p, r) => Reflect.get(t, p, r) })
+  window.ethereum = new Proxy(globalIsAmbireNext ? window.ambireNext : window.ambire, {
+    get: (t, p, r) => Reflect.get(t, p, r)
+  })
 } else {
   const d = Object.getOwnPropertyDescriptor(window, 'ethereum')
   let isDapp = false
@@ -22,7 +26,10 @@ if (/Opera|OPR\//i.test(navigator.userAgent)) {
                   isDapp = true
                   // Send a request to the background's dapp session to notify that this page is a dApp
                   // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                  window.ambire.request({ method: 'eth_chainId', params: [] })
+                  ;(globalIsAmbireNext ? window.ambireNext : window.ambire).request({
+                    method: 'eth_chainId',
+                    params: []
+                  })
                 } catch (e) {
                   // silent fail
                 }
@@ -31,11 +38,11 @@ if (/Opera|OPR\//i.test(navigator.userAgent)) {
           }
         }
 
-        return window.ambire
+        return globalIsAmbireNext ? window.ambireNext : window.ambire
       },
       set: () => {}
     })
   }
-  window.web3 ||= { currentProvider: window.ambire }
+  window.web3 ||= { currentProvider: globalIsAmbireNext ? window.ambireNext : window.ambire }
 }
 window.dispatchEvent(new Event('ethereum#initialized'))

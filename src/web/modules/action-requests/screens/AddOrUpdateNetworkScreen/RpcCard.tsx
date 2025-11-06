@@ -28,7 +28,7 @@ const RpcCard = ({
         flexbox.flex1,
         common.borderRadiusPrimary,
         isNew && common.shadowTertiary,
-        { maxWidth: 292, height: 308 }
+        { maxHeight: 308 }
       ]}
     >
       <View

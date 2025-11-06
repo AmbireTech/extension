@@ -9,7 +9,9 @@ const CARD_PREDEFINED_ID = {
   feedback: 'feedback',
   claimRewards: 'claim-rewards',
   migrateToStk: 'migrate-to-stk',
-  bitrefill: 'bitrefill'
+  bitrefill: 'bitrefill',
+  nft: 'nft',
+  mascot: 'mascot'
 }
 
 const MAX_INVITATIONS = 2
