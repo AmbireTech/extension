@@ -183,13 +183,9 @@ const Recipient: React.FC<Props> = ({
     () =>
       contacts.map((contact) => ({
         contact,
-        searchableText: [
-          contact.address.toLowerCase(),
-          contact.name.toLowerCase(),
-          domains[contact.address]?.ens?.toLowerCase().trim() || ''
-        ]
-          .filter(Boolean)
-          .join(' ')
+        name: contact.name.toLowerCase(),
+        address: contact.address.toLowerCase(),
+        domain: domains[contact.address]?.ens?.toLowerCase().trim() || ''
       })),
     [contacts, domains]
   )
@@ -198,7 +194,11 @@ const Recipient: React.FC<Props> = ({
     if (!actualAddress) return contacts
 
     const fuse = new Fuse(searchableContacts, {
-      keys: ['searchableText'],
+      keys: [
+        { name: 'name', weight: 0.5 },
+        { name: 'domain', weight: 0.3 },
+        { name: 'address', weight: 0.2 }
+      ],
       threshold: 0.3,
       ignoreLocation: true,
       minMatchCharLength: 1
