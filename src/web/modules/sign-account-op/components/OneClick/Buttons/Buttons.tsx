@@ -29,7 +29,6 @@ type Props = {
   networkUserRequests: UserRequest[]
   isRecipientAddressUnknown?: boolean
   isRecipientAddressUnknownAgreed?: boolean
-  recipientAddress?: string
   onRecipientAddressUnknownAgree?: () => void
 }
 

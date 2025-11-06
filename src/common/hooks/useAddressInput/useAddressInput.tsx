@@ -87,7 +87,6 @@ const useAddressInput = ({
     // will be used as-is.
     return {
       ...base
-      // severity: base.isError ? 'error' : 'warning'
     }
   }, [validation, overwriteSeverity])
 
