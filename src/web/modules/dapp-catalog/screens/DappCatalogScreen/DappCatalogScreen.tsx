@@ -158,7 +158,7 @@ const DappCatalogScreen = () => {
       const fuse = new Fuse(searchableDapps, {
         keys: [
           { name: 'name', weight: 0.7 },
-          { name: 'url', weight: 0.3 },
+          { name: 'url', weight: 0.2 },
           { name: 'description', weight: 0.1 }
         ],
         threshold: 0.2, // more strict, better less results than too random
