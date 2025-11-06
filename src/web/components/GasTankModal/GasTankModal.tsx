@@ -5,14 +5,12 @@ import { Animated, Pressable, View } from 'react-native'
 
 import { Account } from '@ambire-common/interfaces/account'
 import { SelectedAccountPortfolio } from '@ambire-common/interfaces/selectedAccount'
-import InfoIcon from '@common/assets/svg/InfoIcon'
 import ReceivingIcon from '@common/assets/svg/ReceivingIcon'
-import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import SavingsIcon from '@common/assets/svg/SavingsIcon'
-import TopUpIcon from '@common/assets/svg/TopUpIcon'
 import TupUpWithBgIcon from '@common/assets/svg/TupUpWithBgIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
+import { PanelBackButton } from '@common/components/Panel/Panel'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
 import useNavigation from '@common/hooks/useNavigation'
@@ -25,7 +23,6 @@ import flexbox from '@common/styles/utils/flexbox'
 import { getGasTankTokenDetails } from '@common/utils/getGasTankTokenDetails'
 import { createTab } from '@web/extension-services/background/webapi/tab'
 import useHasGasTank from '@web/hooks/useHasGasTank'
-import { useCustomHover } from '@web/hooks/useHover'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import { getUiType } from '@web/utils/uiType'
 
@@ -60,14 +57,6 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
   const { navigate } = useNavigation()
   const { networks } = useNetworksControllerState()
   const { hasGasTank } = useHasGasTank({ account })
-
-  const [bindAnim, , isHovered] = useCustomHover({
-    property: 'borderColor',
-    values: {
-      from: 'transparent',
-      to: theme.primary
-    }
-  })
 
   // Note: total balance Gas Tank details
   const { token, balanceFormatted } = useMemo(
@@ -164,10 +153,33 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
     >
       {hasGasTank ? (
         <View style={styles.content}>
-          <Text fontSize={20} weight="medium" style={[spacings.mb]}>
-            Gas Tank
-          </Text>
+          <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbXl]}>
+            <PanelBackButton onPress={handleClose} />
+            <Text fontSize={20} weight="semiBold" numberOfLines={1} style={spacings.mlTy}>
+              {t('Gas Tank')}
+            </Text>
+          </View>
           <View>
+            <View style={[flexbox.alignStart, spacings.mbLg]}>
+              <Text fontSize={21} weight="semiBold" style={[spacings.mbTy]}>
+                {t('Use Gas Tank to cover gas fees across most chains.')}
+              </Text>
+              <Pressable
+                onPress={async () => {
+                  try {
+                    await createTab(
+                      'https://help.ambire.com/hc/en-us/articles/5397969913884-What-is-the-Gas-Tank'
+                    )
+                  } catch {
+                    addToast("Couldn't open link", { type: 'error' })
+                  }
+                }}
+              >
+                <Text color={theme.linkText} underline>
+                  {t('Learn more >')}
+                </Text>
+              </Pressable>
+            </View>
             <View style={styles.balancesWrapper}>
               <View style={{ ...flexbox.alignStart }}>
                 <Text fontSize={12} appearance="secondaryText" style={[spacings.pbTy]}>
@@ -212,49 +224,16 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
                       ? navigate('top-up-gas-tank')
                       : navigate('account-select?triggerAddAccountBottomSheet=true')
                   }
-                >
-                  {hasGasTank && <TopUpIcon strokeWidth={1} width={20} height={20} />}
-                </Button>
+                />
               </View>
-            </View>
-            <View>
-              <Pressable
-                onPress={async () => {
-                  try {
-                    await createTab(
-                      'https://help.ambire.com/hc/en-us/articles/5397969913884-What-is-the-Gas-Tank'
-                    )
-                  } catch {
-                    addToast("Couldn't open link", { type: 'error' })
-                  }
-                }}
-                style={[
-                  styles.descriptionTextWrapper,
-                  {
-                    borderColor: isHovered
-                      ? themeType === THEME_TYPES.DARK
-                        ? theme.primaryLight80
-                        : theme.primary
-                      : 'transparent'
-                  }
-                ]}
-                {...bindAnim}
-              >
-                <View style={[flexbox.directionRow]}>
-                  <InfoIcon width={20} />
-                  <Text style={[spacings.mlSm]} weight="medium" fontSize={16}>
-                    {t('Learn more about Gas Tank')}
-                  </Text>
-                </View>
-                <RightArrowIcon />
-              </Pressable>
             </View>
           </View>
         </View>
       ) : (
         <View style={styles.content}>
-          <View style={[flexbox.directionRow, flexbox.center, common.fullWidth]}>
-            <Text fontSize={20} weight="medium">
+          <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbXl]}>
+            <PanelBackButton onPress={handleClose} />
+            <Text fontSize={20} weight="semiBold" numberOfLines={1} style={spacings.mlTy}>
               {t('Gas Tank')}
             </Text>
           </View>
