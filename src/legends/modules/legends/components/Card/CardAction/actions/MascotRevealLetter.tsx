@@ -99,7 +99,7 @@ const MascotRevealLetter = ({ meta }: Props) => {
           <div className={styles.mascotLetterContainer}>
             <p>Letter:</p>
             <div className={styles.mascotLetter}>
-              <p style={{ fontWeight: 'bold' }}>O</p>
+              <p style={{ fontWeight: 'bold' }}>H</p>
             </div>
           </div>
         </div>

@@ -21,7 +21,7 @@ const ProviderContext = createContext<ProviderContextType>({} as ProviderContext
 const LOCAL_STORAGE_CONNECTED_WALLET = 'connectedWallet'
 
 const ProviderContextProvider = ({ children }: { children: React.ReactNode }) => {
-  const raceTimeoutRef = React.useRef<NodeJS.Timeout | null>(null)
+  const selectProviderTimeoutRef = React.useRef<NodeJS.Timeout | null>(null)
   const [providers, setProviders] = useState<Providers>({} as Providers)
   const [provider, setProvider] = useState<EthereumProvider | null>(null)
   const [browserProvider, setBrowserProvider] = useState<ethers.BrowserProvider | null>(null)
@@ -31,7 +31,57 @@ const ProviderContextProvider = ({ children }: { children: React.ReactNode }) =>
   const [isInitialLoadingDone, setIsInitialLoadingDone] = useState(false)
   const [isConnectModalOpen, setIsConnectModalOpen] = useState(false)
 
+  /**
+   * Automatically selects the last connected provider if it's available.
+   * If both Ambire versions are installed, and one of them injects slightly faster,
+   * we wait for 500ms to see if the other one gets announced as well.
+   */
+  const autoSelectProvider = useCallback(
+    (latestProviders: Providers) => {
+      if (!connectedWallet) {
+        setIsInitialLoadingDone(true)
+        console.log('No previously connected wallet found')
+        return
+      }
+
+      if (selectProviderTimeoutRef.current) {
+        clearTimeout(selectProviderTimeoutRef.current)
+      }
+
+      const hasBothProviders = Object.keys(latestProviders).length > 1
+
+      selectProviderTimeoutRef.current = setTimeout(
+        () => {
+          const detectedProvider = latestProviders[connectedWallet]
+
+          // Previously connected wallet is not installed anymore
+          if (!detectedProvider) {
+            setIsInitialLoadingDone(true)
+            console.log('Previously connected wallet not found among detected providers')
+            return
+          }
+
+          setProvider(detectedProvider.provider)
+          setBrowserProvider(new ethers.BrowserProvider(detectedProvider.provider))
+          setIsInitialLoadingDone(true)
+        },
+        // Give 500ms for the next provider to be announced
+        hasBothProviders ? 0 : 500
+      )
+    },
+    [connectedWallet]
+  )
+
   useEffect(() => {
+    // The window objects are injected immediately. If they are not present
+    // we are sure that no Ambire extension is installed
+    if (!window.ambire && !window.ambireNext) {
+      setIsInitialLoadingDone(true)
+      console.log('No Ambire extensions detected')
+      return
+    }
+
+    // If either window object is injected, we wait for the EIP-6963 announcements
     const detected: Providers = {} as Providers
 
     const handler = (event: CustomEvent<EIP6963AnnounceProviderEvent['detail']>) => {
@@ -44,7 +94,13 @@ const ProviderContextProvider = ({ children }: { children: React.ReactNode }) =>
         detected['ambire-next'] = detail
       }
 
-      setProviders((p) => ({ ...p, ...detected }))
+      setProviders((p) => {
+        const updated = { ...p, ...detected }
+
+        autoSelectProvider(updated)
+
+        return updated
+      })
     }
 
     window.addEventListener('eip6963:announceProvider', handler as any)
@@ -53,69 +109,7 @@ const ProviderContextProvider = ({ children }: { children: React.ReactNode }) =>
     return () => {
       window.removeEventListener('eip6963:announceProvider', handler as any)
     }
-  }, [])
-
-  useEffect(() => {
-    let isMounted = true
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    ;(async () => {
-      try {
-        // Not installed, already done or no past connection
-        if ((!window.ambire && !window.ambireNext) || isInitialLoadingDone || !connectedWallet) {
-          setIsInitialLoadingDone(true)
-          return
-        }
-
-        // Waiting for the providers to be detected
-        if (Object.keys(providers).length === 0) return
-
-        const detectedProvider = providers[connectedWallet]
-
-        // Previously connected wallet is not installed anymore
-        if (!detectedProvider) {
-          setIsInitialLoadingDone(true)
-          return
-        }
-
-        const accs: any = await Promise.race([
-          detectedProvider.provider.request({
-            // Purposefuly using eth_accounts to avoid popup on reconnect
-            method: 'eth_accounts',
-            params: []
-          }),
-          new Promise((_, reject) => {
-            raceTimeoutRef.current = setTimeout(() => {
-              if (!isMounted) return
-
-              setConnectedWallet(null)
-              localStorage.removeItem(LOCAL_STORAGE_CONNECTED_WALLET)
-              reject(new Error('Timeout while fetching accounts'))
-            }, 500)
-          })
-        ])
-
-        if (!isMounted) return
-
-        // Auto-connect only if the wallet hasn't disconnected manually
-        if (accs && accs.length > 0) {
-          setProvider(detectedProvider.provider)
-          setBrowserProvider(new ethers.BrowserProvider(detectedProvider.provider))
-        }
-
-        setIsInitialLoadingDone(true)
-      } catch (e: any) {
-        console.error('Error during auto-connect:', e)
-        setIsInitialLoadingDone(true)
-      }
-    })()
-
-    return () => {
-      isMounted = false
-      if (raceTimeoutRef.current) {
-        clearTimeout(raceTimeoutRef.current)
-      }
-    }
-  }, [connectedWallet, isInitialLoadingDone, provider, providers])
+  }, [autoSelectProvider])
 
   const openModal = useCallback(() => {
     setIsConnectModalOpen(true)
@@ -152,8 +146,6 @@ const ProviderContextProvider = ({ children }: { children: React.ReactNode }) =>
   )
 
   const connectProvider = useCallback(async () => {
-    if (provider) return
-
     const detectedProvidersCount = Object.keys(providers).length
 
     if (!detectedProvidersCount) {
@@ -161,9 +153,14 @@ const ProviderContextProvider = ({ children }: { children: React.ReactNode }) =>
     } else if (detectedProvidersCount === 1) {
       await selectProvider(Object.keys(providers)[0] as WalletType)
     } else if (detectedProvidersCount > 1) {
+      // Always prefer the previously connected wallet if available
+      if (connectedWallet && providers[connectedWallet]) {
+        await selectProvider(connectedWallet)
+        return
+      }
       openModal()
     }
-  }, [provider, providers, openModal, selectProvider])
+  }, [providers, openModal, selectProvider, connectedWallet])
 
   const disconnectProvider = useCallback(() => {
     setProvider(null)

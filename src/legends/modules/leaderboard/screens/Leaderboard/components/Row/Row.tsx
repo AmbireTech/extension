@@ -60,7 +60,7 @@ const Row: FC<Props> = ({
   reward
 }) => {
   const { connectedAccount } = useAccountContext()
-  const { rewardsProjectionData } = usePortfolioControllerState()
+  const { walletTokenInfo } = usePortfolioControllerState()
   const isConnectedAccountRow = account === connectedAccount
   const formatXp = (xp: number) => {
     return xp.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
@@ -95,7 +95,7 @@ const Row: FC<Props> = ({
     symbol: 'stkWALLET',
     name: 'Staked $WALLET',
     decimals: 18,
-    priceIn: [{ baseCurrency: 'usd', price: rewardsProjectionData?.walletPrice }],
+    priceIn: [{ baseCurrency: 'usd', price: walletTokenInfo?.walletPrice || 0 }],
     flags: {
       onGasTank: false,
       rewardsType: 'wallet-projected-rewards' as const,
