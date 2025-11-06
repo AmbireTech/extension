@@ -32,8 +32,6 @@ export class TransferPage extends BasePage {
     await this.clearFieldInput(selectors.getStarted.addressEnsField)
     await this.entertext(selectors.getStarted.addressEnsField, address)
     await this.page.waitForTimeout(1000)
-    // Note: The checkbox for unknown addresses has been replaced with a hold-to-proceed button
-    // The agreement is now handled automatically when the hold-to-proceed button is completed
   }
 
   async holdToProceedForUnknownAddress() {

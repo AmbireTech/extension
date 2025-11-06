@@ -157,7 +157,6 @@ const selectors = {
   continueAnywayCheckboxSaB: 'checkbox',
   continueAnywayButton: '//div[contains(text(),"Continue anyway")]',
   amountField: 'amount-field',
-  // Note: recipientAddressUnknownCheckbox removed - replaced with hold-to-proceed button
   transferButtonConfirm: 'transfer-button-confirm',
   addAccountField: 'add-account-field',
   importExistingSeedBtn: 'import-existing-seed-btn',

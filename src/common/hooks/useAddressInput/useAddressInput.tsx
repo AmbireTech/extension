@@ -5,7 +5,6 @@ import { resolveENSDomain } from '@ambire-common/services/ensDomains'
 
 import getAddressInputValidation from './utils/validation'
 
-// TODO: add severity as type
 interface Props {
   addressState: AddressState
   setAddressState: (newState: AddressStateOptional) => void
