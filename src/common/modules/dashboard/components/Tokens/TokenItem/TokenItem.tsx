@@ -16,7 +16,7 @@ import RewardsTokenItem from './RewardsTokenItem'
 
 const { isPopup } = getUiType()
 
-const INFO_BTN_URL = 'https://rewards.ambire.com/#/wallet'
+const INFO_BTN_URL = 'https://rewards.ambire.com'
 
 const TokenItem = ({ token }: { token: TokenResult }) => {
   const { t } = useTranslation()
