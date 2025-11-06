@@ -129,57 +129,60 @@ const AccountPersonalizeScreen = () => {
   }, [isLoading])
 
   useEffect(() => {
-    let cancelled = false
+    // We reference the latest values via refs. Accessing state directly inside this
+    // async effect could read outdated values, since state updates are not guaranteed
+    // to sync during the async wait loops.
+    const getShouldStopLoadingBasedOnLatestState = () =>
+      !!accountPickerInitializedRef.current ||
+      (accountsToPersonalizeRef.current && accountsToPersonalizeRef.current.length > 0) ||
+      (newlyAddedAccountsRef.current && newlyAddedAccountsRef.current.length > 0)
+
+    // We reference the latest values via refs. Accessing state directly inside this
+    // async effect could read outdated values, since state updates are not guaranteed
+    // to sync during the async wait loops.
+    const getShouldComplete = () =>
+      !accountPickerInitializedRef.current &&
+      (accountsToPersonalizeRef.current?.length ?? 0) === 0 &&
+      (newlyAddedAccountsRef.current?.length ?? 0) === 0
+
+    let resolved = false
 
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     ;(async () => {
       // initial UX delay
       await wait(1100)
-      if (cancelled) return
-
-      // helper that checks latest state values via refs
-      const getShouldStopLoadingBasedOnLatestState = () =>
-        !!accountPickerInitializedRef.current ||
-        (accountsToPersonalizeRef.current && accountsToPersonalizeRef.current.length > 0) ||
-        (newlyAddedAccountsRef.current && newlyAddedAccountsRef.current.length > 0)
+      if (resolved) return
 
       if (getShouldStopLoadingBasedOnLatestState()) {
-        if (!cancelled) setIsLoading(false)
+        if (!resolved) setIsLoading(false)
         return
       }
 
-      // Poll for up to 3s (200ms interval) to allow controller updates to arrive.
-      const timeoutMs = 3000
-      const intervalMs = 200
+      const timeoutMs = 3000 // Poll for up to 3s to allow controller updates to arrive.
+      const intervalMs = 200 // Poll interval
       const start = Date.now()
 
-      while (Date.now() - start < timeoutMs && !cancelled) {
+      while (Date.now() - start < timeoutMs && !resolved) {
         // eslint-disable-next-line no-await-in-loop
         await wait(intervalMs)
-        if (cancelled) return
+        if (resolved) return
         if (getShouldStopLoadingBasedOnLatestState()) {
-          if (!cancelled) setIsLoading(false)
+          if (!resolved) setIsLoading(false)
           return
         }
       }
 
-      if (cancelled) return
+      if (resolved) return
       if (!isLoadingRef.current) return
 
       setIsLoading(false)
-
-      const shouldComplete =
-        !accountPickerInitializedRef.current &&
-        (!accountsToPersonalizeRef.current || accountsToPersonalizeRef.current.length === 0) &&
-        (!newlyAddedAccountsRef.current || newlyAddedAccountsRef.current.length === 0)
-
-      if (shouldComplete) setCompleted(true)
+      if (getShouldComplete()) setCompleted(true)
     })()
 
     return () => {
-      cancelled = true
+      resolved = true
     }
-  }, [/* intentionally shallow: only depend on isLoading to re-run if loading toggles */ isLoading])
+  }, [])
 
   // the hook inits the list with accountsToPersonalize
   useEffect(() => {
