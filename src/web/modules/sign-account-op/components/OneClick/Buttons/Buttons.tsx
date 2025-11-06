@@ -30,6 +30,7 @@ type Props = {
   isRecipientAddressUnknown?: boolean
   isRecipientAddressUnknownAgreed?: boolean
   recipientAddress?: string
+  onRecipientAddressUnknownAgree?: () => void
 }
 
 const { isActionWindow } = getUiType()
@@ -45,7 +46,7 @@ const Buttons: FC<Props> = ({
   networkUserRequests = [],
   isRecipientAddressUnknown = false,
   isRecipientAddressUnknownAgreed = false,
-  recipientAddress,
+  onRecipientAddressUnknownAgree,
   // Used to disable the actions of the buttons when the local state is out of sync.
   // To prevent button flickering when the user is typing we just do nothing when the button is clicked.
   // As it would be a rare case for a user to manage to click it in the 300-400ms that it takes to sync the state,
@@ -150,13 +151,13 @@ const Buttons: FC<Props> = ({
         {isRecipientAddressUnknown && !isRecipientAddressUnknownAgreed ? (
           <HoldToProceedButton
             text="Hold to proceed"
-            disabled={isLoading || !!oneClickDisabledReason}
+            disabled={isNotReadyToProceed || isLoading || !!oneClickDisabledReason}
             onHoldComplete={() => {
               if (isLocalStateOutOfSync) return
+              onRecipientAddressUnknownAgree?.()
 
               handleSubmitForm(true)
             }}
-            recipientAddress={recipientAddress}
             testID="proceed-btn"
           />
         ) : (

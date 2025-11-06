@@ -1,10 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { Contact } from '@ambire-common/controllers/addressBook/addressBook'
-import { ITransferController } from '@ambire-common/interfaces/transfer'
 import { TokenResult } from '@ambire-common/libs/portfolio'
 import { validateAddress } from '@ambire-common/services/validations'
 import { findAccountDomainFromPartialDomain } from '@ambire-common/utils/domains'
@@ -47,12 +45,8 @@ interface Props extends InputProps {
   addressValidationMsg: string
   isRecipientHumanizerKnownTokenOrSmartContract: boolean
   isRecipientAddressUnknown: boolean
-  isRecipientAddressUnknownAgreed: ITransferController['isRecipientAddressUnknownAgreed']
-  onRecipientCheckboxClick: () => void
   validation: AddressValidation
   isRecipientDomainResolving: boolean
-  isSWWarningVisible: boolean
-  isSWWarningAgreed: boolean
   selectedTokenSymbol?: TokenResult['symbol']
   menuPosition?: 'top' | 'bottom'
 }
@@ -157,14 +151,11 @@ const Recipient: React.FC<Props> = ({
   address,
   ensAddress,
   addressValidationMsg,
-  isRecipientAddressUnknownAgreed,
-  onRecipientCheckboxClick,
   isRecipientHumanizerKnownTokenOrSmartContract,
   isRecipientAddressUnknown,
   validation,
   isRecipientDomainResolving,
-  disabled,
-  isSWWarningVisible
+  disabled
 }) => {
   const { account } = useSelectedAccountControllerState()
   const actualAddress = ensAddress || address
@@ -326,15 +317,12 @@ const Recipient: React.FC<Props> = ({
           disabled={disabled}
           renderConfirmAddress={() => (
             <ConfirmAddress
-              onRecipientCheckboxClick={onRecipientCheckboxClick}
               isRecipientHumanizerKnownTokenOrSmartContract={
                 isRecipientHumanizerKnownTokenOrSmartContract
               }
               isRecipientAddressUnknown={isRecipientAddressUnknown}
-              isRecipientAddressUnknownAgreed={isRecipientAddressUnknownAgreed}
               isRecipientAddressSameAsSender={actualAddress === account?.addr}
               addressValidationMsg={addressValidationMsg}
-              isSWWarningVisible={isSWWarningVisible}
               onAddToAddressBookPress={openBottomSheet}
             />
           )}
@@ -349,14 +337,11 @@ const Recipient: React.FC<Props> = ({
       address,
       setAddress,
       disabled,
-      onRecipientCheckboxClick,
       isRecipientHumanizerKnownTokenOrSmartContract,
       isRecipientAddressUnknown,
-      isRecipientAddressUnknownAgreed,
       actualAddress,
       account?.addr,
       addressValidationMsg,
-      isSWWarningVisible,
       openBottomSheet
     ]
   )

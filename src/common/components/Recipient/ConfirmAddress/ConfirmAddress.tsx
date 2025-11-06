@@ -1,9 +1,7 @@
 import React from 'react'
 import { Pressable, View } from 'react-native'
 
-import { ITransferController } from '@ambire-common/interfaces/transfer'
 import AddIcon from '@common/assets/svg/AddIcon'
-import Checkbox from '@common/components/Checkbox'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
@@ -15,21 +13,15 @@ import getStyles from './styles'
 type Props = {
   isRecipientAddressUnknown: boolean
   isRecipientHumanizerKnownTokenOrSmartContract: boolean
-  isRecipientAddressUnknownAgreed: ITransferController['isRecipientAddressUnknownAgreed']
-  onRecipientCheckboxClick: () => void
   addressValidationMsg: string
-  isSWWarningVisible: boolean
   isRecipientAddressSameAsSender: boolean
   onAddToAddressBookPress: () => void
 }
 
 const ConfirmAddress = ({
-  onRecipientCheckboxClick,
   isRecipientHumanizerKnownTokenOrSmartContract,
   isRecipientAddressUnknown,
-  isRecipientAddressUnknownAgreed,
   addressValidationMsg,
-  isSWWarningVisible,
   isRecipientAddressSameAsSender,
   onAddToAddressBookPress
 }: Props) => {

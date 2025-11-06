@@ -273,6 +273,15 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     [dispatch]
   )
 
+  const onRecipientAddressUnknownAgree = useCallback(() => {
+    dispatch({
+      type: 'TRANSFER_CONTROLLER_UPDATE_FORM',
+      params: {
+        formValues: { isRecipientAddressUnknownAgreed: true, isSWWarningAgreed: true }
+      }
+    })
+  }, [dispatch])
+
   const handleCacheResolvedDomain = useCallback(
     (address: string, domain: string, type: 'ens') => {
       dispatch({
@@ -477,7 +486,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
           isLocalStateOutOfSync={isLocalStateOutOfSync}
           isRecipientAddressUnknown={isRecipientAddressUnknown}
           isRecipientAddressUnknownAgreed={isRecipientAddressUnknownAgreed}
-          recipientAddress={getAddressFromAddressState(addressState)}
+          onRecipientAddressUnknownAgree={onRecipientAddressUnknownAgree}
         />
       </>
     )
@@ -490,7 +499,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     isLocalStateOutOfSync,
     isRecipientAddressUnknown,
     isRecipientAddressUnknownAgreed,
-    addressState,
+    onRecipientAddressUnknownAgree,
     addTransaction
   ])
 
