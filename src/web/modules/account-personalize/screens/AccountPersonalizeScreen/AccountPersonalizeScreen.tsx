@@ -182,7 +182,7 @@ const AccountPersonalizeScreen = () => {
     return () => {
       resolved = true
     }
-  }, [])
+  }, [isLoading])
 
   // the hook inits the list with accountsToPersonalize
   useEffect(() => {
