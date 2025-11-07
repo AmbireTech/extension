@@ -1,4 +1,4 @@
-import { ERC_4337_ENTRYPOINT } from '@ambire-common/consts/deploy'
+import { ENTRYPOINT_0_9_0 } from '@ambire-common/consts/deploy'
 import { SignUserOperation } from '@ambire-common/interfaces/userOperation'
 import { GasSpeeds } from '@ambire-common/services/bundlers/types'
 import { getRpcProvider } from '@ambire-common/services/provider'
@@ -125,11 +125,11 @@ const useErc5792 = () => {
     accAddr: string,
     calls: { to: string; data: string; value?: string }[]
   ) => {
-    const baseSepoliaProvider: any = getRpcProvider(
-      ['https://sepolia.base.org'],
-      84532n,
-      'https://sepolia.base.org'
-    )
+    // const baseSepoliaProvider: any = getRpcProvider(
+    //   ['https://sepolia.base.org'],
+    //   84532n,
+    //   'https://sepolia.base.org'
+    // )
     const opSepoliaProvider: any = getRpcProvider(
       ['https://sepolia.optimism.io'],
       11155420n,
@@ -138,14 +138,14 @@ const useErc5792 = () => {
     const entryPointInterface = new Interface([
       'function getNonce(address, uint192) public view returns (uint256 nonce)'
     ])
-    const entryPointNonce = await baseSepoliaProvider.call({
-      to: ERC_4337_ENTRYPOINT,
-      data: entryPointInterface.encodeFunctionData('getNonce', [accAddr, 0])
-    })
-    const nonce =
-      entryPointNonce && entryPointNonce !== '0x' ? toBeHex(BigInt(entryPointNonce)) : '0x00'
+    // const entryPointNonce = await baseSepoliaProvider.call({
+    //   to: ENTRYPOINT_0_9_0,
+    //   data: entryPointInterface.encodeFunctionData('getNonce', [accAddr, 0])
+    // })
+    // const nonce =
+    //   entryPointNonce && entryPointNonce !== '0x' ? toBeHex(BigInt(entryPointNonce)) : '0x00'
     const entryPointNonceOp = await opSepoliaProvider.call({
-      to: ERC_4337_ENTRYPOINT,
+      to: ENTRYPOINT_0_9_0,
       data: entryPointInterface.encodeFunctionData('getNonce', [accAddr, 0])
     })
     const nonceOp =
@@ -156,26 +156,26 @@ const useErc5792 = () => {
         return [[call.to, call.value?.toString() || 0, call.data]]
       })
     )
-    const baseSepoliaChainId = 84532n
+    // const baseSepoliaChainId = 84532n
     const opSepoliaChainId = 11155420n
-    const gasPrice = await getGasPrice(baseSepoliaChainId)
+    // const gasPrice = await getGasPrice(baseSepoliaChainId)
     const gasPriceOp = await getGasPrice(opSepoliaChainId)
     const signUserOpsIdentifierJsonString: any = await provider!.request({
       method: 'wallet_signUserOperations',
       params: [
-        {
-          chainId: toBeHex(baseSepoliaChainId),
-          userOperation: {
-            sender: accAddr,
-            nonce,
-            callData,
-            callGasLimit: toBeHex(100000),
-            verificationGasLimit: toBeHex(100000),
-            preVerificationGas: toBeHex(100000),
-            maxFeePerGas: gasPrice.medium.maxFeePerGas,
-            maxPriorityFeePerGas: gasPrice.medium.maxPriorityFeePerGas
-          }
-        },
+        // {
+        //   chainId: toBeHex(baseSepoliaChainId),
+        //   userOperation: {
+        //     sender: accAddr,
+        //     nonce,
+        //     callData,
+        //     callGasLimit: toBeHex(100000),
+        //     verificationGasLimit: toBeHex(100000),
+        //     preVerificationGas: toBeHex(100000),
+        //     maxFeePerGas: gasPrice.medium.maxFeePerGas,
+        //     maxPriorityFeePerGas: gasPrice.medium.maxPriorityFeePerGas
+        //   }
+        // },
         {
           chainId: toBeHex(opSepoliaChainId),
           userOperation: {
