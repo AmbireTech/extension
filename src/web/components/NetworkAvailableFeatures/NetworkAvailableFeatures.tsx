@@ -277,7 +277,7 @@ const NetworkAvailableFeatures = ({
             </Text>
             <Button
               size="small"
-              text={t('Retry')}
+              text={t('Try next RPC URL')}
               style={{ maxHeight: 32 }}
               onPress={() => {
                 !!handleRetry && handleRetry()
