@@ -20,12 +20,12 @@ export const getGasTankTokenDetails = (
   networks: Network[],
   key: 'amount' | 'cashback' | 'saved'
 ) => {
-  const gasTankResult = portfolio?.latest?.gasTank?.result as
+  const gasTankResult = portfolio?.portfolioState?.gasTank?.result as
     | { gasTankTokens: GasTankTokenResult[] }
     | undefined
 
   const noAccount = !account || !account.addr
-  const noPortfolio = !portfolio || !portfolio.latest || !portfolio.latest.gasTank
+  const noPortfolio = !portfolio || !portfolio.portfolioState || !portfolio.portfolioState.gasTank
   const noGasTankResult = !gasTankResult || !('gasTankTokens' in gasTankResult)
   const noGasTankTokens =
     noGasTankResult ||
