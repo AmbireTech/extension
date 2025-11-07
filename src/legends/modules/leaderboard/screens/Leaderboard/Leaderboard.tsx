@@ -274,6 +274,7 @@ const LeaderboardContainer: React.FC = () => {
                   <Row
                     key={userLeaderboardData.account}
                     {...userLeaderboardData}
+                    projectedRewards={activeTab === 2 ? projectedAmount?.walletRewards : undefined}
                     stickyPosition={stickyPosition}
                     currentUserRef={currentUserRef}
                   />
