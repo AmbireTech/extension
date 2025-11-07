@@ -161,7 +161,7 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
           </View>
           <View>
             <View style={[flexbox.alignStart, spacings.mbLg]}>
-              <Text fontSize={21} weight="semiBold" style={[spacings.mbTy]}>
+              <Text fontSize={20} weight="medium" style={[spacings.mbTy]}>
                 {t('Use Gas Tank to cover gas fees across most chains.')}
               </Text>
               <Pressable
