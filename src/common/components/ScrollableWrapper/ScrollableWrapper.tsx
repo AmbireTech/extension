@@ -18,27 +18,46 @@ import { TAB_BAR_HEIGHT } from '@common/constants/router'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 
+import DraggableFlatList from './DraggableFlatList'
 import createStyles from './styles'
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export enum WRAPPER_TYPES {
   SCROLL_VIEW = 'scrollview',
   KEYBOARD_AWARE_SCROLL_VIEW = 'keyboard-aware-scrollview',
   FLAT_LIST = 'flatlist',
   SECTION_LIST = 'sectionlist',
-  VIEW = 'view'
+  VIEW = 'view',
+  DRAGGABLE_FLAT_LIST = 'draggable-flatlist'
 }
 
-// @ts-ignore ignored because SectionList and FlatList receive props with same names
-export interface WrapperProps
-  extends ScrollViewProps,
-    Partial<FlatListProps<any>>,
-    Partial<SectionListProps<any, any>> {
+type BaseProps = {
   type?: WRAPPER_TYPES
   hasBottomTabNav?: boolean
   wrapperRef?: any
   extraHeight?: number
+  style?: StyleProp<ViewStyle>
+  contentContainerStyle?: StyleProp<ViewStyle>
 }
+
+type FlatListCompatibleProps<T = any> = Partial<FlatListProps<T>>
+type SectionListCompatibleProps<T = any> = Partial<SectionListProps<T, any>>
+
+export type WrapperProps<T = any> = BaseProps &
+  ScrollViewProps &
+  FlatListCompatibleProps<T> &
+  SectionListCompatibleProps<T> & {
+    children?: React.ReactNode
+    onDragEnd?: (fromIndex: number, toIndex: number) => void
+    renderItem?: (
+      item: T,
+      index: number,
+      isDragging: boolean,
+      listeners: any,
+      attributes: any
+    ) => React.ReactElement | null
+    keyExtractor?: (item: T, index: number) => string
+    data?: T[]
+  }
 
 const ScrollableWrapper = ({
   style = {},
@@ -50,13 +69,16 @@ const ScrollableWrapper = ({
   hasBottomTabNav: _hasBottomTabNav,
   extraHeight,
   wrapperRef,
+  onDragEnd,
+  renderItem,
+  keyExtractor,
+  data,
   ...rest
 }: WrapperProps) => {
   const { styles } = useTheme(createStyles)
   const insets = useSafeAreaInsets()
 
   const horizontalSpacing = isWeb ? spacings.ph0 : spacings.ph
-
   const hasBottomTabNav = isWeb ? false : _hasBottomTabNav
 
   const scrollableWrapperStyles = [
@@ -69,14 +91,35 @@ const ScrollableWrapper = ({
     styles.contentContainerStyle,
     !!hasBottomTabNav && { paddingBottom: TAB_BAR_HEIGHT + insets.bottom },
     ...(Array.isArray(contentContainerStyle) ? contentContainerStyle : [contentContainerStyle]),
-    isWeb ? ({ overflowY: 'auto' } as any) : null // missing type for overflowY
+    isWeb ? ({ overflowY: 'auto' } as any) : null
   ]
+
+  if (type === WRAPPER_TYPES.DRAGGABLE_FLAT_LIST) {
+    return (
+      <DraggableFlatList
+        ref={wrapperRef}
+        data={data}
+        keyExtractor={
+          keyExtractor ? (item: any) => keyExtractor(item, 0) : (item: any) => item.key ?? ''
+        }
+        onDragEnd={onDragEnd ?? (() => {})}
+        renderItem={renderItem ?? (() => null)}
+        style={scrollableWrapperStyles}
+        contentContainerStyle={scrollableWrapperContentContainerStyles}
+        keyboardShouldPersistTaps={keyboardShouldPersistTaps || 'handled'}
+        keyboardDismissMode={keyboardDismissMode || 'none'}
+        {...rest}
+      />
+    )
+  }
 
   if (type === WRAPPER_TYPES.FLAT_LIST) {
     return (
-      // @ts-ignore
       <FlatList
         ref={wrapperRef}
+        data={data}
+        renderItem={renderItem}
+        keyExtractor={keyExtractor || ((item, index) => item.key ?? index.toString())}
         style={scrollableWrapperStyles}
         contentContainerStyle={scrollableWrapperContentContainerStyles}
         keyboardShouldPersistTaps={keyboardShouldPersistTaps || 'handled'}
@@ -89,9 +132,11 @@ const ScrollableWrapper = ({
 
   if (type === WRAPPER_TYPES.SECTION_LIST) {
     return (
-      // @ts-ignore
       <SectionList
         ref={wrapperRef}
+        sections={data}
+        renderItem={renderItem}
+        keyExtractor={keyExtractor || ((item, index) => item.key ?? index.toString())}
         style={scrollableWrapperStyles}
         contentContainerStyle={scrollableWrapperContentContainerStyles}
         keyboardShouldPersistTaps={keyboardShouldPersistTaps || 'handled'}

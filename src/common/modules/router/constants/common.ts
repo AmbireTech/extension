@@ -10,7 +10,7 @@ const MOBILE_ROUTES = {
 
 const WEB_ROUTES = {
   ...COMMON_ROUTES,
-  keyStoreUnlock: 'keystore-unlock',
+  keyStoreUnlock: 'unlock',
   getStarted: 'get-started',
   accountPicker: 'account-picker',
   dashboard: 'dashboard',
@@ -25,9 +25,10 @@ const WEB_ROUTES = {
   swap: 'swap',
   noConnection: 'no-connection',
   accounts: 'accounts',
-  appCatalog: 'app-catalog',
-  keyStoreSetup: 'keystore-setup',
-  keyStoreReset: 'keystore-reset',
+  apps: 'apps',
+  keyStoreSetup: 'set-extension-password',
+  keyStoreEmailRecovery: 'extension-password-email-recovery',
+  keyStoreEmailRecoverySetNewPassword: 'set-new-extension-password',
   getEncryptionPublicKeyRequest: 'get-encryption-public-key-request',
   dappConnectRequest: 'dapp-connect-request',
   watchAsset: 'watch-asset',

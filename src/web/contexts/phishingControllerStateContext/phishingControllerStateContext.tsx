@@ -1,12 +1,12 @@
 import React, { createContext, useEffect } from 'react'
 
-import { PhishingController } from '@ambire-common/controllers/phishing/phishing'
+import { IPhishingController } from '@ambire-common/interfaces/phishing'
 import useDeepMemo from '@common/hooks/useDeepMemo'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useControllerState from '@web/hooks/useControllerState'
 import useMainControllerState from '@web/hooks/useMainControllerState'
 
-const PhishingControllerStateContext = createContext<PhishingController>({} as PhishingController)
+const PhishingControllerStateContext = createContext<IPhishingController>({} as IPhishingController)
 
 const PhishingControllerStateProvider: React.FC<any> = ({ children }) => {
   const controller = 'phishing'

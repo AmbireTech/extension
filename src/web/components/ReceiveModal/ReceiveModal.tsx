@@ -6,7 +6,6 @@ import QRCode from 'react-native-qrcode-svg'
 import { getIsViewOnly } from '@ambire-common/utils/accounts'
 import CopyIcon from '@common/assets/svg/CopyIcon'
 import Alert from '@common/components/Alert'
-import AmbireLogoHorizontal from '@common/components/AmbireLogoHorizontal'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader/ModalHeader'
 import NetworkIcon from '@common/components/NetworkIcon'
@@ -60,7 +59,12 @@ const ReceiveModal: FC<Props> = ({ modalRef, handleClose }) => {
       containerInnerWrapperStyles={flexbox.alignCenter}
       closeBottomSheet={handleClose}
     >
-      <ModalHeader handleClose={handleClose} withBackButton={isPopup} title="Receive Assets" />
+      <ModalHeader
+        handleClose={handleClose}
+        withBackButton={isPopup}
+        hasAmbireLogo
+        title="Receive Assets"
+      />
       <View style={styles.content}>
         <View style={styles.qrCodeContainer}>
           {!!account && !qrCodeError && (
@@ -127,7 +131,6 @@ const ReceiveModal: FC<Props> = ({ modalRef, handleClose }) => {
           </View>
         </View>
       </View>
-      <AmbireLogoHorizontal />
     </BottomSheet>
   )
 }

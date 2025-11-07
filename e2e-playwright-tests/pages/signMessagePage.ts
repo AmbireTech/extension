@@ -1,24 +1,19 @@
-import { bootstrapWithStorage } from 'common-helpers/bootstrap'
-import { BasePage } from './basePage'
-import { expect, Page } from '@playwright/test'
 import { BA_ADDRESS } from 'constants/env'
 import selectors from 'constants/selectors'
 
-export class SignMessagePage extends BasePage {
-  async init(param) {
-    const { page } = await bootstrapWithStorage('signMessage', param)
-    this.page = page
-  }
+import { expect } from '@playwright/test'
 
+import { BasePage } from './basePage'
+
+export class SignMessagePage extends BasePage {
   async signMessage(message: string, type: 'plain' | 'hex' | 'typed') {
     await this.page.goto('https://sigtool.ambire.com/')
 
     const dappSelectors = {
       plain: {
         sign: this.page.getByText('Human Message', { exact: true }),
-        verify: this.page.getByRole('link', { name: 'Human Message' }, ),
-        messageTextarea: this.page.getByRole('textbox', { name: 'Message (Hello world)' }),
-
+        verify: this.page.getByRole('link', { name: 'Human Message' }),
+        messageTextarea: this.page.getByRole('textbox', { name: 'Message (Hello world)' })
       },
       hex: {
         sign: this.page.getByText('Hexadecimal', { exact: true }),
@@ -89,6 +84,10 @@ export class SignMessagePage extends BasePage {
     const verifyButton = this.page.getByRole('button', { name: 'Verify' })
     await verifyButton.click()
 
-    await expect(this.page.locator('.verifyFeedback-text')).toHaveText('Signature is Valid')
+    // Here we added a slightly higher timeout as a hotfix, since the public RPCs used in SigTool are sometimes slow to respond.
+    // As a better solution, we plan to replace the RPCs with Invictus.
+    await expect(this.page.locator('.verifyFeedback-text')).toHaveText('Signature is Valid', {
+      timeout: 60000
+    })
   }
 }

@@ -24,6 +24,7 @@ export interface Props {
   buttonsContainerStyle?: ViewStyle
   hideHeader?: boolean
   style?: ViewStyle
+  primaryButtonDisabled?: boolean
 }
 
 const DualChoiceModal: FC<Props> = ({
@@ -39,7 +40,8 @@ const DualChoiceModal: FC<Props> = ({
   primaryButtonTestID,
   buttonsContainerStyle,
   hideHeader,
-  style
+  style,
+  primaryButtonDisabled
 }) => {
   const { styles, theme } = useTheme(getStyles)
 
@@ -84,6 +86,7 @@ const DualChoiceModal: FC<Props> = ({
           size="large"
           style={styles.button}
           testID={primaryButtonTestID}
+          disabled={primaryButtonDisabled}
         />
       </View>
     </View>

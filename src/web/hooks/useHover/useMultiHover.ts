@@ -119,7 +119,7 @@ const useMultiHover = ({ values, forceHoveredStyle = false }: Props) => {
           }
         )
         // Defer state update to avoid interfering with hover event timing
-        requestAnimationFrame(() => setIsHovered(false))
+        requestAnimationFrame(() => setIsHovered(true))
       },
       onHoverOut: () => {
         if (!animatedValues || forceHoveredStyle) return

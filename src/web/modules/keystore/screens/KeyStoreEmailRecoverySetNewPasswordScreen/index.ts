@@ -1,0 +1,3 @@
+import KeyStoreEmailRecoverySetNewPasswordScreen from './KeyStoreEmailRecoverySetNewPasswordScreen'
+
+export default KeyStoreEmailRecoverySetNewPasswordScreen

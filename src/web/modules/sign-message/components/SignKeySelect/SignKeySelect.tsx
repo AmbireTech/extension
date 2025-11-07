@@ -1,4 +1,5 @@
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import { Pressable, View } from 'react-native'
 
 import { Account } from '@ambire-common/interfaces/account'
@@ -14,8 +15,9 @@ import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 import getStyles from './styles'
 
 type Props = {
+  type: 'signing' | 'broadcasting'
   selectedAccountKeyStoreKeys: Key[]
-  handleChooseSigningKey: (keyAddr: Key['addr'], keyType: Key['type']) => void
+  handleChooseKey: (keyAddr: Key['addr'], keyType: Key['type']) => void
   isVisible: boolean
   isSigning: boolean
   handleClose: () => void
@@ -23,13 +25,15 @@ type Props = {
 }
 
 const SigningKeySelect = ({
+  type,
   selectedAccountKeyStoreKeys,
-  handleChooseSigningKey,
+  handleChooseKey,
   isVisible,
   isSigning,
   handleClose,
   account
 }: Props) => {
+  const { t } = useTranslation()
   const { theme, styles } = useTheme(getStyles)
   const { keys } = useKeystoreControllerState()
 
@@ -47,7 +51,7 @@ const SigningKeySelect = ({
         ]}
       >
         <Text style={styles.title} fontSize={16} weight="medium" appearance="secondaryText">
-          Select a signing key
+          {type === 'signing' ? t('Select a signing key') : t('Select a fee payer key')}
         </Text>
         <View>
           {selectedAccountKeyStoreKeys.map((key, i) => {
@@ -56,7 +60,7 @@ const SigningKeySelect = ({
             return (
               <Pressable
                 key={`${key.addr}-${key.type}`}
-                onPress={() => handleChooseSigningKey(key.addr, key.type)}
+                onPress={() => handleChooseKey(key.addr, key.type)}
                 style={({ hovered }: any) => ({
                   backgroundColor: hovered ? theme.secondaryBackground : 'transparent'
                 })}

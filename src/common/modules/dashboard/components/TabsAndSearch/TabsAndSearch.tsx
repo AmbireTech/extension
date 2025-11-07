@@ -37,19 +37,26 @@ const getSearchPlaceholder = (openTab: TabType, t: TFunction) => {
 interface Props {
   openTab: TabType
   setOpenTab: React.Dispatch<React.SetStateAction<TabType>>
+  currentTab: TabType
   searchControl?: any
   sessionId: string
 }
 
 const TABS = ['tokens', 'collectibles', 'defi', 'activity']
 
-const TabsAndSearch: FC<Props> = ({ openTab, setOpenTab, searchControl, sessionId }) => {
+const TabsAndSearch: FC<Props> = ({
+  openTab,
+  setOpenTab,
+  currentTab,
+  searchControl,
+  sessionId
+}) => {
   const [, setSearchParams] = useSearchParams()
   const searchRef = useRef<any>(null)
   const searchButtonRef = useRef<any>(null)
   const { styles, theme, themeType } = useTheme(getStyles)
   const { t } = useTranslation()
-  const allBanners = useBanners()
+  const [controllerBanners] = useBanners()
   const [isSearchVisible, setIsSearchVisible] = useState(false)
   const [bindControlPositionAnim, controlPositionStyles] = useMultiHover({
     values: [
@@ -85,7 +92,7 @@ const TabsAndSearch: FC<Props> = ({ openTab, setOpenTab, searchControl, sessionI
       setIsSearchVisible(false)
     }
 
-    window.addEventListener('mousedown', onClick)
+    window.addEventListener('mousedown', onClick, { passive: true })
 
     return () => {
       window.removeEventListener('mousedown', onClick)
@@ -93,7 +100,7 @@ const TabsAndSearch: FC<Props> = ({ openTab, setOpenTab, searchControl, sessionI
   }, [isSearchVisible])
 
   return (
-    <View style={[styles.container, !!allBanners.length && spacings.ptTy]}>
+    <View style={[styles.container, !!controllerBanners.length && spacings.ptTy]}>
       <Tabs
         handleChangeQuery={(tab) => setSearchParams({ tab, sessionId })}
         setOpenTab={setOpenTab}
@@ -101,9 +108,10 @@ const TabsAndSearch: FC<Props> = ({ openTab, setOpenTab, searchControl, sessionI
       />
       {TABS.includes(openTab) && (
         <View style={[flexbox.directionRow, flexbox.justifySpaceBetween, flexbox.alignCenter]}>
-          <SelectNetwork />
+          <SelectNetwork currentTab={currentTab} />
           {searchControl && (
             <AnimatedPressable
+              testID={`search-glass-icon-${currentTab}`}
               onPress={toggleSearchVisibility}
               ref={searchButtonRef}
               style={[

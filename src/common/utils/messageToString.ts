@@ -1,17 +1,23 @@
 import { getBytes, toUtf8String } from 'ethers'
 
-const getMessageAsText = (msg: any) => {
+import { Hex } from '@ambire-common/interfaces/hex'
+
+const getMessageAsText = (msg: Hex): string => {
   const bytes = getBytes(msg)
+
   const expectedPortionOfValidChars = 0.9
   const numberOfValidCharacters = bytes.filter((x) => x >= 0x20 && x <= 0x7e).length
 
   if (bytes.length * expectedPortionOfValidChars < numberOfValidCharacters) {
     try {
       return toUtf8String(msg)
-    } catch (_) {
-      return msg
+    } catch {
+      // The conversion failing is not something problematic, bad or unexpected.
+      // This function works on 'best effort' and is not critical,
+      // therefore we do not really care about the exception.
     }
   }
+
   return `Hex message:\n${msg}`
 }
 interface TypedMessageVisualization {

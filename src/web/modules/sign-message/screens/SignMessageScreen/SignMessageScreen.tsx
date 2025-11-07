@@ -3,12 +3,16 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { StyleSheet, View } from 'react-native'
 
-import { SignMessageAction } from '@ambire-common/controllers/actions/actions'
+import { SignMessageAction } from '@ambire-common/interfaces/actions'
 import { Key } from '@ambire-common/interfaces/keystore'
 import { PlainTextMessage, TypedMessage } from '@ambire-common/interfaces/userRequest'
 import { isSmartAccount } from '@ambire-common/libs/account/account'
 import { humanizeMessage } from '@ambire-common/libs/humanizer'
-import { EIP_1271_NOT_SUPPORTED_BY } from '@ambire-common/libs/signMessage/signMessage'
+import {
+  EIP_1271_NOT_SUPPORTED_BY,
+  toPersonalSignHex
+} from '@ambire-common/libs/signMessage/signMessage'
+import { isPlainTextMessage } from '@ambire-common/libs/transfer/userRequest'
 import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
 import Spinner from '@common/components/Spinner'
 import useTheme from '@common/hooks/useTheme'
@@ -19,6 +23,7 @@ import SmallNotificationWindowWrapper from '@web/components/SmallNotificationWin
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import useActionsControllerState from '@web/hooks/useActionsControllerState'
 import useBackgroundService from '@web/hooks/useBackgroundService'
+import useDappInfo from '@web/hooks/useDappInfo/useDappInfo'
 import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
@@ -29,7 +34,7 @@ import SigningKeySelect from '@web/modules/sign-message/components/SignKeySelect
 
 import Authorization7702 from './Contents/authorization7702'
 import Main from './Contents/main'
-import getStyles from './styles'
+import SignInWithEthereum from './Contents/signInWithEthereum'
 
 const SignMessageScreen = () => {
   const { t } = useTranslation()
@@ -46,7 +51,7 @@ const SignMessageScreen = () => {
   const [makeItSmartConfirmed, setMakeItSmartConfirmed] = useState(false)
   const [doNotAskMeAgain, setDoNotAskMeAgain] = useState(false)
   const actionState = useActionsControllerState()
-  const { styles, theme, themeType } = useTheme(getStyles)
+  const { theme, themeType } = useTheme()
 
   const signMessageAction = useMemo(() => {
     if (actionState.currentAction?.type !== 'signMessage') return undefined
@@ -57,7 +62,7 @@ const SignMessageScreen = () => {
   const userRequest = useMemo(() => {
     if (!signMessageAction) return undefined
     if (
-      !['typedMessage', 'message', 'authorization-7702'].includes(
+      !['typedMessage', 'message', 'authorization-7702', 'siwe'].includes(
         signMessageAction.userRequest.action.kind
       )
     )
@@ -66,12 +71,20 @@ const SignMessageScreen = () => {
     return signMessageAction.userRequest
   }, [signMessageAction])
 
+  const { name, icon } = useDappInfo(userRequest)
+
   const isAuthorization = useMemo(() => {
     if (!signMessageAction) return false
     if (signMessageAction.userRequest.action.kind !== 'authorization-7702') return false
     if (!signMessageAction.userRequest.meta.show7702Info) return false
 
     return true
+  }, [signMessageAction])
+
+  const isSiwe = useMemo(() => {
+    if (!signMessageAction) return false
+
+    return signMessageAction.userRequest.action.kind === 'siwe'
   }, [signMessageAction])
 
   const selectedAccountKeyStoreKeys = useMemo(
@@ -116,13 +129,15 @@ const SignMessageScreen = () => {
 
     if (!userRequest || !signMessageAction || isAlreadyInit) return
 
+    // Similarly to other wallets, attempt to normalize the input to a hex string,
+    // because some dapps not always pass hex strings, but plain text or Uint8Array.
+    if (isPlainTextMessage(userRequest.action))
+      userRequest.action.message = toPersonalSignHex(userRequest.action.message)
+
     dispatch({
       type: 'MAIN_CONTROLLER_SIGN_MESSAGE_INIT',
       params: {
-        dapp: {
-          name: userRequest?.session?.name || '',
-          icon: userRequest?.session?.icon || ''
-        },
+        dapp: { name, icon },
         messageToSign: {
           accountAddr: userRequest.meta.accountAddr,
           chainId: userRequest.meta.chainId,
@@ -132,7 +147,14 @@ const SignMessageScreen = () => {
         }
       }
     })
-  }, [dispatch, userRequest, signMessageAction, signMessageState.messageToSign?.fromActionId])
+  }, [
+    dispatch,
+    userRequest,
+    signMessageAction,
+    signMessageState.messageToSign?.fromActionId,
+    name,
+    icon
+  ])
 
   useEffect(() => {
     return () => {
@@ -144,7 +166,7 @@ const SignMessageScreen = () => {
     if (!signMessageAction || !userRequest) return
 
     dispatch({
-      type: 'MAIN_CONTROLLER_REJECT_USER_REQUEST',
+      type: 'REQUESTS_CONTROLLER_REJECT_USER_REQUEST',
       params: {
         err: t('User rejected the request.'),
         id: userRequest.id
@@ -195,6 +217,7 @@ const SignMessageScreen = () => {
   )
 
   const resolveButtonText = useMemo(() => {
+    if (isSiwe) return t('Sign in')
     if (isScrollToBottomForced) return t('Read the message')
 
     if (signStatus === 'LOADING') return t('Signing...')
@@ -202,7 +225,7 @@ const SignMessageScreen = () => {
     if (isAuthorization && !makeItSmartConfirmed) return 'Add smart features'
 
     return t('Sign')
-  }, [isScrollToBottomForced, signStatus, t, isAuthorization, makeItSmartConfirmed])
+  }, [isSiwe, t, isScrollToBottomForced, signStatus, isAuthorization, makeItSmartConfirmed])
 
   const rejectButtonText = useMemo(() => {
     if (isAuthorization && doNotAskMeAgain) return 'Skip'
@@ -225,6 +248,14 @@ const SignMessageScreen = () => {
   const onDoNotAskMeAgainChange = useCallback(() => {
     setDoNotAskMeAgain(!doNotAskMeAgain)
   }, [doNotAskMeAgain])
+
+  const view = useMemo(() => {
+    if (isAuthorization && !makeItSmartConfirmed) return 'authorization-7702'
+
+    if (isSiwe) return 'siwe'
+
+    return 'sign-message'
+  }, [isAuthorization, isSiwe, makeItSmartConfirmed])
 
   // In the split second when the action window opens, but the state is not yet
   // initialized, to prevent a flash of the fallback visualization, show a
@@ -258,6 +289,15 @@ const SignMessageScreen = () => {
             resolveDisabled={signStatus === 'LOADING' || isScrollToBottomForced || isViewOnly}
             resolveButtonTestID="button-sign"
             rejectButtonText={rejectButtonText}
+            {...(isViewOnly
+              ? {
+                  resolveNode: (
+                    <View style={[{ flex: 3 }, flexbox.directionRow, flexbox.justifyEnd]}>
+                      <NoKeysToSignAlert type="short" isTransaction={false} />
+                    </View>
+                  )
+                }
+              : {})}
           />
         }
         backgroundColor={
@@ -270,17 +310,19 @@ const SignMessageScreen = () => {
           isVisible={isChooseSignerShown}
           isSigning={signStatus === 'LOADING'}
           selectedAccountKeyStoreKeys={selectedAccountKeyStoreKeys}
-          handleChooseSigningKey={handleSign}
+          handleChooseKey={handleSign}
+          type="signing"
           handleClose={() => setIsChooseSignerShown(false)}
           account={account}
         />
-        {isAuthorization && !makeItSmartConfirmed ? (
+        {view === 'authorization-7702' && (
           <Authorization7702
             onDoNotAskMeAgainChange={onDoNotAskMeAgainChange}
             doNotAskMeAgain={doNotAskMeAgain}
             displayFullInformation
           />
-        ) : (
+        )}
+        {view === 'sign-message' && (
           <Main
             shouldDisplayLedgerConnectModal={shouldDisplayLedgerConnectModal}
             isLedgerConnected={isLedgerConnected}
@@ -290,10 +332,12 @@ const SignMessageScreen = () => {
             shouldDisplayEIP1271Warning={shouldDisplayEIP1271Warning}
           />
         )}
-        {isViewOnly && (
-          <View style={styles.noKeysToSignAlert}>
-            <NoKeysToSignAlert style={{ width: '100%' }} isTransaction={false} />
-          </View>
+        {view === 'siwe' && (
+          <SignInWithEthereum
+            shouldDisplayLedgerConnectModal={shouldDisplayLedgerConnectModal}
+            isLedgerConnected={isLedgerConnected}
+            handleDismissLedgerConnectModal={handleDismissLedgerConnectModal}
+          />
         )}
       </TabLayoutContainer>
     </SmallNotificationWindowWrapper>

@@ -33,9 +33,14 @@ import NotSupportedNetworkTooltip from '../NotSupportedNetworkTooltip'
 
 type Props = Pick<ReturnType<typeof useSwapAndBridgeForm>, 'setIsAutoSelectRouteDisabled'> & {
   isAutoSelectRouteDisabled: boolean
+  simulationFailed?: boolean
 }
 
-const ToToken: FC<Props> = ({ isAutoSelectRouteDisabled, setIsAutoSelectRouteDisabled }) => {
+const ToToken: FC<Props> = ({
+  isAutoSelectRouteDisabled,
+  setIsAutoSelectRouteDisabled,
+  simulationFailed
+}) => {
   const { theme, styles, themeType } = useTheme(getStyles)
   const { t } = useTranslation()
   const {
@@ -72,7 +77,9 @@ const ToToken: FC<Props> = ({ isAutoSelectRouteDisabled, setIsAutoSelectRouteDis
       dispatch({
         type: 'SWAP_AND_BRIDGE_CONTROLLER_UPDATE_FORM',
         params: {
-          toChainId: networks.filter((n) => String(n.chainId) === networkOption.value)[0].chainId
+          formValues: {
+            toChainId: networks.filter((n) => String(n.chainId) === networkOption.value)[0].chainId
+          }
         }
       })
     },
@@ -120,6 +127,7 @@ const ToToken: FC<Props> = ({ isAutoSelectRouteDisabled, setIsAutoSelectRouteDis
       formStatus === SwapAndBridgeFormStatus.NoRoutesFound ||
       formStatus === SwapAndBridgeFormStatus.ReadyToSubmit ||
       formStatus === SwapAndBridgeFormStatus.Proceeded ||
+      (formStatus === SwapAndBridgeFormStatus.InvalidRouteSelected && isAutoSelectRouteDisabled) ||
       shouldShowAmountOnEstimationFailure) &&
     updateQuoteStatus !== 'LOADING'
 
@@ -173,18 +181,24 @@ const ToToken: FC<Props> = ({ isAutoSelectRouteDisabled, setIsAutoSelectRouteDis
   const handleChangeToToken = useCallback(
     ({ address: toSelectedTokenAddr }: SelectValue) => {
       setIsAutoSelectRouteDisabled(false)
-      const isSameAsFromToken = toSelectedTokenAddr === fromSelectedToken?.address
+      const isSameAsFromToken =
+        !!fromSelectedToken &&
+        !!toChainId &&
+        toSelectedTokenAddr === fromSelectedToken.address &&
+        BigInt(toChainId) === fromSelectedToken.chainId
 
       dispatch({
         type: 'SWAP_AND_BRIDGE_CONTROLLER_UPDATE_FORM',
         params: {
-          toSelectedTokenAddr,
-          // Reset the from token if it's the same. undefined acts as "do nothing", null as reset
-          fromSelectedToken: isSameAsFromToken ? null : undefined
+          formValues: {
+            toSelectedTokenAddr,
+            // Reset the from token if it's the same. undefined acts as "do nothing", null as reset
+            fromSelectedToken: isSameAsFromToken ? null : undefined
+          }
         }
       })
     },
-    [setIsAutoSelectRouteDisabled, fromSelectedToken?.address, dispatch]
+    [setIsAutoSelectRouteDisabled, fromSelectedToken, toChainId, dispatch]
   )
 
   const handleAddToTokenByAddress = useCallback(
@@ -226,15 +240,11 @@ const ToToken: FC<Props> = ({ isAutoSelectRouteDisabled, setIsAutoSelectRouteDis
     'pendingBalanceFormatted' in toTokenValue &&
     'balanceFormatted' in toTokenValue
 
+  // @ts-ignore
   return (
     <View>
       <View
-        style={[
-          flexbox.directionRow,
-          flexbox.alignCenter,
-          flexbox.justifySpaceBetween,
-          spacings.mbTy
-        ]}
+        style={[flexbox.directionRow, flexbox.alignEnd, flexbox.justifySpaceBetween, spacings.mbMi]}
       >
         <SwitchTokensButton
           onPress={handleSwitchFromAndToTokens}
@@ -312,8 +322,16 @@ const ToToken: FC<Props> = ({ isAutoSelectRouteDisabled, setIsAutoSelectRouteDis
           ]}
         >
           {hasSelectedToToken && (
-            <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-              <WalletFilledIcon width={14} height={14} color={theme.tertiaryText} />
+            <View
+              style={[flexbox.directionRow, flexbox.alignCenter]}
+              // @ts-ignore
+              dataSet={{ tooltipId: 'to-token-balance-tooltip' }}
+            >
+              <WalletFilledIcon
+                width={14}
+                height={14}
+                color={simulationFailed ? theme.warningDecorative : theme.tertiaryText}
+              />
               <Text
                 testID="max-available-amount"
                 numberOfLines={1}
@@ -322,6 +340,7 @@ const ToToken: FC<Props> = ({ isAutoSelectRouteDisabled, setIsAutoSelectRouteDis
                 weight="medium"
                 appearance="tertiaryText"
                 ellipsizeMode="tail"
+                color={simulationFailed ? theme.warningDecorative : theme.tertiaryText}
               >
                 {`${
                   toTokenValue.isPending
@@ -329,6 +348,10 @@ const ToToken: FC<Props> = ({ isAutoSelectRouteDisabled, setIsAutoSelectRouteDis
                     : toTokenValue.balanceFormatted
                 } ${toTokenValue.symbol}`}
               </Text>
+              <Tooltip
+                content={simulationFailed ? 'Balance may be inaccurate' : ''}
+                id="to-token-balance-tooltip"
+              />
             </View>
           )}
           {!!quote?.selectedRoute && isReadyToDisplayAmounts && (

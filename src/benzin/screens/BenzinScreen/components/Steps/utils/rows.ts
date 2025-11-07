@@ -3,7 +3,7 @@ import { Block } from 'ethers'
 import { FeePaidWith } from '@benzin/screens/BenzinScreen/hooks/useSteps'
 import { FinalizedStatusType } from '@benzin/screens/BenzinScreen/interfaces/steps'
 
-const doNotShow = ['dropped', 'rejected']
+const doNotShow = ['dropped', 'rejected', 'not-found']
 
 const getDate = (timestamp: number) => {
   return new Date(timestamp * 1000).toLocaleString('en-us', {

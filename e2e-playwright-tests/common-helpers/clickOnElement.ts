@@ -39,7 +39,7 @@ export async function clickOnElement(page, selector, waitUntilEnabled = true, cl
 
         return !!buttonElement && !buttonElement.disabled && isClickableByCSS
       } catch (error) {
-        // Some Puppeteer selectors are not valid for querySelector.
+        // Some Playwright selectors are not valid for querySelector.
         // In such cases, skip the enabled check and assume the button should be enabled.
         // This is because accessing the actual DOM element and checking its properties is not straightforward in that case
         return true

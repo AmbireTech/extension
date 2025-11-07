@@ -38,6 +38,9 @@ const Backdrop = ({
       easing: Easing.linear,
       useNativeDriver: !isWeb
     }).start()
+    // Initialize backdrop fade-in animation on mount only opacity is a useRef
+    // value that doesn't change reference, so excluding it from deps is intentional
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {

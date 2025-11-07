@@ -9,7 +9,6 @@ import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import { getMessageAsText } from '@common/utils/messageToString'
 import ImageIcon from '@web/assets/svg/ImageIcon'
 import ManifestImage from '@web/components/ManifestImage'
 
@@ -17,12 +16,6 @@ import { COLLECTIBLE_SIZE } from '../Collectible/styles'
 import ChainVisualization from './ChainVisualization/ChainVisualization'
 import DeadlineItem from './DeadlineItem'
 
-export const visualizeContent = (kind: string, content?: string | Uint8Array) => {
-  if ((kind === 'message' && !content) || content === '0x') {
-    return 'Empty message '
-  }
-  return `${getMessageAsText(content).replace('\n', '')} `
-}
 function stopPropagation(e: React.MouseEvent) {
   e.stopPropagation()
 }
@@ -112,13 +105,6 @@ const HumanizedVisualization: FC<Props> = ({
             />
           )
 
-        if (item.type === 'message' && item.messageContent) {
-          return (
-            <Text key={key} fontSize={16} weight="medium" appearance="primaryText">
-              {visualizeContent('message', item.messageContent)}
-            </Text>
-          )
-        }
         if (item.type === 'image' && item.content) {
           return (
             <ManifestImage
@@ -172,7 +158,9 @@ const HumanizedVisualization: FC<Props> = ({
               fontSize={textSize}
               weight={item.isBold || item.type === 'action' ? 'semiBold' : 'regular'}
               appearance={
-                item.type === 'label'
+                item.warning
+                  ? 'warningText'
+                  : item.type === 'label'
                   ? 'secondaryText'
                   : item.type === 'action'
                   ? 'successText'

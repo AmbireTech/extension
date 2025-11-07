@@ -1,0 +1,41 @@
+@import '@legends/styles/base.scss';
+
+.title {
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.providers {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+
+  .provider {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    background-color: rgba($neutral-600, 0.051);
+    border-radius: 1rem;
+    transition: all 0.25s ease;
+
+    border: 0.0625rem solid rgba($neutral-600, 0.2);
+
+    .providerIcon {
+      width: 2rem;
+      height: 2rem;
+      border-radius: 0.375rem;
+      object-fit: contain;
+    }
+    .providerName {
+      font-size: 1rem;
+      font-weight: 500;
+      color: $primaryText;
+    }
+
+    &:hover {
+      background-color: rgba($neutral-600, 0.1);
+      cursor: pointer;
+    }
+  }
+}

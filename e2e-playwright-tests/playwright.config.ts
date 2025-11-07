@@ -3,8 +3,9 @@ import 'dotenv/config'
 import { PlaywrightTestConfig } from '@playwright/test'
 
 const config: PlaywrightTestConfig = {
+  forbidOnly: true,
   expect: {
-    timeout: 10 * 1000,
+    timeout: 30 * 1000,
     toHaveScreenshot: {
       maxDiffPixelRatio: 1 / 100
     }
@@ -19,8 +20,8 @@ const config: PlaywrightTestConfig = {
   timeout: 180 * 1000, // 3min
   reportSlowTests: null,
   snapshotPathTemplate: 'data/screenshots/{projectName}/{testFilePath}/{arg}/text',
-  retries: process.env.CI ? 1 : 0,
-  workers: process.env.CI ? 3 : 4,
+  retries: process.env.CI ? 3 : 0,
+  workers: process.env.CI ? 3 : 3,
   fullyParallel: true,
   use: {
     viewport: { width: 1920, height: 1080 },

@@ -5,7 +5,6 @@ import { Controller, useForm } from 'react-hook-form'
 import { View } from 'react-native'
 
 import { BIP44_STANDARD_DERIVATION_TEMPLATE } from '@ambire-common/consts/derivation'
-import BrushIcon from '@common/assets/svg/BrushIcon'
 import Button from '@common/components/Button'
 import InputPassword from '@common/components/InputPassword'
 import Panel from '@common/components/Panel'
@@ -141,18 +140,6 @@ const SeedPhraseImportScreen = () => {
         >
           <View style={[flexbox.justifySpaceBetween, flexbox.flex1]}>
             <ScrollableWrapper>
-              <Button
-                testID="clear-seed-phrase-btn"
-                type="ghost2"
-                size="small"
-                onPress={() => {
-                  setValue('seed', '')
-                  setSeedPhraseStatus('incomplete')
-                }}
-                style={[spacings.mbTy, spacings.ph0, flexbox.alignSelfEnd]}
-              >
-                <BrushIcon />
-              </Button>
               <Controller
                 control={control}
                 rules={{

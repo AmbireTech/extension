@@ -1,4 +1,5 @@
-import { SignAccountOpController } from '@ambire-common/controllers/signAccountOp/signAccountOp'
+import { ISignAccountOpController } from '@ambire-common/interfaces/signAccountOp'
+import { SwapAndBridgeRoute } from '@ambire-common/interfaces/swapAndBridge'
 import { Sponsor } from '@ambire-common/libs/erc7677/types'
 import { FeePaymentOption } from '@ambire-common/libs/estimate/interfaces'
 import { TokenResult } from '@ambire-common/libs/portfolio'
@@ -10,7 +11,7 @@ type FeeOption = Pick<SelectValue, 'value' | 'label' | 'disabled'> &
   }
 
 type Props = {
-  signAccountOpState: SignAccountOpController | null
+  signAccountOpState: ISignAccountOpController | null
   disabled: boolean
   hasEstimation: boolean
   slowRequest: boolean
@@ -22,6 +23,7 @@ type Props = {
     id: string
     title: string
   }
+  serviceFee?: SwapAndBridgeRoute['serviceFee']
 }
 
 export type { FeeOption, Props }

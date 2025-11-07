@@ -1,8 +1,9 @@
-import { BrowserProvider, getAddress, Interface } from 'ethers'
+import { getAddress, Interface } from 'ethers'
 
 import { Legends as LEGENDS_CONTRACT_ABI } from '@ambire-common/libs/humanizer/const/abis/Legends'
 import { LEGENDS_CONTRACT_ADDRESS } from '@legends/constants/addresses'
 import useErc5792 from '@legends/hooks/useErc5792'
+import useProviderContext from '@legends/hooks/useProviderContext'
 import useSwitchNetwork from '@legends/hooks/useSwitchNetwork'
 
 const LEGENDS_CONTRACT_INTERFACE = new Interface(LEGENDS_CONTRACT_ABI)
@@ -15,14 +16,15 @@ const useInviteCard = ({
   setAddress: (address: string) => void
 }) => {
   const switchNetwork = useSwitchNetwork()
+  const { browserProvider } = useProviderContext()
   const { sendCalls, getCallsStatus, chainId } = useErc5792()
 
   const inviteEOA = async (): Promise<string> => {
+    if (!browserProvider) return ''
     setAddress('')
     const checksummedAddress = getAddress(address)
 
-    const provider = new BrowserProvider(window.ambire)
-    const signer = await provider.getSigner()
+    const signer = await browserProvider.getSigner()
 
     // no sponsorship for inviteEOA
     const useSponsorship = false

@@ -21,11 +21,5 @@
   "host_permissions": ["http://*/*", "https://*/*", "file://*/*", "wss://*/*"],
   "externally_connectable": {
     "ids": ["*"]
-  },
-  "content_scripts": [
-    {
-      "matches": ["*://connect.trezor.io/*/popup.html", "https://connect.onekey.so/popup.html"],
-      "js": ["browser-polyfill.min.js", "vendor/trezor/trezor-content-script.js"]
-    }
-  ]
+  }
 }

@@ -25,7 +25,7 @@ const BenzinScreen = () => {
   const resolveAction = useCallback(() => {
     if (!actionsState.currentAction) return
     dispatch({
-      type: 'MAIN_CONTROLLER_RESOLVE_USER_REQUEST',
+      type: 'REQUESTS_CONTROLLER_RESOLVE_USER_REQUEST',
       params: {
         data: {},
         id: actionsState.currentAction.id as number

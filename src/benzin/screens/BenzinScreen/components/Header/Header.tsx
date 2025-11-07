@@ -2,7 +2,6 @@ import React, { FC } from 'react'
 import { View } from 'react-native'
 
 import { Network } from '@ambire-common/interfaces/network'
-import { StepsData } from '@benzin/screens/BenzinScreen/hooks/useSteps'
 import { ActiveStepType } from '@benzin/screens/BenzinScreen/interfaces/steps'
 import { IS_MOBILE_UP_BENZIN_BREAKPOINT } from '@benzin/screens/BenzinScreen/styles'
 import AmbireLogoHorizontal from '@common/components/AmbireLogoHorizontal'
@@ -17,12 +16,10 @@ import getStyles from './styles'
 interface Props {
   activeStep: ActiveStepType
   network: Network
-  stepsState: StepsData
 }
 
-const Header: FC<Props> = ({ activeStep, network, stepsState }) => {
+const Header: FC<Props> = ({ activeStep, network }) => {
   const { styles } = useTheme(getStyles)
-  const { pendingTime } = stepsState
 
   return (
     <>
@@ -54,8 +51,8 @@ const Header: FC<Props> = ({ activeStep, network, stepsState }) => {
         {activeStep === 'in-progress' ? (
           <Text appearance="secondaryText" fontSize={14}>
             {/* TODO: FIX estimated time */}
-            Est time remaining {pendingTime === 30 ? 30 : 5}{' '}
-            {pendingTime === 30 ? 'seconds' : 'minutes'}{' '}
+            Est time remaining {network.chainId === 1n ? 1 : 10}{' '}
+            {network.chainId === 1n ? 'minute' : 'seconds'}{' '}
           </Text>
         ) : null}
         <Text appearance="secondaryText" fontSize={14}>

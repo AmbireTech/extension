@@ -9,7 +9,7 @@ function useEscModal(isOpen: boolean, closeModal: () => void) {
     }
 
     if (isOpen) {
-      window.addEventListener('keydown', handleKeyDown)
+      window.addEventListener('keydown', handleKeyDown, { passive: true })
     }
 
     return () => {

@@ -1,11 +1,14 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 
+import { calculateRewardsForSeason } from '@ambire-common/utils/rewards'
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import Tooltip from '@common/components/Tooltip'
 import Alert from '@legends/components/Alert'
 import Page from '@legends/components/Page'
 import Spinner from '@legends/components/Spinner'
+import useAccountContext from '@legends/hooks/useAccountContext'
 import useLeaderboardContext from '@legends/hooks/useLeaderboardContext'
+import usePortfolioControllerState from '@legends/hooks/usePortfolioControllerState/usePortfolioControllerState'
 
 import Podium from './components/Podium'
 import Row from './components/Row'
@@ -22,6 +25,29 @@ const LeaderboardContainer: React.FC = () => {
     error,
     updateLeaderboard
   } = useLeaderboardContext()
+
+  const { rewardsProjectionData, accountPortfolio } = usePortfolioControllerState()
+  const { connectedAccount } = useAccountContext()
+
+  const currentTotalBalanceOnSupportedChains =
+    (accountPortfolio && accountPortfolio?.amount) || undefined
+
+  const parsedSnapshotsBalance = rewardsProjectionData?.currentSeasonSnapshots.map(
+    (snapshot: { week: number; balance: number }) => snapshot.balance
+  )
+
+  const projectedAmount =
+    rewardsProjectionData &&
+    calculateRewardsForSeason(
+      rewardsProjectionData?.userLevel,
+      parsedSnapshotsBalance,
+      currentTotalBalanceOnSupportedChains ?? 0,
+      rewardsProjectionData?.numberOfWeeksSinceStartOfSeason,
+      rewardsProjectionData?.totalWeightNonUser,
+      rewardsProjectionData?.totalRewardsPool,
+      rewardsProjectionData?.minLvl,
+      rewardsProjectionData?.minBalance
+    )
 
   const tableRef = useRef<HTMLDivElement>(null)
   const pageRef = useRef<HTMLDivElement>(null)
@@ -63,7 +89,7 @@ const LeaderboardContainer: React.FC = () => {
     const pageElement = pageRef.current
     if (pageElement) {
       // Attach the scroll event listener
-      pageElement.addEventListener('scroll', handleScroll)
+      pageElement.addEventListener('scroll', handleScroll, { passive: true })
 
       // Trigger the handleScroll function immediately after component mount
       handleScroll()
@@ -103,7 +129,7 @@ const LeaderboardContainer: React.FC = () => {
         </div>
         {error && <Alert className={styles.leaderboardError} type="error" title={error} />}
         {loading && <Spinner />}
-      
+
         {leaderboardData && leaderboardData.length ? (
           <>
             <div className={styles.tabs}>
@@ -131,16 +157,73 @@ const LeaderboardContainer: React.FC = () => {
               </button>
             </div>
             <Podium data={leaderboardData.slice(0, 3)} />
-            <div ref={tableRef} className={styles.table}>
+            <div
+              ref={tableRef}
+              className={`${styles.table} ${leaderboardData[0].reward ? styles.withReward : ''}`}
+            >
               <div className={styles.header}>
                 <div className={styles.cell}>
                   <h5>#</h5>
                   <h5 className={styles.playerCell}>player</h5>
                 </div>
-                <h5 className={styles.cell}>Level</h5>
-                {activeTab === 1 && (
+                {leaderboardData.some((i) => i.level) && <h5 className={styles.cell}>Level</h5>}
+                {leaderboardData.some((i) => i.reward) && (
                   <div className={styles.cell}>
-                    <h5 className={styles.weightText}>Weight</h5>
+                    <h5 className={styles.weightText}>Reward</h5>
+                    <InfoIcon
+                      width={10}
+                      height={10}
+                      color="currentColor"
+                      className={styles.infoIcon}
+                      data-tooltip-id="reward-info"
+                    />
+                    <Tooltip
+                      style={{
+                        backgroundColor: '#101114',
+                        color: '#F4F4F7',
+                        fontFamily: 'FunnelDisplay',
+                        fontSize: 11,
+                        lineHeight: '16px',
+                        fontWeight: 300,
+                        maxWidth: 244,
+                        boxShadow: '0px 0px 12.1px 0px #191B20'
+                      }}
+                      place="bottom"
+                      id="reward-info"
+                      content="$WALLET rewards for the season"
+                    />
+                  </div>
+                )}
+                {leaderboardData.some((i) => i.reward) && (
+                  <div className={styles.cell}>
+                    <h5 className={styles.weightText}>$Reward</h5>
+                    <InfoIcon
+                      width={10}
+                      height={10}
+                      color="currentColor"
+                      className={styles.infoIcon}
+                      data-tooltip-id="dollar-reward-info"
+                    />
+                    <Tooltip
+                      style={{
+                        backgroundColor: '#101114',
+                        color: '#F4F4F7',
+                        fontFamily: 'FunnelDisplay',
+                        fontSize: 11,
+                        lineHeight: '16px',
+                        fontWeight: 300,
+                        maxWidth: 244,
+                        boxShadow: '0px 0px 12.1px 0px #191B20'
+                      }}
+                      place="bottom"
+                      id="dollar-reward-info"
+                      content="The $ value of $WALLET rewards for the season"
+                    />
+                  </div>
+                )}
+                {leaderboardData.some((i) => i.projectedRewards) && (
+                  <div className={styles.cell}>
+                    <h5 className={styles.weightText}>Rewards</h5>
                     <InfoIcon
                       width={10}
                       height={10}
@@ -161,7 +244,7 @@ const LeaderboardContainer: React.FC = () => {
                       }}
                       place="bottom"
                       id="weight-info"
-                      content="Projected weight based on last week's balance snapshot. End results might vary."
+                      content="Your projected $stkWALLET rewards at the end of the season. This number is only an estimate — it will fluctuate as the season progresses, new users join, and balances shift"
                     />
                   </div>
                 )}
@@ -171,9 +254,17 @@ const LeaderboardContainer: React.FC = () => {
                 <Row
                   key={item.account}
                   {...item}
+                  projectedRewards={
+                    activeTab === 2
+                      ? connectedAccount === item.account
+                        ? projectedAmount
+                        : typeof item.projectedRewards === 'number'
+                        ? item.projectedRewards
+                        : 'Loading...'
+                      : undefined
+                  }
                   stickyPosition={stickyPosition}
                   currentUserRef={currentUserRef}
-                  activeTab={activeTab}
                 />
               ))}
               {userLeaderboardData &&
@@ -183,9 +274,9 @@ const LeaderboardContainer: React.FC = () => {
                   <Row
                     key={userLeaderboardData.account}
                     {...userLeaderboardData}
+                    projectedRewards={activeTab === 2 ? projectedAmount?.walletRewards : undefined}
                     stickyPosition={stickyPosition}
                     currentUserRef={currentUserRef}
-                    activeTab={activeTab}
                   />
                 )}
             </div>

@@ -21,14 +21,9 @@ const Networks = ({
   const { networks } = useNetworksControllerState()
   const { account, portfolio } = useSelectedAccountControllerState()
 
-  const portfolioByNetworks = useMemo(
-    () => (account ? portfolio.latest : {}),
-    [account, portfolio.latest]
-  )
-
   const filteredAndSortedPortfolio = useMemo(
     () =>
-      Object.keys(portfolioByNetworks || [])
+      Object.keys(portfolio.balancePerNetwork || [])
         .filter((chainId) => {
           const { name } =
             networks.find(({ chainId: nChainId }) => chainId === nChainId.toString()) || {}
@@ -42,8 +37,8 @@ const Networks = ({
           return true
         })
         .sort((a, b) => {
-          const aBalance = portfolioByNetworks[a]?.result?.total?.usd || 0
-          const bBalance = portfolioByNetworks[b]?.result?.total?.usd || 0
+          const aBalance = portfolio.balancePerNetwork[a]
+          const bBalance = portfolio.balancePerNetwork[b]
 
           if (aBalance === bBalance) {
             if (b === 'rewards' || b === 'gasTank') return -1
@@ -52,7 +47,7 @@ const Networks = ({
 
           return Number(bBalance) - Number(aBalance)
         }),
-    [networks, portfolioByNetworks, search]
+    [networks, portfolio.balancePerNetwork, search]
   )
 
   return (

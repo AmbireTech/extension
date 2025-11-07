@@ -86,7 +86,7 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
     if (!network || !account || !accountState || !accountState[chainId.toString()]) return
 
     dispatch({
-      type: 'MAIN_CONTROLLER_ADD_USER_REQUEST',
+      type: 'REQUESTS_CONTROLLER_ADD_USER_REQUEST',
       params: {
         userRequest: {
           id: new Date().getTime(),

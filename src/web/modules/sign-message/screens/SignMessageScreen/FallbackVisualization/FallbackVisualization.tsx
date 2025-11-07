@@ -2,7 +2,8 @@ import { FC, memo, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { NativeScrollEvent, ScrollView, View } from 'react-native'
 
-import { SignMessageController } from '@ambire-common/controllers/signMessage/signMessage'
+import { ISignMessageController } from '@ambire-common/interfaces/signMessage'
+import { isPlainTextMessage } from '@ambire-common/libs/transfer/userRequest'
 import { isValidAddress } from '@ambire-common/services/address'
 import WarningFilledIcon from '@common/assets/svg/WarningFilledIcon'
 import HumanizerAddress from '@common/components/HumanizerAddress'
@@ -22,10 +23,11 @@ const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }: Nati
 }
 
 const FallbackVisualization: FC<{
-  messageToSign: SignMessageController['messageToSign']
+  messageToSign: ISignMessageController['messageToSign']
   setHasReachedBottom: (hasReachedBottom: boolean) => void
   hasReachedBottom: boolean
-}> = ({ messageToSign, setHasReachedBottom, hasReachedBottom }) => {
+  responsiveSizeMultiplier?: number
+}> = ({ messageToSign, setHasReachedBottom, hasReachedBottom, responsiveSizeMultiplier = 1 }) => {
   const { t } = useTranslation()
   const { styles } = useTheme(getStyles)
   const { maxWidthSize } = useWindowSize()
@@ -72,7 +74,7 @@ const FallbackVisualization: FC<{
         <Text
           selectable
           weight="regular"
-          fontSize={maxWidthSize('xl') ? 14 : 12}
+          fontSize={(maxWidthSize('xl') ? 14 : 12) * responsiveSizeMultiplier}
           appearance="secondaryText"
           style={spacings.mb}
         >
@@ -91,23 +93,38 @@ const FallbackVisualization: FC<{
 
               if (isValidAddress(i.value))
                 componentToReturn = (
-                  <HumanizerAddress chainId={messageToSign.chainId} address={i.value} />
+                  <HumanizerAddress
+                    chainId={messageToSign.chainId}
+                    address={i.value}
+                    fontSize={14 * responsiveSizeMultiplier}
+                  />
                 )
               else if (isProbablyADateWIthinRange)
                 componentToReturn = new Date(parseInt(i.value, 10) * 1000).toUTCString()
               else if (isInfiniteAmount)
                 componentToReturn = (
                   <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                    <Text weight="semiBold" style={[spacings.mrTy]}>
+                    <Text
+                      fontSize={16 * responsiveSizeMultiplier}
+                      weight="semiBold"
+                      style={[spacings.mrTy]}
+                    >
                       {t('Infinite amount')}
                     </Text>
-                    <WarningFilledIcon width={16} height={16} />
+                    <WarningFilledIcon
+                      width={16 * responsiveSizeMultiplier}
+                      height={16 * responsiveSizeMultiplier}
+                    />
                   </View>
                 )
               return (
                 <div style={index < 2 ? { maxWidth: '75%' } : {}} key={JSON.stringify(i)}>
                   <Text
-                    style={[i.type === 'key' && { fontWeight: 'bold' }, { marginLeft: i.n * 20 }]}
+                    style={[
+                      i.type === 'key' && { fontWeight: 'bold' },
+                      { marginLeft: i.n * 20 * responsiveSizeMultiplier }
+                    ]}
+                    fontSize={16 * responsiveSizeMultiplier}
                   >
                     {componentToReturn}
                   </Text>
@@ -116,7 +133,7 @@ const FallbackVisualization: FC<{
             })}
           {content.kind === 'authorization-7702' && getMessageAsText(content.message)}
 
-          {content.kind === 'message' &&
+          {isPlainTextMessage(content) &&
             (getMessageAsText(content.message) || t('(Empty message)'))}
         </Text>
       </ScrollView>

@@ -1,16 +1,20 @@
 import React, { FC } from 'react'
 
+import { STK_WALLET } from '@ambire-common/consts/addresses'
+import { getTokenBalanceInUSD } from '@ambire-common/libs/portfolio/helpers'
 import { faTrophy } from '@fortawesome/free-solid-svg-icons/faTrophy'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import Address from '@legends/components/Address'
 import useAccountContext from '@legends/hooks/useAccountContext'
+import usePortfolioControllerState from '@legends/hooks/usePortfolioControllerState/usePortfolioControllerState'
 import styles from '@legends/modules/leaderboard/screens/Leaderboard/Leaderboard.module.scss'
 import { LeaderboardEntry } from '@legends/modules/leaderboard/types'
 
 type Props = LeaderboardEntry['currentUser'] & {
   stickyPosition: string | null
+  projectedRewards?: number | 'Loading...'
   currentUserRef: React.RefObject<HTMLDivElement>
-  activeTab: number
+  reward?: number | ''
 }
 
 const calculateRowStyle = (isConnectedAccountRow: boolean, stickyPosition: string | null) => {
@@ -37,11 +41,11 @@ const getBadge = (rank: number) => {
   }
 }
 
-function prettifyWeight(weight: number) {
-  if (weight > 1_000) return `${(weight / 1_000).toFixed(2)}K`
-  if (weight > 1_000_000) return `${(weight / 1_000_000).toFixed(2)}M`
-  if (weight > 1_000_000_000) return `${(weight / 1_000_000_000).toFixed(2)}B`
-  return Math.floor(weight)
+function prettifyProjectedRewards(amount: number) {
+  if (amount > 1_000_000_000) return `${(amount / 1_000_000_000).toFixed(2)}B`
+  if (amount > 1_000_000) return `${(amount / 1_000_000).toFixed(2)}M`
+  if (amount > 1_000) return `${(amount / 1_000).toFixed(2)}K`
+  return Math.floor(amount)
 }
 
 const Row: FC<Props> = ({
@@ -49,13 +53,14 @@ const Row: FC<Props> = ({
   image_avatar,
   rank,
   xp,
-  weight,
+  projectedRewards,
   level,
   stickyPosition,
   currentUserRef,
-  activeTab
+  reward
 }) => {
   const { connectedAccount } = useAccountContext()
+  const { walletTokenInfo } = usePortfolioControllerState()
   const isConnectedAccountRow = account === connectedAccount
   const formatXp = (xp: number) => {
     return xp.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
@@ -79,12 +84,32 @@ const Row: FC<Props> = ({
     return () => window.removeEventListener('resize', handleResize)
   }, [])
   const formattedXp = formatXp(xp)
+
+  const amountFormatted = reward ? Math.round(reward * 1e18) : 0
+  const tokenBalanceInUSD = getTokenBalanceInUSD({
+    chainId: BigInt(1),
+    amount: BigInt(amountFormatted || 1),
+    latestAmount: BigInt(amountFormatted || 1),
+    pendingAmount: BigInt(amountFormatted || 1),
+    address: STK_WALLET,
+    symbol: 'stkWALLET',
+    name: 'Staked $WALLET',
+    decimals: 18,
+    priceIn: [{ baseCurrency: 'usd', price: walletTokenInfo?.walletPrice || 0 }],
+    flags: {
+      onGasTank: false,
+      rewardsType: 'wallet-projected-rewards' as const,
+      canTopUpGasTank: false,
+      isFeeToken: false
+    }
+  })
+
   return (
     <div
       key={account}
       className={`${styles.row} ${isConnectedAccountRow ? styles.currentUserRow : ''} ${
         rank <= 3 ? styles[`rankedRow${rank}`] : ''
-      }`}
+      } ${reward ? styles.withReward : ''}`}
       ref={isConnectedAccountRow ? currentUserRef : null}
       style={calculateRowStyle(isConnectedAccountRow, stickyPosition)}
     >
@@ -112,8 +137,25 @@ const Row: FC<Props> = ({
         )}
       </div>
       <h5 className={styles.cell}>{level}</h5>
-      {activeTab === 1 && (
-        <h5 className={`${styles.cell} ${styles.weight}`}>{prettifyWeight(weight || 0)}</h5>
+      {typeof projectedRewards !== 'undefined' && (
+        <h5 className={`${styles.cell} ${styles.weight}`}>
+          {typeof projectedRewards === 'number'
+            ? prettifyProjectedRewards(projectedRewards)
+            : projectedRewards}
+        </h5>
+      )}
+      {typeof reward !== 'undefined' && (
+        <>
+          <h5 className={`${styles.cell} ${styles.reward}`}>
+            {typeof reward === 'number' ? prettifyProjectedRewards(reward) : reward}
+          </h5>
+          <h5 className={`${styles.cell} ${styles.dollarReward}`}>
+            $
+            {Number(tokenBalanceInUSD).toLocaleString(undefined, {
+              maximumFractionDigits: 0
+            })}
+          </h5>
+        </>
       )}
       <h5 className={styles.cell}>{formattedXp}</h5>
     </div>

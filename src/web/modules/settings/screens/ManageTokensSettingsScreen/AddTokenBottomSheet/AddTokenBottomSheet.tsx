@@ -229,7 +229,7 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
       style={{ maxWidth: 720 }}
       backgroundColor={themeType === THEME_TYPES.DARK ? 'secondaryBackground' : 'primaryBackground'}
     >
-      <Text fontSize={20} style={spacings.mbXl} weight="medium">
+      <Text testID="add-token-modal-title-text" fontSize={20} style={spacings.mbXl} weight="medium">
         {t('Add Token')}
       </Text>
       <Select
@@ -244,6 +244,7 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
         name="address"
         render={({ field: { onChange, onBlur, value } }) => (
           <Input
+            testID="token-address-field"
             onBlur={onBlur}
             onChangeText={onChange}
             label={t('Token Address')}
@@ -291,11 +292,16 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
                 chainId={network.chainId}
                 address={address}
               />
-              <Text fontSize={16} style={spacings.mlTy} weight="semiBold">
+              <Text
+                testID="custom-token-name"
+                fontSize={16}
+                style={spacings.mlTy}
+                weight="semiBold"
+              >
                 {temporaryToken?.symbol || portfolioToken?.symbol}
               </Text>
             </View>
-            <View style={flexbox.directionRow}>
+            <View testID="confirmed-pill-text" style={flexbox.directionRow}>
               {temporaryToken?.priceIn?.length || portfolioToken?.priceIn?.length ? (
                 <CoingeckoConfirmedBadge text="Confirmed" address={address} network={network} />
               ) : null}
@@ -327,6 +333,7 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
         ) : null}
       </View>
       <Button
+        testID="add-token-button"
         disabled={
           showAlreadyInPortfolioMessage ||
           (!temporaryToken && !tokenTypeEligibility) ||

@@ -1,9 +1,10 @@
 import { formatUnits } from 'ethers'
-import React, { FC, useCallback, useMemo } from 'react'
+import React, { FC, useCallback, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
-import { getIsBridgeRoute } from '@ambire-common/libs/swapAndBridge/swapAndBridge'
+import { Hex } from '@ambire-common/interfaces/hex'
+import { getIsBridgeRoute, getLink } from '@ambire-common/libs/swapAndBridge/swapAndBridge'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
@@ -21,10 +22,10 @@ import TrackProgressWrapper from '@web/modules/sign-account-op/components/OneCli
 import Completed from '@web/modules/sign-account-op/components/OneClick/TrackProgress/ByStatus/Completed'
 import Failed from '@web/modules/sign-account-op/components/OneClick/TrackProgress/ByStatus/Failed'
 import InProgress from '@web/modules/sign-account-op/components/OneClick/TrackProgress/ByStatus/InProgress'
+import Refunded from '@web/modules/sign-account-op/components/OneClick/TrackProgress/ByStatus/Refunded'
+import useTrackAccountOp from '@web/modules/sign-account-op/hooks/OneClick/useTrackAccountOp'
 import { getUiType } from '@web/utils/uiType'
 
-import { Hex } from '@ambire-common/interfaces/hex'
-import Refunded from '@web/modules/sign-account-op/components/OneClick/TrackProgress/ByStatus/Refunded'
 import RouteStepsToken from '../RouteStepsToken'
 
 const { isActionWindow } = getUiType()
@@ -33,14 +34,13 @@ type Props = {
   handleClose: () => void
 }
 
-const LIFI_EXPLORER_URL = 'https://scan.li.fi'
-
 const TrackProgress: FC<Props> = ({ handleClose }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { navigate } = useNavigation()
   const { dispatch } = useBackgroundService()
   const { activeRoutes } = useSwapAndBridgeControllerState()
+
   const lastCompletedRoute = activeRoutes[activeRoutes.length - 1]
   const steps = lastCompletedRoute?.route?.steps
   const firstStep = steps ? steps[0] : null
@@ -51,8 +51,8 @@ const TrackProgress: FC<Props> = ({ handleClose }) => {
   const isSwap = lastCompletedRoute.route && !getIsBridgeRoute(lastCompletedRoute.route)
 
   const refunded = useMemo(() => {
-    if (!steps || steps.length === 0) return null
-    const firstStep = steps[0]
+    if (!steps || steps.length === 0 || !firstStep) return null
+
     if (steps.length === 1) {
       return {
         amount: firstStep.fromAmount,
@@ -64,9 +64,9 @@ const TrackProgress: FC<Props> = ({ handleClose }) => {
       amount: firstStep.toAmount,
       asset: lastCompletedStep.fromAsset
     }
-  }, [steps])
+  }, [firstStep, steps])
 
-  const onPrimaryButtonPress = useCallback(() => {
+  const navigateOut = useCallback(() => {
     if (isActionWindow) {
       dispatch({
         type: 'CLOSE_SIGNING_ACTION_WINDOW',
@@ -79,9 +79,39 @@ const TrackProgress: FC<Props> = ({ handleClose }) => {
     }
   }, [dispatch, navigate])
 
+  const { sessionHandler } = useTrackAccountOp({
+    address: lastCompletedRoute.route?.userAddress,
+    chainId: lastCompletedRoute.route?.fromChainId
+      ? BigInt(lastCompletedRoute.route.fromChainId)
+      : undefined,
+    sessionId: 'swapAndBridge'
+  })
+
+  useEffect(() => {
+    // Optimization: Don't apply filtration if we don't have a completed route.
+    if (
+      !lastCompletedRoute?.userTxHash ||
+      !lastCompletedRoute.route?.fromChainId ||
+      !lastCompletedRoute.route.userAddress
+    )
+      return
+
+    sessionHandler.initSession()
+
+    return () => {
+      sessionHandler.killSession()
+    }
+  }, [
+    dispatch,
+    lastCompletedRoute.route?.fromChainId,
+    lastCompletedRoute.route?.userAddress,
+    lastCompletedRoute?.userTxHash,
+    sessionHandler
+  ])
+
   const explorerLink = useMemo(() => {
     if (!isSwap) {
-      return `${LIFI_EXPLORER_URL}/tx/${lastCompletedRoute.userTxHash}`
+      return getLink(lastCompletedRoute)
     }
     const toChainId = lastCompletedRoute.route?.toChainId
     if (!toChainId) return
@@ -99,9 +129,10 @@ const TrackProgress: FC<Props> = ({ handleClose }) => {
 
   return (
     <TrackProgressWrapper
-      onPrimaryButtonPress={onPrimaryButtonPress}
+      onPrimaryButtonPress={navigateOut}
       secondaryButtonText={t('Start a new swap?')}
       handleClose={handleClose}
+      routeStatus={lastCompletedRoute?.routeStatus}
     >
       {(!lastCompletedRoute || lastCompletedRoute?.routeStatus === 'in-progress') && (
         <InProgress title={t('Confirming your trade')}>

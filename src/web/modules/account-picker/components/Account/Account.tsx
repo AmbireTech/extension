@@ -102,7 +102,7 @@ const Account = ({
   }, [account.addr, addToast, t])
 
   if (isDomainResolving) {
-    return <SkeletonLoader height={56} width="100%" />
+    return <SkeletonLoader height={56} width="100%" style={spacings.mbTy} />
   }
 
   if (!account.addr) return null

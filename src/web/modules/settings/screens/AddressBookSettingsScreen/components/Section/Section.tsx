@@ -7,10 +7,11 @@ import SettingsPageHeader from '@web/modules/settings/components/SettingsPageHea
 const Section: FC<{
   title: string
   children: ReactNode | ReactNode[]
-}> = ({ title, children }) => {
+  headerChildren?: ReactNode | ReactNode[]
+}> = ({ title, children, headerChildren }) => {
   return (
     <View style={flexbox.flex1}>
-      <SettingsPageHeader title={title} />
+      <SettingsPageHeader title={title}>{headerChildren}</SettingsPageHeader>
       {children}
     </View>
   )

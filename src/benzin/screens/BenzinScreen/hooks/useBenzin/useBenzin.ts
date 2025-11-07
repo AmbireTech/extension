@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Linking } from 'react-native'
 
-import { allBundlers, BUNDLER } from '@ambire-common/consts/bundlers'
+import { BUNDLER } from '@ambire-common/consts/bundlers'
 import {
   AccountOpIdentifiedBy,
   SubmittedAccountOp
 } from '@ambire-common/libs/accountOp/submittedAccountOp'
 import { relayerCall } from '@ambire-common/libs/relayerCall/relayerCall'
-import { getDefaultBundler } from '@ambire-common/services/bundlers/getBundler'
+import { BundlerSwitcher } from '@ambire-common/services/bundlers/bundlerSwitcher'
 import { getRpcProvider } from '@ambire-common/services/provider'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
 import useBenzinNetworksContext from '@benzin/hooks/useBenzinNetworksContext'
@@ -55,20 +55,32 @@ const useBenzin = ({ onOpenExplorer, extensionAccOp }: Props = {}) => {
   const bigintChainId = BigInt(chainId || '') || 0n
   const actualNetworks = networks ?? benzinNetworks
   const areRelayerNetworksLoaded = actualNetworks && actualNetworks.length
-  const network = actualNetworks.find((n) => n.chainId === bigintChainId) || null
-  const provider =
-    network && chainId
-      ? getRpcProvider(network.rpcUrls, bigintChainId, network.selectedRpcUrl)
-      : null
   const isNetworkLoading = loadingBenzinNetworks.includes(bigintChainId)
   const [activeStep, setActiveStep] = useState<ActiveStepType>('signed')
   const isInitialized = !isNetworkLoading && areRelayerNetworksLoaded
 
-  const userOpBundler = useMemo(() => {
-    if (bundler && allBundlers.includes(bundler)) return bundler as BUNDLER
-    if (!network) return undefined
-    return getDefaultBundler(network).getName()
-  }, [bundler, network])
+  const network = useMemo(() => {
+    return actualNetworks.find((n) => n.chainId === bigintChainId) || null
+  }, [actualNetworks, bigintChainId])
+
+  const provider = useMemo(() => {
+    if (!network || bigintChainId === 0n) return null
+    return getRpcProvider(network.rpcUrls, bigintChainId, network.selectedRpcUrl)
+  }, [network, bigintChainId])
+
+  const switcher = useMemo(() => {
+    if (!network) return null
+    return new BundlerSwitcher(
+      network,
+      () => {
+        return false
+      },
+      {
+        canDelegate: false,
+        preferredBundler: (bundler as BUNDLER) ?? undefined
+      }
+    )
+  }, [network, bundler])
 
   const stepsState = useSteps({
     txnId,
@@ -78,16 +90,21 @@ const useBenzin = ({ onOpenExplorer, extensionAccOp }: Props = {}) => {
     standardOptions,
     setActiveStep,
     provider,
-    bundler: userOpBundler,
+    switcher,
     extensionAccOp,
     networks: actualNetworks
   })
 
-  const identifiedBy: AccountOpIdentifiedBy = useMemo(() => {
+  const getIdentifiedBy = useCallback((): AccountOpIdentifiedBy => {
     if (relayerId) return { type: 'Relayer', identifier: relayerId }
-    if (userOpHash) return { type: 'UserOperation', identifier: userOpHash, bundler: userOpBundler }
+    if (userOpHash)
+      return {
+        type: 'UserOperation',
+        identifier: userOpHash,
+        bundler: switcher ? switcher.getBundler().getName() : undefined
+      }
     return { type: 'Transaction', identifier: txnId as string }
-  }, [relayerId, userOpHash, txnId, userOpBundler])
+  }, [relayerId, userOpHash, switcher, txnId])
 
   useEffect(() => {
     if (areRelayerNetworksLoaded && !network && bigintChainId) {
@@ -103,7 +120,7 @@ const useBenzin = ({ onOpenExplorer, extensionAccOp }: Props = {}) => {
         address = `https://explorer.ambire.com/${getBenzinUrlParams({
           chainId,
           txnId: stepsState.txnId,
-          identifiedBy
+          identifiedBy: getIdentifiedBy()
         })}`
       }
 
@@ -112,7 +129,7 @@ const useBenzin = ({ onOpenExplorer, extensionAccOp }: Props = {}) => {
       addToast('Error copying to clipboard', { type: 'error' })
     }
     addToast('Copied to clipboard!')
-  }, [addToast, chainId, stepsState.txnId, identifiedBy])
+  }, [addToast, chainId, stepsState.txnId, getIdentifiedBy])
 
   const handleOpenExplorer = useCallback(async () => {
     if (!network?.explorerUrl) return
@@ -130,19 +147,21 @@ const useBenzin = ({ onOpenExplorer, extensionAccOp }: Props = {}) => {
   }, [network, userOpHash, stepsState.txnId, onOpenExplorer, addToast])
 
   const showCopyBtn = useMemo(() => {
-    if (!network) return true
+    if (!network) return false
+    if (extensionAccOp && extensionAccOp.identifiedBy?.type === 'MultipleTxns') return false
 
     const isRejected = stepsState.finalizedStatus?.status === 'rejected'
     return !isRejected
-  }, [network, stepsState.finalizedStatus?.status])
+  }, [network, stepsState.finalizedStatus?.status, extensionAccOp])
 
   const showOpenExplorerBtn = useMemo(() => {
     if (!network) return false
-    if (relayerId && !stepsState.txnId) return false
+    // do not show the button until a txId is confirmed
+    if (!stepsState.txnId) return false
 
     const isRejected = stepsState.finalizedStatus?.status === 'rejected'
     return !isRejected
-  }, [network, stepsState.finalizedStatus?.status, relayerId, stepsState.txnId])
+  }, [network, stepsState.finalizedStatus?.status, stepsState.txnId])
 
   if (!chainId || (!txnId && !userOpHash && !relayerId)) return null
 

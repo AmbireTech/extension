@@ -2,7 +2,7 @@
 import 'reflect-metadata'
 
 import { ethErrors } from 'eth-rpc-errors'
-import { toBeHex } from 'ethers'
+import { isAddress, toBeHex, TransactionReceipt } from 'ethers'
 import cloneDeep from 'lodash/cloneDeep'
 import { nanoid } from 'nanoid'
 
@@ -21,6 +21,7 @@ import {
   fetchTxnId,
   isIdentifiedByMultipleTxn
 } from '@ambire-common/libs/accountOp/submittedAccountOp'
+import { networkChainIdToHex } from '@ambire-common/libs/networks/networks'
 import { getBundlerByName, getDefaultBundler } from '@ambire-common/services/bundlers/getBundler'
 import { getRpcProvider } from '@ambire-common/services/provider'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
@@ -46,16 +47,6 @@ const handleSignMessage = (requestRes: RequestRes) => {
   }
 
   throw new Error('Internal error: request result not found', requestRes)
-}
-
-const networkChainIdToHex = (chainId: number | bigint) => {
-  try {
-    // Remove leading zero in hex representation
-    // to match the format expected by dApps (e.g., "0xa" instead of "0x0a")
-    return toBeHex(chainId).replace(/^0x0/, '0x')
-  } catch (error) {
-    return `0x${chainId.toString(16)}`
-  }
 }
 
 export class ProviderController {
@@ -153,11 +144,8 @@ export class ProviderController {
         )
         if (!network) return
 
-        const portfolioNetwork =
-          this.mainCtrl.selectedAccount.portfolio.pending[network.chainId.toString()]
-        if (!portfolioNetwork) return
-
-        totalBalance += portfolioNetwork.result?.total.usd || 0
+        totalBalance +=
+          this.mainCtrl.selectedAccount.portfolio.balancePerNetwork[network.chainId.toString()] || 0
       })
     } else {
       totalBalance = this.mainCtrl.selectedAccount.portfolio.totalBalance
@@ -414,7 +402,7 @@ export class ProviderController {
     throw new Error('Transaction failed!')
   }
 
-  walletGetCallsStatus = async (data: any) => {
+  walletGetCallsStatus = async (data: any): Promise<any> => {
     if (!data.params || !data.params.length) {
       throw ethErrors.rpc.invalidParams('params is required but got []')
     }
@@ -447,12 +435,7 @@ export class ProviderController {
       : undefined
     const version = getVersion(accOp)
 
-    const txnIdData = await fetchTxnId(
-      identifiedBy,
-      network,
-      this.mainCtrl.fetch,
-      this.mainCtrl.callRelayer
-    )
+    const txnIdData = await fetchTxnId(identifiedBy, network, this.mainCtrl.callRelayer)
     if (txnIdData.status === 'rejected') {
       return {
         status: getFailureStatus(version)
@@ -470,7 +453,6 @@ export class ProviderController {
     const isUserOp = identifiedBy.type === 'UserOperation'
     const bundler = bundlerName ? getBundlerByName(bundlerName) : getDefaultBundler(network)
 
-    const receipts = []
     if (isUserOp) {
       const userOpReceipt = await bundler
         .getReceipt(identifiedBy.identifier, network)
@@ -481,8 +463,32 @@ export class ProviderController {
         }
       }
 
-      receipts.push(userOpReceipt)
-    } else if (!isMultipleTxn) {
+      const txnStatus =
+        'status' in userOpReceipt.receipt
+          ? toBeHex(userOpReceipt.receipt.status as number, 1)
+          : toBeHex(+userOpReceipt.success, 1)
+      const status = txnStatus === '0x01' || txnStatus === '0x1' ? '0x1' : '0x0'
+      return {
+        version,
+        id: identifiedBy,
+        atomic: !isMultipleTxn,
+        status: getSuccessStatus(version),
+        receipts: [
+          {
+            logs: userOpReceipt.logs,
+            status,
+            chainId: networkChainIdToHex(network.chainId),
+            blockHash: userOpReceipt.receipt.blockHash,
+            blockNumber: userOpReceipt.receipt.blockNumber,
+            gasUsed: userOpReceipt.receipt.gasUsed,
+            transactionHash: userOpReceipt.receipt.transactionHash
+          }
+        ]
+      }
+    }
+
+    const receipts = []
+    if (!isMultipleTxn) {
       const txnReceipt = await provider.getTransactionReceipt(txnId).catch(() => null)
       if (!txnReceipt) {
         return {
@@ -513,20 +519,38 @@ export class ProviderController {
       atomic: !isMultipleTxn,
       status: getSuccessStatus(version),
       receipts: receipts.map((receipt) => {
-        const txnStatus = isUserOp ? receipt.receipt.status : toBeHex(receipt.status as number)
+        const txnReceipt = receipt as unknown as TransactionReceipt
+        const txnStatus = toBeHex(txnReceipt.status as number, 1)
         const status = txnStatus === '0x01' || txnStatus === '0x1' ? '0x1' : '0x0'
         return {
-          logs: receipt.logs,
+          logs: txnReceipt.logs,
           status,
           chainId: networkChainIdToHex(network.chainId),
-          blockHash: isUserOp ? receipt.receipt.blockHash : receipt.blockHash,
-          blockNumber: isUserOp
-            ? receipt.receipt.blockNumber
-            : toBeHex(receipt.blockNumber as number),
-          gasUsed: isUserOp ? receipt.receipt.gasUsed : toBeHex(receipt.gasUsed),
-          transactionHash: isUserOp ? receipt.receipt.transactionHash : receipt.hash
+          blockHash: txnReceipt.blockHash,
+          blockNumber: toBeHex(txnReceipt.blockNumber as number),
+          gasUsed: toBeHex(txnReceipt.gasUsed),
+          transactionHash: txnReceipt.hash
         }
       })
+    }
+  }
+
+  walletGetCurrentAutoLoginPolicy = ({ session: { origin, id } }: DappProviderRequest) => {
+    const appCurrentChainId = this.mainCtrl.dapps.getDapp(id)?.chainId
+
+    if (!this.mainCtrl.autoLogin.settings.enabled)
+      return {
+        activePolicy: null
+      }
+
+    const policy = this.mainCtrl.autoLogin.getAccountPolicyForOrigin(
+      this.mainCtrl.selectedAccount.account?.addr || '',
+      origin,
+      appCurrentChainId
+    )
+
+    return {
+      activePolicy: policy
     }
   }
 
@@ -629,7 +653,17 @@ export class ProviderController {
     return null
   }
 
-  @Reflect.metadata('ACTION_REQUEST', ['WalletWatchAsset', false])
+  @Reflect.metadata('ACTION_REQUEST', [
+    'WalletWatchAsset',
+    ({ request }: { request: ProviderRequest; mainCtrl: MainController }) => {
+      const tokenAddress = request.params?.options?.address
+
+      if (!tokenAddress) throw ethErrors.rpc.invalidParams('Token address is required')
+      if (!isAddress(tokenAddress)) throw ethErrors.rpc.invalidParams('Invalid token address')
+
+      return false // Return false to allow action window to open (address is valid)
+    }
+  ])
   walletWatchAsset = () => true
 
   @Reflect.metadata('ACTION_REQUEST', ['GetEncryptionPublicKey', false])

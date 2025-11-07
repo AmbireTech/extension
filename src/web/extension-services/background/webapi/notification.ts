@@ -1,9 +1,9 @@
 import { nanoid } from 'nanoid'
 
-import { NotificationManager } from '@ambire-common/interfaces/notification'
+import { UiManager } from '@ambire-common/interfaces/ui'
 import { browser, isSafari } from '@web/constants/browserapi'
 
-export const notificationManager: NotificationManager = {
+export const notificationManager: UiManager['notification'] = {
   create: async ({ title, message, icon }: { title: string; message: string; icon?: string }) => {
     try {
       if (isSafari()) return

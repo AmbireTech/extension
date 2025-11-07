@@ -10,6 +10,7 @@ import PrivateKeyExport from '@common/components/ExportKey/PrivateKeyExport'
 import SmartAccountExport from '@common/components/ExportKey/SmartAccountExport'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import useExtraEntropy from '@common/hooks/useExtraEntropy'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
@@ -38,6 +39,8 @@ const ExportKey = ({
   const { dispatch } = useBackgroundService()
   const keystoreState = useKeystoreControllerState()
   const [privateKey, setPrivateKey] = useState<string | null>(null)
+  const [salt, setSalt] = useState<string | null>(null)
+  const [iv, setIv] = useState<string | null>(null)
   const [blurred, setBlurred] = useState<boolean>(true)
   const { themeType } = useTheme()
   const {
@@ -59,18 +62,33 @@ const ExportKey = ({
       if (!data.privateKey) return
 
       setPrivateKey(data.privateKey)
+
+      // when exporting a json, additional data is sent
+      if (isExportingV2SA) {
+        setSalt(data.salt)
+        setIv(data.iv)
+      }
     }
 
     eventBus.addEventListener('receiveOneTimeData', onReceiveOneTimeData)
 
     return () => eventBus.removeEventListener('receiveOneTimeData', onReceiveOneTimeData)
-  }, [])
+  }, [isExportingV2SA])
 
-  const onPasswordConfirmed = () => {
-    dispatch({
-      type: 'KEYSTORE_CONTROLLER_SEND_PRIVATE_KEY_TO_UI',
-      params: { keyAddr }
-    })
+  const { getExtraEntropy } = useExtraEntropy()
+  const onPasswordConfirmed = (password?: string) => {
+    if (isExportingV2SA) {
+      dispatch({
+        type: 'KEYSTORE_CONTROLLER_SEND_ENCRYPTED_PRIVATE_KEY_TO_UI',
+        params: { keyAddr, secret: password, entropy: getExtraEntropy() }
+      })
+    } else {
+      dispatch({
+        type: 'KEYSTORE_CONTROLLER_SEND_PRIVATE_KEY_TO_UI',
+        params: { keyAddr }
+      })
+    }
+
     if (blurred) setBlurred(false)
 
     closeConfirmPassword()
@@ -110,6 +128,8 @@ const ExportKey = ({
           privateKey={privateKey}
           openConfirmPassword={openConfirmPassword}
           goBack={onBackButtonPress}
+          salt={salt}
+          iv={iv}
         />
       )}
       <BottomSheet
@@ -125,7 +145,11 @@ const ExportKey = ({
         style={{ maxWidth: 432, minHeight: 432, ...spacings.pvLg }}
       >
         <PasswordConfirmation
-          text={t('Please enter your extension password to reveal your private key.')}
+          text={
+            isExportingV2SA
+              ? t('Please enter your extension password to export your JSON file.')
+              : t('Please enter your extension password to reveal your private key.')
+          }
           onPasswordConfirmed={onPasswordConfirmed}
           onBackButtonPress={closeConfirmPassword}
         />

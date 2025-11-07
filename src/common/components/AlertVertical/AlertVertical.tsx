@@ -8,10 +8,9 @@ import SuccessIcon from '@common/assets/svg/SuccessIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import Button, { Props as ButtonProps } from '@common/components/Button'
 import useTheme from '@common/hooks/useTheme'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING, SPACING_LG } from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import { getUiType } from '@web/utils/uiType'
 
 import Text, { TextWeight } from '../Text'
 
@@ -38,10 +37,16 @@ const ICON_MAP = {
   info2: InfoIcon
 }
 
-const { isPopup } = getUiType()
+const SIZES = {
+  title: 20,
+  text: 16,
+  icon: 40
+}
 
-const DEFAULT_SM_FONT_SIZE = 14
-const DEFAULT_MD_FONT_SIZE = 16
+const SIZE_MULTIPLIERS = {
+  sm: 0.8,
+  md: 1
+}
 
 interface AlertVerticalTextProps extends TextProps {
   children: React.ReactNode
@@ -56,13 +61,12 @@ const AlertVerticalText: React.FC<AlertVerticalTextProps> = ({
   style,
   ...rest
 }) => {
-  const isSmall = size === 'sm' || isPopup
-  const fontSize = !isSmall ? DEFAULT_MD_FONT_SIZE : DEFAULT_SM_FONT_SIZE
+  const fontSize = SIZES.text * SIZE_MULTIPLIERS[size]
 
   return (
     <Text
       selectable
-      fontSize={fontSize - 2}
+      fontSize={fontSize}
       weight="regular"
       style={[spacings.mrTy, { textAlign: 'center' }, style]}
       appearance={`${type}Text`}
@@ -89,17 +93,17 @@ const AlertVertical = ({
 }: Props) => {
   const Icon = ICON_MAP[type]
   const { theme } = useTheme()
-  const isSmall = size === 'sm' || isPopup
-  const fontSize = !isSmall ? DEFAULT_MD_FONT_SIZE : DEFAULT_SM_FONT_SIZE
+  const sizeMultiplier = SIZE_MULTIPLIERS[size]
+  const titleFontSize = SIZES.title * sizeMultiplier
 
   return (
     <View
       style={[
-        !isSmall ? spacings.phLg : spacings.ph,
-        !isSmall ? spacings.pvLg : spacings.pv,
         common.borderRadiusPrimary,
         flexbox.alignCenter,
         {
+          paddingHorizontal: SPACING_LG * sizeMultiplier,
+          paddingVertical: SPACING_LG * sizeMultiplier,
           borderWidth: 1,
           backgroundColor: theme[`${type}Background`],
           borderColor: theme[`${type}Decorative`]
@@ -109,18 +113,26 @@ const AlertVertical = ({
       testID={testID}
     >
       {!!withIcon && (
-        <View style={[!isSmall ? spacings.mbLg : spacings.mbTy]}>
+        <View
+          style={{
+            marginBottom: SPACING * sizeMultiplier
+          }}
+        >
           {CustomIcon ? (
             <CustomIcon />
           ) : (
-            <Icon width={48} height={48} color={theme[`${type}Decorative`]} />
+            <Icon
+              width={SIZES.icon * sizeMultiplier}
+              height={SIZES.icon * sizeMultiplier}
+              color={theme[`${type}Decorative`]}
+            />
           )}
         </View>
       )}
       {!!title && (
         <Text
           style={[
-            text ? (!isSmall ? spacings.mbSm : spacings.mbTy) : {},
+            text ? spacings.mbTy : {},
             {
               textAlign: 'center'
             }
@@ -130,7 +142,7 @@ const AlertVertical = ({
             <Text
               selectable
               appearance={`${type}Text`}
-              fontSize={fontSize}
+              fontSize={titleFontSize}
               weight={titleWeight || 'semiBold'}
               style={{ textTransform: 'capitalize' }}
             >
@@ -140,7 +152,7 @@ const AlertVertical = ({
           <Text
             selectable
             appearance={`${type}Text`}
-            fontSize={fontSize}
+            fontSize={titleFontSize}
             weight={titleWeight || 'semiBold'}
           >
             {title}

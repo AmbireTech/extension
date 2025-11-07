@@ -17,7 +17,7 @@ const SOCIALS = [
   {
     name: 'twitter',
     icon: faXTwitter,
-    link: 'https://x.com/AmbireWallet'
+    link: 'https://x.com/ambire'
   },
   {
     name: 'discord',

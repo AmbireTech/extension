@@ -4,11 +4,16 @@ import { View } from 'react-native'
 
 import { SignAccountOpError } from '@ambire-common/interfaces/signAccountOp'
 import { UserRequest } from '@ambire-common/interfaces/userRequest'
+import { getCallsCount } from '@ambire-common/utils/userRequest'
 import BatchIcon from '@common/assets/svg/BatchIcon'
+import InfoIcon from '@common/assets/svg/InfoIcon'
 import Button from '@common/components/Button'
+import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
 import Tooltip from '@common/components/Tooltip'
+import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
 import { getUiType } from '@web/utils/uiType'
 
 type Props = {
@@ -17,7 +22,9 @@ type Props = {
   signAccountOpErrors: SignAccountOpError[]
   isNotReadyToProceed: boolean
   isBridge?: boolean
+  isLoading?: boolean
   isLocalStateOutOfSync?: boolean
+  isBatchDisabled?: boolean
   networkUserRequests: UserRequest[]
 }
 
@@ -28,6 +35,8 @@ const Buttons: FC<Props> = ({
   proceedBtnText = 'Proceed',
   handleSubmitForm,
   isNotReadyToProceed,
+  isLoading,
+  isBatchDisabled,
   isBridge,
   networkUserRequests = [],
   // Used to disable the actions of the buttons when the local state is out of sync.
@@ -37,14 +46,20 @@ const Buttons: FC<Props> = ({
   isLocalStateOutOfSync
 }) => {
   const { t } = useTranslation()
+  const callsCount = getCallsCount(networkUserRequests)
+  const { theme } = useTheme()
 
   const oneClickDisabledReason = useMemo(() => {
     if (signAccountOpErrors.length > 0) {
       return signAccountOpErrors[0].title
     }
 
+    if (callsCount && isBridge) {
+      return t('Cannot proceed with the bridge while other transactions are waiting for signing.')
+    }
+
     return ''
-  }, [signAccountOpErrors])
+  }, [signAccountOpErrors, isBridge, callsCount, t])
 
   const batchDisabledReason = useMemo(() => {
     if (isBridge) return t('Batching is not available for bridges.')
@@ -52,47 +67,84 @@ const Buttons: FC<Props> = ({
     return ''
   }, [isBridge, t])
 
+  const startBatchingDisabled = useMemo(
+    () => isNotReadyToProceed || isBatchDisabled || !!batchDisabledReason,
+    [isNotReadyToProceed, isBatchDisabled, batchDisabledReason]
+  )
+
+  const startBatchingInfo = useMemo(
+    () =>
+      t(
+        'Start a batch and sign later. This feature allows you to add more actions to this transaction and sign them all together later.'
+      ),
+    [t]
+  )
+
+  const primaryButtonText = useMemo(() => {
+    if (proceedBtnText !== 'Proceed') {
+      return proceedBtnText
+    }
+
+    return callsCount > 0
+      ? `${proceedBtnText} ${t('({{count}})', {
+          count: callsCount
+        })}`
+      : proceedBtnText
+  }, [proceedBtnText, callsCount, t])
+
+  const [bindAnim, animStyle] = useCustomHover({
+    property: 'backgroundColor',
+    values: {
+      from: 'transparent',
+      to: theme.quaternaryBackground
+    }
+  })
+
   return (
     <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifyEnd]}>
       {!isActionWindow && (
-        // @ts-ignore
-        <View dataSet={{ tooltipId: 'batch-btn-tooltip' }}>
-          <Button
-            hasBottomSpacing={false}
-            text={
-              networkUserRequests.length > 0 && !batchDisabledReason
-                ? t('Add to batch ({{count}})', {
-                    count: networkUserRequests.length
-                  })
-                : t('Start a batch')
-            }
-            disabled={isNotReadyToProceed || !!batchDisabledReason}
-            type="secondary"
-            style={{ minWidth: 160, ...spacings.phMd }}
-            onPress={() => {
-              if (isLocalStateOutOfSync) return
+        <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+          {/* @ts-ignore */}
+          <View dataSet={{ tooltipId: 'batch-btn-tooltip' }}>
+            <Button
+              hasBottomSpacing={false}
+              text={
+                callsCount > 0 && !batchDisabledReason
+                  ? t('Add to batch ({{count}})', {
+                      count: callsCount
+                    })
+                  : t('Start a batch')
+              }
+              disabled={startBatchingDisabled}
+              type="secondary"
+              style={{ minWidth: 160, ...spacings.phMd }}
+              onPress={() => {
+                if (isLocalStateOutOfSync) return
 
-              handleSubmitForm(false)
-            }}
-            testID="batch-btn"
-          >
-            <BatchIcon style={spacings.mlTy} />
-          </Button>
+                handleSubmitForm(false)
+              }}
+              testID="batch-btn"
+            >
+              <BatchIcon style={spacings.mlTy} />
+            </Button>
+          </View>
+          {/* @ts-ignore */}
+          <View style={spacings.mlTy} dataSet={{ tooltipId: 'start-batch-info-tooltip' }}>
+            <AnimatedPressable
+              style={[spacings.phTy, spacings.pvTy, { borderRadius: 50 }, animStyle]}
+              {...bindAnim}
+            >
+              <InfoIcon color={theme.tertiaryText} width={20} height={20} />
+            </AnimatedPressable>
+          </View>
         </View>
       )}
       {/* @ts-ignore */}
       <View dataSet={{ tooltipId: 'proceed-btn-tooltip' }}>
-        <Button
-          text={
-            networkUserRequests.length > 0
-              ? `${proceedBtnText} ${t('({{count}})', {
-                  count: networkUserRequests.length
-                })}`
-              : proceedBtnText
-          }
-          disabled={isNotReadyToProceed || !!oneClickDisabledReason}
-          style={{ minWidth: 160, ...spacings.mlLg }}
-          hasBottomSpacing={false}
+        <ButtonWithLoader
+          text={primaryButtonText}
+          disabled={isNotReadyToProceed || isLoading || !!oneClickDisabledReason}
+          isLoading={isLoading}
           onPress={() => {
             if (isLocalStateOutOfSync) return
 
@@ -103,6 +155,7 @@ const Buttons: FC<Props> = ({
       </View>
       <Tooltip content={oneClickDisabledReason} id="proceed-btn-tooltip" />
       <Tooltip content={batchDisabledReason} id="batch-btn-tooltip" />
+      <Tooltip content={startBatchingInfo} id="start-batch-info-tooltip" />
     </View>
   )
 }

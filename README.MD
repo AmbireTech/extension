@@ -2,24 +2,29 @@
 
 <div align="center">
   <a href="https://chromewebstore.google.com/detail/ambire-wallet/ehgjhhccekdedpbkifaojjaefeohnoea" target="_blank">
-    <img src="./mockups/mockup-dashboard.png" alt="Ambire Wallet Dashboard" />
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="./mockups/mockup-dashboard-dark.png">
+      <source media="(prefers-color-scheme: light)" srcset="./mockups/mockup-dashboard-light.png">
+      <img src="./mockups/mockup-dashboard-light.png" alt="Ambire Wallet Dashboard" width="672" height="672" />
+    </picture>
   </a>
 
   <p>
-    The secure & easy-to-use Web3 wallet. EIP-7702 ready.<br />
-    <a href="https://chromewebstore.google.com/detail/ambire-wallet/ehgjhhccekdedpbkifaojjaefeohnoea" target="_blank">
-      <strong>Download Extension for Webkit Browsers 🔥</strong>
+    Your Web3 wallet that just works. EIP-7702 ready.<br>
+    <em>A self-custodial browser wallet extension built for Ethereum and EVM networks.</em><br />
+    <a href="https://www.ambire.com/get-extension" target="_blank">
+      <strong>Download Ambire extension 🔥</strong>
     </a>
     <br />
-    <em>(Chrome, Brave, Opera, Edge, Arc)</em>
+    <em>(Chrome, Firefox, Brave, Opera, Edge, Arc)</em>
     <br /><br />
-    💌 Request Invite Code:
+    👥 Join the community:
     <a href="https://discord.com/invite/Ambire" target="_blank">Discord</a> |
     <a href="https://t.me/AmbireOfficial" target="_blank">Telegram</a>
     <br />
     🐞
     <a href="https://github.com/AmbireTech/extension/issues">Report a Bug</a> ·
-    <a href="https://forum.ambire.com/" target="_blank">Request Features</a>
+    <a href="https://help.ambire.com/hc/en-us/requests/new" target="_blank">Get help</a>
   </p>
 </div>
 
@@ -224,49 +229,4 @@ And find the resulting build in the "build/legends-prod" folder.
 
 #### Configuration
 
-The best approach here is to follow `.github/workflows/tests.yml`. It contains all the necessary instructions for CI, which are also applicable locally. Make sure to:
-
-- Set all necessary .env variables (marked as end-to-end tests configuration).
-- See [#1409](https://github.com/AmbireTech/ambire-app/pull/1409) for more details.
-
-#### Running against production
-
-To build the webkit production version of the extension and run the E2E tests against the /webkit-prod folder, run:
-
-```bash
-yarn run test:e2e:web
-```
-
-#### Running against development
-
-For debugging, to use the hot-reloaded webpack dev webkit build and to allow running individual tests easily run:
-
-```bash
-yarn test:e2e:web:dev
-```
-
-When debugging or writing a new test, it is easier to use this command, as the project is hot-reloaded with every change you make to the codebase (e.g., adding a new selector or debugging a state), eliminating the need for a complete production build (as before). Additionally, you can run tests for a single or multiple test files.
-
-Here's how to run the tests for a single test file:
-
-```json
-{
-  "test:e2e:web:dev": "WEBPACK_BUILD_OUTPUT_PATH=webkit-dev jest --config=./tests/jest.config.js -- ./tests/basic_account/ba_transactions.test.js"
-}
-```
-
-If you are fixing a failing CI test and want to mimic CI at 100%, you should configure the display server:
-
-First, run `Xvfb -ac :99 -screen 0 1280x1024x16 > /dev/null 2>&1 &`, then set the `DISPLAY` variable with `export DISPLAY=:99.0`. By doing this, when Jest & Puppeteer are running, they will use the newly created virtual display instead of your local display. If you want to switch back to your local display, you should run export `DISPLAY=:0`.
-
-See [#2438](https://github.com/AmbireTech/ambire-app/pull/2438) for more details.
-
-### Translations (Beta)
-
-To scan the project for translation labels and to update translations JSON files, run:
-
-```bash
-yarn translations:scan
-```
-
-PS: Secondary languages not implemented / translated / fully tested yet.
+We've migrated from Puppeteer to Playwright (./e2e-playwright-tests/). Documentation will follow soon.

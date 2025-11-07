@@ -1,9 +1,11 @@
 import { formatUnits } from 'ethers'
 import React, { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import { TokenResult } from '@ambire-common/libs/portfolio/interfaces'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
+import WarningFilledIcon from '@common/assets/svg/WarningFilledIcon'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
 import Tooltip from '@common/components/Tooltip'
@@ -19,8 +21,8 @@ interface Props {
   chainId: bigint | undefined
   hasBottomSpacing?: boolean
 }
-
 const PendingTokenSummary = ({ token, chainId, hasBottomSpacing = true }: Props) => {
+  const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
   const tokenId = getTokenId(token)
   const { formattedAmount, fullAmount } = useMemo(() => {
@@ -67,6 +69,19 @@ const PendingTokenSummary = ({ token, chainId, hasBottomSpacing = true }: Props)
     return theme.secondaryText
   }, [token.simulationAmount, theme])
 
+  const suspiciousTokenTooltipContent = useMemo(() => {
+    const reason = token.flags.suspectedType
+    if (!reason) return null
+
+    if (reason === 'no-latin-symbol')
+      return 'This token has a non-latin symbol which is commonly used by suspicious tokens.'
+    if (reason === 'no-latin-name')
+      return 'This token has a non-latin name which is commonly used by suspicious tokens.'
+    if (reason === 'suspected') return 'This may be a suspicious token.'
+
+    return null
+  }, [token.flags.suspectedType])
+
   return (
     <View style={[styles.container, !hasBottomSpacing && spacings.mb0]}>
       <View style={spacings.mrTy}>
@@ -101,6 +116,21 @@ const PendingTokenSummary = ({ token, chainId, hasBottomSpacing = true }: Props)
         </Text>
         {!!priceInUsd && <Text fontSize={16} weight="medium">{` ($${priceInUsd}) `}</Text>}
       </Text>
+      {token.flags.suspectedType && (
+        <View
+          // @ts-ignore
+          style={[spacings.mlMi, { cursor: 'pointer' }]}
+          dataSet={{
+            tooltipId: `token-amount-${tokenId}`
+          }}
+        >
+          <WarningFilledIcon />
+          <Tooltip
+            content={t('{{content}}', { content: suspiciousTokenTooltipContent })}
+            id={`token-amount-${tokenId}`}
+          />
+        </View>
+      )}
     </View>
   )
 }

@@ -208,67 +208,78 @@ const NavMenu = () => {
           <View style={styles.separatorWrapper}>
             <View style={styles.separator} />
           </View>
-          <View style={[flexbox.directionRow, flexbox.justifySpaceBetween, spacings.plMd, spacings.pb]}>
+          <View
+            style={[flexbox.directionRow, flexbox.justifySpaceBetween, spacings.plMd, spacings.pb]}
+          >
             <View style={[flexbox.directionRow, flexbox.flex1]}>
-            {OTHER_LINKS.map(({ Icon, path, label, isExternal }, i) => (
-              <Pressable
-                style={() => [
-                  flexbox.directionRow,
-                  flexbox.alignCenter,
-                  spacings.mrMd,
-                  common.borderRadiusPrimary,
-                ]}
-                key={path}
-                onPress={() => {
-                  if (isExternal) {
-                    createTab(path)
-                  } else {
-                    navigate(path)
-                  }
-                }}
-              >
-                {({ hovered }: any) => (
-                  <>
-                   <View style={{ backgroundColor: theme.secondaryBackground, paddingVertical: SPACING_SM /2 ,paddingHorizontal: SPACING_SM / 2, borderRadius: BORDER_RADIUS_PRIMARY, ...flexbox.justifyCenter, ...spacings.mrTy }}>
+              {OTHER_LINKS.map(({ Icon, path, label, isExternal }, i) => (
+                <Pressable
+                  style={() => [
+                    flexbox.directionRow,
+                    flexbox.alignCenter,
+                    spacings.mrMd,
+                    common.borderRadiusPrimary
+                  ]}
+                  key={path}
+                  onPress={() => {
+                    if (isExternal) {
+                      createTab(path)
+                    } else {
+                      navigate(path)
+                    }
+                  }}
+                >
+                  {({ hovered }: any) => (
+                    <>
+                      <View
+                        style={{
+                          backgroundColor: theme.secondaryBackground,
+                          paddingVertical: SPACING_SM / 2,
+                          paddingHorizontal: SPACING_SM / 2,
+                          borderRadius: BORDER_RADIUS_PRIMARY,
+                          ...flexbox.justifyCenter,
+                          ...spacings.mrTy
+                        }}
+                      >
+                        <Icon
+                          width={20}
+                          height={20}
+                          color={hovered ? theme.iconSecondary : theme.iconPrimary}
+                        />
+                      </View>
+                      <Text
+                        fontSize={14}
+                        weight="medium"
+                        appearance={hovered ? 'primaryText' : 'secondaryText'}
+                      >
+                        {label}
+                      </Text>
+                    </>
+                  )}
+                </Pressable>
+              ))}
+            </View>
+            <View style={[flexbox.directionRow, flexbox.wrap]}>
+              {SOCIAL.map(({ Icon, url, label }) => (
+                <Pressable
+                  style={() => [
+                    flexbox.directionRow,
+                    flexbox.alignCenter,
+                    flexbox.flex1,
+
+                    common.borderRadiusPrimary
+                  ]}
+                  key={url}
+                  onPress={() => createTab(url)}
+                >
+                  {({ hovered }: any) => (
                     <Icon
-                      width={20}
-                      height={20}
+                      style={spacings.mrSm}
                       color={hovered ? theme.iconSecondary : theme.iconPrimary}
-                      />
-                    </View>
-                    <Text
-                      fontSize={14}
-                      weight="medium"
-                      appearance={hovered ? 'primaryText' : 'secondaryText'}
-                    >
-                      {label}
-                    </Text>
-                  </>
-                )}
-              </Pressable>
-            ))}
-          </View>
-          <View style={[flexbox.directionRow, flexbox.wrap]}>
-            {SOCIAL.map(({ Icon, url, label }) => (
-              <Pressable
-              style={() => [
-                flexbox.directionRow,
-                flexbox.alignCenter,
-                flexbox.flex1,
-            
-                common.borderRadiusPrimary
-              ]}
-              key={url}
-              onPress={() => createTab(url)}
-              >
-                {({ hovered }: any) => (
-                  <Icon
-                    style={spacings.mrSm}
-                    color={hovered ? theme.iconSecondary : theme.iconPrimary}
-                  />
-                )}
-              </Pressable>
-            ))}
+                    />
+                  )}
+                </Pressable>
+              ))}
             </View>
           </View>
         </View>

@@ -11,6 +11,12 @@ export const isTesting = process.env.IS_TESTING === 'true'
 export const isDev = process.env.APP_ENV === 'development'
 export const isProd = process.env.APP_ENV === 'production'
 export const isStaging = process.env.APP_ENV === 'staging'
+/**
+ * Ambire Next is a separate production build variant used for beta testing and preview
+ * before releasing features to the main production build. It allows us to have two
+ * production webkit builds with different branding for testing purposes.
+ */
+export const isAmbireNext = process.env.AMBIRE_NEXT === 'true'
 
 /** On Android, this is the package name. On iOS, this is the bundle ID. */
 export const APP_ID = Application.applicationId
@@ -55,7 +61,8 @@ const CONFIG: Config = {
   DEFAULT_KEYSTORE_PASSWORD_DEV: process.env.DEFAULT_KEYSTORE_PASSWORD_DEV || '',
   LEGENDS_NFT_ADDRESS:
     process.env.LEGENDS_NFT_ADDRESS || '0xF51dF52d0a9BEeB7b6E4B6451e729108a115B863',
-  SENTRY_DSN_LEGENDS: process.env.SENTRY_DSN_LEGENDS || ''
+  SENTRY_DSN_LEGENDS: process.env.SENTRY_DSN_LEGENDS || '',
+  SENTRY_DSN_BROWSER_EXTENSION: process.env.SENTRY_DSN_BROWSER_EXTENSION || ''
 }
 
 if (isProd) {

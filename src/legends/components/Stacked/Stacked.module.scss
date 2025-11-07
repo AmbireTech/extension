@@ -26,6 +26,11 @@ $scale-factor: 0.75;
       }
     }
   }
+  svg {
+    line-height: 0;
+    width: var(--icon-size);
+    height: var(--icon-size);
+  }
 }
 
 .itemText {
@@ -33,11 +38,6 @@ $scale-factor: 0.75;
   color: $blackText;
 }
 
-svg {
-  line-height: 0;
-  width: var(--icon-size);
-  height: var(--icon-size);
-}
 
 //   &.sm {
 //     --font-size: #{round($font-size-lg * $scale-factor)};

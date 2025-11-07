@@ -488,10 +488,6 @@ credentials.json
 /ios/EthereumProvider.js
 /android/app/src/main/assets/EthereumProvider.js
 
-# Puppeteer tests recording
-/recorder
-/tests/reports
-
 # Playwright tests
 e2e-playwright-tests/node_modules
 e2e-playwright-tests/run-tests-logs

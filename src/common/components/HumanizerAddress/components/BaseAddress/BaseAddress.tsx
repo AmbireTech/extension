@@ -27,19 +27,13 @@ import Option from './BaseAddressOption'
 
 interface Props extends TextProps {
   address: string
-  explorerChainId?: bigint
+  chainId?: bigint
   hideLinks?: boolean
 }
 
 const { isActionWindow } = getUiType()
 
-const BaseAddress: FC<Props> = ({
-  children,
-  address,
-  explorerChainId,
-  hideLinks = false,
-  ...rest
-}) => {
+const BaseAddress: FC<Props> = ({ children, address, chainId, hideLinks = false, ...rest }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { addToast } = useToast()
@@ -48,7 +42,7 @@ const BaseAddress: FC<Props> = ({
   const { networks } = useNetworksControllerState()
 
   const actualNetworks = networks ?? benzinNetworks
-  const network = actualNetworks?.find((n) => n.chainId === explorerChainId)
+  const network = actualNetworks?.find((n) => n.chainId === chainId)
 
   const handleCopyAddress = useCallback(async () => {
     try {

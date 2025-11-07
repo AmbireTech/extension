@@ -1,14 +1,14 @@
 /* eslint-disable @typescript-eslint/no-shadow */
 import React, { createContext, useEffect } from 'react'
 
-import { SignMessageController } from '@ambire-common/controllers/signMessage/signMessage'
+import { ISignMessageController } from '@ambire-common/interfaces/signMessage'
 import useDeepMemo from '@common/hooks/useDeepMemo'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useControllerState from '@web/hooks/useControllerState'
 import useMainControllerState from '@web/hooks/useMainControllerState'
 
-const SignMessageControllerStateContext = createContext<SignMessageController>(
-  {} as SignMessageController
+const SignMessageControllerStateContext = createContext<ISignMessageController>(
+  {} as ISignMessageController
 )
 
 const SignMessageControllerStateProvider: React.FC<any> = ({ children }) => {

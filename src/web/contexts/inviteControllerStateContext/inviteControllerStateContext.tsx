@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-shadow */
 import React, { createContext, useEffect, useMemo } from 'react'
 
-import { InviteController } from '@ambire-common/controllers/invite/invite'
+import { IInviteController } from '@ambire-common/interfaces/invite'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useControllerState from '@web/hooks/useControllerState'
 import useMainControllerState from '@web/hooks/useMainControllerState'
 
-const InviteControllerStateContext = createContext<InviteController>({} as InviteController)
+const InviteControllerStateContext = createContext<IInviteController>({} as IInviteController)
 
 const CONTROLLER_NAME = 'invite'
 const InviteControllerStateProvider: React.FC<any> = ({ children }) => {

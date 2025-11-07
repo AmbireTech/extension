@@ -3,7 +3,7 @@ import React, { useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
-import { SwapAndBridgeController } from '@ambire-common/controllers/swapAndBridge/swapAndBridge'
+import { ISwapAndBridgeController } from '@ambire-common/interfaces/swapAndBridge'
 import { getIsTokenEligibleForSwapAndBridge } from '@ambire-common/libs/swapAndBridge/swapAndBridge'
 import CoinsIcon from '@common/assets/svg/CoinsIcon'
 import InfoIcon from '@common/assets/svg/InfoIcon'
@@ -25,7 +25,7 @@ interface Props {
   toTokenValue: SelectValue
   toTokenAmountSelectDisabled: boolean
   handleChangeToToken: (value: SelectValue) => void
-  addToTokenByAddressStatus: SwapAndBridgeController['statuses']['addToTokenByAddress']
+  addToTokenByAddressStatus: ISwapAndBridgeController['statuses']['addToTokenByAddress']
   handleAddToTokenByAddress: (searchTerm: string) => void
 }
 

@@ -10,6 +10,7 @@ import React, {
 import { createPortal } from 'react-dom'
 
 import Modal from '@legends/components/Modal'
+import CharacterSelect from '@legends/modules/character/screens/CharacterSelect'
 import MobileDisclaimerModal from '@legends/modules/Home/components/MobileDisclaimerModal'
 import CardActionComponent from '@legends/modules/legends/components/Card/CardAction'
 import { CardActionComponentProps } from '@legends/modules/legends/components/Card/CardAction/CardAction'
@@ -61,10 +62,12 @@ type ActionModalProps = {
     | 'contentVideoV2'
     | 'title'
     | 'action'
+    | 'id'
   >
 
 const ActionModal: FC<ActionModalProps> = ({
   isOpen,
+  id,
   title,
   xp,
   contentImageV2,
@@ -154,11 +157,15 @@ const ActionModal: FC<ActionModalProps> = ({
     return <TreasureChestComponentModal isOpen={isOpen} handleClose={closeActionModalWrapped} />
   }
 
+  if (predefinedId === CARD_PREDEFINED_ID.nft) {
+    return <CharacterSelect isOpen={isOpen} onClose={closeActionModalWrapped} />
+  }
+
   return (
     <Modal isOpen={isOpen} handleClose={closeActionModalWrapped} className={styles.modal}>
       <Modal.Heading className={styles.modalHeading}>
         <div className={styles.modalHeadingTitle}>{title}</div>
-        {xp && <Rewards xp={xp} size="lg" />}
+        {xp && <Rewards xp={xp} size="lg" id={id} />}
       </Modal.Heading>
 
       {contentSteps && (

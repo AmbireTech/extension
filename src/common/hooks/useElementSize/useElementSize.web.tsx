@@ -16,17 +16,18 @@ const useElementSize = (ref: MutableRefObject<HTMLElement | null>) => {
     updateElementSize()
 
     let resizeObserver: any = new ResizeObserver(updateElementSize)
-    if (ref.current) {
-      resizeObserver.observe(ref.current)
+    const currentElement = ref.current
+    if (currentElement) {
+      resizeObserver.observe(currentElement)
       window.addEventListener('resize', updateElementSize)
     }
 
     return () => {
-      if (ref.current) {
-        resizeObserver.unobserve(ref.current)
-        resizeObserver = null
-        window.removeEventListener('resize', updateElementSize)
-      }
+      if (!currentElement) return
+
+      resizeObserver.unobserve(currentElement)
+      resizeObserver = null
+      window.removeEventListener('resize', updateElementSize)
     }
   }, [ref, updateElementSize])
 

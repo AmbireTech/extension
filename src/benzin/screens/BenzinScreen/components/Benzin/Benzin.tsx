@@ -96,7 +96,7 @@ const Benzin = ({ state }: { state: ReturnType<typeof useBenzin> }) => {
       />
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.content}>
-          <Header activeStep={activeStep} network={network} stepsState={stepsState} />
+          <Header activeStep={activeStep} network={network} />
           <Steps
             activeStep={activeStep}
             txnId={txnId}

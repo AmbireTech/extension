@@ -1,5 +1,3 @@
-import { bootstrapWithStorage } from 'common-helpers/bootstrap'
-import { clickOnElement } from 'common-helpers/clickOnElement'
 import { typeText } from 'common-helpers/typeText'
 import locators from 'constants/locators'
 import selectors, { SELECTORS } from 'constants/selectors'
@@ -10,11 +8,6 @@ import Token from '../interfaces/token'
 import { BasePage } from './basePage'
 
 export class SwapAndBridgePage extends BasePage {
-  async init(param) {
-    const { page } = await bootstrapWithStorage('swapAndBridgeBA', param)
-    this.page = page // Initialize the POM page property with the Playwright page instance
-  }
-
   // General function
   roundAmount(amount, place = 2) {
     // ToDo: Check if values should be int-ed or rounded. Values are currently int-ed
@@ -66,7 +59,7 @@ export class SwapAndBridgePage extends BasePage {
 
   async openSwapAndBridge() {
     if (!this.page.url().includes('/swap-and-bridge')) {
-      await this.click(selectors.dashboardButtonSwapAndBridge)
+      await this.click(selectors.dashboard.swapAndBridgeButton)
       await this.verifyIfOnSwapAndBridgePage()
     } else {
       await this.page.reload()
@@ -96,16 +89,6 @@ export class SwapAndBridgePage extends BasePage {
 
       // TODO: Implement verifyRouteFound
       // await verifyRouteFound()
-
-      // If Warning: The price impact is too high
-      const isHighPrice = await this.page
-        .waitForSelector(SELECTORS.highPriceImpactSab, { timeout: 1000 })
-        .catch(() => null)
-      if (isHighPrice) {
-        await this.click(selectors.highPriceImpactSab)
-        return 'Continue anyway'
-      }
-      return 'Proceed'
     } catch (error) {
       console.error(`[ERROR] Prepare Swap & Bridge Page Failed: ${error.message}`)
       throw error
@@ -201,29 +184,51 @@ export class SwapAndBridgePage extends BasePage {
   }
 
   async rejectTransaction(): Promise<void> {
-    await this.page.waitForSelector(locators.selectRouteButton, { state: 'visible', timeout: 5000 })
+    // "Select route" step may take more time to appear, as it depends on the Li.Fi response.
+    await this.page.waitForSelector(locators.selectRouteButton, {
+      state: 'visible',
+      timeout: 10000
+    })
     await this.click(selectors.addToBatchButton)
+
+    // approve high impact modal
+    await this.handlePriceWarningModals()
+
     await this.click(selectors.goDashboardButton)
     await this.click(selectors.bannerButtonReject) // TODO: this ID gives 4 results on Dashboard page
     await expect(this.page.getByText('Transaction waiting to be').first()).not.toBeVisible()
   }
 
   async proceedTransaction(): Promise<void> {
-    await this.page.waitForSelector(locators.selectRouteButton, { state: 'visible', timeout: 5000 })
+    // "Select route" step may take more time to appear, as it depends on the Li.Fi response.
+    await this.page.waitForSelector(locators.selectRouteButton, {
+      state: 'visible',
+      timeout: 12000
+    })
     await this.click(selectors.addToBatchButton)
+
+    // approve the high impact modal if appears
+    await this.handlePriceWarningModals()
+
     await this.click(selectors.goDashboardButton)
-    const newPage = await this.handleNewPage(this.page.getByTestId(selectors.bannerButtonOpen))
+
+    const openTransactionButton = this.page.getByTestId(selectors.bannerButtonOpen).first()
+
+    const newPage = await this.handleNewPage(openTransactionButton)
     await this.signTransactionPage(newPage)
   }
 
   async signTransactionPage(page): Promise<void> {
-    const signButton = page.locator(SELECTORS.signTransactionButton)
+    const signButton = page.getByTestId(selectors.signTransactionButton)
 
     try {
       await expect(signButton).toBeVisible({ timeout: 5000 })
-      await expect(signButton).toBeEnabled()
-      await clickOnElement(page, SELECTORS.signTransactionButton)
-      await page.waitForTimeout(1500)
+      await expect(signButton).toBeEnabled({ timeout: 5000 })
+      await page.getByTestId(selectors.signTransactionButton).click()
+      await page.waitForTimeout(5000)
+
+      // close transaction progress pop up
+      await page.locator(selectors.closeTransactionProgressPopUpButton).click()
     } catch (error) {
       console.warn("⚠️ The 'Sign' button is not clickable, but it should be.")
     }
@@ -251,9 +256,8 @@ export class SwapAndBridgePage extends BasePage {
 
     const [usdNewAmount, newCurrency] = await this.getUSDTextContent()
     const newAmount = this.roundAmount(await this.getAmount(selectors.fromAmountInputSab))
-
-    expect(Math.abs(oldAmount - usdNewAmount)).toBeLessThanOrEqual(0.5)
-    expect(Math.abs(usdOldAmount - newAmount)).toBeLessThanOrEqual(0.5)
+    expect(Math.abs(oldAmount - usdNewAmount)).toBeLessThanOrEqual(0.2)
+    expect(Math.abs(usdOldAmount - newAmount)).toBeLessThanOrEqual(0.2)
     expect(newCurrency).toBe(sendToken.symbol)
 
     // Wait and flip back
@@ -264,8 +268,8 @@ export class SwapAndBridgePage extends BasePage {
     // const secondAmount = await this.getSendAmount()
     const secondAmount = await this.getAmount(selectors.fromAmountInputSab)
 
-    expect(Math.abs(newAmount - usdSecondAmount)).toBeLessThanOrEqual(1)
-    expect(Math.abs(usdNewAmount - secondAmount)).toBeLessThanOrEqual(1)
+    expect(Math.abs(newAmount - usdSecondAmount)).toBeLessThanOrEqual(0.2)
+    expect(Math.abs(usdNewAmount - secondAmount)).toBeLessThanOrEqual(0.2)
     expect(secondCurrency).toBe('$')
   }
 
@@ -299,13 +303,13 @@ export class SwapAndBridgePage extends BasePage {
   }
 
   async assertSelectedAggregator(): Promise<void> {
-    await expect(this.page.getByText('LI.FI DEX Aggregator').last()).toBeVisible()
-    await expect(this.page.getByText('Selected').last()).toBeVisible()
+    await expect(this.page.getByText('SushiSwap').last()).toBeVisible()
+    await expect(this.page.getByTestId('selected-route')).toBeVisible()
   }
 
   async clickOnSecondRoute(): Promise<void> {
     await this.click(selectors.selectRouteButton)
-    await this.page.locator(locators.liFiRoute).last().click() // missing ID
+    await this.page.locator(selectors.sushiSwapRoute).last().click() // missing ID
     await this.click(selectors.selectRouteButton)
     await this.assertSelectedAggregator()
   }
@@ -335,17 +339,10 @@ export class SwapAndBridgePage extends BasePage {
       await this.page.getByTestId(selectors.fromAmountInputSab).fill(sendAmount.toString())
 
       const isFollowUp = await this.page
-        .waitForSelector(SELECTORS.confirmFollowUpTxn, { timeout: 6000 })
+        .waitForSelector(selectors.confirmFollowUpTxn, { timeout: 6000 })
         .catch(() => null)
       if (isFollowUp) {
         await this.click(selectors.confirmFollowUpTxn)
-      }
-      const isHighPrice = await this.page
-        .waitForSelector(selectors.highPriceImpactSab, { timeout: 1000 })
-        .catch(() => null)
-      if (isHighPrice) {
-        await this.click(selectors.highPriceImpactSab)
-        return 'Continue anyway'
       }
 
       return 'Proceed'
@@ -355,16 +352,44 @@ export class SwapAndBridgePage extends BasePage {
     }
   }
 
-  async signTokens(): Promise<void> {
+  async signTokens({ fromToken }: { fromToken: Token }): Promise<void> {
     await this.click(selectors.topUpProceedButton)
+
+    // approve the high impact modal if appears
+    await this.handlePriceWarningModals()
+
+    await this.monitorRequests()
+
+    // Sometimes the button needs a bit to become enabled
+    await this.expectButtonEnabled(selectors.signButton)
+
     await this.click(selectors.signButton)
-    await expect(this.page.getByText('Confirming your trade')).toBeVisible({ timeout: 5000 })
-    // TODO: add more assertion
+    await expect(this.page.getByText('Confirming your trade')).toBeVisible({ timeout: 10000 })
+
+    const { rpc } = this.getCategorizedRequests()
+
+    // Verify that portfolio updates run only for the from token network.
+    // A previous regression was triggering updates on all enabled networks after a broadcast,
+    // which caused a significant performance downgrade.
+    expect(
+      rpc.every((req) => req === `https://invictus.ambire.com/${fromToken.chainName}`),
+      `Invalid portfolio update behavior detected.
+   After a broadcast, the portfolio must be refreshed only for *${fromToken.chainName}*.
+   However, RPC requests were also made for other networks: ${rpc.toString()}`
+    ).toEqual(true)
+
+    // assert transaction successful
+    await expect(this.page.getByText('Nice trade!')).toBeVisible({ timeout: 120000 }) // sometimes confirmation takes more time (around 1 min)
+    await this.click(selectors.closeProgressModalButton)
   }
 
   async batchAction(): Promise<void> {
     await this.page.getByTestId(selectors.addToBatchButton).isEnabled()
     await this.click(selectors.addToBatchButton)
+
+    // approve high impact modal
+    await this.handlePriceWarningModals()
+
     await this.page.getByTestId(selectors.addMoreButton).isVisible()
     await this.click(selectors.addMoreButton)
   }
@@ -372,29 +397,106 @@ export class SwapAndBridgePage extends BasePage {
   async batchActionWithSign(): Promise<void> {
     await this.page.getByTestId(selectors.addToBatchButton).isEnabled()
     await this.click(selectors.addToBatchButton)
+
+    // approve high impact modal
+    await this.handlePriceWarningModals()
+
     await this.click(selectors.goDashboardButton)
-    const newPage = await this.handleNewPage(this.page.getByTestId(selectors.bannerButtonOpen))
+
+    const openTransactionButton = this.page.getByTestId(selectors.bannerButtonOpen).first()
+
+    const newPage = await this.handleNewPage(openTransactionButton)
     await this.signBatchTransactionsPage(newPage)
   }
 
   async signBatchTransactionsPage(page): Promise<void> {
-    const signButton = page.locator(SELECTORS.signTransactionButton)
-
-    try {
-      await expect(signButton).toBeVisible({ timeout: 5000 })
-      await expect(signButton).toBeEnabled()
-      await this.verifyBatchTransactionDetails(page)
-      await clickOnElement(page, SELECTORS.signTransactionButton)
-      await page.waitForTimeout(1500)
-    } catch (error) {
-      console.warn("⚠️ The 'Sign' button is not clickable, but it should be.")
-    }
+    const signButton = page.getByTestId(selectors.signTransactionButton)
+    await expect(signButton).toBeVisible({ timeout: 5000 })
+    await expect(signButton).toBeEnabled({ timeout: 5000 })
+    await this.verifyBatchTransactionDetails(page)
+    await page.waitForTimeout(3000)
   }
 
   async verifyBatchTransactionDetails(page): Promise<void> {
-    await expect(page.getByTestId('recipient-address-0')).toHaveText(/0\.003/)
-    await expect(page.getByTestId('recipient-address-1')).toHaveText(/LI\.FI/)
-    await expect(page.getByTestId('recipient-address-2')).toHaveText(/0\.002/)
-    await expect(page.getByTestId('recipient-address-3')).toHaveText(/LI\.FI/)
+    // check first row
+    const firstRow = await page.getByTestId('recipient-address-0').innerText() // grab entire row on transaction page
+    const firstRouteSelector = firstRow.trim().split(/\s+/).pop() || '' // grab last item from row e.g. LI.FI
+
+    await expect(page.getByTestId('recipient-address-0')).toHaveText(/Grant approval/) // for either LI.FI or Socket transaction name is GrantApproval with amount and token name
+    await expect(page.getByTestId('recipient-address-0')).toHaveText(/0\.01/)
+    await expect(page.getByTestId('recipient-address-0')).toHaveText(/USDC/)
+    expect(['LI.FI', 'SocketGateway']).toContain(firstRouteSelector)
+
+    // check second row
+    const secondRow = await page.getByTestId('recipient-address-1').innerText()
+    const secondRouteSelector = secondRow.trim().split(/\s+/).pop() || ''
+
+    if (secondRouteSelector === 'WALLET') {
+      await expect(page.getByTestId('recipient-address-1')).toHaveText(/Swap/) // in case its socket route transaction name is Swap with amount
+      await expect(page.getByTestId('recipient-address-1')).toHaveText(/0\.01/)
+    } else if (secondRouteSelector === 'LI.FI') {
+      await expect(page.getByTestId('recipient-address-1')).toHaveText(/Swap\/Bridge/) // in case its LIFI route transaction name is Swap/Bridge
+    }
+    expect(['LI.FI', 'SocketGateway']).toContain(secondRouteSelector)
+
+    // check third row
+    const thirdRow = await page.getByTestId('recipient-address-2').innerText()
+    const thirdRouteSelector = thirdRow.trim().split(/\s+/).pop() || ''
+
+    await expect(page.getByTestId('recipient-address-2')).toHaveText(/Grant approval/) // for either LI.FI or Socket transaction name is GrantApproval with amount and token name
+    await expect(page.getByTestId('recipient-address-2')).toHaveText(/0\.01/)
+    await expect(page.getByTestId('recipient-address-2')).toHaveText(/USDC/)
+    expect(['LI.FI', 'SocketGateway']).toContain(thirdRouteSelector)
+
+    // check fourth row
+    const fourthRow = await page.getByTestId('recipient-address-3').innerText()
+    const fourthRouteSelector = fourthRow.trim().split(/\s+/).pop() || ''
+
+    if (secondRouteSelector === 'WALLET') {
+      await expect(page.getByTestId('recipient-address-3')).toHaveText(/Swap/) // in case of Socket route transaction name is Swap with amount and token name
+      await expect(page.getByTestId('recipient-address-3')).toHaveText(/0\.01/)
+      await expect(page.getByTestId('recipient-address-3')).toHaveText(/USDC/)
+    } else if (secondRouteSelector === 'LI.FI') {
+      await expect(page.getByTestId('recipient-address-3')).toHaveText(/Swap\/Bridge/) // in case of LIFI route transaction name is Swap/Bridge
+    }
+    expect(['LI.FI', 'SocketGateway']).toContain(fourthRouteSelector)
+
+    // sign transaction
+    await page.getByTestId(selectors.signTransactionButton).click()
+  }
+
+  async getCurrentBalance() {
+    const amountText = await this.page.getByTestId(selectors.dashboardGasTankBalance).innerText()
+    const amountNumber = parseFloat(amountText.replace(/[^\d.]/g, ''))
+
+    return amountNumber
+  }
+
+  // TODO: use this method to check activity tab after POM refactor
+  async checkSendTransactionOnActivityTab() {
+    await this.click(selectors.dashboard.activityTabButton)
+    await expect(this.page.locator(selectors.dashboard.grantApprovalText)).toContainText(
+      'Grant approval'
+    )
+    await expect(this.page.locator(selectors.dashboard.confirmedTransactionPill)).toContainText(
+      'Confirmed'
+    )
+  }
+
+  // approve the high impact modal if appears
+  async handlePriceWarningModals() {
+    const isHighPrice = await this.page
+      .waitForSelector(selectors.highPriceImpactSab, { timeout: 1000 })
+      .catch(() => null)
+
+    const isHighSlippage = await this.page
+      .waitForSelector(selectors.highSlippageModal, { timeout: 1000 })
+      .catch(() => null)
+
+    if (isHighPrice || isHighSlippage) {
+      // TODO: change methods once we have IDs
+      await this.click(selectors.continueAnywayCheckboxSaB)
+      await this.page.locator(selectors.continueAnywayButton).click()
+    }
   }
 }

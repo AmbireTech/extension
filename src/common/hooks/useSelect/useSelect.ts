@@ -34,7 +34,7 @@ const useSelect = (props?: { maxMenuHeight?: number; menuPosition?: 'top' | 'bot
         setSearch('search', '')
       }
     }
-    document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener('mousedown', handleClickOutside, { passive: true })
     return () => {
       if (!isWeb) return
       document.removeEventListener('mousedown', handleClickOutside)

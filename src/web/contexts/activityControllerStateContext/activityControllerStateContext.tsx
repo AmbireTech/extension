@@ -1,13 +1,13 @@
 /* eslint-disable @typescript-eslint/no-shadow */
 import React, { createContext, useEffect } from 'react'
 
-import { ActivityController } from '@ambire-common/controllers/activity/activity'
+import { IActivityController } from '@ambire-common/interfaces/activity'
 import useDeepMemo from '@common/hooks/useDeepMemo'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useControllerState from '@web/hooks/useControllerState'
 import useMainControllerState from '@web/hooks/useMainControllerState'
 
-const ActivityControllerStateContext = createContext<ActivityController>({} as ActivityController)
+const ActivityControllerStateContext = createContext<IActivityController>({} as IActivityController)
 
 const ActivityControllerStateProvider: React.FC<any> = ({ children }) => {
   const controller = 'activity'

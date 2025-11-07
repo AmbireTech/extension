@@ -1,17 +1,22 @@
-import { StyleSheet, TextStyle } from 'react-native'
+import { StyleSheet, TextStyle, ViewStyle } from 'react-native'
 
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 interface Style {
   noPositions: TextStyle
+  noPositionsWrapper: ViewStyle
 }
 
 const styles = StyleSheet.create<Style>({
+  noPositionsWrapper: {
+    ...flexbox.flex1,
+    ...flexbox.center
+  },
   noPositions: {
     textAlign: 'center',
     ...flexbox.flex1,
-    ...spacings.mtMd
+    ...spacings.mtTy
   }
 })
 

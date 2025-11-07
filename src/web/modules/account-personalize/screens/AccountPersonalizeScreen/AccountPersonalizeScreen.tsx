@@ -205,6 +205,14 @@ const AccountPersonalizeScreen = () => {
     [dispatch, getValues]
   )
 
+  useEffect(() => {
+    const handleBeforeUnload = () => handleSave()
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+    }
+  }, [handleSave])
+
   const handleComplete = useCallback(async () => {
     await handleSubmit(handleSave)()
     dispatch({ type: 'ACCOUNTS_CONTROLLER_RESET_ACCOUNTS_NEWLY_ADDED_STATE' })
@@ -281,14 +289,13 @@ const AccountPersonalizeScreen = () => {
             ) : (
               <>
                 <SuccessAnimation
-                  noBorder
                   noBackgroundShapes
                   width={352}
                   height={156}
                   style={{ ...spacings.pv0, ...spacings.ph0, ...spacings.mbXl }}
                   animationContainerStyle={{ width: 200, height: 140 }}
                 >
-                  <Text weight="semiBold" fontSize={20}>
+                  <Text weight="semiBold" fontSize={20} style={spacings.mtSm}>
                     {t('Added successfully')}
                   </Text>
                 </SuccessAnimation>

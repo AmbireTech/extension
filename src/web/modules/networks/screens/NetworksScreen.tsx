@@ -27,9 +27,7 @@ import Networks from '@web/modules/networks/components/Networks'
 
 import AddNetworkBottomSheet from '../components/AddNetworkBottomSheet'
 import AllNetworksOption from '../components/AllNetworksOption/AllNetworksOption'
-import NetworkBottomSheet, {
-  NO_BLOCK_EXPLORER_AVAILABLE_TOOLTIP
-} from '../components/NetworkBottomSheet'
+import NetworkBottomSheet, { NO_BLOCK_EXPLORER_AVAILABLE_TOOLTIP } from '../components/NetworkBottomSheet'
 
 const NetworksScreen = () => {
   const { t } = useTranslation()
@@ -138,6 +136,7 @@ const NetworksScreen = () => {
             closeBottomSheet={closeAddNetworkBottomSheet}
           />
           <Input
+            testID="search-for-network-field"
             autoFocus
             containerStyle={spacings.mb}
             value={search}

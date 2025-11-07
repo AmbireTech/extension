@@ -1,13 +1,12 @@
 import { formatUnits } from 'ethers'
 
 import { getFeeSpeedIdentifier } from '@ambire-common/controllers/signAccountOp/helper'
-import {
-  FeeSpeed,
-  SignAccountOpController
-} from '@ambire-common/controllers/signAccountOp/signAccountOp'
+import { FeeSpeed } from '@ambire-common/controllers/signAccountOp/signAccountOp'
+import { ISignAccountOpController } from '@ambire-common/interfaces/signAccountOp'
+import { canBecomeSmarter } from '@ambire-common/libs/account/account'
 import { FeePaymentOption } from '@ambire-common/libs/estimate/interfaces'
-
 import { ZERO_ADDRESS } from '@ambire-common/services/socket/constants'
+
 import PayOption from './components/PayOption'
 import { NO_FEE_OPTIONS } from './consts'
 import { FeeOption } from './types'
@@ -37,7 +36,7 @@ const sortBasedOnUSDValue = (a: FeePaymentOption, b: FeePaymentOption) => {
 const sortFeeOptions = (
   a: FeePaymentOption,
   b: FeePaymentOption,
-  signAccountOpState: SignAccountOpController
+  signAccountOpState: ISignAccountOpController
 ) => {
   const aId = getFeeSpeedIdentifier(
     a,
@@ -75,9 +74,11 @@ const sortFeeOptions = (
 
 const mapFeeOptions = (
   feeOption: FeePaymentOption,
-  signAccountOpState: SignAccountOpController
+  signAccountOpState: ISignAccountOpController
 ) => {
   let disabledReason: string | undefined
+  let disabledTextAppearance: 'errorText' | 'infoText' | undefined
+
   const gasTankKey = feeOption.token.flags.onGasTank ? 'gasTank' : ''
   const speedCoverage: FeeSpeed[] = []
   const id = getFeeSpeedIdentifier(
@@ -104,6 +105,24 @@ const mapFeeOptions = (
     }
   }
 
+  // TODO: TBD, should we refactor and move `disabledReason` logic together with `speedCoverage` into controller.
+  // Note: `accountKeyStoreKeys` can simultaneously store hardware keys and hot wallet keys.
+  // In this case, the `isExternal` check will still resolve to `true`, and we will disable ERC-20 fee options.
+  // We decided to leave it as is, since it's rare to import both a hardware wallet and its seed phrase as a hot wallet.
+  // Additionally, we expect hardware wallets to support EIP-7702 soon, so we prefer not to complicate the UX.
+  const isExternal = signAccountOpState.accountKeyStoreKeys.find(
+    (keyStoreKey) => keyStoreKey.addr === feeOption.paidBy && keyStoreKey.isExternallyStored
+  )
+  const canNotBecomeSmarter = !canBecomeSmarter(
+    signAccountOpState.account,
+    signAccountOpState.accountKeyStoreKeys
+  )
+
+  if (isExternal && canNotBecomeSmarter && feeOption.token.address !== ZERO_ADDRESS) {
+    disabledReason = 'Coming soon for more hardware wallets'
+    disabledTextAppearance = 'infoText'
+  }
+
   return {
     value:
       feeOption.paidBy +
@@ -116,6 +135,7 @@ const mapFeeOptions = (
         amountUsd={feeSpeedUsd}
         feeOption={feeOption}
         disabledReason={disabledReason}
+        disabledTextAppearance={disabledTextAppearance}
       />
     ),
     paidBy: feeOption.paidBy,

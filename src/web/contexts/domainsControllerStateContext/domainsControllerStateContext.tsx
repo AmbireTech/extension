@@ -1,13 +1,13 @@
 /* eslint-disable @typescript-eslint/no-shadow */
 import React, { createContext, useEffect } from 'react'
 
-import { DomainsController } from '@ambire-common/controllers/domains/domains'
+import { IDomainsController } from '@ambire-common/interfaces/domains'
 import useDeepMemo from '@common/hooks/useDeepMemo'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useControllerState from '@web/hooks/useControllerState'
 import useMainControllerState from '@web/hooks/useMainControllerState'
 
-const DomainsControllerStateContext = createContext<DomainsController>({} as DomainsController)
+const DomainsControllerStateContext = createContext<IDomainsController>({} as IDomainsController)
 
 const DomainsControllerStateProvider: React.FC<any> = ({ children }) => {
   const controller = 'domains'

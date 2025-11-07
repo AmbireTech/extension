@@ -1,22 +1,63 @@
-import React from 'react'
+import React, { useMemo } from 'react'
+
+import { CardFromResponse } from '@legends/modules/legends/types'
 
 import styles from './Banner.module.scss'
 import governance from './governance.png'
 
-const Banner: React.FC = () => {
+interface Props {
+  activeProposals: NonNullable<NonNullable<CardFromResponse['meta']>['activeProposals']>
+}
+const emojis = ['🚀', '🔥', '🗣', '📢']
+const Banner: React.FC<Props> = ({ activeProposals }) => {
   return (
     <div className={styles.container}>
       <img className={styles.iconPlaceholder} src={governance} alt="Governance banner icon" />
       <div className={styles.textContent}>
-        <div className={styles.title}>Season 1 reward pool discussion (15M, 20M, 25M stkWALLET) until 7th July!</div>
-        <a
-          href="https://blog.ambire.com/p/180e766e-0faa-4b32-8461-9d2244cb91d5/"
-          className={styles.readMoreLink}
-          target="_blank"
-          rel="noreferrer"
-        >
-          Read more &gt;
-        </a>
+        {activeProposals.length === 1 ? (
+          <div className={styles.title}>
+            🗳️ {activeProposals[0].title}{' '}
+            <a
+              href={`https://snapshot.box/#/s:ambire.eth/proposal/${activeProposals[0].id}`}
+              className={styles.readMoreLink}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Vote until{' '}
+              {new Date(activeProposals[0].end * 1000).toLocaleString('en', {
+                month: 'long',
+                day: 'numeric'
+              })}
+              !
+            </a>
+          </div>
+        ) : (
+          <>
+            <div className={styles.title}>
+              🗳️ {activeProposals.length} governance proposals are live, vote until{' '}
+              {new Date(activeProposals.sort((a, b) => a.end - b.end)[0].end * 1000).toLocaleString(
+                'en',
+                { month: 'long', day: 'numeric' }
+              )}
+              !
+            </div>
+            {activeProposals.map(({ id, title }, i) => {
+              return (
+                <>
+                  <a
+                    href={`https://snapshot.box/#/s:ambire.eth/proposal/${id}`}
+                    className={styles.readMoreLink}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {emojis[i % emojis.length]} {title}
+                  </a>
+                  <br />
+                </>
+              )
+            })}
+          </>
+        )}
       </div>
     </div>
   )

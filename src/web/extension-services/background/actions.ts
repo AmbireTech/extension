@@ -1,15 +1,17 @@
 import { HD_PATH_TEMPLATE_TYPE } from '@ambire-common/consts/derivation'
+import { Filters, Pagination } from '@ambire-common/controllers/activity/activity'
+import { Contact } from '@ambire-common/controllers/addressBook/addressBook'
+import { SignAccountOpType } from '@ambire-common/controllers/signAccountOp/helper'
+import { FeeSpeed, SigningStatus } from '@ambire-common/controllers/signAccountOp/signAccountOp'
+import { Account, AccountPreferences, AccountStates } from '@ambire-common/interfaces/account'
 import {
   AccountOpAction,
   ActionExecutionType,
   Action as ActionFromActionsQueue,
   ActionPosition,
   OpenActionWindowParams
-} from '@ambire-common/controllers/actions/actions'
-import { Filters, Pagination } from '@ambire-common/controllers/activity/activity'
-import { Contact } from '@ambire-common/controllers/addressBook/addressBook'
-import { FeeSpeed, SigningStatus } from '@ambire-common/controllers/signAccountOp/signAccountOp'
-import { Account, AccountPreferences, AccountStates } from '@ambire-common/interfaces/account'
+} from '@ambire-common/interfaces/actions'
+import { Banner } from '@ambire-common/interfaces/banner'
 import { Dapp } from '@ambire-common/interfaces/dapp'
 import { MagicLinkFlow } from '@ambire-common/interfaces/emailVault'
 import {
@@ -21,7 +23,9 @@ import {
   ReadyToAddKeys
 } from '@ambire-common/interfaces/keystore'
 import { AddNetworkRequestParams, ChainId, Network } from '@ambire-common/interfaces/network'
+import { BuildRequest } from '@ambire-common/interfaces/requests'
 import { CashbackStatus } from '@ambire-common/interfaces/selectedAccount'
+import { SignMessageUpdateParams } from '@ambire-common/interfaces/signMessage'
 import {
   SwapAndBridgeActiveRoute,
   SwapAndBridgeRoute,
@@ -35,14 +39,14 @@ import { GasRecommendation } from '@ambire-common/libs/gasPrice/gasPrice'
 import { TokenResult } from '@ambire-common/libs/portfolio'
 import { CustomToken, TokenPreference } from '@ambire-common/libs/portfolio/customToken'
 import { THEME_TYPES } from '@common/styles/themeConfig'
-import { LogLevelNames } from '@web/utils/logger'
+import { LOG_LEVELS } from '@web/utils/logger'
 
 import { AUTO_LOCK_TIMES } from './controllers/auto-lock'
 import { controllersMapping } from './types'
 
 type UpdateNavigationUrl = {
   type: 'UPDATE_PORT_URL'
-  params: { url: string }
+  params: { url: string; route?: string }
 }
 
 type InitControllerStateAction = {
@@ -101,6 +105,10 @@ type MainControllerAccountPickerSetPageAction = {
     shouldGetAccountsUsedOnNetworks?: boolean
   }
 }
+type MainControllerAccountPickerFindAndSetLinkedAccountsAction = {
+  type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_FIND_AND_SET_LINKED_ACCOUNTS'
+}
+
 type MainControllerAccountPickerSetHdPathTemplateAction = {
   type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_SET_HD_PATH_TEMPLATE'
   params: { hdPathTemplate: HD_PATH_TEMPLATE_TYPE }
@@ -146,6 +154,11 @@ type AccountsControllerUpdateAccountPreferences = {
   params: { addr: string; preferences: AccountPreferences }[]
 }
 
+type AccountsControllerReorderAccountsAction = {
+  type: 'ACCOUNTS_CONTROLLER_REORDER_ACCOUNTS'
+  params: { fromIndex: number; toIndex: number }
+}
+
 type AccountsControllerUpdateAccountState = {
   type: 'ACCOUNTS_CONTROLLER_UPDATE_ACCOUNT_STATE'
   params: { addr: string; chainIds: bigint[] }
@@ -182,48 +195,14 @@ type MainControllerUpdateNetworkAction = {
     chainId: ChainId
   }
 }
+type MainControllerUpdateNetworksAction = {
+  type: 'MAIN_CONTROLLER_UPDATE_NETWORKS'
+  params: {
+    network: Partial<Network>
+    chainIds: ChainId[]
+  }
+}
 
-type MainControllerAddUserRequestAction = {
-  type: 'MAIN_CONTROLLER_ADD_USER_REQUEST'
-  params: {
-    userRequest: UserRequest
-    actionPosition?: ActionPosition
-    actionExecutionType?: ActionExecutionType
-    allowAccountSwitch?: boolean
-    skipFocus?: boolean
-  }
-}
-type MainControllerBuildTransferUserRequest = {
-  type: 'MAIN_CONTROLLER_BUILD_TRANSFER_USER_REQUEST'
-  params: {
-    amount: string
-    selectedToken: TokenResult
-    recipientAddress: string
-    actionExecutionType: ActionExecutionType
-  }
-}
-type MainControllerBuildClaimWalletUserRequest = {
-  type: 'MAIN_CONTROLLER_BUILD_CLAIM_WALLET_USER_REQUEST'
-  params: { token: TokenResult }
-}
-type MainControllerBuildMintVestingUserRequest = {
-  type: 'MAIN_CONTROLLER_BUILD_MINT_VESTING_USER_REQUEST'
-  params: {
-    token: TokenResult
-  }
-}
-type MainControllerRemoveUserRequestAction = {
-  type: 'MAIN_CONTROLLER_REMOVE_USER_REQUEST'
-  params: { id: UserRequest['id'] }
-}
-type MainControllerResolveUserRequestAction = {
-  type: 'MAIN_CONTROLLER_RESOLVE_USER_REQUEST'
-  params: { data: any; id: UserRequest['id'] }
-}
-type MainControllerRejectUserRequestAction = {
-  type: 'MAIN_CONTROLLER_REJECT_USER_REQUEST'
-  params: { err: string; id: UserRequest['id'] }
-}
 type MainControllerRejectSignAccountOpCall = {
   type: 'MAIN_CONTROLLER_REJECT_SIGN_ACCOUNT_OP_CALL'
   params: { callId: string }
@@ -245,6 +224,10 @@ type MainControllerSignMessageInitAction = {
 type MainControllerSignMessageResetAction = {
   type: 'MAIN_CONTROLLER_SIGN_MESSAGE_RESET'
 }
+type MainControllerSignMessageUpdate = {
+  type: 'MAIN_CONTROLLER_SIGN_MESSAGE_UPDATE'
+  params: SignMessageUpdateParams
+}
 type MainControllerHandleSignMessage = {
   type: 'MAIN_CONTROLLER_HANDLE_SIGN_MESSAGE'
   params: { keyAddr: Key['addr']; keyType: Key['type'] }
@@ -265,11 +248,6 @@ type MainControllerActivityResetSignedMessagesAction = {
   type: 'MAIN_CONTROLLER_ACTIVITY_RESET_SIGNED_MESSAGES_FILTERS'
   params: { sessionId: string }
 }
-type MainControllerActivityHideBanner = {
-  type: 'ACTIVITY_CONTROLLER_HIDE_BANNER'
-  params: { addr: string; chainId: bigint; timestamp: number }
-}
-
 type MainControllerReloadSelectedAccount = {
   type: 'MAIN_CONTROLLER_RELOAD_SELECTED_ACCOUNT'
   params?: { chainId?: bigint | string }
@@ -278,9 +256,39 @@ type MainControllerReloadSelectedAccount = {
 type MainControllerUpdateSelectedAccountPortfolio = {
   type: 'MAIN_CONTROLLER_UPDATE_SELECTED_ACCOUNT_PORTFOLIO'
   params?: {
-    forceUpdate?: boolean
-    network?: Network
+    networks?: Network[]
   }
+}
+
+type RequestsControllerAddUserRequestAction = {
+  type: 'REQUESTS_CONTROLLER_ADD_USER_REQUEST'
+  params: {
+    userRequest: UserRequest
+    actionPosition?: ActionPosition
+    actionExecutionType?: ActionExecutionType
+    allowAccountSwitch?: boolean
+    skipFocus?: boolean
+  }
+}
+type RequestsControllerBuildRequestAction = {
+  type: 'REQUESTS_CONTROLLER_BUILD_REQUEST'
+  params: BuildRequest
+}
+type RequestsControllerRemoveUserRequestAction = {
+  type: 'REQUESTS_CONTROLLER_REMOVE_USER_REQUEST'
+  params: { id: UserRequest['id'] }
+}
+type RequestsControllerResolveUserRequestAction = {
+  type: 'REQUESTS_CONTROLLER_RESOLVE_USER_REQUEST'
+  params: { data: any; id: UserRequest['id'] }
+}
+type RequestsControllerRejectUserRequestAction = {
+  type: 'REQUESTS_CONTROLLER_REJECT_USER_REQUEST'
+  params: { err: string; id: UserRequest['id'] }
+}
+type RequestsControllerSwapAndBridgeActiveRouteBuildNextUserRequestAction = {
+  type: 'REQUESTS_CONTROLLER_SWAP_AND_BRIDGE_ACTIVE_ROUTE_BUILD_NEXT_USER_REQUEST'
+  params: { activeRouteId: SwapAndBridgeActiveRoute['activeRouteId'] }
 }
 
 type DefiControllerAddSessionAction = {
@@ -296,6 +304,9 @@ type DefiControllerRemoveSessionAction = {
 type SelectedAccountSetDashboardNetworkFilter = {
   type: 'SELECTED_ACCOUNT_SET_DASHBOARD_NETWORK_FILTER'
   params: { dashboardNetworkFilter: bigint | string | null }
+}
+type SelectedAccountDismissDefiPositionsBannerAction = {
+  type: 'DISMISS_DEFI_POSITIONS_BANNER'
 }
 
 type PortfolioControllerGetTemporaryToken = {
@@ -391,6 +402,12 @@ type SignAccountOpUpdateAction = {
     gasUsedTooHighAgreed?: boolean
   }
 }
+type SignAccountOpReestimateAction = {
+  type: 'SIGN_ACCOUNT_OP_REESTIMATE'
+  params: {
+    type: SignAccountOpType
+  }
+}
 type MainControllerSignAccountOpUpdateStatus = {
   type:
     | 'MAIN_CONTROLLER_SIGN_ACCOUNT_OP_UPDATE_STATUS'
@@ -402,13 +419,7 @@ type MainControllerSignAccountOpUpdateStatus = {
 }
 type MainControllerHandleSignAndBroadcastAccountOp = {
   type: 'MAIN_CONTROLLER_HANDLE_SIGN_AND_BROADCAST_ACCOUNT_OP'
-  params: {
-    updateType: 'Main' | 'Swap&Bridge' | 'Transfer&TopUp'
-  }
-}
-
-type MainControllerOnPopupOpenAction = {
-  type: 'MAIN_CONTROLLER_ON_POPUP_OPEN'
+  params: { type: SignAccountOpType }
 }
 
 type MainControllerLockAction = {
@@ -449,6 +460,14 @@ type KeystoreControllerChangePasswordFromRecoveryAction = {
 type KeystoreControllerSendPrivateKeyToUiAction = {
   type: 'KEYSTORE_CONTROLLER_SEND_PRIVATE_KEY_TO_UI'
   params: { keyAddr: string }
+}
+type KeystoreControllerSendEncryptedPrivateKeyToUiAction = {
+  type: 'KEYSTORE_CONTROLLER_SEND_ENCRYPTED_PRIVATE_KEY_TO_UI'
+  params: { keyAddr: string; secret: string; entropy: string }
+}
+type KeystoreControllerSendPasswordDecryptedPrivateKeyToUiAction = {
+  type: 'KEYSTORE_CONTROLLER_SEND_PASSWORD_DECRYPTED_PRIVATE_KEY_TO_UI'
+  params: { secret: string; key: string; salt: string; iv: string; associatedKeys: string[] }
 }
 type KeystoreControllerDeleteSeedAction = {
   type: 'KEYSTORE_CONTROLLER_DELETE_SEED'
@@ -507,6 +526,9 @@ type DomainsControllerSaveResolvedReverseLookupAction = {
   }
 }
 
+type DappsControllerFetchAndUpdateDappsAction = {
+  type: 'DAPPS_CONTROLLER_FETCH_AND_UPDATE_DAPPS'
+}
 type DappsControllerRemoveConnectedSiteAction = {
   type: 'DAPPS_CONTROLLER_DISCONNECT_DAPP'
   params: Dapp['id']
@@ -527,6 +549,7 @@ type SwapAndBridgeControllerInitAction = {
     preselectedFromToken?: Pick<TokenResult, 'address' | 'chainId'>
     preselectedToToken?: Pick<TokenResult, 'address' | 'chainId'>
     fromAmount?: string
+    activeRouteIdToDelete?: string
   }
 }
 type SwapAndBridgeControllerUserProceededAction = {
@@ -544,15 +567,22 @@ type SwapAndBridgeControllerUnloadScreenAction = {
 type SwapAndBridgeControllerUpdateFormAction = {
   type: 'SWAP_AND_BRIDGE_CONTROLLER_UPDATE_FORM'
   params: {
-    fromAmount?: string
-    fromAmountInFiat?: string
-    fromAmountFieldMode?: 'fiat' | 'token'
-    shouldSetMaxAmount?: boolean
-    fromChainId?: bigint | number
-    fromSelectedToken?: TokenResult | null
-    toChainId?: bigint | number
-    toSelectedTokenAddr?: SwapAndBridgeToToken['address'] | null
-    routePriority?: 'output' | 'time'
+    formValues: {
+      fromAmount?: string
+      fromAmountInFiat?: string
+      fromAmountFieldMode?: 'fiat' | 'token'
+      shouldSetMaxAmount?: boolean
+      fromChainId?: bigint | number
+      fromSelectedToken?: TokenResult | null
+      toChainId?: bigint | number
+      toSelectedTokenAddr?: SwapAndBridgeToToken['address'] | null
+      routePriority?: 'output' | 'time'
+    }
+    updateProps?: {
+      emitUpdate?: boolean
+      updateQuote?: boolean
+      shouldIncrementFromAmountUpdateCounter?: boolean
+    }
   }
 }
 type SwapAndBridgeControllerAddToTokenByAddress = {
@@ -573,14 +603,6 @@ type SwapAndBridgeControllerSelectRouteAction = {
 type SwapAndBridgeControllerResetForm = {
   type: 'SWAP_AND_BRIDGE_CONTROLLER_RESET_FORM'
 }
-type SwapAndBridgeControllerBuildUserRequest = {
-  type: 'SWAP_AND_BRIDGE_CONTROLLER_BUILD_USER_REQUEST'
-  params: { openActionWindow: boolean }
-}
-type SwapAndBridgeControllerActiveRouteBuildNextUserRequestAction = {
-  type: 'SWAP_AND_BRIDGE_CONTROLLER_ACTIVE_ROUTE_BUILD_NEXT_USER_REQUEST'
-  params: { activeRouteId: SwapAndBridgeActiveRoute['activeRouteId'] }
-}
 type SwapAndBridgeControllerUpdateQuoteAction = {
   type: 'SWAP_AND_BRIDGE_CONTROLLER_UPDATE_QUOTE'
 }
@@ -590,6 +612,7 @@ type SwapAndBridgeControllerRemoveActiveRouteAction = {
 }
 type SwapAndBridgeControllerMarkSelectedRouteAsFailed = {
   type: 'SWAP_AND_BRIDGE_CONTROLLER_MARK_SELECTED_ROUTE_AS_FAILED'
+  params: { disabledReason: string }
 }
 type SwapAndBridgeControllerDestroySignAccountOp = {
   type: 'SWAP_AND_BRIDGE_CONTROLLER_DESTROY_SIGN_ACCOUNT_OP'
@@ -735,7 +758,18 @@ type SetThemeTypeAction = {
 }
 type SetLogLevelTypeAction = {
   type: 'SET_LOG_LEVEL'
-  params: { logLevel: LogLevelNames }
+  params: { logLevel: LOG_LEVELS }
+}
+type SetCrashAnalyticsAction = {
+  type: 'SET_CRASH_ANALYTICS'
+  params: { enabled: boolean }
+}
+
+type DismissBanner = {
+  type: 'DISMISS_BANNER'
+  params: {
+    bannerId: Banner['id']
+  }
 }
 
 export type Action =
@@ -753,6 +787,7 @@ export type Action =
   | MainControllerAccountPickerInitAction
   | ResetAccountAddingOnPageErrorAction
   | MainControllerAccountPickerResetAccountsSelectionAction
+  | AccountsControllerReorderAccountsAction
   | AccountsControllerUpdateAccountPreferences
   | AccountsControllerUpdateAccountState
   | AccountsControllerResetAccountsNewlyAddedStateAction
@@ -761,24 +796,24 @@ export type Action =
   | MainControllerAddNetwork
   | KeystoreControllerUpdateKeyPreferencesAction
   | MainControllerUpdateNetworkAction
+  | MainControllerUpdateNetworksAction
   | MainControllerAccountPickerSetPageAction
+  | MainControllerAccountPickerFindAndSetLinkedAccountsAction
   | MainControllerAccountPickerSetHdPathTemplateAction
   | MainControllerAccountPickerAddAccounts
   | MainControllerAddAccounts
   | MainControllerRemoveAccount
-  | MainControllerAddUserRequestAction
+  | RequestsControllerAddUserRequestAction
   | MainControllerLockAction
-  | MainControllerOnPopupOpenAction
-  | MainControllerBuildTransferUserRequest
-  | MainControllerBuildClaimWalletUserRequest
-  | MainControllerBuildMintVestingUserRequest
-  | MainControllerRemoveUserRequestAction
-  | MainControllerResolveUserRequestAction
-  | MainControllerRejectUserRequestAction
+  | RequestsControllerBuildRequestAction
+  | RequestsControllerRemoveUserRequestAction
+  | RequestsControllerResolveUserRequestAction
+  | RequestsControllerRejectUserRequestAction
   | MainControllerRejectSignAccountOpCall
   | MainControllerRejectAccountOpAction
   | MainControllerSignMessageInitAction
   | MainControllerSignMessageResetAction
+  | MainControllerSignMessageUpdate
   | MainControllerHandleSignMessage
   | MainControllerActivitySetAccOpsFiltersAction
   | MainControllerActivitySetSignedMessagesFiltersAction
@@ -795,6 +830,7 @@ export type Action =
   | DefiControllerAddSessionAction
   | DefiControllerRemoveSessionAction
   | SelectedAccountSetDashboardNetworkFilter
+  | SelectedAccountDismissDefiPositionsBannerAction
   | PortfolioControllerAddCustomToken
   | PortfolioControllerGetTemporaryToken
   | PortfolioControllerToggleHideToken
@@ -819,6 +855,7 @@ export type Action =
   | EmailVaultControllerDismissBannerAction
   | DomainsControllerReverseLookupAction
   | DomainsControllerSaveResolvedReverseLookupAction
+  | DappsControllerFetchAndUpdateDappsAction
   | DappsControllerRemoveConnectedSiteAction
   | DappsControllerUpdateDappAction
   | DappsControllerRemoveDappAction
@@ -830,8 +867,7 @@ export type Action =
   | SwapAndBridgeControllerSwitchFromAndToTokensAction
   | SwapAndBridgeControllerSelectRouteAction
   | SwapAndBridgeControllerResetForm
-  | SwapAndBridgeControllerBuildUserRequest
-  | SwapAndBridgeControllerActiveRouteBuildNextUserRequestAction
+  | RequestsControllerSwapAndBridgeActiveRouteBuildNextUserRequestAction
   | SwapAndBridgeControllerUpdateQuoteAction
   | SwapAndBridgeControllerRemoveActiveRouteAction
   | ActionsControllerRemoveFromActionsQueue
@@ -854,12 +890,12 @@ export type Action =
   | ImportSmartAccountJson
   | KeystoreControllerSendSeedToUiAction
   | KeystoreControllerSendTempSeedToUiAction
-  | MainControllerActivityHideBanner
   | KeystoreControllerDeleteSeedAction
   | PhishingControllerGetIsBlacklistedAndSendToUiAction
   | ExtensionUpdateControllerApplyUpdate
   | OpenExtensionPopupAction
   | SignAccountOpUpdateAction
+  | SignAccountOpReestimateAction
   | SwapAndBridgeControllerMarkSelectedRouteAsFailed
   | SwapAndBridgeControllerDestroySignAccountOp
   | SwapAndBridgeControllerOpenSigningActionWindow
@@ -875,3 +911,7 @@ export type Action =
   | TransferControllerShouldSkipTransactionQueuedModal
   | SetThemeTypeAction
   | SetLogLevelTypeAction
+  | SetCrashAnalyticsAction
+  | DismissBanner
+  | KeystoreControllerSendEncryptedPrivateKeyToUiAction
+  | KeystoreControllerSendPasswordDecryptedPrivateKeyToUiAction

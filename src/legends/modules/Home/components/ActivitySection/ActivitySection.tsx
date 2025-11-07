@@ -19,7 +19,7 @@ const ActivitySection = () => {
 
   return (
     <div className={styles.wrapper}>
-      <SectionHeading>Your Activity</SectionHeading>
+      <SectionHeading>Your Current Season Activity</SectionHeading>
       {isLoading && (
         <div className={styles.spinnerWrapper}>
           <Spinner />

@@ -65,7 +65,11 @@ const Nft: FC<Props> = ({
         <HumanizerAddress
           fontSize={textSize}
           address={address}
-          highestPriorityAlias={`${nftInfo?.name || 'NFT'} #${tokenId}`}
+          highestPriorityAlias={`${nftInfo?.name || 'NFT'} #${
+            tokenId.toString().length > 9
+              ? `${tokenId.toString().slice(0, 3)}...${tokenId.toString().slice(-4, -1)}`
+              : tokenId
+          }`}
           chainId={network.chainId}
         />
       </View>

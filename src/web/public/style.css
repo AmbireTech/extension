@@ -67,3 +67,8 @@ input {
   background: var(--scroll-thumb-color);
   border-radius: 13px;
 }
+
+.button-icon g,
+.button-icon path {
+  transition: fill 200ms ease-in-out, stroke 200ms ease-in-out;
+}

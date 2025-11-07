@@ -1,14 +1,14 @@
 /* eslint-disable @typescript-eslint/no-shadow */
 import React, { createContext, useEffect } from 'react'
 
-import { SwapAndBridgeController } from '@ambire-common/controllers/swapAndBridge/swapAndBridge'
+import { ISwapAndBridgeController } from '@ambire-common/interfaces/swapAndBridge'
 import useDeepMemo from '@common/hooks/useDeepMemo'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useControllerState from '@web/hooks/useControllerState'
 import useMainControllerState from '@web/hooks/useMainControllerState'
 
-const SwapAndBridgeControllerStateContext = createContext<SwapAndBridgeController>(
-  {} as SwapAndBridgeController
+const SwapAndBridgeControllerStateContext = createContext<ISwapAndBridgeController>(
+  {} as ISwapAndBridgeController
 )
 
 const SwapAndBridgeControllerStateProvider: React.FC<any> = ({ children }) => {

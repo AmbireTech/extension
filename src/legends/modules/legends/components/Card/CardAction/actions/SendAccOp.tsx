@@ -1,9 +1,9 @@
-import { BrowserProvider } from 'ethers'
 import React, { FC, useCallback, useState } from 'react'
 
 import { ERROR_MESSAGES } from '@legends/constants/errors/messages'
 import { BASE_CHAIN_ID } from '@legends/constants/networks'
 import useErc5792 from '@legends/hooks/useErc5792'
+import useProviderContext from '@legends/hooks/useProviderContext'
 import useSwitchNetwork from '@legends/hooks/useSwitchNetwork'
 import useToast from '@legends/hooks/useToast'
 import { useCardActionContext } from '@legends/modules/legends/components/ActionModal'
@@ -22,14 +22,15 @@ const SendAccOp: FC<Props> = ({ action }) => {
   const { onComplete, handleClose } = useCardActionContext()
   const [isInProgress, setIsInProgress] = useState(false)
   const switchNetwork = useSwitchNetwork()
-
+  const { browserProvider } = useProviderContext()
   const onButtonClick = useCallback(async () => {
+    if (!browserProvider) return
+
     setIsInProgress(true)
     await switchNetwork(action.chainId || BASE_CHAIN_ID)
 
     try {
-      const provider = new BrowserProvider(window.ambire)
-      const signer = await provider.getSigner()
+      const signer = await browserProvider.getSigner()
 
       const formattedCalls = action.calls.map(([to, value, data]) => {
         return { to, value, data }
@@ -53,8 +54,10 @@ const SendAccOp: FC<Props> = ({ action }) => {
       addToast(message, { type: 'error' })
     }
   }, [
+    browserProvider,
     switchNetwork,
     action.calls,
+    action.chainId,
     sendCalls,
     chainId,
     getCallsStatus,

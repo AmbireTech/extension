@@ -27,7 +27,7 @@
   background: linear-gradient(147.96deg, #191B1F 43.03%, #201A47 87.21%);
 
   border-radius: 1rem;
-  padding: 2.5rem 1.625rem 2.125rem 2.375rem;
+  padding: 1.4375rem 1.625rem 1.375rem 2.375rem;
   margin: 0 auto;
   margin-bottom: 4.375rem;
   margin-top: 1.875rem;
@@ -49,22 +49,14 @@
     position: relative;
     z-index: 2;
 
-    .title {
-      font-weight: 500;
-      font-size: 2.5rem;
-      line-height: 2.75rem;
-      letter-spacing: 0;
-      vertical-align: middle;
-      text-shadow: -0.125rem .125rem 0 rgba($accent, 0.6);
-      margin-bottom: 7.25rem;
-      max-width: 31.75rem;
+    .chartWrapper {
+      margin-bottom: 0.5rem;
+      min-width: 27.5rem;
 
-      .dollarSign {
-        font-family: 'Roboto Flex', sans-serif;
-        font-weight: 500;
-        font-size: 2.5rem;
-        line-height: 2.75rem;
-        color: $green-500;
+
+      .placeholder {
+        width: 27.5rem;
+        height: 20rem;
       }
     }
 
@@ -107,8 +99,15 @@
       gap: 1rem;
       align-items: flex-start;
 
+      
       .walletItemWrapper {
         display: flex;
+        flex-direction: column;
+        font-size: 0.875rem;
+        font-weight: 300;
+        line-height: 1.5rem;
+        align-self: end;
+        color: $secondaryText;
 
         .icon {
           margin-right: 1.5625rem;
@@ -117,16 +116,18 @@
           align-self: center;
         }
 
-        .walletItem {
-          display: flex;
-          flex-direction: column;
-          font-size: 0.875rem;
-          font-weight: 300;
-          line-height: 1.5rem;
-          align-self: end;
-          color: $secondaryText;
+        &:nth-child(1) {
+          flex: 0.3;
         }
 
+        &:nth-child(2) {
+          flex: 0.3;
+        }
+
+        &:nth-child(3) {
+          flex: 0.45;
+        }
+     
       }
 
       .item {
@@ -135,7 +136,9 @@
         
         border-radius: $secondaryBorderRadius;
         background-color: rgba($neutral-600, 0.3);
-        font-size: 1rem;
+     
+        line-height: 2.75rem;
+        font-size: 1.5rem;
         font-weight: 400;
         line-height: 2.75rem;
         text-align: center;
@@ -175,7 +178,6 @@
     position: absolute;
     z-index: 0;
     right: 0rem;
-    top: -4rem;
 
     .walletRelativeWrapper {
       position: relative;
@@ -183,24 +185,23 @@
       .walletImage {
         position: relative;
         z-index: 2;
-        width: 19.9375rem;
-        height: 24.6875rem;
-        object-fit: contain;
-        right: 1.75rem;
-        bottom: -2rem;
+        width: 22.8125rem;
+        height: 19.875rem;
+        object-fit: cover;
+        top: .5rem;
       }
     }
   }
 
   .walletBlurEffect {
     position: absolute;
-    width: 37.1875rem;
-    height: 19.0625rem;
+    width: 43.1875rem;
+    height: 28.0625rem;
     top: 0;
-    filter: blur(13.2px);
-    background-position: 9rem -5rem;
+    filter: blur(4.2px);
+    background-position: 11rem -4rem;
     opacity: 0.1;
-    background-size: 23.3125rem;
+    background-size: 34.3125rem;
     background-repeat: no-repeat;
     right: 0;
   }
@@ -211,9 +212,7 @@
     width: calc(100% - 6rem);
   }
 
-  @include breakpoint-down-from(small-desktop) {
-    padding-top: 1rem;
-
+  @include breakpoint-down-from(small-desktop) {    
     .walletInfo {
       .walletName {
         font-size: 3rem;
@@ -245,7 +244,7 @@
        .walletInfo {
         .walletLevelInfoWrapper {
           display: grid;
-          grid-template-columns: 1fr 1fr;
+          grid-template-columns: 1fr;
         }
       }
   }
@@ -254,10 +253,15 @@
 .wrapper {
   @include breakpoint-down-from(tablet) {
     margin-left: 0;
-    margin-right: 0;
+    padding-right: 1rem;
     width: 100%;
 
+
+    
     .walletInfo {
+      .chartWrapper {
+        min-width: auto;
+      }
       .title {
         margin-bottom: 2rem;
       }
@@ -269,9 +273,8 @@
     .wallet {
       .walletRelativeWrapper {
         .walletImage {
-          bottom: -4rem;
           right: 0;
-          width: 5rem;
+          width: 7rem;
           height: 6rem;
         }
       }

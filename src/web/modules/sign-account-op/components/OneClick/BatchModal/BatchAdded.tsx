@@ -13,9 +13,12 @@ import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
 import { getTabLayoutPadding } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
+import BatchIconAnimated from '@common/components/BatchIconAnimated'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 
 type Props = {
   title: string
+  callsCount: number
   primaryButtonText: string
   secondaryButtonText: string
   onPrimaryButtonPress: () => void
@@ -24,13 +27,14 @@ type Props = {
 
 const BatchAdded: FC<Props> = ({
   title,
+  callsCount,
   primaryButtonText,
   secondaryButtonText,
   onPrimaryButtonPress,
   onSecondaryButtonPress
 }) => {
   const { t } = useTranslation()
-  const { theme } = useTheme()
+  const { theme, themeType } = useTheme()
   const { maxWidthSize } = useWindowSize()
   const paddingHorizontalStyle = useMemo(() => getTabLayoutPadding(maxWidthSize), [maxWidthSize])
   const scrollViewRef: any = useRef(null)
@@ -66,16 +70,46 @@ const BatchAdded: FC<Props> = ({
             flexbox.alignCenter,
             flexbox.justifyCenter,
             spacings.pt2Xl,
-            spacings.pbXl
+            spacings.pbXl,
+            { alignSelf: 'center' }
           ]}
         >
-          <BatchIcon width={64} height={64} color={theme.secondaryText} />
+          <BatchIconAnimated />
           <Text fontSize={20} weight="medium" style={[spacings.mbTy, spacings.mtLg, text.center]}>
-            {t('Added to batch')}
+            {t('Successfully added to batch!')}
           </Text>
           <Text weight="medium" appearance="secondaryText" style={text.center}>
-            {t('You can manage your batch on the dashboard.')}
+            {t('You are saving on gas fees compared\nto sending individually.')}
           </Text>
+
+          <View style={[flexbox.alignCenter, flexbox.justifyCenter, spacings.mt2Xl]}>
+            <View
+              style={[
+                flexbox.directionRow,
+                flexbox.alignCenter,
+                spacings.ph,
+                spacings.pvTy,
+                {
+                  borderRadius: 20,
+                  backgroundColor: themeType === THEME_TYPES.DARK ? '#2e2a3b' : '#6000ff14'
+                }
+              ]}
+            >
+              <BatchIcon width={16} height={16} color={theme.linkText} />
+              <Text fontSize={16} style={[spacings.mlSm]} color={theme.linkText}>
+                {t('{{ callsCount }} transactions in batch', { callsCount })}
+              </Text>
+            </View>
+            <Text
+              fontSize={12}
+              color={themeType === THEME_TYPES.DARK ? '#ffffff51' : '#767dad'}
+              weight="medium"
+              appearance="secondaryText"
+              style={[text.center, spacings.mtTy]}
+            >
+              {t('You can add more transactions or\nmanage this batch in the dashboard.')}
+            </Text>
+          </View>
         </View>
         <View
           style={{

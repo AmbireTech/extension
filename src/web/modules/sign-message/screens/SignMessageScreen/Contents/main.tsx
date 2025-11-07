@@ -11,11 +11,12 @@ import NetworkBadge from '@common/components/NetworkBadge'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_LG, SPACING_MD, SPACING_TY } from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import { TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
+import useResponsiveActionWindow from '@web/hooks/useResponsiveActionWindow'
 import useSignMessageControllerState from '@web/hooks/useSignMessageControllerState'
 import HardwareWalletSigningModal from '@web/modules/hardware-wallet/components/HardwareWalletSigningModal'
 import LedgerConnectModal from '@web/modules/hardware-wallet/components/LedgerConnectModal'
@@ -44,7 +45,8 @@ const Main = ({
   const signMessageState = useSignMessageControllerState()
   const signStatus = signMessageState.statuses.sign
   const { styles, theme, themeType } = useTheme(getStyles)
-  const { maxWidthSize, minHeightSize } = useWindowSize()
+  const { responsiveSizeMultiplier } = useResponsiveActionWindow()
+  const { minHeightSize } = useWindowSize()
   const { networks } = useNetworksControllerState()
   const network = useMemo(
     () =>
@@ -76,11 +78,13 @@ const Main = ({
           flexbox.directionRow,
           flexbox.alignCenter,
           flexbox.justifySpaceBetween,
-          spacings.mbXl
+          {
+            marginBottom: SPACING_MD * responsiveSizeMultiplier
+          }
         ]}
       >
         <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-          <Text weight="medium" fontSize={24} style={[spacings.mrSm]}>
+          <Text weight="medium" fontSize={24 * responsiveSizeMultiplier} style={[spacings.mrSm]}>
             {t('Sign message')}
           </Text>
           <View style={styles.kindOfMessage}>
@@ -93,11 +97,19 @@ const Main = ({
             </Text>
           </View>
         </View>
-        <NetworkBadge chainId={signMessageState.messageToSign?.chainId} withOnPrefix />
+        <NetworkBadge
+          chainId={signMessageState.messageToSign?.chainId}
+          responsiveSizeMultiplier={responsiveSizeMultiplier}
+          withOnPrefix
+        />
         {/* @TODO: Replace with Badge; add size prop to badge; add tooltip  */}
       </View>
       <View style={styles.container}>
-        <View style={spacings.mbLg}>
+        <View
+          style={{
+            marginBottom: SPACING_LG * responsiveSizeMultiplier
+          }}
+        >
           <Info />
           {shouldDisplayEIP1271Warning && (
             <Alert
@@ -113,7 +125,7 @@ const Main = ({
             isInitiallyExpanded={!visualizeHumanized}
             hasArrow={!!visualizeHumanized}
             style={{
-              ...spacings.mbTy,
+              marginBottom: SPACING_TY * responsiveSizeMultiplier,
               // Setting maxHeight on larger screens introduced internal content scroll
               // (which aligns the content better - with internal scrollbar).
               ...(minHeightSize(660) ? {} : { maxHeight: '100%' }),
@@ -128,15 +140,23 @@ const Main = ({
                 <HumanizedVisualization
                   data={humanizedMessage.fullVisualization}
                   chainId={network?.chainId || 1n}
+                  sizeMultiplierSize={responsiveSizeMultiplier}
                 />
               ) : (
                 <>
-                  <View style={spacings.mrTy}>
-                    <ErrorOutlineIcon width={24} height={24} />
+                  <View
+                    style={{
+                      marginRight: SPACING_TY * responsiveSizeMultiplier
+                    }}
+                  >
+                    <ErrorOutlineIcon
+                      width={24 * responsiveSizeMultiplier}
+                      height={24 * responsiveSizeMultiplier}
+                    />
                   </View>
-                  <Text fontSize={maxWidthSize('xl') ? 16 : 12} appearance="warningText">
+                  <Text fontSize={14 * responsiveSizeMultiplier} appearance="warningText">
                     <Text
-                      fontSize={maxWidthSize('xl') ? 16 : 12}
+                      fontSize={14 * responsiveSizeMultiplier}
                       appearance="warningText"
                       weight="semiBold"
                     >
@@ -152,6 +172,7 @@ const Main = ({
                 setHasReachedBottom={setHasReachedBottom}
                 hasReachedBottom={!!hasReachedBottom}
                 messageToSign={signMessageState.messageToSign}
+                responsiveSizeMultiplier={responsiveSizeMultiplier}
               />
             }
           />

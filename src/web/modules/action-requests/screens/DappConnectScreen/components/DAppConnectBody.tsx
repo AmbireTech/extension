@@ -62,7 +62,7 @@ const DAppConnectBody: FC<{
           </View>
           {securityCheck === 'LOADING' && <Spinner style={{ width: 18, height: 18 }} />}
           {securityCheck === 'NOT_BLACKLISTED' && (
-            <Badge type="success" text={t('Passed')}>
+            <Badge type="success" text={t('Passed')} testId="dapp-security-check-passed">
               <CheckIcon
                 width={12}
                 height={12}

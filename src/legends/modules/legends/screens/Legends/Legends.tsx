@@ -4,6 +4,7 @@ import Alert from '@legends/components/Alert'
 import OverachieverBanner from '@legends/components/OverachieverBanner'
 import Page from '@legends/components/Page'
 import Spinner from '@legends/components/Spinner'
+import V1AccountBanner from '@legends/components/V1AccountBanner/V1AccountBanner'
 import useLegendsContext from '@legends/hooks/useLegendsContext'
 import Card from '@legends/modules/legends/components/Card'
 import { CardGroup, CardGroupNameMapping } from '@legends/modules/legends/types'
@@ -40,12 +41,13 @@ const Legends = () => {
 
   return (
     <Page containerSize="lg">
-      <OverachieverBanner />
+      <div className={styles.overachieverWrapper}>
+        <OverachieverBanner />
+      </div>
+      <V1AccountBanner />
       {!isLoading ? (
         <div className={styles.wrapper}>
-          {error && (
-            <Alert type="error" title={error} className={styles.error} />
-          )}
+          {error && <Alert type="error" title={error} className={styles.error} />}
           {Object.entries(processedLegends).map(([groupName, cards]) => (
             <div key={groupName} className={styles.group}>
               <h2 className={styles.groupName}>
@@ -53,7 +55,7 @@ const Legends = () => {
               </h2>
               <div className={styles.cards}>
                 {cards.map((card) => (
-                  <Card key={card.title + card.card.type} cardData={card} action={card.action} />
+                  <Card key={card.title + card.card.type} cardData={card} />
                 ))}
               </div>
             </div>

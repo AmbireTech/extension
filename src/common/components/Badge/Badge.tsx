@@ -3,6 +3,7 @@ import React from 'react'
 import { View } from 'react-native'
 
 import InformationIcon from '@common/assets/svg/InformationIcon'
+import MetamaskIcon from '@common/assets/svg/Metamask/MetamaskIcon'
 import StarsIcon from '@common/assets/svg/StarsIcon'
 import Text from '@common/components/Text'
 import Tooltip from '@common/components/Tooltip'
@@ -11,7 +12,6 @@ import spacings from '@common/styles/spacings'
 import { ThemeProps } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 
-import MetamaskIcon from '@common/assets/svg/Metamask/MetamaskIcon'
 import getStyles from './styles'
 import { Props } from './types'
 
@@ -19,6 +19,10 @@ const getBadgeTypes = (theme: ThemeProps) => ({
   info: {
     color: theme.infoText,
     iconColor: theme.infoDecorative
+  },
+  info2: {
+    color: theme.info2Text,
+    iconColor: theme.info2Decorative
   },
   default: {
     color: theme.secondaryText,
@@ -39,6 +43,10 @@ const getBadgeTypes = (theme: ThemeProps) => ({
   ok: {
     color: theme.secondaryText,
     iconColor: theme.successText
+  },
+  projectedRewards: {
+    color: theme.projectedRewards,
+    iconColor: theme.projectedRewards
   },
   new: {
     color: '#fff',
@@ -62,7 +70,8 @@ const Badge = ({
   nativeID,
   children,
   size = 'sm',
-  specialType
+  specialType,
+  testId
 }: Props) => {
   const { styles, theme } = useTheme(getStyles)
   const badgeTypes = getBadgeTypes(theme)
@@ -79,8 +88,10 @@ const Badge = ({
         type === 'default' && styles.defaultBadge,
         type === 'warning' && styles.warningBadge,
         type === 'info' && styles.infoBadge,
+        type === 'info2' && styles.info2Badge,
         type === 'error' && styles.errorBadge,
         type === 'new' && styles.newBadge,
+        type === 'projectedRewards' && styles.projectedRewards,
         {
           height: sizeMultiplier * 20
         },
@@ -89,6 +100,7 @@ const Badge = ({
         style
       ]}
       nativeID={nativeID}
+      testID={testId}
     >
       {text && (
         <Text

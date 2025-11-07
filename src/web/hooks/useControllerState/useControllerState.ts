@@ -38,7 +38,7 @@ export default function useControllerState<K extends keyof ControllersMappingTyp
     eventBus.addEventListener(controllerName, onUpdate)
 
     return () => eventBus.removeEventListener(controllerName, onUpdate)
-  }, [controllerName])
+  }, [controllerName, onUpdateCallback])
 
   return state
 }

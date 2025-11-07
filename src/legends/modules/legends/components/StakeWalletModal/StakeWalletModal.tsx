@@ -1,6 +1,5 @@
 import {
   AbiCoder,
-  BrowserProvider,
   Contract,
   formatUnits,
   Interface,
@@ -16,20 +15,23 @@ import { createPortal } from 'react-dom'
 
 import { STK_WALLET, WALLET_STAKING_ADDR, WALLET_TOKEN } from '@ambire-common/consts/addresses'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
-import InfoIcon from '@common/assets/svg/InfoIcon/InfoIcon'
+import WarningIcon from '@common/assets/svg/WarningIcon'
 import { RELAYER_URL } from '@env'
 import HumanReadableError from '@legends/classes/HumanReadableError'
 import CloseIcon from '@legends/components/CloseIcon'
 import Input from '@legends/components/Input'
+import Modal from '@legends/components/Modal'
 import { ERROR_MESSAGES } from '@legends/constants/errors/messages'
 import { ETHEREUM_CHAIN_ID } from '@legends/constants/networks'
 import useAccountContext from '@legends/hooks/useAccountContext'
 import useErc5792 from '@legends/hooks/useErc5792'
 import useEscModal from '@legends/hooks/useEscModal'
 import usePortfolioControllerState from '@legends/hooks/usePortfolioControllerState/usePortfolioControllerState'
+import useProviderContext from '@legends/hooks/useProviderContext'
 import useSwitchNetwork from '@legends/hooks/useSwitchNetwork'
 import useToast from '@legends/hooks/useToast'
 import { humanizeError } from '@legends/modules/legends/utils/errors/humanizeError'
+import { getRewardsButtonText } from '@legends/utils/getRewardsButtonText'
 
 import loadingAnimation from './icons/LoadingAnimation.json'
 import styles from './StakeWalletModal.module.scss'
@@ -54,10 +56,6 @@ const xWalletIface = new Interface([
   'event LogLeave(address indexed owner, uint256 shares, uint256 unlocksAt, uint256 maxTokens)'
 ])
 
-function goToStakingInfo() {
-  window.open('https://help.ambire.com/hc/en-us/sections/4421155466130-Staking/', '_blank')
-}
-
 const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> = ({
   isOpen,
   handleClose
@@ -81,14 +79,28 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
     maxTokens: bigint
     shares: bigint
   }>(null)
+  const { provider, browserProvider } = useProviderContext()
   const { connectedAccount, v1Account } = useAccountContext()
   const { walletTokenInfo } = usePortfolioControllerState()
   const { sendCalls, getCallsStatus, chainId } = useErc5792()
   const switchNetwork = useSwitchNetwork()
   const { addToast } = useToast()
-  useEscModal(isOpen, handleClose)
+  const [isWarningModalOpen, setIsWarningModalOpen] = useState(false)
+  const [isWarningModalUnstakePeriodOpen, setIsWarningModalUnstakePeriodOpen] = useState(false)
+
+  const handleEsc = useCallback(() => {
+    if (isWarningModalOpen) setIsWarningModalOpen(false)
+    else handleClose()
+  }, [handleClose, isWarningModalOpen, setIsWarningModalOpen])
+
+  useEscModal(isOpen, handleEsc)
 
   const isConnected = useMemo(() => !!connectedAccount && !v1Account, [connectedAccount, v1Account])
+
+  const rewardsButtonText = getRewardsButtonText({
+    connectedAccount,
+    v1Account: !!v1Account
+  })
 
   useEffect(() => {
     if (!isConnected || !isOpen) {
@@ -96,10 +108,10 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
       return
     }
     setIsLoadingOnchainData(true)
-    const provider = new JsonRpcProvider('https://invictus.ambire.com/ethereum')
-    const walletContract = new Contract(WALLET_TOKEN, walletIface, provider)
-    const xWalletContract = new Contract(WALLET_STAKING_ADDR, xWalletIface, provider)
-    const stkWalletContract = new Contract(STK_WALLET, stkWalletIface, provider)
+    const ethereumProvider = new JsonRpcProvider('https://invictus.ambire.com/ethereum')
+    const walletContract = new Contract(WALLET_TOKEN, walletIface, ethereumProvider)
+    const xWalletContract = new Contract(WALLET_STAKING_ADDR, xWalletIface, ethereumProvider)
+    const stkWalletContract = new Contract(STK_WALLET, stkWalletIface, ethereumProvider)
     Promise.all([
       walletContract.balanceOf(connectedAccount),
       xWalletContract.shareValue(),
@@ -159,8 +171,8 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
         return { owner, shares, unlocksAt, maxTokens }
       })
       .filter(({ owner }) => owner === connectedAccount)
-    const provider = new JsonRpcProvider('https://invictus.ambire.com/ethereum')
-    const xWalletContract = new Contract(WALLET_STAKING_ADDR, xWalletIface, provider)
+    const ethereumProvider = new JsonRpcProvider('https://invictus.ambire.com/ethereum')
+    const xWalletContract = new Contract(WALLET_STAKING_ADDR, xWalletIface, ethereumProvider)
 
     Promise.all(
       parsedLogs.map(({ shares, owner, unlocksAt }) => {
@@ -179,12 +191,11 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
         const uncollected = allCommitments
           .filter(([maxTokens]) => maxTokens)
           .map(([, commitment]) => commitment)
-          .sort(([a, b]) => a.unlocksAt - b.unlocksAt)
-
+          .sort((a, b) => Number(a.unlocksAt - b.unlocksAt))
         const firstUncollected = uncollected[0]
         if (!firstUncollected) return
         const { maxTokens, unlocksAt, shares } = firstUncollected
-        setFirstToCollect({ unlocksAt: unlocksAt, maxTokens, shares })
+        setFirstToCollect({ unlocksAt, maxTokens, shares })
       })
       .catch(() => addToast('Error getting pending withdraw data', { type: 'error' }))
       .finally(() => setIsLoadingLogs(false))
@@ -193,6 +204,7 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
   const stakeAction = useCallback(
     async (dataFromInput: string) => {
       try {
+        if (!browserProvider) throw new HumanReadableError('No connected wallet.')
         if (!connectedAccount) throw new HumanReadableError('No connected account.')
 
         await switchNetwork(ETHEREUM_CHAIN_ID)
@@ -205,7 +217,7 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
           { to: STK_WALLET, data: stkWalletIface.encodeFunctionData('enter', [amount]) }
         ]
         setIsSigning(true)
-        const signer = await new BrowserProvider(window.ambire).getSigner(connectedAccount)
+        const signer = await browserProvider.getSigner(connectedAccount)
 
         const txId = await sendCalls(chainId, await signer.getAddress(), calls, false)
         await getCallsStatus(txId)
@@ -219,19 +231,20 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
       }
     },
     [
+      browserProvider,
       addToast,
       chainId,
       connectedAccount,
       getCallsStatus,
       handleClose,
-      inputAmount,
       sendCalls,
       switchNetwork
     ]
   )
 
   const goToSwap = useCallback(() => {
-    window.ambire
+    if (!provider) return
+    provider
       .request({
         method: 'open-wallet-route',
         params: { route: 'swap-and-bridge' }
@@ -240,11 +253,12 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
         console.log(e)
         addToast('Failed to go to internal swap.', { type: 'error' })
       })
-  }, [addToast])
+  }, [addToast, provider])
 
   const requestWithdrawAction = useCallback(
     async (dataFromInput: string) => {
       try {
+        if (!browserProvider) throw new HumanReadableError('No connected wallet.')
         if (!connectedAccount) throw new HumanReadableError('No connected account.')
         if (!onchainData) throw new HumanReadableError('We were unable to fetch unstaking data.')
         await switchNetwork(ETHEREUM_CHAIN_ID)
@@ -259,7 +273,7 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
         ]
 
         setIsSigning(true)
-        const signer = await new BrowserProvider(window.ambire).getSigner(connectedAccount)
+        const signer = await browserProvider.getSigner(connectedAccount)
 
         const txId = await sendCalls(chainId, await signer.getAddress(), calls, false)
         await getCallsStatus(txId)
@@ -274,13 +288,12 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
       }
     },
     [
+      browserProvider,
       addToast,
       chainId,
       connectedAccount,
-      firstToCollect,
       getCallsStatus,
       handleClose,
-      inputAmount,
       onchainData,
       sendCalls,
       switchNetwork
@@ -289,6 +302,7 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
 
   const withdrawAction = useCallback(async () => {
     try {
+      if (!browserProvider) throw new HumanReadableError('No connected wallet.')
       if (!firstToCollect) throw new HumanReadableError('Enter a valid amount.')
       if (!connectedAccount) throw new HumanReadableError('No connected account.')
       if (!onchainData) throw new HumanReadableError('We were unable to fetch unstaking data.')
@@ -308,7 +322,7 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
       ]
 
       setIsSigning(true)
-      const signer = await new BrowserProvider(window.ambire).getSigner(connectedAccount)
+      const signer = await browserProvider.getSigner(connectedAccount)
 
       const txId = await sendCalls(chainId, await signer.getAddress(), calls, false)
       await getCallsStatus(txId)
@@ -322,6 +336,7 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
       setIsSigning(false)
     }
   }, [
+    browserProvider,
     addToast,
     chainId,
     connectedAccount,
@@ -341,8 +356,16 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
     return `${days}d ${hours}h ${minutes}m`
   }
 
+  const displayWarningOrUnstake = useCallback(() => {
+    if (!onchainData || !inputAmount) return
+    // Always show unstake period modal first
+    setIsWarningModalUnstakePeriodOpen(true)
+
+    // Otherwise, the confirm button in the unstake period modal will call requestWithdrawAction directly
+  }, [onchainData, inputAmount, setIsWarningModalOpen])
+
   const buttonState = useMemo((): { text: string; action?: () => any } => {
-    if (!isConnected) return { text: 'Connect a new account' }
+    if (!isConnected) return { text: rewardsButtonText }
     if (isLoadingLogs || isLoadingOnchainData) return { text: 'Loading...' }
     if (isSigning) return { text: 'Signing...' }
     if (activeTab === 'stake')
@@ -355,7 +378,7 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
       return onchainData?.stkWalletBalance
         ? {
             text: 'Unstake',
-            action: inputAmount ? () => requestWithdrawAction(inputAmount) : undefined
+            action: inputAmount ? displayWarningOrUnstake : undefined
           }
         : { text: 'No $WALLET staked to withdraw' }
     }
@@ -378,9 +401,10 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
     onchainData?.lockedShares,
     onchainData?.stkWalletBalance,
     onchainData?.walletBalance,
-    requestWithdrawAction,
     stakeAction,
-    withdrawAction
+    withdrawAction,
+    displayWarningOrUnstake,
+    rewardsButtonText
   ])
 
   const formatToken = useCallback(
@@ -438,6 +462,16 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
         </button>
         <div className={styles.contentWrapper}>
           <h2 className={styles.title}>Stake $WALLET</h2>
+          <p className={styles.learnMore}>
+            Learn more about{' '}
+            <a
+              target="_blank"
+              href="https://help.ambire.com/hc/en-us/sections/4421155466130-Staking/"
+              rel="noreferrer"
+            >
+              how staking works
+            </a>
+          </p>
           <div className={styles.tabs}>
             <button
               type="button"
@@ -505,16 +539,7 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
                 </div>
               ))}
             <div className={`${styles.infoRow} ${styles.apyInfo}`}>
-              APY
-              <InfoIcon
-                onClick={goToStakingInfo}
-                width={12}
-                height={12}
-                color="currentColor"
-                className={styles.infoIcon}
-                data-tooltip-id="weight-info"
-              />
-              {walletTokenInfo?.apy.toFixed(2)}%
+              <div style={{ marginRight: '1rem' }}>APY</div> {walletTokenInfo?.apy.toFixed(2)}%
             </div>
             <div
               className={`${activeTab === 'unstake' && onchainData?.lockedShares && styles.blur}`}
@@ -618,6 +643,82 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
           </button>
         </div>
       </div>
+
+      <Modal
+        isOpen={isWarningModalUnstakePeriodOpen}
+        handleClose={() => setIsWarningModalUnstakePeriodOpen(false)}
+        className={styles.warningModal}
+      >
+        <Modal.Heading className={styles.heading}>Confirm Unstake</Modal.Heading>
+        <WarningIcon height={45} width={45} strokeWidth={1} color="#E7AA27" />
+        <p className={styles.infoText}>
+          You are аbout to unstake your $stkWALLET tokens. There is a 30-days unstaking period
+          during which you won&apos;t be accruing $stkWALLET.
+        </p>
+        <div className={styles.buttonWrapper}>
+          <button
+            type="button"
+            className={styles.cancelButton}
+            onClick={() => setIsWarningModalUnstakePeriodOpen(false)}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            className={styles.confirmButton}
+            onClick={() => {
+              setIsWarningModalUnstakePeriodOpen(false)
+              const walletsInXwallet = +formatUnits(
+                onchainData.shareValue * onchainData.xWalletBalance,
+                36
+              )
+              const walletsInStkWallet = +formatUnits(onchainData.stkWalletBalance)
+              const totalStakedWallets = walletsInStkWallet + walletsInXwallet
+
+              // After confirming unstake period, show warning modal if needed
+              if (Number(inputAmount) > totalStakedWallets * 0.65) {
+                setIsWarningModalOpen(true)
+              } else {
+                void requestWithdrawAction(inputAmount)
+              }
+            }}
+          >
+            Confirm
+          </button>
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={isWarningModalOpen}
+        handleClose={() => setIsWarningModalOpen(false)}
+        className={styles.warningModal}
+      >
+        <Modal.Heading className={styles.heading}>Confirm Unstake</Modal.Heading>
+        <WarningIcon height={45} width={45} strokeWidth={1} color="#E7AA27" />
+        <p className={styles.infoText}>
+          If you confirm unstaking a significant amount of your stkWALLET, you won’t be earning XP
+          for the unstake period.
+        </p>
+        <div className={styles.buttonWrapper}>
+          <button
+            type="button"
+            className={styles.cancelButton}
+            onClick={() => setIsWarningModalOpen(false)}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            className={styles.confirmButton}
+            onClick={() => {
+              setIsWarningModalOpen(false)
+              void requestWithdrawAction(inputAmount)
+            }}
+          >
+            Confirm
+          </button>
+        </div>
+      </Modal>
     </div>,
     document.getElementById('modal-root') as HTMLElement
   )

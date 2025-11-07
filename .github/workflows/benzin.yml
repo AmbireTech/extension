@@ -17,21 +17,36 @@ jobs:
       group: ${{ github.workflow }}-${{ github.ref }}
     environment: benzin
     steps:
-      - name: Checkout code 🛎️
-        uses: actions/checkout@v3
-
       - name: Add SSH key to checkout a private repo
         uses: webfactory/ssh-agent@v0.5.4
         with:
           ssh-private-key: ${{ secrets.DEPLOY_KEY }}
 
-      - name: Setup Environment
-        uses: ./.github/composite-actions/setup
+      - name: Checkout code 🛎️
+        uses: actions/checkout@v4
+
+      - name: Git submodules init
+        run: git submodule init
+        shell: bash
+
+      - name: Git submodules update
+        run: git submodule update
+        shell: bash
+
+      - name: Install Node.js ⚙️
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: Install Dependencies
+        run: yarn install --frozen-lockfile
+        shell: bash
 
       - name: Build project 🛠️
         env:
-          REACT_APP_PIMLICO_API_KEY: ${{ secrets.REACT_APP_PIMLICO_API_KEY }}
-          REACT_APP_JIFFYSCAN_API_KEY: ${{ secrets.REACT_APP_JIFFYSCAN_API_KEY }}
+          REACT_APP_PIMLICO_API_KEY: ${{ vars.REACT_APP_PIMLICO_API_KEY }}
+          REACT_APP_ETHERSPOT_API_KEY: ${{ vars.REACT_APP_ETHERSPOT_API_KEY }}
+          REACT_APP_CANDIDE_API_KEY: ${{ vars.REACT_APP_CANDIDE_API_KEY }}
           RELAYER_URL: ${{ vars.RELAYER_URL }}
         run: yarn build:web:benzin
 

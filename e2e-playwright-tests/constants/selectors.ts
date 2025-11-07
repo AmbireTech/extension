@@ -2,11 +2,96 @@ import { buildSelector } from '@helpers/buildSelector'
 
 // TODO: this should be refactored; we should have single file with selector IDs
 const selectors = {
+  getStarted: {
+    watchAddress: 'watch-an-address-button',
+    addOneMoreAddress: 'add-one-more-address',
+    importExistingAccBtn: 'import-existing-account-btn',
+    importMethodPrivateBtn: 'import-method-private-key',
+    importMethodRecoveryPhrase: 'import-method-recovery-phrase',
+    importMethodJSON: 'import-method-json-backup-file',
+    enterSeedPhraseField: 'enter-seed-phrase-field',
+    enterPrivateKeyField: 'enter-private-key-field',
+    advancedPassPhraseSwitch: 'enable-passphrase-toggle',
+    recoveryPhrasePassphraseField: 'input-passphrase',
+    warningCheckbox: 'backup-warning-checkbox',
+    addressEnsField: 'address-ens-field',
+    showMoreBtn: 'show-more-btn',
+    viewOnlyBtnImport: 'view-only-button-import',
+    importBtn: 'import-button'
+  },
+  dashboard: {
+    tokensTabButton: 'tokens-defi',
+    noTokensText: 'no-tokens-text',
+    tokenTitleText: '[data-testid^="token-balance-"]',
+    nftTabButton: 'tab-nft',
+    noCollectiblesText: 'no-collectibles-text',
+    defiTabButton: 'tab-defi',
+    noProtocolsText: 'no-protocols-text',
+    suggestProtocolText: 'suggest-protocol-text',
+    openTicketLink: 'open-ticket-link',
+    activityTabButton: 'tab-activity',
+    sendButton: 'dashboard-button-send',
+    swapAndBridgeButton: 'dashboard-button-swap-and-bridge',
+    hamburgerButton: 'dashboard-hamburger-btn',
+    balanceErrorIcon: 'balance-affecting-error-icon',
+    portfolioErrorAlert: 'portfolio-error-alert',
+    noTransactionOnActivityTab: 'no-transaction-history-text',
+    transactionSendText: '(//div[contains(text(),"Send")])[2]', // TODO: change once we have id on FE
+    confirmedTransactionPill: '//div[contains(text(),"Confirmed")]', // TODO: chage once we have id on FE
+    fuelGasTankTransactionPill: '//div[contains(text(),"Fuel gas tank with")]', // TODO: chage once we have id on FE,
+    grantApprovalText: '//div[contains(text(),"Grant approval")]', // TODO: change once we have id on FE,
+    networksDropdown: 'networks-dropdown',
+    magnifyingGlassIcon: 'search-glass-icon',
+    tokenBalance: '[data-testid^="token-balance"]',
+    networkBase: '//div[text()="Base"]',
+    nftTitle: 'collection-item',
+    nftsTitle: '[data-testid^="collection-item"]',
+    searchForNetwork: 'search-for-network-field',
+    hideTokenButton: 'hide-token-button',
+    yesHideItButton: 'yes-hide-it-text',
+    hideTokenModalTitle: 'hide-token-modal-title',
+    hideTokenModalDescription: 'hide-token-modal-description',
+    projectedRewardsInfoButton: 'rewards-button',
+    projectedRewardsClaimButton: 'projected-rewards-claim-button'
+  },
+  settings: {
+    createNewRecoveryPhraseButton: 'create-new-recovery-phrase',
+    importAccountButton: 'import-account',
+    connectHardwareWallet: 'connect-hardware-wallet',
+    watchAnAddressButton: 'watch-an-address-button',
+    viewOnlyAddressField: 'address-ens-field',
+    viewOnlyImportButton: 'view-only-button-import',
+    validENSDomainText: '//div[contains(text(),"Valid ENS domain")]',
+    addedSuccessfullyText: '//div[contains(text(),"Added successfully")]',
+    accessAccFromDashboardInfoText: '//div[contains(text(),"access your accounts")]',
+    addAccountButton: 'add-account-modal',
+    hiddenTokenName: 'hidden-token-name', // works for custom tokens section
+    hiddenTokenNetwork: 'hidden-token-network', // works for custom tokens section
+    unhideTokenButton: 'unhide-button',
+    youDontHaveInfoText: 'you-dont-have-any-text', // there can be multiple on same page
+    customTokens: {
+      addCustomTokenButton: 'add-custom-token-button',
+      addTokenModalTitle: 'add-token-modal-title-text',
+      ethNetworkOption: 'option-Ethereum',
+      opMainnetNetworkOption: 'option-OP-Mainnet',
+      bnbNetworkOption: 'option-BNB-Chain',
+      polygonNetworkOption: 'option-Polygon',
+      mantleNetworkOption: 'option-Mantle',
+      baseNetworkOption: 'option-Base',
+      arbitrumNetworkOption: 'option-Arbitrum',
+      tokenAddressField: 'token-address-field',
+      customNameTokenText: 'custom-token-name', // visible after entering valid address
+      confirmedPillText: 'confirmed-pill-text',
+      addTokenButton: 'add-token-button',
+      addedTokenSnackbar: '//span[contains(text(),"Added token")]',
+      tokenRemovedSnackbar: '//span[contains(text(),"Token removed")]',
+      removeCustomTokenButton: 'remove-button'
+    }
+  },
   account: 'account',
-  importBtn: 'import-button',
-  importPrivateBtn: 'button-import-private-key',
+  importMethodTrezor: 'import-method-trezor',
+  trezorConnectConfirmTerms: '@analytics/continue-button',
   saveAndContinueBtn: 'button-save-and-continue',
-  enterSeedPhraseField: 'enter-seed-phrase-field',
   buttonProceedSeedPhrase: 'button-proceed-seed-phrase',
   doNotSaveSeedBtn: 'do-not-save-seed-button',
   saveAsDefaultSeedBtn: 'save-seed-button',
@@ -18,11 +103,8 @@ const selectors = {
   editBtnForEditNameField: 'edit-btn-for-edit-name-field',
   editFieldNameField: 'edit-name-field',
   getStartedBtnAdd: 'get-started-button-add',
-  addressEnsField: 'address-ens-field',
   addToAddressBookButton: 'add-to-address-book-button',
-  viewOnlyAddressField: 'view-only-address-field',
-  viewOnlyBtnImport: 'view-only-button-import',
-  addOneMoreAddress: 'add-one-more-address',
+  addContactFormButton: 'add-contact-form-modal',
   contactNameField: 'contact-name-field',
   contactNameText: 'contact-name-text', // TODO: selector could be more precise
   contactAddressText: 'address',
@@ -30,7 +112,6 @@ const selectors = {
   formAddContactNameField: 'form-contact-name-field',
   formAddToContactsButton: 'form-add-to-contacts-button',
   buttonAddAccount: 'button-add-account',
-  watchAddress: 'watch-address',
   checkbox: 'checkbox',
   addAccount: 'add-account',
   buttonImportAccount: 'button-import-account',
@@ -73,10 +154,8 @@ const selectors = {
   collectiblePicture: 'collectible-picture',
   collectibleRow: 'collectible-row',
   addressBookMyWalletContactDyn: 'address-book-my-wallet-contact',
-  dashboardButtonSend: 'dashboard-button-send',
-  dashboardButtonSwapAndBridge: 'dashboard-button-swap-and-bridge',
-  dashboardHumburgerBtn: 'dashboard-hamburger-btn',
   continueAnywayCheckboxSaB: 'checkbox',
+  continueAnywayButton: '//div[contains(text(),"Continue anyway")]',
   amountField: 'amount-field',
   recipientAddressUnknownCheckbox: 'recipient-address-unknown-checkbox',
   transferButtonConfirm: 'transfer-button-confirm',
@@ -124,13 +203,16 @@ const selectors = {
   switchTokensTooltipSab: 'switch-tokens-condition-tooltip-sab',
   switchCurrencySab: 'switch-currency-sab',
   routePrioritySab: 'route-priority-sab',
-  highPriceImpactSab: 'high-price-impact-sab',
+  sushiSwapRoute: 'div:has-text("SushiSwap Aggregator")',
+  highPriceImpactSab: '//div[contains(text(), "Very high price impact")]', // TODO: change with ID when we add it
+  highSlippageModal: '//div[contains(text(), "higher slippage")]', // TODO: change with ID when we add it
   settingsAddNetworkManually: 'add-network-manually',
   settingsAddNetworkFromChainlist: 'add-network-from-chainlist',
   removeNetworkButton: 'remove-network-btn',
   removeNetworkConfirmButton: 'remove-network-confirm-btn',
   signButton: 'sign-button',
   backButton: 'back-button',
+  submitButton: 'button-submit',
   txnStatus: 'txn-status',
   batchModalGotIt: 'queue-modal-got-it-button',
   signButtonSwap: 'swap-button-sign',
@@ -141,6 +223,8 @@ const selectors = {
   goDashboardButton: 'go-dashboard-button',
   txnConfirmed: 'txn-confirmed',
   maxAmountButton: 'max-amount-button',
+  transactionConfirmedText: 'transaction-confirmed-text',
+  closeTransactionProgressPopUpButton: '//div[contains(text(),"Close")]',
   // Top up
   modalGasTankBalance: 'gas-tank-balance',
   topUpButton: 'top-up-gas-tank-modal-button',
@@ -153,8 +237,8 @@ const selectors = {
   addRPCURLButton: '//div[.//div[text()="RPC URL"]]//div[text()="Add"]',
   addNetworkButton: '//div[.//div[text()="Network details"]]//div[text()="Add network"]',
   connectWalletButton:
-  "//div[.//span[text()='Include Testnets']]//button[normalize-space()='Connect Wallet']",
-  chainlistSearchPlaceholder: 'input[placeholder="ETH, Fantom, ..."]',
+    "//div[.//span[text()='Include Testnets']]//button[normalize-space()='Connect Wallet']",
+  chainlistSearchPlaceholder: 'input[placeholder*="ETH"]',
   addToMetamaskButton: '//button[contains(text(),"Add to Metamask")]',
   confirmaddNetworkOnChainlistButton: '//div[contains(text(),"Add network")]',
   blockExplorerURL: (url: string) => `//div[contains(text(),"${url}")]`,
@@ -163,13 +247,17 @@ const selectors = {
   editNetworkModalTitle: '//div[text()="Edit network"]',
   editNetworkCancelButton: '//div[contains(text(),"Cancel")]',
   editNetworkSaveButton: '//div[contains(text(),"Save")]',
-  networkSettingsSavedSnackbar: (networkName: string) => `((//div[contains(normalize-space(), "${networkName} settings saved!")]))[4]`, // TODO: snackbar selector finding 8 elements; change once we have ID on FE
+  networkSettingsSavedSnackbar: (networkName: string) =>
+    `((//div[contains(normalize-space(), "${networkName} settings saved!")]))[4]`, // TODO: snackbar selector finding 8 elements; change once we have ID on FE
   // Sign
   dappConnectButton: 'dapp-connect-button',
+  dappSecurityCheckPassed: 'dapp-security-check-passed',
   signMessageButton: 'button-sign',
   // Notifications
-  networkSuccessfullyAddedSnackbar: '(//div[contains(normalize-space(), "Network successfully added!")])[4]', // TODO: snackbar selector finding 8 elements; change once we have ID on FE
-  contactSuccessfullyAddedSnackbar: '(//div[contains(normalize-space(), "Contact added to Address Book")])[4]', // TODO: snackbar selector finding 8 elements; change once we have ID on FE
+  networkSuccessfullyAddedSnackbar:
+    '(//div[contains(normalize-space(), "Network successfully added!")])[4]', // TODO: snackbar selector finding 8 elements; change once we have ID on FE
+  contactSuccessfullyAddedSnackbar:
+    '(//div[contains(normalize-space(), "Contact added to Address Book")])[4]' // TODO: snackbar selector finding 8 elements; change once we have ID on FE
 }
 
 type SelectorKey = keyof typeof selectors

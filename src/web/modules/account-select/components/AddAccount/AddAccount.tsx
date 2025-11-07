@@ -149,7 +149,7 @@ const AddAccount = ({ handleClose }: { handleClose: () => void }) => {
             icon={ViewOnlyIcon}
             iconProps={{ width: 30, height: 30, strokeWidth: '2.75' }}
             onPress={() => goToNextRoute(WEB_ROUTES.viewOnlyAccountAdder)}
-            testID="connect-hardware-wallet"
+            testID="watch-an-address-button"
           />
         </View>
       </View>

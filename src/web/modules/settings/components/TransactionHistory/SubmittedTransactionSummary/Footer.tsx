@@ -20,6 +20,7 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { createTab } from '@web/extension-services/background/webapi/tab'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
+import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import { sizeMultiplier } from '@web/modules/sign-account-op/components/TransactionSummary'
 
 import RepeatTransaction from './RepeatTransaction'
@@ -50,21 +51,31 @@ const Footer: FC<Props> = ({
   const { styles } = useTheme(getStyles)
   const { addToast } = useToast()
   const { networks } = useNetworksControllerState()
+  const { account: selectedAccount } = useSelectedAccountControllerState()
   const { t } = useTranslation()
   const textSize = 14 * sizeMultiplier[size]
   const iconSize = 26 * sizeMultiplier[size]
   const iconSizeSm = 14 * sizeMultiplier[size]
 
-  const canViewFeeAndTransaction =
+  const canViewFee =
     status !== AccountOpStatus.Rejected &&
     status !== AccountOpStatus.BroadcastButStuck &&
-    status !== AccountOpStatus.UnknownButPastNonce
+    status !== AccountOpStatus.UnknownButPastNonce &&
+    status !== AccountOpStatus.BroadcastedButNotConfirmed
+
   const { chainId } = network
 
   const [feeFormattedValue, setFeeFormattedValue] = useState<string>()
 
-  const handleOpenBenzina = useCallback(async () => {
-    if (!chainId || !txnId) throw new Error('Invalid chainId or txnId')
+  const handleViewTransaction = useCallback(async () => {
+    if (!chainId) {
+      const message = t(
+        "Can't open the transaction details because the network information is missing."
+      )
+      addToast(message, { type: 'error' })
+
+      return
+    }
 
     const link = `https://explorer.ambire.com/${getBenzinUrlParams({
       txnId,
@@ -77,7 +88,7 @@ const Footer: FC<Props> = ({
     } catch (e: any) {
       addToast(e?.message || 'Error opening explorer', { type: 'error' })
     }
-  }, [txnId, identifiedBy, addToast, chainId])
+  }, [txnId, identifiedBy, addToast, chainId, t])
 
   useEffect((): void => {
     const feeTokenAddress = gasFeePayment?.inToken
@@ -119,7 +130,7 @@ const Footer: FC<Props> = ({
     <View style={spacings.phMd}>
       <View style={styles.footer}>
         <StatusBadge status={status} textSize={textSize} />
-        {canViewFeeAndTransaction && (
+        {canViewFee && (
           <View style={spacings.mrMd}>
             <Text fontSize={textSize} appearance="secondaryText" weight="semiBold">
               {t('Fee')}:
@@ -143,36 +154,34 @@ const Footer: FC<Props> = ({
           timestamp={timestamp}
           numberOfLines={2}
         />
-        {canViewFeeAndTransaction && (
-          <View style={[flexbox.alignEnd]}>
-            <TouchableOpacity
-              style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbMi]}
-              onPress={handleOpenBenzina}
+        <View style={[flexbox.alignEnd]}>
+          <TouchableOpacity
+            style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbMi]}
+            onPress={handleViewTransaction}
+          >
+            <Text
+              fontSize={textSize}
+              appearance="secondaryText"
+              weight="medium"
+              style={spacings.mrMi}
+              underline
             >
-              <Text
-                fontSize={textSize}
-                appearance="secondaryText"
-                weight="medium"
-                style={spacings.mrMi}
-                underline
-              >
-                {t('View transaction')}
-              </Text>
-              <LinkIcon width={iconSizeSm} height={iconSizeSm} />
-            </TouchableOpacity>
-            {rawCalls?.length ? (
-              <RepeatTransaction
-                accountAddr={accountAddr}
-                chainId={network.chainId}
-                rawCalls={rawCalls}
-                textSize={textSize}
-                iconSize={iconSizeSm}
-              />
-            ) : (
-              <View />
-            )}
-          </View>
-        )}
+              {t('View transaction')}
+            </Text>
+            <LinkIcon width={iconSizeSm} height={iconSizeSm} />
+          </TouchableOpacity>
+          {rawCalls?.length && selectedAccount?.addr === accountAddr ? (
+            <RepeatTransaction
+              accountAddr={accountAddr}
+              chainId={network.chainId}
+              rawCalls={rawCalls}
+              textSize={textSize}
+              iconSize={iconSizeSm}
+            />
+          ) : (
+            <View />
+          )}
+        </View>
       </View>
     </View>
   )

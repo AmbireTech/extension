@@ -2,14 +2,17 @@ import React, { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
-import {
-  SignAccountOpController,
-  SigningStatus
-} from '@ambire-common/controllers/signAccountOp/signAccountOp'
+import { SigningStatus } from '@ambire-common/controllers/signAccountOp/signAccountOp'
 import { Key } from '@ambire-common/interfaces/keystore'
-import { SignAccountOpError } from '@ambire-common/interfaces/signAccountOp'
+import {
+  ISignAccountOpController,
+  SignAccountOpError
+} from '@ambire-common/interfaces/signAccountOp'
+import { SwapAndBridgeRoute } from '@ambire-common/interfaces/swapAndBridge'
 import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
+import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
+import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
 import Text from '@common/components/Text'
 import useSign from '@common/hooks/useSign'
 import useTheme from '@common/hooks/useTheme'
@@ -20,17 +23,19 @@ import Estimation from '@web/modules/sign-account-op/components/Estimation'
 import Modals from '@web/modules/sign-account-op/components/Modals/Modals'
 import SigningKeySelect from '@web/modules/sign-message/components/SignKeySelect'
 import { getUiType } from '@web/utils/uiType'
+import BundlerWarning from '../../Estimation/components/bundlerWarning'
 
-type Props = {
+export type OneClickEstimationProps = {
   closeEstimationModal: () => void
   handleBroadcastAccountOp: () => void
   handleUpdateStatus: (status: SigningStatus) => void
   updateController: (params: { signingKeyAddr?: Key['addr']; signingKeyType?: Key['type'] }) => void
   estimationModalRef: React.RefObject<any>
   errors?: SignAccountOpError[]
-  signAccountOpController: SignAccountOpController | null
+  signAccountOpController: ISignAccountOpController | null
   hasProceeded: boolean
   updateType: 'Swap&Bridge' | 'Transfer&TopUp'
+  serviceFee?: SwapAndBridgeRoute['serviceFee']
 }
 
 const { isActionWindow, isTab } = getUiType()
@@ -44,8 +49,9 @@ const OneClickEstimation = ({
   signAccountOpController,
   hasProceeded,
   errors,
-  updateType
-}: Props) => {
+  updateType,
+  serviceFee
+}: OneClickEstimationProps) => {
   const { t } = useTranslation()
   const { theme, themeType } = useTheme()
 
@@ -72,14 +78,19 @@ const OneClickEstimation = ({
     warningModalRef,
     dismissWarning,
     acknowledgeWarning,
+    handleChangeFeePayerKeyType,
+    isChooseFeePayerKeyShown,
+    setIsChooseFeePayerKeyShown,
     slowPaymasterRequest,
+    primaryButtonText,
     bundlerNonceDiscrepancy
   } = useSign({
     signAccountOpState: signAccountOpController,
     handleBroadcast: handleBroadcastAccountOp,
     handleUpdate: updateController,
     handleUpdateStatus,
-    isOneClickSign: true
+    isOneClickSign: true,
+    updateType
   })
 
   return (
@@ -100,11 +111,21 @@ const OneClickEstimation = ({
         {!!signAccountOpController && (
           <View>
             <SigningKeySelect
-              isVisible={isChooseSignerShown}
+              isVisible={isChooseSignerShown || isChooseFeePayerKeyShown}
               isSigning={isSignLoading || !signAccountOpController.readyToSign}
-              handleClose={() => setIsChooseSignerShown(false)}
-              selectedAccountKeyStoreKeys={signAccountOpController.accountKeyStoreKeys}
-              handleChooseSigningKey={handleChangeSigningKey}
+              handleClose={() => {
+                setIsChooseSignerShown(false)
+                setIsChooseFeePayerKeyShown(false)
+              }}
+              selectedAccountKeyStoreKeys={
+                isChooseFeePayerKeyShown
+                  ? signAccountOpController.feePayerKeyStoreKeys
+                  : signAccountOpController.accountKeyStoreKeys
+              }
+              handleChooseKey={
+                isChooseFeePayerKeyShown ? handleChangeFeePayerKeyType : handleChangeSigningKey
+              }
+              type={isChooseFeePayerKeyShown ? 'broadcasting' : 'signing'}
               account={signAccountOpController.account}
             />
             <Estimation
@@ -118,21 +139,22 @@ const OneClickEstimation = ({
               isViewOnly={isViewOnly}
               isSponsored={signAccountOpController ? signAccountOpController.isSponsored : false}
               sponsor={signAccountOpController ? signAccountOpController.sponsor : undefined}
+              serviceFee={serviceFee}
             />
-            {signingErrors.length > 0 && (
-              <View style={[flexbox.directionRow, flexbox.alignEnd, spacings.mt]}>
-                <Text fontSize={12} appearance="errorText">
-                  {t(signingErrors[0].title)}
-                </Text>
-              </View>
-            )}
-            {bundlerNonceDiscrepancy && (
-              <View style={[flexbox.directionRow, flexbox.alignEnd, spacings.mt]}>
-                <Text fontSize={12} appearance="warningText">
-                  {t(bundlerNonceDiscrepancy.title)}
-                </Text>
-              </View>
-            )}
+            {signingErrors.length > 0 &&
+              (signingErrors.map(({ code }) => code).includes('NO_KEYS_AVAILABLE') ? (
+                <NoKeysToSignAlert style={spacings.mt} />
+              ) : (
+                <View style={[flexbox.directionRow, flexbox.alignEnd, spacings.mt]}>
+                  <Text fontSize={12} appearance="errorText">
+                    {t(signingErrors[0].title)}
+                  </Text>
+                </View>
+              ))}
+            <BundlerWarning
+              signAccountOpState={signAccountOpController}
+              bundlerNonceDiscrepancy={bundlerNonceDiscrepancy}
+            />
             <View
               style={{
                 height: 1,
@@ -150,13 +172,12 @@ const OneClickEstimation = ({
                 disabled={isSignLoading}
                 style={{ width: 98 }}
               />
-              <Button
+              <ButtonWithLoader
                 testID="sign-button"
-                text={isSignLoading ? t('Signing...') : t('Sign')}
-                hasBottomSpacing={false}
+                text={primaryButtonText}
+                isLoading={isSignLoading}
                 disabled={isSignDisabled || signingErrors.length > 0}
                 onPress={onSignButtonClick}
-                style={{ minWidth: 160 }}
               />
             </View>
           </View>

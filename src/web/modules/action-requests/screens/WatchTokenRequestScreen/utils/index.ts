@@ -85,7 +85,7 @@ const getTokenFromPortfolio = (
   tokenNetwork: Network | undefined,
   accountPortfolio: SelectedAccountPortfolio | null
 ) => {
-  if (!tokenData) return null
+  if (!tokenData || !tokenData.address) return null
 
   return accountPortfolio?.tokens?.find(
     (token) =>
@@ -101,6 +101,7 @@ const getTokenFromTemporaryTokens = (
 ) =>
   undefined ||
   (tokenData &&
+    tokenData.address &&
     tokenNetwork &&
     temporaryTokens?.[tokenNetwork.chainId.toString()] &&
     temporaryTokens?.[tokenNetwork.chainId.toString()]?.result?.tokens?.find(

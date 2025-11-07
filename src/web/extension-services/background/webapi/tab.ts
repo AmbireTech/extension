@@ -58,13 +58,12 @@ const createTab = async (url: string, windowId?: number): Promise<number | undef
   }
 }
 
-const getCurrentTab = async (): Promise<Tabs.Tab> => {
+const getCurrentTab = async (): Promise<chrome.tabs.Tab | undefined> => {
   try {
-    const tabs = await browser.tabs.query({ active: true, currentWindow: true })
-
+    const tabs = await chrome.tabs.query({ active: true, currentWindow: true })
     return tabs[0]
   } catch (error) {
-    // TODO: add appropriate error handling that will notify the user
+    return undefined
   }
 }
 
@@ -88,7 +87,7 @@ export const openInTab = async ({
   url: string
   windowId?: number
   shouldCloseCurrentWindow?: boolean
-}): Promise<Tabs.Tab> => {
+}): Promise<chrome.tabs.Tab> => {
   if (!url) return
 
   const tab = await createTab(url, windowId)

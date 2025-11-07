@@ -17,7 +17,7 @@ import Text from '@common/components/Text'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import { ROUTES } from '@common/modules/router/constants/common'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING, SPACING_MD, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import useBackgroundService from '@web/hooks/useBackgroundService'
@@ -38,6 +38,7 @@ type Props = {
   allowRemoveNetwork?: boolean
   style?: ViewStyle
   type?: 'vertical' | 'horizontal'
+  responsiveSizeMultiplier?: number
 }
 
 const NetworkDetails = ({
@@ -51,7 +52,8 @@ const NetworkDetails = ({
   nativeAssetName,
   allowRemoveNetwork,
   style,
-  type = 'horizontal'
+  type = 'horizontal',
+  responsiveSizeMultiplier = 1
 }: Props) => {
   const { t } = useTranslation()
   const { theme, styles, themeType } = useTheme(getStyles)
@@ -115,13 +117,24 @@ const NetworkDetails = ({
           style={[
             type === 'horizontal' && flexbox.directionRow,
             type === 'horizontal' && flexbox.alignCenter,
-            !!withBottomSpacing && (type === 'vertical' ? spacings.mbSm : spacings.mbMd)
+            !!withBottomSpacing && {
+              marginBottom:
+                type === 'vertical'
+                  ? SPACING_SM * responsiveSizeMultiplier
+                  : SPACING_MD * responsiveSizeMultiplier
+            }
           ]}
         >
           <Text
-            fontSize={14}
+            fontSize={14 * responsiveSizeMultiplier}
             appearance="tertiaryText"
-            style={[type === 'horizontal' ? spacings.mr : {}]}
+            style={[
+              type === 'horizontal'
+                ? {
+                    marginRight: SPACING * responsiveSizeMultiplier
+                  }
+                : {}
+            ]}
             numberOfLines={1}
           >
             {title}
@@ -141,12 +154,12 @@ const NetworkDetails = ({
                   id={chainId.toString()}
                   name={name}
                   uris={iconUrls.length ? iconUrls : undefined}
-                  size={type === 'vertical' ? 26 : 32}
+                  size={(type === 'vertical' ? 26 : 32) * responsiveSizeMultiplier}
                 />
               </View>
             )}
             <Text
-              fontSize={14}
+              fontSize={14 * responsiveSizeMultiplier}
               appearance={value === 'Invalid Chain ID' ? 'errorText' : 'primaryText'}
               numberOfLines={1}
               selectable
@@ -157,7 +170,7 @@ const NetworkDetails = ({
         </View>
       )
     },
-    [name, iconUrls, chainId, type]
+    [type, responsiveSizeMultiplier, name, chainId, iconUrls]
   )
 
   const sortedRpcUrls = useMemo(
@@ -178,7 +191,7 @@ const NetworkDetails = ({
       >
         <Text
           style={spacings.mrMi}
-          fontSize={12}
+          fontSize={12 * responsiveSizeMultiplier}
           color={themeType === THEME_TYPES.DARK ? theme.linkText : theme.featureDecorative}
           underline
         >
@@ -209,21 +222,34 @@ const NetworkDetails = ({
         )}
       </Pressable>
     ) : null
-  }, [showAllRpcUrls, sortedRpcUrls.length, t, theme, type, themeType])
+  }, [
+    sortedRpcUrls.length,
+    type,
+    responsiveSizeMultiplier,
+    themeType,
+    theme.linkText,
+    theme.featureDecorative,
+    showAllRpcUrls,
+    t
+  ])
 
   const renderRpcUrlsItem = useCallback(() => {
     return (
       <View
         style={[
           type === 'horizontal' && flexbox.directionRow,
-          type === 'vertical' ? spacings.mbSm : spacings.mbMd
+          {
+            marginBottom: (type === 'vertical' ? SPACING_SM : SPACING_MD) * responsiveSizeMultiplier
+          }
         ]}
       >
         <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifySpaceBetween]}>
           <Text
-            fontSize={type === 'horizontal' ? 14 : 16}
+            fontSize={(type === 'horizontal' ? 14 : 16) * responsiveSizeMultiplier}
             appearance="tertiaryText"
-            style={[spacings.mr]}
+            style={{
+              marginRight: SPACING * responsiveSizeMultiplier
+            }}
             numberOfLines={1}
           >
             {t(`RPC URL${sortedRpcUrls.length ? '(s)' : ''}`)}
@@ -232,14 +258,19 @@ const NetworkDetails = ({
         </View>
         <View style={[flexbox.flex1, type === 'horizontal' && flexbox.alignEnd]}>
           {!showAllRpcUrls ? (
-            <Text fontSize={14} appearance="primaryText" numberOfLines={1} selectable>
+            <Text
+              fontSize={14 * responsiveSizeMultiplier}
+              appearance="primaryText"
+              numberOfLines={1}
+              selectable
+            >
               {sortedRpcUrls[0]}
             </Text>
           ) : (
             sortedRpcUrls.map((rpcUrl: string, i) => (
               <Text
                 key={rpcUrl}
-                fontSize={14}
+                fontSize={14 * responsiveSizeMultiplier}
                 appearance={i === 0 ? 'primaryText' : 'secondaryText'}
                 weight={i === 0 ? 'regular' : 'light'}
                 numberOfLines={1}
@@ -254,42 +285,69 @@ const NetworkDetails = ({
         </View>
       </View>
     )
-  }, [showAllRpcUrls, t, type, sortedRpcUrls, showMoreRpcUrlsButton])
+  }, [type, responsiveSizeMultiplier, t, sortedRpcUrls, showMoreRpcUrlsButton, showAllRpcUrls])
 
   return (
     <>
-      <View style={[styles.container, shouldDisplayEditButton && spacings.ptSm, style]}>
+      <View
+        style={[
+          styles.container,
+          {
+            paddingHorizontal: SPACING_MD * responsiveSizeMultiplier,
+            paddingVertical: SPACING_MD * responsiveSizeMultiplier
+          },
+          shouldDisplayEditButton ? { paddingTop: SPACING_SM * responsiveSizeMultiplier } : {},
+          style
+        ]}
+      >
         <View
           style={[
             flexbox.directionRow,
             flexbox.alignCenter,
-            type === 'vertical' ? spacings.mbSm : spacings.mbMd
+            {
+              marginBottom:
+                (type === 'vertical' ? SPACING_SM : SPACING_MD) * responsiveSizeMultiplier
+            }
           ]}
         >
           <Text
-            fontSize={18}
+            fontSize={18 * responsiveSizeMultiplier}
             weight="medium"
-            style={[flexbox.flex1, spacings.mrTy]}
+            style={[
+              flexbox.flex1,
+              {
+                marginRight: SPACING_TY * responsiveSizeMultiplier
+              }
+            ]}
             numberOfLines={1}
           >
             {t('Network details')}
           </Text>
           {!!shouldDisplayEditButton && (
             <Button
-              style={[{ maxHeight: 32 }, !!shouldDisplayDisableButton && spacings.mrTy]}
+              style={[
+                { maxHeight: 32 * responsiveSizeMultiplier },
+                !!shouldDisplayDisableButton && {
+                  marginRight: SPACING_TY * responsiveSizeMultiplier
+                }
+              ]}
               text={t('Edit')}
               type="secondary"
               onPress={openBottomSheet as any}
               hasBottomSpacing={false}
             >
-              <View style={spacings.plTy}>
+              <View
+                style={{
+                  paddingLeft: SPACING_TY * responsiveSizeMultiplier
+                }}
+              >
                 <EditPenIcon width={12} height={12} color={theme.primary} />
               </View>
             </Button>
           )}
           {!!shouldDisplayDisableButton && (
             <Button
-              style={{ maxHeight: 32 }}
+              style={{ maxHeight: 32 * responsiveSizeMultiplier }}
               disabled={statuses.updateNetwork !== 'INITIAL'}
               text={!networkData?.disabled ? t('Disable') : t('Enable')}
               testID="disable-network-btn" // @TODO

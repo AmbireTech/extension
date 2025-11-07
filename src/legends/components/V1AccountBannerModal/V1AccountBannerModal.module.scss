@@ -1,0 +1,13 @@
+@import '@legends/styles/base.scss';
+
+.modal {
+  max-width: 31.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+
+  .text {
+    text-align: center;
+  }
+}

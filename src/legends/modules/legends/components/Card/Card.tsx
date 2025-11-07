@@ -46,8 +46,7 @@ const Card: FC<Props> = ({ cardData }) => {
 
   const pollActivityUntilComplete = async (txnId: string, attempt: number) => {
     if (!connectedAccount) return
-
-    if (attempt > 10) {
+    if (attempt > 15) {
       addToast(ERROR_MESSAGES.transactionProcessingFailed, { type: 'error' })
       return
     }
@@ -68,7 +67,9 @@ const Card: FC<Props> = ({ cardData }) => {
         addToast('We are processing your transaction. Expect your reward shortly.')
       }
 
-      setTimeout(() => pollActivityUntilComplete(txnId, attempt + 1), 1000)
+      await new Promise((res) => {
+        setTimeout(() => pollActivityUntilComplete(txnId, attempt + 1).then(res), 1000)
+      })
       return
     }
 

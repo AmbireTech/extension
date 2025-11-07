@@ -1,21 +1,18 @@
 import React, { FC } from 'react'
+import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
+import PlainAddress from '@common/components/AccountAddress/PlainAddress'
+import PlainAddressWithCopy from '@common/components/AccountAddress/PlainAddressWithCopy'
 import Text from '@common/components/Text'
 import useReverseLookup from '@common/hooks/useReverseLookup'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
-import SkeletonLoader from '../SkeletonLoader'
-import { SkeletonLoaderProps } from '../SkeletonLoader/types'
-import PlainAddress from './PlainAddress'
-import PlainAddressWithCopy from './PlainAddressWithCopy'
-
 interface Props extends ReturnType<typeof useReverseLookup> {
   address: string
   plainAddressMaxLength?: number
   withCopy?: boolean
-  skeletonAppearance?: SkeletonLoaderProps['appearance']
 }
 
 const AccountAddress: FC<Props> = ({
@@ -23,11 +20,16 @@ const AccountAddress: FC<Props> = ({
   ens,
   address,
   plainAddressMaxLength = 42,
-  withCopy = true,
-  skeletonAppearance
+  withCopy = true
 }) => {
+  const { t } = useTranslation()
+
   if (isLoading) {
-    return <SkeletonLoader width={200} height={18} appearance={skeletonAppearance} />
+    return (
+      <Text fontSize={12} appearance="secondaryText">
+        {t('Resolving domain...')}
+      </Text>
+    )
   }
 
   return (

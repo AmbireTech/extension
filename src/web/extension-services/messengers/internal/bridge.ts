@@ -5,6 +5,8 @@ import { tabMessenger } from '@web/extension-services/messengers/internal/tab'
 import { windowMessenger } from '@web/extension-services/messengers/internal/window'
 import { detectScriptType } from '@web/extension-services/messengers/utils/detectScriptType'
 
+declare const globalIsAmbireNext: boolean
+
 const messenger = tabMessenger.available ? tabMessenger : windowMessenger
 const scriptId = Date.now()
 
@@ -34,14 +36,20 @@ export async function setupBridgeMessengerRelay() {
     throw new Error('`setupBridgeMessengerRelay` is only supported in Content Scripts.')
   }
 
-  window.postMessage({ type: 'removeEventListener', scriptId }, '*')
+  window.postMessage(
+    { type: globalIsAmbireNext ? 'removeEventListenerNext' : 'removeEventListener', scriptId },
+    '*'
+  )
 
   let windowReplyListener: (() => void) | undefined
   let tabReplyListener: (() => void) | undefined
 
   const handleDestroy = (e: MessageEvent<any>) => {
     // the id here prevents destroying the current script that sends the `removeEventListener` message
-    if (e.data?.type === 'removeEventListener' && e.data?.scriptId > scriptId) {
+    if (
+      e.data?.type === (globalIsAmbireNext ? 'removeEventListenerNext' : 'removeEventListener') &&
+      e.data?.scriptId > scriptId
+    ) {
       !!windowReplyListener && windowReplyListener()
       windowReplyListener = undefined
       !!tabReplyListener && tabReplyListener()
@@ -93,6 +101,10 @@ export async function setupBridgeMessengerRelay() {
   // next tick
   setTimeout(() => {
     // Notify the background that the content script is ready to receive messages
-    tabMessenger.send('ambireProviderRequest', { id: 0, method: 'contentScriptReady' }, { id: 0 })
+    tabMessenger.send(
+      globalIsAmbireNext ? 'ambireNextBuildProviderRequest' : 'ambireProviderRequest',
+      { id: 0, method: 'contentScriptReady' },
+      { id: 0 }
+    )
   }, 0)
 }

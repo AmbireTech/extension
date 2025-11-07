@@ -1,8 +1,8 @@
-import { getAddress } from 'ethers'
+import { getAddress, isAddress } from 'ethers'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { View } from 'react-native'
 
-import { DappRequestAction } from '@ambire-common/controllers/actions/actions'
+import { isDappRequestAction } from '@ambire-common/libs/actions/actions'
 import { getNetworksWithFailedRPC } from '@ambire-common/libs/networks/networks'
 import { TokenResult } from '@ambire-common/libs/portfolio'
 import AmountIcon from '@common/assets/svg/AmountIcon'
@@ -58,11 +58,10 @@ const WatchTokenRequestScreen = () => {
   const { networks } = useNetworksControllerState()
   const { providers } = useProvidersControllerState()
 
-  const dappAction = useMemo(() => {
-    if (state.currentAction?.type !== 'dappRequest') return undefined
-
-    return state.currentAction as DappRequestAction
-  }, [state.currentAction])
+  const dappAction = useMemo(
+    () => (isDappRequestAction(state.currentAction) ? state.currentAction : null),
+    [state.currentAction]
+  )
 
   const userRequest = useMemo(() => {
     if (!dappAction) return undefined
@@ -100,7 +99,7 @@ const WatchTokenRequestScreen = () => {
     if (!dappAction) return
 
     dispatch({
-      type: 'MAIN_CONTROLLER_REJECT_USER_REQUEST',
+      type: 'REQUESTS_CONTROLLER_REJECT_USER_REQUEST',
       params: { err: t('User rejected the request.'), id: dappAction.id }
     })
   }, [dappAction, t, dispatch])
@@ -226,7 +225,7 @@ const WatchTokenRequestScreen = () => {
     })
 
     dispatch({
-      type: 'MAIN_CONTROLLER_RESOLVE_USER_REQUEST',
+      type: 'REQUESTS_CONTROLLER_RESOLVE_USER_REQUEST',
       params: { data: null, id: dappAction.id }
     })
   }, [dispatch, dappAction, tokenData, tokenNetwork])

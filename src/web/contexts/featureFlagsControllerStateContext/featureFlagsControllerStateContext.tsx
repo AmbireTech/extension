@@ -1,13 +1,13 @@
 /* eslint-disable @typescript-eslint/no-shadow */
 import React, { createContext, useEffect, useMemo } from 'react'
 
-import { FeatureFlagsController } from '@ambire-common/controllers/featureFlags/featureFlags'
+import { IFeatureFlagsController } from '@ambire-common/interfaces/featureFlags'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useControllerState from '@web/hooks/useControllerState'
 import useMainControllerState from '@web/hooks/useMainControllerState'
 
-const FeatureFlagsControllerStateContext = createContext<FeatureFlagsController>(
-  {} as FeatureFlagsController
+const FeatureFlagsControllerStateContext = createContext<IFeatureFlagsController>(
+  {} as IFeatureFlagsController
 )
 
 const CONTROLLER_NAME = 'featureFlags'

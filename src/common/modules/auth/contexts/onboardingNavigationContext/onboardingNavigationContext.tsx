@@ -14,6 +14,7 @@ import { ControllersStateLoadedContext } from '@web/contexts/controllersStateLoa
 import useAccountPickerControllerState from '@web/hooks/useAccountPickerControllerState'
 import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
 import useBackgroundService from '@web/hooks/useBackgroundService'
+import useEmailVaultControllerState from '@web/hooks/useEmailVaultControllerState'
 import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 import useWalletStateController from '@web/hooks/useWalletStateController'
 import { getUiType } from '@web/utils/uiType'
@@ -65,6 +66,7 @@ const getAccountsToPersonalizeFromSession = (): Account[] => {
 
 const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode }) => {
   const { hasPasswordSecret } = useKeystoreControllerState()
+  const { statuses: emailVaultStatuses } = useEmailVaultControllerState()
   const { path, params } = useRoute()
   const prevPath: string | undefined = usePrevious(path)
   const { navigate } = useNavigation()
@@ -407,6 +409,7 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
     const currentRoute = path?.substring(1)
     if (!currentRoute) return
     if (!areControllerStatesLoaded) return
+    if (emailVaultStatuses?.recoverKeyStore !== 'INITIAL') return
 
     if (
       !hasPasswordSecret &&
@@ -415,7 +418,14 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
     ) {
       goToNextRoute(WEB_ROUTES.keyStoreSetup)
     }
-  }, [authStatus, path, goToNextRoute, hasPasswordSecret, areControllerStatesLoaded])
+  }, [
+    authStatus,
+    path,
+    goToNextRoute,
+    hasPasswordSecret,
+    areControllerStatesLoaded,
+    emailVaultStatuses?.recoverKeyStore
+  ])
 
   const value = useMemo(
     () => ({

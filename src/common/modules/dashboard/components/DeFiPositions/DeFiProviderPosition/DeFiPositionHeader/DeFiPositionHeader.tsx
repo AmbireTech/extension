@@ -83,7 +83,7 @@ const DeFiPositionHeader: FC<Props> = ({
     } catch (e) {
       console.error(e)
     }
-  }, [dappUrl])
+  }, [dappUrl, siteUrl])
 
   return (
     <AnimatedPressable

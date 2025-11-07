@@ -36,15 +36,13 @@ const Completed: FC<CompletedProps> = ({
   }, [addToast, explorerLink])
 
   return (
-    <>
-      <SuccessAnimation noBorder width={600}>
-        <Text fontSize={20} weight="medium" style={spacings.mbTy} testID="txn-status">
-          {title}
-        </Text>
-        <Text weight="medium" appearance="secondaryText" style={spacings.mb2Xl}>
-          {titleSecondary}
-        </Text>
-      </SuccessAnimation>
+    <SuccessAnimation width={600}>
+      <Text fontSize={20} weight="medium" style={spacings.mbTy} testID="txn-status">
+        {title}
+      </Text>
+      <Text weight="medium" appearance="secondaryText" style={spacings.mbXl}>
+        {titleSecondary}
+      </Text>
       {!!explorerLink && (
         <Pressable
           onPress={handleOpenExplorer}
@@ -64,7 +62,7 @@ const Completed: FC<CompletedProps> = ({
           </Text>
         </Pressable>
       )}
-    </>
+    </SuccessAnimation>
   )
 }
 

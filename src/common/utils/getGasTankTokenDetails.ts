@@ -17,24 +17,22 @@ const parseGasTankToken = (token: GasTankTokenResult, type: keyof GasTankTokenRe
 export const getGasTankTokenDetails = (
   portfolio: SelectedAccountPortfolio,
   account: Account | null,
-  hasGasTank: boolean,
   networks: Network[],
   key: 'amount' | 'cashback' | 'saved'
 ) => {
-  const gasTankResult = portfolio?.latest?.gasTank?.result as
+  const gasTankResult = portfolio?.portfolioState?.gasTank?.result as
     | { gasTankTokens: GasTankTokenResult[] }
     | undefined
 
   const noAccount = !account || !account.addr
-  const noPortfolio = !portfolio || !portfolio.latest || !portfolio.latest.gasTank
+  const noPortfolio = !portfolio || !portfolio.portfolioState || !portfolio.portfolioState.gasTank
   const noGasTankResult = !gasTankResult || !('gasTankTokens' in gasTankResult)
   const noGasTankTokens =
     noGasTankResult ||
     !Array.isArray(gasTankResult.gasTankTokens) ||
     gasTankResult.gasTankTokens.length === 0
-  const noGasTank = !hasGasTank
 
-  if (noAccount || noPortfolio || noGasTankResult || noGasTankTokens || noGasTank) {
+  if (noAccount || noPortfolio || noGasTankResult || noGasTankTokens) {
     return { token: null, balanceFormatted: null }
   }
 
@@ -42,6 +40,7 @@ export const getGasTankTokenDetails = (
 
   return {
     token,
-    balanceFormatted: getAndFormatTokenDetails(token, networks).balanceFormatted
+    balanceFormatted: getAndFormatTokenDetails(token, networks).balanceFormatted,
+    balanceUSDFormatted: getAndFormatTokenDetails(token, networks).balanceUSDFormatted
   }
 }

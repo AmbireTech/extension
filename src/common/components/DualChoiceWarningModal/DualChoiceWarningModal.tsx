@@ -2,16 +2,18 @@ import React, { FC } from 'react'
 import { View, ViewStyle } from 'react-native'
 
 import ErrorIcon from '@common/assets/svg/ErrorIcon'
+import InfoIcon from '@common/assets/svg/InfoIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import Button, { Props as ButtonProps } from '@common/components/Button'
 import { Props as DualChoiceModalProps } from '@common/components/DualChoiceModal/DualChoiceModal'
 import CommonText, { Props } from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
+import flexbox from '@common/styles/utils/flexbox'
 
 import getStyles from './styles'
 
-type Type = 'error' | 'warning'
+type Type = 'error' | 'warning' | 'info3'
 
 const DEFAULT_TYPE = 'warning'
 
@@ -31,7 +33,7 @@ const TitleAndIcon = ({
   style?: ViewStyle
 }) => {
   const { styles, theme } = useTheme(getStyles)
-  const Icon = type === 'error' ? ErrorIcon : WarningIcon
+  const Icon = type === 'error' ? ErrorIcon : type === 'info3' ? InfoIcon : WarningIcon
 
   return (
     <View style={[styles.titleAndIcon, style]}>
@@ -59,10 +61,16 @@ const ContentWrapper = ({ children, style }: { children: React.ReactNode; style?
   return <View style={[styles.content, style]}>{children}</View>
 }
 
-const ButtonWrapper = ({ children }: { children: React.ReactNode }) => {
+const ButtonWrapper = ({
+  children,
+  reverse = false
+}: {
+  children: React.ReactNode
+  reverse: boolean
+}) => {
   const { styles } = useTheme(getStyles)
 
-  return <View style={styles.buttons}>{children}</View>
+  return <View style={[styles.buttons, reverse && flexbox.directionRowReverse]}>{children}</View>
 }
 
 const DualChoiceWarningModal = ({
@@ -85,6 +93,7 @@ const DualChoiceWarningModal = ({
   type?: Type
 }) => {
   const { theme } = useTheme()
+
   return (
     <Wrapper>
       <ContentWrapper style={{ backgroundColor: theme[`${type}Background`] }}>
@@ -92,7 +101,7 @@ const DualChoiceWarningModal = ({
         {!!description && <Text text={description} />}
         {children}
       </ContentWrapper>
-      <ButtonWrapper>
+      <ButtonWrapper reverse={type === 'info3'}>
         <Button
           text={primaryButtonText}
           onPress={onPrimaryButtonPress}

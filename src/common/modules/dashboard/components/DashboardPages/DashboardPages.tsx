@@ -29,7 +29,7 @@ const { isTab } = getUiType()
 const DashboardPages = ({ onScroll, animatedOverviewHeight }: Props) => {
   const { t } = useTranslation()
   const route = useRoute()
-  const [sessionId] = useState(nanoid())
+  const [sessionId] = useState(`dashboard-${nanoid()}`)
   const [, setSearchParams] = useSearchParams()
   const { dashboardNetworkFilter } = useSelectedAccountControllerState()
   const { networks } = useNetworksControllerState()
@@ -48,15 +48,22 @@ const DashboardPages = ({ onScroll, animatedOverviewHeight }: Props) => {
     [key: string]: boolean
   }>({})
 
+  const network = useMemo(() => {
+    if (!dashboardNetworkFilter || dashboardNetworkFilter === 'rewards') return null
+
+    const result = networks.find(({ chainId }) => chainId === BigInt(dashboardNetworkFilter))
+
+    return result || null
+  }, [dashboardNetworkFilter, networks])
+
   const dashboardNetworkFilterName = useMemo(() => {
     if (!dashboardNetworkFilter) return null
 
     if (dashboardNetworkFilter === 'rewards') return t('Rewards')
-    if (dashboardNetworkFilter === 'gasTank') return t('Gas Tank')
 
-    const network = networks.find(({ id }) => id === dashboardNetworkFilter)
+    const result = networks.find(({ chainId }) => chainId === BigInt(dashboardNetworkFilter))
 
-    return network?.name || null
+    return result?.name || null
   }, [dashboardNetworkFilter, networks, t])
 
   useEffect(() => {
@@ -123,8 +130,8 @@ const DashboardPages = ({ onScroll, animatedOverviewHeight }: Props) => {
         setOpenTab={setOpenTab}
         onScroll={onScroll}
         initTab={initTab}
-        dashboardNetworkFilterName={dashboardNetworkFilterName}
         animatedOverviewHeight={animatedOverviewHeight}
+        network={network}
       />
     </View>
   )

@@ -1,6 +1,9 @@
+import { useCallback, useMemo } from 'react'
+
 import { Account } from '@ambire-common/interfaces/account'
 import { canBecomeSmarter, isSmartAccount } from '@ambire-common/libs/account/account'
-import { useCallback, useMemo } from 'react'
+import { getIsViewOnly } from '@ambire-common/utils/accounts'
+
 import useKeystoreControllerState from '../useKeystoreControllerState'
 
 const useHasGasTank = ({ account }: { account: Account | null }) => {
@@ -19,12 +22,14 @@ const useHasGasTank = ({ account }: { account: Account | null }) => {
     [keys]
   )
   const isSA = useMemo(() => isSmartAccount(account), [account])
+
   const hasGasTank = useMemo(() => {
     return !!account && (isSA || canBecomeSmarter(account, getAccKeys(account)))
   }, [account, getAccKeys, isSA])
 
   return {
-    hasGasTank
+    hasGasTank,
+    isViewOnly: getIsViewOnly(keys, account.associatedKeys)
   }
 }
 

@@ -1,13 +1,13 @@
 import React, { createContext, useEffect } from 'react'
 
-import { ProvidersController } from '@ambire-common/controllers/providers/providers'
+import { IProvidersController } from '@ambire-common/interfaces/provider'
 import useDeepMemo from '@common/hooks/useDeepMemo'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useControllerState from '@web/hooks/useControllerState'
 import useMainControllerState from '@web/hooks/useMainControllerState'
 
-const ProvidersControllerStateContext = createContext<ProvidersController>(
-  {} as ProvidersController
+const ProvidersControllerStateContext = createContext<IProvidersController>(
+  {} as IProvidersController
 )
 
 const ProvidersControllerStateProvider: React.FC<any> = ({ children }) => {

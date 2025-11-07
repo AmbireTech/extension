@@ -7,7 +7,7 @@ type AddressInputValidation = {
   isRecipientDomainResolving: boolean
   isValidEns: boolean
   hasDomainResolveFailed: boolean
-  overwriteError?: string | boolean
+  overwriteError?: string
   overwriteValidLabel?: string
 }
 
@@ -19,7 +19,7 @@ const getAddressInputValidation = ({
   overwriteError,
   overwriteValidLabel
 }: AddressInputValidation): {
-  message: any
+  message: string
   isError: boolean
 } => {
   if (!address) {

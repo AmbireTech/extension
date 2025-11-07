@@ -4,10 +4,12 @@ import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { isValidPassword } from '@ambire-common/services/validations'
+import KeyStoreIcon from '@common/assets/svg/KeyStoreIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
 import Input from '@common/components/Input'
 import InputPassword from '@common/components/InputPassword'
+import { PanelTitle } from '@common/components/Panel/Panel'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useExtraEntropy from '@common/hooks/useExtraEntropy'
@@ -21,7 +23,6 @@ import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
-import KeyStoreLogo from '@web/modules/keystore/components/KeyStoreLogo'
 import { SettingsRoutesContext } from '@web/modules/settings/contexts/SettingsRoutesContext'
 
 const DevicePasswordChangeSettingsScreen = () => {
@@ -190,17 +191,15 @@ const DevicePasswordChangeSettingsScreen = () => {
       </View>
       <BottomSheet
         id="device-password-success-modal"
+        sheetRef={modalRef}
+        style={{ width: 400 }}
         backgroundColor={
           themeType === THEME_TYPES.DARK ? 'secondaryBackground' : 'primaryBackground'
         }
-        sheetRef={modalRef}
-        autoWidth
       >
-        <Text weight="medium" fontSize={20} style={[text.center, spacings.mbXl]}>
-          {t('Extension password')}
-        </Text>
-        <KeyStoreLogo style={[flexbox.alignSelfCenter, spacings.mbXl]} />
-        <Text fontSize={16} style={[spacings.mbLg, text.center]}>
+        <PanelTitle title={t('Extension password')} style={spacings.mbXl} />
+        <KeyStoreIcon style={[flexbox.alignSelfCenter, spacings.mbXl]} />
+        <Text fontSize={16} style={[spacings.mbLg, text.center]} appearance="secondaryText">
           {t('Your extension password was successfully changed!')}
         </Text>
         <Button

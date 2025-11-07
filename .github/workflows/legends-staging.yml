@@ -22,10 +22,10 @@ jobs:
           ssh-private-key: ${{ secrets.DEPLOY_KEY }}
 
       - name: Checkout code 🛎️
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install Node.js ⚙️
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
 
@@ -35,31 +35,21 @@ jobs:
       - name: Git submodules update
         run: git submodule update
 
-      - name: Install Yarn packages ♾️🕳️
-        run: yarn install
+      - name: Install Dependencies
+        run: yarn install --frozen-lockfile
+        shell: bash
 
       - name: Build project 🛠️
         env:
           RELAYER_URL: 'https://staging-relayer.ambire.com'
           LEGENDS_NFT_ADDRESS: ${{ vars.LEGENDS_NFT_ADDRESS_STAGING }}
           SENTRY_DSN_LEGENDS: ${{ vars.SENTRY_DSN_LEGENDS }}
-
         run: yarn build:web:legends
 
       - name: Setup SSH agent
         uses: webfactory/ssh-agent@v0.5.4
         with:
           ssh-private-key: ${{ secrets.LEGENDS_STAGING_DEPLOY_KEY }}
-
-      - name: Upload source maps to Sentry
-        env:
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-        run: |
-          curl -sL https://sentry.io/get-cli/ | bash
-          VERSION=$(node -p "require('./src/ambire-common/package.json').version")
-          sentry-cli releases new legends@$VERSION --project legends
-          sentry-cli releases files legends@$VERSION upload-sourcemaps ./build/legends-prod/ --ext .js --ext .map --rewrite --project legends
-          sentry-cli releases finalize legends@$VERSION --project legends
 
       - name: Deploy to Legends Staging Repo gh-pages 🚀🌕
         run: |

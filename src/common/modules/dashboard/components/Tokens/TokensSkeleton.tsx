@@ -19,7 +19,7 @@ const TokensSkeleton = ({
   })
 
   return (
-    <View style={[spacings.phTy, spacings.ptMi]}>
+    <View style={[spacings.ptMi]}>
       {withHeader && <SkeletonLoader width="100%" height={21} style={spacings.mb} />}
       {skeletonItems.map((item) => (
         <SkeletonLoader key={item.key} width="100%" height={40} style={spacings.mb} />

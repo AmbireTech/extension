@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo } from 'react'
 import { View } from 'react-native'
 
-import { DappRequestAction } from '@ambire-common/controllers/actions/actions'
+import { isDappRequestAction } from '@ambire-common/libs/actions/actions'
 import ManifestFallbackIcon from '@common/assets/svg/ManifestFallbackIcon'
 import Button from '@common/components/Button'
 import Panel from '@common/components/Panel'
@@ -17,6 +17,7 @@ import HeaderAccountAndNetworkInfo from '@web/components/HeaderAccountAndNetwork
 import ManifestImage from '@web/components/ManifestImage'
 import useActionsControllerState from '@web/hooks/useActionsControllerState'
 import useBackgroundService from '@web/hooks/useBackgroundService'
+import useDappInfo from '@web/hooks/useDappInfo'
 
 import styles from './styles'
 
@@ -25,20 +26,27 @@ const GetEncryptionPublicKeyRequestScreen = () => {
   const { dispatch } = useBackgroundService()
   const state = useActionsControllerState()
   const { theme } = useTheme()
-  const dappAction = useMemo(() => {
-    return state.currentAction as DappRequestAction
-  }, [state.currentAction])
+  const dappAction = useMemo(
+    () => (isDappRequestAction(state.currentAction) ? state.currentAction : null),
+    [state.currentAction]
+  )
 
   const userRequest = useMemo(() => {
-    return dappAction?.userRequest
-  }, [dappAction?.userRequest])
+    if (!dappAction) return undefined
+
+    return dappAction?.userRequest || undefined
+  }, [dappAction])
+
+  const { name, icon } = useDappInfo(userRequest)
 
   const handleDeny = useCallback(() => {
+    if (!dappAction) return
+
     dispatch({
-      type: 'MAIN_CONTROLLER_REJECT_USER_REQUEST',
+      type: 'REQUESTS_CONTROLLER_REJECT_USER_REQUEST',
       params: { err: t('User rejected the request.'), id: dappAction.id }
     })
-  }, [dappAction.id, t, dispatch])
+  }, [dappAction, t, dispatch])
 
   return (
     <>
@@ -46,11 +54,7 @@ const GetEncryptionPublicKeyRequestScreen = () => {
       <ScrollableWrapper hasBottomTabNav={false}>
         <Panel>
           <View style={[spacings.pvSm, flexboxStyles.alignCenter]}>
-            <ManifestImage
-              uri={userRequest?.session?.icon}
-              size={64}
-              fallback={() => <ManifestFallbackIcon />}
-            />
+            <ManifestImage uri={icon} size={64} fallback={() => <ManifestFallbackIcon />} />
           </View>
 
           <Title style={[textStyles.center, spacings.phSm, spacings.pbLg]}>
@@ -64,7 +68,7 @@ const GetEncryptionPublicKeyRequestScreen = () => {
                   {'The App '}
                 </Text>
                 <Text fontSize={14} weight="regular" color={theme.primaryLight}>
-                  {userRequest?.session?.name || ''}
+                  {name}
                 </Text>
                 <Text fontSize={14} weight="regular">
                   {

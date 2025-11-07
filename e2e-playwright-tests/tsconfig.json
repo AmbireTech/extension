@@ -16,9 +16,8 @@
       "paths": {
         "@common/*": ["common/*"],
         "@helpers/*": ["common-helpers/*"]
-      }
+      },
     },
     "include": ["."],
     "exclude": ["node_modules"]
   }
-  

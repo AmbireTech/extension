@@ -2,16 +2,17 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { View } from 'react-native'
 
-import { DappRequestAction } from '@ambire-common/controllers/actions/actions'
+import { isDappRequestAction } from '@ambire-common/libs/actions/actions'
 import wait from '@ambire-common/utils/wait'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
-import useWindowSize from '@common/hooks/useWindowSize'
 import Header from '@common/modules/header/components/Header'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import eventBus from '@web/extension-services/event/eventBus'
 import useActionsControllerState from '@web/hooks/useActionsControllerState'
 import useBackgroundService from '@web/hooks/useBackgroundService'
+import useDappInfo from '@web/hooks/useDappInfo'
+import useResponsiveActionWindow from '@web/hooks/useResponsiveActionWindow'
 import ActionFooter from '@web/modules/action-requests/components/ActionFooter'
 
 import DAppConnectBody from './components/DAppConnectBody'
@@ -24,19 +25,19 @@ const DappConnectScreen = () => {
   const { theme, styles } = useTheme(getStyles)
   const { dispatch } = useBackgroundService()
   const state = useActionsControllerState()
+
   const [isAuthorizing, setIsAuthorizing] = useState(false)
-  const { minHeightSize } = useWindowSize()
+  const { responsiveSizeMultiplier } = useResponsiveActionWindow()
   const securityCheckCalled = useRef(false)
   const [securityCheck, setSecurityCheck] = useState<'BLACKLISTED' | 'NOT_BLACKLISTED' | 'LOADING'>(
     'LOADING'
   )
   const [confirmedRiskCheckbox, setConfirmedRiskCheckbox] = useState(false)
 
-  const dappAction = useMemo(() => {
-    if (state.currentAction?.type !== 'dappRequest') return undefined
-
-    return state.currentAction as DappRequestAction
-  }, [state.currentAction])
+  const dappAction = useMemo(
+    () => (isDappRequestAction(state.currentAction) ? state.currentAction : null),
+    [state.currentAction]
+  )
 
   const userRequest = useMemo(() => {
     if (!dappAction) return undefined
@@ -44,6 +45,8 @@ const DappConnectScreen = () => {
 
     return dappAction.userRequest
   }, [dappAction])
+
+  const { name, icon } = useDappInfo(userRequest)
 
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -78,7 +81,7 @@ const DappConnectScreen = () => {
     if (!dappAction) return
 
     dispatch({
-      type: 'MAIN_CONTROLLER_REJECT_USER_REQUEST',
+      type: 'REQUESTS_CONTROLLER_REJECT_USER_REQUEST',
       params: { err: t('User rejected the request.'), id: dappAction.id }
     })
   }, [dappAction, t, dispatch])
@@ -88,20 +91,10 @@ const DappConnectScreen = () => {
 
     setIsAuthorizing(true)
     dispatch({
-      type: 'MAIN_CONTROLLER_RESOLVE_USER_REQUEST',
+      type: 'REQUESTS_CONTROLLER_RESOLVE_USER_REQUEST',
       params: { data: null, id: dappAction.id }
     })
   }, [dappAction, dispatch])
-
-  const responsiveSizeMultiplier = useMemo(() => {
-    if (minHeightSize(690)) return 0.75
-    if (minHeightSize(720)) return 0.8
-    if (minHeightSize(750)) return 0.85
-    if (minHeightSize(780)) return 0.9
-    if (minHeightSize(810)) return 0.95
-
-    return 1
-  }, [minHeightSize])
 
   const resolveButtonText = useMemo(() => {
     if (securityCheck === 'LOADING') return t('Loading...')
@@ -141,9 +134,9 @@ const DappConnectScreen = () => {
       <View style={[styles.container]}>
         <View style={styles.content}>
           <DAppConnectHeader
-            name={userRequest?.session?.name}
-            origin={userRequest?.session?.origin}
-            icon={userRequest?.session?.icon}
+            name={name}
+            id={userRequest?.session?.id}
+            icon={icon}
             securityCheck={securityCheck}
             responsiveSizeMultiplier={responsiveSizeMultiplier}
           />

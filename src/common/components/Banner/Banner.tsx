@@ -36,6 +36,8 @@ export interface Props {
   renderButtons?: React.ReactNode | React.ReactNode[]
   CustomIcon?: React.FC<any> | null
   style?: ViewStyle
+  contentContainerStyle?: ViewStyle
+  titleFontSize?: number
   onClosePress?: () => void
 }
 
@@ -83,7 +85,18 @@ const BannerButton: FC<CommonButtonProps & { isReject?: boolean; testId?: string
 const { isTab } = getUiType()
 
 const Banner = React.memo(
-  ({ type, title, text, children, CustomIcon, renderButtons, style, onClosePress }: Props) => {
+  ({
+    type,
+    title,
+    text,
+    children,
+    CustomIcon,
+    renderButtons,
+    titleFontSize,
+    style,
+    contentContainerStyle,
+    onClosePress
+  }: Props) => {
     const { styles, theme, themeType } = useTheme(getStyles)
 
     const Icon = useMemo(() => {
@@ -107,7 +120,13 @@ const Banner = React.memo(
         ]}
         testID={`dashboard-${type}-banner`}
       >
-        <View style={[styles.content, { borderLeftColor: theme[`${type}Decorative`] }]}>
+        <View
+          style={[
+            styles.content,
+            { borderLeftColor: theme[`${type}Decorative`] },
+            contentContainerStyle
+          ]}
+        >
           <View
             style={[
               spacings.mrSm,
@@ -129,7 +148,7 @@ const Banner = React.memo(
           <View style={[flexbox.wrap, flexbox.flex1]}>
             <Text
               appearance={themeType === THEME_TYPES.DARK ? `${type}Text` : 'primaryText'}
-              fontSize={isTab ? 16 : 14}
+              fontSize={titleFontSize || (isTab ? 16 : 14)}
               weight="medium"
             >
               {title}

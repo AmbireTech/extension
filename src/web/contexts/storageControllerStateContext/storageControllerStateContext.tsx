@@ -1,11 +1,11 @@
 import React, { createContext, useEffect } from 'react'
 
-import { StorageController } from '@ambire-common/controllers/storage/storage'
+import { IStorageController } from '@ambire-common/interfaces/storage'
 import useDeepMemo from '@common/hooks/useDeepMemo'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useControllerState from '@web/hooks/useControllerState'
 
-const StorageControllerStateContext = createContext<StorageController>({} as StorageController)
+const StorageControllerStateContext = createContext<IStorageController>({} as IStorageController)
 
 const StorageControllerStateProvider: React.FC<any> = ({ children }) => {
   const controller = 'storage'

@@ -38,6 +38,7 @@ const AccountKeysBottomSheet: FC<Props> = ({
       isScrollEnabled={false}
       containerInnerWrapperStyles={{ flex: 1 }}
       style={{ maxWidth: 432, minHeight: 432, ...spacings.pvLg }}
+      shouldBeClosableOnDrag={false}
     >
       {!!account && (
         <AccountKeys

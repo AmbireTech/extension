@@ -63,19 +63,22 @@ const Step: FC<StepProps> = ({
   const isRedDisplayedInLineGradient =
     (finalizedStatus?.status === 'failed' && stepIndex === 1) ||
     finalizedStatus?.status === 'dropped' ||
-    finalizedStatus?.status === 'rejected'
+    finalizedStatus?.status === 'rejected' ||
+    finalizedStatus?.status === 'not-found'
 
   // True if the transaction has failed and we are on the last step, because only the last step shows the error message.
   const hasFailed =
     (finalizedStatus?.status === 'failed' ||
       finalizedStatus?.status === 'dropped' ||
-      finalizedStatus?.status === 'rejected') &&
+      finalizedStatus?.status === 'rejected' ||
+      finalizedStatus?.status === 'not-found') &&
     stepIndex === STEPS.length - 1
 
   const getTitleAppearance = () => {
     if (hasFailed) {
       return 'errorText'
     }
+
     if (isCompleted) {
       return 'successText'
     }
@@ -141,12 +144,15 @@ const Step: FC<StepProps> = ({
         {!!title && (
           <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifySpaceBetween]}>
             <Text
+              testID="transaction-confirmed-text"
               appearance={getTitleAppearance()}
               fontSize={16}
               weight="medium"
               style={[styles.title, titleStyle]}
             >
-              {title === 'fetching' ? 'Confirmed' : title}
+              {title === 'fetching' ? 'Confirmed' : ''}
+              {title === 'not-found' ? 'Not Found' : ''}
+              {title !== 'fetching' && title !== 'not-found' ? title : ''}
             </Text>
             {collapsibleRows && (
               <Pressable onPress={() => setShowAllRows((prev) => !prev)}>

@@ -6,7 +6,13 @@ import SpinnerAnimation from './spinner-animation.json'
 import WhiteSpinnerAnimation from './spinner-white-animation.json'
 import styles from './styles'
 
-const Spinner = ({ style, variant }: { style?: ViewStyle; variant?: 'gradient' | 'white' }) => {
+const Spinner = ({
+  style,
+  variant
+}: {
+  style?: ViewStyle
+  variant?: 'gradient' | 'white' | 'info2'
+}) => {
   return (
     <LottieView
       source={variant === 'gradient' ? SpinnerAnimation : WhiteSpinnerAnimation}

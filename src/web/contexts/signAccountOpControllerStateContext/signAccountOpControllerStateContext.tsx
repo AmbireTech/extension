@@ -1,17 +1,17 @@
 import React, { createContext, useEffect, useState } from 'react'
 import { flushSync } from 'react-dom'
 
-import { SignAccountOpController } from '@ambire-common/controllers/signAccountOp/signAccountOp'
+import { ISignAccountOpController } from '@ambire-common/interfaces/signAccountOp'
 import useDeepMemo from '@common/hooks/useDeepMemo'
 import eventBus from '@web/extension-services/event/eventBus'
 
-const SignAccountOpControllerStateContext = createContext<SignAccountOpController | null>(null)
+const SignAccountOpControllerStateContext = createContext<ISignAccountOpController | null>(null)
 
 const SignAccountOpControllerStateProvider: React.FC<any> = ({ children }) => {
-  const [state, setState] = useState<SignAccountOpController | null>(null)
+  const [state, setState] = useState<ISignAccountOpController | null>(null)
 
   useEffect(() => {
-    const onUpdate = (newState: SignAccountOpController | null, forceEmit?: boolean) => {
+    const onUpdate = (newState: ISignAccountOpController | null, forceEmit?: boolean) => {
       if (forceEmit) {
         flushSync(() => setState(newState))
       } else {

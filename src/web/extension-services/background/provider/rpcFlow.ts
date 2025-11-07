@@ -53,10 +53,13 @@ const flowContext = flow
         try {
           if (lockedOrigins[origin] === undefined) {
             lockedOrigins[origin] = await new Promise((resolve: (value: any) => void, reject) => {
-              mainCtrl.buildUserRequestFromDAppRequest(
-                { ...request, method: 'unlock', params: {} },
-                { resolve, reject, session: request.session }
-              )
+              mainCtrl.requests.build({
+                type: 'dappRequest',
+                params: {
+                  request: { ...request, method: 'unlock', params: {} },
+                  dappPromise: { resolve, reject, session: request.session }
+                }
+              })
             })
           }
           await lockedOrigins[origin]
@@ -71,43 +74,29 @@ const flowContext = flow
   // if dApp not connected - prompt connect action window
   .use(async ({ request, mainCtrl, mapMethod }, next) => {
     const {
-      session: { id, origin, name, icon }
+      session: { id, origin: url, name, icon }
     } = request
     const providerCtrl = new ProviderController(mainCtrl)
     if (!Reflect.getMetadata('SAFE', providerCtrl, mapMethod)) {
       if (!mainCtrl.dapps.hasPermission(id)) {
         try {
-          if (connectOrigins[origin] === undefined) {
-            connectOrigins[origin] = new Promise((resolve: (value: any) => void, reject) => {
-              mainCtrl.buildUserRequestFromDAppRequest(
-                { ...request, method: 'dapp_connect', params: {} },
-                { resolve, reject, session: request.session }
-              )
+          if (connectOrigins[url] === undefined) {
+            connectOrigins[url] = new Promise((resolve: (value: any) => void, reject) => {
+              mainCtrl.requests.build({
+                type: 'dappRequest',
+                params: {
+                  request: { ...request, method: 'dapp_connect', params: {} },
+                  dappPromise: { resolve, reject, session: request.session }
+                }
+              })
             })
-          } else if (mainCtrl.actions.currentAction) {
-            await mainCtrl.actions.focusActionWindow()
+          } else if (mainCtrl.requests.actions.currentAction) {
+            await mainCtrl.requests.actions.focusActionWindow()
           }
-          await connectOrigins[origin]
-
-          const isBlacklisted = await mainCtrl.phishing.getIsBlacklisted(origin)
-          mainCtrl.dapps.addDapp({
-            id,
-            name,
-            url: origin,
-            icon,
-            description: 'Custom app automatically added when connected for the first time.',
-            favorite: false,
-            chainId: 1,
-            isConnected: true,
-            blacklisted: isBlacklisted
-          })
-          await mainCtrl.dapps.broadcastDappSessionEvent(
-            'chainChanged',
-            { chain: '0x1', networkVersion: '1' },
-            id
-          )
+          await connectOrigins[url]
+          await mainCtrl.dapps.addDapp({ id, name, url, icon, chainId: 1, isConnected: true })
         } finally {
-          delete connectOrigins[origin]
+          delete connectOrigins[url]
         }
       }
     }
@@ -124,11 +113,13 @@ const flowContext = flow
     if (requestType && (!condition || !condition(props))) {
       // eslint-disable-next-line no-param-reassign
       props.requestRes = await new Promise((resolve, reject) => {
-        mainCtrl
-          .buildUserRequestFromDAppRequest(request, {
-            resolve,
-            reject,
-            session: request.session
+        mainCtrl.requests
+          .build({
+            type: 'dappRequest',
+            params: {
+              request,
+              dappPromise: { resolve, reject, session: request.session }
+            }
           })
           .catch((error) => reject(error))
       })

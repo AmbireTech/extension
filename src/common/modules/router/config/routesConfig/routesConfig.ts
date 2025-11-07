@@ -103,10 +103,15 @@ const routesConfig: RouteConfig = {
     title: i18n.t('Welcome to Ambire Wallet'),
     name: i18n.t('Extension Password Setup')
   },
-  [ROUTES.keyStoreReset]: {
-    route: ROUTES.keyStoreReset,
-    title: i18n.t('Restore Key Store Passphrase'),
-    name: i18n.t('Restore Key Store Passphrase')
+  [ROUTES.keyStoreEmailRecovery]: {
+    route: ROUTES.keyStoreEmailRecovery,
+    title: i18n.t('Restore Extension Password'),
+    name: i18n.t('Restore Extension Password')
+  },
+  [ROUTES.keyStoreEmailRecoverySetNewPassword]: {
+    route: ROUTES.keyStoreEmailRecoverySetNewPassword,
+    title: i18n.t('Set New Extension Password'),
+    name: i18n.t('Set New Extension Password')
   },
   [ROUTES.accountPicker]: {
     route: ROUTES.accountPicker,
@@ -182,15 +187,15 @@ const routesConfig: RouteConfig = {
       default: i18n.t('App Wants to Connect')
     })
   },
-  [ROUTES.appCatalog]: {
-    route: ROUTES.appCatalog,
+  [ROUTES.apps]: {
+    route: ROUTES.apps,
     title: Platform.select({
-      web: i18n.t('App Catalog'),
-      default: i18n.t('App Catalog')
+      web: i18n.t('Apps'),
+      default: i18n.t('Apps')
     }),
     name: Platform.select({
-      web: i18n.t('App Catalog'),
-      default: i18n.t('App Catalog')
+      web: i18n.t('Apps'),
+      default: i18n.t('Apps')
     })
   },
   [ROUTES.watchAsset]: {
@@ -232,11 +237,6 @@ const routesConfig: RouteConfig = {
     name: Platform.select({
       default: i18n.t('Swap')
     })
-  },
-  [ROUTES.appCatalog]: {
-    route: ROUTES.appCatalog,
-    title: i18n.t('App Catalog'),
-    name: i18n.t('App Catalog')
   },
   [ROUTES.accountSelect]: {
     route: ROUTES.accountSelect,
@@ -372,8 +372,8 @@ const routesConfig: RouteConfig = {
   },
   [ROUTES.benzin]: {
     route: ROUTES.benzin,
-    title: Platform.select({ default: i18n.t('Benzin') }),
-    name: Platform.select({ default: i18n.t('Benzin') })
+    title: Platform.select({ default: i18n.t('Explorer') }),
+    name: Platform.select({ default: i18n.t('Explorer') })
   },
   [ROUTES.switchAccount]: {
     route: ROUTES.switchAccount,

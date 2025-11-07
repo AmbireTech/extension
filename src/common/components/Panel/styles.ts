@@ -42,6 +42,7 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) => {
     backBtnWrapper: {
       ...flexbox.alignCenter,
       ...flexbox.center,
+      ...flexbox.directionRow,
       ...common.borderRadiusPrimary,
       width: 28,
       height: 28

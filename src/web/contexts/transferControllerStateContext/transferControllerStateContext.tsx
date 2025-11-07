@@ -1,13 +1,10 @@
 import React, { createContext, useEffect, useMemo } from 'react'
-import { View } from 'react-native'
 
-import { TransferController } from '@ambire-common/controllers/transfer/transfer'
+import { ITransferController } from '@ambire-common/interfaces/transfer'
 import { TokenResult } from '@ambire-common/libs/portfolio'
 import { getTokenAmount } from '@ambire-common/libs/portfolio/helpers'
 import { sortPortfolioTokenList } from '@ambire-common/libs/swapAndBridge/swapAndBridge'
-import Spinner from '@common/components/Spinner'
 import useDeepMemo from '@common/hooks/useDeepMemo'
-import flexbox from '@common/styles/utils/flexbox'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useControllerState from '@web/hooks/useControllerState'
 import useMainControllerState from '@web/hooks/useMainControllerState'
@@ -15,7 +12,7 @@ import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 
 type ContextReturn = {
-  state: TransferController
+  state: ITransferController
   tokens: TokenResult[]
 }
 
@@ -101,13 +98,7 @@ const TransferControllerStateProvider = ({ children }: { children: any }) => {
     <TransferControllerStateContext.Provider
       value={useMemo(() => ({ state: memoizedState, tokens }), [memoizedState, tokens])}
     >
-      {Object.keys(memoizedState).length ? (
-        children
-      ) : (
-        <View style={[flexbox.flex1, flexbox.center]}>
-          <Spinner />
-        </View>
-      )}
+      {children}
     </TransferControllerStateContext.Provider>
   )
 }

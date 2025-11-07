@@ -30,7 +30,12 @@ const CharacterLoadingModal: React.FC<CharacterLoadingModalProps> = ({
   onButtonClick
 }) => {
   return (
-    <Modal isOpen={isOpen} isClosable={false} className={styles.modal}>
+    <Modal
+      isOpen={isOpen}
+      isClosable={false}
+      className={styles.modal}
+      wrapperClassName={styles.modalWrapper}
+    >
       {showOnMintModal ? (
         <div>
           <p className={styles.title}>Welcome to Ambire Rewards</p>

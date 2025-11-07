@@ -131,6 +131,27 @@ const ThemeColors = {
     [THEME_TYPES.DARK]: '#70B4FF1F',
     [THEME_TYPES.LIGHT]: '#0079FF14'
   },
+  // Info 3
+  info3Text: {
+    [THEME_TYPES.DARK]: '#ffffff',
+    [THEME_TYPES.LIGHT]: '#54597A'
+  },
+  info3Decorative: {
+    [THEME_TYPES.DARK]: '#70B4FF',
+    [THEME_TYPES.LIGHT]: '#0079ff'
+  },
+  info3Background: {
+    [THEME_TYPES.DARK]: '#2A323D',
+    [THEME_TYPES.LIGHT]: '#EBF4FF'
+  },
+  info3Button: {
+    [THEME_TYPES.DARK]: '#70B4FF',
+    [THEME_TYPES.LIGHT]: '#0750A1'
+  },
+  info3ButtonHover: {
+    [THEME_TYPES.DARK]: '#7CB5F2',
+    [THEME_TYPES.LIGHT]: '#0F6DD2'
+  },
   // Warning
   warningText: {
     [THEME_TYPES.DARK]: '#FFD970',
@@ -180,6 +201,10 @@ const ThemeColors = {
   iconPrimary2: {
     [THEME_TYPES.DARK]: '#6000FF',
     [THEME_TYPES.LIGHT]: '#6000FF'
+  },
+  projectedRewards: {
+    [THEME_TYPES.DARK]: '#D7FF00',
+    [THEME_TYPES.LIGHT]: '#8B3DFF'
   }
 }
 

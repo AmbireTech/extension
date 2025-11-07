@@ -5,18 +5,19 @@ import { useModalize } from 'react-native-modalize'
 
 import { EmailVaultState } from '@ambire-common/controllers/emailVault/emailVault'
 import { isEmail } from '@ambire-common/services/validations'
+import KeyStoreIcon from '@common/assets/svg/KeyStoreIcon'
 import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
-import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Button from '@common/components/Button'
 import Input from '@common/components/Input'
+import { PanelTitle } from '@common/components/Panel/Panel'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import { ROUTES } from '@common/modules/router/constants/common'
-import spacings, { SPACING_3XL, SPACING_XL } from '@common/styles/spacings'
+import spacings, { SPACING_XL } from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
@@ -24,7 +25,6 @@ import useBackgroundService from '@web/hooks/useBackgroundService'
 import useEmailVaultControllerState from '@web/hooks/useEmailVaultControllerState'
 import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 import EmailConfirmation from '@web/modules/keystore/components/EmailConfirmation'
-import KeyStoreLogo from '@web/modules/keystore/components/KeyStoreLogo'
 import { SettingsRoutesContext } from '@web/modules/settings/contexts/SettingsRoutesContext'
 
 const DevicePasswordRecoverySettingsScreen = () => {
@@ -75,7 +75,9 @@ const DevicePasswordRecoverySettingsScreen = () => {
       return
     }
     closeConfirmationModal()
-  }, [closeConfirmationModal, ev.currentState, openConfirmationModal, confirmationModalRef.current])
+    // Ref is stable, `.current` isn't a valid dep - safe to ignore.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [closeConfirmationModal, ev.currentState, openConfirmationModal])
 
   useEffect(() => {
     if (ev.statuses.uploadKeyStoreSecret === 'SUCCESS') {
@@ -184,38 +186,29 @@ const DevicePasswordRecoverySettingsScreen = () => {
         />
       </View>
       <BottomSheet
+        id="backup-password-confirmation-modal"
+        sheetRef={confirmationModalRef}
+        style={{ width: 400 }}
         backgroundColor={
           themeType === THEME_TYPES.DARK ? 'secondaryBackground' : 'primaryBackground'
         }
-        id="backup-password-confirmation-modal"
-        sheetRef={confirmationModalRef}
-        style={{ paddingVertical: SPACING_3XL }}
-        autoWidth
       >
-        <ModalHeader title={t('Email Confirmation Required')} />
         <EmailConfirmation email={email} handleCancelLoginAttempt={handleCancelLoginAttempt} />
       </BottomSheet>
       <BottomSheet
         id="backup-password-success-modal"
+        sheetRef={successModalRef}
+        style={{ width: 400 }}
         backgroundColor={
           themeType === THEME_TYPES.DARK ? 'secondaryBackground' : 'primaryBackground'
         }
-        sheetRef={successModalRef}
-        autoWidth
       >
-        <ModalHeader title={t('Extension password recovery')} />
-        <KeyStoreLogo style={[flexbox.alignSelfCenter, spacings.mbXl]} />
-        <Text fontSize={16} style={[spacings.mbLg, text.center]}>
+        <PanelTitle title={t('Extension password recovery')} style={spacings.mbXl} />
+        <KeyStoreIcon style={[flexbox.alignSelfCenter, spacings.mbXl]} />
+        <Text fontSize={16} style={[spacings.mbXl, text.center]} appearance="secondaryText">
           {t('Your extension password recovery was successfully enabled!')}
         </Text>
-        <Button
-          text={t('Got it')}
-          hasBottomSpacing={false}
-          style={{ minWidth: 232 }}
-          onPress={() => {
-            closeSuccessModal()
-          }}
-        />
+        <Button text={t('Got it')} hasBottomSpacing={false} onPress={closeSuccessModal as any} />
       </BottomSheet>
     </>
   )

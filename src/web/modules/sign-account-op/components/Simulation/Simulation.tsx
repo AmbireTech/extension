@@ -5,8 +5,11 @@ import { View } from 'react-native'
 import { SigningStatus } from '@ambire-common/controllers/signAccountOp/signAccountOp'
 import { Network } from '@ambire-common/interfaces/network'
 import { isSmartAccount } from '@ambire-common/libs/account/account'
+import { isPermit2Interaction } from '@ambire-common/libs/simulation/detectPermit2Interaction'
 import SuccessIcon from '@common/assets/svg/SuccessIcon'
+import WarningFilledIcon from '@common/assets/svg/WarningFilledIcon'
 import Alert from '@common/components/Alert'
+import AlertVertical from '@common/components/AlertVertical'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
 import Nft from '@common/components/TokenOrNft/components/Nft'
@@ -14,6 +17,7 @@ import { Trans, useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import useDappsControllerState from '@web/hooks/useDappsControllerState'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import useSignAccountOpControllerState from '@web/hooks/useSignAccountOpControllerState'
@@ -35,28 +39,31 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
   const { styles, theme } = useTheme(getStyles)
   const signAccountOpState = useSignAccountOpControllerState()
   const {
-    portfolio: { tokens, collections, pending, networkSimulatedAccountOp }
+    portfolio: { tokens, collections, portfolioState, networkSimulatedAccountOp }
   } = useSelectedAccountControllerState()
   const [initialSimulationLoaded, setInitialSimulationLoaded] = useState(false)
   const [shouldRespectIsLoading, setShouldRespectIsLoading] = useState(true)
   const { networks } = useNetworksControllerState()
+  const {
+    state: { dapps }
+  } = useDappsControllerState()
 
   const pendingTokens = useMemo(() => {
     if (signAccountOpState?.accountOp && network) {
-      const pendingData = pending[network.chainId.toString()]
+      const pendingData = portfolioState[network.chainId.toString()]
 
       if (!pendingData || !pendingData.isReady || !pendingData.result) return []
 
       return tokens.filter((token) => token.chainId === network.chainId && !!token.simulationAmount)
     }
     return []
-  }, [network, pending, signAccountOpState?.accountOp, tokens])
+  }, [network, portfolioState, signAccountOpState?.accountOp, tokens])
 
-  const portfolioStatePending = useMemo(() => {
+  const portfolioNetworkState = useMemo(() => {
     if (!signAccountOpState?.accountOp || !network?.chainId) return null
 
-    return pending[network.chainId.toString()]
-  }, [network?.chainId, pending, signAccountOpState?.accountOp])
+    return portfolioState[network.chainId.toString()]
+  }, [network?.chainId, portfolioState, signAccountOpState?.accountOp])
 
   const pendingSendTokens = useMemo(
     () => pendingTokens.filter((token) => token.simulationAmount! < 0),
@@ -88,16 +95,16 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
   )
 
   const simulationErrorMsg = useMemo(() => {
-    if (portfolioStatePending?.isLoading && !initialSimulationLoaded) return ''
+    if (portfolioNetworkState?.isLoading && !initialSimulationLoaded) return ''
 
-    if (portfolioStatePending?.criticalError) {
-      if (isHexString(portfolioStatePending?.criticalError.simulationErrorMsg)) {
-        return `Please report this error to our team: ${portfolioStatePending?.criticalError.simulationErrorMsg}`
+    if (portfolioNetworkState?.criticalError) {
+      if (isHexString(portfolioNetworkState?.criticalError.simulationErrorMsg)) {
+        return `Please report this error to our team: ${portfolioNetworkState?.criticalError.simulationErrorMsg}`
       }
-      return portfolioStatePending?.criticalError.simulationErrorMsg || 'Unknown error'
+      return portfolioNetworkState?.criticalError.simulationErrorMsg || 'Unknown error'
     }
 
-    const simulationError = portfolioStatePending?.errors.find((err) => err.simulationErrorMsg)
+    const simulationError = portfolioNetworkState?.errors.find((err) => err.simulationErrorMsg)
     if (simulationError) {
       if (isHexString(simulationError)) {
         return `Please report this error to our team: ${simulationError.simulationErrorMsg}`
@@ -107,10 +114,10 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
 
     return ''
   }, [
-    initialSimulationLoaded,
-    portfolioStatePending?.criticalError,
-    portfolioStatePending?.errors,
-    portfolioStatePending?.isLoading
+    portfolioNetworkState?.isLoading,
+    portfolioNetworkState?.criticalError,
+    portfolioNetworkState?.errors,
+    initialSimulationLoaded
   ])
 
   const haveCallsChanged = useMemo(() => {
@@ -141,9 +148,9 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
   }, [haveCallsChanged])
 
   useEffect(() => {
-    if (!portfolioStatePending) return
-    if (!portfolioStatePending.isLoading) setShouldRespectIsLoading(false)
-  }, [portfolioStatePending])
+    if (!portfolioNetworkState) return
+    if (!portfolioNetworkState.isLoading) setShouldRespectIsLoading(false)
+  }, [portfolioNetworkState])
 
   const isReloading = useMemo(() => {
     if (!network?.chainId || !initialSimulationLoaded) return false
@@ -153,16 +160,36 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
 
   const shouldShowLoader = useMemo(
     () =>
-      (!!portfolioStatePending?.isLoading && shouldRespectIsLoading) ||
+      (!!portfolioNetworkState?.isLoading && shouldRespectIsLoading) ||
       isReloading ||
       !signAccountOpState?.isInitialized,
     [
+      portfolioNetworkState?.isLoading,
       shouldRespectIsLoading,
       isReloading,
-      portfolioStatePending?.isLoading,
       signAccountOpState?.isInitialized
     ]
   )
+
+  const containsPermit2 = useMemo(() => {
+    if (!signAccountOpState?.accountOp?.calls || !network) return false
+
+    return signAccountOpState.accountOp.calls.some((call) => {
+      if (!call.to || !call.data) return false
+      return isPermit2Interaction({ to: call.to, data: call.data })
+    })
+  }, [signAccountOpState?.accountOp.calls, network])
+
+  const containsDappsNotInCatalog = useMemo(() => {
+    if (!signAccountOpState?.accountOp?.calls || !network) return false
+
+    const dappUrlsSet = new Set(dapps.map((d) => d.url.toLowerCase()))
+
+    return signAccountOpState.accountOp.calls.some((call) => {
+      if (!call.dapp || !call.dapp.url) return false
+      return !dappUrlsSet.has(call.dapp.url.toLowerCase())
+    })
+  }, [signAccountOpState?.accountOp.calls, network, dapps])
 
   const simulationView:
     | 'no-changes'
@@ -210,7 +237,7 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
   return (
     <View style={styles.simulationSection}>
       {simulationView === 'changes' && (
-        <View style={[flexbox.directionRow, flexbox.flex1]}>
+        <View style={[flexbox.directionRow, flexbox.flex1, spacings.mb]}>
           {(!!pendingSendTokens.length || !!pendingSendCollection.length) && (
             <View
               style={[styles.simulationContainer, !!pendingReceiveTokens.length && spacings.mrTy]}
@@ -344,6 +371,19 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
               Settings. If you wish to proceed regardless, please carefully review the transaction
               preview below.
             </Trans>
+          }
+        />
+      )}
+      {containsDappsNotInCatalog && containsPermit2 && (
+        <AlertVertical
+          type="warning"
+          customIcon={() => <WarningFilledIcon width={48} height={44} />}
+          text={
+            <Text appearance="warningText" weight="semiBold">
+              {t(
+                'App is not on the default Ambire App Catalog.\nMake sure you trust it before signing requests.'
+              )}
+            </Text>
           }
         />
       )}

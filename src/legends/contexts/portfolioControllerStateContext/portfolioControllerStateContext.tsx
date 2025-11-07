@@ -4,6 +4,7 @@ import { WALLET_TOKEN } from '@ambire-common/consts/addresses'
 import { RELAYER_URL } from '@env'
 import { LEGENDS_SUPPORTED_NETWORKS_BY_CHAIN_ID } from '@legends/constants/networks'
 import useAccountContext from '@legends/hooks/useAccountContext'
+import useProviderContext from '@legends/hooks/useProviderContext'
 
 export type AccountPortfolio = {
   amount?: number
@@ -42,6 +43,16 @@ const PortfolioControllerStateContext = createContext<{
   } | null
   walletTokenPrice: number | null
   isLoadingWalletTokenInfo: boolean
+  rewardsProjectionData?: {
+    userLevel: number
+    numberOfWeeksSinceStartOfSeason: number
+    totalWeightNonUser: number
+    walletPrice: number
+    totalRewardsPool: number
+    minLvl: number
+    minBalance: number
+    currentSeasonSnapshots: { week: number; balance: number }[]
+  }
 }>({
   updateAccountPortfolio: () => {},
   claimableRewardsError: null,
@@ -54,6 +65,7 @@ const PortfolioControllerStateContext = createContext<{
 
 const PortfolioControllerStateProvider: React.FC<any> = ({ children }) => {
   const getPortfolioIntervalRef: any = useRef(null)
+  const { provider } = useProviderContext()
   const { connectedAccount, nonV2Account, isLoading } = useAccountContext()
   const [accountPortfolio, setAccountPortfolio] = useState<AccountPortfolio>()
   const [claimableRewards, setClaimableRewards] = useState<any>(null)
@@ -72,6 +84,15 @@ const PortfolioControllerStateProvider: React.FC<any> = ({ children }) => {
     walletPrice: number
   } | null>(null)
   const [walletTokenPrice, setWalletTokenPrice] = useState<number | null>(null)
+  const [rewardsProjectionData, setRewardsProjectionData] = useState<{
+    currentSeasonSnapshots: { week: number; balance: number }[]
+    currentWeek: number
+    numberOfWeeksSinceStartOfSeason: number
+    supportedChainIds: number[]
+    totalRewardsPool: number
+    totalWeightNonUser: number
+    userLevel: number
+  } | null>(null)
 
   const updateAdditionalPortfolio = useCallback(async () => {
     if (!connectedAccount) {
@@ -85,7 +106,6 @@ const PortfolioControllerStateProvider: React.FC<any> = ({ children }) => {
       )
 
       const additionalPortfolioJson = await additionalPortfolioResponse.json()
-
       const xWalletClaimableBalanceData =
         additionalPortfolioJson?.data?.rewards?.xWalletClaimableBalance
       const claimableBalance = additionalPortfolioJson?.data?.rewards?.stkWalletClaimableBalance
@@ -96,6 +116,7 @@ const PortfolioControllerStateProvider: React.FC<any> = ({ children }) => {
 
       setWalletTokenPrice(walletTokenInfoData.price)
 
+      setRewardsProjectionData(additionalPortfolioJson?.data?.rewardsProjectionData)
       setClaimableRewards(claimableBalance)
       setXWalletClaimableBalance(xWalletClaimableBalanceData)
       setIsLoadingClaimableRewards(false)
@@ -108,7 +129,7 @@ const PortfolioControllerStateProvider: React.FC<any> = ({ children }) => {
   }, [connectedAccount])
 
   const updateAccountPortfolio = useCallback(async () => {
-    if (!window.ambire)
+    if (!provider)
       return setAccountPortfolio({
         error: 'The Ambire extension is not installed!',
         isReady: false
@@ -150,7 +171,7 @@ const PortfolioControllerStateProvider: React.FC<any> = ({ children }) => {
       // while fetching the portfolio for the new account (address).
       setAccountPortfolio({ isReady: false })
 
-      const portfolioRes = (await window.ambire.request({
+      const portfolioRes = (await provider.request({
         method: 'get_portfolioBalance',
         // TODO: impl a dynamic way of getting the chainIds
         params: [
@@ -166,7 +187,7 @@ const PortfolioControllerStateProvider: React.FC<any> = ({ children }) => {
     }
 
     await getPortfolioTillReady()
-  }, [isLoading, connectedAccount, nonV2Account, setAccountPortfolio])
+  }, [provider, isLoading, connectedAccount, nonV2Account, setAccountPortfolio])
 
   const fetchWalletTokenInfo = useCallback(async () => {
     try {
@@ -210,7 +231,8 @@ const PortfolioControllerStateProvider: React.FC<any> = ({ children }) => {
           isLoadingWalletTokenInfo,
           xWalletClaimableBalance,
           walletTokenInfo,
-          walletTokenPrice
+          walletTokenPrice,
+          rewardsProjectionData
         }),
         [
           accountPortfolio,
@@ -221,7 +243,8 @@ const PortfolioControllerStateProvider: React.FC<any> = ({ children }) => {
           isLoadingWalletTokenInfo,
           xWalletClaimableBalance,
           walletTokenInfo,
-          walletTokenPrice
+          walletTokenPrice,
+          rewardsProjectionData
         ]
       )}
     >
@@ -231,3 +254,15 @@ const PortfolioControllerStateProvider: React.FC<any> = ({ children }) => {
 }
 
 export { PortfolioControllerStateProvider, PortfolioControllerStateContext }
+
+function usePortfolioControllerState() {
+  const context = React.useContext(PortfolioControllerStateContext)
+  if (context === undefined) {
+    throw new Error(
+      'usePortfolioControllerState must be used within PortfolioControllerStateProvider'
+    )
+  }
+  return context
+}
+
+export default usePortfolioControllerState

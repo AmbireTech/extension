@@ -1,12 +1,12 @@
 import React, { createContext, useEffect } from 'react'
 
-import { NetworksController } from '@ambire-common/controllers/networks/networks'
+import { INetworksController } from '@ambire-common/interfaces/network'
 import useDeepMemo from '@common/hooks/useDeepMemo'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useControllerState from '@web/hooks/useControllerState'
 import useMainControllerState from '@web/hooks/useMainControllerState'
 
-const NetworksControllerStateContext = createContext<NetworksController>({} as NetworksController)
+const NetworksControllerStateContext = createContext<INetworksController>({} as INetworksController)
 
 const NetworksControllerStateProvider: React.FC<any> = ({ children }) => {
   const controller = 'networks'

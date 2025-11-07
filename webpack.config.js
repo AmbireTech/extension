@@ -24,6 +24,7 @@ const isExtension =
   outputPath.includes('webkit') || outputPath.includes('gecko') || outputPath.includes('safari')
 const isAmbireExplorer = outputPath.includes('benzin')
 const isLegends = outputPath.includes('legends')
+const isAmbireNext = process.env.AMBIRE_NEXT === 'true'
 
 // style.css output file for WEB_ENGINE: GECKO
 function processStyleGecko(content) {
@@ -42,16 +43,27 @@ module.exports = async function (env, argv) {
     const manifest = JSON.parse(content.toString())
     if (config.mode === 'development') {
       manifest.name = `${manifest.name} (DEV build)`
-      const devBuildIcons = {}
+    }
+    if (isAmbireNext) {
+      manifest.name = 'Ambire Web3 Wallet (NEXT build)'
+      manifest.short_name = 'Ambire Next'
+      manifest.action.default_title = 'Ambire Next'
+    }
+
+    // Customize extension icons to emphasize the different build
+    if (config.mode === 'development' || isAmbireNext) {
+      const buildIcons = {}
+      const suffix = isAmbireNext ? '-next-build-ONLY' : '-dev-build-ONLY'
       Object.keys(manifest.icons).forEach((size) => {
         const iconPath = manifest.icons[size]
         const dotIndex = iconPath.lastIndexOf('.')
         const prefix = iconPath.slice(0, dotIndex)
         const extension = iconPath.slice(dotIndex)
-        devBuildIcons[size] = `${prefix}-dev-build-ONLY${extension}`
+        buildIcons[size] = `${prefix}${suffix}${extension}`
       })
-      manifest.icons = devBuildIcons
+      manifest.icons = buildIcons
     }
+
     // Note: Safari allows up to 100 characters, all others allow up to 132 characters
     manifest.description =
       'Fast & secure Web3 wallet to supercharge your account on Ethereum and EVM networks.'
@@ -85,7 +97,7 @@ module.exports = async function (env, argv) {
       manifest.browser_specific_settings = {
         gecko: {
           id: 'wallet@ambire.com',
-          strict_min_version: '115.0'
+          strict_min_version: '116.0'
         }
       }
     }
@@ -193,7 +205,13 @@ module.exports = async function (env, argv) {
     '@web': path.resolve(__dirname, 'src/web'),
     '@benzin': path.resolve(__dirname, 'src/benzin'),
     '@legends': path.resolve(__dirname, 'src/legends'),
-    react: path.resolve(__dirname, 'node_modules/react')
+    react: path.resolve(__dirname, 'node_modules/react'),
+    // TODO: Temporarily, for Ambire Next, use a pre-release version of gridplus-sdk that supports EIP-7702, look for all #gridplus-sdk-temporary
+    ...(isAmbireNext
+      ? {
+          'gridplus-sdk': path.resolve(__dirname, 'node_modules/gridplus-sdk-e3d6ac0')
+        }
+      : {})
   }
 
   config.resolve.fallback = {
@@ -295,14 +313,6 @@ module.exports = async function (env, argv) {
       {
         from: './node_modules/webextension-polyfill/dist/browser-polyfill.min.js',
         to: 'browser-polyfill.min.js'
-      },
-      {
-        from: require.resolve('@trezor/connect-webextension/build/content-script.js'),
-        to: 'vendor/trezor/trezor-content-script.js'
-      },
-      {
-        from: require.resolve('@trezor/connect-webextension/build/trezor-connect-webextension.js'),
-        to: 'vendor/trezor/trezor-connect-webextension.js'
       }
     ]
 
@@ -330,6 +340,10 @@ module.exports = async function (env, argv) {
       }),
       new CopyPlugin({ patterns: extensionCopyPatterns })
     ]
+
+    // Provides a global variable to all files where globalIsAmbireNext is declared including
+    // content scripts and injected files
+    config.plugins.push(new webpack.DefinePlugin({ globalIsAmbireNext: isAmbireNext }))
 
     // Some dependencies, such as @metamask/eth-sig-util v7+ and v8+, ship .cjs
     // files and define "exports" fields in their package.json. In multi-entry
@@ -432,9 +446,6 @@ module.exports = async function (env, argv) {
           // The drawback is larger bundle size.
           terserRealOptions.mangle = false
         }
-
-        // Disable parallel to avoid nondeterminism in some environments
-        terserPlugin.options.parallel = false
       }
     }
 

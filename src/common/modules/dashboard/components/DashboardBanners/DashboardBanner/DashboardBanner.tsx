@@ -1,9 +1,12 @@
 import React, { useCallback, useMemo } from 'react'
 import { useModalize } from 'react-native-modalize'
 
-import { Action, Banner as BannerType } from '@ambire-common/interfaces/banner'
+import {
+  Action,
+  Banner as BannerType,
+  BannerType as NonMarketingBannerType
+} from '@ambire-common/interfaces/banner'
 import BatchIcon from '@common/assets/svg/BatchIcon'
-import PendingToBeConfirmedIcon from '@common/assets/svg/PendingToBeConfirmedIcon'
 import Banner, { BannerButton } from '@common/components/Banner'
 import useNavigation from '@common/hooks/useNavigation'
 import useToast from '@common/hooks/useToast'
@@ -11,7 +14,7 @@ import DashboardBannerBottomSheet from '@common/modules/dashboard/components/Das
 import { ROUTES } from '@common/modules/router/constants/common'
 import useActionsControllerState from '@web/hooks/useActionsControllerState'
 import useBackgroundService from '@web/hooks/useBackgroundService'
-import useMainControllerState from '@web/hooks/useMainControllerState'
+import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 
 const ERROR_ACTIONS = [
@@ -21,19 +24,22 @@ const ERROR_ACTIONS = [
   'dismiss-7702-banner'
 ]
 
-const DashboardBanner = ({ banner }: { banner: BannerType }) => {
+const DashboardBanner = ({
+  banner
+}: {
+  banner: Omit<BannerType, 'type'> & { type: NonMarketingBannerType }
+}) => {
   const { type, category, title, text, actions = [] } = banner
   const { dispatch } = useBackgroundService()
   const { addToast } = useToast()
   const { navigate } = useNavigation()
-  const { visibleActionsQueue, actionsQueue } = useActionsControllerState()
-  const { statuses } = useMainControllerState()
+  const { visibleActionsQueue } = useActionsControllerState()
+  const { statuses } = useRequestsControllerState()
   const { account, portfolio } = useSelectedAccountControllerState()
   const { ref: sheetRef, close: closeBottomSheet, open: openBottomSheet } = useModalize()
 
   const Icon = useMemo(() => {
     if (category === 'pending-to-be-signed-acc-op') return BatchIcon
-    if (category === 'pending-to-be-confirmed-acc-op') return PendingToBeConfirmedIcon
 
     return null
   }, [category])
@@ -66,9 +72,13 @@ const DashboardBanner = ({ banner }: { banner: BannerType }) => {
           break
 
         case 'open-external-url': {
-          if (type !== 'success') break
-
-          window.open(action.meta.url, '_blank')
+          if (action.meta?.url) {
+            window.open(action.meta.url, '_blank')
+          } else {
+            addToast('Could not open block explorer.', {
+              type: 'error'
+            })
+          }
           break
         }
 
@@ -106,7 +116,7 @@ const DashboardBanner = ({ banner }: { banner: BannerType }) => {
 
         case 'proceed-bridge':
           dispatch({
-            type: 'SWAP_AND_BRIDGE_CONTROLLER_ACTIVE_ROUTE_BUILD_NEXT_USER_REQUEST',
+            type: 'REQUESTS_CONTROLLER_SWAP_AND_BRIDGE_ACTIVE_ROUTE_BUILD_NEXT_USER_REQUEST',
             params: { activeRouteId: action.meta.activeRouteId }
           })
           break
@@ -120,16 +130,9 @@ const DashboardBanner = ({ banner }: { banner: BannerType }) => {
           break
         }
 
-        case 'hide-activity-banner':
-          dispatch({
-            type: 'ACTIVITY_CONTROLLER_HIDE_BANNER',
-            params: action.meta
-          })
-          break
-
         case 'update-extension-version': {
           const shouldPrompt =
-            actionsQueue.filter(({ type: actionType }) => actionType !== 'benzin').length > 0
+            visibleActionsQueue.filter(({ type: actionType }) => actionType !== 'benzin').length > 0
 
           if (shouldPrompt) {
             openBottomSheet()
@@ -161,20 +164,22 @@ const DashboardBanner = ({ banner }: { banner: BannerType }) => {
           )
           break
 
+        case 'enable-networks':
+          dispatch({
+            type: 'MAIN_CONTROLLER_UPDATE_NETWORKS',
+            params: { network: { disabled: false }, chainIds: action.meta.networkChainIds }
+          })
+          break
+
+        case 'dismiss-defi-positions-banner':
+          dispatch({ type: 'DISMISS_DEFI_POSITIONS_BANNER' })
+          break
+
         default:
           break
       }
     },
-    [
-      dispatch,
-      navigate,
-      addToast,
-      visibleActionsQueue,
-      type,
-      account,
-      actionsQueue,
-      openBottomSheet
-    ]
+    [dispatch, navigate, addToast, visibleActionsQueue, type, account, openBottomSheet]
   )
 
   const dismissAction = actions.find((action: Action) => action.label === 'Dismiss')

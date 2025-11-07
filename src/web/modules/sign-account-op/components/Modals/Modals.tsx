@@ -1,7 +1,7 @@
 import { FC } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { SignAccountOpController } from '@ambire-common/controllers/signAccountOp/signAccountOp'
+import { ISignAccountOpController } from '@ambire-common/interfaces/signAccountOp'
 import BottomSheet from '@common/components/BottomSheet'
 import DualChoiceWarningModal from '@common/components/DualChoiceWarningModal'
 import useSign from '@common/hooks/useSign'
@@ -30,7 +30,7 @@ type Props = Pick<
   | 'acknowledgeWarning'
   | 'dismissWarning'
 > & {
-  signAccountOpState: SignAccountOpController | null
+  signAccountOpState: ISignAccountOpController | null
   autoOpen?: 'warnings'
   actionType?: 'swapAndBridge' | 'transfer'
 }
@@ -74,6 +74,7 @@ const Modals: FC<Props> = ({
             secondaryButtonText={t('Cancel')}
             onPrimaryButtonPress={acknowledgeWarning}
             onSecondaryButtonPress={dismissWarning}
+            type={warningToPromptBeforeSign?.type}
           />
         )}
         {slowPaymasterRequest && (

@@ -126,7 +126,10 @@ const Tokens = ({
           )
           const isPinned = PINNED_TOKENS.find(
             ({ address, chainId }) =>
-              token.address.toLowerCase() === address.toLowerCase() && token.chainId === chainId
+              token.address.toLowerCase() === address.toLowerCase() &&
+              token.chainId === chainId &&
+              // exclude projected rewards from pinned tokens
+              token.flags.rewardsType !== 'wallet-projected-rewards'
           )
 
           return (
@@ -200,6 +203,7 @@ const Tokens = ({
             <TabsAndSearch
               openTab={openTab}
               setOpenTab={setOpenTab}
+              currentTab="tokens"
               searchControl={control}
               sessionId={sessionId}
             />
@@ -226,7 +230,7 @@ const Tokens = ({
       if (item === 'empty') {
         return (
           <View style={[flexbox.alignCenter, spacings.pv]}>
-            <Text fontSize={16} weight="medium">
+            <Text testID="no-tokens-text" fontSize={16} weight="medium">
               {!searchValue && !dashboardNetworkFilterName && t("You don't have any tokens yet.")}
               {!searchValue &&
                 dashboardNetworkFilterName &&
@@ -302,12 +306,7 @@ const Tokens = ({
       )
         return null
 
-      return (
-        <TokenItem
-          token={item}
-          testID={`token-${item.address}-${item.chainId}${item.flags.onGasTank ? '-gastank' : ''}`}
-        />
-      )
+      return <TokenItem token={item} />
     },
     [
       initTab?.tokens,

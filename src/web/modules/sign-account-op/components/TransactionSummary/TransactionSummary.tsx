@@ -87,7 +87,7 @@ const TransactionSummary = ({
       type: 'MAIN_CONTROLLER_REJECT_SIGN_ACCOUNT_OP_CALL',
       params: { callId: call.id }
     })
-  }, [dispatch, call.id])
+  }, [isCallRemovedOptimistic, dispatch, call.id])
 
   useEffect(() => {
     let isMounted = true

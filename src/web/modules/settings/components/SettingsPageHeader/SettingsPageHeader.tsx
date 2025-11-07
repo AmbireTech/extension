@@ -16,15 +16,15 @@ interface Props {
 const SettingsPageHeader: FC<Props> = ({ title, children, style }) => {
   const { t } = useTranslation()
   const { maxWidthSize } = useWindowSize()
-  const isWidthXl = maxWidthSize('xl')
+  const isWidthL = maxWidthSize('l')
 
   return (
     <View
       style={[
-        flexbox.directionRow,
+        isWidthL && flexbox.directionRow,
         flexbox.alignCenter,
         flexbox.justifySpaceBetween,
-        isWidthXl ? spacings.mbXl : spacings.mbLg,
+        isWidthL ? spacings.mbXl : spacings.mbLg,
         {
           minHeight: 48
         },

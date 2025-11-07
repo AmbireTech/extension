@@ -2,7 +2,16 @@ import { ViewStyle } from 'react-native'
 
 import { TextWeight } from '@common/components/Text'
 
-type BadgeType = 'info' | 'warning' | 'default' | 'success' | 'error' | 'ok' | 'new'
+type BadgeType =
+  | 'info'
+  | 'info2'
+  | 'warning'
+  | 'default'
+  | 'success'
+  | 'error'
+  | 'ok'
+  | 'new'
+  | 'projectedRewards'
 
 type SpecialBadgeType = 'metamask'
 
@@ -17,6 +26,7 @@ type Props = {
   children?: React.ReactNode
   size?: 'sm' | 'md' | 'lg'
   specialType?: SpecialBadgeType
+  testId?: string
 }
 
 export type { BadgeType, Props, SpecialBadgeType }

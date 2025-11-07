@@ -1,9 +1,11 @@
 import { isWeb } from '@common/config/env'
 import { isExtension } from '@web/constants/browserapi'
 
-type UiType = 'index' | 'tab' | 'action-window'
+type Pathname = 'index' | 'tab' | 'action-window'
 
-const UI_TYPE: { [key: string]: UiType } = {
+type UiType = 'popup' | 'tab' | 'action-window'
+
+const UI_TYPE: { [key: string]: Pathname } = {
   Tab: 'tab',
   Popup: 'index',
   ActionWindow: 'action-window'
@@ -13,6 +15,23 @@ type UiTypeCheck = {
   isTab: boolean
   isActionWindow: boolean
   isPopup: boolean
+  uiType?: UiType
+}
+
+const pathToUiType = (pathname: string): UiType => {
+  try {
+    let uiType = pathname.replace(/^\//, '').replace('.html', '')
+
+    if (uiType === 'index') {
+      uiType = 'popup'
+    }
+
+    return uiType as UiType
+  } catch (e: any) {
+    console.error('Error parsing UI type from pathname:', pathname, e)
+
+    return 'popup'
+  }
 }
 
 export const getUiType = (): UiTypeCheck => {
@@ -25,9 +44,15 @@ export const getUiType = (): UiTypeCheck => {
   }
 
   const { pathname } = window.location
-  return Object.entries(UI_TYPE).reduce((m, [key, value]) => {
+
+  const uiTypeValues = Object.entries(UI_TYPE).reduce((m, [key, value]) => {
     m[`is${key}`] = pathname === `/${value}.html`
 
     return m
   }, {} as UiTypeCheck)
+
+  return {
+    ...uiTypeValues,
+    uiType: pathToUiType(pathname)
+  }
 }

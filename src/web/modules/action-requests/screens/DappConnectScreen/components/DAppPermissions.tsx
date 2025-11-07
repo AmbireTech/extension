@@ -2,7 +2,7 @@ import React, { createContext, FC, useContext, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ColorValue, View } from 'react-native'
 
-import CloseIcon from '@common/assets/svg/CloseIcon'
+import LockIcon from '@common/assets/svg/LockIcon'
 import TransactionsIcon from '@common/assets/svg/TransactionsIcon'
 import VisibilityIcon from '@common/assets/svg/VisibilityIcon'
 import Text, { Props as TextProps } from '@common/components/Text'
@@ -115,11 +115,11 @@ const DAppPermissions: FC<{
         </DAppPermissionText>
       </DAppPermissionWrapper>
       <DAppPermissionWrapper responsiveSizeMultiplier={responsiveSizeMultiplier}>
-        <DAppPermissionIcon backgroundColor={theme.errorBackground}>
-          <CloseIcon
-            width={responsiveSizeMultiplier * 14}
-            height={responsiveSizeMultiplier * 14}
-            color={theme.errorDecorative}
+        <DAppPermissionIcon backgroundColor={theme.successBackground}>
+          <LockIcon
+            width={responsiveSizeMultiplier * 22}
+            height={responsiveSizeMultiplier * 22}
+            color={theme.successDecorative}
           />
         </DAppPermissionIcon>
         <DAppPermissionText style={spacings.ptMi}>

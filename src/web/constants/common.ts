@@ -72,7 +72,8 @@ export const SAFE_RPC_METHODS = [
   'wallet_getCapabilities',
   'wallet_sendCalls',
   'wallet_getCallsStatus',
-  'wallet_showCallsStatus'
+  'wallet_showCallsStatus',
+  'wallet_getCurrentAutoLoginPolicy'
 ]
 
 export const ETH_RPC_METHODS_AMBIRE_MUST_HANDLE = [
@@ -91,5 +92,6 @@ export const ETH_RPC_METHODS_AMBIRE_MUST_HANDLE = [
   'wallet_getCapabilities',
   'wallet_sendCalls',
   'wallet_getCallsStatus',
-  'wallet_showCallsStatus'
+  'wallet_showCallsStatus',
+  'wallet_getCurrentAutoLoginPolicy'
 ]

@@ -61,6 +61,7 @@ const TokenSection: FC<Props> = ({
       <TokenListHeader />
       {!isLoading && !data.length && (
         <Text
+          testID="you-dont-have-any-text"
           appearance="secondaryText"
           fontSize={16}
           style={[spacings.mt2Xl, text.center]}

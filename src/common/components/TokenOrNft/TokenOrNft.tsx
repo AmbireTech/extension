@@ -140,6 +140,7 @@ const TokenOrNft: FC<Props> = ({
           tokenInfo={assetInfo?.tokenInfo}
           marginRight={marginRight}
           hideLinks={hideLinks}
+          chainId={chainId}
         />
       )
 
@@ -164,6 +165,7 @@ const TokenOrNft: FC<Props> = ({
       tokenInfo={assetInfo?.tokenInfo}
       marginRight={marginRight}
       hideLinks={hideLinks}
+      chainId={chainId}
     />
   )
 }

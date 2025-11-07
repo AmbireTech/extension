@@ -1,6 +1,18 @@
 @import '@legends/styles/base.scss';
 
 
+.overachieverWrapper {
+  @include container;
+  margin: 0;
+  @include breakpoint-down-from(medium-desktop) {
+    margin-left: 3rem;
+  }
+
+  @include breakpoint-down-from(tablet) {
+    margin-left: 0;
+  }
+}
+
 .group {
   margin-bottom: 2.75rem;
 }

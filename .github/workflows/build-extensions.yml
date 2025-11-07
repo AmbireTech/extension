@@ -1,19 +1,31 @@
-name: Build production browser extensions ⚡
+# Temporarily build webkit only, because gecko build requires ARM64 architecture, see build-extension-gecko.yml
+name: Build AMD64 webkit production browser extension ⚡
 
 on:
   workflow_dispatch: # Manual trigger
   release:
-    types: [published] # Triggers on new releases
-    branches:
-      - v2 # Only trigger on releases from main branch
+    types: [published] # Triggers on new releases (from any branch)
 
 jobs:
   build:
-    name: Build browser extension webkit and gecko .zips, ready for review submission
+    name: Build extension .zips, ready for review submission
     runs-on: ubuntu-24.04
-    environment: extension-production
+    strategy:
+      matrix:
+        include:
+          - environment: extension-production
+            build_variant: webkit
+            artifact_suffix: webkit
+          - environment: extension-production-next
+            build_variant: next:webkit
+            artifact_suffix: next-webkit
+          # TODO: Enable gecko builds when build-extension-gecko.yml is deprecated
+          # - environment: extension-production
+          #   build_variant: gecko
+          #   artifact_suffix: gecko
+    environment: ${{ matrix.environment }}
     concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}
+      group: ${{ github.workflow }}-${{ github.ref }}-${{ matrix.build_variant }}
     steps:
       - name: Checkout code 🛎️
         uses: actions/checkout@v4
@@ -37,7 +49,7 @@ jobs:
           node-version-file: '.nvmrc'
 
       - name: Install Dependencies
-        run: PUPPETEER_SKIP_DOWNLOAD='true' yarn install --frozen-lockfile
+        run: yarn install --frozen-lockfile
         shell: bash
 
       - name: Generate .env file for review
@@ -46,37 +58,50 @@ jobs:
           echo "VELCRO_URL=\"${{ vars.VELCRO_URL }}\"" >> .env
           echo "BROWSER_EXTENSION_PUBLIC_KEY=\"${{ vars.BROWSER_EXTENSION_PUBLIC_KEY }}\"" >> .env
           echo "REACT_APP_PIMLICO_API_KEY=\"${{ vars.REACT_APP_PIMLICO_API_KEY }}\"" >> .env
-          echo "REACT_APP_JIFFYSCAN_API_KEY=\"${{ vars.REACT_APP_JIFFYSCAN_API_KEY }}\"" >> .env
+          echo "REACT_APP_ETHERSPOT_API_KEY=\"${{ vars.REACT_APP_ETHERSPOT_API_KEY }}\"" >> .env
+          echo "REACT_APP_CANDIDE_API_KEY=\"${{ vars.REACT_APP_CANDIDE_API_KEY }}\"" >> .env
           echo "NFT_CDN_URL=\"${{ vars.NFT_CDN_URL }}\"" >> .env
           echo "LEGENDS_NFT_ADDRESS=\"${{ vars.LEGENDS_NFT_ADDRESS }}\"" >> .env
           echo "LI_FI_API_KEY=\"${{ vars.LI_FI_API_KEY }}\"" >> .env
+          echo "BUNGEE_API_KEY=\"${{ vars.BUNGEE_API_KEY }}\"" >> .env
+          echo "SENTRY_DSN_BROWSER_EXTENSION=\"${{ vars.SENTRY_DSN_BROWSER_EXTENSION }}\"" >> .env
         shell: bash
 
-      - name: Build extensions
+      - name: Get version from app.json
+        id: version
+        run: echo "VERSION=$(grep '"version"' ./app.json | head -n1 | cut -d':' -f2 | tr -d ' ",')" >> $GITHUB_OUTPUT
+        shell: bash
+
+      - name: Build extensions and upload source maps to Sentry
         env:
           RELAYER_URL: ${{ vars.RELAYER_URL }}
           VELCRO_URL: ${{ vars.VELCRO_URL }}
           BROWSER_EXTENSION_PUBLIC_KEY: ${{ vars.BROWSER_EXTENSION_PUBLIC_KEY }}
           REACT_APP_PIMLICO_API_KEY: ${{ vars.REACT_APP_PIMLICO_API_KEY }}
-          REACT_APP_JIFFYSCAN_API_KEY: ${{ vars.REACT_APP_JIFFYSCAN_API_KEY }}
+          REACT_APP_ETHERSPOT_API_KEY: ${{ vars.REACT_APP_ETHERSPOT_API_KEY }}
+          REACT_APP_CANDIDE_API_KEY: ${{ vars.REACT_APP_CANDIDE_API_KEY }}
           NFT_CDN_URL: ${{ vars.NFT_CDN_URL }}
           LEGENDS_NFT_ADDRESS: ${{ vars.LEGENDS_NFT_ADDRESS }}
           LI_FI_API_KEY: ${{ vars.LI_FI_API_KEY }}
-        run: yarn build:extensions
+          BUNGEE_API_KEY: ${{ vars.BUNGEE_API_KEY }}
+          SENTRY_DSN_BROWSER_EXTENSION: ${{ vars.SENTRY_DSN_BROWSER_EXTENSION }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN_BROWSER_EXTENSIONS }}
+        run: yarn build:extensions:${{ matrix.build_variant }}
 
-      - name: Generate .zip with the full source code (including .env)
-        run: |
-          zip -r extension-source-code.zip . -x "node_modules/*" -x ".git/*" -x "build/*" -x "*.zip"
-        shell: bash
+      # TODO: Gecko-only, so skip while building webkit only
+      # - name: Generate .zip with the full source code (including .env)
+      #   run: |
+      #     zip -r extension-source-code.zip . -x "node_modules/*" -x ".git/*" -x "build/*" -x "*.zip" -x "src/legends/*"
+      #   shell: bash
 
-      - name: Upload source code 📦
-        uses: actions/upload-artifact@v4
-        with:
-          name: extension-source-code
-          path: ./extension-source-code.zip
+      # - name: Upload source code 📦
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: extension-source-code
+      #     path: ./extension-source-code.zip
 
       - name: Upload extension builds 📦
         uses: actions/upload-artifact@v4
         with:
-          name: extension-builds-and-source-maps
+          name: ambire-extension-v${{ steps.version.outputs.VERSION }}-${{ matrix.artifact_suffix }}-with-sourcemaps
           path: ./build/*.zip

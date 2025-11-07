@@ -51,7 +51,7 @@ const Dropdown: FC<Props> = ({ data, externalPosition, setExternalPosition, onSe
         setPosition({ x: 0, y: 0 })
       }
     }
-    document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener('mousedown', handleClickOutside, { passive: true })
     return () => {
       if (!isWeb) return
       document.removeEventListener('mousedown', handleClickOutside)

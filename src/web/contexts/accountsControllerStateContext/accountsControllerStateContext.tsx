@@ -1,12 +1,12 @@
 import React, { createContext, useEffect } from 'react'
 
-import { AccountsController } from '@ambire-common/controllers/accounts/accounts'
+import { IAccountsController } from '@ambire-common/interfaces/account'
 import useDeepMemo from '@common/hooks/useDeepMemo'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useControllerState from '@web/hooks/useControllerState'
 import useMainControllerState from '@web/hooks/useMainControllerState'
 
-const AccountsControllerStateContext = createContext<AccountsController>({} as AccountsController)
+const AccountsControllerStateContext = createContext<IAccountsController>({} as IAccountsController)
 
 const AccountsControllerStateProvider: React.FC<any> = ({ children }) => {
   const controller = 'accounts'

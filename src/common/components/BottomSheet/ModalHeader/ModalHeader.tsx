@@ -2,10 +2,11 @@ import React, { FC } from 'react'
 import { TouchableOpacity, View, ViewStyle } from 'react-native'
 
 import CloseIcon from '@common/assets/svg/CloseIcon'
-import BackButton from '@common/components/BackButton'
+import AmbireLogoHorizontal from '@common/components/AmbireLogoHorizontal'
 import { PanelBackButton } from '@common/components/Panel/Panel'
 import Text from '@common/components/Text'
 import spacings from '@common/styles/spacings'
+import flexbox from '@common/styles/utils/flexbox'
 
 import getStyles from './styles'
 
@@ -17,6 +18,7 @@ interface Props {
   title?: string
   titleSuffix?: JSX.Element
   style?: ViewStyle
+  hasAmbireLogo?: boolean
 }
 
 const ModalHeader: FC<Props> = ({
@@ -26,7 +28,8 @@ const ModalHeader: FC<Props> = ({
   withBackButton = true,
   title,
   titleSuffix,
-  style
+  style,
+  hasAmbireLogo = false
 }) => {
   const styles = getStyles()
 
@@ -48,9 +51,19 @@ const ModalHeader: FC<Props> = ({
       )}
       {titleSuffix}
       {!hideRightSideContainer && (
-        <View style={styles.sideContainer}>
+        <View
+          style={[
+            styles.rightSideContainer,
+            ...[
+              hasAmbireLogo && !!handleClose && !withBackButton
+                ? flexbox.justifySpaceBetween
+                : flexbox.justifyEnd
+            ]
+          ]}
+        >
+          {hasAmbireLogo && <AmbireLogoHorizontal />}
           {!!handleClose && !withBackButton && (
-            <TouchableOpacity onPress={handleClose} style={styles.closeIcon}>
+            <TouchableOpacity onPress={handleClose}>
               <CloseIcon />
             </TouchableOpacity>
           )}

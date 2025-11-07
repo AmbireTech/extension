@@ -8,11 +8,13 @@ import flexbox from '@common/styles/utils/flexbox'
 interface Style {
   container: ViewStyle
   infoBadge: ViewStyle
+  info2Badge: ViewStyle
   defaultBadge: ViewStyle
   successBadge: ViewStyle
   warningBadge: ViewStyle
   errorBadge: ViewStyle
   newBadge: ViewStyle
+  projectedRewards: ViewStyle
 }
 
 const label: ViewStyle = {
@@ -33,6 +35,11 @@ const getStyles = (theme: ThemeProps) =>
       ...label,
       borderColor: theme.infoDecorative,
       backgroundColor: theme.infoBackground
+    },
+    info2Badge: {
+      ...label,
+      borderColor: theme.info2Decorative,
+      backgroundColor: theme.info2Background
     },
     defaultBadge: {
       ...label,
@@ -59,6 +66,11 @@ const getStyles = (theme: ThemeProps) =>
       borderColor: theme.infoDecorative,
       // @ts-ignore
       backgroundImage: 'linear-gradient(90deg, #6000FF 0%, #FFA000 100%)'
+    },
+    projectedRewards: {
+      ...label,
+      borderColor: `${String(theme.projectedRewards)}10`,
+      backgroundColor: `${String(theme.projectedRewards)}10`
     }
   })
 

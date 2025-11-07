@@ -106,7 +106,7 @@ const AccountKeyDetails: FC<Props> = ({ details }) => {
     }
 
     return externalKeyDetails
-  }, [type, details.meta, t, dedicatedToOneSA, addr])
+  }, [type, details.meta, t, dedicatedToOneSA, addr, label])
 
   return (
     <View style={[spacings.phSm, spacings.pvSm, spacings.mtMi]}>

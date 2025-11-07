@@ -24,6 +24,7 @@ type ButtonTypes =
   | 'warning'
   | 'info'
   | 'info2'
+  | 'info3'
   | 'success'
   | 'gray'
 
@@ -97,7 +98,8 @@ const ButtonInnerContainer = ({
       info: [],
       info2: [],
       success: [],
-      gray: []
+      gray: [],
+      info3: []
     }),
     [themeType, theme]
   )
@@ -223,6 +225,13 @@ const Button = ({
       warning: [OPACITY_ANIMATION],
       info: [OPACITY_ANIMATION],
       info2: [OPACITY_ANIMATION],
+      info3: [
+        {
+          property: 'backgroundColor',
+          from: `${String(theme.info3Button)}`,
+          to: theme.info3ButtonHover
+        }
+      ],
       success: [OPACITY_ANIMATION],
       gray: [
         {
@@ -275,6 +284,10 @@ const Button = ({
     },
     info2: {
       backgroundColor: theme.info2Text,
+      borderWidth: 0
+    },
+    info3: {
+      backgroundColor: theme.info3Button,
       borderWidth: 0
     },
     success: {
@@ -369,6 +382,13 @@ const Button = ({
           to: theme.primaryBackground
         }
       ],
+      info3: [
+        {
+          property: 'color',
+          from: theme.primaryBackground,
+          to: theme.primaryBackground
+        }
+      ],
       success: [
         {
           property: 'color',
@@ -411,11 +431,14 @@ const Button = ({
 
   const enhancedChildren = React.Children.toArray(children).map((child, index) => {
     if (index === 0 && React.isValidElement(child)) {
-      // Only override color if it's not already set
       const childProps = child.props as any
-      if (childProps.color === undefined) {
-        return React.cloneElement(child, { color: accentColor || effectiveColor } as any)
-      }
+      const extraProps: any = {}
+
+      if (childProps.color === undefined) extraProps.color = accentColor || effectiveColor
+
+      extraProps.className = [childProps.className, 'button-icon'].filter(Boolean).join(' ')
+
+      return React.cloneElement(child, extraProps)
     }
 
     return child

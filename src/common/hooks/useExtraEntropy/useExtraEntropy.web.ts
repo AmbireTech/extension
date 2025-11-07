@@ -10,7 +10,7 @@ const useExtraEntropy = () => {
       setMousePos({ x: e.clientX, y: e.clientY, timestamp: e.timeStamp })
     }
 
-    document.addEventListener('mousemove', handleMouseMove)
+    document.addEventListener('mousemove', handleMouseMove, { passive: true })
 
     return () => {
       document.removeEventListener('mousemove', handleMouseMove)

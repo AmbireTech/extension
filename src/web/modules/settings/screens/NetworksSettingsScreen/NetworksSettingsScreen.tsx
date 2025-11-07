@@ -162,7 +162,7 @@ const NetworksSettingsScreen = () => {
               style={{ height: 48 }}
               childrenPosition="left"
             >
-              <AddIcon color={theme.primary} style={spacings.mrTy} />
+              <AddIcon style={spacings.mrTy} />
             </Button>
           </View>
         </View>

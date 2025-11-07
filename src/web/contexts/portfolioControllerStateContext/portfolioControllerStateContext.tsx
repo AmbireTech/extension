@@ -1,12 +1,12 @@
 import React, { createContext, useEffect } from 'react'
 
-import { PortfolioController } from '@ambire-common/controllers/portfolio/portfolio'
+import { IPortfolioController } from '@ambire-common/interfaces/portfolio'
 import useDeepMemo from '@common/hooks/useDeepMemo'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useControllerState from '@web/hooks/useControllerState'
 
-const PortfolioControllerStateContext = createContext<PortfolioController>(
-  {} as PortfolioController
+const PortfolioControllerStateContext = createContext<IPortfolioController>(
+  {} as IPortfolioController
 )
 
 const PortfolioControllerStateProvider: React.FC<any> = ({ children }) => {

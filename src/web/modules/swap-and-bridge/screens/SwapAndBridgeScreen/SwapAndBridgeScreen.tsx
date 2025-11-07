@@ -8,17 +8,19 @@ import { SwapAndBridgeFormStatus } from '@ambire-common/controllers/swapAndBridg
 import { Key } from '@ambire-common/interfaces/keystore'
 import Alert from '@common/components/Alert'
 import BackButton from '@common/components/BackButton'
+import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import Spinner from '@common/components/Spinner'
 import useNavigation from '@common/hooks/useNavigation'
 import usePrevious from '@common/hooks/usePrevious'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_MD, SPACING_MI } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { Content, Form, Wrapper } from '@web/components/TransactionsScreen'
 import useBackgroundService from '@web/hooks/useBackgroundService'
-import useMainControllerState from '@web/hooks/useMainControllerState'
+import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControllerState'
+import useSimulationError from '@web/modules/portfolio/hooks/SimulationError/useSimulationError'
 import BatchAdded from '@web/modules/sign-account-op/components/OneClick/BatchModal/BatchAdded'
 import Buttons from '@web/modules/sign-account-op/components/OneClick/Buttons'
 import Estimation from '@web/modules/sign-account-op/components/OneClick/Estimation'
@@ -60,30 +62,33 @@ const SwapAndBridgeScreen = () => {
     setIsAutoSelectRouteDisabled,
     isBridge,
     setShowAddedToBatch,
+    batchNetworkUserRequestsCount,
     networkUserRequests,
     isLocalStateOutOfSync
   } = useSwapAndBridgeForm()
   const {
     sessionIds,
     formStatus,
+    fromChainId,
+    toChainId,
     isHealthy,
     shouldEnableRoutesSelection,
     updateQuoteStatus,
     signAccountOpController,
     isAutoSelectRouteDisabled,
     hasProceeded,
-    swapSignErrors
+    swapSignErrors,
+    quote
   } = useSwapAndBridgeControllerState()
   const { portfolio } = useSelectedAccountControllerState()
 
-  const { statuses: mainCtrlStatuses } = useMainControllerState()
+  const { statuses: requestsCtrlStatuses } = useRequestsControllerState()
   const prevPendingRoutes: any[] | undefined = usePrevious(pendingRoutes)
   const scrollViewRef: any = useRef(null)
   const { dispatch } = useBackgroundService()
 
-  const handleBackButtonPress = useCallback(() => {
-    navigate(ROUTES.dashboard)
-  }, [navigate])
+  const { simulationError: fromChainSimulationError } = useSimulationError({ chainId: fromChainId })
+  const { simulationError: toChainSimulationError } = useSimulationError({ chainId: toChainId })
 
   useEffect(() => {
     if (!pendingRoutes || !prevPendingRoutes) return
@@ -105,19 +110,17 @@ const SwapAndBridgeScreen = () => {
     (!signAccountOpController ||
       signAccountOpController.estimation.status === EstimationStatus.Loading)
 
-  const isNotReadyToProceed = useMemo(() => {
+  const isLoading = useMemo(() => {
     return (
-      formStatus !== SwapAndBridgeFormStatus.ReadyToSubmit ||
-      mainCtrlStatuses.buildSwapAndBridgeUserRequest !== 'INITIAL' ||
+      requestsCtrlStatuses.buildSwapAndBridgeUserRequest !== 'INITIAL' ||
       updateQuoteStatus === 'LOADING' ||
       isEstimatingRoute
     )
-  }, [
-    isEstimatingRoute,
-    formStatus,
-    mainCtrlStatuses.buildSwapAndBridgeUserRequest,
-    updateQuoteStatus
-  ])
+  }, [isEstimatingRoute, requestsCtrlStatuses.buildSwapAndBridgeUserRequest, updateQuoteStatus])
+
+  const isNotReadyToProceed = useMemo(() => {
+    return formStatus !== SwapAndBridgeFormStatus.ReadyToSubmit || isLoading
+  }, [formStatus, isLoading])
 
   const onBatchAddedPrimaryButtonPress = useCallback(() => {
     navigate(WEB_ROUTES.dashboard)
@@ -149,9 +152,7 @@ const SwapAndBridgeScreen = () => {
   const handleBroadcastAccountOp = useCallback(() => {
     dispatch({
       type: 'MAIN_CONTROLLER_HANDLE_SIGN_AND_BROADCAST_ACCOUNT_OP',
-      params: {
-        updateType: 'Swap&Bridge'
-      }
+      params: { type: 'one-click-swap-and-bridge' }
     })
   }, [dispatch])
 
@@ -179,10 +180,11 @@ const SwapAndBridgeScreen = () => {
   const buttons = useMemo(() => {
     return (
       <>
-        {isTab && <BackButton onPress={handleBackButtonPress} />}
+        {isTab && <BackButton onPress={onBackButtonPress} />}
         <Buttons
           signAccountOpErrors={swapSignErrors}
           isNotReadyToProceed={isNotReadyToProceed}
+          isLoading={isLoading}
           handleSubmitForm={handleSubmitForm}
           isBridge={isBridge}
           networkUserRequests={networkUserRequests}
@@ -191,11 +193,12 @@ const SwapAndBridgeScreen = () => {
       </>
     )
   }, [
-    handleBackButtonPress,
+    onBackButtonPress,
+    swapSignErrors,
+    isNotReadyToProceed,
+    isLoading,
     handleSubmitForm,
     isBridge,
-    isNotReadyToProceed,
-    swapSignErrors,
     networkUserRequests,
     isLocalStateOutOfSync
   ])
@@ -226,6 +229,7 @@ const SwapAndBridgeScreen = () => {
     return (
       <BatchAdded
         title={t('Swap & Bridge')}
+        callsCount={batchNetworkUserRequestsCount}
         primaryButtonText={t('Open dashboard')}
         secondaryButtonText={t('Add more')}
         onPrimaryButtonPress={onBatchAddedPrimaryButtonPress}
@@ -235,7 +239,7 @@ const SwapAndBridgeScreen = () => {
   }
 
   return (
-    <Wrapper title={t('Swap & Bridge')} handleGoBack={onBackButtonPress} buttons={buttons}>
+    <Wrapper title={t('Swap & Bridge')} buttons={buttons}>
       <Content scrollViewRef={scrollViewRef} buttons={buttons}>
         {isHealthy === false && (
           <Alert
@@ -248,17 +252,26 @@ const SwapAndBridgeScreen = () => {
           />
         )}
         <Form>
-          <FromToken
-            fromTokenOptions={fromTokenOptions}
-            fromTokenValue={fromTokenValue}
-            fromAmountValue={fromAmountValue}
-            fromTokenAmountSelectDisabled={fromTokenAmountSelectDisabled}
-            onFromAmountChange={onFromAmountChange}
-            setIsAutoSelectRouteDisabled={setIsAutoSelectRouteDisabled}
-          />
+          <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mb]}>
+            {!isTab && <PanelBackButton onPress={onBackButtonPress} style={spacings.mrSm} />}
+            <PanelTitle title={t('Swap & Bridge')} />
+            {!isTab && <View style={{ width: 40 }} />}
+          </View>
+          <View style={{ marginBottom: SPACING_MD + SPACING_MI / 2 }}>
+            <FromToken
+              fromTokenOptions={fromTokenOptions}
+              fromTokenValue={fromTokenValue}
+              fromAmountValue={fromAmountValue}
+              fromTokenAmountSelectDisabled={fromTokenAmountSelectDisabled}
+              onFromAmountChange={onFromAmountChange}
+              setIsAutoSelectRouteDisabled={setIsAutoSelectRouteDisabled}
+              simulationFailed={!!fromChainSimulationError}
+            />
+          </View>
           <ToToken
             isAutoSelectRouteDisabled={isAutoSelectRouteDisabled}
             setIsAutoSelectRouteDisabled={setIsAutoSelectRouteDisabled}
+            simulationFailed={!!toChainSimulationError}
           />
         </Form>
         <RouteInfo
@@ -278,6 +291,7 @@ const SwapAndBridgeScreen = () => {
         handleBroadcastAccountOp={handleBroadcastAccountOp}
         hasProceeded={hasProceeded}
         signAccountOpController={signAccountOpController}
+        serviceFee={quote?.selectedRoute?.serviceFee}
       />
       <PriceImpactWarningModal
         sheetRef={priceImpactModalRef}

@@ -95,7 +95,7 @@
 
     .video {
       min-height: 15.625rem;
-      height: 100%;
+      margin: auto;
       width: 100%;
     }
   }
@@ -187,7 +187,6 @@
     margin-bottom: 0.75rem;
   }
 }
-
 
 @include breakpoint-down-from(large-tablet) {
   .wrapper {

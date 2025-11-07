@@ -23,7 +23,8 @@ import text from '@common/styles/utils/text'
 import { DEFAULT_KEYSTORE_PASSWORD_DEV } from '@env'
 import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
 import { POPUP_WIDTH } from '@web/constants/spacings'
-import { openInTab } from '@web/extension-services/background/webapi/tab'
+import { openInternalPageInTab } from '@web/extension-services/background/webapi/tab'
+import useActionsControllerState from '@web/hooks/useActionsControllerState'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 import { getUiType } from '@web/utils/uiType'
@@ -44,6 +45,7 @@ const KeyStoreUnlockScreen = () => {
   const { navigate } = useNavigation()
   const { dispatch } = useBackgroundService()
   const keystoreState = useKeystoreControllerState()
+  const { actionWindow } = useActionsControllerState()
   const { height } = useElementSize(contentContainerRef)
   const {
     control,
@@ -229,9 +231,10 @@ const KeyStoreUnlockScreen = () => {
 
             <TouchableOpacity
               onPress={() =>
-                openInTab({
-                  url: `tab.html#/${ROUTES.keyStoreReset}`,
-                  shouldCloseCurrentWindow: true
+                openInternalPageInTab({
+                  route: ROUTES.keyStoreEmailRecovery,
+                  shouldCloseCurrentWindow: !getUiType().isTab,
+                  windowId: actionWindow.windowProps?.createdFromWindowId
                 })
               }
               hitSlop={FOOTER_BUTTON_HIT_SLOP}

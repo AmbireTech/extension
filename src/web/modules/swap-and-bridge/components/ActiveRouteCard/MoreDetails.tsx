@@ -2,13 +2,12 @@ import { useTranslation } from 'react-i18next'
 import { Pressable, StyleProp, View, ViewStyle } from 'react-native'
 
 import { SwapAndBridgeActiveRoute } from '@ambire-common/interfaces/swapAndBridge'
+import { getLink } from '@ambire-common/libs/swapAndBridge/swapAndBridge'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@web/extension-services/background/webapi/tab'
-
-const LIFI_EXPLORER_URL = 'https://scan.li.fi'
 
 const MoreDetails = ({
   activeRoute,
@@ -20,8 +19,7 @@ const MoreDetails = ({
   const { t } = useTranslation()
   const { themeType, theme } = useTheme()
   const handleOpenExplorer = async (route: SwapAndBridgeActiveRoute) => {
-    const link = `${LIFI_EXPLORER_URL}/tx/${route.userTxHash}`
-    await openInTab({ url: link })
+    await openInTab({ url: getLink(route) })
   }
 
   return (

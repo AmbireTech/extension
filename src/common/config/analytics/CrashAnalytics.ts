@@ -24,4 +24,5 @@ SentryLib.init({
 export const setUserContext = (u: SentryLib.Native.User) => Sentry.setUser(u)
 
 export const captureException = (e: any) => Sentry.captureException(e)
+export const setExtraContext = Sentry.setExtra
 export const captureMessage = (message: string) => Sentry.captureMessage(message)

@@ -1,5 +1,5 @@
 export type FinalizedStatusType = {
-  status: 'confirmed' | 'dropped' | 'rejected' | 'failed' | 'fetching'
+  status: 'confirmed' | 'dropped' | 'rejected' | 'failed' | 'fetching' | 'not-found'
   reason?: string
 } | null
 

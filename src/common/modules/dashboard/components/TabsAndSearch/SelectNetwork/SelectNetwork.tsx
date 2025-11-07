@@ -15,6 +15,7 @@ import { AnimatedPressable, DURATIONS, useMultiHover } from '@web/hooks/useHover
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import { getUiType } from '@web/utils/uiType'
+import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tab/Tab'
 
 import getStyles from './styles'
 
@@ -25,7 +26,11 @@ const maxNetworkNameLengths = {
   tab: 8
 } as const
 
-const SelectNetwork = () => {
+interface Props {
+  currentTab: TabType
+}
+
+const SelectNetwork = ({ currentTab }: Props) => {
   const { styles } = useTheme(getStyles)
   const { t } = useTranslation()
   const { dashboardNetworkFilter } = useSelectedAccountControllerState()
@@ -119,10 +124,16 @@ const SelectNetwork = () => {
               width={14}
               height={14}
             />
-            <Text fontSize={14}>{filterByNetworkName}</Text>
+            <Text testID={`networks-dropdown-${currentTab}`} fontSize={14}>
+              {filterByNetworkName}
+            </Text>
           </View>
         ) : (
-          <Text fontSize={14} color={isHovered ? theme.primaryText : theme.secondaryText}>
+          <Text
+            testID={`networks-dropdown-${currentTab}`}
+            fontSize={14}
+            color={isHovered ? theme.primaryText : theme.secondaryText}
+          >
             {t('All Networks')}
           </Text>
         )}

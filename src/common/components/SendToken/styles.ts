@@ -17,9 +17,8 @@ const getStyles = (theme: ThemeProps) =>
     container: {
       backgroundColor: theme.secondaryBackground,
       ...common.borderRadiusPrimary,
-      ...spacings.pt,
-      ...spacings.pr2Xl,
-      ...spacings.pbSm,
+      ...spacings.pvSm,
+      paddingRight: 40,
       ...spacings.pl
     },
     containerWarning: {

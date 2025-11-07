@@ -163,7 +163,7 @@ const useAddressInput = ({
     if (!handleRevalidate) return
 
     handleRevalidate()
-  }, [handleRevalidate, debouncedValidation])
+  }, [handleRevalidate, debouncedValidation, validation.message])
 
   const reset = useCallback(() => {
     setAddressState({
@@ -177,8 +177,15 @@ const useAddressInput = ({
     // Disable the form if the address is not the same as the debounced address
     // This disables the submit button in the delay window
     if (validation.message !== debouncedValidation?.message) return false
+
+    // Disable the form if the address is resolving
+    if (!debouncedValidation?.isError && debouncedValidation.message === 'Resolving domain...') {
+      return false
+    }
+
     // Disable the form if there is an error
-    if (debouncedValidation?.isError) return debouncedValidation.message
+    if (debouncedValidation?.isError)
+      return !debouncedValidation?.isError && debouncedValidation.message === ''
 
     if (addressState.isDomainResolving) return false
 

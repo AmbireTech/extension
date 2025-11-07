@@ -1,13 +1,10 @@
 import { Signature, toBeHex, Transaction } from 'ethers'
 
 import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
-import { EIP7702Auth } from '@ambire-common/consts/7702'
-import { Hex } from '@ambire-common/interfaces/hex'
 import {
   ExternalKey,
   ExternalSignerController,
-  KeystoreSignerInterface,
-  TxnRequest
+  KeystoreSignerInterface
 } from '@ambire-common/interfaces/keystore'
 import { TypedMessage } from '@ambire-common/interfaces/userRequest'
 import {
@@ -51,7 +48,9 @@ class TrezorSigner implements KeystoreSignerInterface {
 
   init(externalDeviceController?: ExternalSignerController) {
     if (!externalDeviceController) {
-      throw new ExternalSignerError('trezorSigner: externalDeviceController not initialized')
+      throw new ExternalSignerError('trezorSigner: externalDeviceController not initialized', {
+        sendCrashReport: true
+      })
     }
 
     // TODO: Figure out a better approach than to cast the controller type
@@ -61,14 +60,20 @@ class TrezorSigner implements KeystoreSignerInterface {
   #prepareForSigning = async () => {
     if (!this.controller) {
       throw new ExternalSignerError(
-        'Something went wrong when preparing Trezor to sign. Please try again or contact support if the problem persists.'
+        'Something went wrong when preparing Trezor to sign. Please try again or contact support if the problem persists.',
+        {
+          sendCrashReport: true
+        }
       )
     }
 
     await this.controller.initialLoadPromise
     if (!this.controller.isInitiated || !this.controller.walletSDK) {
       throw new ExternalSignerError(
-        'Something went wrong when preparing Trezor to sign. Please try restarting your browser or contact support if the problem persists.'
+        'Something went wrong when preparing Trezor to sign. Please try restarting your browser or contact support if the problem persists.',
+        {
+          sendCrashReport: true
+        }
       )
     }
 
@@ -111,7 +116,8 @@ class TrezorSigner implements KeystoreSignerInterface {
         )}) is different than the key we expected (${shortenAddress(
           this.key.addr,
           13
-        )}). You likely unlocked your Trezor with different passphrase or the Trezor you connected has a different seed.`
+        )}). You likely unlocked your Trezor with different passphrase or the Trezor you connected has a different seed.`,
+        { sendCrashReport: false }
       )
     }
   }
@@ -126,7 +132,9 @@ class TrezorSigner implements KeystoreSignerInterface {
 
   signRawTransaction: KeystoreSignerInterface['signRawTransaction'] = async (txnRequest) => {
     if (typeof txnRequest.value === 'undefined') {
-      throw new ExternalSignerError('trezorSigner: missing value in transaction request')
+      throw new ExternalSignerError('trezorSigner: missing value in transaction request', {
+        sendCrashReport: true
+      })
     }
 
     await this.#prepareForSigning()
@@ -172,6 +180,7 @@ class TrezorSigner implements KeystoreSignerInterface {
 
     if (!res.success)
       throw new ExternalSignerError(
+        // @TODO: Implement a mechanism that reports the error if it's not humanized
         getMessageFromTrezorErrorCode(res.payload?.code, res.payload?.error)
       )
 
@@ -199,7 +208,10 @@ class TrezorSigner implements KeystoreSignerInterface {
     } catch (error: any) {
       throw new ExternalSignerError(
         error?.message ||
-          'Signing failed for unknown reason. Please try again later or contact support if the problem persists.'
+          'Signing failed for unknown reason. Please try again later or contact support if the problem persists.',
+        {
+          sendCrashReport: true
+        }
       )
     }
   }
@@ -248,6 +260,7 @@ class TrezorSigner implements KeystoreSignerInterface {
 
     if (!res.success)
       throw new ExternalSignerError(
+        // @TODO: Implement a mechanism that reports the error if it's not humanized
         getMessageFromTrezorErrorCode(res.payload?.code, res.payload?.error)
       )
 
@@ -270,7 +283,10 @@ class TrezorSigner implements KeystoreSignerInterface {
 
     if (!res.success)
       throw new ExternalSignerError(
-        getMessageFromTrezorErrorCode(res.payload?.code, res.payload?.error)
+        getMessageFromTrezorErrorCode(res.payload?.code, res.payload?.error),
+        {
+          sendCrashReport: true
+        }
       )
 
     this.#validateSigningKey(res.payload.address)
@@ -278,14 +294,16 @@ class TrezorSigner implements KeystoreSignerInterface {
     return addHexPrefix(res.payload.signature)
   }
 
-  // eslint-disable-next-line class-methods-use-this
-  sign7702(hex: string): { yParity: Hex; r: Hex; s: Hex } {
-    throw new Error('not support', { cause: hex })
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  sign7702: KeystoreSignerInterface['sign7702'] = ({ chainId, contract, nonce }) => {
+    throw new Error('not support', { cause: contract })
   }
 
-  // eslint-disable-next-line class-methods-use-this
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  signTransactionTypeFour(txnRequest: TxnRequest, eip7702Auth: EIP7702Auth): Hex {
+  signTransactionTypeFour: KeystoreSignerInterface['signTransactionTypeFour'] = ({
+    txnRequest,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    eip7702Auth
+  }) => {
     throw new Error('not supported', { cause: txnRequest })
   }
 

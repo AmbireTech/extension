@@ -1,13 +1,13 @@
 import React, { createContext, useEffect } from 'react'
 
-import { AddressBookController } from '@ambire-common/controllers/addressBook/addressBook'
+import { IAddressBookController } from '@ambire-common/interfaces/addressBook'
 import useDeepMemo from '@common/hooks/useDeepMemo'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useControllerState from '@web/hooks/useControllerState'
 import useMainControllerState from '@web/hooks/useMainControllerState'
 
-const AddressBookControllerStateContext = createContext<AddressBookController>(
-  {} as AddressBookController
+const AddressBookControllerStateContext = createContext<IAddressBookController>(
+  {} as IAddressBookController
 )
 
 const AddressBookControllerStateProvider: React.FC<any> = ({ children }) => {

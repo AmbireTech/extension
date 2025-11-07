@@ -39,9 +39,6 @@ export class BadgesController {
     this.#walletStateCtrl = walletStateCtrl
 
     this.#mainCtrl.onUpdate(() => {
-      this.badgesCount = this.#mainCtrl.actions.visibleActionsQueue.filter(
-        (a) => a.type !== 'benzin' && a.type !== 'swapAndBridge'
-      ).length
       const swapAndBridgeBannersCount = this.#mainCtrl.swapAndBridge.banners.filter(
         (b) => b.category === 'bridge-ready'
       ).length
@@ -50,6 +47,12 @@ export class BadgesController {
         this.#mainCtrl.signAccountOp && !!swapAndBridgeBannersCount
           ? swapAndBridgeBannersCount - 1
           : swapAndBridgeBannersCount
+    })
+
+    this.#mainCtrl.requests.onUpdate(() => {
+      this.badgesCount = this.#mainCtrl.requests.actions.visibleActionsQueue.filter(
+        (a) => a.type !== 'benzin' && a.type !== 'swapAndBridge' && a.type !== 'transfer'
+      ).length
     })
 
     this.#mainCtrl.keystore.onUpdate(() => {

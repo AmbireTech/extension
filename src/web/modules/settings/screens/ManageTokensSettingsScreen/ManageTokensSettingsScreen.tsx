@@ -113,12 +113,7 @@ const ManageTokensSettingsScreen = () => {
 
     debouncedPortfolioUpdateInterval.current = setTimeout(() => {
       dispatch({
-        type: 'MAIN_CONTROLLER_UPDATE_SELECTED_ACCOUNT_PORTFOLIO',
-        params: {
-          // Update the portfolio for all networks as the user may hide multiple tokens
-          // from different networks
-          forceUpdate: true
-        }
+        type: 'MAIN_CONTROLLER_UPDATE_SELECTED_ACCOUNT_PORTFOLIO'
       })
       debouncedPortfolioUpdateInterval.current = null
     }, 1000)

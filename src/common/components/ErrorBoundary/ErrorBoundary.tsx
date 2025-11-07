@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useState } from 'react'
 import { Trans } from 'react-i18next'
 import { Pressable, TouchableOpacity, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
@@ -30,21 +30,6 @@ const { isPopup } = getUiType()
 
 interface Props {
   error: Error
-}
-
-const ErrorBoundary = ({ error }: Props) => {
-  const [themeType] = useState(
-    (isExtension && localStorage.getItem('fallbackSelectedThemeType')) || DEFAULT_THEME
-  )
-
-  return (
-    // The global theme provider is rendered below the ErrorBoundary as it requires state from other contexts.
-    // To ensure that the ErrorBoundary has access to the theme and wraps as many components as possible,
-    // we render a ThemeProvider with a forced theme type.
-    <ThemeProvider forceThemeType={themeType as ThemeType}>
-      <ErrorBoundaryInner error={error} />
-    </ThemeProvider>
-  )
 }
 
 const ErrorBoundaryInner = ({ error }: Props) => {
@@ -235,6 +220,21 @@ const ErrorBoundaryInner = ({ error }: Props) => {
         </View>
       </View>
     </GestureHandler>
+  )
+}
+
+const ErrorBoundary = ({ error }: Props) => {
+  const [themeType] = useState(
+    (isExtension && localStorage.getItem('fallbackSelectedThemeType')) || DEFAULT_THEME
+  )
+
+  return (
+    // The global theme provider is rendered below the ErrorBoundary as it requires state from other contexts.
+    // To ensure that the ErrorBoundary has access to the theme and wraps as many components as possible,
+    // we render a ThemeProvider with a forced theme type.
+    <ThemeProvider forceThemeType={themeType as ThemeType}>
+      <ErrorBoundaryInner error={error} />
+    </ThemeProvider>
   )
 }
 

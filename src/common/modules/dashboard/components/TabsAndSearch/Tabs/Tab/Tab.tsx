@@ -1,6 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient'
+import { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Pressable } from 'react-native'
+import { Pressable, ViewStyle } from 'react-native'
 
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
@@ -23,6 +24,9 @@ interface Props {
   handleChangeQuery: (openTab: TabType) => void
   disabled?: boolean
   testID?: string
+  customColors?: [string, string]
+  style?: ViewStyle
+  children?: ReactNode
 }
 
 const Tab = ({
@@ -32,7 +36,10 @@ const Tab = ({
   setOpenTab,
   handleChangeQuery,
   disabled,
-  testID
+  testID,
+  customColors,
+  style,
+  children
 }: Props) => {
   const { t } = useTranslation()
   const { styles, theme, themeType } = useTheme(getStyles)
@@ -53,7 +60,8 @@ const Tab = ({
       {({ hovered }: any) => (
         <LinearGradient
           colors={
-            isActive
+            customColors ||
+            (isActive
               ? themeType === THEME_TYPES.DARK
                 ? [
                     `${DASHBOARD_OVERVIEW_BACKGROUND}80`,
@@ -63,7 +71,7 @@ const Tab = ({
                     DASHBOARD_OVERVIEW_BACKGROUND,
                     mixHexColors(DASHBOARD_OVERVIEW_BACKGROUND, avatarColors[1], 0.8)
                   ]
-              : ['transparent', 'transparent']
+              : ['transparent', 'transparent'])
           }
           start={{ x: 0.0, y: 1 }}
           end={{ x: 0.2, y: 0 }}
@@ -75,11 +83,12 @@ const Tab = ({
               opacity: disabled ? 0.4 : 1,
               // @ts-ignore cursor is web only
               cursor: disabled ? 'not-allowed' : 'pointer'
-            }
+            },
+            style
           ]}
         >
           <Text
-            weight={isActive ? 'medium' : 'regular'}
+            weight="medium"
             color={
               isActive
                 ? themeType === THEME_TYPES.DARK
@@ -89,10 +98,11 @@ const Tab = ({
                 ? theme.primaryText
                 : theme.secondaryText
             }
-            fontSize={16}
+            fontSize={14}
           >
             {t(tabLabel)}
           </Text>
+          {children}
         </LinearGradient>
       )}
     </Pressable>

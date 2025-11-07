@@ -1,15 +1,15 @@
 import { useContext } from 'react'
 
-import { ActionsControllerStateContext } from '@web/contexts/actionsControllerStateContext'
+import { RequestsControllerStateContext } from '@web/contexts/requestsControllerStateContext'
 
 export default function useActionsControllerState() {
-  const context = useContext(ActionsControllerStateContext)
+  const context = useContext(RequestsControllerStateContext)
 
   if (!context) {
     throw new Error(
-      'useActionsControllerState must be used within a ActionsControllerStateProvider'
+      'useActionsControllerState must be used within a RequestsControllerStateProvider'
     )
   }
 
-  return context
+  return context.actions || {}
 }

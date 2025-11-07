@@ -1,0 +1,13 @@
+diff --git a/node_modules/@trezor/trezor-user-env-link/libDev/src/websocket-client.js b/node_modules/@trezor/trezor-user-env-link/libDev/src/websocket-client.js
+index ec570e9..22a481e 100644
+--- a/node_modules/@trezor/trezor-user-env-link/libDev/src/websocket-client.js
++++ b/node_modules/@trezor/trezor-user-env-link/libDev/src/websocket-client.js
+@@ -2,7 +2,7 @@ import WebSocket from 'ws';
+ import { EventEmitter } from 'events';
+ import fetch from 'cross-fetch';
+ import { createDeferred } from '@trezor/utils';
+-import { api } from './api';
++import { api } from './api.js';
+ const NOT_INITIALIZED = new Error('websocket_not_initialized');
+ const DEFAULT_TIMEOUT = 5 * 60 * 1000;
+ const DEFAULT_PING_TIMEOUT = 50 * 1000;

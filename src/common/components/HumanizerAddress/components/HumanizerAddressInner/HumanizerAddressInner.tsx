@@ -1,5 +1,5 @@
 import { ZeroAddress } from 'ethers'
-import React, { FC, useEffect, useMemo, useState } from 'react'
+import React, { FC, useMemo } from 'react'
 
 import { HumanizerMetaAddress } from '@ambire-common/libs/humanizer/interfaces'
 import { getAddressCaught } from '@ambire-common/utils/getAddressCaught'
@@ -9,8 +9,8 @@ import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
 import useAddressBookControllerState from '@web/hooks/useAddressBookControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 
+import { AddressName, BenzinAddressName } from '../AddressName'
 import BaseAddress from '../BaseAddress'
-import { BenzinDomainsAddress, DomainsAddress } from '../DomainsAddress'
 
 interface Props extends TextProps {
   address: string
@@ -33,7 +33,6 @@ const HumanizerAddressInner: FC<Props> = ({
   const accountsState = useAccountsControllerState()
   const { contacts = [] } = useAddressBookControllerState()
   const checksummedAddress = getAddressCaught(address)
-  const [fetchedAddressLabel, setFetchedAddressLabel] = useState<null | string>(null)
 
   const localAddressLabel = useMemo(() => {
     const zeroAddressLabel = address === ZeroAddress && 'Zero Address'
@@ -63,25 +62,18 @@ const HumanizerAddressInner: FC<Props> = ({
     accountsState?.accounts
   ])
 
-  useEffect(() => {
-    if (!localAddressLabel && chainId)
-      fetch(`https://cena.ambire.com/api/v3/contracts/${address}/${chainId}`)
-        .then((r) => r.json())
-        .then((r) => setFetchedAddressLabel(r.name))
-        .catch(console.error)
-  }, [address, chainId, localAddressLabel])
-
   // highestPriorityAlias and account labels are of higher priority than domains
-  if (localAddressLabel || fetchedAddressLabel)
+  if (localAddressLabel)
     return (
-      <BaseAddress address={checksummedAddress} hideLinks={hideLinks} {...rest}>
-        {localAddressLabel || fetchedAddressLabel}
+      <BaseAddress address={checksummedAddress} hideLinks={hideLinks} chainId={chainId} {...rest}>
+        {localAddressLabel}
       </BaseAddress>
     )
 
-  if (!isExtension) return <BenzinDomainsAddress address={checksummedAddress} {...rest} />
+  if (!isExtension)
+    return <BenzinAddressName address={checksummedAddress} chainId={chainId} {...rest} />
 
-  return <DomainsAddress address={checksummedAddress} {...rest} />
+  return <AddressName address={checksummedAddress} chainId={chainId} {...rest} />
 }
 
 export default React.memo(HumanizerAddressInner)

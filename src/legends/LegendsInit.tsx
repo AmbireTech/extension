@@ -7,6 +7,7 @@ import { EthereumProvider } from '@web/extension-services/inpage/EthereumProvide
 import ErrorPage from './components/ErrorPage'
 import { AccountContextProvider } from './contexts/accountContext'
 import { CharacterContextProvider } from './contexts/characterContext'
+import { ProviderContextProvider } from './contexts/providerContext'
 import { ToastContextProvider } from './contexts/toastsContext'
 import Router from './modules/router/Router'
 
@@ -23,11 +24,13 @@ const LegendsInit = () => {
     <Sentry.ErrorBoundary fallback={errorComponent}>
       <PortalProvider>
         <ToastContextProvider>
-          <AccountContextProvider>
-            <CharacterContextProvider>
-              <Router />
-            </CharacterContextProvider>
-          </AccountContextProvider>
+          <ProviderContextProvider>
+            <AccountContextProvider>
+              <CharacterContextProvider>
+                <Router />
+              </CharacterContextProvider>
+            </AccountContextProvider>
+          </ProviderContextProvider>
         </ToastContextProvider>
         <PortalHost name="global" />
       </PortalProvider>

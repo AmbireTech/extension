@@ -1,0 +1,20 @@
+{
+  "extends": "./tsconfig.json",
+  "exclude": [
+    "node_modules",
+    "ios",
+    "android",
+    "safari-extension",
+    "build",
+    "coverage",
+    ".expo",
+    "babel.config.js",
+    "metro.config.js",
+    "jest.config.js",
+    "index.js",
+    "src/ambire-common/**/*",
+    "src/benzin/**/*",
+    "src/legends/**/*",
+    "e2e-playwright-tests/**/*"
+  ]
+}

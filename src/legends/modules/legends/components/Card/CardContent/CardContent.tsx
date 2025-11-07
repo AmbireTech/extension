@@ -1,7 +1,8 @@
-import React, { FC } from 'react'
+import React, { FC, useMemo } from 'react'
 
 import LockIcon from '@legends/common/assets/svg/LockIcon'
 import ZapIcon from '@legends/common/assets/svg/ZapIcon'
+import useCharacterContext from '@legends/hooks/useCharacterContext'
 import smokeAndLights from '@legends/modules/leaderboard/screens/Leaderboard/Smoke-and-lights.png'
 import { CARD_PREDEFINED_ID } from '@legends/modules/legends/constants'
 import { CardFromResponse, CardStatus, CardType } from '@legends/modules/legends/types'
@@ -12,7 +13,7 @@ import CompletedRibbon from './CompletedRibbon'
 
 type Props = Pick<
   CardFromResponse,
-  'shortTitle' | 'xp' | 'imageV2' | 'card' | 'action' | 'timesCollectedToday'
+  'shortTitle' | 'xp' | 'imageV2' | 'card' | 'action' | 'timesCollectedToday' | 'id'
 > & {
   openActionModal: () => void
   disabled: boolean
@@ -36,16 +37,58 @@ const CardContent: FC<Props> = ({
   openActionModal,
   disabled,
   treasureChestStreak,
-  nonConnectedAcc
+  nonConnectedAcc,
+  id
 }) => {
-  const isCompleted = card.status === CardStatus.completed
-
+  const { isCharacterNotMinted } = useCharacterContext()
+  const isCompleted =
+    card.status === CardStatus.completed || (id === 'nft' && !isCharacterNotMinted)
   const isTreasureChestCard = isMatchingPredefinedId(action, CARD_PREDEFINED_ID.chest)
 
   const FIXED_CARD_FREQUENCY = {
     ...CARD_FREQUENCY,
     [CardType.oneTime]: 'OneTime'
   }
+
+  const xpComponent = useMemo(() => {
+    if (!Array.isArray(xp)) return
+    if (xp.some((x) => x.linearMultiplier))
+      return (
+        <>
+          <p
+            style={{
+              color: '#F7BA2F',
+              fontWeight: 500
+            }}
+          >
+            Per $100
+          </p>
+          <span className={styles.xp}>
+            {(Math.max(...xp.map((x) => x.linearMultiplier || 0)) * 100).toFixed(2)}
+          </span>
+        </>
+      )
+    if (xp.length > 1)
+      return (
+        <>
+          Up to <br />
+          <span className={styles.xp}>{Math.max(...xp.map((x) => x.to || 0))}</span>
+        </>
+      )
+    if (xp[0].from !== xp[0].to)
+      return (
+        <>
+          Up to <br />
+          <span className={styles.xp}>{xp[0].to}</span>
+        </>
+      )
+    return (
+      <>
+        Earn <br />
+        <span className={styles.xp}>{xp[0].to}</span>
+      </>
+    )
+  }, [xp])
 
   return (
     <div
@@ -117,22 +160,7 @@ const CardContent: FC<Props> = ({
           </div>
           <div>
             <div className={styles.rewardTitle}>
-              {Array.isArray(xp) && xp.length > 1 ? (
-                <>
-                  Up to <br />
-                  <span className={styles.xp}>{Math.max(...xp.map((x) => x.to))}</span>
-                </>
-              ) : xp[0].from !== xp[0].to ? (
-                <>
-                  Up to <br />
-                  <span className={styles.xp}>{xp[0].to}</span>
-                </>
-              ) : (
-                <>
-                  Earn <br />
-                  <span className={styles.xp}>{xp[0].to}</span>
-                </>
-              )}
+              {xpComponent}
               <span className={styles.xpText}>XP</span>
             </div>
           </div>

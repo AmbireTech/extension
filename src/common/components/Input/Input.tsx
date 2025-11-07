@@ -52,6 +52,7 @@ export interface InputProps extends TextInputProps {
   childrenBeforeButtons?: React.ReactNode
   childrenBelowInput?: React.ReactNode
   borderless?: boolean
+  customInputContent?: React.ReactNode
 }
 
 const Input = ({
@@ -82,6 +83,8 @@ const Input = ({
   borderless,
   setInputRef,
   inputBorderWrapperRef,
+  customInputContent,
+  editable,
   ...rest
 }: InputProps) => {
   const [isFocused, setIsFocused] = useState<boolean>(false)
@@ -159,16 +162,21 @@ const Input = ({
             {!!leftIcon && <View style={[styles.leftIcon, leftIconStyle]}>{leftIcon()}</View>}
             {/* TextInput doesn't support border styles so we wrap it in a View */}
             <View style={[inputStyles, hasButton ? { width: '100%' } : {}]}>
+              {customInputContent}
               <TextInput
                 placeholderTextColor={theme.secondaryText}
                 autoCapitalize="none"
                 autoCorrect={false}
-                editable={!disabled}
+                editable={editable ?? !disabled}
                 onBlur={handleOnBlur}
                 onFocus={handleOnFocus}
                 ref={setInputRef}
                 {...rest}
-                style={[styles.nativeInput, nativeInputStyle]}
+                style={[
+                  styles.nativeInput,
+                  !!customInputContent && { position: 'absolute', zIndex: -1, opacity: 0 },
+                  nativeInputStyle
+                ]}
               />
             </View>
             {childrenBeforeButtons || null}

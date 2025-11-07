@@ -73,7 +73,7 @@ const OnboardingCompletedScreen = () => {
                 <View style={[flexbox.flex1, flexbox.justifyEnd]}>
                   <Button
                     testID="onboarding-completed-open-dashboard-btn"
-                    text={t('Open dashboard')}
+                    text={t('Open wallet')}
                     hasBottomSpacing={false}
                     onPress={handleOpenDashboardPress}
                   />

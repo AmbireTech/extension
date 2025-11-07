@@ -1,12 +1,26 @@
 import selectors from 'constants/selectors'
+import BootstrapContext from 'interfaces/bootstrapContext'
 import Token from 'interfaces/token'
 
-import { expect, Locator, Page } from '@playwright/test'
+import { BrowserContext, expect, Locator, Page, Request as PWRequest } from '@playwright/test'
 
-export abstract class BasePage {
+import { categorizeRequests } from '../utils/requests'
+
+export class BasePage {
   page: Page
 
-  abstract init(param?): Promise<void> // ⛔ Must be implemented in subclasses
+  context: BrowserContext
+
+  private _reqListener?: (r: PWRequest) => void
+
+  private _monitorInstalled = false
+
+  collectedRequests: string[] = []
+
+  constructor({ page, context }: BootstrapContext) {
+    this.page = page
+    this.context = context
+  }
 
   async navigateToURL(url: string) {
     await this.page.goto(`${url}`)
@@ -40,10 +54,10 @@ export abstract class BasePage {
     // If the token is outside the viewport, we ensure it becomes visible by searching for its symbol
     await this.entertext(selectors.searchInput, token.symbol)
 
-    const paidBy = paidByAddress.toLowerCase()
-    const tokenAddress = token.address.toLowerCase()
+    const paidBy = paidByAddress
+    const tokenAddress = token.address
     const tokenSymbol = token.symbol.toLowerCase()
-    const gasTank = onGasTank ? 'gastank' : ''
+    const gasTank = onGasTank ? 'gasTank' : ''
 
     // Ensure we click the token inside the SelectMenu,
     // not the one rendered as the default value.
@@ -64,26 +78,48 @@ export abstract class BasePage {
   }
 
   async getText(selector: string): Promise<string> {
-    return await this.page.getByTestId(selector).innerText()
+    return this.page.getByTestId(selector).innerText()
   }
 
-  async entertext(selector: string, text: string): Promise<void> {
-    await this.page.getByTestId(selector).fill(text)
+  async entertext(selector: string, text: string, index?: number): Promise<void> {
+    await this.page
+      .getByTestId(selector)
+      .nth(index ?? 0)
+      .fill(text)
   }
 
   async getValue(selector: string): Promise<string> {
-    return await this.page.getByTestId(selector).inputValue()
+    return this.page.getByTestId(selector).inputValue()
   }
 
-  async handleNewPage(locator: Locator) {
+  async handleNewPage(locator: Locator): Promise<Page> {
     const context = this.page.context()
 
-    const [actionWindowPagePromise] = await Promise.all([
-      context.waitForEvent('page'),
-      locator.first().click({ timeout: 5000 }) // trigger opening
-    ])
+    // const [actionWindowPagePromise] = await Promise.all([
+    //   context.waitForEvent('page', { timeout: 10000 }),
+    //   locator.first().click({ timeout: 5000 }) // trigger opening
+    // ])
 
-    return actionWindowPagePromise
+    // await actionWindowPagePromise.waitForLoadState('domcontentloaded')
+
+    // return actionWindowPagePromise
+
+    // wait for locator before click
+    await locator.waitFor({ state: 'visible' })
+    await expect(locator).toBeEnabled()
+
+    // setup listener for new page event
+    const newPagePromise = context.waitForEvent('page', { timeout: 10000 })
+
+    // initiate new page event
+    await locator.click({ timeout: 5000 })
+
+    // Wait for the newly opened page to be available
+    const actionWindowPage = await newPagePromise
+
+    // wait for new page to load
+    await actionWindowPage.waitForLoadState('domcontentloaded')
+    return actionWindowPage
   }
 
   async pause() {
@@ -100,11 +136,43 @@ export abstract class BasePage {
     await expect(this.page.getByTestId(selector)).toBeVisible()
   }
 
-  async compareText(selector: string, text: string) {
-    await expect(this.page.getByTestId(selector)).toContainText(text)
+  async expectButtonEnabled(selector: string) {
+    await expect(this.page.getByTestId(selector)).toBeEnabled({ timeout: 5000 })
+  }
+
+  async compareText(selector: string, text: string, index?: number) {
+    await expect(this.page.getByTestId(selector).nth(index ?? 0)).toContainText(text)
   }
 
   async isVisible(selector: string): Promise<boolean> {
     return this.page.getByTestId(selector).isVisible()
+  }
+
+  async expectElementNotVisible(selector: string): Promise<void> {
+    await expect(this.page.getByTestId(selector)).not.toBeVisible()
+  }
+
+  async monitorRequests() {
+    if (this._monitorInstalled) return
+    this._reqListener = (request: PWRequest) => {
+      const url = request.url()
+      if (!url.startsWith('http')) return
+      if (request.resourceType() !== 'fetch' || request.method() === 'OPTIONS') return
+
+      this.collectedRequests.push(url)
+    }
+    this.context.on('request', this._reqListener)
+    this._monitorInstalled = true
+  }
+
+  getCategorizedRequests() {
+    return categorizeRequests(this.collectedRequests)
+  }
+
+  async getDashboardTokenBalance(token: Token) {
+    const balanceText = await this.getText(`token-balance-${token.address}.${token.chainId}`)
+    const tokenBalance = parseFloat(balanceText)
+
+    return tokenBalance
   }
 }

@@ -153,7 +153,8 @@ const CollectibleModal = ({
     theme.primaryBackground,
     theme.primaryText,
     theme.secondaryBackground,
-    theme.secondaryText
+    theme.secondaryText,
+    themeType
   ])
 
   return (

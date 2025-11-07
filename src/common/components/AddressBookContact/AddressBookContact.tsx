@@ -21,15 +21,19 @@ import useBackgroundService from '@web/hooks/useBackgroundService'
 import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
 
 import ManageContact from './ManageContact'
+import getStyles from './styles'
 
 interface Props {
   address: string
-  name: string
+  name?: string
   isManageable?: boolean
   isEditable?: boolean
   onPress?: () => void
   style?: ViewStyle
   testID?: string
+  avatarSize?: number
+  fontSize?: number
+  height?: number
 }
 
 const AddressBookContact: FC<Props> = ({
@@ -39,12 +43,15 @@ const AddressBookContact: FC<Props> = ({
   isEditable,
   onPress,
   testID,
-  style = {}
+  style = {},
+  avatarSize,
+  fontSize = 14,
+  height = 20
 }) => {
   const ContainerElement = onPress ? AnimatedPressable : View
 
   const { t } = useTranslation()
-  const { theme } = useTheme()
+  const { theme } = useTheme(getStyles)
   const { addToast } = useToast()
   const { dispatch } = useBackgroundService()
   const { accounts } = useAccountsControllerState()
@@ -66,10 +73,7 @@ const AddressBookContact: FC<Props> = ({
   const onSave = (newName: string) => {
     dispatch({
       type: 'ADDRESS_BOOK_CONTROLLER_RENAME_CONTACT',
-      params: {
-        address,
-        newName
-      }
+      params: { address, newName }
     })
     addToast(t('Successfully renamed contact'))
   }
@@ -85,7 +89,7 @@ const AddressBookContact: FC<Props> = ({
 
     const container = containerRef.current as HTMLElement
 
-    container.addEventListener('mouseleave', closeTooltip)
+    container.addEventListener('mouseleave', closeTooltip, { passive: true })
 
     return () => {
       container.removeEventListener('mouseleave', () => closeTooltip)
@@ -118,24 +122,31 @@ const AddressBookContact: FC<Props> = ({
       testID={testID}
     >
       <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-        <Avatar pfp={address} size={32} isSmart={isSmart} displayTypeBadge={displayTypeBadge} />
+        <Avatar
+          {...(avatarSize && { size: avatarSize })}
+          pfp={address}
+          isSmart={isSmart}
+          displayTypeBadge={displayTypeBadge}
+        />
         <View>
           {isEditable ? (
             <Editable
-              fontSize={14}
+              fontSize={fontSize}
               textProps={{
                 weight: 'medium'
               }}
-              height={20}
+              height={height}
               minWidth={80}
               maxLength={32}
               initialValue={name}
               onSave={onSave}
             />
           ) : (
-            <Text fontSize={14} weight="medium">
-              {name}
-            </Text>
+            <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+              <Text fontSize={fontSize} weight="medium" style={!name && spacings.mrTy}>
+                {name || 'New address'}
+              </Text>
+            </View>
           )}
           <View style={[flexbox.directionRow, flexbox.alignCenter]}>
             <DomainBadge ens={ens} />
@@ -143,11 +154,11 @@ const AddressBookContact: FC<Props> = ({
           </View>
         </View>
       </View>
-      {isManageable ? (
+      {isManageable && name ? (
         <ManageContact tooltipRef={tooltipRef} address={address} name={name} />
       ) : null}
     </ContainerElement>
   )
 }
 
-export default AddressBookContact
+export default React.memo(AddressBookContact)

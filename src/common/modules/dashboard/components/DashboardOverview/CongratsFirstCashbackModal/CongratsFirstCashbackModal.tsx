@@ -3,7 +3,6 @@ import { Image, Pressable, View } from 'react-native'
 
 import { Account } from '@ambire-common/interfaces/account'
 import { SelectedAccountPortfolio } from '@ambire-common/interfaces/selectedAccount'
-import { isSmartAccount } from '@ambire-common/libs/account/account'
 import image from '@common/assets/images/cashEarned.png'
 import Button from '@common/components/Button'
 import Text from '@common/components/Text'
@@ -39,11 +38,9 @@ const CongratsFirstCashbackModal = ({ onPress, position, portfolio, account }: P
   const { addToast } = useToast()
   const { networks } = useNetworksControllerState()
 
-  const isSA = useMemo(() => isSmartAccount(account), [account])
-
   const cashbackGasTankDetails = useMemo(
-    () => getGasTankTokenDetails(portfolio, account, isSA, networks, 'cashback'),
-    [account, isSA, networks, portfolio]
+    () => getGasTankTokenDetails(portfolio, account, networks, 'cashback'),
+    [account, networks, portfolio]
   )
 
   return position ? (

@@ -27,6 +27,7 @@ import ManifestImage from '@web/components/ManifestImage'
 import { openInTab } from '@web/extension-services/background/webapi/tab'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 
+import BundlerWarning from './components/bundlerWarning'
 import EstimationSkeleton from './components/EstimationSkeleton'
 import PayOption from './components/PayOption'
 import { NO_FEE_OPTIONS } from './consts'
@@ -96,7 +97,8 @@ const Estimation = ({
   sponsor,
   updateType,
   slowRequest,
-  bundlerNonceDiscrepancy
+  bundlerNonceDiscrepancy,
+  serviceFee
 }: Props) => {
   const { dispatch } = useBackgroundService()
   const { t } = useTranslation()
@@ -312,12 +314,6 @@ const Estimation = ({
     ]
   }, [payOptionsPaidByEOA, payOptionsPaidByUsOrGasTank, t, theme.secondaryText])
 
-  const serviceFee = useMemo(() => {
-    const fees = signAccountOpState?.accountOp.meta?.swapTxn?.serviceFee || []
-    if (fees.length === 0) return null
-    return fees[0]
-  }, [signAccountOpState])
-
   const nativeFeeOption = signAccountOpState?.estimation.availableFeeOptions.find(
     (feeOption) =>
       feeOption.paidBy === signAccountOpState.accountOp.accountAddr &&
@@ -388,11 +384,15 @@ const Estimation = ({
       </View>
     )
   }
+
+  if (signAccountOpState && signAccountOpState.estimation.status === EstimationStatus.Error) {
+    return null
+  }
+
   if (
     !signAccountOpState ||
     // <Bobby>: the line below may be incorrect and may cause
     // estimation flashing
-    signAccountOpState.estimation.status === EstimationStatus.Error ||
     (!hasEstimation && signAccountOpState.estimation.estimationRetryError) ||
     !payValue
   ) {
@@ -552,13 +552,10 @@ const Estimation = ({
           />
         </>
       )}
-      {bundlerNonceDiscrepancy && (
-        <View style={[flexbox.directionRow, flexbox.alignEnd, spacings.mt]}>
-          <Text fontSize={12} appearance="warningText">
-            {t(bundlerNonceDiscrepancy.title)}
-          </Text>
-        </View>
-      )}
+      <BundlerWarning
+        signAccountOpState={signAccountOpState}
+        bundlerNonceDiscrepancy={bundlerNonceDiscrepancy}
+      />
     </>
   )
 }

@@ -1,6 +1,6 @@
-import React, { FC, useState } from 'react'
+import React, { FC } from 'react'
 
-import useAccountContext from '@legends/hooks/useAccountContext'
+import useProviderContext from '@legends/hooks/useProviderContext'
 
 import ambireBlurredLogo from './ambire-blurred-logo.png'
 import ambireLogoGlass from './ambire-logo-glass.png'
@@ -12,22 +12,19 @@ type Props = {
 }
 
 const LandingSection: FC<Props> = ({ nonV2acc = false }) => {
-  const { requestAccounts } = useAccountContext()
-  const [isDownloadLinkClicked, setIsDownloadLinkClicked] = useState(false)
+  const { connectProvider, hasAnyAmbireExtensionInstalled } = useProviderContext()
 
-  const isExtensionInstalled = !!window.ambire
-
-  const onButtonClick = () => {
-    if (isExtensionInstalled) {
-      requestAccounts()
+  const onButtonClick = async () => {
+    if (hasAnyAmbireExtensionInstalled) {
+      await connectProvider()
     } else {
       window.open(
         'https://chromewebstore.google.com/detail/ambire-wallet/ehgjhhccekdedpbkifaojjaefeohnoea',
         '_blank'
       )
-      setIsDownloadLinkClicked(true)
     }
   }
+
   return (
     <section className={`${styles.wrapper} ${nonV2acc ? styles.nonV2 : styles.v2}`}>
       <div className={styles.heroSection}>
@@ -41,7 +38,7 @@ const LandingSection: FC<Props> = ({ nonV2acc = false }) => {
         {!nonV2acc && (
           <button className={styles.button} type="button" onClick={onButtonClick}>
             <img src={ambireLogoSmall} alt="Ambire Logo" className={styles.logoSmall} />
-            {!isExtensionInstalled ? 'Get the Extension' : 'Connect Ambire'}{' '}
+            {!hasAnyAmbireExtensionInstalled ? 'Get the Extension' : 'Connect Ambire'}{' '}
           </button>
         )}
 
@@ -55,4 +52,4 @@ const LandingSection: FC<Props> = ({ nonV2acc = false }) => {
   )
 }
 
-export default LandingSection
+export default React.memo(LandingSection)

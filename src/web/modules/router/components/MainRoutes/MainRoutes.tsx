@@ -9,7 +9,7 @@ import { SignAccountOpControllerStateProvider } from '@web/contexts/signAccountO
 import AccountPersonalizeScreen from '@web/modules/account-personalize/screens/AccountPersonalizeScreen'
 import AccountPickerScreen from '@web/modules/account-picker/screens/AccountPickerScreen'
 import AccountSelectScreen from '@web/modules/account-select/screens/AccountSelectScreen'
-import AddChainScreen from '@web/modules/action-requests/screens/AddChainScreen'
+import AddOrUpdateNetworkScreen from '@web/modules/action-requests/screens/AddOrUpdateNetworkScreen'
 import BenzinScreen from '@web/modules/action-requests/screens/BenzinScreen'
 import DappConnectScreen from '@web/modules/action-requests/screens/DappConnectScreen'
 import GetEncryptionPublicKeyRequestScreen from '@web/modules/action-requests/screens/GetEncryptionPublicKeyRequestScreen'
@@ -28,7 +28,8 @@ import PrivateKeyImportScreen from '@web/modules/auth/screens/PrivateKeyImportSc
 import SeedPhraseImportScreen from '@web/modules/auth/screens/SeedPhraseImportScreen'
 import DappCatalogScreen from '@web/modules/dapp-catalog/screens/DappCatalogScreen'
 import LedgerConnectScreen from '@web/modules/hardware-wallet/screens/LedgerConnectScreen/LedgerConnectScreen'
-import KeyStoreResetScreen from '@web/modules/keystore/screens/KeyStoreResetScreen/KeyStoreResetScreen'
+import KeyStoreEmailRecoveryScreen from '@web/modules/keystore/screens/KeyStoreEmailRecoveryScreen/KeyStoreEmailRecoveryScreen'
+import KeyStoreEmailRecoverySetNewPasswordScreen from '@web/modules/keystore/screens/KeyStoreEmailRecoverySetNewPasswordScreen'
 import KeyStoreSetupScreen from '@web/modules/keystore/screens/KeyStoreSetupScreen'
 import NetworksScreen from '@web/modules/networks/screens'
 import AuthenticatedRoute from '@web/modules/router/components/AuthenticatedRoute'
@@ -75,7 +76,11 @@ const MainRoutes = () => {
 
       <Route element={<TabOnlyRoute />}>
         <Route path={WEB_ROUTES.keyStoreSetup} element={<KeyStoreSetupScreen />} />
-        <Route path={WEB_ROUTES.keyStoreReset} element={<KeyStoreResetScreen />} />
+        <Route path={WEB_ROUTES.keyStoreEmailRecovery} element={<KeyStoreEmailRecoveryScreen />} />
+        <Route
+          path={WEB_ROUTES.keyStoreEmailRecoverySetNewPassword}
+          element={<KeyStoreEmailRecoverySetNewPasswordScreen />}
+        />
 
         <Route element={<KeystoreUnlockedRoute />}>
           <Route path={WEB_ROUTES.getStarted} element={<GetStartedScreen />} />
@@ -167,7 +172,7 @@ const MainRoutes = () => {
           <Route path={WEB_ROUTES.switchAccount} element={<SwitchAccountScreen />} />
 
           <Route path={WEB_ROUTES.dappConnectRequest} element={<DappConnectScreen />} />
-          <Route path={WEB_ROUTES.addChain} element={<AddChainScreen />} />
+          <Route path={WEB_ROUTES.addChain} element={<AddOrUpdateNetworkScreen />} />
           <Route path={WEB_ROUTES.watchAsset} element={<WatchTokenRequestScreen />} />
 
           <Route
@@ -177,7 +182,7 @@ const MainRoutes = () => {
 
           <Route path={WEB_ROUTES.menu} element={<NavMenu />} />
           <Route path={WEB_ROUTES.accountSelect} element={<AccountSelectScreen />} />
-          <Route path={WEB_ROUTES.appCatalog} element={<DappCatalogScreen />} />
+          <Route path={WEB_ROUTES.apps} element={<DappCatalogScreen />} />
           <Route path={WEB_ROUTES.networks} element={<NetworksScreen />} />
         </Route>
       </Route>

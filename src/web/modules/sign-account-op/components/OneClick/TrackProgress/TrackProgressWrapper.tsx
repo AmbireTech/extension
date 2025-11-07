@@ -2,6 +2,7 @@ import React, { FC, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
+import { SwapAndBridgeActiveRoute } from '@ambire-common/interfaces/swapAndBridge'
 import Button from '@common/components/Button'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
@@ -19,13 +20,15 @@ type TrackProgressProps = {
   onPrimaryButtonPress: () => void
   secondaryButtonText: string
   children: React.ReactNode
+  routeStatus?: SwapAndBridgeActiveRoute['routeStatus']
 }
 
 const TrackProgressWrapper: FC<TrackProgressProps> = ({
   handleClose,
   onPrimaryButtonPress,
   secondaryButtonText,
-  children
+  children,
+  routeStatus
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
@@ -57,7 +60,7 @@ const TrackProgressWrapper: FC<TrackProgressProps> = ({
               flexbox.alignCenter,
               flexbox.justifyCenter,
               isActionWindow ? {} : flexbox.flex1,
-              isActionWindow ? spacings.pt0 : spacings.pt2Xl
+              spacings.pt0
             ]}
           >
             {children}
@@ -69,7 +72,7 @@ const TrackProgressWrapper: FC<TrackProgressProps> = ({
 
           <View
             style={[
-              flexbox.directionRow,
+              routeStatus !== 'failed' ? flexbox.directionRow : flexbox.directionRowReverse,
               flexbox.alignCenter,
               !isActionWindow ? flexbox.justifySpaceBetween : flexbox.justifyCenter,
               isActionWindow && spacings.pt2Xl
@@ -79,7 +82,7 @@ const TrackProgressWrapper: FC<TrackProgressProps> = ({
               <Button
                 onPress={handleClose}
                 hasBottomSpacing={false}
-                type="secondary"
+                type={routeStatus !== 'failed' ? 'secondary' : 'primary'}
                 text={secondaryButtonText}
                 testID="track-progress-secondary-button"
               />
@@ -91,6 +94,7 @@ const TrackProgressWrapper: FC<TrackProgressProps> = ({
               hasBottomSpacing={false}
               style={{ width: isActionWindow ? 240 : 160 }}
               text={t('Close')}
+              type={routeStatus !== 'failed' ? 'primary' : 'secondary'}
               testID="track-progress-primary-button"
             />
           </View>

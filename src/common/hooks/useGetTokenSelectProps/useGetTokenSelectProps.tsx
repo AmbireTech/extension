@@ -198,7 +198,7 @@ const useGetTokenSelectProps = ({
                 <PendingBadge
                   amount={pendingToBeSigned}
                   amountFormatted={pendingToBeSignedFormatted}
-                  label={t('{{symbol}} Pending transaction signature', { symbol })}
+                  label={t('{{symbol}} awaiting signature', { symbol })}
                   backgroundColor={theme.warningBackground}
                   textColor={theme.warningText}
                   Icon={BatchIcon}
@@ -208,7 +208,7 @@ const useGetTokenSelectProps = ({
                 <PendingBadge
                   amount={pendingToBeConfirmed}
                   amountFormatted={pendingToBeConfirmedFormatted}
-                  label={t('Pending to be confirmed')}
+                  label={t('confirming')}
                   backgroundColor={theme.info2Background}
                   textColor={theme.info2Text}
                   Icon={PendingToBeConfirmedIcon}

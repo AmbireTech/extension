@@ -1,8 +1,9 @@
 import React from 'react'
 import { View } from 'react-native'
 
+import rewardsBg from '@common/assets/images/rewards-bg.png'
+import BadgeIcon from '@common/assets/svg/BadgeIcon'
 import DAppsIcon from '@common/assets/svg/DAppsIcon'
-import ReceiveIcon from '@common/assets/svg/ReceiveIcon'
 import SendIcon from '@common/assets/svg/SendIcon'
 import SwapAndBridgeIcon from '@common/assets/svg/SwapAndBridgeIcon'
 import { useTranslation } from '@common/config/localization'
@@ -11,7 +12,7 @@ import flexbox from '@common/styles/utils/flexbox'
 
 import RouteItem from './RouteItem'
 
-const Routes = ({ openReceiveModal }: { openReceiveModal: () => void }) => {
+const Routes = () => {
   const { t } = useTranslation()
 
   const routeItems = [
@@ -20,15 +21,6 @@ const Routes = ({ openReceiveModal }: { openReceiveModal: () => void }) => {
       icon: SendIcon,
       label: t('Send'),
       route: WEB_ROUTES.transfer,
-      isExternal: false,
-      scale: 1.08,
-      scaleOnHover: 1.18
-    },
-    {
-      testID: 'dashboard-button-receive',
-      icon: ReceiveIcon,
-      label: t('Receive'),
-      onPress: openReceiveModal,
       isExternal: false,
       scale: 1.08,
       scaleOnHover: 1.18
@@ -46,10 +38,21 @@ const Routes = ({ openReceiveModal }: { openReceiveModal: () => void }) => {
       testID: 'dashboard-button-apps',
       icon: DAppsIcon,
       label: t('Apps'),
-      route: WEB_ROUTES.appCatalog,
+      route: WEB_ROUTES.apps,
       isExternal: false,
       scale: 0.95,
       scaleOnHover: 1.02
+    },
+    {
+      testID: 'dashboard-button-quests',
+      icon: BadgeIcon,
+      label: t('Rewards'),
+      route:
+        'https://rewards.ambire.com/?utm_source=extension&utm_medium=button&utm_campaign=measure-button',
+      isExternal: true,
+      scale: 0.95,
+      scaleOnHover: 1.2,
+      backgroundImage: rewardsBg
     }
   ]
 

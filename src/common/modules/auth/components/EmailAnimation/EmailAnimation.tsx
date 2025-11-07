@@ -1,17 +1,26 @@
 import LottieView from 'lottie-react'
 import React from 'react'
+import { ViewStyle } from 'react-native'
 
 import animation from './email-animation.json'
 
-const EmailAnimation = () => {
+const EmailAnimation = ({
+  width = 139,
+  height = 139,
+  style
+}: {
+  width?: number
+  height?: number
+  style?: ViewStyle
+}) => {
   return (
     <LottieView
       animationData={animation}
-      style={{ width: 139, height: 139, alignSelf: 'center' }}
+      style={{ width, height, alignSelf: 'center', ...(style || {}) } as any}
       autoPlay
       loop
     />
   )
 }
 
-export default EmailAnimation
+export default React.memo(EmailAnimation)

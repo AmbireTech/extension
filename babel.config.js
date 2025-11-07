@@ -17,7 +17,7 @@ module.exports = function (api) {
   const config = {
     presets: ['babel-preset-expo'],
     plugins: [
-      ['@babel/plugin-proposal-export-namespace-from'],
+      ['@babel/plugin-transform-export-namespace-from'],
       ['transform-inline-environment-variables'],
       ['@babel/plugin-proposal-decorators', { legacy: true }],
       ['@babel/plugin-proposal-private-methods', { loose: true }],

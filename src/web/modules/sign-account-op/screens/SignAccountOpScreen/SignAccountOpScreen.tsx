@@ -2,8 +2,8 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { NativeScrollEvent, Pressable, ScrollView, StyleSheet, View } from 'react-native'
 
-import { AccountOpAction } from '@ambire-common/controllers/actions/actions'
 import { SigningStatus } from '@ambire-common/controllers/signAccountOp/signAccountOp'
+import { AccountOpAction } from '@ambire-common/interfaces/actions'
 import { Key } from '@ambire-common/interfaces/keystore'
 import { getErrorCodeStringFromReason } from '@ambire-common/libs/errorDecoder/helpers'
 import CopyIcon from '@common/assets/svg/CopyIcon'
@@ -79,9 +79,7 @@ const SignAccountOpScreen = () => {
   const handleBroadcast = useCallback(() => {
     dispatch({
       type: 'MAIN_CONTROLLER_HANDLE_SIGN_AND_BROADCAST_ACCOUNT_OP',
-      params: {
-        updateType: 'Main'
-      }
+      params: { type: 'default' }
     })
   }, [dispatch])
   const {
@@ -100,6 +98,9 @@ const SignAccountOpScreen = () => {
     isSignLoading,
     hasEstimation,
     warningModalRef,
+    handleChangeFeePayerKeyType,
+    isChooseFeePayerKeyShown,
+    setIsChooseFeePayerKeyShown,
     signingKeyType,
     feePayerKeyType,
     shouldDisplayLedgerConnectModal,
@@ -107,7 +108,8 @@ const SignAccountOpScreen = () => {
     initDispatchedForId,
     setInitDispatchedForId,
     isSignDisabled,
-    bundlerNonceDiscrepancy
+    bundlerNonceDiscrepancy,
+    primaryButtonText
   } = useSign({
     handleUpdateStatus,
     signAccountOpState,
@@ -193,7 +195,7 @@ const SignAccountOpScreen = () => {
 
     if (code) {
       return (
-        <AlertVertical.Text type="warning" size="md" style={styles.alertText}>
+        <AlertVertical.Text type="warning" size="sm" style={styles.alertText}>
           {getErrorCodeStringFromReason(code || '', false)}
           <Pressable
             // @ts-ignore web style
@@ -208,7 +210,7 @@ const SignAccountOpScreen = () => {
 
     if (text) {
       return (
-        <AlertVertical.Text type="warning" size="md" style={styles.alertText}>
+        <AlertVertical.Text type="warning" size="sm" style={styles.alertText}>
           {text}
         </AlertVertical.Text>
       )
@@ -311,7 +313,6 @@ const SignAccountOpScreen = () => {
               }
               // Allow view only accounts or if no funds for gas to add to cart even if the txn is not ready to sign
               // because they can't sign it anyway
-
               isAddToCartDisabled={isAddToCartDisabled}
               onSign={onSignButtonClick}
               inProgressButtonText={
@@ -319,17 +320,28 @@ const SignAccountOpScreen = () => {
                   ? t('Sending...')
                   : t('Signing...')
               }
+              buttonText={primaryButtonText}
             />
           </View>
         )}
       >
         {signAccountOpState ? (
           <SigningKeySelect
-            isVisible={isChooseSignerShown}
+            isVisible={isChooseSignerShown || isChooseFeePayerKeyShown}
             isSigning={isSignLoading || !signAccountOpState.readyToSign}
-            handleClose={() => setIsChooseSignerShown(false)}
-            selectedAccountKeyStoreKeys={signAccountOpState.accountKeyStoreKeys}
-            handleChooseSigningKey={handleChangeSigningKey}
+            handleClose={() => {
+              setIsChooseSignerShown(false)
+              setIsChooseFeePayerKeyShown(false)
+            }}
+            selectedAccountKeyStoreKeys={
+              isChooseFeePayerKeyShown
+                ? signAccountOpState.feePayerKeyStoreKeys
+                : signAccountOpState.accountKeyStoreKeys
+            }
+            handleChooseKey={
+              isChooseFeePayerKeyShown ? handleChangeFeePayerKeyType : handleChangeSigningKey
+            }
+            type={isChooseFeePayerKeyShown ? 'broadcasting' : 'signing'}
             account={signAccountOpState.account}
           />
         ) : null}
@@ -347,6 +359,7 @@ const SignAccountOpScreen = () => {
               setContentHeight(height)
             }}
             scrollEventThrottle={400}
+            style={contentHeight > containerHeight ? spacings.prMi : {}}
           >
             <PendingTransactions
               network={network}
@@ -357,6 +370,7 @@ const SignAccountOpScreen = () => {
             {signAccountOpState?.errors?.length && !isViewOnly ? (
               <AlertVertical
                 type="warning"
+                size="sm"
                 title={signAccountOpState.errors[0].title}
                 text={errorText}
               />

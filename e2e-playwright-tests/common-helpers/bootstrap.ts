@@ -51,7 +51,7 @@ async function initBrowser(namespace: string): Promise<{
     channel: 'chromium',
     slowMo: 10,
     ignoreHTTPSErrors: true,
-    args: playwrightArgs, // make sure puppeteerArgs is defined/imported
+    args: playwrightArgs, // make sure playwrightArgs is defined/imported
     env: process.env.DISPLAY ? { DISPLAY: process.env.DISPLAY } : undefined,
     viewport: null // explicitly set if not using default
   })
@@ -97,14 +97,14 @@ async function initBrowser(namespace: string): Promise<{
 
 //----------------------------------------------------------------------------------------------
 export async function bootstrap(namespace: string) {
-  const { page, extensionURL, serviceWorker } = await initBrowser(namespace)
+  const { page, context, extensionURL, serviceWorker } = await initBrowser(namespace)
   await page.goto(`${extensionURL}${mainConstants.urls.getStarted}`)
   // Bypass the invite verification step
   await serviceWorker.evaluate(
     (invite) => chrome.storage.local.set({ invite, isE2EStorageSet: true }),
     JSON.stringify(mainConstants.inviteStorageItem)
   )
-  return { page }
+  return { page, context, extensionURL }
 }
 
 //----------------------------------------------------------------------------------------------
@@ -127,13 +127,8 @@ export async function bootstrapWithStorage(
 
   const {
     parsedKeystoreAccounts: accounts,
-    parsedNetworksWithAssetsByAccount: networksWithAssetsByAccount,
-    parsedNetworksWithPositionsByAccount: networksWithPositionsByAccounts,
-    parsedOnboardingState: onboardingState,
-    parsedPreviousHints: previousHints,
+    parsedLearnedAssets: learnedAssets,
     envSelectedAccount: selectedAccount,
-    envTermState: termsState,
-    invite,
     parsedKeystoreUID: keyStoreUid,
     parsedKeystoreKeys: keystoreKeys,
     parsedKeystoreSecrets: keystoreSecrets,
@@ -143,15 +138,9 @@ export async function bootstrapWithStorage(
 
   const storageParamsMapped = {
     accounts,
-    networksWithAssetsByAccount,
-    networksWithPositionsByAccounts,
-    onboardingState,
-    previousHints,
+    learnedAssets,
     selectedAccount,
-    termsState,
-    invite,
     isE2EStorageSet: true,
-    isPinned: 'true',
     isSetupComplete: 'true',
     ...(!shouldUnlockKeystoreManually && {
       keyStoreUid,
@@ -201,5 +190,5 @@ export async function bootstrapWithStorage(
     }
   }
 
-  return { page, context, extensionURL }
+  return { page, context, serviceWorker, extensionURL }
 }

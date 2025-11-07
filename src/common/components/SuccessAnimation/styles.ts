@@ -1,9 +1,7 @@
 import { StyleSheet, ViewStyle } from 'react-native'
 
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES, ThemeProps, ThemeType } from '@common/styles/themeConfig'
-import common from '@common/styles/utils/common'
-import flexbox from '@common/styles/utils/flexbox'
+import { ThemeProps, ThemeType } from '@common/styles/themeConfig'
 
 interface Style {
   boxWrapper: ViewStyle
@@ -18,8 +16,7 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
     boxWrapper: {
       ...spacings.pvMd,
       ...spacings.phMd,
-      backgroundColor:
-        themeType === THEME_TYPES.DARK ? theme.secondaryBackground : theme.primaryBackground
+      backgroundColor: theme.primaryBackground
     },
     backgroundShapes: {
       position: 'absolute',

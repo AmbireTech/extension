@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-shadow */
 import React, { createContext, useEffect, useMemo } from 'react'
 
-import { EmailVaultController } from '@ambire-common/controllers/emailVault/emailVault'
+import { IEmailVaultController } from '@ambire-common/interfaces/emailVault'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useControllerState from '@web/hooks/useControllerState'
 
-const EmailVaultControllerStateContext = createContext<EmailVaultController>(
-  {} as EmailVaultController
+const EmailVaultControllerStateContext = createContext<IEmailVaultController>(
+  {} as IEmailVaultController
 )
 
 const EmailVaultControllerStateProvider: React.FC<any> = ({ children }) => {

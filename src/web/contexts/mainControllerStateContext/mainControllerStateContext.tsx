@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-shadow */
 import React, { createContext, useEffect } from 'react'
 
-import { MainController } from '@ambire-common/controllers/main/main'
+import { IMainController } from '@ambire-common/interfaces/main'
 import useDeepMemo from '@common/hooks/useDeepMemo'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useControllerState from '@web/hooks/useControllerState'
 
-const MainControllerStateContext = createContext<MainController>({} as MainController)
+const MainControllerStateContext = createContext<IMainController>({} as IMainController)
 
 const MainControllerStateProvider: React.FC<any> = ({ children }) => {
   const controller = 'main'

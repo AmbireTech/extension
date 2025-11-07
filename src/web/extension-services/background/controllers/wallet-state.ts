@@ -1,5 +1,10 @@
 /* eslint-disable @typescript-eslint/no-floating-promises */
 import EventEmitter from '@ambire-common/controllers/eventEmitter/eventEmitter'
+import {
+  CRASH_ANALYTICS_ENABLED_DEFAULT,
+  CRASH_ANALYTICS_ENABLED_STORAGE_KEY
+} from '@common/config/analytics/CrashAnalytics.web'
+import { APP_VERSION } from '@common/config/env'
 import { DEFAULT_THEME, ThemeType } from '@common/styles/themeConfig'
 import { browser, isSafari } from '@web/constants/browserapi'
 import { storage } from '@web/extension-services/background/webapi/storage'
@@ -18,8 +23,12 @@ export class WalletStateController extends EventEmitter {
 
   logLevel: LOG_LEVELS = DEFAULT_LOG_LEVEL
 
+  crashAnalyticsEnabled: boolean = CRASH_ANALYTICS_ENABLED_DEFAULT
+
   // Holds the initial load promise, so that one can wait until it completes
   initialLoadPromise: Promise<void>
+
+  extensionVersion: string = APP_VERSION
 
   #onLogLevelUpdateCallback: (logLevel: LOG_LEVELS) => Promise<void>
 
@@ -52,6 +61,11 @@ export class WalletStateController extends EventEmitter {
 
     this.logLevel = await storage.get('logLevel', this.logLevel)
     if (this.logLevel !== DEFAULT_LOG_LEVEL) setLoggerInstanceLogLevel(this.logLevel)
+
+    this.crashAnalyticsEnabled = await storage.get(
+      CRASH_ANALYTICS_ENABLED_STORAGE_KEY,
+      this.crashAnalyticsEnabled
+    )
 
     this.isReady = true
     this.emitUpdate()
@@ -96,6 +110,13 @@ export class WalletStateController extends EventEmitter {
     await this.#onLogLevelUpdateCallback(nextLogLevel)
 
     this.emitUpdate()
+  }
+
+  async setCrashAnalytics(enabled: boolean) {
+    this.crashAnalyticsEnabled = enabled
+    this.emitUpdate()
+
+    await storage.set(CRASH_ANALYTICS_ENABLED_STORAGE_KEY, enabled)
   }
 
   toJSON() {

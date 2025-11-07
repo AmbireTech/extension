@@ -13,6 +13,7 @@ const getStyles = () =>
       ...spacings.phMd,
       ...flexbox.alignCenter,
       ...flexbox.justifyCenter,
+      ...flexbox.directionRow,
       borderRadius: 14,
       height: 28
     }

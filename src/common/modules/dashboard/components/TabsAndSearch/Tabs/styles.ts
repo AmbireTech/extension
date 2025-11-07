@@ -13,8 +13,9 @@ const getStyles = (theme: ThemeProps) =>
       ...flexbox.directionRow,
       ...flexbox.alignCenter,
       backgroundColor: theme.secondaryBackground,
-      borderRadius: 14,
-      height: 32
+      borderRadius: 16,
+      height: 32,
+      paddingHorizontal: 2
     }
   })
 
