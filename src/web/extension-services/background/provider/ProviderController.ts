@@ -658,7 +658,6 @@ export class ProviderController {
     const userOp: UserOperation = {
       ...chainIdAndUserOp.userOp,
       signature: chainIdAndUserOp.userOp.signature as string,
-      requestType: 'standard',
       bundler: bundler.getName()
     }
 
@@ -691,7 +690,7 @@ export class ProviderController {
       throw ethErrors.rpc.invalidRequest('callData must be pointed to executeBySender')
 
     const userOperationHash = await bundler.broadcast(
-      { ...userOp, bundler: bundler.getName(), requestType: 'standard' },
+      { ...userOp, bundler: bundler.getName() },
       network
     )
     const identifiedBy: AccountOpIdentifiedBy = {
