@@ -6,8 +6,8 @@ import { FeeSpeed, SigningStatus } from '@ambire-common/controllers/signAccountO
 import { Account, AccountPreferences, AccountStates } from '@ambire-common/interfaces/account'
 import {
   AccountOpAction,
-  ActionExecutionType,
   Action as ActionFromActionsQueue,
+  ActionExecutionType,
   ActionPosition,
   OpenActionWindowParams
 } from '@ambire-common/interfaces/actions'
@@ -739,9 +739,9 @@ type ImportSmartAccountJson = {
   params: { readyToAddAccount: Account; keys: ReadyToAddKeys['internal'] }
 }
 
-type PhishingControllerGetIsBlacklistedAndSendToUiAction = {
-  type: 'PHISHING_CONTROLLER_GET_IS_BLACKLISTED_AND_SEND_TO_UI'
-  params: { url: string }
+type PhishingControllerCheckDappsBlacklistedStatus = {
+  type: 'PHISHING_CONTROLLER_CHECK_DAPPS_BLACKLISTED_STATUS'
+  params: { urls: string[] }
 }
 
 type ExtensionUpdateControllerApplyUpdate = {
@@ -891,7 +891,7 @@ export type Action =
   | KeystoreControllerSendSeedToUiAction
   | KeystoreControllerSendTempSeedToUiAction
   | KeystoreControllerDeleteSeedAction
-  | PhishingControllerGetIsBlacklistedAndSendToUiAction
+  | PhishingControllerCheckDappsBlacklistedStatus
   | ExtensionUpdateControllerApplyUpdate
   | OpenExtensionPopupAction
   | SignAccountOpUpdateAction

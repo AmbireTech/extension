@@ -21,7 +21,7 @@ const DAppConnectBody: FC<{
   confirmedRiskCheckbox: boolean
   setConfirmedRiskCheckbox: React.Dispatch<React.SetStateAction<boolean>>
   responsiveSizeMultiplier: number
-  securityCheck: 'BLACKLISTED' | 'NOT_BLACKLISTED' | 'LOADING'
+  securityCheck: 'BLACKLISTED' | 'NOT_BLACKLISTED' | 'LOADING' | 'FAILED_TO_GET'
 }> = ({
   confirmedRiskCheckbox,
   setConfirmedRiskCheckbox,
@@ -98,7 +98,7 @@ const DAppConnectBody: FC<{
                 style={{ lineHeight: 18 * responsiveSizeMultiplier }}
               >
                 {
-                  "This website didn't pass our safety checks and is blacklisted. It might trick you into signing malicious transactions, asking you to reveal sensitive information, or be dangerous otherwise. If you believe we have blocked it in error, please "
+                  "This website didn't pass our safety checks. It might trick you into signing malicious transactions or asking you to reveal sensitive information. If you believe we have blocked it in error, please "
                 }
                 <Text
                   fontSize={14 * responsiveSizeMultiplier}

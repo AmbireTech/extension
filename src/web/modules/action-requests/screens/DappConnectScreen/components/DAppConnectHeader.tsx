@@ -19,7 +19,7 @@ import TrustedIcon from './TrustedIcon'
 
 type Props = Partial<DappProviderRequest['session']> & {
   responsiveSizeMultiplier: number
-  securityCheck: 'BLACKLISTED' | 'NOT_BLACKLISTED' | 'LOADING'
+  securityCheck: 'BLACKLISTED' | 'NOT_BLACKLISTED' | 'LOADING' | 'FAILED_TO_GET'
 }
 
 const DAppConnectHeader: FC<Props> = ({

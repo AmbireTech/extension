@@ -3,15 +3,15 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { View } from 'react-native'
 
 import { isDappRequestAction } from '@ambire-common/libs/actions/actions'
-import wait from '@ambire-common/utils/wait'
+import { getDappIdFromUrl } from '@ambire-common/libs/dapps/helpers'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import Header from '@common/modules/header/components/Header'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import eventBus from '@web/extension-services/event/eventBus'
 import useActionsControllerState from '@web/hooks/useActionsControllerState'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useDappInfo from '@web/hooks/useDappInfo'
+import usePhishingControllerState from '@web/hooks/usePhishingControllerState'
 import useResponsiveActionWindow from '@web/hooks/useResponsiveActionWindow'
 import ActionFooter from '@web/modules/action-requests/components/ActionFooter'
 
@@ -29,9 +29,7 @@ const DappConnectScreen = () => {
   const [isAuthorizing, setIsAuthorizing] = useState(false)
   const { responsiveSizeMultiplier } = useResponsiveActionWindow()
   const securityCheckCalled = useRef(false)
-  const [securityCheck, setSecurityCheck] = useState<'BLACKLISTED' | 'NOT_BLACKLISTED' | 'LOADING'>(
-    'LOADING'
-  )
+  const { dappsBlacklistedStatus } = usePhishingControllerState()
   const [confirmedRiskCheckbox, setConfirmedRiskCheckbox] = useState(false)
 
   const dappAction = useMemo(
@@ -48,34 +46,25 @@ const DappConnectScreen = () => {
 
   const { name, icon } = useDappInfo(userRequest)
 
+  const securityCheck = useMemo(() => {
+    if (!userRequest?.session?.origin) return 'LOADING'
+    const dappId = getDappIdFromUrl(userRequest.session.origin)
+    return dappsBlacklistedStatus[dappId]?.status || 'LOADING'
+  }, [dappsBlacklistedStatus, userRequest])
+
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     ;(async () => {
       if (!userRequest?.session?.origin) return
       if (securityCheckCalled.current) return
 
-      // slow down the res a bit for better UX
-      await wait(1000)
-
       securityCheckCalled.current = true
       dispatch({
-        type: 'PHISHING_CONTROLLER_GET_IS_BLACKLISTED_AND_SEND_TO_UI',
-        params: { url: userRequest.session.origin }
+        type: 'PHISHING_CONTROLLER_CHECK_DAPPS_BLACKLISTED_STATUS',
+        params: { urls: [userRequest.session.origin] }
       })
     })()
   }, [dispatch, userRequest?.session?.origin])
-
-  useEffect(() => {
-    const onReceiveOneTimeData = (data: any) => {
-      if (!data.hostname) return
-
-      setSecurityCheck(data.hostname)
-    }
-
-    eventBus.addEventListener('receiveOneTimeData', onReceiveOneTimeData)
-
-    return () => eventBus.removeEventListener('receiveOneTimeData', onReceiveOneTimeData)
-  }, [])
 
   const handleDenyButtonPress = useCallback(() => {
     if (!dappAction) return
