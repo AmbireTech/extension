@@ -105,7 +105,7 @@ export class BasePage {
     // return actionWindowPagePromise
 
     // wait for locator before click
-    await locator.waitFor({ state: 'visible' })
+    await locator.waitFor({ state: 'visible', timeout: 100000 })
     await expect(locator).toBeEnabled()
 
     // setup listener for new page event

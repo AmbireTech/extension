@@ -132,7 +132,7 @@ export class SettingsPage extends BasePage {
     await chainlistTab.locator(selectors.chainlistSearchPlaceholder).fill(network.networkName)
 
     // add to metamask
-    await this.page.waitForTimeout(2000)
+    await this.page.waitForTimeout(3000)
     const addToMetamaskButton = chainlistTab.locator(selectors.addToMetamaskButton)
     const addNetworkPage = await this.handleNewPage(addToMetamaskButton)
     await addNetworkPage.locator(selectors.confirmaddNetworkOnChainlistButton).click()
