@@ -31,6 +31,7 @@ import { APP_VERSION } from '@common/config/env'
 import { SAFE_RPC_METHODS } from '@web/constants/common'
 import { notificationManager } from '@web/extension-services/background/webapi/notification'
 
+import { ENTRYPOINT_0_9_0 } from '@ambire-common/consts/deploy'
 import { Hex } from '@ambire-common/interfaces/hex'
 import { SignUserOperation } from '@ambire-common/interfaces/userOperation'
 import { AccountOpStatus } from '@ambire-common/libs/accountOp/types'
@@ -691,7 +692,8 @@ export class ProviderController {
 
     const userOperationHash = await bundler.broadcast(
       { ...userOp, bundler: bundler.getName() },
-      network
+      network,
+      ENTRYPOINT_0_9_0
     )
     const identifiedBy: AccountOpIdentifiedBy = {
       type: 'UserOperation',
