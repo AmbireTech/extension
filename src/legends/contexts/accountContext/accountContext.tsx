@@ -1,7 +1,9 @@
 import React, { createContext, useCallback, useEffect, useMemo } from 'react'
 
+import { AccountIdentityResponse } from '@ambire-common/interfaces/account'
 import { isAmbireV1LinkedAccount } from '@ambire-common/libs/account/account'
-import { getIdentity } from '@ambire-common/libs/accountPicker/accountPicker'
+import { normalizeIdentityResponse } from '@ambire-common/libs/accountPicker/accountPicker'
+import { relayerCall } from '@ambire-common/libs/relayerCall/relayerCall'
 import { RELAYER_URL } from '@env'
 import useProviderContext from '@legends/hooks/useProviderContext'
 import useToast from '@legends/hooks/useToast'
@@ -21,7 +23,7 @@ const LOCAL_STORAGE_ACC_KEY = 'connectedAccount'
 
 const AccountContextProvider = ({ children }: { children: React.ReactNode }) => {
   const { addToast } = useToast()
-  const { isConnected, provider, disconnectProvider } = useProviderContext()
+  const { isConnected, provider } = useProviderContext()
 
   // We keep only V2 accounts
   const [connectedAccount, setConnectedAccount] = React.useState<string | null>(() => {
@@ -65,7 +67,18 @@ const AccountContextProvider = ({ children }: { children: React.ReactNode }) => 
     async (address: string) => {
       try {
         // Add: timeout to this request
-        const identity = await getIdentity(address, fetch as any, RELAYER_URL)
+        // @ts-ignore types mismatch a bit with the extension, which is fine
+        const callRelayer = relayerCall.bind({ url: RELAYER_URL, fetch })
+        const identityRes: AccountIdentityResponse | null = await callRelayer(
+          `/v2/identity/${address}`
+        ).catch((err: any) => {
+          // 404 response (if the account is not found) is a valid response, do not throw
+          if (err?.output?.res?.status === 404) return null
+
+          throw err
+        })
+
+        const identity = normalizeIdentityResponse(address, identityRes)
         const factoryAddr = identity.creation?.factoryAddr
         const isV1 = isAmbireV1LinkedAccount(factoryAddr)
 
@@ -98,8 +111,7 @@ const AccountContextProvider = ({ children }: { children: React.ReactNode }) => 
     setIsLoading(false)
     setAllAccounts([])
     localStorage.removeItem(LOCAL_STORAGE_ACC_KEY)
-    disconnectProvider()
-  }, [disconnectProvider])
+  }, [])
 
   useEffect(() => {
     if (!isConnected && connectedAccount) {

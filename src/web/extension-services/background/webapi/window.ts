@@ -357,6 +357,10 @@ const closePopupWithUrl = async (url: string) => {
   await chrome.windows.remove(matchingWindowId)
 }
 
+const getCurrentWindow = async () => {
+  return chrome.windows.getCurrent()
+}
+
 export default { open, focus, closePopupWithUrl, remove, event }
 
-export { closeCurrentWindow }
+export { closeCurrentWindow, getCurrentWindow }

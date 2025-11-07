@@ -44,7 +44,6 @@ const LeaderboardContainer: React.FC = () => {
       currentTotalBalanceOnSupportedChains ?? 0,
       rewardsProjectionData?.numberOfWeeksSinceStartOfSeason,
       rewardsProjectionData?.totalWeightNonUser,
-      rewardsProjectionData?.walletPrice,
       rewardsProjectionData?.totalRewardsPool,
       rewardsProjectionData?.minLvl,
       rewardsProjectionData?.minBalance
@@ -258,7 +257,7 @@ const LeaderboardContainer: React.FC = () => {
                   projectedRewards={
                     activeTab === 2
                       ? connectedAccount === item.account
-                        ? projectedAmount?.walletRewards
+                        ? projectedAmount
                         : typeof item.projectedRewards === 'number'
                         ? item.projectedRewards
                         : 'Loading...'
@@ -275,6 +274,7 @@ const LeaderboardContainer: React.FC = () => {
                   <Row
                     key={userLeaderboardData.account}
                     {...userLeaderboardData}
+                    projectedRewards={activeTab === 2 ? projectedAmount?.walletRewards : undefined}
                     stickyPosition={stickyPosition}
                     currentUserRef={currentUserRef}
                   />

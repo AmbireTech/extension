@@ -402,6 +402,12 @@ type SignAccountOpUpdateAction = {
     gasUsedTooHighAgreed?: boolean
   }
 }
+type SignAccountOpReestimateAction = {
+  type: 'SIGN_ACCOUNT_OP_REESTIMATE'
+  params: {
+    type: SignAccountOpType
+  }
+}
 type MainControllerSignAccountOpUpdateStatus = {
   type:
     | 'MAIN_CONTROLLER_SIGN_ACCOUNT_OP_UPDATE_STATUS'
@@ -520,6 +526,9 @@ type DomainsControllerSaveResolvedReverseLookupAction = {
   }
 }
 
+type DappsControllerFetchAndUpdateDappsAction = {
+  type: 'DAPPS_CONTROLLER_FETCH_AND_UPDATE_DAPPS'
+}
 type DappsControllerRemoveConnectedSiteAction = {
   type: 'DAPPS_CONTROLLER_DISCONNECT_DAPP'
   params: Dapp['id']
@@ -846,6 +855,7 @@ export type Action =
   | EmailVaultControllerDismissBannerAction
   | DomainsControllerReverseLookupAction
   | DomainsControllerSaveResolvedReverseLookupAction
+  | DappsControllerFetchAndUpdateDappsAction
   | DappsControllerRemoveConnectedSiteAction
   | DappsControllerUpdateDappAction
   | DappsControllerRemoveDappAction
@@ -885,6 +895,7 @@ export type Action =
   | ExtensionUpdateControllerApplyUpdate
   | OpenExtensionPopupAction
   | SignAccountOpUpdateAction
+  | SignAccountOpReestimateAction
   | SwapAndBridgeControllerMarkSelectedRouteAsFailed
   | SwapAndBridgeControllerDestroySignAccountOp
   | SwapAndBridgeControllerOpenSigningActionWindow

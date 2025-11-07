@@ -112,8 +112,7 @@ const AddChain = ({
             style={[
               styles.dappInfoContainer,
               {
-                marginBottom: SPACING_MD * responsiveSizeMultiplier,
-                paddingHorizontal: SPACING_MD * responsiveSizeMultiplier
+                marginBottom: SPACING_MD * responsiveSizeMultiplier
               }
             ]}
           >

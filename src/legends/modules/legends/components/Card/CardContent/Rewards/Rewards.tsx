@@ -6,7 +6,7 @@ import BinanceSmartChainLogo from '@legends/components/NetworkIcons/BinanceSmart
 import EthereumLogo from '@legends/components/NetworkIcons/EthereumLogo'
 import OptimismLogo from '@legends/components/NetworkIcons/OptimismLogo'
 import ScrollLogo from '@legends/components/NetworkIcons/ScrollLogo'
-import { CardFromResponse } from '@legends/modules/legends/types'
+import { CardFromResponse, CardXp } from '@legends/modules/legends/types'
 
 import styles from './Rewards.module.scss'
 
@@ -24,10 +24,16 @@ const NETWORK_ICONS: { [networkId: string]: React.ReactNode } = {
   'binance-smart-chain': <BinanceSmartChainLogo />
 }
 
+function getText({ from, to, linearMultiplier }: Partial<CardXp>): string {
+  if (linearMultiplier) return `${linearMultiplier} XP per $1 used`
+  if (from !== to) return `${from} - ${to} XP`
+  return `${from} XP`
+}
+
 const Rewards: FC<Props> = ({ xp, size = 'lg', reverse, id }) => {
   return (
     <div className={`${styles.wrapper} ${styles[size]} ${reverse ? styles.reverse : ''}`}>
-      {xp?.map(({ from, to, type, chains }) => (
+      {xp?.map(({ from, to, type, chains, linearMultiplier }) => (
         <div key={`${from}-${to}-${type}`} className={styles.item}>
           {chains && (
             <div className={styles.itemNetworks}>
@@ -38,7 +44,7 @@ const Rewards: FC<Props> = ({ xp, size = 'lg', reverse, id }) => {
           )}
           <div className={styles.itemText}>
             {id !== 'cant-get-enough' ? (
-              `${from} ${to !== from ? ` - ${to}` : ''} XP`
+              getText({ from, to, linearMultiplier })
             ) : (
               <>
                 <p>50 - 500 XP (daily)</p>
