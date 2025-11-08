@@ -6,6 +6,7 @@ import { getAddress, Interface, isAddress, toBeHex, TransactionReceipt, ZeroAddr
 import cloneDeep from 'lodash/cloneDeep'
 import { nanoid } from 'nanoid'
 
+import AmbireAccountOmni from '@ambire-common/../contracts/compiled/AmbireAccountOmni.json'
 import { ORIGINS_WHITELISTED_TO_ALL_ACCOUNTS } from '@ambire-common/consts/dappCommunication'
 import { MainController } from '@ambire-common/controllers/main/main'
 import { DappProviderRequest } from '@ambire-common/interfaces/dapp'
@@ -678,14 +679,13 @@ export class ProviderController {
     }
 
     let calls = []
+    const omni = new Interface(AmbireAccountOmni.abi)
     try {
-      const ambireInterface = new Interface([
-        'function executeBySender((address to, uint256 value, bytes data)[] calls) payable'
-      ])
-      const decoded = ambireInterface.decodeFunctionData('executeBySender', userOp.callData)
+      const decoded = omni.decodeFunctionData('executeBySender', userOp.callData)
       calls = decoded[0]
     } catch (e) {
-      throw ethErrors.rpc.invalidRequest('callData must be pointed to executeBySender')
+      const decoded = omni.decodeFunctionData('executeComposableBySender', userOp.callData)
+      calls = decoded[0]
     }
     if (!calls.length)
       throw ethErrors.rpc.invalidRequest('callData must be pointed to executeBySender')
