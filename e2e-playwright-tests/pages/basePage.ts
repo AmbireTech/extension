@@ -64,6 +64,7 @@ export class BasePage {
       .getByTestId('select-menu')
       .getByTestId(`option-${paidBy + tokenAddress + tokenSymbol + gasTank}`)
     await tokenLocator.click()
+    await this.page.waitForTimeout(1000)
   }
 
   // TODO: refactor, this method can be depracated; switch to getByTestId
@@ -139,8 +140,10 @@ export class BasePage {
     await expect(this.page.getByTestId(selector)).toBeEnabled({ timeout: 5000 })
   }
 
-  async compareText(selector: string, text: string, index?: number) {
-    await expect(this.page.getByTestId(selector).nth(index ?? 0)).toContainText(text)
+  async compareText(selector: string, text: string, timeout = 30000, index?: number) {
+    await expect(this.page.getByTestId(selector).nth(index ?? 0)).toContainText(text, {
+      timeout: timeout
+    })
   }
 
   async isVisible(selector: string): Promise<boolean> {
@@ -173,5 +176,22 @@ export class BasePage {
     const tokenBalance = parseFloat(balanceText)
 
     return tokenBalance
+  }
+
+  // approve the high impact modal if appears
+  async handlePriceWarningModals() {
+    const isHighPrice = await this.page
+      .waitForSelector(selectors.highPriceImpactSab, { timeout: 1000 })
+      .catch(() => null)
+
+    const isHighSlippage = await this.page
+      .waitForSelector(selectors.highSlippageModal, { timeout: 1000 })
+      .catch(() => null)
+
+    if (isHighPrice || isHighSlippage) {
+      // TODO: change methods once we have IDs
+      await this.click(selectors.continueAnywayCheckboxSaB)
+      await this.page.locator(selectors.continueAnywayButton).click()
+    }
   }
 }

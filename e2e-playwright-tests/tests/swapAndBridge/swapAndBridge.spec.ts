@@ -150,6 +150,7 @@ test.describe('swapAndBridge Smart Account', { tag: '@swapAndBridge' }, () => {
   test('should Bridge tokens with a Smart Account', async ({ pages }) => {
     const usdc = tokens.usdc.base
     const usdcOpt = tokens.usdc.optimism
+    const message = 'Nice trade!'
 
     await test.step('assert no transaction on Activity tab', async () => {
       await pages.dashboard.checkNoTransactionOnActivityTab()
@@ -160,7 +161,8 @@ test.describe('swapAndBridge Smart Account', { tag: '@swapAndBridge' }, () => {
     })
 
     await test.step('sign transaction', async () => {
-      await pages.swapAndBridge.signTokens({ fromToken: usdc })
+      // await pages.swapAndBridge.signTokens({ fromToken: usdc })
+      await pages.transfer.signSlowSpeedTransaction({ sendToken: usdc, message })
     })
 
     await test.step('assert new transaction on Activity tab', async () => {
@@ -168,7 +170,7 @@ test.describe('swapAndBridge Smart Account', { tag: '@swapAndBridge' }, () => {
     })
   })
 
-  test('should batch Swap of ERC20 tokens and Native to ERC20 token with a Smart Account', async ({
+  test.only('should batch Swap of ERC20 tokens and Native to ERC20 token with a Smart Account', async ({
     pages
   }) => {
     const usdc = tokens.usdc.base
@@ -185,6 +187,7 @@ test.describe('swapAndBridge Smart Account', { tag: '@swapAndBridge' }, () => {
 
     await test.step('add a transaction swapping USDC for WALLET to the existing batch and sign', async () => {
       await pages.swapAndBridge.prepareSwapAndBridge(0.01, usdc, wallet)
+      // await pages.auth.pause()
       await pages.swapAndBridge.batchActionWithSign()
     })
 

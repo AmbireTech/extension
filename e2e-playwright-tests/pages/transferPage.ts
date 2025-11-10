@@ -132,11 +132,11 @@ export class TransferPage extends BasePage {
   async signSlowSpeedTransaction({
     sendToken,
     feeToken,
-    payWithGasTank,
+    payWithGasTank = true, // pay with gas tank by default
     message
   }: {
     sendToken: Token
-    feeToken: Token
+    feeToken?: Token
     payWithGasTank?: boolean
     message: string
   }) {
@@ -145,11 +145,13 @@ export class TransferPage extends BasePage {
     await this.expectButtonEnabled(selectors.proceedBtn)
     await this.click(selectors.proceedBtn)
 
+    // approve the high impact modal if appears
+    await this.handlePriceWarningModals()
+
     // Select slow speed
     await this.click(selectors.transaction.feeSpeedSelectDropdown)
     await this.click(selectors.transaction.feeSpeedSlow)
 
-    await this.pause()
     // Select fee token; default Gas Tank
     if (!payWithGasTank) {
       await this.selectFeeToken(baParams.envSelectedAccount, feeToken, payWithGasTank)
@@ -163,12 +165,13 @@ export class TransferPage extends BasePage {
     if (feeDollarsAmount > 0.1) {
       console.warn('⚠️ Fee amount is higher than 0.1$, transaction signing skipped.')
     } else {
+      // start monitoring requests
+      await this.monitorRequests()
+
       // Sign & Broadcast
       await this.expectButtonEnabled(selectors.signButton)
       await this.click(selectors.signButton)
-
-      // Validate success message
-      await this.compareText(selectors.txnStatus, message)
+      await expect(this.page.getByText('Confirming your trade')).toBeVisible({ timeout: 10000 })
 
       // Validate requests
       const { rpc } = this.getCategorizedRequests()
@@ -182,6 +185,10 @@ export class TransferPage extends BasePage {
    After a broadcast, the portfolio must be refreshed only for *${sendToken.chainName}*.
    However, RPC requests were also made for other networks: ${rpc.toString()}`
       ).toEqual(true)
+
+      // validate success message
+      const timeout = 120000
+      await this.compareText(selectors.txnStatus, message, timeout)
 
       // Close page
       await this.click(selectors.closeProgressModalButton)

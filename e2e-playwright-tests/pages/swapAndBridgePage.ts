@@ -352,36 +352,37 @@ export class SwapAndBridgePage extends BasePage {
     }
   }
 
-  async signTokens({ fromToken }: { fromToken: Token }): Promise<void> {
-    await this.click(selectors.signButton)
+  // async signTokens({ fromToken }: { fromToken: Token }): Promise<void> {
+  //   await this.pause()
+  //   await this.click(selectors.signButton)
 
-    // approve the high impact modal if appears
-    await this.handlePriceWarningModals()
+  //   // approve the high impact modal if appears
+  //   await this.handlePriceWarningModals()
 
-    await this.monitorRequests()
+  //   await this.monitorRequests()
 
-    // Sometimes the button needs a bit to become enabled
-    await this.expectButtonEnabled(selectors.signButton)
+  //   // Sometimes the button needs a bit to become enabled
+  //   await this.expectButtonEnabled(selectors.signButton)
 
-    await this.click(selectors.signButton)
-    await expect(this.page.getByText('Confirming your trade')).toBeVisible({ timeout: 10000 })
+  //   await this.click(selectors.signButton)
+  //   await expect(this.page.getByText('Confirming your trade')).toBeVisible({ timeout: 10000 })
 
-    const { rpc } = this.getCategorizedRequests()
+  //   const { rpc } = this.getCategorizedRequests()
 
-    // Verify that portfolio updates run only for the from token network.
-    // A previous regression was triggering updates on all enabled networks after a broadcast,
-    // which caused a significant performance downgrade.
-    expect(
-      rpc.every((req) => req === `https://invictus.ambire.com/${fromToken.chainName}`),
-      `Invalid portfolio update behavior detected.
-   After a broadcast, the portfolio must be refreshed only for *${fromToken.chainName}*.
-   However, RPC requests were also made for other networks: ${rpc.toString()}`
-    ).toEqual(true)
+  //   // Verify that portfolio updates run only for the from token network.
+  //   // A previous regression was triggering updates on all enabled networks after a broadcast,
+  //   // which caused a significant performance downgrade.
+  //   expect(
+  //     rpc.every((req) => req === `https://invictus.ambire.com/${fromToken.chainName}`),
+  //     `Invalid portfolio update behavior detected.
+  //  After a broadcast, the portfolio must be refreshed only for *${fromToken.chainName}*.
+  //  However, RPC requests were also made for other networks: ${rpc.toString()}`
+  //   ).toEqual(true)
 
-    // assert transaction successful
-    await expect(this.page.getByText('Nice trade!')).toBeVisible({ timeout: 120000 }) // sometimes confirmation takes more time (around 1 min)
-    await this.click(selectors.closeProgressModalButton)
-  }
+  //   // assert transaction successful
+  //   await expect(this.page.getByText('Nice trade!')).toBeVisible({ timeout: 120000 }) // sometimes confirmation takes more time (around 1 min)
+  //   await this.click(selectors.closeProgressModalButton)
+  // }
 
   async batchAction(): Promise<void> {
     await this.page.getByTestId(selectors.addToBatchButton).isEnabled()
@@ -481,22 +482,5 @@ export class SwapAndBridgePage extends BasePage {
     await expect(this.page.locator(selectors.dashboard.confirmedTransactionPill)).toContainText(
       'Confirmed'
     )
-  }
-
-  // approve the high impact modal if appears
-  async handlePriceWarningModals() {
-    const isHighPrice = await this.page
-      .waitForSelector(selectors.highPriceImpactSab, { timeout: 1000 })
-      .catch(() => null)
-
-    const isHighSlippage = await this.page
-      .waitForSelector(selectors.highSlippageModal, { timeout: 1000 })
-      .catch(() => null)
-
-    if (isHighPrice || isHighSlippage) {
-      // TODO: change methods once we have IDs
-      await this.click(selectors.continueAnywayCheckboxSaB)
-      await this.page.locator(selectors.continueAnywayButton).click()
-    }
   }
 }
