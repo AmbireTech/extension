@@ -59,7 +59,7 @@ const useMultiHover = ({ values, forceHoveredStyle = false }: Props) => {
     // Don't add it if it's already being animated
     if (opacity) return newValues
 
-    // Opacity is always needed for onPressIn and onPressOut
+    // Opacity is always needed for onPressIn
     newValues.push({
       value: new Animated.Value(1),
       property: 'opacity',
@@ -147,9 +147,7 @@ const useMultiHover = ({ values, forceHoveredStyle = false }: Props) => {
           duration: 0,
           useNativeDriver: true
         }).start()
-      },
-      // @TODO: Remove
-      onPressOut: () => {}
+      }
     }),
     [animate, animatedValues, forceHoveredStyle, onHoverIn]
   )
@@ -176,7 +174,6 @@ const useMultiHover = ({ values, forceHoveredStyle = false }: Props) => {
       onHoverIn: (event: MouseEvent) => void
       onHoverOut: (event: MouseEvent) => void
       onPressIn: (event: GestureResponderEvent) => void
-      onPressOut: (event: GestureResponderEvent) => void
     },
     ViewStyle,
     boolean,
