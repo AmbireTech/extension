@@ -44,7 +44,7 @@ type Props = {
   chainId?: bigint
   features: NetworkFeature[] | undefined
   withRetryButton?: boolean
-  handleRetry?: () => void
+  handleRetryWithDifferentRpcUrl?: () => void
   hideBackgroundAndBorders?: boolean
   titleSize?: number
   responsiveSizeMultiplier?: number
@@ -55,7 +55,7 @@ const NetworkAvailableFeatures = ({
   chainId,
   features,
   withRetryButton,
-  handleRetry,
+  handleRetryWithDifferentRpcUrl,
   hideBackgroundAndBorders = false,
   titleSize,
   responsiveSizeMultiplier = 1,
@@ -279,9 +279,7 @@ const NetworkAvailableFeatures = ({
               size="small"
               text={t('Try next RPC URL')}
               style={{ maxHeight: 32 }}
-              onPress={() => {
-                !!handleRetry && handleRetry()
-              }}
+              onPress={handleRetryWithDifferentRpcUrl}
             />
           </View>
         )}
