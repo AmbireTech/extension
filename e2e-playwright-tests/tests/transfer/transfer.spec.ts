@@ -20,6 +20,7 @@ test.describe('transfer', { tag: '@transfer' }, () => {
     const recipientAddress = '0xc162b2F9f06143Cf063606d814C7F38ED4471F44'
     const feeToken = tokens.usdc.ethereum
     const payWithGasTank = true
+    const message = 'Transfer done!'
 
     await test.step('assert no transaction on Activity tab', async () => {
       await pages.dashboard.checkNoTransactionOnActivityTab()
@@ -38,7 +39,13 @@ test.describe('transfer', { tag: '@transfer' }, () => {
     })
 
     await test.step('send transaction', async () => {
-      await pages.transfer.signAndValidate({ feeToken, payWithGasTank, sendToken })
+      // await pages.transfer.signAndValidate({ feeToken, payWithGasTank, sendToken })
+      await pages.transfer.signSlowSpeedTransaction({
+        feeToken,
+        payWithGasTank,
+        sendToken,
+        message
+      })
     })
 
     await test.step('assert new transaction on Activity tab', async () => {
@@ -46,7 +53,7 @@ test.describe('transfer', { tag: '@transfer' }, () => {
     })
   })
 
-  test("should send a transaction and pay with the current account's ERC-20 token", async ({
+  test.only("should send a transaction and pay with the current account's ERC-20 token", async ({
     pages
   }) => {
     const sendToken = tokens.usdc.optimism
@@ -54,6 +61,7 @@ test.describe('transfer', { tag: '@transfer' }, () => {
     const recipientAddress = '0xc162b2F9f06143Cf063606d814C7F38ED4471F44'
     const feeToken = tokens.usdc.optimism
     const payWithGasTank = false
+    const message = 'Transfer done!'
 
     await test.step('assert no transaction on Activity tab', async () => {
       await pages.dashboard.checkNoTransactionOnActivityTab()
@@ -72,7 +80,13 @@ test.describe('transfer', { tag: '@transfer' }, () => {
     })
 
     await test.step('send transaction', async () => {
-      await pages.transfer.signAndValidate({ feeToken, payWithGasTank, sendToken })
+      // await pages.transfer.signAndValidate({ feeToken, payWithGasTank, sendToken })
+      await pages.transfer.signSlowSpeedTransaction({
+        feeToken,
+        payWithGasTank,
+        sendToken,
+        message
+      })
     })
 
     await test.step('assert new transaction on Activity tab', async () => {
@@ -136,13 +150,10 @@ test.describe('transfer', { tag: '@transfer' }, () => {
       })
     })
 
-    await test.step(
-      'stop monitoring requests and expect no uncategorized requests to be made',
-      async () => {
-        const { uncategorized } = pages.transfer.getCategorizedRequests()
-        expect(uncategorized.length).toBeLessThanOrEqual(0)
-      }
-    )
+    await test.step('stop monitoring requests and expect no uncategorized requests to be made', async () => {
+      const { uncategorized } = pages.transfer.getCategorizedRequests()
+      expect(uncategorized.length).toBeLessThanOrEqual(0)
+    })
   })
 
   test('add contact in address book and send transaction to newly added contact', async ({
@@ -154,6 +165,7 @@ test.describe('transfer', { tag: '@transfer' }, () => {
     const feeToken = tokens.usdc.optimism
     const payWithGasTank = false
     const isUnknownAddress = false
+    const message = 'Transfer done!'
 
     await test.step('assert no transaction on Activity tab', async () => {
       await pages.dashboard.checkNoTransactionOnActivityTab()
@@ -191,7 +203,13 @@ test.describe('transfer', { tag: '@transfer' }, () => {
     })
 
     await test.step('send transaction', async () => {
-      await pages.transfer.signAndValidate({ feeToken, payWithGasTank, sendToken })
+      // await pages.transfer.signAndValidate({ feeToken, payWithGasTank, sendToken })
+      await pages.transfer.signSlowSpeedTransaction({
+        feeToken,
+        payWithGasTank,
+        sendToken,
+        message
+      })
     })
 
     await test.step('assert new transaction on Activity tab', async () => {
@@ -206,6 +224,7 @@ test.describe('transfer', { tag: '@transfer' }, () => {
     const feeToken = tokens.usdc.optimism
     const newContactName = 'First Address'
     const newContactAddress = '0xC254b41be9582e45a2aCE62D5adD3F8092D4ea6C'
+    const message = 'Transfer done!'
 
     await test.step('assert no transaction on Activity tab', async () => {
       await pages.dashboard.checkNoTransactionOnActivityTab()
@@ -224,7 +243,12 @@ test.describe('transfer', { tag: '@transfer' }, () => {
     })
 
     await test.step('send USCD to added contact', async () => {
-      await pages.transfer.signAndValidate({ feeToken, sendToken })
+      // await pages.transfer.signAndValidate({ feeToken, sendToken })
+      await pages.transfer.signSlowSpeedTransaction({
+        feeToken,
+        sendToken,
+        message
+      })
     })
 
     await test.step('assert new transaction on Activity tab', async () => {

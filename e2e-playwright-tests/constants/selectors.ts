@@ -88,6 +88,16 @@ const selectors = {
       removeCustomTokenButton: 'remove-button'
     }
   },
+  transaction: {
+    feeTokensSelectDropdown: 'fee-option-select',
+    feeSpeedSelectDropdown: 'fee-speed-select',
+    feeSpeedSlow: 'option-slow',
+    feeSpeedMedium: 'option-medium',
+    feeSpeedFast: 'option-fast',
+    feeSpeedApe: 'option-ape',
+    feeGasTankInDollars: '//span[contains(text(),"Gas Tank")]/../../../div[contains(text(),"$")]', // returning e.g. "<$0.01"
+    feeTokenInDollars: '//span[contains(text(),"")]/../../div[contains(text(),"$")]'
+  },
   account: 'account',
   importMethodTrezor: 'import-method-trezor',
   trezorConnectConfirmTerms: '@analytics/continue-button',
@@ -166,7 +176,6 @@ const selectors = {
   nativeTokenPolygonDyn: 'token-0x0000000000000000000000000000000000000000-polygon',
   tokenSend: 'token-send',
   tokensSelect: 'tokens-select',
-  feeTokensSelect: 'fee-option-select',
   queueAndSignLaterButton: 'queue-and-sign-later-button',
   deleteTxnCallDyn: 'delete-txn-call',
   feeSlow: 'option-slow',
@@ -228,7 +237,6 @@ const selectors = {
   // Top up
   modalGasTankBalance: 'gas-tank-balance',
   topUpButton: 'top-up-gas-tank-modal-button',
-  topUpProceedButton: 'proceed-btn',
   closeProgressModalButton: 'track-progress-primary-button',
   // Network Management
   // TODO: change once we have IDs on FE

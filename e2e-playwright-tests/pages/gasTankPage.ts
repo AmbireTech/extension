@@ -36,13 +36,11 @@ export class GasTankPage extends BasePage {
 
   async signAndValidate() {
     // Proceed
-    const proceedButton = this.page.getByTestId(selectors.proceedBtn)
     await this.expectButtonEnabled(selectors.proceedBtn)
-    await proceedButton.click()
+    await this.click(selectors.proceedBtn)
 
     // Sign & Broadcast
-    const sign = this.page.getByTestId(selectors.signButton)
-    await sign.click()
+    await this.click(selectors.signButton)
 
     // Validate
     const txnStatus = await this.page.getByTestId(selectors.txnStatus).textContent()

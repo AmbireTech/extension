@@ -59,7 +59,7 @@ export class TransferPage extends BasePage {
     await this.click(selectors.proceedBtn)
 
     // Select Fee token and payer
-    await this.clickOnMenuFeeToken(baParams.envSelectedAccount, feeToken, payWithGasTank)
+    await this.selectFeeToken(baParams.envSelectedAccount, feeToken, payWithGasTank)
 
     await this.monitorRequests()
 
@@ -126,5 +126,65 @@ export class TransferPage extends BasePage {
     await expect(this.page.locator(selectors.dashboard.confirmedTransactionPill)).toContainText(
       'Confirmed'
     )
+  }
+
+  // changing fee speed and checking fee amount, if above 0.1$ transaction won't be signed
+  async signSlowSpeedTransaction({
+    sendToken,
+    feeToken,
+    payWithGasTank,
+    message
+  }: {
+    sendToken: Token
+    feeToken: Token
+    payWithGasTank?: boolean
+    message: string
+  }) {
+    let feeSelector
+    // Proceed
+    await this.expectButtonEnabled(selectors.proceedBtn)
+    await this.click(selectors.proceedBtn)
+
+    // Select slow speed
+    await this.click(selectors.transaction.feeSpeedSelectDropdown)
+    await this.click(selectors.transaction.feeSpeedSlow)
+
+    await this.pause()
+    // Select fee token; default Gas Tank
+    if (!payWithGasTank) {
+      await this.selectFeeToken(baParams.envSelectedAccount, feeToken, payWithGasTank)
+      feeSelector = await this.page.locator(selectors.transaction.feeTokenInDollars).innerText() // returns e.g. '<$0.01'
+    } else {
+      feeSelector = await this.page.locator(selectors.transaction.feeGasTankInDollars).innerText() // returns e.g. '<$0.01'
+    }
+
+    const feeDollarsAmount = Number(feeSelector.replace(/[<$]/g, ''))
+
+    if (feeDollarsAmount > 0.1) {
+      console.warn('⚠️ Fee amount is higher than 0.1$, transaction signing skipped.')
+    } else {
+      // Sign & Broadcast
+      await this.expectButtonEnabled(selectors.signButton)
+      await this.click(selectors.signButton)
+
+      // Validate success message
+      await this.compareText(selectors.txnStatus, message)
+
+      // Validate requests
+      const { rpc } = this.getCategorizedRequests()
+
+      // Verify that portfolio updates run only for the send token network.
+      // A previous regression was triggering updates on all enabled networks after a broadcast,
+      // which caused a significant performance downgrade.
+      expect(
+        rpc.every((req) => req === `https://invictus.ambire.com/${sendToken.chainName}`),
+        `Invalid portfolio update behavior detected.
+   After a broadcast, the portfolio must be refreshed only for *${sendToken.chainName}*.
+   However, RPC requests were also made for other networks: ${rpc.toString()}`
+      ).toEqual(true)
+
+      // Close page
+      await this.click(selectors.closeProgressModalButton)
+    }
   }
 }

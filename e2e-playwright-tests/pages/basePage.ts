@@ -47,9 +47,8 @@ export class BasePage {
     await tokenLocator.click()
   }
 
-  async clickOnMenuFeeToken(paidByAddress: string, token: Token, onGasTank?: boolean) {
-    const selectMenu = this.page.getByTestId(selectors.feeTokensSelect)
-    await selectMenu.click()
+  async selectFeeToken(paidByAddress: string, token: Token, onGasTank?: boolean) {
+    await this.click(selectors.transaction.feeTokensSelectDropdown)
 
     // If the token is outside the viewport, we ensure it becomes visible by searching for its symbol
     await this.entertext(selectors.searchInput, token.symbol)

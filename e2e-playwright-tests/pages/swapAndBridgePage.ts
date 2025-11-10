@@ -353,7 +353,7 @@ export class SwapAndBridgePage extends BasePage {
   }
 
   async signTokens({ fromToken }: { fromToken: Token }): Promise<void> {
-    await this.click(selectors.topUpProceedButton)
+    await this.click(selectors.signButton)
 
     // approve the high impact modal if appears
     await this.handlePriceWarningModals()
