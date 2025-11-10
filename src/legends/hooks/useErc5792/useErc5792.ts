@@ -1,13 +1,16 @@
-import { ENTRYPOINT_0_9_0 } from '@ambire-common/consts/deploy'
-import { SignUserOperation } from '@ambire-common/interfaces/userOperation'
+import { Hex } from '@ambire-common/interfaces/hex'
+import {
+  ChainIdWithUserOp,
+  PartialOperation,
+  SignUserOperation
+} from '@ambire-common/interfaces/userOperation'
 import { GasSpeeds } from '@ambire-common/services/bundlers/types'
 import { getRpcProvider } from '@ambire-common/services/provider'
-import { executeBySenderInterface } from '@benzin/screens/BenzinScreen/constants/humanizerInterfaces'
 import { delayPromise } from '@common/utils/promises'
 import { RELAYER_URL } from '@env'
 import HumanReadableError from '@legends/classes/HumanReadableError'
 import useProviderContext from '@legends/hooks/useProviderContext'
-import { Interface, toBeHex } from 'ethers'
+import { concat, randomBytes, toBeHex } from 'ethers'
 
 export const ERRORS = {
   txFailed: 'tx-failed',
@@ -82,11 +85,8 @@ const useErc5792 = () => {
 
   // the callsId should be an identifier return by the wallet
   // from wallet_sendCalls
-  const getCallsStatus = async (
-    callsId: string,
-    is4337Required: boolean = true
-  ): Promise<Receipt> => {
-    if (!provider) return
+  const getCallsStatus = async (callsId: string): Promise<Receipt> => {
+    if (!provider) throw new Error('provider destroyed')
 
     let receipt = null
     // eslint-disable-next-line no-constant-condition
@@ -120,76 +120,25 @@ const useErc5792 = () => {
     return receipt
   }
 
-  const walletSignUserOps = async (
-    chainId: string,
-    accAddr: string,
-    calls: { to: string; data: string; value?: string }[]
-  ) => {
-    // const baseSepoliaProvider: any = getRpcProvider(
-    //   ['https://sepolia.base.org'],
-    //   84532n,
-    //   'https://sepolia.base.org'
-    // )
-    const opSepoliaProvider: any = getRpcProvider(
-      ['https://sepolia.optimism.io'],
-      11155420n,
-      'https://sepolia.optimism.io'
-    )
-    const entryPointInterface = new Interface([
-      'function getNonce(address, uint192) public view returns (uint256 nonce)'
-    ])
-    // const entryPointNonce = await baseSepoliaProvider.call({
-    //   to: ENTRYPOINT_0_9_0,
-    //   data: entryPointInterface.encodeFunctionData('getNonce', [accAddr, 0])
-    // })
-    // const nonce =
-    //   entryPointNonce && entryPointNonce !== '0x' ? toBeHex(BigInt(entryPointNonce)) : '0x00'
-    const entryPointNonceOp = await opSepoliaProvider.call({
-      to: ENTRYPOINT_0_9_0,
-      data: entryPointInterface.encodeFunctionData('getNonce', [accAddr, 0])
-    })
-    const nonceOp =
-      entryPointNonceOp && entryPointNonceOp !== '0x' ? toBeHex(BigInt(entryPointNonceOp)) : '0x00'
-    const callData = executeBySenderInterface.encodeFunctionData(
-      'executeBySender',
-      calls.map((call) => {
-        return [[call.to, call.value?.toString() || 0, call.data]]
+  const walletSignUserOps = async (userOperations: PartialOperation[]) => {
+    const filledUserOps: ChainIdWithUserOp[] = []
+    for (let i = 0; i < userOperations.length; i++) {
+      const op = userOperations[i]
+      // eslint-disable-next-line no-await-in-loop
+      const prices = await getGasPrice(op.chainId)
+      filledUserOps.push({
+        chainId: toBeHex(op.chainId) as Hex,
+        userOperation: {
+          ...op,
+          nonce: concat([randomBytes(24), toBeHex(0, 8)]),
+          maxFeePerGas: prices.medium.maxFeePerGas,
+          maxPriorityFeePerGas: prices.medium.maxPriorityFeePerGas
+        }
       })
-    )
-    // const baseSepoliaChainId = 84532n
-    const opSepoliaChainId = 11155420n
-    // const gasPrice = await getGasPrice(baseSepoliaChainId)
-    const gasPriceOp = await getGasPrice(opSepoliaChainId)
+    }
     const signUserOpsIdentifierJsonString: any = await provider!.request({
       method: 'wallet_signUserOperations',
-      params: [
-        // {
-        //   chainId: toBeHex(baseSepoliaChainId),
-        //   userOperation: {
-        //     sender: accAddr,
-        //     nonce,
-        //     callData,
-        //     callGasLimit: toBeHex(100000),
-        //     verificationGasLimit: toBeHex(100000),
-        //     preVerificationGas: toBeHex(100000),
-        //     maxFeePerGas: gasPrice.medium.maxFeePerGas,
-        //     maxPriorityFeePerGas: gasPrice.medium.maxPriorityFeePerGas
-        //   }
-        // },
-        {
-          chainId: toBeHex(opSepoliaChainId),
-          userOperation: {
-            sender: accAddr,
-            nonce: nonceOp,
-            callData,
-            callGasLimit: toBeHex(100000),
-            verificationGasLimit: toBeHex(100000),
-            preVerificationGas: toBeHex(100000),
-            maxFeePerGas: gasPriceOp.medium.maxFeePerGas,
-            maxPriorityFeePerGas: gasPriceOp.medium.maxPriorityFeePerGas
-          }
-        }
-      ]
+      params: filledUserOps
     })
     const signUserOpsIdentifier: { chainId: string; userOp: SignUserOperation }[] = JSON.parse(
       signUserOpsIdentifierJsonString
@@ -197,7 +146,7 @@ const useErc5792 = () => {
     for (let i = 0; i <= signUserOpsIdentifier.length; i++) {
       const oneIdentifier = signUserOpsIdentifier[i]
       // eslint-disable-next-line no-await-in-loop
-      const userOpHash = await provider!.request({
+      await provider!.request({
         method: 'eth_sendRawUserOperation',
         params: [oneIdentifier]
       })
@@ -209,6 +158,7 @@ const useErc5792 = () => {
   return {
     getCallsStatus,
     sendCalls,
+    walletSignUserOps,
     // the correct format for chainId when using erc5792
     chainId: '0x2105'
   }

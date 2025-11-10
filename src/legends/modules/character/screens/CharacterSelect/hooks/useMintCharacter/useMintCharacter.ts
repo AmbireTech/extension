@@ -124,7 +124,7 @@ const useMintCharacter = () => {
 
         setLoadingMessage(CharacterLoadingMessage.Minting)
 
-        await getCallsStatus(sendCallsIdentifier, false)
+        await getCallsStatus(sendCallsIdentifier)
 
         setLoadingMessage(CharacterLoadingMessage.Minted)
         // Transaction was successful, call getCharacter
