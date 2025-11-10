@@ -168,7 +168,7 @@ const UpdateChain = ({
                 features={networkAlreadyAdded.features}
                 chainId={networkAlreadyAdded.chainId}
                 withRetryButton={!!rpcUrls.length && rpcUrlIndex < rpcUrls.length - 1}
-                handleRetry={handleRetryWithDifferentRpcUrl}
+                handleRetryWithDifferentRpcUrl={handleRetryWithDifferentRpcUrl}
                 responsiveSizeMultiplier={responsiveSizeMultiplier}
                 withScroll
               />
@@ -188,7 +188,7 @@ const UpdateChain = ({
                 features={features}
                 chainId={networkDetails.chainId}
                 withRetryButton={!!rpcUrls.length && rpcUrlIndex < rpcUrls.length - 1}
-                handleRetry={handleRetryWithDifferentRpcUrl}
+                handleRetryWithDifferentRpcUrl={handleRetryWithDifferentRpcUrl}
                 responsiveSizeMultiplier={responsiveSizeMultiplier}
                 withScroll
               />

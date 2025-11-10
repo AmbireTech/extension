@@ -73,7 +73,8 @@ const BitrefillClaim = ({ meta }: Props) => {
   }, [connectedAccount, sendCalls, chainId, getCallsStatus, onComplete, addToast, switchNetwork])
 
   const btnText = useMemo(() => {
-    if (!connectedAccount || v1Account)
+    if (!connectedAccount) return 'Connect your wallet to unlock Rewards quests.'
+    if (v1Account)
       return 'Switch to a new account to unlock Rewards quests. Ambire legacy Web accounts (V1) are not supported.'
     return 'Claim code'
   }, [connectedAccount, v1Account])

@@ -225,7 +225,7 @@ const AddChain = ({
                     features={features}
                     chainId={networkDetails.chainId}
                     withRetryButton={!!rpcUrls.length && rpcUrlIndex < rpcUrls.length - 1}
-                    handleRetry={handleRetryWithDifferentRpcUrl}
+                    handleRetryWithDifferentRpcUrl={handleRetryWithDifferentRpcUrl}
                     responsiveSizeMultiplier={responsiveSizeMultiplier}
                   />
                 )}
