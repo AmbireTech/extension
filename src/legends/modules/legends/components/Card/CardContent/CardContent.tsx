@@ -42,7 +42,7 @@ const CardContent: FC<Props> = ({
 }) => {
   const { isCharacterNotMinted } = useCharacterContext()
   const isCompleted =
-    card.status === CardStatus.completed || (id === 'nft' && !isCharacterNotMinted)
+    card.status === CardStatus.completed || (id === 'nft' && !isCharacterNotMinted && !disabled)
   const isTreasureChestCard = isMatchingPredefinedId(action, CARD_PREDEFINED_ID.chest)
 
   const FIXED_CARD_FREQUENCY = {
