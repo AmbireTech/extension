@@ -78,6 +78,7 @@ export const SAFE_RPC_METHODS = [
 
 export const ETH_RPC_METHODS_AMBIRE_MUST_HANDLE = [
   'eth_chainId',
+  'eth_getCode',
   'eth_getTransactionByHash',
   'eth_getEncryptionPublicKey',
   'eth_accounts',
