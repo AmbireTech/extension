@@ -43,7 +43,6 @@ const flowContext = flow
     const {
       session: { origin, id }
     } = request
-
     const providerCtrl = new ProviderController(mainCtrl)
 
     if (!Reflect.getMetadata('SAFE', providerCtrl, mapMethod)) {
@@ -52,7 +51,7 @@ const flowContext = flow
       if (!isUnlocked && mainCtrl.dapps.hasPermission(id)) {
         try {
           if (lockedOrigins[origin] === undefined) {
-            lockedOrigins[origin] = await new Promise((resolve: (value: any) => void, reject) => {
+            lockedOrigins[origin] = new Promise((resolve: (value: any) => void, reject) => {
               mainCtrl.requests.build({
                 type: 'dappRequest',
                 params: {
@@ -61,6 +60,8 @@ const flowContext = flow
                 }
               })
             })
+          } else if (mainCtrl.requests.actions.currentAction) {
+            await mainCtrl.requests.actions.focusActionWindow()
           }
           await lockedOrigins[origin]
         } finally {
