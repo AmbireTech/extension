@@ -1,7 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Animated, ColorValue, GestureResponderEvent, MouseEvent, ViewStyle } from 'react-native'
 
+import { isWeb } from '@common/config/env'
 import useDeepMemo from '@common/hooks/useDeepMemo'
+import usePrevious from '@common/hooks/usePrevious'
 
 import DURATIONS from './durations'
 
@@ -28,9 +30,14 @@ interface Props {
 const INTERPOLATE_PROPERTIES = ['backgroundColor', 'color', 'borderColor']
 
 const useMultiHover = ({ values, forceHoveredStyle = false }: Props) => {
+  // Deep memoize the values to prevent unnecessary re-renders
   const memoizedValues = useDeepMemo(values)
+  // Used to avoid running the initial animation more than once
+  const isInitialAnimationDone = useRef(false)
+  const prevForceHoveredStyle = usePrevious(forceHoveredStyle)
   const [isHovered, setIsHovered] = useState(false)
 
+  // Initialize the values that will be animated
   const animatedValues = useMemo(() => {
     const opacity = memoizedValues.find(({ property }) => property === 'opacity')
 
@@ -38,13 +45,7 @@ const useMultiHover = ({ values, forceHoveredStyle = false }: Props) => {
       const shouldInterpolate = INTERPOLATE_PROPERTIES.includes(property)
       let value = null
 
-      if (forceHoveredStyle) {
-        value = new Animated.Value(shouldInterpolate ? 1 : (to as number))
-        setIsHovered(true)
-      } else {
-        value = new Animated.Value(shouldInterpolate ? 0 : (from as number))
-        setIsHovered(false)
-      }
+      value = new Animated.Value(shouldInterpolate ? 0 : (from as number))
 
       return {
         value,
@@ -68,79 +69,73 @@ const useMultiHover = ({ values, forceHoveredStyle = false }: Props) => {
     })
 
     return newValues
-  }, [memoizedValues, forceHoveredStyle])
+  }, [memoizedValues])
+
+  const animate = useCallback(
+    (reversed?: boolean, customDuration?: number, skipStateUpdate?: boolean) => {
+      if (!animatedValues) return
+
+      // Animate all values in parallel
+      animatedValues.forEach(
+        ({ property, value, to, from, duration: valueDuration }: AnimationValuesExtended) => {
+          let toValue = !INTERPOLATE_PROPERTIES.includes(property) ? (to as number) : 1
+
+          if (reversed) toValue = !INTERPOLATE_PROPERTIES.includes(property) ? (from as number) : 0
+
+          Animated.timing(value, {
+            toValue,
+            duration: customDuration ?? valueDuration,
+            useNativeDriver: !isWeb
+          }).start()
+        }
+      )
+      if (!skipStateUpdate) {
+        requestAnimationFrame(() => {
+          setIsHovered(!reversed)
+        })
+      }
+    },
+    [animatedValues]
+  )
 
   // Set initial animation
   useEffect(() => {
-    if (!animatedValues) return
+    if (!animatedValues || !!isInitialAnimationDone.current || forceHoveredStyle) return
 
-    animatedValues.forEach(({ property, value, from }: AnimationValuesExtended) => {
-      const fromValue = !INTERPOLATE_PROPERTIES.includes(property) ? (from as number) : 0
+    // 0 for an immediate animation
+    animate(true, 0, true)
+    isInitialAnimationDone.current = true
+  }, [animate, animatedValues, forceHoveredStyle])
 
-      Animated.timing(value, {
-        toValue: fromValue,
-        duration: 0,
-        useNativeDriver: true
-      }).start()
-    })
-  }, [animatedValues])
-
+  // forceHoveredStyle handling
   useEffect(() => {
-    if (!animatedValues || !forceHoveredStyle) return
+    if (isHovered) return
 
-    animatedValues.forEach(
-      ({ property, value, to, duration: valueDuration }: AnimationValuesExtended) => {
-        const toValue = !INTERPOLATE_PROPERTIES.includes(property) ? (to as number) : 1
-        value.stopAnimation()
-        Animated.timing(value, { toValue, duration: valueDuration, useNativeDriver: true }).start()
-      }
-    )
-  }, [forceHoveredStyle, animatedValues])
+    // Animate to hovered state
+    if (forceHoveredStyle && !prevForceHoveredStyle) {
+      animate(false, undefined, true)
+    } else if (!forceHoveredStyle && prevForceHoveredStyle) {
+      // Animate back to the initial state immediately
+      animate(true, 0, true)
+    }
+  }, [forceHoveredStyle, animate, prevForceHoveredStyle, isHovered])
+
+  const onHoverIn = useCallback(() => {
+    // Don't animate if forceHoveredStyle because that's handled in a useEffect
+    if (forceHoveredStyle) return
+
+    animate()
+  }, [animate, forceHoveredStyle])
 
   // Bind the events
   const bind = useMemo(
     () => ({
-      onHoverIn: () => {
-        if (!animatedValues || forceHoveredStyle) return
-
-        animatedValues.forEach(
-          ({ property, value, to, duration: valueDuration }: AnimationValuesExtended) => {
-            const toValue = !INTERPOLATE_PROPERTIES.includes(property) ? (to as number) : 1
-
-            // Stop any ongoing animation to prevent overlap.
-            // This ensures a clean transition and avoids conflicting animations
-            // that could leave the value in an unpredictable state
-            value.stopAnimation()
-            Animated.timing(value, {
-              toValue,
-              duration: valueDuration,
-              useNativeDriver: true
-            }).start()
-          }
-        )
-        // Defer state update to avoid interfering with hover event timing
-        requestAnimationFrame(() => setIsHovered(true))
-      },
+      onHoverIn,
       onHoverOut: () => {
-        if (!animatedValues || forceHoveredStyle) return
+        // Don't animate if forceHoveredStyle because that's handled in a useEffect
+        if (forceHoveredStyle) return
 
-        animatedValues.forEach(
-          ({ property, value, from, duration: valueDuration }: AnimationValuesExtended) => {
-            const toValue = !INTERPOLATE_PROPERTIES.includes(property) ? (from as number) : 0
-
-            // Stop any ongoing animation to prevent overlap.
-            // This ensures a clean transition and avoids conflicting animations
-            // that could leave the value in an unpredictable state
-            value.stopAnimation()
-            Animated.timing(value, {
-              toValue,
-              duration: valueDuration,
-              useNativeDriver: true
-            }).start()
-          }
-        )
-        // Defer state update to avoid interfering with hover event timing
-        requestAnimationFrame(() => setIsHovered(false))
+        animate(true)
       },
       onPressIn: () => {
         const opacity = animatedValues.find(({ property }) => property === 'opacity')
@@ -156,7 +151,7 @@ const useMultiHover = ({ values, forceHoveredStyle = false }: Props) => {
       // @TODO: Remove
       onPressOut: () => {}
     }),
-    [animatedValues, forceHoveredStyle]
+    [animate, animatedValues, forceHoveredStyle, onHoverIn]
   )
 
   const style = useMemo(() => {
@@ -176,11 +171,7 @@ const useMultiHover = ({ values, forceHoveredStyle = false }: Props) => {
     return memoizedValues.reduce((acc, { property, from }) => ({ ...acc, [property]: from }), {})
   }, [animatedValues, memoizedValues])
 
-  const triggerHover = useCallback(() => {
-    setIsHovered(true)
-  }, [])
-
-  return [bind, style, isHovered, triggerHover, animatedValues] as [
+  return [bind, style, isHovered || forceHoveredStyle, onHoverIn, animatedValues] as [
     {
       onHoverIn: (event: MouseEvent) => void
       onHoverOut: (event: MouseEvent) => void
