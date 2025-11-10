@@ -29,6 +29,7 @@ type Props = {
   networkUserRequests: UserRequest[]
   isRecipientAddressUnknown?: boolean
   isRecipientAddressUnknownAgreed?: boolean
+  isRecipientHumanizerKnownTokenOrSmartContract?: boolean
   onRecipientAddressUnknownAgree?: () => void
 }
 
@@ -45,6 +46,7 @@ const Buttons: FC<Props> = ({
   networkUserRequests = [],
   isRecipientAddressUnknown = false,
   isRecipientAddressUnknownAgreed = false,
+  isRecipientHumanizerKnownTokenOrSmartContract = false,
   onRecipientAddressUnknownAgree,
   // Used to disable the actions of the buttons when the local state is out of sync.
   // To prevent button flickering when the user is typing we just do nothing when the button is clicked.
@@ -148,8 +150,9 @@ const Buttons: FC<Props> = ({
       )}
       {/* @ts-ignore */}
       <View dataSet={{ tooltipId: 'proceed-btn-tooltip' }}>
-        {/* Show HoldToProceedButton when recipient address is unknown and user hasn't agreed yet */}
-        {isRecipientAddressUnknown && !isRecipientAddressUnknownAgreed ? (
+        {isRecipientAddressUnknown &&
+        !isRecipientAddressUnknownAgreed &&
+        !isRecipientHumanizerKnownTokenOrSmartContract ? (
           <HoldToProceedButton
             text="Hold to proceed"
             disabled={isNotReadyToProceed || isLoading || !!oneClickDisabledReason}

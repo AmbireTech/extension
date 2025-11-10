@@ -40,6 +40,7 @@ const ProviderContextProvider = ({ children }: { children: React.ReactNode }) =>
     (latestProviders: Providers) => {
       if (!connectedWallet) {
         setIsInitialLoadingDone(true)
+        console.log('No previously connected wallet found')
         return
       }
 
@@ -56,6 +57,7 @@ const ProviderContextProvider = ({ children }: { children: React.ReactNode }) =>
           // Previously connected wallet is not installed anymore
           if (!detectedProvider) {
             setIsInitialLoadingDone(true)
+            console.log('Previously connected wallet not found among detected providers')
             return
           }
 
@@ -75,6 +77,7 @@ const ProviderContextProvider = ({ children }: { children: React.ReactNode }) =>
     // we are sure that no Ambire extension is installed
     if (!window.ambire && !window.ambireNext) {
       setIsInitialLoadingDone(true)
+      console.log('No Ambire extensions detected')
       return
     }
 

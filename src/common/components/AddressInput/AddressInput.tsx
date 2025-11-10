@@ -105,7 +105,7 @@ const AddressInput: React.FC<Props> = ({
         placeholder={placeholder || t('Address / ENS')}
         bottomLabelStyle={styles.bottomLabel}
         info={
-          severity === 'info'
+          !isError && severity === 'info'
             ? message
             : isValidationInDomainResolvingState
             ? t('Resolving domain...')

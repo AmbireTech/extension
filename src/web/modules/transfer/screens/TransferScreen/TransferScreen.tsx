@@ -494,6 +494,9 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
           isLocalStateOutOfSync={isLocalStateOutOfSync}
           isRecipientAddressUnknown={isRecipientAddressUnknown}
           isRecipientAddressUnknownAgreed={isRecipientAddressUnknownAgreed}
+          isRecipientHumanizerKnownTokenOrSmartContract={
+            isRecipientHumanizerKnownTokenOrSmartContract
+          }
           onRecipientAddressUnknownAgree={onRecipientAddressUnknownAgree}
         />
       </>
@@ -507,6 +510,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     isLocalStateOutOfSync,
     isRecipientAddressUnknown,
     isRecipientAddressUnknownAgreed,
+    isRecipientHumanizerKnownTokenOrSmartContract,
     onRecipientAddressUnknownAgree,
     addTransaction
   ])

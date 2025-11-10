@@ -5,6 +5,14 @@ import { resolveENSDomain } from '@ambire-common/services/ensDomains'
 
 import getAddressInputValidation from './utils/validation'
 
+// Expose a `severity` property for non-error validations. We don't change
+// the underlying validation util signature — instead map the result here.
+type ValidationWithSeverityType = {
+  message: string
+  isError: boolean
+  severity?: 'error' | 'warning' | 'info'
+}
+
 interface Props {
   addressState: AddressState
   setAddressState: (newState: AddressStateOptional) => void
@@ -62,22 +70,12 @@ const useAddressInput = ({
     ]
   )
 
-  // Expose a `severity` property for non-error validations. We don't change
-  // the underlying validation util signature — instead map the result here.
-  type ValidationWithSeverityType = {
-    message: string
-    isError: boolean
-    severity?: 'error' | 'warning' | 'info'
-  }
-
   const validationWithSeverity = useMemo<ValidationWithSeverityType>(() => {
     const base = validation
-    // If caller provided an overwriteSeverity (only 'warning'|'info' for now),
-    // treat the validation as non-error and surface the severity.
+    // If caller provided an overwriteSeverity, use it to determine both severity and isError
     if (typeof overwriteSeverity !== 'undefined') {
       return {
         ...base,
-        isError: false,
         severity: overwriteSeverity
       }
     }
@@ -86,7 +84,8 @@ const useAddressInput = ({
     // caller supplied `overwriteSeverity` we returned early above and it
     // will be used as-is.
     return {
-      ...base
+      ...base,
+      severity: base.isError ? 'error' : 'warning'
     }
   }, [validation, overwriteSeverity])
 
