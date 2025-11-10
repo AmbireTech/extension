@@ -53,7 +53,7 @@ test.describe('transfer', { tag: '@transfer' }, () => {
     })
   })
 
-  test.only("should send a transaction and pay with the current account's ERC-20 token", async ({
+  test("should send a transaction and pay with the current account's ERC-20 token", async ({
     pages
   }) => {
     const sendToken = tokens.usdc.optimism
