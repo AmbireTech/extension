@@ -53,6 +53,7 @@
     "eas:secret:push": "eas secret:push --scope project --env-file .env",
     "test": "jest --config=./jest.config.js --passWithNoTests",
     "extension:type:check": "tsc --noEmit --project tsconfig.typecheck-extension.json",
+    "extension:type:check-new": "yarn extension:type:check | yarn tsc-baseline check",
     "postinstall": "patch-package"
   },
   "engines": {
@@ -294,6 +295,7 @@
     "sass-loader": "^16.0.1",
     "style-loader": "^4.0.0",
     "ts-jest": "^29.1.2",
+    "tsc-baseline": "^1.9.0",
     "typescript": "^5.8.3",
     "webpack": "^5.64.4",
     "webpack-cli": "^5.1.1",
