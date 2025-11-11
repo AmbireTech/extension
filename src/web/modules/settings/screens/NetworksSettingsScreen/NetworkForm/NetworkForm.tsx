@@ -101,6 +101,7 @@ export const RpcSelectorItem = React.memo(
               fontSize={14}
               appearance={selectedRpcUrl === url ? 'primaryText' : 'secondaryText'}
               numberOfLines={1}
+              style={flexbox.flex1}
             >
               {url}
             </Text>
@@ -692,7 +693,8 @@ const NetworkForm = ({
                         shouldShowRemove={
                           !!selectedNetwork?.rpcUrls.length &&
                           selectedNetwork.rpcUrls.length > 1 &&
-                          url !== selectedNetwork?.selectedRpcUrl
+                          url !== selectedNetwork?.selectedRpcUrl &&
+                          !url.includes('invictus.ambire.com')
                         }
                         onRemove={handleRemoveRpcUrl}
                       />
