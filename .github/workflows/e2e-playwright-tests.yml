@@ -91,7 +91,7 @@ jobs:
         shell: bash
 
       - name: Ensure no new Typescript errors are introduced
-        run: yarn extension:type:check-safe
+        run: yarn extension:type:check-new
         shell: bash
 
       - name: Build webkit extension
