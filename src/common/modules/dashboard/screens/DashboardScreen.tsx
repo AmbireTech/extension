@@ -16,7 +16,6 @@ import { getUiType } from '@web/utils/uiType'
 
 import DAppFooter from '../components/DAppFooter'
 import DashboardOverview from '../components/DashboardOverview'
-import CongratsFirstCashbackModal from '../components/DashboardOverview/CongratsFirstCashbackModal'
 import DashboardPages from '../components/DashboardPages'
 import getStyles from './styles'
 
@@ -38,12 +37,7 @@ const DashboardScreen = () => {
   const debouncedDashboardOverviewSize = useDebounce({ value: dashboardOverviewSize, delay: 100 })
   const animatedOverviewHeight = useRef(new Animated.Value(OVERVIEW_CONTENT_MAX_HEIGHT)).current
 
-  const { account, portfolio, cashbackStatus } = useSelectedAccountControllerState()
-
-  const hasUnseenFirstCashback = useMemo(
-    () => cashbackStatus === 'cashback-modal',
-    [cashbackStatus]
-  )
+  const { account, portfolio } = useSelectedAccountControllerState()
 
   const [gasTankButtonPosition, setGasTankButtonPosition] = useState<{
     x: number
@@ -130,14 +124,6 @@ const DashboardScreen = () => {
         </View>
         <DAppFooter />
       </View>
-      {hasUnseenFirstCashback && (
-        <CongratsFirstCashbackModal
-          onPress={handleCongratsModalBtnPressed}
-          position={gasTankButtonPosition}
-          portfolio={portfolio}
-          account={account}
-        />
-      )}
     </>
   )
 }
