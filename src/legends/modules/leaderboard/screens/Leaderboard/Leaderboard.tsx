@@ -32,9 +32,10 @@ const LeaderboardContainer: React.FC = () => {
   const currentTotalBalanceOnSupportedChains =
     (accountPortfolio && accountPortfolio?.amount) || undefined
 
-  const parsedSnapshotsBalance = rewardsProjectionData?.currentSeasonSnapshots.map(
-    (snapshot: { week: number; balance: number }) => snapshot.balance
-  )
+  const parsedSnapshotsBalance =
+    rewardsProjectionData?.currentSeasonSnapshots.map(
+      (snapshot: { week: number; balance: number }) => snapshot.balance
+    ) || []
 
   const projectedAmount =
     rewardsProjectionData &&
@@ -274,7 +275,7 @@ const LeaderboardContainer: React.FC = () => {
                   <Row
                     key={userLeaderboardData.account}
                     {...userLeaderboardData}
-                    projectedRewards={activeTab === 2 ? projectedAmount?.walletRewards : undefined}
+                    projectedRewards={activeTab === 2 ? projectedAmount : undefined}
                     stickyPosition={stickyPosition}
                     currentUserRef={currentUserRef}
                   />
