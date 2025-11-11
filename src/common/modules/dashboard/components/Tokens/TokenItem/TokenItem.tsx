@@ -16,7 +16,7 @@ import RewardsTokenItem from './RewardsTokenItem'
 
 const { isPopup } = getUiType()
 
-const INFO_BTN_URL = 'https://rewards.ambire.com/#/wallet'
+const INFO_BTN_URL = 'https://rewards.ambire.com'
 
 const TokenItem = ({ token }: { token: TokenResult }) => {
   const { t } = useTranslation()
@@ -48,7 +48,7 @@ const TokenItem = ({ token }: { token: TokenResult }) => {
   const projectedRewardsDescription = useMemo(
     () => (
       <Text fontSize={12} weight="regular">
-        {t('Projected rewards ')}
+        {t('Projected rewards for ')}
         <Badge text={`${projectedRewardsUserXp} XP`} type="projectedRewards" weight="semiBold" />
       </Text>
     ),

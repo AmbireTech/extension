@@ -11,7 +11,6 @@ import { LEGENDS_CONTRACT_ADDRESS } from '@legends/constants/addresses'
 import { ERROR_MESSAGES } from '@legends/constants/errors/messages'
 import { BASE_CHAIN_ID } from '@legends/constants/networks'
 import useAccountContext from '@legends/hooks/useAccountContext'
-import useCharacterContext from '@legends/hooks/useCharacterContext/useCharacterContext'
 import useErc5792 from '@legends/hooks/useErc5792'
 import useEscModal from '@legends/hooks/useEscModal'
 import useLegendsContext from '@legends/hooks/useLegendsContext'
@@ -47,12 +46,10 @@ const WheelComponentModal: React.FC<WheelComponentProps> = ({ isOpen, handleClos
   >('locked')
 
   const { connectedAccount, v1Account } = useAccountContext()
-  const { isCharacterNotMinted } = useCharacterContext()
 
   const buttonText = getRewardsButtonText({
     connectedAccount,
-    v1Account: !!v1Account,
-    isCharacterNotMinted: !!isCharacterNotMinted
+    v1Account: !!v1Account
   })
 
   const { onLegendComplete } = useLegendsContext()
@@ -60,7 +57,7 @@ const WheelComponentModal: React.FC<WheelComponentProps> = ({ isOpen, handleClos
   const { sendCalls, getCallsStatus } = useErc5792()
   const spinnerRef = React.useRef<HTMLImageElement>(null)
   const chainRef = React.useRef<HTMLImageElement>(null)
-  const nonConnectedAcc = Boolean(!connectedAccount || v1Account || isCharacterNotMinted)
+  const nonConnectedAcc = Boolean(!connectedAccount || v1Account)
 
   const stopSpinnerTeaseAnimation = useCallback(() => {
     if (!spinnerRef.current) return

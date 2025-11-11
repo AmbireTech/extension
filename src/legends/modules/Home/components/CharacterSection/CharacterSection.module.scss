@@ -753,3 +753,13 @@
     background-origin: padding-box, border-box;
   }
 }
+.defaultCharacter {
+  transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+}
+
+.defaultCharacter:hover,
+.defaultCharacter:focus {
+  transform: scale(1.02);
+  filter: brightness(1.05); /* makes it 10% lighter */
+  cursor: pointer;
+}

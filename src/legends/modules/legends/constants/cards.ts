@@ -10,6 +10,7 @@ const CARD_PREDEFINED_ID = {
   claimRewards: 'claim-rewards',
   migrateToStk: 'migrate-to-stk',
   bitrefill: 'bitrefill',
+  nft: 'nft',
   mascot: 'mascot'
 }
 

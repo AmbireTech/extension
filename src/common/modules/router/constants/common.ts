@@ -25,7 +25,7 @@ const WEB_ROUTES = {
   swap: 'swap',
   noConnection: 'no-connection',
   accounts: 'accounts',
-  appCatalog: 'app-catalog',
+  apps: 'apps',
   keyStoreSetup: 'set-extension-password',
   keyStoreEmailRecovery: 'extension-password-email-recovery',
   keyStoreEmailRecoverySetNewPassword: 'set-new-extension-password',

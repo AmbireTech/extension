@@ -4,7 +4,6 @@ import { View } from 'react-native'
 import { getCallsCount } from '@ambire-common/utils/userRequest'
 import BatchIcon from '@common/assets/svg/BatchIcon'
 import InfoIcon from '@common/assets/svg/InfoIcon'
-import InformationIcon from '@common/assets/svg/InformationIcon'
 import Button from '@common/components/Button'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
 import Tooltip from '@common/components/Tooltip'
@@ -120,7 +119,7 @@ const Footer = ({
               <BatchIcon style={spacings.mlTy} />
             </Button>
             {/* @ts-ignore */}
-            <View style={spacings.mlTy} dataSet={{ tooltipId: 'start-batch-info-tooltip' }}>
+            <View style={spacings.mlMi} dataSet={{ tooltipId: 'start-batch-info-tooltip' }}>
               <AnimatedPressable
                 style={[spacings.phTy, spacings.pvTy, { borderRadius: 50 }, animStyle]}
                 {...bindAnim}

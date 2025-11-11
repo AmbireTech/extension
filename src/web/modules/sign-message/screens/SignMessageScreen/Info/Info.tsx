@@ -81,9 +81,7 @@ const Info: FC<Props> = () => {
             <Text
               fontSize={14 * responsiveSizeMultiplier}
               appearance="secondaryText"
-              style={{
-                marginBottom: SPACING_TY * responsiveSizeMultiplier
-              }}
+              style={spacings.mlMi}
             >
               {t('Will verify this signature')}
             </Text>
