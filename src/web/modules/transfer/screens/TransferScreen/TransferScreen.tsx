@@ -1,3 +1,4 @@
+import { parseUnits } from 'ethers'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import { Pressable, View } from 'react-native'
@@ -45,7 +46,6 @@ import useTrackAccountOp from '@web/modules/sign-account-op/hooks/OneClick/useTr
 import GasTankInfoModal from '@web/modules/transfer/components/GasTankInfoModal'
 import SendForm from '@web/modules/transfer/components/SendForm/SendForm'
 import { getUiType } from '@web/utils/uiType'
-import { parseUnits } from 'ethers'
 
 const { isTab, isActionWindow } = getUiType()
 
@@ -60,6 +60,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     isRecipientHumanizerKnownTokenOrSmartContract,
     isSWWarningVisible,
     isRecipientAddressUnknown,
+    isRecipientAddressUnknownAgreed,
     isFormValid,
     signAccountOpController,
     latestBroadcastedAccountOp,
@@ -280,6 +281,15 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     [dispatch]
   )
 
+  const onRecipientAddressUnknownAgree = useCallback(() => {
+    dispatch({
+      type: 'TRANSFER_CONTROLLER_UPDATE_FORM',
+      params: {
+        formValues: { isRecipientAddressUnknownAgreed: true, isSWWarningAgreed: true }
+      }
+    })
+  }, [dispatch])
+
   const handleCacheResolvedDomain = useCallback(
     (address: string, domain: string, type: 'ens') => {
       dispatch({
@@ -307,6 +317,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     overwriteValidLabel: validationFormMsgs?.recipientAddress.success
       ? validationFormMsgs.recipientAddress.message
       : '',
+    overwriteSeverity: validationFormMsgs.recipientAddress.severity,
     handleCacheResolvedDomain
   })
 
@@ -481,6 +492,12 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
           signAccountOpErrors={[]}
           networkUserRequests={networkUserRequests}
           isLocalStateOutOfSync={isLocalStateOutOfSync}
+          isRecipientAddressUnknown={isRecipientAddressUnknown}
+          isRecipientAddressUnknownAgreed={isRecipientAddressUnknownAgreed}
+          isRecipientHumanizerKnownTokenOrSmartContract={
+            isRecipientHumanizerKnownTokenOrSmartContract
+          }
+          onRecipientAddressUnknownAgree={onRecipientAddressUnknownAgree}
         />
       </>
     )
@@ -491,6 +508,10 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     isTransferFormValid,
     networkUserRequests,
     isLocalStateOutOfSync,
+    isRecipientAddressUnknown,
+    isRecipientAddressUnknownAgreed,
+    isRecipientHumanizerKnownTokenOrSmartContract,
+    onRecipientAddressUnknownAgree,
     addTransaction
   ])
 

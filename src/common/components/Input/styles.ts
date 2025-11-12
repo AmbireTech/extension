@@ -21,6 +21,7 @@ export interface Style {
   disabled: ViewStyle
   tooltipWrapper: ViewStyle
   tooltip: ViewStyle
+  errorContainer: ViewStyle
 }
 
 const INPUT_HEIGHT = 48
@@ -100,6 +101,11 @@ const getStyles = (theme: ThemeProps) =>
       borderRadius: 6,
       borderColor: theme.secondaryBorder,
       borderWidth: 2
+    },
+    errorContainer: {
+      marginTop: 8,
+      ...flexbox.directionRow,
+      ...flexbox.justifySpaceBetween
     }
   })
 
