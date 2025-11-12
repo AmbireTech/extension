@@ -739,11 +739,6 @@ type ImportSmartAccountJson = {
   params: { readyToAddAccount: Account; keys: ReadyToAddKeys['internal'] }
 }
 
-type PhishingControllerCheckDappsBlacklistedStatus = {
-  type: 'PHISHING_CONTROLLER_CHECK_DAPPS_BLACKLISTED_STATUS'
-  params: { urls: string[] }
-}
-
 type ExtensionUpdateControllerApplyUpdate = {
   type: 'EXTENSION_UPDATE_CONTROLLER_APPLY_UPDATE'
 }
@@ -891,7 +886,6 @@ export type Action =
   | KeystoreControllerSendSeedToUiAction
   | KeystoreControllerSendTempSeedToUiAction
   | KeystoreControllerDeleteSeedAction
-  | PhishingControllerCheckDappsBlacklistedStatus
   | ExtensionUpdateControllerApplyUpdate
   | OpenExtensionPopupAction
   | SignAccountOpUpdateAction

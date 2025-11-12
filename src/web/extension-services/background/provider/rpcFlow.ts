@@ -95,7 +95,9 @@ const flowContext = flow
             await mainCtrl.requests.actions.focusActionWindow()
           }
           await connectOrigins[url]
-          await mainCtrl.dapps.addDapp({ id, name, url, icon, chainId: 1, isConnected: true })
+          if (mainCtrl.dapps.dappToConnect) {
+            await mainCtrl.dapps.addDapp({ ...mainCtrl.dapps.dappToConnect, isConnected: true })
+          }
         } finally {
           delete connectOrigins[url]
         }

@@ -1,17 +1,15 @@
 /* eslint-disable react/jsx-no-useless-fragment */
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import { View } from 'react-native'
 
 import { isDappRequestAction } from '@ambire-common/libs/actions/actions'
-import { getDappIdFromUrl } from '@ambire-common/libs/dapps/helpers'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import Header from '@common/modules/header/components/Header'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import useActionsControllerState from '@web/hooks/useActionsControllerState'
 import useBackgroundService from '@web/hooks/useBackgroundService'
-import useDappInfo from '@web/hooks/useDappInfo'
-import usePhishingControllerState from '@web/hooks/usePhishingControllerState'
+import useDappsControllerState from '@web/hooks/useDappsControllerState'
 import useResponsiveActionWindow from '@web/hooks/useResponsiveActionWindow'
 import ActionFooter from '@web/modules/action-requests/components/ActionFooter'
 
@@ -28,43 +26,15 @@ const DappConnectScreen = () => {
 
   const [isAuthorizing, setIsAuthorizing] = useState(false)
   const { responsiveSizeMultiplier } = useResponsiveActionWindow()
-  const securityCheckCalled = useRef(false)
-  const { dappsBlacklistedStatus } = usePhishingControllerState()
   const [confirmedRiskCheckbox, setConfirmedRiskCheckbox] = useState(false)
+  const { state: dappsState } = useDappsControllerState()
+
+  const dappToConnect = useMemo(() => dappsState.dappToConnect || null, [dappsState])
 
   const dappAction = useMemo(
     () => (isDappRequestAction(state.currentAction) ? state.currentAction : null),
     [state.currentAction]
   )
-
-  const userRequest = useMemo(() => {
-    if (!dappAction) return undefined
-    if (dappAction.userRequest.action.kind !== 'dappConnect') return undefined
-
-    return dappAction.userRequest
-  }, [dappAction])
-
-  const { name, icon } = useDappInfo(userRequest)
-
-  const securityCheck = useMemo(() => {
-    if (!userRequest?.session?.origin) return 'LOADING'
-    const dappId = getDappIdFromUrl(userRequest.session.origin)
-    return dappsBlacklistedStatus[dappId]?.status || 'LOADING'
-  }, [dappsBlacklistedStatus, userRequest])
-
-  useEffect(() => {
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    ;(async () => {
-      if (!userRequest?.session?.origin) return
-      if (securityCheckCalled.current) return
-
-      securityCheckCalled.current = true
-      dispatch({
-        type: 'PHISHING_CONTROLLER_CHECK_DAPPS_BLACKLISTED_STATUS',
-        params: { urls: [userRequest.session.origin] }
-      })
-    })()
-  }, [dispatch, userRequest?.session?.origin])
 
   const handleDenyButtonPress = useCallback(() => {
     if (!dappAction) return
@@ -86,12 +56,12 @@ const DappConnectScreen = () => {
   }, [dappAction, dispatch])
 
   const resolveButtonText = useMemo(() => {
-    if (securityCheck === 'LOADING') return t('Loading...')
+    if (!dappToConnect || dappToConnect.blacklisted === 'LOADING') return t('Loading...')
     if (isAuthorizing) return t('Connecting...')
-    if (securityCheck === 'BLACKLISTED') return t('Continue anyway')
+    if (dappToConnect.blacklisted === 'BLACKLISTED') return t('Continue anyway')
 
     return t('Connect')
-  }, [isAuthorizing, securityCheck, t])
+  }, [isAuthorizing, dappToConnect, t])
 
   return (
     <TabLayoutContainer
@@ -111,34 +81,40 @@ const DappConnectScreen = () => {
           resolveButtonText={resolveButtonText}
           resolveDisabled={
             isAuthorizing ||
-            securityCheck === 'LOADING' ||
-            (securityCheck === 'BLACKLISTED' && !confirmedRiskCheckbox)
+            (!!dappToConnect && dappToConnect.blacklisted === 'LOADING') ||
+            (!!dappToConnect &&
+              dappToConnect.blacklisted === 'BLACKLISTED' &&
+              !confirmedRiskCheckbox)
           }
-          resolveType={securityCheck === 'BLACKLISTED' ? 'error' : 'primary'}
+          resolveType={
+            !!dappToConnect && dappToConnect.blacklisted === 'BLACKLISTED' ? 'error' : 'primary'
+          }
           rejectButtonText={t('Deny')}
           resolveButtonTestID="dapp-connect-button"
         />
       }
     >
-      <View style={[styles.container]}>
-        <View style={styles.content}>
-          <DAppConnectHeader
-            name={name}
-            id={userRequest?.session?.id}
-            icon={icon}
-            securityCheck={securityCheck}
-            responsiveSizeMultiplier={responsiveSizeMultiplier}
-          />
-          <DAppConnectBody
-            securityCheck={securityCheck}
-            responsiveSizeMultiplier={responsiveSizeMultiplier}
-            confirmedRiskCheckbox={confirmedRiskCheckbox}
-            setConfirmedRiskCheckbox={setConfirmedRiskCheckbox}
-          />
+      {!!dappToConnect && (
+        <View style={[styles.container]}>
+          <View style={styles.content}>
+            <DAppConnectHeader
+              name={dappToConnect.name}
+              id={dappToConnect.id}
+              icon={dappToConnect.icon!}
+              securityCheck={dappToConnect.blacklisted}
+              responsiveSizeMultiplier={responsiveSizeMultiplier}
+            />
+            <DAppConnectBody
+              securityCheck={dappToConnect.blacklisted}
+              responsiveSizeMultiplier={responsiveSizeMultiplier}
+              confirmedRiskCheckbox={confirmedRiskCheckbox}
+              setConfirmedRiskCheckbox={setConfirmedRiskCheckbox}
+            />
+          </View>
         </View>
-      </View>
+      )}
     </TabLayoutContainer>
   )
 }
 
-export default React.memo(DappConnectScreen)
+export default DappConnectScreen
