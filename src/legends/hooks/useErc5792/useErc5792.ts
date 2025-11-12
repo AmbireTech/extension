@@ -6,6 +6,7 @@ import {
 } from '@ambire-common/interfaces/userOperation'
 import { GasSpeeds } from '@ambire-common/services/bundlers/types'
 import { getRpcProvider } from '@ambire-common/services/provider'
+import { executeBySenderInterface } from '@benzin/screens/BenzinScreen/constants/humanizerInterfaces'
 import { delayPromise } from '@common/utils/promises'
 import { RELAYER_URL } from '@env'
 import HumanReadableError from '@legends/classes/HumanReadableError'
@@ -136,6 +137,51 @@ const useErc5792 = () => {
         }
       })
     }
+    const signUserOpsIdentifierJsonString: any = await provider!.request({
+      method: 'wallet_signUserOperations',
+      params: filledUserOps
+    })
+    const signUserOpsIdentifier: { chainId: string; userOp: SignUserOperation }[] = JSON.parse(
+      signUserOpsIdentifierJsonString
+    )
+    for (let i = 0; i <= signUserOpsIdentifier.length; i++) {
+      const oneIdentifier = signUserOpsIdentifier[i]
+      // eslint-disable-next-line no-await-in-loop
+      await provider!.request({
+        method: 'eth_sendRawUserOperation',
+        params: [oneIdentifier]
+      })
+    }
+
+    return signUserOpsIdentifierJsonString as string
+  }
+
+  const walletSignUserOpsForLocalTesting = async (
+    chainId: string,
+    accAddr: string,
+    calls: { to: string; data: string; value?: string }[],
+    useSponsorship = true
+  ) => {
+    const opSepoliaChainId = 11155420n
+    const callData = executeBySenderInterface.encodeFunctionData('executeBySender', [
+      calls.map((c) => [c.to, c.value ?? '0x', c.data])
+    ])
+    const prices = await getGasPrice(opSepoliaChainId)
+    const filledUserOps: ChainIdWithUserOp[] = [
+      {
+        chainId: toBeHex(opSepoliaChainId) as Hex,
+        userOperation: {
+          callData,
+          callGasLimit: toBeHex(100000),
+          verificationGasLimit: toBeHex(100000),
+          preVerificationGas: toBeHex(100000),
+          sender: accAddr,
+          nonce: concat([randomBytes(24), toBeHex(0, 8)]),
+          maxFeePerGas: prices.medium.maxFeePerGas,
+          maxPriorityFeePerGas: prices.medium.maxPriorityFeePerGas
+        }
+      }
+    ]
     const signUserOpsIdentifierJsonString: any = await provider!.request({
       method: 'wallet_signUserOperations',
       params: filledUserOps
