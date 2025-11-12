@@ -16,7 +16,7 @@ import AddressInput from '@common/components/AddressInput'
 import { AddressValidation } from '@common/components/AddressInput/AddressInput'
 import { InputProps } from '@common/components/Input'
 import AddContactBottomSheet from '@common/components/Recipient/AddContactBottomSheet'
-import ConfirmAddress from '@common/components/Recipient/ConfirmAddress'
+import AddToAddressBook from '@common/components/Recipient/AddToAddressBook'
 import { SectionedSelect } from '@common/components/Select'
 import {
   RenderSelectedOptionParams,
@@ -322,7 +322,7 @@ const Recipient: React.FC<Props> = ({
           setAddress={setAddress}
           disabled={disabled}
           renderConfirmAddress={() => (
-            <ConfirmAddress
+            <AddToAddressBook
               isRecipientHumanizerKnownTokenOrSmartContract={
                 isRecipientHumanizerKnownTokenOrSmartContract
               }

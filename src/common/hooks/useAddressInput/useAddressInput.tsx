@@ -3,15 +3,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AddressState, AddressStateOptional } from '@ambire-common/interfaces/domains'
 import { resolveENSDomain } from '@ambire-common/services/ensDomains'
 
-import getAddressInputValidation from './utils/validation'
+import getAddressInputValidation, { ValidationWithSeverityType } from './utils/validation'
 
-// Expose a `severity` property for non-error validations. We don't change
-// the underlying validation util signature — instead map the result here.
-type ValidationWithSeverityType = {
-  message: string
-  isError: boolean
-  severity?: 'error' | 'warning' | 'info'
-}
+// Re-export for backward compatibility
+export type { ValidationWithSeverityType }
 
 interface Props {
   addressState: AddressState
@@ -41,11 +36,7 @@ const useAddressInput = ({
   const fieldValueRef = useRef(addressState.fieldValue)
   const fieldValue = addressState.fieldValue
   const [hasDomainResolveFailed, setHasDomainResolveFailed] = useState(false)
-  const [debouncedValidation, setDebouncedValidation] = useState<{
-    isError: boolean
-    message: string
-    severity?: 'error' | 'warning' | 'info'
-  }>({
+  const [debouncedValidation, setDebouncedValidation] = useState<ValidationWithSeverityType>({
     isError: true,
     message: ''
   })
@@ -58,7 +49,8 @@ const useAddressInput = ({
         isValidEns: !!addressState.ensAddress,
         hasDomainResolveFailed,
         overwriteError,
-        overwriteValidLabel
+        overwriteValidLabel,
+        overwriteSeverity
       }),
     [
       addressState.fieldValue,
@@ -66,28 +58,10 @@ const useAddressInput = ({
       addressState.ensAddress,
       hasDomainResolveFailed,
       overwriteError,
-      overwriteValidLabel
+      overwriteValidLabel,
+      overwriteSeverity
     ]
   )
-
-  const validationWithSeverity = useMemo<ValidationWithSeverityType>(() => {
-    const base = validation
-    // If caller provided an overwriteSeverity, use it to determine both severity and isError
-    if (typeof overwriteSeverity !== 'undefined') {
-      return {
-        ...base,
-        severity: overwriteSeverity
-      }
-    }
-
-    // Default mapping: errors -> 'error', non-errors -> 'warning'. If a
-    // caller supplied `overwriteSeverity` we returned early above and it
-    // will be used as-is.
-    return {
-      ...base,
-      severity: base.isError ? 'error' : 'warning'
-    }
-  }, [validation, overwriteSeverity])
 
   const resolveDomains = useCallback(
     async (trimmedAddress: string) => {
@@ -124,7 +98,7 @@ const useAddressInput = ({
   )
 
   useEffect(() => {
-    const { isError, message: latestMessage } = validationWithSeverity
+    const { isError, message: latestMessage } = validation
     const { isError: debouncedIsError, message: debouncedMessage } = debouncedValidation
 
     if (latestMessage === debouncedMessage) return
@@ -139,12 +113,12 @@ const useAddressInput = ({
 
     // If debouncing is not required, instantly update
     if (!shouldDebounce) {
-      setDebouncedValidation(validationWithSeverity)
+      setDebouncedValidation(validation)
       return
     }
 
     const timeout = setTimeout(() => {
-      setDebouncedValidation(validationWithSeverity)
+      setDebouncedValidation(validation)
     }, 500)
 
     return () => {
@@ -155,7 +129,7 @@ const useAddressInput = ({
     debouncedValidation,
     debouncedValidation.isError,
     debouncedValidation.message,
-    validationWithSeverity
+    validation
   ])
 
   useEffect(() => {
@@ -199,7 +173,7 @@ const useAddressInput = ({
     if (!handleRevalidate) return
 
     handleRevalidate()
-  }, [handleRevalidate, debouncedValidation, validationWithSeverity.message])
+  }, [handleRevalidate, debouncedValidation, validation.message])
 
   const reset = useCallback(() => {
     setAddressState({
@@ -212,7 +186,7 @@ const useAddressInput = ({
   const RHFValidate = useCallback(() => {
     // Disable the form if the address is not the same as the debounced address
     // This disables the submit button in the delay window
-    if (validationWithSeverity.message !== debouncedValidation?.message) return false
+    if (validation.message !== debouncedValidation?.message) return false
 
     // Disable the form if the address is resolving
     if (!debouncedValidation?.isError && debouncedValidation.message === 'Resolving domain...') {
@@ -230,7 +204,7 @@ const useAddressInput = ({
     addressState.isDomainResolving,
     debouncedValidation?.isError,
     debouncedValidation.message,
-    validationWithSeverity.message
+    validation.message
   ])
 
   return {

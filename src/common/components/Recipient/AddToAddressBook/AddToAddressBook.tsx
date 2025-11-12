@@ -18,7 +18,7 @@ type Props = {
   onAddToAddressBookPress: () => void
 }
 
-const ConfirmAddress = ({
+const AddToAddressBook = ({
   isRecipientHumanizerKnownTokenOrSmartContract,
   isRecipientAddressUnknown,
   addressValidationMsg,
@@ -56,4 +56,4 @@ const ConfirmAddress = ({
   ) : null
 }
 
-export default ConfirmAddress
+export default AddToAddressBook

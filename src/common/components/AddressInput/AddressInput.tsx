@@ -12,6 +12,7 @@ import AddressBookContact from '@common/components/AddressBookContact'
 import Button from '@common/components/Button'
 import Input, { InputProps } from '@common/components/Input'
 import Text from '@common/components/Text'
+import { ValidationWithSeverityType } from '@common/hooks/useAddressInput'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
@@ -21,11 +22,7 @@ import useHover, { AnimatedPressable } from '@web/hooks/useHover'
 
 import getStyles from './styles'
 
-export interface AddressValidation {
-  isError: boolean
-  message: string
-  severity?: 'warning' | 'info'
-}
+export interface AddressValidation extends ValidationWithSeverityType {}
 
 interface Props extends InputProps {
   withDetails?: boolean
