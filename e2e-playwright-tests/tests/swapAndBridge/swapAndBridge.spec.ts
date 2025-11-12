@@ -187,7 +187,6 @@ test.describe('swapAndBridge Smart Account', { tag: '@swapAndBridge' }, () => {
 
     await test.step('add a transaction swapping USDC for WALLET to the existing batch and sign', async () => {
       await pages.swapAndBridge.prepareSwapAndBridge(0.01, usdc, wallet)
-      // await pages.auth.pause()
       await pages.swapAndBridge.batchActionWithSign()
     })
 
