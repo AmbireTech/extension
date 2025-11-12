@@ -15,7 +15,8 @@
       "@web/*": ["src/web/*"],
       "@benzin/*": ["src/benzin/*"],
       "@legends/*": ["src/legends/*"]
-    }
+    },
+    "noUncheckedIndexedAccess": true
   },
   "exclude": [
     "node_modules",
