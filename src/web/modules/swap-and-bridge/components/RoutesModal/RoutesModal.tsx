@@ -19,6 +19,8 @@ import useBackgroundService from '@web/hooks/useBackgroundService'
 import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControllerState'
 import RouteStepsPreview from '@web/modules/swap-and-bridge/components/RouteStepsPreview'
 import { getUiType } from '@web/utils/uiType'
+import RetryButton from '@web/components/RetryButton'
+import SkeletonLoader from '@common/components/SkeletonLoader'
 
 import getStyles from './styles'
 
@@ -78,6 +80,12 @@ const RoutesModal = ({
     },
     [closeBottomSheet, dispatch, persistedSelectedRoute, disabledRoutes]
   )
+
+  const updateQuote = useCallback(() => {
+    dispatch({
+      type: 'SWAP_AND_BRIDGE_CONTROLLER_UPDATE_QUOTE'
+    })
+  }, [dispatch])
 
   useEffect(() => {
     if (!signAccountOpController) return
@@ -190,7 +198,7 @@ const RoutesModal = ({
     return selectedRouteIdx
   }, [quote?.routes, userSelectedRoute])
 
-  if (!quote?.routes || !quote.routes.length || !shouldEnableRoutesSelection) return null
+  if (!quote?.routes || !quote.routes.length) return null
 
   return (
     <BottomSheet
@@ -227,33 +235,47 @@ const RoutesModal = ({
       }}
       containerInnerWrapperStyles={flexbox.flex1}
     >
-      <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbXl]}>
-        <Pressable
-          onPress={() => closeBottomSheet()}
-          style={{
-            width: 28,
-            height: 28,
-            justifyContent: 'center',
-            alignItems: 'center'
-          }}
-        >
-          <LeftArrowIcon width={16} height={16} />
-        </Pressable>
-        <Text fontSize={20} weight="semiBold" numberOfLines={1} style={spacings.mlTy}>
-          {t('Select route')}
-        </Text>
+      <View
+        style={[
+          flexbox.directionRow,
+          flexbox.alignCenter,
+          flexbox.justifySpaceBetween,
+          spacings.mbXl
+        ]}
+      >
+        <View style={flexbox.directionRow}>
+          <Pressable
+            onPress={() => closeBottomSheet()}
+            style={{
+              width: 28,
+              height: 28,
+              justifyContent: 'center',
+              alignItems: 'center'
+            }}
+          >
+            <LeftArrowIcon width={16} height={16} />
+          </Pressable>
+          <Text fontSize={20} weight="semiBold" numberOfLines={1} style={spacings.mlTy}>
+            {t('Select route')}
+          </Text>
+        </View>
+        <RetryButton onPress={updateQuote} label={t('Request new quote')} />
       </View>
-      <ScrollableWrapper
-        type={WRAPPER_TYPES.FLAT_LIST}
-        data={quote.routes}
-        wrapperRef={scrollRef}
-        keyExtractor={(r: SwapAndBridgeRoute) => r.routeId.toString()}
-        renderItem={renderItem}
-        initialNumToRender={6}
-        windowSize={6}
-        maxToRenderPerBatch={6}
-        removeClippedSubviews
-      />
+      {shouldEnableRoutesSelection ? (
+        <ScrollableWrapper
+          type={WRAPPER_TYPES.FLAT_LIST}
+          data={quote.routes}
+          wrapperRef={scrollRef}
+          keyExtractor={(r: SwapAndBridgeRoute) => r.routeId.toString()}
+          renderItem={renderItem}
+          initialNumToRender={6}
+          windowSize={6}
+          maxToRenderPerBatch={6}
+          removeClippedSubviews
+        />
+      ) : (
+        <SkeletonLoader width="100%" height={700} appearance="tertiaryBackground" />
+      )}
     </BottomSheet>
   )
 }
