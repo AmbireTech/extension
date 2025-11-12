@@ -21,7 +21,7 @@ const DAppConnectBody: FC<{
   confirmedRiskCheckbox: boolean
   setConfirmedRiskCheckbox: React.Dispatch<React.SetStateAction<boolean>>
   responsiveSizeMultiplier: number
-  securityCheck: 'BLACKLISTED' | 'NOT_BLACKLISTED' | 'LOADING' | 'FAILED_TO_GET'
+  securityCheck: 'BLACKLISTED' | 'VERIFIED' | 'LOADING' | 'FAILED_TO_GET'
 }> = ({
   confirmedRiskCheckbox,
   setConfirmedRiskCheckbox,
@@ -61,7 +61,7 @@ const DAppConnectBody: FC<{
             </Text>
           </View>
           {securityCheck === 'LOADING' && <Spinner style={{ width: 18, height: 18 }} />}
-          {securityCheck === 'NOT_BLACKLISTED' && (
+          {securityCheck === 'VERIFIED' && (
             <Badge type="success" text={t('Passed')} testId="dapp-security-check-passed">
               <CheckIcon
                 width={12}

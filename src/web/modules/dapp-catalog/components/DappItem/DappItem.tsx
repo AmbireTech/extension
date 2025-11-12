@@ -100,7 +100,7 @@ const DappItem = (dapp: Dapp) => {
         >
           <View style={[flexbox.directionRow, !!description && spacings.mbTy]}>
             <View style={spacings.mrTy}>
-              {blacklisted === 'NOT_BLACKLISTED' && (
+              {blacklisted === 'VERIFIED' && (
                 <View
                   style={{
                     position: 'absolute',

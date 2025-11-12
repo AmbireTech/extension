@@ -19,7 +19,7 @@ import TrustedIcon from './TrustedIcon'
 
 type Props = Partial<DappProviderRequest['session']> & {
   responsiveSizeMultiplier: number
-  securityCheck: 'BLACKLISTED' | 'NOT_BLACKLISTED' | 'LOADING' | 'FAILED_TO_GET'
+  securityCheck: 'BLACKLISTED' | 'VERIFIED' | 'LOADING' | 'FAILED_TO_GET'
 }
 
 const DAppConnectHeader: FC<Props> = ({
@@ -95,7 +95,7 @@ const DAppConnectHeader: FC<Props> = ({
             )}
           />
 
-          {isDAppTrusted && securityCheck === 'NOT_BLACKLISTED' && (
+          {isDAppTrusted && securityCheck === 'VERIFIED' && (
             <View
               style={{
                 position: 'absolute',

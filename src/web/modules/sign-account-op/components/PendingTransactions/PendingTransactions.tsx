@@ -1,13 +1,10 @@
-import { keccak256, toUtf8Bytes } from 'ethers'
-import React, { FC, useEffect } from 'react'
+import React, { FC } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import { Hex } from '@ambire-common/interfaces/hex'
 import { Network } from '@ambire-common/interfaces/network'
-import { humanizeAccountOp } from '@ambire-common/libs/humanizer'
-import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
-import { stringify } from '@ambire-common/libs/richJson/richJson'
+import Alert from '@common/components/Alert'
 import NetworkBadge from '@common/components/NetworkBadge'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -26,28 +23,7 @@ interface Props {
 
 const PendingTransactions: FC<Props> = ({ network, setDelegation, delegatedContract }) => {
   const { t } = useTranslation()
-  const { accountOp } = useSignAccountOpControllerState() || {}
-  const oldAccountOpRelevantInfoHash = React.useRef<string>('')
-  const [callsToVisualize, setCallsToVisualize] = React.useState<IrCall[]>([])
-
-  useEffect(() => {
-    if (!accountOp) return
-    const actualDependencyArrayAsString = stringify([
-      accountOp.calls,
-      accountOp.chainId,
-      accountOp.accountAddr
-    ])
-    const newAccountOpRelevantInfoHash = keccak256(toUtf8Bytes(actualDependencyArrayAsString))
-
-    const hasAccountOpChangedSincePrevRender =
-      oldAccountOpRelevantInfoHash.current !== newAccountOpRelevantInfoHash
-
-    if (!hasAccountOpChangedSincePrevRender) return
-
-    setCallsToVisualize(humanizeAccountOp(accountOp, {}))
-
-    oldAccountOpRelevantInfoHash.current = newAccountOpRelevantInfoHash
-  }, [accountOp])
+  const { humanization, banners } = useSignAccountOpControllerState() || {}
 
   return (
     <View style={spacings.mbLg}>
@@ -62,16 +38,30 @@ const PendingTransactions: FC<Props> = ({ network, setDelegation, delegatedContr
         <SectionHeading withMb={false}>{t('Overview')}</SectionHeading>
         <NetworkBadge chainId={network?.chainId} withOnPrefix />
       </View>
+      {!!banners && banners.length && (
+        <View style={spacings.mbTy}>
+          {banners.map((banner) => (
+            <Alert
+              size="sm"
+              key={banner.id}
+              type={banner.type}
+              title={banner.text}
+              titleWeight="medium"
+              style={spacings.mbTy}
+            />
+          ))}
+        </View>
+      )}
       {setDelegation !== undefined ? (
         <DelegationHumanization
           setDelegation={setDelegation}
           delegatedContract={delegatedContract}
         />
-      ) : network && callsToVisualize.length ? (
-        callsToVisualize.map((call, i) => (
+      ) : network && humanization?.length ? (
+        humanization.map((call, i) => (
           <TransactionSummary
             key={call.id}
-            style={i !== callsToVisualize.length - 1 ? spacings.mbTy : {}}
+            style={i !== humanization.length - 1 ? spacings.mbTy : {}}
             call={call}
             chainId={network.chainId}
             index={i}
@@ -84,4 +74,4 @@ const PendingTransactions: FC<Props> = ({ network, setDelegation, delegatedContr
   )
 }
 
-export default PendingTransactions
+export default React.memo(PendingTransactions)
