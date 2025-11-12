@@ -10,9 +10,9 @@ import hexStringToUint8Array from '@ambire-common/utils/hexStringToUint8Array'
 import { ContextModuleBuilder } from '@ledgerhq/context-module'
 import {
   DeviceManagementKitBuilder,
+  DeviceModelId as LedgerDeviceModels,
   DiscoveredDevice,
   LEDGER_VENDOR_ID,
-  DeviceModelId as LedgerDeviceModels,
   UserInteractionRequired
 } from '@ledgerhq/device-management-kit'
 import { Signature, SignerEthBuilder, TypedDataDomain } from '@ledgerhq/device-signer-kit-ethereum'
@@ -442,7 +442,8 @@ class LedgerController implements ExternalSignerController {
       ).observable,
       {
         onCompleted: (output) => output,
-        errorMessage: 'Failed to sign message with Ledger device'
+        errorMessage: 'Failed to sign message with Ledger device',
+        isSign: true
       }
     )
   }

@@ -1,15 +1,14 @@
-import { Signature, Transaction, TransactionLike } from 'ethers'
+import { Signature, toBeHex, Transaction, TransactionLike } from 'ethers'
 
 import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
+import { Hex } from '@ambire-common/interfaces/hex'
 import { ExternalKey, KeystoreSignerInterface } from '@ambire-common/interfaces/keystore'
 import { addHexPrefix } from '@ambire-common/utils/addHexPrefix'
 import { getHdPathFromTemplate } from '@ambire-common/utils/hdPath'
 import hexStringToUint8Array from '@ambire-common/utils/hexStringToUint8Array'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import { stripHexPrefix } from '@ambire-common/utils/stripHexPrefix'
-import LedgerController, {
-  LedgerSignature
-} from '@web/modules/hardware-wallet/controllers/LedgerController'
+import LedgerController, { LedgerSignature } from '@web/modules/hardware-wallet/controllers/LedgerController'
 
 class LedgerSigner implements KeystoreSignerInterface {
   key: ExternalKey & { isExternallyStored: boolean }
@@ -167,6 +166,7 @@ class LedgerSigner implements KeystoreSignerInterface {
 
     try {
       const path = getHdPathFromTemplate(this.key.meta.hdPathTemplate, this.key.meta.index)
+      // Note: '0x4Cd241E8d1510e30b2076397afc7508Ae59C66c9' (Simple7702Account) contact is the only one whitelisted
       const signature = await this.controller!.sign7702(path, chainId, contract, nonce)
       const v = Signature.getNormalizedV(signature.v)
 
@@ -183,12 +183,66 @@ class LedgerSigner implements KeystoreSignerInterface {
     }
   }
 
-  signTransactionTypeFour: KeystoreSignerInterface['signTransactionTypeFour'] = ({
+  signTransactionTypeFour: KeystoreSignerInterface['signTransactionTypeFour'] = async ({
     txnRequest,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     eip7702Auth
   }) => {
-    throw new Error('not supported', { cause: txnRequest })
+    await this.#prepareForSigning()
+
+    try {
+      const maxPriorityFeePerGas = txnRequest.maxPriorityFeePerGas ?? txnRequest.gasPrice
+      const maxFeePerGas = txnRequest.maxFeePerGas ?? txnRequest.gasPrice
+      const authorizationSignature = Signature.from({
+        r: eip7702Auth.r,
+        s: eip7702Auth.s,
+        v: BigInt(eip7702Auth.v)
+      })
+
+      const finalTxnRequest = {
+        ...txnRequest,
+        maxPriorityFeePerGas: maxPriorityFeePerGas ? toBeHex(maxPriorityFeePerGas) : '0x',
+        maxFeePerGas: maxFeePerGas ? toBeHex(maxFeePerGas) : '0x',
+        authorizationList: [
+          {
+            address: eip7702Auth.address,
+            nonce: BigInt(eip7702Auth.nonce),
+            chainId: BigInt(eip7702Auth.chainId),
+            signature: authorizationSignature
+          }
+        ]
+      }
+
+      // Serialize the transaction using ethers
+      const unsignedTxn: TransactionLike = { ...finalTxnRequest, type: 4 }
+      const unsignedSerializedTxn = Transaction.from(unsignedTxn).unsignedSerialized
+      const strippedTxn = stripHexPrefix(unsignedSerializedTxn)
+      const transactionBytes = hexStringToUint8Array(strippedTxn)
+
+      const path = getHdPathFromTemplate(this.key.meta.hdPathTemplate, this.key.meta.index)
+      const res = await this.controller!.signTransaction(path, transactionBytes)
+
+      const signature = Signature.from({
+        r: res.r,
+        s: res.s,
+        v: Signature.getNormalizedV(res.v)
+      })
+      const signedSerializedTxn = Transaction.from({
+        ...unsignedTxn,
+        signature
+      }).serialized
+
+      return signedSerializedTxn as Hex
+    } catch (e: any) {
+      throw new ExternalSignerError(
+        e?.message || 'ledgerSigner: singing failed for unknown reason',
+        {
+          // We don't want to send crash reports of expected errors. If the errors is
+          // TypeError, RuntimeError, etc. - we want to send it.
+          sendCrashReport: e instanceof ExternalSignerError ? e.sendCrashReport : true
+        }
+      )
+    }
   }
 
   async signingCleanup() {
