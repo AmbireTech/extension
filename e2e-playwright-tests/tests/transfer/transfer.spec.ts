@@ -39,7 +39,6 @@ test.describe('transfer', { tag: '@transfer' }, () => {
     })
 
     await test.step('send transaction', async () => {
-      // await pages.transfer.signAndValidate({ feeToken, payWithGasTank, sendToken })
       await pages.transfer.signSlowSpeedTransaction({
         feeToken,
         payWithGasTank,
@@ -80,7 +79,6 @@ test.describe('transfer', { tag: '@transfer' }, () => {
     })
 
     await test.step('send transaction', async () => {
-      // await pages.transfer.signAndValidate({ feeToken, payWithGasTank, sendToken })
       await pages.transfer.signSlowSpeedTransaction({
         feeToken,
         payWithGasTank,
@@ -203,7 +201,6 @@ test.describe('transfer', { tag: '@transfer' }, () => {
     })
 
     await test.step('send transaction', async () => {
-      // await pages.transfer.signAndValidate({ feeToken, payWithGasTank, sendToken })
       await pages.transfer.signSlowSpeedTransaction({
         feeToken,
         payWithGasTank,
@@ -243,7 +240,6 @@ test.describe('transfer', { tag: '@transfer' }, () => {
     })
 
     await test.step('send USCD to added contact', async () => {
-      // await pages.transfer.signAndValidate({ feeToken, sendToken })
       await pages.transfer.signSlowSpeedTransaction({
         feeToken,
         sendToken,

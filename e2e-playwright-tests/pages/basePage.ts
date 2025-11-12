@@ -140,7 +140,12 @@ export class BasePage {
     await expect(this.page.getByTestId(selector)).toBeEnabled({ timeout: 5000 })
   }
 
-  async compareText(selector: string, text: string, timeout = 30000, index?: number) {
+  async compareText(
+    selector: string,
+    text: string,
+    options?: { index?: number; timeout?: number }
+  ) {
+    const { index = 0, timeout = 30000 } = options ?? {}
     await expect(this.page.getByTestId(selector).nth(index ?? 0)).toContainText(text, {
       timeout: timeout
     })

@@ -161,7 +161,6 @@ test.describe('swapAndBridge Smart Account', { tag: '@swapAndBridge' }, () => {
     })
 
     await test.step('sign transaction', async () => {
-      // await pages.swapAndBridge.signTokens({ fromToken: usdc })
       await pages.transfer.signSlowSpeedTransaction({ sendToken: usdc, message })
     })
 

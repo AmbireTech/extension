@@ -245,7 +245,7 @@ export class SettingsPage extends BasePage {
     await this.compareText(
       selectors.settings.youDontHaveInfoText,
       "You don't have any hidden tokens",
-      1
+      { index: 1 }
     )
   }
 

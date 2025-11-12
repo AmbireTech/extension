@@ -45,46 +45,46 @@ export class TransferPage extends BasePage {
     await this.fillRecipient(recipientAddress)
   }
 
-  async signAndValidate({
-    feeToken,
-    payWithGasTank,
-    sendToken
-  }: {
-    feeToken: Token
-    payWithGasTank?: boolean
-    sendToken: Token
-  }) {
-    // Proceed
-    await this.expectButtonEnabled(selectors.proceedBtn)
-    await this.click(selectors.proceedBtn)
+  // async signAndValidate({
+  //   feeToken,
+  //   payWithGasTank,
+  //   sendToken
+  // }: {
+  //   feeToken: Token
+  //   payWithGasTank?: boolean
+  //   sendToken: Token
+  // }) {
+  //   // Proceed
+  //   await this.expectButtonEnabled(selectors.proceedBtn)
+  //   await this.click(selectors.proceedBtn)
 
-    // Select Fee token and payer
-    await this.selectFeeToken(baParams.envSelectedAccount, feeToken, payWithGasTank)
+  //   // Select Fee token and payer
+  //   await this.selectFeeToken(baParams.envSelectedAccount, feeToken, payWithGasTank)
 
-    await this.monitorRequests()
+  //   await this.monitorRequests()
 
-    // Sign & Broadcast
-    await this.expectButtonEnabled(selectors.signButton)
-    await this.click(selectors.signButton)
+  //   // Sign & Broadcast
+  //   await this.expectButtonEnabled(selectors.signButton)
+  //   await this.click(selectors.signButton)
 
-    // Validate
-    await this.compareText(selectors.txnStatus, 'Transfer done!')
+  //   // Validate
+  //   await this.compareText(selectors.txnStatus, 'Transfer done!')
 
-    const { rpc } = this.getCategorizedRequests()
+  //   const { rpc } = this.getCategorizedRequests()
 
-    // Verify that portfolio updates run only for the send token network.
-    // A previous regression was triggering updates on all enabled networks after a broadcast,
-    // which caused a significant performance downgrade.
-    expect(
-      rpc.every((req) => req === `https://invictus.ambire.com/${sendToken.chainName}`),
-      `Invalid portfolio update behavior detected.
-   After a broadcast, the portfolio must be refreshed only for *${sendToken.chainName}*.
-   However, RPC requests were also made for other networks: ${rpc.toString()}`
-    ).toEqual(true)
+  //   // Verify that portfolio updates run only for the send token network.
+  //   // A previous regression was triggering updates on all enabled networks after a broadcast,
+  //   // which caused a significant performance downgrade.
+  //   expect(
+  //     rpc.every((req) => req === `https://invictus.ambire.com/${sendToken.chainName}`),
+  //     `Invalid portfolio update behavior detected.
+  //  After a broadcast, the portfolio must be refreshed only for *${sendToken.chainName}*.
+  //  However, RPC requests were also made for other networks: ${rpc.toString()}`
+  //   ).toEqual(true)
 
-    // Close page
-    await this.click(selectors.closeProgressModalButton)
-  }
+  //   // Close page
+  //   await this.click(selectors.closeProgressModalButton)
+  // }
 
   async addToBatch() {
     await this.click(selectors.batchBtn)
@@ -192,7 +192,7 @@ export class TransferPage extends BasePage {
 
       // validate success message
       const timeout = 120000
-      await this.compareText(selectors.txnStatus, message, timeout)
+      await this.compareText(selectors.txnStatus, message, { timeout })
 
       // Close page
       await this.click(selectors.closeProgressModalButton)

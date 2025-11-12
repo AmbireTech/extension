@@ -222,13 +222,27 @@ export class SwapAndBridgePage extends BasePage {
     const signButton = page.getByTestId(selectors.signTransactionButton)
 
     try {
-      await expect(signButton).toBeVisible({ timeout: 5000 })
-      await expect(signButton).toBeEnabled({ timeout: 5000 })
-      await page.getByTestId(selectors.signTransactionButton).click()
-      await page.waitForTimeout(5000)
+      // Select slow speed
+      await page.getByTestId(selectors.transaction.feeSpeedSelectDropdown).click()
+      await page.getByTestId(selectors.transaction.feeSpeedSlow).first().click()
 
-      // close transaction progress pop up
-      await page.locator(selectors.closeTransactionProgressPopUpButton).click()
+      // check fee
+      const feeSelector = await page.locator(selectors.transaction.feeGasTankInDollars).innerText() // returns e.g. '<$0.01'
+
+      const feeDollarsAmount = Number(feeSelector.replace(/[<$]/g, ''))
+
+      if (feeDollarsAmount > 0.1) {
+        console.warn('⚠️ Fee amount is higher than 0.1$, transaction signing skipped.')
+      } else {
+        console.log('else block')
+        await expect(signButton).toBeVisible({ timeout: 5000 })
+        await expect(signButton).toBeEnabled({ timeout: 5000 })
+        await page.getByTestId(selectors.signTransactionButton).click()
+        await page.waitForTimeout(5000)
+
+        // close transaction progress pop up
+        await page.locator(selectors.closeTransactionProgressPopUpButton).click()
+      }
     } catch (error) {
       console.warn("⚠️ The 'Sign' button is not clickable, but it should be.")
     }
@@ -412,10 +426,24 @@ export class SwapAndBridgePage extends BasePage {
 
   async signBatchTransactionsPage(page): Promise<void> {
     const signButton = page.getByTestId(selectors.signTransactionButton)
-    await expect(signButton).toBeVisible({ timeout: 5000 })
-    await expect(signButton).toBeEnabled({ timeout: 5000 })
-    await this.verifyBatchTransactionDetails(page)
-    await page.waitForTimeout(3000)
+
+    // Select slow speed
+    await page.getByTestId(selectors.transaction.feeSpeedSelectDropdown).click()
+    await page.getByTestId(selectors.transaction.feeSpeedSlow).first().click()
+
+    // check fee
+    const feeSelector = await page.locator(selectors.transaction.feeGasTankInDollars).innerText() // returns e.g. '<$0.01'
+
+    const feeDollarsAmount = Number(feeSelector.replace(/[<$]/g, ''))
+
+    if (feeDollarsAmount > 0.1) {
+      console.warn('⚠️ Fee amount is higher than 0.1$, transaction signing skipped.')
+    } else {
+      await expect(signButton).toBeVisible({ timeout: 5000 })
+      await expect(signButton).toBeEnabled({ timeout: 5000 })
+      await this.verifyBatchTransactionDetails(page)
+      await page.waitForTimeout(3000)
+    }
   }
 
   async verifyBatchTransactionDetails(page): Promise<void> {
