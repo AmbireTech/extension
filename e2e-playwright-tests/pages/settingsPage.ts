@@ -39,7 +39,7 @@ export class SettingsPage extends BasePage {
   async lockKeystore(): Promise<void> {
     await this.openSettingsGeneral()
 
-    await this.expectButtonVisible(selectors.lockExtensionButton)
+    await this.expectElementVisible(selectors.lockExtensionButton)
     await this.click(selectors.lockExtensionButton)
 
     await this.checkUrl('/tab.html#/unlock')
@@ -53,7 +53,7 @@ export class SettingsPage extends BasePage {
 
     await this.entertext(selectors.passphraseField, KEYSTORE_PASS)
     await this.click(selectors.buttonUnlock)
-    await this.expectButtonVisible(selectors.fullBalance)
+    await this.expectElementVisible(selectors.fullBalance)
   }
 
   async openExtensionPassword() {

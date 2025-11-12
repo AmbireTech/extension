@@ -96,7 +96,8 @@ const selectors = {
     feeSpeedFast: 'option-fast',
     feeSpeedApe: 'option-ape',
     feeGasTankInDollars: '//span[contains(text(),"Gas Tank")]/../../../div[contains(text(),"$")]', // returning e.g. "<$0.01"
-    feeTokenInDollars: '//span[contains(text(),"")]/../../div[contains(text(),"$")]'
+    feeTokenInDollars: '//span[contains(text(),"")]/../../div[contains(text(),"$")]',
+    confirmingYourTransactionText: '//div[contains(text(),"Confirming your")]'
   },
   account: 'account',
   importMethodTrezor: 'import-method-trezor',

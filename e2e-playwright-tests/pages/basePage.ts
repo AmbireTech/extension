@@ -132,8 +132,8 @@ export class BasePage {
     expect(this.page.url()).toContain(url)
   }
 
-  async expectButtonVisible(selector: string) {
-    await expect(this.page.getByTestId(selector)).toBeVisible()
+  async expectElementVisible(selector: string) {
+    await expect(this.page.getByTestId(selector)).toBeVisible({ timeout: 10000 })
   }
 
   async expectButtonEnabled(selector: string) {

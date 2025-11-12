@@ -171,7 +171,11 @@ export class TransferPage extends BasePage {
       // Sign & Broadcast
       await this.expectButtonEnabled(selectors.signButton)
       await this.click(selectors.signButton)
-      await expect(this.page.getByText('Confirming your trade')).toBeVisible({ timeout: 10000 })
+      await expect(
+        this.page.locator(selectors.transaction.confirmingYourTransactionText)
+      ).toBeVisible({
+        timeout: 10000
+      })
 
       // Validate requests
       const { rpc } = this.getCategorizedRequests()

@@ -1,4 +1,4 @@
-import { PRIVATE_KEY, KEYSTORE_PASS } from 'constants/env'
+import { KEYSTORE_PASS, PRIVATE_KEY } from 'constants/env'
 import locators from 'constants/locators'
 import selectors from 'constants/selectors'
 import BootstrapContext from 'interfaces/bootstrapContext'
