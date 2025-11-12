@@ -170,7 +170,7 @@ test.describe('swapAndBridge Smart Account', { tag: '@swapAndBridge' }, () => {
     })
   })
 
-  test.only('should batch Swap of ERC20 tokens and Native to ERC20 token with a Smart Account', async ({
+  test('should batch Swap of ERC20 tokens and Native to ERC20 token with a Smart Account', async ({
     pages
   }) => {
     const usdc = tokens.usdc.base
