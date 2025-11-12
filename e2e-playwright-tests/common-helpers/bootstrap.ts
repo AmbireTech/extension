@@ -98,7 +98,7 @@ async function initBrowser(namespace: string): Promise<{
 //----------------------------------------------------------------------------------------------
 export async function bootstrap(namespace: string) {
   const { page, context, extensionURL, serviceWorker } = await initBrowser(namespace)
-  await page.goto(`${extensionURL}${mainConstants.urls.getStarted}`)
+  await page.goto(`${extensionURL}${mainConstants.urls.getStarted}`, { waitUntil: 'load' })
   // Bypass the invite verification step
   await serviceWorker.evaluate(
     (invite) => chrome.storage.local.set({ invite, isE2EStorageSet: true }),
