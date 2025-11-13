@@ -24,7 +24,6 @@ import {
 } from '@ambire-common/interfaces/keystore'
 import { AddNetworkRequestParams, ChainId, Network } from '@ambire-common/interfaces/network'
 import { BuildRequest } from '@ambire-common/interfaces/requests'
-import { CashbackStatus } from '@ambire-common/interfaces/selectedAccount'
 import { SignMessageUpdateParams } from '@ambire-common/interfaces/signMessage'
 import {
   SwapAndBridgeActiveRoute,
@@ -346,11 +345,6 @@ type PortfolioControllerCheckToken = {
   params: {
     token: { address: TokenResult['address']; chainId: bigint }
   }
-}
-
-type PortfolioControllerUpdateConfettiToShown = {
-  type: 'SELECTED_ACCOUNT_CONTROLLER_UPDATE_CASHBACK_STATUS'
-  params: CashbackStatus
 }
 
 type MainControllerSignAccountOpInitAction = {

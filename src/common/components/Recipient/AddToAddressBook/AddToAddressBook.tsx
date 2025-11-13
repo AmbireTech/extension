@@ -1,9 +1,7 @@
 import React from 'react'
 import { Pressable, View } from 'react-native'
 
-import { ITransferController } from '@ambire-common/interfaces/transfer'
 import AddIcon from '@common/assets/svg/AddIcon'
-import Checkbox from '@common/components/Checkbox'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
@@ -15,21 +13,15 @@ import getStyles from './styles'
 type Props = {
   isRecipientAddressUnknown: boolean
   isRecipientHumanizerKnownTokenOrSmartContract: boolean
-  isRecipientAddressUnknownAgreed: ITransferController['isRecipientAddressUnknownAgreed']
-  onRecipientCheckboxClick: () => void
   addressValidationMsg: string
-  isSWWarningVisible: boolean
   isRecipientAddressSameAsSender: boolean
   onAddToAddressBookPress: () => void
 }
 
-const ConfirmAddress = ({
-  onRecipientCheckboxClick,
+const AddToAddressBook = ({
   isRecipientHumanizerKnownTokenOrSmartContract,
   isRecipientAddressUnknown,
-  isRecipientAddressUnknownAgreed,
   addressValidationMsg,
-  isSWWarningVisible,
   isRecipientAddressSameAsSender,
   onAddToAddressBookPress
 }: Props) => {
@@ -43,19 +35,6 @@ const ConfirmAddress = ({
     <View
       style={[spacings.mb, flexbox.directionRow, flexbox.alignCenter, flexbox.justifySpaceBetween]}
     >
-      <Checkbox
-        value={isRecipientAddressUnknownAgreed}
-        onValueChange={onRecipientCheckboxClick}
-        label={
-          isSWWarningVisible
-            ? t(
-                'I confirm sending to this address and that it’s not a CEX (which won’t support ETH deposits from smart wallets).'
-              )
-            : t('Confirm sending to this address.')
-        }
-        style={spacings.mb0}
-        testID="recipient-address-unknown-checkbox"
-      />
       <Pressable
         style={({ hovered }: any) => [
           styles.addressBookButton,
@@ -77,4 +56,4 @@ const ConfirmAddress = ({
   ) : null
 }
 
-export default ConfirmAddress
+export default AddToAddressBook

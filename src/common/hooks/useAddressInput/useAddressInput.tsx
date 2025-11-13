@@ -3,13 +3,19 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AddressState, AddressStateOptional } from '@ambire-common/interfaces/domains'
 import { resolveENSDomain } from '@ambire-common/services/ensDomains'
 
-import getAddressInputValidation from './utils/validation'
+import getAddressInputValidation, { ValidationWithSeverityType } from './utils/validation'
+
+// Re-export for backward compatibility
+export type { ValidationWithSeverityType }
 
 interface Props {
   addressState: AddressState
   setAddressState: (newState: AddressStateOptional) => void
   overwriteError?: string
   overwriteValidLabel?: string
+  // Severity may be provided by callers (e.g. controller state). Accept
+  // 'error'|'warning'|'info' so we can pass it through unchanged.
+  overwriteSeverity?: 'error' | 'warning' | 'info'
   handleCacheResolvedDomain: (address: string, domain: string, type: 'ens') => void
   // handleRevalidate is required when the address input is used
   // together with react-hook-form. It is used to trigger the revalidation of the input.
@@ -22,13 +28,15 @@ const useAddressInput = ({
   setAddressState,
   overwriteError,
   overwriteValidLabel,
+  // For now severity is only used for non-error validations (warnings / info)
+  overwriteSeverity,
   handleCacheResolvedDomain,
   handleRevalidate
 }: Props) => {
   const fieldValueRef = useRef(addressState.fieldValue)
   const fieldValue = addressState.fieldValue
   const [hasDomainResolveFailed, setHasDomainResolveFailed] = useState(false)
-  const [debouncedValidation, setDebouncedValidation] = useState({
+  const [debouncedValidation, setDebouncedValidation] = useState<ValidationWithSeverityType>({
     isError: true,
     message: ''
   })
@@ -41,7 +49,8 @@ const useAddressInput = ({
         isValidEns: !!addressState.ensAddress,
         hasDomainResolveFailed,
         overwriteError,
-        overwriteValidLabel
+        overwriteValidLabel,
+        overwriteSeverity
       }),
     [
       addressState.fieldValue,
@@ -49,7 +58,8 @@ const useAddressInput = ({
       addressState.ensAddress,
       hasDomainResolveFailed,
       overwriteError,
-      overwriteValidLabel
+      overwriteValidLabel,
+      overwriteSeverity
     ]
   )
 
