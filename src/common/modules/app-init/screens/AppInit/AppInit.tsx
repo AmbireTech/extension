@@ -7,7 +7,6 @@ import { BiometricsProvider } from '@common/contexts/biometricsContext'
 import { ConstantsProvider } from '@common/contexts/constantsContext'
 import { KeyboardProvider } from '@common/contexts/keyboardContext'
 import { NetInfoProvider } from '@common/contexts/netInfoContext'
-import { PrivateModeProvider } from '@common/contexts/privateModeContext'
 import { StorageProvider } from '@common/contexts/storageContext'
 import { ThemeProvider } from '@common/contexts/themeContext'
 import { ToastProvider } from '@common/contexts/toastContext'
@@ -51,9 +50,7 @@ const AppInit = () => {
                         {/* TODO: v2 */}
                         {/* <Web3Provider> */}
                         <BiometricsProvider>
-                          <PrivateModeProvider>
-                            <AppRouter />
-                          </PrivateModeProvider>
+                          <AppRouter />
                           <PortalHost name="global" />
                         </BiometricsProvider>
                         {/* </Web3Provider> */}
