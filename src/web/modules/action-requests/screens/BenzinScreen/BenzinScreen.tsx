@@ -4,12 +4,14 @@ import { View } from 'react-native'
 
 import { BenzinAction } from '@ambire-common/interfaces/actions'
 import Benzin from '@benzin/screens/BenzinScreen/components/Benzin/Benzin'
-import Buttons from '@benzin/screens/BenzinScreen/components/Buttons'
+import {
+  CopyButton,
+  OpenExplorerButton
+} from '@benzin/screens/BenzinScreen/components/Buttons/Buttons'
 import useBenzin from '@benzin/screens/BenzinScreen/hooks/useBenzin'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import Button from '@common/components/Button'
 import useTheme from '@common/hooks/useTheme'
-import useWindowSize from '@common/hooks/useWindowSize'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper'
@@ -21,7 +23,6 @@ const BenzinScreen = () => {
   const { dispatch } = useBackgroundService()
   const actionsState = useActionsControllerState()
   const { theme } = useTheme()
-  const { maxWidthSize } = useWindowSize()
   const resolveAction = useCallback(() => {
     if (!actionsState.currentAction) return
     dispatch({
@@ -53,28 +54,26 @@ const BenzinScreen = () => {
       withHorizontalPadding={false}
       footer={
         <>
-          <Button
-            type="secondary"
-            onPress={resolveAction}
-            style={{ minWidth: maxWidthSize('m') ? 180 : 140 }}
-            hasBottomSpacing={false}
-            text={pendingRequests.length ? t('Proceed to Next Request') : t('Close')}
-          >
-            {!!pendingRequests.length && (
-              <View style={spacings.pl}>
-                <RightArrowIcon color={theme.primary} />
-              </View>
+          {!!state?.handleOpenExplorer && (
+            <OpenExplorerButton handleOpenExplorer={state.handleOpenExplorer} />
+          )}
+          <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+            {!!state?.showCopyBtn && !!state?.handleCopyText && (
+              <CopyButton handleCopyText={state.handleCopyText} />
             )}
-          </Button>
-          {state?.handleOpenExplorer ? (
-            <Buttons
-              handleCopyText={state.handleCopyText}
-              handleOpenExplorer={state.handleOpenExplorer}
-              showCopyBtn={state.showCopyBtn}
-              showOpenExplorerBtn={state.showOpenExplorerBtn}
-              style={{ ...flexbox.directionRow, ...spacings.mb0 }}
-            />
-          ) : null}
+            <Button
+              onPress={resolveAction}
+              style={{ minWidth: 180, ...spacings.mlSm }}
+              hasBottomSpacing={false}
+              text={pendingRequests.length ? t('Proceed to Next Request') : t('Close')}
+            >
+              {!!pendingRequests.length && (
+                <View style={spacings.pl}>
+                  <RightArrowIcon color={theme.primary} />
+                </View>
+              )}
+            </Button>
+          </View>
         </>
       }
     >
