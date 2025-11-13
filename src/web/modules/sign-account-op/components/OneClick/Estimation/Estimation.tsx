@@ -111,7 +111,7 @@ const OneClickEstimation = ({
         isScrollEnabled={false}
         shouldBeClosableOnDrag={false}
       >
-        {!!banners && banners.length && (
+        {!!banners && !!banners.length && (
           <View style={spacings.mbTy}>
             {banners.map((banner) => (
               <SafetyChecksBanner

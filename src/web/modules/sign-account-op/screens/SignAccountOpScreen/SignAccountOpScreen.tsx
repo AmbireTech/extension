@@ -240,7 +240,9 @@ const SignAccountOpScreen = () => {
     <SmallNotificationWindowWrapper>
       <SafetyChecksOverlay
         shouldBeVisible={
-          !signAccountOpState?.estimation.estimation || !signAccountOpState?.isInitialized
+          !signAccountOpState?.isInitialized ||
+          !signAccountOpState?.estimation.estimation ||
+          !!signAccountOpState.safetyChecksLoading
         }
       />
       <Modals

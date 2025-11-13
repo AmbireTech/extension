@@ -114,9 +114,15 @@ const SwapAndBridgeScreen = () => {
     return (
       requestsCtrlStatuses.buildSwapAndBridgeUserRequest !== 'INITIAL' ||
       updateQuoteStatus === 'LOADING' ||
-      isEstimatingRoute
+      isEstimatingRoute ||
+      !!signAccountOpController?.safetyChecksLoading
     )
-  }, [isEstimatingRoute, requestsCtrlStatuses.buildSwapAndBridgeUserRequest, updateQuoteStatus])
+  }, [
+    isEstimatingRoute,
+    requestsCtrlStatuses.buildSwapAndBridgeUserRequest,
+    updateQuoteStatus,
+    signAccountOpController?.safetyChecksLoading
+  ])
 
   const isNotReadyToProceed = useMemo(() => {
     return formStatus !== SwapAndBridgeFormStatus.ReadyToSubmit || isLoading

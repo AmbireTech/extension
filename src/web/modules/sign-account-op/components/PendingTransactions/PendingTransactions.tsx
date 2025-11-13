@@ -38,7 +38,7 @@ const PendingTransactions: FC<Props> = ({ network, setDelegation, delegatedContr
         <SectionHeading withMb={false}>{t('Overview')}</SectionHeading>
         <NetworkBadge chainId={network?.chainId} withOnPrefix />
       </View>
-      {!!banners && banners.length && (
+      {!!banners && !!banners.length && (
         <View style={spacings.mbTy}>
           {banners.map((banner) => (
             <SafetyChecksBanner
