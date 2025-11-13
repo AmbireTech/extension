@@ -7,7 +7,7 @@ import selectors from '../../constants/selectors'
 import tokens from '../../constants/tokens'
 import { test } from '../../fixtures/pageObjects'
 
-test.describe.only('stability', { tag: '@stability' }, () => {
+test.describe('stability', { tag: '@stability' }, () => {
   test.beforeEach(async ({ pages }) => {
     await pages.initWithStorage(saParams, { shouldUnlockManually: true })
   })
@@ -97,7 +97,6 @@ test.describe.only('stability', { tag: '@stability' }, () => {
         expect(categorized.rpc.length).toBeLessThanOrEqual(30)
         expect(categorized.hints.length).toBeLessThanOrEqual(1)
         expect(categorized.nativePrices.length).toBeLessThanOrEqual(10)
-        console.log("thirs parties: ", categorized.nativePrices)
         expect(categorized.thirdParty.length).toBeLessThanOrEqual(15)
         expect(categorized.allowedUncategorized.length).toBeLessThanOrEqual(10)
 
