@@ -2872,10 +2872,10 @@
     "@jridgewell/resolve-uri" "^3.1.0"
     "@jridgewell/sourcemap-codec" "^1.4.14"
 
-"@ledgerhq/context-module@1.6.0":
-  version "1.6.0"
-  resolved "https://registry.yarnpkg.com/@ledgerhq/context-module/-/context-module-1.6.0.tgz#a8460c83b82effc8cff67f1033b3bf24d38b9bdd"
-  integrity sha512-W+cLJdN4AJS2L6oPfHJJfP/F+oVhCpeKmr8xq6Tvh2aBWYyzvFlp134LTzJ7F1XFAevi2E7gnJC21FlVv31u7w==
+"@ledgerhq/context-module@1.10.0":
+  version "1.10.0"
+  resolved "https://registry.yarnpkg.com/@ledgerhq/context-module/-/context-module-1.10.0.tgz#777bffe03be099d7d842046c85d060106f21d1d9"
+  integrity sha512-Qrp676DFSah6l2ns/sUciYr/Qvg491kgimVirNsjkgkJ6sL7yL+pX8Z5uYsa4inRHxYGNB37KPA7yiyAfHH61Q==
   dependencies:
     axios "1.8.2"
     crypto-js "^4.2.0"
@@ -2884,10 +2884,10 @@
     purify-ts "2.1.0"
     reflect-metadata "0.2.2"
 
-"@ledgerhq/device-management-kit@0.8.0":
-  version "0.8.0"
-  resolved "https://registry.yarnpkg.com/@ledgerhq/device-management-kit/-/device-management-kit-0.8.0.tgz#4ca5037d986d9d5eca93d03d89889ef06e66c41f"
-  integrity sha512-KymU8UHfP9rz4JGSTpfhQvSpdckxZIaJY9bDm5BXE8C5pTWPu2jMj0m64j9pCuNi1gN6Z+IL6hZZIskKN5cszQ==
+"@ledgerhq/device-management-kit@0.11.0":
+  version "0.11.0"
+  resolved "https://registry.yarnpkg.com/@ledgerhq/device-management-kit/-/device-management-kit-0.11.0.tgz#06c36b45ed1729dee680fc221504ab7261326ec0"
+  integrity sha512-DRBrkb434814WRCFC5FLG3dLBHEdkN9C5f1ierSBjCq/TW27xbRdMFpweigpkYwPXpRPcoJB0kTkk/1RpyqVRA==
   dependencies:
     "@sentry/minimal" "6.19.7"
     axios "1.8.2"
@@ -2895,29 +2895,29 @@
     isomorphic-ws "^5.0.0"
     purify-ts "2.1.0"
     reflect-metadata "0.2.2"
-    semver "7.7.0"
+    semver "7.7.2"
     url "^0.11.4"
     uuid "11.0.3"
     ws "^8.18.0"
     xstate "5.19.2"
 
-"@ledgerhq/device-signer-kit-ethereum@1.6.0":
-  version "1.6.0"
-  resolved "https://registry.yarnpkg.com/@ledgerhq/device-signer-kit-ethereum/-/device-signer-kit-ethereum-1.6.0.tgz#e1dc1c4b35b27e46329af6889a170aaaccee900d"
-  integrity sha512-xOZ6n4plObe2U4aZYYqf6MVXrimBfcI7uSa+gtrkGoeBBhUv8nTENynvaxUWqZ2ZSfPDxix/L3rkfLPxiCOkMw==
+"@ledgerhq/device-signer-kit-ethereum@1.9.2":
+  version "1.9.2"
+  resolved "https://registry.yarnpkg.com/@ledgerhq/device-signer-kit-ethereum/-/device-signer-kit-ethereum-1.9.2.tgz#d0fdbefda115e1d4fca368eb37eabdc081a3b9ce"
+  integrity sha512-c7yfYoQ2uOZOqmnmFPYUTf3Iho2KTHhf+73GgGeKWMBSzFXACT/tNycVy58uKdz/hjQuwxx6p30Mx3JXZRlIQw==
   dependencies:
-    "@ledgerhq/signer-utils" "1.0.6"
+    "@ledgerhq/signer-utils" "^1.1.0"
     ethers "6.14.1"
     inversify "7.5.1"
     purify-ts "2.1.0"
     reflect-metadata "0.2.2"
-    semver "7.7.0"
+    semver "7.7.2"
     xstate "5.19.2"
 
-"@ledgerhq/device-transport-kit-web-hid@1.2.0":
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/@ledgerhq/device-transport-kit-web-hid/-/device-transport-kit-web-hid-1.2.0.tgz#02a8860681f3f642e86da685eb77faf96674e305"
-  integrity sha512-51kLHqrn1dP+0ZQLRyUBHIPSBNvx74hiIAMHrBkiCAedpmND/W522nslpX42bVf3tU3+I0Y51qn3WFvd8ZtIow==
+"@ledgerhq/device-transport-kit-web-hid@1.2.1":
+  version "1.2.1"
+  resolved "https://registry.yarnpkg.com/@ledgerhq/device-transport-kit-web-hid/-/device-transport-kit-web-hid-1.2.1.tgz#1a87e4df31418bb5cabac4bf9e9dfbb34cef8b3e"
+  integrity sha512-goq1uTsz93uxj5pe1kzz/baca7hQ2O4ZPplypC97rN68TRtDTOhpAvPazOoFsDgOnbJcdKF4/CU2ZAurzxI1fg==
   dependencies:
     "@sentry/minimal" "6.19.7"
     purify-ts "2.1.0"
@@ -2966,10 +2966,10 @@
     rxjs "^7.8.1"
     uuid "^9.0.1"
 
-"@ledgerhq/signer-utils@1.0.6":
-  version "1.0.6"
-  resolved "https://registry.yarnpkg.com/@ledgerhq/signer-utils/-/signer-utils-1.0.6.tgz#898a4a47149226b8f40ac70f344a045e77ab6b89"
-  integrity sha512-+iqW4o1moDO3kpROyWxbvcF3VTttmlaQ9/AQzTJOvdJhhf1v8S8N8OddGaasAHMcy39Vq/G5HMB4tb6gfj5EOQ==
+"@ledgerhq/signer-utils@^1.1.0":
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/@ledgerhq/signer-utils/-/signer-utils-1.1.0.tgz#1b1a466b9ef0a93b1b32ba7559bc120c20e77bb2"
+  integrity sha512-zp8kyNF0sNMUG2VkgOL7rDu8W6U1P8yvTA3wIDjjlqoIOPanvodfezeub69fOuHJ2QG/JmnS8YZCGIoSWpQYkA==
 
 "@leichtgewicht/ip-codec@^2.0.1":
   version "2.0.4"
@@ -16424,10 +16424,10 @@ semver@7.3.8, semver@~7.3.2:
   dependencies:
     lru-cache "^6.0.0"
 
-semver@7.7.0, semver@^7.3.5, semver@^7.3.7, semver@^7.3.8, semver@^7.5.3, semver@^7.5.4:
-  version "7.7.0"
-  resolved "https://registry.yarnpkg.com/semver/-/semver-7.7.0.tgz#9c6fe61d0c6f9fa9e26575162ee5a9180361b09c"
-  integrity sha512-DrfFnPzblFmNrIZzg5RzHegbiRWg7KMR7btwi2yjHwx06zsUbO5g613sVwEV7FTwmzJu+Io0lJe2GJ3LxqpvBQ==
+semver@7.7.2:
+  version "7.7.2"
+  resolved "https://registry.yarnpkg.com/semver/-/semver-7.7.2.tgz#67d99fdcd35cec21e6f8b87a7fd515a33f982b58"
+  integrity sha512-RF0Fw+rO5AMf9MAyaRXI4AV0Ulj5lMHqVxxdSgiVbixSCXoEmmX/jk0CuJw4+3SqroYO9VoUh+HcuJivvtJemA==
 
 semver@^5.5.0, semver@^5.6.0:
   version "5.7.1"
@@ -16438,6 +16438,11 @@ semver@^6.0.0, semver@^6.1.1, semver@^6.1.2, semver@^6.3.0, semver@^6.3.1:
   version "6.3.1"
   resolved "https://registry.npmjs.org/semver/-/semver-6.3.1.tgz"
   integrity sha512-BR7VvDCVHO+q2xBEWskxS6DJE1qRnb7DxzUrogb71CWoSficBxYsiAGd+Kl0mmq/MprG9yArRkyrQxTO6XjMzA==
+
+semver@^7.3.5, semver@^7.3.7, semver@^7.3.8, semver@^7.5.3, semver@^7.5.4:
+  version "7.7.0"
+  resolved "https://registry.yarnpkg.com/semver/-/semver-7.7.0.tgz#9c6fe61d0c6f9fa9e26575162ee5a9180361b09c"
+  integrity sha512-DrfFnPzblFmNrIZzg5RzHegbiRWg7KMR7btwi2yjHwx06zsUbO5g613sVwEV7FTwmzJu+Io0lJe2GJ3LxqpvBQ==
 
 send@0.18.0, send@^0.18.0:
   version "0.18.0"
