@@ -8,7 +8,7 @@ import { expect } from '@playwright/test'
 import { emulatorOptions } from '../../constants/trezor'
 import { getController, initTrezorConnect, setup } from '../../utils/trezorEmulator'
 
-test.describe('auth', { tag: '@auth' }, () => {
+test.describe.only('auth', { tag: '@auth' }, () => {
   test.beforeEach(async ({ pages }) => {
     await pages.initWithoutStorage()
   })
