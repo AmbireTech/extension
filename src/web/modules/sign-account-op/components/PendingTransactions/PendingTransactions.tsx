@@ -4,7 +4,6 @@ import { View } from 'react-native'
 
 import { Hex } from '@ambire-common/interfaces/hex'
 import { Network } from '@ambire-common/interfaces/network'
-import Alert from '@common/components/Alert'
 import NetworkBadge from '@common/components/NetworkBadge'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -13,6 +12,7 @@ import useSignAccountOpControllerState from '@web/hooks/useSignAccountOpControll
 import SectionHeading from '@web/modules/sign-account-op/components/SectionHeading'
 import TransactionSummary from '@web/modules/sign-account-op/components/TransactionSummary'
 
+import SafetyChecksBanner from '../SafetyChecksBanner'
 import PendingTransactionsSkeleton from './PendingTransactionsSkeleton'
 
 interface Props {
@@ -41,12 +41,10 @@ const PendingTransactions: FC<Props> = ({ network, setDelegation, delegatedContr
       {!!banners && banners.length && (
         <View style={spacings.mbTy}>
           {banners.map((banner) => (
-            <Alert
-              size="sm"
+            <SafetyChecksBanner
               key={banner.id}
               type={banner.type}
-              title={banner.text}
-              titleWeight="medium"
+              text={banner.text}
               style={spacings.mbTy}
             />
           ))}

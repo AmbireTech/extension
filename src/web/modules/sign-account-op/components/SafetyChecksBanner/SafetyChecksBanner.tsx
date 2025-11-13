@@ -1,9 +1,10 @@
-import React from 'react'
+import React, { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { View, ViewStyle } from 'react-native'
 
 import ErrorIcon from '@common/assets/svg/ErrorIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
-import Button from '@common/components/Button'
+import Badge from '@common/components/Badge'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
@@ -11,11 +12,9 @@ import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
 interface Props {
-  title: string
   text: string | React.ReactNode
   type: 'error' | 'warning'
   style?: ViewStyle
-  testID?: string
 }
 
 const ICON_MAP = {
@@ -23,77 +22,74 @@ const ICON_MAP = {
   warning: WarningIcon
 }
 
-const Alert = ({ title, text, type, style, testID }: Props) => {
+const SafetyCheckBanner = ({ type, text, style }: Props) => {
   const Icon = ICON_MAP[type]
   const { theme } = useTheme()
+  const { t } = useTranslation()
+
+  const TITLE_MAP = useMemo(
+    () => ({
+      error: t('Potential danger!'),
+      warning: t('Warning!')
+    }),
+    [t]
+  )
+
+  const BADGE_TEXT_MAP = useMemo(
+    () => ({
+      error: t('Danger'),
+      warning: t('Warning')
+    }),
+    [t]
+  )
 
   return (
     <View
       style={[
         spacings.phSm,
         spacings.pvSm,
-        flexbox.directionRow,
         common.borderRadiusPrimary,
         {
           backgroundColor: theme[`${type}Background`]
         },
         style
       ]}
-      testID={testID}
     >
-      <Icon width={20} height={20} color={theme[`${type}Decorative`]} />
+      <View
+        style={[
+          flexbox.directionRow,
+          flexbox.alignCenter,
+          flexbox.justifySpaceBetween,
+          spacings.mbSm
+        ]}
+      >
+        <Text fontSize={14} weight="semiBold" appearance="secondaryText">
+          {t('Security checks')}
+        </Text>
+        <Badge type={type} text={BADGE_TEXT_MAP[type]} size="sm">
+          <Icon width={16} height={16} color={theme[`${type}Decorative`]} style={spacings.mlMi} />
+        </Badge>
+      </View>
 
       <View style={flexbox.flex1}>
-        {!!title && (
-          <Text style={text ? (!isSmall ? spacings.mbTy : spacings.mbMi) : {}}>
-            {!isTypeLabelHidden && (
-              <Text
-                selectable
-                appearance={`${type}Text`}
-                fontSize={fontSize}
-                weight={titleWeight || 'semiBold'}
-                style={{ textTransform: 'capitalize' }}
-              >
-                {type}:{' '}
-              </Text>
-            )}
-            <Text
-              selectable
-              appearance={`${type}Text`}
-              fontSize={fontSize}
-              weight={titleWeight || 'semiBold'}
-            >
-              {title}
-            </Text>
+        <Text style={spacings.mbTy}>
+          <Text
+            selectable
+            appearance={`${type}Text`}
+            fontSize={20}
+            weight="semiBold"
+            numberOfLines={1}
+          >
+            {TITLE_MAP[type]}
           </Text>
-        )}
-        {!!text &&
-          (typeof text === 'string' ? (
-            <AlertText size={size} type={type}>
-              {text}
-            </AlertText>
-          ) : (
-            text
-          ))}
-        {buttonProps && (
-          <Button
-            style={{
-              alignSelf: 'flex-end',
-              ...spacings.mtTy
-            }}
-            textStyle={type === 'error' && { fontSize: 14 }}
-            size="small"
-            type="primary"
-            hasBottomSpacing={false}
-            text={buttonProps.text}
-            onPress={buttonProps.onPress}
-            {...buttonProps}
-          />
-        )}
-        {children}
+        </Text>
+
+        <Text fontSize={12} appearance={`${type}Text`} weight="medium">
+          {text}
+        </Text>
       </View>
     </View>
   )
 }
 
-export default Alert
+export default React.memo(SafetyCheckBanner)

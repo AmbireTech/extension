@@ -23,7 +23,9 @@ import Estimation from '@web/modules/sign-account-op/components/Estimation'
 import Modals from '@web/modules/sign-account-op/components/Modals/Modals'
 import SigningKeySelect from '@web/modules/sign-message/components/SignKeySelect'
 import { getUiType } from '@web/utils/uiType'
+
 import BundlerWarning from '../../Estimation/components/bundlerWarning'
+import SafetyChecksBanner from '../../SafetyChecksBanner'
 
 export type OneClickEstimationProps = {
   closeEstimationModal: () => void
@@ -93,6 +95,7 @@ const OneClickEstimation = ({
     updateType
   })
 
+  const { banners } = signAccountOpController || {}
   return (
     <>
       <BottomSheet
@@ -108,6 +111,18 @@ const OneClickEstimation = ({
         isScrollEnabled={false}
         shouldBeClosableOnDrag={false}
       >
+        {!!banners && banners.length && (
+          <View style={spacings.mbTy}>
+            {banners.map((banner) => (
+              <SafetyChecksBanner
+                key={banner.id}
+                type={banner.type}
+                text={banner.text}
+                style={spacings.mbTy}
+              />
+            ))}
+          </View>
+        )}
         {!!signAccountOpController && (
           <View>
             <SigningKeySelect
