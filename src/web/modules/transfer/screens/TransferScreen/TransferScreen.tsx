@@ -492,10 +492,11 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
           signAccountOpErrors={[]}
           networkUserRequests={networkUserRequests}
           isLocalStateOutOfSync={isLocalStateOutOfSync}
-          isRecipientAddressUnknown={isRecipientAddressUnknown}
-          isRecipientAddressUnknownAgreed={isRecipientAddressUnknownAgreed}
-          isRecipientHumanizerKnownTokenOrSmartContract={
-            isRecipientHumanizerKnownTokenOrSmartContract
+          shouldHoldToProceed={
+            (isRecipientAddressUnknown &&
+              !isRecipientAddressUnknownAgreed &&
+              !isRecipientHumanizerKnownTokenOrSmartContract) ||
+            !!signAccountOpController?.banners?.length
           }
           onRecipientAddressUnknownAgree={onRecipientAddressUnknownAgree}
         />
@@ -511,6 +512,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     isRecipientAddressUnknown,
     isRecipientAddressUnknownAgreed,
     isRecipientHumanizerKnownTokenOrSmartContract,
+    signAccountOpController?.banners.length,
     onRecipientAddressUnknownAgree,
     addTransaction
   ])

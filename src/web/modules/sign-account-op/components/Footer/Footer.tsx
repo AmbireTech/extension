@@ -6,6 +6,7 @@ import BatchIcon from '@common/assets/svg/BatchIcon'
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import Button from '@common/components/Button'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
+import HoldToProceedButton from '@common/components/HoldToProceedButton'
 import Tooltip from '@common/components/Tooltip'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
@@ -28,6 +29,7 @@ type Props = {
   isAddToCartDisplayed: boolean
   isAddToCartDisabled: boolean
   inProgressButtonText: string
+  shouldHoldToProceed: boolean
   buttonText: string
   buttonTooltipText?: string
 }
@@ -42,7 +44,8 @@ const Footer = ({
   isAddToCartDisplayed,
   isAddToCartDisabled,
   inProgressButtonText,
-  buttonText
+  buttonText,
+  shouldHoldToProceed
 }: Props) => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
@@ -131,15 +134,24 @@ const Footer = ({
         )}
         {/* @ts-ignore */}
         <View dataSet={{ tooltipId: 'sign-button-tooltip' }}>
-          <ButtonWithLoader
-            testID="transaction-button-sign"
-            type="primary"
-            disabled={isSignDisabled}
-            isLoading={isSignLoading}
-            text={isSignLoading ? inProgressButtonText : buttonText}
-            onPress={onSign}
-            size="large"
-          />
+          {shouldHoldToProceed ? (
+            <HoldToProceedButton
+              text="Hold to proceed"
+              disabled={isSignDisabled}
+              onHoldComplete={onSign}
+              testID="proceed-btn"
+            />
+          ) : (
+            <ButtonWithLoader
+              testID="transaction-button-sign"
+              type="primary"
+              disabled={isSignDisabled}
+              isLoading={isSignLoading}
+              text={isSignLoading ? inProgressButtonText : buttonText}
+              onPress={onSign}
+              size="large"
+            />
+          )}
         </View>
         {!!buttonTooltipText && <Tooltip content={buttonTooltipText} id="sign-button-tooltip" />}
         <Tooltip content={startBatchingInfo} id="start-batch-info-tooltip" />

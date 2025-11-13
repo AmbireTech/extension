@@ -109,7 +109,8 @@ const SignAccountOpScreen = () => {
     setInitDispatchedForId,
     isSignDisabled,
     bundlerNonceDiscrepancy,
-    primaryButtonText
+    primaryButtonText,
+    shouldHoldToProceed
   } = useSign({
     handleUpdateStatus,
     signAccountOpState,
@@ -321,6 +322,7 @@ const SignAccountOpScreen = () => {
                   : t('Signing...')
               }
               buttonText={primaryButtonText}
+              shouldHoldToProceed={shouldHoldToProceed}
             />
           </View>
         )}
