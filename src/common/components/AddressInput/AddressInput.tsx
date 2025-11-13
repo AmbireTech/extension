@@ -12,6 +12,7 @@ import AddressBookContact from '@common/components/AddressBookContact'
 import Button from '@common/components/Button'
 import Input, { InputProps } from '@common/components/Input'
 import Text from '@common/components/Text'
+import { ValidationWithSeverityType } from '@common/hooks/useAddressInput'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
@@ -21,10 +22,7 @@ import useHover, { AnimatedPressable } from '@web/hooks/useHover'
 
 import getStyles from './styles'
 
-export interface AddressValidation {
-  isError: boolean
-  message: string
-}
+export interface AddressValidation extends ValidationWithSeverityType {}
 
 interface Props extends InputProps {
   withDetails?: boolean
@@ -33,6 +31,7 @@ interface Props extends InputProps {
   validation: AddressValidation
   label?: string
   onClearButtonPress?: () => void
+  renderConfirmAddress?: () => React.ReactNode
 }
 
 const AddressInput: React.FC<Props> = ({
@@ -47,13 +46,15 @@ const AddressInput: React.FC<Props> = ({
   childrenBeforeButtons,
   onClearButtonPress,
   value,
+  renderConfirmAddress,
   ...rest
 }) => {
   const { t } = useTranslation()
   const { addToast } = useToast()
   const { styles, theme } = useTheme(getStyles)
   const { contacts } = useAddressBookControllerState()
-  const { message, isError } = validation
+  const { message, isError, severity } = validation
+
   const isValidationInDomainResolvingState = message === 'Resolving domain...'
   const inputRef = useRef<TextInput | null>(null)
   const [bindAnim, animStyle] = useHover({ preset: 'opacityInverted' })
@@ -93,12 +94,21 @@ const AddressInput: React.FC<Props> = ({
         onChangeText={onChangeText}
         testID="address-ens-field"
         containerStyle={containerStyle}
-        validLabel={!isError && !isValidationInDomainResolvingState ? message : ''}
+        validLabel={
+          !isError && severity !== 'info' && !isValidationInDomainResolvingState ? message : ''
+        }
         error={isError ? message : ''}
         isValid={!isError && !isValidationInDomainResolvingState}
         placeholder={placeholder || t('Address / ENS')}
         bottomLabelStyle={styles.bottomLabel}
-        info={isValidationInDomainResolvingState ? t('Resolving domain...') : ''}
+        info={
+          !isError && severity === 'info'
+            ? message
+            : isValidationInDomainResolvingState
+            ? t('Resolving domain...')
+            : ''
+        }
+        renderConfirmAddress={renderConfirmAddress}
         childrenBeforeButtons={
           childrenBeforeButtons ||
           (!withDetails && (

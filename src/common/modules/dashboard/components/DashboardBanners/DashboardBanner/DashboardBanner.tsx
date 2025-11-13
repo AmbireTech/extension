@@ -121,15 +121,6 @@ const DashboardBanner = ({
           })
           break
 
-        case 'open-first-cashback-modal': {
-          if (!account) break
-          dispatch({
-            type: 'SELECTED_ACCOUNT_CONTROLLER_UPDATE_CASHBACK_STATUS',
-            params: 'cashback-modal'
-          })
-          break
-        }
-
         case 'update-extension-version': {
           const shouldPrompt =
             visibleActionsQueue.filter(({ type: actionType }) => actionType !== 'benzin').length > 0
