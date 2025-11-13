@@ -76,18 +76,6 @@
       "count": 1,
       "message": "Type 'string | undefined' is not assignable to type 'string'."
     },
-    "c66582434db15f31f367811ccf1bba922b88bf02": {
-      "file": "src/common/components/HumanizerAddress/components/AddressName/AddressName.tsx",
-      "code": "TS2322",
-      "count": 1,
-      "message": "Type '\"CONTRACT_NAMES_CONTROLLER_GET_NAME\"' is not assignable to type '\"UPDATE_PORT_URL\" | \"INIT_CONTROLLER_STATE\" | \"MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LEDGER\" | \"MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_TREZOR\" | \"MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LATTICE\" | ... 140 more ... | \"DISMISS_BANNER\"'."
-    },
-    "396f161eb7430f7680f29e974ab0aa4a968f4bf0": {
-      "file": "src/common/components/HumanizerAddress/components/AddressName/AddressName.tsx",
-      "code": "TS2353",
-      "count": 1,
-      "message": "Object literal may only specify known properties, and 'address' does not exist in type '{ bannerId: string | number; }'."
-    },
     "27a6b1bddfac06c31882089da2f8dbea8ef93908": {
       "file": "src/common/components/ScrollableWrapper/DraggableFlatList/DraggableItem.tsx",
       "code": "TS2769",
@@ -256,18 +244,6 @@
       "count": 1,
       "message": "Type '0n | ReactNode' is not assignable to type 'ReactNode'."
     },
-    "35325d48ff23d841d823a5d7fd7a97d9e40feda5": {
-      "file": "src/common/modules/dashboard/components/DashboardOverview/CongratsFirstCashbackModal/CongratsFirstCashbackModal.tsx",
-      "code": "TS2307",
-      "count": 1,
-      "message": "Cannot find module '@common/assets/images/cashEarned.png' or its corresponding type declarations."
-    },
-    "8f6fec24198ebfd1cb7cf293a6095bc3c3e3c2b5": {
-      "file": "src/common/modules/dashboard/components/DashboardOverview/CongratsFirstCashbackModal/CongratsFirstCashbackModal.tsx",
-      "code": "TS2769",
-      "count": 1,
-      "message": "No overload matches this call."
-    },
     "65ac42edf8de973f4d686191c7bd3848909eb326": {
       "file": "src/common/modules/dashboard/components/DeFiPositions/DeFiProviderPosition/DeFiProviderPosition.tsx",
       "code": "TS2741",
@@ -334,35 +310,17 @@
       "count": 1,
       "message": "Cannot find module '@web/assets/svg/ambire-white-small-logo.svg' or its corresponding type declarations."
     },
-    "fa1969863c909189f7c80df5f856d80a630c0d54": {
-      "file": "src/web/extension-services/background/handlers/handleActions.ts",
-      "code": "TS2678",
-      "count": 1,
-      "message": "Type '\"CONTRACT_NAMES_CONTROLLER_GET_NAME\"' is not comparable to type '\"UPDATE_PORT_URL\" | \"INIT_CONTROLLER_STATE\" | \"MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LEDGER\" | \"MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_TREZOR\" | \"MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LATTICE\" | ... 140 more ... | \"DISMISS_BANNER\"'."
-    },
-    "f7ac74fd09cf7795b0b3aef1ae751139ba41134b": {
-      "file": "src/web/extension-services/background/handlers/handleActions.ts",
-      "code": "TS2339",
-      "count": 1,
-      "message": "Property 'address' does not exist on type 'never'."
-    },
-    "40de2b790c26ed2df264715ed8d249c3885e7cd3": {
-      "file": "src/web/extension-services/background/handlers/handleActions.ts",
-      "code": "TS2339",
-      "count": 1,
-      "message": "Property 'chainId' does not exist on type 'never'."
-    },
     "ceac886de1ba7df9ad46666e7b40c543ffdb4068": {
       "file": "src/web/extension-services/background/webapi/sessionStorage.ts",
       "code": "TS2322",
       "count": 1,
       "message": "Type '{ get: (key: string, defaultValue: any) => any; set: (key: string, value: any) => Promise<null>; remove: (key: string) => Promise<null>; } | { get: (key?: string | undefined, defaultValue?: any) => Promise<...>; set: (key: string, value: any) => Promise<...>; remove: (key: string) => Promise<...>; }' is not assignable to type 'Storage'."
     },
-    "2b365cac3c629660d06cd29fb8e42bbaf351000e": {
+    "b1058738c3b8897df5dd7a1c6c37b02ad5addbdd": {
       "file": "src/web/extension-services/background/webapi/storage.ts",
       "code": "TS2322",
       "count": 1,
-      "message": "Type '{ get: (key: string, defaultValue: any) => any; set: (key: string, value: any) => Promise<null>; remove: (key: string) => Promise<null>; } | { get: (key?: string | undefined, defaultValue?: any) => Promise<...>; set: (key: string, value: any) => Promise<...>; remove: (key: string) => Promise<...>; }' is not assignable to type 'Storage'."
+      "message": "Type '{ get: (key: string, defaultValue: any) => any; set: (key: string, value: any) => Promise<null>; remove: (key: string) => Promise<null>; } | { get: (key: string, defaultValue?: any) => Promise<...>; set: (key: string, value: any) => Promise<...>; remove: (key: string) => Promise<...>; }' is not assignable to type 'Storage'."
     },
     "125671419c26520e062e2e0b391cf3742e411875": {
       "file": "src/web/extension-services/content-script/content-script-ambire-injection.ts",
