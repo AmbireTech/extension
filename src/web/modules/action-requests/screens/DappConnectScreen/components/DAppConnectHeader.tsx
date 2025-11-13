@@ -5,6 +5,7 @@ import { View } from 'react-native'
 import { Dapp, DappProviderRequest } from '@ambire-common/interfaces/dapp'
 import ErrorFilledIcon from '@common/assets/svg/ErrorFilledIcon'
 import ManifestFallbackIcon from '@common/assets/svg/ManifestFallbackIcon'
+import WarningFilledIcon from '@common/assets/svg/WarningFilledIcon'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
@@ -66,6 +67,8 @@ const DAppConnectHeader: FC<Props> = ({
           backgroundColor:
             securityCheck === 'BLACKLISTED'
               ? theme.errorBackground
+              : securityCheck === 'FAILED_TO_GET'
+              ? theme.warningBackground
               : themeType === THEME_TYPES.DARK
               ? theme.secondaryBackground
               : theme.tertiaryBackground
@@ -115,6 +118,17 @@ const DAppConnectHeader: FC<Props> = ({
               }}
             >
               <ErrorFilledIcon width={18} height={18} />
+            </View>
+          )}
+          {securityCheck === 'FAILED_TO_GET' && (
+            <View
+              style={{
+                position: 'absolute',
+                right: -9,
+                top: -4
+              }}
+            >
+              <WarningFilledIcon width={18} height={18} />
             </View>
           )}
         </View>

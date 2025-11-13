@@ -83,12 +83,16 @@ const DappConnectScreen = () => {
             isAuthorizing ||
             (!!dappToConnect && dappToConnect.blacklisted === 'LOADING') ||
             (!!dappToConnect &&
-              dappToConnect.blacklisted === 'BLACKLISTED' &&
+              (dappToConnect.blacklisted === 'BLACKLISTED' ||
+                dappToConnect.blacklisted === 'FAILED_TO_GET') &&
               !confirmedRiskCheckbox)
           }
-          resolveType={
-            !!dappToConnect && dappToConnect.blacklisted === 'BLACKLISTED' ? 'error' : 'primary'
-          }
+          resolveType={(() => {
+            if (!dappToConnect) return 'primary'
+            if (dappToConnect.blacklisted === 'BLACKLISTED') return 'error'
+            if (dappToConnect.blacklisted === 'FAILED_TO_GET') return 'warning'
+            return 'primary'
+          })()}
           rejectButtonText={t('Deny')}
           resolveButtonTestID="dapp-connect-button"
         />
