@@ -37,8 +37,7 @@ const RoutesModal = ({
 }) => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
-  const { quote, shouldEnableRoutesSelection, signAccountOpController } =
-    useSwapAndBridgeControllerState()
+  const { quote, signAccountOpController, updateQuoteStatus } = useSwapAndBridgeControllerState()
   const { dispatch } = useBackgroundService()
   const scrollRef = useRef<FlatList<SwapAndBridgeRoute>>(null)
   const { height } = useWindowSize()
@@ -86,6 +85,8 @@ const RoutesModal = ({
       type: 'SWAP_AND_BRIDGE_CONTROLLER_UPDATE_QUOTE'
     })
   }, [dispatch])
+
+  const isQuoteLoading = updateQuoteStatus === 'LOADING'
 
   useEffect(() => {
     if (!signAccountOpController) return
@@ -259,9 +260,15 @@ const RoutesModal = ({
             {t('Select route')}
           </Text>
         </View>
-        <RetryButton onPress={updateQuote} label={t('Request new quote')} />
+        <RetryButton
+          onPress={updateQuote}
+          label={t('Request new quote')}
+          disabled={isQuoteLoading}
+        />
       </View>
-      {shouldEnableRoutesSelection ? (
+      {isQuoteLoading ? (
+        <SkeletonLoader width="100%" height={700} appearance="tertiaryBackground" />
+      ) : (
         <ScrollableWrapper
           type={WRAPPER_TYPES.FLAT_LIST}
           data={quote.routes}
@@ -273,8 +280,6 @@ const RoutesModal = ({
           maxToRenderPerBatch={6}
           removeClippedSubviews
         />
-      ) : (
-        <SkeletonLoader width="100%" height={700} appearance="tertiaryBackground" />
       )}
     </BottomSheet>
   )
