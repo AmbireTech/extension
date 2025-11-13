@@ -7,7 +7,6 @@ import { BiometricsProvider } from '@common/contexts/biometricsContext'
 import { ConstantsProvider } from '@common/contexts/constantsContext'
 import { KeyboardProvider } from '@common/contexts/keyboardContext'
 import { NetInfoProvider } from '@common/contexts/netInfoContext'
-import { StorageProvider } from '@common/contexts/storageContext'
 import { ThemeProvider } from '@common/contexts/themeContext'
 import { ToastProvider } from '@common/contexts/toastContext'
 import useFonts from '@common/hooks/useFonts'
@@ -39,29 +38,27 @@ const AppInit = () => {
       theme={navigationContainerDarkTheme}
     >
       <PortalProvider>
-        <StorageProvider>
-          <ThemeProvider>
-            <SafeAreaProvider>
-              <KeyboardProvider>
-                <NetInfoProvider>
-                  <ToastProvider>
-                    <ConstantsProvider>
-                      <AuthProvider>
-                        {/* TODO: v2 */}
-                        {/* <Web3Provider> */}
-                        <BiometricsProvider>
-                          <AppRouter />
-                          <PortalHost name="global" />
-                        </BiometricsProvider>
-                        {/* </Web3Provider> */}
-                      </AuthProvider>
-                    </ConstantsProvider>
-                  </ToastProvider>
-                </NetInfoProvider>
-              </KeyboardProvider>
-            </SafeAreaProvider>
-          </ThemeProvider>
-        </StorageProvider>
+        <ThemeProvider>
+          <SafeAreaProvider>
+            <KeyboardProvider>
+              <NetInfoProvider>
+                <ToastProvider>
+                  <ConstantsProvider>
+                    <AuthProvider>
+                      {/* TODO: v2 */}
+                      {/* <Web3Provider> */}
+                      <BiometricsProvider>
+                        <AppRouter />
+                        <PortalHost name="global" />
+                      </BiometricsProvider>
+                      {/* </Web3Provider> */}
+                    </AuthProvider>
+                  </ConstantsProvider>
+                </ToastProvider>
+              </NetInfoProvider>
+            </KeyboardProvider>
+          </SafeAreaProvider>
+        </ThemeProvider>
       </PortalProvider>
     </NavigationContainer>
   )
