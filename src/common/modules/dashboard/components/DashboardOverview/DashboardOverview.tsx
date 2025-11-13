@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useEffect, useMemo, useState } from 'react'
+import React, { FC, useCallback, useMemo } from 'react'
 import { Animated, Pressable, View } from 'react-native'
 
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
@@ -37,12 +37,6 @@ interface Props {
     height: number
   }
   setDashboardOverviewSize: React.Dispatch<React.SetStateAction<{ width: number; height: number }>>
-  onGasTankButtonPosition: (position: {
-    x: number
-    y: number
-    width: number
-    height: number
-  }) => void
 }
 
 // We create a reusable height constant for both the Balance amount height and the Balance skeleton.
@@ -54,8 +48,7 @@ const DashboardOverview: FC<Props> = ({
   openGasTankModal,
   animatedOverviewHeight,
   dashboardOverviewSize,
-  setDashboardOverviewSize,
-  onGasTankButtonPosition
+  setDashboardOverviewSize
 }) => {
   const { dispatch } = useBackgroundService()
   const { t } = useTranslation()
@@ -89,27 +82,6 @@ const DashboardOverview: FC<Props> = ({
       }
     })
   }, [dashboardNetworkFilter, dispatch])
-
-  const [buttonPosition, setButtonPosition] = useState<{
-    x: number
-    y: number
-    width: number
-    height: number
-  } | null>(null)
-
-  const onGasTankButtonPositionWrapped = useCallback(
-    (position: { x: number; y: number; width: number; height: number }) => {
-      setButtonPosition(position)
-      onGasTankButtonPosition(position)
-    },
-    [onGasTankButtonPosition]
-  )
-
-  useEffect(() => {
-    if (buttonPosition) {
-      onGasTankButtonPositionWrapped(buttonPosition)
-    }
-  }, [buttonPosition, onGasTankButtonPositionWrapped])
 
   return (
     <View style={[spacings.phSm, spacings.mbMi]}>
@@ -245,7 +217,6 @@ const DashboardOverview: FC<Props> = ({
                 <View style={[flexbox.directionRow, flexbox.alignCenter]}>
                   <GasTankButton
                     onPress={openGasTankModal}
-                    onPosition={onGasTankButtonPositionWrapped}
                     portfolio={portfolio}
                     account={account}
                   />

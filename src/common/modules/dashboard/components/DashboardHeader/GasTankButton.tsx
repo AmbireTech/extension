@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef } from 'react'
+import React, { useCallback, useMemo, useRef } from 'react'
 import { View } from 'react-native'
 
 import { Account } from '@ambire-common/interfaces/account'
@@ -22,7 +22,6 @@ import { NEUTRAL_BACKGROUND_HOVERED } from '../../screens/styles'
 
 type Props = {
   onPress: () => void
-  onPosition: (position: { x: number; y: number; width: number; height: number }) => void
   portfolio: SelectedAccountPortfolio
   account: Account | null
 }
@@ -30,7 +29,7 @@ type Props = {
 // font families are different, with different "normal" line-heights, normalize them to vertically center better
 const GAS_TANK_BUTTON_LINE_HEIGHT = 14
 
-const GasTankButton = ({ onPress, onPosition, portfolio, account }: Props) => {
+const GasTankButton = ({ onPress, portfolio, account }: Props) => {
   const { t } = useTranslation()
   const buttonRef = useRef(null)
   const { hasGasTank, isViewOnly } = useHasGasTank({ account })
@@ -60,31 +59,6 @@ const GasTankButton = ({ onPress, onPosition, portfolio, account }: Props) => {
     totalBalanceGasTankDetails.balanceFormatted,
     totalBalanceGasTankDetails.token
   ])
-
-  useEffect(() => {
-    const measureButton = () => {
-      if (buttonRef.current) {
-        // @ts-ignore
-        buttonRef.current.measure(
-          (fx: number, fy: number, width: number, height: number, px: number, py: number) => {
-            onPosition({ x: px, y: py, width, height })
-          }
-        )
-      }
-    }
-
-    measureButton()
-
-    const handleResize = () => {
-      measureButton()
-    }
-
-    window.addEventListener('resize', handleResize)
-
-    return () => {
-      window.removeEventListener('resize', handleResize)
-    }
-  }, [onPosition])
 
   // Purposely don't disable the button (but block the onPress action) in
   // case of a tooltip, because it should be clickable to show the tooltip.
