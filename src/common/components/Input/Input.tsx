@@ -118,22 +118,24 @@ const Input = ({
     borderWrapperStyle
   ]
 
-  const inputWrapperStyles = [
+  const inputWrapperStyles: ViewStyle[] = [
     styles.inputWrapper,
     {
       backgroundColor:
         themeType === THEME_TYPES.DARK ? theme.primaryBackground : theme.secondaryBackground,
       borderColor: theme.secondaryBorder
     },
-    isFocused && {
-      borderColor: themeType === THEME_TYPES.DARK ? theme.linkText : theme.primary
-    },
-    isValid && { borderColor: theme.successDecorative },
-    !!error && { borderColor: theme.errorDecorative },
-    info && { borderColor: theme.warningText },
-    disabled && styles.disabled,
-    borderless && { borderColor: 'transparent', borderWidth: 0 },
-    inputWrapperStyle
+    isFocused
+      ? {
+          borderColor: themeType === THEME_TYPES.DARK ? theme.linkText : theme.primary
+        }
+      : {},
+    isValid ? { borderColor: theme.successDecorative } : {},
+    error ? { borderColor: theme.errorDecorative } : {},
+    info ? { borderColor: theme.warningText } : {},
+    disabled ? styles.disabled : {},
+    borderless ? { borderColor: 'transparent', borderWidth: 0 } : {},
+    ...(Array.isArray(inputWrapperStyle) ? inputWrapperStyle : [inputWrapperStyle || {}])
   ]
 
   const inputStyles = [styles.input, !!hasButton && spacings.pr0, inputStyle]

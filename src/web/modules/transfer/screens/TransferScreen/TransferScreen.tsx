@@ -19,7 +19,7 @@ import Alert from '@common/components/Alert'
 import BackButton from '@common/components/BackButton'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
-import useAddressInput from '@common/hooks/useAddressInput'
+import useAddressInput, { ValidationWithSeverityType } from '@common/hooks/useAddressInput'
 import useNavigation from '@common/hooks/useNavigation'
 import useToast from '@common/hooks/useToast'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
@@ -58,7 +58,6 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     validationFormMsgs,
     addressState,
     isRecipientHumanizerKnownTokenOrSmartContract,
-    isSWWarningVisible,
     isRecipientAddressUnknown,
     isRecipientAddressUnknownAgreed,
     isFormValid,
@@ -317,7 +316,8 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     overwriteValidLabel: validationFormMsgs?.recipientAddress.success
       ? validationFormMsgs.recipientAddress.message
       : '',
-    overwriteSeverity: validationFormMsgs.recipientAddress.severity,
+    overwriteSeverity: validationFormMsgs.recipientAddress
+      .severity as ValidationWithSeverityType['severity'],
     handleCacheResolvedDomain
   })
 
@@ -619,7 +619,6 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
               isRecipientHumanizerKnownTokenOrSmartContract={
                 isRecipientHumanizerKnownTokenOrSmartContract
               }
-              isSWWarningVisible={isSWWarningVisible}
               amountFieldValue={amountFieldValue}
               setAmountFieldValue={setAmountFieldValue}
               addressStateFieldValue={addressStateFieldValue}
