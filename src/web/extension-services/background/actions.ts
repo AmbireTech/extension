@@ -704,6 +704,11 @@ type ChangeCurrentDappNetworkAction = {
   params: { chainId: number; id: string }
 }
 
+type ContractNamesGetName = {
+  type: 'CONTRACT_NAMES_CONTROLLER_GET_NAME'
+  params: { address: string; chainId: bigint }
+}
+
 type SetIsPinnedAction = {
   type: 'SET_IS_PINNED'
   params: { isPinned: boolean }
@@ -830,7 +835,6 @@ export type Action =
   | PortfolioControllerToggleHideToken
   | PortfolioControllerRemoveCustomToken
   | PortfolioControllerCheckToken
-  | PortfolioControllerUpdateConfettiToShown
   | KeystoreControllerAddSecretAction
   | KeystoreControllerAddTempSeedAction
   | KeystoreControllerUpdateSeedAction
@@ -852,6 +856,7 @@ export type Action =
   | DappsControllerFetchAndUpdateDappsAction
   | DappsControllerRemoveConnectedSiteAction
   | DappsControllerUpdateDappAction
+  | ContractNamesGetName
   | DappsControllerRemoveDappAction
   | SwapAndBridgeControllerInitAction
   | SwapAndBridgeControllerUnloadScreenAction
