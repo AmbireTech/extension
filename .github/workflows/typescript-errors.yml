@@ -15,11 +15,11 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: e2e-${{ github.head_ref || github.ref }}
+  group: typescript-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
 
 jobs:
-  e2e-tests:
+  typescript-errors:
     runs-on: ubuntu-latest
     environment: testing
     # This will run for pushes, PRs (ready_for_review/synchronize), and manual dispatch
