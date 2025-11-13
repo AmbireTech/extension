@@ -23,13 +23,19 @@ const getMessageAsText = (msg: Hex): string => {
 interface TypedMessageVisualization {
   type: 'key' | 'value'
   value: any
+  isArrayItem?: boolean
   n: number
 }
 const simplifyTypedMessage = (value: any, n = 0): TypedMessageVisualization[] => {
   const res: TypedMessageVisualization[] = []
   if (Array.isArray(value)) {
     value.forEach((i) => {
-      res.push(...simplifyTypedMessage(i, n + 1))
+      res.push(
+        ...simplifyTypedMessage(i, n + 1).map((v) => ({
+          ...v,
+          isArrayItem: true
+        }))
+      )
     })
     return res
   }
