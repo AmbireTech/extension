@@ -107,50 +107,82 @@ const AccountPersonalizeScreen = () => {
     if (!isSetupComplete && !!completed) goToNextRoute()
   }, [completed, goToNextRoute, isSetupComplete])
 
-  // hold the loading state for 1.1 seconds before displaying the accountsToPersonalize for better UX
+  const accountPickerInitializedRef = useRef(accountPickerState.isInitialized)
+  const accountsToPersonalizeRef = useRef(accountsToPersonalize)
+  const newlyAddedAccountsRef = useRef(newlyAddedAccounts)
+  const isLoadingRef = useRef(isLoading)
+
   useEffect(() => {
+    accountPickerInitializedRef.current = accountPickerState.isInitialized
+  }, [accountPickerState.isInitialized])
+
+  useEffect(() => {
+    accountsToPersonalizeRef.current = accountsToPersonalize
+  }, [accountsToPersonalize])
+
+  useEffect(() => {
+    newlyAddedAccountsRef.current = newlyAddedAccounts
+  }, [newlyAddedAccounts])
+
+  useEffect(() => {
+    isLoadingRef.current = isLoading
+  }, [isLoading])
+
+  useEffect(() => {
+    // We reference the latest values via refs. Accessing state directly inside this
+    // async effect could read outdated values, since state updates are not guaranteed
+    // to sync during the async wait loops.
+    const getShouldStopLoadingBasedOnLatestState = () =>
+      !!accountPickerInitializedRef.current ||
+      (accountsToPersonalizeRef.current && accountsToPersonalizeRef.current.length > 0) ||
+      (newlyAddedAccountsRef.current && newlyAddedAccountsRef.current.length > 0)
+
+    // We reference the latest values via refs. Accessing state directly inside this
+    // async effect could read outdated values, since state updates are not guaranteed
+    // to sync during the async wait loops.
+    const getShouldComplete = () =>
+      !accountPickerInitializedRef.current &&
+      (accountsToPersonalizeRef.current?.length ?? 0) === 0 &&
+      (newlyAddedAccountsRef.current?.length ?? 0) === 0
+
+    let resolved = false
+
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     ;(async () => {
+      // initial UX delay
       await wait(1100)
+      if (resolved) return
 
-      if (
-        accountPickerState.isInitialized &&
-        accountPickerState.selectNextAccountStatus === 'INITIAL' &&
-        !accountPickerState.selectedAccountsFromCurrentSession.length &&
-        accountPickerState.addAccountsStatus === 'INITIAL'
-      ) {
-        setIsLoading(false)
+      if (getShouldStopLoadingBasedOnLatestState()) {
+        if (!resolved) setIsLoading(false)
+        return
       }
 
-      if (
-        !accountPickerState.initParams &&
-        !accountPickerState.isInitialized &&
-        accountsToPersonalize.length
-      ) {
-        setIsLoading(false)
+      const timeoutMs = 3000 // Poll for up to 3s to allow controller updates to arrive.
+      const intervalMs = 200 // Poll interval
+      const start = Date.now()
+
+      while (Date.now() - start < timeoutMs && !resolved) {
+        // eslint-disable-next-line no-await-in-loop
+        await wait(intervalMs)
+        if (resolved) return
+        if (getShouldStopLoadingBasedOnLatestState()) {
+          if (!resolved) setIsLoading(false)
+          return
+        }
       }
 
-      // this covers the case when the screen is opened via the browser navigation instead of the internal
-      // navigation. After 1.1 sec the loading state will be set to false and the hook below will be triggered
-      // that will navigate the user to the dashboard screen because there will be no accounts to personalize
-      if (
-        !accountPickerState.initParams &&
-        !accountPickerState.isInitialized &&
-        accountsState.statuses.addAccounts === 'INITIAL'
-      ) {
-        setIsLoading(false)
-      }
+      if (resolved) return
+      if (!isLoadingRef.current) return
+
+      setIsLoading(false)
+      if (getShouldComplete()) setCompleted(true)
     })()
-  }, [
-    accountPickerState.initParams,
-    accountPickerState.isInitialized,
-    accountPickerState.readyToRemoveAccounts.length,
-    accountPickerState.selectNextAccountStatus,
-    accountPickerState.selectedAccountsFromCurrentSession.length,
-    accountsToPersonalize,
-    accountPickerState.addAccountsStatus,
-    accountsState.statuses.addAccounts
-  ])
+
+    return () => {
+      resolved = true
+    }
+  }, [isLoading])
 
   // the hook inits the list with accountsToPersonalize
   useEffect(() => {
@@ -296,7 +328,9 @@ const AccountPersonalizeScreen = () => {
                   animationContainerStyle={{ width: 200, height: 140 }}
                 >
                   <Text weight="semiBold" fontSize={20} style={spacings.mtSm}>
-                    {t('Added successfully')}
+                    {accountsToPersonalize.length
+                      ? t('Added successfully')
+                      : t('No new accounts added')}
                   </Text>
                 </SuccessAnimation>
                 <ScrollView style={spacings.mbLg}>

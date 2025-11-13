@@ -138,7 +138,6 @@ const ButtonInnerContainer = ({
         }}
         onPressOut={(e) => {
           !!rest.onPressOut && rest.onPressOut(e)
-          buttonInnerContainerBind.onPressOut(e)
         }}
       >
         {children}
@@ -492,9 +491,6 @@ const Button = ({
       onPressOut={(e) => {
         if (buttonTypesWithInnerContainer.includes(type)) return
 
-        buttonContainerBind.onPressOut(e)
-        buttonTextBind.onPressOut(e)
-        childrenScaleBind.onPressOut(e)
         rest?.onPressOut && rest.onPressOut(e)
       }}
     >
@@ -525,9 +521,6 @@ const Button = ({
           rest?.onPressIn && rest.onPressIn(e)
         }}
         onPressOut={(e) => {
-          buttonContainerBind.onPressOut(e)
-          buttonTextBind.onPressOut(e)
-          childrenScaleBind.onPressOut(e)
           rest?.onPressOut && rest.onPressOut(e)
         }}
       >

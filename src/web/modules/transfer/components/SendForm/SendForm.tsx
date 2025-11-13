@@ -20,10 +20,10 @@ import useBackgroundService from '@web/hooks/useBackgroundService'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import useTransferControllerState from '@web/hooks/useTransferControllerState'
+import useSimulationError from '@web/modules/portfolio/hooks/SimulationError/useSimulationError'
 import { getTokenId } from '@web/utils/token'
 import { getUiType } from '@web/utils/uiType'
 
-import useSimulationError from '@web/modules/portfolio/hooks/SimulationError/useSimulationError'
 import styles from './styles'
 
 const isTab = getUiType().isTab
@@ -31,6 +31,7 @@ const SendForm = ({
   addressInputState,
   hasGasTank,
   amountErrorMessage,
+  amountErrorSeverity,
   isRecipientAddressUnknown,
   isSWWarningVisible,
   isRecipientHumanizerKnownTokenOrSmartContract,
@@ -43,6 +44,7 @@ const SendForm = ({
   addressInputState: ReturnType<typeof useAddressInput>
   hasGasTank: boolean
   amountErrorMessage: string
+  amountErrorSeverity?: 'error' | 'warning' | 'info'
   isRecipientAddressUnknown: boolean
   isSWWarningVisible: boolean
   isRecipientHumanizerKnownTokenOrSmartContract: boolean
@@ -70,6 +72,7 @@ const SendForm = ({
   const { t } = useTranslation()
   const { networks } = useNetworksControllerState()
   const { search } = useRoute()
+  const amountIsError = amountErrorSeverity === 'error' && !!amountErrorMessage
   const selectedTokenFromUrl = useMemo(() => getInfoFromSearch(search), [search])
 
   const {
@@ -201,7 +204,7 @@ const SendForm = ({
           fromAmountInFiat={amountInFiat}
           fromAmountFieldMode={amountFieldMode}
           maxFromAmount={maxAmount}
-          validateFromAmount={{ success: !amountErrorMessage, message: amountErrorMessage }}
+          validateFromAmount={{ success: !amountIsError, message: amountErrorMessage }}
           onFromAmountChange={setAmountFieldValue}
           handleSwitchFromAmountFieldMode={switchAmountFieldMode}
           handleSetMaxFromAmount={setMaxAmount}

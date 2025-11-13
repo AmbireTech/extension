@@ -1,4 +1,5 @@
-import React from 'react'
+import Fuse from 'fuse.js'
+import React, { useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
@@ -17,6 +18,7 @@ import useWindowSize from '@common/hooks/useWindowSize'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import useAddressBookControllerState from '@web/hooks/useAddressBookControllerState'
+import useDomainsControllerState from '@web/hooks/useDomainsController/useDomainsController'
 import SettingsPageHeader from '@web/modules/settings/components/SettingsPageHeader'
 
 import AddContactFormModal from '../AddContactFormModal'
@@ -29,6 +31,7 @@ const ContactsList = () => {
     close: closeAddContactForm
   } = useModalize()
   const { contacts } = useAddressBookControllerState()
+  const { domains } = useDomainsControllerState()
   const { control, watch } = useForm({
     defaultValues: {
       search: ''
@@ -37,11 +40,35 @@ const ContactsList = () => {
 
   const search = watch('search')
   const debouncedSearch = useDebounce({ value: search, delay: 350 })
-  const filteredContacts = contacts.filter(
-    (contact) =>
-      contact.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-      contact.address.toLowerCase().includes(debouncedSearch.toLowerCase())
+
+  const searchableContacts = useMemo(
+    () =>
+      contacts.map((contact) => ({
+        contact,
+        name: contact.name.toLowerCase(),
+        address: contact.address.toLowerCase(),
+        domain: domains[contact.address]?.ens?.toLowerCase().trim() || ''
+      })),
+    [contacts, domains]
   )
+
+  const filteredContacts = useMemo(() => {
+    if (!debouncedSearch) return contacts
+
+    const fuse = new Fuse(searchableContacts, {
+      keys: [
+        { name: 'name', weight: 0.5 },
+        { name: 'domain', weight: 0.3 },
+        { name: 'address', weight: 0.2 }
+      ],
+      threshold: 0.3,
+      ignoreLocation: false, // Prioritize matches at the start
+      minMatchCharLength: 1
+    })
+
+    const results = fuse.search(debouncedSearch)
+    return results.map((result) => result.item.contact)
+  }, [contacts, debouncedSearch, searchableContacts])
 
   const walletAccountsSourcedContacts = filteredContacts.filter(
     (contact) => contact.isWalletAccount
