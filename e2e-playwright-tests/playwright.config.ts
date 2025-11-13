@@ -3,7 +3,7 @@ import 'dotenv/config'
 import { PlaywrightTestConfig } from '@playwright/test'
 
 const config: PlaywrightTestConfig = {
-  forbidOnly: true,
+  forbidOnly: false,
   expect: {
     timeout: 30 * 1000,
     toHaveScreenshot: {
