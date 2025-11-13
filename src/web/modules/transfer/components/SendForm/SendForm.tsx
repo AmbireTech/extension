@@ -33,7 +33,6 @@ const SendForm = ({
   amountErrorMessage,
   amountErrorSeverity,
   isRecipientAddressUnknown,
-  isSWWarningVisible,
   isRecipientHumanizerKnownTokenOrSmartContract,
   amountFieldValue,
   setAmountFieldValue,
@@ -46,7 +45,6 @@ const SendForm = ({
   amountErrorMessage: string
   amountErrorSeverity?: 'error' | 'warning' | 'info'
   isRecipientAddressUnknown: boolean
-  isSWWarningVisible: boolean
   isRecipientHumanizerKnownTokenOrSmartContract: boolean
   amountFieldValue: string
   setAmountFieldValue: (value: string) => void
@@ -63,8 +61,6 @@ const SendForm = ({
     amountFieldMode,
     amountInFiat,
     selectedToken,
-    isSWWarningAgreed,
-    isRecipientAddressUnknownAgreed,
     isTopUp,
     addressState,
     amount: controllerAmount
@@ -119,15 +115,6 @@ const SendForm = ({
     })
   }, [amountFieldMode, dispatch])
 
-  const onRecipientCheckboxClick = useCallback(() => {
-    dispatch({
-      type: 'TRANSFER_CONTROLLER_UPDATE_FORM',
-      params: {
-        formValues: { isRecipientAddressUnknownAgreed: true, isSWWarningAgreed: true }
-      }
-    })
-  }, [dispatch])
-
   useEffect(() => {
     if (tokens?.length && !state.selectedToken) {
       let tokenToSelect = tokens[0]
@@ -179,10 +166,6 @@ const SendForm = ({
             }
             isRecipientAddressUnknown={isRecipientAddressUnknown}
             isRecipientDomainResolving={addressState.isDomainResolving}
-            isRecipientAddressUnknownAgreed={isRecipientAddressUnknownAgreed}
-            onRecipientCheckboxClick={onRecipientCheckboxClick}
-            isSWWarningVisible={isSWWarningVisible}
-            isSWWarningAgreed={isSWWarningAgreed}
             selectedTokenSymbol={selectedToken?.symbol}
           />
         )}
