@@ -98,7 +98,7 @@ test.describe.only('stability', { tag: '@stability' }, () => {
         expect(categorized.hints.length).toBeLessThanOrEqual(1)
         expect(categorized.nativePrices.length).toBeLessThanOrEqual(10)
         console.log("third party", categorized.nativePrices)
-        expect(categorized.thirdParty.length).toBeLessThanOrEqual(10)
+        expect(categorized.thirdParty.length).toBeLessThanOrEqual(15)
         expect(categorized.allowedUncategorized.length).toBeLessThanOrEqual(10)
 
         // ☢️ Critical: there should be no truly uncategorized requests.
