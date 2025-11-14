@@ -99,11 +99,22 @@ async function initBrowser(namespace: string): Promise<{
 export async function bootstrap(namespace: string) {
   const { page, context, extensionURL, serviceWorker } = await initBrowser(namespace)
   await page.goto(`${extensionURL}${mainConstants.urls.getStarted}`, { waitUntil: 'load' })
-  // Bypass the invite verification step
-  await serviceWorker.evaluate(
-    (invite) => chrome.storage.local.set({ invite, isE2EStorageSet: true }),
-    JSON.stringify(mainConstants.inviteStorageItem)
-  )
+
+  // Wait until chrome.storage.local becomes available
+  let isReady = false
+  for (let i = 0; i < 50; i++) {
+    isReady = await serviceWorker.evaluate(() => {
+      return typeof chrome !== 'undefined' && !!chrome.storage?.local
+    })
+
+    if (isReady) break
+    await new Promise((res) => setTimeout(res, 100))
+  }
+  if (!isReady) {
+    throw new Error('❌ chrome.storage.local was never available in service worker')
+  }
+
+  await serviceWorker.evaluate(() => chrome.storage.local.set({ isE2EStorageSet: true }))
   return { page, context, extensionURL }
 }
 
