@@ -6,6 +6,7 @@ import { SwapAndBridgeRoute } from '@ambire-common/interfaces/swapAndBridge'
 import LeftArrowIcon from '@common/assets/svg/LeftArrowIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
+import SkeletonLoader from '@common/components/SkeletonLoader'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
@@ -14,13 +15,12 @@ import useWindowSize from '@common/hooks/useWindowSize'
 import spacings, { SPACING_LG } from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
+import RetryButton from '@web/components/RetryButton'
 import { TRANSACTION_FORM_WIDTH } from '@web/components/TransactionsScreen/styles'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControllerState'
 import RouteStepsPreview from '@web/modules/swap-and-bridge/components/RouteStepsPreview'
 import { getUiType } from '@web/utils/uiType'
-import RetryButton from '@web/components/RetryButton'
-import SkeletonLoader from '@common/components/SkeletonLoader'
 
 import getStyles from './styles'
 
@@ -72,7 +72,7 @@ const RoutesModal = ({
 
       dispatch({
         type: 'SWAP_AND_BRIDGE_CONTROLLER_SELECT_ROUTE',
-        params: { route, isAutoSelectDisabled: true }
+        params: { route }
       })
       setUserSelectedRoute(route)
       setIsEstimationLoading(true)
