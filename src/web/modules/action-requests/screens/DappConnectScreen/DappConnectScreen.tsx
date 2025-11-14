@@ -51,9 +51,9 @@ const DappConnectScreen = () => {
     setIsAuthorizing(true)
     dispatch({
       type: 'REQUESTS_CONTROLLER_RESOLVE_USER_REQUEST',
-      params: { data: null, id: dappAction.id }
+      params: { data: dappToConnect, id: dappAction.id }
     })
-  }, [dappAction, dispatch])
+  }, [dappAction, dappToConnect, dispatch])
 
   const resolveButtonText = useMemo(() => {
     if (!dappToConnect || dappToConnect.blacklisted === 'LOADING') return t('Loading...')

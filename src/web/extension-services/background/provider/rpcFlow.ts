@@ -75,7 +75,7 @@ const flowContext = flow
   // if dApp not connected - prompt connect action window
   .use(async ({ request, mainCtrl, mapMethod }, next) => {
     const {
-      session: { id, origin: url, name, icon }
+      session: { id, origin: url }
     } = request
     const providerCtrl = new ProviderController(mainCtrl)
     if (!Reflect.getMetadata('SAFE', providerCtrl, mapMethod)) {
@@ -94,10 +94,8 @@ const flowContext = flow
           } else if (mainCtrl.requests.actions.currentAction) {
             await mainCtrl.requests.actions.focusActionWindow()
           }
-          await connectOrigins[url]
-          if (mainCtrl.dapps.dappToConnect) {
-            await mainCtrl.dapps.addDapp({ ...mainCtrl.dapps.dappToConnect, isConnected: true })
-          }
+          const dappToAdd = await connectOrigins[url]
+          await mainCtrl.dapps.addDapp({ ...dappToAdd, isConnected: true })
         } finally {
           delete connectOrigins[url]
         }
