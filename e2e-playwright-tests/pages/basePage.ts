@@ -178,7 +178,8 @@ export class BasePage {
 
   async getDashboardTokenBalance(token: Token) {
     const balanceText = await this.getText(`token-balance-${token.address}.${token.chainId}`)
-    const tokenBalance = parseFloat(balanceText)
+    const parseText = balanceText.replace(/,/g, '')
+    const tokenBalance = parseFloat(parseText)
 
     return tokenBalance
   }

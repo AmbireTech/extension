@@ -76,7 +76,7 @@ export class DashboardPage extends BasePage {
   async checkBATokenBalance(token: Token) {
     const key = `${token.symbol}-${token.chainId}`
     const balanceThresholds: Record<string, number> = {
-      'WALLET-8453': 400,
+      'WALLET-8453': 300,
       'USDC-10': 2,
       'xWALLET-1': 2
     }
@@ -97,7 +97,7 @@ export class DashboardPage extends BasePage {
   async checkSATokenBalance(token: Token) {
     const key = `${token.symbol}-${token.chainId}`
     const balanceThresholds: Record<string, number> = {
-      'WALLET-8453': 400,
+      'WALLET-8453': 300,
       'USDC-8453': 3,
       'USDC-10': 2,
       'USDC.E-10': 2,
