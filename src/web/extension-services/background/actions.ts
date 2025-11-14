@@ -550,10 +550,6 @@ type SwapAndBridgeControllerUserProceededAction = {
   type: 'SWAP_AND_BRIDGE_CONTROLLER_HAS_USER_PROCEEDED'
   params: { proceeded: boolean }
 }
-type SwapAndBridgeControllerIsAutoSelectRouteDisabled = {
-  type: 'SWAP_AND_BRIDGE_CONTROLLER_IS_AUTO_SELECT_ROUTE_DISABLED'
-  params: { isDisabled: boolean }
-}
 type SwapAndBridgeControllerUnloadScreenAction = {
   type: 'SWAP_AND_BRIDGE_CONTROLLER_UNLOAD_SCREEN'
   params: { sessionId: string; forceUnload?: boolean }
@@ -592,7 +588,7 @@ type SwapAndBridgeControllerSwitchFromAndToTokensAction = {
 }
 type SwapAndBridgeControllerSelectRouteAction = {
   type: 'SWAP_AND_BRIDGE_CONTROLLER_SELECT_ROUTE'
-  params: { route: SwapAndBridgeRoute; isAutoSelectDisabled?: boolean }
+  params: { route: SwapAndBridgeRoute }
 }
 type SwapAndBridgeControllerResetForm = {
   type: 'SWAP_AND_BRIDGE_CONTROLLER_RESET_FORM'
@@ -899,7 +895,6 @@ export type Action =
   | SwapAndBridgeControllerDestroySignAccountOp
   | SwapAndBridgeControllerOpenSigningActionWindow
   | SwapAndBridgeControllerUserProceededAction
-  | SwapAndBridgeControllerIsAutoSelectRouteDisabled
   | OpenSigningActionWindow
   | CloseSigningActionWindow
   | TransferControllerUpdateForm

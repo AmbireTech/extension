@@ -23,14 +23,12 @@ import SelectRoute from './SelectRoute'
 type Props = {
   isEstimatingRoute: boolean
   shouldEnableRoutesSelection: boolean
-  isAutoSelectRouteDisabled: boolean
   openRoutesModal: () => void
 }
 
 const RouteInfo: FC<Props> = ({
   isEstimatingRoute,
   shouldEnableRoutesSelection,
-  isAutoSelectRouteDisabled,
   openRoutesModal
 }) => {
   const { formStatus, signAccountOpController, quote, swapSignErrors } =
@@ -98,7 +96,7 @@ const RouteInfo: FC<Props> = ({
         (signAccountOpController?.estimation.status === EstimationStatus.Success ||
           ((signAccountOpController?.estimation.status === EstimationStatus.Error ||
             formStatus === SwapAndBridgeFormStatus.InvalidRouteSelected) &&
-            (allRoutesFailed || isAutoSelectRouteDisabled))) &&
+            (allRoutesFailed || quote?.selectedRoute?.isSelectedManually))) &&
         !isEstimatingRoute && (
           <>
             {signAccountOpController?.estimation.status === EstimationStatus.Success &&
