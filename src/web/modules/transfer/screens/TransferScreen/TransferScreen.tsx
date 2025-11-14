@@ -342,10 +342,8 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   }, [accountUserRequests, isSendingBatch, networkUserRequests, t])
 
   const isTransferFormValid = useMemo(() => {
-    if (isSendingBatch) return true
-
     return !!(isTopUp ? isFormValid : isFormValid && !addressInputState.validation.isError)
-  }, [addressInputState.validation.isError, isFormValid, isSendingBatch, isTopUp])
+  }, [addressInputState.validation.isError, isFormValid, isTopUp])
 
   const onBack = useCallback(() => {
     dispatch({
