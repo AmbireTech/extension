@@ -95,16 +95,6 @@ const useSwapAndBridgeForm = () => {
     return nanoid()
   }, []) // purposely, so it is unique per hook lifetime
 
-  const setIsAutoSelectRouteDisabled = useCallback(
-    (isDisabled: boolean) => {
-      dispatch({
-        type: 'SWAP_AND_BRIDGE_CONTROLLER_IS_AUTO_SELECT_ROUTE_DISABLED',
-        params: { isDisabled }
-      })
-    },
-    [dispatch]
-  )
-
   const isBridge = useMemo(() => {
     if (!fromSelectedToken || !toSelectedToken) return false
     return fromSelectedToken.chainId !== BigInt(toSelectedToken.chainId)
@@ -132,14 +122,6 @@ const useSwapAndBridgeForm = () => {
 
     return getCallsCount(reqs)
   }, [latestBatchedNetwork, userRequests, account])
-
-  const handleSetFromAmount = useCallback(
-    (val: string) => {
-      setFromAmountValue(val)
-      setIsAutoSelectRouteDisabled(false)
-    },
-    [setFromAmountValue, setIsAutoSelectRouteDisabled]
-  )
 
   useEffect(() => {
     const hasSwapAndBridgeAction = visibleActionsQueue.some(
@@ -445,7 +427,7 @@ const useSwapAndBridgeForm = () => {
   return {
     sessionId,
     fromAmountValue,
-    onFromAmountChange: handleSetFromAmount,
+    onFromAmountChange: setFromAmountValue,
     fromTokenAmountSelectDisabled,
     fromTokenOptions,
     fromTokenValue,
@@ -465,7 +447,6 @@ const useSwapAndBridgeForm = () => {
     openRoutesModal,
     closeRoutesModal,
     estimationModalRef,
-    setIsAutoSelectRouteDisabled,
     isBridge,
     setShowAddedToBatch,
     latestBatchedNetwork,
