@@ -60,6 +60,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     isRecipientHumanizerKnownTokenOrSmartContract,
     isRecipientAddressUnknown,
     isRecipientAddressUnknownAgreed,
+    isRecipientAddressFirstTimeSend,
     isFormValid,
     signAccountOpController,
     latestBroadcastedAccountOp,
@@ -497,6 +498,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
           isRecipientHumanizerKnownTokenOrSmartContract={
             isRecipientHumanizerKnownTokenOrSmartContract
           }
+          isRecipientAddressFirstTimeSend={isRecipientAddressFirstTimeSend}
           onRecipientAddressUnknownAgree={onRecipientAddressUnknownAgree}
         />
       </>
@@ -508,6 +510,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     isTransferFormValid,
     networkUserRequests,
     isLocalStateOutOfSync,
+    isRecipientAddressFirstTimeSend,
     isRecipientAddressUnknown,
     isRecipientAddressUnknownAgreed,
     isRecipientHumanizerKnownTokenOrSmartContract,

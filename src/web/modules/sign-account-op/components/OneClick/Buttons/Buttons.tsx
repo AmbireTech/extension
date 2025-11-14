@@ -30,6 +30,7 @@ type Props = {
   isRecipientAddressUnknown?: boolean
   isRecipientAddressUnknownAgreed?: boolean
   isRecipientHumanizerKnownTokenOrSmartContract?: boolean
+  isRecipientAddressFirstTimeSend?: boolean
   onRecipientAddressUnknownAgree?: () => void
 }
 
@@ -47,6 +48,7 @@ const Buttons: FC<Props> = ({
   isRecipientAddressUnknown = false,
   isRecipientAddressUnknownAgreed = false,
   isRecipientHumanizerKnownTokenOrSmartContract = false,
+  isRecipientAddressFirstTimeSend = false,
   onRecipientAddressUnknownAgree,
   // Used to disable the actions of the buttons when the local state is out of sync.
   // To prevent button flickering when the user is typing we just do nothing when the button is clicked.
@@ -152,7 +154,8 @@ const Buttons: FC<Props> = ({
       <View dataSet={{ tooltipId: 'proceed-btn-tooltip' }}>
         {isRecipientAddressUnknown &&
         !isRecipientAddressUnknownAgreed &&
-        !isRecipientHumanizerKnownTokenOrSmartContract ? (
+        !isRecipientHumanizerKnownTokenOrSmartContract &&
+        isRecipientAddressFirstTimeSend ? (
           <HoldToProceedButton
             text="Hold to proceed"
             disabled={isNotReadyToProceed || isLoading || !!oneClickDisabledReason}
