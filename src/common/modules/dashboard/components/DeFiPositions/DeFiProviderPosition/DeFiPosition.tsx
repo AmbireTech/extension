@@ -10,7 +10,7 @@ import flexbox from '@common/styles/utils/flexbox'
 import DeFiPositionAssets from './DeFiPositionAssets'
 import Badge from './DeFiPositionHeader/Badge'
 
-type Props = Omit<PositionsByProvider, 'iconUrl' | 'positions' | 'positionInUSD'> &
+type Props = Omit<PositionsByProvider, 'iconUrl' | 'positions' | 'positionInUSD' | 'source'> &
   Position & {
     positionInUSD?: string
     withTopBorder?: boolean

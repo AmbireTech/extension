@@ -5,14 +5,16 @@ import { Pressable, View } from 'react-native'
 import { Dapp } from '@ambire-common/interfaces/dapp'
 import CloseIcon from '@common/assets/svg/CloseIcon'
 import DAppsIcon from '@common/assets/svg/DAppsIcon'
+import ErrorFilledIcon from '@common/assets/svg/ErrorFilledIcon'
 import ManifestFallbackIcon from '@common/assets/svg/ManifestFallbackIcon'
 import PowerIcon from '@common/assets/svg/PowerIcon'
 import StarIcon from '@common/assets/svg/StarIcon'
 import UpArrowIcon from '@common/assets/svg/UpArrowIcon'
 import Button from '@common/components/Button'
 import Text from '@common/components/Text'
+import Tooltip from '@common/components/Tooltip'
 import useTheme from '@common/hooks/useTheme'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import ManifestImage from '@web/components/ManifestImage'
 import useBackgroundService from '@web/hooks/useBackgroundService'
@@ -53,7 +55,13 @@ const DappControl = ({
 
   return (
     <View>
-      <View style={styles.titleWrapper}>
+      <View
+        style={[
+          styles.titleWrapper,
+          !inModal &&
+            dapp?.blacklisted === 'BLACKLISTED' && { backgroundColor: theme.errorBackground }
+        ]}
+      >
         <Text weight="medium" fontSize={12} appearance="secondaryText">
           {t(`Manage ${isCurrentDapp ? 'current ' : ''}app`)}
         </Text>
@@ -62,11 +70,31 @@ const DappControl = ({
       <View style={styles.border}>
         {dapp ? (
           <View style={styles.currentDApp}>
-            <ManifestImage
-              uri={dapp.icon || ''}
-              size={32}
-              fallback={() => <ManifestFallbackIcon />}
-            />
+            <View>
+              {dapp.blacklisted === 'BLACKLISTED' && (
+                <View
+                  style={{
+                    position: 'absolute',
+                    right: -2,
+                    top: -2,
+                    zIndex: 1
+                  }}
+                  // @ts-ignore
+                  dataSet={{
+                    tooltipId: 'blacklisted-app-tooltip',
+                    tooltipContent: t('Blacklisted app!')
+                  }}
+                >
+                  <ErrorFilledIcon width={14} height={14} />
+                </View>
+              )}
+
+              <ManifestImage
+                uri={dapp.icon || ''}
+                size={32}
+                fallback={() => <ManifestFallbackIcon />}
+              />
+            </View>
             <View style={[spacings.mlMi, flexbox.flex1]}>
               <View style={[flexbox.directionRow, flexbox.flex1]}>
                 <Text fontSize={12} weight="medium" numberOfLines={1} style={spacings.mrTy}>
@@ -142,6 +170,17 @@ const DappControl = ({
           )}
         </View>
       </View>
+      <Tooltip
+        id="blacklisted-app-tooltip"
+        delayShow={200}
+        border={`1px solid ${theme.errorDecorative as string}`}
+        style={{
+          fontSize: 12,
+          backgroundColor: theme.errorBackground as string,
+          padding: SPACING_TY,
+          color: theme.errorDecorative as string
+        }}
+      />
     </View>
   )
 }

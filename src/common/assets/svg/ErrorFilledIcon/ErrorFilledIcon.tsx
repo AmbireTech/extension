@@ -11,4 +11,4 @@ const ErrorFilledIcon: React.FC<SvgProps> = ({ width = 14, height = 14 }) => (
   </Svg>
 )
 
-export default ErrorFilledIcon
+export default React.memo(ErrorFilledIcon)
