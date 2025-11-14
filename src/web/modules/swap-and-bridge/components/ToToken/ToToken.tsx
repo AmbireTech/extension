@@ -26,21 +26,15 @@ import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountCont
 import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControllerState'
 import SwitchTokensButton from '@web/modules/swap-and-bridge/components/SwitchTokensButton'
 import ToTokenSelect from '@web/modules/swap-and-bridge/components/ToToken/ToTokenSelect'
-import useSwapAndBridgeForm from '@web/modules/swap-and-bridge/hooks/useSwapAndBridgeForm'
 import { getTokenId } from '@web/utils/token'
 
 import NotSupportedNetworkTooltip from '../NotSupportedNetworkTooltip'
 
-type Props = Pick<ReturnType<typeof useSwapAndBridgeForm>, 'setIsAutoSelectRouteDisabled'> & {
-  isAutoSelectRouteDisabled: boolean
+type Props = {
   simulationFailed?: boolean
 }
 
-const ToToken: FC<Props> = ({
-  isAutoSelectRouteDisabled,
-  setIsAutoSelectRouteDisabled,
-  simulationFailed
-}) => {
+const ToToken: FC<Props> = ({ simulationFailed }) => {
   const { theme, styles, themeType } = useTheme(getStyles)
   const { t } = useTranslation()
   const {
@@ -116,10 +110,10 @@ const ToToken: FC<Props> = ({
 
   const shouldShowAmountOnEstimationFailure = useMemo(() => {
     return (
-      isAutoSelectRouteDisabled &&
+      quote?.selectedRoute?.isSelectedManually &&
       signAccountOpController?.estimation.status === EstimationStatus.Error
     )
-  }, [isAutoSelectRouteDisabled, signAccountOpController?.estimation.status])
+  }, [quote?.selectedRoute?.isSelectedManually, signAccountOpController?.estimation.status])
 
   const isReadyToDisplayAmounts =
     (formStatus === SwapAndBridgeFormStatus.Empty ||
@@ -127,7 +121,8 @@ const ToToken: FC<Props> = ({
       formStatus === SwapAndBridgeFormStatus.NoRoutesFound ||
       formStatus === SwapAndBridgeFormStatus.ReadyToSubmit ||
       formStatus === SwapAndBridgeFormStatus.Proceeded ||
-      (formStatus === SwapAndBridgeFormStatus.InvalidRouteSelected && isAutoSelectRouteDisabled) ||
+      (formStatus === SwapAndBridgeFormStatus.InvalidRouteSelected &&
+        quote?.selectedRoute?.isSelectedManually) ||
       shouldShowAmountOnEstimationFailure) &&
     updateQuoteStatus !== 'LOADING'
 
@@ -180,7 +175,6 @@ const ToToken: FC<Props> = ({
 
   const handleChangeToToken = useCallback(
     ({ address: toSelectedTokenAddr }: SelectValue) => {
-      setIsAutoSelectRouteDisabled(false)
       const isSameAsFromToken =
         !!fromSelectedToken &&
         !!toChainId &&
@@ -198,7 +192,7 @@ const ToToken: FC<Props> = ({
         }
       })
     },
-    [setIsAutoSelectRouteDisabled, fromSelectedToken, toChainId, dispatch]
+    [fromSelectedToken, toChainId, dispatch]
   )
 
   const handleAddToTokenByAddress = useCallback(
