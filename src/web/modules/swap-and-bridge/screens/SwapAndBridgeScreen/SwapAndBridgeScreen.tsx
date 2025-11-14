@@ -195,7 +195,6 @@ const SwapAndBridgeScreen = () => {
           isBridge={isBridge}
           networkUserRequests={networkUserRequests}
           isLocalStateOutOfSync={isLocalStateOutOfSync}
-          shouldHoldToProceed={!!signAccountOpController?.banners?.length}
         />
       </>
     )
@@ -207,8 +206,7 @@ const SwapAndBridgeScreen = () => {
     handleSubmitForm,
     isBridge,
     networkUserRequests,
-    isLocalStateOutOfSync,
-    signAccountOpController?.banners?.length
+    isLocalStateOutOfSync
   ])
 
   if (!sessionIds.includes(sessionId)) {

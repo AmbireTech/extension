@@ -148,7 +148,7 @@ const Buttons: FC<Props> = ({
       <View dataSet={{ tooltipId: 'proceed-btn-tooltip' }}>
         {shouldHoldToProceed ? (
           <HoldToProceedButton
-            text="Hold to proceed"
+            text={t('Hold to proceed')}
             disabled={isNotReadyToProceed || isLoading || !!oneClickDisabledReason}
             onHoldComplete={() => {
               if (isLocalStateOutOfSync) return

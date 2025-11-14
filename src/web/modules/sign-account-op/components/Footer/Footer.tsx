@@ -136,7 +136,7 @@ const Footer = ({
         <View dataSet={{ tooltipId: 'sign-button-tooltip' }}>
           {shouldHoldToProceed ? (
             <HoldToProceedButton
-              text="Hold to proceed"
+              text={t('Hold to sign')}
               disabled={isSignDisabled}
               onHoldComplete={onSign}
               testID="proceed-btn"

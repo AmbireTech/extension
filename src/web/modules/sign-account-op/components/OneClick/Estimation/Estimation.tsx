@@ -12,6 +12,7 @@ import { SwapAndBridgeRoute } from '@ambire-common/interfaces/swapAndBridge'
 import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
+import HoldToProceedButton from '@common/components/HoldToProceedButton'
 import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
 import Text from '@common/components/Text'
 import useSign from '@common/hooks/useSign'
@@ -187,13 +188,23 @@ const OneClickEstimation = ({
                 disabled={isSignLoading}
                 style={{ width: 98 }}
               />
-              <ButtonWithLoader
-                testID="sign-button"
-                text={primaryButtonText}
-                isLoading={isSignLoading}
-                disabled={isSignDisabled || signingErrors.length > 0}
-                onPress={onSignButtonClick}
-              />
+
+              {!!banners && !!banners.length ? (
+                <HoldToProceedButton
+                  testID="sign-proceed-btn"
+                  text={t('Hold to sign')}
+                  disabled={isSignDisabled || signingErrors.length > 0}
+                  onHoldComplete={onSignButtonClick}
+                />
+              ) : (
+                <ButtonWithLoader
+                  testID="sign-button"
+                  text={primaryButtonText}
+                  isLoading={isSignLoading}
+                  disabled={isSignDisabled || signingErrors.length > 0}
+                  onPress={onSignButtonClick}
+                />
+              )}
             </View>
           </View>
         )}

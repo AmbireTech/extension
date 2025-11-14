@@ -55,24 +55,15 @@ const SafetyCheckBanner = ({ type, text, style }: Props) => {
         style
       ]}
     >
-      <View
-        style={[
-          flexbox.directionRow,
-          flexbox.alignCenter,
-          flexbox.justifySpaceBetween,
-          spacings.mbSm
-        ]}
-      >
-        <Text fontSize={14} weight="semiBold" appearance="secondaryText">
-          {t('Security checks')}
-        </Text>
-        <Badge type={type} text={BADGE_TEXT_MAP[type]} size="sm">
-          <Icon width={16} height={16} color={theme[`${type}Decorative`]} style={spacings.mlMi} />
-        </Badge>
-      </View>
-
       <View style={flexbox.flex1}>
-        <Text style={spacings.mbTy}>
+        <View
+          style={[
+            flexbox.directionRow,
+            flexbox.alignCenter,
+            flexbox.justifySpaceBetween,
+            spacings.mbTy
+          ]}
+        >
           <Text
             selectable
             appearance={`${type}Text`}
@@ -82,8 +73,10 @@ const SafetyCheckBanner = ({ type, text, style }: Props) => {
           >
             {TITLE_MAP[type]}
           </Text>
-        </Text>
-
+          <Badge type={type} text={BADGE_TEXT_MAP[type]} size="sm">
+            <Icon width={16} height={16} color={theme[`${type}Decorative`]} style={spacings.mlMi} />
+          </Badge>
+        </View>
         <Text fontSize={12} appearance={`${type}Text`} weight="medium">
           {text}
         </Text>
