@@ -182,7 +182,9 @@ const useErc5792 = () => {
           sender: accAddr,
           nonce: concat([randomBytes(24), toBeHex(0, 8)]),
           maxFeePerGas: prices.medium.maxFeePerGas,
-          maxPriorityFeePerGas: prices.medium.maxPriorityFeePerGas
+          maxPriorityFeePerGas: prices.medium.maxPriorityFeePerGas,
+          factory: '0x7702',
+          factoryData: '0x'
         }
       },
       {
@@ -195,7 +197,9 @@ const useErc5792 = () => {
           sender: accAddr,
           nonce: concat([randomBytes(24), toBeHex(0, 8)]),
           maxFeePerGas: pricesArb.medium.maxFeePerGas,
-          maxPriorityFeePerGas: pricesArb.medium.maxPriorityFeePerGas
+          maxPriorityFeePerGas: pricesArb.medium.maxPriorityFeePerGas,
+          factory: '0x7702',
+          factoryData: '0x'
         }
       }
     ]
