@@ -163,10 +163,14 @@ const useErc5792 = () => {
     useSponsorship = true
   ) => {
     const opSepoliaChainId = 11155420n
+    const arbitrumSepoliaChainId = 421614n
     const callData = executeBySenderInterface.encodeFunctionData('executeBySender', [
       calls.map((c) => [c.to, c.value ?? '0x', c.data])
     ])
-    const prices = await getGasPrice(opSepoliaChainId)
+    const [prices, pricesArb] = await Promise.all([
+      getGasPrice(opSepoliaChainId),
+      getGasPrice(arbitrumSepoliaChainId)
+    ])
     const filledUserOps: ChainIdWithUserOp[] = [
       {
         chainId: toBeHex(opSepoliaChainId) as Hex,
@@ -179,6 +183,19 @@ const useErc5792 = () => {
           nonce: concat([randomBytes(24), toBeHex(0, 8)]),
           maxFeePerGas: prices.medium.maxFeePerGas,
           maxPriorityFeePerGas: prices.medium.maxPriorityFeePerGas
+        }
+      },
+      {
+        chainId: toBeHex(arbitrumSepoliaChainId) as Hex,
+        userOperation: {
+          callData,
+          callGasLimit: toBeHex(100000),
+          verificationGasLimit: toBeHex(100000),
+          preVerificationGas: toBeHex(100000),
+          sender: accAddr,
+          nonce: concat([randomBytes(24), toBeHex(0, 8)]),
+          maxFeePerGas: pricesArb.medium.maxFeePerGas,
+          maxPriorityFeePerGas: pricesArb.medium.maxPriorityFeePerGas
         }
       }
     ]
