@@ -28,7 +28,7 @@ const Network: FC<Props> = ({ chainId, openBlockExplorer, openSettingsBottomShee
   const { themeType, theme, styles } = useTheme(getStyles)
   const { networks } = useNetworksControllerState()
   const { portfolio, dashboardNetworkFilter } = useSelectedAccountControllerState()
-  const [bindAnim, animStyle, isHovered] = useMultiHover({
+  const [bindAnim, animStyle, isHovered, triggerHovered] = useMultiHover({
     values: [
       {
         property: 'backgroundColor',
@@ -95,7 +95,7 @@ const Network: FC<Props> = ({ chainId, openBlockExplorer, openSettingsBottomShee
         <AnimatedPressable
           // Bind the parent animation so its hover state doesn't get lost
           // when hovering over the explorer icon
-          onHoverIn={bindAnim.onHoverIn}
+          onHoverIn={triggerHovered}
           onPress={handleOpenBlockExplorer}
           // @ts-ignore missing type, but the prop is valid
           dataSet={{
@@ -121,7 +121,7 @@ const Network: FC<Props> = ({ chainId, openBlockExplorer, openSettingsBottomShee
         </Text>
         {!isInternalNetwork && (
           <Pressable
-            onHoverIn={bindAnim.onHoverIn}
+            onHoverIn={triggerHovered}
             onPress={() => openSettingsBottomSheet(chainId)}
             style={spacings.mlSm}
           >

@@ -102,6 +102,7 @@ export const RpcSelectorItem = React.memo(
               fontSize={14}
               appearance={selectedRpcUrl === url ? 'primaryText' : 'secondaryText'}
               numberOfLines={1}
+              style={flexbox.flex1}
             >
               {url}
             </Text>
@@ -153,11 +154,6 @@ const NetworkForm = ({
   const selectedNetwork = useMemo(
     () => allNetworks.find((network) => network.chainId.toString() === selectedChainId.toString()),
     [allNetworks, selectedChainId]
-  )
-
-  const isPredefinedNetwork = useMemo(
-    () => selectedNetwork && selectedNetwork.predefined,
-    [selectedNetwork]
   )
 
   const {
@@ -511,12 +507,10 @@ const NetworkForm = ({
 
   const handleRemoveRpcUrl = useCallback(
     (url: string) => {
-      if (
-        isPredefinedNetwork &&
-        allNetworks.filter((n) => n.predefined).find((n) => n.rpcUrls.includes(url))
-      )
+      if (rpcUrls.length <= 1) {
+        addToast('There must be at least one RPC provider', { type: 'error' })
         return
-
+      }
       const filteredRpcUrls = rpcUrls.filter((u) => u !== url)
       if (url === selectedRpcUrl) {
         if (filteredRpcUrls.length) {
@@ -525,7 +519,7 @@ const NetworkForm = ({
       }
       setRpcUrls(filteredRpcUrls)
     },
-    [isPredefinedNetwork, allNetworks, rpcUrls, selectedRpcUrl, handleSelectRpcUrl]
+    [rpcUrls, selectedRpcUrl, addToast, handleSelectRpcUrl]
   )
 
   const handleAddRpcUrl = useCallback(
@@ -702,11 +696,10 @@ const NetworkForm = ({
                         rpcUrlsLength={rpcUrls.length}
                         onPress={handleSelectRpcUrl}
                         shouldShowRemove={
-                          isPredefinedNetwork
-                            ? !allNetworks
-                                .filter((n) => n.predefined)
-                                .find((n) => n.rpcUrls.includes(url))
-                            : true
+                          !!selectedNetwork?.rpcUrls.length &&
+                          selectedNetwork.rpcUrls.length > 1 &&
+                          url !== selectedNetwork?.selectedRpcUrl &&
+                          !url.includes('invictus.ambire.com')
                         }
                         onRemove={handleRemoveRpcUrl}
                       />

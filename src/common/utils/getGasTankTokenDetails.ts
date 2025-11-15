@@ -9,7 +9,7 @@ import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getToken
 
 const parseGasTankToken = (token: GasTankTokenResult, type: keyof GasTankTokenResult) => {
   const amount = token[type]
-  const { cashback, saved, availableAmount, ...rest } = token
+  const { availableAmount, ...rest } = token
 
   return { ...rest, amount } as SelectedAccountPortfolioTokenResult
 }
@@ -18,7 +18,7 @@ export const getGasTankTokenDetails = (
   portfolio: SelectedAccountPortfolio,
   account: Account | null,
   networks: Network[],
-  key: 'amount' | 'cashback' | 'saved'
+  key: 'amount'
 ) => {
   const gasTankResult = portfolio?.portfolioState?.gasTank?.result as
     | { gasTankTokens: GasTankTokenResult[] }
