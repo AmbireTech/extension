@@ -6,6 +6,7 @@ import {
 } from '@ambire-common/interfaces/userOperation'
 import { GasSpeeds } from '@ambire-common/services/bundlers/types'
 import { getRpcProvider } from '@ambire-common/services/provider'
+import wait from '@ambire-common/utils/wait'
 import { executeBySenderInterface } from '@benzin/screens/BenzinScreen/constants/humanizerInterfaces'
 import { delayPromise } from '@common/utils/promises'
 import { RELAYER_URL } from '@env'
@@ -182,9 +183,20 @@ const useErc5792 = () => {
           sender: accAddr,
           nonce: concat([randomBytes(24), toBeHex(0, 8)]),
           maxFeePerGas: prices.medium.maxFeePerGas,
-          maxPriorityFeePerGas: prices.medium.maxPriorityFeePerGas,
-          factory: '0x7702',
-          factoryData: '0x'
+          maxPriorityFeePerGas: prices.medium.maxPriorityFeePerGas
+        }
+      },
+      {
+        chainId: toBeHex(opSepoliaChainId) as Hex,
+        userOperation: {
+          callData,
+          callGasLimit: toBeHex(100000),
+          verificationGasLimit: toBeHex(100000),
+          preVerificationGas: toBeHex(100000),
+          sender: accAddr,
+          nonce: concat([randomBytes(24), toBeHex(0, 8)]),
+          maxFeePerGas: prices.medium.maxFeePerGas,
+          maxPriorityFeePerGas: prices.medium.maxPriorityFeePerGas
         }
       },
       {
@@ -197,9 +209,7 @@ const useErc5792 = () => {
           sender: accAddr,
           nonce: concat([randomBytes(24), toBeHex(0, 8)]),
           maxFeePerGas: pricesArb.medium.maxFeePerGas,
-          maxPriorityFeePerGas: pricesArb.medium.maxPriorityFeePerGas,
-          factory: '0x7702',
-          factoryData: '0x'
+          maxPriorityFeePerGas: pricesArb.medium.maxPriorityFeePerGas
         }
       }
     ]
@@ -217,6 +227,8 @@ const useErc5792 = () => {
         method: 'eth_sendRawUserOperation',
         params: [oneIdentifier]
       })
+      // eslint-disable-next-line no-await-in-loop
+      await wait(3000)
     }
 
     return signUserOpsIdentifierJsonString as string
