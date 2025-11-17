@@ -85,6 +85,7 @@ const AddOrUpdateNetworkScreen = () => {
 
   const networkDetails: AddNetworkRequestParams | undefined = useMemo(() => {
     if (!areParamsValid || !requestData) return undefined
+
     if (!requestData.rpcUrls) return
     if (existingNetwork) {
       return {
@@ -268,60 +269,52 @@ const AddOrUpdateNetworkScreen = () => {
     )
   }
 
-  if (view === 'update') {
+  if (view === 'update' && networkAlreadyAdded) {
     return (
-      <>
-        {networkDetails && networkAlreadyAdded && (
-          <UpdateChain
-            handleDenyButtonPress={handleDenyButtonPress}
-            handleUpdateNetwork={handleUpdateNetwork}
-            handleRetryWithDifferentRpcUrl={handleRetryWithDifferentRpcUrl}
-            areParamsValid={areParamsValid}
-            statuses={statuses}
-            features={features}
-            networkDetails={networkDetails}
-            networkAlreadyAdded={networkAlreadyAdded}
-            userRequest={userRequest}
-            actionButtonPressedRef={actionButtonPressedRef}
-            rpcUrls={rpcUrls}
-            rpcUrlIndex={rpcUrlIndex}
-          />
-        )}
-      </>
+      <UpdateChain
+        handleDenyButtonPress={handleDenyButtonPress}
+        handleUpdateNetwork={handleUpdateNetwork}
+        handleRetryWithDifferentRpcUrl={handleRetryWithDifferentRpcUrl}
+        areParamsValid={areParamsValid}
+        statuses={statuses}
+        features={features}
+        networkDetails={networkDetails}
+        networkAlreadyAdded={networkAlreadyAdded}
+        userRequest={userRequest}
+        actionButtonPressedRef={actionButtonPressedRef}
+        rpcUrls={rpcUrls}
+        rpcUrlIndex={rpcUrlIndex}
+      />
     )
   }
 
-  if (view === 'alreadyAdded') {
+  if (view === 'alreadyAdded' && networkAlreadyAdded) {
     return (
       <AlreadyAddedChain
         handleCloseOnAlreadyAdded={handleCloseOnAlreadyAdded}
         statuses={statuses}
-        networkAlreadyAdded={networkAlreadyAdded!}
+        networkAlreadyAdded={networkAlreadyAdded}
         successStateText={successStateText}
       />
     )
   }
 
   return (
-    <>
-      {networkDetails && (
-        <AddChain
-          handleDenyButtonPress={handleDenyButtonPress}
-          handlePrimaryButtonPress={handlePrimaryButtonPress}
-          handleRetryWithDifferentRpcUrl={handleRetryWithDifferentRpcUrl}
-          areParamsValid={areParamsValid}
-          statuses={statuses}
-          features={features}
-          networkDetails={networkDetails}
-          actionButtonPressedRef={actionButtonPressedRef}
-          rpcUrls={rpcUrls}
-          rpcUrlIndex={rpcUrlIndex}
-          resolveButtonText={resolveButtonText}
-          existingNetwork={existingNetwork}
-          userRequest={userRequest}
-        />
-      )}
-    </>
+    <AddChain
+      handleDenyButtonPress={handleDenyButtonPress}
+      handlePrimaryButtonPress={handlePrimaryButtonPress}
+      handleRetryWithDifferentRpcUrl={handleRetryWithDifferentRpcUrl}
+      areParamsValid={areParamsValid}
+      statuses={statuses}
+      features={features}
+      networkDetails={networkDetails}
+      actionButtonPressedRef={actionButtonPressedRef}
+      rpcUrls={rpcUrls}
+      rpcUrlIndex={rpcUrlIndex}
+      resolveButtonText={resolveButtonText}
+      existingNetwork={existingNetwork}
+      userRequest={userRequest}
+    />
   )
 }
 
