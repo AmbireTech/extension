@@ -10,6 +10,7 @@ import useNavigation from '@common/hooks/useNavigation'
 import usePrevious from '@common/hooks/usePrevious'
 import useTheme from '@common/hooks/useTheme'
 import DashboardBanners from '@common/modules/dashboard/components/DashboardBanners'
+import DashboardBanner from '@common/modules/dashboard/components/DashboardBanners/DashboardBanner'
 import DashboardPageScrollContainer from '@common/modules/dashboard/components/DashboardPageScrollContainer'
 import TabsAndSearch from '@common/modules/dashboard/components/TabsAndSearch'
 import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tab/Tab'
@@ -22,7 +23,6 @@ import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import { getUiType } from '@web/utils/uiType'
 
-import DashboardBanner from '../DashboardBanners/DashboardBanner'
 import DefiPositionsSkeleton from './DefiPositionsSkeleton'
 import DeFiPosition from './DeFiProviderPosition'
 import styles from './styles'
@@ -62,7 +62,7 @@ const DeFiPositions: FC<Props> = ({
 
   const currentAccountBanners = useMemo(
     () => getCurrentAccountBanners(banners, account?.addr),
-    [banners, account?.addr]
+    [banners, account]
   )
 
   useEffect(() => {
@@ -189,15 +189,18 @@ const DeFiPositions: FC<Props> = ({
       return <DeFiPosition key={item.providerName + item.network} {...item} />
     },
     [
-      control,
       initTab?.defi,
+      theme.primaryBackground,
+      theme.linkText,
+      theme.primary,
       openTab,
-      searchValue,
       setOpenTab,
-      t,
-      theme,
+      control,
       sessionId,
+      currentAccountBanners,
+      searchValue,
       dashboardNetworkFilterName,
+      t,
       themeType
     ]
   )

@@ -3,7 +3,7 @@ import { ColorValue, View } from 'react-native'
 
 import { getCurrentAccountBanners } from '@ambire-common/libs/banners/banners'
 import Spinner from '@common/components/Spinner'
-import Text, { TextAppearance } from '@common/components/Text'
+import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
