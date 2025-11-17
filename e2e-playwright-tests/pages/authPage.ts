@@ -89,9 +89,11 @@ export class AuthPage extends BasePage {
     // assertion on Dashboard after login
     await this.page.locator(locators.confirmationMessageForViewOnly).isVisible()
     await this.page.locator(locators.addMoreAccountsButton).isVisible()
-    await this.page.locator(locators.completeButton).click()
+    // await this.page.locator(locators.completeButton).click()
+    await this.click(selectors.saveAndContinueBtn)
     await this.page.locator(locators.confirmationMessageAmbireWallet).isVisible()
-    await this.page.locator(locators.openDashboardButton).click()
+    // await this.page.locator(locators.openDashboardButton).click()
+    await this.click(selectors.getStarted.openDashboardButton)
   }
 
   // TODO: imporove method assertions
@@ -110,13 +112,16 @@ export class AuthPage extends BasePage {
     await this.personalizeAccountName()
     // assertion on Dashboard after login
     await this.page.locator(locators.addMoreAccountsButton).isVisible()
-    await this.page.locator(locators.completeButton).click()
+    // await this.page.locator(locators.completeButton).click()
+    await this.click(selectors.saveAndContinueBtn)
     await this.page.locator(locators.confirmationMessageAmbireWallet).isVisible()
-    await this.page.locator(locators.openDashboardButton).click()
+    // await this.page.locator(locators.openDashboardButton).click()
+    await this.click(selectors.getStarted.openDashboardButton)
   }
 
   async personalizeAccountName(): Promise<void> {
-    await this.page.locator(locators.editAccountButton).click()
+    // await this.page.locator(locators.editAccountButton).click()
+    await this.click(selectors.getStarted.editFirstAccNameButton)
     // TODO: Parametrization
     await this.typeTextInInputField(locators.editAccountNameField, 'Name 1')
     await this.page.locator(locators.saveMessageText).isVisible()
@@ -137,9 +142,11 @@ export class AuthPage extends BasePage {
     // assertion on Dashboard after login
     await this.page.locator(locators.confirmationMessageForViewOnly).isVisible()
     await this.personalizeAccountName()
-    await this.page.locator(locators.completeButton).click()
+    // await this.page.locator(locators.completeButton).click()
+    await this.click(selectors.saveAndContinueBtn)
     await this.page.locator(locators.confirmationMessageAmbireWallet).isVisible()
-    await this.page.locator(locators.openDashboardButton).click()
+    // await this.page.locator(locators.openDashboardButton).click()
+    await this.click(selectors.getStarted.openDashboardButton)
   }
 
   async createNewHotWalletAndPersonalizeName(): Promise<void> {
@@ -157,9 +164,11 @@ export class AuthPage extends BasePage {
     await this.page.locator(locators.confirmationMessageForViewOnly).isVisible()
     await this.personalizeAccountName()
     await this.page.locator(locators.addMoreAccountsButton).isVisible()
-    await this.page.locator(locators.completeButton).click()
+    // await this.page.locator(locators.completeButton).click()
+    await this.click(selectors.saveAndContinueBtn)
     await this.page.locator(locators.confirmationMessageAmbireWallet).isVisible()
-    await this.page.locator(locators.openDashboardButton).click()
+    // await this.page.locator(locators.openDashboardButton).click()
+    await this.click(selectors.getStarted.openDashboardButton)
   }
 
   async selectHDPath(path: string): Promise<void> {
@@ -187,9 +196,11 @@ export class AuthPage extends BasePage {
     await this.page.locator(locators.smartAccountPickerForHDPath).click()
     await this.page.locator(locators.importAccountButton).click()
     await this.page.locator(locators.addMoreAccountsButton).isVisible()
-    await this.page.locator(locators.completeButton).click()
+    // await this.page.locator(locators.completeButton).click()
+    await this.click(selectors.saveAndContinueBtn)
     await this.page.locator(locators.confirmationMessageAmbireWallet).isVisible()
-    await this.page.locator(locators.openDashboardButton).click()
+    // await this.page.locator(locators.openDashboardButton).click()
+    await this.click(selectors.getStarted.openDashboardButton)
   }
 
   // TODO: imporove method assertions
@@ -209,8 +220,10 @@ export class AuthPage extends BasePage {
     await this.decryptBackup()
     await this.setExtensionPassword()
     // assertion on Dashboard after login
-    await this.page.locator(locators.completeButton).click()
+    // await this.page.locator(locators.completeButton).click()
+    await this.click(selectors.saveAndContinueBtn)
     await this.page.locator(locators.confirmationMessageAmbireWallet).isVisible()
-    await this.page.locator(locators.openDashboardButton).click()
+    // await this.page.locator(locators.openDashboardButton).click()
+    await this.click(selectors.getStarted.openDashboardButton)
   }
 }

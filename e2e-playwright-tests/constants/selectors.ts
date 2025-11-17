@@ -17,7 +17,9 @@ const selectors = {
     addressEnsField: 'address-ens-field',
     showMoreBtn: 'show-more-btn',
     viewOnlyBtnImport: 'view-only-button-import',
-    importBtn: 'import-button'
+    importBtn: 'import-button',
+    openDashboardButton: 'onboarding-completed-open-dashboard-btn',
+    editFirstAccNameButton: 'edit-btn-for-edit-name-field-0'
   },
   dashboard: {
     tokensTabButton: 'tokens-defi',
