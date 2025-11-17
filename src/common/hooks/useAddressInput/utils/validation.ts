@@ -34,6 +34,32 @@ const getAddressInputValidation = ({
       severity: overwriteSeverity || 'error'
     }
   }
+
+  if (address && isValidAddress(address)) {
+    try {
+      if (address !== getAddress(address)) {
+        return {
+          message: 'Invalid checksum. Verify the address and try again.',
+          isError: true,
+          severity: overwriteSeverity || 'error'
+        }
+      }
+    } catch {
+      return {
+        message: 'Invalid checksum. Verify the address and try again.',
+        isError: true,
+        severity: overwriteSeverity || 'error'
+      }
+    }
+  }
+  if (address && !isValidAddress(address)) {
+    return {
+      message: 'Please enter a valid address or ENS domain',
+      isError: true,
+      severity: overwriteSeverity || 'error'
+    }
+  }
+
   if (isRecipientDomainResolving) {
     return {
       message: 'Resolving domain...',
@@ -71,29 +97,6 @@ const getAddressInputValidation = ({
       message: 'Valid ENS domain',
       isError: false,
       severity: overwriteSeverity || 'warning'
-    }
-  }
-  if (address && isValidAddress(address)) {
-    try {
-      getAddress(address)
-      return {
-        message: 'Valid address',
-        isError: false,
-        severity: overwriteSeverity || 'warning'
-      }
-    } catch {
-      return {
-        message: 'Invalid checksum. Verify the address and try again.',
-        isError: true,
-        severity: overwriteSeverity || 'error'
-      }
-    }
-  }
-  if (address && !isValidAddress(address)) {
-    return {
-      message: 'Please enter a valid address or ENS domain',
-      isError: true,
-      severity: overwriteSeverity || 'error'
     }
   }
 
