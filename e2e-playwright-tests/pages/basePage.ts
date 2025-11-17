@@ -200,4 +200,11 @@ export class BasePage {
       await this.page.locator(selectors.continueAnywayButton).click()
     }
   }
+
+  async longPressButton(selector: string, pressTime: number) {
+    await this.page.getByTestId(selector).hover()
+    await this.page.mouse.down()
+    await this.page.waitForTimeout(pressTime * 1000)
+    await this.page.mouse.up()
+  }
 }

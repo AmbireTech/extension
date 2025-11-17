@@ -110,7 +110,7 @@ export class TransferPage extends BasePage {
     let feeSelector
     // Proceed
     await this.expectButtonEnabled(selectors.proceedBtn)
-    await this.click(selectors.proceedBtn)
+    await this.longPressButton(selectors.proceedBtn, 5)
 
     // approve the high impact modal if appears
     await this.handlePriceWarningModals()
