@@ -6,8 +6,8 @@ import { FeeSpeed, SigningStatus } from '@ambire-common/controllers/signAccountO
 import { Account, AccountPreferences, AccountStates } from '@ambire-common/interfaces/account'
 import {
   AccountOpAction,
-  ActionExecutionType,
   Action as ActionFromActionsQueue,
+  ActionExecutionType,
   ActionPosition,
   OpenActionWindowParams
 } from '@ambire-common/interfaces/actions'
@@ -24,7 +24,6 @@ import {
 } from '@ambire-common/interfaces/keystore'
 import { AddNetworkRequestParams, ChainId, Network } from '@ambire-common/interfaces/network'
 import { BuildRequest } from '@ambire-common/interfaces/requests'
-import { CashbackStatus } from '@ambire-common/interfaces/selectedAccount'
 import { SignMessageUpdateParams } from '@ambire-common/interfaces/signMessage'
 import {
   SwapAndBridgeActiveRoute,
@@ -348,11 +347,6 @@ type PortfolioControllerCheckToken = {
   }
 }
 
-type PortfolioControllerUpdateConfettiToShown = {
-  type: 'SELECTED_ACCOUNT_CONTROLLER_UPDATE_CASHBACK_STATUS'
-  params: CashbackStatus
-}
-
 type MainControllerSignAccountOpInitAction = {
   type: 'MAIN_CONTROLLER_SIGN_ACCOUNT_OP_INIT'
   params: {
@@ -556,10 +550,6 @@ type SwapAndBridgeControllerUserProceededAction = {
   type: 'SWAP_AND_BRIDGE_CONTROLLER_HAS_USER_PROCEEDED'
   params: { proceeded: boolean }
 }
-type SwapAndBridgeControllerIsAutoSelectRouteDisabled = {
-  type: 'SWAP_AND_BRIDGE_CONTROLLER_IS_AUTO_SELECT_ROUTE_DISABLED'
-  params: { isDisabled: boolean }
-}
 type SwapAndBridgeControllerUnloadScreenAction = {
   type: 'SWAP_AND_BRIDGE_CONTROLLER_UNLOAD_SCREEN'
   params: { sessionId: string; forceUnload?: boolean }
@@ -598,7 +588,7 @@ type SwapAndBridgeControllerSwitchFromAndToTokensAction = {
 }
 type SwapAndBridgeControllerSelectRouteAction = {
   type: 'SWAP_AND_BRIDGE_CONTROLLER_SELECT_ROUTE'
-  params: { route: SwapAndBridgeRoute; isAutoSelectDisabled?: boolean }
+  params: { route: SwapAndBridgeRoute }
 }
 type SwapAndBridgeControllerResetForm = {
   type: 'SWAP_AND_BRIDGE_CONTROLLER_RESET_FORM'
@@ -708,6 +698,11 @@ type AddressBookControllerRemoveContact = {
 type ChangeCurrentDappNetworkAction = {
   type: 'CHANGE_CURRENT_DAPP_NETWORK'
   params: { chainId: number; id: string }
+}
+
+type ContractNamesGetName = {
+  type: 'CONTRACT_NAMES_CONTROLLER_GET_NAME'
+  params: { address: string; chainId: bigint }
 }
 
 type SetIsPinnedAction = {
@@ -836,7 +831,6 @@ export type Action =
   | PortfolioControllerToggleHideToken
   | PortfolioControllerRemoveCustomToken
   | PortfolioControllerCheckToken
-  | PortfolioControllerUpdateConfettiToShown
   | KeystoreControllerAddSecretAction
   | KeystoreControllerAddTempSeedAction
   | KeystoreControllerUpdateSeedAction
@@ -858,6 +852,7 @@ export type Action =
   | DappsControllerFetchAndUpdateDappsAction
   | DappsControllerRemoveConnectedSiteAction
   | DappsControllerUpdateDappAction
+  | ContractNamesGetName
   | DappsControllerRemoveDappAction
   | SwapAndBridgeControllerInitAction
   | SwapAndBridgeControllerUnloadScreenAction
@@ -900,7 +895,6 @@ export type Action =
   | SwapAndBridgeControllerDestroySignAccountOp
   | SwapAndBridgeControllerOpenSigningActionWindow
   | SwapAndBridgeControllerUserProceededAction
-  | SwapAndBridgeControllerIsAutoSelectRouteDisabled
   | OpenSigningActionWindow
   | CloseSigningActionWindow
   | TransferControllerUpdateForm

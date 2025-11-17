@@ -1,3 +1,4 @@
+import { isHexString } from 'ethers'
 import { FC, memo, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { NativeScrollEvent, ScrollView, View } from 'react-native'
@@ -118,7 +119,13 @@ const FallbackVisualization: FC<{
                   </View>
                 )
               return (
-                <div style={index < 2 ? { maxWidth: '75%' } : {}} key={JSON.stringify(i)}>
+                <div
+                  style={{
+                    ...(index < 2 ? { maxWidth: '75%' } : {}),
+                    ...(i.isArrayItem && isHexString(i.value) ? { marginBottom: '0.5rem' } : {})
+                  }}
+                  key={JSON.stringify(i)}
+                >
                   <Text
                     style={[
                       i.type === 'key' && { fontWeight: 'bold' },

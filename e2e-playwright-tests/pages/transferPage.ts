@@ -27,15 +27,23 @@ export class TransferPage extends BasePage {
     await this.entertext(selectors.amountField, '0.001')
   }
 
-  async fillRecipient(address: string, isUnknownAddress: boolean = true) {
+  async fillRecipient(address: string) {
     // clear input if any
     await this.clearFieldInput(selectors.getStarted.addressEnsField)
     await this.entertext(selectors.getStarted.addressEnsField, address)
     await this.page.waitForTimeout(1000)
-    // if address is unknown checkbox has to be checked
-    if (isUnknownAddress) {
-      await this.click(selectors.recipientAddressUnknownCheckbox)
-    }
+  }
+
+  async holdToProceedForUnknownAddress() {
+    // For unknown addresses, the proceed button becomes a hold-to-proceed button
+    // We need to hold it for the required duration (1600ms) to agree and proceed
+    const holdButton = this.page.getByTestId('proceed-btn')
+
+    // Press and hold the button for the required duration
+    await holdButton.hover()
+    await this.page.mouse.down()
+    await this.page.waitForTimeout(2000) // Hold for 2 seconds to ensure completion
+    await this.page.mouse.up()
   }
 
   async fillForm(token: Token, recipientAddress: string) {
@@ -54,9 +62,20 @@ export class TransferPage extends BasePage {
     payWithGasTank?: boolean
     sendToken: Token
   }) {
-    // Proceed
+    // Proceed - handle both regular proceed button and hold-to-proceed button
     await this.expectButtonEnabled(selectors.proceedBtn)
-    await this.click(selectors.proceedBtn)
+
+    // Check if this is a hold-to-proceed button by looking at the button text
+    const proceedButton = this.page.getByTestId(selectors.proceedBtn)
+    const buttonText = await proceedButton.textContent()
+
+    if (buttonText?.includes('Hold to proceed')) {
+      // This is a hold-to-proceed button for unknown addresses
+      await this.holdToProceedForUnknownAddress()
+    } else {
+      // This is a regular proceed button
+      await this.click(selectors.proceedBtn)
+    }
 
     // Select Fee token and payer
     await this.clickOnMenuFeeToken(baParams.envSelectedAccount, feeToken, payWithGasTank)

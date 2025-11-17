@@ -17,7 +17,6 @@ type Props = Pick<
   | 'fromAmountValue'
   | 'fromTokenAmountSelectDisabled'
   | 'onFromAmountChange'
-  | 'setIsAutoSelectRouteDisabled'
 > & { simulationFailed?: boolean }
 
 const FromToken: FC<Props> = ({
@@ -25,7 +24,6 @@ const FromToken: FC<Props> = ({
   fromTokenValue,
   fromAmountValue,
   fromTokenAmountSelectDisabled,
-  setIsAutoSelectRouteDisabled,
   onFromAmountChange,
   simulationFailed
 }) => {
@@ -49,8 +47,6 @@ const FromToken: FC<Props> = ({
         (tokenRes: TokenResult) => getTokenId(tokenRes) === value
       )
 
-      setIsAutoSelectRouteDisabled(false)
-
       // Switch the tokens if the selected token is the same as the "to" token
       if (
         tokenToSelect &&
@@ -69,7 +65,7 @@ const FromToken: FC<Props> = ({
         params: { formValues: { fromSelectedToken: tokenToSelect } }
       })
     },
-    [portfolioTokenList, setIsAutoSelectRouteDisabled, toSelectedToken, dispatch]
+    [portfolioTokenList, toSelectedToken, dispatch]
   )
 
   const handleSetMaxFromAmount = useCallback(() => {

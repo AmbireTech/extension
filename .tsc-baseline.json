@@ -1,0 +1,644 @@
+{
+  "meta": {
+    "baselineFileVersion": 1,
+    "ignoreMessages": false
+  },
+  "errors": {
+    "11a9424bbf2bf6890b29fcde44ff08a4fceda37e": {
+      "file": "src/ambire-common/src/libs/defiPositions/providers/stkWallet.ts",
+      "code": "TS2741",
+      "count": 1,
+      "message": "Property 'source' is missing in type '{ providerName: string; chainId: bigint; iconUrl: string; siteUrl: string; type: \"common\"; positionInUSD: number | undefined; positions: Position[]; }' but required in type 'PositionsByProvider'."
+    },
+    "1df86a3e1e984759c17d357a77c86332c05dbb8b": {
+      "file": "src/ambire-common/src/libs/tracer/debugTraceCall.ts",
+      "code": "TS2345",
+      "count": 1,
+      "message": "Argument of type '{ blockTag: string; from: string; mode: DeploylessMode; isEOA: boolean; simulation: { accountOps: AccountOp[]; account: Account; state: AccountOnchainState; }; }' is not assignable to parameter of type 'Pick<GetOptions, \"blockTag\" | \"simulation\">'."
+    },
+    "14b3a97dd55943f5a067d87c7687e9ac26306064": {
+      "file": "src/benzin/screens/BenzinScreen/hooks/useBenzin/useBenzin.ts",
+      "code": "TS2322",
+      "count": 1,
+      "message": "Type 'import(\"/home/devlabs-php/Desktop/projects/ambire/extension-mobile/src/ambire-common/node_modules/ethers/lib.commonjs/providers/provider-jsonrpc\").JsonRpcProvider | null' is not assignable to type 'import(\"/home/devlabs-php/Desktop/projects/ambire/extension-mobile/node_modules/ethers/lib.commonjs/providers/provider-jsonrpc\").JsonRpcProvider | null'."
+    },
+    "b24a218ba7339c8430723ac3ec0616d75162616a": {
+      "file": "src/common/assets/svg/UnlockScreenBackground/UnlockScreenBackground.tsx",
+      "code": "TS2769",
+      "count": 2,
+      "message": "No overload matches this call."
+    },
+    "d6ed08b80a37eabbb9aa8197a8dee8f45ef0fc8f": {
+      "file": "src/common/assets/svg/UnlockScreenBackground/UnlockScreenBackground.tsx",
+      "code": "TS2322",
+      "count": 1,
+      "message": "Type '{ cx: string; cy: string; rx: string; ry: string; fill: string; transform: string; nativeID: string; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<Ellipse> & Pick<Readonly<EllipseProps>, \"strokeWidth\" | ... 60 more ... | \"testID\"> & InexactPartial<...> & InexactPartial<...>'."
+    },
+    "5e1ad51312f4f9377d22f4c5a271bd38cbe98184": {
+      "file": "src/common/assets/svg/UnlockScreenBackground/UnlockScreenBackground.tsx",
+      "code": "TS2322",
+      "count": 1,
+      "message": "Type '{ cx: string; cy: string; rx: string; ry: string; transform: string; fill: string; nativeID: string; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<Ellipse> & Pick<Readonly<EllipseProps>, \"strokeWidth\" | ... 60 more ... | \"testID\"> & InexactPartial<...> & InexactPartial<...>'."
+    },
+    "16864d004827389615c12bdafa17d7d1d351ad6f": {
+      "file": "src/common/components/AccountKeyBanner/AccountKeyBanner.tsx",
+      "code": "TS2367",
+      "count": 1,
+      "message": "This comparison appears to be unintentional because the types '\"internal\" | \"trezor\" | \"ledger\" | \"lattice\"' and '\"none\"' have no overlap."
+    },
+    "25d949069e3ef40907d918c71a8f69c126997541": {
+      "file": "src/common/components/AccountKeyIcon/AccountKeyIcon.tsx",
+      "code": "TS2367",
+      "count": 1,
+      "message": "This comparison appears to be unintentional because the types '\"internal\"' and '\"none\"' have no overlap."
+    },
+    "ef06a1206620c60394d60dfd50e69e8d772cb89e": {
+      "file": "src/common/components/AccountKeyIcons/AccountKeyIcons.tsx",
+      "code": "TS2322",
+      "count": 2,
+      "message": "Type 'string' is not assignable to type '\"internal\" | \"trezor\" | \"ledger\" | \"lattice\"'."
+    },
+    "3a7548182ab4823b285a9a27e33af57a7c6939b9": {
+      "file": "src/common/components/AmbireLogoHorizontalWithOG/AmbireLogoHorizontalOG.tsx",
+      "code": "TS2322",
+      "count": 1,
+      "message": "Type '{ id: string; x1: string; x2: string; xlinkHref: string; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<LinearGradient> & Pick<Readonly<LinearGradientProps>, \"children\" | ... 2 more ... | \"gradientTransform\"> & InexactPartial<...> & InexactPartial<...>'."
+    },
+    "64e3b1f8bc2339f60a41e02c15e342fc58669767": {
+      "file": "src/common/components/Button/Button.tsx",
+      "code": "TS2322",
+      "count": 1,
+      "message": "Type '{ primary: ({ property: string; from: number; to: number; } | { property: string; from: ColorValue; to: ColorValue; })[]; secondary: { property: \"backgroundColor\"; from: string; to: ColorValue; }[]; ... 10 more ...; gray: ({ ...; } | ... 1 more ... | { ...; })[]; }' is not assignable to type '{ primary: AnimationValues[]; info: AnimationValues[]; error: AnimationValues[]; success: AnimationValues[]; warning: AnimationValues[]; ... 7 more ...; gray: AnimationValues[]; }'."
+    },
+    "fd2108417bce251108329eb3f3f36cfd26afadab": {
+      "file": "src/common/components/ExportKey/ExportKey.tsx",
+      "code": "TS2322",
+      "count": 1,
+      "message": "Type 'string | undefined' is not assignable to type 'string'."
+    },
+    "27a6b1bddfac06c31882089da2f8dbea8ef93908": {
+      "file": "src/common/components/ScrollableWrapper/DraggableFlatList/DraggableItem.tsx",
+      "code": "TS2769",
+      "count": 1,
+      "message": "No overload matches this call."
+    },
+    "19643ef4f92f1bd69c7d9fa04fb898432fc2e9a4": {
+      "file": "src/common/components/Toggle/Toggle.web.tsx",
+      "code": "TS2322",
+      "count": 1,
+      "message": "Type '{ marginRight: string; display: \"inline-block\"; position: \"relative\"; width: string; height: string; borderRadius: string; transition: \"border 0.2s\"; background: string; } | { backfaceVisibility?: \"visible\" | ... 1 more ... | undefined; ... 86 more ...; background: string; } | { ...; }' is not assignable to type 'CSSProperties | undefined'."
+    },
+    "164eb937438f1c98634fb2c43052debc50b2afe3": {
+      "file": "src/common/components/Toggle/Toggle.web.tsx",
+      "code": "TS2322",
+      "count": 1,
+      "message": "Type '\"\" | (PerpectiveTransform | RotateTransform | RotateXTransform | RotateYTransform | RotateZTransform | ... 7 more ... | MatrixTransform)[] | Transform | \"translateX(12px)\"' is not assignable to type 'Transform | undefined'."
+    },
+    "f13fab610a8ea7d20f2b5dd0a1710f97732bee8e": {
+      "file": "src/common/components/TokenOrNft/TokenOrNft.tsx",
+      "code": "TS2345",
+      "count": 1,
+      "message": "Argument of type 'JsonRpcProvider' is not assignable to parameter of type 'SetStateAction<JsonRpcProvider | null>'."
+    },
+    "70fda8032e5a1fb839bd77313e2313be6d9f2bf1": {
+      "file": "src/common/config/env/env.ts",
+      "code": "TS2739",
+      "count": 1,
+      "message": "Type '{ APP_ENV: APP_ENV.DEV; RELAYER_URL: string; VELCRO_URL: string; SENTRY_DSN: string | undefined; NFT_CDN_URL: string; ENVIRONMENT: string; DEFAULT_KEYSTORE_PASSWORD_DEV: string; LEGENDS_NFT_ADDRESS: string; SENTRY_DSN_LEGENDS: string; SENTRY_DSN_BROWSER_EXTENSION: string; }' is missing the following properties from type 'Config': BUNGEE_API_KEY, LI_FI_API_KEY"
+    },
+    "159062a45c0e823b8be15a4de1465c5ae2d62cb6": {
+      "file": "src/common/contexts/biometricsContext/biometricsContext.tsx",
+      "code": "TS2339",
+      "count": 1,
+      "message": "Property 'children' does not exist on type '{}'."
+    },
+    "a17b28a5eb70f536760e382c5e179e3ff9f48a07": {
+      "file": "src/common/contexts/constantsContext/constantsContext.tsx",
+      "code": "TS2339",
+      "count": 1,
+      "message": "Property 'children' does not exist on type '{}'."
+    },
+    "37985672ee135bac10f9f36120e3f64b834d9b58": {
+      "file": "src/common/contexts/constantsContext/constantsContext.tsx",
+      "code": "TS2739",
+      "count": 1,
+      "message": "Type 'UseConstantsReturnType' is missing the following properties from type 'ConstantsType': tokenList, humanizerInfo, lastFetched, customTokens"
+    },
+    "be74ebe563bef9e128b6d62862be27d89b0fd561": {
+      "file": "src/common/contexts/constantsContext/constantsContext.tsx",
+      "code": "TS2339",
+      "count": 1,
+      "message": "Property 'constants' does not exist on type 'ConstantsType | null'."
+    },
+    "1f3695b70d1fd1c99659117bddf7360c51e06a20": {
+      "file": "src/common/contexts/constantsContext/constantsContext.tsx",
+      "code": "TS2339",
+      "count": 1,
+      "message": "Property 'isLoading' does not exist on type 'ConstantsType | null'."
+    },
+    "0d8ef08b1465ec3484338ece7d4adfa55a17d32b": {
+      "file": "src/common/contexts/constantsContext/constantsContext.tsx",
+      "code": "TS2339",
+      "count": 1,
+      "message": "Property 'retryFetch' does not exist on type 'ConstantsType | null'."
+    },
+    "1e8077f2dd52941634b31720017058aa0a02e343": {
+      "file": "src/common/contexts/constantsContext/constantsContext.tsx",
+      "code": "TS2339",
+      "count": 1,
+      "message": "Property 'hasError' does not exist on type 'ConstantsType | null'."
+    },
+    "11d66e0bb8ccc061fdad0d1920e830342df76633": {
+      "file": "src/common/contexts/constantsContext/constantsContext.tsx",
+      "code": "TS2339",
+      "count": 1,
+      "message": "Property 'CONSTANTS_ENDPOINT' does not exist on type 'Config'."
+    },
+    "c6c63fed2ded314c878bed788236d29a7816ecbc": {
+      "file": "src/common/contexts/contractNamesContext/contractNamesContext.tsx",
+      "code": "TS2345",
+      "count": 1,
+      "message": "Argument of type '{ (input: URL | RequestInfo, init?: RequestInit | undefined): Promise<Response>; (input: URL | RequestInfo, init?: RequestInit | undefined): Promise<...>; (input: RequestInfo, init?: RequestInit | undefined): Promise<...>; (input: string | ... 1 more ... | Request, init?: RequestInit | undefined): Promise<...>; }' is not assignable to parameter of type 'Fetch'."
+    },
+    "9c33cc3afbc518aab5a85efb142069c75c00ac48": {
+      "file": "src/common/contexts/keyboardContext/keyboardContext.tsx",
+      "code": "TS2339",
+      "count": 1,
+      "message": "Property 'children' does not exist on type '{}'."
+    },
+    "32b56f669a5f87a47049b9b53d104f072d3f3bcd": {
+      "file": "src/common/contexts/netInfoContext/netInfoContext.tsx",
+      "code": "TS2339",
+      "count": 1,
+      "message": "Property 'children' does not exist on type '{}'."
+    },
+    "97a24b84f7f6bc55a6724ea28665f663fb4bb835": {
+      "file": "src/common/contexts/netInfoContext/netInfoContext.web.tsx",
+      "code": "TS2339",
+      "count": 1,
+      "message": "Property 'children' does not exist on type '{}'."
+    },
+    "6e2392e106c13a4fd0f1465e1d81988c280a1d7f": {
+      "file": "src/common/contexts/privateModeContext/privateModeContext.tsx",
+      "code": "TS2339",
+      "count": 1,
+      "message": "Property 'children' does not exist on type '{}'."
+    },
+    "c27c8875b399697b8538222f2d0616874c0d07a4": {
+      "file": "src/common/contexts/privateModeContext/privateModeContext.tsx",
+      "code": "TS2322",
+      "count": 1,
+      "message": "Type '{ isPrivateMode: unknown; hidePrivateValue: (value: string | number) => string | number; togglePrivateMode: () => void; }' is not assignable to type 'UsePrivateModeReturnType'."
+    },
+    "0a23f0692386aff9bdaa9fd3a3e2e00bf436cdd1": {
+      "file": "src/common/hooks/useLoader/useLoader.ts",
+      "code": "TS2307",
+      "count": 1,
+      "message": "Cannot find module '@common/contexts/loaderContext' or its corresponding type declarations."
+    },
+    "2298a82437cc025c1f2eabac483e46dbc130a694": {
+      "file": "src/common/hooks/useNavigation/useNavigation.tsx",
+      "code": "TS2739",
+      "count": 1,
+      "message": "Type '{ navigate: (to: string, options?: NavigateOptions | undefined) => void; canGoBack: boolean; reset: (state: Readonly<{ key: string; index: number; routeNames: never[]; history?: unknown[] | undefined; routes: NavigationRoute<...>[]; type: string; stale: false; }> | PartialState<...>) => void; ... 9 more ...; removeL...' is missing the following properties from type 'UseNavigationReturnTypeCommon': searchParams, setSearchParams"
+    },
+    "6affbe13ebdb7c6a885ca81c65ff33277f6fa35b": {
+      "file": "src/common/hooks/useNavigation/useNavigation.web.tsx",
+      "code": "TS2339",
+      "count": 1,
+      "message": "Property 'headerTitle' does not exist on type 'Partial<{}>'."
+    },
+    "cfd67043a0411fd30519f0232fbab2ca846af0e4": {
+      "file": "src/common/hooks/usePrevious/usePrevious.ts",
+      "code": "TS2322",
+      "count": 1,
+      "message": "Type 'T | undefined' is not assignable to type 'T'."
+    },
+    "195afe5ee9094ac0698ccc5c30ed362ced65316f": {
+      "file": "src/common/hooks/useRelayerData/useRelayerData.ts",
+      "code": "TS2769",
+      "count": 1,
+      "message": "No overload matches this call."
+    },
+    "529ae406a0b9abce8541f2d8d5f67b8df732bfa1": {
+      "file": "src/common/hooks/useRoute/useRoute.tsx",
+      "code": "TS18047",
+      "count": 1,
+      "message": "'navigationRef.current' is possibly 'null'."
+    },
+    "286480fc58873e4961ea40383a9a658260e48340": {
+      "file": "src/common/modules/app-init/components/AppRouter/AppRouter.tsx",
+      "code": "TS2307",
+      "count": 1,
+      "message": "Cannot find module '@mobile/modules/router/Router' or its corresponding type declarations."
+    },
+    "9686938c140818193b6b115c5633d969a0cb64f4": {
+      "file": "src/common/modules/dashboard/components/Activity/ActivityPositions.tsx",
+      "code": "TS2322",
+      "count": 1,
+      "message": "Type 'ColorValue' is not assignable to type 'Color | undefined'."
+    },
+    "3293e888bed960e610c3f317f77d382de56b9d04": {
+      "file": "src/common/modules/dashboard/components/Collections/Collections.tsx",
+      "code": "TS2322",
+      "count": 1,
+      "message": "Type '0n | ReactNode' is not assignable to type 'ReactNode'."
+    },
+    "65ac42edf8de973f4d686191c7bd3848909eb326": {
+      "file": "src/common/modules/dashboard/components/DeFiPositions/DeFiProviderPosition/DeFiProviderPosition.tsx",
+      "code": "TS2741",
+      "count": 1,
+      "message": "Property 'source' is missing in type '{ providerName: string; chainId: bigint; toggleExpanded: () => void; isExpanded: boolean; positionInUSD: string; healthRate: any; iconUrl: string; siteUrl: string; }' but required in type 'Omit<PositionsByProvider, \"type\" | \"positionInUSD\" | \"positions\">'."
+    },
+    "0328d58853a730b8a2799f779b88d96cc2690140": {
+      "file": "src/common/modules/dashboard/components/DeFiPositions/DeFiProviderPosition/DeFiProviderPosition.tsx",
+      "code": "TS2741",
+      "count": 1,
+      "message": "Property 'source' is missing in type '{ key: string; withTopBorder: boolean; id: string; type: \"common\" | \"locked\" | \"lending\" | \"leveraged_farming\" | \"vesting\" | \"reward\" | \"options_seller\" | \"options_buyer\" | \"insurance_seller\" | ... 4 more ... | \"nft_fraction\"; ... 5 more ...; positionInUSD: string; }' but required in type 'Omit<PositionsByProvider, \"positionInUSD\" | \"iconUrl\" | \"positions\">'."
+    },
+    "32220c9262adc3e59b8190634b99669fbbffc0aa": {
+      "file": "src/common/modules/dashboard/components/Gradients/Gradient/Gradient.web.tsx",
+      "code": "TS2769",
+      "count": 1,
+      "message": "No overload matches this call."
+    },
+    "9e1fa4675f5a7fab129985ee167ea9dd6763ab3c": {
+      "file": "src/common/modules/dashboard/components/Routes/RouteItem/RouteItem.tsx",
+      "code": "TS2769",
+      "count": 1,
+      "message": "No overload matches this call."
+    },
+    "b48b1fcc8082e9894f2925ac1a8fd43c0b19075e": {
+      "file": "src/common/modules/dashboard/components/Routes/Routes.tsx",
+      "code": "TS2307",
+      "count": 1,
+      "message": "Cannot find module '@common/assets/images/rewards-bg.png' or its corresponding type declarations."
+    },
+    "aa3b92b25b6a264607ae1cf6055429464cd75f5c": {
+      "file": "src/common/modules/dashboard/components/TabsAndSearch/Tabs/Tabs.tsx",
+      "code": "TS2454",
+      "count": 1,
+      "message": "Variable 'badgeTextAppearance' is used before being assigned."
+    },
+    "2355b57516b42ba55330bd63d332782912f9ff7f": {
+      "file": "src/common/modules/dashboard/components/Tokens/TokenItem/RewardsTokenItem.tsx",
+      "code": "TS2322",
+      "count": 1,
+      "message": "Type 'StyleProp<ViewStyle> | ((state: PressableStateCallbackType) => StyleProp<ViewStyle>)' is not assignable to type 'Falsy | ViewStyle | RegisteredStyle<ViewStyle> | RecursiveArray<Falsy | ViewStyle | RegisteredStyle<ViewStyle>> | readonly (Falsy | ... 1 more ... | RegisteredStyle<...>)[]'."
+    },
+    "ce5486ce59b2b17cc61322826654736fc7f789ec": {
+      "file": "src/common/modules/dashboard/components/Tokens/Tokens.tsx",
+      "code": "TS2322",
+      "count": 1,
+      "message": "Type '0n | ReactNode' is not assignable to type 'ReactNode'."
+    },
+    "c920c5054e7de692eb760dcc445272ecab8182cf": {
+      "file": "src/common/modules/router/config/routesConfig/routesConfig.ts",
+      "code": "TS2740",
+      "count": 1,
+      "message": "Type '{ [x: string]: { route: string; title: string; name: string; } | { route: string; title: string; name: string; withTitlePrefix: boolean; }; }' is missing the following properties from type 'RouteConfig': keyStoreUnlock, getStarted, accountPicker, dashboard, and 49 more."
+    },
+    "e06b4537dbb4defee7a8ea76f93e64c5fcda3dac": {
+      "file": "src/common/styles/utils/text.ts",
+      "code": "TS2741",
+      "count": 1,
+      "message": "Property 'highlightPrimary' is missing in type '{ center: { textAlign: \"center\"; }; right: { textAlign: \"right\"; }; left: { textAlign: \"left\"; }; uppercase: { textTransform: \"uppercase\"; }; capitalize: { textTransform: \"capitalize\"; }; italic: { fontStyle: \"italic\"; }; underline: { ...; }; }' but required in type 'Styles'."
+    },
+    "25a596b64764feb5ec6d9618a7d209ec55cd05ad": {
+      "file": "src/web/components/AmbireSmallWhiteLogo/AmbireSmallWhiteLogo.tsx",
+      "code": "TS2307",
+      "count": 1,
+      "message": "Cannot find module '@web/assets/svg/ambire-white-small-logo.svg' or its corresponding type declarations."
+    },
+    "ceac886de1ba7df9ad46666e7b40c543ffdb4068": {
+      "file": "src/web/extension-services/background/webapi/sessionStorage.ts",
+      "code": "TS2322",
+      "count": 1,
+      "message": "Type '{ get: (key: string, defaultValue: any) => any; set: (key: string, value: any) => Promise<null>; remove: (key: string) => Promise<null>; } | { get: (key?: string | undefined, defaultValue?: any) => Promise<...>; set: (key: string, value: any) => Promise<...>; remove: (key: string) => Promise<...>; }' is not assignable to type 'Storage'."
+    },
+    "b1058738c3b8897df5dd7a1c6c37b02ad5addbdd": {
+      "file": "src/web/extension-services/background/webapi/storage.ts",
+      "code": "TS2322",
+      "count": 1,
+      "message": "Type '{ get: (key: string, defaultValue: any) => any; set: (key: string, value: any) => Promise<null>; remove: (key: string) => Promise<null>; } | { get: (key: string, defaultValue?: any) => Promise<...>; set: (key: string, value: any) => Promise<...>; remove: (key: string) => Promise<...>; }' is not assignable to type 'Storage'."
+    },
+    "125671419c26520e062e2e0b391cf3742e411875": {
+      "file": "src/web/extension-services/content-script/content-script-ambire-injection.ts",
+      "code": "TS2451",
+      "count": 1,
+      "message": "Cannot redeclare block-scoped variable 'injectProviderScript'."
+    },
+    "77e2c9656d42d81f91a581e0868ce80a0a7a6231": {
+      "file": "src/web/extension-services/content-script/content-script-ethereum-injection.ts",
+      "code": "TS2451",
+      "count": 1,
+      "message": "Cannot redeclare block-scoped variable 'injectProviderScript'."
+    },
+    "eb76f44360860f71f1d1674405c780d6e033524e": {
+      "file": "src/web/extension-services/inpage/EthereumProvider.ts",
+      "code": "TS7006",
+      "count": 3,
+      "message": "Parameter 'data' implicitly has an 'any' type."
+    },
+    "9673e850d1c24c75e4b10044c3a6b398b61ed013": {
+      "file": "src/web/extension-services/inpage/EthereumProvider.ts",
+      "code": "TS18048",
+      "count": 8,
+      "message": "'response' is possibly 'undefined'."
+    },
+    "64bebb6c9560b3e4a6a7c536d2abb0270eb457a4": {
+      "file": "src/web/extension-services/inpage/EthereumProvider.ts",
+      "code": "TS2339",
+      "count": 1,
+      "message": "Property 'id' does not exist on type 'boolean | { id: number; error: Error; result?: undefined; } | { id: number; error?: undefined; result: any; }'."
+    },
+    "07a96e9017d551e9e9d261b24c31e7b71ff1a7ff": {
+      "file": "src/web/extension-services/inpage/EthereumProvider.ts",
+      "code": "TS2339",
+      "count": 5,
+      "message": "Property 'error' does not exist on type 'boolean | { id: number; error: Error; result?: undefined; } | { id: number; error?: undefined; result: any; }'."
+    },
+    "1d5c889bf1876ecc6a422319b12ede2164f8feaa": {
+      "file": "src/web/extension-services/inpage/EthereumProvider.ts",
+      "code": "TS2339",
+      "count": 2,
+      "message": "Property 'result' does not exist on type 'boolean | { id: number; error: Error; result?: undefined; } | { id: number; error?: undefined; result: any; }'."
+    },
+    "551de82805823c52c86b6c745c7d3f833bd8625b": {
+      "file": "src/web/extension-services/inpage/EthereumProvider.ts",
+      "code": "TS7030",
+      "count": 1,
+      "message": "Not all code paths return a value."
+    },
+    "2c4fbe8f305132535c3af386ac584d281cb59381": {
+      "file": "src/web/extension-services/inpage/EthereumProvider.ts",
+      "code": "TS7006",
+      "count": 2,
+      "message": "Parameter 'payload' implicitly has an 'any' type."
+    },
+    "1d8bd29e3ba5594e20495cc5161a5071e3b11864": {
+      "file": "src/web/extension-services/inpage/EthereumProvider.ts",
+      "code": "TS7006",
+      "count": 2,
+      "message": "Parameter 'callback' implicitly has an 'any' type."
+    },
+    "27e1de75818bd466f4392d122c811fd34eaea47b": {
+      "file": "src/web/extension-services/inpage/EthereumProvider.ts",
+      "code": "TS7006",
+      "count": 1,
+      "message": "Parameter 'err' implicitly has an 'any' type."
+    },
+    "1302f5541817737cb1137be17110a037b15abc88": {
+      "file": "src/web/extension-services/inpage/EthereumProvider.ts",
+      "code": "TS7006",
+      "count": 1,
+      "message": "Parameter 'res' implicitly has an 'any' type."
+    },
+    "483c7f0c80ed1280a29e12d81bd7dec573e2cc8a": {
+      "file": "src/web/extension-services/inpage/EthereumProvider.ts",
+      "code": "TS7053",
+      "count": 1,
+      "message": "Element implicitly has an 'any' type because expression of type 'string' can't be used to index type 'EthereumProvider'."
+    },
+    "7e758bca833b1ddf84c026d4121520c28b31dee1": {
+      "file": "src/web/extension-services/messengers/initializeMessenger.ts",
+      "code": "TS2305",
+      "count": 1,
+      "message": "Module '\"@web/extension-services/messengers/utils/detectScriptType\"' has no exported member 'ScriptType'."
+    },
+    "abb309d2c3ca65474c2c834d82f0cc73524dd0a1": {
+      "file": "src/web/extension-services/messengers/internal/bridge.ts",
+      "code": "TS7030",
+      "count": 1,
+      "message": "Not all code paths return a value."
+    },
+    "48242df58fa2e5c38f06f176f82be9449979d0a3": {
+      "file": "src/web/modules/account-picker/screens/AccountPickerScreen/AccountPickerScreen.tsx",
+      "code": "TS2740",
+      "count": 1,
+      "message": "Type 'Pick<AccountPickerController, PublicKeys<AccountPickerController>> & EventEmitter' is missing the following properties from type 'AccountPickerController': #callRelayer, #accounts, #keystore, #networks, and 21 more."
+    },
+    "c2d8ce202b51f254397bbac2fa5d246ea3e69cfd": {
+      "file": "src/web/modules/action-requests/screens/WatchTokenRequestScreen/WatchTokenRequestScreen.tsx",
+      "code": "TS2339",
+      "count": 1,
+      "message": "Property 'priceIn' does not exist on type '\"\" | TokenResult'."
+    },
+    "2115cea0c397b15d59aea2fe2fcfca71832c2118": {
+      "file": "src/web/modules/action-requests/screens/WatchTokenRequestScreen/WatchTokenRequestScreen.tsx",
+      "code": "TS2339",
+      "count": 1,
+      "message": "Property 'balance' does not exist on type '\"\" | { isPending?: boolean | undefined; pendingToBeSigned?: bigint | undefined; pendingToBeConfirmed?: bigint | undefined; pendingBalance?: string | undefined; pendingBalanceFormatted?: string | undefined; ... 13 more ...; isProjectedRewards: boolean; }'."
+    },
+    "c3016138af2ef5655c49cae6bb48a4de6e3e7b88": {
+      "file": "src/web/modules/action-requests/screens/WatchTokenRequestScreen/WatchTokenRequestScreen.tsx",
+      "code": "TS2339",
+      "count": 1,
+      "message": "Property 'priceUSDFormatted' does not exist on type '\"\" | { isPending?: boolean | undefined; pendingToBeSigned?: bigint | undefined; pendingToBeConfirmed?: bigint | undefined; pendingBalance?: string | undefined; pendingBalanceFormatted?: string | undefined; ... 13 more ...; isProjectedRewards: boolean; }'."
+    },
+    "eb1679332fc176d8c106ab13fc85c4550d613f2c": {
+      "file": "src/web/modules/action-requests/screens/WatchTokenRequestScreen/WatchTokenRequestScreen.tsx",
+      "code": "TS2339",
+      "count": 1,
+      "message": "Property 'balanceUSDFormatted' does not exist on type '\"\" | { isPending?: boolean | undefined; pendingToBeSigned?: bigint | undefined; pendingToBeConfirmed?: bigint | undefined; pendingBalance?: string | undefined; pendingBalanceFormatted?: string | undefined; ... 13 more ...; isProjectedRewards: boolean; }'."
+    },
+    "cd0e5b55e69b120da5168c7e75060b33845ba4ea": {
+      "file": "src/web/modules/action-requests/screens/WatchTokenRequestScreen/utils/index.ts",
+      "code": "TS2873",
+      "count": 2,
+      "message": "This kind of expression is always falsy."
+    },
+    "c38f2b61ee1c2a6da36f4310504bd519bfd7150b": {
+      "file": "src/web/modules/auth/components/PinExtension/PinExtension.tsx",
+      "code": "TS2307",
+      "count": 1,
+      "message": "Cannot find module '@web/assets/images/xicon@128.png' or its corresponding type declarations."
+    },
+    "9a256e339db9e1cb908b0d6309f1b9f0cd423268": {
+      "file": "src/web/modules/auth/screens/EmailLoginScreen/EmailLoginScreen.tsx",
+      "code": "TS2741",
+      "count": 1,
+      "message": "Property 'children' is missing in type '{}' but required in type 'TabLayoutWrapperMainContentProps'."
+    },
+    "2c9153723bbc636c039d71fce7fb347d09575e72": {
+      "file": "src/web/modules/auth/screens/EmailRegisterScreen/EmailRegisterScreen.tsx",
+      "code": "TS2741",
+      "count": 1,
+      "message": "Property 'children' is missing in type '{}' but required in type 'TabLayoutWrapperMainContentProps'."
+    },
+    "39c31e37bf532befccb847a550760d81ab9c5277": {
+      "file": "src/web/modules/hardware-wallet/controllers/LatticeController/LatticeController.ts",
+      "code": "TS2420",
+      "count": 1,
+      "message": "Class 'LatticeController' incorrectly implements interface 'ExternalSignerController'."
+    },
+    "04542ab022ee36c39eeecc123af99edef2750c65": {
+      "file": "src/web/modules/hardware-wallet/controllers/LatticeController/LatticeController.ts",
+      "code": "TS2339",
+      "count": 1,
+      "message": "Property 'EIP7702_AUTH' does not exist on type '{ readonly NONE: LatticeSignEncoding.none; readonly SOLANA: LatticeSignEncoding.solana; readonly EVM: LatticeSignEncoding.evm; readonly ETH_DEPOSIT: LatticeSignEncoding.eth_deposit; }'."
+    },
+    "21797c77e7b6759a2968b0f73b86bccc9a1362f6": {
+      "file": "src/web/modules/hardware-wallet/controllers/LatticeController/LatticeController.ts",
+      "code": "TS2339",
+      "count": 1,
+      "message": "Property 'getYParity' does not exist on type '{ fetchCalldataDecoder: (_data: string | Uint8Array<ArrayBufferLike>, to: string, _chainId: string | number, recurse?: boolean | undefined) => Promise<...>; generateAppSecret: (deviceId: string | Buffer<...>, password: string | Buffer<...>, appName: string | Buffer<...>) => Buffer<...>; getV: (tx: any, resp: any) =>...'."
+    },
+    "f6f73ef66989bafb4675956efd78d77e13b65f5d": {
+      "file": "src/web/modules/hardware-wallet/controllers/LatticeController/LatticeController.ts",
+      "code": "TS7006",
+      "count": 1,
+      "message": "Parameter 'id' implicitly has an 'any' type."
+    },
+    "320e19602da9f0c598fb3d33f53ca034693d6647": {
+      "file": "src/web/modules/hardware-wallet/controllers/LatticeController/LatticeController.ts",
+      "code": "TS7006",
+      "count": 1,
+      "message": "Parameter 'tab' implicitly has an 'any' type."
+    },
+    "04f4209d8736f1f295b6ca38cc13ca2fa2c16dc7": {
+      "file": "src/web/modules/hardware-wallet/controllers/LatticeController/LatticeController.ts",
+      "code": "TS2339",
+      "count": 1,
+      "message": "Property 'stateData' does not exist on type '{ name: string; baseUrl: any; timeout: number; privKey: Buffer<ArrayBufferLike>; skipRetryOnWrongWallet: boolean; }'."
+    },
+    "6b2398f84732fd3576fbd73341f13f2e85a4b5c5": {
+      "file": "src/web/modules/hardware-wallet/libs/LatticeSigner/LatticeSigner.ts",
+      "code": "TS2345",
+      "count": 2,
+      "message": "Argument of type 'Buffer<ArrayBufferLike>' is not assignable to parameter of type 'string'."
+    },
+    "5d6ebff030478ddd93adf7a977fc2658a29c57d5": {
+      "file": "src/web/modules/hardware-wallet/libs/LatticeSigner/LatticeSigner.ts",
+      "code": "TS2345",
+      "count": 1,
+      "message": "Argument of type 'Buffer<ArrayBufferLike>' is not assignable to parameter of type 'BigNumberish'."
+    },
+    "1bc06ebb3a64bf86876482526e2d1497a8f4b87c": {
+      "file": "src/web/modules/hardware-wallet/libs/LatticeSigner/LatticeSigner.ts",
+      "code": "TS2339",
+      "count": 1,
+      "message": "Property 'EIP7702_AUTH_LIST' does not exist on type '{ readonly NONE: LatticeSignEncoding.none; readonly SOLANA: LatticeSignEncoding.solana; readonly EVM: LatticeSignEncoding.evm; readonly ETH_DEPOSIT: LatticeSignEncoding.eth_deposit; }'."
+    },
+    "b435474fd26cd8113291bbb6ee83c83a438a7603": {
+      "file": "src/web/modules/hardware-wallet/libs/TrezorSigner/TrezorSigner.ts",
+      "code": "TS2416",
+      "count": 1,
+      "message": "Property 'key' in type 'TrezorSigner' is not assignable to the same property in base type 'KeystoreSignerInterface'."
+    },
+    "2d9441664eb7a2cd8342b07189351b48377ea928": {
+      "file": "src/web/modules/keystore/components/KeyStoreSetNewPasswordForm/KeystoreSetNewPasswordForm.tsx",
+      "code": "TS2322",
+      "count": 1,
+      "message": "Type 'string | undefined' is not assignable to type 'string'."
+    },
+    "89db26b74682c4539fcac290db7db77cea453713": {
+      "file": "src/web/modules/settings/screens/AccountsSettingsScreen/AccountsSettingsScreen.tsx",
+      "code": "TS2353",
+      "count": 1,
+      "message": "Object literal may only specify known properties, and 'cursor' does not exist in type 'ViewStyle | RecursiveArray<Falsy | ViewStyle | RegisteredStyle<ViewStyle>> | readonly (Falsy | ViewStyle | RegisteredStyle<...>)[]'."
+    },
+    "023dcf94cdf7b23da92b2ef5c21f74d43a074e07": {
+      "file": "src/web/modules/settings/screens/AccountsSettingsScreen/AccountsSettingsScreen.tsx",
+      "code": "TS2322",
+      "count": 1,
+      "message": "Type '(item: AccountInterface, index: number, isDragging: boolean, listeners: any, attributes: any) => React.JSX.Element' is not assignable to type 'ListRenderItem<any> & SectionListRenderItem<any, any> & ((item: any, index: number, isDragging: boolean, listeners: any, attributes: any) => ReactElement<...> | null)'."
+    },
+    "34535a751dfa836a4695f129b44c7b5c94d01dc6": {
+      "file": "src/web/modules/settings/screens/DevicePasswordSetSettingsScreen/DevicePasswordSetSettingsScreen.tsx",
+      "code": "TS2322",
+      "count": 1,
+      "message": "Type '{ isKeystoreReady: boolean; isKeystoreSetupLoading: boolean; formState: FormState<{ password: string; confirmPassword: string; }>; control: Control<{ password: string; confirmPassword: string; }, any>; ... 4 more ...; onContinue: () => void; }' is not assignable to type 'IntrinsicAttributes & Props'."
+    },
+    "954a743a20f31f0ccf44c58ed03161be49655e8d": {
+      "file": "src/web/modules/settings/screens/ManageTokensSettingsScreen/AddTokenBottomSheet/AddTokenBottomSheet.tsx",
+      "code": "TS2339",
+      "count": 3,
+      "message": "Property 'address' does not exist on type '\"\" | TokenResult'."
+    },
+    "3a09ae73244dc9b277af023e08d4f51dd76b4c25": {
+      "file": "src/web/modules/settings/screens/ManageTokensSettingsScreen/AddTokenBottomSheet/AddTokenBottomSheet.tsx",
+      "code": "TS2339",
+      "count": 3,
+      "message": "Property 'symbol' does not exist on type '\"\" | TokenResult'."
+    },
+    "d4d9c3ebe257b616a6a9201c5b72752084da69c9": {
+      "file": "src/web/modules/settings/screens/ManageTokensSettingsScreen/AddTokenBottomSheet/AddTokenBottomSheet.tsx",
+      "code": "TS2339",
+      "count": 2,
+      "message": "Property 'decimals' does not exist on type '\"\" | TokenResult'."
+    },
+    "95a5fab5719bbc553b875549257bd20e81d17746": {
+      "file": "src/web/modules/settings/screens/ManageTokensSettingsScreen/AddTokenBottomSheet/AddTokenBottomSheet.tsx",
+      "code": "TS2339",
+      "count": 1,
+      "message": "Property 'priceIn' does not exist on type '\"\" | TokenResult'."
+    },
+    "c89559ed0446323652dcca6cb4c96f105ddbb3d9": {
+      "file": "src/web/modules/settings/screens/SecurityAndPrivacyScreen/components/SavedSeedControlOption.tsx",
+      "code": "TS2339",
+      "count": 1,
+      "message": "Property 'savedSeed' does not exist on type '{ keyStoreUnlock: string; getStarted: string; accountPicker: string; dashboard: string; earn: string; transfer: string; topUpGasTank: string; signAccountOp: string; transactions: string; signedMessages: string; ... 42 more ...; onboardingCompleted: string; }'."
+    },
+    "8c18f4fe670c807b30b437dc2cc87be9340b20fc": {
+      "file": "src/web/modules/settings/screens/SecurityAndPrivacyScreen/components/SavedSeedControlOption.tsx",
+      "code": "TS2551",
+      "count": 3,
+      "message": "Property 'hasKeystoreSavedSeed' does not exist on type 'IKeystoreController'. Did you mean 'hasKeystoreTempSeed'?"
+    },
+    "64d5bb7f37743ec9989f466d85d6974962b7224e": {
+      "file": "src/web/modules/sign-account-op/components/CustomFee/CustomFee.tsx",
+      "code": "TS2307",
+      "count": 1,
+      "message": "Cannot find module '@web/modules/sign-account-op/components/FeeWrapper' or its corresponding type declarations."
+    },
+    "adb1455ed0165cfb3cf6aa6d395d5beaa7cd9dd1": {
+      "file": "src/web/modules/sign-account-op/components/Modals/Modals.tsx",
+      "code": "TS2322",
+      "count": 1,
+      "message": "Type '\"internal\" | \"trezor\" | \"ledger\" | \"lattice\" | null | undefined' is not assignable to type '\"internal\" | \"trezor\" | \"ledger\" | \"lattice\" | undefined'."
+    },
+    "d99f6fbfd812467bd24ff4d73a37f8b23e006bb2": {
+      "file": "src/web/modules/sign-account-op/components/OneClick/BatchModal/index.ts",
+      "code": "TS2307",
+      "count": 1,
+      "message": "Cannot find module './BatchModal' or its corresponding type declarations."
+    },
+    "d659258c6c156e0dce38d3dc759badec3e800227": {
+      "file": "src/web/modules/sign-account-op/components/SignAccountOpHardwareWalletSigningModal/SignAccountOpHardwareWalletSigningModal.tsx",
+      "code": "TS2365",
+      "count": 1,
+      "message": "Operator '>' cannot be applied to types 'number' and '{}'."
+    },
+    "c5e5cb068467b9b5682d73220f3a18247ede5eb6": {
+      "file": "src/web/modules/sign-account-op/components/SignAccountOpHardwareWalletSigningModal/SignAccountOpHardwareWalletSigningModal.tsx",
+      "code": "TS2322",
+      "count": 1,
+      "message": "Type '\"internal\" | \"trezor\" | \"ledger\" | \"lattice\"' is not assignable to type '\"trezor\" | \"ledger\" | \"lattice\"'."
+    },
+    "d757bfe4d020a40796eabe2dad66c5a408eb459d": {
+      "file": "src/web/modules/swap-and-bridge/screens/SwapAndBridgeScreen/SwapAndBridgeScreen.tsx",
+      "code": "TS2322",
+      "count": 2,
+      "message": "Type 'number | null' is not assignable to type 'bigint | undefined'."
+    },
+    "ac364911b8c93dfc1ff4e00b0c971aefee70481f": {
+      "file": "src/web/utils/persistStore.ts",
+      "code": "TS2345",
+      "count": 1,
+      "message": "Argument of type 'Promise<null>' is not assignable to parameter of type 'Function'."
+    },
+    "8863cd4cb745358e00f8e6f3faea3dba8097ac34": {
+      "file": "src/web/utils/persistStore.ts",
+      "code": "TS7053",
+      "count": 1,
+      "message": "Element implicitly has an 'any' type because expression of type 'string | symbol' can't be used to index type '{}'."
+    },
+    "21cb7b44cace10b71d017bcaa8a66ee4bbb27515": {
+      "file": "src/web/utils/uiType.ts",
+      "code": "TS7053",
+      "count": 1,
+      "message": "Element implicitly has an 'any' type because expression of type '`is${string}`' can't be used to index type 'UiTypeCheck'."
+    }
+  }
+}
