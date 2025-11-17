@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { Linking, Pressable, View } from 'react-native'
 
 import { getCoinGeckoTokenUrl } from '@ambire-common/consts/coingecko'
+import { BlacklistedStatus } from '@ambire-common/interfaces/phishing'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import useBenzinNetworksContext from '@benzin/hooks/useBenzinNetworksContext'
 // import AddressBookIcon from '@common/assets/svg/AddressBookIcon'
@@ -29,11 +30,19 @@ interface Props extends TextProps {
   address: string
   chainId?: bigint
   hideLinks?: boolean
+  verification?: BlacklistedStatus
 }
 
 const { isActionWindow } = getUiType()
 
-const BaseAddress: FC<Props> = ({ children, address, chainId, hideLinks = false, ...rest }) => {
+const BaseAddress: FC<Props> = ({
+  children,
+  address,
+  chainId,
+  hideLinks = false,
+  verification,
+  ...rest
+}) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { addToast } = useToast()
@@ -44,6 +53,7 @@ const BaseAddress: FC<Props> = ({ children, address, chainId, hideLinks = false,
   const actualNetworks = networks ?? benzinNetworks
   const network = actualNetworks?.find((n) => n.chainId === chainId)
 
+  console.log(address, verification)
   const handleCopyAddress = useCallback(async () => {
     try {
       await setStringAsync(address)
@@ -87,7 +97,13 @@ const BaseAddress: FC<Props> = ({ children, address, chainId, hideLinks = false,
 
   return (
     <View style={[flexbox.alignCenter, flexbox.directionRow, flexbox.flex1]}>
-      <Text fontSize={14} weight="medium" appearance="primaryText" selectable {...rest}>
+      <Text
+        fontSize={14}
+        weight="medium"
+        appearance={verification === 'BLACKLISTED' ? 'errorText' : 'primaryText'}
+        selectable
+        {...rest}
+      >
         {children}
         <Pressable style={spacings.mlMi}>
           {({ hovered }: any) => (

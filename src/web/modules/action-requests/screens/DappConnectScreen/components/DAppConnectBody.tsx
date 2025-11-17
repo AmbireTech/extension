@@ -2,6 +2,7 @@ import React, { FC, useCallback, useMemo } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
+import { BlacklistedStatus } from '@ambire-common/interfaces/phishing'
 import CheckIcon from '@common/assets/svg/CheckIcon'
 import ErrorIcon from '@common/assets/svg/ErrorIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
@@ -22,7 +23,7 @@ const DAppConnectBody: FC<{
   confirmedRiskCheckbox: boolean
   setConfirmedRiskCheckbox: React.Dispatch<React.SetStateAction<boolean>>
   responsiveSizeMultiplier: number
-  securityCheck: 'BLACKLISTED' | 'VERIFIED' | 'LOADING' | 'FAILED_TO_GET'
+  securityCheck: BlacklistedStatus
 }> = ({
   confirmedRiskCheckbox,
   setConfirmedRiskCheckbox,

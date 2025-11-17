@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import { Dapp, DappProviderRequest } from '@ambire-common/interfaces/dapp'
+import { BlacklistedStatus } from '@ambire-common/interfaces/phishing'
 import ErrorFilledIcon from '@common/assets/svg/ErrorFilledIcon'
 import ManifestFallbackIcon from '@common/assets/svg/ManifestFallbackIcon'
 import WarningFilledIcon from '@common/assets/svg/WarningFilledIcon'
@@ -20,7 +21,7 @@ import TrustedIcon from './TrustedIcon'
 
 type Props = Partial<DappProviderRequest['session']> & {
   responsiveSizeMultiplier: number
-  securityCheck: 'BLACKLISTED' | 'VERIFIED' | 'LOADING' | 'FAILED_TO_GET'
+  securityCheck: BlacklistedStatus
 }
 
 const DAppConnectHeader: FC<Props> = ({
