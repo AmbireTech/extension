@@ -59,7 +59,6 @@ const SwapAndBridgeScreen = () => {
     setHasBroadcasted,
     displayedView,
     closeEstimationModalWrapped,
-    setIsAutoSelectRouteDisabled,
     isBridge,
     setShowAddedToBatch,
     batchNetworkUserRequestsCount,
@@ -75,7 +74,6 @@ const SwapAndBridgeScreen = () => {
     shouldEnableRoutesSelection,
     updateQuoteStatus,
     signAccountOpController,
-    isAutoSelectRouteDisabled,
     hasProceeded,
     swapSignErrors,
     quote
@@ -264,21 +262,15 @@ const SwapAndBridgeScreen = () => {
               fromAmountValue={fromAmountValue}
               fromTokenAmountSelectDisabled={fromTokenAmountSelectDisabled}
               onFromAmountChange={onFromAmountChange}
-              setIsAutoSelectRouteDisabled={setIsAutoSelectRouteDisabled}
               simulationFailed={!!fromChainSimulationError}
             />
           </View>
-          <ToToken
-            isAutoSelectRouteDisabled={isAutoSelectRouteDisabled}
-            setIsAutoSelectRouteDisabled={setIsAutoSelectRouteDisabled}
-            simulationFailed={!!toChainSimulationError}
-          />
+          <ToToken simulationFailed={!!toChainSimulationError} />
         </Form>
         <RouteInfo
           isEstimatingRoute={isEstimatingRoute}
           openRoutesModal={openRoutesModal}
           shouldEnableRoutesSelection={shouldEnableRoutesSelection}
-          isAutoSelectRouteDisabled={isAutoSelectRouteDisabled}
         />
       </Content>
       <RoutesModal sheetRef={routesModalRef} closeBottomSheet={closeRoutesModal} />
