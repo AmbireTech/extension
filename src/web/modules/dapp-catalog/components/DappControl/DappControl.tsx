@@ -73,12 +73,7 @@ const DappControl = ({
             <View>
               {dapp.blacklisted === 'BLACKLISTED' && (
                 <View
-                  style={{
-                    position: 'absolute',
-                    right: -2,
-                    top: -2,
-                    zIndex: 1
-                  }}
+                  style={{ position: 'absolute', right: -3, top: -2, zIndex: 1 }}
                   // @ts-ignore
                   dataSet={{
                     tooltipId: 'blacklisted-app-tooltip',

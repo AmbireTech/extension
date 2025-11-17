@@ -1,14 +1,38 @@
 import React from 'react'
-import Svg, { Path, SvgProps } from 'react-native-svg'
+import Svg, { G, Path, SvgProps } from 'react-native-svg'
 
-const ErrorFilledIcon: React.FC<SvgProps> = ({ width = 14, height = 14 }) => (
-  <Svg width={width} height={height} fill="none" viewBox="0 0 14 14">
-    <Path
-      d="M182.384,105.486l-2.87-2.87A2.433,2.433,0,0,0,178.03,102h-4.06a2.433,2.433,0,0,0-1.484.616l-2.87,2.87A2.432,2.432,0,0,0,169,106.97v4.06a2.432,2.432,0,0,0,.616,1.484l2.87,2.87a2.432,2.432,0,0,0,1.484.616h4.06a2.433,2.433,0,0,0,1.484-.616l2.87-2.87A2.431,2.431,0,0,0,183,111.03v-4.06A2.432,2.432,0,0,0,182.384,105.486Zm-3.563,5.593a.528.528,0,0,1,0,.742.524.524,0,0,1-.742,0L176,109.742l-2.079,2.079a.524.524,0,0,1-.742,0,.528.528,0,0,1,0-.742L175.258,109l-2.079-2.079a.525.525,0,0,1,.742-.742L176,108.258l2.079-2.079a.525.525,0,0,1,.742.742L176.742,109Z"
-      transform="translate(-169 -102)"
-      fill="#ea0129"
-    />
-  </Svg>
-)
+import useTheme from '@common/hooks/useTheme'
 
+const ErrorFilledIcon: React.FC<SvgProps> = ({ width = 14, height = 14 }) => {
+  const { theme } = useTheme()
+  return (
+    <Svg width={width} height={height} fill="none" viewBox="0 0 20 20">
+      <G id="error" transform="translate(-617.949 -1686.25)">
+        <Path
+          d="M34.9,102H29.1a3.475,3.475,0,0,0-2.12.88l-4.1,4.1A3.475,3.475,0,0,0,22,109.1v5.8a3.475,3.475,0,0,0,.88,2.12l4.1,4.1a3.475,3.475,0,0,0,2.12.88h5.8a3.475,3.475,0,0,0,2.12-.88l4.1-4.1A3.475,3.475,0,0,0,42,114.9v-5.8a3.475,3.475,0,0,0-.88-2.12l-4.1-4.1A3.475,3.475,0,0,0,34.9,102Z"
+          transform="translate(595.949 1584.25)"
+          fill={theme.errorDecorative}
+        />
+        <Path
+          d="M28.5,115.5l7-7"
+          transform="translate(595.949 1584.25)"
+          fill="none"
+          stroke={theme.primaryBackground}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="1.5"
+        />
+        <Path
+          d="M35.5,115.5l-7-7"
+          transform="translate(595.949 1584.25)"
+          fill="none"
+          stroke={theme.primaryBackground}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="1.5"
+        />
+      </G>
+    </Svg>
+  )
+}
 export default React.memo(ErrorFilledIcon)
