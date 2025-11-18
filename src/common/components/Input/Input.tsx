@@ -16,6 +16,7 @@ import { isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
+import flexbox from '@common/styles/utils/flexbox'
 import useHover, { AnimatedPressable } from '@web/hooks/useHover'
 
 import getStyles from './styles'
@@ -216,7 +217,7 @@ const Input = ({
         {childrenBelowInput}
       </View>
       <View style={styles.errorContainer}>
-        <View>
+        <View style={flexbox.flex1}>
           {!!error && (
             <Text
               style={[styles.bottomLabel, bottomLabelStyle]}
