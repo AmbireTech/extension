@@ -95,24 +95,35 @@ async function initBrowser(namespace: string): Promise<{
   return { page, extensionURL, serviceWorker, context }
 }
 
+// Wait until chrome.storage.local becomes available
+async function waitForStorage(serviceWorker) {
+  const maxAttempts = 50
+
+  /* eslint-disable no-await-in-loop */
+  for (let i = 0; i < maxAttempts; i++) {
+    const isReady = await serviceWorker.evaluate(() => {
+      return typeof chrome !== 'undefined' && !!chrome.storage?.local
+    })
+
+    if (isReady) {
+      return
+    }
+
+    await new Promise((res) => {
+      setTimeout(res, 100)
+    })
+  }
+  /* eslint-enable no-await-in-loop */
+
+  throw new Error('❌ chrome.storage.local was never available in service worker')
+}
+
 //----------------------------------------------------------------------------------------------
 export async function bootstrap(namespace: string) {
   const { page, context, extensionURL, serviceWorker } = await initBrowser(namespace)
   await page.goto(`${extensionURL}${mainConstants.urls.getStarted}`, { waitUntil: 'load' })
 
-  // Wait until chrome.storage.local becomes available
-  let isReady = false
-  for (let i = 0; i < 50; i++) {
-    isReady = await serviceWorker.evaluate(() => {
-      return typeof chrome !== 'undefined' && !!chrome.storage?.local
-    })
-
-    if (isReady) break
-    await new Promise((res) => setTimeout(res, 100))
-  }
-  if (!isReady) {
-    throw new Error('❌ chrome.storage.local was never available in service worker')
-  }
+  await waitForStorage(serviceWorker)
 
   await serviceWorker.evaluate(() => chrome.storage.local.set({ isE2EStorageSet: true }))
   return { page, context, extensionURL }
@@ -161,19 +172,8 @@ export async function bootstrapWithStorage(
     ...rest
   }
 
-  // Wait until chrome.storage.local becomes available
-  let isReady = false
-  for (let i = 0; i < 50; i++) {
-    isReady = await serviceWorker.evaluate(() => {
-      return typeof chrome !== 'undefined' && !!chrome.storage?.local
-    })
+  await waitForStorage(serviceWorker)
 
-    if (isReady) break
-    await new Promise((res) => setTimeout(res, 100))
-  }
-  if (!isReady) {
-    throw new Error('❌ chrome.storage.local was never available in service worker')
-  }
   await serviceWorker.evaluate((params) => chrome.storage.local.set(params), storageParamsMapped)
 
   /**
