@@ -148,7 +148,12 @@ const Tabs: React.FC<Props> = ({ openTab, setOpenTab, handleChangeQuery }) => {
                     }
                   ]}
                 >
-                  {!pendingBanner && type === 'activity' ? (
+                  {type === 'activity' && !!pendingBanner ? (
+                    <Spinner
+                      style={{ width: '100%', height: '100%', position: 'absolute' }}
+                      variant="info2"
+                    />
+                  ) : (
                     <View
                       style={{
                         width: '100%',
@@ -158,11 +163,6 @@ const Tabs: React.FC<Props> = ({ openTab, setOpenTab, handleChangeQuery }) => {
                         borderColor: badgeBorderColor,
                         position: 'absolute'
                       }}
-                    />
-                  ) : (
-                    <Spinner
-                      style={{ width: '100%', height: '100%', position: 'absolute' }}
-                      variant="info2"
                     />
                   )}
                   <Text fontSize={10} weight="medium" color={badgeTextAppearance}>
