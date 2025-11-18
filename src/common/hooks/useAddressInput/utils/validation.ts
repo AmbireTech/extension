@@ -52,13 +52,6 @@ const getAddressInputValidation = ({
       }
     }
   }
-  if (address && !isValidAddress(address)) {
-    return {
-      message: 'Please enter a valid address or ENS domain',
-      isError: true,
-      severity: overwriteSeverity || 'error'
-    }
-  }
 
   if (isRecipientDomainResolving) {
     return {
@@ -97,6 +90,14 @@ const getAddressInputValidation = ({
       message: 'Valid ENS domain',
       isError: false,
       severity: overwriteSeverity || 'warning'
+    }
+  }
+
+  if (address && !isValidAddress(address)) {
+    return {
+      message: 'Please enter a valid address or ENS domain',
+      isError: true,
+      severity: overwriteSeverity || 'error'
     }
   }
 
