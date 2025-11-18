@@ -54,6 +54,7 @@ const DappsControllerStateProvider: React.FC<any> = ({ children }) => {
           chainIds: [],
           geckoId: null,
           isCustom: true,
+          blacklisted: 'VERIFIED',
           isFeatured: false
         })
       } else if (!Object.keys(currentSession).length && !dapp && currentDapp) {

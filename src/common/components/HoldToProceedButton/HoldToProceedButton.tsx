@@ -193,7 +193,11 @@ const HoldToProceedButton: FC<Props> = ({
   })
 
   // Progress bar background color - using theme colors for consistency
-  const progressColor = isCompleted ? theme.successDecorative : isHolding ? theme.primary : 'transparent'
+  const progressColor = isCompleted
+    ? theme.successDecorative
+    : isHolding
+    ? theme.primary
+    : 'transparent'
 
   return (
     <Animated.View
@@ -219,7 +223,7 @@ const HoldToProceedButton: FC<Props> = ({
         hasBottomSpacing={false}
         text={buttonText}
         disabled={disabled}
-        type='primary'
+        type="primary"
         {...rest}
       />
 
