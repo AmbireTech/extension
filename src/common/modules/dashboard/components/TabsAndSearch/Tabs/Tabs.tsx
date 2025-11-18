@@ -1,9 +1,9 @@
 import React, { useMemo } from 'react'
-import { View } from 'react-native'
+import { ColorValue, View } from 'react-native'
 
 import { getCurrentAccountBanners } from '@ambire-common/libs/banners/banners'
 import Spinner from '@common/components/Spinner'
-import Text, { TextAppearance } from '@common/components/Text'
+import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -52,7 +52,12 @@ const Tabs: React.FC<Props> = ({ openTab, setOpenTab, handleChangeQuery }) => {
   const { styles, theme } = useTheme(getStyles)
 
   const { banners } = useActivityControllerState()
-  const { account } = useSelectedAccountControllerState()
+  const { account, banners: defiBanners } = useSelectedAccountControllerState()
+
+  const currentDefiBanners = useMemo(
+    () => getCurrentAccountBanners(defiBanners, account?.addr),
+    [defiBanners, account]
+  )
 
   const currentAccountBanners = useMemo(() => {
     return getCurrentAccountBanners(banners, account?.addr)
@@ -75,10 +80,12 @@ const Tabs: React.FC<Props> = ({ openTab, setOpenTab, handleChangeQuery }) => {
         const isActive = openTab === type
 
         let customColors: [string, string] | undefined
-        const withBadge = type === 'activity' && !isActive && (!!pendingBanner || !!failedBanner)
+        const withBadge =
+          (type === 'activity' && !isActive && (!!pendingBanner || !!failedBanner)) ||
+          (type === 'defi' && currentDefiBanners.length > 0)
         let badge
         let badgeText
-        let badgeTextAppearance: TextAppearance
+        let badgeTextAppearance: ColorValue | undefined
 
         if (failedBanner) {
           badge = (
@@ -93,13 +100,29 @@ const Tabs: React.FC<Props> = ({ openTab, setOpenTab, handleChangeQuery }) => {
             />
           )
           badgeText = failedBanner.meta!.accountOpsCount
-          badgeTextAppearance = 'errorText'
+          badgeTextAppearance = theme.errorText
         }
 
         if (pendingBanner) {
           badge = <Spinner style={{ width: 18, height: 18 }} variant="info2" />
           badgeText = pendingBanner.meta!.accountOpsCount
-          badgeTextAppearance = 'info2Text'
+          badgeTextAppearance = theme.info2Text
+        }
+
+        if (type === 'defi' && currentDefiBanners.length > 0) {
+          badge = (
+            <View
+              style={{
+                width: 18,
+                height: 18,
+                borderWidth: 2,
+                borderRadius: 50,
+                borderColor: isActive ? '#39F7EF' : theme.secondaryText
+              }}
+            />
+          )
+          badgeText = 1
+          badgeTextAppearance = isActive ? '#39F7EF' : theme.secondaryText
         }
 
         if (type === 'activity' && !isActive && failedBanner) {
@@ -121,16 +144,18 @@ const Tabs: React.FC<Props> = ({ openTab, setOpenTab, handleChangeQuery }) => {
               handleChangeQuery={handleChangeQuery}
               disabled={disabled}
               customColors={customColors}
-              style={type === 'activity' ? { width: 100 } : undefined}
+              style={
+                type === 'activity' ? { width: 100 } : type === 'defi' ? { width: 90 } : undefined
+              }
             >
               {!!withBadge && (
-                <View style={[spacings.mlTy, flexbox.alignCenter, flexbox.justifyCenter]}>
+                <View style={[spacings.mlMi, flexbox.alignCenter, flexbox.justifyCenter]}>
                   {badge}
                   <Text
                     fontSize={10}
                     weight="medium"
                     style={{ position: 'absolute' }}
-                    appearance={badgeTextAppearance}
+                    color={badgeTextAppearance}
                   >
                     {badgeText}
                   </Text>

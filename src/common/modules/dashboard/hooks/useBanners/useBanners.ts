@@ -36,7 +36,6 @@ export default function useBanners(): [BannerInterface[], BannerInterface[]] {
   const { banners: swapAndBridgeBanners = [] } = useSwapAndBridgeControllerState()
   const { extensionUpdateBanner } = useExtensionUpdateControllerState()
   const { hasFundedHotAccount } = usePortfolioControllerState()
-  const { banners: selectedAccountBanners } = useSelectedAccountControllerState()
 
   const controllerBanners = useMemo(() => {
     return [
@@ -46,7 +45,6 @@ export default function useBanners(): [BannerInterface[], BannerInterface[]] {
       ...(isOffline && portfolio.isAllReady ? [OFFLINE_BANNER] : []),
       ...(isOffline ? [] : [...swapAndBridgeBanners]),
       ...getCurrentAccountBanners(hasFundedHotAccount ? emailVaultBanners : [], account?.addr),
-      ...selectedAccountBanners,
       ...extensionUpdateBanner
     ]
   }, [
@@ -59,7 +57,6 @@ export default function useBanners(): [BannerInterface[], BannerInterface[]] {
     hasFundedHotAccount,
     emailVaultBanners,
     account?.addr,
-    selectedAccountBanners,
     extensionUpdateBanner
   ])
 
