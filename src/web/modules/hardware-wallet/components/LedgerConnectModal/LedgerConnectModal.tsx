@@ -133,7 +133,7 @@ const LedgerConnectModal = ({
               weight="semiBold"
               fontSize={14}
               underline
-              color={theme.primaryLight}
+              color={theme.primary}
               onPress={handleOnLedgerReauthorize}
             >
               try re-authorizing Ambire to connect
