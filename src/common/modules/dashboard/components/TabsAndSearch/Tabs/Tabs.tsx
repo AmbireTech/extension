@@ -143,8 +143,7 @@ const Tabs: React.FC<Props> = ({ openTab, setOpenTab, handleChangeQuery }) => {
                     flexbox.justifyCenter,
                     {
                       width: 18,
-                      height: 18,
-                      paddingTop: 1
+                      height: 18
                     }
                   ]}
                 >
@@ -165,7 +164,12 @@ const Tabs: React.FC<Props> = ({ openTab, setOpenTab, handleChangeQuery }) => {
                       }}
                     />
                   )}
-                  <Text fontSize={10} weight="medium" color={badgeTextAppearance}>
+                  <Text
+                    fontSize={10}
+                    weight="medium"
+                    color={badgeTextAppearance}
+                    style={{ marginTop: 1 }}
+                  >
                     {badgeText}
                   </Text>
                 </View>
