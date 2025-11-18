@@ -41,7 +41,8 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       marginTop: 5,
       borderColor: theme.primaryBorder,
       ...common.borderRadiusPrimary,
-      ...common.shadowPrimary
+      ...common.shadowPrimary,
+      height: '100%'
     },
     searchInputWrapper: {
       backgroundColor: theme.primaryBackground
