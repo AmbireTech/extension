@@ -37,12 +37,22 @@ const getAddressInputValidation = ({
 
   if (address && isValidAddress(address)) {
     try {
-      if (address !== getAddress(address)) {
+      const checksummedAddress = getAddress(address)
+      const isAllLowercase = address === address.toLowerCase()
+      const isAllUppercase = address === address.toUpperCase()
+
+      // Accept all lowercase, all uppercase, or correct mixed case
+      if (!isAllLowercase && !isAllUppercase && address !== checksummedAddress) {
         return {
           message: 'Invalid checksum. Verify the address and try again.',
           isError: true,
           severity: overwriteSeverity || 'error'
         }
+      }
+      return {
+        message: overwriteValidLabel || 'Valid address',
+        isError: false,
+        severity: overwriteSeverity || 'warning'
       }
     } catch {
       return {
