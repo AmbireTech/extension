@@ -83,54 +83,41 @@ const Tabs: React.FC<Props> = ({ openTab, setOpenTab, handleChangeQuery }) => {
         const withBadge =
           (type === 'activity' && !isActive && (!!pendingBanner || !!failedBanner)) ||
           (type === 'defi' && currentDefiBanners.length > 0)
-        let badge
         let badgeText
         let badgeTextAppearance: ColorValue | undefined
+        let badgeBorderColor: ColorValue | undefined
 
-        if (failedBanner) {
-          badge = (
-            <View
-              style={{
-                width: 18,
-                height: 18,
-                borderWidth: 2,
-                borderRadius: 50,
-                borderColor: theme.errorDecorative
-              }}
-            />
-          )
-          badgeText = failedBanner.meta!.accountOpsCount
-          badgeTextAppearance = theme.errorText
-        }
+        if (type === 'activity') {
+          if (failedBanner) {
+            badgeBorderColor = theme.errorDecorative
+            badgeText = failedBanner.meta!.accountOpsCount
+            badgeTextAppearance = theme.errorText
+          }
 
-        if (pendingBanner) {
-          badge = <Spinner style={{ width: 18, height: 18 }} variant="info2" />
-          badgeText = pendingBanner.meta!.accountOpsCount
-          badgeTextAppearance = theme.info2Text
+          if (pendingBanner) {
+            badgeText = pendingBanner.meta!.accountOpsCount
+            badgeTextAppearance = theme.info2Text
+          }
+
+          if (!isActive && failedBanner) {
+            customColors = [
+              `${theme.errorDecorative as any}45`,
+              `${theme.errorDecorative as any}07`
+            ]
+          }
+
+          if (!isActive && pendingBanner) {
+            customColors = [
+              `${theme.info2Decorative as any}45`,
+              `${theme.info2Decorative as any}07`
+            ]
+          }
         }
 
         if (type === 'defi' && currentDefiBanners.length > 0) {
-          badge = (
-            <View
-              style={{
-                width: 18,
-                height: 18,
-                borderWidth: 2,
-                borderRadius: 50,
-                borderColor: isActive ? '#39F7EF' : theme.secondaryText
-              }}
-            />
-          )
+          badgeBorderColor = isActive ? '#39F7EF' : theme.secondaryText
           badgeText = 1
           badgeTextAppearance = isActive ? '#39F7EF' : theme.secondaryText
-        }
-
-        if (type === 'activity' && !isActive && failedBanner) {
-          customColors = [`${theme.errorDecorative as any}45`, `${theme.errorDecorative as any}07`]
-        }
-
-        if (type === 'activity' && !isActive && pendingBanner) {
-          customColors = [`${theme.info2Decorative as any}45`, `${theme.info2Decorative as any}07`]
         }
 
         return (
@@ -149,14 +136,36 @@ const Tabs: React.FC<Props> = ({ openTab, setOpenTab, handleChangeQuery }) => {
               }
             >
               {!!withBadge && (
-                <View style={[spacings.mlMi, flexbox.alignCenter, flexbox.justifyCenter]}>
-                  {badge}
-                  <Text
-                    fontSize={10}
-                    weight="medium"
-                    style={{ position: 'absolute' }}
-                    color={badgeTextAppearance}
-                  >
+                <View
+                  style={[
+                    spacings.mlMi,
+                    flexbox.alignCenter,
+                    flexbox.justifyCenter,
+                    {
+                      width: 18,
+                      height: 18,
+                      paddingTop: 1
+                    }
+                  ]}
+                >
+                  {!pendingBanner && type === 'activity' ? (
+                    <View
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        borderWidth: 2,
+                        borderRadius: 50,
+                        borderColor: badgeBorderColor,
+                        position: 'absolute'
+                      }}
+                    />
+                  ) : (
+                    <Spinner
+                      style={{ width: '100%', height: '100%', position: 'absolute' }}
+                      variant="info2"
+                    />
+                  )}
+                  <Text fontSize={10} weight="medium" color={badgeTextAppearance}>
                     {badgeText}
                   </Text>
                 </View>
