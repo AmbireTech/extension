@@ -1,6 +1,7 @@
 import { ZeroAddress } from 'ethers'
 import React, { FC, useMemo } from 'react'
 
+import { BlacklistedStatus } from '@ambire-common/interfaces/phishing'
 import { HumanizerMetaAddress } from '@ambire-common/libs/humanizer/interfaces'
 import { getAddressCaught } from '@ambire-common/utils/getAddressCaught'
 import { Props as TextProps } from '@common/components/Text'
@@ -19,6 +20,7 @@ interface Props extends TextProps {
   humanizerInfo?: HumanizerMetaAddress
   hideLinks?: boolean
   chainId: bigint
+  verification?: BlacklistedStatus
 }
 
 const HumanizerAddressInner: FC<Props> = ({

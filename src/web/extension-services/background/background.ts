@@ -701,7 +701,6 @@ const init = async () => {
   browser.runtime.onConnect.addListener(async (port: Port) => {
     const [name, id] = port.name.split(':') as [Port['name'], Port['id']]
     if (['popup', 'tab', 'action-window'].includes(name)) {
-      const isAlreadyAdded = pm.ports.some((p) => p.id === id)
       // eslint-disable-next-line no-param-reassign
       port.id = id || nanoid()
       // eslint-disable-next-line no-param-reassign
@@ -780,11 +779,6 @@ const init = async () => {
           }
         })
       })
-
-      // ignore executions if the port was already added (identified by id)
-      if (isAlreadyAdded) return
-
-      mainCtrl.phishing.updateIfNeeded()
     }
   })
 }
