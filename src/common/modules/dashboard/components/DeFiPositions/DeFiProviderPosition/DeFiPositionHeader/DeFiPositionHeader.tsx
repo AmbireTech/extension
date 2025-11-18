@@ -18,7 +18,7 @@ import useHover, { AnimatedPressable, useCustomHover } from '@web/hooks/useHover
 import Badge from './Badge'
 import ProtocolIcon from './ProtocolIcon'
 
-type Props = Omit<PositionsByProvider, 'type' | 'positionInUSD' | 'positions'> & {
+type Props = Omit<PositionsByProvider, 'type' | 'positionInUSD' | 'positions' | 'source'> & {
   toggleExpanded: () => void
   isExpanded: boolean
   positionInUSD?: string

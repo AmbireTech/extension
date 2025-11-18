@@ -122,7 +122,9 @@ const Tokens = ({
           const hasTokenAmount = hasAmount(token)
           const isCustom = customTokens.find(
             ({ address, chainId }) =>
-              token.address.toLowerCase() === address.toLowerCase() && token.chainId === chainId
+              token.address.toLowerCase() === address.toLowerCase() &&
+              token.chainId === chainId &&
+              !token.flags.rewardsType // exclude rewards from custom tokens
           )
           const isPinned = PINNED_TOKENS.find(
             ({ address, chainId }) =>

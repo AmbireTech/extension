@@ -3,14 +3,18 @@ import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { Animated, FlatListProps, View } from 'react-native'
 
+import { BannerType } from '@ambire-common/interfaces/banner'
+import { getCurrentAccountBanners } from '@ambire-common/libs/banners/banners'
 import Text from '@common/components/Text'
 import useNavigation from '@common/hooks/useNavigation'
 import usePrevious from '@common/hooks/usePrevious'
 import useTheme from '@common/hooks/useTheme'
 import DashboardBanners from '@common/modules/dashboard/components/DashboardBanners'
+import DashboardBanner from '@common/modules/dashboard/components/DashboardBanners/DashboardBanner'
 import DashboardPageScrollContainer from '@common/modules/dashboard/components/DashboardPageScrollContainer'
 import TabsAndSearch from '@common/modules/dashboard/components/TabsAndSearch'
 import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tab/Tab'
+import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import { getDoesNetworkMatch } from '@common/utils/search'
 import { openInTab } from '@web/extension-services/background/webapi/tab'
@@ -49,11 +53,17 @@ const DeFiPositions: FC<Props> = ({
   const { theme, themeType } = useTheme()
   const searchValue = watch('search')
   const { networks } = useNetworksControllerState()
-  const { defiPositions, portfolio, dashboardNetworkFilter } = useSelectedAccountControllerState()
+  const { account, defiPositions, portfolio, dashboardNetworkFilter, banners } =
+    useSelectedAccountControllerState()
   const { setSearchParams } = useNavigation()
 
   const { dispatch } = useBackgroundService()
   const prevInitTab: any = usePrevious(initTab)
+
+  const currentAccountBanners = useMemo(
+    () => getCurrentAccountBanners(banners, account?.addr),
+    [banners, account]
+  )
 
   useEffect(() => {
     setValue('search', '')
@@ -117,6 +127,16 @@ const DeFiPositions: FC<Props> = ({
               searchControl={control}
               sessionId={sessionId}
             />
+            {currentAccountBanners.length > 0 && (
+              <View style={spacings.mbMi}>
+                {currentAccountBanners.map((banner) => (
+                  <DashboardBanner
+                    key={banner.id}
+                    banner={{ ...banner, type: banner.type as BannerType }}
+                  />
+                ))}
+              </View>
+            )}
           </View>
         )
       }
@@ -169,15 +189,18 @@ const DeFiPositions: FC<Props> = ({
       return <DeFiPosition key={item.providerName + item.network} {...item} />
     },
     [
-      control,
       initTab?.defi,
+      theme.primaryBackground,
+      theme.linkText,
+      theme.primary,
       openTab,
-      searchValue,
       setOpenTab,
-      t,
-      theme,
+      control,
       sessionId,
+      currentAccountBanners,
+      searchValue,
       dashboardNetworkFilterName,
+      t,
       themeType
     ]
   )

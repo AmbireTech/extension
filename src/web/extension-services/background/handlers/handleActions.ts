@@ -325,7 +325,9 @@ export const handleActions = async (
     case 'SWAP_AND_BRIDGE_CONTROLLER_SEARCH_TO_TOKEN':
       return await mainCtrl.swapAndBridge.searchToToken(params.searchTerm)
     case 'SWAP_AND_BRIDGE_CONTROLLER_SELECT_ROUTE':
-      return await mainCtrl.swapAndBridge.selectRoute(params.route, params.isAutoSelectDisabled)
+      return await mainCtrl.swapAndBridge.selectRoute(params.route, {
+        isManualSelection: true
+      })
     case 'REQUESTS_CONTROLLER_SWAP_AND_BRIDGE_ACTIVE_ROUTE_BUILD_NEXT_USER_REQUEST':
       return await mainCtrl.requests.build({
         type: 'swapAndBridgeRequest',
@@ -353,8 +355,6 @@ export const handleActions = async (
       return mainCtrl?.swapAndBridge?.signAccountOpController?.updateStatus(params.status)
     case 'SWAP_AND_BRIDGE_CONTROLLER_HAS_USER_PROCEEDED':
       return mainCtrl?.swapAndBridge.setUserProceeded(params.proceeded)
-    case 'SWAP_AND_BRIDGE_CONTROLLER_IS_AUTO_SELECT_ROUTE_DISABLED':
-      return mainCtrl?.swapAndBridge.setIsAutoSelectRouteDisabled(params.isDisabled)
     case 'SWAP_AND_BRIDGE_CONTROLLER_DESTROY_SIGN_ACCOUNT_OP':
       return mainCtrl?.swapAndBridge.destroySignAccountOp()
     case 'OPEN_SIGNING_ACTION_WINDOW': {
@@ -632,9 +632,6 @@ export const handleActions = async (
     }
     case 'DAPP_CONTROLLER_REMOVE_DAPP': {
       return mainCtrl.dapps.removeDapp(params)
-    }
-    case 'PHISHING_CONTROLLER_GET_IS_BLACKLISTED_AND_SEND_TO_UI': {
-      return mainCtrl.phishing.sendIsBlacklistedToUi(params.url)
     }
     case 'EXTENSION_UPDATE_CONTROLLER_APPLY_UPDATE': {
       extensionUpdateCtrl.applyUpdate()

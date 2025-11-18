@@ -1,3 +1,4 @@
+import { JsonRpcProvider } from 'ethers'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Linking } from 'react-native'
 
@@ -51,7 +52,12 @@ const useBenzin = ({ onOpenExplorer, extensionAccOp }: Props = {}) => {
   )
 
   const { networks } = useNetworksControllerState()
-  const { benzinNetworks, loadingBenzinNetworks = [], addNetwork } = useBenzinNetworksContext()
+  const {
+    benzinNetworks,
+    loadingBenzinNetworks = [],
+    addNetwork,
+    notFoundNetworks
+  } = useBenzinNetworksContext()
   const bigintChainId = BigInt(chainId || '') || 0n
   const actualNetworks = networks ?? benzinNetworks
   const areRelayerNetworksLoaded = actualNetworks && actualNetworks.length
@@ -65,7 +71,12 @@ const useBenzin = ({ onOpenExplorer, extensionAccOp }: Props = {}) => {
 
   const provider = useMemo(() => {
     if (!network || bigintChainId === 0n) return null
-    return getRpcProvider(network.rpcUrls, bigintChainId, network.selectedRpcUrl)
+    // We are using ethers 6.14 in the app, while ambire-common is on 6.8. This causes ts errors
+    return getRpcProvider(
+      network.rpcUrls,
+      bigintChainId,
+      network.selectedRpcUrl
+    ) as unknown as JsonRpcProvider
   }, [network, bigintChainId])
 
   const switcher = useMemo(() => {
@@ -174,9 +185,11 @@ const useBenzin = ({ onOpenExplorer, extensionAccOp }: Props = {}) => {
     txnId: stepsState.txnId,
     userOpHash,
     isRenderedInternally,
+    bigintChainId,
     showCopyBtn,
     showOpenExplorerBtn,
-    isInitialized
+    isInitialized,
+    isNetworkNotFound: notFoundNetworks.includes(bigintChainId)
   }
 }
 

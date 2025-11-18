@@ -11,11 +11,14 @@ import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
 
 type Props = {
   onPress: () => void
+  label?: string
+  disabled?: boolean
 }
 
-const RetryButton: FC<Props> = ({ onPress }) => {
+const RetryButton: FC<Props> = ({ onPress, label, disabled }) => {
   const { theme } = useTheme()
   const { t } = useTranslation()
+  const buttonLabel = label ?? t('Retry')
   const rotateAnim = useRef(new Animated.Value(0)).current
   const [bindAnim, animStyle] = useCustomHover({
     property: 'backgroundColor',
@@ -73,15 +76,21 @@ const RetryButton: FC<Props> = ({ onPress }) => {
       ...animStyle,
       ...spacings.phTy,
       minHeight: 28,
-      paddingLeft: 10
+      paddingLeft: 10,
+      ...(disabled && { opacity: 0.5 })
     }),
-    [animStyle]
+    [animStyle, disabled]
   )
 
   return (
-    <AnimatedPressable style={buttonStyle} onPress={onPress} {...mergedBindAnim}>
+    <AnimatedPressable
+      style={buttonStyle}
+      onPress={onPress}
+      disabled={disabled}
+      {...mergedBindAnim}
+    >
       <Text fontSize={12} weight="medium" color={theme.primary} style={spacings.mrTy}>
-        {t('Retry')}
+        {buttonLabel}
       </Text>
       <Animated.View style={{ transform: [{ rotateZ: rotateInterpolate }] }}>
         <RetryIcon color={theme.primary} />

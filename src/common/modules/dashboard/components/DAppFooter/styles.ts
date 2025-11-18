@@ -8,6 +8,7 @@ import flexbox from '@common/styles/utils/flexbox'
 interface Style {
   footerContainer: ViewStyle
   container: ViewStyle
+  containerError: ViewStyle
 }
 
 const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
@@ -26,6 +27,11 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       shadowOffset: { width: 0, height: -3 },
       shadowColor: themeType === THEME_TYPES.DARK ? '#00000099' : '#CACDE699',
       shadowRadius: 6
+    },
+    containerError: {
+      backgroundColor: theme.errorBackground,
+      borderWidth: 1,
+      borderColor: theme.errorDecorative
     }
   })
 

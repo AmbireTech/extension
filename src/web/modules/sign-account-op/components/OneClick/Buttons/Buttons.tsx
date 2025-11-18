@@ -27,10 +27,7 @@ type Props = {
   isLocalStateOutOfSync?: boolean
   isBatchDisabled?: boolean
   networkUserRequests: UserRequest[]
-  isRecipientAddressUnknown?: boolean
-  isRecipientAddressUnknownAgreed?: boolean
-  isRecipientHumanizerKnownTokenOrSmartContract?: boolean
-  isRecipientAddressFirstTimeSend?: boolean
+  shouldHoldToProceed?: boolean
   onRecipientAddressUnknownAgree?: () => void
 }
 
@@ -45,10 +42,7 @@ const Buttons: FC<Props> = ({
   isBatchDisabled,
   isBridge,
   networkUserRequests = [],
-  isRecipientAddressUnknown = false,
-  isRecipientAddressUnknownAgreed = false,
-  isRecipientHumanizerKnownTokenOrSmartContract = false,
-  isRecipientAddressFirstTimeSend = false,
+  shouldHoldToProceed,
   onRecipientAddressUnknownAgree,
   // Used to disable the actions of the buttons when the local state is out of sync.
   // To prevent button flickering when the user is typing we just do nothing when the button is clicked.
@@ -152,12 +146,9 @@ const Buttons: FC<Props> = ({
       )}
       {/* @ts-ignore */}
       <View dataSet={{ tooltipId: 'proceed-btn-tooltip' }}>
-        {isRecipientAddressUnknown &&
-        !isRecipientAddressUnknownAgreed &&
-        !isRecipientHumanizerKnownTokenOrSmartContract &&
-        isRecipientAddressFirstTimeSend ? (
+        {shouldHoldToProceed ? (
           <HoldToProceedButton
-            text="Hold to proceed"
+            text={t('Hold to proceed')}
             disabled={isNotReadyToProceed || isLoading || !!oneClickDisabledReason}
             onHoldComplete={() => {
               if (isLocalStateOutOfSync) return

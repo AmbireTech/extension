@@ -41,19 +41,8 @@ function formatTVL(tvl: number) {
 }
 
 const DappItem = (dapp: Dapp) => {
-  const {
-    id,
-    url,
-    name,
-    icon,
-    description,
-    isConnected,
-    favorite,
-    blacklisted,
-    isCustom,
-    tvl,
-    twitter
-  } = dapp
+  const { id, url, name, icon, description, isConnected, favorite, blacklisted, tvl, twitter } =
+    dapp
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const { styles, theme } = useTheme(getStyles)
   const { dispatch } = useBackgroundService()
@@ -63,8 +52,8 @@ const DappItem = (dapp: Dapp) => {
   const [bindAnim, animStyle] = useCustomHover({
     property: 'backgroundColor',
     values: {
-      from: blacklisted ? theme.errorBackground : theme.secondaryBackground,
-      to: blacklisted ? theme.errorBackground : theme.tertiaryBackground
+      from: blacklisted === 'BLACKLISTED' ? theme.errorBackground : theme.secondaryBackground,
+      to: blacklisted === 'BLACKLISTED' ? theme.errorBackground : theme.tertiaryBackground
     }
   })
 
@@ -111,7 +100,7 @@ const DappItem = (dapp: Dapp) => {
         >
           <View style={[flexbox.directionRow, !!description && spacings.mbTy]}>
             <View style={spacings.mrTy}>
-              {!isCustom && !blacklisted && (
+              {blacklisted === 'VERIFIED' && (
                 <View
                   style={{
                     position: 'absolute',
@@ -200,7 +189,7 @@ const DappItem = (dapp: Dapp) => {
                       </AnimatedPressable>
                     </View>
                   )}
-                  {!!blacklisted && (
+                  {blacklisted === 'BLACKLISTED' && (
                     <Badge text={t('Blacklisted')} type="error" style={spacings.mrTy} />
                   )}
                 </View>
