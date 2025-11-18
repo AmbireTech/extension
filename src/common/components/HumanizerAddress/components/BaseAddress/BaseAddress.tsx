@@ -53,7 +53,6 @@ const BaseAddress: FC<Props> = ({
   const actualNetworks = networks ?? benzinNetworks
   const network = actualNetworks?.find((n) => n.chainId === chainId)
 
-  console.log(address, verification)
   const handleCopyAddress = useCallback(async () => {
     try {
       await setStringAsync(address)
