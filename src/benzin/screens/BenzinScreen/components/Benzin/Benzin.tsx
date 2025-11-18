@@ -58,7 +58,24 @@ const Benzin = ({ state }: { state: ReturnType<typeof useBenzin> }) => {
       </View>
     )
 
-  if (!state || !state.network)
+  if (!state || !state.network) {
+    if (state?.isNetworkNotFound) {
+      return (
+        <View style={[spacings.pv, spacings.ph, flexbox.center, flexbox.flex1]}>
+          <Text fontSize={24} style={spacings.mbMi} weight="semiBold">
+            Network not supported
+          </Text>
+          <Text fontSize={16}>
+            The network with chainId{' '}
+            <Text fontSize={16} weight="medium">
+              {state.bigintChainId.toString()}
+            </Text>{' '}
+            is not supported.
+          </Text>
+        </View>
+      )
+    }
+
     return (
       <View style={[spacings.pv, spacings.ph, flexbox.center, flexbox.flex1]}>
         <Text fontSize={24} style={spacings.mbMi} weight="semiBold">
@@ -73,6 +90,7 @@ const Benzin = ({ state }: { state: ReturnType<typeof useBenzin> }) => {
         </Text>
       </View>
     )
+  }
 
   const {
     activeStep,
