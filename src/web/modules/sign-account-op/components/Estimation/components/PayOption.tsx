@@ -165,7 +165,7 @@ const PayOption = ({
           </Text>
         </View>
       )}
-      {true && (
+      {warning && (
         <>
           <WarningIcon
             width={20}
@@ -174,7 +174,7 @@ const PayOption = ({
             data-tooltip-id="estimation-warning"
             color={theme.warningText}
           />
-          <Tooltip id="estimation-warning" content={warning?.title || ''} />
+          <Tooltip id="estimation-warning" content={warning.title} />
         </>
       )}
     </View>
