@@ -150,6 +150,7 @@ test.describe('swapAndBridge Smart Account', { tag: '@swapAndBridge' }, () => {
   test('should Bridge tokens with a Smart Account', async ({ pages }) => {
     const usdc = tokens.usdc.base
     const usdcOpt = tokens.usdc.optimism
+    const message = 'Nice trade!'
 
     await test.step('assert no transaction on Activity tab', async () => {
       await pages.dashboard.checkNoTransactionOnActivityTab()
@@ -160,7 +161,7 @@ test.describe('swapAndBridge Smart Account', { tag: '@swapAndBridge' }, () => {
     })
 
     await test.step('sign transaction', async () => {
-      await pages.swapAndBridge.signTokens({ fromToken: usdc })
+      await pages.transfer.signSlowSpeedTransaction({ sendToken: usdc, message })
     })
 
     await test.step('assert new transaction on Activity tab', async () => {

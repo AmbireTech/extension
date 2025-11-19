@@ -47,9 +47,8 @@ export class BasePage {
     await tokenLocator.click()
   }
 
-  async clickOnMenuFeeToken(paidByAddress: string, token: Token, onGasTank?: boolean) {
-    const selectMenu = this.page.getByTestId(selectors.feeTokensSelect)
-    await selectMenu.click()
+  async selectFeeToken(paidByAddress: string, token: Token, onGasTank?: boolean) {
+    await this.click(selectors.transaction.feeTokensSelectDropdown)
 
     // If the token is outside the viewport, we ensure it becomes visible by searching for its symbol
     await this.entertext(selectors.searchInput, token.symbol)
@@ -65,6 +64,7 @@ export class BasePage {
       .getByTestId('select-menu')
       .getByTestId(`option-${paidBy + tokenAddress + tokenSymbol + gasTank}`)
     await tokenLocator.click()
+    await this.page.waitForTimeout(1000)
   }
 
   // TODO: refactor, this method can be depracated; switch to getByTestId
@@ -105,7 +105,7 @@ export class BasePage {
     // return actionWindowPagePromise
 
     // wait for locator before click
-    await locator.waitFor({ state: 'visible' })
+    await locator.waitFor({ state: 'visible', timeout: 100000 })
     await expect(locator).toBeEnabled()
 
     // setup listener for new page event
@@ -132,16 +132,23 @@ export class BasePage {
     expect(this.page.url()).toContain(url)
   }
 
-  async expectButtonVisible(selector: string) {
-    await expect(this.page.getByTestId(selector)).toBeVisible()
+  async expectElementVisible(selector: string) {
+    await expect(this.page.getByTestId(selector)).toBeVisible({ timeout: 10000 })
   }
 
   async expectButtonEnabled(selector: string) {
     await expect(this.page.getByTestId(selector)).toBeEnabled({ timeout: 5000 })
   }
 
-  async compareText(selector: string, text: string, index?: number) {
-    await expect(this.page.getByTestId(selector).nth(index ?? 0)).toContainText(text)
+  async compareText(
+    selector: string,
+    text: string,
+    options?: { index?: number; timeout?: number }
+  ) {
+    const { index = 0, timeout = 30000 } = options ?? {}
+    await expect(this.page.getByTestId(selector).nth(index ?? 0)).toContainText(text, {
+      timeout: timeout
+    })
   }
 
   async isVisible(selector: string): Promise<boolean> {
@@ -171,8 +178,33 @@ export class BasePage {
 
   async getDashboardTokenBalance(token: Token) {
     const balanceText = await this.getText(`token-balance-${token.address}.${token.chainId}`)
-    const tokenBalance = parseFloat(balanceText)
+    const parseText = balanceText.replace(/,/g, '')
+    const tokenBalance = parseFloat(parseText)
 
     return tokenBalance
+  }
+
+  // approve the high impact modal if appears
+  async handlePriceWarningModals() {
+    const isHighPrice = await this.page
+      .waitForSelector(selectors.highPriceImpactSab, { timeout: 1000 })
+      .catch(() => null)
+
+    const isHighSlippage = await this.page
+      .waitForSelector(selectors.highSlippageModal, { timeout: 1000 })
+      .catch(() => null)
+
+    if (isHighPrice || isHighSlippage) {
+      // TODO: change methods once we have IDs
+      await this.click(selectors.continueAnywayCheckboxSaB)
+      await this.page.locator(selectors.continueAnywayButton).click()
+    }
+  }
+
+  async longPressButton(selector: string, pressTime: number) {
+    await this.page.getByTestId(selector).hover()
+    await this.page.mouse.down()
+    await this.page.waitForTimeout(pressTime * 1000)
+    await this.page.mouse.up()
   }
 }
