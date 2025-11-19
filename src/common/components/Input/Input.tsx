@@ -217,40 +217,38 @@ const Input = ({
         {childrenBelowInput}
       </View>
       <View style={styles.errorContainer}>
-        <View style={flexbox.flex1}>
-          {!!error && (
-            <Text
-              style={[styles.bottomLabel, bottomLabelStyle]}
-              weight={isWeb ? 'regular' : undefined}
-              fontSize={10}
-              appearance={errorType === 'warning' ? 'warningText' : 'errorText'}
-            >
-              {error}
-            </Text>
-          )}
+        {!!error && (
+          <Text
+            style={[styles.bottomLabel, bottomLabelStyle]}
+            weight={isWeb ? 'regular' : undefined}
+            fontSize={10}
+            appearance={errorType === 'warning' ? 'warningText' : 'errorText'}
+          >
+            {error}
+          </Text>
+        )}
 
-          {!!isValid && !!validLabel && !error && (
-            <Text
-              style={[styles.bottomLabel, bottomLabelStyle]}
-              weight="regular"
-              fontSize={12}
-              color={theme.successText}
-            >
-              {validLabel}
-            </Text>
-          )}
+        {!!isValid && !!validLabel && !error && (
+          <Text
+            style={[styles.bottomLabel, bottomLabelStyle]}
+            weight="regular"
+            fontSize={12}
+            color={theme.successText}
+          >
+            {validLabel}
+          </Text>
+        )}
 
-          {!!info && (
-            <Text
-              weight="regular"
-              appearance="warningText"
-              style={[styles.bottomLabel, bottomLabelStyle]}
-              fontSize={10}
-            >
-              {info}
-            </Text>
-          )}
-        </View>
+        {!!info && (
+          <Text
+            weight="regular"
+            appearance="warningText"
+            style={[styles.bottomLabel, bottomLabelStyle]}
+            fontSize={10}
+          >
+            {info}
+          </Text>
+        )}
         {renderConfirmAddress && renderConfirmAddress()}
       </View>
     </View>
