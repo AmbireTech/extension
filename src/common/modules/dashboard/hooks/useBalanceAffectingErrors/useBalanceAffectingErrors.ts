@@ -73,13 +73,7 @@ const useBalanceAffectingErrors = () => {
       return
     }
 
-    // Sort errors so that errors are shown before warnings
-    const sorted = [...balanceAffectingErrors].sort((a, b) => {
-      const order = { error: 0, warning: 1 } as const
-      return order[a.type] - order[b.type]
-    })
-
-    setBalanceAffectingErrorsSnapshot(sorted)
+    setBalanceAffectingErrorsSnapshot(balanceAffectingErrors)
     openBottomSheet()
   }, [balanceAffectingErrors, isLoadingTakingTooLong, isOffline, openBottomSheet])
 
