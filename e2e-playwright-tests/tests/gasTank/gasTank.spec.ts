@@ -14,6 +14,7 @@ test.describe('gasTank - Smart Account', { tag: '@gasTank' }, () => {
 
   test('top up Gas Tank with 0.1$ on Base', async ({ pages }) => {
     const sendToken = tokens.usdc.base
+    const message = 'Top up ready!'
     // let oldBalance: number
 
     await test.step('assert no transaction on Activity tab', async () => {
@@ -26,6 +27,7 @@ test.describe('gasTank - Smart Account', { tag: '@gasTank' }, () => {
 
     await test.step('top up gas tank', async () => {
       await pages.gasTank.topUpGasTank(sendToken, '0.01')
+      await pages.transfer.signSlowSpeedTransaction({ sendToken, message })
     })
 
     // TODO: topping up with 0.01 + fee made the gas tank amount decrease so the test fails
