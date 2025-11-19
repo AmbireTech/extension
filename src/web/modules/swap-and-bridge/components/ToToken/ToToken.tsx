@@ -8,6 +8,7 @@ import { SwapAndBridgeFormStatus } from '@ambire-common/controllers/swapAndBridg
 import { getIsNetworkSupported } from '@ambire-common/libs/swapAndBridge/swapAndBridge'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import WalletFilledIcon from '@common/assets/svg/WalletFilledIcon'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import NetworkIcon from '@common/components/NetworkIcon'
 import Select from '@common/components/Select'
 import { SelectValue } from '@common/components/Select/types'
@@ -278,22 +279,23 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
           />
           <View style={[spacings.plSm, flexbox.flex1]}>
             {isReadyToDisplayAmounts ? (
-              <>
-                <Text
-                  fontSize={20}
-                  weight="medium"
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                  appearance={
-                    formattedToAmount && formattedToAmount !== '0' ? 'primaryText' : 'secondaryText'
-                  }
-                  dataSet={{ tooltipId: 'to-amount' }}
-                  style={{ textAlign: 'right' }}
-                >
-                  {formattedToAmount}
-                </Text>
-                {formattedToAmount !== '0' && <Tooltip id="to-amount" content={toAmount} />}
-              </>
+              <Text
+                fontSize={20}
+                weight="medium"
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                appearance={
+                  formattedToAmount && formattedToAmount !== '0' ? 'primaryText' : 'secondaryText'
+                }
+                dataSet={createGlobalTooltipDataSet({
+                  id: 'to-amount',
+                  content: toAmount,
+                  hidden: formattedToAmount === '0'
+                })}
+                style={{ textAlign: 'right' }}
+              >
+                {formattedToAmount}
+              </Text>
             ) : (
               <SkeletonLoader
                 appearance="tertiaryBackground"

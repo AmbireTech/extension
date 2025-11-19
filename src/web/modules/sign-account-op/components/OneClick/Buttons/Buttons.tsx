@@ -9,8 +9,8 @@ import BatchIcon from '@common/assets/svg/BatchIcon'
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import Button from '@common/components/Button'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
-import Tooltip from '@common/components/Tooltip'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -109,8 +109,12 @@ const Buttons: FC<Props> = ({
     <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifyEnd]}>
       {!isActionWindow && (
         <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-          {/* @ts-ignore */}
-          <View dataSet={{ tooltipId: 'batch-btn-tooltip' }}>
+          <View // @ts-ignore
+            dataSet={createGlobalTooltipDataSet({
+              id: 'batch-btn-tooltip',
+              content: batchDisabledReason
+            })}
+          >
             <Button
               hasBottomSpacing={false}
               text={
@@ -133,8 +137,14 @@ const Buttons: FC<Props> = ({
               <BatchIcon style={spacings.mlTy} />
             </Button>
           </View>
-          {/* @ts-ignore */}
-          <View style={spacings.mlTy} dataSet={{ tooltipId: 'start-batch-info-tooltip' }}>
+          <View
+            // @ts-ignore
+            dataSet={createGlobalTooltipDataSet({
+              id: 'start-batch-info-tooltip',
+              content: startBatchingInfo
+            })}
+            style={spacings.mlTy}
+          >
             <AnimatedPressable
               style={[spacings.phTy, spacings.pvTy, { borderRadius: 50 }, animStyle]}
               {...bindAnim}
@@ -144,8 +154,13 @@ const Buttons: FC<Props> = ({
           </View>
         </View>
       )}
-      {/* @ts-ignore */}
-      <View dataSet={{ tooltipId: 'proceed-btn-tooltip' }}>
+      <View
+        // @ts-ignore
+        dataSet={createGlobalTooltipDataSet({
+          id: 'proceed-btn-tooltip',
+          content: oneClickDisabledReason
+        })}
+      >
         {shouldHoldToProceed ? (
           <HoldToProceedButton
             text={t('Hold to proceed')}
@@ -172,9 +187,6 @@ const Buttons: FC<Props> = ({
           />
         )}
       </View>
-      <Tooltip content={oneClickDisabledReason} id="proceed-btn-tooltip" />
-      <Tooltip content={batchDisabledReason} id="batch-btn-tooltip" />
-      <Tooltip content={startBatchingInfo} id="start-batch-info-tooltip" />
     </View>
   )
 }
