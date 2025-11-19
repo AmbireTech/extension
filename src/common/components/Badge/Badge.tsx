@@ -62,6 +62,7 @@ const SIZES = {
 
 const Badge = ({
   text,
+  textStyle,
   weight,
   tooltipText,
   withRightSpacing,
@@ -107,7 +108,7 @@ const Badge = ({
           weight={weight || (type === 'new' ? 'semiBold' : 'regular')}
           fontSize={sizeMultiplier * 10}
           color={color}
-          style={[!!tooltipText && spacings.mrMi]}
+          style={[!!tooltipText && spacings.mrMi, textStyle]}
         >
           {text}
         </Text>

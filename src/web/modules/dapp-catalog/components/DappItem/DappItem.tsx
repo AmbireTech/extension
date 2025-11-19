@@ -41,15 +41,26 @@ function formatTVL(tvl: number) {
 }
 
 const DappItem = (dapp: Dapp) => {
-  const { id, url, name, icon, description, isConnected, favorite, blacklisted, tvl, twitter } =
-    dapp
+  const {
+    id,
+    url,
+    name,
+    icon,
+    description,
+    isConnected,
+    isFeatured,
+    favorite,
+    blacklisted,
+    tvl,
+    twitter
+  } = dapp
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const { styles, theme } = useTheme(getStyles)
   const { dispatch } = useBackgroundService()
   const { t } = useTranslation()
   const [hovered, setHovered] = useState(false)
 
-  const [bindAnim, animStyle] = useCustomHover({
+  const [bindAnim, animStyle, isHovered] = useCustomHover({
     property: 'backgroundColor',
     values: {
       from: blacklisted === 'BLACKLISTED' ? theme.errorBackground : theme.secondaryBackground,
@@ -94,7 +105,14 @@ const DappItem = (dapp: Dapp) => {
         onMouseLeave={() => setHovered(false)}
       >
         <AnimatedPressable
-          style={[styles.container, animStyle]}
+          style={[
+            styles.container,
+            isFeatured && {
+              // @ts-ignore
+              boxShadow: `0 ${isHovered ? 2 : 3}px 0 0 ${String(theme.primaryLight80)}`
+            },
+            animStyle
+          ]}
           onPress={() => openInTab({ url })}
           {...bindAnim}
         >
@@ -211,6 +229,19 @@ const DappItem = (dapp: Dapp) => {
                       color={theme.iconPrimary}
                     />
                   </AnimatedPressable>
+                )}
+                {isFeatured && (
+                  <Badge
+                    text={t('Featured')}
+                    textStyle={{
+                      color: theme.primaryBackground
+                    }}
+                    style={{
+                      ...spacings.mlTy,
+                      backgroundColor: theme.primaryLight80,
+                      borderWidth: 0
+                    }}
+                  />
                 )}
               </View>
               <Text
