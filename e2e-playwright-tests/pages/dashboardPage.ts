@@ -2,10 +2,10 @@ import locators from 'constants/locators'
 import selectors from 'constants/selectors'
 import BootstrapContext from 'interfaces/bootstrapContext'
 import Tabs from 'interfaces/tabs'
+import Threshold from 'interfaces/threshold'
 
 import { expect } from '@playwright/test'
 
-import Token from '../interfaces/token'
 import { BasePage } from './basePage'
 
 export class DashboardPage extends BasePage {
@@ -73,49 +73,56 @@ export class DashboardPage extends BasePage {
     return amountNumber
   }
 
-  async checkBATokenBalance(token: Token) {
-    const key = `${token.symbol}-${token.chainId}`
-    const balanceThresholds: Record<string, number> = {
-      'WALLET-8453': 300,
-      'USDC-10': 2,
-      'xWALLET-1': 2
+  async #checkBalanceThresholds(params: {
+    thresholds: Threshold[]
+    accountName: string
+  }): Promise<{ name: string; message: string }[]> {
+    const { thresholds, accountName } = params
+
+    const errors: { name: string; message: string }[] = []
+
+    // eslint-disable-next-line no-restricted-syntax
+    for (const [token, minBalance] of thresholds) {
+      if (token === 'gas-token') {
+        // eslint-disable-next-line no-await-in-loop
+        const balance = await this.getCurrentBalance()
+
+        if (balance < minBalance) {
+          const name = 'gas-token'
+          const message = `${accountName}: gas tank balance is only ${balance} (min: ${minBalance}).`
+          errors.push({ name, message })
+        }
+      } else {
+        // eslint-disable-next-line no-await-in-loop
+        const balance = await this.getDashboardTokenBalance(token)
+        const name = `${token.symbol}-${token.chainId}`
+
+        if (balance < minBalance) {
+          const message = `${accountName}: ${name} balance is only ${balance} (min: ${minBalance}).`
+          errors.push({ name, message })
+        }
+      }
     }
 
-    const minBalance = balanceThresholds[key] ?? 0
-    const tokenBalance = await this.getDashboardTokenBalance(token)
-
-    let error: string | undefined
-
-    try {
-      expect(tokenBalance).toBeGreaterThanOrEqual(minBalance)
-    } catch (e) {
-      error = `${token.symbol}-${token.chainId} balance for BA is only: ${tokenBalance}.`
-    }
-    return { token, error }
+    return errors
   }
 
-  async checkSATokenBalance(token: Token) {
-    const key = `${token.symbol}-${token.chainId}`
-    const balanceThresholds: Record<string, number> = {
-      'WALLET-8453': 300,
-      'USDC-8453': 3,
-      'USDC-10': 2,
-      'USDC.E-10': 2,
-      'DAI-10': 2,
-      'xWALLET-1': 2
-    }
+  async checkBalances(params: {
+    thresholds: Threshold[]
+    accountName: string
+  }): Promise<string | undefined> {
+    const { thresholds, accountName } = params
 
-    const minBalance = balanceThresholds[key] ?? 0
-    const tokenBalance = await this.getDashboardTokenBalance(token)
+    const errors = await this.#checkBalanceThresholds({
+      thresholds,
+      accountName
+    })
 
-    let error: string | undefined
+    if (errors.length === 0) return undefined
 
-    try {
-      expect(tokenBalance).toBeGreaterThanOrEqual(minBalance)
-    } catch (e) {
-      error = `${token.symbol}-${token.chainId} balance for SA is only: ${tokenBalance}.`
-    }
-    return { token, error }
+    const tokenNames = errors.map((e) => e.name).join(', ')
+
+    return `${accountName} has insufficient balance for: ${tokenNames}.`
   }
 
   async checkNoTransactionOnActivityTab() {
