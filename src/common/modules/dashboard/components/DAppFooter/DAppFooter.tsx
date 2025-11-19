@@ -23,7 +23,12 @@ const DAppFooter = () => {
   return (
     <View style={styles.footerContainer}>
       <div onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
-        <View style={styles.container}>
+        <View
+          style={[
+            styles.container,
+            currentDapp.blacklisted === 'BLACKLISTED' && styles.containerError
+          ]}
+        >
           <DappControl
             dapp={currentDapp}
             isHovered={hovered}

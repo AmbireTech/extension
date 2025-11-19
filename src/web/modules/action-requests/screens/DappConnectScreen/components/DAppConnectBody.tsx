@@ -2,8 +2,10 @@ import React, { FC, useCallback, useMemo } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
+import { BlacklistedStatus } from '@ambire-common/interfaces/phishing'
 import CheckIcon from '@common/assets/svg/CheckIcon'
 import ErrorIcon from '@common/assets/svg/ErrorIcon'
+import WarningIcon from '@common/assets/svg/WarningIcon'
 import Alert from '@common/components/Alert'
 import Badge from '@common/components/Badge'
 import Checkbox from '@common/components/Checkbox'
@@ -21,7 +23,7 @@ const DAppConnectBody: FC<{
   confirmedRiskCheckbox: boolean
   setConfirmedRiskCheckbox: React.Dispatch<React.SetStateAction<boolean>>
   responsiveSizeMultiplier: number
-  securityCheck: 'BLACKLISTED' | 'NOT_BLACKLISTED' | 'LOADING'
+  securityCheck: BlacklistedStatus
 }> = ({
   confirmedRiskCheckbox,
   setConfirmedRiskCheckbox,
@@ -51,7 +53,8 @@ const DAppConnectBody: FC<{
           {
             marginBottom: SPACING * responsiveSizeMultiplier
           },
-          securityCheck === 'BLACKLISTED' && { borderColor: theme.errorDecorative }
+          securityCheck === 'BLACKLISTED' && { borderColor: theme.errorDecorative },
+          securityCheck === 'FAILED_TO_GET' && { borderColor: theme.warningDecorative }
         ]}
       >
         <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifySpaceBetween]}>
@@ -61,7 +64,7 @@ const DAppConnectBody: FC<{
             </Text>
           </View>
           {securityCheck === 'LOADING' && <Spinner style={{ width: 18, height: 18 }} />}
-          {securityCheck === 'NOT_BLACKLISTED' && (
+          {securityCheck === 'VERIFIED' && (
             <Badge type="success" text={t('Passed')} testId="dapp-security-check-passed">
               <CheckIcon
                 width={12}
@@ -80,44 +83,67 @@ const DAppConnectBody: FC<{
               />
             </Badge>
           )}
+          {securityCheck === 'FAILED_TO_GET' && (
+            <Badge type="warning" text={t('Warning')}>
+              <WarningIcon
+                width={12}
+                height={12}
+                color={theme.warningDecorative}
+                style={{ marginRight: -SPACING_MI, marginLeft: SPACING_MI }}
+              />
+            </Badge>
+          )}
         </View>
-        {securityCheck === 'BLACKLISTED' && (
+        {(securityCheck === 'BLACKLISTED' || securityCheck === 'FAILED_TO_GET') && (
           <View style={spacings.ptTy}>
             <Text
               fontSize={20 * responsiveSizeMultiplier}
               weight="semiBold"
-              color={theme.errorDecorative}
+              color={
+                securityCheck === 'BLACKLISTED' ? theme.errorDecorative : theme.warningDecorative
+              }
               style={[{ lineHeight: 18 * responsiveSizeMultiplier }, spacings.mbTy]}
             >
-              {t('Potential danger!')}
+              {securityCheck === 'BLACKLISTED' ? t('Potential danger!') : t('Warning!')}
             </Text>
-            <Trans>
-              <Text
-                fontSize={14 * responsiveSizeMultiplier}
-                color={theme.errorDecorative}
-                style={{ lineHeight: 18 * responsiveSizeMultiplier }}
-              >
-                {
-                  "This website didn't pass our safety checks and is blacklisted. It might trick you into signing malicious transactions, asking you to reveal sensitive information, or be dangerous otherwise. If you believe we have blocked it in error, please "
-                }
+            {securityCheck === 'BLACKLISTED' && (
+              <Trans>
                 <Text
                   fontSize={14 * responsiveSizeMultiplier}
                   color={theme.errorDecorative}
                   style={{ lineHeight: 18 * responsiveSizeMultiplier }}
-                  underline
-                  onPress={() =>
-                    openInTab({ url: 'https://help.ambire.com/hc/en-us/requests/new' })
-                  }
                 >
-                  let us know.
+                  {
+                    "This website didn't pass our safety checks. It might trick you into signing malicious transactions or asking you to reveal sensitive information. If you believe we have blocked it in error, please "
+                  }
+                  <Text
+                    fontSize={14 * responsiveSizeMultiplier}
+                    color={theme.errorDecorative}
+                    style={{ lineHeight: 18 * responsiveSizeMultiplier }}
+                    underline
+                    onPress={() =>
+                      openInTab({ url: 'https://help.ambire.com/hc/en-us/requests/new' })
+                    }
+                  >
+                    let us know.
+                  </Text>
                 </Text>
+              </Trans>
+            )}
+            {securityCheck === 'FAILED_TO_GET' && (
+              <Text
+                fontSize={14 * responsiveSizeMultiplier}
+                color={theme.warningDecorative}
+                style={{ lineHeight: 18 * responsiveSizeMultiplier }}
+              >
+                {t("We couldn't check this domain for malicious activity. Proceed with caution.")}
               </Text>
-            </Trans>
+            )}
           </View>
         )}
       </View>
       <DAppPermissions responsiveSizeMultiplier={responsiveSizeMultiplier} />
-      {securityCheck === 'BLACKLISTED' ? (
+      {securityCheck === 'BLACKLISTED' || securityCheck === 'FAILED_TO_GET' ? (
         <Alert type="warning" size="sm" withIcon={false}>
           <Checkbox
             value={confirmedRiskCheckbox}

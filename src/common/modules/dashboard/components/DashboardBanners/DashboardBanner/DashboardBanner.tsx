@@ -170,7 +170,7 @@ const DashboardBanner = ({
           break
       }
     },
-    [dispatch, navigate, addToast, visibleActionsQueue, type, account, openBottomSheet]
+    [dispatch, navigate, addToast, visibleActionsQueue, type, openBottomSheet]
   )
 
   const dismissAction = actions.find((action: Action) => action.label === 'Dismiss')

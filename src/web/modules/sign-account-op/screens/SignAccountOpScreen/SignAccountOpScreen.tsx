@@ -109,7 +109,8 @@ const SignAccountOpScreen = () => {
     setInitDispatchedForId,
     isSignDisabled,
     bundlerNonceDiscrepancy,
-    primaryButtonText
+    primaryButtonText,
+    shouldHoldToProceed
   } = useSign({
     handleUpdateStatus,
     signAccountOpState,
@@ -239,7 +240,9 @@ const SignAccountOpScreen = () => {
     <SmallNotificationWindowWrapper>
       <SafetyChecksOverlay
         shouldBeVisible={
-          !signAccountOpState?.estimation.estimation || !signAccountOpState?.isInitialized
+          !signAccountOpState?.isInitialized ||
+          !signAccountOpState?.estimation.estimation ||
+          !!signAccountOpState.safetyChecksLoading
         }
       />
       <Modals
@@ -321,6 +324,7 @@ const SignAccountOpScreen = () => {
                   : t('Signing...')
               }
               buttonText={primaryButtonText}
+              shouldHoldToProceed={shouldHoldToProceed}
             />
           </View>
         )}
