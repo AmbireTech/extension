@@ -134,7 +134,7 @@ export class DashboardPage extends BasePage {
 
     if (warnings.length > 0) {
       const warningTokens = formatTokens(warnings)
-      warningMessage = `${accountName} balance is getting low for: ${warningTokens}.`
+      warningMessage = `💰 ${accountName} balance is getting low for: ${warningTokens}.`
     }
 
     if (errors.length > 0) {
@@ -143,7 +143,7 @@ export class DashboardPage extends BasePage {
     }
 
     if (warningMessage) {
-      console.warn(warningMessage)
+      console.log(warningMessage)
     }
 
     if (errorMessage) {
