@@ -45,7 +45,7 @@ const SubmittedTransactionSummaryInner = ({
 
   const calls = useMemo(
     () =>
-      humanizeAccountOp(submittedAccountOp, { network }).map((call, index) => ({
+      humanizeAccountOp(submittedAccountOp).map((call, index) => ({
         ...call,
         // It's okay to use index as:
         // 1. The calls aren't reordered

@@ -751,7 +751,7 @@ const useSteps = ({
     // if we have the extension account op passed, we do not need to
     // wait to show the calls
     if (extensionAccOp) {
-      const humanizedCalls = humanizeAccountOp(extensionAccOp, { network })
+      const humanizedCalls = humanizeAccountOp(extensionAccOp)
       setCalls(parseHumanizer(humanizedCalls))
       setFrom(extensionAccOp.accountAddr)
       if (extensionAccOp.feeCall) setFeeCall(extensionAccOp.feeCall)
@@ -786,7 +786,7 @@ const useSteps = ({
         signature: '0x', // irrelevant
         gasFeePayment: null
       }
-      const humanizedCalls = humanizeAccountOp(accountOp, { network })
+      const humanizedCalls = humanizeAccountOp(accountOp)
 
       setCalls(parseHumanizer(humanizedCalls))
       setFrom(accountOp.accountAddr)
