@@ -9,9 +9,9 @@ import shortenAddress from '@ambire-common/utils/shortenAddress'
 import GasTankIcon from '@common/assets/svg/GasTankIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import Avatar from '@common/components/Avatar'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
-import Tooltip from '@common/components/Tooltip'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
@@ -166,16 +166,18 @@ const PayOption = ({
         </View>
       )}
       {warning && (
-        <>
-          <WarningIcon
-            width={20}
-            height={20}
-            style={spacings.mrTy}
-            data-tooltip-id="estimation-warning"
-            color={theme.warningText}
-          />
-          <Tooltip id="estimation-warning" content={warning.title} />
-        </>
+        <WarningIcon
+          width={20}
+          height={20}
+          style={spacings.mrTy}
+          // @ts-ignore
+          dataSet={createGlobalTooltipDataSet({
+            id: 'estimation-warning',
+            content: warning.title
+          })}
+          data-tooltip-id="estimation-warning"
+          color={theme.warningText}
+        />
       )}
     </View>
   )

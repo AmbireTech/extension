@@ -12,11 +12,11 @@ import {
 import WarningFilledIcon from '@common/assets/svg/WarningFilledIcon'
 import Alert from '@common/components/Alert'
 import Badge from '@common/components/Badge'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Pagination from '@common/components/Pagination'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
-import Tooltip from '@common/components/Tooltip'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
@@ -312,21 +312,23 @@ const AccountsOnPageList = ({
                             tooltipText="Linked smart accounts are accounts that were not created with a given key originally, but this key was authorized for that given account on any supported network."
                           />
 
-                          <WarningFilledIcon data-tooltip-id="linked-accounts-warning" />
-                          <Tooltip
-                            id="linked-accounts-warning"
-                            border={`1px solid ${theme.warningDecorative as any}`}
-                            style={{
-                              backgroundColor:
-                                themeType === THEME_TYPES.DARK
-                                  ? theme.warningDecorative
-                                  : (theme.warningBackground as any),
-                              color:
-                                themeType === THEME_TYPES.DARK
-                                  ? theme.primaryBackground
-                                  : (theme.warningText as any)
-                            }}
-                            content="Do not add linked accounts you are not aware of!"
+                          <WarningFilledIcon
+                            // @ts-ignore
+                            dataSet={createGlobalTooltipDataSet({
+                              id: 'linked-accounts-warning',
+                              border: `1px solid ${theme.warningDecorative as any}`,
+                              style: {
+                                backgroundColor:
+                                  themeType === THEME_TYPES.DARK
+                                    ? theme.warningDecorative
+                                    : (theme.warningBackground as any),
+                                color:
+                                  themeType === THEME_TYPES.DARK
+                                    ? theme.primaryBackground
+                                    : (theme.warningText as any)
+                              },
+                              content: t('Do not add linked accounts you are not aware of!')
+                            })}
                           />
                         </View>
                       )}

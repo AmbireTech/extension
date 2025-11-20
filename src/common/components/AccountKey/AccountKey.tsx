@@ -19,7 +19,6 @@ import Button from '@common/components/Button'
 import Editable from '@common/components/Editable'
 import ExportKey from '@common/components/ExportKey'
 import Text from '@common/components/Text'
-import Tooltip from '@common/components/Tooltip'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
@@ -30,6 +29,8 @@ import { setStringAsync } from '@common/utils/clipboard'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useHover, { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
 import { getUiType } from '@web/utils/uiType'
+
+import { createGlobalTooltipDataSet } from '../GlobalTooltip'
 
 export type AccountKeyType = {
   isImported: boolean
@@ -173,8 +174,13 @@ const AccountKey: React.FC<Props> = ({
 
           {!isEditing && (
             <>
-              {/* @ts-ignore */}
-              <View dataSet={{ tooltipId: `key-${addr}-tooltip` }}>
+              <View
+                // @ts-ignore
+                dataSet={createGlobalTooltipDataSet({
+                  id: `key-${addr}-tooltip`,
+                  content: addr
+                })}
+              >
                 <Text
                   color={dedicatedToOneSA ? theme.infoDecorative : theme.primaryText}
                   fontSize={fontSize - 1}
@@ -189,11 +195,6 @@ const AccountKey: React.FC<Props> = ({
                   {dedicatedToOneSA ? t('(dedicated key)') : label ? `(${shortAddr})` : shortAddr}
                 </Text>
               </View>
-              <Tooltip id={`key-${addr}-tooltip`}>
-                <Text fontSize={14} weight="medium" appearance="secondaryText">
-                  {addr}
-                </Text>
-              </Tooltip>
               {!!showCopyAddr && (
                 <AnimatedPressable
                   style={[spacings.mlMi, copyIconAnimStyle]}
@@ -226,8 +227,14 @@ const AccountKey: React.FC<Props> = ({
                 So even the tooltip will not work.
                 The workaround is to set a wrapping <View> and make it the tooltip target
               */}
-                  {/* @ts-ignore */}
-                  <View dataSet={{ tooltipId: `export-${addr}-tooltip` }}>
+                  <View
+                    // @ts-ignore
+                    dataSet={createGlobalTooltipDataSet({
+                      id: `export-${addr}-tooltip`,
+                      content: t('Export unavailable as this is a hardware wallet key'),
+                      hidden: canExportKey
+                    })}
+                  >
                     <Button
                       style={{ height: 32 }}
                       hasBottomSpacing={false}
@@ -245,15 +252,6 @@ const AccountKey: React.FC<Props> = ({
                       />
                     </Button>
                   </View>
-                  {!canExportKey && (
-                    <Tooltip id={`export-${addr}-tooltip`}>
-                      <View>
-                        <Text fontSize={14} appearance="secondaryText">
-                          {t('Export unavailable as this is a hardware wallet key')}
-                        </Text>
-                      </View>
-                    </Tooltip>
-                  )}
                 </View>
                 <AnimatedPressable
                   onPress={() => {

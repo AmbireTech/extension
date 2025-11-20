@@ -15,7 +15,6 @@ import { SelectValue } from '@common/components/Select/types'
 import getStyles from '@common/components/SendToken/styles'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
-import Tooltip from '@common/components/Tooltip'
 import useGetTokenSelectProps from '@common/hooks/useGetTokenSelectProps'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
@@ -321,7 +320,11 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
             <View
               style={[flexbox.directionRow, flexbox.alignCenter]}
               // @ts-ignore
-              dataSet={{ tooltipId: 'to-token-balance-tooltip' }}
+              dataSet={createGlobalTooltipDataSet({
+                id: 'to-token-balance-tooltip',
+                content: t('Balance may be inaccurate'),
+                hidden: !simulationFailed
+              })}
             >
               <WalletFilledIcon
                 width={14}
@@ -344,10 +347,6 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
                     : toTokenValue.balanceFormatted
                 } ${toTokenValue.symbol}`}
               </Text>
-              <Tooltip
-                content={simulationFailed ? 'Balance may be inaccurate' : ''}
-                id="to-token-balance-tooltip"
-              />
             </View>
           )}
           {!!quote?.selectedRoute && isReadyToDisplayAmounts && (

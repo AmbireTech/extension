@@ -6,12 +6,12 @@ import InformationIcon from '@common/assets/svg/InformationIcon'
 import MetamaskIcon from '@common/assets/svg/Metamask/MetamaskIcon'
 import StarsIcon from '@common/assets/svg/StarsIcon'
 import Text from '@common/components/Text'
-import Tooltip from '@common/components/Tooltip'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { ThemeProps } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 
+import { createGlobalTooltipDataSet } from '../GlobalTooltip'
 import getStyles from './styles'
 import { Props } from './types'
 
@@ -115,28 +115,32 @@ const Badge = ({
       )}
       {children}
       {!!tooltipText && type !== 'new' && !specialType && (
-        <>
-          <InformationIcon
-            data-tooltip-id={tooltipId}
-            color={iconColor}
+        <InformationIcon
+          dataSet={createGlobalTooltipDataSet({
+            id: tooltipId,
+            content: tooltipText
+          })}
+          data-tooltip-id={tooltipId}
+          color={iconColor}
+          width={sizeMultiplier * 14}
+          height={sizeMultiplier * 14}
+        />
+      )}
+      {!!tooltipText &&
+        type !== 'new' &&
+        specialType &&
+        specialType === 'metamask' &&
+        text === 'Metamask' && (
+          <MetamaskIcon
+            // @ts-ignore
+            dataSet={createGlobalTooltipDataSet({
+              id: tooltipId,
+              content: tooltipText
+            })}
             width={sizeMultiplier * 14}
             height={sizeMultiplier * 14}
           />
-          <Tooltip id={tooltipId} content={tooltipText} />
-        </>
-      )}
-      {!!tooltipText && type !== 'new' && specialType && specialType === 'metamask' && (
-        <>
-          {text === 'Metamask' && (
-            <MetamaskIcon
-              data-tooltip-id={tooltipId}
-              width={sizeMultiplier * 14}
-              height={sizeMultiplier * 14}
-            />
-          )}
-          <Tooltip id={tooltipId} content={tooltipText} />
-        </>
-      )}
+        )}
       {type === 'new' && (
         <StarsIcon
           style={spacings.mlMi}

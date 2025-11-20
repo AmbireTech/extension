@@ -4,9 +4,9 @@ import { Pressable, View } from 'react-native'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import KebabMenuIcon from '@common/assets/svg/KebabMenuIcon'
 import OpenIcon from '@common/assets/svg/OpenIcon'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import NetworkIcon from '@common/components/NetworkIcon'
 import Text from '@common/components/Text'
-import Tooltip from '@common/components/Tooltip'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
@@ -98,10 +98,11 @@ const Network: FC<Props> = ({ chainId, openBlockExplorer, openSettingsBottomShee
           onHoverIn={triggerHovered}
           onPress={handleOpenBlockExplorer}
           // @ts-ignore missing type, but the prop is valid
-          dataSet={{
-            tooltipId: tooltipBlockExplorerMissingId,
-            tooltipContent: NO_BLOCK_EXPLORER_AVAILABLE_TOOLTIP
-          }}
+          dataSet={createGlobalTooltipDataSet({
+            id: tooltipBlockExplorerMissingId,
+            content: NO_BLOCK_EXPLORER_AVAILABLE_TOOLTIP,
+            hidden: !isBlockExplorerMissing
+          })}
           style={[spacings.mlSm, explorerIconAnimStyle]}
         >
           {({ hovered }: any) => (
@@ -113,7 +114,6 @@ const Network: FC<Props> = ({ chainId, openBlockExplorer, openSettingsBottomShee
             />
           )}
         </AnimatedPressable>
-        {isBlockExplorerMissing && <Tooltip id={tooltipBlockExplorerMissingId} />}
       </View>
       <View style={[flexbox.alignCenter, flexbox.directionRow]}>
         <Text fontSize={dashboardNetworkFilter === chainId ? 20 : 16} weight="semiBold">
