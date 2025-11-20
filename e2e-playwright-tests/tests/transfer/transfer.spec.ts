@@ -52,7 +52,17 @@ test.describe('transfer', { tag: '@transfer' }, () => {
     })
 
     await test.step('assert funds sent to recepient address on explorer', async () => {
-      await pages.transfer.checkRecepientTransactionOnExplorer(recipientAddress)
+      const viewTransactionLink = pages.basePage.page.getByTestId(
+        selectors.dashboard.viewTransactionLink
+      )
+      const viewTransactionTab = await pages.basePage.handleNewPage(viewTransactionLink)
+      await pages.transfer.checkRecepientTransactionOnExplorer({
+        newPage: viewTransactionTab,
+        recepientAddress: recipientAddress
+      })
+
+      // check url of new tab
+      expect(viewTransactionTab.url()).toContain('explorer.ambire.com')
     })
   })
 
@@ -94,9 +104,24 @@ test.describe('transfer', { tag: '@transfer' }, () => {
     await test.step('assert new transaction on Activity tab', async () => {
       await pages.transfer.checkSendTransactionOnActivityTab()
     })
+
+    await test.step('assert funds sent to recepient address on explorer', async () => {
+      const viewTransactionLink = pages.basePage.page.getByTestId(
+        selectors.dashboard.viewTransactionLink
+      )
+      const viewTransactionTab = await pages.basePage.handleNewPage(viewTransactionLink)
+
+      // check url of new tab
+      expect(viewTransactionTab.url()).toContain('explorer.ambire.com')
+
+      await pages.transfer.checkRecepientTransactionOnExplorer({
+        newPage: viewTransactionTab,
+        recepientAddress: recipientAddress
+      })
+    })
   })
 
-  test('should batch multiple transfer transactions', async ({ pages }) => {
+  test.only('should batch multiple transfer transactions', async ({ pages }) => {
     const page = pages.transfer.page
     const sendToken = tokens.usdc.optimism
     const recipientAddress = '0xc162b2F9f06143Cf063606d814C7F38ED4471F44'
@@ -127,6 +152,7 @@ test.describe('transfer', { tag: '@transfer' }, () => {
 
     await test.step('go to dashboard', async () => {
       await pages.transfer.click(selectors.goDashboardButton)
+      await pages.auth.pause()
     })
 
     await test.step('open AccountOp screen and sign', async () => {
@@ -149,6 +175,13 @@ test.describe('transfer', { tag: '@transfer' }, () => {
       // Sometimes it takes a bit more time to be confirmed, that's why we increase the timeout.
       await expect(actionWindowPage.getByTestId(selectors.txnConfirmed)).toBeVisible({
         timeout: 20000
+      })
+
+      // assert funds sent to recepient address on explorer
+      await pages.transfer.checkRecepientTransactionOnExplorer({
+        newPage: actionWindowPage,
+        recepientAddress: recipientAddress,
+        options: { expectedTransactionsCount: 2 }
       })
     })
 

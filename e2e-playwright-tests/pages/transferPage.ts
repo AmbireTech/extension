@@ -2,7 +2,7 @@ import { baParams } from 'constants/env'
 import selectors from 'constants/selectors'
 import Token from 'interfaces/token'
 
-import { expect } from '@playwright/test'
+import { expect, Page } from '@playwright/test'
 
 import { BasePage } from './basePage'
 
@@ -166,34 +166,44 @@ export class TransferPage extends BasePage {
     }
   }
 
-  async checkRecepientTransactionOnExplorer(recepientAddress: string) {
-    // view transaction
-    const viewTransactionLink = this.page.getByTestId(selectors.dashboard.viewTransactionLink)
-    const viewTransactionTab = await this.handleNewPage(viewTransactionLink)
-
-    expect(viewTransactionTab.url()).toContain('explorer.ambire.com')
+  async checkRecepientTransactionOnExplorer({
+    newPage,
+    recepientAddress,
+    options
+  }: {
+    newPage: Page
+    recepientAddress: string
+    options?: { expectedTransactionsCount?: number }
+  }): Promise<void> {
+    const expectedTransactionsCount = options?.expectedTransactionsCount ?? 1 // expect at least 1 transaction
+    const transactionDetails: string[] = []
 
     // assert signed block
-    await expect(
-      viewTransactionTab.getByTestId(selectors.transaction.explorer.txnSignedStep)
-    ).toContainText('Signed')
+    await expect(newPage.getByTestId(selectors.transaction.explorer.txnSignedStep)).toContainText(
+      'Signed'
+    )
 
     // assert transaction details block
-    await expect(
-      viewTransactionTab.getByTestId(selectors.transaction.explorer.txnProgressStep)
-    ).toContainText('Transaction details')
-
-    const transactionDetails = await this.getText(
-      selectors.transaction.explorer.recepientAddressBlock
+    await expect(newPage.getByTestId(selectors.transaction.explorer.txnProgressStep)).toContainText(
+      'Transaction details'
     )
+
+    for (let i = 0; i < expectedTransactionsCount; i++) {
+      const text = await newPage
+        .getByTestId(selectors.transaction.explorer.recepientAddressBlock).nth(i)
+        .innerText()
+      transactionDetails.push(text)
+      console.log('text ', text)
+      console.log('txn details ', transactionDetails)
+    }
+
     expect(transactionDetails).toContain('Send')
     expect(transactionDetails).toContain('0.001')
     expect(transactionDetails).toContain('USDC')
     expect(transactionDetails).toContain(recepientAddress)
-    await this.pause()
     // assert confirmed block
     await expect(
-      viewTransactionTab.getByTestId(selectors.transaction.explorer.txnConfirmedStep)
+      newPage.getByTestId(selectors.transaction.explorer.txnConfirmedStep)
     ).toContainText('confirmed')
   }
 }

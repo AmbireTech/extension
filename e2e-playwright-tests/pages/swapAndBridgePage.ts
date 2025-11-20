@@ -234,7 +234,6 @@ export class SwapAndBridgePage extends BasePage {
       if (feeDollarsAmount > 0.1) {
         console.warn('⚠️ Fee amount is higher than 0.1$, transaction signing skipped.')
       } else {
-        console.log('else block')
         await expect(signButton).toBeVisible({ timeout: 5000 })
         await expect(signButton).toBeEnabled({ timeout: 5000 })
         await page.getByTestId(selectors.signTransactionButton).click()
