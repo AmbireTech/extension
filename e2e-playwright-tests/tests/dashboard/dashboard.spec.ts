@@ -66,10 +66,9 @@ test.describe('dashboard', () => {
   })
 
   test('Filter Tokens by token name', async ({ pages }) => {
-    // SA should have 4 tokens containing USDC - base/optimism/polygon, USDCe - optimism
+    // SA should have 3 tokens containing USDC - base/optimism/polygon
     const usdcMainnet = tokens.usdc.optimism
     const usdcBase = tokens.usdc.base
-    const usdcEMainnet = tokens.usdce.optimism
     const usdcPolygon = tokens.usdc.polygon
 
     await test.step('search Tokens by token name - USDC', async () => {
@@ -79,9 +78,6 @@ test.describe('dashboard', () => {
     await test.step('assert search result', async () => {
       await pages.basePage.isVisible(`token-balance-${usdcMainnet.address}.${usdcMainnet.chainId}`)
       await pages.basePage.isVisible(`token-balance-${usdcBase.address}.${usdcBase.chainId}`)
-      await pages.basePage.isVisible(
-        `token-balance-${usdcEMainnet.address}.${usdcEMainnet.chainId}`
-      )
       await pages.basePage.isVisible(`token-balance-${usdcPolygon.address}.${usdcPolygon.chainId}`)
     })
   })

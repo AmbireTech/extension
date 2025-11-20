@@ -1,4 +1,4 @@
-import { baParams } from 'constants/env'
+import { baParams, SA_ADDRESS } from 'constants/env'
 import selectors from 'constants/selectors'
 import tokens from 'constants/tokens'
 import { test } from 'fixtures/pageObjects'
@@ -16,8 +16,7 @@ test.describe('transfer', { tag: '@transfer' }, () => {
 
   test('should send a transaction and pay with the current account gas tank', async ({ pages }) => {
     const sendToken = tokens.usdc.optimism
-    // This address is derived from SA testing account seed phrase
-    const recipientAddress = '0xc162b2F9f06143Cf063606d814C7F38ED4471F44'
+    const recipientAddress = SA_ADDRESS
     const feeToken = tokens.usdc.ethereum
     const payWithGasTank = true
     const message = 'Transfer done!'
@@ -148,10 +147,13 @@ test.describe('transfer', { tag: '@transfer' }, () => {
       })
     })
 
-    await test.step('stop monitoring requests and expect no uncategorized requests to be made', async () => {
-      const { uncategorized } = pages.transfer.getCategorizedRequests()
-      expect(uncategorized.length).toBeLessThanOrEqual(0)
-    })
+    await test.step(
+      'stop monitoring requests and expect no uncategorized requests to be made',
+      async () => {
+        const { uncategorized } = pages.transfer.getCategorizedRequests()
+        expect(uncategorized.length).toBeLessThanOrEqual(0)
+      }
+    )
   })
 
   test('add contact in address book and send transaction to newly added contact', async ({
