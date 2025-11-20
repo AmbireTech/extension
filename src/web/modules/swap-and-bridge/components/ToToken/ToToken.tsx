@@ -8,13 +8,13 @@ import { SwapAndBridgeFormStatus } from '@ambire-common/controllers/swapAndBridg
 import { getIsNetworkSupported } from '@ambire-common/libs/swapAndBridge/swapAndBridge'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import WalletFilledIcon from '@common/assets/svg/WalletFilledIcon'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import NetworkIcon from '@common/components/NetworkIcon'
 import Select from '@common/components/Select'
 import { SelectValue } from '@common/components/Select/types'
 import getStyles from '@common/components/SendToken/styles'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
-import Tooltip from '@common/components/Tooltip'
 import useGetTokenSelectProps from '@common/hooks/useGetTokenSelectProps'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
@@ -278,22 +278,23 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
           />
           <View style={[spacings.plSm, flexbox.flex1]}>
             {isReadyToDisplayAmounts ? (
-              <>
-                <Text
-                  fontSize={20}
-                  weight="medium"
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                  appearance={
-                    formattedToAmount && formattedToAmount !== '0' ? 'primaryText' : 'secondaryText'
-                  }
-                  dataSet={{ tooltipId: 'to-amount' }}
-                  style={{ textAlign: 'right' }}
-                >
-                  {formattedToAmount}
-                </Text>
-                {formattedToAmount !== '0' && <Tooltip id="to-amount" content={toAmount} />}
-              </>
+              <Text
+                fontSize={20}
+                weight="medium"
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                appearance={
+                  formattedToAmount && formattedToAmount !== '0' ? 'primaryText' : 'secondaryText'
+                }
+                dataSet={createGlobalTooltipDataSet({
+                  id: 'to-amount',
+                  content: toAmount,
+                  hidden: formattedToAmount === '0'
+                })}
+                style={{ textAlign: 'right' }}
+              >
+                {formattedToAmount}
+              </Text>
             ) : (
               <SkeletonLoader
                 appearance="tertiaryBackground"
@@ -319,7 +320,11 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
             <View
               style={[flexbox.directionRow, flexbox.alignCenter]}
               // @ts-ignore
-              dataSet={{ tooltipId: 'to-token-balance-tooltip' }}
+              dataSet={createGlobalTooltipDataSet({
+                id: 'to-token-balance-tooltip',
+                content: t('Balance may be inaccurate'),
+                hidden: !simulationFailed
+              })}
             >
               <WalletFilledIcon
                 width={14}
@@ -342,10 +347,6 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
                     : toTokenValue.balanceFormatted
                 } ${toTokenValue.symbol}`}
               </Text>
-              <Tooltip
-                content={simulationFailed ? 'Balance may be inaccurate' : ''}
-                id="to-token-balance-tooltip"
-              />
             </View>
           )}
           {!!quote?.selectedRoute && isReadyToDisplayAmounts && (

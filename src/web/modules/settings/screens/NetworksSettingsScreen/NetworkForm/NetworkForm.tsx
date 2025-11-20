@@ -14,7 +14,6 @@ import NetworkIcon from '@common/components/NetworkIcon'
 import NumberInput from '@common/components/NumberInput'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
-import Tooltip from '@common/components/Tooltip'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
@@ -830,7 +829,6 @@ const NetworkForm = ({
           </View>
         </View>
       </View>
-      <Tooltip id="chainId" />
     </>
   )
 }

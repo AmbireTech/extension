@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import Button, { Props as ButtonProps } from '@common/components/Button'
-import Tooltip from '@common/components/Tooltip'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -68,7 +67,6 @@ const ActionFooter = ({
           />
         </View>
       )}
-      <Tooltip id="coming-soon" />
     </>
   )
 }

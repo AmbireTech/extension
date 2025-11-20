@@ -5,8 +5,8 @@ import { View, ViewStyle } from 'react-native'
 import { Network } from '@ambire-common/interfaces/network'
 import GasTankIcon from '@common/assets/svg/GasTankIcon'
 import RewardsIcon from '@common/assets/svg/RewardsIcon'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
-import Tooltip from '@common/components/Tooltip'
 import useTheme from '@common/hooks/useTheme'
 import { SPACING_MI, SPACING_TY } from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
@@ -100,57 +100,51 @@ const NetworkIcon = ({
   const tooltipId = useMemo(() => `${networkName}-${nanoid(6)}`, [networkName])
 
   return (
-    <>
-      <View
-        // @ts-ignore
-        dataSet={{
-          tooltipId,
-          tooltipContent: `${network?.name}`
-        }}
-        style={[
-          flexbox.alignCenter,
-          flexbox.justifyCenter,
-          !Icon && {
-            width: size,
-            height: size
-          },
-          {
-            borderRadius: 50,
-            overflow: 'hidden',
-            backgroundColor:
-              themeType === THEME_TYPES.DARK
-                ? theme.primaryBackgroundInverted
-                : theme.tertiaryBackground
-          },
-          style
-        ]}
-      >
-        {Icon ? (
-          <Icon width={size} height={size} {...rest} />
-        ) : (
-          <ManifestImage
-            uris={uris || iconUrls}
-            size={size}
-            iconScale={iconScale}
-            isRound
-            fallback={() => renderDefaultIcon()}
-            imageStyle={themeType === THEME_TYPES.DARK ? { backgroundColor: 'transparent' } : {}}
-          />
-        )}
-      </View>
-      {!!network && withTooltip && (
-        <Tooltip
-          id={tooltipId}
-          style={{
-            paddingRight: SPACING_TY,
-            paddingLeft: SPACING_TY,
-            paddingTop: SPACING_MI,
-            paddingBottom: SPACING_MI,
-            fontSize: 12
-          }}
+    <View
+      // @ts-ignore
+      dataSet={createGlobalTooltipDataSet({
+        id: tooltipId,
+        content: `${network?.name}`,
+        style: {
+          paddingRight: SPACING_TY,
+          paddingLeft: SPACING_TY,
+          paddingTop: SPACING_MI,
+          paddingBottom: SPACING_MI,
+          fontSize: 12
+        },
+        hidden: !network || !withTooltip
+      })}
+      style={[
+        flexbox.alignCenter,
+        flexbox.justifyCenter,
+        !Icon && {
+          width: size,
+          height: size
+        },
+        {
+          borderRadius: 50,
+          overflow: 'hidden',
+          backgroundColor:
+            themeType === THEME_TYPES.DARK
+              ? theme.primaryBackgroundInverted
+              : theme.tertiaryBackground
+        },
+        style
+      ]}
+    >
+      {Icon ? (
+        <Icon width={size} height={size} {...rest} />
+      ) : (
+        <ManifestImage
+          uris={uris || iconUrls}
+          size={size}
+          iconScale={iconScale}
+          isRound
+          fallback={() => renderDefaultIcon()}
+          imageStyle={themeType === THEME_TYPES.DARK ? { backgroundColor: 'transparent' } : {}}
         />
       )}
-    </>
+    </View>
   )
 }
 

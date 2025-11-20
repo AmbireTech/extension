@@ -6,10 +6,10 @@ import { Linking, Pressable, View } from 'react-native'
 import { getCoinGeckoTokenUrl } from '@ambire-common/consts/coingecko'
 import { Network } from '@ambire-common/interfaces/network'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import HumanizerAddress from '@common/components/HumanizerAddress'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
-import Tooltip from '@common/components/Tooltip'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -90,14 +90,14 @@ const InnerToken: FC<Props> = ({
               <Text
                 weight="medium"
                 appearance="primaryText"
-                dataSet={{
-                  tooltipId: `${address}-${fullAmount}-balance`
-                }}
+                dataSet={createGlobalTooltipDataSet({
+                  id: `${address}-${fullAmount}-balance`,
+                  content: String(fullAmount)
+                })}
                 style={spacings.mrMi}
               >
                 {formattedAmount}
               </Text>
-              <Tooltip content={String(fullAmount)} id={`${address}-${fullAmount}-balance`} />
               {!tokenInfo?.decimals && (
                 <Text
                   fontSize={textSize}
