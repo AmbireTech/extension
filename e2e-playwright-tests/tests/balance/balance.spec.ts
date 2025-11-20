@@ -20,14 +20,10 @@ test.describe('Basic Account - Tokens balance check', { tag: '@balanceCheck' }, 
       [tokens.xwallet.ethereum, 2]
     ]
 
-    const err = await pages.dashboard.checkBalances({
-      accountName: 'Basic account',
+    await pages.dashboard.checkBalances({
+      accountName: 'Basic Account',
       thresholds: THRESHOLDS
     })
-
-    if (err) throw new Error(err)
-
-    console.log('✅ Basic Account tokens and gas tank have sufficient balance.')
   })
 })
 
@@ -51,13 +47,9 @@ test.describe('Smart Account - Tokens balance check', { tag: '@balanceCheck' }, 
       [tokens.xwallet.ethereum, 2]
     ]
 
-    const err = await pages.dashboard.checkBalances({
+    await pages.dashboard.checkBalances({
       accountName: 'Smart Account',
       thresholds: THRESHOLDS
     })
-
-    if (err) throw new Error(err)
-
-    console.log('✅ Smart Account tokens and gas tank have sufficient balance.')
   })
 })
