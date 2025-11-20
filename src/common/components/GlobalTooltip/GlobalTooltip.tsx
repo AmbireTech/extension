@@ -10,9 +10,10 @@ interface TooltipProps {
 
 export function GlobalTooltip() {
   const [current, setCurrent] = useState<TooltipProps>({ id: null, props: null })
-
+  const tooltipRef: any = useRef(null)
   const pointerPos = useRef({ x: 0, y: 0 })
   const lastEl = useRef<Element | null>(null)
+  const scrollTimeout = useRef<any>(null)
 
   useEffect(() => {
     const extractTooltip = (el: Element | null) => {
@@ -41,18 +42,24 @@ export function GlobalTooltip() {
     }
 
     const handleScroll = () => {
-      if (!pointerPos.current.x && !pointerPos.current.y) return
+      clearTimeout(scrollTimeout.current)
 
-      const el = document.elementFromPoint(
-        pointerPos.current.x,
-        pointerPos.current.y
-      ) as HTMLElement | null
-      const newEl = el?.closest('[data-tooltip]') || null
+      scrollTimeout.current = setTimeout(() => {
+        // Detect tooltip only after scroll stops
+        if (!pointerPos.current.x && !pointerPos.current.y) return
 
-      if (newEl !== lastEl.current) {
-        lastEl.current = newEl
-        applyTooltip(extractTooltip(newEl))
-      }
+        const el = document.elementFromPoint(
+          pointerPos.current.x,
+          pointerPos.current.y
+        ) as HTMLElement | null
+
+        const newEl = el?.closest('[data-tooltip]') || null
+
+        if (newEl !== lastEl.current) {
+          lastEl.current = newEl
+          applyTooltip(extractTooltip(newEl))
+        }
+      }, 80)
     }
 
     document.addEventListener('pointermove', handlePointerMove, true)
@@ -64,8 +71,15 @@ export function GlobalTooltip() {
     }
   }, [])
 
+  useEffect(() => {
+    if (current.id && tooltipRef.current) {
+      tooltipRef.current?.open()
+    }
+  }, [current.id])
+
   return (
     <Tooltip
+      tooltipRef={tooltipRef}
       id="global-tooltip"
       anchorSelect={current.id ? `[data-tooltip*='"id":"${current.id}"']` : null}
       {...(current.props || {})}
