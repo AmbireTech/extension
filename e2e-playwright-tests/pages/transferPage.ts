@@ -176,7 +176,7 @@ export class TransferPage extends BasePage {
     options?: { expectedTransactionsCount?: number }
   }): Promise<void> {
     const expectedTransactionsCount = options?.expectedTransactionsCount ?? 1 // expect at least 1 transaction
-    const transactionDetails: string[] = []
+    let transactionDetails: any
 
     // assert signed block
     await expect(newPage.getByTestId(selectors.transaction.explorer.txnSignedStep)).toContainText(
@@ -189,12 +189,10 @@ export class TransferPage extends BasePage {
     )
 
     for (let i = 0; i < expectedTransactionsCount; i++) {
-      const text = await newPage
-        .getByTestId(selectors.transaction.explorer.recepientAddressBlock).nth(i)
+      transactionDetails = await newPage
+        .getByTestId(selectors.transaction.explorer.recepientAddressBlock)
+        .nth(i)
         .innerText()
-      transactionDetails.push(text)
-      console.log('text ', text)
-      console.log('txn details ', transactionDetails)
     }
 
     expect(transactionDetails).toContain('Send')
