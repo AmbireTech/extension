@@ -6,6 +6,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { BrowserRouter, HashRouter } from 'react-router-dom'
 
 import ErrorComponent from '@common/components/ErrorBoundary'
+import { GlobalTooltip } from '@common/components/GlobalTooltip'
 import { ErrorBoundary } from '@common/config/analytics/CrashAnalytics.web'
 import { KeyboardProvider } from '@common/contexts/keyboardContext'
 import { NetInfoProvider } from '@common/contexts/netInfoContext'
@@ -60,6 +61,7 @@ const AppInit = () => {
   return (
     <Router>
       <PortalProvider>
+        <GlobalTooltip />
         <SafeAreaProvider>
           <ToastProvider>
             <ErrorBoundary fallback={errorComponent}>

@@ -9,8 +9,8 @@ import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import StarIcon from '@common/assets/svg/StarIcon'
 import XIcon from '@common/assets/svg/XIcon'
 import Badge from '@common/components/Badge'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
-import Tooltip from '@common/components/Tooltip'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING_TY } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
@@ -127,7 +127,18 @@ const DappItem = (dapp: Dapp) => {
                     zIndex: 1
                   }}
                   // @ts-ignore
-                  dataSet={{ tooltipId: id, tooltipContent: 'Verified app' }}
+                  dataSet={createGlobalTooltipDataSet({
+                    id,
+                    content: t('Verified app'),
+                    delayShow: 250,
+                    border: `1px solid ${theme.successDecorative as string}`,
+                    style: {
+                      fontSize: 12,
+                      backgroundColor: theme.successBackground as string,
+                      padding: SPACING_TY,
+                      color: theme.successDecorative as string
+                    }
+                  })}
                 >
                   <TrustedIcon width={16} height={16} />
                 </View>
@@ -259,17 +270,6 @@ const DappItem = (dapp: Dapp) => {
           <Text fontSize={12} appearance="secondaryText" numberOfLines={isConnected ? 2 : 3}>
             {description}
           </Text>
-          <Tooltip
-            id={id}
-            delayShow={500}
-            border={`1px solid ${theme.successDecorative as string}`}
-            style={{
-              fontSize: 12,
-              backgroundColor: theme.successBackground as string,
-              padding: SPACING_TY,
-              color: theme.successDecorative as string
-            }}
-          />
         </AnimatedPressable>
       </div>
       <ManageDapp

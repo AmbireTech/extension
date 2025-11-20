@@ -58,9 +58,7 @@ const Value = ({
     <Text
       appearance="secondaryText"
       fontSize={14 * responsiveSizeMultiplier}
-      dataSet={{
-        tooltipId
-      }}
+      dataSet={{ tooltipId }}
     >
       {children}
     </Text>

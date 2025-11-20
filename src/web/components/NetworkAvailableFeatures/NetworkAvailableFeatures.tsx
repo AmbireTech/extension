@@ -17,10 +17,10 @@ import ErrorFilledIcon from '@common/assets/svg/ErrorFilledIcon'
 import InformationIcon from '@common/assets/svg/InformationIcon'
 import WarningFilledIcon from '@common/assets/svg/WarningFilledIcon'
 import Button from '@common/components/Button'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
-import Tooltip from '@common/components/Tooltip'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
@@ -239,10 +239,10 @@ const NetworkAvailableFeatures = ({
                           <InformationIcon
                             width={iconSize}
                             height={iconSize}
-                            dataSet={{
-                              tooltipId: 'feature-message-tooltip',
-                              tooltipContent: feature.msg
-                            }}
+                            dataSet={createGlobalTooltipDataSet({
+                              id: 'feature-message-tooltip',
+                              content: feature.msg
+                            })}
                           />
                         </View>
                       </View>
@@ -283,7 +283,6 @@ const NetworkAvailableFeatures = ({
             />
           </View>
         )}
-        <Tooltip id="feature-message-tooltip" />
       </View>
     </Wrapper>
   )

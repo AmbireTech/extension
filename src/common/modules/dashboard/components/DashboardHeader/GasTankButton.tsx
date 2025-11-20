@@ -4,9 +4,9 @@ import { View } from 'react-native'
 import { Account } from '@ambire-common/interfaces/account'
 import { SelectedAccountPortfolio } from '@ambire-common/interfaces/selectedAccount'
 import GasTankIcon from '@common/assets/svg/GasTankIcon'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
-import Tooltip from '@common/components/Tooltip'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
@@ -149,8 +149,14 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
           </Text>
         )}
         {buttonState === 'soon' && (
-          // @ts-ignore
-          <View dataSet={{ tooltipId: 'gas-tank-soon' }}>
+          <View
+            // @ts-ignore
+            dataSet={createGlobalTooltipDataSet({
+              id: 'gas-tank-soon',
+              content: t('Not available for hardware wallets yet.'),
+              hidden: buttonState !== 'soon'
+            })}
+          >
             <Text
               style={[spacings.mhTy]}
               color={
@@ -180,9 +186,6 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
           </Text>
         )}
       </AnimatedPressable>
-      {buttonState === 'soon' && (
-        <Tooltip content="Not available for hardware wallets yet." id="gas-tank-soon" />
-      )}
     </View>
   )
 }
