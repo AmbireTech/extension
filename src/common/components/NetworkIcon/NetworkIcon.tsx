@@ -5,6 +5,7 @@ import { View, ViewStyle } from 'react-native'
 import { Network } from '@ambire-common/interfaces/network'
 import GasTankIcon from '@common/assets/svg/GasTankIcon'
 import RewardsIcon from '@common/assets/svg/RewardsIcon'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import { SPACING_MI, SPACING_TY } from '@common/styles/spacings'
@@ -12,8 +13,6 @@ import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import ManifestImage from '@web/components/ManifestImage'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
-
-import { createGlobalTooltipDataSet } from '../GlobalTooltip'
 
 export type NetworkIconIdType = string | 'gasTank' | 'rewards'
 

@@ -169,13 +169,12 @@ const PayOption = ({
         <WarningIcon
           width={20}
           height={20}
-          style={spacings.mrTy}
+          style={spacings.mlTy}
           // @ts-ignore
           dataSet={createGlobalTooltipDataSet({
             id: 'estimation-warning',
             content: warning.title
           })}
-          data-tooltip-id="estimation-warning"
           color={theme.warningText}
         />
       )}

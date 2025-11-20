@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ITooltip } from 'react-tooltip'
+import { ITooltip, TooltipRefProps } from 'react-tooltip'
 
 import Tooltip from '@common/components/Tooltip'
 
@@ -10,10 +10,10 @@ interface TooltipProps {
 
 export function GlobalTooltip() {
   const [current, setCurrent] = useState<TooltipProps>({ id: null, props: null })
-  const tooltipRef: any = useRef(null)
+  const tooltipRef = useRef<TooltipRefProps | null>(null)
   const pointerPos = useRef({ x: 0, y: 0 })
   const lastEl = useRef<Element | null>(null)
-  const scrollTimeout = useRef<any>(null)
+  const scrollTimeout = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
     const extractTooltip = (el: Element | null) => {
@@ -42,7 +42,7 @@ export function GlobalTooltip() {
     }
 
     const handleScroll = () => {
-      clearTimeout(scrollTimeout.current)
+      !!scrollTimeout.current && clearTimeout(scrollTimeout.current)
 
       scrollTimeout.current = setTimeout(() => {
         // Detect tooltip only after scroll stops

@@ -61,10 +61,10 @@ const AppInit = () => {
   return (
     <Router>
       <PortalProvider>
+        <GlobalTooltip />
         <SafeAreaProvider>
           <ToastProvider>
             <ErrorBoundary fallback={errorComponent}>
-              <GlobalTooltip />
               <BackgroundServiceProvider>
                 <MainControllerStateProvider>
                   <StorageControllerStateProvider>

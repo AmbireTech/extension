@@ -18,6 +18,7 @@ import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
 import Editable from '@common/components/Editable'
 import ExportKey from '@common/components/ExportKey'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
@@ -29,8 +30,6 @@ import { setStringAsync } from '@common/utils/clipboard'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useHover, { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
 import { getUiType } from '@web/utils/uiType'
-
-import { createGlobalTooltipDataSet } from '../GlobalTooltip'
 
 export type AccountKeyType = {
   isImported: boolean
