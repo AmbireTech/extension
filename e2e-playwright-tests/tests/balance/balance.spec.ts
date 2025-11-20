@@ -15,9 +15,9 @@ test.describe('Basic Account - Tokens balance check', { tag: '@balanceCheck' }, 
   test('check balance of test tokens', async ({ pages }) => {
     const THRESHOLDS: Threshold[] = [
       ['gas-token', 1],
-      [tokens.wallet.base, 300],
-      [tokens.usdc.optimism, 2],
-      [tokens.xwallet.ethereum, 2]
+      [tokens.wallet.base, 1],
+      // These tokens are used to pay fees in transactions, so we need more funds here:
+      [tokens.usdc.optimism, 2]
     ]
 
     await pages.dashboard.checkBalances({
@@ -39,12 +39,11 @@ test.describe('Smart Account - Tokens balance check', { tag: '@balanceCheck' }, 
   test('check balance of test tokens', async ({ pages }) => {
     const THRESHOLDS: Threshold[] = [
       ['gas-token', 1],
-      [tokens.wallet.base, 300],
-      [tokens.usdc.base, 3],
-      [tokens.usdc.optimism, 2],
-      [tokens.usdce.optimism, 2],
-      [tokens.dai.optimism, 2],
-      [tokens.xwallet.ethereum, 2]
+      [tokens.wallet.base, 1],
+      [tokens.dai.optimism, 1],
+      // These tokens are used to pay fees in transactions, so we need more funds here:
+      [tokens.usdc.base, 2],
+      [tokens.usdc.optimism, 2]
     ]
 
     await pages.dashboard.checkBalances({
