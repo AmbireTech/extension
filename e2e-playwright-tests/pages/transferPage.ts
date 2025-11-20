@@ -165,4 +165,35 @@ export class TransferPage extends BasePage {
       await this.click(selectors.closeProgressModalButton)
     }
   }
+
+  async checkRecepientTransactionOnExplorer(recepientAddress: string) {
+    // view transaction
+    const viewTransactionLink = this.page.getByTestId(selectors.dashboard.viewTransactionLink)
+    const viewTransactionTab = await this.handleNewPage(viewTransactionLink)
+
+    expect(viewTransactionTab.url()).toContain('explorer.ambire.com')
+
+    // assert signed block
+    await expect(
+      viewTransactionTab.getByTestId(selectors.transaction.explorer.txnSignedStep)
+    ).toContainText('Signed')
+
+    // assert transaction details block
+    await expect(
+      viewTransactionTab.getByTestId(selectors.transaction.explorer.txnProgressStep)
+    ).toContainText('Transaction details')
+
+    const transactionDetails = await this.getText(
+      selectors.transaction.explorer.recepientAddressBlock
+    )
+    expect(transactionDetails).toContain('Send')
+    expect(transactionDetails).toContain('0.001')
+    expect(transactionDetails).toContain('USDC')
+    expect(transactionDetails).toContain(recepientAddress)
+    await this.pause()
+    // assert confirmed block
+    await expect(
+      viewTransactionTab.getByTestId(selectors.transaction.explorer.txnConfirmedStep)
+    ).toContainText('confirmed')
+  }
 }

@@ -50,6 +50,10 @@ test.describe('transfer', { tag: '@transfer' }, () => {
     await test.step('assert new transaction on Activity tab', async () => {
       await pages.transfer.checkSendTransactionOnActivityTab()
     })
+
+    await test.step('assert funds sent to recepient address on explorer', async () => {
+      await pages.transfer.checkRecepientTransactionOnExplorer(recipientAddress)
+    })
   })
 
   test("should send a transaction and pay with the current account's ERC-20 token", async ({

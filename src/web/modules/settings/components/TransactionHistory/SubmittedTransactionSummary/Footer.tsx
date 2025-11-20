@@ -160,6 +160,7 @@ const Footer: FC<Props> = ({
             onPress={handleViewTransaction}
           >
             <Text
+              testID="view-transaction-link"
               fontSize={textSize}
               appearance="secondaryText"
               weight="medium"
