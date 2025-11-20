@@ -19,12 +19,14 @@ type NetworksContextType = {
   benzinNetworks: Network[]
   addNetwork: (chainId: bigint) => void
   loadingBenzinNetworks: bigint[]
+  notFoundNetworks: bigint[]
 }
 
 const benzinNetworksContext = createContext<NetworksContextType>({
   benzinNetworks: [],
   addNetwork: () => {},
-  loadingBenzinNetworks: []
+  loadingBenzinNetworks: [],
+  notFoundNetworks: []
 })
 
 const fetchNetworkData = async (chainId: bigint) => {
@@ -63,6 +65,7 @@ const fetchNetworks = async () => {
 const BenzinNetworksContextProvider: FC<Props> = ({ children }) => {
   const [benzinNetworks, setBenzinNetworks] = useState<Network[]>([])
   const [loadingBenzinNetworks, setLoadingBenzinNetworks] = useState<bigint[]>([])
+  const [notFoundNetworks, setNotFoundNetworks] = useState<bigint[]>([])
 
   useEffect(() => {
     const fetchAndSetNetworks = async () => {
@@ -74,19 +77,26 @@ const BenzinNetworksContextProvider: FC<Props> = ({ children }) => {
 
   const addNetwork = useCallback(
     async (chainId: bigint) => {
-      if (loadingBenzinNetworks.includes(chainId)) return
+      if (loadingBenzinNetworks.includes(chainId) || notFoundNetworks.includes(chainId)) return
 
       setLoadingBenzinNetworks((prevLoadingNetworks) => [...prevLoadingNetworks, chainId])
       try {
         const networkExists = benzinNetworks.some((network) => network.chainId === chainId)
-        if (networkExists) return
+        if (networkExists) {
+          setNotFoundNetworks((prev) => [...prev, chainId])
+          return
+        }
 
         const networkData = await fetchNetworkData(chainId)
 
-        if (!networkData) return
+        if (!networkData) {
+          setNotFoundNetworks((prev) => [...prev, chainId])
+          return
+        }
 
         setBenzinNetworks((prevNetworks) => [...prevNetworks, networkData])
       } catch (error) {
+        setNotFoundNetworks((prev) => [...prev, chainId])
         console.error(error)
       } finally {
         setLoadingBenzinNetworks((prevLoadingNetworks) =>
@@ -94,16 +104,17 @@ const BenzinNetworksContextProvider: FC<Props> = ({ children }) => {
         )
       }
     },
-    [loadingBenzinNetworks, benzinNetworks]
+    [loadingBenzinNetworks, notFoundNetworks, benzinNetworks]
   )
 
   const value = useMemo(
     () => ({
       benzinNetworks,
       addNetwork,
+      notFoundNetworks,
       loadingBenzinNetworks
     }),
-    [addNetwork, loadingBenzinNetworks, benzinNetworks]
+    [benzinNetworks, addNetwork, notFoundNetworks, loadingBenzinNetworks]
   )
 
   return <benzinNetworksContext.Provider value={value}>{children}</benzinNetworksContext.Provider>

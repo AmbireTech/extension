@@ -48,9 +48,9 @@ const DappItem = (dapp: Dapp) => {
     icon,
     description,
     isConnected,
+    isFeatured,
     favorite,
     blacklisted,
-    isCustom,
     tvl,
     twitter
   } = dapp
@@ -60,11 +60,11 @@ const DappItem = (dapp: Dapp) => {
   const { t } = useTranslation()
   const [hovered, setHovered] = useState(false)
 
-  const [bindAnim, animStyle] = useCustomHover({
+  const [bindAnim, animStyle, isHovered] = useCustomHover({
     property: 'backgroundColor',
     values: {
-      from: blacklisted ? theme.errorBackground : theme.secondaryBackground,
-      to: blacklisted ? theme.errorBackground : theme.tertiaryBackground
+      from: blacklisted === 'BLACKLISTED' ? theme.errorBackground : theme.secondaryBackground,
+      to: blacklisted === 'BLACKLISTED' ? theme.errorBackground : theme.tertiaryBackground
     }
   })
 
@@ -105,13 +105,20 @@ const DappItem = (dapp: Dapp) => {
         onMouseLeave={() => setHovered(false)}
       >
         <AnimatedPressable
-          style={[styles.container, animStyle]}
+          style={[
+            styles.container,
+            isFeatured && {
+              // @ts-ignore
+              boxShadow: `0 ${isHovered ? 2 : 3}px 0 0 ${String(theme.primaryLight80)}`
+            },
+            animStyle
+          ]}
           onPress={() => openInTab({ url })}
           {...bindAnim}
         >
           <View style={[flexbox.directionRow, !!description && spacings.mbTy]}>
             <View style={spacings.mrTy}>
-              {!isCustom && !blacklisted && (
+              {blacklisted === 'VERIFIED' && (
                 <View
                   style={{
                     position: 'absolute',
@@ -200,7 +207,7 @@ const DappItem = (dapp: Dapp) => {
                       </AnimatedPressable>
                     </View>
                   )}
-                  {!!blacklisted && (
+                  {blacklisted === 'BLACKLISTED' && (
                     <Badge text={t('Blacklisted')} type="error" style={spacings.mrTy} />
                   )}
                 </View>
@@ -222,6 +229,19 @@ const DappItem = (dapp: Dapp) => {
                       color={theme.iconPrimary}
                     />
                   </AnimatedPressable>
+                )}
+                {isFeatured && (
+                  <Badge
+                    text={t('Featured')}
+                    textStyle={{
+                      color: theme.primaryBackground
+                    }}
+                    style={{
+                      ...spacings.mlTy,
+                      backgroundColor: theme.primaryLight80,
+                      borderWidth: 0
+                    }}
+                  />
                 )}
               </View>
               <Text

@@ -16,6 +16,7 @@ import { isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
+import flexbox from '@common/styles/utils/flexbox'
 import useHover, { AnimatedPressable } from '@web/hooks/useHover'
 
 import getStyles from './styles'
@@ -216,40 +217,38 @@ const Input = ({
         {childrenBelowInput}
       </View>
       <View style={styles.errorContainer}>
-        <View>
-          {!!error && (
-            <Text
-              style={[styles.bottomLabel, bottomLabelStyle]}
-              weight={isWeb ? 'regular' : undefined}
-              fontSize={10}
-              appearance={errorType === 'warning' ? 'warningText' : 'errorText'}
-            >
-              {error}
-            </Text>
-          )}
+        {!!error && (
+          <Text
+            style={[styles.bottomLabel, bottomLabelStyle]}
+            weight={isWeb ? 'regular' : undefined}
+            fontSize={10}
+            appearance={errorType === 'warning' ? 'warningText' : 'errorText'}
+          >
+            {error}
+          </Text>
+        )}
 
-          {!!isValid && !!validLabel && !error && (
-            <Text
-              style={[styles.bottomLabel, bottomLabelStyle]}
-              weight="regular"
-              fontSize={12}
-              color={theme.successText}
-            >
-              {validLabel}
-            </Text>
-          )}
+        {!!isValid && !!validLabel && !error && (
+          <Text
+            style={[styles.bottomLabel, bottomLabelStyle]}
+            weight="regular"
+            fontSize={12}
+            color={theme.successText}
+          >
+            {validLabel}
+          </Text>
+        )}
 
-          {!!info && (
-            <Text
-              weight="regular"
-              appearance="warningText"
-              style={[styles.bottomLabel, bottomLabelStyle]}
-              fontSize={10}
-            >
-              {info}
-            </Text>
-          )}
-        </View>
+        {!!info && (
+          <Text
+            weight="regular"
+            appearance="warningText"
+            style={[styles.bottomLabel, bottomLabelStyle]}
+            fontSize={10}
+          >
+            {info}
+          </Text>
+        )}
         {renderConfirmAddress && renderConfirmAddress()}
       </View>
     </View>
