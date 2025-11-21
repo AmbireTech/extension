@@ -189,16 +189,15 @@ export class TransferPage extends BasePage {
     )
 
     for (let i = 0; i < expectedTransactionsCount; i++) {
-      transactionDetails = await newPage
+      // eslint-disable-next-line no-await-in-loop
+      transactionDetails = newPage
         .getByTestId(selectors.transaction.explorer.recepientAddressBlock)
         .nth(i)
-        .innerText()
     }
-
-    expect(transactionDetails).toContain('Send')
-    expect(transactionDetails).toContain('0.001')
-    expect(transactionDetails).toContain('USDC')
-    expect(transactionDetails).toContain(recepientAddress)
+    await expect(transactionDetails).toHaveText(/Send/)
+    await expect(transactionDetails).toHaveText(/0\.001/)
+    await expect(transactionDetails).toHaveText(/USDC/)
+    await expect(transactionDetails).toHaveText(new RegExp(recepientAddress))
     // assert confirmed block
     await expect(
       newPage.getByTestId(selectors.transaction.explorer.txnConfirmedStep)
