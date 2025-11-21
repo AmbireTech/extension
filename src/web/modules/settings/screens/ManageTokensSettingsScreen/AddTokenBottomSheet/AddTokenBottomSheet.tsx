@@ -313,7 +313,7 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
             </View>
           </View>
         ) : null}
-        {address && tokenTypeEligibility === false && !tokenValidation.error ? (
+        {address && tokenTypeEligibility === false && !tokenValidation?.error ? (
           <Alert
             type="error"
             isTypeLabelHidden
