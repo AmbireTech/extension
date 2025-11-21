@@ -32,6 +32,7 @@ const selectors = {
     suggestProtocolText: 'suggest-protocol-text',
     openTicketLink: 'open-ticket-link',
     activityTabButton: 'tab-activity',
+    viewTransactionLink: 'view-transaction-link',
     sendButton: 'dashboard-button-send',
     swapAndBridgeButton: 'dashboard-button-swap-and-bridge',
     hamburgerButton: 'dashboard-hamburger-btn',
@@ -54,7 +55,7 @@ const selectors = {
     hideTokenModalTitle: 'hide-token-modal-title',
     hideTokenModalDescription: 'hide-token-modal-description',
     projectedRewardsInfoButton: 'rewards-button',
-    projectedRewardsClaimButton: 'projected-rewards-claim-button'
+    projectedRewardsClaimButton: 'projected-rewards-claim-button',
   },
   settings: {
     createNewRecoveryPhraseButton: 'create-new-recovery-phrase',
@@ -99,7 +100,13 @@ const selectors = {
     feeSpeedApe: 'option-ape',
     feeGasTankInDollars: '//span[contains(text(),"Gas Tank")]/../../../div[contains(text(),"$")]', // returning e.g. "<$0.01"
     feeTokenInDollars: '//span[contains(text(),"")]/../../div[contains(text(),"$")]',
-    confirmingYourTransactionText: '//div[contains(text(),"Confirming your")]'
+    confirmingYourTransactionText: '//div[contains(text(),"Confirming your")]',
+    explorer: {
+      txnSignedStep: 'signed-step',
+      txnProgressStep: 'txn-progress-step',
+      txnConfirmedStep: 'finalized-rows',
+      recepientAddressBlock: 'recipient-address-undefined'
+    }
   },
   account: 'account',
   importMethodTrezor: 'import-method-trezor',

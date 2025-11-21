@@ -49,6 +49,20 @@ test.describe('transfer', { tag: '@transfer' }, () => {
     await test.step('assert new transaction on Activity tab', async () => {
       await pages.transfer.checkSendTransactionOnActivityTab()
     })
+
+    await test.step('assert funds sent to recepient address on explorer', async () => {
+      const viewTransactionLink = pages.basePage.page.getByTestId(
+        selectors.dashboard.viewTransactionLink
+      )
+      const viewTransactionTab = await pages.basePage.handleNewPage(viewTransactionLink)
+      await pages.transfer.checkRecepientTransactionOnExplorer({
+        newPage: viewTransactionTab,
+        recepientAddress: recipientAddress
+      })
+
+      // check url of new tab
+      expect(viewTransactionTab.url()).toContain('explorer.ambire.com')
+    })
   })
 
   test("should send a transaction and pay with the current account's ERC-20 token", async ({
@@ -88,6 +102,21 @@ test.describe('transfer', { tag: '@transfer' }, () => {
 
     await test.step('assert new transaction on Activity tab', async () => {
       await pages.transfer.checkSendTransactionOnActivityTab()
+    })
+
+    await test.step('assert funds sent to recepient address on explorer', async () => {
+      const viewTransactionLink = pages.basePage.page.getByTestId(
+        selectors.dashboard.viewTransactionLink
+      )
+      const viewTransactionTab = await pages.basePage.handleNewPage(viewTransactionLink)
+
+      // check url of new tab
+      expect(viewTransactionTab.url()).toContain('explorer.ambire.com')
+
+      await pages.transfer.checkRecepientTransactionOnExplorer({
+        newPage: viewTransactionTab,
+        recepientAddress: recipientAddress
+      })
     })
   })
 
@@ -144,6 +173,13 @@ test.describe('transfer', { tag: '@transfer' }, () => {
       // Sometimes it takes a bit more time to be confirmed, that's why we increase the timeout.
       await expect(actionWindowPage.getByTestId(selectors.txnConfirmed)).toBeVisible({
         timeout: 20000
+      })
+
+      // assert funds sent to recepient address on explorer
+      await pages.transfer.checkRecepientTransactionOnExplorer({
+        newPage: actionWindowPage,
+        recepientAddress: recipientAddress,
+        options: { expectedTransactionsCount: 2 }
       })
     })
 
@@ -214,6 +250,21 @@ test.describe('transfer', { tag: '@transfer' }, () => {
     await test.step('assert new transaction on Activity tab', async () => {
       await pages.transfer.checkSendTransactionOnActivityTab()
     })
+
+    await test.step('assert funds sent to recepient address on explorer', async () => {
+      const viewTransactionLink = pages.basePage.page.getByTestId(
+        selectors.dashboard.viewTransactionLink
+      )
+      const viewTransactionTab = await pages.basePage.handleNewPage(viewTransactionLink)
+
+      // check url of new tab
+      expect(viewTransactionTab.url()).toContain('explorer.ambire.com')
+
+      await pages.transfer.checkRecepientTransactionOnExplorer({
+        newPage: viewTransactionTab,
+        recepientAddress: newContactAddress
+      })
+    })
   })
 
   test('Start transfer, add contact, send transaction to newly added contact', async ({
@@ -251,6 +302,21 @@ test.describe('transfer', { tag: '@transfer' }, () => {
 
     await test.step('assert new transaction on Activity tab', async () => {
       await pages.transfer.checkSendTransactionOnActivityTab()
+    })
+
+    await test.step('assert funds sent to recepient address on explorer', async () => {
+      const viewTransactionLink = pages.basePage.page.getByTestId(
+        selectors.dashboard.viewTransactionLink
+      )
+      const viewTransactionTab = await pages.basePage.handleNewPage(viewTransactionLink)
+
+      // check url of new tab
+      expect(viewTransactionTab.url()).toContain('explorer.ambire.com')
+
+      await pages.transfer.checkRecepientTransactionOnExplorer({
+        newPage: viewTransactionTab,
+        recepientAddress: newContactAddress
+      })
     })
   })
 })
