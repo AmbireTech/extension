@@ -187,7 +187,7 @@ export class SwapAndBridgePage extends BasePage {
     // "Select route" step may take more time to appear, as it depends on the Li.Fi response.
     await this.page.waitForSelector(locators.selectRouteButton, {
       state: 'visible',
-      timeout: 10000
+      timeout: 15000
     })
     await this.click(selectors.addToBatchButton)
 
