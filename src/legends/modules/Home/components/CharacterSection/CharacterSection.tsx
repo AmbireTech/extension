@@ -15,8 +15,6 @@ import OverachieverBanner from '@legends/components/OverachieverBanner'
 import Stacked from '@legends/components/Stacked'
 import { LEGENDS_SUPPORTED_NETWORKS_BY_CHAIN_ID } from '@legends/constants/networks'
 import useCharacterContext from '@legends/hooks/useCharacterContext'
-import useLeaderboardContext from '@legends/hooks/useLeaderboardContext'
-import useLegendsContext from '@legends/hooks/useLegendsContext'
 import usePortfolioControllerState from '@legends/hooks/usePortfolioControllerState/usePortfolioControllerState'
 import CharacterSelect from '@legends/modules/character/screens/CharacterSelect'
 import { Networks } from '@legends/modules/legends/types'
@@ -39,19 +37,10 @@ const CharacterSection = () => {
     rewardsProjectionData
   } = usePortfolioControllerState()
 
-  const { legends, isLoading } = useLegendsContext()
-
-  const { season1LeaderboardData, isLeaderboardLoading } = useLeaderboardContext()
-
   const isRewardsLoading =
-    isLoadingClaimableRewards ||
-    isLoading ||
-    isLeaderboardLoading ||
-    !season1LeaderboardData ||
-    !accountPortfolio ||
-    !accountPortfolio?.isReady
+    isLoadingClaimableRewards || !accountPortfolio || !accountPortfolio?.isReady
 
-  const { amountFormatted, amount } = accountPortfolio || {}
+  const userBalance = accountPortfolio?.amount || 0
   // Helper to format balance with/without decimals
   const formatBalance = (value: string | number | undefined) => {
     const num = Number((value ?? '0').toString().replace(/[^0-9.-]+/g, ''))
@@ -65,14 +54,6 @@ const CharacterSection = () => {
       maximumFractionDigits: 2
     })
   }
-  const isNotAvailableForRewards =
-    ((accountPortfolio || accountPortfolio?.isReady) &&
-      amountFormatted &&
-      Number((amountFormatted ?? '0').replace(/[^0-9.-]+/g, '')) <
-        (rewardsProjectionData?.minBalance || 0)) ||
-    (season1LeaderboardData?.currentUser?.level ?? 0) < (rewardsProjectionData?.minLvl || 0)
-
-  const shouldShowIcon = !!claimableRewardsError || isNotAvailableForRewards
 
   const formatXp = (xp: number) => {
     return xp && xp.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
@@ -88,29 +69,38 @@ const CharacterSection = () => {
       />
     )
 
-  const currentLevel = season1LeaderboardData?.currentUser?.level ?? 1
+  const currentLevel = rewardsProjectionData?.userLevel || 0
+  const minBalance = rewardsProjectionData?.minBalance || 0
+  const minLvl = rewardsProjectionData?.minLvl || 0
+  const currentXp = rewardsProjectionData?.userXp || 0
   const xpForNextLevel = Math.ceil(((currentLevel + 1) * 4.5) ** 2)
 
   const startXpForCurrentLevel = currentLevel === 1 ? 0 : Math.ceil((currentLevel * 4.5) ** 2)
-
-  const currentTotalBalanceOnSupportedChains = amount || undefined
 
   const parsedSnapshotsBalance = (rewardsProjectionData?.currentSeasonSnapshots || []).map(
     (snapshot: { week: number; balance: number }) => snapshot.balance
   )
 
+  // Extract level and balance eligibility
+  const hasMinBalance = [...parsedSnapshotsBalance, userBalance].some((x) => x > minBalance)
+  const hasMinLevel = currentLevel >= minLvl
+
   const projectedAmount =
     rewardsProjectionData &&
     calculateRewardsForSeason(
-      rewardsProjectionData?.userLevel,
+      currentLevel,
       parsedSnapshotsBalance,
-      currentTotalBalanceOnSupportedChains ?? 0,
+      userBalance,
       rewardsProjectionData?.numberOfWeeksSinceStartOfSeason,
       rewardsProjectionData?.totalWeightNonUser,
       rewardsProjectionData?.totalRewardsPool,
-      rewardsProjectionData?.minLvl,
-      rewardsProjectionData?.minBalance
+      minLvl,
+      minBalance
     )
+
+  const isNotAvailableForRewards = (accountPortfolio?.isReady && !hasMinBalance) || !hasMinLevel
+
+  const shouldShowIcon = !!claimableRewardsError || isNotAvailableForRewards
 
   const projectedAmountFormatted = projectedAmount && Math.round(projectedAmount * 1e18)
   const balanceInUsd = getTokenBalanceInUSD({
@@ -202,8 +192,7 @@ const CharacterSection = () => {
                     className={styles.levelProgressBar}
                     style={{
                       width: `${(
-                        (((season1LeaderboardData?.currentUser?.xp ?? startXpForCurrentLevel) -
-                          startXpForCurrentLevel) /
+                        ((currentXp - startXpForCurrentLevel) /
                           (xpForNextLevel - startXpForCurrentLevel)) *
                         100
                       ).toFixed(2)}%`
@@ -247,7 +236,7 @@ const CharacterSection = () => {
                   />
                 </div>
                 <span className={styles.balanceAmount}>
-                  {accountPortfolio?.isReady ? `$${formatBalance(amountFormatted)}` : 'Loading...'}
+                  {accountPortfolio?.isReady ? `$${formatBalance(userBalance)}` : 'Loading...'}
                 </span>
               </div>
               <div className={styles.logoAndBalanceWrapper}>
@@ -279,108 +268,96 @@ const CharacterSection = () => {
                   return <p>Error loading rewards</p>
                 }
 
-                // Extract level and balance eligibility
-                const userLevel = season1LeaderboardData?.currentUser?.level ?? 0
-
-                const hasMinBalance = [...(parsedSnapshotsBalance || []), amount || 0].some(
-                  (x) => x > (rewardsProjectionData?.minBalance || 0)
-                )
-                const hasMinLevel = userLevel >= (rewardsProjectionData?.minLvl || 0)
-
                 // Lvl reached, Usd < 500
                 if (hasMinLevel && !hasMinBalance) {
-                  return (
-                    <p className={styles.rewardsTitle}>
-                      Keep your account balance over ${rewardsProjectionData?.minBalance} to
-                      accumulate rewards.
-                    </p>
-                  )
+                  const warningText =
+                    minBalance === 0
+                      ? 'Fund your account to accumulate rewards.'
+                      : `Keep your account balance over $${minBalance} to accumulate rewards.`
+                  return <p className={styles.rewardsTitle}>{warningText}</p>
                 }
 
                 // Lvl not reached, Usd > 500
                 if (!hasMinLevel && hasMinBalance) {
                   return (
                     <p className={styles.rewardsTitle}>
-                      Reach level {rewardsProjectionData?.minLvl} to start accumulating rewards.
+                      Reach level {minLvl} to start accumulating rewards.
                     </p>
                   )
                 }
 
                 // Lvl not reached, Usd < 500
                 if (!hasMinLevel && !hasMinBalance) {
-                  return (
-                    <p className={styles.rewardsTitle}>
-                      Keep your account balance over ${rewardsProjectionData?.minBalance} and reach
-                      level {rewardsProjectionData?.minLvl} to start accumulating rewards.
-                    </p>
-                  )
+                  const warningText =
+                    minBalance === 0
+                      ? `Fund your account and reach level ${minLvl} to start accumulating rewards.`
+                      : `Keep your account balance over $${minBalance} and reach level ${minLvl} to start accumulating rewards.`
+                  return <p className={styles.rewardsTitle}>{warningText}</p>
                 }
 
-                // Lvl reached, Usd > 500
-                if (hasMinLevel && hasMinBalance) {
-                  // Active state with rewards
-                  return (
-                    <>
-                      <div className={styles.rewardsProjectionTitleWrapper}>
-                        <p className={styles.rewardsProjectionTitle}>Rewards Projection </p>{' '}
-                        <InfoIcon
-                          width={12}
-                          height={12}
-                          color="currentColor"
-                          className={styles.infoIcon}
-                          data-tooltip-id="projected-rewards-info"
-                        />
-                        <Tooltip
-                          style={{
-                            backgroundColor: '#101114',
-                            color: '#F4F4F7',
-                            fontFamily: 'FunnelDisplay',
-                            fontSize: 11,
-                            lineHeight: '16px',
-                            fontWeight: 300,
-                            maxWidth: 244,
-                            boxShadow: '0px 0px 12.1px 0px #191B20'
-                          }}
-                          place="bottom"
-                          id="projected-rewards-info"
-                          content="Projected rewards based on season weekly balance snapshot. End results might vary. This number is only an estimate — it will fluctuate as the season progresses, new users join, and balances shift."
-                        />
-                      </div>
-                      <div className={styles.rewardsProjectionStats}>
-                        <p className={styles.projectionStatLabel}>
-                          <WalletIcon width={34} height={34} />
-                          $WALLET
-                        </p>
-                        <p className={styles.projectionStatValue}>
-                          {projectedAmount
-                            ? Number(projectedAmount) >= THRESHOLD_AMOUNT_TO_HIDE_BALANCE_DECIMALS
-                              ? Number(projectedAmount).toLocaleString(undefined, {
-                                  maximumFractionDigits: 0
-                                })
-                              : Number(projectedAmount).toLocaleString(undefined, {
-                                  minimumFractionDigits: 3,
-                                  maximumFractionDigits: 3
-                                })
-                            : '0.000'}
-                        </p>
-                        <p className={styles.projectionStatPriceValue}>
-                          {balanceInUsd
-                            ? `$${
-                                Number(balanceInUsd) >= THRESHOLD_AMOUNT_TO_HIDE_BALANCE_DECIMALS
-                                  ? Number(balanceInUsd).toLocaleString(undefined, {
-                                      maximumFractionDigits: 0
-                                    })
-                                  : Number(balanceInUsd).toLocaleString(undefined, {
-                                      minimumFractionDigits: 2,
-                                      maximumFractionDigits: 2
-                                    })
-                              }`
-                            : '$0.00'}
-                        </p>
-                      </div>
-                    </>
-                  )
-                }
+                // reachable only if hasLevel && hasMinBalance
+                // Active state with rewards
+                return (
+                  <>
+                    <div className={styles.rewardsProjectionTitleWrapper}>
+                      <p className={styles.rewardsProjectionTitle}>Rewards Projection </p>{' '}
+                      <InfoIcon
+                        width={12}
+                        height={12}
+                        color="currentColor"
+                        className={styles.infoIcon}
+                        data-tooltip-id="projected-rewards-info"
+                      />
+                      <Tooltip
+                        style={{
+                          backgroundColor: '#101114',
+                          color: '#F4F4F7',
+                          fontFamily: 'FunnelDisplay',
+                          fontSize: 11,
+                          lineHeight: '16px',
+                          fontWeight: 300,
+                          maxWidth: 244,
+                          boxShadow: '0px 0px 12.1px 0px #191B20'
+                        }}
+                        place="bottom"
+                        id="projected-rewards-info"
+                        content="Projected rewards based on season weekly balance snapshot. End results might vary. This number is only an estimate — it will fluctuate as the season progresses, new users join, and balances shift."
+                      />
+                    </div>
+                    <div className={styles.rewardsProjectionStats}>
+                      <p className={styles.projectionStatLabel}>
+                        <WalletIcon width={34} height={34} />
+                        $WALLET
+                      </p>
+                      <p className={styles.projectionStatValue}>
+                        {projectedAmount
+                          ? Number(projectedAmount) >= THRESHOLD_AMOUNT_TO_HIDE_BALANCE_DECIMALS
+                            ? Number(projectedAmount).toLocaleString(undefined, {
+                                maximumFractionDigits: 0
+                              })
+                            : Number(projectedAmount).toLocaleString(undefined, {
+                                minimumFractionDigits: 3,
+                                maximumFractionDigits: 3
+                              })
+                          : '0.000'}
+                      </p>
+                      <p className={styles.projectionStatPriceValue}>
+                        {balanceInUsd
+                          ? `$${
+                              Number(balanceInUsd) >= THRESHOLD_AMOUNT_TO_HIDE_BALANCE_DECIMALS
+                                ? Number(balanceInUsd).toLocaleString(undefined, {
+                                    maximumFractionDigits: 0
+                                  })
+                                : Number(balanceInUsd).toLocaleString(undefined, {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2
+                                  })
+                            }`
+                          : '$0.00'}
+                      </p>
+                    </div>
+                  </>
+                )
               })()}
             </div>{' '}
           </>
