@@ -102,6 +102,11 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
     [validTokens, address, network]
   )
 
+  const tokenValidation = useMemo(() => {
+    if (!address || !network) return null
+    return validTokens.erc20[`${address}-${network.chainId}`]
+  }, [validTokens, address, network])
+
   const isCustomToken = useMemo(
     () =>
       !!customTokens.find(
@@ -210,7 +215,7 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
 
     handleEffect().catch(() => setIsLoading(false))
 
-    if (tokenTypeEligibility === false || !!temporaryToken) {
+    if (tokenTypeEligibility === false || !!temporaryToken || tokenValidation?.error) {
       setIsLoading(false)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -308,11 +313,20 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
             </View>
           </View>
         ) : null}
-        {address && tokenTypeEligibility === false ? (
+        {address && tokenTypeEligibility === false && !tokenValidation.error ? (
           <Alert
             type="error"
             isTypeLabelHidden
             title={t('This token type is not supported.')}
+            style={{ ...spacings.phSm, ...spacings.pvSm }}
+          />
+        ) : null}
+
+        {address && tokenValidation && tokenValidation.error?.message ? (
+          <Alert
+            type={tokenValidation.error.type === 'network' ? 'warning' : 'error'}
+            isTypeLabelHidden
+            title={tokenValidation.error.message}
             style={{ ...spacings.phSm, ...spacings.pvSm }}
           />
         ) : null}
@@ -326,7 +340,7 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
           />
         ) : null}
 
-        {isLoading || (isAdditionalHintRequested && !temporaryToken) ? (
+        {isLoading || (isAdditionalHintRequested && !temporaryToken && !tokenValidation?.error) ? (
           <View style={[flexbox.alignCenter, flexbox.justifyCenter, { height: 48 }]}>
             <Spinner style={{ width: 18, height: 18 }} />
           </View>
@@ -337,6 +351,7 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
         disabled={
           showAlreadyInPortfolioMessage ||
           (!temporaryToken && !tokenTypeEligibility) ||
+          !!tokenValidation?.error ||
           !isValidAddress(address) ||
           !network ||
           isSubmitting
