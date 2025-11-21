@@ -7,6 +7,7 @@ import ErrorOutlineIcon from '@common/assets/svg/ErrorOutlineIcon'
 import Alert from '@common/components/Alert'
 import ExpandableCard from '@common/components/ExpandableCard'
 import HumanizedVisualization from '@common/components/HumanizedVisualization'
+import Label from '@common/components/Label'
 import NetworkBadge from '@common/components/NetworkBadge'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
@@ -130,7 +131,8 @@ const Main = ({
               // (which aligns the content better - with internal scrollbar).
               ...(minHeightSize(660) ? {} : { maxHeight: '100%' }),
               backgroundColor:
-                themeType === THEME_TYPES.DARK ? theme.tertiaryBackground : theme.primaryBackground
+                themeType === THEME_TYPES.DARK ? theme.tertiaryBackground : theme.primaryBackground,
+              ...(humanizedMessage?.warnings?.length ? styles.warningContainer : {})
             }}
             content={
               visualizeHumanized &&
@@ -175,7 +177,19 @@ const Main = ({
                 responsiveSizeMultiplier={responsiveSizeMultiplier}
               />
             }
-          />
+          >
+            {humanizedMessage?.warnings?.map((warning) => {
+              return (
+                <Label
+                  size="lg"
+                  key={warning.content + warning.level}
+                  text={warning.content}
+                  type="warning"
+                  style={spacings.mlMd}
+                />
+              )
+            })}
+          </ExpandableCard>
         </View>
         {signMessageState.signingKeyType && signMessageState.signingKeyType !== 'internal' && (
           <HardwareWalletSigningModal
