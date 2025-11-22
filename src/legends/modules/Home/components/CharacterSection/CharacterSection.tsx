@@ -100,7 +100,10 @@ const CharacterSection = () => {
 
   const isNotAvailableForRewards = (accountPortfolio?.isReady && !hasMinBalance) || !hasMinLevel
 
-  const shouldShowIcon = !!claimableRewardsError || isNotAvailableForRewards
+  const shouldShowIcon =
+    !!claimableRewardsError ||
+    isNotAvailableForRewards ||
+    rewardsProjectionData?.reasonToNotDisplayProjectedRewards
 
   const projectedAmountFormatted = projectedAmount && Math.round(projectedAmount * 1e18)
   const balanceInUsd = getTokenBalanceInUSD({
@@ -262,6 +265,10 @@ const CharacterSection = () => {
                 if (isRewardsLoading) {
                   return <p>Loading rewards...</p>
                 }
+                if (rewardsProjectionData?.reasonToNotDisplayProjectedRewards)
+                  return (
+                    <p style={{ textAlign: 'center' }}>This account will not receive rewards!</p>
+                  )
 
                 // Error state
                 if (claimableRewardsError) {
