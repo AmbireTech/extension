@@ -187,7 +187,7 @@ export class SwapAndBridgePage extends BasePage {
     // "Select route" step may take more time to appear, as it depends on the Li.Fi response.
     await this.page.waitForSelector(locators.selectRouteButton, {
       state: 'visible',
-      timeout: 10000
+      timeout: 15000
     })
     await this.click(selectors.addToBatchButton)
 
@@ -234,7 +234,6 @@ export class SwapAndBridgePage extends BasePage {
       if (feeDollarsAmount > 0.1) {
         console.warn('⚠️ Fee amount is higher than 0.1$, transaction signing skipped.')
       } else {
-        console.log('else block')
         await expect(signButton).toBeVisible({ timeout: 5000 })
         await expect(signButton).toBeEnabled({ timeout: 5000 })
         await page.getByTestId(selectors.signTransactionButton).click()

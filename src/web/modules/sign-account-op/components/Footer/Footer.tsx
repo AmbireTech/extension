@@ -6,8 +6,8 @@ import BatchIcon from '@common/assets/svg/BatchIcon'
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import Button from '@common/components/Button'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
-import Tooltip from '@common/components/Tooltip'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
@@ -121,8 +121,14 @@ const Footer = ({
             >
               <BatchIcon style={spacings.mlTy} />
             </Button>
-            {/* @ts-ignore */}
-            <View style={spacings.mlMi} dataSet={{ tooltipId: 'start-batch-info-tooltip' }}>
+            <View
+              style={spacings.mlMi}
+              // @ts-ignore
+              dataSet={createGlobalTooltipDataSet({
+                id: 'start-batch-info-tooltip',
+                content: startBatchingInfo
+              })}
+            >
               <AnimatedPressable
                 style={[spacings.phTy, spacings.pvTy, { borderRadius: 50 }, animStyle]}
                 {...bindAnim}
@@ -132,8 +138,14 @@ const Footer = ({
             </View>
           </View>
         )}
-        {/* @ts-ignore */}
-        <View dataSet={{ tooltipId: 'sign-button-tooltip' }}>
+        <View
+          // @ts-ignore
+          dataSet={createGlobalTooltipDataSet({
+            id: 'sign-button-tooltip',
+            hidden: !buttonTooltipText,
+            content: buttonTooltipText
+          })}
+        >
           {shouldHoldToProceed ? (
             <HoldToProceedButton
               text={t('Hold to sign')}
@@ -153,8 +165,6 @@ const Footer = ({
             />
           )}
         </View>
-        {!!buttonTooltipText && <Tooltip content={buttonTooltipText} id="sign-button-tooltip" />}
-        <Tooltip content={startBatchingInfo} id="start-batch-info-tooltip" />
       </View>
     </View>
   )

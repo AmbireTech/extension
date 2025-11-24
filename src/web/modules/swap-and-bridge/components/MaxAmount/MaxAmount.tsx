@@ -3,6 +3,7 @@ import { Pressable, View } from 'react-native'
 
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import WalletFilledIcon from '@common/assets/svg/WalletFilledIcon'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
@@ -10,7 +11,6 @@ import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
-import Tooltip from '@common/components/Tooltip'
 import getStyles from './styles'
 
 const MaxAmount = ({
@@ -38,7 +38,11 @@ const MaxAmount = ({
       <View
         style={[flexbox.directionRow, flexbox.alignCenter]}
         // @ts-ignore
-        dataSet={{ tooltipId: 'from-token-balance-tooltip' }}
+        dataSet={createGlobalTooltipDataSet({
+          id: 'from-token-balance-tooltip',
+          content: t('Balance may be inaccurate'),
+          hidden: !simulationFailed
+        })}
       >
         <WalletFilledIcon
           width={14}
@@ -72,10 +76,6 @@ const MaxAmount = ({
           </Text>
         </Pressable>
       )}
-      <Tooltip
-        content={simulationFailed ? 'Balance may be inaccurate' : ''}
-        id="from-token-balance-tooltip"
-      />
     </View>
   ) : (
     <SkeletonLoader height={22} width={100} />

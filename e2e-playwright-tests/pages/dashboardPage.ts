@@ -2,10 +2,10 @@ import locators from 'constants/locators'
 import selectors from 'constants/selectors'
 import BootstrapContext from 'interfaces/bootstrapContext'
 import Tabs from 'interfaces/tabs'
+import Threshold, { ThresholdError } from 'interfaces/threshold'
 
 import { expect } from '@playwright/test'
 
-import Token from '../interfaces/token'
 import { BasePage } from './basePage'
 
 export class DashboardPage extends BasePage {
@@ -73,49 +73,84 @@ export class DashboardPage extends BasePage {
     return amountNumber
   }
 
-  async checkBATokenBalance(token: Token) {
-    const key = `${token.symbol}-${token.chainId}`
-    const balanceThresholds: Record<string, number> = {
-      'WALLET-8453': 300,
-      'USDC-10': 2,
-      'xWALLET-1': 2
+  async #checkBalanceThresholds(params: { thresholds: Threshold[] }): Promise<{
+    errors: ThresholdError[]
+    warnings: ThresholdError[]
+  }> {
+    const { thresholds } = params
+
+    const errors: ThresholdError[] = []
+    const warnings: ThresholdError[] = []
+
+    // eslint-disable-next-line no-restricted-syntax
+    for (const [token, minBalance] of thresholds) {
+      let balance: number
+      let tokenName: string
+      let chainName: string
+
+      if (token === 'gas-token') {
+        // eslint-disable-next-line no-await-in-loop
+        balance = await this.getCurrentBalance()
+        tokenName = 'gas-token'
+        chainName = 'N/A'
+      } else {
+        // eslint-disable-next-line no-await-in-loop
+        balance = await this.getDashboardTokenBalance(token)
+        tokenName = token.symbol
+        chainName = token.chainName
+      }
+
+      const warnThreshold = minBalance * 1.5
+
+      if (balance < minBalance) {
+        errors.push({ tokenName, chainName, balance, minBalance })
+      } else if (balance < warnThreshold) {
+        warnings.push({ tokenName, chainName, balance, minBalance })
+      }
     }
 
-    const minBalance = balanceThresholds[key] ?? 0
-    const tokenBalance = await this.getDashboardTokenBalance(token)
-
-    let error: string | undefined
-
-    try {
-      expect(tokenBalance).toBeGreaterThanOrEqual(minBalance)
-    } catch (e) {
-      error = `${token.symbol}-${token.chainId} balance for BA is only: ${tokenBalance}.`
-    }
-    return { token, error }
+    return { errors, warnings }
   }
 
-  async checkSATokenBalance(token: Token) {
-    const key = `${token.symbol}-${token.chainId}`
-    const balanceThresholds: Record<string, number> = {
-      'WALLET-8453': 300,
-      'USDC-8453': 3,
-      'USDC-10': 2,
-      'USDC.E-10': 2,
-      'DAI-10': 2,
-      'xWALLET-1': 2
+  async checkBalances(params: { thresholds: Threshold[]; accountName: string }): Promise<void> {
+    const { thresholds, accountName } = params
+
+    const { errors, warnings } = await this.#checkBalanceThresholds({
+      thresholds
+    })
+
+    const formatTokens = (
+      items: { tokenName: string; chainName: string; balance: number; minBalance: number }[]
+    ) =>
+      items
+        .map(
+          (i) =>
+            `${i.tokenName} on ${i.chainName} (current: ${i.balance}, minimumRequired: ${i.minBalance})`
+        )
+        .join(', ')
+
+    let errorMessage: string | undefined
+    let warningMessage: string | undefined
+
+    if (warnings.length > 0) {
+      const warningTokens = formatTokens(warnings)
+      warningMessage = `💰 ${accountName} balance is getting low for: ${warningTokens}.`
     }
 
-    const minBalance = balanceThresholds[key] ?? 0
-    const tokenBalance = await this.getDashboardTokenBalance(token)
-
-    let error: string | undefined
-
-    try {
-      expect(tokenBalance).toBeGreaterThanOrEqual(minBalance)
-    } catch (e) {
-      error = `${token.symbol}-${token.chainId} balance for SA is only: ${tokenBalance}.`
+    if (errors.length > 0) {
+      const errorTokens = formatTokens(errors)
+      errorMessage = `${accountName} has insufficient balance for: ${errorTokens}.`
     }
-    return { token, error }
+
+    if (warningMessage) {
+      console.log(warningMessage)
+    }
+
+    if (errorMessage) {
+      throw new Error(errorMessage)
+    }
+
+    console.log(`✅ ${accountName} tokens and gas tank have sufficient balance.`)
   }
 
   async checkNoTransactionOnActivityTab() {

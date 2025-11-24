@@ -7,9 +7,9 @@ import { FormatType } from '@ambire-common/utils/formatDecimals/formatDecimals'
 import BatchIcon from '@common/assets/svg/BatchIcon'
 import PendingToBeConfirmedIcon from '@common/assets/svg/PendingToBeConfirmedIcon'
 import BottomSheet from '@common/components/BottomSheet'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
-import Tooltip from '@common/components/Tooltip'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
@@ -192,7 +192,10 @@ const BaseTokenItem = ({
                     weight="number_bold"
                     numberOfLines={1}
                     // @ts-ignore
-                    dataSet={{ tooltipId: `${tokenId}-balance` }}
+                    dataSet={createGlobalTooltipDataSet({
+                      id: `${tokenId}-balance`,
+                      content: String(isPending ? pendingBalance : balance)
+                    })}
                     testID={`token-balance-${tokenId}`}
                   >
                     <Text
@@ -203,11 +206,6 @@ const BaseTokenItem = ({
                     </Text>{' '}
                     {symbol}{' '}
                   </Text>
-
-                  <Tooltip
-                    content={String(isPending ? pendingBalance : balance)}
-                    id={`${tokenId}-balance`}
-                  />
                   <Text weight="regular" style={[spacings.mrMi]} fontSize={12}>
                     {!label
                       ? networkData && t('on {{network}}', { network: networkData.name })
