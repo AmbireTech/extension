@@ -3,7 +3,7 @@ import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 
 interface Props {
-  chainId?: bigint
+  chainId?: bigint | number | null
 }
 const useSimulationError = ({ chainId }: Props) => {
   const { portfolio } = useSelectedAccountControllerState()
