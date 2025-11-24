@@ -60,6 +60,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     isRecipientHumanizerKnownTokenOrSmartContract,
     isRecipientAddressUnknown,
     isRecipientAddressUnknownAgreed,
+    isRecipientAddressFirstTimeSend,
     isFormValid,
     signAccountOpController,
     latestBroadcastedAccountOp,
@@ -341,10 +342,8 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   }, [accountUserRequests, isSendingBatch, networkUserRequests, t])
 
   const isTransferFormValid = useMemo(() => {
-    if (isSendingBatch) return true
-
     return !!(isTopUp ? isFormValid : isFormValid && !addressInputState.validation.isError)
-  }, [addressInputState.validation.isError, isFormValid, isSendingBatch, isTopUp])
+  }, [addressInputState.validation.isError, isFormValid, isTopUp])
 
   const onBack = useCallback(() => {
     dispatch({
@@ -495,7 +494,8 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
           shouldHoldToProceed={
             isRecipientAddressUnknown &&
             !isRecipientAddressUnknownAgreed &&
-            !isRecipientHumanizerKnownTokenOrSmartContract
+            !isRecipientHumanizerKnownTokenOrSmartContract &&
+            isRecipientAddressFirstTimeSend
           }
           onRecipientAddressUnknownAgree={onRecipientAddressUnknownAgree}
         />
@@ -508,6 +508,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     isTransferFormValid,
     networkUserRequests,
     isLocalStateOutOfSync,
+    isRecipientAddressFirstTimeSend,
     isRecipientAddressUnknown,
     isRecipientAddressUnknownAgreed,
     isRecipientHumanizerKnownTokenOrSmartContract,
