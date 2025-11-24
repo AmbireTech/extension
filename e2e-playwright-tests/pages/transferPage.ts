@@ -130,7 +130,9 @@ export class TransferPage extends BasePage {
     const feeDollarsAmount = Number(feeSelector.replace(/[<$]/g, ''))
 
     if (feeDollarsAmount > 0.1) {
-      console.warn('⚠️ Fee amount is higher than 0.1$, transaction signing skipped.')
+      console.warn(
+        `⚠️ Fee amount ($${feeDollarsAmount}) exceeds the $0.10 limit; transaction signing skipped.`
+      )
     } else {
       // start monitoring requests
       await this.monitorRequests()
