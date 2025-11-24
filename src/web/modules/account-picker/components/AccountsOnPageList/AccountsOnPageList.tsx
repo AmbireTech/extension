@@ -3,12 +3,12 @@ import groupBy from 'lodash/groupBy'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { NativeScrollEvent, View } from 'react-native'
 
-import AccountPickerController from '@ambire-common/controllers/accountPicker/accountPicker'
 import {
   Account as AccountInterface,
   AccountOnPage,
   ImportStatus
 } from '@ambire-common/interfaces/account'
+import { IAccountPickerController } from '@ambire-common/interfaces/accountPicker'
 import WarningFilledIcon from '@common/assets/svg/WarningFilledIcon'
 import Alert from '@common/components/Alert'
 import Badge from '@common/components/Badge'
@@ -37,9 +37,9 @@ const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }: Nati
 }
 
 type Props = {
-  state: AccountPickerController
+  state: IAccountPickerController
   setPage: (page: number) => void
-  subType: AccountPickerController['subType']
+  subType: IAccountPickerController['subType']
   isLoading: boolean
   lookingForLinkedAccounts: boolean
   children?: any
