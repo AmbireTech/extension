@@ -58,7 +58,8 @@ const getTokenEligibility = (
   null ||
   (tokenData?.address &&
     tokenNetwork?.chainId &&
-    validTokens?.erc20[`${tokenData?.address}-${tokenNetwork?.chainId}`])
+    validTokens?.erc20[`${tokenData?.address}-${tokenNetwork?.chainId}`] &&
+    validTokens?.erc20[`${tokenData?.address}-${tokenNetwork?.chainId}`]?.isValid === true)
 
 const handleTokenIsInPortfolio = async (
   isTokenCustom: boolean,

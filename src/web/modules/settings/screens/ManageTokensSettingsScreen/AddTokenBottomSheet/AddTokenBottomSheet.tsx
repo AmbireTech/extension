@@ -209,7 +209,16 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
         } else if (tokenTypeEligibility === undefined) {
           setIsLoading(true)
           handleTokenType()
+        } else if (tokenTypeEligibility === false && tokenValidation?.error) {
+          // Retry validation if there was an error and token type is false
+          setIsLoading(true)
+          handleTokenType()
         }
+      }
+
+      // Stop loading if there's a validation error
+      if (tokenValidation?.error) {
+        setIsLoading(false)
       }
     }
 
@@ -219,7 +228,15 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
       setIsLoading(false)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [t, address, network, tokenTypeEligibility, temporaryToken, isAdditionalHintRequested])
+  }, [
+    t,
+    address,
+    network,
+    tokenTypeEligibility,
+    temporaryToken,
+    isAdditionalHintRequested,
+    tokenValidation
+  ])
 
   useEffect(() => {
     setShowAlreadyInPortfolioMessage(false) // Reset the state when address changes
@@ -317,7 +334,7 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
           <Alert
             type="error"
             isTypeLabelHidden
-            title={t('This token type is not supported.')}
+            title={t('Invalid token address. Is the correct network selected?')}
             style={{ ...spacings.phSm, ...spacings.pvSm }}
           />
         ) : null}
