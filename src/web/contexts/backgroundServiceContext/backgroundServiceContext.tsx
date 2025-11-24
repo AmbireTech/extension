@@ -92,7 +92,10 @@ if (isExtension) {
   connectPort()
 }
 
-const ACTIONS_TO_DISPATCH_EVEN_WHEN_HIDDEN = ['INIT_CONTROLLER_STATE']
+const ACTIONS_TO_DISPATCH_EVEN_WHEN_HIDDEN = [
+  'INIT_CONTROLLER_STATE',
+  'MAIN_CONTROLLER_ACTIVITY_SET_ACC_OPS_FILTERS'
+]
 
 globalDispatch = (action, windowId?: number) => {
   // Dispatch the action only when the tab or popup is focused or active.
