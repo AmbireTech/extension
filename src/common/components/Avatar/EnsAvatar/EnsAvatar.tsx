@@ -1,4 +1,4 @@
-import React, { FC } from 'react'
+import React, { FC, memo } from 'react'
 import { Image } from 'react-native'
 
 import SkeletonLoader from '@common/components/SkeletonLoader'
@@ -13,25 +13,16 @@ type Props = {
 }
 
 const EnsAvatar: FC<Props> = ({ isLoading, avatar, setImageFetchFailed, size, borderRadius }) => {
-  if (isLoading) {
-    return (
-      <SkeletonLoader
-        width={size}
-        height={size}
-        borderRadius={borderRadius}
-        style={spacings.mrTy}
-      />
-    )
-  }
-
-  return (
+  return !isLoading ? (
     <Image
       source={{ uri: avatar }}
       style={{ width: size, height: size, borderRadius }}
       resizeMode="contain"
       onError={() => setImageFetchFailed(true)}
     />
+  ) : (
+    <SkeletonLoader width={size} height={size} borderRadius={borderRadius} style={spacings.mrTy} />
   )
 }
 
-export default EnsAvatar
+export default memo(EnsAvatar)
