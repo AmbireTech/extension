@@ -291,13 +291,14 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   }, [dispatch])
 
   const handleCacheResolvedDomain = useCallback(
-    (address: string, domain: string, type: 'ens') => {
+    (address: string, ensAvatar: string | null, domain: string, type: 'ens') => {
       dispatch({
         type: 'DOMAINS_CONTROLLER_SAVE_RESOLVED_REVERSE_LOOKUP',
         params: {
           type,
           address,
-          name: domain
+          name: domain,
+          ensAvatar
         }
       })
     },

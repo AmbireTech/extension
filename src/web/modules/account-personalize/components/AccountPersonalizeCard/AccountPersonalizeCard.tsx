@@ -53,7 +53,7 @@ const AccountPersonalizeCard = ({
           testID="personalize-account"
           style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}
         >
-          <Avatar isSmart={isSmartAccount(account)} pfp={preferences.pfp} />
+          <Avatar address={account.addr} isSmart={isSmartAccount(account)} pfp={preferences.pfp} />
           <View style={flexbox.flex1}>
             <View style={[flexbox.directionRow, flexbox.flex1]}>
               <Controller

@@ -125,6 +125,7 @@ const AddressBookContact: FC<Props> = ({
         <Avatar
           {...(avatarSize && { size: avatarSize })}
           pfp={address}
+          address={address}
           isSmart={isSmart}
           displayTypeBadge={displayTypeBadge}
         />
