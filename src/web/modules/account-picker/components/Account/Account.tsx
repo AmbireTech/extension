@@ -140,6 +140,7 @@ const Account = ({
               {isAccountImported ? (
                 <>
                   <Avatar
+                    address={account.addr}
                     pfp={account.preferences.pfp}
                     size={24}
                     isSmart={isSmartAccount(account)}
