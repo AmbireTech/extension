@@ -11,8 +11,8 @@ import PowerIcon from '@common/assets/svg/PowerIcon'
 import StarIcon from '@common/assets/svg/StarIcon'
 import UpArrowIcon from '@common/assets/svg/UpArrowIcon'
 import Button from '@common/components/Button'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
-import Tooltip from '@common/components/Tooltip'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -75,10 +75,18 @@ const DappControl = ({
                 <View
                   style={{ position: 'absolute', right: -3, top: -2, zIndex: 1 }}
                   // @ts-ignore
-                  dataSet={{
-                    tooltipId: 'blacklisted-app-tooltip',
-                    tooltipContent: t('Blacklisted app!')
-                  }}
+                  dataSet={createGlobalTooltipDataSet({
+                    id: 'blacklisted-app-tooltip',
+                    content: t('Blacklisted app!'),
+                    delayShow: 200,
+                    border: `1px solid ${theme.errorDecorative as string}`,
+                    style: {
+                      fontSize: 12,
+                      backgroundColor: theme.errorBackground as string,
+                      padding: SPACING_TY,
+                      color: theme.errorDecorative as string
+                    }
+                  })}
                 >
                   <ErrorFilledIcon width={14} height={14} />
                 </View>
@@ -165,17 +173,6 @@ const DappControl = ({
           )}
         </View>
       </View>
-      <Tooltip
-        id="blacklisted-app-tooltip"
-        delayShow={200}
-        border={`1px solid ${theme.errorDecorative as string}`}
-        style={{
-          fontSize: 12,
-          backgroundColor: theme.errorBackground as string,
-          padding: SPACING_TY,
-          color: theme.errorDecorative as string
-        }}
-      />
     </View>
   )
 }

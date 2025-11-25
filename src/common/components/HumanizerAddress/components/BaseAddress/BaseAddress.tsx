@@ -117,10 +117,7 @@ const BaseAddress: FC<Props> = ({
       </Text>
       <Tooltip
         id={tooltipId}
-        style={{
-          padding: 0,
-          overflow: 'hidden'
-        }}
+        style={{ padding: 0, overflow: 'hidden' }}
         clickable
         noArrow
         place="bottom-end"

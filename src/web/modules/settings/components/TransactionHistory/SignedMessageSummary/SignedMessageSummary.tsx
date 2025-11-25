@@ -6,10 +6,9 @@ import { humanizeMessage } from '@ambire-common/libs/humanizer'
 import { ENTRY_POINT_AUTHORIZATION_REQUEST_ID } from '@ambire-common/libs/userOperation/userOperation'
 import ManifestFallbackIcon from '@common/assets/svg/ManifestFallbackIcon'
 import ExpandableCard from '@common/components/ExpandableCard'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import HumanizedVisualization from '@common/components/HumanizedVisualization/HumanizedVisualization'
 import Text from '@common/components/Text'
-import Tooltip from '@common/components/Tooltip'
-import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -26,7 +25,6 @@ interface Props {
 
 const SignedMessageSummary = ({ signedMessage, style }: Props) => {
   const { styles } = useTheme(getStyles)
-  const { t } = useTranslation()
   const { networks } = useNetworksControllerState()
 
   const humanizedMessage = useMemo(() => {
@@ -85,13 +83,13 @@ const SignedMessageSummary = ({ signedMessage, style }: Props) => {
               fontSize={16}
               weight="semiBold"
               numberOfLines={2}
-              dataSet={{
-                tooltipId: dAppNameTooltipId
-              }}
+              dataSet={createGlobalTooltipDataSet({
+                id: dAppNameTooltipId,
+                content: dAppName
+              })}
             >
               {dAppName}
             </Text>
-            <Tooltip content={dAppName} id={dAppNameTooltipId} />
           </View>
           <View style={flexbox.flex1}>
             {new Date(signedMessage.timestamp).toString() !== 'Invalid Date' && (
@@ -126,7 +124,7 @@ const SignedMessageSummary = ({ signedMessage, style }: Props) => {
           <ScrollView contentContainerStyle={styles.rawMessage}>
             <FallbackVisualization
               setHasReachedBottom={() => {}}
-              hasReachedBottom={true}
+              hasReachedBottom
               messageToSign={signedMessage}
             />
           </ScrollView>

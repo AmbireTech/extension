@@ -1,14 +1,13 @@
 import { formatUnits } from 'ethers'
 import React, { useMemo } from 'react'
-import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import { TokenResult } from '@ambire-common/libs/portfolio/interfaces'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import WarningFilledIcon from '@common/assets/svg/WarningFilledIcon'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
-import Tooltip from '@common/components/Tooltip'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { BigIntMath } from '@common/utils/bigint'
@@ -22,7 +21,6 @@ interface Props {
   hasBottomSpacing?: boolean
 }
 const PendingTokenSummary = ({ token, chainId, hasBottomSpacing = true }: Props) => {
-  const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
   const tokenId = getTokenId(token)
   const { formattedAmount, fullAmount } = useMemo(() => {
@@ -106,11 +104,11 @@ const PendingTokenSummary = ({ token, chainId, hasBottomSpacing = true }: Props)
           // @ts-ignore
           style={{ cursor: 'pointer' }}
           color={amountToSendTextColor}
-          dataSet={{
-            tooltipId: `${amountToSendSign}token-amount-${tokenId}`
-          }}
+          dataSet={createGlobalTooltipDataSet({
+            id: `${amountToSendSign}token-amount-${tokenId}`,
+            content: String(fullAmount)
+          })}
         >{`${amountToSendSign}${formattedAmount}`}</Text>
-        <Tooltip content={String(fullAmount)} id={`${amountToSendSign}token-amount-${tokenId}`} />
         <Text fontSize={16} weight="medium">
           {` ${token.symbol}`}
         </Text>
@@ -120,15 +118,12 @@ const PendingTokenSummary = ({ token, chainId, hasBottomSpacing = true }: Props)
         <View
           // @ts-ignore
           style={[spacings.mlMi, { cursor: 'pointer' }]}
-          dataSet={{
-            tooltipId: `token-amount-${tokenId}`
-          }}
+          dataSet={createGlobalTooltipDataSet({
+            id: `token-amount-${tokenId}`,
+            content: suspiciousTokenTooltipContent ?? undefined
+          })}
         >
           <WarningFilledIcon />
-          <Tooltip
-            content={t('{{content}}', { content: suspiciousTokenTooltipContent })}
-            id={`token-amount-${tokenId}`}
-          />
         </View>
       )}
     </View>

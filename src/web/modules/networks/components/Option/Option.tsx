@@ -2,8 +2,8 @@ import { useCallback } from 'react'
 import { Animated, View } from 'react-native'
 
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
-import Tooltip from '@common/components/Tooltip'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
@@ -53,55 +53,56 @@ const Option = ({
   const tooltipId = `tooltip-for-${text}`
 
   return (
-    <>
-      <AnimatedPressable
-        onPress={handleOnPress}
-        // @ts-ignore missing type, but the prop is valid
-        dataSet={{ tooltipId, tooltipContent: tooltip }}
-        // Purposely don't disable the button (but block the onPress action) in
-        // case of a tooltip, because it should be clickable to show the tooltip.
-        disabled={disabled && !tooltip}
-        style={[
-          styles.item,
-          flexbox.justifySpaceBetween,
-          {
-            borderWidth: 1,
-            borderColor: animStyle.borderColor
-          },
-          disabled && { opacity: 0.4 }
-        ]}
-        {...(!disabled && bindAnim)}
-      >
-        <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-          <View
-            style={{
-              width: 40,
-              height: 40,
-              ...flexbox.center,
-              ...spacings.mrTy
-            }}
-          >
-            {renderIcon}
-          </View>
-          <Text fontSize={16} weight="medium">
-            {title}
-          </Text>
-          {!!text && (
-            <Text style={spacings.mlTy} fontSize={14} appearance="secondaryText">
-              {text}
-            </Text>
-          )}
-        </View>
-        <Animated.View
+    <AnimatedPressable
+      onPress={handleOnPress}
+      // @ts-ignore missing type, but the prop is valid
+      dataSet={createGlobalTooltipDataSet({
+        id: tooltipId,
+        content: tooltip,
+        hidden: !tooltip
+      })}
+      // Purposely don't disable the button (but block the onPress action) in
+      // case of a tooltip, because it should be clickable to show the tooltip.
+      disabled={disabled && !tooltip}
+      style={[
+        styles.item,
+        flexbox.justifySpaceBetween,
+        {
+          borderWidth: 1,
+          borderColor: animStyle.borderColor
+        },
+        disabled && { opacity: 0.4 }
+      ]}
+      {...(!disabled && bindAnim)}
+    >
+      <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+        <View
           style={{
-            left: animStyle.left
+            width: 40,
+            height: 40,
+            ...flexbox.center,
+            ...spacings.mrTy
           }}
         >
-          <RightArrowIcon />
-        </Animated.View>
-      </AnimatedPressable>
-      {tooltip && <Tooltip id={tooltipId} />}
-    </>
+          {renderIcon}
+        </View>
+        <Text fontSize={16} weight="medium">
+          {title}
+        </Text>
+        {!!text && (
+          <Text style={spacings.mlTy} fontSize={14} appearance="secondaryText">
+            {text}
+          </Text>
+        )}
+      </View>
+      <Animated.View
+        style={{
+          left: animStyle.left
+        }}
+      >
+        <RightArrowIcon />
+      </Animated.View>
+    </AnimatedPressable>
   )
 }
 

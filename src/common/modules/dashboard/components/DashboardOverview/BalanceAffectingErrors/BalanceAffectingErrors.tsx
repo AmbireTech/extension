@@ -7,8 +7,8 @@ import WarningIcon from '@common/assets/svg/WarningIcon'
 import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
-import Tooltip from '@common/components/Tooltip'
 import { isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import useBalanceAffectingErrors from '@common/modules/dashboard/hooks/useBalanceAffectingErrors'
@@ -59,8 +59,11 @@ const BalanceAffectingErrors: FC<Props> = ({
       <WarningIcon
         color={theme.warningDecorative2}
         style={spacings.mlTy}
-        data-tooltip-id="balance-affecting-error"
-        data-tooltip-content={warningMessage}
+        // @ts-ignore
+        dataSet={createGlobalTooltipDataSet({
+          id: 'balance-affecting-error',
+          content: warningMessage
+        })}
         width={21}
         height={21}
       />
@@ -135,7 +138,6 @@ const BalanceAffectingErrors: FC<Props> = ({
           {renderWarningIcon()}
         </Pressable>
       )}
-      <Tooltip id="balance-affecting-error" />
       <BottomSheet
         style={{ maxWidth: 720, ...spacings.pvLg, ...spacings.phXl, width: '100%' }}
         id="portfolio-errors"
