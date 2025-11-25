@@ -413,7 +413,7 @@ const useSwapAndBridgeForm = () => {
     setSettingsModalVisible((p) => !p)
   }, [])
 
-  const pendingRoutes = useMemo(() => {
+  const selectedAccActiveRoutes = useMemo(() => {
     return (
       (activeRoutes || [])
         .filter((r) => r.route && getAddress(r.route.userAddress) === account?.addr)
@@ -431,10 +431,10 @@ const useSwapAndBridgeForm = () => {
 
   useEffect(() => {
     const broadcastStatus = mainCtrlStatuses.signAndBroadcastAccountOp
-    if (broadcastStatus === 'SUCCESS' && activeRoutes.length) {
+    if (broadcastStatus === 'SUCCESS' && selectedAccActiveRoutes.length) {
       setHasBroadcasted(true)
     }
-  }, [activeRoutes.length, mainCtrlStatuses.signAndBroadcastAccountOp])
+  }, [selectedAccActiveRoutes.length, mainCtrlStatuses.signAndBroadcastAccountOp])
 
   useEffect(() => {
     if (!signAccountOpController) {
@@ -457,7 +457,7 @@ const useSwapAndBridgeForm = () => {
     acknowledgeHighPriceImpact,
     settingModalVisible,
     handleToggleSettingsMenu,
-    pendingRoutes,
+    selectedAccActiveRoutes,
     routesModalRef,
     displayedView,
     hasBroadcasted,

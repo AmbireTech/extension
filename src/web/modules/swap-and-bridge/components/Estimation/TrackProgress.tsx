@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import { Hex } from '@ambire-common/interfaces/hex'
+import { SwapAndBridgeActiveRoute } from '@ambire-common/interfaces/swapAndBridge'
 import { getIsBridgeRoute, getLink } from '@ambire-common/libs/swapAndBridge/swapAndBridge'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
@@ -17,7 +18,6 @@ import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import formatTime from '@common/utils/formatTime'
 import useBackgroundService from '@web/hooks/useBackgroundService'
-import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControllerState'
 import TrackProgressWrapper from '@web/modules/sign-account-op/components/OneClick/TrackProgress'
 import Completed from '@web/modules/sign-account-op/components/OneClick/TrackProgress/ByStatus/Completed'
 import Failed from '@web/modules/sign-account-op/components/OneClick/TrackProgress/ByStatus/Failed'
@@ -32,16 +32,16 @@ const { isActionWindow } = getUiType()
 
 type Props = {
   handleClose: () => void
+  selectedAccActiveRoutes: SwapAndBridgeActiveRoute[]
 }
 
-const TrackProgress: FC<Props> = ({ handleClose }) => {
+const TrackProgress: FC<Props> = ({ handleClose, selectedAccActiveRoutes }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { navigate } = useNavigation()
   const { dispatch } = useBackgroundService()
-  const { activeRoutes } = useSwapAndBridgeControllerState()
 
-  const lastCompletedRoute = activeRoutes[activeRoutes.length - 1]
+  const lastCompletedRoute = selectedAccActiveRoutes[selectedAccActiveRoutes.length - 1]
   const steps = lastCompletedRoute?.route?.steps
   const firstStep = steps ? steps[0] : null
   const lastStep = steps ? steps[steps.length - 1] : null
