@@ -345,7 +345,7 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
       )}
 
       {simulationView === 'error' && (
-        <Alert type="error" title={t('Unable to simulate the transaction. Proceed with caution')} />
+        <Alert type="error" title={t('Unable to simulate the transaction. Proceed with caution.')} />
       )}
       {simulationView === 'no-changes' && (
         <View style={[flexbox.directionRow, flexbox.flex1, flexbox.alignCenter]}>
