@@ -13,7 +13,7 @@ import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components
 import { getTabLayoutPadding } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import { getUiType } from '@web/utils/uiType'
 
-const { isActionWindow } = getUiType()
+const { isRequestWindow } = getUiType()
 
 type TrackProgressProps = {
   handleClose: () => void
@@ -59,14 +59,14 @@ const TrackProgressWrapper: FC<TrackProgressProps> = ({
             style={[
               flexbox.alignCenter,
               flexbox.justifyCenter,
-              isActionWindow ? {} : flexbox.flex1,
+              isRequestWindow ? {} : flexbox.flex1,
               spacings.pt0
             ]}
           >
             {children}
           </View>
 
-          {!isActionWindow && (
+          {!isRequestWindow && (
             <View style={{ height: 1, backgroundColor: theme.secondaryBorder, ...spacings.mvLg }} />
           )}
 
@@ -74,11 +74,11 @@ const TrackProgressWrapper: FC<TrackProgressProps> = ({
             style={[
               routeStatus !== 'failed' ? flexbox.directionRow : flexbox.directionRowReverse,
               flexbox.alignCenter,
-              !isActionWindow ? flexbox.justifySpaceBetween : flexbox.justifyCenter,
-              isActionWindow && spacings.pt2Xl
+              !isRequestWindow ? flexbox.justifySpaceBetween : flexbox.justifyCenter,
+              isRequestWindow && spacings.pt2Xl
             ]}
           >
-            {!isActionWindow ? (
+            {!isRequestWindow ? (
               <Button
                 onPress={handleClose}
                 hasBottomSpacing={false}
@@ -92,7 +92,7 @@ const TrackProgressWrapper: FC<TrackProgressProps> = ({
             <Button
               onPress={onPrimaryButtonPress}
               hasBottomSpacing={false}
-              style={{ width: isActionWindow ? 240 : 160 }}
+              style={{ width: isRequestWindow ? 240 : 160 }}
               text={t('Close')}
               type={routeStatus !== 'failed' ? 'primary' : 'secondary'}
               testID="track-progress-primary-button"

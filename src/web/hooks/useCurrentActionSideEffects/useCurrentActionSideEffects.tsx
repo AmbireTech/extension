@@ -9,7 +9,7 @@ import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import { getUiType } from '@web/utils/uiType'
 
-const { isActionWindow } = getUiType()
+const { isRequestWindow } = getUiType()
 
 const useCurrentActionSideEffects = () => {
   const { authStatus } = useAuth()
@@ -27,7 +27,7 @@ const useCurrentActionSideEffects = () => {
     )
       return
 
-    if (isActionWindow && currentUserRequest) {
+    if (isRequestWindow && currentUserRequest) {
       if (currentUserRequest.kind === 'unlock') {
         dispatch({
           type: 'REQUESTS_CONTROLLER_RESOLVE_USER_REQUEST',
@@ -48,7 +48,7 @@ const useCurrentActionSideEffects = () => {
     if (!areControllerStatesLoaded) return
 
     const timeoutId = setTimeout(() => {
-      if (isActionWindow && !currentUserRequest) closeCurrentWindow()
+      if (isRequestWindow && !currentUserRequest) closeCurrentWindow()
     }, 1000)
 
     return () => clearTimeout(timeoutId)

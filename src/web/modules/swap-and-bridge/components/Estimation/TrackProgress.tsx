@@ -28,7 +28,7 @@ import { getUiType } from '@web/utils/uiType'
 
 import RouteStepsToken from '../RouteStepsToken'
 
-const { isActionWindow } = getUiType()
+const { isRequestWindow } = getUiType()
 
 type Props = {
   handleClose: () => void
@@ -67,7 +67,7 @@ const TrackProgress: FC<Props> = ({ handleClose }) => {
   }, [firstStep, steps])
 
   const navigateOut = useCallback(() => {
-    if (isActionWindow) {
+    if (isRequestWindow) {
       dispatch({
         type: 'CLOSE_SIGNING_REQUEST_WINDOW',
         params: {

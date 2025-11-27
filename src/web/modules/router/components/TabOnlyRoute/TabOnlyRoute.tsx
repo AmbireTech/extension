@@ -10,7 +10,7 @@ import { getUiType } from '@web/utils/uiType'
 const { isTab } = getUiType()
 
 const TabOnlyRoute = () => {
-  const isActionWindow = getUiType().isActionWindow
+  const isRequestWindow = getUiType().isRequestWindow
   const { path, search, params } = useRoute()
   const { currentUserRequest, requestWindow } = useRequestsControllerState()
 
@@ -29,7 +29,7 @@ const TabOnlyRoute = () => {
     }
   }, [path, search, params, requestWindow.windowProps?.createdFromWindowId])
 
-  if (isActionWindow && currentUserRequest) {
+  if (isRequestWindow && currentUserRequest) {
     return <Outlet />
   }
 

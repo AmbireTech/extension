@@ -42,7 +42,7 @@ if (isExtension) {
 
     let portName = 'popup'
     if (getUiType().isTab) portName = 'tab'
-    if (getUiType().isActionWindow) portName = 'request-window'
+    if (getUiType().isRequestWindow) portName = 'request-window'
 
     pm.connect({ id: portId, name: portName })
     // connect to the portMessenger initialized in the background
@@ -101,7 +101,7 @@ globalDispatch = (action, windowId?: number) => {
   // dispatches from request-window should not be blocked even when unfocused
   // because we can have only one instance of request-window and only one instance for the given action screen
   // (an action screen could not be opened in tab or popup window by design)
-  const shouldBlockDispatch = document.hidden && !getUiType().isActionWindow
+  const shouldBlockDispatch = document.hidden && !getUiType().isRequestWindow
   if (shouldBlockDispatch && !ACTIONS_TO_DISPATCH_EVEN_WHEN_HIDDEN.includes(action.type)) return
 
   if (!backgroundReady) {
@@ -180,7 +180,7 @@ const BackgroundServiceProvider: React.FC<any> = ({ children }) => {
         if (message.action === 'sw-started') {
           // if the sw restarts and the current window is an action window then close it
           // because the actions state has been lost after the sw restart
-          if (getUiType().isActionWindow) {
+          if (getUiType().isRequestWindow) {
             closeCurrentWindow()
           } else {
             sessionStorage.setItem('backgroundState', 'restarted')

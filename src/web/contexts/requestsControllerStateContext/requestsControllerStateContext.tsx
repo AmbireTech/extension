@@ -19,7 +19,7 @@ const RequestsControllerStateProvider: React.FC<any> = ({ children }) => {
 
   useEffect(() => {
     dispatch({ type: 'INIT_CONTROLLER_STATE', params: { controller } })
-    if (getUiType().isActionWindow) {
+    if (getUiType().isRequestWindow) {
       dispatch({ type: 'REQUESTS_CONTROLLER_SET_WINDOW_LOADED' })
     }
   }, [dispatch])
@@ -30,7 +30,7 @@ const RequestsControllerStateProvider: React.FC<any> = ({ children }) => {
 
   useEffect(() => {
     if (
-      getUiType().isActionWindow &&
+      getUiType().isRequestWindow &&
       prevCurrentActionId !== memoizedState?.actions?.currentAction?.id
     ) {
       setTimeout(() => navigate('/'))

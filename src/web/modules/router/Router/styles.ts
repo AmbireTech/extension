@@ -9,7 +9,7 @@ interface Style {
   container: ViewStyle
 }
 
-const { isPopup, isActionWindow } = getUiType()
+const { isPopup, isRequestWindow } = getUiType()
 
 const getStyles = () =>
   StyleSheet.create<Style>({
@@ -18,7 +18,7 @@ const getStyles = () =>
       ...(isPopup ? { maxWidth: POPUP_WIDTH } : {}),
       ...(isPopup && isSafari() ? { maxHeight: POPUP_WIDTH } : {}),
       // to prevent content to be overlapped by the request-window's top bar on Opera
-      ...(isOpera() && isActionWindow ? { paddingTop: 15 } : {})
+      ...(isOpera() && isRequestWindow ? { paddingTop: 15 } : {})
     }
   })
 

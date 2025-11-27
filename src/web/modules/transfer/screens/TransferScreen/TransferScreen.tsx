@@ -46,7 +46,7 @@ import GasTankInfoModal from '@web/modules/transfer/components/GasTankInfoModal'
 import SendForm from '@web/modules/transfer/components/SendForm/SendForm'
 import { getUiType } from '@web/utils/uiType'
 
-const { isTab, isActionWindow } = getUiType()
+const { isTab, isRequestWindow } = getUiType()
 
 const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   const { dispatch } = useBackgroundService()
@@ -151,7 +151,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   }, [latestBatchedNetwork, account, accountUserRequests])
 
   const navigateOut = useCallback(() => {
-    if (isActionWindow) {
+    if (isRequestWindow) {
       dispatch({
         type: 'CLOSE_SIGNING_REQUEST_WINDOW',
         params: {

@@ -25,7 +25,7 @@ import { getUiType } from '@web/utils/uiType'
 
 type SessionId = ReturnType<typeof nanoid>
 
-const { isPopup, isActionWindow } = getUiType()
+const { isPopup, isRequestWindow } = getUiType()
 
 const useSwapAndBridgeForm = () => {
   const {
@@ -89,7 +89,7 @@ const useSwapAndBridgeForm = () => {
   const sessionIdsRequestedToBeInit = useRef<SessionId[]>([])
   const sessionId = useMemo(() => {
     if (isPopup) return 'popup'
-    if (isActionWindow) return 'request-window'
+    if (isRequestWindow) return 'request-window'
 
     return nanoid()
   }, []) // purposely, so it is unique per hook lifetime
@@ -154,7 +154,7 @@ const useSwapAndBridgeForm = () => {
       // Otherwise when the user is done with the operation
       // and closes the window the popup session will remain open and the swap and bridge
       // screen will open on load
-      if (isActionWindow && sessionIds.includes('popup') && sessionIds.includes(sessionId)) {
+      if (isRequestWindow && sessionIds.includes('popup') && sessionIds.includes(sessionId)) {
         dispatch({
           type: 'SWAP_AND_BRIDGE_CONTROLLER_UNLOAD_SCREEN',
           params: { sessionId: 'popup', forceUnload: true }

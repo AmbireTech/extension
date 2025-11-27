@@ -7,7 +7,7 @@ import { AUTH_STATUS } from '@common/modules/auth/constants/authStatus'
 import { ROUTES } from '@common/modules/router/constants/common'
 import { getUiType } from '@web/utils/uiType'
 
-const { isActionWindow } = getUiType()
+const { isRequestWindow } = getUiType()
 
 const getInitialRoute = ({
   keystoreState,
@@ -30,7 +30,7 @@ const getInitialRoute = ({
     return ROUTES.getStarted
   }
 
-  if (isActionWindow && requestsState.currentUserRequest) {
+  if (isRequestWindow && requestsState.currentUserRequest) {
     const { currentUserRequest } = requestsState
     if (currentUserRequest.kind === 'dappConnect') {
       return ROUTES.dappConnectRequest
@@ -72,7 +72,7 @@ const getInitialRoute = ({
     }
 
     if (currentUserRequest.kind === 'switchAccount') return ROUTES.switchAccount
-  } else if (!isActionWindow) {
+  } else if (!isRequestWindow) {
     // TODO: Always redirects to Dashboard, which for initial extension load is okay, but
     // for other scenarios, ideally, it should be the last route before the keystore got locked.
     const hasSwapAndBridgePersistentSession = swapAndBridgeState.sessionIds.some(

@@ -41,7 +41,7 @@ export type OneClickEstimationProps = {
   serviceFee?: SwapAndBridgeRoute['serviceFee']
 }
 
-const { isActionWindow, isTab } = getUiType()
+const { isRequestWindow, isTab } = getUiType()
 
 const OneClickEstimation = ({
   closeEstimationModal,
@@ -108,7 +108,7 @@ const OneClickEstimation = ({
         }
         // NOTE: This must be lower than SigningKeySelect's z-index
         customZIndex={5}
-        autoOpen={hasProceeded || (isActionWindow && !!signAccountOpController)}
+        autoOpen={hasProceeded || (isRequestWindow && !!signAccountOpController)}
         isScrollEnabled={false}
         shouldBeClosableOnDrag={false}
       >

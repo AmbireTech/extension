@@ -13,7 +13,7 @@ const UI_TYPE: { [key: string]: Pathname } = {
 
 type UiTypeCheck = {
   isTab: boolean
-  isActionWindow: boolean
+  isRequestWindow: boolean
   isPopup: boolean
   uiType?: UiType
 }
@@ -36,11 +36,11 @@ const pathToUiType = (pathname: string): UiType => {
 
 export const getUiType = (): UiTypeCheck => {
   if (!isWeb) {
-    return { isActionWindow: false, isPopup: false, isTab: false }
+    return { isRequestWindow: false, isPopup: false, isTab: false }
   }
 
   if (isWeb && !isExtension) {
-    return { isActionWindow: false, isPopup: false, isTab: true }
+    return { isRequestWindow: false, isPopup: false, isTab: true }
   }
 
   const { pathname } = window.location
