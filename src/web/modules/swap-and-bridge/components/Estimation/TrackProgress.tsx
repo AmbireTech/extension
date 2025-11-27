@@ -69,7 +69,7 @@ const TrackProgress: FC<Props> = ({ handleClose }) => {
   const navigateOut = useCallback(() => {
     if (isActionWindow) {
       dispatch({
-        type: 'CLOSE_SIGNING_ACTION_WINDOW',
+        type: 'CLOSE_SIGNING_REQUEST_WINDOW',
         params: {
           type: 'swapAndBridge'
         }

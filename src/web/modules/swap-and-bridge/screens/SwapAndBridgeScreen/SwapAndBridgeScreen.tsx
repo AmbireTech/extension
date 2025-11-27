@@ -140,7 +140,7 @@ const SwapAndBridgeScreen = () => {
     })
     if (isActionWindow) {
       dispatch({
-        type: 'CLOSE_SIGNING_ACTION_WINDOW',
+        type: 'CLOSE_SIGNING_REQUEST_WINDOW',
         params: {
           type: 'swapAndBridge'
         }

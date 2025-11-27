@@ -1,4 +1,9 @@
-const validateRequestParams = (kind: string | undefined, params: { [key: string]: any }) => {
+import { WalletAddEthereumChainRequest } from '@ambire-common/interfaces/userRequest'
+
+const validateRequestParams = (
+  kind: string | undefined,
+  params: WalletAddEthereumChainRequest['meta']['params'][0] | undefined
+) => {
   if (!kind) return false
   if (!['walletAddEthereumChain'].includes(kind)) return false
 

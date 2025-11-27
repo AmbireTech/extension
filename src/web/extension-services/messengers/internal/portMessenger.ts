@@ -3,7 +3,7 @@ import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
 import { browser } from '@web/constants/browserapi'
 import { Action as ActionType } from '@web/extension-services/background/actions'
 
-export type Port = chrome.runtime.Port & { id: string; name: 'popup' | 'tab' | 'action-window' }
+export type Port = chrome.runtime.Port & { id: string; name: 'popup' | 'tab' | 'request-window' }
 
 type MessageType = '> ui' | '> ui-error' | '> ui-toast' | '> background'
 

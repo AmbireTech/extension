@@ -3,6 +3,7 @@
 /* eslint-disable @typescript-eslint/return-await */
 import { BIP44_STANDARD_DERIVATION_TEMPLATE } from '@ambire-common/consts/derivation'
 import { MainController } from '@ambire-common/controllers/main/main'
+import { SwapAndBridgeRequest } from '@ambire-common/interfaces/userRequest'
 import { KeyIterator } from '@ambire-common/libs/keyIterator/keyIterator'
 import wait from '@ambire-common/utils/wait'
 import { browser } from '@web/constants/browserapi'
@@ -214,7 +215,7 @@ export const handleActions = async (
     case 'MAIN_CONTROLLER_REJECT_ACCOUNT_OP':
       return mainCtrl.rejectAccountOpAction(
         params.err,
-        params.actionId,
+        params.requestId,
         params.shouldOpenNextAction
       )
     case 'MAIN_CONTROLLER_SIGN_MESSAGE_INIT': {
@@ -254,19 +255,15 @@ export const handleActions = async (
       return await mainCtrl.handleSignAndBroadcastAccountOp(params.type)
     }
     case 'MAIN_CONTROLLER_SIGN_ACCOUNT_OP_INIT':
-      return mainCtrl.initSignAccOp(params.actionId)
+      return mainCtrl.initSignAccOp(params.requestId)
     case 'MAIN_CONTROLLER_SIGN_ACCOUNT_OP_DESTROY':
       return mainCtrl.destroySignAccOp()
 
     case 'REQUESTS_CONTROLLER_BUILD_REQUEST':
       return await mainCtrl.requests.build(params)
-    case 'REQUESTS_CONTROLLER_ADD_USER_REQUEST':
-      return await mainCtrl.requests.addUserRequests([params.userRequest], {
-        actionPosition: params.actionPosition,
-        actionExecutionType: params.actionExecutionType,
-        allowAccountSwitch: params.allowAccountSwitch,
-        skipFocus: params.skipFocus
-      })
+    case 'REQUESTS_CONTROLLER_ADD_CALLS_USER_REQUEST': {
+      return await mainCtrl.requests.build({ type: 'calls', params })
+    }
     case 'REQUESTS_CONTROLLER_REMOVE_USER_REQUEST':
       return mainCtrl.requests.removeUserRequests([params.id])
     case 'REQUESTS_CONTROLLER_RESOLVE_USER_REQUEST':
@@ -357,36 +354,34 @@ export const handleActions = async (
       return mainCtrl?.swapAndBridge.setUserProceeded(params.proceeded)
     case 'SWAP_AND_BRIDGE_CONTROLLER_DESTROY_SIGN_ACCOUNT_OP':
       return mainCtrl?.swapAndBridge.destroySignAccountOp()
-    case 'OPEN_SIGNING_ACTION_WINDOW': {
+    case 'OPEN_SIGNING_REQUEST_WINDOW': {
       if (!mainCtrl.selectedAccount.account) throw new Error('No selected account')
 
       const idSuffix = params.type === 'swapAndBridge' ? 'swap-and-bridge-sign' : 'transfer-sign'
 
-      return mainCtrl.requests.actions.addOrUpdateActions(
+      return mainCtrl.requests.addUserRequests(
         [
           {
             id: `${mainCtrl.selectedAccount.account.addr}-${idSuffix}`,
-            type: params.type,
-            userRequest: {
-              meta: {
-                accountAddr: mainCtrl.selectedAccount.account.addr
-              }
-            }
-          }
+            kind: params.type,
+            meta: {
+              accountAddr: mainCtrl.selectedAccount.account.addr
+            },
+            dappPromises: []
+          } as SwapAndBridgeRequest
         ],
         {
           position: 'last',
-          executionType: 'open-action-window',
-          baseWindowId: windowId
+          executionType: 'open-request-window'
         }
       )
     }
-    case 'CLOSE_SIGNING_ACTION_WINDOW': {
+    case 'CLOSE_SIGNING_REQUEST_WINDOW': {
       if (!mainCtrl.selectedAccount.account) throw new Error('No selected account')
 
       const idSuffix = params.type === 'swapAndBridge' ? 'swap-and-bridge-sign' : 'transfer-sign'
 
-      return mainCtrl.requests.actions.removeActions([
+      return mainCtrl.requests.removeUserRequests([
         `${mainCtrl.selectedAccount.account.addr}-${idSuffix}`
       ])
     }
@@ -410,21 +405,19 @@ export const handleActions = async (
     case 'MAIN_CONTROLLER_REMOVE_ACTIVE_ROUTE':
       return mainCtrl.removeActiveRoute(params.activeRouteId)
 
-    case 'ACTIONS_CONTROLLER_REMOVE_FROM_ACTIONS_QUEUE':
-      return mainCtrl.requests.actions.removeActions([params.id], params.shouldOpenNextAction)
-    case 'ACTIONS_CONTROLLER_FOCUS_ACTION_WINDOW':
-      return mainCtrl.requests.actions.focusActionWindow()
-    case 'ACTIONS_CONTROLLER_SET_CURRENT_ACTION_BY_ID':
-      return mainCtrl.requests.actions.setCurrentActionById(params.actionId, {
+    case 'REQUESTS_CONTROLLER_FOCUS_REQUEST_WINDOW':
+      return mainCtrl.requests.focusRequestWindow()
+    case 'REQUSTS_CONTROLLER_SET_CURRENT_REQUEST_BY_ID':
+      return mainCtrl.requests.setCurrentUserRequestById(params.requestId, {
         baseWindowId: windowId
       })
-    case 'ACTIONS_CONTROLLER_SET_CURRENT_ACTION_BY_INDEX':
-      return mainCtrl.requests.actions.setCurrentActionByIndex(params.index, {
+    case 'REQUESTS_CONTROLLER_SET_CURRENT_REQUEST_BY_INDEX':
+      return mainCtrl.requests.setCurrentUserRequestByIndex(params.index, {
         ...params.params,
         baseWindowId: windowId
       })
-    case 'ACTIONS_CONTROLLER_SET_WINDOW_LOADED':
-      return mainCtrl.requests.actions.setWindowLoaded()
+    case 'REQUESTS_CONTROLLER_SET_WINDOW_LOADED':
+      return mainCtrl.requests.setWindowLoaded()
 
     case 'MAIN_CONTROLLER_RELOAD_SELECTED_ACCOUNT': {
       return await mainCtrl.reloadSelectedAccount({

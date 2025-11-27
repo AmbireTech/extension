@@ -12,7 +12,6 @@ import useNavigation from '@common/hooks/useNavigation'
 import useToast from '@common/hooks/useToast'
 import DashboardBannerBottomSheet from '@common/modules/dashboard/components/DashboardBanners/DashboardBannerBottomSheet'
 import { ROUTES } from '@common/modules/router/constants/common'
-import useActionsControllerState from '@web/hooks/useActionsControllerState'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
@@ -33,9 +32,8 @@ const DashboardBanner = ({
   const { dispatch } = useBackgroundService()
   const { addToast } = useToast()
   const { navigate } = useNavigation()
-  const { visibleActionsQueue } = useActionsControllerState()
-  const { statuses } = useRequestsControllerState()
-  const { account, portfolio } = useSelectedAccountControllerState()
+  const { statuses, visibleUserRequests } = useRequestsControllerState()
+  const { portfolio } = useSelectedAccountControllerState()
   const { ref: sheetRef, close: closeBottomSheet, open: openBottomSheet } = useModalize()
 
   const Icon = useMemo(() => {
@@ -48,18 +46,18 @@ const DashboardBanner = ({
     (action: Action) => {
       switch (action.actionName) {
         case 'open-pending-dapp-requests': {
-          if (!visibleActionsQueue) break
-          const dappActions = visibleActionsQueue.filter((a) => a.type !== 'accountOp')
+          if (!visibleUserRequests) break
+          const dappRequests = visibleUserRequests.filter((r) => r.kind !== 'calls')
           dispatch({
-            type: 'ACTIONS_CONTROLLER_SET_CURRENT_ACTION_BY_ID',
-            params: { actionId: dappActions[0].id }
+            type: 'REQUSTS_CONTROLLER_SET_CURRENT_REQUEST_BY_ID',
+            params: { requestId: dappRequests[0].id }
           })
           break
         }
 
         case 'open-accountOp':
           dispatch({
-            type: 'ACTIONS_CONTROLLER_SET_CURRENT_ACTION_BY_ID',
+            type: 'REQUSTS_CONTROLLER_SET_CURRENT_REQUEST_BY_ID',
             params: action.meta
           })
           break
@@ -123,7 +121,7 @@ const DashboardBanner = ({
 
         case 'update-extension-version': {
           const shouldPrompt =
-            visibleActionsQueue.filter(({ type: actionType }) => actionType !== 'benzin').length > 0
+            visibleUserRequests.filter(({ kind }) => kind !== 'benzin').length > 0
 
           if (shouldPrompt) {
             openBottomSheet()
@@ -170,7 +168,7 @@ const DashboardBanner = ({
           break
       }
     },
-    [dispatch, navigate, addToast, visibleActionsQueue, type, openBottomSheet]
+    [dispatch, navigate, addToast, visibleUserRequests, type, openBottomSheet]
   )
 
   const dismissAction = actions.find((action: Action) => action.label === 'Dismiss')

@@ -226,7 +226,7 @@ const open = async (
 ): Promise<WindowProps> => {
   const { route, customSize, baseWindowId } = options
 
-  const url = `action-window.html${route ? `#/${route}` : ''}`
+  const url = `request-window.html${route ? `#/${route}` : ''}`
   return create(url, customSize, baseWindowId)
 }
 /**

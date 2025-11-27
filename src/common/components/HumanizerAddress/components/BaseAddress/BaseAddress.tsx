@@ -79,7 +79,7 @@ const BaseAddress: FC<Props> = ({
         await Linking.openURL(targetUrl)
         return
       }
-      // Close the action-window if this address is opened in one, otherwise
+      // Close the request-window if this address is opened in one, otherwise
       // the user will have to minimize it to see the explorer.
       await openInTab({ url: targetUrl, shouldCloseCurrentWindow: isActionWindow })
     } catch {

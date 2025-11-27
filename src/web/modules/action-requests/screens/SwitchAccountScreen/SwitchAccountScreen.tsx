@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
-import { SwitchAccountAction } from '@ambire-common/interfaces/actions'
 import DownArrowLongIcon from '@common/assets/svg/DownArrowLongIcon'
 import ManifestFallbackIcon from '@common/assets/svg/ManifestFallbackIcon'
 import AmbireLogoHorizontal from '@common/components/AmbireLogoHorizontal'
@@ -17,8 +16,8 @@ import text from '@common/styles/utils/text'
 import ManifestImage from '@web/components/ManifestImage'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
-import useActionsControllerState from '@web/hooks/useActionsControllerState'
 import useBackgroundService from '@web/hooks/useBackgroundService'
+import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import ActionFooter from '@web/modules/action-requests/components/ActionFooter'
 
@@ -31,26 +30,19 @@ const SwitchAccountScreen = () => {
   const { addToast } = useToast()
   const { account } = useSelectedAccountControllerState()
   const { dispatch } = useBackgroundService()
-  const state = useActionsControllerState()
+  const { currentUserRequest } = useRequestsControllerState()
   const { accounts } = useAccountsControllerState()
   const [isAuthorizing, setIsAuthorizing] = useState(false)
   const { minHeightSize } = useWindowSize()
-  const dAppAction = useMemo(
-    () =>
-      (state.currentAction?.type === 'switchAccount'
-        ? state.currentAction
-        : null) as SwitchAccountAction | null,
-    [state.currentAction]
-  )
 
   const userRequest = useMemo(() => {
-    if (dAppAction?.userRequest?.action?.kind !== 'switchAccount') return null
+    if (currentUserRequest?.kind !== 'switchAccount') return null
 
-    return dAppAction.userRequest
-  }, [dAppAction])
+    return currentUserRequest
+  }, [currentUserRequest])
 
-  const nextAccount = userRequest?.action.params?.switchToAccountAddr
-  const nextRequestType = userRequest?.action.params?.nextRequestType
+  const nextAccount = userRequest?.meta.params?.switchToAccountAddr
+  const nextRequestType = userRequest?.meta.params?.nextRequestType
   const nextAccountData = useMemo(() => {
     if (!nextAccount) return null
 
@@ -63,19 +55,19 @@ const SwitchAccountScreen = () => {
     return 'unknown request'
   }, [nextRequestType])
 
-  const dAppData = useMemo(() => userRequest?.session, [userRequest?.session])
+  const dAppData = useMemo(() => userRequest?.dappPromises[0].session, [userRequest])
 
   const handleDenyButtonPress = useCallback(() => {
-    if (!dAppAction) return
+    if (!userRequest) return
 
     dispatch({
       type: 'REQUESTS_CONTROLLER_REJECT_USER_REQUEST',
-      params: { err: t('User rejected the request.'), id: dAppAction.id }
+      params: { err: t('User rejected the request.'), id: userRequest.id }
     })
-  }, [dAppAction, t, dispatch])
+  }, [userRequest, t, dispatch])
 
   const handleAuthorizeButtonPress = useCallback(() => {
-    if (!dAppAction) return
+    if (!userRequest) return
 
     if (!nextAccount) {
       addToast(
@@ -95,7 +87,7 @@ const SwitchAccountScreen = () => {
       type: 'MAIN_CONTROLLER_SELECT_ACCOUNT',
       params: { accountAddr: nextAccount }
     })
-  }, [addToast, dAppAction, dispatch, nextAccount, t])
+  }, [addToast, userRequest, dispatch, nextAccount, t])
 
   const responsiveSizeMultiplier = useMemo(() => {
     if (minHeightSize('s')) return 0.85
@@ -106,13 +98,13 @@ const SwitchAccountScreen = () => {
 
   // Resolve the request
   useEffect(() => {
-    if (account?.addr !== nextAccount || !userRequest || !dAppAction) return
+    if (account?.addr !== nextAccount || !userRequest || !userRequest) return
 
     dispatch({
       type: 'REQUESTS_CONTROLLER_RESOLVE_USER_REQUEST',
-      params: { data: null, id: dAppAction.id }
+      params: { data: null, id: userRequest.id }
     })
-  }, [account?.addr, dAppAction, dispatch, nextAccount, userRequest])
+  }, [account?.addr, userRequest, dispatch, nextAccount])
 
   return (
     <TabLayoutContainer

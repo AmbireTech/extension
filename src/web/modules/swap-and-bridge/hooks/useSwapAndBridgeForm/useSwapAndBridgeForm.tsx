@@ -13,7 +13,6 @@ import { getCallsCount } from '@ambire-common/utils/userRequest'
 import useGetTokenSelectProps from '@common/hooks/useGetTokenSelectProps'
 import useNavigation from '@common/hooks/useNavigation'
 import { ROUTES } from '@common/modules/router/constants/common'
-import useActionsControllerState from '@web/hooks/useActionsControllerState'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useMainControllerState from '@web/hooks/useMainControllerState'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
@@ -86,11 +85,11 @@ const useSwapAndBridgeForm = () => {
     open: openPriceImpactModal,
     close: closePriceImpactModal
   } = useModalize()
-  const { visibleActionsQueue } = useActionsControllerState()
+  const { visibleUserRequests } = useRequestsControllerState()
   const sessionIdsRequestedToBeInit = useRef<SessionId[]>([])
   const sessionId = useMemo(() => {
     if (isPopup) return 'popup'
-    if (isActionWindow) return 'action-window'
+    if (isActionWindow) return 'request-window'
 
     return nanoid()
   }, []) // purposely, so it is unique per hook lifetime
@@ -104,7 +103,7 @@ const useSwapAndBridgeForm = () => {
     if (!fromSelectedToken || !account || !userRequests.length) return []
     return userRequests.filter(
       (r) =>
-        r.action.kind === 'calls' &&
+        r.kind === 'calls' &&
         r.meta.accountAddr === account.addr &&
         r.meta.chainId === fromSelectedToken.chainId
     )
@@ -115,7 +114,7 @@ const useSwapAndBridgeForm = () => {
 
     const reqs = userRequests.filter(
       (r) =>
-        r.action.kind === 'calls' &&
+        r.kind === 'calls' &&
         r.meta.accountAddr === account.addr &&
         r.meta.chainId === latestBatchedNetwork
     )
@@ -124,9 +123,7 @@ const useSwapAndBridgeForm = () => {
   }, [latestBatchedNetwork, userRequests, account])
 
   useEffect(() => {
-    const hasSwapAndBridgeAction = visibleActionsQueue.some(
-      (action) => action.type === 'swapAndBridge'
-    )
+    const hasSwapAndBridgeAction = visibleUserRequests.some((req) => req.kind === 'swapAndBridge')
 
     // Cleanup sessions
     if (hasSwapAndBridgeAction) {
@@ -138,13 +135,13 @@ const useSwapAndBridgeForm = () => {
         if (signAccountOpController) {
           window.close()
           dispatch({
-            type: 'ACTIONS_CONTROLLER_FOCUS_ACTION_WINDOW'
+            type: 'REQUESTS_CONTROLLER_FOCUS_REQUEST_WINDOW'
           })
           return
         }
 
         dispatch({
-          type: 'CLOSE_SIGNING_ACTION_WINDOW',
+          type: 'CLOSE_SIGNING_REQUEST_WINDOW',
           params: {
             type: 'swapAndBridge'
           }
@@ -153,7 +150,7 @@ const useSwapAndBridgeForm = () => {
 
         return
       }
-      // Forcefully unload the popup session after the action window session is added.
+      // Forcefully unload the popup session after the request window session is added.
       // Otherwise when the user is done with the operation
       // and closes the window the popup session will remain open and the swap and bridge
       // screen will open on load
@@ -211,7 +208,7 @@ const useSwapAndBridgeForm = () => {
     sessionIds,
     setSearchParams,
     signAccountOpController,
-    visibleActionsQueue
+    visibleUserRequests
   ])
 
   // remove session - this will be triggered only

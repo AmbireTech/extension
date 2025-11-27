@@ -20,7 +20,7 @@ const RequestsControllerStateProvider: React.FC<any> = ({ children }) => {
   useEffect(() => {
     dispatch({ type: 'INIT_CONTROLLER_STATE', params: { controller } })
     if (getUiType().isActionWindow) {
-      dispatch({ type: 'ACTIONS_CONTROLLER_SET_WINDOW_LOADED' })
+      dispatch({ type: 'REQUESTS_CONTROLLER_SET_WINDOW_LOADED' })
     }
   }, [dispatch])
 

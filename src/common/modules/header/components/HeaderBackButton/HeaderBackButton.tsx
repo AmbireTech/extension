@@ -13,7 +13,7 @@ import { getUiType } from '@web/utils/uiType'
 
 const { isPopup, isTab, isActionWindow } = getUiType()
 
-export type DisplayIn = 'popup' | 'tab' | 'action-window' | 'always' | 'never'
+export type DisplayIn = 'popup' | 'tab' | 'request-window' | 'always' | 'never'
 
 const HeaderBackButton = ({
   displayIn = 'popup',
@@ -45,7 +45,7 @@ const HeaderBackButton = ({
 
     return displayInArray.some((display) => {
       if (display === 'popup') return isPopup
-      if (display === 'action-window') return isActionWindow
+      if (display === 'request-window') return isActionWindow
 
       return isTab
     })

@@ -42,7 +42,7 @@ if (isExtension) {
 
     let portName = 'popup'
     if (getUiType().isTab) portName = 'tab'
-    if (getUiType().isActionWindow) portName = 'action-window'
+    if (getUiType().isActionWindow) portName = 'request-window'
 
     pm.connect({ id: portId, name: portName })
     // connect to the portMessenger initialized in the background
@@ -98,8 +98,8 @@ globalDispatch = (action, windowId?: number) => {
   // Dispatch the action only when the tab or popup is focused or active.
   // Otherwise, multiple dispatches could occur if the same screen is open in multiple tabs/popup windows,
   // causing unpredictable background/controllers state behavior.
-  // dispatches from action-window should not be blocked even when unfocused
-  // because we can have only one instance of action-window and only one instance for the given action screen
+  // dispatches from request-window should not be blocked even when unfocused
+  // because we can have only one instance of request-window and only one instance for the given action screen
   // (an action screen could not be opened in tab or popup window by design)
   const shouldBlockDispatch = document.hidden && !getUiType().isActionWindow
   if (shouldBlockDispatch && !ACTIONS_TO_DISPATCH_EVEN_WHEN_HIDDEN.includes(action.type)) return

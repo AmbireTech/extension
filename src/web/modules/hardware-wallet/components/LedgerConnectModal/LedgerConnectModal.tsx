@@ -18,8 +18,8 @@ import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { openInternalPageInTab } from '@web/extension-services/background/webapi/tab'
-import useActionsControllerState from '@web/hooks/useActionsControllerState'
 import useMainControllerState from '@web/hooks/useMainControllerState'
+import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import useLedger from '@web/modules/hardware-wallet/hooks/useLedger'
 import { getUiType } from '@web/utils/uiType'
 
@@ -48,7 +48,7 @@ const LedgerConnectModal = ({
   const { addToast } = useToast()
   const { t } = useTranslation()
   const [isGrantingPermission, setIsGrantingPermission] = useState(false)
-  const { currentAction, actionWindow } = useActionsControllerState()
+  const { currentUserRequest, requestWindow } = useRequestsControllerState()
   const { theme, themeType } = useTheme()
 
   useEffect(() => {
@@ -79,13 +79,17 @@ const LedgerConnectModal = ({
   const handleOnLedgerReauthorize = useCallback(
     () =>
       openInternalPageInTab({
-        route: `${WEB_ROUTES.ledgerConnect}?actionId=${currentAction?.id}`,
+        route: `${WEB_ROUTES.ledgerConnect}?requestId=${currentUserRequest?.id}`,
         // Don't close the action window if the current action is a sign message
         // as that would reject the message automatically.
-        shouldCloseCurrentWindow: currentAction?.type === 'accountOp',
-        windowId: actionWindow.windowProps?.createdFromWindowId
+        shouldCloseCurrentWindow: currentUserRequest?.kind === 'calls',
+        windowId: requestWindow.windowProps?.createdFromWindowId
       }),
-    [currentAction?.id, currentAction?.type, actionWindow.windowProps?.createdFromWindowId]
+    [
+      currentUserRequest?.id,
+      currentUserRequest?.kind,
+      requestWindow.windowProps?.createdFromWindowId
+    ]
   )
 
   const isLoading =

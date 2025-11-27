@@ -1,5 +1,5 @@
-import { ActionsController } from '@ambire-common/controllers/actions/actions'
 import { IKeystoreController } from '@ambire-common/interfaces/keystore'
+import { IRequestsController } from '@ambire-common/interfaces/requests'
 import { ISwapAndBridgeController } from '@ambire-common/interfaces/swapAndBridge'
 import { ITransferController } from '@ambire-common/interfaces/transfer'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
@@ -12,13 +12,13 @@ const { isActionWindow } = getUiType()
 const getInitialRoute = ({
   keystoreState,
   authStatus,
-  actionsState,
+  requestsState,
   swapAndBridgeState,
   transferState
 }: {
   keystoreState: IKeystoreController
   authStatus: AUTH_STATUS
-  actionsState: ActionsController
+  requestsState: IRequestsController
   swapAndBridgeState: ISwapAndBridgeController
   transferState: ITransferController
 }) => {
@@ -30,54 +30,53 @@ const getInitialRoute = ({
     return ROUTES.getStarted
   }
 
-  if (isActionWindow && actionsState.currentAction) {
-    const actionType = actionsState.currentAction.type
-    if (actionType === 'dappRequest') {
-      const action = actionsState.currentAction
-
-      if (action.userRequest.action.kind === 'dappConnect') {
-        return ROUTES.dappConnectRequest
-      }
-      if (action.userRequest.action.kind === 'walletAddEthereumChain') {
-        return ROUTES.addChain
-      }
-      if (action.userRequest.action.kind === 'walletWatchAsset') {
-        return ROUTES.watchAsset
-      }
-      if (action.userRequest.action.kind === 'ethGetEncryptionPublicKey') {
-        return ROUTES.getEncryptionPublicKeyRequest
-      }
+  if (isActionWindow && requestsState.currentUserRequest) {
+    const { currentUserRequest } = requestsState
+    if (currentUserRequest.kind === 'dappConnect') {
+      return ROUTES.dappConnectRequest
     }
-    if (actionType === 'accountOp') return ROUTES.signAccountOp
+    if (currentUserRequest.kind === 'walletAddEthereumChain') {
+      return ROUTES.addChain
+    }
+    if (currentUserRequest.kind === 'walletWatchAsset') {
+      return ROUTES.watchAsset
+    }
+    if (currentUserRequest.kind === 'ethGetEncryptionPublicKey') {
+      return ROUTES.getEncryptionPublicKeyRequest
+    }
 
-    if (actionType === 'signMessage') return ROUTES.signMessage
+    if (currentUserRequest.kind === 'calls') return ROUTES.signAccountOp
 
-    if (actionType === 'swapAndBridge') return ROUTES.swapAndBridge
+    if (currentUserRequest.kind === 'message') return ROUTES.signMessage
+    if (currentUserRequest.kind === 'typedMessage') return ROUTES.signMessage
+    if (currentUserRequest.kind === 'siwe') return ROUTES.signMessage
+    if (currentUserRequest.kind === 'authorization-7702') return ROUTES.signMessage
+
+    if (currentUserRequest.kind === 'swapAndBridge') return ROUTES.swapAndBridge
 
     // TODO: This navigation occurs when signing with Trezor.
     // Currently, Gas Top-Ups are not supported by Trezor.
     // Once support is added, we need to introduce a new actionType specifically for Top-Up.
-    if (actionType === 'transfer') return ROUTES.transfer
+    if (currentUserRequest.kind === 'transfer') return ROUTES.transfer
 
-    if (actionType === 'benzin') {
-      const benzinAction = actionsState.currentAction
+    if (currentUserRequest.kind === 'benzin') {
       const link =
         ROUTES.benzin +
         getBenzinUrlParams({
-          chainId: benzinAction.userRequest.meta?.chainId,
+          chainId: currentUserRequest.meta.chainId,
           isInternal: true,
-          txnId: benzinAction.userRequest.meta?.txnId, // can be undefined
-          identifiedBy: benzinAction.userRequest.meta?.identifiedBy
+          txnId: currentUserRequest.meta?.txnId, // can be undefined
+          identifiedBy: currentUserRequest.meta?.identifiedBy
         })
       return link
     }
 
-    if (actionType === 'switchAccount') return ROUTES.switchAccount
+    if (currentUserRequest.kind === 'switchAccount') return ROUTES.switchAccount
   } else if (!isActionWindow) {
     // TODO: Always redirects to Dashboard, which for initial extension load is okay, but
     // for other scenarios, ideally, it should be the last route before the keystore got locked.
     const hasSwapAndBridgePersistentSession = swapAndBridgeState.sessionIds.some(
-      (id) => id === 'popup' || id === 'action-window'
+      (id) => id === 'popup' || id === 'request-window'
     )
 
     if (hasSwapAndBridgePersistentSession) {

@@ -700,7 +700,7 @@ const init = async () => {
   // listen for messages from UI
   browser.runtime.onConnect.addListener(async (port: Port) => {
     const [name, id] = port.name.split(':') as [Port['name'], Port['id']]
-    if (['popup', 'tab', 'action-window'].includes(name)) {
+    if (['popup', 'tab', 'request-window'].includes(name)) {
       // eslint-disable-next-line no-param-reassign
       port.id = id || nanoid()
       // eslint-disable-next-line no-param-reassign
@@ -772,7 +772,7 @@ const init = async () => {
           // Example: the user has the dashboard opened in tab, opens the popup
           // and closes it immediately.
           if (disconnectedPort.name === 'popup') mainCtrl.portfolio.forceEmitUpdate()
-          if (disconnectedPort.name === 'tab' || disconnectedPort.name === 'action-window') {
+          if (disconnectedPort.name === 'tab' || disconnectedPort.name === 'request-window') {
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             ledgerCtrl.cleanUp()
             trezorCtrl.cleanUp()

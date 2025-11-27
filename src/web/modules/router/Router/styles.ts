@@ -17,7 +17,7 @@ const getStyles = () =>
       ...flexbox.flex1,
       ...(isPopup ? { maxWidth: POPUP_WIDTH } : {}),
       ...(isPopup && isSafari() ? { maxHeight: POPUP_WIDTH } : {}),
-      // to prevent content to be overlapped by the action-window's top bar on Opera
+      // to prevent content to be overlapped by the request-window's top bar on Opera
       ...(isOpera() && isActionWindow ? { paddingTop: 15 } : {})
     }
   })

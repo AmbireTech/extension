@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 import { Modalize } from 'react-native-modalize'
 
-import { Session } from '@ambire-common/classes/session'
 import { Account } from '@ambire-common/interfaces/account'
 import { has7702 } from '@ambire-common/libs/7702/7702'
 import { canBecomeSmarter } from '@ambire-common/libs/account/account'
@@ -41,7 +40,7 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
   const { keys } = useKeystoreControllerState()
   const { networks } = useNetworksControllerState()
   const { theme, themeType } = useTheme()
-  const { dispatch, windowId } = useBackgroundService()
+  const { dispatch } = useBackgroundService()
   const { t } = useTranslation()
   const [checkedAccountState, setCheckedAccountState] = useState<boolean>(false)
 
@@ -86,26 +85,15 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
     if (!network || !account || !accountState || !accountState[chainId.toString()]) return
 
     dispatch({
-      type: 'REQUESTS_CONTROLLER_ADD_USER_REQUEST',
+      type: 'REQUESTS_CONTROLLER_ADD_CALLS_USER_REQUEST',
       params: {
-        userRequest: {
-          id: new Date().getTime(),
+        userRequestParams: {
+          calls: [{ to: ZERO_ADDRESS, data: '0x', value: BigInt(0) }],
           meta: {
             isSignAction: true,
             chainId: network.chainId,
             accountAddr: account.addr,
             setDelegation: !accountState[chainId.toString()].delegatedContract
-          },
-          session: new Session({ windowId }),
-          action: {
-            kind: 'calls',
-            calls: [
-              {
-                to: ZERO_ADDRESS,
-                data: '0x',
-                value: BigInt(0)
-              }
-            ]
           }
         },
         allowAccountSwitch: true
