@@ -27,7 +27,9 @@ import Networks from '@web/modules/networks/components/Networks'
 
 import AddNetworkBottomSheet from '../components/AddNetworkBottomSheet'
 import AllNetworksOption from '../components/AllNetworksOption/AllNetworksOption'
-import NetworkBottomSheet, { NO_BLOCK_EXPLORER_AVAILABLE_TOOLTIP } from '../components/NetworkBottomSheet'
+import NetworkBottomSheet, {
+  NO_BLOCK_EXPLORER_AVAILABLE_TOOLTIP
+} from '../components/NetworkBottomSheet'
 
 const NetworksScreen = () => {
   const { t } = useTranslation()
@@ -123,7 +125,14 @@ const NetworksScreen = () => {
       width="lg"
       hideFooterInPopup
     >
-      <View style={[flexbox.flex1, spacings.pb]}>
+      <View style={[flexbox.flex1, spacings.pv]}>
+        <Input
+          testID="search-for-network-field"
+          autoFocus
+          value={search}
+          onChangeText={setSearch}
+          placeholder={t('Search for network')}
+        />
         <TabLayoutWrapperMainContent>
           <NetworkBottomSheet
             chainId={settingsChainId}
@@ -134,14 +143,6 @@ const NetworksScreen = () => {
           <AddNetworkBottomSheet
             sheetRef={addNetworkBottomSheetRef}
             closeBottomSheet={closeAddNetworkBottomSheet}
-          />
-          <Input
-            testID="search-for-network-field"
-            autoFocus
-            containerStyle={spacings.mb}
-            value={search}
-            onChangeText={setSearch}
-            placeholder={t('Search for network')}
           />
           <AllNetworksOption onPress={handleChangeNetwork} />
           <Networks
