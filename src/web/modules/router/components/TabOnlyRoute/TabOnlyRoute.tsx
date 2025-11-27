@@ -14,10 +14,9 @@ const TabOnlyRoute = () => {
   const { path, search, params } = useRoute()
   const { currentUserRequest, requestWindow } = useRequestsControllerState()
 
-  // if the current window is request-window and there is a action request don't open
-  // the route in tab because the dApp that requests the action request
-  // will loose the session with the wallet and the action request response won't arrive
-
+  // if the current window is request-window and there is a request don't open
+  // the route in tab because the dApp that requests the request
+  // will loose the session with the wallet and the request response won't arrive
   useEffect(() => {
     if (!isTab && isExtension) {
       // eslint-disable-next-line @typescript-eslint/no-floating-promises

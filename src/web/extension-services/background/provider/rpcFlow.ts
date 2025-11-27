@@ -60,8 +60,8 @@ const flowContext = flow
                 }
               })
             })
-          } else if (mainCtrl.requests.actions.currentAction) {
-            await mainCtrl.requests.actions.focusActionWindow()
+          } else if (mainCtrl.requests.currentUserRequest) {
+            await mainCtrl.requests.focusRequestWindow()
           }
           await lockedOrigins[origin]
         } finally {
@@ -72,7 +72,7 @@ const flowContext = flow
 
     return next()
   })
-  // if dApp not connected - prompt connect action window
+  // if dApp not connected - prompt connect request window
   .use(async ({ request, mainCtrl, mapMethod }, next) => {
     const {
       session: { id, origin: url }
@@ -91,8 +91,8 @@ const flowContext = flow
                 }
               })
             })
-          } else if (mainCtrl.requests.actions.currentAction) {
-            await mainCtrl.requests.actions.focusActionWindow()
+          } else if (mainCtrl.requests.currentUserRequest) {
+            await mainCtrl.requests.focusRequestWindow()
           }
           const dappToAdd = await connectOrigins[url]
           await mainCtrl.dapps.addDapp({ ...dappToAdd, isConnected: true })
@@ -104,7 +104,7 @@ const flowContext = flow
 
     return next()
   })
-  // add the dapp request as a userRequest and action
+  // add the dapp request as a userRequest
   .use(async (props, next) => {
     const { request, mainCtrl, mapMethod } = props
     const providerCtrl = new ProviderController(mainCtrl)

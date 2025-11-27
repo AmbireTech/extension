@@ -661,7 +661,7 @@ export class ProviderController {
       if (!tokenAddress) throw ethErrors.rpc.invalidParams('Token address is required')
       if (!isAddress(tokenAddress)) throw ethErrors.rpc.invalidParams('Invalid token address')
 
-      return false // Return false to allow action window to open (address is valid)
+      return false // Return false to allow request window to open (address is valid)
     }
   ])
   walletWatchAsset = () => true

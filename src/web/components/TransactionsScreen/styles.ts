@@ -14,7 +14,7 @@ interface Style {
 
 const { isActionWindow, isTab } = getUiType()
 
-// Make the form slightly larger in action window
+// Make the form slightly larger in request window
 // so it stretches as much as the header
 export const TRANSACTION_FORM_WIDTH = isActionWindow ? 656 : 600
 

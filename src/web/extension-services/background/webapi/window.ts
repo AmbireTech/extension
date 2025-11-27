@@ -194,7 +194,7 @@ const create = async (
 }
 
 const remove = async (winId: number, pm: PortMessenger) => {
-  // In Firefox, closing a browser window (e.g., the action window) can also close the extension popup in the main window.
+  // In Firefox, closing a browser window (e.g., the request window) can also close the extension popup in the main window.
   // As a workaround, we first unfocus the window, then change the route. On the next chrome.windows.create call,
   // if a blank window exists, we close it before opening a new one. This prevents stacking multiple blank windows in the background.
   if (IS_FIREFOX) {
@@ -203,7 +203,7 @@ const remove = async (winId: number, pm: PortMessenger) => {
 
     if (
       windowToRemove &&
-      windowToRemove.type === 'popup' && // if an action window is opened
+      windowToRemove.type === 'popup' && // if a request window is opened
       pm.ports.some((p) => p.name === 'popup') // if the extension popup is opened
     ) {
       chrome.windows

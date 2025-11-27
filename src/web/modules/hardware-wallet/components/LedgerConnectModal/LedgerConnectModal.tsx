@@ -29,7 +29,7 @@ type Props = {
   handleOnConnect?: () => void
   /**
    * The WebHID API allows the authorization to happen only in the extension
-   * foreground and on a new tab (not in an action window).
+   * foreground and on a new tab (not in an request window).
    */
   displayOptionToAuthorize?: boolean
 }
@@ -80,7 +80,7 @@ const LedgerConnectModal = ({
     () =>
       openInternalPageInTab({
         route: `${WEB_ROUTES.ledgerConnect}?requestId=${currentUserRequest?.id}`,
-        // Don't close the action window if the current action is a sign message
+        // Don't close the request window if the current request is a sign message
         // as that would reject the message automatically.
         shouldCloseCurrentWindow: currentUserRequest?.kind === 'calls',
         windowId: requestWindow.windowProps?.createdFromWindowId
