@@ -62,8 +62,8 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
 
   // Purposely don't disable the button (but block the onPress action) in
   // case of a tooltip, because it should be clickable to show the tooltip.
-  const doesHaveTooltip = buttonState === 'soon'
-  const disabled = (!hasGasTank && !doesHaveTooltip) || buttonState === 'error'
+  const doesHaveTooltip = buttonState === 'soon' || buttonState === 'error'
+  const disabled = !hasGasTank && !doesHaveTooltip
   const handleOnPress = useCallback(() => {
     if (doesHaveTooltip) return
 
@@ -172,18 +172,26 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
           </View>
         )}
         {buttonState === 'error' && (
-          <Text
-            style={[spacings.mhTy]}
-            color={
-              themeType === THEME_TYPES.DARK
-                ? theme.primaryBackgroundInverted
-                : theme.primaryBackground
-            }
-            weight="number_bold"
-            fontSize={12}
+          <View
+            // @ts-ignore
+            dataSet={createGlobalTooltipDataSet({
+              id: 'gas-tank-error',
+              content: t('Unable to load Gas Tank data.')
+            })}
           >
-            {t('Gas Tank Unavailable')}
-          </Text>
+            <Text
+              style={[spacings.mhTy]}
+              color={
+                themeType === THEME_TYPES.DARK
+                  ? theme.primaryBackgroundInverted
+                  : theme.primaryBackground
+              }
+              weight="number_bold"
+              fontSize={12}
+            >
+              {t('Gas Tank Unavailable')}
+            </Text>
+          </View>
         )}
       </AnimatedPressable>
     </View>
