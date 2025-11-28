@@ -11,10 +11,8 @@ import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useAddressInput from '@common/hooks/useAddressInput'
 import useGetTokenSelectProps from '@common/hooks/useGetTokenSelectProps'
-import useRoute from '@common/hooks/useRoute'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { getInfoFromSearch } from '@web/contexts/transferControllerStateContext'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
@@ -66,7 +64,6 @@ const SendForm = ({
   } = state
   const { t } = useTranslation()
   const { networks } = useNetworksControllerState()
-  const { search } = useRoute()
   const amountIsError = amountErrorSeverity === 'error' && !!amountErrorMessage
 
   const {
