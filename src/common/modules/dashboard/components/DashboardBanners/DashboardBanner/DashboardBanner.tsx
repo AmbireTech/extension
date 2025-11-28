@@ -48,16 +48,17 @@ const DashboardBanner = ({
         case 'open-pending-dapp-requests': {
           if (!visibleUserRequests) break
           const dappRequests = visibleUserRequests.filter((r) => r.kind !== 'calls')
+          if (!dappRequests.length) break
           dispatch({
-            type: 'REQUSTS_CONTROLLER_SET_CURRENT_REQUEST_BY_ID',
-            params: { requestId: dappRequests[0].id }
+            type: 'REQUESTS_CONTROLLER_SET_CURRENT_REQUEST_BY_ID',
+            params: { requestId: dappRequests[0]!.id }
           })
           break
         }
 
         case 'open-accountOp':
           dispatch({
-            type: 'REQUSTS_CONTROLLER_SET_CURRENT_REQUEST_BY_ID',
+            type: 'REQUESTS_CONTROLLER_SET_CURRENT_REQUEST_BY_ID',
             params: action.meta
           })
           break

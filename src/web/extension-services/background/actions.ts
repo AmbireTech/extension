@@ -213,10 +213,7 @@ type MainControllerRejectAccountOpAction = {
 type MainControllerSignMessageInitAction = {
   type: 'MAIN_CONTROLLER_SIGN_MESSAGE_INIT'
   params: {
-    dapp: {
-      name: string
-      icon: string
-    }
+    dapp: { name: string; icon: string }
     messageToSign: Message
   }
 }
@@ -653,7 +650,7 @@ type RequestsControllerFocusRequestWindow = {
 }
 
 type RequestsControllerSetCurrentRequestById = {
-  type: 'REQUSTS_CONTROLLER_SET_CURRENT_REQUEST_BY_ID'
+  type: 'REQUESTS_CONTROLLER_SET_CURRENT_REQUEST_BY_ID'
   params: {
     requestId: UserRequest['id']
   }

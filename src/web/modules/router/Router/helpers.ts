@@ -32,24 +32,23 @@ const getInitialRoute = ({
 
   if (isRequestWindow && requestsState.currentUserRequest) {
     const { currentUserRequest } = requestsState
-    if (currentUserRequest.kind === 'dappConnect') {
-      return ROUTES.dappConnectRequest
-    }
-    if (currentUserRequest.kind === 'walletAddEthereumChain') {
-      return ROUTES.addChain
-    }
-    if (currentUserRequest.kind === 'walletWatchAsset') {
-      return ROUTES.watchAsset
-    }
-    if (currentUserRequest.kind === 'ethGetEncryptionPublicKey') {
+    if (currentUserRequest.kind === 'dappConnect') return ROUTES.dappConnectRequest
+
+    if (currentUserRequest.kind === 'walletAddEthereumChain') return ROUTES.addChain
+
+    if (currentUserRequest.kind === 'walletWatchAsset') return ROUTES.watchAsset
+
+    if (currentUserRequest.kind === 'ethGetEncryptionPublicKey')
       return ROUTES.getEncryptionPublicKeyRequest
-    }
 
     if (currentUserRequest.kind === 'calls') return ROUTES.signAccountOp
 
     if (currentUserRequest.kind === 'message') return ROUTES.signMessage
+
     if (currentUserRequest.kind === 'typedMessage') return ROUTES.signMessage
+
     if (currentUserRequest.kind === 'siwe') return ROUTES.signMessage
+
     if (currentUserRequest.kind === 'authorization-7702') return ROUTES.signMessage
 
     if (currentUserRequest.kind === 'swapAndBridge') return ROUTES.swapAndBridge

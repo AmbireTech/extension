@@ -407,7 +407,7 @@ export const handleActions = async (
 
     case 'REQUESTS_CONTROLLER_FOCUS_REQUEST_WINDOW':
       return mainCtrl.requests.focusRequestWindow()
-    case 'REQUSTS_CONTROLLER_SET_CURRENT_REQUEST_BY_ID':
+    case 'REQUESTS_CONTROLLER_SET_CURRENT_REQUEST_BY_ID':
       return mainCtrl.requests.setCurrentUserRequestById(params.requestId, {
         baseWindowId: windowId
       })

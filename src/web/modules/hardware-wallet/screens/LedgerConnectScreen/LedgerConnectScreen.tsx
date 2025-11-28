@@ -56,7 +56,7 @@ const LedgerConnectScreen = () => {
       const params = new URLSearchParams(route?.search)
       const requestId = params.get('requestId')
       if (requestId) {
-        dispatch({ type: 'REQUSTS_CONTROLLER_SET_CURRENT_REQUEST_BY_ID', params: { requestId } })
+        dispatch({ type: 'REQUESTS_CONTROLLER_SET_CURRENT_REQUEST_BY_ID', params: { requestId } })
         await closeCurrentWindow()
       } else {
         dispatch({ type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LEDGER' })

@@ -4,6 +4,7 @@ import { Interface } from 'ethers'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
+import { v4 as uuidv4 } from 'uuid'
 
 import DeployHelper from '@ambire-common/../contracts/compiled/DeployHelper.json'
 import { AMBIRE_ACCOUNT_FACTORY, SINGLETON } from '@ambire-common/consts/deploy'
@@ -132,6 +133,7 @@ const NetworkAvailableFeatures = ({
         userRequestParams: {
           calls: [
             {
+              id: uuidv4(),
               to: SINGLETON,
               value: 0n,
               data: singletonInterface.encodeFunctionData('deploy', [bytecode, salt])

@@ -28,7 +28,7 @@ const DappConnectScreen = () => {
   const [confirmedRiskCheckbox, setConfirmedRiskCheckbox] = useState(false)
   const { state: dappsState } = useDappsControllerState()
 
-  const dappToConnect = useMemo(() => dappsState.dappToConnect || null, [dappsState])
+  const dappToConnect = useMemo(() => dappsState.dappToConnect || null, [dappsState.dappToConnect])
 
   const userRequest = useMemo(
     () => (currentUserRequest?.kind === 'dappConnect' ? currentUserRequest : undefined),

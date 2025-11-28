@@ -371,7 +371,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
         }
 
         dispatch({
-          type: 'REQUSTS_CONTROLLER_SET_CURRENT_REQUEST_BY_ID',
+          type: 'REQUESTS_CONTROLLER_SET_CURRENT_REQUEST_BY_ID',
           params: {
             requestId: request.id
           }

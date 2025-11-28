@@ -147,7 +147,7 @@ const TransactionSummary = ({
               hasPadding={enableExpand}
             />
           )}
-          {!!call.fromUserRequestId && !isHistory && !rightIcon && (
+          {!!call.id && !isHistory && !rightIcon && (
             <AnimatedPressable
               style={deleteIconAnimStyle}
               onPress={handleRemoveCall}

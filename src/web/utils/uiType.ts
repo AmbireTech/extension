@@ -8,7 +8,7 @@ type UiType = 'popup' | 'tab' | 'request-window'
 const UI_TYPE: { [key: string]: Pathname } = {
   Tab: 'tab',
   Popup: 'index',
-  ActionWindow: 'request-window'
+  RequestWindow: 'request-window'
 }
 
 type UiTypeCheck = {

@@ -2,6 +2,7 @@ import React, { FC, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 import { Modalize } from 'react-native-modalize'
+import { v4 as uuidv4 } from 'uuid'
 
 import { Account } from '@ambire-common/interfaces/account'
 import { has7702 } from '@ambire-common/libs/7702/7702'
@@ -88,7 +89,7 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
       type: 'REQUESTS_CONTROLLER_ADD_CALLS_USER_REQUEST',
       params: {
         userRequestParams: {
-          calls: [{ to: ZERO_ADDRESS, data: '0x', value: BigInt(0) }],
+          calls: [{ id: uuidv4(), to: ZERO_ADDRESS, data: '0x', value: BigInt(0) }],
           meta: {
             isSignAction: true,
             chainId: network.chainId,

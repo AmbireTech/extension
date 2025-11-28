@@ -13,7 +13,7 @@ import text from '@common/styles/utils/text'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 
-const SET_CURRENT_ACTION_PARAMS = {
+const SET_CURRENT_REQUEST_PARAMS = {
   skipFocus: true
 }
 
@@ -22,7 +22,7 @@ const ActionsPagination = () => {
   const { t } = useTranslation()
   const { dispatch } = useBackgroundService()
   const { theme, themeType } = useTheme()
-  const currentActionIndex = useMemo(() => {
+  const currentRequestIndex = useMemo(() => {
     if (!currentUserRequest) return undefined
 
     const idx = visibleUserRequests.findIndex((a) => a.id === currentUserRequest?.id)
@@ -35,36 +35,36 @@ const ActionsPagination = () => {
   if (visibleUserRequests?.length <= 1) return null
 
   const handleSmallPageStepDecrement = () => {
-    if (typeof currentActionIndex !== 'number') return
+    if (typeof currentRequestIndex !== 'number') return
     dispatch({
       type: 'REQUESTS_CONTROLLER_SET_CURRENT_REQUEST_BY_INDEX',
-      params: { index: currentActionIndex - 1, params: SET_CURRENT_ACTION_PARAMS }
+      params: { index: currentRequestIndex - 1, params: SET_CURRENT_REQUEST_PARAMS }
     })
   }
 
   const handleSmallPageStepIncrement = () => {
-    if (typeof currentActionIndex !== 'number') return
+    if (typeof currentRequestIndex !== 'number') return
     dispatch({
       type: 'REQUESTS_CONTROLLER_SET_CURRENT_REQUEST_BY_INDEX',
-      params: { index: currentActionIndex + 1, params: SET_CURRENT_ACTION_PARAMS }
+      params: { index: currentRequestIndex + 1, params: SET_CURRENT_REQUEST_PARAMS }
     })
   }
 
   const handleLargePageStepDecrement = () => {
     dispatch({
       type: 'REQUESTS_CONTROLLER_SET_CURRENT_REQUEST_BY_INDEX',
-      params: { index: 0, params: SET_CURRENT_ACTION_PARAMS }
+      params: { index: 0, params: SET_CURRENT_REQUEST_PARAMS }
     })
   }
 
   const handleLargePageStepIncrement = () => {
     dispatch({
       type: 'REQUESTS_CONTROLLER_SET_CURRENT_REQUEST_BY_INDEX',
-      params: { index: visibleUserRequests.length - 1, params: SET_CURRENT_ACTION_PARAMS }
+      params: { index: visibleUserRequests.length - 1, params: SET_CURRENT_REQUEST_PARAMS }
     })
   }
 
-  if (typeof currentActionIndex !== 'number') return null
+  if (typeof currentRequestIndex !== 'number') return null
 
   return (
     <View
@@ -77,8 +77,8 @@ const ActionsPagination = () => {
       ]}
     >
       <TouchableOpacity
-        style={currentActionIndex === 0 && { opacity: 0.4 }}
-        disabled={currentActionIndex === 0}
+        style={currentRequestIndex === 0 && { opacity: 0.4 }}
+        disabled={currentRequestIndex === 0}
         onPress={handleLargePageStepDecrement}
       >
         <View style={flexbox.directionRow}>
@@ -87,8 +87,8 @@ const ActionsPagination = () => {
         </View>
       </TouchableOpacity>
       <TouchableOpacity
-        style={[spacings.mlTy, currentActionIndex === 0 && { opacity: 0.4 }]}
-        disabled={currentActionIndex === 0}
+        style={[spacings.mlTy, currentRequestIndex === 0 && { opacity: 0.4 }]}
+        disabled={currentRequestIndex === 0}
         onPress={handleSmallPageStepDecrement}
       >
         <View style={flexbox.directionRow}>
@@ -101,17 +101,17 @@ const ActionsPagination = () => {
         underline
         style={[text.center, spacings.mh]}
       >
-        {t('Request {{currentActionIndex}} of {{numberOfAllActions}}', {
-          currentActionIndex: currentActionIndex + 1,
+        {t('Request {{currentRequestIndex}} of {{numberOfAllActions}}', {
+          currentRequestIndex: currentRequestIndex + 1,
           numberOfAllActions: visibleUserRequests.length
         })}
       </Text>
       <TouchableOpacity
         style={[
           spacings.mrTy,
-          currentActionIndex === visibleUserRequests.length - 1 && { opacity: 0.4 }
+          currentRequestIndex === visibleUserRequests.length - 1 && { opacity: 0.4 }
         ]}
-        disabled={currentActionIndex === visibleUserRequests.length - 1}
+        disabled={currentRequestIndex === visibleUserRequests.length - 1}
         onPress={handleSmallPageStepIncrement}
       >
         <View style={flexbox.directionRow}>
@@ -119,8 +119,8 @@ const ActionsPagination = () => {
         </View>
       </TouchableOpacity>
       <TouchableOpacity
-        style={currentActionIndex === visibleUserRequests.length - 1 && { opacity: 0.4 }}
-        disabled={currentActionIndex === visibleUserRequests.length - 1}
+        style={currentRequestIndex === visibleUserRequests.length - 1 && { opacity: 0.4 }}
+        disabled={currentRequestIndex === visibleUserRequests.length - 1}
         onPress={handleLargePageStepIncrement}
       >
         <View style={flexbox.directionRow}>
