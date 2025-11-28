@@ -519,6 +519,7 @@ type DomainsControllerSaveResolvedReverseLookupAction = {
   params: {
     address: string
     name: string
+    ensAvatar: string | null
     type: 'ens'
   }
 }

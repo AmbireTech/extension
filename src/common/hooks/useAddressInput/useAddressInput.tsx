@@ -16,7 +16,12 @@ interface Props {
   // Severity may be provided by callers (e.g. controller state). Accept
   // 'error'|'warning'|'info' so we can pass it through unchanged.
   overwriteSeverity?: 'error' | 'warning' | 'info'
-  handleCacheResolvedDomain: (address: string, domain: string, type: 'ens') => void
+  handleCacheResolvedDomain: (
+    address: string,
+    avatar: string | null,
+    domain: string,
+    type: 'ens'
+  ) => void
   // handleRevalidate is required when the address input is used
   // together with react-hook-form. It is used to trigger the revalidation of the input.
   // !!! Must be memoized with useCallback
@@ -70,11 +75,11 @@ const useAddressInput = ({
       // Keep the promise all as we may add more domain resolvers in the future
       await Promise.all([
         resolveENSDomain(trimmedAddress)
-          .then((newEnsAddress: string) => {
+          .then(({ address: newEnsAddress, avatar }) => {
             ensAddress = newEnsAddress
 
             if (ensAddress) {
-              handleCacheResolvedDomain(ensAddress, fieldValue, 'ens')
+              handleCacheResolvedDomain(ensAddress, avatar, fieldValue, 'ens')
             }
           })
           .catch((e) => {

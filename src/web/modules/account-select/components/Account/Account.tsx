@@ -158,7 +158,12 @@ const Account = ({
       ]}
     >
       <View style={[flexbox.flex1, flexbox.directionRow]}>
-        <Avatar pfp={account.preferences.pfp} isSmart={isSmartAccount(account)} showTooltip />
+        <Avatar
+          address={account.addr}
+          pfp={account.preferences.pfp}
+          isSmart={isSmartAccount(account)}
+          showTooltip
+        />
         <View style={flexbox.flex1}>
           <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
             {!withSettings ? (
