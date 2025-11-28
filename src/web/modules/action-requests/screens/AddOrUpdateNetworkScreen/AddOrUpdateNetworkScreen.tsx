@@ -96,7 +96,7 @@ const AddOrUpdateNetworkScreen = () => {
       return {
         name,
         rpcUrls,
-        selectedRpcUrl: rpcUrls[rpcUrlIndex],
+        selectedRpcUrl: rpcUrls[rpcUrlIndex]!,
         chainId: BigInt(requestData.chainId),
         nativeAssetSymbol,
         nativeAssetName,

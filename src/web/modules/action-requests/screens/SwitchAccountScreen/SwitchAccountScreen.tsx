@@ -55,7 +55,7 @@ const SwitchAccountScreen = () => {
     return 'unknown request'
   }, [nextRequestType])
 
-  const dAppData = useMemo(() => userRequest?.dappPromises[0].session, [userRequest])
+  const dAppData = useMemo(() => userRequest?.dappPromises?.[0]?.session, [userRequest])
 
   const handleDenyButtonPress = useCallback(() => {
     if (!userRequest) return
