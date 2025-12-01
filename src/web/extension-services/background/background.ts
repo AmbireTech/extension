@@ -331,6 +331,10 @@ const init = async () => {
   // Extension-specific additional trackings
   // @ts-ignore
   const fetchWithAnalytics: Fetch = (url, init) => {
+    // Tracking is not needed for 3rd party URLs
+    // @ts-ignore
+    if (!url.toString().includes('ambire.com')) return fetch(url, init)
+
     // As of v4.26.0, custom extension-specific headers. TBD for the other apps.
     const initWithCustomHeaders = init || { headers: { 'x-app-source': '' } }
     initWithCustomHeaders.headers = initWithCustomHeaders.headers || {}
