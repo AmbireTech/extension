@@ -44,16 +44,12 @@ const TrackProgress: FC<Props> = ({ activeRouteId, handleClose }) => {
 
   const lastCompletedRoute = activeRoutes.find((r) => r.activeRouteId === activeRouteId)
   const steps = lastCompletedRoute?.route?.steps
-  if (!lastCompletedRoute || !steps || steps.length === 0) {
-    return null
-  }
-
   const firstStep = steps ? steps[0] : null
   const lastStep = steps ? steps[steps.length - 1] : null
   const fromAsset = firstStep ? firstStep.fromAsset : null
   const toAsset = lastStep ? lastStep.toAsset : null
   const toAssetSymbol = steps ? steps[steps.length - 1]!.toAsset.symbol : null
-  const isSwap = lastCompletedRoute.route && !getIsBridgeRoute(lastCompletedRoute.route)
+  const isSwap = lastCompletedRoute?.route && !getIsBridgeRoute(lastCompletedRoute?.route)
 
   const refunded = useMemo(() => {
     if (!steps || steps.length === 0 || !firstStep) return null
@@ -85,9 +81,9 @@ const TrackProgress: FC<Props> = ({ activeRouteId, handleClose }) => {
   }, [dispatch, navigate])
 
   const { sessionHandler } = useTrackAccountOp({
-    address: lastCompletedRoute.route?.userAddress,
-    chainId: lastCompletedRoute.route?.fromChainId
-      ? BigInt(lastCompletedRoute.route.fromChainId)
+    address: lastCompletedRoute?.route?.userAddress,
+    chainId: lastCompletedRoute?.route?.fromChainId
+      ? BigInt(lastCompletedRoute?.route.fromChainId)
       : undefined,
     sessionId: 'swapAndBridge'
   })
@@ -95,9 +91,9 @@ const TrackProgress: FC<Props> = ({ activeRouteId, handleClose }) => {
   useEffect(() => {
     // Optimization: Don't apply filtration if we don't have a completed route.
     if (
-      !lastCompletedRoute.userTxHash ||
-      !lastCompletedRoute.route?.fromChainId ||
-      !lastCompletedRoute.route.userAddress
+      !lastCompletedRoute?.userTxHash ||
+      !lastCompletedRoute?.route?.fromChainId ||
+      !lastCompletedRoute?.route.userAddress
     )
       return
 
@@ -108,17 +104,19 @@ const TrackProgress: FC<Props> = ({ activeRouteId, handleClose }) => {
     }
   }, [
     dispatch,
-    lastCompletedRoute.route?.fromChainId,
-    lastCompletedRoute.route?.userAddress,
-    lastCompletedRoute.userTxHash,
+    lastCompletedRoute?.route?.fromChainId,
+    lastCompletedRoute?.route?.userAddress,
+    lastCompletedRoute?.userTxHash,
     sessionHandler
   ])
 
   const explorerLink = useMemo(() => {
+    if (!lastCompletedRoute) return
+
     if (!isSwap) {
       return getLink(lastCompletedRoute)
     }
-    const toChainId = lastCompletedRoute.route?.toChainId
+    const toChainId = lastCompletedRoute?.route?.toChainId
     if (!toChainId) return
 
     const { identifiedBy } = lastCompletedRoute
@@ -137,9 +135,9 @@ const TrackProgress: FC<Props> = ({ activeRouteId, handleClose }) => {
       onPrimaryButtonPress={navigateOut}
       secondaryButtonText={t('Start a new swap?')}
       handleClose={handleClose}
-      routeStatus={lastCompletedRoute.routeStatus}
+      routeStatus={lastCompletedRoute?.routeStatus}
     >
-      {lastCompletedRoute.routeStatus === 'in-progress' && (
+      {lastCompletedRoute?.routeStatus === 'in-progress' && (
         <InProgress title={t('Confirming your trade')}>
           {!!fromAsset && !!toAsset && (
             <View
@@ -159,7 +157,7 @@ const TrackProgress: FC<Props> = ({ activeRouteId, handleClose }) => {
                 address={fromAsset.address}
                 symbol={fromAsset.symbol}
                 amount={
-                  lastCompletedRoute.route?.fromAmount
+                  lastCompletedRoute?.route?.fromAmount
                     ? formatDecimals(
                         Number(
                           formatUnits(lastCompletedRoute.route?.fromAmount, fromAsset.decimals)
@@ -223,7 +221,7 @@ const TrackProgress: FC<Props> = ({ activeRouteId, handleClose }) => {
         </InProgress>
       )}
 
-      {lastCompletedRoute.routeStatus === 'completed' && (
+      {lastCompletedRoute?.routeStatus === 'completed' && (
         <Completed
           title={t('Nice trade!')}
           titleSecondary={t('{{symbol}} delivered - like magic.', {
@@ -234,7 +232,7 @@ const TrackProgress: FC<Props> = ({ activeRouteId, handleClose }) => {
         />
       )}
 
-      {lastCompletedRoute.routeStatus === 'failed' && (
+      {lastCompletedRoute?.routeStatus === 'failed' && (
         <Failed
           title={t(isSwap ? 'Swap failed' : 'Bridge failed')}
           errorMessage={`Error: ${lastCompletedRoute.error!}`}
@@ -258,7 +256,7 @@ const TrackProgress: FC<Props> = ({ activeRouteId, handleClose }) => {
         />
       )}
 
-      {lastCompletedRoute.routeStatus === 'refunded' && (
+      {lastCompletedRoute?.routeStatus === 'refunded' && (
         <Refunded
           title={t('Bridge refunded')}
           titleSecondary={t('{{token}} was refunded to your account as the bridge failed.', {

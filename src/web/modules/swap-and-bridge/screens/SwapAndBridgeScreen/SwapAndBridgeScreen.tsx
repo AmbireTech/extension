@@ -102,7 +102,7 @@ const SwapAndBridgeScreen = () => {
   useEffect(() => {
     if (!signAccountOpController?.accountOp.meta?.swapTxn?.activeRouteId) return
     setActiveRouteId(signAccountOpController.accountOp.meta.swapTxn.activeRouteId)
-  })
+  }, [signAccountOpController?.accountOp.meta?.swapTxn?.activeRouteId])
 
   // TODO: Disable tokens that are NOT supported
   // (not in the `fromTokenList` of the SwapAndBridge controller)
