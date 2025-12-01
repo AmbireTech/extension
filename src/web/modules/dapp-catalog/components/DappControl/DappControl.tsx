@@ -115,7 +115,7 @@ const DappControl = ({
                 </View>
               )}
 
-              <ManifestImage uri="" size={32} fallback={fallbackIcon} />
+              <ManifestImage uri={dapp.icon || ''} size={32} fallback={fallbackIcon} />
             </View>
             <View style={[spacings.mlMi, flexbox.flex1]}>
               <View style={[flexbox.directionRow, flexbox.flex1]}>
