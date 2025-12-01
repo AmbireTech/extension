@@ -5,6 +5,7 @@ import { useModalize } from 'react-native-modalize'
 import { useLocation } from 'react-router-dom'
 
 import { SwapAndBridgeFormStatus } from '@ambire-common/controllers/swapAndBridge/swapAndBridge'
+import { SwapAndBridgeActiveRoute } from '@ambire-common/interfaces/swapAndBridge'
 import {
   calculateAmountWarnings,
   getIsTokenEligibleForSwapAndBridge
@@ -67,7 +68,7 @@ const useSwapAndBridgeForm = () => {
    * @deprecated - the settings menu is not used anymore
    */
   const [settingModalVisible, setSettingsModalVisible] = useState<boolean>(false)
-  const [hasBroadcasted, setHasBroadcasted] = useState(false)
+  const [activeRoute, setActiveRoute] = useState<SwapAndBridgeActiveRoute | undefined>(undefined)
   const [showAddedToBatch, setShowAddedToBatch] = useState(false)
   const [latestBatchedNetwork, setLatestBatchedNetwork] = useState<bigint | undefined>()
   const [isOneClickModeDuringPriceImpact, setIsOneClickModeDuringPriceImpact] =
@@ -406,17 +407,25 @@ const useSwapAndBridgeForm = () => {
   const displayedView: 'estimate' | 'batch' | 'track' = useMemo(() => {
     if (showAddedToBatch) return 'batch'
 
-    if (hasBroadcasted) return 'track'
+    if (activeRoute) return 'track'
 
     return 'estimate'
-  }, [hasBroadcasted, showAddedToBatch])
+  }, [activeRoute, showAddedToBatch])
 
   useEffect(() => {
     const broadcastStatus = mainCtrlStatuses.signAndBroadcastAccountOp
     if (broadcastStatus === 'SUCCESS' && activeRoutes.length) {
-      setHasBroadcasted(true)
+      setActiveRoute(
+        activeRoutes.find(
+          (r) => r.activeRouteId === signAccountOpController?.accountOp.meta?.swapTxn?.activeRouteId
+        )
+      )
     }
-  }, [activeRoutes.length, mainCtrlStatuses.signAndBroadcastAccountOp])
+  }, [
+    activeRoutes,
+    mainCtrlStatuses.signAndBroadcastAccountOp,
+    signAccountOpController?.accountOp.meta?.swapTxn?.activeRouteId
+  ])
 
   useEffect(() => {
     if (!signAccountOpController) {
@@ -442,8 +451,8 @@ const useSwapAndBridgeForm = () => {
     pendingRoutes,
     routesModalRef,
     displayedView,
-    hasBroadcasted,
-    setHasBroadcasted,
+    activeRoute,
+    setActiveRoute,
     openRoutesModal,
     closeRoutesModal,
     estimationModalRef,

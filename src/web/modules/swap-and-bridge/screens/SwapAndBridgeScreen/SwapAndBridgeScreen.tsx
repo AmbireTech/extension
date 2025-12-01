@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
@@ -39,7 +39,6 @@ const { isTab, isActionWindow } = getUiType()
 const SwapAndBridgeScreen = () => {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
-  const [activeRouteId, setActiveRouteId] = useState<string | null>(null)
   const {
     sessionId,
     fromAmountValue,
@@ -57,7 +56,8 @@ const SwapAndBridgeScreen = () => {
     openRoutesModal,
     closeRoutesModal,
     estimationModalRef,
-    setHasBroadcasted,
+    activeRoute,
+    setActiveRoute,
     displayedView,
     closeEstimationModalWrapped,
     isBridge,
@@ -97,12 +97,6 @@ const SwapAndBridgeScreen = () => {
       scrollViewRef.current?.scrollTo({ y: 0 })
     }
   }, [pendingRoutes, prevPendingRoutes])
-
-  // set the active route id to the last occurance in signAccountOpController
-  useEffect(() => {
-    if (!signAccountOpController?.accountOp.meta?.swapTxn?.activeRouteId) return
-    setActiveRouteId(signAccountOpController.accountOp.meta.swapTxn.activeRouteId)
-  }, [signAccountOpController?.accountOp.meta?.swapTxn?.activeRouteId])
 
   // TODO: Disable tokens that are NOT supported
   // (not in the `fromTokenList` of the SwapAndBridge controller)
@@ -226,13 +220,13 @@ const SwapAndBridgeScreen = () => {
     )
   }
 
-  if (displayedView === 'track') {
+  if (activeRoute && displayedView === 'track') {
     return (
       <TrackProgress
         handleClose={() => {
-          setHasBroadcasted(false)
+          setActiveRoute(undefined)
         }}
-        activeRouteId={activeRouteId}
+        activeRoute={activeRoute}
       />
     )
   }

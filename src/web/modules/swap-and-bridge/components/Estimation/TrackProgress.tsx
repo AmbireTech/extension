@@ -26,23 +26,25 @@ import Refunded from '@web/modules/sign-account-op/components/OneClick/TrackProg
 import useTrackAccountOp from '@web/modules/sign-account-op/hooks/OneClick/useTrackAccountOp'
 import { getUiType } from '@web/utils/uiType'
 
+import { SwapAndBridgeActiveRoute } from '@ambire-common/interfaces/swapAndBridge'
 import RouteStepsToken from '../RouteStepsToken'
 
 const { isActionWindow } = getUiType()
 
 type Props = {
-  activeRouteId: string | null
+  activeRoute: SwapAndBridgeActiveRoute
   handleClose: () => void
 }
 
-const TrackProgress: FC<Props> = ({ activeRouteId, handleClose }) => {
+const TrackProgress: FC<Props> = ({ activeRoute, handleClose }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { navigate } = useNavigation()
   const { dispatch } = useBackgroundService()
   const { activeRoutes } = useSwapAndBridgeControllerState()
 
-  const lastCompletedRoute = activeRoutes.find((r) => r.activeRouteId === activeRouteId)
+  const lastCompletedRoute =
+    activeRoutes.find((r) => r.activeRouteId === activeRoute?.activeRouteId) || activeRoute
   const steps = lastCompletedRoute?.route?.steps
   const firstStep = steps ? steps[0] : null
   const lastStep = steps ? steps[steps.length - 1] : null
