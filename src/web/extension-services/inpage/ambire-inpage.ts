@@ -64,7 +64,8 @@ let isDapp = false
       try {
         reqClone = (resource as Request).clone()
       } catch (error) {
-        // silent fail
+        // eslint-disable-next-line no-console
+        console.error(error)
       }
       if (reqClone) {
         if ((resource as Request)?.body) {
@@ -80,7 +81,8 @@ let isDapp = false
             fetchURL = reqClone.url
             fetchBody = body
           } catch (error) {
-            // silent fail
+            // eslint-disable-next-line no-console
+            console.error(error)
           }
         }
       }

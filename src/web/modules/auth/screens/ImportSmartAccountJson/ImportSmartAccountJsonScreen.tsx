@@ -269,6 +269,8 @@ const SmartAccountImportScreen = () => {
         })
         openConfirmKeyPassword()
       } catch (e) {
+        // eslint-disable-next-line no-console
+        console.error(e)
         setError('Could not parse file. Please upload a valid json file')
         setIsLoading(false)
       }
