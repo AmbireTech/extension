@@ -56,7 +56,8 @@ const SwapAndBridgeScreen = () => {
     openRoutesModal,
     closeRoutesModal,
     estimationModalRef,
-    setHasBroadcasted,
+    activeRoute,
+    setActiveRoute,
     displayedView,
     closeEstimationModalWrapped,
     isBridge,
@@ -219,12 +220,13 @@ const SwapAndBridgeScreen = () => {
     )
   }
 
-  if (displayedView === 'track') {
+  if (activeRoute && displayedView === 'track') {
     return (
       <TrackProgress
         handleClose={() => {
-          setHasBroadcasted(false)
+          setActiveRoute(undefined)
         }}
+        activeRoute={activeRoute}
       />
     )
   }
