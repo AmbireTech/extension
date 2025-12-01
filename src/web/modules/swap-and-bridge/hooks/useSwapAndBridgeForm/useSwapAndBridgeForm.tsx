@@ -414,17 +414,29 @@ const useSwapAndBridgeForm = () => {
 
   useEffect(() => {
     const broadcastStatus = mainCtrlStatuses.signAndBroadcastAccountOp
-    if (broadcastStatus === 'SUCCESS' && activeRoutes.length) {
-      setActiveRoute(
-        activeRoutes.find(
-          (r) => r.activeRouteId === signAccountOpController?.accountOp.meta?.swapTxn?.activeRouteId
-        )
+    if (broadcastStatus === 'SUCCESS' && activeRoutes.length && !activeRoute) {
+      const route = activeRoutes.find(
+        (r) => r.activeRouteId === signAccountOpController?.accountOp.meta?.swapTxn?.activeRouteId
       )
+
+      if (!route && isActionWindow) {
+        dispatch({
+          type: 'CLOSE_SIGNING_ACTION_WINDOW',
+          params: {
+            type: 'swapAndBridge'
+          }
+        })
+        return
+      }
+
+      setActiveRoute(route)
     }
   }, [
     activeRoutes,
     mainCtrlStatuses.signAndBroadcastAccountOp,
-    signAccountOpController?.accountOp.meta?.swapTxn?.activeRouteId
+    signAccountOpController?.accountOp.meta?.swapTxn?.activeRouteId,
+    dispatch,
+    activeRoute
   ])
 
   useEffect(() => {
