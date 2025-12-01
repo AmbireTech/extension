@@ -328,9 +328,23 @@ const init = async () => {
   const trezorCtrl = new TrezorController(windowManager as UiManager['window'])
   const latticeCtrl = new LatticeController()
 
-  // Extension-specific additional trackings
+  // Skip adding custom headers and URL modifications for 3rd party URLs
+  // (only internal Ambire APIs need the x-app-source header and tracking params)
   // @ts-ignore
   const fetchWithAnalytics: Fetch = (url, init) => {
+    const urlString = url.toString()
+    try {
+      const urlObj = new URL(urlString)
+      if (!urlObj.hostname.endsWith('.ambire.com') && urlObj.hostname !== 'ambire.com') {
+        // @ts-ignore
+        return fetch(url, init)
+      }
+    } catch {
+      // If URL parsing fails, skip analytics for safety
+      // @ts-ignore
+      return fetch(url, init)
+    }
+
     // As of v4.26.0, custom extension-specific headers. TBD for the other apps.
     const initWithCustomHeaders = init || { headers: { 'x-app-source': '' } }
     initWithCustomHeaders.headers = initWithCustomHeaders.headers || {}
