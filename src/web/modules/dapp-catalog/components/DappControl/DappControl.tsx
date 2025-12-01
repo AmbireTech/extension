@@ -6,6 +6,7 @@ import { Dapp } from '@ambire-common/interfaces/dapp'
 import CloseIcon from '@common/assets/svg/CloseIcon'
 import DAppsIcon from '@common/assets/svg/DAppsIcon'
 import ErrorFilledIcon from '@common/assets/svg/ErrorFilledIcon'
+import ManifestFallbackIcon from '@common/assets/svg/ManifestFallbackIcon'
 import PowerIcon from '@common/assets/svg/PowerIcon'
 import StarIcon from '@common/assets/svg/StarIcon'
 import UpArrowIcon from '@common/assets/svg/UpArrowIcon'
@@ -52,19 +53,28 @@ const DappControl = ({
 
   const showDisconnectButton = !!dapp?.isConnected && (isHovered || inModal)
 
-  const getInitials = useCallback((fullName: string) => {
-    const words = fullName.split(' ').filter((word) => word.length > 0)
-    return words.length > 0 ? words[0][0].toUpperCase() : ''
-  }, [])
+  const dappInitials = useMemo(() => {
+    const fullName = dapp?.name || ''
 
-  const fallbackIcon = useCallback(
-    () => (
+    if (!fullName) return null
+
+    const words = fullName.split(' ').filter((word) => word.length > 0)
+    const firstSymbol = words?.[0]?.[0]
+
+    if (!firstSymbol) return null
+
+    return firstSymbol.toUpperCase()
+  }, [dapp?.name])
+
+  const fallbackIcon = useCallback(() => {
+    if (!dappInitials) return <ManifestFallbackIcon />
+
+    return (
       <View style={styles.fallbackWrapper}>
-        <Text color={theme.infoText}>{getInitials(dapp.name)}</Text>
+        <Text color={theme.infoText}>{dappInitials}</Text>
       </View>
-    ),
-    [dapp?.name, getInitials, theme.infoText]
-  )
+    )
+  }, [dappInitials, styles.fallbackWrapper, theme.infoText])
 
   return (
     <View>
@@ -105,7 +115,7 @@ const DappControl = ({
                 </View>
               )}
 
-              <ManifestImage uri={dapp.icon || ''} size={32} fallback={fallbackIcon} />
+              <ManifestImage uri="" size={32} fallback={fallbackIcon} />
             </View>
             <View style={[spacings.mlMi, flexbox.flex1]}>
               <View style={[flexbox.directionRow, flexbox.flex1]}>
@@ -131,7 +141,9 @@ const DappControl = ({
                 color={dapp.isConnected ? theme.successText : theme.errorText}
                 fontSize={10}
               >
-                {dapp.isConnected ? t(`Connected on ${network.name}`) : t('Not connected')}
+                {dapp.isConnected
+                  ? t(`Connected on ${network?.name || dapp.chainId}`)
+                  : t('Not connected')}
               </Text>
             </View>
           </View>

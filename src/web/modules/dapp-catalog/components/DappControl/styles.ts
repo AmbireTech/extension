@@ -18,8 +18,7 @@ const getStyles = (theme: ThemeProps) =>
     fallbackWrapper: {
       width: 30,
       height: 30,
-      // @ts-ignore
-      borderRadius: '50%',
+      borderRadius: 15,
       backgroundColor: theme.primaryLight80,
       alignItems: 'center',
       justifyContent: 'center'
