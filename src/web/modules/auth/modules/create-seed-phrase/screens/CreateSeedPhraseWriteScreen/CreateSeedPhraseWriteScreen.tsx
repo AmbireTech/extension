@@ -79,7 +79,9 @@ const CreateSeedPhraseWriteScreen = () => {
 
       await setStringAsync(tempSeed.seed)
       addToast(t('Recovery phrase copied to clipboard'))
-    } catch {
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error(error)
       addToast(t('Failed to copy recovery phrase'))
     }
   }, [addToast, tempSeed, t])
