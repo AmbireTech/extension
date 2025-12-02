@@ -1,3 +1,4 @@
+/* eslint-disable no-param-reassign */
 /* eslint-disable no-console */
 /* eslint-disable no-await-in-loop */
 /* eslint-disable no-restricted-syntax */
@@ -151,7 +152,9 @@ const IGNORED_ERROR_SUBSTRINGS = ['failed to fetch', 'network error']
 const checkSubstrings = (text: string, substrings: string[]) =>
   substrings.some((substring) => text.toLowerCase().includes(substring))
 
-const isIgnoredError = (message?: string, shortMessage?: string) => {
+const isIgnoredError = (error?: any) => {
+  const { message, shortMessage } = error || {}
+
   return (
     (!!message && checkSubstrings(message, IGNORED_ERROR_SUBSTRINGS)) ||
     (!!shortMessage && checkSubstrings(shortMessage, IGNORED_SHORT_MESSAGE_SUBSTRINGS))
@@ -159,11 +162,16 @@ const isIgnoredError = (message?: string, shortMessage?: string) => {
 }
 
 const getErrorType = (error: any) => {
-  const { statusCode, shortMessage, message } = error
+  const { statusCode, message, isProviderInvictus } = error
 
   if (typeof statusCode === 'number') {
     if (statusCode >= 200 && statusCode < 300) {
       return '2xx'
+    }
+
+    if (typeof isProviderInvictus === 'boolean' && !isProviderInvictus) {
+      // No need to report custom RPC non-2xx errors
+      return 'ignored-error'
     }
 
     return 'non-2xx'
@@ -173,7 +181,7 @@ const getErrorType = (error: any) => {
 
   // Ethers doesn't return a status code for 2XX responses, so we treat undefined as 2XX
   // and have handling just in case statusCode is explicitly set to 200-299
-  return isIgnoredError(message, shortMessage) ? 'ignored-error' : '2xx'
+  return isIgnoredError(error) ? 'ignored-error' : '2xx'
 }
 
 let isInitialized = false
@@ -201,33 +209,41 @@ if (CONFIG.SENTRY_DSN_BROWSER_EXTENSION) {
         }
 
         // Always delete breadcrumbs to reduce event size.
-        // eslint-disable-next-line no-param-reassign
         delete event.breadcrumbs
 
         if (errorType !== '2xx') {
           // We don't care about any data for non-2XX errors
           // We only want to know how many of them happened and group them accordingly
 
-          // eslint-disable-next-line no-param-reassign
           delete event.user
-          // eslint-disable-next-line no-param-reassign
           delete event.extra
-          // eslint-disable-next-line no-param-reassign
           delete event.contexts
         }
 
-        // eslint-disable-next-line no-param-reassign
         event.extra = {
           ...(event.extra || {}),
           providerUrl: error.providerUrl
         }
 
-        // eslint-disable-next-line no-param-reassign
         event.fingerprint = [
           '{{ default }}',
           error.isProviderInvictus ? error.providerUrl || 'invictus' : 'custom-rpc',
           errorType
         ]
+
+        if (error.isProviderInvictus) {
+          event.tags = {
+            ...(event.tags || {}),
+            // Allows us to filter issues by provider in Sentry's UI
+            providerUrl: error.providerUrl || 'should-never-be-undefined',
+            providerType: 'invictus'
+          }
+        } else {
+          event.tags = {
+            ...(event.tags || {}),
+            providerType: 'custom-rpc'
+          }
+        }
       }
 
       // We don't want to miss errors that occur before the controllers are initialized

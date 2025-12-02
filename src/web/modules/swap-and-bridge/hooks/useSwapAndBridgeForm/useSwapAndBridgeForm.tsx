@@ -396,7 +396,7 @@ const useSwapAndBridgeForm = () => {
     setSettingsModalVisible((p) => !p)
   }, [])
 
-  const pendingRoutes = useMemo(() => {
+  const selectedAccActiveRoutes = useMemo(() => {
     return (
       (activeRoutes || [])
         .filter((r) => r.route && getAddress(r.route.userAddress) === account?.addr)
@@ -460,7 +460,7 @@ const useSwapAndBridgeForm = () => {
     acknowledgeHighPriceImpact,
     settingModalVisible,
     handleToggleSettingsMenu,
-    pendingRoutes,
+    selectedAccActiveRoutes,
     routesModalRef,
     displayedView,
     activeRoute,

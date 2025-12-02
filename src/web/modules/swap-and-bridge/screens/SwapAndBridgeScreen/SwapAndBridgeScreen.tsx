@@ -51,7 +51,7 @@ const SwapAndBridgeScreen = () => {
     priceImpactModalRef,
     closePriceImpactModal,
     acknowledgeHighPriceImpact,
-    pendingRoutes,
+    selectedAccActiveRoutes,
     routesModalRef,
     openRoutesModal,
     closeRoutesModal,
@@ -82,7 +82,7 @@ const SwapAndBridgeScreen = () => {
   const { portfolio } = useSelectedAccountControllerState()
 
   const { statuses: requestsCtrlStatuses } = useRequestsControllerState()
-  const prevPendingRoutes: any[] | undefined = usePrevious(pendingRoutes)
+  const prevSelectedAccActiveRoutes: any[] | undefined = usePrevious(selectedAccActiveRoutes)
   const scrollViewRef: any = useRef(null)
   const { dispatch } = useBackgroundService()
 
@@ -90,13 +90,13 @@ const SwapAndBridgeScreen = () => {
   const { simulationError: toChainSimulationError } = useSimulationError({ chainId: toChainId })
 
   useEffect(() => {
-    if (!pendingRoutes || !prevPendingRoutes) return
-    if (!pendingRoutes.length) return
-    if (prevPendingRoutes.length < pendingRoutes.length) {
+    if (!selectedAccActiveRoutes || !prevSelectedAccActiveRoutes) return
+    if (!selectedAccActiveRoutes.length) return
+    if (prevSelectedAccActiveRoutes.length < selectedAccActiveRoutes.length) {
       // scroll to top when there is a new item in the active routes list
       scrollViewRef.current?.scrollTo({ y: 0 })
     }
-  }, [pendingRoutes, prevPendingRoutes])
+  }, [selectedAccActiveRoutes, prevSelectedAccActiveRoutes])
 
   // TODO: Disable tokens that are NOT supported
   // (not in the `fromTokenList` of the SwapAndBridge controller)

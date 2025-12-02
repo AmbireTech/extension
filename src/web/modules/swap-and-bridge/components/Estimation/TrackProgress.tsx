@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import { Hex } from '@ambire-common/interfaces/hex'
+import { SwapAndBridgeActiveRoute } from '@ambire-common/interfaces/swapAndBridge'
 import { getIsBridgeRoute, getLink } from '@ambire-common/libs/swapAndBridge/swapAndBridge'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
@@ -26,7 +27,6 @@ import Refunded from '@web/modules/sign-account-op/components/OneClick/TrackProg
 import useTrackAccountOp from '@web/modules/sign-account-op/hooks/OneClick/useTrackAccountOp'
 import { getUiType } from '@web/utils/uiType'
 
-import { SwapAndBridgeActiveRoute } from '@ambire-common/interfaces/swapAndBridge'
 import RouteStepsToken from '../RouteStepsToken'
 
 const { isActionWindow } = getUiType()
