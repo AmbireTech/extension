@@ -6,8 +6,8 @@ import { FeeSpeed, SigningStatus } from '@ambire-common/controllers/signAccountO
 import { Account, AccountPreferences, AccountStates } from '@ambire-common/interfaces/account'
 import {
   AccountOpAction,
-  Action as ActionFromActionsQueue,
   ActionExecutionType,
+  Action as ActionFromActionsQueue,
   ActionPosition,
   OpenActionWindowParams
 } from '@ambire-common/interfaces/actions'
@@ -34,12 +34,12 @@ import { TransferUpdate } from '@ambire-common/interfaces/transfer'
 import { Message, UserRequest } from '@ambire-common/interfaces/userRequest'
 import { AccountOp } from '@ambire-common/libs/accountOp/accountOp'
 import { FullEstimation } from '@ambire-common/libs/estimate/interfaces'
-import { GasRecommendation } from '@ambire-common/libs/gasPrice/gasPrice'
 import { TokenResult } from '@ambire-common/libs/portfolio'
 import { CustomToken, TokenPreference } from '@ambire-common/libs/portfolio/customToken'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import { LOG_LEVELS } from '@web/utils/logger'
 
+import { GasSpeeds } from '@ambire-common/services/bundlers/types'
 import { AUTO_LOCK_TIMES } from './controllers/auto-lock'
 import { controllersMapping } from './types'
 
@@ -371,7 +371,7 @@ type MainControllerSignAccountOpUpdateAction = {
     | 'TRANSFER_CONTROLLER_SIGN_ACCOUNT_OP_UPDATE'
   params: {
     accountOp?: AccountOp
-    gasPrices?: GasRecommendation[]
+    gasPrices?: GasSpeeds
     estimation?: FullEstimation
     feeToken?: TokenResult
     paidBy?: string
@@ -386,7 +386,7 @@ type SignAccountOpUpdateAction = {
   params: {
     updateType: 'Main' | 'Swap&Bridge' | 'Transfer&TopUp'
     accountOp?: AccountOp
-    gasPrices?: GasRecommendation[]
+    gasPrices?: GasSpeeds
     estimation?: FullEstimation
     feeToken?: TokenResult
     paidBy?: string
