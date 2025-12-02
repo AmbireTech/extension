@@ -414,8 +414,8 @@ const useSwapAndBridgeForm = () => {
 
   useEffect(() => {
     const broadcastStatus = mainCtrlStatuses.signAndBroadcastAccountOp
-    if (broadcastStatus === 'SUCCESS' && activeRoutes.length && !activeRoute) {
-      const route = activeRoutes.find(
+    if (broadcastStatus === 'SUCCESS' && selectedAccActiveRoutes.length && !activeRoute) {
+      const route = selectedAccActiveRoutes.find(
         (r) => r.activeRouteId === signAccountOpController?.accountOp.meta?.swapTxn?.activeRouteId
       )
 
@@ -432,7 +432,7 @@ const useSwapAndBridgeForm = () => {
       setActiveRoute(route)
     }
   }, [
-    activeRoutes,
+    selectedAccActiveRoutes,
     mainCtrlStatuses.signAndBroadcastAccountOp,
     signAccountOpController?.accountOp.meta?.swapTxn?.activeRouteId,
     dispatch,
