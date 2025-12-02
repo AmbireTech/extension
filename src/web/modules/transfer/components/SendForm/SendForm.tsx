@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react'
+import React, { useCallback } from 'react'
 import { View } from 'react-native'
 
 import { TokenResult } from '@ambire-common/libs/portfolio'
