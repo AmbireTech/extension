@@ -229,7 +229,7 @@ const SignMessageScreen = () => {
   }, [])
 
   const shouldDisplayEIP1271Warning = useMemo(() => {
-    const dappOrigin = userRequest?.dappPromises?.[0]?.session.origin
+    const dappOrigin = userRequest?.dappPromises[0]?.session?.origin
 
     if (!dappOrigin || !isSmartAccount(account)) return false
 

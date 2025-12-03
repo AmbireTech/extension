@@ -2,6 +2,7 @@
 import 'reflect-metadata'
 
 import { ethErrors } from 'eth-rpc-errors'
+import { v4 as uuidv4 } from 'uuid'
 
 import { MainController } from '@ambire-common/controllers/main/main'
 import { DappProviderRequest } from '@ambire-common/interfaces/dapp'
@@ -56,7 +57,7 @@ const flowContext = flow
                 type: 'dappRequest',
                 params: {
                   request: { ...request, method: 'unlock', params: {} },
-                  dappPromise: { resolve, reject, session: request.session }
+                  dappPromise: { id: uuidv4(), resolve, reject, session: request.session }
                 }
               })
             })
@@ -87,7 +88,7 @@ const flowContext = flow
                 type: 'dappRequest',
                 params: {
                   request: { ...request, method: 'dapp_connect', params: {} },
-                  dappPromise: { resolve, reject, session: request.session }
+                  dappPromise: { id: uuidv4(), resolve, reject, session: request.session }
                 }
               })
             })
@@ -119,7 +120,7 @@ const flowContext = flow
             type: 'dappRequest',
             params: {
               request,
-              dappPromise: { resolve, reject, session: request.session }
+              dappPromise: { id: uuidv4(), resolve, reject, session: request.session }
             }
           })
           .catch((error) => reject(error))
