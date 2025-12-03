@@ -53,7 +53,7 @@ const GetEncryptionPublicKeyRequestScreen = () => {
           </View>
 
           <Title style={[textStyles.center, spacings.phSm, spacings.pbLg]}>
-            {userRequest?.dappPromises[0]?.session?.origin
+            {userRequest?.dappPromises[0].session.origin
               ? new URL(userRequest.dappPromises[0].session.origin).hostname
               : ''}
           </Title>

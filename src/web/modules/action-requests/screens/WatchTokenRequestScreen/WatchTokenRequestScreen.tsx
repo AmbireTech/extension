@@ -63,7 +63,7 @@ const WatchTokenRequestScreen = () => {
   )
 
   const tokenData = userRequest?.meta?.params?.options
-  const origin = userRequest?.dappPromises[0]?.session.origin
+  const origin = userRequest?.dappPromises[0].session.origin
   const network =
     networks.find((n) => n.explorerUrl === origin) ||
     networks.find((n) => n.chainId === tokenData?.chainId)
