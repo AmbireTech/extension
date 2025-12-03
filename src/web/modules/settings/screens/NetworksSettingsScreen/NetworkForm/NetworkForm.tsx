@@ -296,6 +296,8 @@ const NetworkForm = ({
         setValidatingRPC(false)
         clearErrors('rpcUrl')
       } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error(error)
         setValidatingRPC(false)
         setError('rpcUrl', { type: 'custom-error', message: 'Invalid RPC URL' })
       }
