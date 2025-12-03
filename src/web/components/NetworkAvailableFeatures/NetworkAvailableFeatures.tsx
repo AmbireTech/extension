@@ -140,7 +140,6 @@ const NetworkAvailableFeatures = ({
             }
           ],
           meta: {
-            isSignAction: true,
             chainId: selectedNetwork.chainId,
             accountAddr: account.addr as string
           }

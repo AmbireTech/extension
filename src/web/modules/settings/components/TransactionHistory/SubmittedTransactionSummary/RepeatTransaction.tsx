@@ -39,7 +39,7 @@ const RepeatTransaction: FC<Props> = ({
       params: {
         userRequestParams: {
           calls: rawCalls,
-          meta: { isSignAction: true, chainId, accountAddr }
+          meta: { chainId, accountAddr }
         }
       }
     })
