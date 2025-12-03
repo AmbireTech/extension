@@ -73,27 +73,6 @@ const TransferControllerStateProvider = ({ children }: { children: any }) => {
   // This ensures that `tokens` won't trigger re-renders unless its deep content changes
   const tokens = useDeepMemo(rawTokens, 'tokens')
 
-  const updatedSelectedToken = useMemo(() => {
-    return tokens.find(
-      (token) =>
-        token.address === memoizedState.selectedToken?.address &&
-        token.chainId === memoizedState.selectedToken?.chainId
-    )
-  }, [tokens, memoizedState.selectedToken?.address, memoizedState.selectedToken?.chainId])
-
-  // If a token is already selected, we should retrieve its latest value from tokens.
-  // This is important because the token amount is likely to change,
-  // especially when initiating a transfer or adding a new one to the queue.
-  // As a result, the token `amountPostSimulation` may differ, and we need to update the available token balance accordingly.
-  useEffect(() => {
-    if (!memoizedState.isInitialized || !updatedSelectedToken) return
-
-    dispatch({
-      type: 'TRANSFER_CONTROLLER_UPDATE_FORM',
-      params: { formValues: { selectedToken: updatedSelectedToken } }
-    })
-  }, [memoizedState.isInitialized, updatedSelectedToken, dispatch])
-
   return (
     <TransferControllerStateContext.Provider
       value={useMemo(() => ({ state: memoizedState, tokens }), [memoizedState, tokens])}
