@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo } from 'react'
 import { View } from 'react-native'
 
 import { TokenResult } from '@ambire-common/libs/portfolio'
+import { getTokenAmount } from '@ambire-common/libs/portfolio/helpers'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import Recipient from '@common/components/Recipient'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
