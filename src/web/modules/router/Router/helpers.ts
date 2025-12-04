@@ -43,13 +43,14 @@ const getInitialRoute = ({
 
     if (currentUserRequest.kind === 'calls') return ROUTES.signAccountOp
 
-    if (currentUserRequest.kind === 'message') return ROUTES.signMessage
-
-    if (currentUserRequest.kind === 'typedMessage') return ROUTES.signMessage
-
-    if (currentUserRequest.kind === 'siwe') return ROUTES.signMessage
-
-    if (currentUserRequest.kind === 'authorization-7702') return ROUTES.signMessage
+    if (
+      currentUserRequest.kind === 'message' ||
+      currentUserRequest.kind === 'typedMessage' ||
+      currentUserRequest.kind === 'authorization-7702' ||
+      currentUserRequest.kind === 'siwe'
+    ) {
+      return ROUTES.signMessage
+    }
 
     if (currentUserRequest.kind === 'swapAndBridge') return ROUTES.swapAndBridge
 

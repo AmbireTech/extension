@@ -46,7 +46,7 @@ const DashboardBanner = ({
     (action: Action) => {
       switch (action.actionName) {
         case 'open-pending-dapp-requests': {
-          if (!visibleUserRequests) break
+          if (!visibleUserRequests.length) break
           const dappRequests = visibleUserRequests.filter((r) => r.kind !== 'calls')
           if (!dappRequests.length) break
           dispatch({
