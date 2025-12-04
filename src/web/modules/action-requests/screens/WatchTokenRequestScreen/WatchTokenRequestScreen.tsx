@@ -62,7 +62,8 @@ const WatchTokenRequestScreen = () => {
     [currentUserRequest]
   )
 
-  const tokenData = userRequest?.meta?.params?.options
+  // TODO: fix types here
+  const tokenData = userRequest?.meta.params.options as any
   const origin = userRequest?.dappPromises[0].session.origin
   const network =
     networks.find((n) => n.explorerUrl === origin) ||

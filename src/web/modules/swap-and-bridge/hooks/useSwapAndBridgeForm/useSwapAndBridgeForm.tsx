@@ -416,12 +416,10 @@ const useSwapAndBridgeForm = () => {
         (r) => r.activeRouteId === signAccountOpController?.accountOp.meta?.swapTxn?.activeRouteId
       )
 
-      if (!route && isActionWindow) {
+      if (!route && isRequestWindow) {
         dispatch({
-          type: 'CLOSE_SIGNING_ACTION_WINDOW',
-          params: {
-            type: 'swapAndBridge'
-          }
+          type: 'CLOSE_SIGNING_REQUEST_WINDOW',
+          params: { type: 'swapAndBridge' }
         })
         return
       }
