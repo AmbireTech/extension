@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useMemo, useState } from 'react'
+import React, { FC, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 import { Modalize } from 'react-native-modalize'
@@ -16,7 +16,7 @@ import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
 import NetworkIcon from '@common/components/NetworkIcon'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
-import Spinner from '@common/components/Spinner'
+import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
@@ -43,7 +43,7 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
   const { theme, themeType } = useTheme()
   const { dispatch, windowId } = useBackgroundService()
   const { t } = useTranslation()
-  const [checkedAccountState, setCheckedAccountState] = useState<boolean>(false)
+  const accountStateCheckedForRef = React.useRef<string | null>(null)
 
   const accountState = useMemo(() => {
     if (!account) return null
@@ -54,23 +54,20 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
   const delegationNetworks = useMemo(() => networks.filter((n) => has7702(n)), [networks])
 
   useEffect(() => {
-    if (checkedAccountState || !account || !accountState || delegationNetworks.length === 0) return
-    setCheckedAccountState(true)
+    const checkedForThisAcc = accountStateCheckedForRef.current === account?.addr
 
-    const missingAccountStateNetworks: bigint[] = []
-    delegationNetworks.forEach((net) => {
-      if (!accountState[net.chainId.toString()]) missingAccountStateNetworks.push(net.chainId)
-    })
-    if (missingAccountStateNetworks.length === 0) return
+    if (checkedForThisAcc || !account || !!accountState || delegationNetworks.length === 0) return
+
+    accountStateCheckedForRef.current = account.addr
 
     dispatch({
       type: 'ACCOUNTS_CONTROLLER_UPDATE_ACCOUNT_STATE',
       params: {
         addr: account.addr,
-        chainIds: missingAccountStateNetworks
+        chainIds: delegationNetworks.map((n) => n.chainId)
       }
     })
-  }, [checkedAccountState, accountState, delegationNetworks, account, dispatch])
+  }, [accountState, delegationNetworks, account, dispatch])
 
   const is7702 = useMemo(() => {
     if (!account) return false
@@ -124,139 +121,132 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
       containerInnerWrapperStyles={{ flex: 1 }}
       style={{ maxWidth: TAB_CONTENT_WIDTH * 0.85, ...spacings.pvMd }}
     >
-      {!!account && !!accountState && (
-        <>
-          <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-            <PanelBackButton onPress={closeBottomSheet} style={spacings.mrTy} />
+      <>
+        <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+          <PanelBackButton onPress={closeBottomSheet} style={spacings.mrTy} />
+          {account ? (
             <PanelTitle title={`${account.preferences.label} smart settings`} style={text.left} />
-          </View>
-          <Authorization7702>
-            {account && is7702 && delegationNetworks?.length ? (
-              <>
-                <Text fontSize={14} style={[spacings.mbMd]} appearance="secondaryText">
-                  {t(
-                    'While we support multiple networks, only those that have implemented EIP-7702 are listed here. As more networks adopt this upgrade, we will update the list to reflect broader availability.'
-                  )}
-                </Text>
+          ) : (
+            <SkeletonLoader width={200} height={24} />
+          )}
+        </View>
+        <Authorization7702>
+          {is7702 && delegationNetworks?.length ? (
+            <>
+              <Text fontSize={14} style={[spacings.mbMd]} appearance="secondaryText">
+                {t(
+                  'While we support multiple networks, only those that have implemented EIP-7702 are listed here. As more networks adopt this upgrade, we will update the list to reflect broader availability.'
+                )}
+              </Text>
+              <View
+                style={[
+                  {
+                    borderBottomWidth: 1,
+                    borderBottomColor: theme.secondaryBorder
+                  },
+                  flexbox.directionRow,
+                  spacings.pbMi
+                ]}
+              >
+                <View style={[flexbox.flex1]}>
+                  <Text fontSize={14} weight="medium">
+                    {t('Network')}
+                  </Text>
+                </View>
+                <View style={[flexbox.flex1, flexbox.alignCenter]}>
+                  <Text fontSize={14} weight="medium">
+                    {t('Delegation')}
+                  </Text>
+                </View>
+                <View style={[flexbox.flex1, flexbox.alignEnd]}>
+                  <Text fontSize={14} weight="medium">
+                    {t('Action')}
+                  </Text>
+                </View>
+              </View>
+              {delegationNetworks.map((net, i) => (
                 <View
+                  key={net.chainId.toString()}
                   style={[
                     {
-                      borderBottomWidth: 1,
-                      borderBottomColor: theme.secondaryBorder
+                      borderBottomWidth: i !== delegationNetworks.length - 1 ? 1 : 0,
+                      borderBottomColor:
+                        themeType === THEME_TYPES.DARK
+                          ? theme.primaryBorder
+                          : theme.tertiaryBackground
                     },
                     flexbox.directionRow,
-                    spacings.pbMi
+                    flexbox.alignCenter,
+                    spacings.pvTy
                   ]}
                 >
                   <View style={[flexbox.flex1]}>
-                    <Text fontSize={14} weight="medium">
-                      {t('Network')}
-                    </Text>
+                    <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+                      <NetworkIcon id={net.chainId.toString()} />
+                      <Text style={spacings.mlTy} fontSize={14}>
+                        {net.name}
+                      </Text>
+                    </View>
                   </View>
                   <View style={[flexbox.flex1, flexbox.alignCenter]}>
-                    <Text fontSize={14} weight="medium">
-                      {t('Delegation')}
-                    </Text>
+                    {accountState && accountState[net.chainId.toString()] ? (
+                      <View style={[flexbox.directionRow]}>
+                        {accountState[net.chainId.toString()].delegatedContractName ? (
+                          <>
+                            {accountState[net.chainId.toString()].delegatedContractName ===
+                              'AMBIRE' && <AmbireLogo width={20} height={20} />}
+                            {accountState[net.chainId.toString()].delegatedContractName ===
+                              'METAMASK' && <MetamaskIcon width={20} height={20} />}
+                            {accountState[net.chainId.toString()].delegatedContractName ===
+                              'UNKNOWN' && <Badge type="success" text={t('unknown')} />}
+                          </>
+                        ) : (
+                          <Badge type="default" text={t('disabled')} />
+                        )}
+                      </View>
+                    ) : (
+                      <SkeletonLoader width={72} height={32} />
+                    )}
                   </View>
                   <View style={[flexbox.flex1, flexbox.alignEnd]}>
-                    <Text fontSize={14} weight="medium">
-                      {t('Action')}
-                    </Text>
+                    {accountState && accountState[net.chainId.toString()] ? (
+                      <View style={[flexbox.directionRow]}>
+                        <Button
+                          type={
+                            !accountState[net.chainId.toString()].delegatedContract
+                              ? 'secondary'
+                              : 'danger'
+                          }
+                          size="tiny"
+                          style={[spacings.mb0, { minWidth: 78, height: 32 }]}
+                          onPress={() => delegate(net.chainId)}
+                          text={
+                            !accountState[net.chainId.toString()].delegatedContract
+                              ? t('Enable')
+                              : t('Revoke')
+                          }
+                        />
+                      </View>
+                    ) : (
+                      <SkeletonLoader width={72} height={32} />
+                    )}
                   </View>
                 </View>
-                {delegationNetworks.map((net, i) => (
-                  <View
-                    key={net.chainId.toString()}
-                    style={[
-                      {
-                        borderBottomWidth: i !== delegationNetworks.length - 1 ? 1 : 0,
-                        borderBottomColor:
-                          themeType === THEME_TYPES.DARK
-                            ? theme.primaryBorder
-                            : theme.tertiaryBackground
-                      },
-                      flexbox.directionRow,
-                      flexbox.alignCenter,
-                      spacings.pvTy
-                    ]}
-                  >
-                    <View style={[flexbox.flex1]}>
-                      <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                        <NetworkIcon id={net.chainId.toString()} />
-                        <Text style={spacings.mlTy} fontSize={14}>
-                          {net.name}
-                        </Text>
-                      </View>
-                    </View>
-                    <View style={[flexbox.flex1, flexbox.alignCenter]}>
-                      {accountState[net.chainId.toString()] ? (
-                        <View style={[flexbox.directionRow]}>
-                          {accountState[net.chainId.toString()].delegatedContractName ? (
-                            <>
-                              {accountState[net.chainId.toString()].delegatedContractName ===
-                                'AMBIRE' && <AmbireLogo width={20} height={20} />}
-                              {accountState[net.chainId.toString()].delegatedContractName ===
-                                'METAMASK' && <MetamaskIcon width={20} height={20} />}
-                              {accountState[net.chainId.toString()].delegatedContractName ===
-                                'UNKNOWN' && <Badge type="success" text={t('unknown')} />}
-                            </>
-                          ) : (
-                            <Badge type="default" text={t('disabled')} />
-                          )}
-                        </View>
-                      ) : (
-                        <View style={[flexbox.alignCenter, flexbox.justifyCenter, flexbox.flex1]}>
-                          <Spinner style={{ width: '15px', height: '15px' }} />
-                        </View>
-                      )}
-                    </View>
-                    <View style={[flexbox.flex1, flexbox.alignEnd]}>
-                      {accountState[net.chainId.toString()] ? (
-                        <View style={[flexbox.directionRow]}>
-                          <Button
-                            type={
-                              !accountState[net.chainId.toString()].delegatedContract
-                                ? 'secondary'
-                                : 'danger'
-                            }
-                            size="tiny"
-                            style={[spacings.mb0, { minWidth: 78, height: 32 }]}
-                            onPress={() => delegate(net.chainId)}
-                            text={
-                              !accountState[net.chainId.toString()].delegatedContract
-                                ? t('Enable')
-                                : t('Revoke')
-                            }
-                          />
-                        </View>
-                      ) : (
-                        <View style={[flexbox.alignCenter, flexbox.justifyCenter, flexbox.flex1]}>
-                          -
-                        </View>
-                      )}
-                    </View>
-                  </View>
-                ))}
-              </>
-            ) : (
-              <View>
-                <Alert type="info" size="md">
-                  <Text fontSize={16} appearance="infoText">
-                    {t(
-                      'Turning EOAs into Smart is only available for hot wallets (a wallet whose key is directly imported into the extension)'
-                    )}
-                  </Text>
-                </Alert>
-              </View>
-            )}
-          </Authorization7702>
-        </>
-      )}
-      {(!account || !accountState) && (
-        <View style={[flexbox.alignCenter, flexbox.justifyCenter, flexbox.flex1]}>
-          <Spinner />
-        </View>
-      )}
+              ))}
+            </>
+          ) : (
+            <View>
+              <Alert type="info" size="md">
+                <Text fontSize={16} appearance="infoText">
+                  {t(
+                    'Turning EOAs into Smart is only available for hot wallets (a wallet whose key is directly imported into the extension)'
+                  )}
+                </Text>
+              </Alert>
+            </View>
+          )}
+        </Authorization7702>
+      </>
     </BottomSheet>
   )
 }
