@@ -31,7 +31,8 @@ if (/Opera|OPR\//i.test(navigator.userAgent)) {
                     params: []
                   })
                 } catch (e) {
-                  // silent fail
+                  // eslint-disable-next-line no-console
+                  console.error(e)
                 }
               }
             }

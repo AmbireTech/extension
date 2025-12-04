@@ -34,9 +34,9 @@ import {
 } from '@ambire-common/interfaces/userRequest'
 import { AccountOp } from '@ambire-common/libs/accountOp/accountOp'
 import { FullEstimation } from '@ambire-common/libs/estimate/interfaces'
-import { GasRecommendation } from '@ambire-common/libs/gasPrice/gasPrice'
 import { TokenResult } from '@ambire-common/libs/portfolio'
 import { CustomToken, TokenPreference } from '@ambire-common/libs/portfolio/customToken'
+import { GasSpeeds } from '@ambire-common/services/bundlers/types'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import { LOG_LEVELS } from '@web/utils/logger'
 
@@ -45,7 +45,7 @@ import { controllersMapping } from './types'
 
 type UpdateNavigationUrl = {
   type: 'UPDATE_PORT_URL'
-  params: { url: string; route?: string }
+  params: { url: string; route?: string; searchParams?: { [key: string]: string } }
 }
 
 type InitControllerStateAction = {
@@ -371,7 +371,7 @@ type MainControllerSignAccountOpUpdateAction = {
     | 'TRANSFER_CONTROLLER_SIGN_ACCOUNT_OP_UPDATE'
   params: {
     accountOp?: AccountOp
-    gasPrices?: GasRecommendation[]
+    gasPrices?: GasSpeeds
     estimation?: FullEstimation
     feeToken?: TokenResult
     paidBy?: string
@@ -386,7 +386,7 @@ type SignAccountOpUpdateAction = {
   params: {
     updateType: 'Main' | 'Swap&Bridge' | 'Transfer&TopUp'
     accountOp?: AccountOp
-    gasPrices?: GasRecommendation[]
+    gasPrices?: GasSpeeds
     estimation?: FullEstimation
     feeToken?: TokenResult
     paidBy?: string

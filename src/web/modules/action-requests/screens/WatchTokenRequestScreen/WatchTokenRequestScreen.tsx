@@ -181,7 +181,11 @@ const WatchTokenRequestScreen = () => {
       }
     }
 
-    handleEffect().catch(() => setIsLoading(false))
+    handleEffect().catch((error) => {
+      // eslint-disable-next-line no-console
+      console.error(error)
+      return setIsLoading(false)
+    })
 
     if (tokenTypeEligibility === false || !!temporaryToken) {
       setIsLoading(false)

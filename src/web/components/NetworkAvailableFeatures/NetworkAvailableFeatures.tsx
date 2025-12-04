@@ -90,7 +90,9 @@ const NetworkAvailableFeatures = ({
         }
         provider.destroy()
       })
-      .catch(() => {
+      .catch((error) => {
+        // eslint-disable-next-line no-console
+        console.error(error)
         provider.destroy()
       })
 

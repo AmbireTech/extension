@@ -323,19 +323,14 @@ const focus = async (
 }
 
 const closeCurrentWindow = async () => {
-  let windowObj: Window | undefined
-
-  try {
-    windowObj = window
-  } catch (error) {
-    // silent fail
-  }
+  const windowObj: Window | undefined = window
 
   if (isSafari() || !windowObj) {
     try {
       const win = await chrome.windows.getCurrent()
       await chrome.windows.remove(win.id!)
     } catch (e) {
+      // eslint-disable-next-line no-console
       console.error(e)
     }
   } else {

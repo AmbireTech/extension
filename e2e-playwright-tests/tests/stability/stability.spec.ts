@@ -135,7 +135,8 @@ test.describe('stability', { tag: '@stability' }, () => {
       57073, // Ink
       59144, // Linea
       80094, // Berachain
-      81457 // Blast
+      81457, // Blast
+      143 // Monad
     ]
 
     const url = 'https://relayer.ambire.com/velcro-v3/multi-hints'

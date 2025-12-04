@@ -67,19 +67,6 @@ const PendingTokenSummary = ({ token, chainId, hasBottomSpacing = true }: Props)
     return theme.secondaryText
   }, [token.simulationAmount, theme])
 
-  const suspiciousTokenTooltipContent = useMemo(() => {
-    const reason = token.flags.suspectedType
-    if (!reason) return null
-
-    if (reason === 'no-latin-symbol')
-      return 'This token has a non-latin symbol which is commonly used by suspicious tokens.'
-    if (reason === 'no-latin-name')
-      return 'This token has a non-latin name which is commonly used by suspicious tokens.'
-    if (reason === 'suspected') return 'This may be a suspicious token.'
-
-    return null
-  }, [token.flags.suspectedType])
-
   return (
     <View style={[styles.container, !hasBottomSpacing && spacings.mb0]}>
       <View style={spacings.mrTy}>
@@ -115,14 +102,7 @@ const PendingTokenSummary = ({ token, chainId, hasBottomSpacing = true }: Props)
         {!!priceInUsd && <Text fontSize={16} weight="medium">{` ($${priceInUsd}) `}</Text>}
       </Text>
       {token.flags.suspectedType && (
-        <View
-          // @ts-ignore
-          style={[spacings.mlMi, { cursor: 'pointer' }]}
-          dataSet={createGlobalTooltipDataSet({
-            id: `token-amount-${tokenId}`,
-            content: suspiciousTokenTooltipContent ?? undefined
-          })}
-        >
+        <View style={spacings.mlMi}>
           <WarningFilledIcon />
         </View>
       )}
