@@ -46,10 +46,7 @@ export const handleActions = async (
         port.sender.url = params.url
         if (port.sender.tab) port.sender.tab.url = params.url
       }
-      mainCtrl.ui.updateView(port.id, {
-        currentRoute: params.route,
-        searchParams: params.searchParams
-      })
+      mainCtrl.ui.updateView(port.id, { currentRoute: params.route })
       break
     }
     case 'INIT_CONTROLLER_STATE': {
