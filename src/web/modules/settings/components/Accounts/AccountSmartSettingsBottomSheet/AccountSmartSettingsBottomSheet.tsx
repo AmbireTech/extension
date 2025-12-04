@@ -43,6 +43,7 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
   const { theme, themeType } = useTheme()
   const { dispatch, windowId } = useBackgroundService()
   const { t } = useTranslation()
+  const [lastViewedAcc, setLastViewedAcc] = useState<Account | null>(null)
   const [checkedAccountState, setCheckedAccountState] = useState<boolean>(false)
 
   const accountState = useMemo(() => {
@@ -54,20 +55,25 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
   const delegationNetworks = useMemo(() => networks.filter((n) => has7702(n)), [networks])
 
   useEffect(() => {
-    if (checkedAccountState || !account || !accountState || delegationNetworks.length === 0) return
-    setCheckedAccountState(true)
+    if (!account) return
+    if (!lastViewedAcc) {
+      setLastViewedAcc(account)
+      return
+    }
+    if (lastViewedAcc.addr === account.addr) return
+    setLastViewedAcc(account)
+    setCheckedAccountState(false)
+  }, [account, lastViewedAcc])
 
-    const missingAccountStateNetworks: bigint[] = []
-    delegationNetworks.forEach((net) => {
-      if (!accountState[net.chainId.toString()]) missingAccountStateNetworks.push(net.chainId)
-    })
-    if (missingAccountStateNetworks.length === 0) return
+  useEffect(() => {
+    if (checkedAccountState || !account || !!accountState || delegationNetworks.length === 0) return
+    setCheckedAccountState(true)
 
     dispatch({
       type: 'ACCOUNTS_CONTROLLER_UPDATE_ACCOUNT_STATE',
       params: {
         addr: account.addr,
-        chainIds: missingAccountStateNetworks
+        chainIds: delegationNetworks.map((n) => n.chainId)
       }
     })
   }, [checkedAccountState, accountState, delegationNetworks, account, dispatch])
