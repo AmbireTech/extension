@@ -356,7 +356,7 @@ const useSteps = ({
         )
         setTxnReceipt({
           originatedFrom: receipt.sender,
-          actualGasCost: BigInt(receipt.actualGasUsed) * BigInt(receipt.actualGasCost),
+          actualGasCost: BigInt(receipt.actualGasCost),
           blockNumber: BigInt(receipt.receipt.blockNumber)
         })
 
@@ -724,7 +724,6 @@ const useSteps = ({
         const fee = parseFloat(formatUnits(amount, decimals))
 
         if (!isMounted) return
-
         setFeePaidWith({
           amount: formatDecimals(fee),
           symbol: tokenInfo.symbol,
