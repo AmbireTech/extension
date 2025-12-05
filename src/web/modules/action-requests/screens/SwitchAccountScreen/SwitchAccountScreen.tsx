@@ -41,8 +41,8 @@ const SwitchAccountScreen = () => {
     return currentUserRequest
   }, [currentUserRequest])
 
-  const nextAccount = userRequest?.meta.params?.switchToAccountAddr
-  const nextRequestType = userRequest?.meta.params?.nextRequestType
+  const nextAccount = userRequest?.meta.switchToAccountAddr
+  const nextRequestType = userRequest?.meta.nextRequestKind
   const nextAccountData = useMemo(() => {
     if (!nextAccount) return null
 
@@ -55,7 +55,7 @@ const SwitchAccountScreen = () => {
     return 'unknown request'
   }, [nextRequestType])
 
-  const dAppData = useMemo(() => userRequest?.dappPromises[0].session, [userRequest])
+  const dAppData = useMemo(() => userRequest?.dappPromises[0]?.session, [userRequest])
 
   const handleDenyButtonPress = useCallback(() => {
     if (!userRequest) return

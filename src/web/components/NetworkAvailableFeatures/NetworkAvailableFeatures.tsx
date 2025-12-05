@@ -135,7 +135,6 @@ const NetworkAvailableFeatures = ({
         userRequestParams: {
           calls: [
             {
-              id: uuidv4(),
               to: SINGLETON,
               value: 0n,
               data: singletonInterface.encodeFunctionData('deploy', [bytecode, salt])

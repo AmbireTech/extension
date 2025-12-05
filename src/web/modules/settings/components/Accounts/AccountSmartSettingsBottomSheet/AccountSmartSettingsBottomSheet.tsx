@@ -86,7 +86,7 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
       type: 'REQUESTS_CONTROLLER_ADD_CALLS_USER_REQUEST',
       params: {
         userRequestParams: {
-          calls: [{ id: uuidv4(), to: ZERO_ADDRESS, data: '0x', value: BigInt(0) }],
+          calls: [{ to: ZERO_ADDRESS, data: '0x', value: BigInt(0) }],
           meta: {
             chainId: network.chainId,
             accountAddr: account.addr,
