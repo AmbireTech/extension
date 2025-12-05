@@ -133,6 +133,14 @@ const parseHumanizer = (humanizedCalls: IrCall[]): IrCall[] => {
   return finalParsedCalls
 }
 
+/**
+ * When enabling the entry point, hide the activator call from benzina
+ * to reduce the panic caused to the user as this is an internal, routine call
+ * we need to make, not one the user has requested
+ */
+const filterEntryPointAuthCall = (call: IrCall) =>
+  !call.data.endsWith('0000000000000000000000000000000000000000000000000000000000007171')
+
 const useSteps = ({
   txnId,
   userOpHash,
@@ -348,7 +356,7 @@ const useSteps = ({
         )
         setTxnReceipt({
           originatedFrom: receipt.sender,
-          actualGasCost: BigInt(receipt.actualGasUsed) * BigInt(receipt.actualGasCost),
+          actualGasCost: BigInt(receipt.actualGasCost),
           blockNumber: BigInt(receipt.receipt.blockNumber)
         })
 
@@ -711,16 +719,15 @@ const useSteps = ({
       ({ tokenInfo }) => {
         if (!tokenInfo || (!amount && !isSponsored)) return
         const { decimals, priceIn } = tokenInfo
-        const price = priceIn.length ? priceIn[0].price : null
+        const price = priceIn.length && priceIn[0] ? priceIn[0].price : null
 
         const fee = parseFloat(formatUnits(amount, decimals))
 
         if (!isMounted) return
-
         setFeePaidWith({
           amount: formatDecimals(fee),
           symbol: tokenInfo.symbol,
-          usdValue: price ? formatDecimals(fee * priceIn[0].price, 'value') : '-$',
+          usdValue: price ? formatDecimals(fee * price, 'value') : '-$',
           isErc20: address !== ZeroAddress,
           address: address as string,
           isSponsored,
@@ -751,7 +758,7 @@ const useSteps = ({
     // if we have the extension account op passed, we do not need to
     // wait to show the calls
     if (extensionAccOp) {
-      const humanizedCalls = humanizeAccountOp(extensionAccOp)
+      const humanizedCalls = humanizeAccountOp(extensionAccOp).filter(filterEntryPointAuthCall)
       setCalls(parseHumanizer(humanizedCalls))
       setFrom(extensionAccOp.accountAddr)
       if (extensionAccOp.feeCall) setFeeCall(extensionAccOp.feeCall)
@@ -765,7 +772,9 @@ const useSteps = ({
       txnId &&
       entryPointTxnSplit[txn.data.slice(0, 10)]
     ) {
-      setCalls(entryPointTxnSplit[txn.data.slice(0, 10)](txn, network, txnId))
+      // typescript fixes
+      const getCalls = entryPointTxnSplit[txn.data.slice(0, 10)]
+      if (getCalls) setCalls(getCalls(txn, network, txnId))
       return
     }
 
@@ -786,8 +795,7 @@ const useSteps = ({
         signature: '0x', // irrelevant
         gasFeePayment: null
       }
-      const humanizedCalls = humanizeAccountOp(accountOp)
-
+      const humanizedCalls = humanizeAccountOp(accountOp).filter(filterEntryPointAuthCall)
       setCalls(parseHumanizer(humanizedCalls))
       setFrom(accountOp.accountAddr)
       if (decodedFeeCall) {

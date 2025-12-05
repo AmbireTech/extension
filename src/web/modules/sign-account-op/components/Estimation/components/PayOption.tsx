@@ -151,6 +151,7 @@ const PayOption = ({
           <View style={[flexbox.directionRow, flexbox.alignCenter]}>
             <Avatar
               size={16}
+              address={feeOption.paidBy}
               pfp={feeOption.paidBy}
               style={spacings.prTy}
               isSmart={false}

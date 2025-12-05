@@ -1,8 +1,11 @@
 import React, { useCallback, useContext, useEffect, useMemo } from 'react'
 import { Pressable, View } from 'react-native'
 
-import { Account as AccountInterface, ImportStatus } from '@ambire-common/interfaces/account'
-import { Network } from '@ambire-common/interfaces/network'
+import {
+  Account as AccountInterface,
+  AccountWithNetworkMeta,
+  ImportStatus
+} from '@ambire-common/interfaces/account'
 import { isAmbireV1LinkedAccount, isSmartAccount } from '@ambire-common/libs/account/account'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import Avatar from '@common/components/Avatar'
@@ -47,7 +50,7 @@ const Account = ({
   displayTypePill = true,
   shouldBeDisplayedAsNew = false
 }: {
-  account: AccountInterface & { usedOnNetworks: Network[] }
+  account: AccountWithNetworkMeta
   type: 'basic' | 'smart' | 'linked'
   unused: boolean
   isSelected: boolean
@@ -58,7 +61,6 @@ const Account = ({
   isDisabled?: boolean
   importStatus: ImportStatus
   displayTypeBadge?: boolean
-  withQuaternaryBackground?: boolean
   displayTypePill?: boolean
   shouldBeDisplayedAsNew?: boolean
 }) => {
@@ -140,6 +142,7 @@ const Account = ({
               {isAccountImported ? (
                 <>
                   <Avatar
+                    address={account.addr}
                     pfp={account.preferences.pfp}
                     size={24}
                     isSmart={isSmartAccount(account)}
@@ -218,28 +221,39 @@ const Account = ({
             )}
           </View>
           <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-            {!!account.usedOnNetworks.length && (
+            {account.usedOnNetworks !== null && (
               <View style={[flexbox.directionRow, flexbox.alignCenter]}>
                 <Text fontSize={12} weight="regular">
                   {t('used on ')}
                 </Text>
-                {account.usedOnNetworks.slice(0, 7).map((n, index: number, arr: string | any[]) => {
-                  return (
-                    <View
-                      style={[
-                        styles.networkIcon,
-                        { marginLeft: index ? -5 : 0, zIndex: arr.length - index }
-                      ]}
-                      key={n.chainId.toString()}
-                    >
-                      <NetworkIcon
-                        style={{ backgroundColor: '#fff' }}
-                        id={n.chainId.toString()}
-                        size={18}
-                      />
-                    </View>
-                  )
-                })}
+                {Array.isArray(account.usedOnNetworks) ? (
+                  account.usedOnNetworks
+                    .slice(0, 7)
+                    .map((n, index: number, arr: string | any[]) => {
+                      return (
+                        <View
+                          style={[
+                            styles.networkIcon,
+                            { marginLeft: index ? -5 : 0, zIndex: arr.length - index }
+                          ]}
+                          key={n.chainId.toString()}
+                        >
+                          <NetworkIcon
+                            style={{ backgroundColor: '#fff' }}
+                            id={n.chainId.toString()}
+                            size={18}
+                          />
+                        </View>
+                      )
+                    })
+                ) : (
+                  <SkeletonLoader
+                    width={54}
+                    height={20}
+                    borderRadius={6}
+                    appearance="tertiaryBackground"
+                  />
+                )}
               </View>
             )}
             {!!unused && (

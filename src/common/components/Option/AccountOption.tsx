@@ -18,6 +18,7 @@ const AccountOption = ({ acc }: { acc: Account }) => {
     <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
       <Avatar
         pfp={acc.preferences.pfp}
+        address={acc.addr}
         size={32}
         style={spacings.prTy}
         isSmart={isSmartAccount(acc)}

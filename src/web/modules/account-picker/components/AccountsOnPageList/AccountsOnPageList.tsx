@@ -132,7 +132,8 @@ const AccountsOnPageList = ({
 
       return filteredAccounts.map((acc, i: number) => {
         const hasBottomSpacing = !(isLastSlot && i === filteredAccounts.length - 1)
-        const isUnused = !acc.account.usedOnNetworks.length
+        const isUnused =
+          Array.isArray(acc.account.usedOnNetworks) && !acc.account.usedOnNetworks.length
         const isSelected = state.selectedAccounts.some(
           (selectedAcc) => selectedAcc.account.addr === acc.account.addr
         )
@@ -259,7 +260,7 @@ const AccountsOnPageList = ({
                   return (
                     <View key={key}>
                       {getAccounts({
-                        accounts: slots[key],
+                        accounts: slots[key] || [],
                         isLastSlot: i === Object.keys(slots).length - 1,
                         slotIndex: 1,
                         byType: ['basic']
@@ -339,7 +340,7 @@ const AccountsOnPageList = ({
                     return (
                       <View key={key}>
                         {getAccounts({
-                          accounts: slots[key],
+                          accounts: slots[key] || [],
                           isLastSlot: i === Object.keys(slots).length - 1,
                           slotIndex: 1,
                           byType: ['smart', 'linked']
