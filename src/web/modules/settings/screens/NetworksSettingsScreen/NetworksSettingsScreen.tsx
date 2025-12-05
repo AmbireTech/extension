@@ -11,6 +11,7 @@ import Button from '@common/components/Button'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Search from '@common/components/Search'
 import Text from '@common/components/Text'
+import { isAmbireNext, isDev } from '@common/config/env'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
@@ -22,10 +23,13 @@ import NetworkAvailableFeatures from '@web/components/NetworkAvailableFeatures'
 import NetworkDetails from '@web/components/NetworkDetails'
 import { openInTab } from '@web/extension-services/background/webapi/tab'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
+import useProvidersControllerState from '@web/hooks/useProvidersControllerState'
 import SettingsPageHeader from '@web/modules/settings/components/SettingsPageHeader'
 import { SettingsRoutesContext } from '@web/modules/settings/contexts/SettingsRoutesContext'
 import Network from '@web/modules/settings/screens/NetworksSettingsScreen/Network'
 import NetworkForm from '@web/modules/settings/screens/NetworksSettingsScreen/NetworkForm'
+
+import BatchingControlOption from './BatchingControlOption'
 
 const NetworksSettingsScreen = () => {
   const { t } = useTranslation()
@@ -34,6 +38,7 @@ const NetworksSettingsScreen = () => {
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const { maxWidthSize } = useWindowSize()
   const { allNetworks } = useNetworksControllerState()
+  const { providers } = useProvidersControllerState()
 
   const { setCurrentSettingsPage } = useContext(SettingsRoutesContext)
   const { theme, themeType } = useTheme()
@@ -55,6 +60,12 @@ const NetworksSettingsScreen = () => {
     () => allNetworks.find((n) => n.chainId === selectedChainId),
     [allNetworks, selectedChainId]
   )
+
+  const selectedNetworkProvider = useMemo(() => {
+    if (!selectedNetwork) return undefined
+
+    return providers[selectedNetwork.chainId.toString()]
+  }, [providers, selectedNetwork])
 
   const search = watch('search')
 
@@ -89,7 +100,7 @@ const NetworksSettingsScreen = () => {
   return (
     <>
       <SettingsPageHeader title={t('Networks')} />
-      <View style={[flexbox.directionRow, flexbox.flex1]}>
+      <View style={[flexbox.directionRow, flexbox.flex1, (isDev || isAmbireNext) && spacings.mtLg]}>
         <View style={[{ flex: 1 }]}>
           <Search
             placeholder={t('Search for network')}
@@ -185,6 +196,7 @@ const NetworksSettingsScreen = () => {
                 nativeAssetSymbol={selectedNetwork?.nativeAssetSymbol || '-'}
                 nativeAssetName={selectedNetwork?.nativeAssetName || '-'}
                 explorerUrl={selectedNetwork?.explorerUrl || '-'}
+                batchMaxCount={selectedNetwork ? selectedNetworkProvider?.batchMaxCount : '-'}
                 allowRemoveNetwork
               />
             </View>
@@ -193,6 +205,11 @@ const NetworksSettingsScreen = () => {
                 features={selectedNetwork.features}
                 chainId={selectedChainId}
               />
+            )}
+            {(isDev || isAmbireNext) && (
+              <View style={spacings.mtXl}>
+                <BatchingControlOption />
+              </View>
             )}
           </ScrollableWrapper>
         </View>

@@ -47,10 +47,7 @@ export const handleActions = async (
         port.sender.url = params.url
         if (port.sender.tab) port.sender.tab.url = params.url
       }
-      mainCtrl.ui.updateView(port.id, {
-        currentRoute: params.route,
-        searchParams: params.searchParams
-      })
+      mainCtrl.ui.updateView(port.id, { currentRoute: params.route })
       break
     }
     case 'INIT_CONTROLLER_STATE': {
@@ -104,6 +101,9 @@ export const handleActions = async (
         hdPathTemplate: keystoreSavedSeed.hdPathTemplate
       })
       break
+    }
+    case 'PROVIDERS_CONTROLLER_TOGGLE_BATCHING': {
+      return await mainCtrl.providers.toggleBatching()
     }
     case 'MAIN_CONTROLLER_ADD_NETWORK': {
       return await mainCtrl.addNetwork(params)
