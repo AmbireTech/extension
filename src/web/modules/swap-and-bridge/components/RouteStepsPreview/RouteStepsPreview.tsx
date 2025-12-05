@@ -30,11 +30,11 @@ const RouteStepsPreview = ({
   estimationInSeconds,
   currentStep = 0,
   loadingEnabled,
-  isSelected,
   isDisabled,
   routeStatus,
   disabledReason = 'Route failed',
-  providerId
+  providerId,
+  isBridge
 }: {
   steps: SwapAndBridgeStep[]
   inputValueInUsd?: number
@@ -42,11 +42,11 @@ const RouteStepsPreview = ({
   estimationInSeconds?: number
   currentStep?: number
   loadingEnabled?: boolean
-  isSelected?: boolean
   isDisabled?: boolean
   routeStatus?: SwapAndBridgeActiveRoute['routeStatus']
   disabledReason?: string
   providerId: string
+  isBridge: boolean
 }) => {
   const { theme } = useTheme()
   const { t } = useTranslation()
@@ -215,10 +215,11 @@ const RouteStepsPreview = ({
           )
         })}
       </View>
-      {!!estimationInSeconds && (
-        <View style={[flexbox.directionRow, flexbox.justifySpaceBetween]}>
-          {!!estimationInSeconds && !isDisabled && (
-            <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+
+      <View style={[flexbox.directionRow, flexbox.justifySpaceBetween]}>
+        {!isDisabled ? (
+          <>
+            <View>
               {!!shouldWarnForLongEstimation && (
                 <WarningIcon
                   color={theme.warningDecorative}
@@ -233,42 +234,38 @@ const RouteStepsPreview = ({
                 weight={shouldWarnForLongEstimation ? 'semiBold' : 'medium'}
                 appearance={shouldWarnForLongEstimation ? 'warningText' : 'primaryText'}
               >
-                {t('Estimation: around {{time}}', {
-                  time: formatTime(estimationInSeconds)
-                })}
+                {isBridge && !!estimationInSeconds
+                  ? t('Estimation: around {{time}}', {
+                      time: formatTime(estimationInSeconds)
+                    })
+                  : ''}
               </Text>
             </View>
-          )}
 
-          {!isDisabled && (
-            <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-              {providerId === 'socket' ? (
-                <BungeeIcon width={56.7} height={11.2} />
-              ) : (
-                <LiFiIcon width={39.75} height={14} />
-              )}
-            </View>
-          )}
-
-          {isDisabled && (
-            <View style={[flexbox.directionRow, flexbox.alignCenter, { maxWidth: '100%' }]}>
-              <Text
-                fontSize={12}
-                weight="medium"
-                color={theme.warningText}
-                style={[
-                  spacings.phTy,
-                  {
-                    backgroundColor: theme.warningBackground
-                  }
-                ]}
-              >
-                {disabledReason}
-              </Text>
-            </View>
-          )}
-        </View>
-      )}
+            {providerId === 'socket' ? (
+              <BungeeIcon width={56.7} height={11.2} />
+            ) : (
+              <LiFiIcon width={39.75} height={14} />
+            )}
+          </>
+        ) : (
+          <View style={[flexbox.directionRow, flexbox.alignCenter, { maxWidth: '100%' }]}>
+            <Text
+              fontSize={12}
+              weight="medium"
+              color={theme.warningText}
+              style={[
+                spacings.phTy,
+                {
+                  backgroundColor: theme.warningBackground
+                }
+              ]}
+            >
+              {disabledReason}
+            </Text>
+          </View>
+        )}
+      </View>
     </View>
   )
 }

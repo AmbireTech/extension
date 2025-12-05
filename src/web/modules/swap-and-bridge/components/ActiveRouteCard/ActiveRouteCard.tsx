@@ -130,6 +130,9 @@ const ActiveRouteCard = ({ activeRoute }: { activeRoute: SwapAndBridgeActiveRout
           providerId={
             activeRoute.route ? activeRoute.route.providerId : activeRoute.serviceProviderId
           }
+          isBridge={
+            !!activeRoute.route && activeRoute.route.fromChainId !== activeRoute.route.toChainId
+          }
         />
       </View>
 
