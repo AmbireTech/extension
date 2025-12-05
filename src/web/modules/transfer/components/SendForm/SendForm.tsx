@@ -50,7 +50,10 @@ const SendForm = ({
   handleGoBack: () => void
 }) => {
   const { validation } = addressInputState
-  const { state, tokens } = useTransferControllerState()
+  const {
+    state,
+    state: { tokens }
+  } = useTransferControllerState()
   const { dispatch } = useBackgroundService()
   const { portfolio } = useSelectedAccountControllerState()
   const {
