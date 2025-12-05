@@ -202,10 +202,6 @@ type MainControllerUpdateNetworksAction = {
   }
 }
 
-type MainControllerRejectSignAccountOpCall = {
-  type: 'MAIN_CONTROLLER_REJECT_SIGN_ACCOUNT_OP_CALL'
-  params: { callId: string }
-}
 type MainControllerRejectAccountOpAction = {
   type: 'MAIN_CONTROLLER_REJECT_ACCOUNT_OP'
   params: { err: string; requestId: UserRequest['id']; shouldOpenNextAction: boolean }
@@ -269,6 +265,7 @@ type RequestsControllerAddCallsUserRequestAction = {
     skipFocus?: boolean
   }
 }
+
 type RequestsControllerBuildRequestAction = {
   type: 'REQUESTS_CONTROLLER_BUILD_REQUEST'
   params: BuildRequest
@@ -284,6 +281,10 @@ type RequestsControllerResolveUserRequestAction = {
 type RequestsControllerRejectUserRequestAction = {
   type: 'REQUESTS_CONTROLLER_REJECT_USER_REQUEST'
   params: { err: string; id: UserRequest['id'] }
+}
+type RequestsControllerRejectCallFromUserRequestAction = {
+  type: 'REQUESTS_CONTROLLER_REJECT_CALL_FROM_USER_REQUEST'
+  params: { callId: string }
 }
 type RequestsControllerSwapAndBridgeActiveRouteBuildNextUserRequestAction = {
   type: 'REQUESTS_CONTROLLER_SWAP_AND_BRIDGE_ACTIVE_ROUTE_BUILD_NEXT_USER_REQUEST'
@@ -793,7 +794,7 @@ export type Action =
   | RequestsControllerRemoveUserRequestAction
   | RequestsControllerResolveUserRequestAction
   | RequestsControllerRejectUserRequestAction
-  | MainControllerRejectSignAccountOpCall
+  | RequestsControllerRejectCallFromUserRequestAction
   | MainControllerRejectAccountOpAction
   | MainControllerSignMessageInitAction
   | MainControllerSignMessageResetAction

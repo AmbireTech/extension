@@ -84,7 +84,7 @@ const TransactionSummary = ({
 
     setIsCallRemovedOptimistic(true)
     dispatch({
-      type: 'MAIN_CONTROLLER_REJECT_SIGN_ACCOUNT_OP_CALL',
+      type: 'REQUESTS_CONTROLLER_REJECT_CALL_FROM_USER_REQUEST',
       params: { callId: call.id }
     })
   }, [isCallRemovedOptimistic, dispatch, call.id])

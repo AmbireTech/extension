@@ -212,9 +212,6 @@ export const handleActions = async (
     case 'MAIN_CONTROLLER_REMOVE_ACCOUNT': {
       return await mainCtrl.removeAccount(params.accountAddr)
     }
-    case 'MAIN_CONTROLLER_REJECT_SIGN_ACCOUNT_OP_CALL': {
-      return mainCtrl.rejectSignAccountOpCall(params.callId)
-    }
     case 'MAIN_CONTROLLER_REJECT_ACCOUNT_OP':
       return mainCtrl.rejectAccountOpAction(
         params.err,
@@ -273,6 +270,10 @@ export const handleActions = async (
       return mainCtrl.requests.resolveUserRequest(params.data, params.id)
     case 'REQUESTS_CONTROLLER_REJECT_USER_REQUEST':
       return mainCtrl.requests.rejectUserRequests(params.err, [params.id])
+    case 'REQUESTS_CONTROLLER_REJECT_CALL_FROM_USER_REQUEST': {
+      await mainCtrl.requests.rejectCalls({ callIds: [params.callId] })
+      break
+    }
 
     case 'SIGN_ACCOUNT_OP_UPDATE': {
       if (params.updateType === 'Main') {
