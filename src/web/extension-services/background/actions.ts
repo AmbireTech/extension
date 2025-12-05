@@ -129,6 +129,9 @@ type MainControllerRemoveAccount = {
     accountAddr: Account['addr']
   }
 }
+type ProvidersControllerToggleBatching = {
+  type: 'PROVIDERS_CONTROLLER_TOGGLE_BATCHING'
+}
 type MainControllerAccountPickerResetAction = {
   type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_RESET'
 }
@@ -794,6 +797,7 @@ export type Action =
   | MainControllerAccountPickerAddAccounts
   | MainControllerAddAccounts
   | MainControllerRemoveAccount
+  | ProvidersControllerToggleBatching
   | RequestsControllerAddUserRequestAction
   | MainControllerLockAction
   | RequestsControllerBuildRequestAction
