@@ -35,7 +35,7 @@ const SubmittedOn = ({
     <View
       style={[
         spacings.mrMd,
-        { flex: 1 },
+        { flex: 2 },
         numberOfLines === 1 && flexbox.directionRow,
         numberOfLines === 1 && flexbox.alignCenter
       ]}
