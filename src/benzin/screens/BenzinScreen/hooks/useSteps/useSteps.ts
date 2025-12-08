@@ -42,8 +42,8 @@ import { UserOperation } from '@benzin/screens/BenzinScreen/interfaces/userOpera
 
 import { decodeUserOp, entryPointTxnSplit, reproduceCallsFromTxn } from './utils/reproduceCalls'
 
-const REFETCH_TIME = 3000 // 4 seconds
-const REFETCH_TIME_ETHEREUM = 6000 // 4 seconds
+const REFETCH_TIME = 3000 // 3 seconds
+const REFETCH_TIME_ETHEREUM = 12000 // 12 seconds
 
 export type FeePaidWith = {
   address: string
@@ -356,7 +356,7 @@ const useSteps = ({
         )
         setTxnReceipt({
           originatedFrom: receipt.sender,
-          actualGasCost: BigInt(receipt.actualGasUsed) * BigInt(receipt.actualGasCost),
+          actualGasCost: BigInt(receipt.actualGasCost),
           blockNumber: BigInt(receipt.receipt.blockNumber)
         })
 
@@ -724,7 +724,6 @@ const useSteps = ({
         const fee = parseFloat(formatUnits(amount, decimals))
 
         if (!isMounted) return
-
         setFeePaidWith({
           amount: formatDecimals(fee),
           symbol: tokenInfo.symbol,
