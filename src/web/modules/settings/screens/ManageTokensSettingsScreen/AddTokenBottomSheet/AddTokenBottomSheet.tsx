@@ -273,15 +273,7 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
             placeholder={t('0x...')}
             value={value}
             inputStyle={spacings.mbSm}
-            containerStyle={
-              !isAdditionalHintRequested &&
-              !temporaryToken &&
-              !showAlreadyInPortfolioMessage &&
-              !isLoading &&
-              tokenTypeEligibility === undefined
-                ? { marginBottom: SPACING_SM + SPACING_2XL }
-                : spacings.mbSm
-            }
+            containerStyle={spacings.mbSm}
             error={errors.address && errors.address.message}
           />
         )}
