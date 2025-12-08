@@ -12,17 +12,6 @@ type ContextReturn = {
 
 const TransferControllerStateContext = createContext<ContextReturn>({} as ContextReturn)
 
-export const getInfoFromSearch = (search: string | undefined) => {
-  if (!search) return null
-
-  const params = new URLSearchParams(search)
-
-  return {
-    addr: params.get('address'),
-    chainId: params.get('chainId')
-  }
-}
-
 const TransferControllerStateProvider = ({ children }: { children: any }) => {
   const controller = 'transfer'
   const state = useControllerState(controller)
