@@ -3,8 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { NativeScrollEvent, Pressable, ScrollView, StyleSheet, View } from 'react-native'
 
 import { SigningStatus } from '@ambire-common/controllers/signAccountOp/signAccountOp'
-import { AccountOpAction } from '@ambire-common/interfaces/actions'
 import { Key } from '@ambire-common/interfaces/keystore'
+import { CallsUserRequest } from '@ambire-common/interfaces/userRequest'
 import { getErrorCodeStringFromReason } from '@ambire-common/libs/errorDecoder/helpers'
 import CopyIcon from '@common/assets/svg/CopyIcon'
 import Alert from '@common/components/Alert'
@@ -24,9 +24,9 @@ import {
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import { closeCurrentWindow } from '@web/extension-services/background/webapi/window'
-import useActionsControllerState from '@web/hooks/useActionsControllerState'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useMainControllerState from '@web/hooks/useMainControllerState'
+import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import useSignAccountOpControllerState from '@web/hooks/useSignAccountOpControllerState'
 import Estimation from '@web/modules/sign-account-op/components/Estimation'
 import Footer from '@web/modules/sign-account-op/components/Footer'
@@ -44,7 +44,7 @@ const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }: Nati
 }
 
 const SignAccountOpScreen = () => {
-  const actionsState = useActionsControllerState()
+  const { currentUserRequest, visibleUserRequests } = useRequestsControllerState()
   const signAccountOpState = useSignAccountOpControllerState()
   const mainState = useMainControllerState()
   const { dispatch } = useBackgroundService()
@@ -118,13 +118,13 @@ const SignAccountOpScreen = () => {
     handleBroadcast
   })
 
-  const accountOpAction = useMemo(() => {
-    if (actionsState.currentAction?.type !== 'accountOp') return undefined
-    return actionsState.currentAction as AccountOpAction
-  }, [actionsState.currentAction])
+  const accountOpRequest = useMemo(() => {
+    if (currentUserRequest?.kind !== 'calls') return undefined
+    return currentUserRequest as CallsUserRequest
+  }, [currentUserRequest])
 
   useEffect(() => {
-    // Check if the action is already initialized to avoid double dispatching
+    // Check if the request is already initialized to avoid double dispatching
     // Without this check two dispatches occur for the same id:
     // - one from the current window before it gets closed
     // - one from the new window
@@ -133,27 +133,27 @@ const SignAccountOpScreen = () => {
     // gasPrice controller that sets an interval for fetching gas price
     // each 12s and that interval gets persisted into memory, causing double
     // fetching
-    if (accountOpAction?.id && initDispatchedForId !== accountOpAction.id) {
-      setInitDispatchedForId(accountOpAction.id)
+    if (accountOpRequest?.id && initDispatchedForId !== accountOpRequest.id) {
+      setInitDispatchedForId(accountOpRequest.id)
       dispatch({
         type: 'MAIN_CONTROLLER_SIGN_ACCOUNT_OP_INIT',
-        params: { actionId: accountOpAction.id }
+        params: { requestId: accountOpRequest.id }
       })
     }
-  }, [accountOpAction?.id, initDispatchedForId, dispatch, setInitDispatchedForId])
+  }, [accountOpRequest?.id, initDispatchedForId, dispatch, setInitDispatchedForId])
 
   const handleRejectAccountOp = useCallback(() => {
-    if (!accountOpAction) return
+    if (!accountOpRequest) return
 
     dispatch({
       type: 'MAIN_CONTROLLER_REJECT_ACCOUNT_OP',
       params: {
         err: 'User rejected the transaction request.',
-        actionId: accountOpAction.id,
-        shouldOpenNextAction: actionsState.visibleActionsQueue.length > 1
+        requestId: accountOpRequest.id,
+        shouldOpenNextAction: visibleUserRequests.length > 1
       }
     })
-  }, [dispatch, accountOpAction, actionsState.visibleActionsQueue.length])
+  }, [dispatch, accountOpRequest, visibleUserRequests.length])
 
   const handleAddToCart = useCallback(() => {
     // eslint-disable-next-line @typescript-eslint/no-floating-promises

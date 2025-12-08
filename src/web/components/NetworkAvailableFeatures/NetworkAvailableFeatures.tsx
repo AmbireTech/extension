@@ -4,12 +4,11 @@ import { Interface } from 'ethers'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
+import { v4 as uuidv4 } from 'uuid'
 
 import DeployHelper from '@ambire-common/../contracts/compiled/DeployHelper.json'
-import { Session } from '@ambire-common/classes/session'
 import { AMBIRE_ACCOUNT_FACTORY, SINGLETON } from '@ambire-common/consts/deploy'
 import { NetworkFeature } from '@ambire-common/interfaces/network'
-import { SignUserRequest } from '@ambire-common/interfaces/userRequest'
 import { isSmartAccount } from '@ambire-common/libs/account/account'
 import { getRpcProvider } from '@ambire-common/services/provider'
 import CheckIcon from '@common/assets/svg/CheckIcon'
@@ -66,7 +65,7 @@ const NetworkAvailableFeatures = ({
   const { pathname } = useRoute()
   const { account } = useSelectedAccountControllerState()
   const { networks } = useNetworksControllerState()
-  const { dispatch, windowId } = useBackgroundService()
+  const { dispatch } = useBackgroundService()
   const { addToast } = useToast()
   const [checkedDeploy, setCheckedDeploy] = useState<boolean>(false)
 
@@ -129,30 +128,26 @@ const NetworkAvailableFeatures = ({
       }
     ]
     const singletonInterface = new Interface(singletonABI)
-    const txn = {
-      kind: 'calls' as const,
-      calls: [
-        {
-          to: SINGLETON,
-          value: 0n,
-          data: singletonInterface.encodeFunctionData('deploy', [bytecode, salt])
+
+    dispatch({
+      type: 'REQUESTS_CONTROLLER_ADD_CALLS_USER_REQUEST',
+      params: {
+        userRequestParams: {
+          calls: [
+            {
+              to: SINGLETON,
+              value: 0n,
+              data: singletonInterface.encodeFunctionData('deploy', [bytecode, salt])
+            }
+          ],
+          meta: {
+            chainId: selectedNetwork.chainId,
+            accountAddr: account.addr as string
+          }
         }
-      ]
-    }
-
-    const userRequest: SignUserRequest = {
-      id: new Date().getTime(),
-      session: new Session({ windowId }),
-      meta: {
-        isSignAction: true,
-        chainId: selectedNetwork.chainId,
-        accountAddr: account.addr as string
-      },
-      action: txn
-    }
-
-    dispatch({ type: 'REQUESTS_CONTROLLER_ADD_USER_REQUEST', params: { userRequest } })
-  }, [addToast, dispatch, account, selectedNetwork, windowId])
+      }
+    })
+  }, [addToast, dispatch, account, selectedNetwork])
 
   const shouldRenderRetryButton = useMemo(
     () => !!features && !!features.find((f) => f.id === 'flagged') && withRetryButton,

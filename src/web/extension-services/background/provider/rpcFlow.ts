@@ -2,6 +2,7 @@
 import 'reflect-metadata'
 
 import { ethErrors } from 'eth-rpc-errors'
+import { v4 as uuidv4 } from 'uuid'
 
 import { MainController } from '@ambire-common/controllers/main/main'
 import { DappProviderRequest } from '@ambire-common/interfaces/dapp'
@@ -56,12 +57,12 @@ const flowContext = flow
                 type: 'dappRequest',
                 params: {
                   request: { ...request, method: 'unlock', params: {} },
-                  dappPromise: { resolve, reject, session: request.session }
+                  dappPromise: { id: uuidv4(), resolve, reject, session: request.session }
                 }
               })
             })
-          } else if (mainCtrl.requests.actions.currentAction) {
-            await mainCtrl.requests.actions.focusActionWindow()
+          } else if (mainCtrl.requests.currentUserRequest) {
+            await mainCtrl.requests.focusRequestWindow()
           }
           await lockedOrigins[origin]
         } finally {
@@ -72,7 +73,7 @@ const flowContext = flow
 
     return next()
   })
-  // if dApp not connected - prompt connect action window
+  // if dApp not connected - prompt connect request window
   .use(async ({ request, mainCtrl, mapMethod }, next) => {
     const {
       session: { id, origin: url }
@@ -87,12 +88,12 @@ const flowContext = flow
                 type: 'dappRequest',
                 params: {
                   request: { ...request, method: 'dapp_connect', params: {} },
-                  dappPromise: { resolve, reject, session: request.session }
+                  dappPromise: { id: uuidv4(), resolve, reject, session: request.session }
                 }
               })
             })
-          } else if (mainCtrl.requests.actions.currentAction) {
-            await mainCtrl.requests.actions.focusActionWindow()
+          } else if (mainCtrl.requests.currentUserRequest) {
+            await mainCtrl.requests.focusRequestWindow()
           }
           const dappToAdd = await connectOrigins[url]
           await mainCtrl.dapps.addDapp({ ...dappToAdd, isConnected: true })
@@ -104,7 +105,7 @@ const flowContext = flow
 
     return next()
   })
-  // add the dapp request as a userRequest and action
+  // add the dapp request as a userRequest
   .use(async (props, next) => {
     const { request, mainCtrl, mapMethod } = props
     const providerCtrl = new ProviderController(mainCtrl)
@@ -119,7 +120,7 @@ const flowContext = flow
             type: 'dappRequest',
             params: {
               request,
-              dappPromise: { resolve, reject, session: request.session }
+              dappPromise: { id: uuidv4(), resolve, reject, session: request.session }
             }
           })
           .catch((error) => reject(error))

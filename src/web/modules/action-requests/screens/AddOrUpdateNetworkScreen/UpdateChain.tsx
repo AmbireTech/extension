@@ -4,7 +4,7 @@ import { View } from 'react-native'
 
 import { Statuses } from '@ambire-common/interfaces/eventEmitter'
 import { AddNetworkRequestParams, Network, NetworkFeature } from '@ambire-common/interfaces/network'
-import { DappUserRequest } from '@ambire-common/interfaces/userRequest'
+import { UserRequest } from '@ambire-common/interfaces/userRequest'
 import ArrowRightIcon from '@common/assets/svg/ArrowRightIcon'
 import ManifestFallbackIcon from '@common/assets/svg/ManifestFallbackIcon'
 import Alert from '@common/components/Alert'
@@ -34,7 +34,7 @@ type UpdateChainProps = {
   features: NetworkFeature[]
   networkDetails?: AddNetworkRequestParams
   networkAlreadyAdded: Network
-  userRequest: DappUserRequest | undefined
+  userRequest: UserRequest | undefined
   actionButtonPressedRef: React.MutableRefObject<boolean>
   rpcUrls: string[]
   rpcUrlIndex: number

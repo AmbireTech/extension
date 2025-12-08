@@ -12,11 +12,14 @@ interface DappInfo {
  */
 const useDappInfo = (userRequest?: UserRequest): DappInfo => {
   return useMemo(() => {
-    const name = userRequest?.session?.name || ''
-    const icon = userRequest?.session?.icon || ''
+    if (!userRequest) return { name: '', icon: '' }
+
+    const session = userRequest.dappPromises[0]?.session
+    const name = session?.name || ''
+    const icon = session?.icon || ''
 
     return { name, icon }
-  }, [userRequest?.session?.name, userRequest?.session?.icon])
+  }, [userRequest])
 }
 
 export default useDappInfo

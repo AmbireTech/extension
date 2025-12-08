@@ -4,13 +4,6 @@ import { Contact } from '@ambire-common/controllers/addressBook/addressBook'
 import { SignAccountOpType } from '@ambire-common/controllers/signAccountOp/helper'
 import { FeeSpeed, SigningStatus } from '@ambire-common/controllers/signAccountOp/signAccountOp'
 import { Account, AccountPreferences, AccountStates } from '@ambire-common/interfaces/account'
-import {
-  AccountOpAction,
-  Action as ActionFromActionsQueue,
-  ActionExecutionType,
-  ActionPosition,
-  OpenActionWindowParams
-} from '@ambire-common/interfaces/actions'
 import { Banner } from '@ambire-common/interfaces/banner'
 import { Dapp } from '@ambire-common/interfaces/dapp'
 import { MagicLinkFlow } from '@ambire-common/interfaces/emailVault'
@@ -31,7 +24,14 @@ import {
   SwapAndBridgeToToken
 } from '@ambire-common/interfaces/swapAndBridge'
 import { TransferUpdate } from '@ambire-common/interfaces/transfer'
-import { Message, UserRequest } from '@ambire-common/interfaces/userRequest'
+import {
+  CallsUserRequest,
+  Message,
+  OpenRequestWindowParams,
+  RequestExecutionType,
+  RequestPosition,
+  UserRequest
+} from '@ambire-common/interfaces/userRequest'
 import { AccountOp } from '@ambire-common/libs/accountOp/accountOp'
 import { FullEstimation } from '@ambire-common/libs/estimate/interfaces'
 import { TokenResult } from '@ambire-common/libs/portfolio'
@@ -205,21 +205,14 @@ type MainControllerUpdateNetworksAction = {
   }
 }
 
-type MainControllerRejectSignAccountOpCall = {
-  type: 'MAIN_CONTROLLER_REJECT_SIGN_ACCOUNT_OP_CALL'
-  params: { callId: string }
-}
 type MainControllerRejectAccountOpAction = {
   type: 'MAIN_CONTROLLER_REJECT_ACCOUNT_OP'
-  params: { err: string; actionId: AccountOpAction['id']; shouldOpenNextAction: boolean }
+  params: { err: string; requestId: UserRequest['id']; shouldOpenNextAction: boolean }
 }
 type MainControllerSignMessageInitAction = {
   type: 'MAIN_CONTROLLER_SIGN_MESSAGE_INIT'
   params: {
-    dapp: {
-      name: string
-      icon: string
-    }
+    dapp: { name: string; icon: string }
     messageToSign: Message
   }
 }
@@ -262,16 +255,20 @@ type MainControllerUpdateSelectedAccountPortfolio = {
   }
 }
 
-type RequestsControllerAddUserRequestAction = {
-  type: 'REQUESTS_CONTROLLER_ADD_USER_REQUEST'
+type RequestsControllerAddCallsUserRequestAction = {
+  type: 'REQUESTS_CONTROLLER_ADD_CALLS_USER_REQUEST'
   params: {
-    userRequest: UserRequest
-    actionPosition?: ActionPosition
-    actionExecutionType?: ActionExecutionType
+    userRequestParams: {
+      calls: CallsUserRequest['accountOp']['calls']
+      meta: CallsUserRequest['meta']
+    }
+    position?: RequestPosition
+    executionType?: RequestExecutionType
     allowAccountSwitch?: boolean
     skipFocus?: boolean
   }
 }
+
 type RequestsControllerBuildRequestAction = {
   type: 'REQUESTS_CONTROLLER_BUILD_REQUEST'
   params: BuildRequest
@@ -287,6 +284,10 @@ type RequestsControllerResolveUserRequestAction = {
 type RequestsControllerRejectUserRequestAction = {
   type: 'REQUESTS_CONTROLLER_REJECT_USER_REQUEST'
   params: { err: string; id: UserRequest['id'] }
+}
+type RequestsControllerRejectCallFromUserRequestAction = {
+  type: 'REQUESTS_CONTROLLER_REJECT_CALL_FROM_USER_REQUEST'
+  params: { callId: string }
 }
 type RequestsControllerSwapAndBridgeActiveRouteBuildNextUserRequestAction = {
   type: 'REQUESTS_CONTROLLER_SWAP_AND_BRIDGE_ACTIVE_ROUTE_BUILD_NEXT_USER_REQUEST'
@@ -353,7 +354,7 @@ type PortfolioControllerCheckToken = {
 type MainControllerSignAccountOpInitAction = {
   type: 'MAIN_CONTROLLER_SIGN_ACCOUNT_OP_INIT'
   params: {
-    actionId: AccountOpAction['id']
+    requestId: CallsUserRequest['id']
   }
 }
 type MainControllerSignAccountOpDestroyAction = {
@@ -612,16 +613,16 @@ type SwapAndBridgeControllerDestroySignAccountOp = {
   type: 'SWAP_AND_BRIDGE_CONTROLLER_DESTROY_SIGN_ACCOUNT_OP'
 }
 type SwapAndBridgeControllerOpenSigningActionWindow = {
-  type: 'SWAP_AND_BRIDGE_CONTROLLER_OPEN_SIGNING_ACTION_WINDOW'
+  type: 'SWAP_AND_BRIDGE_CONTROLLER_OPEN_SIGNING_REQUEST_WINDOW'
 }
 type OpenSigningActionWindow = {
-  type: 'OPEN_SIGNING_ACTION_WINDOW'
+  type: 'OPEN_SIGNING_REQUEST_WINDOW'
   params: {
     type: 'swapAndBridge' | 'transfer'
   }
 }
 type CloseSigningActionWindow = {
-  type: 'CLOSE_SIGNING_ACTION_WINDOW'
+  type: 'CLOSE_SIGNING_REQUEST_WINDOW'
   params: {
     type: 'swapAndBridge' | 'transfer'
   }
@@ -647,35 +648,28 @@ type TransferControllerShouldSkipTransactionQueuedModal = {
   type: 'TRANSFER_CONTROLLER_SHOULD_SKIP_TRANSACTION_QUEUED_MODAL'
   params: { shouldSkip: boolean }
 }
-type ActionsControllerRemoveFromActionsQueue = {
-  type: 'ACTIONS_CONTROLLER_REMOVE_FROM_ACTIONS_QUEUE'
-  params: { id: ActionFromActionsQueue['id']; shouldOpenNextAction: boolean }
-}
-type ActionsControllerFocusActionWindow = {
-  type: 'ACTIONS_CONTROLLER_FOCUS_ACTION_WINDOW'
+
+type RequestsControllerFocusRequestWindow = {
+  type: 'REQUESTS_CONTROLLER_FOCUS_REQUEST_WINDOW'
 }
 
-type ActionsControllerMakeAllActionsActive = {
-  type: 'ACTIONS_CONTROLLER_MAKE_ALL_ACTIONS_ACTIVE'
-}
-
-type ActionsControllerSetCurrentActionById = {
-  type: 'ACTIONS_CONTROLLER_SET_CURRENT_ACTION_BY_ID'
+type RequestsControllerSetCurrentRequestById = {
+  type: 'REQUESTS_CONTROLLER_SET_CURRENT_REQUEST_BY_ID'
   params: {
-    actionId: ActionFromActionsQueue['id']
+    requestId: UserRequest['id']
   }
 }
 
-type ActionsControllerSetCurrentActionByIndex = {
-  type: 'ACTIONS_CONTROLLER_SET_CURRENT_ACTION_BY_INDEX'
+type RequestsControllerSetCurrentRequestByIndex = {
+  type: 'REQUESTS_CONTROLLER_SET_CURRENT_REQUEST_BY_INDEX'
   params: {
     index: number
-    params?: OpenActionWindowParams
+    params?: OpenRequestWindowParams
   }
 }
 
-type ActionsControllerSetWindowLoaded = {
-  type: 'ACTIONS_CONTROLLER_SET_WINDOW_LOADED'
+type RequestsControllerSetWindowLoaded = {
+  type: 'REQUESTS_CONTROLLER_SET_WINDOW_LOADED'
 }
 
 type AddressBookControllerAddContact = {
@@ -797,14 +791,14 @@ export type Action =
   | MainControllerAccountPickerAddAccounts
   | MainControllerAddAccounts
   | MainControllerRemoveAccount
+  | RequestsControllerAddCallsUserRequestAction
   | ProvidersControllerToggleBatching
-  | RequestsControllerAddUserRequestAction
   | MainControllerLockAction
   | RequestsControllerBuildRequestAction
   | RequestsControllerRemoveUserRequestAction
   | RequestsControllerResolveUserRequestAction
   | RequestsControllerRejectUserRequestAction
-  | MainControllerRejectSignAccountOpCall
+  | RequestsControllerRejectCallFromUserRequestAction
   | MainControllerRejectAccountOpAction
   | MainControllerSignMessageInitAction
   | MainControllerSignMessageResetAction
@@ -865,12 +859,10 @@ export type Action =
   | RequestsControllerSwapAndBridgeActiveRouteBuildNextUserRequestAction
   | SwapAndBridgeControllerUpdateQuoteAction
   | SwapAndBridgeControllerRemoveActiveRouteAction
-  | ActionsControllerRemoveFromActionsQueue
-  | ActionsControllerFocusActionWindow
-  | ActionsControllerMakeAllActionsActive
-  | ActionsControllerSetCurrentActionById
-  | ActionsControllerSetCurrentActionByIndex
-  | ActionsControllerSetWindowLoaded
+  | RequestsControllerFocusRequestWindow
+  | RequestsControllerSetCurrentRequestById
+  | RequestsControllerSetCurrentRequestByIndex
+  | RequestsControllerSetWindowLoaded
   | AddressBookControllerAddContact
   | AddressBookControllerRenameContact
   | AddressBookControllerRemoveContact

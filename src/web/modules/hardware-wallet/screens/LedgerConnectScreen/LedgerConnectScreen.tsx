@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { View } from 'react-native'
 
 import AmbireDevice from '@common/assets/svg/AmbireDevice'
@@ -54,9 +54,9 @@ const LedgerConnectScreen = () => {
       setAuthorizeButtonPressed(true)
 
       const params = new URLSearchParams(route?.search)
-      const actionId = params.get('actionId')
-      if (actionId) {
-        dispatch({ type: 'ACTIONS_CONTROLLER_SET_CURRENT_ACTION_BY_ID', params: { actionId } })
+      const requestId = params.get('requestId')
+      if (requestId) {
+        dispatch({ type: 'REQUESTS_CONTROLLER_SET_CURRENT_REQUEST_BY_ID', params: { requestId } })
         await closeCurrentWindow()
       } else {
         dispatch({ type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LEDGER' })

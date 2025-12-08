@@ -4,7 +4,7 @@ import { View } from 'react-native'
 
 import { Statuses } from '@ambire-common/interfaces/eventEmitter'
 import { AddNetworkRequestParams, Network, NetworkFeature } from '@ambire-common/interfaces/network'
-import { DappUserRequest } from '@ambire-common/interfaces/userRequest'
+import { UserRequest } from '@ambire-common/interfaces/userRequest'
 import ManifestFallbackIcon from '@common/assets/svg/ManifestFallbackIcon'
 import Alert from '@common/components/Alert'
 import NetworkIcon from '@common/components/NetworkIcon'
@@ -38,7 +38,7 @@ type AddChainProps = {
   rpcUrlIndex: number
   resolveButtonText: string
   existingNetwork: Network | null | undefined
-  userRequest: DappUserRequest | undefined
+  userRequest: UserRequest | undefined
 }
 
 const AddChain = ({
@@ -200,14 +200,14 @@ const AddChain = ({
                 ]}
               >
                 <NetworkDetails
-                  name={networkDetails.name || userRequest?.action?.params?.[0]?.chainName}
+                  name={networkDetails.name || userRequest?.meta?.params?.[0]?.chainName}
                   iconUrls={networkDetails?.iconUrls || []}
                   chainId={networkDetails.chainId}
                   rpcUrls={networkDetails.rpcUrls}
                   selectedRpcUrl={rpcUrls[rpcUrlIndex]}
                   nativeAssetSymbol={networkDetails.nativeAssetSymbol}
                   nativeAssetName={networkDetails.nativeAssetName}
-                  explorerUrl={networkDetails.explorerUrl}
+                  explorerUrl={networkDetails.explorerUrl || '-'}
                   style={{
                     backgroundColor:
                       themeType === THEME_TYPES.DARK
