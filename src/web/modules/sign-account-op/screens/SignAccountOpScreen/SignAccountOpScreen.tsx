@@ -398,7 +398,7 @@ const SignAccountOpScreen = () => {
                 isEstimationComplete={!!signAccountOpState?.isInitialized && !!network}
               />
             )}
-            {isViewOnly && <NoKeysToSignAlert style={spacings.ptTy} />}
+            {isViewOnly && <NoKeysToSignAlert />}
           </ScrollView>
         </TabLayoutWrapperMainContent>
       </TabLayoutContainer>
