@@ -1,12 +1,8 @@
 import React, { FC, useMemo } from 'react'
 
 import LockIcon from '@legends/common/assets/svg/LockIcon'
-import ZapIcon from '@legends/common/assets/svg/ZapIcon'
-import useCharacterContext from '@legends/hooks/useCharacterContext'
 import smokeAndLights from '@legends/modules/leaderboard/screens/Leaderboard/Smoke-and-lights.png'
-import { CARD_PREDEFINED_ID } from '@legends/modules/legends/constants'
 import { CardFromResponse, CardStatus, CardType } from '@legends/modules/legends/types'
-import { isMatchingPredefinedId } from '@legends/modules/legends/utils/cards'
 
 import styles from './CardContent.module.scss'
 import CompletedRibbon from './CompletedRibbon'
@@ -17,7 +13,6 @@ type Props = Pick<
 > & {
   openActionModal: () => void
   disabled: boolean
-  treasureChestStreak: number | undefined
   nonConnectedAcc: boolean
 }
 
@@ -33,17 +28,11 @@ const CardContent: FC<Props> = ({
   xp,
   imageV2,
   card,
-  action,
   openActionModal,
   disabled,
-  treasureChestStreak,
-  nonConnectedAcc,
-  id
+  nonConnectedAcc
 }) => {
-  const { isCharacterNotMinted } = useCharacterContext()
-  const isCompleted =
-    card.status === CardStatus.completed || (id === 'nft' && !isCharacterNotMinted && !disabled)
-  const isTreasureChestCard = isMatchingPredefinedId(action, CARD_PREDEFINED_ID.chest)
+  const isCompleted = card.status === CardStatus.completed
 
   const FIXED_CARD_FREQUENCY = {
     ...CARD_FREQUENCY,
@@ -75,17 +64,18 @@ const CardContent: FC<Props> = ({
           <span className={styles.xp}>{Math.max(...xp.map((x) => x.to || 0))}</span>
         </>
       )
-    if (xp[0].from !== xp[0].to)
+    if (xp && xp[0] && xp[0].from !== xp[0].to)
       return (
         <>
           Up to <br />
           <span className={styles.xp}>{xp[0].to}</span>
         </>
       )
+
     return (
       <>
         Earn <br />
-        <span className={styles.xp}>{xp[0].to}</span>
+        <span className={styles.xp}>{xp?.[0]?.to}</span>
       </>
     )
   }, [xp])
@@ -109,13 +99,6 @@ const CardContent: FC<Props> = ({
       {isCompleted && !nonConnectedAcc ? (
         <div className={styles.overlay}>
           <CompletedRibbon className={styles.overlayIcon} />
-          {/* <div className={styles.overlayTitle}>
-            Completed
-            {isMatchingPredefinedId(action, CARD_PREDEFINED_ID.wheelOfFortune) ||
-            isMatchingPredefinedId(action, CARD_PREDEFINED_ID.chest) ? (
-              <MidnightTimer className={styles.overlayText} />
-            ) : null}
-          </div> */}
         </div>
       ) : null}
       {disabled && (
@@ -140,23 +123,13 @@ const CardContent: FC<Props> = ({
 
         <div className={styles.actionAndRewards}>
           <div className={styles.rewardFrequencyWrapper}>
-            {isTreasureChestCard && treasureChestStreak && !nonConnectedAcc ? (
-              <div className={styles.streak}>
-                <ZapIcon width={14} height={19} />
-                <p className={styles.streakNumber}>{treasureChestStreak}</p>
-                <p className={styles.streakLabel}>
-                  {treasureChestStreak === 1 ? 'Day' : 'Days'} Streak
-                </p>
-              </div>
-            ) : (
-              <span
-                className={`${styles.rewardFrequency} ${
-                  styles[`rewardFrequency${FIXED_CARD_FREQUENCY[card.type]}`]
-                }`}
-              >
-                {CARD_FREQUENCY[card.type]}
-              </span>
-            )}
+            <span
+              className={`${styles.rewardFrequency} ${
+                styles[`rewardFrequency${FIXED_CARD_FREQUENCY[card.type]}`]
+              }`}
+            >
+              {CARD_FREQUENCY[card.type]}
+            </span>
           </div>
           <div>
             <div className={styles.rewardTitle}>

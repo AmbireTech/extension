@@ -7,24 +7,24 @@
 */
 
 // Theme Colors
-$mainText:#f4f4f7;
+$mainText: #f4f4f7;
 $secondaryText: #8d93ac;
 $icons: #6a6f86;
-$hover: #393C48;
-$interactiveElement: #292B34;
+$hover: #393c48;
+$interactiveElement: #292b34;
 $cardBg: #848486;
 $mainBg: #101114;
 
 // Neutrals
-$neutral-100: #F4F4F7;
-$neutral-200: #E8E8E9;
-$neutral-300: #CADBEB;
-$neutral-400: #8D93AC;
-$neutral-500: #7d84A4;
-$neutral-600: #6A6F86;
-$neutral-700: #191A1F;
+$neutral-100: #f4f4f7;
+$neutral-200: #e8e8e9;
+$neutral-300: #cadbeb;
+$neutral-400: #8d93ac;
+$neutral-500: #7d84a4;
+$neutral-600: #6a6f86;
+$neutral-700: #191a1f;
 $neutral-800: #101114;
-$neutral-900: #23242B;
+$neutral-900: #23242b;
 
 // Purple Shades
 $purple-100: #f0ebff;
@@ -35,7 +35,7 @@ $purple-500: #855dff;
 $purple-600: #6735ff;
 $purple-700: #5e30e8;
 $purple-800: #4926b5;
-$purple-850: #6C2B99;
+$purple-850: #6c2b99;
 $purple-900: #391d8c;
 $purple-1000: #2b166b;
 
@@ -49,11 +49,11 @@ $blue-200: #cbcdd9;
 // $blue-400: #a4a9bd;
 // $blue-500: #8d93ac;
 // $blue-600: #80869d;
-$blue-700: #005BA3;
-$blue-800: #0D6D86;
+$blue-700: #005ba3;
+$blue-800: #0d6d86;
 // $blue-800: #4e515f;
 // $blue-900: #3b3e48;
-$teal: #1B709B;
+$teal: #1b709b;
 
 // Red Shades
 $red-50: #fbe6ef;
@@ -100,12 +100,12 @@ $quinaryText: $neutral-300;
 
 $primaryBackground: $neutral-800;
 $primaryBackground200: rgba($neutral-600, 0.2);
-$primaryBackground300: #26272C;
+$primaryBackground300: #26272c;
 $secondaryBackground: $neutral-700;
-$tertiaryBackground:$neutral-700;
+$tertiaryBackground: $neutral-700;
 
-$whiteText: #FFFFFF;
-$purpleText: #A670FF;
+$whiteText: #ffffff;
+$purpleText: #a670ff;
 $blackText: #000000;
 
 $accent: $purple-600;
@@ -116,11 +116,11 @@ $goldDecorative: $yellow-300;
 $backdrop: rgba($blackText, 0.5);
 
 // One time used colors
-$hover-dark: #373B43;
-$charcoal: #1E1F24;
+$hover-dark: #373b43;
+$charcoal: #1e1f24;
 $blackText: #000000;
 $backdrop: rgba($blackText, 0.5);
-$midnightDark: #17191E;
+$midnightDark: #17191e;
 
 $primaryBorder: $hover-dark;
 
@@ -137,7 +137,7 @@ $silverBackground: #e8e6e3;
 $silverText: #686663;
 $goldBackground: #f8e3b7;
 $goldText: #b67d02;
-$yellowText: #F7BA2F;
+$yellowText: #f7ba2f;
 
 $primaryBadgeBackground: #2c567d;
 $primaryBadgeDecorative: #113a60;
@@ -183,6 +183,6 @@ $primaryFont: 'FunnelDisplay', sans-serif;
 $secondaryFont: 'FunnelDisplay', sans-serif;
 
 // Other
-$primaryBorderRadius: 0.375rem;
+$primaryBorderRadius: 0.5rem;
 $secondaryBorderRadius: 0.75rem;
 $tertiaryBorderRadius: 2rem;

@@ -21,8 +21,8 @@ type Props = {
 
 const NAVIGATION_LINKS = [
   { to: LEGENDS_ROUTES.home, text: 'Home', icon: faCircleUser },
-  { to: LEGENDS_ROUTES.quests, text: 'Quests', icon: faMedal },
   { to: LEGENDS_ROUTES.leaderboard, text: 'Leaderboard', icon: faTrophy },
+  { to: LEGENDS_ROUTES.rewardsPool, text: 'Rewards Pool', icon: faMedal },
   { to: LEGENDS_ROUTES.wallet, text: '$WALLET', icon: faPiggyBank },
   {
     to: 'https://codex.ambire.com/',

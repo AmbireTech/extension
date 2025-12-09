@@ -30,7 +30,6 @@
       align-items: center;
       gap: 1.125rem;
 
-
       .disconnectIcon {
         cursor: pointer;
       }
@@ -52,12 +51,6 @@
     .addressSkeleton {
       height: 19.6px;
       width: 5.25rem;
-    }
-    .levelAndRank {
-      text-align: left;
-      font-size: 0.8125rem;
-      color: $neutral-400;
-      font-weight: 400;
     }
   }
 }

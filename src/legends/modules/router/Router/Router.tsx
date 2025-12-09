@@ -4,16 +4,12 @@ import { createHashRouter, Navigate, RouterProvider } from 'react-router-dom'
 import { DomainsContextProvider } from '@common/contexts/domainsContext'
 import ErrorPage from '@legends/components/ErrorPage'
 import PrivateRoute from '@legends/components/PrivateRoute'
-import { ActivityContextProvider } from '@legends/contexts/activityContext'
 import { DataPollingContextProvider } from '@legends/contexts/dataPollingContext'
 import { LeaderboardContextProvider } from '@legends/contexts/leaderboardContext'
 import { LegendsContextProvider } from '@legends/contexts/legendsContext'
-import { MidnightTimerContextProvider } from '@legends/contexts/midnightTimerContext'
 import { PortfolioControllerStateProvider } from '@legends/contexts/portfolioControllerStateContext'
-import CharacterSelect from '@legends/modules/character/screens/CharacterSelect'
 import Home from '@legends/modules/Home'
 import Leaderboard from '@legends/modules/leaderboard/screens/Leaderboard'
-import Legends from '@legends/modules/legends/screens/Legends'
 import Wallet from '@legends/modules/wallet'
 import * as Sentry from '@sentry/react'
 
@@ -39,17 +35,13 @@ const PrivateArea: FC<{ children: ReactNode }> = ({ children }) => {
 
   return (
     <LeaderboardContextProvider>
-      <ActivityContextProvider>
-        <LegendsContextProvider>
-          <PortfolioControllerStateProvider>
-            <DomainsContextProvider>
-              <DataPollingContextProvider>
-                <MidnightTimerContextProvider>{children}</MidnightTimerContextProvider>
-              </DataPollingContextProvider>
-            </DomainsContextProvider>
-          </PortfolioControllerStateProvider>
-        </LegendsContextProvider>
-      </ActivityContextProvider>
+      <LegendsContextProvider>
+        <PortfolioControllerStateProvider>
+          <DomainsContextProvider>
+            <DataPollingContextProvider>{children}</DataPollingContextProvider>
+          </DomainsContextProvider>
+        </PortfolioControllerStateProvider>
+      </LegendsContextProvider>
     </LeaderboardContextProvider>
   )
 }
@@ -67,10 +59,6 @@ const router = sentryCreateHashRouter([
           </PrivateArea>
         ),
         children: [
-          {
-            path: LEGENDS_ROUTES.quests,
-            element: <Legends />
-          },
           {
             path: LEGENDS_ROUTES.leaderboard,
             element: <Leaderboard />
