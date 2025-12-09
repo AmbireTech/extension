@@ -7,6 +7,7 @@ import useAccountContext from '@legends/hooks/useAccountContext'
 import FaqSection from './components/FaqSection'
 import LandingSection from './components/LandingSection'
 import MobileDisclaimerModal from './components/MobileDisclaimerModal'
+import UserDataSection from './components/UserDataSection'
 
 const Character = () => {
   const { v1Account, connectedAccount } = useAccountContext()
@@ -23,11 +24,13 @@ const Character = () => {
       {v1Account && (
         <V1AccountBannerModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
       )}
-      {!connectedAccount && (
+      {!connectedAccount ? (
         <>
           <LandingSection nonV2acc={!!v1Account} />
           <MobileDisclaimerModal />
         </>
+      ) : (
+        <UserDataSection />
       )}
 
       {(!connectedAccount || !v1Account) && <FaqSection />}
