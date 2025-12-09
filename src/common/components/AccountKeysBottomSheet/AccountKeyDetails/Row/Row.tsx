@@ -2,8 +2,8 @@ import React, { FC } from 'react'
 import { View } from 'react-native'
 
 import InformationIcon from '@common/assets/svg/InformationIcon'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
-import Tooltip from '@common/components/Tooltip'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -41,9 +41,11 @@ const Row: FC<Props> = ({ rowKey, value, tooltip, suffix }) => {
               width={14}
               height={14}
               style={styles.icon}
-              dataSet={{ tooltipId: `tooltip-for-${rowKey}`, tooltipContent: tooltip }}
+              dataSet={createGlobalTooltipDataSet({
+                id: `tooltip-for-${rowKey}`,
+                content: tooltip
+              })}
             />
-            <Tooltip id={`tooltip-for-${rowKey}`} />
           </>
         )}
         {suffix && (

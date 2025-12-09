@@ -1,3 +1,4 @@
+/* eslint-disable no-param-reassign */
 /* eslint-disable no-console */
 /* eslint-disable no-await-in-loop */
 /* eslint-disable no-restricted-syntax */
@@ -151,7 +152,9 @@ const IGNORED_ERROR_SUBSTRINGS = ['failed to fetch', 'network error']
 const checkSubstrings = (text: string, substrings: string[]) =>
   substrings.some((substring) => text.toLowerCase().includes(substring))
 
-const isIgnoredError = (message?: string, shortMessage?: string) => {
+const isIgnoredError = (error?: any) => {
+  const { message, shortMessage } = error || {}
+
   return (
     (!!message && checkSubstrings(message, IGNORED_ERROR_SUBSTRINGS)) ||
     (!!shortMessage && checkSubstrings(shortMessage, IGNORED_SHORT_MESSAGE_SUBSTRINGS))
@@ -159,11 +162,16 @@ const isIgnoredError = (message?: string, shortMessage?: string) => {
 }
 
 const getErrorType = (error: any) => {
-  const { statusCode, shortMessage, message } = error
+  const { statusCode, message, isProviderInvictus } = error
 
   if (typeof statusCode === 'number') {
     if (statusCode >= 200 && statusCode < 300) {
       return '2xx'
+    }
+
+    if (typeof isProviderInvictus === 'boolean' && !isProviderInvictus) {
+      // No need to report custom RPC non-2xx errors
+      return 'ignored-error'
     }
 
     return 'non-2xx'
@@ -173,7 +181,7 @@ const getErrorType = (error: any) => {
 
   // Ethers doesn't return a status code for 2XX responses, so we treat undefined as 2XX
   // and have handling just in case statusCode is explicitly set to 200-299
-  return isIgnoredError(message, shortMessage) ? 'ignored-error' : '2xx'
+  return isIgnoredError(error) ? 'ignored-error' : '2xx'
 }
 
 let isInitialized = false
@@ -201,33 +209,41 @@ if (CONFIG.SENTRY_DSN_BROWSER_EXTENSION) {
         }
 
         // Always delete breadcrumbs to reduce event size.
-        // eslint-disable-next-line no-param-reassign
         delete event.breadcrumbs
 
         if (errorType !== '2xx') {
           // We don't care about any data for non-2XX errors
           // We only want to know how many of them happened and group them accordingly
 
-          // eslint-disable-next-line no-param-reassign
           delete event.user
-          // eslint-disable-next-line no-param-reassign
           delete event.extra
-          // eslint-disable-next-line no-param-reassign
           delete event.contexts
         }
 
-        // eslint-disable-next-line no-param-reassign
         event.extra = {
           ...(event.extra || {}),
           providerUrl: error.providerUrl
         }
 
-        // eslint-disable-next-line no-param-reassign
         event.fingerprint = [
           '{{ default }}',
           error.isProviderInvictus ? error.providerUrl || 'invictus' : 'custom-rpc',
           errorType
         ]
+
+        if (error.isProviderInvictus) {
+          event.tags = {
+            ...(event.tags || {}),
+            // Allows us to filter issues by provider in Sentry's UI
+            providerUrl: error.providerUrl || 'should-never-be-undefined',
+            providerType: 'invictus'
+          }
+        } else {
+          event.tags = {
+            ...(event.tags || {}),
+            providerType: 'custom-rpc'
+          }
+        }
       }
 
       // We don't want to miss errors that occur before the controllers are initialized
@@ -328,9 +344,25 @@ const init = async () => {
   const trezorCtrl = new TrezorController(windowManager as UiManager['window'])
   const latticeCtrl = new LatticeController()
 
-  // Extension-specific additional trackings
+  // Skip adding custom headers and URL modifications for 3rd party URLs
+  // (only internal Ambire APIs need the x-app-source header and tracking params)
   // @ts-ignore
   const fetchWithAnalytics: Fetch = (url, init) => {
+    const urlString = url.toString()
+    try {
+      const urlObj = new URL(urlString)
+      if (!urlObj.hostname.endsWith('.ambire.com') && urlObj.hostname !== 'ambire.com') {
+        // @ts-ignore
+        return fetch(url, init)
+      }
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error(error)
+      // If URL parsing fails, skip analytics for safety
+      // @ts-ignore
+      return fetch(url, init)
+    }
+
     // As of v4.26.0, custom extension-specific headers. TBD for the other apps.
     const initWithCustomHeaders = init || { headers: { 'x-app-source': '' } }
     initWithCustomHeaders.headers = initWithCustomHeaders.headers || {}
@@ -700,8 +732,7 @@ const init = async () => {
   // listen for messages from UI
   browser.runtime.onConnect.addListener(async (port: Port) => {
     const [name, id] = port.name.split(':') as [Port['name'], Port['id']]
-    if (['popup', 'tab', 'action-window'].includes(name)) {
-      const isAlreadyAdded = pm.ports.some((p) => p.id === id)
+    if (['popup', 'tab', 'request-window'].includes(name)) {
       // eslint-disable-next-line no-param-reassign
       port.id = id || nanoid()
       // eslint-disable-next-line no-param-reassign
@@ -773,18 +804,13 @@ const init = async () => {
           // Example: the user has the dashboard opened in tab, opens the popup
           // and closes it immediately.
           if (disconnectedPort.name === 'popup') mainCtrl.portfolio.forceEmitUpdate()
-          if (disconnectedPort.name === 'tab' || disconnectedPort.name === 'action-window') {
+          if (disconnectedPort.name === 'tab' || disconnectedPort.name === 'request-window') {
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             ledgerCtrl.cleanUp()
             trezorCtrl.cleanUp()
           }
         })
       })
-
-      // ignore executions if the port was already added (identified by id)
-      if (isAlreadyAdded) return
-
-      mainCtrl.phishing.updateIfNeeded()
     }
   })
 }

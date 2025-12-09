@@ -12,6 +12,7 @@ import {
 } from 'ethers'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
+import { EIP7702Auth } from '@ambire-common/consts/7702'
 import { AMBIRE_PAYMASTER, ERC_4337_ENTRYPOINT } from '@ambire-common/consts/deploy'
 import { Fetch } from '@ambire-common/interfaces/fetch'
 import { Network } from '@ambire-common/interfaces/network'
@@ -28,6 +29,8 @@ import { humanizeAccountOp } from '@ambire-common/libs/humanizer'
 import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import { parseLogs } from '@ambire-common/libs/userOperation/userOperation'
 import { resolveAssetInfo } from '@ambire-common/services/assetInfo'
+import { BundlerSwitcher } from '@ambire-common/services/bundlers/bundlerSwitcher'
+import { BundlerTransactionReceipt } from '@ambire-common/services/bundlers/types'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import {
@@ -37,13 +40,10 @@ import {
 import { ActiveStepType, FinalizedStatusType } from '@benzin/screens/BenzinScreen/interfaces/steps'
 import { UserOperation } from '@benzin/screens/BenzinScreen/interfaces/userOperation'
 
-import { EIP7702Auth } from '@ambire-common/consts/7702'
-import { BundlerSwitcher } from '@ambire-common/services/bundlers/bundlerSwitcher'
-import { BundlerTransactionReceipt } from '@ambire-common/services/bundlers/types'
 import { decodeUserOp, entryPointTxnSplit, reproduceCallsFromTxn } from './utils/reproduceCalls'
 
-const REFETCH_TIME = 3000 // 4 seconds
-const REFETCH_TIME_ETHEREUM = 6000 // 4 seconds
+const REFETCH_TIME = 3000 // 3 seconds
+const REFETCH_TIME_ETHEREUM = 12000 // 12 seconds
 
 export type FeePaidWith = {
   address: string
@@ -132,6 +132,14 @@ const parseHumanizer = (humanizedCalls: IrCall[]): IrCall[] => {
   })
   return finalParsedCalls
 }
+
+/**
+ * When enabling the entry point, hide the activator call from benzina
+ * to reduce the panic caused to the user as this is an internal, routine call
+ * we need to make, not one the user has requested
+ */
+const filterEntryPointAuthCall = (call: IrCall) =>
+  !call.data.endsWith('0000000000000000000000000000000000000000000000000000000000007171')
 
 const useSteps = ({
   txnId,
@@ -348,7 +356,7 @@ const useSteps = ({
         )
         setTxnReceipt({
           originatedFrom: receipt.sender,
-          actualGasCost: BigInt(receipt.actualGasUsed) * BigInt(receipt.actualGasCost),
+          actualGasCost: BigInt(receipt.actualGasCost),
           blockNumber: BigInt(receipt.receipt.blockNumber)
         })
 
@@ -711,16 +719,15 @@ const useSteps = ({
       ({ tokenInfo }) => {
         if (!tokenInfo || (!amount && !isSponsored)) return
         const { decimals, priceIn } = tokenInfo
-        const price = priceIn.length ? priceIn[0].price : null
+        const price = priceIn.length && priceIn[0] ? priceIn[0].price : null
 
         const fee = parseFloat(formatUnits(amount, decimals))
 
         if (!isMounted) return
-
         setFeePaidWith({
           amount: formatDecimals(fee),
           symbol: tokenInfo.symbol,
-          usdValue: price ? formatDecimals(fee * priceIn[0].price, 'value') : '-$',
+          usdValue: price ? formatDecimals(fee * price, 'value') : '-$',
           isErc20: address !== ZeroAddress,
           address: address as string,
           isSponsored,
@@ -751,7 +758,7 @@ const useSteps = ({
     // if we have the extension account op passed, we do not need to
     // wait to show the calls
     if (extensionAccOp) {
-      const humanizedCalls = humanizeAccountOp(extensionAccOp, { network })
+      const humanizedCalls = humanizeAccountOp(extensionAccOp).filter(filterEntryPointAuthCall)
       setCalls(parseHumanizer(humanizedCalls))
       setFrom(extensionAccOp.accountAddr)
       if (extensionAccOp.feeCall) setFeeCall(extensionAccOp.feeCall)
@@ -765,7 +772,9 @@ const useSteps = ({
       txnId &&
       entryPointTxnSplit[txn.data.slice(0, 10)]
     ) {
-      setCalls(entryPointTxnSplit[txn.data.slice(0, 10)](txn, network, txnId))
+      // typescript fixes
+      const getCalls = entryPointTxnSplit[txn.data.slice(0, 10)]
+      if (getCalls) setCalls(getCalls(txn, network, txnId))
       return
     }
 
@@ -786,8 +795,7 @@ const useSteps = ({
         signature: '0x', // irrelevant
         gasFeePayment: null
       }
-      const humanizedCalls = humanizeAccountOp(accountOp, { network })
-
+      const humanizedCalls = humanizeAccountOp(accountOp).filter(filterEntryPointAuthCall)
       setCalls(parseHumanizer(humanizedCalls))
       setFrom(accountOp.accountAddr)
       if (decodedFeeCall) {

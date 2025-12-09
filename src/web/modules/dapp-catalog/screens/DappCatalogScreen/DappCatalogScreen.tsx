@@ -1,3 +1,4 @@
+import Fuse from 'fuse.js'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
@@ -137,23 +138,56 @@ const DappCatalogScreen = () => {
   const { theme, themeType } = useTheme()
   const { maxWidthSize } = useWindowSize()
 
+  const searchableDapps = useMemo(
+    () =>
+      state.dapps.map((dapp) => ({
+        dapp,
+        name: dapp.name.toLowerCase(),
+        url: dapp.url.toLowerCase(),
+        description: dapp.description?.toLowerCase() || ''
+      })),
+    [state.dapps]
+  )
+
   const filteredDapps = useMemo(() => {
     if (!state?.dapps?.length) return []
 
-    return state.dapps.filter((dapp) => {
-      const searchMatch =
-        !debouncedSearch ||
-        dapp.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-        dapp.url.toLowerCase().includes(debouncedSearch.toLowerCase())
+    // Apply search filter with fuse.js if there's a search query
+    let searchFilteredDapps = state.dapps
+    if (debouncedSearch) {
+      const fuse = new Fuse(searchableDapps, {
+        keys: [
+          { name: 'name', weight: 0.7 },
+          { name: 'url', weight: 0.2 },
+          { name: 'description', weight: 0.1 }
+        ],
+        threshold: 0.2, // more strict, better less results than too random
+        ignoreLocation: true,
+        minMatchCharLength: 1
+      })
 
+      const results = fuse.search(debouncedSearch)
+      searchFilteredDapps = results.map((result) => result.item.dapp)
+    }
+
+    // Apply other filters (network, category, favorites, connected)
+    return searchFilteredDapps.filter((dapp) => {
       const networkMatch = !network || dapp.chainIds?.includes(Number(network.chainId))
       const categoryMatch = !category || dapp.category?.toLowerCase() === category.toLowerCase()
       const favoritesMatch = !favoritesSelected || dapp.favorite
       const connectedMatch = !connectedSelected || dapp.isConnected
 
-      return searchMatch && networkMatch && categoryMatch && favoritesMatch && connectedMatch
+      return networkMatch && categoryMatch && favoritesMatch && connectedMatch
     })
-  }, [state.dapps, debouncedSearch, network, category, favoritesSelected, connectedSelected])
+  }, [
+    state.dapps,
+    debouncedSearch,
+    network,
+    category,
+    favoritesSelected,
+    connectedSelected,
+    searchableDapps
+  ])
 
   const handleSetNetworkValue = useCallback(
     (networkOption: SelectValue) => {
@@ -293,7 +327,7 @@ const DappCatalogScreen = () => {
       header={<Header mode="title" withAmbireLogo />}
       withHorizontalPadding={!isPopup}
     >
-      {state.isFetchingAndUpdatingDapps || !state.dapps.length ? (
+      {!state.isReadyToDisplayDapps || !state.dapps.length ? (
         <DappsSkeletonLoader />
       ) : (
         <View style={[flexbox.flex1]}>

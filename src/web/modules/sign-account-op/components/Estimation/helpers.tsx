@@ -38,20 +38,12 @@ const sortFeeOptions = (
   b: FeePaymentOption,
   signAccountOpState: ISignAccountOpController
 ) => {
-  const aId = getFeeSpeedIdentifier(
-    a,
-    signAccountOpState.accountOp.accountAddr,
-    signAccountOpState.rbfAccountOps[a.paidBy]
-  )
+  const aId = getFeeSpeedIdentifier(a, signAccountOpState.accountOp.accountAddr)
   const aSlow = signAccountOpState.feeSpeeds[aId]?.find((speed) => speed.type === 'slow')
   if (!aSlow) return 1
   const aCanCoverFee = a.availableAmount >= aSlow.amount
 
-  const bId = getFeeSpeedIdentifier(
-    b,
-    signAccountOpState.accountOp.accountAddr,
-    signAccountOpState.rbfAccountOps[b.paidBy]
-  )
+  const bId = getFeeSpeedIdentifier(b, signAccountOpState.accountOp.accountAddr)
   const bSlow = signAccountOpState.feeSpeeds[bId]?.find((speed) => speed.type === 'slow')
   if (!bSlow) return -1
   const bCanCoverFee = b.availableAmount >= bSlow.amount
@@ -81,11 +73,7 @@ const mapFeeOptions = (
 
   const gasTankKey = feeOption.token.flags.onGasTank ? 'gasTank' : ''
   const speedCoverage: FeeSpeed[] = []
-  const id = getFeeSpeedIdentifier(
-    feeOption,
-    signAccountOpState.accountOp.accountAddr,
-    signAccountOpState.rbfAccountOps[feeOption.paidBy]
-  )
+  const id = getFeeSpeedIdentifier(feeOption, signAccountOpState.accountOp.accountAddr)
 
   signAccountOpState.feeSpeeds[id]?.forEach((speed) => {
     if (feeOption.availableAmount >= speed.amount) speedCoverage.push(speed.type)

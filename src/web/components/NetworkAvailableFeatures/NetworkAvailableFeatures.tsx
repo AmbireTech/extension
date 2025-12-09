@@ -4,12 +4,11 @@ import { Interface } from 'ethers'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
+import { v4 as uuidv4 } from 'uuid'
 
 import DeployHelper from '@ambire-common/../contracts/compiled/DeployHelper.json'
-import { Session } from '@ambire-common/classes/session'
 import { AMBIRE_ACCOUNT_FACTORY, SINGLETON } from '@ambire-common/consts/deploy'
 import { NetworkFeature } from '@ambire-common/interfaces/network'
-import { SignUserRequest } from '@ambire-common/interfaces/userRequest'
 import { isSmartAccount } from '@ambire-common/libs/account/account'
 import { getRpcProvider } from '@ambire-common/services/provider'
 import CheckIcon from '@common/assets/svg/CheckIcon'
@@ -17,10 +16,10 @@ import ErrorFilledIcon from '@common/assets/svg/ErrorFilledIcon'
 import InformationIcon from '@common/assets/svg/InformationIcon'
 import WarningFilledIcon from '@common/assets/svg/WarningFilledIcon'
 import Button from '@common/components/Button'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
-import Tooltip from '@common/components/Tooltip'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
@@ -44,7 +43,7 @@ type Props = {
   chainId?: bigint
   features: NetworkFeature[] | undefined
   withRetryButton?: boolean
-  handleRetry?: () => void
+  handleRetryWithDifferentRpcUrl?: () => void
   hideBackgroundAndBorders?: boolean
   titleSize?: number
   responsiveSizeMultiplier?: number
@@ -55,7 +54,7 @@ const NetworkAvailableFeatures = ({
   chainId,
   features,
   withRetryButton,
-  handleRetry,
+  handleRetryWithDifferentRpcUrl,
   hideBackgroundAndBorders = false,
   titleSize,
   responsiveSizeMultiplier = 1,
@@ -66,7 +65,7 @@ const NetworkAvailableFeatures = ({
   const { pathname } = useRoute()
   const { account } = useSelectedAccountControllerState()
   const { networks } = useNetworksControllerState()
-  const { dispatch, windowId } = useBackgroundService()
+  const { dispatch } = useBackgroundService()
   const { addToast } = useToast()
   const [checkedDeploy, setCheckedDeploy] = useState<boolean>(false)
 
@@ -91,7 +90,9 @@ const NetworkAvailableFeatures = ({
         }
         provider.destroy()
       })
-      .catch(() => {
+      .catch((error) => {
+        // eslint-disable-next-line no-console
+        console.error(error)
         provider.destroy()
       })
 
@@ -127,30 +128,26 @@ const NetworkAvailableFeatures = ({
       }
     ]
     const singletonInterface = new Interface(singletonABI)
-    const txn = {
-      kind: 'calls' as const,
-      calls: [
-        {
-          to: SINGLETON,
-          value: 0n,
-          data: singletonInterface.encodeFunctionData('deploy', [bytecode, salt])
+
+    dispatch({
+      type: 'REQUESTS_CONTROLLER_ADD_CALLS_USER_REQUEST',
+      params: {
+        userRequestParams: {
+          calls: [
+            {
+              to: SINGLETON,
+              value: 0n,
+              data: singletonInterface.encodeFunctionData('deploy', [bytecode, salt])
+            }
+          ],
+          meta: {
+            chainId: selectedNetwork.chainId,
+            accountAddr: account.addr as string
+          }
         }
-      ]
-    }
-
-    const userRequest: SignUserRequest = {
-      id: new Date().getTime(),
-      session: new Session({ windowId }),
-      meta: {
-        isSignAction: true,
-        chainId: selectedNetwork.chainId,
-        accountAddr: account.addr as string
-      },
-      action: txn
-    }
-
-    dispatch({ type: 'REQUESTS_CONTROLLER_ADD_USER_REQUEST', params: { userRequest } })
-  }, [addToast, dispatch, account, selectedNetwork, windowId])
+      }
+    })
+  }, [addToast, dispatch, account, selectedNetwork])
 
   const shouldRenderRetryButton = useMemo(
     () => !!features && !!features.find((f) => f.id === 'flagged') && withRetryButton,
@@ -239,10 +236,10 @@ const NetworkAvailableFeatures = ({
                           <InformationIcon
                             width={iconSize}
                             height={iconSize}
-                            dataSet={{
-                              tooltipId: 'feature-message-tooltip',
-                              tooltipContent: feature.msg
-                            }}
+                            dataSet={createGlobalTooltipDataSet({
+                              id: 'feature-message-tooltip',
+                              content: feature.msg
+                            })}
                           />
                         </View>
                       </View>
@@ -277,15 +274,12 @@ const NetworkAvailableFeatures = ({
             </Text>
             <Button
               size="small"
-              text={t('Retry')}
+              text={t('Try next RPC URL')}
               style={{ maxHeight: 32 }}
-              onPress={() => {
-                !!handleRetry && handleRetry()
-              }}
+              onPress={handleRetryWithDifferentRpcUrl}
             />
           </View>
         )}
-        <Tooltip id="feature-message-tooltip" />
       </View>
     </Wrapper>
   )

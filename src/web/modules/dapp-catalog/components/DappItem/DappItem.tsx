@@ -9,8 +9,8 @@ import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import StarIcon from '@common/assets/svg/StarIcon'
 import XIcon from '@common/assets/svg/XIcon'
 import Badge from '@common/components/Badge'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
-import Tooltip from '@common/components/Tooltip'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING_TY } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
@@ -48,9 +48,9 @@ const DappItem = (dapp: Dapp) => {
     icon,
     description,
     isConnected,
+    isFeatured,
     favorite,
     blacklisted,
-    isCustom,
     tvl,
     twitter
   } = dapp
@@ -60,11 +60,11 @@ const DappItem = (dapp: Dapp) => {
   const { t } = useTranslation()
   const [hovered, setHovered] = useState(false)
 
-  const [bindAnim, animStyle] = useCustomHover({
+  const [bindAnim, animStyle, isHovered] = useCustomHover({
     property: 'backgroundColor',
     values: {
-      from: blacklisted ? theme.errorBackground : theme.secondaryBackground,
-      to: blacklisted ? theme.errorBackground : theme.tertiaryBackground
+      from: blacklisted === 'BLACKLISTED' ? theme.errorBackground : theme.secondaryBackground,
+      to: blacklisted === 'BLACKLISTED' ? theme.errorBackground : theme.tertiaryBackground
     }
   })
 
@@ -105,13 +105,20 @@ const DappItem = (dapp: Dapp) => {
         onMouseLeave={() => setHovered(false)}
       >
         <AnimatedPressable
-          style={[styles.container, animStyle]}
+          style={[
+            styles.container,
+            isFeatured && {
+              // @ts-ignore
+              boxShadow: `0 ${isHovered ? 2 : 3}px 0 0 ${String(theme.primaryLight80)}`
+            },
+            animStyle
+          ]}
           onPress={() => openInTab({ url })}
           {...bindAnim}
         >
           <View style={[flexbox.directionRow, !!description && spacings.mbTy]}>
             <View style={spacings.mrTy}>
-              {!isCustom && !blacklisted && (
+              {blacklisted === 'VERIFIED' && (
                 <View
                   style={{
                     position: 'absolute',
@@ -120,7 +127,18 @@ const DappItem = (dapp: Dapp) => {
                     zIndex: 1
                   }}
                   // @ts-ignore
-                  dataSet={{ tooltipId: id, tooltipContent: 'Verified app' }}
+                  dataSet={createGlobalTooltipDataSet({
+                    id,
+                    content: t('Verified app'),
+                    delayShow: 250,
+                    border: `1px solid ${theme.successDecorative as string}`,
+                    style: {
+                      fontSize: 12,
+                      backgroundColor: theme.successBackground as string,
+                      padding: SPACING_TY,
+                      color: theme.successDecorative as string
+                    }
+                  })}
                 >
                   <TrustedIcon width={16} height={16} />
                 </View>
@@ -200,7 +218,7 @@ const DappItem = (dapp: Dapp) => {
                       </AnimatedPressable>
                     </View>
                   )}
-                  {!!blacklisted && (
+                  {blacklisted === 'BLACKLISTED' && (
                     <Badge text={t('Blacklisted')} type="error" style={spacings.mrTy} />
                   )}
                 </View>
@@ -223,6 +241,19 @@ const DappItem = (dapp: Dapp) => {
                     />
                   </AnimatedPressable>
                 )}
+                {isFeatured && (
+                  <Badge
+                    text={t('Featured')}
+                    textStyle={{
+                      color: theme.primaryBackground
+                    }}
+                    style={{
+                      ...spacings.mlTy,
+                      backgroundColor: theme.primaryLight80,
+                      borderWidth: 0
+                    }}
+                  />
+                )}
               </View>
               <Text
                 weight="medium"
@@ -239,17 +270,6 @@ const DappItem = (dapp: Dapp) => {
           <Text fontSize={12} appearance="secondaryText" numberOfLines={isConnected ? 2 : 3}>
             {description}
           </Text>
-          <Tooltip
-            id={id}
-            delayShow={500}
-            border={`1px solid ${theme.successDecorative as string}`}
-            style={{
-              fontSize: 12,
-              backgroundColor: theme.successBackground as string,
-              padding: SPACING_TY,
-              color: theme.successDecorative as string
-            }}
-          />
         </AnimatedPressable>
       </div>
       <ManageDapp

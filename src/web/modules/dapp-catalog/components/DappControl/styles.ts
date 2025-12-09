@@ -10,10 +10,19 @@ interface Style {
   currentDApp: ViewStyle
   icon: ImageStyle
   titleWrapper: ViewStyle
+  fallbackWrapper: ViewStyle
 }
 
 const getStyles = (theme: ThemeProps) =>
   StyleSheet.create<Style>({
+    fallbackWrapper: {
+      width: 30,
+      height: 30,
+      borderRadius: 15,
+      backgroundColor: theme.primaryLight80,
+      alignItems: 'center',
+      justifyContent: 'center'
+    },
     currentDApp: {
       ...flexbox.directionRow,
       ...flexbox.alignCenter,

@@ -14,7 +14,6 @@ import NetworkIcon from '@common/components/NetworkIcon'
 import NumberInput from '@common/components/NumberInput'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
-import Tooltip from '@common/components/Tooltip'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
@@ -101,6 +100,7 @@ export const RpcSelectorItem = React.memo(
               fontSize={14}
               appearance={selectedRpcUrl === url ? 'primaryText' : 'secondaryText'}
               numberOfLines={1}
+              style={flexbox.flex1}
             >
               {url}
             </Text>
@@ -152,11 +152,6 @@ const NetworkForm = ({
   const selectedNetwork = useMemo(
     () => allNetworks.find((network) => network.chainId.toString() === selectedChainId.toString()),
     [allNetworks, selectedChainId]
-  )
-
-  const isPredefinedNetwork = useMemo(
-    () => selectedNetwork && selectedNetwork.predefined,
-    [selectedNetwork]
   )
 
   const {
@@ -301,6 +296,8 @@ const NetworkForm = ({
         setValidatingRPC(false)
         clearErrors('rpcUrl')
       } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error(error)
         setValidatingRPC(false)
         setError('rpcUrl', { type: 'custom-error', message: 'Invalid RPC URL' })
       }
@@ -506,12 +503,10 @@ const NetworkForm = ({
 
   const handleRemoveRpcUrl = useCallback(
     (url: string) => {
-      if (
-        isPredefinedNetwork &&
-        allNetworks.filter((n) => n.predefined).find((n) => n.rpcUrls.includes(url))
-      )
+      if (rpcUrls.length <= 1) {
+        addToast('There must be at least one RPC provider', { type: 'error' })
         return
-
+      }
       const filteredRpcUrls = rpcUrls.filter((u) => u !== url)
       if (url === selectedRpcUrl) {
         if (filteredRpcUrls.length) {
@@ -520,7 +515,7 @@ const NetworkForm = ({
       }
       setRpcUrls(filteredRpcUrls)
     },
-    [isPredefinedNetwork, allNetworks, rpcUrls, selectedRpcUrl, handleSelectRpcUrl]
+    [rpcUrls, selectedRpcUrl, addToast, handleSelectRpcUrl]
   )
 
   const handleAddRpcUrl = useCallback(
@@ -697,11 +692,10 @@ const NetworkForm = ({
                         rpcUrlsLength={rpcUrls.length}
                         onPress={handleSelectRpcUrl}
                         shouldShowRemove={
-                          isPredefinedNetwork
-                            ? !allNetworks
-                                .filter((n) => n.predefined)
-                                .find((n) => n.rpcUrls.includes(url))
-                            : true
+                          !!selectedNetwork?.rpcUrls.length &&
+                          selectedNetwork.rpcUrls.length > 1 &&
+                          url !== selectedNetwork?.selectedRpcUrl &&
+                          !url.includes('invictus.ambire.com')
                         }
                         onRemove={handleRemoveRpcUrl}
                       />
@@ -837,7 +831,6 @@ const NetworkForm = ({
           </View>
         </View>
       </View>
-      <Tooltip id="chainId" />
     </>
   )
 }

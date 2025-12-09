@@ -3,20 +3,20 @@ import groupBy from 'lodash/groupBy'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { NativeScrollEvent, View } from 'react-native'
 
-import AccountPickerController from '@ambire-common/controllers/accountPicker/accountPicker'
 import {
   Account as AccountInterface,
   AccountOnPage,
   ImportStatus
 } from '@ambire-common/interfaces/account'
+import { IAccountPickerController } from '@ambire-common/interfaces/accountPicker'
 import WarningFilledIcon from '@common/assets/svg/WarningFilledIcon'
 import Alert from '@common/components/Alert'
 import Badge from '@common/components/Badge'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Pagination from '@common/components/Pagination'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
-import Tooltip from '@common/components/Tooltip'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
@@ -37,9 +37,9 @@ const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }: Nati
 }
 
 type Props = {
-  state: AccountPickerController
+  state: IAccountPickerController
   setPage: (page: number) => void
-  subType: AccountPickerController['subType']
+  subType: IAccountPickerController['subType']
   isLoading: boolean
   lookingForLinkedAccounts: boolean
   children?: any
@@ -132,7 +132,8 @@ const AccountsOnPageList = ({
 
       return filteredAccounts.map((acc, i: number) => {
         const hasBottomSpacing = !(isLastSlot && i === filteredAccounts.length - 1)
-        const isUnused = !acc.account.usedOnNetworks.length
+        const isUnused =
+          Array.isArray(acc.account.usedOnNetworks) && !acc.account.usedOnNetworks.length
         const isSelected = state.selectedAccounts.some(
           (selectedAcc) => selectedAcc.account.addr === acc.account.addr
         )
@@ -259,7 +260,7 @@ const AccountsOnPageList = ({
                   return (
                     <View key={key}>
                       {getAccounts({
-                        accounts: slots[key],
+                        accounts: slots[key] || [],
                         isLastSlot: i === Object.keys(slots).length - 1,
                         slotIndex: 1,
                         byType: ['basic']
@@ -312,21 +313,23 @@ const AccountsOnPageList = ({
                             tooltipText="Linked smart accounts are accounts that were not created with a given key originally, but this key was authorized for that given account on any supported network."
                           />
 
-                          <WarningFilledIcon data-tooltip-id="linked-accounts-warning" />
-                          <Tooltip
-                            id="linked-accounts-warning"
-                            border={`1px solid ${theme.warningDecorative as any}`}
-                            style={{
-                              backgroundColor:
-                                themeType === THEME_TYPES.DARK
-                                  ? theme.warningDecorative
-                                  : (theme.warningBackground as any),
-                              color:
-                                themeType === THEME_TYPES.DARK
-                                  ? theme.primaryBackground
-                                  : (theme.warningText as any)
-                            }}
-                            content="Do not add linked accounts you are not aware of!"
+                          <WarningFilledIcon
+                            // @ts-ignore
+                            dataSet={createGlobalTooltipDataSet({
+                              id: 'linked-accounts-warning',
+                              border: `1px solid ${theme.warningDecorative as any}`,
+                              style: {
+                                backgroundColor:
+                                  themeType === THEME_TYPES.DARK
+                                    ? theme.warningDecorative
+                                    : (theme.warningBackground as any),
+                                color:
+                                  themeType === THEME_TYPES.DARK
+                                    ? theme.primaryBackground
+                                    : (theme.warningText as any)
+                              },
+                              content: t('Do not add linked accounts you are not aware of!')
+                            })}
                           />
                         </View>
                       )}
@@ -337,7 +340,7 @@ const AccountsOnPageList = ({
                     return (
                       <View key={key}>
                         {getAccounts({
-                          accounts: slots[key],
+                          accounts: slots[key] || [],
                           isLastSlot: i === Object.keys(slots).length - 1,
                           slotIndex: 1,
                           byType: ['smart', 'linked']

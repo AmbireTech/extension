@@ -1,5 +1,4 @@
 import React, { FC } from 'react'
-import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import { TokenResult } from '@ambire-common/libs/portfolio'
@@ -42,7 +41,6 @@ const TokenDetailsButton: FC<Props> = ({
   isTokenInfoLoading,
   testID
 }) => {
-  const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
   const [bindAnim, animStyle] = useCustomHover({
     property: 'backgroundColor',

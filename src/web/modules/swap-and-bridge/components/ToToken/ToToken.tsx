@@ -8,13 +8,13 @@ import { SwapAndBridgeFormStatus } from '@ambire-common/controllers/swapAndBridg
 import { getIsNetworkSupported } from '@ambire-common/libs/swapAndBridge/swapAndBridge'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import WalletFilledIcon from '@common/assets/svg/WalletFilledIcon'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import NetworkIcon from '@common/components/NetworkIcon'
 import Select from '@common/components/Select'
 import { SelectValue } from '@common/components/Select/types'
 import getStyles from '@common/components/SendToken/styles'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
-import Tooltip from '@common/components/Tooltip'
 import useGetTokenSelectProps from '@common/hooks/useGetTokenSelectProps'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
@@ -26,21 +26,15 @@ import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountCont
 import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControllerState'
 import SwitchTokensButton from '@web/modules/swap-and-bridge/components/SwitchTokensButton'
 import ToTokenSelect from '@web/modules/swap-and-bridge/components/ToToken/ToTokenSelect'
-import useSwapAndBridgeForm from '@web/modules/swap-and-bridge/hooks/useSwapAndBridgeForm'
 import { getTokenId } from '@web/utils/token'
 
 import NotSupportedNetworkTooltip from '../NotSupportedNetworkTooltip'
 
-type Props = Pick<ReturnType<typeof useSwapAndBridgeForm>, 'setIsAutoSelectRouteDisabled'> & {
-  isAutoSelectRouteDisabled: boolean
+type Props = {
   simulationFailed?: boolean
 }
 
-const ToToken: FC<Props> = ({
-  isAutoSelectRouteDisabled,
-  setIsAutoSelectRouteDisabled,
-  simulationFailed
-}) => {
+const ToToken: FC<Props> = ({ simulationFailed }) => {
   const { theme, styles, themeType } = useTheme(getStyles)
   const { t } = useTranslation()
   const {
@@ -116,10 +110,10 @@ const ToToken: FC<Props> = ({
 
   const shouldShowAmountOnEstimationFailure = useMemo(() => {
     return (
-      isAutoSelectRouteDisabled &&
+      quote?.selectedRoute?.isSelectedManually &&
       signAccountOpController?.estimation.status === EstimationStatus.Error
     )
-  }, [isAutoSelectRouteDisabled, signAccountOpController?.estimation.status])
+  }, [quote?.selectedRoute?.isSelectedManually, signAccountOpController?.estimation.status])
 
   const isReadyToDisplayAmounts =
     (formStatus === SwapAndBridgeFormStatus.Empty ||
@@ -127,7 +121,8 @@ const ToToken: FC<Props> = ({
       formStatus === SwapAndBridgeFormStatus.NoRoutesFound ||
       formStatus === SwapAndBridgeFormStatus.ReadyToSubmit ||
       formStatus === SwapAndBridgeFormStatus.Proceeded ||
-      (formStatus === SwapAndBridgeFormStatus.InvalidRouteSelected && isAutoSelectRouteDisabled) ||
+      (formStatus === SwapAndBridgeFormStatus.InvalidRouteSelected &&
+        quote?.selectedRoute?.isSelectedManually) ||
       shouldShowAmountOnEstimationFailure) &&
     updateQuoteStatus !== 'LOADING'
 
@@ -180,7 +175,6 @@ const ToToken: FC<Props> = ({
 
   const handleChangeToToken = useCallback(
     ({ address: toSelectedTokenAddr }: SelectValue) => {
-      setIsAutoSelectRouteDisabled(false)
       const isSameAsFromToken =
         !!fromSelectedToken &&
         !!toChainId &&
@@ -198,7 +192,7 @@ const ToToken: FC<Props> = ({
         }
       })
     },
-    [setIsAutoSelectRouteDisabled, fromSelectedToken, toChainId, dispatch]
+    [fromSelectedToken, toChainId, dispatch]
   )
 
   const handleAddToTokenByAddress = useCallback(
@@ -284,22 +278,23 @@ const ToToken: FC<Props> = ({
           />
           <View style={[spacings.plSm, flexbox.flex1]}>
             {isReadyToDisplayAmounts ? (
-              <>
-                <Text
-                  fontSize={20}
-                  weight="medium"
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                  appearance={
-                    formattedToAmount && formattedToAmount !== '0' ? 'primaryText' : 'secondaryText'
-                  }
-                  dataSet={{ tooltipId: 'to-amount' }}
-                  style={{ textAlign: 'right' }}
-                >
-                  {formattedToAmount}
-                </Text>
-                {formattedToAmount !== '0' && <Tooltip id="to-amount" content={toAmount} />}
-              </>
+              <Text
+                fontSize={20}
+                weight="medium"
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                appearance={
+                  formattedToAmount && formattedToAmount !== '0' ? 'primaryText' : 'secondaryText'
+                }
+                dataSet={createGlobalTooltipDataSet({
+                  id: 'to-amount',
+                  content: toAmount,
+                  hidden: formattedToAmount === '0'
+                })}
+                style={{ textAlign: 'right' }}
+              >
+                {formattedToAmount}
+              </Text>
             ) : (
               <SkeletonLoader
                 appearance="tertiaryBackground"
@@ -325,7 +320,11 @@ const ToToken: FC<Props> = ({
             <View
               style={[flexbox.directionRow, flexbox.alignCenter]}
               // @ts-ignore
-              dataSet={{ tooltipId: 'to-token-balance-tooltip' }}
+              dataSet={createGlobalTooltipDataSet({
+                id: 'to-token-balance-tooltip',
+                content: t('Balance may be inaccurate'),
+                hidden: !simulationFailed
+              })}
             >
               <WalletFilledIcon
                 width={14}
@@ -348,10 +347,6 @@ const ToToken: FC<Props> = ({
                     : toTokenValue.balanceFormatted
                 } ${toTokenValue.symbol}`}
               </Text>
-              <Tooltip
-                content={simulationFailed ? 'Balance may be inaccurate' : ''}
-                id="to-token-balance-tooltip"
-              />
             </View>
           )}
           {!!quote?.selectedRoute && isReadyToDisplayAmounts && (

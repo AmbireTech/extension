@@ -1,6 +1,6 @@
 // @ts-nocheck
 
-import React, { FC } from 'react'
+import React, { FC, useState } from 'react'
 import { Image, View, ViewStyle } from 'react-native'
 
 import { isValidAddress } from '@ambire-common/services/address'
@@ -15,8 +15,10 @@ import avatarSpreadFire from '@common/assets/images/avatars/avatar-spread-fire.p
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getAvatarType } from '@common/utils/avatars'
+import useDomainsControllerState from '@web/hooks/useDomainsController/useDomainsController'
 
 import Blockie from './Blockies/Blockies'
+import EnsAvatar from './EnsAvatar'
 import JazzIcon from './Jazz'
 import TypeBadge from './TypeBadge'
 
@@ -54,6 +56,7 @@ export const getAccountPfpSource = (pfpId: string) => {
 
 interface Props {
   pfp: string
+  address: string
   isSmart: boolean
   size?: number
   style?: ViewStyle
@@ -63,44 +66,57 @@ interface Props {
 
 const Avatar: FC<Props> = ({
   pfp,
+  address,
   isSmart,
   size = 40,
-  style,
+  style = {},
   showTooltip = false,
   displayTypeBadge = true
 }) => {
+  // the ENS avatar may point to an image that no longer exists or just fails to load
+  // In that case we must fallback to the next avatar type
+  const [ensAvatarImageFetchFailed, setEnsAvatarImageFetchFailed] = useState(false)
   const selectedAccountPfp = getAccountPfpSource(pfp)
-  const avatarType = getAvatarType(selectedAccountPfp)
+  // ENS Avatar
+  const { domains, loadingAddresses } = useDomainsControllerState()
+  const isEnsLoading = address
+    ? (domains && !domains[address]) || loadingAddresses?.includes(address)
+    : false
+  const ensAvatar = address ? domains?.[address]?.ensAvatar : undefined
+  const shouldLoadEns = (isEnsLoading || !!ensAvatar) && !ensAvatarImageFetchFailed
+  // Determine avatar type and props
+  const avatarType = getAvatarType(selectedAccountPfp, shouldLoadEns)
   const borderRadius = size / 2
   const badgeType = size >= 40 ? 'big' : 'small'
 
-  if (['jazz', 'blockies'].includes(avatarType)) {
-    return (
-      <View style={[spacings.prTy, flexbox.alignCenter, flexbox.justifyCenter, style]}>
-        {avatarType === 'jazz' && (
-          <JazzIcon borderRadius={borderRadius} address={selectedAccountPfp} size={size} />
-        )}
-        {avatarType === 'blockies' && (
-          <Blockie
-            seed={selectedAccountPfp}
-            width={size}
-            height={size}
-            borderRadius={borderRadius}
-          />
-        )}
-        {displayTypeBadge && (
-          <TypeBadge isSmart={isSmart} type={badgeType} showTooltip={showTooltip} />
-        )}
-      </View>
-    )
-  }
-
   return (
-    <Image
-      source={selectedAccountPfp}
-      style={[spacings.mrTy, { width: size, height: size, borderRadius }]}
-      resizeMode="contain"
-    />
+    <View style={[spacings.prTy, flexbox.alignCenter, flexbox.justifyCenter, style]}>
+      {avatarType === 'jazz' && (
+        <JazzIcon borderRadius={borderRadius} address={selectedAccountPfp} size={size} />
+      )}
+      {avatarType === 'blockies' && (
+        <Blockie seed={selectedAccountPfp} width={size} height={size} borderRadius={borderRadius} />
+      )}
+      {avatarType === 'ens' && (
+        <EnsAvatar
+          isLoading={isEnsLoading}
+          avatar={ensAvatar}
+          size={size}
+          borderRadius={borderRadius}
+          setImageFetchFailed={setEnsAvatarImageFetchFailed}
+        />
+      )}
+      {avatarType === 'legacy' && (
+        <Image
+          source={selectedAccountPfp}
+          style={{ width: size, height: size, borderRadius }}
+          resizeMode="contain"
+        />
+      )}
+      {displayTypeBadge && (
+        <TypeBadge isSmart={isSmart} type={badgeType} showTooltip={showTooltip} />
+      )}
+    </View>
   )
 }
 

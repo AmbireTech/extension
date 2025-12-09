@@ -6,11 +6,10 @@ import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { BrowserRouter, HashRouter } from 'react-router-dom'
 
 import ErrorComponent from '@common/components/ErrorBoundary'
+import { GlobalTooltip } from '@common/components/GlobalTooltip'
 import { ErrorBoundary } from '@common/config/analytics/CrashAnalytics.web'
 import { KeyboardProvider } from '@common/contexts/keyboardContext'
 import { NetInfoProvider } from '@common/contexts/netInfoContext'
-import { PrivateModeProvider } from '@common/contexts/privateModeContext'
-import { StorageProvider } from '@common/contexts/storageContext'
 import { ThemeProvider } from '@common/contexts/themeContext'
 import { ToastProvider } from '@common/contexts/toastContext'
 import useFonts from '@common/hooks/useFonts'
@@ -62,6 +61,7 @@ const AppInit = () => {
   return (
     <Router>
       <PortalProvider>
+        <GlobalTooltip />
         <SafeAreaProvider>
           <ToastProvider>
             <ErrorBoundary fallback={errorComponent}>
@@ -98,20 +98,16 @@ const AppInit = () => {
                                                                           {/* Reading from controllers in components, rendered above ControllersStateLoadedProvider
                                                                     must be done very carefully, as it is not guaranteed that the state is loaded */}
                                                                           <ControllersStateLoadedProvider>
-                                                                            <StorageProvider>
-                                                                              <KeyboardProvider>
-                                                                                <NetInfoProvider>
-                                                                                  <AuthProvider>
-                                                                                    <OnboardingNavigationProvider>
-                                                                                      <PrivateModeProvider>
-                                                                                        <AppRouter />
-                                                                                      </PrivateModeProvider>
-                                                                                      <PortalHost name="global" />
-                                                                                    </OnboardingNavigationProvider>
-                                                                                  </AuthProvider>
-                                                                                </NetInfoProvider>
-                                                                              </KeyboardProvider>
-                                                                            </StorageProvider>
+                                                                            <KeyboardProvider>
+                                                                              <NetInfoProvider>
+                                                                                <AuthProvider>
+                                                                                  <OnboardingNavigationProvider>
+                                                                                    <AppRouter />
+                                                                                    <PortalHost name="global" />
+                                                                                  </OnboardingNavigationProvider>
+                                                                                </AuthProvider>
+                                                                              </NetInfoProvider>
+                                                                            </KeyboardProvider>
                                                                           </ControllersStateLoadedProvider>
                                                                         </TransferControllerStateProvider>
                                                                       </SwapAndBridgeControllerStateProvider>

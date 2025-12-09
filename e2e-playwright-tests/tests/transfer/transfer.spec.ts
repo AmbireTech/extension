@@ -1,4 +1,4 @@
-import { baParams } from 'constants/env'
+import { baParams, SA_ADDRESS } from 'constants/env'
 import selectors from 'constants/selectors'
 import tokens from 'constants/tokens'
 import { test } from 'fixtures/pageObjects'
@@ -16,10 +16,10 @@ test.describe('transfer', { tag: '@transfer' }, () => {
 
   test('should send a transaction and pay with the current account gas tank', async ({ pages }) => {
     const sendToken = tokens.usdc.optimism
-    // This address is derived from SA testing account seed phrase
-    const recipientAddress = '0xc162b2F9f06143Cf063606d814C7F38ED4471F44'
+    const recipientAddress = SA_ADDRESS
     const feeToken = tokens.usdc.ethereum
     const payWithGasTank = true
+    const message = 'Transfer done!'
 
     await test.step('assert no transaction on Activity tab', async () => {
       await pages.dashboard.checkNoTransactionOnActivityTab()
@@ -38,11 +38,30 @@ test.describe('transfer', { tag: '@transfer' }, () => {
     })
 
     await test.step('send transaction', async () => {
-      await pages.transfer.signAndValidate({ feeToken, payWithGasTank, sendToken })
+      await pages.transfer.signSlowSpeedTransaction({
+        feeToken,
+        payWithGasTank,
+        sendToken,
+        message
+      })
     })
 
     await test.step('assert new transaction on Activity tab', async () => {
       await pages.transfer.checkSendTransactionOnActivityTab()
+    })
+
+    await test.step('assert funds sent to recepient address on explorer', async () => {
+      const viewTransactionLink = pages.basePage.page.getByTestId(
+        selectors.dashboard.viewTransactionLink
+      )
+      const viewTransactionTab = await pages.basePage.handleNewPage(viewTransactionLink)
+      await pages.transfer.checkRecepientTransactionOnExplorer({
+        newPage: viewTransactionTab,
+        recepientAddress: recipientAddress
+      })
+
+      // check url of new tab
+      expect(viewTransactionTab.url()).toContain('explorer.ambire.com')
     })
   })
 
@@ -54,6 +73,7 @@ test.describe('transfer', { tag: '@transfer' }, () => {
     const recipientAddress = '0xc162b2F9f06143Cf063606d814C7F38ED4471F44'
     const feeToken = tokens.usdc.optimism
     const payWithGasTank = false
+    const message = 'Transfer done!'
 
     await test.step('assert no transaction on Activity tab', async () => {
       await pages.dashboard.checkNoTransactionOnActivityTab()
@@ -72,11 +92,31 @@ test.describe('transfer', { tag: '@transfer' }, () => {
     })
 
     await test.step('send transaction', async () => {
-      await pages.transfer.signAndValidate({ feeToken, payWithGasTank, sendToken })
+      await pages.transfer.signSlowSpeedTransaction({
+        feeToken,
+        payWithGasTank,
+        sendToken,
+        message
+      })
     })
 
     await test.step('assert new transaction on Activity tab', async () => {
       await pages.transfer.checkSendTransactionOnActivityTab()
+    })
+
+    await test.step('assert funds sent to recepient address on explorer', async () => {
+      const viewTransactionLink = pages.basePage.page.getByTestId(
+        selectors.dashboard.viewTransactionLink
+      )
+      const viewTransactionTab = await pages.basePage.handleNewPage(viewTransactionLink)
+
+      // check url of new tab
+      expect(viewTransactionTab.url()).toContain('explorer.ambire.com')
+
+      await pages.transfer.checkRecepientTransactionOnExplorer({
+        newPage: viewTransactionTab,
+        recepientAddress: recipientAddress
+      })
     })
   })
 
@@ -134,6 +174,13 @@ test.describe('transfer', { tag: '@transfer' }, () => {
       await expect(actionWindowPage.getByTestId(selectors.txnConfirmed)).toBeVisible({
         timeout: 20000
       })
+
+      // assert funds sent to recepient address on explorer
+      await pages.transfer.checkRecepientTransactionOnExplorer({
+        newPage: actionWindowPage,
+        recepientAddress: recipientAddress,
+        options: { expectedTransactionsCount: 2 }
+      })
     })
 
     await test.step(
@@ -154,6 +201,7 @@ test.describe('transfer', { tag: '@transfer' }, () => {
     const feeToken = tokens.usdc.optimism
     const payWithGasTank = false
     const isUnknownAddress = false
+    const message = 'Transfer done!'
 
     await test.step('assert no transaction on Activity tab', async () => {
       await pages.dashboard.checkNoTransactionOnActivityTab()
@@ -191,11 +239,31 @@ test.describe('transfer', { tag: '@transfer' }, () => {
     })
 
     await test.step('send transaction', async () => {
-      await pages.transfer.signAndValidate({ feeToken, payWithGasTank, sendToken })
+      await pages.transfer.signSlowSpeedTransaction({
+        feeToken,
+        payWithGasTank,
+        sendToken,
+        message
+      })
     })
 
     await test.step('assert new transaction on Activity tab', async () => {
       await pages.transfer.checkSendTransactionOnActivityTab()
+    })
+
+    await test.step('assert funds sent to recepient address on explorer', async () => {
+      const viewTransactionLink = pages.basePage.page.getByTestId(
+        selectors.dashboard.viewTransactionLink
+      )
+      const viewTransactionTab = await pages.basePage.handleNewPage(viewTransactionLink)
+
+      // check url of new tab
+      expect(viewTransactionTab.url()).toContain('explorer.ambire.com')
+
+      await pages.transfer.checkRecepientTransactionOnExplorer({
+        newPage: viewTransactionTab,
+        recepientAddress: newContactAddress
+      })
     })
   })
 
@@ -206,6 +274,7 @@ test.describe('transfer', { tag: '@transfer' }, () => {
     const feeToken = tokens.usdc.optimism
     const newContactName = 'First Address'
     const newContactAddress = '0xC254b41be9582e45a2aCE62D5adD3F8092D4ea6C'
+    const message = 'Transfer done!'
 
     await test.step('assert no transaction on Activity tab', async () => {
       await pages.dashboard.checkNoTransactionOnActivityTab()
@@ -224,11 +293,30 @@ test.describe('transfer', { tag: '@transfer' }, () => {
     })
 
     await test.step('send USCD to added contact', async () => {
-      await pages.transfer.signAndValidate({ feeToken, sendToken })
+      await pages.transfer.signSlowSpeedTransaction({
+        feeToken,
+        sendToken,
+        message
+      })
     })
 
     await test.step('assert new transaction on Activity tab', async () => {
       await pages.transfer.checkSendTransactionOnActivityTab()
+    })
+
+    await test.step('assert funds sent to recepient address on explorer', async () => {
+      const viewTransactionLink = pages.basePage.page.getByTestId(
+        selectors.dashboard.viewTransactionLink
+      )
+      const viewTransactionTab = await pages.basePage.handleNewPage(viewTransactionLink)
+
+      // check url of new tab
+      expect(viewTransactionTab.url()).toContain('explorer.ambire.com')
+
+      await pages.transfer.checkRecepientTransactionOnExplorer({
+        newPage: viewTransactionTab,
+        recepientAddress: newContactAddress
+      })
     })
   })
 })

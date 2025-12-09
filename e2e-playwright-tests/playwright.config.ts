@@ -15,7 +15,7 @@ const config: PlaywrightTestConfig = {
   reporter: [
     ['list'],
     ['junit', { outputFile: 'test-results/results.xml' }],
-    ['html', { open: 'always' }]
+    ['html', { outputFolder: 'test-results/', open: 'always' }]
   ],
   timeout: 180 * 1000, // 3min
   reportSlowTests: null,
@@ -27,8 +27,8 @@ const config: PlaywrightTestConfig = {
     viewport: { width: 1920, height: 1080 },
     baseURL: process.env.APP_URL || '',
     headless: true,
-    video: 'on',
-    trace: 'retain-on-failure',
+    trace: 'on-first-retry',
+    video: 'retain-on-failure',
     screenshot: 'only-on-failure',
     ignoreHTTPSErrors: true,
     acceptDownloads: true,

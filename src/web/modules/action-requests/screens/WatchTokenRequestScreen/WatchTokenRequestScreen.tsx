@@ -1,8 +1,7 @@
-import { getAddress, isAddress } from 'ethers'
+import { getAddress } from 'ethers'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { View } from 'react-native'
 
-import { isDappRequestAction } from '@ambire-common/libs/actions/actions'
 import { getNetworksWithFailedRPC } from '@ambire-common/libs/networks/networks'
 import { TokenResult } from '@ambire-common/libs/portfolio'
 import AmountIcon from '@common/assets/svg/AmountIcon'
@@ -22,11 +21,11 @@ import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import useActionsControllerState from '@web/hooks/useActionsControllerState'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import usePortfolioControllerState from '@web/hooks/usePortfolioControllerState/usePortfolioControllerState'
 import useProvidersControllerState from '@web/hooks/useProvidersControllerState'
+import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import ActionFooter from '@web/modules/action-requests/components/ActionFooter'
 import {
@@ -52,26 +51,20 @@ const WatchTokenRequestScreen = () => {
   const { theme, styles, themeType } = useTheme(getStyles)
 
   const { dispatch } = useBackgroundService()
-  const state = useActionsControllerState()
+  const { currentUserRequest } = useRequestsControllerState()
   const { temporaryTokens, validTokens, customTokens } = usePortfolioControllerState()
   const { portfolio: selectedAccountPortfolio } = useSelectedAccountControllerState()
   const { networks } = useNetworksControllerState()
   const { providers } = useProvidersControllerState()
 
-  const dappAction = useMemo(
-    () => (isDappRequestAction(state.currentAction) ? state.currentAction : null),
-    [state.currentAction]
+  const userRequest = useMemo(
+    () => (currentUserRequest?.kind === 'walletWatchAsset' ? currentUserRequest : undefined),
+    [currentUserRequest]
   )
 
-  const userRequest = useMemo(() => {
-    if (!dappAction) return undefined
-    if (dappAction.userRequest.action.kind !== 'walletWatchAsset') return undefined
-
-    return dappAction.userRequest
-  }, [dappAction])
-
-  const tokenData = userRequest?.action?.params?.options
-  const origin = userRequest?.session?.origin
+  // TODO: fix types here
+  const tokenData = userRequest?.meta.params.options as any
+  const origin = userRequest?.dappPromises[0].session.origin
   const network =
     networks.find((n) => n.explorerUrl === origin) ||
     networks.find((n) => n.chainId === tokenData?.chainId)
@@ -96,13 +89,13 @@ const WatchTokenRequestScreen = () => {
     [validTokens, tokenData, tokenNetwork]
   )
   const handleCancel = useCallback(() => {
-    if (!dappAction) return
+    if (!userRequest) return
 
     dispatch({
       type: 'REQUESTS_CONTROLLER_REJECT_USER_REQUEST',
-      params: { err: t('User rejected the request.'), id: dappAction.id }
+      params: { err: t('User rejected the request.'), id: userRequest.id }
     })
-  }, [dappAction, t, dispatch])
+  }, [userRequest, t, dispatch])
 
   // Handle the case its already in token preferences
   const isTokenCustom = !!customTokens.find(
@@ -189,7 +182,11 @@ const WatchTokenRequestScreen = () => {
       }
     }
 
-    handleEffect().catch(() => setIsLoading(false))
+    handleEffect().catch((error) => {
+      // eslint-disable-next-line no-console
+      console.error(error)
+      return setIsLoading(false)
+    })
 
     if (tokenTypeEligibility === false || !!temporaryToken) {
       setIsLoading(false)
@@ -209,7 +206,7 @@ const WatchTokenRequestScreen = () => {
   ])
 
   const handleAddToken = useCallback(async () => {
-    if (!dappAction) return
+    if (!userRequest) return
     if (!tokenNetwork?.chainId) return
 
     dispatch({
@@ -226,9 +223,9 @@ const WatchTokenRequestScreen = () => {
 
     dispatch({
       type: 'REQUESTS_CONTROLLER_RESOLVE_USER_REQUEST',
-      params: { data: null, id: dappAction.id }
+      params: { data: null, id: userRequest.id }
     })
-  }, [dispatch, dappAction, tokenData, tokenNetwork])
+  }, [dispatch, userRequest, tokenData, tokenNetwork])
 
   const tokenDetails = useMemo(() => {
     const token = portfolioToken || temporaryToken

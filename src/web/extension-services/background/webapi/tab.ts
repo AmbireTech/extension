@@ -31,7 +31,7 @@ const createTab = async (url: string, windowId?: number): Promise<number | undef
           populate: true,
           windowTypes: ['normal', 'panel', 'app']
         })
-    const allTabs = (baseWindow.tabs || []).filter((t) => !t.url.includes('action-window.html'))
+    const allTabs = (baseWindow.tabs || []).filter((t) => !t.url.includes('request-window.html'))
     const base = browser.runtime.getURL('/')
     const fullUrl = new URL(url, base)
     const route = fullUrl.hash.replace(/^#/, '')
@@ -73,7 +73,7 @@ const getCurrentTab = async (): Promise<chrome.tabs.Tab | undefined> => {
  * @param {string} url - The full URL to open in a new tab. Required.
  * @param {number} windowId - Optional ID of the browser window where the tab should be opened.
  *                            Helps ensure the tab opens in the intended window (especially useful in multi-window
- *                            scenarios e.g. opening a new tab from an action-window).
+ *                            scenarios e.g. opening a new tab from an request-window).
  * @param {boolean} shouldCloseCurrentWindow - If true, closes the current window after opening the new tab.
  *                                             Has no effect in Safari due to API limitations.
  *
@@ -107,9 +107,9 @@ const routeableSearchParams = ['flow', 'goBack']
  * @param {object} searchParams - Optional URL search parameters (e.g., { flow: 'onboarding' }).
  *                                Only parameters listed in `routeableSearchParams` will be included.
  * @param {number} windowId - Optional ID of the browser window where the tab should open.
- *                            Recommended when the current context is an action window—
+ *                            Recommended when the current context is an request window—
  *                            use `createdFromWindowId` from actions controller to ensure
- *                            the tab opens in the correct window (avoids opening in the action window itself or searching
+ *                            the tab opens in the correct window (avoids opening in the request window itself or searching
  *                            for existing Ambire tabs in the wrong window).
  * @param {boolean} shouldCloseCurrentWindow - If true, closes the current window after opening the new tab.
  *

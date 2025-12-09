@@ -1,4 +1,4 @@
-import { ViewStyle } from 'react-native'
+import { TextStyle, ViewStyle } from 'react-native'
 
 import { TextWeight } from '@common/components/Text'
 
@@ -17,6 +17,7 @@ type SpecialBadgeType = 'metamask'
 
 type Props = {
   text: string
+  textStyle?: TextStyle
   weight?: TextWeight
   type?: BadgeType
   tooltipText?: string

@@ -1,18 +1,20 @@
-import React, { useMemo } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Pressable, View } from 'react-native'
 
 import { Dapp } from '@ambire-common/interfaces/dapp'
 import CloseIcon from '@common/assets/svg/CloseIcon'
 import DAppsIcon from '@common/assets/svg/DAppsIcon'
+import ErrorFilledIcon from '@common/assets/svg/ErrorFilledIcon'
 import ManifestFallbackIcon from '@common/assets/svg/ManifestFallbackIcon'
 import PowerIcon from '@common/assets/svg/PowerIcon'
 import StarIcon from '@common/assets/svg/StarIcon'
 import UpArrowIcon from '@common/assets/svg/UpArrowIcon'
 import Button from '@common/components/Button'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import ManifestImage from '@web/components/ManifestImage'
 import useBackgroundService from '@web/hooks/useBackgroundService'
@@ -51,9 +53,38 @@ const DappControl = ({
 
   const showDisconnectButton = !!dapp?.isConnected && (isHovered || inModal)
 
+  const dappInitials = useMemo(() => {
+    const fullName = dapp?.name || ''
+
+    if (!fullName) return null
+
+    const words = fullName.split(' ').filter((word) => word.length > 0)
+    const firstSymbol = words?.[0]?.[0]
+
+    if (!firstSymbol) return null
+
+    return firstSymbol.toUpperCase()
+  }, [dapp?.name])
+
+  const fallbackIcon = useCallback(() => {
+    if (!dappInitials) return <ManifestFallbackIcon />
+
+    return (
+      <View style={styles.fallbackWrapper}>
+        <Text color={theme.infoText}>{dappInitials}</Text>
+      </View>
+    )
+  }, [dappInitials, styles.fallbackWrapper, theme.infoText])
+
   return (
     <View>
-      <View style={styles.titleWrapper}>
+      <View
+        style={[
+          styles.titleWrapper,
+          !inModal &&
+            dapp?.blacklisted === 'BLACKLISTED' && { backgroundColor: theme.errorBackground }
+        ]}
+      >
         <Text weight="medium" fontSize={12} appearance="secondaryText">
           {t(`Manage ${isCurrentDapp ? 'current ' : ''}app`)}
         </Text>
@@ -62,11 +93,30 @@ const DappControl = ({
       <View style={styles.border}>
         {dapp ? (
           <View style={styles.currentDApp}>
-            <ManifestImage
-              uri={dapp.icon || ''}
-              size={32}
-              fallback={() => <ManifestFallbackIcon />}
-            />
+            <View>
+              {dapp.blacklisted === 'BLACKLISTED' && (
+                <View
+                  style={{ position: 'absolute', right: -3, top: -2, zIndex: 1 }}
+                  // @ts-ignore
+                  dataSet={createGlobalTooltipDataSet({
+                    id: 'blacklisted-app-tooltip',
+                    content: t('Blacklisted app!'),
+                    delayShow: 200,
+                    border: `1px solid ${theme.errorDecorative as string}`,
+                    style: {
+                      fontSize: 12,
+                      backgroundColor: theme.errorBackground as string,
+                      padding: SPACING_TY,
+                      color: theme.errorDecorative as string
+                    }
+                  })}
+                >
+                  <ErrorFilledIcon width={14} height={14} />
+                </View>
+              )}
+
+              <ManifestImage uri={dapp.icon || ''} size={32} fallback={fallbackIcon} />
+            </View>
             <View style={[spacings.mlMi, flexbox.flex1]}>
               <View style={[flexbox.directionRow, flexbox.flex1]}>
                 <Text fontSize={12} weight="medium" numberOfLines={1} style={spacings.mrTy}>
@@ -91,7 +141,9 @@ const DappControl = ({
                 color={dapp.isConnected ? theme.successText : theme.errorText}
                 fontSize={10}
               >
-                {dapp.isConnected ? t(`Connected on ${network.name}`) : t('Not connected')}
+                {dapp.isConnected
+                  ? t(`Connected on ${network?.name || dapp.chainId}`)
+                  : t('Not connected')}
               </Text>
             </View>
           </View>

@@ -12,6 +12,7 @@ import { SwapAndBridgeRoute } from '@ambire-common/interfaces/swapAndBridge'
 import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
+import HoldToProceedButton from '@common/components/HoldToProceedButton'
 import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
 import Text from '@common/components/Text'
 import useSign from '@common/hooks/useSign'
@@ -23,7 +24,9 @@ import Estimation from '@web/modules/sign-account-op/components/Estimation'
 import Modals from '@web/modules/sign-account-op/components/Modals/Modals'
 import SigningKeySelect from '@web/modules/sign-message/components/SignKeySelect'
 import { getUiType } from '@web/utils/uiType'
+
 import BundlerWarning from '../../Estimation/components/bundlerWarning'
+import SafetyChecksBanner from '../../SafetyChecksBanner'
 
 export type OneClickEstimationProps = {
   closeEstimationModal: () => void
@@ -38,7 +41,7 @@ export type OneClickEstimationProps = {
   serviceFee?: SwapAndBridgeRoute['serviceFee']
 }
 
-const { isActionWindow, isTab } = getUiType()
+const { isRequestWindow, isTab } = getUiType()
 
 const OneClickEstimation = ({
   closeEstimationModal,
@@ -93,6 +96,7 @@ const OneClickEstimation = ({
     updateType
   })
 
+  const { banners } = signAccountOpController || {}
   return (
     <>
       <BottomSheet
@@ -104,10 +108,22 @@ const OneClickEstimation = ({
         }
         // NOTE: This must be lower than SigningKeySelect's z-index
         customZIndex={5}
-        autoOpen={hasProceeded || (isActionWindow && !!signAccountOpController)}
+        autoOpen={hasProceeded || (isRequestWindow && !!signAccountOpController)}
         isScrollEnabled={false}
         shouldBeClosableOnDrag={false}
       >
+        {!!banners && !!banners.length && (
+          <View style={spacings.mbTy}>
+            {banners.map((banner) => (
+              <SafetyChecksBanner
+                key={banner.id}
+                type={banner.type}
+                text={banner.text}
+                style={spacings.mbTy}
+              />
+            ))}
+          </View>
+        )}
         {!!signAccountOpController && (
           <View>
             <SigningKeySelect
@@ -172,13 +188,23 @@ const OneClickEstimation = ({
                 disabled={isSignLoading}
                 style={{ width: 98 }}
               />
-              <ButtonWithLoader
-                testID="sign-button"
-                text={primaryButtonText}
-                isLoading={isSignLoading}
-                disabled={isSignDisabled || signingErrors.length > 0}
-                onPress={onSignButtonClick}
-              />
+
+              {!!banners && !!banners.length ? (
+                <HoldToProceedButton
+                  testID="sign-proceed-btn"
+                  text={t('Hold to sign')}
+                  disabled={isSignDisabled || signingErrors.length > 0}
+                  onHoldComplete={onSignButtonClick}
+                />
+              ) : (
+                <ButtonWithLoader
+                  testID="sign-button"
+                  text={primaryButtonText}
+                  isLoading={isSignLoading}
+                  disabled={isSignDisabled || signingErrors.length > 0}
+                  onPress={onSignButtonClick}
+                />
+              )}
             </View>
           </View>
         )}
