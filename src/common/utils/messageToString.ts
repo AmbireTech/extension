@@ -23,24 +23,31 @@ const getMessageAsText = (msg: Hex): string => {
 interface TypedMessageVisualization {
   type: 'key' | 'value'
   value: any
+  isArrayItem?: boolean
   n: number
+  path: string
 }
-const simplifyTypedMessage = (value: any, n = 0): TypedMessageVisualization[] => {
+const simplifyTypedMessage = (value: any, n = 0, path = '/'): TypedMessageVisualization[] => {
   const res: TypedMessageVisualization[] = []
   if (Array.isArray(value)) {
-    value.forEach((i) => {
-      res.push(...simplifyTypedMessage(i, n + 1))
+    value.forEach((i, index) => {
+      res.push(
+        ...simplifyTypedMessage(i, n + 1, `${path}/[${index}]`).map((v) => ({
+          ...v,
+          isArrayItem: true
+        }))
+      )
     })
     return res
   }
   if (value && typeof value === 'object') {
     Object.keys(value).forEach((k) => {
-      res.push({ type: 'key', value: k, n })
-      res.push(...simplifyTypedMessage(value[k], n + 1))
+      res.push({ type: 'key', value: k, n, path })
+      res.push(...simplifyTypedMessage(value[k], n + 1, `${path}.${k}`))
     })
     return res
   }
-  return [{ type: 'value', value, n }]
+  return [{ type: 'value', value, n, path }]
 }
 
 export { getMessageAsText, simplifyTypedMessage }

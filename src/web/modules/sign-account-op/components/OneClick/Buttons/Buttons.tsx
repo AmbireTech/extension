@@ -9,7 +9,8 @@ import BatchIcon from '@common/assets/svg/BatchIcon'
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import Button from '@common/components/Button'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
-import Tooltip from '@common/components/Tooltip'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
+import HoldToProceedButton from '@common/components/HoldToProceedButton'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -26,6 +27,8 @@ type Props = {
   isLocalStateOutOfSync?: boolean
   isBatchDisabled?: boolean
   networkUserRequests: UserRequest[]
+  shouldHoldToProceed?: boolean
+  onRecipientAddressUnknownAgree?: () => void
 }
 
 const { isActionWindow } = getUiType()
@@ -39,6 +42,8 @@ const Buttons: FC<Props> = ({
   isBatchDisabled,
   isBridge,
   networkUserRequests = [],
+  shouldHoldToProceed,
+  onRecipientAddressUnknownAgree,
   // Used to disable the actions of the buttons when the local state is out of sync.
   // To prevent button flickering when the user is typing we just do nothing when the button is clicked.
   // As it would be a rare case for a user to manage to click it in the 300-400ms that it takes to sync the state,
@@ -104,8 +109,12 @@ const Buttons: FC<Props> = ({
     <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifyEnd]}>
       {!isActionWindow && (
         <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-          {/* @ts-ignore */}
-          <View dataSet={{ tooltipId: 'batch-btn-tooltip' }}>
+          <View // @ts-ignore
+            dataSet={createGlobalTooltipDataSet({
+              id: 'batch-btn-tooltip',
+              content: batchDisabledReason
+            })}
+          >
             <Button
               hasBottomSpacing={false}
               text={
@@ -128,8 +137,14 @@ const Buttons: FC<Props> = ({
               <BatchIcon style={spacings.mlTy} />
             </Button>
           </View>
-          {/* @ts-ignore */}
-          <View style={spacings.mlTy} dataSet={{ tooltipId: 'start-batch-info-tooltip' }}>
+          <View
+            // @ts-ignore
+            dataSet={createGlobalTooltipDataSet({
+              id: 'start-batch-info-tooltip',
+              content: startBatchingInfo
+            })}
+            style={spacings.mlTy}
+          >
             <AnimatedPressable
               style={[spacings.phTy, spacings.pvTy, { borderRadius: 50 }, animStyle]}
               {...bindAnim}
@@ -139,23 +154,39 @@ const Buttons: FC<Props> = ({
           </View>
         </View>
       )}
-      {/* @ts-ignore */}
-      <View dataSet={{ tooltipId: 'proceed-btn-tooltip' }}>
-        <ButtonWithLoader
-          text={primaryButtonText}
-          disabled={isNotReadyToProceed || isLoading || !!oneClickDisabledReason}
-          isLoading={isLoading}
-          onPress={() => {
-            if (isLocalStateOutOfSync) return
+      <View
+        // @ts-ignore
+        dataSet={createGlobalTooltipDataSet({
+          id: 'proceed-btn-tooltip',
+          content: oneClickDisabledReason
+        })}
+      >
+        {shouldHoldToProceed ? (
+          <HoldToProceedButton
+            text={t('Hold to proceed')}
+            disabled={isNotReadyToProceed || isLoading || !!oneClickDisabledReason}
+            onHoldComplete={() => {
+              if (isLocalStateOutOfSync) return
+              onRecipientAddressUnknownAgree?.()
 
-            handleSubmitForm(true)
-          }}
-          testID="proceed-btn"
-        />
+              handleSubmitForm(true)
+            }}
+            testID="proceed-btn"
+          />
+        ) : (
+          <ButtonWithLoader
+            text={primaryButtonText}
+            disabled={isNotReadyToProceed || isLoading || !!oneClickDisabledReason}
+            isLoading={isLoading}
+            onPress={() => {
+              if (isLocalStateOutOfSync) return
+
+              handleSubmitForm(true)
+            }}
+            testID="proceed-btn"
+          />
+        )}
       </View>
-      <Tooltip content={oneClickDisabledReason} id="proceed-btn-tooltip" />
-      <Tooltip content={batchDisabledReason} id="batch-btn-tooltip" />
-      <Tooltip content={startBatchingInfo} id="start-batch-info-tooltip" />
     </View>
   )
 }

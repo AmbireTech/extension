@@ -1,3 +1,4 @@
+import { parseUnits } from 'ethers'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import { Pressable, View } from 'react-native'
@@ -17,8 +18,9 @@ import InfoIcon from '@common/assets/svg/InfoIcon'
 import Alert from '@common/components/Alert'
 import BackButton from '@common/components/BackButton'
 import SkeletonLoader from '@common/components/SkeletonLoader'
+import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
-import useAddressInput from '@common/hooks/useAddressInput'
+import useAddressInput, { ValidationWithSeverityType } from '@common/hooks/useAddressInput'
 import useNavigation from '@common/hooks/useNavigation'
 import useToast from '@common/hooks/useToast'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
@@ -45,7 +47,6 @@ import useTrackAccountOp from '@web/modules/sign-account-op/hooks/OneClick/useTr
 import GasTankInfoModal from '@web/modules/transfer/components/GasTankInfoModal'
 import SendForm from '@web/modules/transfer/components/SendForm/SendForm'
 import { getUiType } from '@web/utils/uiType'
-import { parseUnits } from 'ethers'
 
 const { isTab, isActionWindow } = getUiType()
 
@@ -58,8 +59,9 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     validationFormMsgs,
     addressState,
     isRecipientHumanizerKnownTokenOrSmartContract,
-    isSWWarningVisible,
     isRecipientAddressUnknown,
+    isRecipientAddressUnknownAgreed,
+    isRecipientAddressFirstTimeSend,
     isFormValid,
     signAccountOpController,
     latestBroadcastedAccountOp,
@@ -196,13 +198,17 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     }
   }, [latestBroadcastedAccountOp?.accountAddr, latestBroadcastedAccountOp?.chainId, sessionHandler])
 
-  const displayedView: 'transfer' | 'batch' | 'track' = useMemo(() => {
+  const displayedView: 'transfer' | 'batch' | 'track' | 'loading' = useMemo(() => {
+    // If the screen type doesn't match the controller state, we show a loading state
+    // This avoids showing the wrong screen for a brief moment0
+    if (!!isTopUpScreen !== !!isTopUp) return 'loading'
+
     if (showAddedToBatch) return 'batch'
 
     if (latestBroadcastedAccountOp) return 'track'
 
     return 'transfer'
-  }, [latestBroadcastedAccountOp, showAddedToBatch])
+  }, [isTopUp, isTopUpScreen, latestBroadcastedAccountOp, showAddedToBatch])
 
   // When navigating to another screen internally in the extension, we unload the TransferController
   // to ensure that no estimation or SignAccountOp logic is still running.
@@ -280,14 +286,24 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     [dispatch]
   )
 
+  const onRecipientAddressUnknownAgree = useCallback(() => {
+    dispatch({
+      type: 'TRANSFER_CONTROLLER_UPDATE_FORM',
+      params: {
+        formValues: { isRecipientAddressUnknownAgreed: true, isSWWarningAgreed: true }
+      }
+    })
+  }, [dispatch])
+
   const handleCacheResolvedDomain = useCallback(
-    (address: string, domain: string, type: 'ens') => {
+    (address: string, ensAvatar: string | null, domain: string, type: 'ens') => {
       dispatch({
         type: 'DOMAINS_CONTROLLER_SAVE_RESOLVED_REVERSE_LOOKUP',
         params: {
           type,
           address,
-          name: domain
+          name: domain,
+          ensAvatar
         }
       })
     },
@@ -307,6 +323,8 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     overwriteValidLabel: validationFormMsgs?.recipientAddress.success
       ? validationFormMsgs.recipientAddress.message
       : '',
+    overwriteSeverity: validationFormMsgs.recipientAddress
+      .severity as ValidationWithSeverityType['severity'],
     handleCacheResolvedDomain
   })
 
@@ -330,10 +348,8 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   }, [accountUserRequests, isSendingBatch, networkUserRequests, t])
 
   const isTransferFormValid = useMemo(() => {
-    if (isSendingBatch) return true
-
     return !!(isTopUp ? isFormValid : isFormValid && !addressInputState.validation.isError)
-  }, [addressInputState.validation.isError, isFormValid, isSendingBatch, isTopUp])
+  }, [addressInputState.validation.isError, isFormValid, isTopUp])
 
   const onBack = useCallback(() => {
     dispatch({
@@ -481,6 +497,13 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
           signAccountOpErrors={[]}
           networkUserRequests={networkUserRequests}
           isLocalStateOutOfSync={isLocalStateOutOfSync}
+          shouldHoldToProceed={
+            isRecipientAddressUnknown &&
+            !isRecipientAddressUnknownAgreed &&
+            !isRecipientHumanizerKnownTokenOrSmartContract &&
+            isRecipientAddressFirstTimeSend
+          }
+          onRecipientAddressUnknownAgree={onRecipientAddressUnknownAgree}
         />
       </>
     )
@@ -491,6 +514,11 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     isTransferFormValid,
     networkUserRequests,
     isLocalStateOutOfSync,
+    isRecipientAddressFirstTimeSend,
+    isRecipientAddressUnknown,
+    isRecipientAddressUnknownAgreed,
+    isRecipientHumanizerKnownTokenOrSmartContract,
+    onRecipientAddressUnknownAgree,
     addTransaction
   ])
 
@@ -513,6 +541,14 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     })
     setShowAddedToBatch(false)
   }, [dispatch, setShowAddedToBatch])
+
+  if (displayedView === 'loading') {
+    return (
+      <View style={[flexbox.flex1, flexbox.justifyCenter, flexbox.alignCenter]}>
+        <Spinner />
+      </View>
+    )
+  }
 
   if (displayedView === 'track') {
     return (
@@ -598,7 +634,6 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
               isRecipientHumanizerKnownTokenOrSmartContract={
                 isRecipientHumanizerKnownTokenOrSmartContract
               }
-              isSWWarningVisible={isSWWarningVisible}
               amountFieldValue={amountFieldValue}
               setAmountFieldValue={setAmountFieldValue}
               addressStateFieldValue={addressStateFieldValue}

@@ -17,10 +17,10 @@ import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
 import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
+import useMainControllerState from '@web/hooks/useMainControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import { getUiType } from '@web/utils/uiType'
 
@@ -60,7 +60,7 @@ const Account = ({
   const { t } = useTranslation()
   const { theme, styles } = useTheme(getStyles)
   const { addToast } = useToast()
-  const { statuses: accountsStatuses } = useAccountsControllerState()
+  const { statuses: mainStatuses } = useMainControllerState()
   const { account: selectedAccount } = useSelectedAccountControllerState()
   const { dispatch } = useBackgroundService()
   const { ens, isLoading } = useReverseLookup({ address: addr })
@@ -145,7 +145,7 @@ const Account = ({
 
   return (
     <AnimatedPressable
-      disabled={accountsStatuses.selectAccount !== 'INITIAL'}
+      disabled={mainStatuses.selectAccount !== 'INITIAL'}
       onPress={selectAccount}
       {...(isSelectable ? bindAnim : {})}
       testID="account"
@@ -158,7 +158,12 @@ const Account = ({
       ]}
     >
       <View style={[flexbox.flex1, flexbox.directionRow]}>
-        <Avatar pfp={account.preferences.pfp} isSmart={isSmartAccount(account)} showTooltip />
+        <Avatar
+          address={account.addr}
+          pfp={account.preferences.pfp}
+          isSmart={isSmartAccount(account)}
+          showTooltip
+        />
         <View style={flexbox.flex1}>
           <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
             {!withSettings ? (

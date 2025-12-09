@@ -121,15 +121,6 @@ const DashboardBanner = ({
           })
           break
 
-        case 'open-first-cashback-modal': {
-          if (!account) break
-          dispatch({
-            type: 'SELECTED_ACCOUNT_CONTROLLER_UPDATE_CASHBACK_STATUS',
-            params: 'cashback-modal'
-          })
-          break
-        }
-
         case 'update-extension-version': {
           const shouldPrompt =
             visibleActionsQueue.filter(({ type: actionType }) => actionType !== 'benzin').length > 0
@@ -179,7 +170,7 @@ const DashboardBanner = ({
           break
       }
     },
-    [dispatch, navigate, addToast, visibleActionsQueue, type, account, openBottomSheet]
+    [dispatch, navigate, addToast, visibleActionsQueue, type, openBottomSheet]
   )
 
   const dismissAction = actions.find((action: Action) => action.label === 'Dismiss')

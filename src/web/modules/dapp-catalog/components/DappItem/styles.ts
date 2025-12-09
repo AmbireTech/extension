@@ -28,7 +28,7 @@ const getStyles = (theme: ThemeProps) =>
     container: {
       width: '100%',
       height: '100%',
-      ...common.borderRadiusPrimary,
+      ...common.borderRadiusSecondary,
       ...spacings.phSm,
       ...spacings.pvSm
     }

@@ -25,7 +25,7 @@ let pm: PortMessenger
 const actionsBeforeBackgroundReady: Action[] = []
 let backgroundReady: boolean
 let connectPort: () => Promise<void> = () => Promise.resolve()
-const MAX_RETRIES = 4
+const MAX_RETRIES = 20
 // Facilitate communication between the different parts of the browser extension.
 // Utilizes the PortMessenger class to establish a connection between the popup
 // and background pages, and the eventBus to emit and listen for events.
@@ -82,6 +82,7 @@ if (isExtension) {
       }
 
       if (!backgroundReady && retries < MAX_RETRIES) {
+        console.log({ retries })
         retries++
         connectPort()
       }
@@ -91,7 +92,11 @@ if (isExtension) {
   connectPort()
 }
 
-const ACTIONS_TO_DISPATCH_EVEN_WHEN_HIDDEN = ['INIT_CONTROLLER_STATE']
+const ACTIONS_TO_DISPATCH_EVEN_WHEN_HIDDEN = [
+  'INIT_CONTROLLER_STATE',
+  'MAIN_CONTROLLER_ACTIVITY_SET_ACC_OPS_FILTERS',
+  'MAIN_CONTROLLER_ACTIVITY_RESET_ACC_OPS_FILTERS'
+]
 
 globalDispatch = (action, windowId?: number) => {
   // Dispatch the action only when the tab or popup is focused or active.

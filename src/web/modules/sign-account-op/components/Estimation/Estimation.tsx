@@ -203,8 +203,7 @@ const Estimation = ({
 
     const identifier = getFeeSpeedIdentifier(
       signAccountOpState.selectedOption,
-      signAccountOpState.accountOp.accountAddr,
-      signAccountOpState.rbfAccountOps[signAccountOpState.selectedOption.paidBy]
+      signAccountOpState.accountOp.accountAddr
     )
 
     // The fallback array covers a corner case, that I could not reproduce,
@@ -213,8 +212,7 @@ const Estimation = ({
   }, [
     signAccountOpState?.feeSpeeds,
     signAccountOpState?.selectedOption,
-    signAccountOpState?.accountOp.accountAddr,
-    signAccountOpState?.rbfAccountOps
+    signAccountOpState?.accountOp.accountAddr
   ])
 
   const isGaslessTransaction = useMemo(() => {

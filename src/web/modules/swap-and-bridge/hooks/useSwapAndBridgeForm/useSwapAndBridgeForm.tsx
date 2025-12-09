@@ -5,6 +5,7 @@ import { useModalize } from 'react-native-modalize'
 import { useLocation } from 'react-router-dom'
 
 import { SwapAndBridgeFormStatus } from '@ambire-common/controllers/swapAndBridge/swapAndBridge'
+import { SwapAndBridgeActiveRoute } from '@ambire-common/interfaces/swapAndBridge'
 import {
   calculateAmountWarnings,
   getIsTokenEligibleForSwapAndBridge
@@ -67,7 +68,7 @@ const useSwapAndBridgeForm = () => {
    * @deprecated - the settings menu is not used anymore
    */
   const [settingModalVisible, setSettingsModalVisible] = useState<boolean>(false)
-  const [hasBroadcasted, setHasBroadcasted] = useState(false)
+  const [activeRoute, setActiveRoute] = useState<SwapAndBridgeActiveRoute | undefined>(undefined)
   const [showAddedToBatch, setShowAddedToBatch] = useState(false)
   const [latestBatchedNetwork, setLatestBatchedNetwork] = useState<bigint | undefined>()
   const [isOneClickModeDuringPriceImpact, setIsOneClickModeDuringPriceImpact] =
@@ -94,16 +95,6 @@ const useSwapAndBridgeForm = () => {
 
     return nanoid()
   }, []) // purposely, so it is unique per hook lifetime
-
-  const setIsAutoSelectRouteDisabled = useCallback(
-    (isDisabled: boolean) => {
-      dispatch({
-        type: 'SWAP_AND_BRIDGE_CONTROLLER_IS_AUTO_SELECT_ROUTE_DISABLED',
-        params: { isDisabled }
-      })
-    },
-    [dispatch]
-  )
 
   const isBridge = useMemo(() => {
     if (!fromSelectedToken || !toSelectedToken) return false
@@ -132,14 +123,6 @@ const useSwapAndBridgeForm = () => {
 
     return getCallsCount(reqs)
   }, [latestBatchedNetwork, userRequests, account])
-
-  const handleSetFromAmount = useCallback(
-    (val: string) => {
-      setFromAmountValue(val)
-      setIsAutoSelectRouteDisabled(false)
-    },
-    [setFromAmountValue, setIsAutoSelectRouteDisabled]
-  )
 
   useEffect(() => {
     const hasSwapAndBridgeAction = visibleActionsQueue.some(
@@ -424,17 +407,37 @@ const useSwapAndBridgeForm = () => {
   const displayedView: 'estimate' | 'batch' | 'track' = useMemo(() => {
     if (showAddedToBatch) return 'batch'
 
-    if (hasBroadcasted) return 'track'
+    if (activeRoute) return 'track'
 
     return 'estimate'
-  }, [hasBroadcasted, showAddedToBatch])
+  }, [activeRoute, showAddedToBatch])
 
   useEffect(() => {
     const broadcastStatus = mainCtrlStatuses.signAndBroadcastAccountOp
-    if (broadcastStatus === 'SUCCESS' && selectedAccActiveRoutes.length) {
-      setHasBroadcasted(true)
+    if (broadcastStatus === 'SUCCESS' && selectedAccActiveRoutes.length && !activeRoute) {
+      const route = selectedAccActiveRoutes.find(
+        (r) => r.activeRouteId === signAccountOpController?.accountOp.meta?.swapTxn?.activeRouteId
+      )
+
+      if (!route && isActionWindow) {
+        dispatch({
+          type: 'CLOSE_SIGNING_ACTION_WINDOW',
+          params: {
+            type: 'swapAndBridge'
+          }
+        })
+        return
+      }
+
+      setActiveRoute(route)
     }
-  }, [selectedAccActiveRoutes.length, mainCtrlStatuses.signAndBroadcastAccountOp])
+  }, [
+    selectedAccActiveRoutes,
+    mainCtrlStatuses.signAndBroadcastAccountOp,
+    signAccountOpController?.accountOp.meta?.swapTxn?.activeRouteId,
+    dispatch,
+    activeRoute
+  ])
 
   useEffect(() => {
     if (!signAccountOpController) {
@@ -445,7 +448,7 @@ const useSwapAndBridgeForm = () => {
   return {
     sessionId,
     fromAmountValue,
-    onFromAmountChange: handleSetFromAmount,
+    onFromAmountChange: setFromAmountValue,
     fromTokenAmountSelectDisabled,
     fromTokenOptions,
     fromTokenValue,
@@ -460,12 +463,11 @@ const useSwapAndBridgeForm = () => {
     selectedAccActiveRoutes,
     routesModalRef,
     displayedView,
-    hasBroadcasted,
-    setHasBroadcasted,
+    activeRoute,
+    setActiveRoute,
     openRoutesModal,
     closeRoutesModal,
     estimationModalRef,
-    setIsAutoSelectRouteDisabled,
     isBridge,
     setShowAddedToBatch,
     latestBatchedNetwork,

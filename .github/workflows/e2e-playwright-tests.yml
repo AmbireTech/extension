@@ -127,12 +127,11 @@ jobs:
         working-directory: ./e2e-playwright-tests
         run: npm run test
 
-      - name: Upload HTML report
+      - name: Zip HTML report
         if: always()
         working-directory: ./e2e-playwright-tests
         run: |
-          mkdir -p playwright-report
-          zip -r playwright-report.zip playwright-report
+          zip -r playwright-report.zip test-results/
         continue-on-error: true
 
       - name: Save test report as artifact

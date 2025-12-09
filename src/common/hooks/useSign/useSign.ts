@@ -363,7 +363,8 @@ const useSign = ({
     primaryButtonText,
     bundlerNonceDiscrepancy,
     isChooseFeePayerKeyShown,
-    setIsChooseFeePayerKeyShown
+    setIsChooseFeePayerKeyShown,
+    shouldHoldToProceed: !!signAccountOpState?.banners?.length
   }
 }
 

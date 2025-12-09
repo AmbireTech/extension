@@ -8,12 +8,12 @@ import shortenAddress from '@ambire-common/utils/shortenAddress'
 import Avatar from '@common/components/Avatar'
 import Badge from '@common/components/Badge'
 import BadgeWithPreset from '@common/components/BadgeWithPreset'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Label from '@common/components/Label'
 import NetworkIcon from '@common/components/NetworkIcon'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import Toggle from '@common/components/Toggle'
-import Tooltip from '@common/components/Tooltip'
 import { useTranslation } from '@common/config/localization'
 import useReverseLookup from '@common/hooks/useReverseLookup'
 import useTheme from '@common/hooks/useTheme'
@@ -140,6 +140,7 @@ const Account = ({
               {isAccountImported ? (
                 <>
                   <Avatar
+                    address={account.addr}
                     pfp={account.preferences.pfp}
                     size={24}
                     isSmart={isSmartAccount(account)}
@@ -158,11 +159,13 @@ const Account = ({
                     appearance="secondaryText"
                     style={spacings.mrMi}
                     // @ts-ignore
-                    dataSet={{ tooltipId: account.addr }}
+                    dataSet={createGlobalTooltipDataSet({
+                      id: account.addr,
+                      content: account.addr
+                    })}
                   >
                     ({shortenAddress(account.addr, 16)})
                   </Text>
-                  <Tooltip content={account.addr} id={account.addr} />
                 </>
               ) : (
                 <>

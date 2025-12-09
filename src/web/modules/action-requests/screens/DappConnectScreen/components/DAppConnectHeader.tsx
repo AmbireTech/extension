@@ -1,25 +1,27 @@
-import React, { FC, useEffect, useMemo, useState } from 'react'
+import React, { FC, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
-import { Dapp, DappProviderRequest } from '@ambire-common/interfaces/dapp'
+import { DappProviderRequest } from '@ambire-common/interfaces/dapp'
+import { BlacklistedStatus } from '@ambire-common/interfaces/phishing'
 import ErrorFilledIcon from '@common/assets/svg/ErrorFilledIcon'
 import ManifestFallbackIcon from '@common/assets/svg/ManifestFallbackIcon'
+import WarningFilledIcon from '@common/assets/svg/WarningFilledIcon'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
-import spacings, { SPACING, SPACING_LG, SPACING_MD } from '@common/styles/spacings'
+import spacings, { SPACING, SPACING_LG, SPACING_MD, SPACING_TY } from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import ManifestImage from '@web/components/ManifestImage'
-import useDappsControllerState from '@web/hooks/useDappsControllerState'
 
 import getStyles from '../styles'
 import TrustedIcon from './TrustedIcon'
 
 type Props = Partial<DappProviderRequest['session']> & {
   responsiveSizeMultiplier: number
-  securityCheck: 'BLACKLISTED' | 'NOT_BLACKLISTED' | 'LOADING'
+  securityCheck: BlacklistedStatus
 }
 
 const DAppConnectHeader: FC<Props> = ({
@@ -31,24 +33,8 @@ const DAppConnectHeader: FC<Props> = ({
 }) => {
   const { t } = useTranslation()
   const { styles, theme, themeType } = useTheme(getStyles)
-  const { state } = useDappsControllerState()
+
   const { minHeightSize } = useWindowSize()
-  // When the user connects to a dApp, the dApp is added to the list of dApps.
-  // If we don't use the initial list of dApps to determine if a dApp is trusted,
-  // the dApp will be marked as trusted for a split second before the window closes.
-  const [initialDappsList, setInitialDappsList] = useState<Dapp[]>([])
-
-  useEffect(() => {
-    if (!initialDappsList.length && state.dapps.length) {
-      setInitialDappsList(state.dapps)
-    }
-  }, [initialDappsList, state.dapps])
-
-  const isDAppTrusted = useMemo(() => {
-    if (!id) return false
-
-    return initialDappsList.some((dapp) => dapp.id === id)
-  }, [id, initialDappsList])
 
   const spacingsStyle = useMemo(() => {
     return {
@@ -66,6 +52,8 @@ const DAppConnectHeader: FC<Props> = ({
           backgroundColor:
             securityCheck === 'BLACKLISTED'
               ? theme.errorBackground
+              : securityCheck === 'FAILED_TO_GET'
+              ? theme.warningBackground
               : themeType === THEME_TYPES.DARK
               ? theme.secondaryBackground
               : theme.tertiaryBackground
@@ -95,13 +83,26 @@ const DAppConnectHeader: FC<Props> = ({
             )}
           />
 
-          {isDAppTrusted && securityCheck === 'NOT_BLACKLISTED' && (
+          {securityCheck === 'VERIFIED' && (
             <View
               style={{
                 position: 'absolute',
                 right: -9,
                 top: -5
               }}
+              // @ts-ignore
+              dataSet={createGlobalTooltipDataSet({
+                id,
+                content: t('Verified app'),
+                delayShow: 250,
+                border: `1px solid ${theme.successDecorative as string}`,
+                style: {
+                  fontSize: 12,
+                  backgroundColor: theme.successBackground as string,
+                  padding: SPACING_TY,
+                  color: theme.successDecorative as string
+                }
+              })}
             >
               <TrustedIcon borderColor={theme.tertiaryBackground} />
             </View>
@@ -115,6 +116,17 @@ const DAppConnectHeader: FC<Props> = ({
               }}
             >
               <ErrorFilledIcon width={18} height={18} />
+            </View>
+          )}
+          {securityCheck === 'FAILED_TO_GET' && (
+            <View
+              style={{
+                position: 'absolute',
+                right: -9,
+                top: -4
+              }}
+            >
+              <WarningFilledIcon width={18} height={18} />
             </View>
           )}
         </View>

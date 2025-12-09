@@ -17,7 +17,9 @@ const selectors = {
     addressEnsField: 'address-ens-field',
     showMoreBtn: 'show-more-btn',
     viewOnlyBtnImport: 'view-only-button-import',
-    importBtn: 'import-button'
+    importBtn: 'import-button',
+    openDashboardButton: 'onboarding-completed-open-dashboard-btn',
+    editFirstAccNameButton: 'edit-btn-for-edit-name-field-0'
   },
   dashboard: {
     tokensTabButton: 'tokens-defi',
@@ -30,6 +32,7 @@ const selectors = {
     suggestProtocolText: 'suggest-protocol-text',
     openTicketLink: 'open-ticket-link',
     activityTabButton: 'tab-activity',
+    viewTransactionLink: 'view-transaction-link',
     sendButton: 'dashboard-button-send',
     swapAndBridgeButton: 'dashboard-button-swap-and-bridge',
     hamburgerButton: 'dashboard-hamburger-btn',
@@ -52,7 +55,7 @@ const selectors = {
     hideTokenModalTitle: 'hide-token-modal-title',
     hideTokenModalDescription: 'hide-token-modal-description',
     projectedRewardsInfoButton: 'rewards-button',
-    projectedRewardsClaimButton: 'projected-rewards-claim-button'
+    projectedRewardsClaimButton: 'projected-rewards-claim-button',
   },
   settings: {
     createNewRecoveryPhraseButton: 'create-new-recovery-phrase',
@@ -86,6 +89,23 @@ const selectors = {
       addedTokenSnackbar: '//span[contains(text(),"Added token")]',
       tokenRemovedSnackbar: '//span[contains(text(),"Token removed")]',
       removeCustomTokenButton: 'remove-button'
+    }
+  },
+  transaction: {
+    feeTokensSelectDropdown: 'fee-option-select',
+    feeSpeedSelectDropdown: 'fee-speed-select',
+    feeSpeedSlow: 'option-slow',
+    feeSpeedMedium: 'option-medium',
+    feeSpeedFast: 'option-fast',
+    feeSpeedApe: 'option-ape',
+    feeGasTankInDollars: '//span[contains(text(),"Gas Tank")]/../../../div[contains(text(),"$")]', // returning e.g. "<$0.01"
+    feeTokenInDollars: '//span[contains(text(),"")]/../../div[contains(text(),"$")]',
+    confirmingYourTransactionText: '//div[contains(text(),"Confirming your")]',
+    explorer: {
+      txnSignedStep: 'signed-step',
+      txnProgressStep: 'txn-progress-step',
+      txnConfirmedStep: 'finalized-rows',
+      recepientAddressBlock: 'recipient-address-undefined'
     }
   },
   account: 'account',
@@ -157,7 +177,6 @@ const selectors = {
   continueAnywayCheckboxSaB: 'checkbox',
   continueAnywayButton: '//div[contains(text(),"Continue anyway")]',
   amountField: 'amount-field',
-  recipientAddressUnknownCheckbox: 'recipient-address-unknown-checkbox',
   transferButtonConfirm: 'transfer-button-confirm',
   addAccountField: 'add-account-field',
   importExistingSeedBtn: 'import-existing-seed-btn',
@@ -166,7 +185,6 @@ const selectors = {
   nativeTokenPolygonDyn: 'token-0x0000000000000000000000000000000000000000-polygon',
   tokenSend: 'token-send',
   tokensSelect: 'tokens-select',
-  feeTokensSelect: 'fee-option-select',
   queueAndSignLaterButton: 'queue-and-sign-later-button',
   deleteTxnCallDyn: 'delete-txn-call',
   feeSlow: 'option-slow',
@@ -228,7 +246,6 @@ const selectors = {
   // Top up
   modalGasTankBalance: 'gas-tank-balance',
   topUpButton: 'top-up-gas-tank-modal-button',
-  topUpProceedButton: 'proceed-btn',
   closeProgressModalButton: 'track-progress-primary-button',
   // Network Management
   // TODO: change once we have IDs on FE

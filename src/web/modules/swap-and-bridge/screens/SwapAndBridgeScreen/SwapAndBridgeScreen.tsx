@@ -56,10 +56,10 @@ const SwapAndBridgeScreen = () => {
     openRoutesModal,
     closeRoutesModal,
     estimationModalRef,
-    setHasBroadcasted,
+    activeRoute,
+    setActiveRoute,
     displayedView,
     closeEstimationModalWrapped,
-    setIsAutoSelectRouteDisabled,
     isBridge,
     setShowAddedToBatch,
     batchNetworkUserRequestsCount,
@@ -75,7 +75,6 @@ const SwapAndBridgeScreen = () => {
     shouldEnableRoutesSelection,
     updateQuoteStatus,
     signAccountOpController,
-    isAutoSelectRouteDisabled,
     hasProceeded,
     swapSignErrors,
     quote
@@ -114,9 +113,15 @@ const SwapAndBridgeScreen = () => {
     return (
       requestsCtrlStatuses.buildSwapAndBridgeUserRequest !== 'INITIAL' ||
       updateQuoteStatus === 'LOADING' ||
-      isEstimatingRoute
+      isEstimatingRoute ||
+      !!signAccountOpController?.safetyChecksLoading
     )
-  }, [isEstimatingRoute, requestsCtrlStatuses.buildSwapAndBridgeUserRequest, updateQuoteStatus])
+  }, [
+    isEstimatingRoute,
+    requestsCtrlStatuses.buildSwapAndBridgeUserRequest,
+    updateQuoteStatus,
+    signAccountOpController?.safetyChecksLoading
+  ])
 
   const isNotReadyToProceed = useMemo(() => {
     return formStatus !== SwapAndBridgeFormStatus.ReadyToSubmit || isLoading
@@ -215,13 +220,13 @@ const SwapAndBridgeScreen = () => {
     )
   }
 
-  if (displayedView === 'track') {
+  if (activeRoute && displayedView === 'track') {
     return (
       <TrackProgress
-        selectedAccActiveRoutes={selectedAccActiveRoutes}
         handleClose={() => {
-          setHasBroadcasted(false)
+          setActiveRoute(undefined)
         }}
+        activeRoute={activeRoute}
       />
     )
   }
@@ -265,21 +270,15 @@ const SwapAndBridgeScreen = () => {
               fromAmountValue={fromAmountValue}
               fromTokenAmountSelectDisabled={fromTokenAmountSelectDisabled}
               onFromAmountChange={onFromAmountChange}
-              setIsAutoSelectRouteDisabled={setIsAutoSelectRouteDisabled}
               simulationFailed={!!fromChainSimulationError}
             />
           </View>
-          <ToToken
-            isAutoSelectRouteDisabled={isAutoSelectRouteDisabled}
-            setIsAutoSelectRouteDisabled={setIsAutoSelectRouteDisabled}
-            simulationFailed={!!toChainSimulationError}
-          />
+          <ToToken simulationFailed={!!toChainSimulationError} />
         </Form>
         <RouteInfo
           isEstimatingRoute={isEstimatingRoute}
           openRoutesModal={openRoutesModal}
           shouldEnableRoutesSelection={shouldEnableRoutesSelection}
-          isAutoSelectRouteDisabled={isAutoSelectRouteDisabled}
         />
       </Content>
       <RoutesModal sheetRef={routesModalRef} closeBottomSheet={closeRoutesModal} />

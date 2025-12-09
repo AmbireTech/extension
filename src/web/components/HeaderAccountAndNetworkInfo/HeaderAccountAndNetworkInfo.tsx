@@ -57,7 +57,11 @@ const HeaderAccountAndNetworkInfo: FC<Props> = ({
         style={[headerStyles.widthContainer, !isActionWindow && { maxWidth: tabLayoutWidths.xl }]}
       >
         <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1]}>
-          <Avatar pfp={account.preferences.pfp} isSmart={isSmartAccount(account)} />
+          <Avatar
+            address={account.addr}
+            pfp={account.preferences.pfp}
+            isSmart={isSmartAccount(account)}
+          />
           <View style={flexbox.flex1}>
             <View style={[flexbox.flex1, flexbox.directionRow]}>
               <Text fontSize={16} weight="medium" numberOfLines={1}>

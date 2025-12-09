@@ -8,10 +8,10 @@ import { getIsTokenEligibleForSwapAndBridge } from '@ambire-common/libs/swapAndB
 import CoinsIcon from '@common/assets/svg/CoinsIcon'
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import StarFilledIcon from '@common/assets/svg/StarFilledIcon'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import { SectionedSelect } from '@common/components/Select'
 import { SelectValue } from '@common/components/Select/types'
 import Text from '@common/components/Text'
-import Tooltip from '@common/components/Tooltip'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES, ThemeProps } from '@common/styles/themeConfig'
@@ -57,9 +57,12 @@ const getToTokenListErrorOption = ({
           color={theme.secondaryText}
           width={14}
           height={14}
-          data-tooltip-id="to-token-list-error-tooltip"
+          // @ts-ignore
+          dataSet={createGlobalTooltipDataSet({
+            id: 'to-token-list-error-tooltip',
+            content: text
+          })}
         />
-        <Tooltip id="to-token-list-error-tooltip" content={text} />
       </View>
     ),
     icon: null,

@@ -12,6 +12,7 @@ import {
 } from 'ethers'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
+import { EIP7702Auth } from '@ambire-common/consts/7702'
 import { AMBIRE_PAYMASTER, ERC_4337_ENTRYPOINT } from '@ambire-common/consts/deploy'
 import { Fetch } from '@ambire-common/interfaces/fetch'
 import { Network } from '@ambire-common/interfaces/network'
@@ -28,6 +29,8 @@ import { humanizeAccountOp } from '@ambire-common/libs/humanizer'
 import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import { parseLogs } from '@ambire-common/libs/userOperation/userOperation'
 import { resolveAssetInfo } from '@ambire-common/services/assetInfo'
+import { BundlerSwitcher } from '@ambire-common/services/bundlers/bundlerSwitcher'
+import { BundlerTransactionReceipt } from '@ambire-common/services/bundlers/types'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import {
@@ -37,9 +40,6 @@ import {
 import { ActiveStepType, FinalizedStatusType } from '@benzin/screens/BenzinScreen/interfaces/steps'
 import { UserOperation } from '@benzin/screens/BenzinScreen/interfaces/userOperation'
 
-import { EIP7702Auth } from '@ambire-common/consts/7702'
-import { BundlerSwitcher } from '@ambire-common/services/bundlers/bundlerSwitcher'
-import { BundlerTransactionReceipt } from '@ambire-common/services/bundlers/types'
 import { decodeUserOp, entryPointTxnSplit, reproduceCallsFromTxn } from './utils/reproduceCalls'
 
 const REFETCH_TIME = 3000 // 4 seconds
@@ -751,7 +751,7 @@ const useSteps = ({
     // if we have the extension account op passed, we do not need to
     // wait to show the calls
     if (extensionAccOp) {
-      const humanizedCalls = humanizeAccountOp(extensionAccOp, { network })
+      const humanizedCalls = humanizeAccountOp(extensionAccOp)
       setCalls(parseHumanizer(humanizedCalls))
       setFrom(extensionAccOp.accountAddr)
       if (extensionAccOp.feeCall) setFeeCall(extensionAccOp.feeCall)
@@ -786,7 +786,7 @@ const useSteps = ({
         signature: '0x', // irrelevant
         gasFeePayment: null
       }
-      const humanizedCalls = humanizeAccountOp(accountOp, { network })
+      const humanizedCalls = humanizeAccountOp(accountOp)
 
       setCalls(parseHumanizer(humanizedCalls))
       setFrom(accountOp.accountAddr)

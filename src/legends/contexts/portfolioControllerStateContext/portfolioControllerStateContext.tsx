@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { WALLET_TOKEN } from '@ambire-common/consts/addresses'
+import { PortfolioProjectedRewardsResult } from '@ambire-common/libs/portfolio/interfaces'
 import { RELAYER_URL } from '@env'
 import { LEGENDS_SUPPORTED_NETWORKS_BY_CHAIN_ID } from '@legends/constants/networks'
 import useAccountContext from '@legends/hooks/useAccountContext'
@@ -43,16 +44,7 @@ const PortfolioControllerStateContext = createContext<{
   } | null
   walletTokenPrice: number | null
   isLoadingWalletTokenInfo: boolean
-  rewardsProjectionData?: {
-    userLevel: number
-    numberOfWeeksSinceStartOfSeason: number
-    totalWeightNonUser: number
-    walletPrice: number
-    totalRewardsPool: number
-    minLvl: number
-    minBalance: number
-    currentSeasonSnapshots: { week: number; balance: number }[]
-  }
+  rewardsProjectionData?: PortfolioProjectedRewardsResult
 }>({
   updateAccountPortfolio: () => {},
   claimableRewardsError: null,

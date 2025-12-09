@@ -24,7 +24,6 @@ import {
 } from '@ambire-common/interfaces/keystore'
 import { AddNetworkRequestParams, ChainId, Network } from '@ambire-common/interfaces/network'
 import { BuildRequest } from '@ambire-common/interfaces/requests'
-import { CashbackStatus } from '@ambire-common/interfaces/selectedAccount'
 import { SignMessageUpdateParams } from '@ambire-common/interfaces/signMessage'
 import {
   SwapAndBridgeActiveRoute,
@@ -35,12 +34,12 @@ import { TransferUpdate } from '@ambire-common/interfaces/transfer'
 import { Message, UserRequest } from '@ambire-common/interfaces/userRequest'
 import { AccountOp } from '@ambire-common/libs/accountOp/accountOp'
 import { FullEstimation } from '@ambire-common/libs/estimate/interfaces'
-import { GasRecommendation } from '@ambire-common/libs/gasPrice/gasPrice'
 import { TokenResult } from '@ambire-common/libs/portfolio'
 import { CustomToken, TokenPreference } from '@ambire-common/libs/portfolio/customToken'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import { LOG_LEVELS } from '@web/utils/logger'
 
+import { GasSpeeds } from '@ambire-common/services/bundlers/types'
 import { AUTO_LOCK_TIMES } from './controllers/auto-lock'
 import { controllersMapping } from './types'
 
@@ -348,11 +347,6 @@ type PortfolioControllerCheckToken = {
   }
 }
 
-type PortfolioControllerUpdateConfettiToShown = {
-  type: 'SELECTED_ACCOUNT_CONTROLLER_UPDATE_CASHBACK_STATUS'
-  params: CashbackStatus
-}
-
 type MainControllerSignAccountOpInitAction = {
   type: 'MAIN_CONTROLLER_SIGN_ACCOUNT_OP_INIT'
   params: {
@@ -377,7 +371,7 @@ type MainControllerSignAccountOpUpdateAction = {
     | 'TRANSFER_CONTROLLER_SIGN_ACCOUNT_OP_UPDATE'
   params: {
     accountOp?: AccountOp
-    gasPrices?: GasRecommendation[]
+    gasPrices?: GasSpeeds
     estimation?: FullEstimation
     feeToken?: TokenResult
     paidBy?: string
@@ -392,7 +386,7 @@ type SignAccountOpUpdateAction = {
   params: {
     updateType: 'Main' | 'Swap&Bridge' | 'Transfer&TopUp'
     accountOp?: AccountOp
-    gasPrices?: GasRecommendation[]
+    gasPrices?: GasSpeeds
     estimation?: FullEstimation
     feeToken?: TokenResult
     paidBy?: string
@@ -522,6 +516,7 @@ type DomainsControllerSaveResolvedReverseLookupAction = {
   params: {
     address: string
     name: string
+    ensAvatar: string | null
     type: 'ens'
   }
 }
@@ -555,10 +550,6 @@ type SwapAndBridgeControllerInitAction = {
 type SwapAndBridgeControllerUserProceededAction = {
   type: 'SWAP_AND_BRIDGE_CONTROLLER_HAS_USER_PROCEEDED'
   params: { proceeded: boolean }
-}
-type SwapAndBridgeControllerIsAutoSelectRouteDisabled = {
-  type: 'SWAP_AND_BRIDGE_CONTROLLER_IS_AUTO_SELECT_ROUTE_DISABLED'
-  params: { isDisabled: boolean }
 }
 type SwapAndBridgeControllerUnloadScreenAction = {
   type: 'SWAP_AND_BRIDGE_CONTROLLER_UNLOAD_SCREEN'
@@ -598,7 +589,7 @@ type SwapAndBridgeControllerSwitchFromAndToTokensAction = {
 }
 type SwapAndBridgeControllerSelectRouteAction = {
   type: 'SWAP_AND_BRIDGE_CONTROLLER_SELECT_ROUTE'
-  params: { route: SwapAndBridgeRoute; isAutoSelectDisabled?: boolean }
+  params: { route: SwapAndBridgeRoute }
 }
 type SwapAndBridgeControllerResetForm = {
   type: 'SWAP_AND_BRIDGE_CONTROLLER_RESET_FORM'
@@ -710,6 +701,11 @@ type ChangeCurrentDappNetworkAction = {
   params: { chainId: number; id: string }
 }
 
+type ContractNamesGetName = {
+  type: 'CONTRACT_NAMES_CONTROLLER_GET_NAME'
+  params: { address: string; chainId: bigint }
+}
+
 type SetIsPinnedAction = {
   type: 'SET_IS_PINNED'
   params: { isPinned: boolean }
@@ -737,11 +733,6 @@ type InviteControllerRevokeOGAction = { type: 'INVITE_CONTROLLER_REVOKE_OG' }
 type ImportSmartAccountJson = {
   type: 'IMPORT_SMART_ACCOUNT_JSON'
   params: { readyToAddAccount: Account; keys: ReadyToAddKeys['internal'] }
-}
-
-type PhishingControllerGetIsBlacklistedAndSendToUiAction = {
-  type: 'PHISHING_CONTROLLER_GET_IS_BLACKLISTED_AND_SEND_TO_UI'
-  params: { url: string }
 }
 
 type ExtensionUpdateControllerApplyUpdate = {
@@ -836,7 +827,6 @@ export type Action =
   | PortfolioControllerToggleHideToken
   | PortfolioControllerRemoveCustomToken
   | PortfolioControllerCheckToken
-  | PortfolioControllerUpdateConfettiToShown
   | KeystoreControllerAddSecretAction
   | KeystoreControllerAddTempSeedAction
   | KeystoreControllerUpdateSeedAction
@@ -858,6 +848,7 @@ export type Action =
   | DappsControllerFetchAndUpdateDappsAction
   | DappsControllerRemoveConnectedSiteAction
   | DappsControllerUpdateDappAction
+  | ContractNamesGetName
   | DappsControllerRemoveDappAction
   | SwapAndBridgeControllerInitAction
   | SwapAndBridgeControllerUnloadScreenAction
@@ -891,7 +882,6 @@ export type Action =
   | KeystoreControllerSendSeedToUiAction
   | KeystoreControllerSendTempSeedToUiAction
   | KeystoreControllerDeleteSeedAction
-  | PhishingControllerGetIsBlacklistedAndSendToUiAction
   | ExtensionUpdateControllerApplyUpdate
   | OpenExtensionPopupAction
   | SignAccountOpUpdateAction
@@ -900,7 +890,6 @@ export type Action =
   | SwapAndBridgeControllerDestroySignAccountOp
   | SwapAndBridgeControllerOpenSigningActionWindow
   | SwapAndBridgeControllerUserProceededAction
-  | SwapAndBridgeControllerIsAutoSelectRouteDisabled
   | OpenSigningActionWindow
   | CloseSigningActionWindow
   | TransferControllerUpdateForm

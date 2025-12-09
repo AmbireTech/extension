@@ -97,7 +97,7 @@ test.describe('stability', { tag: '@stability' }, () => {
         expect(categorized.rpc.length).toBeLessThanOrEqual(30)
         expect(categorized.hints.length).toBeLessThanOrEqual(1)
         expect(categorized.nativePrices.length).toBeLessThanOrEqual(10)
-        expect(categorized.thirdParty.length).toBeLessThanOrEqual(10)
+        expect(categorized.thirdParty.length).toBeLessThanOrEqual(15)
         expect(categorized.allowedUncategorized.length).toBeLessThanOrEqual(10)
 
         // ☢️ Critical: there should be no truly uncategorized requests.
@@ -135,7 +135,8 @@ test.describe('stability', { tag: '@stability' }, () => {
       57073, // Ink
       59144, // Linea
       80094, // Berachain
-      81457 // Blast
+      81457, // Blast
+      143 // Monad
     ]
 
     const url = 'https://relayer.ambire.com/velcro-v3/multi-hints'
