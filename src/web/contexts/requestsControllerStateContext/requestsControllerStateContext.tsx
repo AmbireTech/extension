@@ -19,23 +19,23 @@ const RequestsControllerStateProvider: React.FC<any> = ({ children }) => {
 
   useEffect(() => {
     dispatch({ type: 'INIT_CONTROLLER_STATE', params: { controller } })
-    if (getUiType().isActionWindow) {
-      dispatch({ type: 'ACTIONS_CONTROLLER_SET_WINDOW_LOADED' })
+    if (getUiType().isRequestWindow) {
+      dispatch({ type: 'REQUESTS_CONTROLLER_SET_WINDOW_LOADED' })
     }
   }, [dispatch])
 
   const memoizedState = useDeepMemo(state, controller)
 
-  const prevCurrentActionId = usePrevious(memoizedState?.actions?.currentAction?.id)
+  const prevCurrentUserRequestId = usePrevious(memoizedState?.currentUserRequest?.id)
 
   useEffect(() => {
     if (
-      getUiType().isActionWindow &&
-      prevCurrentActionId !== memoizedState?.actions?.currentAction?.id
+      getUiType().isRequestWindow &&
+      prevCurrentUserRequestId !== memoizedState?.currentUserRequest?.id
     ) {
       setTimeout(() => navigate('/'))
     }
-  }, [prevCurrentActionId, memoizedState?.actions?.currentAction?.id, navigate])
+  }, [prevCurrentUserRequestId, memoizedState?.currentUserRequest?.id, navigate])
 
   return (
     <RequestsControllerStateContext.Provider value={memoizedState}>

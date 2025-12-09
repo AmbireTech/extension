@@ -57,9 +57,7 @@ const Footer = ({
   const batchCount = useMemo(() => {
     const requests = userRequests.filter((r) => {
       return (
-        r.action.kind === 'calls' &&
-        r.meta.accountAddr === account?.addr &&
-        r.meta.chainId === chainId
+        r.kind === 'calls' && r.meta.accountAddr === account?.addr && r.meta.chainId === chainId
       )
     })
 

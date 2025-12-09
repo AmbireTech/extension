@@ -6,9 +6,9 @@ import { useModalize } from 'react-native-modalize'
 
 import { FEE_COLLECTOR } from '@ambire-common/consts/addresses'
 import { SigningStatus } from '@ambire-common/controllers/signAccountOp/signAccountOp'
-import { ActionExecutionType } from '@ambire-common/interfaces/actions'
 import { AddressStateOptional } from '@ambire-common/interfaces/domains'
 import { Key } from '@ambire-common/interfaces/keystore'
+import { RequestExecutionType } from '@ambire-common/interfaces/userRequest'
 import { AccountOpStatus } from '@ambire-common/libs/accountOp/types'
 import { getSanitizedAmount } from '@ambire-common/libs/transfer/amount'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
@@ -28,7 +28,6 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { Content, Form, Wrapper } from '@web/components/TransactionsScreen'
 import { createTab } from '@web/extension-services/background/webapi/tab'
-import useActionsControllerState from '@web/hooks/useActionsControllerState'
 import useActivityControllerState from '@web/hooks/useActivityControllerState'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useHasGasTank from '@web/hooks/useHasGasTank'
@@ -48,7 +47,7 @@ import GasTankInfoModal from '@web/modules/transfer/components/GasTankInfoModal'
 import SendForm from '@web/modules/transfer/components/SendForm/SendForm'
 import { getUiType } from '@web/utils/uiType'
 
-const { isTab, isActionWindow } = getUiType()
+const { isTab, isRequestWindow } = getUiType()
 
 const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   const { dispatch } = useBackgroundService()
@@ -83,7 +82,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
 
   const { navigate } = useNavigation()
   const { t } = useTranslation()
-  const { visibleActionsQueue } = useActionsControllerState()
+  const { visibleUserRequests } = useRequestsControllerState()
   const { account, portfolio } = useSelectedAccountControllerState()
   const { userRequests } = useRequestsControllerState()
   const {
@@ -135,9 +134,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   const accountUserRequests = useMemo(() => {
     if (!account || !userRequests.length) return []
 
-    return userRequests.filter(
-      (r) => r.action.kind === 'calls' && r.meta.accountAddr === account.addr
-    )
+    return userRequests.filter((r) => r.kind === 'calls' && r.meta.accountAddr === account.addr)
   }, [userRequests, account])
 
   const networkUserRequests = useMemo(() => {
@@ -155,9 +152,9 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   }, [latestBatchedNetwork, account, accountUserRequests])
 
   const navigateOut = useCallback(() => {
-    if (isActionWindow) {
+    if (isRequestWindow) {
       dispatch({
-        type: 'CLOSE_SIGNING_ACTION_WINDOW',
+        type: 'CLOSE_SIGNING_REQUEST_WINDOW',
         params: {
           type: 'transfer'
         }
@@ -333,7 +330,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
    * Used to allow the user to open the SignAccountOp window to sign the requests.
    */
   const isSendingBatch =
-    accountUserRequests.length > 0 && !state.amount && visibleActionsQueue.length > 0
+    accountUserRequests.length > 0 && !state.amount && visibleUserRequests.length > 0
 
   const submitButtonText = useMemo(() => {
     const callsCount = getCallsCount(isSendingBatch ? accountUserRequests : networkUserRequests)
@@ -366,11 +363,11 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   }, [dispatch])
 
   const addTransaction = useCallback(
-    (actionExecutionType: ActionExecutionType) => {
+    (executionType: RequestExecutionType) => {
       if (isSendingBatch) {
-        const action = visibleActionsQueue.find((a) => a.type === 'accountOp')
+        const request = visibleUserRequests.find((r) => r.kind === 'calls')
 
-        if (!action) {
+        if (!request) {
           addToast(
             t('Failed to open batch. If this error persists please reject it from the dashboard.'),
             { type: 'error' }
@@ -379,9 +376,9 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
         }
 
         dispatch({
-          type: 'ACTIONS_CONTROLLER_SET_CURRENT_ACTION_BY_ID',
+          type: 'REQUESTS_CONTROLLER_SET_CURRENT_REQUEST_BY_ID',
           params: {
-            actionId: action.id
+            requestId: request.id
           }
         })
         return
@@ -389,7 +386,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
 
       if (isFormValid && state.selectedToken) {
         // Proceed in OneClick txn
-        if (actionExecutionType === 'open-action-window') {
+        if (executionType === 'open-request-window') {
           // one click mode opens signAccountOp if more than 1 req in batch
           if (networkUserRequests.length > 0) {
             dispatch({
@@ -403,7 +400,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
                   recipientAddress: isTopUp
                     ? FEE_COLLECTOR
                     : getAddressFromAddressState(addressState),
-                  actionExecutionType
+                  executionType
                 }
               }
             })
@@ -424,7 +421,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
               amountInFiat: amountInFiatBigInt, // used only for topUp calcs
               selectedToken: state.selectedToken,
               recipientAddress: isTopUp ? FEE_COLLECTOR : getAddressFromAddressState(addressState),
-              actionExecutionType
+              executionType
             }
           }
         })
@@ -441,7 +438,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
       state.selectedToken,
       state.amount,
       amountInFiatBigInt,
-      visibleActionsQueue,
+      visibleUserRequests,
       dispatch,
       addToast,
       t,
@@ -489,7 +486,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
         {isTab && <BackButton onPress={onBack} />}
         <Buttons
           handleSubmitForm={(isOneClickMode) =>
-            addTransaction(isOneClickMode ? 'open-action-window' : 'queue')
+            addTransaction(isOneClickMode ? 'open-request-window' : 'queue')
           }
           proceedBtnText={submitButtonText}
           isBatchDisabled={isSendingBatch}

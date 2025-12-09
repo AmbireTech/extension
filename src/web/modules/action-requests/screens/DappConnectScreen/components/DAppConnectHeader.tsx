@@ -73,6 +73,7 @@ const DAppConnectHeader: FC<Props> = ({
       <View style={[flexbox.directionRow, flexbox.alignCenter]}>
         <View style={spacings.mr}>
           <ManifestImage
+            key={icon}
             uri={icon}
             size={responsiveSizeMultiplier * 56}
             fallback={() => (
