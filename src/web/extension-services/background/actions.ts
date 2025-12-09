@@ -40,6 +40,7 @@ import { GasSpeeds } from '@ambire-common/services/bundlers/types'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import { LOG_LEVELS } from '@web/utils/logger'
 
+import { AccountOpIdentifiedBy } from '@ambire-common/libs/accountOp/submittedAccountOp'
 import { AUTO_LOCK_TIMES } from './controllers/auto-lock'
 import { controllersMapping } from './types'
 
@@ -242,6 +243,10 @@ type MainControllerActivityResetAccOpsAction = {
 type MainControllerActivityResetSignedMessagesAction = {
   type: 'MAIN_CONTROLLER_ACTIVITY_RESET_SIGNED_MESSAGES_FILTERS'
   params: { sessionId: string }
+}
+type ActivityGetBenzinaInfo = {
+  type: 'ACTIVITY_GET_BENZINA_INFO'
+  params: { identifiedBy: AccountOpIdentifiedBy; accountAddr: string; chainId: bigint }
 }
 type MainControllerReloadSelectedAccount = {
   type: 'MAIN_CONTROLLER_RELOAD_SELECTED_ACCOUNT'
@@ -900,3 +905,4 @@ export type Action =
   | DismissBanner
   | KeystoreControllerSendEncryptedPrivateKeyToUiAction
   | KeystoreControllerSendPasswordDecryptedPrivateKeyToUiAction
+  | ActivityGetBenzinaInfo

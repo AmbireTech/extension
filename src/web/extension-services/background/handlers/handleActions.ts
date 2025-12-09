@@ -259,6 +259,13 @@ export const handleActions = async (
     case 'MAIN_CONTROLLER_SIGN_ACCOUNT_OP_DESTROY':
       return mainCtrl.destroySignAccOp()
 
+    case 'ACTIVITY_GET_BENZINA_INFO':
+      return mainCtrl.activity.getBenzinaInfo(
+        params.identifiedBy,
+        params.accountAddr,
+        params.chainId
+      )
+
     case 'REQUESTS_CONTROLLER_BUILD_REQUEST':
       return await mainCtrl.requests.build(params)
     case 'REQUESTS_CONTROLLER_ADD_CALLS_USER_REQUEST': {
