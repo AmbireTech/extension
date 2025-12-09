@@ -13,7 +13,6 @@ import Modal from '@legends/components/Modal'
 import MobileDisclaimerModal from '@legends/modules/Home/components/MobileDisclaimerModal'
 import CardActionComponent from '@legends/modules/legends/components/Card/CardAction'
 import { CardActionComponentProps } from '@legends/modules/legends/components/Card/CardAction/CardAction'
-import Rewards from '@legends/modules/legends/components/Card/CardContent/Rewards'
 import HowTo from '@legends/modules/legends/components/Card/HowTo'
 import { HowToProps } from '@legends/modules/legends/components/Card/HowTo/HowTo'
 import ClaimRewards from '@legends/modules/legends/components/ClaimRewardsModal/ClaimRewardsModal'
@@ -148,7 +147,6 @@ const ActionModal: FC<ActionModalProps> = ({
     <Modal isOpen={isOpen} handleClose={closeActionModalWrapped} className={styles.modal}>
       <Modal.Heading className={styles.modalHeading}>
         <div className={styles.modalHeadingTitle}>{title}</div>
-        {xp && <Rewards xp={xp} size="lg" id={id} />}
       </Modal.Heading>
 
       {contentSteps && (

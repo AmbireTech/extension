@@ -3,7 +3,7 @@
 .wrapper {
   display: flex;
   gap: 1.875rem;
-  margin-bottom: 1.75rem;
+  margin-bottom: 2rem;
 
   .column {
     display: flex;
@@ -84,19 +84,19 @@
 
     .image,
     .video {
-      border-radius: $secondaryBorderRadius;
+      border-radius: $tertiaryBorderRadius;
     }
 
     .image {
       width: 100%;
       height: auto;
-      border: 1px solid rgba(106, 111, 134, 0.2);
+      border: 0.0625rem solid #6a6f8633;
     }
 
     .video {
-      min-height: 15.625rem;
       margin: auto;
       width: 100%;
+      height: 14rem;
     }
   }
 }
@@ -163,10 +163,6 @@
             font-size: 0.984375rem;
           }
         }
-      }
-
-      .video {
-        min-height: 11.71875rem;
       }
     }
   }

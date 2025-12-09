@@ -25,13 +25,14 @@
         box-sizing: content-box;
         width: calc(100%);
         height: calc(100%);
-        border: 0.25rem solid transparent;
+        border: 0.125rem solid transparent;
         z-index: 0;
         background-clip: padding-box, border-box;
         background-color: $neutral-700;
         background-origin: padding-box, border-box;
         background-image: linear-gradient($secondaryBackground, $secondaryBackground),
-          linear-gradient(152.35deg, rgba(207, 162, 255, 0.6) 9.38%, rgba(78, 25, 168, 0.6) 96.89%);
+          linear-gradient(101.08deg, #b082ff 8.27%, #5f02ff 96.34%);
+
         border-radius: 1rem;
       }
 
@@ -41,7 +42,7 @@
         }
 
         .backgroundEffect {
-          opacity: 0.5;
+          opacity: 1;
         }
       }
     }
@@ -125,13 +126,14 @@
 
     // Used for the hover effect on the card
     .backgroundEffect {
+      transition: opacity 0.2s ease;
       position: absolute;
-      bottom: -1.5625rem;
+      top: 0;
       right: 0;
-      width: 10.6875rem;
-      height: 11.937196731567383rem;
+      height: 9.375rem;
+      width: 9.375rem;
       opacity: 0;
-      z-index: 1;
+      z-index: 0;
     }
 
     .image {

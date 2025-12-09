@@ -22,11 +22,11 @@
   background-size: cover;
   background-color: $neutral-700;
   border-radius: $tertiaryBorderRadius;
-  border: 0.25rem solid transparent;
+  border: 0.0625rem solid transparent;
   background-clip: padding-box, border-box;
   background-origin: padding-box, border-box;
   background-image: linear-gradient($secondaryBackground, $secondaryBackground),
-    linear-gradient(152.35deg, rgba(207, 162, 255, 0.6) 9.38%, rgba(78, 25, 168, 0.6) 96.89%);
+    linear-gradient(15.37deg, #00bfff 6.35%, #785aff 54.11%);
 }
 
 .closeButton {

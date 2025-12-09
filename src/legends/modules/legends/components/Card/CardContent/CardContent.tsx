@@ -1,11 +1,11 @@
 import React, { FC } from 'react'
 
 import LockIcon from '@legends/common/assets/svg/LockIcon'
-import smokeAndLights from '@legends/modules/leaderboard/screens/Leaderboard/Smoke-and-lights.png'
 import { CardFromResponse, CardStatus } from '@legends/modules/legends/types'
 
 import styles from './CardContent.module.scss'
 import CompletedRibbon from './CompletedRibbon'
+import hoverBackgroundImage from './media/hover-background.png'
 
 type Props = Pick<
   CardFromResponse,
@@ -58,7 +58,7 @@ const CardContent: FC<Props> = ({
         <div
           className={styles.backgroundEffect}
           style={{
-            backgroundImage: `url(${smokeAndLights})`,
+            backgroundImage: `url(${hoverBackgroundImage})`,
             backgroundPosition: 'center',
             backgroundRepeat: 'no-repeat',
             backgroundSize: 'cover'
