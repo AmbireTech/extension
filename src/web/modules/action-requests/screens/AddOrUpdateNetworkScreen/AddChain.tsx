@@ -32,7 +32,7 @@ type AddChainProps = {
   areParamsValid: boolean | null
   statuses: Statuses<'addNetwork' | 'updateNetwork'> & Statuses<string>
   features: NetworkFeature[]
-  networkDetails: AddNetworkRequestParams
+  networkDetails?: AddNetworkRequestParams
   actionButtonPressedRef: React.MutableRefObject<boolean>
   rpcUrls: string[]
   rpcUrlIndex: number
@@ -225,7 +225,7 @@ const AddChain = ({
                     features={features}
                     chainId={networkDetails.chainId}
                     withRetryButton={!!rpcUrls.length && rpcUrlIndex < rpcUrls.length - 1}
-                    handleRetry={handleRetryWithDifferentRpcUrl}
+                    handleRetryWithDifferentRpcUrl={handleRetryWithDifferentRpcUrl}
                     responsiveSizeMultiplier={responsiveSizeMultiplier}
                   />
                 )}
@@ -236,9 +236,12 @@ const AddChain = ({
             <View style={[flexbox.flex1, flexbox.alignCenter, flexbox.justifyCenter]}>
               <Alert
                 title={t('Invalid Request Params')}
-                text={t('{{name}} provided invalid params for adding a new network.', {
-                  name: name || 'The App'
-                })}
+                text={t(
+                  '{{name}} provided invalid params for adding a new network. Try adding it from another App or manually from Settings.',
+                  {
+                    name: name || 'The App'
+                  }
+                )}
                 type="error"
               />
             </View>

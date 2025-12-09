@@ -1,0 +1,42 @@
+diff --git a/node_modules/@trezor/connect-webextension/build/trezor-connect-webextension.js b/node_modules/@trezor/connect-webextension/build/trezor-connect-webextension.js
+index 8ae24fe..e5e1822 100644
+--- a/node_modules/@trezor/connect-webextension/build/trezor-connect-webextension.js
++++ b/node_modules/@trezor/connect-webextension/build/trezor-connect-webextension.js
+@@ -4190,8 +4190,28 @@ class PopupManager extends (events_default()) {
+         // Request coming from extension popup,
+         // create new window above instead of opening new tab
+         if (currentWindow.type !== 'normal') {
++          // More consistent approach for opening the popup window in the correct position.
++          // For webkit browsers, this aligns it better with the main browser window
++          // in terms of top-left corner. For gecko browsers, solves the problem
++          // where 2nd time onwards the popup window is NOT being opened with the
++          // correct sizing (compared to the main browser window), but relative
++          // to the Ambire action window, that could be too tiny.
++          chrome.windows.getAll({ windowTypes: ['normal'] }, (wins) => {
++          const largestParentWindow = wins.length
++            ? wins.sort((a, b) => ((b.width || 0) * (b.height || 0)) - ((a.width || 0) * (a.height || 0)))[0]
++            : { left: 0, top: 0, width: 800, height: 600, incognito: false };
++          const shrink = 40; // px on each side
++          const width = Math.max(200, (largestParentWindow.width || 800) - shrink * 2);
++          const height = Math.max(200, (largestParentWindow.height || 600) - shrink * 2);
++          const left = (largestParentWindow.left || 0) + Math.floor(((largestParentWindow.width || width) - width) / 2);
++          const top = (largestParentWindow.top || 0) + Math.floor(((largestParentWindow.height || height) - height) / 2);
++          const bounds = { left, top, width, height };
+           chrome.windows.create({
+-            url
++            url,
++            type: 'popup',
++            state: 'normal',
++            ...bounds,
++            incognito: largestParentWindow.incognito
+           }, newWindow => {
+             chrome.tabs.query({
+               windowId: newWindow?.id,
+@@ -4203,6 +4223,7 @@ class PopupManager extends (events_default()) {
+               };
+               this.injectContentScript(tabs[0].id);
+             });
++            });
+           });
+         } else {
+           chrome.tabs.query({

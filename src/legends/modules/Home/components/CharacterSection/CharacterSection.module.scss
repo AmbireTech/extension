@@ -105,6 +105,7 @@
       mix-blend-mode: Lighten;
       background-position: center;
       background-size: contain;
+      z-index: 0;
     }
 
     .rewardsTitle {
@@ -119,6 +120,7 @@
       display: flex;
       align-items: center;
       margin-bottom: 1.875rem;
+      z-index: 1;
 
       .infoIcon {
         margin-left: 0.375rem;

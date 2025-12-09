@@ -6,7 +6,7 @@ import { calculateRewardsForSeason } from '@ambire-common/utils/rewards'
 import EqualIcon from '@common/assets/svg/EqualIcon'
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import MultiplicationIcon from '@common/assets/svg/MultiplicationIcon'
-import StkWalletIcon from '@common/assets/svg/StkWalletIcon'
+import WalletIcon from '@common/assets/svg/WalletIcon'
 import Tooltip from '@common/components/Tooltip'
 import LockIcon from '@legends/common/assets/svg/LockIcon'
 import UnionIcon from '@legends/common/assets/svg/UnionIcon'
@@ -348,8 +348,8 @@ const CharacterSection = () => {
                       </div>
                       <div className={styles.rewardsProjectionStats}>
                         <p className={styles.projectionStatLabel}>
-                          <StkWalletIcon width={34} height={34} />
-                          $stkWALLET
+                          <WalletIcon width={34} height={34} />
+                          $WALLET
                         </p>
                         <p className={styles.projectionStatValue}>
                           {projectedAmount

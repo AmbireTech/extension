@@ -31,14 +31,10 @@ const useAccountsList = ({
     () =>
       accounts.map((account) => ({
         account,
-        searchableText: [
-          account.addr.toLowerCase(),
-          account.preferences.label.toLowerCase(),
-          domains[account.addr]?.ens?.toLowerCase().trim() || '',
-          isSmartAccount(account) ? 'smart' : ''
-        ]
-          .filter(Boolean)
-          .join(' ')
+        label: account.preferences.label.toLowerCase(),
+        domain: domains[account.addr]?.ens?.toLowerCase().trim() || '',
+        address: account.addr.toLowerCase(),
+        smart: isSmartAccount(account) ? 'smart' : ''
       })),
     [accounts, domains]
   )
@@ -47,9 +43,14 @@ const useAccountsList = ({
     if (!search) return accounts
 
     const fuse = new Fuse(searchableAccounts, {
-      keys: ['searchableText'],
-      threshold: 0.3, // 0 = exact match, 1 = match anything
-      ignoreLocation: true,
+      keys: [
+        { name: 'label', weight: 0.5 },
+        { name: 'domain', weight: 0.3 },
+        { name: 'address', weight: 0.1 },
+        { name: 'smart', weight: 0.1 }
+      ],
+      threshold: 0.3,
+      ignoreLocation: false, // Prioritize matches at the start
       minMatchCharLength: 1
     })
 

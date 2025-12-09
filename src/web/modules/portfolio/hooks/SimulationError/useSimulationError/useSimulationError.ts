@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 
@@ -15,17 +16,17 @@ const useSimulationError = ({ chainId }: Props) => {
     return networks.find((n) => n.chainId === BigInt(chainId))
   }, [networks, chainId])
 
-  const portfolioPending = useMemo(() => {
-    if (!network || !portfolio.pending) return
+  const portfolioState = useMemo(() => {
+    if (!network || !portfolio.portfolioState) return
 
-    return portfolio.pending[network.chainId.toString()]
-  }, [network, portfolio.pending])
+    return portfolio.portfolioState[network.chainId.toString()]
+  }, [network, portfolio.portfolioState])
 
   const simulationError = useMemo(() => {
-    if (!portfolioPending || portfolioPending.isLoading) return
+    if (!portfolioState || portfolioState.isLoading) return
 
-    return portfolioPending.criticalError?.simulationErrorMsg
-  }, [portfolioPending])
+    return portfolioState.criticalError?.simulationErrorMsg
+  }, [portfolioState])
 
   return {
     simulationError
