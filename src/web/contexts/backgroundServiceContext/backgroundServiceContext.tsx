@@ -142,10 +142,20 @@ const BackgroundServiceProvider: React.FC<any> = ({ children }) => {
   }, [])
 
   useEffect(() => {
-    const url = `${window.location.origin}${route.pathname}${route.search}${route.hash}`
+    const { pathname = '/', search = '', hash = '' } = route
+
+    const url = `${window.location.origin}${pathname}${search}${hash}`
+
+    const searchParams = new URLSearchParams(search)
+    const searchParamsFormatted = Object.fromEntries(searchParams.entries())
+
     globalDispatch({
       type: 'UPDATE_PORT_URL',
-      params: { url, route: route.pathname?.substring(1) || '/' }
+      params: {
+        url,
+        route: pathname.startsWith('/') ? pathname.slice(1) : pathname,
+        searchParams: searchParamsFormatted
+      }
     })
   }, [route])
 
