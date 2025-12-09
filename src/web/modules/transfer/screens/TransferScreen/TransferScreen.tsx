@@ -232,15 +232,6 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     openEstimationModal()
   }, [openEstimationModal, dispatch])
 
-  useEffect(() => {
-    dispatch({
-      type: 'TRANSFER_CONTROLLER_UPDATE_FORM',
-      // `isTopUp` should be sent as a boolean.
-      // Sending it as undefined will not correctly reflect the state of the transfer controller.
-      params: { formValues: { isTopUp: !!isTopUpScreen } }
-    })
-  }, [dispatch, isTopUpScreen])
-
   /**
    * Single click broadcast
    */
