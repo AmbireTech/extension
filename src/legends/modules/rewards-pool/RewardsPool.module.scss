@@ -1,0 +1,56 @@
+@import '@legends/styles/base.scss';
+
+.wrapper {
+  background: #191a1f;
+  border-radius: 1rem;
+  border: 1px solid #6a6f8633;
+  padding: 2rem;
+
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+
+    .titleSection {
+      max-width: 23.75rem;
+
+      .title {
+        font-size: 2rem;
+        font-weight: 500;
+        color: #f4f4f7;
+        margin-bottom: 1.5rem;
+      }
+      .text {
+        color: #8d93ac;
+        font-weight: 300;
+        font-size: 1.5rem;
+        line-height: 2rem;
+      }
+    }
+    .timeLeft {
+      padding: 1rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      border-radius: $primaryBorderRadius;
+      border: 1px solid #6a6f8633;
+
+      .label {
+        font-size: 1rem;
+        font-weight: 500;
+        color: #8d93ac;
+      }
+      .value {
+        font-weight: 500;
+        font-size: 1.5rem;
+        line-height: 1;
+        color: $whiteText;
+      }
+    }
+  }
+
+  .chart {
+    width: 100%;
+    height: auto;
+  }
+}

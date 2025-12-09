@@ -10,6 +10,7 @@ import { LegendsContextProvider } from '@legends/contexts/legendsContext'
 import { PortfolioControllerStateProvider } from '@legends/contexts/portfolioControllerStateContext'
 import Home from '@legends/modules/Home'
 import Leaderboard from '@legends/modules/leaderboard/screens/Leaderboard'
+import RewardsPool from '@legends/modules/rewards-pool'
 import Wallet from '@legends/modules/wallet'
 import * as Sentry from '@sentry/react'
 
@@ -76,8 +77,12 @@ const router = sentryCreateHashRouter([
             element: <Home />
           },
           {
+            path: LEGENDS_ROUTES.rewardsPool,
+            element: <RewardsPool />
+          },
+          {
             path: LEGENDS_LEGACY_ROUTES.legends,
-            element: <Navigate to={LEGENDS_ROUTES.quests} />
+            element: <Navigate to={LEGENDS_ROUTES.home} />
           },
           {
             path: LEGENDS_LEGACY_ROUTES.character,
