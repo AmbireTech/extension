@@ -143,7 +143,9 @@ const SendForm = ({
       <Text appearance="secondaryText" fontSize={14} weight="medium" style={spacings.mbMi}>
         {!portfolio?.isReadyToVisualize ? t('Loading tokens...') : t('Select token')}
       </Text>
-      {(!state.selectedToken && tokens.length) || !portfolio?.isReadyToVisualize ? (
+      {(!state.selectedToken && tokens.length) ||
+      !portfolio?.isReadyToVisualize ||
+      !state.isReady ? (
         <SkeletonLoader width="100%" height={115} />
       ) : (
         <SendToken
