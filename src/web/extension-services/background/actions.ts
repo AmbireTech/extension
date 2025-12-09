@@ -46,7 +46,7 @@ import { controllersMapping } from './types'
 
 type UpdateNavigationUrl = {
   type: 'UPDATE_PORT_URL'
-  params: { url: string; route?: string }
+  params: { url: string; route?: string; searchParams?: { [key: string]: string } }
 }
 
 type InitControllerStateAction = {

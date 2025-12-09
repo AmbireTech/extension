@@ -1,8 +1,7 @@
-import React, { useCallback, useEffect, useMemo } from 'react'
+import React, { useCallback } from 'react'
 import { View } from 'react-native'
 
 import { TokenResult } from '@ambire-common/libs/portfolio'
-import { getTokenAmount } from '@ambire-common/libs/portfolio/helpers'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import Recipient from '@common/components/Recipient'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
@@ -12,10 +11,8 @@ import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useAddressInput from '@common/hooks/useAddressInput'
 import useGetTokenSelectProps from '@common/hooks/useGetTokenSelectProps'
-import useRoute from '@common/hooks/useRoute'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { getInfoFromSearch } from '@web/contexts/transferControllerStateContext'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
@@ -53,7 +50,10 @@ const SendForm = ({
   handleGoBack: () => void
 }) => {
   const { validation } = addressInputState
-  const { state, tokens } = useTransferControllerState()
+  const {
+    state,
+    state: { tokens }
+  } = useTransferControllerState()
   const { dispatch } = useBackgroundService()
   const { portfolio } = useSelectedAccountControllerState()
   const {
@@ -67,9 +67,7 @@ const SendForm = ({
   } = state
   const { t } = useTranslation()
   const { networks } = useNetworksControllerState()
-  const { search } = useRoute()
   const amountIsError = amountErrorSeverity === 'error' && !!amountErrorMessage
-  const selectedTokenFromUrl = useMemo(() => getInfoFromSearch(search), [search])
 
   const {
     value: tokenSelectValue,
@@ -115,34 +113,6 @@ const SendForm = ({
     })
   }, [amountFieldMode, dispatch])
 
-  useEffect(() => {
-    if (tokens?.length && !state.selectedToken) {
-      let tokenToSelect = tokens[0]
-
-      if (selectedTokenFromUrl) {
-        const correspondingToken = tokens.find(
-          (token) =>
-            token.address === selectedTokenFromUrl.addr &&
-            token.chainId.toString() === selectedTokenFromUrl.chainId &&
-            token.flags.onGasTank === false
-        )
-
-        if (correspondingToken) {
-          tokenToSelect = correspondingToken
-        }
-      }
-
-      if (tokenToSelect && getTokenAmount(tokenToSelect) > 0) {
-        dispatch({
-          type: 'TRANSFER_CONTROLLER_UPDATE_FORM',
-          params: {
-            formValues: { selectedToken: tokenToSelect }
-          }
-        })
-      }
-    }
-  }, [tokens, selectedTokenFromUrl, state.selectedToken, dispatch])
-
   return (
     <ScrollableWrapper
       contentContainerStyle={[styles.container, isTopUp ? styles.topUpContainer : {}]}
@@ -173,7 +143,9 @@ const SendForm = ({
       <Text appearance="secondaryText" fontSize={14} weight="medium" style={spacings.mbMi}>
         {!portfolio?.isReadyToVisualize ? t('Loading tokens...') : t('Select token')}
       </Text>
-      {(!state.selectedToken && tokens.length) || !portfolio?.isReadyToVisualize ? (
+      {(!state.selectedToken && tokens.length) ||
+      !portfolio?.isReadyToVisualize ||
+      !state.isReady ? (
         <SkeletonLoader width="100%" height={115} />
       ) : (
         <SendToken
