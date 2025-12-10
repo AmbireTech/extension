@@ -13,24 +13,27 @@ import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { createTab } from '@web/extension-services/background/webapi/tab'
 
+export type RouteItemType = {
+  icon: any
+  label: string
+  route?: string
+  disabled?: boolean
+  onPress?: () => void
+  testID?: string
+  isExternal?: boolean
+  scale: number
+  scaleOnHover: number
+  backgroundImage?: string
+}
+
 interface Props {
-  routeItem: {
-    icon: any
-    label: string
-    route?: string
-    isExternal: boolean
-    disabled?: boolean
-    onPress?: () => void
-    testID?: string
-    scale: number
-    scaleOnHover: number
-    backgroundImage?: string
-  }
+  routeItem: RouteItemType
   index: number
   routeItemsLength: number
 }
 
 const ITEM_HEIGHT = 44
+const ICON_SIZE = 24
 
 const RouteItem: FC<Props> = ({ routeItem, index, routeItemsLength }) => {
   const { theme, themeType } = useTheme()
@@ -68,7 +71,7 @@ const RouteItem: FC<Props> = ({ routeItem, index, routeItemsLength }) => {
             testID={routeItem.testID}
             style={{
               height: ITEM_HEIGHT,
-              paddingHorizontal: 9, // this way it gets equal to ITEM_HEIGHT (when square), and flexible otherwise
+              width: routeItem.route === WEB_ROUTES.swapAndBridge ? ITEM_HEIGHT * 2 : ITEM_HEIGHT,
               borderRadius: BORDER_RADIUS_PRIMARY,
               backgroundColor: hovered
                 ? themeType === THEME_TYPES.DARK
@@ -78,25 +81,17 @@ const RouteItem: FC<Props> = ({ routeItem, index, routeItemsLength }) => {
                 ? theme.primaryBackground
                 : theme.primaryText,
               ...flexbox.center,
-              ...spacings.mbTy
+              ...spacings.mbTy,
+              ...(routeItem.backgroundImage
+                ? {
+                    // @ts-ignore
+                    backgroundImage: `url(${routeItem.backgroundImage})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center'
+                  }
+                : {})
             }}
           >
-            {routeItem.backgroundImage && (
-              <View
-                style={{
-                  position: 'absolute',
-                  width: '100%',
-                  height: '100%',
-                  opacity: hovered ? 1 : 0.64,
-                  borderRadius: BORDER_RADIUS_PRIMARY,
-                  overflow: 'hidden',
-                  backgroundImage: `url(${routeItem.backgroundImage})`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center',
-                  transition: 'opacity 0.2s ease-in-out'
-                }}
-              />
-            )}
             <View
               style={[
                 flexbox.center,
@@ -112,7 +107,13 @@ const RouteItem: FC<Props> = ({ routeItem, index, routeItemsLength }) => {
                     ? '#c197ff'
                     : theme.primaryBackground
                 }
-                height={ITEM_HEIGHT}
+                // Rewards has no other hover effect so we slightly increase its size
+                height={
+                  routeItem.route === WEB_ROUTES.rewards && hovered ? ICON_SIZE + 2 : ICON_SIZE
+                }
+                width={
+                  routeItem.route === WEB_ROUTES.rewards && hovered ? ICON_SIZE + 2 : ICON_SIZE
+                }
               />
             </View>
           </View>

@@ -12,6 +12,7 @@ const WEB_ROUTES = {
   ...COMMON_ROUTES,
   keyStoreUnlock: 'unlock',
   getStarted: 'get-started',
+  rewards: 'rewards',
   accountPicker: 'account-picker',
   dashboard: 'dashboard',
   earn: 'earn',
