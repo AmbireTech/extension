@@ -3,14 +3,14 @@
 .wrapper {
   max-width: 62.5rem;
   width: 100%;
-  min-height: 32.5rem;
+  min-height: 34.375rem;
   display: flex;
   padding: 0;
   overflow: hidden;
 
   .content {
     flex: 1;
-    background-position: center;
+    background-position: center -5rem;
     background-size: cover;
     background-repeat: no-repeat;
     display: flex;
