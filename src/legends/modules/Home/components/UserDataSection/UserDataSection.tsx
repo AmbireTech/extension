@@ -26,6 +26,7 @@ type Stat = {
   value: string
 }
 
+// @TODO: Get rid of mock data
 const MOCK_STATS: Stat[] = [
   {
     id: 'balance',
@@ -77,9 +78,11 @@ const Icon = ({ id }: { id: Stat['id'] }) => {
 }
 
 const UserDataSection = () => {
+  // @TODO: Replace with season 2 data
   const { season1LeaderboardData } = useLeaderboardContext()
   const [expandedId, setExpandedId] = React.useState<Stat['id'] | null>(null)
 
+  // @TODO: Loading state
   return (
     <div className={styles.wrapper}>
       <div className={styles.statsWrapper}>
@@ -168,7 +171,7 @@ const UserDataSection = () => {
         </div>
         <div className={styles.rank}>
           <div className={styles.content}>
-            <span className={styles.badge}>{season1LeaderboardData?.currentUser.rank || '-'}</span>
+            <span className={styles.badge}>{season1LeaderboardData?.currentUser?.rank || '-'}</span>
             <div className={styles.labelWithIcon}>
               <FontAwesomeIcon icon={faTrophy} className={styles.icon} />
               <span className={styles.label}>Rank</span>
