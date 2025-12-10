@@ -48,6 +48,7 @@
 
     .header {
       display: flex;
+      width: 100%;
       align-items: center;
 
       span {
@@ -68,6 +69,9 @@
           transition: max-height 0.3s ease-in-out, opacity 0.2s ease-in-out;
           padding: 0.5rem;
           opacity: 1;
+        }
+        .chevronIcon {
+          transform: rotate(180deg);
         }
       }
 
@@ -122,13 +126,12 @@
             margin-left: 0.5rem;
           }
         }
-        .expandButton {
+
+        .chevronIcon {
           margin-left: 1.5rem;
           color: #54597a;
-
-          .chevronIcon {
-            width: 1rem;
-          }
+          width: 1rem;
+          transition: transform 0.2s ease-in-out;
         }
       }
       .description {

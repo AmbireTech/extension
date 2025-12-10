@@ -92,7 +92,11 @@ const UserDataSection = () => {
         <div className={styles.stats}>
           {MOCK_STATS.map(({ score, id, label, explanation, description, value }) => (
             <div className={`${styles.stat} ${expandedId === id ? styles.open : ''}`} key={id}>
-              <div className={styles.header}>
+              <button
+                type="button"
+                className={styles.header}
+                onClick={() => setExpandedId(expandedId === id ? null : id)}
+              >
                 <div className={styles.score}>
                   <div className={styles.scoreBadge}>
                     <span className={styles.scoreText}>{score}</span>
@@ -127,14 +131,8 @@ const UserDataSection = () => {
                   />
                 </div>
                 <span className={styles.value}>{value}</span>
-                <button
-                  className={styles.expandButton}
-                  type="button"
-                  onClick={() => setExpandedId(expandedId === id ? null : id)}
-                >
-                  <FontAwesomeIcon className={`${styles.chevronIcon}`} icon={faChevronDown} />
-                </button>
-              </div>
+                <FontAwesomeIcon className={`${styles.chevronIcon}`} icon={faChevronDown} />
+              </button>
               <div className={styles.description}>{description}</div>
             </div>
           ))}
