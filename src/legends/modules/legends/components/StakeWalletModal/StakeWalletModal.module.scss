@@ -26,7 +26,7 @@
   background-clip: padding-box, border-box;
   background-origin: padding-box, border-box;
   background-image: linear-gradient($secondaryBackground, $secondaryBackground),
-    linear-gradient(15.37deg, #00bfff 6.35%, #785aff 54.11%);
+    linear-gradient(15.37deg, $blue-300 6.35%, $purple-650 54.11%);
 }
 
 .closeButton {
@@ -100,7 +100,7 @@
     }
 
     &:not(.activeTab):hover {
-      color: #fff;
+      color: $whiteText;
     }
 
     &:disabled {

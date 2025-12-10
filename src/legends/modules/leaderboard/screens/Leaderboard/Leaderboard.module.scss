@@ -57,7 +57,7 @@
       font-weight: 300;
       transition: all 0.2s ease;
       font-size: 0.875rem;
-      background: #f4f4f71a;
+      background-color: rgba($mainText, 0.1);
       backdrop-filter: blur(0.25rem);
       opacity: 0.5;
 
@@ -87,7 +87,7 @@
             font-size: 0.5rem;
             font-weight: 600;
             letter-spacing: 5%;
-            color: #00bb92;
+            color: $green-500;
           }
         }
       }

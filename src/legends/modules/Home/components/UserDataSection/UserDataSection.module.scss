@@ -22,7 +22,7 @@
   .rewardsWrapper {
     border-radius: 1rem;
     background-color: $neutral-700;
-    border: 0.0625rem solid #6a6f8633;
+    border: 0.0625rem solid rgba($neutral-600, 0.2);
   }
 
   .statsWrapper {
@@ -55,7 +55,7 @@
       span {
         font-size: 0.8125rem;
         font-weight: 500;
-        color: #8e98a8;
+        color: $neutral-450;
       }
     }
     .stat {
@@ -78,7 +78,7 @@
 
       &:not(:last-child) {
         padding-bottom: 1rem;
-        border-bottom: 2px solid #6a6f8633;
+        border-bottom: 2px solid rgba($neutral-600, 0.2);
       }
       .header {
         display: flex;
@@ -122,7 +122,7 @@
             margin-right: 0.5rem;
           }
           .infoIcon {
-            color: #54597a;
+            color: $quaternaryText;
             font-size: 0.75rem;
             margin-left: 0.5rem;
           }
@@ -130,7 +130,7 @@
 
         .chevronIcon {
           margin-left: 1.5rem;
-          color: #54597a;
+          color: $quaternaryText;
           width: 1rem;
           transition: transform 0.2s ease-in-out;
         }
@@ -138,7 +138,7 @@
       .description {
         font-size: 0.75rem;
         line-height: 1.1875rem;
-        color: #8d93ac;
+        color: $secondaryText;
         max-height: 0;
         padding: 0;
         overflow: hidden;
@@ -219,7 +219,7 @@
         font-size: 0.625rem;
         line-height: 1rem;
         margin-bottom: 0.5rem;
-        color: #8d93ac;
+        color: $secondaryText;
       }
       .value {
         font-size: 2rem;
@@ -228,7 +228,7 @@
       }
       .usd {
         font-size: 0.875rem;
-        color: #00d4ff;
+        color: $blue-400;
         font-weight: 600;
         margin-bottom: 0.5rem;
       }
@@ -248,7 +248,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        color: #b37aff;
+        color: $purple-550;
         font-size: 1rem;
         font-weight: 500;
       }
@@ -258,7 +258,7 @@
         align-items: center;
 
         .icon {
-          color: #6a6f86a3;
+          color: rgba($neutral-600, 0.64);
           font-size: 0.75rem;
           margin-right: 0.375rem;
         }

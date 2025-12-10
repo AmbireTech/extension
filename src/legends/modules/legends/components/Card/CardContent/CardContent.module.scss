@@ -49,7 +49,7 @@
   }
 
   &.disabled .overlay {
-    background-color: #191a1f80;
+    background-color: rgba($neutral-700, 0.6);
   }
   &.disabled {
     .content {

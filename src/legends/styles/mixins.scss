@@ -24,7 +24,7 @@
   padding: 1rem;
   transition: background 0.3s ease;
   background-blend-mode: overlay;
-  background: linear-gradient(81.89deg, #00d5ff 5.63%, #a25aff 95.17%);
+  background: $primaryGradient;
 
   &:not(:disabled) {
     &:hover {

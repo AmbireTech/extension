@@ -25,8 +25,8 @@
   border: 0.25rem solid transparent;
   background-clip: padding-box, border-box;
   background-origin: padding-box, border-box;
-  background-image: linear-gradient($secondaryBackground, $secondaryBackground), 
-                    linear-gradient(152.35deg, rgba(207, 162, 255, 0.6) 9.38%, rgba(78, 25, 168, 0.6) 96.89%);
+  background-image: linear-gradient($secondaryBackground, $secondaryBackground),
+    linear-gradient(152.35deg, rgba(207, 162, 255, 0.6) 9.38%, rgba(78, 25, 168, 0.6) 96.89%);
 
   .backgroundEffect {
     position: absolute;
@@ -42,7 +42,7 @@
 
   .closeButton {
     font-size: inherit;
-    margin-right: .5625rem;
+    margin-right: 0.5625rem;
     margin-top: 0.813em;
     margin-left: auto;
     display: block;
@@ -69,47 +69,46 @@
       flex-direction: column;
       justify-content: space-between;
       align-items: center;
-    .title {
-      font-size: 2.5rem;
-      font-weight: 400;
-      line-height: 1;
-      margin: 0 auto;
-      color: $whiteText;
-      margin-bottom: 1.5625rem;
-    }
+      .title {
+        font-size: 2.5rem;
+        font-weight: 400;
+        line-height: 1;
+        margin: 0 auto;
+        color: $whiteText;
+        margin-bottom: 1.5625rem;
+      }
 
-    .rewardsCoverImg {
-      align-self: center;
-      width: 7.75rem;
-      height: 7.25rem;
-      opacity: 0.8;
-      margin-bottom: 1rem;
-    }
+      .rewardsCoverImg {
+        align-self: center;
+        width: 7.75rem;
+        height: 7.25rem;
+        opacity: 0.8;
+        margin-bottom: 1rem;
+      }
 
-    .sectionTitle {
-      font-size: .875rem;
-      line-height: 1.5rem;
-      // text-align: center;
-      color: $secondaryText;
-      margin-bottom: .125rem;
-    }
+      .sectionTitle {
+        font-size: 0.875rem;
+        line-height: 1.5rem;
+        // text-align: center;
+        color: $secondaryText;
+        margin-bottom: 0.125rem;
+      }
 
-    .sectionContent {
-      border: 1px solid #6A6F8633;
-      padding: 1rem;
-      width: 13rem;
-      border-radius: .5rem;
-      align-self: center;
-      text-align: center;
-      margin-bottom: 1.5rem;
+      .sectionContent {
+        border: 1px solid rgba($neutral-600, 0.2);
+        padding: 1rem;
+        width: 13rem;
+        border-radius: 0.5rem;
+        align-self: center;
+        text-align: center;
+        margin-bottom: 1.5rem;
 
-      
-      .usdValue {
-        font-size: 1rem;
-        color: #8E98A8;
+        .usdValue {
+          font-size: 1rem;
+          color: $neutral-450;
+        }
       }
     }
-  }
     .button {
       @include primary-button;
       position: absolute;
@@ -119,7 +118,7 @@
       min-width: 31.25rem;
       width: max-content;
       height: 4.25rem;
-      font-size: 1.25rem; 
+      font-size: 1.25rem;
       font-weight: 400;
     }
   }
