@@ -49,8 +49,87 @@
     }
   }
 
-  .chart {
-    width: 100%;
-    height: auto;
+  .chartWrapper {
+    position: relative;
+
+    .chartData {
+      position: absolute;
+      left: 18%;
+      top: 10%;
+      padding: 1rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      border-radius: $tertiaryBorderRadius;
+      border: 0.0625rem solid #6a6f8633;
+      border-style: inset;
+      background: #1414146b;
+
+      .label {
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: #8e98a8;
+      }
+      .value,
+      .value2 {
+        font-size: 1.25rem;
+        font-weight: 500;
+      }
+      .value {
+        margin-bottom: 0.5rem;
+        color: #00d5ff;
+      }
+      .value2 {
+        color: #9d7aff;
+      }
+    }
+
+    .chart {
+      width: 100%;
+      height: auto;
+    }
+  }
+
+  @include on-mobile {
+    padding: 1.5rem;
+
+    .header {
+      gap: 1rem;
+      margin-bottom: 1rem;
+
+      .titleSection {
+        max-width: 100%;
+
+        .title {
+          font-size: 1.5rem;
+          margin-bottom: 0.5rem;
+        }
+        .text {
+          font-size: 1rem;
+          line-height: 1.5rem;
+        }
+      }
+
+      .timeLeft {
+        padding: 0.75rem;
+        min-width: 8rem;
+
+        .label {
+          font-size: 0.875rem;
+        }
+        .value {
+          font-size: 1.25rem;
+        }
+      }
+    }
+
+    .chartWrapper {
+      .chartData {
+        position: static;
+
+        .label {
+          margin-bottom: 0.125rem;
+        }
+      }
+    }
   }
 }

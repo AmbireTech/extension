@@ -10,6 +10,8 @@ const END_DATE = new Date('2026-03-31T23:59:59Z')
 const Character = () => {
   const [timeLeft, setTimeLeft] = useState('')
   const timerTimeout = useRef<NodeJS.Timeout | null>(null)
+  const SWAP_VOLUME = 4.32 * 1_000_000
+  const REWARDS_POOL = 100_000
 
   useEffect(() => {
     const updateTimeLeft = () => {
@@ -40,6 +42,16 @@ const Character = () => {
     }
   }, [])
 
+  const formatCurrency = (value: number) => {
+    if (value >= 1_000_000) {
+      return `$${(value / 1_000_000).toFixed(2)}M`
+    }
+    if (value >= 1_000) {
+      return `$${(value / 1_000).toFixed(0)}K`
+    }
+    return `$${value.toFixed(0)}`
+  }
+
   return (
     <Page>
       <div className={styles.wrapper}>
@@ -53,7 +65,15 @@ const Character = () => {
             <span className={styles.value}>{timeLeft}</span>
           </div>
         </div>
-        <RewardsPoolChart className={styles.chart} />
+        <div className={styles.chartWrapper}>
+          <div className={styles.chartData}>
+            <span className={styles.label}>Current Swap&Bridge volume</span>
+            <span className={styles.value}>{formatCurrency(SWAP_VOLUME)}</span>
+            <span className={styles.label}>Current Rewards Pool</span>
+            <span className={styles.value2}>{formatCurrency(REWARDS_POOL)}</span>
+          </div>
+          <RewardsPoolChart className={styles.chart as string} volume={SWAP_VOLUME} />
+        </div>
       </div>
     </Page>
   )

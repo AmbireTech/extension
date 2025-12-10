@@ -37,10 +37,14 @@ const calculateChartPosition = (volume: number) => {
   }
 }
 
-export default function RewardsPoolChart({ className }: { className: string }) {
-  const SWAP_VOLUME = 5.5 * 1_000_000 // Example swap volume in USD
-
-  const dotPosition = calculateChartPosition(SWAP_VOLUME)
+export default function RewardsPoolChart({
+  className,
+  volume
+}: {
+  className: string
+  volume: number
+}) {
+  const dotPosition = calculateChartPosition(volume)
 
   return (
     <svg viewBox="0 0 804 530" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
