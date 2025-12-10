@@ -11,7 +11,7 @@ const ChevronDownIcon: FC<LegendsSvgProps> = ({
 }) => {
   return (
     <Svg width={width} height={height} viewBox="0 0 24 24" fill="none" {...rest}>
-      <Path d="M7 9.5L12 14.5L17 9.5" stroke={color} strokeWidth="3" stroke-linecap="round" />
+      <Path d="M7 9.5L12 14.5L17 9.5" stroke={color} strokeWidth="3" strokeLinecap="round" />
     </Svg>
   )
 }
