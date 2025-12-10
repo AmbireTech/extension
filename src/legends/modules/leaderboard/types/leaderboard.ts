@@ -8,6 +8,7 @@ type LeaderboardEntry = {
     projectedRewards?: number
     image: string
     image_avatar: string
+    reward?: number
   }>
   currentUser: {
     rank: number

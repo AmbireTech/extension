@@ -10,9 +10,9 @@ import usePortfolioControllerState from '@legends/hooks/usePortfolioControllerSt
 import styles from '@legends/modules/leaderboard/screens/Leaderboard/Leaderboard.module.scss'
 import { LeaderboardEntry } from '@legends/modules/leaderboard/types'
 
-type Props = LeaderboardEntry['currentUser'] & {
+type Props = Omit<LeaderboardEntry['currentUser'], 'projectedRewards'> & {
   stickyPosition: string | null
-  projectedRewards?: number | 'Loading...'
+  projectedRewards?: number | string
   currentUserRef: React.RefObject<HTMLDivElement>
   reward?: number | ''
 }
@@ -48,13 +48,15 @@ function prettifyProjectedRewards(amount: number) {
   return Math.floor(amount)
 }
 
+const formatXp = (xp: number) => {
+  return xp.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
+}
+
 const Row: FC<Props> = ({
   account,
-  image_avatar,
   rank,
   xp,
   projectedRewards,
-  level,
   stickyPosition,
   currentUserRef,
   reward
@@ -62,9 +64,6 @@ const Row: FC<Props> = ({
   const { connectedAccount } = useAccountContext()
   const { walletTokenInfo } = usePortfolioControllerState()
   const isConnectedAccountRow = account === connectedAccount
-  const formatXp = (xp: number) => {
-    return xp.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
-  }
 
   const [maxAddressLength, setMaxAddressLength] = React.useState(23)
 
@@ -115,7 +114,6 @@ const Row: FC<Props> = ({
     >
       <div className={styles.cell}>
         <div className={styles.rankWrapper}>{rank > 3 ? rank : getBadge(rank)}</div>
-        <img src={image_avatar} alt="avatar" className={styles.avatar} />
         {isConnectedAccountRow ? (
           <>
             You (
@@ -136,7 +134,7 @@ const Row: FC<Props> = ({
           />
         )}
       </div>
-      <h5 className={styles.cell}>{level}</h5>
+      {/* <h5 className={styles.cell}>{level}</h5> */}
       {typeof projectedRewards !== 'undefined' && (
         <h5 className={`${styles.cell} ${styles.weight}`}>
           {typeof projectedRewards === 'number'

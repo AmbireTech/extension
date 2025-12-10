@@ -39,53 +39,59 @@
   .tabs {
     display: flex;
     justify-content: space-between;
-    gap: .5rem;
+    gap: 0.75rem;
     margin: 0 auto 2.75rem auto;
     color: $mainText;
     position: relative;
+
     .tab {
-      position: relative;
-      flex: 1;
-      padding: .5rem 1rem;
       background: none;
       border: none;
+
+      position: relative;
+      flex: 1;
+      width: 7.5rem;
+      height: 2.5rem;
+
       cursor: pointer;
-      font-weight: 400;
-      transition: all 0.2s ease;
-      font-size: 1rem;
-      width: 100%;
-      min-width: 7.6875rem;
-      height: 3.25rem;
-      background-color: rgba($icons, 0.24);
-      line-height: 2.25rem;
-      border-radius: .5rem; 
-    
-    }
-    
-    .ribbon {
-      position: absolute;
-      top: -0.2rem;
-      left: 50%;
-      transform: translateX(-50%);
-    }
-
-    .current {
-      position: absolute;
-      bottom: 0.3rem;
-      left: 50%;
-      transform: translateX(-50%);
-      color: #FFFFFFA3;
-      font-size: .75rem;
       font-weight: 300;
-      line-height: 100%;
+      transition: all 0.2s ease;
+      font-size: 0.875rem;
+      background: #f4f4f71a;
+      backdrop-filter: blur(0.25rem);
+      opacity: 0.5;
 
+      border-radius: 1.5rem;
+
+      &.active {
+        opacity: 1;
+      }
+
+      &.current {
+        font-weight: 500;
+
+        .ribbonWrapper {
+          position: absolute;
+          top: -0.1875rem;
+          left: 50%;
+          transform: translateX(-50%);
+          display: flex;
+          align-items: flex-end;
+          gap: 0.25rem;
+
+          .icon {
+            width: 0.625rem;
+            height: auto;
+          }
+          .label {
+            font-size: 0.5rem;
+            font-weight: 600;
+            letter-spacing: 5%;
+            color: #00bb92;
+          }
+        }
+      }
     }
-    
-    .active {
-      background-color: $purple-700;
-    }
-  
-   
   }
   .table {
     display: flex;
@@ -107,17 +113,17 @@
     font-weight: 300;
     line-height: 1.25rem;
     padding: 0.75rem 1rem;
-    margin-bottom: .5rem;
+    margin-bottom: 0.5rem;
     width: calc(100% - 2rem);
 
     .cell {
       display: flex;
       align-content: center;
-      
+
       &:first-child {
         flex: 5;
       }
-      
+
       &:nth-child(2),
       &:nth-child(3) {
         flex: 1.5;
@@ -126,6 +132,10 @@
         text-align: right;
         flex: 1;
         justify-content: flex-end;
+      }
+
+      &.scoreCell {
+        text-transform: capitalize;
       }
       .weightText {
         margin-right: 0.25rem;
@@ -154,7 +164,7 @@
       }
 
       &:first-child {
-        margin-left: .375rem;
+        margin-left: 0.375rem;
         flex: 4.8;
       }
     }
@@ -177,7 +187,6 @@
       justify-content: flex-end;
       font-weight: 400;
     }
-    
   }
 
   .rankWrapper {
@@ -193,42 +202,43 @@
     width: 1.25rem;
     text-align: center;
   }
-  
+
   .rankedRow1 {
     background-color: rgba($neutral-600, 0.051);
-    .cell:last-child, .trophy {
+    .cell:last-child,
+    .trophy {
       color: $goldDecorative;
     }
-    
   }
 
   .currentUserRow {
     border-color: $accent;
-    border-width: .0625rem;
+    border-width: 0.0625rem;
     border-style: solid;
     background-color: rgba($tertiaryText, 0.1);
     z-index: 2;
     width: 100%;
 
-    backdrop-filter: blur(10px); 
+    backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-   
+
     .addressSkeleton {
       background-color: $secondaryBackground;
     }
-
   }
 
   .rankedRow2 {
     background-color: rgba($neutral-600, 0.051);
-    .cell:last-child, .trophy {
+    .cell:last-child,
+    .trophy {
       color: $silverDecorative;
     }
   }
 
   .rankedRow3 {
     background-color: rgba($neutral-600, 0.051);
-    .cell:last-child, .trophy {
+    .cell:last-child,
+    .trophy {
       color: $bronzeDecorative;
     }
   }
@@ -272,8 +282,6 @@
     font-weight: 400;
   }
 
-
-
   .withReward {
     .header {
       .cell {
@@ -296,29 +304,26 @@
       }
     }
 
-      .cell {
-        &:first-child {
-          flex: 4.2;
-        }
-
-        &:nth-child(2),
-        &:nth-child(3) {
-          flex: 1.3;
-        }
-
-        &:nth-child(4) {
-          flex: 1.3;
-        }
-        &:nth-child(5) {
-          flex: 1;
-          justify-content: flex-end;
-          text-align: right;
-        }
+    .cell {
+      &:first-child {
+        flex: 4.2;
       }
-    
+
+      &:nth-child(2),
+      &:nth-child(3) {
+        flex: 1.3;
+      }
+
+      &:nth-child(4) {
+        flex: 1.3;
+      }
+      &:nth-child(5) {
+        flex: 1;
+        justify-content: flex-end;
+        text-align: right;
+      }
+    }
   }
-
-
 
   @include breakpoint-down-from(large-tablet) {
     .address {

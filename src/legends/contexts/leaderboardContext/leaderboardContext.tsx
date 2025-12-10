@@ -7,9 +7,9 @@ import { getLeaderboard } from './helpers'
 
 type LeaderboardContextType = {
   isLeaderboardLoading: boolean
-  fullLeaderboardData: LeaderboardEntry
-  season0LeaderboardData: LeaderboardEntry
-  season1LeaderboardData: LeaderboardEntry
+  fullLeaderboardData: LeaderboardEntry | null
+  season0LeaderboardData: LeaderboardEntry | null
+  season1LeaderboardData: LeaderboardEntry | null
   userLeaderboardData: LeaderboardEntry['currentUser'] | null
   error: string | null
   updateLeaderboard: () => Promise<void>

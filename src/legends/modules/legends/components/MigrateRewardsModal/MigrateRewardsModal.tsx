@@ -186,6 +186,7 @@ const MigrateRewardsModal: React.FC<MigrateRewardsModalProps> = ({
 
           {meta?.hasAlreadyMigrated && (
             <div className={styles.alreadyMigratedWarning}>
+              {/* TODO: UPDATE TEXT */}
               You will not receive XP from this action as you already migrated some of your $xWALLET
               tokens!
             </div>

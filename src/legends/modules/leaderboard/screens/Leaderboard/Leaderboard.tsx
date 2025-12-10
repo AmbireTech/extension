@@ -13,12 +13,11 @@ import usePortfolioControllerState from '@legends/hooks/usePortfolioControllerSt
 import Podium from './components/Podium'
 import Row from './components/Row'
 import styles from './Leaderboard.module.scss'
+import background from './media/background.png'
 import Ribbon from './Ribbon'
-import smokeAndLights from './Smoke-and-lights.png'
 
 const LeaderboardContainer: React.FC = () => {
   const {
-    fullLeaderboardData,
     season0LeaderboardData,
     season1LeaderboardData,
     isLeaderboardLoading: loading,
@@ -57,8 +56,8 @@ const LeaderboardContainer: React.FC = () => {
 
   const [stickyPosition, setStickyPosition] = useState<'top' | 'bottom' | null>(null)
   const leaderboardSources = useMemo(
-    () => [fullLeaderboardData, season0LeaderboardData, season1LeaderboardData],
-    [fullLeaderboardData, season0LeaderboardData, season1LeaderboardData]
+    () => [season0LeaderboardData, season1LeaderboardData, season1LeaderboardData], // TODO: Add s2
+    [season0LeaderboardData, season1LeaderboardData]
   )
 
   const leaderboardData = useMemo(
@@ -115,7 +114,7 @@ const LeaderboardContainer: React.FC = () => {
       containerSize="lg"
       pageRef={pageRef}
       style={{
-        backgroundImage: `url(${smokeAndLights})`,
+        backgroundImage: `url(${background})`,
         backgroundPosition: 'top right',
         backgroundRepeat: 'no-repeat',
         backgroundSize: 'cover'
@@ -125,7 +124,8 @@ const LeaderboardContainer: React.FC = () => {
         <div className={styles.heading}>
           <h1 className={styles.title}>Leaderboard</h1>
           <p className={styles.subtitle}>
-            Complete quests, earn XP and climb the leaderboard to secure Ambire rewards.
+            Find your current position on the Ambire Rewards Leaderboard or check the archives of
+            the previous seasons
           </p>
         </div>
         {error && <Alert className={styles.leaderboardError} type="error" title={error} />}
@@ -136,38 +136,43 @@ const LeaderboardContainer: React.FC = () => {
             <div className={styles.tabs}>
               <button
                 type="button"
-                className={`${styles.tab} ${!activeTab ? styles.active : ''}`}
+                className={`${styles.tab} ${activeTab === 0 ? styles.active : ''}`}
                 onClick={() => setActiveTab(0)}
               >
-                Total XP
+                Season 0
               </button>
               <button
                 type="button"
                 className={`${styles.tab} ${activeTab === 1 ? styles.active : ''}`}
                 onClick={() => setActiveTab(1)}
               >
-                Season 0
+                Season 1
               </button>
               <button
                 type="button"
-                className={`${styles.tab} ${activeTab === 2 ? styles.active : ''}`}
+                className={`${styles.tab} ${styles.current} ${
+                  activeTab === 2 ? styles.active : ''
+                }`}
                 onClick={() => setActiveTab(2)}
               >
-                <Ribbon className={styles.ribbon} />
-                Season 1<span className={styles.current}>current</span>
+                <div className={styles.ribbonWrapper}>
+                  <Ribbon className={styles.icon} />
+                  <span className={styles.label}>Current</span>
+                </div>
+                Season 2
               </button>
             </div>
             <Podium data={leaderboardData.slice(0, 3)} />
             <div
               ref={tableRef}
-              className={`${styles.table} ${leaderboardData[0].reward ? styles.withReward : ''}`}
+              className={`${styles.table} ${leaderboardData[0]?.reward ? styles.withReward : ''}`}
             >
               <div className={styles.header}>
                 <div className={styles.cell}>
                   <h5>#</h5>
                   <h5 className={styles.playerCell}>player</h5>
                 </div>
-                {leaderboardData.some((i) => i.level) && <h5 className={styles.cell}>Level</h5>}
+                {/* {leaderboardData.some((i) => i.level) && <h5 className={styles.cell}>Level</h5>} */}
                 {leaderboardData.some((i) => i.reward) && (
                   <div className={styles.cell}>
                     <h5 className={styles.weightText}>Reward</h5>
@@ -249,7 +254,7 @@ const LeaderboardContainer: React.FC = () => {
                     />
                   </div>
                 )}
-                <h5 className={styles.cell}>XP</h5>
+                <h5 className={`${styles.cell} ${styles.scoreCell}`}>Score</h5>
               </div>
               {leaderboardData.map((item) => (
                 <Row

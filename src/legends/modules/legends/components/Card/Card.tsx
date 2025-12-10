@@ -68,7 +68,7 @@ const Card: FC<Props> = ({ cardData }) => {
     const latestXpReward = foundTxn.legends.totalXp
 
     if (latestXpReward) {
-      addToast(`Transaction completed! Reward ${latestXpReward} XP`, { type: 'success' })
+      addToast(`Transaction completed! Reward ${latestXpReward}`, { type: 'success' })
     } else {
       addToast('Transaction completed!', { type: 'success' })
     }

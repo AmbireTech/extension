@@ -696,6 +696,7 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
         <Modal.Heading className={styles.heading}>Confirm Unstake</Modal.Heading>
         <WarningIcon height={45} width={45} strokeWidth={1} color="#E7AA27" />
         <p className={styles.infoText}>
+          {/* TODO: UPDATE */}
           If you confirm unstaking a significant amount of your stkWALLET, you won’t be earning XP
           for the unstake period.
         </p>
