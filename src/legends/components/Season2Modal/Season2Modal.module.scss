@@ -1,0 +1,37 @@
+@import '@legends/styles/base.scss';
+
+.wrapper {
+  max-width: 62.5rem;
+  width: 100%;
+  min-height: 32.5rem;
+  display: flex;
+  padding: 0;
+  overflow: hidden;
+
+  .content {
+    flex: 1;
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+    text-align: center;
+    padding-bottom: 3.75rem;
+
+    .title {
+      font-size: 1.5rem;
+      font-weight: 500;
+      color: $whiteText;
+      margin-bottom: 1.25rem;
+    }
+    .link {
+      font-size: 1rem;
+      letter-spacing: 5%;
+      font-weight: 600;
+      color: #855dff;
+      text-decoration: underline;
+    }
+  }
+}

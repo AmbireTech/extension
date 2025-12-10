@@ -4,6 +4,7 @@ import { createHashRouter, Navigate, RouterProvider } from 'react-router-dom'
 import { DomainsContextProvider } from '@common/contexts/domainsContext'
 import ErrorPage from '@legends/components/ErrorPage'
 import PrivateRoute from '@legends/components/PrivateRoute'
+import Season2Modal from '@legends/components/Season2Modal'
 import { DataPollingContextProvider } from '@legends/contexts/dataPollingContext'
 import { LeaderboardContextProvider } from '@legends/contexts/leaderboardContext'
 import { LegendsContextProvider } from '@legends/contexts/legendsContext'
@@ -39,7 +40,10 @@ const PrivateArea: FC<{ children: ReactNode }> = ({ children }) => {
       <LegendsContextProvider>
         <PortfolioControllerStateProvider>
           <DomainsContextProvider>
-            <DataPollingContextProvider>{children}</DataPollingContextProvider>
+            <DataPollingContextProvider>
+              <Season2Modal />
+              {children}
+            </DataPollingContextProvider>
           </DomainsContextProvider>
         </PortfolioControllerStateProvider>
       </LegendsContextProvider>
