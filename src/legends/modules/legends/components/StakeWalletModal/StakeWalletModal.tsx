@@ -18,6 +18,7 @@ import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import { RELAYER_URL } from '@env'
 import HumanReadableError from '@legends/classes/HumanReadableError'
+import background from '@legends/common/assets/images/background.png'
 import CloseIcon from '@legends/components/CloseIcon'
 import Input from '@legends/components/Input'
 import Modal from '@legends/components/Modal'
@@ -460,7 +461,12 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
         <button type="button" className={styles.closeButton} onClick={handleCloseClick}>
           <CloseIcon />
         </button>
-        <div className={styles.contentWrapper}>
+        <div
+          className={styles.contentWrapper}
+          style={{
+            backgroundImage: `url(${background})`
+          }}
+        >
           <h2 className={styles.title}>Stake $WALLET</h2>
           <p className={styles.learnMore}>
             Learn more about{' '}

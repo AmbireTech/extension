@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom'
 import { TokenResult } from '@ambire-common/libs/portfolio'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
+import background from '@legends/common/assets/images/background.png'
 import CloseIcon from '@legends/components/CloseIcon'
 import { ERROR_MESSAGES } from '@legends/constants/errors/messages'
 import { ETHEREUM_CHAIN_ID } from '@legends/constants/networks'
@@ -15,7 +16,6 @@ import usePortfolioControllerState from '@legends/hooks/usePortfolioControllerSt
 import useProviderContext from '@legends/hooks/useProviderContext'
 import useSwitchNetwork from '@legends/hooks/useSwitchNetwork'
 import useToast from '@legends/hooks/useToast'
-import smokeAndLights from '@legends/modules/leaderboard/screens/Leaderboard/Smoke-and-lights.png'
 import { humanizeError } from '@legends/modules/legends/utils/errors/humanizeError'
 
 import { CardActionCalls, CardActionPredefined, CardFromResponse, CardStatus } from '../../types'
@@ -110,7 +110,7 @@ const ClaimRewardsModal: React.FC<ClaimRewardsModalProps> = ({
         <div
           className={styles.backgroundEffect}
           style={{
-            backgroundImage: `url(${smokeAndLights})`
+            backgroundImage: `url(${background})`
           }}
         />
         <div className={styles.contentWrapper}>

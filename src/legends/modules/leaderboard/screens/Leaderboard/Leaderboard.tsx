@@ -3,6 +3,7 @@ import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 're
 import { calculateRewardsForSeason } from '@ambire-common/utils/rewards'
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import Tooltip from '@common/components/Tooltip'
+import background from '@legends/common/assets/images/background.png'
 import Alert from '@legends/components/Alert'
 import Page from '@legends/components/Page'
 import Spinner from '@legends/components/Spinner'
@@ -13,7 +14,6 @@ import usePortfolioControllerState from '@legends/hooks/usePortfolioControllerSt
 import Podium from './components/Podium'
 import Row from './components/Row'
 import styles from './Leaderboard.module.scss'
-import background from './media/background.png'
 import Ribbon from './Ribbon'
 
 const LeaderboardContainer: React.FC = () => {
