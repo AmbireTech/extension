@@ -4,7 +4,6 @@ import { ProjectedRewardsStats } from '@ambire-common/libs/portfolio/interfaces'
 import AsteriskIcon from '@common/assets/svg/AsteriskIcon'
 import HumidityIcon from '@common/assets/svg/HumidityIcon'
 import InfoIcon from '@common/assets/svg/InfoIcon'
-import LightningIcon from '@common/assets/svg/LightningIcon'
 import LockIcon2 from '@common/assets/svg/LockIcon2'
 import ScaleIcon from '@common/assets/svg/ScaleIcon'
 import SwapIcon from '@common/assets/svg/SwapIcon/SwapIcon'
@@ -55,7 +54,7 @@ const SECTIONS: Omit<Stat, 'score' | 'value'>[] = [
   },
   {
     id: 'governanceScore',
-    label: 'Governance total weight',
+    label: 'Governance total weight in usd',
     explanation: `Governance vote score is calculated by the formula: 
 governance_score = user.governance_proposals_voted_in.map(x => x.governance_weight).sum() * wallet_token.price / 2000`
   },
