@@ -4,8 +4,8 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  width: 17.3125rem;
-  height: 13.375rem;
+  width: 17.8125rem;
+  height: 13.4375rem;
   background-color: $neutral-700;
   border-radius: 1rem;
   transition: all 0.1s ease;
@@ -118,7 +118,7 @@
       font-weight: 400;
       margin-bottom: 0.25rem;
       padding-top: 1.5rem;
-      width: 10.9375rem;
+      width: 9rem;
       line-height: 1.5rem;
       height: 7.875rem;
       z-index: 2;
@@ -138,12 +138,12 @@
 
     .image {
       position: absolute;
-      bottom: -0.75rem;
+      top: 0;
       right: 0;
+      height: 100%;
       z-index: 1;
       opacity: 0.3;
       transition: opacity 0.1s ease;
-      height: 11.875rem;
       width: auto;
     }
 
