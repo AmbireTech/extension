@@ -3,7 +3,7 @@ import { Path, Svg } from 'react-native-svg'
 
 import { LegendsSvgProps } from '@legends/types/svg'
 
-const WalletIcon: FC<LegendsSvgProps> = ({
+const WalletIcon2: FC<LegendsSvgProps> = ({
   width = 24,
   height = 24,
   color = '#54597A',
@@ -29,4 +29,4 @@ const WalletIcon: FC<LegendsSvgProps> = ({
   )
 }
 
-export default WalletIcon
+export default WalletIcon2
