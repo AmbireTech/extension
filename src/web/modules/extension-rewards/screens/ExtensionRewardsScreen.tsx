@@ -1,13 +1,16 @@
 import React from 'react'
 import { View } from 'react-native'
 
-import AmbireBrandLogo from '@common/assets/svg/AmbireBrandLogo'
+import BadgeIcon from '@common/assets/svg/BadgeIcon'
+import OpenIcon from '@common/assets/svg/OpenIcon'
 import { getValueFromKey, SECTIONS, Stat } from '@common/components/RewardsStat'
 import SkeletonLoaderWeb from '@common/components/SkeletonLoader/SkeletonLoader.web'
 import Text from '@common/components/Text'
 import HeaderBackButton from '@common/modules/header/components/HeaderBackButton'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { openInTab } from '@web/extension-services/background/webapi/tab'
+import useHover, { AnimatedPressable } from '@web/hooks/useHover'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 
 import RewardsAndStats from '../components/RewardsAndStats'
@@ -16,6 +19,7 @@ import StatsHeading from '../components/StatsHeading'
 
 const ExtensionRewardsScreen = () => {
   const { portfolio } = useSelectedAccountControllerState()
+  const [bindAnim, animStyle] = useHover({ preset: 'opacityInverted' })
 
   const isProjectedRewardsLoading =
     portfolio.portfolioState.projectedRewards?.isLoading && !portfolio.isAllReady
@@ -54,10 +58,36 @@ const ExtensionRewardsScreen = () => {
           }}
         >
           <HeaderBackButton color="#8E98A8" displayIn="always" />
-          <Text color="#fff" weight="medium" fontSize={16}>
-            Ambire Rewards
-          </Text>
-          <AmbireBrandLogo />
+
+          <AnimatedPressable
+            {...bindAnim}
+            onPress={async () => {
+              await openInTab({ url: 'https://rewards.ambire.com/' })
+            }}
+            style={{
+              ...animStyle,
+              ...flexbox.directionRow,
+              ...flexbox.alignCenter,
+              ...flexbox.justifyCenter,
+              ...spacings.pvTy,
+              ...spacings.ph,
+              backgroundColor: '#6A6F864D',
+              borderRadius: 16
+            }}
+          >
+            <BadgeIcon width={24} height={24} />
+            <Text
+              fontSize={16}
+              weight="medium"
+              style={{
+                ...spacings.mlTy,
+                ...spacings.mr
+              }}
+            >
+              Ambire Rewards
+            </Text>
+            <OpenIcon width={18} height={18} color="#8D93AC" />
+          </AnimatedPressable>
         </View>
         {!isProjectedRewardsLoading ? (
           <View
