@@ -124,11 +124,10 @@ const Icon = ({ id }: { id: Stat['id'] }) => {
 const UserDataSection = () => {
   // @TODO: Replace with season 2 data
   const { season1LeaderboardData } = useLeaderboardContext()
-  const { userRewardsStats } = usePortfolioControllerState()
+  const { userRewardsStats, isLoadingClaimableRewards } = usePortfolioControllerState()
   const [expandedId, setExpandedId] = React.useState<Stat['id'] | null>(null)
 
   const sections: Stat[] = SECTIONS.map((section) => {
-    // const value = userRewardsStats ? userRewardsStats[section.id] : '-'
     let score = userRewardsStats ? userRewardsStats[section.id].toFixed(0) : 0
 
     if (section.id === 'multiplier') {
@@ -142,7 +141,6 @@ const UserDataSection = () => {
     }
   })
 
-  // @TODO: Loading state
   return (
     <div className={styles.wrapper}>
       <div className={styles.statsWrapper}>
@@ -153,53 +151,57 @@ const UserDataSection = () => {
           <span />
         </div>
         <div className={styles.stats}>
-          {sections.map(({ score, id, label, explanation, value }) => (
-            <div className={`${styles.stat} ${expandedId === id ? styles.open : ''}`} key={id}>
-              <button
-                type="button"
-                className={styles.header}
-                onClick={() => setExpandedId(expandedId === id ? null : id)}
-              >
-                <div className={styles.score}>
-                  <div className={styles.scoreBadge}>
-                    <span className={styles.scoreText}>{score}</span>
+          {sections.map(({ score, id, label, explanation, value }) =>
+            isLoadingClaimableRewards ? (
+              <div className={styles.statSkeleton} />
+            ) : (
+              <div className={`${styles.stat} ${expandedId === id ? styles.open : ''}`} key={id}>
+                <button
+                  type="button"
+                  className={styles.header}
+                  onClick={() => setExpandedId(expandedId === id ? null : id)}
+                >
+                  <div className={styles.score}>
+                    <div className={styles.scoreBadge}>
+                      <span className={styles.scoreText}>{score}</span>
+                    </div>
                   </div>
-                </div>
-                <div className={styles.criteria}>
-                  <div className={styles.icon}>
-                    <Icon id={id} />
+                  <div className={styles.criteria}>
+                    <div className={styles.icon}>
+                      <Icon id={id} />
+                    </div>
+                    <span className={styles.label}>{label}</span>
+                    <InfoIcon
+                      width={12}
+                      height={12}
+                      color="currentColor"
+                      className={styles.infoIcon}
+                      data-tooltip-id={`${id}-info-tooltip`}
+                    />
+                    <Tooltip
+                      style={{
+                        backgroundColor: '#101114',
+                        color: '#F4F4F7',
+                        fontFamily: 'FunnelDisplay',
+                        fontSize: 11,
+                        lineHeight: '16px',
+                        fontWeight: 300,
+                        maxWidth: 244,
+                        boxShadow: '0px 0px 12px 0px #191B20',
+                        whiteSpace: 'pre-wrap'
+                      }}
+                      place="bottom"
+                      id={`${id}-info-tooltip`}
+                      content={explanation}
+                    />
                   </div>
-                  <span className={styles.label}>{label}</span>
-                  <InfoIcon
-                    width={12}
-                    height={12}
-                    color="currentColor"
-                    className={styles.infoIcon}
-                    data-tooltip-id={`${id}-info-tooltip`}
-                  />
-                  <Tooltip
-                    style={{
-                      backgroundColor: '#101114',
-                      color: '#F4F4F7',
-                      fontFamily: 'FunnelDisplay',
-                      fontSize: 11,
-                      lineHeight: '16px',
-                      fontWeight: 300,
-                      maxWidth: 244,
-                      boxShadow: '0px 0px 12px 0px #191B20',
-                      whiteSpace: 'pre-wrap'
-                    }}
-                    place="bottom"
-                    id={`${id}-info-tooltip`}
-                    content={explanation}
-                  />
-                </div>
-                <span className={styles.value}>{value}</span>
-                <FontAwesomeIcon className={`${styles.chevronIcon}`} icon={faChevronDown} />
-              </button>
-              <div className={styles.description}>{explanation}</div>
-            </div>
-          ))}
+                  <span className={styles.value}>{value}</span>
+                  <FontAwesomeIcon className={`${styles.chevronIcon}`} icon={faChevronDown} />
+                </button>
+                <div className={styles.description}>{explanation}</div>
+              </div>
+            )
+          )}
         </div>
       </div>
       <div className={styles.rewardsWrapper}>
