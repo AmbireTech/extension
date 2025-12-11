@@ -6,13 +6,17 @@ import TrophyIcon from '@common/assets/svg/TrophyIcon'
 import Text from '@common/components/Text'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 
 import Background1 from './media/Background1'
 import Background2 from './media/Background2'
 import Background3 from './media/Background3'
 
 const RewardsAndStats = () => {
+  const { portfolio } = useSelectedAccountControllerState()
+  const { projectedRewardsStats } = portfolio
   const { t } = useTranslation()
+
   return (
     <View style={[flexbox.directionRow, flexbox.alignCenter]}>
       <View
@@ -33,7 +37,7 @@ const RewardsAndStats = () => {
               backgroundClip: 'text'
             }}
           >
-            617
+            {projectedRewardsStats ? projectedRewardsStats.totalScore : '-'}
           </Text>
           <Text fontSize={10} weight="semiBold" color="#E9EBF8">
             Total score
@@ -52,10 +56,19 @@ const RewardsAndStats = () => {
             $WALLET
           </Text>
           <Text fontSize={20} weight="medium" color="#FFFFFF" style={spacings.mb0}>
-            120,845.01
+            {projectedRewardsStats
+              ? projectedRewardsStats.estimatedRewards.toLocaleString(undefined, {
+                  maximumFractionDigits: 2
+                })
+              : '-'}
           </Text>
           <Text fontSize={10} weight="semiBold" color="#00D4FF" style={spacings.mbTy}>
-            $1,234
+            $
+            {projectedRewardsStats
+              ? projectedRewardsStats.estimatedRewardsUSD.toLocaleString(undefined, {
+                  maximumFractionDigits: 2
+                })
+              : '-'}
           </Text>
           <Text fontSize={10} weight="semiBold" color="#E9EBF8">
             {t('Estimated Rewards')}
@@ -82,7 +95,7 @@ const RewardsAndStats = () => {
             }}
           >
             <Text weight="medium" color="#B37AFF">
-              112
+              {projectedRewardsStats ? projectedRewardsStats.rank : '-'}
             </Text>
           </View>
           <View

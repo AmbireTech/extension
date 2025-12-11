@@ -2,45 +2,39 @@ import React from 'react'
 import { View } from 'react-native'
 
 import AmbireBrandLogo from '@common/assets/svg/AmbireBrandLogo'
+import { getValueFromKey, SECTIONS, Stat } from '@common/components/RewardsStat'
+import SkeletonLoaderWeb from '@common/components/SkeletonLoader/SkeletonLoader.web'
 import Text from '@common/components/Text'
 import HeaderBackButton from '@common/modules/header/components/HeaderBackButton'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 
 import RewardsAndStats from '../components/RewardsAndStats'
 import StatItem from '../components/StatItem'
-import { Stat } from '../components/StatItem/StatItem'
 import StatsHeading from '../components/StatsHeading'
 
-// @TODO: Get rid of mock data
-const MOCK_STATS: Stat[] = [
-  {
-    id: 'balance',
-    score: 1200,
-    label: 'Wallet Balance (AVG)',
-    explanation: 'Average wallet balance over the last 30 days.',
-    description: 'This is calculated based on daily snapshots of your wallet balance.',
-    value: '$5,432.10'
-  },
-  {
-    id: 'liquidity',
-    score: 950,
-    label: 'Concentrated Liquidity (AVG)',
-    explanation: 'Average liquidity provided in concentrated pools over the last 30 days.',
-    description: 'This reflects your participation in liquidity pools with specific price ranges.',
-    value: '$3,210.75'
-  },
-  {
-    id: 'staked',
-    score: 1100,
-    label: 'Staked $WALLET (AVG)',
-    explanation: 'Average value of $WALLET staked over the last 30 days.',
-    description: 'Staking $WALLET helps secure the network and earn rewards.',
-    value: '$1,250.00'
-  }
-]
-
 const ExtensionRewardsScreen = () => {
+  const { portfolio } = useSelectedAccountControllerState()
+
+  const isProjectedRewardsLoading =
+    portfolio.portfolioState.projectedRewards?.isLoading && !portfolio.isAllReady
+  const projectedRewardsStats = portfolio.projectedRewardsStats
+
+  const sections: Stat[] = SECTIONS.map((section) => {
+    let score = projectedRewardsStats ? projectedRewardsStats[section.id].toFixed(0) : 0
+
+    if (section.id === 'multiplier') {
+      score = `${score}x`
+    }
+
+    return {
+      ...section,
+      score,
+      value: getValueFromKey(section.id, projectedRewardsStats)
+    }
+  })
+
   return (
     <View style={[flexbox.flex1, { backgroundColor: '#101114' }, spacings.ph, spacings.pv]}>
       <View
@@ -65,25 +59,29 @@ const ExtensionRewardsScreen = () => {
           </Text>
           <AmbireBrandLogo />
         </View>
-        <View
-          style={{
-            ...spacings.phLg,
-            ...spacings.pbSm,
-            ...spacings.ptMd,
-            backgroundColor: '#191A1F',
-            borderWidth: 1,
-            borderColor: '#6A6F8633',
-            borderRadius: 16
-          }}
-        >
-          <StatsHeading />
-          <View style={spacings.mb}>
-            {MOCK_STATS.map((stat, index) => (
-              <StatItem key={stat.id} {...stat} isLast={index === MOCK_STATS.length - 1} />
-            ))}
+        {!isProjectedRewardsLoading ? (
+          <View
+            style={{
+              ...spacings.phLg,
+              ...spacings.pbSm,
+              ...spacings.ptMd,
+              backgroundColor: '#191A1F',
+              borderWidth: 1,
+              borderColor: '#6A6F8633',
+              borderRadius: 16
+            }}
+          >
+            <StatsHeading />
+            <View style={spacings.mb}>
+              {sections.map((stat, index) => (
+                <StatItem key={stat.id} {...stat} isLast={index === sections.length - 1} />
+              ))}
+            </View>
+            <RewardsAndStats />
           </View>
-          <RewardsAndStats />
-        </View>
+        ) : (
+          <SkeletonLoaderWeb width="100%" height={420} style={{ backgroundColor: '#101114' }} />
+        )}
       </View>
     </View>
   )

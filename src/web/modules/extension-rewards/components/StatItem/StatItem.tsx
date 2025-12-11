@@ -1,42 +1,15 @@
 import React from 'react'
 import { View } from 'react-native'
 
-import HumidityIcon from '@common/assets/svg/HumidityIcon'
 import InfoIcon from '@common/assets/svg/InfoIcon'
-import LockIcon2 from '@common/assets/svg/LockIcon2'
-import SwapIcon from '@common/assets/svg/SwapIcon/SwapIcon'
-import WalletIcon2 from '@common/assets/svg/WalletIcon2'
+import { Icon, Stat } from '@common/components/RewardsStat'
 import Text from '@common/components/Text'
 import Tooltip from '@common/components/Tooltip'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
-export type Stat = {
-  id: 'balance' | 'liquidity' | 'staked' | 'swap-volume' // TODO: Add all
-  score: number
-  label: string
-  description: string
-  explanation: string
-  value: string
-}
-
 type Props = Stat & {
   isLast?: boolean
-}
-
-const Icon = ({ id }: { id: Stat['id'] }) => {
-  switch (id) {
-    case 'balance':
-      return <WalletIcon2 />
-    case 'liquidity':
-      return <HumidityIcon />
-    case 'staked':
-      return <LockIcon2 />
-    case 'swap-volume':
-      return <SwapIcon />
-    default:
-      return null
-  }
 }
 
 const StatItem = ({ id, score, label, explanation, value, isLast }: Props) => {
@@ -56,10 +29,12 @@ const StatItem = ({ id, score, label, explanation, value, isLast }: Props) => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            width: 56,
+            minWidth: 56,
+            width: 'fit-content',
             height: 32,
             backgroundColor: '#101114',
-            borderRadius: 20
+            borderRadius: 20,
+            ...spacings.phSm
           }}
         >
           <Text
@@ -82,7 +57,13 @@ const StatItem = ({ id, score, label, explanation, value, isLast }: Props) => {
           {label}
         </Text>
         <InfoIcon color="#54597A" data-tooltip-id={`tooltip-${id}`} width={14} height={14} />
-        <Tooltip id={`tooltip-${id}`} content={explanation} />
+        <Tooltip
+          id={`tooltip-${id}`}
+          content={explanation}
+          style={{
+            whiteSpace: 'pre-wrap'
+          }}
+        />
       </View>
       <Text
         color="#fff"
