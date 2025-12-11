@@ -205,13 +205,7 @@ module.exports = async function (env, argv) {
     '@web': path.resolve(__dirname, 'src/web'),
     '@benzin': path.resolve(__dirname, 'src/benzin'),
     '@legends': path.resolve(__dirname, 'src/legends'),
-    react: path.resolve(__dirname, 'node_modules/react'),
-    // TODO: Temporarily, for Ambire Next, use a pre-release version of gridplus-sdk that supports EIP-7702, look for all #gridplus-sdk-temporary
-    ...(isAmbireNext
-      ? {
-          'gridplus-sdk': path.resolve(__dirname, 'node_modules/gridplus-sdk-e3d6ac0')
-        }
-      : {})
+    react: path.resolve(__dirname, 'node_modules/react')
   }
 
   config.resolve.fallback = {
