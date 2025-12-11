@@ -2,8 +2,6 @@ import React, { useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { TokenResult } from '@ambire-common/libs/portfolio'
-import { ProjectedRewardsTokenResult } from '@ambire-common/libs/portfolio/interfaces'
-import Badge from '@common/components/Badge'
 import Text from '@common/components/Text'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
 import useBackgroundService from '@web/hooks/useBackgroundService'
@@ -35,24 +33,13 @@ const TokenItem = ({ token }: { token: TokenResult }) => {
     window.open(INFO_BTN_URL, '_blank')
   }, [])
 
-  const projectedRewardsUserXp = useMemo(() => {
-    if (isProjectedRewards) {
-      const projectedRewardsToken = token as ProjectedRewardsTokenResult
-      return Number(projectedRewardsToken.userXp || 0).toLocaleString('en-US', {
-        maximumFractionDigits: 0
-      })
-    }
-    return 0
-  }, [isProjectedRewards, token])
-
   const projectedRewardsDescription = useMemo(
     () => (
       <Text fontSize={12} weight="regular">
-        {t('Projected rewards for ')}
-        <Badge text={`${projectedRewardsUserXp} XP`} type="projectedRewards" weight="semiBold" />
+        {t('Projected Rewards')}
       </Text>
     ),
-    [projectedRewardsUserXp, t]
+    [t]
   )
 
   const sendTransaction = useCallback(

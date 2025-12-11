@@ -89,6 +89,10 @@
     }
   }
 
+  .alert {
+    margin-top: 1.5rem;
+  }
+
   @include on-mobile {
     padding: 1.5rem;
 

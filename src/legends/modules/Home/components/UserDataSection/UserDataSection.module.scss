@@ -87,9 +87,11 @@
         .score {
           .scoreBadge {
             display: flex;
+            width: fit-content;
             align-items: center;
             justify-content: center;
-            width: 3.5rem;
+            padding: 0 0.75rem;
+            min-width: 3.5rem;
             height: 2rem;
             text-align: center;
             background-color: $blackText;
@@ -143,6 +145,7 @@
         padding: 0;
         overflow: hidden;
         opacity: 0;
+        white-space: pre-wrap;
       }
     }
   }

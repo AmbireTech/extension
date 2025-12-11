@@ -1,6 +1,5 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 
-import { calculateRewardsForSeason } from '@ambire-common/utils/rewards'
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import Tooltip from '@common/components/Tooltip'
 import background from '@legends/common/assets/images/background.png'
@@ -25,29 +24,9 @@ const LeaderboardContainer: React.FC = () => {
     updateLeaderboard
   } = useLeaderboardContext()
 
-  const { rewardsProjectionData, accountPortfolio } = usePortfolioControllerState()
+  const { userRewardsStats } = usePortfolioControllerState()
+  const projectedAmount = userRewardsStats?.estimatedRewards
   const { connectedAccount } = useAccountContext()
-
-  const currentTotalBalanceOnSupportedChains =
-    (accountPortfolio && accountPortfolio?.amount) || undefined
-
-  const parsedSnapshotsBalance =
-    rewardsProjectionData?.currentSeasonSnapshots.map(
-      (snapshot: { week: number; balance: number }) => snapshot.balance
-    ) || []
-
-  const projectedAmount =
-    rewardsProjectionData &&
-    calculateRewardsForSeason(
-      rewardsProjectionData?.userLevel,
-      parsedSnapshotsBalance,
-      currentTotalBalanceOnSupportedChains ?? 0,
-      rewardsProjectionData?.numberOfWeeksSinceStartOfSeason,
-      rewardsProjectionData?.totalWeightNonUser,
-      rewardsProjectionData?.totalRewardsPool,
-      rewardsProjectionData?.minLvl,
-      rewardsProjectionData?.minBalance
-    )
 
   const tableRef = useRef<HTMLDivElement>(null)
   const pageRef = useRef<HTMLDivElement>(null)

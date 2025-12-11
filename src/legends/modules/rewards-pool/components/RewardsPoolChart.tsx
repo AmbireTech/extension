@@ -4,6 +4,7 @@ import React from 'react'
 const calculateChartPosition = (volume: number) => {
   // Start at 1m because the first cell is smaller
   const X_AT_1_VOLUME = 498
+  const X_AT_0_VOLUME = 538
   const Y_AT_0_VOLUME = 415
   const X_AT_3_MIL_VOLUME = 368
   const Y_AT_3_MIL_VOLUME = 337
@@ -13,7 +14,7 @@ const calculateChartPosition = (volume: number) => {
   const Y_INCREMENT_BY = Y_AT_0_VOLUME - Y_AT_3_MIL_VOLUME
 
   const getX = (vol: number) => {
-    return Math.min(X_AT_3_MIL_VOLUME, X_AT_1_VOLUME - vol * INCREMENT_X_PER_VOLUME_UNIT)
+    return Math.min(X_AT_0_VOLUME, X_AT_1_VOLUME - vol * INCREMENT_X_PER_VOLUME_UNIT)
   }
 
   const getY = (vol: number) => {

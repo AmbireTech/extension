@@ -1,8 +1,12 @@
 import React from 'react'
 
+import { ProjectedRewardsStats } from '@ambire-common/libs/portfolio/interfaces'
+import AsteriskIcon from '@common/assets/svg/AsteriskIcon'
 import HumidityIcon from '@common/assets/svg/HumidityIcon'
 import InfoIcon from '@common/assets/svg/InfoIcon'
+import LightningIcon from '@common/assets/svg/LightningIcon'
 import LockIcon2 from '@common/assets/svg/LockIcon2'
+import ScaleIcon from '@common/assets/svg/ScaleIcon'
 import SwapIcon from '@common/assets/svg/SwapIcon/SwapIcon'
 import WalletIcon from '@common/assets/svg/WalletIcon2'
 import Tooltip from '@common/components/Tooltip'
@@ -11,6 +15,7 @@ import { faTrophy } from '@fortawesome/free-solid-svg-icons/faTrophy'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import ChevronDownIcon from '@legends/common/assets/svg/ChevronDownIcon'
 import useLeaderboardContext from '@legends/hooks/useLeaderboardContext'
+import usePortfolioControllerState from '@legends/hooks/usePortfolioControllerState/usePortfolioControllerState'
 
 import Background1 from './media/Background1'
 import Background2 from './media/Background2'
@@ -18,60 +23,108 @@ import Background3 from './media/Background3'
 import styles from './UserDataSection.module.scss'
 
 type Stat = {
-  id: 'balance' | 'liquidity' | 'staked' | 'swap-volume'
-  score: number
+  id: keyof ProjectedRewardsStats
+  score: number | string
   label: string
   explanation: string
-  description: string
-  value: string
+  value: string | null
 }
 
-// @TODO: Get rid of mock data
-const MOCK_STATS: Stat[] = [
+const SECTIONS: Omit<Stat, 'score' | 'value'>[] = [
   {
-    id: 'balance',
-    score: 1200,
+    id: 'balanceScore',
     label: 'Wallet Balance (AVG)',
-    explanation: 'Average wallet balance over the last 30 days.',
-    description: 'This is calculated based on daily snapshots of your wallet balance.',
-    value: '$5,432.10'
+    explanation:
+      'For every $1000 (on the eligible networks) in your wallet balance you receive 1 score point.'
   },
   {
-    id: 'liquidity',
-    score: 950,
+    id: 'liquidityScore',
     label: 'Concentrated Liquidity (AVG)',
-    explanation: 'Average liquidity provided in concentrated pools over the last 30 days.',
-    description: 'This reflects your participation in liquidity pools with specific price ranges.',
-    value: '$3,210.75'
+    explanation:
+      'For every $1000 worth of $WALLET/$ETH liquidity provided on Uniswap you receive 30 score points.'
   },
   {
-    id: 'staked',
-    score: 1100,
+    id: 'stkWALLETScore',
     label: 'Staked $WALLET (AVG)',
-    explanation: 'Average value of $WALLET staked over the last 30 days.',
-    description: 'Staking $WALLET helps secure the network and earn rewards.',
-    value: '$1,250.00'
+    explanation: 'For every $1000 worth of $stkWALLET you hold you receive 20 score points.'
+  },
+  {
+    id: 'swapVolumeScore',
+    label: 'Swap & Bridge volume (AVG)',
+    explanation: 'For every $1000 generated in Swap & Bridge volume, you receive 10 score points.'
+  },
+  {
+    id: 'weeklyTx',
+    label: 'Weekly Transactions',
+    explanation:
+      'If you have at least 1 transaction on Ethereum during the week, you receive 1.06X multiplier of your score.'
+  },
+  {
+    id: 'goveranceScore',
+    label: 'Governance total weight',
+    explanation: `Governance vote score is calculated by the formula: 
+governance_score = user.governance_proposals_voted_in.map(x => x.governance_weight).sum() * wallet_token.price / 2000`
+  },
+  {
+    id: 'multiplier',
+    label: 'Community multipliers',
+    explanation: `You receive 1.06X multiplier of your score for belonging to any of the following:
+- Have pledget to the Trustless manifesto
+- Hold a LobsterDAO NFT
+- Hold a CryptoTesters NFT
+- Hold an Ambire Gas Tank NFT, Legends NFT, or any Ambire conference POAP
+- Hold Gitcoin passport NFT
+- Hold GHO passport NFT`
   }
 ]
 
-const MOCK_DATA = {
-  totalScore: 617,
-  rewards: {
-    amount: 120845.01,
-    usd: 1234
+const getValueFromKey = (id: Stat['id'], stats: ProjectedRewardsStats | null): string | null => {
+  if (!stats) return '-'
+
+  switch (id) {
+    case 'balanceScore':
+      return `$${stats.averageBalance.toLocaleString(undefined, {
+        maximumFractionDigits: 2
+      })}`
+    case 'liquidityScore':
+      return `$${stats.averageLiquidity.toLocaleString(undefined, {
+        maximumFractionDigits: 2
+      })}`
+    case 'stkWALLETScore':
+      return `$${stats.averageStkWalletBalance.toLocaleString(undefined, {
+        maximumFractionDigits: 2
+      })}`
+    case 'weeklyTx':
+      return String(stats.weeklyTx)
+    case 'swapVolumeScore':
+      return `$${stats.swapVolume.toLocaleString(undefined, {
+        maximumFractionDigits: 2
+      })}`
+    case 'goveranceScore':
+      return String(stats.votedTimes)
+    case 'multiplier':
+      return null
+    default:
+      return '-'
   }
 }
 
 const Icon = ({ id }: { id: Stat['id'] }) => {
   switch (id) {
-    case 'balance':
+    case 'balanceScore':
       return <WalletIcon />
-    case 'liquidity':
+    case 'liquidityScore':
       return <HumidityIcon />
-    case 'staked':
+    case 'stkWALLETScore':
       return <LockIcon2 />
-    case 'swap-volume':
+    case 'swapVolumeScore':
       return <SwapIcon />
+    case 'weeklyTx':
+      return <LightningIcon />
+    case 'multiplier':
+      return <AsteriskIcon />
+    case 'goveranceScore':
+      return <ScaleIcon />
     default:
       return null
   }
@@ -80,7 +133,23 @@ const Icon = ({ id }: { id: Stat['id'] }) => {
 const UserDataSection = () => {
   // @TODO: Replace with season 2 data
   const { season1LeaderboardData } = useLeaderboardContext()
+  const { userRewardsStats } = usePortfolioControllerState()
   const [expandedId, setExpandedId] = React.useState<Stat['id'] | null>(null)
+
+  const sections: Stat[] = SECTIONS.map((section) => {
+    // const value = userRewardsStats ? userRewardsStats[section.id] : '-'
+    let score = userRewardsStats ? userRewardsStats[section.id].toFixed(0) : 0
+
+    if (section.id === 'multiplier') {
+      score = `${score}x`
+    }
+
+    return {
+      ...section,
+      score,
+      value: getValueFromKey(section.id, userRewardsStats)
+    }
+  })
 
   // @TODO: Loading state
   return (
@@ -93,7 +162,7 @@ const UserDataSection = () => {
           <span />
         </div>
         <div className={styles.stats}>
-          {MOCK_STATS.map(({ score, id, label, explanation, description, value }) => (
+          {sections.map(({ score, id, label, explanation, value }) => (
             <div className={`${styles.stat} ${expandedId === id ? styles.open : ''}`} key={id}>
               <button
                 type="button"
@@ -126,7 +195,8 @@ const UserDataSection = () => {
                       lineHeight: '16px',
                       fontWeight: 300,
                       maxWidth: 244,
-                      boxShadow: '0px 0px 12.1px 0px #191B20'
+                      boxShadow: '0px 0px 12px 0px #191B20',
+                      whiteSpace: 'pre-wrap'
                     }}
                     place="bottom"
                     id={`${id}-info-tooltip`}
@@ -136,7 +206,7 @@ const UserDataSection = () => {
                 <span className={styles.value}>{value}</span>
                 <FontAwesomeIcon className={`${styles.chevronIcon}`} icon={faChevronDown} />
               </button>
-              <div className={styles.description}>{description}</div>
+              <div className={styles.description}>{explanation}</div>
             </div>
           ))}
         </div>
@@ -144,7 +214,9 @@ const UserDataSection = () => {
       <div className={styles.rewardsWrapper}>
         <div className={styles.total}>
           <div className={styles.content}>
-            <span className={styles.value}>{MOCK_DATA.totalScore}</span>
+            <span className={styles.value}>
+              {userRewardsStats ? userRewardsStats.totalScore : '-'}
+            </span>
             <span className={styles.label}>Total score</span>
           </div>
           <Background1 className={styles.background} />
@@ -154,15 +226,19 @@ const UserDataSection = () => {
           <div className={styles.content}>
             <span className={styles.kicker}>$WALLET</span>
             <span className={styles.value}>
-              {MOCK_DATA.rewards.amount.toLocaleString(undefined, {
-                maximumFractionDigits: 2
-              })}
+              {userRewardsStats
+                ? userRewardsStats.estimatedRewards.toLocaleString(undefined, {
+                    maximumFractionDigits: 2
+                  })
+                : '-'}
             </span>
             <span className={styles.usd}>
               $
-              {MOCK_DATA.rewards.usd.toLocaleString(undefined, {
-                maximumFractionDigits: 2
-              })}
+              {userRewardsStats
+                ? userRewardsStats.estimatedRewardsUSD.toLocaleString(undefined, {
+                    maximumFractionDigits: 2
+                  })
+                : '-'}
             </span>
             <span className={styles.label}>Estimated Rewards</span>
           </div>

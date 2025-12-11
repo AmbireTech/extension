@@ -1,17 +1,22 @@
 import React, { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
+import Alert from '@legends/components/Alert'
 import Page from '@legends/components/Page'
+import usePortfolioControllerState from '@legends/hooks/usePortfolioControllerState/usePortfolioControllerState'
 
 import RewardsPoolChart from './components/RewardsPoolChart'
 import styles from './RewardsPool.module.scss'
 
-const END_DATE = new Date('2026-03-31T23:59:59Z')
+const END_DATE = new Date('2026-03-15T11:59:59.999Z')
 
-const Character = () => {
+const RewardsPool = () => {
+  const { t } = useTranslation()
+  const { userRewardsStats } = usePortfolioControllerState()
   const [timeLeft, setTimeLeft] = useState('')
   const timerTimeout = useRef<NodeJS.Timeout | null>(null)
-  const SWAP_VOLUME = 4.32 * 1_000_000
-  const REWARDS_POOL = 100_000
+  const swapVolume = userRewardsStats?.swapVolume ?? null
+  const poolSize = userRewardsStats?.poolSize ?? null
 
   useEffect(() => {
     const updateTimeLeft = () => {
@@ -65,18 +70,26 @@ const Character = () => {
             <span className={styles.value}>{timeLeft}</span>
           </div>
         </div>
-        <div className={styles.chartWrapper}>
-          <div className={styles.chartData}>
-            <span className={styles.label}>Current Swap&Bridge volume</span>
-            <span className={styles.value}>{formatCurrency(SWAP_VOLUME)}</span>
-            <span className={styles.label}>Current Rewards Pool</span>
-            <span className={styles.value2}>{formatCurrency(REWARDS_POOL)}</span>
+        {typeof swapVolume === 'number' && poolSize ? (
+          <div className={styles.chartWrapper}>
+            <div className={styles.chartData}>
+              <span className={styles.label}>Current Swap&Bridge volume</span>
+              <span className={styles.value}>{formatCurrency(swapVolume)}</span>
+              <span className={styles.label}>Current Rewards Pool</span>
+              <span className={styles.value2}>{formatCurrency(poolSize)}</span>
+            </div>
+            <RewardsPoolChart className={styles.chart as string} volume={swapVolume} />
           </div>
-          <RewardsPoolChart className={styles.chart as string} volume={SWAP_VOLUME} />
-        </div>
+        ) : (
+          <Alert
+            className={styles.alert}
+            title={t('Failed to load rewards pool data')}
+            type="error"
+          />
+        )}
       </div>
     </Page>
   )
 }
 
-export default Character
+export default RewardsPool
