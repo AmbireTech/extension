@@ -2,7 +2,6 @@ import React from 'react'
 import Svg, { Defs, LinearGradient, Path, Stop, SvgProps } from 'react-native-svg'
 
 const BadgeIcon: React.FC<SvgProps> = ({ width = 24, height = 24, color, ...rest }) => {
-  console.log('Debug: BadgeIcon rendered', height)
   return (
     <Svg width={width} height={height} viewBox="0 0 24 24" {...rest}>
       <Path
