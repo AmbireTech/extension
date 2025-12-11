@@ -10,9 +10,10 @@ import usePortfolioControllerState from '@legends/hooks/usePortfolioControllerSt
 import styles from '@legends/modules/leaderboard/screens/Leaderboard/Leaderboard.module.scss'
 import { LeaderboardEntry } from '@legends/modules/leaderboard/types'
 
-type Props = Omit<LeaderboardEntry['currentUser'], 'projectedRewards'> & {
+type Props = Omit<LeaderboardEntry['currentUser'], 'projectedRewards' | 'projectedRewardsUsd'> & {
   stickyPosition: string | null
-  projectedRewards?: number | string
+  projectedRewardsSeason1?: number | string
+  projectedRewardsSeason2Usd?: number
   currentUserRef: React.RefObject<HTMLDivElement>
   reward?: number | ''
 }
@@ -57,8 +58,8 @@ const Row: FC<Props> = ({
   rank,
   xp,
   points,
-  projectedRewards,
-  projectedRewardsInUsd,
+  projectedRewardsSeason1,
+  projectedRewardsSeason2Usd,
   stickyPosition,
   currentUserRef,
   reward
@@ -137,11 +138,11 @@ const Row: FC<Props> = ({
         )}
       </div>
       {/* <h5 className={styles.cell}>{level}</h5> */}
-      {typeof projectedRewards !== 'undefined' && (
+      {typeof projectedRewardsSeason1 !== 'undefined' && (
         <h5 className={`${styles.cell} ${styles.weight}`}>
-          {typeof projectedRewards === 'number'
-            ? prettifyProjectedRewards(projectedRewards)
-            : projectedRewards}
+          {typeof projectedRewardsSeason1 === 'number'
+            ? prettifyProjectedRewards(projectedRewardsSeason1)
+            : projectedRewardsSeason1}
         </h5>
       )}
       {typeof reward !== 'undefined' && (
@@ -157,9 +158,9 @@ const Row: FC<Props> = ({
           </h5>
         </>
       )}
-      {typeof projectedRewardsInUsd !== 'undefined' && (
+      {typeof projectedRewardsSeason2Usd !== 'undefined' && (
         <h5 className={`${styles.cell} ${styles.dollarReward}`}>
-          {Number(projectedRewardsInUsd / (walletTokenInfo?.walletPrice || 0)).toLocaleString(
+          {Number(projectedRewardsSeason2Usd / (walletTokenInfo?.walletPrice || 0)).toLocaleString(
             undefined,
             {
               maximumFractionDigits: 0

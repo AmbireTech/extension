@@ -26,7 +26,7 @@ const LeaderboardContainer: React.FC = () => {
   } = useLeaderboardContext()
 
   const { userRewardsStats } = usePortfolioControllerState()
-  const projectedAmount = userRewardsStats?.estimatedRewards
+  const season2ProjectedAmountUsd = userRewardsStats?.estimatedRewards
   const { connectedAccount } = useAccountContext()
 
   const tableRef = useRef<HTMLDivElement>(null)
@@ -241,14 +241,16 @@ const LeaderboardContainer: React.FC = () => {
                 <Row
                   key={item.account}
                   {...item}
-                  projectedRewards={
-                    activeTab === 1
+                  projectedRewardsSeason1={
+                    activeTab === 1 ? item.projectedRewards || 'Loading...' : undefined
+                  }
+                  projectedRewardsSeason2Usd={
+                    activeTab === 2
                       ? connectedAccount === item.account
-                        ? projectedAmount
-                        : item.projectedRewards || 'Loading...'
+                        ? season2ProjectedAmountUsd
+                        : item.projectedRewardsInUsd
                       : undefined
                   }
-                  projectedRewardsInUsd={activeTab === 2 ? item.projectedRewardsInUsd : undefined}
                   points={activeTab === 2 ? item.points : undefined}
                   stickyPosition={stickyPosition}
                   currentUserRef={currentUserRef}
@@ -261,9 +263,11 @@ const LeaderboardContainer: React.FC = () => {
                   <Row
                     key={userLeaderboardData.account}
                     {...userLeaderboardData}
-                    projectedRewards={activeTab === 2 ? projectedAmount : undefined}
-                    projectedRewardsInUsd={
-                      activeTab === 2 ? userLeaderboardData.projectedRewardsInUsd : undefined
+                    projectedRewardsSeason1={
+                      activeTab === 1 ? userLeaderboardData.projectedRewards : undefined
+                    }
+                    projectedRewardsSeason2Usd={
+                      activeTab === 2 ? season2ProjectedAmountUsd : undefined
                     }
                     points={activeTab === 2 ? userLeaderboardData.points : undefined}
                     stickyPosition={stickyPosition}
