@@ -21,8 +21,7 @@ const ExtensionRewardsScreen = () => {
   const { portfolio } = useSelectedAccountControllerState()
   const [bindAnim, animStyle] = useHover({ preset: 'opacityInverted' })
 
-  const isProjectedRewardsLoading =
-    portfolio.portfolioState.projectedRewards?.isLoading && !portfolio.isAllReady
+  const isProjectedRewardsLoading = !portfolio.portfolioState.projectedRewards?.isReady
   const projectedRewardsStats = portfolio.projectedRewardsStats
 
   const sections: Stat[] = SECTIONS.map((section) => {
@@ -110,7 +109,7 @@ const ExtensionRewardsScreen = () => {
             <RewardsAndStats />
           </View>
         ) : (
-          <SkeletonLoaderWeb width="100%" height={420} style={{ backgroundColor: '#101114' }} />
+          <SkeletonLoaderWeb width="100%" height={420} style={{ backgroundColor: '#191A1F' }} />
         )}
       </View>
     </View>
