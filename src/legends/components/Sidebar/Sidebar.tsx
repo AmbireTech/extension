@@ -25,7 +25,7 @@ const NAVIGATION_LINKS = [
   { to: LEGENDS_ROUTES.rewardsPool, text: 'Rewards Pool', icon: faMedal },
   { to: LEGENDS_ROUTES.wallet, text: '$WALLET', icon: faPiggyBank },
   {
-    to: 'https://codex.ambire.com/',
+    to: 'https://help.ambire.com/hc/en-us/sections/4422038113554',
     text: 'FAQ',
     icon: faFileLines,
     newTab: true,
