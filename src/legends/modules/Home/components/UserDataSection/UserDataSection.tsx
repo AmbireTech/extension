@@ -54,13 +54,7 @@ const SECTIONS: Omit<Stat, 'score' | 'value'>[] = [
     explanation: 'For every $1000 generated in Swap & Bridge volume, you receive 10 score points.'
   },
   {
-    id: 'weeklyTx',
-    label: 'Weekly Transactions',
-    explanation:
-      'If you have at least 1 transaction on Ethereum during the week, you receive 1.06X multiplier of your score.'
-  },
-  {
-    id: 'goveranceScore',
+    id: 'governanceScore',
     label: 'Governance total weight',
     explanation: `Governance vote score is calculated by the formula: 
 governance_score = user.governance_proposals_voted_in.map(x => x.governance_weight).sum() * wallet_token.price / 2000`
@@ -94,14 +88,14 @@ const getValueFromKey = (id: Stat['id'], stats: ProjectedRewardsStats | null): s
       return `$${stats.averageStkWalletBalance.toLocaleString(undefined, {
         maximumFractionDigits: 2
       })}`
-    case 'weeklyTx':
-      return String(stats.weeklyTx)
     case 'swapVolumeScore':
       return `$${stats.swapVolume.toLocaleString(undefined, {
         maximumFractionDigits: 2
       })}`
-    case 'goveranceScore':
-      return String(stats.votedTimes)
+    case 'governanceScore':
+      return `$${stats.governanceWeight.toLocaleString(undefined, {
+        maximumFractionDigits: 2
+      })}`
     case 'multiplier':
       return null
     default:
@@ -119,11 +113,9 @@ const Icon = ({ id }: { id: Stat['id'] }) => {
       return <LockIcon2 />
     case 'swapVolumeScore':
       return <SwapIcon />
-    case 'weeklyTx':
-      return <LightningIcon />
     case 'multiplier':
       return <AsteriskIcon />
-    case 'goveranceScore':
+    case 'governanceScore':
       return <ScaleIcon />
     default:
       return null
