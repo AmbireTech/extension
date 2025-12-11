@@ -1,5 +1,4 @@
 import React from 'react'
-import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import AmbireBrandLogo from '@common/assets/svg/AmbireBrandLogo'
@@ -41,16 +40,7 @@ const MOCK_STATS: Stat[] = [
   }
 ]
 
-const MOCK_DATA = {
-  totalScore: 617,
-  rewards: {
-    amount: 120845.01,
-    usd: 1234
-  }
-}
-
 const ExtensionRewardsScreen = () => {
-  const { t } = useTranslation()
   return (
     <View style={[flexbox.flex1, { backgroundColor: '#101114' }, spacings.ph, spacings.pv]}>
       <View
@@ -69,7 +59,7 @@ const ExtensionRewardsScreen = () => {
             ...spacings.mbLg
           }}
         >
-          <HeaderBackButton displayIn="always" />
+          <HeaderBackButton color="#8E98A8" displayIn="always" />
           <Text color="#fff" weight="medium" fontSize={16}>
             Ambire Rewards
           </Text>

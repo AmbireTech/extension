@@ -15,6 +15,7 @@ export type Stat = {
   id: 'balance' | 'liquidity' | 'staked' | 'swap-volume' // TODO: Add all
   score: number
   label: string
+  description: string
   explanation: string
   value: string
 }
@@ -62,10 +63,9 @@ const StatItem = ({ id, score, label, explanation, value, isLast }: Props) => {
           }}
         >
           <Text
+            weight="semiBold"
             style={{
-              fontWeight: '600',
               fontSize: 16,
-              letterSpacing: 0,
               color: 'transparent',
               // @ts-ignore
               background: 'linear-gradient(27.42deg, #00d5ff 19.16%, #a25aff 74.07%)',
@@ -81,7 +81,7 @@ const StatItem = ({ id, score, label, explanation, value, isLast }: Props) => {
         <Text color="#fff" fontSize={13} weight="medium" style={{ ...spacings.mhTy }}>
           {label}
         </Text>
-        <InfoIcon data-tooltip-id={`tooltip-${id}`} width={14} height={14} />
+        <InfoIcon color="#54597A" data-tooltip-id={`tooltip-${id}`} width={14} height={14} />
         <Tooltip id={`tooltip-${id}`} content={explanation} />
       </View>
       <Text
