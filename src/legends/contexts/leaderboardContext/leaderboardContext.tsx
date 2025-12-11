@@ -10,6 +10,7 @@ type LeaderboardContextType = {
   fullLeaderboardData: LeaderboardEntry | null
   season0LeaderboardData: LeaderboardEntry | null
   season1LeaderboardData: LeaderboardEntry | null
+  season2LeaderboardData: LeaderboardEntry | null
   userLeaderboardData: LeaderboardEntry['currentUser'] | null
   error: string | null
   updateLeaderboard: () => Promise<void>
@@ -26,6 +27,7 @@ const LeaderboardContextProvider = ({ children }: { children: React.ReactNode })
   const [fullLeaderboardData, setFullLeaderboardData] = useState<LeaderboardEntry | null>(null)
   const [season0LeaderboardData, setSeason0Leaderboard] = useState<LeaderboardEntry | null>(null)
   const [season1LeaderboardData, setSeason1Leaderboard] = useState<LeaderboardEntry | null>(null)
+  const [season2LeaderboardData, setSeason2Leaderboard] = useState<LeaderboardEntry | null>(null)
   const { connectedAccount } = useAccountContext()
 
   const updateLeaderboard = useCallback(async () => {
@@ -37,11 +39,13 @@ const LeaderboardContextProvider = ({ children }: { children: React.ReactNode })
         setLoading(true)
       }
       if (response) {
-        const { fullLeaderboard, season0Leaderboard, season1Leaderboard } = response
+        const { fullLeaderboard, season0Leaderboard, season1Leaderboard, season2Leaderboard } =
+          response
 
         setFullLeaderboardData(fullLeaderboard)
         setSeason0Leaderboard(season0Leaderboard)
         setSeason1Leaderboard(season1Leaderboard)
+        setSeason2Leaderboard(season2Leaderboard)
         fullLeaderboard.currentUser && setUserLeaderboardData(fullLeaderboard.currentUser)
       } else {
         setError('Failed to fetch leaderboard')
@@ -68,6 +72,7 @@ const LeaderboardContextProvider = ({ children }: { children: React.ReactNode })
       fullLeaderboardData,
       season0LeaderboardData,
       season1LeaderboardData,
+      season2LeaderboardData,
       error,
       updateLeaderboard
     }),
@@ -77,6 +82,7 @@ const LeaderboardContextProvider = ({ children }: { children: React.ReactNode })
       fullLeaderboardData,
       season0LeaderboardData,
       season1LeaderboardData,
+      season2LeaderboardData,
       error,
       updateLeaderboard
     ]

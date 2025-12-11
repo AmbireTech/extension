@@ -56,7 +56,9 @@ const Row: FC<Props> = ({
   account,
   rank,
   xp,
+  points,
   projectedRewards,
+  projectedRewardsInUsd,
   stickyPosition,
   currentUserRef,
   reward
@@ -82,7 +84,7 @@ const Row: FC<Props> = ({
     // Clean up
     return () => window.removeEventListener('resize', handleResize)
   }, [])
-  const formattedXp = formatXp(xp)
+  const formattedXp = formatXp(xp || 0)
 
   const amountFormatted = reward ? Math.round(reward * 1e18) : 0
   const tokenBalanceInUSD = getTokenBalanceInUSD({
@@ -155,7 +157,18 @@ const Row: FC<Props> = ({
           </h5>
         </>
       )}
-      <h5 className={styles.cell}>{formattedXp}</h5>
+      {typeof projectedRewardsInUsd !== 'undefined' && (
+        <h5 className={`${styles.cell} ${styles.dollarReward}`}>
+          {Number(projectedRewardsInUsd / (walletTokenInfo?.walletPrice || 0)).toLocaleString(
+            undefined,
+            {
+              maximumFractionDigits: 0
+            }
+          )}
+        </h5>
+      )}
+
+      <h5 className={styles.cell}>{points || formattedXp}</h5>
     </div>
   )
 }

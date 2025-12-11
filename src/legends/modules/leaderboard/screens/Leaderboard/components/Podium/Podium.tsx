@@ -39,7 +39,7 @@ const Podium: React.FC<PodiumProps> = ({ data }) => {
             ) : (
               <Address address={item.account} className={styles.name} maxAddressLength={11} />
             )}
-            <h4 className={styles.xp}>{formatXp(item.xp)}</h4>
+            <h4 className={styles.xp}>{item.xp ? formatXp(item.xp) : item.points}</h4>
           </div>
         </div>
       ))}
