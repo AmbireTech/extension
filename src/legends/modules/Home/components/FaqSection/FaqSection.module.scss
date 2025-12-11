@@ -10,6 +10,7 @@
     font-size: 1rem;
     line-height: 1.5rem;
     font-weight: 200;
+    white-space: pre-wrap;
   }
 
   @include breakpoint-down-from(medium-desktop) {
@@ -30,5 +31,5 @@
 }
 
 .accordionTitle {
-    font-size: 1.25rem !important;
+  font-size: 1.25rem !important;
 }
