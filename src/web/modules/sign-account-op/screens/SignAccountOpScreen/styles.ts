@@ -19,6 +19,7 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       maxWidth: '100%'
     },
     footer: {
+      ...spacings.mt,
       ...spacings.pvMd,
       ...spacings.phMd,
       backgroundColor:
