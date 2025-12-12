@@ -57,13 +57,11 @@ type ActionModalProps = {
     | 'contentVideoV2'
     | 'title'
     | 'action'
-    | 'id'
   >
 
 const ActionModal: FC<ActionModalProps> = ({
   isOpen,
   title,
-  id,
   contentImageV2,
   onLegendCompleteWrapped,
   closeActionModal,
@@ -159,7 +157,7 @@ const ActionModal: FC<ActionModalProps> = ({
       )}
       {!!action && (
         <cardActionContext.Provider value={cardActionContextValue}>
-          <CardActionComponent id={id} meta={meta} action={action} />
+          <CardActionComponent meta={meta} action={action} />
         </cardActionContext.Provider>
       )}
     </Modal>
