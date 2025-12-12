@@ -61,8 +61,11 @@ const StatItem = ({ id, score, label, explanation, value, isLast }: Props) => {
           id={`tooltip-${id}`}
           content={explanation}
           style={{
-            whiteSpace: 'pre-wrap'
+            whiteSpace: 'pre-wrap',
+            backgroundColor: '#101114',
+            color: '#f4f4f7'
           }}
+          border="#6A6F8633"
         />
       </View>
       <Text
