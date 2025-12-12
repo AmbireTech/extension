@@ -11,17 +11,17 @@ import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import flexbox from '@common/styles/utils/flexbox'
 
 import RouteItem from './RouteItem'
+import { RouteItemType } from './RouteItem/RouteItem'
 
 const Routes = () => {
   const { t } = useTranslation()
 
-  const routeItems = [
+  const routeItems: RouteItemType[] = [
     {
       testID: 'dashboard-button-send',
       icon: SendIcon,
       label: t('Send'),
       route: WEB_ROUTES.transfer,
-      isExternal: false,
       scale: 1.08,
       scaleOnHover: 1.18
     },
@@ -30,7 +30,6 @@ const Routes = () => {
       icon: SwapAndBridgeIcon,
       label: t('Swap & Bridge'),
       route: WEB_ROUTES.swapAndBridge,
-      isExternal: false,
       scale: 0.95,
       scaleOnHover: 1
     },
@@ -39,7 +38,6 @@ const Routes = () => {
       icon: DAppsIcon,
       label: t('Apps'),
       route: WEB_ROUTES.apps,
-      isExternal: false,
       scale: 0.95,
       scaleOnHover: 1.02
     },
@@ -47,10 +45,8 @@ const Routes = () => {
       testID: 'dashboard-button-quests',
       icon: BadgeIcon,
       label: t('Rewards'),
-      route:
-        'https://rewards.ambire.com/?utm_source=extension&utm_medium=button&utm_campaign=measure-button',
-      isExternal: true,
-      scale: 0.95,
+      route: WEB_ROUTES.rewards,
+      scale: 1,
       scaleOnHover: 1.2,
       backgroundImage: rewardsBg
     }
