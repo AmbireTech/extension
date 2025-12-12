@@ -11,6 +11,7 @@ import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountCont
 import Background1 from './media/Background1'
 import Background2 from './media/Background2'
 import Background3 from './media/Background3'
+import ChevronRight from './media/ChevronRight'
 
 const RewardsAndStats = () => {
   const { portfolio } = useSelectedAccountControllerState()
@@ -22,7 +23,8 @@ const RewardsAndStats = () => {
       <View
         style={{
           ...flexbox.justifyCenter,
-          ...flexbox.alignCenter
+          ...flexbox.alignCenter,
+          zIndex: 3
         }}
       >
         <Background1 width={157} />
@@ -43,11 +45,20 @@ const RewardsAndStats = () => {
             Total score
           </Text>
         </View>
+        <ChevronRight
+          style={{
+            position: 'absolute',
+            top: '50%',
+            right: 0,
+            transform: [{ translateX: 12 }, { translateY: -12 }]
+          }}
+        />
       </View>
       <View
         style={{
           ...flexbox.justifyCenter,
-          ...flexbox.alignCenter
+          ...flexbox.alignCenter,
+          zIndex: 2
         }}
       >
         <Background2 width={195} />
@@ -74,6 +85,14 @@ const RewardsAndStats = () => {
             {t('Estimated Rewards')}
           </Text>
         </View>
+        <ChevronRight
+          style={{
+            position: 'absolute',
+            top: '50%',
+            right: 0,
+            transform: [{ translateX: 12 }, { translateY: -12 }]
+          }}
+        />
       </View>
       <View
         style={{
