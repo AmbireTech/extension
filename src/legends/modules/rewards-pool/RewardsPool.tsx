@@ -14,16 +14,21 @@ const MIN_SWAP_VOLUME = 3 * 1_000_000
 
 const RewardsPool = () => {
   const { t } = useTranslation()
-  const { userRewardsStats, isLoadingClaimableRewards } = usePortfolioControllerState()
+  const { userRewardsStats, isLoadingClaimableRewards, isLoadingWalletTokenInfo, walletTokenInfo } =
+    usePortfolioControllerState()
   const [timeLeft, setTimeLeft] = useState('')
   const timerTimeout = useRef<NodeJS.Timeout | null>(null)
-  const swapVolume = userRewardsStats?.swapVolume ?? null
+  const isLoading = isLoadingClaimableRewards || isLoadingWalletTokenInfo
+  const swapVolume =
+    userRewardsStats?.swapVolume ??
+    walletTokenInfo?.season2PoolInfo.totalVolumeSwapAndBridge ??
+    null
+  const relayerPoolSize =
+    userRewardsStats?.poolSize ?? walletTokenInfo?.season2PoolInfo.poolSize ?? null
   // The relayer returns a pool size of 100000 so we can calculate rewards. The actual poolSize
   // may be 0 if the min swap volume hasn't been reached
   const poolSize =
-    userRewardsStats?.poolSize && swapVolume && swapVolume > MIN_SWAP_VOLUME
-      ? userRewardsStats.poolSize
-      : 0
+    relayerPoolSize && swapVolume && swapVolume > MIN_SWAP_VOLUME ? relayerPoolSize : 0
 
   useEffect(() => {
     const updateTimeLeft = () => {
@@ -77,9 +82,9 @@ const RewardsPool = () => {
             <span className={styles.value}>{timeLeft}</span>
           </div>
         </div>
-        {isLoadingClaimableRewards && <div className={styles.skeleton} />}
+        {isLoading && <div className={styles.skeleton} />}
 
-        {typeof swapVolume === 'number' && !isLoadingClaimableRewards && (
+        {typeof swapVolume === 'number' && !isLoading && (
           <div className={styles.chartWrapper}>
             <div className={styles.chartData}>
               <span className={styles.label}>Current Swap&Bridge volume</span>
@@ -90,7 +95,7 @@ const RewardsPool = () => {
             <RewardsPoolChart className={styles.chart as string} volume={swapVolume} />
           </div>
         )}
-        {typeof swapVolume !== 'number' && !isLoadingClaimableRewards && (
+        {typeof swapVolume !== 'number' && !isLoading && (
           <Alert
             className={styles.alert}
             title={t('Failed to load rewards pool data')}

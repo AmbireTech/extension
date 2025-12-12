@@ -30,25 +30,31 @@ export type ClaimableRewards = {
   }>
 }
 
+type WalletTokenInfo = {
+  maxSupply: number
+  circulatingSupply: number
+  totalSupply: number
+  stkWalletTotalSupply: number
+  percentageStakedWallet: number
+  apy: number
+  stakedWallets: number
+  walletPrice: number
+  season2PoolInfo: {
+    poolSize: number
+    totalVolumeSwapAndBridge: number
+  }
+} | null
+
 const PortfolioControllerStateContext = createContext<{
   accountPortfolio?: AccountPortfolio
   updateAccountPortfolio: () => void
   claimableRewardsError: string | null
   claimableRewards: ClaimableRewards | null
   isLoadingClaimableRewards: boolean
-  walletTokenInfo: {
-    maxSupply: number
-    circulatingSupply: number
-    totalSupply: number
-    stkWalletTotalSupply: number
-    percentageStakedWallet: number
-    apy: number
-    stakedWallets: number
-    walletPrice: number
-  } | null
+  walletTokenInfo: WalletTokenInfo
   walletTokenPrice: number | null
   isLoadingWalletTokenInfo: boolean
-  rewardsProjectionData?: PortfolioProjectedRewardsResult
+  rewardsProjectionData: PortfolioProjectedRewardsResult | null
   userRewardsStats: ProjectedRewardsStats | null
 }>({
   updateAccountPortfolio: () => {},
@@ -58,7 +64,8 @@ const PortfolioControllerStateContext = createContext<{
   walletTokenInfo: null,
   walletTokenPrice: null,
   isLoadingWalletTokenInfo: true,
-  userRewardsStats: null
+  userRewardsStats: null,
+  rewardsProjectionData: null
 })
 
 const PortfolioControllerStateProvider: React.FC<any> = ({ children }) => {
@@ -72,15 +79,7 @@ const PortfolioControllerStateProvider: React.FC<any> = ({ children }) => {
   const [xWalletClaimableBalance, setXWalletClaimableBalance] = useState<string | null>(null)
 
   const [isLoadingWalletTokenInfo, setIsLoadingWalletTokenInfo] = useState(true)
-  const [walletTokenInfo, setWalletTokenInfo] = useState<{
-    maxSupply: number
-    circulatingSupply: number
-    totalSupply: number
-    price: number
-    stkWalletTotalSupply: number
-    stakedWallets: number
-    walletPrice: number
-  } | null>(null)
+  const [walletTokenInfo, setWalletTokenInfo] = useState<WalletTokenInfo>(null)
   const [walletTokenPrice, setWalletTokenPrice] = useState<number | null>(null)
   const [rewardsProjectionData, setRewardsProjectionData] =
     useState<PortfolioProjectedRewardsResult | null>(null)
