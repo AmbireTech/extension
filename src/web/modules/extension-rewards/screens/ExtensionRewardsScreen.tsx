@@ -12,10 +12,13 @@ import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@web/extension-services/background/webapi/tab'
 import useHover, { AnimatedPressable } from '@web/hooks/useHover'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
+import { getUiType } from '@web/utils/uiType'
 
 import RewardsAndStats from '../components/RewardsAndStats'
 import StatItem from '../components/StatItem'
 import StatsHeading from '../components/StatsHeading'
+
+const { isPopup } = getUiType()
 
 /**
  * The screen is styled to match the design of rewards.ambire.com
@@ -66,7 +69,10 @@ const ExtensionRewardsScreen = () => {
           <AnimatedPressable
             {...bindAnim}
             onPress={async () => {
-              await openInTab({ url: 'https://rewards.ambire.com/' })
+              await openInTab({
+                url: 'https://rewards.ambire.com/',
+                shouldCloseCurrentWindow: isPopup
+              })
             }}
             style={{
               ...animStyle,
