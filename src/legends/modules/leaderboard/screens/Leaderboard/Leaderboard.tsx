@@ -36,7 +36,7 @@ const LeaderboardContainer: React.FC = () => {
 
   const [stickyPosition, setStickyPosition] = useState<'top' | 'bottom' | null>(null)
   const leaderboardSources = useMemo(
-    () => [season0LeaderboardData, season1LeaderboardData, season2LeaderboardData], // TODO: Add s2
+    () => [season0LeaderboardData, season1LeaderboardData, season2LeaderboardData],
     [season0LeaderboardData, season1LeaderboardData, season2LeaderboardData]
   )
 
