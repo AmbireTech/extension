@@ -3,6 +3,7 @@ import React, { createContext, useCallback, useEffect, useMemo, useRef, useState
 import { WALLET_TOKEN } from '@ambire-common/consts/addresses'
 import {
   PortfolioProjectedRewardsResult,
+  PortfolioRewardsResult,
   ProjectedRewardsStats
 } from '@ambire-common/libs/portfolio/interfaces'
 import { calculateRewardsStats } from '@ambire-common/utils/rewards'
@@ -56,6 +57,7 @@ const PortfolioControllerStateContext = createContext<{
   isLoadingWalletTokenInfo: boolean
   rewardsProjectionData: PortfolioProjectedRewardsResult | null
   userRewardsStats: ProjectedRewardsStats | null
+  xWalletClaimableBalance: PortfolioRewardsResult['xWalletClaimableBalance'] | null
 }>({
   updateAccountPortfolio: () => {},
   claimableRewardsError: null,
@@ -65,7 +67,8 @@ const PortfolioControllerStateContext = createContext<{
   walletTokenPrice: null,
   isLoadingWalletTokenInfo: true,
   userRewardsStats: null,
-  rewardsProjectionData: null
+  rewardsProjectionData: null,
+  xWalletClaimableBalance: null
 })
 
 const PortfolioControllerStateProvider: React.FC<any> = ({ children }) => {
@@ -76,7 +79,9 @@ const PortfolioControllerStateProvider: React.FC<any> = ({ children }) => {
   const [claimableRewards, setClaimableRewards] = useState<any>(null)
   const [isLoadingClaimableRewards, setIsLoadingClaimableRewards] = useState(true)
   const [claimableRewardsError, setClaimableRewardsError] = useState<string | null>(null)
-  const [xWalletClaimableBalance, setXWalletClaimableBalance] = useState<string | null>(null)
+  const [xWalletClaimableBalance, setXWalletClaimableBalance] = useState<
+    PortfolioRewardsResult['xWalletClaimableBalance'] | null
+  >(null)
 
   const [isLoadingWalletTokenInfo, setIsLoadingWalletTokenInfo] = useState(true)
   const [walletTokenInfo, setWalletTokenInfo] = useState<WalletTokenInfo>(null)
