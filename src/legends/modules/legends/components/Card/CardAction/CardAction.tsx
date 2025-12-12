@@ -7,19 +7,18 @@ import { CARD_PREDEFINED_ID } from '@legends/modules/legends/constants'
 import { CardAction, CardActionType, CardFromResponse } from '@legends/modules/legends/types'
 import { getRewardsButtonText } from '@legends/utils/getRewardsButtonText'
 
-import { InviteAcc, SendAccOp } from './actions'
+import { SendAccOp } from './actions'
 import BitrefillClaim from './actions/BitrefillClaim'
 import Feedback from './actions/Feedback'
 import MascotRevealLetter from './actions/MascotRevealLetter'
 
 export type CardActionComponentProps = {
   action: CardAction
-  buttonText: string
   meta: CardFromResponse['meta']
   id: CardFromResponse['id']
 }
 
-const CardActionComponent: FC<CardActionComponentProps> = ({ meta, action, buttonText }) => {
+const CardActionComponent: FC<CardActionComponentProps> = ({ meta, action }) => {
   const { connectedAccount, v1Account } = useAccountContext()
   const disabledButton = Boolean(!connectedAccount || v1Account)
   const { provider } = useProviderContext()
@@ -41,21 +40,9 @@ const CardActionComponent: FC<CardActionComponentProps> = ({ meta, action, butto
     } catch (e) {
       console.error(e)
     }
-  }, [action])
+  }, [action, provider])
 
   if (action.type === CardActionType.predefined) {
-    if (action.predefinedId === CARD_PREDEFINED_ID.inviteAccount) {
-      return (
-        <InviteAcc
-          alreadyLinkedAccounts={meta?.alreadyLinkedAccounts || []}
-          alreadyInvitedAccounts={meta?.alreadyInvitedAccounts || []}
-          usedInvitationSlots={meta?.usedInvitationSlots || 0}
-          buttonText={buttonText}
-          usersInvitationHistory={meta?.usersInvitationHistory || []}
-        />
-      )
-    }
-
     if (action.predefinedId === CARD_PREDEFINED_ID.feedback) {
       return <Feedback meta={meta} />
     }

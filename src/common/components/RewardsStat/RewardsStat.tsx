@@ -1,3 +1,4 @@
+// @TODO: Refactor this somehow, no time now
 import React from 'react'
 
 import { ProjectedRewardsStats } from '@ambire-common/libs/portfolio/interfaces'

@@ -74,8 +74,8 @@ const MigrateRewardsModal: React.FC<MigrateRewardsModalProps> = ({
     const ethereumProvider = new JsonRpcProvider('https://invictus.ambire.com/ethereum')
     const walletContract = new Contract(X_WALLET_TOKEN, xWalletIface, ethereumProvider)
     Promise.all([
-      walletContract.balanceOf(connectedAccount),
-      walletContract.lockedShares(connectedAccount)
+      walletContract.balanceOf!(connectedAccount),
+      walletContract.lockedShares!(connectedAccount)
     ])
       .then(([xWalletBalance, lockedShares]: [bigint, bigint]) =>
         setMigratableXWalletBalance(xWalletBalance - lockedShares)
@@ -169,9 +169,9 @@ const MigrateRewardsModal: React.FC<MigrateRewardsModalProps> = ({
                       : 'Loading...'}
                   </p>
                   <p className={styles.usdValue}>
-                    {migratableXWalletBalance
+                    {migratableXWalletBalance && xWalletClaimableBalance?.priceIn.length
                       ? formatDecimals(
-                          xWalletClaimableBalance.priceIn[0].price *
+                          xWalletClaimableBalance.priceIn![0]!.price *
                             Number(formatEther(migratableXWalletBalance)),
                           'value'
                         )
@@ -186,6 +186,7 @@ const MigrateRewardsModal: React.FC<MigrateRewardsModalProps> = ({
 
           {meta?.hasAlreadyMigrated && (
             <div className={styles.alreadyMigratedWarning}>
+              {/* TODO: UPDATE TEXT */}
               You will not receive XP from this action as you already migrated some of your $xWALLET
               tokens!
             </div>

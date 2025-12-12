@@ -45,7 +45,7 @@
   background-clip: padding-box, border-box;
   background-origin: padding-box, border-box;
   background-image: linear-gradient($mainBg, $mainBg),
-    linear-gradient(104.11deg, #00bb92 8.63%, #350586 93.48%);
+    linear-gradient(104.11deg, $green-500 8.63%, $dark-purple 93.48%);
   border-radius: 1.25rem;
   padding: 0.25rem;
   max-width: 40rem;
@@ -95,7 +95,7 @@
     opacity: 0;
   }
 
-  background: linear-gradient(0deg, #191a1f, #191a1f),
+  background: linear-gradient(0deg, $neutral-700, $neutral-700),
     linear-gradient(
       95.63deg,
       rgba(106, 111, 134, 0) 11.53%,

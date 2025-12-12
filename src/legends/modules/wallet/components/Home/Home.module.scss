@@ -1,36 +1,28 @@
 @import '@legends/styles/base.scss';
 
-
 .error {
   margin-bottom: 1.5rem;
 }
 
-.overachieverWrapper {
-  @include  container;
-  @include breakpoint-down-from(medium-desktop) {
-    margin-left: 3rem;
-  }
-
-  @include breakpoint-down-from(tablet) {
-    margin-left: 0;
-  }
-}
 .overachieverBanner {
   margin-bottom: 1.875rem;
 }
 
 .wrapper {
-  @include container;
-  display: flex;
-  position: relative;
-  margin-bottom: 3rem;
-  background: linear-gradient(147.96deg, #191B1F 43.03%, #201A47 87.21%);
+  @include container(true);
 
-  border-radius: 1rem;
-  padding: 1.4375rem 1.625rem 1.375rem 2.375rem;
-  margin: 0 auto;
-  margin-bottom: 4.375rem;
-  margin-top: 1.875rem;
+  & {
+    display: flex;
+    position: relative;
+    margin-bottom: 3rem;
+    background: linear-gradient(147.96deg, #191b1f 43.03%, #201a47 87.21%);
+
+    border-radius: 1rem;
+    padding: 1.4375rem 1.625rem 1.375rem 2.375rem;
+    margin: 0 auto;
+    margin-bottom: 4.375rem;
+    margin-top: 1.875rem;
+  }
 
   .logoAndBalanceWrapper {
     display: inline-block;
@@ -52,7 +44,6 @@
     .chartWrapper {
       margin-bottom: 0.5rem;
       min-width: 27.5rem;
-
 
       .placeholder {
         width: 27.5rem;
@@ -99,7 +90,6 @@
       gap: 1rem;
       align-items: flex-start;
 
-      
       .walletItemWrapper {
         display: flex;
         flex-direction: column;
@@ -127,16 +117,15 @@
         &:nth-child(3) {
           flex: 0.45;
         }
-     
       }
 
       .item {
         min-width: 7.25rem;
         padding: 0.25rem 0.5rem;
-        
+
         border-radius: $secondaryBorderRadius;
         background-color: rgba($neutral-600, 0.3);
-     
+
         line-height: 2.75rem;
         font-size: 1.5rem;
         font-weight: 400;
@@ -188,7 +177,7 @@
         width: 22.8125rem;
         height: 19.875rem;
         object-fit: cover;
-        top: .5rem;
+        top: 0.5rem;
       }
     }
   }
@@ -206,13 +195,7 @@
     right: 0;
   }
 
-  @include breakpoint-down-from(medium-desktop) {
-    margin-left: 3rem;
-    margin-right: 3rem;
-    width: calc(100% - 6rem);
-  }
-
-  @include breakpoint-down-from(small-desktop) {    
+  @include breakpoint-down-from(small-desktop) {
     .walletInfo {
       .walletName {
         font-size: 3rem;
@@ -239,25 +222,20 @@
   }
 
   @include breakpoint-down-from(tablet) {
-    margin-left: 0;
-
-       .walletInfo {
-        .walletLevelInfoWrapper {
-          display: grid;
-          grid-template-columns: 1fr;
-        }
+    .walletInfo {
+      .walletLevelInfoWrapper {
+        display: grid;
+        grid-template-columns: 1fr;
       }
+    }
   }
 }
 
 .wrapper {
   @include breakpoint-down-from(tablet) {
-    margin-left: 0;
     padding-right: 1rem;
     width: 100%;
 
-
-    
     .walletInfo {
       .chartWrapper {
         min-width: auto;

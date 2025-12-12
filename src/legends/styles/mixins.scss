@@ -24,7 +24,7 @@
   padding: 1rem;
   transition: background 0.3s ease;
   background-blend-mode: overlay;
-  background: linear-gradient(100.29deg, $green-500 7.82%, $teal 49.79%, $dark-purple 92.28%);
+  background: $primaryGradient;
 
   &:not(:disabled) {
     &:hover {
@@ -67,10 +67,28 @@
     font-size: 0.875rem;
   }
 }
-@mixin container {
+@mixin container($responsive: false) {
   max-width: 62.5rem;
   width: 100%;
   margin: 0 auto;
+
+  @if $responsive == true {
+    @include breakpoint-down-from(medium-desktop) {
+      margin-left: 3rem;
+      margin-right: 3rem;
+      width: calc(100% - 6rem);
+    }
+    @include breakpoint-down-from(small-desktop) {
+      margin-left: 2rem;
+      margin-right: 2rem;
+      width: calc(100% - 4rem);
+    }
+    @include on-mobile {
+      margin-left: 0;
+      margin-right: 0;
+      width: 100%;
+    }
+  }
 }
 
 @mixin containerLg {
