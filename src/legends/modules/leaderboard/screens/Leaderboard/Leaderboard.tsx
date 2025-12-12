@@ -142,16 +142,13 @@ const LeaderboardContainer: React.FC = () => {
               </button>
             </div>
             <Podium data={leaderboardData.slice(0, 3)} />
-            <div
-              ref={tableRef}
-              className={`${styles.table} ${leaderboardData[0]?.reward ? styles.withReward : ''}`}
-            >
+            <div ref={tableRef} className={`${styles.table} ${styles[`season${activeTab}`]}`}>
               <div className={styles.header}>
                 <div className={styles.cell}>
                   <h5>#</h5>
                   <h5 className={styles.playerCell}>player</h5>
                 </div>
-                {/* {leaderboardData.some((i) => i.level) && <h5 className={styles.cell}>Level</h5>} */}
+                {leaderboardData.some((i) => i.level) && <h5 className={styles.cell}>Level</h5>}
                 {leaderboardData.some((i) => i.reward) && (
                   <div className={styles.cell}>
                     <h5 className={styles.weightText}>Reward</h5>

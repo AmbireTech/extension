@@ -16,6 +16,7 @@ type Props = Omit<LeaderboardEntry['currentUser'], 'projectedRewards' | 'project
   projectedRewardsSeason2Usd?: number
   currentUserRef: React.RefObject<HTMLDivElement>
   reward?: number | ''
+  image_avatar?: string
 }
 
 const calculateRowStyle = (isConnectedAccountRow: boolean, stickyPosition: string | null) => {
@@ -57,7 +58,9 @@ const Row: FC<Props> = ({
   account,
   rank,
   xp,
+  level,
   points,
+  image_avatar,
   projectedRewardsSeason1,
   projectedRewardsSeason2Usd,
   stickyPosition,
@@ -117,6 +120,7 @@ const Row: FC<Props> = ({
     >
       <div className={styles.cell}>
         <div className={styles.rankWrapper}>{rank > 3 ? rank : getBadge(rank)}</div>
+        {!!image_avatar && <img src={image_avatar} alt="avatar" className={styles.avatar} />}
         {isConnectedAccountRow ? (
           <>
             You (
@@ -137,7 +141,9 @@ const Row: FC<Props> = ({
           />
         )}
       </div>
-      {/* <h5 className={styles.cell}>{level}</h5> */}
+      {typeof level === 'number' && (
+        <h5 className={`${styles.cell} ${styles.levelCell}`}>{level}</h5>
+      )}
       {typeof projectedRewardsSeason1 !== 'undefined' && (
         <h5 className={`${styles.cell} ${styles.weight}`}>
           {typeof projectedRewardsSeason1 === 'number'
