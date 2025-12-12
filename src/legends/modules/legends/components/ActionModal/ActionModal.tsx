@@ -62,9 +62,8 @@ type ActionModalProps = {
 
 const ActionModal: FC<ActionModalProps> = ({
   isOpen,
-  id,
   title,
-  xp,
+  id,
   contentImageV2,
   onLegendCompleteWrapped,
   closeActionModal,
@@ -160,7 +159,7 @@ const ActionModal: FC<ActionModalProps> = ({
       )}
       {!!action && (
         <cardActionContext.Provider value={cardActionContextValue}>
-          <CardActionComponent meta={meta} action={action} />
+          <CardActionComponent id={id} meta={meta} action={action} />
         </cardActionContext.Provider>
       )}
     </Modal>

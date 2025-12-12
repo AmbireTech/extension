@@ -65,9 +65,9 @@ const useErc5792 = () => {
   // the callsId should be an identifier return by the wallet
   // from wallet_sendCalls
   const getCallsStatus = async (
-    callsId: string,
-    is4337Required: boolean = true
-  ): Promise<Receipt> => {
+    callsId: string
+    // is4337Required: boolean = true
+  ): Promise<Receipt | undefined> => {
     if (!provider) return
 
     let receipt = null

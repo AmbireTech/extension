@@ -29,7 +29,7 @@ const cardsOrder = [
 
 const Actions = () => {
   const { legends, isLoading, error } = useLegendsContext()
-  const sliderRef = useRef(null)
+  const sliderRef = useRef<any>(null)
 
   const sortedLegends = React.useMemo(() => {
     if (!legends) return []
@@ -113,7 +113,6 @@ const Actions = () => {
         mousewheel={{
           enabled: true,
           sensitivity: 10,
-          sticky: true,
           releaseOnEdges: true,
           forceToAxis: true
         }}

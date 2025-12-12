@@ -57,6 +57,9 @@ const MascotRevealLetter = ({ meta }: Props) => {
         useSponsorship
       )
       const receipt = await getCallsStatus(sendCallsIdentifier)
+
+      if (!receipt) throw new Error('No receipt found')
+
       await onComplete(receipt.transactionHash)
       setIsInProgress(false)
     } catch (e: any) {

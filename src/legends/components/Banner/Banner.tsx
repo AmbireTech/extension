@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React from 'react'
 
 import { CardFromResponse } from '@legends/modules/legends/types'
 
@@ -10,21 +10,25 @@ interface Props {
 }
 const emojis = ['🚀', '🔥', '🗣', '📢']
 const Banner: React.FC<Props> = ({ activeProposals }) => {
+  if (!activeProposals || activeProposals.length === 0) {
+    return null
+  }
+
   return (
     <div className={styles.container}>
       <img className={styles.iconPlaceholder} src={governance} alt="Governance banner icon" />
       <div className={styles.textContent}>
         {activeProposals.length === 1 ? (
           <div className={styles.title}>
-            🗳️ {activeProposals[0].title}{' '}
+            🗳️ {activeProposals[0]!.title}{' '}
             <a
-              href={`https://snapshot.box/#/s:ambire.eth/proposal/${activeProposals[0].id}`}
+              href={`https://snapshot.box/#/s:ambire.eth/proposal/${activeProposals[0]!.id}`}
               className={styles.readMoreLink}
               target="_blank"
               rel="noreferrer"
             >
               Vote until{' '}
-              {new Date(activeProposals[0].end * 1000).toLocaleString('en', {
+              {new Date(activeProposals[0]!.end * 1000).toLocaleString('en', {
                 month: 'long',
                 day: 'numeric'
               })}
@@ -35,10 +39,9 @@ const Banner: React.FC<Props> = ({ activeProposals }) => {
           <>
             <div className={styles.title}>
               🗳️ {activeProposals.length} governance proposals are live, vote until{' '}
-              {new Date(activeProposals.sort((a, b) => a.end - b.end)[0].end * 1000).toLocaleString(
-                'en',
-                { month: 'long', day: 'numeric' }
-              )}
+              {new Date(
+                activeProposals!.sort((a, b) => a.end - b.end)[0]!.end * 1000
+              ).toLocaleString('en', { month: 'long', day: 'numeric' })}
               !
             </div>
             {activeProposals.map(({ id, title }, i) => {

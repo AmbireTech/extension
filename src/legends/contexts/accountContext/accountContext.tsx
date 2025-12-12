@@ -149,7 +149,7 @@ const AccountContextProvider = ({ children }: { children: React.ReactNode }) => 
         return
       }
 
-      await validateAndSetAccount(accounts[0])
+      await validateAndSetAccount(accounts[0]!)
       setIsLoading(false)
     }
 
