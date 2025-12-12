@@ -4,6 +4,7 @@ import { useModalize } from 'react-native-modalize'
 
 import { TokenResult } from '@ambire-common/libs/portfolio'
 import { FormatType } from '@ambire-common/utils/formatDecimals/formatDecimals'
+// @ts-ignore
 import rewardsImage from '@common/assets/images/AmbireLogoLikeCoin.png'
 import BatchIcon from '@common/assets/svg/BatchIcon'
 import PendingToBeConfirmedIcon from '@common/assets/svg/PendingToBeConfirmedIcon'
