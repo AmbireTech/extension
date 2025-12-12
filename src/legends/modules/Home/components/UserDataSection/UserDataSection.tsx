@@ -16,8 +16,7 @@ import Background3 from './media/Background3'
 import styles from './UserDataSection.module.scss'
 
 const UserDataSection = () => {
-  // @TODO: Replace with season 2 data
-  const { season1LeaderboardData } = useLeaderboardContext()
+  const { season2LeaderboardData } = useLeaderboardContext()
   const { userRewardsStats, isLoadingClaimableRewards } = usePortfolioControllerState()
   const [expandedId, setExpandedId] = React.useState<Stat['id'] | null>(null)
 
@@ -134,7 +133,7 @@ const UserDataSection = () => {
         </div>
         <div className={styles.rank}>
           <div className={styles.content}>
-            <span className={styles.badge}>{season1LeaderboardData?.currentUser?.rank || '-'}</span>
+            <span className={styles.badge}>{season2LeaderboardData?.currentUser?.rank || '-'}</span>
             <div className={styles.labelWithIcon}>
               <FontAwesomeIcon icon={faTrophy} className={styles.icon} />
               <span className={styles.label}>Rank</span>
