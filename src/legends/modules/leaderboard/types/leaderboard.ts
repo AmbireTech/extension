@@ -3,22 +3,26 @@ type LeaderboardEntry = {
     rank: number
     account: string
     level?: number
-    xp: number
+    xp?: number
     weight?: number
     projectedRewards?: number
-    image: string
-    image_avatar: string
+    projectedRewardsInUsd?: number
+    image?: string
+    image_avatar?: string
     reward?: number
+    points?: number
   }>
   currentUser: {
     rank: number
     account: string
     level?: number
-    xp: number
+    xp?: number
     weight?: number
     projectedRewards?: number
-    image: string
-    image_avatar: string
+    projectedRewardsInUsd?: number
+    image?: string
+    image_avatar?: string
+    points?: number
   }
 }
 
@@ -26,6 +30,7 @@ interface LeaderboardResponse {
   fullLeaderboard: LeaderboardEntry
   season0Leaderboard: LeaderboardEntry
   season1Leaderboard: LeaderboardEntry
+  season2Leaderboard: LeaderboardEntry
 }
 
 export type { LeaderboardEntry, LeaderboardResponse }

@@ -19,13 +19,14 @@ const LeaderboardContainer: React.FC = () => {
   const {
     season0LeaderboardData,
     season1LeaderboardData,
+    season2LeaderboardData,
     isLeaderboardLoading: loading,
     error,
     updateLeaderboard
   } = useLeaderboardContext()
 
   const { userRewardsStats } = usePortfolioControllerState()
-  const projectedAmount = userRewardsStats?.estimatedRewards
+  const season2ProjectedAmountUsd = userRewardsStats?.estimatedRewards
   const { connectedAccount } = useAccountContext()
 
   const tableRef = useRef<HTMLDivElement>(null)
@@ -35,14 +36,13 @@ const LeaderboardContainer: React.FC = () => {
 
   const [stickyPosition, setStickyPosition] = useState<'top' | 'bottom' | null>(null)
   const leaderboardSources = useMemo(
-    () => [season0LeaderboardData, season1LeaderboardData, season1LeaderboardData], // TODO: Add s2
-    [season0LeaderboardData, season1LeaderboardData]
+    () => [season0LeaderboardData, season1LeaderboardData, season2LeaderboardData], // TODO: Add s2
+    [season0LeaderboardData, season1LeaderboardData, season2LeaderboardData]
   )
 
-  const leaderboardData = useMemo(
-    () => leaderboardSources[activeTab]?.entries || [],
-    [leaderboardSources, activeTab]
-  )
+  const leaderboardData = useMemo(() => {
+    return leaderboardSources[activeTab]?.entries || []
+  }, [leaderboardSources, activeTab])
 
   const userLeaderboardData = useMemo(
     () => leaderboardSources[activeTab]?.currentUser,
@@ -206,7 +206,7 @@ const LeaderboardContainer: React.FC = () => {
                     />
                   </div>
                 )}
-                {leaderboardData.some((i) => i.projectedRewards) && (
+                {leaderboardData.some((i) => i.projectedRewards || i.projectedRewardsInUsd) && (
                   <div className={styles.cell}>
                     <h5 className={styles.weightText}>Rewards</h5>
                     <InfoIcon
@@ -233,21 +233,25 @@ const LeaderboardContainer: React.FC = () => {
                     />
                   </div>
                 )}
+
                 <h5 className={`${styles.cell} ${styles.scoreCell}`}>Score</h5>
               </div>
               {leaderboardData.map((item) => (
+                // maybe we can split this components into multiple, one for each season
                 <Row
                   key={item.account}
                   {...item}
-                  projectedRewards={
+                  projectedRewardsSeason1={
+                    activeTab === 1 ? item.projectedRewards || 'Loading...' : undefined
+                  }
+                  projectedRewardsSeason2Usd={
                     activeTab === 2
                       ? connectedAccount === item.account
-                        ? projectedAmount
-                        : typeof item.projectedRewards === 'number'
-                        ? item.projectedRewards
-                        : 'Loading...'
+                        ? season2ProjectedAmountUsd
+                        : item.projectedRewardsInUsd
                       : undefined
                   }
+                  points={activeTab === 2 ? item.points : undefined}
                   stickyPosition={stickyPosition}
                   currentUserRef={currentUserRef}
                 />
@@ -259,7 +263,13 @@ const LeaderboardContainer: React.FC = () => {
                   <Row
                     key={userLeaderboardData.account}
                     {...userLeaderboardData}
-                    projectedRewards={activeTab === 2 ? projectedAmount : undefined}
+                    projectedRewardsSeason1={
+                      activeTab === 1 ? userLeaderboardData.projectedRewards : undefined
+                    }
+                    projectedRewardsSeason2Usd={
+                      activeTab === 2 ? season2ProjectedAmountUsd : undefined
+                    }
+                    points={activeTab === 2 ? userLeaderboardData.points : undefined}
                     stickyPosition={stickyPosition}
                     currentUserRef={currentUserRef}
                   />

@@ -37,7 +37,7 @@ const SECTIONS: Omit<Stat, 'score' | 'value'>[] = [
   },
   {
     id: 'swapVolumeScore',
-    label: 'Swap & Bridge volume (AVG)',
+    label: 'Swap & Bridge volume',
     explanation: 'For every $1000 generated in Swap & Bridge volume, you receive 10 score points.'
   },
   {
