@@ -6,7 +6,7 @@ import AsteriskIcon from '@common/assets/svg/AsteriskIcon'
 import HumidityIcon from '@common/assets/svg/HumidityIcon'
 import LockIcon2 from '@common/assets/svg/LockIcon2'
 import ScaleIcon from '@common/assets/svg/ScaleIcon'
-import SwapIcon from '@common/assets/svg/SwapIcon/SwapIcon'
+import SwapIcon from '@common/assets/svg/SwapIcon'
 import WalletIcon from '@common/assets/svg/WalletIcon2'
 
 type Stat = {
