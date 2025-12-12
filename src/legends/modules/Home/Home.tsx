@@ -20,7 +20,7 @@ const Character = () => {
   }, [v1Account])
 
   return (
-    <Page containerSize="full">
+    <Page containerSize="responsive">
       {v1Account && (
         <V1AccountBannerModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
       )}

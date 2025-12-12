@@ -70,7 +70,7 @@ const RewardsPool = () => {
   }
 
   return (
-    <Page>
+    <Page containerSize="responsive">
       <div className={styles.wrapper}>
         <div className={styles.header}>
           <div className={styles.titleSection}>

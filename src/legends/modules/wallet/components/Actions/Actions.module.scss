@@ -84,6 +84,15 @@
     }
   }
 
+  @include breakpoint-down-from(small-desktop) {
+    padding-left: 2rem;
+
+    .titleAndButtons {
+      margin-left: 0;
+      margin-right: 2rem;
+    }
+  }
+
   @include breakpoint-down-from(large-tablet) {
     .titleAndButtons {
       margin-right: 0;
