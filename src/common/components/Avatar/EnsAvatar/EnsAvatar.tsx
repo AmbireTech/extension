@@ -21,7 +21,7 @@ const EnsAvatar: FC<Props> = ({ isLoading, avatar, setImageFetchFailed, size, bo
       onError={() => setImageFetchFailed(true)}
     />
   ) : (
-    <SkeletonLoader width={size} height={size} borderRadius={borderRadius} style={spacings.mrTy} />
+    <SkeletonLoader width={size} height={size} borderRadius={borderRadius} />
   )
 }
 
