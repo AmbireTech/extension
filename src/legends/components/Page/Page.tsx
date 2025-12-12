@@ -19,7 +19,7 @@ const Page = ({
   children: React.ReactNode | React.ReactNode[]
   pageRef?: React.RefObject<HTMLDivElement>
   style?: React.CSSProperties
-  containerSize?: 'md' | 'lg' | 'full'
+  containerSize?: 'md' | 'responsive' | 'lg' | 'full'
 }) => {
   const customContainerSizeClass = styles[`container${containerSize}`] || ''
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)

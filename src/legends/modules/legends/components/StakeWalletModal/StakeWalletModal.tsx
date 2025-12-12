@@ -18,6 +18,7 @@ import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import { RELAYER_URL } from '@env'
 import HumanReadableError from '@legends/classes/HumanReadableError'
+import background from '@legends/common/assets/images/background.png'
 import CloseIcon from '@legends/components/CloseIcon'
 import Input from '@legends/components/Input'
 import Modal from '@legends/components/Modal'
@@ -113,11 +114,11 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
     const xWalletContract = new Contract(WALLET_STAKING_ADDR, xWalletIface, ethereumProvider)
     const stkWalletContract = new Contract(STK_WALLET, stkWalletIface, ethereumProvider)
     Promise.all([
-      walletContract.balanceOf(connectedAccount),
-      xWalletContract.shareValue(),
-      stkWalletContract.balanceOf(connectedAccount),
-      xWalletContract.lockedShares(connectedAccount),
-      xWalletContract.balanceOf(connectedAccount)
+      walletContract.balanceOf!(connectedAccount),
+      xWalletContract.shareValue!(),
+      stkWalletContract.balanceOf!(connectedAccount),
+      xWalletContract.lockedShares!(connectedAccount),
+      xWalletContract.balanceOf!(connectedAccount)
     ])
       .then(([walletBalance, shareValue, stkWalletBalance, lockedShares, xWalletBalance]) =>
         setOnchainData({
@@ -182,9 +183,10 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
           [owner, shares, unlocksAt]
         )
         const commitmentId = keccak256(encoded)
-        return xWalletContract
-          .commitments(commitmentId)
-          .then((maxTokens) => [maxTokens, { shares, owner, unlocksAt, maxTokens }])
+        return xWalletContract.commitments!(commitmentId).then((maxTokens) => [
+          maxTokens,
+          { shares, owner, unlocksAt, maxTokens }
+        ])
       })
     )
       .then((allCommitments) => {
@@ -460,7 +462,12 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
         <button type="button" className={styles.closeButton} onClick={handleCloseClick}>
           <CloseIcon />
         </button>
-        <div className={styles.contentWrapper}>
+        <div
+          className={styles.contentWrapper}
+          style={{
+            backgroundImage: `url(${background})`
+          }}
+        >
           <h2 className={styles.title}>Stake $WALLET</h2>
           <p className={styles.learnMore}>
             Learn more about{' '}
@@ -666,8 +673,10 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
           <button
             type="button"
             className={styles.confirmButton}
-            onClick={() => {
+            onClick={async () => {
               setIsWarningModalUnstakePeriodOpen(false)
+              if (!onchainData) return
+
               const walletsInXwallet = +formatUnits(
                 onchainData.shareValue * onchainData.xWalletBalance,
                 36
@@ -679,7 +688,7 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
               if (Number(inputAmount) > totalStakedWallets * 0.65) {
                 setIsWarningModalOpen(true)
               } else {
-                void requestWithdrawAction(inputAmount)
+                await requestWithdrawAction(inputAmount)
               }
             }}
           >
@@ -696,6 +705,7 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
         <Modal.Heading className={styles.heading}>Confirm Unstake</Modal.Heading>
         <WarningIcon height={45} width={45} strokeWidth={1} color="#E7AA27" />
         <p className={styles.infoText}>
+          {/* TODO: UPDATE */}
           If you confirm unstaking a significant amount of your stkWALLET, you won’t be earning XP
           for the unstake period.
         </p>
@@ -710,9 +720,9 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
           <button
             type="button"
             className={styles.confirmButton}
-            onClick={() => {
+            onClick={async () => {
               setIsWarningModalOpen(false)
-              void requestWithdrawAction(inputAmount)
+              await requestWithdrawAction(inputAmount)
             }}
           >
             Confirm

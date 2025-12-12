@@ -2,13 +2,13 @@
 import React, { useCallback } from 'react'
 import { createPortal } from 'react-dom'
 
+import { TokenResult } from '@ambire-common/libs/portfolio'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
-import Alert from '@legends/components/Alert'
+import background from '@legends/common/assets/images/background.png'
 import CloseIcon from '@legends/components/CloseIcon'
 import { ERROR_MESSAGES } from '@legends/constants/errors/messages'
 import { ETHEREUM_CHAIN_ID } from '@legends/constants/networks'
-import useCharacterContext from '@legends/hooks/useCharacterContext'
 import useErc5792 from '@legends/hooks/useErc5792'
 import useEscModal from '@legends/hooks/useEscModal'
 import useLegendsContext from '@legends/hooks/useLegendsContext'
@@ -16,7 +16,6 @@ import usePortfolioControllerState from '@legends/hooks/usePortfolioControllerSt
 import useProviderContext from '@legends/hooks/useProviderContext'
 import useSwitchNetwork from '@legends/hooks/useSwitchNetwork'
 import useToast from '@legends/hooks/useToast'
-import smokeAndLights from '@legends/modules/leaderboard/screens/Leaderboard/Smoke-and-lights.png'
 import { humanizeError } from '@legends/modules/legends/utils/errors/humanizeError'
 
 import { CardActionCalls, CardActionPredefined, CardFromResponse, CardStatus } from '../../types'
@@ -25,7 +24,7 @@ import rewardsCoverImg from './assets/rewards-cover.png'
 import styles from './ClaimRewardsModal.module.scss'
 
 type Action = CardActionPredefined & {
-  calls: CardActionCalls['calls']
+  calls?: CardActionCalls['calls']
 }
 interface ClaimRewardsModalProps {
   isOpen: boolean
@@ -43,12 +42,8 @@ const ClaimRewardsModal: React.FC<ClaimRewardsModalProps> = ({
   card
 }) => {
   const { browserProvider } = useProviderContext()
-  const { character } = useCharacterContext()
   const { claimableRewards } = usePortfolioControllerState()
   const { sendCalls, getCallsStatus, chainId } = useErc5792()
-  const formatXp = (xp: number) => {
-    return xp && xp.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
-  }
   const { onLegendComplete } = useLegendsContext()
 
   const cardDisabled = card?.status === CardStatus.disabled
@@ -105,14 +100,6 @@ const ClaimRewardsModal: React.FC<ClaimRewardsModalProps> = ({
   ])
 
   if (!isOpen) return null
-  if (!character)
-    return (
-      <Alert
-        type="error"
-        title="Failed to load character"
-        message="Please try again later or contact support if the issue persists."
-      />
-    )
 
   return createPortal(
     <div className={styles.backdrop}>
@@ -123,7 +110,7 @@ const ClaimRewardsModal: React.FC<ClaimRewardsModalProps> = ({
         <div
           className={styles.backgroundEffect}
           style={{
-            backgroundImage: `url(${smokeAndLights})`
+            backgroundImage: `url(${background})`
           }}
         />
         <div className={styles.contentWrapper}>
@@ -135,7 +122,7 @@ const ClaimRewardsModal: React.FC<ClaimRewardsModalProps> = ({
               <div className={styles.sectionContent}>
                 <p>
                   {formatDecimals(
-                    parseFloat(meta?.availableToClaim ? meta?.availableToClaim : '0')
+                    parseFloat(meta?.availableToClaim ? String(meta?.availableToClaim) : '0')
                   )}
                 </p>
                 <p className={styles.usdValue}>
@@ -143,19 +130,24 @@ const ClaimRewardsModal: React.FC<ClaimRewardsModalProps> = ({
                     getAndFormatTokenDetails(
                       {
                         ...claimableRewards,
-                        flags: { rewardsType: 'wallet-rewards' }
-                      },
-                      [{ chainId: 1 }]
+                        flags: {
+                          rewardsType: 'wallet-rewards',
+                          onGasTank: false,
+                          isFeeToken: false,
+                          canTopUpGasTank: false
+                        }
+                      } as unknown as TokenResult,
+                      [{ chainId: 1n }] as any
                     ).balanceUSDFormatted
                   }{' '}
                 </p>
               </div>
             </div>
 
-            <div>
+            {/* <div>
               <p className={styles.sectionTitle}>Total XP accrued</p>
               <div className={styles.sectionContent}>{formatXp(character.xp)}</div>
-            </div>
+            </div> */}
           </div>
 
           <CardActionButton

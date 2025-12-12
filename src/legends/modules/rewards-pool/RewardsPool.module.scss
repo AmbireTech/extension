@@ -1,0 +1,145 @@
+@import '@legends/styles/base.scss';
+
+.wrapper {
+  background: $neutral-700;
+  border-radius: 1rem;
+  border: 1px solid rgba($neutral-600, 0.2);
+  padding: 2rem;
+
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+
+    .titleSection {
+      max-width: 23.75rem;
+
+      .title {
+        font-size: 2rem;
+        font-weight: 500;
+        color: $mainText;
+        margin-bottom: 1.5rem;
+      }
+      .text {
+        color: $secondaryText;
+        font-weight: 300;
+        font-size: 1.5rem;
+        line-height: 2rem;
+      }
+    }
+    .timeLeft {
+      padding: 1rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      border-radius: $primaryBorderRadius;
+      border: 1px solid rgba($neutral-600, 0.2);
+
+      .label {
+        font-size: 1rem;
+        font-weight: 500;
+        color: $secondaryText;
+      }
+      .value {
+        font-weight: 500;
+        font-size: 1.5rem;
+        line-height: 1;
+        color: $whiteText;
+      }
+    }
+  }
+
+  .chartWrapper {
+    position: relative;
+
+    .chartData {
+      position: absolute;
+      left: 18%;
+      top: 10%;
+      padding: 1rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      border-radius: $tertiaryBorderRadius;
+      border: 0.0625rem solid rgba($neutral-600, 0.2);
+      border-style: inset;
+      background: #1414146b;
+
+      .label {
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: $neutral-450;
+      }
+      .value,
+      .value2 {
+        font-size: 1.25rem;
+        font-weight: 500;
+      }
+      .value {
+        margin-bottom: 0.5rem;
+        color: $blue-400;
+      }
+      .value2 {
+        color: #9d7aff;
+      }
+    }
+
+    .chart {
+      width: 100%;
+      height: auto;
+    }
+  }
+
+  .skeleton {
+    width: 100%;
+    height: 26.25rem;
+    background: #1414146b;
+  }
+
+  .alert {
+    margin-top: 1.5rem;
+  }
+
+  @include on-mobile {
+    padding: 1.5rem;
+
+    .header {
+      gap: 1rem;
+      margin-bottom: 1rem;
+
+      .titleSection {
+        max-width: 100%;
+
+        .title {
+          font-size: 1.5rem;
+          margin-bottom: 0.5rem;
+        }
+        .text {
+          font-size: 1rem;
+          line-height: 1.5rem;
+        }
+      }
+
+      .timeLeft {
+        padding: 0.75rem;
+        min-width: 8rem;
+
+        .label {
+          font-size: 0.875rem;
+        }
+        .value {
+          font-size: 1.25rem;
+        }
+      }
+    }
+
+    .chartWrapper {
+      .chartData {
+        position: static;
+
+        .label {
+          margin-bottom: 0.125rem;
+        }
+      }
+    }
+  }
+}
