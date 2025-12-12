@@ -9,17 +9,20 @@
 }
 
 .wrapper {
-  display: flex;
-  position: relative;
-  margin-bottom: 3rem;
-  background: linear-gradient(147.96deg, #191b1f 43.03%, #201a47 87.21%);
-
-  border-radius: 1rem;
-  padding: 1.4375rem 1.625rem 1.375rem 2.375rem;
-  margin: 0 auto;
-  margin-bottom: 4.375rem;
-  margin-top: 1.875rem;
   @include container(true);
+
+  & {
+    display: flex;
+    position: relative;
+    margin-bottom: 3rem;
+    background: linear-gradient(147.96deg, #191b1f 43.03%, #201a47 87.21%);
+
+    border-radius: 1rem;
+    padding: 1.4375rem 1.625rem 1.375rem 2.375rem;
+    margin: 0 auto;
+    margin-bottom: 4.375rem;
+    margin-top: 1.875rem;
+  }
 
   .logoAndBalanceWrapper {
     display: inline-block;
