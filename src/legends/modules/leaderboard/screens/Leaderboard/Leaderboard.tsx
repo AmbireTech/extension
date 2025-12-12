@@ -231,7 +231,9 @@ const LeaderboardContainer: React.FC = () => {
                   </div>
                 )}
 
-                <h5 className={`${styles.cell} ${styles.scoreCell}`}>Score</h5>
+                <h5 className={`${styles.cell} ${styles.scoreCell}`}>
+                  {activeTab === 2 ? 'Score' : 'XP'}
+                </h5>
               </div>
               {leaderboardData.map((item) => (
                 // maybe we can split this components into multiple, one for each season
