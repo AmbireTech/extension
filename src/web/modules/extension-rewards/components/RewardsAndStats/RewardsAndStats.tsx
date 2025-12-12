@@ -42,7 +42,7 @@ const RewardsAndStats = () => {
             {projectedRewardsStats ? projectedRewardsStats.totalScore : '-'}
           </Text>
           <Text fontSize={10} weight="semiBold" color="#E9EBF8">
-            Total score
+            {t('Total score')}
           </Text>
         </View>
         <ChevronRight
