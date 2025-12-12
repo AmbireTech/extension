@@ -14,17 +14,13 @@ const MIN_SWAP_VOLUME = 3 * 1_000_000
 
 const RewardsPool = () => {
   const { t } = useTranslation()
-  const { userRewardsStats, isLoadingClaimableRewards, isLoadingWalletTokenInfo, walletTokenInfo } =
+  const { isLoadingClaimableRewards, isLoadingWalletTokenInfo, walletTokenInfo } =
     usePortfolioControllerState()
   const [timeLeft, setTimeLeft] = useState('')
   const timerTimeout = useRef<NodeJS.Timeout | null>(null)
   const isLoading = isLoadingClaimableRewards || isLoadingWalletTokenInfo
-  const swapVolume =
-    userRewardsStats?.swapVolume ??
-    walletTokenInfo?.season2PoolInfo.totalVolumeSwapAndBridge ??
-    null
-  const relayerPoolSize =
-    userRewardsStats?.poolSize ?? walletTokenInfo?.season2PoolInfo.poolSize ?? null
+  const swapVolume = walletTokenInfo?.season2PoolInfo.totalVolumeSwapAndBridge ?? null
+  const relayerPoolSize = walletTokenInfo?.season2PoolInfo.poolSize ?? null
   // The relayer returns a pool size of 100000 so we can calculate rewards. The actual poolSize
   // may be 0 if the min swap volume hasn't been reached
   const poolSize =
