@@ -17,6 +17,11 @@ import RewardsAndStats from '../components/RewardsAndStats'
 import StatItem from '../components/StatItem'
 import StatsHeading from '../components/StatsHeading'
 
+/**
+ * The screen is styled to match the design of rewards.ambire.com
+ * It uses the same color scheme. This is why we are not using the useTheme
+ * hook here and colors are hardcoded.
+ */
 const ExtensionRewardsScreen = () => {
   const { portfolio } = useSelectedAccountControllerState()
   const [bindAnim, animStyle] = useHover({ preset: 'opacityInverted' })
