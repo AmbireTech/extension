@@ -10,13 +10,20 @@ import styles from './RewardsPool.module.scss'
 
 const END_DATE = new Date('2026-03-15T11:59:59.999Z')
 
+const MIN_SWAP_VOLUME = 3 * 1_000_000
+
 const RewardsPool = () => {
   const { t } = useTranslation()
-  const { userRewardsStats } = usePortfolioControllerState()
+  const { userRewardsStats, isLoadingClaimableRewards } = usePortfolioControllerState()
   const [timeLeft, setTimeLeft] = useState('')
   const timerTimeout = useRef<NodeJS.Timeout | null>(null)
   const swapVolume = userRewardsStats?.swapVolume ?? null
-  const poolSize = userRewardsStats?.poolSize ?? null
+  // The relayer returns a pool size of 100000 so we can calculate rewards. The actual poolSize
+  // may be 0 if the min swap volume hasn't been reached
+  const poolSize =
+    userRewardsStats?.poolSize && swapVolume && swapVolume > MIN_SWAP_VOLUME
+      ? userRewardsStats.poolSize
+      : 0
 
   useEffect(() => {
     const updateTimeLeft = () => {
@@ -70,7 +77,9 @@ const RewardsPool = () => {
             <span className={styles.value}>{timeLeft}</span>
           </div>
         </div>
-        {typeof swapVolume === 'number' && poolSize ? (
+        {isLoadingClaimableRewards && <div className={styles.skeleton} />}
+
+        {typeof swapVolume === 'number' && !isLoadingClaimableRewards && (
           <div className={styles.chartWrapper}>
             <div className={styles.chartData}>
               <span className={styles.label}>Current Swap&Bridge volume</span>
@@ -80,7 +89,8 @@ const RewardsPool = () => {
             </div>
             <RewardsPoolChart className={styles.chart as string} volume={swapVolume} />
           </div>
-        ) : (
+        )}
+        {typeof swapVolume !== 'number' && !isLoadingClaimableRewards && (
           <Alert
             className={styles.alert}
             title={t('Failed to load rewards pool data')}
