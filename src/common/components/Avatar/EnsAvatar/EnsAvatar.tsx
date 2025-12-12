@@ -2,7 +2,6 @@ import React, { FC, memo } from 'react'
 import { Image } from 'react-native'
 
 import SkeletonLoader from '@common/components/SkeletonLoader'
-import spacings from '@common/styles/spacings'
 
 type Props = {
   isLoading: boolean
