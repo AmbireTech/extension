@@ -82,6 +82,7 @@ const ExtensionRewardsScreen = () => {
                 ...spacings.mlTy,
                 ...spacings.mr
               }}
+              color="#fff"
             >
               Ambire Rewards
             </Text>
