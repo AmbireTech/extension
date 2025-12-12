@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 
 import Modal from '../Modal'
-import background from './media/background.png'
+import background from './media/season2-background.png'
 import styles from './Season2Modal.module.scss'
 
 const STORAGE_KEY = 'season2_modal_shown'
