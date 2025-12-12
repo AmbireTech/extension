@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { memo } from 'react'
 import Svg, { Path, SvgProps } from 'react-native-svg'
 
 const TrophyIcon = ({
@@ -19,4 +19,4 @@ const TrophyIcon = ({
   )
 }
 
-export default TrophyIcon
+export default memo(TrophyIcon)

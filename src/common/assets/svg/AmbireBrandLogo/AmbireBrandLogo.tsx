@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { memo } from 'react'
 import Svg, { ClipPath, Defs, G, Path, Rect, SvgProps } from 'react-native-svg'
 
 const AmbireBrandLogo: React.FC<SvgProps> = ({ width = 71, height = 21, ...rest }) => (
@@ -48,4 +48,4 @@ const AmbireBrandLogo: React.FC<SvgProps> = ({ width = 71, height = 21, ...rest 
   </Svg>
 )
 
-export default AmbireBrandLogo
+export default memo(AmbireBrandLogo)

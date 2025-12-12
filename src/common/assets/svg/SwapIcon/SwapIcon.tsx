@@ -1,4 +1,4 @@
-import React, { FC } from 'react'
+import React, { FC, memo } from 'react'
 import { Path, Svg } from 'react-native-svg'
 
 import { LegendsSvgProps } from '@legends/types/svg'
@@ -14,4 +14,4 @@ const SwapIcon: FC<LegendsSvgProps> = ({ width = 24, height = 24, color = '#5459
   )
 }
 
-export default SwapIcon
+export default memo(SwapIcon)

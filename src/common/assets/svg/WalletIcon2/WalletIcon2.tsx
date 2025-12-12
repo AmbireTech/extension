@@ -1,4 +1,4 @@
-import React, { FC } from 'react'
+import React, { FC, memo } from 'react'
 import { Path, Svg } from 'react-native-svg'
 
 import { LegendsSvgProps } from '@legends/types/svg'
@@ -29,4 +29,4 @@ const WalletIcon2: FC<LegendsSvgProps> = ({
   )
 }
 
-export default WalletIcon2
+export default memo(WalletIcon2)
