@@ -12,7 +12,6 @@
   display: flex;
   position: relative;
   margin-bottom: 3rem;
-  @include container(true);
   background: linear-gradient(147.96deg, #191b1f 43.03%, #201a47 87.21%);
 
   border-radius: 1rem;
@@ -20,6 +19,7 @@
   margin: 0 auto;
   margin-bottom: 4.375rem;
   margin-top: 1.875rem;
+  @include container(true);
 
   .logoAndBalanceWrapper {
     display: inline-block;
