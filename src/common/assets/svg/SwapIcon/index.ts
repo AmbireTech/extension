@@ -1,3 +1,3 @@
 import SwapIcon from './SwapIcon'
 
-export defualt SwapIcon
+export default SwapIcon
