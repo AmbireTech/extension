@@ -9,6 +9,7 @@ import { getErrorCodeStringFromReason } from '@ambire-common/libs/errorDecoder/h
 import CopyIcon from '@common/assets/svg/CopyIcon'
 import Alert from '@common/components/Alert'
 import AlertVertical from '@common/components/AlertVertical'
+import NetworkBadge from '@common/components/NetworkBadge'
 import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
 import useSign from '@common/hooks/useSign'
 import useTheme from '@common/hooks/useTheme'
@@ -33,6 +34,7 @@ import Footer from '@web/modules/sign-account-op/components/Footer'
 import Modals from '@web/modules/sign-account-op/components/Modals/Modals'
 import PendingTransactions from '@web/modules/sign-account-op/components/PendingTransactions'
 import SafetyChecksOverlay from '@web/modules/sign-account-op/components/SafetyChecksOverlay'
+import SectionHeading from '@web/modules/sign-account-op/components/SectionHeading'
 import Simulation from '@web/modules/sign-account-op/components/Simulation'
 import SigningKeySelect from '@web/modules/sign-message/components/SignKeySelect'
 
@@ -350,6 +352,17 @@ const SignAccountOpScreen = () => {
           />
         ) : null}
         <TabLayoutWrapperMainContent withScroll={false}>
+          <View
+            style={[
+              flexbox.directionRow,
+              flexbox.alignCenter,
+              flexbox.justifySpaceBetween,
+              spacings.mbSm
+            ]}
+          >
+            <SectionHeading withMb={false}>{t('Overview')}</SectionHeading>
+            <NetworkBadge chainId={network?.chainId} withOnPrefix />
+          </View>
           {/* TabLayoutWrapperMainContent supports scroll but the logic that determines the height
           of the content doesn't work with it, so we use a ScrollView here */}
           <ScrollView
@@ -385,7 +398,7 @@ const SignAccountOpScreen = () => {
                 isEstimationComplete={!!signAccountOpState?.isInitialized && !!network}
               />
             )}
-            {isViewOnly && <NoKeysToSignAlert style={spacings.ptTy} />}
+            {isViewOnly && <NoKeysToSignAlert />}
           </ScrollView>
         </TabLayoutWrapperMainContent>
       </TabLayoutContainer>

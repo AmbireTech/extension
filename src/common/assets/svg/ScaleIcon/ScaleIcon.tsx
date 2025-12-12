@@ -1,4 +1,4 @@
-import React, { FC } from 'react'
+import React, { FC, memo } from 'react'
 import { Path, Svg } from 'react-native-svg'
 
 import { LegendsSvgProps } from '@legends/types/svg'
@@ -21,4 +21,4 @@ const ScaleIcon: FC<LegendsSvgProps> = ({
   )
 }
 
-export default ScaleIcon
+export default memo(ScaleIcon)

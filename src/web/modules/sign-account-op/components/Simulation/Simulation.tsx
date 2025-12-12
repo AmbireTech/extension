@@ -237,7 +237,7 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
   return (
     <View style={styles.simulationSection}>
       {simulationView === 'changes' && (
-        <View style={[flexbox.directionRow, flexbox.flex1, spacings.mb]}>
+        <View style={[flexbox.directionRow, flexbox.flex1]}>
           {(!!pendingSendTokens.length || !!pendingSendCollection.length) && (
             <View
               style={[styles.simulationContainer, !!pendingReceiveTokens.length && spacings.mrTy]}
@@ -345,7 +345,10 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
       )}
 
       {simulationView === 'error' && (
-        <Alert type="error" title={t('Unable to simulate the transaction. Proceed with caution.')} />
+        <Alert
+          type="error"
+          title={t('Unable to simulate the transaction. Proceed with caution.')}
+        />
       )}
       {simulationView === 'no-changes' && (
         <View style={[flexbox.directionRow, flexbox.flex1, flexbox.alignCenter]}>

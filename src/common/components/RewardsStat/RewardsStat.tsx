@@ -48,9 +48,9 @@ governance_score = user.governance_proposals_voted_in.map(x => x.governance_weig
   },
   {
     id: 'multiplier',
-    label: 'Community multipliers',
+    label: 'Community multipliers (Soon)',
     explanation: `You receive 1.06X multiplier of your score for belonging to any of the following:
-- Have pledget to the Trustless manifesto
+- Have pledge to the Trustless manifesto
 - Hold a LobsterDAO NFT
 - Hold a CryptoTesters NFT
 - Hold an Ambire Gas Tank NFT, Legends NFT, or any Ambire conference POAP
@@ -65,23 +65,23 @@ const getValueFromKey = (id: Stat['id'], stats: ProjectedRewardsStats | null): s
   switch (id) {
     case 'balanceScore':
       return `$${stats.averageBalance.toLocaleString(undefined, {
-        maximumFractionDigits: 2
+        maximumFractionDigits: 0
       })}`
     case 'liquidityScore':
       return `$${stats.averageLiquidity.toLocaleString(undefined, {
-        maximumFractionDigits: 2
+        maximumFractionDigits: 0
       })}`
     case 'stkWALLETScore':
       return `$${stats.averageStkWalletBalance.toLocaleString(undefined, {
-        maximumFractionDigits: 2
+        maximumFractionDigits: 0
       })}`
     case 'swapVolumeScore':
       return `$${stats.swapVolume.toLocaleString(undefined, {
-        maximumFractionDigits: 2
+        maximumFractionDigits: 0
       })}`
     case 'governanceScore':
       return `$${stats.governanceWeight.toLocaleString(undefined, {
-        maximumFractionDigits: 2
+        maximumFractionDigits: 0
       })}`
     case 'multiplier':
       return null

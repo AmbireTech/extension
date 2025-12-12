@@ -1,4 +1,4 @@
-import React, { FC } from 'react'
+import React, { FC, memo } from 'react'
 import { Path, Svg } from 'react-native-svg'
 
 import { LegendsSvgProps } from '@legends/types/svg'
@@ -25,4 +25,4 @@ const LockIcon2: FC<LegendsSvgProps> = ({
   )
 }
 
-export default LockIcon2
+export default memo(LockIcon2)
