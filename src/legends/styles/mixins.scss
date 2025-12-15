@@ -28,8 +28,8 @@
 
   &:not(:disabled) {
     &:hover {
-      background: linear-gradient(100.29deg, $green-500 7.82%, $teal 49.79%, $dark-purple 92.28%),
-        linear-gradient(0deg, rgba(244, 244, 247, 0.102), rgba(244, 244, 247, 0.1));
+      background: linear-gradient(81.53deg, $blue-500 1%, #a25aff 95.43%),
+        linear-gradient(0deg, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2));
     }
     &:active {
       box-shadow: none;
