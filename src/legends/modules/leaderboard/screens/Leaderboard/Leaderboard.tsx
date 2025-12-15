@@ -146,7 +146,7 @@ const LeaderboardContainer: React.FC = () => {
               <div className={styles.header}>
                 <div className={styles.cell}>
                   <h5>#</h5>
-                  <h5 className={styles.playerCell}>player</h5>
+                  <h5 className={styles.playerCell}>{activeTab !== 2 ? 'Player' : 'Account'}</h5>
                 </div>
                 {leaderboardData.some((i) => i.level) && <h5 className={styles.cell}>Level</h5>}
                 {leaderboardData.some((i) => i.reward) && (
