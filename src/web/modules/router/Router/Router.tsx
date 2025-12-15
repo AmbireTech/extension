@@ -13,9 +13,9 @@ import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import flexbox from '@common/styles/utils/flexbox'
 import Splash from '@web/components/Splash'
 import { ControllersStateLoadedContext } from '@web/contexts/controllersStateLoadedContext'
-import useActionsControllerState from '@web/hooks/useActionsControllerState'
 import useCurrentActionSideEffects from '@web/hooks/useCurrentActionSideEffects'
 import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
+import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControllerState'
 import useTransferControllerState from '@web/hooks/useTransferControllerState'
 import KeyStoreUnlockScreen from '@web/modules/keystore/screens/KeyStoreUnlockScreen'
@@ -34,7 +34,7 @@ const Router = () => {
   const pathname = path?.substring(1)
   const { authStatus } = useAuth()
   const keystoreState = useKeystoreControllerState()
-  const actionsState = useActionsControllerState()
+  const requestsState = useRequestsControllerState()
   const swapAndBridgeState = useSwapAndBridgeControllerState()
   const transferState = useTransferControllerState()
   const { areControllerStatesLoaded, isStatesLoadingTakingTooLong } = useContext(
@@ -64,7 +64,7 @@ const Router = () => {
   const initialRoute = getInitialRoute({
     keystoreState,
     authStatus,
-    actionsState,
+    requestsState,
     swapAndBridgeState,
     transferState: transferState.state
   })

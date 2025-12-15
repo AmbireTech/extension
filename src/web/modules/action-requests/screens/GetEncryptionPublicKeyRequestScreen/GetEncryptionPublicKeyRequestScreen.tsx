@@ -1,7 +1,6 @@
 import React, { useCallback, useMemo } from 'react'
 import { View } from 'react-native'
 
-import { isDappRequestAction } from '@ambire-common/libs/actions/actions'
 import ManifestFallbackIcon from '@common/assets/svg/ManifestFallbackIcon'
 import Button from '@common/components/Button'
 import Panel from '@common/components/Panel'
@@ -15,38 +14,34 @@ import flexboxStyles from '@common/styles/utils/flexbox'
 import textStyles from '@common/styles/utils/text'
 import HeaderAccountAndNetworkInfo from '@web/components/HeaderAccountAndNetworkInfo'
 import ManifestImage from '@web/components/ManifestImage'
-import useActionsControllerState from '@web/hooks/useActionsControllerState'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useDappInfo from '@web/hooks/useDappInfo'
+import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 
 import styles from './styles'
 
 const GetEncryptionPublicKeyRequestScreen = () => {
   const { t } = useTranslation()
   const { dispatch } = useBackgroundService()
-  const state = useActionsControllerState()
+  const { currentUserRequest } = useRequestsControllerState()
   const { theme } = useTheme()
-  const dappAction = useMemo(
-    () => (isDappRequestAction(state.currentAction) ? state.currentAction : null),
-    [state.currentAction]
+
+  const userRequest = useMemo(
+    () =>
+      currentUserRequest?.kind === 'ethGetEncryptionPublicKey' ? currentUserRequest : undefined,
+    [currentUserRequest]
   )
-
-  const userRequest = useMemo(() => {
-    if (!dappAction) return undefined
-
-    return dappAction?.userRequest || undefined
-  }, [dappAction])
 
   const { name, icon } = useDappInfo(userRequest)
 
   const handleDeny = useCallback(() => {
-    if (!dappAction) return
+    if (!userRequest) return
 
     dispatch({
       type: 'REQUESTS_CONTROLLER_REJECT_USER_REQUEST',
-      params: { err: t('User rejected the request.'), id: dappAction.id }
+      params: { err: t('User rejected the request.'), id: userRequest.id }
     })
-  }, [dappAction, t, dispatch])
+  }, [userRequest, t, dispatch])
 
   return (
     <>
@@ -58,7 +53,9 @@ const GetEncryptionPublicKeyRequestScreen = () => {
           </View>
 
           <Title style={[textStyles.center, spacings.phSm, spacings.pbLg]}>
-            {userRequest?.session?.origin ? new URL(userRequest.session.origin).hostname : ''}
+            {userRequest?.dappPromises[0].session.origin
+              ? new URL(userRequest.dappPromises[0].session.origin).hostname
+              : ''}
           </Title>
 
           <View>

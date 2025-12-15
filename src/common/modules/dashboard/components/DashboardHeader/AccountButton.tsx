@@ -72,7 +72,12 @@ const AccountButton = () => {
       >
         <>
           <View style={styles.accountButtonInfo}>
-            <Avatar pfp={account.preferences.pfp} size={32} isSmart={isSmartAccount(account)} />
+            <Avatar
+              pfp={account.preferences.pfp}
+              address={account.addr}
+              size={32}
+              isSmart={isSmartAccount(account)}
+            />
             <Text
               numberOfLines={1}
               weight="semiBold"

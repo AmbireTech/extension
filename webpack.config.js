@@ -205,13 +205,7 @@ module.exports = async function (env, argv) {
     '@web': path.resolve(__dirname, 'src/web'),
     '@benzin': path.resolve(__dirname, 'src/benzin'),
     '@legends': path.resolve(__dirname, 'src/legends'),
-    react: path.resolve(__dirname, 'node_modules/react'),
-    // TODO: Temporarily, for Ambire Next, use a pre-release version of gridplus-sdk that supports EIP-7702, look for all #gridplus-sdk-temporary
-    ...(isAmbireNext
-      ? {
-          'gridplus-sdk': path.resolve(__dirname, 'node_modules/gridplus-sdk-e3d6ac0')
-        }
-      : {})
+    react: path.resolve(__dirname, 'node_modules/react')
   }
 
   config.resolve.fallback = {
@@ -327,8 +321,8 @@ module.exports = async function (env, argv) {
         chunks: ['main'] // include only chunks from the main entry
       }),
       new HtmlWebpackPlugin({
-        template: './src/web/public/action-window.html',
-        filename: 'action-window.html',
+        template: './src/web/public/request-window.html',
+        filename: 'request-window.html',
         inject: 'body', // to auto inject the main.js bundle in the body
         chunks: ['main'] // include only chunks from the main entry
       }),

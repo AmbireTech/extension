@@ -2,7 +2,7 @@ import { baParams } from 'constants/env'
 import selectors from 'constants/selectors'
 import Token from 'interfaces/token'
 
-import { expect } from '@playwright/test'
+import { expect, Page } from '@playwright/test'
 
 import { BasePage } from './basePage'
 
@@ -130,7 +130,9 @@ export class TransferPage extends BasePage {
     const feeDollarsAmount = Number(feeSelector.replace(/[<$]/g, ''))
 
     if (feeDollarsAmount > 0.1) {
-      console.warn('⚠️ Fee amount is higher than 0.1$, transaction signing skipped.')
+      console.warn(
+        `⚠️ Fee amount ($${feeDollarsAmount}) exceeds the $0.10 limit; transaction signing skipped.`
+      )
     } else {
       // start monitoring requests
       await this.monitorRequests()
@@ -158,11 +160,49 @@ export class TransferPage extends BasePage {
       ).toEqual(true)
 
       // validate success message
-      const timeout = 120000
+      const timeout = 150000
       await this.compareText(selectors.txnStatus, message, { timeout })
 
       // Close page
       await this.click(selectors.closeProgressModalButton)
     }
+  }
+
+  async checkRecepientTransactionOnExplorer({
+    newPage,
+    recepientAddress,
+    options
+  }: {
+    newPage: Page
+    recepientAddress: string
+    options?: { expectedTransactionsCount?: number }
+  }): Promise<void> {
+    const expectedTransactionsCount = options?.expectedTransactionsCount ?? 1 // expect at least 1 transaction
+    let transactionDetails: any
+
+    // assert signed block
+    await expect(newPage.getByTestId(selectors.transaction.explorer.txnSignedStep)).toContainText(
+      'Signed'
+    )
+
+    // assert transaction details block
+    await expect(newPage.getByTestId(selectors.transaction.explorer.txnProgressStep)).toContainText(
+      'Transaction details'
+    )
+
+    for (let i = 0; i < expectedTransactionsCount; i++) {
+      // eslint-disable-next-line no-await-in-loop
+      transactionDetails = newPage
+        .getByTestId(selectors.transaction.explorer.recepientAddressBlock)
+        .nth(i)
+    }
+    await expect(transactionDetails).toHaveText(/Send/)
+    await expect(transactionDetails).toHaveText(/0\.001/)
+    await expect(transactionDetails).toHaveText(/USDC/)
+    await expect(transactionDetails).toHaveText(new RegExp(recepientAddress))
+    // assert confirmed block
+    await expect(
+      newPage.getByTestId(selectors.transaction.explorer.txnConfirmedStep)
+    ).toContainText('confirmed')
   }
 }

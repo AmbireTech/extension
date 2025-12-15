@@ -222,7 +222,11 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
       }
     }
 
-    handleEffect().catch(() => setIsLoading(false))
+    handleEffect().catch((error) => {
+      // eslint-disable-next-line no-console
+      console.error(error)
+      return setIsLoading(false)
+    })
 
     if (tokenTypeEligibility === false || !!temporaryToken || tokenValidation?.error) {
       setIsLoading(false)

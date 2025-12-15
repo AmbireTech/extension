@@ -14,6 +14,7 @@ import DialogButton from '@common/components/Dialog/DialogButton'
 import DialogFooter from '@common/components/Dialog/DialogFooter'
 import NetworkIcon from '@common/components/NetworkIcon'
 import Text from '@common/components/Text'
+import { isAmbireNext, isDev } from '@common/config/env'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import { ROUTES } from '@common/modules/router/constants/common'
@@ -29,6 +30,7 @@ import getStyles from './styles'
 type Props = {
   name: string
   iconUrls?: string[]
+  batchMaxCount?: number | '-'
   selectedRpcUrl: string
   rpcUrls: string[]
   chainId: bigint | string
@@ -47,6 +49,7 @@ const NetworkDetails = ({
   selectedRpcUrl,
   rpcUrls,
   chainId,
+  batchMaxCount,
   explorerUrl,
   nativeAssetSymbol,
   nativeAssetName,
@@ -365,6 +368,8 @@ const NetworkDetails = ({
         <View style={flexbox.flex1}>
           {renderInfoItem(t('Network Name'), name)}
           {renderRpcUrlsItem()}
+          {(isAmbireNext || isDev) &&
+            renderInfoItem(t('Max batch size'), batchMaxCount?.toString() || 'Unlimited')}
           {renderInfoItem(t('Chain ID'), chainId.toString())}
           {renderInfoItem(t('Currency Symbol'), nativeAssetSymbol)}
           {renderInfoItem(t('Currency Name'), nativeAssetName)}

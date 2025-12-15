@@ -1,7 +1,6 @@
 @import '@legends/styles/base.scss';
 
 .wrapper {
-  @include container;
   position: relative;
   margin-bottom: 2.625rem;
 
@@ -10,18 +9,7 @@
     font-size: 1rem;
     line-height: 1.5rem;
     font-weight: 200;
-  }
-
-  @include breakpoint-down-from(medium-desktop) {
-    margin-left: 3rem;
-    margin-right: 3rem;
-
-    width: calc(100% - 6rem);
-  }
-
-  @include breakpoint-down-from(large-tablet) {
-    margin-left: 0;
-    width: 100%;
+    white-space: pre-wrap;
   }
 }
 
@@ -30,5 +18,5 @@
 }
 
 .accordionTitle {
-    font-size: 1.25rem !important;
+  font-size: 1.25rem !important;
 }

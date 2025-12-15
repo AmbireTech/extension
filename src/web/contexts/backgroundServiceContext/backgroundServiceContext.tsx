@@ -42,7 +42,7 @@ if (isExtension) {
 
     let portName = 'popup'
     if (getUiType().isTab) portName = 'tab'
-    if (getUiType().isActionWindow) portName = 'action-window'
+    if (getUiType().isRequestWindow) portName = 'request-window'
 
     pm.connect({ id: portId, name: portName })
     // connect to the portMessenger initialized in the background
@@ -92,16 +92,20 @@ if (isExtension) {
   connectPort()
 }
 
-const ACTIONS_TO_DISPATCH_EVEN_WHEN_HIDDEN = ['INIT_CONTROLLER_STATE']
+const ACTIONS_TO_DISPATCH_EVEN_WHEN_HIDDEN = [
+  'INIT_CONTROLLER_STATE',
+  'MAIN_CONTROLLER_ACTIVITY_SET_ACC_OPS_FILTERS',
+  'MAIN_CONTROLLER_ACTIVITY_RESET_ACC_OPS_FILTERS'
+]
 
 globalDispatch = (action, windowId?: number) => {
   // Dispatch the action only when the tab or popup is focused or active.
   // Otherwise, multiple dispatches could occur if the same screen is open in multiple tabs/popup windows,
   // causing unpredictable background/controllers state behavior.
-  // dispatches from action-window should not be blocked even when unfocused
-  // because we can have only one instance of action-window and only one instance for the given action screen
+  // dispatches from request-window should not be blocked even when unfocused
+  // because we can have only one instance of request-window and only one instance for the given action screen
   // (an action screen could not be opened in tab or popup window by design)
-  const shouldBlockDispatch = document.hidden && !getUiType().isActionWindow
+  const shouldBlockDispatch = document.hidden && !getUiType().isRequestWindow
   if (shouldBlockDispatch && !ACTIONS_TO_DISPATCH_EVEN_WHEN_HIDDEN.includes(action.type)) return
 
   if (!backgroundReady) {
@@ -138,10 +142,20 @@ const BackgroundServiceProvider: React.FC<any> = ({ children }) => {
   }, [])
 
   useEffect(() => {
-    const url = `${window.location.origin}${route.pathname}${route.search}${route.hash}`
+    const { pathname = '/', search = '', hash = '' } = route
+
+    const url = `${window.location.origin}${pathname}${search}${hash}`
+
+    const searchParams = new URLSearchParams(search)
+    const searchParamsFormatted = Object.fromEntries(searchParams.entries())
+
     globalDispatch({
       type: 'UPDATE_PORT_URL',
-      params: { url, route: route.pathname?.substring(1) || '/' }
+      params: {
+        url,
+        route: pathname.startsWith('/') ? pathname.slice(1) : pathname,
+        searchParams: searchParamsFormatted
+      }
     })
   }, [route])
 
@@ -180,7 +194,7 @@ const BackgroundServiceProvider: React.FC<any> = ({ children }) => {
         if (message.action === 'sw-started') {
           // if the sw restarts and the current window is an action window then close it
           // because the actions state has been lost after the sw restart
-          if (getUiType().isActionWindow) {
+          if (getUiType().isRequestWindow) {
             closeCurrentWindow()
           } else {
             sessionStorage.setItem('backgroundState', 'restarted')

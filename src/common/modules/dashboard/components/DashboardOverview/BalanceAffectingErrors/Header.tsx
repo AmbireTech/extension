@@ -24,7 +24,11 @@ const Header: FC = () => {
         flexbox.alignCenter,
         flexbox.justifySpaceBetween,
         spacings.mbSm,
-        spacings.pbTy
+        spacings.pbTy,
+        {
+          backgroundColor:
+            themeType === THEME_TYPES.DARK ? theme.secondaryBackground : theme.primaryBackground
+        }
       ]}
     >
       <Text fontSize={20} weight="medium" color={theme.primaryText}>

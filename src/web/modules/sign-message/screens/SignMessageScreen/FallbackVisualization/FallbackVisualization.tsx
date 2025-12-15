@@ -3,8 +3,8 @@ import { FC, memo, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { NativeScrollEvent, ScrollView, View } from 'react-native'
 
+import { Hex } from '@ambire-common/interfaces/hex'
 import { ISignMessageController } from '@ambire-common/interfaces/signMessage'
-import { isPlainTextMessage } from '@ambire-common/libs/transfer/userRequest'
 import { isValidAddress } from '@ambire-common/services/address'
 import WarningFilledIcon from '@common/assets/svg/WarningFilledIcon'
 import HumanizerAddress from '@common/components/HumanizerAddress'
@@ -138,10 +138,9 @@ const FallbackVisualization: FC<{
                 </div>
               )
             })}
-          {content.kind === 'authorization-7702' && getMessageAsText(content.message)}
-
-          {isPlainTextMessage(content) &&
-            (getMessageAsText(content.message) || t('(Empty message)'))}
+          {content.kind === 'authorization-7702' && getMessageAsText(content.message as Hex)}
+          {(content.kind === 'message' || content.kind === 'siwe') &&
+            (getMessageAsText(content.message as Hex) || t('(Empty message)'))}
         </Text>
       </ScrollView>
       {content.kind === 'typedMessage' && (

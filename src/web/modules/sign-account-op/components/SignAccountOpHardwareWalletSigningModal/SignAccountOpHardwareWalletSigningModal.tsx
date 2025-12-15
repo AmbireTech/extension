@@ -92,9 +92,9 @@ const SignAccountOpHardwareWalletSigningModal: React.FC<Props> = ({
       currentlyInvolvedSignOrBroadcastKeyType === 'trezor'
     ) {
       // If the user needs to sign using a hardware wallet, we need to open the
-      // screen in an action window and close the popup
+      // screen in an request window and close the popup
       dispatch({
-        type: 'OPEN_SIGNING_ACTION_WINDOW',
+        type: 'OPEN_SIGNING_REQUEST_WINDOW',
         params: {
           type: actionType
         }

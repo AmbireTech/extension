@@ -2,10 +2,10 @@ import React, { useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { TokenResult } from '@ambire-common/libs/portfolio'
-import { ProjectedRewardsTokenResult } from '@ambire-common/libs/portfolio/interfaces'
-import Badge from '@common/components/Badge'
 import Text from '@common/components/Text'
+import useNavigation from '@common/hooks/useNavigation'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
+import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
@@ -16,12 +16,11 @@ import RewardsTokenItem from './RewardsTokenItem'
 
 const { isPopup } = getUiType()
 
-const INFO_BTN_URL = 'https://rewards.ambire.com'
-
 const TokenItem = ({ token }: { token: TokenResult }) => {
   const { t } = useTranslation()
   const { dispatch } = useBackgroundService()
   const { portfolio } = useSelectedAccountControllerState()
+  const { navigate } = useNavigation()
 
   const { networks } = useNetworksControllerState()
   const simulatedAccountOp = portfolio.networkSimulatedAccountOp[token.chainId.toString()]
@@ -32,27 +31,16 @@ const TokenItem = ({ token }: { token: TokenResult }) => {
   )
 
   const handleDetailsPress = useCallback(() => {
-    window.open(INFO_BTN_URL, '_blank')
-  }, [])
-
-  const projectedRewardsUserXp = useMemo(() => {
-    if (isProjectedRewards) {
-      const projectedRewardsToken = token as ProjectedRewardsTokenResult
-      return Number(projectedRewardsToken.userXp || 0).toLocaleString('en-US', {
-        maximumFractionDigits: 0
-      })
-    }
-    return 0
-  }, [isProjectedRewards, token])
+    navigate(WEB_ROUTES.rewards)
+  }, [navigate])
 
   const projectedRewardsDescription = useMemo(
     () => (
       <Text fontSize={12} weight="regular">
-        {t('Projected rewards for ')}
-        <Badge text={`${projectedRewardsUserXp} XP`} type="projectedRewards" weight="semiBold" />
+        {t('Projected Rewards')}
       </Text>
     ),
-    [projectedRewardsUserXp, t]
+    [t]
   )
 
   const sendTransaction = useCallback(

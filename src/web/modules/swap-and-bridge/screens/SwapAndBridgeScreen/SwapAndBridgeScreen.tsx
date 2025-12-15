@@ -34,7 +34,7 @@ import PriceImpactWarningModal from '../../components/PriceImpactWarningModal'
 import RouteInfo from '../../components/RouteInfo'
 import ToToken from '../../components/ToToken'
 
-const { isTab, isActionWindow } = getUiType()
+const { isTab, isRequestWindow } = getUiType()
 
 const SwapAndBridgeScreen = () => {
   const { t } = useTranslation()
@@ -51,12 +51,13 @@ const SwapAndBridgeScreen = () => {
     priceImpactModalRef,
     closePriceImpactModal,
     acknowledgeHighPriceImpact,
-    pendingRoutes,
+    selectedAccActiveRoutes,
     routesModalRef,
     openRoutesModal,
     closeRoutesModal,
     estimationModalRef,
-    setHasBroadcasted,
+    activeRoute,
+    setActiveRoute,
     displayedView,
     closeEstimationModalWrapped,
     isBridge,
@@ -81,7 +82,7 @@ const SwapAndBridgeScreen = () => {
   const { portfolio } = useSelectedAccountControllerState()
 
   const { statuses: requestsCtrlStatuses } = useRequestsControllerState()
-  const prevPendingRoutes: any[] | undefined = usePrevious(pendingRoutes)
+  const prevSelectedAccActiveRoutes: any[] | undefined = usePrevious(selectedAccActiveRoutes)
   const scrollViewRef: any = useRef(null)
   const { dispatch } = useBackgroundService()
 
@@ -89,13 +90,13 @@ const SwapAndBridgeScreen = () => {
   const { simulationError: toChainSimulationError } = useSimulationError({ chainId: toChainId })
 
   useEffect(() => {
-    if (!pendingRoutes || !prevPendingRoutes) return
-    if (!pendingRoutes.length) return
-    if (prevPendingRoutes.length < pendingRoutes.length) {
+    if (!selectedAccActiveRoutes || !prevSelectedAccActiveRoutes) return
+    if (!selectedAccActiveRoutes.length) return
+    if (prevSelectedAccActiveRoutes.length < selectedAccActiveRoutes.length) {
       // scroll to top when there is a new item in the active routes list
       scrollViewRef.current?.scrollTo({ y: 0 })
     }
-  }, [pendingRoutes, prevPendingRoutes])
+  }, [selectedAccActiveRoutes, prevSelectedAccActiveRoutes])
 
   // TODO: Disable tokens that are NOT supported
   // (not in the `fromTokenList` of the SwapAndBridge controller)
@@ -138,9 +139,9 @@ const SwapAndBridgeScreen = () => {
       type: 'SWAP_AND_BRIDGE_CONTROLLER_UNLOAD_SCREEN',
       params: { sessionId, forceUnload: true }
     })
-    if (isActionWindow) {
+    if (isRequestWindow) {
       dispatch({
-        type: 'CLOSE_SIGNING_ACTION_WINDOW',
+        type: 'CLOSE_SIGNING_REQUEST_WINDOW',
         params: {
           type: 'swapAndBridge'
         }
@@ -219,12 +220,13 @@ const SwapAndBridgeScreen = () => {
     )
   }
 
-  if (displayedView === 'track') {
+  if (activeRoute && displayedView === 'track') {
     return (
       <TrackProgress
         handleClose={() => {
-          setHasBroadcasted(false)
+          setActiveRoute(undefined)
         }}
+        activeRoute={activeRoute}
       />
     )
   }

@@ -2,7 +2,6 @@ import React, { useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
-import { BenzinAction } from '@ambire-common/interfaces/actions'
 import Benzin from '@benzin/screens/BenzinScreen/components/Benzin/Benzin'
 import {
   CopyButton,
@@ -15,38 +14,37 @@ import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper'
-import useActionsControllerState from '@web/hooks/useActionsControllerState'
 import useBackgroundService from '@web/hooks/useBackgroundService'
+import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 
 const BenzinScreen = () => {
   const { t } = useTranslation()
   const { dispatch } = useBackgroundService()
-  const actionsState = useActionsControllerState()
+  const { currentUserRequest, visibleUserRequests } = useRequestsControllerState()
   const { theme } = useTheme()
+
+  const userRequest = useMemo(
+    () => (currentUserRequest?.kind === 'benzin' ? currentUserRequest : undefined),
+    [currentUserRequest]
+  )
+
   const resolveAction = useCallback(() => {
-    if (!actionsState.currentAction) return
+    if (!userRequest) return
     dispatch({
       type: 'REQUESTS_CONTROLLER_RESOLVE_USER_REQUEST',
-      params: {
-        data: {},
-        id: actionsState.currentAction.id as number
-      }
+      params: { data: {}, id: userRequest.id as number }
     })
-  }, [actionsState.currentAction, dispatch])
+  }, [userRequest, dispatch])
 
-  const extensionAccOp = (actionsState.currentAction as BenzinAction)?.userRequest?.meta
-    ?.submittedAccountOp
+  const extensionAccOp = userRequest?.meta?.submittedAccountOp
 
-  const state = useBenzin({
-    onOpenExplorer: resolveAction,
-    extensionAccOp
-  })
+  const state = useBenzin({ onOpenExplorer: resolveAction, extensionAccOp })
 
   const pendingRequests = useMemo(() => {
-    if (!actionsState.visibleActionsQueue) return []
+    if (!visibleUserRequests.length) return []
 
-    return actionsState.visibleActionsQueue.filter((a) => a.type !== 'benzin')
-  }, [actionsState.visibleActionsQueue])
+    return visibleUserRequests.filter((r) => r.kind !== 'benzin')
+  }, [visibleUserRequests])
 
   return (
     <TabLayoutContainer

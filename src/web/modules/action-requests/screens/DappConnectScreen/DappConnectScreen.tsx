@@ -2,14 +2,13 @@
 import React, { useCallback, useMemo, useState } from 'react'
 import { View } from 'react-native'
 
-import { isDappRequestAction } from '@ambire-common/libs/actions/actions'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import Header from '@common/modules/header/components/Header'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import useActionsControllerState from '@web/hooks/useActionsControllerState'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useDappsControllerState from '@web/hooks/useDappsControllerState'
+import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import useResponsiveActionWindow from '@web/hooks/useResponsiveActionWindow'
 import ActionFooter from '@web/modules/action-requests/components/ActionFooter'
 
@@ -22,38 +21,38 @@ const DappConnectScreen = () => {
   const { t } = useTranslation()
   const { theme, styles } = useTheme(getStyles)
   const { dispatch } = useBackgroundService()
-  const state = useActionsControllerState()
+  const { currentUserRequest } = useRequestsControllerState()
 
   const [isAuthorizing, setIsAuthorizing] = useState(false)
   const { responsiveSizeMultiplier } = useResponsiveActionWindow()
   const [confirmedRiskCheckbox, setConfirmedRiskCheckbox] = useState(false)
   const { state: dappsState } = useDappsControllerState()
 
-  const dappToConnect = useMemo(() => dappsState.dappToConnect || null, [dappsState])
+  const dappToConnect = useMemo(() => dappsState.dappToConnect || null, [dappsState.dappToConnect])
 
-  const dappAction = useMemo(
-    () => (isDappRequestAction(state.currentAction) ? state.currentAction : null),
-    [state.currentAction]
+  const userRequest = useMemo(
+    () => (currentUserRequest?.kind === 'dappConnect' ? currentUserRequest : undefined),
+    [currentUserRequest]
   )
 
   const handleDenyButtonPress = useCallback(() => {
-    if (!dappAction) return
+    if (!userRequest) return
 
     dispatch({
       type: 'REQUESTS_CONTROLLER_REJECT_USER_REQUEST',
-      params: { err: t('User rejected the request.'), id: dappAction.id }
+      params: { err: t('User rejected the request.'), id: userRequest.id }
     })
-  }, [dappAction, t, dispatch])
+  }, [userRequest, t, dispatch])
 
   const handleAuthorizeButtonPress = useCallback(() => {
-    if (!dappAction) return
+    if (!userRequest) return
 
     setIsAuthorizing(true)
     dispatch({
       type: 'REQUESTS_CONTROLLER_RESOLVE_USER_REQUEST',
-      params: { data: dappToConnect, id: dappAction.id }
+      params: { data: dappToConnect, id: userRequest.id }
     })
-  }, [dappAction, dappToConnect, dispatch])
+  }, [userRequest, dappToConnect, dispatch])
 
   const resolveButtonText = useMemo(() => {
     if (!dappToConnect || dappToConnect.blacklisted === 'LOADING') return t('Loading...')

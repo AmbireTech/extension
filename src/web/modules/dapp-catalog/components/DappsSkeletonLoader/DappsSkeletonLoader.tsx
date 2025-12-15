@@ -22,7 +22,7 @@ const DappsSkeletonLoader = () => {
 
   return (
     <View style={[flexbox.flex1, spacings.phSm, spacings.pvSm]}>
-      {state.isFetchingAndUpdatingDapps ? (
+      {!state.isReadyToDisplayDapps ? (
         <>
           <SkeletonLoader width="100%" height={40} style={spacings.mbTy} />
           <View
