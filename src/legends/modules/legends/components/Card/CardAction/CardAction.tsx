@@ -15,7 +15,6 @@ import MascotRevealLetter from './actions/MascotRevealLetter'
 export type CardActionComponentProps = {
   action: CardAction
   meta: CardFromResponse['meta']
-  id: CardFromResponse['id']
 }
 
 const CardActionComponent: FC<CardActionComponentProps> = ({ meta, action }) => {

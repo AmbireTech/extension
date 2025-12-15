@@ -18,7 +18,7 @@ import useToast from '@legends/hooks/useToast'
 import { humanizeError } from '@legends/modules/legends/utils/errors/humanizeError'
 import { getRewardsButtonText } from '@legends/utils/getRewardsButtonText'
 
-import { CardActionCalls, CardActionPredefined, CardFromResponse } from '../../types'
+import { CardAction, CardActionCalls, CardActionPredefined, CardFromResponse } from '../../types'
 import CardActionButton from '../Card/CardAction/actions/CardActionButton'
 import styles from './MigrateRewardsModal.module.scss'
 
@@ -28,7 +28,7 @@ type Action = CardActionPredefined & {
 interface MigrateRewardsModalProps {
   isOpen: boolean
   handleClose: () => void
-  action: Action | undefined
+  action: Action | CardAction | undefined
   meta: CardFromResponse['meta'] | undefined
   card: CardFromResponse['card'] | undefined
 }
@@ -97,7 +97,7 @@ const MigrateRewardsModal: React.FC<MigrateRewardsModalProps> = ({
 
   const onButtonClick = useCallback(async () => {
     if (!browserProvider) return
-    if (!action || !action.calls) return
+    if (!action || !('calls' in action) || !action.calls) return
     await switchNetwork(ETHEREUM_CHAIN_ID)
 
     try {
@@ -117,7 +117,7 @@ const MigrateRewardsModal: React.FC<MigrateRewardsModalProps> = ({
       )
 
       const receipt = await getCallsStatus(sendCallsIdentifier)
-      if (receipt.transactionHash) {
+      if (receipt?.transactionHash) {
         addToast('Transaction completed successfully', { type: 'success' })
         setIsSigning(false)
         getXWalletBalance()
@@ -186,9 +186,8 @@ const MigrateRewardsModal: React.FC<MigrateRewardsModalProps> = ({
 
           {meta?.hasAlreadyMigrated && (
             <div className={styles.alreadyMigratedWarning}>
-              {/* TODO: UPDATE TEXT */}
-              You will not receive XP from this action as you already migrated some of your $xWALLET
-              tokens!
+              If you confirm unstaking your stkWALLET tokens, the amount won&apos;t be counted to
+              your overall stkWALLET score.
             </div>
           )}
           <CardActionButton

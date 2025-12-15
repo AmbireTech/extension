@@ -18,7 +18,13 @@ import useSwitchNetwork from '@legends/hooks/useSwitchNetwork'
 import useToast from '@legends/hooks/useToast'
 import { humanizeError } from '@legends/modules/legends/utils/errors/humanizeError'
 
-import { CardActionCalls, CardActionPredefined, CardFromResponse, CardStatus } from '../../types'
+import {
+  CardAction,
+  CardActionCalls,
+  CardActionPredefined,
+  CardFromResponse,
+  CardStatus
+} from '../../types'
 import CardActionButton from '../Card/CardAction/actions/CardActionButton'
 import rewardsCoverImg from './assets/rewards-cover.png'
 import styles from './ClaimRewardsModal.module.scss'
@@ -29,7 +35,7 @@ type Action = CardActionPredefined & {
 interface ClaimRewardsModalProps {
   isOpen: boolean
   handleClose: () => void
-  action: Action | undefined
+  action: Action | CardAction | undefined
   meta: CardFromResponse['meta'] | undefined
   card: CardFromResponse['card'] | undefined
 }
@@ -60,7 +66,7 @@ const ClaimRewardsModal: React.FC<ClaimRewardsModalProps> = ({
 
   const onButtonClick = useCallback(async () => {
     if (!browserProvider) return
-    if (!action || !action.calls) return
+    if (!action || !('calls' in action) || !action.calls) return
     await switchNetwork(ETHEREUM_CHAIN_ID)
 
     try {
@@ -77,7 +83,7 @@ const ClaimRewardsModal: React.FC<ClaimRewardsModalProps> = ({
         false
       )
       const receipt = await getCallsStatus(sendCallsIdentifier)
-      if (receipt.transactionHash) {
+      if (receipt?.transactionHash) {
         addToast('Transaction completed successfully', { type: 'success' })
       }
       onLegendComplete()

@@ -26,7 +26,7 @@ const LeaderboardContainer: React.FC = () => {
   } = useLeaderboardContext()
 
   const { userRewardsStats } = usePortfolioControllerState()
-  const season2ProjectedAmountUsd = userRewardsStats?.estimatedRewards
+  const season2ProjectedAmountUsd = userRewardsStats?.estimatedRewardsUSD
   const { connectedAccount } = useAccountContext()
 
   const tableRef = useRef<HTMLDivElement>(null)
