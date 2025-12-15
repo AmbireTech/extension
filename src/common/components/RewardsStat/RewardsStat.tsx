@@ -55,7 +55,8 @@ governance_score = user.governance_proposals_voted_in.map(x => x.governance_weig
 - Hold a CryptoTesters NFT
 - Hold an Ambire Gas Tank NFT, Legends NFT, or any Ambire conference POAP
 - Hold Gitcoin passport NFT
-- Hold GHO passport NFT`
+- Hold GHO passport NFT
+- Have at least one Ethereum transaction per week, all weeks during the season, except up to 2`
   }
 ]
 
