@@ -10,13 +10,14 @@ import ChevronDownIcon from '@legends/common/assets/svg/ChevronDownIcon'
 import Page from '@legends/components/Page'
 import useLeaderboardContext from '@legends/hooks/useLeaderboardContext'
 import usePortfolioControllerState from '@legends/hooks/usePortfolioControllerState/usePortfolioControllerState'
+import FaqSection from '@legends/modules/Home/components/FaqSection'
 
+import styles from './Dashboard.module.scss'
 import Background1 from './media/Background1'
 import Background2 from './media/Background2'
 import Background3 from './media/Background3'
-import styles from './UserDataSection.module.scss'
 
-const UserDataSection = () => {
+const Dashboard = () => {
   const { season2LeaderboardData } = useLeaderboardContext()
   const { userRewardsStats, isLoadingClaimableRewards } = usePortfolioControllerState()
   const [expandedId, setExpandedId] = React.useState<Stat['id'] | null>(null)
@@ -166,8 +167,9 @@ const UserDataSection = () => {
           </div>
         </div>
       </div>
+      <FaqSection />
     </Page>
   )
 }
 
-export default UserDataSection
+export default Dashboard
