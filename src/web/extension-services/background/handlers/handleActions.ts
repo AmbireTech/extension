@@ -239,6 +239,14 @@ export const handleActions = async (
         params.filters,
         params.pagination
       )
+    case 'MAIN_CONTROLLER_HANDLE_GET_ENCRYPTION_PUBLIC_KEY': {
+      const encryptionPublicKey = await mainCtrl.handleGetEncryptionPublicKey({
+        keyAddr: params.keyAddr,
+        keyType: params.keyType
+      })
+
+      return mainCtrl.requests.resolveUserRequest(encryptionPublicKey, params.requestId)
+    }
     case 'MAIN_CONTROLLER_ACTIVITY_SET_SIGNED_MESSAGES_FILTERS':
       return mainCtrl.activity.filterSignedMessages(
         params.sessionId,

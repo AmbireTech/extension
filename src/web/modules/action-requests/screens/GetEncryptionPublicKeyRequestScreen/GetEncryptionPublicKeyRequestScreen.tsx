@@ -16,7 +16,9 @@ import HeaderAccountAndNetworkInfo from '@web/components/HeaderAccountAndNetwork
 import ManifestImage from '@web/components/ManifestImage'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useDappInfo from '@web/hooks/useDappInfo'
+import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
+import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 
 import styles from './styles'
 
@@ -24,6 +26,8 @@ const GetEncryptionPublicKeyRequestScreen = () => {
   const { t } = useTranslation()
   const { dispatch } = useBackgroundService()
   const { currentUserRequest } = useRequestsControllerState()
+  const { account } = useSelectedAccountControllerState()
+  const keystoreState = useKeystoreControllerState()
   const { theme } = useTheme()
 
   const userRequest = useMemo(
@@ -34,6 +38,29 @@ const GetEncryptionPublicKeyRequestScreen = () => {
 
   const { name, icon } = useDappInfo(userRequest)
 
+  const selectedAccountKeyStoreKeys = useMemo(
+    () => keystoreState.keys.filter((key) => account?.associatedKeys.includes(key.addr)),
+    [keystoreState.keys, account?.associatedKeys]
+  )
+
+  const handleAccept = useCallback(() => {
+    if (!userRequest) return
+
+    if (!selectedAccountKeyStoreKeys.length) return
+
+    const internalKey = selectedAccountKeyStoreKeys.find((k) => k.type === 'internal')
+    if (!internalKey) return
+
+    dispatch({
+      type: 'MAIN_CONTROLLER_HANDLE_GET_ENCRYPTION_PUBLIC_KEY',
+      params: {
+        requestId: userRequest.id,
+        keyAddr: internalKey.addr,
+        keyType: internalKey.type
+      }
+    })
+  }, [userRequest, dispatch, selectedAccountKeyStoreKeys])
+
   const handleDeny = useCallback(() => {
     if (!userRequest) return
 
@@ -43,6 +70,7 @@ const GetEncryptionPublicKeyRequestScreen = () => {
     })
   }, [userRequest, t, dispatch])
 
+  // TODO: Display not supported for 1) smart accounts and 2) accounts with only hw wallet keys.
   return (
     <>
       <HeaderAccountAndNetworkInfo />
@@ -69,7 +97,7 @@ const GetEncryptionPublicKeyRequestScreen = () => {
                 </Text>
                 <Text fontSize={14} weight="regular">
                   {
-                    ' wants to get your public encryption key. This method is deprecated and Ambire does not support it.'
+                    ' wants to get your public encryption key. By consenting, this site will be able to compose encrypted messages to you.'
                   }
                 </Text>
               </Text>
@@ -78,7 +106,9 @@ const GetEncryptionPublicKeyRequestScreen = () => {
 
           <View style={styles.buttonsContainer}>
             <View style={styles.buttonWrapper}>
-              <Button type="outline" onPress={handleDeny} text={t('Okay')} />
+              <Button type="outline" onPress={handleDeny} text={t('Cancel')} />
+              {/* TODO: Disable for view only accounts (or add import key prompt) */}
+              <Button type="primary" onPress={handleAccept} text={t('Provide')} />
             </View>
           </View>
         </Panel>

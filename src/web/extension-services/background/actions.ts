@@ -227,6 +227,10 @@ type MainControllerHandleSignMessage = {
   type: 'MAIN_CONTROLLER_HANDLE_SIGN_MESSAGE'
   params: { keyAddr: Key['addr']; keyType: Key['type'] }
 }
+type MainControllerHandleGetEncryptionPublicKey = {
+  type: 'MAIN_CONTROLLER_HANDLE_GET_ENCRYPTION_PUBLIC_KEY'
+  params: { requestId: UserRequest['id']; keyAddr: Key['addr']; keyType: Key['type'] }
+}
 type MainControllerActivitySetAccOpsFiltersAction = {
   type: 'MAIN_CONTROLLER_ACTIVITY_SET_ACC_OPS_FILTERS'
   params: { filters: Filters; pagination?: Pagination; sessionId: string }
@@ -804,6 +808,7 @@ export type Action =
   | MainControllerSignMessageResetAction
   | MainControllerSignMessageUpdate
   | MainControllerHandleSignMessage
+  | MainControllerHandleGetEncryptionPublicKey
   | MainControllerActivitySetAccOpsFiltersAction
   | MainControllerActivitySetSignedMessagesFiltersAction
   | MainControllerActivityResetAccOpsAction
