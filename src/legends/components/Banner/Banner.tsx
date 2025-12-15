@@ -10,7 +10,9 @@ interface Props {
 }
 const emojis = ['🚀', '🔥', '🗣', '📢']
 const Banner: React.FC<Props> = ({ activeProposals }) => {
-  if (!activeProposals || activeProposals.length === 0) {
+  const firstProposal = activeProposals?.[0]
+
+  if (!firstProposal) {
     return null
   }
 
@@ -20,15 +22,15 @@ const Banner: React.FC<Props> = ({ activeProposals }) => {
       <div className={styles.textContent}>
         {activeProposals.length === 1 ? (
           <div className={styles.title}>
-            🗳️ {activeProposals[0]!.title}{' '}
+            🗳️ {firstProposal.title}{' '}
             <a
-              href={`https://snapshot.box/#/s:ambire.eth/proposal/${activeProposals[0]!.id}`}
+              href={`https://snapshot.box/#/s:ambire.eth/proposal/${firstProposal.id}`}
               className={styles.readMoreLink}
               target="_blank"
               rel="noreferrer"
             >
               Vote until{' '}
-              {new Date(activeProposals[0]!.end * 1000).toLocaleString('en', {
+              {new Date(firstProposal.end * 1000).toLocaleString('en', {
                 month: 'long',
                 day: 'numeric'
               })}
@@ -40,7 +42,7 @@ const Banner: React.FC<Props> = ({ activeProposals }) => {
             <div className={styles.title}>
               🗳️ {activeProposals.length} governance proposals are live, vote until{' '}
               {new Date(
-                activeProposals!.sort((a, b) => a.end - b.end)[0]!.end * 1000
+                activeProposals.sort((a, b) => a.end - b.end)[0]!.end * 1000
               ).toLocaleString('en', { month: 'long', day: 'numeric' })}
               !
             </div>
