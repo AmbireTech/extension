@@ -7,8 +7,8 @@ import {
 } from '@legends/modules/legends/types'
 
 const sortByHighestXp = (a: CardFromResponse, b: CardFromResponse) => {
-  const totalAXp = a.xp.reduce((acc, xp) => acc + xp.to + xp.from, 0)
-  const totalBXp = b.xp.reduce((acc, xp) => acc + xp.to + xp.from, 0)
+  const totalAXp = a.xp.reduce((acc, xp) => acc + (xp?.to || 0) + (xp?.from || 0), 0)
+  const totalBXp = b.xp.reduce((acc, xp) => acc + (xp?.to || 0) + (xp?.from || 0), 0)
 
   return totalBXp - totalAXp
 }

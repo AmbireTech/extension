@@ -57,14 +57,11 @@ type ActionModalProps = {
     | 'contentVideoV2'
     | 'title'
     | 'action'
-    | 'id'
   >
 
 const ActionModal: FC<ActionModalProps> = ({
   isOpen,
-  id,
   title,
-  xp,
   contentImageV2,
   onLegendCompleteWrapped,
   closeActionModal,

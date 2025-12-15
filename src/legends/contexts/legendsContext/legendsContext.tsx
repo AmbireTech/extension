@@ -18,10 +18,10 @@ type LegendsContextType = {
 const legendsContext = createContext<LegendsContextType>({} as LegendsContextType)
 
 const LegendsContextProvider = ({ children }: { children: React.ReactNode }) => {
-  const { connectedAccount, nonV2Account } = useAccountContext()
+  const { connectedAccount, v1Account } = useAccountContext()
   const { addToast } = useToast()
   const { updateLeaderboard } = useLeaderboardContext()
-  const noConnectionAcc = Boolean(!connectedAccount || nonV2Account)
+  const noConnectionAcc = Boolean(!connectedAccount || v1Account)
   const [legendsAcc, setLegendsAcc] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
