@@ -1,10 +1,11 @@
 @import '@legends/styles/base.scss';
 
-.wrapper {
+.panel {
   background: $neutral-700;
   border-radius: 1rem;
   border: 1px solid rgba($neutral-600, 0.2);
   padding: 2rem;
+  margin-bottom: 1.5rem;
 
   .header {
     display: flex;
@@ -142,5 +143,18 @@
         }
       }
     }
+  }
+}
+
+.explanation {
+  padding-bottom: 2.25rem;
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.72;
+  color: $neutral-600;
+
+  .explanationLink {
+    text-decoration: underline;
+    color: $blue-500;
   }
 }

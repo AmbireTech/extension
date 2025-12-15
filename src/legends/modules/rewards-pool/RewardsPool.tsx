@@ -67,7 +67,7 @@ const RewardsPool = () => {
 
   return (
     <Page containerSize="responsive">
-      <div className={styles.wrapper}>
+      <div className={styles.panel}>
         <div className={styles.header}>
           <div className={styles.titleSection}>
             <h1 className={styles.title}>Rewards Pool</h1>
@@ -99,6 +99,21 @@ const RewardsPool = () => {
           />
         )}
       </div>
+      <p className={styles.explanation}>
+        The Season 2 rewards pool will depend on the equivalent in USD of generated Ambire Swap &
+        bridge volume during the season. <br />
+        You can track the current volume and remaining days on this page. The reward tokens will be
+        minted from the Ambire Rewards budget in the DAO allocation as previously{' '}
+        <a
+          href="https://snapshot.box/#/s:ambire.eth/proposal/0xf598ecc6359795f388fab7297d5e94eefa61f25046a28eb0f9055826419987a0"
+          target="_blank"
+          rel="noreferrer noopener"
+          className={styles.explanationLink}
+        >
+          voted
+        </a>
+        .
+      </p>
     </Page>
   )
 }
