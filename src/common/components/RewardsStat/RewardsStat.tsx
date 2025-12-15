@@ -42,7 +42,7 @@ const SECTIONS: Omit<Stat, 'score' | 'value'>[] = [
   },
   {
     id: 'governanceScore',
-    label: 'Governance total weight in usd',
+    label: 'Governance total weight in USD',
     explanation: `Governance vote score is calculated by the formula: 
 governance_score = user.governance_proposals_voted_in.map(x => x.governance_weight).sum() * wallet_token.price / 2000`
   },
