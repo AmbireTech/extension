@@ -71,7 +71,7 @@ const RewardsPool = () => {
         <div className={styles.header}>
           <div className={styles.titleSection}>
             <h1 className={styles.title}>Rewards Pool</h1>
-            <p className={styles.text}>Swap & bridge more to grow the global rewards pool.</p>
+            <p className={styles.text}>Swap & bridge to grow the global rewards pool.</p>
           </div>
           <div className={styles.timeLeft}>
             <span className={styles.label}>Time left in season</span>
