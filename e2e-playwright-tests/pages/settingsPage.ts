@@ -39,7 +39,7 @@ export class SettingsPage extends BasePage {
   async lockKeystore(): Promise<void> {
     await this.openSettingsGeneral()
 
-    await this.expectButtonVisible(selectors.lockExtensionButton)
+    await this.expectElementVisible(selectors.lockExtensionButton)
     await this.click(selectors.lockExtensionButton)
 
     await this.checkUrl('/tab.html#/unlock')
@@ -53,7 +53,7 @@ export class SettingsPage extends BasePage {
 
     await this.entertext(selectors.passphraseField, KEYSTORE_PASS)
     await this.click(selectors.buttonUnlock)
-    await this.expectButtonVisible(selectors.fullBalance)
+    await this.expectElementVisible(selectors.fullBalance)
   }
 
   async openExtensionPassword() {
@@ -128,11 +128,12 @@ export class SettingsPage extends BasePage {
     await expect(connectPage.getByTestId(selectors.dappSecurityCheckPassed)).toBeVisible({
       timeout: 10000
     })
+    await this.page.waitForTimeout(1000)
     await chainlistTab.waitForSelector(selectors.chainlistSearchPlaceholder)
     await chainlistTab.locator(selectors.chainlistSearchPlaceholder).fill(network.networkName)
 
     // add to metamask
-    await this.page.waitForTimeout(2000)
+    await this.page.waitForTimeout(3000)
     const addToMetamaskButton = chainlistTab.locator(selectors.addToMetamaskButton)
     const addNetworkPage = await this.handleNewPage(addToMetamaskButton)
     await addNetworkPage.locator(selectors.confirmaddNetworkOnChainlistButton).click()
@@ -244,7 +245,7 @@ export class SettingsPage extends BasePage {
     await this.compareText(
       selectors.settings.youDontHaveInfoText,
       "You don't have any hidden tokens",
-      1
+      { index: 1 }
     )
   }
 

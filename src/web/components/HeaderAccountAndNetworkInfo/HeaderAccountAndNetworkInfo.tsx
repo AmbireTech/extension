@@ -42,7 +42,7 @@ const HeaderAccountAndNetworkInfo: FC<Props> = ({
 
   const { isLoading, ens } = useReverseLookup({ address: account?.addr || '' })
 
-  const isActionWindow = getUiType().isActionWindow
+  const isRequestWindow = getUiType().isRequestWindow
 
   if (!account) return null
 
@@ -54,10 +54,14 @@ const HeaderAccountAndNetworkInfo: FC<Props> = ({
       backgroundColor={backgroundColor}
     >
       <View
-        style={[headerStyles.widthContainer, !isActionWindow && { maxWidth: tabLayoutWidths.xl }]}
+        style={[headerStyles.widthContainer, !isRequestWindow && { maxWidth: tabLayoutWidths.xl }]}
       >
         <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1]}>
-          <Avatar pfp={account.preferences.pfp} isSmart={isSmartAccount(account)} />
+          <Avatar
+            address={account.addr}
+            pfp={account.preferences.pfp}
+            isSmart={isSmartAccount(account)}
+          />
           <View style={flexbox.flex1}>
             <View style={[flexbox.flex1, flexbox.directionRow]}>
               <Text fontSize={16} weight="medium" numberOfLines={1}>
@@ -72,7 +76,7 @@ const HeaderAccountAndNetworkInfo: FC<Props> = ({
             </View>
           </View>
         </View>
-        {!!withAmbireLogo && (maxWidthSize(700) || isActionWindow) && (
+        {!!withAmbireLogo && (maxWidthSize(700) || isRequestWindow) && (
           <View style={spacings.pl}>
             {withOG ? <AmbireLogoHorizontalWithOG /> : <AmbireLogoHorizontal />}
           </View>

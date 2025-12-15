@@ -6,7 +6,8 @@ import BatchIcon from '@common/assets/svg/BatchIcon'
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import Button from '@common/components/Button'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
-import Tooltip from '@common/components/Tooltip'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
+import HoldToProceedButton from '@common/components/HoldToProceedButton'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
@@ -28,6 +29,7 @@ type Props = {
   isAddToCartDisplayed: boolean
   isAddToCartDisabled: boolean
   inProgressButtonText: string
+  shouldHoldToProceed: boolean
   buttonText: string
   buttonTooltipText?: string
 }
@@ -42,7 +44,8 @@ const Footer = ({
   isAddToCartDisplayed,
   isAddToCartDisabled,
   inProgressButtonText,
-  buttonText
+  buttonText,
+  shouldHoldToProceed
 }: Props) => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
@@ -54,9 +57,7 @@ const Footer = ({
   const batchCount = useMemo(() => {
     const requests = userRequests.filter((r) => {
       return (
-        r.action.kind === 'calls' &&
-        r.meta.accountAddr === account?.addr &&
-        r.meta.chainId === chainId
+        r.kind === 'calls' && r.meta.accountAddr === account?.addr && r.meta.chainId === chainId
       )
     })
 
@@ -118,8 +119,14 @@ const Footer = ({
             >
               <BatchIcon style={spacings.mlTy} />
             </Button>
-            {/* @ts-ignore */}
-            <View style={spacings.mlMi} dataSet={{ tooltipId: 'start-batch-info-tooltip' }}>
+            <View
+              style={spacings.mlMi}
+              // @ts-ignore
+              dataSet={createGlobalTooltipDataSet({
+                id: 'start-batch-info-tooltip',
+                content: startBatchingInfo
+              })}
+            >
               <AnimatedPressable
                 style={[spacings.phTy, spacings.pvTy, { borderRadius: 50 }, animStyle]}
                 {...bindAnim}
@@ -129,20 +136,33 @@ const Footer = ({
             </View>
           </View>
         )}
-        {/* @ts-ignore */}
-        <View dataSet={{ tooltipId: 'sign-button-tooltip' }}>
-          <ButtonWithLoader
-            testID="transaction-button-sign"
-            type="primary"
-            disabled={isSignDisabled}
-            isLoading={isSignLoading}
-            text={isSignLoading ? inProgressButtonText : buttonText}
-            onPress={onSign}
-            size="large"
-          />
+        <View
+          // @ts-ignore
+          dataSet={createGlobalTooltipDataSet({
+            id: 'sign-button-tooltip',
+            hidden: !buttonTooltipText,
+            content: buttonTooltipText
+          })}
+        >
+          {shouldHoldToProceed ? (
+            <HoldToProceedButton
+              text={t('Hold to sign')}
+              disabled={isSignDisabled}
+              onHoldComplete={onSign}
+              testID="proceed-btn"
+            />
+          ) : (
+            <ButtonWithLoader
+              testID="transaction-button-sign"
+              type="primary"
+              disabled={isSignDisabled}
+              isLoading={isSignLoading}
+              text={isSignLoading ? inProgressButtonText : buttonText}
+              onPress={onSign}
+              size="large"
+            />
+          )}
         </View>
-        {!!buttonTooltipText && <Tooltip content={buttonTooltipText} id="sign-button-tooltip" />}
-        <Tooltip content={startBatchingInfo} id="start-batch-info-tooltip" />
       </View>
     </View>
   )

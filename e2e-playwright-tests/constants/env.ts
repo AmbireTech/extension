@@ -9,6 +9,7 @@ export const baParams = parseEnv(envVariables, 'BA')
 export const saParams = parseEnv(envVariables, 'SA')
 
 export const BA_ADDRESS = envVariables.BA_SELECTED_ACCOUNT
+export const SA_ADDRESS = envVariables.SA_SELECTED_ACCOUNT
 export const KEYSTORE_PASS = envVariables.KEYSTORE_PASS
 export const SEED = envVariables.SEED
 export const SEED24 = envVariables.SEED_24_WORDS

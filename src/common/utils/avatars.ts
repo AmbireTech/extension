@@ -3,11 +3,16 @@ import { isAddress } from 'ethers'
 import { blockyColors } from '@common/components/Avatar/Blockies/utils'
 import Jazzicon from '@raugfer/jazzicon'
 
-const getAvatarType = (pfp: string): string => {
+type AvatarType = 'ens' | 'jazz' | 'blockies' | 'legacy'
+
+const getAvatarType = (pfp: string, canBeEns?: boolean): AvatarType => {
+  if (canBeEns) return 'ens'
+
   if (isAddress(pfp)) {
     return 'jazz'
   }
-  return ''
+
+  return 'legacy'
 }
 
 const FALLBACK_COLORS: AvatarColors = ['#6000FF', '#A36AF8', '#35008C']

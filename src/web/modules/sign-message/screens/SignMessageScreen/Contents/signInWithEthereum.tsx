@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import { AUTO_LOGIN_DURATION_OPTIONS } from '@ambire-common/controllers/autoLogin/autoLogin'
-import { SiweMessage } from '@ambire-common/interfaces/userRequest'
+import { SiweMessageUserRequest } from '@ambire-common/interfaces/userRequest'
 import Alert from '@common/components/Alert'
 import NetworkBadge from '@common/components/NetworkBadge'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
@@ -58,9 +58,7 @@ const Value = ({
     <Text
       appearance="secondaryText"
       fontSize={14 * responsiveSizeMultiplier}
-      dataSet={{
-        tooltipId
-      }}
+      dataSet={{ tooltipId }}
     >
       {children}
     </Text>
@@ -107,7 +105,7 @@ const SignInWithEthereum = ({
   const siweMessageToSign = useMemo(() => {
     // It's validated beforehand. This component is never rendered if the
     // message is not a SIWE one.
-    return signMessageState.messageToSign!.content as SiweMessage
+    return signMessageState.messageToSign!.content as SiweMessageUserRequest['meta']['params']
   }, [signMessageState.messageToSign])
   const isAutoLoginEnabledByUser = siweMessageToSign?.isAutoLoginEnabledByUser || false
 

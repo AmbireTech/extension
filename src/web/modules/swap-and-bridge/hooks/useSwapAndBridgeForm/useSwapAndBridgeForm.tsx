@@ -5,6 +5,7 @@ import { useModalize } from 'react-native-modalize'
 import { useLocation } from 'react-router-dom'
 
 import { SwapAndBridgeFormStatus } from '@ambire-common/controllers/swapAndBridge/swapAndBridge'
+import { SwapAndBridgeActiveRoute } from '@ambire-common/interfaces/swapAndBridge'
 import {
   calculateAmountWarnings,
   getIsTokenEligibleForSwapAndBridge
@@ -13,7 +14,6 @@ import { getCallsCount } from '@ambire-common/utils/userRequest'
 import useGetTokenSelectProps from '@common/hooks/useGetTokenSelectProps'
 import useNavigation from '@common/hooks/useNavigation'
 import { ROUTES } from '@common/modules/router/constants/common'
-import useActionsControllerState from '@web/hooks/useActionsControllerState'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useMainControllerState from '@web/hooks/useMainControllerState'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
@@ -26,7 +26,7 @@ import { getUiType } from '@web/utils/uiType'
 
 type SessionId = ReturnType<typeof nanoid>
 
-const { isPopup, isActionWindow } = getUiType()
+const { isPopup, isRequestWindow } = getUiType()
 
 const useSwapAndBridgeForm = () => {
   const {
@@ -67,7 +67,7 @@ const useSwapAndBridgeForm = () => {
    * @deprecated - the settings menu is not used anymore
    */
   const [settingModalVisible, setSettingsModalVisible] = useState<boolean>(false)
-  const [hasBroadcasted, setHasBroadcasted] = useState(false)
+  const [activeRoute, setActiveRoute] = useState<SwapAndBridgeActiveRoute | undefined>(undefined)
   const [showAddedToBatch, setShowAddedToBatch] = useState(false)
   const [latestBatchedNetwork, setLatestBatchedNetwork] = useState<bigint | undefined>()
   const [isOneClickModeDuringPriceImpact, setIsOneClickModeDuringPriceImpact] =
@@ -86,24 +86,14 @@ const useSwapAndBridgeForm = () => {
     open: openPriceImpactModal,
     close: closePriceImpactModal
   } = useModalize()
-  const { visibleActionsQueue } = useActionsControllerState()
+  const { visibleUserRequests } = useRequestsControllerState()
   const sessionIdsRequestedToBeInit = useRef<SessionId[]>([])
   const sessionId = useMemo(() => {
     if (isPopup) return 'popup'
-    if (isActionWindow) return 'action-window'
+    if (isRequestWindow) return 'request-window'
 
     return nanoid()
   }, []) // purposely, so it is unique per hook lifetime
-
-  const setIsAutoSelectRouteDisabled = useCallback(
-    (isDisabled: boolean) => {
-      dispatch({
-        type: 'SWAP_AND_BRIDGE_CONTROLLER_IS_AUTO_SELECT_ROUTE_DISABLED',
-        params: { isDisabled }
-      })
-    },
-    [dispatch]
-  )
 
   const isBridge = useMemo(() => {
     if (!fromSelectedToken || !toSelectedToken) return false
@@ -114,7 +104,7 @@ const useSwapAndBridgeForm = () => {
     if (!fromSelectedToken || !account || !userRequests.length) return []
     return userRequests.filter(
       (r) =>
-        r.action.kind === 'calls' &&
+        r.kind === 'calls' &&
         r.meta.accountAddr === account.addr &&
         r.meta.chainId === fromSelectedToken.chainId
     )
@@ -125,7 +115,7 @@ const useSwapAndBridgeForm = () => {
 
     const reqs = userRequests.filter(
       (r) =>
-        r.action.kind === 'calls' &&
+        r.kind === 'calls' &&
         r.meta.accountAddr === account.addr &&
         r.meta.chainId === latestBatchedNetwork
     )
@@ -133,18 +123,8 @@ const useSwapAndBridgeForm = () => {
     return getCallsCount(reqs)
   }, [latestBatchedNetwork, userRequests, account])
 
-  const handleSetFromAmount = useCallback(
-    (val: string) => {
-      setFromAmountValue(val)
-      setIsAutoSelectRouteDisabled(false)
-    },
-    [setFromAmountValue, setIsAutoSelectRouteDisabled]
-  )
-
   useEffect(() => {
-    const hasSwapAndBridgeAction = visibleActionsQueue.some(
-      (action) => action.type === 'swapAndBridge'
-    )
+    const hasSwapAndBridgeAction = visibleUserRequests.some((req) => req.kind === 'swapAndBridge')
 
     // Cleanup sessions
     if (hasSwapAndBridgeAction) {
@@ -156,13 +136,13 @@ const useSwapAndBridgeForm = () => {
         if (signAccountOpController) {
           window.close()
           dispatch({
-            type: 'ACTIONS_CONTROLLER_FOCUS_ACTION_WINDOW'
+            type: 'REQUESTS_CONTROLLER_FOCUS_REQUEST_WINDOW'
           })
           return
         }
 
         dispatch({
-          type: 'CLOSE_SIGNING_ACTION_WINDOW',
+          type: 'CLOSE_SIGNING_REQUEST_WINDOW',
           params: {
             type: 'swapAndBridge'
           }
@@ -171,11 +151,11 @@ const useSwapAndBridgeForm = () => {
 
         return
       }
-      // Forcefully unload the popup session after the action window session is added.
+      // Forcefully unload the popup session after the request window session is added.
       // Otherwise when the user is done with the operation
       // and closes the window the popup session will remain open and the swap and bridge
       // screen will open on load
-      if (isActionWindow && sessionIds.includes('popup') && sessionIds.includes(sessionId)) {
+      if (isRequestWindow && sessionIds.includes('popup') && sessionIds.includes(sessionId)) {
         dispatch({
           type: 'SWAP_AND_BRIDGE_CONTROLLER_UNLOAD_SCREEN',
           params: { sessionId: 'popup', forceUnload: true }
@@ -229,7 +209,7 @@ const useSwapAndBridgeForm = () => {
     sessionIds,
     setSearchParams,
     signAccountOpController,
-    visibleActionsQueue
+    visibleUserRequests
   ])
 
   // remove session - this will be triggered only
@@ -413,7 +393,7 @@ const useSwapAndBridgeForm = () => {
     setSettingsModalVisible((p) => !p)
   }, [])
 
-  const pendingRoutes = useMemo(() => {
+  const selectedAccActiveRoutes = useMemo(() => {
     return (
       (activeRoutes || [])
         .filter((r) => r.route && getAddress(r.route.userAddress) === account?.addr)
@@ -424,17 +404,35 @@ const useSwapAndBridgeForm = () => {
   const displayedView: 'estimate' | 'batch' | 'track' = useMemo(() => {
     if (showAddedToBatch) return 'batch'
 
-    if (hasBroadcasted) return 'track'
+    if (activeRoute) return 'track'
 
     return 'estimate'
-  }, [hasBroadcasted, showAddedToBatch])
+  }, [activeRoute, showAddedToBatch])
 
   useEffect(() => {
     const broadcastStatus = mainCtrlStatuses.signAndBroadcastAccountOp
-    if (broadcastStatus === 'SUCCESS' && activeRoutes.length) {
-      setHasBroadcasted(true)
+    if (broadcastStatus === 'SUCCESS' && selectedAccActiveRoutes.length && !activeRoute) {
+      const route = selectedAccActiveRoutes.find(
+        (r) => r.activeRouteId === signAccountOpController?.accountOp.meta?.swapTxn?.activeRouteId
+      )
+
+      if (!route && isRequestWindow) {
+        dispatch({
+          type: 'CLOSE_SIGNING_REQUEST_WINDOW',
+          params: { type: 'swapAndBridge' }
+        })
+        return
+      }
+
+      setActiveRoute(route)
     }
-  }, [activeRoutes.length, mainCtrlStatuses.signAndBroadcastAccountOp])
+  }, [
+    selectedAccActiveRoutes,
+    mainCtrlStatuses.signAndBroadcastAccountOp,
+    signAccountOpController?.accountOp.meta?.swapTxn?.activeRouteId,
+    dispatch,
+    activeRoute
+  ])
 
   useEffect(() => {
     if (!signAccountOpController) {
@@ -445,7 +443,7 @@ const useSwapAndBridgeForm = () => {
   return {
     sessionId,
     fromAmountValue,
-    onFromAmountChange: handleSetFromAmount,
+    onFromAmountChange: setFromAmountValue,
     fromTokenAmountSelectDisabled,
     fromTokenOptions,
     fromTokenValue,
@@ -457,15 +455,14 @@ const useSwapAndBridgeForm = () => {
     acknowledgeHighPriceImpact,
     settingModalVisible,
     handleToggleSettingsMenu,
-    pendingRoutes,
+    selectedAccActiveRoutes,
     routesModalRef,
     displayedView,
-    hasBroadcasted,
-    setHasBroadcasted,
+    activeRoute,
+    setActiveRoute,
     openRoutesModal,
     closeRoutesModal,
     estimationModalRef,
-    setIsAutoSelectRouteDisabled,
     isBridge,
     setShowAddedToBatch,
     latestBatchedNetwork,

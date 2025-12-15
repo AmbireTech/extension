@@ -4,9 +4,10 @@ import { View } from 'react-native'
 
 import { Statuses } from '@ambire-common/interfaces/eventEmitter'
 import { AddNetworkRequestParams, Network, NetworkFeature } from '@ambire-common/interfaces/network'
-import { DappUserRequest } from '@ambire-common/interfaces/userRequest'
+import { UserRequest } from '@ambire-common/interfaces/userRequest'
 import ArrowRightIcon from '@common/assets/svg/ArrowRightIcon'
 import ManifestFallbackIcon from '@common/assets/svg/ManifestFallbackIcon'
+import Alert from '@common/components/Alert'
 import Banner from '@common/components/Banner'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
@@ -31,9 +32,9 @@ type UpdateChainProps = {
   areParamsValid: boolean | null
   statuses: Statuses<'addNetwork' | 'updateNetwork'> & Statuses<string>
   features: NetworkFeature[]
-  networkDetails: AddNetworkRequestParams
+  networkDetails?: AddNetworkRequestParams
   networkAlreadyAdded: Network
-  userRequest: DappUserRequest | undefined
+  userRequest: UserRequest | undefined
   actionButtonPressedRef: React.MutableRefObject<boolean>
   rpcUrls: string[]
   rpcUrlIndex: number
@@ -150,62 +151,80 @@ const UpdateChain = ({
             </Text>
           </View>
 
-          <View
-            style={[
-              flexbox.directionRow,
-              flexbox.flex1,
-              flexbox.justifySpaceBetween,
-              {
-                marginBottom: SPACING_SM * responsiveSizeMultiplier,
-                paddingBottom: SPACING_TY * responsiveSizeMultiplier
-              }
-            ]}
-          >
-            <RpcCard title="Old RPC URL" url={networkAlreadyAdded.selectedRpcUrl}>
-              <NetworkAvailableFeatures
-                hideBackgroundAndBorders
-                titleSize={14 * responsiveSizeMultiplier}
-                features={networkAlreadyAdded.features}
-                chainId={networkAlreadyAdded.chainId}
-                withRetryButton={!!rpcUrls.length && rpcUrlIndex < rpcUrls.length - 1}
-                handleRetry={handleRetryWithDifferentRpcUrl}
-                responsiveSizeMultiplier={responsiveSizeMultiplier}
-                withScroll
+          {(areParamsValid || areParamsValid === null || actionButtonPressedRef.current) &&
+          networkDetails ? (
+            <>
+              <View
+                style={[
+                  flexbox.directionRow,
+                  flexbox.flex1,
+                  flexbox.justifySpaceBetween,
+                  {
+                    marginBottom: SPACING_SM * responsiveSizeMultiplier,
+                    paddingBottom: SPACING_TY * responsiveSizeMultiplier
+                  }
+                ]}
+              >
+                <RpcCard title="Old RPC URL" url={networkAlreadyAdded.selectedRpcUrl}>
+                  <NetworkAvailableFeatures
+                    hideBackgroundAndBorders
+                    titleSize={14 * responsiveSizeMultiplier}
+                    features={networkAlreadyAdded.features}
+                    chainId={networkAlreadyAdded.chainId}
+                    withRetryButton={!!rpcUrls.length && rpcUrlIndex < rpcUrls.length - 1}
+                    handleRetryWithDifferentRpcUrl={handleRetryWithDifferentRpcUrl}
+                    responsiveSizeMultiplier={responsiveSizeMultiplier}
+                    withScroll
+                  />
+                </RpcCard>
+                <ArrowRightIcon
+                  style={{
+                    // Align-self center, instead of aligning the parent, to avoid weird behaviour when the
+                    // container is scrollable
+                    alignSelf: 'center',
+                    marginHorizontal: SPACING_MD * responsiveSizeMultiplier
+                  }}
+                />
+                <RpcCard title="New RPC URL" url={networkDetails.selectedRpcUrl} isNew>
+                  <NetworkAvailableFeatures
+                    hideBackgroundAndBorders
+                    titleSize={14 * responsiveSizeMultiplier}
+                    features={features}
+                    chainId={networkDetails.chainId}
+                    withRetryButton={!!rpcUrls.length && rpcUrlIndex < rpcUrls.length - 1}
+                    handleRetryWithDifferentRpcUrl={handleRetryWithDifferentRpcUrl}
+                    responsiveSizeMultiplier={responsiveSizeMultiplier}
+                    withScroll
+                  />
+                </RpcCard>
+              </View>
+              <View
+                style={{
+                  marginBottom: SPACING * responsiveSizeMultiplier
+                }}
+              >
+                <Banner
+                  title={t(
+                    'Make sure you trust this site and provider. You can change the RPC URL anytime in the network settings.'
+                  )}
+                  type="info2"
+                />
+              </View>
+            </>
+          ) : (
+            <View style={[flexbox.flex1, flexbox.alignCenter, flexbox.justifyCenter]}>
+              <Alert
+                title={t('Invalid Request Params')}
+                text={t(
+                  '{{name}} provided invalid params for adding a new network. Try adding it from another App or manually from Settings.',
+                  {
+                    name: name || 'The App'
+                  }
+                )}
+                type="error"
               />
-            </RpcCard>
-            <ArrowRightIcon
-              style={{
-                // Align-self center, instead of aligning the parent, to avoid weird behaviour when the
-                // container is scrollable
-                alignSelf: 'center',
-                marginHorizontal: SPACING_MD * responsiveSizeMultiplier
-              }}
-            />
-            <RpcCard title="New RPC URL" url={networkDetails.selectedRpcUrl} isNew>
-              <NetworkAvailableFeatures
-                hideBackgroundAndBorders
-                titleSize={14 * responsiveSizeMultiplier}
-                features={features}
-                chainId={networkDetails.chainId}
-                withRetryButton={!!rpcUrls.length && rpcUrlIndex < rpcUrls.length - 1}
-                handleRetry={handleRetryWithDifferentRpcUrl}
-                responsiveSizeMultiplier={responsiveSizeMultiplier}
-                withScroll
-              />
-            </RpcCard>
-          </View>
-          <View
-            style={{
-              marginBottom: SPACING * responsiveSizeMultiplier
-            }}
-          >
-            <Banner
-              title={t(
-                'Make sure you trust this site and provider. You can change the RPC URL anytime in the network settings.'
-              )}
-              type="info2"
-            />
-          </View>
+            </View>
+          )}
         </>
       </TabLayoutWrapperMainContent>
     </TabLayoutContainer>

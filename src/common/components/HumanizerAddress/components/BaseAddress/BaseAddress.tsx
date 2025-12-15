@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { Linking, Pressable, View } from 'react-native'
 
 import { getCoinGeckoTokenUrl } from '@ambire-common/consts/coingecko'
+import { BlacklistedStatus } from '@ambire-common/interfaces/phishing'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import useBenzinNetworksContext from '@benzin/hooks/useBenzinNetworksContext'
 // import AddressBookIcon from '@common/assets/svg/AddressBookIcon'
@@ -29,11 +30,19 @@ interface Props extends TextProps {
   address: string
   chainId?: bigint
   hideLinks?: boolean
+  verification?: BlacklistedStatus
 }
 
-const { isActionWindow } = getUiType()
+const { isRequestWindow } = getUiType()
 
-const BaseAddress: FC<Props> = ({ children, address, chainId, hideLinks = false, ...rest }) => {
+const BaseAddress: FC<Props> = ({
+  children,
+  address,
+  chainId,
+  hideLinks = false,
+  verification,
+  ...rest
+}) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { addToast } = useToast()
@@ -70,9 +79,9 @@ const BaseAddress: FC<Props> = ({ children, address, chainId, hideLinks = false,
         await Linking.openURL(targetUrl)
         return
       }
-      // Close the action-window if this address is opened in one, otherwise
+      // Close the request-window if this address is opened in one, otherwise
       // the user will have to minimize it to see the explorer.
-      await openInTab({ url: targetUrl, shouldCloseCurrentWindow: isActionWindow })
+      await openInTab({ url: targetUrl, shouldCloseCurrentWindow: isRequestWindow })
     } catch {
       addToast(t('Failed to open explorer'), {
         type: 'error'
@@ -87,7 +96,13 @@ const BaseAddress: FC<Props> = ({ children, address, chainId, hideLinks = false,
 
   return (
     <View style={[flexbox.alignCenter, flexbox.directionRow, flexbox.flex1]}>
-      <Text fontSize={14} weight="medium" appearance="primaryText" selectable {...rest}>
+      <Text
+        fontSize={14}
+        weight="medium"
+        appearance={verification === 'BLACKLISTED' ? 'errorText' : 'primaryText'}
+        selectable
+        {...rest}
+      >
         {children}
         <Pressable style={spacings.mlMi}>
           {({ hovered }: any) => (
@@ -102,10 +117,7 @@ const BaseAddress: FC<Props> = ({ children, address, chainId, hideLinks = false,
       </Text>
       <Tooltip
         id={tooltipId}
-        style={{
-          padding: 0,
-          overflow: 'hidden'
-        }}
+        style={{ padding: 0, overflow: 'hidden' }}
         clickable
         noArrow
         place="bottom-end"

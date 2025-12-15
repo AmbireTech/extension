@@ -18,7 +18,7 @@ import useHover, { AnimatedPressable, useCustomHover } from '@web/hooks/useHover
 import Badge from './Badge'
 import ProtocolIcon from './ProtocolIcon'
 
-type Props = Omit<PositionsByProvider, 'type' | 'positionInUSD' | 'positions'> & {
+type Props = Omit<PositionsByProvider, 'type' | 'positionInUSD' | 'positions' | 'source'> & {
   toggleExpanded: () => void
   isExpanded: boolean
   positionInUSD?: string
@@ -71,6 +71,8 @@ const DeFiPositionHeader: FC<Props> = ({
   })
 
   const dappUrl = useMemo(() => {
+    if (siteUrl) return siteUrl
+
     const providerNameWithoutVersion = providerName.split(' ')[0].toLowerCase()
     const dapp = dapps.find((d) => d.name.toLowerCase().includes(providerNameWithoutVersion))
 
@@ -78,8 +80,9 @@ const DeFiPositionHeader: FC<Props> = ({
   }, [dapps, providerName])
 
   const openDAppUrl = useCallback(async () => {
+    if (!dappUrl) return
     try {
-      await openInTab({ url: siteUrl || dappUrl! })
+      await openInTab({ url: dappUrl })
     } catch (e) {
       console.error(e)
     }

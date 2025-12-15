@@ -39,14 +39,14 @@ const GasTankInfoModal = ({
   const { networks } = useNetworksControllerState()
 
   const token = useMemo(() => {
-    const result = portfolio?.latest?.gasTank?.result as PortfolioGasTankResult
+    const result = portfolio?.portfolioState?.gasTank?.result as PortfolioGasTankResult
 
     if (!isSA || !result) {
       return null
     }
 
     return result.gasTankTokens ? result.gasTankTokens[0] : null
-  }, [isSA, portfolio?.latest?.gasTank?.result])
+  }, [isSA, portfolio?.portfolioState?.gasTank?.result])
 
   const balanceFormatted = useMemo(
     () => (token ? getAndFormatTokenDetails(token, networks)?.balanceFormatted ?? 0 : 0),

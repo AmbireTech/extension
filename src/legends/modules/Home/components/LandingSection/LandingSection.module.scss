@@ -24,11 +24,13 @@
         z-index: 2;
 
         .kicker {
-            font-weight: 400;
+            font-weight: 500;
             font-size: 1rem;
             line-height: 1;
+            margin-bottom: 0.5rem;
             letter-spacing: 0;
-            color: $cardBg;
+            text-transform: capitalize;
+            color: $neutral-600;
         }
 
         .title {
@@ -41,7 +43,7 @@
             text-shadow: -0.125rem .125rem 0 rgba($accent, 0.6);
 
             margin-bottom: 2.5rem;
-            max-width: 31.75rem;
+            max-width: 36rem;
         }
 
         .button {

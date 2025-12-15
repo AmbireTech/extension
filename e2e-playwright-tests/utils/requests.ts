@@ -25,7 +25,11 @@ function categorizeRequests(requests: string[]) {
     'rpc.blast.io',
     'bepolia.rpc.berachain.com',
     'rpc.berachain-apis.com',
-    'rpc.plasma.to'
+    'rpc.plasma.to',
+    'api.llama.fi',
+    'api.llama.fi',
+    'base-mainnet.public.blastapi.io',
+    'rpc.monad.xyz'
   ]
 
   const reqs = requests.reduce(

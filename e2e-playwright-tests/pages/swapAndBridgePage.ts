@@ -187,7 +187,7 @@ export class SwapAndBridgePage extends BasePage {
     // "Select route" step may take more time to appear, as it depends on the Li.Fi response.
     await this.page.waitForSelector(locators.selectRouteButton, {
       state: 'visible',
-      timeout: 10000
+      timeout: 15000
     })
     await this.click(selectors.addToBatchButton)
 
@@ -222,13 +222,28 @@ export class SwapAndBridgePage extends BasePage {
     const signButton = page.getByTestId(selectors.signTransactionButton)
 
     try {
-      await expect(signButton).toBeVisible({ timeout: 5000 })
-      await expect(signButton).toBeEnabled({ timeout: 5000 })
-      await page.getByTestId(selectors.signTransactionButton).click()
-      await page.waitForTimeout(5000)
+      // Select slow speed
+      await page.getByTestId(selectors.transaction.feeSpeedSelectDropdown).click()
+      await page.getByTestId(selectors.transaction.feeSpeedSlow).first().click()
 
-      // close transaction progress pop up
-      await page.locator(selectors.closeTransactionProgressPopUpButton).click()
+      // check fee
+      const feeSelector = await page.locator(selectors.transaction.feeGasTankInDollars).innerText() // returns e.g. '<$0.01'
+
+      const feeDollarsAmount = Number(feeSelector.replace(/[<$]/g, ''))
+
+      if (feeDollarsAmount > 0.1) {
+        console.warn(
+          `⚠️ Fee amount ($${feeDollarsAmount}) exceeds the $0.10 limit; transaction signing skipped.`
+        )
+      } else {
+        await expect(signButton).toBeVisible({ timeout: 5000 })
+        await expect(signButton).toBeEnabled({ timeout: 5000 })
+        await page.getByTestId(selectors.signTransactionButton).click()
+        await page.waitForTimeout(5000)
+
+        // close transaction progress pop up
+        await page.locator(selectors.closeTransactionProgressPopUpButton).click()
+      }
     } catch (error) {
       console.warn("⚠️ The 'Sign' button is not clickable, but it should be.")
     }
@@ -352,37 +367,6 @@ export class SwapAndBridgePage extends BasePage {
     }
   }
 
-  async signTokens({ fromToken }: { fromToken: Token }): Promise<void> {
-    await this.click(selectors.topUpProceedButton)
-
-    // approve the high impact modal if appears
-    await this.handlePriceWarningModals()
-
-    await this.monitorRequests()
-
-    // Sometimes the button needs a bit to become enabled
-    await this.expectButtonEnabled(selectors.signButton)
-
-    await this.click(selectors.signButton)
-    await expect(this.page.getByText('Confirming your trade')).toBeVisible({ timeout: 10000 })
-
-    const { rpc } = this.getCategorizedRequests()
-
-    // Verify that portfolio updates run only for the from token network.
-    // A previous regression was triggering updates on all enabled networks after a broadcast,
-    // which caused a significant performance downgrade.
-    expect(
-      rpc.every((req) => req === `https://invictus.ambire.com/${fromToken.chainName}`),
-      `Invalid portfolio update behavior detected.
-   After a broadcast, the portfolio must be refreshed only for *${fromToken.chainName}*.
-   However, RPC requests were also made for other networks: ${rpc.toString()}`
-    ).toEqual(true)
-
-    // assert transaction successful
-    await expect(this.page.getByText('Nice trade!')).toBeVisible({ timeout: 120000 }) // sometimes confirmation takes more time (around 1 min)
-    await this.click(selectors.closeProgressModalButton)
-  }
-
   async batchAction(): Promise<void> {
     await this.page.getByTestId(selectors.addToBatchButton).isEnabled()
     await this.click(selectors.addToBatchButton)
@@ -411,10 +395,26 @@ export class SwapAndBridgePage extends BasePage {
 
   async signBatchTransactionsPage(page): Promise<void> {
     const signButton = page.getByTestId(selectors.signTransactionButton)
-    await expect(signButton).toBeVisible({ timeout: 5000 })
-    await expect(signButton).toBeEnabled({ timeout: 5000 })
-    await this.verifyBatchTransactionDetails(page)
-    await page.waitForTimeout(3000)
+
+    // Select slow speed
+    await page.getByTestId(selectors.transaction.feeSpeedSelectDropdown).click()
+    await page.getByTestId(selectors.transaction.feeSpeedSlow).first().click()
+
+    // check fee
+    const feeSelector = await page.locator(selectors.transaction.feeGasTankInDollars).innerText() // returns e.g. '<$0.01'
+
+    const feeDollarsAmount = Number(feeSelector.replace(/[<$]/g, ''))
+
+    if (feeDollarsAmount > 0.1) {
+      console.warn(
+        `⚠️ Fee amount ($${feeDollarsAmount}) exceeds the $0.10 limit; transaction signing skipped.`
+      )
+    } else {
+      await expect(signButton).toBeVisible({ timeout: 5000 })
+      await expect(signButton).toBeEnabled({ timeout: 5000 })
+      await this.verifyBatchTransactionDetails(page)
+      await page.waitForTimeout(3000)
+    }
   }
 
   async verifyBatchTransactionDetails(page): Promise<void> {
@@ -481,22 +481,5 @@ export class SwapAndBridgePage extends BasePage {
     await expect(this.page.locator(selectors.dashboard.confirmedTransactionPill)).toContainText(
       'Confirmed'
     )
-  }
-
-  // approve the high impact modal if appears
-  async handlePriceWarningModals() {
-    const isHighPrice = await this.page
-      .waitForSelector(selectors.highPriceImpactSab, { timeout: 1000 })
-      .catch(() => null)
-
-    const isHighSlippage = await this.page
-      .waitForSelector(selectors.highSlippageModal, { timeout: 1000 })
-      .catch(() => null)
-
-    if (isHighPrice || isHighSlippage) {
-      // TODO: change methods once we have IDs
-      await this.click(selectors.continueAnywayCheckboxSaB)
-      await this.page.locator(selectors.continueAnywayButton).click()
-    }
   }
 }

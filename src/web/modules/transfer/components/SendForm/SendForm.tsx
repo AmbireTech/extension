@@ -1,8 +1,7 @@
-import React, { useCallback, useEffect, useMemo } from 'react'
+import React, { useCallback } from 'react'
 import { View } from 'react-native'
 
 import { TokenResult } from '@ambire-common/libs/portfolio'
-import { getTokenAmount } from '@ambire-common/libs/portfolio/helpers'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import Recipient from '@common/components/Recipient'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
@@ -12,18 +11,16 @@ import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useAddressInput from '@common/hooks/useAddressInput'
 import useGetTokenSelectProps from '@common/hooks/useGetTokenSelectProps'
-import useRoute from '@common/hooks/useRoute'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { getInfoFromSearch } from '@web/contexts/transferControllerStateContext'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import useTransferControllerState from '@web/hooks/useTransferControllerState'
+import useSimulationError from '@web/modules/portfolio/hooks/SimulationError/useSimulationError'
 import { getTokenId } from '@web/utils/token'
 import { getUiType } from '@web/utils/uiType'
 
-import useSimulationError from '@web/modules/portfolio/hooks/SimulationError/useSimulationError'
 import styles from './styles'
 
 const isTab = getUiType().isTab
@@ -31,8 +28,8 @@ const SendForm = ({
   addressInputState,
   hasGasTank,
   amountErrorMessage,
+  amountErrorSeverity,
   isRecipientAddressUnknown,
-  isSWWarningVisible,
   isRecipientHumanizerKnownTokenOrSmartContract,
   amountFieldValue,
   setAmountFieldValue,
@@ -43,8 +40,8 @@ const SendForm = ({
   addressInputState: ReturnType<typeof useAddressInput>
   hasGasTank: boolean
   amountErrorMessage: string
+  amountErrorSeverity?: 'error' | 'warning' | 'info'
   isRecipientAddressUnknown: boolean
-  isSWWarningVisible: boolean
   isRecipientHumanizerKnownTokenOrSmartContract: boolean
   amountFieldValue: string
   setAmountFieldValue: (value: string) => void
@@ -53,7 +50,10 @@ const SendForm = ({
   handleGoBack: () => void
 }) => {
   const { validation } = addressInputState
-  const { state, tokens } = useTransferControllerState()
+  const {
+    state,
+    state: { tokens }
+  } = useTransferControllerState()
   const { dispatch } = useBackgroundService()
   const { portfolio } = useSelectedAccountControllerState()
   const {
@@ -61,16 +61,13 @@ const SendForm = ({
     amountFieldMode,
     amountInFiat,
     selectedToken,
-    isSWWarningAgreed,
-    isRecipientAddressUnknownAgreed,
     isTopUp,
     addressState,
     amount: controllerAmount
   } = state
   const { t } = useTranslation()
   const { networks } = useNetworksControllerState()
-  const { search } = useRoute()
-  const selectedTokenFromUrl = useMemo(() => getInfoFromSearch(search), [search])
+  const amountIsError = amountErrorSeverity === 'error' && !!amountErrorMessage
 
   const {
     value: tokenSelectValue,
@@ -116,43 +113,6 @@ const SendForm = ({
     })
   }, [amountFieldMode, dispatch])
 
-  const onRecipientCheckboxClick = useCallback(() => {
-    dispatch({
-      type: 'TRANSFER_CONTROLLER_UPDATE_FORM',
-      params: {
-        formValues: { isRecipientAddressUnknownAgreed: true, isSWWarningAgreed: true }
-      }
-    })
-  }, [dispatch])
-
-  useEffect(() => {
-    if (tokens?.length && !state.selectedToken) {
-      let tokenToSelect = tokens[0]
-
-      if (selectedTokenFromUrl) {
-        const correspondingToken = tokens.find(
-          (token) =>
-            token.address === selectedTokenFromUrl.addr &&
-            token.chainId.toString() === selectedTokenFromUrl.chainId &&
-            token.flags.onGasTank === false
-        )
-
-        if (correspondingToken) {
-          tokenToSelect = correspondingToken
-        }
-      }
-
-      if (tokenToSelect && getTokenAmount(tokenToSelect) > 0) {
-        dispatch({
-          type: 'TRANSFER_CONTROLLER_UPDATE_FORM',
-          params: {
-            formValues: { selectedToken: tokenToSelect }
-          }
-        })
-      }
-    }
-  }, [tokens, selectedTokenFromUrl, state.selectedToken, dispatch])
-
   return (
     <ScrollableWrapper
       contentContainerStyle={[styles.container, isTopUp ? styles.topUpContainer : {}]}
@@ -176,10 +136,6 @@ const SendForm = ({
             }
             isRecipientAddressUnknown={isRecipientAddressUnknown}
             isRecipientDomainResolving={addressState.isDomainResolving}
-            isRecipientAddressUnknownAgreed={isRecipientAddressUnknownAgreed}
-            onRecipientCheckboxClick={onRecipientCheckboxClick}
-            isSWWarningVisible={isSWWarningVisible}
-            isSWWarningAgreed={isSWWarningAgreed}
             selectedTokenSymbol={selectedToken?.symbol}
           />
         )}
@@ -187,7 +143,9 @@ const SendForm = ({
       <Text appearance="secondaryText" fontSize={14} weight="medium" style={spacings.mbMi}>
         {!portfolio?.isReadyToVisualize ? t('Loading tokens...') : t('Select token')}
       </Text>
-      {(!state.selectedToken && tokens.length) || !portfolio?.isReadyToVisualize ? (
+      {(!state.selectedToken && tokens.length) ||
+      !portfolio?.isReadyToVisualize ||
+      !state.isReady ? (
         <SkeletonLoader width="100%" height={115} />
       ) : (
         <SendToken
@@ -201,7 +159,7 @@ const SendForm = ({
           fromAmountInFiat={amountInFiat}
           fromAmountFieldMode={amountFieldMode}
           maxFromAmount={maxAmount}
-          validateFromAmount={{ success: !amountErrorMessage, message: amountErrorMessage }}
+          validateFromAmount={{ success: !amountIsError, message: amountErrorMessage }}
           onFromAmountChange={setAmountFieldValue}
           handleSwitchFromAmountFieldMode={switchAmountFieldMode}
           handleSetMaxFromAmount={setMaxAmount}

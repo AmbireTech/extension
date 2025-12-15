@@ -23,7 +23,8 @@ try {
     if (browser?.runtime?.id) isExtension = true
   }
 } catch (error) {
-  // Silent fail
+  // eslint-disable-next-line no-console
+  console.error(error)
 }
 
 const getFirefoxVersion = () => {
@@ -37,6 +38,8 @@ const getFirefoxVersion = () => {
 
     return undefined
   } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error(error)
     return undefined
   }
 }
@@ -46,6 +49,8 @@ const isOpera = () => {
     const userAgent = navigator.userAgent
     return userAgent.includes('Opera') || userAgent.includes('OPR')
   } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error(error)
     return false
   }
 }
@@ -54,6 +59,8 @@ const isSafari = () => {
   try {
     return navigator.userAgent.includes('Safari') && !navigator.userAgent.includes('Chrome')
   } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error(error)
     return false
   }
 }
@@ -65,6 +72,8 @@ const isVivaldi = async () => {
     // {@link https://stackoverflow.com/a/77047611/1333836}
     return !!currentWindow?.vivExtData
   } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error(error)
     return false
   }
 }

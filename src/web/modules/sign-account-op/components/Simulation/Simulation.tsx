@@ -39,7 +39,7 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
   const { styles, theme } = useTheme(getStyles)
   const signAccountOpState = useSignAccountOpControllerState()
   const {
-    portfolio: { tokens, collections, pending, networkSimulatedAccountOp }
+    portfolio: { tokens, collections, portfolioState, networkSimulatedAccountOp }
   } = useSelectedAccountControllerState()
   const [initialSimulationLoaded, setInitialSimulationLoaded] = useState(false)
   const [shouldRespectIsLoading, setShouldRespectIsLoading] = useState(true)
@@ -50,20 +50,20 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
 
   const pendingTokens = useMemo(() => {
     if (signAccountOpState?.accountOp && network) {
-      const pendingData = pending[network.chainId.toString()]
+      const pendingData = portfolioState[network.chainId.toString()]
 
       if (!pendingData || !pendingData.isReady || !pendingData.result) return []
 
       return tokens.filter((token) => token.chainId === network.chainId && !!token.simulationAmount)
     }
     return []
-  }, [network, pending, signAccountOpState?.accountOp, tokens])
+  }, [network, portfolioState, signAccountOpState?.accountOp, tokens])
 
-  const portfolioStatePending = useMemo(() => {
+  const portfolioNetworkState = useMemo(() => {
     if (!signAccountOpState?.accountOp || !network?.chainId) return null
 
-    return pending[network.chainId.toString()]
-  }, [network?.chainId, pending, signAccountOpState?.accountOp])
+    return portfolioState[network.chainId.toString()]
+  }, [network?.chainId, portfolioState, signAccountOpState?.accountOp])
 
   const pendingSendTokens = useMemo(
     () => pendingTokens.filter((token) => token.simulationAmount! < 0),
@@ -95,16 +95,16 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
   )
 
   const simulationErrorMsg = useMemo(() => {
-    if (portfolioStatePending?.isLoading && !initialSimulationLoaded) return ''
+    if (portfolioNetworkState?.isLoading && !initialSimulationLoaded) return ''
 
-    if (portfolioStatePending?.criticalError) {
-      if (isHexString(portfolioStatePending?.criticalError.simulationErrorMsg)) {
-        return `Please report this error to our team: ${portfolioStatePending?.criticalError.simulationErrorMsg}`
+    if (portfolioNetworkState?.criticalError) {
+      if (isHexString(portfolioNetworkState?.criticalError.simulationErrorMsg)) {
+        return `Please report this error to our team: ${portfolioNetworkState?.criticalError.simulationErrorMsg}`
       }
-      return portfolioStatePending?.criticalError.simulationErrorMsg || 'Unknown error'
+      return portfolioNetworkState?.criticalError.simulationErrorMsg || 'Unknown error'
     }
 
-    const simulationError = portfolioStatePending?.errors.find((err) => err.simulationErrorMsg)
+    const simulationError = portfolioNetworkState?.errors.find((err) => err.simulationErrorMsg)
     if (simulationError) {
       if (isHexString(simulationError)) {
         return `Please report this error to our team: ${simulationError.simulationErrorMsg}`
@@ -114,10 +114,10 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
 
     return ''
   }, [
-    initialSimulationLoaded,
-    portfolioStatePending?.criticalError,
-    portfolioStatePending?.errors,
-    portfolioStatePending?.isLoading
+    portfolioNetworkState?.isLoading,
+    portfolioNetworkState?.criticalError,
+    portfolioNetworkState?.errors,
+    initialSimulationLoaded
   ])
 
   const haveCallsChanged = useMemo(() => {
@@ -148,9 +148,9 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
   }, [haveCallsChanged])
 
   useEffect(() => {
-    if (!portfolioStatePending) return
-    if (!portfolioStatePending.isLoading) setShouldRespectIsLoading(false)
-  }, [portfolioStatePending])
+    if (!portfolioNetworkState) return
+    if (!portfolioNetworkState.isLoading) setShouldRespectIsLoading(false)
+  }, [portfolioNetworkState])
 
   const isReloading = useMemo(() => {
     if (!network?.chainId || !initialSimulationLoaded) return false
@@ -160,13 +160,13 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
 
   const shouldShowLoader = useMemo(
     () =>
-      (!!portfolioStatePending?.isLoading && shouldRespectIsLoading) ||
+      (!!portfolioNetworkState?.isLoading && shouldRespectIsLoading) ||
       isReloading ||
       !signAccountOpState?.isInitialized,
     [
+      portfolioNetworkState?.isLoading,
       shouldRespectIsLoading,
       isReloading,
-      portfolioStatePending?.isLoading,
       signAccountOpState?.isInitialized
     ]
   )
@@ -237,7 +237,7 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
   return (
     <View style={styles.simulationSection}>
       {simulationView === 'changes' && (
-        <View style={[flexbox.directionRow, flexbox.flex1, spacings.mb]}>
+        <View style={[flexbox.directionRow, flexbox.flex1]}>
           {(!!pendingSendTokens.length || !!pendingSendCollection.length) && (
             <View
               style={[styles.simulationContainer, !!pendingReceiveTokens.length && spacings.mrTy]}
@@ -345,7 +345,10 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
       )}
 
       {simulationView === 'error' && (
-        <Alert type="error" title={t('Unable to simulate the transaction. Proceed with caution')} />
+        <Alert
+          type="error"
+          title={t('Unable to simulate the transaction. Proceed with caution.')}
+        />
       )}
       {simulationView === 'no-changes' && (
         <View style={[flexbox.directionRow, flexbox.flex1, flexbox.alignCenter]}>

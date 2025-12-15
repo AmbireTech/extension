@@ -32,7 +32,7 @@ const LandingSection: FC<Props> = ({ nonV2acc = false }) => {
         <h1 className={styles.title}>
           {nonV2acc
             ? 'Switch to a new account to unlock Rewards quests. Ambire legacy accounts not supported.'
-            : 'Complete onchain quests, collect XP, claim $WALLET!'}
+            : 'Ambire is the only wallet that rewards you just for using it.'}
         </h1>
 
         {!nonV2acc && (

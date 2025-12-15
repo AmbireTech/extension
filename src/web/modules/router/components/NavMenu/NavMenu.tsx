@@ -12,8 +12,8 @@ import TelegramIcon from '@common/assets/svg/TelegramIcon'
 import TwitterIcon from '@common/assets/svg/TwitterIcon'
 import BackButton from '@common/components/BackButton'
 import Button from '@common/components/Button'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
-import Tooltip from '@common/components/Tooltip'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import Header from '@common/modules/header/components/Header'
@@ -175,13 +175,14 @@ const NavMenu = () => {
                       <MaximizeIcon
                         color={theme.secondaryBackgroundInverted}
                         // @ts-ignore missing type, but the prop is valid
-                        dataSet={{ tooltipId: expandViewTooltipId }}
+                        dataSet={createGlobalTooltipDataSet({
+                          id: expandViewTooltipId,
+                          content: t('Expand view')
+                        })}
                         width={16}
                         height={16}
                       />
                     </Button>
-
-                    <Tooltip content={t('Expand view')} id={expandViewTooltipId} />
                   </View>
                 )}
               </View>

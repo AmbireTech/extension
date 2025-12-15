@@ -9,7 +9,6 @@
     background-color: $primaryBackground;
     flex: 1;
 
-
     .container {
       padding: 1rem;
       @include container;
@@ -19,7 +18,6 @@
         align-items: center;
         justify-content: space-between;
         @include container;
-
 
         .sidebarButton {
           font-size: 1.25rem;
@@ -35,7 +33,7 @@
         }
       }
       .content {
-        padding-top: 2.5rem;
+        padding-top: 4rem;
       }
     }
 
@@ -44,6 +42,9 @@
     }
     .containerfull {
       max-width: 100%;
+    }
+    .containerresponsive {
+      @include container(true);
     }
   }
 
@@ -71,6 +72,10 @@
       &.containerfull {
         padding: 0;
       }
+
+      .container .content {
+        padding-top: 2.5rem;
+      }
     }
   }
 
@@ -78,6 +83,9 @@
     .scroll {
       padding: 0;
 
+      .container .content {
+        padding-top: 1.5rem;
+      }
     }
   }
 }

@@ -4,7 +4,7 @@ import { View } from 'react-native'
 
 import { Statuses } from '@ambire-common/interfaces/eventEmitter'
 import { AddNetworkRequestParams, Network, NetworkFeature } from '@ambire-common/interfaces/network'
-import { DappUserRequest } from '@ambire-common/interfaces/userRequest'
+import { UserRequest } from '@ambire-common/interfaces/userRequest'
 import ManifestFallbackIcon from '@common/assets/svg/ManifestFallbackIcon'
 import Alert from '@common/components/Alert'
 import NetworkIcon from '@common/components/NetworkIcon'
@@ -32,13 +32,13 @@ type AddChainProps = {
   areParamsValid: boolean | null
   statuses: Statuses<'addNetwork' | 'updateNetwork'> & Statuses<string>
   features: NetworkFeature[]
-  networkDetails: AddNetworkRequestParams
+  networkDetails?: AddNetworkRequestParams
   actionButtonPressedRef: React.MutableRefObject<boolean>
   rpcUrls: string[]
   rpcUrlIndex: number
   resolveButtonText: string
   existingNetwork: Network | null | undefined
-  userRequest: DappUserRequest | undefined
+  userRequest: UserRequest | undefined
 }
 
 const AddChain = ({
@@ -200,14 +200,14 @@ const AddChain = ({
                 ]}
               >
                 <NetworkDetails
-                  name={networkDetails.name || userRequest?.action?.params?.[0]?.chainName}
+                  name={networkDetails.name || userRequest?.meta?.params?.[0]?.chainName}
                   iconUrls={networkDetails?.iconUrls || []}
                   chainId={networkDetails.chainId}
                   rpcUrls={networkDetails.rpcUrls}
                   selectedRpcUrl={rpcUrls[rpcUrlIndex]}
                   nativeAssetSymbol={networkDetails.nativeAssetSymbol}
                   nativeAssetName={networkDetails.nativeAssetName}
-                  explorerUrl={networkDetails.explorerUrl}
+                  explorerUrl={networkDetails.explorerUrl || '-'}
                   style={{
                     backgroundColor:
                       themeType === THEME_TYPES.DARK
@@ -225,7 +225,7 @@ const AddChain = ({
                     features={features}
                     chainId={networkDetails.chainId}
                     withRetryButton={!!rpcUrls.length && rpcUrlIndex < rpcUrls.length - 1}
-                    handleRetry={handleRetryWithDifferentRpcUrl}
+                    handleRetryWithDifferentRpcUrl={handleRetryWithDifferentRpcUrl}
                     responsiveSizeMultiplier={responsiveSizeMultiplier}
                   />
                 )}
@@ -236,9 +236,12 @@ const AddChain = ({
             <View style={[flexbox.flex1, flexbox.alignCenter, flexbox.justifyCenter]}>
               <Alert
                 title={t('Invalid Request Params')}
-                text={t('{{name}} provided invalid params for adding a new network.', {
-                  name: name || 'The App'
-                })}
+                text={t(
+                  '{{name}} provided invalid params for adding a new network. Try adding it from another App or manually from Settings.',
+                  {
+                    name: name || 'The App'
+                  }
+                )}
                 type="error"
               />
             </View>

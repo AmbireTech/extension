@@ -4,12 +4,14 @@ import { useModalize } from 'react-native-modalize'
 
 import { TokenResult } from '@ambire-common/libs/portfolio'
 import { FormatType } from '@ambire-common/utils/formatDecimals/formatDecimals'
+// @ts-ignore
+import rewardsImage from '@common/assets/images/AmbireLogoLikeCoin.png'
 import BatchIcon from '@common/assets/svg/BatchIcon'
 import PendingToBeConfirmedIcon from '@common/assets/svg/PendingToBeConfirmedIcon'
 import BottomSheet from '@common/components/BottomSheet'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
-import Tooltip from '@common/components/Tooltip'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
@@ -25,8 +27,6 @@ import { getTokenId } from '@web/utils/token'
 import TokenDetails from '../TokenDetails'
 import PendingBadge from './PendingBadge'
 import getStyles from './styles'
-
-const rewardsImage = require('@common/assets/images/AmbireLogoLikeCoin.png')
 
 type Props = {
   token: TokenResult
@@ -157,9 +157,7 @@ const BaseTokenItem = ({
           <View style={[flexboxStyles.directionRow, { flex: 1.5 }]}>
             <View style={[spacings.mr, flexboxStyles.justifyCenter]}>
               {rewardsStyle ? (
-                <View style={styles.tokenButtonIconWrapper}>
-                  <Image source={rewardsImage} style={{ width: 33, height: 33 }} />
-                </View>
+                <Image source={rewardsImage as any} style={{ width: 40, height: 40 }} />
               ) : (
                 <TokenIcon
                   withContainer
@@ -192,7 +190,10 @@ const BaseTokenItem = ({
                     weight="number_bold"
                     numberOfLines={1}
                     // @ts-ignore
-                    dataSet={{ tooltipId: `${tokenId}-balance` }}
+                    dataSet={createGlobalTooltipDataSet({
+                      id: `${tokenId}-balance`,
+                      content: String(isPending ? pendingBalance : balance)
+                    })}
                     testID={`token-balance-${tokenId}`}
                   >
                     <Text
@@ -203,11 +204,6 @@ const BaseTokenItem = ({
                     </Text>{' '}
                     {symbol}{' '}
                   </Text>
-
-                  <Tooltip
-                    content={String(isPending ? pendingBalance : balance)}
-                    id={`${tokenId}-balance`}
-                  />
                   <Text weight="regular" style={[spacings.mrMi]} fontSize={12}>
                     {!label
                       ? networkData && t('on {{network}}', { network: networkData.name })

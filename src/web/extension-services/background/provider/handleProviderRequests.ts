@@ -137,7 +137,7 @@ const handleProviderRequests = async (
 
     await openInternalPageInTab({
       route: params.route,
-      windowId: mainCtrl.requests.actions.actionWindow.windowProps?.createdFromWindowId
+      windowId: mainCtrl.requests.requestWindow.windowProps?.createdFromWindowId
     })
     return null
   }

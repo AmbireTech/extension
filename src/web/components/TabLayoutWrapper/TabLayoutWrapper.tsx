@@ -16,7 +16,7 @@ import getStyles from './styles'
 
 type Width = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'full'
 
-const { isTab, isActionWindow } = getUiType()
+const { isTab, isRequestWindow } = getUiType()
 
 export const tabLayoutWidths = {
   xs: 420,
@@ -41,7 +41,7 @@ type TabLayoutContainerProps = {
 }
 
 export const getTabLayoutPadding = (maxWidthSize: (size: WindowSizes) => boolean) => {
-  if (isTab || isActionWindow) {
+  if (isTab || isRequestWindow) {
     return {
       paddingHorizontal: maxWidthSize('xl') ? SPACING_3XL : SPACING_MD
     }

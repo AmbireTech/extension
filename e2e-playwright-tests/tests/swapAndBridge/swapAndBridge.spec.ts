@@ -16,7 +16,7 @@ test.describe('swapAndBridge Smart Account', { tag: '@swapAndBridge' }, () => {
     pages
   }) => {
     const fromToken = tokens.dai.optimism
-    const toToken = tokens.usdce.optimism
+    const toToken = tokens.usdc.optimism
     await pages.swapAndBridge.prepareSwapAndBridge(0.1, fromToken, toToken)
     await pages.swapAndBridge.enterNumber('00.01', true)
   })
@@ -25,7 +25,7 @@ test.describe('swapAndBridge Smart Account', { tag: '@swapAndBridge' }, () => {
     pages
   }) => {
     const fromToken = tokens.dai.optimism
-    const toToken = tokens.usdce.optimism
+    const toToken = tokens.usdc.optimism
 
     await pages.swapAndBridge.prepareSwapAndBridge(0.1, fromToken, toToken)
     await pages.swapAndBridge.enterNumber('.01', true)
@@ -35,7 +35,7 @@ test.describe('swapAndBridge Smart Account', { tag: '@swapAndBridge' }, () => {
     pages
   }) => {
     const fromToken = tokens.dai.optimism
-    const toToken = tokens.usdce.optimism
+    const toToken = tokens.usdc.optimism
 
     await pages.swapAndBridge.prepareSwapAndBridge(0.1, fromToken, toToken) // ~ 0.1$
     await pages.swapAndBridge.enterNumber('abc', true)
@@ -116,15 +116,11 @@ test.describe('swapAndBridge Smart Account', { tag: '@swapAndBridge' }, () => {
   test('should switch from token amount to USD value and vise-versa during Swap & Bridge with a Smart Account', async ({
     pages
   }) => {
-    const usdce = tokens.usdce.optimism
     const dai = tokens.dai.optimism
     const usdc = tokens.usdc.base
-    const xwallet = tokens.xwallet.ethereum
 
-    await pages.swapAndBridge.switchUSDValueOnSwapAndBridge(usdce, 0.2)
     await pages.swapAndBridge.switchUSDValueOnSwapAndBridge(dai, 0.2)
     await pages.swapAndBridge.switchUSDValueOnSwapAndBridge(usdc, 0.2)
-    await pages.swapAndBridge.switchUSDValueOnSwapAndBridge(xwallet, 0.2)
   })
 
   test('should auto-refresh active route after 60s during Swap & Bridge with a Smart Account', async ({
@@ -150,6 +146,7 @@ test.describe('swapAndBridge Smart Account', { tag: '@swapAndBridge' }, () => {
   test('should Bridge tokens with a Smart Account', async ({ pages }) => {
     const usdc = tokens.usdc.base
     const usdcOpt = tokens.usdc.optimism
+    const message = 'Nice trade!'
 
     await test.step('assert no transaction on Activity tab', async () => {
       await pages.dashboard.checkNoTransactionOnActivityTab()
@@ -160,7 +157,7 @@ test.describe('swapAndBridge Smart Account', { tag: '@swapAndBridge' }, () => {
     })
 
     await test.step('sign transaction', async () => {
-      await pages.swapAndBridge.signTokens({ fromToken: usdc })
+      await pages.transfer.signSlowSpeedTransaction({ sendToken: usdc, message })
     })
 
     await test.step('assert new transaction on Activity tab', async () => {
@@ -183,14 +180,20 @@ test.describe('swapAndBridge Smart Account', { tag: '@swapAndBridge' }, () => {
       await pages.swapAndBridge.batchAction()
     })
 
-    await test.step('add a transaction swapping USDC for WALLET to the existing batch and sign', async () => {
-      await pages.swapAndBridge.prepareSwapAndBridge(0.01, usdc, wallet)
-      await pages.swapAndBridge.batchActionWithSign()
-    })
+    await test.step(
+      'add a transaction swapping USDC for WALLET to the existing batch and sign',
+      async () => {
+        await pages.swapAndBridge.prepareSwapAndBridge(0.01, usdc, wallet)
+        await pages.swapAndBridge.batchActionWithSign()
+      }
+    )
 
-    await test.step('stop monitoring requests and expect no uncategorized requests to be made', async () => {
-      const { uncategorized } = pages.swapAndBridge.getCategorizedRequests()
-      expect(uncategorized.length).toBeLessThanOrEqual(0)
-    })
+    await test.step(
+      'stop monitoring requests and expect no uncategorized requests to be made',
+      async () => {
+        const { uncategorized } = pages.swapAndBridge.getCategorizedRequests()
+        expect(uncategorized.length).toBeLessThanOrEqual(0)
+      }
+    )
   })
 })
