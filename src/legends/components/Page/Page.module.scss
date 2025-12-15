@@ -33,7 +33,7 @@
         }
       }
       .content {
-        padding-top: 2.5rem;
+        padding-top: 4rem;
       }
     }
 
@@ -72,12 +72,20 @@
       &.containerfull {
         padding: 0;
       }
+
+      .container .content {
+        padding-top: 2.5rem;
+      }
     }
   }
 
   @include breakpoint-down-from(tablet) {
     .scroll {
       padding: 0;
+
+      .container .content {
+        padding-top: 1.5rem;
+      }
     }
   }
 }

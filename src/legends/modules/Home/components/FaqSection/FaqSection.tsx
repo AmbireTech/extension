@@ -10,7 +10,7 @@ const FaqSection = () => {
     {
       question: 'What is Ambire Rewards?',
       answer:
-        'Ambire Rewards is a loyalty program that lets you earn $WALLET tokens simply by using the Ambire Wallet Extension. The program is divided into seasons, and your onchain activity during each season contributes to your personal score. When a season ends, your score determines how many $WALLET tokens you receive.'
+        'Ambire Rewards is the fair reward distribution program for $WALLET. The program is divided into seasons, and your onchain activity during each season contributes to your personal score. When a season ends, your score determines how many $WALLET tokens you receive.'
     },
     {
       question: 'Is Ambire Rewards free to participate?',
@@ -36,8 +36,7 @@ That said, if any misuse or sybil-like behavior is detected, the Ambire team may
       question: 'How long is the current Ambire Reward season?',
       answer: `Season 2 begins on December 15, 2025. It is planned to run for 90 days, but this depends on the community goal being reached. The goal is to generate $3MM in swap/bridge volume through the built-in Swap & Bridge features in the wallet during the season.
 
-If the goal is not reached within the initial 90 days, the season will be extended following a governance vote.
-      `
+If the goal is not reached within the initial 90 days, the season will be extended following a governance vote.`
     },
     {
       question: 'What are projected rewards?',
