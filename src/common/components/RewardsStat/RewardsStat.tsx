@@ -1,3 +1,4 @@
+// @TODO: Refactor this somehow, no time now
 import React from 'react'
 
 import { ProjectedRewardsStats } from '@ambire-common/libs/portfolio/interfaces'
@@ -41,7 +42,7 @@ const SECTIONS: Omit<Stat, 'score' | 'value'>[] = [
   },
   {
     id: 'governanceScore',
-    label: 'Governance total weight in usd',
+    label: 'Governance total weight in USD',
     explanation: `Governance vote score is calculated by the formula: 
 governance_score = user.governance_proposals_voted_in.map(x => x.governance_weight).sum() * wallet_token.price / 2000`
   },
@@ -54,7 +55,8 @@ governance_score = user.governance_proposals_voted_in.map(x => x.governance_weig
 - Hold a CryptoTesters NFT
 - Hold an Ambire Gas Tank NFT, Legends NFT, or any Ambire conference POAP
 - Hold Gitcoin passport NFT
-- Hold GHO passport NFT`
+- Hold GHO passport NFT
+- Have at least one Ethereum transaction per week, all weeks during the season, except up to 2`
   }
 ]
 
