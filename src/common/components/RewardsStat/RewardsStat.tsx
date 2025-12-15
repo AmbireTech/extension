@@ -21,7 +21,7 @@ const SECTIONS: Omit<Stat, 'score' | 'value'>[] = [
     id: 'balanceScore',
     label: 'Wallet Balance (AVG)',
     explanation:
-      'For every $1000 (on the eligible networks) in your wallet balance you receive 1 score point.'
+      'For every $1000 in your wallet balance (on the eligible networks), you receive 1 score point.'
   },
   {
     id: 'liquidityScore',
@@ -37,7 +37,7 @@ const SECTIONS: Omit<Stat, 'score' | 'value'>[] = [
   {
     id: 'swapVolumeScore',
     label: 'Swap & Bridge volume',
-    explanation: 'For every $1000 generated in Swap & Bridge volume, you receive 10 score points.'
+    explanation: 'For every $2000 generated in Swap & Bridge volume, you receive 1 score point.'
   },
   {
     id: 'governanceScore',
@@ -49,7 +49,7 @@ governance_score = user.governance_proposals_voted_in.map(x => x.governance_weig
     id: 'multiplier',
     label: 'Community multipliers (Soon)',
     explanation: `You receive 1.06X multiplier of your score for belonging to any of the following:
-- Have pledge to the Trustless manifesto
+- Have pledged to the Trustless manifesto
 - Hold a LobsterDAO NFT
 - Hold a CryptoTesters NFT
 - Hold an Ambire Gas Tank NFT, Legends NFT, or any Ambire conference POAP
