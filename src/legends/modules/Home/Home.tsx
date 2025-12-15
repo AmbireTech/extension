@@ -4,12 +4,12 @@ import Page from '@legends/components/Page'
 import V1AccountBannerModal from '@legends/components/V1AccountBannerModal/V1AccountBannerModal'
 import useAccountContext from '@legends/hooks/useAccountContext'
 
+import Dashboard from './components/Dashboard'
 import FaqSection from './components/FaqSection'
 import LandingSection from './components/LandingSection'
 import MobileDisclaimerModal from './components/MobileDisclaimerModal'
-import UserDataSection from './components/UserDataSection'
 
-const Character = () => {
+const Home = () => {
   const { v1Account, connectedAccount } = useAccountContext()
   const [isModalOpen, setIsModalOpen] = useState(Boolean(v1Account))
 
@@ -19,23 +19,22 @@ const Character = () => {
     }
   }, [v1Account])
 
-  return (
-    <Page containerSize="responsive">
-      {v1Account && (
-        <V1AccountBannerModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
-      )}
-      {!connectedAccount ? (
-        <>
-          <LandingSection nonV2acc={!!v1Account} />
-          <MobileDisclaimerModal />
-        </>
-      ) : (
-        <UserDataSection />
-      )}
+  if (!connectedAccount) {
+    // Separated because the padding of the Page is different when the user is logged in
+    return (
+      <Page containerSize="responsive">
+        {v1Account && (
+          <V1AccountBannerModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+        )}
+        <MobileDisclaimerModal />
 
-      {(!connectedAccount || !v1Account) && <FaqSection />}
-    </Page>
-  )
+        <LandingSection nonV2acc={!!v1Account} />
+        <FaqSection />
+      </Page>
+    )
+  }
+
+  return <Dashboard />
 }
 
-export default Character
+export default Home
