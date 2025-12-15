@@ -11,7 +11,7 @@ if (SENTRY_DSN_LEGENDS && version)
     // Adds request headers and IP for users, for more info visit:
     // https://docs.sentry.io/platforms/javascript/guides/react/configuration/options/#sendDefaultPii
     sendDefaultPii: false,
-    release: version ? `legends@${version}` : undefined,
+    release: `legends@${version}`,
     integrations: [],
     environment: CONFIG.APP_ENV || 'unknown',
     beforeSend(event) {
