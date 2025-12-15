@@ -14,12 +14,14 @@ const Page = ({
   children,
   pageRef,
   style,
-  containerSize = 'md'
+  containerSize = 'md',
+  contentClassName
 }: {
   children: React.ReactNode | React.ReactNode[]
   pageRef?: React.RefObject<HTMLDivElement>
   style?: React.CSSProperties
   containerSize?: 'md' | 'responsive' | 'lg' | 'full'
+  contentClassName?: string
 }) => {
   const customContainerSizeClass = styles[`container${containerSize}`] || ''
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
@@ -50,7 +52,7 @@ const Page = ({
                 </div>
               )}
             </div>
-            <div className={styles.content}>{children}</div>
+            <div className={`${styles.content} ${contentClassName || ''}`}>{children}</div>
           </div>
         </div>
       </div>
