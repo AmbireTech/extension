@@ -31,8 +31,7 @@ const DecryptRequestScreen = () => {
   const { theme } = useTheme()
 
   const userRequest = useMemo(
-    () =>
-      currentUserRequest?.kind === 'ethGetEncryptionPublicKey' ? currentUserRequest : undefined,
+    () => (currentUserRequest?.kind === 'ethDecrypt' ? currentUserRequest : undefined),
     [currentUserRequest]
   )
 
@@ -43,7 +42,7 @@ const DecryptRequestScreen = () => {
     [keystoreState.keys, account?.associatedKeys]
   )
 
-  const handleAccept = useCallback(() => {
+  const handleDecrypt = useCallback(() => {
     if (!userRequest) return
 
     if (!selectedAccountKeyStoreKeys.length) return
@@ -52,14 +51,15 @@ const DecryptRequestScreen = () => {
     if (!internalKey) return
 
     dispatch({
-      type: 'MAIN_CONTROLLER_HANDLE_GET_ENCRYPTION_PUBLIC_KEY',
+      type: 'MAIN_CONTROLLER_HANDLE_DECRYPT',
       params: {
+        encryptedData: currentUserRequest?.meta?.params[1],
         requestId: userRequest.id,
         keyAddr: internalKey.addr,
         keyType: internalKey.type
       }
     })
-  }, [userRequest, dispatch, selectedAccountKeyStoreKeys])
+  }, [userRequest, dispatch, selectedAccountKeyStoreKeys, currentUserRequest])
 
   const handleDeny = useCallback(() => {
     if (!userRequest) return
@@ -108,7 +108,7 @@ const DecryptRequestScreen = () => {
             <View style={styles.buttonWrapper}>
               <Button type="outline" onPress={handleDeny} text={t('Cancel')} />
               {/* TODO: Disable for view only accounts (or add import key prompt) */}
-              <Button type="primary" onPress={handleAccept} text={t('Decrypt')} />
+              <Button type="primary" onPress={handleDecrypt} text={t('Decrypt')} />
             </View>
           </View>
         </Panel>
