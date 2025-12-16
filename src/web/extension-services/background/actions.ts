@@ -231,6 +231,15 @@ type MainControllerHandleGetEncryptionPublicKey = {
   type: 'MAIN_CONTROLLER_HANDLE_GET_ENCRYPTION_PUBLIC_KEY'
   params: { requestId: UserRequest['id']; keyAddr: Key['addr']; keyType: Key['type'] }
 }
+type MainControllerHandleDecrypt = {
+  type: 'MAIN_CONTROLLER_HANDLE_DECRYPT'
+  params: {
+    requestId: UserRequest['id']
+    encryptedData: string
+    keyAddr: Key['addr']
+    keyType: Key['type']
+  }
+}
 type MainControllerActivitySetAccOpsFiltersAction = {
   type: 'MAIN_CONTROLLER_ACTIVITY_SET_ACC_OPS_FILTERS'
   params: { filters: Filters; pagination?: Pagination; sessionId: string }
@@ -809,6 +818,7 @@ export type Action =
   | MainControllerSignMessageUpdate
   | MainControllerHandleSignMessage
   | MainControllerHandleGetEncryptionPublicKey
+  | MainControllerHandleDecrypt
   | MainControllerActivitySetAccOpsFiltersAction
   | MainControllerActivitySetSignedMessagesFiltersAction
   | MainControllerActivityResetAccOpsAction

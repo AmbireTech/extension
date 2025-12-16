@@ -685,6 +685,11 @@ export class ProviderController {
     result: requestRes
   })
 
+  @Reflect.metadata('ACTION_REQUEST', ['Decrypt', false])
+  ethDecrypt = ({ requestRes }: ProviderRequest) => ({
+    result: requestRes
+  })
+
   walletRequestPermissions = ({ params: permissions, session }: DappProviderRequest) => {
     const result: Web3WalletPermission[] = []
 

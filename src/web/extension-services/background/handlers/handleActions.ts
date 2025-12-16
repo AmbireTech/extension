@@ -247,6 +247,15 @@ export const handleActions = async (
 
       return mainCtrl.requests.resolveUserRequest(encryptionPublicKey, params.requestId)
     }
+    case 'MAIN_CONTROLLER_HANDLE_DECRYPT': {
+      const encryptionPublicKey = await mainCtrl.handleDecrypt({
+        encryptedData: params.encryptedData,
+        keyAddr: params.keyAddr,
+        keyType: params.keyType
+      })
+
+      return mainCtrl.requests.resolveUserRequest(encryptionPublicKey, params.requestId)
+    }
     case 'MAIN_CONTROLLER_ACTIVITY_SET_SIGNED_MESSAGES_FILTERS':
       return mainCtrl.activity.filterSignedMessages(
         params.sessionId,
