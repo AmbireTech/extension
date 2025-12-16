@@ -85,6 +85,10 @@ const router = sentryCreateHashRouter([
             element: <RewardsPool />
           },
           {
+            path: LEGENDS_ROUTES.legacyQuests,
+            element: <Navigate to={LEGENDS_ROUTES.home} />
+          },
+          {
             path: LEGENDS_LEGACY_ROUTES.legends,
             element: <Navigate to={LEGENDS_ROUTES.home} />
           },
