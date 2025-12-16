@@ -15,7 +15,9 @@ import EventEmitter from '@ambire-common/controllers/eventEmitter/eventEmitter'
 import { MainController } from '@ambire-common/controllers/main/main'
 import { ErrorRef } from '@ambire-common/interfaces/eventEmitter'
 import { Fetch } from '@ambire-common/interfaces/fetch'
+import { IRequestsController } from '@ambire-common/interfaces/requests'
 import { UiManager } from '@ambire-common/interfaces/ui'
+import { CallsUserRequest } from '@ambire-common/interfaces/userRequest'
 import { getAccountKeysCount } from '@ambire-common/libs/keys/keys'
 import { KeystoreSigner } from '@ambire-common/libs/keystoreSigner/keystoreSigner'
 import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
@@ -589,8 +591,13 @@ const init = async () => {
     Initialize the onUpdate callback for the MainController. Once the mainCtrl load is ready,
     initialize the rest of the onUpdate callbacks for the nested controllers of the main controller.
    */
-  mainCtrl.onUpdate((forceEmit) => {
-    const res = debounceFrontEndEventUpdatesOnSameTick('main', mainCtrl, mainCtrl, forceEmit)
+  mainCtrl.onUpdate((mainCtrlForceEmit) => {
+    const res = debounceFrontEndEventUpdatesOnSameTick(
+      'main',
+      mainCtrl,
+      mainCtrl,
+      mainCtrlForceEmit
+    )
     if (res === 'DEBOUNCED') return
 
     Object.keys(controllersNestedInMainMapping).forEach((ctrlName) => {
@@ -611,6 +618,24 @@ const init = async () => {
               forceEmit
             )
             if (res === 'DEBOUNCED') return
+
+            if (ctrlName === 'requests') {
+              if ((controller as IRequestsController).currentUserRequest?.kind === 'calls') {
+                const signAccountOpCtrl = (
+                  (controller as IRequestsController)?.currentUserRequest as CallsUserRequest
+                )?.signAccountOp
+                if (signAccountOpCtrl) {
+                  signAccountOpCtrl.onUpdate((signAccountOpCtrlForceEmit) => {
+                    debounceFrontEndEventUpdatesOnSameTick(
+                      'signAccountOp',
+                      signAccountOpCtrl,
+                      mainCtrl,
+                      signAccountOpCtrlForceEmit
+                    )
+                  })
+                }
+              }
+            }
 
             if (ctrlName === 'keystore') {
               if (controller.isReadyToStoreKeys) {

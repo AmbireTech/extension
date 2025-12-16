@@ -205,10 +205,6 @@ type MainControllerUpdateNetworksAction = {
   }
 }
 
-type MainControllerRejectAccountOpAction = {
-  type: 'MAIN_CONTROLLER_REJECT_ACCOUNT_OP'
-  params: { err: string; requestId: UserRequest['id']; shouldOpenNextAction: boolean }
-}
 type MainControllerSignMessageInitAction = {
   type: 'MAIN_CONTROLLER_SIGN_MESSAGE_INIT'
   params: {
@@ -259,7 +255,7 @@ type RequestsControllerAddCallsUserRequestAction = {
   type: 'REQUESTS_CONTROLLER_ADD_CALLS_USER_REQUEST'
   params: {
     userRequestParams: {
-      calls: CallsUserRequest['accountOp']['calls']
+      calls: CallsUserRequest['signAccountOp']['accountOp']['calls']
       meta: CallsUserRequest['meta']
     }
     position?: RequestPosition
@@ -283,7 +279,14 @@ type RequestsControllerResolveUserRequestAction = {
 }
 type RequestsControllerRejectUserRequestAction = {
   type: 'REQUESTS_CONTROLLER_REJECT_USER_REQUEST'
-  params: { err: string; id: UserRequest['id'] }
+  params: {
+    err: string
+    id: UserRequest['id']
+    options?: {
+      shouldRemoveSwapAndBridgeRoute?: boolean
+      shouldOpenNextRequest?: boolean
+    }
+  }
 }
 type RequestsControllerRejectCallFromUserRequestAction = {
   type: 'REQUESTS_CONTROLLER_REJECT_CALL_FROM_USER_REQUEST'
@@ -351,26 +354,9 @@ type PortfolioControllerCheckToken = {
   }
 }
 
-type MainControllerSignAccountOpInitAction = {
-  type: 'MAIN_CONTROLLER_SIGN_ACCOUNT_OP_INIT'
-  params: {
-    requestId: CallsUserRequest['id']
-  }
-}
-type MainControllerSignAccountOpDestroyAction = {
-  type: 'MAIN_CONTROLLER_SIGN_ACCOUNT_OP_DESTROY'
-}
-type MainControllerSignAccountOpUpdateMainDepsAction = {
-  type: 'MAIN_CONTROLLER_SIGN_ACCOUNT_OP_UPDATE_MAIN_DEPS'
-  params: {
-    accounts?: Account[]
-    networks?: Network[]
-    accountStates?: AccountStates
-  }
-}
-type MainControllerSignAccountOpUpdateAction = {
+type RequestsControllerSignAccountOpUpdateAction = {
   type:
-    | 'MAIN_CONTROLLER_SIGN_ACCOUNT_OP_UPDATE'
+    | 'REQUESTS_CONTROLLER_CURRENT_SIGN_ACCOUNT_OP_UPDATE'
     | 'SWAP_AND_BRIDGE_CONTROLLER_SIGN_ACCOUNT_OP_UPDATE'
     | 'TRANSFER_CONTROLLER_SIGN_ACCOUNT_OP_UPDATE'
   params: {
@@ -385,10 +371,10 @@ type MainControllerSignAccountOpUpdateAction = {
     gasUsedTooHighAgreed?: boolean
   }
 }
-type SignAccountOpUpdateAction = {
-  type: 'SIGN_ACCOUNT_OP_UPDATE'
+type CurrentSignAccountOpUpdateAction = {
+  type: 'CURRENT_SIGN_ACCOUNT_OP_UPDATE'
   params: {
-    updateType: 'Main' | 'Swap&Bridge' | 'Transfer&TopUp'
+    updateType: 'Requests' | 'Swap&Bridge' | 'Transfer&TopUp'
     accountOp?: AccountOp
     gasPrices?: GasSpeeds
     estimation?: FullEstimation
@@ -400,15 +386,13 @@ type SignAccountOpUpdateAction = {
     gasUsedTooHighAgreed?: boolean
   }
 }
-type SignAccountOpReestimateAction = {
-  type: 'SIGN_ACCOUNT_OP_REESTIMATE'
-  params: {
-    type: SignAccountOpType
-  }
+type CurrentSignAccountOpReestimateAction = {
+  type: 'CURRENT_SIGN_ACCOUNT_OP_REESTIMATE'
+  params: { type: SignAccountOpType }
 }
-type MainControllerSignAccountOpUpdateStatus = {
+type RequestsControllerSignAccountOpUpdateStatus = {
   type:
-    | 'MAIN_CONTROLLER_SIGN_ACCOUNT_OP_UPDATE_STATUS'
+    | 'REQUESTS_CONTROLLER_CURRENT_SIGN_ACCOUNT_OP_UPDATE_STATUS'
     | 'SWAP_AND_BRIDGE_CONTROLLER_SIGN_ACCOUNT_OP_UPDATE_STATUS'
     | 'TRANSFER_CONTROLLER_SIGN_ACCOUNT_OP_UPDATE_STATUS'
   params: {
@@ -799,7 +783,6 @@ export type Action =
   | RequestsControllerResolveUserRequestAction
   | RequestsControllerRejectUserRequestAction
   | RequestsControllerRejectCallFromUserRequestAction
-  | MainControllerRejectAccountOpAction
   | MainControllerSignMessageInitAction
   | MainControllerSignMessageResetAction
   | MainControllerSignMessageUpdate
@@ -808,12 +791,9 @@ export type Action =
   | MainControllerActivitySetSignedMessagesFiltersAction
   | MainControllerActivityResetAccOpsAction
   | MainControllerActivityResetSignedMessagesAction
-  | MainControllerSignAccountOpInitAction
-  | MainControllerSignAccountOpDestroyAction
-  | MainControllerSignAccountOpUpdateMainDepsAction
   | MainControllerHandleSignAndBroadcastAccountOp
-  | MainControllerSignAccountOpUpdateAction
-  | MainControllerSignAccountOpUpdateStatus
+  | RequestsControllerSignAccountOpUpdateAction
+  | RequestsControllerSignAccountOpUpdateStatus
   | MainControllerReloadSelectedAccount
   | MainControllerUpdateSelectedAccountPortfolio
   | DefiControllerAddSessionAction
@@ -880,8 +860,8 @@ export type Action =
   | KeystoreControllerDeleteSeedAction
   | ExtensionUpdateControllerApplyUpdate
   | OpenExtensionPopupAction
-  | SignAccountOpUpdateAction
-  | SignAccountOpReestimateAction
+  | CurrentSignAccountOpUpdateAction
+  | CurrentSignAccountOpReestimateAction
   | SwapAndBridgeControllerMarkSelectedRouteAsFailed
   | SwapAndBridgeControllerDestroySignAccountOp
   | SwapAndBridgeControllerOpenSigningActionWindow

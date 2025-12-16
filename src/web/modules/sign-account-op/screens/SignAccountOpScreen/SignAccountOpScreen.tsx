@@ -60,10 +60,8 @@ const SignAccountOpScreen = () => {
   const handleUpdateStatus = useCallback(
     (status: SigningStatus) => {
       dispatch({
-        type: 'MAIN_CONTROLLER_SIGN_ACCOUNT_OP_UPDATE_STATUS',
-        params: {
-          status
-        }
+        type: 'REQUESTS_CONTROLLER_CURRENT_SIGN_ACCOUNT_OP_UPDATE_STATUS',
+        params: { status }
       })
     },
     [dispatch]
@@ -71,7 +69,7 @@ const SignAccountOpScreen = () => {
   const updateController = useCallback(
     (params: { signingKeyAddr?: Key['addr']; signingKeyType?: Key['type'] }) => {
       dispatch({
-        type: 'MAIN_CONTROLLER_SIGN_ACCOUNT_OP_UPDATE',
+        type: 'REQUESTS_CONTROLLER_CURRENT_SIGN_ACCOUNT_OP_UPDATE',
         params
       })
     },
@@ -107,8 +105,6 @@ const SignAccountOpScreen = () => {
     feePayerKeyType,
     shouldDisplayLedgerConnectModal,
     network,
-    initDispatchedForId,
-    setInitDispatchedForId,
     isSignDisabled,
     bundlerNonceDiscrepancy,
     primaryButtonText,
@@ -125,34 +121,17 @@ const SignAccountOpScreen = () => {
     return currentUserRequest as CallsUserRequest
   }, [currentUserRequest])
 
-  useEffect(() => {
-    // Check if the request is already initialized to avoid double dispatching
-    // Without this check two dispatches occur for the same id:
-    // - one from the current window before it gets closed
-    // - one from the new window
-    // leading into two threads trying to initialize the same signAccountOp
-    // object which is a waste of resources + signAccountOp has an inner
-    // gasPrice controller that sets an interval for fetching gas price
-    // each 12s and that interval gets persisted into memory, causing double
-    // fetching
-    if (accountOpRequest?.id && initDispatchedForId !== accountOpRequest.id) {
-      setInitDispatchedForId(accountOpRequest.id)
-      dispatch({
-        type: 'MAIN_CONTROLLER_SIGN_ACCOUNT_OP_INIT',
-        params: { requestId: accountOpRequest.id }
-      })
-    }
-  }, [accountOpRequest?.id, initDispatchedForId, dispatch, setInitDispatchedForId])
-
   const handleRejectAccountOp = useCallback(() => {
     if (!accountOpRequest) return
 
     dispatch({
-      type: 'MAIN_CONTROLLER_REJECT_ACCOUNT_OP',
+      type: 'REQUESTS_CONTROLLER_REJECT_USER_REQUEST',
       params: {
         err: 'User rejected the transaction request.',
-        requestId: accountOpRequest.id,
-        shouldOpenNextAction: visibleUserRequests.length > 1
+        id: accountOpRequest.id,
+        options: {
+          shouldOpenNextRequest: visibleUserRequests.length > 1
+        }
       }
     })
   }, [dispatch, accountOpRequest, visibleUserRequests.length])
@@ -161,12 +140,6 @@ const SignAccountOpScreen = () => {
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     closeCurrentWindow()
   }, [])
-
-  useEffect(() => {
-    return () => {
-      dispatch({ type: 'MAIN_CONTROLLER_SIGN_ACCOUNT_OP_DESTROY' })
-    }
-  }, [dispatch])
 
   useEffect(() => {
     if (isSignDisabled || !containerHeight || !contentHeight) return
@@ -232,7 +205,11 @@ const SignAccountOpScreen = () => {
 
   const isAddToCartDisabled = useMemo(() => {
     const readyToSign = signAccountOpState?.readyToSign
-
+    console.log({
+      readyToSign,
+      isSignLoading,
+      isViewOnly
+    })
     return isSignLoading || (!readyToSign && !isViewOnly)
   }, [isSignLoading, isViewOnly, signAccountOpState?.readyToSign])
 

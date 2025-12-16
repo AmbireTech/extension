@@ -69,6 +69,13 @@ export const handleActions = async (
         pm.send('> ui', { method: 'autoLock', params: autoLockCtrl })
       } else if (params.controller === ('extensionUpdate' as any)) {
         pm.send('> ui', { method: 'extensionUpdate', params: extensionUpdateCtrl })
+      } else if (params.controller === 'signAccountOp') {
+        if (mainCtrl.requests.currentUserRequest?.kind === 'calls') {
+          pm.send('> ui', {
+            method: params.controller,
+            params: mainCtrl.requests.currentUserRequest.signAccountOp
+          })
+        }
       } else {
         pm.send('> ui', {
           method: params.controller,
@@ -215,12 +222,6 @@ export const handleActions = async (
     case 'MAIN_CONTROLLER_REMOVE_ACCOUNT': {
       return await mainCtrl.removeAccount(params.accountAddr)
     }
-    case 'MAIN_CONTROLLER_REJECT_ACCOUNT_OP':
-      return mainCtrl.rejectAccountOpAction(
-        params.err,
-        params.requestId,
-        params.shouldOpenNextAction
-      )
     case 'MAIN_CONTROLLER_SIGN_MESSAGE_INIT': {
       return await mainCtrl.signMessage.init(params)
     }
@@ -250,17 +251,21 @@ export const handleActions = async (
     case 'MAIN_CONTROLLER_ACTIVITY_RESET_SIGNED_MESSAGES_FILTERS':
       return mainCtrl.activity.resetSignedMessagesFilters(params.sessionId)
 
-    case 'MAIN_CONTROLLER_SIGN_ACCOUNT_OP_UPDATE':
-      return mainCtrl?.signAccountOp?.update(params)
-    case 'MAIN_CONTROLLER_SIGN_ACCOUNT_OP_UPDATE_STATUS':
-      return mainCtrl?.signAccountOp?.updateStatus(params.status)
+    case 'REQUESTS_CONTROLLER_CURRENT_SIGN_ACCOUNT_OP_UPDATE': {
+      if (mainCtrl.requests.currentUserRequest?.kind === 'calls') {
+        mainCtrl.requests.currentUserRequest.signAccountOp.update(params)
+      }
+      break
+    }
+    case 'REQUESTS_CONTROLLER_CURRENT_SIGN_ACCOUNT_OP_UPDATE_STATUS': {
+      if (mainCtrl.requests.currentUserRequest?.kind === 'calls') {
+        mainCtrl.requests.currentUserRequest.signAccountOp.updateStatus(params.status)
+      }
+      break
+    }
     case 'MAIN_CONTROLLER_HANDLE_SIGN_AND_BROADCAST_ACCOUNT_OP': {
       return await mainCtrl.handleSignAndBroadcastAccountOp(params.type)
     }
-    case 'MAIN_CONTROLLER_SIGN_ACCOUNT_OP_INIT':
-      return mainCtrl.initSignAccOp(params.requestId)
-    case 'MAIN_CONTROLLER_SIGN_ACCOUNT_OP_DESTROY':
-      return mainCtrl.destroySignAccOp()
 
     case 'REQUESTS_CONTROLLER_BUILD_REQUEST':
       return await mainCtrl.requests.build(params)
@@ -272,15 +277,18 @@ export const handleActions = async (
     case 'REQUESTS_CONTROLLER_RESOLVE_USER_REQUEST':
       return mainCtrl.requests.resolveUserRequest(params.data, params.id)
     case 'REQUESTS_CONTROLLER_REJECT_USER_REQUEST':
-      return mainCtrl.requests.rejectUserRequests(params.err, [params.id])
+      return mainCtrl.requests.rejectUserRequests(params.err, [params.id], params.options)
     case 'REQUESTS_CONTROLLER_REJECT_CALL_FROM_USER_REQUEST': {
       await mainCtrl.requests.rejectCalls({ callIds: [params.callId] })
       break
     }
 
-    case 'SIGN_ACCOUNT_OP_UPDATE': {
-      if (params.updateType === 'Main') {
-        return mainCtrl?.signAccountOp?.update(params)
+    case 'CURRENT_SIGN_ACCOUNT_OP_UPDATE': {
+      if (
+        params.updateType === 'Requests' &&
+        mainCtrl.requests.currentUserRequest?.kind === 'calls'
+      ) {
+        return mainCtrl.requests.currentUserRequest.signAccountOp.update(params)
       }
       if (params.updateType === 'Swap&Bridge') {
         return mainCtrl?.swapAndBridge?.signAccountOpController?.update(params)
@@ -289,9 +297,9 @@ export const handleActions = async (
       // 'Transfer&TopUp'
       return mainCtrl?.transfer?.signAccountOpController?.update(params)
     }
-    case 'SIGN_ACCOUNT_OP_REESTIMATE': {
-      if (params.type === 'default') {
-        return mainCtrl?.signAccountOp?.retry('simulate')
+    case 'CURRENT_SIGN_ACCOUNT_OP_REESTIMATE': {
+      if (params.type === 'default' && mainCtrl.requests.currentUserRequest?.kind === 'calls') {
+        return mainCtrl.requests.currentUserRequest.signAccountOp.retry('simulate')
       }
       if (params.type === 'one-click-swap-and-bridge') {
         return mainCtrl?.swapAndBridge?.signAccountOpController?.retry('estimate')

@@ -147,7 +147,7 @@ const Estimation = ({
       setSelectedFeeOption(localPayValue.value)
 
       dispatch({
-        type: 'SIGN_ACCOUNT_OP_UPDATE',
+        type: 'CURRENT_SIGN_ACCOUNT_OP_UPDATE',
         params: {
           updateType,
           feeToken: localPayValue.token,
@@ -273,7 +273,7 @@ const Estimation = ({
       }
 
       dispatch({
-        type: 'SIGN_ACCOUNT_OP_UPDATE',
+        type: 'CURRENT_SIGN_ACCOUNT_OP_UPDATE',
         params: {
           updateType,
           speed: value as FeeSpeed

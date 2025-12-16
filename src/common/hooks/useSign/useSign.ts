@@ -65,7 +65,6 @@ const useSign = ({
   const [slowPaymasterRequest, setSlowPaymasterRequest] = useState<boolean>(true)
   const [acknowledgedWarnings, setAcknowledgedWarnings] = useState<string[]>([])
   const { ref: warningModalRef, open: openWarningModal, close: closeWarningModal } = useModalize()
-  const [initDispatchedForId, setInitDispatchedForId] = useState<number | string | null>(null)
 
   const hasEstimation = useMemo(
     () =>
@@ -357,8 +356,6 @@ const useSign = ({
     shouldDisplayLedgerConnectModal,
     network,
     notReadyToSignButAlsoNotDone,
-    initDispatchedForId,
-    setInitDispatchedForId,
     isSignDisabled,
     primaryButtonText,
     bundlerNonceDiscrepancy,
