@@ -22,7 +22,12 @@ const Season2Modal = () => {
     <Modal isOpen={isOpen} handleClose={handleClose} className={styles.wrapper}>
       <div className={styles.content} style={{ backgroundImage: `url(${background})` }}>
         <h1 className={styles.title}>Ambire Rewards Season 2 is here!</h1>
-        <a href="TODO" target="_blank" rel="noreferrer" className={styles.link}>
+        <a
+          href="https://blog.ambire.com/rewards-enters-season2/"
+          target="_blank"
+          rel="noreferrer"
+          className={styles.link}
+        >
           Read the Announcement
         </a>
       </div>

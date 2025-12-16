@@ -32,9 +32,6 @@
           text-overflow: ellipsis;
         }
       }
-      .content {
-        padding-top: 2.5rem;
-      }
     }
 
     .containerlg {
@@ -88,4 +85,16 @@
   left: 0;
   right: 0;
   z-index: 100;
+}
+
+.content {
+  padding-top: 4rem;
+
+  @include breakpoint-down-from(medium-desktop) {
+    padding-top: 2.5rem;
+  }
+
+  @include breakpoint-down-from(tablet) {
+    padding-top: 1.5rem;
+  }
 }
