@@ -681,9 +681,7 @@ export class ProviderController {
   walletWatchAsset = () => true
 
   @Reflect.metadata('ACTION_REQUEST', ['GetEncryptionPublicKey', false])
-  ethGetEncryptionPublicKey = ({ requestRes }: ProviderRequest) => ({
-    result: requestRes
-  })
+  ethGetEncryptionPublicKey = ({ requestRes }: ProviderRequest) => requestRes
 
   @Reflect.metadata('ACTION_REQUEST', ['Decrypt', false])
   ethDecrypt = ({ requestRes }: ProviderRequest) => ({
