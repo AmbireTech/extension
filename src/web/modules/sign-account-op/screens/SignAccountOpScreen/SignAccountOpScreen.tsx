@@ -263,7 +263,7 @@ const SignAccountOpScreen = () => {
                   isViewOnly={isViewOnly}
                   isSponsored={signAccountOpState ? signAccountOpState.isSponsored : false}
                   sponsor={signAccountOpState ? signAccountOpState.sponsor : undefined}
-                  updateType="Main"
+                  updateType="Requests"
                   bundlerNonceDiscrepancy={bundlerNonceDiscrepancy}
                 />
 
