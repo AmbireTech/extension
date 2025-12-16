@@ -174,7 +174,7 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
   const handleTokenType = useCallback(() => {
     dispatch({
       type: 'PORTFOLIO_CONTROLLER_CHECK_TOKEN',
-      params: { token: { address, chainId: network.chainId } }
+      params: { token: { address, chainId: network.chainId }, allNetworks: true }
     })
   }, [address, dispatch, network.chainId])
 

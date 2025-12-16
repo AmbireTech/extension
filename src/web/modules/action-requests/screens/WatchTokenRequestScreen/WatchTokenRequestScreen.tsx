@@ -93,6 +93,22 @@ const WatchTokenRequestScreen = () => {
     if (!tokenData?.address || !tokenNetwork) return null
     return validTokens.erc20[`${tokenData.address}-${tokenNetwork.chainId}`]
   }, [validTokens, tokenData?.address, tokenNetwork])
+
+  const tokenValidationError = useMemo(() => {
+    if (!tokenData?.address) return null
+
+    if (tokenNetwork?.chainId) {
+      return validTokens.erc20[`${tokenData.address}-${tokenNetwork.chainId}`]?.error
+    }
+
+    // When we don't have tokenNetwork.chainId, find any validation error for this address across all networks
+    const validationEntry = Object.entries(validTokens.erc20 || {}).find(([key]) =>
+      key.startsWith(`${tokenData.address}-`)
+    )
+
+    return validationEntry?.[1]?.error
+  }, [validTokens, tokenData?.address, tokenNetwork?.chainId])
+
   const handleCancel = useCallback(() => {
     if (!userRequest) return
 
@@ -122,7 +138,7 @@ const WatchTokenRequestScreen = () => {
   const handleTokenType = (chainId: bigint) => {
     dispatch({
       type: 'PORTFOLIO_CONTROLLER_CHECK_TOKEN',
-      params: { token: { address: tokenData?.address, chainId } }
+      params: { token: { address: tokenData?.address, chainId }, allNetworks: false }
     })
   }
 
@@ -169,7 +185,7 @@ const WatchTokenRequestScreen = () => {
         }
         if (!temporaryToken) {
           // Check if token is eligible to add in portfolio
-          if (tokenData && !tokenTypeEligibility) {
+          if (tokenData && !tokenTypeEligibility && tokenValidation?.error) {
             handleTokenType(tokenNetwork?.chainId)
           }
 
@@ -184,6 +200,11 @@ const WatchTokenRequestScreen = () => {
             })
           }
         }
+
+        // Stop loading if there's a validation error
+        if (tokenValidation?.error) {
+          setIsLoading(false)
+        }
       }
     }
 
@@ -193,10 +214,9 @@ const WatchTokenRequestScreen = () => {
       return setIsLoading(false)
     })
 
-    if (tokenTypeEligibility === false || !!temporaryToken) {
+    if (tokenTypeEligibility === false || !!temporaryToken || tokenValidation?.error) {
       setIsLoading(false)
     }
-
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     network,
@@ -431,16 +451,16 @@ const WatchTokenRequestScreen = () => {
               </View>
             )}
 
-            {tokenData?.address && tokenValidation && tokenValidation.error?.message && (
+            {tokenData?.address && tokenValidationError && tokenValidationError?.message && (
               <View style={spacings.ptMd}>
                 <Alert
-                  type={tokenValidation.error.type === 'network' ? 'warning' : 'error'}
-                  title={tokenValidation.error.message}
+                  type={tokenValidationError.type === 'network' ? 'warning' : 'error'}
+                  title={tokenValidationError.message}
                 />
               </View>
             )}
 
-            {!tokenNetwork && !isLoading && (
+            {!tokenNetwork && !isLoading && !tokenValidationError?.message && (
               <View style={spacings.ptMd}>
                 <Alert type="error" title={t('This token type is not supported.')} />
               </View>
