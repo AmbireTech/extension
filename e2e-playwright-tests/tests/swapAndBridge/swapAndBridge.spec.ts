@@ -192,6 +192,7 @@ test.describe('swapAndBridge Smart Account', { tag: '@swapAndBridge' }, () => {
       'stop monitoring requests and expect no uncategorized requests to be made',
       async () => {
         const { uncategorized } = pages.swapAndBridge.getCategorizedRequests()
+        pages.swapAndBridge.stopMonitorRequests()
         expect(uncategorized.length).toBeLessThanOrEqual(0)
       }
     )
