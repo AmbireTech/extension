@@ -159,8 +159,7 @@
     "expo-status-bar": "~1.4.2",
     "expo-updates": "~0.15.6",
     "fuse.js": "7.1.0",
-    "gridplus-sdk": "3.4.0",
-    "gridplus-sdk-e3d6ac0": "https://pkg.pr.new/GridPlus/gridplus-sdk@e3d6ac0",
+    "gridplus-sdk": "4.0.0",
     "https-browserify": "~0.0.0",
     "i18next": "^21.6.0",
     "intro.js": "^7.2.0",
@@ -243,7 +242,7 @@
     "util": "~0.10.3",
     "uuid": "9.0.0",
     "validator": "^13.7.0",
-    "viem": "^2.33.3",
+    "viem": "2.41.2",
     "vm-browserify": "0.0.4",
     "webextension-polyfill": "^0.10.0"
   },

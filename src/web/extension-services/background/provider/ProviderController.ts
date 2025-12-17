@@ -383,7 +383,7 @@ export class ProviderController {
             // hasBundlerSupport means it might not be 4337 but we support it
             // our default may be the relayer but we will broadcast an userOp
             // in case of sponsorships
-            (network.erc4337.enabled || network.erc4337.hasBundlerSupport)
+            network.erc4337.hasBundlerSupport
         },
         atomic: {
           status: baseAccount.getAtomicStatus()
@@ -456,7 +456,11 @@ export class ProviderController {
     if (isUserOp) {
       const userOpReceipt = await bundler
         .getReceipt(identifiedBy.identifier, network)
-        .catch(() => null)
+        .catch((error) => {
+          // eslint-disable-next-line no-console
+          console.error(error)
+          return null
+        })
       if (!userOpReceipt) {
         return {
           status: getPendingStatus(version)
@@ -489,7 +493,11 @@ export class ProviderController {
 
     const receipts = []
     if (!isMultipleTxn) {
-      const txnReceipt = await provider.getTransactionReceipt(txnId).catch(() => null)
+      const txnReceipt = await provider.getTransactionReceipt(txnId).catch((error) => {
+        // eslint-disable-next-line no-console
+        console.error(error)
+        return null
+      })
       if (!txnReceipt) {
         return {
           status: getPendingStatus(version)
@@ -500,7 +508,13 @@ export class ProviderController {
     } else {
       const txnIds = identifiedBy.identifier.split('-')
       const txnReceipts = await Promise.all(
-        txnIds.map((oneTxnId) => provider.getTransactionReceipt(oneTxnId).catch(() => null))
+        txnIds.map((oneTxnId) =>
+          provider.getTransactionReceipt(oneTxnId).catch((error) => {
+            // eslint-disable-next-line no-console
+            console.error(error)
+            return null
+          })
+        )
       )
       const foundTxnReceipts = txnReceipts.filter((r) => r)
 

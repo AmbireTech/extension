@@ -131,7 +131,7 @@ const Footer: FC<Props> = ({
       <View style={styles.footer}>
         <StatusBadge status={status} textSize={textSize} />
         {canViewFee && (
-          <View style={spacings.mrMd}>
+          <View style={[flexbox.flex1, spacings.mrMd]}>
             <Text fontSize={textSize} appearance="secondaryText" weight="semiBold">
               {t('Fee')}:
             </Text>

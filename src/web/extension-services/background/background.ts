@@ -355,7 +355,9 @@ const init = async () => {
         // @ts-ignore
         return fetch(url, init)
       }
-    } catch {
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error(error)
       // If URL parsing fails, skip analytics for safety
       // @ts-ignore
       return fetch(url, init)

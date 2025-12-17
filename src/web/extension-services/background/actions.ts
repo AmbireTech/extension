@@ -6,8 +6,8 @@ import { FeeSpeed, SigningStatus } from '@ambire-common/controllers/signAccountO
 import { Account, AccountPreferences, AccountStates } from '@ambire-common/interfaces/account'
 import {
   AccountOpAction,
-  ActionExecutionType,
   Action as ActionFromActionsQueue,
+  ActionExecutionType,
   ActionPosition,
   OpenActionWindowParams
 } from '@ambire-common/interfaces/actions'
@@ -36,10 +36,10 @@ import { AccountOp } from '@ambire-common/libs/accountOp/accountOp'
 import { FullEstimation } from '@ambire-common/libs/estimate/interfaces'
 import { TokenResult } from '@ambire-common/libs/portfolio'
 import { CustomToken, TokenPreference } from '@ambire-common/libs/portfolio/customToken'
+import { GasSpeeds } from '@ambire-common/services/bundlers/types'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import { LOG_LEVELS } from '@web/utils/logger'
 
-import { GasSpeeds } from '@ambire-common/services/bundlers/types'
 import { AUTO_LOCK_TIMES } from './controllers/auto-lock'
 import { controllersMapping } from './types'
 
@@ -128,6 +128,9 @@ type MainControllerRemoveAccount = {
   params: {
     accountAddr: Account['addr']
   }
+}
+type ProvidersControllerToggleBatching = {
+  type: 'PROVIDERS_CONTROLLER_TOGGLE_BATCHING'
 }
 type MainControllerAccountPickerResetAction = {
   type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_RESET'
@@ -794,6 +797,7 @@ export type Action =
   | MainControllerAccountPickerAddAccounts
   | MainControllerAddAccounts
   | MainControllerRemoveAccount
+  | ProvidersControllerToggleBatching
   | RequestsControllerAddUserRequestAction
   | MainControllerLockAction
   | RequestsControllerBuildRequestAction

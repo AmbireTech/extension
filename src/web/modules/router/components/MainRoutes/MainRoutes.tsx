@@ -27,6 +27,7 @@ import OnboardingCompletedScreen from '@web/modules/auth/screens/OnboardingCompl
 import PrivateKeyImportScreen from '@web/modules/auth/screens/PrivateKeyImportScreen'
 import SeedPhraseImportScreen from '@web/modules/auth/screens/SeedPhraseImportScreen'
 import DappCatalogScreen from '@web/modules/dapp-catalog/screens/DappCatalogScreen'
+import ExtensionRewardsScreen from '@web/modules/extension-rewards/screens/ExtensionRewardsScreen'
 import LedgerConnectScreen from '@web/modules/hardware-wallet/screens/LedgerConnectScreen/LedgerConnectScreen'
 import KeyStoreEmailRecoveryScreen from '@web/modules/keystore/screens/KeyStoreEmailRecoveryScreen/KeyStoreEmailRecoveryScreen'
 import KeyStoreEmailRecoverySetNewPasswordScreen from '@web/modules/keystore/screens/KeyStoreEmailRecoverySetNewPasswordScreen'
@@ -184,6 +185,7 @@ const MainRoutes = () => {
           <Route path={WEB_ROUTES.accountSelect} element={<AccountSelectScreen />} />
           <Route path={WEB_ROUTES.apps} element={<DappCatalogScreen />} />
           <Route path={WEB_ROUTES.networks} element={<NetworksScreen />} />
+          <Route path={WEB_ROUTES.rewards} element={<ExtensionRewardsScreen />} />
         </Route>
       </Route>
     </Routes>
