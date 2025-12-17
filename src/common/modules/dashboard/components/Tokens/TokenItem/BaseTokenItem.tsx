@@ -4,6 +4,8 @@ import { useModalize } from 'react-native-modalize'
 
 import { TokenResult } from '@ambire-common/libs/portfolio'
 import { FormatType } from '@ambire-common/utils/formatDecimals/formatDecimals'
+// @ts-ignore
+import rewardsImage from '@common/assets/images/AmbireLogoLikeCoin.png'
 import BatchIcon from '@common/assets/svg/BatchIcon'
 import PendingToBeConfirmedIcon from '@common/assets/svg/PendingToBeConfirmedIcon'
 import BottomSheet from '@common/components/BottomSheet'
@@ -25,8 +27,6 @@ import { getTokenId } from '@web/utils/token'
 import TokenDetails from '../TokenDetails'
 import PendingBadge from './PendingBadge'
 import getStyles from './styles'
-
-const rewardsImage = require('@common/assets/images/AmbireLogoLikeCoin.png')
 
 type Props = {
   token: TokenResult
@@ -157,9 +157,7 @@ const BaseTokenItem = ({
           <View style={[flexboxStyles.directionRow, { flex: 1.5 }]}>
             <View style={[spacings.mr, flexboxStyles.justifyCenter]}>
               {rewardsStyle ? (
-                <View style={styles.tokenButtonIconWrapper}>
-                  <Image source={rewardsImage} style={{ width: 33, height: 33 }} />
-                </View>
+                <Image source={rewardsImage as any} style={{ width: 40, height: 40 }} />
               ) : (
                 <TokenIcon
                   withContainer

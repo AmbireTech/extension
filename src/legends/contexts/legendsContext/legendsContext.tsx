@@ -2,36 +2,26 @@ import React, { createContext, useCallback, useEffect, useMemo, useState } from 
 
 import { RELAYER_URL } from '@env'
 import useAccountContext from '@legends/hooks/useAccountContext'
-import useActivityContext from '@legends/hooks/useActivityContext'
-import useCharacterContext from '@legends/hooks/useCharacterContext'
 import useLeaderboardContext from '@legends/hooks/useLeaderboardContext'
 import useToast from '@legends/hooks/useToast'
-import { isWheelSpinTodayDone } from '@legends/modules/legends/components/WheelComponentModal/helpers'
-import { CARD_PREDEFINED_ID } from '@legends/modules/legends/constants'
 import { CardFromResponse, CardStatus } from '@legends/modules/legends/types'
-import { isMatchingPredefinedId, sortCards } from '@legends/modules/legends/utils'
+import { sortCards } from '@legends/modules/legends/utils'
 
 type LegendsContextType = {
   legends: CardFromResponse[]
   isLoading: boolean
   error: string | null
-  completedCount: number
   getLegends: () => Promise<void>
-  wheelSpinOfTheDay: boolean
-  treasureChestOpenedForToday: boolean
-  treasureChestStreak: number | undefined
   onLegendComplete: () => Promise<void>
 }
 
 const legendsContext = createContext<LegendsContextType>({} as LegendsContextType)
 
 const LegendsContextProvider = ({ children }: { children: React.ReactNode }) => {
-  const { connectedAccount, nonV2Account } = useAccountContext()
+  const { connectedAccount, v1Account } = useAccountContext()
   const { addToast } = useToast()
-  const { getCharacter } = useCharacterContext()
-  const { getActivity } = useActivityContext()
   const { updateLeaderboard } = useLeaderboardContext()
-  const noConnectionAcc = Boolean(!connectedAccount || nonV2Account)
+  const noConnectionAcc = Boolean(!connectedAccount || v1Account)
   const [legendsAcc, setLegendsAcc] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -39,24 +29,6 @@ const LegendsContextProvider = ({ children }: { children: React.ReactNode }) => 
 
   const completedCount = useMemo(
     () => legends.filter((card) => card.card.status === CardStatus.completed).length,
-    [legends]
-  )
-
-  const wheelSpinOfTheDay = useMemo(() => isWheelSpinTodayDone({ legends }), [legends])
-
-  const treasureChestOpenedForToday = useMemo(
-    () =>
-      legends.find((legend) => isMatchingPredefinedId(legend.action, CARD_PREDEFINED_ID.chest))
-        ?.card.status === CardStatus.completed ||
-      legends.find((legend) => isMatchingPredefinedId(legend.action, CARD_PREDEFINED_ID.chest))
-        ?.card.status === CardStatus.disabled,
-    [legends]
-  )
-
-  const treasureChestStreak = useMemo(
-    () =>
-      legends.find((legend) => isMatchingPredefinedId(legend.action, CARD_PREDEFINED_ID.chest))
-        ?.meta?.streak,
     [legends]
   )
 
@@ -90,15 +62,15 @@ const LegendsContextProvider = ({ children }: { children: React.ReactNode }) => 
   }, [getLegends])
 
   const onLegendComplete = useCallback(async () => {
-    const [activityResult, legendsResult, characterResult, leaderboardResult] =
-      await Promise.allSettled([getActivity(), getLegends(), getCharacter(), updateLeaderboard()])
+    const [activityResult, legendsResult] = await Promise.allSettled([
+      getLegends(),
+      updateLeaderboard()
+    ])
     const hasActivityFailed = activityResult.status === 'rejected'
     const hasLegendsFailed = legendsResult.status === 'rejected'
-    const hasCharacterFailed = characterResult.status === 'rejected'
-    const leaderboardResultFailed = leaderboardResult.status === 'rejected'
 
     // No need to bombard the user with three toast if the relayer is down
-    if (hasActivityFailed && hasLegendsFailed && hasCharacterFailed && leaderboardResultFailed) {
+    if (hasActivityFailed && hasLegendsFailed) {
       addToast('An error occurred while completing the legend. Please try again later.', {
         type: 'error'
       })
@@ -118,21 +90,7 @@ const LegendsContextProvider = ({ children }: { children: React.ReactNode }) => 
         type: 'error'
       })
     }
-
-    if (characterResult.status === 'rejected') {
-      addToast(
-        'Your XP has been successfully gained, but there was an error retrieving it. Please refresh the page to see the latest XP.',
-        { type: 'error' }
-      )
-    }
-
-    if (leaderboardResult.status === 'rejected') {
-      addToast(
-        'Your XP has been successfully gained, but there was an error retrieving the leaderboard. Please refresh the page to see your latest place.',
-        { type: 'error' }
-      )
-    }
-  }, [addToast, getActivity, getCharacter, getLegends, updateLeaderboard])
+  }, [addToast, getLegends, updateLeaderboard])
 
   const contextValue: LegendsContextType = useMemo(
     () => ({
@@ -142,23 +100,9 @@ const LegendsContextProvider = ({ children }: { children: React.ReactNode }) => 
       error,
       completedCount,
       getLegends,
-      onLegendComplete,
-      wheelSpinOfTheDay,
-      treasureChestOpenedForToday,
-      treasureChestStreak
+      onLegendComplete
     }),
-    [
-      legends,
-      isLoading,
-      setIsLoading,
-      error,
-      completedCount,
-      getLegends,
-      onLegendComplete,
-      wheelSpinOfTheDay,
-      treasureChestOpenedForToday,
-      treasureChestStreak
-    ]
+    [legends, isLoading, setIsLoading, error, completedCount, getLegends, onLegendComplete]
   )
 
   return <legendsContext.Provider value={contextValue}>{children}</legendsContext.Provider>

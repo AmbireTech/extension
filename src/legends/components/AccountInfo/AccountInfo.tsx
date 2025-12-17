@@ -1,11 +1,10 @@
 import React from 'react'
 
+import Avatar from '@common/components/Avatar'
 import Tooltip from '@common/components/Tooltip'
 import DisconnectIcon from '@legends/common/assets/svg/DisconnectIcon'
 import Address from '@legends/components/Address'
 import useAccountContext from '@legends/hooks/useAccountContext'
-import useCharacterContext from '@legends/hooks/useCharacterContext'
-import useLeaderboardContext from '@legends/hooks/useLeaderboardContext'
 import useProviderContext from '@legends/hooks/useProviderContext'
 
 import styles from './AccountInfo.module.scss'
@@ -22,9 +21,6 @@ const AccountInfo = ({
 }) => {
   const { disconnectProvider } = useProviderContext()
   const { connectedAccount } = useAccountContext()
-  const { season1LeaderboardData } = useLeaderboardContext()
-
-  const { character } = useCharacterContext()
 
   return (
     <div
@@ -32,9 +28,7 @@ const AccountInfo = ({
         connectedAccount ? styles.connected : ''
       } ${wrapperClassName}`}
     >
-      <div className={styles.avatarWrapper}>
-        <img alt="avatar" className={styles.avatar} src={character!.image_avatar} />
-      </div>
+      <Avatar size={32} address={connectedAccount!} pfp={connectedAccount || ''} isSmart={false} />
       <div className={styles.account}>
         <div className={styles.accountAndArrowWrapper}>
           <Address
@@ -66,10 +60,6 @@ const AccountInfo = ({
             />
           )}
         </div>
-
-        <p className={`${styles.levelAndRank} ${styles.activityDot}`}>
-          Level {season1LeaderboardData?.currentUser?.level || 0}
-        </p>
       </div>
     </div>
   )

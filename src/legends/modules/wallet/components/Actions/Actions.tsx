@@ -6,7 +6,7 @@ import 'swiper/css/free-mode'
 
 import React, { useRef } from 'react'
 import { FreeMode, Mousewheel, Navigation } from 'swiper/modules'
-import { Swiper, SwiperSlide } from 'swiper/react'
+import { Swiper, SwiperRef, SwiperSlide } from 'swiper/react'
 
 import LeftArrowIcon from '@common/assets/svg/LeftArrowIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
@@ -29,7 +29,7 @@ const cardsOrder = [
 
 const Actions = () => {
   const { legends, isLoading, error } = useLegendsContext()
-  const sliderRef = useRef(null)
+  const sliderRef = useRef<SwiperRef>(null)
 
   const sortedLegends = React.useMemo(() => {
     if (!legends) return []
@@ -113,7 +113,6 @@ const Actions = () => {
         mousewheel={{
           enabled: true,
           sensitivity: 10,
-          sticky: true,
           releaseOnEdges: true,
           forceToAxis: true
         }}
