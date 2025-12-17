@@ -40,7 +40,7 @@ import {
 import { ActiveStepType, FinalizedStatusType } from '@benzin/screens/BenzinScreen/interfaces/steps'
 import { UserOperation } from '@benzin/screens/BenzinScreen/interfaces/userOperation'
 
-import eventBus from '@web/extension-services/event/eventBus'
+import useActivityControllerState from '@web/hooks/useActivityControllerState'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import { decodeUserOp, entryPointTxnSplit, reproduceCallsFromTxn } from './utils/reproduceCalls'
 
@@ -181,6 +181,7 @@ const useSteps = ({
   const [shouldTryBlockFetch, setShouldTryBlockFetch] = useState<boolean>(true)
   const [refetchStatus, setRefetchStatus] = useState<number>(0)
   const { dispatch } = useBackgroundService()
+  const { accountsOps } = useActivityControllerState()
 
   const getIdentifiedBy = useCallback((): AccountOpIdentifiedBy => {
     if (relayerId) return { type: 'Relayer', identifier: relayerId }
@@ -204,18 +205,26 @@ const useSteps = ({
     return network.chainId === 1n ? REFETCH_TIME_ETHEREUM : REFETCH_TIME
   }, [network])
 
+  // fetch the account op from the activity every 2 seconds until found
   useEffect(() => {
     if (!extensionAccOp || !!activityAccOp || refetchStatus > 1000) return
     const timeout = setTimeout(() => {
       setRefetchStatus((prev) => prev + 1)
-    }, 1000)
+    }, 2000)
 
     dispatch({
-      type: 'ACTIVITY_GET_BENZINA_INFO',
+      type: 'MAIN_CONTROLLER_ACTIVITY_SET_ACC_OPS_FILTERS',
       params: {
-        identifiedBy: extensionAccOp.identifiedBy,
-        accountAddr: extensionAccOp.accountAddr,
-        chainId: extensionAccOp.chainId
+        sessionId: 'benzin',
+        filters: {
+          identifiedBy: extensionAccOp.identifiedBy,
+          account: extensionAccOp.accountAddr,
+          chainId: extensionAccOp.chainId
+        },
+        pagination: {
+          itemsPerPage: 1,
+          fromPage: 0
+        }
       }
     })
 
@@ -224,26 +233,28 @@ const useSteps = ({
     }
   }, [extensionAccOp, activityAccOp, setRefetchStatus, refetchStatus, dispatch])
 
+  // set the found account op from the activity
   useEffect(() => {
-    if (!extensionAccOp || !!activityAccOp || !network || !switcher) return
+    if (!extensionAccOp || !!activityAccOp || !('benzin' in accountsOps) || !network || !switcher)
+      return
 
-    const onReceiveOneTimeData = (data: any) => {
-      if (!data.status || !data.blockNumber || !data.txnId) return
+    const items = accountsOps.benzin.result.items
+    if (!items[0]) return
+    const op = items[0]
+    if (
+      op.identifiedBy.identifier !== extensionAccOp.identifiedBy.identifier ||
+      op.status === AccountOpStatus.BroadcastedButNotConfirmed ||
+      op.status === AccountOpStatus.Pending ||
+      !op.txnId
+    )
+      return
 
-      setActivityAccOp({
-        ...extensionAccOp,
-        status: data.status,
-        blockNumber: data.blockNumber,
-        txnId: data.txnId
-      })
-      setFoundTxnId(data.txnId)
-      setUrlToTxnId(data.txnId, userOpHash, relayerId, network.chainId, switcher)
-    }
-
-    eventBus.addEventListener('receiveOneTimeData', onReceiveOneTimeData)
-
-    return () => eventBus.removeEventListener('receiveOneTimeData', onReceiveOneTimeData)
-  }, [extensionAccOp, activityAccOp, relayerId, userOpHash, network, switcher])
+    setActivityAccOp({
+      ...op
+    })
+    setFoundTxnId(op.txnId)
+    setUrlToTxnId(op.txnId, userOpHash, relayerId, network.chainId, switcher)
+  }, [accountsOps, extensionAccOp, activityAccOp, network, switcher, relayerId, userOpHash])
 
   // use the extension account op for status changes, if passed
   useEffect(() => {
