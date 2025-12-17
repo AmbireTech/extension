@@ -278,7 +278,6 @@ test.describe('dashboard', () => {
     })
 
     await test.step('click on Info button and check redirection', async () => {
-      await pages.auth.pause()
       await pages.dashboard.checkRewardsPageRedirection()
     })
   })
