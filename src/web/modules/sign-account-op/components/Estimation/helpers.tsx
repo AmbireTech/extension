@@ -133,21 +133,4 @@ const mapFeeOptions = (
   }
 }
 
-const getDefaultFeeOption = (
-  payOptionsPaidByUsOrGasTank: FeeOption[],
-  payOptionsPaidByEOA: FeeOption[]
-) => {
-  if (payOptionsPaidByUsOrGasTank.length > 0 && !payOptionsPaidByUsOrGasTank[0].disabled)
-    return payOptionsPaidByUsOrGasTank[0]
-
-  if (payOptionsPaidByEOA.length > 0 && !payOptionsPaidByEOA[0].disabled)
-    return payOptionsPaidByEOA[0]
-
-  // if there's nothing to cover the fee, select a disabled option
-  if (payOptionsPaidByUsOrGasTank.length) return payOptionsPaidByUsOrGasTank[0]
-  if (payOptionsPaidByEOA.length) return payOptionsPaidByEOA[0]
-
-  return NO_FEE_OPTIONS as FeeOption
-}
-
-export { getDefaultFeeOption, mapFeeOptions, sortFeeOptions }
+export { mapFeeOptions, sortFeeOptions }
