@@ -60,6 +60,10 @@ const TokenDetails = ({
   const [coinGeckoTokenSlug, setCoinGeckoTokenSlug] = useState('')
   const [isTokenInfoLoading, setIsTokenInfoLoading] = useState(false)
   const [doNotDisplayHideTokenModal, setDoNotDisplayHideTokenModal] = useState(false)
+  const [gasTankAssets, setGasTankAssets] = useState<{ chainId: number; address: string }[] | null>(
+    null
+  )
+  const [gasTankAssetsError, setGasTankAssetsError] = useState<string | null>(null)
   const network = useMemo(
     () => networks.find((n) => n.chainId === token?.chainId),
     [networks, token?.chainId]
@@ -103,6 +107,24 @@ const TokenDetails = ({
       .then(setDoNotDisplayHideTokenModal)
       .catch(() => console.error('Failed to load storage value for doNotShowAgainModalHideToken'))
   }, [setDoNotDisplayHideTokenModal])
+
+  useEffect(() => {
+    // Fetch gas tank assets
+    fetch(`${RELAYER_URL}/gas-tank/assets`)
+      .then((r) => r.json())
+      .then((assets) => {
+        setGasTankAssets(assets)
+        setGasTankAssetsError(null)
+      })
+      .catch(() => {
+        setGasTankAssetsError(
+          t(
+            'Unable to top up right now. This might be a temporary service issue. Please try again later.'
+          )
+        )
+        setGasTankAssets(null)
+      })
+  }, [t])
 
   const actions = useMemo(
     () => [
@@ -170,12 +192,9 @@ const TokenDetails = ({
         text: t('Top Up Gas Tank'),
         icon: TopUpIcon,
         onPress: async ({ chainId, address }: TokenResult) => {
-          const assets: { chainId: number; address: string }[] = await fetch(
-            `${RELAYER_URL}/gas-tank/assets`
-          )
-            .then((r) => r.json())
-            .catch(() => addToast(t('Error while fetching from relayer'), { type: 'error' }))
-          const canTopUp = !!assets.find(
+          if (!gasTankAssets || gasTankAssetsError) return
+
+          const canTopUp = gasTankAssets.find(
             (a) =>
               getAddress(a.address) === getAddress(address) &&
               a.chainId.toString() === chainId.toString()
@@ -190,7 +209,7 @@ const TokenDetails = ({
           ? t(
               'This token is not eligible for filling up the Gas Tank. Please select a supported token instead.'
             )
-          : undefined,
+          : gasTankAssetsError || undefined,
         strokeWidth: 1,
         testID: 'top-up-button'
       },
@@ -248,7 +267,9 @@ const TokenDetails = ({
       isNetworkNotSupportedForSwapAndBridge,
       unavailableBecauseGasTankOrRewardsTokenTooltipText,
       isTokenInfoLoading,
-      hasGasTank
+      hasGasTank,
+      gasTankAssets,
+      gasTankAssetsError
     ]
   )
   useEffect(() => {

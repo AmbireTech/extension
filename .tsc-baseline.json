@@ -4,30 +4,6 @@
     "ignoreMessages": false
   },
   "errors": {
-    "90aebd3b5439c4f81c8aad694c670e0989c903ef": {
-      "file": "src/ambire-common/src/controllers/accountPicker/accountPicker.ts",
-      "code": "TS2532",
-      "count": 3,
-      "message": "Object is possibly 'undefined'."
-    },
-    "3e35fa3956fbdbe545b0a29317411ca2c085c337": {
-      "file": "src/ambire-common/src/controllers/accountPicker/accountPicker.ts",
-      "code": "TS2322",
-      "count": 1,
-      "message": "Type 'string | undefined' is not assignable to type 'string'."
-    },
-    "ee1458d131af637cda730eeffaafa01e88821932": {
-      "file": "src/ambire-common/src/controllers/accountPicker/accountPicker.ts",
-      "code": "TS18048",
-      "count": 1,
-      "message": "'recoveryKey' is possibly 'undefined'."
-    },
-    "1599eeeec9eb85592ab1df6a7a4fb6ed2fd5cd1b": {
-      "file": "src/ambire-common/src/controllers/accountPicker/accountPicker.ts",
-      "code": "TS2345",
-      "count": 1,
-      "message": "Argument of type 'RPCProvider | undefined' is not assignable to parameter of type 'RPCProvider'."
-    },
     "fe2e840e2f1a9073afd00b424d136b3cf9aa436b": {
       "file": "src/ambire-common/src/controllers/accounts/accounts.ts",
       "code": "TS2345",
@@ -46,77 +22,23 @@
       "count": 1,
       "message": "Type '{ [chainId: string]: AccountOnchainState; } | undefined' is not assignable to type '{ [chainId: string]: AccountOnchainState; }'."
     },
-    "e672f7c3cdb824bd6009ce950e9ff9a00848e6c5": {
-      "file": "src/ambire-common/src/controllers/accounts/accounts.ts",
-      "code": "TS2322",
-      "count": 2,
-      "message": "Type 'AccountOnchainState | undefined' is not assignable to type 'AccountOnchainState'."
-    },
     "5b3136c5c87dd30b17fc4efc1bfb6958856f8de9": {
       "file": "src/ambire-common/src/controllers/accounts/accounts.ts",
       "code": "TS2532",
       "count": 2,
       "message": "Object is possibly 'undefined'."
     },
+    "e672f7c3cdb824bd6009ce950e9ff9a00848e6c5": {
+      "file": "src/ambire-common/src/controllers/accounts/accounts.ts",
+      "code": "TS2322",
+      "count": 1,
+      "message": "Type 'AccountOnchainState | undefined' is not assignable to type 'AccountOnchainState'."
+    },
     "4a29da22dc7d9cd863cc97e2bea68cb2e4e4bfda": {
       "file": "src/ambire-common/src/controllers/accounts/accounts.ts",
       "code": "TS2322",
       "count": 1,
       "message": "Type '{ associatedKeys: [string | undefined, string][]; creation: { factoryAddr: string; salt: string; baseIdentityAddr: string; }; email?: string | undefined; addr: string; }[]' is not assignable to type 'AmbireSmartAccountIdentityCreateRequest[]'."
-    },
-    "7f145db5682d6c060dc2dd3b3eafe8d86ffb7d27": {
-      "file": "src/ambire-common/src/controllers/actions/actions.ts",
-      "code": "TS18048",
-      "count": 1,
-      "message": "'nextAction' is possibly 'undefined'."
-    },
-    "5491249eb9d2350e701affca31375939264d8523": {
-      "file": "src/ambire-common/src/controllers/actions/actions.ts",
-      "code": "TS2345",
-      "count": 1,
-      "message": "Argument of type 'Action | undefined' is not assignable to parameter of type 'Action'."
-    },
-    "68c0b78e8a5d73ff43de43311af40da42a836266": {
-      "file": "src/ambire-common/src/controllers/actions/actions.ts",
-      "code": "TS2345",
-      "count": 1,
-      "message": "Argument of type 'Action | undefined' is not assignable to parameter of type 'Action | null'."
-    },
-    "faf70ad1383f9ff73f098e98285743bbf78c96f4": {
-      "file": "src/ambire-common/src/controllers/activity/activity.ts",
-      "code": "TS2532",
-      "count": 12,
-      "message": "Object is possibly 'undefined'."
-    },
-    "53930702264160a7b57f716f48c4bd520f664455": {
-      "file": "src/ambire-common/src/controllers/activity/activity.ts",
-      "code": "TS18048",
-      "count": 3,
-      "message": "'state' is possibly 'undefined'."
-    },
-    "f99be19cde8ad9e65ba704ceef4d55344314a0a6": {
-      "file": "src/ambire-common/src/controllers/activity/activity.ts",
-      "code": "TS2345",
-      "count": 1,
-      "message": "Argument of type 'SubmittedAccountOp[] | undefined' is not assignable to parameter of type 'SubmittedAccountOp[]'."
-    },
-    "a74f04e7f9b821eb982812b3794a1e69f74b08fa": {
-      "file": "src/ambire-common/src/controllers/activity/activity.ts",
-      "code": "TS18048",
-      "count": 3,
-      "message": "'provider' is possibly 'undefined'."
-    },
-    "24ea0fd23f6ccf500c7ce13208fe2c5e20c1078f": {
-      "file": "src/ambire-common/src/controllers/continuousUpdates/continuousUpdates.ts",
-      "code": "TS18048",
-      "count": 3,
-      "message": "'selectedAccountBroadcastedButNotConfirmed' is possibly 'undefined'."
-    },
-    "e0816ebd89ee317f775e834a8b2a2219d2f19a99": {
-      "file": "src/ambire-common/src/controllers/dapps/dapps.ts",
-      "code": "TS2532",
-      "count": 7,
-      "message": "Object is possibly 'undefined'."
     },
     "a27d6bdc270f0ba2493fe5982e239dbfe9bbdb0a": {
       "file": "src/ambire-common/src/controllers/defiPositions/defiPositions.ts",
@@ -193,7 +115,7 @@
     "c4b7d27279f5694cfac6875e8ba74103fa7308f3": {
       "file": "src/ambire-common/src/controllers/main/main.ts",
       "code": "TS2532",
-      "count": 3,
+      "count": 1,
       "message": "Object is possibly 'undefined'."
     },
     "a5ce5e968e89a2f83c544d531f5cd0bd8687b96a": {
@@ -207,60 +129,6 @@
       "code": "TS2345",
       "count": 1,
       "message": "Argument of type 'string | undefined' is not assignable to parameter of type 'string | null'."
-    },
-    "a654c5e18f1163eaefdc4f8ee112b27a60337238": {
-      "file": "src/ambire-common/src/controllers/main/main.ts",
-      "code": "TS18048",
-      "count": 1,
-      "message": "'provider' is possibly 'undefined'."
-    },
-    "72598355ba4a42d158cbcc6ecbced39d9c5c4a22": {
-      "file": "src/ambire-common/src/controllers/networks/networks.ts",
-      "code": "TS2322",
-      "count": 1,
-      "message": "Type '{ lastUpdatedNetworkInfo: number; chainId: bigint; isSAEnabled: boolean; hasSingleton: boolean; isOptimistic: boolean; rpcNoStateOverride: boolean; erc4337: Erc4337settings; ... 22 more ...; disabled?: boolean; }' is not assignable to type 'Network'."
-    },
-    "0ca3cd8d8d3a6213bd9702e3ce776cae4499165f": {
-      "file": "src/ambire-common/src/controllers/networks/networks.ts",
-      "code": "TS2322",
-      "count": 2,
-      "message": "Type 'Network | undefined' is not assignable to type 'Network'."
-    },
-    "7f36b31d9d263a29d08e5bf7ba515a2482200f9d": {
-      "file": "src/ambire-common/src/controllers/networks/networks.ts",
-      "code": "TS2322",
-      "count": 2,
-      "message": "Type '{ is1559: boolean; minBaseFee?: bigint; elasticityMultiplier?: bigint; baseFeeMaxChangeDenominator?: bigint; feeIncrease?: bigint; minBaseFeeEqualToLastBlock?: boolean; chainId: bigint; ... 28 more ...; disabled?: boolean; }' is not assignable to type 'Network'."
-    },
-    "c5a4cec98ad658030dd5207523f45317917861b4": {
-      "file": "src/ambire-common/src/controllers/networks/networks.ts",
-      "code": "TS2532",
-      "count": 1,
-      "message": "Object is possibly 'undefined'."
-    },
-    "4552a3158151be5a591b83f7037d675c28a8b825": {
-      "file": "src/ambire-common/src/controllers/phishing/phishing.ts",
-      "code": "TS2532",
-      "count": 6,
-      "message": "Object is possibly 'undefined'."
-    },
-    "1fdcc9d138d9d08d04eff9e591cd69781dcdcd27": {
-      "file": "src/ambire-common/src/controllers/providers/providers.ts",
-      "code": "TS2532",
-      "count": 2,
-      "message": "Object is possibly 'undefined'."
-    },
-    "c94de41166f25df988eb4b4c09dc37acdf36a0a7": {
-      "file": "src/ambire-common/src/controllers/requests/requests.ts",
-      "code": "TS2532",
-      "count": 2,
-      "message": "Object is possibly 'undefined'."
-    },
-    "6203a9dc363941461406c9c26294306d288b486d": {
-      "file": "src/ambire-common/src/controllers/requests/requests.ts",
-      "code": "TS2345",
-      "count": 1,
-      "message": "Argument of type 'AccountOnchainState | undefined' is not assignable to parameter of type 'AccountOnchainState'."
     },
     "9eca723aa9dd0417166ef33cac70f7721c544e38": {
       "file": "src/ambire-common/src/controllers/requests/requests.ts",
@@ -279,48 +147,6 @@
       "code": "TS2322",
       "count": 4,
       "message": "Type 'Warning | undefined' is not assignable to type 'Warning | null'."
-    },
-    "162a16cfd1729fd57d473416d9a79f6a122bb745": {
-      "file": "src/ambire-common/src/controllers/signAccountOp/signAccountOp.ts",
-      "code": "TS2532",
-      "count": 6,
-      "message": "Object is possibly 'undefined'."
-    },
-    "4c4504aae79c2dc7b73307303475f9163dde2cdc": {
-      "file": "src/ambire-common/src/controllers/signAccountOp/signAccountOp.ts",
-      "code": "TS2345",
-      "count": 1,
-      "message": "Argument of type 'AccountOnchainState | undefined' is not assignable to parameter of type 'AccountOnchainState'."
-    },
-    "2b3de3207cd29294d483ef41f917d00f64fd6747": {
-      "file": "src/ambire-common/src/controllers/signAccountOp/signAccountOp.ts",
-      "code": "TS18048",
-      "count": 6,
-      "message": "'call' is possibly 'undefined'."
-    },
-    "93f281953494596687c2b07bf393adf309b0aec5": {
-      "file": "src/ambire-common/src/controllers/signAccountOp/signAccountOp.ts",
-      "code": "TS2345",
-      "count": 9,
-      "message": "Argument of type 'SubmittedAccountOp | null | undefined' is not assignable to parameter of type 'SubmittedAccountOp | null'."
-    },
-    "80dc15574c3eda8372dc225c308e041071ff0ced": {
-      "file": "src/ambire-common/src/controllers/signAccountOp/signAccountOp.ts",
-      "code": "TS2345",
-      "count": 1,
-      "message": "Argument of type 'boolean | undefined' is not assignable to parameter of type 'boolean'."
-    },
-    "5211d28ffbdc56cef84637d5cb0117fe3ab98aa6": {
-      "file": "src/ambire-common/src/controllers/signAccountOp/signAccountOp.ts",
-      "code": "TS2345",
-      "count": 1,
-      "message": "Argument of type 'Warning | undefined' is not assignable to parameter of type 'Warning'."
-    },
-    "17675fcdc80b12d40e4656f060431231b447a092": {
-      "file": "src/ambire-common/src/controllers/signAccountOp/signAccountOp.ts",
-      "code": "TS18048",
-      "count": 3,
-      "message": "'newCall' is possibly 'undefined'."
     },
     "9a41c2f45d9513ac656e8071fc9682ad987e84c9": {
       "file": "src/ambire-common/src/controllers/signMessage/signMessage.ts",
@@ -343,7 +169,7 @@
     "0cc716ff15fd4be0b5953a4e2a09618420f5d19a": {
       "file": "src/ambire-common/src/controllers/swapAndBridge/swapAndBridge.ts",
       "code": "TS2532",
-      "count": 6,
+      "count": 5,
       "message": "Object is possibly 'undefined'."
     },
     "b86487071a80b2056f26f4cbd3160f1764818da4": {
@@ -382,12 +208,6 @@
       "count": 2,
       "message": "Type '{ serviceProviderId?: string | undefined; fromAsset?: SocketAPIToken; toAsset?: SocketAPIToken; fromAssetAddress?: string | undefined; ... 9 more ...; error?: string; }' is not assignable to type 'SwapAndBridgeActiveRoute'."
     },
-    "e7ab81fdf89353636a7f6c719d41c23ba17b0e63": {
-      "file": "src/ambire-common/src/controllers/transfer/transfer.ts",
-      "code": "TS2322",
-      "count": 1,
-      "message": "Type 'RPCProvider | undefined' is not assignable to type 'RPCProvider'."
-    },
     "a89d3b572f5ea307103d0e606d4318c846c12805": {
       "file": "src/ambire-common/src/libs/account/account.ts",
       "code": "TS2769",
@@ -406,24 +226,6 @@
       "count": 1,
       "message": "Type 'undefined' cannot be used as an index type."
     },
-    "2ffc0b5ce8725f0bc7034f7775d2d69633de2ec8": {
-      "file": "src/ambire-common/src/libs/account/EOA.ts",
-      "code": "TS18048",
-      "count": 1,
-      "message": "'call' is possibly 'undefined'."
-    },
-    "0461defb4d281375e843614304438132d6765654": {
-      "file": "src/ambire-common/src/libs/accountOp/submittedAccountOp.ts",
-      "code": "TS18048",
-      "count": 1,
-      "message": "'currentCall' is possibly 'undefined'."
-    },
-    "76b1434401574915ea96035d4efba158793f519d": {
-      "file": "src/ambire-common/src/libs/accountOp/submittedAccountOp.ts",
-      "code": "TS2322",
-      "count": 2,
-      "message": "Type 'Call | undefined' is not assignable to type 'Call'."
-    },
     "3fcc9a342eb812e62f41282e0e938cd1775bb6e9": {
       "file": "src/ambire-common/src/libs/accountOp/submittedAccountOp.ts",
       "code": "TS2322",
@@ -435,30 +237,6 @@
       "code": "TS2532",
       "count": 2,
       "message": "Object is possibly 'undefined'."
-    },
-    "4baa3525d4535e58af14cecfeaaddc7ecad3f0ff": {
-      "file": "src/ambire-common/src/libs/accountState/accountState.ts",
-      "code": "TS2322",
-      "count": 1,
-      "message": "Type 'string | undefined' is not assignable to type 'BytesLike'."
-    },
-    "2c2ff1972648d7e93d9fbb915f3ecb3396f3231b": {
-      "file": "src/ambire-common/src/libs/accountState/accountState.ts",
-      "code": "TS2532",
-      "count": 4,
-      "message": "Object is possibly 'undefined'."
-    },
-    "ed68045473b9ee8956c3804196888ac45c3387d2": {
-      "file": "src/ambire-common/src/libs/accountState/accountState.ts",
-      "code": "TS18048",
-      "count": 8,
-      "message": "'account' is possibly 'undefined'."
-    },
-    "bfffc344fe3c0a4f8206849f01c780fb83615140": {
-      "file": "src/ambire-common/src/libs/accountState/accountState.ts",
-      "code": "TS2345",
-      "count": 1,
-      "message": "Argument of type 'string | undefined' is not assignable to parameter of type 'string'."
     },
     "3dad763fbd484f4f5c00415b6670cf3191d220d7": {
       "file": "src/ambire-common/src/libs/banners/banners.ts",
@@ -525,30 +303,6 @@
       "code": "TS18048",
       "count": 1,
       "message": "'regex' is possibly 'undefined'."
-    },
-    "c367e10242b52adb5e44e91dda0dec70bb05adfc": {
-      "file": "src/ambire-common/src/libs/estimate/providerEstimateGas.ts",
-      "code": "TS18048",
-      "count": 3,
-      "message": "'call' is possibly 'undefined'."
-    },
-    "3a75513deeca26cf4aebf0174b351f1db0b97773": {
-      "file": "src/ambire-common/src/libs/gasPrice/gasPrice.ts",
-      "code": "TS18048",
-      "count": 2,
-      "message": "'q2' is possibly 'undefined'."
-    },
-    "3c58ea85478ce9dbe48bfa7ff96de744f25a8442": {
-      "file": "src/ambire-common/src/libs/gasPrice/gasPrice.ts",
-      "code": "TS18048",
-      "count": 2,
-      "message": "'q1' is possibly 'undefined'."
-    },
-    "653a172379e5f5eb6dca278073e618319a0f759e": {
-      "file": "src/ambire-common/src/libs/gasPrice/gasPrice.ts",
-      "code": "TS2532",
-      "count": 1,
-      "message": "Object is possibly 'undefined'."
     },
     "d4b2940da975b551384aafa36f27885ec7a60bad": {
       "file": "src/ambire-common/src/libs/humanizer/messageModules/legendsModule.ts",
@@ -748,24 +502,6 @@
       "count": 1,
       "message": "Argument of type 'string | undefined' is not assignable to parameter of type 'string'."
     },
-    "ca379b8a9efbd8e3c1ed3f0e38f7465315002cbb": {
-      "file": "src/ambire-common/src/libs/networks/networks.ts",
-      "code": "TS2532",
-      "count": 4,
-      "message": "Object is possibly 'undefined'."
-    },
-    "2fbd2e9d305484000990ec3ad1678fd520cdb3d5": {
-      "file": "src/ambire-common/src/libs/networks/networks.ts",
-      "code": "TS18048",
-      "count": 2,
-      "message": "'network' is possibly 'undefined'."
-    },
-    "8c6210db812047847d6d641f310797b5aa6dee54": {
-      "file": "src/ambire-common/src/libs/networks/networks.ts",
-      "code": "TS2322",
-      "count": 1,
-      "message": "Type '{ predefined: false; hasRelayer: false; chainId?: bigint | undefined; name?: string | undefined; nativeAssetSymbol?: string | undefined; nativeAssetName?: string | undefined; rpcUrls?: string[] | undefined; ... 22 more ...; disabled?: boolean; }' is not assignable to type 'Network'."
-    },
     "b2ebe679db6937757db47fa8793d4797eb0db6a4": {
       "file": "src/ambire-common/src/libs/paymaster/paymaster.ts",
       "code": "TS2722",
@@ -868,18 +604,6 @@
       "count": 1,
       "message": "Object is possibly 'undefined'."
     },
-    "b87e6b4ebcecb7efe730d705b45632efcb889ed8": {
-      "file": "src/ambire-common/src/libs/tracer/debugTraceCall.ts",
-      "code": "TS18048",
-      "count": 3,
-      "message": "'call' is possibly 'undefined'."
-    },
-    "1df86a3e1e984759c17d357a77c86332c05dbb8b": {
-      "file": "src/ambire-common/src/libs/tracer/debugTraceCall.ts",
-      "code": "TS2345",
-      "count": 1,
-      "message": "Argument of type '{ blockTag: string; from: string; mode: DeploylessMode; isEOA: boolean; simulation: { accountOps: AccountOp[]; account: Account; state: AccountOnchainState; }; }' is not assignable to parameter of type 'Pick<GetOptions, \"blockTag\" | \"simulation\">'."
-    },
     "38b0a8d4a6d03509814d60d5ae3dff3b50a3f8f7": {
       "file": "src/ambire-common/src/libs/tracer/debugTraceCall.ts",
       "code": "TS2532",
@@ -921,12 +645,6 @@
       "code": "TS2532",
       "count": 5,
       "message": "Object is possibly 'undefined'."
-    },
-    "78e555d26c9c418b822e7cef40be927b44063733": {
-      "file": "src/ambire-common/src/services/lifi/api.ts",
-      "code": "TS2322",
-      "count": 1,
-      "message": "Type 'string | undefined' is not assignable to type 'string'."
     },
     "4681f399d56078ed421b6d6d5430eb8739193b97": {
       "file": "src/ambire-common/src/services/paymaster/FailedPaymasters.ts",
@@ -999,18 +717,6 @@
       "code": "TS2322",
       "count": 1,
       "message": "Type 'ViewStyle | ImageStyle | undefined' is not assignable to type 'ViewStyle'."
-    },
-    "fbee97df359d1a0c0cb76c869b3e03cba661db74": {
-      "file": "src/benzin/screens/BenzinScreen/hooks/useSteps/useSteps.ts",
-      "code": "TS2532",
-      "count": 2,
-      "message": "Object is possibly 'undefined'."
-    },
-    "7e19f7b584e4aceeb514683ddc67b137702691cc": {
-      "file": "src/benzin/screens/BenzinScreen/hooks/useSteps/useSteps.ts",
-      "code": "TS2722",
-      "count": 1,
-      "message": "Cannot invoke an object which is possibly 'undefined'."
     },
     "d6b9fcee583936a9777ded4d0d936127eb6eba26": {
       "file": "src/benzin/screens/BenzinScreen/hooks/useSteps/utils/reproduceCalls.ts",
@@ -1330,12 +1036,6 @@
       "count": 1,
       "message": "Type '0n | ReactNode' is not assignable to type 'ReactNode'."
     },
-    "09e1947fd1ca86f27b8dbfa834a40b91ff98dc87": {
-      "file": "src/common/modules/dashboard/components/DashboardBanners/DashboardBanner/DashboardBanner.tsx",
-      "code": "TS2532",
-      "count": 1,
-      "message": "Object is possibly 'undefined'."
-    },
     "e7dc0ba8a0eade0f2abee7ba7234954df0dd37b7": {
       "file": "src/common/modules/dashboard/components/DashboardBanners/MarketingBanner/MarketingBanner.tsx",
       "code": "TS18048",
@@ -1356,12 +1056,6 @@
     },
     "32220c9262adc3e59b8190634b99669fbbffc0aa": {
       "file": "src/common/modules/dashboard/components/Gradients/Gradient/Gradient.web.tsx",
-      "code": "TS2769",
-      "count": 1,
-      "message": "No overload matches this call."
-    },
-    "9e1fa4675f5a7fab129985ee167ea9dd6763ab3c": {
-      "file": "src/common/modules/dashboard/components/Routes/RouteItem/RouteItem.tsx",
       "code": "TS2769",
       "count": 1,
       "message": "No overload matches this call."
@@ -1389,12 +1083,6 @@
       "code": "TS2532",
       "count": 1,
       "message": "Object is possibly 'undefined'."
-    },
-    "c920c5054e7de692eb760dcc445272ecab8182cf": {
-      "file": "src/common/modules/router/config/routesConfig/routesConfig.ts",
-      "code": "TS2740",
-      "count": 1,
-      "message": "Type '{ [x: string]: { route: string; title: string; name: string; } | { route: string; title: string; name: string; withTitlePrefix: boolean; }; }' is missing the following properties from type 'RouteConfig': keyStoreUnlock, getStarted, accountPicker, dashboard, and 49 more."
     },
     "e06b4537dbb4defee7a8ea76f93e64c5fcda3dac": {
       "file": "src/common/styles/utils/text.ts",
@@ -1498,12 +1186,6 @@
       "count": 2,
       "message": "Object is possibly 'undefined'."
     },
-    "02104aaf87846cdfd510acbca83384441379b157": {
-      "file": "src/web/extension-services/background/provider/handleProviderRequests.ts",
-      "code": "TS2532",
-      "count": 2,
-      "message": "Object is possibly 'undefined'."
-    },
     "da6d19bfbd69ada0e5c41772feb91a747dd7265f": {
       "file": "src/web/extension-services/background/provider/ProviderController.ts",
       "code": "TS18048",
@@ -1527,6 +1209,12 @@
       "code": "TS2345",
       "count": 3,
       "message": "Argument of type 'Network | undefined' is not assignable to parameter of type 'Network'."
+    },
+    "02104aaf87846cdfd510acbca83384441379b157": {
+      "file": "src/web/extension-services/background/provider/handleProviderRequests.ts",
+      "code": "TS2532",
+      "count": 2,
+      "message": "Object is possibly 'undefined'."
     },
     "125671419c26520e062e2e0b391cf3742e411875": {
       "file": "src/web/extension-services/content-script/content-script-ambire-injection.ts",
@@ -1660,41 +1348,11 @@
       "count": 2,
       "message": "Object is possibly 'undefined'."
     },
-    "04f55dc905fb73b19a014a6e973b07fa2fd3a236": {
-      "file": "src/web/modules/account-picker/components/AccountsOnPageList/AccountsOnPageList.tsx",
-      "code": "TS2322",
-      "count": 2,
-      "message": "Type 'AccountOnPage[] | undefined' is not assignable to type 'AccountOnPage[]'."
-    },
-    "48242df58fa2e5c38f06f176f82be9449979d0a3": {
-      "file": "src/web/modules/account-picker/screens/AccountPickerScreen/AccountPickerScreen.tsx",
-      "code": "TS2740",
-      "count": 1,
-      "message": "Type 'Pick<AccountPickerController, PublicKeys<AccountPickerController>> & EventEmitter' is missing the following properties from type 'AccountPickerController': #callRelayer, #accounts, #keystore, #networks, and 21 more."
-    },
     "f748cf7f4193d4358a71f64faeede7d699ad703d": {
       "file": "src/web/modules/action-requests/screens/AddOrUpdateNetworkScreen/AddChain.tsx",
       "code": "TS2322",
       "count": 1,
       "message": "Type 'string | undefined' is not assignable to type 'string'."
-    },
-    "c2a9aff4572045fd2cf4e59473456da7a41b792e": {
-      "file": "src/web/modules/action-requests/screens/AddOrUpdateNetworkScreen/AddOrUpdateNetworkScreen.tsx",
-      "code": "TS2322",
-      "count": 1,
-      "message": "Type '{ iconUrls: any; chainId: bigint; name: string; nativeAssetSymbol: string; nativeAssetName: string; rpcUrls: string[]; explorerUrl: string; selectedRpcUrl: string; erc4337: Erc4337settings; ... 20 more ...; disabled?: boolean | undefined; } | { ...; } | undefined' is not assignable to type 'AddNetworkRequestParams | undefined'."
-    },
-    "520987cda9329aaddbc91efb94fd8ce252dc0bba": {
-      "file": "src/web/modules/action-requests/screens/WatchTokenRequestScreen/utils/index.ts",
-      "code": "TS2532",
-      "count": 2,
-      "message": "Object is possibly 'undefined'."
-    },
-    "cd0e5b55e69b120da5168c7e75060b33845ba4ea": {
-      "file": "src/web/modules/action-requests/screens/WatchTokenRequestScreen/utils/index.ts",
-      "code": "TS2873",
-      "count": 2,
-      "message": "This kind of expression is always falsy."
     },
     "c2d8ce202b51f254397bbac2fa5d246ea3e69cfd": {
       "file": "src/web/modules/action-requests/screens/WatchTokenRequestScreen/WatchTokenRequestScreen.tsx",
@@ -1719,6 +1377,18 @@
       "code": "TS2339",
       "count": 1,
       "message": "Property 'balanceUSDFormatted' does not exist on type '\"\" | { isPending?: boolean | undefined; pendingToBeSigned?: bigint | undefined; pendingToBeConfirmed?: bigint | undefined; pendingBalance?: string | undefined; pendingBalanceFormatted?: string | undefined; ... 13 more ...; isProjectedRewards: boolean; }'."
+    },
+    "520987cda9329aaddbc91efb94fd8ce252dc0bba": {
+      "file": "src/web/modules/action-requests/screens/WatchTokenRequestScreen/utils/index.ts",
+      "code": "TS2532",
+      "count": 2,
+      "message": "Object is possibly 'undefined'."
+    },
+    "cd0e5b55e69b120da5168c7e75060b33845ba4ea": {
+      "file": "src/web/modules/action-requests/screens/WatchTokenRequestScreen/utils/index.ts",
+      "code": "TS2873",
+      "count": 2,
+      "message": "This kind of expression is always falsy."
     },
     "c38f2b61ee1c2a6da36f4310504bd519bfd7150b": {
       "file": "src/web/modules/auth/components/PinExtension/PinExtension.tsx",
@@ -1755,12 +1425,6 @@
       "code": "TS18048",
       "count": 2,
       "message": "'wordlists.english' is possibly 'undefined'."
-    },
-    "e91a5be7560efefbc09633e5c9f4f4329193d03a": {
-      "file": "src/web/modules/dapp-catalog/components/DappControl/DappControl.tsx",
-      "code": "TS18048",
-      "count": 1,
-      "message": "'network' is possibly 'undefined'."
     },
     "9def141c0a30e1857c2139fe1ad15653f99a8c5e": {
       "file": "src/web/modules/dapp-catalog/components/DappItem/DappItem.tsx",
@@ -1840,12 +1504,6 @@
       "count": 1,
       "message": "Argument of type 'string | undefined' is not assignable to parameter of type 'string'."
     },
-    "e7911100e5a91177e98a18b96bd016e35e9b6d8d": {
-      "file": "src/web/modules/hardware-wallet/libs/latticeKeyIterator/latticeKeyIterator.ts",
-      "code": "TS2532",
-      "count": 1,
-      "message": "Object is possibly 'undefined'."
-    },
     "6b2398f84732fd3576fbd73341f13f2e85a4b5c5": {
       "file": "src/web/modules/hardware-wallet/libs/LatticeSigner/LatticeSigner.ts",
       "code": "TS2345",
@@ -1864,17 +1522,23 @@
       "count": 1,
       "message": "Property 'EIP7702_AUTH_LIST' does not exist on type '{ readonly NONE: LatticeSignEncoding.none; readonly SOLANA: LatticeSignEncoding.solana; readonly EVM: LatticeSignEncoding.evm; readonly ETH_DEPOSIT: LatticeSignEncoding.eth_deposit; }'."
     },
-    "68ef2d1ac2130ad878dc366ce70e1203d987381a": {
-      "file": "src/web/modules/hardware-wallet/libs/trezorKeyIterator/trezorKeyIterator.ts",
-      "code": "TS2769",
-      "count": 1,
-      "message": "No overload matches this call."
-    },
     "b435474fd26cd8113291bbb6ee83c83a438a7603": {
       "file": "src/web/modules/hardware-wallet/libs/TrezorSigner/TrezorSigner.ts",
       "code": "TS2416",
       "count": 1,
       "message": "Property 'key' in type 'TrezorSigner' is not assignable to the same property in base type 'KeystoreSignerInterface'."
+    },
+    "e7911100e5a91177e98a18b96bd016e35e9b6d8d": {
+      "file": "src/web/modules/hardware-wallet/libs/latticeKeyIterator/latticeKeyIterator.ts",
+      "code": "TS2532",
+      "count": 1,
+      "message": "Object is possibly 'undefined'."
+    },
+    "68ef2d1ac2130ad878dc366ce70e1203d987381a": {
+      "file": "src/web/modules/hardware-wallet/libs/trezorKeyIterator/trezorKeyIterator.ts",
+      "code": "TS2769",
+      "count": 1,
+      "message": "No overload matches this call."
     },
     "2d9441664eb7a2cd8342b07189351b48377ea928": {
       "file": "src/web/modules/keystore/components/KeyStoreSetNewPasswordForm/KeystoreSetNewPasswordForm.tsx",
@@ -1978,18 +1642,6 @@
       "count": 1,
       "message": "Argument of type 'string | undefined' is not assignable to parameter of type 'string'."
     },
-    "c89559ed0446323652dcca6cb4c96f105ddbb3d9": {
-      "file": "src/web/modules/settings/screens/SecurityAndPrivacyScreen/components/SavedSeedControlOption.tsx",
-      "code": "TS2339",
-      "count": 1,
-      "message": "Property 'savedSeed' does not exist on type '{ keyStoreUnlock: string; getStarted: string; accountPicker: string; dashboard: string; earn: string; transfer: string; topUpGasTank: string; signAccountOp: string; transactions: string; signedMessages: string; ... 42 more ...; onboardingCompleted: string; }'."
-    },
-    "8c18f4fe670c807b30b437dc2cc87be9340b20fc": {
-      "file": "src/web/modules/settings/screens/SecurityAndPrivacyScreen/components/SavedSeedControlOption.tsx",
-      "code": "TS2551",
-      "count": 3,
-      "message": "Property 'hasKeystoreSavedSeed' does not exist on type 'IKeystoreController'. Did you mean 'hasKeystoreTempSeed'?"
-    },
     "eab68f9222c7ee729519c455e9550c0e4f843755": {
       "file": "src/web/modules/settings/screens/SignedMessageHistorySettingsScreen/SignedMessageHistorySettingsScreen.tsx",
       "code": "TS2532",
@@ -2019,18 +1671,6 @@
       "code": "TS18048",
       "count": 4,
       "message": "'defaultFeeOption' is possibly 'undefined'."
-    },
-    "3bd156048cc47ade4ab60c23130b8cd898075ff5": {
-      "file": "src/web/modules/sign-account-op/components/Estimation/Estimation.tsx",
-      "code": "TS2345",
-      "count": 1,
-      "message": "Argument of type 'SubmittedAccountOp | null | undefined' is not assignable to parameter of type 'SubmittedAccountOp | null'."
-    },
-    "43e4e84111588b615b77581f794be6769acd1dcd": {
-      "file": "src/web/modules/sign-account-op/components/Estimation/helpers.tsx",
-      "code": "TS2345",
-      "count": 3,
-      "message": "Argument of type 'SubmittedAccountOp | null | undefined' is not assignable to parameter of type 'SubmittedAccountOp | null'."
     },
     "81c034293825b6a9b6351444314871364080953f": {
       "file": "src/web/modules/sign-account-op/components/Estimation/helpers.tsx",
@@ -2122,36 +1762,6 @@
       "count": 6,
       "message": "Object is possibly 'undefined'."
     },
-    "1c45bfb7256c8a6f74af8226d1a2b459db78c18d": {
-      "file": "src/web/modules/swap-and-bridge/components/Estimation/TrackProgress.tsx",
-      "code": "TS2532",
-      "count": 1,
-      "message": "Object is possibly 'undefined'."
-    },
-    "1810be74ce92d5c75770156507432c8535f3746d": {
-      "file": "src/web/modules/swap-and-bridge/components/Estimation/TrackProgress.tsx",
-      "code": "TS18048",
-      "count": 17,
-      "message": "'lastCompletedRoute' is possibly 'undefined'."
-    },
-    "27ec75ffe00e8cd4aeb0be0b91be899ff60ffae3": {
-      "file": "src/web/modules/swap-and-bridge/components/Estimation/TrackProgress.tsx",
-      "code": "TS18048",
-      "count": 1,
-      "message": "'lastCompletedStep' is possibly 'undefined'."
-    },
-    "fb4165c6e684e2c686c7a54f3213e85b8fdcbf40": {
-      "file": "src/web/modules/swap-and-bridge/components/Estimation/TrackProgress.tsx",
-      "code": "TS2345",
-      "count": 1,
-      "message": "Argument of type 'SwapAndBridgeActiveRoute | undefined' is not assignable to parameter of type 'SwapAndBridgeActiveRoute'."
-    },
-    "0d17d36965dc2a5af86effe24ff7165280a200ef": {
-      "file": "src/web/modules/swap-and-bridge/components/Estimation/TrackProgress.tsx",
-      "code": "TS2339",
-      "count": 1,
-      "message": "Property 'identifiedBy' does not exist on type 'SwapAndBridgeActiveRoute | undefined'."
-    },
     "447a54fd9e15345275e797c1fdeb3123567db74b": {
       "file": "src/web/modules/swap-and-bridge/components/RouteInfo/RouteInfo.tsx",
       "code": "TS2532",
@@ -2181,12 +1791,6 @@
       "code": "TS2322",
       "count": 1,
       "message": "Type '{ value: string; label: Element; icon: null; } | { value: string; label: Element; icon: null; } | { value: string; address: string; chainId: number | bigint; disabled: boolean; ... 6 more ...; icon: Element; } | undefined' is not assignable to type 'SelectValue'."
-    },
-    "d757bfe4d020a40796eabe2dad66c5a408eb459d": {
-      "file": "src/web/modules/swap-and-bridge/screens/SwapAndBridgeScreen/SwapAndBridgeScreen.tsx",
-      "code": "TS2322",
-      "count": 2,
-      "message": "Type 'number | null' is not assignable to type 'bigint | undefined'."
     },
     "ad233e633fc172e20ea4a127641d6e9f94c6f62c": {
       "file": "src/web/modules/transfer/components/SendForm/styles.ts",

@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from 'react'
-import { Pressable } from 'react-native'
+import { ColorValue, Pressable } from 'react-native'
 
 import LeftArrowIcon from '@common/assets/svg/LeftArrowIcon'
 import Text from '@common/components/Text'
@@ -18,11 +18,13 @@ export type DisplayIn = 'popup' | 'tab' | 'request-window' | 'always' | 'never'
 const HeaderBackButton = ({
   displayIn = 'popup',
   onGoBackPress,
-  forceBack
+  forceBack,
+  color
 }: {
   displayIn?: DisplayIn | DisplayIn[]
   onGoBackPress?: () => void
   forceBack?: boolean
+  color?: string | ColorValue
 }) => {
   const { theme } = useTheme()
   const { path, params } = useRoute()
@@ -62,12 +64,12 @@ const HeaderBackButton = ({
     >
       {({ hovered }: any) => (
         <>
-          <LeftArrowIcon color={theme[hovered ? 'primaryText' : 'secondaryText']} />
+          <LeftArrowIcon color={color || theme[hovered ? 'primaryText' : 'secondaryText']} />
           <Text
             style={spacings.plTy}
             fontSize={16}
             weight="medium"
-            appearance={hovered ? 'primaryText' : 'secondaryText'}
+            color={color || theme[hovered ? 'primaryText' : 'secondaryText']}
           >
             {t('Back')}
           </Text>

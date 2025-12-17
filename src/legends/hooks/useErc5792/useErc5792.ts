@@ -65,9 +65,9 @@ const useErc5792 = () => {
   // the callsId should be an identifier return by the wallet
   // from wallet_sendCalls
   const getCallsStatus = async (
-    callsId: string,
-    is4337Required: boolean = true
-  ): Promise<Receipt> => {
+    callsId: string
+    // is4337Required: boolean = true
+  ): Promise<Receipt | undefined> => {
     if (!provider) return
 
     let receipt = null
@@ -92,12 +92,9 @@ const useErc5792 = () => {
     }
 
     if (Number(receipt.status) === 0)
-      throw new HumanReadableError(
-        'The transaction failed and will not grant any XP. Please try signing again.',
-        {
-          cause: ERRORS.txFailed
-        }
-      )
+      throw new HumanReadableError('The transaction failed. Please try signing again.', {
+        cause: ERRORS.txFailed
+      })
 
     return receipt
   }

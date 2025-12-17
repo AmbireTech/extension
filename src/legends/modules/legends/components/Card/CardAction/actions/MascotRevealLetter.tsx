@@ -8,7 +8,6 @@ import { LEGENDS_CONTRACT_ADDRESS } from '@legends/constants/addresses'
 import { ERROR_MESSAGES } from '@legends/constants/errors/messages'
 import { BASE_CHAIN_ID } from '@legends/constants/networks'
 import useAccountContext from '@legends/hooks/useAccountContext'
-import useCharacterContext from '@legends/hooks/useCharacterContext'
 import useErc5792 from '@legends/hooks/useErc5792'
 import useProviderContext from '@legends/hooks/useProviderContext'
 import useSwitchNetwork from '@legends/hooks/useSwitchNetwork'
@@ -33,7 +32,6 @@ const MascotRevealLetter = ({ meta }: Props) => {
   const switchNetwork = useSwitchNetwork()
   const { browserProvider } = useProviderContext()
   const { connectedAccount, v1Account } = useAccountContext()
-  const { isCharacterNotMinted } = useCharacterContext()
 
   const revealLetter = useCallback(async () => {
     try {
@@ -59,6 +57,9 @@ const MascotRevealLetter = ({ meta }: Props) => {
         useSponsorship
       )
       const receipt = await getCallsStatus(sendCallsIdentifier)
+
+      if (!receipt) throw new Error('No receipt found')
+
       await onComplete(receipt.transactionHash)
       setIsInProgress(false)
     } catch (e: any) {
@@ -81,16 +82,15 @@ const MascotRevealLetter = ({ meta }: Props) => {
   ])
 
   const btnText = useMemo(() => {
-    if (isCharacterNotMinted) return 'Join Rewards to start accumulating XP'
     if (!connectedAccount || v1Account)
       return 'Switch to a new account to unlock Rewards quests. Ambire legacy Web accounts (V1) are not supported.'
     return 'Reveal letter'
-  }, [connectedAccount, v1Account, isCharacterNotMinted])
+  }, [connectedAccount, v1Account])
 
   const isButtonDisabled = useMemo(() => {
-    if (!connectedAccount || v1Account || isCharacterNotMinted) return true
+    if (!connectedAccount || v1Account) return true
     return false
-  }, [connectedAccount, v1Account, isCharacterNotMinted])
+  }, [connectedAccount, v1Account])
 
   const infoComponent = useMemo(() => {
     if (meta?.revealedMascotLetter)
