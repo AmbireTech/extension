@@ -12,6 +12,7 @@ const checkTransactionStatus = async (
     const today = new Date().toISOString().split('T')[0]
     const transaction: ActivityTransaction | undefined = response?.transactions.find(
       (txn: ActivityTransaction) =>
+        today &&
         txn.submittedAt.startsWith(today) &&
         txn.legends.activities &&
         txn.legends.activities.some(

@@ -3,18 +3,14 @@ import React, { useEffect, useState } from 'react'
 import Page from '@legends/components/Page'
 import V1AccountBannerModal from '@legends/components/V1AccountBannerModal/V1AccountBannerModal'
 import useAccountContext from '@legends/hooks/useAccountContext'
-import useCharacterContext from '@legends/hooks/useCharacterContext/useCharacterContext'
 
-import ActivitySection from './components/ActivitySection'
-import CharacterSection from './components/CharacterSection'
+import Dashboard from './components/Dashboard'
 import FaqSection from './components/FaqSection'
 import LandingSection from './components/LandingSection'
 import MobileDisclaimerModal from './components/MobileDisclaimerModal'
-import QuestsSection from './components/QuestsSection'
 
-const Character = () => {
+const Home = () => {
   const { v1Account, connectedAccount } = useAccountContext()
-  const { isCharacterNotMinted } = useCharacterContext()
   const [isModalOpen, setIsModalOpen] = useState(Boolean(v1Account))
 
   useEffect(() => {
@@ -23,28 +19,22 @@ const Character = () => {
     }
   }, [v1Account])
 
-  return (
-    <Page containerSize="full">
-      {v1Account && (
-        <V1AccountBannerModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
-      )}
-      {v1Account && !connectedAccount ? (
-        <LandingSection nonV2acc />
-      ) : connectedAccount ? (
-        <CharacterSection />
-      ) : (
-        <>
-          <MobileDisclaimerModal />
-          <LandingSection />
-        </>
-      )}
+  if (!connectedAccount) {
+    // Separated because the padding of the Page is different when the user is logged in
+    return (
+      <Page containerSize="responsive">
+        {v1Account && (
+          <V1AccountBannerModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+        )}
+        <MobileDisclaimerModal />
 
-      <QuestsSection />
-      {connectedAccount && !v1Account && <ActivitySection />}
+        <LandingSection nonV2acc={!!v1Account} />
+        <FaqSection />
+      </Page>
+    )
+  }
 
-      {(!connectedAccount || !v1Account || isCharacterNotMinted) && <FaqSection />}
-    </Page>
-  )
+  return <Dashboard />
 }
 
-export default Character
+export default Home

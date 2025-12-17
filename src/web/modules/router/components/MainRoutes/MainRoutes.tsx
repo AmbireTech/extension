@@ -27,6 +27,7 @@ import OnboardingCompletedScreen from '@web/modules/auth/screens/OnboardingCompl
 import PrivateKeyImportScreen from '@web/modules/auth/screens/PrivateKeyImportScreen'
 import SeedPhraseImportScreen from '@web/modules/auth/screens/SeedPhraseImportScreen'
 import DappCatalogScreen from '@web/modules/dapp-catalog/screens/DappCatalogScreen'
+import ExtensionRewardsScreen from '@web/modules/extension-rewards/screens/ExtensionRewardsScreen'
 import LedgerConnectScreen from '@web/modules/hardware-wallet/screens/LedgerConnectScreen/LedgerConnectScreen'
 import KeyStoreEmailRecoveryScreen from '@web/modules/keystore/screens/KeyStoreEmailRecoveryScreen/KeyStoreEmailRecoveryScreen'
 import KeyStoreEmailRecoverySetNewPasswordScreen from '@web/modules/keystore/screens/KeyStoreEmailRecoverySetNewPasswordScreen'
@@ -47,7 +48,6 @@ import GeneralSettingsScreen from '@web/modules/settings/screens/GeneralSettings
 import ManageTokensSettingsScreen from '@web/modules/settings/screens/ManageTokensSettingsScreen'
 import NetworksSettingsScreen from '@web/modules/settings/screens/NetworksSettingsScreen/NetworksSettingsScreen'
 import RecoveryPhrasesSettingsScreen from '@web/modules/settings/screens/RecoveryPhrasesSettingsScreen'
-import SecurityAndPrivacyScreen from '@web/modules/settings/screens/SecurityAndPrivacyScreen'
 import SignedMessageHistorySettingsScreen from '@web/modules/settings/screens/SignedMessageHistorySettingsScreen'
 import TermsSettingsScreen from '@web/modules/settings/screens/TermsSettingsScreen'
 import TransactionHistorySettingsScreen from '@web/modules/settings/screens/TransactionHistorySettingsScreen'
@@ -118,7 +118,6 @@ const MainRoutes = () => {
           <Route element={<AuthenticatedRoute />}>
             <Route element={<SettingsRoutesProvider />}>
               <Route path={WEB_ROUTES.generalSettings} element={<GeneralSettingsScreen />} />
-              <Route path={WEB_ROUTES.securityAndPrivacy} element={<SecurityAndPrivacyScreen />} />
               <Route path={WEB_ROUTES.accountsSettings} element={<AccountsSettingsScreen />} />
               <Route
                 path={WEB_ROUTES.recoveryPhrasesSettings}
@@ -184,6 +183,7 @@ const MainRoutes = () => {
           <Route path={WEB_ROUTES.accountSelect} element={<AccountSelectScreen />} />
           <Route path={WEB_ROUTES.apps} element={<DappCatalogScreen />} />
           <Route path={WEB_ROUTES.networks} element={<NetworksScreen />} />
+          <Route path={WEB_ROUTES.rewards} element={<ExtensionRewardsScreen />} />
         </Route>
       </Route>
     </Routes>

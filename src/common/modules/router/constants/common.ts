@@ -12,6 +12,7 @@ const WEB_ROUTES = {
   ...COMMON_ROUTES,
   keyStoreUnlock: 'unlock',
   getStarted: 'get-started',
+  rewards: 'rewards',
   accountPicker: 'account-picker',
   dashboard: 'dashboard',
   earn: 'earn',
@@ -61,7 +62,6 @@ const WEB_ROUTES = {
   benzin: 'benzin',
   swapAndBridge: 'swap-and-bridge',
   recoveryPhrasesSettings: 'settings/recovery-phrases',
-  securityAndPrivacy: 'settings/security-and-privacy',
   onboardingCompleted: 'wallet-setup-completed'
 }
 

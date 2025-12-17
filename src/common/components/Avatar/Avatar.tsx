@@ -12,9 +12,11 @@ import avatarSpaceDog from '@common/assets/images/avatars/avatar-space-dog.png'
 import avatarSpaceRaccoon from '@common/assets/images/avatars/avatar-space-raccoon.png'
 import avatarSpace from '@common/assets/images/avatars/avatar-space.png'
 import avatarSpreadFire from '@common/assets/images/avatars/avatar-spread-fire.png'
+import useDomainsContext from '@common/hooks/useDomainsContext'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getAvatarType } from '@common/utils/avatars'
+import { isExtension } from '@web/constants/browserapi'
 import useDomainsControllerState from '@web/hooks/useDomainsController/useDomainsController'
 
 import Blockie from './Blockies/Blockies'
@@ -78,7 +80,10 @@ const Avatar: FC<Props> = ({
   const [ensAvatarImageFetchFailed, setEnsAvatarImageFetchFailed] = useState(false)
   const selectedAccountPfp = getAccountPfpSource(pfp)
   // ENS Avatar
-  const { domains, loadingAddresses } = useDomainsControllerState()
+  const { domains, loadingAddresses } = isExtension
+    ? useDomainsControllerState()
+    : useDomainsContext().state
+
   const isEnsLoading = address
     ? (domains && !domains[address]) || loadingAddresses?.includes(address)
     : false
