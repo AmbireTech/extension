@@ -625,7 +625,7 @@ const init = async () => {
                   (controller as IRequestsController)?.currentUserRequest as CallsUserRequest
                 )?.signAccountOp
                 if (signAccountOpCtrl) {
-                  signAccountOpCtrl.onUpdate((signAccountOpCtrlForceEmit) => {
+                  signAccountOpCtrl.onUpdate(async (signAccountOpCtrlForceEmit) => {
                     debounceFrontEndEventUpdatesOnSameTick(
                       'signAccountOp',
                       signAccountOpCtrl,

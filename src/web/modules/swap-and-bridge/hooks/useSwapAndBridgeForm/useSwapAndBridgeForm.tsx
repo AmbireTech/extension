@@ -408,6 +408,11 @@ const useSwapAndBridgeForm = () => {
   }, [activeRoute, showAddedToBatch])
 
   useEffect(() => {
+    console.log(
+      signAccountOpController?.broadcastStatus,
+      selectedAccActiveRoutes.length,
+      activeRoute
+    )
     if (
       signAccountOpController?.broadcastStatus === 'SUCCESS' &&
       selectedAccActiveRoutes.length &&
