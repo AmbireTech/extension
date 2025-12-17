@@ -14,7 +14,6 @@ import NetworkIcon from '@common/components/NetworkIcon'
 import NumberInput from '@common/components/NumberInput'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
-import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -29,6 +28,9 @@ import {
   handleErrors
 } from '@web/modules/settings/screens/NetworksSettingsScreen/NetworkForm/helpers'
 
+import WarningIcon from '@common/assets/svg/WarningIcon'
+import Tooltip from '@common/components/Tooltip'
+import useTheme from '@common/hooks/useTheme'
 import getStyles from './styles'
 
 type RpcSelectorItemType = {
@@ -147,7 +149,7 @@ const NetworkForm = ({
   const { addToast } = useToast()
   const { allNetworks, networkToAddOrUpdate, statuses } = useNetworksControllerState()
   const [isValidatingRPC, setValidatingRPC] = useState<boolean>(false)
-  const { styles } = useTheme(getStyles)
+  const { styles, theme } = useTheme(getStyles)
 
   const selectedNetwork = useMemo(
     () => allNetworks.find((network) => network.chainId.toString() === selectedChainId.toString()),
@@ -172,7 +174,8 @@ const NetworkForm = ({
       nativeAssetName: '',
       explorerUrl: '',
       coingeckoPlatformId: '',
-      coingeckoNativeAssetId: ''
+      coingeckoNativeAssetId: '',
+      customBundlerUrl: ''
     },
     values: {
       name: selectedNetwork?.name || '',
@@ -182,7 +185,8 @@ const NetworkForm = ({
       nativeAssetName: selectedNetwork?.nativeAssetName || '',
       explorerUrl: selectedNetwork?.explorerUrl || '',
       coingeckoPlatformId: (selectedNetwork?.platformId as string) || '',
-      coingeckoNativeAssetId: (selectedNetwork?.nativeAssetId as string) || ''
+      coingeckoNativeAssetId: (selectedNetwork?.nativeAssetId as string) || '',
+      customBundlerUrl: (selectedNetwork?.customBundlerUrl as string) || ''
     }
   })
   const [rpcUrls, setRpcUrls] = useState(selectedNetwork?.rpcUrls || [])
@@ -324,7 +328,7 @@ const NetworkForm = ({
     // when resetting the form.
     const subscription = watch(async (value, { name }) => {
       if (name && !value[name]) {
-        if (name !== 'rpcUrl') {
+        if (name !== 'rpcUrl' && name !== 'customBundlerUrl') {
           setError(name, { type: 'custom-error', message: 'Field is required' })
           return
         }
@@ -465,7 +469,8 @@ const NetworkForm = ({
             rpcUrls,
             selectedRpcUrl,
             chainId: BigInt(networkFormValues.chainId),
-            iconUrls: []
+            iconUrls: [],
+            customBundlerUrl: networkFormValues.customBundlerUrl
           }
         })
       } else {
@@ -475,7 +480,8 @@ const NetworkForm = ({
             network: {
               rpcUrls,
               selectedRpcUrl,
-              explorerUrl: networkFormValues.explorerUrl
+              explorerUrl: networkFormValues.explorerUrl,
+              customBundlerUrl: networkFormValues.customBundlerUrl
             },
             chainId: BigInt(networkFormValues.chainId)
           }
@@ -510,7 +516,7 @@ const NetworkForm = ({
       const filteredRpcUrls = rpcUrls.filter((u) => u !== url)
       if (url === selectedRpcUrl) {
         if (filteredRpcUrls.length) {
-          handleSelectRpcUrl(filteredRpcUrls[0])
+          handleSelectRpcUrl(filteredRpcUrls[0]!)
         }
       }
       setRpcUrls(filteredRpcUrls)
@@ -787,6 +793,38 @@ const NetworkForm = ({
                     />
                   )}
                   name="coingeckoNativeAssetId"
+                />
+              </View>
+              <View style={[flexbox.directionRow, flexbox.alignStart]}>
+                <Controller
+                  control={control}
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <Input
+                      onBlur={onBlur}
+                      onChangeText={onChange}
+                      value={value}
+                      leftIcon={() => {
+                        return (
+                          <>
+                            <WarningIcon
+                              color={theme.warningDecorative}
+                              data-tooltip-id="customBundlerId"
+                            />
+                            <Tooltip
+                              id="customBundlerId"
+                              content="The custom bundler is an experimental feature. The extension might not work well with it. Proceed with caution"
+                            />
+                          </>
+                        )
+                      }}
+                      inputWrapperStyle={{ height: 40 }}
+                      inputStyle={{ height: 40 }}
+                      containerStyle={{ ...spacings.mb, ...spacings.mrMi, flex: 1 }}
+                      label={t('Custom bundler url (Experimental)')}
+                      error={handleErrors(errors.customBundlerUrl)}
+                    />
+                  )}
+                  name="customBundlerUrl"
                 />
               </View>
             </ScrollableWrapper>

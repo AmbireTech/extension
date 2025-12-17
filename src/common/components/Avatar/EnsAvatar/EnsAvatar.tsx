@@ -2,7 +2,6 @@ import React, { FC, memo } from 'react'
 import { Image } from 'react-native'
 
 import SkeletonLoader from '@common/components/SkeletonLoader'
-import spacings from '@common/styles/spacings'
 
 type Props = {
   isLoading: boolean
@@ -21,7 +20,7 @@ const EnsAvatar: FC<Props> = ({ isLoading, avatar, setImageFetchFailed, size, bo
       onError={() => setImageFetchFailed(true)}
     />
   ) : (
-    <SkeletonLoader width={size} height={size} borderRadius={borderRadius} style={spacings.mrTy} />
+    <SkeletonLoader width={size} height={size} borderRadius={borderRadius} />
   )
 }
 

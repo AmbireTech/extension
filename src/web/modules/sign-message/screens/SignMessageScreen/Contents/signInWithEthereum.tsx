@@ -336,12 +336,12 @@ const SignInWithEthereum = ({
             text={t('The Sign-In message is invalid. Please verify its contents before signing.')}
           />
         )}
-        {siweMessageToSign.siweValidityStatus === 'invalid-critical' && (
+        {siweMessageToSign.siweValidityStatus === 'malformed' && (
           <Alert
             type="error"
-            title={t('Potentially dangerous Sign-In request')}
+            title={t('Malformed Sign-In request')}
             text={t(
-              'The Sign-In message is invalid and may pose a security risk. Please do not sign this message.'
+              'This Sign-In message does not follow the SIWE specification. Please verify its contents before signing.'
             )}
           />
         )}

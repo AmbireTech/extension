@@ -129,12 +129,3 @@ export interface CardFromResponse {
   contentImageV2?: string
   contentVideoV2?: string
 }
-
-export interface ChestCard extends Omit<CardFromResponse, 'id' | 'meta'> {
-  id: 'chest'
-  meta: {
-    streak: number
-    points: number[]
-    expiresOrResetsAt: string
-  }
-}

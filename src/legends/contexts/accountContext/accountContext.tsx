@@ -143,13 +143,15 @@ const AccountContextProvider = ({ children }: { children: React.ReactNode }) => 
 
     const onAccountsChanged = async (accounts: string[]) => {
       setIsLoading(true)
-      if (!accounts.length) {
+      const firstAccount = accounts[0]
+
+      if (!accounts.length || !firstAccount) {
         handleDisconnectFromWallet()
         setIsLoading(false)
         return
       }
 
-      await validateAndSetAccount(accounts[0])
+      await validateAndSetAccount(firstAccount)
       setIsLoading(false)
     }
 

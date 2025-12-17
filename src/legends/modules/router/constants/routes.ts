@@ -1,10 +1,10 @@
 const LEGENDS_ROUTES = {
   '/': '/',
-  quests: '/quests',
+  rewardsPool: '/rewards-pool',
   home: '/home',
-  characterSelect: '/character-select',
   leaderboard: '/leaderboard',
-  wallet: '/wallet'
+  wallet: '/wallet',
+  legacyQuests: '/quests'
 }
 
 const LEGENDS_LEGACY_ROUTES = {

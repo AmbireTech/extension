@@ -46,6 +46,7 @@ jobs:
           RELAYER_URL: 'https://relayer.ambire.com'
           LEGENDS_NFT_ADDRESS: ${{ vars.LEGENDS_NFT_ADDRESS }}
           SENTRY_DSN_LEGENDS: ${{ vars.SENTRY_DSN_LEGENDS }}
+          GIT_COMMIT_SHA: ${{ github.sha }}
         run: yarn build:web:legends
 
       - name: Setup SSH agent
@@ -58,10 +59,10 @@ jobs:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         run: |
           curl -sL https://sentry.io/get-cli/ | bash
-          VERSION=$(node -p "require('./src/ambire-common/package.json').version")
+          VERSION=${{ github.sha }}
           sentry-cli sourcemaps inject ./build/legends-prod
           sentry-cli releases new legends@$VERSION --project legends
-          sentry-cli releases files legends@$VERSION upload-sourcemaps ./build/legends-prod/ --ext .js --ext .map --rewrite --project legends
+          sentry-cli sourcemaps upload --release legends@$VERSION ./build/legends-prod --rewrite --project legends
           sentry-cli releases finalize legends@$VERSION --project legends
 
       - name: Deploy to Legends Repo gh-pages 🚀🌕

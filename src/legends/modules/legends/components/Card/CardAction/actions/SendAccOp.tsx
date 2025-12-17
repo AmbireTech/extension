@@ -45,6 +45,8 @@ const SendAccOp: FC<Props> = ({ action }) => {
       )
       const receipt = await getCallsStatus(sendCallsIdentifier)
 
+      if (!receipt) throw new Error('No receipt found')
+
       onComplete(receipt.transactionHash)
       handleClose()
     } catch (e: any) {
