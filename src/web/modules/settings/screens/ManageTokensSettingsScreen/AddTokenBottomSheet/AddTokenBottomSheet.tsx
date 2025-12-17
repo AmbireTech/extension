@@ -326,14 +326,6 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
             </View>
           </View>
         ) : null}
-        {address && tokenTypeEligibility === false && !tokenValidation?.error ? (
-          <Alert
-            type="error"
-            isTypeLabelHidden
-            title={t('Invalid token address. Is the correct network selected?')}
-            style={{ ...spacings.phSm, ...spacings.pvSm }}
-          />
-        ) : null}
 
         {address && tokenValidation && tokenValidation.error?.message ? (
           <Alert
@@ -364,7 +356,7 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
         disabled={
           showAlreadyInPortfolioMessage ||
           (!temporaryToken && !tokenTypeEligibility) ||
-          !!tokenValidation?.error ||
+          !!tokenValidation.error?.message ||
           !isValidAddress(address) ||
           !network ||
           isSubmitting

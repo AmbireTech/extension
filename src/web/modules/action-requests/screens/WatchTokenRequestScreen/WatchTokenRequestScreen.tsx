@@ -185,7 +185,7 @@ const WatchTokenRequestScreen = () => {
         }
         if (!temporaryToken) {
           // Check if token is eligible to add in portfolio
-          if (tokenData && !tokenTypeEligibility && tokenValidation?.error) {
+          if (tokenData && (!tokenTypeEligibility || tokenValidation?.error)) {
             handleTokenType(tokenNetwork?.chainId)
           }
 
@@ -442,16 +442,7 @@ const WatchTokenRequestScreen = () => {
               </View>
             )}
 
-            {tokenData?.address && tokenTypeEligibility === false && !tokenValidation?.error && (
-              <View style={spacings.ptMd}>
-                <Alert
-                  type="error"
-                  title={t('Invalid token address. Is the correct network selected?')}
-                />
-              </View>
-            )}
-
-            {tokenData?.address && tokenValidationError && tokenValidationError?.message && (
+            {tokenData?.address && tokenValidationError?.message && (
               <View style={spacings.ptMd}>
                 <Alert
                   type={tokenValidationError.type === 'network' ? 'warning' : 'error'}

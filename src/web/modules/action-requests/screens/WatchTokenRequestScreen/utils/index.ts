@@ -39,8 +39,8 @@ const selectNetwork = async (
 
       const isChecked = hasKey || !isWorking
 
-      // Network is considered "checked" if it has a result (valid/invalid) OR provider is not working
-      // Networks with errors are excluded above
+      // Treat networks with errors as "processed" so they don't block allNetworksChecked,
+      // but skip them from further validation/selection logic.
       return isChecked
     })
 
@@ -90,7 +90,7 @@ const getTokenEligibility = (
   const key = `${tokenData.address}-${tokenNetwork.chainId}`
   const tokenValidation = validTokens.erc20[key]
 
-  return tokenValidation === true || tokenValidation?.isValid === true
+  return tokenValidation === true || tokenValidation?.isValid === true || undefined
 }
 
 const handleTokenIsInPortfolio = async (
