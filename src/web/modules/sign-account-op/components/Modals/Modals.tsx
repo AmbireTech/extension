@@ -8,7 +8,7 @@ import useSign from '@common/hooks/useSign'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import text from '@common/styles/utils/text'
-import useMainControllerState from '@web/hooks/useMainControllerState'
+import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import LedgerConnectModal from '@web/modules/hardware-wallet/components/LedgerConnectModal'
 import SignAccountOpHardwareWalletSigningModal from '@web/modules/sign-account-op/components/SignAccountOpHardwareWalletSigningModal'
 import { getUiType } from '@web/utils/uiType'
@@ -52,7 +52,7 @@ const Modals: FC<Props> = ({
 }) => {
   const { styles } = useTheme(getStyles)
   const { t } = useTranslation()
-  const mainState = useMainControllerState()
+  const { currentUserRequest } = useRequestsControllerState()
 
   if (renderedButNotNecessarilyVisibleModal === 'warnings') {
     return (
@@ -115,7 +115,11 @@ const Modals: FC<Props> = ({
       <SignAccountOpHardwareWalletSigningModal
         signingKeyType={signingKeyType}
         feePayerKeyType={feePayerKeyType}
-        signAndBroadcastAccountOpStatus={mainState.statuses.signAndBroadcastAccountOp}
+        isSignAndBroadcastInProgress={
+          currentUserRequest?.kind === 'calls'
+            ? currentUserRequest.signAccountOp.isSignAndBroadcastInProgress
+            : false
+        }
         signAccountOpStatusType={signAccountOpState.status?.type}
         shouldSignAuth={signAccountOpState.shouldSignAuth}
         signedTransactionsCount={signAccountOpState.signedTransactionsCount}

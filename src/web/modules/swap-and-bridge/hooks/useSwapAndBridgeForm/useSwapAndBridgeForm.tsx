@@ -15,7 +15,6 @@ import useGetTokenSelectProps from '@common/hooks/useGetTokenSelectProps'
 import useNavigation from '@common/hooks/useNavigation'
 import { ROUTES } from '@common/modules/router/constants/common'
 import useBackgroundService from '@web/hooks/useBackgroundService'
-import useMainControllerState from '@web/hooks/useMainControllerState'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
@@ -47,7 +46,6 @@ const useSwapAndBridgeForm = () => {
     toSelectedToken
   } = useSwapAndBridgeControllerState()
   const { dispatch } = useBackgroundService()
-  const { statuses: mainCtrlStatuses } = useMainControllerState()
   const { userRequests } = useRequestsControllerState()
   const { account, portfolio } = useSelectedAccountControllerState()
   const controllerAmountFieldValue = fromAmountFieldMode === 'token' ? fromAmount : fromAmountInFiat
@@ -410,8 +408,11 @@ const useSwapAndBridgeForm = () => {
   }, [activeRoute, showAddedToBatch])
 
   useEffect(() => {
-    const broadcastStatus = mainCtrlStatuses.signAndBroadcastAccountOp
-    if (broadcastStatus === 'SUCCESS' && selectedAccActiveRoutes.length && !activeRoute) {
+    if (
+      signAccountOpController?.broadcastStatus === 'SUCCESS' &&
+      selectedAccActiveRoutes.length &&
+      !activeRoute
+    ) {
       const route = selectedAccActiveRoutes.find(
         (r) => r.activeRouteId === signAccountOpController?.accountOp.meta?.swapTxn?.activeRouteId
       )
@@ -428,7 +429,7 @@ const useSwapAndBridgeForm = () => {
     }
   }, [
     selectedAccActiveRoutes,
-    mainCtrlStatuses.signAndBroadcastAccountOp,
+    signAccountOpController?.broadcastStatus,
     signAccountOpController?.accountOp.meta?.swapTxn?.activeRouteId,
     dispatch,
     activeRoute
