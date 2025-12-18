@@ -26,9 +26,9 @@ export const handleCleanUpOnPortDisconnect = async ({
       }
     }
 
-    if (url.pathname.includes('dashboard')) {
-      mainCtrl.defiPositions.removeSession(sessionId)
-    }
+    // if (url.pathname.includes('dashboard')) {
+    //   mainCtrl.defiPositions.removeSession(sessionId)
+    // }
 
     if (url.pathname.includes('dashboard') || url.pathname.includes('transactions')) {
       mainCtrl.activity.resetAccountsOpsFilters(sessionId)

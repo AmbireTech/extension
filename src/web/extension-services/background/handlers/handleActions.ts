@@ -437,11 +437,11 @@ export const handleActions = async (
     }
 
     case 'DEFI_CONTOLLER_ADD_SESSION': {
-      mainCtrl.defiPositions.addSession(params.sessionId)
+      mainCtrl.portfolio.defiPositions.addSession(params.sessionId)
       break
     }
     case 'DEFI_CONTOLLER_REMOVE_SESSION': {
-      mainCtrl.defiPositions.removeSession(params.sessionId)
+      mainCtrl.portfolio.defiPositions.removeSession(params.sessionId)
       break
     }
 
