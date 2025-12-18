@@ -27,6 +27,9 @@ const getAreDefaultsChanged = (values: any, selectedNetwork?: Network) => {
         !values[key].length
       )
     }
+    if (key === 'customBundlerUrl') {
+      return values[key] !== (selectedNetwork[key] || '')
+    }
 
     return key in selectedNetwork && values[key] !== selectedNetwork[key as keyof Network]
   })

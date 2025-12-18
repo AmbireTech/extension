@@ -3,7 +3,8 @@ const LEGENDS_ROUTES = {
   rewardsPool: '/rewards-pool',
   home: '/home',
   leaderboard: '/leaderboard',
-  wallet: '/wallet'
+  wallet: '/wallet',
+  legacyQuests: '/quests'
 }
 
 const LEGENDS_LEGACY_ROUTES = {
