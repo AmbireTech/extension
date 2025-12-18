@@ -2,7 +2,7 @@
 import 'reflect-metadata'
 
 import { ethErrors } from 'eth-rpc-errors'
-import { isAddress, toBeHex, TransactionReceipt } from 'ethers'
+import { EthersError, getAddress, isAddress, toBeHex, TransactionReceipt } from 'ethers'
 import cloneDeep from 'lodash/cloneDeep'
 import { nanoid } from 'nanoid'
 
@@ -683,7 +683,25 @@ export class ProviderController {
   @Reflect.metadata('ACTION_REQUEST', ['GetEncryptionPublicKey', false])
   ethGetEncryptionPublicKey = ({ requestRes }: ProviderRequest) => requestRes
 
-  @Reflect.metadata('ACTION_REQUEST', ['Decrypt', false])
+  @Reflect.metadata('ACTION_REQUEST', [
+    'Decrypt',
+    ({ request, mainCtrl }: { request: ProviderRequest; mainCtrl: MainController }) => {
+      let incomingAddress
+      try {
+        incomingAddress = getAddress(request.params?.[1])
+      } catch (e: any) {
+        throw ethErrors.rpc.invalidParams(e?.shortMessage || 'invalid address')
+      }
+
+      const addressesMismatch = incomingAddress !== mainCtrl.selectedAccount.account?.addr
+      if (addressesMismatch)
+        throw ethErrors.rpc.invalidParams(
+          'Account mismatch. The decryption request does not match the currently selected account.'
+        )
+
+      return false // Return false to allow request window to open
+    }
+  ])
   ethDecrypt = ({ requestRes }: ProviderRequest) => requestRes
 
   walletRequestPermissions = ({ params: permissions, session }: DappProviderRequest) => {
