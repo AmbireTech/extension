@@ -92,9 +92,7 @@ const SignAccountOpHardwareWalletSigningModal: React.FC<Props> = ({
       // screen in an request window and close the popup
       dispatch({
         type: 'OPEN_SIGNING_REQUEST_WINDOW',
-        params: {
-          type: actionType
-        }
+        params: { type: actionType }
       })
       window.close()
     }

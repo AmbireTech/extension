@@ -8,7 +8,8 @@ import useSign from '@common/hooks/useSign'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import text from '@common/styles/utils/text'
-import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
+import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControllerState'
+import useTransferControllerState from '@web/hooks/useTransferControllerState'
 import LedgerConnectModal from '@web/modules/hardware-wallet/components/LedgerConnectModal'
 import SignAccountOpHardwareWalletSigningModal from '@web/modules/sign-account-op/components/SignAccountOpHardwareWalletSigningModal'
 import { getUiType } from '@web/utils/uiType'
@@ -52,7 +53,8 @@ const Modals: FC<Props> = ({
 }) => {
   const { styles } = useTheme(getStyles)
   const { t } = useTranslation()
-  const { currentUserRequest } = useRequestsControllerState()
+  const { signAccountOpController: swapAndBridgeSignAccountOp } = useSwapAndBridgeControllerState()
+  const { signAccountOpController: transferSignAccountOp } = useTransferControllerState()
 
   if (renderedButNotNecessarilyVisibleModal === 'warnings') {
     return (
@@ -115,11 +117,16 @@ const Modals: FC<Props> = ({
       <SignAccountOpHardwareWalletSigningModal
         signingKeyType={signingKeyType}
         feePayerKeyType={feePayerKeyType}
-        isSignAndBroadcastInProgress={
-          currentUserRequest?.kind === 'calls'
-            ? currentUserRequest.signAccountOp.isSignAndBroadcastInProgress
-            : false
-        }
+        isSignAndBroadcastInProgress={(() => {
+          if (actionType === 'swapAndBridge') {
+            return !!swapAndBridgeSignAccountOp?.isSignAndBroadcastInProgress
+          }
+          if (actionType === 'transfer') {
+            return !!transferSignAccountOp?.isSignAndBroadcastInProgress
+          }
+
+          return false
+        })()}
         signAccountOpStatusType={signAccountOpState.status?.type}
         shouldSignAuth={signAccountOpState.shouldSignAuth}
         signedTransactionsCount={signAccountOpState.signedTransactionsCount}
