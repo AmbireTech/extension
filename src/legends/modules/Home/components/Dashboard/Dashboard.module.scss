@@ -106,14 +106,9 @@
         padding-top: 1rem;
 
         &.open {
-          .header {
-            margin-bottom: 0.5rem;
-          }
           .description {
-            max-height: 30rem;
-            transition: max-height 0.3s ease-in-out, opacity 0.2s ease-in-out;
-            padding: 0.5rem;
-            opacity: 1;
+            grid-template-rows: 1fr;
+            margin-top: 0.5rem;
           }
           .chevronIcon {
             transform: rotate(180deg);
@@ -127,6 +122,8 @@
         .header {
           display: flex;
           align-items: center;
+          cursor: pointer;
+          user-select: none;
 
           .score {
             .scoreBadge {
@@ -178,18 +175,24 @@
             margin-left: 1.5rem;
             color: $quaternaryText;
             width: 1rem;
-            transition: transform 0.2s ease-in-out;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
           }
         }
         .description {
-          font-size: 0.75rem;
-          line-height: 1.1875rem;
-          color: $secondaryText;
-          max-height: 0;
-          padding: 0;
+          display: grid;
+          grid-template-rows: 0fr;
           overflow: hidden;
-          opacity: 0;
-          white-space: pre-wrap;
+          transition: grid-template-rows 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+            margin-top 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+          > div {
+            min-height: 0;
+            font-size: 0.75rem;
+            line-height: 1.1875rem;
+            color: $secondaryText;
+            white-space: pre-wrap;
+            padding: 0 0.5rem;
+          }
         }
       }
     }
