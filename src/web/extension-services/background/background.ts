@@ -625,15 +625,24 @@ const init = async () => {
                   (controller as IRequestsController)?.currentUserRequest as CallsUserRequest
                 )?.signAccountOp
                 if (signAccountOpCtrl) {
-                  signAccountOpCtrl.onUpdate(async (signAccountOpCtrlForceEmit) => {
-                    debounceFrontEndEventUpdatesOnSameTick(
-                      'signAccountOp',
-                      signAccountOpCtrl,
-                      mainCtrl,
-                      signAccountOpCtrlForceEmit
-                    )
-                  })
+                  const hasOnUpdateInitialized =
+                    signAccountOpCtrl.onUpdateIds.includes('background')
+                  if (!hasOnUpdateInitialized) {
+                    signAccountOpCtrl.onUpdate(async (signAccountOpCtrlForceEmit) => {
+                      debounceFrontEndEventUpdatesOnSameTick(
+                        'signAccountOp',
+                        signAccountOpCtrl,
+                        mainCtrl,
+                        signAccountOpCtrlForceEmit
+                      )
+                    }, 'background')
+                  }
                 }
+              }
+              try {
+                setupControllerErrorListeners(mainCtrl.requests, ['requests'])
+              } catch (error) {
+                console.error('Failed to setup requestsControllerErrorListeners')
               }
             }
 
@@ -664,13 +673,13 @@ const init = async () => {
       }
     })
     try {
-      setupMainControllerErrorListeners(mainCtrl, ['main'])
+      setupControllerErrorListeners(mainCtrl, ['main'])
     } catch (error) {
       console.error('Failed to setup mainControllerErrorListeners')
     }
   }, 'background')
 
-  function setupMainControllerErrorListeners(ctrl: any, ctrlNamePath: any[] = []) {
+  function setupControllerErrorListeners(ctrl: any, ctrlNamePath: any[] = []) {
     if (!ctrl || typeof ctrl !== 'object') return
 
     if (ctrl instanceof EventEmitter) {
@@ -689,6 +698,28 @@ const init = async () => {
       }
     }
 
+    if (ctrlNamePath[0] === 'requests') {
+      if ((ctrl as IRequestsController).currentUserRequest?.kind === 'calls') {
+        const signAccountOpCtrl = (
+          (ctrl as IRequestsController).currentUserRequest as CallsUserRequest
+        )?.signAccountOp
+        const hasOnErrorInitialized = signAccountOpCtrl.onErrorIds.includes('background')
+        if (!hasOnErrorInitialized) {
+          signAccountOpCtrl.onError(() => {
+            const signAccountOpCtrlName = 'main -> requests -> currentUserRequest -> signAccountOp'
+            stateDebug(walletStateCtrl.logLevel, signAccountOpCtrl, signAccountOpCtrlName, 'error')
+            pm.send('> ui-error', {
+              method: signAccountOpCtrlName,
+              params: {
+                errors: signAccountOpCtrl.emittedErrors,
+                controller: signAccountOpCtrlName
+              }
+            })
+          }, 'background')
+        }
+      }
+    }
+
     function hasEvents(prop: any) {
       return prop && typeof prop === 'object' && prop instanceof EventEmitter
     }
@@ -703,7 +734,7 @@ const init = async () => {
 
     for (const key of Object.keys(ctrl)) {
       if (hasEvents(ctrl[key]) || hasChildControllers(ctrl[key])) {
-        setupMainControllerErrorListeners(ctrl[key], [...ctrlNamePath, key])
+        setupControllerErrorListeners(ctrl[key], [...ctrlNamePath, key])
       }
     }
   }
