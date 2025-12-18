@@ -49,7 +49,6 @@ import GeneralSettingsScreen from '@web/modules/settings/screens/GeneralSettings
 import ManageTokensSettingsScreen from '@web/modules/settings/screens/ManageTokensSettingsScreen'
 import NetworksSettingsScreen from '@web/modules/settings/screens/NetworksSettingsScreen/NetworksSettingsScreen'
 import RecoveryPhrasesSettingsScreen from '@web/modules/settings/screens/RecoveryPhrasesSettingsScreen'
-import SecurityAndPrivacyScreen from '@web/modules/settings/screens/SecurityAndPrivacyScreen'
 import SignedMessageHistorySettingsScreen from '@web/modules/settings/screens/SignedMessageHistorySettingsScreen'
 import TermsSettingsScreen from '@web/modules/settings/screens/TermsSettingsScreen'
 import TransactionHistorySettingsScreen from '@web/modules/settings/screens/TransactionHistorySettingsScreen'
@@ -120,7 +119,6 @@ const MainRoutes = () => {
           <Route element={<AuthenticatedRoute />}>
             <Route element={<SettingsRoutesProvider />}>
               <Route path={WEB_ROUTES.generalSettings} element={<GeneralSettingsScreen />} />
-              <Route path={WEB_ROUTES.securityAndPrivacy} element={<SecurityAndPrivacyScreen />} />
               <Route path={WEB_ROUTES.accountsSettings} element={<AccountsSettingsScreen />} />
               <Route
                 path={WEB_ROUTES.recoveryPhrasesSettings}
