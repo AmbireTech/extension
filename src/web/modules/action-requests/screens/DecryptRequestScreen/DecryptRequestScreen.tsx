@@ -53,7 +53,7 @@ const DecryptRequestScreen = () => {
     dispatch({
       type: 'MAIN_CONTROLLER_HANDLE_DECRYPT',
       params: {
-        encryptedData: currentUserRequest?.meta?.params[1],
+        encryptedData: currentUserRequest?.meta?.params[0],
         requestId: userRequest.id,
         keyAddr: internalKey.addr,
         keyType: internalKey.type
