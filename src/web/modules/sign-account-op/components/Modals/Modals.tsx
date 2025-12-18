@@ -8,6 +8,7 @@ import useSign from '@common/hooks/useSign'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import text from '@common/styles/utils/text'
+import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControllerState'
 import useTransferControllerState from '@web/hooks/useTransferControllerState'
 import LedgerConnectModal from '@web/modules/hardware-wallet/components/LedgerConnectModal'
@@ -57,6 +58,7 @@ const Modals: FC<Props> = ({
   const {
     state: { signAccountOpController: transferSignAccountOp }
   } = useTransferControllerState()
+  const { currentUserRequest } = useRequestsControllerState()
 
   if (renderedButNotNecessarilyVisibleModal === 'warnings') {
     return (
@@ -127,7 +129,9 @@ const Modals: FC<Props> = ({
             return !!transferSignAccountOp?.isSignAndBroadcastInProgress
           }
 
-          return false
+          return currentUserRequest?.kind === 'calls'
+            ? currentUserRequest.signAccountOp.isSignAndBroadcastInProgress
+            : false
         })()}
         signAccountOpStatusType={signAccountOpState.status?.type}
         shouldSignAuth={signAccountOpState.shouldSignAuth}
