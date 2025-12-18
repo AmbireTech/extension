@@ -55,6 +55,7 @@ const selectors = {
     hideTokenModalTitle: 'hide-token-modal-title',
     hideTokenModalDescription: 'hide-token-modal-description',
     projectedRewardsInfoButton: 'rewards-button',
+    rewardsLink: '//div[contains(text(),"Ambire Rewards")]',
     projectedRewardsClaimButton: 'projected-rewards-claim-button',
   },
   settings: {
