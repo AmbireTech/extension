@@ -54,7 +54,9 @@ const Modals: FC<Props> = ({
   const { styles } = useTheme(getStyles)
   const { t } = useTranslation()
   const { signAccountOpController: swapAndBridgeSignAccountOp } = useSwapAndBridgeControllerState()
-  const { signAccountOpController: transferSignAccountOp } = useTransferControllerState()
+  const {
+    state: { signAccountOpController: transferSignAccountOp }
+  } = useTransferControllerState()
 
   if (renderedButNotNecessarilyVisibleModal === 'warnings') {
     return (
