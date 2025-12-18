@@ -14,6 +14,11 @@ const calculateChartPosition = (volume: number) => {
   const Y_INCREMENT_BY = Y_AT_0_VOLUME - Y_AT_3_MIL_VOLUME
 
   const getX = (vol: number) => {
+    if (vol <= 1_000_000) {
+      const INCREMENT_X_PER_VOLUME_UNIT_BEFORE_1M = (X_AT_0_VOLUME - X_AT_1_VOLUME) / 1_000_000
+      return X_AT_0_VOLUME - vol * INCREMENT_X_PER_VOLUME_UNIT_BEFORE_1M
+    }
+
     return Math.min(X_AT_0_VOLUME, X_AT_1_VOLUME - vol * INCREMENT_X_PER_VOLUME_UNIT)
   }
 
@@ -32,8 +37,7 @@ const calculateChartPosition = (volume: number) => {
   }
 
   return {
-    // - one mil because the chart starts at 1M
-    x: getX(volume - 1_000_000),
+    x: getX(volume),
     y: getY(volume)
   }
 }
