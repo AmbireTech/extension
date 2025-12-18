@@ -13,13 +13,15 @@ const calculateChartPosition = (volume: number) => {
   const BREAKPOINTS_TO_INCREMENT_Y = [3, 5, 10]
   const Y_INCREMENT_BY = Y_AT_0_VOLUME - Y_AT_3_MIL_VOLUME
 
-  const getX = (vol: number) => {
-    if (vol <= 1_000_000) {
+  const getX = (_vol: number) => {
+    if (_vol <= 1_000_000) {
       const INCREMENT_X_PER_VOLUME_UNIT_BEFORE_1M = (X_AT_0_VOLUME - X_AT_1_VOLUME) / 1_000_000
-      return X_AT_0_VOLUME - vol * INCREMENT_X_PER_VOLUME_UNIT_BEFORE_1M
+      return X_AT_0_VOLUME - _vol * INCREMENT_X_PER_VOLUME_UNIT_BEFORE_1M
     }
 
-    return Math.min(X_AT_0_VOLUME, X_AT_1_VOLUME - vol * INCREMENT_X_PER_VOLUME_UNIT)
+    const volAfter1M = _vol - 1_000_000
+
+    return Math.min(X_AT_0_VOLUME, X_AT_1_VOLUME - volAfter1M * INCREMENT_X_PER_VOLUME_UNIT)
   }
 
   const getY = (vol: number) => {
