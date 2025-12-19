@@ -123,6 +123,51 @@ class LedgerController implements ExternalSignerController {
   }
 
   /**
+   * This function is designed to handle the scenario where Ledger device loses
+   * connectivity during an operation. Without this method, if the Ledger device
+   * disconnects, the observable returned by the Ledger SDK throws an error,
+   * but with an awkward delay.
+   *
+   * Was removed in v5.24.0, because after an update of the Ledger DMK - the
+   * observable returned by the Ledger SDK started to throw WITHOUT an awkward
+   * delay there was. But then brought back in v5.33.5, because after another
+   * update of the Ledger DMK - the DMK behavior turned out to be inconsistent
+   * (not working while in the middle of signing a raw transaction).
+   */
+  withDisconnectProtection = async <T>(operation: () => Promise<T>): Promise<T> => {
+    let listenerCbRef: (...args: Array<any>) => any = () => {}
+    const disconnectHandler =
+      (reject: (reason?: any) => void) =>
+      async ({ device }: { device: HIDDevice }) => {
+        if (LedgerController.vendorId === device.vendorId) {
+          await this.cleanUp() // the communication with the initiated walletSDK drops
+          reject(new ExternalSignerError('Ledger device got disconnected.'))
+        }
+      }
+
+    try {
+      // Race the operation against a new Promise that rejects if a 'disconnect'
+      // event is emitted from the Ledger device. If the device disconnects
+      // before the operation completes, the new Promise rejects and the method
+      // returns, preventing the SDK from hanging. If the operation completes
+      // before the device disconnects, the result of the operation is returned.
+      const result = await Promise.race<T>([
+        operation(),
+        new Promise((_, reject) => {
+          listenerCbRef = disconnectHandler(reject)
+          navigator.hid.addEventListener('disconnect', listenerCbRef)
+        })
+      ])
+
+      return result
+    } finally {
+      // In either case, the 'disconnect' event listener should be removed
+      // after the operation to clean up resources.
+      if (listenerCbRef) navigator.hid.removeEventListener('disconnect', listenerCbRef)
+    }
+  }
+
+  /**
    * Handles the scenario where Ledger device hangs indefinitely during an
    * operation. Happens in some cases when the Ledger device gets connected to
    * Ambire, then another app is accessing the Ledger device and then user comes
@@ -222,7 +267,7 @@ class LedgerController implements ExternalSignerController {
   ): Promise<T> {
     const { onCompleted, errorMessage, isSign } = options
 
-    return new Promise<T>((resolve, reject) => {
+    const subscriptionPromise = new Promise<T>((resolve, reject) => {
       let subscription: Subscription // so it is always defined inside the subscribe callback
       let isCancelled = false
 
@@ -282,6 +327,8 @@ class LedgerController implements ExternalSignerController {
         }
       }
     })
+
+    return this.withDisconnectProtection(() => subscriptionPromise)
   }
 
   async unlock(
