@@ -17,10 +17,12 @@ const INITIAL_DELAY = 200
 const FADE_IN_DURATION = 350
 const DELAY_BETWEEN_ANIMATIONS = 400
 
+export const TOTAL_COUNTER_DELAY = INITIAL_DELAY + FADE_IN_DURATION + DELAY_BETWEEN_ANIMATIONS
+
 const SCORE_ANIMATION_DURATION = 1000
 const HIDE_SCORE_CHANGE_DELAY = 800
 
-const getDynamicTimings = (scoreChange: number) => {
+export const getDynamicTimings = (scoreChange: number) => {
   // The more the scoreChange, the longer the animation duration
   const scoreAnimationDuration =
     SCORE_ANIMATION_DURATION + Math.min(scoreChange * 10, SCORE_ANIMATION_DURATION)
@@ -50,9 +52,6 @@ const StatItem = ({ id, score, label, explanation, value, isLast, scoreChange }:
   const changeTranslateY = useRef(new Animated.Value(8)).current
   const animatedScore = useRef(new Animated.Value(0)).current
   const shouldAnimate = !!scoreChange && scoreChange > 0
-
-  // Initialize with the old score if there's a score change
-
   const [displayScore, setDisplayScore] = useState(getInitialScore(scoreChange, score, id))
 
   useEffect(() => {
@@ -95,7 +94,7 @@ const StatItem = ({ id, score, label, explanation, value, isLast, scoreChange }:
         duration: scoreAnimationDuration,
         useNativeDriver: !isWeb
       }).start()
-    }, FADE_IN_DURATION + INITIAL_DELAY + DELAY_BETWEEN_ANIMATIONS)
+    }, TOTAL_COUNTER_DELAY)
 
     // Listen to animated value changes and update display
     const listenerId = animatedScore.addListener(({ value: scoreValue }) => {
@@ -137,7 +136,7 @@ const StatItem = ({ id, score, label, explanation, value, isLast, scoreChange }:
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            minWidth: 56,
+            minWidth: 80,
             width: 'fit-content',
             height: 32,
             backgroundColor: '#101114',
@@ -151,8 +150,6 @@ const StatItem = ({ id, score, label, explanation, value, isLast, scoreChange }:
               fontSize: 16,
               color: 'transparent',
               textAlign: 'center',
-              // Prevent layout shifting during the score animation
-              minWidth: `${String(score).length}ch`,
               // @ts-ignore
               background: 'linear-gradient(27.42deg, #00d5ff 19.16%, #a25aff 74.07%)',
               backgroundClip: 'text'

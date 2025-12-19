@@ -209,7 +209,9 @@ const ExtensionRewardsScreen = () => {
                 <StatItem key={stat.id} {...stat} isLast={index === sections.length - 1} />
               ))}
             </View>
-            <RewardsAndStats />
+            <RewardsAndStats
+              pastTotalScore={pastProjectedRewardsScores?.scores.totalScore ?? null}
+            />
           </View>
         ) : (
           <SkeletonLoaderWeb width="100%" height={420} style={{ backgroundColor: '#191A1F' }} />
