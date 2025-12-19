@@ -1,4 +1,4 @@
-import { Contract, formatEther, formatUnits, JsonRpcProvider } from 'ethers'
+import { Contract, formatEther, formatUnits } from 'ethers'
 import React, { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { STK_WALLET, WALLET_TOKEN } from '@ambire-common/consts/addresses'
@@ -9,6 +9,7 @@ import {
   PortfolioRewardsResult,
   ProjectedRewardsStats
 } from '@ambire-common/libs/portfolio/interfaces'
+import { getRpcProvider } from '@ambire-common/services/provider'
 import { calculateRewardsStats } from '@ambire-common/utils/rewards'
 import { RELAYER_URL } from '@env'
 import { LEGENDS_SUPPORTED_NETWORKS_BY_CHAIN_ID } from '@legends/constants/networks'
@@ -74,19 +75,12 @@ const PortfolioControllerStateContext = createContext<{
   xWalletClaimableBalance: null
 })
 
-const ethereumProvider = new JsonRpcProvider(
-  'https://invictus.ambire.com/ethereum',
-  {
-    name: 'mainnet',
-    chainId: 1
-  },
-  { staticNetwork: true }
-)
+const ethereumProvider = getRpcProvider(['https://invictus.ambire.com/ethereum'], 1n)
 
 const stkWalletContract = new Contract(
   STK_WALLET,
-  ['function balanceOf(address) view returns (uint256)'],
-  ethereumProvider
+  ['function balanceOf(address) public view returns (uint256)'],
+  ethereumProvider as any
 )
 
 const PortfolioControllerStateProvider: React.FC<any> = ({ children }) => {
