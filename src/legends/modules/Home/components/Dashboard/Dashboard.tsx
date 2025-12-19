@@ -1,8 +1,6 @@
 import React from 'react'
 
-import InfoIcon from '@common/assets/svg/InfoIcon'
 import { getValueFromKey, Icon, SECTIONS, Stat } from '@common/components/RewardsStat'
-import Tooltip from '@common/components/Tooltip'
 import { faChevronDown } from '@fortawesome/free-solid-svg-icons/faChevronDown'
 import { faTrophy } from '@fortawesome/free-solid-svg-icons/faTrophy'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -84,34 +82,13 @@ const Dashboard = () => {
                           <Icon id={id} />
                         </div>
                         <span className={styles.label}>{label}</span>
-                        <InfoIcon
-                          width={12}
-                          height={12}
-                          color="currentColor"
-                          className={styles.infoIcon}
-                          data-tooltip-id={`${id}-info-tooltip`}
-                        />
-                        <Tooltip
-                          style={{
-                            backgroundColor: '#101114',
-                            color: '#F4F4F7',
-                            fontFamily: 'FunnelDisplay',
-                            fontSize: 11,
-                            lineHeight: '16px',
-                            fontWeight: 300,
-                            maxWidth: 244,
-                            boxShadow: '0px 0px 12px 0px #191B20',
-                            whiteSpace: 'pre-wrap'
-                          }}
-                          place="bottom"
-                          id={`${id}-info-tooltip`}
-                          content={explanation}
-                        />
                       </div>
                       <span className={styles.value}>{value}</span>
                       <FontAwesomeIcon className={`${styles.chevronIcon}`} icon={faChevronDown} />
                     </button>
-                    <div className={styles.description}>{explanation}</div>
+                    <div className={styles.description}>
+                      <div>{explanation}</div>
+                    </div>
                   </div>
                 )
               )}
