@@ -4,6 +4,7 @@ import { test } from 'fixtures/pageObjects'
 import { runSimpleTransferFlow, runBatchTransferFlow } from '../../flows/transferFlow'
 import { PageManager } from '../../pages/utils/page_instances'
 import { runSwapBatchFlow, runSwapFlow, runSwapProceedFlow } from '../../flows/swapAndBridgeFlow'
+import { runAddManualNetworkFlow, runChainlistFlow } from '../../flows/networkManagementFlow'
 
 test.describe.configure({ mode: 'serial' })
 
@@ -52,6 +53,26 @@ test.describe('sharedState', { tag: '@sharedState' }, () => {
         sendToken: tokens.usdc.optimism,
         recipientAddress: '0xc162b2F9f06143Cf063606d814C7F38ED4471F44'
       })
+    })
+  })
+
+  test.describe('Network Management', () => {
+    test('adding network manually', async () => {
+      await runAddManualNetworkFlow({ pages: sharedPages })
+    })
+
+    test('add, edit and disable network from Chainlist', async () => {
+      await runChainlistFlow({ pages: sharedPages })
+    })
+  })
+
+  test.describe('Keystore', () => {
+    test('should lock keystore', async () => {
+      await sharedPages.settings.lockKeystore()
+    })
+
+    test('should unlock keystore', async () => {
+      await sharedPages.settings.unlockKeystore()
     })
   })
 
