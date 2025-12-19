@@ -15,6 +15,7 @@ type Stat = {
   label: string
   explanation: string
   value: string | null
+  scoreChange?: number
 }
 
 const SECTIONS: Omit<Stat, 'score' | 'value'>[] = [

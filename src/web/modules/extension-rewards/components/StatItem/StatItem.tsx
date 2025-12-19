@@ -1,10 +1,11 @@
-import React from 'react'
-import { View } from 'react-native'
+import React, { useEffect, useRef, useState } from 'react'
+import { Animated, View } from 'react-native'
 
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import { Icon, Stat } from '@common/components/RewardsStat'
 import Text from '@common/components/Text'
 import Tooltip from '@common/components/Tooltip'
+import { isWeb } from '@common/config/env'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -12,7 +13,100 @@ type Props = Stat & {
   isLast?: boolean
 }
 
-const StatItem = ({ id, score, label, explanation, value, isLast }: Props) => {
+const INITIAL_DELAY = 200
+const FADE_IN_DURATION = 350
+const DELAY_BETWEEN_ANIMATIONS = 400
+
+const SCORE_ANIMATION_DURATION = 1000
+const HIDE_SCORE_CHANGE_DELAY = 800
+
+const getDynamicTimings = (scoreChange: number) => {
+  // The more the scoreChange, the longer the animation duration
+  const scoreAnimationDuration =
+    SCORE_ANIMATION_DURATION + Math.min(scoreChange * 10, SCORE_ANIMATION_DURATION)
+  const hideScoreChangeDelay =
+    HIDE_SCORE_CHANGE_DELAY + Math.min(scoreChange * 10, HIDE_SCORE_CHANGE_DELAY)
+
+  return {
+    scoreAnimationDuration,
+    hideScoreChangeDelay
+  }
+}
+
+const StatItem = ({ id, score, label, explanation, value, isLast, scoreChange }: Props) => {
+  const changeOpacity = useRef(new Animated.Value(0)).current
+  const changeTranslateY = useRef(new Animated.Value(8)).current
+  const animatedScore = useRef(new Animated.Value(0)).current
+
+  // Initialize with the old score if there's a score change
+  const getInitialScore = () => {
+    if (!scoreChange || scoreChange <= 0) return score
+
+    const numericScore = typeof score === 'string' ? parseFloat(score) : score
+    const oldScore = numericScore - scoreChange
+
+    return id === 'multiplier' ? `${oldScore.toFixed(0)}x` : oldScore.toFixed(0)
+  }
+
+  const [displayScore, setDisplayScore] = useState(getInitialScore)
+
+  useEffect(() => {
+    if (!scoreChange || scoreChange <= 0) return
+
+    const numericScore = typeof score === 'string' ? parseFloat(score) : score
+    const startValue = numericScore - scoreChange
+    const endValue = numericScore
+
+    animatedScore.setValue(startValue)
+
+    const { scoreAnimationDuration, hideScoreChangeDelay } = getDynamicTimings(scoreChange)
+
+    // Fade in the scoreChange badge
+    const phase1Timer = setTimeout(() => {
+      Animated.parallel([
+        Animated.timing(changeOpacity, {
+          toValue: 1,
+          duration: FADE_IN_DURATION,
+          useNativeDriver: !isWeb
+        }),
+        Animated.timing(changeTranslateY, {
+          toValue: 0,
+          duration: FADE_IN_DURATION,
+          useNativeDriver: !isWeb
+        })
+      ]).start()
+    }, INITIAL_DELAY)
+
+    // After scoreChange appears, animate score counting + fade out scoreChange
+    const phase2Timer = setTimeout(() => {
+      Animated.timing(animatedScore, {
+        toValue: endValue,
+        duration: scoreAnimationDuration,
+        useNativeDriver: !isWeb
+      }).start()
+
+      Animated.timing(changeOpacity, {
+        toValue: 0,
+        delay: hideScoreChangeDelay,
+        duration: scoreAnimationDuration,
+        useNativeDriver: !isWeb
+      }).start()
+    }, FADE_IN_DURATION + INITIAL_DELAY + DELAY_BETWEEN_ANIMATIONS)
+
+    // Listen to animated value changes and update display
+    const listenerId = animatedScore.addListener(({ value: scoreValue }) => {
+      const formattedValue =
+        id === 'multiplier' ? `${scoreValue.toFixed(0)}x` : scoreValue.toFixed(0)
+      setDisplayScore(formattedValue)
+    })
+
+    return () => {
+      clearTimeout(phase1Timer)
+      clearTimeout(phase2Timer)
+      animatedScore.removeListener(listenerId)
+    }
+  }, [score, scoreChange, id, changeOpacity, changeTranslateY, animatedScore])
+
   return (
     <View
       style={{
@@ -42,13 +136,31 @@ const StatItem = ({ id, score, label, explanation, value, isLast }: Props) => {
             style={{
               fontSize: 16,
               color: 'transparent',
+              textAlign: 'center',
+              // Prevent layout shifting during the score animation
+              minWidth: `${String(score).length}ch`,
               // @ts-ignore
               background: 'linear-gradient(27.42deg, #00d5ff 19.16%, #a25aff 74.07%)',
               backgroundClip: 'text'
             }}
           >
-            {score}
+            {displayScore}
           </Text>
+          {!!scoreChange && scoreChange > 0 && (
+            <Animated.View
+              style={{
+                position: 'absolute',
+                top: -4,
+                right: -12,
+                opacity: changeOpacity,
+                transform: [{ translateY: changeTranslateY }]
+              }}
+            >
+              <Text fontSize={13} color="#D7FF00" weight="semiBold">
+                +{scoreChange}
+              </Text>
+            </Animated.View>
+          )}
         </View>
       </View>
       <View style={{ flex: 0.6, ...flexbox.directionRow, ...flexbox.alignCenter }}>
