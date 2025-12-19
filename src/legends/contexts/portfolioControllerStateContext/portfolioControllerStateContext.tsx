@@ -173,15 +173,16 @@ const PortfolioControllerStateProvider: React.FC<any> = ({ children }) => {
         ethereumProvider as unknown as Parameters<typeof getUniV3Positions>[1],
         networks.find((n) => n.chainId === 1n)!
       )
-      const walletEthPositionsAssets = uniV3Positions?.positions
-        .filter((p) => p.additionalData.inRange)
-        .filter(
-          (p) =>
-            p.assets.some((a) => a.symbol === 'WALLET') && p.assets.some((a) => a.symbol === 'WETH')
-        )
-        .map((p) => p.assets)
-        .flat()
-      if (!walletEthPositionsAssets) return
+      const walletEthPositionsAssets =
+        uniV3Positions?.positions
+          .filter((p) => p.additionalData.inRange)
+          .filter(
+            (p) =>
+              p.assets.some((a) => a.symbol === 'WALLET') &&
+              p.assets.some((a) => a.symbol === 'WETH')
+          )
+          .map((p) => p.assets)
+          .flat() || []
       const newAmounts = {
         wallet: walletEthPositionsAssets
           ?.filter((a) => a.symbol === 'WALLET')
