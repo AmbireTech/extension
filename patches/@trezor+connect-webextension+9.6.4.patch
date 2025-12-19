@@ -11,7 +11,7 @@ index 8ae24fe..e5e1822 100644
 +          // in terms of top-left corner. For gecko browsers, solves the problem
 +          // where 2nd time onwards the popup window is NOT being opened with the
 +          // correct sizing (compared to the main browser window), but relative
-+          // to the Ambire action window, that could be too tiny.
++          // to the Ambire request window, that could be too tiny.
 +          chrome.windows.getAll({ windowTypes: ['normal'] }, (wins) => {
 +          const largestParentWindow = wins.length
 +            ? wins.sort((a, b) => ((b.width || 0) * (b.height || 0)) - ((a.width || 0) * (a.height || 0)))[0]

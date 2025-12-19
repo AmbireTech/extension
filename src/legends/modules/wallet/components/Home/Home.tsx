@@ -111,6 +111,7 @@ const Home = () => {
     <>
       <div className={styles.overachieverWrapper}>
         <V1AccountBanner />
+        {/* TODO: Consider deleting the banner as it's likely no longer needed */}
         <OverachieverBanner wrapperClassName={styles.overachieverBanner} />
       </div>
       <section className={`${styles.wrapper}`}>

@@ -22,11 +22,11 @@
   background-size: cover;
   background-color: $neutral-700;
   border-radius: $tertiaryBorderRadius;
-  border: 0.25rem solid transparent;
+  border: 0.0625rem solid transparent;
   background-clip: padding-box, border-box;
   background-origin: padding-box, border-box;
   background-image: linear-gradient($secondaryBackground, $secondaryBackground),
-    linear-gradient(152.35deg, rgba(207, 162, 255, 0.6) 9.38%, rgba(78, 25, 168, 0.6) 96.89%);
+    linear-gradient(15.37deg, $blue-300 6.35%, $purple-650 54.11%);
 }
 
 .closeButton {
@@ -53,8 +53,7 @@
   flex-direction: column;
   align-items: center;
   padding: 0 2rem 2rem 2rem;
-  background-image: url('/src//legends/public/images/stakeModalSmokeAndLight.png');
-  background-size: 41rem 30rem;
+  background-size: 40rem 30rem;
   background-repeat: no-repeat;
   background-position: center -20%;
 }
@@ -101,7 +100,7 @@
     }
 
     &:not(.activeTab):hover {
-      color: #fff;
+      color: $whiteText;
     }
 
     &:disabled {

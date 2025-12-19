@@ -10,8 +10,8 @@ export const TAB_WIDE_CONTENT_WIDTH = 1320
 const BROWSER_WINDOW_TOP_BAR_HEIGHT = engine === 'gecko' ? 20 : 30
 export const POPUP_HEIGHT = Math.round(BROWSER_WINDOW_TOP_BAR_HEIGHT + 600)
 
-// This are the dimensions for a collapsed action-window
-// by default the action-window will be full screen and won't be with these dimensions
+// This are the dimensions for a collapsed request-window
+// by default the request-window will be full screen and won't be with these dimensions
 export const NOTIFICATION_WINDOW_WIDTH = 1100
 export const NOTIFICATION_WINDOW_HEIGHT = 800
 export const BROWSER_WINDOW_BAR_BUFFER = 50

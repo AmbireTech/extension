@@ -43,7 +43,7 @@ const SignedMessageSummary = ({ signedMessage, style }: Props) => {
   )
 
   const dAppName = useMemo(() => {
-    if (signedMessage.fromActionId === ENTRY_POINT_AUTHORIZATION_REQUEST_ID) {
+    if (signedMessage.fromRequestId === ENTRY_POINT_AUTHORIZATION_REQUEST_ID) {
       return 'Entry Point Authorization'
     }
     if (signedMessage.content.kind === 'authorization-7702') {
@@ -51,7 +51,7 @@ const SignedMessageSummary = ({ signedMessage, style }: Props) => {
     }
 
     return signedMessage.dapp?.name || 'Unknown App'
-  }, [signedMessage.dapp?.name, signedMessage.fromActionId, signedMessage.content.kind])
+  }, [signedMessage.dapp?.name, signedMessage.fromRequestId, signedMessage.content.kind])
 
   const dAppNameTooltipId = useMemo(() => {
     // Filter out spaces and special characters
@@ -70,7 +70,7 @@ const SignedMessageSummary = ({ signedMessage, style }: Props) => {
       content={
         <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1]}>
           <View style={[flexbox.alignCenter, flexbox.directionRow, flexbox.flex1, spacings.prTy]}>
-            {signedMessage.fromActionId !== ENTRY_POINT_AUTHORIZATION_REQUEST_ID &&
+            {signedMessage.fromRequestId !== ENTRY_POINT_AUTHORIZATION_REQUEST_ID &&
               signedMessage.content.kind !== 'authorization-7702' && (
                 <ManifestImage
                   uri={signedMessage?.dapp?.icon || ''}

@@ -2,7 +2,7 @@ import { Observable, Subscription } from 'rxjs'
 
 import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
 import { ExternalSignerController } from '@ambire-common/interfaces/keystore'
-import { TypedMessage } from '@ambire-common/interfaces/userRequest'
+import { TypedMessageUserRequest } from '@ambire-common/interfaces/userRequest'
 import { normalizeLedgerMessage } from '@ambire-common/libs/ledger/ledger'
 import { getHdPathFromTemplate, getHdPathWithoutRoot } from '@ambire-common/utils/hdPath'
 import hexStringToUint8Array from '@ambire-common/utils/hexStringToUint8Array'
@@ -454,7 +454,7 @@ class LedgerController implements ExternalSignerController {
     signTypedData: { domain, types, message, primaryType }
   }: {
     path: string
-    signTypedData: TypedMessage
+    signTypedData: TypedMessageUserRequest['meta']['params']
   }) => {
     if (!this.signerEth) throw new ExternalSignerError(normalizeLedgerMessage())
     // TODO: Slight mismatch between TypedMessage type and Ledger's TypedDataDomain

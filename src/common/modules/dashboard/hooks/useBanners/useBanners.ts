@@ -2,7 +2,6 @@ import { useMemo } from 'react'
 
 import { Banner as BannerInterface } from '@ambire-common/interfaces/banner'
 import { getCurrentAccountBanners } from '@ambire-common/libs/banners/banners'
-import useActionsControllerState from '@web/hooks/useActionsControllerState'
 import useBannersControllerState from '@web/hooks/useBannersControllerState'
 import useEmailVaultControllerState from '@web/hooks/useEmailVaultControllerState'
 import useExtensionUpdateControllerState from '@web/hooks/useExtensionUpdateControllerState'
@@ -32,7 +31,6 @@ export default function useBanners(): [BannerInterface[], BannerInterface[]] {
 
   const { banners: emailVaultBanners = [] } = useEmailVaultControllerState()
   const { banners: requestBanners = [] } = useRequestsControllerState()
-  const { banners: actionBanners = [] } = useActionsControllerState()
   const { banners: swapAndBridgeBanners = [] } = useSwapAndBridgeControllerState()
   const { extensionUpdateBanner } = useExtensionUpdateControllerState()
   const { hasFundedHotAccount } = usePortfolioControllerState()
@@ -41,7 +39,6 @@ export default function useBanners(): [BannerInterface[], BannerInterface[]] {
     return [
       ...deprecatedSmartAccountBanner,
       ...requestBanners,
-      ...actionBanners,
       ...(isOffline && portfolio.isAllReady ? [OFFLINE_BANNER] : []),
       ...(isOffline ? [] : [...swapAndBridgeBanners]),
       ...getCurrentAccountBanners(hasFundedHotAccount ? emailVaultBanners : [], account?.addr),
@@ -50,7 +47,6 @@ export default function useBanners(): [BannerInterface[], BannerInterface[]] {
   }, [
     deprecatedSmartAccountBanner,
     requestBanners,
-    actionBanners,
     isOffline,
     portfolio.isAllReady,
     swapAndBridgeBanners,

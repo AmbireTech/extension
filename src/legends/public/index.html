@@ -4,25 +4,25 @@
 <head>
   <!-- Meta title, description and image -->
   <!-- -- Default -- -->
-  <title>Ambire Rewards | Master Smart Accounts & Win Big</title>
+  <title>Ambire Rewards</title>
   <meta name="description"
-    content="Join Ambire Rewards! Complete onchain quests, earn XP and level up your character to win a share of 195M $WALLET tokens. The first 4 transactions are free!" />
+    content="Ambire Rewards fairly distributes $WALLET to Ambire Wallet users who support the ecosystem through staking, liquidity, governance, and Swap & Bridge usage." />
   <!-- -- OG -- -->
-  <meta property="og:title" content="Ambire Rewards | Master Smart Accounts & Get Rewarded" />
+  <meta property="og:title" content="Ambire Rewards | The Fair Rewards Program for $WALLET" />
   <meta property="og:description"
-    content="Join Ambire Rewards! An onchain smart account exploration campaign exclusive to Ambire extension users, with a reward pool of 195M $WALLET tokens. Embark on quests, mint NFT characters, and level up as your XP grows. Start strong with 4 sponsored transactions!" />
+    content="Ambire Rewards is the fair distribution mechanism for the $WALLET token, rewarding Ambire Wallet users who actively support the ecosystem." />
   <meta property="og:image" content="https://rewards.ambire.com/meta.png" />
-  <meta property="og:image:alt" content="Smart accounts exploration campaign" />
+  <meta property="og:image:alt" content="web3 wallet rewards program" />
   <meta property="og:url" content="https://rewards.ambire.com/" />
   <meta property="og:type" content="website" />
   <!-- -- Twitter -- -->
-  <meta name="twitter:title" content="Ambire Rewards | Master Smart Accounts & Earn Rewards" />
+  <meta name="twitter:title" content="Ambire Rewards | The Fair $WALLET Distribution Program" />
   <meta name="twitter:description"
-    content="Join the exclusive ranks of Ambire Rewards! Navigate quests, earn XP, level up, and mint unique NFT characters in a race for 195M $WALLET tokens. Start with 4 free transactions on us!" />
+    content="The fair $WALLET token distribution program for Ambire Wallet users who stake, provide liquidity, participate in governance, and use Swap & Bridge." />
   <meta name="twitter:image" content="https://rewards.ambire.com/meta.png" />
-  <meta name="twitter:image:alt" content="Ambire Rewards—a smart account exploration campaign" />
+  <meta name="twitter:image:alt" content="wallet rewards program" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:site" content="@AmbireWallet" />
+  <meta name="twitter:site" content="@ambire" />
   <!-- Other meta tags  -->
   <meta name="robots" content="index, follow" />
   <meta charset="UTF-8" />
@@ -40,64 +40,232 @@
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
   <!-- End of icons -->
   <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+
     {
-      "@context": "https://schema.org",
-      "@type": "SoftwareApplication",
-      "name": "Ambire Rewards",
-      "url": "https://rewards.ambire.com/",
-      "description": "Ambire Rewards is a Smart Accounts exploration campaign exclusive to Ambire Wallet, showcasing the benefits over traditional EOAs. Players engage in quests across five networks, mint NFTs, and level up, competing for a share of 195M $WALLET tokens. Start with 4 sponsored transactions.",
-      "applicationCategory": "GameApplication",
-      "operatingSystem": "Web",
-      "creator": {
-        "@type": "Organization",
-        "name": "Ambire",
-        "url": "https://www.ambire.com",
-        "logo": "https://www.ambire.com/ambire.png",
-        "sameAs": [
-          "https://x.com/AmbireWallet",
-          "https://warpcast.com/ambirewallet",
-          "https://t.me/AmbireOfficial",
-          "https://www.linkedin.com/company/ambiretech/"
-        ]
+      "@type": "Organization",
+      "@id": "https://www.ambire.com#organization",
+      "name": "Ambire",
+      "alternateName": "Ambire Web3 Wallet",
+      "url": "https://www.ambire.com",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://www.ambire.com/logo.svg",
+        "caption": "Ambire Web3 Wallet logo"
       },
+      "sameAs": [
+        "https://blog.ambire.com/",
+        "https://help.ambire.com/hc/en-us",
+        "https://x.com/ambire",
+        "https://farcaster.xyz/ambirewallet",
+        "https://t.me/AmbireOfficial",
+        "https://www.linkedin.com/company/ambiretech/",
+        "https://github.com/AmbireTech",
+        "https://www.youtube.com/@AmbireTech",
+        "https://discord.com/invite/ambire"
+      ]
+    },
+
+    {
+      "@type": "WebSite",
+      "@id": "https://rewards.ambire.com#website",
+      "url": "https://rewards.ambire.com/",
+      "name": "Ambire Rewards App",
+      "publisher": { "@id": "https://www.ambire.com#organization" },
+      "inLanguage": "en",
+      "description": "Ambire Rewards is the fair reward distribution program for $WALLET, rewarding Ambire users for onchain activity across Ethereum and EVM networks."
+    },
+
+    {
+      "@type": "WebPage",
+      "@id": "https://rewards.ambire.com/#webpage",
+      "url": "https://rewards.ambire.com/",
+      "name": "Ambire Rewards Home",
+      "description": "Track your score points, follow the leaderboard, manage $WALLET staking, and view your projected rewards.",
+      "isPartOf": { "@id": "https://rewards.ambire.com#website" },
+      "about": { "@id": "https://rewards.ambire.com/#app" },
+      "primaryImageOfPage": {
+        "@type": "ImageObject",
+        "url": "https://rewards.ambire.com/images/logo.png"
+      },
+      "hasPart": { "@id": "https://rewards.ambire.com/#faq" },
+      "inLanguage": "en"
+    },
+
+    {
+      "@type": "SoftwareApplication",
+      "@id": "https://rewards.ambire.com/#app",
+      "name": "Ambire Rewards App",
+      "url": "https://rewards.ambire.com/",
+      "description": "Ambire Rewards is the fair reward distribution program for $WALLET. All Ambire Wallet users earn $WALLET tokens for onchain activity within the wallet across six eligible networks. EOAs with Ambire's EIP-7702 delegation, as well as Smart Accounts created in the extension (V2 accounts), are all eligible for rewards.",
+      "applicationCategory": "FinanceApplication",
+      "applicationSubCategory": "web3 wallet rewards program",
+      "operatingSystem": "Web",
+      "inLanguage": "en",
+      "isAccessibleForFree": true,
+      "softwareRequirements": "Requires the Ambire Wallet browser extension; eligible accounts include EOAs (with EIP-7702 delegated) and Smart Accounts created in Ambire Wallet extension.",
+      "publisher": { "@id": "https://www.ambire.com#organization" },
+      "image": "https://rewards.ambire.com/images/logo.png",
+
+      "audience": { "@type": "Audience", "audienceType": "Ambire Wallet browser extension users" },
+
+      "softwareHelp": {
+        "@type": "CreativeWork",
+        "url": "https://help.ambire.com/hc/en-us/sections/4422038113554-Ambire-Rewards",
+        "name": "Ambire Rewards Guide"
+      },
+
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": 4.9,
+        "bestRating": 5,
+        "reviewCount": 185
+      },
+
+      "featureList": [
+        "Accumulate score points based on the average USD value of assets held in your Ambire Wallet, with scores converting to $WALLET at the end of the season.",
+        "Earn score points by providing $WALLET liquidity on Uniswap, with higher weighting compared to passive balances.",
+        "Generate score points from swap and bridge volume executed through Ambire Wallet.",
+        "Increase your score by staking $WALLET directly through the Rewards interface.",
+        "Receive score points for participating in WalletDAO governance using $WALLET or $stkWALLET voting power.",
+        "Earn weekly activity score points for making onchain transactions, with diminishing rewards across multiple transactions per week.",
+        "Apply community score multipliers by holding eligible NFTs from supported ecosystems and partner communities.",
+        "Track your total score, score breakdown by action, and projected $WALLET rewards in real time.",
+        "Compare performance on the global leaderboard and monitor your rank throughout the season.",
+        "View the total rewards pool, token metrics, and season rules directly within the Rewards interface."
+      ],
+
+      "keywords": "web3 rewards program, web3 loyalty program, web3 rewards, Web3 rewards app, web3 wallet loyalty program, web3 wallet rewards program",
+
       "offers": {
         "@type": "Offer",
-        "price": "0",
+        "price": 0,
         "priceCurrency": "USD",
         "availability": "https://schema.org/InStock"
       },
-      "featureList": [
-        "Minting NFTs with Legends characters",
-        "Performing transactions on 5 EVM chains",
-        "Making gasless transactions",
-        "Exploring onchain transaction simulation",
-        "Providing liquidity for $WALLET",
-        "Bridging tokens between EVMs",
-        "Swapping tokens with the built-in swap",
-        "Topping up the Ambire Gas Tank",
-        "Broadcasting 4337 transactions",
-        "Participating in the WalletDAO governance vote",
-        "Deriving Smart Accounts from a Seed Phrase",
-        "Batching transactions"
-      ],
-      "applicationSubCategory": "Smart Accounts Exploration campaign",
-      "datePublished": "2024-12-12",
-      "keywords": "exploration campaign to test smart accounts, Web3 game, Web3 role-playing game, onchain quest, free onchain game, onchain RPG, play-to-earn game, onchain adventure game, crypto rewards game, blockchain-based quest game, smart contract-driven quest game, gas-efficient blockchain game, crypto treasure hunt",
-      "isAccessibleForFree": true,
+
       "potentialAction": {
-        "@type": "PlayAction",
+        "@type": "UseAction",
         "target": "https://rewards.ambire.com/"
       },
-      "image": "https://rewards.ambire.com/images/logo.png",
-      "aggregateRating": {
-        "@type": "AggregateRating",
-        "ratingValue": "4.8",
-        "reviewCount": "99",
-        "worstRating": "1",
-        "bestRating": "5"
-      }
-    }    
-  </script>
+
+      "about": [
+        { "@id": "https://rewards.ambire.com/#wallet-token" },
+        { "@id": "https://www.wikidata.org/wiki/Q122926344" },  /* rewards program */
+        { "@id": "https://www.wikidata.org/wiki/Q1426546" },    /* loyalty program */
+        { "@id": "https://www.wikidata.org/wiki/Q135797717" },  /* customer loyalty program software */
+        { "@id": "https://www.wikidata.org/wiki/Q106677933" },  /* Web3 */
+        { "@id": "https://www.wikidata.org/wiki/Q55080113" },   /* decentralized application */
+        { "@id": "https://www.wikidata.org/wiki/Q20514253" },   /* blockchain */
+        { "@id": "https://www.wikidata.org/wiki/Q40186999" },   /* cryptocurrency wallet */
+        { "@id": "https://www.wikidata.org/wiki/Q13479982" },   /* cryptocurrency */
+        { "@id": "https://www.wikidata.org/wiki/Q39049892" },   /* ERC-20 */
+        { "@id": "https://www.wikidata.org/wiki/Q16783523" },   /* Ethereum */
+        { "@id": "https://www.wikidata.org/wiki/Q114416242" },  /* Optimism */
+        { "@id": "https://www.wikidata.org/wiki/Q111446147" },  /* Arbitrum */
+        { "@id": "https://www.wikidata.org/wiki/Q135337980" },  /* Base blockchain */
+        { "@id": "https://www.wikidata.org/wiki/Q107313836" }   /* Binance Smart Chain */
+      ]
+    },
+
+    {
+      "@type": "DefinedTerm",
+      "@id": "https://rewards.ambire.com/#wallet-token",
+      "name": "$WALLET",
+      "alternateName": "Ambire $WALLET Token",
+      "description": "$WALLET is the native ERC-20 utility and governance token of the Ambire ecosystem. It powers Ambire Wallet and Ambire Rewards, serving as the medium for staking, reward distribution, and WalletDAO governance.",
+      "inDefinedTermSet": "https://www.wikidata.org/wiki/Q13479982",  /* cryptocurrency */
+      "additionalType": [
+        "https://www.wikidata.org/wiki/Q39049892",  /* ERC-20 */
+        "https://www.wikidata.org/wiki/Q16783523",  /* Ethereum */
+        "https://www.wikidata.org/wiki/Q135337980"  /* Base blockchain */
+      ],
+      "sameAs": [
+        "https://etherscan.io/token/0x88800092ff476844f74dc2fc427974bbee2794ae",
+        "https://basescan.org/token/0x0BbbEad62f7647AE8323d2cb243A0DB74B7C2b80",
+        "https://coinmarketcap.com/currencies/ambire-wallet/",
+        "https://www.coingecko.com/en/coins/ambire-wallet"
+      ],
+      "additionalProperty": [
+        { "@type": "PropertyValue",
+          "name": "Maximum supply",
+          "value": "1000000000",
+          "unitText": "$WALLET"
+        }
+      ]
+    },
+
+    {
+      "@type": "FAQPage",
+      "@id": "https://rewards.ambire.com/#faq",
+      "url": "https://rewards.ambire.com/",
+      "inLanguage": "en",
+      "mainEntityOfPage": { "@id": "https://rewards.ambire.com/#webpage" },
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is Ambire Rewards?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Ambire Rewards is the fair reward distribution program for $WALLET. The program is divided into seasons, and your onchain activity during each season contributes to your personal score. When a season ends, your score determines how many $WALLET tokens you receive."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is Ambire Rewards free to participate?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes, participating in Rewards is free."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I participate with a wallet different from Ambire?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No, only Ambire Wallet Extension users are eligible to participate."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I use my existing account?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. You can participate with any account you import or create in the Ambire Wallet extension — this includes existing hot EOAs, hardware wallets, and new Ambire (V2) accounts created in the extension. Ambire legacy accounts from the web wallet or mobile app (V1) are not eligible for Rewards."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I participate with multiple accounts?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes, you can use more than one account. However, there is no incentive to split your balance ... That said, if any misuse or sybil-like behavior is detected, the Ambire team may take immediate action, including disqualifying accounts, adjusting score calculations, applying penalties, or other necessary measures. The team reserves the right to disqualify or penalize users for any reason."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How long is the current Ambire Reward season?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Season 2 begins on December 15, 2025. It is planned to run for 90 days, but this depends on the community goal being reached. The goal is to generate $3MM in swap/bridge volume through the built-in Swap & Bridge features in the wallet during the season. If the goal is not reached within the initial 90 days, the season will be extended following a governance vote."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What are projected rewards?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Projected rewards are an estimate of how much $WALLET you might earn based on your current score compared to all other participants. These values change throughout the season as scores update. Projections also assume that the community goal is reached. If the goal is not met, the season is extended. If higher goal levels are reached, the total reward pool increases."
+          }
+        }
+      ]
+    }
+
+  ]
+}
+</script>
 
   <!-- Google Tag Manager -->
   <script>

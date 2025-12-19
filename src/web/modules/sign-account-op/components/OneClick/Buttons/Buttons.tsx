@@ -31,7 +31,7 @@ type Props = {
   onRecipientAddressUnknownAgree?: () => void
 }
 
-const { isActionWindow } = getUiType()
+const { isRequestWindow } = getUiType()
 
 const Buttons: FC<Props> = ({
   signAccountOpErrors,
@@ -107,7 +107,7 @@ const Buttons: FC<Props> = ({
 
   return (
     <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifyEnd]}>
-      {!isActionWindow && (
+      {!isRequestWindow && (
         <View style={[flexbox.directionRow, flexbox.alignCenter]}>
           <View // @ts-ignore
             dataSet={createGlobalTooltipDataSet({

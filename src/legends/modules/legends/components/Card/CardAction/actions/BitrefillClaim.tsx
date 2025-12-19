@@ -60,6 +60,9 @@ const BitrefillClaim = ({ meta }: Props) => {
         useSponsorship
       )
       const receipt = await getCallsStatus(sendCallsIdentifier)
+
+      if (!receipt) throw new Error('No receipt found')
+
       await onComplete(receipt.transactionHash)
       setIsInProgress(false)
     } catch (e: any) {
@@ -70,7 +73,16 @@ const BitrefillClaim = ({ meta }: Props) => {
     } finally {
       setIsInProgress(false)
     }
-  }, [connectedAccount, sendCalls, chainId, getCallsStatus, onComplete, addToast, switchNetwork])
+  }, [
+    browserProvider,
+    connectedAccount,
+    switchNetwork,
+    sendCalls,
+    chainId,
+    getCallsStatus,
+    onComplete,
+    addToast
+  ])
 
   const btnText = useMemo(() => {
     if (!connectedAccount) return 'Connect your wallet to unlock Rewards quests.'
