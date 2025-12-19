@@ -61,7 +61,7 @@ test.describe('sharedState', { tag: '@sharedState' }, () => {
         pages: sharedPages,
         fromToken: tokens.usdc.base,
         toToken: tokens.wallet.base,
-        sendAmount: 0.01,
+        sendAmount: 0.01
       })
     })
 
