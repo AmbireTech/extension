@@ -1,7 +1,7 @@
 import React from 'react'
 
 import InfoIcon from '@common/assets/svg/InfoIcon'
-import { getValueFromKey, Icon, SECTIONS, Stat } from '@common/components/RewardsStat'
+import { formatScore, getValueFromKey, Icon, SECTIONS, Stat } from '@common/components/RewardsStat'
 import Tooltip from '@common/components/Tooltip'
 import { faChevronDown } from '@fortawesome/free-solid-svg-icons/faChevronDown'
 import { faTrophy } from '@fortawesome/free-solid-svg-icons/faTrophy'
@@ -23,11 +23,7 @@ const Dashboard = () => {
   const [expandedId, setExpandedId] = React.useState<Stat['id'] | null>(null)
 
   const sections: Stat[] = SECTIONS.map((section) => {
-    let score = userRewardsStats ? userRewardsStats[section.id].toFixed(0) : 0
-
-    if (section.id === 'multiplier') {
-      score = `${score}x`
-    }
+    const score = userRewardsStats ? Math.floor(userRewardsStats[section.id]) : 0
 
     return {
       ...section,
@@ -76,7 +72,7 @@ const Dashboard = () => {
                     >
                       <div className={styles.score}>
                         <div className={styles.scoreBadge}>
-                          <span className={styles.scoreText}>{score}</span>
+                          <span className={styles.scoreText}>{formatScore(id, score)}</span>
                         </div>
                       </div>
                       <div className={styles.criteria}>

@@ -65,12 +65,9 @@ const ExtensionRewardsScreen = () => {
   const sections: Stat[] = useMemo(
     () =>
       SECTIONS.map((section) => {
-        let score = projectedRewardsStats ? projectedRewardsStats[section.id].toFixed(0) : 0
-        let scoreChange = 0
+        const score = projectedRewardsStats ? Math.floor(projectedRewardsStats[section.id]) : 0
 
-        if (section.id === 'multiplier') {
-          score = `${score}x`
-        }
+        let scoreChange = 0
 
         if (pastProjectedRewardsScores && projectedRewardsStats) {
           const pastValue = pastProjectedRewardsScores.scores[section.id]
@@ -116,7 +113,7 @@ const ExtensionRewardsScreen = () => {
       scores
     })
     setArePastProjectedRewardsScoresLoading(false)
-  }, [account, pastProjectedRewardsScores, projectedRewardsStats])
+  }, [account, pastProjectedRewardsScores])
 
   // Store the projected rewards scores when unmounting the screen
   useEffect(() => {

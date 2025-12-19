@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { Animated, View } from 'react-native'
 
 import InfoIcon from '@common/assets/svg/InfoIcon'
-import { Icon, Stat } from '@common/components/RewardsStat'
+import { formatScore, Icon, Stat } from '@common/components/RewardsStat'
 import Text from '@common/components/Text'
 import Tooltip from '@common/components/Tooltip'
 import { isWeb } from '@common/config/env'
@@ -33,29 +33,33 @@ const getDynamicTimings = (scoreChange: number) => {
   }
 }
 
+const getInitialScore = (
+  scoreChange: Stat['scoreChange'],
+  score: Stat['score'],
+  id: Stat['id']
+) => {
+  if (!scoreChange || scoreChange <= 0) return formatScore(id, score)
+
+  const oldScore = score - scoreChange
+
+  return formatScore(id, oldScore)
+}
+
 const StatItem = ({ id, score, label, explanation, value, isLast, scoreChange }: Props) => {
   const changeOpacity = useRef(new Animated.Value(0)).current
   const changeTranslateY = useRef(new Animated.Value(8)).current
   const animatedScore = useRef(new Animated.Value(0)).current
+  const shouldAnimate = !!scoreChange && scoreChange > 0
 
   // Initialize with the old score if there's a score change
-  const getInitialScore = () => {
-    if (!scoreChange || scoreChange <= 0) return score
 
-    const numericScore = typeof score === 'string' ? parseFloat(score) : score
-    const oldScore = numericScore - scoreChange
-
-    return id === 'multiplier' ? `${oldScore.toFixed(0)}x` : oldScore.toFixed(0)
-  }
-
-  const [displayScore, setDisplayScore] = useState(getInitialScore)
+  const [displayScore, setDisplayScore] = useState(getInitialScore(scoreChange, score, id))
 
   useEffect(() => {
-    if (!scoreChange || scoreChange <= 0) return
+    if (!shouldAnimate) return
 
-    const numericScore = typeof score === 'string' ? parseFloat(score) : score
-    const startValue = numericScore - scoreChange
-    const endValue = numericScore
+    const startValue = score - scoreChange
+    const endValue = score
 
     animatedScore.setValue(startValue)
 
@@ -105,7 +109,17 @@ const StatItem = ({ id, score, label, explanation, value, isLast, scoreChange }:
       clearTimeout(phase2Timer)
       animatedScore.removeListener(listenerId)
     }
-  }, [score, scoreChange, id, changeOpacity, changeTranslateY, animatedScore])
+  }, [score, scoreChange, id, changeOpacity, changeTranslateY, animatedScore, shouldAnimate])
+
+  // When there is no positive scoreChange (no animation), keep displayScore in sync with score
+  useEffect(() => {
+    if (shouldAnimate) {
+      // Animation effect will handle updating displayScore
+      return
+    }
+
+    setDisplayScore(getInitialScore(scoreChange, score, id))
+  }, [score, scoreChange, id, shouldAnimate])
 
   return (
     <View
@@ -146,7 +160,7 @@ const StatItem = ({ id, score, label, explanation, value, isLast, scoreChange }:
           >
             {displayScore}
           </Text>
-          {!!scoreChange && scoreChange > 0 && (
+          {shouldAnimate && (
             <Animated.View
               style={{
                 position: 'absolute',
