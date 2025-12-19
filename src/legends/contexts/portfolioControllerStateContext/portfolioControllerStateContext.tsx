@@ -99,7 +99,9 @@ const PortfolioControllerStateProvider: React.FC<any> = ({ children }) => {
     useState<{ wallet: number; eth: number }>()
   const [stkBalance, setStkBalance] = useState<number>()
   const [claimableRewards, setClaimableRewards] = useState<any>(null)
-  const [isLoadingClaimableRewards, setIsLoadingClaimableRewards] = useState(true)
+  const [isLoadingPortfolioProjectionData, setIsLoadingPortfolioProjectionData] = useState(true)
+  const [isLoadingUniPositions, setIsLoadingUniPositions] = useState(true)
+  const [isLoadingStkBalance, setIsLoadingStkBalance] = useState(true)
   const [claimableRewardsError, setClaimableRewardsError] = useState<string | null>(null)
   const [xWalletClaimableBalance, setXWalletClaimableBalance] = useState<
     PortfolioRewardsResult['xWalletClaimableBalance'] | null
@@ -113,11 +115,11 @@ const PortfolioControllerStateProvider: React.FC<any> = ({ children }) => {
 
   const updateAdditionalPortfolio = useCallback(async () => {
     if (!connectedAccount) {
-      setIsLoadingClaimableRewards(false)
+      setIsLoadingPortfolioProjectionData(false)
       return
     }
     try {
-      setIsLoadingClaimableRewards(true)
+      setIsLoadingPortfolioProjectionData(true)
       const additionalPortfolioResponse = await fetch(
         `${RELAYER_URL}/v2/identity/${connectedAccount}/portfolio-additional`
       )
@@ -138,27 +140,40 @@ const PortfolioControllerStateProvider: React.FC<any> = ({ children }) => {
       setRewardsProjectionData(additionalPortfolioJson?.data?.rewardsProjectionDataV2)
       setClaimableRewards(claimableBalance)
       setXWalletClaimableBalance(xWalletClaimableBalanceData)
-      setIsLoadingClaimableRewards(false)
+      setIsLoadingPortfolioProjectionData(false)
     } catch (e) {
       console.error('Error fetching additional portfolio:', e)
-      setIsLoadingClaimableRewards(false)
+      setIsLoadingPortfolioProjectionData(false)
       setClaimableRewards(null)
       setClaimableRewardsError('Error fetching claimable data')
     }
   }, [connectedAccount])
 
   const updateStkBalance = useCallback(async () => {
-    if (!connectedAccount) return
-
+    if (!connectedAccount) {
+      setIsLoadingStkBalance(false)
+      return
+    }
+    setIsLoadingStkBalance(true)
     stkWalletContract.balanceOf!(connectedAccount)
       .then((stkBalanceBigint) => setStkBalance(Number(formatUnits(stkBalanceBigint))))
-      .catch((e) => console.error('Failed to fetch stk wallet price', e))
+      .catch((e) => {
+        console.error('Failed to fetch stk wallet price', e)
+        return null
+      })
+      .finally(() => {
+        setIsLoadingStkBalance(false)
+      })
   }, [connectedAccount])
 
   const updateUniswapPositions = useCallback(async () => {
-    if (!connectedAccount) return
+    if (!connectedAccount) {
+      setIsLoadingUniPositions(false)
+      return
+    }
 
     try {
+      setIsLoadingUniPositions(true)
       const uniV3Positions = await getUniV3Positions(
         connectedAccount,
         ethereumProvider as unknown as Parameters<typeof getUniV3Positions>[1],
@@ -184,7 +199,9 @@ const PortfolioControllerStateProvider: React.FC<any> = ({ children }) => {
           .reduce((a, b) => a + b, 0)
       }
       setUniswapWalletPosition(newAmounts)
+      setIsLoadingUniPositions(false)
     } catch (e) {
+      setIsLoadingUniPositions(false)
       console.error('Error fetching uniswap positions:', e)
     }
   }, [connectedAccount])
@@ -263,31 +280,43 @@ const PortfolioControllerStateProvider: React.FC<any> = ({ children }) => {
     }
   }, [])
 
-  const userRewardsStats = useMemo(() => {
-    if (
-      !rewardsProjectionData ||
-      walletTokenPrice === null ||
-      !ethTokenPrice ||
-      !uniswapWalletPosition ||
-      stkBalance === undefined ||
+  const isLoadingClaimableRewards = useMemo(() => {
+    return (
+      isLoadingPortfolioProjectionData ||
+      isLoadingUniPositions ||
+      isLoadingStkBalance ||
       !accountPortfolio?.isReady
     )
+  }, [
+    isLoadingPortfolioProjectionData,
+    isLoadingUniPositions,
+    isLoadingStkBalance,
+    accountPortfolio?.isReady
+  ])
+
+  const userRewardsStats = useMemo(() => {
+    if (!rewardsProjectionData || walletTokenPrice === null || isLoadingClaimableRewards)
       return null
+
     const liquidityUSD =
-      uniswapWalletPosition.eth * ethTokenPrice + uniswapWalletPosition.wallet * walletTokenPrice
-    const stkBalanceUSD = stkBalance * walletTokenPrice
+      ethTokenPrice === undefined || uniswapWalletPosition === undefined
+        ? undefined
+        : uniswapWalletPosition.eth * ethTokenPrice +
+          uniswapWalletPosition.wallet * walletTokenPrice
+
+    const stkBalanceUSD = stkBalance === undefined ? undefined : stkBalance * walletTokenPrice
 
     return calculateRewardsStats(
       rewardsProjectionData,
       walletTokenPrice,
-      accountPortfolio.amount,
+      accountPortfolio?.amount,
       stkBalanceUSD,
       liquidityUSD
     )
   }, [
     accountPortfolio?.amount,
-    accountPortfolio?.isReady,
     ethTokenPrice,
+    isLoadingClaimableRewards,
     rewardsProjectionData,
     stkBalance,
     uniswapWalletPosition,
