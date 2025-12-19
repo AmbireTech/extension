@@ -289,7 +289,7 @@ const WatchTokenRequestScreen = () => {
             isLoading ||
             showAlreadyInPortfolioMessage ||
             (!tokenTypeEligibility && !temporaryToken) ||
-            !!tokenValidation?.error
+            !!tokenValidation?.error?.message
           }
         />
       }
