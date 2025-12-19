@@ -1,30 +1,29 @@
 import { baParams, SA_ADDRESS } from 'constants/env'
 import tokens from 'constants/tokens'
 import { test } from 'fixtures/pageObjects'
-import { runSimpleTransferFlow, runBatchTransferFlow } from '../../flows/transferFlow'
 import { PageManager } from '../../pages/utils/page_instances'
-import { runSwapBatchFlow, runSwapFlow, runSwapProceedFlow } from '../../flows/swapAndBridgeFlow'
-import { runAddManualNetworkFlow, runChainlistFlow } from '../../flows/networkManagementFlow'
 
-test.describe.configure({ mode: 'serial' })
+import { runSimpleTransferFlow, runBatchTransferFlow } from '../../flows/transferFlow'
+import { runAddManualNetworkFlow, runChainlistFlow } from '../../flows/networkManagementFlow'
+import { runSwapBatchFlow, runSwapFlow, runSwapProceedFlow } from '../../flows/swapAndBridgeFlow'
 
 let sharedPages: PageManager
 
-test.describe('sharedState', { tag: '@sharedState' }, () => {
+test.describe('sharedState', () => {
+  test.describe.configure({ mode: 'serial' })
+
   test.beforeAll(async ({ pages }) => {
     await pages.initWithStorage(baParams)
     sharedPages = pages
   })
 
-  test.beforeEach(async () => {
-    await sharedPages.dashboard.navigateToDashboard()
-  })
-
-  test.afterEach(async ({ context }) => {
-    await context.close()
-  })
-
   test.describe('Transfer', () => {
+    test.describe.configure({ mode: 'serial' })
+
+    test.beforeEach(async () => {
+      await sharedPages.dashboard.navigateToDashboard()
+    })
+
     test('should send a transaction and pay with the current account gas tank', async () => {
       await runSimpleTransferFlow({
         pages: sharedPages,
@@ -57,6 +56,12 @@ test.describe('sharedState', { tag: '@sharedState' }, () => {
   })
 
   test.describe('Network Management', () => {
+    test.describe.configure({ mode: 'serial' })
+
+    test.beforeEach(async () => {
+      await sharedPages.dashboard.navigateToDashboard()
+    })
+
     test('adding network manually', async () => {
       await runAddManualNetworkFlow({ pages: sharedPages })
     })
@@ -67,6 +72,12 @@ test.describe('sharedState', { tag: '@sharedState' }, () => {
   })
 
   test.describe('Keystore', () => {
+    test.describe.configure({ mode: 'serial' })
+
+    test.beforeEach(async () => {
+      await sharedPages.dashboard.navigateToDashboard()
+    })
+
     test('should lock keystore', async () => {
       await sharedPages.settings.lockKeystore()
     })
@@ -77,6 +88,12 @@ test.describe('sharedState', { tag: '@sharedState' }, () => {
   })
 
   test.describe('Swap & Bridge', () => {
+    test.describe.configure({ mode: 'serial' })
+
+    test.beforeEach(async () => {
+      await sharedPages.dashboard.navigateToDashboard()
+    })
+
     test('should "Proceed" Swap & Bridge from the Pending Route component', async () => {
       await runSwapProceedFlow({
         pages: sharedPages,
