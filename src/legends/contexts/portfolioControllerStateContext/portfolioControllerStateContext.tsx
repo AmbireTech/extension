@@ -1,6 +1,9 @@
+import { Contract, formatEther, formatUnits, JsonRpcProvider } from 'ethers'
 import React, { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-import { WALLET_TOKEN } from '@ambire-common/consts/addresses'
+import { STK_WALLET, WALLET_TOKEN } from '@ambire-common/consts/addresses'
+import { networks } from '@ambire-common/consts/networks'
+import { getUniV3Positions } from '@ambire-common/libs/defiPositions/providers'
 import {
   PortfolioProjectedRewardsResult,
   PortfolioRewardsResult,
@@ -71,11 +74,30 @@ const PortfolioControllerStateContext = createContext<{
   xWalletClaimableBalance: null
 })
 
+const ethereumProvider = new JsonRpcProvider(
+  'https://invictus.ambire.com/ethereum',
+  {
+    name: 'mainnet',
+    chainId: 1
+  },
+  { staticNetwork: true }
+)
+
+const stkWalletContract = new Contract(
+  STK_WALLET,
+  ['function balanceOf(address) view returns (uint256)'],
+  ethereumProvider
+)
+
 const PortfolioControllerStateProvider: React.FC<any> = ({ children }) => {
   const getPortfolioIntervalRef: any = useRef(null)
   const { provider } = useProviderContext()
   const { connectedAccount, v1Account, isLoading } = useAccountContext()
   const [accountPortfolio, setAccountPortfolio] = useState<AccountPortfolio>()
+  const [ethTokenPrice, setEthTokenPrice] = useState<number>()
+  const [uniswapWalletPosition, setUniswapWalletPosition] =
+    useState<{ wallet: number; eth: number }>()
+  const [stkBalance, setStkBalance] = useState<number>()
   const [claimableRewards, setClaimableRewards] = useState<any>(null)
   const [isLoadingClaimableRewards, setIsLoadingClaimableRewards] = useState(true)
   const [claimableRewardsError, setClaimableRewardsError] = useState<string | null>(null)
@@ -108,9 +130,11 @@ const PortfolioControllerStateProvider: React.FC<any> = ({ children }) => {
         additionalPortfolioJson?.data?.gasTank?.availableGasTankAssets.find(
           (asset: any) => asset.address === WALLET_TOKEN
         )
-
+      const ethPrice = additionalPortfolioJson?.data?.gasTank?.availableGasTankAssets.find(
+        (asset: any) => asset.symbol === 'eth'
+      )?.price
       setWalletTokenPrice(walletTokenInfoData.price)
-
+      setEthTokenPrice(ethPrice)
       setRewardsProjectionData(additionalPortfolioJson?.data?.rewardsProjectionDataV2)
       setClaimableRewards(claimableBalance)
       setXWalletClaimableBalance(xWalletClaimableBalanceData)
@@ -120,6 +144,48 @@ const PortfolioControllerStateProvider: React.FC<any> = ({ children }) => {
       setIsLoadingClaimableRewards(false)
       setClaimableRewards(null)
       setClaimableRewardsError('Error fetching claimable data')
+    }
+  }, [connectedAccount])
+
+  const updateStkBalance = useCallback(async () => {
+    if (!connectedAccount) return
+
+    stkWalletContract.balanceOf!(connectedAccount)
+      .then((stkBalanceBigint) => setStkBalance(Number(formatUnits(stkBalanceBigint))))
+      .catch((e) => console.error('Failed to fetch stk wallet price', e))
+  }, [connectedAccount])
+
+  const updateUniswapPositions = useCallback(async () => {
+    if (!connectedAccount) return
+
+    try {
+      const additionalPortfolioResponse = await getUniV3Positions(
+        connectedAccount,
+        ethereumProvider as unknown as Parameters<typeof getUniV3Positions>[1],
+        networks.find((n) => n.chainId === 1n)!
+      )
+      const walletEthPositionsAssets = additionalPortfolioResponse?.positions
+        .filter((p) => p.additionalData.inRange)
+        .filter(
+          (p) =>
+            p.assets.some((a) => a.symbol === 'WALLET') && p.assets.some((a) => a.symbol === 'WETH')
+        )
+        .map((p) => p.assets)
+        .flat()
+      if (!walletEthPositionsAssets) return
+      const newAmounts = {
+        wallet: walletEthPositionsAssets
+          ?.filter((a) => a.symbol === 'WALLET')
+          .map((a) => Number(formatEther(a.amount)))
+          .reduce((a, b) => a + b, 0),
+        eth: walletEthPositionsAssets
+          ?.filter((a) => a.symbol === 'WETH')
+          .map((a) => Number(formatEther(a.amount)))
+          .reduce((a, b) => a + b, 0)
+      }
+      setUniswapWalletPosition(newAmounts)
+    } catch (e) {
+      console.error('Error fetching uniswap positions:', e)
     }
   }, [connectedAccount])
 
@@ -198,17 +264,46 @@ const PortfolioControllerStateProvider: React.FC<any> = ({ children }) => {
   }, [])
 
   const userRewardsStats = useMemo(() => {
-    if (!rewardsProjectionData || walletTokenPrice === null) return null
+    if (
+      !rewardsProjectionData ||
+      walletTokenPrice === null ||
+      !ethTokenPrice ||
+      !uniswapWalletPosition ||
+      stkBalance === undefined ||
+      !accountPortfolio?.isReady
+    )
+      return null
+    const liquidityUSD =
+      uniswapWalletPosition.eth * ethTokenPrice + uniswapWalletPosition.wallet * walletTokenPrice
+    const stkBalanceUSD = stkBalance * walletTokenPrice
 
-    return calculateRewardsStats(rewardsProjectionData, walletTokenPrice)
-  }, [rewardsProjectionData, walletTokenPrice])
+    return calculateRewardsStats(
+      rewardsProjectionData,
+      walletTokenPrice,
+      accountPortfolio.amount,
+      stkBalanceUSD,
+      liquidityUSD
+    )
+  }, [
+    accountPortfolio?.amount,
+    accountPortfolio?.isReady,
+    ethTokenPrice,
+    rewardsProjectionData,
+    stkBalance,
+    uniswapWalletPosition,
+    walletTokenPrice
+  ])
 
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     updateAdditionalPortfolio()
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     fetchWalletTokenInfo()
-  }, [updateAdditionalPortfolio, fetchWalletTokenInfo])
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    updateStkBalance()
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    updateUniswapPositions()
+  }, [updateAdditionalPortfolio, fetchWalletTokenInfo, updateStkBalance, updateUniswapPositions])
 
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
