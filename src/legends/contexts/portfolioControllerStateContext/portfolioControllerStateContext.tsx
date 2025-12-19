@@ -159,12 +159,12 @@ const PortfolioControllerStateProvider: React.FC<any> = ({ children }) => {
     if (!connectedAccount) return
 
     try {
-      const additionalPortfolioResponse = await getUniV3Positions(
+      const uniV3Positions = await getUniV3Positions(
         connectedAccount,
         ethereumProvider as unknown as Parameters<typeof getUniV3Positions>[1],
         networks.find((n) => n.chainId === 1n)!
       )
-      const walletEthPositionsAssets = additionalPortfolioResponse?.positions
+      const walletEthPositionsAssets = uniV3Positions?.positions
         .filter((p) => p.additionalData.inRange)
         .filter(
           (p) =>
