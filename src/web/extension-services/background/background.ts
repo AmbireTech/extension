@@ -15,7 +15,9 @@ import EventEmitter from '@ambire-common/controllers/eventEmitter/eventEmitter'
 import { MainController } from '@ambire-common/controllers/main/main'
 import { ErrorRef } from '@ambire-common/interfaces/eventEmitter'
 import { Fetch } from '@ambire-common/interfaces/fetch'
+import { IKeystoreController } from '@ambire-common/interfaces/keystore'
 import { IRequestsController } from '@ambire-common/interfaces/requests'
+import { ISelectedAccountController } from '@ambire-common/interfaces/selectedAccount'
 import { UiManager } from '@ambire-common/interfaces/ui'
 import { CallsUserRequest } from '@ambire-common/interfaces/userRequest'
 import { getAccountKeysCount } from '@ambire-common/libs/keys/keys'
@@ -543,7 +545,7 @@ const init = async () => {
     const sendUpdate = () => {
       let stateToSendToFE
 
-      if (ctrlName === 'main') {
+      if (ctrlName === 'MainController') {
         const state = { ...ctrl.toJSON() }
         // We are removing the state of the nested controllers in main to avoid the CPU-intensive task of parsing + stringifying.
         // We should access the state of the nested controllers directly from their context instead of accessing them through the main ctrl state on the FE.
@@ -593,85 +595,49 @@ const init = async () => {
    */
   mainCtrl.onUpdate((mainCtrlForceEmit) => {
     const res = debounceFrontEndEventUpdatesOnSameTick(
-      'main',
+      'MainController',
       mainCtrl,
       mainCtrl,
       mainCtrlForceEmit
     )
     if (res === 'DEBOUNCED') return
 
-    Object.keys(controllersNestedInMainMapping).forEach((ctrlName) => {
-      const controller = (mainCtrl as any)[ctrlName]
-      if (Array.isArray(controller?.onUpdateIds)) {
-        /**
-         * We have the capability to incorporate multiple onUpdate callbacks for a specific controller, allowing multiple listeners for updates in different files.
-         * However, in the context of this background service, we only need a single instance of the onUpdate callback for each controller.
-         */
-        const hasOnUpdateInitialized = controller.onUpdateIds.includes('background')
+    mainCtrl.eventEmitterRegistry.values().forEach((ctrl) => {
+      const hasOnUpdateInitialized = ctrl.onUpdateIds.includes('background')
+      if (!hasOnUpdateInitialized) {
+        ctrl.onUpdate(async (forceEmit) => {
+          const res = debounceFrontEndEventUpdatesOnSameTick(ctrl.name, ctrl, mainCtrl, forceEmit)
+          if (res === 'DEBOUNCED') return
 
-        if (!hasOnUpdateInitialized) {
-          controller?.onUpdate(async (forceEmit?: boolean) => {
-            const res = debounceFrontEndEventUpdatesOnSameTick(
-              ctrlName,
-              controller,
-              mainCtrl,
-              forceEmit
-            )
-            if (res === 'DEBOUNCED') return
-
-            if (ctrlName === 'requests') {
-              if ((controller as IRequestsController).currentUserRequest?.kind === 'calls') {
-                const signAccountOpCtrl = (
-                  (controller as IRequestsController)?.currentUserRequest as CallsUserRequest
-                )?.signAccountOp
-                if (signAccountOpCtrl) {
-                  const hasOnUpdateInitialized =
-                    signAccountOpCtrl.onUpdateIds.includes('background')
-                  if (!hasOnUpdateInitialized) {
-                    signAccountOpCtrl.onUpdate(async (signAccountOpCtrlForceEmit) => {
-                      debounceFrontEndEventUpdatesOnSameTick(
-                        'signAccountOp',
-                        signAccountOpCtrl,
-                        mainCtrl,
-                        signAccountOpCtrlForceEmit
-                      )
-                    }, 'background')
-                  }
-                }
+          if (ctrl.name === 'KeystoreController') {
+            const keystoreCtrl = ctrl as IKeystoreController
+            if (keystoreCtrl.isReadyToStoreKeys) {
+              setBackgroundUserContext({
+                id: getExtensionInstanceId(keystoreCtrl.keyStoreUid, mainCtrl.invite.verifiedCode)
+              })
+              if (backgroundState.isUnlocked && !keystoreCtrl.isUnlocked) {
+                await mainCtrl.dapps.broadcastDappSessionEvent('lock')
+              } else if (!backgroundState.isUnlocked && keystoreCtrl.isUnlocked) {
+                autoLockCtrl.setLastActiveTime()
+                await mainCtrl.dapps.broadcastDappSessionEvent('unlock', [
+                  mainCtrl.selectedAccount.account?.addr
+                ])
               }
-              try {
-                setupControllerErrorListeners(mainCtrl.requests, ['requests'])
-              } catch (error) {
-                console.error('Failed to setup requestsControllerErrorListeners')
-              }
+              backgroundState.isUnlocked = keystoreCtrl.isUnlocked
             }
+          }
 
-            if (ctrlName === 'keystore') {
-              if (controller.isReadyToStoreKeys) {
-                setBackgroundUserContext({
-                  id: getExtensionInstanceId(controller.keyStoreUid, mainCtrl.invite.verifiedCode)
-                })
-                if (backgroundState.isUnlocked && !controller.isUnlocked) {
-                  await mainCtrl.dapps.broadcastDappSessionEvent('lock')
-                } else if (!backgroundState.isUnlocked && controller.isUnlocked) {
-                  autoLockCtrl.setLastActiveTime()
-                  await mainCtrl.dapps.broadcastDappSessionEvent('unlock', [
-                    mainCtrl.selectedAccount.account?.addr
-                  ])
-                }
-                backgroundState.isUnlocked = controller.isUnlocked
-              }
-            }
+          if (ctrl.name === 'SelectedAccountController') {
+            const selectedAccountCtrl = ctrl as ISelectedAccountController
 
-            if (ctrlName === 'selectedAccount') {
-              if (controller?.account?.addr) {
-                setBackgroundExtraContext('account', controller.account.addr)
-              }
+            if (selectedAccountCtrl?.account?.addr) {
+              setBackgroundExtraContext('account', selectedAccountCtrl.account.addr)
             }
-          }, 'background')
-        }
+          }
+        }, 'background')
       }
     })
+
     try {
       setupControllerErrorListeners(mainCtrl, ['main'])
     } catch (error) {
