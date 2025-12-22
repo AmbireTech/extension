@@ -106,7 +106,7 @@ const WatchTokenRequestScreen = () => {
       key.startsWith(`${tokenData.address}-`)
     )
 
-    return validationEntry?.[1]?.error
+    return (validationEntry?.[1] as any)?.error
   }, [validTokens, tokenData?.address, tokenNetwork?.chainId])
 
   const handleCancel = useCallback(() => {

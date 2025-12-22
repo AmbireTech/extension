@@ -82,7 +82,7 @@ const getTokenEligibility = (
   tokenData: { address: string } | CustomToken,
   validTokens: any,
   tokenNetwork: Network | undefined
-) => {
+): boolean | undefined => {
   if (!tokenData?.address || !tokenNetwork?.chainId || !validTokens?.erc20) {
     return undefined
   }
@@ -90,7 +90,11 @@ const getTokenEligibility = (
   const key = `${tokenData.address}-${tokenNetwork.chainId}`
   const tokenValidation = validTokens.erc20[key]
 
-  return tokenValidation === true || tokenValidation?.isValid === true || undefined
+  if (tokenValidation === true || tokenValidation?.isValid === true) {
+    return true
+  }
+
+  return undefined
 }
 
 const handleTokenIsInPortfolio = async (
