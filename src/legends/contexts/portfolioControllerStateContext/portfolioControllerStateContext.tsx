@@ -96,6 +96,7 @@ const PortfolioControllerStateProvider: React.FC<any> = ({ children }) => {
   const [isLoadingPortfolioProjectionData, setIsLoadingPortfolioProjectionData] = useState(true)
   const [isLoadingUniPositions, setIsLoadingUniPositions] = useState(true)
   const [isLoadingStkBalance, setIsLoadingStkBalance] = useState(true)
+  const [isLoadingPrices, setIsLoadingPrices] = useState(true)
   const [claimableRewardsError, setClaimableRewardsError] = useState<string | null>(null)
   const [xWalletClaimableBalance, setXWalletClaimableBalance] = useState<
     PortfolioRewardsResult['xWalletClaimableBalance'] | null
@@ -107,6 +108,20 @@ const PortfolioControllerStateProvider: React.FC<any> = ({ children }) => {
   const [rewardsProjectionData, setRewardsProjectionData] =
     useState<PortfolioProjectedRewardsResult | null>(null)
 
+  const updatePrices = useCallback(async () => {
+    try {
+      setIsLoadingPrices(true)
+      const cenaInfo = await fetch(
+        'https://cena.ambire.com/api/v3/simple/price?ids=weth,ambire-wallet&vs_currencies=usd'
+      ).then((r) => r.json())
+      setWalletTokenPrice(cenaInfo['ambire-wallet'].usd)
+      setEthTokenPrice(cenaInfo.weth.usd)
+      setIsLoadingPrices(false)
+    } catch (e) {
+      console.error('Error fetching token prices:', e)
+      setIsLoadingPrices(false)
+    }
+  }, [])
   const updateAdditionalPortfolio = useCallback(async () => {
     if (!connectedAccount) {
       setIsLoadingPortfolioProjectionData(false)
@@ -122,15 +137,7 @@ const PortfolioControllerStateProvider: React.FC<any> = ({ children }) => {
       const xWalletClaimableBalanceData =
         additionalPortfolioJson?.data?.rewards?.xWalletClaimableBalance
       const claimableBalance = additionalPortfolioJson?.data?.rewards?.stkWalletClaimableBalance
-      const walletTokenInfoData =
-        additionalPortfolioJson?.data?.gasTank?.availableGasTankAssets.find(
-          (asset: any) => asset.address === WALLET_TOKEN
-        )
-      const ethPrice = additionalPortfolioJson?.data?.gasTank?.availableGasTankAssets.find(
-        (asset: any) => asset.symbol === 'eth'
-      )?.price
-      setWalletTokenPrice(walletTokenInfoData.price)
-      setEthTokenPrice(ethPrice)
+
       setRewardsProjectionData(additionalPortfolioJson?.data?.rewardsProjectionDataV2)
       setClaimableRewards(claimableBalance)
       setXWalletClaimableBalance(xWalletClaimableBalanceData)
@@ -280,13 +287,15 @@ const PortfolioControllerStateProvider: React.FC<any> = ({ children }) => {
       isLoadingPortfolioProjectionData ||
       isLoadingUniPositions ||
       isLoadingStkBalance ||
-      !accountPortfolio?.isReady
+      !accountPortfolio?.isReady ||
+      isLoadingPrices
     )
   }, [
     isLoadingPortfolioProjectionData,
     isLoadingUniPositions,
     isLoadingStkBalance,
-    accountPortfolio?.isReady
+    accountPortfolio?.isReady,
+    isLoadingPrices
   ])
 
   const userRewardsStats = useMemo(() => {
@@ -327,7 +336,15 @@ const PortfolioControllerStateProvider: React.FC<any> = ({ children }) => {
     updateStkBalance()
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     updateUniswapPositions()
-  }, [updateAdditionalPortfolio, fetchWalletTokenInfo, updateStkBalance, updateUniswapPositions])
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    updatePrices()
+  }, [
+    updateAdditionalPortfolio,
+    fetchWalletTokenInfo,
+    updateStkBalance,
+    updateUniswapPositions,
+    updatePrices
+  ])
 
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
