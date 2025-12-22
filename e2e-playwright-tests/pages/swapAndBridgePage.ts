@@ -475,11 +475,17 @@ export class SwapAndBridgePage extends BasePage {
   // TODO: use this method to check activity tab after POM refactor
   async checkSendTransactionOnActivityTab() {
     await this.click(selectors.dashboard.activityTabButton)
-    await expect(this.page.locator(selectors.dashboard.grantApprovalText)).toContainText(
-      'Grant approval'
-    )
-    await expect(this.page.locator(selectors.dashboard.confirmedTransactionPill)).toContainText(
-      'Confirmed'
-    )
+
+    // When tests are ran in isolation, there would be only 1 txn in the activity tab.
+    // But when they are ran in a shared state, we check only the latest one txn, i.e. the first one in the list.
+    const firstApprovalTransaction = this.page
+      .locator(selectors.dashboard.grantApprovalText)
+      .first()
+    const firstConfirmedPill = this.page
+      .locator(selectors.dashboard.confirmedTransactionPill)
+      .first()
+
+    await expect(firstApprovalTransaction).toContainText('Grant approval')
+    await expect(firstConfirmedPill).toContainText('Confirmed')
   }
 }

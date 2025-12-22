@@ -62,7 +62,7 @@ jobs:
           VERSION=${{ github.sha }}
           sentry-cli sourcemaps inject ./build/legends-prod
           sentry-cli releases new legends@$VERSION --project legends
-          sentry-cli releases files legends@$VERSION upload-sourcemaps ./build/legends-prod/ --ext .js --ext .map --rewrite --project legends
+          sentry-cli sourcemaps upload --release legends@$VERSION ./build/legends-prod --rewrite --project legends
           sentry-cli releases finalize legends@$VERSION --project legends
 
       - name: Deploy to Legends Repo gh-pages 🚀🌕

@@ -28,7 +28,7 @@ const DappsControllerStateProvider: React.FC<any> = ({ children }) => {
 
       if (!tab || !tab.id || !tab.url) return
 
-      const dappId = getDappIdFromUrl(tab.url)
+      const dappId = getDappIdFromUrl(new URL(tab.url).origin)
       const currentSession = newState.dappSessions?.[`${window.id}-${tab.id}-${dappId}`] || {}
       const dapp = newState.dapps.find((d) => d.id === currentSession.id || d.id === dappId)
 
