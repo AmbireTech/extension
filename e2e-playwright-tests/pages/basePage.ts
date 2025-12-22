@@ -148,7 +148,7 @@ export class BasePage {
   ) {
     const { index = 0, timeout = 30000 } = options ?? {}
     await expect(this.page.getByTestId(selector).nth(index ?? 0)).toContainText(text, {
-      timeout: timeout
+      timeout
     })
   }
 
@@ -171,6 +171,15 @@ export class BasePage {
     }
     this.context.on('request', this._reqListener)
     this._monitorInstalled = true
+  }
+
+  stopMonitorRequests() {
+    if (this._monitorInstalled && this._reqListener) {
+      this.context.off('request', this._reqListener)
+      this._monitorInstalled = false
+    }
+
+    this.collectedRequests = []
   }
 
   getCategorizedRequests() {

@@ -479,7 +479,8 @@ export const handleActions = async (
       if (!mainCtrl.selectedAccount.account) return
       return await mainCtrl.portfolio.updateTokenValidationByStandard(
         params.token,
-        mainCtrl.selectedAccount.account.addr
+        mainCtrl.selectedAccount.account.addr,
+        params.allNetworks
       )
     }
     case 'KEYSTORE_CONTROLLER_ADD_SECRET':
