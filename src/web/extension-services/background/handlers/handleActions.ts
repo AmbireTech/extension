@@ -429,8 +429,7 @@ export const handleActions = async (
     case 'MAIN_CONTROLLER_RELOAD_SELECTED_ACCOUNT': {
       return await mainCtrl.reloadSelectedAccount({
         chainIds: params?.chainId ? [BigInt(params?.chainId)] : undefined,
-        isManualReload: true,
-        maxDataAgeMs: 10 * 1000
+        isManualReload: true
       })
     }
     case 'MAIN_CONTROLLER_UPDATE_SELECTED_ACCOUNT_PORTFOLIO': {
@@ -480,7 +479,8 @@ export const handleActions = async (
       if (!mainCtrl.selectedAccount.account) return
       return await mainCtrl.portfolio.updateTokenValidationByStandard(
         params.token,
-        mainCtrl.selectedAccount.account.addr
+        mainCtrl.selectedAccount.account.addr,
+        params.allNetworks
       )
     }
     case 'KEYSTORE_CONTROLLER_ADD_SECRET':
