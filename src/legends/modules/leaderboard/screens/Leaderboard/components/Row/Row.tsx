@@ -175,7 +175,7 @@ const Row: FC<Props> = ({
         </h5>
       )}
 
-      <h5 className={styles.cell}>{points || formattedXp}</h5>
+      <h5 className={styles.cell}>{points ? Math.floor(points) : formattedXp}</h5>
     </div>
   )
 }
