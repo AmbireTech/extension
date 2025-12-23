@@ -63,6 +63,7 @@ const getStyles = (theme: ThemeProps) =>
       ...spacings.phMi,
       ...spacings.mbMI,
       ...spacings.phTy,
+      ...spacings.mtTy,
       paddingTop: SPACING_MI / 2
     },
     label: {
@@ -103,7 +104,6 @@ const getStyles = (theme: ThemeProps) =>
       borderWidth: 2
     },
     errorContainer: {
-      marginTop: 8,
       ...flexbox.directionRow,
       ...flexbox.justifySpaceBetween
     }

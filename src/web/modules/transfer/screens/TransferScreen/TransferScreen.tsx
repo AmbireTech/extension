@@ -69,7 +69,8 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     selectedToken,
     amountFieldMode,
     amount: controllerAmount,
-    amountInFiat
+    amountInFiat,
+    isRecipientAddressViewOnly
   } = state
 
   const amountInFiatBigInt = useMemo(() => {
@@ -486,10 +487,11 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
           networkUserRequests={networkUserRequests}
           isLocalStateOutOfSync={isLocalStateOutOfSync}
           shouldHoldToProceed={
-            isRecipientAddressUnknown &&
-            !isRecipientAddressUnknownAgreed &&
-            !isRecipientHumanizerKnownTokenOrSmartContract &&
-            isRecipientAddressFirstTimeSend
+            (isRecipientAddressUnknown &&
+              !isRecipientAddressUnknownAgreed &&
+              !isRecipientHumanizerKnownTokenOrSmartContract &&
+              isRecipientAddressFirstTimeSend) ||
+            isRecipientAddressViewOnly
           }
           onRecipientAddressUnknownAgree={onRecipientAddressUnknownAgree}
         />
@@ -502,10 +504,11 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     isTransferFormValid,
     networkUserRequests,
     isLocalStateOutOfSync,
-    isRecipientAddressFirstTimeSend,
     isRecipientAddressUnknown,
     isRecipientAddressUnknownAgreed,
     isRecipientHumanizerKnownTokenOrSmartContract,
+    isRecipientAddressFirstTimeSend,
+    isRecipientAddressViewOnly,
     onRecipientAddressUnknownAgree,
     addTransaction
   ])
