@@ -54,9 +54,11 @@ const selectors = {
     yesHideItButton: 'yes-hide-it-text',
     hideTokenModalTitle: 'hide-token-modal-title',
     hideTokenModalDescription: 'hide-token-modal-description',
-    projectedRewardsInfoButton: 'rewards-button',
+    rewardsButton: 'dashboard-button-quests',
+    projectedRewardsButton: 'rewards-button',
+    backRewardsButton: '//div[contains(text(),"Back")]',
     rewardsLink: '//div[contains(text(),"Ambire Rewards")]',
-    projectedRewardsClaimButton: 'projected-rewards-claim-button',
+    projectedRewardsClaimButton: 'projected-rewards-claim-button'
   },
   settings: {
     createNewRecoveryPhraseButton: 'create-new-recovery-phrase',
