@@ -182,7 +182,7 @@ const Main = ({
               return (
                 <Label
                   size="lg"
-                  key={warning.content}
+                  key={warning.content + warning.level}
                   text={warning.content}
                   type="warning"
                   style={spacings.mlMd}
