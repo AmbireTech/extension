@@ -3,7 +3,7 @@ import 'dotenv/config'
 import { PlaywrightTestConfig } from '@playwright/test'
 
 const config: PlaywrightTestConfig = {
-  forbidOnly: true,
+  forbidOnly: false,
   expect: {
     timeout: 30 * 1000,
     toHaveScreenshot: {
@@ -15,7 +15,7 @@ const config: PlaywrightTestConfig = {
   reporter: [
     ['list'],
     ['junit', { outputFile: 'test-results/results.xml' }],
-    ['html', { outputFolder: 'html-report/', open: 'never' }]
+    ['html', { outputFolder: 'html-report/', open: 'on-failure' }]
   ],
   timeout: 180 * 1000, // 3min
   reportSlowTests: null,
@@ -26,7 +26,7 @@ const config: PlaywrightTestConfig = {
   use: {
     viewport: { width: 1920, height: 1080 },
     baseURL: process.env.APP_URL || '',
-    headless: true,
+    headless: false,
     trace: 'on-first-retry',
     video: 'retain-on-failure',
     screenshot: 'only-on-failure',

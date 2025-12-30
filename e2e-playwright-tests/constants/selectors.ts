@@ -111,6 +111,15 @@ const selectors = {
       recepientAddressBlock: 'recipient-address-undefined'
     }
   },
+  ambireRewards: {
+    pageTitle: '//h1',
+    pageDescription: '//p',
+    homePage: '//span[contains(text(),"Home")]',
+    leaderboardPage: '//span[contains(text(),"Leaderboard")]',
+    rewardsPoolPage: '//span[contains(text(),"Rewards Pool")]',
+    walletPage: '//span[contains(text(),"WALLET")]',
+    faqPage: '//span[contains(text(),"FAQ")]'
+  },
   account: 'account',
   importMethodTrezor: 'import-method-trezor',
   trezorConnectConfirmTerms: '@analytics/continue-button',
