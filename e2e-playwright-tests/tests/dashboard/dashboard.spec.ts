@@ -364,8 +364,27 @@ test.describe('dashboard', () => {
       expect(rewardsTab.url()).toContain('/wallet')
 
       // check page content
+      // TODO:
     })
 
-    await test.step('Check FAQ page', async () => {})
+    await test.step('Check FAQ page', async () => {
+      const faqContext = rewardsTab.context()
+
+      // setup listener for new page
+      const faqPagePromise = faqContext.waitForEvent('page', { timeout: 5000 })
+
+      // initiate navigation to faq page
+      await rewardsTab.locator(selectors.ambireRewards.faqPage).click()
+
+      // wait for new tab
+      const faqTab = await faqPagePromise
+      await faqTab.waitForLoadState('domcontentloaded')
+
+      // assert url
+      expect(faqTab.url()).toContain('help.ambire.com')
+
+      // close faq tab
+      await faqTab.close()
+    })
   })
 })
