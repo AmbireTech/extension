@@ -112,6 +112,7 @@ const selectors = {
     }
   },
   ambireRewards: {
+    readAnnouncementHyperlink: '//a[contains(@href, "rewards-enters")]',
     pageTitle: '//h1',
     pageDescription: '//p',
     homePage: '//span[contains(text(),"Home")]',

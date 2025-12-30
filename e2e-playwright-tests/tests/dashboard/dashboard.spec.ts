@@ -306,8 +306,15 @@ test.describe('dashboard', () => {
         'Ambire Rewards Season 2 is here!'
       )
 
-      await pages.auth.pause()
+      // check read announcement redirection
+      const readAnnouncementButton = rewardsTab.locator(
+        selectors.ambireRewards.readAnnouncementHyperlink
+      )
+      const announcementTab = await pages.basePage.handleNewPage(readAnnouncementButton, rewardsTab)
+      expect(announcementTab.url()).toContain('blog.ambire.com/rewards-enters-season2/')
 
+      // close announcement tab
+      await announcementTab.close()
       // close pop up
       await rewardsTab.mouse.click(0, 100)
     })
@@ -368,17 +375,8 @@ test.describe('dashboard', () => {
     })
 
     await test.step('Check FAQ page', async () => {
-      const faqContext = rewardsTab.context()
-
-      // setup listener for new page
-      const faqPagePromise = faqContext.waitForEvent('page', { timeout: 5000 })
-
-      // initiate navigation to faq page
-      await rewardsTab.locator(selectors.ambireRewards.faqPage).click()
-
-      // wait for new tab
-      const faqTab = await faqPagePromise
-      await faqTab.waitForLoadState('domcontentloaded')
+      const faqButton = rewardsTab.locator(selectors.ambireRewards.faqPage)
+      const faqTab = await pages.basePage.handleNewPage(faqButton, rewardsTab)
 
       // assert url
       expect(faqTab.url()).toContain('help.ambire.com')
