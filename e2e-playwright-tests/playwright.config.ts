@@ -3,7 +3,7 @@ import 'dotenv/config'
 import { PlaywrightTestConfig } from '@playwright/test'
 
 const config: PlaywrightTestConfig = {
-  forbidOnly: false,
+  forbidOnly: true,
   expect: {
     timeout: 30 * 1000,
     toHaveScreenshot: {
@@ -26,7 +26,7 @@ const config: PlaywrightTestConfig = {
   use: {
     viewport: { width: 1920, height: 1080 },
     baseURL: process.env.APP_URL || '',
-    headless: false,
+    headless: true,
     trace: 'on-first-retry',
     video: 'retain-on-failure',
     screenshot: 'only-on-failure',

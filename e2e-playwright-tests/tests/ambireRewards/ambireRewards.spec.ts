@@ -32,7 +32,7 @@ test.describe('ambire rewards', () => {
     })
   })
 
-  test.only('Check Ambire rewards home', async ({ pages }) => {
+  test('Check Ambire rewards home', async ({ pages }) => {
     const rewardsLink = pages.basePage.page.locator(selectors.dashboard.rewardsLink)
     let rewardsTab: Page
 
@@ -105,7 +105,7 @@ test.describe('ambire rewards', () => {
     })
 
     await test.step('Check $WALLET page', async () => {
-      await rewardsTab.pause()
+    //   await rewardsTab.pause()
       const walletPage = rewardsTab.locator(selectors.ambireRewards.walletPage)
       await walletPage.click()
 
