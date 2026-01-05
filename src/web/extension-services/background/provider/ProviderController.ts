@@ -295,7 +295,6 @@ export class ProviderController {
           `Expected 0x-prefixed, unpadded, non-zero hexadecimal string 'chainId'. Received: ${chainParams?.chainId}`
         )
 
-      // Validate chainId is valid hex and not greater than max safe integer
       const { chainId } = chainParams
       const chainIdNumber = Number(chainId)
       if (isNaN(chainIdNumber) || chainIdNumber > Number.MAX_SAFE_INTEGER)
@@ -670,7 +669,6 @@ export class ProviderController {
           `Expected 0x-prefixed, unpadded, non-zero hexadecimal string 'chainId'. Received: ${chainParams?.chainId}`
         )
 
-      // Validate chainId is valid hex and not greater than max safe integer
       const { chainId } = chainParams
       const chainIdNumber = Number(chainId)
       if (isNaN(chainIdNumber) || chainIdNumber > Number.MAX_SAFE_INTEGER)
