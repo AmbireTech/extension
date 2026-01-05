@@ -346,11 +346,7 @@ export class ProviderController {
     }
   ])
   walletAddEthereumChain = async ({ params: [chainParams], session: { id } }: ProviderRequest) => {
-    let chainId = chainParams.chainId
-    if (typeof chainId === 'string') {
-      chainId = Number(chainId)
-    }
-
+    const chainId = Number(chainParams.chainId)
     const network = this.mainCtrl.networks.networks.find((n) => Number(n.chainId) === chainId)
 
     if (!network) {
@@ -695,9 +691,7 @@ export class ProviderController {
     params: [chainParams],
     session: { id, origin, name }
   }: ProviderRequest) => {
-    let chainId = chainParams.chainId
-    if (typeof chainId === 'string') chainId = Number(chainId)
-
+    const chainId = Number(chainParams.chainId)
     const network = this.mainCtrl.networks.networks.find((n) => Number(n.chainId) === chainId)
     if (!network) throw new Error('This chain is not supported by Ambire yet.')
 
