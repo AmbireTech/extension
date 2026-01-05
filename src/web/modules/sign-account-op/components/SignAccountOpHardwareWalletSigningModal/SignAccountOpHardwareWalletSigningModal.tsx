@@ -88,7 +88,7 @@ const SignAccountOpHardwareWalletSigningModal: React.FC<Props> = ({
     if (
       shouldBeVisible &&
       isPopup &&
-      actionType &&
+      actionType === 'swapAndBridge' &&
       currentlyInvolvedSignOrBroadcastKeyType === 'trezor'
     ) {
       // If the user needs to sign using a hardware wallet, we need to open the
