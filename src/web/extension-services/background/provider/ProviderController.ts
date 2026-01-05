@@ -396,6 +396,13 @@ export class ProviderController {
   @Reflect.metadata('ACTION_REQUEST', ['SendTransaction', false])
   walletSendCalls = async (data: any) => {
     if (data.requestRes && data.requestRes.hash) {
+      const version = data.params?.[0]?.version
+      if (version === '2.0.0')
+        return {
+          id: data.requestRes.hash
+        }
+
+      // v1 response
       return data.requestRes.hash
     }
 
