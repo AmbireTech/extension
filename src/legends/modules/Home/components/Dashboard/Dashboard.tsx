@@ -79,7 +79,7 @@ const Dashboard = () => {
             <div className={styles.stats}>
               {sections.map(({ score, id, label, explanation, value }) =>
                 isLoadingClaimableRewards ? (
-                  <div className={styles.statSkeleton} />
+                  <div key={id} className={styles.statSkeleton} />
                 ) : (
                   <div
                     className={`${styles.stat} ${expandedId === id ? styles.open : ''}`}
