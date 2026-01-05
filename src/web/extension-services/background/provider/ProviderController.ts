@@ -349,9 +349,11 @@ export class ProviderController {
     const chainId = Number(chainParams.chainId)
     const network = this.mainCtrl.networks.networks.find((n) => Number(n.chainId) === chainId)
 
-    if (!network) {
-      throw new Error('This chain is not supported by Ambire yet.')
-    }
+    // should never happen
+    if (!network)
+      throw new Error(
+        'Something went wrong while adding the network. Please try again later or contact Ambire support.'
+      )
 
     this.mainCtrl.dapps.updateDapp(id, { chainId })
     await this.mainCtrl.dapps.broadcastDappSessionEvent(
@@ -693,7 +695,12 @@ export class ProviderController {
   }: ProviderRequest) => {
     const chainId = Number(chainParams.chainId)
     const network = this.mainCtrl.networks.networks.find((n) => Number(n.chainId) === chainId)
-    if (!network) throw new Error('This chain is not supported by Ambire yet.')
+
+    // should never happen, because this gets validated beforehand
+    if (!network)
+      throw new Error(
+        'Something went wrong while switching network. Please try again later or contact Ambire support.'
+      )
 
     const dapp = this.mainCtrl.dapps.getDapp(id)
 
