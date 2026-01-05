@@ -620,6 +620,14 @@ export class ProviderController {
           `Expected 0x-prefixed, unpadded, non-zero hexadecimal string 'chainId'. Received: ${chainParams?.chainId}`
         )
 
+      // Validate chainId is valid hex and not greater than max safe integer
+      const { chainId } = chainParams
+      const chainIdNumber = Number(chainId)
+      if (isNaN(chainIdNumber) || chainIdNumber > Number.MAX_SAFE_INTEGER)
+        throw ethErrors.rpc.invalidParams(
+          `Invalid chain ID "${chainId}": numerical value greater than max safe value. Received: ${chainId}`
+        )
+
       if (!chainParams?.chainName || typeof chainParams.chainName !== 'string') {
         throw ethErrors.rpc.invalidParams("'chainName' is required and must be a string")
       }
@@ -645,6 +653,12 @@ export class ProviderController {
           "'nativeCurrency.symbol' is required and must be a string"
         )
 
+      const ticker = nativeCurrency.symbol
+      if (ticker.length < 2 || ticker.length > 6)
+        throw ethErrors.rpc.invalidParams(
+          `Expected 2-6 character string 'nativeCurrency.symbol'. Received: ${ticker}`
+        )
+
       // Validate rpcUrls
       if (!chainParams?.rpcUrls || !Array.isArray(chainParams.rpcUrls))
         throw ethErrors.rpc.invalidParams("'rpcUrls' is required and must be an array")
@@ -655,7 +669,6 @@ export class ProviderController {
         throw ethErrors.rpc.invalidParams("'rpcUrls' must be an array of strings")
 
       const dapp = mainCtrl.dapps.getDapp(session.id)
-      const { chainId } = chainParams
       const network = mainCtrl.networks.networks.find(
         (n: any) => Number(n.chainId) === Number(chainId)
       )
