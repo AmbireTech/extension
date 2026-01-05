@@ -88,6 +88,27 @@ const WatchTokenRequestScreen = () => {
     () => getTokenEligibility(tokenData, validTokens, tokenNetwork),
     [validTokens, tokenData, tokenNetwork]
   )
+
+  const tokenValidation = useMemo(() => {
+    if (!tokenData?.address || !tokenNetwork) return null
+    return validTokens.erc20[`${tokenData.address}-${tokenNetwork.chainId}`]
+  }, [validTokens, tokenData?.address, tokenNetwork])
+
+  const tokenValidationError = useMemo(() => {
+    if (!tokenData?.address) return null
+
+    if (tokenNetwork?.chainId) {
+      return validTokens.erc20[`${tokenData.address}-${tokenNetwork.chainId}`]?.error
+    }
+
+    // When we don't have tokenNetwork.chainId, find any validation error for this address across all networks
+    const validationEntry = Object.entries(validTokens.erc20 || {}).find(([key]) =>
+      key.startsWith(`${tokenData.address}-`)
+    )
+
+    return (validationEntry?.[1] as any)?.error
+  }, [validTokens, tokenData?.address, tokenNetwork?.chainId])
+
   const handleCancel = useCallback(() => {
     if (!userRequest) return
 
@@ -117,7 +138,7 @@ const WatchTokenRequestScreen = () => {
   const handleTokenType = (chainId: bigint) => {
     dispatch({
       type: 'PORTFOLIO_CONTROLLER_CHECK_TOKEN',
-      params: { token: { address: tokenData?.address, chainId } }
+      params: { token: { address: tokenData?.address, chainId }, allNetworks: false }
     })
   }
 
@@ -164,7 +185,7 @@ const WatchTokenRequestScreen = () => {
         }
         if (!temporaryToken) {
           // Check if token is eligible to add in portfolio
-          if (tokenData && !tokenTypeEligibility) {
+          if (tokenData && (!tokenTypeEligibility || tokenValidation?.error)) {
             handleTokenType(tokenNetwork?.chainId)
           }
 
@@ -179,6 +200,11 @@ const WatchTokenRequestScreen = () => {
             })
           }
         }
+
+        // Stop loading if there's a validation error
+        if (tokenValidation?.error) {
+          setIsLoading(false)
+        }
       }
     }
 
@@ -188,10 +214,9 @@ const WatchTokenRequestScreen = () => {
       return setIsLoading(false)
     })
 
-    if (tokenTypeEligibility === false || !!temporaryToken) {
+    if (tokenTypeEligibility === false || !!temporaryToken || tokenValidation?.error) {
       setIsLoading(false)
     }
-
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     network,
@@ -261,177 +286,179 @@ const WatchTokenRequestScreen = () => {
           onResolve={handleAddToken}
           resolveButtonText={isLoading ? t('Adding token...') : t('Add token')}
           resolveDisabled={
-            isLoading || showAlreadyInPortfolioMessage || (!tokenTypeEligibility && !temporaryToken)
+            isLoading ||
+            showAlreadyInPortfolioMessage ||
+            (!tokenTypeEligibility && !temporaryToken) ||
+            !!tokenValidation?.error?.message
           }
         />
       }
     >
-      {(!tokenTypeEligibility &&
-        tokenTypeEligibility !== undefined &&
-        !temporaryToken &&
-        !isLoadingTemporaryToken) ||
-      (!tokenNetwork && !isLoading) ? (
-        <View style={[flexbox.flex1, flexbox.alignCenter, flexbox.justifyCenter]}>
-          <Alert type="error" title={t('This token type is not supported.')} />
-        </View>
-      ) : (
-        <View style={[styles.container]}>
-          <View style={styles.content}>
-            <View style={styles.contentHeader}>
-              <Text weight="medium" fontSize={20} style={spacings.mbLg} numberOfLines={1}>
-                {t('Add suggested token')}
-              </Text>
-              <View style={spacings.mb}>
-                <TokenIcon
-                  withContainer
-                  chainId={tokenNetwork?.chainId}
-                  containerHeight={56}
-                  containerWidth={56}
-                  networkSize={20}
-                  address={tokenData?.address}
-                  width={50}
-                  height={50}
-                  networkWrapperStyle={{
-                    left: -8,
-                    top: -4
-                  }}
-                />
-              </View>
-              <Text weight="semiBold" fontSize={20} numberOfLines={1}>
-                {tokenData?.symbol}
-              </Text>
-              <NetworkBadge
-                withOnPrefix
+      <View style={[styles.container]}>
+        <View style={styles.content}>
+          <View style={styles.contentHeader}>
+            <Text weight="medium" fontSize={20} style={spacings.mbLg} numberOfLines={1}>
+              {t('Add suggested token')}
+            </Text>
+            <View style={spacings.mb}>
+              <TokenIcon
+                withContainer
                 chainId={tokenNetwork?.chainId}
-                fontSize={14}
-                iconSize={20}
-                style={{
-                  backgroundColor: theme.quaternaryBackground,
-                  ...spacings.mb,
-                  ...spacings.pr
+                containerHeight={56}
+                containerWidth={56}
+                networkSize={20}
+                address={tokenData?.address}
+                width={50}
+                height={50}
+                networkWrapperStyle={{
+                  left: -8,
+                  top: -4
                 }}
-                withIcon={false}
               />
-              {temporaryToken?.priceIn?.length ? (
-                <View style={[flexbox.alignEnd, { flex: 0.5 }]}>
-                  {tokenData && (
-                    <CoingeckoConfirmedBadge
-                      text={t('Confirmed')}
-                      address={tokenData.address}
-                      network={tokenNetwork}
-                    />
-                  )}
-                </View>
-              ) : null}
             </View>
+            <Text weight="semiBold" fontSize={20} numberOfLines={1}>
+              {tokenData?.symbol}
+            </Text>
+            <NetworkBadge
+              withOnPrefix
+              chainId={tokenNetwork?.chainId}
+              fontSize={14}
+              iconSize={20}
+              style={{
+                backgroundColor: theme.quaternaryBackground,
+                ...spacings.mb,
+                ...spacings.pr
+              }}
+              withIcon={false}
+            />
+            {temporaryToken?.priceIn?.length ? (
+              <View style={[flexbox.alignEnd, { flex: 0.5 }]}>
+                {tokenData && (
+                  <CoingeckoConfirmedBadge
+                    text={t('Confirmed')}
+                    address={tokenData.address}
+                    network={tokenNetwork}
+                  />
+                )}
+              </View>
+            ) : null}
+          </View>
 
-            <View style={styles.contentBody}>
-              <Text fontSize={14} weight="medium" style={spacings.mbTy}>
-                {t('Token info')}
-              </Text>
-              <View style={[styles.tokenInfoContainer, spacings.mbTy]}>
-                <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mr]}>
-                  <View style={styles.tokenInfoIconWrapper}>
-                    <AmountIcon
-                      color={
-                        themeType === THEME_TYPES.DARK ? theme.secondaryText : theme.tertiaryText
-                      }
-                    />
-                  </View>
-                  <Text
-                    fontSize={14}
+          <View style={styles.contentBody}>
+            <Text fontSize={14} weight="medium" style={spacings.mbTy}>
+              {t('Token info')}
+            </Text>
+            <View style={[styles.tokenInfoContainer, spacings.mbTy]}>
+              <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mr]}>
+                <View style={styles.tokenInfoIconWrapper}>
+                  <AmountIcon
                     color={
                       themeType === THEME_TYPES.DARK ? theme.secondaryText : theme.tertiaryText
-                    }
-                  >
-                    {t('Amount')}
-                  </Text>
-                </View>
-                <Text
-                  weight="medium"
-                  fontSize={14}
-                  color={themeType === THEME_TYPES.DARK ? theme.secondaryText : theme.tertiaryText}
-                  numberOfLines={1}
-                >
-                  {tokenDetails?.balance || '0.00'} {tokenData?.symbol}
-                </Text>
-              </View>
-              <View style={[styles.tokenInfoContainer, spacings.mbTy]}>
-                <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mr]}>
-                  <View style={styles.tokenInfoIconWrapper}>
-                    <DollarIcon
-                      color={
-                        themeType === THEME_TYPES.DARK ? theme.secondaryText : theme.tertiaryText
-                      }
-                    />
-                  </View>
-                  <Text
-                    fontSize={14}
-                    color={
-                      themeType === THEME_TYPES.DARK ? theme.secondaryText : theme.tertiaryText
-                    }
-                  >
-                    {t('Price')}
-                  </Text>
-                </View>
-                <Text
-                  weight="medium"
-                  fontSize={14}
-                  color={themeType === THEME_TYPES.DARK ? theme.secondaryText : theme.tertiaryText}
-                >
-                  {isLoading ? (
-                    <View style={[flexbox.flex1, flexbox.alignCenter, flexbox.justifyCenter]}>
-                      <Spinner style={{ width: 18, height: 18 }} />
-                    </View>
-                  ) : (
-                    tokenDetails?.priceUSDFormatted
-                  )}
-                </Text>
-              </View>
-              <View style={[styles.tokenInfoContainer]}>
-                <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mr]}>
-                  <View style={styles.tokenInfoIconWrapper}>
-                    <ValueIcon
-                      color={
-                        themeType === THEME_TYPES.DARK ? theme.secondaryText : theme.tertiaryText
-                      }
-                    />
-                  </View>
-                  <Text
-                    fontSize={14}
-                    color={
-                      themeType === THEME_TYPES.DARK ? theme.secondaryText : theme.tertiaryText
-                    }
-                  >
-                    {t('Value')}
-                  </Text>
-                </View>
-                <Text
-                  weight="medium"
-                  fontSize={14}
-                  color={themeType === THEME_TYPES.DARK ? theme.secondaryText : theme.tertiaryText}
-                >
-                  {tokenDetails?.balanceUSDFormatted || '-'}
-                </Text>
-              </View>
-
-              {!!showAlreadyInPortfolioMessage && (
-                <View style={spacings.ptMd}>
-                  <Alert
-                    size="sm"
-                    type="info2"
-                    title={
-                      isTokenCustom
-                        ? t('This token is already added as a custom token.')
-                        : t('This token is already in your portfolio.')
                     }
                   />
                 </View>
-              )}
+                <Text
+                  fontSize={14}
+                  color={themeType === THEME_TYPES.DARK ? theme.secondaryText : theme.tertiaryText}
+                >
+                  {t('Amount')}
+                </Text>
+              </View>
+              <Text
+                weight="medium"
+                fontSize={14}
+                color={themeType === THEME_TYPES.DARK ? theme.secondaryText : theme.tertiaryText}
+                numberOfLines={1}
+              >
+                {tokenDetails?.balance || '0.00'} {tokenData?.symbol}
+              </Text>
             </View>
+            <View style={[styles.tokenInfoContainer, spacings.mbTy]}>
+              <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mr]}>
+                <View style={styles.tokenInfoIconWrapper}>
+                  <DollarIcon
+                    color={
+                      themeType === THEME_TYPES.DARK ? theme.secondaryText : theme.tertiaryText
+                    }
+                  />
+                </View>
+                <Text
+                  fontSize={14}
+                  color={themeType === THEME_TYPES.DARK ? theme.secondaryText : theme.tertiaryText}
+                >
+                  {t('Price')}
+                </Text>
+              </View>
+              <Text
+                weight="medium"
+                fontSize={14}
+                color={themeType === THEME_TYPES.DARK ? theme.secondaryText : theme.tertiaryText}
+              >
+                {isLoading ? (
+                  <View style={[flexbox.flex1, flexbox.alignCenter, flexbox.justifyCenter]}>
+                    <Spinner style={{ width: 18, height: 18 }} />
+                  </View>
+                ) : (
+                  tokenDetails?.priceUSDFormatted
+                )}
+              </Text>
+            </View>
+            <View style={[styles.tokenInfoContainer]}>
+              <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mr]}>
+                <View style={styles.tokenInfoIconWrapper}>
+                  <ValueIcon
+                    color={
+                      themeType === THEME_TYPES.DARK ? theme.secondaryText : theme.tertiaryText
+                    }
+                  />
+                </View>
+                <Text
+                  fontSize={14}
+                  color={themeType === THEME_TYPES.DARK ? theme.secondaryText : theme.tertiaryText}
+                >
+                  {t('Value')}
+                </Text>
+              </View>
+              <Text
+                weight="medium"
+                fontSize={14}
+                color={themeType === THEME_TYPES.DARK ? theme.secondaryText : theme.tertiaryText}
+              >
+                {tokenDetails?.balanceUSDFormatted || '-'}
+              </Text>
+            </View>
+
+            {!!showAlreadyInPortfolioMessage && (
+              <View style={spacings.ptMd}>
+                <Alert
+                  size="sm"
+                  type="info2"
+                  title={
+                    isTokenCustom
+                      ? t('This token is already added as a custom token.')
+                      : t('This token is already in your portfolio.')
+                  }
+                />
+              </View>
+            )}
+
+            {tokenData?.address && tokenValidationError?.message && (
+              <View style={spacings.ptMd}>
+                <Alert
+                  type={tokenValidationError.type === 'network' ? 'warning' : 'error'}
+                  title={tokenValidationError.message}
+                />
+              </View>
+            )}
+
+            {!tokenNetwork && !isLoading && !tokenValidationError?.message && (
+              <View style={spacings.ptMd}>
+                <Alert type="error" title={t('This token type is not supported.')} />
+              </View>
+            )}
           </View>
         </View>
-      )}
+      </View>
     </TabLayoutContainer>
   )
 }

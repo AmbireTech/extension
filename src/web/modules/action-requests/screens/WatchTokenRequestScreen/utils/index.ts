@@ -19,16 +19,30 @@ const selectNetwork = async (
   providers: RPCProviders
 ) => {
   if (!network && !tokenNetwork?.chainId) {
-    const validTokenNetworks = networks.filter(
-      (_network: Network) =>
-        validTokens.erc20[`${tokenData?.address}-${_network.chainId}`] === true &&
-        `${tokenData?.address}-${_network.chainId}` in validTokens.erc20
-    )
-    const allNetworksChecked = networks.every(
-      (_network: Network) =>
-        `${tokenData?.address}-${_network.chainId}` in validTokens.erc20 &&
-        providers[_network.chainId.toString()].isWorking
-    )
+    const validTokenNetworks = networks.filter((_network: Network) => {
+      const key = `${tokenData?.address}-${_network.chainId}`
+      const isValid = validTokens.erc20[key]?.isValid === true
+
+      return isValid
+    })
+
+    const allNetworksChecked = networks.every((_network: Network) => {
+      const key = `${tokenData?.address}-${_network.chainId}`
+      const hasKey = key in validTokens.erc20
+      const isWorking = providers[_network.chainId.toString()]?.isWorking
+      const hasError = validTokens.erc20[key]?.error || validTokens.erc20[key] === false
+
+      // Exclude networks with errors from being considered "checked" - we skip them entirely
+      if (hasError) {
+        return true // Consider as "checked" but excluded from validation
+      }
+
+      const isChecked = hasKey || !isWorking
+
+      // Treat networks with errors as "processed" so they don't block allNetworksChecked,
+      // but skip them from further validation/selection logic.
+      return isChecked
+    })
 
     if (validTokenNetworks.length > 0) {
       const newTokenNetwork = validTokenNetworks.find(
@@ -40,13 +54,27 @@ const selectNetwork = async (
     } else if (allNetworksChecked && validTokenNetworks.length === 0) {
       setIsLoading(false)
     } else {
-      await Promise.all(
-        networks.map(
-          (_network: Network) =>
-            providers[_network.chainId.toString()].isWorking && handleTokenType(_network.chainId)
-        )
-      )
+      // Get networks that haven't been tried yet and have working providers
+      const untried = networks.filter((_network: Network) => {
+        const key = `${tokenData?.address}-${_network.chainId}`
+        const hasKey = key in validTokens.erc20
+        const isWorking = providers[_network.chainId.toString()]?.isWorking
+        const hasError = validTokens.erc20[key]?.error || validTokens.erc20[key] === false
+
+        // Only include networks that: are working, haven't been tried, and don't have errors
+        return isWorking && !hasKey && !hasError
+      })
+
+      const targetNetwork = tokenNetwork || untried[0]
+
+      if (targetNetwork && providers[targetNetwork.chainId.toString()]?.isWorking) {
+        handleTokenType(targetNetwork.chainId)
+      } else {
+        setIsLoading(false)
+      }
     }
+  } else {
+    // Network already set or tokenNetwork has chainId - skip selection
   }
 }
 
@@ -54,11 +82,20 @@ const getTokenEligibility = (
   tokenData: { address: string } | CustomToken,
   validTokens: any,
   tokenNetwork: Network | undefined
-) =>
-  null ||
-  (tokenData?.address &&
-    tokenNetwork?.chainId &&
-    validTokens?.erc20[`${tokenData?.address}-${tokenNetwork?.chainId}`])
+): boolean | undefined => {
+  if (!tokenData?.address || !tokenNetwork?.chainId || !validTokens?.erc20) {
+    return undefined
+  }
+
+  const key = `${tokenData.address}-${tokenNetwork.chainId}`
+  const tokenValidation = validTokens.erc20[key]
+
+  if (tokenValidation === true || tokenValidation?.isValid === true) {
+    return true
+  }
+
+  return undefined
+}
 
 const handleTokenIsInPortfolio = async (
   isTokenCustom: boolean,
@@ -98,15 +135,20 @@ const getTokenFromTemporaryTokens = (
   temporaryTokens: TemporaryTokens,
   tokenData: { address: string } | CustomToken,
   tokenNetwork: Network | undefined
-) =>
-  undefined ||
-  (tokenData &&
-    tokenData.address &&
-    tokenNetwork &&
-    temporaryTokens?.[tokenNetwork.chainId.toString()] &&
-    temporaryTokens?.[tokenNetwork.chainId.toString()]?.result?.tokens?.find(
-      (x) => x.address.toLowerCase() === tokenData.address.toLowerCase()
-    ))
+) => {
+  if (!tokenData?.address || !tokenNetwork?.chainId || !temporaryTokens) {
+    return undefined
+  }
+
+  const chainTokens = temporaryTokens[tokenNetwork.chainId.toString()]
+  if (!chainTokens?.result?.tokens) {
+    return undefined
+  }
+
+  return chainTokens.result.tokens.find(
+    (token) => token.address.toLowerCase() === tokenData.address.toLowerCase()
+  )
+}
 
 export {
   selectNetwork,

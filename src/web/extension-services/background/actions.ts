@@ -348,6 +348,7 @@ type PortfolioControllerCheckToken = {
   type: 'PORTFOLIO_CONTROLLER_CHECK_TOKEN'
   params: {
     token: { address: TokenResult['address']; chainId: bigint }
+    allNetworks: boolean
   }
 }
 

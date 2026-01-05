@@ -101,9 +101,10 @@ const SignMessageScreen = () => {
     if (!signMessageState?.messageToSign) return
     return humanizeMessage(signMessageState.messageToSign)
   }, [signMessageState])
-  const humanizationHasWarnings = useMemo(
-    () => !!humanizedMessage?.warnings?.length,
-    [humanizedMessage?.warnings?.length]
+
+  const humanizationHasBlockingWarnings = useMemo(
+    () => !!humanizedMessage?.warnings?.some((w) => w.blocking),
+    [humanizedMessage?.warnings]
   )
 
   const visualizeHumanized = useMemo(
@@ -281,7 +282,7 @@ const SignMessageScreen = () => {
               signStatus === 'LOADING' ||
               isScrollToBottomForced ||
               isViewOnly ||
-              humanizationHasWarnings
+              humanizationHasBlockingWarnings
             }
             resolveButtonTestID="button-sign"
             rejectButtonText={rejectButtonText}

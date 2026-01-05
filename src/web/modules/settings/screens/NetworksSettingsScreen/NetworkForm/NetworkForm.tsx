@@ -436,8 +436,13 @@ const NetworkForm = ({
       if (selectedChainId === 'add-custom-network') {
         emptyFields = Object.keys(formFields).filter(
           (key) =>
-            !['rpcUrl', 'rpcUrls', 'coingeckoPlatformId', 'coingeckoNativeAssetId'].includes(key) &&
-            !formFields[key].length
+            ![
+              'rpcUrl',
+              'rpcUrls',
+              'coingeckoPlatformId',
+              'coingeckoNativeAssetId',
+              'customBundlerUrl'
+            ].includes(key) && !formFields[key].length
         )
       } else {
         emptyFields = Object.keys(formFields).filter(

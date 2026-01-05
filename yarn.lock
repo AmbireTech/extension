@@ -2847,25 +2847,26 @@
     "@jridgewell/resolve-uri" "^3.1.0"
     "@jridgewell/sourcemap-codec" "^1.4.14"
 
-"@ledgerhq/context-module@1.10.0":
-  version "1.10.0"
-  resolved "https://registry.yarnpkg.com/@ledgerhq/context-module/-/context-module-1.10.0.tgz#777bffe03be099d7d842046c85d060106f21d1d9"
-  integrity sha512-Qrp676DFSah6l2ns/sUciYr/Qvg491kgimVirNsjkgkJ6sL7yL+pX8Z5uYsa4inRHxYGNB37KPA7yiyAfHH61Q==
+"@ledgerhq/context-module@1.11.1":
+  version "1.11.1"
+  resolved "https://registry.yarnpkg.com/@ledgerhq/context-module/-/context-module-1.11.1.tgz#f8a8eaf54c613306d05e6d7f331d51a0412d1be2"
+  integrity sha512-qaWVLOlI7FMJ9e1QWmzT+CydcIFnW3fqXIuchVYYKMuf8nsCB1x21NTp4jWmK1Fu8IphYgCYDPU/O7sqdTf+JA==
   dependencies:
-    axios "1.8.2"
+    axios "1.13.2"
     crypto-js "^4.2.0"
     ethers "6.14.1"
     inversify "7.5.1"
     purify-ts "2.1.0"
     reflect-metadata "0.2.2"
 
-"@ledgerhq/device-management-kit@0.11.0":
-  version "0.11.0"
-  resolved "https://registry.yarnpkg.com/@ledgerhq/device-management-kit/-/device-management-kit-0.11.0.tgz#06c36b45ed1729dee680fc221504ab7261326ec0"
-  integrity sha512-DRBrkb434814WRCFC5FLG3dLBHEdkN9C5f1ierSBjCq/TW27xbRdMFpweigpkYwPXpRPcoJB0kTkk/1RpyqVRA==
+"@ledgerhq/device-management-kit@0.13.0":
+  version "0.13.0"
+  resolved "https://registry.yarnpkg.com/@ledgerhq/device-management-kit/-/device-management-kit-0.13.0.tgz#c1f7842b1ab5e6c5a47e81fbea2ecf6cdafb3545"
+  integrity sha512-pNnbjII88Kmk6RtDzzwoCmUDuHYtw+EyWti9Al5VcPnBRximC34+UnzANHPBA0uegQmRigZJKdLVmH4lwSTxEQ==
   dependencies:
+    "@noble/hashes" "^1.8.0"
     "@sentry/minimal" "6.19.7"
-    axios "1.8.2"
+    axios "1.13.2"
     inversify "7.5.1"
     isomorphic-ws "^5.0.0"
     purify-ts "2.1.0"
@@ -2876,12 +2877,12 @@
     ws "^8.18.0"
     xstate "5.19.2"
 
-"@ledgerhq/device-signer-kit-ethereum@1.9.2":
-  version "1.9.2"
-  resolved "https://registry.yarnpkg.com/@ledgerhq/device-signer-kit-ethereum/-/device-signer-kit-ethereum-1.9.2.tgz#d0fdbefda115e1d4fca368eb37eabdc081a3b9ce"
-  integrity sha512-c7yfYoQ2uOZOqmnmFPYUTf3Iho2KTHhf+73GgGeKWMBSzFXACT/tNycVy58uKdz/hjQuwxx6p30Mx3JXZRlIQw==
+"@ledgerhq/device-signer-kit-ethereum@1.9.4":
+  version "1.9.4"
+  resolved "https://registry.yarnpkg.com/@ledgerhq/device-signer-kit-ethereum/-/device-signer-kit-ethereum-1.9.4.tgz#36f2b39021ff63215fda382252da45031f4481c3"
+  integrity sha512-pKQyg7SDYfP07530PYTQCMyM3bVMLU6f15A/Zp7CgKS+tW1tSXmIZw02//iPbbTZv+giczLJaSyijx8mqC+iuQ==
   dependencies:
-    "@ledgerhq/signer-utils" "^1.1.0"
+    "@ledgerhq/signer-utils" "^1.1.1"
     ethers "6.14.1"
     inversify "7.5.1"
     purify-ts "2.1.0"
@@ -2889,10 +2890,10 @@
     semver "7.7.2"
     xstate "5.19.2"
 
-"@ledgerhq/device-transport-kit-web-hid@1.2.1":
-  version "1.2.1"
-  resolved "https://registry.yarnpkg.com/@ledgerhq/device-transport-kit-web-hid/-/device-transport-kit-web-hid-1.2.1.tgz#1a87e4df31418bb5cabac4bf9e9dfbb34cef8b3e"
-  integrity sha512-goq1uTsz93uxj5pe1kzz/baca7hQ2O4ZPplypC97rN68TRtDTOhpAvPazOoFsDgOnbJcdKF4/CU2ZAurzxI1fg==
+"@ledgerhq/device-transport-kit-web-hid@1.2.2":
+  version "1.2.2"
+  resolved "https://registry.yarnpkg.com/@ledgerhq/device-transport-kit-web-hid/-/device-transport-kit-web-hid-1.2.2.tgz#96756f68b998825f4a51443647eaaaad2fc8c02a"
+  integrity sha512-Qmc0jpyK4awK/JY6FbAGQCo5DvkR30Bp6N1eZYWPnwcM/JBC0xvRnQ/5CBMPDis1LR2+6n2Yd8uHkGmrTFfnSQ==
   dependencies:
     "@sentry/minimal" "6.19.7"
     purify-ts "2.1.0"
@@ -2941,10 +2942,10 @@
     rxjs "^7.8.1"
     uuid "^9.0.1"
 
-"@ledgerhq/signer-utils@^1.1.0":
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/@ledgerhq/signer-utils/-/signer-utils-1.1.0.tgz#1b1a466b9ef0a93b1b32ba7559bc120c20e77bb2"
-  integrity sha512-zp8kyNF0sNMUG2VkgOL7rDu8W6U1P8yvTA3wIDjjlqoIOPanvodfezeub69fOuHJ2QG/JmnS8YZCGIoSWpQYkA==
+"@ledgerhq/signer-utils@^1.1.1":
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/@ledgerhq/signer-utils/-/signer-utils-1.1.1.tgz#fc66aef1b43848c1119108361dffc91e6bc78970"
+  integrity sha512-ztzNipkDv5y2/VRT3O76/k8ZWNK7DH9Qu1tCnX2BmIMBFbRj1/yN3hNsMDAXI2UlsPTkYI4ANDY8dx3tfsuvYg==
 
 "@leichtgewicht/ip-codec@^2.0.1":
   version "2.0.4"
@@ -6194,13 +6195,13 @@ axe-core@^4.3.5:
   resolved "https://registry.npmjs.org/axe-core/-/axe-core-4.6.2.tgz"
   integrity sha512-b1WlTV8+XKLj9gZy2DZXgQiyDp9xkkoe2a6U6UbYccScq2wgH/YwCeI2/Jq2mgo0HzQxqJOjWZBLeA/mqsk5Mg==
 
-axios@1.8.2:
-  version "1.8.2"
-  resolved "https://registry.yarnpkg.com/axios/-/axios-1.8.2.tgz#fabe06e241dfe83071d4edfbcaa7b1c3a40f7979"
-  integrity sha512-ls4GYBm5aig9vWx8AWDSGLpnpDQRtWAfrjU+EuytuODrFBkqesN2RkOQCBzrA1RQNHw1SmRMSDDDSwzNAYQ6Rg==
+axios@1.13.2:
+  version "1.13.2"
+  resolved "https://registry.yarnpkg.com/axios/-/axios-1.13.2.tgz#9ada120b7b5ab24509553ec3e40123521117f687"
+  integrity sha512-VPk9ebNqPcy5lRGuSlKx752IlDatOjT9paPlm8A7yOuW2Fbvp4X3JznJtT4f0GzGLLiWE9W8onz51SqLYwzGaA==
   dependencies:
     follow-redirects "^1.15.6"
-    form-data "^4.0.0"
+    form-data "^4.0.4"
     proxy-from-env "^1.1.0"
 
 axios@^1.8.4:
@@ -10122,6 +10123,17 @@ form-data@^3.0.1:
   dependencies:
     asynckit "^0.4.0"
     combined-stream "^1.0.8"
+    mime-types "^2.1.12"
+
+form-data@^4.0.4:
+  version "4.0.5"
+  resolved "https://registry.yarnpkg.com/form-data/-/form-data-4.0.5.tgz#b49e48858045ff4cbf6b03e1805cebcad3679053"
+  integrity sha512-8RipRLol37bNs2bhoV67fiTEvdTrbMUYcFTiy3+wuuOnUog2QBHCZWXDRijWQfAkhBj2Uf5UnVaiWwA5vdd82w==
+  dependencies:
+    asynckit "^0.4.0"
+    combined-stream "^1.0.8"
+    es-set-tostringtag "^2.1.0"
+    hasown "^2.0.2"
     mime-types "^2.1.12"
 
 forwarded@0.2.0:
