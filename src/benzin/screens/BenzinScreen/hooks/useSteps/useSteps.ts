@@ -40,6 +40,7 @@ import {
 import { ActiveStepType, FinalizedStatusType } from '@benzin/screens/BenzinScreen/interfaces/steps'
 import { UserOperation } from '@benzin/screens/BenzinScreen/interfaces/userOperation'
 
+import { Bundler } from '@ambire-common/services/bundlers/bundler'
 import { decodeUserOp, entryPointTxnSplit, reproduceCallsFromTxn } from './utils/reproduceCalls'
 
 const REFETCH_TIME = 3000 // 3 seconds
@@ -338,10 +339,9 @@ const useSteps = ({
           setFoundTxnId(receipt.receipt.transactionHash)
         }
 
-        const opTxnReceipt = receipt.receipt
         const hasUserOpSucceeded = !!receipt.success
-        const hasTxnFailedOrNoInfo =
-          opTxnReceipt.status === undefined || BigInt(opTxnReceipt.status) === 0n
+        const statusAsNumber = Bundler.getReceiptSuccess(receipt)
+        const hasTxnFailedOrNoInfo = statusAsNumber === 0n
         if (!hasUserOpSucceeded && hasTxnFailedOrNoInfo && !hasCheckedFrontRun) {
           setIsFrontRan(true)
           return
