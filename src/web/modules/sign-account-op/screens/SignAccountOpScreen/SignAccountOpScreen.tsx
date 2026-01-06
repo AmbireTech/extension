@@ -205,11 +205,7 @@ const SignAccountOpScreen = () => {
 
   const isAddToCartDisabled = useMemo(() => {
     const readyToSign = signAccountOpState?.readyToSign
-    console.log({
-      readyToSign,
-      isSignLoading,
-      isViewOnly
-    })
+
     return isSignLoading || (!readyToSign && !isViewOnly)
   }, [isSignLoading, isViewOnly, signAccountOpState?.readyToSign])
 

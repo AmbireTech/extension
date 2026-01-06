@@ -19,7 +19,6 @@ const SignAccountOpControllerStateProvider: React.FC<any> = ({ children }) => {
 
   useEffect(() => {
     const onUpdate = (newState: ISignAccountOpController | null, forceEmit?: boolean) => {
-      console.log('newState', newState)
       if (forceEmit) {
         flushSync(() => setState(newState))
       } else {
