@@ -164,8 +164,9 @@ const SwapAndBridgeScreen = () => {
   const handleUpdateStatus = useCallback(
     (status: SigningStatus) => {
       dispatch({
-        type: 'SWAP_AND_BRIDGE_CONTROLLER_SIGN_ACCOUNT_OP_UPDATE_STATUS',
+        type: 'CURRENT_SIGN_ACCOUNT_OP_UPDATE_STATUS',
         params: {
+          updateType: 'Swap&Bridge',
           status
         }
       })
@@ -175,8 +176,11 @@ const SwapAndBridgeScreen = () => {
   const updateController = useCallback(
     (params: { signingKeyAddr?: Key['addr']; signingKeyType?: Key['type'] }) => {
       dispatch({
-        type: 'SWAP_AND_BRIDGE_CONTROLLER_SIGN_ACCOUNT_OP_UPDATE',
-        params
+        type: 'CURRENT_SIGN_ACCOUNT_OP_UPDATE',
+        params: {
+          updateType: 'Swap&Bridge',
+          ...params
+        }
       })
     },
     [dispatch]

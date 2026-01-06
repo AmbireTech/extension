@@ -246,8 +246,9 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   const handleUpdateStatus = useCallback(
     (status: SigningStatus) => {
       dispatch({
-        type: 'TRANSFER_CONTROLLER_SIGN_ACCOUNT_OP_UPDATE_STATUS',
+        type: 'CURRENT_SIGN_ACCOUNT_OP_UPDATE_STATUS',
         params: {
+          updateType: 'Transfer&TopUp',
           status
         }
       })
@@ -257,8 +258,11 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   const updateController = useCallback(
     (params: { signingKeyAddr?: Key['addr']; signingKeyType?: Key['type'] }) => {
       dispatch({
-        type: 'TRANSFER_CONTROLLER_SIGN_ACCOUNT_OP_UPDATE',
-        params
+        type: 'CURRENT_SIGN_ACCOUNT_OP_UPDATE',
+        params: {
+          updateType: 'Transfer&TopUp',
+          ...params
+        }
       })
     },
     [dispatch]

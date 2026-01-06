@@ -60,8 +60,8 @@ const SignAccountOpScreen = () => {
   const handleUpdateStatus = useCallback(
     (status: SigningStatus) => {
       dispatch({
-        type: 'REQUESTS_CONTROLLER_CURRENT_SIGN_ACCOUNT_OP_UPDATE_STATUS',
-        params: { status }
+        type: 'CURRENT_SIGN_ACCOUNT_OP_UPDATE_STATUS',
+        params: { updateType: 'Requests', status }
       })
     },
     [dispatch]
@@ -69,8 +69,11 @@ const SignAccountOpScreen = () => {
   const updateController = useCallback(
     (params: { signingKeyAddr?: Key['addr']; signingKeyType?: Key['type'] }) => {
       dispatch({
-        type: 'REQUESTS_CONTROLLER_CURRENT_SIGN_ACCOUNT_OP_UPDATE',
-        params
+        type: 'CURRENT_SIGN_ACCOUNT_OP_UPDATE',
+        params: {
+          updateType: 'Requests',
+          ...params
+        }
       })
     },
     [dispatch]
