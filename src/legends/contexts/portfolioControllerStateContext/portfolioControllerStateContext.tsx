@@ -116,9 +116,9 @@ const PortfolioControllerStateProvider: React.FC<any> = ({ children }) => {
       ).then((r) => r.json())
       setWalletTokenPrice(cenaInfo['ambire-wallet'].usd)
       setEthTokenPrice(cenaInfo.weth.usd)
-      setIsLoadingPrices(false)
     } catch (e) {
       console.error('Error fetching token prices:', e)
+    } finally {
       setIsLoadingPrices(false)
     }
   }, [])
