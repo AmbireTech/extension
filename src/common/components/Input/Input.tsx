@@ -11,12 +11,11 @@ import {
 } from 'react-native'
 
 import InformationIcon from '@common/assets/svg/InformationIcon'
-import Text from '@common/components/Text'
+import Text, { TextAppearance } from '@common/components/Text'
 import { isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
-import flexbox from '@common/styles/utils/flexbox'
 import useHover, { AnimatedPressable } from '@web/hooks/useHover'
 
 import getStyles from './styles'
@@ -29,6 +28,7 @@ export interface InputProps extends TextInputProps {
   label?: string
   isValid?: boolean
   validLabel?: string
+  validLabelAppearance?: TextAppearance
   button?: string | JSX.Element | null
   buttonProps?: TouchableOpacityProps & {
     withBackground?: boolean
@@ -67,6 +67,7 @@ const Input = ({
   errorType,
   isValid,
   validLabel,
+  validLabelAppearance,
   onBlur = () => {},
   onFocus = () => {},
   onButtonPress = () => {},
@@ -233,7 +234,7 @@ const Input = ({
             style={[styles.bottomLabel, bottomLabelStyle]}
             weight="regular"
             fontSize={12}
-            color={theme.successText}
+            appearance={validLabelAppearance || 'successText'}
           >
             {validLabel}
           </Text>
