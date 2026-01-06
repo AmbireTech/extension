@@ -112,6 +112,13 @@ const TransactionSummary = ({
     }
   }, [isCallRemovedOptimistic])
 
+  const humanizerWarningLabels = useMemo(() => {
+    if (isHistory) return null
+    return call.warnings?.map((warning) => {
+      return <Label size={size} key={warning.content} text={warning.content} type="warning" />
+    })
+  }, [isHistory, call.warnings, size])
+
   if (isCallRemovedOptimistic) return null
 
   return (
@@ -119,7 +126,9 @@ const TransactionSummary = ({
       enableToggleExpand={enableExpand}
       hasArrow={enableExpand}
       style={{
-        ...(call.warnings?.length ? { ...styles.warningContainer, ...style } : { ...style })
+        ...(call.warnings?.length && !isHistory
+          ? { ...styles.warningContainer, ...style }
+          : { ...style })
       }}
       contentStyle={{
         paddingHorizontal: SPACING_SM * sizeMultiplier[size],
@@ -216,16 +225,7 @@ const TransactionSummary = ({
         }}
       >
         {!call.validationError ? (
-          call.warnings?.map((warning) => {
-            return (
-              <Label
-                size={size}
-                key={warning.content + warning.level}
-                text={warning.content}
-                type="warning"
-              />
-            )
-          })
+          humanizerWarningLabels
         ) : (
           <Label size={size} key={call.validationError} text={call.validationError} type="error" />
         )}
