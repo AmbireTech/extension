@@ -511,10 +511,19 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   ])
 
   const handleGoBackPress = useCallback(() => {
-    dispatch({
-      type: 'TRANSFER_CONTROLLER_RESET_FORM'
-    })
-    navigate(ROUTES.dashboard)
+    if (!isRequestWindow) {
+      dispatch({
+        type: 'TRANSFER_CONTROLLER_RESET_FORM'
+      })
+      navigate(ROUTES.dashboard)
+    } else {
+      dispatch({
+        type: 'CLOSE_SIGNING_REQUEST_WINDOW',
+        params: {
+          type: 'transfer'
+        }
+      })
+    }
   }, [navigate, dispatch])
 
   const onBatchAddedPrimaryButtonPress = useCallback(() => {
