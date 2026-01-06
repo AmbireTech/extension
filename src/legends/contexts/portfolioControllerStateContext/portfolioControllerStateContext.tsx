@@ -1,7 +1,7 @@
 import { Contract, formatEther, formatUnits } from 'ethers'
 import React, { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-import { STK_WALLET, WALLET_TOKEN } from '@ambire-common/consts/addresses'
+import { STK_WALLET } from '@ambire-common/consts/addresses'
 import { networks } from '@ambire-common/consts/networks'
 import { getUniV3Positions } from '@ambire-common/libs/defiPositions/providers'
 import {
