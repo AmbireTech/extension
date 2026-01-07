@@ -732,12 +732,40 @@ export class ProviderController {
   @Reflect.metadata('ACTION_REQUEST', [
     'WalletWatchAsset',
     ({ request }: { request: ProviderRequest; mainCtrl: MainController }) => {
-      const tokenAddress = request.params?.options?.address
+      const options = request.params?.options
+      const tokenAddress = options?.address
 
       if (!tokenAddress) throw ethErrors.rpc.invalidParams('Token address is required')
-      if (!isAddress(tokenAddress)) throw ethErrors.rpc.invalidParams('Invalid token address')
+      if (!isAddress(tokenAddress))
+        throw ethErrors.rpc.invalidParams(`Invalid address '${tokenAddress}'.`)
 
-      return false // Return false to allow request window to open (address is valid)
+      // Validate symbol if provided
+      if (options?.symbol !== undefined) {
+        if (typeof options.symbol !== 'string') {
+          throw ethErrors.rpc.invalidParams('Invalid symbol: not a string.')
+        }
+        if (options.symbol.length > 11) {
+          throw ethErrors.rpc.invalidParams(
+            `Invalid symbol '${options.symbol}': longer than 11 characters.`
+          )
+        }
+      }
+
+      // Validate decimals if provided
+      if (options?.decimals !== undefined) {
+        if (typeof options.decimals !== 'number' || !Number.isInteger(options.decimals)) {
+          throw ethErrors.rpc.invalidParams(
+            `Invalid decimals '${options.decimals}': must be 0 <= 36.`
+          )
+        }
+        if (options.decimals < 0 || options.decimals > 36) {
+          throw ethErrors.rpc.invalidParams(
+            `Invalid decimals '${options.decimals}': must be 0 <= 36.`
+          )
+        }
+      }
+
+      return false // Return false to allow request window to open (all params are valid)
     }
   ])
   walletWatchAsset = () => true
