@@ -1,11 +1,15 @@
+import { Contract, formatEther, formatUnits } from 'ethers'
 import React, { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-import { WALLET_TOKEN } from '@ambire-common/consts/addresses'
+import { STK_WALLET } from '@ambire-common/consts/addresses'
+import { networks } from '@ambire-common/consts/networks'
+import { getUniV3Positions } from '@ambire-common/libs/defiPositions/providers'
 import {
   PortfolioProjectedRewardsResult,
   PortfolioRewardsResult,
   ProjectedRewardsStats
 } from '@ambire-common/libs/portfolio/interfaces'
+import { getRpcProvider } from '@ambire-common/services/provider'
 import { calculateRewardsStats } from '@ambire-common/utils/rewards'
 import { RELAYER_URL } from '@env'
 import { LEGENDS_SUPPORTED_NETWORKS_BY_CHAIN_ID } from '@legends/constants/networks'
@@ -71,13 +75,28 @@ const PortfolioControllerStateContext = createContext<{
   xWalletClaimableBalance: null
 })
 
+const ethereumProvider = getRpcProvider(['https://invictus.ambire.com/ethereum'], 1n)
+
+const stkWalletContract = new Contract(
+  STK_WALLET,
+  ['function balanceOf(address) public view returns (uint256)'],
+  ethereumProvider as any
+)
+
 const PortfolioControllerStateProvider: React.FC<any> = ({ children }) => {
   const getPortfolioIntervalRef: any = useRef(null)
   const { provider } = useProviderContext()
   const { connectedAccount, v1Account, isLoading } = useAccountContext()
   const [accountPortfolio, setAccountPortfolio] = useState<AccountPortfolio>()
+  const [ethTokenPrice, setEthTokenPrice] = useState<number>()
+  const [uniswapWalletPosition, setUniswapWalletPosition] =
+    useState<{ wallet: number; eth: number }>()
+  const [stkBalance, setStkBalance] = useState<number>()
   const [claimableRewards, setClaimableRewards] = useState<any>(null)
-  const [isLoadingClaimableRewards, setIsLoadingClaimableRewards] = useState(true)
+  const [isLoadingPortfolioProjectionData, setIsLoadingPortfolioProjectionData] = useState(true)
+  const [isLoadingUniPositions, setIsLoadingUniPositions] = useState(true)
+  const [isLoadingStkBalance, setIsLoadingStkBalance] = useState(true)
+  const [isLoadingPrices, setIsLoadingPrices] = useState(true)
   const [claimableRewardsError, setClaimableRewardsError] = useState<string | null>(null)
   const [xWalletClaimableBalance, setXWalletClaimableBalance] = useState<
     PortfolioRewardsResult['xWalletClaimableBalance'] | null
@@ -89,13 +108,27 @@ const PortfolioControllerStateProvider: React.FC<any> = ({ children }) => {
   const [rewardsProjectionData, setRewardsProjectionData] =
     useState<PortfolioProjectedRewardsResult | null>(null)
 
+  const updatePrices = useCallback(async () => {
+    try {
+      setIsLoadingPrices(true)
+      const cenaInfo = await fetch(
+        'https://cena.ambire.com/api/v3/simple/price?ids=weth,ambire-wallet&vs_currencies=usd'
+      ).then((r) => r.json())
+      setWalletTokenPrice(cenaInfo['ambire-wallet'].usd)
+      setEthTokenPrice(cenaInfo.weth.usd)
+    } catch (e) {
+      console.error('Error fetching token prices:', e)
+    } finally {
+      setIsLoadingPrices(false)
+    }
+  }, [])
   const updateAdditionalPortfolio = useCallback(async () => {
     if (!connectedAccount) {
-      setIsLoadingClaimableRewards(false)
+      setIsLoadingPortfolioProjectionData(false)
       return
     }
     try {
-      setIsLoadingClaimableRewards(true)
+      setIsLoadingPortfolioProjectionData(true)
       const additionalPortfolioResponse = await fetch(
         `${RELAYER_URL}/v2/identity/${connectedAccount}/portfolio-additional`
       )
@@ -104,22 +137,74 @@ const PortfolioControllerStateProvider: React.FC<any> = ({ children }) => {
       const xWalletClaimableBalanceData =
         additionalPortfolioJson?.data?.rewards?.xWalletClaimableBalance
       const claimableBalance = additionalPortfolioJson?.data?.rewards?.stkWalletClaimableBalance
-      const walletTokenInfoData =
-        additionalPortfolioJson?.data?.gasTank?.availableGasTankAssets.find(
-          (asset: any) => asset.address === WALLET_TOKEN
-        )
-
-      setWalletTokenPrice(walletTokenInfoData.price)
 
       setRewardsProjectionData(additionalPortfolioJson?.data?.rewardsProjectionDataV2)
       setClaimableRewards(claimableBalance)
       setXWalletClaimableBalance(xWalletClaimableBalanceData)
-      setIsLoadingClaimableRewards(false)
+      setIsLoadingPortfolioProjectionData(false)
     } catch (e) {
       console.error('Error fetching additional portfolio:', e)
-      setIsLoadingClaimableRewards(false)
+      setIsLoadingPortfolioProjectionData(false)
       setClaimableRewards(null)
       setClaimableRewardsError('Error fetching claimable data')
+    }
+  }, [connectedAccount])
+
+  const updateStkBalance = useCallback(async () => {
+    if (!connectedAccount) {
+      setIsLoadingStkBalance(false)
+      return
+    }
+    setIsLoadingStkBalance(true)
+    stkWalletContract.balanceOf!(connectedAccount)
+      .then((stkBalanceBigint) => setStkBalance(Number(formatUnits(stkBalanceBigint))))
+      .catch((e) => {
+        console.error('Failed to fetch stk wallet price', e)
+        return null
+      })
+      .finally(() => {
+        setIsLoadingStkBalance(false)
+      })
+  }, [connectedAccount])
+
+  const updateUniswapPositions = useCallback(async () => {
+    if (!connectedAccount) {
+      setIsLoadingUniPositions(false)
+      return
+    }
+
+    try {
+      setIsLoadingUniPositions(true)
+      const uniV3Positions = await getUniV3Positions(
+        connectedAccount,
+        ethereumProvider as unknown as Parameters<typeof getUniV3Positions>[1],
+        networks.find((n) => n.chainId === 1n)!
+      )
+      const walletEthPositionsAssets =
+        uniV3Positions?.positions
+          .filter((p) => p.additionalData.inRange)
+          .filter(
+            (p) =>
+              p.assets.some((a) => a.symbol === 'WALLET') &&
+              p.assets.some((a) => a.symbol === 'WETH')
+          )
+          .map((p) => p.assets)
+          .flat() || []
+      const newAmounts = {
+        wallet: walletEthPositionsAssets
+          ?.filter((a) => a.symbol === 'WALLET')
+          .map((a) => Number(formatEther(a.amount)))
+          .reduce((a, b) => a + b, 0),
+        eth: walletEthPositionsAssets
+          ?.filter((a) => a.symbol === 'WETH')
+          .map((a) => Number(formatEther(a.amount)))
+          .reduce((a, b) => a + b, 0)
+      }
+      setUniswapWalletPosition(newAmounts)
+      setIsLoadingUniPositions(false)
+    } catch (e) {
+      setIsLoadingUniPositions(false)
+      console.error('Error fetching uniswap positions:', e)
     }
   }, [connectedAccount])
 
@@ -197,18 +282,69 @@ const PortfolioControllerStateProvider: React.FC<any> = ({ children }) => {
     }
   }, [])
 
-  const userRewardsStats = useMemo(() => {
-    if (!rewardsProjectionData || walletTokenPrice === null) return null
+  const isLoadingClaimableRewards = useMemo(() => {
+    return (
+      isLoadingPortfolioProjectionData ||
+      isLoadingUniPositions ||
+      isLoadingStkBalance ||
+      !accountPortfolio?.isReady ||
+      isLoadingPrices
+    )
+  }, [
+    isLoadingPortfolioProjectionData,
+    isLoadingUniPositions,
+    isLoadingStkBalance,
+    accountPortfolio?.isReady,
+    isLoadingPrices
+  ])
 
-    return calculateRewardsStats(rewardsProjectionData, walletTokenPrice)
-  }, [rewardsProjectionData, walletTokenPrice])
+  const userRewardsStats = useMemo(() => {
+    if (!rewardsProjectionData || walletTokenPrice === null || isLoadingClaimableRewards)
+      return null
+
+    const liquidityUSD =
+      ethTokenPrice === undefined || uniswapWalletPosition === undefined
+        ? undefined
+        : uniswapWalletPosition.eth * ethTokenPrice +
+          uniswapWalletPosition.wallet * walletTokenPrice
+
+    const stkBalanceUSD = stkBalance === undefined ? undefined : stkBalance * walletTokenPrice
+
+    return calculateRewardsStats(
+      rewardsProjectionData,
+      walletTokenPrice,
+      accountPortfolio?.amount,
+      stkBalanceUSD,
+      liquidityUSD
+    )
+  }, [
+    accountPortfolio?.amount,
+    ethTokenPrice,
+    isLoadingClaimableRewards,
+    rewardsProjectionData,
+    stkBalance,
+    uniswapWalletPosition,
+    walletTokenPrice
+  ])
 
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     updateAdditionalPortfolio()
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     fetchWalletTokenInfo()
-  }, [updateAdditionalPortfolio, fetchWalletTokenInfo])
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    updateStkBalance()
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    updateUniswapPositions()
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    updatePrices()
+  }, [
+    updateAdditionalPortfolio,
+    fetchWalletTokenInfo,
+    updateStkBalance,
+    updateUniswapPositions,
+    updatePrices
+  ])
 
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-floating-promises

@@ -17,6 +17,7 @@ test.describe('Basic Account - Tokens balance check', { tag: '@balanceCheck' }, 
       ['gas-token', 1],
       [tokens.wallet.base, 1],
       // These tokens are used to pay fees in transactions, so we need more funds here:
+      [tokens.usdc.base, 2],
       [tokens.usdc.optimism, 2]
     ]
 
