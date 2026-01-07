@@ -283,28 +283,77 @@ export class ProviderController {
   @Reflect.metadata('ACTION_REQUEST', [
     'AddChain',
     ({ request }: { request: ProviderRequest; mainCtrl: MainController }) => {
-      const { params } = request
-      if (!params[0]) {
-        throw ethErrors.rpc.invalidParams('params is required but got []')
+      const chainParams = request.params[0]
+
+      if (!chainParams)
+        throw ethErrors.rpc.invalidParams(
+          'Missing network details. Please specify a chain ID and the required network information.'
+        )
+
+      if (!chainParams?.chainId || typeof chainParams.chainId !== 'string')
+        throw ethErrors.rpc.invalidParams(
+          `Expected 0x-prefixed, unpadded, non-zero hexadecimal string 'chainId'. Received: ${chainParams?.chainId}`
+        )
+
+      const { chainId } = chainParams
+      const chainIdNumber = Number(chainId)
+      if (isNaN(chainIdNumber) || chainIdNumber > Number.MAX_SAFE_INTEGER)
+        throw ethErrors.rpc.invalidParams(
+          `Invalid chain ID "${chainId}": numerical value greater than max safe value. Received: ${chainId}`
+        )
+
+      if (!chainParams?.chainName || typeof chainParams.chainName !== 'string') {
+        throw ethErrors.rpc.invalidParams("'chainName' is required and must be a string")
       }
-      if (!params[0]?.chainId) {
-        throw ethErrors.rpc.invalidParams('chainId is required')
-      }
+
+      if (!chainParams?.nativeCurrency || typeof chainParams.nativeCurrency !== 'object')
+        throw ethErrors.rpc.invalidParams("'nativeCurrency' is required and must be an object")
+
+      const { nativeCurrency } = chainParams
+      if (
+        !nativeCurrency.decimals ||
+        typeof nativeCurrency.decimals !== 'number' ||
+        !Number.isInteger(nativeCurrency.decimals)
+      )
+        throw ethErrors.rpc.invalidParams(
+          "'nativeCurrency.decimals' is required and must be an integer"
+        )
+
+      if (!nativeCurrency.name || typeof nativeCurrency.name !== 'string')
+        throw ethErrors.rpc.invalidParams("'nativeCurrency.name' is required and must be a string")
+
+      if (!nativeCurrency.symbol || typeof nativeCurrency.symbol !== 'string')
+        throw ethErrors.rpc.invalidParams(
+          "'nativeCurrency.symbol' is required and must be a string"
+        )
+
+      const ticker = nativeCurrency.symbol
+      if (ticker.length < 2 || ticker.length > 6)
+        throw ethErrors.rpc.invalidParams(
+          `Expected 2-6 character string 'nativeCurrency.symbol'. Received: ${ticker}`
+        )
+
+      // Validate rpcUrls
+      if (!chainParams?.rpcUrls || !Array.isArray(chainParams.rpcUrls))
+        throw ethErrors.rpc.invalidParams("'rpcUrls' is required and must be an array")
+      if (chainParams.rpcUrls.length === 0)
+        throw ethErrors.rpc.invalidParams("'rpcUrls' must contain at least one URL")
+
+      if (!chainParams.rpcUrls.every((url: any) => typeof url === 'string'))
+        throw ethErrors.rpc.invalidParams("'rpcUrls' must be an array of strings")
 
       return false
     }
   ])
   walletAddEthereumChain = async ({ params: [chainParams], session: { id } }: ProviderRequest) => {
-    let chainId = chainParams.chainId
-    if (typeof chainId === 'string') {
-      chainId = Number(chainId)
-    }
-
+    const chainId = Number(chainParams.chainId)
     const network = this.mainCtrl.networks.networks.find((n) => Number(n.chainId) === chainId)
 
-    if (!network) {
-      throw new Error('This chain is not supported by Ambire yet.')
-    }
+    // should never happen
+    if (!network)
+      throw new Error(
+        'Something went wrong while adding the network. Please try again later or contact Ambire support.'
+      )
 
     this.mainCtrl.dapps.updateDapp(id, { chainId })
     await this.mainCtrl.dapps.broadcastDappSessionEvent(
@@ -421,6 +470,7 @@ export class ProviderController {
       identifier,
       bundler: bundlerName
     }
+    if (!identifier) throw ethErrors.rpc.invalidParams('no identifier passed')
 
     const dappNetwork = this.getDappNetwork(data.session.id)
     const network = this.mainCtrl.networks.networks.filter(
@@ -607,20 +657,28 @@ export class ProviderController {
   @Reflect.metadata('ACTION_REQUEST', [
     'AddChain',
     ({ request, mainCtrl }: { request: ProviderRequest; mainCtrl: MainController }) => {
-      const { params, session } = request
-      if (!params[0]) {
-        throw ethErrors.rpc.invalidParams('params is required but got []')
-      }
-      if (!params[0]?.chainId) {
-        throw ethErrors.rpc.invalidParams('chainId is required')
-      }
-      const dapp = mainCtrl.dapps.getDapp(session.id)
-      const { chainId } = params[0]
-      const network = mainCtrl.networks.networks.find(
-        (n: any) => Number(n.chainId) === Number(chainId)
-      )
+      const chainParams = request.params[0]
+      if (!chainParams)
+        throw ethErrors.rpc.invalidParams(
+          'Missing network details. Please specify a chain ID and the required network information.'
+        )
+
+      if (!chainParams?.chainId || typeof chainParams.chainId !== 'string')
+        throw ethErrors.rpc.invalidParams(
+          `Expected 0x-prefixed, unpadded, non-zero hexadecimal string 'chainId'. Received: ${chainParams?.chainId}`
+        )
+
+      const { chainId } = chainParams
+      const chainIdNumber = Number(chainId)
+      if (isNaN(chainIdNumber) || chainIdNumber > Number.MAX_SAFE_INTEGER)
+        throw ethErrors.rpc.invalidParams(
+          `Invalid chain ID "${chainId}": numerical value greater than max safe value. Received: ${chainId}`
+        )
+
+      const dapp = mainCtrl.dapps.getDapp(request.session.id)
       if (!dapp?.isConnected) return false
 
+      const network = mainCtrl.networks.networks.find((n) => Number(n.chainId) === Number(chainId))
       if (!network) {
         throw ethErrors.provider.custom({
           code: 4902,
@@ -628,6 +686,7 @@ export class ProviderController {
             'Unrecognized chain ID. Try adding the chain using wallet_addEthereumChain first.'
         })
       }
+
       return true
     }
   ])
@@ -635,11 +694,14 @@ export class ProviderController {
     params: [chainParams],
     session: { id, origin, name }
   }: ProviderRequest) => {
-    let chainId = chainParams.chainId
-    if (typeof chainId === 'string') chainId = Number(chainId)
-
+    const chainId = Number(chainParams.chainId)
     const network = this.mainCtrl.networks.networks.find((n) => Number(n.chainId) === chainId)
-    if (!network) throw new Error('This chain is not supported by Ambire yet.')
+
+    // should never happen, because this gets validated beforehand
+    if (!network)
+      throw new Error(
+        'Something went wrong while switching network. Please try again later or contact Ambire support.'
+      )
 
     const dapp = this.mainCtrl.dapps.getDapp(id)
 

@@ -345,7 +345,7 @@ const init = async () => {
   const latticeCtrl = new LatticeController()
 
   // Skip adding custom headers and URL modifications for 3rd party URLs
-  // (only internal Ambire APIs need the x-app-source header and tracking params)
+  // (only internal Ambire APIs need the x-app-* headers and tracking params)
   // @ts-ignore
   const fetchWithAnalytics: Fetch = (url, init) => {
     const urlString = url.toString()
@@ -364,7 +364,7 @@ const init = async () => {
     }
 
     // As of v4.26.0, custom extension-specific headers. TBD for the other apps.
-    const initWithCustomHeaders = init || { headers: { 'x-app-source': '' } }
+    const initWithCustomHeaders = init || { headers: { 'x-app-source': '', 'x-app-version': '' } }
     initWithCustomHeaders.headers = initWithCustomHeaders.headers || {}
 
     // if the fetch method is called while the keystore is constructing the keyStoreUid won't be defined yet
@@ -376,6 +376,8 @@ const init = async () => {
       )
 
       initWithCustomHeaders.headers['x-app-source'] = instanceId
+      const versionHeader = `extension-${APP_VERSION}-${process.env.WEB_ENGINE}`
+      initWithCustomHeaders.headers['x-app-version'] = versionHeader
     }
 
     // As of v4.36.0, for metric purposes, pass the account keys count as an
