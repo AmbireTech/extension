@@ -5,7 +5,7 @@ import { isValidAddress } from '@ambire-common/services/address'
 export type ValidationWithSeverityType = {
   message: string
   isError: boolean
-  severity?: 'error' | 'warning' | 'info'
+  severity?: 'error' | 'warning' | 'info' | 'success'
 }
 
 type AddressInputValidation = {
@@ -15,7 +15,7 @@ type AddressInputValidation = {
   hasDomainResolveFailed: boolean
   overwriteError?: string
   overwriteValidLabel?: string
-  overwriteSeverity?: 'error' | 'warning' | 'info'
+  overwriteSeverity?: 'error' | 'warning' | 'info' | 'success'
 }
 
 const getAddressInputValidation = ({
