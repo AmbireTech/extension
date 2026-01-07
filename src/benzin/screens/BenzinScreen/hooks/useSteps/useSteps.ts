@@ -242,6 +242,8 @@ const useSteps = ({
     if (!items[0]) return
     const op = items[0]
     if (
+      op.identifiedBy &&
+      extensionAccOp.identifiedBy &&
       op.identifiedBy.identifier !== extensionAccOp.identifiedBy.identifier ||
       op.status === AccountOpStatus.BroadcastedButNotConfirmed ||
       op.status === AccountOpStatus.Pending ||

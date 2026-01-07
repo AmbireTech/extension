@@ -421,6 +421,7 @@ export class ProviderController {
       identifier,
       bundler: bundlerName
     }
+    if (!identifier) throw ethErrors.rpc.invalidParams('no identifier passed')
 
     const dappNetwork = this.getDappNetwork(data.session.id)
     const network = this.mainCtrl.networks.networks.filter(
