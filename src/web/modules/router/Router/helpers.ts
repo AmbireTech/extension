@@ -54,10 +54,13 @@ const getInitialRoute = ({
 
     if (currentUserRequest.kind === 'swapAndBridge') return ROUTES.swapAndBridge
 
-    // TODO: This navigation occurs when signing with Trezor.
-    // Currently, Gas Top-Ups are not supported by Trezor.
-    // Once support is added, we need to introduce a new actionType specifically for Top-Up.
-    if (currentUserRequest.kind === 'transfer') return ROUTES.transfer
+    if (currentUserRequest.kind === 'transfer') {
+      if (transferState.isTopUp) {
+        return ROUTES.topUpGasTank
+      }
+
+      return ROUTES.transfer
+    }
 
     if (currentUserRequest.kind === 'benzin') {
       const link =

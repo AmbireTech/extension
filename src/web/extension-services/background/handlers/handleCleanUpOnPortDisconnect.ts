@@ -92,7 +92,7 @@ export const handleCleanUpOnPortDisconnect = async ({
 
     // We reset the form state without destroying the signAccountOp,
     // since it's still needed for broadcasting. Once broadcasting completes, we destroy the signAccountOp.
-    if (!shouldTrack) {
+    if (!shouldTrack && !signAccountOpController.isSignAndBroadcastInProgress) {
       mainCtrl.transfer.resetForm(false)
     }
 
