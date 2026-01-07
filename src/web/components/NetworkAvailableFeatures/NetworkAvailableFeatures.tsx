@@ -1,10 +1,9 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
 import { Interface } from 'ethers'
 /* eslint-disable react/jsx-no-useless-fragment */
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useId, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
-import { v4 as uuidv4 } from 'uuid'
 
 import DeployHelper from '@ambire-common/../contracts/compiled/DeployHelper.json'
 import { AMBIRE_ACCOUNT_FACTORY, SINGLETON } from '@ambire-common/consts/deploy'
@@ -68,6 +67,7 @@ const NetworkAvailableFeatures = ({
   const { dispatch } = useBackgroundService()
   const { addToast } = useToast()
   const [checkedDeploy, setCheckedDeploy] = useState<boolean>(false)
+  const tooltipId = useId()
 
   const selectedNetwork = useMemo(
     () => networks.find((network) => network.chainId === chainId),
@@ -237,7 +237,7 @@ const NetworkAvailableFeatures = ({
                             width={iconSize}
                             height={iconSize}
                             dataSet={createGlobalTooltipDataSet({
-                              id: 'feature-message-tooltip',
+                              id: `feature-message-tooltip-${feature.id}-${tooltipId}`,
                               content: feature.msg
                             })}
                           />
