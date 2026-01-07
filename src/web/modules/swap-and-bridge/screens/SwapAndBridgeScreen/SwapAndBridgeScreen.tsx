@@ -34,7 +34,7 @@ import PriceImpactWarningModal from '../../components/PriceImpactWarningModal'
 import RouteInfo from '../../components/RouteInfo'
 import ToToken from '../../components/ToToken'
 
-const { isTab, isActionWindow } = getUiType()
+const { isTab, isRequestWindow } = getUiType()
 
 const SwapAndBridgeScreen = () => {
   const { t } = useTranslation()
@@ -139,9 +139,9 @@ const SwapAndBridgeScreen = () => {
       type: 'SWAP_AND_BRIDGE_CONTROLLER_UNLOAD_SCREEN',
       params: { sessionId, forceUnload: true }
     })
-    if (isActionWindow) {
+    if (isRequestWindow) {
       dispatch({
-        type: 'CLOSE_SIGNING_ACTION_WINDOW',
+        type: 'CLOSE_SIGNING_REQUEST_WINDOW',
         params: {
           type: 'swapAndBridge'
         }

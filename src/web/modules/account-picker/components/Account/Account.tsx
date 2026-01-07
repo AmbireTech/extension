@@ -72,6 +72,10 @@ const Account = ({
   const { minWidthSize, maxWidthSize } = useWindowSize()
   const { addToast } = useToast()
   const isAccountImported = importStatus !== ImportStatus.NotImported
+  const usedOnNetworks = Array.isArray(account.usedOnNetworks) ? account.usedOnNetworks : undefined
+  const isUsedOnNetworksLoading = account.usedOnNetworks !== null && !usedOnNetworks
+  const hasUsedOnNetworks = !!usedOnNetworks && usedOnNetworks.length > 0
+  const shouldShowUsedOnNetworks = !unused && (hasUsedOnNetworks || isUsedOnNetworksLoading)
 
   const toggleSelectedState = useCallback(() => {
     if (isSelected) {
@@ -221,31 +225,29 @@ const Account = ({
             )}
           </View>
           <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-            {account.usedOnNetworks !== null && (
+            {shouldShowUsedOnNetworks && (
               <View style={[flexbox.directionRow, flexbox.alignCenter]}>
                 <Text fontSize={12} weight="regular">
                   {t('used on ')}
                 </Text>
-                {Array.isArray(account.usedOnNetworks) ? (
-                  account.usedOnNetworks
-                    .slice(0, 7)
-                    .map((n, index: number, arr: string | any[]) => {
-                      return (
-                        <View
-                          style={[
-                            styles.networkIcon,
-                            { marginLeft: index ? -5 : 0, zIndex: arr.length - index }
-                          ]}
-                          key={n.chainId.toString()}
-                        >
-                          <NetworkIcon
-                            style={{ backgroundColor: '#fff' }}
-                            id={n.chainId.toString()}
-                            size={18}
-                          />
-                        </View>
-                      )
-                    })
+                {hasUsedOnNetworks && usedOnNetworks ? (
+                  usedOnNetworks.slice(0, 7).map((n, index: number, arr: string | any[]) => {
+                    return (
+                      <View
+                        style={[
+                          styles.networkIcon,
+                          { marginLeft: index ? -5 : 0, zIndex: arr.length - index }
+                        ]}
+                        key={n.chainId.toString()}
+                      >
+                        <NetworkIcon
+                          style={{ backgroundColor: '#fff' }}
+                          id={n.chainId.toString()}
+                          size={18}
+                        />
+                      </View>
+                    )
+                  })
                 ) : (
                   <SkeletonLoader
                     width={54}

@@ -19,7 +19,7 @@ export const handleCleanUpOnPortDisconnect = async ({
     const sessionId = url.searchParams.get('sessionId')!
 
     if (url.pathname.includes('swap-and-bridge')) {
-      if (port.name === 'action-window') {
+      if (port.name === 'request-window') {
         mainCtrl.onOneClickSwapClose()
       } else {
         mainCtrl.swapAndBridge.unloadScreen(sessionId)
@@ -48,8 +48,8 @@ export const handleCleanUpOnPortDisconnect = async ({
   }
 
   if (url.pathname.includes('transfer') || url.pathname.includes('top-up-gas-tank')) {
-    // Always unload the screen when the action window is closed
-    const isActionWindow = port.name === 'action-window'
+    // Always unload the screen when the request window is closed
+    const isActionWindow = port.name === 'request-window'
 
     if (isActionWindow) {
       mainCtrl.onOneClickTransferClose()
@@ -66,9 +66,9 @@ export const handleCleanUpOnPortDisconnect = async ({
     // That's why we introduced `shouldTrackLatestBroadcastedAccountOp` flag.
     //
     // Trezor Note: For Trezor, we always enable tracking and do not reset the form, because with the Trezor signer,
-    // the Transfer popup is closed and all logic is handled in a new action window.
+    // the Transfer popup is closed and all logic is handled in a new request window.
     // In that window, we have dedicated logic for clearing the form completely (e.g., if (isActionWindow) mainCtrl.onOneClickTransferClose()).
-    // If we reset the form state here while opening the Trezor action window, the form will be re-initialized
+    // If we reset the form state here while opening the Trezor request window, the form will be re-initialized
     // and the current `signAccountOp` will be destroyed, which will break the Trezor signing process.
     //
     // Lattice Note: We bypass this logic for Lattice and always enable tracking, because Lattice may call
@@ -92,7 +92,7 @@ export const handleCleanUpOnPortDisconnect = async ({
 
     // We reset the form state without destroying the signAccountOp,
     // since it's still needed for broadcasting. Once broadcasting completes, we destroy the signAccountOp.
-    if (!shouldTrack) {
+    if (!shouldTrack && !signAccountOpController.isSignAndBroadcastInProgress) {
       mainCtrl.transfer.resetForm(false)
     }
 
@@ -117,7 +117,7 @@ export const handleCleanUpOnPortDisconnect = async ({
     }
   }
 
-  // In Firefox, we don't close the action window directly to avoid a bug where closing it also closes the extension popup.
+  // In Firefox, we don't close the request window directly to avoid a bug where closing it also closes the extension popup.
   // Instead, we turn it into a blank, unfocused page. Later, when the popup gets disconnected, we clean up any such leftover blank pages.
   // The rest of the logic is in the remove func in window.ts
   if (IS_FIREFOX && port.name === 'popup') {

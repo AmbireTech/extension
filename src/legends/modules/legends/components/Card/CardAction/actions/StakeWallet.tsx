@@ -48,8 +48,7 @@ const StakeWallet = () => {
     const ethereumProvider = new JsonRpcProvider('https://invictus.ambire.com/ethereum')
     const walletContract = new Contract(WALLET_TOKEN, walletIface, ethereumProvider)
     // @TODO use the pending $WALLET balance in the future
-    walletContract
-      .balanceOf(connectedAccount)
+    walletContract.balanceOf!(connectedAccount)
       .then(setWalletBalance)
       .catch((e) => {
         console.error(e)
@@ -86,6 +85,9 @@ const StakeWallet = () => {
         useSponsorship
       )
       const receipt = await getCallsStatus(sendCallsIdentifier)
+
+      if (!receipt) throw new HumanReadableError('Transaction failed.')
+
       onComplete(receipt.transactionHash)
       handleClose()
     } catch (e: any) {

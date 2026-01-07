@@ -1,7 +1,12 @@
 import React, { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { WALLET_TOKEN } from '@ambire-common/consts/addresses'
-import { PortfolioProjectedRewardsResult } from '@ambire-common/libs/portfolio/interfaces'
+import {
+  PortfolioProjectedRewardsResult,
+  PortfolioRewardsResult,
+  ProjectedRewardsStats
+} from '@ambire-common/libs/portfolio/interfaces'
+import { calculateRewardsStats } from '@ambire-common/utils/rewards'
 import { RELAYER_URL } from '@env'
 import { LEGENDS_SUPPORTED_NETWORKS_BY_CHAIN_ID } from '@legends/constants/networks'
 import useAccountContext from '@legends/hooks/useAccountContext'
@@ -26,25 +31,33 @@ export type ClaimableRewards = {
   }>
 }
 
+type WalletTokenInfo = {
+  maxSupply: number
+  circulatingSupply: number
+  totalSupply: number
+  stkWalletTotalSupply: number
+  percentageStakedWallet: number
+  apy: number
+  stakedWallets: number
+  walletPrice: number
+  season2PoolInfo: {
+    poolSize: number
+    totalVolumeSwapAndBridge: number
+  }
+} | null
+
 const PortfolioControllerStateContext = createContext<{
   accountPortfolio?: AccountPortfolio
   updateAccountPortfolio: () => void
   claimableRewardsError: string | null
   claimableRewards: ClaimableRewards | null
   isLoadingClaimableRewards: boolean
-  walletTokenInfo: {
-    maxSupply: number
-    circulatingSupply: number
-    totalSupply: number
-    stkWalletTotalSupply: number
-    percentageStakedWallet: number
-    apy: number
-    stakedWallets: number
-    walletPrice: number
-  } | null
+  walletTokenInfo: WalletTokenInfo
   walletTokenPrice: number | null
   isLoadingWalletTokenInfo: boolean
-  rewardsProjectionData?: PortfolioProjectedRewardsResult
+  rewardsProjectionData: PortfolioProjectedRewardsResult | null
+  userRewardsStats: ProjectedRewardsStats | null
+  xWalletClaimableBalance: PortfolioRewardsResult['xWalletClaimableBalance'] | null
 }>({
   updateAccountPortfolio: () => {},
   claimableRewardsError: null,
@@ -52,39 +65,29 @@ const PortfolioControllerStateContext = createContext<{
   isLoadingClaimableRewards: true,
   walletTokenInfo: null,
   walletTokenPrice: null,
-  isLoadingWalletTokenInfo: true
+  isLoadingWalletTokenInfo: true,
+  userRewardsStats: null,
+  rewardsProjectionData: null,
+  xWalletClaimableBalance: null
 })
 
 const PortfolioControllerStateProvider: React.FC<any> = ({ children }) => {
   const getPortfolioIntervalRef: any = useRef(null)
   const { provider } = useProviderContext()
-  const { connectedAccount, nonV2Account, isLoading } = useAccountContext()
+  const { connectedAccount, v1Account, isLoading } = useAccountContext()
   const [accountPortfolio, setAccountPortfolio] = useState<AccountPortfolio>()
   const [claimableRewards, setClaimableRewards] = useState<any>(null)
   const [isLoadingClaimableRewards, setIsLoadingClaimableRewards] = useState(true)
   const [claimableRewardsError, setClaimableRewardsError] = useState<string | null>(null)
-  const [xWalletClaimableBalance, setXWalletClaimableBalance] = useState<string | null>(null)
+  const [xWalletClaimableBalance, setXWalletClaimableBalance] = useState<
+    PortfolioRewardsResult['xWalletClaimableBalance'] | null
+  >(null)
 
   const [isLoadingWalletTokenInfo, setIsLoadingWalletTokenInfo] = useState(true)
-  const [walletTokenInfo, setWalletTokenInfo] = useState<{
-    maxSupply: number
-    circulatingSupply: number
-    totalSupply: number
-    price: number
-    stkWalletTotalSupply: number
-    stakedWallets: number
-    walletPrice: number
-  } | null>(null)
+  const [walletTokenInfo, setWalletTokenInfo] = useState<WalletTokenInfo>(null)
   const [walletTokenPrice, setWalletTokenPrice] = useState<number | null>(null)
-  const [rewardsProjectionData, setRewardsProjectionData] = useState<{
-    currentSeasonSnapshots: { week: number; balance: number }[]
-    currentWeek: number
-    numberOfWeeksSinceStartOfSeason: number
-    supportedChainIds: number[]
-    totalRewardsPool: number
-    totalWeightNonUser: number
-    userLevel: number
-  } | null>(null)
+  const [rewardsProjectionData, setRewardsProjectionData] =
+    useState<PortfolioProjectedRewardsResult | null>(null)
 
   const updateAdditionalPortfolio = useCallback(async () => {
     if (!connectedAccount) {
@@ -108,7 +111,7 @@ const PortfolioControllerStateProvider: React.FC<any> = ({ children }) => {
 
       setWalletTokenPrice(walletTokenInfoData.price)
 
-      setRewardsProjectionData(additionalPortfolioJson?.data?.rewardsProjectionData)
+      setRewardsProjectionData(additionalPortfolioJson?.data?.rewardsProjectionDataV2)
       setClaimableRewards(claimableBalance)
       setXWalletClaimableBalance(xWalletClaimableBalanceData)
       setIsLoadingClaimableRewards(false)
@@ -130,13 +133,11 @@ const PortfolioControllerStateProvider: React.FC<any> = ({ children }) => {
     // While account is loading, we don't know yet what is the value of actual value of `nonV2Account`
     if (isLoading) return
 
-    if (!connectedAccount) return
-
     // Ensure there isn't already a scheduled timeout before setting a new one.
     if (getPortfolioIntervalRef.current) clearTimeout(getPortfolioIntervalRef.current)
 
     // We don't want to trigger a portfolio update (updateAccountPortfolio) for non v2 account
-    if (nonV2Account) {
+    if (v1Account && !connectedAccount) {
       return setAccountPortfolio((prevAccountPortfolio) => {
         // If the user switches to a non-V2 account and we already have the balance for the `connectedAccount`,
         // we want to display the balance of the `connectedAccount`.
@@ -179,7 +180,7 @@ const PortfolioControllerStateProvider: React.FC<any> = ({ children }) => {
     }
 
     await getPortfolioTillReady()
-  }, [provider, isLoading, connectedAccount, nonV2Account, setAccountPortfolio])
+  }, [provider, isLoading, connectedAccount, v1Account])
 
   const fetchWalletTokenInfo = useCallback(async () => {
     try {
@@ -195,6 +196,12 @@ const PortfolioControllerStateProvider: React.FC<any> = ({ children }) => {
       setIsLoadingWalletTokenInfo(false)
     }
   }, [])
+
+  const userRewardsStats = useMemo(() => {
+    if (!rewardsProjectionData || walletTokenPrice === null) return null
+
+    return calculateRewardsStats(rewardsProjectionData, walletTokenPrice)
+  }, [rewardsProjectionData, walletTokenPrice])
 
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -224,7 +231,8 @@ const PortfolioControllerStateProvider: React.FC<any> = ({ children }) => {
           xWalletClaimableBalance,
           walletTokenInfo,
           walletTokenPrice,
-          rewardsProjectionData
+          rewardsProjectionData,
+          userRewardsStats
         }),
         [
           accountPortfolio,
@@ -236,7 +244,8 @@ const PortfolioControllerStateProvider: React.FC<any> = ({ children }) => {
           xWalletClaimableBalance,
           walletTokenInfo,
           walletTokenPrice,
-          rewardsProjectionData
+          rewardsProjectionData,
+          userRewardsStats
         ]
       )}
     >

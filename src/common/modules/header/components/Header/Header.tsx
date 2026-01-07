@@ -32,7 +32,7 @@ interface Props {
   style?: ViewStyle
 }
 
-const { isTab, isActionWindow } = getUiType()
+const { isTab, isRequestWindow } = getUiType()
 
 const Header = ({
   mode = 'title',
@@ -68,7 +68,7 @@ const Header = ({
   }, [])
 
   const paddingHorizontalStyle = useMemo(() => {
-    if (isTab || isActionWindow) {
+    if (isTab || isRequestWindow) {
       return {
         paddingHorizontal: maxWidthSize('xl') ? SPACING_3XL : SPACING_MD
       }

@@ -62,8 +62,26 @@ const ContactsList = () => {
         { name: 'address', weight: 0.2 }
       ],
       threshold: 0.3,
-      ignoreLocation: false, // Prioritize matches at the start
-      minMatchCharLength: 1
+      /*
+      `ignoreLocation = false`:
+      - Fuse prioritizes matches that appear near the beginning of the string
+        (e.g. typing "vi" ranks "Vitalik" above "MyVitalikWallet").
+      - We set this explicitly, even though it's the default, to avoid accidental overrides during future refactoring.
+
+      `distance = 1000`:
+      - ETH addresses are long, and valid matches often appear near the end.
+        By default, Fuse scores these lower, which may exclude them.
+      - distance reduces this penalty so such matches are still returned
+        (e.g. searching for "33" should match 0x579f87277E14f32df7FA4036D76BbfC94C325033 even though "33" is at the end).
+      - distance does NOT represent string length - it controls how strongly Fuse penalizes late-position matches.
+        A large value reduces this penalty so end-of-string matches are still returned while start matches remain prioritized.
+
+      Summary:
+      - ignoreLocation: false → keep prioritizing early-position matches
+      - distance: 1000 → allow matches anywhere in the string without discarding them
+      */
+      ignoreLocation: false,
+      distance: 1000
     })
 
     const results = fuse.search(debouncedSearch)

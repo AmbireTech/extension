@@ -12,11 +12,11 @@ interface Style {
   headerSideContainer: ViewStyle
 }
 
-const { isActionWindow, isTab } = getUiType()
+const { isRequestWindow, isTab } = getUiType()
 
-// Make the form slightly larger in action window
+// Make the form slightly larger in request window
 // so it stretches as much as the header
-export const TRANSACTION_FORM_WIDTH = isActionWindow ? 656 : 600
+export const TRANSACTION_FORM_WIDTH = isRequestWindow ? 656 : 600
 
 const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
   StyleSheet.create<Style>({
