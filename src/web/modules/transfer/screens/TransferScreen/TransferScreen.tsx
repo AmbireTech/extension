@@ -135,7 +135,12 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   const accountUserRequests = useMemo(() => {
     if (!account || !userRequests.length) return []
 
-    return userRequests.filter((r) => r.kind === 'calls' && r.meta.accountAddr === account.addr)
+    return userRequests.filter(
+      (r) =>
+        r.kind === 'calls' &&
+        r.meta.accountAddr === account.addr &&
+        !r.signAccountOp.isSignAndBroadcastInProgress
+    )
   }, [userRequests, account])
 
   const networkUserRequests = useMemo(() => {
@@ -232,16 +237,6 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     })
     openEstimationModal()
   }, [openEstimationModal, dispatch])
-
-  /**
-   * Single click broadcast
-   */
-  const handleBroadcastAccountOp = useCallback(() => {
-    dispatch({
-      type: 'MAIN_CONTROLLER_HANDLE_SIGN_AND_BROADCAST_ACCOUNT_OP',
-      params: { type: 'one-click-transfer' }
-    })
-  }, [dispatch])
 
   const handleUpdateStatus = useCallback(
     (status: SigningStatus) => {
@@ -698,7 +693,6 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
         closeEstimationModal={closeEstimationModal}
         updateController={updateController}
         handleUpdateStatus={handleUpdateStatus}
-        handleBroadcastAccountOp={handleBroadcastAccountOp}
         hasProceeded={hasProceeded}
         signAccountOpController={signAccountOpController}
       />

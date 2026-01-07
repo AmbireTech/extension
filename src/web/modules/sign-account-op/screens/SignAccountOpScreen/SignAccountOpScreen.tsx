@@ -79,12 +79,6 @@ const SignAccountOpScreen = () => {
     [dispatch]
   )
 
-  const handleBroadcast = useCallback(() => {
-    dispatch({
-      type: 'MAIN_CONTROLLER_HANDLE_SIGN_AND_BROADCAST_ACCOUNT_OP',
-      params: { type: 'default' }
-    })
-  }, [dispatch])
   const {
     renderedButNotNecessarilyVisibleModal,
     isViewOnly,
@@ -115,8 +109,7 @@ const SignAccountOpScreen = () => {
   } = useSign({
     handleUpdateStatus,
     signAccountOpState,
-    handleUpdate: updateController,
-    handleBroadcast
+    handleUpdate: updateController
   })
 
   const accountOpRequest = useMemo(() => {

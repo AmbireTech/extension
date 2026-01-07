@@ -252,7 +252,7 @@ export const handleActions = async (
       return mainCtrl.activity.resetSignedMessagesFilters(params.sessionId)
 
     case 'MAIN_CONTROLLER_HANDLE_SIGN_AND_BROADCAST_ACCOUNT_OP': {
-      return await mainCtrl.handleSignAndBroadcastAccountOp(params.type)
+      return await mainCtrl.handleSignAndBroadcastAccountOp(params.type, params.fromRequestId)
     }
 
     case 'REQUESTS_CONTROLLER_BUILD_REQUEST':

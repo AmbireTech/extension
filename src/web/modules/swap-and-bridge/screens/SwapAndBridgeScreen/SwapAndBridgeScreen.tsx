@@ -151,16 +151,6 @@ const SwapAndBridgeScreen = () => {
     }
   }, [dispatch, navigate, sessionId])
 
-  /**
-   * Single click broadcast
-   */
-  const handleBroadcastAccountOp = useCallback(() => {
-    dispatch({
-      type: 'MAIN_CONTROLLER_HANDLE_SIGN_AND_BROADCAST_ACCOUNT_OP',
-      params: { type: 'one-click-swap-and-bridge' }
-    })
-  }, [dispatch])
-
   const handleUpdateStatus = useCallback(
     (status: SigningStatus) => {
       dispatch({
@@ -292,7 +282,6 @@ const SwapAndBridgeScreen = () => {
         closeEstimationModal={closeEstimationModalWrapped}
         updateController={updateController}
         handleUpdateStatus={handleUpdateStatus}
-        handleBroadcastAccountOp={handleBroadcastAccountOp}
         hasProceeded={hasProceeded}
         signAccountOpController={signAccountOpController}
         serviceFee={quote?.selectedRoute?.serviceFee}

@@ -383,7 +383,7 @@ type CurrentSignAccountOpReestimateAction = {
 }
 type MainControllerHandleSignAndBroadcastAccountOp = {
   type: 'MAIN_CONTROLLER_HANDLE_SIGN_AND_BROADCAST_ACCOUNT_OP'
-  params: { type: SignAccountOpType }
+  params: { type: SignAccountOpType; fromRequestId: string | number }
 }
 
 type MainControllerLockAction = {
