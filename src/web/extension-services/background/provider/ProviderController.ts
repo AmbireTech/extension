@@ -765,6 +765,13 @@ export class ProviderController {
         }
       }
 
+      // Validate image if provided
+      if (options?.image !== undefined) {
+        if (typeof options.image !== 'string') {
+          throw ethErrors.rpc.invalidParams('Invalid image: not a string.')
+        }
+      }
+
       return false // Return false to allow request window to open (all params are valid)
     }
   ])
