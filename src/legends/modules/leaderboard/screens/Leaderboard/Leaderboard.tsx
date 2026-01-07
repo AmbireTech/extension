@@ -9,7 +9,9 @@ import Spinner from '@legends/components/Spinner'
 import useAccountContext from '@legends/hooks/useAccountContext'
 import useLeaderboardContext from '@legends/hooks/useLeaderboardContext'
 import usePortfolioControllerState from '@legends/hooks/usePortfolioControllerState/usePortfolioControllerState'
+import { reorderLeaderboardWithLiveData } from '@legends/utils/leaderboards'
 
+import { LeaderboardEntry } from '../../types'
 import Podium from './components/Podium'
 import Row from './components/Row'
 import styles from './Leaderboard.module.scss'
@@ -30,8 +32,7 @@ const LeaderboardContainer: React.FC = () => {
     updateLeaderboard
   } = useLeaderboardContext()
 
-  const { userRewardsStats } = usePortfolioControllerState()
-  const season2ProjectedAmountUsd = userRewardsStats?.estimatedRewardsUSD
+  const { userRewardsStats, isLoadingClaimableRewards } = usePortfolioControllerState()
   const { connectedAccount } = useAccountContext()
 
   const tableRef = useRef<HTMLDivElement>(null)
@@ -49,14 +50,24 @@ const LeaderboardContainer: React.FC = () => {
     [season0LeaderboardData, season1LeaderboardData, season2LeaderboardData]
   )
 
-  const leaderboardData = useMemo(() => {
-    return leaderboardSources[activeTab]?.entries || []
-  }, [leaderboardSources, activeTab])
-
-  const userLeaderboardData = useMemo(
-    () => leaderboardSources[activeTab]?.currentUser,
-    [leaderboardSources, activeTab]
-  )
+  const {
+    entries: leaderboardData,
+    currentUser: userLeaderboardData
+  }: {
+    entries: LeaderboardEntry['entries'] | null
+    currentUser?: LeaderboardEntry['currentUser'] | null
+  } = useMemo(() => {
+    const fullLeaderboardData = leaderboardSources[activeTab]
+    if (!fullLeaderboardData) return { entries: null, currentUser: null }
+    if (isLoadingClaimableRewards) return { entries: null, currentUser: null }
+    if (activeTab !== ActiveTab.Season2) {
+      return {
+        entries: fullLeaderboardData.entries,
+        currentUser: fullLeaderboardData.currentUser
+      }
+    }
+    return reorderLeaderboardWithLiveData(fullLeaderboardData, userRewardsStats, connectedAccount)
+  }, [activeTab, leaderboardSources, userRewardsStats, isLoadingClaimableRewards, connectedAccount])
 
   useLayoutEffect(() => {
     const handleScroll = () => {
@@ -257,11 +268,7 @@ const LeaderboardContainer: React.FC = () => {
                       : undefined
                   }
                   projectedRewardsSeason2Usd={
-                    activeTab === ActiveTab.Season2
-                      ? connectedAccount === item.account
-                        ? season2ProjectedAmountUsd
-                        : item.projectedRewardsInUsd
-                      : undefined
+                    activeTab === ActiveTab.Season2 ? item.projectedRewardsInUsd : undefined
                   }
                   points={activeTab === ActiveTab.Season2 ? item.points : undefined}
                   stickyPosition={stickyPosition}
@@ -281,7 +288,9 @@ const LeaderboardContainer: React.FC = () => {
                         : undefined
                     }
                     projectedRewardsSeason2Usd={
-                      activeTab === ActiveTab.Season2 ? season2ProjectedAmountUsd : undefined
+                      activeTab === ActiveTab.Season2
+                        ? userLeaderboardData.projectedRewardsInUsd
+                        : undefined
                     }
                     points={
                       activeTab === ActiveTab.Season2 ? userLeaderboardData.points : undefined
