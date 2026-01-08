@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useModalize } from 'react-native-modalize'
 
 import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
+import { SignAccountOpType } from '@ambire-common/controllers/signAccountOp/helper'
 import {
   SignAccountOpUpdateProps,
   SigningStatus
@@ -10,6 +11,7 @@ import {
 import { Key } from '@ambire-common/interfaces/keystore'
 import { ISignAccountOpController } from '@ambire-common/interfaces/signAccountOp'
 import usePrevious from '@common/hooks/usePrevious'
+import useBackgroundService from '@web/hooks/useBackgroundService'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import useLedger from '@web/modules/hardware-wallet/hooks/useLedger'
 import { OneClickEstimationProps } from '@web/modules/sign-account-op/components/OneClick/Estimation/Estimation'
@@ -39,7 +41,6 @@ const PRIMARY_BUTTON_LABELS: Record<
 
 type Props = {
   handleUpdateStatus: (status: SigningStatus) => void
-  handleBroadcast: () => void
   handleUpdate: (params: SignAccountOpUpdateProps) => void
   signAccountOpState: ISignAccountOpController | null
   isOneClickSign?: boolean
@@ -49,13 +50,13 @@ type Props = {
 const useSign = ({
   handleUpdateStatus,
   signAccountOpState,
-  handleBroadcast,
   handleUpdate,
   isOneClickSign,
   updateType = undefined
 }: Props) => {
   const { t } = useTranslation()
   const { networks } = useNetworksControllerState()
+  const { dispatch } = useBackgroundService()
   const [isChooseSignerShown, setIsChooseSignerShown] = useState(false)
   const [isChooseFeePayerKeyShown, setIsChooseFeePayerKeyShown] = useState(false)
   const [shouldDisplayLedgerConnectModal, setShouldDisplayLedgerConnectModal] = useState(false)
@@ -167,6 +168,24 @@ const useSign = ({
       }),
     [acknowledgedWarnings, isOneClickSign, signAccountOpState?.warnings]
   )
+
+  const handleBroadcast = useCallback(() => {
+    if (!signAccountOpState) return // should never happen
+
+    let type: SignAccountOpType = 'default'
+
+    if (updateType === 'Swap&Bridge') {
+      type = 'one-click-swap-and-bridge'
+    }
+
+    if (updateType === 'Transfer&TopUp') {
+      type = 'one-click-transfer'
+    }
+    dispatch({
+      type: 'MAIN_CONTROLLER_HANDLE_SIGN_AND_BROADCAST_ACCOUNT_OP',
+      params: { type, fromRequestId: signAccountOpState.fromRequestId }
+    })
+  }, [dispatch, signAccountOpState, updateType])
 
   const handleSign = useCallback(
     (_chosenSigningKeyType?: Key['type'], _warningAccepted?: boolean) => {

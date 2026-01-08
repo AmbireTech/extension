@@ -251,20 +251,8 @@ export const handleActions = async (
     case 'MAIN_CONTROLLER_ACTIVITY_RESET_SIGNED_MESSAGES_FILTERS':
       return mainCtrl.activity.resetSignedMessagesFilters(params.sessionId)
 
-    case 'REQUESTS_CONTROLLER_CURRENT_SIGN_ACCOUNT_OP_UPDATE': {
-      if (mainCtrl.requests.currentUserRequest?.kind === 'calls') {
-        mainCtrl.requests.currentUserRequest.signAccountOp.update(params)
-      }
-      break
-    }
-    case 'REQUESTS_CONTROLLER_CURRENT_SIGN_ACCOUNT_OP_UPDATE_STATUS': {
-      if (mainCtrl.requests.currentUserRequest?.kind === 'calls') {
-        mainCtrl.requests.currentUserRequest.signAccountOp.updateStatus(params.status)
-      }
-      break
-    }
     case 'MAIN_CONTROLLER_HANDLE_SIGN_AND_BROADCAST_ACCOUNT_OP': {
-      return await mainCtrl.handleSignAndBroadcastAccountOp(params.type)
+      return await mainCtrl.handleSignAndBroadcastAccountOp(params.type, params.fromRequestId)
     }
 
     case 'REQUESTS_CONTROLLER_BUILD_REQUEST':
@@ -296,6 +284,20 @@ export const handleActions = async (
 
       // 'Transfer&TopUp'
       return mainCtrl?.transfer?.signAccountOpController?.update(params)
+    }
+    case 'CURRENT_SIGN_ACCOUNT_OP_UPDATE_STATUS': {
+      if (
+        params.updateType === 'Requests' &&
+        mainCtrl.requests.currentUserRequest?.kind === 'calls'
+      ) {
+        return mainCtrl?.requests?.currentUserRequest?.signAccountOp.updateStatus(params.status)
+      }
+      if (params.updateType === 'Swap&Bridge') {
+        return mainCtrl?.swapAndBridge?.signAccountOpController?.updateStatus(params.status)
+      }
+
+      // 'Transfer&TopUp'
+      return mainCtrl?.transfer?.signAccountOpController?.updateStatus(params.status)
     }
     case 'CURRENT_SIGN_ACCOUNT_OP_REESTIMATE': {
       if (params.type === 'default' && mainCtrl.requests.currentUserRequest?.kind === 'calls') {
@@ -361,10 +363,6 @@ export const handleActions = async (
       return mainCtrl.swapAndBridge.resetForm()
     case 'SWAP_AND_BRIDGE_CONTROLLER_MARK_SELECTED_ROUTE_AS_FAILED':
       return mainCtrl.swapAndBridge.markSelectedRouteAsFailed(params.disabledReason)
-    case 'SWAP_AND_BRIDGE_CONTROLLER_SIGN_ACCOUNT_OP_UPDATE':
-      return mainCtrl?.swapAndBridge?.signAccountOpController?.update(params)
-    case 'SWAP_AND_BRIDGE_CONTROLLER_SIGN_ACCOUNT_OP_UPDATE_STATUS':
-      return mainCtrl?.swapAndBridge?.signAccountOpController?.updateStatus(params.status)
     case 'SWAP_AND_BRIDGE_CONTROLLER_HAS_USER_PROCEEDED':
       return mainCtrl?.swapAndBridge.setUserProceeded(params.proceeded)
     case 'SWAP_AND_BRIDGE_CONTROLLER_DESTROY_SIGN_ACCOUNT_OP':
@@ -413,10 +411,6 @@ export const handleActions = async (
     case 'TRANSFER_CONTROLLER_SHOULD_SKIP_TRANSACTION_QUEUED_MODAL':
       mainCtrl.transfer.shouldSkipTransactionQueuedModal = params.shouldSkip
       return
-    case 'TRANSFER_CONTROLLER_SIGN_ACCOUNT_OP_UPDATE':
-      return mainCtrl?.transfer?.signAccountOpController?.update(params)
-    case 'TRANSFER_CONTROLLER_SIGN_ACCOUNT_OP_UPDATE_STATUS':
-      return mainCtrl?.transfer?.signAccountOpController?.updateStatus(params.status)
     case 'MAIN_CONTROLLER_REMOVE_ACTIVE_ROUTE':
       return mainCtrl.removeActiveRoute(params.activeRouteId)
 
@@ -487,7 +481,8 @@ export const handleActions = async (
       if (!mainCtrl.selectedAccount.account) return
       return await mainCtrl.portfolio.updateTokenValidationByStandard(
         params.token,
-        mainCtrl.selectedAccount.account.addr
+        mainCtrl.selectedAccount.account.addr,
+        params.allNetworks
       )
     }
     case 'KEYSTORE_CONTROLLER_ADD_SECRET':

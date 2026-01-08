@@ -151,21 +151,12 @@ const SwapAndBridgeScreen = () => {
     }
   }, [dispatch, navigate, sessionId])
 
-  /**
-   * Single click broadcast
-   */
-  const handleBroadcastAccountOp = useCallback(() => {
-    dispatch({
-      type: 'MAIN_CONTROLLER_HANDLE_SIGN_AND_BROADCAST_ACCOUNT_OP',
-      params: { type: 'one-click-swap-and-bridge' }
-    })
-  }, [dispatch])
-
   const handleUpdateStatus = useCallback(
     (status: SigningStatus) => {
       dispatch({
-        type: 'SWAP_AND_BRIDGE_CONTROLLER_SIGN_ACCOUNT_OP_UPDATE_STATUS',
+        type: 'CURRENT_SIGN_ACCOUNT_OP_UPDATE_STATUS',
         params: {
+          updateType: 'Swap&Bridge',
           status
         }
       })
@@ -175,8 +166,11 @@ const SwapAndBridgeScreen = () => {
   const updateController = useCallback(
     (params: { signingKeyAddr?: Key['addr']; signingKeyType?: Key['type'] }) => {
       dispatch({
-        type: 'SWAP_AND_BRIDGE_CONTROLLER_SIGN_ACCOUNT_OP_UPDATE',
-        params
+        type: 'CURRENT_SIGN_ACCOUNT_OP_UPDATE',
+        params: {
+          updateType: 'Swap&Bridge',
+          ...params
+        }
       })
     },
     [dispatch]
@@ -288,7 +282,6 @@ const SwapAndBridgeScreen = () => {
         closeEstimationModal={closeEstimationModalWrapped}
         updateController={updateController}
         handleUpdateStatus={handleUpdateStatus}
-        handleBroadcastAccountOp={handleBroadcastAccountOp}
         hasProceeded={hasProceeded}
         signAccountOpController={signAccountOpController}
         serviceFee={quote?.selectedRoute?.serviceFee}

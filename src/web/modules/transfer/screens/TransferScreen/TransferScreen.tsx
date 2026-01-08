@@ -135,7 +135,12 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   const accountUserRequests = useMemo(() => {
     if (!account || !userRequests.length) return []
 
-    return userRequests.filter((r) => r.kind === 'calls' && r.meta.accountAddr === account.addr)
+    return userRequests.filter(
+      (r) =>
+        r.kind === 'calls' &&
+        r.meta.accountAddr === account.addr &&
+        !r.signAccountOp.isSignAndBroadcastInProgress
+    )
   }, [userRequests, account])
 
   const networkUserRequests = useMemo(() => {
@@ -233,21 +238,12 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     openEstimationModal()
   }, [openEstimationModal, dispatch])
 
-  /**
-   * Single click broadcast
-   */
-  const handleBroadcastAccountOp = useCallback(() => {
-    dispatch({
-      type: 'MAIN_CONTROLLER_HANDLE_SIGN_AND_BROADCAST_ACCOUNT_OP',
-      params: { type: 'one-click-transfer' }
-    })
-  }, [dispatch])
-
   const handleUpdateStatus = useCallback(
     (status: SigningStatus) => {
       dispatch({
-        type: 'TRANSFER_CONTROLLER_SIGN_ACCOUNT_OP_UPDATE_STATUS',
+        type: 'CURRENT_SIGN_ACCOUNT_OP_UPDATE_STATUS',
         params: {
+          updateType: 'Transfer&TopUp',
           status
         }
       })
@@ -257,8 +253,11 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   const updateController = useCallback(
     (params: { signingKeyAddr?: Key['addr']; signingKeyType?: Key['type'] }) => {
       dispatch({
-        type: 'TRANSFER_CONTROLLER_SIGN_ACCOUNT_OP_UPDATE',
-        params
+        type: 'CURRENT_SIGN_ACCOUNT_OP_UPDATE',
+        params: {
+          updateType: 'Transfer&TopUp',
+          ...params
+        }
       })
     },
     [dispatch]
@@ -274,15 +273,6 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     },
     [dispatch]
   )
-
-  const onRecipientAddressUnknownAgree = useCallback(() => {
-    dispatch({
-      type: 'TRANSFER_CONTROLLER_UPDATE_FORM',
-      params: {
-        formValues: { isRecipientAddressUnknownAgreed: true, isSWWarningAgreed: true }
-      }
-    })
-  }, [dispatch])
 
   const handleCacheResolvedDomain = useCallback(
     (address: string, ensAvatar: string | null, domain: string, type: 'ens') => {
@@ -493,7 +483,6 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
               isRecipientAddressFirstTimeSend) ||
             isRecipientAddressViewOnly
           }
-          onRecipientAddressUnknownAgree={onRecipientAddressUnknownAgree}
         />
       </>
     )
@@ -509,15 +498,23 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     isRecipientHumanizerKnownTokenOrSmartContract,
     isRecipientAddressFirstTimeSend,
     isRecipientAddressViewOnly,
-    onRecipientAddressUnknownAgree,
     addTransaction
   ])
 
   const handleGoBackPress = useCallback(() => {
-    dispatch({
-      type: 'TRANSFER_CONTROLLER_RESET_FORM'
-    })
-    navigate(ROUTES.dashboard)
+    if (!isRequestWindow) {
+      dispatch({
+        type: 'TRANSFER_CONTROLLER_RESET_FORM'
+      })
+      navigate(ROUTES.dashboard)
+    } else {
+      dispatch({
+        type: 'CLOSE_SIGNING_REQUEST_WINDOW',
+        params: {
+          type: 'transfer'
+        }
+      })
+    }
   }, [navigate, dispatch])
 
   const onBatchAddedPrimaryButtonPress = useCallback(() => {
@@ -694,7 +691,6 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
         closeEstimationModal={closeEstimationModal}
         updateController={updateController}
         handleUpdateStatus={handleUpdateStatus}
-        handleBroadcastAccountOp={handleBroadcastAccountOp}
         hasProceeded={hasProceeded}
         signAccountOpController={signAccountOpController}
       />

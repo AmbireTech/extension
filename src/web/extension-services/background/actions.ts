@@ -351,26 +351,10 @@ type PortfolioControllerCheckToken = {
   type: 'PORTFOLIO_CONTROLLER_CHECK_TOKEN'
   params: {
     token: { address: TokenResult['address']; chainId: bigint }
+    allNetworks: boolean
   }
 }
 
-type RequestsControllerSignAccountOpUpdateAction = {
-  type:
-    | 'REQUESTS_CONTROLLER_CURRENT_SIGN_ACCOUNT_OP_UPDATE'
-    | 'SWAP_AND_BRIDGE_CONTROLLER_SIGN_ACCOUNT_OP_UPDATE'
-    | 'TRANSFER_CONTROLLER_SIGN_ACCOUNT_OP_UPDATE'
-  params: {
-    accountOp?: AccountOp
-    gasPrices?: GasSpeeds
-    estimation?: FullEstimation
-    feeToken?: TokenResult
-    paidBy?: string
-    speed?: FeeSpeed
-    signingKeyAddr?: Key['addr']
-    signingKeyType?: InternalKey['type'] | ExternalKey['type']
-    gasUsedTooHighAgreed?: boolean
-  }
-}
 type CurrentSignAccountOpUpdateAction = {
   type: 'CURRENT_SIGN_ACCOUNT_OP_UPDATE'
   params: {
@@ -386,22 +370,20 @@ type CurrentSignAccountOpUpdateAction = {
     gasUsedTooHighAgreed?: boolean
   }
 }
+type CurrentSignAccountOpUpdateStatusAction = {
+  type: 'CURRENT_SIGN_ACCOUNT_OP_UPDATE_STATUS'
+  params: {
+    updateType: 'Requests' | 'Swap&Bridge' | 'Transfer&TopUp'
+    status: SigningStatus
+  }
+}
 type CurrentSignAccountOpReestimateAction = {
   type: 'CURRENT_SIGN_ACCOUNT_OP_REESTIMATE'
   params: { type: SignAccountOpType }
 }
-type RequestsControllerSignAccountOpUpdateStatus = {
-  type:
-    | 'REQUESTS_CONTROLLER_CURRENT_SIGN_ACCOUNT_OP_UPDATE_STATUS'
-    | 'SWAP_AND_BRIDGE_CONTROLLER_SIGN_ACCOUNT_OP_UPDATE_STATUS'
-    | 'TRANSFER_CONTROLLER_SIGN_ACCOUNT_OP_UPDATE_STATUS'
-  params: {
-    status: SigningStatus
-  }
-}
 type MainControllerHandleSignAndBroadcastAccountOp = {
   type: 'MAIN_CONTROLLER_HANDLE_SIGN_AND_BROADCAST_ACCOUNT_OP'
-  params: { type: SignAccountOpType }
+  params: { type: SignAccountOpType; fromRequestId: string | number }
 }
 
 type MainControllerLockAction = {
@@ -792,8 +774,6 @@ export type Action =
   | MainControllerActivityResetAccOpsAction
   | MainControllerActivityResetSignedMessagesAction
   | MainControllerHandleSignAndBroadcastAccountOp
-  | RequestsControllerSignAccountOpUpdateAction
-  | RequestsControllerSignAccountOpUpdateStatus
   | MainControllerReloadSelectedAccount
   | MainControllerUpdateSelectedAccountPortfolio
   | DefiControllerAddSessionAction
@@ -861,6 +841,7 @@ export type Action =
   | ExtensionUpdateControllerApplyUpdate
   | OpenExtensionPopupAction
   | CurrentSignAccountOpUpdateAction
+  | CurrentSignAccountOpUpdateStatusAction
   | CurrentSignAccountOpReestimateAction
   | SwapAndBridgeControllerMarkSelectedRouteAsFailed
   | SwapAndBridgeControllerDestroySignAccountOp
