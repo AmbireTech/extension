@@ -39,19 +39,15 @@ export const handleCleanUpOnPortDisconnect = async ({
     }
   }
 
-  if (url.pathname.includes('sign-account-op')) {
-    mainCtrl.destroySignAccOp()
-  }
-
   if (url.pathname.includes('sign-message')) {
     mainCtrl.signMessage.reset()
   }
 
   if (url.pathname.includes('transfer') || url.pathname.includes('top-up-gas-tank')) {
     // Always unload the screen when the request window is closed
-    const isActionWindow = port.name === 'request-window'
+    const isRequestWindow = port.name === 'request-window'
 
-    if (isActionWindow) {
+    if (isRequestWindow) {
       mainCtrl.onOneClickTransferClose()
     } else {
       mainCtrl.transfer.unloadScreen()
@@ -67,7 +63,7 @@ export const handleCleanUpOnPortDisconnect = async ({
     //
     // Trezor Note: For Trezor, we always enable tracking and do not reset the form, because with the Trezor signer,
     // the Transfer popup is closed and all logic is handled in a new request window.
-    // In that window, we have dedicated logic for clearing the form completely (e.g., if (isActionWindow) mainCtrl.onOneClickTransferClose()).
+    // In that window, we have dedicated logic for clearing the form completely (e.g., if (isRequestWindow) mainCtrl.onOneClickTransferClose()).
     // If we reset the form state here while opening the Trezor request window, the form will be re-initialized
     // and the current `signAccountOp` will be destroyed, which will break the Trezor signing process.
     //
