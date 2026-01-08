@@ -274,6 +274,15 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     [dispatch]
   )
 
+  const onRecipientAddressUnknownAgree = useCallback(() => {
+    dispatch({
+      type: 'TRANSFER_CONTROLLER_UPDATE_FORM',
+      params: {
+        formValues: { isRecipientAddressUnknownAgreed: true }
+      }
+    })
+  }, [dispatch])
+
   const handleCacheResolvedDomain = useCallback(
     (address: string, ensAvatar: string | null, domain: string, type: 'ens') => {
       dispatch({
@@ -495,6 +504,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
               isRecipientAddressFirstTimeSend) ||
             isRecipientAddressViewOnly
           }
+          onRecipientAddressUnknownAgree={onRecipientAddressUnknownAgree}
         />
       </>
     )
@@ -511,6 +521,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     isRecipientHumanizerKnownTokenOrSmartContract,
     isRecipientAddressFirstTimeSend,
     isRecipientAddressViewOnly,
+    onRecipientAddressUnknownAgree,
     addTransaction
   ])
 
