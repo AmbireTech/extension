@@ -26,12 +26,12 @@ const SignAccountOpControllerStateProvider: React.FC<any> = ({ children }) => {
       }
     }
 
-    eventBus.addEventListener('signAccountOp', onUpdate)
+    eventBus.addEventListener(controller, onUpdate)
 
-    return () => eventBus.removeEventListener('signAccountOp', onUpdate)
+    return () => eventBus.removeEventListener(controller, onUpdate)
   }, [])
 
-  const memoizedState = useDeepMemo(state, 'signAccountOp')
+  const memoizedState = useDeepMemo(state, controller)
 
   return (
     <SignAccountOpControllerStateContext.Provider value={memoizedState}>
