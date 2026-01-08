@@ -19,6 +19,7 @@ import flexbox from '@common/styles/utils/flexbox'
 import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
+import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 
 import ManageContact from './ManageContact'
 import getStyles from './styles'
@@ -55,6 +56,7 @@ const AddressBookContact: FC<Props> = ({
   const { addToast } = useToast()
   const { dispatch } = useBackgroundService()
   const { accounts } = useAccountsControllerState()
+  const { account: selectedAccount } = useSelectedAccountControllerState()
   const { ens, isLoading } = useReverseLookup({ address })
   const [bindAnim, animStyle] = useCustomHover({
     property: 'backgroundColor',
@@ -145,7 +147,9 @@ const AddressBookContact: FC<Props> = ({
           ) : (
             <View style={[flexbox.directionRow, flexbox.alignCenter]}>
               <Text fontSize={fontSize} weight="medium" style={!name && spacings.mrTy}>
-                {name || 'New address'}
+                {name || account?.addr === selectedAccount?.addr
+                  ? account?.preferences.label
+                  : 'New address'}
               </Text>
             </View>
           )}

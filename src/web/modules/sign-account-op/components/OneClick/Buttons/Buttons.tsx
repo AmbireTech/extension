@@ -28,7 +28,6 @@ type Props = {
   isBatchDisabled?: boolean
   networkUserRequests: UserRequest[]
   shouldHoldToProceed?: boolean
-  onRecipientAddressUnknownAgree?: () => void
 }
 
 const { isRequestWindow } = getUiType()
@@ -43,7 +42,6 @@ const Buttons: FC<Props> = ({
   isBridge,
   networkUserRequests = [],
   shouldHoldToProceed,
-  onRecipientAddressUnknownAgree,
   // Used to disable the actions of the buttons when the local state is out of sync.
   // To prevent button flickering when the user is typing we just do nothing when the button is clicked.
   // As it would be a rare case for a user to manage to click it in the 300-400ms that it takes to sync the state,
@@ -167,7 +165,6 @@ const Buttons: FC<Props> = ({
             disabled={isNotReadyToProceed || isLoading || !!oneClickDisabledReason}
             onHoldComplete={() => {
               if (isLocalStateOutOfSync) return
-              onRecipientAddressUnknownAgree?.()
 
               handleSubmitForm(true)
             }}

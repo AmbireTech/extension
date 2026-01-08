@@ -274,15 +274,6 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     [dispatch]
   )
 
-  const onRecipientAddressUnknownAgree = useCallback(() => {
-    dispatch({
-      type: 'TRANSFER_CONTROLLER_UPDATE_FORM',
-      params: {
-        formValues: { isRecipientAddressUnknownAgreed: true, isSWWarningAgreed: true }
-      }
-    })
-  }, [dispatch])
-
   const handleCacheResolvedDomain = useCallback(
     (address: string, ensAvatar: string | null, domain: string, type: 'ens') => {
       dispatch({
@@ -492,7 +483,6 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
               isRecipientAddressFirstTimeSend) ||
             isRecipientAddressViewOnly
           }
-          onRecipientAddressUnknownAgree={onRecipientAddressUnknownAgree}
         />
       </>
     )
@@ -508,15 +498,23 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     isRecipientHumanizerKnownTokenOrSmartContract,
     isRecipientAddressFirstTimeSend,
     isRecipientAddressViewOnly,
-    onRecipientAddressUnknownAgree,
     addTransaction
   ])
 
   const handleGoBackPress = useCallback(() => {
-    dispatch({
-      type: 'TRANSFER_CONTROLLER_RESET_FORM'
-    })
-    navigate(ROUTES.dashboard)
+    if (!isRequestWindow) {
+      dispatch({
+        type: 'TRANSFER_CONTROLLER_RESET_FORM'
+      })
+      navigate(ROUTES.dashboard)
+    } else {
+      dispatch({
+        type: 'CLOSE_SIGNING_REQUEST_WINDOW',
+        params: {
+          type: 'transfer'
+        }
+      })
+    }
   }, [navigate, dispatch])
 
   const onBatchAddedPrimaryButtonPress = useCallback(() => {
