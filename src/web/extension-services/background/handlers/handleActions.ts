@@ -54,7 +54,7 @@ export const handleActions = async (
       break
     }
     case 'INIT_CONTROLLER_STATE': {
-      if (params.controller === ('main' as any)) {
+      if (params.controller === ('MainController' as any)) {
         const mainCtrlState: any = { ...mainCtrl.toJSON() }
         // We are removing the state of the nested controllers in main to avoid the CPU-intensive task of parsing + stringifying.
         // We should access the state of the nested controllers directly from their context instead of accessing them through the main ctrl state on the FE.
@@ -62,14 +62,14 @@ export const handleActions = async (
         Object.keys(controllersNestedInMainMapping).forEach((nestedCtrlName) => {
           delete mainCtrlState[nestedCtrlName]
         })
-        pm.send('> ui', { method: 'main', params: mainCtrlState })
-      } else if (params.controller === ('walletState' as any)) {
-        pm.send('> ui', { method: 'walletState', params: walletStateCtrl })
-      } else if (params.controller === ('autoLock' as any)) {
-        pm.send('> ui', { method: 'autoLock', params: autoLockCtrl })
-      } else if (params.controller === ('extensionUpdate' as any)) {
-        pm.send('> ui', { method: 'extensionUpdate', params: extensionUpdateCtrl })
-      } else if (params.controller === 'signAccountOp') {
+        pm.send('> ui', { method: params.controller, params: mainCtrlState })
+      } else if (params.controller === 'WalletStateController') {
+        pm.send('> ui', { method: params.controller, params: walletStateCtrl })
+      } else if (params.controller === 'AutoLockController') {
+        pm.send('> ui', { method: params.controller, params: autoLockCtrl })
+      } else if (params.controller === 'ExtensionUpdateController') {
+        pm.send('> ui', { method: params.controller, params: extensionUpdateCtrl })
+      } else if (params.controller === 'SignAccountOpController') {
         if (mainCtrl.requests.currentUserRequest?.kind === 'calls') {
           pm.send('> ui', {
             method: params.controller,
@@ -77,10 +77,10 @@ export const handleActions = async (
           })
         }
       } else {
-        pm.send('> ui', {
-          method: params.controller,
-          params: (mainCtrl as any)[params.controller]
-        })
+        const ctrl = mainCtrl.eventEmitterRegistry
+          .values()
+          .find((c) => c.name === params.controller)
+        if (ctrl) pm.send('> ui', { method: params.controller, params: ctrl })
       }
       break
     }

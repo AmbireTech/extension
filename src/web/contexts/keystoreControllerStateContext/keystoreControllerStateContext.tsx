@@ -12,7 +12,7 @@ import { getExtensionInstanceId } from '@web/utils/analytics'
 const KeystoreControllerStateContext = createContext<IKeystoreController>({} as IKeystoreController)
 
 const KeystoreControllerStateProvider: React.FC<any> = ({ children }) => {
-  const controller = 'keystore'
+  const controller = 'KeystoreController'
   const state = useControllerState(controller)
   const { dispatch } = useBackgroundService()
   const mainState = useMainControllerState()

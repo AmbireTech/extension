@@ -9,7 +9,7 @@ import useBackgroundService from '@web/hooks/useBackgroundService'
 const SignAccountOpControllerStateContext = createContext<ISignAccountOpController | null>(null)
 
 const SignAccountOpControllerStateProvider: React.FC<any> = ({ children }) => {
-  const controller = 'signAccountOp'
+  const controller = 'SignAccountOpController'
   const [state, setState] = useState<ISignAccountOpController | null>(null)
   const { dispatch } = useBackgroundService()
 

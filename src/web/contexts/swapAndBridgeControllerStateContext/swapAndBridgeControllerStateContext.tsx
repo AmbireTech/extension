@@ -12,7 +12,7 @@ const SwapAndBridgeControllerStateContext = createContext<ISwapAndBridgeControll
 )
 
 const SwapAndBridgeControllerStateProvider: React.FC<any> = ({ children }) => {
-  const controller = 'swapAndBridge'
+  const controller = 'SwapAndBridgeController'
   const state = useControllerState(controller)
   const { dispatch } = useBackgroundService()
   const mainState = useMainControllerState()

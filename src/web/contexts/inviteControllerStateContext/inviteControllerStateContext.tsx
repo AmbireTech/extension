@@ -8,7 +8,7 @@ import useMainControllerState from '@web/hooks/useMainControllerState'
 
 const InviteControllerStateContext = createContext<IInviteController>({} as IInviteController)
 
-const CONTROLLER_NAME = 'invite'
+const CONTROLLER_NAME = 'InviteController'
 const InviteControllerStateProvider: React.FC<any> = ({ children }) => {
   const state = useControllerState(CONTROLLER_NAME)
   const { dispatch } = useBackgroundService()
