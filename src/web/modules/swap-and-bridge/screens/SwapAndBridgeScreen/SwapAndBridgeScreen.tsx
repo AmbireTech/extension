@@ -64,7 +64,8 @@ const SwapAndBridgeScreen = () => {
     setShowAddedToBatch,
     batchNetworkUserRequestsCount,
     networkUserRequests,
-    isLocalStateOutOfSync
+    isLocalStateOutOfSync,
+    shouldDisableAddToBatch
   } = useSwapAndBridgeForm()
   const {
     sessionIds,
@@ -183,6 +184,7 @@ const SwapAndBridgeScreen = () => {
         <Buttons
           signAccountOpErrors={swapSignErrors}
           isNotReadyToProceed={isNotReadyToProceed}
+          isBatchDisabled={shouldDisableAddToBatch}
           isLoading={isLoading}
           handleSubmitForm={handleSubmitForm}
           isBridge={isBridge}
@@ -199,7 +201,8 @@ const SwapAndBridgeScreen = () => {
     handleSubmitForm,
     isBridge,
     networkUserRequests,
-    isLocalStateOutOfSync
+    isLocalStateOutOfSync,
+    shouldDisableAddToBatch
   ])
 
   if (!sessionIds.includes(sessionId)) {
