@@ -11,15 +11,12 @@ import { nanoid } from 'nanoid'
 import EmittableError from '@ambire-common/classes/EmittableError'
 import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
 import { ProviderError } from '@ambire-common/classes/ProviderError'
-import EventEmitter from '@ambire-common/controllers/eventEmitter/eventEmitter'
 import { MainController } from '@ambire-common/controllers/main/main'
 import { ErrorRef } from '@ambire-common/interfaces/eventEmitter'
 import { Fetch } from '@ambire-common/interfaces/fetch'
 import { IKeystoreController } from '@ambire-common/interfaces/keystore'
-import { IRequestsController } from '@ambire-common/interfaces/requests'
 import { ISelectedAccountController } from '@ambire-common/interfaces/selectedAccount'
 import { UiManager } from '@ambire-common/interfaces/ui'
-import { CallsUserRequest } from '@ambire-common/interfaces/userRequest'
 import { getAccountKeysCount } from '@ambire-common/libs/keys/keys'
 import { KeystoreSigner } from '@ambire-common/libs/keystoreSigner/keystoreSigner'
 import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
@@ -640,72 +637,38 @@ const init = async () => {
       }
     })
 
-    try {
-      setupControllerErrorListeners(mainCtrl, ['main'])
-    } catch (error) {
-      console.error('Failed to setup mainControllerErrorListeners')
+    //
+    // Add onError listeners
+    //
+
+    const hasOnErrorInitialized = mainCtrl.onErrorIds.includes('background')
+
+    if (!hasOnErrorInitialized) {
+      mainCtrl.onError((error) => {
+        stateDebug(walletStateCtrl.logLevel, mainCtrl, mainCtrl.name, 'error')
+        pm.send('> ui-error', {
+          method: mainCtrl.name,
+          params: { errors: mainCtrl.emittedErrors, controller: mainCtrl.name }
+        })
+        captureBackgroundExceptionFromControllerError(error, mainCtrl.name)
+      }, 'background')
     }
-  }, 'background')
 
-  function setupControllerErrorListeners(ctrl: any, ctrlNamePath: any[] = []) {
-    if (!ctrl || typeof ctrl !== 'object') return
-
-    if (ctrl instanceof EventEmitter) {
-      const ctrlName = ctrlNamePath.join(' -> ')
+    mainCtrl.eventEmitterRegistry.values().forEach((ctrl) => {
       const hasOnErrorInitialized = ctrl.onErrorIds.includes('background')
 
       if (!hasOnErrorInitialized) {
         ctrl.onError((error) => {
-          stateDebug(walletStateCtrl.logLevel, ctrl, ctrlName, 'error')
+          stateDebug(walletStateCtrl.logLevel, ctrl, ctrl.name, 'error')
           pm.send('> ui-error', {
-            method: ctrlName,
-            params: { errors: ctrl.emittedErrors, controller: ctrlName }
+            method: ctrl.name,
+            params: { errors: ctrl.emittedErrors, controller: mainCtrl.name }
           })
-          captureBackgroundExceptionFromControllerError(error, ctrlName)
+          captureBackgroundExceptionFromControllerError(error, ctrl.name)
         }, 'background')
       }
-    }
-
-    if (ctrlNamePath[0] === 'requests') {
-      if ((ctrl as IRequestsController).currentUserRequest?.kind === 'calls') {
-        const signAccountOpCtrl = (
-          (ctrl as IRequestsController).currentUserRequest as CallsUserRequest
-        )?.signAccountOp
-        const hasOnErrorInitialized = signAccountOpCtrl.onErrorIds.includes('background')
-        if (!hasOnErrorInitialized) {
-          signAccountOpCtrl.onError(() => {
-            const signAccountOpCtrlName = 'main -> requests -> currentUserRequest -> signAccountOp'
-            stateDebug(walletStateCtrl.logLevel, signAccountOpCtrl, signAccountOpCtrlName, 'error')
-            pm.send('> ui-error', {
-              method: signAccountOpCtrlName,
-              params: {
-                errors: signAccountOpCtrl.emittedErrors,
-                controller: signAccountOpCtrlName
-              }
-            })
-          }, 'background')
-        }
-      }
-    }
-
-    function hasEvents(prop: any) {
-      return prop && typeof prop === 'object' && prop instanceof EventEmitter
-    }
-
-    function hasChildControllers(prop: any) {
-      return (
-        prop &&
-        typeof prop === 'object' &&
-        Object.values(prop).some((p) => p && typeof p === 'object' && p instanceof EventEmitter)
-      )
-    }
-
-    for (const key of Object.keys(ctrl)) {
-      if (hasEvents(ctrl[key]) || hasChildControllers(ctrl[key])) {
-        setupControllerErrorListeners(ctrl[key], [...ctrlNamePath, key])
-      }
-    }
-  }
+    })
+  }, 'background')
 
   // Broadcast onUpdate for the wallet state controller
   walletStateCtrl.onUpdate((forceEmit) => {
