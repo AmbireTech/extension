@@ -30,6 +30,7 @@ import { APP_VERSION } from '@common/config/env'
 import { SAFE_RPC_METHODS } from '@web/constants/common'
 import { notificationManager } from '@web/extension-services/background/webapi/notification'
 
+import { Bundler } from '@ambire-common/services/bundlers/bundler'
 import { createTab } from '../webapi/tab'
 import { RequestRes, Web3WalletPermission } from './types'
 
@@ -110,6 +111,7 @@ export class ProviderController {
     if (!this.mainCtrl.dapps.hasPermission(id) && !SAFE_RPC_METHODS.includes(method)) {
       throw ethErrors.provider.unauthorized()
     }
+    if (!provider) throw ethErrors.rpc.invalidParams('provider not found')
 
     return provider.send(method, params)
   }
@@ -199,7 +201,7 @@ export class ProviderController {
           }
         )
         if (!token) return
-        res[chainId].push({
+        res[chainId]!.push({
           address: token.address,
           balance: `0x${(token.amountPostSimulation || token.amount || 0).toString(16)}`,
           type: 'ERC20',
@@ -445,6 +447,13 @@ export class ProviderController {
   @Reflect.metadata('ACTION_REQUEST', ['SendTransaction', false])
   walletSendCalls = async (data: any) => {
     if (data.requestRes && data.requestRes.hash) {
+      const version = data.params?.[0]?.version
+      if (version === '2.0.0')
+        return {
+          id: data.requestRes.hash
+        }
+
+      // v1 response
       return data.requestRes.hash
     }
 
@@ -476,6 +485,8 @@ export class ProviderController {
     const network = this.mainCtrl.networks.networks.filter(
       (n) => n.chainId === dappNetwork.chainId
     )[0]
+    if (!network) throw ethErrors.rpc.invalidParams('invalid chain')
+
     const accOp = this.mainCtrl.selectedAccount.account
       ? this.mainCtrl.activity.findByIdentifiedBy(
           identifiedBy,
@@ -517,11 +528,8 @@ export class ProviderController {
         }
       }
 
-      const txnStatus =
-        'status' in userOpReceipt.receipt
-          ? toBeHex(userOpReceipt.receipt.status as number, 1)
-          : toBeHex(+userOpReceipt.success, 1)
-      const status = txnStatus === '0x01' || txnStatus === '0x1' ? '0x1' : '0x0'
+      const txnStatus = Bundler.getReceiptSuccess(userOpReceipt)
+      const status = txnStatus === 1n ? '0x1' : '0x0'
       return {
         version,
         id: identifiedBy,
@@ -643,6 +651,7 @@ export class ProviderController {
     const network = this.mainCtrl.networks.networks.filter(
       (n) => n.chainId === dappNetwork.chainId
     )[0]
+    if (!network) throw ethErrors.rpc.invalidParams('invalid chain')
     const chainId = Number(network.chainId)
 
     const link = `https://explorer.ambire.com/${getBenzinUrlParams({
@@ -732,12 +741,47 @@ export class ProviderController {
   @Reflect.metadata('ACTION_REQUEST', [
     'WalletWatchAsset',
     ({ request }: { request: ProviderRequest; mainCtrl: MainController }) => {
-      const tokenAddress = request.params?.options?.address
+      const options = request.params?.options
+      const tokenAddress = options?.address
 
       if (!tokenAddress) throw ethErrors.rpc.invalidParams('Token address is required')
-      if (!isAddress(tokenAddress)) throw ethErrors.rpc.invalidParams('Invalid token address')
+      if (!isAddress(tokenAddress))
+        throw ethErrors.rpc.invalidParams(`Invalid address '${tokenAddress}'.`)
 
-      return false // Return false to allow request window to open (address is valid)
+      // Validate symbol if provided
+      if (options?.symbol !== undefined) {
+        if (typeof options.symbol !== 'string') {
+          throw ethErrors.rpc.invalidParams('Invalid symbol: not a string.')
+        }
+        if (options.symbol.length > 11) {
+          throw ethErrors.rpc.invalidParams(
+            `Invalid symbol '${options.symbol}': longer than 11 characters.`
+          )
+        }
+      }
+
+      // Validate decimals if provided
+      if (options?.decimals !== undefined) {
+        if (typeof options.decimals !== 'number' || !Number.isInteger(options.decimals)) {
+          throw ethErrors.rpc.invalidParams(
+            `Invalid decimals '${options.decimals}': must be 0 <= 36.`
+          )
+        }
+        if (options.decimals < 0 || options.decimals > 36) {
+          throw ethErrors.rpc.invalidParams(
+            `Invalid decimals '${options.decimals}': must be 0 <= 36.`
+          )
+        }
+      }
+
+      // Validate image if provided
+      if (options?.image !== undefined) {
+        if (typeof options.image !== 'string') {
+          throw ethErrors.rpc.invalidParams('Invalid image: not a string.')
+        }
+      }
+
+      return false // Return false to allow request window to open (all params are valid)
     }
   ])
   walletWatchAsset = () => true

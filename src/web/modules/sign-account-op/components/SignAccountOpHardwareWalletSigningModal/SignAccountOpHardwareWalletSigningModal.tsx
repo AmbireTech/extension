@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo } from 'react'
 import { View } from 'react-native'
 
-import { MainController } from '@ambire-common/controllers/main/main'
 import { SigningStatus } from '@ambire-common/controllers/signAccountOp/signAccountOp'
 import { Key } from '@ambire-common/interfaces/keystore'
 import { AccountOp } from '@ambire-common/libs/accountOp/accountOp'
@@ -19,7 +18,7 @@ const { isPopup } = getUiType()
 interface Props {
   signingKeyType?: AccountOp['signingKeyType']
   feePayerKeyType?: Key['type']
-  signAndBroadcastAccountOpStatus: MainController['statuses']['signAndBroadcastAccountOp']
+  isSignAndBroadcastInProgress: boolean
   signAccountOpStatusType?: SigningStatus
   shouldSignAuth: {
     type: 'V2Deploy' | '7702'
@@ -33,7 +32,7 @@ interface Props {
 const SignAccountOpHardwareWalletSigningModal: React.FC<Props> = ({
   signingKeyType,
   feePayerKeyType,
-  signAndBroadcastAccountOpStatus,
+  isSignAndBroadcastInProgress,
   signAccountOpStatusType,
   shouldSignAuth,
   signedTransactionsCount,
@@ -50,16 +49,14 @@ const SignAccountOpHardwareWalletSigningModal: React.FC<Props> = ({
     if (signAccountOpStatusType === SigningStatus.UpdatesPaused) return false
 
     const isCurrentlyBroadcastingWithExternalKey =
-      signAndBroadcastAccountOpStatus === 'LOADING' &&
-      !!feePayerKeyType &&
-      feePayerKeyType !== 'internal'
+      isSignAndBroadcastInProgress && !!feePayerKeyType && feePayerKeyType !== 'internal'
     const isCurrentlySigningWithExternalKey =
       signAccountOpStatusType === SigningStatus.InProgress &&
       !!signingKeyType &&
       signingKeyType !== 'internal'
 
     return isCurrentlyBroadcastingWithExternalKey || isCurrentlySigningWithExternalKey
-  }, [signAndBroadcastAccountOpStatus, feePayerKeyType, signAccountOpStatusType, signingKeyType])
+  }, [isSignAndBroadcastInProgress, feePayerKeyType, signAccountOpStatusType, signingKeyType])
 
   const currentlyInvolvedSignOrBroadcastKeyType = useMemo(
     () => (signAccountOpStatusType === SigningStatus.InProgress ? signingKeyType : feePayerKeyType),
@@ -87,17 +84,15 @@ const SignAccountOpHardwareWalletSigningModal: React.FC<Props> = ({
   useEffect(() => {
     if (
       shouldBeVisible &&
-      isPopup &&
       actionType &&
+      isPopup &&
       currentlyInvolvedSignOrBroadcastKeyType === 'trezor'
     ) {
       // If the user needs to sign using a hardware wallet, we need to open the
       // screen in an request window and close the popup
       dispatch({
         type: 'OPEN_SIGNING_REQUEST_WINDOW',
-        params: {
-          type: actionType
-        }
+        params: { type: actionType }
       })
       window.close()
     }

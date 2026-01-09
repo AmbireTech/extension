@@ -287,7 +287,7 @@ const PortfolioControllerStateProvider: React.FC<any> = ({ children }) => {
       isLoadingPortfolioProjectionData ||
       isLoadingUniPositions ||
       isLoadingStkBalance ||
-      !accountPortfolio?.isReady ||
+      (!accountPortfolio?.isReady && connectedAccount && !v1Account) ||
       isLoadingPrices
     )
   }, [
@@ -295,7 +295,9 @@ const PortfolioControllerStateProvider: React.FC<any> = ({ children }) => {
     isLoadingUniPositions,
     isLoadingStkBalance,
     accountPortfolio?.isReady,
-    isLoadingPrices
+    isLoadingPrices,
+    connectedAccount,
+    v1Account
   ])
 
   const userRewardsStats = useMemo(() => {
