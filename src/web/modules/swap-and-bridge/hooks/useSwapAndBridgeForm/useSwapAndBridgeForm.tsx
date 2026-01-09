@@ -6,6 +6,7 @@ import { useLocation } from 'react-router-dom'
 
 import { SwapAndBridgeFormStatus } from '@ambire-common/controllers/swapAndBridge/swapAndBridge'
 import { SwapAndBridgeActiveRoute } from '@ambire-common/interfaces/swapAndBridge'
+import { CallsUserRequest } from '@ambire-common/interfaces/userRequest'
 import {
   calculateAmountWarnings,
   getIsTokenEligibleForSwapAndBridge
@@ -30,6 +31,7 @@ const { isPopup, isRequestWindow } = getUiType()
 const useSwapAndBridgeForm = () => {
   const {
     fromAmount,
+    fromChainId,
     fromSelectedToken,
     fromAmountFieldMode,
     portfolioTokenList,
@@ -441,6 +443,18 @@ const useSwapAndBridgeForm = () => {
     }
   }, [closeEstimationModalWrapped, signAccountOpController])
 
+  const shouldDisableAddToBatch = useMemo(() => {
+    if (!account || !userRequests.length || !fromChainId) return false
+
+    const signAccountOpRequest = userRequests.find(
+      (r) =>
+        r.kind === 'calls' &&
+        r.meta.accountAddr === account.addr &&
+        r.meta.chainId.toString() === fromChainId.toString()
+    ) as CallsUserRequest | undefined
+    return !!signAccountOpRequest?.signAccountOp.isSignAndBroadcastInProgress
+  }, [account, fromChainId, userRequests])
+
   return {
     sessionId,
     fromAmountValue,
@@ -469,7 +483,8 @@ const useSwapAndBridgeForm = () => {
     latestBatchedNetwork,
     batchNetworkUserRequestsCount,
     networkUserRequests,
-    isLocalStateOutOfSync
+    isLocalStateOutOfSync,
+    shouldDisableAddToBatch
   }
 }
 

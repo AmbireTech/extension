@@ -8,7 +8,7 @@ import { FEE_COLLECTOR } from '@ambire-common/consts/addresses'
 import { SigningStatus } from '@ambire-common/controllers/signAccountOp/signAccountOp'
 import { AddressStateOptional } from '@ambire-common/interfaces/domains'
 import { Key } from '@ambire-common/interfaces/keystore'
-import { RequestExecutionType } from '@ambire-common/interfaces/userRequest'
+import { CallsUserRequest, RequestExecutionType } from '@ambire-common/interfaces/userRequest'
 import { AccountOpStatus } from '@ambire-common/libs/accountOp/types'
 import { getSanitizedAmount } from '@ambire-common/libs/transfer/amount'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
@@ -274,6 +274,15 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     [dispatch]
   )
 
+  const onRecipientAddressUnknownAgree = useCallback(() => {
+    dispatch({
+      type: 'TRANSFER_CONTROLLER_UPDATE_FORM',
+      params: {
+        formValues: { isRecipientAddressUnknownAgreed: true }
+      }
+    })
+  }, [dispatch])
+
   const handleCacheResolvedDomain = useCallback(
     (address: string, ensAvatar: string | null, domain: string, type: 'ens') => {
       dispatch({
@@ -462,6 +471,18 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     [state.isTopUp, gasTankLabelWithInfo, t]
   )
 
+  const isSignAccountOpInProgress = useMemo(() => {
+    if (!account || !userRequests.length || !selectedToken) return false
+
+    const signAccountOpRequest = userRequests.find(
+      (r) =>
+        r.kind === 'calls' &&
+        r.meta.accountAddr === account.addr &&
+        r.meta.chainId === selectedToken.chainId
+    ) as CallsUserRequest | undefined
+    return !!signAccountOpRequest?.signAccountOp.isSignAndBroadcastInProgress
+  }, [account, selectedToken, userRequests])
+
   const buttons = useMemo(() => {
     return (
       <>
@@ -471,7 +492,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
             addTransaction(isOneClickMode ? 'open-request-window' : 'queue')
           }
           proceedBtnText={submitButtonText}
-          isBatchDisabled={isSendingBatch}
+          isBatchDisabled={isSendingBatch || isSignAccountOpInProgress}
           isNotReadyToProceed={!isTransferFormValid}
           signAccountOpErrors={[]}
           networkUserRequests={networkUserRequests}
@@ -483,6 +504,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
               isRecipientAddressFirstTimeSend) ||
             isRecipientAddressViewOnly
           }
+          onRecipientAddressUnknownAgree={onRecipientAddressUnknownAgree}
         />
       </>
     )
@@ -490,6 +512,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     onBack,
     submitButtonText,
     isSendingBatch,
+    isSignAccountOpInProgress,
     isTransferFormValid,
     networkUserRequests,
     isLocalStateOutOfSync,
@@ -498,6 +521,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     isRecipientHumanizerKnownTokenOrSmartContract,
     isRecipientAddressFirstTimeSend,
     isRecipientAddressViewOnly,
+    onRecipientAddressUnknownAgree,
     addTransaction
   ])
 
