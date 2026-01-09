@@ -1,4 +1,5 @@
 import { MainController } from '@ambire-common/controllers/main/main'
+import { CallsUserRequest } from '@ambire-common/interfaces/userRequest'
 import ThemeColors from '@common/styles/themeConfig'
 import { browser } from '@web/constants/browserapi'
 import { setExtensionIcon } from '@web/extension-services/background/webapi/icon'
@@ -44,7 +45,8 @@ export class BadgesController {
       ).length
 
       this.swapAndBridgeBannersCount =
-        this.#mainCtrl.signAccountOp && !!swapAndBridgeBannersCount
+        (this.#mainCtrl.requests.currentUserRequest as CallsUserRequest | undefined)
+          ?.signAccountOp && !!swapAndBridgeBannersCount
           ? swapAndBridgeBannersCount - 1
           : swapAndBridgeBannersCount
     })
@@ -77,7 +79,8 @@ export class BadgesController {
       ).length
 
       this.swapAndBridgeBannersCount =
-        this.#mainCtrl.signAccountOp && !!swapAndBridgeBannersCount
+        (this.#mainCtrl.requests.currentUserRequest as CallsUserRequest | undefined)
+          ?.signAccountOp && !!swapAndBridgeBannersCount
           ? swapAndBridgeBannersCount - 1
           : swapAndBridgeBannersCount
     })

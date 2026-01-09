@@ -29,6 +29,7 @@ import { humanizeAccountOp } from '@ambire-common/libs/humanizer'
 import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import { parseLogs } from '@ambire-common/libs/userOperation/userOperation'
 import { resolveAssetInfo } from '@ambire-common/services/assetInfo'
+import { Bundler } from '@ambire-common/services/bundlers/bundler'
 import { BundlerSwitcher } from '@ambire-common/services/bundlers/bundlerSwitcher'
 import { BundlerTransactionReceipt } from '@ambire-common/services/bundlers/types'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
@@ -39,9 +40,9 @@ import {
 } from '@benzin/screens/BenzinScreen/constants/humanizerInterfaces'
 import { ActiveStepType, FinalizedStatusType } from '@benzin/screens/BenzinScreen/interfaces/steps'
 import { UserOperation } from '@benzin/screens/BenzinScreen/interfaces/userOperation'
-
 import useActivityControllerState from '@web/hooks/useActivityControllerState'
 import useBackgroundService from '@web/hooks/useBackgroundService'
+
 import { decodeUserOp, entryPointTxnSplit, reproduceCallsFromTxn } from './utils/reproduceCalls'
 
 const REFETCH_TIME = 3000 // 3 seconds
@@ -242,7 +243,9 @@ const useSteps = ({
     if (!items[0]) return
     const op = items[0]
     if (
-      op.identifiedBy.identifier !== extensionAccOp.identifiedBy.identifier ||
+      (op.identifiedBy &&
+        extensionAccOp.identifiedBy &&
+        op.identifiedBy.identifier !== extensionAccOp.identifiedBy.identifier) ||
       op.status === AccountOpStatus.BroadcastedButNotConfirmed ||
       op.status === AccountOpStatus.Pending ||
       !op.txnId
@@ -442,10 +445,9 @@ const useSteps = ({
           setFoundTxnId(receipt.receipt.transactionHash)
         }
 
-        const opTxnReceipt = receipt.receipt
         const hasUserOpSucceeded = !!receipt.success
-        const hasTxnFailedOrNoInfo =
-          opTxnReceipt.status === undefined || BigInt(opTxnReceipt.status) === 0n
+        const statusAsNumber = Bundler.getReceiptSuccess(receipt)
+        const hasTxnFailedOrNoInfo = statusAsNumber === 0n
         if (!hasUserOpSucceeded && hasTxnFailedOrNoInfo && !hasCheckedFrontRun) {
           setIsFrontRan(true)
           return
