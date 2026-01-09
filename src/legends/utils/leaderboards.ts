@@ -1,15 +1,21 @@
 import { ProjectedRewardsStats } from '@ambire-common/libs/portfolio/interfaces'
 import { LeaderboardEntry } from '@legends/modules/leaderboard/types'
 
-// in season 2 the score is calculated on the basis of data we fetch weekly
-// new users should dno't wait a week until they see a score, based on their balance, liquidity,staked WALLET
-// That is why we get the current balance/liquidity/stkWALLET of the user, so we can display at least
-// some example points 'as if' they were included in last week's snapshot we executed on the relayer
-// But since that data is not available in the relayer at the current time, it is not able to place
-// the current user in the appropriate place in the leaderboard
-// this function combines the leaderboard from the relayer and the live data only the client has
-// and reorders the leaderboard so 1) the score the user sees on the home page and the one in
-// the leaderboard matches and 2) the ordering is correct with the new data
+/**
+ * in season 2 the score is calculated on the basis of data we fetch weekly
+ * new users should dno't wait a week until they see a score, based on their balance, liquidity,staked WALLET
+ * That is why we get the current balance/liquidity/stkWALLET of the user, so we can display at least
+ * some example points 'as if' they were included in last week's snapshot we executed on the relayer
+ * But since that data is not available in the relayer at the current time, it is not able to place
+ * the current user in the appropriate place in the leaderboard
+ * this function combines the leaderboard from the relayer and the live data only the client has
+ * and reorders the leaderboard so 1) the score the user sees on the home page and the one in
+ * the leaderboard matches and 2) the ordering is correct with the new data
+ * @param {LeaderboardEntry} leaderboardData leaderboard from relayer
+ * @param {ProjectedRewardsStats | null} userRewardsStats live stats of current account for getting projected rewards
+ * @param {string | null} account Current account address
+ * @returns {LeaderboardEntry} Reordered leaderboard with live data for current user
+ */
 export function reorderLeaderboardWithLiveData(
   leaderboardData: LeaderboardEntry,
   userRewardsStats: ProjectedRewardsStats | null,
