@@ -22,7 +22,7 @@ const providers = {
   '1': getRpcProvider(ethereum?.rpcUrls || [], 1n, ethereum?.selectedRpcUrl)
 }
 
-const domainsCtrl = new DomainsController(providers)
+const domainsCtrl = new DomainsController({ providers })
 
 const DomainsContextProvider: React.FC<any> = ({ children }) => {
   const [state, setState] = useState<IDomainsController>(domainsCtrl)
