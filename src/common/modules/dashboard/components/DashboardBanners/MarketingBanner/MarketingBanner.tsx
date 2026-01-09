@@ -85,7 +85,7 @@ const MarketingBanner: React.FC<Props> = ({ banner }) => {
       <View style={styles.backgroundLogo}>
         <AmbireBackgroundLogo color={typeBannerColorsMap[type]?.logoColor} />
       </View>
-      <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.plSm]}>
+      <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter, spacings.plSm]}>
         <View
           style={{
             width: 32,
@@ -98,13 +98,15 @@ const MarketingBanner: React.FC<Props> = ({ banner }) => {
         >
           <Text fontSize={24}>{typeEmojiMap[type] || ''}</Text>
         </View>
-        <Text
-          weight="medium"
-          fontSize={isTab ? 16 : 14}
-          color={ThemeColors.primaryText[THEME_TYPES.DARK]}
-        >
-          {text}
-        </Text>
+        <View style={[flexbox.flex1, spacings.pvTy]}>
+          <Text
+            weight="medium"
+            fontSize={isTab ? 16 : 14}
+            color={ThemeColors.primaryText[THEME_TYPES.DARK]}
+          >
+            {text}
+          </Text>
+        </View>
       </View>
 
       <View style={[flexbox.directionRow, flexbox.alignCenter]}>
