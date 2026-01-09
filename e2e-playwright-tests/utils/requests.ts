@@ -29,7 +29,9 @@ function categorizeRequests(requests: string[]) {
     'api.llama.fi',
     'api.llama.fi',
     'base-mainnet.public.blastapi.io',
-    'rpc.monad.xyz'
+    'rpc.monad.xyz',
+    // Token images
+    'static.debank.com'
   ]
 
   const reqs = requests.reduce(
