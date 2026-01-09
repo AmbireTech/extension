@@ -8,7 +8,9 @@ import useSign from '@common/hooks/useSign'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import text from '@common/styles/utils/text'
-import useMainControllerState from '@web/hooks/useMainControllerState'
+import useSignAccountOpControllerState from '@web/hooks/useSignAccountOpControllerState'
+import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControllerState'
+import useTransferControllerState from '@web/hooks/useTransferControllerState'
 import LedgerConnectModal from '@web/modules/hardware-wallet/components/LedgerConnectModal'
 import SignAccountOpHardwareWalletSigningModal from '@web/modules/sign-account-op/components/SignAccountOpHardwareWalletSigningModal'
 import { getUiType } from '@web/utils/uiType'
@@ -52,7 +54,11 @@ const Modals: FC<Props> = ({
 }) => {
   const { styles } = useTheme(getStyles)
   const { t } = useTranslation()
-  const mainState = useMainControllerState()
+  const { signAccountOpController: swapAndBridgeSignAccountOp } = useSwapAndBridgeControllerState()
+  const {
+    state: { signAccountOpController: transferSignAccountOp }
+  } = useTransferControllerState()
+  const currentSignAccountOp = useSignAccountOpControllerState()
 
   if (renderedButNotNecessarilyVisibleModal === 'warnings') {
     return (
@@ -115,7 +121,16 @@ const Modals: FC<Props> = ({
       <SignAccountOpHardwareWalletSigningModal
         signingKeyType={signingKeyType}
         feePayerKeyType={feePayerKeyType}
-        signAndBroadcastAccountOpStatus={mainState.statuses.signAndBroadcastAccountOp}
+        isSignAndBroadcastInProgress={(() => {
+          if (actionType === 'swapAndBridge') {
+            return !!swapAndBridgeSignAccountOp?.isSignAndBroadcastInProgress
+          }
+          if (actionType === 'transfer') {
+            return !!transferSignAccountOp?.isSignAndBroadcastInProgress
+          }
+
+          return currentSignAccountOp ? currentSignAccountOp.isSignAndBroadcastInProgress : false
+        })()}
         signAccountOpStatusType={signAccountOpState.status?.type}
         shouldSignAuth={signAccountOpState.shouldSignAuth}
         signedTransactionsCount={signAccountOpState.signedTransactionsCount}
