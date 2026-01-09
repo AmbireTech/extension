@@ -21,7 +21,7 @@ export function reorderLeaderboardWithLiveData(
   userRewardsStats: ProjectedRewardsStats | null,
   account: string | null
 ): LeaderboardEntry {
-  // if live ata is not loaded, do not change the leaderboard from the relayer
+  // if live data is not loaded, do not change the leaderboard from the relayer
   if (!userRewardsStats) return leaderboardData
   // if not connected account, do not change anything
   if (!account) return leaderboardData
