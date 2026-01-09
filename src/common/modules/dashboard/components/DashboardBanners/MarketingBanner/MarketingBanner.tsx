@@ -1,7 +1,7 @@
 import React from 'react'
 import { Pressable, View } from 'react-native'
 
-import { Banner } from '@ambire-common/interfaces/banner'
+import { Banner, MarketingBannerTypes } from '@ambire-common/interfaces/banner'
 import AmbireBackgroundLogo from '@common/assets/svg/AmbireBackgroundLogo'
 import CloseIcon from '@common/assets/svg/CloseIcon'
 import Text from '@common/components/Text'
@@ -35,7 +35,7 @@ interface BannerColors {
   logoColor: string
 }
 
-const typeBannerColorsMap: Record<string, BannerColors> = {
+const typeBannerColorsMap: Record<Exclude<MarketingBannerTypes, 'alert'>, BannerColors> = {
   updates: {
     background: '#9D7AFF',
     border: '#7B59E7',
@@ -68,7 +68,9 @@ const MarketingBanner: React.FC<Props> = ({ banner }) => {
   const { dispatch } = useBackgroundService()
   const { styles } = useTheme(getStyles)
   const { text, type: bannerType = 'updates', actions } = banner
-  const type = RELAYER_BANNER_TYPES.includes(bannerType as any) ? bannerType : 'updates'
+  const type = (
+    RELAYER_BANNER_TYPES.includes(bannerType as any) ? bannerType : 'updates'
+  ) as Exclude<MarketingBannerTypes, 'alert'>
   const url = actions?.find((action) => action.actionName === 'open-link')?.meta?.url || ''
   const colors = typeBannerColorsMap[type]
 
