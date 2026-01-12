@@ -615,13 +615,8 @@ export const handleActions = async (
     case 'DAPPS_CONTROLLER_DISCONNECT_DAPP': {
       await mainCtrl.dapps.broadcastDappSessionEvent('disconnect', undefined, params.id)
       mainCtrl.dapps.updateDapp(params.id, { isConnected: false })
-      if (mainCtrl.selectedAccount.account) {
-        await mainCtrl.autoLogin.revokePolicy(
-          mainCtrl.selectedAccount.account.addr,
-          params.id,
-          params.url
-        )
-      }
+      await mainCtrl.autoLogin.revokeAllPoliciesForDomain(params.id, params.url)
+
       break
     }
     case 'CHANGE_CURRENT_DAPP_NETWORK': {
