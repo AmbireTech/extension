@@ -92,6 +92,7 @@ function stateDebug(
   // Instead of logging with `logInfoWithPrefix` in production, we rely on EventEmitter.emitError() to log individual errors
   // (instead of the entire state) to the user console, which aids in debugging without significant performance costs.
   if (logLevel === LOG_LEVELS.PROD) return
+  if (!stateToLog) return
 
   const args = parse(stringify(stateToLog))
   let ctrlState = args
@@ -454,7 +455,12 @@ const init = async () => {
       const hasOnUpdateInitialized = ctrl.onUpdateIds.includes('background')
       if (!hasOnUpdateInitialized) {
         ctrl.onUpdate(async (forceEmit) => {
-          const res = debounceFrontEndEventUpdatesOnSameTick(ctrl.name, ctrl, mainCtrl, forceEmit)
+          const res = debounceFrontEndEventUpdatesOnSameTick(
+            ctrl.name,
+            ctrl,
+            mainCtrl || ctrl,
+            forceEmit
+          )
           if (res === 'DEBOUNCED') return
 
           if (ctrl.name === 'KeystoreController') {
