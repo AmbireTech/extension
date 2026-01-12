@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-floating-promises */
 import EventEmitter from '@ambire-common/controllers/eventEmitter/eventEmitter'
+import { IEventEmitterRegistryController } from '@ambire-common/interfaces/eventEmitter'
 import {
   CRASH_ANALYTICS_ENABLED_DEFAULT,
   CRASH_ANALYTICS_ENABLED_STORAGE_KEY
@@ -43,11 +44,13 @@ export class WalletStateController extends EventEmitter {
   }
 
   constructor({
+    eventEmitterRegistry,
     onLogLevelUpdateCallback
   }: {
+    eventEmitterRegistry: IEventEmitterRegistryController
     onLogLevelUpdateCallback: (logLevel: LOG_LEVELS) => Promise<void>
   }) {
-    super()
+    super(eventEmitterRegistry)
 
     this.#onLogLevelUpdateCallback = onLogLevelUpdateCallback
     this.initialLoadPromise = this.#init()

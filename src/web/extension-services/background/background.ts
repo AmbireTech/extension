@@ -11,6 +11,7 @@ import { nanoid } from 'nanoid'
 import EmittableError from '@ambire-common/classes/EmittableError'
 import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
 import { ProviderError } from '@ambire-common/classes/ProviderError'
+import { EventEmitterRegistryController } from '@ambire-common/controllers/eventEmitterRegistry/eventEmitterRegistry'
 import { MainController } from '@ambire-common/controllers/main/main'
 import { ErrorRef } from '@ambire-common/interfaces/eventEmitter'
 import { Fetch } from '@ambire-common/interfaces/fetch'
@@ -448,7 +449,65 @@ const init = async () => {
     return fetch(url, initWithCustomHeaders)
   }
 
+  const eventEmitterRegistry = new EventEmitterRegistryController(() => {
+    eventEmitterRegistry.values().forEach((ctrl) => {
+      const hasOnUpdateInitialized = ctrl.onUpdateIds.includes('background')
+      if (!hasOnUpdateInitialized) {
+        ctrl.onUpdate(async (forceEmit) => {
+          const res = debounceFrontEndEventUpdatesOnSameTick(ctrl.name, ctrl, mainCtrl, forceEmit)
+          if (res === 'DEBOUNCED') return
+
+          if (ctrl.name === 'KeystoreController') {
+            const keystoreCtrl = ctrl as IKeystoreController
+            if (keystoreCtrl.isReadyToStoreKeys) {
+              setBackgroundUserContext({
+                id: getExtensionInstanceId(keystoreCtrl.keyStoreUid, mainCtrl.invite.verifiedCode)
+              })
+              if (backgroundState.isUnlocked && !keystoreCtrl.isUnlocked) {
+                await mainCtrl.dapps.broadcastDappSessionEvent('lock')
+              } else if (!backgroundState.isUnlocked && keystoreCtrl.isUnlocked) {
+                autoLockCtrl.setLastActiveTime()
+                await mainCtrl.dapps.broadcastDappSessionEvent('unlock', [
+                  mainCtrl.selectedAccount.account?.addr
+                ])
+              }
+              backgroundState.isUnlocked = keystoreCtrl.isUnlocked
+            }
+          }
+
+          if (ctrl.name === 'SelectedAccountController') {
+            const selectedAccountCtrl = ctrl as ISelectedAccountController
+
+            if (selectedAccountCtrl?.account?.addr) {
+              setBackgroundExtraContext('account', selectedAccountCtrl.account.addr)
+            }
+          }
+        }, 'background')
+      }
+    })
+
+    //
+    // Add onError listeners
+    //
+
+    eventEmitterRegistry.values().forEach((ctrl) => {
+      const hasOnErrorInitialized = ctrl.onErrorIds.includes('background')
+
+      if (!hasOnErrorInitialized) {
+        ctrl.onError((error) => {
+          stateDebug(walletStateCtrl.logLevel, ctrl, ctrl.name, 'error')
+          pm.send('> ui-error', {
+            method: ctrl.name,
+            params: { errors: ctrl.emittedErrors, controller: mainCtrl.name }
+          })
+          captureBackgroundExceptionFromControllerError(error, ctrl.name)
+        }, 'background')
+      }
+    })
+  })
+
   mainCtrl = new MainController({
+    eventEmitterRegistry,
     appVersion: APP_VERSION,
     platform,
     storageAPI: storage,
@@ -513,13 +572,14 @@ const init = async () => {
   })
 
   walletStateCtrl = new WalletStateController({
+    eventEmitterRegistry,
     onLogLevelUpdateCallback: async (nextLogLevel: LOG_LEVELS) => {
       await mainCtrl.dapps.broadcastDappSessionEvent('logLevelUpdate', nextLogLevel)
     }
   })
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const badgesCtrl = new BadgesController(mainCtrl, walletStateCtrl)
-  autoLockCtrl = new AutoLockController(() => {
+  autoLockCtrl = new AutoLockController(eventEmitterRegistry, () => {
     // Prevents sending multiple notifications if the event is triggered multiple times
     if (mainCtrl.keystore.isUnlocked) {
       notificationManager
@@ -533,7 +593,7 @@ const init = async () => {
     }
     mainCtrl.lock()
   })
-  const extensionUpdateCtrl = new ExtensionUpdateController()
+  const extensionUpdateCtrl = new ExtensionUpdateController(eventEmitterRegistry)
 
   function debounceFrontEndEventUpdatesOnSameTick(
     ctrlName: string,
@@ -559,7 +619,16 @@ const init = async () => {
       }
 
       pm.send('> ui', { method: ctrlName, params: stateToSendToFE, forceEmit })
-      stateDebug(walletStateCtrl.logLevel, stateToLog, ctrlName, 'update')
+
+      if (
+        ctrlName === 'WalletStateController' ||
+        ctrlName === 'AutoLockController' ||
+        ctrlName === 'ExtensionUpdateController'
+      ) {
+        stateDebug(walletStateCtrl.logLevel, ctrl, ctrlName, 'update')
+      } else {
+        stateDebug(walletStateCtrl.logLevel, stateToLog, ctrlName, 'update')
+      }
     }
 
     /**
@@ -588,134 +657,6 @@ const init = async () => {
     return 'EMITTED'
   }
 
-  /**
-    Initialize the onUpdate callback for the MainController. Once the mainCtrl load is ready,
-    initialize the rest of the onUpdate callbacks for the nested controllers of the main controller.
-   */
-  mainCtrl.onUpdate((mainCtrlForceEmit) => {
-    const res = debounceFrontEndEventUpdatesOnSameTick(
-      'MainController',
-      mainCtrl,
-      mainCtrl,
-      mainCtrlForceEmit
-    )
-    if (res === 'DEBOUNCED') return
-
-    mainCtrl.eventEmitterRegistry.values().forEach((ctrl) => {
-      const hasOnUpdateInitialized = ctrl.onUpdateIds.includes('background')
-      if (!hasOnUpdateInitialized) {
-        ctrl.onUpdate(async (forceEmit) => {
-          const res = debounceFrontEndEventUpdatesOnSameTick(ctrl.name, ctrl, mainCtrl, forceEmit)
-          if (res === 'DEBOUNCED') return
-
-          if (ctrl.name === 'KeystoreController') {
-            const keystoreCtrl = ctrl as IKeystoreController
-            if (keystoreCtrl.isReadyToStoreKeys) {
-              setBackgroundUserContext({
-                id: getExtensionInstanceId(keystoreCtrl.keyStoreUid, mainCtrl.invite.verifiedCode)
-              })
-              if (backgroundState.isUnlocked && !keystoreCtrl.isUnlocked) {
-                await mainCtrl.dapps.broadcastDappSessionEvent('lock')
-              } else if (!backgroundState.isUnlocked && keystoreCtrl.isUnlocked) {
-                autoLockCtrl.setLastActiveTime()
-                await mainCtrl.dapps.broadcastDappSessionEvent('unlock', [
-                  mainCtrl.selectedAccount.account?.addr
-                ])
-              }
-              backgroundState.isUnlocked = keystoreCtrl.isUnlocked
-            }
-          }
-
-          if (ctrl.name === 'SelectedAccountController') {
-            const selectedAccountCtrl = ctrl as ISelectedAccountController
-
-            if (selectedAccountCtrl?.account?.addr) {
-              setBackgroundExtraContext('account', selectedAccountCtrl.account.addr)
-            }
-          }
-        }, 'background')
-      }
-    })
-
-    //
-    // Add onError listeners
-    //
-
-    const hasOnErrorInitialized = mainCtrl.onErrorIds.includes('background')
-
-    if (!hasOnErrorInitialized) {
-      mainCtrl.onError((error) => {
-        stateDebug(walletStateCtrl.logLevel, mainCtrl, mainCtrl.name, 'error')
-        pm.send('> ui-error', {
-          method: mainCtrl.name,
-          params: { errors: mainCtrl.emittedErrors, controller: mainCtrl.name }
-        })
-        captureBackgroundExceptionFromControllerError(error, mainCtrl.name)
-      }, 'background')
-    }
-
-    mainCtrl.eventEmitterRegistry.values().forEach((ctrl) => {
-      const hasOnErrorInitialized = ctrl.onErrorIds.includes('background')
-
-      if (!hasOnErrorInitialized) {
-        ctrl.onError((error) => {
-          stateDebug(walletStateCtrl.logLevel, ctrl, ctrl.name, 'error')
-          pm.send('> ui-error', {
-            method: ctrl.name,
-            params: { errors: ctrl.emittedErrors, controller: mainCtrl.name }
-          })
-          captureBackgroundExceptionFromControllerError(error, ctrl.name)
-        }, 'background')
-      }
-    })
-  }, 'background')
-
-  // Broadcast onUpdate for the wallet state controller
-  walletStateCtrl.onUpdate((forceEmit) => {
-    debounceFrontEndEventUpdatesOnSameTick(
-      'walletState',
-      walletStateCtrl,
-      walletStateCtrl,
-      forceEmit
-    )
-  })
-  walletStateCtrl.onError((error) => {
-    pm.send('> ui-error', {
-      method: 'walletState',
-      params: { errors: walletStateCtrl.emittedErrors, controller: 'walletState' }
-    })
-    captureBackgroundExceptionFromControllerError(error, 'walletState')
-  })
-
-  // Broadcast onUpdate for the auto-lock controller
-  autoLockCtrl.onUpdate((forceEmit) => {
-    debounceFrontEndEventUpdatesOnSameTick('autoLock', autoLockCtrl, autoLockCtrl, forceEmit)
-  })
-  autoLockCtrl.onError((error) => {
-    pm.send('> ui-error', {
-      method: 'autoLock',
-      params: { errors: autoLockCtrl.emittedErrors, controller: 'autoLock' }
-    })
-    captureBackgroundExceptionFromControllerError(error, 'autoLock')
-  })
-
-  // Broadcast onUpdate for the extension-update controller
-  extensionUpdateCtrl.onUpdate((forceEmit) => {
-    debounceFrontEndEventUpdatesOnSameTick(
-      'extensionUpdate',
-      extensionUpdateCtrl,
-      extensionUpdateCtrl,
-      forceEmit
-    )
-  })
-  extensionUpdateCtrl.onError((error) => {
-    pm.send('> ui-error', {
-      method: 'extensionUpdate',
-      params: { errors: extensionUpdateCtrl.emittedErrors, controller: 'extensionUpdate' }
-    })
-    captureBackgroundExceptionFromControllerError(error, 'extensionUpdate')
-  })
-
   // listen for messages from UI
   browser.runtime.onConnect.addListener(async (port: Port) => {
     const [name, id] = port.name.split(':') as [Port['name'], Port['id']]
@@ -739,6 +680,7 @@ const init = async () => {
                 await handleActions(action, {
                   pm,
                   port,
+                  eventEmitterRegistry,
                   mainCtrl,
                   walletStateCtrl,
                   autoLockCtrl,
