@@ -12,7 +12,7 @@ type LeaderboardEntry = {
     reward?: number
     points?: number
   }>
-  currentUser: {
+  currentUser?: {
     rank: number
     account: string
     level?: number
