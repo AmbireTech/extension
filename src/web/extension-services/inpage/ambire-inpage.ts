@@ -64,8 +64,7 @@ let isDapp = false
       try {
         reqClone = (resource as Request).clone()
       } catch (error) {
-        // eslint-disable-next-line no-console
-        console.error(error)
+        // intentionally swallow internal ambire-inpage errors to avoid polluting the page console
       }
       if (reqClone) {
         if ((resource as Request)?.body) {
@@ -81,8 +80,7 @@ let isDapp = false
             fetchURL = reqClone.url
             fetchBody = body
           } catch (error) {
-            // eslint-disable-next-line no-console
-            console.error(error)
+            // intentionally swallow internal ambire-inpage errors to avoid polluting the page console
           }
         }
       }
@@ -91,7 +89,14 @@ let isDapp = false
     if (!!fetchURL && !!fetchBody) {
       // if the dapp uses ethers the body of the requests to the RPC will be Uint8Array
       if (fetchBody instanceof Uint8Array) {
-        if (!foundDappRpcUrls.includes(fetchURL)) foundDappRpcUrls.push(fetchURL) // store potential RPC URL
+        try {
+          const bodyObject = JSON.parse(new TextDecoder('utf-8').decode(fetchBody))
+          if (bodyObject.jsonrpc) {
+            if (!foundDappRpcUrls.includes(fetchURL)) foundDappRpcUrls.push(fetchURL) // store potential RPC URL
+          }
+        } catch (error) {
+          // intentionally swallow internal ambire-inpage errors to avoid polluting the page console
+        }
       } else {
         try {
           const fetchBodyObject: any = JSON.parse(fetchBody as any)
