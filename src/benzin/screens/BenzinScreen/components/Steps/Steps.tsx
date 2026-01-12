@@ -169,6 +169,7 @@ const Steps: FC<Props> = ({ activeStep, txnId, userOpHash, stepsState, summary, 
                 userOpHash &&
                 stepsState.userOp &&
                 stepsState.userOp.callData === '' &&
+                !stepsState.extensionAccOp &&
                 stepsState.finalizedStatus?.status !== 'fetching' && (
                   <Text appearance="errorText" fontSize={14}>
                     Could not decode calldata. Open the explorer for a better summarization
