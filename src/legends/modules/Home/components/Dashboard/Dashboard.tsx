@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import { getValueFromKey, Icon, SECTIONS, Stat } from '@common/components/RewardsStat'
@@ -8,9 +8,11 @@ import { faTrophy } from '@fortawesome/free-solid-svg-icons/faTrophy'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import ChevronDownIcon from '@legends/common/assets/svg/ChevronDownIcon'
 import Page from '@legends/components/Page'
+import useAccountContext from '@legends/hooks/useAccountContext'
 import useLeaderboardContext from '@legends/hooks/useLeaderboardContext'
 import usePortfolioControllerState from '@legends/hooks/usePortfolioControllerState/usePortfolioControllerState'
 import FaqSection from '@legends/modules/Home/components/FaqSection'
+import { reorderLeaderboardWithLiveData } from '@legends/utils/leaderboards'
 
 import styles from './Dashboard.module.scss'
 import Background1 from './media/Background1'
@@ -21,6 +23,16 @@ const Dashboard = () => {
   const { season2LeaderboardData } = useLeaderboardContext()
   const { userRewardsStats, isLoadingClaimableRewards } = usePortfolioControllerState()
   const [expandedId, setExpandedId] = React.useState<Stat['id'] | null>(null)
+  const { connectedAccount } = useAccountContext()
+
+  // since we reorder the leaderboard, the rank should be calculate dynamically
+  const dynamicLiveRank: number | null = useMemo(() => {
+    if (!season2LeaderboardData) return null
+    return (
+      reorderLeaderboardWithLiveData(season2LeaderboardData, userRewardsStats, connectedAccount)
+        .currentUser?.rank || null
+    )
+  }, [connectedAccount, season2LeaderboardData, userRewardsStats])
 
   const sections: Stat[] = SECTIONS.map((section) => {
     let score
@@ -169,9 +181,7 @@ const Dashboard = () => {
             </div>
             <div className={styles.rank}>
               <div className={styles.content}>
-                <span className={styles.badge}>
-                  {season2LeaderboardData?.currentUser?.rank || '-'}
-                </span>
+                <span className={styles.badge}>{dynamicLiveRank || '-'}</span>
                 <div className={styles.labelWithIcon}>
                   <FontAwesomeIcon icon={faTrophy} className={styles.icon} />
                   <span className={styles.label}>Rank</span>
