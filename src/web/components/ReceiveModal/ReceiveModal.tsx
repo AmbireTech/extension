@@ -134,7 +134,7 @@ const ReceiveModal: FC<Props> = ({ modalRef, handleClose }) => {
               <View key={chainId.toString()} style={styles.supportedNetwork}>
                 <NetworkIcon
                   id={chainId.toString()}
-                  size={28}
+                  size={31}
                   scale={1}
                   dataSet={createGlobalTooltipDataSet({
                     id: `network-icon-${chainId.toString()}`,
