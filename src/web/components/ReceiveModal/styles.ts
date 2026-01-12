@@ -19,6 +19,8 @@ interface Style {
   supportedNetwork: ViewStyle
   accountAddressWrapper: ViewStyle
   seeMoreWrapper: ViewStyle
+  extraNetwork: ViewStyle
+  extraNetworkVisible: ViewStyle
 }
 
 const { isTab } = getUiType()
@@ -74,6 +76,23 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
     },
     seeMoreWrapper: {
       ...flexbox.alignCenter
+    },
+    extraNetwork: {
+      opacity: 0,
+      transform: [{ translateY: -8 }],
+      // @ts-ignore
+      pointerEvents: 'none',
+      position: 'absolute',
+      transitionProperty: 'opacity, transform',
+      transitionDuration: '500ms',
+      transitionTimingFunction: 'ease'
+    },
+    extraNetworkVisible: {
+      opacity: 1,
+      transform: [{ translateY: 0 }],
+      // @ts-ignore
+      pointerEvents: 'auto',
+      position: 'relative'
     }
   })
 

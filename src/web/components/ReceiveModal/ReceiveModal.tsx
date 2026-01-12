@@ -50,7 +50,8 @@ const ReceiveModal: FC<Props> = ({ modalRef, handleClose }) => {
 
   const hasMoreNetworks = networks.length > MAX_VISIBLE_NETWORKS
 
-  const visibleNetworks = showAllNetworks ? networks : networks.slice(0, MAX_VISIBLE_NETWORKS)
+  const alwaysVisible = networks.slice(0, MAX_VISIBLE_NETWORKS)
+  const extraNetworks = networks.slice(MAX_VISIBLE_NETWORKS)
 
   return (
     <BottomSheet
@@ -130,7 +131,7 @@ const ReceiveModal: FC<Props> = ({ modalRef, handleClose }) => {
             {t('Supported networks:')}
           </Text>
           <View style={styles.supportedNetworks}>
-            {visibleNetworks.map(({ chainId, name }: any) => (
+            {alwaysVisible.map(({ chainId, name }: any) => (
               <View key={chainId.toString()} style={styles.supportedNetwork}>
                 <NetworkIcon
                   id={chainId.toString()}
@@ -143,7 +144,29 @@ const ReceiveModal: FC<Props> = ({ modalRef, handleClose }) => {
                 />
               </View>
             ))}
+
+            {extraNetworks.map(({ chainId, name }: any) => (
+              <View
+                key={chainId.toString()}
+                style={[
+                  styles.supportedNetwork,
+                  styles.extraNetwork,
+                  showAllNetworks && styles.extraNetworkVisible
+                ]}
+              >
+                <NetworkIcon
+                  id={chainId.toString()}
+                  size={31}
+                  scale={1}
+                  dataSet={createGlobalTooltipDataSet({
+                    id: `network-icon-${chainId.toString()}`,
+                    content: name
+                  })}
+                />
+              </View>
+            ))}
           </View>
+
           {hasMoreNetworks && (
             <View style={styles.seeMoreWrapper}>
               <Text appearance="linkText" onPress={() => setShowAllNetworks((prev) => !prev)}>
