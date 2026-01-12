@@ -4,19 +4,20 @@ import { View } from 'react-native'
 import QRCode from 'react-native-qrcode-svg'
 
 import { getIsViewOnly } from '@ambire-common/utils/accounts'
-import CopyIcon from '@common/assets/svg/CopyIcon'
+import AccountAddress from '@common/components/AccountAddress'
 import Alert from '@common/components/Alert'
+import Avatar from '@common/components/Avatar/Avatar'
+import DomainBadge from '@common/components/Avatar/DomainBadge'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader/ModalHeader'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import NetworkIcon from '@common/components/NetworkIcon'
 import Text from '@common/components/Text'
+import useReverseLookup from '@common/hooks/useReverseLookup'
 import useTheme from '@common/hooks/useTheme'
-import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
-import { setStringAsync } from '@common/utils/clipboard'
-import useHover, { AnimatedPressable } from '@web/hooks/useHover'
 import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
@@ -33,29 +34,30 @@ const { isPopup } = getUiType()
 
 const ReceiveModal: FC<Props> = ({ modalRef, handleClose }) => {
   const { account } = useSelectedAccountControllerState()
+  const { isLoading: isDomainResolving, ens } = useReverseLookup({ address: account?.addr || '' })
   const { networks } = useNetworksControllerState()
   const { keys } = useKeystoreControllerState()
   const { t } = useTranslation()
   const { styles, themeType } = useTheme(getStyles)
-  const [bindAnim, animStyle] = useHover({ preset: 'opacityInverted' })
   const qrCodeRef: any = useRef(null)
-  const { addToast } = useToast()
   const [qrCodeError, setQrCodeError] = useState<string | boolean | null>(null)
   const isViewOnly = getIsViewOnly(keys, account?.associatedKeys || [])
 
-  const handleCopyAddress = () => {
-    if (!account) return
+  const { label, pfp } = account?.preferences || { label: '', pfp: '' }
 
-    setStringAsync(account.addr)
-    addToast(t('Address copied to clipboard!') as string, { timeout: 2500 })
-  }
+  const MAX_VISIBLE_NETWORKS = isPopup ? 10 : 20
+  const [showAllNetworks, setShowAllNetworks] = useState(false)
+
+  const hasMoreNetworks = networks.length > MAX_VISIBLE_NETWORKS
+
+  const visibleNetworks = showAllNetworks ? networks : networks.slice(0, MAX_VISIBLE_NETWORKS)
 
   return (
     <BottomSheet
       id="receive-assets-modal"
       type="modal"
       sheetRef={modalRef}
-      backgroundColor={themeType === THEME_TYPES.DARK ? 'secondaryBackground' : 'primaryBackground'}
+      backgroundColor={themeType === THEME_TYPES.DARK ? 'primaryBackground' : 'secondaryBackground'}
       containerInnerWrapperStyles={flexbox.alignCenter}
       closeBottomSheet={handleClose}
     >
@@ -66,12 +68,18 @@ const ReceiveModal: FC<Props> = ({ modalRef, handleClose }) => {
         title="Receive Assets"
       />
       <View style={styles.content}>
+        <View style={[spacings.mtMd, flexbox.alignCenter]}>
+          <Avatar size={40} pfp={pfp} address={account?.addr || ''} isSmart={!!account?.creation} />
+          <Text weight="semiBold" fontSize={14} style={spacings.mtMi}>
+            {label}
+          </Text>
+        </View>
         <View style={styles.qrCodeContainer}>
           {!!account && !qrCodeError && (
             <View style={styles.qrCode}>
               <QRCode
                 value={account.addr}
-                size={160}
+                size={156}
                 quietZone={10}
                 getRef={qrCodeRef}
                 onError={() => setQrCodeError(t('Failed to load QR code!') as string)}
@@ -84,51 +92,65 @@ const ReceiveModal: FC<Props> = ({ modalRef, handleClose }) => {
             </Text>
           )}
         </View>
-        <View style={isPopup ? spacings.mb : spacings.mbXl}>
-          <AnimatedPressable
-            style={[styles.accountAddress, isViewOnly ? spacings.mbSm : spacings.mb0, animStyle]}
-            onPress={handleCopyAddress}
-            {...bindAnim}
-          >
-            <Text selectable numberOfLines={1} fontSize={14} ellipsizeMode="middle" weight="medium">
-              {account?.addr}
-            </Text>
-            <CopyIcon style={spacings.mlTy} />
-          </AnimatedPressable>
-          {isViewOnly ? (
-            <Alert
-              style={{
+        <View style={[styles.accountAddressWrapper]}>
+          <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+            <DomainBadge ens={ens} />
+            <AccountAddress
+              isLoading={isDomainResolving}
+              ens={ens}
+              address={account?.addr || ''}
+              plainAddressMaxLength={42}
+              fontSize={16}
+            />
+          </View>
+        </View>
+        {isViewOnly ? (
+          <View
+            style={[
+              spacings.mbSm,
+              {
                 maxWidth: 400,
                 marginHorizontal: 'auto'
-              }}
-              type="warning"
-              title={t('Selected account is view only.')}
-            />
-          ) : null}
-        </View>
+              }
+            ]}
+          >
+            <Alert type="warning" title={t('Selected account is view only.')} />
+          </View>
+        ) : (
+          <View style={spacings.mb3Xl} />
+        )}
 
         <View style={styles.supportedNetworksContainer}>
-          <Text weight="regular" fontSize={14} style={styles.supportedNetworksTitle}>
-            {t('Following networks supported on this address:')}
+          <Text
+            weight="regular"
+            appearance="tertiaryText"
+            fontSize={14}
+            style={styles.supportedNetworksTitle}
+          >
+            {t('Supported networks:')}
           </Text>
           <View style={styles.supportedNetworks}>
-            {networks.map(({ chainId, name }: any) => (
+            {visibleNetworks.map(({ chainId, name }: any) => (
               <View key={chainId.toString()} style={styles.supportedNetwork}>
-                <View style={spacings.mbMi}>
-                  <NetworkIcon id={chainId.toString()} size={22} scale={0.6} />
-                </View>
-                <Text
-                  style={spacings.plMi}
-                  fontSize={10}
-                  numberOfLines={1}
-                  appearance="secondaryText"
-                  weight="regular"
-                >
-                  {name}
-                </Text>
+                <NetworkIcon
+                  id={chainId.toString()}
+                  size={28}
+                  scale={1}
+                  dataSet={createGlobalTooltipDataSet({
+                    id: `network-icon-${chainId.toString()}`,
+                    content: name
+                  })}
+                />
               </View>
             ))}
           </View>
+          {hasMoreNetworks && (
+            <View style={styles.seeMoreWrapper}>
+              <Text appearance="linkText" onPress={() => setShowAllNetworks((prev) => !prev)}>
+                {showAllNetworks ? t('View less') : t('View more')}
+              </Text>
+            </View>
+          )}
         </View>
       </View>
     </BottomSheet>

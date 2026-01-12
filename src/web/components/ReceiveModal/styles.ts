@@ -1,13 +1,6 @@
 import { StyleSheet, TextStyle, ViewStyle } from 'react-native'
 
-import spacings, {
-  SPACING,
-  SPACING_LG,
-  SPACING_MD,
-  SPACING_MI,
-  SPACING_TY,
-  SPACING_XL
-} from '@common/styles/spacings'
+import spacings, { SPACING_MD, SPACING_XL } from '@common/styles/spacings'
 import { THEME_TYPES, ThemeProps, ThemeType } from '@common/styles/themeConfig'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -24,6 +17,8 @@ interface Style {
   supportedNetworksTitle: TextStyle
   supportedNetworks: ViewStyle
   supportedNetwork: ViewStyle
+  accountAddressWrapper: ViewStyle
+  seeMoreWrapper: ViewStyle
 }
 
 const { isTab } = getUiType()
@@ -32,14 +27,11 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
   StyleSheet.create<Style>({
     content: {
       backgroundColor:
-        themeType === THEME_TYPES.DARK ? theme.primaryBackground : theme.secondaryBackground,
-      paddingTop: isTab ? SPACING_XL : SPACING_MD,
-      paddingBottom: isTab ? SPACING : SPACING_TY,
+        themeType === THEME_TYPES.DARK ? theme.secondaryBackground : theme.primaryBackground,
       ...common.borderRadiusPrimary,
-      marginBottom: isTab ? SPACING_LG : SPACING,
       width: '100%'
     },
-    qrCodeContainer: { ...flexbox.alignCenter, ...spacings.mb },
+    qrCodeContainer: { ...flexbox.alignCenter, ...spacings.mvMi },
     qrCode: {
       ...common.borderRadiusPrimary,
       overflow: 'hidden'
@@ -59,21 +51,29 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
     supportedNetworks: {
       flexDirection: 'row',
       flexWrap: 'wrap',
-      justifyContent: 'center'
+      justifyContent: 'center',
+      ...spacings.mbTy
     },
     supportedNetwork: {
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor:
-        themeType === THEME_TYPES.DARK ? theme.tertiaryBackground : theme.primaryBackground,
+      ...flexbox.alignCenter,
+      ...flexbox.justifyCenter,
+      ...spacings.mhTy,
+      ...spacings.mvMi,
+      borderRadius: 32,
       borderWidth: 1,
-      borderColor: theme.secondaryBorder,
-      ...spacings.phMi,
-      ...spacings.pvMi,
-      margin: SPACING_MI / 2,
+      borderColor: theme.secondaryBorder
+    },
+    accountAddressWrapper: {
+      marginHorizontal: 'auto',
+      ...spacings.phSm,
+      ...spacings.pvSm,
+      ...spacings.mbSm,
       ...common.borderRadiusPrimary,
-      minWidth: 86,
-      height: 50
+      backgroundColor:
+        themeType === THEME_TYPES.DARK ? theme.primaryBackground : theme.secondaryBackground
+    },
+    seeMoreWrapper: {
+      ...flexbox.alignCenter
     }
   })
 
