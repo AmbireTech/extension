@@ -13,8 +13,8 @@ import { openInTab } from '@web/extension-services/background/webapi/tab'
 import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { Pressable, View } from 'react-native'
-import PayOption from './components/PayOption'
-import getStyles from './styles'
+import getStyles from '../styles'
+import PayOption from './PayOption'
 
 const ServiceFee = ({
   nativeFeeOption,
@@ -34,14 +34,14 @@ const ServiceFee = ({
     <>
       <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
         <Text fontSize={12} style={spacings.mvTy}>
-          {t('+ Additional bridge fee')}
+          {t('Additional bridge fee')}
         </Text>
         <InfoIcon width={16} height={16} data-tooltip-id="bridge-fee-icon" style={spacings.mlTy} />
         <Tooltip id="bridge-fee-icon" clickable>
           <View>
             <Text fontSize={14} appearance="secondaryText" style={spacings.mbMi}>
               {t(
-                `The selected bridge provider demands an additional service fee, paid out in ${paidByNativeValue.token.symbol}. This additional fee is not included in the gas fee displayed above or the quote. `
+                `The selected bridge provider demands an additional service fee, paid out in ${paidByNativeValue.token.symbol}. `
               )}
               <Pressable
                 onPress={() => {

@@ -11,7 +11,6 @@ import { ZERO_ADDRESS } from '@ambire-common/services/socket/constants'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import AssetIcon from '@common/assets/svg/AssetIcon'
 import FeeIcon from '@common/assets/svg/FeeIcon'
-import ManifestFallbackIcon from '@common/assets/svg/ManifestFallbackIcon'
 import Alert from '@common/components/Alert'
 import Select, { SectionedSelect } from '@common/components/Select'
 import { SelectValue } from '@common/components/Select/types'
@@ -21,15 +20,15 @@ import useWindowSize from '@common/hooks/useWindowSize'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
-import ManifestImage from '@web/components/ManifestImage'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 
 import BundlerWarning from './components/bundlerWarning'
 import EstimationSkeleton from './components/EstimationSkeleton'
 import PayOption from './components/PayOption'
+import ServiceFee from './components/ServiceFee'
+import Sponsored from './components/Sponsored'
 import { NO_FEE_OPTIONS } from './consts'
 import { mapFeeOptions, sortFeeOptions } from './helpers'
-import ServiceFee from './ServiceFee'
 import getStyles from './styles'
 import { Props } from './types'
 
@@ -365,38 +364,14 @@ const Estimation = ({
 
   if (isSponsored) {
     return (
-      <View>
-        {sponsor ? (
-          <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-            {sponsor.icon && (
-              <ManifestImage
-                uri={sponsor.icon}
-                size={64}
-                fallback={() => <ManifestFallbackIcon width={64} height={64} />}
-              />
-            )}
-            <View style={spacings.ml}>
-              <Text fontSize={18} weight="semiBold" style={spacings.mbMi}>
-                {sponsor.name}
-              </Text>
-              <Text fontSize={16} appearance="secondaryText">
-                {t('is 🪄 sponsoring 🪄 this transaction')}
-              </Text>
-            </View>
-          </View>
-        ) : (
-          <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-            <View style={spacings.ml}>
-              <Text fontSize={18} weight="semiBold" style={spacings.mbMi}>
-                {t("The dapp you're connected to")}
-              </Text>
-              <Text fontSize={16} appearance="secondaryText">
-                {t('is 🪄 sponsoring 🪄 this transaction')}
-              </Text>
-            </View>
-          </View>
-        )}
-      </View>
+      <>
+        {!serviceFee && <Sponsored sponsor={sponsor} />}
+        <ServiceFee
+          serviceFee={serviceFee}
+          paidByNativeValue={paidByNativeValue}
+          nativeFeeOption={nativeFeeOption}
+        />
+      </>
     )
   }
 
