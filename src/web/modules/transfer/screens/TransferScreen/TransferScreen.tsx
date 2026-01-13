@@ -569,7 +569,8 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
         secondaryButtonText={t('Add more')}
         handleClose={() => {
           dispatch({
-            type: 'TRANSFER_CONTROLLER_DESTROY_LATEST_BROADCASTED_ACCOUNT_OP'
+            type: 'TRANSFER_CONTROLLER_UNLOAD_SCREEN',
+            params: { forceUnload: true }
           })
         }}
       >

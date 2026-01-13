@@ -53,7 +53,11 @@ type Controllers = {
 
 type ControllersToWait = Omit<
   Controllers,
-  'signAccountOp' | 'autoLock' | 'transfer' | 'defiPositions' | 'autoLogin'
+  | 'SignAccountOpController'
+  | 'AutoLockController'
+  | 'TransferController'
+  | 'DefiPositionsController'
+  | 'AutoLoginController'
 >
 
 const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
@@ -68,96 +72,96 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
   const [areControllerStatesLoaded, setAreControllerStatesLoaded] = useState(false)
   const [isStatesLoadingTakingTooLong, setIsStatesLoadingTakingTooLong] = useState(false)
 
-  const accountPicker = useAccountPickerControllerState()
-  const keystore = useKeystoreControllerState()
-  const main = useMainControllerState()
-  const storage = useStorageControllerState()
-  const ui = useUiControllerState()
-  const networks = useNetworksControllerState()
-  const providers = useProvidersControllerState()
-  const accounts = useAccountsControllerState()
-  const selectedAccount = useSelectedAccountControllerState()
-  const walletState = useWalletStateController()
-  const signMessage = useSignMessageControllerState()
-  const requests = useRequestsControllerState()
-  const activity = useActivityControllerState()
-  const portfolio = usePortfolioControllerState()
-  const emailVault = useEmailVaultControllerState()
-  const phishing = usePhishingControllerState()
-  const dapps = useDappsControllerState().state
-  const addressBook = useAddressBookControllerState()
-  const domains = useDomainsControllerState()
-  const invite = useInviteControllerState()
-  const contractNames = useContractNamesControllerState()
-  const banner = useBannersControllerState()
-  const swapAndBridge = useSwapAndBridgeControllerState()
-  const extensionUpdate = useExtensionUpdateControllerState()
-  const featureFlags = useFeatureFlagsControllerState()
+  const AccountPickerController = useAccountPickerControllerState()
+  const KeystoreController = useKeystoreControllerState()
+  const MainController = useMainControllerState()
+  const StorageController = useStorageControllerState()
+  const UiController = useUiControllerState()
+  const NetworksController = useNetworksControllerState()
+  const ProvidersController = useProvidersControllerState()
+  const AccountsController = useAccountsControllerState()
+  const SelectedAccountController = useSelectedAccountControllerState()
+  const WalletStateController = useWalletStateController()
+  const SignMessageController = useSignMessageControllerState()
+  const RequestsController = useRequestsControllerState()
+  const ActivityController = useActivityControllerState()
+  const PortfolioController = usePortfolioControllerState()
+  const EmailVaultController = useEmailVaultControllerState()
+  const PhishingController = usePhishingControllerState()
+  const DappsController = useDappsControllerState().state
+  const AddressBookController = useAddressBookControllerState()
+  const DomainsController = useDomainsControllerState()
+  const InviteController = useInviteControllerState()
+  const ContractNamesController = useContractNamesControllerState()
+  const BannerController = useBannersControllerState()
+  const SwapAndBridgeController = useSwapAndBridgeControllerState()
+  const ExtensionUpdateController = useExtensionUpdateControllerState()
+  const FeatureFlagsController = useFeatureFlagsControllerState()
 
   const controllers: ControllersToWait = useMemo(
     () => ({
-      accountPicker,
-      keystore,
-      main,
-      storage,
-      ui,
-      networks,
-      providers,
-      accounts,
-      selectedAccount,
-      walletState,
-      signMessage,
-      requests,
-      activity,
-      portfolio,
-      emailVault,
-      phishing,
-      dapps,
-      addressBook,
-      domains,
-      invite,
-      contractNames,
-      banner,
-      swapAndBridge,
-      extensionUpdate,
-      featureFlags
+      AccountPickerController,
+      KeystoreController,
+      MainController,
+      StorageController,
+      UiController,
+      NetworksController,
+      ProvidersController,
+      AccountsController,
+      SelectedAccountController,
+      WalletStateController,
+      SignMessageController,
+      RequestsController,
+      ActivityController,
+      PortfolioController,
+      EmailVaultController,
+      PhishingController,
+      DappsController,
+      AddressBookController,
+      DomainsController,
+      InviteController,
+      ContractNamesController,
+      BannerController,
+      SwapAndBridgeController,
+      ExtensionUpdateController,
+      FeatureFlagsController
     }),
     [
-      accountPicker,
-      keystore,
-      main,
-      storage,
-      ui,
-      networks,
-      providers,
-      accounts,
-      selectedAccount,
-      walletState,
-      signMessage,
-      requests,
-      activity,
-      portfolio,
-      emailVault,
-      phishing,
-      dapps,
-      addressBook,
-      domains,
-      invite,
-      contractNames,
-      banner,
-      swapAndBridge,
-      extensionUpdate,
-      featureFlags
+      AccountPickerController,
+      KeystoreController,
+      MainController,
+      StorageController,
+      UiController,
+      NetworksController,
+      ProvidersController,
+      AccountsController,
+      SelectedAccountController,
+      WalletStateController,
+      SignMessageController,
+      RequestsController,
+      ActivityController,
+      PortfolioController,
+      EmailVaultController,
+      PhishingController,
+      DappsController,
+      AddressBookController,
+      DomainsController,
+      InviteController,
+      ContractNamesController,
+      BannerController,
+      SwapAndBridgeController,
+      ExtensionUpdateController,
+      FeatureFlagsController
     ]
   )
 
   const isViewReady = useMemo(() => {
     if (!isPopup) return true
 
-    const popupView = controllers.ui?.views?.find((v) => v.type === 'popup')
+    const popupView = controllers.UiController?.views?.find((v) => v.type === 'popup')
 
     return !!popupView?.isReady
-  }, [controllers.ui])
+  }, [controllers.UiController])
 
   useEffect(() => {
     if (areControllerStatesLoaded) return
@@ -175,7 +179,7 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
       loadingControllers,
       isPopup,
       isPopupReady: isViewReady,
-      backgroundVersion: walletState?.extensionVersion,
+      backgroundVersion: WalletStateController?.extensionVersion,
       uiVersion: APP_VERSION
     }
 
@@ -208,7 +212,7 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
         setAreControllerStatesLoaded(true)
       }, wait)
     }
-  }, [areControllerStatesLoaded, isViewReady, controllers, walletState?.extensionVersion])
+  }, [areControllerStatesLoaded, isViewReady, controllers, WalletStateController?.extensionVersion])
 
   const contextValue = useMemo(
     () => ({ areControllerStatesLoaded, isStatesLoadingTakingTooLong }),
