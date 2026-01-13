@@ -1,7 +1,7 @@
 import { saParams } from 'constants/env'
 import tokens from 'constants/tokens'
 import { test } from 'fixtures/pageObjects'
-import { runSwapFlow, runSwapBatchFlow, runSwapProceedFlow } from 'flows/swapAndBridgeFlow'
+import { runSwapBatchFlow, runSwapFlow, runSwapProceedFlow } from 'flows/swapAndBridgeFlow'
 
 test.describe('swapAndBridge Smart Account', { tag: '@swapAndBridge' }, () => {
   test.beforeEach(async ({ pages }) => {

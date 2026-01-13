@@ -11,7 +11,7 @@ const AddressBookControllerStateContext = createContext<IAddressBookController>(
 )
 
 const AddressBookControllerStateProvider: React.FC<any> = ({ children }) => {
-  const controller = 'addressBook'
+  const controller = 'AddressBookController'
   const state = useControllerState(controller)
   const { dispatch } = useBackgroundService()
   const mainState = useMainControllerState()

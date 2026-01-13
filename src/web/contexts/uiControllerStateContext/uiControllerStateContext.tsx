@@ -9,7 +9,7 @@ import useControllerState from '@web/hooks/useControllerState'
 const UiControllerStateContext = createContext<IUiController>({} as IUiController)
 
 const UiControllerStateProvider: React.FC<any> = ({ children }) => {
-  const controller = 'ui'
+  const controller = 'UiController'
   const state = useControllerState(controller)
   const { dispatch } = useBackgroundService()
 

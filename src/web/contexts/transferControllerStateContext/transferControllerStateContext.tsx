@@ -13,7 +13,7 @@ type ContextReturn = {
 const TransferControllerStateContext = createContext<ContextReturn>({} as ContextReturn)
 
 const TransferControllerStateProvider = ({ children }: { children: any }) => {
-  const controller = 'transfer'
+  const controller = 'TransferController'
   const state = useControllerState(controller)
   const { dispatch } = useBackgroundService()
   const mainState = useMainControllerState()

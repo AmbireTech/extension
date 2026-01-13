@@ -10,7 +10,7 @@ import useMainControllerState from '@web/hooks/useMainControllerState'
 const BannerControllerStateContext = createContext<IBannerController>({} as IBannerController)
 
 const BannerControllerStateProvider: React.FC<any> = ({ children }) => {
-  const controller = 'banner'
+  const controller = 'BannerController'
   const state = useControllerState(controller)
   const { dispatch } = useBackgroundService()
   const mainState = useMainControllerState()

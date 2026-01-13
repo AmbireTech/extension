@@ -9,7 +9,7 @@ import useControllerState from '@web/hooks/useControllerState'
 const AutoLockControllerStateContext = createContext<AutoLockController>({} as AutoLockController)
 
 const AutoLockControllerStateProvider: React.FC<any> = ({ children }) => {
-  const controller = 'autoLock'
+  const controller = 'AutoLockController'
   const state = useControllerState(controller)
   const { dispatch } = useBackgroundService()
 
