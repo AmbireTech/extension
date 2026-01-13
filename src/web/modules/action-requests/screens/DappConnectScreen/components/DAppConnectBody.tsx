@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useMemo } from 'react'
+import React, { FC, useMemo } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
@@ -6,9 +6,7 @@ import { BlacklistedStatus } from '@ambire-common/interfaces/phishing'
 import CheckIcon from '@common/assets/svg/CheckIcon'
 import ErrorIcon from '@common/assets/svg/ErrorIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
-import Alert from '@common/components/Alert'
 import Badge from '@common/components/Badge'
-import Checkbox from '@common/components/Checkbox'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
@@ -20,16 +18,11 @@ import getStyles from '../styles'
 import DAppPermissions from './DAppPermissions'
 
 const DAppConnectBody: FC<{
-  confirmedRiskCheckbox: boolean
-  setConfirmedRiskCheckbox: React.Dispatch<React.SetStateAction<boolean>>
   responsiveSizeMultiplier: number
   securityCheck: BlacklistedStatus
-}> = ({
-  confirmedRiskCheckbox,
-  setConfirmedRiskCheckbox,
-  securityCheck,
-  responsiveSizeMultiplier
-}) => {
+}> = ({ securityCheck, responsiveSizeMultiplier }) => {
+  // TODO: only for testing, remove it
+  // securityCheck = 'BLACKLISTED'
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
 
@@ -40,10 +33,6 @@ const DAppConnectBody: FC<{
       paddingBottom: SPACING_LG * responsiveSizeMultiplier
     }
   }, [responsiveSizeMultiplier])
-
-  const handleRiskCheckboxPress = useCallback(() => {
-    setConfirmedRiskCheckbox((p) => !p)
-  }, [setConfirmedRiskCheckbox])
 
   return (
     <View style={[styles.contentBody, spacingsStyle]}>
@@ -143,39 +132,17 @@ const DAppConnectBody: FC<{
         )}
       </View>
       <DAppPermissions responsiveSizeMultiplier={responsiveSizeMultiplier} />
-      {securityCheck === 'BLACKLISTED' || securityCheck === 'FAILED_TO_GET' ? (
-        <Alert type="warning" size="sm" withIcon={false}>
-          <Checkbox
-            value={confirmedRiskCheckbox}
-            style={{ ...spacings.mb0 }}
-            onValueChange={handleRiskCheckboxPress}
-            uncheckedBorderColor={theme.warningDecorative}
-            checkedColor={theme.warningDecorative}
-          >
-            <Text
-              fontSize={16 * responsiveSizeMultiplier}
-              appearance="errorText"
-              weight="semiBold"
-              style={{ lineHeight: 20 }}
-              onPress={handleRiskCheckboxPress}
-            >
-              {t('I have read and understood the risks')}
-            </Text>
-          </Checkbox>
-        </Alert>
-      ) : (
-        <Text
-          style={{
-            opacity: 0.64,
-            marginHorizontal: 'auto'
-          }}
-          fontSize={14 * responsiveSizeMultiplier}
-          weight="medium"
-          appearance="tertiaryText"
-        >
-          {t('Only connect with sites you trust')}
-        </Text>
-      )}
+      <Text
+        style={{
+          opacity: 0.64,
+          marginHorizontal: 'auto'
+        }}
+        fontSize={14 * responsiveSizeMultiplier}
+        weight="medium"
+        appearance="tertiaryText"
+      >
+        {t('Only connect with sites you trust')}
+      </Text>
     </View>
   )
 }
