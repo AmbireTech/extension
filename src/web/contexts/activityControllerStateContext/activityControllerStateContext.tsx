@@ -10,7 +10,7 @@ import useMainControllerState from '@web/hooks/useMainControllerState'
 const ActivityControllerStateContext = createContext<IActivityController>({} as IActivityController)
 
 const ActivityControllerStateProvider: React.FC<any> = ({ children }) => {
-  const controller = 'activity'
+  const controller = 'ActivityController'
   const state = useControllerState(controller)
   const { dispatch } = useBackgroundService()
   const mainState = useMainControllerState()

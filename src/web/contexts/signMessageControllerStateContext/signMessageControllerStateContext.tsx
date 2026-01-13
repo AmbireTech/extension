@@ -12,7 +12,7 @@ const SignMessageControllerStateContext = createContext<ISignMessageController>(
 )
 
 const SignMessageControllerStateProvider: React.FC<any> = ({ children }) => {
-  const controller = 'signMessage'
+  const controller = 'SignMessageController'
   const state = useControllerState(controller)
   const { dispatch } = useBackgroundService()
   const mainState = useMainControllerState()

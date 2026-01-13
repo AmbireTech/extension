@@ -12,7 +12,7 @@ const AccountPickerControllerStateContext = createContext<IAccountPickerControll
 )
 
 const AccountPickerControllerStateProvider: React.FC<any> = ({ children }) => {
-  const controller = 'accountPicker'
+  const controller = 'AccountPickerController'
   const state = useControllerState(controller)
   const { dispatch } = useBackgroundService()
   const mainState = useMainControllerState()

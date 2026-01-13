@@ -9,7 +9,7 @@ import useMainControllerState from '@web/hooks/useMainControllerState'
 const AccountsControllerStateContext = createContext<IAccountsController>({} as IAccountsController)
 
 const AccountsControllerStateProvider: React.FC<any> = ({ children }) => {
-  const controller = 'accounts'
+  const controller = 'AccountsController'
   const state = useControllerState(controller)
   const { dispatch } = useBackgroundService()
   const mainState = useMainControllerState()
