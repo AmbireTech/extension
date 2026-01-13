@@ -2,9 +2,7 @@
 import React, { useCallback } from 'react'
 import { createPortal } from 'react-dom'
 
-import { TokenResult } from '@ambire-common/libs/portfolio'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
-import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
 import background from '@legends/common/assets/images/background.png'
 import CloseIcon from '@legends/components/CloseIcon'
 import { ERROR_MESSAGES } from '@legends/constants/errors/messages'
@@ -48,7 +46,7 @@ const ClaimRewardsModal: React.FC<ClaimRewardsModalProps> = ({
   card
 }) => {
   const { browserProvider } = useProviderContext()
-  const { claimableRewards } = usePortfolioControllerState()
+  const { walletTokenPrice } = usePortfolioControllerState()
   const { sendCalls, getCallsStatus, chainId } = useErc5792()
   const { onLegendComplete } = useLegendsContext()
 
@@ -132,20 +130,7 @@ const ClaimRewardsModal: React.FC<ClaimRewardsModalProps> = ({
                   )}
                 </p>
                 <p className={styles.usdValue}>
-                  {
-                    getAndFormatTokenDetails(
-                      {
-                        ...claimableRewards,
-                        flags: {
-                          rewardsType: 'wallet-rewards',
-                          onGasTank: false,
-                          isFeeToken: false,
-                          canTopUpGasTank: false
-                        }
-                      } as unknown as TokenResult,
-                      [{ chainId: 1n }] as any
-                    ).balanceUSDFormatted
-                  }{' '}
+                  {formatDecimals((walletTokenPrice || 0) * (meta?.availableToClaim || 0), 'value')}{' '}
                 </p>
               </div>
             </div>
