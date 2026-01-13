@@ -354,8 +354,6 @@ const Estimation = ({
 
   if (
     !signAccountOpState ||
-    // <Bobby>: the line below may be incorrect and may cause
-    // estimation flashing
     (!hasEstimation && signAccountOpState.estimation.estimationRetryError) ||
     !payValue
   ) {
@@ -365,7 +363,7 @@ const Estimation = ({
   if (isSponsored) {
     return (
       <>
-        {!serviceFee && <Sponsored sponsor={sponsor} />}
+        {(!serviceFee || !paidByNativeValue || !nativeFeeOption) && <Sponsored sponsor={sponsor} />}
         <ServiceFee
           serviceFee={serviceFee}
           paidByNativeValue={paidByNativeValue}
