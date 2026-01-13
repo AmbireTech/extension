@@ -496,7 +496,10 @@ type DappsControllerFetchAndUpdateDappsAction = {
 }
 type DappsControllerRemoveConnectedSiteAction = {
   type: 'DAPPS_CONTROLLER_DISCONNECT_DAPP'
-  params: Dapp['id']
+  params: {
+    id: Dapp['id']
+    url: Dapp['url']
+  }
 }
 type DappsControllerUpdateDappAction = {
   type: 'DAPP_CONTROLLER_UPDATE_DAPP'

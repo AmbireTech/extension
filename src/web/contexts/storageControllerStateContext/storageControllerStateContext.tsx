@@ -8,7 +8,7 @@ import useControllerState from '@web/hooks/useControllerState'
 const StorageControllerStateContext = createContext<IStorageController>({} as IStorageController)
 
 const StorageControllerStateProvider: React.FC<any> = ({ children }) => {
-  const controller = 'storage'
+  const controller = 'StorageController'
   const state = useControllerState(controller)
   const { dispatch } = useBackgroundService()
 

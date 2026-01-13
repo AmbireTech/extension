@@ -84,6 +84,7 @@ export interface StepsData {
   originatedFrom: string | null
   userOp: UserOperation | null
   delegation?: EIP7702Auth
+  extensionAccOp?: SubmittedAccountOp
 }
 
 // if the transaction hash is found, we make the top url the real txn id
@@ -938,6 +939,7 @@ const useSteps = ({
     from: from || null,
     originatedFrom: txnReceipt.originatedFrom,
     userOp,
+    extensionAccOp,
     delegation:
       extensionAccOp && extensionAccOp.meta && extensionAccOp.meta.setDelegation !== undefined
         ? extensionAccOp.meta.delegation

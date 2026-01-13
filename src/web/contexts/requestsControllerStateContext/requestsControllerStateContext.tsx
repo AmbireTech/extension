@@ -12,7 +12,7 @@ import { getUiType } from '@web/utils/uiType'
 const RequestsControllerStateContext = createContext<IRequestsController>({} as IRequestsController)
 
 const RequestsControllerStateProvider: React.FC<any> = ({ children }) => {
-  const controller = 'requests'
+  const controller = 'RequestsController'
   const state = useControllerState(controller)
   const { dispatch } = useBackgroundService()
   const { navigate } = useNavigation()

@@ -9,7 +9,7 @@ const ExtensionUpdateControllerStateContext = createContext<ExtensionUpdateContr
 )
 
 const ExtensionUpdateControllerStateProvider: React.FC<any> = ({ children }) => {
-  const controller = 'extensionUpdate'
+  const controller = 'ExtensionUpdateController'
   const state = useControllerState(controller)
   const { dispatch } = useBackgroundService()
 
