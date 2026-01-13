@@ -9,7 +9,7 @@ import useBackgroundService from '@web/hooks/useBackgroundService'
 const SignAccountOpControllerStateContext = createContext<ISignAccountOpController | null>(null)
 
 const SignAccountOpControllerStateProvider: React.FC<any> = ({ children }) => {
-  const controller = 'signAccountOp'
+  const controller = 'SignAccountOpController'
   const [state, setState] = useState<ISignAccountOpController | null>(null)
   const { dispatch } = useBackgroundService()
 
@@ -26,12 +26,12 @@ const SignAccountOpControllerStateProvider: React.FC<any> = ({ children }) => {
       }
     }
 
-    eventBus.addEventListener('signAccountOp', onUpdate)
+    eventBus.addEventListener(controller, onUpdate)
 
-    return () => eventBus.removeEventListener('signAccountOp', onUpdate)
+    return () => eventBus.removeEventListener(controller, onUpdate)
   }, [])
 
-  const memoizedState = useDeepMemo(state, 'signAccountOp')
+  const memoizedState = useDeepMemo(state, controller)
 
   return (
     <SignAccountOpControllerStateContext.Provider value={memoizedState}>

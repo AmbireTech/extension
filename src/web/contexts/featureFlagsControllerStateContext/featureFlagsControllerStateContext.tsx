@@ -10,7 +10,7 @@ const FeatureFlagsControllerStateContext = createContext<IFeatureFlagsController
   {} as IFeatureFlagsController
 )
 
-const CONTROLLER_NAME = 'featureFlags'
+const CONTROLLER_NAME = 'FeatureFlagsController'
 const FeatureFlagsControllerStateProvider: React.FC<any> = ({ children }) => {
   const state = useControllerState(CONTROLLER_NAME)
   const { dispatch } = useBackgroundService()

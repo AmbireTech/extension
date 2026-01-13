@@ -8,7 +8,7 @@ import usePrevious from '@common/hooks/usePrevious'
 import DURATIONS from './durations'
 
 export type AnimationValues = {
-  property: keyof ViewStyle
+  property: keyof ViewStyle | string
   from: number | ColorValue
   to: number | ColorValue
   duration?: number

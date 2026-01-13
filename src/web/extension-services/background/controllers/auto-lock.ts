@@ -1,6 +1,7 @@
 import i18n from 'i18next'
 
 import EventEmitter from '@ambire-common/controllers/eventEmitter/eventEmitter'
+import { IEventEmitterRegistryController } from '@ambire-common/interfaces/eventEmitter'
 import { browser } from '@web/constants/browserapi'
 import { storage } from '@web/extension-services/background/webapi/storage'
 
@@ -43,8 +44,8 @@ export class AutoLockController extends EventEmitter {
 
   #onAutoLock: () => void
 
-  constructor(onAutoLock: () => void) {
-    super()
+  constructor(eventEmitterRegistry: IEventEmitterRegistryController, onAutoLock: () => void) {
+    super(eventEmitterRegistry)
     this.#onAutoLock = onAutoLock
     this.#init()
   }

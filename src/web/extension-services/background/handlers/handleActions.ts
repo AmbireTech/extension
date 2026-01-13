@@ -3,6 +3,7 @@
 /* eslint-disable @typescript-eslint/return-await */
 import { BIP44_STANDARD_DERIVATION_TEMPLATE } from '@ambire-common/consts/derivation'
 import { MainController } from '@ambire-common/controllers/main/main'
+import { IEventEmitterRegistryController } from '@ambire-common/interfaces/eventEmitter'
 import { SwapAndBridgeRequest } from '@ambire-common/interfaces/userRequest'
 import { KeyIterator } from '@ambire-common/libs/keyIterator/keyIterator'
 import wait from '@ambire-common/utils/wait'
@@ -11,7 +12,6 @@ import { Action } from '@web/extension-services/background/actions'
 import AutoLockController from '@web/extension-services/background/controllers/auto-lock'
 import { ExtensionUpdateController } from '@web/extension-services/background/controllers/extension-update'
 import { WalletStateController } from '@web/extension-services/background/controllers/wallet-state'
-import { controllersNestedInMainMapping } from '@web/extension-services/background/types'
 import { Port, PortMessenger } from '@web/extension-services/messengers'
 import LatticeKeyIterator from '@web/modules/hardware-wallet/libs/latticeKeyIterator'
 import LedgerKeyIterator from '@web/modules/hardware-wallet/libs/ledgerKeyIterator'
@@ -24,6 +24,7 @@ export const handleActions = async (
   {
     pm,
     port,
+    eventEmitterRegistry,
     mainCtrl,
     walletStateCtrl,
     autoLockCtrl,
@@ -32,6 +33,7 @@ export const handleActions = async (
   }: {
     pm: PortMessenger
     port: Port
+    eventEmitterRegistry: IEventEmitterRegistryController
     mainCtrl: MainController
     walletStateCtrl: WalletStateController
     autoLockCtrl: AutoLockController
@@ -54,34 +56,9 @@ export const handleActions = async (
       break
     }
     case 'INIT_CONTROLLER_STATE': {
-      if (params.controller === ('main' as any)) {
-        const mainCtrlState: any = { ...mainCtrl.toJSON() }
-        // We are removing the state of the nested controllers in main to avoid the CPU-intensive task of parsing + stringifying.
-        // We should access the state of the nested controllers directly from their context instead of accessing them through the main ctrl state on the FE.
-        // Keep in mind: if we just spread `ctrl` instead of calling `ctrl.toJSON()`, the getters won't be included.
-        Object.keys(controllersNestedInMainMapping).forEach((nestedCtrlName) => {
-          delete mainCtrlState[nestedCtrlName]
-        })
-        pm.send('> ui', { method: 'main', params: mainCtrlState })
-      } else if (params.controller === ('walletState' as any)) {
-        pm.send('> ui', { method: 'walletState', params: walletStateCtrl })
-      } else if (params.controller === ('autoLock' as any)) {
-        pm.send('> ui', { method: 'autoLock', params: autoLockCtrl })
-      } else if (params.controller === ('extensionUpdate' as any)) {
-        pm.send('> ui', { method: 'extensionUpdate', params: extensionUpdateCtrl })
-      } else if (params.controller === 'signAccountOp') {
-        if (mainCtrl.requests.currentUserRequest?.kind === 'calls') {
-          pm.send('> ui', {
-            method: params.controller,
-            params: mainCtrl.requests.currentUserRequest.signAccountOp
-          })
-        }
-      } else {
-        pm.send('> ui', {
-          method: params.controller,
-          params: (mainCtrl as any)[params.controller]
-        })
-      }
+      const ctrl = eventEmitterRegistry.values().find((c) => c.name === params.controller)
+      if (ctrl) pm.send('> ui', { method: params.controller, params: ctrl })
+
       break
     }
     case 'MAIN_CONTROLLER_LOCK':
