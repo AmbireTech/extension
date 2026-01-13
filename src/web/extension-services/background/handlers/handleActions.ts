@@ -380,7 +380,7 @@ export const handleActions = async (
     case 'TRANSFER_CONTROLLER_RESET_FORM':
       return mainCtrl.transfer.resetForm()
     case 'TRANSFER_CONTROLLER_UNLOAD_SCREEN':
-      return mainCtrl.transfer.unloadScreen(false)
+      return mainCtrl.transfer.unloadScreen(params?.forceUnload)
     case 'TRANSFER_CONTROLLER_DESTROY_LATEST_BROADCASTED_ACCOUNT_OP':
       return mainCtrl.transfer.destroyLatestBroadcastedAccountOp()
     case 'TRANSFER_CONTROLLER_HAS_USER_PROCEEDED':
