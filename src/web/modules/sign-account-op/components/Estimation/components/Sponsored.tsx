@@ -40,7 +40,7 @@ const Sponsored = ({ sponsor }: { sponsor?: Sponsor }) => {
               {sponsor.name}
             </Text>
             <Text fontSize={16} appearance="secondaryText">
-              {t('is 🪄 sponsoring 🪄 this transaction')}
+              {t('is sponsoring this transaction')}
             </Text>
           </View>
         </View>
@@ -51,7 +51,7 @@ const Sponsored = ({ sponsor }: { sponsor?: Sponsor }) => {
               {t("The dapp you're connected to")}
             </Text>
             <Text fontSize={16} appearance="secondaryText">
-              {t('is 🪄 sponsoring 🪄 this transaction')}
+              {t('is sponsoring this transaction')}
             </Text>
           </View>
         </View>

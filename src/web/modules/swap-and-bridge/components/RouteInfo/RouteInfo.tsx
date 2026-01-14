@@ -64,7 +64,7 @@ const RouteInfo: FC<Props> = ({
         <View style={[flexbox.directionRow, flexbox.alignCenter, { maxWidth: '100%' }]}>
           <WarningIcon width={14} height={14} color={theme.warningDecorative} />
           <Text fontSize={14} weight="medium" appearance="warningText" style={spacings.mlMi}>
-            {swapSignErrors[0].title}
+            {swapSignErrors[0]!.title}
           </Text>
         </View>
       )}
@@ -112,16 +112,18 @@ const RouteInfo: FC<Props> = ({
                   <View style={[flexbox.directionRow, flexbox.alignCenter]}>
                     <View style={[flexbox.directionRow, flexbox.alignCenter]}>
                       <Text
-                        appearance={quote?.withConvenienceFee || isOG ? 'tertiaryText' : 'primary'}
+                        appearance={
+                          quote?.selectedRoute?.withConvenienceFee ? 'tertiaryText' : 'primary'
+                        }
                         fontSize={14}
                         weight="medium"
                       >
                         {t('Ambire fee: {{fee}}{{ogText}}', {
-                          fee: `${quote?.withConvenienceFee ? FEE_PERCENT : 0}%`,
+                          fee: `${quote?.selectedRoute?.withConvenienceFee ? FEE_PERCENT : 0}%`,
                           ogText: isOG ? " - you're an OG 🎉" : ''
                         })}
                       </Text>
-                      {!quote?.withConvenienceFee && !isOG && (
+                      {!quote?.selectedRoute?.withConvenienceFee && (
                         <>
                           <InfoIcon
                             width={16}
