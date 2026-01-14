@@ -21,8 +21,6 @@ const DAppConnectBody: FC<{
   responsiveSizeMultiplier: number
   securityCheck: BlacklistedStatus
 }> = ({ securityCheck, responsiveSizeMultiplier }) => {
-  // TODO: only for testing, remove it
-  // securityCheck = 'BLACKLISTED'
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
 
@@ -132,17 +130,19 @@ const DAppConnectBody: FC<{
         )}
       </View>
       <DAppPermissions responsiveSizeMultiplier={responsiveSizeMultiplier} />
-      <Text
-        style={{
-          opacity: 0.64,
-          marginHorizontal: 'auto'
-        }}
-        fontSize={14 * responsiveSizeMultiplier}
-        weight="medium"
-        appearance="tertiaryText"
-      >
-        {t('Only connect with sites you trust')}
-      </Text>
+      {!(securityCheck === 'BLACKLISTED' || securityCheck === 'FAILED_TO_GET') && (
+        <Text
+          style={{
+            opacity: 0.64,
+            marginHorizontal: 'auto'
+          }}
+          fontSize={14 * responsiveSizeMultiplier}
+          weight="medium"
+          appearance="tertiaryText"
+        >
+          {t('Only connect with sites you trust')}
+        </Text>
+      )}
     </View>
   )
 }
