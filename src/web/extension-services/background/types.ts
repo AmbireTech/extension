@@ -29,41 +29,41 @@ import { ExtensionUpdateController } from '@web/extension-services/background/co
 import { WalletStateController } from '@web/extension-services/background/controllers/wallet-state'
 
 export const controllersNestedInMainMapping = {
-  storage: StorageController,
-  providers: ProvidersController,
-  networks: NetworksController,
-  accounts: AccountsController,
-  selectedAccount: SelectedAccountController,
-  accountPicker: AccountPickerController,
-  keystore: KeystoreController,
-  signMessage: SignMessageController,
-  portfolio: PortfolioController,
-  activity: ActivityController,
-  emailVault: EmailVaultController,
-  signAccountOp: SignAccountOpController,
-  transfer: TransferController,
-  phishing: PhishingController,
-  dapps: DappsController,
-  requests: RequestsController,
-  addressBook: AddressBookController,
-  domains: DomainsController,
-  contractNames: ContractNamesController,
-  invite: InviteController,
-  swapAndBridge: SwapAndBridgeController,
-  featureFlags: FeatureFlagsController,
-  banner: BannerController,
-  ui: UiController,
-  autoLogin: AutoLoginController
+  StorageController,
+  ProvidersController,
+  NetworksController,
+  AccountsController,
+  SelectedAccountController,
+  AccountPickerController,
+  KeystoreController,
+  SignMessageController,
+  PortfolioController,
+  ActivityController,
+  EmailVaultController,
+  SignAccountOpController,
+  TransferController,
+  PhishingController,
+  DappsController,
+  RequestsController,
+  AddressBookController,
+  DomainsController,
+  ContractNamesController,
+  InviteController,
+  SwapAndBridgeController,
+  FeatureFlagsController,
+  BannerController,
+  UiController,
+  AutoLoginController
 
   // Add the rest of the controllers that are part of the main controller:
   // - key is the name of the controller
   // - value is the type of the controller
 }
 export const controllersMapping = {
-  main: MainController,
-  walletState: WalletStateController,
-  autoLock: AutoLockController,
-  extensionUpdate: ExtensionUpdateController,
+  MainController,
+  WalletStateController,
+  AutoLockController,
+  ExtensionUpdateController,
   ...controllersNestedInMainMapping
 }
 

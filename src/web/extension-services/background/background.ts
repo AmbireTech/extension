@@ -11,13 +11,13 @@ import { nanoid } from 'nanoid'
 import EmittableError from '@ambire-common/classes/EmittableError'
 import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
 import { ProviderError } from '@ambire-common/classes/ProviderError'
-import EventEmitter from '@ambire-common/controllers/eventEmitter/eventEmitter'
+import { EventEmitterRegistryController } from '@ambire-common/controllers/eventEmitterRegistry/eventEmitterRegistry'
 import { MainController } from '@ambire-common/controllers/main/main'
 import { ErrorRef } from '@ambire-common/interfaces/eventEmitter'
 import { Fetch } from '@ambire-common/interfaces/fetch'
-import { IRequestsController } from '@ambire-common/interfaces/requests'
+import { IKeystoreController } from '@ambire-common/interfaces/keystore'
+import { ISelectedAccountController } from '@ambire-common/interfaces/selectedAccount'
 import { UiManager } from '@ambire-common/interfaces/ui'
-import { CallsUserRequest } from '@ambire-common/interfaces/userRequest'
 import { getAccountKeysCount } from '@ambire-common/libs/keys/keys'
 import { KeystoreSigner } from '@ambire-common/libs/keystoreSigner/keystoreSigner'
 import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
@@ -92,6 +92,7 @@ function stateDebug(
   // Instead of logging with `logInfoWithPrefix` in production, we rely on EventEmitter.emitError() to log individual errors
   // (instead of the entire state) to the user console, which aids in debugging without significant performance costs.
   if (logLevel === LOG_LEVELS.PROD) return
+  if (!stateToLog) return
 
   const args = parse(stringify(stateToLog))
   let ctrlState = args
@@ -426,7 +427,70 @@ const init = async () => {
     return fetch(url, initWithCustomHeaders)
   }
 
+  const eventEmitterRegistry = new EventEmitterRegistryController(() => {
+    eventEmitterRegistry.values().forEach((ctrl) => {
+      const hasOnUpdateInitialized = ctrl.onUpdateIds.includes('background')
+      if (!hasOnUpdateInitialized) {
+        ctrl.onUpdate(async (forceEmit) => {
+          const res = debounceFrontEndEventUpdatesOnSameTick(
+            ctrl.name,
+            ctrl,
+            mainCtrl || ctrl,
+            forceEmit
+          )
+          if (res === 'DEBOUNCED') return
+
+          if (ctrl.name === 'KeystoreController') {
+            const keystoreCtrl = ctrl as IKeystoreController
+            if (keystoreCtrl.isReadyToStoreKeys) {
+              setBackgroundUserContext({
+                id: getExtensionInstanceId(keystoreCtrl.keyStoreUid, mainCtrl.invite.verifiedCode)
+              })
+              if (backgroundState.isUnlocked && !keystoreCtrl.isUnlocked) {
+                await mainCtrl.dapps.broadcastDappSessionEvent('lock')
+              } else if (!backgroundState.isUnlocked && keystoreCtrl.isUnlocked) {
+                autoLockCtrl.setLastActiveTime()
+                await mainCtrl.dapps.broadcastDappSessionEvent('unlock', [
+                  mainCtrl.selectedAccount.account?.addr
+                ])
+              }
+              backgroundState.isUnlocked = keystoreCtrl.isUnlocked
+            }
+          }
+
+          if (ctrl.name === 'SelectedAccountController') {
+            const selectedAccountCtrl = ctrl as ISelectedAccountController
+
+            if (selectedAccountCtrl?.account?.addr) {
+              setBackgroundExtraContext('account', selectedAccountCtrl.account.addr)
+            }
+          }
+        }, 'background')
+      }
+    })
+
+    //
+    // Add onError listeners
+    //
+
+    eventEmitterRegistry.values().forEach((ctrl) => {
+      const hasOnErrorInitialized = ctrl.onErrorIds.includes('background')
+
+      if (!hasOnErrorInitialized) {
+        ctrl.onError((error) => {
+          stateDebug(walletStateCtrl.logLevel, ctrl, ctrl.name, 'error')
+          pm.send('> ui-error', {
+            method: ctrl.name,
+            params: { errors: ctrl.emittedErrors, controller: mainCtrl.name }
+          })
+          captureBackgroundExceptionFromControllerError(error, ctrl.name)
+        }, 'background')
+      }
+    })
+  })
+
   mainCtrl = new MainController({
+    eventEmitterRegistry,
     appVersion: APP_VERSION,
     platform,
     storageAPI: storage,
@@ -491,13 +555,14 @@ const init = async () => {
   })
 
   walletStateCtrl = new WalletStateController({
+    eventEmitterRegistry,
     onLogLevelUpdateCallback: async (nextLogLevel: LOG_LEVELS) => {
       await mainCtrl.dapps.broadcastDappSessionEvent('logLevelUpdate', nextLogLevel)
     }
   })
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const badgesCtrl = new BadgesController(mainCtrl, walletStateCtrl)
-  autoLockCtrl = new AutoLockController(() => {
+  autoLockCtrl = new AutoLockController(eventEmitterRegistry, () => {
     // Prevents sending multiple notifications if the event is triggered multiple times
     if (mainCtrl.keystore.isUnlocked) {
       notificationManager
@@ -511,7 +576,7 @@ const init = async () => {
     }
     mainCtrl.lock()
   })
-  const extensionUpdateCtrl = new ExtensionUpdateController()
+  const extensionUpdateCtrl = new ExtensionUpdateController(eventEmitterRegistry)
 
   function debounceFrontEndEventUpdatesOnSameTick(
     ctrlName: string,
@@ -522,7 +587,7 @@ const init = async () => {
     const sendUpdate = () => {
       let stateToSendToFE
 
-      if (ctrlName === 'main') {
+      if (ctrlName === 'MainController') {
         const state = { ...ctrl.toJSON() }
         // We are removing the state of the nested controllers in main to avoid the CPU-intensive task of parsing + stringifying.
         // We should access the state of the nested controllers directly from their context instead of accessing them through the main ctrl state on the FE.
@@ -537,7 +602,16 @@ const init = async () => {
       }
 
       pm.send('> ui', { method: ctrlName, params: stateToSendToFE, forceEmit })
-      stateDebug(walletStateCtrl.logLevel, stateToLog, ctrlName, 'update')
+
+      if (
+        ctrlName === 'WalletStateController' ||
+        ctrlName === 'AutoLockController' ||
+        ctrlName === 'ExtensionUpdateController'
+      ) {
+        stateDebug(walletStateCtrl.logLevel, ctrl, ctrlName, 'update')
+      } else {
+        stateDebug(walletStateCtrl.logLevel, stateToLog, ctrlName, 'update')
+      }
     }
 
     /**
@@ -566,204 +640,6 @@ const init = async () => {
     return 'EMITTED'
   }
 
-  /**
-    Initialize the onUpdate callback for the MainController. Once the mainCtrl load is ready,
-    initialize the rest of the onUpdate callbacks for the nested controllers of the main controller.
-   */
-  mainCtrl.onUpdate((mainCtrlForceEmit) => {
-    const res = debounceFrontEndEventUpdatesOnSameTick(
-      'main',
-      mainCtrl,
-      mainCtrl,
-      mainCtrlForceEmit
-    )
-    if (res === 'DEBOUNCED') return
-
-    Object.keys(controllersNestedInMainMapping).forEach((ctrlName) => {
-      const controller = (mainCtrl as any)[ctrlName]
-      if (Array.isArray(controller?.onUpdateIds)) {
-        /**
-         * We have the capability to incorporate multiple onUpdate callbacks for a specific controller, allowing multiple listeners for updates in different files.
-         * However, in the context of this background service, we only need a single instance of the onUpdate callback for each controller.
-         */
-        const hasOnUpdateInitialized = controller.onUpdateIds.includes('background')
-
-        if (!hasOnUpdateInitialized) {
-          controller?.onUpdate(async (forceEmit?: boolean) => {
-            const res = debounceFrontEndEventUpdatesOnSameTick(
-              ctrlName,
-              controller,
-              mainCtrl,
-              forceEmit
-            )
-            if (res === 'DEBOUNCED') return
-
-            if (ctrlName === 'requests') {
-              if ((controller as IRequestsController).currentUserRequest?.kind === 'calls') {
-                const signAccountOpCtrl = (
-                  (controller as IRequestsController)?.currentUserRequest as CallsUserRequest
-                )?.signAccountOp
-                if (signAccountOpCtrl) {
-                  const hasOnUpdateInitialized =
-                    signAccountOpCtrl.onUpdateIds.includes('background')
-                  if (!hasOnUpdateInitialized) {
-                    signAccountOpCtrl.onUpdate(async (signAccountOpCtrlForceEmit) => {
-                      debounceFrontEndEventUpdatesOnSameTick(
-                        'signAccountOp',
-                        signAccountOpCtrl,
-                        mainCtrl,
-                        signAccountOpCtrlForceEmit
-                      )
-                    }, 'background')
-                  }
-                }
-              }
-              try {
-                setupControllerErrorListeners(mainCtrl.requests, ['requests'])
-              } catch (error) {
-                console.error('Failed to setup requestsControllerErrorListeners')
-              }
-            }
-
-            if (ctrlName === 'keystore') {
-              if (controller.isReadyToStoreKeys) {
-                setBackgroundUserContext({
-                  id: getExtensionInstanceId(controller.keyStoreUid, mainCtrl.invite.verifiedCode)
-                })
-                if (backgroundState.isUnlocked && !controller.isUnlocked) {
-                  await mainCtrl.dapps.broadcastDappSessionEvent('lock')
-                } else if (!backgroundState.isUnlocked && controller.isUnlocked) {
-                  autoLockCtrl.setLastActiveTime()
-                  await mainCtrl.dapps.broadcastDappSessionEvent('unlock', [
-                    mainCtrl.selectedAccount.account?.addr
-                  ])
-                }
-                backgroundState.isUnlocked = controller.isUnlocked
-              }
-            }
-
-            if (ctrlName === 'selectedAccount') {
-              if (controller?.account?.addr) {
-                setBackgroundExtraContext('account', controller.account.addr)
-              }
-            }
-          }, 'background')
-        }
-      }
-    })
-    try {
-      setupControllerErrorListeners(mainCtrl, ['main'])
-    } catch (error) {
-      console.error('Failed to setup mainControllerErrorListeners')
-    }
-  }, 'background')
-
-  function setupControllerErrorListeners(ctrl: any, ctrlNamePath: any[] = []) {
-    if (!ctrl || typeof ctrl !== 'object') return
-
-    if (ctrl instanceof EventEmitter) {
-      const ctrlName = ctrlNamePath.join(' -> ')
-      const hasOnErrorInitialized = ctrl.onErrorIds.includes('background')
-
-      if (!hasOnErrorInitialized) {
-        ctrl.onError((error) => {
-          stateDebug(walletStateCtrl.logLevel, ctrl, ctrlName, 'error')
-          pm.send('> ui-error', {
-            method: ctrlName,
-            params: { errors: ctrl.emittedErrors, controller: ctrlName }
-          })
-          captureBackgroundExceptionFromControllerError(error, ctrlName)
-        }, 'background')
-      }
-    }
-
-    if (ctrlNamePath[0] === 'requests') {
-      if ((ctrl as IRequestsController).currentUserRequest?.kind === 'calls') {
-        const signAccountOpCtrl = (
-          (ctrl as IRequestsController).currentUserRequest as CallsUserRequest
-        )?.signAccountOp
-        const hasOnErrorInitialized = signAccountOpCtrl.onErrorIds.includes('background')
-        if (!hasOnErrorInitialized) {
-          signAccountOpCtrl.onError(() => {
-            const signAccountOpCtrlName = 'main -> requests -> currentUserRequest -> signAccountOp'
-            stateDebug(walletStateCtrl.logLevel, signAccountOpCtrl, signAccountOpCtrlName, 'error')
-            pm.send('> ui-error', {
-              method: signAccountOpCtrlName,
-              params: {
-                errors: signAccountOpCtrl.emittedErrors,
-                controller: signAccountOpCtrlName
-              }
-            })
-          }, 'background')
-        }
-      }
-    }
-
-    function hasEvents(prop: any) {
-      return prop && typeof prop === 'object' && prop instanceof EventEmitter
-    }
-
-    function hasChildControllers(prop: any) {
-      return (
-        prop &&
-        typeof prop === 'object' &&
-        Object.values(prop).some((p) => p && typeof p === 'object' && p instanceof EventEmitter)
-      )
-    }
-
-    for (const key of Object.keys(ctrl)) {
-      if (hasEvents(ctrl[key]) || hasChildControllers(ctrl[key])) {
-        setupControllerErrorListeners(ctrl[key], [...ctrlNamePath, key])
-      }
-    }
-  }
-
-  // Broadcast onUpdate for the wallet state controller
-  walletStateCtrl.onUpdate((forceEmit) => {
-    debounceFrontEndEventUpdatesOnSameTick(
-      'walletState',
-      walletStateCtrl,
-      walletStateCtrl,
-      forceEmit
-    )
-  })
-  walletStateCtrl.onError((error) => {
-    pm.send('> ui-error', {
-      method: 'walletState',
-      params: { errors: walletStateCtrl.emittedErrors, controller: 'walletState' }
-    })
-    captureBackgroundExceptionFromControllerError(error, 'walletState')
-  })
-
-  // Broadcast onUpdate for the auto-lock controller
-  autoLockCtrl.onUpdate((forceEmit) => {
-    debounceFrontEndEventUpdatesOnSameTick('autoLock', autoLockCtrl, autoLockCtrl, forceEmit)
-  })
-  autoLockCtrl.onError((error) => {
-    pm.send('> ui-error', {
-      method: 'autoLock',
-      params: { errors: autoLockCtrl.emittedErrors, controller: 'autoLock' }
-    })
-    captureBackgroundExceptionFromControllerError(error, 'autoLock')
-  })
-
-  // Broadcast onUpdate for the extension-update controller
-  extensionUpdateCtrl.onUpdate((forceEmit) => {
-    debounceFrontEndEventUpdatesOnSameTick(
-      'extensionUpdate',
-      extensionUpdateCtrl,
-      extensionUpdateCtrl,
-      forceEmit
-    )
-  })
-  extensionUpdateCtrl.onError((error) => {
-    pm.send('> ui-error', {
-      method: 'extensionUpdate',
-      params: { errors: extensionUpdateCtrl.emittedErrors, controller: 'extensionUpdate' }
-    })
-    captureBackgroundExceptionFromControllerError(error, 'extensionUpdate')
-  })
-
   // listen for messages from UI
   browser.runtime.onConnect.addListener(async (port: Port) => {
     const [name, id] = port.name.split(':') as [Port['name'], Port['id']]
@@ -787,6 +663,7 @@ const init = async () => {
                 await handleActions(action, {
                   pm,
                   port,
+                  eventEmitterRegistry,
                   mainCtrl,
                   walletStateCtrl,
                   autoLockCtrl,
