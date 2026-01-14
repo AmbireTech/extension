@@ -70,7 +70,13 @@ const ReceiveModal: FC<Props> = ({ modalRef, handleClose }) => {
       />
       <View style={styles.content}>
         <View style={[spacings.mtMd, flexbox.alignCenter]}>
-          <Avatar size={40} pfp={pfp} address={account?.addr || ''} isSmart={!!account?.creation} />
+          <Avatar
+            size={40}
+            pfp={pfp}
+            address={account?.addr || ''}
+            isSmart={!!account?.creation}
+            style={spacings.pr0}
+          />
           <Text weight="semiBold" fontSize={14} style={spacings.mtMi}>
             {label}
           </Text>

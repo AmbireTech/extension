@@ -30,7 +30,7 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
     content: {
       backgroundColor:
         themeType === THEME_TYPES.DARK ? theme.secondaryBackground : theme.primaryBackground,
-      ...common.borderRadiusPrimary,
+      ...common.borderRadiusSecondary,
       width: '100%'
     },
     qrCodeContainer: { ...flexbox.alignCenter, ...spacings.mvMi },
