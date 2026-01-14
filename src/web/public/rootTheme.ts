@@ -1,3 +1,4 @@
+// run before React mounts and before paint, so the page doesn’t flash white → dark
 ;(function () {
   try {
     const stored = localStorage.getItem('fallbackSelectedThemeType')
