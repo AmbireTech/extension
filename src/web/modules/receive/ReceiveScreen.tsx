@@ -29,7 +29,7 @@ import getStyles from './styles'
 
 const { isPopup } = getUiType()
 
-const ReceiveModal: FC = () => {
+const ReceiveScreen: FC = () => {
   const { account } = useSelectedAccountControllerState()
   const { isLoading: isDomainResolving, ens } = useReverseLookup({ address: account?.addr || '' })
   const { networks } = useNetworksControllerState()
@@ -192,4 +192,4 @@ const ReceiveModal: FC = () => {
   )
 }
 
-export default React.memo(ReceiveModal)
+export default React.memo(ReceiveScreen)
