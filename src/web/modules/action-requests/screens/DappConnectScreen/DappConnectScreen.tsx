@@ -26,8 +26,6 @@ const DappConnectScreen = () => {
 
   const [isAuthorizing, setIsAuthorizing] = useState(false)
   const { responsiveSizeMultiplier } = useResponsiveActionWindow()
-  // TODO: remove this
-  // const [confirmedRiskCheckbox, setConfirmedRiskCheckbox] = useState(false)
   const { state: dappsState } = useDappsControllerState()
 
   const dappToConnect = useMemo(() => dappsState.dappToConnect || null, [dappsState.dappToConnect])
@@ -66,7 +64,7 @@ const DappConnectScreen = () => {
   const resolveButtonText = useMemo(() => {
     if (!dappToConnect || dappToConnect.blacklisted === 'LOADING') return t('Loading...')
     if (isAuthorizing) return t('Connecting...')
-    if (dappToConnect.blacklisted === 'BLACKLISTED') return t('Continue anyway')
+    if (dappToConnect.blacklisted === 'BLACKLISTED') return t('Hold to continue anyway')
 
     return shouldHoldToProceed ? t('Hold to connect') : t('Connect')
   }, [dappToConnect, t, isAuthorizing, shouldHoldToProceed])
@@ -85,8 +83,7 @@ const DappConnectScreen = () => {
       footer={
         <ActionFooter
           onReject={handleDenyButtonPress}
-          // TODO: fix types
-          onResolve={!shouldHoldToProceed ? handleAuthorizeButtonPress : undefined}
+          onResolve={!shouldHoldToProceed ? handleAuthorizeButtonPress : () => {}}
           resolveNode={
             shouldHoldToProceed ? (
               <HoldToProceedButton
@@ -94,9 +91,10 @@ const DappConnectScreen = () => {
                 onHoldComplete={handleAuthorizeButtonPress}
                 holdDuration={1600}
                 text={resolveButtonText}
-                disabled={
-                  isAuthorizing || (!!dappToConnect && dappToConnect?.blacklisted === 'BLACKLISTED')
-                }
+                buttonType={((): 'error' | 'warning' => {
+                  if (!!dappToConnect && dappToConnect.blacklisted === 'BLACKLISTED') return 'error'
+                  return 'warning'
+                })()}
               />
             ) : undefined
           }
@@ -106,17 +104,7 @@ const DappConnectScreen = () => {
               ? isAuthorizing || (!!dappToConnect && dappToConnect.blacklisted === 'LOADING')
               : undefined
           }
-          // TODO: fix types
-          resolveType={
-            !shouldHoldToProceed
-              ? (() => {
-                  if (!dappToConnect) return 'primary'
-                  // if (dappToConnect.blacklisted === 'BLACKLISTED') return 'error'
-                  // if (dappToConnect.blacklisted === 'FAILED_TO_GET') return 'warning'
-                  return 'primary'
-                })()
-              : undefined
-          }
+          resolveType={!shouldHoldToProceed ? 'primary' : undefined}
           rejectButtonText={t('Deny')}
           resolveButtonTestID={!shouldHoldToProceed ? 'dapp-connect-button' : undefined}
         />
