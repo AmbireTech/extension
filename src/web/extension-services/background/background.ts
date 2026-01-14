@@ -617,9 +617,10 @@ const init = async () => {
         // If it's main we have to log the main controller itself and not the data that is sent to the UI
         // as the latter is stripped from nested controllers' states.
         ctrlName === 'MainController' ||
-        (!logOnlyUpdatedState && ctrlName in controllersNestedInMainMapping)
+        // Log main if not configured otherwise, the controller is nested in main and main exists
+        (!logOnlyUpdatedState && ctrlName in controllersNestedInMainMapping && mainCtrl)
       ) {
-        stateToLog = mainCtrl || {}
+        stateToLog = mainCtrl as EventEmitter
       }
 
       stateDebug(walletStateCtrl.logLevel, stateToLog, ctrlName, 'update')
