@@ -11,6 +11,7 @@ import { nanoid } from 'nanoid'
 import EmittableError from '@ambire-common/classes/EmittableError'
 import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
 import { ProviderError } from '@ambire-common/classes/ProviderError'
+import EventEmitter from '@ambire-common/controllers/eventEmitter/eventEmitter'
 import { EventEmitterRegistryController } from '@ambire-common/controllers/eventEmitterRegistry/eventEmitterRegistry'
 import { MainController } from '@ambire-common/controllers/main/main'
 import { ErrorRef } from '@ambire-common/interfaces/eventEmitter'
@@ -94,14 +95,7 @@ function stateDebug(
   if (logLevel === LOG_LEVELS.PROD) return
   if (!stateToLog) return
 
-  const args = parse(stringify(stateToLog))
-  let ctrlState = args
-
-  if (ctrlName === 'main' || !Object.keys(controllersNestedInMainMapping).includes(ctrlName)) {
-    ctrlState = args
-  } else {
-    ctrlState = args[ctrlName] || {}
-  }
+  const clonedState = parse(stringify(stateToLog))
 
   const now = new Date()
   const timeWithMs = `${now.toLocaleTimeString('en-US', { hour12: false })}.${now
@@ -113,17 +107,15 @@ function stateDebug(
     type === 'error'
       ? `${ctrlName} ctrl emitted an error at ${timeWithMs}`
       : `${ctrlName} ctrl emitted an update at ${timeWithMs}`
-  const value =
-    BROWSER_EXTENSION_LOG_UPDATED_CONTROLLER_STATE_ONLY === 'true' ? ctrlState : { ...args }
 
   if (BROWSER_EXTENSION_MEMORY_INTENSIVE_LOGS === 'true' && isDev) {
-    logInfoWithPrefix(key, value)
+    logInfoWithPrefix(key, clonedState)
     return
   }
 
   debugLogs.unshift({
     key,
-    value
+    value: clonedState
   })
 
   if (debugLogs.length > 200) {
@@ -455,12 +447,7 @@ const init = async () => {
       const hasOnUpdateInitialized = ctrl.onUpdateIds.includes('background')
       if (!hasOnUpdateInitialized) {
         ctrl.onUpdate(async (forceEmit) => {
-          const res = debounceFrontEndEventUpdatesOnSameTick(
-            ctrl.name,
-            ctrl,
-            mainCtrl || ctrl,
-            forceEmit
-          )
+          const res = debounceFrontEndEventUpdatesOnSameTick(ctrl.name, ctrl, mainCtrl, forceEmit)
           if (res === 'DEBOUNCED') return
 
           if (ctrl.name === 'KeystoreController') {
@@ -603,38 +590,39 @@ const init = async () => {
 
   function debounceFrontEndEventUpdatesOnSameTick(
     ctrlName: string,
-    ctrl: any,
-    stateToLog: any,
+    ctrl: EventEmitter,
+    mainCtrl: EventEmitter | undefined,
     forceEmit?: boolean
   ): 'DEBOUNCED' | 'EMITTED' {
     const sendUpdate = () => {
-      let stateToSendToFE
+      // Controller updates
+      const stateToSendToFE = ctrl.toJSON()
 
       if (ctrlName === 'MainController') {
-        const state = { ...ctrl.toJSON() }
         // We are removing the state of the nested controllers in main to avoid the CPU-intensive task of parsing + stringifying.
         // We should access the state of the nested controllers directly from their context instead of accessing them through the main ctrl state on the FE.
         // Keep in mind: if we just spread `ctrl` instead of calling `ctrl.toJSON()`, the getters won't be included.
         Object.keys(controllersNestedInMainMapping).forEach((nestedCtrlName) => {
-          delete state[nestedCtrlName]
+          delete (stateToSendToFE as any)[nestedCtrlName]
         })
-
-        stateToSendToFE = state
-      } else {
-        stateToSendToFE = ctrl
       }
 
       pm.send('> ui', { method: ctrlName, params: stateToSendToFE, forceEmit })
 
+      // Debug logs
+      const logOnlyUpdatedState = BROWSER_EXTENSION_LOG_UPDATED_CONTROLLER_STATE_ONLY === 'true'
+      let stateToLog: object = stateToSendToFE
+
       if (
-        ctrlName === 'WalletStateController' ||
-        ctrlName === 'AutoLockController' ||
-        ctrlName === 'ExtensionUpdateController'
+        // If it's main we have to log the main controller itself and not the data that is sent to the UI
+        // as the latter is stripped from nested controllers' states.
+        ctrlName === 'MainController' ||
+        (!logOnlyUpdatedState && ctrlName in controllersNestedInMainMapping)
       ) {
-        stateDebug(walletStateCtrl.logLevel, ctrl, ctrlName, 'update')
-      } else {
-        stateDebug(walletStateCtrl.logLevel, stateToLog, ctrlName, 'update')
+        stateToLog = mainCtrl || {}
       }
+
+      stateDebug(walletStateCtrl.logLevel, stateToLog, ctrlName, 'update')
     }
 
     /**
