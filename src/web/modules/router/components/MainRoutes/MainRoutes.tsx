@@ -5,6 +5,7 @@ import { Route, Routes, useLocation } from 'react-router-dom'
 import NoConnectionScreen from '@common/modules/no-connection/screens/NoConnectionScreen'
 import routesConfig from '@common/modules/router/config/routesConfig'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
+import ReceiveModal from '@web/components/ReceiveModal'
 import { SignAccountOpControllerStateProvider } from '@web/contexts/signAccountOpControllerStateContext'
 import AccountPersonalizeScreen from '@web/modules/account-personalize/screens/AccountPersonalizeScreen'
 import AccountPickerScreen from '@web/modules/account-picker/screens/AccountPickerScreen'
@@ -181,6 +182,8 @@ const MainRoutes = () => {
 
           <Route path={WEB_ROUTES.menu} element={<NavMenu />} />
           <Route path={WEB_ROUTES.accountSelect} element={<AccountSelectScreen />} />
+          {/* TODO: Rename ReceiveModal to ReceiveScreen moved the file to src/web/screens/ReceiveScreen */}
+          <Route path={WEB_ROUTES.receive} element={<ReceiveModal />} />
           <Route path={WEB_ROUTES.apps} element={<DappCatalogScreen />} />
           <Route path={WEB_ROUTES.networks} element={<NetworksScreen />} />
           <Route path={WEB_ROUTES.rewards} element={<ExtensionRewardsScreen />} />
