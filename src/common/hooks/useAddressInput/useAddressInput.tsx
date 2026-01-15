@@ -15,7 +15,7 @@ interface Props {
   overwriteValidLabel?: string
   // Severity may be provided by callers (e.g. controller state). Accept
   // 'error'|'warning'|'info' so we can pass it through unchanged.
-  overwriteSeverity?: 'error' | 'warning' | 'info'
+  overwriteSeverity?: 'error' | 'warning' | 'info' | 'success'
   handleCacheResolvedDomain: (
     address: string,
     avatar: string | null,
@@ -103,10 +103,14 @@ const useAddressInput = ({
   )
 
   useEffect(() => {
-    const { isError, message: latestMessage } = validation
-    const { isError: debouncedIsError, message: debouncedMessage } = debouncedValidation
+    const { isError, message: latestMessage, severity } = validation
+    const {
+      isError: debouncedIsError,
+      message: debouncedMessage,
+      severity: debouncedSeverity
+    } = debouncedValidation
 
-    if (latestMessage === debouncedMessage) return
+    if (latestMessage === debouncedMessage && severity === debouncedSeverity) return
 
     const shouldDebounce =
       // Both validations are errors

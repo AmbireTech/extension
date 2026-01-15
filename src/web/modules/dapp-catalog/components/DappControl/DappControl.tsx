@@ -166,7 +166,7 @@ const DappControl = ({
               onPress={() => {
                 dispatch({
                   type: 'DAPPS_CONTROLLER_DISCONNECT_DAPP',
-                  params: dapp.id
+                  params: { id: dapp.id, url: dapp.url }
                 })
               }}
             >

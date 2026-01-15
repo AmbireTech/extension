@@ -4,11 +4,18 @@ import { flushSync } from 'react-dom'
 import { ISignAccountOpController } from '@ambire-common/interfaces/signAccountOp'
 import useDeepMemo from '@common/hooks/useDeepMemo'
 import eventBus from '@web/extension-services/event/eventBus'
+import useBackgroundService from '@web/hooks/useBackgroundService'
 
 const SignAccountOpControllerStateContext = createContext<ISignAccountOpController | null>(null)
 
 const SignAccountOpControllerStateProvider: React.FC<any> = ({ children }) => {
+  const controller = 'SignAccountOpController'
   const [state, setState] = useState<ISignAccountOpController | null>(null)
+  const { dispatch } = useBackgroundService()
+
+  useEffect(() => {
+    dispatch({ type: 'INIT_CONTROLLER_STATE', params: { controller } })
+  }, [dispatch])
 
   useEffect(() => {
     const onUpdate = (newState: ISignAccountOpController | null, forceEmit?: boolean) => {
@@ -19,12 +26,12 @@ const SignAccountOpControllerStateProvider: React.FC<any> = ({ children }) => {
       }
     }
 
-    eventBus.addEventListener('signAccountOp', onUpdate)
+    eventBus.addEventListener(controller, onUpdate)
 
-    return () => eventBus.removeEventListener('signAccountOp', onUpdate)
+    return () => eventBus.removeEventListener(controller, onUpdate)
   }, [])
 
-  const memoizedState = useDeepMemo(state, 'signAccountOp')
+  const memoizedState = useDeepMemo(state, controller)
 
   return (
     <SignAccountOpControllerStateContext.Provider value={memoizedState}>

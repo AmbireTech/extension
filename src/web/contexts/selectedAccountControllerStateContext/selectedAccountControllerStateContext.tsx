@@ -11,7 +11,7 @@ const SelectedAccountControllerStateContext = createContext<ISelectedAccountCont
 )
 
 const SelectedAccountControllerStateProvider: React.FC<any> = ({ children }) => {
-  const controller = 'selectedAccount'
+  const controller = 'SelectedAccountController'
   const state = useControllerState(controller)
   const { dispatch } = useBackgroundService()
   const mainState = useMainControllerState()

@@ -1,6 +1,6 @@
 import EventEmitter from '@ambire-common/controllers/eventEmitter/eventEmitter'
 import { Banner } from '@ambire-common/interfaces/banner'
-import { ErrorRef } from '@ambire-common/interfaces/eventEmitter'
+import { ErrorRef, IEventEmitterRegistryController } from '@ambire-common/interfaces/eventEmitter'
 import { isAmbireNext } from '@common/config/env'
 import { browser, isSafari } from '@web/constants/browserapi'
 import { logInfoWithPrefix } from '@web/utils/logger'
@@ -24,8 +24,8 @@ export class ExtensionUpdateController extends EventEmitter {
 
   #isUpdateAvailable: boolean = false
 
-  constructor() {
-    super()
+  constructor(eventEmitterRegistry: IEventEmitterRegistryController) {
+    super(eventEmitterRegistry)
     this.#updateAvailableHandler = this.#onUpdateAvailable.bind(this)
     this.#init()
   }

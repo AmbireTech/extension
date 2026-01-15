@@ -65,8 +65,12 @@ const DashboardBanner = ({
 
         case 'reject-accountOp':
           dispatch({
-            type: 'MAIN_CONTROLLER_REJECT_ACCOUNT_OP',
-            params: action.meta
+            type: 'REQUESTS_CONTROLLER_REJECT_USER_REQUEST',
+            params: {
+              err: action.meta.err,
+              id: action.meta.requestId,
+              options: { shouldOpenNextRequest: action.meta.shouldOpenNextAction }
+            }
           })
           break
 
