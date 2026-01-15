@@ -2,9 +2,7 @@ const ambireCommonConfig = require('./src/ambire-common/eslint.config.js')
 
 /** @type {import('eslint').Linter.FlatConfig[]} */
 module.exports = [
-  // Spread the ambire-common config array
   ...ambireCommonConfig,
-  // Add project-specific overrides
   {
     files: ['**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx'],
     languageOptions: {
