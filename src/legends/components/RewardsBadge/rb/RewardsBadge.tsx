@@ -1,4 +1,5 @@
-import React, { useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 
 import rewardsCoverImg from '@legends/common/assets/images/rewards-cover-image.png'
 import useAccountContext from '@legends/hooks/useAccountContext'
@@ -13,7 +14,7 @@ const RewardsBadge: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false)
   const cardRef = useRef<HTMLDivElement>(null)
   const { connectedAccount } = useAccountContext()
-
+  const [params] = useSearchParams()
   const { legends, legendsAcc } = useLegendsContext()
   const claimWalletCard = legends?.find((card) =>
     isMatchingPredefinedId(card.action, CARD_PREDEFINED_ID.claimRewards)
@@ -22,7 +23,9 @@ const RewardsBadge: React.FC = () => {
   const openClaimModal = () => setIsOpen(true)
   const closeClaimModal = () => setIsOpen(false)
   const amountToClaim = claimWalletCard?.meta?.availableToClaim || 0
-
+  useEffect(() => {
+    if (params.get('action') === 'claim') openClaimModal()
+  }, [params])
   if (!connectedAccount || !amountToClaim || connectedAccount !== legendsAcc) return null
 
   return (
