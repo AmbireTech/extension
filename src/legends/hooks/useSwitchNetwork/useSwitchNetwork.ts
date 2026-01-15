@@ -18,7 +18,7 @@ const useSwitchNetwork = () => {
       if (isAlreadyConnected) return
       await provider.request({
         method: 'wallet_switchEthereumChain',
-        params: [{ chainId: newChainId }]
+        params: [{ chainId: `0x${newChainId.toString(16)}` }]
       })
     } catch {
       addToast(ERROR_MESSAGES.networkSwitchFailed, { type: 'error' })

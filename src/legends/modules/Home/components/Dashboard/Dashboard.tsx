@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react'
 
-import { getValueFromKey, Icon, SECTIONS, Stat } from '@common/components/RewardsStat'
+import { formatScore, getValueFromKey, Icon, SECTIONS, Stat } from '@common/components/RewardsStat'
 import { faChevronDown } from '@fortawesome/free-solid-svg-icons/faChevronDown'
 import { faTrophy } from '@fortawesome/free-solid-svg-icons/faTrophy'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -33,13 +33,10 @@ const Dashboard = () => {
   }, [connectedAccount, season2LeaderboardData, userRewardsStats])
 
   const sections: Stat[] = SECTIONS.map((section) => {
-    let score
-    if (section.id === 'multiplier') {
-      score = userRewardsStats ? `${userRewardsStats[section.id]}x` : 0
-    } else {
-      score = userRewardsStats ? userRewardsStats[section.id].toFixed(0) : 0
-    }
-    let explanation
+    const score = userRewardsStats ? Math.floor(userRewardsStats[section.id]) : 0
+
+    let explanation = section.explanation
+
     if (section.id === 'multiplier') {
       explanation = `You receive 1.06X multiplier of your score for belonging to any of the following:
 - Have pledged to the Trustless manifesto (Soon)
@@ -54,9 +51,10 @@ const Dashboard = () => {
           : ''
       }Have at least one Ethereum transaction per week, all weeks during the season, except up to 2`
     }
+
     return {
       ...section,
-      explanation: explanation || section.explanation,
+      explanation,
       score,
       value: getValueFromKey(section.id, userRewardsStats)
     }
@@ -102,7 +100,7 @@ const Dashboard = () => {
                     >
                       <div className={styles.score}>
                         <div className={styles.scoreBadge}>
-                          <span className={styles.scoreText}>{score}</span>
+                          <span className={styles.scoreText}>{formatScore(id, score)}</span>
                         </div>
                       </div>
                       <div className={styles.criteria}>
