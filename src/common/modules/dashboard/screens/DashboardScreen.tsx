@@ -9,7 +9,6 @@ import PendingActionWindowModal from '@common/modules/dashboard/components/Pendi
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import GasTankModal from '@web/components/GasTankModal'
-import ReceiveModal from '@web/components/ReceiveModal'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import { getUiType } from '@web/utils/uiType'
 
@@ -24,7 +23,6 @@ export const OVERVIEW_CONTENT_MAX_HEIGHT = 120
 
 const DashboardScreen = () => {
   const { styles } = useTheme(getStyles)
-  const { ref: receiveModalRef, open: openReceiveModal, close: closeReceiveModal } = useModalize()
   const { ref: gasTankModalRef, open: openGasTankModal, close: closeGasTankModal } = useModalize()
   const lastOffsetY = useRef(0)
   const scrollUpStartedAt = useRef(0)
@@ -76,7 +74,6 @@ const DashboardScreen = () => {
 
   return (
     <>
-      <ReceiveModal modalRef={receiveModalRef} handleClose={closeReceiveModal} />
       <GasTankModal
         modalRef={gasTankModalRef}
         handleClose={closeGasTankModal}
@@ -88,7 +85,6 @@ const DashboardScreen = () => {
       <View style={styles.container}>
         <View style={[flexbox.flex1, spacings.ptSm]}>
           <DashboardOverview
-            openReceiveModal={openReceiveModal}
             openGasTankModal={openGasTankModal}
             animatedOverviewHeight={animatedOverviewHeight}
             dashboardOverviewSize={debouncedDashboardOverviewSize}

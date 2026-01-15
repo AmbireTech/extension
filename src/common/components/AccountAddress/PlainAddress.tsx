@@ -9,10 +9,11 @@ interface Props {
   address: string
   style?: any
   hideParentheses?: boolean
+  fontSize?: number
 }
 
-const PlainAddress: FC<Props> = ({ style, maxLength, address, hideParentheses }) => (
-  <Text fontSize={12} appearance="secondaryText" style={[spacings.mrMi, style]}>
+const PlainAddress: FC<Props> = ({ style, maxLength, address, hideParentheses, fontSize = 12 }) => (
+  <Text fontSize={fontSize} appearance="secondaryText" style={[spacings.mrMi, style]}>
     {hideParentheses ? '' : '('}
     {shortenAddress(address, maxLength)}
     {hideParentheses ? '' : ')'}
