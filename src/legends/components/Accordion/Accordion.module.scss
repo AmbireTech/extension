@@ -7,8 +7,7 @@
   padding: 1rem 2rem;
 
   margin-top: 1rem;
-  border: .0625rem solid rgba($neutral-600, 0.2);
-
+  border: 0.0625rem solid rgba($neutral-600, 0.2);
 
   .heading {
     .title {
@@ -21,9 +20,12 @@
       cursor: default;
     }
     display: flex;
+    cursor: pointer;
+    user-select: none;
+
     .chevronIcon {
       margin-left: auto;
-      transition: 0.2s max-height ease-in-out;
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       color: $secondaryText;
       width: 1rem;
       height: 1rem;
@@ -35,13 +37,20 @@
   }
   .dropdown {
     border-radius: $primaryBorderRadius;
-    max-height: 0;
+    display: grid;
+    grid-template-rows: 0fr;
     overflow: hidden;
-    transition: all 0.3s ease-in-out;
+    transition: grid-template-rows 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+      margin-top 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     color: $secondaryText;
+
+    & > * {
+      min-height: 0;
+    }
+
     &.open {
-      margin-top: .5rem;
-      max-height: 32rem;
+      margin-top: 0.5rem;
+      grid-template-rows: 1fr;
     }
   }
 }

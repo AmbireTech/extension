@@ -196,7 +196,6 @@
         }
       ]
     },
-
     {
       "@type": "FAQPage",
       "@id": "https://rewards.ambire.com/#faq",
@@ -230,6 +229,22 @@
         },
         {
           "@type": "Question",
+          "name": "Which tokens, networks, and protocols are eligible?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "To calculate user balance, we are using DeBank portfolio API for the following networks: Ethereum, Optimism, Base, Arbitrum, and BNB. Additional networks might be subsequently announced."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How is Swap & Bridge volume calculated?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "For Swap & Bridge volume, the amount swapped from the source chain is counted. For example, if you bridge $1,000 from Optimism to another supported network, this will count towards your Swap & Bridge volume. Bridging in the opposite direction does not count as eligible volume."
+          }
+        },
+        {
+          "@type": "Question",
           "name": "Can I use my existing account?",
           "acceptedAnswer": {
             "@type": "Answer",
@@ -241,7 +256,7 @@
           "name": "Can I participate with multiple accounts?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Yes, you can use more than one account. However, there is no incentive to split your balance ... That said, if any misuse or sybil-like behavior is detected, the Ambire team may take immediate action, including disqualifying accounts, adjusting score calculations, applying penalties, or other necessary measures. The team reserves the right to disqualify or penalize users for any reason."
+            "text": "Yes, you can use more than one account. However, there is no incentive to split your balance across multiple accounts in this season. That said, if any misuse or sybil-like behavior is detected, the Ambire team may take immediate action, including disqualifying accounts, adjusting score calculations, applying penalties, or other necessary measures. The team reserves the right to disqualify or penalize users for any reason."
           }
         },
         {
@@ -262,7 +277,6 @@
         }
       ]
     }
-
   ]
 }
 </script>
