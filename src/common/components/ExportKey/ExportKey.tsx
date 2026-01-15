@@ -11,6 +11,7 @@ import SmartAccountExport from '@common/components/ExportKey/SmartAccountExport'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useExtraEntropy from '@common/hooks/useExtraEntropy'
+import usePrevious from '@common/hooks/usePrevious'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
@@ -42,12 +43,22 @@ const ExportKey = ({
   const [salt, setSalt] = useState<string | null>(null)
   const [iv, setIv] = useState<string | null>(null)
   const [blurred, setBlurred] = useState<boolean>(true)
+  const prevBlurred = usePrevious(blurred)
+
   const { themeType } = useTheme()
   const {
     ref: sheetRefConfirmPassword,
     open: openConfirmPassword,
     close: closeConfirmPassword
   } = useModalize()
+
+  useEffect(() => {
+    if (!prevBlurred && !!blurred) {
+      setPrivateKey(null)
+      setSalt(null)
+      setIv(null)
+    }
+  }, [blurred, prevBlurred])
 
   const isExportingV2SA =
     isSmartAccount(account) && !isAmbireV1LinkedAccount(account?.creation?.factoryAddr)
