@@ -14,7 +14,7 @@ const RewardsBadge: React.FC = () => {
   const cardRef = useRef<HTMLDivElement>(null)
   const { connectedAccount } = useAccountContext()
 
-  const { legends } = useLegendsContext()
+  const { legends, legendsAcc } = useLegendsContext()
   const claimWalletCard = legends?.find((card) =>
     isMatchingPredefinedId(card.action, CARD_PREDEFINED_ID.claimRewards)
   )
@@ -22,7 +22,8 @@ const RewardsBadge: React.FC = () => {
   const openClaimModal = () => setIsOpen(true)
   const closeClaimModal = () => setIsOpen(false)
   const amountToClaim = claimWalletCard?.meta?.availableToClaim || 0
-  if (!connectedAccount || !amountToClaim) return null
+  console.log(connectedAccount, legendsAcc)
+  if (!connectedAccount || !amountToClaim || connectedAccount !== legendsAcc) return null
 
   return (
     <div className={styles.rewardsWrapper}>
