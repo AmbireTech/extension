@@ -1,0 +1,170 @@
+@import '@legends/styles/base.scss';
+
+@property --dna-pointer-x {
+  syntax: '<percentage>';
+  inherits: true;
+  initial-value: 10%;
+}
+
+@property --dna-pointer-y {
+  syntax: '<percentage>';
+  inherits: true;
+  initial-value: 10%;
+}
+
+@property --dna-angle-x {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 10deg;
+}
+
+@property --dna-angle-y {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 10deg;
+}
+
+.rewardsWrapper {
+  position: relative;
+  z-index: 3;
+  user-select: none;
+
+  @include breakpoint-down-from(tablet) {
+    margin-left: 0;
+  }
+}
+
+.rewardsBadgeWrapper {
+  border-radius: 1.25rem;
+  padding: 0.25rem;
+  max-width: 40rem;
+  width: fit-content;
+  // transform-style: preserve-3d;
+  overflow: hidden;
+  // transition: transform 0.2s;
+
+  /* Default fallback values */
+  --pointer-x: 50%;
+  --pointer-y: 50%;
+  --rotate-x: 0deg;
+  --rotate-y: 0deg;
+  --scale: 1;
+  --perspective: 0px;
+
+  transform: rotateX(var(--rotate-x)) rotateY(var(--rotate-y)) scale(var(--scale))
+    perspective(var(--perspective));
+
+  .rewardsBadge::after {
+    opacity: 1;
+  }
+
+  &.active {
+    cursor: pointer;
+  }
+}
+
+.rewardsBadge {
+  display: flex;
+  position: relative;
+  border-radius: 0.8125rem;
+
+  &:after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    border-radius: 1rem;
+    background-image: radial-gradient(
+      circle at var(--pointer-x) var(--pointer-y),
+      rgba(255, 255, 255, 0.05),
+      rgba(255, 255, 255, 0) 30%
+    );
+    // transition: opacity 0.2s ease;
+    opacity: 0;
+  }
+
+  background: linear-gradient(0deg, $neutral-700, $neutral-700),
+    linear-gradient(
+      95.63deg,
+      rgba(106, 111, 134, 0) 11.53%,
+      rgba(106, 111, 134, 0.2) 49.67%,
+      rgba(106, 111, 134, 0) 80.34%
+    );
+
+  padding-right: 1.375rem;
+
+  .rewardsTitle {
+    font-size: 1rem;
+    line-height: 1.5rem;
+    letter-spacing: 0;
+    color: $mainText;
+    font-weight: 400;
+    font-style: Regular;
+    leading-trim: CAP_HEIGHT;
+    line-height: 1.5rem;
+    letter-spacing: 0%;
+  }
+
+  .rewardsAmount {
+    font-weight: 400;
+    font-size: 2.25rem;
+    line-height: 2.75rem;
+    letter-spacing: 0;
+    color: #d7ff00;
+  }
+
+  .rewardsInfo {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    flex: 1;
+
+    .amountAndButtonRow {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      .claimButton {
+        width: 5.9375rem;
+        height: 1.875rem;
+        gap: 0.625rem;
+        border-radius: 0.5rem;
+
+        font-weight: 500;
+        font-style: Medium;
+        font-size: 7/8rem;
+
+        background: linear-gradient(81.82deg, #00d5ff 0%, #a25aff 90.89%);
+      }
+    }
+  }
+
+  .rewardsCoverImgWrapper {
+    position: relative;
+
+    .rewardsCoverImgDisabled {
+      opacity: 0.3;
+    }
+    .rewardsCoverImg {
+      width: 7.3125rem;
+      height: 100%;
+      align-self: end;
+    }
+
+    .lockIcon {
+      position: absolute;
+      top: 2.5rem;
+      left: 0;
+      left: 3rem;
+      transform: translateX(-50%);
+      path:first-child {
+        fill: $red-400;
+        stroke: $red-400;
+      }
+      path:nth-child(2) {
+        fill: $neutral-700;
+      }
+    }
+  }
+}
