@@ -29,7 +29,6 @@ import getStyles from './styles'
 const THRESHOLD_AMOUNT_TO_HIDE_BALANCE_DECIMALS = 10000
 
 interface Props {
-  openReceiveModal: () => void
   openGasTankModal: () => void
   animatedOverviewHeight: Animated.Value
   dashboardOverviewSize: {
@@ -44,7 +43,6 @@ interface Props {
 const BALANCE_HEIGHT = 38
 
 const DashboardOverview: FC<Props> = ({
-  openReceiveModal,
   openGasTankModal,
   animatedOverviewHeight,
   dashboardOverviewSize,
@@ -117,7 +115,7 @@ const DashboardOverview: FC<Props> = ({
             selectedAccount={account?.addr || null}
           />
           <View style={{ zIndex: 2 }}>
-            <DashboardHeader openReceiveModal={openReceiveModal} />
+            <DashboardHeader />
             <Animated.View
               style={{
                 ...styles.overview,
