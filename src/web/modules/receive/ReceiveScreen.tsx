@@ -23,11 +23,8 @@ import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWr
 import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
-import { getUiType } from '@web/utils/uiType'
 
 import getStyles from './styles'
-
-const { isPopup } = getUiType()
 
 const ReceiveScreen: FC = () => {
   const { account } = useSelectedAccountControllerState()
@@ -42,7 +39,7 @@ const ReceiveScreen: FC = () => {
 
   const { label, pfp } = account?.preferences || { label: '', pfp: '' }
 
-  const MAX_VISIBLE_NETWORKS = isPopup ? 10 : 20
+  const MAX_VISIBLE_NETWORKS = 10
   const [showAllNetworks, setShowAllNetworks] = useState(false)
 
   const hasMoreNetworks = networks.length > MAX_VISIBLE_NETWORKS
@@ -56,6 +53,7 @@ const ReceiveScreen: FC = () => {
       footer={<BackButton />}
       hideFooterInPopup
       withHorizontalPadding={false}
+      width="full"
     >
       <ScrollableWrapper>
         <View
@@ -72,7 +70,7 @@ const ReceiveScreen: FC = () => {
           ]}
         >
           <View style={styles.content}>
-            <View style={spacings.mtMd} />
+            <View style={spacings.mtSm} />
             <View style={[spacings.mtMd, flexbox.alignCenter]}>
               <Avatar
                 size={40}
@@ -104,7 +102,7 @@ const ReceiveScreen: FC = () => {
               )}
             </View>
             <View style={[styles.accountAddressWrapper]}>
-              <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+              <View style={[flexbox.directionRow, flexbox.center]}>
                 <DomainBadge ens={ens} />
                 <AccountAddress
                   isLoading={isDomainResolving}
@@ -128,7 +126,7 @@ const ReceiveScreen: FC = () => {
                 <Alert type="warning" title={t('Selected account is view only.')} />
               </View>
             ) : (
-              <View style={spacings.mb3Xl} />
+              <View style={spacings.mb2Xl} />
             )}
 
             <View style={styles.supportedNetworksContainer}>
@@ -145,7 +143,7 @@ const ReceiveScreen: FC = () => {
                   <View key={chainId.toString()} style={styles.supportedNetwork}>
                     <NetworkIcon
                       id={chainId.toString()}
-                      size={31}
+                      size={32}
                       scale={1}
                       dataSet={createGlobalTooltipDataSet({
                         id: `network-icon-${chainId.toString()}`,
@@ -166,7 +164,7 @@ const ReceiveScreen: FC = () => {
                   >
                     <NetworkIcon
                       id={chainId.toString()}
-                      size={31}
+                      size={32}
                       scale={1}
                       dataSet={createGlobalTooltipDataSet({
                         id: `network-icon-${chainId.toString()}`,

@@ -35,7 +35,7 @@ const AccountAddress: FC<Props> = ({
   }
 
   return (
-    <View style={[flexbox.flex1, { height: 18 }]} testID="address">
+    <View style={[flexbox.flex1, { height: fontSize + 6 }]} testID="address">
       {ens ? (
         <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
           <Text fontSize={fontSize} weight="semiBold" appearance="primary" numberOfLines={1}>

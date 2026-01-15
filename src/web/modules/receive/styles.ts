@@ -32,9 +32,10 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
         themeType === THEME_TYPES.DARK ? theme.secondaryBackground : theme.primaryBackground,
       ...common.borderRadiusSecondary,
       ...common.shadowTertiary,
-      width: '100%'
+      width: '100%',
+      maxWidth: 600
     },
-    qrCodeContainer: { ...flexbox.alignCenter, ...spacings.mvMi },
+    qrCodeContainer: { ...flexbox.alignCenter, ...spacings.mvTy },
     qrCode: {
       ...common.borderRadiusPrimary,
       overflow: 'hidden'
@@ -55,11 +56,11 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       flexDirection: 'row',
       flexWrap: 'wrap',
       justifyContent: 'center',
+      maxWidth: 500,
       ...spacings.mbTy
     },
     supportedNetwork: {
-      ...flexbox.alignCenter,
-      ...flexbox.justifyCenter,
+      ...flexbox.center,
       ...spacings.mhTy,
       ...spacings.mvMi,
       borderRadius: 32,
@@ -68,6 +69,7 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
     },
     accountAddressWrapper: {
       marginHorizontal: 'auto',
+      ...flexbox.center,
       ...spacings.phSm,
       ...spacings.pvSm,
       ...spacings.mbSm,
@@ -76,7 +78,8 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
         themeType === THEME_TYPES.DARK ? theme.primaryBackground : theme.secondaryBackground
     },
     seeMoreWrapper: {
-      ...flexbox.alignCenter
+      ...flexbox.center,
+      ...spacings.mbSm
     },
     extraNetwork: {
       opacity: 0,
