@@ -1,11 +1,13 @@
-import React from 'react'
+import React, { memo, useEffect, useMemo, useState } from 'react'
 import { View } from 'react-native'
 
+import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
 import BadgeIcon from '@common/assets/svg/BadgeIcon'
 import OpenIcon from '@common/assets/svg/OpenIcon'
 import { getValueFromKey, SECTIONS, Stat } from '@common/components/RewardsStat'
 import SkeletonLoaderWeb from '@common/components/SkeletonLoader/SkeletonLoader.web'
 import Text from '@common/components/Text'
+import { APP_VERSION } from '@common/config/env'
 import HeaderBackButton from '@common/modules/header/components/HeaderBackButton'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -21,28 +23,65 @@ import StatsHeading from '../components/StatsHeading'
 const { isPopup } = getUiType()
 
 /**
+ * The storage structure of `PastProjectedRewardsScores`
+ */
+type PastProjectedRewardsScoresStorage = {
+  extensionVersion: string
+  data: {
+    [accountAddr: string]: {
+      [key in Stat['id']]: number
+    }
+  }
+}
+
+/**
+ * Past projected rewards scores stored per account,
+ * used to display a cool animation when the score changes.
+ */
+type PastProjectedRewardsScores = {
+  accountAddr: string
+  scores: {
+    [key in Stat['id']]: number
+  }
+}
+
+/**
  * The screen is styled to match the design of rewards.ambire.com
  * It uses the same color scheme. This is why we are not using the useTheme
  * hook here and colors are hardcoded.
  */
 const ExtensionRewardsScreen = () => {
-  const { portfolio } = useSelectedAccountControllerState()
+  const { portfolio, account } = useSelectedAccountControllerState()
   const [bindAnim, animStyle] = useHover({ preset: 'opacityInverted' })
 
-  const isProjectedRewardsLoading = !portfolio.portfolioState.projectedRewards?.isReady
   const projectedRewardsStats = portfolio.projectedRewardsStats
+  const [pastProjectedRewardsScores, setPastProjectedRewardsScores] =
+    useState<PastProjectedRewardsScores | null>(null)
+  const [arePastProjectedRewardsScoresLoading, setArePastProjectedRewardsScoresLoading] =
+    useState(true)
+  const isProjectedRewardsLoading =
+    !portfolio.portfolioState.projectedRewards?.isReady || arePastProjectedRewardsScoresLoading
 
-  const sections: Stat[] = SECTIONS.map((section) => {
-    let score
-    if (section.id === 'multiplier') {
-      score = projectedRewardsStats ? `${projectedRewardsStats[section.id]}x` : 0
-    } else {
-      score = projectedRewardsStats ? projectedRewardsStats[section.id].toFixed(0) : 0
-    }
+  const sections: Stat[] = useMemo(
+    () =>
+      SECTIONS.map((section) => {
+        const score = projectedRewardsStats ? Math.floor(projectedRewardsStats[section.id]) : 0
 
-    let explanation
-    if (section.id === 'multiplier') {
-      explanation = `You receive 1.06X multiplier of your score for belonging to any of the following:
+        let scoreChange = 0
+
+        if (pastProjectedRewardsScores && projectedRewardsStats) {
+          const pastValue = pastProjectedRewardsScores.scores[section.id]
+          const currentValue = projectedRewardsStats[section.id]
+
+          if (typeof pastValue === 'number' && typeof currentValue === 'number') {
+            scoreChange = currentValue - pastValue
+          }
+        }
+
+        let explanation = section.explanation
+
+        if (section.id === 'multiplier') {
+          explanation = `You receive 1.06X multiplier of your score for belonging to any of the following:
 - Have pledged to the Trustless manifesto (Soon)
 - Hold a LobsterDAO NFT (Soon)
 - Hold a CryptoTesters NFT (Soon)
@@ -50,20 +89,73 @@ const ExtensionRewardsScreen = () => {
 - Hold Gitcoin passport NFT (Soon)
 - Hold GHO passport NFT (Soon)
 - ${
-        (projectedRewardsStats?.multipliers || []).some(
-          (m) => m.type === 'WEEKLY_TX' && m.activated
-        )
-          ? '✅ '
-          : ''
-      }Have at least one Ethereum transaction per week, all weeks during the season, except up to 2`
+            (projectedRewardsStats?.multipliers || []).some(
+              (m) => m.type === 'WEEKLY_TX' && m.activated
+            )
+              ? '✅ '
+              : ''
+          }Have at least one Ethereum transaction per week, all weeks during the season, except up to 2`
+        }
+
+        return {
+          ...section,
+          explanation,
+          score,
+          scoreChange,
+          value: getValueFromKey(section.id, projectedRewardsStats)
+        }
+      }),
+    [pastProjectedRewardsScores, projectedRewardsStats]
+  )
+
+  // Read past projected rewards scores from storage
+  useEffect(() => {
+    if (pastProjectedRewardsScores && account?.addr === pastProjectedRewardsScores.accountAddr)
+      return
+
+    const storageData = localStorage.getItem('pastProjectedRewardsScores') as string | undefined
+    const parsed = storageData ? (parse(storageData) as PastProjectedRewardsScoresStorage) : null
+
+    if (!parsed || parsed.extensionVersion !== APP_VERSION || !account) {
+      setArePastProjectedRewardsScoresLoading(false)
+      return
     }
-    return {
-      ...section,
-      explanation: explanation || section.explanation,
-      score,
-      value: getValueFromKey(section.id, projectedRewardsStats)
+
+    const scores = parsed.data[account.addr]
+
+    if (!scores) {
+      setArePastProjectedRewardsScoresLoading(false)
+      return
     }
-  })
+
+    setPastProjectedRewardsScores({
+      accountAddr: account.addr,
+      scores
+    })
+    setArePastProjectedRewardsScoresLoading(false)
+  }, [account, pastProjectedRewardsScores])
+
+  // Store the projected rewards scores when unmounting the screen
+  useEffect(() => {
+    return () => {
+      if (!projectedRewardsStats || !account) return
+
+      const prevData = localStorage.getItem('pastProjectedRewardsScores') as string | undefined
+      const parsed = prevData ? (parse(prevData) as PastProjectedRewardsScoresStorage) : null
+
+      // There are no bigint values atm, but use richJson just in case
+      localStorage.setItem(
+        'pastProjectedRewardsScores',
+        stringify({
+          extensionVersion: APP_VERSION,
+          data: {
+            ...(parsed?.data || {}),
+            [account.addr]: projectedRewardsStats
+          }
+        })
+      )
+    }
+  }, [account, projectedRewardsStats])
 
   return (
     <View style={[flexbox.flex1, { backgroundColor: '#101114' }, spacings.ph, spacings.pv]}>
@@ -137,7 +229,9 @@ const ExtensionRewardsScreen = () => {
                 <StatItem key={stat.id} {...stat} isLast={index === sections.length - 1} />
               ))}
             </View>
-            <RewardsAndStats />
+            <RewardsAndStats
+              pastTotalScore={pastProjectedRewardsScores?.scores.totalScore ?? null}
+            />
           </View>
         ) : (
           <SkeletonLoaderWeb width="100%" height={420} style={{ backgroundColor: '#191A1F' }} />
@@ -147,4 +241,4 @@ const ExtensionRewardsScreen = () => {
   )
 }
 
-export default ExtensionRewardsScreen
+export default memo(ExtensionRewardsScreen)
