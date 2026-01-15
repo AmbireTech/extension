@@ -608,6 +608,9 @@ type TransferControllerDestroyLatestBroadcastedAccountOp = {
 }
 type TransferControllerUnloadScreen = {
   type: 'TRANSFER_CONTROLLER_UNLOAD_SCREEN'
+  params?: {
+    forceUnload?: boolean
+  }
 }
 type TransferControllerUserProceededAction = {
   type: 'TRANSFER_CONTROLLER_HAS_USER_PROCEEDED'

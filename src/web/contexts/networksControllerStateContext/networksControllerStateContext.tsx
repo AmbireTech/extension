@@ -9,7 +9,7 @@ import useMainControllerState from '@web/hooks/useMainControllerState'
 const NetworksControllerStateContext = createContext<INetworksController>({} as INetworksController)
 
 const NetworksControllerStateProvider: React.FC<any> = ({ children }) => {
-  const controller = 'networks'
+  const controller = 'NetworksController'
   const state = useControllerState(controller)
   const { dispatch } = useBackgroundService()
   const mainState = useMainControllerState()

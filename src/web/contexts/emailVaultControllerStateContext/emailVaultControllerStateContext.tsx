@@ -10,7 +10,7 @@ const EmailVaultControllerStateContext = createContext<IEmailVaultController>(
 )
 
 const EmailVaultControllerStateProvider: React.FC<any> = ({ children }) => {
-  const controller = 'emailVault'
+  const controller = 'EmailVaultController'
   const state = useControllerState(controller)
   const { dispatch } = useBackgroundService()
 
