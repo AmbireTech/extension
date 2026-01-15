@@ -22,7 +22,7 @@ const RewardsBadge: React.FC = () => {
   const openClaimModal = () => setIsOpen(true)
   const closeClaimModal = () => setIsOpen(false)
   const amountToClaim = claimWalletCard?.meta?.availableToClaim || 0
-  console.log(connectedAccount, legendsAcc)
+
   if (!connectedAccount || !amountToClaim || connectedAccount !== legendsAcc) return null
 
   return (
