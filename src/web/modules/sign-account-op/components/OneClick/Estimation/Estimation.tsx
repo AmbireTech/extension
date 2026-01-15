@@ -30,7 +30,6 @@ import SafetyChecksBanner from '../../SafetyChecksBanner'
 
 export type OneClickEstimationProps = {
   closeEstimationModal: () => void
-  handleBroadcastAccountOp: () => void
   handleUpdateStatus: (status: SigningStatus) => void
   updateController: (params: { signingKeyAddr?: Key['addr']; signingKeyType?: Key['type'] }) => void
   estimationModalRef: React.RefObject<any>
@@ -45,7 +44,6 @@ const { isRequestWindow, isTab } = getUiType()
 
 const OneClickEstimation = ({
   closeEstimationModal,
-  handleBroadcastAccountOp,
   handleUpdateStatus,
   updateController,
   estimationModalRef,
@@ -89,7 +87,6 @@ const OneClickEstimation = ({
     bundlerNonceDiscrepancy
   } = useSign({
     signAccountOpState: signAccountOpController,
-    handleBroadcast: handleBroadcastAccountOp,
     handleUpdate: updateController,
     handleUpdateStatus,
     isOneClickSign: true,

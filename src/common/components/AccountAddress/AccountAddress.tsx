@@ -13,6 +13,7 @@ interface Props extends ReturnType<typeof useReverseLookup> {
   address: string
   plainAddressMaxLength?: number
   withCopy?: boolean
+  fontSize?: number
 }
 
 const AccountAddress: FC<Props> = ({
@@ -20,7 +21,8 @@ const AccountAddress: FC<Props> = ({
   ens,
   address,
   plainAddressMaxLength = 42,
-  withCopy = true
+  withCopy = true,
+  fontSize = 12
 }) => {
   const { t } = useTranslation()
 
@@ -33,22 +35,42 @@ const AccountAddress: FC<Props> = ({
   }
 
   return (
-    <View style={[flexbox.flex1, { height: 18 }]} testID="address">
+    <View style={[flexbox.flex1, { paddingVertical: 3 }]} testID="address">
       {ens ? (
         <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
-          <Text fontSize={12} weight="semiBold" appearance="primary" numberOfLines={1}>
+          <Text fontSize={fontSize} weight="semiBold" appearance="primary" numberOfLines={1}>
             {ens}
           </Text>
           {withCopy ? (
-            <PlainAddressWithCopy maxLength={18} address={address} style={spacings.mlMi} />
+            <PlainAddressWithCopy
+              maxLength={18}
+              address={address}
+              style={spacings.mlMi}
+              fontSize={fontSize}
+            />
           ) : (
-            <PlainAddress maxLength={18} address={address} style={spacings.mlMi} />
+            <PlainAddress
+              maxLength={18}
+              address={address}
+              style={spacings.mlMi}
+              fontSize={fontSize}
+            />
           )}
         </View>
       ) : withCopy ? (
-        <PlainAddressWithCopy maxLength={plainAddressMaxLength} address={address} hideParentheses />
+        <PlainAddressWithCopy
+          maxLength={plainAddressMaxLength}
+          address={address}
+          hideParentheses
+          fontSize={fontSize}
+        />
       ) : (
-        <PlainAddress maxLength={plainAddressMaxLength} address={address} hideParentheses />
+        <PlainAddress
+          maxLength={plainAddressMaxLength}
+          address={address}
+          hideParentheses
+          fontSize={fontSize}
+        />
       )}
     </View>
   )

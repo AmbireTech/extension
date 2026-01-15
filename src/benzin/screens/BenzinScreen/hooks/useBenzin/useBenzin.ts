@@ -63,7 +63,7 @@ const useBenzin = ({ onOpenExplorer, extensionAccOp }: Props = {}) => {
   const areRelayerNetworksLoaded = actualNetworks && actualNetworks.length
   const isNetworkLoading = loadingBenzinNetworks.includes(bigintChainId)
   const [activeStep, setActiveStep] = useState<ActiveStepType>('signed')
-  const isInitialized = !isNetworkLoading && areRelayerNetworksLoaded
+  const isInitialized = !isNetworkLoading && areRelayerNetworksLoaded && (!!extensionAccOp || activeStep !== 'signed')
 
   const network = useMemo(() => {
     return actualNetworks.find((n) => n.chainId === bigintChainId) || null

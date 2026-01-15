@@ -102,6 +102,11 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
     [validTokens, address, network]
   )
 
+  const tokenValidation = useMemo(() => {
+    if (!address || !network) return null
+    return validTokens.erc20[`${address}-${network.chainId}`]
+  }, [validTokens, address, network])
+
   const isCustomToken = useMemo(
     () =>
       !!customTokens.find(
@@ -169,7 +174,7 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
   const handleTokenType = useCallback(() => {
     dispatch({
       type: 'PORTFOLIO_CONTROLLER_CHECK_TOKEN',
-      params: { token: { address, chainId: network.chainId } }
+      params: { token: { address, chainId: network.chainId }, allNetworks: true }
     })
   }, [address, dispatch, network.chainId])
 
@@ -204,7 +209,16 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
         } else if (tokenTypeEligibility === undefined) {
           setIsLoading(true)
           handleTokenType()
+        } else if (tokenTypeEligibility === false && tokenValidation?.error) {
+          // Retry validation if there was an error and token type is false
+          setIsLoading(true)
+          handleTokenType()
         }
+      }
+
+      // Stop loading if there's a validation error
+      if (tokenValidation?.error) {
+        setIsLoading(false)
       }
     }
 
@@ -214,11 +228,19 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
       return setIsLoading(false)
     })
 
-    if (tokenTypeEligibility === false || !!temporaryToken) {
+    if (tokenTypeEligibility === false || !!temporaryToken || tokenValidation?.error) {
       setIsLoading(false)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [t, address, network, tokenTypeEligibility, temporaryToken, isAdditionalHintRequested])
+  }, [
+    t,
+    address,
+    network,
+    tokenTypeEligibility,
+    temporaryToken,
+    isAdditionalHintRequested,
+    tokenValidation
+  ])
 
   useEffect(() => {
     setShowAlreadyInPortfolioMessage(false) // Reset the state when address changes
@@ -255,15 +277,7 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
             placeholder={t('0x...')}
             value={value}
             inputStyle={spacings.mbSm}
-            containerStyle={
-              !isAdditionalHintRequested &&
-              !temporaryToken &&
-              !showAlreadyInPortfolioMessage &&
-              !isLoading &&
-              tokenTypeEligibility === undefined
-                ? { marginBottom: SPACING_SM + SPACING_2XL }
-                : spacings.mbSm
-            }
+            containerStyle={spacings.mbSm}
             error={errors.address && errors.address.message}
           />
         )}
@@ -312,11 +326,12 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
             </View>
           </View>
         ) : null}
-        {address && tokenTypeEligibility === false ? (
+
+        {address && tokenValidation && tokenValidation?.error?.message ? (
           <Alert
-            type="error"
+            type={tokenValidation.error.type === 'network' ? 'warning' : 'error'}
             isTypeLabelHidden
-            title={t('This token type is not supported.')}
+            title={tokenValidation.error.message}
             style={{ ...spacings.phSm, ...spacings.pvSm }}
           />
         ) : null}
@@ -330,7 +345,7 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
           />
         ) : null}
 
-        {isLoading || (isAdditionalHintRequested && !temporaryToken) ? (
+        {isLoading || (isAdditionalHintRequested && !temporaryToken && !tokenValidation?.error) ? (
           <View style={[flexbox.alignCenter, flexbox.justifyCenter, { height: 48 }]}>
             <Spinner style={{ width: 18, height: 18 }} />
           </View>
@@ -341,6 +356,7 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
         disabled={
           showAlreadyInPortfolioMessage ||
           (!temporaryToken && !tokenTypeEligibility) ||
+          !!tokenValidation?.error?.message ||
           !isValidAddress(address) ||
           !network ||
           isSubmitting

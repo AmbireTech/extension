@@ -78,8 +78,28 @@ const ExtensionRewardsScreen = () => {
           }
         }
 
+        let explanation = section.explanation
+
+        if (section.id === 'multiplier') {
+          explanation = `You receive 1.06X multiplier of your score for belonging to any of the following:
+- Have pledged to the Trustless manifesto (Soon)
+- Hold a LobsterDAO NFT (Soon)
+- Hold a CryptoTesters NFT (Soon)
+- Hold an Ambire Gas Tank NFT, Legends NFT, or any Ambire conference POAP (Soon)
+- Hold Gitcoin passport NFT (Soon)
+- Hold GHO passport NFT (Soon)
+- ${
+            (projectedRewardsStats?.multipliers || []).some(
+              (m) => m.type === 'WEEKLY_TX' && m.activated
+            )
+              ? '✅ '
+              : ''
+          }Have at least one Ethereum transaction per week, all weeks during the season, except up to 2`
+        }
+
         return {
           ...section,
+          explanation,
           score,
           scoreChange,
           value: getValueFromKey(section.id, projectedRewardsStats)

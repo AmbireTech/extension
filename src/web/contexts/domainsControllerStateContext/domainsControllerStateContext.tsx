@@ -10,7 +10,7 @@ import useMainControllerState from '@web/hooks/useMainControllerState'
 const DomainsControllerStateContext = createContext<IDomainsController>({} as IDomainsController)
 
 const DomainsControllerStateProvider: React.FC<any> = ({ children }) => {
-  const controller = 'domains'
+  const controller = 'DomainsController'
   const state = useControllerState(controller)
   const { dispatch } = useBackgroundService()
   const mainState = useMainControllerState()

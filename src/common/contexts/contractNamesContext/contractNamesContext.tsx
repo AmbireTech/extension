@@ -10,7 +10,10 @@ const ContractNamesContext = createContext<{
   state: {} as IContractNamesController,
   contractNamesCtrl: {} as IContractNamesController
 })
-const contractNamesCtrl = new ContractNamesController(fetch.bind(window), 50)
+const contractNamesCtrl = new ContractNamesController({
+  fetch: fetch.bind(window) as any,
+  debounceTime: 50
+})
 
 const ContractNamesContextProvider: React.FC<any> = ({ children }) => {
   const [state, setState] = useState<IContractNamesController>(contractNamesCtrl)

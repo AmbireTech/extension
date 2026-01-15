@@ -89,10 +89,16 @@ export class TransferPage extends BasePage {
   // TODO: move to dashboard page once POM is refactored
   async checkSendTransactionOnActivityTab() {
     await this.click(selectors.dashboard.activityTabButton)
-    await expect(this.page.locator(selectors.dashboard.transactionSendText)).toContainText('Send')
-    await expect(this.page.locator(selectors.dashboard.confirmedTransactionPill)).toContainText(
-      'Confirmed'
-    )
+
+    // When tests are ran in isolation, there would be only 1 txn in the activity tab.
+    // But when they are ran in a shared state, we check only the latest one txn, i.e. the first one in the list.
+    const firstSendTransaction = this.page.locator(selectors.dashboard.transactionSendText).first()
+    const firstConfirmedPill = this.page
+      .locator(selectors.dashboard.confirmedTransactionPill)
+      .first()
+
+    await expect(firstSendTransaction).toContainText('Send')
+    await expect(firstConfirmedPill).toContainText('Confirmed')
   }
 
   // changing fee speed and checking fee amount, if above 0.1$ transaction won't be signed
@@ -148,6 +154,8 @@ export class TransferPage extends BasePage {
 
       // Validate requests
       const { rpc } = this.getCategorizedRequests()
+
+      this.stopMonitorRequests()
 
       // Verify that portfolio updates run only for the send token network.
       // A previous regression was triggering updates on all enabled networks after a broadcast,

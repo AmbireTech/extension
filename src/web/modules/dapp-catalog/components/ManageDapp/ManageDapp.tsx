@@ -16,6 +16,7 @@ import NetworkIcon from '@common/components/NetworkIcon'
 import Select from '@common/components/Select'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
+import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import useBackgroundService from '@web/hooks/useBackgroundService'
@@ -45,12 +46,13 @@ const ManageDapp = ({
   openBottomSheet,
   closeBottomSheet
 }: Props) => {
+  const { addToast } = useToast()
   const { styles, theme } = useTheme(getStyles)
   const { t } = useTranslation()
   const { ref: dialogRef, open: openDialog, close: closeDialog } = useModalize()
   const { networks } = useNetworksControllerState()
 
-  const [network, setNetwork] = useState<Network>(
+  const [network, setNetwork] = useState<Network | undefined>(
     networks.filter((n) => Number(n.chainId) === dapp?.chainId)[0] ||
       networks.filter((n) => n.chainId.toString() === '1')[0]
   )
@@ -74,6 +76,15 @@ const ManageDapp = ({
     (networkOption: NetworkOption) => {
       if (dapp?.id) {
         const newNetwork = networks.filter((n) => n.name === networkOption.value)[0]
+        // should never happen
+        if (!newNetwork || !newNetwork.chainId) {
+          addToast("Couldn't change app network. Please try again or contact Ambire support.", {
+            type: 'error'
+          })
+
+          return
+        }
+
         setNetwork(newNetwork)
         dispatch({
           type: 'CHANGE_CURRENT_DAPP_NETWORK',
@@ -84,7 +95,7 @@ const ManageDapp = ({
         })
       }
     },
-    [networks, dapp?.id, dispatch]
+    [networks, dapp?.id, dispatch, addToast]
   )
 
   const promptRemoveDApp = useCallback(() => {
@@ -146,7 +157,7 @@ const ManageDapp = ({
           containerStyle={{ width: 230 }}
           selectStyle={{ height: 40 }}
           options={networksOptions}
-          value={networksOptions.filter((opt) => opt.value === network.name)[0]}
+          value={networksOptions.filter((opt) => opt.value === network?.name)[0]}
         />
       </View>
       {!!dapp?.isCustom && (
