@@ -134,8 +134,11 @@
         font-weight: 500;
         font-style: Medium;
         font-size: 7/8rem;
-
+        transition: opacity 0.2s ease;
         background: linear-gradient(81.82deg, #00d5ff 0%, #a25aff 90.89%);
+      }
+      .claimButton:hover {
+        opacity: 0.9;
       }
     }
   }
