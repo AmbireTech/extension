@@ -8,6 +8,7 @@ import Sidebar from '@legends/components/Sidebar'
 import useAccountContext from '@legends/hooks/useAccountContext'
 import useLegendsContext from '@legends/hooks/useLegendsContext'
 
+import RewardsBadge from '../RewardsBadge/rb'
 import styles from './Page.module.scss'
 
 const Page = ({
@@ -15,13 +16,15 @@ const Page = ({
   pageRef,
   style,
   containerSize = 'md',
-  contentClassName
+  contentClassName,
+  showClaimRewardsModal
 }: {
   children: React.ReactNode | React.ReactNode[]
   pageRef?: React.RefObject<HTMLDivElement>
   style?: React.CSSProperties
   containerSize?: 'md' | 'responsive' | 'lg' | 'full'
   contentClassName?: string
+  showClaimRewardsModal?: boolean
 }) => {
   const customContainerSizeClass = styles[`container${containerSize}`] || ''
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
@@ -43,6 +46,7 @@ const Page = ({
           {activeProposals.length > 0 && <Banner activeProposals={activeProposals} />}
           <div className={`${styles.container} ${customContainerSizeClass}`}>
             <div className={styles.header}>
+              {showClaimRewardsModal && <RewardsBadge />}
               <button className={styles.sidebarButton} type="button" onClick={openSidebar}>
                 <FontAwesomeIcon icon={faBars} />
               </button>
