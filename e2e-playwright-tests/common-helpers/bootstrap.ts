@@ -53,8 +53,7 @@ async function initBrowser(namespace: string): Promise<{
     ignoreHTTPSErrors: true,
     args: playwrightArgs, // make sure playwrightArgs is defined/imported
     env: process.env.DISPLAY ? { DISPLAY: process.env.DISPLAY } : undefined,
-    viewport: null, // explicitly set if not using default
-    recordVideo: { dir: 'test-results/videos' }
+    viewport: null // explicitly set if not using default
   })
 
   currentContext = context
