@@ -65,7 +65,7 @@ const Dashboard = () => {
   })
 
   return (
-    <Page containerSize="responsive" contentClassName={styles.pageContent}>
+    <Page containerSize="responsive" contentClassName={styles.pageContent} showClaimRewardsModal>
       <div className={styles.wrapper}>
         <div className={styles.headerWrapper}>
           <h2 className={styles.title}>Your Rewards</h2>
