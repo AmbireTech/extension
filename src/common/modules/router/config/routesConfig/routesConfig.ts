@@ -395,7 +395,7 @@ const routesConfig: RouteConfig = {
     name: Platform.select({ default: i18n.t('Ambire Rewards') })
   },
   [ROUTES.receive]: {
-    route: ROUTES.rewards,
+    route: ROUTES.receive,
     title: Platform.select({ default: i18n.t('Receive Assets') }),
     name: Platform.select({ default: i18n.t('Receive Assets') })
   }
