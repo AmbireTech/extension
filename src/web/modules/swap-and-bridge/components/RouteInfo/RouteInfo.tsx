@@ -15,7 +15,6 @@ import flexbox from '@common/styles/utils/flexbox'
 import formatTime from '@common/utils/formatTime'
 import RetryButton from '@web/components/RetryButton'
 import useBackgroundService from '@web/hooks/useBackgroundService'
-import useInviteControllerState from '@web/hooks/useInviteControllerState'
 import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControllerState'
 
 import SelectRoute from './SelectRoute'
@@ -33,7 +32,6 @@ const RouteInfo: FC<Props> = ({
 }) => {
   const { formStatus, signAccountOpController, quote, swapSignErrors } =
     useSwapAndBridgeControllerState()
-  const { isOG } = useInviteControllerState()
   const { theme } = useTheme()
   const { t } = useTranslation()
   const { dispatch } = useBackgroundService()
@@ -118,9 +116,8 @@ const RouteInfo: FC<Props> = ({
                         fontSize={14}
                         weight="medium"
                       >
-                        {t('Ambire fee: {{fee}}{{ogText}}', {
-                          fee: `${quote?.selectedRoute?.withConvenienceFee ? FEE_PERCENT : 0}%`,
-                          ogText: isOG ? " - you're an OG 🎉" : ''
+                        {t('Ambire fee: {{fee}}', {
+                          fee: `${quote?.selectedRoute?.withConvenienceFee ? FEE_PERCENT : 0}%`
                         })}
                       </Text>
                       {!quote?.selectedRoute?.withConvenienceFee && (
