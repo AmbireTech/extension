@@ -206,11 +206,9 @@ const Recipient: React.FC<Props> = ({
     ({ value: newAddress }: Pick<SelectValue, 'value'>) => {
       if (typeof newAddress !== 'string') return
 
-      const correspondingDomain = domains[newAddress]?.ens
-
-      setAddress(correspondingDomain || newAddress)
+      setAddress(newAddress)
     },
-    [domains, setAddress]
+    [setAddress]
   )
 
   const walletAccountsSourcedContactOptions = useMemo(
