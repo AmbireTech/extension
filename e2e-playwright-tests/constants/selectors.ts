@@ -113,6 +113,8 @@ const selectors = {
   },
   // TODO: update selectors wiyh testID
   ambireRewards: {
+    connectAmbireButton: '//button[contains(text(),"Connect Ambire")]',
+    claimRewardButton: '//button[contains(text(),"Claim")]',
     readAnnouncementHyperlink: '//a[contains(@href, "rewards-enters")]',
     faqFirstQuestion: '//span[contains(text(),"What is Ambire")]',
     faqFirstAnswer: '(//div/p)[2]',

@@ -60,18 +60,7 @@ test.describe('ambire rewards', () => {
       await rewardsTab.mouse.click(0, 100)
     })
 
-    await test.step('Connect Ambire and check Home page', async () => {
-      // check url
-      expect(rewardsTab.url()).toContain('rewards.ambire.com')
-
-      // await rewardsTab.locator('//button[contains(text(),"Connect Ambire")]').click()
-
-      // check FAQ section
-      // await rewardsTab.click()
-    })
-
     await test.step('Check Home page FAQ section', async () => {
-      await rewardsTab.pause()
       const faqs = [
         {
           questionSelector: selectors.ambireRewards.faqFirstQuestion,
@@ -128,7 +117,6 @@ test.describe('ambire rewards', () => {
           answer: ambireRewardsText.homeFAQ.answerToNinthQuestion
         }
       ]
-
 
       for (const faq of faqs) {
         const question = rewardsTab.locator(faq.questionSelector)
@@ -195,6 +183,21 @@ test.describe('ambire rewards', () => {
 
       // close faq tab
       await faqTab.close()
+    })
+
+    await test.step('Connect Ambire', async () => {
+      const homeButton = rewardsTab.locator(selectors.ambireRewards.homePage)
+      await homeButton.click()
+
+      // check url
+      expect(rewardsTab.url()).toContain('rewards.ambire.com')
+      const connectWalletButton = rewardsTab.locator(selectors.ambireRewards.connectAmbireButton)
+      const connectWalletTab = await pages.basePage.handleNewPage(connectWalletButton)
+
+      await connectWalletTab.getByTestId(selectors.dappConnectButton).click()
+      // await rewardsTab.waitForTimeout(5000) // wait for rewards banner to appear
+      await expect(rewardsTab.locator(selectors.ambireRewards.claimRewardButton)).toBeVisible()
+      // TODO: add more assertion when wallet is connected and disconnect wallet when we have IDs no
     })
   })
 })
