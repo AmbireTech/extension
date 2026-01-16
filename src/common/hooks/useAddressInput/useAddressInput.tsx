@@ -10,6 +10,7 @@ export type { ValidationWithSeverityType }
 
 interface Props {
   addressState: AddressState
+  overwriteValidationFieldValue?: string
   setAddressState: (newState: AddressStateOptional) => void
   overwriteError?: string
   overwriteValidLabel?: string
@@ -33,6 +34,7 @@ const useAddressInput = ({
   setAddressState,
   overwriteError,
   overwriteValidLabel,
+  overwriteValidationFieldValue,
   // For now severity is only used for non-error validations (warnings / info)
   overwriteSeverity,
   handleCacheResolvedDomain,
@@ -49,7 +51,7 @@ const useAddressInput = ({
   const validation = useMemo(
     () =>
       getAddressInputValidation({
-        address: addressState.fieldValue,
+        address: overwriteValidationFieldValue ?? fieldValue,
         isRecipientDomainResolving: addressState.isDomainResolving,
         isValidEns: !!addressState.ensAddress,
         hasDomainResolveFailed,
@@ -58,7 +60,8 @@ const useAddressInput = ({
         overwriteSeverity
       }),
     [
-      addressState.fieldValue,
+      overwriteValidationFieldValue,
+      fieldValue,
       addressState.isDomainResolving,
       addressState.ensAddress,
       hasDomainResolveFailed,

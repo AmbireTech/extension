@@ -55,6 +55,7 @@ export interface InputProps extends TextInputProps {
   borderless?: boolean
   customInputContent?: React.ReactNode
   renderConfirmAddress?: () => React.ReactNode
+  preventJumpOnValidationChange?: boolean
 }
 
 const Input = ({
@@ -89,6 +90,7 @@ const Input = ({
   customInputContent,
   editable,
   renderConfirmAddress,
+  preventJumpOnValidationChange,
   ...rest
 }: InputProps) => {
   const [isFocused, setIsFocused] = useState<boolean>(false)
@@ -248,6 +250,16 @@ const Input = ({
             fontSize={10}
           >
             {info}
+          </Text>
+        )}
+        {!!preventJumpOnValidationChange && !error && !isValid && !info && (
+          <Text
+            style={[styles.bottomLabel, bottomLabelStyle]}
+            weight="regular"
+            fontSize={10}
+            // Purposefully render a space to keep the input height consistent
+          >
+            {' '}
           </Text>
         )}
         {renderConfirmAddress && renderConfirmAddress()}
