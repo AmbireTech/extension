@@ -398,6 +398,10 @@ type KeystoreControllerAddTempSeedAction = {
   type: 'KEYSTORE_CONTROLLER_ADD_TEMP_SEED'
   params: Omit<KeystoreSeed, 'id' | 'label'>
 }
+type KeystoreControllerGenerateTempSeedAction = {
+  type: 'KEYSTORE_CONTROLLER_GENERATE_TEMP_SEED'
+  params: { extraEntropy?: string }
+}
 type KeystoreControllerUpdateSeedAction = {
   type: 'KEYSTORE_CONTROLLER_UPDATE_SEED'
   params: {
@@ -793,6 +797,7 @@ export type Action =
   | PortfolioControllerCheckToken
   | KeystoreControllerAddSecretAction
   | KeystoreControllerAddTempSeedAction
+  | KeystoreControllerGenerateTempSeedAction
   | KeystoreControllerUpdateSeedAction
   | KeystoreControllerUnlockWithSecretAction
   | KeystoreControllerResetErrorStateAction
