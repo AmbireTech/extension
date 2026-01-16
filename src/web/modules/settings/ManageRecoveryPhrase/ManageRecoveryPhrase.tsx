@@ -91,8 +91,13 @@ const ManageRecoveryPhrase = ({
       return
     }
 
+    if (!blurred && seed !== DUMMY_SEED) {
+      setSeed(DUMMY_SEED)
+      setSeedPassphrase(null)
+    }
+
     setBlurred((prev) => !prev)
-  }, [seed, openConfirmPassword])
+  }, [seed, blurred, openConfirmPassword])
 
   const handleCopySeed = useCallback(async () => {
     if (!seed || seed === DUMMY_SEED) return
