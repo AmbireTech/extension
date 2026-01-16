@@ -1,10 +1,6 @@
 import React, { useCallback, useMemo } from 'react'
 import { View } from 'react-native'
 
-import { isSmartAccount as getIsSmartAccount } from '@ambire-common/libs/account/account'
-import { getIsViewOnly } from '@ambire-common/utils/accounts'
-import Alert from '@common/components/Alert'
-import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
@@ -17,18 +13,24 @@ import SmallNotificationWindowWrapper from '@web/components/SmallNotificationWin
 import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useDappInfo from '@web/hooks/useDappInfo'
-import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import ActionFooter from '@web/modules/action-requests/components/ActionFooter'
+import { useEncryptionCapability } from '@web/modules/action-requests/hooks'
 
 const DecryptRequestScreen = () => {
   const { t } = useTranslation()
   const { dispatch } = useBackgroundService()
   const { currentUserRequest } = useRequestsControllerState()
-  const { account } = useSelectedAccountControllerState()
-  const keystoreState = useKeystoreControllerState()
   const { theme, themeType } = useTheme()
+
+  const {
+    isViewOnly,
+    isSmartAccount,
+    internalKey,
+    selectedAccountKeyStoreKeys,
+    errorNode,
+    actionFooterResolveNode
+  } = useEncryptionCapability()
 
   const userRequest = useMemo(
     () => (currentUserRequest?.kind === 'ethDecrypt' ? currentUserRequest : undefined),
@@ -37,17 +39,11 @@ const DecryptRequestScreen = () => {
 
   const { name, icon } = useDappInfo(userRequest)
 
-  const selectedAccountKeyStoreKeys = useMemo(
-    () => keystoreState.keys.filter((key) => account?.associatedKeys.includes(key.addr)),
-    [keystoreState.keys, account?.associatedKeys]
-  )
-
   const handleDecrypt = useCallback(() => {
     if (!userRequest) return
 
     if (!selectedAccountKeyStoreKeys.length) return
 
-    const internalKey = selectedAccountKeyStoreKeys.find((k) => k.type === 'internal')
     if (!internalKey) return
 
     dispatch({
@@ -59,44 +55,7 @@ const DecryptRequestScreen = () => {
         keyType: internalKey.type
       }
     })
-  }, [userRequest, dispatch, selectedAccountKeyStoreKeys, currentUserRequest])
-
-  // Duplicated with GetEncryptionPublicKeyRequestScreen
-  const isViewOnly = getIsViewOnly(keystoreState.keys, account?.associatedKeys || [])
-  const isSmartAccount = getIsSmartAccount(account)
-  const internalKey = selectedAccountKeyStoreKeys.find((k) => k.type === 'internal')
-  const errorNode = useMemo(() => {
-    if (isSmartAccount)
-      return (
-        <Alert
-          title={<Text>{t('Smart contract wallets do not support this capability.')}</Text>}
-          type="error"
-        />
-      )
-
-    const hasKeyButNotAnInternalOne = !isViewOnly && !internalKey
-    if (hasKeyButNotAnInternalOne)
-      return (
-        <Alert
-          title={<Text>{t('Hardware wallets do not support this capability.')}</Text>}
-          type="error"
-        />
-      )
-
-    return null
-  }, [internalKey, isSmartAccount, isViewOnly, t])
-  const actionFooterResolveNode = useMemo(() => {
-    if (isSmartAccount || internalKey) return null
-
-    if (isViewOnly)
-      return (
-        <View style={[{ flex: 3 }, flexbox.directionRow, flexbox.justifyEnd]}>
-          <NoKeysToSignAlert type="short" isTransaction={false} />
-        </View>
-      )
-
-    return null
-  }, [isSmartAccount, isViewOnly, internalKey])
+  }, [userRequest, dispatch, selectedAccountKeyStoreKeys, internalKey, currentUserRequest])
 
   const handleDeny = useCallback(() => {
     if (!userRequest) return
@@ -107,7 +66,6 @@ const DecryptRequestScreen = () => {
     })
   }, [userRequest, t, dispatch])
 
-  // TODO: Display not supported for 1) smart accounts and 2) accounts with only hw wallet keys.
   return (
     <SmallNotificationWindowWrapper>
       <TabLayoutContainer
