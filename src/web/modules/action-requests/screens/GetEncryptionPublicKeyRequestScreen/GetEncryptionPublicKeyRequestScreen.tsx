@@ -108,52 +108,48 @@ const GetEncryptionPublicKeyRequestScreen = () => {
   }, [internalKey, isSmartAccount, isViewOnly, t])
 
   return (
-    <>
-      <SmallNotificationWindowWrapper>
-        <TabLayoutContainer
-          width="full"
-          header={
-            <HeaderAccountAndNetworkInfo
-              backgroundColor={
-                themeType === THEME_TYPES.DARK
-                  ? (theme.secondaryBackground as string)
-                  : (theme.primaryBackground as string)
-              }
-            />
-          }
-          footer={
-            <ActionFooter
-              onReject={handleDeny}
-              onResolve={handleAccept}
-              resolveButtonText={t('Provide')}
-              resolveDisabled={isViewOnly || isSmartAccount}
-              resolveButtonTestID="button-provide"
-              resolveNode={actionFooterResolveNode}
-            />
-          }
-          backgroundColor={theme.quinaryBackground}
-        >
-          <TabLayoutWrapperMainContent>
-            <RequestingDappInfo
-              name={name}
-              icon={icon}
-              intentText={t('wants to get your public encryption key')}
+    <SmallNotificationWindowWrapper>
+      <TabLayoutContainer
+        width="full"
+        header={
+          <HeaderAccountAndNetworkInfo
+            backgroundColor={
+              themeType === THEME_TYPES.DARK
+                ? (theme.secondaryBackground as string)
+                : (theme.primaryBackground as string)
+            }
+          />
+        }
+        footer={
+          <ActionFooter
+            onReject={handleDeny}
+            onResolve={handleAccept}
+            resolveButtonText={t('Provide')}
+            resolveDisabled={isViewOnly || isSmartAccount}
+            resolveButtonTestID="button-provide"
+            resolveNode={actionFooterResolveNode}
+          />
+        }
+        backgroundColor={theme.quinaryBackground}
+      >
+        <TabLayoutWrapperMainContent>
+          <RequestingDappInfo
+            name={name}
+            icon={icon}
+            intentText={t('wants to get your public encryption key')}
+          />
+
+          <View style={[spacings.mtLg, flexbox.flex1, flexbox.justifySpaceBetween]}>
+            <Alert
+              title={t('By providing, this app will be able to compose encrypted messages to you.')}
+              type="info2"
             />
 
-            <View style={[spacings.mtLg, flexbox.flex1, flexbox.justifySpaceBetween]}>
-              <Alert
-                title={t(
-                  'By providing, this app will be able to compose encrypted messages to you.'
-                )}
-                type="info2"
-              />
-
-              {errorNode}
-            </View>
-          </TabLayoutWrapperMainContent>
-        </TabLayoutContainer>
-      </SmallNotificationWindowWrapper>
-    </>
+            {errorNode}
+          </View>
+        </TabLayoutWrapperMainContent>
+      </TabLayoutContainer>
+    </SmallNotificationWindowWrapper>
   )
 }
 
