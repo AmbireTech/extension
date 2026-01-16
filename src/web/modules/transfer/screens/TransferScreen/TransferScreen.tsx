@@ -168,10 +168,6 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     } else {
       navigate(WEB_ROUTES.dashboard)
     }
-
-    dispatch({
-      type: 'TRANSFER_CONTROLLER_RESET_FORM'
-    })
   }, [dispatch, navigate])
 
   const { sessionHandler } = useTrackAccountOp({
@@ -331,11 +327,8 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   }, [addressInputState.validation.isError, isFormValid, isTopUp])
 
   const onBack = useCallback(() => {
-    dispatch({
-      type: 'TRANSFER_CONTROLLER_RESET_FORM'
-    })
     navigate(ROUTES.dashboard)
-  }, [navigate, dispatch])
+  }, [navigate])
 
   const resetTransferForm = useCallback(() => {
     dispatch({
@@ -518,9 +511,6 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
 
   const handleGoBackPress = useCallback(() => {
     if (!isRequestWindow) {
-      dispatch({
-        type: 'TRANSFER_CONTROLLER_RESET_FORM'
-      })
       navigate(ROUTES.dashboard)
     } else {
       dispatch({
