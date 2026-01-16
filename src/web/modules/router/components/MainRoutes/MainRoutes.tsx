@@ -32,6 +32,7 @@ import LedgerConnectScreen from '@web/modules/hardware-wallet/screens/LedgerConn
 import KeyStoreEmailRecoveryScreen from '@web/modules/keystore/screens/KeyStoreEmailRecoveryScreen/KeyStoreEmailRecoveryScreen'
 import KeyStoreEmailRecoverySetNewPasswordScreen from '@web/modules/keystore/screens/KeyStoreEmailRecoverySetNewPasswordScreen'
 import KeyStoreSetupScreen from '@web/modules/keystore/screens/KeyStoreSetupScreen'
+import NetworksConfiguration from '@web/modules/network-settings/screens'
 import NetworksScreen from '@web/modules/networks/screens'
 import ReceiveScreen from '@web/modules/receive'
 import AuthenticatedRoute from '@web/modules/router/components/AuthenticatedRoute'
@@ -76,6 +77,7 @@ const MainRoutes = () => {
       <Route path={WEB_ROUTES.noConnection} element={<NoConnectionScreen />} />
 
       <Route element={<TabOnlyRoute />}>
+        <Route path={WEB_ROUTES.networksConfiguration} element={<NetworksConfiguration />} />
         <Route path={WEB_ROUTES.keyStoreSetup} element={<KeyStoreSetupScreen />} />
         <Route path={WEB_ROUTES.keyStoreEmailRecovery} element={<KeyStoreEmailRecoveryScreen />} />
         <Route
