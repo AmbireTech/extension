@@ -1,26 +1,24 @@
 import React, { useCallback, useMemo } from 'react'
 import { View } from 'react-native'
 
-import ManifestFallbackIcon from '@common/assets/svg/ManifestFallbackIcon'
-import Button from '@common/components/Button'
-import Panel from '@common/components/Panel'
-import ScrollableWrapper from '@common/components/ScrollableWrapper'
-import Text from '@common/components/Text'
-import Title from '@common/components/Title'
-import { Trans, useTranslation } from '@common/config/localization'
+import { getIsViewOnly } from '@ambire-common/utils/accounts'
+import Alert from '@common/components/Alert'
+import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
+import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import flexboxStyles from '@common/styles/utils/flexbox'
-import textStyles from '@common/styles/utils/text'
+import { THEME_TYPES } from '@common/styles/themeConfig'
+import flexbox from '@common/styles/utils/flexbox'
 import HeaderAccountAndNetworkInfo from '@web/components/HeaderAccountAndNetworkInfo'
-import ManifestImage from '@web/components/ManifestImage'
+import RequestingDappInfo from '@web/components/RequestingDappInfo'
+import SmallNotificationWindowWrapper from '@web/components/SmallNotificationWindowWrapper'
+import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useDappInfo from '@web/hooks/useDappInfo'
 import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
-
-import styles from './styles'
+import ActionFooter from '@web/modules/action-requests/components/ActionFooter'
 
 const GetEncryptionPublicKeyRequestScreen = () => {
   const { t } = useTranslation()
@@ -28,7 +26,7 @@ const GetEncryptionPublicKeyRequestScreen = () => {
   const { currentUserRequest } = useRequestsControllerState()
   const { account } = useSelectedAccountControllerState()
   const keystoreState = useKeystoreControllerState()
-  const { theme } = useTheme()
+  const { theme, themeType } = useTheme()
 
   const userRequest = useMemo(
     () =>
@@ -38,17 +36,19 @@ const GetEncryptionPublicKeyRequestScreen = () => {
 
   const { name, icon } = useDappInfo(userRequest)
 
+  const isViewOnly = getIsViewOnly(keystoreState.keys, account?.associatedKeys || [])
+
   const selectedAccountKeyStoreKeys = useMemo(
     () => keystoreState.keys.filter((key) => account?.associatedKeys.includes(key.addr)),
     [keystoreState.keys, account?.associatedKeys]
   )
 
+  const internalKey = selectedAccountKeyStoreKeys.find((k) => k.type === 'internal')
+
   const handleAccept = useCallback(() => {
     if (!userRequest) return
 
-    if (!selectedAccountKeyStoreKeys.length) return
-
-    const internalKey = selectedAccountKeyStoreKeys.find((k) => k.type === 'internal')
+    // TODO: Toast instead!
     if (!internalKey) return
 
     dispatch({
@@ -59,7 +59,7 @@ const GetEncryptionPublicKeyRequestScreen = () => {
         keyType: internalKey.type
       }
     })
-  }, [userRequest, dispatch, selectedAccountKeyStoreKeys])
+  }, [userRequest, dispatch, internalKey])
 
   const handleDeny = useCallback(() => {
     if (!userRequest) return
@@ -73,46 +73,56 @@ const GetEncryptionPublicKeyRequestScreen = () => {
   // TODO: Display not supported for 1) smart accounts and 2) accounts with only hw wallet keys.
   return (
     <>
-      <HeaderAccountAndNetworkInfo />
-      <ScrollableWrapper hasBottomTabNav={false}>
-        <Panel>
-          <View style={[spacings.pvSm, flexboxStyles.alignCenter]}>
-            <ManifestImage uri={icon} size={64} fallback={() => <ManifestFallbackIcon />} />
-          </View>
-
-          <Title style={[textStyles.center, spacings.phSm, spacings.pbLg]}>
-            {userRequest?.dappPromises[0].session.origin
-              ? new URL(userRequest.dappPromises[0].session.origin).hostname
-              : ''}
-          </Title>
-
-          <View>
-            <Trans>
-              <Text style={[textStyles.center, spacings.phSm, spacings.mbLg]}>
-                <Text fontSize={14} weight="regular">
-                  {'The App '}
-                </Text>
-                <Text fontSize={14} weight="regular" color={theme.primaryLight}>
-                  {name}
-                </Text>
-                <Text fontSize={14} weight="regular">
-                  {
-                    ' wants to get your public encryption key. By consenting, this site will be able to compose encrypted messages to you.'
+      <SmallNotificationWindowWrapper>
+        <TabLayoutContainer
+          width="full"
+          header={
+            <HeaderAccountAndNetworkInfo
+              backgroundColor={
+                themeType === THEME_TYPES.DARK
+                  ? (theme.secondaryBackground as string)
+                  : (theme.primaryBackground as string)
+              }
+            />
+          }
+          footer={
+            <ActionFooter
+              onReject={handleDeny}
+              onResolve={handleAccept}
+              resolveButtonText={t('Provide')}
+              resolveDisabled={isViewOnly}
+              resolveButtonTestID="button-provide"
+              {...(isViewOnly
+                ? {
+                    resolveNode: (
+                      <View style={[{ flex: 3 }, flexbox.directionRow, flexbox.justifyEnd]}>
+                        <NoKeysToSignAlert type="short" isTransaction={false} />
+                      </View>
+                    )
                   }
-                </Text>
-              </Text>
-            </Trans>
-          </View>
+                : {})}
+            />
+          }
+          backgroundColor={theme.quinaryBackground}
+        >
+          <TabLayoutWrapperMainContent>
+            <RequestingDappInfo
+              name={name}
+              icon={icon}
+              intentText={t('wants to get your public encryption key')}
+            />
 
-          <View style={styles.buttonsContainer}>
-            <View style={styles.buttonWrapper}>
-              <Button type="outline" onPress={handleDeny} text={t('Cancel')} />
-              {/* TODO: Disable for view only accounts (or add import key prompt) */}
-              <Button type="primary" onPress={handleAccept} text={t('Provide')} />
+            <View style={spacings.mvLg}>
+              <Alert
+                title={t(
+                  'By providing, this app will be able to compose encrypted messages to you.'
+                )}
+                type="info2"
+              />
             </View>
-          </View>
-        </Panel>
-      </ScrollableWrapper>
+          </TabLayoutWrapperMainContent>
+        </TabLayoutContainer>
+      </SmallNotificationWindowWrapper>
     </>
   )
 }
