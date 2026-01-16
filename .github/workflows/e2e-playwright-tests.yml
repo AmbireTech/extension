@@ -131,7 +131,7 @@ jobs:
         if: always()
         working-directory: ./e2e-playwright-tests
         run: |
-          zip -r playwright-report.zip test-results/ html-report/
+          zip -r playwright-report.zip html-report/
         continue-on-error: true
 
       - name: Save test report as artifact

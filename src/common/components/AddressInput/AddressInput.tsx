@@ -110,6 +110,7 @@ const AddressInput: React.FC<Props> = ({
             : ''
         }
         renderConfirmAddress={renderConfirmAddress}
+        preventJumpOnValidationChange
         childrenBeforeButtons={
           childrenBeforeButtons ||
           (!withDetails && (

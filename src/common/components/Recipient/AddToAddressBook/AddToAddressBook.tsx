@@ -33,7 +33,13 @@ const AddToAddressBook = ({
     !isRecipientAddressSameAsSender &&
     addressValidationMsg !== 'Invalid address.' ? (
     <View
-      style={[spacings.mb, flexbox.directionRow, flexbox.alignCenter, flexbox.justifySpaceBetween]}
+      style={[
+        spacings.mb,
+        spacings.mtTy,
+        flexbox.directionRow,
+        flexbox.alignCenter,
+        flexbox.justifySpaceBetween
+      ]}
     >
       <Pressable
         style={({ hovered }: any) => [

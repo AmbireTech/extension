@@ -16,9 +16,7 @@ const useExtraEntropy = () => {
     return extraEntropy
   }, [])
 
-  return {
-    getExtraEntropy
-  }
+  return { getExtraEntropy }
 }
 
 export default useExtraEntropy
