@@ -1,9 +1,11 @@
 import React, { useCallback, useMemo } from 'react'
 import { View } from 'react-native'
 
+import { isSmartAccount as getIsSmartAccount } from '@ambire-common/libs/account/account'
 import { getIsViewOnly } from '@ambire-common/utils/accounts'
 import Alert from '@common/components/Alert'
 import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
+import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
@@ -37,6 +39,7 @@ const GetEncryptionPublicKeyRequestScreen = () => {
   const { name, icon } = useDappInfo(userRequest)
 
   const isViewOnly = getIsViewOnly(keystoreState.keys, account?.associatedKeys || [])
+  const isSmartAccount = getIsSmartAccount(account)
 
   const selectedAccountKeyStoreKeys = useMemo(
     () => keystoreState.keys.filter((key) => account?.associatedKeys.includes(key.addr)),
@@ -70,7 +73,40 @@ const GetEncryptionPublicKeyRequestScreen = () => {
     })
   }, [userRequest, t, dispatch])
 
-  // TODO: Display not supported for 1) smart accounts and 2) accounts with only hw wallet keys.
+  const actionFooterResolveNode = useMemo(() => {
+    if (isSmartAccount || internalKey) return null
+
+    if (isViewOnly)
+      return (
+        <View style={[{ flex: 3 }, flexbox.directionRow, flexbox.justifyEnd]}>
+          <NoKeysToSignAlert type="short" isTransaction={false} />
+        </View>
+      )
+
+    return null
+  }, [isSmartAccount, isViewOnly, internalKey])
+
+  const errorNode = useMemo(() => {
+    if (isSmartAccount)
+      return (
+        <Alert
+          title={<Text>{t('Smart contract wallets do not support this capability.')}</Text>}
+          type="error"
+        />
+      )
+
+    const hasKeyButNotAnInternalOne = !isViewOnly && !internalKey
+    if (hasKeyButNotAnInternalOne)
+      return (
+        <Alert
+          title={<Text>{t('Hardware wallets do not support this capability.')}</Text>}
+          type="error"
+        />
+      )
+
+    return null
+  }, [internalKey, isSmartAccount, isViewOnly, t])
+
   return (
     <>
       <SmallNotificationWindowWrapper>
@@ -90,17 +126,9 @@ const GetEncryptionPublicKeyRequestScreen = () => {
               onReject={handleDeny}
               onResolve={handleAccept}
               resolveButtonText={t('Provide')}
-              resolveDisabled={isViewOnly}
+              resolveDisabled={isViewOnly || isSmartAccount}
               resolveButtonTestID="button-provide"
-              {...(isViewOnly
-                ? {
-                    resolveNode: (
-                      <View style={[{ flex: 3 }, flexbox.directionRow, flexbox.justifyEnd]}>
-                        <NoKeysToSignAlert type="short" isTransaction={false} />
-                      </View>
-                    )
-                  }
-                : {})}
+              resolveNode={actionFooterResolveNode}
             />
           }
           backgroundColor={theme.quinaryBackground}
@@ -112,13 +140,15 @@ const GetEncryptionPublicKeyRequestScreen = () => {
               intentText={t('wants to get your public encryption key')}
             />
 
-            <View style={spacings.mvLg}>
+            <View style={[spacings.mtLg, flexbox.flex1, flexbox.justifySpaceBetween]}>
               <Alert
                 title={t(
                   'By providing, this app will be able to compose encrypted messages to you.'
                 )}
                 type="info2"
               />
+
+              {errorNode}
             </View>
           </TabLayoutWrapperMainContent>
         </TabLayoutContainer>
