@@ -1,26 +1,26 @@
 import React, { useCallback, useMemo } from 'react'
 import { View } from 'react-native'
 
-import ManifestFallbackIcon from '@common/assets/svg/ManifestFallbackIcon'
-import Button from '@common/components/Button'
-import Panel from '@common/components/Panel'
-import ScrollableWrapper from '@common/components/ScrollableWrapper'
+import { isSmartAccount as getIsSmartAccount } from '@ambire-common/libs/account/account'
+import { getIsViewOnly } from '@ambire-common/utils/accounts'
+import Alert from '@common/components/Alert'
+import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
 import Text from '@common/components/Text'
-import Title from '@common/components/Title'
-import { Trans, useTranslation } from '@common/config/localization'
+import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import flexboxStyles from '@common/styles/utils/flexbox'
-import textStyles from '@common/styles/utils/text'
+import { THEME_TYPES } from '@common/styles/themeConfig'
+import flexbox from '@common/styles/utils/flexbox'
 import HeaderAccountAndNetworkInfo from '@web/components/HeaderAccountAndNetworkInfo'
-import ManifestImage from '@web/components/ManifestImage'
+import RequestingDappInfo from '@web/components/RequestingDappInfo'
+import SmallNotificationWindowWrapper from '@web/components/SmallNotificationWindowWrapper'
+import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useDappInfo from '@web/hooks/useDappInfo'
 import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
-
-import styles from './styles'
+import ActionFooter from '@web/modules/action-requests/components/ActionFooter'
 
 const DecryptRequestScreen = () => {
   const { t } = useTranslation()
@@ -28,7 +28,7 @@ const DecryptRequestScreen = () => {
   const { currentUserRequest } = useRequestsControllerState()
   const { account } = useSelectedAccountControllerState()
   const keystoreState = useKeystoreControllerState()
-  const { theme } = useTheme()
+  const { theme, themeType } = useTheme()
 
   const userRequest = useMemo(
     () => (currentUserRequest?.kind === 'ethDecrypt' ? currentUserRequest : undefined),
@@ -61,6 +61,43 @@ const DecryptRequestScreen = () => {
     })
   }, [userRequest, dispatch, selectedAccountKeyStoreKeys, currentUserRequest])
 
+  // Duplicated with GetEncryptionPublicKeyRequestScreen
+  const isViewOnly = getIsViewOnly(keystoreState.keys, account?.associatedKeys || [])
+  const isSmartAccount = getIsSmartAccount(account)
+  const internalKey = selectedAccountKeyStoreKeys.find((k) => k.type === 'internal')
+  const errorNode = useMemo(() => {
+    if (isSmartAccount)
+      return (
+        <Alert
+          title={<Text>{t('Smart contract wallets do not support this capability.')}</Text>}
+          type="error"
+        />
+      )
+
+    const hasKeyButNotAnInternalOne = !isViewOnly && !internalKey
+    if (hasKeyButNotAnInternalOne)
+      return (
+        <Alert
+          title={<Text>{t('Hardware wallets do not support this capability.')}</Text>}
+          type="error"
+        />
+      )
+
+    return null
+  }, [internalKey, isSmartAccount, isViewOnly, t])
+  const actionFooterResolveNode = useMemo(() => {
+    if (isSmartAccount || internalKey) return null
+
+    if (isViewOnly)
+      return (
+        <View style={[{ flex: 3 }, flexbox.directionRow, flexbox.justifyEnd]}>
+          <NoKeysToSignAlert type="short" isTransaction={false} />
+        </View>
+      )
+
+    return null
+  }, [isSmartAccount, isViewOnly, internalKey])
+
   const handleDeny = useCallback(() => {
     if (!userRequest) return
 
@@ -72,48 +109,45 @@ const DecryptRequestScreen = () => {
 
   // TODO: Display not supported for 1) smart accounts and 2) accounts with only hw wallet keys.
   return (
-    <>
-      <HeaderAccountAndNetworkInfo />
-      <ScrollableWrapper hasBottomTabNav={false}>
-        <Panel>
-          <View style={[spacings.pvSm, flexboxStyles.alignCenter]}>
-            <ManifestImage uri={icon} size={64} fallback={() => <ManifestFallbackIcon />} />
-          </View>
+    <SmallNotificationWindowWrapper>
+      <TabLayoutContainer
+        width="full"
+        header={
+          <HeaderAccountAndNetworkInfo
+            backgroundColor={
+              themeType === THEME_TYPES.DARK
+                ? (theme.secondaryBackground as string)
+                : (theme.primaryBackground as string)
+            }
+          />
+        }
+        footer={
+          <ActionFooter
+            onReject={handleDeny}
+            onResolve={handleDecrypt}
+            resolveButtonText={t('Decrypt')}
+            resolveDisabled={isViewOnly || isSmartAccount}
+            resolveButtonTestID="button-decrypt"
+            resolveNode={actionFooterResolveNode}
+          />
+        }
+        backgroundColor={theme.quinaryBackground}
+      >
+        <TabLayoutWrapperMainContent>
+          <RequestingDappInfo
+            name={name}
+            icon={icon}
+            intentText={t('wants you to decrypt a message')}
+          />
 
-          <Title style={[textStyles.center, spacings.phSm, spacings.pbLg]}>
-            {userRequest?.dappPromises[0].session.origin
-              ? new URL(userRequest.dappPromises[0].session.origin).hostname
-              : ''}
-          </Title>
+          <View style={[spacings.mtLg, flexbox.flex1, flexbox.justifySpaceBetween]}>
+            <Text>TODO: Display the message.</Text>
 
-          <View>
-            <Trans>
-              <Text style={[textStyles.center, spacings.phSm, spacings.mbLg]}>
-                <Text fontSize={14} weight="regular">
-                  {'The App '}
-                </Text>
-                <Text fontSize={14} weight="regular" color={theme.primaryLight}>
-                  {name}
-                </Text>
-                <Text fontSize={14} weight="regular">
-                  {
-                    ' requires you to decrypt the following text in order to complete the operation:'
-                  }
-                </Text>
-              </Text>
-            </Trans>
+            {errorNode}
           </View>
-
-          <View style={styles.buttonsContainer}>
-            <View style={styles.buttonWrapper}>
-              <Button type="outline" onPress={handleDeny} text={t('Cancel')} />
-              {/* TODO: Disable for view only accounts (or add import key prompt) */}
-              <Button type="primary" onPress={handleDecrypt} text={t('Decrypt')} />
-            </View>
-          </View>
-        </Panel>
-      </ScrollableWrapper>
-    </>
+        </TabLayoutWrapperMainContent>
+      </TabLayoutContainer>
+    </SmallNotificationWindowWrapper>
   )
 }
 
