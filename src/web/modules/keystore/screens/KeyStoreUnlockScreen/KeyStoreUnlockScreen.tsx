@@ -58,7 +58,7 @@ const KeyStoreUnlockScreen = () => {
   } = useForm({
     mode: 'all',
     defaultValues: {
-      password: isDev && !isTesting ? (DEFAULT_KEYSTORE_PASSWORD_DEV ?? '') : ''
+      password: isDev && !isTesting ? DEFAULT_KEYSTORE_PASSWORD_DEV ?? '' : ''
     }
   })
 
@@ -233,7 +233,7 @@ const KeyStoreUnlockScreen = () => {
                   openInternalPageInTab({
                     route: ROUTES.keyStoreEmailRecovery,
                     shouldCloseCurrentWindow: !getUiType().isTab,
-                    windowId: requestWindow.windowProps?.createdFromWindowId
+                    windowId: requestWindow?.windowProps?.createdFromWindowId
                   })
                 }
                 hitSlop={FOOTER_BUTTON_HIT_SLOP}

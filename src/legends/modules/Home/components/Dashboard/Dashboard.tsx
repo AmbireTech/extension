@@ -33,7 +33,11 @@ const Dashboard = () => {
   }, [connectedAccount, season2LeaderboardData, userRewardsStats])
 
   const sections: Stat[] = SECTIONS.map((section) => {
-    const score = userRewardsStats ? Math.floor(userRewardsStats[section.id]) : 0
+    let score = 0
+    if (userRewardsStats) {
+      if (section.id === 'multiplier') score = userRewardsStats[section.id]
+      else score = Math.floor(userRewardsStats[section.id])
+    }
 
     let explanation = section.explanation
 

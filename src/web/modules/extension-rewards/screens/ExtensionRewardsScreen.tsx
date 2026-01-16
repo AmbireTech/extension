@@ -65,8 +65,11 @@ const ExtensionRewardsScreen = () => {
   const sections: Stat[] = useMemo(
     () =>
       SECTIONS.map((section) => {
-        const score = projectedRewardsStats ? Math.floor(projectedRewardsStats[section.id]) : 0
-
+        let score = 0
+        if (projectedRewardsStats) {
+          if (section.id === 'multiplier') score = projectedRewardsStats[section.id]
+          else score = Math.floor(projectedRewardsStats[section.id])
+        }
         let scoreChange = 0
 
         if (pastProjectedRewardsScores && projectedRewardsStats) {
