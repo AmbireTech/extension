@@ -11,7 +11,7 @@ const WalletStateControllerContext = createContext<WalletStateController>(
 )
 
 const WalletStateControllerProvider: React.FC<any> = ({ children }) => {
-  const controller = 'walletState'
+  const controller = 'WalletStateController'
   const state = useControllerState(controller)
   const { dispatch } = useBackgroundService()
 

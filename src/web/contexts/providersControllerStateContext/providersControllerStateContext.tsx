@@ -11,7 +11,7 @@ const ProvidersControllerStateContext = createContext<IProvidersController>(
 )
 
 const ProvidersControllerStateProvider: React.FC<any> = ({ children }) => {
-  const controller = 'providers'
+  const controller = 'ProvidersController'
   const state = useControllerState(controller)
   const { dispatch } = useBackgroundService()
   const mainState = useMainControllerState()

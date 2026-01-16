@@ -1,16 +1,16 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 
-import InfoIcon from '@common/assets/svg/InfoIcon'
-import { getValueFromKey, Icon, SECTIONS, Stat } from '@common/components/RewardsStat'
-import Tooltip from '@common/components/Tooltip'
+import { formatScore, getValueFromKey, Icon, SECTIONS, Stat } from '@common/components/RewardsStat'
 import { faChevronDown } from '@fortawesome/free-solid-svg-icons/faChevronDown'
 import { faTrophy } from '@fortawesome/free-solid-svg-icons/faTrophy'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import ChevronDownIcon from '@legends/common/assets/svg/ChevronDownIcon'
 import Page from '@legends/components/Page'
+import useAccountContext from '@legends/hooks/useAccountContext'
 import useLeaderboardContext from '@legends/hooks/useLeaderboardContext'
 import usePortfolioControllerState from '@legends/hooks/usePortfolioControllerState/usePortfolioControllerState'
 import FaqSection from '@legends/modules/Home/components/FaqSection'
+import { reorderLeaderboardWithLiveData } from '@legends/utils/leaderboards'
 
 import styles from './Dashboard.module.scss'
 import Background1 from './media/Background1'
@@ -21,23 +21,47 @@ const Dashboard = () => {
   const { season2LeaderboardData } = useLeaderboardContext()
   const { userRewardsStats, isLoadingClaimableRewards } = usePortfolioControllerState()
   const [expandedId, setExpandedId] = React.useState<Stat['id'] | null>(null)
+  const { connectedAccount } = useAccountContext()
+
+  // since we reorder the leaderboard, the rank should be calculate dynamically
+  const dynamicLiveRank: number | null = useMemo(() => {
+    if (!season2LeaderboardData) return null
+    return (
+      reorderLeaderboardWithLiveData(season2LeaderboardData, userRewardsStats, connectedAccount)
+        .currentUser?.rank || null
+    )
+  }, [connectedAccount, season2LeaderboardData, userRewardsStats])
 
   const sections: Stat[] = SECTIONS.map((section) => {
-    let score = userRewardsStats ? userRewardsStats[section.id].toFixed(0) : 0
+    const score = userRewardsStats ? Math.floor(userRewardsStats[section.id]) : 0
+
+    let explanation = section.explanation
 
     if (section.id === 'multiplier') {
-      score = `${score}x`
+      explanation = `You receive 1.06X multiplier of your score for belonging to any of the following:
+- Have pledged to the Trustless manifesto (Soon)
+- Hold a LobsterDAO NFT (Soon)
+- Hold a CryptoTesters NFT (Soon)
+- Hold an Ambire Gas Tank NFT, Legends NFT, or any Ambire conference POAP (Soon)
+- Hold Gitcoin passport NFT (Soon)
+- Hold GHO passport NFT (Soon)
+- ${
+        (userRewardsStats?.multipliers || []).some((m) => m.type === 'WEEKLY_TX' && m.activated)
+          ? '✅ '
+          : ''
+      }Have at least one Ethereum transaction per week, all weeks during the season, except up to 2`
     }
 
     return {
       ...section,
+      explanation,
       score,
       value: getValueFromKey(section.id, userRewardsStats)
     }
   })
 
   return (
-    <Page containerSize="responsive" contentClassName={styles.pageContent}>
+    <Page containerSize="responsive" contentClassName={styles.pageContent} showClaimRewardsModal>
       <div className={styles.wrapper}>
         <div className={styles.headerWrapper}>
           <h2 className={styles.title}>Your Rewards</h2>
@@ -63,7 +87,7 @@ const Dashboard = () => {
             <div className={styles.stats}>
               {sections.map(({ score, id, label, explanation, value }) =>
                 isLoadingClaimableRewards ? (
-                  <div className={styles.statSkeleton} />
+                  <div key={id} className={styles.statSkeleton} />
                 ) : (
                   <div
                     className={`${styles.stat} ${expandedId === id ? styles.open : ''}`}
@@ -76,7 +100,7 @@ const Dashboard = () => {
                     >
                       <div className={styles.score}>
                         <div className={styles.scoreBadge}>
-                          <span className={styles.scoreText}>{score}</span>
+                          <span className={styles.scoreText}>{formatScore(id, score)}</span>
                         </div>
                       </div>
                       <div className={styles.criteria}>
@@ -84,34 +108,13 @@ const Dashboard = () => {
                           <Icon id={id} />
                         </div>
                         <span className={styles.label}>{label}</span>
-                        <InfoIcon
-                          width={12}
-                          height={12}
-                          color="currentColor"
-                          className={styles.infoIcon}
-                          data-tooltip-id={`${id}-info-tooltip`}
-                        />
-                        <Tooltip
-                          style={{
-                            backgroundColor: '#101114',
-                            color: '#F4F4F7',
-                            fontFamily: 'FunnelDisplay',
-                            fontSize: 11,
-                            lineHeight: '16px',
-                            fontWeight: 300,
-                            maxWidth: 244,
-                            boxShadow: '0px 0px 12px 0px #191B20',
-                            whiteSpace: 'pre-wrap'
-                          }}
-                          place="bottom"
-                          id={`${id}-info-tooltip`}
-                          content={explanation}
-                        />
                       </div>
                       <span className={styles.value}>{value}</span>
                       <FontAwesomeIcon className={`${styles.chevronIcon}`} icon={faChevronDown} />
                     </button>
-                    <div className={styles.description}>{explanation}</div>
+                    <div className={styles.description}>
+                      <div>{explanation}</div>
+                    </div>
                   </div>
                 )
               )}
@@ -153,9 +156,7 @@ const Dashboard = () => {
             </div>
             <div className={styles.rank}>
               <div className={styles.content}>
-                <span className={styles.badge}>
-                  {season2LeaderboardData?.currentUser?.rank || '-'}
-                </span>
+                <span className={styles.badge}>{dynamicLiveRank || '-'}</span>
                 <div className={styles.labelWithIcon}>
                   <FontAwesomeIcon icon={faTrophy} className={styles.icon} />
                   <span className={styles.label}>Rank</span>

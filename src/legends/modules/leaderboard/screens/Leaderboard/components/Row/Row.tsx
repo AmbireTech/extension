@@ -10,7 +10,10 @@ import usePortfolioControllerState from '@legends/hooks/usePortfolioControllerSt
 import styles from '@legends/modules/leaderboard/screens/Leaderboard/Leaderboard.module.scss'
 import { LeaderboardEntry } from '@legends/modules/leaderboard/types'
 
-type Props = Omit<LeaderboardEntry['currentUser'], 'projectedRewards' | 'projectedRewardsUsd'> & {
+type Props = Omit<
+  NonNullable<LeaderboardEntry['currentUser']>,
+  'projectedRewards' | 'projectedRewardsUsd'
+> & {
   stickyPosition: string | null
   projectedRewardsSeason1?: number | string
   projectedRewardsSeason2Usd?: number
@@ -18,7 +21,6 @@ type Props = Omit<LeaderboardEntry['currentUser'], 'projectedRewards' | 'project
   reward?: number | ''
   image_avatar?: string
 }
-
 const calculateRowStyle = (isConnectedAccountRow: boolean, stickyPosition: string | null) => {
   return {
     position: (isConnectedAccountRow && stickyPosition ? 'sticky' : 'relative') as
@@ -68,7 +70,7 @@ const Row: FC<Props> = ({
   reward
 }) => {
   const { connectedAccount } = useAccountContext()
-  const { walletTokenInfo } = usePortfolioControllerState()
+  const { walletTokenPrice } = usePortfolioControllerState()
   const isConnectedAccountRow = account === connectedAccount
 
   const [maxAddressLength, setMaxAddressLength] = React.useState(23)
@@ -100,7 +102,7 @@ const Row: FC<Props> = ({
     symbol: 'stkWALLET',
     name: 'Staked $WALLET',
     decimals: 18,
-    priceIn: [{ baseCurrency: 'usd', price: walletTokenInfo?.walletPrice || 0 }],
+    priceIn: [{ baseCurrency: 'usd', price: walletTokenPrice || 0 }],
     flags: {
       onGasTank: false,
       rewardsType: 'wallet-projected-rewards' as const,
@@ -166,16 +168,15 @@ const Row: FC<Props> = ({
       )}
       {typeof projectedRewardsSeason2Usd !== 'undefined' && (
         <h5 className={`${styles.cell} ${styles.dollarReward}`}>
-          {Number(projectedRewardsSeason2Usd / (walletTokenInfo?.walletPrice || 0)).toLocaleString(
-            undefined,
-            {
-              maximumFractionDigits: 0
-            }
-          )}
+          {walletTokenPrice
+            ? Number(projectedRewardsSeason2Usd / walletTokenPrice).toLocaleString(undefined, {
+                maximumFractionDigits: 0
+              })
+            : 'Loading...'}
         </h5>
       )}
 
-      <h5 className={styles.cell}>{points || formattedXp}</h5>
+      <h5 className={styles.cell}>{points ? Math.floor(points) : formattedXp}</h5>
     </div>
   )
 }

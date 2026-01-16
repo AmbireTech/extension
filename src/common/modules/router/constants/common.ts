@@ -63,7 +63,8 @@ const WEB_ROUTES = {
   benzin: 'benzin',
   swapAndBridge: 'swap-and-bridge',
   recoveryPhrasesSettings: 'settings/recovery-phrases',
-  onboardingCompleted: 'wallet-setup-completed'
+  onboardingCompleted: 'wallet-setup-completed',
+  receive: 'receive'
 }
 
 const ROUTES = { ...MOBILE_ROUTES, ...WEB_ROUTES }

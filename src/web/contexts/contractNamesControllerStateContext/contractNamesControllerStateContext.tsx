@@ -12,7 +12,7 @@ const ContractNamesControllerStateContext = createContext<IContractNamesControll
 )
 
 const ContractNamesControllerStateProvider: React.FC<any> = ({ children }) => {
-  const controller = 'contractNames'
+  const controller = 'ContractNamesController'
   const state = useControllerState(controller)
   const { dispatch } = useBackgroundService()
   const mainState = useMainControllerState()

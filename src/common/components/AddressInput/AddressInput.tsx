@@ -97,6 +97,7 @@ const AddressInput: React.FC<Props> = ({
         validLabel={
           !isError && severity !== 'info' && !isValidationInDomainResolvingState ? message : ''
         }
+        validLabelAppearance={severity ? `${severity}Text` : undefined}
         error={isError ? message : ''}
         isValid={!isError && !isValidationInDomainResolvingState}
         placeholder={placeholder || t('Address / ENS')}
@@ -109,6 +110,7 @@ const AddressInput: React.FC<Props> = ({
             : ''
         }
         renderConfirmAddress={renderConfirmAddress}
+        preventJumpOnValidationChange
         childrenBeforeButtons={
           childrenBeforeButtons ||
           (!withDetails && (

@@ -3,7 +3,8 @@ import selectors from 'constants/selectors'
 import tokens from 'constants/tokens'
 import { test } from 'fixtures/pageObjects'
 
-import { expect, Page } from '@playwright/test'
+import { expect } from '@playwright/test'
+import { runBatchTransferFlow, runSimpleTransferFlow } from '../../flows/transferFlow'
 
 test.describe('transfer', { tag: '@transfer' }, () => {
   test.beforeEach(async ({ pages }) => {
@@ -15,181 +16,37 @@ test.describe('transfer', { tag: '@transfer' }, () => {
   })
 
   test('should send a transaction and pay with the current account gas tank', async ({ pages }) => {
-    const sendToken = tokens.usdc.optimism
-    const recipientAddress = SA_ADDRESS
-    const feeToken = tokens.usdc.ethereum
-    const payWithGasTank = true
-    const message = 'Transfer done!'
-
-    await test.step('assert no transaction on Activity tab', async () => {
-      await pages.dashboard.checkNoTransactionOnActivityTab()
-    })
-
-    await test.step('start send transfer', async () => {
-      await pages.transfer.navigateToTransfer()
-    })
-
-    await test.step('add transfer amount', async () => {
-      await pages.transfer.fillAmount(sendToken)
-    })
-
-    await test.step('add recepient address', async () => {
-      await pages.transfer.fillRecipient(recipientAddress)
-    })
-
-    await test.step('send transaction', async () => {
-      await pages.transfer.signSlowSpeedTransaction({
-        feeToken,
-        payWithGasTank,
-        sendToken,
-        message
-      })
-    })
-
-    await test.step('assert new transaction on Activity tab', async () => {
-      await pages.transfer.checkSendTransactionOnActivityTab()
-    })
-
-    await test.step('assert funds sent to recepient address on explorer', async () => {
-      const viewTransactionLink = pages.basePage.page.getByTestId(
-        selectors.dashboard.viewTransactionLink
-      )
-      const viewTransactionTab = await pages.basePage.handleNewPage(viewTransactionLink)
-      await pages.transfer.checkRecepientTransactionOnExplorer({
-        newPage: viewTransactionTab,
-        recepientAddress: recipientAddress
-      })
-
-      // check url of new tab
-      expect(viewTransactionTab.url()).toContain('explorer.ambire.com')
+    await runSimpleTransferFlow({
+      pages,
+      sendToken: tokens.usdc.optimism,
+      recipientAddress: SA_ADDRESS,
+      feeToken: tokens.usdc.ethereum,
+      payWithGasTank: true,
+      message: 'Transfer done!',
+      assertNoInitialTx: true
     })
   })
 
   test("should send a transaction and pay with the current account's ERC-20 token", async ({
     pages
   }) => {
-    const sendToken = tokens.usdc.optimism
-    // This address is derived from SA testing account seed phrase
-    const recipientAddress = '0xc162b2F9f06143Cf063606d814C7F38ED4471F44'
-    const feeToken = tokens.usdc.optimism
-    const payWithGasTank = false
-    const message = 'Transfer done!'
-
-    await test.step('assert no transaction on Activity tab', async () => {
-      await pages.dashboard.checkNoTransactionOnActivityTab()
-    })
-
-    await test.step('start send transfer', async () => {
-      await pages.transfer.navigateToTransfer()
-    })
-
-    await test.step('add transfer amount', async () => {
-      await pages.transfer.fillAmount(sendToken)
-    })
-
-    await test.step('add recepient address', async () => {
-      await pages.transfer.fillRecipient(recipientAddress)
-    })
-
-    await test.step('send transaction', async () => {
-      await pages.transfer.signSlowSpeedTransaction({
-        feeToken,
-        payWithGasTank,
-        sendToken,
-        message
-      })
-    })
-
-    await test.step('assert new transaction on Activity tab', async () => {
-      await pages.transfer.checkSendTransactionOnActivityTab()
-    })
-
-    await test.step('assert funds sent to recepient address on explorer', async () => {
-      const viewTransactionLink = pages.basePage.page.getByTestId(
-        selectors.dashboard.viewTransactionLink
-      )
-      const viewTransactionTab = await pages.basePage.handleNewPage(viewTransactionLink)
-
-      // check url of new tab
-      expect(viewTransactionTab.url()).toContain('explorer.ambire.com')
-
-      await pages.transfer.checkRecepientTransactionOnExplorer({
-        newPage: viewTransactionTab,
-        recepientAddress: recipientAddress
-      })
+    await runSimpleTransferFlow({
+      pages,
+      sendToken: tokens.usdc.optimism,
+      recipientAddress: '0xc162b2F9f06143Cf063606d814C7F38ED4471F44',
+      feeToken: tokens.usdc.optimism,
+      payWithGasTank: false,
+      message: 'Transfer done!',
+      assertNoInitialTx: true
     })
   })
 
   test('should batch multiple transfer transactions', async ({ pages }) => {
-    const page = pages.transfer.page
-    const sendToken = tokens.usdc.optimism
-    const recipientAddress = '0xc162b2F9f06143Cf063606d814C7F38ED4471F44'
-
-    await test.step('start monitoring requests', async () => {
-      await pages.transfer.monitorRequests()
+    await runBatchTransferFlow({
+      pages,
+      sendToken: tokens.usdc.optimism,
+      recipientAddress: '0xc162b2F9f06143Cf063606d814C7F38ED4471F44'
     })
-
-    await test.step('start send transfer', async () => {
-      await pages.transfer.navigateToTransfer()
-    })
-
-    await test.step('add first transaction', async () => {
-      await pages.transfer.fillAmount(sendToken)
-      await pages.transfer.fillRecipient(recipientAddress)
-      await pages.transfer.addToBatch()
-    })
-
-    await test.step('add more transaction', async () => {
-      await pages.transfer.click(selectors.addMoreButton)
-    })
-
-    await test.step('add second transaction', async () => {
-      await pages.transfer.fillAmount(sendToken)
-      await pages.transfer.fillRecipient(recipientAddress)
-      await pages.transfer.addToBatch()
-    })
-
-    await test.step('go to dashboard', async () => {
-      await pages.transfer.click(selectors.goDashboardButton)
-    })
-
-    await test.step('open AccountOp screen and sign', async () => {
-      // New Page promise
-      const context = page.context()
-      const actionWindowPagePromise = new Promise<Page>((resolve) => {
-        context.once('page', (p) => {
-          resolve(p)
-        })
-      })
-
-      // Open AccountOp screen
-      await page.getByTestId(selectors.bannerButtonOpen).first().click()
-
-      // Sign
-      const actionWindowPage = await actionWindowPagePromise
-      await actionWindowPage.getByTestId(selectors.signTransactionButton).click()
-
-      // Expect the txn to be Confirmed.
-      // Sometimes it takes a bit more time to be confirmed, that's why we increase the timeout.
-      await expect(actionWindowPage.getByTestId(selectors.txnConfirmed)).toBeVisible({
-        timeout: 20000
-      })
-
-      // assert funds sent to recepient address on explorer
-      await pages.transfer.checkRecepientTransactionOnExplorer({
-        newPage: actionWindowPage,
-        recepientAddress: recipientAddress,
-        options: { expectedTransactionsCount: 2 }
-      })
-    })
-
-    await test.step(
-      'stop monitoring requests and expect no uncategorized requests to be made',
-      async () => {
-        const { uncategorized } = pages.transfer.getCategorizedRequests()
-        expect(uncategorized.length).toBeLessThanOrEqual(0)
-      }
-    )
   })
 
   test('add contact in address book and send transaction to newly added contact', async ({
@@ -200,7 +57,6 @@ test.describe('transfer', { tag: '@transfer' }, () => {
     const sendToken = tokens.usdc.optimism
     const feeToken = tokens.usdc.optimism
     const payWithGasTank = false
-    const isUnknownAddress = false
     const message = 'Transfer done!'
 
     await test.step('assert no transaction on Activity tab', async () => {
@@ -235,7 +91,7 @@ test.describe('transfer', { tag: '@transfer' }, () => {
     })
 
     await test.step('add recepient address', async () => {
-      await pages.transfer.fillRecipient(newContactAddress, isUnknownAddress)
+      await pages.transfer.fillRecipient(newContactAddress)
     })
 
     await test.step('send transaction', async () => {

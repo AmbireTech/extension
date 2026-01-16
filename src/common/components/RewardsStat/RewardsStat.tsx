@@ -10,11 +10,12 @@ import SwapIcon from '@common/assets/svg/SwapIcon'
 import WalletIcon from '@common/assets/svg/WalletIcon2'
 
 type Stat = {
-  id: keyof ProjectedRewardsStats
-  score: number | string
+  id: keyof Omit<ProjectedRewardsStats, 'multipliers'>
+  score: number
   label: string
   explanation: string
   value: string | null
+  scoreChange?: number
 }
 
 const SECTIONS: Omit<Stat, 'score' | 'value'>[] = [
@@ -48,15 +49,8 @@ governance_score = user.governance_proposals_voted_in.map(x => x.governance_weig
   },
   {
     id: 'multiplier',
-    label: 'Community multipliers (Soon)',
-    explanation: `You receive 1.06X multiplier of your score for belonging to any of the following:
-- Have pledged to the Trustless manifesto
-- Hold a LobsterDAO NFT
-- Hold a CryptoTesters NFT
-- Hold an Ambire Gas Tank NFT, Legends NFT, or any Ambire conference POAP
-- Hold Gitcoin passport NFT
-- Hold GHO passport NFT
-- Have at least one Ethereum transaction per week, all weeks during the season, except up to 2`
+    label: 'Community multipliers',
+    explanation: ''
   }
 ]
 
@@ -85,10 +79,14 @@ const getValueFromKey = (id: Stat['id'], stats: ProjectedRewardsStats | null): s
         maximumFractionDigits: 0
       })}`
     case 'multiplier':
-      return null
+      return `${stats.multiplierCount}`
     default:
       return '-'
   }
+}
+
+const formatScore = (id: Stat['id'], score: Stat['score']) => {
+  return id === 'multiplier' ? `${score}x` : score.toFixed(0)
 }
 
 const Icon = ({ id }: { id: Stat['id'] }) => {
@@ -110,6 +108,6 @@ const Icon = ({ id }: { id: Stat['id'] }) => {
   }
 }
 
-export { SECTIONS, getValueFromKey, Icon }
+export { SECTIONS, getValueFromKey, Icon, formatScore }
 
 export type { Stat }

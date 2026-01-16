@@ -115,7 +115,7 @@ export interface CardFromResponse {
     }[]
     usedInvitationSlots?: number
     accountLinkingHistory: { invitedEoaOrV1: string; date: string }[]
-    availableToClaim?: BigInt
+    availableToClaim?: number
     notMetLvlThreshold?: true
     hasAlreadyMigrated?: true
     hasPenalty?: boolean
