@@ -112,6 +112,15 @@ const GetStartedScreen = () => {
               </Button>
             </ScrollableWrapper>
           </View>
+          <View style={[flexbox.directionRow, flexbox.alignSelfCenter, spacings.mt]}>
+            <Text
+              onPress={() => navigate(ROUTES.networksConfiguration)}
+              fontSize={12}
+              color={theme.info2Text}
+            >
+              <a href="javascript:;">→ {t('Network Configuration')}</a>
+            </Text>
+          </View>
         </Panel>
       </TabLayoutWrapperMainContent>
     </TabLayoutContainer>

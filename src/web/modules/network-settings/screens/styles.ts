@@ -25,7 +25,8 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       ...flexbox.flex1,
       ...spacings.mb2Xl,
       ...spacings.pvLg,
-      ...spacings.phLg
+      ...spacings.phLg,
+      ...spacings.ptSm
     }
   })
 

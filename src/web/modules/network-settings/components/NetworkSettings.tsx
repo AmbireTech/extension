@@ -28,11 +28,12 @@ import { SettingsRoutesContext } from '@web/modules/settings/contexts/SettingsRo
 import Network from '@web/modules/settings/screens/NetworksSettingsScreen/Network'
 import NetworkForm from '@web/modules/settings/screens/NetworksSettingsScreen/NetworkForm'
 
+import { ROUTES } from '@common/modules/router/constants/common'
 import BatchingControlOption from './BatchingControlOption'
 
 const NetworksSettings = () => {
   const { t } = useTranslation()
-  const { search: searchParams } = useRoute()
+  const { search: searchParams, pathname } = useRoute()
   const { control, watch } = useForm({ defaultValues: { search: '' } })
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const { maxWidthSize } = useWindowSize()
@@ -67,6 +68,11 @@ const NetworksSettings = () => {
   }, [providers, selectedNetwork])
 
   const search = watch('search')
+
+  const isInitialConfig = useMemo(
+    () => pathname?.includes(ROUTES.networksConfiguration),
+    [pathname]
+  )
 
   useEffect(() => {
     setCurrentSettingsPage('networks')
@@ -150,17 +156,19 @@ const NetworksSettings = () => {
             )}
           </ScrollableWrapper>
           <View style={spacings.pt}>
-            <Button
-              type="primary"
-              size="small"
-              text={t('Add network from Chainlist')}
-              testID="add-network-from-chainlist"
-              onPress={navigateToChainlist}
-              style={{ height: 48, ...spacings.mbTy }}
-              childrenPosition="left"
-            >
-              <ChainlistIcon width={20} height={20} color={theme.primary} style={spacings.mrTy} />
-            </Button>
+            {!isInitialConfig && (
+              <Button
+                type="primary"
+                size="small"
+                text={t('Add network from Chainlist')}
+                testID="add-network-from-chainlist"
+                onPress={navigateToChainlist}
+                style={{ height: 48, ...spacings.mbTy }}
+                childrenPosition="left"
+              >
+                <ChainlistIcon width={20} height={20} color={theme.primary} style={spacings.mrTy} />
+              </Button>
+            )}
             <Button
               type="secondary"
               size="small"

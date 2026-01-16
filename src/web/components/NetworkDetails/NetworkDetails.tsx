@@ -77,17 +77,21 @@ const NetworkDetails = ({
     [allNetworks, chainId]
   )
 
-  const shouldDisplayEditButton = useMemo(
-    () => pathname?.includes(ROUTES.networksSettings) && !isEmpty,
-    [pathname, isEmpty]
+  const isEditableRoute = useMemo(
+    () =>
+      pathname?.includes(ROUTES.networksSettings) ||
+      pathname?.includes(ROUTES.networksConfiguration),
+    [pathname]
+  )
+  const allowDisableWithoutConfirmation = useMemo(
+    () => pathname?.includes(ROUTES.networksConfiguration),
+    [pathname]
   )
 
+  const shouldDisplayEditButton = useMemo(() => isEditableRoute && !isEmpty, [pathname, isEmpty])
+
   const shouldDisplayDisableButton = useMemo(
-    () =>
-      pathname?.includes(ROUTES.networksSettings) &&
-      !isEmpty &&
-      allowRemoveNetwork &&
-      String(chainId) !== '1',
+    () => isEditableRoute && !isEmpty && allowRemoveNetwork && String(chainId) !== '1',
     [pathname, isEmpty, allowRemoveNetwork, chainId]
   )
 
@@ -106,7 +110,7 @@ const NetworkDetails = ({
   }, [chainId, closeDialog, dispatch, networkData?.disabled, statuses.updateNetwork])
 
   const toggleNetworkDisabled = useCallback(() => {
-    if (networkData?.disabled) {
+    if (networkData?.disabled || allowDisableWithoutConfirmation) {
       updateNetworkDisabled()
     } else {
       openDialog()
