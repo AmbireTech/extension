@@ -66,7 +66,78 @@ test.describe('ambire rewards', () => {
 
       // await rewardsTab.locator('//button[contains(text(),"Connect Ambire")]').click()
 
-      // check page content
+      // check FAQ section
+      // await rewardsTab.click()
+    })
+
+    await test.step('Check Home page FAQ section', async () => {
+      await rewardsTab.pause()
+      const faqs = [
+        {
+          questionSelector: selectors.ambireRewards.faqFirstQuestion,
+          answerSelector: selectors.ambireRewards.faqFirstAnswer,
+          question: ambireRewardsText.homeFAQ.firstQuestion,
+          answer: ambireRewardsText.homeFAQ.answerToFirstQuestion
+        },
+        {
+          questionSelector: selectors.ambireRewards.faqSecondQuestion,
+          answerSelector: selectors.ambireRewards.faqSecondAnswer,
+          question: ambireRewardsText.homeFAQ.secondQuestion,
+          answer: ambireRewardsText.homeFAQ.answerToSecondQuestion
+        },
+        {
+          questionSelector: selectors.ambireRewards.faqThirdQuestion,
+          answerSelector: selectors.ambireRewards.faqThirdAnswer,
+          question: ambireRewardsText.homeFAQ.thirdQuestion,
+          answer: ambireRewardsText.homeFAQ.answerToThirdQuestion
+        },
+        {
+          questionSelector: selectors.ambireRewards.faqFourthQuestion,
+          answerSelector: selectors.ambireRewards.faqFourthAnswer,
+          question: ambireRewardsText.homeFAQ.forthQuestion,
+          answer: ambireRewardsText.homeFAQ.answerToFourthQuestion
+        },
+        {
+          questionSelector: selectors.ambireRewards.faqFifthQuestion,
+          answerSelector: selectors.ambireRewards.faqFifthAnswer,
+          question: ambireRewardsText.homeFAQ.fifthQuestion,
+          answer: ambireRewardsText.homeFAQ.answerToFifthQuestion
+        },
+        {
+          questionSelector: selectors.ambireRewards.faqSixthQuestion,
+          answerSelector: selectors.ambireRewards.faqSixthAnswer,
+          question: ambireRewardsText.homeFAQ.sixthQuestion,
+          answer: ambireRewardsText.homeFAQ.answerToSixthQuestion
+        },
+        {
+          questionSelector: selectors.ambireRewards.faqSeventhQuestion,
+          answerSelector: selectors.ambireRewards.faqSeventhAnswer,
+          question: ambireRewardsText.homeFAQ.seventhQuestion,
+          answer: ambireRewardsText.homeFAQ.answerToSeventhQuestion
+        },
+        {
+          questionSelector: selectors.ambireRewards.faqEightQuestion,
+          answerSelector: selectors.ambireRewards.faqEightAnswer,
+          question: ambireRewardsText.homeFAQ.eightQuestion,
+          answer: ambireRewardsText.homeFAQ.answerToEightQuestion
+        },
+        {
+          questionSelector: selectors.ambireRewards.faqNinthQuestion,
+          answerSelector: selectors.ambireRewards.faqNinthAnswer,
+          question: ambireRewardsText.homeFAQ.ninthQuestion,
+          answer: ambireRewardsText.homeFAQ.answerToNinthQuestion
+        }
+      ]
+
+
+      for (const faq of faqs) {
+        const question = rewardsTab.locator(faq.questionSelector)
+        const answer = rewardsTab.locator(faq.answerSelector)
+
+        await expect(question).toHaveText(faq.question)
+        await question.click()
+        await expect(answer).toHaveText(faq.answer)
+      }
     })
 
     await test.step('Check Leaderboard page', async () => {
@@ -105,7 +176,6 @@ test.describe('ambire rewards', () => {
     })
 
     await test.step('Check $WALLET page', async () => {
-    //   await rewardsTab.pause()
       const walletPage = rewardsTab.locator(selectors.ambireRewards.walletPage)
       await walletPage.click()
 
