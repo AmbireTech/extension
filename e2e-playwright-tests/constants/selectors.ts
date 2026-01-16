@@ -111,6 +111,7 @@ const selectors = {
       recepientAddressBlock: 'recipient-address-undefined'
     }
   },
+  // TODO: update selectors wiyh testID
   ambireRewards: {
     readAnnouncementHyperlink: '//a[contains(@href, "rewards-enters")]',
     faqFirstQuestion: '//span[contains(text(),"What is Ambire")]',
