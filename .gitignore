@@ -493,6 +493,7 @@ e2e-playwright-tests/node_modules
 e2e-playwright-tests/run-tests-logs
 e2e-playwright-tests/test-results
 e2e-playwright-tests/playwright-report
+e2e-playwright-tests/html-report
 e2e-playwright-tests/run-tests.sh
 e2e-playwright-tests/.vscode
 run-tests-logs
