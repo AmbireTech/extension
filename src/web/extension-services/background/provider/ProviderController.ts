@@ -22,6 +22,7 @@ import {
   isIdentifiedByMultipleTxn
 } from '@ambire-common/libs/accountOp/submittedAccountOp'
 import { networkChainIdToHex } from '@ambire-common/libs/networks/networks'
+import { Bundler } from '@ambire-common/services/bundlers/bundler'
 import { getBundlerByName, getDefaultBundler } from '@ambire-common/services/bundlers/getBundler'
 import { getRpcProvider } from '@ambire-common/services/provider'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
@@ -30,7 +31,6 @@ import { APP_VERSION } from '@common/config/env'
 import { SAFE_RPC_METHODS } from '@web/constants/common'
 import { notificationManager } from '@web/extension-services/background/webapi/notification'
 
-import { Bundler } from '@ambire-common/services/bundlers/bundler'
 import { createTab } from '../webapi/tab'
 import { RequestRes, Web3WalletPermission } from './types'
 
@@ -786,7 +786,25 @@ export class ProviderController {
   ])
   walletWatchAsset = () => true
 
-  @Reflect.metadata('ACTION_REQUEST', ['GetEncryptionPublicKey', false])
+  @Reflect.metadata('ACTION_REQUEST', [
+    'GetEncryptionPublicKey',
+    ({ request, mainCtrl }: { request: ProviderRequest; mainCtrl: MainController }) => {
+      let incomingAddress
+      try {
+        incomingAddress = getAddress(request.params?.[0])
+      } catch (e: any) {
+        throw ethErrors.rpc.invalidParams(e?.shortMessage || 'invalid address')
+      }
+
+      const addressesMismatch = incomingAddress !== mainCtrl.selectedAccount.account?.addr
+      if (addressesMismatch)
+        throw ethErrors.rpc.invalidParams(
+          'Account mismatch. The encryption public key request does not match the currently selected account.'
+        )
+
+      return false // Return false to allow request window to open
+    }
+  ])
   ethGetEncryptionPublicKey = ({ requestRes }: ProviderRequest) => requestRes
 
   @Reflect.metadata('ACTION_REQUEST', [
