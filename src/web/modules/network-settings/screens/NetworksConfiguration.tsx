@@ -1,4 +1,6 @@
 import React from 'react'
+import { useTranslation } from 'react-i18next'
+import { View } from 'react-native'
 
 import Button from '@common/components/Button'
 import useNavigation from '@common/hooks/useNavigation'
@@ -10,8 +12,7 @@ import flexbox from '@common/styles/utils/flexbox'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper'
 import NetworkSettings from '@web/modules/network-settings/components'
 import SettingsPageHeader from '@web/modules/settings/components/SettingsPageHeader'
-import { useTranslation } from 'react-i18next'
-import { View } from 'react-native'
+
 import getStyles from './styles'
 
 const NetworksConfiguration = () => {
@@ -27,17 +28,16 @@ const NetworksConfiguration = () => {
       <View style={[styles.contentContainer]}>
         <SettingsPageHeader
           title={t('Networks Configuration')}
-          // @ts-ignore
-          style={[spacings.mt0, spacings.mbSm]}
+          style={{ ...spacings.mt0, ...spacings.mbSm }}
         />
         <NetworkSettings />
         <View style={[spacings.mt, flexbox.directionRow, flexbox.alignSelfEnd]}>
           <Button
             type="primary"
-            size="small"
+            style={{ minWidth: 220 }}
             hasBottomSpacing={false}
             onPress={() => navigate(ROUTES.getStarted)}
-            text={t('Confirm')}
+            text={t('Confirm and go back')}
           />
         </View>
       </View>

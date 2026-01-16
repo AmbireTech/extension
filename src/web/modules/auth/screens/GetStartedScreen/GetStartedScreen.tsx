@@ -120,7 +120,7 @@ const GetStartedScreen = () => {
                 color={theme.info2Text}
                 style={{ textDecorationLine: 'underline' }}
               >
-                → {t('Network Configuration')}
+                {t('Network Configuration')}
               </Text>
             </TouchableOpacity>
           </View>
