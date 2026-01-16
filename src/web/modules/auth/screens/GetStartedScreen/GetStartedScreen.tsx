@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect } from 'react'
-import { View } from 'react-native'
+import { TouchableOpacity, View } from 'react-native'
 
 import AmbireLogo from '@common/assets/svg/AmbireLogo'
 import ViewModeIcon from '@common/assets/svg/ViewModeIcon'
@@ -113,13 +113,16 @@ const GetStartedScreen = () => {
             </ScrollableWrapper>
           </View>
           <View style={[flexbox.directionRow, flexbox.alignSelfCenter, spacings.mt]}>
-            <Text
-              onPress={() => navigate(ROUTES.networksConfiguration)}
-              fontSize={12}
-              color={theme.info2Text}
-            >
-              <a href="javascript:;">→ {t('Network Configuration')}</a>
-            </Text>
+            <TouchableOpacity onPress={() => navigate(ROUTES.networksConfiguration)}>
+              <Text
+                onPress={() => navigate(ROUTES.networksConfiguration)}
+                fontSize={12}
+                color={theme.info2Text}
+                style={{ textDecorationLine: 'underline' }}
+              >
+                → {t('Network Configuration')}
+              </Text>
+            </TouchableOpacity>
           </View>
         </Panel>
       </TabLayoutWrapperMainContent>
