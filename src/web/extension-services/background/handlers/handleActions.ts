@@ -471,6 +471,8 @@ export const handleActions = async (
       )
     case 'KEYSTORE_CONTROLLER_ADD_TEMP_SEED':
       return await mainCtrl.keystore.addTempSeed(params)
+    case 'KEYSTORE_CONTROLLER_GENERATE_TEMP_SEED':
+      return await mainCtrl.keystore.generateTempSeed(params)
     case 'KEYSTORE_CONTROLLER_UPDATE_SEED':
       return await mainCtrl.keystore.updateSeed(params)
     case 'KEYSTORE_CONTROLLER_UNLOCK_WITH_SECRET':

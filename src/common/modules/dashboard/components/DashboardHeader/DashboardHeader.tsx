@@ -19,7 +19,7 @@ import getStyles from './styles'
 
 const { isPopup } = getUiType()
 
-const DashboardHeader = ({ openReceiveModal }: { openReceiveModal: () => void }) => {
+const DashboardHeader = () => {
   const { account } = useSelectedAccountControllerState()
   const [bindBurgerAnim, burgerAnimStyle] = useHover({ preset: 'opacity' })
   const [bindReceiveAnim, receiveAnimStyle] = useHover({ preset: 'opacity' })
@@ -45,7 +45,7 @@ const DashboardHeader = ({ openReceiveModal }: { openReceiveModal: () => void })
           <Pressable
             testID="dashboard-button-receive"
             style={[spacings.mlSm, spacings.pvTy, flexboxStyles.alignSelfCenter]}
-            onPress={() => openReceiveModal()}
+            onPress={() => navigate(WEB_ROUTES.receive)}
             {...bindReceiveAnim}
           >
             <Animated.View style={receiveAnimStyle}>

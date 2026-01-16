@@ -19,6 +19,14 @@ body,
   flex: 1;
 }
 
+@media (prefers-color-scheme: dark) {
+  html,
+  body,
+  #root {
+    background-color: #0d0d0f;
+  }
+}
+
 .light-scrollbar {
   --scroll-thumb-color: #6770b360;
   --scroll-track-color: #dddff766;
