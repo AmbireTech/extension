@@ -274,113 +274,128 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
       <Text testID="add-token-modal-title-text" fontSize={20} style={spacings.mbXl} weight="medium">
         {t('Add Token')}
       </Text>
-      <Select
-        setValue={handleSetNetworkValue as any}
-        options={networksOptions}
-        value={networksOptions.filter((opt) => opt.value === network?.name)[0]}
-        label={t('Choose Network')}
-        containerStyle={spacings.mbMd}
-      />
-      <Controller
-        control={control}
-        name="address"
-        render={({ field: { onChange, onBlur, value } }) => (
-          <Input
-            testID="token-address-field"
-            onBlur={onBlur}
-            onChangeText={onChange}
-            label={t('Token Address')}
-            placeholder={t('0x...')}
-            value={value}
-            inputStyle={spacings.mbSm}
-            containerStyle={spacings.mbSm}
-            error={errors.address && errors.address.message}
+      {isInitialized && network ? (
+        <View>
+          <Select
+            setValue={handleSetNetworkValue as any}
+            options={networksOptions}
+            value={networksOptions.filter((opt) => opt.value === network.name)[0]}
+            label={t('Choose Network')}
+            containerStyle={spacings.mbMd}
           />
-        )}
-      />
-      <View
-        style={[
-          spacings.mbXl,
-          {
-            minHeight: 50 // To prevent the bottom sheet from resizing
-          }
-        ]}
-      >
-        {temporaryToken || portfolioToken ? (
+          <Controller
+            control={control}
+            name="address"
+            render={({ field: { onChange, onBlur, value } }) => (
+              <Input
+                testID="token-address-field"
+                onBlur={onBlur}
+                onChangeText={onChange}
+                label={t('Token Address')}
+                placeholder={t('0x...')}
+                value={value}
+                inputStyle={spacings.mbSm}
+                containerStyle={spacings.mbSm}
+                error={errors.address && errors.address.message}
+              />
+            )}
+          />
           <View
             style={[
-              flexbox.directionRow,
-              flexbox.justifySpaceBetween,
-              flexbox.alignCenter,
-              spacings.phTy,
-              spacings.pvTy
+              spacings.mbXl,
+              {
+                minHeight: 50 // To prevent the bottom sheet from resizing
+              }
             ]}
           >
-            <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-              <TokenIcon
-                containerHeight={32}
-                containerWidth={32}
-                width={22}
-                height={22}
-                withContainer
-                chainId={network?.chainId}
-                address={address}
-              />
-              <Text
-                testID="custom-token-name"
-                fontSize={16}
-                style={spacings.mlTy}
-                weight="semiBold"
+            {temporaryToken || portfolioToken ? (
+              <View
+                style={[
+                  flexbox.directionRow,
+                  flexbox.justifySpaceBetween,
+                  flexbox.alignCenter,
+                  spacings.phTy,
+                  spacings.pvTy
+                ]}
               >
-                {temporaryToken?.symbol || portfolioToken?.symbol}
-              </Text>
-            </View>
-            <View testID="confirmed-pill-text" style={flexbox.directionRow}>
-              {temporaryToken?.priceIn?.length || portfolioToken?.priceIn?.length ? (
-                <CoingeckoConfirmedBadge text="Confirmed" address={address} network={network} />
-              ) : null}
-            </View>
+                <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+                  <TokenIcon
+                    containerHeight={32}
+                    containerWidth={32}
+                    width={22}
+                    height={22}
+                    withContainer
+                    chainId={network.chainId}
+                    address={address}
+                  />
+                  <Text
+                    testID="custom-token-name"
+                    fontSize={16}
+                    style={spacings.mlTy}
+                    weight="semiBold"
+                  >
+                    {temporaryToken?.symbol || portfolioToken?.symbol}
+                  </Text>
+                </View>
+                <View testID="confirmed-pill-text" style={flexbox.directionRow}>
+                  {temporaryToken?.priceIn?.length || portfolioToken?.priceIn?.length ? (
+                    <CoingeckoConfirmedBadge text="Confirmed" address={address} network={network} />
+                  ) : null}
+                </View>
+              </View>
+            ) : null}
+
+            {address && tokenValidation && tokenValidation?.error?.message ? (
+              <Alert
+                type={tokenValidation.error.type === 'network' ? 'warning' : 'error'}
+                isTypeLabelHidden
+                title={tokenValidation.error.message}
+                style={{ ...spacings.phSm, ...spacings.pvSm }}
+              />
+            ) : null}
+
+            {address && showAlreadyInPortfolioMessage ? (
+              <Alert
+                type="warning"
+                isTypeLabelHidden
+                title={t('This token is already handled in your wallet')}
+                style={{ ...spacings.phSm, ...spacings.pvSm }}
+              />
+            ) : null}
+
+            {isLoading ||
+            (isAdditionalHintRequested && !temporaryToken && !tokenValidation?.error) ? (
+              <View style={[flexbox.alignCenter, flexbox.justifyCenter, { height: 48 }]}>
+                <Spinner style={{ width: 18, height: 18 }} />
+              </View>
+            ) : null}
           </View>
-        ) : null}
-
-        {address && tokenValidation && tokenValidation?.error?.message ? (
-          <Alert
-            type={tokenValidation.error.type === 'network' ? 'warning' : 'error'}
-            isTypeLabelHidden
-            title={tokenValidation.error.message}
-            style={{ ...spacings.phSm, ...spacings.pvSm }}
+          <Button
+            testID="add-token-button"
+            disabled={
+              showAlreadyInPortfolioMessage ||
+              (!temporaryToken && !tokenTypeEligibility) ||
+              !!tokenValidation?.error?.message ||
+              !isValidAddress(address) ||
+              !network ||
+              isSubmitting
+            }
+            text={t('Add Token')}
+            hasBottomSpacing={false}
+            onPress={handleAddToken}
           />
-        ) : null}
-
-        {address && showAlreadyInPortfolioMessage ? (
-          <Alert
-            type="warning"
-            isTypeLabelHidden
-            title={t('This token is already handled in your wallet')}
-            style={{ ...spacings.phSm, ...spacings.pvSm }}
-          />
-        ) : null}
-
-        {isLoading || (isAdditionalHintRequested && !temporaryToken && !tokenValidation?.error) ? (
-          <View style={[flexbox.alignCenter, flexbox.justifyCenter, { height: 48 }]}>
-            <Spinner style={{ width: 18, height: 18 }} />
-          </View>
-        ) : null}
-      </View>
-      <Button
-        testID="add-token-button"
-        disabled={
-          showAlreadyInPortfolioMessage ||
-          (!temporaryToken && !tokenTypeEligibility) ||
-          !!tokenValidation?.error?.message ||
-          !isValidAddress(address) ||
-          !network ||
-          isSubmitting
-        }
-        text={t('Add Token')}
-        hasBottomSpacing={false}
-        onPress={handleAddToken}
-      />
+        </View>
+      ) : (
+        <View style={[flexbox.alignCenter, flexbox.justifyCenter, spacings.pv]}>
+          <Text fontSize={16} weight="medium">
+            {t('Preparing networks. Please wait...')}
+          </Text>
+          <Text fontSize={16} style={spacings.mbMd} weight="medium">
+            {t('If this takes too long, please try again later.')}
+          </Text>
+          <Spinner style={{ width: 24, height: 24 }} />
+        </View>
+      )}
     </BottomSheet>
   )
 }
