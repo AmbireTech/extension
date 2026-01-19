@@ -43,6 +43,7 @@ const WEB_ROUTES = {
   accountSelect: 'account-select',
   viewOnlyAccountAdder: 'view-only-account-adder',
   networks: 'networks',
+  networksConfiguration: 'networks-configuration',
   generalSettings: 'settings/general',
   settingsTerms: 'settings/terms',
   settingsAbout: 'settings/about',
