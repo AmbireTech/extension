@@ -10,6 +10,7 @@ type Props = Omit<CommonButtonProps, 'style' | 'children' | 'childrenPosition' |
   holdDuration?: number // in milliseconds
   holdText?: string
   completeText?: string
+  buttonType?: 'primary' | 'error' | 'warning'
 }
 
 const HoldToProceedButton: FC<Props> = ({
@@ -20,8 +21,10 @@ const HoldToProceedButton: FC<Props> = ({
   onHoldComplete,
   holdDuration = 1600,
   disabled,
+  buttonType = 'primary',
   ...rest
 }) => {
+  console.log('HoldToProceedButton rendered', buttonType)
   const { theme } = useTheme()
   const progressAnim = useRef(new Animated.Value(0)).current
   const scaleAnim = useRef(new Animated.Value(1)).current
@@ -31,6 +34,14 @@ const HoldToProceedButton: FC<Props> = ({
   const animationRef = useRef<Animated.CompositeAnimation | null>(null)
   const holdStartTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const isCurrentlyHoldingRef = useRef(false)
+
+  const colorTypes = {
+    primary: theme.primary,
+    error: theme.errorText,
+    warning: theme.warningText
+  }
+
+  console.log('buttonType color:', colorTypes[buttonType])
 
   const startHold = useCallback(() => {
     if (disabled) return
@@ -196,7 +207,7 @@ const HoldToProceedButton: FC<Props> = ({
   const progressColor = isCompleted
     ? theme.successDecorative
     : isHolding
-    ? theme.primary
+    ? colorTypes[buttonType]
     : 'transparent'
 
   return (
@@ -216,14 +227,14 @@ const HoldToProceedButton: FC<Props> = ({
           {
             minWidth: 160,
             position: 'relative',
-            backgroundColor: theme.primary
+            backgroundColor: colorTypes[buttonType]
           },
           style
         ]}
         hasBottomSpacing={false}
         text={buttonText}
         disabled={disabled}
-        type="primary"
+        type={buttonType}
         {...rest}
       />
 

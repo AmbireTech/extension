@@ -9,6 +9,7 @@ import { sortCards } from '@legends/modules/legends/utils'
 
 type LegendsContextType = {
   legends: CardFromResponse[]
+  legendsAcc: string | null
   isLoading: boolean
   error: string | null
   getLegends: () => Promise<void>
@@ -95,6 +96,7 @@ const LegendsContextProvider = ({ children }: { children: React.ReactNode }) => 
   const contextValue: LegendsContextType = useMemo(
     () => ({
       legends,
+      legendsAcc,
       isLoading,
       setIsLoading,
       error,
@@ -102,7 +104,16 @@ const LegendsContextProvider = ({ children }: { children: React.ReactNode }) => 
       getLegends,
       onLegendComplete
     }),
-    [legends, isLoading, setIsLoading, error, completedCount, getLegends, onLegendComplete]
+    [
+      legends,
+      isLoading,
+      setIsLoading,
+      error,
+      completedCount,
+      getLegends,
+      onLegendComplete,
+      legendsAcc
+    ]
   )
 
   return <legendsContext.Provider value={contextValue}>{children}</legendsContext.Provider>

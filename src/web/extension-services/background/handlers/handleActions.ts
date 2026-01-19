@@ -379,8 +379,6 @@ export const handleActions = async (
       return mainCtrl.transfer.update(params.formValues)
     case 'TRANSFER_CONTROLLER_RESET_FORM':
       return mainCtrl.transfer.resetForm()
-    case 'TRANSFER_CONTROLLER_UNLOAD_SCREEN':
-      return mainCtrl.transfer.unloadScreen(params?.forceUnload)
     case 'TRANSFER_CONTROLLER_DESTROY_LATEST_BROADCASTED_ACCOUNT_OP':
       return mainCtrl.transfer.destroyLatestBroadcastedAccountOp()
     case 'TRANSFER_CONTROLLER_HAS_USER_PROCEEDED':
@@ -471,6 +469,8 @@ export const handleActions = async (
       )
     case 'KEYSTORE_CONTROLLER_ADD_TEMP_SEED':
       return await mainCtrl.keystore.addTempSeed(params)
+    case 'KEYSTORE_CONTROLLER_GENERATE_TEMP_SEED':
+      return await mainCtrl.keystore.generateTempSeed(params)
     case 'KEYSTORE_CONTROLLER_UPDATE_SEED':
       return await mainCtrl.keystore.updateSeed(params)
     case 'KEYSTORE_CONTROLLER_UNLOCK_WITH_SECRET':

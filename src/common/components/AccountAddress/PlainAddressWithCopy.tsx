@@ -16,9 +16,16 @@ interface Props {
   address: string
   style?: ViewStyle
   hideParentheses?: boolean
+  fontSize?: number
 }
 
-const PlainAddressWithCopy: FC<Props> = ({ maxLength, address, style, hideParentheses }) => {
+const PlainAddressWithCopy: FC<Props> = ({
+  maxLength,
+  address,
+  style,
+  hideParentheses,
+  fontSize = 12
+}) => {
   const { t } = useTranslation()
   const { addToast } = useToast()
   const { theme } = useTheme()
@@ -42,9 +49,10 @@ const PlainAddressWithCopy: FC<Props> = ({ maxLength, address, style, hideParent
         address={address}
         hideParentheses={hideParentheses}
         style={style}
+        fontSize={fontSize}
       />
       <AnimatedPressable onPress={handleCopy} style={animStyle} {...bindAnim}>
-        <CopyIcon width={14} height={14} color={theme.secondaryText} />
+        <CopyIcon width={fontSize + 2} height={fontSize + 2} color={theme.secondaryText} />
       </AnimatedPressable>
     </View>
   )
