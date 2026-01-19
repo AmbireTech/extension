@@ -823,6 +823,9 @@ export class ProviderController {
           'Account mismatch. The decryption request does not match the currently selected account.'
         )
 
+      if (!request.params?.[1] || typeof request.params?.[1] !== 'string')
+        throw ethErrors.rpc.invalidParams('The encrypted message is required and must be a string')
+
       return false // Return false to allow request window to open
     }
   ])
