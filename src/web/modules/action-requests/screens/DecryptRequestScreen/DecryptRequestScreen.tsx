@@ -6,6 +6,7 @@ import ExpandableCard from '@common/components/ExpandableCard'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
+import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
@@ -17,7 +18,6 @@ import eventBus from '@web/extension-services/event/eventBus'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useDappInfo from '@web/hooks/useDappInfo'
 import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
-import useResponsiveActionWindow from '@web/hooks/useResponsiveActionWindow'
 import ActionFooter from '@web/modules/action-requests/components/ActionFooter'
 import { useEncryptionCapability } from '@web/modules/action-requests/hooks'
 
@@ -26,8 +26,14 @@ const DecryptRequestScreen = () => {
   const { dispatch } = useBackgroundService()
   const { currentUserRequest } = useRequestsControllerState()
   const { theme, themeType } = useTheme()
+  const { addToast } = useToast()
   const [decryptedMessage, setDecryptedMessage] = useState<string>('')
-
+  const userRequest = useMemo(
+    () => (currentUserRequest?.kind === 'ethDecrypt' ? currentUserRequest : undefined),
+    [currentUserRequest]
+  )
+  const { name, icon } = useDappInfo(userRequest)
+  const encryptedMessage = userRequest?.meta?.params[0]
   const {
     isViewOnly,
     isSmartAccount,
@@ -37,18 +43,21 @@ const DecryptRequestScreen = () => {
     actionFooterResolveNode
   } = useEncryptionCapability()
 
-  const userRequest = useMemo(
-    () => (currentUserRequest?.kind === 'ethDecrypt' ? currentUserRequest : undefined),
-    [currentUserRequest]
-  )
-  const encryptedMessage = userRequest?.meta?.params[0]
-
-  const { name, icon } = useDappInfo(userRequest)
-
   const handleDecryptForPreview = useCallback(() => {
-    // TODO: Display errors
-    if (!userRequest) return
-    if (!internalKey) return
+    if (!userRequest) {
+      const message =
+        'The app request is missing required details. Please try to trigger the request again from the app.'
+      addToast(message, { type: 'error' })
+      return
+    }
+
+    // should never happen (because the UI blocks it), but just in case
+    if (!internalKey) {
+      const selectedAccountKeyTypes = selectedAccountKeyStoreKeys.map((k) => k.type).join(',')
+      const message = `This account uses a key type (${selectedAccountKeyTypes}) that does not support getting encryption public key.`
+      addToast(message, { type: 'error' })
+      return
+    }
 
     dispatch({
       type: 'KEYSTORE_CONTROLLER_SEND_DECRYPTED_MESSAGE_TO_UI',
@@ -58,7 +67,7 @@ const DecryptRequestScreen = () => {
         keyType: internalKey.type
       }
     })
-  }, [dispatch, internalKey, userRequest])
+  }, [dispatch, internalKey, userRequest, addToast, selectedAccountKeyStoreKeys])
 
   useEffect(() => {
     const onReceiveOneTimeData = (data: any) => {
@@ -71,9 +80,20 @@ const DecryptRequestScreen = () => {
   }, [])
 
   const handleDecrypt = useCallback(() => {
-    if (!userRequest) return
-    if (!selectedAccountKeyStoreKeys.length) return
-    if (!internalKey) return
+    if (!userRequest) {
+      const message =
+        'The app request is missing required details. Please try to trigger the request again from the app.'
+      addToast(message, { type: 'error' })
+      return
+    }
+
+    // should never happen (because the UI blocks it), but just in case
+    if (!internalKey) {
+      const selectedAccountKeyTypes = selectedAccountKeyStoreKeys.map((k) => k.type).join(',')
+      const message = `This account uses a key type (${selectedAccountKeyTypes}) that does not support getting encryption public key.`
+      addToast(message, { type: 'error' })
+      return
+    }
 
     dispatch({
       type: 'REQUESTS_CONTROLLER_RESOLVE_USER_REQUEST',
@@ -82,7 +102,7 @@ const DecryptRequestScreen = () => {
         id: userRequest.id
       }
     })
-  }, [userRequest, dispatch, selectedAccountKeyStoreKeys, internalKey, encryptedMessage])
+  }, [userRequest, dispatch, selectedAccountKeyStoreKeys, internalKey, encryptedMessage, addToast])
 
   const handleDeny = useCallback(() => {
     if (!userRequest) return
