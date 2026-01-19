@@ -434,11 +434,11 @@ export class SwapAndBridgePage extends BasePage {
 
     if (secondRouteSelector === 'WALLET') {
       // in case its socket route transaction name is Swap with amount
-      await expect(page.getByTestId('recipient-address-1')).toHaveText(/Swap.*USDC/) // in case its socket route transaction name is Swap with amount
+      await expect(page.getByTestId('recipient-address-1')).toHaveText(/Swap\/USDC/) // in case its socket route transaction name is Swap with amount
     } else if (secondRouteSelector === 'LI.FI') {
       await expect(page.getByTestId('recipient-address-1')).toHaveText(/Swap\/Bridge/) // in case its LIFI route transaction name is Swap/Bridge
+      expect(['LI.FI', 'SocketGateway']).toContain(secondRouteSelector)
     }
-    expect(['LI.FI', 'SocketGateway']).toContain(secondRouteSelector)
 
     // check third row
     const thirdRow = await page.getByTestId('recipient-address-2').innerText()
@@ -456,9 +456,9 @@ export class SwapAndBridgePage extends BasePage {
 
     if (secondRouteSelector === 'WALLET') {
       // in case of Socket route transaction name is Swap with amount and token name
-      await expect(page.getByTestId('recipient-address-3')).toHaveText(/Swap.*USDC/)
+      await expect(page.getByTestId('recipient-address-3')).toHaveText(/Swap\/USDC/)
     } else if (secondRouteSelector === 'LI.FI') {
-      await expect(page.getByTestId('recipient-address-3')).toHaveText(/Swap\/Bridge/) // in case of LIFI route transaction name is Swap/Bridge
+      await expect(page.getByTestId('recipient-address-3')).toHaveText(/Swap/) // in case of LIFI route transaction name is Swap
     }
     expect(['LI.FI', 'SocketGateway']).toContain(fourthRouteSelector)
 

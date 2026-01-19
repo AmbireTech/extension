@@ -5,7 +5,7 @@ import { ambireRewardsText } from 'pages/utils/data/ambireRewardsText'
 
 import { expect, Page } from '@playwright/test'
 
-test.describe('ambire rewards', () => {
+test.describe('ambire rewards', { tag: '@rewards' }, () => {
   test.beforeEach(async ({ pages }) => {
     await pages.initWithStorage(saParams)
   })
