@@ -26,8 +26,9 @@ export type RequestRes = {
   error?: string
   isUserOp?: boolean
   submittedAccountOp?: SubmittedAccountOp
-  keyAddr?: Key['addr'] // for eth_getEncryptionPublicKey
-  keyType?: Key['type'] // for eth_getEncryptionPublicKey
+  keyAddr?: Key['addr'] // for eth_getEncryptionPublicKey and eth_decrypt
+  keyType?: Key['type'] // for eth_getEncryptionPublicKey and eth_decrypt
+  encryptedMessage?: string // for eth_decrypt
 }
 
 export type Web3WalletPermission = {

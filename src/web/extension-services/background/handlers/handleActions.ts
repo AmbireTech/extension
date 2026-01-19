@@ -217,15 +217,7 @@ export const handleActions = async (
         params.filters,
         params.pagination
       )
-    case 'MAIN_CONTROLLER_HANDLE_DECRYPT': {
-      const encryptionPublicKey = mainCtrl.handleDecrypt({
-        encryptedData: params.encryptedData,
-        keyAddr: params.keyAddr,
-        keyType: params.keyType
-      })
 
-      return mainCtrl.requests.resolveUserRequest(encryptionPublicKey, params.requestId)
-    }
     case 'MAIN_CONTROLLER_ACTIVITY_SET_SIGNED_MESSAGES_FILTERS':
       return mainCtrl.activity.filterSignedMessages(
         params.sessionId,
@@ -516,6 +508,12 @@ export const handleActions = async (
       return await mainCtrl.keystore.sendTempSeedToUi()
     case 'KEYSTORE_CONTROLLER_DELETE_SEED':
       return await mainCtrl.keystore.deleteSeed(params.id)
+    case 'KEYSTORE_CONTROLLER_SEND_DECRYPTED_MESSAGE_TO_UI':
+      return await mainCtrl.keystore.sendDecryptedMessageToUi({
+        encryptedMessage: params.encryptedMessage,
+        keyAddr: params.keyAddr,
+        keyType: params.keyType
+      })
 
     case 'EMAIL_VAULT_CONTROLLER_GET_INFO':
       return await mainCtrl.emailVault?.getEmailVaultInfo(params.email)

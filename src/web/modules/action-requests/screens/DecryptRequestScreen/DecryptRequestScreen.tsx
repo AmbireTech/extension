@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo } from 'react'
 import { View } from 'react-native'
 
+import Button from '@common/components/Button'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
@@ -36,26 +37,27 @@ const DecryptRequestScreen = () => {
     () => (currentUserRequest?.kind === 'ethDecrypt' ? currentUserRequest : undefined),
     [currentUserRequest]
   )
+  const encryptedMessage = userRequest?.meta?.params[0]
 
   const { name, icon } = useDappInfo(userRequest)
 
+  const handleDecryptForPreview = useCallback(() => {
+    // TODO: Implement
+  }, [dispatch, internalKey, userRequest])
+
   const handleDecrypt = useCallback(() => {
     if (!userRequest) return
-
     if (!selectedAccountKeyStoreKeys.length) return
-
     if (!internalKey) return
 
     dispatch({
-      type: 'MAIN_CONTROLLER_HANDLE_DECRYPT',
+      type: 'REQUESTS_CONTROLLER_RESOLVE_USER_REQUEST',
       params: {
-        encryptedData: currentUserRequest?.meta?.params[0],
-        requestId: userRequest.id,
-        keyAddr: internalKey.addr,
-        keyType: internalKey.type
+        data: { encryptedMessage, keyAddr: internalKey.addr, keyType: internalKey.type },
+        id: userRequest.id
       }
     })
-  }, [userRequest, dispatch, selectedAccountKeyStoreKeys, internalKey, currentUserRequest])
+  }, [userRequest, dispatch, selectedAccountKeyStoreKeys, internalKey, encryptedMessage])
 
   const handleDeny = useCallback(() => {
     if (!userRequest) return
@@ -99,7 +101,18 @@ const DecryptRequestScreen = () => {
           />
 
           <View style={[spacings.mtLg, flexbox.flex1, flexbox.justifySpaceBetween]}>
-            <Text>TODO: Display the message.</Text>
+            <View>
+              <Text>Encrypted message: {encryptedMessage}</Text>
+              <Button
+                text={t('Preview decrypted message')}
+                onPress={handleDecryptForPreview}
+                type="outline"
+                hasBottomSpacing={false}
+                style={spacings.phXl}
+                accentColor={theme.secondaryText}
+                disabled={isViewOnly || isSmartAccount}
+              />
+            </View>
 
             {errorNode}
           </View>

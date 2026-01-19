@@ -221,15 +221,6 @@ type MainControllerHandleSignMessage = {
   type: 'MAIN_CONTROLLER_HANDLE_SIGN_MESSAGE'
   params: { keyAddr: Key['addr']; keyType: Key['type'] }
 }
-type MainControllerHandleDecrypt = {
-  type: 'MAIN_CONTROLLER_HANDLE_DECRYPT'
-  params: {
-    requestId: UserRequest['id']
-    encryptedData: string
-    keyAddr: Key['addr']
-    keyType: Key['type']
-  }
-}
 type MainControllerActivitySetAccOpsFiltersAction = {
   type: 'MAIN_CONTROLLER_ACTIVITY_SET_ACC_OPS_FILTERS'
   params: { filters: Filters; pagination?: Pagination; sessionId: string }
@@ -454,6 +445,14 @@ type KeystoreControllerSendSeedToUiAction = {
 }
 type KeystoreControllerSendTempSeedToUiAction = {
   type: 'KEYSTORE_CONTROLLER_SEND_TEMP_SEED_TO_UI'
+}
+type KeystoreControllerSendDecryptedMessageToUiAction = {
+  type: 'KEYSTORE_CONTROLLER_SEND_DECRYPTED_MESSAGE_TO_UI'
+  params: {
+    encryptedMessage: string
+    keyAddr: Key['addr']
+    keyType: Key['type']
+  }
 }
 
 type EmailVaultControllerGetInfoAction = {
@@ -786,7 +785,6 @@ export type Action =
   | MainControllerSignMessageResetAction
   | MainControllerSignMessageUpdate
   | MainControllerHandleSignMessage
-  | MainControllerHandleDecrypt
   | MainControllerActivitySetAccOpsFiltersAction
   | MainControllerActivitySetSignedMessagesFiltersAction
   | MainControllerActivityResetAccOpsAction
@@ -812,6 +810,7 @@ export type Action =
   | KeystoreControllerChangePasswordAction
   | KeystoreControllerChangePasswordFromRecoveryAction
   | KeystoreControllerSendPrivateKeyToUiAction
+  | KeystoreControllerSendDecryptedMessageToUiAction
   | EmailVaultControllerGetInfoAction
   | EmailVaultControllerUploadKeystoreSecretAction
   | EmailVaultControllerCancelConfirmationAction

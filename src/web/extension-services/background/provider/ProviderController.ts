@@ -845,7 +845,16 @@ export class ProviderController {
       return false // Return false to allow request window to open
     }
   ])
-  ethDecrypt = ({ requestRes }: ProviderRequest) => requestRes
+  ethDecrypt = ({ requestRes }: ProviderRequest) => {
+    const { keyAddr, keyType, encryptedMessage } = requestRes
+    // should never happen (because the UI blocks it), but just in case
+    if (!keyAddr || !keyType || !encryptedMessage) {
+      const message = `Missing required parameters: keyAddr: ${keyAddr}, keyType: ${keyType}, encryptedMessage: ${encryptedMessage}.`
+      throw ethErrors.rpc.invalidParams(message)
+    }
+
+    return this.mainCtrl.keystore.decryptMessage({ keyAddr, keyType, encryptedMessage })
+  }
 
   walletRequestPermissions = ({ params: permissions, session }: DappProviderRequest) => {
     const result: Web3WalletPermission[] = []
