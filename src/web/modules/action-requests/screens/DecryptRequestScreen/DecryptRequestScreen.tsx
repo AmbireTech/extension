@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { View } from 'react-native'
 
 import Button from '@common/components/Button'
+import ExpandableCard from '@common/components/ExpandableCard'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
@@ -16,6 +17,7 @@ import eventBus from '@web/extension-services/event/eventBus'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useDappInfo from '@web/hooks/useDappInfo'
 import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
+import useResponsiveActionWindow from '@web/hooks/useResponsiveActionWindow'
 import ActionFooter from '@web/modules/action-requests/components/ActionFooter'
 import { useEncryptionCapability } from '@web/modules/action-requests/hooks'
 
@@ -125,17 +127,60 @@ const DecryptRequestScreen = () => {
 
           <View style={[spacings.mtLg, flexbox.flex1, flexbox.justifySpaceBetween]}>
             <View>
-              <Text>Encrypted message: {encryptedMessage}</Text>
-              <Button
-                text={t('Preview decrypted message')}
-                onPress={handleDecryptForPreview}
-                type="outline"
-                hasBottomSpacing={false}
-                style={spacings.phXl}
-                accentColor={theme.secondaryText}
-                disabled={isViewOnly || isSmartAccount}
+              <ExpandableCard
+                enableToggleExpand={false}
+                isInitiallyExpanded={true}
+                hasArrow={false}
+                content={
+                  <View style={flexbox.flex1}>
+                    {decryptedMessage ? (
+                      <>
+                        <Text
+                          weight="semiBold"
+                          style={[{ lineHeight: 12 }, spacings.mtTy, spacings.mbLg]}
+                        >
+                          {t('Decrypted message')}
+                        </Text>
+                        <Text selectable>{decryptedMessage}</Text>
+                      </>
+                    ) : (
+                      <>
+                        <View
+                          style={[
+                            flexbox.directionRow,
+                            flexbox.justifySpaceBetween,
+                            flexbox.alignCenter,
+                            spacings.mb
+                          ]}
+                        >
+                          <Text weight="semiBold" appearance="info2Text" style={{ lineHeight: 12 }}>
+                            {t('Encrypted message')}
+                          </Text>
+                          <Button
+                            text={t('Preview decrypted message')}
+                            onPress={handleDecryptForPreview}
+                            type="outline"
+                            hasBottomSpacing={false}
+                            accentColor={theme.info3Button}
+                            disabled={isViewOnly || isSmartAccount}
+                            size="small"
+                          />
+                        </View>
+
+                        <Text appearance="info2Text" selectable>
+                          {encryptedMessage}
+                        </Text>
+                      </>
+                    )}
+                  </View>
+                }
+                style={{
+                  backgroundColor:
+                    themeType === THEME_TYPES.DARK
+                      ? theme.tertiaryBackground
+                      : theme.primaryBackground
+                }}
               />
-              <Text>Decrypted message: {decryptedMessage}</Text>
             </View>
 
             {errorNode}
