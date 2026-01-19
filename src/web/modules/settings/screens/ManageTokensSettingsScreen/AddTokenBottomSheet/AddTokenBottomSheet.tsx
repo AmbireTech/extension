@@ -52,13 +52,9 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
   const { validTokens, customTokens, temporaryTokens } = usePortfolioControllerState()
   const { portfolio: selectedAccountPortfolio } = useSelectedAccountControllerState()
   const { themeType } = useTheme()
-  const defaultNetwork = useMemo<Network | undefined>(() => {
-    if (!isInitialized) return
-
-    return networks.find((n) => n.chainId.toString() === '1') ?? networks[0]
-  }, [isInitialized, networks])
-
-  const [network, setNetwork] = useState<Network | undefined>(defaultNetwork)
+  const [network, setNetwork] = useState<Network | undefined>(
+    isInitialized ? networks.find((n) => n.chainId.toString() === '1') ?? networks[0] : undefined
+  )
   const [showAlreadyInPortfolioMessage, setShowAlreadyInPortfolioMessage] = useState<boolean>(false)
   const [isLoading, setIsLoading] = useState(false)
   const [isAdditionalHintRequested, setAdditionalHintRequested] = useState(false)
@@ -266,12 +262,6 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
     setShowAlreadyInPortfolioMessage(false) // Reset the state when address changes
     setAdditionalHintRequested(false)
   }, [address, network])
-
-  useEffect(() => {
-    if (!network && defaultNetwork) {
-      setNetwork(defaultNetwork)
-    }
-  }, [defaultNetwork, network])
 
   return (
     <BottomSheet
