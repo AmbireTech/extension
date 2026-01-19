@@ -179,8 +179,13 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
   ])
 
   const handleTokenType = useCallback(() => {
-    if (!network?.chainId) {
-      addToast(t('Network is not selected.'), { type: 'error' })
+    if (!network || !network.chainId) {
+      addToast(
+        t(
+          'Missing required network details for this token. Please try again later or contact Ambire support.'
+        ),
+        { type: 'error' }
+      )
       return
     }
 
@@ -191,7 +196,7 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
         allNetworks: true
       }
     })
-  }, [address, dispatch, network?.chainId, addToast, t])
+  }, [network, dispatch, address, addToast, t])
 
   useEffect(() => {
     const handleEffect = async () => {
