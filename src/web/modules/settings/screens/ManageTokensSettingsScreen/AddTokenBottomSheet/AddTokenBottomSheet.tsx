@@ -19,7 +19,7 @@ import TokenIcon from '@common/components/TokenIcon'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
-import spacings, { SPACING_2XL, SPACING_SM } from '@common/styles/spacings'
+import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import useBackgroundService from '@web/hooks/useBackgroundService'
@@ -47,15 +47,18 @@ type Props = {
 const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
   const { t } = useTranslation()
   const { dispatch } = useBackgroundService()
-  const { networks } = useNetworksControllerState()
+  const { networks, isInitialized } = useNetworksControllerState()
   const { addToast } = useToast()
   const { validTokens, customTokens, temporaryTokens } = usePortfolioControllerState()
   const { portfolio: selectedAccountPortfolio } = useSelectedAccountControllerState()
   const { themeType } = useTheme()
-  const [network, setNetwork] = useState<Network>(
-    networks.find((n) => n.chainId.toString() === '1') || networks[0]
-  )
+  const defaultNetwork = useMemo<Network | undefined>(() => {
+    if (!isInitialized) return
 
+    return networks.find((n) => n.chainId.toString() === '1') ?? networks[0]
+  }, [isInitialized, networks])
+
+  const [network, setNetwork] = useState<Network | undefined>(defaultNetwork)
   const [showAlreadyInPortfolioMessage, setShowAlreadyInPortfolioMessage] = useState<boolean>(false)
   const [isLoading, setIsLoading] = useState(false)
   const [isAdditionalHintRequested, setAdditionalHintRequested] = useState(false)
@@ -76,7 +79,11 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
 
   const handleSetNetworkValue = useCallback(
     (networkOption: NetworkOption) => {
-      setNetwork(networks.filter((net) => net.name === networkOption.value)[0])
+      const selectedNetwork = networks.find((net) => net.name === networkOption.value)
+
+      if (!selectedNetwork) return
+
+      setNetwork(selectedNetwork)
     },
     [networks]
   )
@@ -111,7 +118,7 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
     () =>
       !!customTokens.find(
         ({ address: addr, chainId }) =>
-          addr.toLowerCase() === address.toLowerCase() && chainId === network.chainId
+          addr.toLowerCase() === address.toLowerCase() && chainId === network?.chainId
       ),
     [customTokens, address, network]
   )
@@ -172,11 +179,19 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
   ])
 
   const handleTokenType = useCallback(() => {
+    if (!network?.chainId) {
+      addToast(t('Network is not selected.'), { type: 'error' })
+      return
+    }
+
     dispatch({
       type: 'PORTFOLIO_CONTROLLER_CHECK_TOKEN',
-      params: { token: { address, chainId: network.chainId }, allNetworks: true }
+      params: {
+        token: { address, chainId: network.chainId },
+        allNetworks: true
+      }
     })
-  }, [address, dispatch, network.chainId])
+  }, [address, dispatch, network?.chainId, addToast, t])
 
   useEffect(() => {
     const handleEffect = async () => {
@@ -247,6 +262,12 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
     setAdditionalHintRequested(false)
   }, [address, network])
 
+  useEffect(() => {
+    if (!network && defaultNetwork) {
+      setNetwork(defaultNetwork)
+    }
+  }, [defaultNetwork, network])
+
   return (
     <BottomSheet
       id="add-custom-token"
@@ -261,7 +282,7 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
       <Select
         setValue={handleSetNetworkValue as any}
         options={networksOptions}
-        value={networksOptions.filter((opt) => opt.value === network.name)[0]}
+        value={networksOptions.filter((opt) => opt.value === network?.name)[0]}
         label={t('Choose Network')}
         containerStyle={spacings.mbMd}
       />
@@ -307,7 +328,7 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
                 width={22}
                 height={22}
                 withContainer
-                chainId={network.chainId}
+                chainId={network?.chainId}
                 address={address}
               />
               <Text
