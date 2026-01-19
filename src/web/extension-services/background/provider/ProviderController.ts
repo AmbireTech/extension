@@ -805,7 +805,23 @@ export class ProviderController {
       return false // Return false to allow request window to open
     }
   ])
-  ethGetEncryptionPublicKey = ({ requestRes }: ProviderRequest) => requestRes
+  ethGetEncryptionPublicKey = async ({ requestRes }: ProviderRequest) => {
+    const { keyAddr, keyType } = requestRes
+    // should never happen (because the UI blocks it), but just in case
+    if (!keyAddr || !keyType) {
+      const message = `Missing required parameters: keyAddr: ${keyAddr}, keyType: ${keyType}.`
+      throw ethErrors.rpc.invalidParams(message)
+    }
+
+    const signer = await this.mainCtrl.keystore.getSigner(keyAddr, keyType)
+    // should never happen (because the UI blocks it), but just in case
+    if (!signer.getEncryptionPublicKey) {
+      const message = `This account uses a ${keyType} key, which does not support getting encryption public key.`
+      throw ethErrors.rpc.invalidParams(message)
+    }
+
+    return signer.getEncryptionPublicKey()
+  }
 
   @Reflect.metadata('ACTION_REQUEST', [
     'Decrypt',

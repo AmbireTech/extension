@@ -4,6 +4,7 @@ import { View } from 'react-native'
 import Alert from '@common/components/Alert'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
+import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
@@ -22,9 +23,15 @@ const GetEncryptionPublicKeyRequestScreen = () => {
   const { dispatch } = useBackgroundService()
   const { currentUserRequest } = useRequestsControllerState()
   const { theme, themeType } = useTheme()
-
-  const { isViewOnly, isSmartAccount, internalKey, errorNode, actionFooterResolveNode } =
-    useEncryptionCapability()
+  const { addToast } = useToast()
+  const {
+    isViewOnly,
+    isSmartAccount,
+    internalKey,
+    errorNode,
+    actionFooterResolveNode,
+    selectedAccountKeyStoreKeys
+  } = useEncryptionCapability()
 
   const userRequest = useMemo(
     () =>
@@ -35,20 +42,29 @@ const GetEncryptionPublicKeyRequestScreen = () => {
   const { name, icon } = useDappInfo(userRequest)
 
   const handleAccept = useCallback(() => {
-    if (!userRequest) return
+    if (!userRequest) {
+      const message =
+        'The app request is missing required details. Please try to trigger the request again from the app.'
+      addToast(message, { type: 'error' })
+      return
+    }
 
-    // TODO: Toast instead!
-    if (!internalKey) return
+    // should never happen (because the UI blocks it), but just in case
+    if (!internalKey) {
+      const selectedAccountKeyTypes = selectedAccountKeyStoreKeys.map((k) => k.type).join(',')
+      const message = `This account uses a key type (${selectedAccountKeyTypes}) that does not support getting encryption public key.`
+      addToast(message, { type: 'error' })
+      return
+    }
+
+    const keyAddr = internalKey.addr
+    const keyType = internalKey.type
 
     dispatch({
-      type: 'MAIN_CONTROLLER_HANDLE_GET_ENCRYPTION_PUBLIC_KEY',
-      params: {
-        requestId: userRequest.id,
-        keyAddr: internalKey.addr,
-        keyType: internalKey.type
-      }
+      type: 'REQUESTS_CONTROLLER_RESOLVE_USER_REQUEST',
+      params: { data: { keyAddr, keyType }, id: userRequest.id }
     })
-  }, [userRequest, dispatch, internalKey])
+  }, [userRequest, dispatch, addToast, internalKey, selectedAccountKeyStoreKeys])
 
   const handleDeny = useCallback(() => {
     if (!userRequest) return

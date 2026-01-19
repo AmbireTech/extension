@@ -8,8 +8,6 @@ import { Banner } from '@ambire-common/interfaces/banner'
 import { Dapp } from '@ambire-common/interfaces/dapp'
 import { MagicLinkFlow } from '@ambire-common/interfaces/emailVault'
 import {
-  ExternalKey,
-  InternalKey,
   Key,
   KeyPreferences,
   KeystoreSeed,
@@ -222,10 +220,6 @@ type MainControllerSignMessageUpdate = {
 type MainControllerHandleSignMessage = {
   type: 'MAIN_CONTROLLER_HANDLE_SIGN_MESSAGE'
   params: { keyAddr: Key['addr']; keyType: Key['type'] }
-}
-type MainControllerHandleGetEncryptionPublicKey = {
-  type: 'MAIN_CONTROLLER_HANDLE_GET_ENCRYPTION_PUBLIC_KEY'
-  params: { requestId: UserRequest['id']; keyAddr: Key['addr']; keyType: Key['type'] }
 }
 type MainControllerHandleDecrypt = {
   type: 'MAIN_CONTROLLER_HANDLE_DECRYPT'
@@ -792,7 +786,6 @@ export type Action =
   | MainControllerSignMessageResetAction
   | MainControllerSignMessageUpdate
   | MainControllerHandleSignMessage
-  | MainControllerHandleGetEncryptionPublicKey
   | MainControllerHandleDecrypt
   | MainControllerActivitySetAccOpsFiltersAction
   | MainControllerActivitySetSignedMessagesFiltersAction

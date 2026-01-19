@@ -1,4 +1,5 @@
 import { Session } from '@ambire-common/classes/session'
+import { Key } from '@ambire-common/interfaces/keystore'
 import { SubmittedAccountOp } from '@ambire-common/libs/accountOp/submittedAccountOp'
 
 export type ProviderRequest<TMethod = string> = {
@@ -25,6 +26,8 @@ export type RequestRes = {
   error?: string
   isUserOp?: boolean
   submittedAccountOp?: SubmittedAccountOp
+  keyAddr?: Key['addr'] // for eth_getEncryptionPublicKey
+  keyType?: Key['type'] // for eth_getEncryptionPublicKey
 }
 
 export type Web3WalletPermission = {
