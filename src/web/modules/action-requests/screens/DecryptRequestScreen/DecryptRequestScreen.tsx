@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { View } from 'react-native'
 
 import Button from '@common/components/Button'
@@ -12,6 +12,7 @@ import HeaderAccountAndNetworkInfo from '@web/components/HeaderAccountAndNetwork
 import RequestingDappInfo from '@web/components/RequestingDappInfo'
 import SmallNotificationWindowWrapper from '@web/components/SmallNotificationWindowWrapper'
 import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
+import eventBus from '@web/extension-services/event/eventBus'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useDappInfo from '@web/hooks/useDappInfo'
 import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
@@ -23,6 +24,7 @@ const DecryptRequestScreen = () => {
   const { dispatch } = useBackgroundService()
   const { currentUserRequest } = useRequestsControllerState()
   const { theme, themeType } = useTheme()
+  const [decryptedMessage, setDecryptedMessage] = useState<string>('')
 
   const {
     isViewOnly,
@@ -42,8 +44,29 @@ const DecryptRequestScreen = () => {
   const { name, icon } = useDappInfo(userRequest)
 
   const handleDecryptForPreview = useCallback(() => {
-    // TODO: Implement
+    // TODO: Display errors
+    if (!userRequest) return
+    if (!internalKey) return
+
+    dispatch({
+      type: 'KEYSTORE_CONTROLLER_SEND_DECRYPTED_MESSAGE_TO_UI',
+      params: {
+        encryptedMessage: userRequest?.meta?.params[0],
+        keyAddr: internalKey.addr,
+        keyType: internalKey.type
+      }
+    })
   }, [dispatch, internalKey, userRequest])
+
+  useEffect(() => {
+    const onReceiveOneTimeData = (data: any) => {
+      if (!data.decryptedMessage) return
+      setDecryptedMessage(data.decryptedMessage)
+    }
+
+    eventBus.addEventListener('receiveOneTimeData', onReceiveOneTimeData)
+    return () => eventBus.removeEventListener('receiveOneTimeData', onReceiveOneTimeData)
+  }, [])
 
   const handleDecrypt = useCallback(() => {
     if (!userRequest) return
@@ -112,6 +135,7 @@ const DecryptRequestScreen = () => {
                 accentColor={theme.secondaryText}
                 disabled={isViewOnly || isSmartAccount}
               />
+              <Text>Decrypted message: {decryptedMessage}</Text>
             </View>
 
             {errorNode}
