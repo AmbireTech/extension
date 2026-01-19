@@ -41,13 +41,13 @@ const getAddressInputValidation = ({
       return {
         message: overwriteValidLabel || 'Valid address',
         isError: false,
-        severity: overwriteSeverity || 'warning'
+        severity: overwriteSeverity || 'success'
       }
     } catch {
       return {
         message: 'Invalid checksum. Verify the address and try again.',
         isError: true,
-        severity: overwriteSeverity || 'error'
+        severity: 'error'
       }
     }
   }
@@ -56,7 +56,7 @@ const getAddressInputValidation = ({
     return {
       message: 'Resolving domain...',
       isError: false,
-      severity: overwriteSeverity || 'warning'
+      severity: 'info'
     }
   }
 
@@ -73,7 +73,7 @@ const getAddressInputValidation = ({
     return {
       message: overwriteValidLabel,
       isError: false,
-      severity: overwriteSeverity || 'warning'
+      severity: overwriteSeverity || 'success'
     }
   }
   if (hasDomainResolveFailed) {
@@ -81,14 +81,14 @@ const getAddressInputValidation = ({
       // Change ENS to domain if we add more resolvers
       message: 'Failed to resolve ENS. Please try again later or enter a hex address.',
       isError: true,
-      severity: overwriteSeverity || 'error'
+      severity: 'error'
     }
   }
   if (isValidEns) {
     return {
       message: 'Valid ENS domain',
       isError: false,
-      severity: overwriteSeverity || 'warning'
+      severity: 'success'
     }
   }
 
@@ -96,7 +96,7 @@ const getAddressInputValidation = ({
     return {
       message: 'Please enter a valid address or ENS domain',
       isError: true,
-      severity: overwriteSeverity || 'error'
+      severity: 'error'
     }
   }
 
