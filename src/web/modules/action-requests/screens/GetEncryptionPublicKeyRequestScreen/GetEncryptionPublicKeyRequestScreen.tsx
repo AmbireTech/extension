@@ -42,8 +42,9 @@ const GetEncryptionPublicKeyRequestScreen = () => {
 
   const handleAccept = useCallback(() => {
     if (!userRequest) {
-      const message =
+      const message = t(
         'The app request is missing required details. Please try to trigger the request again from the app.'
+      )
       addToast(message, { type: 'error' })
       return
     }
@@ -51,7 +52,10 @@ const GetEncryptionPublicKeyRequestScreen = () => {
     // should never happen (because the UI blocks it), but just in case
     if (!internalKey) {
       const selectedAccountKeyTypes = selectedAccountKeyStoreKeys.map((k) => k.type).join(',')
-      const message = `This account uses a key type (${selectedAccountKeyTypes}) that does not support getting encryption public key.`
+      const message = t(
+        'This account uses a key type ({{selectedAccountKeyTypes}}) that does not support getting encryption public key.',
+        { selectedAccountKeyTypes }
+      )
       addToast(message, { type: 'error' })
       return
     }
@@ -63,7 +67,7 @@ const GetEncryptionPublicKeyRequestScreen = () => {
       type: 'REQUESTS_CONTROLLER_RESOLVE_USER_REQUEST',
       params: { data: { keyAddr, keyType }, id: userRequest.id }
     })
-  }, [userRequest, dispatch, addToast, internalKey, selectedAccountKeyStoreKeys])
+  }, [t, userRequest, dispatch, addToast, internalKey, selectedAccountKeyStoreKeys])
 
   const handleDeny = useCallback(() => {
     if (!userRequest) return

@@ -44,8 +44,9 @@ const DecryptRequestScreen = () => {
 
   const handleDecryptForPreview = useCallback(() => {
     if (!userRequest) {
-      const message =
+      const message = t(
         'The app request is missing required details. Please try to trigger the request again from the app.'
+      )
       addToast(message, { type: 'error' })
       return
     }
@@ -53,7 +54,10 @@ const DecryptRequestScreen = () => {
     // should never happen (because the UI blocks it), but just in case
     if (!internalKey) {
       const selectedAccountKeyTypes = selectedAccountKeyStoreKeys.map((k) => k.type).join(',')
-      const message = `This account uses a key type (${selectedAccountKeyTypes}) that does not support getting encryption public key.`
+      const message = t(
+        'This account uses a key type ({{selectedAccountKeyTypes}}) that does not support getting encryption public key.',
+        { selectedAccountKeyTypes }
+      )
       addToast(message, { type: 'error' })
       return
     }
@@ -66,7 +70,7 @@ const DecryptRequestScreen = () => {
         keyType: internalKey.type
       }
     })
-  }, [dispatch, internalKey, userRequest, addToast, selectedAccountKeyStoreKeys])
+  }, [t, dispatch, internalKey, userRequest, addToast, selectedAccountKeyStoreKeys])
 
   useEffect(() => {
     const onReceiveOneTimeData = (data: any) => {
@@ -80,8 +84,9 @@ const DecryptRequestScreen = () => {
 
   const handleDecrypt = useCallback(() => {
     if (!userRequest) {
-      const message =
+      const message = t(
         'The app request is missing required details. Please try to trigger the request again from the app.'
+      )
       addToast(message, { type: 'error' })
       return
     }
@@ -89,7 +94,10 @@ const DecryptRequestScreen = () => {
     // should never happen (because the UI blocks it), but just in case
     if (!internalKey) {
       const selectedAccountKeyTypes = selectedAccountKeyStoreKeys.map((k) => k.type).join(',')
-      const message = `This account uses a key type (${selectedAccountKeyTypes}) that does not support getting encryption public key.`
+      const message = t(
+        'This account uses a key type ({{selectedAccountKeyTypes}}) that does not support getting encryption public key.',
+        { selectedAccountKeyTypes }
+      )
       addToast(message, { type: 'error' })
       return
     }
@@ -101,7 +109,15 @@ const DecryptRequestScreen = () => {
         id: userRequest.id
       }
     })
-  }, [userRequest, dispatch, selectedAccountKeyStoreKeys, internalKey, encryptedMessage, addToast])
+  }, [
+    t,
+    userRequest,
+    dispatch,
+    selectedAccountKeyStoreKeys,
+    internalKey,
+    encryptedMessage,
+    addToast
+  ])
 
   const handleDeny = useCallback(() => {
     if (!userRequest) return
