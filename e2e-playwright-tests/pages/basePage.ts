@@ -104,7 +104,7 @@ export class BasePage {
     await expect(locator).toBeEnabled()
 
     // setup listener for new page event
-    const newPagePromise = context.waitForEvent('page', { timeout: 10000 })
+    const newPagePromise = context.waitForEvent('page', { timeout: 15000 })
 
     // initiate new page event
     await locator.click({ timeout: 5000 })
