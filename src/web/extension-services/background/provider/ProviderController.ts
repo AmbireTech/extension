@@ -853,7 +853,12 @@ export class ProviderController {
       throw ethErrors.rpc.invalidParams(message)
     }
 
-    return this.mainCtrl.keystore.decryptMessage({ keyAddr, keyType, encryptedMessage })
+    try {
+      return this.mainCtrl.keystore.decryptMessage({ keyAddr, keyType, encryptedMessage })
+    } catch (e) {
+      const message = `Failed to decrypt message. Error details: <${e}>`
+      throw ethErrors.provider.unauthorized(message)
+    }
   }
 
   walletRequestPermissions = ({ params: permissions, session }: DappProviderRequest) => {
