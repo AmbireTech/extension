@@ -42,14 +42,15 @@ const ManageTokensSettingsScreen = () => {
   }, [setCurrentSettingsPage])
 
   const filteredTokens = useMemo(() => {
-    return tokens.filter((token) => {
+    const filtered = tokens.filter((token) => {
       const { flags, chainId } = token
       if (flags.onGasTank || !!flags.rewardsType) return false
       const network = networks.find((n) => n.chainId === chainId)
-      if (networkFilter !== 'all' && network?.name !== networkFilter) return false
 
-      return tokenSearch({ search, token, networks })
+      return networkFilter === 'all' || network?.name === networkFilter
     })
+
+    return tokenSearch({ networks, tokens: filtered, search })
   }, [networkFilter, networks, search, tokens])
 
   const customTokens = useMemo(() => {

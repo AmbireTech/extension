@@ -1,3 +1,4 @@
+import Fuse from 'fuse.js'
 import React, { FC, useCallback, useEffect, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
@@ -16,7 +17,6 @@ import TabsAndSearch from '@common/modules/dashboard/components/TabsAndSearch'
 import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tab/Tab'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
-import { getDoesNetworkMatch } from '@common/utils/search'
 import { openInTab } from '@web/extension-services/background/webapi/tab'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
@@ -91,7 +91,7 @@ const DeFiPositions: FC<Props> = ({
 
   const filteredPositions = useMemo(
     () =>
-      defiPositions.filter(({ chainId, providerName }) => {
+      defiPositions.filter(({ chainId, providerName, positions }) => {
         let isMatchingNetwork = true
         let isMatchingSearch = true
 
@@ -100,19 +100,23 @@ const DeFiPositions: FC<Props> = ({
         }
 
         if (searchValue) {
-          const lowercaseSearch = searchValue.toLowerCase()
-          isMatchingSearch =
-            providerName.toLowerCase().includes(lowercaseSearch) ||
-            getDoesNetworkMatch({
-              networks,
-              itemChainId: chainId,
-              lowercaseSearch
-            })
+          // Allow the user to search for assets in the positions as well
+          const assetNames = positions
+            .map(({ assets }) => assets.map(({ symbol }) => symbol).join(' '))
+            .join(' ')
+
+          const fuse = new Fuse([{ providerName, assetNames }], {
+            keys: ['providerName', 'assetNames'],
+            threshold: 0.3
+          })
+          const result = fuse.search(searchValue)
+
+          isMatchingSearch = result.length > 0
         }
 
         return isMatchingNetwork && isMatchingSearch
       }),
-    [defiPositions, dashboardNetworkFilter, searchValue, networks]
+    [defiPositions, dashboardNetworkFilter, searchValue]
   )
 
   const renderItem = useCallback(

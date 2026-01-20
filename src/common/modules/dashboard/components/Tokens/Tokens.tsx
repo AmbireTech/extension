@@ -1,3 +1,4 @@
+import Fuse from 'fuse.js'
 import React, { useCallback, useEffect, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { Animated, FlatListProps, Pressable, View } from 'react-native'
@@ -5,6 +6,7 @@ import { useModalize } from 'react-native-modalize'
 
 import { PINNED_TOKENS } from '@ambire-common/consts/pinnedTokens'
 import { Network } from '@ambire-common/interfaces/network'
+import { SelectedAccountPortfolioTokenResult } from '@ambire-common/interfaces/selectedAccount'
 import { AssetType } from '@ambire-common/libs/defiPositions/types'
 import { getTokenAmount, getTokenBalanceInUSD } from '@ambire-common/libs/portfolio/helpers'
 import { TokenResult } from '@ambire-common/libs/portfolio/interfaces'
@@ -86,24 +88,20 @@ const Tokens = ({
 
   const searchValue = watch('search')
 
-  const tokens = useMemo(
-    () =>
-      (portfolio?.tokens || [])
-        // Hide gas tank and borrowed defi tokens from the list
-        .filter((token) => !token.flags.onGasTank && token.flags.defiTokenType !== AssetType.Borrow)
-        .filter((token) => {
-          if (!dashboardNetworkFilter) return true
-          if (dashboardNetworkFilter === 'rewards') return token.flags.rewardsType
-          if (dashboardNetworkFilter === 'gasTank') return token.flags.onGasTank
+  const tokens = useMemo(() => {
+    const tokenList = (portfolio?.tokens || []).filter((token) => {
+      // Hide gas tank and borrowed defi tokens from the list
+      if (token.flags.onGasTank || token.flags.defiTokenType === AssetType.Borrow) return false
 
-          return (
-            token?.chainId?.toString() === dashboardNetworkFilter.toString() &&
-            !token.flags.onGasTank
-          )
-        })
-        .filter((token) => tokenSearch({ search: searchValue, token, networks })),
-    [portfolio?.tokens, dashboardNetworkFilter, searchValue, networks]
-  )
+      if (!dashboardNetworkFilter) return true
+      if (dashboardNetworkFilter === 'rewards') return token.flags.rewardsType
+      if (dashboardNetworkFilter === 'gasTank') return token.flags.onGasTank
+
+      return token?.chainId?.toString() === dashboardNetworkFilter.toString()
+    })
+
+    return tokenSearch({ networks, tokens: tokenList, search: searchValue })
+  }, [portfolio?.tokens, networks, searchValue, dashboardNetworkFilter])
 
   const userHasNoBalance = useMemo(
     // Exclude gas tank tokens from the check
@@ -286,7 +284,7 @@ const Tokens = ({
                     count: hiddenTokensCount,
                     tokensLabel: hiddenTokensCount > 1 ? t('tokens') : t('token')
                   })}{' '}
-                  {dashboardNetworkFilter && t('on this network')}
+                  {!!dashboardNetworkFilter && t('on this network')}
                 </Text>
                 <RightArrowIcon height={12} color={theme.secondaryText} />
               </Pressable>

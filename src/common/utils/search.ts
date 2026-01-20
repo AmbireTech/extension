@@ -1,58 +1,42 @@
+import Fuse from 'fuse.js'
+
 import { Network } from '@ambire-common/interfaces/network'
 import { TokenResult } from '@ambire-common/libs/portfolio'
 
-const getDoesNetworkMatch = ({
+const tokenSearch = ({
   networks,
-  itemChainId,
-  tokenFlags,
-  lowercaseSearch
+  tokens,
+  search
 }: {
   networks: Network[]
-  itemChainId: bigint
-  tokenFlags?: TokenResult['flags']
-  lowercaseSearch: string
+  tokens: TokenResult[]
+  search: string
 }) => {
-  let isMatchingByFlag = false
+  // Use this map to avoid searching the network name for every token using find
+  const networkChainIdToNameMap: { [chainId: string]: string } = {}
 
-  if (tokenFlags) {
-    if ('gas tank'.includes(lowercaseSearch)) {
-      isMatchingByFlag = !!tokenFlags.onGasTank
-    } else if ('rewards'.includes(lowercaseSearch)) {
-      isMatchingByFlag = !!tokenFlags.rewardsType
-    }
+  networks.forEach((network) => {
+    networkChainIdToNameMap[network.chainId.toString()] = network.name
+  })
+
+  if (!search) {
+    return tokens
   }
 
-  const networkName = networks.find((n) => n.chainId === itemChainId)?.name || ''
-
-  return networkName.toLowerCase().includes(lowercaseSearch) || isMatchingByFlag
-}
-
-const tokenSearch = ({
-  search,
-  token,
-  networks
-}: {
-  search: string
-  token: TokenResult
-  networks: Network[]
-}) => {
-  if (!search) return true
-
-  const lowercaseSearch = search.toLowerCase()
-
-  const doesAddressMatch = token.address.toLowerCase().includes(lowercaseSearch)
-  const doesSymbolMatch = token.symbol.toLowerCase().includes(lowercaseSearch)
-
-  return (
-    doesAddressMatch ||
-    doesSymbolMatch ||
-    getDoesNetworkMatch({
-      networks,
-      tokenFlags: token.flags,
-      itemChainId: token.chainId,
-      lowercaseSearch
-    })
+  const fuse = new Fuse(
+    tokens.map((token) => ({
+      ...token,
+      networkName: networkChainIdToNameMap[token.chainId.toString()] || ''
+    })),
+    {
+      keys: ['symbol', 'address', 'networkName'],
+      threshold: 0.3
+    }
   )
+
+  const result = fuse.search(search)
+
+  return result.map(({ item }) => item)
 }
 
-export { getDoesNetworkMatch, tokenSearch }
+export { tokenSearch }
