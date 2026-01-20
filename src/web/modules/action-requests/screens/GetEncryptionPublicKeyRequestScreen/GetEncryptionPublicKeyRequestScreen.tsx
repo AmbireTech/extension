@@ -25,8 +25,6 @@ const GetEncryptionPublicKeyRequestScreen = () => {
   const { theme, themeType } = useTheme()
   const { addToast } = useToast()
   const {
-    isViewOnly,
-    isSmartAccount,
     internalKey,
     errorNode,
     actionFooterResolveNode,

@@ -35,8 +35,6 @@ const DecryptRequestScreen = () => {
   const { name, icon } = useDappInfo(userRequest)
   const encryptedMessage = userRequest?.meta?.params[0]
   const {
-    isViewOnly,
-    isSmartAccount,
     internalKey,
     selectedAccountKeyStoreKeys,
     errorNode,

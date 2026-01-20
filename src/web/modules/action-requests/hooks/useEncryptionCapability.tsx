@@ -67,13 +67,13 @@ export const useEncryptionCapability = () => {
     return null
   }, [isSmartAccount, isViewOnly, internalKey])
 
+  const isDisabled = isViewOnly || isSmartAccount || !internalKey
+
   return {
-    isViewOnly,
-    isSmartAccount,
     internalKey,
     selectedAccountKeyStoreKeys,
     errorNode,
     actionFooterResolveNode,
-    isDisabled: isViewOnly || isSmartAccount || !internalKey
+    isDisabled
   }
 }
