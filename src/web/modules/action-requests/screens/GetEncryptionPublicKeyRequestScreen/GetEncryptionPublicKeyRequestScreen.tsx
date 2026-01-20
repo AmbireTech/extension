@@ -30,7 +30,8 @@ const GetEncryptionPublicKeyRequestScreen = () => {
     internalKey,
     errorNode,
     actionFooterResolveNode,
-    selectedAccountKeyStoreKeys
+    selectedAccountKeyStoreKeys,
+    isDisabled
   } = useEncryptionCapability()
 
   const userRequest = useMemo(
@@ -93,7 +94,7 @@ const GetEncryptionPublicKeyRequestScreen = () => {
             onReject={handleDeny}
             onResolve={handleAccept}
             resolveButtonText={t('Provide')}
-            resolveDisabled={isViewOnly || isSmartAccount}
+            resolveDisabled={isDisabled}
             resolveButtonTestID="button-provide"
             resolveNode={actionFooterResolveNode}
           />

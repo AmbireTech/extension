@@ -40,7 +40,8 @@ const DecryptRequestScreen = () => {
     internalKey,
     selectedAccountKeyStoreKeys,
     errorNode,
-    actionFooterResolveNode
+    actionFooterResolveNode,
+    isDisabled
   } = useEncryptionCapability()
 
   const handleDecryptForPreview = useCallback(() => {
@@ -131,7 +132,7 @@ const DecryptRequestScreen = () => {
             onReject={handleDeny}
             onResolve={handleDecrypt}
             resolveButtonText={t('Decrypt')}
-            resolveDisabled={isViewOnly || isSmartAccount}
+            resolveDisabled={isDisabled}
             resolveButtonTestID="button-decrypt"
             resolveNode={actionFooterResolveNode}
           />
@@ -182,7 +183,7 @@ const DecryptRequestScreen = () => {
                             type="outline"
                             hasBottomSpacing={false}
                             accentColor={theme.info3Button}
-                            disabled={isViewOnly || isSmartAccount}
+                            disabled={isDisabled}
                             size="small"
                           />
                         </View>

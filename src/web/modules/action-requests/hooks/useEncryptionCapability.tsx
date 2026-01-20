@@ -73,6 +73,7 @@ export const useEncryptionCapability = () => {
     internalKey,
     selectedAccountKeyStoreKeys,
     errorNode,
-    actionFooterResolveNode
+    actionFooterResolveNode,
+    isDisabled: isViewOnly || isSmartAccount || !internalKey
   }
 }
