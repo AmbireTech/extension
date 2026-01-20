@@ -217,7 +217,6 @@ export const handleActions = async (
         params.filters,
         params.pagination
       )
-
     case 'MAIN_CONTROLLER_ACTIVITY_SET_SIGNED_MESSAGES_FILTERS':
       return mainCtrl.activity.filterSignedMessages(
         params.sessionId,
