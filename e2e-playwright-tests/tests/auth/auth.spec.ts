@@ -33,11 +33,12 @@ test.describe('auth', { tag: '@auth' }, () => {
     await pages.auth.importExistingAccount()
   })
 
-  test('import one Basic Account from a 12 words seed phrase and personalize them', async ({
-    pages
-  }) => {
-    await pages.auth.importExistingAccountByRecoveryPhrase(SEED)
-  })
+  // TODO: duplicate; entering same seed phrase 2 times
+  // test.only('import one Basic Account from a 12 words seed phrase and personalize them', async ({
+  //   pages
+  // }) => {
+  //   await pages.auth.importExistingAccountByRecoveryPhrase(SEED)
+  // })
 
   test('import one Smart Account from a 12 words seed phrase and personalize them', async ({
     pages

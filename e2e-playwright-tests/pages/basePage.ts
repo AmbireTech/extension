@@ -67,12 +67,6 @@ export class BasePage {
     await this.page.waitForTimeout(1000)
   }
 
-  // TODO: refactor, this method can be depracated; switch to getByTestId
-  async typeTextInInputField(locator: string, text: string): Promise<void> {
-    await this.page.locator(locator).clear()
-    await this.page.locator(locator).pressSequentially(text)
-  }
-
   async clearFieldInput(selector: string): Promise<void> {
     await this.page.getByTestId(selector).fill('')
   }

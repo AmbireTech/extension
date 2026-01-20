@@ -99,6 +99,7 @@ const CreateSeedPhraseWriteScreen = () => {
     >
       <TabLayoutWrapperMainContent>
         <Panel
+          testID='back-up-recovery-phrase-text'
           type="onboarding"
           spacingsSize="small"
           step={1}
