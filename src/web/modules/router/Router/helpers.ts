@@ -40,6 +40,7 @@ const getInitialRoute = ({
 
     if (currentUserRequest.kind === 'ethGetEncryptionPublicKey')
       return ROUTES.getEncryptionPublicKeyRequest
+    if (currentUserRequest.kind === 'ethDecrypt') return ROUTES.decryptRequest
 
     if (currentUserRequest.kind === 'calls') return ROUTES.signAccountOp
 

@@ -93,8 +93,8 @@ export class BasePage {
     return this.page.getByTestId(selector).inputValue()
   }
 
-  async handleNewPage(locator: Locator): Promise<Page> {
-    const context = this.page.context()
+  async handleNewPage(locator: Locator, page: Page = this.page): Promise<Page> {
+    const context = page.context()
 
     // const [actionWindowPagePromise] = await Promise.all([
     //   context.waitForEvent('page', { timeout: 10000 }),

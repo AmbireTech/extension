@@ -245,7 +245,7 @@ const Input = ({
         {!!info && (
           <Text
             weight="regular"
-            appearance="warningText"
+            appearance="secondaryText"
             style={[styles.bottomLabel, bottomLabelStyle]}
             fontSize={10}
           >

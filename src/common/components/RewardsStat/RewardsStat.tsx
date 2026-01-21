@@ -86,7 +86,7 @@ const getValueFromKey = (id: Stat['id'], stats: ProjectedRewardsStats | null): s
 }
 
 const formatScore = (id: Stat['id'], score: Stat['score']) => {
-  return id === 'multiplier' ? `${score}x` : score.toFixed(0)
+  return id === 'multiplier' ? `${score.toFixed(3)}x` : score.toFixed(0)
 }
 
 const Icon = ({ id }: { id: Stat['id'] }) => {

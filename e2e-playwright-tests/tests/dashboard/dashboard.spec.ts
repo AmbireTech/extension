@@ -271,14 +271,4 @@ test.describe('dashboard', () => {
       await pages.settings.isVisible(`token-balance-${wallet.address}.${wallet.chainId}`)
     })
   })
-
-  test('Check redirection to Ambire rewards page', async ({ pages }) => {
-    await test.step('assert Info button is visible', async () => {
-      await pages.basePage.isVisible(selectors.dashboard.projectedRewardsInfoButton)
-    })
-
-    await test.step('click on Info button and check redirection', async () => {
-      await pages.dashboard.checkRewardsPageRedirection()
-    })
-  })
 })

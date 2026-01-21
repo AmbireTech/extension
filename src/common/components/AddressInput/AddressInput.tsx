@@ -106,8 +106,8 @@ const AddressInput: React.FC<Props> = ({
           !isError && severity === 'info'
             ? message
             : isValidationInDomainResolvingState
-            ? t('Resolving domain...')
-            : ''
+              ? t('Resolving domain...')
+              : ''
         }
         renderConfirmAddress={renderConfirmAddress}
         preventJumpOnValidationChange

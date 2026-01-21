@@ -168,10 +168,6 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     } else {
       navigate(WEB_ROUTES.dashboard)
     }
-
-    dispatch({
-      type: 'TRANSFER_CONTROLLER_RESET_FORM'
-    })
   }, [dispatch, navigate])
 
   const { sessionHandler } = useTrackAccountOp({
@@ -212,15 +208,6 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
 
     return 'transfer'
   }, [isTopUp, isTopUpScreen, latestBroadcastedAccountOp, showAddedToBatch])
-
-  // When navigating to another screen internally in the extension, we unload the TransferController
-  // to ensure that no estimation or SignAccountOp logic is still running.
-  // If the screen is closed entirely, the clean-up is handled by the port.onDisconnect callback in the background.
-  useEffect(() => {
-    return () => {
-      dispatch({ type: 'TRANSFER_CONTROLLER_UNLOAD_SCREEN' })
-    }
-  }, [dispatch])
 
   const {
     ref: estimationModalRef,
@@ -341,11 +328,8 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   }, [addressInputState.validation.isError, isFormValid, isTopUp])
 
   const onBack = useCallback(() => {
-    dispatch({
-      type: 'TRANSFER_CONTROLLER_RESET_FORM'
-    })
     navigate(ROUTES.dashboard)
-  }, [navigate, dispatch])
+  }, [navigate])
 
   const resetTransferForm = useCallback(() => {
     dispatch({
@@ -528,9 +512,6 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
 
   const handleGoBackPress = useCallback(() => {
     if (!isRequestWindow) {
-      dispatch({
-        type: 'TRANSFER_CONTROLLER_RESET_FORM'
-      })
       navigate(ROUTES.dashboard)
     } else {
       dispatch({
@@ -570,8 +551,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
         secondaryButtonText={t('Add more')}
         handleClose={() => {
           dispatch({
-            type: 'TRANSFER_CONTROLLER_UNLOAD_SCREEN',
-            params: { forceUnload: true }
+            type: 'TRANSFER_CONTROLLER_DESTROY_LATEST_BROADCASTED_ACCOUNT_OP'
           })
         }}
       >
