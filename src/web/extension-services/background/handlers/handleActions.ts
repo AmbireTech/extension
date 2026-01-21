@@ -505,6 +505,12 @@ export const handleActions = async (
       return await mainCtrl.keystore.sendTempSeedToUi()
     case 'KEYSTORE_CONTROLLER_DELETE_SEED':
       return await mainCtrl.keystore.deleteSeed(params.id)
+    case 'KEYSTORE_CONTROLLER_SEND_DECRYPTED_MESSAGE_TO_UI':
+      return await mainCtrl.keystore.sendDecryptedMessageToUi({
+        encryptedMessage: params.encryptedMessage,
+        keyAddr: params.keyAddr,
+        keyType: params.keyType
+      })
 
     case 'EMAIL_VAULT_CONTROLLER_GET_INFO':
       return await mainCtrl.emailVault?.getEmailVaultInfo(params.email)

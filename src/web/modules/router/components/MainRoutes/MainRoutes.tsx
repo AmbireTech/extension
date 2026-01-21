@@ -12,6 +12,7 @@ import AccountSelectScreen from '@web/modules/account-select/screens/AccountSele
 import AddOrUpdateNetworkScreen from '@web/modules/action-requests/screens/AddOrUpdateNetworkScreen'
 import BenzinScreen from '@web/modules/action-requests/screens/BenzinScreen'
 import DappConnectScreen from '@web/modules/action-requests/screens/DappConnectScreen'
+import DecryptRequestScreen from '@web/modules/action-requests/screens/DecryptRequestScreen'
 import GetEncryptionPublicKeyRequestScreen from '@web/modules/action-requests/screens/GetEncryptionPublicKeyRequestScreen'
 import SwitchAccountScreen from '@web/modules/action-requests/screens/SwitchAccountScreen'
 import WatchTokenRequestScreen from '@web/modules/action-requests/screens/WatchTokenRequestScreen'
@@ -181,6 +182,7 @@ const MainRoutes = () => {
             path={WEB_ROUTES.getEncryptionPublicKeyRequest}
             element={<GetEncryptionPublicKeyRequestScreen />}
           />
+          <Route path={WEB_ROUTES.decryptRequest} element={<DecryptRequestScreen />} />
 
           <Route path={WEB_ROUTES.menu} element={<NavMenu />} />
           <Route path={WEB_ROUTES.accountSelect} element={<AccountSelectScreen />} />

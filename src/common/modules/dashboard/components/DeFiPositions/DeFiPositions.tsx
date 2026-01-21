@@ -1,3 +1,4 @@
+import Fuse from 'fuse.js'
 import React, { FC, useCallback, useEffect, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
@@ -16,7 +17,7 @@ import TabsAndSearch from '@common/modules/dashboard/components/TabsAndSearch'
 import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tab/Tab'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
-import { getDoesNetworkMatch } from '@common/utils/search'
+import { searchWithNetworkName } from '@common/utils/search'
 import { openInTab } from '@web/extension-services/background/webapi/tab'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useFeatureFlagsControllerState from '@web/hooks/useFeatureFlagsControllerState'
@@ -91,31 +92,31 @@ const DeFiPositions: FC<Props> = ({
     }
   }, [sessionId, dispatch])
 
-  const filteredPositions = useMemo(
-    () =>
-      defiPositions.filter(({ chainId, providerName }) => {
+  const filteredPositions = useMemo(() => {
+    const defiToSearch = defiPositions
+      .filter(({ chainId, positions }) => {
         let isMatchingNetwork = true
-        let isMatchingSearch = true
 
         if (dashboardNetworkFilter) {
           isMatchingNetwork = chainId === BigInt(dashboardNetworkFilter)
         }
 
-        if (searchValue) {
-          const lowercaseSearch = searchValue.toLowerCase()
-          isMatchingSearch =
-            providerName.toLowerCase().includes(lowercaseSearch) ||
-            getDoesNetworkMatch({
-              networks,
-              itemChainId: chainId,
-              lowercaseSearch
-            })
-        }
+        return isMatchingNetwork && positions.length
+      })
+      .map((position) => ({
+        ...position,
+        assetNames: position.positions
+          .map(({ assets }) => assets.map(({ symbol }) => symbol).join(' '))
+          .join(' ')
+      }))
 
-        return isMatchingNetwork && isMatchingSearch
-      }),
-    [defiPositions, dashboardNetworkFilter, searchValue, networks]
-  )
+    return searchWithNetworkName({
+      networks,
+      items: defiToSearch,
+      search: searchValue,
+      keys: ['providerName', 'assetNames']
+    })
+  }, [defiPositions, dashboardNetworkFilter, searchValue, networks])
 
   const renderItem = useCallback(
     ({ item }: any) => {
