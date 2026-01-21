@@ -1,5 +1,4 @@
 import { MainController } from '@ambire-common/controllers/main/main'
-import { SigningStatus } from '@ambire-common/controllers/signAccountOp/signAccountOp'
 import { ONBOARDING_WEB_ROUTES } from '@common/modules/router/constants/common'
 import { IS_FIREFOX } from '@web/constants/common'
 import { Port } from '@web/extension-services/messengers'
@@ -39,61 +38,16 @@ export const handleCleanUpOnPortDisconnect = async ({
     }
   }
 
-  if (url.pathname.includes('sign-account-op')) {
-    mainCtrl.destroySignAccOp()
-  }
-
   if (url.pathname.includes('sign-message')) {
     mainCtrl.signMessage.reset()
   }
 
   if (url.pathname.includes('transfer') || url.pathname.includes('top-up-gas-tank')) {
     // Always unload the screen when the request window is closed
-    const isActionWindow = port.name === 'request-window'
+    const isRequestWindow = port.name === 'request-window'
 
-    if (isActionWindow) {
+    if (isRequestWindow) {
       mainCtrl.onOneClickTransferClose()
-    } else {
-      mainCtrl.transfer.unloadScreen()
-    }
-
-    // If the Transfer popup is closed during signing or broadcasting,
-    // we don't want to show the tracking screen the next time the Transfer popup/screen is opened.
-    // The tracking screen is shown based on the value of `transferController.latestAccountOp`,
-    // which is set asynchronously when `mainCtrl.#broadcastSignedAccountOp` completes.
-    // Therefore, if the popup is intentionally closed during signing or broadcasting, we don't want to enable tracking later,
-    // and we need to prevent updating the `transferController.latestAccountOp` value.
-    // That's why we introduced `shouldTrackLatestBroadcastedAccountOp` flag.
-    //
-    // Trezor Note: For Trezor, we always enable tracking and do not reset the form, because with the Trezor signer,
-    // the Transfer popup is closed and all logic is handled in a new request window.
-    // In that window, we have dedicated logic for clearing the form completely (e.g., if (isActionWindow) mainCtrl.onOneClickTransferClose()).
-    // If we reset the form state here while opening the Trezor request window, the form will be re-initialized
-    // and the current `signAccountOp` will be destroyed, which will break the Trezor signing process.
-    //
-    // Lattice Note: We bypass this logic for Lattice and always enable tracking, because Lattice may call
-    // `LatticeController._getCreds` to retrieve credentials, which briefly opens a new window and causes the popup to close.
-    // Since we can't distinguish between a `getCreds` call and a user intentionally closing the popup after signing,
-    // we always enable tracking. This means that if the popup is closed immediately after signing with Lattice,
-    // the next time you open the Transfer screen, you may see the transaction tracking screen.
-
-    const signAccountOpController = mainCtrl.transfer.signAccountOpController
-
-    // If there is no signAccountOpController or it has no status, we don't need to determine tracking
-    // as there is nothing to track. unloadScreen will handle the cleanup.
-    if (!signAccountOpController || !signAccountOpController.status) return
-
-    const shouldTrack =
-      signAccountOpController.status?.type === SigningStatus.ReadyToSign ||
-      signAccountOpController.accountOp?.signingKeyType === 'trezor' ||
-      signAccountOpController.accountOp?.signingKeyType === 'lattice'
-    // eslint-disable-next-line no-param-reassign
-    mainCtrl.transfer.shouldTrackLatestBroadcastedAccountOp = shouldTrack
-
-    // We reset the form state without destroying the signAccountOp,
-    // since it's still needed for broadcasting. Once broadcasting completes, we destroy the signAccountOp.
-    if (!shouldTrack && !signAccountOpController.isSignAndBroadcastInProgress) {
-      mainCtrl.transfer.resetForm(false)
     }
 
     mainCtrl.activity.resetAccountsOpsFilters('transfer')
@@ -129,7 +83,7 @@ export const handleCleanUpOnPortDisconnect = async ({
       if (w && w.id) {
         // eslint-disable-next-line no-await-in-loop
         const tabs = await chrome.tabs.query({ windowId: w.id })
-        if (tabs[0].url === 'about:blank' && tabs[0].status !== 'loading') {
+        if (tabs[0]?.url === 'about:blank' && tabs[0].status !== 'loading') {
           // eslint-disable-next-line no-await-in-loop
           await chrome.windows.remove(w.id)
         }

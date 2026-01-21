@@ -31,7 +31,7 @@ import BundlerWarning from './components/bundlerWarning'
 import EstimationSkeleton from './components/EstimationSkeleton'
 import PayOption from './components/PayOption'
 import { NO_FEE_OPTIONS } from './consts'
-import { getDefaultFeeOption, mapFeeOptions, sortFeeOptions } from './helpers'
+import { mapFeeOptions, sortFeeOptions } from './helpers'
 import getStyles from './styles'
 import { Props } from './types'
 
@@ -127,11 +127,6 @@ const Estimation = ({
       .map((feeOption) => mapFeeOptions(feeOption, signAccountOpState))
   }, [hasEstimation, signAccountOpState])
 
-  const defaultFeeOption = useMemo(
-    () => getDefaultFeeOption(payOptionsPaidByUsOrGasTank, payOptionsPaidByEOA),
-    [payOptionsPaidByEOA, payOptionsPaidByUsOrGasTank]
-  )
-
   const [selectedFeeOption, setSelectedFeeOption] = useState<SelectValue['value'] | null>(null)
 
   const payValue = useMemo(() => {
@@ -142,61 +137,34 @@ const Estimation = ({
   }, [payOptionsPaidByUsOrGasTank, payOptionsPaidByEOA, selectedFeeOption])
 
   const setFeeOption = useCallback(
-    (localPayValue: any) => {
+    (localPayValue: any, skipDispatch?: boolean) => {
       if (!signAccountOpState?.selectedFeeSpeed) return
       setSelectedFeeOption(localPayValue.value)
 
-      dispatch({
-        type: 'SIGN_ACCOUNT_OP_UPDATE',
-        params: {
-          updateType,
-          feeToken: localPayValue.token,
-          paidBy: localPayValue.paidBy,
-          speed: localPayValue.speedCoverage.includes(signAccountOpState.selectedFeeSpeed)
-            ? signAccountOpState.selectedFeeSpeed
-            : FeeSpeed.Fast
-        }
-      })
+      if (!skipDispatch) {
+        dispatch({
+          type: 'CURRENT_SIGN_ACCOUNT_OP_UPDATE',
+          params: {
+            updateType,
+            feeToken: localPayValue.token,
+            paidBy: localPayValue.paidBy,
+            speed: localPayValue.speedCoverage.includes(signAccountOpState.selectedFeeSpeed)
+              ? signAccountOpState.selectedFeeSpeed
+              : FeeSpeed.Fast
+          }
+        })
+      }
     },
     [dispatch, signAccountOpState?.selectedFeeSpeed, updateType]
   )
 
   useEffect(() => {
-    if (!hasEstimation) return
+    if (!hasEstimation || !signAccountOpState) return
 
-    const isInitialValueSet = !!payValue
-    const canPayFeeAfterNotBeingAbleToPayInitially =
-      payValue?.value === NO_FEE_OPTIONS.value && defaultFeeOption.value !== NO_FEE_OPTIONS.value
-    const feeOptionNoLongerViable = payValue?.disabled !== defaultFeeOption.disabled
-
-    if (
-      !isInitialValueSet ||
-      canPayFeeAfterNotBeingAbleToPayInitially ||
-      feeOptionNoLongerViable ||
-      (payValue &&
-        !payOptionsPaidByUsOrGasTank.find(
-          (payOption) =>
-            payOption.paidBy === payValue.paidBy &&
-            payOption.token.address === payValue.token?.address
-        ) &&
-        !payOptionsPaidByEOA.find(
-          (payOption) =>
-            payOption.paidBy === payValue.paidBy &&
-            payOption.token.address === payValue.token?.address
-        ))
-    ) {
-      setFeeOption(defaultFeeOption)
+    if (!payValue && signAccountOpState.selectedOption) {
+      setFeeOption(mapFeeOptions(signAccountOpState.selectedOption, signAccountOpState), true)
     }
-  }, [
-    payValue,
-    setFeeOption,
-    hasEstimation,
-    defaultFeeOption.value,
-    defaultFeeOption,
-    signAccountOpState?.account.addr,
-    payOptionsPaidByUsOrGasTank,
-    payOptionsPaidByEOA
-  ])
+  }, [payValue, setFeeOption, hasEstimation, signAccountOpState])
 
   const feeSpeeds = useMemo(() => {
     if (!signAccountOpState?.selectedOption) return []
@@ -273,7 +241,7 @@ const Estimation = ({
       }
 
       dispatch({
-        type: 'SIGN_ACCOUNT_OP_UPDATE',
+        type: 'CURRENT_SIGN_ACCOUNT_OP_UPDATE',
         params: {
           updateType,
           speed: value as FeeSpeed
@@ -487,7 +455,7 @@ const Estimation = ({
         disabled={
           disabled ||
           (!payOptionsPaidByUsOrGasTank.length && !payOptionsPaidByEOA.length) ||
-          defaultFeeOption.label === NO_FEE_OPTIONS.label
+          !signAccountOpState.selectedOption
         }
         defaultValue={payValue ?? undefined}
         selectStyle={{

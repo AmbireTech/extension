@@ -2,14 +2,13 @@ import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
+import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
+import { ISignAccountOpController } from '@ambire-common/interfaces/signAccountOp'
+import Button from '@common/components/Button'
 import Text from '@common/components/Text'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import useBackgroundService from '@web/hooks/useBackgroundService'
-
-import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
-import { ISignAccountOpController } from '@ambire-common/interfaces/signAccountOp'
-import Button from '@common/components/Button'
 
 const BundlerWarning = ({
   signAccountOpState,
@@ -38,7 +37,7 @@ const BundlerWarning = ({
         text={t('Retry')}
         onPress={() => {
           dispatch({
-            type: 'SIGN_ACCOUNT_OP_REESTIMATE',
+            type: 'CURRENT_SIGN_ACCOUNT_OP_REESTIMATE',
             params: {
               type: signAccountOpState.type
             }
