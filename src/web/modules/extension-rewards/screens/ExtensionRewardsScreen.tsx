@@ -218,8 +218,7 @@ const ExtensionRewardsScreen = () => {
           <View
             style={{
               ...spacings.phLg,
-              ...spacings.pbSm,
-              ...spacings.ptMd,
+              ...spacings.pvLg,
               backgroundColor: '#191A1F',
               borderWidth: 1,
               borderColor: '#6A6F8633',
