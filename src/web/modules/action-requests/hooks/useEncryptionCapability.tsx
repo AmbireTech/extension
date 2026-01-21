@@ -55,15 +55,14 @@ export const useEncryptionCapability = () => {
   }, [internalKey, isSmartAccount, isViewOnly, t])
 
   const actionFooterResolveNode = useMemo(() => {
-    if (isViewOnly)
-      return (
-        <View style={[{ flex: 3 }, flexbox.directionRow, flexbox.justifyEnd]}>
-          <NoKeysToSignAlert type="short" isTransaction={false} />
-        </View>
-      )
+    if (isSmartAccount || !isViewOnly) return null
 
-    return null
-  }, [isViewOnly])
+    return (
+      <View style={[{ flex: 3 }, flexbox.directionRow, flexbox.justifyEnd]}>
+        <NoKeysToSignAlert type="short" isTransaction={false} />
+      </View>
+    )
+  }, [isSmartAccount, isViewOnly])
 
   const isDisabled = isViewOnly || isSmartAccount || !internalKey
 
