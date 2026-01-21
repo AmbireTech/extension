@@ -213,6 +213,7 @@ export class SwapAndBridgePage extends BasePage {
     await this.click(selectors.goDashboardButton)
 
     const openTransactionButton = this.page.getByTestId(selectors.bannerButtonOpen).first()
+    await openTransactionButton.waitFor({ state: 'visible' })
 
     const newPage = await this.handleNewPage(openTransactionButton)
     await this.signTransactionPage(newPage)

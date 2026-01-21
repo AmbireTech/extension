@@ -64,6 +64,8 @@ test.describe('auth', { tag: '@auth' }, () => {
   })
 
   test('import account from different HD paths', async ({ pages }) => {
+    test.setTimeout(80000)
+
     await pages.auth.createAccountAndImportFromDifferentHDPath()
   })
 

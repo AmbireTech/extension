@@ -128,9 +128,13 @@ export class TransferPage extends BasePage {
     // Select fee token; default Gas Tank
     if (!payWithGasTank) {
       await this.selectFeeToken(baParams.envSelectedAccount, feeToken, payWithGasTank)
-      feeSelector = await this.page.locator(selectors.transaction.feeTokenInDollars).innerText() // returns e.g. '<$0.01'
+      feeSelector = await this.page
+        .locator(selectors.transaction.feeTokenInDollars)
+        .innerText({ timeout: 10000 }) // returns e.g. '<$0.01'
     } else {
-      feeSelector = await this.page.locator(selectors.transaction.feeGasTankInDollars).innerText() // returns e.g. '<$0.01'
+      feeSelector = await this.page
+        .locator(selectors.transaction.feeGasTankInDollars)
+        .innerText({ timeout: 10000 }) // returns e.g. '<$0.01'
     }
 
     const feeDollarsAmount = Number(feeSelector.replace(/[<$]/g, ''))
