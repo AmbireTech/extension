@@ -1,8 +1,7 @@
-import Fuse from 'fuse.js'
 import React, { FC, useCallback, useEffect, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
-import { Animated, FlatListProps, View } from 'react-native'
+import { Animated, FlatListProps, TouchableOpacity, View } from 'react-native'
 
 import { BannerType } from '@ambire-common/interfaces/banner'
 import { getCurrentAccountBanners } from '@ambire-common/libs/banners/banners'
@@ -15,8 +14,10 @@ import DashboardBanner from '@common/modules/dashboard/components/DashboardBanne
 import DashboardPageScrollContainer from '@common/modules/dashboard/components/DashboardPageScrollContainer'
 import TabsAndSearch from '@common/modules/dashboard/components/TabsAndSearch'
 import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tab/Tab'
+import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
+import flexbox from '@common/styles/utils/flexbox'
 import { searchWithNetworkName } from '@common/utils/search'
 import { openInTab } from '@web/extension-services/background/webapi/tab'
 import useBackgroundService from '@web/hooks/useBackgroundService'
@@ -58,7 +59,7 @@ const DeFiPositions: FC<Props> = ({
   const { networks } = useNetworksControllerState()
   const { account, defiPositions, portfolio, dashboardNetworkFilter, banners } =
     useSelectedAccountControllerState()
-  const { setSearchParams } = useNavigation()
+  const { setSearchParams, navigate } = useNavigation()
 
   const { dispatch } = useBackgroundService()
   const prevInitTab: any = usePrevious(initTab)
@@ -185,9 +186,21 @@ const DeFiPositions: FC<Props> = ({
 
       if (item === 'disabled') {
         return (
-          <Text fontSize={16} weight="medium" style={styles.noPositions}>
-            {t('Defi positions disabled. You can enable them from settings.')}
-          </Text>
+          <View style={flexbox.alignCenter}>
+            <Text fontSize={16} weight="medium" style={styles.noPositions}>
+              {t('Defi positions disabled')}
+            </Text>
+            <TouchableOpacity onPress={() => navigate(ROUTES.optOuts)}>
+              <Text
+                onPress={() => navigate(ROUTES.optOuts)}
+                fontSize={16}
+                color={theme.info2Text}
+                style={{ textDecorationLine: 'underline' }}
+              >
+                {t('You can enable them from settings')}
+              </Text>
+            </TouchableOpacity>
+          </View>
         )
       }
 
