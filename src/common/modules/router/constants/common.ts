@@ -65,7 +65,8 @@ const WEB_ROUTES = {
   swapAndBridge: 'swap-and-bridge',
   recoveryPhrasesSettings: 'settings/recovery-phrases',
   onboardingCompleted: 'wallet-setup-completed',
-  receive: 'receive'
+  receive: 'receive',
+  optOuts: 'opt-outs'
 }
 
 const ROUTES = { ...MOBILE_ROUTES, ...WEB_ROUTES }

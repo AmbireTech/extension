@@ -11,7 +11,6 @@ import { SettingsRoutesContext } from '@web/modules/settings/contexts/SettingsRo
 import AutoLockDeviceControlOption from './components/AutoLockDeviceControlOption'
 import CrashAnalyticsControlOption from './components/CrashAnalyticsControlOption'
 // import CrashAnalyticsControlOption from './components/CrashAnalyticsControlOption'
-import DefiPositionsControlOption from './components/DefiPositionsControlOption'
 import LockAmbireControlOption from './components/LockAmbireControlOption'
 import LogLevelControlOption from './components/LogLevelControlOption'
 import ThemeControlOption from './components/ThemeControlOption'
@@ -30,10 +29,6 @@ const GeneralSettingsScreen = () => {
         <LockAmbireControlOption />
         <AutoLockDeviceControlOption />
         <ThemeControlOption />
-      </View>
-      <SettingsPageHeader title="Privacy opt outs" />
-      <View style={spacings.mb2Xl}>
-        <DefiPositionsControlOption />
       </View>
       <SettingsPageHeader title="Support tools" />
       <LogLevelControlOption />

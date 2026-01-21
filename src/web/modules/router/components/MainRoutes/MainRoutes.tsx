@@ -50,6 +50,7 @@ import DevicePasswordSetSettingsScreen from '@web/modules/settings/screens/Devic
 import GeneralSettingsScreen from '@web/modules/settings/screens/GeneralSettingsScreen'
 import ManageTokensSettingsScreen from '@web/modules/settings/screens/ManageTokensSettingsScreen'
 import NetworksSettingsScreen from '@web/modules/settings/screens/NetworksSettingsScreen/NetworksSettingsScreen'
+import OptOutsScreen from '@web/modules/settings/screens/OptOutsScreen'
 import RecoveryPhrasesSettingsScreen from '@web/modules/settings/screens/RecoveryPhrasesSettingsScreen'
 import SignedMessageHistorySettingsScreen from '@web/modules/settings/screens/SignedMessageHistorySettingsScreen'
 import TermsSettingsScreen from '@web/modules/settings/screens/TermsSettingsScreen'
@@ -148,6 +149,7 @@ const MainRoutes = () => {
                 path={WEB_ROUTES.devicePasswordRecovery}
                 element={<DevicePasswordRecoverySettingsScreen />}
               />
+              <Route path={WEB_ROUTES.optOuts} element={<OptOutsScreen />} />
               <Route path={WEB_ROUTES.manageTokens} element={<ManageTokensSettingsScreen />} />
               <Route path={WEB_ROUTES.addressBook} element={<AddressBookSettingsScreen />} />
               <Route path={WEB_ROUTES.settingsTerms} element={<TermsSettingsScreen />} />
