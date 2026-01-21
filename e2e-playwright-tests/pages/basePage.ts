@@ -146,8 +146,11 @@ export class BasePage {
     })
   }
 
-  async isVisible(selector: string): Promise<boolean> {
-    return this.page.getByTestId(selector).isVisible()
+  async isVisible(selector: string, index?: number): Promise<boolean> {
+    return this.page
+      .getByTestId(selector)
+      .nth(index ?? 0)
+      .isVisible()
   }
 
   async expectElementNotVisible(selector: string): Promise<void> {

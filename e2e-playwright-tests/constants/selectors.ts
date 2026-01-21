@@ -76,7 +76,7 @@ const selectors = {
     hideTokenModalTitle: 'hide-token-modal-title',
     hideTokenModalDescription: 'hide-token-modal-description',
     rewardsButton: 'dashboard-button-quests',
-    projectedRewardsButton: 'rewards-button',
+    rewardsForClaimingButton: 'marketing-banner-button',
     backRewardsButton: '//div[contains(text(),"Back")]',
     rewardsLink: '//div[contains(text(),"Ambire Rewards")]',
     projectedRewardsClaimButton: 'projected-rewards-claim-button'
