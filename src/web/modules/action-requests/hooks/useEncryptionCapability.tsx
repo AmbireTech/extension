@@ -55,8 +55,6 @@ export const useEncryptionCapability = () => {
   }, [internalKey, isSmartAccount, isViewOnly, t])
 
   const actionFooterResolveNode = useMemo(() => {
-    if (isSmartAccount || internalKey) return null
-
     if (isViewOnly)
       return (
         <View style={[{ flex: 3 }, flexbox.directionRow, flexbox.justifyEnd]}>
@@ -65,7 +63,7 @@ export const useEncryptionCapability = () => {
       )
 
     return null
-  }, [isSmartAccount, isViewOnly, internalKey])
+  }, [isViewOnly])
 
   const isDisabled = isViewOnly || isSmartAccount || !internalKey
 
