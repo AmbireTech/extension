@@ -418,6 +418,7 @@ export class SwapAndBridgePage extends BasePage {
     }
   }
 
+  // TODO: lots of different cases, refactor
   async verifyBatchTransactionDetails(page): Promise<void> {
     // check first row
     const firstRow = await page.getByTestId('recipient-address-0').innerText() // grab entire row on transaction page
@@ -456,7 +457,7 @@ export class SwapAndBridgePage extends BasePage {
 
     if (secondRouteSelector === 'WALLET') {
       // in case of Socket route transaction name is Swap with amount and token name
-      await expect(page.getByTestId('recipient-address-3')).toHaveText(/SwapUSDC/)
+      await expect(page.getByTestId('recipient-address-3')).toHaveText(/Swap/)
     } else if (secondRouteSelector === 'LI.FI') {
       await expect(page.getByTestId('recipient-address-3')).toHaveText(/Swap/) // in case of LIFI route transaction name is Swap
     }
