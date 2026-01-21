@@ -35,27 +35,18 @@ const ExtensionRewardsScreen = () => {
   const sections: Stat[] = SECTIONS.map((section) => {
     let score
     if (section.id === 'multiplier') {
-      score = projectedRewardsStats ? `${projectedRewardsStats[section.id]}x` : 0
+      score = projectedRewardsStats
+        ? `${Math.floor(projectedRewardsStats[section.id] * 1000) / 1000}x`
+        : 0
     } else {
       score = projectedRewardsStats ? projectedRewardsStats[section.id].toFixed(0) : 0
     }
 
-    let explanation
+    let explanation = section.explanation
     if (section.id === 'multiplier') {
-      explanation = `You receive 1.06X multiplier of your score for belonging to any of the following:
-- Have pledged to the Trustless manifesto (Soon)
-- Hold a LobsterDAO NFT (Soon)
-- Hold a CryptoTesters NFT (Soon)
-- Hold an Ambire Gas Tank NFT, Legends NFT, or any Ambire conference POAP (Soon)
-- Hold Gitcoin passport NFT (Soon)
-- Hold GHO passport NFT (Soon)
-- ${
-        (projectedRewardsStats?.multipliers || []).some(
-          (m) => m.type === 'WEEKLY_TX' && m.activated
-        )
-          ? '✅ '
-          : ''
-      }Have at least one Ethereum transaction per week, all weeks during the season, except up to 2`
+      if (projectedRewardsStats?.multipliers) {
+        explanation = projectedRewardsStats.multipliers.map((m) => m.description).join('\n')
+      }
     }
     return {
       ...section,
