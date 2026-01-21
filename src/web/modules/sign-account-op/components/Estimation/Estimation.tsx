@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Pressable, View } from 'react-native'
+import { View } from 'react-native'
 
 import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
 import { getFeeSpeedIdentifier } from '@ambire-common/controllers/signAccountOp/helper'
@@ -11,25 +11,22 @@ import { ZERO_ADDRESS } from '@ambire-common/services/socket/constants'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import AssetIcon from '@common/assets/svg/AssetIcon'
 import FeeIcon from '@common/assets/svg/FeeIcon'
-import InfoIcon from '@common/assets/svg/InfoIcon'
-import ManifestFallbackIcon from '@common/assets/svg/ManifestFallbackIcon'
 import Alert from '@common/components/Alert'
 import Select, { SectionedSelect } from '@common/components/Select'
 import { SelectValue } from '@common/components/Select/types'
 import Text from '@common/components/Text'
-import Tooltip from '@common/components/Tooltip'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
-import ManifestImage from '@web/components/ManifestImage'
-import { openInTab } from '@web/extension-services/background/webapi/tab'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 
 import BundlerWarning from './components/bundlerWarning'
 import EstimationSkeleton from './components/EstimationSkeleton'
 import PayOption from './components/PayOption'
+import ServiceFee from './components/ServiceFee'
+import Sponsored from './components/Sponsored'
 import { NO_FEE_OPTIONS } from './consts'
 import { mapFeeOptions, sortFeeOptions } from './helpers'
 import getStyles from './styles'
@@ -102,7 +99,7 @@ const Estimation = ({
 }: Props) => {
   const { dispatch } = useBackgroundService()
   const { t } = useTranslation()
-  const { theme, themeType, styles } = useTheme(getStyles)
+  const { theme, themeType } = useTheme(getStyles)
   const { minWidthSize } = useWindowSize()
 
   const feeTokenPriceUnavailableWarning = useMemo(() => {
@@ -357,8 +354,6 @@ const Estimation = ({
 
   if (
     !signAccountOpState ||
-    // <Bobby>: the line below may be incorrect and may cause
-    // estimation flashing
     (!hasEstimation && signAccountOpState.estimation.estimationRetryError) ||
     !payValue
   ) {
@@ -367,38 +362,14 @@ const Estimation = ({
 
   if (isSponsored) {
     return (
-      <View>
-        {sponsor ? (
-          <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-            {sponsor.icon && (
-              <ManifestImage
-                uri={sponsor.icon}
-                size={64}
-                fallback={() => <ManifestFallbackIcon width={64} height={64} />}
-              />
-            )}
-            <View style={spacings.ml}>
-              <Text fontSize={18} weight="semiBold" style={spacings.mbMi}>
-                {sponsor.name}
-              </Text>
-              <Text fontSize={16} appearance="secondaryText">
-                {t('is 🪄 sponsoring 🪄 this transaction')}
-              </Text>
-            </View>
-          </View>
-        ) : (
-          <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-            <View style={spacings.ml}>
-              <Text fontSize={18} weight="semiBold" style={spacings.mbMi}>
-                {t("The dapp you're connected to")}
-              </Text>
-              <Text fontSize={16} appearance="secondaryText">
-                {t('is 🪄 sponsoring 🪄 this transaction')}
-              </Text>
-            </View>
-          </View>
-        )}
-      </View>
+      <>
+        {(!serviceFee || !paidByNativeValue || !nativeFeeOption) && <Sponsored sponsor={sponsor} />}
+        <ServiceFee
+          serviceFee={serviceFee}
+          paidByNativeValue={paidByNativeValue}
+          nativeFeeOption={nativeFeeOption}
+        />
+      </>
     )
   }
 
@@ -464,60 +435,11 @@ const Estimation = ({
         withSearch={!!payOptionsPaidByUsOrGasTank.length || !!payOptionsPaidByEOA.length}
         stickySectionHeadersEnabled
       />
-      {serviceFee && paidByNativeValue && nativeFeeOption && (
-        <>
-          <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
-            <Text fontSize={12} style={spacings.mvTy}>
-              {t('+ Additional bridge fee')}
-            </Text>
-            <InfoIcon
-              width={16}
-              height={16}
-              data-tooltip-id="bridge-fee-icon"
-              style={spacings.mlTy}
-            />
-            <Tooltip id="bridge-fee-icon" clickable>
-              <View>
-                <Text fontSize={14} appearance="secondaryText" style={spacings.mbMi}>
-                  {t(
-                    `The selected bridge provider demands an additional service fee, paid out in ${paidByNativeValue.token.symbol}. This additional fee is not included in the gas fee displayed above or the quote. `
-                  )}
-                  <Pressable
-                    onPress={() => {
-                      // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                      openInTab({ url: 'https://help.ambire.com/hc/en-us/articles/20618326653596' })
-                    }}
-                  >
-                    <Text fontSize={14} weight="medium" appearance="primary">
-                      {t('Learn more')}
-                    </Text>
-                  </Pressable>
-                </Text>
-              </View>
-            </Tooltip>
-          </View>
-          <Select
-            options={[paidByNativeValue]}
-            containerStyle={spacings.mb0}
-            value={paidByNativeValue}
-            disabled
-            defaultValue={paidByNativeValue}
-            selectStyle={{
-              borderWidth: themeType === THEME_TYPES.DARK ? 0 : 1
-            }}
-            renderSelectedOption={() => (
-              <View style={styles.nativeBridgeFeeContainer}>
-                <PayOption
-                  amount={BigInt(serviceFee.amount)}
-                  amountUsd={serviceFee.amountUSD}
-                  feeOption={nativeFeeOption}
-                />
-              </View>
-            )}
-            withSearch={false}
-          />
-        </>
-      )}
+      <ServiceFee
+        serviceFee={serviceFee}
+        paidByNativeValue={paidByNativeValue}
+        nativeFeeOption={nativeFeeOption}
+      />
       <BundlerWarning
         signAccountOpState={signAccountOpState}
         bundlerNonceDiscrepancy={bundlerNonceDiscrepancy}
