@@ -446,6 +446,14 @@ type KeystoreControllerSendSeedToUiAction = {
 type KeystoreControllerSendTempSeedToUiAction = {
   type: 'KEYSTORE_CONTROLLER_SEND_TEMP_SEED_TO_UI'
 }
+type KeystoreControllerSendDecryptedMessageToUiAction = {
+  type: 'KEYSTORE_CONTROLLER_SEND_DECRYPTED_MESSAGE_TO_UI'
+  params: {
+    encryptedMessage: string
+    keyAddr: Key['addr']
+    keyType: Key['type']
+  }
+}
 
 type EmailVaultControllerGetInfoAction = {
   type: 'EMAIL_VAULT_CONTROLLER_GET_INFO'
@@ -796,6 +804,7 @@ export type Action =
   | KeystoreControllerChangePasswordAction
   | KeystoreControllerChangePasswordFromRecoveryAction
   | KeystoreControllerSendPrivateKeyToUiAction
+  | KeystoreControllerSendDecryptedMessageToUiAction
   | EmailVaultControllerGetInfoAction
   | EmailVaultControllerUploadKeystoreSecretAction
   | EmailVaultControllerCancelConfirmationAction
