@@ -115,8 +115,6 @@ const Tokens = ({
     [tokens]
   )
 
-  console.log('Tokens:', tokens)
-
   const sortedTokens = useMemo(
     () =>
       tokens
@@ -192,8 +190,6 @@ const Tokens = ({
         }),
     [tokens, networks, customTokens, userHasNoBalance, portfolio?.isAllReady]
   )
-
-  console.log('Sorted Tokens:', sortedTokens)
 
   const hiddenTokensCount = useMemo(
     () => tokens.filter((token) => token.flags.isHidden).length,
