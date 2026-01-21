@@ -19,6 +19,7 @@ import { THEME_TYPES } from '@common/styles/themeConfig'
 import { getDoesNetworkMatch } from '@common/utils/search'
 import { openInTab } from '@web/extension-services/background/webapi/tab'
 import useBackgroundService from '@web/hooks/useBackgroundService'
+import useFeatureFlagsControllerState from '@web/hooks/useFeatureFlagsControllerState'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import { getUiType } from '@web/utils/uiType'
@@ -48,8 +49,9 @@ const DeFiPositions: FC<Props> = ({
   dashboardNetworkFilterName,
   animatedOverviewHeight
 }) => {
-  const { control, watch, setValue } = useForm({ mode: 'all', defaultValues: { search: '' } })
   const { t } = useTranslation()
+  const { flags } = useFeatureFlagsControllerState()
+  const { control, watch, setValue } = useForm({ mode: 'all', defaultValues: { search: '' } })
   const { theme, themeType } = useTheme()
   const searchValue = watch('search')
   const { networks } = useNetworksControllerState()
@@ -180,6 +182,14 @@ const DeFiPositions: FC<Props> = ({
         )
       }
 
+      if (item === 'disabled') {
+        return (
+          <Text fontSize={16} weight="medium" style={styles.noPositions}>
+            {t('Defi positions disabled. You can enable them from settings.')}
+          </Text>
+        )
+      }
+
       if (item === 'skeleton') {
         return <DefiPositionsSkeleton amount={4} />
       }
@@ -211,17 +221,23 @@ const DeFiPositions: FC<Props> = ({
     return `${positionOrElement.providerName}-${positionOrElement.chainId}`
   }, [])
 
+  const dataItems = ['header']
+  if (flags.defiPositions) {
+    dataItems.push(!portfolio.isAllReady ? 'skeleton' : 'keep-this-to-avoid-key-warning')
+    if (initTab?.defi && portfolio.isAllReady) {
+      filteredPositions.forEach((p: any) => dataItems.push(p))
+    }
+    dataItems.push(portfolio.isAllReady && !filteredPositions.length ? 'empty' : '')
+  } else {
+    dataItems.push('disabled')
+  }
+
   return (
     <DashboardPageScrollContainer
       tab="defi"
       openTab={openTab}
       ListHeaderComponent={<DashboardBanners />}
-      data={[
-        'header',
-        !portfolio.isAllReady ? 'skeleton' : 'keep-this-to-avoid-key-warning',
-        ...(initTab?.defi && portfolio.isAllReady ? filteredPositions : []),
-        portfolio.isAllReady && !filteredPositions.length ? 'empty' : ''
-      ]}
+      data={dataItems}
       renderItem={renderItem}
       keyExtractor={keyExtractor}
       onEndReachedThreshold={isPopup ? 5 : 2.5}
