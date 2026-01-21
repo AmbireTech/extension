@@ -47,7 +47,10 @@ interface Props {
 // if any of the post amount (during simulation) or the current state
 // has a balance above 0, we should consider it legit and show it
 const hasAmount = (token: TokenResult) => {
-  return token.amount > 0n || (token.amountPostSimulation && token.amountPostSimulation > 0n)
+  return (
+    (token.amount > 0n || (token.amountPostSimulation && token.amountPostSimulation > 0n)) &&
+    token.flags.isHidden === false
+  )
 }
 // if the token is on the gas tank and the network is not a relayer network (a custom network)
 // we should not show it on dashboard
@@ -111,6 +114,8 @@ const Tokens = ({
     () => !tokens.some((token) => !token.flags.onGasTank && hasAmount(token)),
     [tokens]
   )
+
+  console.log('Tokens:', tokens)
 
   const sortedTokens = useMemo(
     () =>
@@ -187,6 +192,8 @@ const Tokens = ({
         }),
     [tokens, networks, customTokens, userHasNoBalance, portfolio?.isAllReady]
   )
+
+  console.log('Sorted Tokens:', sortedTokens)
 
   const hiddenTokensCount = useMemo(
     () => tokens.filter((token) => token.flags.isHidden).length,
