@@ -19,7 +19,7 @@ import useTheme from '@common/hooks/useTheme'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { tokenSearch } from '@common/utils/search'
+import { tokenOrCollectionSearch } from '@common/utils/search'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import usePortfolioControllerState from '@web/hooks/usePortfolioControllerState/usePortfolioControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
@@ -100,7 +100,7 @@ const Tokens = ({
       return token?.chainId?.toString() === dashboardNetworkFilter.toString()
     })
 
-    return tokenSearch({ networks, tokens: tokenList, search: searchValue })
+    return tokenOrCollectionSearch({ networks, assets: tokenList, search: searchValue })
   }, [portfolio?.tokens, networks, searchValue, dashboardNetworkFilter])
 
   const userHasNoBalance = useMemo(

@@ -6,7 +6,7 @@ import { useModalize } from 'react-native-modalize'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import { SelectValue } from '@common/components/Select/types'
 import flexbox from '@common/styles/utils/flexbox'
-import { tokenSearch } from '@common/utils/search'
+import { tokenOrCollectionSearch } from '@common/utils/search'
 import { networkSort } from '@common/utils/sorting'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
@@ -50,7 +50,7 @@ const ManageTokensSettingsScreen = () => {
       return networkFilter === 'all' || network?.name === networkFilter
     })
 
-    return tokenSearch({ networks, tokens: filtered, search })
+    return tokenOrCollectionSearch({ networks, assets: filtered, search })
   }, [networkFilter, networks, search, tokens])
 
   const customTokens = useMemo(() => {

@@ -17,6 +17,7 @@ import TabsAndSearch from '@common/modules/dashboard/components/TabsAndSearch'
 import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tab/Tab'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
+import { searchWithNetworkName } from '@common/utils/search'
 import { openInTab } from '@web/extension-services/background/webapi/tab'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
@@ -89,35 +90,31 @@ const DeFiPositions: FC<Props> = ({
     }
   }, [sessionId, dispatch])
 
-  const filteredPositions = useMemo(
-    () =>
-      defiPositions.filter(({ chainId, providerName, positions }) => {
+  const filteredPositions = useMemo(() => {
+    const defiToSearch = defiPositions
+      .filter(({ chainId, positions }) => {
         let isMatchingNetwork = true
-        let isMatchingSearch = true
 
         if (dashboardNetworkFilter) {
           isMatchingNetwork = chainId === BigInt(dashboardNetworkFilter)
         }
 
-        if (searchValue) {
-          // Allow the user to search for assets in the positions as well
-          const assetNames = positions
-            .map(({ assets }) => assets.map(({ symbol }) => symbol).join(' '))
-            .join(' ')
+        return isMatchingNetwork && positions.length
+      })
+      .map((position) => ({
+        ...position,
+        assetNames: position.positions
+          .map(({ assets }) => assets.map(({ symbol }) => symbol).join(' '))
+          .join(' ')
+      }))
 
-          const fuse = new Fuse([{ providerName, assetNames }], {
-            keys: ['providerName', 'assetNames'],
-            threshold: 0.3
-          })
-          const result = fuse.search(searchValue)
-
-          isMatchingSearch = result.length > 0
-        }
-
-        return isMatchingNetwork && isMatchingSearch
-      }),
-    [defiPositions, dashboardNetworkFilter, searchValue]
-  )
+    return searchWithNetworkName({
+      networks,
+      items: defiToSearch,
+      search: searchValue,
+      keys: ['providerName', 'assetNames']
+    })
+  }, [defiPositions, dashboardNetworkFilter, searchValue, networks])
 
   const renderItem = useCallback(
     ({ item }: any) => {

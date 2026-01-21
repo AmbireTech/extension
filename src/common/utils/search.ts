@@ -3,15 +3,21 @@ import Fuse from 'fuse.js'
 import { Network } from '@ambire-common/interfaces/network'
 import { TokenResult } from '@ambire-common/libs/portfolio'
 
-const tokenSearch = ({
+const searchWithNetworkName = <T extends object>({
   networks,
-  tokens,
-  search
+  items,
+  search,
+  keys
 }: {
   networks: Network[]
-  tokens: TokenResult[]
+  items: T[]
   search: string
+  keys: string[]
 }) => {
+  if (!search) {
+    return items
+  }
+
   // Use this map to avoid searching the network name for every token using find
   const networkChainIdToNameMap: { [chainId: string]: string } = {}
 
@@ -19,24 +25,39 @@ const tokenSearch = ({
     networkChainIdToNameMap[network.chainId.toString()] = network.name
   })
 
-  if (!search) {
-    return tokens
-  }
-
   const fuse = new Fuse(
-    tokens.map((token) => ({
-      ...token,
-      networkName: networkChainIdToNameMap[token.chainId.toString()] || ''
+    items.map((item) => ({
+      ...item,
+      networkName: networkChainIdToNameMap[(item as any).chainId.toString()] || ''
     })),
     {
-      keys: ['symbol', 'address', 'networkName'],
+      keys: [...keys, 'networkName'],
       threshold: 0.3
     }
   )
 
   const result = fuse.search(search)
 
-  return result.map(({ item }) => item)
+  return result.map(({ item }) => item) as T[]
 }
 
-export { tokenSearch }
+const tokenOrCollectionSearch = ({
+  networks,
+  assets,
+  search,
+  searchType = 'token'
+}: {
+  networks: Network[]
+  assets: TokenResult[]
+  search: string
+  searchType?: 'token' | 'collection'
+}) => {
+  return searchWithNetworkName({
+    networks,
+    items: assets,
+    search,
+    keys: searchType === 'token' ? ['symbol', 'address'] : ['name', 'address']
+  })
+}
+
+export { tokenOrCollectionSearch, searchWithNetworkName }

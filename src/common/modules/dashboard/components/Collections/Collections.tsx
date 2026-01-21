@@ -13,6 +13,7 @@ import DashboardBanners from '@common/modules/dashboard/components/DashboardBann
 import DashboardPageScrollContainer from '@common/modules/dashboard/components/DashboardPageScrollContainer'
 import TabsAndSearch from '@common/modules/dashboard/components/TabsAndSearch'
 import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tab/Tab'
+import { tokenOrCollectionSearch } from '@common/utils/search'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import { getUiType } from '@web/utils/uiType'
 
@@ -79,16 +80,13 @@ const Collections: FC<Props> = ({
       }
     )
 
-    if (!searchValue) return searchableCollections
-
-    const fuse = new Fuse(searchableCollections, {
-      keys: ['name', 'address'],
-      threshold: 0.3
+    return tokenOrCollectionSearch({
+      networks,
+      assets: searchableCollections,
+      search: searchValue,
+      searchType: 'collection'
     })
-    const result = fuse.search(searchValue)
-
-    return result.map(({ item }) => item)
-  }, [portfolio?.collections, dashboardNetworkFilter, searchValue])
+  }, [portfolio?.collections, networks, searchValue, dashboardNetworkFilter])
 
   const isReadyToVisualizeCollections = useMemo(() => {
     if (portfolio.isAllReady) return true
