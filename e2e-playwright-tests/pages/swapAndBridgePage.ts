@@ -436,7 +436,7 @@ export class SwapAndBridgePage extends BasePage {
       // in case its socket route transaction name is Swap with amount
       await expect(page.getByTestId('recipient-address-1')).toHaveText(/SwapUSDC/) // in case its socket route transaction name is Swap with amount
     } else if (secondRouteSelector === 'LI.FI') {
-      await expect(page.getByTestId('recipient-address-1')).toHaveText(/SwapBridge/) // in case its LIFI route transaction name is Swap/Bridge
+      await expect(page.getByTestId('recipient-address-1')).toHaveText(/Swap\/Bridge.*/) // in case its LIFI route transaction name is Swap/Bridge
       expect(['LI.FI', 'SocketGateway']).toContain(secondRouteSelector)
     }
 
