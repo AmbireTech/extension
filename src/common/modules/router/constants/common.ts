@@ -31,6 +31,7 @@ const WEB_ROUTES = {
   keyStoreEmailRecovery: 'extension-password-email-recovery',
   keyStoreEmailRecoverySetNewPassword: 'set-new-extension-password',
   getEncryptionPublicKeyRequest: 'get-encryption-public-key-request',
+  decryptRequest: 'decryptRequest',
   dappConnectRequest: 'dapp-connect-request',
   watchAsset: 'watch-asset',
   addChain: 'add-chain',

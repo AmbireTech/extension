@@ -230,6 +230,11 @@ const routesConfig: RouteConfig = {
       default: i18n.t('Get Encryption Public Key Request')
     })
   },
+  [ROUTES.decryptRequest]: {
+    route: ROUTES.getEncryptionPublicKeyRequest,
+    title: Platform.select({ default: i18n.t('Decrypt Request') }),
+    name: Platform.select({ default: i18n.t('Decrypt Request') })
+  },
   [ROUTES.swap]: {
     route: ROUTES.swap,
     title: Platform.select({
