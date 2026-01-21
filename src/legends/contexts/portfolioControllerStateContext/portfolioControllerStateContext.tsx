@@ -89,8 +89,10 @@ const PortfolioControllerStateProvider: React.FC<any> = ({ children }) => {
   const { connectedAccount, v1Account, isLoading } = useAccountContext()
   const [accountPortfolio, setAccountPortfolio] = useState<AccountPortfolio>()
   const [ethTokenPrice, setEthTokenPrice] = useState<number>()
-  const [uniswapWalletPosition, setUniswapWalletPosition] =
-    useState<{ wallet: number; eth: number }>()
+  const [uniswapWalletPosition, setUniswapWalletPosition] = useState<{
+    wallet: number
+    eth: number
+  }>()
   const [stkBalance, setStkBalance] = useState<number>()
   const [claimableRewards, setClaimableRewards] = useState<any>(null)
   const [isLoadingPortfolioProjectionData, setIsLoadingPortfolioProjectionData] = useState(true)
