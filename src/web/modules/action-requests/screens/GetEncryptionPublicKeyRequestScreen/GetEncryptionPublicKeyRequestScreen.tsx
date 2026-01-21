@@ -113,7 +113,9 @@ const GetEncryptionPublicKeyRequestScreen = () => {
 
           <View style={[spacings.mtLg, flexbox.flex1, flexbox.justifySpaceBetween]}>
             <Alert
-              title={t('By providing, this app will be able to compose encrypted messages to you.')}
+              title={t(
+                'By providing your public encryption key, this app will be able to compose encrypted messages to you.'
+              )}
               type="info2"
             />
 
