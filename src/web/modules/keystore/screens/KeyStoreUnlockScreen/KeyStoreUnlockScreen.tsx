@@ -58,7 +58,7 @@ const KeyStoreUnlockScreen = () => {
   } = useForm({
     mode: 'all',
     defaultValues: {
-      password: isDev && !isTesting ? DEFAULT_KEYSTORE_PASSWORD_DEV ?? '' : ''
+      password: isDev && !isTesting ? (DEFAULT_KEYSTORE_PASSWORD_DEV ?? '') : ''
     }
   })
 

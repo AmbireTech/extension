@@ -3,13 +3,11 @@ import { Filters, Pagination } from '@ambire-common/controllers/activity/activit
 import { Contact } from '@ambire-common/controllers/addressBook/addressBook'
 import { SignAccountOpType } from '@ambire-common/controllers/signAccountOp/helper'
 import { FeeSpeed, SigningStatus } from '@ambire-common/controllers/signAccountOp/signAccountOp'
-import { Account, AccountPreferences, AccountStates } from '@ambire-common/interfaces/account'
+import { Account, AccountPreferences } from '@ambire-common/interfaces/account'
 import { Banner } from '@ambire-common/interfaces/banner'
 import { Dapp } from '@ambire-common/interfaces/dapp'
 import { MagicLinkFlow } from '@ambire-common/interfaces/emailVault'
 import {
-  ExternalKey,
-  InternalKey,
   Key,
   KeyPreferences,
   KeystoreSeed,
@@ -448,6 +446,14 @@ type KeystoreControllerSendSeedToUiAction = {
 type KeystoreControllerSendTempSeedToUiAction = {
   type: 'KEYSTORE_CONTROLLER_SEND_TEMP_SEED_TO_UI'
 }
+type KeystoreControllerSendDecryptedMessageToUiAction = {
+  type: 'KEYSTORE_CONTROLLER_SEND_DECRYPTED_MESSAGE_TO_UI'
+  params: {
+    encryptedMessage: string
+    keyAddr: Key['addr']
+    keyType: Key['type']
+  }
+}
 
 type EmailVaultControllerGetInfoAction = {
   type: 'EMAIL_VAULT_CONTROLLER_GET_INFO'
@@ -609,12 +615,6 @@ type TransferControllerResetForm = {
 }
 type TransferControllerDestroyLatestBroadcastedAccountOp = {
   type: 'TRANSFER_CONTROLLER_DESTROY_LATEST_BROADCASTED_ACCOUNT_OP'
-}
-type TransferControllerUnloadScreen = {
-  type: 'TRANSFER_CONTROLLER_UNLOAD_SCREEN'
-  params?: {
-    forceUnload?: boolean
-  }
 }
 type TransferControllerUserProceededAction = {
   type: 'TRANSFER_CONTROLLER_HAS_USER_PROCEEDED'
@@ -804,6 +804,7 @@ export type Action =
   | KeystoreControllerChangePasswordAction
   | KeystoreControllerChangePasswordFromRecoveryAction
   | KeystoreControllerSendPrivateKeyToUiAction
+  | KeystoreControllerSendDecryptedMessageToUiAction
   | EmailVaultControllerGetInfoAction
   | EmailVaultControllerUploadKeystoreSecretAction
   | EmailVaultControllerCancelConfirmationAction
@@ -863,7 +864,6 @@ export type Action =
   | TransferControllerUpdateForm
   | TransferControllerResetForm
   | TransferControllerDestroyLatestBroadcastedAccountOp
-  | TransferControllerUnloadScreen
   | TransferControllerUserProceededAction
   | TransferControllerShouldSkipTransactionQueuedModal
   | SetThemeTypeAction

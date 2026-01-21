@@ -1,3 +1,4 @@
+import Fuse from 'fuse.js'
 import React, { useMemo } from 'react'
 import { View } from 'react-native'
 
@@ -21,34 +22,49 @@ const Networks = ({
   const { networks } = useNetworksControllerState()
   const { account, portfolio } = useSelectedAccountControllerState()
 
-  const filteredAndSortedPortfolio = useMemo(
-    () =>
-      Object.keys(portfolio.balancePerNetwork || [])
-        .filter((chainId) => {
-          const { name } =
-            networks.find(({ chainId: nChainId }) => chainId === nChainId.toString()) || {}
+  // Use this map to avoid searching the network name for every network using find
+  const networkChainIdToNameMap = useMemo(() => {
+    const map: { [chainId: string]: string } = {}
+    networks.forEach((network) => {
+      map[network.chainId.toString()] = network.name
+    })
+    return map
+  }, [networks])
 
-          if (!name) return false
+  const filteredAndSortedPortfolio = useMemo(() => {
+    const nonInternalNetworks = Object.keys(portfolio.balancePerNetwork || [])
+      .filter((chainId) => {
+        const name = networkChainIdToNameMap[chainId]
 
-          if (search) {
-            return name.toLowerCase().includes(search.toLowerCase())
-          }
+        // Done to filter out internal networks
+        return !!name
+      })
+      .sort((a, b) => {
+        const aBalance = portfolio.balancePerNetwork[a]
+        const bBalance = portfolio.balancePerNetwork[b]
 
-          return true
-        })
-        .sort((a, b) => {
-          const aBalance = portfolio.balancePerNetwork[a]
-          const bBalance = portfolio.balancePerNetwork[b]
+        return Number(bBalance) - Number(aBalance)
+      })
 
-          if (aBalance === bBalance) {
-            if (b === 'rewards' || b === 'gasTank') return -1
-            return 1
-          }
+    if (!search) {
+      return nonInternalNetworks
+    }
 
-          return Number(bBalance) - Number(aBalance)
-        }),
-    [networks, portfolio.balancePerNetwork, search]
-  )
+    const fuse = new Fuse(
+      nonInternalNetworks.map((chainId) => ({
+        chainId,
+        name: networkChainIdToNameMap[chainId]
+      })),
+      {
+        keys: ['name'],
+        threshold: 0.3
+      }
+    )
+
+    const result = fuse.search(search)
+
+    return result.map(({ item }) => item.chainId)
+  }, [networkChainIdToNameMap, portfolio.balancePerNetwork, search])
 
   return (
     <View style={spacings.mbLg}>

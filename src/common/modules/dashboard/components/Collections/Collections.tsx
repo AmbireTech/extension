@@ -1,3 +1,4 @@
+import Fuse from 'fuse.js'
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
@@ -12,7 +13,7 @@ import DashboardBanners from '@common/modules/dashboard/components/DashboardBann
 import DashboardPageScrollContainer from '@common/modules/dashboard/components/DashboardPageScrollContainer'
 import TabsAndSearch from '@common/modules/dashboard/components/TabsAndSearch'
 import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tab/Tab'
-import { getDoesNetworkMatch } from '@common/utils/search'
+import { tokenOrCollectionSearch } from '@common/utils/search'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import { getUiType } from '@web/utils/uiType'
 
@@ -65,9 +66,9 @@ const Collections: FC<Props> = ({
     [openModal]
   )
 
-  const filteredPortfolioCollections = useMemo(
-    () =>
-      (portfolio?.collections || []).filter(({ name, address, chainId, collectibles }) => {
+  const filteredPortfolioCollections = useMemo(() => {
+    const searchableCollections = (portfolio?.collections || []).filter(
+      ({ chainId, collectibles }) => {
         let isMatchingNetwork = true
         let isMatchingSearch = true
 
@@ -75,18 +76,17 @@ const Collections: FC<Props> = ({
           isMatchingNetwork = chainId === BigInt(dashboardNetworkFilter)
         }
 
-        if (searchValue) {
-          const lowercaseSearch = searchValue.toLowerCase()
-          isMatchingSearch =
-            name.toLowerCase().includes(lowercaseSearch) ||
-            address.toLowerCase().includes(lowercaseSearch) ||
-            getDoesNetworkMatch({ networks, itemChainId: chainId, lowercaseSearch })
-        }
-
         return isMatchingNetwork && isMatchingSearch && collectibles.length
-      }),
-    [portfolio?.collections, dashboardNetworkFilter, searchValue, networks]
-  )
+      }
+    )
+
+    return tokenOrCollectionSearch({
+      networks,
+      assets: searchableCollections,
+      search: searchValue,
+      searchType: 'collection'
+    })
+  }, [portfolio?.collections, networks, searchValue, dashboardNetworkFilter])
 
   const isReadyToVisualizeCollections = useMemo(() => {
     if (portfolio.isAllReady) return true
@@ -122,7 +122,7 @@ const Collections: FC<Props> = ({
               !dashboardNetworkFilterName &&
               t("You don't have any collectibles (NFTs) yet.")}
             {!searchValue &&
-              dashboardNetworkFilter &&
+              !!dashboardNetworkFilter &&
               t(`You don't have any collectibles (NFTs) on ${dashboardNetworkFilterName}.`)}
             {searchValue &&
               t(

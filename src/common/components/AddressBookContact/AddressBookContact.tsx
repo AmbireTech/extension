@@ -147,9 +147,10 @@ const AddressBookContact: FC<Props> = ({
           ) : (
             <View style={[flexbox.directionRow, flexbox.alignCenter]}>
               <Text fontSize={fontSize} weight="medium" style={!name && spacings.mrTy}>
-                {name || account?.addr === selectedAccount?.addr
-                  ? account?.preferences.label
-                  : 'New address'}
+                {name ||
+                  (account?.addr === selectedAccount?.addr
+                    ? account?.preferences.label
+                    : 'New address')}
               </Text>
             </View>
           )}

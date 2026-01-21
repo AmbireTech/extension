@@ -1,5 +1,6 @@
 // @ts-nocheck
 
+import { captureException } from '@common/config/analytics/CrashAnalytics.web'
 import { browser, engine, isSafari } from '@web/constants/browserapi'
 import { closeCurrentWindow } from '@web/extension-services/background/webapi/window'
 
@@ -55,6 +56,7 @@ const createTab = async (url: string, windowId?: number): Promise<number | undef
     return tab
   } catch (error) {
     console.error('Error in createTab: ', error)
+    captureException(error)
   }
 }
 
