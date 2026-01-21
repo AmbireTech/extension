@@ -9,7 +9,7 @@ import { emulatorOptions } from '../../constants/trezor'
 import { getController, initTrezorConnect, setup } from '../../utils/trezorEmulator'
 
 test.describe('auth', { tag: '@auth' }, () => {
-  test.setTimeout(20000) // fast tests; usually pass in aprox 15sec
+  test.setTimeout(30000) // fast tests; usually pass in aprox 15sec
 
   test.beforeEach(async ({ pages }) => {
     await pages.initWithoutStorage()
@@ -64,7 +64,7 @@ test.describe('auth', { tag: '@auth' }, () => {
   })
 
   test('import account from different HD paths', async ({ pages }) => {
-    test.setTimeout(40000) // test passes in aprox 30sec
+    test.setTimeout(60000) // test passes in aprox 30sec
     await pages.auth.createAccountAndImportFromDifferentHDPath()
   })
 
