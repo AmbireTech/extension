@@ -22,6 +22,7 @@ import {
   isIdentifiedByMultipleTxn
 } from '@ambire-common/libs/accountOp/submittedAccountOp'
 import { networkChainIdToHex } from '@ambire-common/libs/networks/networks'
+import { Bundler } from '@ambire-common/services/bundlers/bundler'
 import { getBundlerByName, getDefaultBundler } from '@ambire-common/services/bundlers/getBundler'
 import { getRpcProvider } from '@ambire-common/services/provider'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
@@ -30,7 +31,6 @@ import { APP_VERSION } from '@common/config/env'
 import { SAFE_RPC_METHODS } from '@web/constants/common'
 import { notificationManager } from '@web/extension-services/background/webapi/notification'
 
-import { Bundler } from '@ambire-common/services/bundlers/bundler'
 import { createTab } from '../webapi/tab'
 import { RequestRes, Web3WalletPermission } from './types'
 
@@ -762,6 +762,9 @@ export class ProviderController {
 
       // Validate decimals if provided
       if (options?.decimals !== undefined) {
+        // Some apps (e.g. CoinGecko) send `decimals` as a string (spec expects an integer). Workaround by parsing it.
+        if (typeof options?.decimals === 'string') options.decimals = +options.decimals
+
         if (typeof options.decimals !== 'number' || !Number.isInteger(options.decimals)) {
           throw ethErrors.rpc.invalidParams(
             `Invalid decimals '${options.decimals}': must be 0 <= 36.`
