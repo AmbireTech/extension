@@ -51,10 +51,11 @@ const GetEncryptionPublicKeyRequestScreen = () => {
 
     // should never happen (because the UI blocks it), but just in case
     if (!internalKey) {
-      const selectedAccountKeyTypes = selectedAccountKeyStoreKeys.map((k) => k.type).join(',')
+      const selectedAccountKeyTypes = selectedAccountKeyStoreKeys.map((k) => k.type).join(' and ')
+      const keyWord = selectedAccountKeyTypes.length === 1 ? t('key') : t('keys')
       const message = t(
-        'This account uses a key type ({{selectedAccountKeyTypes}}) that does not support getting encryption public key.',
-        { selectedAccountKeyTypes }
+        'This account uses {{selectedAccountKeyTypes}} {{keyWord}} that does not support getting encryption public key.',
+        { selectedAccountKeyTypes, keyWord }
       )
       addToast(message, { type: 'error' })
       return
