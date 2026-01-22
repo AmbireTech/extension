@@ -344,8 +344,6 @@ const Tokens = ({
     setValue('search', '')
   }, [setValue])
 
-  console.log('Debug: sortedTokens length ', sortedTokens, portfolio.tokens)
-
   return (
     <>
       <DashboardPageScrollContainer
