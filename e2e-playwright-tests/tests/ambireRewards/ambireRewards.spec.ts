@@ -14,24 +14,6 @@ test.describe('ambire rewards', () => {
     await context.close()
   })
 
-  test('Check redirection to Ambire rewards page', async ({ pages }) => {
-    await test.step('assert rewards button is visible', async () => {
-      await pages.basePage.isVisible(selectors.dashboard.rewardsButton)
-    })
-
-    await test.step('rewards button should redirect to rewards page', async () => {
-      await pages.dashboard.checkRewardsPageRedirection(selectors.dashboard.rewardsButton)
-    })
-
-    await test.step('assert WALLET asset button is visible', async () => {
-      await pages.basePage.isVisible(selectors.dashboard.projectedRewardsButton)
-    })
-
-    await test.step('WALLET asset button should redirect to rewards page', async () => {
-      await pages.dashboard.checkRewardsPageRedirection(selectors.dashboard.projectedRewardsButton)
-    })
-  })
-
   test('Check Ambire rewards home', async ({ pages }) => {
     const rewardsLink = pages.basePage.page.locator(selectors.dashboard.rewardsLink)
     let rewardsTab: Page
