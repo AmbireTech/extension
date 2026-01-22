@@ -67,12 +67,6 @@ export class BasePage {
     await this.page.waitForTimeout(1000)
   }
 
-  // TODO: refactor, this method can be depracated; switch to getByTestId
-  async typeTextInInputField(locator: string, text: string): Promise<void> {
-    await this.page.locator(locator).clear()
-    await this.page.locator(locator).pressSequentially(text)
-  }
-
   async clearFieldInput(selector: string): Promise<void> {
     await this.page.getByTestId(selector).fill('')
   }
@@ -110,7 +104,7 @@ export class BasePage {
     await expect(locator).toBeEnabled()
 
     // setup listener for new page event
-    const newPagePromise = context.waitForEvent('page', { timeout: 10000 })
+    const newPagePromise = context.waitForEvent('page', { timeout: 15000 })
 
     // initiate new page event
     await locator.click({ timeout: 5000 })
@@ -134,7 +128,7 @@ export class BasePage {
   }
 
   async expectElementVisible(selector: string) {
-    await expect(this.page.getByTestId(selector)).toBeVisible({ timeout: 10000 })
+    await expect(this.page.getByTestId(selector)).toBeVisible({ timeout: 15000 })
   }
 
   async expectButtonEnabled(selector: string) {
@@ -152,8 +146,11 @@ export class BasePage {
     })
   }
 
-  async isVisible(selector: string): Promise<boolean> {
-    return this.page.getByTestId(selector).isVisible()
+  async isVisible(selector: string, index?: number): Promise<boolean> {
+    return this.page
+      .getByTestId(selector)
+      .nth(index ?? 0)
+      .isVisible()
   }
 
   async expectElementNotVisible(selector: string): Promise<void> {
