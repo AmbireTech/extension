@@ -78,7 +78,7 @@ const BalanceAffectingErrors: FC<Props> = ({
         title={title}
         text={text}
         type={type}
-        testID="portfolio-error-alert"
+        testID={'portfolio-error-alert-' + id}
       >
         {actions &&
           actions.map(({ actionName, ...rest }: Action) => {

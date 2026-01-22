@@ -57,7 +57,7 @@ const DeFiPositions: FC<Props> = ({
   const { theme, themeType } = useTheme()
   const searchValue = watch('search')
   const { networks } = useNetworksControllerState()
-  const { account, defiPositions, portfolio, dashboardNetworkFilter, banners } =
+  const { account, portfolio, dashboardNetworkFilter, banners } =
     useSelectedAccountControllerState()
   const { setSearchParams, navigate } = useNavigation()
 
@@ -94,7 +94,7 @@ const DeFiPositions: FC<Props> = ({
   }, [sessionId, dispatch])
 
   const filteredPositions = useMemo(() => {
-    const defiToSearch = defiPositions
+    const defiToSearch = portfolio.defiPositions
       .filter(({ chainId, positions }) => {
         let isMatchingNetwork = true
 
@@ -117,7 +117,7 @@ const DeFiPositions: FC<Props> = ({
       search: searchValue,
       keys: ['providerName', 'assetNames']
     })
-  }, [defiPositions, dashboardNetworkFilter, searchValue, networks])
+  }, [portfolio.defiPositions, dashboardNetworkFilter, searchValue, networks])
 
   const renderItem = useCallback(
     ({ item }: any) => {
