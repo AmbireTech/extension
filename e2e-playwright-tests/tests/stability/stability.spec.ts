@@ -141,9 +141,8 @@ test.describe('stability', { tag: '@stability' }, () => {
 
     const url = 'https://relayer.ambire.com/velcro-v3/portfolio'
     const networksParam = chains.join()
-    const accountsParam = Array(chains.length).fill(address).join()
 
-    const route = `${url}?networks=${networksParam}&accounts=${accountsParam}&baseCurrency=usd`
+    const route = `${url}?networks=${networksParam}&account=${address}&baseCurrency=usd`
 
     const res = await fetch(route)
     expect(res.ok).toBe(true)
