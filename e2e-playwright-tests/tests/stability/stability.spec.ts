@@ -59,7 +59,7 @@ test.describe('stability', { tag: '@stability' }, () => {
       'click on the error indicator and appropriate message is expected to be shown',
       async () => {
         await page.getByTestId(selectors.dashboard.balanceErrorIcon).click()
-        const velcroErrorBanner = page.getByTestId(selectors.dashboard.portfolioErrorAlert)
+        const velcroErrorBanner = page.getByTestId(selectors.dashboard.portfolioErrorAlert+'-NoApiHintsError')
 
         await expect(velcroErrorBanner).toBeVisible()
         await expect(velcroErrorBanner).toContainText(

@@ -125,7 +125,7 @@ jobs:
 
       - name: Run Playwright tests
         working-directory: ./e2e-playwright-tests
-        run: npm run test
+        run: npm run stability
 
       - name: Zip HTML report
         if: always()

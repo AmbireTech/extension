@@ -10,7 +10,7 @@ const config: PlaywrightTestConfig = {
       maxDiffPixelRatio: 1 / 100
     }
   },
-  testDir: 'tests/stability',
+  testDir: 'tests',
   testMatch: '**/*.spec.ts',
   reporter: [['list'], ['html', { outputFolder: 'html-report', open: 'never' }]],
   timeout: 180 * 1000, // 3min
