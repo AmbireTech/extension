@@ -6,7 +6,6 @@ import { AutoLoginController } from '@ambire-common/controllers/autoLogin/autoLo
 import { BannerController } from '@ambire-common/controllers/banner/banner'
 import { ContractNamesController } from '@ambire-common/controllers/contractNames/contractNames'
 import { DappsController } from '@ambire-common/controllers/dapps/dapps'
-import { DefiPositionsController } from '@ambire-common/controllers/defiPositions/defiPositions'
 import { DomainsController } from '@ambire-common/controllers/domains/domains'
 import { EmailVaultController } from '@ambire-common/controllers/emailVault/emailVault'
 import { FeatureFlagsController } from '@ambire-common/controllers/featureFlags/featureFlags'
@@ -52,7 +51,6 @@ export const controllersNestedInMainMapping = {
   InviteController,
   SwapAndBridgeController,
   FeatureFlagsController,
-  DefiPositionsController,
   BannerController,
   UiController,
   AutoLoginController
