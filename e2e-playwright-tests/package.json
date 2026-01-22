@@ -39,7 +39,7 @@
   "dependencies": {
     "@playwright/test": "^1.52.0",
     "@trezor/connect-plugin-ethereum": "^9.0.5",
-    "@trezor/connect-webextension": "^9.6.4",
+    "@trezor/connect-webextension": "9.6.4",
     "@trezor/trezor-user-env-link": "^1.0.0",
     "dotenv": "^16.4.5",
     "qs": "^6.12.0"
