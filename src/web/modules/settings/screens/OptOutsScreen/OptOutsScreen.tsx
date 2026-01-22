@@ -29,6 +29,12 @@ const OptOutsScreen = () => {
           icon={<HelpIcon color={theme.primaryText} />}
           flag="defiPositions"
         />
+        <OptOutControlOption
+          title={t('Token auto discovery')}
+          description={t('Should we try to find the tokens in your account using our API service.')}
+          icon={<HelpIcon color={theme.primaryText} />}
+          flag="tokenAutoDiscovery"
+        />
       </View>
     </>
   )
