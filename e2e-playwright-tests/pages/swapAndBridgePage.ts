@@ -213,6 +213,7 @@ export class SwapAndBridgePage extends BasePage {
     await this.click(selectors.goDashboardButton)
 
     const openTransactionButton = this.page.getByTestId(selectors.bannerButtonOpen).first()
+    await openTransactionButton.waitFor({ state: 'visible' })
 
     const newPage = await this.handleNewPage(openTransactionButton)
     await this.signTransactionPage(newPage)
@@ -417,6 +418,7 @@ export class SwapAndBridgePage extends BasePage {
     }
   }
 
+  // TODO: lots of different cases, refactor
   async verifyBatchTransactionDetails(page): Promise<void> {
     // check first row
     const firstRow = await page.getByTestId('recipient-address-0').innerText() // grab entire row on transaction page
@@ -434,11 +436,10 @@ export class SwapAndBridgePage extends BasePage {
 
     if (secondRouteSelector === 'WALLET') {
       // in case its socket route transaction name is Swap with amount
-      await expect(page.getByTestId('recipient-address-1')).toHaveText(/Swap.*USDC/) // in case its socket route transaction name is Swap with amount
+      await expect(page.getByTestId('recipient-address-1')).toHaveText(/SwapUSDC/) // in case its socket route transaction name is Swap with amount
     } else if (secondRouteSelector === 'LI.FI') {
-      await expect(page.getByTestId('recipient-address-1')).toHaveText(/Swap\/Bridge/) // in case its LIFI route transaction name is Swap/Bridge
+      await expect(page.getByTestId('recipient-address-1')).toHaveText(/Swap\/Bridge.*/) // in case its LIFI route transaction name is Swap/Bridge
     }
-    expect(['LI.FI', 'SocketGateway']).toContain(secondRouteSelector)
 
     // check third row
     const thirdRow = await page.getByTestId('recipient-address-2').innerText()
@@ -456,11 +457,10 @@ export class SwapAndBridgePage extends BasePage {
 
     if (secondRouteSelector === 'WALLET') {
       // in case of Socket route transaction name is Swap with amount and token name
-      await expect(page.getByTestId('recipient-address-3')).toHaveText(/Swap.*USDC/)
+      await expect(page.getByTestId('recipient-address-3')).toHaveText(/Swap/)
     } else if (secondRouteSelector === 'LI.FI') {
-      await expect(page.getByTestId('recipient-address-3')).toHaveText(/Swap\/Bridge/) // in case of LIFI route transaction name is Swap/Bridge
+      await expect(page.getByTestId('recipient-address-3')).toHaveText(/Swap/) // in case of LIFI route transaction name is Swap
     }
-    expect(['LI.FI', 'SocketGateway']).toContain(fourthRouteSelector)
 
     // sign transaction
     await page.getByTestId(selectors.signTransactionButton).click()

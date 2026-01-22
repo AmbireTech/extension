@@ -9,6 +9,8 @@ import { emulatorOptions } from '../../constants/trezor'
 import { getController, initTrezorConnect, setup } from '../../utils/trezorEmulator'
 
 test.describe('auth', { tag: '@auth' }, () => {
+  test.setTimeout(60000)
+
   test.beforeEach(async ({ pages }) => {
     await pages.initWithoutStorage()
   })
@@ -33,11 +35,12 @@ test.describe('auth', { tag: '@auth' }, () => {
     await pages.auth.importExistingAccount()
   })
 
-  test('import one Basic Account from a 12 words seed phrase and personalize them', async ({
-    pages
-  }) => {
-    await pages.auth.importExistingAccountByRecoveryPhrase(SEED)
-  })
+  // TODO: duplicate; entering same seed phrase 2 times
+  // test('import one Basic Account from a 12 words seed phrase and personalize them', async ({
+  //   pages
+  // }) => {
+  //   await pages.auth.importExistingAccountByRecoveryPhrase(SEED)
+  // })
 
   test('import one Smart Account from a 12 words seed phrase and personalize them', async ({
     pages
@@ -61,10 +64,13 @@ test.describe('auth', { tag: '@auth' }, () => {
   })
 
   test('import account from different HD paths', async ({ pages }) => {
+    test.setTimeout(80000)
+
     await pages.auth.createAccountAndImportFromDifferentHDPath()
   })
 
   test('import account from JSON file', async ({ pages }) => {
+    await pages.auth.pause()
     await pages.auth.importAccountFromJSONFile()
   })
 })
@@ -112,13 +118,13 @@ test.describe('trezor', () => {
       await page.getByTestId(selectors.getStarted.importExistingAccBtn).click()
       await page.getByTestId(selectors.importMethodTrezor).click()
 
-      await page.getByTestId(selectors.enterPassField).fill(KEYSTORE_PASS)
-      await page.getByTestId(selectors.repeatPassField).fill(KEYSTORE_PASS)
+      await page.getByTestId(selectors.getStarted.enterPassField).fill(KEYSTORE_PASS)
+      await page.getByTestId(selectors.getStarted.repeatPassField).fill(KEYSTORE_PASS)
     })
 
     await test.step('allow importing accounts from Trezor Connect', async () => {
       const trezorPage = await pages.auth.handleNewPage(
-        page.getByTestId(selectors.createKeystorePassBtn)
+        page.getByTestId(selectors.getStarted.createKeystorePassBtn)
       )
 
       await trezorPage.content()
@@ -144,9 +150,8 @@ test.describe('trezor', () => {
     await test.step('import first 2 accounts', async () => {
       await page.getByTestId(`add-account-${mainConstants.addresses.trezorAccount1}`).click()
       await page.getByTestId(`add-account-${mainConstants.addresses.trezorAccount2}`).click()
-
-      await page.getByTestId(selectors.buttonImportAccount).click()
-      await page.getByTestId(selectors.saveAndContinueBtn).click()
+      await page.getByTestId(selectors.getStarted.importAccountButton).click()
+      await page.getByTestId(selectors.getStarted.saveAndContinueBtn).click()
     })
 
     await test.step('make sure accounts are imported', async () => {

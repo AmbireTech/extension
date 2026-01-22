@@ -57,6 +57,7 @@ const OnboardingCompletedScreen = () => {
                 style={[spacings.mtLg, spacings.mb, text.center]}
                 weight="semiBold"
                 fontSize={20}
+                testID='wallet-ready-to-use-text'
               >
                 {t('Ambire Wallet is ready to use')}
               </Text>
