@@ -5,13 +5,36 @@ import { ambireRewardsText } from 'pages/utils/data/ambireRewardsText'
 
 import { expect, Page } from '@playwright/test'
 
-test.describe('ambire rewards', () => {
+test.describe('ambire rewards', { tag: '@rewards' }, () => {
   test.beforeEach(async ({ pages }) => {
     await pages.initWithStorage(saParams)
   })
 
   test.afterEach(async ({ context }) => {
     await context.close()
+  })
+
+  test('Check redirection to Ambire rewards page', async ({ pages }) => {
+    await test.step('assert rewards button is visible', async () => {
+      await pages.basePage.isVisible(selectors.dashboard.rewardsButton)
+    })
+
+    await test.step('rewards button should redirect to rewards page', async () => {
+      await pages.dashboard.checkRewardsPageRedirection(selectors.dashboard.rewardsButton)
+    })
+
+    await test.step('assert $WALLET open button is visible', async () => {
+      await pages.basePage.isVisible(selectors.dashboard.rewardsForClaimingButton)
+    })
+
+    await test.step('$WALLET rewards banner button should redirect to rewards page', async () => {
+      const rewardsButton = pages.basePage.page
+        .getByTestId(selectors.dashboard.rewardsForClaimingButton)
+        .first()
+
+      const newTab = await pages.basePage.handleNewPage(rewardsButton)
+      expect(newTab.url()).toContain('https://rewards.ambire.com/')
+    })
   })
 
   test('Check Ambire rewards home', async ({ pages }) => {
