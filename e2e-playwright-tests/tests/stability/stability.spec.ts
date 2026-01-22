@@ -41,7 +41,7 @@ test.describe('stability', { tag: '@stability' }, () => {
     const page = pages.stability.page
 
     await test.step('block Velcro tokens request and unlock the extension', async () => {
-      await pages.stability.blockRouteAndUnlock('**/relayer.ambire.com/velcro-v3/*')
+      await pages.stability.blockRouteAndUnlock('**/relayer.ambire.com/velcro-v3/portfolio*')
     })
 
     await test.step('tokens are found using previous hints', async () => {
@@ -139,7 +139,7 @@ test.describe('stability', { tag: '@stability' }, () => {
       143 // Monad
     ]
 
-    const url = 'https://relayer.ambire.com/velcro-v3/multi-hints'
+    const url = 'https://relayer.ambire.com/velcro-v3/portfolio'
     const networksParam = chains.join()
     const accountsParam = Array(chains.length).fill(address).join()
 
