@@ -27,7 +27,7 @@ test.describe('stability', { tag: '@stability' }, () => {
         const page = pages.stability.page
         await page.getByTestId(selectors.dashboard.balanceErrorIcon).click()
 
-        const rpcErrorBanner = page.getByTestId(selectors.dashboard.portfolioErrorAlert+'-portfolio-critical').first()
+        const rpcErrorBanner = page.getByTestId(selectors.dashboard.portfolioErrorAlert+'-rpcs-down').first()
 
         await expect(rpcErrorBanner).toBeVisible()
         await expect(rpcErrorBanner).toContainText('Failed to retrieve network data for Polygon')
