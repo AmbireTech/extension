@@ -379,8 +379,6 @@ export const handleActions = async (
       return mainCtrl.transfer.update(params.formValues)
     case 'TRANSFER_CONTROLLER_RESET_FORM':
       return mainCtrl.transfer.resetForm()
-    case 'TRANSFER_CONTROLLER_UNLOAD_SCREEN':
-      return mainCtrl.transfer.unloadScreen(params?.forceUnload)
     case 'TRANSFER_CONTROLLER_DESTROY_LATEST_BROADCASTED_ACCOUNT_OP':
       return mainCtrl.transfer.destroyLatestBroadcastedAccountOp()
     case 'TRANSFER_CONTROLLER_HAS_USER_PROCEEDED':
@@ -507,6 +505,12 @@ export const handleActions = async (
       return await mainCtrl.keystore.sendTempSeedToUi()
     case 'KEYSTORE_CONTROLLER_DELETE_SEED':
       return await mainCtrl.keystore.deleteSeed(params.id)
+    case 'KEYSTORE_CONTROLLER_SEND_DECRYPTED_MESSAGE_TO_UI':
+      return await mainCtrl.keystore.sendDecryptedMessageToUi({
+        encryptedMessage: params.encryptedMessage,
+        keyAddr: params.keyAddr,
+        keyType: params.keyType
+      })
 
     case 'EMAIL_VAULT_CONTROLLER_GET_INFO':
       return await mainCtrl.emailVault?.getEmailVaultInfo(params.email)

@@ -31,31 +31,18 @@ const Dashboard = () => {
         .currentUser?.rank || null
     )
   }, [connectedAccount, season2LeaderboardData, userRewardsStats])
-
   const sections: Stat[] = SECTIONS.map((section) => {
-    let score = 0
-    if (userRewardsStats) {
-      if (section.id === 'multiplier') score = userRewardsStats[section.id]
-      else score = Math.floor(userRewardsStats[section.id])
-    }
-
+    let score
     let explanation = section.explanation
-
     if (section.id === 'multiplier') {
-      explanation = `You receive 1.06X multiplier of your score for belonging to any of the following:
-- Have pledged to the Trustless manifesto (Soon)
-- Hold a LobsterDAO NFT (Soon)
-- Hold a CryptoTesters NFT (Soon)
-- Hold an Ambire Gas Tank NFT, Legends NFT, or any Ambire conference POAP (Soon)
-- Hold Gitcoin passport NFT (Soon)
-- Hold GHO passport NFT (Soon)
-- ${
-        (userRewardsStats?.multipliers || []).some((m) => m.type === 'WEEKLY_TX' && m.activated)
-          ? '✅ '
-          : ''
-      }Have at least one Ethereum transaction per week, all weeks during the season, except up to 2`
-    }
+      score = userRewardsStats ? Math.floor(userRewardsStats[section.id] * 1000) / 1000 : 0
 
+      if (userRewardsStats?.multipliers) {
+        explanation = userRewardsStats.multipliers.map((m) => m.description).join('\n')
+      }
+    } else {
+      score = userRewardsStats ? Math.floor(userRewardsStats[section.id]) : 0
+    }
     return {
       ...section,
       explanation,
