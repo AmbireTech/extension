@@ -1,6 +1,6 @@
 import React, { memo, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { View } from 'react-native'
+import { ScrollView, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { PortfolioNetworkResult } from '@ambire-common/libs/portfolio/interfaces'
@@ -23,7 +23,7 @@ interface Props {
  * A bottom sheet that shows the time taken by each network to load, together
  * with a breakdown of the time taken for discovery, price updates, and deployless calls.
  *
- * It's displayed in Ambire Next only and can be used to monitor the performance of the portfolio.
+ * It's not displayed in production and can be used to monitor the performance of the portfolio.
  */
 const NetworkStatusesBottomSheet = ({ sheetRef, closeBottomSheet }: Props) => {
   const { t } = useTranslation()
@@ -31,19 +31,10 @@ const NetworkStatusesBottomSheet = ({ sheetRef, closeBottomSheet }: Props) => {
   const { portfolio } = useSelectedAccountControllerState()
   const { theme } = useTheme()
 
-  const networkDataMap = networks.reduce(
-    (acc, network) => {
-      acc[network.chainId.toString()] = network
-      return acc
-    },
-    {} as Record<string, (typeof networks)[0]>
-  )
-
   const sortedNetworks = useMemo(() => {
-    const networkKeys = Object.keys(portfolio.portfolioState).filter((key) => !!networkDataMap[key])
-
-    return networkKeys
-      .map((networkKey) => {
+    return networks
+      .map((network) => {
+        const networkKey = network.chainId.toString()
         const result = portfolio.portfolioState[networkKey]?.result as
           | PortfolioNetworkResult
           | undefined
@@ -57,10 +48,11 @@ const NetworkStatusesBottomSheet = ({ sheetRef, closeBottomSheet }: Props) => {
         return {
           networkKey,
           result,
-          isLoading: !!portfolio.portfolioState[networkKey]?.isLoading,
+          isLoading:
+            !portfolio.portfolioState[networkKey] || portfolio.portfolioState[networkKey].isLoading,
           lastUpdatedAt,
           totalTime,
-          name: networkDataMap[networkKey]?.name || t('Unknown Network')
+          name: network.name
         }
       })
       .sort((a, b) => {
@@ -76,7 +68,7 @@ const NetworkStatusesBottomSheet = ({ sheetRef, closeBottomSheet }: Props) => {
         // Slowest first
         return b.totalTime - a.totalTime
       })
-  }, [portfolio.portfolioState, networkDataMap, t])
+  }, [networks, portfolio.portfolioState])
 
   return (
     <BottomSheet
@@ -84,6 +76,8 @@ const NetworkStatusesBottomSheet = ({ sheetRef, closeBottomSheet }: Props) => {
       sheetRef={sheetRef}
       closeBottomSheet={closeBottomSheet}
       backgroundColor="primaryBackground"
+      isScrollEnabled={false}
+      containerInnerWrapperStyles={flexbox.flex1}
     >
       <Text fontSize={20} weight="semiBold" style={spacings.mbLg}>
         {t('Network Statuses')}
@@ -93,7 +87,6 @@ const NetworkStatusesBottomSheet = ({ sheetRef, closeBottomSheet }: Props) => {
       <View
         style={[
           flexbox.directionRow,
-          spacings.mbTy,
           spacings.pbTy,
           {
             borderBottomWidth: 2,
@@ -139,20 +132,21 @@ const NetworkStatusesBottomSheet = ({ sheetRef, closeBottomSheet }: Props) => {
           {t('Deployless')}
         </Text>
       </View>
-
-      {/* Table Rows */}
-      {sortedNetworks.map(({ networkKey, totalTime, isLoading, result, lastUpdatedAt, name }) => (
-        <NetworkStatusRow
-          key={networkKey}
-          networkKey={networkKey}
-          name={name as string}
-          lastUpdatedAt={lastUpdatedAt}
-          totalTime={totalTime}
-          isLoading={isLoading}
-          result={result}
-          theme={theme}
-        />
-      ))}
+      <ScrollView style={flexbox.flex1} contentContainerStyle={spacings.ptTy}>
+        {/* Table Rows */}
+        {sortedNetworks.map(({ networkKey, totalTime, isLoading, result, lastUpdatedAt, name }) => (
+          <NetworkStatusRow
+            key={networkKey}
+            networkKey={networkKey}
+            name={name as string}
+            lastUpdatedAt={lastUpdatedAt}
+            totalTime={totalTime}
+            isLoading={isLoading}
+            result={result}
+            theme={theme}
+          />
+        ))}
+      </ScrollView>
     </BottomSheet>
   )
 }

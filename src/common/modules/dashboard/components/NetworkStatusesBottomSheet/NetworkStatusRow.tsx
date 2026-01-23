@@ -15,7 +15,12 @@ const LastUpdatedAtElapsed: FC<{ lastUpdatedAt?: number }> = ({ lastUpdatedAt })
   const [elapsed, setElapsed] = useState(lastUpdatedAt ? getTimeAgo(new Date(lastUpdatedAt)) : '')
 
   useEffect(() => {
-    if (!lastUpdatedAt) return
+    if (!lastUpdatedAt) {
+      setElapsed('')
+      return
+    }
+
+    setElapsed(getTimeAgo(new Date(lastUpdatedAt)))
 
     const interval = setInterval(() => {
       setElapsed(getTimeAgo(new Date(lastUpdatedAt)))
@@ -131,27 +136,35 @@ const NetworkStatusRow: FC<{
         </View>
       </View>
       {/* Time taken */}
-      <Cell
-        backgroundColor="transparent"
-        time={totalTime}
-        color={theme.secondaryText}
-        style={{ flex: 1.5 }}
-      />
-      <Cell
-        backgroundColor={discoveryStyle.backgroundColor}
-        time={result?.discoveryTime}
-        color={discoveryStyle.color}
-      />
-      <Cell
-        backgroundColor={priceStyle.backgroundColor}
-        time={result?.priceUpdateTime}
-        color={priceStyle.color}
-      />
-      <Cell
-        backgroundColor={oracleStyle.backgroundColor}
-        time={result?.oracleCallTime}
-        color={oracleStyle.color}
-      />
+      {result ? (
+        <>
+          <Cell
+            backgroundColor="transparent"
+            time={totalTime}
+            color={theme.secondaryText}
+            style={{ flex: 1.5 }}
+          />
+          <Cell
+            backgroundColor={discoveryStyle.backgroundColor}
+            time={result?.discoveryTime}
+            color={discoveryStyle.color}
+          />
+          <Cell
+            backgroundColor={priceStyle.backgroundColor}
+            time={result?.priceUpdateTime}
+            color={priceStyle.color}
+          />
+          <Cell
+            backgroundColor={oracleStyle.backgroundColor}
+            time={result?.oracleCallTime}
+            color={oracleStyle.color}
+          />
+        </>
+      ) : (
+        <Text fontSize={12} appearance="secondaryText" style={{ flex: 4, textAlign: 'center' }}>
+          No data
+        </Text>
+      )}
     </Animated.View>
   )
 }

@@ -36,7 +36,7 @@ const getTimeAgo = (date: Date) => {
   const now = new Date()
   const seconds = Math.floor((now.getTime() - date.getTime()) / 1000)
 
-  if (seconds < 5) return 'just now'
+  if (seconds < 5) return 'Just now'
 
   if (seconds < 60) return `${seconds} seconds ago`
   const minutes = Math.floor(seconds / 60)
