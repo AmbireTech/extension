@@ -24,16 +24,12 @@ const OptOutsScreen = () => {
       <SettingsPageHeader title="Privacy opt outs" />
       <View style={spacings.mb2Xl}>
         <OptOutControlOption
-          title={t('Defi positions')}
-          description={t('Should we fetch your defi positions.')}
+          title={t('Tokens, NFTs & DeFi positions auto discovery')}
+          description={t(
+            'Should we fetch your tokens and defi positions via our own API that uses third party providers.'
+          )}
           icon={<HelpIcon color={theme.primaryText} />}
-          flag="defiPositions"
-        />
-        <OptOutControlOption
-          title={t('Token auto discovery')}
-          description={t('Should we try to find the tokens in your account using our API service.')}
-          icon={<HelpIcon color={theme.primaryText} />}
-          flag="tokenAutoDiscovery"
+          flag="tokenAndDefiAutoDiscovery"
         />
       </View>
     </>

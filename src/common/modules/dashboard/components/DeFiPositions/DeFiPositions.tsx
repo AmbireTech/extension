@@ -236,7 +236,7 @@ const DeFiPositions: FC<Props> = ({
   }, [])
 
   const dataItems = ['header']
-  if (flags.defiPositions) {
+  if (flags.tokenAndDefiAutoDiscovery) {
     dataItems.push(!portfolio.isAllReady ? 'skeleton' : 'keep-this-to-avoid-key-warning')
     if (initTab?.defi && portfolio.isAllReady) {
       filteredPositions.forEach((p: any) => dataItems.push(p))
