@@ -40,7 +40,7 @@ const DecryptRequestScreen = () => {
     errorNode,
     actionFooterResolveNode,
     isDisabled
-  } = useEncryptionCapability()
+  } = useEncryptionCapability({ requestType: 'decrypt' })
 
   const handleDecryptForPreview = useCallback(() => {
     if (!userRequest) {
@@ -162,8 +162,8 @@ const DecryptRequestScreen = () => {
             intentText={t('wants you to decrypt a message')}
           />
 
-          <View style={[spacings.mtLg, flexbox.flex1, flexbox.justifySpaceBetween]}>
-            <View>
+          <View style={spacings.mtLg}>
+            {errorNode || (
               <ExpandableCard
                 enableToggleExpand={false}
                 isInitiallyExpanded={true}
@@ -218,9 +218,7 @@ const DecryptRequestScreen = () => {
                       : theme.primaryBackground
                 }}
               />
-            </View>
-
-            {errorNode}
+            )}
           </View>
         </TabLayoutWrapperMainContent>
       </TabLayoutContainer>

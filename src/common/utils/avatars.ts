@@ -2,12 +2,6 @@ import { blockyColors } from '@common/components/Avatar/Blockies/utils'
 import Jazzicon from '@raugfer/jazzicon'
 import { AvatarType } from '@web/extension-services/background/controllers/wallet-state'
 
-const getAvatarType = (avatarType: AvatarType, canBeEns?: boolean): AvatarType => {
-  if (canBeEns) return 'ens'
-
-  return avatarType
-}
-
 const FALLBACK_COLORS: AvatarColors = ['#6000FF', '#A36AF8', '#35008C']
 
 export type AvatarColors = [string, string, string]
@@ -37,4 +31,4 @@ const getAvatarColors = (avatarType: AvatarType, address: string): AvatarColors 
   return FALLBACK_COLORS
 }
 
-export { getAvatarType, getAvatarColors }
+export { getAvatarColors }
