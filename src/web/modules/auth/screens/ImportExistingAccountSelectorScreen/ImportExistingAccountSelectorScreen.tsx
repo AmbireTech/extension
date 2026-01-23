@@ -8,6 +8,7 @@ import LatticeWithBorderIcon from '@common/assets/svg/LatticeWithBorderIcon'
 import LedgerIcon from '@common/assets/svg/LedgerIcon'
 import PrivateKeyIcon from '@common/assets/svg/PrivateKeyIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
+import SafeIcon from '@common/assets/svg/SafeIcon'
 import SeedPhraseIcon from '@common/assets/svg/SeedPhraseIcon'
 import TrezorIcon from '@common/assets/svg/TrezorIcon'
 import Button from '@common/components/Button'
@@ -100,6 +101,13 @@ const ImportExistingAccountSelectorScreen = () => {
           dispatch({ type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LATTICE' })
         },
         icon: LatticeWithBorderIcon
+      },
+      {
+        title: 'Safe',
+        onPress: () => {
+          goToNextRoute(WEB_ROUTES.safeImport)
+        },
+        icon: SafeIcon
       },
       {
         title: 'JSON backup file',
