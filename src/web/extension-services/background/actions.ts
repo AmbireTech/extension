@@ -39,6 +39,7 @@ import { THEME_TYPES } from '@common/styles/themeConfig'
 import { LOG_LEVELS } from '@web/utils/logger'
 
 import { AUTO_LOCK_TIMES } from './controllers/auto-lock'
+import { AvatarType } from './controllers/wallet-state'
 import { controllersMapping } from './types'
 
 type UpdateNavigationUrl = {
@@ -679,6 +680,10 @@ type ContractNamesGetName = {
   params: { address: string; chainId: bigint }
 }
 
+type SetAvatarTypeAction = {
+  type: 'SET_AVATAR_TYPE'
+  params: { avatarType: AvatarType }
+}
 type SetIsPinnedAction = {
   type: 'SET_IS_PINNED'
   params: { isPinned: boolean }
@@ -867,6 +872,7 @@ export type Action =
   | TransferControllerUserProceededAction
   | TransferControllerShouldSkipTransactionQueuedModal
   | SetThemeTypeAction
+  | SetAvatarTypeAction
   | SetLogLevelTypeAction
   | SetCrashAnalyticsAction
   | DismissBanner

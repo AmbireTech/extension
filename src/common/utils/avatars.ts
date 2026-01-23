@@ -1,32 +1,23 @@
-import { isAddress } from 'ethers'
-
 import { blockyColors } from '@common/components/Avatar/Blockies/utils'
 import Jazzicon from '@raugfer/jazzicon'
+import { AvatarType } from '@web/extension-services/background/controllers/wallet-state'
 
-type AvatarType = 'ens' | 'jazz' | 'blockies' | 'legacy'
-
-const getAvatarType = (pfp: string, canBeEns?: boolean): AvatarType => {
+const getAvatarType = (avatarType: AvatarType, canBeEns?: boolean): AvatarType => {
   if (canBeEns) return 'ens'
 
-  if (isAddress(pfp)) {
-    return 'jazz'
-  }
-
-  return 'legacy'
+  return avatarType
 }
 
 const FALLBACK_COLORS: AvatarColors = ['#6000FF', '#A36AF8', '#35008C']
 
 export type AvatarColors = [string, string, string]
 
-const getAvatarColors = (pfp: string): AvatarColors => {
-  const avatarType = getAvatarType(pfp)
-
+const getAvatarColors = (avatarType: AvatarType, address: string): AvatarColors => {
   if (avatarType === 'blockies') {
-    return blockyColors(pfp)
+    return blockyColors(address)
   }
-  if (avatarType === 'jazz') {
-    const jazzIcon = Jazzicon(pfp)
+  if (avatarType === 'jazzicon') {
+    const jazzIcon = Jazzicon(address)
     const fillAttributeRegex = /fill="([^"]*)"/g
 
     const fillAttributes = jazzIcon.match(fillAttributeRegex)
@@ -40,7 +31,7 @@ const getAvatarColors = (pfp: string): AvatarColors => {
       return FALLBACK_COLORS
     }
 
-    return [colors[2], colors[1], colors[0]]
+    return [colors[2]!, colors[1]!, colors[0]!]
   }
 
   return FALLBACK_COLORS
