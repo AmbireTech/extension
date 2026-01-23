@@ -5,12 +5,14 @@ import useDomainsContext from '@common/hooks/useDomainsContext'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { isExtension } from '@web/constants/browserapi'
+import { AvatarType } from '@web/extension-services/background/controllers/wallet-state'
 import useDomainsControllerState from '@web/hooks/useDomainsController/useDomainsController'
 import useWalletStateController from '@web/hooks/useWalletStateController'
 
 import Blockie from './Blockies/Blockies'
 import EnsAvatar from './EnsAvatar'
 import JazzIcon from './Jazz'
+import Polycons from './Polycons/Polycons'
 import TypeBadge from './TypeBadge'
 
 interface Props {
@@ -29,6 +31,10 @@ interface Props {
   size?: number
   style?: ViewStyle
   showTooltip?: boolean
+  /**
+   * Allow selecting a specific avatar type, overwriting the global settings.
+   */
+  avatarType?: Omit<AvatarType, 'ens'>
   displayTypeBadge?: boolean
 }
 
@@ -37,6 +43,7 @@ const Avatar: FC<Props> = ({
   address,
   isSmart,
   size = 40,
+  avatarType: propAvatarType,
   style = {},
   showTooltip = false,
   displayTypeBadge = true
@@ -49,7 +56,7 @@ const Avatar: FC<Props> = ({
     ? useDomainsControllerState()
     : useDomainsContext().state
   const walletState = useWalletStateController()
-  const avatarTypeSetting = walletState.avatarType || 'jazzicon'
+  const avatarTypeSetting = propAvatarType || walletState.avatarType || 'jazzicons'
 
   const isEnsLoading = address
     ? (domains && !domains[address]) || loadingAddresses?.includes(address)
@@ -59,7 +66,6 @@ const Avatar: FC<Props> = ({
   // Determine avatar type and props
   const avatarType = ensAvatar ? 'ens' : avatarTypeSetting
   const borderRadius = size / 2
-  const badgeSize = size >= 40 ? 'big' : 'small'
 
   // Pulsating animation
   const pulseAnim = useRef(new Animated.Value(1)).current
@@ -97,7 +103,7 @@ const Avatar: FC<Props> = ({
         { opacity: pulseAnim }
       ]}
     >
-      {avatarType === 'jazzicon' && (
+      {avatarType === 'jazzicons' && (
         <JazzIcon borderRadius={borderRadius} address={address} size={size} />
       )}
       {avatarType === 'blockies' && (
@@ -110,6 +116,9 @@ const Avatar: FC<Props> = ({
           borderRadius={borderRadius}
           setImageFetchFailed={setEnsAvatarImageFetchFailed}
         />
+      )}
+      {avatarType === 'polycons' && (
+        <Polycons address={address} size={size} borderRadius={borderRadius} />
       )}
       {displayTypeBadge && (
         <TypeBadge

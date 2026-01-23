@@ -1,4 +1,5 @@
 import { blockyColors } from '@common/components/Avatar/Blockies/utils'
+import { generateSeedEthereum, getPolyconColors } from '@common/components/Avatar/Polycons/utils'
 import Jazzicon from '@raugfer/jazzicon'
 import { AvatarType } from '@web/extension-services/background/controllers/wallet-state'
 
@@ -10,7 +11,7 @@ const getAvatarColors = (avatarType: AvatarType, address: string): AvatarColors 
   if (avatarType === 'blockies') {
     return blockyColors(address)
   }
-  if (avatarType === 'jazzicon') {
+  if (avatarType === 'jazzicons') {
     const jazzIcon = Jazzicon(address)
     const fillAttributeRegex = /fill="([^"]*)"/g
 
@@ -26,6 +27,13 @@ const getAvatarColors = (avatarType: AvatarType, address: string): AvatarColors 
     }
 
     return [colors[2]!, colors[1]!, colors[0]!]
+  }
+
+  if (avatarType === 'polycons') {
+    const seed = generateSeedEthereum(address)
+    const polyconColors = getPolyconColors(seed)
+
+    return [polyconColors.bgColor, polyconColors.fgColor, polyconColors.fgColor]
   }
 
   return FALLBACK_COLORS
