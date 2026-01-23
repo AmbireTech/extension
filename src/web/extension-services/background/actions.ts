@@ -736,6 +736,13 @@ type DismissBanner = {
   }
 }
 
+type SafeControllerFindSafe = {
+  type: 'SAFE_CONTROLLER_FIND_SAFE'
+  params: {
+    safeAddress: string
+  }
+}
+
 export type Action =
   | UpdateNavigationUrl
   | InitControllerStateAction
@@ -872,3 +879,4 @@ export type Action =
   | DismissBanner
   | KeystoreControllerSendEncryptedPrivateKeyToUiAction
   | KeystoreControllerSendPasswordDecryptedPrivateKeyToUiAction
+  | SafeControllerFindSafe

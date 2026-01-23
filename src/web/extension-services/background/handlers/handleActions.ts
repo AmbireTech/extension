@@ -403,6 +403,9 @@ export const handleActions = async (
     case 'REQUESTS_CONTROLLER_SET_WINDOW_LOADED':
       return mainCtrl.requests.setWindowLoaded()
 
+    case 'SAFE_CONTROLLER_FIND_SAFE':
+      return mainCtrl.safe.findSafe(params.safeAddress)
+
     case 'MAIN_CONTROLLER_RELOAD_SELECTED_ACCOUNT': {
       return await mainCtrl.reloadSelectedAccount({
         chainIds: params?.chainId ? [BigInt(params?.chainId)] : undefined,
