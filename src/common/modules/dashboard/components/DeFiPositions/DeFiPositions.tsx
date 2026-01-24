@@ -5,6 +5,7 @@ import { Animated, FlatListProps, TouchableOpacity, View } from 'react-native'
 
 import { BannerType } from '@ambire-common/interfaces/banner'
 import { getCurrentAccountBanners } from '@ambire-common/libs/banners/banners'
+import PrivacyIcon from '@common/assets/svg/PrivacyIcon'
 import Text from '@common/components/Text'
 import useNavigation from '@common/hooks/useNavigation'
 import usePrevious from '@common/hooks/usePrevious'
@@ -186,10 +187,13 @@ const DeFiPositions: FC<Props> = ({
 
       if (item === 'disabled') {
         return (
-          <View style={flexbox.alignCenter}>
-            <Text fontSize={16} weight="medium" style={styles.noPositions}>
-              {t('Defi positions disabled')}
-            </Text>
+          <View style={[flexbox.alignCenter, spacings.mt]}>
+            <View style={[flexbox.directionRow, flexbox.alignSelfCenter]}>
+              <Text fontSize={16} weight="medium" style={[spacings.mrTy]}>
+                {t('Defi positions disabled')}
+              </Text>
+              <PrivacyIcon width={20} height={20} />
+            </View>
             <TouchableOpacity onPress={() => navigate(ROUTES.optOuts)}>
               <Text
                 onPress={() => navigate(ROUTES.optOuts)}
