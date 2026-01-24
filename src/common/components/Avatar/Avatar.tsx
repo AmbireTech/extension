@@ -1,7 +1,5 @@
-// @ts-nocheck
-
-import React, { FC, useState } from 'react'
-import { Image, View, ViewStyle } from 'react-native'
+import React, { FC, useEffect, useRef, useState } from 'react'
+import { Animated, Image, View, ViewStyle } from 'react-native'
 
 import { isValidAddress } from '@ambire-common/services/address'
 import avatarAstronautMan from '@common/assets/images/avatars/avatar-astronaut-man.png'
@@ -53,7 +51,7 @@ export const getAccountPfpSource = (pfpId: string) => {
   // address for the Blockie
   if (isValidAddress(pfpId)) return pfpId
 
-  return buildInAvatars.find(({ id }) => id === pfpId)?.source || DEFAULT_AVATAR.source
+  return buildInAvatars.find(({ id }) => id === pfpId)?.source || DEFAULT_AVATAR!.source
 }
 
 interface Props {
@@ -87,41 +85,75 @@ const Avatar: FC<Props> = ({
   const isEnsLoading = address
     ? (domains && !domains[address]) || loadingAddresses?.includes(address)
     : false
-  const ensAvatar = address ? domains?.[address]?.ensAvatar : undefined
-  const shouldLoadEns = (isEnsLoading || !!ensAvatar) && !ensAvatarImageFetchFailed
+  const ensAvatar =
+    address && !ensAvatarImageFetchFailed ? domains?.[address]?.ensAvatar : undefined
   // Determine avatar type and props
-  const avatarType = getAvatarType(selectedAccountPfp, shouldLoadEns)
+  const avatarType = getAvatarType(selectedAccountPfp, ensAvatar)
   const borderRadius = size / 2
-  const badgeType = size >= 40 ? 'big' : 'small'
+  const badgeSize = size >= 40 ? 'big' : 'small'
+
+  // Pulsating animation
+  const pulseAnim = useRef(new Animated.Value(1)).current
+
+  useEffect(() => {
+    if (isEnsLoading) {
+      const pulse = Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, {
+            toValue: 0.7,
+            duration: 800,
+            useNativeDriver: true
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 800,
+            useNativeDriver: true
+          })
+        ])
+      )
+      pulse.start()
+      return () => pulse.stop()
+    }
+
+    pulseAnim.setValue(1)
+  }, [isEnsLoading, pulseAnim])
 
   return (
-    <View style={[spacings.prTy, flexbox.alignCenter, flexbox.justifyCenter, style]}>
+    <Animated.View
+      style={[
+        spacings.prTy,
+        flexbox.alignCenter,
+        flexbox.justifyCenter,
+        style,
+        { opacity: pulseAnim }
+      ]}
+    >
       {avatarType === 'jazz' && (
         <JazzIcon borderRadius={borderRadius} address={selectedAccountPfp} size={size} />
       )}
       {avatarType === 'blockies' && (
         <Blockie seed={selectedAccountPfp} width={size} height={size} borderRadius={borderRadius} />
       )}
-      {avatarType === 'ens' && (
+      {avatarType === 'ens' && !!ensAvatar && (
         <EnsAvatar
-          isLoading={isEnsLoading}
-          avatar={ensAvatar}
           size={size}
+          avatar={ensAvatar}
           borderRadius={borderRadius}
           setImageFetchFailed={setEnsAvatarImageFetchFailed}
         />
       )}
       {avatarType === 'legacy' && (
         <Image
+          // @ts-ignore
           source={selectedAccountPfp}
           style={{ width: size, height: size, borderRadius }}
           resizeMode="contain"
         />
       )}
       {displayTypeBadge && (
-        <TypeBadge isSmart={isSmart} type={badgeType} showTooltip={showTooltip} />
+        <TypeBadge isSmart={isSmart} size={badgeSize} showTooltip={showTooltip} />
       )}
-    </View>
+    </Animated.View>
   )
 }
 

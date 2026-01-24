@@ -11,11 +11,15 @@ import flexbox from '@common/styles/utils/flexbox'
 import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 
+interface Props {
+  requestType?: 'encrypt' | 'decrypt'
+}
+
 /**
  * Hook that provides encryption capability validation logic.
  * Used for screens that require internal keys for encryption/decryption operations.
  */
-export const useEncryptionCapability = () => {
+export const useEncryptionCapability = ({ requestType }: Props = { requestType: 'encrypt' }) => {
   const { t } = useTranslation()
   const { account } = useSelectedAccountControllerState()
   const keystoreState = useKeystoreControllerState()
@@ -34,10 +38,22 @@ export const useEncryptionCapability = () => {
   )
 
   const errorNode = useMemo(() => {
+    const requestSpecifics =
+      requestType === 'encrypt'
+        ? t('the capability to encrypt messages')
+        : t('to decrypt an encrypted message')
+
     if (isSmartAccount)
       return (
         <Alert
-          title={<Text>{t('Smart contract wallets do not support this capability.')}</Text>}
+          title={
+            <Text>
+              {t(
+                'This app is requesting {{requestSpecifics}}, which is not supported by smart contract wallets.',
+                { requestSpecifics }
+              )}
+            </Text>
+          }
           type="error"
         />
       )
@@ -46,13 +62,20 @@ export const useEncryptionCapability = () => {
     if (hasKeyButNotAnInternalOne)
       return (
         <Alert
-          title={<Text>{t('Hardware wallets do not support this capability.')}</Text>}
+          title={
+            <Text>
+              {t(
+                'This app is requesting {{requestSpecifics}}, which is not supported by hardware wallets.',
+                { requestSpecifics }
+              )}
+            </Text>
+          }
           type="error"
         />
       )
 
     return null
-  }, [internalKey, isSmartAccount, isViewOnly, t])
+  }, [internalKey, isSmartAccount, isViewOnly, t, requestType])
 
   const actionFooterResolveNode = useMemo(() => {
     if (isSmartAccount || !isViewOnly) return null
