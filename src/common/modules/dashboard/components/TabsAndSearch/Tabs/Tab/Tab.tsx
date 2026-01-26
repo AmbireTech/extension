@@ -11,6 +11,7 @@ import { THEME_TYPES } from '@common/styles/themeConfig'
 import { getAvatarColors } from '@common/utils/avatars'
 import mixHexColors from '@common/utils/mixHexColors'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
+import useWalletStateController from '@web/hooks/useWalletStateController'
 
 import getStyles from './styles'
 
@@ -44,7 +45,8 @@ const Tab = ({
   const { t } = useTranslation()
   const { styles, theme, themeType } = useTheme(getStyles)
   const { account } = useSelectedAccountControllerState()
-  const avatarColors = getAvatarColors(account?.addr || '')
+  const { avatarType } = useWalletStateController()
+  const avatarColors = getAvatarColors(avatarType, account?.addr || '')
 
   const isActive = openTab === tab
 
@@ -95,8 +97,8 @@ const Tab = ({
                   ? theme.primary
                   : theme.primaryBackground
                 : hovered
-                ? theme.primaryText
-                : theme.secondaryText
+                  ? theme.primaryText
+                  : theme.secondaryText
             }
             fontSize={14}
           >
