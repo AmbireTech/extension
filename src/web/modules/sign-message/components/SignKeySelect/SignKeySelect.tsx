@@ -76,10 +76,8 @@ const SigningKeySelect = ({
                     keyIconColor={theme.iconPrimary as string}
                     isLast
                     containerStyle={{
-                      // @ts-ignore
-                      border: hovered
-                        ? `1px solid ${String(theme.primaryBorder)}`
-                        : '1px solid transparent',
+                      borderWidth: 1,
+                      borderColor: hovered ? theme.primaryBorder : 'transparent',
                       backgroundColor: theme.secondaryBackground
                     }}
                   />
