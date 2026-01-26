@@ -13,6 +13,7 @@ import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
+import useToast from '@common/hooks/useToast'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import Header from '@common/modules/header/components/Header'
 import spacings from '@common/styles/spacings'
@@ -29,12 +30,13 @@ const SafeImportScreen = () => {
   const {
     control,
     handleSubmit,
-    getValues,
     formState: { errors, isValid }
   } = useForm({
     mode: 'all',
     defaultValues: { safeAddress: safeInfo?.address || '' }
   })
+  const [isLoading, setIsLoading] = useState(false)
+  const { addToast } = useToast()
   const safeAddressValue = useWatch({
     control,
     name: 'safeAddress'
@@ -47,12 +49,49 @@ const SafeImportScreen = () => {
   const { dispatch } = useBackgroundService()
 
   const handleFormSubmit = useCallback(async () => {
-    await handleSubmit(({ safeAddress }) => {
-      const addr = getAddress(safeAddress.trim())
-      // todo: handle continuation
-      console.log('the safe addr', addr)
-    })()
-  }, [handleSubmit])
+    if (!safe || !safeInfo) return
+
+    try {
+      // TODO: configure ens?
+      setIsLoading(true)
+      dispatch({
+        type: 'MAIN_CONTROLLER_ADD_VIEW_ONLY_ACCOUNTS',
+        params: {
+          accounts: [
+            {
+              addr: safe,
+              associatedKeys: [], // todo
+              initialPrivileges: [], // todo,
+              domainName: null, // todo
+              creation: {
+                factoryAddr: safeInfo.factoryAddr,
+                singleton: safeInfo.singleton,
+                setupData: safeInfo.setupData,
+                saltNonce: safeInfo.saltNonce
+              },
+              preferences: {
+                label: 'Safe',
+                pfp: safe
+              }
+            }
+          ]
+        }
+      })
+      goToNextRoute()
+    } catch (e: any) {
+      setIsLoading(false)
+      addToast(
+        t(
+          `Import unsuccessful. We were unable to fetch the necessary data.${
+            e?.message ? ` Error: ${e?.message}` : ''
+          }`
+        ),
+        { type: 'error' }
+      )
+
+      throw e
+    }
+  }, [goToNextRoute, addToast, dispatch, t, safe, safeInfo])
 
   const handleValidation = (value: string) => {
     const trimmedValue = value.trim()
@@ -154,9 +193,9 @@ const SafeImportScreen = () => {
             <Button
               testID="import-button"
               size="large"
-              text={t('Confirm')}
+              text={isLoading ? t('Importing...') : t('Import')}
               hasBottomSpacing={false}
-              onPress={handleFormSubmit}
+              onPress={handleSubmit(handleFormSubmit)}
               disabled={!isValid || !!importError || statuses.findSafe === 'LOADING'}
             />
           </View>
