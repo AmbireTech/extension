@@ -55,8 +55,9 @@ const Avatar: FC<Props> = ({
   const { domains, loadingAddresses } = isExtension
     ? useDomainsControllerState()
     : useDomainsContext().state
+  // There is no wallet controller state in benzin/rewards so we need to be careful
   const walletState = useWalletStateController()
-  const avatarTypeSetting = propAvatarType || walletState.avatarType || 'jazzicons'
+  const avatarTypeSetting = propAvatarType || walletState?.avatarType || 'jazzicons'
 
   const isEnsLoading = address
     ? (domains && !domains[address]) || loadingAddresses?.includes(address)
