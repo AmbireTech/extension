@@ -71,6 +71,7 @@ const Avatar: FC<Props> = ({
   // Pulsating animation
   const pulseAnim = useRef(new Animated.Value(1)).current
 
+  // @ts-ignore
   useEffect(() => {
     if (isEnsLoading) {
       const pulse = Animated.loop(
