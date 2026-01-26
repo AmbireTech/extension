@@ -7,7 +7,9 @@ import SafeIcon from '@common/assets/svg/SafeIcon'
 import Alert from '@common/components/Alert'
 import Button from '@common/components/Button'
 import Input from '@common/components/Input'
+import NetworkIcon from '@common/components/NetworkIcon'
 import Panel from '@common/components/Panel'
+import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
@@ -23,7 +25,7 @@ import useBackgroundService from '@web/hooks/useBackgroundService'
 import useSafeControllerState from '@web/hooks/useSafeControllerState'
 
 const SafeImportScreen = () => {
-  const { statuses, errorMessage, safeInfo } = useSafeControllerState()
+  const { statuses, importError, safeInfo } = useSafeControllerState()
   const {
     control,
     handleSubmit,
@@ -110,30 +112,39 @@ const SafeImportScreen = () => {
                   />
                 )}
               />
-            </View>
-
-            {statuses.findSafe === 'LOADING' && (
-              <View style={[flexbox.directionRow, flexbox.alignSelfCenter]}>
-                <Text>Loading...</Text>
-              </View>
-            )}
-
-            {safe && safeInfo && safe === safeInfo.address && (
-              <View>
-                <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                  <SafeIcon width={20} height={20} />
-                  <Text style={spacings.mlTy}>{t('Safe found')}</Text>
+              {statuses.findSafe === 'LOADING' ? (
+                <View style={[flexbox.directionRow, flexbox.alignSelfCenter]}>
+                  <Spinner />
                 </View>
-                <Text>{t(`Threshold: ${safeInfo.threshold} / ${safeInfo.owners.length}`)}</Text>
-                <Text>{t(`Owners : ${safeInfo.owners.map((o) => o).join(',')}`)}</Text>
-              </View>
-            )}
+              ) : (
+                <View>
+                  {safe && safeInfo && safe === safeInfo.address && (
+                    <View style={[flexbox.directionRow, flexbox.justifySpaceBetween]}>
+                      <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+                        <SafeIcon width={20} height={20} />
+                        <Text style={spacings.mlTy}>{t('Deployed on:')}</Text>
+                      </View>
+                      <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+                        {safeInfo.deployedOn.map((c, i) => (
+                          <NetworkIcon
+                            key={c}
+                            id={c.toString()}
+                            style={i === 0 ? { marginLeft: '0' } : { marginLeft: '-11px' }}
+                            size={22}
+                          />
+                        ))}
+                      </View>
+                    </View>
+                  )}
 
-            {errorMessage && (
-              <View style={[flexbox.alignCenter, flexbox.justifyCenter]}>
-                <Alert type="error" text={errorMessage} />
-              </View>
-            )}
+                  {importError && safe && safe === importError.address && (
+                    <View style={[flexbox.alignCenter, flexbox.justifyCenter]}>
+                      <Alert type="error" text={importError.message} style={{ maxWidth: '100%' }} />
+                    </View>
+                  )}
+                </View>
+              )}
+            </View>
 
             <Button
               testID="import-button"
@@ -141,7 +152,7 @@ const SafeImportScreen = () => {
               text={t('Confirm')}
               hasBottomSpacing={false}
               onPress={handleFormSubmit}
-              disabled={!isValid || !!errorMessage}
+              disabled={!isValid || !!importError}
             />
           </View>
         </Panel>
