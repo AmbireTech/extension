@@ -57,7 +57,7 @@ const TokenDetailsButton: FC<Props> = ({
       <AnimatedPressable
         testID={testID}
         key={id}
-        dataSet={tooltipText && { tooltipId }}
+        dataSet={tooltipText ? { tooltipId } : undefined}
         style={[styles.action, animStyle, isDisabled && { opacity: 0.4 }]}
         // Purposely don't disable the button (but block the onPress action) in
         // case of a tooltip, because it should be clickable to show the tooltip.

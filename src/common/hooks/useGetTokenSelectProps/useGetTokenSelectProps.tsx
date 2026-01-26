@@ -154,7 +154,10 @@ const useGetTokenSelectProps = ({
       : getAndFormatTokenDetails(currentToken, networks, simulatedAccountOp)
 
     const formattedBalancesLabel = !!tokenInPortfolio && (
-      <View dataSet={isPending && { tooltipId: tooltipIdPendingBalance }} style={flexbox.alignEnd}>
+      <View
+        dataSet={isPending ? { tooltipId: tooltipIdPendingBalance } : undefined}
+        style={flexbox.alignEnd}
+      >
         <Text
           fontSize={16}
           weight="medium"
@@ -220,7 +223,7 @@ const useGetTokenSelectProps = ({
     const label = getIsToTokenTypeGuard(currentToken) ? (
       <>
         <View
-          dataSet={tooltipIdNotSupported && { tooltipId: tooltipIdNotSupported }}
+          dataSet={tooltipIdNotSupported ? { tooltipId: tooltipIdNotSupported } : undefined}
           style={flexbox.flex1}
         >
           <Text numberOfLines={1}>
