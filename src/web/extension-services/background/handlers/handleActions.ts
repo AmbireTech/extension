@@ -168,6 +168,10 @@ export const handleActions = async (
       await mainCtrl.accountPicker.addAccounts()
       break
     }
+    case 'ACCOUNTS_CONTROLLER_ADD_ACCOUNTS': {
+      await mainCtrl.accounts.addAccounts(params.accounts)
+      break
+    }
     case 'IMPORT_SMART_ACCOUNT_JSON': {
       // Add accounts first, because some of the next steps have validation
       // if accounts exists.

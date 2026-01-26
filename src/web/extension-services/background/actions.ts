@@ -155,6 +155,11 @@ type AccountsControllerUpdateAccountPreferences = {
   params: { addr: string; preferences: AccountPreferences }[]
 }
 
+type AccountsControllerAddAccounts = {
+  type: 'ACCOUNTS_CONTROLLER_ADD_ACCOUNTS'
+  params: { accounts: Account[] }
+}
+
 type AccountsControllerReorderAccountsAction = {
   type: 'ACCOUNTS_CONTROLLER_REORDER_ACCOUNTS'
   params: { fromIndex: number; toIndex: number }
@@ -886,3 +891,4 @@ export type Action =
   | KeystoreControllerSendEncryptedPrivateKeyToUiAction
   | KeystoreControllerSendPasswordDecryptedPrivateKeyToUiAction
   | SafeControllerFindSafe
+  | AccountsControllerAddAccounts

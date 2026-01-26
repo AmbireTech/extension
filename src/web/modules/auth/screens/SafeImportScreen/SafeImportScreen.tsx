@@ -55,14 +55,13 @@ const SafeImportScreen = () => {
       // TODO: configure ens?
       setIsLoading(true)
       dispatch({
-        type: 'MAIN_CONTROLLER_ADD_VIEW_ONLY_ACCOUNTS',
+        type: 'ACCOUNTS_CONTROLLER_ADD_ACCOUNTS',
         params: {
           accounts: [
             {
               addr: safe,
-              associatedKeys: [], // todo
-              initialPrivileges: [], // todo,
-              domainName: null, // todo
+              associatedKeys: safeInfo.owners,
+              initialPrivileges: [], // not applicable for safe accounts,
               creation: {
                 factoryAddr: safeInfo.factoryAddr,
                 singleton: safeInfo.singleton,
