@@ -59,7 +59,6 @@ const BalanceAffectingErrors: FC<Props> = ({
       <WarningIcon
         color={theme.warningDecorative2}
         style={spacings.mlTy}
-        // @ts-ignore
         dataSet={createGlobalTooltipDataSet({
           id: 'balance-affecting-error',
           content: warningMessage

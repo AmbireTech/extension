@@ -101,7 +101,6 @@ const NetworkIcon = ({
 
   return (
     <View
-      // @ts-ignore
       dataSet={createGlobalTooltipDataSet({
         id: tooltipId,
         content: `${network?.name}`,

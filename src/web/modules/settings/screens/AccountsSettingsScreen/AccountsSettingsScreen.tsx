@@ -146,6 +146,7 @@ const AccountsSettingsScreen = () => {
                 spacings.pvMi,
                 spacings.phSm,
                 spacings.mbMi,
+                //@ts-ignore
                 { cursor: 'grab', touchAction: 'manipulation' }
               ]}
             >
@@ -190,6 +191,7 @@ const AccountsSettingsScreen = () => {
             ]}
             hasBottomSpacing={false}
             onPress={openBottomSheet as any}
+            submitOnEnter={false}
           />
           <Search
             autoFocus

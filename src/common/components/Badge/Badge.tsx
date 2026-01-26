@@ -132,7 +132,6 @@ const Badge = ({
         specialType === 'metamask' &&
         text === 'Metamask' && (
           <MetamaskIcon
-            // @ts-ignore
             dataSet={createGlobalTooltipDataSet({
               id: tooltipId,
               content: tooltipText

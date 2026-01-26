@@ -97,7 +97,6 @@ const Network: FC<Props> = ({ chainId, openBlockExplorer, openSettingsBottomShee
           // when hovering over the explorer icon
           onHoverIn={triggerHovered}
           onPress={handleOpenBlockExplorer}
-          // @ts-ignore missing type, but the prop is valid
           dataSet={createGlobalTooltipDataSet({
             id: tooltipBlockExplorerMissingId,
             content: NO_BLOCK_EXPLORER_AVAILABLE_TOOLTIP,

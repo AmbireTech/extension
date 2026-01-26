@@ -126,7 +126,6 @@ const DappItem = (dapp: Dapp) => {
                     top: -3,
                     zIndex: 1
                   }}
-                  // @ts-ignore
                   dataSet={createGlobalTooltipDataSet({
                     id,
                     content: t('Verified app'),

@@ -53,10 +53,10 @@ const DAppConnectHeader: FC<Props> = ({
             securityCheck === 'BLACKLISTED'
               ? theme.errorBackground
               : securityCheck === 'FAILED_TO_GET'
-              ? theme.warningBackground
-              : themeType === THEME_TYPES.DARK
-              ? theme.secondaryBackground
-              : theme.tertiaryBackground
+                ? theme.warningBackground
+                : themeType === THEME_TYPES.DARK
+                  ? theme.secondaryBackground
+                  : theme.tertiaryBackground
         },
         spacingsStyle
       ]}
@@ -91,7 +91,6 @@ const DAppConnectHeader: FC<Props> = ({
                 right: -9,
                 top: -5
               }}
-              // @ts-ignore
               dataSet={createGlobalTooltipDataSet({
                 id,
                 content: t('Verified app'),

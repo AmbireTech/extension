@@ -3,6 +3,7 @@ import { Animated } from 'react-native'
 
 import useTheme from '@common/hooks/useTheme'
 import { getAvatarColors } from '@common/utils/avatars'
+import useWalletStateController from '@web/hooks/useWalletStateController'
 import { getUiType } from '@web/utils/uiType'
 
 import Gradient from './Gradient/Gradient.web'
@@ -55,7 +56,8 @@ const Gradients = ({
   height: number
   selectedAccount: string | null
 }) => {
-  const avatarColors = getAvatarColors(selectedAccount || '')
+  const { avatarType } = useWalletStateController()
+  const avatarColors = getAvatarColors(avatarType, selectedAccount || '')
   const left = useRef(new Animated.Value(0)).current
   const top = useRef(new Animated.Value(0)).current
 

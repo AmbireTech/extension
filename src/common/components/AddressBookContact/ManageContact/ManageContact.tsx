@@ -60,7 +60,6 @@ const ManageContact: FC<Props> = ({ address, name, tooltipRef }) => {
             height: 20
           }
         ]}
-        // @ts-ignore
         dataSet={{
           tooltipId: `${address}`
         }}

@@ -215,6 +215,16 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     close: closeEstimationModal
   } = useModalize()
 
+  const closeEstimationModalAndDispatch = useCallback(() => {
+    dispatch({
+      type: 'TRANSFER_CONTROLLER_HAS_USER_PROCEEDED',
+      params: {
+        proceeded: false
+      }
+    })
+    closeEstimationModal()
+  }, [closeEstimationModal, dispatch])
+
   const openEstimationModalAndDispatch = useCallback(() => {
     dispatch({
       type: 'TRANSFER_CONTROLLER_HAS_USER_PROCEEDED',
@@ -694,7 +704,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
       <Estimation
         updateType="Transfer&TopUp"
         estimationModalRef={estimationModalRef}
-        closeEstimationModal={closeEstimationModal}
+        closeEstimationModal={closeEstimationModalAndDispatch}
         updateController={updateController}
         handleUpdateStatus={handleUpdateStatus}
         hasProceeded={hasProceeded}

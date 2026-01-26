@@ -97,7 +97,6 @@ const DappControl = ({
               {dapp.blacklisted === 'BLACKLISTED' && (
                 <View
                   style={{ position: 'absolute', right: -3, top: -2, zIndex: 1 }}
-                  // @ts-ignore
                   dataSet={createGlobalTooltipDataSet({
                     id: 'blacklisted-app-tooltip',
                     content: t('Blacklisted app!'),
