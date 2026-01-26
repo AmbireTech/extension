@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { memo } from 'react'
 import { View } from 'react-native'
 import Svg from 'react-native-svg'
 
@@ -48,4 +48,4 @@ export const Polycons: React.FC<PolyconProps> = ({
   )
 }
 
-export default Polycons
+export default memo(Polycons)

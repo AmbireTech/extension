@@ -1,7 +1,7 @@
 import React, { FC } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import SettingsIcon from '@common/assets/svg/SettingsIcon'
+import AvatarIcon from '@common/assets/svg/AvatarIcon'
 import Avatar from '@common/components/Avatar'
 import ControlOption from '@common/components/ControlOption'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
@@ -67,12 +67,13 @@ const AvatarOption: FC<{ type: AvatarType }> = ({ type }) => {
 
 const AvatarTypeControlOption = () => {
   const { t } = useTranslation()
+  const { theme } = useTheme()
 
   return (
     <ControlOption
       title={t('Avatar style')}
       description={t('Choose between Blockies, Jazzicons, or Polycons for your avatars.')}
-      renderIcon={<SettingsIcon />}
+      renderIcon={<AvatarIcon width={22} height={22} color={theme.primaryText} />}
     >
       {AVATAR_TYPES.map((type) => (
         <AvatarOption key={type} type={type} />

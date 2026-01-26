@@ -13,7 +13,7 @@ import useBackgroundService from '@web/hooks/useBackgroundService'
 
 const ThemeControlOption = () => {
   const { t } = useTranslation()
-  const { selectedThemeType } = useTheme()
+  const { selectedThemeType, theme } = useTheme()
   const { dispatch } = useBackgroundService()
 
   const THEME_SELECT_OPTIONS = useMemo(
@@ -48,11 +48,11 @@ const ThemeControlOption = () => {
       style={spacings.mbTy}
       renderIcon={
         selectedThemeType === THEME_TYPES.SYSTEM ? (
-          <SystemThemeIcon />
+          <SystemThemeIcon color={theme.primaryText} />
         ) : selectedThemeType === THEME_TYPES.DARK ? (
-          <DarkThemeIcon />
+          <DarkThemeIcon color={theme.primaryText} />
         ) : (
-          <LightThemeIcon />
+          <LightThemeIcon color={theme.primaryText} />
         )
       }
     >
