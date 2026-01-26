@@ -174,7 +174,6 @@ const AccountKey: React.FC<Props> = ({
           {!isEditing && (
             <>
               <View
-                // @ts-ignore
                 dataSet={createGlobalTooltipDataSet({
                   id: `key-${addr}-tooltip`,
                   content: addr
@@ -227,7 +226,6 @@ const AccountKey: React.FC<Props> = ({
                 The workaround is to set a wrapping <View> and make it the tooltip target
               */}
                   <View
-                    // @ts-ignore
                     dataSet={createGlobalTooltipDataSet({
                       id: `export-${addr}-tooltip`,
                       content: t('Export unavailable as this is a hardware wallet key'),

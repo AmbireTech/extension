@@ -150,7 +150,6 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
         )}
         {buttonState === 'soon' && (
           <View
-            // @ts-ignore
             dataSet={createGlobalTooltipDataSet({
               id: 'gas-tank-soon',
               content: t('Not available for hardware wallets yet.'),
@@ -173,7 +172,6 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
         )}
         {buttonState === 'error' && (
           <View
-            // @ts-ignore
             dataSet={createGlobalTooltipDataSet({
               id: 'gas-tank-error',
               content: t('Unable to load Gas Tank data.')

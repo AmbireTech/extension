@@ -55,7 +55,6 @@ const Option = ({
   return (
     <AnimatedPressable
       onPress={handleOnPress}
-      // @ts-ignore missing type, but the prop is valid
       dataSet={createGlobalTooltipDataSet({
         id: tooltipId,
         content: tooltip,

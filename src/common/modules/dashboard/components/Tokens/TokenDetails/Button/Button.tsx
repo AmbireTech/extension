@@ -57,7 +57,6 @@ const TokenDetailsButton: FC<Props> = ({
       <AnimatedPressable
         testID={testID}
         key={id}
-        // @ts-ignore missing type, but the prop is valid
         dataSet={tooltipText && { tooltipId }}
         style={[styles.action, animStyle, isDisabled && { opacity: 0.4 }]}
         // Purposely don't disable the button (but block the onPress action) in

@@ -154,11 +154,7 @@ const useGetTokenSelectProps = ({
       : getAndFormatTokenDetails(currentToken, networks, simulatedAccountOp)
 
     const formattedBalancesLabel = !!tokenInPortfolio && (
-      <View
-        // @ts-ignore missing in the types, but React Native Web supports it
-        dataSet={isPending && { tooltipId: tooltipIdPendingBalance }}
-        style={flexbox.alignEnd}
-      >
+      <View dataSet={isPending && { tooltipId: tooltipIdPendingBalance }} style={flexbox.alignEnd}>
         <Text
           fontSize={16}
           weight="medium"
@@ -224,7 +220,6 @@ const useGetTokenSelectProps = ({
     const label = getIsToTokenTypeGuard(currentToken) ? (
       <>
         <View
-          // @ts-ignore missing in the types, but React Native Web supports it
           dataSet={tooltipIdNotSupported && { tooltipId: tooltipIdNotSupported }}
           style={flexbox.flex1}
         >
