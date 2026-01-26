@@ -49,6 +49,7 @@ type Props = AccountKeyType & {
   account: Account
   keyIconColor?: string
   showExportImport?: boolean
+  containerStyle?: ViewStyle
 }
 
 const { isPopup } = getUiType()
@@ -62,6 +63,7 @@ const AccountKey: React.FC<Props> = ({
   type,
   isImported,
   style,
+  containerStyle,
   enableEditing = true,
   openAddAccountBottomSheet,
   account,
@@ -124,7 +126,8 @@ const AccountKey: React.FC<Props> = ({
         {
           backgroundColor:
             themeType === THEME_TYPES.DARK ? theme.primaryBackground : theme.secondaryBackground,
-          borderRadius: BORDER_RADIUS_PRIMARY
+          borderRadius: BORDER_RADIUS_PRIMARY,
+          ...containerStyle
         },
         isLast ? spacings.mb0 : spacings.mbTy
       ]}
