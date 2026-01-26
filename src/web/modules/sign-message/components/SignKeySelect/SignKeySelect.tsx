@@ -8,7 +8,7 @@ import AccountKey from '@common/components/AccountKey'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
-import { SPACING_LG } from '@common/styles/spacings'
+import spacings, { SPACING_LG } from '@common/styles/spacings'
 import { Portal } from '@gorhom/portal'
 import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 
@@ -53,7 +53,7 @@ const SigningKeySelect = ({
         <Text style={styles.title} fontSize={16} weight="medium" appearance="secondaryText">
           {type === 'signing' ? t('Select a signing key') : t('Select a fee payer key')}
         </Text>
-        <View>
+        <View style={spacings.pvMi}>
           {selectedAccountKeyStoreKeys.map((key, i) => {
             const isImported = keys.some((k) => k.addr === key.addr && k.type === key.type)
 
@@ -61,22 +61,29 @@ const SigningKeySelect = ({
               <Pressable
                 key={`${key.addr}-${key.type}`}
                 onPress={() => handleChooseKey(key.addr, key.type)}
-                style={({ hovered }: any) => ({
-                  backgroundColor: hovered ? theme.secondaryBackground : 'transparent'
-                })}
                 disabled={isSigning}
+                style={[spacings.pvMi, spacings.phMi, { backgroundColor: theme.primaryBackground }]}
               >
-                <AccountKey
-                  addr={key.addr}
-                  type={key.type}
-                  dedicatedToOneSA={key.dedicatedToOneSA}
-                  label={key.label || `Key ${i + 1}`}
-                  isLast={i === selectedAccountKeyStoreKeys.length - 1}
-                  isImported={isImported}
-                  enableEditing={false}
-                  account={account}
-                  keyIconColor="#000"
-                />
+                {({ hovered }: any) => (
+                  <AccountKey
+                    addr={key.addr}
+                    type={key.type}
+                    dedicatedToOneSA={key.dedicatedToOneSA}
+                    label={key.label || `Key ${i + 1}`}
+                    isImported={isImported}
+                    enableEditing={false}
+                    account={account}
+                    keyIconColor={theme.iconPrimary as string}
+                    isLast
+                    containerStyle={{
+                      // @ts-ignore
+                      border: hovered
+                        ? `1px solid ${String(theme.primaryBorder)}`
+                        : '1px solid transparent',
+                      backgroundColor: theme.secondaryBackground
+                    }}
+                  />
+                )}
               </Pressable>
             )
           })}
