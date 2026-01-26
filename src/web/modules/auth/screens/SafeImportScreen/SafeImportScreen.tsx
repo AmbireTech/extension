@@ -1,6 +1,6 @@
 import { getAddress, isAddress } from 'ethers'
 import React, { useCallback, useEffect, useState } from 'react'
-import { Controller, useForm } from 'react-hook-form'
+import { Controller, useForm, useWatch } from 'react-hook-form'
 import { View } from 'react-native'
 
 import SafeIcon from '@common/assets/svg/SafeIcon'
@@ -35,6 +35,10 @@ const SafeImportScreen = () => {
     mode: 'all',
     defaultValues: { safeAddress: safeInfo?.address || '' }
   })
+  const safeAddressValue = useWatch({
+    control,
+    name: 'safeAddress'
+  })
   const { goToPrevRoute, goToNextRoute } = useOnboardingNavigation()
   const { t } = useTranslation()
   const [safe, setSafe] = useState<string | null>(safeInfo?.address || '')
@@ -61,19 +65,20 @@ const SafeImportScreen = () => {
   }
 
   useEffect(() => {
-    if (isValid) {
-      const addr = getValues('safeAddress')
-      if (addr !== safe) setSafe(getAddress(addr))
-      if (addr !== safe && addr !== safeInfo?.address) {
-        dispatch({
-          type: 'SAFE_CONTROLLER_FIND_SAFE',
-          params: { safeAddress: addr }
-        })
-      }
-    } else {
+    const safeAddr = safeAddressValue.trim()
+    if (!safeAddr.length || !isAddress(safeAddr)) {
       setSafe('')
+      return
     }
-  }, [isValid, dispatch, getValues, safeInfo?.address, safe])
+
+    if (safeAddr !== safe) setSafe(getAddress(safeAddr))
+    if (safeAddr !== safe && safeAddr !== safeInfo?.address) {
+      dispatch({
+        type: 'SAFE_CONTROLLER_FIND_SAFE',
+        params: { safeAddress: safeAddr }
+      })
+    }
+  }, [dispatch, safeAddressValue, safeInfo?.address, safe])
 
   return (
     <TabLayoutContainer
@@ -152,7 +157,7 @@ const SafeImportScreen = () => {
               text={t('Confirm')}
               hasBottomSpacing={false}
               onPress={handleFormSubmit}
-              disabled={!isValid || !!importError}
+              disabled={!isValid || !!importError || statuses.findSafe === 'LOADING'}
             />
           </View>
         </Panel>
