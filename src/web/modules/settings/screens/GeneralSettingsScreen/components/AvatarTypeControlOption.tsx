@@ -71,8 +71,10 @@ const AvatarTypeControlOption = () => {
 
   return (
     <ControlOption
-      title={t('Avatar style')}
-      description={t('Choose between Blockies, Jazzicons, or Polycons for your avatars.')}
+      title={t('Account icon')}
+      description={t(
+        'Choose from three unique icon styles to help you identify accounts at a glance.'
+      )}
       renderIcon={<AvatarIcon width={22} height={22} color={theme.primaryText} />}
     >
       {AVATAR_TYPES.map((type) => (
