@@ -2,7 +2,7 @@ import React, { useContext, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
-import HelpIcon from '@common/assets/svg/HelpIcon'
+import DiscoveryIcon from '@common/assets/svg/DiscoveryIcon'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import SettingsPageHeader from '@web/modules/settings/components/SettingsPageHeader'
@@ -25,10 +25,8 @@ const OptOutsScreen = () => {
       <View style={spacings.mb2Xl}>
         <OptOutControlOption
           title={t('Tokens, NFTs & DeFi positions auto discovery')}
-          description={t(
-            'Should we fetch your tokens and defi positions via our own API that uses third party providers.'
-          )}
-          icon={<HelpIcon color={theme.primaryText} />}
+          description={t('Fetch tokens and positions via Ambire API, using third party providers')}
+          icon={<DiscoveryIcon color={theme.primaryText} width={24} height={24} />}
           flag="tokenAndDefiAutoDiscovery"
         />
       </View>
