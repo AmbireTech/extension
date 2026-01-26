@@ -14,6 +14,7 @@ import {
   ReadyToAddKeys
 } from '@ambire-common/interfaces/keystore'
 import { AddNetworkRequestParams, ChainId, Network } from '@ambire-common/interfaces/network'
+import { RPCProvider } from '@ambire-common/interfaces/provider'
 import { BuildRequest } from '@ambire-common/interfaces/requests'
 import { SignMessageUpdateParams } from '@ambire-common/interfaces/signMessage'
 import {
@@ -129,6 +130,15 @@ type MainControllerRemoveAccount = {
 }
 type ProvidersControllerToggleBatching = {
   type: 'PROVIDERS_CONTROLLER_TOGGLE_BATCHING'
+}
+type ProvidersControllerCallProviderAndSendResToUiAction = {
+  type: 'PROVIDERS_CONTROLLER_CALL_PROVIDER_AND_SEND_RES_TO_UI'
+  params: {
+    requestId: string
+    chainId: bigint
+    method: keyof RPCProvider
+    args: unknown[]
+  }
 }
 type MainControllerAccountPickerResetAction = {
   type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_RESET'
@@ -769,6 +779,7 @@ export type Action =
   | MainControllerRemoveAccount
   | RequestsControllerAddCallsUserRequestAction
   | ProvidersControllerToggleBatching
+  | ProvidersControllerCallProviderAndSendResToUiAction
   | MainControllerLockAction
   | RequestsControllerBuildRequestAction
   | RequestsControllerRemoveUserRequestAction

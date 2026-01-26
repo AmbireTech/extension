@@ -78,7 +78,7 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
   const StorageController = useStorageControllerState()
   const UiController = useUiControllerState()
   const NetworksController = useNetworksControllerState()
-  const ProvidersController = useProvidersControllerState()
+  const ProvidersController = useProvidersControllerState().state
   const AccountsController = useAccountsControllerState()
   const SelectedAccountController = useSelectedAccountControllerState()
   const WalletStateController = useWalletStateController()

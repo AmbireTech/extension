@@ -92,6 +92,10 @@ export const handleActions = async (
     case 'PROVIDERS_CONTROLLER_TOGGLE_BATCHING': {
       return await mainCtrl.providers.toggleBatching()
     }
+    case 'PROVIDERS_CONTROLLER_CALL_PROVIDER_AND_SEND_RES_TO_UI': {
+      mainCtrl.providers.callProviderAndSendResToUi(params)
+      break
+    }
     case 'MAIN_CONTROLLER_ADD_NETWORK': {
       return await mainCtrl.addNetwork(params)
     }
