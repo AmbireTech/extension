@@ -30,10 +30,11 @@ const SafeImportScreen = () => {
   const {
     control,
     handleSubmit,
-    formState: { errors, isValid }
+    formState: { errors, isValid },
+    reset
   } = useForm({
     mode: 'all',
-    defaultValues: { safeAddress: safeInfo?.address || '' }
+    defaultValues: { safeAddress: '' }
   })
   const [isLoading, setIsLoading] = useState(false)
   const { addToast } = useToast()
@@ -43,7 +44,7 @@ const SafeImportScreen = () => {
   })
   const { goToPrevRoute, goToNextRoute } = useOnboardingNavigation()
   const { t } = useTranslation()
-  const [safe, setSafe] = useState<string | null>(safeInfo?.address || '')
+  const [safe, setSafe] = useState<string | null>('')
 
   const { theme } = useTheme()
   const { dispatch } = useBackgroundService()
@@ -76,6 +77,7 @@ const SafeImportScreen = () => {
           ]
         }
       })
+      reset()
       goToNextRoute()
     } catch (e: any) {
       setIsLoading(false)
@@ -90,7 +92,7 @@ const SafeImportScreen = () => {
 
       throw e
     }
-  }, [goToNextRoute, addToast, dispatch, t, safe, safeInfo])
+  }, [goToNextRoute, addToast, dispatch, t, safe, safeInfo, reset])
 
   const handleValidation = (value: string) => {
     const trimmedValue = value.trim()
@@ -131,7 +133,7 @@ const SafeImportScreen = () => {
           onBackButtonPress={goToPrevRoute}
           title={t('Import safe address')}
           step={1}
-          totalSteps={2}
+          totalSteps={1}
         >
           <View style={[flexbox.justifySpaceBetween, flexbox.flex1]}>
             <View>
