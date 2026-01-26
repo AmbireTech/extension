@@ -1,0 +1,36 @@
+name: Dependency age gate
+
+on:
+  pull_request:
+  push:
+
+jobs:
+  dep-age:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Needed so `git show origin/main:yarn.lock` works reliably
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.12.0
+          cache: yarn
+
+      - name: Install dependencies (frozen lockfile)
+        run: yarn install --frozen-lockfile
+
+      - name: Dependency age check
+        shell: bash
+        run: |
+          if [[ "${GITHUB_REF_NAME}" == "main" ]]; then
+            echo "Running full dependency age check (mode=all) on main"
+            node check-dep-age.js --min-days 14 --mode all --concurrency 4 --timeout-ms 20000 --fail-on-unknown
+          else
+            echo "Running PR dependency age check (mode=changed) vs origin/main"
+            node check-dep-age.js --min-days 14 --mode changed --base-ref origin/main --concurrency 4 --timeout-ms 20000
+          fi
