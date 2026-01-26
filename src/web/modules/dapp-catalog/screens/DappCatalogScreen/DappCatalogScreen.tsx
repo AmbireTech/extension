@@ -109,8 +109,8 @@ const FilterButton = React.memo(
                 active
                   ? activeTextColor || theme.primaryBackground
                   : hovered
-                  ? hoveredTextColor || theme.primary
-                  : textColor || theme.secondaryText
+                    ? hoveredTextColor || theme.primary
+                    : textColor || theme.secondaryText
               }
             >
               {`${value.charAt(0).toUpperCase()}${value.slice(1)}`}
@@ -161,8 +161,8 @@ const DappCatalogScreen = () => {
           { name: 'url', weight: 0.2 },
           { name: 'description', weight: 0.1 }
         ],
+        shouldSort: false,
         threshold: 0.2, // more strict, better less results than too random
-        ignoreLocation: true,
         minMatchCharLength: 1
       })
 
@@ -195,7 +195,7 @@ const DappCatalogScreen = () => {
         setNetwork(null)
         return
       }
-      setNetwork(allNetworks.filter((n) => n.name === networkOption.value)[0])
+      setNetwork(allNetworks.filter((n) => n.name === networkOption.value)[0] ?? null)
       setValue('search', '')
     },
     [allNetworks, setValue]
