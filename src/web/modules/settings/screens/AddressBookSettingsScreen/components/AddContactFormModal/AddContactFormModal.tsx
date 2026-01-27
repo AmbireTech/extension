@@ -5,6 +5,7 @@ import { View } from 'react-native'
 import { Modalize } from 'react-native-modalize'
 
 import { AddressStateOptional } from '@ambire-common/interfaces/domains'
+import { Validation } from '@ambire-common/services/validations'
 import AddressInput from '@common/components/AddressInput'
 import BottomSheet from '@common/components/BottomSheet'
 import DualChoiceModal from '@common/components/DualChoiceModal'
@@ -69,18 +70,24 @@ const AddContactFormModal = ({ id, sheetRef, closeBottomSheet }: Props) => {
     trigger('addressState.ensAddress')
   }, [trigger])
 
-  const customValidation = useMemo(() => {
+  const overwriteValidation: Validation | null = useMemo(() => {
     const address = addressState.ensAddress || addressState.fieldValue
 
     if (accounts.some((account) => account.addr.toLowerCase() === address.toLowerCase())) {
-      return t('This address is already in your account list')
+      return {
+        severity: 'error',
+        message: t('This address is already in your account list')
+      }
     }
 
     if (contacts.some((contact) => contact.address.toLowerCase() === address.toLowerCase())) {
-      return t('This address is already in your Address Book')
+      return {
+        severity: 'error',
+        message: t('This address is already in your Address Book')
+      }
     }
 
-    return ''
+    return null
   }, [accounts, addressState.ensAddress, addressState.fieldValue, contacts, t])
 
   const handleCacheResolvedDomain = useCallback(
@@ -102,7 +109,7 @@ const AddContactFormModal = ({ id, sheetRef, closeBottomSheet }: Props) => {
     addressState,
     setAddressState,
     handleRevalidate,
-    overwriteError: customValidation,
+    overwriteValidation,
     handleCacheResolvedDomain
   })
 
