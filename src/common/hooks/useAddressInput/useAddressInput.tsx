@@ -8,8 +8,19 @@ import getAddressInputValidation from './utils/validation'
 
 interface Props {
   addressState: AddressState
+  /**
+   * Used to overwrite the address state field value that is
+   * used for validation. Because there is controller state (which takes a while to update)
+   * and useState state (which is updated instantly), and the useState state is used
+   * for ENS resolution, we may want to delay the validation until the controller state
+   * is updated.
+   */
   overwriteValidationFieldValue?: string
   setAddressState: (newState: AddressStateOptional) => void
+  /**
+   * Used to overwrite the default validation logic.
+   * Example: preventing adding an address that is already in the address book.
+   */
   overwriteValidation?: Validation | null
   handleCacheResolvedDomain: (
     address: string,
