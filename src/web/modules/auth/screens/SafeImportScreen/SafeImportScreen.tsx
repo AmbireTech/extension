@@ -62,8 +62,9 @@ const SafeImportScreen = () => {
             {
               addr: safe,
               associatedKeys: safeInfo.owners,
-              initialPrivileges: [], // not applicable for safe accounts,
-              creation: {
+              initialPrivileges: safeInfo.owners.map((o) => [o, '0x01']),
+              creation: null,
+              safeCreation: {
                 factoryAddr: safeInfo.factoryAddr,
                 singleton: safeInfo.singleton,
                 setupData: safeInfo.setupData,
