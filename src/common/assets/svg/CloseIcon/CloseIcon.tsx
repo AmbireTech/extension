@@ -7,6 +7,7 @@ interface Props extends SvgProps {
   width?: number
   height?: number
   strokeWidth?: string
+  color?: string
 }
 
 const CloseIcon: React.FC<Props> = ({
