@@ -357,7 +357,13 @@ const Estimation = ({
     (!hasEstimation && signAccountOpState.estimation.estimationRetryError) ||
     !payValue
   ) {
-    return <EstimationSkeleton />
+    return (
+      <EstimationSkeleton
+        // Overwrite the appearance in Swap/Transfer as the background behind the skeleton is different
+        // and it isn't visible in dark mode otherwise
+        appearance={updateType === 'Requests' ? undefined : 'tertiaryBackground'}
+      />
+    )
   }
 
   if (isSponsored) {
