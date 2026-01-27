@@ -1,5 +1,5 @@
 import React, { memo, useEffect, useMemo, useState } from 'react'
-import { View } from 'react-native'
+import { Image, ImageSourcePropType, View } from 'react-native'
 
 import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
 import BadgeIcon from '@common/assets/svg/BadgeIcon'
@@ -11,11 +11,14 @@ import { APP_VERSION } from '@common/config/env'
 import HeaderBackButton from '@common/modules/header/components/HeaderBackButton'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import text from '@common/styles/utils/text'
 import { openInTab } from '@web/extension-services/background/webapi/tab'
 import useHover, { AnimatedPressable } from '@web/hooks/useHover'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import { getUiType } from '@web/utils/uiType'
 
+import rewardsPageBackground from '../../../assets/images/rewardsPageBackground.png'
+import userBlacklistedIcon from '../../../assets/images/userBlacklisted.png'
 import RewardsAndStats from '../components/RewardsAndStats'
 import StatItem from '../components/StatItem'
 import StatsHeading from '../components/StatsHeading'
@@ -150,7 +153,31 @@ const ExtensionRewardsScreen = () => {
   }, [account, projectedRewardsStats])
 
   return (
-    <View style={[flexbox.flex1, { backgroundColor: '#101114' }, spacings.ph, spacings.pv]}>
+    <View
+      style={{
+        ...flexbox.flex1,
+        ...spacings.ph,
+        ...spacings.pv,
+        backgroundColor: '#101114'
+      }}
+    >
+      {projectedRewardsStats?.reasonToNotDisplayProjectedRewards && (
+        <View
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.5)'
+          }}
+        >
+          <Image
+            source={rewardsPageBackground as ImageSourcePropType}
+            style={{ width: '100%', height: '100%' }}
+          />
+        </View>
+      )}
       <View
         style={{
           maxWidth: 540,
@@ -203,30 +230,71 @@ const ExtensionRewardsScreen = () => {
             <OpenIcon width={18} height={18} color="#8D93AC" />
           </AnimatedPressable>
         </View>
-        {!isProjectedRewardsLoading ? (
-          <View
-            style={{
-              ...spacings.phLg,
-              ...spacings.pvLg,
-              backgroundColor: '#191A1F',
-              borderWidth: 1,
-              borderColor: '#6A6F8633',
-              borderRadius: 16
-            }}
-          >
-            <StatsHeading />
-            <View style={spacings.mb}>
-              {sections.map((stat, index) => (
-                <StatItem key={stat.id} {...stat} isLast={index === sections.length - 1} />
-              ))}
+        <View
+          style={{
+            height: '100%',
+            top: '100px'
+          }}
+        >
+          {!isProjectedRewardsLoading ? (
+            <View
+              style={{
+                ...spacings.phLg,
+                ...spacings.pvLg,
+                backgroundColor: '#191A1F',
+                borderWidth: 1,
+                borderColor: '#6A6F8633',
+                borderRadius: 16
+              }}
+            >
+              {projectedRewardsStats?.reasonToNotDisplayProjectedRewards ? (
+                <View
+                  style={{
+                    ...spacings.ptLg,
+                    ...spacings.prLg,
+                    ...spacings.plLg,
+                    alignItems: 'center'
+                  }}
+                >
+                  <View style={spacings.mbLg}>
+                    <Image
+                      source={userBlacklistedIcon as ImageSourcePropType}
+                      style={{ width: '54px', height: '54px' }}
+                    />
+                  </View>
+                  <Text
+                    style={{
+                      ...spacings.mbLg,
+                      ...text.center,
+                      color: '#8E98A8',
+                      fontWeight: '500',
+                      fontSize: 16,
+                      lineHeight: 24,
+                      letterSpacing: 0
+                    }}
+                  >
+                    Legacy accounts are not eligible for Ambire Rewards. Switch to a brand new
+                    account.
+                  </Text>
+                </View>
+              ) : (
+                <>
+                  <StatsHeading />
+                  <View style={spacings.mb}>
+                    {sections.map((stat, index) => (
+                      <StatItem key={stat.id} {...stat} isLast={index === sections.length - 1} />
+                    ))}
+                  </View>
+                  <RewardsAndStats
+                    pastTotalScore={pastProjectedRewardsScores?.scores.totalScore ?? null}
+                  />
+                </>
+              )}
             </View>
-            <RewardsAndStats
-              pastTotalScore={pastProjectedRewardsScores?.scores.totalScore ?? null}
-            />
-          </View>
-        ) : (
-          <SkeletonLoaderWeb width="100%" height={420} style={{ backgroundColor: '#191A1F' }} />
-        )}
+          ) : (
+            <SkeletonLoaderWeb width="100%" height={420} style={{ backgroundColor: '#191A1F' }} />
+          )}
+        </View>
       </View>
     </View>
   )
