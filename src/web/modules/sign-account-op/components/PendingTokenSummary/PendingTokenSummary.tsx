@@ -1,5 +1,6 @@
 import { formatUnits } from 'ethers'
 import React, { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import { TokenResult } from '@ambire-common/libs/portfolio/interfaces'
@@ -21,6 +22,7 @@ interface Props {
   hasBottomSpacing?: boolean
 }
 const PendingTokenSummary = ({ token, chainId, hasBottomSpacing = true }: Props) => {
+  const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
   const tokenId = getTokenId(token)
   const { formattedAmount, fullAmount } = useMemo(() => {
@@ -67,6 +69,15 @@ const PendingTokenSummary = ({ token, chainId, hasBottomSpacing = true }: Props)
     return theme.secondaryText
   }, [token.simulationAmount, theme])
 
+  const suspiciousTokenTooltipContent = useMemo(() => {
+    const reason = token.flags.suspectedType
+    if (!reason) return null
+
+    if (reason === 'suspected') return t('This may be a suspicious token.')
+
+    return null
+  }, [token.flags.suspectedType, t])
+
   return (
     <View style={[styles.container, !hasBottomSpacing && spacings.mb0]}>
       <View style={spacings.mrTy}>
@@ -102,7 +113,14 @@ const PendingTokenSummary = ({ token, chainId, hasBottomSpacing = true }: Props)
         {!!priceInUsd && <Text fontSize={16} weight="medium">{` ($${priceInUsd}) `}</Text>}
       </Text>
       {token.flags.suspectedType && (
-        <View style={spacings.mlMi}>
+        <View
+          // @ts-ignore
+          style={[spacings.mlMi, { cursor: 'pointer' }]}
+          dataSet={createGlobalTooltipDataSet({
+            id: `token-amount-${tokenId}`,
+            content: suspiciousTokenTooltipContent ?? undefined
+          })}
+        >
           <WarningFilledIcon />
         </View>
       )}

@@ -9,7 +9,7 @@ import useControllerState from '@web/hooks/useControllerState'
 const MainControllerStateContext = createContext<IMainController>({} as IMainController)
 
 const MainControllerStateProvider: React.FC<any> = ({ children }) => {
-  const controller = 'main'
+  const controller = 'MainController'
   const state = useControllerState(controller)
   const { dispatch } = useBackgroundService()
   useEffect(() => {

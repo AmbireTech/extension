@@ -230,6 +230,11 @@ const routesConfig: RouteConfig = {
       default: i18n.t('Get Encryption Public Key Request')
     })
   },
+  [ROUTES.decryptRequest]: {
+    route: ROUTES.getEncryptionPublicKeyRequest,
+    title: Platform.select({ default: i18n.t('Decrypt Request') }),
+    name: Platform.select({ default: i18n.t('Decrypt Request') })
+  },
   [ROUTES.swap]: {
     route: ROUTES.swap,
     title: Platform.select({
@@ -393,6 +398,11 @@ const routesConfig: RouteConfig = {
     route: ROUTES.rewards,
     title: Platform.select({ default: i18n.t('Ambire Rewards') }),
     name: Platform.select({ default: i18n.t('Ambire Rewards') })
+  },
+  [ROUTES.receive]: {
+    route: ROUTES.receive,
+    title: Platform.select({ default: i18n.t('Receive Assets') }),
+    name: Platform.select({ default: i18n.t('Receive Assets') })
   }
 }
 

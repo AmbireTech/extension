@@ -300,6 +300,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
       ...addressState,
       fieldValue: addressStateFieldValue
     },
+    overwriteValidationFieldValue: addressState.fieldValue,
     setAddressState,
     overwriteError:
       state?.isInitialized && !validationFormMsgs.recipientAddress.success

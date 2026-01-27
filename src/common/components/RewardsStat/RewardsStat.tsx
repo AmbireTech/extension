@@ -11,10 +11,11 @@ import WalletIcon from '@common/assets/svg/WalletIcon2'
 
 type Stat = {
   id: keyof Omit<ProjectedRewardsStats, 'multipliers'>
-  score: number | string
+  score: number
   label: string
   explanation: string
   value: string | null
+  scoreChange?: number
 }
 
 const SECTIONS: Omit<Stat, 'score' | 'value'>[] = [
@@ -84,6 +85,10 @@ const getValueFromKey = (id: Stat['id'], stats: ProjectedRewardsStats | null): s
   }
 }
 
+const formatScore = (id: Stat['id'], score: Stat['score']) => {
+  return id === 'multiplier' ? `${Math.floor(score * 1000) / 1000}x` : score.toFixed(0)
+}
+
 const Icon = ({ id }: { id: Stat['id'] }) => {
   switch (id) {
     case 'balanceScore':
@@ -103,6 +108,6 @@ const Icon = ({ id }: { id: Stat['id'] }) => {
   }
 }
 
-export { SECTIONS, getValueFromKey, Icon }
+export { SECTIONS, getValueFromKey, Icon, formatScore }
 
 export type { Stat }

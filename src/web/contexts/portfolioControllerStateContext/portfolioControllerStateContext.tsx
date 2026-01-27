@@ -10,7 +10,7 @@ const PortfolioControllerStateContext = createContext<IPortfolioController>(
 )
 
 const PortfolioControllerStateProvider: React.FC<any> = ({ children }) => {
-  const controller = 'portfolio'
+  const controller = 'PortfolioController'
   const state = useControllerState(controller)
   const { dispatch } = useBackgroundService()
 

@@ -1,8 +1,6 @@
 import React, { useMemo } from 'react'
 
-import InfoIcon from '@common/assets/svg/InfoIcon'
-import { getValueFromKey, Icon, SECTIONS, Stat } from '@common/components/RewardsStat'
-import Tooltip from '@common/components/Tooltip'
+import { formatScore, getValueFromKey, Icon, SECTIONS, Stat } from '@common/components/RewardsStat'
 import { faChevronDown } from '@fortawesome/free-solid-svg-icons/faChevronDown'
 import { faTrophy } from '@fortawesome/free-solid-svg-icons/faTrophy'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -35,13 +33,14 @@ const Dashboard = () => {
   }, [connectedAccount, season2LeaderboardData, userRewardsStats])
 
   const sections: Stat[] = SECTIONS.map((section) => {
-    let score
-    if (section.id === 'multiplier') {
-      score = userRewardsStats ? `${userRewardsStats[section.id]}x` : 0
-    } else {
-      score = userRewardsStats ? userRewardsStats[section.id].toFixed(0) : 0
+    let score = 0
+    if (userRewardsStats) {
+      if (section.id === 'multiplier') score = userRewardsStats[section.id]
+      else score = Math.floor(userRewardsStats[section.id])
     }
-    let explanation
+
+    let explanation = section.explanation
+
     if (section.id === 'multiplier') {
       explanation = `You receive 1.06X multiplier of your score for belonging to any of the following:
 - Have pledged to the Trustless manifesto (Soon)
@@ -56,16 +55,17 @@ const Dashboard = () => {
           : ''
       }Have at least one Ethereum transaction per week, all weeks during the season, except up to 2`
     }
+
     return {
       ...section,
-      explanation: explanation || section.explanation,
+      explanation,
       score,
       value: getValueFromKey(section.id, userRewardsStats)
     }
   })
 
   return (
-    <Page containerSize="responsive" contentClassName={styles.pageContent}>
+    <Page containerSize="responsive" contentClassName={styles.pageContent} showClaimRewardsModal>
       <div className={styles.wrapper}>
         <div className={styles.headerWrapper}>
           <h2 className={styles.title}>Your Rewards</h2>
@@ -104,7 +104,7 @@ const Dashboard = () => {
                     >
                       <div className={styles.score}>
                         <div className={styles.scoreBadge}>
-                          <span className={styles.scoreText}>{score}</span>
+                          <span className={styles.scoreText}>{formatScore(id, score)}</span>
                         </div>
                       </div>
                       <div className={styles.criteria}>
@@ -112,34 +112,13 @@ const Dashboard = () => {
                           <Icon id={id} />
                         </div>
                         <span className={styles.label}>{label}</span>
-                        <InfoIcon
-                          width={12}
-                          height={12}
-                          color="currentColor"
-                          className={styles.infoIcon}
-                          data-tooltip-id={`${id}-info-tooltip`}
-                        />
-                        <Tooltip
-                          style={{
-                            backgroundColor: '#101114',
-                            color: '#F4F4F7',
-                            fontFamily: 'FunnelDisplay',
-                            fontSize: 11,
-                            lineHeight: '16px',
-                            fontWeight: 300,
-                            maxWidth: 244,
-                            boxShadow: '0px 0px 12px 0px #191B20',
-                            whiteSpace: 'pre-wrap'
-                          }}
-                          place="bottom"
-                          id={`${id}-info-tooltip`}
-                          content={explanation}
-                        />
                       </div>
                       <span className={styles.value}>{value}</span>
                       <FontAwesomeIcon className={`${styles.chevronIcon}`} icon={faChevronDown} />
                     </button>
-                    <div className={styles.description}>{explanation}</div>
+                    <div className={styles.description}>
+                      <div>{explanation}</div>
+                    </div>
                   </div>
                 )
               )}

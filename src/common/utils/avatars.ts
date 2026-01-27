@@ -5,8 +5,8 @@ import Jazzicon from '@raugfer/jazzicon'
 
 type AvatarType = 'ens' | 'jazz' | 'blockies' | 'legacy'
 
-const getAvatarType = (pfp: string, canBeEns?: boolean): AvatarType => {
-  if (canBeEns) return 'ens'
+const getAvatarType = (pfp: string, ensAvatar?: string | null): AvatarType => {
+  if (ensAvatar) return 'ens'
 
   if (isAddress(pfp)) {
     return 'jazz'
@@ -40,7 +40,7 @@ const getAvatarColors = (pfp: string): AvatarColors => {
       return FALLBACK_COLORS
     }
 
-    return [colors[2], colors[1], colors[0]]
+    return [colors[2]!, colors[1]!, colors[0]!]
   }
 
   return FALLBACK_COLORS

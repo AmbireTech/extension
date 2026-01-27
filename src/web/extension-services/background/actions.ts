@@ -396,6 +396,10 @@ type KeystoreControllerAddTempSeedAction = {
   type: 'KEYSTORE_CONTROLLER_ADD_TEMP_SEED'
   params: Omit<KeystoreSeed, 'id' | 'label'>
 }
+type KeystoreControllerGenerateTempSeedAction = {
+  type: 'KEYSTORE_CONTROLLER_GENERATE_TEMP_SEED'
+  params: { extraEntropy?: string }
+}
 type KeystoreControllerUpdateSeedAction = {
   type: 'KEYSTORE_CONTROLLER_UPDATE_SEED'
   params: {
@@ -441,6 +445,14 @@ type KeystoreControllerSendSeedToUiAction = {
 }
 type KeystoreControllerSendTempSeedToUiAction = {
   type: 'KEYSTORE_CONTROLLER_SEND_TEMP_SEED_TO_UI'
+}
+type KeystoreControllerSendDecryptedMessageToUiAction = {
+  type: 'KEYSTORE_CONTROLLER_SEND_DECRYPTED_MESSAGE_TO_UI'
+  params: {
+    encryptedMessage: string
+    keyAddr: Key['addr']
+    keyType: Key['type']
+  }
 }
 
 type EmailVaultControllerGetInfoAction = {
@@ -785,12 +797,14 @@ export type Action =
   | PortfolioControllerCheckToken
   | KeystoreControllerAddSecretAction
   | KeystoreControllerAddTempSeedAction
+  | KeystoreControllerGenerateTempSeedAction
   | KeystoreControllerUpdateSeedAction
   | KeystoreControllerUnlockWithSecretAction
   | KeystoreControllerResetErrorStateAction
   | KeystoreControllerChangePasswordAction
   | KeystoreControllerChangePasswordFromRecoveryAction
   | KeystoreControllerSendPrivateKeyToUiAction
+  | KeystoreControllerSendDecryptedMessageToUiAction
   | EmailVaultControllerGetInfoAction
   | EmailVaultControllerUploadKeystoreSecretAction
   | EmailVaultControllerCancelConfirmationAction

@@ -3,18 +3,26 @@ import React from 'react'
 // Calculate the position on the chart based on volume
 const calculateChartPosition = (volume: number) => {
   // Start at 1m because the first cell is smaller
-  const X_AT_1_VOLUME = 498
-  const X_AT_0_VOLUME = 538
+  const X_AT_1_VOLUME = 497
+  const X_AT_0_VOLUME = 536
   const Y_AT_0_VOLUME = 415
-  const X_AT_3_MIL_VOLUME = 368
-  const Y_AT_3_MIL_VOLUME = 337
+  const X_AT_3_MIL_VOLUME = 369
+  const Y_AT_3_MIL_VOLUME = 336
+  const CHART_VOLUME_CAP = 10_000_000
 
   const INCREMENT_X_PER_VOLUME_UNIT = (X_AT_1_VOLUME - X_AT_3_MIL_VOLUME) / (2 * 1_000_000)
   const BREAKPOINTS_TO_INCREMENT_Y = [3, 5, 10]
   const Y_INCREMENT_BY = Y_AT_0_VOLUME - Y_AT_3_MIL_VOLUME
 
-  const getX = (vol: number) => {
-    return Math.min(X_AT_0_VOLUME, X_AT_1_VOLUME - vol * INCREMENT_X_PER_VOLUME_UNIT)
+  const getX = (_vol: number) => {
+    if (_vol <= 1_000_000) {
+      const INCREMENT_X_PER_VOLUME_UNIT_BEFORE_1M = (X_AT_0_VOLUME - X_AT_1_VOLUME) / 1_000_000
+      return X_AT_0_VOLUME - _vol * INCREMENT_X_PER_VOLUME_UNIT_BEFORE_1M
+    }
+
+    const volAfter1M = Math.min(_vol, CHART_VOLUME_CAP) - 1_000_000
+
+    return Math.min(X_AT_0_VOLUME, X_AT_1_VOLUME - volAfter1M * INCREMENT_X_PER_VOLUME_UNIT)
   }
 
   const getY = (vol: number) => {
@@ -32,8 +40,7 @@ const calculateChartPosition = (volume: number) => {
   }
 
   return {
-    // - one mil because the chart starts at 1M
-    x: getX(volume - 1_000_000),
+    x: getX(volume),
     y: getY(volume)
   }
 }

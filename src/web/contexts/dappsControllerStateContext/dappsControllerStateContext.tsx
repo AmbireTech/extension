@@ -64,10 +64,10 @@ const DappsControllerStateProvider: React.FC<any> = ({ children }) => {
     [currentDapp]
   )
 
-  const controller = 'dapps'
+  const controller = 'DappsController'
   const state = useControllerState(controller, dappsControllerStateCallback)
   useEffect(() => {
-    dispatch({ type: 'INIT_CONTROLLER_STATE', params: { controller: 'dapps' } })
+    dispatch({ type: 'INIT_CONTROLLER_STATE', params: { controller: 'DappsController' } })
   }, [dispatch])
 
   return (

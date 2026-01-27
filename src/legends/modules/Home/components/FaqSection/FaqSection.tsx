@@ -21,6 +21,16 @@ const FaqSection = () => {
       answer: 'No, only Ambire Wallet Extension users are eligible to participate.'
     },
     {
+      question: 'Which tokens, networks, and protocols are eligible?',
+      answer: `To calculate user balance, we are using DeBank portfolio API for the following networks: 
+Ethereum, Optimism, Base, Arbitrum, and BNB. Additional networks might be subsequently announced.`
+    },
+    {
+      question: 'How is Swap&Bridge volume calculated?',
+      answer:
+        "For Swap & Bridge volume, the amount swapped from the source chain is counted. e.g., if you bridge $1000 from Optimism to Blast, this will count towards your Swap&Bridge volume. If you bridge the other way round, this won't count as volume eligible for Ambire Rewards."
+    },
+    {
       question: 'Can I use my existing account?',
       answer: `Yes. You can participate with any account you import or create in the Ambire Wallet extension — this includes existing hot EOAs, hardware wallets, and new Ambire (V2) accounts created in the extension.
 

@@ -9,7 +9,7 @@ import useMainControllerState from '@web/hooks/useMainControllerState'
 const PhishingControllerStateContext = createContext<IPhishingController>({} as IPhishingController)
 
 const PhishingControllerStateProvider: React.FC<any> = ({ children }) => {
-  const controller = 'phishing'
+  const controller = 'PhishingController'
   const state = useControllerState(controller)
   const { dispatch } = useBackgroundService()
   const mainState = useMainControllerState()

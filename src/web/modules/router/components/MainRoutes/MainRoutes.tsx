@@ -12,6 +12,7 @@ import AccountSelectScreen from '@web/modules/account-select/screens/AccountSele
 import AddOrUpdateNetworkScreen from '@web/modules/action-requests/screens/AddOrUpdateNetworkScreen'
 import BenzinScreen from '@web/modules/action-requests/screens/BenzinScreen'
 import DappConnectScreen from '@web/modules/action-requests/screens/DappConnectScreen'
+import DecryptRequestScreen from '@web/modules/action-requests/screens/DecryptRequestScreen'
 import GetEncryptionPublicKeyRequestScreen from '@web/modules/action-requests/screens/GetEncryptionPublicKeyRequestScreen'
 import SwitchAccountScreen from '@web/modules/action-requests/screens/SwitchAccountScreen'
 import WatchTokenRequestScreen from '@web/modules/action-requests/screens/WatchTokenRequestScreen'
@@ -32,7 +33,9 @@ import LedgerConnectScreen from '@web/modules/hardware-wallet/screens/LedgerConn
 import KeyStoreEmailRecoveryScreen from '@web/modules/keystore/screens/KeyStoreEmailRecoveryScreen/KeyStoreEmailRecoveryScreen'
 import KeyStoreEmailRecoverySetNewPasswordScreen from '@web/modules/keystore/screens/KeyStoreEmailRecoverySetNewPasswordScreen'
 import KeyStoreSetupScreen from '@web/modules/keystore/screens/KeyStoreSetupScreen'
+import NetworksConfiguration from '@web/modules/network-settings/screens'
 import NetworksScreen from '@web/modules/networks/screens'
+import ReceiveScreen from '@web/modules/receive'
 import AuthenticatedRoute from '@web/modules/router/components/AuthenticatedRoute'
 import KeystoreUnlockedRoute from '@web/modules/router/components/KeystoreUnlockedRoute'
 import NavMenu from '@web/modules/router/components/NavMenu'
@@ -75,6 +78,7 @@ const MainRoutes = () => {
       <Route path={WEB_ROUTES.noConnection} element={<NoConnectionScreen />} />
 
       <Route element={<TabOnlyRoute />}>
+        <Route path={WEB_ROUTES.networksConfiguration} element={<NetworksConfiguration />} />
         <Route path={WEB_ROUTES.keyStoreSetup} element={<KeyStoreSetupScreen />} />
         <Route path={WEB_ROUTES.keyStoreEmailRecovery} element={<KeyStoreEmailRecoveryScreen />} />
         <Route
@@ -178,9 +182,11 @@ const MainRoutes = () => {
             path={WEB_ROUTES.getEncryptionPublicKeyRequest}
             element={<GetEncryptionPublicKeyRequestScreen />}
           />
+          <Route path={WEB_ROUTES.decryptRequest} element={<DecryptRequestScreen />} />
 
           <Route path={WEB_ROUTES.menu} element={<NavMenu />} />
           <Route path={WEB_ROUTES.accountSelect} element={<AccountSelectScreen />} />
+          <Route path={WEB_ROUTES.receive} element={<ReceiveScreen />} />
           <Route path={WEB_ROUTES.apps} element={<DappCatalogScreen />} />
           <Route path={WEB_ROUTES.networks} element={<NetworksScreen />} />
           <Route path={WEB_ROUTES.rewards} element={<ExtensionRewardsScreen />} />

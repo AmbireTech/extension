@@ -2,7 +2,7 @@
 import 'reflect-metadata'
 
 import { ethErrors } from 'eth-rpc-errors'
-import { isAddress, toBeHex, TransactionReceipt } from 'ethers'
+import { EthersError, getAddress, isAddress, toBeHex, TransactionReceipt } from 'ethers'
 import cloneDeep from 'lodash/cloneDeep'
 import { nanoid } from 'nanoid'
 
@@ -789,10 +789,80 @@ export class ProviderController {
   ])
   walletWatchAsset = () => true
 
-  @Reflect.metadata('ACTION_REQUEST', ['GetEncryptionPublicKey', false])
-  ethGetEncryptionPublicKey = ({ requestRes }: ProviderRequest) => ({
-    result: requestRes
-  })
+  @Reflect.metadata('ACTION_REQUEST', [
+    'GetEncryptionPublicKey',
+    ({ request, mainCtrl }: { request: ProviderRequest; mainCtrl: MainController }) => {
+      let incomingAddress
+      try {
+        incomingAddress = getAddress(request.params?.[0])
+      } catch (e: any) {
+        throw ethErrors.rpc.invalidParams(e?.shortMessage || 'invalid address')
+      }
+
+      const addressesMismatch = incomingAddress !== mainCtrl.selectedAccount.account?.addr
+      if (addressesMismatch)
+        throw ethErrors.rpc.invalidParams(
+          'Account mismatch. The encryption public key request does not match the currently selected account.'
+        )
+
+      return false // Return false to allow request window to open
+    }
+  ])
+  ethGetEncryptionPublicKey = async ({ requestRes }: ProviderRequest) => {
+    const { keyAddr, keyType } = requestRes
+    // should never happen (because the UI blocks it), but just in case
+    if (!keyAddr || !keyType) {
+      const message = `Missing required parameters: keyAddr: ${keyAddr}, keyType: ${keyType}.`
+      throw ethErrors.rpc.invalidParams(message)
+    }
+
+    const signer = await this.mainCtrl.keystore.getSigner(keyAddr, keyType)
+    // should never happen (because the UI blocks it), but just in case
+    if (!signer.getEncryptionPublicKey) {
+      const message = `This account uses a ${keyType} key, which does not support getting encryption public key.`
+      throw ethErrors.rpc.invalidParams(message)
+    }
+
+    return signer.getEncryptionPublicKey()
+  }
+
+  @Reflect.metadata('ACTION_REQUEST', [
+    'Decrypt',
+    ({ request, mainCtrl }: { request: ProviderRequest; mainCtrl: MainController }) => {
+      let incomingAddress
+      try {
+        incomingAddress = getAddress(request.params?.[1])
+      } catch (e: any) {
+        throw ethErrors.rpc.invalidParams(e?.shortMessage || 'invalid address')
+      }
+
+      const addressesMismatch = incomingAddress !== mainCtrl.selectedAccount.account?.addr
+      if (addressesMismatch)
+        throw ethErrors.rpc.invalidParams(
+          'Account mismatch. The decryption request does not match the currently selected account.'
+        )
+
+      if (!request.params?.[0] || typeof request.params?.[0] !== 'string')
+        throw ethErrors.rpc.invalidParams('The encrypted message is required and must be a string')
+
+      return false // Return false to allow request window to open
+    }
+  ])
+  ethDecrypt = ({ requestRes }: ProviderRequest) => {
+    const { keyAddr, keyType, encryptedMessage } = requestRes
+    // should never happen (because the UI blocks it), but just in case
+    if (!keyAddr || !keyType || !encryptedMessage) {
+      const message = `Missing required parameters: keyAddr: ${keyAddr}, keyType: ${keyType}, encryptedMessage: ${encryptedMessage}.`
+      throw ethErrors.rpc.invalidParams(message)
+    }
+
+    try {
+      return this.mainCtrl.keystore.decryptMessage({ keyAddr, keyType, encryptedMessage })
+    } catch (e) {
+      const message = `Failed to decrypt message. Error details: <${e}>`
+      throw ethErrors.provider.unauthorized(message)
+    }
+  }
 
   walletRequestPermissions = ({ params: permissions, session }: DappProviderRequest) => {
     const result: Web3WalletPermission[] = []

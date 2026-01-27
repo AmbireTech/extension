@@ -25,6 +25,7 @@ import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components
 import { POPUP_WIDTH } from '@web/constants/spacings'
 import { openInternalPageInTab } from '@web/extension-services/background/webapi/tab'
 import useBackgroundService from '@web/hooks/useBackgroundService'
+import useEmailVaultControllerState from '@web/hooks/useEmailVaultControllerState'
 import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import { getUiType } from '@web/utils/uiType'
@@ -44,7 +45,8 @@ const KeyStoreUnlockScreen = () => {
   const { styles, theme } = useTheme(getStyles)
   const { navigate } = useNavigation()
   const { dispatch } = useBackgroundService()
-  const keystoreState = useKeystoreControllerState()
+  const { hasKeystoreRecovery } = useEmailVaultControllerState()
+  const { isUnlocked, statuses, errorMessage } = useKeystoreControllerState()
   const { requestWindow } = useRequestsControllerState()
   const { height } = useElementSize(contentContainerRef)
   const {
@@ -65,16 +67,16 @@ const KeyStoreUnlockScreen = () => {
   const passwordFieldValue = watch('password')
 
   useEffect(() => {
-    if (keystoreState.errorMessage) setError('password', { message: keystoreState.errorMessage })
-  }, [keystoreState.errorMessage, setError])
+    if (errorMessage) setError('password', { message: errorMessage })
+  }, [errorMessage, setError])
 
   useEffect(() => {
-    if (keystoreState.isUnlocked) navigate('/')
-  }, [navigate, keystoreState])
+    if (isUnlocked) navigate('/')
+  }, [navigate, isUnlocked])
 
   const disableSubmit = useMemo(
-    () => keystoreState.statuses.unlockWithSecret !== 'INITIAL' || !!keystoreState.errorMessage,
-    [keystoreState.statuses.unlockWithSecret, keystoreState.errorMessage]
+    () => statuses.unlockWithSecret !== 'INITIAL' || !!errorMessage,
+    [statuses.unlockWithSecret, errorMessage]
   )
 
   const passwordFieldError = useMemo(() => {
@@ -204,7 +206,7 @@ const KeyStoreUnlockScreen = () => {
                   autoFocus={isWeb}
                   onChangeText={(val: string) => {
                     onChange(val)
-                    if (keystoreState.errorMessage) {
+                    if (errorMessage) {
                       dispatch({ type: 'KEYSTORE_CONTROLLER_RESET_ERROR_STATE' })
                     }
                   }}
@@ -221,28 +223,26 @@ const KeyStoreUnlockScreen = () => {
               testID="button-unlock"
               style={{ width: 342, ...spacings.mbLg }}
               disabled={disableSubmit}
-              text={
-                keystoreState.statuses.unlockWithSecret === 'LOADING'
-                  ? t('Unlocking...')
-                  : t('Unlock')
-              }
+              text={statuses.unlockWithSecret === 'LOADING' ? t('Unlocking...') : t('Unlock')}
               onPress={handleSubmit((data) => handleUnlock(data))}
             />
 
-            <TouchableOpacity
-              onPress={() =>
-                openInternalPageInTab({
-                  route: ROUTES.keyStoreEmailRecovery,
-                  shouldCloseCurrentWindow: !getUiType().isTab,
-                  windowId: requestWindow?.windowProps?.createdFromWindowId
-                })
-              }
-              hitSlop={FOOTER_BUTTON_HIT_SLOP}
-            >
-              <Text weight="medium" appearance="secondaryText" fontSize={14} underline>
-                {t('Forgot extension password?')}
-              </Text>
-            </TouchableOpacity>
+            {hasKeystoreRecovery && (
+              <TouchableOpacity
+                onPress={() =>
+                  openInternalPageInTab({
+                    route: ROUTES.keyStoreEmailRecovery,
+                    shouldCloseCurrentWindow: !getUiType().isTab,
+                    windowId: requestWindow?.windowProps?.createdFromWindowId
+                  })
+                }
+                hitSlop={FOOTER_BUTTON_HIT_SLOP}
+              >
+                <Text weight="medium" appearance="secondaryText" fontSize={14} underline>
+                  {t('Forgot extension password?')}
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
       </Container>

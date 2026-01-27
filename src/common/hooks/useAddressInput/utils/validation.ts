@@ -31,24 +31,7 @@ const getAddressInputValidation = ({
     return {
       message: '',
       isError: true,
-      severity: overwriteSeverity || 'error'
-    }
-  }
-
-  if (address && isValidAddress(address)) {
-    try {
-      getAddress(address)
-      return {
-        message: overwriteValidLabel || 'Valid address',
-        isError: false,
-        severity: overwriteSeverity || 'warning'
-      }
-    } catch {
-      return {
-        message: 'Invalid checksum. Verify the address and try again.',
-        isError: true,
-        severity: overwriteSeverity || 'error'
-      }
+      severity: 'error'
     }
   }
 
@@ -56,55 +39,69 @@ const getAddressInputValidation = ({
     return {
       message: 'Resolving domain...',
       isError: false,
-      severity: overwriteSeverity || 'warning'
+      severity: 'info'
     }
   }
 
-  // Return error from props if it's passed
-  if (overwriteError) {
-    return {
-      message: overwriteError,
-      isError: true,
-      severity: overwriteSeverity || 'error'
-    }
-  }
-  // Return valid label from props if it's passed
-  if (overwriteValidLabel) {
-    return {
-      message: overwriteValidLabel,
-      isError: false,
-      severity: overwriteSeverity || 'warning'
-    }
-  }
   if (hasDomainResolveFailed) {
     return {
       // Change ENS to domain if we add more resolvers
       message: 'Failed to resolve ENS. Please try again later or enter a hex address.',
       isError: true,
-      severity: overwriteSeverity || 'error'
-    }
-  }
-  if (isValidEns) {
-    return {
-      message: 'Valid ENS domain',
-      isError: false,
-      severity: overwriteSeverity || 'warning'
+      severity: 'error'
     }
   }
 
-  if (address && !isValidAddress(address)) {
+  let validation: ValidationWithSeverityType | null = null
+
+  if (isValidAddress(address)) {
+    try {
+      getAddress(address)
+
+      validation = {
+        message: overwriteValidLabel || 'Valid address',
+        isError: false,
+        severity: overwriteSeverity || 'success'
+      }
+    } catch {
+      // Return immediately, the address is not valid at all
+      return {
+        message: 'Invalid checksum. Verify the address and try again.',
+        isError: true,
+        severity: 'error'
+      }
+    }
+  } else if (!isValidEns) {
     return {
       message: 'Please enter a valid address or ENS domain',
       isError: true,
-      severity: overwriteSeverity || 'error'
+      severity: 'error'
     }
   }
 
-  return {
-    message: '',
-    isError: true,
-    severity: overwriteSeverity || 'error'
+  if (isValidEns) {
+    validation = {
+      message: 'Valid ENS domain',
+      isError: false,
+      severity: 'success'
+    }
   }
+
+  if (overwriteError || overwriteValidLabel) {
+    return {
+      message: overwriteError || overwriteValidLabel || '',
+      isError: overwriteSeverity === 'error' || !!overwriteError,
+      severity: overwriteSeverity || (overwriteError ? 'error' : 'success')
+    }
+  }
+
+  return (
+    validation || {
+      message: '',
+      isError: true,
+      severity: overwriteSeverity || 'error'
+    }
+  )
 }
 
 export default getAddressInputValidation
