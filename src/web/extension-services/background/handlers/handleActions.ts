@@ -576,6 +576,10 @@ export const handleActions = async (
       walletStateCtrl.isPinned = params.isPinned
       break
     }
+    case 'SET_AVATAR_TYPE': {
+      walletStateCtrl.setAvatarType(params.avatarType)
+      break
+    }
     case 'SET_IS_SETUP_COMPLETE': {
       walletStateCtrl.isSetupComplete = params.isSetupComplete
       break
