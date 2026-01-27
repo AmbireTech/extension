@@ -87,7 +87,9 @@ const Collection: FC<Props> = ({
         </View>
         <Text fontSize={isTab ? 14 : 10} appearance="secondaryText">
           {networkData?.name || 'Unknown Network'}
-          {priceIn && priceIn.length ? ` / Floor Price: ${formatCollectiblePrice(priceIn[0])}` : ''}
+          {priceIn && priceIn.length && priceIn[0]
+            ? ` / Floor Price: ${formatCollectiblePrice(priceIn[0])}`
+            : ''}
         </Text>
       </View>
       <View style={[flexbox.directionRow, flexbox.wrap]}>

@@ -175,7 +175,7 @@ const ActivityPositions: FC<Props> = ({
                 )}
                 target="_blank"
                 rel="noreferrer"
-                style={{ color: theme.linkText, textDecorationLine: 'none' }}
+                style={{ color: String(theme.linkText), textDecorationLine: 'none' }}
               >
                 {blockExplorerName(network?.explorerUrl || 'https://etherscan.io')}
               </a>
@@ -217,7 +217,8 @@ const ActivityPositions: FC<Props> = ({
                       })
                     },
                     pagination: {
-                      itemsPerPage: accountsOps[sessionId].pagination.itemsPerPage + ITEMS_PER_PAGE,
+                      itemsPerPage:
+                        accountsOps[sessionId]?.pagination.itemsPerPage || +ITEMS_PER_PAGE,
                       fromPage: 0
                     }
                   }
