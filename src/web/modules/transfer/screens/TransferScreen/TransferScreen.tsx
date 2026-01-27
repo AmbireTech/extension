@@ -30,6 +30,7 @@ import { Content, Form, Wrapper } from '@web/components/TransactionsScreen'
 import { createTab } from '@web/extension-services/background/webapi/tab'
 import useActivityControllerState from '@web/hooks/useActivityControllerState'
 import useBackgroundService from '@web/hooks/useBackgroundService'
+import useDomainsControllerState from '@web/hooks/useDomainsController/useDomainsController'
 import useHasGasTank from '@web/hooks/useHasGasTank'
 import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
@@ -86,6 +87,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   const { visibleUserRequests } = useRequestsControllerState()
   const { account, portfolio } = useSelectedAccountControllerState()
   const { userRequests } = useRequestsControllerState()
+  const { saveResolvedDomain } = useDomainsControllerState()
   const {
     ref: gasTankSheetRef,
     open: openGasTankInfoBottomSheet,
@@ -282,15 +284,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
 
   const handleCacheResolvedDomain = useCallback(
     (address: string, ensAvatar: string | null, domain: string, type: 'ens') => {
-      dispatch({
-        type: 'DOMAINS_CONTROLLER_SAVE_RESOLVED_REVERSE_LOOKUP',
-        params: {
-          type,
-          address,
-          name: domain,
-          ensAvatar
-        }
-      })
+      saveResolvedDomain(address, ensAvatar, domain, type)
     },
     [dispatch]
   )

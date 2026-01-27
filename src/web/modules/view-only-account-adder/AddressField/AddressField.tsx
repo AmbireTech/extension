@@ -14,6 +14,7 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
 import useBackgroundService from '@web/hooks/useBackgroundService'
+import useDomainsControllerState from '@web/hooks/useDomainsController/useDomainsController'
 import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 
 interface Props {
@@ -46,6 +47,7 @@ const AddressField: FC<Props> = ({
   const { dispatch } = useBackgroundService()
   const accountsState = useAccountsControllerState()
   const keystoreState = useKeystoreControllerState()
+  const { saveResolvedDomain } = useDomainsControllerState()
   const accounts = watch('accounts')
   const value = watch(`accounts.${index}`)
   const { t } = useTranslation()
@@ -120,15 +122,7 @@ const AddressField: FC<Props> = ({
 
   const handleCacheResolvedDomain = useCallback(
     (address: string, ensAvatar: string | null, domain: string, type: 'ens') => {
-      dispatch({
-        type: 'DOMAINS_CONTROLLER_SAVE_RESOLVED_REVERSE_LOOKUP',
-        params: {
-          type,
-          address,
-          name: domain,
-          ensAvatar
-        }
-      })
+      saveResolvedDomain(address, ensAvatar, domain, type)
     },
     [dispatch]
   )
