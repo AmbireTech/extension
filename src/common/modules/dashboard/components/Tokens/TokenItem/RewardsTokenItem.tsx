@@ -74,7 +74,7 @@ const RewardsTokenItem = ({
         </Text>
       }
       borderRadius={16}
-      wrapperTestID="rewards-button"
+      wrapperTestID="projected-rewards-asset-button"
     />
   )
 }

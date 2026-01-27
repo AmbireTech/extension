@@ -1,5 +1,6 @@
 import React, { FC } from 'react'
 import { View } from 'react-native'
+
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import spacings from '@common/styles/spacings'
@@ -14,7 +15,7 @@ type InProgressProps = {
 const InProgress: FC<InProgressProps> = ({ title, children }) => (
   <>
     <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifyCenter, spacings.mbLg]}>
-      <Text fontSize={20} weight="medium" style={text.center}>
+      <Text testID="confirming-your-trade" fontSize={20} weight="medium" style={text.center}>
         {title}
       </Text>
       <Spinner style={{ width: 20, height: 20, ...spacings.mlSm }} />
