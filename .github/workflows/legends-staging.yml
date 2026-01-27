@@ -36,7 +36,7 @@ jobs:
         run: git submodule update
 
       - name: Install Dependencies
-        run: yarn install --frozen-lockfile
+        run: yarn setup:ci
         shell: bash
 
       - name: Build project 🛠️
