@@ -16,7 +16,7 @@ test.describe('transfer', { tag: '@transfer' }, () => {
     await context.close()
   })
 
-  test.only('should send a transaction and pay with the current account gas tank', async ({ pages }) => {
+  test('should send a transaction and pay with the current account gas tank', async ({ pages }) => {
     await runSimpleTransferFlow({
       pages,
       sendToken: tokens.usdc.optimism,
