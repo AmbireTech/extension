@@ -6,6 +6,7 @@
     "module": "ES2020",
     "lib": ["ES2020", "ESNext", "DOM", "WebWorker"],
     "types": ["chrome", "firefox-webext-browser", "reflect-metadata", "jest", "w3c-web-hid"],
+    "moduleSuffixes": [".native", ".web", ".png", ""],
     "paths": {
       "@ambire-common/*": ["src/ambire-common/src/*"],
       "@contracts/*": ["src/ambire-common/contracts/*"],
