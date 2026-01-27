@@ -34,9 +34,15 @@ type CallProviderFn = <M extends ProviderMethod>(
 const ProvidersControllerStateContext = createContext<{
   state: IProvidersController
   callProvider: CallProviderFn
+  getContractName: (props: {
+    address: string
+    abi: string
+    chainId: bigint
+  }) => Promise<string | undefined>
 }>({
   state: {} as IProvidersController,
-  callProvider: () => Promise.resolve(null as any)
+  callProvider: () => Promise.resolve(null as any),
+  getContractName: () => Promise.resolve(undefined)
 })
 
 const ProvidersControllerStateProvider: React.FC<any> = ({ children }) => {
@@ -100,11 +106,60 @@ const ProvidersControllerStateProvider: React.FC<any> = ({ children }) => {
     [dispatch, eventBus]
   )
 
+  const getContractName = useCallback(
+    async ({ address, abi, chainId }: { address: string; abi: string; chainId: bigint }) => {
+      const requestId = uuidv4()
+
+      dispatch({
+        type: 'PROVIDERS_CONTROLLER_GET_CONTRACT_NAME_AND_SEND_RES_TO_UI',
+        params: { requestId, chainId, address, abi }
+      })
+
+      return new Promise<string | undefined>((resolve, reject) => {
+        let settled = false
+
+        const cleanup = () => {
+          eventBus.removeEventListener('receiveOneTimeData', onResponse)
+          clearTimeout(timeoutId)
+        }
+
+        const onResponse = (data: any) => {
+          if (data?.type !== 'GetContractName' || data?.requestId !== requestId) return
+          if (settled) return
+
+          settled = true
+
+          cleanup()
+
+          if (data.ok) {
+            resolve(data.res as string | undefined)
+          } else {
+            reject(new Error(data.error ?? 'Get contract name failed'))
+          }
+        }
+
+        const timeoutId = setTimeout(() => {
+          if (settled) return
+          settled = true
+
+          cleanup()
+          reject(new Error('Get contract name timed out after 10 seconds'))
+        }, 10_000)
+
+        eventBus.addEventListener('receiveOneTimeData', onResponse)
+      })
+    },
+    [dispatch, eventBus]
+  )
+
   const memoizedState = useDeepMemo(state, controller)
 
   return (
     <ProvidersControllerStateContext.Provider
-      value={useMemo(() => ({ state: memoizedState, callProvider }), [memoizedState, callProvider])}
+      value={useMemo(
+        () => ({ state: memoizedState, callProvider, getContractName }),
+        [memoizedState, callProvider, getContractName]
+      )}
     >
       {children}
     </ProvidersControllerStateContext.Provider>

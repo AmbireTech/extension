@@ -140,6 +140,15 @@ type ProvidersControllerCallProviderAndSendResToUiAction = {
     args: unknown[]
   }
 }
+type ProvidersControllerGetContractNameAndSendResToUiAction = {
+  type: 'PROVIDERS_CONTROLLER_GET_CONTRACT_NAME_AND_SEND_RES_TO_UI'
+  params: {
+    requestId: string
+    address: string
+    abi: string
+    chainId: bigint
+  }
+}
 type MainControllerAccountPickerResetAction = {
   type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_RESET'
 }
@@ -780,6 +789,7 @@ export type Action =
   | RequestsControllerAddCallsUserRequestAction
   | ProvidersControllerToggleBatching
   | ProvidersControllerCallProviderAndSendResToUiAction
+  | ProvidersControllerGetContractNameAndSendResToUiAction
   | MainControllerLockAction
   | RequestsControllerBuildRequestAction
   | RequestsControllerRemoveUserRequestAction

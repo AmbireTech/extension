@@ -96,6 +96,10 @@ export const handleActions = async (
       mainCtrl.providers.callProviderAndSendResToUi(params)
       break
     }
+    case 'PROVIDERS_CONTROLLER_GET_CONTRACT_NAME_AND_SEND_RES_TO_UI': {
+      mainCtrl.providers.getContractNameAndSendResToUi(params)
+      break
+    }
     case 'MAIN_CONTROLLER_ADD_NETWORK': {
       return await mainCtrl.addNetwork(params)
     }
