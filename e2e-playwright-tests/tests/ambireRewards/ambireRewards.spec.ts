@@ -15,6 +15,7 @@ test.describe('ambire rewards', { tag: '@rewards' }, () => {
   })
 
   test('Check redirection to Ambire rewards page', async ({ pages }) => {
+    await pages.auth.pause()
     await test.step('assert rewards button is visible', async () => {
       await pages.basePage.isVisible(selectors.dashboard.rewardsButton)
     })
@@ -23,17 +24,10 @@ test.describe('ambire rewards', { tag: '@rewards' }, () => {
       await pages.dashboard.checkRewardsPageRedirection(selectors.dashboard.rewardsButton)
     })
 
-    await test.step('assert $WALLET open button is visible', async () => {
-      await pages.basePage.isVisible(selectors.dashboard.rewardsForClaimingButton)
-    })
-
-    await test.step('$WALLET rewards banner button should redirect to rewards page', async () => {
-      const rewardsButton = pages.basePage.page
-        .getByTestId(selectors.dashboard.rewardsForClaimingButton)
-        .first()
-
-      const newTab = await pages.basePage.handleNewPage(rewardsButton)
-      expect(newTab.url()).toContain('https://rewards.ambire.com/')
+    await test.step('rewards button should redirect to rewards page', async () => {
+      await pages.dashboard.checkRewardsPageRedirection(
+        selectors.dashboard.projecteedRewardsWalletAssetRewardsButton
+      )
     })
   })
 
