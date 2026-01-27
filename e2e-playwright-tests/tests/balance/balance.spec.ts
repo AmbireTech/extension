@@ -15,7 +15,6 @@ test.describe('Basic Account - Tokens balance check', { tag: '@balanceCheck' }, 
   })
 
   test('check balance of test tokens', async ({ pages }) => {
-    await pages.auth.pause()
     const THRESHOLDS: Threshold[] = [
       ['gas-token', 1],
       [tokens.wallet.base, 1],
@@ -43,8 +42,6 @@ test.describe('Smart Account - Tokens balance check', { tag: '@balanceCheck' }, 
   })
 
   test('check balance of test tokens', async ({ pages }) => {
-    await pages.auth.pause()
-
     const THRESHOLDS: Threshold[] = [
       ['gas-token', 1],
       [tokens.wallet.base, 1],
