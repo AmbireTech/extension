@@ -27,7 +27,7 @@ interface Props {
    * The address of the user - used to generate the avatar
    */
   address: string
-  isSmart: boolean
+  smartAccountType?: 'Ambire' | 'Safe'
   size?: number
   style?: ViewStyle
   showTooltip?: boolean
@@ -41,7 +41,7 @@ interface Props {
 const Avatar: FC<Props> = ({
   pfp,
   address,
-  isSmart,
+  smartAccountType,
   size = 40,
   avatarType: propAvatarType,
   style = {},
@@ -124,7 +124,7 @@ const Avatar: FC<Props> = ({
       )}
       {displayTypeBadge && (
         <TypeBadge
-          isSmart={isSmart}
+          smartAccountType={smartAccountType}
           size={size >= 40 ? 'big' : 'small'}
           showTooltip={showTooltip}
         />

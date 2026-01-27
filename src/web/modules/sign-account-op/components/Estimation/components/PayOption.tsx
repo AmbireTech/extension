@@ -154,7 +154,6 @@ const PayOption = ({
               address={feeOption.paidBy}
               pfp={feeOption.paidBy}
               style={spacings.prTy}
-              isSmart={false}
               displayTypeBadge={false}
             />
             <Text fontSize={10} weight="semiBold" numberOfLines={1}>

@@ -6,7 +6,7 @@ import {
   AccountWithNetworkMeta,
   ImportStatus
 } from '@ambire-common/interfaces/account'
-import { isAmbireV1LinkedAccount, isSmartAccount } from '@ambire-common/libs/account/account'
+import { isAmbireV1LinkedAccount } from '@ambire-common/libs/account/account'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import Avatar from '@common/components/Avatar'
 import Badge from '@common/components/Badge'
@@ -149,7 +149,9 @@ const Account = ({
                     address={account.addr}
                     pfp={account.preferences.pfp}
                     size={24}
-                    isSmart={isSmartAccount(account)}
+                    smartAccountType={
+                      (account.creation && 'Ambire') || (account.safeCreation && 'Safe')
+                    }
                     displayTypeBadge={displayTypeBadge}
                   />
                   <Text

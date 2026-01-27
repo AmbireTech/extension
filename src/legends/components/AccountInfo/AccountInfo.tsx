@@ -28,7 +28,7 @@ const AccountInfo = ({
         connectedAccount ? styles.connected : ''
       } ${wrapperClassName}`}
     >
-      <Avatar size={32} address={connectedAccount!} pfp={connectedAccount || ''} isSmart={false} />
+      <Avatar size={32} address={connectedAccount!} pfp={connectedAccount || ''} />
       <div className={styles.account}>
         <div className={styles.accountAndArrowWrapper}>
           <Address

@@ -76,7 +76,9 @@ const ReceiveScreen: FC = () => {
                 size={40}
                 pfp={pfp}
                 address={account?.addr || ''}
-                isSmart={!!account?.creation}
+                smartAccountType={
+                  (account?.creation && 'Ambire') || (account?.safeCreation && 'Safe')
+                }
                 style={spacings.pr0}
               />
               <Text weight="semiBold" fontSize={14} style={spacings.mtMi}>

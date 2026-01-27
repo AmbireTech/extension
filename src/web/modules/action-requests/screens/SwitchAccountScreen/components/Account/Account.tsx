@@ -9,11 +9,11 @@ import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
-type Props = Pick<AccountType, 'addr' | 'creation' | 'preferences'> & {
+type Props = Pick<AccountType, 'addr' | 'creation' | 'preferences' | 'safeCreation'> & {
   style?: ViewStyle
 }
 
-const Account: FC<Props> = ({ addr, creation, preferences, style }) => {
+const Account: FC<Props> = ({ addr, creation, preferences, style, safeCreation }) => {
   const { theme } = useTheme()
   const { label, pfp } = preferences || {}
 
@@ -33,7 +33,12 @@ const Account: FC<Props> = ({ addr, creation, preferences, style }) => {
         style
       ]}
     >
-      <Avatar isSmart={!!creation} size={32} pfp={pfp} address={addr} />
+      <Avatar
+        smartAccountType={(creation && 'Ambire') || (safeCreation && 'Safe')}
+        size={32}
+        pfp={pfp}
+        address={addr}
+      />
       <View>
         <Text fontSize={14} weight="medium">
           {label}

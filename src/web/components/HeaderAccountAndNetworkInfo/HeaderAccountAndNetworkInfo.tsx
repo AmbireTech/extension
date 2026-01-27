@@ -1,7 +1,6 @@
 import React, { FC } from 'react'
 import { View } from 'react-native'
 
-import { isSmartAccount } from '@ambire-common/libs/account/account'
 import AccountAddress from '@common/components/AccountAddress'
 import AccountBadges from '@common/components/AccountBadges'
 import AmbireLogoHorizontal from '@common/components/AmbireLogoHorizontal'
@@ -60,7 +59,7 @@ const HeaderAccountAndNetworkInfo: FC<Props> = ({
           <Avatar
             address={account.addr}
             pfp={account.preferences.pfp}
-            isSmart={isSmartAccount(account)}
+            smartAccountType={(account.creation && 'Ambire') || (account.safeCreation && 'Safe')}
           />
           <View style={flexbox.flex1}>
             <View style={[flexbox.flex1, flexbox.directionRow]}>

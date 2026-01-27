@@ -1,9 +1,9 @@
 import React from 'react'
 import Svg, { Circle, Path, SvgProps } from 'react-native-svg'
 
-const SafeIcon: React.FC<SvgProps> = ({ width = 57, height = 57 }) => {
+const SafeIcon: React.FC<SvgProps> = ({ width = 57, height = 57, style }) => {
   return (
-    <Svg width={width} height={height} viewBox="0 0 100 100" fill="none">
+    <Svg width={width} height={height} viewBox="0 0 100 100" fill="none" style={style}>
       <Circle cx="50" cy="50" r="50" fill="#68FF7A" />
       <Path
         d="M74.8947 50.8828H68.7888C66.9651 50.8828 65.4876 52.406 65.4876 54.2856V63.4209C65.4876 65.3006 64.0098 66.8238 62.1864 66.8238H37.8951C36.0715 66.8238 34.5938 68.347 34.5938 70.2268V76.5207C34.5938 78.4003 36.0715 79.9235 37.8951 79.9235H63.5923C65.416 79.9235 66.8725 78.4003 66.8725 76.5207V71.4709C66.8725 69.5913 68.3502 68.2578 70.1739 68.2578H74.8935C76.717 68.2578 78.1947 66.7346 78.1947 64.8548V54.2462C78.1947 52.3665 76.7182 50.8828 74.8947 50.8828Z"

@@ -2,7 +2,7 @@ import React, { useCallback, useMemo, useState } from 'react'
 import { View, ViewStyle } from 'react-native'
 
 import { Account as AccountInterface } from '@ambire-common/interfaces/account'
-import { canBecomeSmarter, isSmartAccount } from '@ambire-common/libs/account/account'
+import { canBecomeSmarter } from '@ambire-common/libs/account/account'
 import AccountAddress from '@common/components/AccountAddress'
 import AccountBadges from '@common/components/AccountBadges'
 import AccountKeyIcons from '@common/components/AccountKeyIcons'
@@ -161,7 +161,7 @@ const Account = ({
         <Avatar
           address={account.addr}
           pfp={account.preferences.pfp}
-          isSmart={isSmartAccount(account)}
+          smartAccountType={(account.creation && 'Ambire') || (account.safeCreation && 'Safe')}
           showTooltip
         />
         <View style={flexbox.flex1}>

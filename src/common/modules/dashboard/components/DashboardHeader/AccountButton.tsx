@@ -2,7 +2,6 @@ import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { Animated, View } from 'react-native'
 
-import { isSmartAccount } from '@ambire-common/libs/account/account'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import CopyIcon from '@common/assets/svg/CopyIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
@@ -76,7 +75,7 @@ const AccountButton = () => {
               pfp={account.preferences.pfp}
               address={account.addr}
               size={32}
-              isSmart={isSmartAccount(account)}
+              smartAccountType={(account.creation && 'Ambire') || (account.safeCreation && 'Safe')}
             />
             <Text
               numberOfLines={1}
