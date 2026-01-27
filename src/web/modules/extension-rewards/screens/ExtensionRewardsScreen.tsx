@@ -273,8 +273,9 @@ const ExtensionRewardsScreen = () => {
                       letterSpacing: 0
                     }}
                   >
-                    Legacy accounts are not eligible for Ambire Rewards. Switch to a brand new
-                    account.
+                    {projectedRewardsStats?.reasonToNotDisplayProjectedRewards === 'BLACKLISTED'
+                      ? 'This account has been blacklisted from participation in Ambire Rewards.'
+                      : 'Legacy accounts are not eligible for Ambire Rewards. Switch to a brand new account.'}
                   </Text>
                 </View>
               ) : (
