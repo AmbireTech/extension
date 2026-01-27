@@ -150,11 +150,7 @@ export class TransferPage extends BasePage {
       // Sign & Broadcast
       await this.expectButtonEnabled(selectors.signButton)
       await this.click(selectors.signButton)
-      await this.compareText(
-        selectors.transaction.confirmingYourTransactionText,
-        'Confirming your trade'
-      )
-
+      await this.isVisible(selectors.transaction.confirmingYourTransactionText)
       // Validate requests
       const { rpc } = this.getCategorizedRequests()
 

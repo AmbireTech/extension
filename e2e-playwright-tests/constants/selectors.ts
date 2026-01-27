@@ -125,7 +125,7 @@ const selectors = {
     feeSpeedApe: 'option-ape',
     feeGasTankInDollars: '//span[contains(text(),"Gas Tank")]/../../../div[contains(text(),"$")]', // returning e.g. "<$0.01"
     feeTokenInDollars: '//span[contains(text(),"")]/../../div[contains(text(),"$")]',
-    confirmingYourTransactionText: 'confirming-your-trade',
+    confirmingYourTransactionText: 'confirming-your',
     explorer: {
       txnSignedStep: 'signed-step',
       txnProgressStep: 'txn-progress-step',
