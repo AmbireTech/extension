@@ -50,7 +50,7 @@ const SafeImportScreen = () => {
   const { dispatch } = useBackgroundService()
 
   const handleFormSubmit = useCallback(async () => {
-    if (!safe || !safeInfo) return
+    if (!safe || !safeInfo || isLoading) return
 
     try {
       // TODO: configure ens?
@@ -92,7 +92,7 @@ const SafeImportScreen = () => {
 
       throw e
     }
-  }, [goToNextRoute, addToast, dispatch, t, safe, safeInfo, reset])
+  }, [goToNextRoute, addToast, dispatch, t, safe, safeInfo, reset, isLoading])
 
   const handleValidation = (value: string) => {
     const trimmedValue = value.trim()
