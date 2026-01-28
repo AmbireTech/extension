@@ -8,8 +8,6 @@ import { FeePaymentOption } from '@ambire-common/libs/estimate/interfaces'
 import { ZERO_ADDRESS } from '@ambire-common/services/socket/constants'
 
 import PayOption from './components/PayOption'
-import { NO_FEE_OPTIONS } from './consts'
-import { FeeOption } from './types'
 
 const sortBasedOnUSDValue = (a: FeePaymentOption, b: FeePaymentOption) => {
   if (!a || !b) return 0
@@ -88,6 +86,11 @@ const mapFeeOptions = (
   if (!speedCoverage.includes(FeeSpeed.Slow)) {
     if (!feeOption.token.priceIn.length) {
       disabledReason = 'No price data'
+    } else if (
+      feeOption.paidBy === signAccountOpState.account.addr &&
+      signAccountOpState.account.safeCreation
+    ) {
+      disabledReason = 'Coming soon'
     } else {
       disabledReason = 'Insufficient amount'
     }
