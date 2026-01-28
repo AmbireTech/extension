@@ -49,7 +49,7 @@ jobs:
           node-version-file: '.nvmrc'
 
       - name: Install Dependencies
-        run: yarn install --frozen-lockfile
+        run: yarn setup:ci
         shell: bash
 
       - name: Generate .env file for review
