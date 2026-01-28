@@ -8,12 +8,15 @@ import { getFeatures } from '@ambire-common/libs/networks/networks'
 import { getRpcProvider } from '@ambire-common/services/provider'
 import { isValidURL } from '@ambire-common/services/validations'
 import CopyIcon from '@common/assets/svg/CopyIcon'
+import WarningIcon from '@common/assets/svg/WarningIcon'
 import Button from '@common/components/Button'
 import Input from '@common/components/Input'
 import NetworkIcon from '@common/components/NetworkIcon'
 import NumberInput from '@common/components/NumberInput'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
+import Tooltip from '@common/components/Tooltip'
+import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -28,9 +31,6 @@ import {
   handleErrors
 } from '@web/modules/settings/screens/NetworksSettingsScreen/NetworkForm/helpers'
 
-import WarningIcon from '@common/assets/svg/WarningIcon'
-import Tooltip from '@common/components/Tooltip'
-import useTheme from '@common/hooks/useTheme'
 import getStyles from './styles'
 
 type RpcSelectorItemType = {
@@ -204,8 +204,8 @@ const NetworkForm = ({
       networkToAddOrUpdate?.info
         ? getFeatures(networkToAddOrUpdate?.info, selectedNetwork)
         : errors.chainId
-        ? getFeatures(undefined, selectedNetwork)
-        : selectedNetwork?.features || getFeatures(undefined, selectedNetwork),
+          ? getFeatures(undefined, selectedNetwork)
+          : selectedNetwork?.features || getFeatures(undefined, selectedNetwork),
     [errors.chainId, networkToAddOrUpdate?.info, selectedNetwork]
   )
 

@@ -1,4 +1,4 @@
-import { JsonRpcProvider } from 'ethers'
+import { Contract, JsonRpcProvider } from 'ethers'
 import React, { createContext, useCallback, useEffect, useMemo } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 
@@ -34,15 +34,17 @@ type CallProviderFn = <M extends ProviderMethod>(
 const ProvidersControllerStateContext = createContext<{
   state: IProvidersController
   callProvider: CallProviderFn
-  getContractName: (props: {
+  callContract: (props: {
     address: string
     abi: string
     chainId: bigint
+    method: keyof Contract
+    args: unknown[]
   }) => Promise<string | undefined>
 }>({
   state: {} as IProvidersController,
   callProvider: () => Promise.resolve(null as any),
-  getContractName: () => Promise.resolve(undefined)
+  callContract: () => Promise.resolve(undefined)
 })
 
 const ProvidersControllerStateProvider: React.FC<any> = ({ children }) => {
@@ -106,13 +108,25 @@ const ProvidersControllerStateProvider: React.FC<any> = ({ children }) => {
     [dispatch, eventBus]
   )
 
-  const getContractName = useCallback(
-    async ({ address, abi, chainId }: { address: string; abi: string; chainId: bigint }) => {
+  const callContract = useCallback(
+    async ({
+      address,
+      abi,
+      chainId,
+      method,
+      args
+    }: {
+      address: string
+      abi: string
+      chainId: bigint
+      method: keyof Contract
+      args: unknown[]
+    }) => {
       const requestId = uuidv4()
 
       dispatch({
-        type: 'PROVIDERS_CONTROLLER_GET_CONTRACT_NAME_AND_SEND_RES_TO_UI',
-        params: { requestId, chainId, address, abi }
+        type: 'PROVIDERS_CONTROLLER_CALL_CONTRACT_AND_SEND_RES_TO_UI',
+        params: { requestId, chainId, address, abi, method, args }
       })
 
       return new Promise<string | undefined>((resolve, reject) => {
@@ -124,7 +138,7 @@ const ProvidersControllerStateProvider: React.FC<any> = ({ children }) => {
         }
 
         const onResponse = (data: any) => {
-          if (data?.type !== 'GetContractName' || data?.requestId !== requestId) return
+          if (data?.type !== 'CallContract' || data?.requestId !== requestId) return
           if (settled) return
 
           settled = true
@@ -134,7 +148,7 @@ const ProvidersControllerStateProvider: React.FC<any> = ({ children }) => {
           if (data.ok) {
             resolve(data.res as string | undefined)
           } else {
-            reject(new Error(data.error ?? 'Get contract name failed'))
+            reject(new Error(data.error ?? `Call Contract.${method.toString()} failed`))
           }
         }
 
@@ -143,7 +157,7 @@ const ProvidersControllerStateProvider: React.FC<any> = ({ children }) => {
           settled = true
 
           cleanup()
-          reject(new Error('Get contract name timed out after 10 seconds'))
+          reject(new Error(`Call Contract.${method.toString()} timed out after 10 seconds`))
         }, 10_000)
 
         eventBus.addEventListener('receiveOneTimeData', onResponse)
@@ -157,8 +171,8 @@ const ProvidersControllerStateProvider: React.FC<any> = ({ children }) => {
   return (
     <ProvidersControllerStateContext.Provider
       value={useMemo(
-        () => ({ state: memoizedState, callProvider, getContractName }),
-        [memoizedState, callProvider, getContractName]
+        () => ({ state: memoizedState, callProvider, callContract }),
+        [memoizedState, callProvider, callContract]
       )}
     >
       {children}

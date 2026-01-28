@@ -42,7 +42,7 @@ const TokenOrNft: FC<Props> = ({
 
   const { t } = useTranslation()
   const { networks: controllerNetworks } = useNetworksControllerState()
-  const { getContractName } = useProvidersControllerState()
+  const { callContract } = useProvidersControllerState()
   const { benzinNetworks, addNetwork } = useBenzinNetworksContext()
   // Component used across Benzin and Extension, make sure to always set networks
   const networks = controllerNetworks ?? benzinNetworks
@@ -56,10 +56,12 @@ const TokenOrNft: FC<Props> = ({
   const fetchFallbackNameIfNeeded = useCallback(
     async (_assetInfo: any) => {
       if (_assetInfo.nftInfo || _assetInfo.tokenInfo) return
-      const name = await getContractName({
+      const name = await callContract({
         chainId,
         address,
-        abi: 'function name() view returns(string)'
+        abi: 'function name() view returns(string)',
+        method: 'name',
+        args: []
       })
       if (name) setFallbackName(name)
     },

@@ -1,3 +1,5 @@
+import { Contract } from 'ethers'
+
 import { HD_PATH_TEMPLATE_TYPE } from '@ambire-common/consts/derivation'
 import { Filters, Pagination } from '@ambire-common/controllers/activity/activity'
 import { Contact } from '@ambire-common/controllers/addressBook/addressBook'
@@ -141,13 +143,15 @@ type ProvidersControllerCallProviderAndSendResToUiAction = {
     args: unknown[]
   }
 }
-type ProvidersControllerGetContractNameAndSendResToUiAction = {
-  type: 'PROVIDERS_CONTROLLER_GET_CONTRACT_NAME_AND_SEND_RES_TO_UI'
+type ProvidersControllerCallContractAndSendResToUiAction = {
+  type: 'PROVIDERS_CONTROLLER_CALL_CONTRACT_AND_SEND_RES_TO_UI'
   params: {
     requestId: string
+    chainId: bigint
     address: string
     abi: string
-    chainId: bigint
+    method: keyof Contract
+    args: unknown[]
   }
 }
 type MainControllerAccountPickerResetAction = {
@@ -794,7 +798,7 @@ export type Action =
   | RequestsControllerAddCallsUserRequestAction
   | ProvidersControllerToggleBatching
   | ProvidersControllerCallProviderAndSendResToUiAction
-  | ProvidersControllerGetContractNameAndSendResToUiAction
+  | ProvidersControllerCallContractAndSendResToUiAction
   | MainControllerLockAction
   | RequestsControllerBuildRequestAction
   | RequestsControllerRemoveUserRequestAction
