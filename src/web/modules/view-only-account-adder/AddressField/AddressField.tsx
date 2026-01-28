@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import { AddressStateOptional } from '@ambire-common/interfaces/domains'
+import { Validation } from '@ambire-common/services/validations'
 import { getAddressFromAddressState } from '@ambire-common/utils/domains'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import DeleteIcon from '@common/assets/svg/DeleteIcon'
@@ -96,21 +97,28 @@ const AddressField: FC<Props> = ({
     return [...new Set(addressesWithSharedKey)]
   }, [accountsState.accounts, keystoreState.keys, value?.fieldValue])
 
-  const overwriteError = useMemo(() => {
+  const overwriteValidation: Validation | null = useMemo(() => {
     // We don't want to update the error message while accounts are being
     // imported because that would stop the import process.
-    if (isLoading) return ''
+    if (isLoading) return null
 
     if (
       accountsState.accounts.find(
         (account) => account.addr.toLowerCase() === getAddressFromAddressState(value).toLowerCase()
       )
     )
-      return 'This address is already in your wallet.'
+      return {
+        severity: 'error',
+        message: 'This address is already in your wallet.'
+      }
 
-    if (duplicateAccountsIndexes.includes(index)) return 'Duplicate address.'
+    if (duplicateAccountsIndexes.includes(index))
+      return {
+        severity: 'error',
+        message: 'Duplicate address.'
+      }
 
-    return ''
+    return null
   }, [duplicateAccountsIndexes, index, isLoading, accountsState.accounts, value])
 
   const handleRevalidate = useCallback(() => {
@@ -130,7 +138,7 @@ const AddressField: FC<Props> = ({
   const { validation, RHFValidate } = useAddressInput({
     addressState: value,
     setAddressState,
-    overwriteError,
+    overwriteValidation,
     handleRevalidate,
     handleCacheResolvedDomain
   })

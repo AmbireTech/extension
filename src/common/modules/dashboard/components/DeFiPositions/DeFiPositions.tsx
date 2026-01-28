@@ -1,11 +1,11 @@
-import Fuse from 'fuse.js'
 import React, { FC, useCallback, useEffect, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
-import { Animated, FlatListProps, View } from 'react-native'
+import { Animated, FlatListProps, TouchableOpacity, View } from 'react-native'
 
 import { BannerType } from '@ambire-common/interfaces/banner'
 import { getCurrentAccountBanners } from '@ambire-common/libs/banners/banners'
+import PrivacyIcon from '@common/assets/svg/PrivacyIcon'
 import Text from '@common/components/Text'
 import useNavigation from '@common/hooks/useNavigation'
 import usePrevious from '@common/hooks/usePrevious'
@@ -15,11 +15,14 @@ import DashboardBanner from '@common/modules/dashboard/components/DashboardBanne
 import DashboardPageScrollContainer from '@common/modules/dashboard/components/DashboardPageScrollContainer'
 import TabsAndSearch from '@common/modules/dashboard/components/TabsAndSearch'
 import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tab/Tab'
+import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
+import flexbox from '@common/styles/utils/flexbox'
 import { searchWithNetworkName } from '@common/utils/search'
 import { openInTab } from '@web/extension-services/background/webapi/tab'
 import useBackgroundService from '@web/hooks/useBackgroundService'
+import useFeatureFlagsControllerState from '@web/hooks/useFeatureFlagsControllerState'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import { getUiType } from '@web/utils/uiType'
@@ -49,14 +52,15 @@ const DeFiPositions: FC<Props> = ({
   dashboardNetworkFilterName,
   animatedOverviewHeight
 }) => {
-  const { control, watch, setValue } = useForm({ mode: 'all', defaultValues: { search: '' } })
   const { t } = useTranslation()
+  const { flags } = useFeatureFlagsControllerState()
+  const { control, watch, setValue } = useForm({ mode: 'all', defaultValues: { search: '' } })
   const { theme, themeType } = useTheme()
   const searchValue = watch('search')
   const { networks } = useNetworksControllerState()
   const { account, portfolio, dashboardNetworkFilter, banners } =
     useSelectedAccountControllerState()
-  const { setSearchParams } = useNavigation()
+  const { setSearchParams, navigate } = useNavigation()
 
   const { dispatch } = useBackgroundService()
   const prevInitTab: any = usePrevious(initTab)
@@ -181,6 +185,29 @@ const DeFiPositions: FC<Props> = ({
         )
       }
 
+      if (item === 'disabled') {
+        return (
+          <View style={[flexbox.alignCenter, spacings.mt]}>
+            <View style={[flexbox.directionRow, flexbox.alignSelfCenter]}>
+              <Text fontSize={16} weight="medium" style={[spacings.mrTy]}>
+                {t('Defi positions disabled')}
+              </Text>
+              <PrivacyIcon width={20} height={20} />
+            </View>
+            <TouchableOpacity onPress={() => navigate(ROUTES.optOuts)}>
+              <Text
+                onPress={() => navigate(ROUTES.optOuts)}
+                fontSize={16}
+                color={theme.info2Text}
+                style={{ textDecorationLine: 'underline' }}
+              >
+                {t('You can enable them from settings')}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )
+      }
+
       if (item === 'skeleton') {
         return <DefiPositionsSkeleton amount={4} />
       }
@@ -212,17 +239,26 @@ const DeFiPositions: FC<Props> = ({
     return `${positionOrElement.providerName}-${positionOrElement.chainId}`
   }, [])
 
+  const dataItems = useMemo(() => {
+    const items = ['header']
+    if (flags.tokenAndDefiAutoDiscovery) {
+      items.push(!portfolio.isAllReady ? 'skeleton' : 'keep-this-to-avoid-key-warning')
+      if (initTab?.defi && portfolio.isAllReady) {
+        filteredPositions.forEach((p: any) => items.push(p))
+      }
+      items.push(portfolio.isAllReady && !filteredPositions.length ? 'empty' : '')
+    } else {
+      items.push('disabled')
+    }
+    return items
+  }, [filteredPositions, flags.tokenAndDefiAutoDiscovery, initTab?.defi, portfolio.isAllReady])
+
   return (
     <DashboardPageScrollContainer
       tab="defi"
       openTab={openTab}
       ListHeaderComponent={<DashboardBanners />}
-      data={[
-        'header',
-        !portfolio.isAllReady ? 'skeleton' : 'keep-this-to-avoid-key-warning',
-        ...(initTab?.defi && portfolio.isAllReady ? filteredPositions : []),
-        portfolio.isAllReady && !filteredPositions.length ? 'empty' : ''
-      ]}
+      data={dataItems}
       renderItem={renderItem}
       keyExtractor={keyExtractor}
       onEndReachedThreshold={isPopup ? 5 : 2.5}

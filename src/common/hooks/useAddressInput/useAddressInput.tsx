@@ -2,22 +2,27 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { AddressState, AddressStateOptional } from '@ambire-common/interfaces/domains'
 import { resolveENSDomain } from '@ambire-common/services/ensDomains'
+import { Validation } from '@ambire-common/services/validations'
 import useProvidersControllerState from '@web/hooks/useProvidersControllerState'
 
-import getAddressInputValidation, { ValidationWithSeverityType } from './utils/validation'
-
-// Re-export for backward compatibility
-export type { ValidationWithSeverityType }
+import getAddressInputValidation from './utils/validation'
 
 interface Props {
   addressState: AddressState
+  /**
+   * Used to overwrite the address state field value that is
+   * used for validation. Because there is controller state (which takes a while to update)
+   * and useState state (which is updated instantly), and the useState state is used
+   * for ENS resolution, we may want to delay the validation until the controller state
+   * is updated.
+   */
   overwriteValidationFieldValue?: string
   setAddressState: (newState: AddressStateOptional) => void
-  overwriteError?: string
-  overwriteValidLabel?: string
-  // Severity may be provided by callers (e.g. controller state). Accept
-  // 'error'|'warning'|'info' so we can pass it through unchanged.
-  overwriteSeverity?: 'error' | 'warning' | 'info' | 'success'
+  /**
+   * Used to overwrite the default validation logic.
+   * Example: preventing adding an address that is already in the address book.
+   */
+  overwriteValidation?: Validation | null
   handleCacheResolvedDomain: (
     address: string,
     avatar: string | null,
@@ -33,11 +38,8 @@ interface Props {
 const useAddressInput = ({
   addressState,
   setAddressState,
-  overwriteError,
-  overwriteValidLabel,
+  overwriteValidation,
   overwriteValidationFieldValue,
-  // For now severity is only used for non-error validations (warnings / info)
-  overwriteSeverity,
   handleCacheResolvedDomain,
   handleRevalidate
 }: Props) => {
@@ -45,8 +47,8 @@ const useAddressInput = ({
   const fieldValue = addressState.fieldValue
   const [hasDomainResolveFailed, setHasDomainResolveFailed] = useState(false)
   const { callProvider } = useProvidersControllerState()
-  const [debouncedValidation, setDebouncedValidation] = useState<ValidationWithSeverityType>({
-    isError: true,
+  const [debouncedValidation, setDebouncedValidation] = useState<Validation>({
+    severity: 'error',
     message: ''
   })
 
@@ -57,9 +59,7 @@ const useAddressInput = ({
         isRecipientDomainResolving: addressState.isDomainResolving,
         isValidEns: !!addressState.ensAddress,
         hasDomainResolveFailed,
-        overwriteError,
-        overwriteValidLabel,
-        overwriteSeverity
+        overwriteValidation
       }),
     [
       overwriteValidationFieldValue,
@@ -67,9 +67,7 @@ const useAddressInput = ({
       addressState.isDomainResolving,
       addressState.ensAddress,
       hasDomainResolveFailed,
-      overwriteError,
-      overwriteValidLabel,
-      overwriteSeverity
+      overwriteValidation
     ]
   )
 
@@ -113,18 +111,15 @@ const useAddressInput = ({
   )
 
   useEffect(() => {
-    const { isError, message: latestMessage, severity } = validation
-    const {
-      isError: debouncedIsError,
-      message: debouncedMessage,
-      severity: debouncedSeverity
-    } = debouncedValidation
+    const { message: latestMessage, severity } = validation
+    const { message: debouncedMessage, severity: debouncedSeverity } = debouncedValidation
 
     if (latestMessage === debouncedMessage && severity === debouncedSeverity) return
 
     const shouldDebounce =
       // Both validations are errors
-      isError === debouncedIsError &&
+      severity === 'error' &&
+      debouncedSeverity === 'error' &&
       // There is no ENS address
       !addressState.ensAddress &&
       // The message is not empty
@@ -146,7 +141,7 @@ const useAddressInput = ({
   }, [
     addressState.ensAddress,
     debouncedValidation,
-    debouncedValidation.isError,
+    debouncedValidation.severity,
     debouncedValidation.message,
     validation
   ])
@@ -208,21 +203,22 @@ const useAddressInput = ({
     if (validation.message !== debouncedValidation?.message) return false
 
     // Disable the form if the address is resolving
-    if (!debouncedValidation?.isError && debouncedValidation.message === 'Resolving domain...') {
+    if (debouncedValidation.id === 'resolving_domain') {
       return false
     }
 
     // Disable the form if there is an error
-    if (debouncedValidation?.isError)
-      return !debouncedValidation?.isError && debouncedValidation.message === ''
+    if (debouncedValidation?.severity === 'error')
+      return !(debouncedValidation?.severity === 'error') && debouncedValidation.message === ''
 
     if (addressState.isDomainResolving) return false
 
     return true
   }, [
     addressState.isDomainResolving,
-    debouncedValidation?.isError,
+    debouncedValidation.id,
     debouncedValidation.message,
+    debouncedValidation?.severity,
     validation.message
   ])
 
