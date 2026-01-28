@@ -644,7 +644,16 @@ const init = async () => {
     // Debounce multiple emits in the same tick and only execute one of them
     setTimeout(() => {
       if (backgroundState.ctrlOnUpdateIsDirtyFlags[ctrlName]) {
-        sendUpdate()
+        // If the toJSON method of a controller ever throws, we want to catch it here
+        // otherwise the ctrlOnUpdateIsDirtyFlags flag will remain true forever and no further updates
+        // will be sent to the UI for that controller
+        try {
+          sendUpdate()
+        } catch (err) {
+          ;(err as any).controllerName = ctrlName
+          console.error('Debug: Failed to send update to UI for ctrl', ctrlName, err)
+          captureBackgroundException(err)
+        }
       }
       backgroundState.ctrlOnUpdateIsDirtyFlags[ctrlName] = false
     }, 0)
