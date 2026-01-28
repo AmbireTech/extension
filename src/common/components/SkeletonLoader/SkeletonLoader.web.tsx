@@ -12,7 +12,7 @@ const SkeletonLoader = ({
   width,
   height,
   borderRadius = BORDER_RADIUS_PRIMARY,
-  style,
+  style = {},
   lowOpacity = false,
   appearance
 }: SkeletonLoaderProps & {

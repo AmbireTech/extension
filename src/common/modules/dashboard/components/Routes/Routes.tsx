@@ -1,7 +1,7 @@
 import React from 'react'
 import { View } from 'react-native'
 
-import { rewardsBg } from '@common/assets/images'
+import rewardsBg from '@common/assets/images/rewards-bg.png'
 import BadgeIcon from '@common/assets/svg/BadgeIcon'
 import DAppsIcon from '@common/assets/svg/DAppsIcon'
 import SendIcon from '@common/assets/svg/SendIcon'

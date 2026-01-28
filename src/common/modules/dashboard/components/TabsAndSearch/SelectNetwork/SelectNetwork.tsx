@@ -137,10 +137,7 @@ const SelectNetwork = ({ currentTab }: Props) => {
             {t('All Networks')}
           </Text>
         )}
-        <RightArrowIcon
-          height={12}
-          color={(isHovered ? theme.primaryText : theme.secondaryText) as string}
-        />
+        <RightArrowIcon height={12} color={isHovered ? theme.primaryText : theme.secondaryText} />
       </AnimatedPressable>
     </View>
   )

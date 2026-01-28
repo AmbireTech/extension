@@ -99,9 +99,9 @@ const AccountButton = () => {
               style={styles.accountButtonRightIcon}
               width={12}
               color={
-                (themeType === THEME_TYPES.DARK
+                themeType === THEME_TYPES.DARK
                   ? theme.primaryBackgroundInverted
-                  : theme.primaryBackground) as string
+                  : theme.primaryBackground
               }
             />
           </Animated.View>

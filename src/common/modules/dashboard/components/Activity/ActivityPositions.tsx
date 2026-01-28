@@ -1,6 +1,6 @@
 import React, { FC, useCallback, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Animated, FlatListProps, View } from 'react-native'
+import { Animated, FlatListProps, TouchableOpacity, View } from 'react-native'
 
 import { BannerType } from '@ambire-common/interfaces/banner'
 import { Network } from '@ambire-common/interfaces/network'
@@ -19,6 +19,7 @@ import TabsAndSearch from '@common/modules/dashboard/components/TabsAndSearch'
 import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tab/Tab'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { openInTab } from '@web/extension-services/background/webapi/tab'
 import useActivityControllerState from '@web/hooks/useActivityControllerState'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
@@ -37,7 +38,7 @@ interface Props {
   network: Network | null
 }
 
-const { isPopup } = getUiType()
+const { isPopup, isRequestWindow } = getUiType()
 
 const ITEMS_PER_PAGE = 10
 
@@ -168,17 +169,21 @@ const ActivityPositions: FC<Props> = ({
               {t(
                 "Ambire doesn't retrieve transactions made\n before installing the extension, but you can \ncheck your address on "
               )}
-              <a
-                href={blockExplorerUrl(
-                  network?.explorerUrl || 'https://etherscan.io',
-                  account!.addr
-                )}
-                target="_blank"
-                rel="noreferrer"
-                style={{ color: String(theme.linkText), textDecorationLine: 'none' }}
+              <TouchableOpacity
+                onPress={() =>
+                  openInTab({
+                    url: blockExplorerUrl(
+                      network?.explorerUrl || 'https://etherscan.io',
+                      account!.addr
+                    ),
+                    shouldCloseCurrentWindow: isRequestWindow
+                  })
+                }
               >
-                {blockExplorerName(network?.explorerUrl || 'https://etherscan.io')}
-              </a>
+                <Text weight="medium" color={theme.linkText} style={{ textDecorationLine: 'none' }}>
+                  {blockExplorerName(network?.explorerUrl || 'https://etherscan.io')}
+                </Text>
+              </TouchableOpacity>
               .
             </Text>
           </View>
