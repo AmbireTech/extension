@@ -1,4 +1,5 @@
 import { HD_PATH_TEMPLATE_TYPE } from '@ambire-common/consts/derivation'
+import { FeatureFlags } from '@ambire-common/consts/featureFlags'
 import { Filters, Pagination } from '@ambire-common/controllers/activity/activity'
 import { Contact } from '@ambire-common/controllers/addressBook/addressBook'
 import { SignAccountOpType } from '@ambire-common/controllers/signAccountOp/helper'
@@ -741,6 +742,14 @@ type DismissBanner = {
   }
 }
 
+type FlipFeature = {
+  type: 'FEATURE_FLAGS_CONTROLLER_FLIP_FEATURE'
+  params: {
+    flag: keyof FeatureFlags
+    isEnabled: boolean
+  }
+}
+
 export type Action =
   | UpdateNavigationUrl
   | InitControllerStateAction
@@ -878,3 +887,4 @@ export type Action =
   | DismissBanner
   | KeystoreControllerSendEncryptedPrivateKeyToUiAction
   | KeystoreControllerSendPasswordDecryptedPrivateKeyToUiAction
+  | FlipFeature
