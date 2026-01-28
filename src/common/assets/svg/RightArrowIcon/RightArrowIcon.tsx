@@ -8,7 +8,6 @@ interface Props extends LegendsSvgProps {
   width?: number
   height?: number
   weight?: string
-  color?: string
 }
 
 const RightArrowIcon: React.FC<Props> = ({
