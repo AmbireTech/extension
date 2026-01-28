@@ -585,6 +585,10 @@ export const handleActions = async (
       break
     }
 
+    case 'FEATURE_FLAGS_CONTROLLER_FLIP_FEATURE': {
+      return await mainCtrl.featureFlags.setFeatureFlag(params.flag, params.isEnabled)
+    }
+
     case 'INVITE_CONTROLLER_VERIFY': {
       return await mainCtrl.invite.verify(params.code)
     }
