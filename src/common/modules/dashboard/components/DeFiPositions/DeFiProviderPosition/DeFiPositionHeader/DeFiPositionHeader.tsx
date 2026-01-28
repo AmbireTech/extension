@@ -73,7 +73,7 @@ const DeFiPositionHeader: FC<Props> = ({
   const dappUrl = useMemo(() => {
     if (siteUrl) return siteUrl
 
-    const providerNameWithoutVersion = providerName.split(' ')[0].toLowerCase()
+    const providerNameWithoutVersion = providerName.split(' ')[0]?.toLowerCase() || ''
     const dapp = dapps.find((d) => d.name.toLowerCase().includes(providerNameWithoutVersion))
 
     return dapp?.url

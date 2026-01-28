@@ -19,7 +19,7 @@ import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 import useWalletStateController from '@web/hooks/useWalletStateController'
 import { getUiType } from '@web/utils/uiType'
 
-export type OnboardingRoute = typeof ONBOARDING_WEB_ROUTES[number]
+export type OnboardingRoute = (typeof ONBOARDING_WEB_ROUTES)[number]
 type HwWalletsNeedingRedirect = 'trezor' | 'lattice' | null
 
 const OnboardingNavigationContext = createContext<{
@@ -161,7 +161,7 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
         new RouteNode(
           WEB_ROUTES.importExistingAccount,
           [
-            ...(common[0].disabled ? common[0].children : common),
+            ...(common && common[0] && common[0].disabled ? common[0].children : common),
             new RouteNode(WEB_ROUTES.importPrivateKey, common, false, false),
             new RouteNode(WEB_ROUTES.importSeedPhrase, common, false, false),
             new RouteNode(WEB_ROUTES.ledgerConnect, common, false, false),
@@ -286,7 +286,7 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
 
     while (newHistory.length > 0) {
       const prevRouteName = newHistory[newHistory.length - 1]
-      const prevRoute = deepSearchRouteNode(onboardingRoutesTree, prevRouteName)
+      const prevRoute = deepSearchRouteNode(onboardingRoutesTree, prevRouteName!)
       newHistory.pop()
       if (!prevRoute) {
         navigate('/')
