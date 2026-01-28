@@ -1,16 +1,9 @@
 import React from 'react'
-import { ColorValue } from 'react-native'
 import Svg, { Circle, G, Path, SvgProps } from 'react-native-svg'
 
 import useTheme from '@common/hooks/useTheme'
 
-interface Props extends SvgProps {
-  width?: number
-  height?: number
-  color?: ColorValue
-}
-
-const DiscoveryIcon: React.FC<Props> = ({ width = 21, height = 21, color }) => {
+const DiscoveryIcon: React.FC<SvgProps> = ({ width = 21, height = 21, color }) => {
   const { theme } = useTheme()
   return (
     <Svg width={width} height={height} viewBox="0 0 21.061 21.065">

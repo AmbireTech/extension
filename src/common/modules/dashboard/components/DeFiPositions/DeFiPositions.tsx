@@ -239,16 +239,19 @@ const DeFiPositions: FC<Props> = ({
     return `${positionOrElement.providerName}-${positionOrElement.chainId}`
   }, [])
 
-  const dataItems = ['header']
-  if (flags.tokenAndDefiAutoDiscovery) {
-    dataItems.push(!portfolio.isAllReady ? 'skeleton' : 'keep-this-to-avoid-key-warning')
-    if (initTab?.defi && portfolio.isAllReady) {
-      filteredPositions.forEach((p: any) => dataItems.push(p))
+  const dataItems = useMemo(() => {
+    const items = ['header']
+    if (flags.tokenAndDefiAutoDiscovery) {
+      items.push(!portfolio.isAllReady ? 'skeleton' : 'keep-this-to-avoid-key-warning')
+      if (initTab?.defi && portfolio.isAllReady) {
+        filteredPositions.forEach((p: any) => items.push(p))
+      }
+      items.push(portfolio.isAllReady && !filteredPositions.length ? 'empty' : '')
+    } else {
+      items.push('disabled')
     }
-    dataItems.push(portfolio.isAllReady && !filteredPositions.length ? 'empty' : '')
-  } else {
-    dataItems.push('disabled')
-  }
+    return items
+  }, [filteredPositions, flags.tokenAndDefiAutoDiscovery, initTab?.defi, portfolio.isAllReady])
 
   return (
     <DashboardPageScrollContainer
