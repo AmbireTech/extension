@@ -2865,7 +2865,7 @@
   dependencies:
     resolve "1.22.10"
 
-"@lavamoat/allow-scripts@^3.4.2":
+"@lavamoat/allow-scripts@3.4.2":
   version "3.4.2"
   resolved "https://registry.yarnpkg.com/@lavamoat/allow-scripts/-/allow-scripts-3.4.2.tgz#53fcb3c4b3f64281ad88e5ef5993bc9439bbe58f"
   integrity sha512-AOUdl1SzSBEuSMkb30C6FMg2CbogUClOMFgFarHhbm3QyCS0zXvGwB2Adg/FYoT6f8w/tLr4oCMJbeX0PQj/rQ==
@@ -2877,7 +2877,7 @@
     type-fest "4.41.0"
     yargs "17.7.2"
 
-"@lavamoat/preinstall-always-fail@^2.1.1":
+"@lavamoat/preinstall-always-fail@2.1.1":
   version "2.1.1"
   resolved "https://registry.yarnpkg.com/@lavamoat/preinstall-always-fail/-/preinstall-always-fail-2.1.1.tgz#1df713b4c6ede11461b148a80615a8ec92d682b3"
   integrity sha512-8eyQm26cQtEek2z1vM+iSVOoKrchkHBEvUQ3VnbDEqQ7hDL5sU/rhHo/FnoMgY8J31r6LSesEzpwYQe4omgqbA==
