@@ -8,6 +8,7 @@ import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
+import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tab/Tab'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -15,7 +16,6 @@ import { AnimatedPressable, DURATIONS, useMultiHover } from '@web/hooks/useHover
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import { getUiType } from '@web/utils/uiType'
-import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tab/Tab'
 
 import getStyles from './styles'
 

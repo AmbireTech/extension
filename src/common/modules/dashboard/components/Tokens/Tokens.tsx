@@ -289,7 +289,7 @@ const Tokens = ({
                   })}{' '}
                   {!!dashboardNetworkFilter && t('on this network')}
                 </Text>
-                <RightArrowIcon height={12} color={theme.secondaryText} />
+                <RightArrowIcon height={12} color={theme.secondaryText as string} />
               </Pressable>
             )}
             <Button

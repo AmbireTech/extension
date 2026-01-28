@@ -11,10 +11,12 @@ import Button from '@common/components/Button'
 import Panel from '@common/components/Panel'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import Header from '@common/modules/header/components/Header'
+import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
@@ -52,6 +54,7 @@ const ViewOnlyScreen = () => {
   const accountsState = useAccountsControllerState()
   const { t } = useTranslation()
   const { addToast } = useToast()
+  const { navigate } = useNavigation()
   const { theme } = useTheme()
   const { goToNextRoute, goToPrevRoute } = useOnboardingNavigation()
   const [bindAnim, animStyle] = useHover({
@@ -89,7 +92,25 @@ const ViewOnlyScreen = () => {
     [duplicateAccountsIndexes.length, isLoading, isSubmitting, isValid]
   )
 
+  const isEveryAccountImported = useMemo(
+    () =>
+      isValid &&
+      accounts.length &&
+      accounts.every((account) =>
+        accountsState.accounts.some(
+          (existingAccount) =>
+            existingAccount.addr.toLowerCase() === getAddressFromAddressState(account).toLowerCase()
+        )
+      ),
+    [accounts, accountsState.accounts, isValid]
+  )
+
   const handleFormSubmit = useCallback(async () => {
+    if (isEveryAccountImported) {
+      navigate(ROUTES.dashboard)
+      return
+    }
+
     const accountsToAdd = accounts.map((account, i) => {
       const address = getAddressFromAddressState(account)
       // Use defaults, fetch identity later so account import isn’t blocked by failures
@@ -132,7 +153,24 @@ const ViewOnlyScreen = () => {
 
       throw e
     }
-  }, [accounts, accountsState.accounts, goToNextRoute, addToast, dispatch, t])
+  }, [
+    isEveryAccountImported,
+    accounts,
+    navigate,
+    accountsState.accounts,
+    dispatch,
+    goToNextRoute,
+    addToast,
+    t
+  ])
+
+  const buttonText = useMemo(() => {
+    if (isEveryAccountImported) {
+      return t('Continue')
+    }
+
+    return isLoading ? t('Importing...') : t('Import')
+  }, [isEveryAccountImported, isLoading, t])
 
   return (
     <TabLayoutContainer
@@ -186,7 +224,7 @@ const ViewOnlyScreen = () => {
               size="large"
               disabled={disabled}
               hasBottomSpacing={false}
-              text={isLoading ? t('Importing...') : t('Import')}
+              text={buttonText}
               onPress={handleSubmit(handleFormSubmit)}
             />
           </View>

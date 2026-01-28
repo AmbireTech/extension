@@ -96,9 +96,11 @@ const AddressField: FC<Props> = ({
   }, [accountsState.accounts, keystoreState.keys, value?.fieldValue])
 
   const overwriteValidation: Validation | null = useMemo(() => {
-    // We don't want to update the error message while accounts are being
-    // imported because that would stop the import process.
-    if (isLoading) return null
+    if (duplicateAccountsIndexes.includes(index))
+      return {
+        severity: 'error',
+        message: 'Duplicate address.'
+      }
 
     if (
       accountsState.accounts.find(
@@ -106,18 +108,13 @@ const AddressField: FC<Props> = ({
       )
     )
       return {
-        severity: 'error',
+        // Allow the user to proceed on purpose
+        severity: 'info',
         message: 'This address is already in your wallet.'
       }
 
-    if (duplicateAccountsIndexes.includes(index))
-      return {
-        severity: 'error',
-        message: 'Duplicate address.'
-      }
-
     return null
-  }, [duplicateAccountsIndexes, index, isLoading, accountsState.accounts, value])
+  }, [duplicateAccountsIndexes, index, accountsState.accounts, value])
 
   const handleRevalidate = useCallback(() => {
     // We don't want to update the error message while accounts are being
