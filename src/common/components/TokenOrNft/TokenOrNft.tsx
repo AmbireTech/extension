@@ -62,10 +62,10 @@ const TokenOrNft: FC<Props> = ({
         abi: 'function name() view returns(string)',
         method: 'name',
         args: []
-      })
+      }).catch(console.error)
       if (name) setFallbackName(name)
     },
-    [address]
+    [address, chainId, callContract]
   )
 
   const [isLoading, setIsLoading] = useState(true)

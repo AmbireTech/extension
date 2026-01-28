@@ -101,7 +101,7 @@ const NetworkAvailableFeatures = ({
         // eslint-disable-next-line no-console
         console.error(error)
       })
-  }, [dispatch, selectedNetwork, checkedDeploy])
+  }, [dispatch, selectedNetwork, checkedDeploy, callProvider])
 
   const handleDeploy = useCallback(async () => {
     if (!selectedNetwork) return // this should not happen...
