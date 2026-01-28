@@ -68,7 +68,8 @@ const SafeImportScreen = () => {
                 factoryAddr: safeInfo.factoryAddr,
                 singleton: safeInfo.singleton,
                 setupData: safeInfo.setupData,
-                saltNonce: safeInfo.saltNonce
+                saltNonce: safeInfo.saltNonce,
+                version: safeInfo.version
               },
               preferences: {
                 label: 'Safe',
