@@ -42,7 +42,7 @@ const Routes = () => {
       scaleOnHover: 1.02
     },
     {
-      testID: 'dashboard-button-quests',
+      testID: 'dashboard-button-rewards',
       icon: BadgeIcon,
       label: t('Rewards'),
       route: WEB_ROUTES.rewards,

@@ -4,6 +4,7 @@ import tokens from 'constants/tokens'
 import { test } from 'fixtures/pageObjects'
 
 import { expect } from '@playwright/test'
+
 import { runBatchTransferFlow, runSimpleTransferFlow } from '../../flows/transferFlow'
 
 test.describe('transfer', { tag: '@transfer' }, () => {

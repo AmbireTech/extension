@@ -5,7 +5,7 @@ import { useModalize } from 'react-native-modalize'
 
 import { Contact } from '@ambire-common/controllers/addressBook/addressBook'
 import { TokenResult } from '@ambire-common/libs/portfolio'
-import { validateAddress } from '@ambire-common/services/validations'
+import { validateAddress, Validation } from '@ambire-common/services/validations'
 import AccountsFilledIcon from '@common/assets/svg/AccountsFilledIcon'
 import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
@@ -13,7 +13,6 @@ import UpArrowIcon from '@common/assets/svg/UpArrowIcon'
 import WalletFilledIcon from '@common/assets/svg/WalletFilledIcon'
 import AddressBookContact from '@common/components/AddressBookContact'
 import AddressInput from '@common/components/AddressInput'
-import { AddressValidation } from '@common/components/AddressInput/AddressInput'
 import { InputProps } from '@common/components/Input'
 import AddContactBottomSheet from '@common/components/Recipient/AddContactBottomSheet'
 import AddToAddressBook from '@common/components/Recipient/AddToAddressBook'
@@ -45,20 +44,20 @@ interface Props extends InputProps {
   addressValidationMsg: string
   isRecipientHumanizerKnownTokenOrSmartContract: boolean
   isRecipientAddressUnknown: boolean
-  validation: AddressValidation
+  validation: Validation
   isRecipientDomainResolving: boolean
   selectedTokenSymbol?: TokenResult['symbol']
   menuPosition?: 'top' | 'bottom'
 }
 
-const ADDRESS_BOOK_VISIBLE_VALIDATION = {
-  isError: true, // Don't let the user submit, just in case there is an error
+const ADDRESS_BOOK_VISIBLE_VALIDATION: Validation = {
+  severity: 'error', // Don't let the user submit, just in case there is an error
   message: ''
 }
 
 const SelectedMenuOption: React.FC<{
   selectRef: React.RefObject<any>
-  validation: AddressValidation
+  validation: Validation
   isMenuOpen: boolean
   ensAddress: string
   isRecipientDomainResolving: boolean
@@ -85,7 +84,7 @@ const SelectedMenuOption: React.FC<{
   const prevFilteredContactsLength = usePrevious(filteredContacts.length)
 
   const isValidAddress = useMemo(
-    () => !!validateAddress(ensAddress || address).success,
+    () => validateAddress(ensAddress || address).severity === 'success',
     [ensAddress, address]
   )
   const prevIsValidAddress = usePrevious(isValidAddress)

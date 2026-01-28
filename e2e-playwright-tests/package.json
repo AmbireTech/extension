@@ -7,7 +7,7 @@
     "lint": "eslint .",
     "test": "playwright test --grep-invert @balanceCheck",
     "show:trace": "playwright show-trace",
-    "balance:test": "npx playwright test -g @balanceCheck",
+    "balance:test": "npx playwright test -g @balanceCheck --retries 1",
     "auth": "npx playwright test -g @auth",
     "dashboard": "npx playwright test -g @dashboard",
     "gas:tank": "npx playwright test -g @gasTank",

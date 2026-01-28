@@ -550,6 +550,7 @@ module.exports = async function (env, argv) {
         Buffer: ['buffer', 'Buffer'],
         process: 'process'
       }),
+      new NodePolyfillPlugin(),
       new HtmlWebpackPlugin({
         template: './src/legends/public/index.html',
         filename: 'index.html',

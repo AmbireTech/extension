@@ -11,6 +11,7 @@ import { Key } from '@ambire-common/interfaces/keystore'
 import { CallsUserRequest, RequestExecutionType } from '@ambire-common/interfaces/userRequest'
 import { AccountOpStatus } from '@ambire-common/libs/accountOp/types'
 import { getSanitizedAmount } from '@ambire-common/libs/transfer/amount'
+import { Validation } from '@ambire-common/services/validations'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
 import { getAddressFromAddressState } from '@ambire-common/utils/domains'
 import { getCallsCount } from '@ambire-common/utils/userRequest'
@@ -20,7 +21,7 @@ import BackButton from '@common/components/BackButton'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
-import useAddressInput, { ValidationWithSeverityType } from '@common/hooks/useAddressInput'
+import useAddressInput from '@common/hooks/useAddressInput'
 import useNavigation from '@common/hooks/useNavigation'
 import useToast from '@common/hooks/useToast'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
@@ -302,15 +303,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     },
     overwriteValidationFieldValue: addressState.fieldValue,
     setAddressState,
-    overwriteError:
-      state?.isInitialized && !validationFormMsgs.recipientAddress.success
-        ? validationFormMsgs.recipientAddress.message
-        : '',
-    overwriteValidLabel: validationFormMsgs?.recipientAddress.success
-      ? validationFormMsgs.recipientAddress.message
-      : '',
-    overwriteSeverity: validationFormMsgs.recipientAddress
-      .severity as ValidationWithSeverityType['severity'],
+    overwriteValidation: validationFormMsgs.recipientAddress,
     handleCacheResolvedDomain
   })
 
@@ -334,8 +327,10 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   }, [accountUserRequests, isSendingBatch, networkUserRequests, t])
 
   const isTransferFormValid = useMemo(() => {
-    return !!(isTopUp ? isFormValid : isFormValid && !addressInputState.validation.isError)
-  }, [addressInputState.validation.isError, isFormValid, isTopUp])
+    return !!(isTopUp
+      ? isFormValid
+      : isFormValid && addressInputState.validation.severity !== 'error')
+  }, [addressInputState.validation.severity, isFormValid, isTopUp])
 
   const onBack = useCallback(() => {
     navigate(ROUTES.dashboard)

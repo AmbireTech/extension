@@ -98,8 +98,7 @@ const StatItem = ({ id, score, label, explanation, value, isLast, scoreChange }:
 
     // Listen to animated value changes and update display
     const listenerId = animatedScore.addListener(({ value: scoreValue }) => {
-      const formattedValue =
-        id === 'multiplier' ? `${scoreValue.toFixed(3)}x` : scoreValue.toFixed(0)
+      const formattedValue = formatScore(id, scoreValue)
       setDisplayScore(formattedValue)
     })
 
@@ -168,7 +167,7 @@ const StatItem = ({ id, score, label, explanation, value, isLast, scoreChange }:
               }}
             >
               <Text fontSize={13} color="#D7FF00" weight="semiBold">
-                +{scoreChange.toFixed(3)}
+                +{Math.floor(scoreChange * 1000) / 1000}
               </Text>
             </Animated.View>
           )}

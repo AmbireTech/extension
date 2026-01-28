@@ -75,7 +75,8 @@ const selectors = {
     yesHideItButton: 'yes-hide-it-text',
     hideTokenModalTitle: 'hide-token-modal-title',
     hideTokenModalDescription: 'hide-token-modal-description',
-    rewardsButton: 'dashboard-button-quests',
+    rewardsButton: 'dashboard-button-rewards',
+    projecteedRewardsWalletAssetRewardsButton: 'projected-rewards-asset-button',
     rewardsForClaimingButton: 'marketing-banner-button',
     backRewardsButton: '//div[contains(text(),"Back")]',
     rewardsLink: '//div[contains(text(),"Ambire Rewards")]',
@@ -124,7 +125,7 @@ const selectors = {
     feeSpeedApe: 'option-ape',
     feeGasTankInDollars: '//span[contains(text(),"Gas Tank")]/../../../div[contains(text(),"$")]', // returning e.g. "<$0.01"
     feeTokenInDollars: '//span[contains(text(),"")]/../../div[contains(text(),"$")]',
-    confirmingYourTransactionText: '//div[contains(text(),"Confirming your")]',
+    confirmingYourTransactionText: 'confirming-your',
     explorer: {
       txnSignedStep: 'signed-step',
       txnProgressStep: 'txn-progress-step',
