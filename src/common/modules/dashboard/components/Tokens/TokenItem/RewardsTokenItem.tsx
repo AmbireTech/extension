@@ -10,7 +10,7 @@ import BaseTokenItem from './BaseTokenItem'
 
 export interface ClaimButtonProps extends Omit<Props, 'type'> {}
 
-const ClaimButton = ({ style, textStyle, ...rest }: ClaimButtonProps) => {
+const ClaimButton = ({ textStyle, ...rest }: ClaimButtonProps) => {
   const { theme } = useTheme()
 
   const claimStyles = useMemo(
@@ -31,7 +31,7 @@ const ClaimButton = ({ style, textStyle, ...rest }: ClaimButtonProps) => {
     <Button
       {...rest}
       type="secondary"
-      style={[claimStyles.container, style]}
+      style={[claimStyles.container]}
       textStyle={[claimStyles.text, textStyle]}
     />
   )
