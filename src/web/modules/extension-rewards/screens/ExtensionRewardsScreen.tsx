@@ -232,8 +232,7 @@ const ExtensionRewardsScreen = () => {
         </View>
         <View
           style={{
-            height: '100%',
-            top: '100px'
+            height: '100%'
           }}
         >
           {!isProjectedRewardsLoading ? (
@@ -244,13 +243,16 @@ const ExtensionRewardsScreen = () => {
                 backgroundColor: '#191A1F',
                 borderWidth: 1,
                 borderColor: '#6A6F8633',
-                borderRadius: 16
+                borderRadius: 16,
+                ...(projectedRewardsStats?.reasonToNotDisplayProjectedRewards
+                  ? { top: '6.25rem' }
+                  : {})
               }}
             >
               {projectedRewardsStats?.reasonToNotDisplayProjectedRewards ? (
                 <View
                   style={{
-                    ...spacings.ptLg,
+                    ...spacings.pt2Xl,
                     ...spacings.prLg,
                     ...spacings.plLg,
                     alignItems: 'center'
@@ -267,7 +269,7 @@ const ExtensionRewardsScreen = () => {
                       ...spacings.mbLg,
                       ...text.center,
                       color: '#8E98A8',
-                      fontWeight: '500',
+                      fontWeight: '600',
                       fontSize: 16,
                       lineHeight: 24,
                       letterSpacing: 0
