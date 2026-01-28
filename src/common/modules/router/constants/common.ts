@@ -66,7 +66,8 @@ const WEB_ROUTES = {
   recoveryPhrasesSettings: 'settings/recovery-phrases',
   onboardingCompleted: 'wallet-setup-completed',
   receive: 'receive',
-  safeImport: 'safe-import'
+  safeImport: 'safe-import',
+  optOuts: 'settings/opt-outs'
 }
 
 const ROUTES = { ...MOBILE_ROUTES, ...WEB_ROUTES }

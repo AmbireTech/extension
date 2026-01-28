@@ -1,18 +1,17 @@
 import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
-import { SvgProps } from 'react-native-svg'
 
 import AccountsIcon from '@common/assets/svg/AccountsIcon'
 import AddressBookIcon from '@common/assets/svg/AddressBookIcon'
 import BugIcon from '@common/assets/svg/BugIcon'
 import BulbIcon from '@common/assets/svg/BulbIcon'
 import CustomTokensIcon from '@common/assets/svg/CustomTokensIcon'
-import EmailVaultIcon from '@common/assets/svg/EmailVaultIcon'
 import HelpIcon from '@common/assets/svg/HelpIcon'
 import KeyStoreSettingsIcon from '@common/assets/svg/KeyStoreSettingsIcon'
 import NetworksIcon from '@common/assets/svg/NetworksIcon'
 import PasswordRecoverySettingsIcon from '@common/assets/svg/PasswordRecoverySettingsIcon'
+import PrivacyIcon from '@common/assets/svg/PrivacyIcon'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import SidebarSecurityIcon from '@common/assets/svg/SidebarSecurityIcon'
 import SignedMessageIcon from '@common/assets/svg/SignedMessageIcon'
@@ -82,6 +81,12 @@ export const SETTINGS_LINKS = [
     Icon: React.memo(PasswordRecoverySettingsIcon),
     label: 'Password recovery',
     path: ROUTES.devicePasswordRecovery
+  },
+  {
+    key: 'opt-outs',
+    Icon: React.memo(PrivacyIcon),
+    label: 'Privacy Opt-outs',
+    path: ROUTES.optOuts
   },
   // Disabled for now - will be added in future releases
   // {
