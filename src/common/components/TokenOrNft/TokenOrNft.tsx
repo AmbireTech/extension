@@ -57,6 +57,11 @@ const TokenOrNft: FC<Props> = ({
   useEffect(() => {
     if (!network) return
     const rpcUrl = network.selectedRpcUrl || network.rpcUrls[0]
+    // Note: ethers v6 changes the way providers are created and used
+    // Solution: https://github.com/ethers-io/ethers.js/issues/2201
+    // But currently we are on ethers v6 but ethersproject/providers => 5.5.2. There are beta versions of ethers ethersproject/providers v6 but they are not stable yet.
+    // This is the error Property '#private' in type 'JsonRpcProvider' refers to a different member that cannot be accessed from within type 'JsonRpcProvider'.ts(2345)
+    // @ts-ignore
     if (!provider) setProvider(getRpcProvider([rpcUrl], network.chainId))
     return () => {
       if (provider && provider.destroy) provider.destroy()
