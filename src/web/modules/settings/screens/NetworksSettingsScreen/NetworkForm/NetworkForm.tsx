@@ -211,7 +211,7 @@ const NetworkForm = ({
 
   useEffect(() => {
     dispatch({
-      type: 'SETTINGS_CONTROLLER_RESET_NETWORK_TO_ADD_OR_UPDATE'
+      type: 'NETWORKS_CONTROLLER_RESET_NETWORK_TO_ADD_OR_UPDATE'
     })
   }, [dispatch])
 
@@ -219,7 +219,7 @@ const NetworkForm = ({
     async (rpcUrl?: string, chainId?: string | number, type: 'add' | 'change' = 'change') => {
       setValidatingRPC(true)
       if (type === 'change') {
-        dispatch({ type: 'SETTINGS_CONTROLLER_RESET_NETWORK_TO_ADD_OR_UPDATE' })
+        dispatch({ type: 'NETWORKS_CONTROLLER_RESET_NETWORK_TO_ADD_OR_UPDATE' })
       }
       if (!rpcUrl && !selectedRpcUrl) {
         setValidatingRPC(false)
@@ -294,7 +294,7 @@ const NetworkForm = ({
             return
           }
           dispatch({
-            type: 'SETTINGS_CONTROLLER_SET_NETWORK_TO_ADD_OR_UPDATE',
+            type: 'NETWORKS_CONTROLLER_SET_NETWORK_TO_ADD_OR_UPDATE',
             params: { rpcUrl: rpcUrl as string, chainId: BigInt(chainId) }
           })
         }
@@ -504,7 +504,7 @@ const NetworkForm = ({
         const chainId = watch('chainId')
         if (chainId) {
           dispatch({
-            type: 'SETTINGS_CONTROLLER_SET_NETWORK_TO_ADD_OR_UPDATE',
+            type: 'NETWORKS_CONTROLLER_SET_NETWORK_TO_ADD_OR_UPDATE',
             params: { rpcUrl: url, chainId: BigInt(chainId) }
           })
         }

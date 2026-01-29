@@ -192,16 +192,16 @@ type AccountsControllerResetAccountsNewlyAddedStateAction = {
   type: 'ACCOUNTS_CONTROLLER_RESET_ACCOUNTS_NEWLY_ADDED_STATE'
 }
 
-type SettingsControllerSetNetworkToAddOrUpdate = {
-  type: 'SETTINGS_CONTROLLER_SET_NETWORK_TO_ADD_OR_UPDATE'
+type NetworksControllerSetNetworkToAddOrUpdate = {
+  type: 'NETWORKS_CONTROLLER_SET_NETWORK_TO_ADD_OR_UPDATE'
   params: {
     chainId: Network['chainId']
     rpcUrl: string
   }
 }
 
-type SettingsControllerResetNetworkToAddOrUpdate = {
-  type: 'SETTINGS_CONTROLLER_RESET_NETWORK_TO_ADD_OR_UPDATE'
+type NetworksControllerResetNetworkToAddOrUpdate = {
+  type: 'NETWORKS_CONTROLLER_RESET_NETWORK_TO_ADD_OR_UPDATE'
 }
 
 type KeystoreControllerUpdateKeyPreferencesAction = {
@@ -792,8 +792,8 @@ export type Action =
   | AccountsControllerUpdateAccountPreferences
   | AccountsControllerUpdateAccountState
   | AccountsControllerResetAccountsNewlyAddedStateAction
-  | SettingsControllerSetNetworkToAddOrUpdate
-  | SettingsControllerResetNetworkToAddOrUpdate
+  | NetworksControllerSetNetworkToAddOrUpdate
+  | NetworksControllerResetNetworkToAddOrUpdate
   | MainControllerAddNetwork
   | KeystoreControllerUpdateKeyPreferencesAction
   | MainControllerUpdateNetworkAction

@@ -115,10 +115,10 @@ export const handleActions = async (
     case 'ACCOUNTS_CONTROLLER_RESET_ACCOUNTS_NEWLY_ADDED_STATE': {
       return await mainCtrl.accounts.resetAccountsNewlyAddedState()
     }
-    case 'SETTINGS_CONTROLLER_SET_NETWORK_TO_ADD_OR_UPDATE': {
+    case 'NETWORKS_CONTROLLER_SET_NETWORK_TO_ADD_OR_UPDATE': {
       return await mainCtrl.networks.setNetworkToAddOrUpdate(params)
     }
-    case 'SETTINGS_CONTROLLER_RESET_NETWORK_TO_ADD_OR_UPDATE': {
+    case 'NETWORKS_CONTROLLER_RESET_NETWORK_TO_ADD_OR_UPDATE': {
       return await mainCtrl.networks.setNetworkToAddOrUpdate(null)
     }
     case 'KEYSTORE_CONTROLLER_UPDATE_KEY_PREFERENCES': {
