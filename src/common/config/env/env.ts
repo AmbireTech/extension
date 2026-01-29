@@ -24,7 +24,7 @@ export const APP_ID = Application.applicationId
  * Internal app version, example: 1.0.0 (follows semantic versioning).
  * Fallback to the appJSON version, because in web mode Constants are missing.
  */
-export const APP_VERSION = Constants?.manifest?.version || appJSON.expo.version
+export const APP_VERSION = Constants?.manifest?.version || appJSON.version
 /**
  * The internal build version of the native build (binary).
  * This is the Info.plist value for `CFBundleVersion` on iOS and
