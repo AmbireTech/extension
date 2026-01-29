@@ -2321,10 +2321,10 @@
   resolved "https://registry.yarnpkg.com/@expo/vector-icons/-/vector-icons-15.0.3.tgz#12c38d4e6cc927dd0500e4591ac00672a8909748"
   integrity sha512-SBUyYKphmlfUBqxSfDdJ3jAdEVSALS2VUPOUyqn48oZmb2TL/O7t7/PQm5v4NQujYEPLPMTLn9KVw6H7twwbTA==
 
-"@expo/webpack-config@18.1.4":
-  version "18.1.4"
-  resolved "https://registry.yarnpkg.com/@expo/webpack-config/-/webpack-config-18.1.4.tgz#45945f401ef8e246f0f74945e1d1bbe7ce36efac"
-  integrity sha512-lc2ZvlsxI6vDH4RHA4xnYzDl4Dir5HTiFpw8WE28kE8+33pma/DIIycv5bE/BZx+czV5NqM4103E2TvgKkccKA==
+"@expo/webpack-config@19.0.1":
+  version "19.0.1"
+  resolved "https://registry.yarnpkg.com/@expo/webpack-config/-/webpack-config-19.0.1.tgz#c54db7ecbe37cc8ae3d8cc4a7d8184ab4633827e"
+  integrity sha512-5bSxXTUd/DCF44+1dSyU23YKLOOYCr9pMJ+C5Vw7PAi6v6OEyNp4uOVMk2x5DAEpXtvOsJCxvNZdmtY/IqmO/A==
   dependencies:
     "@babel/core" "^7.20.2"
     babel-loader "^8.3.0"
@@ -2333,15 +2333,16 @@
     copy-webpack-plugin "^10.2.0"
     css-loader "^6.5.1"
     css-minimizer-webpack-plugin "^3.4.1"
-    expo-pwa "0.0.126"
+    expo-pwa "0.0.127"
     find-up "^5.0.0"
     find-yarn-workspace-root "~2.0.0"
+    fs-extra "^11.2.0"
     getenv "^1.0.0"
     html-webpack-plugin "^5.5.0"
     is-wsl "^2.0.0"
     mini-css-extract-plugin "^2.5.2"
     node-html-parser "^5.2.0"
-    semver "~7.3.2"
+    semver "~7.5.4"
     source-map-loader "^3.0.1"
     style-loader "^3.3.1"
     terser-webpack-plugin "^5.3.0"
@@ -8989,10 +8990,10 @@ expo-modules-core@3.0.29:
   dependencies:
     invariant "^2.2.4"
 
-expo-pwa@0.0.126:
-  version "0.0.126"
-  resolved "https://registry.yarnpkg.com/expo-pwa/-/expo-pwa-0.0.126.tgz#2d554a4a671eb25a3560eb99d46de65634de52dd"
-  integrity sha512-9qb6aIY0awez4FTyIiNhqyekb6sKnbvODOFCDPg23PqpkvdhuzzDRtP/Avgippt8kqRAgPpFXmIp2LaAyH1/aw==
+expo-pwa@0.0.127:
+  version "0.0.127"
+  resolved "https://registry.yarnpkg.com/expo-pwa/-/expo-pwa-0.0.127.tgz#b8d2fd28efff408a24e0f2539bfb47e09f8e4ebe"
+  integrity sha512-8D9wEDkEXG9r6TPvAFpWt27IiP1cLm/4RWVRUHzFZflbWYLi8GkYArj5LHbbfokybRm1GVAanSrrYFEqHoIUiA==
   dependencies:
     "@expo/image-utils" "0.3.23"
     chalk "^4.0.0"
@@ -9426,6 +9427,15 @@ fs-extra@9.0.0:
     graceful-fs "^4.2.0"
     jsonfile "^6.0.1"
     universalify "^1.0.0"
+
+fs-extra@^11.2.0:
+  version "11.3.3"
+  resolved "https://registry.yarnpkg.com/fs-extra/-/fs-extra-11.3.3.tgz#a27da23b72524e81ac6c3815cc0179b8c74c59ee"
+  integrity sha512-VWSRii4t0AFm6ixFFmLLx1t7wS1gh+ckoa84aOeapGum0h+EZd1EhEumSB+ZdDLnEPuucsVB9oB7cxJHap6Afg==
+  dependencies:
+    graceful-fs "^4.2.0"
+    jsonfile "^6.0.1"
+    universalify "^2.0.0"
 
 fs-extra@^9.0.0:
   version "9.1.0"
@@ -14953,10 +14963,10 @@ semver@^7.3.5, semver@^7.3.8, semver@^7.5.3, semver@^7.5.4:
   resolved "https://registry.yarnpkg.com/semver/-/semver-7.7.0.tgz#9c6fe61d0c6f9fa9e26575162ee5a9180361b09c"
   integrity sha512-DrfFnPzblFmNrIZzg5RzHegbiRWg7KMR7btwi2yjHwx06zsUbO5g613sVwEV7FTwmzJu+Io0lJe2GJ3LxqpvBQ==
 
-semver@~7.3.2:
-  version "7.3.8"
-  resolved "https://registry.yarnpkg.com/semver/-/semver-7.3.8.tgz#07a78feafb3f7b32347d725e33de7e2a2df67798"
-  integrity sha512-NB1ctGL5rlHrPJtFDVIVzTyQylMLu9N9VICA6HSFJo8MCGVTMW6gfpicwKmmK/dAjTOrqu5l63JJOpDSrAis3A==
+semver@~7.5.4:
+  version "7.5.4"
+  resolved "https://registry.yarnpkg.com/semver/-/semver-7.5.4.tgz#483986ec4ed38e1c6c48c34894a9182dbff68a6e"
+  integrity sha512-1bCSESV6Pv+i21Hvpxp3Dx+pSD8lIPt8uVjRrxAUt/nbswYc+tK6Y2btiULjd4+fnq15PX+nqQDC7Oft7WkwcA==
   dependencies:
     lru-cache "^6.0.0"
 
