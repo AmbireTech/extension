@@ -68,7 +68,7 @@ const NetworkAvailableFeatures = ({
   const { callProvider } = useProvidersControllerState()
   const { dispatch } = useBackgroundService()
   const { addToast } = useToast()
-  const [checkedDeploy, setCheckedDeploy] = useState<boolean>(false)
+  const [checkedDeployFor, setCheckedDeployFor] = useState<bigint | undefined>()
   const tooltipId = useId()
 
   const selectedNetwork = useMemo(
@@ -78,15 +78,15 @@ const NetworkAvailableFeatures = ({
   const prevSelectedNetwork: any = usePrevious(selectedNetwork)
 
   useEffect(() => {
-    if (selectedNetwork?.chainId !== prevSelectedNetwork?.chainId && checkedDeploy) {
-      setCheckedDeploy(false)
-    }
-  }, [selectedNetwork, prevSelectedNetwork, checkedDeploy])
+    if (!selectedNetwork) return
+
+    if (selectedNetwork.chainId !== checkedDeployFor) setCheckedDeployFor(undefined)
+  }, [selectedNetwork, prevSelectedNetwork, checkedDeployFor])
 
   useEffect(() => {
-    if (!selectedNetwork || checkedDeploy) return
+    if (!selectedNetwork || selectedNetwork.areContractsDeployed || checkedDeployFor) return
 
-    setCheckedDeploy(true)
+    setCheckedDeployFor(selectedNetwork.chainId)
 
     callProvider(selectedNetwork.chainId, 'getCode', AMBIRE_ACCOUNT_FACTORY)
       .then((factoryCode) => {
@@ -101,7 +101,7 @@ const NetworkAvailableFeatures = ({
         // eslint-disable-next-line no-console
         console.error(error)
       })
-  }, [dispatch, selectedNetwork, checkedDeploy, callProvider])
+  }, [dispatch, selectedNetwork, checkedDeployFor, callProvider])
 
   const handleDeploy = useCallback(async () => {
     if (!selectedNetwork) return // this should not happen...
