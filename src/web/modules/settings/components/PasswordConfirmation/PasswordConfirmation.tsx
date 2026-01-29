@@ -17,7 +17,7 @@ import useBackgroundService from '@web/hooks/useBackgroundService'
 import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 
 interface Props {
-  onPasswordConfirmed: (password?: string) => void
+  onPasswordConfirmed: (password: string) => void
   onBackButtonPress: () => void
   text: string
   title?: string
