@@ -63,10 +63,6 @@
   },
   "dependencies": {
     "@ambire/signature-validator": "^1.5.0",
-    "@babel/plugin-proposal-decorators": "7.28.6",
-    "@babel/plugin-transform-class-properties": "7.28.6",
-    "@babel/plugin-transform-private-methods": "7.28.6",
-    "@babel/plugin-transform-typescript": "^7.23.3",
     "@babel/preset-react": "^7.24.7",
     "@babel/runtime": "^7.20.6",
     "@dnd-kit/core": "^6.3.1",
@@ -248,10 +244,14 @@
     "webextension-polyfill": "^0.10.0"
   },
   "devDependencies": {
-    "@babel/core": "7.26.10",
-    "@babel/plugin-proposal-nullish-coalescing-operator": "^7.18.6",
-    "@babel/plugin-proposal-optional-chaining": "^7.21.0",
+    "@babel/core": "7.28.6",
+    "@babel/plugin-proposal-decorators": "7.28.6",
+    "@babel/plugin-proposal-nullish-coalescing-operator": "7.18.6",
+    "@babel/plugin-proposal-optional-chaining": "7.21.0",
+    "@babel/plugin-transform-class-properties": "7.28.6",
     "@babel/plugin-transform-export-namespace-from": "7.27.1",
+    "@babel/plugin-transform-private-methods": "7.28.6",
+    "@babel/plugin-transform-typescript": "7.28.6",
     "@babel/preset-env": "^7.22.5",
     "@babel/preset-typescript": "^7.23.3",
     "@expo/webpack-config": "18.1.4",
@@ -273,7 +273,7 @@
     "@types/validator": "^13.7.0",
     "@typescript-eslint/eslint-plugin": "7.18.0",
     "@typescript-eslint/parser": "7.18.0",
-    "babel-loader": "8.3.0",
+    "babel-loader": "10.0.0",
     "copy-webpack-plugin": "^10.2.0",
     "css-loader": "^7.1.2",
     "dotenv": "^16.3.1",
@@ -309,8 +309,8 @@
     "webpack-target-webextension": "^1.1.2"
   },
   "resolutions": {
-    "babel-loader": "8.3.0",
-    "elliptic": "^6.6.1"
+    "elliptic": "^6.6.1",
+    "browserslist": "^4.23.0"
   },
   "private": true,
   "lavamoat": {
