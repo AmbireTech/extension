@@ -10,18 +10,6 @@
       "enabled": true,
       "fallbackToCacheTimeout": 45000
     },
-    "hooks": {
-      "postPublish": [
-        {
-          "file": "sentry-expo/upload-sourcemaps",
-          "config": {
-            "organization": "ambire",
-            "project": "ambire",
-            "authToken": "94f0f4e891314cb79d2a094b3e1af571944170fe8d54435c95a539b039673db3"
-          }
-        }
-      ]
-    },
     "ios": {
       "bundleIdentifier": "com.ambire.app.wallet"
     },
