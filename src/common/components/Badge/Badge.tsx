@@ -4,6 +4,7 @@ import { View } from 'react-native'
 
 import InformationIcon from '@common/assets/svg/InformationIcon'
 import MetamaskIcon from '@common/assets/svg/Metamask/MetamaskIcon'
+import SafeIcon from '@common/assets/svg/SafeIcon'
 import StarsIcon from '@common/assets/svg/StarsIcon'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
@@ -140,6 +141,9 @@ const Badge = ({
             height={sizeMultiplier * 14}
           />
         )}
+      {specialType && specialType === 'safe' && (
+        <SafeIcon width={sizeMultiplier * 14} height={sizeMultiplier * 14} />
+      )}
       {type === 'new' && (
         <StarsIcon
           style={spacings.mlMi}
