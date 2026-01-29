@@ -31,6 +31,7 @@ export const parseTextLinks = (text: string): (ParsedTextLink | string)[] => {
   const result = []
   const matches = Array.from(textWithLinks.matchAll(linkRegex)).filter(([, , url]) => {
     try {
+      if (!url) return false
       const urlObj = new URL(url)
 
       // Check if the URL's hostname is in the whitelist

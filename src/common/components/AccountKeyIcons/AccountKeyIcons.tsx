@@ -12,12 +12,14 @@ import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 import AccountKeyBanner from '../AccountKeyBanner'
 import AccountKeyIcon from '../AccountKeyIcon/AccountKeyIcon'
 
+export type KeyType = Key['type'] | 'none' | 'safe'
+
 const AccountKeyIconOrBanner = ({
   type,
   isExtended,
   color
 }: {
-  type: Key['type'] | 'none' | 'safe'
+  type: KeyType
   isExtended: boolean
   color: string
 }) => {

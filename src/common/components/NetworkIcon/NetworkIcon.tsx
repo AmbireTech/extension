@@ -57,7 +57,7 @@ const NetworkIcon = ({
   const iconUrls = useMemo(
     () => [
       ...((network as Network)?.iconUrls || []),
-      `https://icons.llamao.fi/icons/chains/rsz_${networkName.split(/\s+/)[0].toLowerCase()}.jpg`,
+      `https://icons.llamao.fi/icons/chains/rsz_${networkName.split(/\s+/)[0]?.toLowerCase()}.jpg`,
       `https://icons.llamao.fi/icons/chains/rsz_${network?.nativeAssetSymbol?.toLowerCase()}.jpg`,
       `https://raw.githubusercontent.com/ErikThiart/cryptocurrency-icons/master/64/${networkName.toLowerCase()}.png`,
       `https://github.com/ErikThiart/cryptocurrency-icons/tree/master/64/${networkName.toLowerCase()}.png`
@@ -70,8 +70,10 @@ const NetworkIcon = ({
   const { theme, themeType } = useTheme()
   const Icon = icons[networkName]
 
-  const renderDefaultIcon = useCallback(
-    () => (
+  const renderDefaultIcon = useCallback(() => {
+    const firstCharOfNetworkName = networkName[0]?.toUpperCase() || '?'
+
+    return (
       <View
         style={[{ width: size, height: size }, flexbox.alignCenter, flexbox.justifyCenter, style]}
       >
@@ -88,13 +90,12 @@ const NetworkIcon = ({
           ]}
         >
           <Text weight="medium" fontSize={size * 0.4} color="#fff">
-            {networkName[0].toUpperCase()}
+            {firstCharOfNetworkName}
           </Text>
         </View>
       </View>
-    ),
-    [iconScale, networkName, size, style, theme]
-  )
+    )
+  }, [iconScale, networkName, size, style, theme])
 
   // Ensure tooltip ID is unique per component to avoid duplicates when multiple are rendered (with same network name)
   const tooltipId = useMemo(() => `${networkName}-${nanoid(6)}`, [networkName])

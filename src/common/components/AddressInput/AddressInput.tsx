@@ -137,7 +137,7 @@ const AddressInput: React.FC<Props> = ({
               ) : null}
               <View style={[styles.domainIcons, rest.button ? spacings.pr0 : spacings.pr]}>
                 {childrenBeforeButtons}
-                <View style={styles.plTy}>
+                <View style={spacings.plTy}>
                   <EnsIcon isActive={!!ensAddress} />
                 </View>
               </View>
