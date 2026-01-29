@@ -2,7 +2,7 @@
 import 'reflect-metadata'
 
 import { ethErrors } from 'eth-rpc-errors'
-import { EthersError, getAddress, isAddress, toBeHex, TransactionReceipt } from 'ethers'
+import { getAddress, isAddress, toBeHex, TransactionReceipt } from 'ethers'
 import cloneDeep from 'lodash/cloneDeep'
 import { nanoid } from 'nanoid'
 
@@ -412,12 +412,7 @@ export class ProviderController {
       }
 
       const accout = this.mainCtrl.accounts.accounts.find((acc) => acc.addr === accountAddr)!
-      const baseAccount = getBaseAccount(
-        accout,
-        accountState,
-        this.mainCtrl.keystore.keys.filter((key) => accout.associatedKeys.includes(key.addr)),
-        network
-      )
+      const baseAccount = getBaseAccount(accout, accountState, network)
       const isSmart = baseAccount.getAtomicStatus() !== 'unsupported'
 
       capabilities[networkChainIdToHex(network.chainId)] = {
