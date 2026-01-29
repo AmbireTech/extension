@@ -54,7 +54,8 @@
     "test": "jest --config=./jest.config.js --passWithNoTests",
     "extension:type:check": "tsc --noEmit --project tsconfig.typecheck-extension.json",
     "extension:type:check-new": "yarn extension:type:check | yarn tsc-baseline check",
-    "postinstall": "patch-package"
+    "setup": "yarn install && yarn allow-scripts && yarn patch-package",
+    "setup:ci": "yarn install --frozen-lockfile && yarn allow-scripts && yarn patch-package"
   },
   "engines": {
     "node": ">=22.12.0 <23.0.0",
@@ -251,6 +252,8 @@
     "@babel/preset-env": "^7.22.5",
     "@babel/preset-typescript": "^7.23.3",
     "@expo/webpack-config": "^18.0.4",
+    "@lavamoat/allow-scripts": "3.4.2",
+    "@lavamoat/preinstall-always-fail": "2.1.1",
     "@lifi/types": "17.46.0",
     "@types/aes-js": "^3.1.4",
     "@types/chrome": "^0.0.212",
@@ -311,5 +314,24 @@
     "babel-loader": "8.3.0",
     "elliptic": "^6.6.1"
   },
-  "private": true
+  "private": true,
+  "lavamoat": {
+    "allowScripts": {
+      "$root$": false,
+      "@lavamoat/preinstall-always-fail": false,
+      "@sentry/react-native>@sentry/cli": false,
+      "@trezor/connect-webextension>@trezor/connect>@trezor/protobuf>protobufjs": false,
+      "@trezor/connect-webextension>@trezor/connect>@trezor/transport>usb": false,
+      "@trezor/connect-webextension>@trezor/connect>@trezor/utxo-lib>blake-hash": false,
+      "@trezor/connect-webextension>@trezor/connect>@trezor/utxo-lib>tiny-secp256k1": false,
+      "eth-crypto>eccrypto": false,
+      "eth-crypto>eccrypto>secp256k1": false,
+      "eth-crypto>ethereumjs-util>ethereum-cryptography>keccak": false,
+      "eth-crypto>ethereumjs-util>ethereum-cryptography>secp256k1": false,
+      "postinstall-postinstall": false,
+      "secp256k1": false,
+      "sentry-expo>@sentry/react-native>@sentry/cli": false,
+      "sentry-expo>@sentry/react-native>@sentry/wizard>@sentry/cli": false
+    }
+  }
 }

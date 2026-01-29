@@ -87,7 +87,7 @@ jobs:
           node-version: 22.12.0
 
       - name: Install root dependencies
-        run: yarn install --frozen-lockfile
+        run: yarn setup:ci
         shell: bash
 
       - name: Build webkit extension
