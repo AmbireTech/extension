@@ -11,7 +11,6 @@ import { Key } from '@ambire-common/interfaces/keystore'
 import { CallsUserRequest, RequestExecutionType } from '@ambire-common/interfaces/userRequest'
 import { AccountOpStatus } from '@ambire-common/libs/accountOp/types'
 import { getSanitizedAmount } from '@ambire-common/libs/transfer/amount'
-import { Validation } from '@ambire-common/services/validations'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
 import { getAddressFromAddressState } from '@ambire-common/utils/domains'
 import { getCallsCount } from '@ambire-common/utils/userRequest'
@@ -285,9 +284,9 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
 
   const handleCacheResolvedDomain = useCallback(
     (address: string, ensAvatar: string | null, domain: string, type: 'ens') => {
-      saveResolvedDomain(address, ensAvatar, domain, type)
+      saveResolvedDomain({ address, ensAvatar, name: domain, type })
     },
-    [dispatch]
+    [saveResolvedDomain]
   )
 
   const addressInputState = useAddressInput({

@@ -14,16 +14,16 @@ import useMainControllerState from '@web/hooks/useMainControllerState'
 
 const DomainsControllerStateContext = createContext<{
   state: IDomainsController
-  resolveDomain: (address: string) => void
-  saveResolvedDomain: (
-    address: string,
-    ensAvatar: string | null,
-    domain: string,
+  reverseLookup: (address: string) => void
+  saveResolvedDomain: (props: {
+    address: string
+    ensAvatar: string | null
+    name: string
     type: 'ens'
-  ) => void
+  }) => void
 }>({
   state: {} as IDomainsController,
-  resolveDomain: () => {},
+  reverseLookup: () => {},
   saveResolvedDomain: () => {}
 })
 
@@ -47,26 +47,29 @@ const BenzinAndLegendsDomainsProvider: React.FC<React.PropsWithChildren> = ({ ch
 
   const memoizedDomainCtrl = useDeepMemo(domainsCtrl, controller)
 
-  const resolveDomain = useCallback((address: string) => {
-    const checksummedAddress = getAddress(address)
+  const reverseLookup = useCallback(
+    (address: string) => {
+      const checksummedAddress = getAddress(address)
 
-    domainsCtrl.reverseLookup(checksummedAddress).catch((e) => {
-      console.error('Failed to resolve domain for address', checksummedAddress, e)
-    })
-  }, [])
+      domainsCtrl.reverseLookup(checksummedAddress).catch((e) => {
+        console.error('Failed to resolve domain for address', checksummedAddress, e)
+      })
+    },
+    [domainsCtrl]
+  )
 
   const saveResolvedDomain = useCallback(
-    (address: string, ensAvatar: string | null, domain: string, type: 'ens') => {
-      domainsCtrl.saveResolvedReverseLookup({ address, type, ensAvatar, name: domain })
+    (props: { address: string; ensAvatar: string | null; name: string; type: 'ens' }) => {
+      domainsCtrl.saveResolvedReverseLookup(props)
     },
-    []
+    [domainsCtrl]
   )
 
   return (
     <DomainsControllerStateContext.Provider
       value={useMemo(
-        () => ({ state: memoizedDomainCtrl, resolveDomain, saveResolvedDomain }),
-        [memoizedDomainCtrl, resolveDomain, saveResolvedDomain]
+        () => ({ state: memoizedDomainCtrl, reverseLookup, saveResolvedDomain }),
+        [memoizedDomainCtrl, reverseLookup, saveResolvedDomain]
       )}
     >
       {children}
@@ -90,25 +93,28 @@ const ExtensionDomainsProvider: React.FC<React.PropsWithChildren> = ({ children 
 
   const memoizedState = useDeepMemo(state, controller)
 
-  const resolveDomain = useCallback((address: string) => {
-    dispatch({ type: 'DOMAINS_CONTROLLER_REVERSE_LOOKUP', params: { address } })
-  }, [])
+  const reverseLookup = useCallback(
+    (address: string) => {
+      dispatch({ type: 'DOMAINS_CONTROLLER_REVERSE_LOOKUP', params: { address } })
+    },
+    [dispatch]
+  )
 
   const saveResolvedDomain = useCallback(
-    (address: string, ensAvatar: string | null, domain: string, type: 'ens') => {
+    (props: { address: string; ensAvatar: string | null; name: string; type: 'ens' }) => {
       dispatch({
         type: 'DOMAINS_CONTROLLER_SAVE_RESOLVED_REVERSE_LOOKUP',
-        params: { address, ensAvatar, type, name: domain }
+        params: props
       })
     },
-    []
+    [dispatch]
   )
 
   return (
     <DomainsControllerStateContext.Provider
       value={useMemo(
-        () => ({ state: memoizedState, resolveDomain, saveResolvedDomain }),
-        [memoizedState, resolveDomain, saveResolvedDomain]
+        () => ({ state: memoizedState, reverseLookup, saveResolvedDomain }),
+        [memoizedState, reverseLookup, saveResolvedDomain]
       )}
     >
       {children}

@@ -94,9 +94,9 @@ const AddContactFormModal = ({ id, sheetRef, closeBottomSheet }: Props) => {
 
   const handleCacheResolvedDomain = useCallback(
     (address: string, ensAvatar: string | null, domain: string, type: 'ens') => {
-      saveResolvedDomain(address, ensAvatar, domain, type)
+      saveResolvedDomain({ address, ensAvatar, name: domain, type })
     },
-    [dispatch]
+    [saveResolvedDomain]
   )
 
   const { validation, RHFValidate } = useAddressInput({

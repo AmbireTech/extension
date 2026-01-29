@@ -25,14 +25,14 @@ const BenzinInit = () => {
         <ThemeProvider>
           <SafeAreaProvider>
             <ToastProvider>
-              <DomainsControllerStateProvider>
-                <ContractNamesContextProvider>
-                  <BenzinNetworksContextProvider>
+              <ContractNamesContextProvider>
+                <BenzinNetworksContextProvider>
+                  <DomainsControllerStateProvider>
                     <BenzinScreen />
                     <PortalHost name="global" />
-                  </BenzinNetworksContextProvider>
-                </ContractNamesContextProvider>
-              </DomainsControllerStateProvider>
+                  </DomainsControllerStateProvider>
+                </BenzinNetworksContextProvider>
+              </ContractNamesContextProvider>
             </ToastProvider>
           </SafeAreaProvider>
         </ThemeProvider>

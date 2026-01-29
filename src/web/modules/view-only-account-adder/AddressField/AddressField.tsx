@@ -14,7 +14,6 @@ import useAddressInput from '@common/hooks/useAddressInput'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import useDomainsControllerState from '@web/hooks/useDomainsController/useDomainsController'
 import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 
@@ -45,7 +44,6 @@ const AddressField: FC<Props> = ({
   setValue,
   trigger
 }) => {
-  const { dispatch } = useBackgroundService()
   const accountsState = useAccountsControllerState()
   const keystoreState = useKeystoreControllerState()
   const { saveResolvedDomain } = useDomainsControllerState()
@@ -130,9 +128,9 @@ const AddressField: FC<Props> = ({
 
   const handleCacheResolvedDomain = useCallback(
     (address: string, ensAvatar: string | null, domain: string, type: 'ens') => {
-      saveResolvedDomain(address, ensAvatar, domain, type)
+      saveResolvedDomain({ address, ensAvatar, name: domain, type })
     },
-    [dispatch]
+    [saveResolvedDomain]
   )
 
   const { validation, RHFValidate } = useAddressInput({
