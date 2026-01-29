@@ -69,8 +69,8 @@ const TokenOrNft: FC<Props> = ({
       if (_assetInfo.nftInfo || _assetInfo.tokenInfo) return
       if (!provider) return
       const contract = new Contract(address, ['function name() view returns(string)'], provider)
-      const name = await contract.name().catch(console.error)
-      setFallbackName(name)
+      const name = await contract.name?.().catch(console.error)
+      if (name) setFallbackName(name)
     },
     [network, address, provider]
   )
