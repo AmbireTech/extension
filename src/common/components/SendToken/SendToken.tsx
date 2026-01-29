@@ -1,6 +1,6 @@
 import React, { FC, memo, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Pressable, View } from 'react-native'
+import { Pressable, View, ViewStyle } from 'react-native'
 
 import { TokenResult } from '@ambire-common/libs/portfolio'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
@@ -132,7 +132,7 @@ const SendToken: FC<Props> = ({
                 textAlign: 'right'
               }}
               disabled={fromTokenAmountSelectDisabled}
-              containerStyle={[spacings.mb0, flexbox.flex1, { overflow: 'hidden' }]}
+              containerStyle={[spacings.mb0 as ViewStyle, flexbox.flex1, { overflow: 'hidden' }]}
               inputStyle={spacings.ph0}
               testID={inputTestId}
               childrenBelowInput={
@@ -214,8 +214,8 @@ const SendToken: FC<Props> = ({
                               ? theme.primary20
                               : `${theme.primary as string}14`
                             : hovered
-                            ? '#6000FF14'
-                            : theme.infoBackground,
+                              ? '#6000FF14'
+                              : theme.infoBackground,
                         borderRadius: 50,
                         paddingHorizontal: 5,
                         paddingVertical: 5,
