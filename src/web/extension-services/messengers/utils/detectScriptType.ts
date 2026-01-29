@@ -9,7 +9,7 @@ export function detectScriptType(): 'background' | 'contentScript' | 'popup' | '
     // If this is a real extension context, chrome.runtime.id should be defined
     const isRealExtensionContext = hasChromeRuntime && chrome.runtime?.id
 
-    const pathname = window.location.pathname
+    const pathname = window?.location?.pathname || ''
 
     if (pathname.includes('background')) return 'background'
     if (pathname.includes('popup')) return 'popup'
