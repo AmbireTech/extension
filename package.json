@@ -268,7 +268,6 @@
     "@types/koa-compose": "3.2.5",
     "@types/lodash": "4.14.191",
     "@types/react": "19.1.10",
-    "@types/react-native": "~0.70.6",
     "@types/react-test-renderer": "17.0.1",
     "@types/uuid": "9.0.0",
     "@types/validator": "^13.7.0",
