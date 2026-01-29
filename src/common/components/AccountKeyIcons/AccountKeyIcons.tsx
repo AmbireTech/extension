@@ -2,6 +2,7 @@ import React from 'react'
 import { View } from 'react-native'
 
 import { Account as AccountInterface } from '@ambire-common/interfaces/account'
+import { Key } from '@ambire-common/interfaces/keystore'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
@@ -16,7 +17,7 @@ const AccountKeyIconOrBanner = ({
   isExtended,
   color
 }: {
-  type: string
+  type: Key['type'] | 'none' | 'safe'
   isExtended: boolean
   color: string
 }) => {
@@ -52,7 +53,7 @@ const AccountKeyIcons = ({
               style={[index !== importedKeyTypes.length - 1 ? spacings.mrTy : spacings.mr0]}
             >
               <AccountKeyIconOrBanner
-                type={type || 'internal'}
+                type={!!account.safeCreation ? 'safe' : type || 'internal'}
                 isExtended={isExtended}
                 color={
                   themeType === THEME_TYPES.DARK
@@ -65,7 +66,7 @@ const AccountKeyIcons = ({
         })
       ) : (
         <AccountKeyIconOrBanner
-          type="none"
+          type={!!account.safeCreation ? 'safe' : 'none'}
           isExtended={isExtended}
           color={
             themeType === THEME_TYPES.DARK

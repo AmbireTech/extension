@@ -9,8 +9,8 @@ import useTheme from '@common/hooks/useTheme'
 
 import Wrapper from './Wrapper'
 
-const AccountKeyBanner = ({ type }: { type: Key['type'] }) => {
-  if (type === 'none') return null
+const AccountKeyBanner = ({ type }: { type: Key['type'] | 'none' | 'safe' }) => {
+  if (type === 'none' || type === 'safe') return null
 
   const { theme } = useTheme()
 

@@ -154,7 +154,10 @@ const AccountKey: React.FC<Props> = ({
         >
           {!!isImported && (
             <View style={spacings.mrTy}>
-              <AccountKeyIcon type={type || 'internal'} color={keyIconColor} />
+              <AccountKeyIcon
+                type={!!account.safeCreation ? 'safe' : type || 'internal'}
+                color={keyIconColor}
+              />
             </View>
           )}
 
