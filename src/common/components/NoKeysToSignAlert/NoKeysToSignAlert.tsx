@@ -71,7 +71,9 @@ const NoKeysToSignAlert: FC<Props> = ({ style, isTransaction = true, type = 'lon
           type="error"
           title={t(`No keys available to sign this ${isTransaction ? 'transaction' : 'message'}`)}
           text={t(
-            "This account was imported in view-only mode, which means that there isn't an imported key that can sign for this account. \nIf you do have such a key, please re-import the account with it."
+            account.safeCreation
+              ? 'Import your safe account owners to get started'
+              : "This account was imported in view-only mode, which means that there isn't an imported key that can sign for this account. \nIf you do have such a key, please re-import the account with it."
           )}
           customIcon={() => <NoKeysIcon color={theme.secondaryText} />}
           buttonProps={{
