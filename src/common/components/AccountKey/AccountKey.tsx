@@ -13,12 +13,12 @@ import ImportIcon from '@common/assets/svg/ImportIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import AccountKeyIcon from '@common/components/AccountKeyIcon'
 import AccountKeyDetails from '@common/components/AccountKeysBottomSheet/AccountKeyDetails'
-import Badge from '@common/components/Badge'
 import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
 import Editable from '@common/components/Editable'
 import ExportKey from '@common/components/ExportKey'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
+import NetworkIcon from '@common/components/NetworkIcon'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
@@ -38,6 +38,7 @@ export type AccountKeyType = {
   type?: Key['type']
   meta?: Key['meta']
   label?: string
+  onChains?: bigint[]
 }
 
 type Props = AccountKeyType & {
@@ -69,9 +70,9 @@ const AccountKey: React.FC<Props> = ({
   account,
   meta,
   keyIconColor,
-  showExportImport = false
+  showExportImport = false,
+  onChains
 }) => {
-  const [isImporting, setIsImporting] = useState<boolean>(false)
   const { t } = useTranslation()
   const { theme, themeType } = useTheme()
   const { addToast } = useToast()
@@ -113,9 +114,6 @@ const AccountKey: React.FC<Props> = ({
   const isInternal = !type || type === 'internal'
   const canExportKey = isImported && isInternal
 
-  const importKey = () => {
-    setIsImporting(true)
-  }
   const reimportAccount = () => {
     if (openAddAccountBottomSheet) openAddAccountBottomSheet()
   }
@@ -148,7 +146,6 @@ const AccountKey: React.FC<Props> = ({
           style={[
             flexbox.directionRow,
             flexbox.alignCenter,
-            flexbox.flex1,
             !!showExportImport && !isKeyAmbireV1 && spacings.mrSm
           ]}
         >
@@ -212,9 +209,16 @@ const AccountKey: React.FC<Props> = ({
                   />
                 </AnimatedPressable>
               )}
-              {!isImported && (
-                <View style={spacings.mlTy}>
-                  <Badge type="warning" text={t('Not imported')} />
+              {onChains && onChains.length && (
+                <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mlTy]}>
+                  {onChains.map((c, i) => (
+                    <NetworkIcon
+                      key={c}
+                      id={c.toString()}
+                      style={i === 0 ? { marginLeft: '0' } : { marginLeft: '-10px' }}
+                      size={20}
+                    />
+                  ))}
                 </View>
               )}
             </>
@@ -281,7 +285,7 @@ const AccountKey: React.FC<Props> = ({
             ) : (
               <View style={[flexbox.directionRow, flexbox.alignCenter]}>
                 <Button
-                  onPress={importKey}
+                  onPress={reimportAccount}
                   size="small"
                   type="secondary"
                   text={t('Import')}
@@ -300,28 +304,6 @@ const AccountKey: React.FC<Props> = ({
           </View>
         )}
       </View>
-      {!!canExportOrImportKey && !!isImporting && !!openAddAccountBottomSheet && (
-        <View
-          style={[
-            spacings.phSm,
-            flexbox.directionRow,
-            flexbox.alignCenter,
-            flexbox.justifySpaceBetween,
-            spacings.mbSm
-          ]}
-        >
-          <Text fontSize={14} appearance="secondaryText">
-            {t('To import this key, you have to reimport the account.')}
-          </Text>
-          <Button
-            onPress={reimportAccount}
-            size="small"
-            style={{ height: 32, ...spacings.mlTy }}
-            text={t('Reimport account')}
-            hasBottomSpacing={false}
-          />
-        </View>
-      )}
       {!!isKeyAmbireV1 && (
         <View style={[spacings.phSm, spacings.mbTy]}>
           <Text appearance="secondaryText" weight="medium" fontSize={14} numberOfLines={2}>

@@ -37,7 +37,7 @@ const AccountKeysBottomSheet: FC<Props> = ({
       scrollViewProps={{ contentContainerStyle: { flex: 1 } }}
       isScrollEnabled={false}
       containerInnerWrapperStyles={{ flex: 1 }}
-      style={{ maxWidth: 432, minHeight: 432, ...spacings.pvLg }}
+      style={{ maxWidth: 492, minHeight: 432, ...spacings.pvLg }}
       shouldBeClosableOnDrag={false}
     >
       {!!account && (

@@ -131,10 +131,10 @@ const Account = ({
 
   const submenuOptions = useMemo(
     () => [
-      { label: 'Manage keys', value: 'keys' },
+      { label: account.safeCreation ? 'Manage owners' : 'Manage keys', value: 'keys' },
       { label: 'Remove account', value: 'remove', style: { color: theme.errorDecorative } }
     ],
-    [theme.errorDecorative]
+    [theme.errorDecorative, account.safeCreation]
   )
 
   const submenuOptions7702 = useMemo(() => ({ label: 'Smart settings', value: 'toSmarter' }), [])

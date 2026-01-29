@@ -160,7 +160,7 @@ const OneClickEstimation = ({
               ) : (
                 <View style={[flexbox.directionRow, flexbox.alignEnd, spacings.mt]}>
                   <Text fontSize={12} appearance="errorText">
-                    {t(signingErrors[0].title)}
+                    {t(signingErrors[0]!.title)}
                   </Text>
                 </View>
               ))}
