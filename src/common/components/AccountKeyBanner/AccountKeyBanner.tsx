@@ -4,9 +4,9 @@ import LatticeIcon from '@common/assets/svg/LatticeIcon'
 import LedgerLetterIcon from '@common/assets/svg/LedgerLetterIcon'
 import SingleKeyIcon from '@common/assets/svg/SingleKeyIcon'
 import TrezorLockIcon from '@common/assets/svg/TrezorLockIcon'
+import { KeyType } from '@common/components/AccountKeyIcons/AccountKeyIcons'
 import useTheme from '@common/hooks/useTheme'
 
-import { KeyType } from '../AccountKeyIcons/AccountKeyIcons'
 import Wrapper from './Wrapper'
 
 const AccountKeyBanner = ({ type }: { type: KeyType }) => {

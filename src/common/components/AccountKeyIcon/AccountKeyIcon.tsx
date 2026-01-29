@@ -5,9 +5,8 @@ import LedgerLetterIcon from '@common/assets/svg/LedgerLetterIcon'
 import NoKeysIcon from '@common/assets/svg/NoKeysIcon'
 import SingleKeyIcon from '@common/assets/svg/SingleKeyIcon'
 import TrezorLockIcon from '@common/assets/svg/TrezorLockIcon'
+import { KeyType } from '@common/components/AccountKeyIcons/AccountKeyIcons'
 import useTheme from '@common/hooks/useTheme'
-
-import { KeyType } from '../AccountKeyIcons/AccountKeyIcons'
 
 const AccountKeyIcon = ({ type, color }: { type: KeyType; color?: string }) => {
   const { theme } = useTheme()
