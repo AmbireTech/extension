@@ -69,7 +69,7 @@ module.exports = async function (env, argv) {
       'Fast & secure Web3 wallet to supercharge your account on Ethereum and EVM networks.'
 
     // Maintain the same versioning between the web extension and the mobile app
-    manifest.version = appJSON.expo.version
+    manifest.version = appJSON.version
 
     // Directives to disallow a set of script-related privileges for a
     // specific page. They prevent the browser extension being embedded or

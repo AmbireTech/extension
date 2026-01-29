@@ -32,7 +32,7 @@ export const APP_VERSION = Constants?.manifest?.version || appJSON.expo.version
  */
 export const BUILD_NUMBER = Application.nativeBuildVersion || 'N/A'
 
-export const RELEASE_CHANNEL = Updates.releaseChannel || 'N/A'
+export const RELEASE_CHANNEL = Updates.channel || 'N/A'
 export const RUNTIME_VERSION = Updates.runtimeVersion || 'N/A'
 export const EXPO_SDK = Constants?.manifest?.sdkVersion || 'N/A'
 
