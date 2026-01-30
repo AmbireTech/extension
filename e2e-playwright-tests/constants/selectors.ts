@@ -308,7 +308,7 @@ const selectors = {
     "//div[.//span[text()='Include Testnets']]//button[normalize-space()='Connect Wallet']",
   chainlistSearchPlaceholder: 'input[placeholder*="ETH"]',
   addToMetamaskButton: '//button[contains(text(),"Add to Metamask")]',
-  confirmaddNetworkOnChainlistButton: '//div[contains(text(),"Add network")]',
+  confirmaddNetworkOnChainlistButton: '//div[contains(text(),"Enable network")]',
   blockExplorerURL: (url: string) => `//div[contains(text(),"${url}")]`,
   networkDetailEditButton: '//div[.//div[text()="Network details"]]//div[text()="Edit"]',
   // edit network modal
