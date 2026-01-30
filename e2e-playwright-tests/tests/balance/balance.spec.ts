@@ -4,6 +4,8 @@ import { test } from 'fixtures/pageObjects'
 import Threshold from 'interfaces/threshold'
 
 test.describe('Basic Account - Tokens balance check', { tag: '@balanceCheck' }, async () => {
+  test.setTimeout(30000)
+
   test.beforeEach(async ({ pages }) => {
     await pages.initWithStorage(baParams)
   })
@@ -29,6 +31,8 @@ test.describe('Basic Account - Tokens balance check', { tag: '@balanceCheck' }, 
 })
 
 test.describe('Smart Account - Tokens balance check', { tag: '@balanceCheck' }, async () => {
+  test.setTimeout(30000)
+
   test.beforeEach(async ({ pages }) => {
     await pages.initWithStorage(saParams)
   })

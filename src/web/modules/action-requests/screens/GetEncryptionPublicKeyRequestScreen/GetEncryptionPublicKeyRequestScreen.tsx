@@ -111,15 +111,13 @@ const GetEncryptionPublicKeyRequestScreen = () => {
             intentText={t('wants to get your public encryption key')}
           />
 
-          <View style={[spacings.mtLg, flexbox.flex1, flexbox.justifySpaceBetween]}>
-            <Alert
-              title={t(
-                'By providing your public encryption key, this app will be able to compose encrypted messages to you.'
-              )}
-              type="info2"
-            />
-
-            {errorNode}
+          <View style={spacings.mtLg}>
+            {errorNode || (
+              <Alert
+                title={t('This app will be able to compose encrypted messages to you.')}
+                type="info2"
+              />
+            )}
           </View>
         </TabLayoutWrapperMainContent>
       </TabLayoutContainer>

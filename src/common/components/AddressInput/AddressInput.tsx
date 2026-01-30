@@ -3,7 +3,7 @@ import React, { useCallback, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TextInput, View } from 'react-native'
 
-import { validateAddress } from '@ambire-common/services/validations'
+import { validateAddress, Validation } from '@ambire-common/services/validations'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import CloseIcon from '@common/assets/svg/CloseIcon'
 import CopyIcon from '@common/assets/svg/CopyIcon'
@@ -12,7 +12,6 @@ import AddressBookContact from '@common/components/AddressBookContact'
 import Button from '@common/components/Button'
 import Input, { InputProps } from '@common/components/Input'
 import Text from '@common/components/Text'
-import { ValidationWithSeverityType } from '@common/hooks/useAddressInput'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
@@ -22,13 +21,11 @@ import useHover, { AnimatedPressable } from '@web/hooks/useHover'
 
 import getStyles from './styles'
 
-export interface AddressValidation extends ValidationWithSeverityType {}
-
 interface Props extends InputProps {
   withDetails?: boolean
   ensAddress: string
   isRecipientDomainResolving: boolean
-  validation: AddressValidation
+  validation: Validation
   label?: string
   onClearButtonPress?: () => void
   renderConfirmAddress?: () => React.ReactNode
@@ -53,7 +50,8 @@ const AddressInput: React.FC<Props> = ({
   const { addToast } = useToast()
   const { styles, theme } = useTheme(getStyles)
   const { contacts } = useAddressBookControllerState()
-  const { message, isError, severity } = validation
+  const { message, severity } = validation
+  const isError = severity === 'error'
 
   const isValidationInDomainResolvingState = message === 'Resolving domain...'
   const inputRef = useRef<TextInput | null>(null)
@@ -77,7 +75,7 @@ const AddressInput: React.FC<Props> = ({
 
   const address = ensAddress || value || ''
 
-  const isValidAddress = useMemo(() => !!validateAddress(address).success, [address])
+  const isValidAddress = useMemo(() => validateAddress(address).severity === 'success', [address])
 
   return (
     <>
@@ -139,7 +137,7 @@ const AddressInput: React.FC<Props> = ({
               ) : null}
               <View style={[styles.domainIcons, rest.button ? spacings.pr0 : spacings.pr]}>
                 {childrenBeforeButtons}
-                <View style={styles.plTy}>
+                <View style={spacings.plTy}>
                   <EnsIcon isActive={!!ensAddress} />
                 </View>
               </View>

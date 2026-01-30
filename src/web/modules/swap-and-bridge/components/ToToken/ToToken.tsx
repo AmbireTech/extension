@@ -319,7 +319,6 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
           {hasSelectedToToken && (
             <View
               style={[flexbox.directionRow, flexbox.alignCenter]}
-              // @ts-ignore
               dataSet={createGlobalTooltipDataSet({
                 id: 'to-token-balance-tooltip',
                 content: t('Balance may be inaccurate'),

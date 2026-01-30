@@ -1,4 +1,5 @@
 import { HD_PATH_TEMPLATE_TYPE } from '@ambire-common/consts/derivation'
+import { FeatureFlags } from '@ambire-common/consts/featureFlags'
 import { Filters, Pagination } from '@ambire-common/controllers/activity/activity'
 import { Contact } from '@ambire-common/controllers/addressBook/addressBook'
 import { SignAccountOpType } from '@ambire-common/controllers/signAccountOp/helper'
@@ -39,6 +40,7 @@ import { THEME_TYPES } from '@common/styles/themeConfig'
 import { LOG_LEVELS } from '@web/utils/logger'
 
 import { AUTO_LOCK_TIMES } from './controllers/auto-lock'
+import { AvatarType } from './controllers/wallet-state'
 import { controllersMapping } from './types'
 
 type UpdateNavigationUrl = {
@@ -679,6 +681,10 @@ type ContractNamesGetName = {
   params: { address: string; chainId: bigint }
 }
 
+type SetAvatarTypeAction = {
+  type: 'SET_AVATAR_TYPE'
+  params: { avatarType: AvatarType }
+}
 type SetIsPinnedAction = {
   type: 'SET_IS_PINNED'
   params: { isPinned: boolean }
@@ -733,6 +739,14 @@ type DismissBanner = {
   type: 'DISMISS_BANNER'
   params: {
     bannerId: Banner['id']
+  }
+}
+
+type FlipFeature = {
+  type: 'FEATURE_FLAGS_CONTROLLER_FLIP_FEATURE'
+  params: {
+    flag: keyof FeatureFlags
+    isEnabled: boolean
   }
 }
 
@@ -867,8 +881,10 @@ export type Action =
   | TransferControllerUserProceededAction
   | TransferControllerShouldSkipTransactionQueuedModal
   | SetThemeTypeAction
+  | SetAvatarTypeAction
   | SetLogLevelTypeAction
   | SetCrashAnalyticsAction
   | DismissBanner
   | KeystoreControllerSendEncryptedPrivateKeyToUiAction
   | KeystoreControllerSendPasswordDecryptedPrivateKeyToUiAction
+  | FlipFeature

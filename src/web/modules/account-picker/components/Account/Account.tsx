@@ -164,7 +164,6 @@ const Account = ({
                     fontSize={14}
                     appearance="secondaryText"
                     style={spacings.mrMi}
-                    // @ts-ignore
                     dataSet={createGlobalTooltipDataSet({
                       id: account.addr,
                       content: account.addr

@@ -51,7 +51,7 @@ interface Props {
 const hasAmount = (token: TokenResult) => {
   return (
     (token.amount > 0n || (token.amountPostSimulation && token.amountPostSimulation > 0n)) &&
-    token.flags.isHidden === false
+    !token.flags.isHidden
   )
 }
 // if the token is on the gas tank and the network is not a relayer network (a custom network)
@@ -289,7 +289,7 @@ const Tokens = ({
                   })}{' '}
                   {!!dashboardNetworkFilter && t('on this network')}
                 </Text>
-                <RightArrowIcon height={12} color={theme.secondaryText} />
+                <RightArrowIcon height={12} color={theme.secondaryText as string} />
               </Pressable>
             )}
             <Button
