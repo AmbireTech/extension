@@ -81,10 +81,10 @@ jobs:
       - name: Set up Docker
         uses: docker/setup-buildx-action@v2
 
-      - name: Use Node.js
+      - name: Install Node.js ⚙️
         uses: actions/setup-node@v4
         with:
-          node-version: 22.12.0
+          node-version-file: '.nvmrc'
 
       - name: Install root dependencies
         run: yarn setup:ci
