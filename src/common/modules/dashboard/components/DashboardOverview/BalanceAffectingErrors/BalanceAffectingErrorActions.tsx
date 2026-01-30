@@ -40,7 +40,7 @@ const BalanceAffectingErrorActions: FC<Props> = ({ actionName, meta, closeBottom
       ({ value }: any) => {
         if (network) {
           dispatch({
-            type: 'SETTINGS_CONTROLLER_SET_NETWORK_TO_ADD_OR_UPDATE',
+            type: 'NETWORKS_CONTROLLER_SET_NETWORK_TO_ADD_OR_UPDATE',
             params: { rpcUrl: value, chainId: BigInt(network.chainId) }
           })
           // dispatch on next tick

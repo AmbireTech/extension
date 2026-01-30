@@ -1,10 +1,8 @@
 import React, { FC, useEffect, useRef, useState } from 'react'
 import { Animated, ViewStyle } from 'react-native'
 
-import useDomainsContext from '@common/hooks/useDomainsContext'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { isExtension } from '@web/constants/browserapi'
 import { AvatarType } from '@web/extension-services/background/controllers/wallet-state'
 import useDomainsControllerState from '@web/hooks/useDomainsController/useDomainsController'
 import useWalletStateController from '@web/hooks/useWalletStateController'
@@ -52,9 +50,9 @@ const Avatar: FC<Props> = ({
   // In that case we must fallback to the next avatar type
   const [ensAvatarImageFetchFailed, setEnsAvatarImageFetchFailed] = useState(false)
   // ENS Avatar
-  const { domains, loadingAddresses } = isExtension
-    ? useDomainsControllerState()
-    : useDomainsContext().state
+  const {
+    state: { domains, loadingAddresses }
+  } = useDomainsControllerState()
   // There is no wallet controller state in benzin/rewards so we need to be careful
   const walletState = useWalletStateController()
   const avatarTypeSetting = propAvatarType || walletState?.avatarType || 'jazzicons'

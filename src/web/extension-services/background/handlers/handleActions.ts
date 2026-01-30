@@ -92,6 +92,14 @@ export const handleActions = async (
     case 'PROVIDERS_CONTROLLER_TOGGLE_BATCHING': {
       return await mainCtrl.providers.toggleBatching()
     }
+    case 'PROVIDERS_CONTROLLER_CALL_PROVIDER_AND_SEND_RES_TO_UI': {
+      mainCtrl.providers.callProviderAndSendResToUi(params)
+      break
+    }
+    case 'PROVIDERS_CONTROLLER_CALL_CONTRACT_AND_SEND_RES_TO_UI': {
+      mainCtrl.providers.callContractAndSendResToUi(params)
+      break
+    }
     case 'MAIN_CONTROLLER_ADD_NETWORK': {
       return await mainCtrl.addNetwork(params)
     }
@@ -107,10 +115,10 @@ export const handleActions = async (
     case 'ACCOUNTS_CONTROLLER_RESET_ACCOUNTS_NEWLY_ADDED_STATE': {
       return await mainCtrl.accounts.resetAccountsNewlyAddedState()
     }
-    case 'SETTINGS_CONTROLLER_SET_NETWORK_TO_ADD_OR_UPDATE': {
+    case 'NETWORKS_CONTROLLER_SET_NETWORK_TO_ADD_OR_UPDATE': {
       return await mainCtrl.networks.setNetworkToAddOrUpdate(params)
     }
-    case 'SETTINGS_CONTROLLER_RESET_NETWORK_TO_ADD_OR_UPDATE': {
+    case 'NETWORKS_CONTROLLER_RESET_NETWORK_TO_ADD_OR_UPDATE': {
       return await mainCtrl.networks.setNetworkToAddOrUpdate(null)
     }
     case 'KEYSTORE_CONTROLLER_UPDATE_KEY_PREFERENCES': {

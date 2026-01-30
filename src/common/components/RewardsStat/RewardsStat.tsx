@@ -10,7 +10,7 @@ import SwapIcon from '@common/assets/svg/SwapIcon'
 import WalletIcon from '@common/assets/svg/WalletIcon2'
 
 type Stat = {
-  id: keyof Omit<ProjectedRewardsStats, 'multipliers'>
+  id: keyof Omit<ProjectedRewardsStats, 'multipliers' | 'reasonToNotDisplayProjectedRewards'>
   score: number
   label: string
   explanation: string

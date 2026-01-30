@@ -31,7 +31,9 @@ const ContactsList = () => {
     close: closeAddContactForm
   } = useModalize()
   const { contacts } = useAddressBookControllerState()
-  const { domains } = useDomainsControllerState()
+  const {
+    state: { domains }
+  } = useDomainsControllerState()
   const { control, watch } = useForm({
     defaultValues: {
       search: ''

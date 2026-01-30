@@ -163,8 +163,8 @@ const DashboardOverview: FC<Props> = ({
                             networksWithErrors.length || isOffline
                               ? theme.warningDecorative2
                               : themeType === THEME_TYPES.DARK
-                              ? theme.primaryBackgroundInverted
-                              : theme.primaryBackground
+                                ? theme.primaryBackgroundInverted
+                                : theme.primaryBackground
                           }
                           selectable
                           testID="total-portfolio-amount-integer"
@@ -180,8 +180,8 @@ const DashboardOverview: FC<Props> = ({
                               networksWithErrors.length || isOffline
                                 ? theme.warningDecorative2
                                 : themeType === THEME_TYPES.DARK
-                                ? theme.primaryBackgroundInverted
-                                : theme.primaryBackground
+                                  ? theme.primaryBackgroundInverted
+                                  : theme.primaryBackground
                             }
                             selectable
                           >

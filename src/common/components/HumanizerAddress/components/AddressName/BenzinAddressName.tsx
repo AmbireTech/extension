@@ -4,7 +4,7 @@ import React, { FC, useEffect, useMemo } from 'react'
 import Spinner from '@common/components/Spinner'
 import { Props as TextProps } from '@common/components/Text'
 import useContractNamesContext from '@common/hooks/useContractNamesContext/useContractNamesContext'
-import useStandaloneReverseLookup from '@common/hooks/useStandaloneReverseLookup'
+import useReverseLookup from '@common/hooks/useReverseLookup'
 
 import BaseAddress from '../BaseAddress'
 
@@ -14,7 +14,7 @@ interface Props extends TextProps {
 }
 
 const BenzinAddressName: FC<Props> = ({ address, chainId, ...rest }) => {
-  const { isLoading: isLoadingEns, resolvedDomain } = useStandaloneReverseLookup({ address })
+  const { isLoading: isLoadingEns, ens } = useReverseLookup({ address })
   const { contractNamesCtrl, state } = useContractNamesContext()
 
   useEffect(() => {
@@ -39,7 +39,7 @@ const BenzinAddressName: FC<Props> = ({ address, chainId, ...rest }) => {
 
   return (
     <BaseAddress address={address} {...rest}>
-      {resolvedDomain.ens || foundContractName || address}
+      {ens || foundContractName || address}
     </BaseAddress>
   )
 }

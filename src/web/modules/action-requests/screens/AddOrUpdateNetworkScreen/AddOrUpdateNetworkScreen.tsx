@@ -122,7 +122,7 @@ const AddOrUpdateNetworkScreen = () => {
     if (!networkDetails || existingNetwork) return
 
     dispatch({
-      type: 'SETTINGS_CONTROLLER_SET_NETWORK_TO_ADD_OR_UPDATE',
+      type: 'NETWORKS_CONTROLLER_SET_NETWORK_TO_ADD_OR_UPDATE',
       params: { chainId: networkDetails.chainId, rpcUrl: networkDetails.selectedRpcUrl }
     })
   }, [dispatch, rpcUrlIndex, networkDetails, existingNetwork, networkToAddOrUpdate?.chainId])
@@ -165,6 +165,9 @@ const AddOrUpdateNetworkScreen = () => {
       type: 'REQUESTS_CONTROLLER_REJECT_USER_REQUEST',
       params: { err: t('User rejected the request.'), id: userRequest.id }
     })
+    dispatch({
+      type: 'NETWORKS_CONTROLLER_RESET_NETWORK_TO_ADD_OR_UPDATE'
+    })
   }, [userRequest, t, dispatch])
 
   const handleCloseOnAlreadyAdded = useCallback(() => {
@@ -174,6 +177,9 @@ const AddOrUpdateNetworkScreen = () => {
     dispatch({
       type: 'REQUESTS_CONTROLLER_RESOLVE_USER_REQUEST',
       params: { data: null, id: userRequest.id }
+    })
+    dispatch({
+      type: 'NETWORKS_CONTROLLER_RESET_NETWORK_TO_ADD_OR_UPDATE'
     })
   }, [userRequest, dispatch])
 

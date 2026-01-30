@@ -1,15 +1,14 @@
-import { Contract, JsonRpcProvider } from 'ethers'
 import React, { FC, memo, useCallback, useEffect, useMemo, useState } from 'react'
 
 import { CollectionResult, TokenResult } from '@ambire-common/libs/portfolio'
 import { resolveAssetInfo } from '@ambire-common/services/assetInfo'
-import { getRpcProvider } from '@ambire-common/services/provider'
 import useBenzinNetworksContext from '@benzin/hooks/useBenzinNetworksContext'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import { useTranslation } from '@common/config/localization'
 import useToast from '@common/hooks/useToast'
 import { SPACING_TY } from '@common/styles/spacings'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
+import useProvidersControllerState from '@web/hooks/useProvidersControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 
 import HumanizerAddress from '../HumanizerAddress'
@@ -39,11 +38,11 @@ const TokenOrNft: FC<Props> = ({
     tokenInfo?: TokenResult
     nftInfo?: CollectionResult
   }>({})
-  const [provider, setProvider] = useState<JsonRpcProvider | null>(null)
   const { portfolio } = useSelectedAccountControllerState()
 
   const { t } = useTranslation()
   const { networks: controllerNetworks } = useNetworksControllerState()
+  const { callContract } = useProvidersControllerState()
   const { benzinNetworks, addNetwork } = useBenzinNetworksContext()
   // Component used across Benzin and Extension, make sure to always set networks
   const networks = controllerNetworks ?? benzinNetworks
@@ -52,32 +51,21 @@ const TokenOrNft: FC<Props> = ({
     [networks, chainId]
   )
 
-  const [fallbackName, setFallbackName] = useState()
-
-  useEffect(() => {
-    if (!network) return
-    const rpcUrl = network.selectedRpcUrl || network.rpcUrls[0]
-    // Note: ethers v6 changes the way providers are created and used
-    // Solution: https://github.com/ethers-io/ethers.js/issues/2201
-    // But currently we are on ethers v6 but ethersproject/providers => 5.5.2. There are beta versions of ethers ethersproject/providers v6 but they are not stable yet.
-    // This is the error Property '#private' in type 'JsonRpcProvider' refers to a different member that cannot be accessed from within type 'JsonRpcProvider'.ts(2345)
-    // @ts-ignore
-    if (!provider) setProvider(getRpcProvider([rpcUrl], network.chainId))
-    return () => {
-      if (provider && provider.destroy) provider.destroy()
-    }
-  }, [network, provider])
+  const [fallbackName, setFallbackName] = useState<string | undefined>()
 
   const fetchFallbackNameIfNeeded = useCallback(
     async (_assetInfo: any) => {
-      if (!network) return
       if (_assetInfo.nftInfo || _assetInfo.tokenInfo) return
-      if (!provider) return
-      const contract = new Contract(address, ['function name() view returns(string)'], provider)
-      const name = await contract.name?.().catch(console.error)
+      const name = await callContract({
+        chainId,
+        address,
+        abi: 'function name() view returns(string)',
+        method: 'name',
+        args: []
+      }).catch(console.error)
       if (name) setFallbackName(name)
     },
-    [network, address, provider]
+    [address, chainId, callContract]
   )
 
   const [isLoading, setIsLoading] = useState(true)
