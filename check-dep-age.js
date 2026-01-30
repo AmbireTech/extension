@@ -8,9 +8,7 @@ const lockfile = require('@yarnpkg/lockfile')
 const MIN_DAYS = Number(process.argv[2] || 14)
 const LOCKFILE = 'yarn.lock'
 const REGISTRY = 'https://registry.npmjs.org'
-const BASE_REF = process.env.GITHUB_BASE_REF
-  ? `origin/${process.env.GITHUB_BASE_REF}`
-  : 'origin/main'
+const BASE_REF = process.env.GITHUB_BASE_REF ? `origin/${process.env.GITHUB_BASE_REF}` : 'origin/v2'
 
 /* -------- helpers -------- */
 
