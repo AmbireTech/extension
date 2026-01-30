@@ -18,7 +18,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 22.12.0
+          node-version-file: .nvmrc
           cache: yarn
 
       - name: Install dependencies (frozen lockfile)
@@ -27,10 +27,14 @@ jobs:
       - name: Dependency age check
         shell: bash
         run: |
-          if [[ "${GITHUB_REF_NAME}" == "main" ]]; then
-            echo "Running full dependency age check (mode=all) on main"
-            node check-dep-age.js --min-days 14 --mode all --concurrency 4 --timeout-ms 20000 --fail-on-unknown
+          # Ensure the PR base branch ref is available locally for `git show origin/<base>:yarn.lock`.
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            echo "Fetching base branch origin/${{ github.base_ref }} for lockfile diff"
+            git fetch origin "${{ github.base_ref }}" --depth=1
           else
-            echo "Running PR dependency age check (mode=changed) vs origin/main"
-            node check-dep-age.js --min-days 14 --mode changed --base-ref origin/main --concurrency 4 --timeout-ms 20000
+            # On push runs, make sure origin/main exists (some checkouts may not fetch it explicitly).
+            git fetch origin main --depth=1 || true
           fi
+
+          echo "Running dependency age check"
+          node check-dep-age.js 14

@@ -15833,12 +15833,10 @@ react-tooltip@^5.26.3:
     "@floating-ui/dom" "^1.6.1"
     classnames "^2.3.0"
 
-react@18.3.0:
-  version "18.3.0"
-  resolved "https://registry.yarnpkg.com/react/-/react-18.3.0.tgz#84386d0a36fdf5ef50fa5755b7812bdfb76194a5"
-  integrity sha512-RPutkJftSAldDibyrjuku7q11d3oy6wKOyPe5K1HA/HwwrXcEqBdHsLypkC2FFYjP7bPUa6gbzSBhw4sY2JcDg==
-  dependencies:
-    loose-envify "^1.1.0"
+react@^19.3.0-canary-230772f9-20260128:
+  version "19.3.0-canary-230772f9-20260128"
+  resolved "https://registry.yarnpkg.com/react/-/react-19.3.0-canary-230772f9-20260128.tgz#8bd42ff1c59cc51dc6f7e13c20b09270d089e552"
+  integrity sha512-n7u1d/OAgZkcktgGX2YWatuusrA0vsvh6DO+eADmpHG/FW33rUrzq4yvSt/F0uCpfD2K27uBWQOsjb4GW3d3zw==
 
 read-env@^1.3.0:
   version "1.3.0"
