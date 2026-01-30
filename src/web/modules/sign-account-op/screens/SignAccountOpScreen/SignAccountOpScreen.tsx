@@ -154,7 +154,7 @@ const SignAccountOpScreen = () => {
   const copySignAccountOpError = useCallback(async () => {
     if (!signAccountOpState?.errors?.length) return
 
-    const errorCode = signAccountOpState.errors[0].code
+    const errorCode = signAccountOpState.errors[0]!.code
 
     if (!errorCode) return
 
@@ -357,7 +357,7 @@ const SignAccountOpScreen = () => {
               <AlertVertical
                 type="warning"
                 size="sm"
-                title={signAccountOpState.errors[0].title}
+                title={signAccountOpState.errors[0]!.title}
                 text={errorText}
               />
             ) : (

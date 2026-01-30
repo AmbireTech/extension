@@ -257,7 +257,10 @@ const useSign = ({
 
     // If the account has only one signer, we don't need to show the select signer overlay,
     // and we will sign the transaction with the only one available signer (it is set by default in the controller).
-    if (signAccountOpState?.accountKeyStoreKeys.length === 1) {
+    if (
+      signAccountOpState?.accountKeyStoreKeys.length === 1 ||
+      !!signAccountOpState.account.safeCreation
+    ) {
       handleSign()
       return
     }
