@@ -182,7 +182,7 @@
     "process": "^0.11.0",
     "purify-ts": "2.1.0",
     "querystring-es3": "~0.2.0",
-    "react": "^19.3.0-canary-230772f9-20260128",
+    "react": "18.3.0",
     "react-custom-roulette": "^1.4.1",
     "react-dom": "18.3.0",
     "react-dropzone": "^14.2.3",
