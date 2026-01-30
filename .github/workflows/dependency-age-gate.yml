@@ -2,7 +2,7 @@ name: Dependency age gate
 
 on:
   pull_request:
-  push:
+    branches: [v2]
 
 jobs:
   dep-age:
@@ -27,14 +27,8 @@ jobs:
       - name: Dependency age check
         shell: bash
         run: |
-          # Ensure the PR base branch ref is available locally for `git show origin/<base>:yarn.lock`.
-          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            echo "Fetching base branch origin/${{ github.base_ref }} for lockfile diff"
-            git fetch origin "${{ github.base_ref }}" --depth=1
-          else
-            # On push runs, make sure origin/v2 exists (some checkouts may not fetch it explicitly).
-            git fetch origin v2 --depth=1 || true
-          fi
+          echo "Fetching base branch origin/${{ github.base_ref }} for lockfile diff"
+          git fetch origin "${{ github.base_ref }}" --depth=1
 
           echo "Running dependency age check"
           node check-dep-age.js 14
