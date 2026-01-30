@@ -30,7 +30,7 @@ const DomainsControllerStateContext = createContext<{
 const controller = 'DomainsController'
 
 const BenzinAndLegendsDomainsProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
-  const [, forceRerender] = useReducer((x) => x + 1, 0)
+  const [rerender, forceRerender] = useReducer((x) => x + 1, 0)
 
   const ethereum = useMemo(() => networks.find(({ chainId }) => chainId === 1n)!, [])
 
@@ -45,13 +45,11 @@ const BenzinAndLegendsDomainsProvider: React.FC<React.PropsWithChildren> = ({ ch
     return unsubscribe
   }, [domainsCtrl])
 
-  const memoizedDomainCtrl = useDeepMemo(domainsCtrl, controller)
-
   const reverseLookup = useCallback(
     (address: string) => {
       const checksummedAddress = getAddress(address)
 
-      domainsCtrl.reverseLookup(checksummedAddress).catch((e) => {
+      domainsCtrl.reverseLookup(checksummedAddress, true).catch((e) => {
         console.error('Failed to resolve domain for address', checksummedAddress, e)
       })
     },
@@ -68,8 +66,9 @@ const BenzinAndLegendsDomainsProvider: React.FC<React.PropsWithChildren> = ({ ch
   return (
     <DomainsControllerStateContext.Provider
       value={useMemo(
-        () => ({ state: memoizedDomainCtrl, reverseLookup, saveResolvedDomain }),
-        [memoizedDomainCtrl, reverseLookup, saveResolvedDomain]
+        () => ({ state: domainsCtrl, reverseLookup, saveResolvedDomain }),
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [domainsCtrl, reverseLookup, saveResolvedDomain, rerender]
       )}
     >
       {children}
