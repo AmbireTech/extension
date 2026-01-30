@@ -311,7 +311,6 @@
     "allowScripts": {
       "$root$": false,
       "@lavamoat/preinstall-always-fail": false,
-      "@sentry/react-native>@sentry/cli": false,
       "@trezor/connect-webextension>@trezor/connect>@trezor/protobuf>protobufjs": false,
       "@trezor/connect-webextension>@trezor/connect>@trezor/transport>usb": false,
       "@trezor/connect-webextension>@trezor/connect>@trezor/utxo-lib>blake-hash": false,
