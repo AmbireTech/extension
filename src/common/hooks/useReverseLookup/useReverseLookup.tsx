@@ -1,7 +1,6 @@
 import { useEffect } from 'react'
 
 import { getAddressCaught } from '@ambire-common/utils/getAddressCaught'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import useDomainsControllerState from '@web/hooks/useDomainsController/useDomainsController'
 
 interface Props {
@@ -10,21 +9,19 @@ interface Props {
 
 const useReverseLookup = ({ address }: Props) => {
   const checksummedAddress = getAddressCaught(address)
-  const { dispatch } = useBackgroundService()
-  const { domains, loadingAddresses } = useDomainsControllerState()
+
+  const {
+    state: { domains, loadingAddresses },
+    reverseLookup
+  } = useDomainsControllerState()
   const isLoading = loadingAddresses.includes(checksummedAddress)
   const addressInDomains = domains[checksummedAddress]
 
   useEffect(() => {
     if (!checksummedAddress || addressInDomains || isLoading) return
 
-    dispatch({
-      type: 'DOMAINS_CONTROLLER_REVERSE_LOOKUP',
-      params: {
-        address: checksummedAddress
-      }
-    })
-  }, [checksummedAddress, addressInDomains, dispatch, isLoading])
+    reverseLookup(checksummedAddress)
+  }, [checksummedAddress, addressInDomains, isLoading, reverseLookup])
 
   return {
     isLoading: isLoading || !addressInDomains,

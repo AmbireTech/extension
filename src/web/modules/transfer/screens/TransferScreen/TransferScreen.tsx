@@ -11,7 +11,6 @@ import { Key } from '@ambire-common/interfaces/keystore'
 import { CallsUserRequest, RequestExecutionType } from '@ambire-common/interfaces/userRequest'
 import { AccountOpStatus } from '@ambire-common/libs/accountOp/types'
 import { getSanitizedAmount } from '@ambire-common/libs/transfer/amount'
-import { Validation } from '@ambire-common/services/validations'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
 import { getAddressFromAddressState } from '@ambire-common/utils/domains'
 import { getCallsCount } from '@ambire-common/utils/userRequest'
@@ -31,6 +30,7 @@ import { Content, Form, Wrapper } from '@web/components/TransactionsScreen'
 import { createTab } from '@web/extension-services/background/webapi/tab'
 import useActivityControllerState from '@web/hooks/useActivityControllerState'
 import useBackgroundService from '@web/hooks/useBackgroundService'
+import useDomainsControllerState from '@web/hooks/useDomainsController/useDomainsController'
 import useHasGasTank from '@web/hooks/useHasGasTank'
 import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
@@ -87,6 +87,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   const { visibleUserRequests } = useRequestsControllerState()
   const { account, portfolio } = useSelectedAccountControllerState()
   const { userRequests } = useRequestsControllerState()
+  const { saveResolvedDomain } = useDomainsControllerState()
   const {
     ref: gasTankSheetRef,
     open: openGasTankInfoBottomSheet,
@@ -283,17 +284,9 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
 
   const handleCacheResolvedDomain = useCallback(
     (address: string, ensAvatar: string | null, domain: string, type: 'ens') => {
-      dispatch({
-        type: 'DOMAINS_CONTROLLER_SAVE_RESOLVED_REVERSE_LOOKUP',
-        params: {
-          type,
-          address,
-          name: domain,
-          ensAvatar
-        }
-      })
+      saveResolvedDomain({ address, ensAvatar, name: domain, type })
     },
-    [dispatch]
+    [saveResolvedDomain]
   )
 
   const addressInputState = useAddressInput({

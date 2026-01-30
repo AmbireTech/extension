@@ -163,7 +163,9 @@ const Recipient: React.FC<Props> = ({
   const { theme } = useTheme()
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const { contacts } = useAddressBookControllerState()
-  const { domains } = useDomainsControllerState()
+  const {
+    state: { domains }
+  } = useDomainsControllerState()
   const [bindManageBtnAnim, manageBtnAnimStyle] = useHover({
     preset: 'opacityInverted'
   })

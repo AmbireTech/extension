@@ -11,6 +11,8 @@ export const isTesting = process.env.IS_TESTING === 'true'
 export const isDev = process.env.APP_ENV === 'development'
 export const isProd = process.env.APP_ENV === 'production'
 export const isStaging = process.env.APP_ENV === 'staging'
+export const isBenzin = process.env.BENZIN === 'true'
+export const isLegends = process.env.LEGENDS === 'true'
 /**
  * Ambire Next is a separate production build variant used for beta testing and preview
  * before releasing features to the main production build. It allows us to have two
