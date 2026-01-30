@@ -103,7 +103,6 @@ const RoutesRefreshButton = ({ width = 32, height = 32 }: SvgProps) => {
       onPress={handleOnPress}
       style={{ opacity }}
       disabled={updateQuoteStatus === 'LOADING'}
-      // @ts-ignore
       dataSet={createGlobalTooltipDataSet({
         id: 'export-icon-tooltip',
         content: t('Routes auto-refresh every 60 secs.'),

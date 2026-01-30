@@ -22,7 +22,6 @@ const TypeBadge: FC<Props> = ({ isSmart, size, showTooltip = false }) => {
 
   return isSmart ? (
     <View
-      // @ts-ignore
       dataSet={createGlobalTooltipDataSet({
         id: tooltipId,
         content: badgePreset.tooltipText,

@@ -32,7 +32,7 @@ runs:
         key: ${{ runner.os }}-yarn-${{ steps.yarn-cache-dir-path.outputs.version }}-${{ hashFiles('yarn.lock') }}
 
     - name: Install Dependencies
-      run: yarn install --frozen-lockfile
+      run: yarn setup:ci
       shell: bash
 
     - name: Cache Dependencies
