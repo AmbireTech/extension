@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AddressState, AddressStateOptional } from '@ambire-common/interfaces/domains'
 import { resolveENSDomain } from '@ambire-common/services/ensDomains'
 import { Validation } from '@ambire-common/services/validations'
+import useProvidersControllerState from '@web/hooks/useProvidersControllerState'
 
 import getAddressInputValidation from './utils/validation'
 
@@ -45,6 +46,7 @@ const useAddressInput = ({
   const fieldValueRef = useRef(addressState.fieldValue)
   const fieldValue = addressState.fieldValue
   const [hasDomainResolveFailed, setHasDomainResolveFailed] = useState(false)
+  const { callProvider } = useProvidersControllerState()
   const [debouncedValidation, setDebouncedValidation] = useState<Validation>({
     severity: 'error',
     message: ''
@@ -75,7 +77,12 @@ const useAddressInput = ({
 
       // Keep the promise all as we may add more domain resolvers in the future
       await Promise.all([
-        resolveENSDomain(trimmedAddress)
+        resolveENSDomain({
+          domain: trimmedAddress,
+          getResolver: (name) => {
+            return callProvider(1n, 'getResolver', name)
+          }
+        })
           .then(({ address: newEnsAddress, avatar }) => {
             ensAddress = newEnsAddress
 

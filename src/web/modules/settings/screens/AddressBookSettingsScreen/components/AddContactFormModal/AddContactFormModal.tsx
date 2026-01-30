@@ -16,6 +16,7 @@ import flexbox from '@common/styles/utils/flexbox'
 import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
 import useAddressBookControllerState from '@web/hooks/useAddressBookControllerState'
 import useBackgroundService from '@web/hooks/useBackgroundService'
+import useDomainsControllerState from '@web/hooks/useDomainsController/useDomainsController'
 
 type Props = {
   id: string
@@ -28,6 +29,7 @@ const AddContactFormModal = ({ id, sheetRef, closeBottomSheet }: Props) => {
   const { dispatch } = useBackgroundService()
   const { contacts } = useAddressBookControllerState()
   const { accounts } = useAccountsControllerState()
+  const { saveResolvedDomain } = useDomainsControllerState()
   const {
     control,
     watch,
@@ -92,17 +94,9 @@ const AddContactFormModal = ({ id, sheetRef, closeBottomSheet }: Props) => {
 
   const handleCacheResolvedDomain = useCallback(
     (address: string, ensAvatar: string | null, domain: string, type: 'ens') => {
-      dispatch({
-        type: 'DOMAINS_CONTROLLER_SAVE_RESOLVED_REVERSE_LOOKUP',
-        params: {
-          type,
-          address,
-          name: domain,
-          ensAvatar
-        }
-      })
+      saveResolvedDomain({ address, ensAvatar, name: domain, type })
     },
-    [dispatch]
+    [saveResolvedDomain]
   )
 
   const { validation, RHFValidate } = useAddressInput({
