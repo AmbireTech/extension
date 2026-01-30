@@ -29,7 +29,7 @@ module.exports = function (api) {
           path: '.env'
         }
       ],
-      ['react-native-reanimated/plugin', { relativeSourceLocation: true }]
+      ['react-native-worklets/plugin', { relativeSourceLocation: true }]
     ]
   }
 
