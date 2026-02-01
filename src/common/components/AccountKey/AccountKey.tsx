@@ -15,7 +15,6 @@ import AccountKeyIcon from '@common/components/AccountKeyIcon'
 import AccountKeyDetails from '@common/components/AccountKeysBottomSheet/AccountKeyDetails'
 import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
-import Editable from '@common/components/Editable'
 import ExportKey from '@common/components/ExportKey'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import NetworkIcon from '@common/components/NetworkIcon'
@@ -101,14 +100,6 @@ const AccountKey: React.FC<Props> = ({
     }
   }
 
-  const editKeyLabel = (newLabel: string) => {
-    dispatch({
-      type: 'KEYSTORE_CONTROLLER_UPDATE_KEY_PREFERENCES',
-      params: [{ addr, type: type || 'internal', preferences: { label: newLabel } }]
-    })
-    addToast(t('Key label updated'), { type: 'success' })
-  }
-
   const shortAddr = shortenAddress(addr, 13)
 
   const isInternal = !type || type === 'internal'
@@ -151,27 +142,8 @@ const AccountKey: React.FC<Props> = ({
         >
           {!!isImported && (
             <View style={spacings.mrTy}>
-              <AccountKeyIcon
-                type={!!account.safeCreation ? 'safe' : type || 'internal'}
-                color={keyIconColor}
-              />
+              <AccountKeyIcon type={type || 'internal'} color={keyIconColor} />
             </View>
-          )}
-
-          {/* Keys that aren't imported can't be labeled */}
-          {isImported && enableEditing ? (
-            <Editable
-              textProps={{ weight: 'semiBold' }}
-              fontSize={fontSize}
-              initialValue={label || ''}
-              onSave={editKeyLabel}
-              maxLength={40}
-              onSetIsEditing={setIsEditing}
-            />
-          ) : (
-            <Text weight="semiBold" fontSize={fontSize} numberOfLines={1}>
-              {label}
-            </Text>
           )}
 
           {!isEditing && (
