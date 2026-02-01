@@ -568,8 +568,8 @@ export const handleActions = async (
       return await mainCtrl.addressBook.removeManuallyAddedContact(params.address)
     case 'DOMAINS_CONTROLLER_REVERSE_LOOKUP':
       return await mainCtrl.domains.reverseLookup(params.address)
-    case 'DOMAINS_CONTROLLER_SAVE_RESOLVED_REVERSE_LOOKUP':
-      return mainCtrl.domains.saveResolvedReverseLookup(params)
+    case 'DOMAINS_CONTROLLER_RESOLVE_DOMAIN':
+      return mainCtrl.domains.resolveDomain(params)
     case 'CONTRACT_NAMES_CONTROLLER_GET_NAME':
       return mainCtrl.contractNames.getName(params.address, params.chainId)
     case 'SET_IS_PINNED': {
