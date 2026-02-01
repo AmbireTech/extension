@@ -63,8 +63,6 @@ const useAddressInput = ({
     ]
   )
 
-  console.log('validation', validation)
-  console.log('addressState', addressState)
   useEffect(() => {
     const { message: latestMessage, severity } = validation
     const { message: debouncedMessage, severity: debouncedSeverity } = debouncedValidation
