@@ -29,7 +29,7 @@ const useResolveDomain = () => {
       if (!resolver) return
 
       if (status === 'RESOLVED') {
-        resolver.resolve(ensToAddress[domain] ? domain : undefined)
+        resolver.resolve(ensToAddress[domain])
         delete requests.current[domain]
       } else if (status === 'FAILED') {
         resolver.reject(new Error(`Failed to resolve domain: ${domain}`))
@@ -42,7 +42,7 @@ const useResolveDomain = () => {
     ({ domain, bip44Item }: Props) => {
       const status = resolveDomainsStatus[domain]
 
-      if (status === 'RESOLVED') return Promise.resolve(ensToAddress[domain] ? domain : undefined)
+      if (status === 'RESOLVED') return Promise.resolve(ensToAddress[domain])
 
       if (status === 'FAILED')
         return Promise.reject(new Error(`Failed to resolve domain: ${domain}`))
