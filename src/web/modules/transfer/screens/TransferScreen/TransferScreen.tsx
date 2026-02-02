@@ -30,7 +30,6 @@ import { Content, Form, Wrapper } from '@web/components/TransactionsScreen'
 import { createTab } from '@web/extension-services/background/webapi/tab'
 import useActivityControllerState from '@web/hooks/useActivityControllerState'
 import useBackgroundService from '@web/hooks/useBackgroundService'
-import useDomainsControllerState from '@web/hooks/useDomainsController/useDomainsController'
 import useHasGasTank from '@web/hooks/useHasGasTank'
 import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
@@ -87,7 +86,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   const { visibleUserRequests } = useRequestsControllerState()
   const { account, portfolio } = useSelectedAccountControllerState()
   const { userRequests } = useRequestsControllerState()
-  const { saveResolvedDomain } = useDomainsControllerState()
+
   const {
     ref: gasTankSheetRef,
     open: openGasTankInfoBottomSheet,
@@ -282,13 +281,6 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     })
   }, [dispatch])
 
-  const handleCacheResolvedDomain = useCallback(
-    (address: string, ensAvatar: string | null, domain: string, type: 'ens') => {
-      saveResolvedDomain({ address, ensAvatar, name: domain, type })
-    },
-    [saveResolvedDomain]
-  )
-
   const addressInputState = useAddressInput({
     addressState: {
       ...addressState,
@@ -296,8 +288,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     },
     overwriteValidationFieldValue: addressState.fieldValue,
     setAddressState,
-    overwriteValidation: validationFormMsgs.recipientAddress,
-    handleCacheResolvedDomain
+    overwriteValidation: validationFormMsgs.recipientAddress
   })
 
   /**

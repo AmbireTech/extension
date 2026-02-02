@@ -8,11 +8,12 @@ if (/Opera|OPR\//i.test(navigator.userAgent)) {
   const d = Object.getOwnPropertyDescriptor(window, 'ethereum')
   let isDapp = false
 
-  if (!d || d.configurable) {
-    Object.defineProperty(window, 'ethereum', {
-      configurable: false,
-      enumerable: true,
-      get: () => {
+  // Get a proxied provider that detects actual usage of the provider
+  const getMonitoredProvider = () => {
+    const provider = globalIsAmbireNext ? window.ambireNext : window.ambire
+
+    return new Proxy(provider, {
+      get(target, prop, receiver) {
         if (!isDapp) {
           try {
             // throw an Error to determine the source of the request
@@ -22,25 +23,31 @@ if (/Opera|OPR\//i.test(navigator.userAgent)) {
             if (stack) {
               const callerPage = (typeof stack === 'string' && stack.split('\n')[2]?.trim()) || ''
               if (callerPage.includes(window.location.hostname)) {
-                try {
-                  isDapp = true
-                  // Send a request to the background's dapp session to notify that this page is a dApp
-                  // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                  ;(globalIsAmbireNext ? window.ambireNext : window.ambire).request({
-                    method: 'eth_chainId',
-                    params: []
-                  })
-                } catch (e) {
-                  // eslint-disable-next-line no-console
-                  console.error(e)
+                isDapp = true
+
+                // Notify background that this is a real dApp
+                if (provider) {
+                  provider
+                    .request({ method: 'eth_chainId', params: [] })
+                    .catch((e) =>
+                      console.error('Error notifying background of window.ethereum usage', e)
+                    )
                 }
               }
             }
           }
         }
 
-        return globalIsAmbireNext ? window.ambireNext : window.ambire
-      },
+        return Reflect.get(target, prop, receiver)
+      }
+    })
+  }
+
+  if (!d || d.configurable) {
+    Object.defineProperty(window, 'ethereum', {
+      configurable: false,
+      enumerable: true,
+      get: getMonitoredProvider,
       set: () => {}
     })
   }
