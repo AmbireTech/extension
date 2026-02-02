@@ -13,6 +13,28 @@ import JazzIcon from './Jazz'
 import Polycons from './Polycons/Polycons'
 import TypeBadge from './TypeBadge'
 
+const getAvatarType = ({
+  ensAvatar,
+  ensAvatarImageFetchFailed,
+  avatarTypeSetting,
+  propAvatarType
+}: {
+  ensAvatar: string | undefined | null
+  ensAvatarImageFetchFailed: boolean
+  avatarTypeSetting: Omit<AvatarType, 'ens'>
+  propAvatarType?: Omit<AvatarType, 'ens'>
+}): AvatarType | Omit<AvatarType, 'ens'> => {
+  // Always use the prop avatar type if provided,
+  // otherwise ENS will override it.
+  if (propAvatarType) return propAvatarType
+
+  if (ensAvatar && !ensAvatarImageFetchFailed) {
+    return 'ens'
+  }
+
+  return avatarTypeSetting
+}
+
 interface Props {
   /**
    * A custom profile picture URL to use as an avatar.
@@ -31,6 +53,8 @@ interface Props {
   showTooltip?: boolean
   /**
    * Allow selecting a specific avatar type, overwriting the global settings.
+   *
+   * Note: This will also disable ENS avatars.
    */
   avatarType?: Omit<AvatarType, 'ens'>
   displayTypeBadge?: boolean
@@ -60,10 +84,13 @@ const Avatar: FC<Props> = ({
   const isEnsLoading = address
     ? (domains && !domains[address]) || loadingAddresses?.includes(address)
     : false
-  const ensAvatar =
-    address && !ensAvatarImageFetchFailed ? domains?.[address]?.ensAvatar : undefined
-  // Determine avatar type and props
-  const avatarType = ensAvatar ? 'ens' : avatarTypeSetting
+  const ensAvatar = domains?.[address]?.ensAvatar
+  const avatarType = getAvatarType({
+    ensAvatar,
+    ensAvatarImageFetchFailed,
+    avatarTypeSetting,
+    propAvatarType
+  })
   const borderRadius = size / 2
 
   // Pulsating animation
