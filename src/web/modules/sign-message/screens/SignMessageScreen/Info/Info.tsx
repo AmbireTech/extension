@@ -5,7 +5,7 @@ import { View } from 'react-native'
 import HumanizerAddress from '@common/components/HumanizerAddress'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
-import spacings, { SPACING, SPACING_SM } from '@common/styles/spacings'
+import spacings, { SPACING, SPACING_MD, SPACING_SM } from '@common/styles/spacings'
 import RequestingDappInfo from '@web/components/RequestingDappInfo'
 import useResponsiveActionWindow from '@web/hooks/useResponsiveActionWindow'
 import useSignMessageControllerState from '@web/hooks/useSignMessageControllerState'
@@ -39,6 +39,7 @@ const Info: FC<Props> = () => {
           <View
             style={{
               ...styles.verifyingContract,
+              marginTop: SPACING_SM * responsiveSizeMultiplier,
               paddingVertical: SPACING_SM * responsiveSizeMultiplier,
               paddingHorizontal: SPACING * responsiveSizeMultiplier
             }}
