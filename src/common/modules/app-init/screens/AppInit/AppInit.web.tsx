@@ -54,10 +54,58 @@ const Router = isExtension ? HashRouter : BrowserRouter
 
 const errorComponent = ({ error }: { error: Error }) => <ErrorComponent error={error} />
 
+// Composed at runtime to avoid Babel JSX transform bug with very deep nesting (~40+ levels).
+type ProviderComponent = React.ComponentType<{ children: React.ReactNode }>
+
+const composeProviders = (
+  providers: ProviderComponent[],
+  children: React.ReactNode
+): React.ReactNode =>
+  providers.reduceRight<React.ReactNode>((acc, Provider) => <Provider>{acc}</Provider>, children)
+
+const CONTROLLER_STATE_PROVIDERS: ProviderComponent[] = [
+  NetworksControllerStateProvider,
+  AccountsControllerStateProvider,
+  SelectedAccountControllerStateProvider,
+  ProvidersControllerStateProvider,
+  AutoLockControllerStateProvider,
+  ExtensionUpdateControllerStateProvider,
+  FeatureFlagsControllerStateProvider,
+  InviteControllerStateProvider,
+  AccountPickerControllerStateProvider,
+  KeystoreControllerStateProvider,
+  SignMessageControllerStateProvider,
+  ActivityControllerStateProvider,
+  RequestsControllerStateProvider,
+  PortfolioControllerStateProvider,
+  BannerControllerStateProvider,
+  SafeControllerStateProvider,
+  EmailVaultControllerStateProvider,
+  PhishingControllerStateProvider,
+  DappsControllerStateProvider,
+  DomainsControllerStateProvider,
+  ContractNamesControllerStateProvider,
+  AddressBookControllerStateProvider,
+  SwapAndBridgeControllerStateProvider,
+  TransferControllerStateProvider,
+  ControllersStateLoadedProvider,
+  KeyboardProvider,
+  NetInfoProvider,
+  AuthProvider,
+  OnboardingNavigationProvider
+]
+
 const AppInit = () => {
   const { fontsLoaded, robotoFontsLoaded } = useFonts()
 
   if (!fontsLoaded && !robotoFontsLoaded) return null
+
+  const appContent = (
+    <>
+      <AppRouter />
+      <PortalHost name="global" />
+    </>
+  )
 
   return (
     <Router>
@@ -73,68 +121,7 @@ const AppInit = () => {
                       <WalletStateControllerProvider>
                         <ThemeProvider>
                           <GestureHandler>
-                            <NetworksControllerStateProvider>
-                              <AccountsControllerStateProvider>
-                                <SelectedAccountControllerStateProvider>
-                                  <ProvidersControllerStateProvider>
-                                    <AutoLockControllerStateProvider>
-                                      <ExtensionUpdateControllerStateProvider>
-                                        <FeatureFlagsControllerStateProvider>
-                                          <InviteControllerStateProvider>
-                                            <AccountPickerControllerStateProvider>
-                                              <KeystoreControllerStateProvider>
-                                                <SignMessageControllerStateProvider>
-                                                  <ActivityControllerStateProvider>
-                                                    <RequestsControllerStateProvider>
-                                                      <PortfolioControllerStateProvider>
-                                                        <BannerControllerStateProvider>
-                                                          <SafeControllerStateProvider>
-                                                            <EmailVaultControllerStateProvider>
-                                                              <PhishingControllerStateProvider>
-                                                                <DappsControllerStateProvider>
-                                                                  <DomainsControllerStateProvider>
-                                                                    <ContractNamesControllerStateProvider>
-                                                                      <AddressBookControllerStateProvider>
-                                                                        <SwapAndBridgeControllerStateProvider>
-                                                                          <TransferControllerStateProvider>
-                                                                            {/* Reading from controllers in components, rendered above ControllersStateLoadedProvider
-                                                                    must be done very carefully, as it is not guaranteed that the state is loaded */}
-                                                                            <ControllersStateLoadedProvider>
-                                                                              <KeyboardProvider>
-                                                                                <NetInfoProvider>
-                                                                                  <AuthProvider>
-                                                                                    <OnboardingNavigationProvider>
-                                                                                      <AppRouter />
-                                                                                      <PortalHost name="global" />
-                                                                                    </OnboardingNavigationProvider>
-                                                                                  </AuthProvider>
-                                                                                </NetInfoProvider>
-                                                                              </KeyboardProvider>
-                                                                            </ControllersStateLoadedProvider>
-                                                                          </TransferControllerStateProvider>
-                                                                        </SwapAndBridgeControllerStateProvider>
-                                                                      </AddressBookControllerStateProvider>
-                                                                    </ContractNamesControllerStateProvider>
-                                                                  </DomainsControllerStateProvider>
-                                                                </DappsControllerStateProvider>
-                                                              </PhishingControllerStateProvider>
-                                                            </EmailVaultControllerStateProvider>
-                                                          </SafeControllerStateProvider>
-                                                        </BannerControllerStateProvider>
-                                                      </PortfolioControllerStateProvider>
-                                                    </RequestsControllerStateProvider>
-                                                  </ActivityControllerStateProvider>
-                                                </SignMessageControllerStateProvider>
-                                              </KeystoreControllerStateProvider>
-                                            </AccountPickerControllerStateProvider>
-                                          </InviteControllerStateProvider>
-                                        </FeatureFlagsControllerStateProvider>
-                                      </ExtensionUpdateControllerStateProvider>
-                                    </AutoLockControllerStateProvider>
-                                  </ProvidersControllerStateProvider>
-                                </SelectedAccountControllerStateProvider>
-                              </AccountsControllerStateProvider>
-                            </NetworksControllerStateProvider>
+                            {composeProviders(CONTROLLER_STATE_PROVIDERS, appContent)}
                           </GestureHandler>
                         </ThemeProvider>
                       </WalletStateControllerProvider>
