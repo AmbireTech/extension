@@ -537,9 +537,7 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
                   )}
                 </div>
               ))}
-            <div className={`${styles.infoRow} ${styles.apyInfo}`}>
-              <div style={{ marginRight: '1rem' }}>APY</div> {walletTokenInfo?.apy.toFixed(2)}%
-            </div>
+
             <div
               className={`${activeTab === 'unstake' && onchainData?.lockedShares && styles.blur}`}
             >
