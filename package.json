@@ -103,7 +103,6 @@
     "@safe-global/protocol-kit": "^6.1.2",
     "@sentry/browser": "10.37.0",
     "@sentry/react": "10.37.0",
-    "@sentry/react-native": "5.0.0-alpha.10",
     "@tradle/react-native-http": "^2.0.0",
     "@trezor/connect-plugin-ethereum": "9.1.5",
     "@trezor/connect-webextension": "9.7.1",
@@ -326,7 +325,6 @@
       "postinstall-postinstall": false,
       "secp256k1": false,
       "@trezor/connect-webextension>@trezor/connect>@trezor/blockchain-link>@stellar/stellar-sdk": false,
-      "@sentry/react-native>@sentry/cli": false,
       "sass>@parcel/watcher": false
     }
   }
