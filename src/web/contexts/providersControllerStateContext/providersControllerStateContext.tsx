@@ -105,7 +105,7 @@ const ProvidersControllerStateProvider: React.FC<any> = ({ children }) => {
         eventBus.addEventListener('receiveOneTimeData', onResponse)
       })
     },
-    [dispatch, eventBus]
+    [dispatch]
   )
 
   const callContract = useCallback(
@@ -163,7 +163,7 @@ const ProvidersControllerStateProvider: React.FC<any> = ({ children }) => {
         eventBus.addEventListener('receiveOneTimeData', onResponse)
       })
     },
-    [dispatch, eventBus]
+    [dispatch]
   )
 
   const memoizedState = useDeepMemo(state, controller)
