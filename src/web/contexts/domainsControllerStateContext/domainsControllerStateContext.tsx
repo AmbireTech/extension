@@ -15,16 +15,11 @@ import useMainControllerState from '@web/hooks/useMainControllerState'
 const DomainsControllerStateContext = createContext<{
   state: IDomainsController
   reverseLookup: (address: string) => void
-  saveResolvedDomain: (props: {
-    address: string
-    ensAvatar: string | null
-    name: string
-    type: 'ens'
-  }) => void
+  resolveDomain: (props: { domain: string; bip44Item?: number[][] }) => void
 }>({
   state: {} as IDomainsController,
   reverseLookup: () => {},
-  saveResolvedDomain: () => {}
+  resolveDomain: () => {}
 })
 
 const controller = 'DomainsController'
@@ -56,9 +51,11 @@ const BenzinAndLegendsDomainsProvider: React.FC<React.PropsWithChildren> = ({ ch
     [domainsCtrl]
   )
 
-  const saveResolvedDomain = useCallback(
-    (props: { address: string; ensAvatar: string | null; name: string; type: 'ens' }) => {
-      domainsCtrl.saveResolvedReverseLookup(props)
+  const resolveDomain = useCallback(
+    (props: { domain: string; bip44Item?: number[][] }) => {
+      domainsCtrl.resolveDomain(props).catch((e) => {
+        console.error('Failed to resolve address for domain', props.domain, e)
+      })
     },
     [domainsCtrl]
   )
@@ -66,9 +63,9 @@ const BenzinAndLegendsDomainsProvider: React.FC<React.PropsWithChildren> = ({ ch
   return (
     <DomainsControllerStateContext.Provider
       value={useMemo(
-        () => ({ state: domainsCtrl, reverseLookup, saveResolvedDomain }),
+        () => ({ state: domainsCtrl, reverseLookup, resolveDomain }),
         // eslint-disable-next-line react-hooks/exhaustive-deps
-        [domainsCtrl, reverseLookup, saveResolvedDomain, rerender]
+        [domainsCtrl, reverseLookup, resolveDomain, rerender]
       )}
     >
       {children}
@@ -99,10 +96,10 @@ const ExtensionDomainsProvider: React.FC<React.PropsWithChildren> = ({ children 
     [dispatch]
   )
 
-  const saveResolvedDomain = useCallback(
-    (props: { address: string; ensAvatar: string | null; name: string; type: 'ens' }) => {
+  const resolveDomain = useCallback(
+    (props: { domain: string; bip44Item?: number[][] }) => {
       dispatch({
-        type: 'DOMAINS_CONTROLLER_SAVE_RESOLVED_REVERSE_LOOKUP',
+        type: 'DOMAINS_CONTROLLER_RESOLVE_DOMAIN',
         params: props
       })
     },
@@ -112,8 +109,8 @@ const ExtensionDomainsProvider: React.FC<React.PropsWithChildren> = ({ children 
   return (
     <DomainsControllerStateContext.Provider
       value={useMemo(
-        () => ({ state: memoizedState, reverseLookup, saveResolvedDomain }),
-        [memoizedState, reverseLookup, saveResolvedDomain]
+        () => ({ state: memoizedState, reverseLookup, resolveDomain }),
+        [memoizedState, reverseLookup, resolveDomain]
       )}
     >
       {children}
