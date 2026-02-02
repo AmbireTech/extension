@@ -320,7 +320,8 @@
       "eth-crypto>ethereumjs-util>ethereum-cryptography>keccak": false,
       "eth-crypto>ethereumjs-util>ethereum-cryptography>secp256k1": false,
       "postinstall-postinstall": false,
-      "secp256k1": false
+      "secp256k1": false,
+      "@trezor/connect-webextension>@trezor/connect>@trezor/blockchain-link>@stellar/stellar-sdk": false
     }
   }
 }
