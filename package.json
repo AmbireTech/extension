@@ -58,7 +58,7 @@
     "setup:ci": "yarn install --frozen-lockfile && yarn allow-scripts && yarn patch-package"
   },
   "engines": {
-    "node": ">=22.12.0 <23.0.0",
+    "node": ">=24.13.0 <25.0.0",
     "yarn": ">=1.22.0 <2.0.0"
   },
   "dependencies": {
