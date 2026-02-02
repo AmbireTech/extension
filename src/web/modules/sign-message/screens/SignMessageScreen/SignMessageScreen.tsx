@@ -13,6 +13,7 @@ import {
 import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
 import Spinner from '@common/components/Spinner'
 import useTheme from '@common/hooks/useTheme'
+import useToast from '@common/hooks/useToast'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import HeaderAccountAndNetworkInfo from '@web/components/HeaderAccountAndNetworkInfo'
@@ -49,6 +50,7 @@ const SignMessageScreen = () => {
   const [doNotAskMeAgain, setDoNotAskMeAgain] = useState(false)
   const { currentUserRequest } = useRequestsControllerState()
   const { theme, themeType } = useTheme()
+  const { addToast } = useToast()
 
   const userRequest = useMemo(() => {
     if (
@@ -185,14 +187,24 @@ const SignMessageScreen = () => {
         ? // Accounts with multiple keys have an additional step to choose the key first
           chosenSigningKeyType === 'ledger'
         : // Take the key type from the account key itself, no additional step to choose key
-          selectedAccountKeyStoreKeys[0].type === 'ledger'
+          selectedAccountKeyStoreKeys[0]?.type === 'ledger'
       if (isLedgerKeyChosen && !isLedgerConnected) {
         setShouldDisplayLedgerConnectModal(true)
         return
       }
 
-      const keyAddr = chosenSigningKeyAddr || selectedAccountKeyStoreKeys[0].addr
-      const keyType = chosenSigningKeyType || selectedAccountKeyStoreKeys[0].type
+      const keyAddr = chosenSigningKeyAddr || selectedAccountKeyStoreKeys[0]?.addr
+      const keyType = chosenSigningKeyType || selectedAccountKeyStoreKeys[0]?.type
+
+      if (!keyAddr || !keyType) {
+        addToast(
+          t(
+            'No signing key available to sign the message. Please reject the request and try again.'
+          ),
+          { type: 'error' }
+        )
+        return
+      }
 
       dispatch({
         type: 'MAIN_CONTROLLER_HANDLE_SIGN_MESSAGE',
@@ -200,11 +212,13 @@ const SignMessageScreen = () => {
       })
     },
     [
-      dispatch,
-      isLedgerConnected,
-      selectedAccountKeyStoreKeys,
+      isAuthorization,
       makeItSmartConfirmed,
-      isAuthorization
+      selectedAccountKeyStoreKeys,
+      isLedgerConnected,
+      dispatch,
+      addToast,
+      t
     ]
   )
 
@@ -242,12 +256,26 @@ const SignMessageScreen = () => {
   }, [doNotAskMeAgain])
 
   const view = useMemo(() => {
+    // Happens when switching between requests
+    const isReinitializingAfterSwitch =
+      userRequest?.kind &&
+      signMessageState.messageToSign &&
+      userRequest.kind !== signMessageState.messageToSign.content.kind
+
+    if (isReinitializingAfterSwitch) return 'reinitializing'
+
     if (isAuthorization && !makeItSmartConfirmed) return 'authorization-7702'
 
     if (isSiwe) return 'siwe'
 
     return 'sign-message'
-  }, [isAuthorization, isSiwe, makeItSmartConfirmed])
+  }, [
+    isAuthorization,
+    isSiwe,
+    makeItSmartConfirmed,
+    signMessageState.messageToSign,
+    userRequest?.kind
+  ])
 
   // In the split second when the request window opens, but the state is not yet
   // initialized, to prevent a flash of the fallback visualization, show a
@@ -312,6 +340,11 @@ const SignMessageScreen = () => {
           handleClose={() => setIsChooseSignerShown(false)}
           account={account}
         />
+        {view === 'reinitializing' && (
+          <View style={[StyleSheet.absoluteFill, flexbox.center]}>
+            <Spinner />
+          </View>
+        )}
         {view === 'authorization-7702' && (
           <Authorization7702
             onDoNotAskMeAgainChange={onDoNotAskMeAgainChange}
