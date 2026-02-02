@@ -1,3 +1,5 @@
+import { Contract } from 'ethers'
+
 import { HD_PATH_TEMPLATE_TYPE } from '@ambire-common/consts/derivation'
 import { FeatureFlags } from '@ambire-common/consts/featureFlags'
 import { Filters, Pagination } from '@ambire-common/controllers/activity/activity'
@@ -15,6 +17,7 @@ import {
   ReadyToAddKeys
 } from '@ambire-common/interfaces/keystore'
 import { AddNetworkRequestParams, ChainId, Network } from '@ambire-common/interfaces/network'
+import { RPCProvider } from '@ambire-common/interfaces/provider'
 import { BuildRequest } from '@ambire-common/interfaces/requests'
 import { SignMessageUpdateParams } from '@ambire-common/interfaces/signMessage'
 import {
@@ -132,6 +135,26 @@ type MainControllerRemoveAccount = {
 type ProvidersControllerToggleBatching = {
   type: 'PROVIDERS_CONTROLLER_TOGGLE_BATCHING'
 }
+type ProvidersControllerCallProviderAndSendResToUiAction = {
+  type: 'PROVIDERS_CONTROLLER_CALL_PROVIDER_AND_SEND_RES_TO_UI'
+  params: {
+    requestId: string
+    chainId: bigint
+    method: keyof RPCProvider
+    args: unknown[]
+  }
+}
+type ProvidersControllerCallContractAndSendResToUiAction = {
+  type: 'PROVIDERS_CONTROLLER_CALL_CONTRACT_AND_SEND_RES_TO_UI'
+  params: {
+    requestId: string
+    chainId: bigint
+    address: string
+    abi: string
+    method: keyof Contract
+    args: unknown[]
+  }
+}
 type MainControllerAccountPickerResetAction = {
   type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_RESET'
 }
@@ -169,16 +192,16 @@ type AccountsControllerResetAccountsNewlyAddedStateAction = {
   type: 'ACCOUNTS_CONTROLLER_RESET_ACCOUNTS_NEWLY_ADDED_STATE'
 }
 
-type SettingsControllerSetNetworkToAddOrUpdate = {
-  type: 'SETTINGS_CONTROLLER_SET_NETWORK_TO_ADD_OR_UPDATE'
+type NetworksControllerSetNetworkToAddOrUpdate = {
+  type: 'NETWORKS_CONTROLLER_SET_NETWORK_TO_ADD_OR_UPDATE'
   params: {
     chainId: Network['chainId']
     rpcUrl: string
   }
 }
 
-type SettingsControllerResetNetworkToAddOrUpdate = {
-  type: 'SETTINGS_CONTROLLER_RESET_NETWORK_TO_ADD_OR_UPDATE'
+type NetworksControllerResetNetworkToAddOrUpdate = {
+  type: 'NETWORKS_CONTROLLER_RESET_NETWORK_TO_ADD_OR_UPDATE'
 }
 
 type KeystoreControllerUpdateKeyPreferencesAction = {
@@ -493,14 +516,9 @@ type DomainsControllerReverseLookupAction = {
   params: { address: string }
 }
 
-type DomainsControllerSaveResolvedReverseLookupAction = {
-  type: 'DOMAINS_CONTROLLER_SAVE_RESOLVED_REVERSE_LOOKUP'
-  params: {
-    address: string
-    name: string
-    ensAvatar: string | null
-    type: 'ens'
-  }
+type DomainsControllerResolveDomainAction = {
+  type: 'DOMAINS_CONTROLLER_RESOLVE_DOMAIN'
+  params: { domain: string; bip44Item?: number[][] }
 }
 
 type DappsControllerFetchAndUpdateDappsAction = {
@@ -769,8 +787,8 @@ export type Action =
   | AccountsControllerUpdateAccountPreferences
   | AccountsControllerUpdateAccountState
   | AccountsControllerResetAccountsNewlyAddedStateAction
-  | SettingsControllerSetNetworkToAddOrUpdate
-  | SettingsControllerResetNetworkToAddOrUpdate
+  | NetworksControllerSetNetworkToAddOrUpdate
+  | NetworksControllerResetNetworkToAddOrUpdate
   | MainControllerAddNetwork
   | KeystoreControllerUpdateKeyPreferencesAction
   | MainControllerUpdateNetworkAction
@@ -783,6 +801,8 @@ export type Action =
   | MainControllerRemoveAccount
   | RequestsControllerAddCallsUserRequestAction
   | ProvidersControllerToggleBatching
+  | ProvidersControllerCallProviderAndSendResToUiAction
+  | ProvidersControllerCallContractAndSendResToUiAction
   | MainControllerLockAction
   | RequestsControllerBuildRequestAction
   | RequestsControllerRemoveUserRequestAction
@@ -828,7 +848,7 @@ export type Action =
   | EmailVaultControllerRequestKeysSyncAction
   | EmailVaultControllerDismissBannerAction
   | DomainsControllerReverseLookupAction
-  | DomainsControllerSaveResolvedReverseLookupAction
+  | DomainsControllerResolveDomainAction
   | DappsControllerFetchAndUpdateDappsAction
   | DappsControllerRemoveConnectedSiteAction
   | DappsControllerUpdateDappAction

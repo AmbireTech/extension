@@ -1,16 +1,79 @@
+import { getAddress } from 'ethers'
 /* eslint-disable @typescript-eslint/no-shadow */
-import React, { createContext, useEffect } from 'react'
+import React, { createContext, useCallback, useEffect, useMemo, useReducer } from 'react'
 
+import { networks } from '@ambire-common/consts/networks'
+import { DomainsController } from '@ambire-common/controllers/domains/domains'
 import { IDomainsController } from '@ambire-common/interfaces/domains'
+import { getRpcProvider } from '@ambire-common/services/provider'
+import { isBenzin, isLegends } from '@common/config/env'
 import useDeepMemo from '@common/hooks/useDeepMemo'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useControllerState from '@web/hooks/useControllerState'
 import useMainControllerState from '@web/hooks/useMainControllerState'
 
-const DomainsControllerStateContext = createContext<IDomainsController>({} as IDomainsController)
+const DomainsControllerStateContext = createContext<{
+  state: IDomainsController
+  reverseLookup: (address: string) => void
+  resolveDomain: (props: { domain: string; bip44Item?: number[][] }) => void
+}>({
+  state: {} as IDomainsController,
+  reverseLookup: () => {},
+  resolveDomain: () => {}
+})
 
-const DomainsControllerStateProvider: React.FC<any> = ({ children }) => {
-  const controller = 'DomainsController'
+const controller = 'DomainsController'
+
+const BenzinAndLegendsDomainsProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
+  const [rerender, forceRerender] = useReducer((x) => x + 1, 0)
+
+  const ethereum = useMemo(() => networks.find(({ chainId }) => chainId === 1n)!, [])
+
+  const providers = useMemo(() => {
+    return { '1': getRpcProvider(ethereum.rpcUrls, 1n, ethereum.selectedRpcUrl) }
+  }, [ethereum])
+
+  const domainsCtrl = useMemo(() => new DomainsController({ providers }), [providers])
+
+  useEffect(() => {
+    const unsubscribe = domainsCtrl.onUpdate(forceRerender)
+    return unsubscribe
+  }, [domainsCtrl])
+
+  const reverseLookup = useCallback(
+    (address: string) => {
+      const checksummedAddress = getAddress(address)
+
+      domainsCtrl.reverseLookup(checksummedAddress, true).catch((e) => {
+        console.error('Failed to resolve domain for address', checksummedAddress, e)
+      })
+    },
+    [domainsCtrl]
+  )
+
+  const resolveDomain = useCallback(
+    (props: { domain: string; bip44Item?: number[][] }) => {
+      domainsCtrl.resolveDomain(props).catch((e) => {
+        console.error('Failed to resolve address for domain', props.domain, e)
+      })
+    },
+    [domainsCtrl]
+  )
+
+  return (
+    <DomainsControllerStateContext.Provider
+      value={useMemo(
+        () => ({ state: domainsCtrl, reverseLookup, resolveDomain }),
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [domainsCtrl, reverseLookup, resolveDomain, rerender]
+      )}
+    >
+      {children}
+    </DomainsControllerStateContext.Provider>
+  )
+}
+
+const ExtensionDomainsProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
   const state = useControllerState(controller)
   const { dispatch } = useBackgroundService()
   const mainState = useMainControllerState()
@@ -26,10 +89,40 @@ const DomainsControllerStateProvider: React.FC<any> = ({ children }) => {
 
   const memoizedState = useDeepMemo(state, controller)
 
+  const reverseLookup = useCallback(
+    (address: string) => {
+      dispatch({ type: 'DOMAINS_CONTROLLER_REVERSE_LOOKUP', params: { address } })
+    },
+    [dispatch]
+  )
+
+  const resolveDomain = useCallback(
+    (props: { domain: string; bip44Item?: number[][] }) => {
+      dispatch({
+        type: 'DOMAINS_CONTROLLER_RESOLVE_DOMAIN',
+        params: props
+      })
+    },
+    [dispatch]
+  )
+
   return (
-    <DomainsControllerStateContext.Provider value={memoizedState}>
+    <DomainsControllerStateContext.Provider
+      value={useMemo(
+        () => ({ state: memoizedState, reverseLookup, resolveDomain }),
+        [memoizedState, reverseLookup, resolveDomain]
+      )}
+    >
       {children}
     </DomainsControllerStateContext.Provider>
+  )
+}
+
+const DomainsControllerStateProvider: React.FC<React.PropsWithChildren> = (props) => {
+  return isBenzin || isLegends ? (
+    <BenzinAndLegendsDomainsProvider {...props} />
+  ) : (
+    <ExtensionDomainsProvider {...props} />
   )
 }
 

@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { AddressState, AddressStateOptional } from '@ambire-common/interfaces/domains'
-import { resolveENSDomain } from '@ambire-common/services/ensDomains'
 import { Validation } from '@ambire-common/services/validations'
 
+import useResolveDomain from '../useResolveDomain'
 import getAddressInputValidation from './utils/validation'
 
 interface Props {
@@ -22,12 +22,6 @@ interface Props {
    * Example: preventing adding an address that is already in the address book.
    */
   overwriteValidation?: Validation | null
-  handleCacheResolvedDomain: (
-    address: string,
-    avatar: string | null,
-    domain: string,
-    type: 'ens'
-  ) => void
   // handleRevalidate is required when the address input is used
   // together with react-hook-form. It is used to trigger the revalidation of the input.
   // !!! Must be memoized with useCallback
@@ -39,12 +33,12 @@ const useAddressInput = ({
   setAddressState,
   overwriteValidation,
   overwriteValidationFieldValue,
-  handleCacheResolvedDomain,
   handleRevalidate
 }: Props) => {
   const fieldValueRef = useRef(addressState.fieldValue)
   const fieldValue = addressState.fieldValue
   const [hasDomainResolveFailed, setHasDomainResolveFailed] = useState(false)
+  const { resolveDomain } = useResolveDomain()
   const [debouncedValidation, setDebouncedValidation] = useState<Validation>({
     severity: 'error',
     message: ''
@@ -67,40 +61,6 @@ const useAddressInput = ({
       hasDomainResolveFailed,
       overwriteValidation
     ]
-  )
-
-  const resolveDomains = useCallback(
-    async (trimmedAddress: string) => {
-      let ensAddress = ''
-
-      // Keep the promise all as we may add more domain resolvers in the future
-      await Promise.all([
-        resolveENSDomain(trimmedAddress)
-          .then(({ address: newEnsAddress, avatar }) => {
-            ensAddress = newEnsAddress
-
-            if (ensAddress) {
-              handleCacheResolvedDomain(ensAddress, avatar, fieldValue, 'ens')
-            }
-          })
-          .catch((e) => {
-            if (fieldValueRef.current !== fieldValue) return
-
-            setHasDomainResolveFailed(true)
-            ensAddress = ''
-            console.error('Failed to resolve ENS domain:', e)
-          })
-      ])
-
-      // The promises may resolve after the component is unmounted.
-      if (fieldValueRef.current !== fieldValue) return
-
-      setAddressState({
-        ensAddress,
-        isDomainResolving: false
-      })
-    },
-    [handleCacheResolvedDomain, fieldValue, setAddressState]
   )
 
   useEffect(() => {
@@ -164,13 +124,23 @@ const useAddressInput = ({
 
     // Debounce domain resolving
     const timeout = setTimeout(() => {
-      resolveDomains(trimmedAddress)
+      resolveDomain({ domain: trimmedAddress })
+        .then((ensAddress) => {
+          if (fieldValueRef.current !== fieldValue) return
+          setAddressState({ ensAddress, isDomainResolving: false })
+        })
+        .catch(() => {
+          if (fieldValueRef.current !== fieldValue) return
+
+          setHasDomainResolveFailed(true)
+          setAddressState({ ensAddress: '', isDomainResolving: false })
+        })
     }, 300)
 
     return () => {
       clearTimeout(timeout)
     }
-  }, [fieldValue, resolveDomains, setAddressState])
+  }, [fieldValue, setAddressState, resolveDomain])
 
   useEffect(() => {
     fieldValueRef.current = addressState.fieldValue

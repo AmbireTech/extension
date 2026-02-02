@@ -28,6 +28,7 @@ const AddContactFormModal = ({ id, sheetRef, closeBottomSheet }: Props) => {
   const { dispatch } = useBackgroundService()
   const { contacts } = useAddressBookControllerState()
   const { accounts } = useAccountsControllerState()
+
   const {
     control,
     watch,
@@ -90,27 +91,11 @@ const AddContactFormModal = ({ id, sheetRef, closeBottomSheet }: Props) => {
     return null
   }, [accounts, addressState.ensAddress, addressState.fieldValue, contacts, t])
 
-  const handleCacheResolvedDomain = useCallback(
-    (address: string, ensAvatar: string | null, domain: string, type: 'ens') => {
-      dispatch({
-        type: 'DOMAINS_CONTROLLER_SAVE_RESOLVED_REVERSE_LOOKUP',
-        params: {
-          type,
-          address,
-          name: domain,
-          ensAvatar
-        }
-      })
-    },
-    [dispatch]
-  )
-
   const { validation, RHFValidate } = useAddressInput({
     addressState,
     setAddressState,
     handleRevalidate,
-    overwriteValidation,
-    handleCacheResolvedDomain
+    overwriteValidation
   })
 
   const submitForm = handleSubmit(() => {
