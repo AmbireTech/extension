@@ -69,7 +69,7 @@ module.exports = async function (env, argv) {
       'Fast & secure Web3 wallet to supercharge your account on Ethereum and EVM networks.'
 
     // Maintain the same versioning between the web extension and the mobile app
-    manifest.version = appJSON.expo.version
+    manifest.version = appJSON.version
 
     // Directives to disallow a set of script-related privileges for a
     // specific page. They prevent the browser extension being embedded or
@@ -190,6 +190,22 @@ module.exports = async function (env, argv) {
       // As far as we could debug, these are not critical and lib specific.
       // Webpack can't find source maps for specific packages, which is fine.
       message: /Failed to parse source map/
+    },
+    // react-native-worklets uses Metro-specific require.getModules()/resolveWeak();
+    // those APIs don't exist in webpack. Safe to ignore for web/extension builds.
+    (warning, compilation) => {
+      if (
+        typeof warning.message !== 'string' ||
+        !warning.message.includes(
+          'Critical dependency: require function is used in a way in which dependencies cannot be statically extracted'
+        )
+      ) {
+        return false
+      }
+      const requestShortener = compilation?.requestShortener
+      const moduleId = warning.module?.readableIdentifier?.(requestShortener) ?? ''
+      const file = warning.file || warning.module?.resource || ''
+      return moduleId.includes('react-native-worklets') || file.includes('react-native-worklets')
     }
   ]
 

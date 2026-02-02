@@ -521,14 +521,9 @@ type DomainsControllerReverseLookupAction = {
   params: { address: string }
 }
 
-type DomainsControllerSaveResolvedReverseLookupAction = {
-  type: 'DOMAINS_CONTROLLER_SAVE_RESOLVED_REVERSE_LOOKUP'
-  params: {
-    address: string
-    name: string
-    ensAvatar: string | null
-    type: 'ens'
-  }
+type DomainsControllerResolveDomainAction = {
+  type: 'DOMAINS_CONTROLLER_RESOLVE_DOMAIN'
+  params: { domain: string; bip44Item?: number[][] }
 }
 
 type DappsControllerFetchAndUpdateDappsAction = {
@@ -865,7 +860,7 @@ export type Action =
   | EmailVaultControllerRequestKeysSyncAction
   | EmailVaultControllerDismissBannerAction
   | DomainsControllerReverseLookupAction
-  | DomainsControllerSaveResolvedReverseLookupAction
+  | DomainsControllerResolveDomainAction
   | DappsControllerFetchAndUpdateDappsAction
   | DappsControllerRemoveConnectedSiteAction
   | DappsControllerUpdateDappAction

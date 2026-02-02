@@ -14,7 +14,6 @@ import useAddressInput from '@common/hooks/useAddressInput'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
-import useDomainsControllerState from '@web/hooks/useDomainsController/useDomainsController'
 import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 
 interface Props {
@@ -46,7 +45,6 @@ const AddressField: FC<Props> = ({
 }) => {
   const accountsState = useAccountsControllerState()
   const keystoreState = useKeystoreControllerState()
-  const { saveResolvedDomain } = useDomainsControllerState()
   const accounts = watch('accounts')
   const value = watch(`accounts.${index}`)
   const { t } = useTranslation()
@@ -123,19 +121,11 @@ const AddressField: FC<Props> = ({
     trigger(`accounts.${index}.fieldValue`)
   }, [index, isLoading, trigger])
 
-  const handleCacheResolvedDomain = useCallback(
-    (address: string, ensAvatar: string | null, domain: string, type: 'ens') => {
-      saveResolvedDomain({ address, ensAvatar, name: domain, type })
-    },
-    [saveResolvedDomain]
-  )
-
   const { validation, RHFValidate } = useAddressInput({
     addressState: value,
     setAddressState,
     overwriteValidation,
-    handleRevalidate,
-    handleCacheResolvedDomain
+    handleRevalidate
   })
 
   return (

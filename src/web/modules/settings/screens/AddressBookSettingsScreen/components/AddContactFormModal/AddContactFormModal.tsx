@@ -16,7 +16,6 @@ import flexbox from '@common/styles/utils/flexbox'
 import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
 import useAddressBookControllerState from '@web/hooks/useAddressBookControllerState'
 import useBackgroundService from '@web/hooks/useBackgroundService'
-import useDomainsControllerState from '@web/hooks/useDomainsController/useDomainsController'
 
 type Props = {
   id: string
@@ -29,7 +28,7 @@ const AddContactFormModal = ({ id, sheetRef, closeBottomSheet }: Props) => {
   const { dispatch } = useBackgroundService()
   const { contacts } = useAddressBookControllerState()
   const { accounts } = useAccountsControllerState()
-  const { saveResolvedDomain } = useDomainsControllerState()
+
   const {
     control,
     watch,
@@ -92,19 +91,11 @@ const AddContactFormModal = ({ id, sheetRef, closeBottomSheet }: Props) => {
     return null
   }, [accounts, addressState.ensAddress, addressState.fieldValue, contacts, t])
 
-  const handleCacheResolvedDomain = useCallback(
-    (address: string, ensAvatar: string | null, domain: string, type: 'ens') => {
-      saveResolvedDomain({ address, ensAvatar, name: domain, type })
-    },
-    [saveResolvedDomain]
-  )
-
   const { validation, RHFValidate } = useAddressInput({
     addressState,
     setAddressState,
     handleRevalidate,
-    overwriteValidation,
-    handleCacheResolvedDomain
+    overwriteValidation
   })
 
   const submitForm = handleSubmit(() => {

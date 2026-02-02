@@ -1,6 +1,8 @@
 import { delayPromise } from '@common/utils/promises'
 import { RELAYER_URL } from '@env'
 import HumanReadableError from '@legends/classes/HumanReadableError'
+import { BASE_CHAIN_ID } from '@legends/constants/networks'
+import useAccountContext from '@legends/hooks/useAccountContext'
 import useProviderContext from '@legends/hooks/useProviderContext'
 
 export const ERRORS = {
@@ -29,6 +31,7 @@ type Receipt = {
 
 const useErc5792 = () => {
   const { provider } = useProviderContext()
+  const { chainId } = useAccountContext()
   // all fields below marked as string should be HEX!
   const sendCalls = async (
     chainId: string,
@@ -103,7 +106,7 @@ const useErc5792 = () => {
     getCallsStatus,
     sendCalls,
     // the correct format for chainId when using erc5792
-    chainId: '0x2105'
+    chainId: `0x${(chainId || BASE_CHAIN_ID).toString(16)}`
   }
 }
 
