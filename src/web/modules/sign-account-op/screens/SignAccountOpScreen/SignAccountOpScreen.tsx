@@ -36,6 +36,7 @@ import PendingTransactions from '@web/modules/sign-account-op/components/Pending
 import SafetyChecksOverlay from '@web/modules/sign-account-op/components/SafetyChecksOverlay'
 import SectionHeading from '@web/modules/sign-account-op/components/SectionHeading'
 import Simulation from '@web/modules/sign-account-op/components/Simulation'
+import MultipleSignersSelect from '@web/modules/sign-message/components/SafeSignersSelect'
 import SigningKeySelect from '@web/modules/sign-message/components/SignKeySelect'
 
 import getStyles from './styles'
@@ -105,7 +106,8 @@ const SignAccountOpScreen = () => {
     isSignDisabled,
     bundlerNonceDiscrepancy,
     primaryButtonText,
-    shouldHoldToProceed
+    shouldHoldToProceed,
+    handleSetMultisigSigners
   } = useSign({
     handleUpdateStatus,
     signAccountOpState,
@@ -302,7 +304,10 @@ const SignAccountOpScreen = () => {
       >
         {signAccountOpState ? (
           <SigningKeySelect
-            isVisible={isChooseSignerShown || isChooseFeePayerKeyShown}
+            isVisible={
+              (isChooseSignerShown && !signAccountOpState.account.safeCreation) ||
+              isChooseFeePayerKeyShown
+            }
             isSigning={isSignLoading || !signAccountOpState.readyToSign}
             handleClose={() => {
               setIsChooseSignerShown(false)
@@ -318,6 +323,19 @@ const SignAccountOpScreen = () => {
             }
             type={isChooseFeePayerKeyShown ? 'broadcasting' : 'signing'}
             account={signAccountOpState.account}
+          />
+        ) : null}
+        {signAccountOpState && !!signAccountOpState.account.safeCreation ? (
+          <MultipleSignersSelect
+            isVisible={isChooseSignerShown}
+            isSigning={isSignLoading || !signAccountOpState.readyToSign}
+            handleSetMultisigSigners={handleSetMultisigSigners}
+            handleClose={() => {
+              setIsChooseSignerShown(false)
+            }}
+            importedOwners={signAccountOpState.accountKeyStoreKeys}
+            account={signAccountOpState.account}
+            threshold={signAccountOpState.threshold}
           />
         ) : null}
         <TabLayoutWrapperMainContent withScroll={false}>

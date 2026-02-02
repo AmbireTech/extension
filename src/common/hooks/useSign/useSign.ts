@@ -188,7 +188,7 @@ const useSign = ({
   }, [dispatch, signAccountOpState, updateType])
 
   const handleSign = useCallback(
-    (_chosenSigningKeyType?: Key['type'], _warningAccepted?: boolean) => {
+    (_chosenSigningKeyTypes?: Key['type'][], _warningAccepted?: boolean) => {
       // Prioritize warning(s) modals over all others
       // Warning modals are not displayed in the one-click swap flow
       if (warningToPromptBeforeSign && !_warningAccepted) {
@@ -200,9 +200,10 @@ const useSign = ({
       const isFeePayerSameAsSigner =
         signAccountOpState?.accountOp.signingKeyAddr ===
         signAccountOpState?.accountOp.gasFeePayment?.paidBy
-      const isLedgerKeyInvolvedInTheJustChosenKeys = _chosenSigningKeyType
-        ? _chosenSigningKeyType === 'ledger' || feePayerKeyType === 'ledger'
-        : isAtLeastOneOfTheKeysInvolvedLedger
+      const isLedgerKeyInvolvedInTheJustChosenKeys =
+        _chosenSigningKeyTypes && _chosenSigningKeyTypes.length
+          ? _chosenSigningKeyTypes.indexOf('ledger') !== -1 || feePayerKeyType === 'ledger'
+          : isAtLeastOneOfTheKeysInvolvedLedger
 
       if (isLedgerKeyInvolvedInTheJustChosenKeys && !isLedgerConnected) {
         setShouldDisplayLedgerConnectModal(true)
@@ -237,7 +238,17 @@ const useSign = ({
       // Explicitly pass the currently selected signing key type, because
       // the signing key type in the state might not be updated yet,
       // and Sign Account Op controller assigns a default signing upfront
-      handleSign(_chosenSigningKeyType)
+      handleSign([_chosenSigningKeyType])
+    },
+    [handleSign, handleUpdate]
+  )
+
+  const handleSetMultisigSigners = useCallback(
+    (signers: { addr: Key['addr']; type: Key['type'] }[]) => {
+      handleUpdate({ signers })
+
+      // pass all the key types to check if ledger is there
+      handleSign(signers.map((s) => s.type))
     },
     [handleSign, handleUpdate]
   )
@@ -255,11 +266,23 @@ const useSign = ({
   const onSignButtonClick = useCallback(() => {
     if (!signAccountOpState) return
 
+    const isSafeWithMultipleHardwareSigners =
+      !!signAccountOpState?.account.safeCreation &&
+      [
+        ...new Set(
+          signAccountOpState?.accountKeyStoreKeys
+            .filter((k) => k.type !== 'internal')
+            .map((k) => k.type)
+        )
+      ].length > 1
+
     // If the account has only one signer, we don't need to show the select signer overlay,
     // and we will sign the transaction with the only one available signer (it is set by default in the controller).
+    // Or if the account is a safe with hot signers OR signers from one hardware wallet only,
+    // the user can sign automatically
     if (
       signAccountOpState?.accountKeyStoreKeys.length === 1 ||
-      !!signAccountOpState.account.safeCreation
+      !isSafeWithMultipleHardwareSigners
     ) {
       handleSign()
       return
@@ -383,7 +406,8 @@ const useSign = ({
     bundlerNonceDiscrepancy,
     isChooseFeePayerKeyShown,
     setIsChooseFeePayerKeyShown,
-    shouldHoldToProceed: !!signAccountOpState?.banners?.length
+    shouldHoldToProceed: !!signAccountOpState?.banners?.length,
+    handleSetMultisigSigners
   }
 }
 
