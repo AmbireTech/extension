@@ -1,11 +1,11 @@
 import { baParams, SA_ADDRESS } from 'constants/env'
 import tokens from 'constants/tokens'
 import { test } from 'fixtures/pageObjects'
-import { PageManager } from '../../pages/utils/page_instances'
 
-import { runSimpleTransferFlow, runBatchTransferFlow } from '../../flows/transferFlow'
 import { runAddManualNetworkFlow, runChainlistFlow } from '../../flows/networkManagementFlow'
 import { runSwapBatchFlow, runSwapFlow, runSwapProceedFlow } from '../../flows/swapAndBridgeFlow'
+import { runBatchTransferFlow, runSimpleTransferFlow } from '../../flows/transferFlow'
+import { PageManager } from '../../pages/utils/page_instances'
 
 let sharedPages: PageManager
 
