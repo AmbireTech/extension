@@ -40,7 +40,7 @@ const Search = ({
       name="search"
       render={({ field: { onChange, onBlur, value } }) => (
         <Input
-          containerStyle={[spacings.mb0, containerStyle]}
+          containerStyle={[spacings.mb0 as ViewStyle, containerStyle]}
           leftIcon={hasLeftIcon ? () => <SearchIcon color={theme.secondaryText} /> : undefined}
           placeholder={placeholder}
           style={style}

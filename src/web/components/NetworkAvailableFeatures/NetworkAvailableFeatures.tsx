@@ -9,7 +9,6 @@ import DeployHelper from '@ambire-common/../contracts/compiled/DeployHelper.json
 import { AMBIRE_ACCOUNT_FACTORY, SINGLETON } from '@ambire-common/consts/deploy'
 import { NetworkFeature } from '@ambire-common/interfaces/network'
 import { isSmartAccount } from '@ambire-common/libs/account/account'
-import { getRpcProvider } from '@ambire-common/services/provider'
 import CheckIcon from '@common/assets/svg/CheckIcon'
 import ErrorFilledIcon from '@common/assets/svg/ErrorFilledIcon'
 import InformationIcon from '@common/assets/svg/InformationIcon'
@@ -19,6 +18,7 @@ import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
+import usePrevious from '@common/hooks/usePrevious'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
@@ -34,6 +34,7 @@ import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
+import useProvidersControllerState from '@web/hooks/useProvidersControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 
 import getStyles from './styles'
@@ -64,42 +65,43 @@ const NetworkAvailableFeatures = ({
   const { pathname } = useRoute()
   const { account } = useSelectedAccountControllerState()
   const { networks } = useNetworksControllerState()
+  const { callProvider } = useProvidersControllerState()
   const { dispatch } = useBackgroundService()
   const { addToast } = useToast()
-  const [checkedDeploy, setCheckedDeploy] = useState<boolean>(false)
+  const [checkedDeployFor, setCheckedDeployFor] = useState<bigint | undefined>()
   const tooltipId = useId()
 
   const selectedNetwork = useMemo(
     () => networks.find((network) => network.chainId === chainId),
     [networks, chainId]
   )
+  const prevSelectedNetwork: any = usePrevious(selectedNetwork)
 
   useEffect(() => {
-    if (!selectedNetwork || selectedNetwork.areContractsDeployed || checkedDeploy) return
+    if (!selectedNetwork) return
 
-    setCheckedDeploy(true)
-    const provider = getRpcProvider(selectedNetwork.rpcUrls, selectedNetwork.chainId)
-    provider
-      .getCode(AMBIRE_ACCOUNT_FACTORY)
-      .then((factoryCode: string) => {
+    if (selectedNetwork.chainId !== checkedDeployFor) setCheckedDeployFor(undefined)
+  }, [selectedNetwork, prevSelectedNetwork, checkedDeployFor])
+
+  useEffect(() => {
+    if (!selectedNetwork || selectedNetwork.areContractsDeployed || checkedDeployFor) return
+
+    setCheckedDeployFor(selectedNetwork.chainId)
+
+    callProvider(selectedNetwork.chainId, 'getCode', AMBIRE_ACCOUNT_FACTORY)
+      .then((factoryCode) => {
         if (factoryCode !== '0x') {
           dispatch({
             type: 'MAIN_CONTROLLER_UPDATE_NETWORK',
             params: { network: { areContractsDeployed: true }, chainId: selectedNetwork.chainId }
           })
         }
-        provider.destroy()
       })
       .catch((error) => {
         // eslint-disable-next-line no-console
         console.error(error)
-        provider.destroy()
       })
-
-    return () => {
-      provider.destroy()
-    }
-  }, [dispatch, selectedNetwork, checkedDeploy])
+  }, [dispatch, selectedNetwork, checkedDeployFor, callProvider])
 
   const handleDeploy = useCallback(async () => {
     if (!selectedNetwork) return // this should not happen...

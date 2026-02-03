@@ -22,7 +22,9 @@ const useAccountsList = ({
   })
   const search = watch('search')
   const [shouldDisplayAccounts, setShouldDisplayAccounts] = useState(false)
-  const { domains } = useDomainsControllerState()
+  const {
+    state: { domains }
+  } = useDomainsControllerState()
   const { accounts } = useAccountsControllerState()
   const { account: selectedAccount } = useSelectedAccountControllerState()
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)

@@ -20,7 +20,7 @@ import Background3 from './media/Background3'
 const Dashboard = () => {
   const { season2LeaderboardData } = useLeaderboardContext()
   const { userRewardsStats, isLoadingClaimableRewards } = usePortfolioControllerState()
-  const [expandedId, setExpandedId] = React.useState<Stat['id'] | null>(null)
+  const [expandedIds, setExpandedIds] = React.useState<Set<Stat['id']>>(new Set())
   const { connectedAccount } = useAccountContext()
 
   // since we reorder the leaderboard, the rank should be calculate dynamically
@@ -81,13 +81,21 @@ const Dashboard = () => {
                   <div key={id} className={styles.statSkeleton} />
                 ) : (
                   <div
-                    className={`${styles.stat} ${expandedId === id ? styles.open : ''}`}
+                    className={`${styles.stat} ${expandedIds.has(id) ? styles.open : ''}`}
                     key={id}
                   >
                     <button
                       type="button"
                       className={styles.header}
-                      onClick={() => setExpandedId(expandedId === id ? null : id)}
+                      onClick={() => {
+                        const newExpandedIds = new Set(expandedIds)
+                        if (newExpandedIds.has(id)) {
+                          newExpandedIds.delete(id)
+                        } else {
+                          newExpandedIds.add(id)
+                        }
+                        setExpandedIds(newExpandedIds)
+                      }}
                     >
                       <div className={styles.score}>
                         <div className={styles.scoreBadge}>

@@ -10,7 +10,7 @@ echo "It will also inject debug ids and upload source maps to Sentry"
 VERSION=$(grep '"version"' ./app.json | head -n1 | cut -d':' -f2 | tr -d ' ",')
 
 if [ -z "$VERSION" ]; then
-  echo "Version not found in app.json. Make sure the 'expo.version' key exists."
+  echo "Version not found in app.json. Make sure the 'version' key exists."
   exit 1
 fi
 

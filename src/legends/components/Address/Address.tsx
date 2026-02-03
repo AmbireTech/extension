@@ -1,7 +1,7 @@
 import React, { FC } from 'react'
 
 import shortenAddress from '@ambire-common/utils/shortenAddress'
-import useStandaloneReverseLookup from '@common/hooks/useStandaloneReverseLookup'
+import useReverseLookup from '@common/hooks/useReverseLookup'
 
 import styles from './Address.module.scss'
 
@@ -13,20 +13,14 @@ type Props = {
 }
 
 const Address: FC<Props> = ({ address, className, skeletonClassName, maxAddressLength }) => {
-  const { isLoading, resolvedDomain } = useStandaloneReverseLookup({
-    address
-  })
+  const { isLoading, ens } = useReverseLookup({ address })
   const shortenedAddress = maxAddressLength ? shortenAddress(address, maxAddressLength) : address
 
   if (isLoading) {
     return <div className={`${styles.skeleton} ${className} ${skeletonClassName}`} />
   }
 
-  return (
-    <span className={`${styles.address} ${className}`}>
-      {resolvedDomain.ens || shortenedAddress}
-    </span>
-  )
+  return <span className={`${styles.address} ${className}`}>{ens || shortenedAddress}</span>
 }
 
 export default Address

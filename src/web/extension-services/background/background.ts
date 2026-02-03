@@ -375,29 +375,6 @@ const init = async () => {
       initWithCustomHeaders.headers['x-app-version'] = versionHeader
     }
 
-    // As of v4.36.0, for metric purposes, pass the account keys count as an
-    // additional param for the batched velcro discovery requests.
-    const shouldAttachKeyCountParam = url.toString().startsWith(`${VELCRO_URL}/multi-hints?`)
-    if (shouldAttachKeyCountParam) {
-      const urlObj = new URL(url.toString())
-      const accounts = urlObj.searchParams.get('accounts')
-
-      if (accounts) {
-        const accountKeysCount = accounts.split(',').map((accountAddr) => {
-          return getAccountKeysCount({
-            accountAddr,
-            keys: mainCtrl.keystore.keys,
-            accounts: mainCtrl.accounts.accounts
-          })
-        })
-
-        urlObj.searchParams.append('sigs', accountKeysCount.join(','))
-        // Override the URL and replace encoded commas (%2C) with actual commas
-        // eslint-disable-next-line no-param-reassign
-        url = urlObj.toString().replace(/%2C/g, ',')
-      }
-    }
-
     // we want to calculate the TVL of our users
     // we can achieve this by making a relayer (server-side trusted environment) script that gets the balances of all our users
     // but doing this with all our users would be 'expensive'.
@@ -644,7 +621,16 @@ const init = async () => {
     // Debounce multiple emits in the same tick and only execute one of them
     setTimeout(() => {
       if (backgroundState.ctrlOnUpdateIsDirtyFlags[ctrlName]) {
-        sendUpdate()
+        // If the toJSON method of a controller ever throws, we want to catch it here
+        // otherwise the ctrlOnUpdateIsDirtyFlags flag will remain true forever and no further updates
+        // will be sent to the UI for that controller
+        try {
+          sendUpdate()
+        } catch (err) {
+          ;(err as any).controllerName = ctrlName
+          console.error('Debug: Failed to send update to UI for ctrl', ctrlName, err)
+          captureBackgroundException(err)
+        }
       }
       backgroundState.ctrlOnUpdateIsDirtyFlags[ctrlName] = false
     }, 0)

@@ -11,7 +11,7 @@ runs:
       shell: bash
 
     - name: Install Node.js ⚙️
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v6
       with:
         node-version-file: '.nvmrc'
 
@@ -32,7 +32,7 @@ runs:
         key: ${{ runner.os }}-yarn-${{ steps.yarn-cache-dir-path.outputs.version }}-${{ hashFiles('yarn.lock') }}
 
     - name: Install Dependencies
-      run: yarn install --frozen-lockfile
+      run: yarn setup:ci
       shell: bash
 
     - name: Cache Dependencies

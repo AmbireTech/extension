@@ -31,7 +31,7 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       backgroundColor:
         themeType === THEME_TYPES.DARK ? theme.secondaryBackground : theme.primaryBackground,
       ...common.borderRadiusSecondary,
-      ...common.shadowTertiary,
+      ...(themeType === THEME_TYPES.DARK ? {} : common.shadowTertiary),
       width: '100%',
       maxWidth: 600
     },

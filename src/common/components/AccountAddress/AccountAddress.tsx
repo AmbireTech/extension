@@ -26,21 +26,19 @@ const AccountAddress: FC<Props> = ({
 }) => {
   const { t } = useTranslation()
 
-  if (isLoading) {
-    return (
-      <Text fontSize={12} appearance="secondaryText">
-        {t('Resolving domain...')}
-      </Text>
-    )
-  }
-
   return (
     <View style={[flexbox.flex1, { paddingVertical: 3 }]} testID="address">
-      {ens ? (
+      {ens || isLoading ? (
         <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
-          <Text fontSize={fontSize} weight="semiBold" appearance="primary" numberOfLines={1}>
-            {ens}
-          </Text>
+          {!isLoading ? (
+            <Text fontSize={fontSize} weight="semiBold" appearance="primary" numberOfLines={1}>
+              {ens}
+            </Text>
+          ) : (
+            <Text fontSize={12} appearance="secondaryText">
+              {t('Resolving domain...')}
+            </Text>
+          )}
           {withCopy ? (
             <PlainAddressWithCopy
               maxLength={18}

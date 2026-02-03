@@ -11,6 +11,8 @@ import { browser, isSafari } from '@web/constants/browserapi'
 import { storage } from '@web/extension-services/background/webapi/storage'
 import { DEFAULT_LOG_LEVEL, LOG_LEVELS, setLoggerInstanceLogLevel } from '@web/utils/logger'
 
+export type AvatarType = 'blockies' | 'jazzicons' | 'polycons' | 'ens'
+
 export class WalletStateController extends EventEmitter {
   isReady: boolean = false
 
@@ -21,6 +23,8 @@ export class WalletStateController extends EventEmitter {
   #isSetupComplete: boolean = false
 
   themeType: ThemeType = DEFAULT_THEME
+
+  avatarType: AvatarType = 'jazzicons'
 
   logLevel: LOG_LEVELS = DEFAULT_LOG_LEVEL
 
@@ -59,6 +63,7 @@ export class WalletStateController extends EventEmitter {
   async #init(): Promise<void> {
     this.#isSetupComplete = await storage.get('isSetupComplete', false)
     this.themeType = await storage.get('themeType', DEFAULT_THEME)
+    this.avatarType = await storage.get('avatarType', this.avatarType)
     this.isPinned = await this.#checkIsPinned()
     if (!this.isPinned) this.#initContinuousCheckIsPinned()
 
@@ -102,6 +107,13 @@ export class WalletStateController extends EventEmitter {
   async setThemeType(type: ThemeType) {
     this.themeType = type
     await storage.set('themeType', type)
+
+    this.emitUpdate()
+  }
+
+  async setAvatarType(type: AvatarType) {
+    this.avatarType = type
+    await storage.set('avatarType', type)
 
     this.emitUpdate()
   }

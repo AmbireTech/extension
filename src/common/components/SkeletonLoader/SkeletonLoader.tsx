@@ -62,6 +62,7 @@ const SkeletonLoader = ({
           borderRadius
         },
         { opacity: pulseAnim },
+        //@ts-ignore
         style
       ]}
     />

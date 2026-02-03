@@ -109,7 +109,7 @@ const Buttons: FC<Props> = ({
     <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifyEnd]}>
       {!isRequestWindow && (
         <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-          <View // @ts-ignore
+          <View
             dataSet={createGlobalTooltipDataSet({
               id: 'batch-btn-tooltip',
               content: batchDisabledReason
@@ -138,7 +138,6 @@ const Buttons: FC<Props> = ({
             </Button>
           </View>
           <View
-            // @ts-ignore
             dataSet={createGlobalTooltipDataSet({
               id: 'start-batch-info-tooltip',
               content: startBatchingInfo
@@ -155,7 +154,6 @@ const Buttons: FC<Props> = ({
         </View>
       )}
       <View
-        // @ts-ignore
         dataSet={createGlobalTooltipDataSet({
           id: 'proceed-btn-tooltip',
           content: oneClickDisabledReason

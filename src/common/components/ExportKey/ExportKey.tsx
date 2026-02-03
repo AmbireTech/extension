@@ -87,7 +87,7 @@ const ExportKey = ({
   }, [isExportingV2SA])
 
   const { getExtraEntropy } = useExtraEntropy()
-  const onPasswordConfirmed = (password?: string) => {
+  const onPasswordConfirmed = (password: string) => {
     if (isExportingV2SA) {
       dispatch({
         type: 'KEYSTORE_CONTROLLER_SEND_ENCRYPTED_PRIVATE_KEY_TO_UI',

@@ -55,7 +55,7 @@ const WatchTokenRequestScreen = () => {
   const { temporaryTokens, validTokens, customTokens } = usePortfolioControllerState()
   const { portfolio: selectedAccountPortfolio } = useSelectedAccountControllerState()
   const { networks } = useNetworksControllerState()
-  const { providers } = useProvidersControllerState()
+  const { state } = useProvidersControllerState()
 
   const userRequest = useMemo(
     () => (currentUserRequest?.kind === 'walletWatchAsset' ? currentUserRequest : undefined),
@@ -80,7 +80,7 @@ const WatchTokenRequestScreen = () => {
 
   const networkWithFailedRPC =
     tokenNetwork?.chainId &&
-    getNetworksWithFailedRPC({ providers }).filter(
+    getNetworksWithFailedRPC({ providers: state.providers }).filter(
       (chainId: string) => tokenNetwork?.chainId.toString() === chainId
     )
 
@@ -152,7 +152,7 @@ const WatchTokenRequestScreen = () => {
       setIsLoading,
       setTokenNetwork,
       handleTokenType,
-      providers
+      state.providers
     )
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -164,7 +164,7 @@ const WatchTokenRequestScreen = () => {
     setIsLoading,
     setTokenNetwork,
     handleTokenType,
-    providers,
+    state.providers,
     tokenTypeEligibility
   ])
 

@@ -78,7 +78,7 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
   const StorageController = useStorageControllerState()
   const UiController = useUiControllerState()
   const NetworksController = useNetworksControllerState()
-  const ProvidersController = useProvidersControllerState()
+  const ProvidersController = useProvidersControllerState().state
   const AccountsController = useAccountsControllerState()
   const SelectedAccountController = useSelectedAccountControllerState()
   const WalletStateController = useWalletStateController()
@@ -90,7 +90,7 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
   const PhishingController = usePhishingControllerState()
   const DappsController = useDappsControllerState().state
   const AddressBookController = useAddressBookControllerState()
-  const DomainsController = useDomainsControllerState()
+  const DomainsController = useDomainsControllerState().state
   const InviteController = useInviteControllerState()
   const ContractNamesController = useContractNamesControllerState()
   const BannerController = useBannersControllerState()

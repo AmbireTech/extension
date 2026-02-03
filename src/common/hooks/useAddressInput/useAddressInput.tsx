@@ -1,28 +1,27 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { AddressState, AddressStateOptional } from '@ambire-common/interfaces/domains'
-import { resolveENSDomain } from '@ambire-common/services/ensDomains'
+import { Validation } from '@ambire-common/services/validations'
 
-import getAddressInputValidation, { ValidationWithSeverityType } from './utils/validation'
-
-// Re-export for backward compatibility
-export type { ValidationWithSeverityType }
+import useResolveDomain from '../useResolveDomain'
+import getAddressInputValidation from './utils/validation'
 
 interface Props {
   addressState: AddressState
+  /**
+   * Used to overwrite the address state field value that is
+   * used for validation. Because there is controller state (which takes a while to update)
+   * and useState state (which is updated instantly), and the useState state is used
+   * for ENS resolution, we may want to delay the validation until the controller state
+   * is updated.
+   */
   overwriteValidationFieldValue?: string
   setAddressState: (newState: AddressStateOptional) => void
-  overwriteError?: string
-  overwriteValidLabel?: string
-  // Severity may be provided by callers (e.g. controller state). Accept
-  // 'error'|'warning'|'info' so we can pass it through unchanged.
-  overwriteSeverity?: 'error' | 'warning' | 'info' | 'success'
-  handleCacheResolvedDomain: (
-    address: string,
-    avatar: string | null,
-    domain: string,
-    type: 'ens'
-  ) => void
+  /**
+   * Used to overwrite the default validation logic.
+   * Example: preventing adding an address that is already in the address book.
+   */
+  overwriteValidation?: Validation | null
   // handleRevalidate is required when the address input is used
   // together with react-hook-form. It is used to trigger the revalidation of the input.
   // !!! Must be memoized with useCallback
@@ -32,19 +31,16 @@ interface Props {
 const useAddressInput = ({
   addressState,
   setAddressState,
-  overwriteError,
-  overwriteValidLabel,
+  overwriteValidation,
   overwriteValidationFieldValue,
-  // For now severity is only used for non-error validations (warnings / info)
-  overwriteSeverity,
-  handleCacheResolvedDomain,
   handleRevalidate
 }: Props) => {
   const fieldValueRef = useRef(addressState.fieldValue)
   const fieldValue = addressState.fieldValue
   const [hasDomainResolveFailed, setHasDomainResolveFailed] = useState(false)
-  const [debouncedValidation, setDebouncedValidation] = useState<ValidationWithSeverityType>({
-    isError: true,
+  const { resolveDomain } = useResolveDomain()
+  const [debouncedValidation, setDebouncedValidation] = useState<Validation>({
+    severity: 'error',
     message: ''
   })
 
@@ -55,9 +51,7 @@ const useAddressInput = ({
         isRecipientDomainResolving: addressState.isDomainResolving,
         isValidEns: !!addressState.ensAddress,
         hasDomainResolveFailed,
-        overwriteError,
-        overwriteValidLabel,
-        overwriteSeverity
+        overwriteValidation
       }),
     [
       overwriteValidationFieldValue,
@@ -65,59 +59,20 @@ const useAddressInput = ({
       addressState.isDomainResolving,
       addressState.ensAddress,
       hasDomainResolveFailed,
-      overwriteError,
-      overwriteValidLabel,
-      overwriteSeverity
+      overwriteValidation
     ]
   )
 
-  const resolveDomains = useCallback(
-    async (trimmedAddress: string) => {
-      let ensAddress = ''
-
-      // Keep the promise all as we may add more domain resolvers in the future
-      await Promise.all([
-        resolveENSDomain(trimmedAddress)
-          .then(({ address: newEnsAddress, avatar }) => {
-            ensAddress = newEnsAddress
-
-            if (ensAddress) {
-              handleCacheResolvedDomain(ensAddress, avatar, fieldValue, 'ens')
-            }
-          })
-          .catch((e) => {
-            if (fieldValueRef.current !== fieldValue) return
-
-            setHasDomainResolveFailed(true)
-            ensAddress = ''
-            console.error('Failed to resolve ENS domain:', e)
-          })
-      ])
-
-      // The promises may resolve after the component is unmounted.
-      if (fieldValueRef.current !== fieldValue) return
-
-      setAddressState({
-        ensAddress,
-        isDomainResolving: false
-      })
-    },
-    [handleCacheResolvedDomain, fieldValue, setAddressState]
-  )
-
   useEffect(() => {
-    const { isError, message: latestMessage, severity } = validation
-    const {
-      isError: debouncedIsError,
-      message: debouncedMessage,
-      severity: debouncedSeverity
-    } = debouncedValidation
+    const { message: latestMessage, severity } = validation
+    const { message: debouncedMessage, severity: debouncedSeverity } = debouncedValidation
 
     if (latestMessage === debouncedMessage && severity === debouncedSeverity) return
 
     const shouldDebounce =
       // Both validations are errors
-      isError === debouncedIsError &&
+      severity === 'error' &&
+      debouncedSeverity === 'error' &&
       // There is no ENS address
       !addressState.ensAddress &&
       // The message is not empty
@@ -139,7 +94,7 @@ const useAddressInput = ({
   }, [
     addressState.ensAddress,
     debouncedValidation,
-    debouncedValidation.isError,
+    debouncedValidation.severity,
     debouncedValidation.message,
     validation
   ])
@@ -169,13 +124,23 @@ const useAddressInput = ({
 
     // Debounce domain resolving
     const timeout = setTimeout(() => {
-      resolveDomains(trimmedAddress)
+      resolveDomain({ domain: trimmedAddress })
+        .then((ensAddress) => {
+          if (fieldValueRef.current !== fieldValue) return
+          setAddressState({ ensAddress, isDomainResolving: false })
+        })
+        .catch(() => {
+          if (fieldValueRef.current !== fieldValue) return
+
+          setHasDomainResolveFailed(true)
+          setAddressState({ ensAddress: '', isDomainResolving: false })
+        })
     }, 300)
 
     return () => {
       clearTimeout(timeout)
     }
-  }, [fieldValue, resolveDomains, setAddressState])
+  }, [fieldValue, setAddressState, resolveDomain])
 
   useEffect(() => {
     fieldValueRef.current = addressState.fieldValue
@@ -201,21 +166,22 @@ const useAddressInput = ({
     if (validation.message !== debouncedValidation?.message) return false
 
     // Disable the form if the address is resolving
-    if (!debouncedValidation?.isError && debouncedValidation.message === 'Resolving domain...') {
+    if (debouncedValidation.id === 'resolving_domain') {
       return false
     }
 
     // Disable the form if there is an error
-    if (debouncedValidation?.isError)
-      return !debouncedValidation?.isError && debouncedValidation.message === ''
+    if (debouncedValidation?.severity === 'error')
+      return !(debouncedValidation?.severity === 'error') && debouncedValidation.message === ''
 
     if (addressState.isDomainResolving) return false
 
     return true
   }, [
     addressState.isDomainResolving,
-    debouncedValidation?.isError,
+    debouncedValidation.id,
     debouncedValidation.message,
+    debouncedValidation?.severity,
     validation.message
   ])
 

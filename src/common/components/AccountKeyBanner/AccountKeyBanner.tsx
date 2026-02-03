@@ -1,15 +1,15 @@
 import React from 'react'
 
-import { Key } from '@ambire-common/interfaces/keystore'
 import LatticeIcon from '@common/assets/svg/LatticeIcon'
 import LedgerLetterIcon from '@common/assets/svg/LedgerLetterIcon'
 import SingleKeyIcon from '@common/assets/svg/SingleKeyIcon'
 import TrezorLockIcon from '@common/assets/svg/TrezorLockIcon'
+import { KeyType } from '@common/components/AccountKeyIcons/AccountKeyIcons'
 import useTheme from '@common/hooks/useTheme'
 
 import Wrapper from './Wrapper'
 
-const AccountKeyBanner = ({ type }: { type: Key['type'] }) => {
+const AccountKeyBanner = ({ type }: { type: KeyType }) => {
   if (type === 'none') return null
 
   const { theme } = useTheme()

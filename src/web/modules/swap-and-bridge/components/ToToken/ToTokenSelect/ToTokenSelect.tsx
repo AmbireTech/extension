@@ -57,7 +57,6 @@ const getToTokenListErrorOption = ({
           color={theme.secondaryText}
           width={14}
           height={14}
-          // @ts-ignore
           dataSet={createGlobalTooltipDataSet({
             id: 'to-token-list-error-tooltip',
             content: text

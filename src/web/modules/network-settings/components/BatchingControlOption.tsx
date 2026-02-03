@@ -13,7 +13,9 @@ const BatchingControlOption = () => {
   const { dispatch } = useBackgroundService()
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { isBatchingEnabled, statuses } = useProvidersControllerState()
+  const {
+    state: { isBatchingEnabled, statuses }
+  } = useProvidersControllerState()
   const isLoading = statuses.toggleBatching === 'LOADING'
 
   const handleToggleBatching = useCallback(() => {

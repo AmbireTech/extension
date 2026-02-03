@@ -15,6 +15,7 @@ import { isAmbireNext, isDev } from '@common/config/env'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
+import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
@@ -28,7 +29,6 @@ import { SettingsRoutesContext } from '@web/modules/settings/contexts/SettingsRo
 import Network from '@web/modules/settings/screens/NetworksSettingsScreen/Network'
 import NetworkForm from '@web/modules/settings/screens/NetworksSettingsScreen/NetworkForm'
 
-import { ROUTES } from '@common/modules/router/constants/common'
 import BatchingControlOption from './BatchingControlOption'
 
 const NetworksSettings = () => {
@@ -38,7 +38,9 @@ const NetworksSettings = () => {
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const { maxWidthSize } = useWindowSize()
   const { allNetworks } = useNetworksControllerState()
-  const { providers } = useProvidersControllerState()
+  const {
+    state: { providers }
+  } = useProvidersControllerState()
 
   const { setCurrentSettingsPage } = useContext(SettingsRoutesContext)
   const { theme, themeType } = useTheme()

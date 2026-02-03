@@ -37,7 +37,6 @@ const MaxAmount = ({
     <View style={[flexbox.directionRow, flexbox.alignCenter]}>
       <View
         style={[flexbox.directionRow, flexbox.alignCenter]}
-        // @ts-ignore
         dataSet={createGlobalTooltipDataSet({
           id: 'from-token-balance-tooltip',
           content: t('Balance may be inaccurate'),

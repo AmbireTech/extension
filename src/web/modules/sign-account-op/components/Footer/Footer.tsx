@@ -121,7 +121,6 @@ const Footer = ({
             </Button>
             <View
               style={spacings.mlMi}
-              // @ts-ignore
               dataSet={createGlobalTooltipDataSet({
                 id: 'start-batch-info-tooltip',
                 content: startBatchingInfo
@@ -137,7 +136,6 @@ const Footer = ({
           </View>
         )}
         <View
-          // @ts-ignore
           dataSet={createGlobalTooltipDataSet({
             id: 'sign-button-tooltip',
             hidden: !buttonTooltipText,
