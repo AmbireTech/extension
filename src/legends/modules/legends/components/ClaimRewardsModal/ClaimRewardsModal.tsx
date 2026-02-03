@@ -75,7 +75,7 @@ const ClaimRewardsModal: React.FC<ClaimRewardsModalProps> = ({
       })
 
       const sendCallsIdentifier = await sendCalls(
-        '0x1',
+        BigInt(ETHEREUM_CHAIN_ID),
         await signer.getAddress(),
         formattedCalls,
         false

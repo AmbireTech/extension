@@ -110,7 +110,7 @@ const MigrateRewardsModal: React.FC<MigrateRewardsModalProps> = ({
       setIsSigning(true)
 
       const sendCallsIdentifier = await sendCalls(
-        '0x1',
+        BigInt(ETHEREUM_CHAIN_ID),
         await signer.getAddress(),
         formattedCalls,
         false

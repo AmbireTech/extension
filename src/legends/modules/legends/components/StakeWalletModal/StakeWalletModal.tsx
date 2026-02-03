@@ -215,7 +215,12 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
         setIsSigning(true)
         const signer = await browserProvider.getSigner(connectedAccount)
 
-        const txId = await sendCalls('0x1', await signer.getAddress(), calls, false)
+        const txId = await sendCalls(
+          BigInt(ETHEREUM_CHAIN_ID),
+          await signer.getAddress(),
+          calls,
+          false
+        )
         await getCallsStatus(txId)
         addToast('Staked successfully!', { type: 'success' })
         handleClose()
@@ -270,7 +275,12 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
         setIsSigning(true)
         const signer = await browserProvider.getSigner(connectedAccount)
 
-        const txId = await sendCalls('0x1', await signer.getAddress(), calls, false)
+        const txId = await sendCalls(
+          BigInt(ETHEREUM_CHAIN_ID),
+          await signer.getAddress(),
+          calls,
+          false
+        )
         await getCallsStatus(txId)
         addToast('Withdraw requested successfully!', { type: 'success' })
         handleClose()
@@ -318,7 +328,12 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
       setIsSigning(true)
       const signer = await browserProvider.getSigner(connectedAccount)
 
-      const txId = await sendCalls('0x1', await signer.getAddress(), calls, false)
+      const txId = await sendCalls(
+        BigInt(ETHEREUM_CHAIN_ID),
+        await signer.getAddress(),
+        calls,
+        false
+      )
       await getCallsStatus(txId)
       addToast('Withdrawn successfully!', { type: 'success' })
       handleClose()

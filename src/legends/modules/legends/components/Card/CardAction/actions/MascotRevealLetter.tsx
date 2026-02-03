@@ -45,7 +45,7 @@ const MascotRevealLetter = ({ meta }: Props) => {
       const useSponsorship = false
 
       const sendCallsIdentifier = await sendCalls(
-        '0x' + BASE_CHAIN_ID.toString(16),
+        BigInt(BASE_CHAIN_ID),
         await signer.getAddress(),
         [
           {

@@ -38,7 +38,7 @@ const SendAccOp: FC<Props> = ({ action }) => {
 
       setIsInProgress(false)
       const sendCallsIdentifier = await sendCalls(
-        '0x' + (action.chainId || BASE_CHAIN_ID).toString(16),
+        BigInt(action.chainId || BASE_CHAIN_ID),
         await signer.getAddress(),
         formattedCalls,
         false
