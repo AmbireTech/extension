@@ -65,6 +65,9 @@ const ClaimRewardsModal: React.FC<ClaimRewardsModalProps> = ({
   const onButtonClick = useCallback(async () => {
     if (!browserProvider) return
     if (!action || !('calls' in action) || !action.calls) return
+    // as of feb 2026 this is not needed for latest v's of the extension, because the wallet_sendCalls method handles the chainId
+    // but we are not removing it for now, becaus there are many users right now who have not yet updated their extension to latest
+    // same applies for most other such cases in rewards
     await switchNetwork(ETHEREUM_CHAIN_ID)
 
     try {

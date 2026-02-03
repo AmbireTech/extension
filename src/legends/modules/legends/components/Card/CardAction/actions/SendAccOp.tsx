@@ -27,6 +27,9 @@ const SendAccOp: FC<Props> = ({ action }) => {
     if (!browserProvider) return
 
     setIsInProgress(true)
+    // as of feb 2026 this is not needed for latest v's of the extension, because the wallet_sendCalls method handles the chainId
+    // but we are not removing it for now, becaus there are many users right now who have not yet updated their extension to latest
+    // same applies for most other such cases in rewards
     await switchNetwork(action.chainId || BASE_CHAIN_ID)
 
     try {

@@ -202,7 +202,9 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
       try {
         if (!browserProvider) throw new HumanReadableError('No connected wallet.')
         if (!connectedAccount) throw new HumanReadableError('No connected account.')
-
+        // as of feb 2026 this is not needed for latest v's of the extension, because the wallet_sendCalls method handles the chainId
+        // but we are not removing it for now, becaus there are many users right now who have not yet updated their extension to latest
+        // same applies for most other such cases in rewards
         await switchNetwork(ETHEREUM_CHAIN_ID)
         const amount = parseEther(dataFromInput)
         const calls = [
@@ -261,6 +263,9 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
         if (!browserProvider) throw new HumanReadableError('No connected wallet.')
         if (!connectedAccount) throw new HumanReadableError('No connected account.')
         if (!onchainData) throw new HumanReadableError('We were unable to fetch unstaking data.')
+        // as of feb 2026 this is not needed for latest v's of the extension, because the wallet_sendCalls method handles the chainId
+        // but we are not removing it for now, becaus there are many users right now who have not yet updated their extension to latest
+        // same applies for most other such cases in rewards
         await switchNetwork(ETHEREUM_CHAIN_ID)
 
         const amount = parseUnits(dataFromInput, 36) / onchainData.shareValue
@@ -310,6 +315,10 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
       if (!firstToCollect) throw new HumanReadableError('Enter a valid amount.')
       if (!connectedAccount) throw new HumanReadableError('No connected account.')
       if (!onchainData) throw new HumanReadableError('We were unable to fetch unstaking data.')
+
+      // as of feb 2026 this is not needed for latest v's of the extension, because the wallet_sendCalls method handles the chainId
+      // but we are not removing it for now, becaus there are many users right now who have not yet updated their extension to latest
+      // same applies for most other such cases in rewards
       await switchNetwork(ETHEREUM_CHAIN_ID)
 
       if (onchainData.xWalletBalance < onchainData.lockedShares)
