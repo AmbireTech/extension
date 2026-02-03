@@ -1,6 +1,6 @@
 import React from 'react'
 import { Trans, useTranslation } from 'react-i18next'
-import { TextStyle, View, ViewStyle } from 'react-native'
+import { TextStyle, View, ViewProps } from 'react-native'
 import { SvgProps } from 'react-native-svg'
 
 import Button from '@common/components/Button'
@@ -15,7 +15,7 @@ import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
 import getStyles from './styles'
 
 interface Props {
-  style?: ViewStyle | ViewStyle[]
+  style?: ViewProps['style']
   titleProps?: TextProps
   text?: string | React.ReactNode
   textProps?: TextProps
