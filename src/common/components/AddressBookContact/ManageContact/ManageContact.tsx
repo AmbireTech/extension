@@ -19,7 +19,7 @@ import useBackgroundService from '@web/hooks/useBackgroundService'
 import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
 
 interface Props {
-  tooltipRef: React.RefObject<TooltipRefProps>
+  tooltipRef: React.RefObject<TooltipRefProps | null>
   address: string
   name: string
 }
