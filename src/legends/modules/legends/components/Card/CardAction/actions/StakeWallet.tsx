@@ -27,7 +27,7 @@ const stkWalletIface = new Interface(['function enter(uint256 amount) external']
 const StakeWallet = () => {
   const [isLoading, setIsLoading] = useState(true)
   const [isInProgress, setIsInProgress] = useState(false)
-  const { sendCalls, getCallsStatus, chainId } = useErc5792()
+  const { sendCalls, getCallsStatus } = useErc5792()
   const { onComplete, handleClose } = useCardActionContext()
 
   const { addToast } = useToast()
@@ -70,7 +70,7 @@ const StakeWallet = () => {
       const useSponsorship = false
 
       const sendCallsIdentifier = await sendCalls(
-        chainId,
+        '0x1',
         await signer.getAddress(),
         [
           {
@@ -103,7 +103,6 @@ const StakeWallet = () => {
     connectedAccount,
     walletBalance,
     sendCalls,
-    chainId,
     getCallsStatus,
     onComplete,
     handleClose,
@@ -136,10 +135,10 @@ const StakeWallet = () => {
         disabledButton
           ? buttonText
           : isLoading
-          ? 'Loading...'
-          : !walletBalance
-          ? 'Buy $WALLET'
-          : 'Stake'
+            ? 'Loading...'
+            : !walletBalance
+              ? 'Buy $WALLET'
+              : 'Stake'
       }
       onButtonClick={onButtonClick}
     />

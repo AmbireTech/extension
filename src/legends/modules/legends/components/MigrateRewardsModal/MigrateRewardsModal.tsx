@@ -48,7 +48,7 @@ const MigrateRewardsModal: React.FC<MigrateRewardsModalProps> = ({
   meta
 }) => {
   const { xWalletClaimableBalance } = usePortfolioControllerState()
-  const { sendCalls, getCallsStatus, chainId } = useErc5792()
+  const { sendCalls, getCallsStatus } = useErc5792()
   const { onLegendComplete } = useLegendsContext()
 
   const { addToast } = useToast()
@@ -110,7 +110,7 @@ const MigrateRewardsModal: React.FC<MigrateRewardsModalProps> = ({
       setIsSigning(true)
 
       const sendCallsIdentifier = await sendCalls(
-        chainId,
+        '0x1',
         await signer.getAddress(),
         formattedCalls,
         false
@@ -139,7 +139,6 @@ const MigrateRewardsModal: React.FC<MigrateRewardsModalProps> = ({
     onLegendComplete,
     sendCalls,
     getXWalletBalance,
-    chainId,
     handleClose,
     addToast
   ])

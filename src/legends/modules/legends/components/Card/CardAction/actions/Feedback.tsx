@@ -29,7 +29,7 @@ const Feedback = ({ meta }: Props) => {
   const [isInProgress, setIsInProgress] = useState(false)
   const [isFeedbackFormOpen, setIsFeedbackFormOpen] = useState(false)
   const [surveyCode, setSurveyCode] = useState<string>('')
-  const { sendCalls, getCallsStatus, chainId } = useErc5792()
+  const { sendCalls, getCallsStatus } = useErc5792()
   const { onComplete, handleClose } = useCardActionContext()
   const { addToast } = useToast()
   const switchNetwork = useSwitchNetwork()
@@ -61,7 +61,7 @@ const Feedback = ({ meta }: Props) => {
       const useSponsorship = false
 
       const sendCallsIdentifier = await sendCalls(
-        chainId,
+        '0x' + BASE_CHAIN_ID.toString(16),
         await signer.getAddress(),
         [
           {
@@ -90,7 +90,6 @@ const Feedback = ({ meta }: Props) => {
     connectedAccount,
     sendCalls,
     surveyCode,
-    chainId,
     getCallsStatus,
     onComplete,
     handleClose,

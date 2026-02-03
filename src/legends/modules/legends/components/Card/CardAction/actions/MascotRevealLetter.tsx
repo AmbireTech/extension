@@ -26,7 +26,7 @@ interface Props {
 }
 const MascotRevealLetter = ({ meta }: Props) => {
   const [isInProgress, setIsInProgress] = useState(false)
-  const { sendCalls, getCallsStatus, chainId } = useErc5792()
+  const { sendCalls, getCallsStatus } = useErc5792()
   const { onComplete } = useCardActionContext()
   const { addToast } = useToast()
   const switchNetwork = useSwitchNetwork()
@@ -45,7 +45,7 @@ const MascotRevealLetter = ({ meta }: Props) => {
       const useSponsorship = false
 
       const sendCallsIdentifier = await sendCalls(
-        chainId,
+        '0x' + BASE_CHAIN_ID.toString(16),
         await signer.getAddress(),
         [
           {
@@ -75,7 +75,6 @@ const MascotRevealLetter = ({ meta }: Props) => {
     connectedAccount,
     switchNetwork,
     sendCalls,
-    chainId,
     getCallsStatus,
     onComplete,
     addToast

@@ -47,7 +47,7 @@ const ClaimRewardsModal: React.FC<ClaimRewardsModalProps> = ({
 }) => {
   const { browserProvider } = useProviderContext()
   const { walletTokenPrice } = usePortfolioControllerState()
-  const { sendCalls, getCallsStatus, chainId } = useErc5792()
+  const { sendCalls, getCallsStatus } = useErc5792()
   const { onLegendComplete } = useLegendsContext()
 
   const cardDisabled = card?.status === CardStatus.disabled
@@ -75,7 +75,7 @@ const ClaimRewardsModal: React.FC<ClaimRewardsModalProps> = ({
       })
 
       const sendCallsIdentifier = await sendCalls(
-        chainId,
+        '0x1',
         await signer.getAddress(),
         formattedCalls,
         false
@@ -97,7 +97,6 @@ const ClaimRewardsModal: React.FC<ClaimRewardsModalProps> = ({
     action,
     onLegendComplete,
     sendCalls,
-    chainId,
     getCallsStatus,
     handleClose,
     addToast

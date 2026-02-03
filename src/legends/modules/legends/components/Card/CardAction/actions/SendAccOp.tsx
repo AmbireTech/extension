@@ -18,7 +18,7 @@ type Props = {
 
 const SendAccOp: FC<Props> = ({ action }) => {
   const { addToast } = useToast()
-  const { sendCalls, getCallsStatus, chainId } = useErc5792()
+  const { sendCalls, getCallsStatus } = useErc5792()
   const { onComplete, handleClose } = useCardActionContext()
   const [isInProgress, setIsInProgress] = useState(false)
   const switchNetwork = useSwitchNetwork()
@@ -38,7 +38,7 @@ const SendAccOp: FC<Props> = ({ action }) => {
 
       setIsInProgress(false)
       const sendCallsIdentifier = await sendCalls(
-        chainId,
+        '0x' + (action.chainId || BASE_CHAIN_ID).toString(16),
         await signer.getAddress(),
         formattedCalls,
         false
@@ -61,7 +61,6 @@ const SendAccOp: FC<Props> = ({ action }) => {
     action.calls,
     action.chainId,
     sendCalls,
-    chainId,
     getCallsStatus,
     onComplete,
     handleClose,

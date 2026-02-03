@@ -31,7 +31,7 @@ type Receipt = {
 
 const useErc5792 = () => {
   const { provider } = useProviderContext()
-  const { chainId } = useAccountContext()
+
   // all fields below marked as string should be HEX!
   const sendCalls = async (
     chainId: string,
@@ -104,9 +104,7 @@ const useErc5792 = () => {
 
   return {
     getCallsStatus,
-    sendCalls,
-    // the correct format for chainId when using erc5792
-    chainId: `0x${(chainId || BASE_CHAIN_ID).toString(16)}`
+    sendCalls
   }
 }
 

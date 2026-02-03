@@ -83,7 +83,7 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
   const { provider, browserProvider } = useProviderContext()
   const { connectedAccount, v1Account } = useAccountContext()
   const { walletTokenInfo } = usePortfolioControllerState()
-  const { sendCalls, getCallsStatus, chainId } = useErc5792()
+  const { sendCalls, getCallsStatus } = useErc5792()
   const switchNetwork = useSwitchNetwork()
   const { addToast } = useToast()
   const [isWarningModalUnstakePeriodOpen, setIsWarningModalUnstakePeriodOpen] = useState(false)
@@ -215,7 +215,7 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
         setIsSigning(true)
         const signer = await browserProvider.getSigner(connectedAccount)
 
-        const txId = await sendCalls(chainId, await signer.getAddress(), calls, false)
+        const txId = await sendCalls('0x1', await signer.getAddress(), calls, false)
         await getCallsStatus(txId)
         addToast('Staked successfully!', { type: 'success' })
         handleClose()
@@ -229,7 +229,6 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
     [
       browserProvider,
       addToast,
-      chainId,
       connectedAccount,
       getCallsStatus,
       handleClose,
@@ -271,7 +270,7 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
         setIsSigning(true)
         const signer = await browserProvider.getSigner(connectedAccount)
 
-        const txId = await sendCalls(chainId, await signer.getAddress(), calls, false)
+        const txId = await sendCalls('0x1', await signer.getAddress(), calls, false)
         await getCallsStatus(txId)
         addToast('Withdraw requested successfully!', { type: 'success' })
         handleClose()
@@ -286,7 +285,6 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
     [
       browserProvider,
       addToast,
-      chainId,
       connectedAccount,
       getCallsStatus,
       handleClose,
@@ -320,7 +318,7 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
       setIsSigning(true)
       const signer = await browserProvider.getSigner(connectedAccount)
 
-      const txId = await sendCalls(chainId, await signer.getAddress(), calls, false)
+      const txId = await sendCalls('0x1', await signer.getAddress(), calls, false)
       await getCallsStatus(txId)
       addToast('Withdrawn successfully!', { type: 'success' })
       handleClose()
@@ -334,7 +332,6 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
   }, [
     browserProvider,
     addToast,
-    chainId,
     connectedAccount,
     firstToCollect,
     getCallsStatus,
