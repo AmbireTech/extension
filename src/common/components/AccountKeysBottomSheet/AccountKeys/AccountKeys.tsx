@@ -49,7 +49,9 @@ const AccountKeys: FC<Props> = ({
     const networkStates = networks.filter(
       (n) => !accountState || !accountState[n.chainId.toString()]
     )
-    if (checkedForThisAcc || !account || networkStates.length === 0 || networks.length === 0) return
+    if (checkedForThisAcc && (!account || networkStates.length === 0 || networks.length === 0))
+      return
+
     accountStateCheckedForRef.current = account.addr
 
     dispatch({

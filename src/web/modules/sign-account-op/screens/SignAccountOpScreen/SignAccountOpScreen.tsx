@@ -247,7 +247,7 @@ const SignAccountOpScreen = () => {
         }
         renderDirectChildren={() => (
           <View style={styles.footer}>
-            {!estimationFailed ? (
+            {!estimationFailed && signAccountOpState?.canBroadcast ? (
               <>
                 <Estimation
                   signAccountOpState={signAccountOpState}
