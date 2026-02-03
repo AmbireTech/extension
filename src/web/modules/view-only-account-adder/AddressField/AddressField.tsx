@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import { AddressStateOptional } from '@ambire-common/interfaces/domains'
+import { Validation } from '@ambire-common/services/validations'
 import { getAddressFromAddressState } from '@ambire-common/utils/domains'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import DeleteIcon from '@common/assets/svg/DeleteIcon'
@@ -13,7 +14,6 @@ import useAddressInput from '@common/hooks/useAddressInput'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 
 interface Props {
@@ -43,7 +43,6 @@ const AddressField: FC<Props> = ({
   setValue,
   trigger
 }) => {
-  const { dispatch } = useBackgroundService()
   const accountsState = useAccountsControllerState()
   const keystoreState = useKeystoreControllerState()
   const accounts = watch('accounts')
@@ -94,22 +93,26 @@ const AddressField: FC<Props> = ({
     return [...new Set(addressesWithSharedKey)]
   }, [accountsState.accounts, keystoreState.keys, value?.fieldValue])
 
-  const overwriteError = useMemo(() => {
-    // We don't want to update the error message while accounts are being
-    // imported because that would stop the import process.
-    if (isLoading) return ''
+  const overwriteValidation: Validation | null = useMemo(() => {
+    if (duplicateAccountsIndexes.includes(index))
+      return {
+        severity: 'error',
+        message: 'Duplicate address.'
+      }
 
     if (
       accountsState.accounts.find(
         (account) => account.addr.toLowerCase() === getAddressFromAddressState(value).toLowerCase()
       )
     )
-      return 'This address is already in your wallet.'
+      return {
+        // Allow the user to proceed on purpose
+        severity: 'info',
+        message: 'This address is already in your wallet.'
+      }
 
-    if (duplicateAccountsIndexes.includes(index)) return 'Duplicate address.'
-
-    return ''
-  }, [duplicateAccountsIndexes, index, isLoading, accountsState.accounts, value])
+    return null
+  }, [duplicateAccountsIndexes, index, accountsState.accounts, value])
 
   const handleRevalidate = useCallback(() => {
     // We don't want to update the error message while accounts are being
@@ -118,27 +121,11 @@ const AddressField: FC<Props> = ({
     trigger(`accounts.${index}.fieldValue`)
   }, [index, isLoading, trigger])
 
-  const handleCacheResolvedDomain = useCallback(
-    (address: string, ensAvatar: string | null, domain: string, type: 'ens') => {
-      dispatch({
-        type: 'DOMAINS_CONTROLLER_SAVE_RESOLVED_REVERSE_LOOKUP',
-        params: {
-          type,
-          address,
-          name: domain,
-          ensAvatar
-        }
-      })
-    },
-    [dispatch]
-  )
-
   const { validation, RHFValidate } = useAddressInput({
     addressState: value,
     setAddressState,
-    overwriteError,
-    handleRevalidate,
-    handleCacheResolvedDomain
+    overwriteValidation,
+    handleRevalidate
   })
 
   return (

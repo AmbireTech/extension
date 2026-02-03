@@ -510,7 +510,15 @@ export class ProviderController {
 
     const isMultipleTxn = isIdentifiedByMultipleTxn(identifiedBy)
     const txnId = txnIdData.txnId as string
-    const provider = getRpcProvider(network.rpcUrls, network.chainId, network.selectedRpcUrl)
+    const provider = this.mainCtrl.providers.providers[network.chainId.toString()]
+
+    // check to satisfy the TS; should never happen
+    if (!provider) {
+      throw ethErrors.rpc.internal(
+        `RPC provider with chainId: ${network.chainId.toString()} not found`
+      )
+    }
+
     const isUserOp = identifiedBy.type === 'UserOperation'
     const bundler = bundlerName ? getBundlerByName(bundlerName) : getDefaultBundler(network)
 

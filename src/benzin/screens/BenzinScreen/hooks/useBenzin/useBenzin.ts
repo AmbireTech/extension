@@ -63,7 +63,8 @@ const useBenzin = ({ onOpenExplorer, extensionAccOp }: Props = {}) => {
   const areRelayerNetworksLoaded = actualNetworks && actualNetworks.length
   const isNetworkLoading = loadingBenzinNetworks.includes(bigintChainId)
   const [activeStep, setActiveStep] = useState<ActiveStepType>('signed')
-  const isInitialized = !isNetworkLoading && areRelayerNetworksLoaded && (!!extensionAccOp || activeStep !== 'signed')
+  const isInitialized =
+    !isNetworkLoading && areRelayerNetworksLoaded && (!!extensionAccOp || activeStep !== 'signed')
 
   const network = useMemo(() => {
     return actualNetworks.find((n) => n.chainId === bigintChainId) || null
@@ -72,6 +73,8 @@ const useBenzin = ({ onOpenExplorer, extensionAccOp }: Props = {}) => {
   const provider = useMemo(() => {
     if (!network || bigintChainId === 0n) return null
     // We are using ethers 6.14 in the app, while ambire-common is on 6.8. This causes ts errors
+    // TODO: Implement the callProvider func to use the global provider once the refactor is complete and
+    // all controllers from the MainController are shared across Benzin, Legends, Extension, and Mobile
     return getRpcProvider(
       network.rpcUrls,
       bigintChainId,

@@ -46,7 +46,7 @@ const useBalanceAffectingErrors = () => {
     if (isOffline && portfolio.isAllReady) return t('Please check your internet connection.')
 
     if (balanceAffectingErrors.length) {
-      if (balanceAffectingErrors.length === 1) {
+      if (balanceAffectingErrors.length === 1 && balanceAffectingErrors[0]) {
         return t(balanceAffectingErrors[0].title)
       }
 

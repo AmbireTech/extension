@@ -329,22 +329,6 @@ const SignInWithEthereum = ({
             )}
           />
         )}
-        {siweMessageToSign.siweValidityStatus === 'invalid' && (
-          <Alert
-            type="error"
-            title={t('Invalid Sign-In request')}
-            text={t('The Sign-In message is invalid. Please verify its contents before signing.')}
-          />
-        )}
-        {siweMessageToSign.siweValidityStatus === 'malformed' && (
-          <Alert
-            type="error"
-            title={t('Malformed Sign-In request')}
-            text={t(
-              'This Sign-In message does not follow the SIWE specification. Please verify its contents before signing.'
-            )}
-          />
-        )}
         {signMessageState.signingKeyType && signMessageState.signingKeyType !== 'internal' && (
           <HardwareWalletSigningModal
             keyType={signMessageState.signingKeyType}

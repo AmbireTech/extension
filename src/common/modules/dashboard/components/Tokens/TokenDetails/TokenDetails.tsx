@@ -379,28 +379,24 @@ const TokenDetails = ({
                 <CopyTokenAddress address={address} isRewards={isRewards} isVesting={isVesting} />
               </Text>
             </View>
-            {!onGasTank &&
-              !isRewards &&
-              !isVesting &&
-              !isProjectedRewards &&
-              !token.flags.defiTokenType && (
-                <View style={[flexbox.alignSelfEnd]}>
-                  <AnimatedPressable
-                    {...bindAnimHide}
-                    onPress={handleHideTokenFromButton}
-                    style={animStyleHide}
+            {!onGasTank && !isRewards && !isVesting && !isProjectedRewards && (
+              <View style={[flexbox.alignSelfEnd]}>
+                <AnimatedPressable
+                  {...bindAnimHide}
+                  onPress={handleHideTokenFromButton}
+                  style={animStyleHide}
+                >
+                  <Text
+                    testID="hide-token-button"
+                    style={styles.hideTokenButton}
+                    weight="medium"
+                    fontSize={12}
                   >
-                    <Text
-                      testID="hide-token-button"
-                      style={styles.hideTokenButton}
-                      weight="medium"
-                      fontSize={12}
-                    >
-                      {t('Hide token')}
-                    </Text>
-                  </AnimatedPressable>
-                </View>
-              )}
+                    {t('Hide token')}
+                  </Text>
+                </AnimatedPressable>
+              </View>
+            )}
           </View>
           <View style={styles.balance}>
             <Text

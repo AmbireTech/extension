@@ -19,9 +19,9 @@ export class AuthPage extends BasePage {
   }
 
   async setExtensionPassword(): Promise<void> {
-    await this.page.getByTestId(selectors.enterPassField).fill(KEYSTORE_PASS)
-    await this.page.getByTestId(selectors.repeatPassField).fill(KEYSTORE_PASS)
-    await this.page.getByTestId(selectors.createKeystorePassBtn).click()
+    await this.entertext(selectors.getStarted.enterPassField, KEYSTORE_PASS)
+    await this.entertext(selectors.getStarted.repeatPassField, KEYSTORE_PASS)
+    await this.click(selectors.getStarted.createKeystorePassBtn)
   }
 
   async decryptBackup(): Promise<void> {
@@ -29,17 +29,23 @@ export class AuthPage extends BasePage {
     await this.page.getByTestId(selectors.submitButton).click()
   }
 
-  // TODO: imporove method assertions
+  // TODO: improve method assertions
   async importViewOnlyAccount(account: string): Promise<void> {
     await this.click(selectors.getStarted.watchAddress)
     await this.entertext(selectors.getStarted.addressEnsField, account)
     await this.click(selectors.getStarted.viewOnlyBtnImport)
     await this.setExtensionPassword()
+    await this.compareText(
+      selectors.getStarted.confirmationMessageForViewOnly,
+      'Added successfully'
+    )
+    await this.click(selectors.getStarted.saveAndContinueBtn)
+    await this.compareText(
+      selectors.getStarted.confirmationMessageAmbireWallet,
+      'Ambire Wallet is ready to use'
+    )
+    await this.click(selectors.getStarted.openDashboardButton)
     // assertion on Dashboard after login
-    await this.page.locator(locators.confirmationMessageForViewOnly).isVisible()
-    await this.page.locator(locators.completeButton).click()
-    await this.page.locator(locators.confirmationMessageAmbireWallet).isVisible()
-    await this.page.locator(locators.openDashboardButton).click()
   }
 
   async verifyRecoveryPhraseScreen(): Promise<void> {
@@ -53,29 +59,36 @@ export class AuthPage extends BasePage {
       await locator.waitFor({ state: 'visible' })
       await locator.click()
     }
-    await this.page.locator(locators.recoveryPhraseHeader).isVisible()
-    await this.page.locator(locators.copyRecoveryPhraseButton).click()
-    await this.page.getByText('Recovery phrase copied to').isVisible()
-    await this.page.getByText('Recovery phrase copied to').waitFor({ state: 'detached' })
-    await this.page.locator(locators.savedPhraseButton).click()
+    await this.isVisible(selectors.getStarted.recoveryPhraseHeader)
+    await this.click(selectors.getStarted.copyRecoveryPhraseButton)
+    await this.compareText(
+      selectors.getStarted.recoveryPhraseCopiedSnackbar,
+      'Recovery phrase copied to clipboard'
+    )
+    await this.click(selectors.getStarted.savedPhraseButton)
   }
 
   // TODO: imporove method assertions
   async createNewAccount(): Promise<void> {
-    await this.page.locator(locators.createNewAccountButton).click()
+    await this.click(selectors.getStarted.createNewAccountButton)
     for (let index = 0; index < 3; index++) {
-      // eslint-disable-next-line no-await-in-loop
-      await this.page.locator(`div[data-testid="checkbox"] >> nth = ${index}`).click()
+      await this.click(selectors.getStarted.checkbox, index)
     }
-    await this.page.locator(locators.createRecoveryPhraseButton).click()
+    await this.click(selectors.getStarted.createRecoveryPhraseButton)
     await this.verifyRecoveryPhraseScreen()
     await this.setExtensionPassword()
     // assertion on Dashboard after login
-    await this.page.locator(locators.confirmationMessageForViewOnly).isVisible()
-    await this.page.locator(locators.addMoreAccountsButton).isVisible()
-    await this.page.locator(locators.completeButton).click()
-    await this.page.locator(locators.confirmationMessageAmbireWallet).isVisible()
-    await this.page.locator(locators.openDashboardButton).click()
+    await this.compareText(
+      selectors.getStarted.confirmationMessageForViewOnly,
+      'Added successfully'
+    )
+    await this.compareText(selectors.getStarted.addMoreAccountsButton, 'Add more accounts')
+    await this.click(selectors.getStarted.saveAndContinueBtn)
+    await this.compareText(
+      selectors.getStarted.confirmationMessageAmbireWallet,
+      'Ambire Wallet is ready to use'
+    )
+    await this.click(selectors.getStarted.openDashboardButton)
   }
 
   // TODO: imporove method assertions
@@ -87,12 +100,15 @@ export class AuthPage extends BasePage {
     await this.click(selectors.getStarted.importBtn)
     await this.setExtensionPassword()
     // assertion on Dashboard after login
-    await this.page.locator(locators.confirmationMessageForViewOnly).isVisible()
-    await this.page.locator(locators.addMoreAccountsButton).isVisible()
-    // await this.page.locator(locators.completeButton).click()
-    await this.click(selectors.saveAndContinueBtn)
-    await this.page.locator(locators.confirmationMessageAmbireWallet).isVisible()
-    // await this.page.locator(locators.openDashboardButton).click()
+    await this.compareText(
+      selectors.getStarted.confirmationMessageForViewOnly,
+      'Added successfully'
+    )
+    await this.click(selectors.getStarted.saveAndContinueBtn)
+    await this.compareText(
+      selectors.getStarted.confirmationMessageAmbireWallet,
+      'Ambire Wallet is ready to use'
+    )
     await this.click(selectors.getStarted.openDashboardButton)
   }
 
@@ -109,22 +125,22 @@ export class AuthPage extends BasePage {
     await this.click(selectors.getStarted.importBtn)
     // set pass and name
     await this.setExtensionPassword()
-    await this.personalizeAccountName()
+    await this.personalizeAccountName('Name 1')
     // assertion on Dashboard after login
-    await this.page.locator(locators.addMoreAccountsButton).isVisible()
-    // await this.page.locator(locators.completeButton).click()
-    await this.click(selectors.saveAndContinueBtn)
-    await this.page.locator(locators.confirmationMessageAmbireWallet).isVisible()
-    // await this.page.locator(locators.openDashboardButton).click()
+    await this.compareText(selectors.getStarted.addMoreAccountsButton, 'Add more accounts')
+    await this.click(selectors.getStarted.saveAndContinueBtn)
+    await this.compareText(
+      selectors.getStarted.confirmationMessageAmbireWallet,
+      'Ambire Wallet is ready to use'
+    )
     await this.click(selectors.getStarted.openDashboardButton)
   }
 
-  async personalizeAccountName(): Promise<void> {
-    // await this.page.locator(locators.editAccountButton).click()
+  async personalizeAccountName(name: string): Promise<void> {
+    // clear field input first
     await this.click(selectors.getStarted.editFirstAccNameButton)
-    // TODO: Parametrization
-    await this.typeTextInInputField(locators.editAccountNameField, 'Name 1')
-    await this.page.locator(locators.saveMessageText).isVisible()
+    await this.entertext(selectors.getStarted.editAccountNameInputField, name)
+    await this.compareText(selectors.getStarted.editFirstAccNameButton, 'Save')
   }
 
   // TODO: imporove method assertions
@@ -140,66 +156,84 @@ export class AuthPage extends BasePage {
     // set pass and name
     await this.setExtensionPassword()
     // assertion on Dashboard after login
-    await this.page.locator(locators.confirmationMessageForViewOnly).isVisible()
-    await this.personalizeAccountName()
-    // await this.page.locator(locators.completeButton).click()
-    await this.click(selectors.saveAndContinueBtn)
-    await this.page.locator(locators.confirmationMessageAmbireWallet).isVisible()
-    // await this.page.locator(locators.openDashboardButton).click()
+    await this.compareText(
+      selectors.getStarted.confirmationMessageForViewOnly,
+      'Added successfully'
+    )
+    await this.personalizeAccountName('Name 1')
+    await this.click(selectors.getStarted.saveAndContinueBtn)
+    await this.compareText(
+      selectors.getStarted.confirmationMessageAmbireWallet,
+      'Ambire Wallet is ready to use'
+    )
     await this.click(selectors.getStarted.openDashboardButton)
   }
 
   async createNewHotWalletAndPersonalizeName(): Promise<void> {
-    await this.page.locator(locators.createNewAccountButton).click()
+    await this.click(selectors.getStarted.createNewAccountButton)
     for (let index = 0; index < 3; index++) {
-      // eslint-disable-next-line no-await-in-loop
-      await this.page.locator(`div[data-testid="checkbox"] >> nth = ${index}`).click()
+      await this.click(selectors.getStarted.checkbox, index)
     }
-    await this.page.locator(locators.createRecoveryPhraseButton).click()
+    await this.click(selectors.getStarted.createRecoveryPhraseButton)
     await this.verifyRecoveryPhraseScreen()
     await this.setExtensionPassword()
-    await this.page.locator(locators.addMoreAccountsButton).click()
+    await this.click(selectors.getStarted.addMoreAccountsButton)
     await this.page.locator(locators.smartAccountPicker).click()
-    await this.page.locator(locators.importAccountButton).click()
-    await this.page.locator(locators.confirmationMessageForViewOnly).isVisible()
-    await this.personalizeAccountName()
-    await this.page.locator(locators.addMoreAccountsButton).isVisible()
-    // await this.page.locator(locators.completeButton).click()
-    await this.click(selectors.saveAndContinueBtn)
-    await this.page.locator(locators.confirmationMessageAmbireWallet).isVisible()
-    // await this.page.locator(locators.openDashboardButton).click()
+    // await this.click(selectors.getStarted.smartAccountPicker, 5) // TODO: not working
+    await this.click(selectors.getStarted.importAccountButton)
+    await this.compareText(
+      selectors.getStarted.confirmationMessageForViewOnly,
+      'Added successfully'
+    )
+    await this.personalizeAccountName('Name 1')
+    await this.isVisible(selectors.getStarted.addMoreAccountsButton)
+    await this.click(selectors.getStarted.saveAndContinueBtn)
+    await this.compareText(
+      selectors.getStarted.confirmationMessageAmbireWallet,
+      'Ambire Wallet is ready to use'
+    )
     await this.click(selectors.getStarted.openDashboardButton)
   }
 
   async selectHDPath(path: string): Promise<void> {
-    await this.page.locator(locators.changeHDPathButton).click()
-    await this.page.locator(path).click()
-    await this.page.locator(locators.hdPathConfirmButton).click()
+    await this.click(selectors.getStarted.changeHDPathButton)
+    await this.click(path)
+    await this.click(selectors.getStarted.hdPathConfirmButton)
   }
 
   async createAccountAndImportFromDifferentHDPath(): Promise<void> {
-    await this.page.locator(locators.createNewAccountButton).click()
+    await this.click(selectors.getStarted.createNewAccountButton)
     for (let index = 0; index < 3; index++) {
-      // eslint-disable-next-line no-await-in-loop
-      await this.page.locator(`div[data-testid="checkbox"] >> nth = ${index}`).click()
+      await this.click(selectors.getStarted.checkbox, index)
     }
-    await this.page.locator(locators.createRecoveryPhraseButton).click()
+    await this.click(selectors.getStarted.createRecoveryPhraseButton)
     await this.verifyRecoveryPhraseScreen()
     await this.setExtensionPassword()
-    await this.page.locator(locators.addMoreAccountsButton).click()
-    await this.selectHDPath(locators.hdPathLegerLive)
+    await this.click(selectors.getStarted.addMoreAccountsButton)
+    await this.selectHDPath(selectors.getStarted.hdPathLegerLive)
     await this.page.locator(locators.smartAccountPicker).click()
-    await this.page.locator(locators.importAccountButton).click()
-    await this.page.locator(locators.confirmationMessageForViewOnly).isVisible()
-    await this.page.locator(locators.addMoreAccountsButton).click()
-    await this.selectHDPath(locators.hdPathLegerLive)
-    await this.page.locator(locators.smartAccountPickerForHDPath).click()
-    await this.page.locator(locators.importAccountButton).click()
-    await this.page.locator(locators.addMoreAccountsButton).isVisible()
-    // await this.page.locator(locators.completeButton).click()
-    await this.click(selectors.saveAndContinueBtn)
-    await this.page.locator(locators.confirmationMessageAmbireWallet).isVisible()
-    // await this.page.locator(locators.openDashboardButton).click()
+    // await this.click(selectors.getStarted.smartAccountPicker, 5) // TODO: not working
+    await this.click(selectors.getStarted.importAccountButton)
+    await this.compareText(
+      selectors.getStarted.confirmationMessageForViewOnly,
+      'Added successfully'
+    )
+    // add another acc
+    await this.click(selectors.getStarted.addMoreAccountsButton)
+    await this.selectHDPath(selectors.getStarted.hdPathLegerLive)
+    await this.page.locator(locators.smartAccountPicker).click()
+    // await this.click(selectors.getStarted.smartAccountPicker, 5) // TODO: not working
+    await this.click(selectors.getStarted.importAccountButton)
+    await this.compareText(
+      selectors.getStarted.confirmationMessageForViewOnly,
+      'Added successfully'
+    )
+    await this.isVisible(selectors.getStarted.addMoreAccountsButton)
+    await this.click(selectors.getStarted.saveAndContinueBtn)
+    await this.compareText(
+      selectors.getStarted.confirmationMessageAmbireWallet,
+      'Ambire Wallet is ready to use'
+    )
     await this.click(selectors.getStarted.openDashboardButton)
   }
 
@@ -207,7 +241,7 @@ export class AuthPage extends BasePage {
   async importAccountFromJSONFile(): Promise<void> {
     const saAccounts = JSON.parse(process.env.SA_ACCOUNT_JSON || '{}')
     const jsonBuffer = Buffer.from(JSON.stringify(saAccounts))
-    // await this.page.locator(locators.importExistingAccountButton).click()
+
     await this.click(selectors.getStarted.importExistingAccBtn)
     await this.click(selectors.getStarted.showMoreBtn)
     await this.click(selectors.getStarted.importMethodJSON)
@@ -220,10 +254,11 @@ export class AuthPage extends BasePage {
     await this.decryptBackup()
     await this.setExtensionPassword()
     // assertion on Dashboard after login
-    // await this.page.locator(locators.completeButton).click()
-    await this.click(selectors.saveAndContinueBtn)
-    await this.page.locator(locators.confirmationMessageAmbireWallet).isVisible()
-    // await this.page.locator(locators.openDashboardButton).click()
+    await this.click(selectors.getStarted.saveAndContinueBtn)
+    await this.compareText(
+      selectors.getStarted.confirmationMessageAmbireWallet,
+      'Ambire Wallet is ready to use'
+    )
     await this.click(selectors.getStarted.openDashboardButton)
   }
 }

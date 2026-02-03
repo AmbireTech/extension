@@ -189,7 +189,6 @@ const BaseTokenItem = ({
                     fontSize={16}
                     weight="number_bold"
                     numberOfLines={1}
-                    // @ts-ignore
                     dataSet={createGlobalTooltipDataSet({
                       id: `${tokenId}-balance`,
                       content: String(isPending ? pendingBalance : balance)

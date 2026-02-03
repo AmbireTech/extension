@@ -6,7 +6,7 @@ interface Props {
   width: ViewStyle['width']
   height: ViewStyle['height']
   borderRadius?: number
-  style?: ViewStyle
+  style?: React.CSSProperties | ViewStyle
   lowOpacity?: boolean
   appearance?: keyof ThemeProps
 }

@@ -18,7 +18,7 @@ type Props = {
 
 const SendAccOp: FC<Props> = ({ action }) => {
   const { addToast } = useToast()
-  const { sendCalls, getCallsStatus, chainId } = useErc5792()
+  const { sendCalls, getCallsStatus } = useErc5792()
   const { onComplete, handleClose } = useCardActionContext()
   const [isInProgress, setIsInProgress] = useState(false)
   const switchNetwork = useSwitchNetwork()
@@ -27,6 +27,9 @@ const SendAccOp: FC<Props> = ({ action }) => {
     if (!browserProvider) return
 
     setIsInProgress(true)
+    // as of feb 2026 this is not needed for latest v's of the extension, because the wallet_sendCalls method handles the chainId
+    // but we are not removing it for now, becaus there are many users right now who have not yet updated their extension to latest
+    // same applies for most other such cases in rewards
     await switchNetwork(action.chainId || BASE_CHAIN_ID)
 
     try {
@@ -38,7 +41,7 @@ const SendAccOp: FC<Props> = ({ action }) => {
 
       setIsInProgress(false)
       const sendCallsIdentifier = await sendCalls(
-        chainId,
+        BigInt(action.chainId || BASE_CHAIN_ID),
         await signer.getAddress(),
         formattedCalls,
         false
@@ -61,7 +64,6 @@ const SendAccOp: FC<Props> = ({ action }) => {
     action.calls,
     action.chainId,
     sendCalls,
-    chainId,
     getCallsStatus,
     onComplete,
     handleClose,

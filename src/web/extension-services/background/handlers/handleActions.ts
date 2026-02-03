@@ -92,6 +92,14 @@ export const handleActions = async (
     case 'PROVIDERS_CONTROLLER_TOGGLE_BATCHING': {
       return await mainCtrl.providers.toggleBatching()
     }
+    case 'PROVIDERS_CONTROLLER_CALL_PROVIDER_AND_SEND_RES_TO_UI': {
+      mainCtrl.providers.callProviderAndSendResToUi(params)
+      break
+    }
+    case 'PROVIDERS_CONTROLLER_CALL_CONTRACT_AND_SEND_RES_TO_UI': {
+      mainCtrl.providers.callContractAndSendResToUi(params)
+      break
+    }
     case 'MAIN_CONTROLLER_ADD_NETWORK': {
       return await mainCtrl.addNetwork(params)
     }
@@ -107,10 +115,10 @@ export const handleActions = async (
     case 'ACCOUNTS_CONTROLLER_RESET_ACCOUNTS_NEWLY_ADDED_STATE': {
       return await mainCtrl.accounts.resetAccountsNewlyAddedState()
     }
-    case 'SETTINGS_CONTROLLER_SET_NETWORK_TO_ADD_OR_UPDATE': {
+    case 'NETWORKS_CONTROLLER_SET_NETWORK_TO_ADD_OR_UPDATE': {
       return await mainCtrl.networks.setNetworkToAddOrUpdate(params)
     }
-    case 'SETTINGS_CONTROLLER_RESET_NETWORK_TO_ADD_OR_UPDATE': {
+    case 'NETWORKS_CONTROLLER_RESET_NETWORK_TO_ADD_OR_UPDATE': {
       return await mainCtrl.networks.setNetworkToAddOrUpdate(null)
     }
     case 'KEYSTORE_CONTROLLER_UPDATE_KEY_PREFERENCES': {
@@ -414,11 +422,11 @@ export const handleActions = async (
     }
 
     case 'DEFI_CONTOLLER_ADD_SESSION': {
-      mainCtrl.defiPositions.addSession(params.sessionId)
+      mainCtrl.portfolio.addDefiSession(params.sessionId)
       break
     }
     case 'DEFI_CONTOLLER_REMOVE_SESSION': {
-      mainCtrl.defiPositions.removeSession(params.sessionId)
+      mainCtrl.portfolio.removeDefiSession(params.sessionId)
       break
     }
 
@@ -560,12 +568,16 @@ export const handleActions = async (
       return await mainCtrl.addressBook.removeManuallyAddedContact(params.address)
     case 'DOMAINS_CONTROLLER_REVERSE_LOOKUP':
       return await mainCtrl.domains.reverseLookup(params.address)
-    case 'DOMAINS_CONTROLLER_SAVE_RESOLVED_REVERSE_LOOKUP':
-      return mainCtrl.domains.saveResolvedReverseLookup(params)
+    case 'DOMAINS_CONTROLLER_RESOLVE_DOMAIN':
+      return mainCtrl.domains.resolveDomain(params)
     case 'CONTRACT_NAMES_CONTROLLER_GET_NAME':
       return mainCtrl.contractNames.getName(params.address, params.chainId)
     case 'SET_IS_PINNED': {
       walletStateCtrl.isPinned = params.isPinned
+      break
+    }
+    case 'SET_AVATAR_TYPE': {
+      walletStateCtrl.setAvatarType(params.avatarType)
       break
     }
     case 'SET_IS_SETUP_COMPLETE': {
@@ -579,6 +591,10 @@ export const handleActions = async (
     case 'AUTO_LOCK_CONTROLLER_SET_AUTO_LOCK_TIME': {
       autoLockCtrl.autoLockTime = params
       break
+    }
+
+    case 'FEATURE_FLAGS_CONTROLLER_FLIP_FEATURE': {
+      return await mainCtrl.featureFlags.setFeatureFlag(params.flag, params.isEnabled)
     }
 
     case 'INVITE_CONTROLLER_VERIFY': {

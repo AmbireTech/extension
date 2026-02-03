@@ -20,7 +20,7 @@ import BackButton from '@common/components/BackButton'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
-import useAddressInput, { ValidationWithSeverityType } from '@common/hooks/useAddressInput'
+import useAddressInput from '@common/hooks/useAddressInput'
 import useNavigation from '@common/hooks/useNavigation'
 import useToast from '@common/hooks/useToast'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
@@ -86,6 +86,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   const { visibleUserRequests } = useRequestsControllerState()
   const { account, portfolio } = useSelectedAccountControllerState()
   const { userRequests } = useRequestsControllerState()
+
   const {
     ref: gasTankSheetRef,
     open: openGasTankInfoBottomSheet,
@@ -215,6 +216,16 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     close: closeEstimationModal
   } = useModalize()
 
+  const closeEstimationModalAndDispatch = useCallback(() => {
+    dispatch({
+      type: 'TRANSFER_CONTROLLER_HAS_USER_PROCEEDED',
+      params: {
+        proceeded: false
+      }
+    })
+    closeEstimationModal()
+  }, [closeEstimationModal, dispatch])
+
   const openEstimationModalAndDispatch = useCallback(() => {
     dispatch({
       type: 'TRANSFER_CONTROLLER_HAS_USER_PROCEEDED',
@@ -270,21 +281,6 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     })
   }, [dispatch])
 
-  const handleCacheResolvedDomain = useCallback(
-    (address: string, ensAvatar: string | null, domain: string, type: 'ens') => {
-      dispatch({
-        type: 'DOMAINS_CONTROLLER_SAVE_RESOLVED_REVERSE_LOOKUP',
-        params: {
-          type,
-          address,
-          name: domain,
-          ensAvatar
-        }
-      })
-    },
-    [dispatch]
-  )
-
   const addressInputState = useAddressInput({
     addressState: {
       ...addressState,
@@ -292,16 +288,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     },
     overwriteValidationFieldValue: addressState.fieldValue,
     setAddressState,
-    overwriteError:
-      state?.isInitialized && !validationFormMsgs.recipientAddress.success
-        ? validationFormMsgs.recipientAddress.message
-        : '',
-    overwriteValidLabel: validationFormMsgs?.recipientAddress.success
-      ? validationFormMsgs.recipientAddress.message
-      : '',
-    overwriteSeverity: validationFormMsgs.recipientAddress
-      .severity as ValidationWithSeverityType['severity'],
-    handleCacheResolvedDomain
+    overwriteValidation: validationFormMsgs.recipientAddress
   })
 
   /**
@@ -324,8 +311,10 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   }, [accountUserRequests, isSendingBatch, networkUserRequests, t])
 
   const isTransferFormValid = useMemo(() => {
-    return !!(isTopUp ? isFormValid : isFormValid && !addressInputState.validation.isError)
-  }, [addressInputState.validation.isError, isFormValid, isTopUp])
+    return !!(isTopUp
+      ? isFormValid
+      : isFormValid && addressInputState.validation.severity !== 'error')
+  }, [addressInputState.validation.severity, isFormValid, isTopUp])
 
   const onBack = useCallback(() => {
     navigate(ROUTES.dashboard)
@@ -694,7 +683,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
       <Estimation
         updateType="Transfer&TopUp"
         estimationModalRef={estimationModalRef}
-        closeEstimationModal={closeEstimationModal}
+        closeEstimationModal={closeEstimationModalAndDispatch}
         updateController={updateController}
         handleUpdateStatus={handleUpdateStatus}
         hasProceeded={hasProceeded}

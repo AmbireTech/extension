@@ -36,24 +36,19 @@ const useSelectKeyboardControl = ({
   const prevIsMenuOpen = usePrevious(isMenuOpen)
 
   const selectedItemIndex = useMemo(() => {
-    let index: { sectionIndex: number; optionIndex: number } | null = null
-
     for (let sectionIndex = 0; sectionIndex < sections.length; sectionIndex++) {
       const section = sections[sectionIndex]
 
-      for (let optionIndex = 0; optionIndex < section.data.length; optionIndex++) {
-        const option = section.data[optionIndex]
+      if (section) {
+        const optionIndex = section.data.findIndex((option) => option?.value === value?.value)
 
-        if (option.value === value?.value) {
-          index = { sectionIndex, optionIndex }
-          break
+        if (optionIndex !== -1) {
+          return { sectionIndex, optionIndex }
         }
       }
-
-      if (index) break
     }
 
-    return index
+    return null
   }, [value, sections])
 
   const prevSelectedItemIndex = usePrevious(selectedItemIndex)
@@ -103,7 +98,7 @@ const useSelectKeyboardControl = ({
           if (sectionIndex === sections.length - 1 && optionIndex === optionsLength - 1) return
 
           for (let i = sectionIndex; i < sections.length; i++) {
-            const options = sections[i].data
+            const options = sections[i]?.data || []
             const startIndex = i === sectionIndex ? optionIndex + 1 : 0
 
             // find the closest non-disabled option
@@ -168,39 +163,41 @@ const useSelectKeyboardControl = ({
           }
 
           for (let i = sectionIndex; i >= 0; i--) {
-            const options = sections[i].data
+            const options = sections[i]?.data || []
             const startIndex = i === sectionIndex ? optionIndex - 1 : options.length - 1
 
-            for (let j = startIndex; j >= 0; j--) {
-              // find the closest non-disabled option
-              if (!options[j].disabled) {
-                const nextIndex = { sectionIndex: i, optionIndex: j }
-                setHighlightedItemIndex(nextIndex)
+            if (options) {
+              for (let j = startIndex; j >= 0; j--) {
+                // find the closest non-disabled option
+                if (!options[j]?.disabled) {
+                  const nextIndex = { sectionIndex: i, optionIndex: j }
+                  setHighlightedItemIndex(nextIndex)
 
-                let offset: number = 0
-                sections.forEach((section, sectionIdx) => {
-                  if (sectionIdx < nextIndex.sectionIndex) {
-                    offset += headerHeight
-                    offset += section.data.length * optionHeight
-                  }
+                  let offset: number = 0
+                  sections.forEach((section, sectionIdx) => {
+                    if (sectionIdx < nextIndex.sectionIndex) {
+                      offset += headerHeight
+                      offset += section.data.length * optionHeight
+                    }
 
-                  if (sectionIdx === nextIndex.sectionIndex) {
-                    offset += headerHeight
-                    offset += (nextIndex.optionIndex + 1) * optionHeight
-                  }
-                })
-
-                if (scrollOffset.current >= offset - optionHeight) {
-                  listRef.current?.getScrollResponder()?.scrollTo({
-                    x: 0,
-                    y: offset - optionHeight - (stickySectionHeadersEnabled ? headerHeight : 0),
-                    animated: false
+                    if (sectionIdx === nextIndex.sectionIndex) {
+                      offset += headerHeight
+                      offset += (nextIndex.optionIndex + 1) * optionHeight
+                    }
                   })
+
+                  if (scrollOffset.current >= offset - optionHeight) {
+                    listRef.current?.getScrollResponder()?.scrollTo({
+                      x: 0,
+                      y: offset - optionHeight - (stickySectionHeadersEnabled ? headerHeight : 0),
+                      animated: false
+                    })
+                  }
+                  if (offset - optionHeight <= headerHeight) {
+                    listRef.current?.getScrollResponder()?.scrollTo({ x: 0, y: 0, animated: false })
+                  }
+                  return
                 }
-                if (offset - optionHeight <= headerHeight) {
-                  listRef.current?.getScrollResponder()?.scrollTo({ x: 0, y: 0, animated: false })
-                }
-                return
               }
             }
           }
@@ -210,7 +207,10 @@ const useSelectKeyboardControl = ({
 
         if (e.key === 'Enter' && highlightedItemIndex !== null) {
           const { sectionIndex, optionIndex } = highlightedItemIndex
-          handleOptionSelect(sections[sectionIndex].data[optionIndex])
+          const selectedOption = sections[sectionIndex]?.data[optionIndex]
+          if (selectedOption) {
+            handleOptionSelect(selectedOption)
+          }
         }
 
         if (e.key === 'Escape') setIsMenuOpen(false)
@@ -264,7 +264,7 @@ const useSelectKeyboardControl = ({
       try {
         let sectionIndex: number
 
-        if (sections.length === 1 && sections[0].key === 'default') {
+        if (sections.length === 1 && sections[0]?.key === 'default') {
           sectionIndex = 0
         } else {
           sectionIndex = sections.findIndex((s) => s.key === (section as any)?.key)

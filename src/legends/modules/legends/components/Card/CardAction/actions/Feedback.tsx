@@ -29,7 +29,7 @@ const Feedback = ({ meta }: Props) => {
   const [isInProgress, setIsInProgress] = useState(false)
   const [isFeedbackFormOpen, setIsFeedbackFormOpen] = useState(false)
   const [surveyCode, setSurveyCode] = useState<string>('')
-  const { sendCalls, getCallsStatus, chainId } = useErc5792()
+  const { sendCalls, getCallsStatus } = useErc5792()
   const { onComplete, handleClose } = useCardActionContext()
   const { addToast } = useToast()
   const switchNetwork = useSwitchNetwork()
@@ -55,13 +55,17 @@ const Feedback = ({ meta }: Props) => {
       if (!connectedAccount) throw new Error('No connected account')
       if (!surveyCode) throw new Error('No survey code')
       setIsInProgress(true)
+
+      // as of feb 2026 this is not needed for latest v's of the extension, because the wallet_sendCalls method handles the chainId
+      // but we are not removing it for now, becaus there are many users right now who have not yet updated their extension to latest
+      // same applies for most other such cases in rewards
       await switchNetwork(BASE_CHAIN_ID)
       const signer = await browserProvider.getSigner(connectedAccount)
 
       const useSponsorship = false
 
       const sendCallsIdentifier = await sendCalls(
-        chainId,
+        BigInt(BASE_CHAIN_ID),
         await signer.getAddress(),
         [
           {
@@ -90,7 +94,6 @@ const Feedback = ({ meta }: Props) => {
     connectedAccount,
     sendCalls,
     surveyCode,
-    chainId,
     getCallsStatus,
     onComplete,
     handleClose,

@@ -47,7 +47,7 @@ const RequireLocation: React.FC<any> = ({ children }) => {
 
   const requestPermissions = useCallback(async () => {
     const status = await PermissionsAndroid.request(
-      PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+      PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION!,
       {
         title: t('Location permission required'),
         message: t(

@@ -25,6 +25,7 @@ const DraggableItem = ({ id, children }: Props) => {
   }
 
   return (
+    // @ts-ignore
     <View ref={setNodeRef} style={style}>
       {children(isDragging, listeners, attributes)}
     </View>

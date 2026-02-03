@@ -41,7 +41,7 @@ More about the environment setup and prerequisites [here](https://reactnative.de
 Install all dependencies:
 
 ```bash
-yarn install
+yarn setup
 ```
 
 Install the [ambire-common](https://github.com/AmbireTech/ambire-common) submodule, a common ground for the Ambire apps, run:

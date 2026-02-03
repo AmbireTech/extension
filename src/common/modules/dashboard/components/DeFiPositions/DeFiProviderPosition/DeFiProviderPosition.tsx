@@ -35,7 +35,11 @@ const DeFiProviderPosition: FC<PositionsByProvider> = ({
         toggleExpanded={toggleExpanded}
         isExpanded={isExpanded}
         positionInUSD={positionInUSDFormatted}
-        healthRate={positions.length === 1 ? positions[0].additionalData.healthRate : undefined}
+        healthRate={
+          positions.length === 1 && positions[0]
+            ? positions[0].additionalData.healthRate
+            : undefined
+        }
         iconUrl={iconUrl}
         siteUrl={siteUrl}
       />

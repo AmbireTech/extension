@@ -1,9 +1,9 @@
 import './gradient.css'
 
 import React from 'react'
-import { View } from 'react-native'
+import { View, ViewStyle } from 'react-native'
 
-const Gradient = ({ style = {} }: { style?: React.CSSProperties }) => {
+const Gradient = ({ style = {} }: { style?: ViewStyle }) => {
   return <View nativeID="gradient" style={style} />
 }
 
