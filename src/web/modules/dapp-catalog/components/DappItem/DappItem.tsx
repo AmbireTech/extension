@@ -18,7 +18,7 @@ import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import ManifestImage from '@web/components/ManifestImage'
 import { openInTab } from '@web/extension-services/background/webapi/tab'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
 import TrustedIcon from '@web/modules/action-requests/screens/DappConnectScreen/components/TrustedIcon'
 import ManageDapp from '@web/modules/dapp-catalog/components/ManageDapp'
@@ -56,7 +56,7 @@ const DappItem = (dapp: Dapp) => {
   } = dapp
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const { styles, theme } = useTheme(getStyles)
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { t } = useTranslation()
   const [hovered, setHovered] = useState(false)
 

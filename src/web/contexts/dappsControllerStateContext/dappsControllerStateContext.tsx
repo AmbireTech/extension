@@ -6,7 +6,7 @@ import { getDappIdFromUrl } from '@ambire-common/libs/dapps/helpers'
 import { isValidURL } from '@ambire-common/services/validations'
 import { getCurrentTab } from '@web/extension-services/background/webapi/tab'
 import { getCurrentWindow } from '@web/extension-services/background/webapi/window'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useControllerState from '@web/hooks/useControllerState'
 
 const DappsControllerStateContext = createContext<{
@@ -19,7 +19,7 @@ const DappsControllerStateContext = createContext<{
 
 const DappsControllerStateProvider: React.FC<any> = ({ children }) => {
   const [currentDapp, setCurrentDapp] = useState<Dapp | null>(null)
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
 
   const dappsControllerStateCallback = useCallback(
     async (newState: IDappsController) => {

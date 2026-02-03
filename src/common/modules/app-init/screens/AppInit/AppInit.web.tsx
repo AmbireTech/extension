@@ -24,9 +24,9 @@ import { AccountsControllerStateProvider } from '@web/contexts/accountsControlle
 import { ActivityControllerStateProvider } from '@web/contexts/activityControllerStateContext'
 import { AddressBookControllerStateProvider } from '@web/contexts/addressBookControllerStateContext'
 import { AutoLockControllerStateProvider } from '@web/contexts/autoLockControllerStateContext'
-import { BackgroundServiceProvider } from '@web/contexts/backgroundServiceContext'
 import { BannerControllerStateProvider } from '@web/contexts/bannerControllerStateContext/bannerControllerStateContext'
 import { ContractNamesControllerStateProvider } from '@web/contexts/contractNamesControllerStateContext'
+import { ControllersMiddlewareProvider } from '@web/contexts/controllersMiddlewareContext'
 import { ControllersStateLoadedProvider } from '@web/contexts/controllersStateLoadedContext'
 import { DappsControllerStateProvider } from '@web/contexts/dappsControllerStateContext'
 import { DomainsControllerStateProvider } from '@web/contexts/domainsControllerStateContext'
@@ -65,7 +65,7 @@ const AppInit = () => {
         <SafeAreaProvider>
           <ToastProvider>
             <ErrorBoundary fallback={errorComponent}>
-              <BackgroundServiceProvider>
+              <ControllersMiddlewareProvider>
                 <MainControllerStateProvider>
                   <StorageControllerStateProvider>
                     <UiControllerStateProvider>
@@ -138,7 +138,7 @@ const AppInit = () => {
                     </UiControllerStateProvider>
                   </StorageControllerStateProvider>
                 </MainControllerStateProvider>
-              </BackgroundServiceProvider>
+              </ControllersMiddlewareProvider>
             </ErrorBoundary>
           </ToastProvider>
         </SafeAreaProvider>

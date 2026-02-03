@@ -8,7 +8,7 @@ import ThemeColors, {
   ThemeType
 } from '@common/styles/themeConfig'
 import { isExtension } from '@web/constants/browserapi'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useWalletStateController from '@web/hooks/useWalletStateController'
 
 export interface ThemeContextReturnType {
@@ -30,7 +30,7 @@ const ThemeProvider: React.FC<{
   forceThemeType?: ThemeType
 }> = ({ children, forceThemeType }) => {
   const systemThemeType = useColorScheme()
-  const { dispatch } = useBackgroundService() || {}
+  const { dispatch } = useControllersMiddleware() || {}
   const { themeType: selectedThemeType } = useWalletStateController() || {}
 
   useEffect(() => {

@@ -3,7 +3,7 @@ import React, { createContext, useEffect } from 'react'
 
 import { IAccountPickerController } from '@ambire-common/interfaces/accountPicker'
 import useDeepMemo from '@common/hooks/useDeepMemo'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useControllerState from '@web/hooks/useControllerState'
 import useMainControllerState from '@web/hooks/useMainControllerState'
 
@@ -14,7 +14,7 @@ const AccountPickerControllerStateContext = createContext<IAccountPickerControll
 const AccountPickerControllerStateProvider: React.FC<any> = ({ children }) => {
   const controller = 'AccountPickerController'
   const state = useControllerState(controller)
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const mainState = useMainControllerState()
 
   useEffect(() => {

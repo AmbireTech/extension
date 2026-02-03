@@ -15,7 +15,7 @@ import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
 
 interface Props {
@@ -28,7 +28,7 @@ const ManageContact: FC<Props> = ({ address, name, tooltipRef }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { addToast } = useToast()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { ref: dialogRef, open: openDialog, close: closeDialog } = useModalize()
   const [bindRemoveBtnAnim, removeBtnAnimStyle] = useCustomHover({
     property: 'backgroundColor',

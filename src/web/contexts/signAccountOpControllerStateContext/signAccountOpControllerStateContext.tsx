@@ -4,14 +4,14 @@ import { flushSync } from 'react-dom'
 import { ISignAccountOpController } from '@ambire-common/interfaces/signAccountOp'
 import useDeepMemo from '@common/hooks/useDeepMemo'
 import eventBus from '@web/extension-services/event/eventBus'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 
 const SignAccountOpControllerStateContext = createContext<ISignAccountOpController | null>(null)
 
 const SignAccountOpControllerStateProvider: React.FC<any> = ({ children }) => {
   const controller = 'SignAccountOpController'
   const [state, setState] = useState<ISignAccountOpController | null>(null)
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
 
   useEffect(() => {
     dispatch({ type: 'INIT_CONTROLLER_STATE', params: { controller } })

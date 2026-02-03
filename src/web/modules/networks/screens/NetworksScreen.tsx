@@ -21,7 +21,7 @@ import {
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import { createTab } from '@web/extension-services/background/webapi/tab'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import Networks from '@web/modules/networks/components/Networks'
 
@@ -34,7 +34,7 @@ import NetworkBottomSheet, {
 const NetworksScreen = () => {
   const { t } = useTranslation()
   const { addToast } = useToast()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { navigate } = useNavigation()
   const { theme } = useTheme()
   const { account, dashboardNetworkFilter } = useSelectedAccountControllerState()

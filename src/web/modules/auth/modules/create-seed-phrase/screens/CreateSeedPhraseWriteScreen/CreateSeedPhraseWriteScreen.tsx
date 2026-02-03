@@ -23,7 +23,7 @@ import {
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import eventBus from '@web/extension-services/event/eventBus'
 import useAccountPickerControllerState from '@web/hooks/useAccountPickerControllerState'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 
 const CreateSeedPhraseWriteScreen = () => {
@@ -31,7 +31,7 @@ const CreateSeedPhraseWriteScreen = () => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { addToast } = useToast()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { hasTempSeed } = useKeystoreControllerState()
   const [tempSeed, setTempSeed] = useState<KeystoreSeed | null>(null)
   const { initParams, subType } = useAccountPickerControllerState()
@@ -99,7 +99,7 @@ const CreateSeedPhraseWriteScreen = () => {
     >
       <TabLayoutWrapperMainContent>
         <Panel
-          testID='back-up-recovery-phrase-text'
+          testID="back-up-recovery-phrase-text"
           type="onboarding"
           spacingsSize="small"
           step={1}

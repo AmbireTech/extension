@@ -3,7 +3,7 @@ import React, { createContext, useEffect } from 'react'
 
 import useDeepMemo from '@common/hooks/useDeepMemo'
 import { WalletStateController } from '@web/extension-services/background/controllers/wallet-state'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useControllerState from '@web/hooks/useControllerState'
 
 const WalletStateControllerContext = createContext<WalletStateController>(
@@ -13,7 +13,7 @@ const WalletStateControllerContext = createContext<WalletStateController>(
 const WalletStateControllerProvider: React.FC<any> = ({ children }) => {
   const controller = 'WalletStateController'
   const state = useControllerState(controller)
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
 
   useEffect(() => {
     dispatch({

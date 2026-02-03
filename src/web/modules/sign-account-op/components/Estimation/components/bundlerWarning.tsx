@@ -8,7 +8,7 @@ import Button from '@common/components/Button'
 import Text from '@common/components/Text'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 
 const BundlerWarning = ({
   signAccountOpState,
@@ -20,7 +20,7 @@ const BundlerWarning = ({
     title: string
   }
 }) => {
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { t } = useTranslation()
 
   if (!bundlerNonceDiscrepancy || !signAccountOpState) return null

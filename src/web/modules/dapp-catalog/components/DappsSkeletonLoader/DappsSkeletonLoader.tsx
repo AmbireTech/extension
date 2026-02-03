@@ -11,12 +11,12 @@ import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useDappsControllerState from '@web/hooks/useDappsControllerState'
 
 const DappsSkeletonLoader = () => {
   const { state } = useDappsControllerState()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { theme } = useTheme()
   const { t } = useTranslation()
 

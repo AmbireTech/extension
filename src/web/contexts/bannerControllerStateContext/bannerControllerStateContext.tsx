@@ -3,7 +3,7 @@ import React, { createContext, useEffect } from 'react'
 
 import { IBannerController } from '@ambire-common/interfaces/banner'
 import useDeepMemo from '@common/hooks/useDeepMemo'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useControllerState from '@web/hooks/useControllerState'
 import useMainControllerState from '@web/hooks/useMainControllerState'
 
@@ -12,7 +12,7 @@ const BannerControllerStateContext = createContext<IBannerController>({} as IBan
 const BannerControllerStateProvider: React.FC<any> = ({ children }) => {
   const controller = 'BannerController'
   const state = useControllerState(controller)
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const mainState = useMainControllerState()
 
   useEffect(() => {

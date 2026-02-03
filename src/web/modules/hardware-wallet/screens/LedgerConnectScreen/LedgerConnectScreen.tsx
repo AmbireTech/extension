@@ -23,7 +23,7 @@ import {
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import { closeCurrentWindow } from '@web/extension-services/background/webapi/window'
 import useAccountPickerControllerState from '@web/hooks/useAccountPickerControllerState'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useMainControllerState from '@web/hooks/useMainControllerState'
 import useLedger from '@web/modules/hardware-wallet/hooks/useLedger'
 
@@ -37,7 +37,7 @@ const LedgerConnectScreen = () => {
   const [isGrantingPermission, setIsGrantingPermission] = useState(false)
   const { theme } = useTheme()
   const { goToPrevRoute, goToNextRoute } = useOnboardingNavigation()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { initParams, type } = useAccountPickerControllerState()
   const [authorizeButtonPressed, setAuthorizeButtonPressed] = useState(false)
   const route = useRoute()

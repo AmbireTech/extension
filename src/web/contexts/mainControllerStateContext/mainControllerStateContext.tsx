@@ -3,7 +3,7 @@ import React, { createContext, useEffect } from 'react'
 
 import { IMainController } from '@ambire-common/interfaces/main'
 import useDeepMemo from '@common/hooks/useDeepMemo'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useControllerState from '@web/hooks/useControllerState'
 
 const MainControllerStateContext = createContext<IMainController>({} as IMainController)
@@ -11,7 +11,7 @@ const MainControllerStateContext = createContext<IMainController>({} as IMainCon
 const MainControllerStateProvider: React.FC<any> = ({ children }) => {
   const controller = 'MainController'
   const state = useControllerState(controller)
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   useEffect(() => {
     dispatch({
       type: 'INIT_CONTROLLER_STATE',

@@ -22,7 +22,7 @@ import {
   TabLayoutContainer,
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useWalletStateController from '@web/hooks/useWalletStateController'
 
 import getStyles from './styles'
@@ -36,7 +36,7 @@ const GetStartedScreen = () => {
   const { goToNextRoute } = useOnboardingNavigation()
 
   const { authStatus } = useAuth()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
 
   const state = useWalletStateController()
 

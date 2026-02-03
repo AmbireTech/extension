@@ -23,7 +23,7 @@ import {
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import useAccountPickerControllerState from '@web/hooks/useAccountPickerControllerState'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 
 import getStyles from './styles'
 
@@ -34,7 +34,7 @@ const SeedPhraseImportScreen = () => {
   const { t } = useTranslation()
 
   const { theme, styles } = useTheme(getStyles)
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { initParams, subType } = useAccountPickerControllerState()
   const {
     watch,

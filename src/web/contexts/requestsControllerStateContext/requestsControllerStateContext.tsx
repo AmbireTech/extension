@@ -5,7 +5,7 @@ import { IRequestsController } from '@ambire-common/interfaces/requests'
 import useDeepMemo from '@common/hooks/useDeepMemo'
 import useNavigation from '@common/hooks/useNavigation'
 import usePrevious from '@common/hooks/usePrevious'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useControllerState from '@web/hooks/useControllerState'
 import { getUiType } from '@web/utils/uiType'
 
@@ -14,7 +14,7 @@ const RequestsControllerStateContext = createContext<IRequestsController>({} as 
 const RequestsControllerStateProvider: React.FC<any> = ({ children }) => {
   const controller = 'RequestsController'
   const state = useControllerState(controller)
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { navigate } = useNavigation()
 
   useEffect(() => {

@@ -16,7 +16,7 @@ import spacings, { SPACING, SPACING_LG, SPACING_MD, SPACING_SM } from '@common/s
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import useResponsiveActionWindow from '@web/hooks/useResponsiveActionWindow'
 import useSignMessageControllerState from '@web/hooks/useSignMessageControllerState'
@@ -100,7 +100,7 @@ const SignInWithEthereum = ({
   const { theme } = useTheme()
   const { networks } = useNetworksControllerState()
   const { responsiveSizeMultiplier } = useResponsiveActionWindow()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
 
   const siweMessageToSign = useMemo(() => {
     // It's validated beforehand. This component is never rendered if the

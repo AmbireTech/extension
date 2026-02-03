@@ -14,7 +14,7 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import formatTime from '@common/utils/formatTime'
 import RetryButton from '@web/components/RetryButton'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControllerState'
 
 import SelectRoute from './SelectRoute'
@@ -34,7 +34,7 @@ const RouteInfo: FC<Props> = ({
     useSwapAndBridgeControllerState()
   const { theme } = useTheme()
   const { t } = useTranslation()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
 
   const allRoutesFailed = useMemo(() => {
     if (!quote || !quote.routes.length) return false

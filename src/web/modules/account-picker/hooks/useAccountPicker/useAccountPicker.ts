@@ -4,7 +4,7 @@ import usePrevious from '@common/hooks/usePrevious'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import useAccountPickerControllerState from '@web/hooks/useAccountPickerControllerState'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 
 const useAccountPicker = () => {
   const { goToNextRoute, goToPrevRoute } = useOnboardingNavigation()
@@ -18,7 +18,7 @@ const useAccountPicker = () => {
   } = useAccountPickerControllerState()
   const prevIsInitialized = usePrevious(isInitialized)
   const shouldResetAccountsSelectionOnUnmount = useRef(true)
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const [isReady, setIsReady] = useState(false)
   const [onImportPressed, setOnImportPressed] = useState(false)
 

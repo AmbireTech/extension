@@ -4,8 +4,8 @@ import BaseAddress from '@common/components/HumanizerAddress/components/BaseAddr
 import Spinner from '@common/components/Spinner'
 import { Props as TextProps } from '@common/components/Text'
 import useReverseLookup from '@common/hooks/useReverseLookup'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import useContractNamesControllerState from '@web/hooks/useContractNamesController/useContractNamesController'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 
 interface Props extends TextProps {
   address: string
@@ -15,7 +15,7 @@ interface Props extends TextProps {
 const AddressName: FC<Props> = ({ address, chainId, ...rest }) => {
   const { ens, isLoading } = useReverseLookup({ address })
   const { contractNames } = useContractNamesControllerState()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
 
   const contract = useMemo(() => {
     return contractNames[address]

@@ -32,7 +32,7 @@ import spacings, {
 } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import useProvidersControllerState from '@web/hooks/useProvidersControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
@@ -66,7 +66,7 @@ const NetworkAvailableFeatures = ({
   const { account } = useSelectedAccountControllerState()
   const { networks } = useNetworksControllerState()
   const { callProvider } = useProvidersControllerState()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { addToast } = useToast()
   const [checkedDeployFor, setCheckedDeployFor] = useState<bigint | undefined>()
   const tooltipId = useId()

@@ -12,7 +12,7 @@ import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useHover, { AnimatedPressable } from '@web/hooks/useHover'
 
 import FallbackVisualization from './FallbackVisualization'
@@ -52,7 +52,7 @@ const TransactionSummary = ({
   const textSize = 16 * sizeMultiplier[size]
   const imageSize = 32 * sizeMultiplier[size]
   const { t } = useTranslation()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { styles } = useTheme(getStyles)
   /**
    * It takes some time to remove the call from the controller state, so we optimistically

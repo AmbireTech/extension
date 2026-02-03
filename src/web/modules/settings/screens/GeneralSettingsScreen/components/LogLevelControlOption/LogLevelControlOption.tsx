@@ -6,7 +6,7 @@ import ControlOption from '@common/components/ControlOption'
 import FatToggle from '@common/components/FatToggle'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useWalletStateController from '@web/hooks/useWalletStateController'
 import { LOG_LEVELS } from '@web/utils/logger'
 
@@ -14,7 +14,7 @@ const LogLevelControlOption = () => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { logLevel } = useWalletStateController()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
 
   const handleToggleLogLevel = useCallback(() => {
     const nextLogLevel = logLevel === LOG_LEVELS.DEV ? LOG_LEVELS.PROD : LOG_LEVELS.DEV

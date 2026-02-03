@@ -6,7 +6,7 @@ import PendingActionWindowIcon from '@common/assets/svg/PendingActionWindowIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import DualChoiceModal from '@common/components/DualChoiceModal'
 import spacings from '@common/styles/spacings'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import { getUiType } from '@web/utils/uiType'
 
@@ -15,7 +15,7 @@ const isPopup = getUiType().isPopup
 const PendingActionWindowModal = () => {
   const { ref: sheetRef, close: closeBottomSheet } = useModalize()
   const { t } = useTranslation()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { requestWindow, currentUserRequest } = useRequestsControllerState()
   const onPrimaryButtonPress = useCallback(() => {
     dispatch({ type: 'REQUESTS_CONTROLLER_FOCUS_REQUEST_WINDOW' })

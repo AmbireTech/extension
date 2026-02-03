@@ -2,7 +2,7 @@
 import React, { createContext, useEffect, useMemo } from 'react'
 
 import { IFeatureFlagsController } from '@ambire-common/interfaces/featureFlags'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useControllerState from '@web/hooks/useControllerState'
 import useMainControllerState from '@web/hooks/useMainControllerState'
 
@@ -13,7 +13,7 @@ const FeatureFlagsControllerStateContext = createContext<IFeatureFlagsController
 const CONTROLLER_NAME = 'FeatureFlagsController'
 const FeatureFlagsControllerStateProvider: React.FC<any> = ({ children }) => {
   const state = useControllerState(CONTROLLER_NAME)
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const mainState = useMainControllerState()
 
   useEffect(() => {

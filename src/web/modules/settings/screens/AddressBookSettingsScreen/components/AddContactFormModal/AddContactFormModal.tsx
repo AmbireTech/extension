@@ -15,7 +15,7 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
 import useAddressBookControllerState from '@web/hooks/useAddressBookControllerState'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 
 type Props = {
   id: string
@@ -25,7 +25,7 @@ type Props = {
 
 const AddContactFormModal = ({ id, sheetRef, closeBottomSheet }: Props) => {
   const { t } = useTranslation()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { contacts } = useAddressBookControllerState()
   const { accounts } = useAccountsControllerState()
 

@@ -15,7 +15,7 @@ import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import useAccountPickerControllerState from '@web/hooks/useAccountPickerControllerState'
 import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 import useStorageControllerState from '@web/hooks/useStorageControllerState'
 import Account from '@web/modules/account-select/components/Account'
@@ -26,7 +26,7 @@ const SavedSeedPhrases = ({ handleClose }: { handleClose: () => void }) => {
   const { statuses } = useStorageControllerState()
   const { accounts } = useAccountsControllerState()
   const { seeds, keys } = useKeystoreControllerState()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { subType, initParams } = useAccountPickerControllerState()
   const [addAccountButtonPressed, setAddAccountButtonPressed] = useState(false)
   const { goToNextRoute } = useOnboardingNavigation()

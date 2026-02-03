@@ -24,7 +24,7 @@ import { DEFAULT_KEYSTORE_PASSWORD_DEV } from '@env'
 import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
 import { POPUP_WIDTH } from '@web/constants/spacings'
 import { openInternalPageInTab } from '@web/extension-services/background/webapi/tab'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useEmailVaultControllerState from '@web/hooks/useEmailVaultControllerState'
 import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
@@ -44,7 +44,7 @@ const KeyStoreUnlockScreen = () => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
   const { navigate } = useNavigation()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { hasKeystoreRecovery } = useEmailVaultControllerState()
   const { isUnlocked, statuses, errorMessage } = useKeystoreControllerState()
   const { requestWindow } = useRequestsControllerState()

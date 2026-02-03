@@ -6,11 +6,11 @@ import Button from '@common/components/Button'
 import ControlOption from '@common/components/ControlOption'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useProvidersControllerState from '@web/hooks/useProvidersControllerState'
 
 const BatchingControlOption = () => {
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { t } = useTranslation()
   const { theme } = useTheme()
   const {

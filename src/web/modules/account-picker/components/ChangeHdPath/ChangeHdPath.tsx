@@ -9,7 +9,7 @@ import { useTranslation } from '@common/config/localization'
 import { FONT_FAMILIES } from '@common/hooks/useFonts'
 import spacings from '@common/styles/spacings'
 import useAccountPickerControllerState from '@web/hooks/useAccountPickerControllerState'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 
 import AdvancedModeBottomSheet from './AdvancedModeBottomSheet'
 
@@ -21,7 +21,7 @@ type Props = {
 const ChangeHdPath: React.FC<Props> = ({ setPage, disabled }) => {
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const { t } = useTranslation()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { hdPathTemplate, accountsLoading, pageError, page } = useAccountPickerControllerState()
 
   const value = useMemo(

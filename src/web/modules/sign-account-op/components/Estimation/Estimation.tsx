@@ -20,7 +20,7 @@ import useWindowSize from '@common/hooks/useWindowSize'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 
 import BundlerWarning from './components/bundlerWarning'
 import EstimationSkeleton from './components/EstimationSkeleton'
@@ -97,7 +97,7 @@ const Estimation = ({
   bundlerNonceDiscrepancy,
   serviceFee
 }: Props) => {
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { t } = useTranslation()
   const { theme, themeType } = useTheme(getStyles)
   const { minWidthSize } = useWindowSize()

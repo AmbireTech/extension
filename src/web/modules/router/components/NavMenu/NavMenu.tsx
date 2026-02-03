@@ -32,7 +32,7 @@ import { DISCORD_URL, TELEGRAM_URL, TWITTER_URL } from '@web/constants/social'
 import { getAutoLockLabel } from '@web/extension-services/background/controllers/auto-lock'
 import { createTab, openInTab } from '@web/extension-services/background/webapi/tab'
 import useAutoLockStateController from '@web/hooks/useAutoLockStateController'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 import SettingsLink from '@web/modules/settings/components/SettingsLink'
 import { SETTINGS_LINKS } from '@web/modules/settings/components/Sidebar/Sidebar'
@@ -79,7 +79,7 @@ const NavMenu = () => {
   const { styles, theme } = useTheme(getStyles)
   const { styles: headerStyles } = useTheme(getHeaderStyles)
   const { hasPasswordSecret } = useKeystoreControllerState()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const autoLockState = useAutoLockStateController()
   const handleLockAmbire = () => {
     dispatch({

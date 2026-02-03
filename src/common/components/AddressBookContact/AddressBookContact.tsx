@@ -17,7 +17,7 @@ import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 
@@ -54,7 +54,7 @@ const AddressBookContact: FC<Props> = ({
   const { t } = useTranslation()
   const { theme } = useTheme(getStyles)
   const { addToast } = useToast()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { accounts } = useAccountsControllerState()
   const { account: selectedAccount } = useSelectedAccountControllerState()
   const { ens, isLoading } = useReverseLookup({ address })

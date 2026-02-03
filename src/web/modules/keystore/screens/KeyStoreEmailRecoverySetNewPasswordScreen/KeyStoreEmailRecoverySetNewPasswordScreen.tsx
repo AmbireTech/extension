@@ -11,7 +11,7 @@ import {
   TabLayoutContainer,
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useEmailVaultControllerState from '@web/hooks/useEmailVaultControllerState'
 import PinExtension from '@web/modules/auth/components/PinExtension'
 import KeyStoreSetNewPasswordForm from '@web/modules/keystore/components/KeyStoreSetNewPasswordForm'
@@ -25,7 +25,7 @@ const KeyStoreEmailRecoverySetNewPasswordScreen = () => {
   const { theme } = useTheme()
   const { navigate } = useNavigation()
   const emailVault = useEmailVaultControllerState()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
 
   const prevRecoverKeyStoreStatus = usePrevious(emailVault.statuses.recoverKeyStore)
   const handleBackButtonPress = useCallback(() => {

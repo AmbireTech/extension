@@ -18,7 +18,7 @@ import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import eventBus from '@web/extension-services/event/eventBus'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 import PasswordConfirmation from '@web/modules/settings/components/PasswordConfirmation'
 import { getUiType } from '@web/utils/uiType'
@@ -37,7 +37,7 @@ const ExportKey = ({
   onBackButtonPress: () => void
 }) => {
   const { t } = useTranslation()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const keystoreState = useKeystoreControllerState()
   const [privateKey, setPrivateKey] = useState<string | null>(null)
   const [salt, setSalt] = useState<string | null>(null)

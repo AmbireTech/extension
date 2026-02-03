@@ -22,7 +22,7 @@ import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import usePortfolioControllerState from '@web/hooks/usePortfolioControllerState/usePortfolioControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
@@ -46,14 +46,14 @@ type Props = {
 
 const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
   const { t } = useTranslation()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { networks, isInitialized } = useNetworksControllerState()
   const { addToast } = useToast()
   const { validTokens, customTokens, temporaryTokens } = usePortfolioControllerState()
   const { portfolio: selectedAccountPortfolio } = useSelectedAccountControllerState()
   const { themeType } = useTheme()
   const [network, setNetwork] = useState<Network | undefined>(
-    isInitialized ? networks.find((n) => n.chainId.toString() === '1') ?? networks[0] : undefined
+    isInitialized ? (networks.find((n) => n.chainId.toString() === '1') ?? networks[0]) : undefined
   )
   const [showAlreadyInPortfolioMessage, setShowAlreadyInPortfolioMessage] = useState<boolean>(false)
   const [isLoading, setIsLoading] = useState(false)

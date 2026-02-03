@@ -8,7 +8,7 @@ import { IDomainsController } from '@ambire-common/interfaces/domains'
 import { getRpcProvider } from '@ambire-common/services/provider'
 import { isBenzin, isLegends } from '@common/config/env'
 import useDeepMemo from '@common/hooks/useDeepMemo'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useControllerState from '@web/hooks/useControllerState'
 import useMainControllerState from '@web/hooks/useMainControllerState'
 
@@ -75,7 +75,7 @@ const BenzinAndLegendsDomainsProvider: React.FC<React.PropsWithChildren> = ({ ch
 
 const ExtensionDomainsProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
   const state = useControllerState(controller)
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const mainState = useMainControllerState()
 
   useEffect(() => {

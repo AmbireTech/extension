@@ -23,7 +23,7 @@ import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { setStringAsync } from '@common/utils/clipboard'
 import eventBus from '@web/extension-services/event/eventBus'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 import PasswordConfirmation from '@web/modules/settings/components/PasswordConfirmation'
 
@@ -42,7 +42,7 @@ const ManageRecoveryPhrase = ({
   }
   onBackButtonPress: () => void
 }) => {
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const [deleteSeedIsConfirmed, setDeleteSeedIsConfirmed] = useState<boolean>(false)
   const keystoreState = useKeystoreControllerState()
   const [seed, setSeed] = useState<string | null>(DUMMY_SEED)

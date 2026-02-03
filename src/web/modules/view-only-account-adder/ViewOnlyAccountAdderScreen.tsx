@@ -21,7 +21,7 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
 import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useHover, { AnimatedPressable } from '@web/hooks/useHover'
 
 import AddressField from './AddressField'
@@ -50,7 +50,7 @@ const DEFAULT_ADDRESS_FIELD_VALUE = {
 }
 
 const ViewOnlyScreen = () => {
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const accountsState = useAccountsControllerState()
   const { t } = useTranslation()
   const { addToast } = useToast()

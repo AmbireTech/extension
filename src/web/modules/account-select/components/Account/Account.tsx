@@ -17,7 +17,7 @@ import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
 import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 import useMainControllerState from '@web/hooks/useMainControllerState'
@@ -62,7 +62,7 @@ const Account = ({
   const { addToast } = useToast()
   const { statuses: mainStatuses } = useMainControllerState()
   const { account: selectedAccount } = useSelectedAccountControllerState()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { ens, isLoading } = useReverseLookup({ address: addr })
   const { keys } = useKeystoreControllerState()
   const [bindAnim, animStyle] = useCustomHover({

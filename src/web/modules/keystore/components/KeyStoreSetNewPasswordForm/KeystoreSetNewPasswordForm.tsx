@@ -15,7 +15,7 @@ import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useEmailVaultControllerState from '@web/hooks/useEmailVaultControllerState'
 
 import getStyles from './styles'
@@ -24,7 +24,7 @@ const KeystoreSetNewPasswordForm = () => {
   const { t } = useTranslation()
 
   const emailVault = useEmailVaultControllerState()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const {
     watch,
     control,

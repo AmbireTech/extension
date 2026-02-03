@@ -1,6 +1,6 @@
 import { Action } from '@web/extension-services/background/actions'
 
-export type BackgroundServiceContextReturnType = {
+export type ControllersMiddlewareContextReturnType = {
   /**
    * Dispatches an action to the extension background service.
    * Does not return the result of the action.
@@ -10,7 +10,7 @@ export type BackgroundServiceContextReturnType = {
   windowId: number | undefined
 }
 
-export const backgroundServiceContextDefaults: BackgroundServiceContextReturnType = {
+export const controllersMiddlewareContextDefaults: ControllersMiddlewareContextReturnType = {
   dispatch: Promise.resolve,
   windowId: undefined
 }

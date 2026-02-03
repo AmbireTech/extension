@@ -17,7 +17,7 @@ import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import RetryButton from '@web/components/RetryButton'
 import { TRANSACTION_FORM_WIDTH } from '@web/components/TransactionsScreen/styles'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControllerState'
 import RouteStepsPreview from '@web/modules/swap-and-bridge/components/RouteStepsPreview'
 import { getUiType } from '@web/utils/uiType'
@@ -38,7 +38,7 @@ const RoutesModal = ({
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
   const { quote, signAccountOpController, updateQuoteStatus } = useSwapAndBridgeControllerState()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const scrollRef = useRef<FlatList<SwapAndBridgeRoute>>(null)
   const { height } = useWindowSize()
   // there's a small discrepancy between ticks and we want to capture that

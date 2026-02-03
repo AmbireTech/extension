@@ -9,7 +9,7 @@ import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
 
 type FailedProps = {
@@ -26,7 +26,7 @@ type FailedProps = {
 const Failed: FC<FailedProps> = ({ title, errorMessage, handleClose, toToken, amount }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const [bindAnim, animStyle] = useCustomHover({
     property: 'backgroundColor',
     values: {

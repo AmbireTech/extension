@@ -11,7 +11,7 @@ import {
   getAutoLockLabel
 } from '@web/extension-services/background/controllers/auto-lock'
 import useAutoLockStateController from '@web/hooks/useAutoLockStateController'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 
 const AUTO_LOCK_OPTIONS = [
   {
@@ -41,7 +41,7 @@ const AUTO_LOCK_OPTIONS = [
 ]
 
 const AutoLockDeviceControlOption = () => {
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { autoLockTime } = useAutoLockStateController()

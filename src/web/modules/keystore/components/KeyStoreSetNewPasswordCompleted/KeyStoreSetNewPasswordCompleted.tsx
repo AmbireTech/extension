@@ -10,7 +10,7 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { engine } from '@web/constants/browserapi'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useWalletStateController from '@web/hooks/useWalletStateController'
 import PasswordResetCompletedAnimation from '@web/modules/keystore/components/KeyStoreSetNewPasswordCompleted/password-reset-completed-animation.json'
 
@@ -18,7 +18,7 @@ export const CARD_WIDTH = 400
 
 const KeyStoreSetNewPasswordCompleted = () => {
   const { t } = useTranslation()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { isPinned } = useWalletStateController()
 
   useEffect(() => {

@@ -15,7 +15,7 @@ import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@web/extension-services/background/webapi/tab'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import usePortfolioControllerState from '@web/hooks/usePortfolioControllerState/usePortfolioControllerState'
 
@@ -34,7 +34,7 @@ const Token: FC<Props> = ({
   const { addToast } = useToast()
   const { tokenPreferences } = usePortfolioControllerState()
   const { theme } = useTheme()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { networks } = useNetworksControllerState()
   // flags.isHidden is updated after the portfolio is updated
   // so we use tokenPreferences to get the value faster

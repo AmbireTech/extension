@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 
 type Props = {
   address?: string
@@ -9,7 +9,7 @@ type Props = {
 }
 
 const useTrackAccountOp = ({ address, chainId, sessionId }: Props) => {
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
 
   const sessionHandler = useMemo(() => {
     return {

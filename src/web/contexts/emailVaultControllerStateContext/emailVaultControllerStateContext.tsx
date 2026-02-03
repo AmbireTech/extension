@@ -2,7 +2,7 @@
 import React, { createContext, useEffect, useMemo } from 'react'
 
 import { IEmailVaultController } from '@ambire-common/interfaces/emailVault'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useControllerState from '@web/hooks/useControllerState'
 
 const EmailVaultControllerStateContext = createContext<IEmailVaultController>(
@@ -12,7 +12,7 @@ const EmailVaultControllerStateContext = createContext<IEmailVaultController>(
 const EmailVaultControllerStateProvider: React.FC<any> = ({ children }) => {
   const controller = 'EmailVaultController'
   const state = useControllerState(controller)
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
 
   useEffect(() => {
     dispatch({

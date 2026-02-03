@@ -6,19 +6,19 @@ import { useTranslation } from '@common/config/localization'
 import useExtraEntropy from '@common/hooks/useExtraEntropy'
 import useToast from '@common/hooks/useToast'
 import { DEFAULT_KEYSTORE_PASSWORD_DEV } from '@env'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 
 const useKeyStoreSetup = () => {
   const { t } = useTranslation()
   const { addToast } = useToast()
   const state = useKeystoreControllerState()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { control, handleSubmit, watch, trigger, getValues, formState } = useForm({
     mode: 'all',
     defaultValues: {
-      password: isDev && !isTesting ? DEFAULT_KEYSTORE_PASSWORD_DEV ?? '' : '',
-      confirmPassword: isDev && !isTesting ? DEFAULT_KEYSTORE_PASSWORD_DEV ?? '' : ''
+      password: isDev && !isTesting ? (DEFAULT_KEYSTORE_PASSWORD_DEV ?? '') : '',
+      confirmPassword: isDev && !isTesting ? (DEFAULT_KEYSTORE_PASSWORD_DEV ?? '') : ''
     }
   })
   const [isKeystoreReady, setKeystoreReady] = useState(false)

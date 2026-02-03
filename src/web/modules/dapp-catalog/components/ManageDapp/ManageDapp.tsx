@@ -19,7 +19,7 @@ import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import DappControl from '@web/modules/dapp-catalog/components/DappControl'
 
@@ -56,7 +56,7 @@ const ManageDapp = ({
     networks.filter((n) => Number(n.chainId) === dapp?.chainId)[0] ||
       networks.filter((n) => n.chainId.toString() === '1')[0]
   )
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
 
   const networksOptions: NetworkOption[] = useMemo(
     () =>

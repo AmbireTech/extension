@@ -16,7 +16,7 @@ import spacings, { SPACING, SPACING_SM, SPACING_TY, SPACING_XL } from '@common/s
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useHover, { AnimatedPressable } from '@web/hooks/useHover'
 import useMainControllerState from '@web/hooks/useMainControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
@@ -48,7 +48,7 @@ const DashboardOverview: FC<Props> = ({
   dashboardOverviewSize,
   setDashboardOverviewSize
 }) => {
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { t } = useTranslation()
   const { theme, styles, themeType } = useTheme(getStyles)
   const { isOffline } = useMainControllerState()

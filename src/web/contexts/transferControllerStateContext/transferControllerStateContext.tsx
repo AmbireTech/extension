@@ -2,7 +2,7 @@ import React, { createContext, useEffect, useMemo } from 'react'
 
 import { ITransferController } from '@ambire-common/interfaces/transfer'
 import useDeepMemo from '@common/hooks/useDeepMemo'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useControllerState from '@web/hooks/useControllerState'
 import useMainControllerState from '@web/hooks/useMainControllerState'
 
@@ -15,7 +15,7 @@ const TransferControllerStateContext = createContext<ContextReturn>({} as Contex
 const TransferControllerStateProvider = ({ children }: { children: any }) => {
   const controller = 'TransferController'
   const state = useControllerState(controller)
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const mainState = useMainControllerState()
 
   useEffect(() => {

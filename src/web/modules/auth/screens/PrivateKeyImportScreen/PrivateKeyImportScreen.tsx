@@ -20,7 +20,7 @@ import {
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import storage from '@web/extension-services/background/webapi/storage'
 import useAccountPickerControllerState from '@web/hooks/useAccountPickerControllerState'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 
 export const CARD_WIDTH = 400
 
@@ -38,7 +38,7 @@ const PrivateKeyImportScreen = () => {
   const { t } = useTranslation()
 
   const { theme } = useTheme()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { initParams, subType } = useAccountPickerControllerState()
   const [agreedToBackupWarning, setAgreedToBackupWarning] = useState(false)
   const [importButtonPressed, setImportButtonPressed] = useState(false)

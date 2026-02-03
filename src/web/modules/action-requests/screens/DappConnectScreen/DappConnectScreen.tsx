@@ -7,7 +7,7 @@ import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import Header from '@common/modules/header/components/Header'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useDappsControllerState from '@web/hooks/useDappsControllerState'
 import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import useResponsiveActionWindow from '@web/hooks/useResponsiveActionWindow'
@@ -21,7 +21,7 @@ import getStyles from './styles'
 const DappConnectScreen = () => {
   const { t } = useTranslation()
   const { theme, styles } = useTheme(getStyles)
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { currentUserRequest } = useRequestsControllerState()
 
   const [isAuthorizing, setIsAuthorizing] = useState(false)

@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { IProvidersController } from '@ambire-common/interfaces/provider'
 import useDeepMemo from '@common/hooks/useDeepMemo'
 import eventBus from '@web/extension-services/event/eventBus'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useControllerState from '@web/hooks/useControllerState'
 import useMainControllerState from '@web/hooks/useMainControllerState'
 
@@ -50,7 +50,7 @@ const ProvidersControllerStateContext = createContext<{
 const ProvidersControllerStateProvider: React.FC<any> = ({ children }) => {
   const controller = 'ProvidersController'
   const state = useControllerState(controller)
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const mainState = useMainControllerState()
 
   useEffect(() => {

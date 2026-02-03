@@ -8,7 +8,7 @@ import usePrevious from '@common/hooks/usePrevious'
 import useRoute from '@common/hooks/useRoute'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import { getUiType } from '@web/utils/uiType'
@@ -33,7 +33,7 @@ const DashboardPages = ({ onScroll, animatedOverviewHeight }: Props) => {
   const [, setSearchParams] = useSearchParams()
   const { dashboardNetworkFilter } = useSelectedAccountControllerState()
   const { networks } = useNetworksControllerState()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
 
   const [openTab, setOpenTab] = useState(() => {
     const params = new URLSearchParams(route?.search)

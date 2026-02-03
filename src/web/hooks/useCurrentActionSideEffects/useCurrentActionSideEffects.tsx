@@ -4,7 +4,7 @@ import { AUTH_STATUS } from '@common/modules/auth/constants/authStatus'
 import useAuth from '@common/modules/auth/hooks/useAuth'
 import { ControllersStateLoadedContext } from '@web/contexts/controllersStateLoadedContext'
 import { closeCurrentWindow } from '@web/extension-services/background/webapi/window'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import { getUiType } from '@web/utils/uiType'
@@ -13,7 +13,7 @@ const { isRequestWindow } = getUiType()
 
 const useCurrentActionSideEffects = () => {
   const { authStatus } = useAuth()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const keystoreState = useKeystoreControllerState()
   const { currentUserRequest } = useRequestsControllerState()
   const { areControllerStatesLoaded } = useContext(ControllersStateLoadedContext)

@@ -1,7 +1,7 @@
 import React, { createContext, useEffect, useMemo } from 'react'
 
 import { ExtensionUpdateController } from '@web/extension-services/background/controllers/extension-update'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useControllerState from '@web/hooks/useControllerState'
 
 const ExtensionUpdateControllerStateContext = createContext<ExtensionUpdateController>(
@@ -11,7 +11,7 @@ const ExtensionUpdateControllerStateContext = createContext<ExtensionUpdateContr
 const ExtensionUpdateControllerStateProvider: React.FC<any> = ({ children }) => {
   const controller = 'ExtensionUpdateController'
   const state = useControllerState(controller)
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
 
   useEffect(() => {
     dispatch({

@@ -18,7 +18,7 @@ import {
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import { engine } from '@web/constants/browserapi'
 import { TAB_CONTENT_WIDTH } from '@web/constants/spacings'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useWalletStateController from '@web/hooks/useWalletStateController'
 import PinExtension from '@web/modules/auth/components/PinExtension'
 
@@ -26,7 +26,7 @@ export const CARD_WIDTH = 400
 
 const OnboardingCompletedScreen = () => {
   const { t } = useTranslation()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { isPinned } = useWalletStateController()
 
   const { theme } = useTheme()
@@ -57,7 +57,7 @@ const OnboardingCompletedScreen = () => {
                 style={[spacings.mtLg, spacings.mb, text.center]}
                 weight="semiBold"
                 fontSize={20}
-                testID='wallet-ready-to-use-text'
+                testID="wallet-ready-to-use-text"
               >
                 {t('Ambire Wallet is ready to use')}
               </Text>

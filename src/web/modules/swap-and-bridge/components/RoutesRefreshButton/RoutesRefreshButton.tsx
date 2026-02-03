@@ -8,7 +8,7 @@ import { SwapAndBridgeFormStatus } from '@ambire-common/controllers/swapAndBridg
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import usePrevious from '@common/hooks/usePrevious'
 import useTheme from '@common/hooks/useTheme'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControllerState'
 
 const radius = 9.5
@@ -19,7 +19,7 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
 
 const RoutesRefreshButton = ({ width = 32, height = 32 }: SvgProps) => {
   const [progress, setProgress] = useState(0)
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { updateQuoteStatus, formStatus } = useSwapAndBridgeControllerState()
   const prevUpdateQuoteStatus = usePrevious(updateQuoteStatus)
   const { t } = useTranslation()

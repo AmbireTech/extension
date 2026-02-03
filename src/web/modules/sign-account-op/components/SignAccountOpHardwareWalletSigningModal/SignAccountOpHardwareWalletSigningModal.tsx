@@ -9,7 +9,7 @@ import usePrevious from '@common/hooks/usePrevious'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import HardwareWalletSigningModal from '@web/modules/hardware-wallet/components/HardwareWalletSigningModal'
 import { getUiType } from '@web/utils/uiType'
 
@@ -39,7 +39,7 @@ const SignAccountOpHardwareWalletSigningModal: React.FC<Props> = ({
   accountOp,
   actionType
 }: Props) => {
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { addToast } = useToast()
 
   const prevTransactionCount = usePrevious(signedTransactionsCount)

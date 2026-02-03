@@ -3,7 +3,7 @@ import React, { createContext, useEffect } from 'react'
 
 import { IContractNamesController } from '@ambire-common/interfaces/contractNames'
 import useDeepMemo from '@common/hooks/useDeepMemo'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useControllerState from '@web/hooks/useControllerState'
 import useMainControllerState from '@web/hooks/useMainControllerState'
 
@@ -14,7 +14,7 @@ const ContractNamesControllerStateContext = createContext<IContractNamesControll
 const ContractNamesControllerStateProvider: React.FC<any> = ({ children }) => {
   const controller = 'ContractNamesController'
   const state = useControllerState(controller)
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const mainState = useMainControllerState()
 
   useEffect(() => {

@@ -12,7 +12,7 @@ import useNavigation from '@common/hooks/useNavigation'
 import useToast from '@common/hooks/useToast'
 import DashboardBannerBottomSheet from '@common/modules/dashboard/components/DashboardBanners/DashboardBannerBottomSheet'
 import { ROUTES } from '@common/modules/router/constants/common'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 
@@ -29,7 +29,7 @@ const DashboardBanner = ({
   banner: Omit<BannerType, 'type'> & { type: NonMarketingBannerType }
 }) => {
   const { type, category, title, text, actions = [] } = banner
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { addToast } = useToast()
   const { navigate } = useNavigation()
   const { statuses, visibleUserRequests } = useRequestsControllerState()

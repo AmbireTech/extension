@@ -3,7 +3,7 @@ import React, { createContext, useEffect } from 'react'
 
 import { ISignMessageController } from '@ambire-common/interfaces/signMessage'
 import useDeepMemo from '@common/hooks/useDeepMemo'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useControllerState from '@web/hooks/useControllerState'
 import useMainControllerState from '@web/hooks/useMainControllerState'
 
@@ -14,7 +14,7 @@ const SignMessageControllerStateContext = createContext<ISignMessageController>(
 const SignMessageControllerStateProvider: React.FC<any> = ({ children }) => {
   const controller = 'SignMessageController'
   const state = useControllerState(controller)
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const mainState = useMainControllerState()
 
   useEffect(() => {

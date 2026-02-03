@@ -2,7 +2,7 @@ import React, { createContext, useEffect, useMemo } from 'react'
 
 import { ISelectedAccountController } from '@ambire-common/interfaces/selectedAccount'
 import { setExtraContext } from '@common/config/analytics/CrashAnalytics'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useControllerState from '@web/hooks/useControllerState'
 import useMainControllerState from '@web/hooks/useMainControllerState'
 
@@ -13,7 +13,7 @@ const SelectedAccountControllerStateContext = createContext<ISelectedAccountCont
 const SelectedAccountControllerStateProvider: React.FC<any> = ({ children }) => {
   const controller = 'SelectedAccountController'
   const state = useControllerState(controller)
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const mainState = useMainControllerState()
 
   useEffect(() => {
