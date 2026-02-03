@@ -1,4 +1,4 @@
-import React, { ReactNode, useState } from 'react'
+import React, { ReactElement, ReactNode, useState } from 'react'
 import {
   NativeSyntheticEvent,
   TextInput,
@@ -29,7 +29,7 @@ export interface InputProps extends TextInputProps {
   isValid?: boolean
   validLabel?: string
   validLabelAppearance?: TextAppearance
-  button?: string | JSX.Element | null
+  button?: string | ReactElement | null
   buttonProps?: TouchableOpacityProps & {
     withBackground?: boolean
   }

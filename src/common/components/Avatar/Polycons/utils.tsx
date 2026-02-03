@@ -1,5 +1,5 @@
 /* eslint-disable no-bitwise */
-import React from 'react'
+import React, { ReactElement } from 'react'
 import { Path, Rect } from 'react-native-svg'
 
 export function generateSeedEthereum(address: string): number {
@@ -139,7 +139,7 @@ export function getPolyconColors(seed: number | number[]): PolyconColors {
  * @param size The size of the SVG icon in pixels
  * @returns React elements for the Polycon
  */
-export function renderPolycon(seed: number | number[], size = 100): JSX.Element[] {
+export function renderPolycon(seed: number | number[], size = 100): ReactElement[] {
   // 1) Convert seed to string, then hash
   const str = seedToString(seed)
   const hashVal = sdbmHash(str)

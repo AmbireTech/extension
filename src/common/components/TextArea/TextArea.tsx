@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { ReactElement, useState } from 'react'
 import {
   NativeSyntheticEvent,
   TextInput,
@@ -28,7 +28,7 @@ export interface InputProps extends TextInputProps {
   inputWrapperStyle?: ViewStyle | ViewStyle[]
   bottomLabelStyle?: TextStyle | TextStyle[]
   nativeInputStyle?: TextStyle
-  leftIcon?: () => JSX.Element | JSX.Element
+  leftIcon?: () => ReactElement | ReactElement
 }
 
 const TextArea = ({

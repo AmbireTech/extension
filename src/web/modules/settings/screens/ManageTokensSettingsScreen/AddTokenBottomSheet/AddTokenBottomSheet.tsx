@@ -1,5 +1,5 @@
 import { getAddress } from 'ethers'
-import React, { FC, useCallback, useEffect, useMemo, useState } from 'react'
+import React, { FC, ReactElement, useCallback, useEffect, useMemo, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { View } from 'react-native'
 
@@ -35,8 +35,8 @@ import {
 
 type NetworkOption = {
   value: string
-  label: JSX.Element
-  icon: JSX.Element
+  label: ReactElement
+  icon: ReactElement
 }
 
 type Props = {
@@ -53,7 +53,7 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
   const { portfolio: selectedAccountPortfolio } = useSelectedAccountControllerState()
   const { themeType } = useTheme()
   const [network, setNetwork] = useState<Network | undefined>(
-    isInitialized ? networks.find((n) => n.chainId.toString() === '1') ?? networks[0] : undefined
+    isInitialized ? (networks.find((n) => n.chainId.toString() === '1') ?? networks[0]) : undefined
   )
   const [showAlreadyInPortfolioMessage, setShowAlreadyInPortfolioMessage] = useState<boolean>(false)
   const [isLoading, setIsLoading] = useState(false)

@@ -1,5 +1,5 @@
 import Fuse from 'fuse.js'
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { ReactElement, useCallback, useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { ColorValue, View, ViewStyle } from 'react-native'
@@ -42,7 +42,7 @@ const { isPopup } = getUiType()
 
 type FilterButtonType = {
   value: 'favorites' | 'connected'
-  icon: React.JSX.Element
+  icon: ReactElement
   active?: boolean
   onPress: (type: 'favorites' | 'connected') => void
   style?: ViewStyle

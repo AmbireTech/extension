@@ -1,4 +1,4 @@
-import { FC } from 'react'
+import { FC, ReactElement } from 'react'
 import { View } from 'react-native'
 
 import { IS_MOBILE_UP_BENZIN_BREAKPOINT } from '@benzin/screens/BenzinScreen/styles'
@@ -10,7 +10,7 @@ import flexbox from '@common/styles/utils/flexbox'
 export interface StepRowProps {
   label: string
   value?: string
-  renderValue?: () => JSX.Element
+  renderValue?: () => ReactElement
   isValueSmall?: boolean
   error?: boolean
   collapsedByDefault?: boolean
