@@ -86,6 +86,8 @@ const CONTROLLER_STATE_PROVIDERS: ProviderComponent[] = [
   AddressBookControllerStateProvider,
   SwapAndBridgeControllerStateProvider,
   TransferControllerStateProvider,
+  // Reading from controllers in components, rendered above ControllersStateLoadedProvider
+  // must be done very carefully, as it is not guaranteed that the state is loaded.
   ControllersStateLoadedProvider,
   KeyboardProvider,
   NetInfoProvider,
