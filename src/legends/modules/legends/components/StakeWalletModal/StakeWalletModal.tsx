@@ -83,7 +83,7 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
   const { provider, browserProvider } = useProviderContext()
   const { connectedAccount, v1Account } = useAccountContext()
   const { walletTokenInfo } = usePortfolioControllerState()
-  const { sendCalls, getCallsStatus, chainId } = useErc5792()
+  const { sendCalls, getCallsStatus } = useErc5792()
   const switchNetwork = useSwitchNetwork()
   const { addToast } = useToast()
   const [isWarningModalUnstakePeriodOpen, setIsWarningModalUnstakePeriodOpen] = useState(false)
@@ -202,7 +202,9 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
       try {
         if (!browserProvider) throw new HumanReadableError('No connected wallet.')
         if (!connectedAccount) throw new HumanReadableError('No connected account.')
-
+        // as of feb 2026 this is not needed for latest v's of the extension, because the wallet_sendCalls method handles the chainId
+        // but we are not removing it for now, becaus there are many users right now who have not yet updated their extension to latest
+        // same applies for most other such cases in rewards
         await switchNetwork(ETHEREUM_CHAIN_ID)
         const amount = parseEther(dataFromInput)
         const calls = [
@@ -215,7 +217,12 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
         setIsSigning(true)
         const signer = await browserProvider.getSigner(connectedAccount)
 
-        const txId = await sendCalls(chainId, await signer.getAddress(), calls, false)
+        const txId = await sendCalls(
+          BigInt(ETHEREUM_CHAIN_ID),
+          await signer.getAddress(),
+          calls,
+          false
+        )
         await getCallsStatus(txId)
         addToast('Staked successfully!', { type: 'success' })
         handleClose()
@@ -229,7 +236,6 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
     [
       browserProvider,
       addToast,
-      chainId,
       connectedAccount,
       getCallsStatus,
       handleClose,
@@ -257,6 +263,9 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
         if (!browserProvider) throw new HumanReadableError('No connected wallet.')
         if (!connectedAccount) throw new HumanReadableError('No connected account.')
         if (!onchainData) throw new HumanReadableError('We were unable to fetch unstaking data.')
+        // as of feb 2026 this is not needed for latest v's of the extension, because the wallet_sendCalls method handles the chainId
+        // but we are not removing it for now, becaus there are many users right now who have not yet updated their extension to latest
+        // same applies for most other such cases in rewards
         await switchNetwork(ETHEREUM_CHAIN_ID)
 
         const amount = parseUnits(dataFromInput, 36) / onchainData.shareValue
@@ -271,7 +280,12 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
         setIsSigning(true)
         const signer = await browserProvider.getSigner(connectedAccount)
 
-        const txId = await sendCalls(chainId, await signer.getAddress(), calls, false)
+        const txId = await sendCalls(
+          BigInt(ETHEREUM_CHAIN_ID),
+          await signer.getAddress(),
+          calls,
+          false
+        )
         await getCallsStatus(txId)
         addToast('Withdraw requested successfully!', { type: 'success' })
         handleClose()
@@ -286,7 +300,6 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
     [
       browserProvider,
       addToast,
-      chainId,
       connectedAccount,
       getCallsStatus,
       handleClose,
@@ -302,6 +315,10 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
       if (!firstToCollect) throw new HumanReadableError('Enter a valid amount.')
       if (!connectedAccount) throw new HumanReadableError('No connected account.')
       if (!onchainData) throw new HumanReadableError('We were unable to fetch unstaking data.')
+
+      // as of feb 2026 this is not needed for latest v's of the extension, because the wallet_sendCalls method handles the chainId
+      // but we are not removing it for now, becaus there are many users right now who have not yet updated their extension to latest
+      // same applies for most other such cases in rewards
       await switchNetwork(ETHEREUM_CHAIN_ID)
 
       if (onchainData.xWalletBalance < onchainData.lockedShares)
@@ -320,7 +337,12 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
       setIsSigning(true)
       const signer = await browserProvider.getSigner(connectedAccount)
 
-      const txId = await sendCalls(chainId, await signer.getAddress(), calls, false)
+      const txId = await sendCalls(
+        BigInt(ETHEREUM_CHAIN_ID),
+        await signer.getAddress(),
+        calls,
+        false
+      )
       await getCallsStatus(txId)
       addToast('Withdrawn successfully!', { type: 'success' })
       handleClose()
@@ -334,7 +356,6 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
   }, [
     browserProvider,
     addToast,
-    chainId,
     connectedAccount,
     firstToCollect,
     getCallsStatus,
