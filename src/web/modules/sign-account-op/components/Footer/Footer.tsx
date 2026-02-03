@@ -96,7 +96,7 @@ const Footer = ({
             appearance="secondaryText"
             numberOfLines={1}
           >
-            {t('Sent to safe global')}
+            {t('Waiting for signatures from other owners')}
           </Text>
         </View>
         <Button
