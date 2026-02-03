@@ -369,7 +369,9 @@ export class SwapAndBridgePage extends BasePage {
   }
 
   async batchAction(): Promise<void> {
-    await this.page.getByTestId(selectors.addToBatchButton).isEnabled()
+    await expect(this.page.getByTestId(selectors.addToBatchButton)).toBeEnabled()
+
+    await this.page.waitForTimeout(5000) //TODO: misses click without pause, investigate
     await this.click(selectors.addToBatchButton)
 
     // approve high impact modal
@@ -380,7 +382,8 @@ export class SwapAndBridgePage extends BasePage {
   }
 
   async batchActionWithSign(): Promise<void> {
-    await this.page.getByTestId(selectors.addToBatchButton).isEnabled()
+    await expect(this.page.getByTestId(selectors.addToBatchButton)).toBeEnabled()
+    await this.page.waitForTimeout(5000) //TODO: misses click without pause, investigate
     await this.click(selectors.addToBatchButton)
 
     // approve high impact modal
