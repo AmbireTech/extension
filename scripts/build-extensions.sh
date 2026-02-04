@@ -17,10 +17,9 @@ fi
 # Read the build target
 TARGET="$1"
 
-# Get the script directory to resolve node_modules path for sentry-cli
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-SENTRY_CLI_PATH="$PROJECT_ROOT/node_modules/.bin/sentry-cli"
+# Use yarn to run sentry-cli (it will automatically resolve from node_modules)
+# This is more reliable than trying to find the binary path directly
+SENTRY_CLI_CMD="yarn sentry-cli"
 
 # The order of the commands is crucial! Injecting the debug ids
 # before creating the release will result in an empty release!
@@ -29,7 +28,7 @@ upload_source_maps_for_build() {
 
   # Only create a new release if auth token is available
   if [ -n "$SENTRY_AUTH_TOKEN" ]; then
-    "$SENTRY_CLI_PATH" releases new extension-$ENGINE@$VERSION --project=$SENTRY_PROJECT
+    $SENTRY_CLI_CMD releases new extension-$ENGINE@$VERSION --project=$SENTRY_PROJECT
   else
     echo "SENTRY_AUTH_TOKEN not available, skipping creating new Sentry release"
   fi
@@ -37,13 +36,13 @@ upload_source_maps_for_build() {
   # Always inject debug IDs (doesn't require auth token), so that the build is
   # deterministic enough to pass the Firefox review process.
   echo "Injecting debug IDs for $ENGINE build"
-  "$SENTRY_CLI_PATH" sourcemaps inject build/$ENGINE-prod/ --release=extension-$ENGINE@$VERSION --project=$SENTRY_PROJECT
+  $SENTRY_CLI_CMD sourcemaps inject build/$ENGINE-prod/ --release=extension-$ENGINE@$VERSION --project=$SENTRY_PROJECT
 
   # Only upload to Sentry if auth token is available
   if [ -n "$SENTRY_AUTH_TOKEN" ]; then
     echo "Uploading source maps for $ENGINE build to Sentry"
-    "$SENTRY_CLI_PATH" sourcemaps upload --release=extension-$ENGINE@$VERSION --project=$SENTRY_PROJECT build/$ENGINE-prod/
-    "$SENTRY_CLI_PATH" releases finalize extension-$ENGINE@$VERSION --project=$SENTRY_PROJECT
+    $SENTRY_CLI_CMD sourcemaps upload --release=extension-$ENGINE@$VERSION --project=$SENTRY_PROJECT build/$ENGINE-prod/
+    $SENTRY_CLI_CMD releases finalize extension-$ENGINE@$VERSION --project=$SENTRY_PROJECT
   else
     echo "SENTRY_AUTH_TOKEN not available, skipping source map upload to Sentry"
   fi
@@ -52,17 +51,16 @@ upload_source_maps_for_build() {
 # Injects debug ids and optionally uploads source maps to Sentry
 # Must be done before separating the source maps from the build directories
 prepare_and_upload_sourcemaps() {
-  # Verify sentry-cli is available (should be installed as @sentry/cli dev dependency)
-  if [ ! -f "$SENTRY_CLI_PATH" ]; then
-    echo "Error: sentry-cli not found at $SENTRY_CLI_PATH"
+  # Verify sentry-cli is available by trying to run it
+  # @sentry/cli should be installed as a dev dependency
+  if ! $SENTRY_CLI_CMD --version &>/dev/null; then
+    echo "Error: sentry-cli is not available"
     echo "Please ensure @sentry/cli is installed as a dev dependency: yarn add -D @sentry/cli"
     exit 1
   fi
 
-  chmod +x "$SENTRY_CLI_PATH"
-
   SENTRY_PROJECT=extension
-  "$SENTRY_CLI_PATH" --version
+  $SENTRY_CLI_CMD --version
 
   # Decide what to build
   case "$TARGET" in
