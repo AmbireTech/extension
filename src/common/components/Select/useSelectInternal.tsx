@@ -119,7 +119,7 @@ const useSelectInternal = ({
   const keyExtractor = useCallback((item: SelectValue) => item.key || item.value, [])
 
   const getItemLayout = useCallback(
-    (d: SelectValue[] | null | undefined, index: number) => {
+    (d: ArrayLike<SelectValue> | null | undefined, index: number) => {
       return {
         length: optionHeight,
         offset: optionHeight * index,
