@@ -1,8 +1,7 @@
 import React, { ReactElement, ReactNode, useState } from 'react'
 import {
-  NativeSyntheticEvent,
+  BlurEvent,
   TextInput,
-  TextInputFocusEventData,
   TextInputProps,
   TextStyle,
   TouchableOpacityProps,
@@ -97,12 +96,12 @@ const Input = ({
   const { theme, styles, themeType } = useTheme(getStyles)
   const [bindAnim, animStyle] = useHover({ preset: 'opacityInverted' })
 
-  const handleOnFocus = (e: NativeSyntheticEvent<TextInputFocusEventData>) => {
+  const handleOnFocus = (e: BlurEvent) => {
     if (disabled) return
     setIsFocused(true)
     return onFocus(e)
   }
-  const handleOnBlur = (e: NativeSyntheticEvent<TextInputFocusEventData>) => {
+  const handleOnBlur = (e: BlurEvent) => {
     if (disabled) return
     setIsFocused(false)
     return onBlur(e)
