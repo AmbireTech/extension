@@ -22,22 +22,22 @@ import sessionStorage from '../webapi/sessionStorage'
 export const handleActions = async (
   action: Action,
   {
-    pm,
-    port,
     eventEmitterRegistry,
     mainCtrl,
     walletStateCtrl,
     autoLockCtrl,
     extensionUpdateCtrl,
+    pm,
+    port,
     windowId
   }: {
-    pm: PortMessenger
-    port: Port
     eventEmitterRegistry: IEventEmitterRegistryController
     mainCtrl: MainController
     walletStateCtrl: WalletStateController
-    autoLockCtrl: AutoLockController
-    extensionUpdateCtrl: ExtensionUpdateController
+    autoLockCtrl?: AutoLockController
+    extensionUpdateCtrl?: ExtensionUpdateController
+    pm?: PortMessenger
+    port?: Port
     windowId?: number
   }
 ) => {
@@ -45,6 +45,8 @@ export const handleActions = async (
   const { type, params } = action
   switch (type) {
     case 'UPDATE_PORT_URL': {
+      if (!port) return
+
       if (port.sender) {
         port.sender.url = params.url
         if (port.sender.tab) port.sender.tab.url = params.url
@@ -56,6 +58,8 @@ export const handleActions = async (
       break
     }
     case 'INIT_CONTROLLER_STATE': {
+      if (!pm) return
+
       const ctrl = eventEmitterRegistry.values().find((c) => c.name === params.controller)
       if (ctrl) pm.send('> ui', { method: params.controller, params: ctrl })
 
@@ -585,10 +589,12 @@ export const handleActions = async (
       break
     }
     case 'AUTO_LOCK_CONTROLLER_SET_LAST_ACTIVE_TIME': {
-      autoLockCtrl.setLastActiveTime()
+      autoLockCtrl?.setLastActiveTime()
       break
     }
     case 'AUTO_LOCK_CONTROLLER_SET_AUTO_LOCK_TIME': {
+      if (!autoLockCtrl) return
+
       autoLockCtrl.autoLockTime = params
       break
     }
@@ -637,15 +643,17 @@ export const handleActions = async (
       return mainCtrl.dapps.removeDapp(params)
     }
     case 'EXTENSION_UPDATE_CONTROLLER_APPLY_UPDATE': {
-      extensionUpdateCtrl.applyUpdate()
+      extensionUpdateCtrl?.applyUpdate()
       break
     }
 
     case 'OPEN_EXTENSION_POPUP': {
+      if (!pm) return
+
       // eslint-disable-next-line no-inner-declarations
       async function waitForPopupOpen(timeout = 10000, interval = 100) {
         const startTime = Date.now()
-        while (!pm.ports.some((p) => p.name === 'popup')) {
+        while (!pm!.ports.some((p) => p.name === 'popup')) {
           if (Date.now() - startTime > timeout) break
           await wait(interval)
         }

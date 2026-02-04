@@ -7,7 +7,7 @@ export type ControllersMiddlewareContextReturnType = {
    * It will only work when called from a focused window!
    */
   dispatch: (action: Action, windowId?: number) => void
-  windowId: number | undefined
+  windowId?: number
 }
 
 export const controllersMiddlewareContextDefaults: ControllersMiddlewareContextReturnType = {

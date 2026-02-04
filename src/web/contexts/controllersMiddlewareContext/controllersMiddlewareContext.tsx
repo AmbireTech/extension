@@ -24,6 +24,8 @@ import {
   ControllersMiddlewareContextReturnType
 } from '@web/contexts/controllersMiddlewareContext/types'
 import { Action } from '@web/extension-services/background/actions'
+import { WalletStateController } from '@web/extension-services/background/controllers/wallet-state'
+import { handleActions } from '@web/extension-services/background/handlers/handleActions'
 import storage from '@web/extension-services/background/webapi/storage'
 import { closeCurrentWindow } from '@web/extension-services/background/webapi/window'
 import eventBus from '@web/extension-services/event/eventBus'
@@ -102,13 +104,13 @@ if (isExtension) {
   connectPort()
 }
 
-const ACTIONS_TO_DISPATCH_EVEN_WHEN_HIDDEN = [
-  'INIT_CONTROLLER_STATE',
-  'MAIN_CONTROLLER_ACTIVITY_SET_ACC_OPS_FILTERS',
-  'MAIN_CONTROLLER_ACTIVITY_RESET_ACC_OPS_FILTERS'
-]
-
 if (isExtension) {
+  const ACTIONS_TO_DISPATCH_EVEN_WHEN_HIDDEN = [
+    'INIT_CONTROLLER_STATE',
+    'MAIN_CONTROLLER_ACTIVITY_SET_ACC_OPS_FILTERS',
+    'MAIN_CONTROLLER_ACTIVITY_RESET_ACC_OPS_FILTERS'
+  ]
+
   globalDispatch = (action, windowId?: number) => {
     // Dispatch the action only when the tab or popup is focused or active.
     // Otherwise, multiple dispatches could occur if the same screen is open in multiple tabs/popup windows,
@@ -289,7 +291,6 @@ const ExtensionControllersMiddlewareProvider: React.FC<any> = ({ children }) => 
 const CommonControllersMiddlewareProvider: React.FC<any> = ({ children }) => {
   const { addToast } = useToast()
   const { navigate } = useNavigation()
-  const [windowId, setWindowId] = useState<number | undefined>()
   const [isUnlocked, setIsUnlocked] = useState(false)
   const ctrlOnUpdateIsDirtyFlags = useRef<Record<string, boolean>>({})
 
@@ -536,18 +537,12 @@ const CommonControllersMiddlewareProvider: React.FC<any> = ({ children }) => {
     })
   )
 
-  useEffect(() => {
-    if (!isExtension) return
-    ;(async () => {
-      if (getUiType().isPopup) {
-        const win = await chrome.windows.getCurrent()
-        setWindowId(win.id)
-      } else if (getUiType().isTab) {
-        const tab = await chrome.tabs.getCurrent()
-        if (tab) setWindowId(tab.windowId)
-      }
-    })()
-  }, [])
+  const walletStateCtrl = useRef<WalletStateController>(
+    new WalletStateController({
+      eventEmitterRegistry: eventEmitterRegistry.current,
+      onLogLevelUpdateCallback: async () => {}
+    })
+  )
 
   useEffect(() => {
     const onError = (newState: { errors: ErrorRef[]; controller: string }) => {
@@ -586,17 +581,23 @@ const CommonControllersMiddlewareProvider: React.FC<any> = ({ children }) => {
     return () => eventBus.removeEventListener('navigate', onNavigate)
   }, [addToast, navigate])
 
-  const dispatch = useCallback(
-    (action: Action) => {
-      globalDispatch(action, windowId)
-    },
-    [windowId]
-  )
+  const dispatch = useCallback((action: Action) => {
+    if (action.type === 'INIT_CONTROLLER_STATE') {
+      const ctrl = eventEmitterRegistry.current
+        .values()
+        .find((c) => c.name === action.params.controller)
+      if (ctrl) pm.send('> ui', { method: action.params.controller, params: ctrl })
+    } else {
+      handleActions(action, {
+        eventEmitterRegistry: eventEmitterRegistry.current,
+        mainCtrl: mainCtrl.current,
+        walletStateCtrl: walletStateCtrl.current
+      })
+    }
+  }, [])
 
   return (
-    <ControllersMiddlewareContext.Provider
-      value={useMemo(() => ({ dispatch, windowId }), [dispatch, windowId])}
-    >
+    <ControllersMiddlewareContext.Provider value={useMemo(() => ({ dispatch }), [dispatch])}>
       {children}
     </ControllersMiddlewareContext.Provider>
   )

@@ -1,12 +1,7 @@
-import { getAddress } from 'ethers'
 /* eslint-disable @typescript-eslint/no-shadow */
-import React, { createContext, useCallback, useEffect, useMemo, useReducer } from 'react'
+import React, { createContext, useCallback, useEffect, useMemo } from 'react'
 
-import { networks } from '@ambire-common/consts/networks'
-import { DomainsController } from '@ambire-common/controllers/domains/domains'
 import { IDomainsController } from '@ambire-common/interfaces/domains'
-import { getRpcProvider } from '@ambire-common/services/provider'
-import { isBenzin, isLegends } from '@common/config/env'
 import useDeepMemo from '@common/hooks/useDeepMemo'
 import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useControllerState from '@web/hooks/useControllerState'
@@ -22,58 +17,8 @@ const DomainsControllerStateContext = createContext<{
   resolveDomain: () => {}
 })
 
-const controller = 'DomainsController'
-
-const BenzinAndLegendsDomainsProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
-  const [rerender, forceRerender] = useReducer((x) => x + 1, 0)
-
-  const ethereum = useMemo(() => networks.find(({ chainId }) => chainId === 1n)!, [])
-
-  const providers = useMemo(() => {
-    return { '1': getRpcProvider(ethereum.rpcUrls, 1n, ethereum.selectedRpcUrl) }
-  }, [ethereum])
-
-  const domainsCtrl = useMemo(() => new DomainsController({ providers }), [providers])
-
-  useEffect(() => {
-    const unsubscribe = domainsCtrl.onUpdate(forceRerender)
-    return unsubscribe
-  }, [domainsCtrl])
-
-  const reverseLookup = useCallback(
-    (address: string) => {
-      const checksummedAddress = getAddress(address)
-
-      domainsCtrl.reverseLookup(checksummedAddress, true).catch((e) => {
-        console.error('Failed to resolve domain for address', checksummedAddress, e)
-      })
-    },
-    [domainsCtrl]
-  )
-
-  const resolveDomain = useCallback(
-    (props: { domain: string; bip44Item?: number[][] }) => {
-      domainsCtrl.resolveDomain(props).catch((e) => {
-        console.error('Failed to resolve address for domain', props.domain, e)
-      })
-    },
-    [domainsCtrl]
-  )
-
-  return (
-    <DomainsControllerStateContext.Provider
-      value={useMemo(
-        () => ({ state: domainsCtrl, reverseLookup, resolveDomain }),
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-        [domainsCtrl, reverseLookup, resolveDomain, rerender]
-      )}
-    >
-      {children}
-    </DomainsControllerStateContext.Provider>
-  )
-}
-
 const ExtensionDomainsProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
+  const controller = 'DomainsController'
   const state = useControllerState(controller)
   const { dispatch } = useControllersMiddleware()
   const mainState = useMainControllerState()
@@ -119,11 +64,7 @@ const ExtensionDomainsProvider: React.FC<React.PropsWithChildren> = ({ children 
 }
 
 const DomainsControllerStateProvider: React.FC<React.PropsWithChildren> = (props) => {
-  return isBenzin || isLegends ? (
-    <BenzinAndLegendsDomainsProvider {...props} />
-  ) : (
-    <ExtensionDomainsProvider {...props} />
-  )
+  return <ExtensionDomainsProvider {...props} />
 }
 
 export { DomainsControllerStateProvider, DomainsControllerStateContext }

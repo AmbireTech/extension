@@ -8,8 +8,10 @@ import { ThemeProvider } from '@common/contexts/themeContext'
 import { ToastProvider } from '@common/contexts/toastContext'
 import useFonts from '@common/hooks/useFonts'
 import { PortalHost, PortalProvider } from '@gorhom/portal'
+// import { ControllersMiddlewareProvider } from '@web/contexts/controllersMiddlewareContext'
 import { DomainsControllerStateProvider } from '@web/contexts/domainsControllerStateContext'
 
+// import { MainControllerStateProvider } from '@web/contexts/mainControllerStateContext'
 import { BenzinNetworksContextProvider } from './context'
 import BenzinScreen from './screens/BenzinScreen'
 
@@ -25,6 +27,8 @@ const BenzinInit = () => {
         <ThemeProvider>
           <SafeAreaProvider>
             <ToastProvider>
+              {/* <ControllersMiddlewareProvider>
+                <MainControllerStateProvider> */}
               <ContractNamesContextProvider>
                 <BenzinNetworksContextProvider>
                   <DomainsControllerStateProvider>
@@ -33,6 +37,8 @@ const BenzinInit = () => {
                   </DomainsControllerStateProvider>
                 </BenzinNetworksContextProvider>
               </ContractNamesContextProvider>
+              {/* </MainControllerStateProvider>
+              </ControllersMiddlewareProvider> */}
             </ToastProvider>
           </SafeAreaProvider>
         </ThemeProvider>
