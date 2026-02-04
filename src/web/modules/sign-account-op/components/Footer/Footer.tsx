@@ -109,8 +109,9 @@ const Footer = ({
             appearance="secondaryText"
             numberOfLines={1}
           >
-            {t('Waiting for signatures from other owners')}
+            {t('Waiting for signatures')}
           </Text>
+          <ActionsPagination />
         </View>
         <Button
           testID="close-queue-button"
