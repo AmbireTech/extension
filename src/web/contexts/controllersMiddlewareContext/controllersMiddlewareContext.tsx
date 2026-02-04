@@ -3,13 +3,19 @@ import { nanoid } from 'nanoid'
 /* eslint-disable @typescript-eslint/no-floating-promises */
 import React, { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
+import { networks } from '@ambire-common/consts/networks'
+import { ContractNamesController } from '@ambire-common/controllers/contractNames/contractNames'
+import { DomainsController } from '@ambire-common/controllers/domains/domains'
 import EventEmitter from '@ambire-common/controllers/eventEmitter/eventEmitter'
 import { EventEmitterRegistryController } from '@ambire-common/controllers/eventEmitterRegistry/eventEmitterRegistry'
 import { MainController } from '@ambire-common/controllers/main/main'
+import { ProvidersController } from '@ambire-common/controllers/providers/providers'
+import { StorageController } from '@ambire-common/controllers/storage/storage'
 import { ErrorRef } from '@ambire-common/interfaces/eventEmitter'
 import { IKeystoreController } from '@ambire-common/interfaces/keystore'
 import { WindowProps } from '@ambire-common/interfaces/ui'
 import { KeystoreSigner } from '@ambire-common/libs/keystoreSigner/keystoreSigner'
+import { LIFI_EXPLORER_URL } from '@ambire-common/services/lifi/consts'
 import { captureMessage } from '@common/config/analytics/CrashAnalytics.web'
 import { APP_VERSION } from '@common/config/env'
 import { ToastOptions } from '@common/contexts/toastContext'
@@ -17,7 +23,7 @@ import useIsScreenFocused from '@common/hooks/useIsScreenFocused'
 import useNavigation from '@common/hooks/useNavigation'
 import useRoute from '@common/hooks/useRoute'
 import useToast from '@common/hooks/useToast'
-import { BUNGEE_API_KEY, LI_FI_API_KEY, RELAYER_URL, VELCRO_URL } from '@env'
+import { BUNGEE_API_KEY, RELAYER_URL, VELCRO_URL } from '@env'
 import { isExtension } from '@web/constants/browserapi'
 import {
   controllersMiddlewareContextDefaults,
@@ -26,7 +32,7 @@ import {
 import { Action } from '@web/extension-services/background/actions'
 import { WalletStateController } from '@web/extension-services/background/controllers/wallet-state'
 import { handleActions } from '@web/extension-services/background/handlers/handleActions'
-import storage from '@web/extension-services/background/webapi/storage'
+import { storage } from '@web/extension-services/background/webapi/storage'
 import { closeCurrentWindow } from '@web/extension-services/background/webapi/window'
 import eventBus from '@web/extension-services/event/eventBus'
 import { PortMessenger } from '@web/extension-services/messengers'
@@ -133,7 +139,10 @@ const ControllersMiddlewareContext = createContext<ControllersMiddlewareContextR
   controllersMiddlewareContextDefaults
 )
 
-const ExtensionControllersMiddlewareProvider: React.FC<any> = ({ children }) => {
+const ExtensionControllersMiddlewareProvider: React.FC<{
+  children: React.ReactNode
+  env: 'extension'
+}> = ({ children }) => {
   const { addToast } = useToast()
   const route = useRoute()
   const timer: any = useRef(null)
@@ -288,7 +297,10 @@ const ExtensionControllersMiddlewareProvider: React.FC<any> = ({ children }) => 
   )
 }
 
-const CommonControllersMiddlewareProvider: React.FC<any> = ({ children }) => {
+const CommonControllersMiddlewareProvider: React.FC<{
+  children: React.ReactNode
+  env: 'mobile' | 'explorer' | 'rewards'
+}> = ({ children, env }) => {
   const { addToast } = useToast()
   const { navigate } = useNavigation()
   const [isUnlocked, setIsUnlocked] = useState(false)
@@ -345,7 +357,7 @@ const CommonControllersMiddlewareProvider: React.FC<any> = ({ children }) => {
         if (!hasOnUpdateInitialized) {
           ctrl.onUpdate(async (forceEmit) => {
             const res = debounceFrontEndEventUpdatesOnSameTick(ctrl.name, ctrl, forceEmit)
-            if (res === 'DEBOUNCED') return
+            if (res === 'DEBOUNCED' || env !== 'mobile') return
 
             if (ctrl.name === 'KeystoreController') {
               const keystoreCtrl = ctrl as IKeystoreController
@@ -355,7 +367,7 @@ const CommonControllersMiddlewareProvider: React.FC<any> = ({ children }) => {
                 //   id: getExtensionInstanceId(keystoreCtrl.keyStoreUid, mainCtrl.invite.verifiedCode)
                 // })
                 if (isUnlocked && !keystoreCtrl.isUnlocked) {
-                  await mainCtrl.current.dapps.broadcastDappSessionEvent('lock')
+                  await controllers.current.main!.dapps.broadcastDappSessionEvent('lock')
                 }
                 setIsUnlocked(keystoreCtrl.isUnlocked)
               }
@@ -380,12 +392,8 @@ const CommonControllersMiddlewareProvider: React.FC<any> = ({ children }) => {
         const hasOnErrorInitialized = ctrl.onErrorIds.includes('background')
 
         if (!hasOnErrorInitialized) {
-          ctrl.onError((error) => {
-            // stateDebug(walletStateCtrl.logLevel, ctrl, ctrl.name, 'error')
-            eventBus.emit('error', {
-              errors: ctrl.emittedErrors,
-              controller: mainCtrl.current.name
-            })
+          ctrl.onError(() => {
+            eventBus.emit('error', { errors: ctrl.emittedErrors, controller: ctrl.name })
             // TODO: sentry
             // captureBackgroundExceptionFromControllerError(error, ctrl.name)
           }, 'background')
@@ -474,67 +482,102 @@ const CommonControllersMiddlewareProvider: React.FC<any> = ({ children }) => {
     return fetch(url, initWithCustomHeaders)
   }, [])
 
-  const mainCtrl = useRef<MainController>(
-    new MainController({
-      eventEmitterRegistry: eventEmitterRegistry.current,
-      appVersion: APP_VERSION,
-      platform: 'default',
-      storageAPI: storage,
-      fetch: fetchWithAnalytics,
-      relayerUrl: RELAYER_URL,
-      velcroUrl: VELCRO_URL,
-      liFiApiKey: LI_FI_API_KEY,
-      bungeeApiKey: BUNGEE_API_KEY,
-      featureFlags: {},
-      keystoreSigners: {
-        internal: KeystoreSigner
-      } as any,
-      externalSignerControllers: {},
-      uiManager: {
-        window: {
-          open: async () => {
-            return {
-              id: 1,
-              width: 0,
-              height: 0,
-              left: 0,
-              top: 0,
-              focused: true,
-              createdFromWindowId: 0
-            } as WindowProps
+  const controllers = useRef<{
+    main?: MainController
+    providers?: ProvidersController
+    domains?: DomainsController
+    contractNames?: ContractNamesController
+  }>(
+    (() => {
+      const ctrls: {
+        main?: MainController
+        providers?: ProvidersController
+        domains?: DomainsController
+        contractNames?: ContractNamesController
+      } = {}
+
+      if (env === 'mobile') {
+        ctrls.main = new MainController({
+          eventEmitterRegistry: eventEmitterRegistry.current,
+          appVersion: APP_VERSION,
+          platform: 'default',
+          storageAPI: storage,
+          fetch: fetchWithAnalytics,
+          relayerUrl: RELAYER_URL,
+          velcroUrl: VELCRO_URL,
+          liFiApiKey: LIFI_EXPLORER_URL,
+          bungeeApiKey: BUNGEE_API_KEY,
+          featureFlags: {},
+          keystoreSigners: {
+            internal: KeystoreSigner
           },
-          focus: async () => {
-            return {
-              id: 1,
-              width: 0,
-              height: 0,
-              left: 0,
-              top: 0,
-              focused: true,
-              createdFromWindowId: 0
-            } as WindowProps
-          },
-          closePopupWithUrl: async () => {},
-          remove: async () => {},
-          event: new Emitter()
-        },
-        notification: {
-          create: async () => {}
-        },
-        message: {
-          sendToastMessage: (text, options) => {
-            eventBus.emit('addToast', { text, options })
-          },
-          sendUiMessage: (params) => {
-            eventBus.emit('receiveOneTimeData', params)
-          },
-          sendNavigateMessage: () => {
-            // TODO:
-            // pm.send('> ui-navigate', ...)
+          externalSignerControllers: {},
+          uiManager: {
+            window: {
+              open: async () => {
+                return {
+                  id: 1,
+                  width: 0,
+                  height: 0,
+                  left: 0,
+                  top: 0,
+                  focused: true,
+                  createdFromWindowId: 0
+                } as WindowProps
+              },
+              focus: async () => {
+                return {
+                  id: 1,
+                  width: 0,
+                  height: 0,
+                  left: 0,
+                  top: 0,
+                  focused: true,
+                  createdFromWindowId: 0
+                } as WindowProps
+              },
+              closePopupWithUrl: async () => {},
+              remove: async () => {},
+              event: new Emitter()
+            },
+            notification: {
+              create: async () => {}
+            },
+            message: {
+              sendToastMessage: (text, options) => {
+                eventBus.emit('addToast', { text, options })
+              },
+              sendUiMessage: (params) => {
+                eventBus.emit('receiveOneTimeData', params)
+              },
+              sendNavigateMessage: () => {
+                // TODO:
+                // pm.send('> ui-navigate', ...)
+              }
+            }
           }
-        }
+        })
+      } else if (env === 'explorer') {
+        const storageCtrl = new StorageController(storage)
+        ctrls.providers = new ProvidersController({
+          eventEmitterRegistry: eventEmitterRegistry.current,
+          storage: storageCtrl,
+          getNetworks: () => networks,
+          sendUiMessage: () => {}
+        })
+
+        ctrls.domains = new DomainsController({
+          eventEmitterRegistry: eventEmitterRegistry.current,
+          providers: ctrls.providers.providers
+        })
+
+        ctrls.contractNames = new ContractNamesController({
+          eventEmitterRegistry: eventEmitterRegistry.current,
+          fetch: fetchWithAnalytics
+        })
       }
-    })
+      return ctrls
+    })()
   )
 
   const walletStateCtrl = useRef<WalletStateController>(
@@ -581,20 +624,30 @@ const CommonControllersMiddlewareProvider: React.FC<any> = ({ children }) => {
     return () => eventBus.removeEventListener('navigate', onNavigate)
   }, [addToast, navigate])
 
-  const dispatch = useCallback((action: Action) => {
-    if (action.type === 'INIT_CONTROLLER_STATE') {
-      const ctrl = eventEmitterRegistry.current
-        .values()
-        .find((c) => c.name === action.params.controller)
-      if (ctrl) pm.send('> ui', { method: action.params.controller, params: ctrl })
-    } else {
-      handleActions(action, {
-        eventEmitterRegistry: eventEmitterRegistry.current,
-        mainCtrl: mainCtrl.current,
-        walletStateCtrl: walletStateCtrl.current
-      })
-    }
-  }, [])
+  const dispatch = useCallback(
+    (action: Action) => {
+      if (action.type === 'INIT_CONTROLLER_STATE') {
+        const ctrl = eventEmitterRegistry.current
+          .values()
+          .find((c) => c.name === action.params.controller)
+        if (ctrl) {
+          eventBus.emit(action.params.controller, ctrl.toJSON())
+        }
+      } else {
+        console.log(action, controllers.current)
+        // TODO: temp solution
+        handleActions(action, {
+          eventEmitterRegistry: eventEmitterRegistry.current,
+          mainCtrl:
+            env === 'mobile'
+              ? controllers.current.main!
+              : (controllers.current as never as MainController),
+          walletStateCtrl: walletStateCtrl.current
+        })
+      }
+    },
+    [env]
+  )
 
   return (
     <ControllersMiddlewareContext.Provider value={useMemo(() => ({ dispatch }), [dispatch])}>
@@ -603,11 +656,14 @@ const CommonControllersMiddlewareProvider: React.FC<any> = ({ children }) => {
   )
 }
 
-const ControllersMiddlewareProvider: React.FC<React.PropsWithChildren> = (props) => {
-  return isExtension ? (
-    <ExtensionControllersMiddlewareProvider {...props} />
+const ControllersMiddlewareProvider: React.FC<{
+  children: React.ReactNode
+  env: 'extension' | 'mobile' | 'explorer' | 'rewards'
+}> = ({ env, ...rest }) => {
+  return env === 'extension' ? (
+    <ExtensionControllersMiddlewareProvider {...rest} env="extension" />
   ) : (
-    <CommonControllersMiddlewareProvider {...props} />
+    <CommonControllersMiddlewareProvider {...rest} env={env} />
   )
 }
 

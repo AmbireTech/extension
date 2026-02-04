@@ -41,7 +41,7 @@ const ControllersStateLoadedContext = createContext<{
 
 const { isPopup } = getUiType()
 
-const isStateLoaded = (state: any) => {
+export const isStateLoaded = (state: any) => {
   if (!state || !Object.keys(state).length) return false
   if ('isReady' in state) return state.isReady === true
   return true

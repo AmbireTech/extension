@@ -476,6 +476,11 @@ module.exports = async function (env, argv) {
 
     config.entry = './src/benzin/index.js'
 
+    config.resolve.fallback = {
+      stream: require.resolve('stream-browserify'),
+      crypto: require.resolve('crypto-browserify')
+    }
+
     config.plugins = [
       ...defaultExpoConfigPlugins,
       new NodePolyfillPlugin(),
@@ -505,11 +510,21 @@ module.exports = async function (env, argv) {
       })
     ]
 
+    config.module.rules.push({
+      test: /\.cjs$/,
+      type: 'javascript/auto'
+    })
+
     return config
   }
   if (isLegends) {
     config.output.clean = true
     config.entry = './src/legends/index.js'
+
+    config.resolve.fallback = {
+      stream: require.resolve('stream-browserify'),
+      crypto: require.resolve('crypto-browserify')
+    }
 
     if (process.env.APP_ENV === 'development') {
       config.optimization = { minimize: false }
@@ -585,6 +600,11 @@ module.exports = async function (env, argv) {
         ]
       })
     ]
+
+    config.module.rules.push({
+      test: /\.cjs$/,
+      type: 'javascript/auto'
+    })
 
     return config
   }

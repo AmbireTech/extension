@@ -3,8 +3,9 @@ import React, { FC, useEffect, useMemo } from 'react'
 
 import Spinner from '@common/components/Spinner'
 import { Props as TextProps } from '@common/components/Text'
-import useContractNamesContext from '@common/hooks/useContractNamesContext/useContractNamesContext'
 import useReverseLookup from '@common/hooks/useReverseLookup'
+import useContractNamesControllerState from '@web/hooks/useContractNamesController/useContractNamesController'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 
 import BaseAddress from '../BaseAddress'
 
@@ -15,17 +16,23 @@ interface Props extends TextProps {
 
 const BenzinAddressName: FC<Props> = ({ address, chainId, ...rest }) => {
   const { isLoading: isLoadingEns, ens } = useReverseLookup({ address })
-  const { contractNamesCtrl, state } = useContractNamesContext()
+  const { contractNames } = useContractNamesControllerState()
+  const { dispatch } = useControllersMiddleware()
 
   useEffect(() => {
-    if (!contractNamesCtrl.contractNames?.[address]) contractNamesCtrl.getName(address, chainId)
-  }, [address, chainId, contractNamesCtrl])
+    if (!contractNames[address]) {
+      dispatch({
+        type: 'CONTRACT_NAMES_CONTROLLER_GET_NAME',
+        params: { address, chainId }
+      })
+    }
+  }, [address, chainId, contractNames, dispatch])
 
   const foundContractName = useMemo(() => {
-    const name = state.contractNames?.[address]?.name
+    const name = contractNames?.[address]?.name
     if (!name) return
     return name
-  }, [state, address])
+  }, [contractNames, address])
 
   if (isLoadingEns)
     return (

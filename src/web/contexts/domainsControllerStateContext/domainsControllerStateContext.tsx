@@ -5,7 +5,6 @@ import { IDomainsController } from '@ambire-common/interfaces/domains'
 import useDeepMemo from '@common/hooks/useDeepMemo'
 import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useControllerState from '@web/hooks/useControllerState'
-import useMainControllerState from '@web/hooks/useMainControllerState'
 
 const DomainsControllerStateContext = createContext<{
   state: IDomainsController
@@ -21,16 +20,15 @@ const ExtensionDomainsProvider: React.FC<React.PropsWithChildren> = ({ children 
   const controller = 'DomainsController'
   const state = useControllerState(controller)
   const { dispatch } = useControllersMiddleware()
-  const mainState = useMainControllerState()
 
   useEffect(() => {
-    if (mainState.isReady && !Object.keys(state).length) {
+    if (!Object.keys(state).length) {
       dispatch({
         type: 'INIT_CONTROLLER_STATE',
         params: { controller }
       })
     }
-  }, [dispatch, mainState.isReady, state])
+  }, [dispatch, state])
 
   const memoizedState = useDeepMemo(state, controller)
 

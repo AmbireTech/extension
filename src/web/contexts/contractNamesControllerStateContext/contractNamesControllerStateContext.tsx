@@ -5,7 +5,6 @@ import { IContractNamesController } from '@ambire-common/interfaces/contractName
 import useDeepMemo from '@common/hooks/useDeepMemo'
 import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useControllerState from '@web/hooks/useControllerState'
-import useMainControllerState from '@web/hooks/useMainControllerState'
 
 const ContractNamesControllerStateContext = createContext<IContractNamesController>(
   {} as IContractNamesController
@@ -15,16 +14,15 @@ const ContractNamesControllerStateProvider: React.FC<any> = ({ children }) => {
   const controller = 'ContractNamesController'
   const state = useControllerState(controller)
   const { dispatch } = useControllersMiddleware()
-  const mainState = useMainControllerState()
 
   useEffect(() => {
-    if (mainState.isReady && !Object.keys(state).length) {
+    if (!Object.keys(state).length) {
       dispatch({
         type: 'INIT_CONTROLLER_STATE',
         params: { controller }
       })
     }
-  }, [dispatch, mainState.isReady, state])
+  }, [dispatch, state])
 
   const memoizedState = useDeepMemo(state, controller)
 
