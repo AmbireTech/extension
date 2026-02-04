@@ -49,19 +49,14 @@ upload_source_maps_for_build() {
 prepare_and_upload_sourcemaps() {
   # Always install sentry-cli for debug ID injection, even without auth token
 
-  # Check if sentry-cli is installed, if not install it
-  if command -v sentry-cli &> /dev/null; then
-    echo "sentry-cli found, uninstalling..."
-    EXISTING_SENTRY_PATH=$(command -v sentry-cli)
-    rm -f "$EXISTING_SENTRY_PATH"
-  fi
-
-  echo "Installing sentry-cli..."
   # Ensure common installation paths are in PATH before installation
   # The Sentry installer typically installs to ~/.local/bin on Linux
+  # We put this first so our installed version takes precedence over any system installation
   export PATH="$HOME/.local/bin:/usr/local/bin:$PATH"
 
+  echo "Installing sentry-cli..."
   # Install sentry-cli (the installer script handles the installation)
+  # It will install to ~/.local/bin/sentry-cli, which is now first in PATH
   curl -sL https://sentry.io/get-cli/ | SENTRY_CLI_VERSION="2.46.0" sh
 
   # Verify installation succeeded
