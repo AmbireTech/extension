@@ -57,7 +57,22 @@ prepare_and_upload_sourcemaps() {
   fi
 
   echo "Installing sentry-cli..."
+  # Ensure common installation paths are in PATH before installation
+  # The Sentry installer typically installs to ~/.local/bin on Linux
+  export PATH="$HOME/.local/bin:/usr/local/bin:$PATH"
+
+  # Install sentry-cli (the installer script handles the installation)
   curl -sL https://sentry.io/get-cli/ | SENTRY_CLI_VERSION="2.46.0" sh
+
+  # Verify installation succeeded
+  if ! command -v sentry-cli &> /dev/null; then
+    echo "Error: sentry-cli installation completed but command not found in PATH"
+    echo "Current PATH: $PATH"
+    echo "Checking common locations..."
+    [ -f "$HOME/.local/bin/sentry-cli" ] && echo "Found at $HOME/.local/bin/sentry-cli" || echo "Not found at $HOME/.local/bin/sentry-cli"
+    [ -f "/usr/local/bin/sentry-cli" ] && echo "Found at /usr/local/bin/sentry-cli" || echo "Not found at /usr/local/bin/sentry-cli"
+    exit 1
+  fi
 
   SENTRY_PROJECT=extension
   sentry-cli --version
