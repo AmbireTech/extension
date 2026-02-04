@@ -1,43 +1,43 @@
 import { THEME_TYPES } from './types'
 
 const ACCENT_PRIMITIVES = {
-  primary100: {
+  primaryAccent100: {
     [THEME_TYPES.LIGHT]: '#EFEAFF',
     [THEME_TYPES.DARK]: '#2B273D'
   },
-  primary200: {
+  primaryAccent200: {
     [THEME_TYPES.LIGHT]: '#9D7AFF',
     [THEME_TYPES.DARK]: '#9D7AFF'
   },
-  primary300: {
+  primaryAccent300: {
     [THEME_TYPES.LIGHT]: '#6C38F7',
     [THEME_TYPES.DARK]: '#9D7AFF'
   },
-  primary400: {
+  primaryAccent400: {
     [THEME_TYPES.LIGHT]: '#34128D',
     [THEME_TYPES.DARK]: '#34128D'
   },
-  primary500: {
+  primaryAccent500: {
     [THEME_TYPES.LIGHT]: '#2B273D',
     [THEME_TYPES.DARK]: '#2B273D'
   },
-  secondary100: {
+  secondaryAccent100: {
     [THEME_TYPES.LIGHT]: '#DFFEFC',
     [THEME_TYPES.DARK]: '#204041'
   },
-  secondary200: {
+  secondaryAccent200: {
     [THEME_TYPES.LIGHT]: '#7AFFF9',
     [THEME_TYPES.DARK]: '#7AFFF9'
   },
-  secondary300: {
+  secondaryAccent300: {
     [THEME_TYPES.LIGHT]: '#39F7EF',
     [THEME_TYPES.DARK]: '#39F7EF'
   },
-  secondary400: {
+  secondaryAccent400: {
     [THEME_TYPES.LIGHT]: '#0B7772',
     [THEME_TYPES.DARK]: '#7AFFF9'
   },
-  secondary500: {
+  secondaryAccent500: {
     [THEME_TYPES.LIGHT]: '#DFFEFC',
     [THEME_TYPES.DARK]: '#204041'
   }

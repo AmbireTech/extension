@@ -41,11 +41,11 @@ const ThemeColors = {
   /**
    * @deprecated - please use primaryAccent
    */
-  primary: ACCENT_PRIMITIVES.primary200,
-  primaryAccent: ACCENT_PRIMITIVES.primary200,
-  primaryAccentHovered: ACCENT_PRIMITIVES.primary300,
-  secondaryAccent: ACCENT_PRIMITIVES.secondary500,
-  secondaryAccentHovered: ACCENT_PRIMITIVES.secondary400,
+  primary: ACCENT_PRIMITIVES.primaryAccent200,
+  primaryAccent: ACCENT_PRIMITIVES.primaryAccent200,
+  primaryAccentHovered: ACCENT_PRIMITIVES.primaryAccent300,
+  secondaryAccent: ACCENT_PRIMITIVES.secondaryAccent500,
+  secondaryAccentHovered: ACCENT_PRIMITIVES.secondaryAccent400,
   // --- Feedback tokens ---
   infoText: FEEDBACK_PRIMITIVES.info300,
   infoDecorative: FEEDBACK_PRIMITIVES.info300,
@@ -70,7 +70,7 @@ const ThemeColors = {
     [THEME_TYPES.DARK]: `rgba(0, 0, 0, 0.5)`
   },
   // @TODO: Sync up with miro
-  linkText: ACCENT_PRIMITIVES.primary300,
+  linkText: ACCENT_PRIMITIVES.primaryAccent300,
   /**
    * @deprecated
    */
