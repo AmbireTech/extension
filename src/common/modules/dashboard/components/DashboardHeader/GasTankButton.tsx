@@ -89,7 +89,7 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
           ...removeTankBtnStyle,
           ...(!totalBalanceGasTankDetails.balanceFormatted && {
             borderWidth: 1,
-            borderColor: theme.primaryLight
+            borderColor: theme.primaryAccent
           }),
           ...(doesHaveTooltip && { cursor: 'default' })
         }}

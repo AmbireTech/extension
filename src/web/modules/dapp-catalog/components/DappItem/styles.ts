@@ -17,7 +17,7 @@ const getStyles = (theme: ThemeProps) =>
       height: 30,
       // @ts-ignore
       borderRadius: '50%',
-      backgroundColor: theme.primaryLight80,
+      backgroundColor: theme.primaryAccent,
       alignItems: 'center',
       justifyContent: 'center'
     },

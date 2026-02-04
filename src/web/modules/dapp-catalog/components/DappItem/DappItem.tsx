@@ -109,7 +109,7 @@ const DappItem = (dapp: Dapp) => {
             styles.container,
             isFeatured && {
               // @ts-ignore
-              boxShadow: `0 ${isHovered ? 2 : 3}px 0 0 ${String(theme.primaryLight80)}`
+              boxShadow: `0 ${isHovered ? 2 : 3}px 0 0 ${String(theme.primaryAccent)}`
             },
             animStyle
           ]}
@@ -248,7 +248,7 @@ const DappItem = (dapp: Dapp) => {
                     }}
                     style={{
                       ...spacings.mlTy,
-                      backgroundColor: theme.primaryLight80,
+                      backgroundColor: theme.primaryAccent,
                       borderWidth: 0
                     }}
                   />

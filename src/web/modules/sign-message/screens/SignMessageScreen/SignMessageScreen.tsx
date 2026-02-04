@@ -328,7 +328,7 @@ const SignMessageScreen = () => {
         backgroundColor={
           isAuthorization && !makeItSmartConfirmed
             ? theme.primaryBackground
-            : theme.quinaryBackground
+            : theme.secondaryBackground
         }
       >
         <SigningKeySelect

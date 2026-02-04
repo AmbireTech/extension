@@ -114,11 +114,9 @@ const SavedSeedPhrases = ({ handleClose }: { handleClose: () => void }) => {
         <PanelTitle title={t('Add from stored recovery phrases')} style={text.left} />
         <Button
           size="small"
-          type="ghost"
+          type="gray"
           text={t('Manage phrases')}
-          textStyle={{ color: theme.primary }}
           hasBottomSpacing={false}
-          style={spacings.ph0}
           onPress={() => {
             navigate(WEB_ROUTES.recoveryPhrasesSettings)
           }}
@@ -126,7 +124,7 @@ const SavedSeedPhrases = ({ handleClose }: { handleClose: () => void }) => {
           <SettingsIcon
             width={18}
             height={18}
-            color={theme.primary}
+            color={theme.primaryText}
             style={spacings.mlTy}
             strokeWidth="1.7"
           />

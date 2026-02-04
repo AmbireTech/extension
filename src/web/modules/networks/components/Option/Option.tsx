@@ -35,7 +35,7 @@ const Option = ({
           themeType === THEME_TYPES.DARK
             ? `${String(theme.linkText)}00`
             : `${String(theme.primary)}00`,
-        to: themeType === THEME_TYPES.DARK ? theme.primaryLight80 : theme.primary
+        to: theme.primaryAccent
       },
       {
         property: 'left',

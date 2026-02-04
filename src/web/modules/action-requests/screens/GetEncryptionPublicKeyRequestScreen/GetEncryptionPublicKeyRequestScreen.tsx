@@ -102,7 +102,7 @@ const GetEncryptionPublicKeyRequestScreen = () => {
             resolveNode={actionFooterResolveNode}
           />
         }
-        backgroundColor={theme.quinaryBackground}
+        backgroundColor={theme.secondaryBackground}
       >
         <TabLayoutWrapperMainContent>
           <RequestingDappInfo
@@ -115,7 +115,7 @@ const GetEncryptionPublicKeyRequestScreen = () => {
             {errorNode || (
               <Alert
                 title={t('This app will be able to compose encrypted messages to you.')}
-                type="info2"
+                type="info"
               />
             )}
           </View>

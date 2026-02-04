@@ -96,7 +96,7 @@ const Tabs: React.FC<Props> = ({ openTab, setOpenTab, handleChangeQuery }) => {
 
           if (pendingBanner) {
             badgeText = pendingBanner.meta!.accountOpsCount
-            badgeTextAppearance = theme.info2Text
+            badgeTextAppearance = theme.infoText
           }
 
           if (!isActive && failedBanner) {
@@ -107,17 +107,14 @@ const Tabs: React.FC<Props> = ({ openTab, setOpenTab, handleChangeQuery }) => {
           }
 
           if (!isActive && pendingBanner) {
-            customColors = [
-              `${theme.info2Decorative as any}45`,
-              `${theme.info2Decorative as any}07`
-            ]
+            customColors = [`${theme.infoDecorative as any}45`, `${theme.infoDecorative as any}07`]
           }
         }
 
         if (type === 'defi' && currentDefiBanners.length > 0) {
-          badgeBorderColor = isActive ? '#39F7EF' : theme.secondaryText
+          badgeBorderColor = isActive ? theme.primaryAccent : theme.secondaryText
           badgeText = 1
-          badgeTextAppearance = isActive ? '#39F7EF' : theme.secondaryText
+          badgeTextAppearance = isActive ? theme.primaryAccent : theme.secondaryText
         }
 
         return (
@@ -150,7 +147,7 @@ const Tabs: React.FC<Props> = ({ openTab, setOpenTab, handleChangeQuery }) => {
                   {type === 'activity' && !!pendingBanner ? (
                     <Spinner
                       style={{ width: '100%', height: '100%', position: 'absolute' }}
-                      variant="info2"
+                      variant="info"
                     />
                   ) : (
                     <View
@@ -184,8 +181,8 @@ const Tabs: React.FC<Props> = ({ openTab, setOpenTab, handleChangeQuery }) => {
                     TABS[tabIndex + 1]?.type === 'activity' && (!!pendingBanner || !!failedBanner)
                       ? 'transparent'
                       : indexDiff >= 1 || indexDiff < -1
-                      ? theme.secondaryBorder
-                      : 'transparent'
+                        ? theme.secondaryBorder
+                        : 'transparent'
                 }}
               />
             )}

@@ -117,7 +117,7 @@ const GetStartedScreen = () => {
               <Text
                 onPress={() => navigate(ROUTES.networksConfiguration)}
                 fontSize={12}
-                color={theme.info2Text}
+                color={theme.infoText}
                 style={{ textDecorationLine: 'underline' }}
               >
                 {t('Network Configuration')}

@@ -18,7 +18,7 @@ interface Props {
   title?: string | React.ReactNode
   titleWeight?: TextWeight
   text?: string | React.ReactNode
-  type?: 'error' | 'warning' | 'success' | 'info' | 'info2'
+  type?: 'error' | 'warning' | 'success' | 'info'
   style?: ViewStyle
   children?: React.ReactNode
   size?: 'sm' | 'md'
@@ -33,8 +33,7 @@ const ICON_MAP = {
   error: ErrorIcon,
   warning: WarningIcon,
   success: SuccessIcon,
-  info: InfoIcon,
-  info2: InfoIcon
+  info: InfoIcon
 }
 
 const SIZES = {

@@ -18,8 +18,8 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
     },
     gasTankBadge: {
       borderRadius: 50,
-      backgroundColor: themeType === THEME_TYPES.DARK ? '#8B3DFF' : theme.primaryLight,
-      borderColor: themeType === THEME_TYPES.DARK ? '#8B3DFF' : theme.primaryLight,
+      backgroundColor: theme.primaryAccent,
+      borderColor: theme.primaryAccent,
       borderWidth: 1,
       ...spacings.phMi,
       ...spacings.mlMi

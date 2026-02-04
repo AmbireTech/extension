@@ -6,6 +6,7 @@ import RetryIcon from '@common/assets/svg/RetryIcon'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
+import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
 
@@ -23,8 +24,8 @@ const RetryButton: FC<Props> = ({ onPress, label, disabled }) => {
   const [bindAnim, animStyle] = useCustomHover({
     property: 'backgroundColor',
     values: {
-      from: `${theme.primary as string}14`,
-      to: theme.primary20
+      from: hexToRgba(theme.primaryAccent, 0.08),
+      to: hexToRgba(theme.primaryAccent, 0.2)
     }
   })
 

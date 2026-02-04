@@ -89,11 +89,11 @@ const DAppPermissions: FC<{
         {t('Connecting with this app will:')}
       </Text>
       <DAppPermissionWrapper responsiveSizeMultiplier={responsiveSizeMultiplier}>
-        <DAppPermissionIcon backgroundColor={theme.info2Background}>
+        <DAppPermissionIcon backgroundColor={theme.infoBackground}>
           <VisibilityIcon
             width={responsiveSizeMultiplier * 24}
             height={responsiveSizeMultiplier * 24}
-            color={theme.info2Decorative}
+            color={theme.infoDecorative}
           />
         </DAppPermissionIcon>
         <DAppPermissionText style={spacings.ptMi}>

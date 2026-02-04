@@ -28,11 +28,8 @@ const AllNetworksOption = ({ onPress }: { onPress: (chainId: bigint | null) => v
       },
       {
         property: 'borderColor',
-        from:
-          themeType === THEME_TYPES.DARK
-            ? `${String(theme.primaryLight)}00`
-            : `${String(theme.secondaryBorder)}00`,
-        to: themeType === THEME_TYPES.DARK ? theme.primaryLight80 : theme.secondaryBorder
+        from: theme.primaryAccent,
+        to: theme.primaryAccentHovered
       }
     ],
     forceHoveredStyle: !dashboardNetworkFilter

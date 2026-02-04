@@ -30,7 +30,7 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       shadowRadius: 8,
       elevation: 5,
       borderWidth: 1,
-      borderColor: themeType === THEME_TYPES.DARK ? theme.primaryLight80 : theme.primary,
+      borderColor: theme.primaryAccent,
       borderBottomWidth: 0,
       borderTopLeftRadius: 12,
       borderTopRightRadius: 12

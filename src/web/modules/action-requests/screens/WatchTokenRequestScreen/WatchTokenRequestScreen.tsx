@@ -272,12 +272,12 @@ const WatchTokenRequestScreen = () => {
   return (
     <TabLayoutContainer
       width="full"
-      backgroundColor={theme.quinaryBackground}
+      backgroundColor={theme.secondaryBackground}
       header={
         <Header
           mode="custom-inner-content"
           withAmbireLogo
-          backgroundColor={theme.quinaryBackground as string}
+          backgroundColor={theme.secondaryBackground as string}
         />
       }
       footer={
@@ -432,7 +432,7 @@ const WatchTokenRequestScreen = () => {
               <View style={spacings.ptMd}>
                 <Alert
                   size="sm"
-                  type="info2"
+                  type="info"
                   title={
                     isTokenCustom
                       ? t('This token is already added as a custom token.')

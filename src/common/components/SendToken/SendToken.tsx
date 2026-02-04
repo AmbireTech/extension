@@ -13,6 +13,7 @@ import { FONT_FAMILIES } from '@common/hooks/useFonts'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
+import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import MaxAmount from '@web/modules/swap-and-bridge/components/MaxAmount'
@@ -211,8 +212,8 @@ const SendToken: FC<Props> = ({
                         backgroundColor:
                           themeType === THEME_TYPES.DARK
                             ? hovered
-                              ? theme.primary20
-                              : `${theme.primary as string}14`
+                              ? hexToRgba(theme.primaryAccent, 0.2)
+                              : hexToRgba(theme.primaryAccent, 0.08)
                             : hovered
                               ? '#6000FF14'
                               : theme.infoBackground,

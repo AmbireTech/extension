@@ -383,14 +383,13 @@ const DappCatalogScreen = () => {
                   borderWidth: 1,
                   ...(network && network.name !== ALL_CATEGORIES_OPTION.value
                     ? {
-                        borderColor:
-                          themeType === THEME_TYPES.DARK ? theme.primary : theme.primaryLight
+                        borderColor: theme.primaryAccent
                       }
                     : {})
                 }}
                 hoveredSelectStyle={{
                   backgroundColor: theme.secondaryBackground,
-                  borderColor: themeType === THEME_TYPES.DARK ? theme.primary : theme.primaryLight
+                  borderColor: theme.primaryAccent
                 }}
               />
               <Select
@@ -418,14 +417,13 @@ const DappCatalogScreen = () => {
                   borderWidth: 1,
                   ...(category && category !== ALL_CATEGORIES_OPTION.value
                     ? {
-                        borderColor:
-                          themeType === THEME_TYPES.DARK ? theme.primary : theme.primaryLight
+                        borderColor: theme.primaryAccent
                       }
                     : {})
                 }}
                 hoveredSelectStyle={{
                   backgroundColor: theme.secondaryBackground,
-                  borderColor: themeType === THEME_TYPES.DARK ? theme.primary : theme.primaryLight
+                  borderColor: theme.primaryAccent
                 }}
               />
               <FilterButton
@@ -449,7 +447,7 @@ const DappCatalogScreen = () => {
                 hoveredStyle={{ borderColor: theme.successDecorative }}
                 hoveredTextColor={theme.successDecorative}
                 activeStyle={{
-                  borderColor: themeType === THEME_TYPES.DARK ? theme.primary : theme.primaryLight
+                  borderColor: theme.primaryAccent
                 }}
               />
             </View>

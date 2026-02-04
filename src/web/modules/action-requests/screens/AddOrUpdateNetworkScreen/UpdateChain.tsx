@@ -88,7 +88,7 @@ const UpdateChain = ({
           }
         />
       }
-      backgroundColor={theme.quinaryBackground}
+      backgroundColor={theme.secondaryBackground}
     >
       <TabLayoutWrapperMainContent
         style={{
@@ -207,7 +207,7 @@ const UpdateChain = ({
                   title={t(
                     'Make sure you trust this site and provider. You can change the RPC URL anytime in the network settings.'
                   )}
-                  type="info2"
+                  type="info"
                 />
               </View>
             </>

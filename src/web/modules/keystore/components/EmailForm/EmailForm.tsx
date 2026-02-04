@@ -102,7 +102,7 @@ const EmailForm = () => {
           )}
         </Text>
         <Banner
-          type="info2"
+          type="info"
           style={spacings.mbMd}
           title={t('Recovery works only if you have already enabled it in settings.')}
           titleFontSize={14}

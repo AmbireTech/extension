@@ -20,10 +20,6 @@ const getBadgeTypes = (theme: ThemeProps) => ({
     color: theme.infoText,
     iconColor: theme.infoDecorative
   },
-  info2: {
-    color: theme.info2Text,
-    iconColor: theme.info2Decorative
-  },
   default: {
     color: theme.secondaryText,
     iconColor: theme.secondaryText
@@ -89,7 +85,6 @@ const Badge = ({
         type === 'default' && styles.defaultBadge,
         type === 'warning' && styles.warningBadge,
         type === 'info' && styles.infoBadge,
-        type === 'info2' && styles.info2Badge,
         type === 'error' && styles.errorBadge,
         type === 'new' && styles.newBadge,
         type === 'projectedRewards' && styles.projectedRewards,

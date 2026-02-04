@@ -57,7 +57,6 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
     },
     buttonContainerSecondary: {
       backgroundColor: 'transparent',
-      borderWidth: 1,
       borderColor: theme.primary
     },
     buttonContainerDanger: {
@@ -69,6 +68,7 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
     buttonContainerGhost: {
       backgroundColor: 'transparent',
       minHeight: 'auto',
+      height: 'auto',
       ...spacings.pv0
     },
 

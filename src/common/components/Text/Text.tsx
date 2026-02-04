@@ -26,8 +26,6 @@ export type TextAppearance =
   | 'warningText'
   | 'errorText'
   | 'infoText'
-  | 'info2Text'
-  | 'info3Text'
   | 'linkText'
 
 export interface Props extends TextProps {
@@ -84,8 +82,6 @@ const Text: React.FC<Props> = ({
     warningText: theme.warningText,
     errorText: theme.errorText,
     infoText: theme.infoText,
-    info2Text: theme.info2Text,
-    info3Text: theme.info3Text,
     linkText: theme.linkText
   }
 

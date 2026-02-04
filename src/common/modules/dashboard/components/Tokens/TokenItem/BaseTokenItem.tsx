@@ -118,8 +118,8 @@ const BaseTokenItem = ({
 
   const textColor = useMemo(() => {
     if (!isPending) return theme.primaryText
-    return pendingToBeSigned ? theme.warningText : theme.info2Text
-  }, [isPending, pendingToBeSigned, theme.primaryText, theme.warningText, theme.info2Text])
+    return pendingToBeSigned ? theme.warningText : theme.infoText
+  }, [isPending, pendingToBeSigned, theme.primaryText, theme.warningText, theme.infoText])
 
   return (
     <AnimatedPressable
@@ -131,7 +131,7 @@ const BaseTokenItem = ({
           borderRadius: borderRadius || BORDER_RADIUS_PRIMARY,
           marginBottom: hasBottomSpacing ? SPACING_TY : 0,
           ...(rewardsStyle && {
-            boxShadow: `0 ${isHovered ? 2 : 3}px 0 0 ${String(theme.iconPrimary2)}`
+            boxShadow: `0 ${isHovered ? 2 : 3}px 0 0 ${String(theme.primaryAccent)}`
           })
         },
         animStyle
@@ -254,8 +254,8 @@ const BaseTokenItem = ({
                   amount={pendingToBeConfirmed}
                   amountFormatted={pendingToBeConfirmedFormatted}
                   label="confirming"
-                  backgroundColor={theme.info2Background}
-                  textColor={theme.info2Text}
+                  backgroundColor={theme.infoBackground}
+                  textColor={theme.infoText}
                   Icon={PendingToBeConfirmedIcon}
                 />
               )}

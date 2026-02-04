@@ -231,7 +231,7 @@ const SignAccountOpScreen = () => {
       />
       <TabLayoutContainer
         width="full"
-        backgroundColor={theme.quinaryBackground}
+        backgroundColor={theme.secondaryBackground}
         withHorizontalPadding={false}
         style={spacings.phMd}
         header={

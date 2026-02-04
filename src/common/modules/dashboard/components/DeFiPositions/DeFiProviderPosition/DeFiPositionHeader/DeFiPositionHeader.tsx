@@ -60,8 +60,7 @@ const DeFiPositionHeader: FC<Props> = ({
   const [bindAnim, animStyle] = useCustomHover({
     property: 'backgroundColor',
     values: {
-      from:
-        themeType === THEME_TYPES.DARK ? theme.tertiaryBackground : theme.quaternaryBackgroundSolid,
+      from: theme.tertiaryBackground,
       to: theme.secondaryBackground
     },
     forceHoveredStyle: isExpanded
@@ -77,7 +76,7 @@ const DeFiPositionHeader: FC<Props> = ({
     const dapp = dapps.find((d) => d.name.toLowerCase().includes(providerNameWithoutVersion))
 
     return dapp?.url
-  }, [dapps, providerName])
+  }, [dapps, providerName, siteUrl])
 
   const openDAppUrl = useCallback(async () => {
     if (!dappUrl) return
