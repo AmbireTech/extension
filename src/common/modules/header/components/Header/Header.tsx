@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { View, ViewProps } from 'react-native'
 
+import AmbireLogoHorizontalMonochrome from '@common/assets/svg/AmbireLogoHorizontalMonochrome'
 import AccountData from '@common/components/AccountData'
 import Text from '@common/components/Text'
 import { titleChangeEventStream } from '@common/hooks/useNavigation'
@@ -8,7 +9,6 @@ import useRoute from '@common/hooks/useRoute'
 import routesConfig from '@common/modules/router/config/routesConfig'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import AmbireSmallWhiteLogo from '@web/components/AmbireSmallWhiteLogo'
 import { tabLayoutWidths } from '@web/components/TabLayoutWrapper'
 
 import HeaderBackButton, { DisplayIn } from '../HeaderBackButton'
@@ -81,7 +81,7 @@ const Header = ({ width }: CommonHeaderProps) => {
   return (
     <Wrapper width={width}>
       <AccountData />
-      <AmbireSmallWhiteLogo />
+      <AmbireLogoHorizontalMonochrome />
     </Wrapper>
   )
 }
@@ -117,7 +117,9 @@ const HeaderWithTitle = ({
         <HeaderBackButton displayIn={displayBackButtonIn} />
       </View>
       <Title>{customTitle || title}</Title>
-      <View style={[flexbox.flex1, flexbox.alignEnd]}>{children || <AmbireSmallWhiteLogo />}</View>
+      <View style={[flexbox.flex1, flexbox.alignEnd]}>
+        {children || <AmbireLogoHorizontalMonochrome />}
+      </View>
     </Wrapper>
   )
 }
@@ -125,7 +127,7 @@ const HeaderWithTitle = ({
 const HeaderWithLogoOnly = ({ width }: CommonHeaderProps) => {
   return (
     <Wrapper style={flexbox.justifyEnd} width={width}>
-      <AmbireSmallWhiteLogo />
+      <AmbireLogoHorizontalMonochrome />
     </Wrapper>
   )
 }
@@ -136,7 +138,7 @@ Header.Wrapper = Wrapper
 Header.AccountData = AccountData
 Header.Title = Title
 Header.BackButton = HeaderBackButton
-Header.Logo = AmbireSmallWhiteLogo
+Header.Logo = AmbireLogoHorizontalMonochrome
 
 export default Header
 export { HeaderWithTitle, HeaderWithLogoOnly, HEADER_HEIGHT }
