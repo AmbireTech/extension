@@ -1,5 +1,6 @@
 import React, { ReactElement, useState } from 'react'
 import {
+  BlurEvent,
   NativeSyntheticEvent,
   TextInput,
   TextInputFocusEventData,
@@ -51,11 +52,11 @@ const TextArea = ({
   const [isFocused, setIsFocused] = useState<boolean>(false)
   const { theme, styles } = useTheme(getStyles)
 
-  const handleOnFocus = (e: NativeSyntheticEvent<TextInputFocusEventData>) => {
+  const handleOnFocus = (e: BlurEvent) => {
     setIsFocused(true)
     return onFocus(e)
   }
-  const handleOnBlur = (e: NativeSyntheticEvent<TextInputFocusEventData>) => {
+  const handleOnBlur = (e: BlurEvent) => {
     setIsFocused(false)
     return onBlur(e)
   }
