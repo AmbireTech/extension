@@ -83,6 +83,19 @@ const Footer = ({
     }
   })
 
+  const isMultisigSigned = useMemo(() => {
+    return !!accountOp?.signature
+  }, [accountOp?.signature])
+
+  const batchBtnText = useMemo(() => {
+    if (isMultisigSigned) return t('Sign later')
+    return batchCount > 1
+      ? t('Add to batch ({{batchCount}})', {
+          batchCount
+        })
+      : t('Start a batch')
+  }, [isMultisigSigned, batchCount, t])
+
   // if the txns has been queued, display only a success and close options
   if (status && status.type === SigningStatus.Queued) {
     return (
@@ -136,35 +149,31 @@ const Footer = ({
               testID="queue-and-sign-later-button"
               type="outline"
               accentColor={theme.primary}
-              text={
-                batchCount > 1
-                  ? t('Add to batch ({{batchCount}})', {
-                      batchCount
-                    })
-                  : t('Start a batch')
-              }
+              text={batchBtnText}
               onPress={onAddToCart}
               disabled={isAddToCartDisabled}
               hasBottomSpacing={false}
               style={{ minWidth: 160, ...spacings.ph }}
               size="large"
             >
-              <BatchIcon style={spacings.mlTy} />
+              {!isMultisigSigned && <BatchIcon style={spacings.mlTy} />}
             </Button>
-            <View
-              style={spacings.mlMi}
-              dataSet={createGlobalTooltipDataSet({
-                id: 'start-batch-info-tooltip',
-                content: startBatchingInfo
-              })}
-            >
-              <AnimatedPressable
-                style={[spacings.phTy, spacings.pvTy, { borderRadius: 50 }, animStyle]}
-                {...bindAnim}
+            {!isMultisigSigned && (
+              <View
+                style={spacings.mlMi}
+                dataSet={createGlobalTooltipDataSet({
+                  id: 'start-batch-info-tooltip',
+                  content: startBatchingInfo
+                })}
               >
-                <InfoIcon color={theme.tertiaryText} width={20} height={20} />
-              </AnimatedPressable>
-            </View>
+                <AnimatedPressable
+                  style={[spacings.phTy, spacings.pvTy, { borderRadius: 50 }, animStyle]}
+                  {...bindAnim}
+                >
+                  <InfoIcon color={theme.tertiaryText} width={20} height={20} />
+                </AnimatedPressable>
+              </View>
+            )}
           </View>
         )}
         <View
