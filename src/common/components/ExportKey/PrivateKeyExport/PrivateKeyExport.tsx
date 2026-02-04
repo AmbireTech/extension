@@ -85,10 +85,8 @@ const PrivateKeyExport: FC<Props> = ({ privateKey, blurred, setBlurred, openConf
               type="ghost"
               size="small"
               text={t('Copy key')}
-              style={{
-                // @ts-ignore
-                cursor: !privateKey ? 'default' : 'pointer'
-              }}
+              // @ts-ignore react-native-web supports `cursor`, but it's missing from React Native StyleProp<ViewStyle> types
+              style={{ cursor: !privateKey ? 'default' : 'pointer' }}
             >
               <CopyIcon style={spacings.mlTy} width={18} color={theme.iconPrimary} />
             </Button>

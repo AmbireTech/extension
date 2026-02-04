@@ -71,11 +71,8 @@ const Card: React.FC<Props> = ({
         },
         animStyle,
         isDisabled && { opacity: 0.7 },
-        isDisabled &&
-          isWeb && {
-            // @ts-ignore cursor only works on web
-            cursor: 'not-allowed'
-          },
+        // @ts-ignore react-native-web supports `cursor`, but it's missing from React Native StyleProp<ViewStyle> types
+        isDisabled && isWeb && { cursor: 'not-allowed' },
         style
       ]}
       {...bindAnim}
