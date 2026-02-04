@@ -348,6 +348,16 @@ const useSign = ({
     ])
 
   const primaryButtonText = useMemo(() => {
+    // to do
+    // for now, implement the Broadcast text
+    if (signAccountOpState?.account.safeCreation) {
+      const isBroadcast =
+        (signAccountOpState?.accountOp.signed?.length || 0) >= signAccountOpState?.threshold
+      if (isBroadcast) {
+        return isSignLoading ? 'Broadcasting...' : 'Broadcast'
+      }
+    }
+
     const buttonLabelType = updateType || (isAtLeastOneOfTheKeysInvolvedExternal ? 'HW' : 'Sign')
 
     return t(
@@ -355,7 +365,15 @@ const useSign = ({
         ? PRIMARY_BUTTON_LABELS[buttonLabelType].isLoading
         : PRIMARY_BUTTON_LABELS[buttonLabelType].default
     )
-  }, [isAtLeastOneOfTheKeysInvolvedExternal, isSignLoading, t, updateType])
+  }, [
+    isAtLeastOneOfTheKeysInvolvedExternal,
+    isSignLoading,
+    t,
+    updateType,
+    signAccountOpState?.account.safeCreation,
+    signAccountOpState?.accountOp.signed?.length,
+    signAccountOpState?.threshold
+  ])
 
   // When being done, there is a corner case if the sign succeeds, but the broadcast fails.
   // If so, the "Sign" button should NOT be disabled, so the user can retry broadcasting.

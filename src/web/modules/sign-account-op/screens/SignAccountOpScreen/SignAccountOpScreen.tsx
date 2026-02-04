@@ -202,10 +202,16 @@ const SignAccountOpScreen = () => {
   }
 
   const isAddToCartDisabled = useMemo(() => {
+    if (signAccountOpState?.account.safeCreation) return false
     const readyToSign = signAccountOpState?.readyToSign
 
     return isSignLoading || (!readyToSign && !isViewOnly)
-  }, [isSignLoading, isViewOnly, signAccountOpState?.readyToSign])
+  }, [
+    isSignLoading,
+    isViewOnly,
+    signAccountOpState?.readyToSign,
+    signAccountOpState?.account.safeCreation
+  ])
 
   const estimationFailed = signAccountOpState?.status?.type === SigningStatus.EstimationError
 
