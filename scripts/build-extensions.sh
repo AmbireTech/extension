@@ -17,9 +17,14 @@ fi
 # Read the build target
 TARGET="$1"
 
-# Use yarn to run sentry-cli (it will automatically resolve from node_modules)
-# This is more reliable than trying to find the binary path directly
-SENTRY_CLI_CMD="yarn sentry-cli"
+# sentry-cli should be available in node_modules/.bin after installing @sentry/cli
+# According to Sentry docs: https://docs.sentry.io/cli/installation/#installation-via-npm
+# The binary is located at ./node_modules/.bin/sentry-cli
+# We use a relative path from the project root (where the script is executed from)
+SENTRY_CLI_PATH="./node_modules/.bin/sentry-cli"
+
+# Use the direct path to sentry-cli binary
+SENTRY_CLI_CMD="$SENTRY_CLI_PATH"
 
 # The order of the commands is crucial! Injecting the debug ids
 # before creating the release will result in an empty release!
@@ -51,13 +56,18 @@ upload_source_maps_for_build() {
 # Injects debug ids and optionally uploads source maps to Sentry
 # Must be done before separating the source maps from the build directories
 prepare_and_upload_sourcemaps() {
-  # Verify sentry-cli is available by trying to run it
+  # Verify sentry-cli is available
   # @sentry/cli should be installed as a dev dependency
-  if ! $SENTRY_CLI_CMD --version &>/dev/null; then
-    echo "Error: sentry-cli is not available"
+  # According to Sentry docs, it's located at ./node_modules/.bin/sentry-cli
+  if [ ! -f "$SENTRY_CLI_PATH" ]; then
+    echo "Error: sentry-cli not found at $SENTRY_CLI_PATH"
+    echo "Current directory: $(pwd)"
     echo "Please ensure @sentry/cli is installed as a dev dependency: yarn add -D @sentry/cli"
     exit 1
   fi
+
+  # Make sure it's executable
+  chmod +x "$SENTRY_CLI_PATH" 2>/dev/null || true
 
   SENTRY_PROJECT=extension
   $SENTRY_CLI_CMD --version
