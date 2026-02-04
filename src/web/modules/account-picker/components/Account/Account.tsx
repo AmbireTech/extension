@@ -168,6 +168,7 @@ const Account = ({
                       id: account.addr,
                       content: account.addr
                     })}
+                    weight="mono_regular"
                   >
                     ({shortenAddress(account.addr, 16)})
                   </Text>
@@ -188,6 +189,7 @@ const Account = ({
                     fontSize={domainName ? 14 : 16}
                     appearance={domainName ? 'secondaryText' : 'primaryText'}
                     style={spacings.mrMi}
+                    weight="mono_regular"
                   >
                     {domainName ? '(' : ''}
                     {formattedAddress}

@@ -187,7 +187,7 @@ const TransactionSummary = ({
           }}
         >
           {call.to && (
-            <Text selectable fontSize={12} style={styles.bodyText}>
+            <Text selectable fontSize={12} style={styles.bodyText} weight="mono_regular">
               <Text fontSize={12} style={styles.bodyText} weight="regular">
                 {t('Interacting with (to): ')}
               </Text>
@@ -212,7 +212,7 @@ const TransactionSummary = ({
             <Text fontSize={12} style={styles.bodyText} weight="regular">
               {t('Data: ')}
             </Text>
-            <Text fontSize={12} style={styles.bodyText}>
+            <Text fontSize={12} style={styles.bodyText} weight="mono_regular">
               {call.data}
             </Text>
           </Text>

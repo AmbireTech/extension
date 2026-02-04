@@ -119,7 +119,7 @@ const AccountButton = () => {
               : theme.secondaryBackground
           }
           style={spacings.mrMi}
-          weight="medium"
+          weight="mono_regular"
           fontSize={14}
         >
           ({shortenAddress(account.addr, 13)})

@@ -37,7 +37,7 @@ const AddressName: FC<Props> = ({ address, chainId, ...rest }) => {
   if (isLoading) return <Spinner style={{ width: 16, height: 16 }} />
 
   return (
-    <BaseAddress address={address} {...rest}>
+    <BaseAddress address={address} isDisplayingPlainAddress={!ens && !contractName} {...rest}>
       {ens || contractName || address}
     </BaseAddress>
   )

@@ -54,9 +54,9 @@ const Router = isExtension ? HashRouter : BrowserRouter
 const errorComponent = ({ error }: { error: Error }) => <ErrorComponent error={error} />
 
 const AppInit = () => {
-  const { fontsLoaded, robotoFontsLoaded } = useFonts()
+  const { fontsLoaded } = useFonts()
 
-  if (!fontsLoaded && !robotoFontsLoaded) return null
+  if (!fontsLoaded) return null
 
   return (
     <Router>
