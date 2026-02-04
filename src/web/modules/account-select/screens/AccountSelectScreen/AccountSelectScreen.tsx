@@ -16,7 +16,7 @@ import useNavigation from '@common/hooks/useNavigation'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import DashboardSkeleton from '@common/modules/dashboard/screens/Skeleton'
-import LegacyHeader from '@common/modules/header/components/LegacyHeader'
+import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -97,7 +97,7 @@ const AccountSelectScreen = () => {
 
   return !pendingToBeSetSelectedAccount ? (
     <TabLayoutContainer
-      header={<LegacyHeader withAmbireLogo />}
+      header={<HeaderWithTitle />}
       footer={<BackButton />}
       width="lg"
       hideFooterInPopup

@@ -2,12 +2,10 @@ import React, { useCallback, useMemo } from 'react'
 import { ColorValue, Pressable } from 'react-native'
 
 import LeftArrowIcon from '@common/assets/svg/LeftArrowIcon'
-import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useNavigation from '@common/hooks/useNavigation'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
-import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@web/utils/uiType'
 
@@ -59,20 +57,20 @@ const HeaderBackButton = ({
 
   return (
     <Pressable
-      style={[flexbox.directionRow, flexbox.alignCenter]}
+      style={[
+        flexbox.directionRow,
+        flexbox.alignCenter,
+        flexbox.justifyCenter,
+        {
+          width: 28,
+          height: 28
+        }
+      ]}
       onPress={onGoBackPress || handleGoBack}
     >
       {({ hovered }: any) => (
         <>
-          <LeftArrowIcon color={color || theme[hovered ? 'primaryText' : 'secondaryText']} />
-          <Text
-            style={spacings.plTy}
-            fontSize={16}
-            weight="medium"
-            color={color || theme[hovered ? 'primaryText' : 'secondaryText']}
-          >
-            {t('Back')}
-          </Text>
+          <LeftArrowIcon color={color || (hovered ? theme.primaryText : theme.iconPrimary)} />
         </>
       )}
     </Pressable>

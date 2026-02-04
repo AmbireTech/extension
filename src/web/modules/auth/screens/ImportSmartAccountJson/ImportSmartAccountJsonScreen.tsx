@@ -17,7 +17,7 @@ import Text from '@common/components/Text'
 import { Trans, useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
-import LegacyHeader from '@common/modules/header/components/LegacyHeader'
+import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Header'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import text from '@common/styles/utils/text'
@@ -311,7 +311,7 @@ const SmartAccountImportScreen = () => {
     <TabLayoutContainer
       backgroundColor={theme.secondaryBackground}
       width="md"
-      header={<LegacyHeader mode="custom-inner-content" withAmbireLogo />}
+      header={<HeaderWithLogoOnly />}
     >
       <TabLayoutWrapperMainContent>
         <Panel

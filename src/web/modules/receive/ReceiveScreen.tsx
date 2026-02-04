@@ -15,7 +15,7 @@ import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
 import useReverseLookup from '@common/hooks/useReverseLookup'
 import useTheme from '@common/hooks/useTheme'
-import LegacyHeader from '@common/modules/header/components/LegacyHeader'
+import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
@@ -49,7 +49,7 @@ const ReceiveScreen: FC = () => {
 
   return (
     <TabLayoutContainer
-      header={<LegacyHeader withAmbireLogo />}
+      header={<HeaderWithTitle />}
       footer={<BackButton />}
       hideFooterInPopup
       withHorizontalPadding={false}

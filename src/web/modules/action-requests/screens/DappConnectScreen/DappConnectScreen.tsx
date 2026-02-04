@@ -5,7 +5,7 @@ import { View } from 'react-native'
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
-import LegacyHeader from '@common/modules/header/components/LegacyHeader'
+import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Header'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useDappsControllerState from '@web/hooks/useDappsControllerState'
@@ -73,13 +73,7 @@ const DappConnectScreen = () => {
     <TabLayoutContainer
       width="full"
       backgroundColor={theme.secondaryBackground}
-      header={
-        <LegacyHeader
-          mode="custom-inner-content"
-          withAmbireLogo
-          backgroundColor={theme.secondaryBackground as string}
-        />
-      }
+      header={<HeaderWithLogoOnly />}
       footer={
         <ActionFooter
           onReject={handleDenyButtonPress}

@@ -130,7 +130,7 @@ const ManageTokensSettingsScreen = () => {
         sheetRef={addTokenBottomSheetRef}
         handleClose={handleCloseAddTokenBottomSheet}
       />
-      <LegacyHeader openAddTokenBottomSheet={openAddTokenBottomSheet} />
+      <Header openAddTokenBottomSheet={openAddTokenBottomSheet} />
       <Filters
         control={control}
         networkFilter={networkFilter}

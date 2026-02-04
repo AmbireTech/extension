@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import ToastComponent from '@common/components/Toast'
 import { isWeb } from '@common/config/env'
-import { HEADER_HEIGHT } from '@common/modules/header/components/LegacyHeader/styles'
+import { HEADER_HEIGHT } from '@common/modules/header/components/Header/Header'
 import { SPACING_TY } from '@common/styles/spacings'
 import { Portal } from '@gorhom/portal'
 

@@ -10,7 +10,7 @@ import Panel from '@common/components/Panel'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import useTheme from '@common/hooks/useTheme'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
-import LegacyHeader from '@common/modules/header/components/LegacyHeader'
+import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Header'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import {
@@ -111,7 +111,7 @@ const AccountPickerScreen = () => {
     <TabLayoutContainer
       backgroundColor={theme.secondaryBackground}
       width="lg"
-      header={<LegacyHeader mode="custom-inner-content" withAmbireLogo />}
+      header={<HeaderWithLogoOnly />}
     >
       <TabLayoutWrapperMainContent contentContainerStyle={[spacings.pt0]}>
         <Panel type="onboarding" spacingsSize="small" panelWidth={900} style={{ minHeight: '92%' }}>

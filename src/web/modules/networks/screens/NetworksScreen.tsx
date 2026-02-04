@@ -11,7 +11,7 @@ import Input from '@common/components/Input'
 import useNavigation from '@common/hooks/useNavigation/useNavigation.web'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
-import LegacyHeader from '@common/modules/header/components/LegacyHeader'
+import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -120,7 +120,7 @@ const NetworksScreen = () => {
 
   return (
     <TabLayoutContainer
-      header={<LegacyHeader customTitle="Networks" withAmbireLogo />}
+      header={<HeaderWithTitle title="Networks" />}
       footer={<BackButton />}
       width="lg"
       hideFooterInPopup

@@ -8,7 +8,7 @@ import Button from '@common/components/Button'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
-import LegacyHeader from '@common/modules/header/components/LegacyHeader'
+import Header from '@common/modules/header/components/Header'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
@@ -42,15 +42,7 @@ const BatchAdded: FC<Props> = ({
   return (
     <TabLayoutContainer
       backgroundColor={theme.primaryBackground}
-      header={
-        <LegacyHeader
-          backgroundColor="primaryBackground"
-          displayBackButtonIn="never"
-          mode="title"
-          customTitle={title}
-          withAmbireLogo
-        />
-      }
+      header={<Header />}
       withHorizontalPadding={false}
       footer={null}
       style={{ ...flexbox.alignEnd, ...spacings.pb }}
