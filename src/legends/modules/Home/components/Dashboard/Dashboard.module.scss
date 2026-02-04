@@ -55,12 +55,12 @@
       border-radius: 1rem;
       background-color: $neutral-700;
       border: 0.0625rem solid rgba($neutral-600, 0.2);
+      height: fit-content;
     }
 
     .statsWrapper {
       padding: 1.25rem 1.5rem 1.5rem;
       flex: 1;
-      height: fit-content;
 
       .header > span,
       .stat .header > div {

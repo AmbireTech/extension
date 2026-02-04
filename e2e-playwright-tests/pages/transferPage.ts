@@ -128,9 +128,13 @@ export class TransferPage extends BasePage {
     // Select fee token; default Gas Tank
     if (!payWithGasTank) {
       await this.selectFeeToken(baParams.envSelectedAccount, feeToken, payWithGasTank)
-      feeSelector = await this.page.locator(selectors.transaction.feeTokenInDollars).innerText() // returns e.g. '<$0.01'
+      feeSelector = await this.page
+        .locator(selectors.transaction.feeTokenInDollars)
+        .innerText({ timeout: 10000 }) // returns e.g. '<$0.01'
     } else {
-      feeSelector = await this.page.locator(selectors.transaction.feeGasTankInDollars).innerText() // returns e.g. '<$0.01'
+      feeSelector = await this.page
+        .locator(selectors.transaction.feeGasTankInDollars)
+        .innerText({ timeout: 10000 }) // returns e.g. '<$0.01'
     }
 
     const feeDollarsAmount = Number(feeSelector.replace(/[<$]/g, ''))
@@ -146,12 +150,7 @@ export class TransferPage extends BasePage {
       // Sign & Broadcast
       await this.expectButtonEnabled(selectors.signButton)
       await this.click(selectors.signButton)
-      await expect(
-        this.page.locator(selectors.transaction.confirmingYourTransactionText)
-      ).toBeVisible({
-        timeout: 10000
-      })
-
+      await this.isVisible(selectors.transaction.confirmingYourTransactionText)
       // Validate requests
       const { rpc } = this.getCategorizedRequests()
 

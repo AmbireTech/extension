@@ -174,7 +174,6 @@ const NavMenu = () => {
                     >
                       <MaximizeIcon
                         color={theme.secondaryBackgroundInverted}
-                        // @ts-ignore missing type, but the prop is valid
                         dataSet={createGlobalTooltipDataSet({
                           id: expandViewTooltipId,
                           content: t('Expand view')

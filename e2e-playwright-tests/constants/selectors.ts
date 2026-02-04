@@ -3,7 +3,21 @@ import { buildSelector } from '@helpers/buildSelector'
 // TODO: this should be refactored; we should have single file with selector IDs
 const selectors = {
   getStarted: {
+    createNewAccountButton: 'create-new-account-btn',
+    createRecoveryPhraseButton: 'review-seed-phrase-btn',
+    importAccountButton: 'button-import-account',
+    confirmationMessageForViewOnly: 'added-successfully-text',
+    confirmationMessageAmbireWallet: 'wallet-ready-to-use-text',
+    savedPhraseButton: 'create-seed-phrase-write-continue-btn',
+    recoveryPhraseHeader: 'back-up-recovery-phrase-text',
+    copyRecoveryPhraseButton: 'copy-recovery-phrase',
+    recoveryPhraseCopiedSnackbar: 'success-0', // first snackbar that appears has value 0 after dash
+    checkbox: 'checkbox',
+    enterPassField: 'enter-pass-field',
+    repeatPassField: 'repeat-pass-field',
+    createKeystorePassBtn: 'create-keystore-pass-btn',
     watchAddress: 'watch-an-address-button',
+    addMoreAccountsButton: 'add-more-accounts-btn',
     addOneMoreAddress: 'add-one-more-address',
     importExistingAccBtn: 'import-existing-account-btn',
     importMethodPrivateBtn: 'import-method-private-key',
@@ -19,7 +33,14 @@ const selectors = {
     viewOnlyBtnImport: 'view-only-button-import',
     importBtn: 'import-button',
     openDashboardButton: 'onboarding-completed-open-dashboard-btn',
-    editFirstAccNameButton: 'edit-btn-for-edit-name-field-0'
+    editFirstAccNameButton: 'edit-btn-for-edit-name-field-0', // same id used for clearing input field; after edit for checking confirmation pill 'Save'
+    editAccountNameInputField: 'edit-name-field-0',
+    saveAndContinueBtn: 'button-save-and-continue',
+    hdPathLegerLive: 'hd-path-option-ledger-live',
+    changeHDPathButton: 'change-hd-path-btn',
+    hdPathConfirmButton: 'hd-path-confirm-btn',
+    hdPathLegerLegacy: 'hd-path-option-ledger-legacy',
+    smartAccountPicker: 'add-account-' // need add index 5
   },
   dashboard: {
     tokensTabButton: 'tokens-defi',
@@ -54,8 +75,9 @@ const selectors = {
     yesHideItButton: 'yes-hide-it-text',
     hideTokenModalTitle: 'hide-token-modal-title',
     hideTokenModalDescription: 'hide-token-modal-description',
-    rewardsButton: 'dashboard-button-quests',
-    projectedRewardsButton: 'rewards-button',
+    rewardsButton: 'dashboard-button-rewards',
+    projecteedRewardsWalletAssetRewardsButton: 'projected-rewards-asset-button',
+    rewardsForClaimingButton: 'marketing-banner-button',
     backRewardsButton: '//div[contains(text(),"Back")]',
     rewardsLink: '//div[contains(text(),"Ambire Rewards")]',
     projectedRewardsClaimButton: 'projected-rewards-claim-button'
@@ -103,7 +125,7 @@ const selectors = {
     feeSpeedApe: 'option-ape',
     feeGasTankInDollars: '//span[contains(text(),"Gas Tank")]/../../../div[contains(text(),"$")]', // returning e.g. "<$0.01"
     feeTokenInDollars: '//span[contains(text(),"")]/../../div[contains(text(),"$")]',
-    confirmingYourTransactionText: '//div[contains(text(),"Confirming your")]',
+    confirmingYourTransactionText: 'confirming-your',
     explorer: {
       txnSignedStep: 'signed-step',
       txnProgressStep: 'txn-progress-step',
@@ -145,13 +167,10 @@ const selectors = {
   account: 'account',
   importMethodTrezor: 'import-method-trezor',
   trezorConnectConfirmTerms: '@analytics/continue-button',
-  saveAndContinueBtn: 'button-save-and-continue',
   buttonProceedSeedPhrase: 'button-proceed-seed-phrase',
   doNotSaveSeedBtn: 'do-not-save-seed-button',
   saveAsDefaultSeedBtn: 'save-seed-button',
   getStartedBtnImport: 'get-started-button-import',
-  enterPassField: 'enter-pass-field',
-  repeatPassField: 'repeat-pass-field',
   keystoreBtnCreate: 'keystore-button-create',
   keystoreBtnContinue: 'keystore-button-continue',
   editBtnForEditNameField: 'edit-btn-for-edit-name-field',
@@ -168,7 +187,6 @@ const selectors = {
   buttonAddAccount: 'button-add-account',
   checkbox: 'checkbox',
   addAccount: 'add-account',
-  buttonImportAccount: 'button-import-account',
   seedPhraseInputFieldDynamic: 'seed-phrase-field',
   getStartedCreateHotWallet: 'get-started-create-hot-wallet',
   setUpWithSeedPhraseBtn: 'set-up-with-seed-phrase-btn',
@@ -199,7 +217,6 @@ const selectors = {
   bottomSheet: 'bottom-sheet',
   devicePassSuccessModal: 'device-pass-success-modal',
   lockExtensionButton: 'lock-extension-button',
-  createKeystorePassBtn: 'create-keystore-pass-btn',
   passphraseField: 'passphrase-field',
   buttonUnlock: 'button-unlock',
   fullBalance: 'full-balance',

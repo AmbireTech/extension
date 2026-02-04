@@ -314,7 +314,6 @@ const AccountsOnPageList = ({
                           />
 
                           <WarningFilledIcon
-                            // @ts-ignore
                             dataSet={createGlobalTooltipDataSet({
                               id: 'linked-accounts-warning',
                               border: `1px solid ${theme.warningDecorative as any}`,

@@ -171,7 +171,6 @@ const PayOption = ({
           width={20}
           height={20}
           style={spacings.mlTy}
-          // @ts-ignore
           dataSet={createGlobalTooltipDataSet({
             id: 'estimation-warning',
             content: warning.title

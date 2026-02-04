@@ -327,7 +327,12 @@ const AccountPersonalizeScreen = () => {
                   style={{ ...spacings.pv0, ...spacings.ph0, ...spacings.mbXl }}
                   animationContainerStyle={{ width: 200, height: 140 }}
                 >
-                  <Text weight="semiBold" fontSize={20} style={spacings.mtSm}>
+                  <Text
+                    testID="added-successfully-text"
+                    weight="semiBold"
+                    fontSize={20}
+                    style={spacings.mtSm}
+                  >
                     {accountsToPersonalize.length
                       ? t('Added successfully')
                       : t('No new accounts added')}

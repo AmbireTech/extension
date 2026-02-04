@@ -223,7 +223,7 @@ export class SettingsPage extends BasePage {
     console.log(`Import took ${duration} ms`)
 
     // complete and assert info text
-    await this.click(selectors.saveAndContinueBtn)
+    await this.click(selectors.getStarted.saveAndContinueBtn)
 
     // assert info text
     await expect(this.page.locator(selectors.settings.accessAccFromDashboardInfoText)).toHaveText(

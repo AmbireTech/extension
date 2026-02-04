@@ -5,7 +5,7 @@ import { ambireRewardsText } from 'pages/utils/data/ambireRewardsText'
 
 import { expect, Page } from '@playwright/test'
 
-test.describe('ambire rewards', () => {
+test.describe('ambire rewards', { tag: '@rewards' }, () => {
   test.beforeEach(async ({ pages }) => {
     await pages.initWithStorage(saParams)
   })
@@ -15,6 +15,7 @@ test.describe('ambire rewards', () => {
   })
 
   test('Check redirection to Ambire rewards page', async ({ pages }) => {
+    await pages.auth.pause()
     await test.step('assert rewards button is visible', async () => {
       await pages.basePage.isVisible(selectors.dashboard.rewardsButton)
     })
@@ -23,12 +24,10 @@ test.describe('ambire rewards', () => {
       await pages.dashboard.checkRewardsPageRedirection(selectors.dashboard.rewardsButton)
     })
 
-    await test.step('assert WALLET asset button is visible', async () => {
-      await pages.basePage.isVisible(selectors.dashboard.projectedRewardsButton)
-    })
-
-    await test.step('WALLET asset button should redirect to rewards page', async () => {
-      await pages.dashboard.checkRewardsPageRedirection(selectors.dashboard.projectedRewardsButton)
+    await test.step('rewards button should redirect to rewards page', async () => {
+      await pages.dashboard.checkRewardsPageRedirection(
+        selectors.dashboard.projecteedRewardsWalletAssetRewardsButton
+      )
     })
   })
 

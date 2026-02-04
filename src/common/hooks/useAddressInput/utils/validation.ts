@@ -1,105 +1,92 @@
 import { getAddress } from 'ethers'
 
 import { isValidAddress } from '@ambire-common/services/address'
-
-export type ValidationWithSeverityType = {
-  message: string
-  isError: boolean
-  severity?: 'error' | 'warning' | 'info' | 'success'
-}
+import { Validation } from '@ambire-common/services/validations'
 
 type AddressInputValidation = {
   address: string
   isRecipientDomainResolving: boolean
   isValidEns: boolean
   hasDomainResolveFailed: boolean
-  overwriteError?: string
-  overwriteValidLabel?: string
-  overwriteSeverity?: 'error' | 'warning' | 'info' | 'success'
+  overwriteValidation?: Validation | null
 }
 
+/**
+ * Mixes basic address/ens validation with an optional overwrite validation.
+ * - basic validation - is the address valid? Is ENS resolving?
+ * - overwrite validation - custom situation based validation - e.g. the address is already in the address book
+ *
+ * Rules:
+ * Allow overwrites only if the basic validation passes (success).
+ * The overwrite validation can be of any severity.
+ */
 const getAddressInputValidation = ({
   address,
   isRecipientDomainResolving,
   hasDomainResolveFailed = false,
   isValidEns,
-  overwriteError,
-  overwriteValidLabel,
-  overwriteSeverity
-}: AddressInputValidation): ValidationWithSeverityType => {
+  overwriteValidation
+}: AddressInputValidation): Validation => {
   if (!address) {
     return {
       message: '',
-      isError: true,
       severity: 'error'
     }
   }
 
+  // Domain resolution is of highest priority
   if (isRecipientDomainResolving) {
     return {
       message: 'Resolving domain...',
-      isError: false,
-      severity: 'info'
+      severity: 'info',
+      id: 'resolving_domain'
     }
   }
 
   if (hasDomainResolveFailed) {
     return {
-      // Change ENS to domain if we add more resolvers
+      // Change ENS to domain if we add more resolvers (like Unstoppable Domains)
       message: 'Failed to resolve ENS. Please try again later or enter a hex address.',
-      isError: true,
       severity: 'error'
     }
   }
 
-  let validation: ValidationWithSeverityType | null = null
+  let successValidation: Validation | null = null
 
-  if (isValidAddress(address)) {
+  if (address && isValidAddress(address)) {
     try {
       getAddress(address)
 
-      validation = {
-        message: overwriteValidLabel || 'Valid address',
-        isError: false,
-        severity: overwriteSeverity || 'success'
+      successValidation = {
+        message: 'Valid address',
+        severity: 'success'
       }
     } catch {
-      // Return immediately, the address is not valid at all
       return {
         message: 'Invalid checksum. Verify the address and try again.',
-        isError: true,
         severity: 'error'
       }
-    }
-  } else if (!isValidEns) {
-    return {
-      message: 'Please enter a valid address or ENS domain',
-      isError: true,
-      severity: 'error'
     }
   }
 
   if (isValidEns) {
-    validation = {
+    successValidation = {
       message: 'Valid ENS domain',
-      isError: false,
       severity: 'success'
     }
-  }
-
-  if (overwriteError || overwriteValidLabel) {
+  } else if (address && !isValidAddress(address)) {
     return {
-      message: overwriteError || overwriteValidLabel || '',
-      isError: overwriteSeverity === 'error' || !!overwriteError,
-      severity: overwriteSeverity || (overwriteError ? 'error' : 'success')
+      message: 'Please enter a valid address or ENS domain',
+      severity: 'error'
     }
   }
 
   return (
-    validation || {
+    // The validation has passed at this point so we allow overwrites
+    overwriteValidation ||
+    successValidation || {
       message: '',
-      isError: true,
-      severity: overwriteSeverity || 'error'
+      severity: 'error'
     }
   )
 }
