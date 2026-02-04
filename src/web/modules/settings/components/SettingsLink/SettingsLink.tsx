@@ -51,8 +51,8 @@ const SettingsLink: FC<Props> = ({
   const [bindAnim, animStyle, isHovered] = useCustomHover({
     property: 'backgroundColor',
     values: {
-      from: initialBackground || theme.secondaryBackground,
-      to: theme.tertiaryBackground
+      from: initialBackground || theme.primaryBackground,
+      to: theme.secondaryBackground
     },
     forceHoveredStyle: isActive
   })

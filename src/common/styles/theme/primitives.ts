@@ -46,19 +46,19 @@ const ACCENT_PRIMITIVES = {
 const NEUTRAL_PRIMITIVES = {
   neutral100: {
     [THEME_TYPES.LIGHT]: '#FFFFFF',
-    [THEME_TYPES.DARK]: '#000000'
+    [THEME_TYPES.DARK]: '#2C2F33'
   },
   neutral200: {
     [THEME_TYPES.LIGHT]: '#F9FAFB',
-    [THEME_TYPES.DARK]: '#1B1D20'
+    [THEME_TYPES.DARK]: '#F9FAFB'
   },
   neutral300: {
     [THEME_TYPES.LIGHT]: '#F2F4F7',
-    [THEME_TYPES.DARK]: '#2C2F33'
+    [THEME_TYPES.DARK]: '#1B1D20'
   },
   neutral400: {
     [THEME_TYPES.LIGHT]: '#E3E6EB',
-    [THEME_TYPES.DARK]: '#50555D'
+    [THEME_TYPES.DARK]: '#000000'
   },
   neutral500: {
     [THEME_TYPES.LIGHT]: '#96A1B1',

@@ -231,18 +231,10 @@ const SignAccountOpScreen = () => {
       />
       <TabLayoutContainer
         width="full"
-        backgroundColor={theme.secondaryBackground}
+        backgroundColor={theme.primaryBackground}
         withHorizontalPadding={false}
         style={spacings.phMd}
-        header={
-          <HeaderAccountAndNetworkInfo
-            backgroundColor={
-              themeType === THEME_TYPES.DARK
-                ? (theme.tertiaryBackground as string)
-                : (theme.primaryBackground as string)
-            }
-          />
-        }
+        header={<HeaderAccountAndNetworkInfo backgroundColor={theme.primaryBackground} />}
         renderDirectChildren={() => (
           <View style={styles.footer}>
             {!estimationFailed ? (

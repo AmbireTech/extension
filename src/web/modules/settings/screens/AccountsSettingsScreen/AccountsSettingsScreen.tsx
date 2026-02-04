@@ -150,7 +150,7 @@ const AccountsSettingsScreen = () => {
                 { cursor: 'grab', touchAction: 'manipulation' }
               ]}
             >
-              <DragIndicatorIcon color={isDragging ? theme.primary : theme.secondaryBorder} />
+              <DragIndicatorIcon color={isDragging ? theme.primary : theme.iconPrimary} />
             </Pressable>
           </div>
           <View style={flexbox.flex1}>
@@ -164,7 +164,7 @@ const AccountsSettingsScreen = () => {
         </View>
       )
     },
-    [theme.primary, theme.secondaryBorder, shortenAccountAddr, accountOptions]
+    [theme.primary, theme.iconPrimary, shortenAccountAddr, accountOptions]
   )
   const { maxWidthSize } = useWindowSize()
   const isWidthS = maxWidthSize('s')

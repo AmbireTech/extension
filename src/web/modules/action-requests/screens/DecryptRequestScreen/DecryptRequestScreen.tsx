@@ -153,7 +153,7 @@ const DecryptRequestScreen = () => {
             resolveNode={actionFooterResolveNode}
           />
         }
-        backgroundColor={theme.secondaryBackground}
+        backgroundColor={theme.primaryBackground}
       >
         <TabLayoutWrapperMainContent>
           <RequestingDappInfo
@@ -212,10 +212,7 @@ const DecryptRequestScreen = () => {
                   </View>
                 }
                 style={{
-                  backgroundColor:
-                    themeType === THEME_TYPES.DARK
-                      ? theme.tertiaryBackground
-                      : theme.primaryBackground
+                  backgroundColor: theme.secondaryBackground
                 }}
               />
             )}

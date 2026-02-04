@@ -21,7 +21,7 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
     background: {
       ...flexbox.alignCenter,
       ...flexbox.flex1,
-      backgroundColor: theme.secondaryBackground
+      backgroundColor: theme.primaryBackground
     },
     container: {
       ...flexbox.directionRow,
@@ -43,8 +43,7 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       ...flexbox.flex1,
       width: TAB_CONTENT_WIDTH,
       maxHeight: '100%',
-      backgroundColor: theme.primaryBackground,
-      borderWidth: themeType === THEME_TYPES.DARK ? 0 : 1
+      backgroundColor: theme.secondaryBackground
     },
     sideContainer: {
       opacity: 0,

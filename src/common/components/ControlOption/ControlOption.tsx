@@ -58,7 +58,7 @@ const ControlOption: FC<Props> = ({
         flexbox.alignCenter,
         flexbox.justifySpaceBetween,
         {
-          backgroundColor: theme.secondaryBackground
+          backgroundColor: theme.primaryBackground
         },
         onPress ? animStyle : {},
         style

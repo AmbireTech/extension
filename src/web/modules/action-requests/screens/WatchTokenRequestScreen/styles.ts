@@ -26,13 +26,7 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       ...common.fullWidth,
       borderRadius: BORDER_RADIUS_PRIMARY,
       overflow: 'hidden',
-      shadowColor: themeType === THEME_TYPES.DARK ? '#00000052' : '#6770B3',
-      shadowOffset: { width: 0, height: SPACING_SM },
-      shadowOpacity: themeType === THEME_TYPES.DARK ? 1 : 0.3,
-      shadowRadius: SPACING_SM,
-      elevation: SPACING_SM,
-      backgroundColor:
-        themeType === THEME_TYPES.DARK ? theme.secondaryBackground : theme.tertiaryBackground
+      backgroundColor: theme.secondaryBackground
     },
     contentHeader: {
       ...flexbox.flex1,
@@ -41,13 +35,12 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       ...spacings.phMd
     },
     contentBody: {
-      backgroundColor:
-        themeType === THEME_TYPES.DARK ? theme.tertiaryBackground : theme.primaryBackground,
+      backgroundColor: theme.tertiaryBackground,
       ...spacings.pvMd,
       ...spacings.phMd
     },
     tokenInfoContainer: {
-      backgroundColor: theme.quaternaryBackground,
+      backgroundColor: theme.tertiaryBackground,
       height: 36,
       ...spacings.phTy,
       ...flexbox.directionRow,

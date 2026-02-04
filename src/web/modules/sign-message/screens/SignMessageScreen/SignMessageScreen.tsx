@@ -292,15 +292,7 @@ const SignMessageScreen = () => {
     <SmallNotificationWindowWrapper>
       <TabLayoutContainer
         width="full"
-        header={
-          <HeaderAccountAndNetworkInfo
-            backgroundColor={
-              themeType === THEME_TYPES.DARK
-                ? (theme.secondaryBackground as string)
-                : (theme.primaryBackground as string)
-            }
-          />
-        }
+        header={<HeaderAccountAndNetworkInfo backgroundColor={theme.primaryBackground} />}
         footer={
           <ActionFooter
             onReject={handleReject}
@@ -325,11 +317,7 @@ const SignMessageScreen = () => {
               : {})}
           />
         }
-        backgroundColor={
-          isAuthorization && !makeItSmartConfirmed
-            ? theme.primaryBackground
-            : theme.secondaryBackground
-        }
+        backgroundColor={theme.primaryBackground}
       >
         <SigningKeySelect
           isVisible={isChooseSignerShown}

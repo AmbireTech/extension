@@ -17,8 +17,6 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) => {
   return StyleSheet.create<Style>({
     container: {
       ...common.borderRadiusPrimary,
-      borderWidth: themeType === THEME_TYPES.DARK ? 0 : 1,
-      borderColor: theme.secondaryBorder,
       backgroundColor: theme.primaryBackground
     },
     // Overridden when type === 'onboarding'

@@ -272,12 +272,12 @@ const WatchTokenRequestScreen = () => {
   return (
     <TabLayoutContainer
       width="full"
-      backgroundColor={theme.secondaryBackground}
+      backgroundColor={theme.primaryBackground}
       header={
         <Header
           mode="custom-inner-content"
           withAmbireLogo
-          backgroundColor={theme.secondaryBackground as string}
+          backgroundColor={theme.primaryBackground as string}
         />
       }
       footer={
@@ -325,7 +325,7 @@ const WatchTokenRequestScreen = () => {
               fontSize={14}
               iconSize={20}
               style={{
-                backgroundColor: theme.quaternaryBackground,
+                backgroundColor: theme.primaryBackground,
                 ...spacings.mb,
                 ...spacings.pr
               }}
@@ -351,49 +351,26 @@ const WatchTokenRequestScreen = () => {
             <View style={[styles.tokenInfoContainer, spacings.mbTy]}>
               <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mr]}>
                 <View style={styles.tokenInfoIconWrapper}>
-                  <AmountIcon
-                    color={
-                      themeType === THEME_TYPES.DARK ? theme.secondaryText : theme.tertiaryText
-                    }
-                  />
+                  <AmountIcon color={theme.secondaryText} />
                 </View>
-                <Text
-                  fontSize={14}
-                  color={themeType === THEME_TYPES.DARK ? theme.secondaryText : theme.tertiaryText}
-                >
+                <Text fontSize={14} color={theme.secondaryText}>
                   {t('Amount')}
                 </Text>
               </View>
-              <Text
-                weight="medium"
-                fontSize={14}
-                color={themeType === THEME_TYPES.DARK ? theme.secondaryText : theme.tertiaryText}
-                numberOfLines={1}
-              >
+              <Text weight="medium" fontSize={14} color={theme.secondaryText} numberOfLines={1}>
                 {tokenDetails?.balance || '0.00'} {tokenData?.symbol}
               </Text>
             </View>
             <View style={[styles.tokenInfoContainer, spacings.mbTy]}>
               <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mr]}>
                 <View style={styles.tokenInfoIconWrapper}>
-                  <DollarIcon
-                    color={
-                      themeType === THEME_TYPES.DARK ? theme.secondaryText : theme.tertiaryText
-                    }
-                  />
+                  <DollarIcon color={theme.secondaryText} />
                 </View>
-                <Text
-                  fontSize={14}
-                  color={themeType === THEME_TYPES.DARK ? theme.secondaryText : theme.tertiaryText}
-                >
+                <Text fontSize={14} color={theme.secondaryText}>
                   {t('Price')}
                 </Text>
               </View>
-              <Text
-                weight="medium"
-                fontSize={14}
-                color={themeType === THEME_TYPES.DARK ? theme.secondaryText : theme.tertiaryText}
-              >
+              <Text weight="medium" fontSize={14} color={theme.secondaryText}>
                 {isLoading ? (
                   <View style={[flexbox.flex1, flexbox.alignCenter, flexbox.justifyCenter]}>
                     <Spinner style={{ width: 18, height: 18 }} />
@@ -406,24 +383,13 @@ const WatchTokenRequestScreen = () => {
             <View style={[styles.tokenInfoContainer]}>
               <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mr]}>
                 <View style={styles.tokenInfoIconWrapper}>
-                  <ValueIcon
-                    color={
-                      themeType === THEME_TYPES.DARK ? theme.secondaryText : theme.tertiaryText
-                    }
-                  />
+                  <ValueIcon color={theme.secondaryText} />
                 </View>
-                <Text
-                  fontSize={14}
-                  color={themeType === THEME_TYPES.DARK ? theme.secondaryText : theme.tertiaryText}
-                >
+                <Text fontSize={14} color={theme.secondaryText}>
                   {t('Value')}
                 </Text>
               </View>
-              <Text
-                weight="medium"
-                fontSize={14}
-                color={themeType === THEME_TYPES.DARK ? theme.secondaryText : theme.tertiaryText}
-              >
+              <Text weight="medium" fontSize={14} color={theme.secondaryText}>
                 {tokenDetails?.balanceUSDFormatted || '-'}
               </Text>
             </View>

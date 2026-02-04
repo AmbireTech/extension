@@ -9,9 +9,9 @@ const ThemeColors = {
   ...ACCENT_PRIMITIVES,
   ...FEEDBACK_PRIMITIVES,
   // --- Background tokens ---
-  primaryBackground: NEUTRAL_PRIMITIVES.neutral200,
-  secondaryBackground: NEUTRAL_PRIMITIVES.neutral300,
-  tertiaryBackground: NEUTRAL_PRIMITIVES.neutral100,
+  primaryBackground: NEUTRAL_PRIMITIVES.neutral300,
+  secondaryBackground: NEUTRAL_PRIMITIVES.neutral100,
+  tertiaryBackground: NEUTRAL_PRIMITIVES.neutral400,
   /**
    * @deprecated
    */
@@ -30,7 +30,7 @@ const ThemeColors = {
   tertiaryText: NEUTRAL_PRIMITIVES.neutral500,
   // --- Border tokens ---
   primaryBorder: NEUTRAL_PRIMITIVES.neutral300,
-  secondaryBorder: NEUTRAL_PRIMITIVES.neutral400,
+  secondaryBorder: NEUTRAL_PRIMITIVES.neutral300,
   // --- Icon tokens ---
   iconPrimary: NEUTRAL_PRIMITIVES.neutral500,
   /**
@@ -47,16 +47,14 @@ const ThemeColors = {
   secondaryAccent: ACCENT_PRIMITIVES.secondary500,
   secondaryAccentHovered: ACCENT_PRIMITIVES.secondary400,
   // --- Feedback tokens ---
-  // Decorative=Text for feedback colors
-  // We have separated them for backwards compatibility and future-proofing
   infoText: FEEDBACK_PRIMITIVES.info300,
   infoDecorative: FEEDBACK_PRIMITIVES.info300,
   infoBackground: FEEDBACK_PRIMITIVES.info100,
   successText: FEEDBACK_PRIMITIVES.success400,
-  successDecorative: FEEDBACK_PRIMITIVES.success400,
+  successDecorative: FEEDBACK_PRIMITIVES.success300,
   successBackground: FEEDBACK_PRIMITIVES.success100,
   warningText: FEEDBACK_PRIMITIVES.warning400,
-  warningDecorative: FEEDBACK_PRIMITIVES.warning400,
+  warningDecorative: FEEDBACK_PRIMITIVES.warning300,
   warningBackground: FEEDBACK_PRIMITIVES.warning100,
   warningDecorative2: {
     [THEME_TYPES.DARK]: '#FBBA27',
@@ -65,10 +63,11 @@ const ThemeColors = {
   errorText: FEEDBACK_PRIMITIVES.error300,
   errorDecorative: FEEDBACK_PRIMITIVES.error300,
   errorBackground: FEEDBACK_PRIMITIVES.error100,
+  // --- Other tokens ---
   backdrop: {
     // @TODO: Sync up with miro
-    [THEME_TYPES.LIGHT]: hexToRgba(NEUTRAL_PRIMITIVES.neutral200[THEME_TYPES.DARK], 0.8),
-    [THEME_TYPES.DARK]: hexToRgba(NEUTRAL_PRIMITIVES.neutral200[THEME_TYPES.DARK], 0.8)
+    [THEME_TYPES.LIGHT]: `rgba(0, 0, 0, 0.5)`,
+    [THEME_TYPES.DARK]: `rgba(0, 0, 0, 0.5)`
   },
   // @TODO: Sync up with miro
   linkText: ACCENT_PRIMITIVES.primary300,

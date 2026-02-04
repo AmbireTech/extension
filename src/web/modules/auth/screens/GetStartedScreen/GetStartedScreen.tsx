@@ -107,8 +107,11 @@ const GetStartedScreen = () => {
                 hasBottomSpacing={false}
                 onPress={() => handleAuthButtonPress('view-only')}
                 text={t('Watch an address')}
+                textStyle={{
+                  color: theme.primaryAccent
+                }}
               >
-                <ViewModeIcon color={theme.primary} width={24} style={spacings.mlTy} />
+                <ViewModeIcon color={theme.primaryAccent} width={24} style={spacings.mlTy} />
               </Button>
             </ScrollableWrapper>
           </View>
