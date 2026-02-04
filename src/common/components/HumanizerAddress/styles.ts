@@ -1,4 +1,4 @@
-import { ImageStyle, StyleSheet } from 'react-native'
+import { ImageStyle, StyleSheet, ViewStyle } from 'react-native'
 
 import spacings from '@common/styles/spacings'
 
@@ -12,7 +12,7 @@ const getStyles = () =>
       width: 25,
       height: 25,
       borderRadius: 5,
-      ...spacings.mrMi
+      ...(spacings.mrMi as ImageStyle)
     }
   })
 
