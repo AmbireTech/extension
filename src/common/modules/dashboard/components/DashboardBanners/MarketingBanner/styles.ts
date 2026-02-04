@@ -28,7 +28,7 @@ const getStyles = () =>
     backgroundLogo: {
       position: 'absolute',
       right: 0,
-      bottom: '-188px'
+      bottom: -188
     },
     button: {
       backgroundColor: 'black'
