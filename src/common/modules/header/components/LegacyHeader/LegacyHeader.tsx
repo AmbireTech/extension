@@ -34,7 +34,7 @@ interface Props {
 
 const { isTab, isRequestWindow } = getUiType()
 
-const Header = ({
+const LegacyHeader = ({
   mode = 'title',
   customTitle,
   displayBackButtonIn,
@@ -135,4 +135,4 @@ const Header = ({
   )
 }
 
-export default React.memo(Header)
+export default React.memo(LegacyHeader)

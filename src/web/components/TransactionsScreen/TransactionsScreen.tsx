@@ -11,8 +11,8 @@ import Text from '@common/components/Text'
 import useReverseLookup from '@common/hooks/useReverseLookup'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
-import Header from '@common/modules/header/components/Header'
-import getHeaderStyles from '@common/modules/header/components/Header/styles'
+import LegacyHeader from '@common/modules/header/components/LegacyHeader'
+import getHeaderStyles from '@common/modules/header/components/LegacyHeader/styles'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
@@ -53,7 +53,7 @@ const Wrapper: FC<WrapperProps> = ({ children, title, buttons }) => {
     <TabLayoutContainer
       backgroundColor={theme.secondaryBackground}
       header={
-        <Header mode="custom">
+        <LegacyHeader mode="custom">
           <View
             style={[
               headerStyles.widthContainer,
@@ -98,7 +98,7 @@ const Wrapper: FC<WrapperProps> = ({ children, title, buttons }) => {
               <AmbireLogoHorizontalWithOG />
             </View>
           </View>
-        </Header>
+        </LegacyHeader>
       }
       withHorizontalPadding={false}
       footer={isTab ? buttons : null}

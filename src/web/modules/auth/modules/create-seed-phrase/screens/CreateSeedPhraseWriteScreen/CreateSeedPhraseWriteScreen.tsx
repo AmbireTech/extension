@@ -12,7 +12,7 @@ import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
-import Header from '@common/modules/header/components/Header'
+import LegacyHeader from '@common/modules/header/components/LegacyHeader'
 import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -95,11 +95,11 @@ const CreateSeedPhraseWriteScreen = () => {
   return (
     <TabLayoutContainer
       backgroundColor={theme.secondaryBackground}
-      header={<Header mode="custom-inner-content" withAmbireLogo />}
+      header={<LegacyHeader mode="custom-inner-content" withAmbireLogo />}
     >
       <TabLayoutWrapperMainContent>
         <Panel
-          testID='back-up-recovery-phrase-text'
+          testID="back-up-recovery-phrase-text"
           type="onboarding"
           spacingsSize="small"
           step={1}

@@ -13,7 +13,7 @@ import useTheme from '@common/hooks/useTheme'
 import { AUTH_STATUS } from '@common/modules/auth/constants/authStatus'
 import useAuth from '@common/modules/auth/hooks/useAuth'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
-import Header from '@common/modules/header/components/Header'
+import LegacyHeader from '@common/modules/header/components/LegacyHeader'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -75,7 +75,7 @@ const GetStartedScreen = () => {
   return (
     <TabLayoutContainer
       backgroundColor={theme.secondaryBackground}
-      header={<Header mode="custom-inner-content" withAmbireLogo />}
+      header={<LegacyHeader mode="custom-inner-content" withAmbireLogo />}
     >
       <TabLayoutWrapperMainContent>
         <Panel spacingsSize="small" type="onboarding">

@@ -16,7 +16,7 @@ import TokenIcon from '@common/components/TokenIcon'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
-import Header from '@common/modules/header/components/Header'
+import LegacyHeader from '@common/modules/header/components/LegacyHeader'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
@@ -274,7 +274,7 @@ const WatchTokenRequestScreen = () => {
       width="full"
       backgroundColor={theme.primaryBackground}
       header={
-        <Header
+        <LegacyHeader
           mode="custom-inner-content"
           withAmbireLogo
           backgroundColor={theme.primaryBackground as string}

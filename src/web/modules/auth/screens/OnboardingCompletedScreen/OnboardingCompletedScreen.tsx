@@ -8,7 +8,7 @@ import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import ConfettiAnimation from '@common/modules/dashboard/components/ConfettiAnimation'
-import Header from '@common/modules/header/components/Header'
+import LegacyHeader from '@common/modules/header/components/LegacyHeader'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
@@ -44,7 +44,7 @@ const OnboardingCompletedScreen = () => {
       <PinExtension />
       <TabLayoutContainer
         backgroundColor={theme.secondaryBackground}
-        header={<Header customTitle={' '} />}
+        header={<LegacyHeader customTitle={' '} />}
       >
         <TabLayoutWrapperMainContent>
           <Panel type="onboarding" spacingsSize="small" style={{ overflow: 'visible' }}>
@@ -57,7 +57,7 @@ const OnboardingCompletedScreen = () => {
                 style={[spacings.mtLg, spacings.mb, text.center]}
                 weight="semiBold"
                 fontSize={20}
-                testID='wallet-ready-to-use-text'
+                testID="wallet-ready-to-use-text"
               >
                 {t('Ambire Wallet is ready to use')}
               </Text>

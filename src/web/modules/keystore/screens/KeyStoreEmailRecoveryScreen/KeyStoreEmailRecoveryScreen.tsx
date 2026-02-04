@@ -5,7 +5,7 @@ import Panel from '@common/components/Panel'
 import useNavigation from '@common/hooks/useNavigation'
 import usePrevious from '@common/hooks/usePrevious'
 import useTheme from '@common/hooks/useTheme'
-import Header from '@common/modules/header/components/Header'
+import LegacyHeader from '@common/modules/header/components/LegacyHeader'
 import { ROUTES } from '@common/modules/router/constants/common'
 import {
   TabLayoutContainer,
@@ -35,7 +35,7 @@ const KeyStoreEmailRecoveryScreen = () => {
   return (
     <TabLayoutContainer
       backgroundColor={theme.secondaryBackground}
-      header={<Header mode="custom-inner-content" withAmbireLogo />}
+      header={<LegacyHeader mode="custom-inner-content" withAmbireLogo />}
     >
       <TabLayoutWrapperMainContent withScroll={false}>
         <Panel

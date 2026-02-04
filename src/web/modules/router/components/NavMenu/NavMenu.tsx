@@ -16,9 +16,9 @@ import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
-import Header from '@common/modules/header/components/Header'
-import getHeaderStyles from '@common/modules/header/components/Header/styles'
 import HeaderBackButton from '@common/modules/header/components/HeaderBackButton'
+import LegacyHeader from '@common/modules/header/components/LegacyHeader'
+import getHeaderStyles from '@common/modules/header/components/LegacyHeader/styles'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import common, { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
@@ -100,7 +100,7 @@ const NavMenu = () => {
       footer={<BackButton />}
       footerStyle={{ maxWidth: tabLayoutWidths.xl }}
       header={
-        <Header mode="custom">
+        <LegacyHeader mode="custom">
           <View style={[headerStyles.widthContainer, { maxWidth: tabLayoutWidths.xl }]}>
             <View style={[headerStyles.sideContainer, { width: 180 }]}>
               <HeaderBackButton />
@@ -138,7 +138,7 @@ const NavMenu = () => {
               )}
             </View>
           </View>
-        </Header>
+        </LegacyHeader>
       }
       style={spacings.ph0}
       withHorizontalPadding={false}

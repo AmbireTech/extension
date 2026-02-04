@@ -20,7 +20,7 @@ import Text from '@common/components/Text'
 import useDebounce from '@common/hooks/useDebounce'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
-import Header from '@common/modules/header/components/Header'
+import LegacyHeader from '@common/modules/header/components/LegacyHeader'
 import spacings, { SPACING_MI, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
@@ -324,7 +324,7 @@ const DappCatalogScreen = () => {
       width="xl"
       footer={<BackButton />}
       footerStyle={{ maxWidth: tabLayoutWidths.xl }}
-      header={<Header mode="title" withAmbireLogo />}
+      header={<LegacyHeader mode="title" withAmbireLogo />}
       withHorizontalPadding={!isPopup}
     >
       {!state.isReadyToDisplayDapps || !state.dapps.length ? (

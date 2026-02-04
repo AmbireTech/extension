@@ -12,8 +12,8 @@ import Text from '@common/components/Text'
 import useReverseLookup from '@common/hooks/useReverseLookup'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
-import Header from '@common/modules/header/components/Header'
-import getHeaderStyles from '@common/modules/header/components/Header/styles'
+import LegacyHeader from '@common/modules/header/components/LegacyHeader'
+import getHeaderStyles from '@common/modules/header/components/LegacyHeader/styles'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
@@ -47,7 +47,7 @@ const HeaderAccountAndNetworkInfo: FC<Props> = ({
   if (!account) return null
 
   return (
-    <Header
+    <LegacyHeader
       mode="custom"
       withAmbireLogo={!!withAmbireLogo && maxWidthSize(700)}
       style={styles.container}
@@ -82,7 +82,7 @@ const HeaderAccountAndNetworkInfo: FC<Props> = ({
           </View>
         )}
       </View>
-    </Header>
+    </LegacyHeader>
   )
 }
 

@@ -6,7 +6,7 @@ import { SwapAndBridgeActiveRoute } from '@ambire-common/interfaces/swapAndBridg
 import Button from '@common/components/Button'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
-import Header from '@common/modules/header/components/Header'
+import LegacyHeader from '@common/modules/header/components/LegacyHeader'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
@@ -39,7 +39,7 @@ const TrackProgressWrapper: FC<TrackProgressProps> = ({
     <TabLayoutContainer
       backgroundColor={theme.primaryBackground}
       header={
-        <Header
+        <LegacyHeader
           backgroundColor="primaryBackground"
           displayBackButtonIn="never"
           mode="custom-inner-content"

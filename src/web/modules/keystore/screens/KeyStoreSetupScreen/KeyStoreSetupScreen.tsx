@@ -11,7 +11,7 @@ import Text from '@common/components/Text'
 import { Trans, useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
-import Header from '@common/modules/header/components/Header'
+import LegacyHeader from '@common/modules/header/components/LegacyHeader'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import common from '@common/styles/utils/common'
@@ -43,7 +43,7 @@ const KeyStoreSetupScreen = () => {
   return (
     <TabLayoutContainer
       backgroundColor={theme.secondaryBackground}
-      header={<Header mode="custom-inner-content" withAmbireLogo />}
+      header={<LegacyHeader mode="custom-inner-content" withAmbireLogo />}
     >
       <TabLayoutWrapperMainContent withScroll={false}>
         <Panel
