@@ -199,6 +199,8 @@ export class AuthPage extends BasePage {
   }
 
   async selectHDPath(path: string): Promise<void> {
+    await this.page.waitForTimeout(3000)
+    await this.expectButtonEnabled(selectors.getStarted.changeHDPathButton)
     await this.click(selectors.getStarted.changeHDPathButton)
     await this.isVisible(path)
     await this.click(path)
