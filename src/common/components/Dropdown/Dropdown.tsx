@@ -19,7 +19,7 @@ interface Props {
 }
 
 const Dropdown: FC<Props> = ({ data, externalPosition, setExternalPosition, onSelect }) => {
-  const DropdownButton: any = useRef()
+  const DropdownButton: any = useRef(null)
   const { styles, theme, themeType } = useTheme(getStyles)
   const dropdownButtonRef = useRef(null)
   const { width: windowWidth } = useWindowSize()
