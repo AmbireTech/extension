@@ -177,6 +177,7 @@ const ManageDapp = ({
             <DeleteIcon
               color={theme.errorDecorative}
               width={16}
+              height={16}
               style={spacings.mlTy}
               strokeWidth="1.8"
             />

@@ -151,7 +151,7 @@ const AddressField: FC<Props> = ({
               ensAddress={value.ensAddress}
               isRecipientDomainResolving={value.isDomainResolving}
               onSubmitEditing={disabled ? undefined : handleSubmit}
-              button={accounts.length > 1 ? <DeleteIcon /> : null}
+              button={accounts.length > 1 ? <DeleteIcon width={24} height={24} /> : null}
               onButtonPress={() => remove(index)}
             />
           </View>
