@@ -17,10 +17,9 @@ import useLedger from '@web/modules/hardware-wallet/hooks/useLedger'
 import { OneClickEstimationProps } from '@web/modules/sign-account-op/components/OneClick/Estimation/Estimation'
 import { getIsSignLoading } from '@web/modules/sign-account-op/utils/helpers'
 
-const PRIMARY_BUTTON_LABELS: Record<
-  OneClickEstimationProps['updateType'] | 'Sign' | 'HW',
-  { default: string; isLoading: string }
-> = {
+type ButtonMode = OneClickEstimationProps['updateType'] | 'Sign' | 'HW' | 'Safe'
+
+const PRIMARY_BUTTON_LABELS: Record<ButtonMode, { default: string; isLoading: string }> = {
   'Swap&Bridge': {
     default: 'Swap',
     isLoading: 'Swapping...'
@@ -35,6 +34,10 @@ const PRIMARY_BUTTON_LABELS: Record<
   },
   HW: {
     default: 'Begin signing',
+    isLoading: 'Signing...'
+  },
+  Safe: {
+    default: 'Sign',
     isLoading: 'Signing...'
   }
 }
@@ -348,17 +351,19 @@ const useSign = ({
     ])
 
   const primaryButtonText = useMemo(() => {
-    // to do
-    // for now, implement the Broadcast text
+    let buttonLabelType: ButtonMode =
+      updateType || (isAtLeastOneOfTheKeysInvolvedExternal ? 'HW' : 'Sign')
+
     if (signAccountOpState?.account.safeCreation) {
       const isBroadcast =
         (signAccountOpState?.accountOp.signed?.length || 0) >= signAccountOpState?.threshold
       if (isBroadcast) {
         return isSignLoading ? 'Broadcasting...' : 'Broadcast'
       }
-    }
 
-    const buttonLabelType = updateType || (isAtLeastOneOfTheKeysInvolvedExternal ? 'HW' : 'Sign')
+      // safe
+      buttonLabelType = 'Safe'
+    }
 
     return t(
       isSignLoading
