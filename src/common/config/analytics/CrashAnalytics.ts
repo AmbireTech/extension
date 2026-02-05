@@ -23,7 +23,11 @@
 // })
 
 // export const setUserContext = (u: SentryLib.Native.User) => Sentry.setUser(u)
+export const setUserContext = (u: any) => {}
 
 // export const captureException = (e: any) => Sentry.captureException(e)
+export const captureException = (e: any) => {}
 // export const setExtraContext = Sentry.setExtra
+export const setExtraContext = (param1: string, param2: string) => {}
 // export const captureMessage = (message: string) => Sentry.captureMessage(message)
+export const captureMessage = (message: string) => {}
