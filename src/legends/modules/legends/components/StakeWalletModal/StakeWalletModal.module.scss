@@ -91,7 +91,9 @@
     padding: 0.55rem 1.855rem;
     border-radius: 0.5rem;
     cursor: pointer;
-    transition: background 0.2s, color 0.2s;
+    transition:
+      background 0.2s,
+      color 0.2s;
 
     &.activeTab {
       background: rgba($neutral-600, 0.3);
@@ -119,17 +121,6 @@
   display: flex;
   justify-content: space-between;
   width: 100%;
-}
-
-.apyInfo {
-  color: #02f3bf;
-  margin-bottom: 1rem;
-  font-weight: 700;
-  font-size: 1rem;
-  line-height: 2.75rem;
-  display: flex;
-  justify-content: center;
-  align-items: center;
 }
 
 .label {

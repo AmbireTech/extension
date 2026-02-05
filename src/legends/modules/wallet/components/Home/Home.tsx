@@ -163,22 +163,10 @@ const Home = () => {
                 {isLoadingWalletTokenInfo
                   ? 'Loading...'
                   : stakedWallet === null
-                  ? 0
-                  : `${stakedWallet.toFixed(2)}%`}
+                    ? 0
+                    : `${stakedWallet.toFixed(2)}%`}
               </span>
               Staked $WALLET
-              <div className={styles.walletInfoWrapper} />
-            </div>
-
-            <div className={styles.walletItemWrapper}>
-              <span className={styles.item}>
-                {isLoadingWalletTokenInfo
-                  ? 'Loading...'
-                  : walletTokenInfo?.apy === null || walletTokenInfo?.apy === undefined
-                  ? '0%'
-                  : `${walletTokenInfo.apy.toFixed(2)}%`}
-              </span>
-              Staking APY
               <div className={styles.walletInfoWrapper} />
             </div>
 
