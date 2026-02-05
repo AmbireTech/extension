@@ -11,10 +11,9 @@ import Alert from '@common/components/Alert'
 import Banner from '@common/components/Banner'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
+import Header from '@common/modules/header/components/Header'
 import { SPACING, SPACING_LG, SPACING_MD, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
-import HeaderAccountAndNetworkInfo from '@web/components/HeaderAccountAndNetworkInfo'
 import ManifestImage from '@web/components/ManifestImage'
 import NetworkAvailableFeatures from '@web/components/NetworkAvailableFeatures'
 import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
@@ -54,7 +53,7 @@ const UpdateChain = ({
   rpcUrls,
   rpcUrlIndex
 }: UpdateChainProps) => {
-  const { styles, theme, themeType } = useTheme(getStyles)
+  const { styles, theme } = useTheme(getStyles)
   const { t } = useTranslation()
   const { name, icon } = useDappInfo(userRequest)
   const { responsiveSizeMultiplier } = useResponsiveActionWindow({ maxBreakpoints: 2 })
@@ -62,15 +61,7 @@ const UpdateChain = ({
   return (
     <TabLayoutContainer
       width="full"
-      header={
-        <HeaderAccountAndNetworkInfo
-          backgroundColor={
-            themeType === THEME_TYPES.DARK
-              ? (theme.tertiaryBackground as string)
-              : (theme.primaryBackground as string)
-          }
-        />
-      }
+      header={<Header withDetailedAccountData />}
       footer={
         <ActionFooter
           onReject={handleDenyButtonPress}

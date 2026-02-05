@@ -12,7 +12,6 @@ import { isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
-import flexboxStyles from '@common/styles/utils/flexbox'
 import { setStringAsync } from '@common/utils/clipboard'
 import useHover, { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
@@ -38,7 +37,7 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
   const [bindAddressAnim, addressAnimStyle] = useHover({
     preset: 'opacityInverted'
   })
-  const [bindAccountBtnAnim, accountBtnAnimStyle, isAccountBtnHovered] = useCustomHover({
+  const [bindAccountBtnAnim, accountBtnAnimStyle] = useCustomHover({
     property: 'left',
     values: {
       from: 0,
@@ -90,14 +89,10 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
         >
           {account.preferences.label}
         </Text>
-        <AnimatedPressable
-          style={[flexboxStyles.directionRow, flexboxStyles.alignCenter, addressAnimStyle]}
-          onPress={handleCopyText}
-          {...bindAddressAnim}
-        >
-          <Text color="#E3E6EB" style={spacings.mrMi} weight="mono_regular" fontSize={14}>
-            ({shortenAddress(account.addr, 13)})
-          </Text>
+        <Text color="#E3E6EB" style={spacings.mrMi} weight="mono_regular" fontSize={14}>
+          ({shortenAddress(account.addr, 13)})
+        </Text>
+        <AnimatedPressable style={addressAnimStyle} onPress={handleCopyText} {...bindAddressAnim}>
           <CopyIcon width={24} height={24} color="#E3E6EB" />
         </AnimatedPressable>
         {!!withArrowRightIcon && (

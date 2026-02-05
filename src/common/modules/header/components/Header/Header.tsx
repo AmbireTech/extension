@@ -3,6 +3,7 @@ import { View, ViewProps } from 'react-native'
 
 import AmbireLogoHorizontalMonochrome from '@common/assets/svg/AmbireLogoHorizontalMonochrome'
 import AccountData from '@common/components/AccountData'
+import AccountDataDetailed from '@common/components/AccountDataDetailed'
 import Text from '@common/components/Text'
 import { titleChangeEventStream } from '@common/hooks/useNavigation'
 import useRoute from '@common/hooks/useRoute'
@@ -77,10 +78,15 @@ type CommonHeaderProps = {
 }
 
 // TODO: OG Mode
-const Header = ({ width }: CommonHeaderProps) => {
+const Header = ({
+  width,
+  withDetailedAccountData
+}: CommonHeaderProps & {
+  withDetailedAccountData?: boolean
+}) => {
   return (
     <Wrapper width={width}>
-      <AccountData />
+      {withDetailedAccountData ? <AccountDataDetailed /> : <AccountData />}
       <AmbireLogoHorizontalMonochrome />
     </Wrapper>
   )
@@ -136,6 +142,7 @@ const HeaderWithLogoOnly = ({ width }: CommonHeaderProps) => {
 // If you need something custom, compose it using these
 Header.Wrapper = Wrapper
 Header.AccountData = AccountData
+Header.AccountDataDetailed = AccountDataDetailed
 Header.Title = Title
 Header.BackButton = HeaderBackButton
 Header.Logo = AmbireLogoHorizontalMonochrome

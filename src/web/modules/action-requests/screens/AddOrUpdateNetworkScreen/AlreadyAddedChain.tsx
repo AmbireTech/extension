@@ -7,11 +7,10 @@ import { Network } from '@ambire-common/interfaces/network'
 import SuccessAnimation from '@common/components/SuccessAnimation'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
+import Header from '@common/modules/header/components/Header'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import HeaderAccountAndNetworkInfo from '@web/components/HeaderAccountAndNetworkInfo'
 import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
 
 import ActionFooter from '../../components/ActionFooter'
@@ -29,21 +28,13 @@ const AlreadyAddedChain = ({
   networkAlreadyAdded,
   successStateText
 }: AlreadyAddedChainProps) => {
-  const { theme, themeType } = useTheme()
+  const { theme } = useTheme()
   const { t } = useTranslation()
 
   return (
     <TabLayoutContainer
       width="full"
-      header={
-        <HeaderAccountAndNetworkInfo
-          backgroundColor={
-            themeType === THEME_TYPES.DARK
-              ? (theme.tertiaryBackground as string)
-              : (theme.primaryBackground as string)
-          }
-        />
-      }
+      header={<Header withDetailedAccountData />}
       footer={
         <ActionFooter
           onReject={undefined}

@@ -15,7 +15,7 @@ import useDisableNavigatingBack from '@common/hooks/useDisableNavigatingBack'
 import useElementSize from '@common/hooks/useElementSize'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
-import LegacyHeader from '@common/modules/header/components/LegacyHeader'
+import Header from '@common/modules/header/components/Header'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings, { SPACING } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -116,25 +116,12 @@ const KeyStoreUnlockScreen = () => {
       backgroundColor={theme.secondaryBackground}
       header={
         !isPopup && (
-          <LegacyHeader displayBackButtonIn="never" withAmbireLogo mode="custom-inner-content">
-            <View
-              style={[
-                flexbox.flex1,
-                flexbox.directionRow,
-                flexbox.alignCenter,
-                flexbox.justifyCenter
-              ]}
-            >
-              <Text
-                fontSize={20}
-                weight="medium"
-                style={[{ marginLeft: 18 + SPACING }, spacings.mr]}
-              >
-                {t('Welcome Back')}
-              </Text>
-              <LockIcon />
-            </View>
-          </LegacyHeader>
+          <Header.Wrapper style={flexbox.justifyCenter}>
+            <Text fontSize={20} weight="medium" style={[{ marginLeft: 18 + SPACING }, spacings.mr]}>
+              {t('Welcome Back')}
+            </Text>
+            <LockIcon />
+          </Header.Wrapper>
         )
       }
     >

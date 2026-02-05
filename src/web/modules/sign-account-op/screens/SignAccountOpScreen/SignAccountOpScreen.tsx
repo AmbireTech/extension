@@ -14,11 +14,11 @@ import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
 import useSign from '@common/hooks/useSign'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
+import Header from '@common/modules/header/components/Header'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import { setStringAsync } from '@common/utils/clipboard'
-import HeaderAccountAndNetworkInfo from '@web/components/HeaderAccountAndNetworkInfo'
 import SmallNotificationWindowWrapper from '@web/components/SmallNotificationWindowWrapper'
 import {
   TabLayoutContainer,
@@ -234,7 +234,7 @@ const SignAccountOpScreen = () => {
         backgroundColor={theme.primaryBackground}
         withHorizontalPadding={false}
         style={spacings.phMd}
-        header={<HeaderAccountAndNetworkInfo backgroundColor={theme.primaryBackground} />}
+        header={<Header withDetailedAccountData />}
         renderDirectChildren={() => (
           <View style={styles.footer}>
             {!estimationFailed ? (
