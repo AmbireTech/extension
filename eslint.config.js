@@ -6,7 +6,6 @@ module.exports = [
   {
     files: ['**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx'],
     languageOptions: {
-      parser: require('@typescript-eslint/parser'),
       parserOptions: {
         project: './tsconfig.json'
       },
