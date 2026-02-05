@@ -161,7 +161,7 @@ const BottomSheet: React.FC<Props> = ({
           modalStyle={[
             styles.bottomSheet,
             isModal
-              ? { ...styles.modal, ...(autoWidth ? { maxWidth: null, width: null } : {}) }
+              ? { ...styles.modal, ...(autoWidth ? { maxWidth: null, width: 'auto' } : {}) }
               : {},
             { backgroundColor: theme[backgroundColor] },
             isPopup && isModal ? { height: '100%' } : {},
