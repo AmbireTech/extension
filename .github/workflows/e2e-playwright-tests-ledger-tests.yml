@@ -105,14 +105,25 @@ jobs:
           docker pull ghcr.io/ledgerhq/speculos:0.25.13
           docker image tag ghcr.io/ledgerhq/speculos:0.25.13 speculos
           docker run -d --rm -it --net=host --privileged -v "$(pwd)"/e2e-playwright-tests/ledger-simulator/apps:/speculos/apps speculos --model nanosp ./apps/app.elf --display headless --api-port 5000 --apdu-port 9999 -T HID --seed "$SEED" -u HID 
-          cd e2e-playwright-tests/ledger-simulator
+
+      - name: Test ledger simulator
+        working-directory: ./e2e-playwright-tests/ledger-simulator
+        run: |
           npm -g i ts-node
           npm i @ledgerhq/hw-transport-node-speculos @ledgerhq/hw-app-eth ethers
           ts-node test.ts
+          
+
+      - name: Ledger simulator attach to the OS
+        working-directory: ./e2e-playwright-tests/ledger-simulator
+        run: |
+          echo ">>>>>>>>> show uhid device"
+          ls -la /dev/uhid
+          echo ">>>>>>>>> show hid divices"
+          ls -la /dev/hid*
           echo ">>>>>>>>> modprobe"
           sudo modprobe uhid
           echo "">>>>>>>>>>> ls dev huid"
-          ls -la /dev/uhid
           sudo ./ledger-usb-speculos-bridge &
           sudo ls -la /dev/hid*
           cd ../..
