@@ -1,13 +1,12 @@
 import { StyleSheet, ViewStyle } from 'react-native'
 
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES, ThemeProps, ThemeType } from '@common/styles/themeConfig'
+import { ThemeProps, ThemeType } from '@common/styles/themeConfig'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
 type Styles = {
   container: ViewStyle
-  expandedContainer: ViewStyle
   header: ViewStyle
   expandedHeader: ViewStyle
   providerData: ViewStyle
@@ -19,12 +18,7 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
     container: {
       ...common.borderRadiusPrimary,
       ...spacings.mbTy,
-      overflow: 'hidden',
-      borderWidth: 1,
-      borderColor: 'transparent'
-    },
-    expandedContainer: {
-      borderColor: themeType === THEME_TYPES.DARK ? theme.linkText : theme.primary
+      overflow: 'hidden'
     },
     header: {
       ...flexbox.directionRow,
@@ -35,7 +29,7 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       ...common.borderRadiusPrimary
     },
     expandedHeader: {
-      backgroundColor: theme.quaternaryBackground,
+      backgroundColor: theme.secondaryBackground,
       borderBottomRightRadius: 0,
       borderBottomLeftRadius: 0
     },

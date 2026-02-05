@@ -56,12 +56,12 @@ const DeFiPositionHeader: FC<Props> = ({
   const {
     state: { dapps }
   } = useDappsControllerState()
-  const { styles, theme, themeType } = useTheme(getStyles)
+  const { styles, theme } = useTheme(getStyles)
   const [bindAnim, animStyle] = useCustomHover({
     property: 'backgroundColor',
     values: {
-      from: theme.tertiaryBackground,
-      to: theme.secondaryBackground
+      from: theme.secondaryBackground,
+      to: theme.tertiaryBackground
     },
     forceHoveredStyle: isExpanded
   })
@@ -85,7 +85,7 @@ const DeFiPositionHeader: FC<Props> = ({
     } catch (e) {
       console.error(e)
     }
-  }, [dappUrl, siteUrl])
+  }, [dappUrl])
 
   return (
     <AnimatedPressable
