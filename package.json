@@ -289,6 +289,7 @@
     "postinstall-postinstall": "2.1.0",
     "prettier": "3.3.3",
     "react-native-dotenv": "3.4.7",
+    "@sentry/cli": "3.1.0",
     "sass": "1.79.2",
     "sass-loader": "16.0.2",
     "style-loader": "4.0.0",
@@ -320,7 +321,8 @@
       "eth-crypto>ethereumjs-util>ethereum-cryptography>secp256k1": false,
       "postinstall-postinstall": false,
       "secp256k1": false,
-      "@trezor/connect-webextension>@trezor/connect>@trezor/blockchain-link>@stellar/stellar-sdk": false
+      "@trezor/connect-webextension>@trezor/connect>@trezor/blockchain-link>@stellar/stellar-sdk": false,
+      "@sentry/cli": true
     }
   }
 }

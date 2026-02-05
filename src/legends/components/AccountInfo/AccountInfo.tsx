@@ -38,7 +38,7 @@ const AccountInfo = ({
             maxAddressLength={12}
           />
           <DisconnectIcon
-            onClick={disconnectProvider}
+            onPress={disconnectProvider}
             className={styles.disconnectIcon}
             data-tooltip-id="disconnect-info"
           />
