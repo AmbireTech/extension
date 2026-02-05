@@ -13,7 +13,6 @@ export type ControllersMiddlewareContextReturnType = {
    * It will only work when called from a focused window!
    */
   dispatch: (action: Action, windowId?: number) => void
-  handleAction: (action: AnyControllerAction) => void
   windowId?: number
   controllerStore: ControllerStore
   isStoreReady: boolean
@@ -21,7 +20,6 @@ export type ControllersMiddlewareContextReturnType = {
 
 export const controllersMiddlewareContextDefaults: ControllersMiddlewareContextReturnType = {
   dispatch: Promise.resolve,
-  handleAction: Promise.resolve,
   windowId: undefined,
   controllerStore: {} as ControllerStore,
   isStoreReady: false

@@ -65,6 +65,22 @@ export const handleActions = async (
 
       break
     }
+    case 'method': {
+      const { ctrlName, method, args } = params
+
+      const ctrl = eventEmitterRegistry.values().find((c) => c.name === ctrlName) as any
+
+      if (!ctrl) {
+        console.error(`handleAction: Controller ${ctrlName} not found`)
+
+        return
+      }
+
+      if (ctrl && typeof ctrl[method] === 'function') {
+        ctrl[method](...args)
+      }
+      break
+    }
     case 'MAIN_CONTROLLER_LOCK':
       return mainCtrl.lock()
     case 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LEDGER': {

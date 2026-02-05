@@ -359,12 +359,6 @@ export const CommonControllersMiddlewareProvider: React.FC<{
   }, [addToast, navigate])
 
   const dispatch = useCallback((action: Action) => {
-    throw new Error(
-      'Dispatch was called in the CommonControllersMiddlewareProvider but it is deprecated!'
-    )
-  }, [])
-
-  const handleAction = useCallback((action: AnyControllerAction) => {
     if (action.type === 'method') {
       const { ctrlName, method, args } = action.params
 
@@ -383,13 +377,15 @@ export const CommonControllersMiddlewareProvider: React.FC<{
 
       return
     }
+
+    //TODO: handle common actions for the mobile app
   }, [])
 
   return (
     <ControllersMiddlewareContext.Provider
       value={useMemo(
-        () => ({ dispatch, handleAction, controllerStore: controllerStore.current, isStoreReady }),
-        [dispatch, handleAction, isStoreReady]
+        () => ({ dispatch, controllerStore: controllerStore.current, isStoreReady }),
+        [dispatch, isStoreReady]
       )}
     >
       {children}

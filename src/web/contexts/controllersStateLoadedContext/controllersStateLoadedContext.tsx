@@ -10,6 +10,7 @@ import useActivityControllerState from '@web/hooks/useActivityControllerState'
 import useAddressBookControllerState from '@web/hooks/useAddressBookControllerState'
 import useBannersControllerState from '@web/hooks/useBannersControllerState'
 import useContractNamesControllerState from '@web/hooks/useContractNamesController/useContractNamesController'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useDappsControllerState from '@web/hooks/useDappsControllerState'
 import useDomainsControllerState from '@web/hooks/useDomainsController/useDomainsController'
 import useEmailVaultControllerState from '@web/hooks/useEmailVaultControllerState'
@@ -71,6 +72,7 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
   // `isStatesLoadingTakingTooLong` flag).
   const [areControllerStatesLoaded, setAreControllerStatesLoaded] = useState(false)
   const [isStatesLoadingTakingTooLong, setIsStatesLoadingTakingTooLong] = useState(false)
+  const { isStoreReady } = useControllersMiddleware()
 
   const AccountPickerController = useAccountPickerControllerState()
   const KeystoreController = useKeystoreControllerState()
@@ -215,8 +217,11 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
   }, [areControllerStatesLoaded, isViewReady, controllers, WalletStateController?.extensionVersion])
 
   const contextValue = useMemo(
-    () => ({ areControllerStatesLoaded, isStatesLoadingTakingTooLong }),
-    [areControllerStatesLoaded, isStatesLoadingTakingTooLong]
+    () => ({
+      areControllerStatesLoaded: areControllerStatesLoaded && isStoreReady,
+      isStatesLoadingTakingTooLong
+    }),
+    [areControllerStatesLoaded, isStoreReady, isStatesLoadingTakingTooLong]
   )
 
   return (

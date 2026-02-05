@@ -321,7 +321,7 @@ export const ExtensionControllersMiddlewareProvider: React.FC<{
   return (
     <ControllersMiddlewareContext.Provider
       value={useMemo(
-        () => ({ dispatch, windowId, isStoreReady }),
+        () => ({ dispatch, controllerStore: controllerStore.current, windowId, isStoreReady }),
         [dispatch, windowId, isStoreReady]
       )}
     >

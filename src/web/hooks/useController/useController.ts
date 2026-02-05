@@ -43,7 +43,7 @@ export default function useController<K extends keyof ControllersMappingType>(
     throw new Error('useController must be used within ControllersMiddlewareProvider')
   }
 
-  const { controllerStore, handleAction } = controllersMiddleware
+  const { controllerStore, dispatch: controllersMiddlewareDispatch } = controllersMiddleware
 
   const state = useSyncExternalStore(
     useCallback((cb) => controllerStore.subscribe(id as string, cb), [id, controllerStore]),
@@ -57,9 +57,9 @@ export default function useController<K extends keyof ControllersMappingType>(
         params: { ...action.params, ctrlName: id }
       } as never as AnyControllerAction
 
-      handleAction(ctrlAction)
+      controllersMiddlewareDispatch(ctrlAction)
     },
-    [handleAction, id]
+    [controllersMiddlewareDispatch, id]
   )
 
   return { state: state || ({} as ControllersMappingType[K]), dispatch }

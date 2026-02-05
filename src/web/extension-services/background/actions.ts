@@ -44,7 +44,7 @@ import { LOG_LEVELS } from '@web/utils/logger'
 
 import { AUTO_LOCK_TIMES } from './controllers/auto-lock'
 import { AvatarType } from './controllers/wallet-state'
-import { controllersMapping } from './types'
+import { controllersMapping, ControllersMappingType } from './types'
 
 type UpdateNavigationUrl = {
   type: 'UPDATE_PORT_URL'
@@ -55,6 +55,15 @@ type InitControllerStateAction = {
   type: 'INIT_CONTROLLER_STATE'
   params: {
     controller: keyof typeof controllersMapping
+  }
+}
+
+type MethodAction = {
+  type: 'method'
+  params: {
+    ctrlName: keyof ControllersMappingType
+    method: string
+    args: unknown[]
   }
 }
 
@@ -771,6 +780,7 @@ type FlipFeature = {
 export type Action =
   | UpdateNavigationUrl
   | InitControllerStateAction
+  | MethodAction
   | MainControllerAccountPickerInitLatticeAction
   | MainControllerAccountPickerInitTrezorAction
   | MainControllerAccountPickerInitLedgerAction

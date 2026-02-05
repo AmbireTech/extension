@@ -65,7 +65,7 @@ const AppInit = () => {
         <SafeAreaProvider>
           <ToastProvider>
             <ErrorBoundary fallback={errorComponent}>
-              <ControllersMiddlewareProvider>
+              <ControllersMiddlewareProvider env="extension">
                 <MainControllerStateProvider>
                   <StorageControllerStateProvider>
                     <UiControllerStateProvider>
