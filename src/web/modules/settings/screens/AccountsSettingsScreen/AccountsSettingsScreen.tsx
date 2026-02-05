@@ -195,7 +195,6 @@ const AccountsSettingsScreen = () => {
           />
           <Search
             autoFocus
-            placeholder={t('Search for account')}
             control={control}
             height={48}
             containerStyle={{ width: isWidthS ? '50%' : '100%' }}

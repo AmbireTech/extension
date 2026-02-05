@@ -127,10 +127,7 @@ const TabsAndSearch: FC<Props> = ({
               onHoverIn={bindControlPositionAnim.onHoverIn}
               onHoverOut={bindControlPositionAnim.onHoverOut}
             >
-              <SearchIcon
-                color={themeType === THEME_TYPES.DARK ? theme.primary : theme.tertiaryText}
-                width={16}
-              />
+              <SearchIcon width={24} height={24} />
             </AnimatedPressable>
           )}
           {isSearchVisible && (
