@@ -14,7 +14,7 @@ const AccountKeyBanner = ({ type }: { type: KeyType }) => {
   const { theme } = useTheme()
 
   const props = {
-    color: theme.secondaryText,
+    color: theme.secondaryAccent400,
     width: 16,
     height: 16
   }
