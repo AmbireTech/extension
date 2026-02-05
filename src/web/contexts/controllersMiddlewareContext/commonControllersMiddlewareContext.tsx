@@ -22,7 +22,7 @@ import useToast from '@common/hooks/useToast'
 import { BUNGEE_API_KEY, RELAYER_URL, VELCRO_URL } from '@env'
 import { Action } from '@web/extension-services/background/actions'
 import { WalletStateController } from '@web/extension-services/background/controllers/wallet-state'
-import { handleActions } from '@web/extension-services/background/handlers/handleActions'
+import { ControllersMappingType } from '@web/extension-services/background/types'
 import { storage } from '@web/extension-services/background/webapi/storage'
 import eventBus from '@web/extension-services/event/eventBus'
 
@@ -44,17 +44,18 @@ export const CommonControllersMiddlewareProvider: React.FC<{
     (ctrlName: string, ctrl: EventEmitter, forceEmit?: boolean): 'DEBOUNCED' | 'EMITTED' => {
       if (forceEmit) {
         eventBus.emit(ctrlName, ctrl.toJSON(), forceEmit)
+        controllerStore.current.update(ctrlName as any, ctrl, forceEmit)
 
         return 'EMITTED'
       }
 
       if (ctrlOnUpdateIsDirtyFlags.current[ctrlName]) return 'DEBOUNCED'
       ctrlOnUpdateIsDirtyFlags.current[ctrlName] = true
-
       // Debounce multiple emits in the same tick and only execute one of them
       setTimeout(() => {
         if (ctrlOnUpdateIsDirtyFlags.current[ctrlName]) {
           eventBus.emit(ctrlName, ctrl.toJSON(), forceEmit)
+          controllerStore.current.update(ctrlName as any, ctrl, forceEmit)
         }
         ctrlOnUpdateIsDirtyFlags.current[ctrlName] = false
       }, 0)
@@ -64,7 +65,25 @@ export const CommonControllersMiddlewareProvider: React.FC<{
     []
   )
 
-  const controllerStore = useRef<ControllerStore>(new ControllerStore())
+  const controllerStore = useRef<ControllerStore>(
+    new ControllerStore({
+      onInit: () => {
+        return Object.values(controllers.current).map((ctrl) => {
+          const ctrlName = ctrl.name as keyof ControllersMappingType
+          controllerStore.current.update(ctrlName, ctrl)
+
+          return ctrlName
+        })
+      },
+      onReady: () => {
+        setIsStoreReady(true)
+      }
+    })
+  )
+
+  useEffect(() => {
+    controllerStore.current.init()
+  }, [])
 
   const eventEmitterRegistry = useRef<EventEmitterRegistryController>(
     new EventEmitterRegistryController(() => {
@@ -199,6 +218,7 @@ export const CommonControllersMiddlewareProvider: React.FC<{
   }, [])
 
   const controllers = useRef<{
+    walletState?: WalletStateController
     main?: MainController
     providers?: ProvidersController
     domains?: DomainsController
@@ -206,6 +226,7 @@ export const CommonControllersMiddlewareProvider: React.FC<{
   }>(
     (() => {
       const ctrls: {
+        walletState?: WalletStateController
         main?: MainController
         providers?: ProvidersController
         domains?: DomainsController
@@ -213,6 +234,10 @@ export const CommonControllersMiddlewareProvider: React.FC<{
       } = {}
 
       if (env === 'mobile') {
+        ctrls.walletState = new WalletStateController({
+          eventEmitterRegistry: eventEmitterRegistry.current,
+          onLogLevelUpdateCallback: async () => {}
+        })
         ctrls.main = new MainController({
           eventEmitterRegistry: eventEmitterRegistry.current,
           appVersion: APP_VERSION,
@@ -296,13 +321,6 @@ export const CommonControllersMiddlewareProvider: React.FC<{
     })()
   )
 
-  const walletStateCtrl = useRef<WalletStateController>(
-    new WalletStateController({
-      eventEmitterRegistry: eventEmitterRegistry.current,
-      onLogLevelUpdateCallback: async () => {}
-    })
-  )
-
   useEffect(() => {
     const onError = (newState: { errors: ErrorRef[]; controller: string }) => {
       const lastError = newState.errors[newState.errors.length - 1]
@@ -340,52 +358,31 @@ export const CommonControllersMiddlewareProvider: React.FC<{
     return () => eventBus.removeEventListener('navigate', onNavigate)
   }, [addToast, navigate])
 
-  const dispatch = useCallback(
-    (action: Action) => {
-      if (action.type === 'INIT_CONTROLLER_STATE') {
-        const ctrl = eventEmitterRegistry.current
-          .values()
-          .find((c) => c.name === action.params.controller)
-        if (ctrl) {
-          eventBus.emit(action.params.controller, ctrl.toJSON())
-        }
-      } else {
-        console.log(action, controllers.current)
-        // TODO: temp solution
-        handleActions(action, {
-          eventEmitterRegistry: eventEmitterRegistry.current,
-          mainCtrl:
-            env === 'mobile'
-              ? controllers.current.main!
-              : (controllers.current as never as MainController),
-          walletStateCtrl: walletStateCtrl.current
-        })
-      }
-    },
-    [env]
-  )
+  const dispatch = useCallback((action: Action) => {
+    throw new Error(
+      'Dispatch was called in the CommonControllersMiddlewareProvider but it is deprecated!'
+    )
+  }, [])
 
   const handleAction = useCallback((action: AnyControllerAction) => {
     if (action.type === 'method') {
       const { ctrlName, method, args } = action.params
 
-      let targetCtrl = (controllers.current as any)[ctrlName]
-      if (!targetCtrl && controllers.current.main) {
-        targetCtrl = (controllers.current.main as any)[ctrlName]
+      let targetCtrl: any = Object.values(controllers.current as any).find(
+        (ctrl: any) => ctrl.name === ctrlName
+      )
+      if (!targetCtrl) {
+        console.error(`handleAction: Controller ${ctrlName} not found`)
+
+        return
       }
 
-      if (targetCtrl && typeof targetCtrl[method] === 'function') targetCtrl[method](...args)
+      if (targetCtrl && typeof targetCtrl[method] === 'function') {
+        targetCtrl[method](...args)
+      }
 
       return
     }
-  }, [])
-
-  useEffect(() => {
-    Object.values(controllers.current).forEach((ctrl) => {
-      controllerStore.current.update(ctrl.name as any, ctrl)
-    })
-
-    setIsStoreReady(true)
   }, [])
 
   return (

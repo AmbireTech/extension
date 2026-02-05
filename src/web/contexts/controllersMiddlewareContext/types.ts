@@ -23,6 +23,6 @@ export const controllersMiddlewareContextDefaults: ControllersMiddlewareContextR
   dispatch: Promise.resolve,
   handleAction: Promise.resolve,
   windowId: undefined,
-  controllerStore: new ControllerStore(),
+  controllerStore: {} as ControllerStore,
   isStoreReady: false
 }

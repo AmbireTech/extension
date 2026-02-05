@@ -12,12 +12,17 @@ import useToast from '@common/hooks/useToast'
 import { isExtension } from '@web/constants/browserapi'
 import { ControllersMiddlewareContextReturnType } from '@web/contexts/controllersMiddlewareContext/types'
 import { Action } from '@web/extension-services/background/actions'
+import {
+  controllersMapping,
+  ControllersMappingType
+} from '@web/extension-services/background/types'
 import { closeCurrentWindow } from '@web/extension-services/background/webapi/window'
 import eventBus from '@web/extension-services/event/eventBus'
 import { PortMessenger } from '@web/extension-services/messengers'
 import { getUiType } from '@web/utils/uiType'
 
 import { ControllersMiddlewareContext } from './context'
+import { ControllerStore } from './controllerStore'
 
 let globalDispatch: ControllersMiddlewareContextReturnType['dispatch']
 let pm: PortMessenger
@@ -48,6 +53,7 @@ if (isExtension) {
     // @ts-ignore
     pm.addConnectListener(pm.ports[0].id, (messageType, { method, params, forceEmit }) => {
       if (method === 'portReady') {
+        eventBus.emit('onReady')
         backgroundReady = true
         actionsBeforeBackgroundReady.forEach((a) => globalDispatch(a))
         actionsBeforeBackgroundReady.length = 0
@@ -58,6 +64,10 @@ if (isExtension) {
           closeCurrentWindow()
         } else {
           eventBus.emit(method, params, forceEmit)
+          eventBus.emit('ctrlUpdate', {
+            ctrlName: method,
+            ctrlState: params
+          })
         }
       }
       if (messageType === '> ui-error') {
@@ -127,6 +137,39 @@ export const ExtensionControllersMiddlewareProvider: React.FC<{
   const { navigate } = useNavigation()
   const [windowId, setWindowId] = useState<number | undefined>()
   const hasConnectedToTheBackground = useRef(false)
+  const [isStoreReady, setIsStoreReady] = useState(false)
+
+  const controllerStore = useRef<ControllerStore>(
+    new ControllerStore({
+      onInit: () => {
+        const controllersByName = Object.keys(
+          controllersMapping
+        ) as (keyof ControllersMappingType)[]
+
+        controllersByName.forEach((key) => {
+          dispatch({
+            type: 'INIT_CONTROLLER_STATE',
+            params: { controller: key as keyof typeof controllersMapping }
+          })
+        })
+
+        return controllersByName
+      },
+      onReady: () => {
+        setIsStoreReady(true)
+      }
+    })
+  )
+
+  useEffect(() => {
+    const initControllers = () => {
+      controllerStore.current.init()
+    }
+
+    eventBus.addEventListener('onReady', initControllers)
+
+    return () => eventBus.removeEventListener('onReady', initControllers)
+  }, [])
 
   useEffect(() => {
     if (!isExtension) return
@@ -222,6 +265,16 @@ export const ExtensionControllersMiddlewareProvider: React.FC<{
   }, [addToast])
 
   useEffect(() => {
+    const onCtrlUpdate = ({ ctrlName, ctrlState }: { ctrlName: string; ctrlState: any }) => {
+      controllerStore.current.update(ctrlName as any, ctrlState)
+    }
+
+    eventBus.addEventListener('ctrlUpdate', onCtrlUpdate)
+
+    return () => eventBus.removeEventListener('ctrlUpdate', onCtrlUpdate)
+  }, [])
+
+  useEffect(() => {
     const onError = (newState: { errors: ErrorRef[]; controller: string }) => {
       const lastError = newState.errors[newState.errors.length - 1]
       if (lastError) {
@@ -267,7 +320,10 @@ export const ExtensionControllersMiddlewareProvider: React.FC<{
 
   return (
     <ControllersMiddlewareContext.Provider
-      value={useMemo(() => ({ dispatch, windowId }), [dispatch, windowId])}
+      value={useMemo(
+        () => ({ dispatch, windowId, isStoreReady }),
+        [dispatch, windowId, isStoreReady]
+      )}
     >
       {children}
     </ControllersMiddlewareContext.Provider>
