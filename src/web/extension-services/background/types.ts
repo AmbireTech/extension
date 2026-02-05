@@ -68,5 +68,5 @@ export const controllersMapping = {
 }
 
 export type ControllersMappingType = {
-  [K in keyof typeof controllersMapping]: InstanceType<typeof controllersMapping[K]>
+  [K in keyof typeof controllersMapping]: InstanceType<(typeof controllersMapping)[K]>
 }

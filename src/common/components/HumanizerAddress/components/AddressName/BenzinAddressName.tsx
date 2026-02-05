@@ -4,8 +4,7 @@ import React, { FC, useEffect, useMemo } from 'react'
 import Spinner from '@common/components/Spinner'
 import { Props as TextProps } from '@common/components/Text'
 import useReverseLookup from '@common/hooks/useReverseLookup'
-import useContractNamesControllerState from '@web/hooks/useContractNamesController/useContractNamesController'
-import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
+import useController from '@web/hooks/useController'
 
 import BaseAddress from '../BaseAddress'
 
@@ -16,14 +15,17 @@ interface Props extends TextProps {
 
 const BenzinAddressName: FC<Props> = ({ address, chainId, ...rest }) => {
   const { isLoading: isLoadingEns, ens } = useReverseLookup({ address })
-  const { contractNames } = useContractNamesControllerState()
-  const { dispatch } = useControllersMiddleware()
+
+  const {
+    state: { contractNames },
+    dispatch
+  } = useController('ContractNamesController')
 
   useEffect(() => {
     if (!contractNames[address]) {
       dispatch({
-        type: 'CONTRACT_NAMES_CONTROLLER_GET_NAME',
-        params: { address, chainId }
+        type: 'method',
+        params: { method: 'getName', args: [address, chainId] }
       })
     }
   }, [address, chainId, contractNames, dispatch])

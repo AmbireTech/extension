@@ -1,5 +1,5 @@
 import { randomBytes } from 'ethers'
-import React, { memo, useEffect, useMemo, useState } from 'react'
+import React, { memo, useMemo } from 'react'
 import { Image, ScrollView, View } from 'react-native'
 
 // @ts-ignore
@@ -17,10 +17,7 @@ import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { isStateLoaded } from '@web/contexts/controllersStateLoadedContext'
-import useContractNamesControllerState from '@web/hooks/useContractNamesController/useContractNamesController'
-import useDomainsControllerState from '@web/hooks/useDomainsController/useDomainsController'
-import useProvidersControllerState from '@web/hooks/useProvidersControllerState'
+import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import TransactionSummary from '@web/modules/sign-account-op/components/TransactionSummary'
 
 import { IS_MOBILE_UP_BENZIN_BREAKPOINT } from '../../styles'
@@ -29,23 +26,7 @@ import getStyles from './styles'
 const Benzin = ({ state }: { state: ReturnType<typeof useBenzin> }) => {
   const { styles } = useTheme(getStyles)
   const { maxWidthSize } = useWindowSize()
-  const [areControllerStatesLoaded, setAreControllerStatesLoaded] = useState(false)
-
-  const ProvidersController = useProvidersControllerState().state
-  const DomainsController = useDomainsControllerState().state
-  const ContractNamesController = useContractNamesControllerState()
-
-  useEffect(() => {
-    if (areControllerStatesLoaded) return
-
-    if (
-      Object.values({ ProvidersController, DomainsController, ContractNamesController }).every(
-        (state) => isStateLoaded(state)
-      )
-    ) {
-      setAreControllerStatesLoaded(true)
-    }
-  }, [ContractNamesController, DomainsController, ProvidersController, areControllerStatesLoaded])
+  const { isStoreReady } = useControllersMiddleware()
 
   const summary = useMemo(() => {
     const calls = state?.stepsState?.calls
@@ -72,7 +53,7 @@ const Benzin = ({ state }: { state: ReturnType<typeof useBenzin> }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state?.handleOpenExplorer, state?.network?.chainId, state?.stepsState?.calls?.length])
 
-  if ((state && !state?.isInitialized) || !areControllerStatesLoaded)
+  if ((state && !state?.isInitialized) || !isStoreReady)
     return (
       <View style={[spacings.pv, spacings.ph, flexbox.center, flexbox.flex1]}>
         <Spinner />
