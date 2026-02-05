@@ -3,7 +3,6 @@ import React from 'react'
 import { View } from 'react-native'
 
 import InfoIcon from '@common/assets/svg/InfoIcon'
-import InformationIcon from '@common/assets/svg/InformationIcon'
 import MetamaskIcon from '@common/assets/svg/Metamask/MetamaskIcon'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
@@ -88,7 +87,9 @@ const Badge = ({
         },
         type === 'new' && styles.newBadge,
         withRightSpacing && spacings.mrMd,
-        !!tooltipText && spacings.prMi,
+        (!!tooltipText || !!children) && {
+          paddingRight: sizeMultiplier * 2
+        },
         style
       ]}
       nativeID={nativeID}
@@ -96,7 +97,7 @@ const Badge = ({
     >
       {text && (
         <Text
-          weight={weight || 'regular'}
+          weight={weight || 'medium'}
           fontSize={sizeMultiplier * 10}
           color={color}
           style={[!!tooltipText && spacings.mrMi, textStyle]}
@@ -113,8 +114,8 @@ const Badge = ({
           })}
           data-tooltip-id={tooltipId}
           color={color}
-          width={sizeMultiplier * 14}
-          height={sizeMultiplier * 14}
+          width={sizeMultiplier * 16}
+          height={sizeMultiplier * 16}
         />
       )}
       {!!tooltipText && specialType && specialType === 'metamask' && text === 'Metamask' && (
