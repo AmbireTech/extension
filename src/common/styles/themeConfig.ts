@@ -2,7 +2,6 @@ import { ColorValue } from 'react-native'
 
 import { ACCENT_PRIMITIVES, FEEDBACK_PRIMITIVES, NEUTRAL_PRIMITIVES } from './theme/primitives'
 import { THEME_TYPES, ThemeType } from './theme/types'
-import { hexToRgba } from './utils/common'
 
 const ThemeColors = {
   ...NEUTRAL_PRIMITIVES,

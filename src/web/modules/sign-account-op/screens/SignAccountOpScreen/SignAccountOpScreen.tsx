@@ -14,7 +14,6 @@ import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
 import useSign from '@common/hooks/useSign'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
-import Header from '@common/modules/header/components/Header'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
@@ -29,6 +28,7 @@ import useBackgroundService from '@web/hooks/useBackgroundService'
 import useMainControllerState from '@web/hooks/useMainControllerState'
 import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import useSignAccountOpControllerState from '@web/hooks/useSignAccountOpControllerState'
+import ActionHeader from '@web/modules/action-requests/components/ActionHeader'
 import Estimation from '@web/modules/sign-account-op/components/Estimation'
 import Footer from '@web/modules/sign-account-op/components/Footer'
 import Modals from '@web/modules/sign-account-op/components/Modals/Modals'
@@ -234,7 +234,7 @@ const SignAccountOpScreen = () => {
         backgroundColor={theme.primaryBackground}
         withHorizontalPadding={false}
         style={spacings.phMd}
-        header={<Header withDetailedAccountData />}
+        header={<ActionHeader />}
         renderDirectChildren={() => (
           <View style={styles.footer}>
             {!estimationFailed ? (
