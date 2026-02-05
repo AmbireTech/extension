@@ -12,6 +12,7 @@ import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import Button from '@common/components/Button'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper'
 import useBackgroundService from '@web/hooks/useBackgroundService'
@@ -21,7 +22,7 @@ const BenzinScreen = () => {
   const { t } = useTranslation()
   const { dispatch } = useBackgroundService()
   const { currentUserRequest, visibleUserRequests } = useRequestsControllerState()
-  const { theme } = useTheme()
+  const { theme, themeType } = useTheme()
 
   const userRequest = useMemo(
     () => (currentUserRequest?.kind === 'benzin' ? currentUserRequest : undefined),
@@ -67,7 +68,9 @@ const BenzinScreen = () => {
             >
               {!!pendingRequests.length && (
                 <View style={spacings.pl}>
-                  <RightArrowIcon color={theme.primary} />
+                  <RightArrowIcon
+                    color={themeType === THEME_TYPES.DARK ? theme.primaryBackground : '#fff'}
+                  />
                 </View>
               )}
             </Button>
