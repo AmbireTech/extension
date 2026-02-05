@@ -55,7 +55,7 @@ interface Config extends EnvTypes {
   APP_ENV: APP_ENV
 }
 
-const CONFIG: Config = {
+const CONFIG: Partial<Config> = {
   APP_ENV: APP_ENV.DEV,
   RELAYER_URL,
   VELCRO_URL,
