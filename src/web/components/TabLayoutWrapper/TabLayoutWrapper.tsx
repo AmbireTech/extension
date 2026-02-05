@@ -1,5 +1,5 @@
 import React, { ReactElement, ReactNode, useMemo } from 'react'
-import { ColorValue, View, ViewStyle } from 'react-native'
+import { ColorValue, DimensionValue, View, ViewStyle } from 'react-native'
 
 import ScrollableWrapper, { WrapperProps } from '@common/components/ScrollableWrapper'
 import useTheme from '@common/hooks/useTheme'
@@ -79,7 +79,7 @@ export const TabLayoutContainer = ({
             width !== 'full' ? flexbox.alignSelfCenter : {},
             {
               backgroundColor: backgroundColor || theme.primaryBackground,
-              maxWidth: tabLayoutWidths[width],
+              maxWidth: tabLayoutWidths[width] as DimensionValue, // minor type mismatch
               width: '100%'
             },
             style
