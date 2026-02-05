@@ -18,8 +18,6 @@ const getStyles = (theme: ThemeProps) =>
     fallbackIcon: {
       backgroundColor: theme.secondaryBackground,
       alignSelf: 'flex-start',
-      ...spacings.pvMi,
-      ...spacings.phMi,
       borderRadius: BORDER_RADIUS_PRIMARY
     }
   })
