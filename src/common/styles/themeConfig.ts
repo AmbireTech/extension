@@ -29,7 +29,7 @@ const ThemeColors = {
   secondaryText: NEUTRAL_PRIMITIVES.neutral600,
   tertiaryText: NEUTRAL_PRIMITIVES.neutral500,
   // --- Border tokens ---
-  primaryBorder: NEUTRAL_PRIMITIVES.neutral300,
+  primaryBorder: NEUTRAL_PRIMITIVES.neutral100,
   secondaryBorder: NEUTRAL_PRIMITIVES.neutral300,
   // --- Icon tokens ---
   iconPrimary: NEUTRAL_PRIMITIVES.neutral500,
