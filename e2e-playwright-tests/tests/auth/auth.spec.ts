@@ -70,7 +70,6 @@ test.describe('auth', { tag: '@auth' }, () => {
   })
 
   test('import account from JSON file', async ({ pages }) => {
-    await pages.auth.pause()
     await pages.auth.importAccountFromJSONFile()
   })
 })
