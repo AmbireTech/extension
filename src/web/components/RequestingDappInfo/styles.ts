@@ -1,6 +1,5 @@
 import { ImageStyle, StyleSheet } from 'react-native'
 
-import spacings from '@common/styles/spacings'
 import { ThemeProps } from '@common/styles/themeConfig'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 
