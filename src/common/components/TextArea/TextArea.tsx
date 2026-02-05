@@ -1,14 +1,5 @@
 import React, { ReactElement, useState } from 'react'
-import {
-  BlurEvent,
-  NativeSyntheticEvent,
-  TextInput,
-  TextInputFocusEventData,
-  TextInputProps,
-  TextStyle,
-  View,
-  ViewStyle
-} from 'react-native'
+import { BlurEvent, TextInput, TextInputProps, TextStyle, View, ViewStyle } from 'react-native'
 
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
@@ -29,7 +20,7 @@ export interface InputProps extends TextInputProps {
   inputWrapperStyle?: ViewStyle | ViewStyle[]
   bottomLabelStyle?: TextStyle | TextStyle[]
   nativeInputStyle?: TextStyle
-  leftIcon?: () => ReactElement | ReactElement
+  leftIcon?: () => ReactElement
 }
 
 const TextArea = ({
