@@ -1,5 +1,5 @@
 import React from 'react'
-import { View } from 'react-native'
+import { ColorValue, View } from 'react-native'
 
 import { Account as AccountInterface } from '@ambire-common/interfaces/account'
 import { Key } from '@ambire-common/interfaces/keystore'
@@ -21,7 +21,7 @@ const AccountKeyIconOrBanner = ({
 }: {
   type: KeyType
   isExtended: boolean
-  color: string
+  color: string | ColorValue
 }) => {
   return isExtended ? (
     <AccountKeyBanner type={type} />
@@ -57,11 +57,7 @@ const AccountKeyIcons = ({
               <AccountKeyIconOrBanner
                 type={type || 'internal'}
                 isExtended={isExtended}
-                color={
-                  themeType === THEME_TYPES.DARK
-                    ? (theme.primaryBackgroundInverted as string)
-                    : (theme.primaryBackground as string)
-                }
+                color={theme.primaryBackground}
               />
             </View>
           )
@@ -70,11 +66,7 @@ const AccountKeyIcons = ({
         <AccountKeyIconOrBanner
           type="none"
           isExtended={isExtended}
-          color={
-            themeType === THEME_TYPES.DARK
-              ? (theme.primaryBackgroundInverted as string)
-              : (theme.primaryBackground as string)
-          }
+          color={theme.primaryBackground}
         />
       )}
     </View>
