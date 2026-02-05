@@ -35,7 +35,7 @@ const Wrapper: FC<WrapperProps> = ({ children, buttons }) => {
   return (
     <TabLayoutContainer
       backgroundColor={theme.secondaryBackground}
-      header={<Header />}
+      header={<Header withDetailedAccountData withOG />}
       withHorizontalPadding={false}
       footer={isTab ? buttons : null}
     >

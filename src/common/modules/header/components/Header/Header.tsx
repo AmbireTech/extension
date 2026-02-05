@@ -4,6 +4,7 @@ import { View, ViewProps } from 'react-native'
 import AmbireLogoHorizontalMonochrome from '@common/assets/svg/AmbireLogoHorizontalMonochrome'
 import AccountData from '@common/components/AccountData'
 import AccountDataDetailed from '@common/components/AccountDataDetailed'
+import AmbireLogoHorizontalWithOG from '@common/components/AmbireLogoHorizontalWithOG'
 import Text from '@common/components/Text'
 import { titleChangeEventStream } from '@common/hooks/useNavigation'
 import useRoute from '@common/hooks/useRoute'
@@ -75,11 +76,12 @@ const Title = ({ children }: { children: React.ReactNode }) => {
 
 type CommonHeaderProps = {
   width?: Width
+  withOG?: boolean
 }
 
-// TODO: OG Mode
 const Header = ({
   width,
+  withOG,
   withDetailedAccountData
 }: CommonHeaderProps & {
   withDetailedAccountData?: boolean
@@ -87,7 +89,7 @@ const Header = ({
   return (
     <Wrapper width={width}>
       {withDetailedAccountData ? <AccountDataDetailed /> : <AccountData />}
-      <AmbireLogoHorizontalMonochrome />
+      <AmbireLogoHorizontalWithOG withOG={withOG} />
     </Wrapper>
   )
 }
@@ -96,6 +98,7 @@ const HeaderWithTitle = ({
   title: customTitle,
   displayBackButtonIn,
   children,
+  withOG,
   width
 }: {
   title?: string
@@ -124,16 +127,16 @@ const HeaderWithTitle = ({
       </View>
       <Title>{customTitle || title}</Title>
       <View style={[flexbox.flex1, flexbox.alignEnd]}>
-        {children || <AmbireLogoHorizontalMonochrome />}
+        {children || <AmbireLogoHorizontalWithOG withOG={withOG} />}
       </View>
     </Wrapper>
   )
 }
 
-const HeaderWithLogoOnly = ({ width }: CommonHeaderProps) => {
+const HeaderWithLogoOnly = ({ width, withOG }: CommonHeaderProps & { withOG?: boolean }) => {
   return (
     <Wrapper style={flexbox.justifyEnd} width={width}>
-      <AmbireLogoHorizontalMonochrome />
+      <AmbireLogoHorizontalWithOG withOG={withOG} />
     </Wrapper>
   )
 }
@@ -145,7 +148,7 @@ Header.AccountData = AccountData
 Header.AccountDataDetailed = AccountDataDetailed
 Header.Title = Title
 Header.BackButton = HeaderBackButton
-Header.Logo = AmbireLogoHorizontalMonochrome
+Header.Logo = AmbireLogoHorizontalWithOG
 
 export default Header
 export { HeaderWithTitle, HeaderWithLogoOnly, HEADER_HEIGHT }
