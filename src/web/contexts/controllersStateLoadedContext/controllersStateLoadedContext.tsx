@@ -62,7 +62,7 @@ type ControllersToWait = Omit<
 
 const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
   const startTimeRef = useRef(Date.now())
-  const timeoutRef = useRef<NodeJS.Timeout>()
+  const timeoutRef = useRef<NodeJS.Timeout>(null)
   const errorDataRef = useRef<any>(null)
   // Safeguard against a potential race condition where one of the controller
   // states might not update properly and the `areControllerStatesLoaded`
