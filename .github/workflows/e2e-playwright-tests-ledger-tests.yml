@@ -80,13 +80,13 @@ jobs:
         with:
           node-version-file: '.nvmrc'
 
-      - name: Debug .env presence
-        run: |
-          pwd
-          ls -la
-          test -f .env && echo ".env exists" || (echo ".env missing" && exit 1)
-          wc -c .env
-          file .env
+      # - name: Debug .env presence
+      #   run: |
+      #     pwd
+      #     ls -la
+      #     test -f .env && echo ".env exists" || (echo ".env missing" && exit 1)
+      #     wc -c .env
+      #     file .env
 
       # - name: Install root dependencies
       #   run: yarn setup:ci
