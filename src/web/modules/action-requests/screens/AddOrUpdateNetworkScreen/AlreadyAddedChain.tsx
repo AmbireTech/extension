@@ -7,13 +7,12 @@ import { Network } from '@ambire-common/interfaces/network'
 import SuccessAnimation from '@common/components/SuccessAnimation'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
-import Header from '@common/modules/header/components/Header'
 import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
-
-import ActionFooter from '../../components/ActionFooter'
+import ActionFooter from '@web/modules/action-requests/components/ActionFooter'
+import ActionHeader from '@web/modules/action-requests/components/ActionHeader'
 
 type AlreadyAddedChainProps = {
   handleCloseOnAlreadyAdded: () => void
@@ -34,7 +33,7 @@ const AlreadyAddedChain = ({
   return (
     <TabLayoutContainer
       width="full"
-      header={<Header withDetailedAccountData />}
+      header={<ActionHeader />}
       footer={
         <ActionFooter
           onReject={undefined}

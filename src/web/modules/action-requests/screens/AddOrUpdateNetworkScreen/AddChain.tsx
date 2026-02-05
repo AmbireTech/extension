@@ -11,7 +11,6 @@ import NetworkIcon from '@common/components/NetworkIcon'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
-import Header from '@common/modules/header/components/Header'
 import { SPACING, SPACING_LG, SPACING_MD } from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
@@ -21,8 +20,9 @@ import NetworkDetails from '@web/components/NetworkDetails'
 import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
 import useDappInfo from '@web/hooks/useDappInfo'
 import useResponsiveActionWindow from '@web/hooks/useResponsiveActionWindow'
+import ActionFooter from '@web/modules/action-requests/components/ActionFooter'
+import ActionHeader from '@web/modules/action-requests/components/ActionHeader'
 
-import ActionFooter from '../../components/ActionFooter'
 import getStyles from './styles'
 
 type AddChainProps = {
@@ -64,7 +64,7 @@ const AddChain = ({
   return (
     <TabLayoutContainer
       width="full"
-      header={<Header withDetailedAccountData />}
+      header={<ActionHeader />}
       footer={
         <ActionFooter
           onReject={handleDenyButtonPress}

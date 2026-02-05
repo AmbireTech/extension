@@ -11,7 +11,6 @@ import Alert from '@common/components/Alert'
 import Banner from '@common/components/Banner'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
-import Header from '@common/modules/header/components/Header'
 import { SPACING, SPACING_LG, SPACING_MD, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import ManifestImage from '@web/components/ManifestImage'
@@ -19,6 +18,7 @@ import NetworkAvailableFeatures from '@web/components/NetworkAvailableFeatures'
 import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
 import useDappInfo from '@web/hooks/useDappInfo'
 import useResponsiveActionWindow from '@web/hooks/useResponsiveActionWindow'
+import ActionHeader from '@web/modules/action-requests/components/ActionHeader'
 
 import ActionFooter from '../../components/ActionFooter'
 import RpcCard from './RpcCard'
@@ -61,7 +61,7 @@ const UpdateChain = ({
   return (
     <TabLayoutContainer
       width="full"
-      header={<Header withDetailedAccountData />}
+      header={<ActionHeader />}
       footer={
         <ActionFooter
           onReject={handleDenyButtonPress}
