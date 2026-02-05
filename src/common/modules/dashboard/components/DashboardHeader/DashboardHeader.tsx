@@ -114,8 +114,8 @@ const DashboardHeader = () => {
                     ? theme.primaryBackgroundInverted
                     : theme.primaryBackground
                 }
-                width={20}
-                height={20}
+                width={28}
+                height={28}
               />
             </Animated.View>
           </Pressable>
