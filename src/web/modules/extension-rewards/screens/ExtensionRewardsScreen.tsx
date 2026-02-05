@@ -261,7 +261,7 @@ const ExtensionRewardsScreen = () => {
                   <View style={spacings.mbLg}>
                     <Image
                       source={userBlacklistedIcon as ImageSourcePropType}
-                      style={{ width: '54px', height: '54px' }}
+                      style={{ width: 54, height: 54 }}
                     />
                   </View>
                   <Text
