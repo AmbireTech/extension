@@ -103,9 +103,7 @@ const AlertVertical = ({
         {
           paddingHorizontal: SPACING_LG * sizeMultiplier,
           paddingVertical: SPACING_LG * sizeMultiplier,
-          borderWidth: 1,
-          backgroundColor: theme[`${type}Background`],
-          borderColor: theme[`${type}Decorative`]
+          backgroundColor: theme[`${type}Background`]
         },
         style
       ]}
@@ -123,7 +121,7 @@ const AlertVertical = ({
             <Icon
               width={SIZES.icon * sizeMultiplier}
               height={SIZES.icon * sizeMultiplier}
-              color={theme[`${type}Decorative`]}
+              color={theme[`${type}Text`]}
             />
           )}
         </View>

@@ -94,9 +94,7 @@ const Alert = ({
         flexbox.directionRow,
         common.borderRadiusPrimary,
         {
-          borderWidth: 1,
-          backgroundColor: theme[`${type}Background`],
-          borderColor: theme[`${type}Decorative`]
+          backgroundColor: theme[`${type}Background`]
         },
         style
       ]}
@@ -107,7 +105,7 @@ const Alert = ({
           {CustomIcon ? (
             <CustomIcon />
           ) : (
-            <Icon width={20} height={20} color={theme[`${type}Decorative`]} />
+            <Icon width={20} height={20} color={theme[`${type}Text`]} />
           )}
         </View>
       )}
