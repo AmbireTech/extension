@@ -2,7 +2,6 @@ import React, { useCallback, useMemo } from 'react'
 import { ColorValue, Pressable } from 'react-native'
 
 import LeftArrowIcon from '@common/assets/svg/LeftArrowIcon'
-import { useTranslation } from '@common/config/localization'
 import useNavigation from '@common/hooks/useNavigation'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
@@ -27,7 +26,6 @@ const HeaderBackButton = ({
   const { theme } = useTheme()
   const { path, params } = useRoute()
   const { navigate } = useNavigation()
-  const { t } = useTranslation()
 
   const navigationEnabled = !isRequestWindow
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { View, ViewProps } from 'react-native'
+import { View, ViewProps, ViewStyle } from 'react-native'
 
 import AccountData from '@common/components/AccountData'
 import AccountDataDetailed from '@common/components/AccountDataDetailed'
@@ -27,8 +27,8 @@ const Wrapper = ({
   width = 'xl'
 }: {
   children?: React.ReactNode
-  style?: ViewProps
-  containerStyle?: ViewProps
+  style?: ViewStyle
+  containerStyle?: ViewStyle
   width?: Width
 }) => {
   const { maxWidthSize } = useWindowSize()
@@ -68,7 +68,13 @@ const Title = ({ children }: { children: React.ReactNode }) => {
       fontSize={20}
       weight="medium"
       style={[
+        {
+          display: 'flex'
+        },
         flexbox.flex1,
+        flexbox.directionRow,
+        flexbox.alignCenter,
+        flexbox.justifyCenter,
         {
           textAlign: 'center'
         }
@@ -96,6 +102,22 @@ const Header = ({
       {withDetailedAccountData ? <AccountDataDetailed /> : <AccountData />}
       <AmbireLogoHorizontalWithOG withOG={withOG} />
     </Wrapper>
+  )
+}
+
+const Container = ({
+  side,
+  style,
+  children
+}: {
+  side: 'left' | 'right'
+  style?: ViewStyle
+  children?: React.ReactNode
+}) => {
+  return (
+    <View style={[{ flex: 0.5 }, side === 'left' ? flexbox.alignStart : flexbox.alignEnd, style]}>
+      {children}
+    </View>
   )
 }
 
@@ -127,13 +149,13 @@ const HeaderWithTitle = ({
 
   return (
     <Wrapper width={width}>
-      <View style={[flexbox.flex1, flexbox.alignStart]}>
+      <Container side="left">
         <HeaderBackButton displayIn={displayBackButtonIn} />
-      </View>
+      </Container>
       <Title>{customTitle || title}</Title>
-      <View style={[flexbox.flex1, flexbox.alignEnd]}>
+      <Container side="right">
         {children || <AmbireLogoHorizontalWithOG withOG={withOG} />}
-      </View>
+      </Container>
     </Wrapper>
   )
 }
@@ -152,6 +174,7 @@ Header.Wrapper = Wrapper
 Header.AccountData = AccountData
 Header.AccountDataDetailed = AccountDataDetailed
 Header.Title = Title
+Header.Container = Container
 Header.BackButton = HeaderBackButton
 Header.Logo = AmbireLogoHorizontalWithOG
 
