@@ -27,6 +27,9 @@ import useBackgroundService from '@web/hooks/useBackgroundService'
 import useMainControllerState from '@web/hooks/useMainControllerState'
 import useLedger from '@web/modules/hardware-wallet/hooks/useLedger'
 
+const IS_SPECULOS_TRANSPORT =
+  typeof process !== 'undefined' && !!process.env && process.env.LEDGER_TRANSPORT === 'speculos'
+
 export const CARD_WIDTH = 400
 
 const LedgerConnectScreen = () => {
@@ -45,10 +48,12 @@ const LedgerConnectScreen = () => {
 
   const onPressNext = async () => {
     try {
-      // Request Ledger access first, before any state updates to prevent error:
-      // "Failed to execute 'requestDevice' on 'HID': Must be handling a user
-      // gesture to show a permission request." on Vivaldi browser.
-      await requestLedgerDeviceAccess()
+      if (!IS_SPECULOS_TRANSPORT) {
+        // Request Ledger access first, before any state updates to prevent error:
+        // "Failed to execute 'requestDevice' on 'HID': Must be handling a user
+        // gesture to show a permission request." on Vivaldi browser.
+        await requestLedgerDeviceAccess()
+      }
 
       setIsGrantingPermission(true)
       setAuthorizeButtonPressed(true)
@@ -72,11 +77,32 @@ const LedgerConnectScreen = () => {
   }
 
   useEffect(() => {
-    if (!!authorizeButtonPressed && initParams && type === 'ledger') {
+    // In Speculos mode, automatically proceed with the connection flow without
+    // requiring a USB/HID permission gesture.
+    if (IS_SPECULOS_TRANSPORT && !authorizeButtonPressed && !isGrantingPermission) {
+      // Fire and forget; errors will be surfaced via toast from onPressNext
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+      onPressNext()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authorizeButtonPressed, isGrantingPermission])
+
+  useEffect(() => {
+    if (!IS_SPECULOS_TRANSPORT && !!authorizeButtonPressed && initParams && type === 'ledger') {
       setAuthorizeButtonPressed(false)
       goToNextRoute()
     }
   }, [authorizeButtonPressed, goToNextRoute, dispatch, initParams, type])
+
+  useEffect(() => {
+    // In Speculos mode, once the Ledger account picker init succeeds, move to the next screen
+    if (
+      IS_SPECULOS_TRANSPORT &&
+      mainCtrlState.statuses.handleAccountPickerInitLedger === 'SUCCESS'
+    ) {
+      goToNextRoute()
+    }
+  }, [goToNextRoute, mainCtrlState.statuses.handleAccountPickerInitLedger])
 
   const isLoading =
     isGrantingPermission || mainCtrlState.statuses.handleAccountPickerInitLedger === 'LOADING'
@@ -96,14 +122,18 @@ const LedgerConnectScreen = () => {
         >
           <View style={[flexbox.alignSelfCenter, spacings.mbSm, spacings.ptMd]}>
             <Text weight="regular" style={spacings.mbTy} fontSize={14}>
-              {t('1. Plug in your Ledger and enter a PIN to unlock it.')}
+              {IS_SPECULOS_TRANSPORT
+                ? t('1. Make sure your Speculos Ledger emulator is running.')
+                : t('1. Plug in your Ledger and enter a PIN to unlock it.')}
             </Text>
             <Text
               weight="regular"
               fontSize={14}
               style={minHeightSize(620) ? { marginBottom: 12 } : { marginBottom: 40 }}
             >
-              {t('2. Open the Ethereum app.')}
+              {IS_SPECULOS_TRANSPORT
+                ? t('2. Open the Ethereum app in the emulator.')
+                : t('2. Open the Ethereum app.')}
             </Text>
           </View>
           <View
@@ -119,18 +149,22 @@ const LedgerConnectScreen = () => {
             <AmbireDevice />
           </View>
           <Text style={[spacings.mbLg, text.center]} appearance="secondaryText">
-            {t(
-              'If not previously granted, Ambire will ask for permission to connect to a HID device.'
-            )}
+            {IS_SPECULOS_TRANSPORT
+              ? t('Connecting to the Speculos Ledger emulator configured for this environment.')
+              : t(
+                  'If not previously granted, Ambire will ask for permission to connect to a HID device.'
+                )}
           </Text>
 
-          <Button
-            text={isLoading ? t('Connecting...') : t('Authorize & connect')}
-            disabled={isLoading}
-            style={{ width: 264, ...flexbox.alignSelfCenter }}
-            onPress={onPressNext}
-            hasBottomSpacing={false}
-          />
+          {!IS_SPECULOS_TRANSPORT && (
+            <Button
+              text={isLoading ? t('Connecting...') : t('Authorize & connect')}
+              disabled={isLoading}
+              style={{ width: 264, ...flexbox.alignSelfCenter }}
+              onPress={onPressNext}
+              hasBottomSpacing={false}
+            />
+          )}
         </Panel>
       </TabLayoutWrapperMainContent>
     </TabLayoutContainer>
