@@ -1,17 +1,18 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { View, ViewProps } from 'react-native'
 
-import AmbireLogoHorizontalMonochrome from '@common/assets/svg/AmbireLogoHorizontalMonochrome'
 import AccountData from '@common/components/AccountData'
 import AccountDataDetailed from '@common/components/AccountDataDetailed'
 import AmbireLogoHorizontalWithOG from '@common/components/AmbireLogoHorizontalWithOG'
 import Text from '@common/components/Text'
 import { titleChangeEventStream } from '@common/hooks/useNavigation'
 import useRoute from '@common/hooks/useRoute'
+import useWindowSize from '@common/hooks/useWindowSize'
 import routesConfig from '@common/modules/router/config/routesConfig'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { tabLayoutWidths } from '@web/components/TabLayoutWrapper'
+import { getTabLayoutPadding } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 
 import HeaderBackButton, { DisplayIn } from '../HeaderBackButton'
 
@@ -30,10 +31,14 @@ const Wrapper = ({
   containerStyle?: ViewProps
   width?: Width
 }) => {
+  const { maxWidthSize } = useWindowSize()
+
+  const paddingHorizontalStyle = useMemo(() => getTabLayoutPadding(maxWidthSize), [maxWidthSize])
+
   return (
     <View
       style={[
-        spacings.phSm,
+        paddingHorizontalStyle,
         spacings.pbSm,
         spacings.ptMd,
         {
