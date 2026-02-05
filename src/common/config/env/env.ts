@@ -2,7 +2,15 @@ import * as Application from 'expo-application'
 import * as Updates from 'expo-updates'
 import { Platform } from 'react-native'
 
-import { EnvTypes, NFT_CDN_URL, RELAYER_URL, SENTRY_DSN, VELCRO_URL } from '@env'
+import {
+  BUNGEE_API_KEY,
+  EnvTypes,
+  LI_FI_API_KEY,
+  NFT_CDN_URL,
+  RELAYER_URL,
+  SENTRY_DSN,
+  VELCRO_URL
+} from '@env'
 
 import appJSON from '../../../../app.json'
 
@@ -55,7 +63,7 @@ interface Config extends EnvTypes {
   APP_ENV: APP_ENV
 }
 
-const CONFIG: Partial<Config> = {
+const CONFIG: Config = {
   APP_ENV: APP_ENV.DEV,
   RELAYER_URL,
   VELCRO_URL,
@@ -66,7 +74,9 @@ const CONFIG: Partial<Config> = {
   LEGENDS_NFT_ADDRESS:
     process.env.LEGENDS_NFT_ADDRESS || '0xF51dF52d0a9BEeB7b6E4B6451e729108a115B863',
   SENTRY_DSN_LEGENDS: process.env.SENTRY_DSN_LEGENDS || '',
-  SENTRY_DSN_BROWSER_EXTENSION: process.env.SENTRY_DSN_BROWSER_EXTENSION || ''
+  SENTRY_DSN_BROWSER_EXTENSION: process.env.SENTRY_DSN_BROWSER_EXTENSION || '',
+  BUNGEE_API_KEY,
+  LI_FI_API_KEY
 }
 
 if (isProd) {
