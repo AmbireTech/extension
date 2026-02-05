@@ -104,7 +104,7 @@ jobs:
         run: |
           docker pull ghcr.io/ledgerhq/speculos:0.25.13
           docker image tag ghcr.io/ledgerhq/speculos:0.25.13 speculos
-          docker run --rm -it --net=host --privileged -v "$(pwd)"/e2e-playwright-tests/ledger-simulator/apps:/speculos/apps speculos --model nanosp ./apps/app.elf --display headless --api-port 5000 --apdu-port 9999 -T HID --seed "$SEED" -u HID & 
+          docker run -d --rm -it --net=host --privileged -v "$(pwd)"/e2e-playwright-tests/ledger-simulator/apps:/speculos/apps speculos --model nanosp ./apps/app.elf --display headless --api-port 5000 --apdu-port 9999 -T HID --seed "$SEED" -u HID 
           cd e2e-playwright-tests/ledger-simulator
           npm -g i ts-node
           npm i @ledgerhq/hw-transport-node-speculos @ledgerhq/hw-app-eth ethers
