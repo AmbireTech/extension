@@ -237,17 +237,18 @@ const ExtensionRewardsScreen = () => {
         >
           {!isProjectedRewardsLoading ? (
             <View
-              style={{
-                ...spacings.phLg,
-                ...spacings.pvLg,
-                backgroundColor: '#191A1F',
-                borderWidth: 1,
-                borderColor: '#6A6F8633',
-                borderRadius: 16,
-                ...(projectedRewardsStats?.reasonToNotDisplayProjectedRewards
-                  ? { top: '6.25rem' }
-                  : {})
-              }}
+              style={[
+                spacings.phLg,
+                spacings.pvLg,
+                {
+                  backgroundColor: '#191A1F',
+                  borderWidth: 1,
+                  borderColor: '#6A6F8633',
+                  borderRadius: 16
+                },
+                // @ts-ignore rem values are not supported / missing type on mobile, but available on web
+                projectedRewardsStats?.reasonToNotDisplayProjectedRewards && { top: '6.25rem' }
+              ]}
             >
               {projectedRewardsStats?.reasonToNotDisplayProjectedRewards ? (
                 <View
