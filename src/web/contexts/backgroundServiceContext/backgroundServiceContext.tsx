@@ -122,7 +122,7 @@ const BackgroundServiceContext = createContext<BackgroundServiceContextReturnTyp
 const BackgroundServiceProvider: React.FC<any> = ({ children }) => {
   const { addToast } = useToast()
   const route = useRoute()
-  const timer: any = useRef()
+  const timer = useRef<NodeJS.Timeout>(null)
   const isFocused = useIsScreenFocused()
   const { navigate } = useNavigation()
   const [windowId, setWindowId] = useState<number | undefined>()
