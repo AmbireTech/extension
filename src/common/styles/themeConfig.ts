@@ -2,6 +2,7 @@ import { ColorValue } from 'react-native'
 
 import { ACCENT_PRIMITIVES, FEEDBACK_PRIMITIVES, NEUTRAL_PRIMITIVES } from './theme/primitives'
 import { THEME_TYPES, ThemeType } from './theme/types'
+import { hexToRgba } from './utils/common'
 
 const ThemeColors = {
   ...NEUTRAL_PRIMITIVES,
@@ -64,11 +65,9 @@ const ThemeColors = {
   errorBackground: FEEDBACK_PRIMITIVES.error100,
   // --- Other tokens ---
   backdrop: {
-    // @TODO: Sync up with miro
-    [THEME_TYPES.LIGHT]: `rgba(0, 0, 0, 0.5)`,
-    [THEME_TYPES.DARK]: `rgba(0, 0, 0, 0.5)`
+    [THEME_TYPES.LIGHT]: hexToRgba('#2C2F33', 0.8),
+    [THEME_TYPES.DARK]: hexToRgba('#2C2F33', 0.8)
   },
-  // @TODO: Sync up with miro
   linkText: ACCENT_PRIMITIVES.primaryAccent300,
   /**
    * @deprecated
