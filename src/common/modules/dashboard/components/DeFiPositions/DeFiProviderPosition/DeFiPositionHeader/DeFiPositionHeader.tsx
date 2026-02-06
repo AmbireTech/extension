@@ -10,6 +10,7 @@ import useTheme from '@common/hooks/useTheme'
 import getStyles from '@common/modules/dashboard/components/DeFiPositions/DeFiProviderPosition/styles'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
+import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@web/extension-services/background/webapi/tab'
 import useDappsControllerState from '@web/hooks/useDappsControllerState'
@@ -60,8 +61,8 @@ const DeFiPositionHeader: FC<Props> = ({
   const [bindAnim, animStyle] = useCustomHover({
     property: 'backgroundColor',
     values: {
-      from: theme.secondaryBackground,
-      to: theme.tertiaryBackground
+      from: hexToRgba(theme.secondaryBackground, 0),
+      to: theme.secondaryBackground
     },
     forceHoveredStyle: isExpanded
   })

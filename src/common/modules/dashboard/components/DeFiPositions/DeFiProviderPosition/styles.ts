@@ -18,7 +18,9 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
     container: {
       ...common.borderRadiusPrimary,
       ...spacings.mbTy,
-      overflow: 'hidden'
+      overflow: 'hidden',
+      borderWidth: 1,
+      borderColor: 'transparent'
     },
     header: {
       ...flexbox.directionRow,
@@ -29,9 +31,7 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       ...common.borderRadiusPrimary
     },
     expandedHeader: {
-      backgroundColor: theme.secondaryBackground,
-      borderBottomRightRadius: 0,
-      borderBottomLeftRadius: 0
+      backgroundColor: theme.secondaryBackground
     },
     providerData: {
       ...flexbox.directionRow,
