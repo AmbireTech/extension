@@ -19,7 +19,10 @@ import { getIsSignLoading } from '@web/modules/sign-account-op/utils/helpers'
 
 type ButtonMode = OneClickEstimationProps['updateType'] | 'Sign' | 'HW' | 'Safe'
 
-const PRIMARY_BUTTON_LABELS: Record<ButtonMode, { default: string; isLoading: string }> = {
+const PRIMARY_BUTTON_LABELS: Record<
+  ButtonMode,
+  { default: string; isLoading: string; config?: string }
+> = {
   'Swap&Bridge': {
     default: 'Swap',
     isLoading: 'Swapping...'
@@ -38,7 +41,8 @@ const PRIMARY_BUTTON_LABELS: Record<ButtonMode, { default: string; isLoading: st
   },
   Safe: {
     default: 'Sign',
-    isLoading: 'Signing...'
+    isLoading: 'Signing...',
+    config: 'Choose signers'
   }
 }
 
@@ -269,24 +273,14 @@ const useSign = ({
   const onSignButtonClick = useCallback(() => {
     if (!signAccountOpState) return
 
-    const isSafeWithMultipleHardwareSigners =
-      !!signAccountOpState?.account.safeCreation &&
-      [
-        ...new Set(
-          signAccountOpState?.accountKeyStoreKeys
-            .filter((k) => k.type !== 'internal')
-            .map((k) => k.type)
-        )
-      ].length > 1
+    const isSafeWithManualSigners =
+      !!signAccountOpState?.account.safeCreation && !signAccountOpState.accountOp.signers?.length
 
     // If the account has only one signer, we don't need to show the select signer overlay,
     // and we will sign the transaction with the only one available signer (it is set by default in the controller).
     // Or if the account is a safe with hot signers OR signers from one hardware wallet only,
     // the user can sign automatically
-    if (
-      signAccountOpState?.accountKeyStoreKeys.length === 1 ||
-      !isSafeWithMultipleHardwareSigners
-    ) {
+    if (signAccountOpState?.accountKeyStoreKeys.length === 1 || !isSafeWithManualSigners) {
       handleSign()
       return
     }
@@ -361,8 +355,11 @@ const useSign = ({
         return isSignLoading ? 'Broadcasting...' : 'Broadcast'
       }
 
-      // safe
       buttonLabelType = 'Safe'
+
+      // if signers are not configured, prompt the user to do so
+      if ((signAccountOpState?.accountOp.signers?.length || 0) === 0)
+        return PRIMARY_BUTTON_LABELS[buttonLabelType].config as string
     }
 
     return t(
@@ -377,6 +374,7 @@ const useSign = ({
     updateType,
     signAccountOpState?.account.safeCreation,
     signAccountOpState?.accountOp.signed?.length,
+    signAccountOpState?.accountOp.signers?.length,
     signAccountOpState?.threshold
   ])
 

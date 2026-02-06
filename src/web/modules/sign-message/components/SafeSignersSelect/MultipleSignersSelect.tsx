@@ -1,8 +1,7 @@
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Pressable, View } from 'react-native'
 
-import { Account } from '@ambire-common/interfaces/account'
 import { Key } from '@ambire-common/interfaces/keystore'
 import AccountKey from '@common/components/AccountKey'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
@@ -12,29 +11,25 @@ import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING_LG } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { Portal } from '@gorhom/portal'
+import useSignAccountOpControllerState from '@web/hooks/useSignAccountOpControllerState'
 
 import getStyles from './styles'
 
 type Props = {
-  importedOwners: { addr: Key['addr']; type: Key['type'] }[]
   handleSetMultisigSigners: (signers: { addr: Key['addr']; type: Key['type'] }[]) => void
   isVisible: boolean
   isSigning: boolean
   handleClose: () => void
-  account: Account
-  threshold: number
 }
 
 const MultipleSignersSelect = ({
-  importedOwners,
   handleSetMultisigSigners,
   isVisible,
   isSigning,
-  handleClose,
-  account,
-  threshold
+  handleClose
 }: Props) => {
   const { t } = useTranslation()
+  const signAccountOpState = useSignAccountOpControllerState()
   const { theme, styles } = useTheme(getStyles)
   const [selectedSigners, setSelectedSigners] = useState<
     { addr: Key['addr']; type: Key['type'] }[]
@@ -52,7 +47,23 @@ const MultipleSignersSelect = ({
     [selectedSigners]
   )
 
-  if (!isVisible) return null
+  const alreadySigned = useMemo(() => {
+    if (!signAccountOpState) return 0
+    return signAccountOpState.accountOp.signed?.length || 0
+  }, [signAccountOpState])
+
+  const leftToSign = useMemo(() => {
+    if (!signAccountOpState) return []
+    return signAccountOpState.accountKeyStoreKeys.filter(
+      (k) => !signAccountOpState.accountOp.signed?.includes(k.addr)
+    )
+  }, [signAccountOpState])
+
+  const leftThreshold = useMemo(() => {
+    return leftToSign.length - alreadySigned
+  }, [leftToSign, alreadySigned])
+
+  if (!isVisible || !signAccountOpState) return null
 
   return (
     <Portal hostName="global">
@@ -73,22 +84,22 @@ const MultipleSignersSelect = ({
             <Text
               fontSize={16}
               weight="medium"
-              appearance={selectedSigners.length === threshold ? 'successText' : 'errorText'}
+              appearance={selectedSigners.length === leftThreshold ? 'successText' : 'errorText'}
             >
               ({selectedSigners.length})
             </Text>
           </View>
           <Text fontSize={16} weight="medium" appearance="secondaryText">
-            {threshold} / {importedOwners.length}
+            {leftThreshold} / {leftToSign.length}
           </Text>
         </View>
         <View>
-          {importedOwners.map((key, i) => {
+          {leftToSign.map((key, i) => {
             return (
               <Checkbox
                 key={`${key.addr}-${key.type}`}
                 value={!!selectedSigners.find((s) => s.addr === key.addr && s.type === key.type)}
-                onValueChange={() => onSignerSelected(importedOwners[i]!)}
+                onValueChange={() => onSignerSelected(leftToSign[i]!)}
                 style={[flexbox.directionRow, flexbox.alignCenter]}
               >
                 <AccountKey
@@ -97,7 +108,7 @@ const MultipleSignersSelect = ({
                   dedicatedToOneSA={false}
                   isImported
                   enableEditing={false}
-                  account={account}
+                  account={signAccountOpState.account}
                   isLast={true}
                   keyIconColor={theme.iconPrimary as string}
                   containerStyle={{
@@ -114,7 +125,7 @@ const MultipleSignersSelect = ({
           testID="sign-safe-button"
           text={t('Sign')}
           isLoading={isSigning}
-          disabled={selectedSigners.length !== threshold}
+          disabled={selectedSigners.length !== leftThreshold}
           onPress={() => handleSetMultisigSigners(selectedSigners)}
           style={spacings.ml0}
           size="small"

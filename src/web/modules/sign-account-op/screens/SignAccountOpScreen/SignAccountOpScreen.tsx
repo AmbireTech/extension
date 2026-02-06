@@ -36,8 +36,7 @@ import PendingTransactions from '@web/modules/sign-account-op/components/Pending
 import SafetyChecksOverlay from '@web/modules/sign-account-op/components/SafetyChecksOverlay'
 import SectionHeading from '@web/modules/sign-account-op/components/SectionHeading'
 import Simulation from '@web/modules/sign-account-op/components/Simulation'
-import MultipleSignersSelect from '@web/modules/sign-message/components/SafeSignersSelect'
-import SigningKeySelect from '@web/modules/sign-message/components/SignKeySelect'
+import KeySelect from '@web/modules/sign-message/components/KeySelect'
 
 import getStyles from './styles'
 
@@ -308,42 +307,16 @@ const SignAccountOpScreen = () => {
           </View>
         )}
       >
-        {signAccountOpState ? (
-          <SigningKeySelect
-            isVisible={
-              (isChooseSignerShown && !signAccountOpState.account.safeCreation) ||
-              isChooseFeePayerKeyShown
-            }
-            isSigning={isSignLoading || !signAccountOpState.readyToSign}
-            handleClose={() => {
-              setIsChooseSignerShown(false)
-              setIsChooseFeePayerKeyShown(false)
-            }}
-            selectedAccountKeyStoreKeys={
-              isChooseFeePayerKeyShown
-                ? signAccountOpState.feePayerKeyStoreKeys
-                : signAccountOpState.accountKeyStoreKeys
-            }
-            handleChooseKey={
-              isChooseFeePayerKeyShown ? handleChangeFeePayerKeyType : handleChangeSigningKey
-            }
-            type={isChooseFeePayerKeyShown ? 'broadcasting' : 'signing'}
-            account={signAccountOpState.account}
-          />
-        ) : null}
-        {signAccountOpState && !!signAccountOpState.account.safeCreation ? (
-          <MultipleSignersSelect
-            isVisible={isChooseSignerShown}
-            isSigning={isSignLoading || !signAccountOpState.readyToSign}
-            handleSetMultisigSigners={handleSetMultisigSigners}
-            handleClose={() => {
-              setIsChooseSignerShown(false)
-            }}
-            importedOwners={signAccountOpState.accountKeyStoreKeys}
-            account={signAccountOpState.account}
-            threshold={signAccountOpState.threshold}
-          />
-        ) : null}
+        <KeySelect
+          isSignLoading={isSignLoading}
+          setIsChooseSignerShown={setIsChooseSignerShown}
+          setIsChooseFeePayerKeyShown={setIsChooseFeePayerKeyShown}
+          isChooseSignerShown={isChooseSignerShown}
+          isChooseFeePayerKeyShown={isChooseFeePayerKeyShown}
+          handleChangeFeePayerKeyType={handleChangeFeePayerKeyType}
+          handleChangeSigningKey={handleChangeSigningKey}
+          handleSetMultisigSigners={handleSetMultisigSigners}
+        />
         <TabLayoutWrapperMainContent withScroll={false}>
           <View
             style={[
