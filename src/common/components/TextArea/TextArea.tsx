@@ -1,4 +1,4 @@
-import React, { ReactElement, useState } from 'react'
+import React, { ReactNode, useState } from 'react'
 import { BlurEvent, TextInput, TextInputProps, TextStyle, View, ViewStyle } from 'react-native'
 
 import Text from '@common/components/Text'
@@ -20,7 +20,7 @@ export interface InputProps extends TextInputProps {
   inputWrapperStyle?: ViewStyle | ViewStyle[]
   bottomLabelStyle?: TextStyle | TextStyle[]
   nativeInputStyle?: TextStyle
-  leftIcon?: () => ReactElement
+  leftIcon?: () => ReactNode
 }
 
 const TextArea = ({

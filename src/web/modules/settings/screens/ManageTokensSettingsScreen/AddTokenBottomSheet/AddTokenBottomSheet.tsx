@@ -1,5 +1,5 @@
 import { getAddress } from 'ethers'
-import React, { FC, ReactElement, useCallback, useEffect, useMemo, useState } from 'react'
+import React, { FC, ReactNode, useCallback, useEffect, useMemo, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { View } from 'react-native'
 
@@ -35,8 +35,8 @@ import {
 
 type NetworkOption = {
   value: string
-  label: ReactElement
-  icon: ReactElement
+  label: ReactNode
+  icon: ReactNode
 }
 
 type Props = {

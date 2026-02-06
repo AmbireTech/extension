@@ -1,4 +1,4 @@
-import React, { ReactElement, useCallback, useMemo, useState } from 'react'
+import React, { ReactNode, useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
@@ -35,8 +35,8 @@ type Props = {
 
 type NetworkOption = {
   value: string
-  label: ReactElement
-  icon: ReactElement
+  label: ReactNode
+  icon: ReactNode
 }
 
 const ManageDapp = ({

@@ -1,4 +1,4 @@
-import React, { ReactElement, ReactNode, useState } from 'react'
+import React, { ReactNode, useState } from 'react'
 import {
   BlurEvent,
   TextInput,
@@ -28,7 +28,7 @@ export interface InputProps extends TextInputProps {
   isValid?: boolean
   validLabel?: string
   validLabelAppearance?: TextAppearance
-  button?: string | ReactElement | null
+  button?: string | ReactNode | null
   buttonProps?: TouchableOpacityProps & {
     withBackground?: boolean
   }
@@ -49,11 +49,11 @@ export interface InputProps extends TextInputProps {
     id: string
     content: string
   }
-  childrenBeforeButtons?: React.ReactNode
-  childrenBelowInput?: React.ReactNode
+  childrenBeforeButtons?: ReactNode
+  childrenBelowInput?: ReactNode
   borderless?: boolean
-  customInputContent?: React.ReactNode
-  renderConfirmAddress?: () => React.ReactNode
+  customInputContent?: ReactNode
+  renderConfirmAddress?: () => ReactNode
   preventJumpOnValidationChange?: boolean
 }
 
