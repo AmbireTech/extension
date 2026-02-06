@@ -24,6 +24,8 @@ jobs:
     steps:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -68,6 +70,9 @@ jobs:
           echo "LI_FI_API_KEY=\"${{ vars.LI_FI_API_KEY }}\"" >> .env
           echo "BUNGEE_API_KEY=\"${{ vars.BUNGEE_API_KEY }}\"" >> .env
           echo "SENTRY_DSN_BROWSER_EXTENSION=\"${{ vars.SENTRY_DSN_BROWSER_EXTENSION }}\"" >> .env
+
+          # Pull the ARM64 image first to ensure QEMU is properly initialized
+          docker pull --platform linux/arm64 node:${{ steps.node-version.outputs.NODE_VERSION }}-alpine
 
           # Run build in docker container with ARM64 architecture
           docker run --platform linux/arm64 --rm \

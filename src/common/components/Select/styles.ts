@@ -17,8 +17,6 @@ interface Style {
   smMenuOption: ViewStyle
   mdMenuOption: ViewStyle
   sheetMenuOption: ViewStyle
-  searchContainerStyle: ViewProps
-  searchTextInputStyle: ViewProps
   optionIcon: ImageStyle
   searchBorderWrapperStyle: ViewStyle
   topSearchInputWrapperStyle: ViewStyle
@@ -95,31 +93,11 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       height: SELECT_SIZE_TO_HEIGHT.md,
       ...spacings.ph
     },
-    searchContainerStyle: {
-      flexDirection: 'column-reverse',
-      width: '100%',
-      alignItems: 'flex-end',
-      ...spacings.ph,
-      ...spacings.pt,
-      ...spacings.pbTy,
-      borderBottomWidth: 0
-    },
-    searchTextInputStyle: {
-      marginTop: SPACING_TY,
-      width: '100%',
-      height: 50,
-      borderRadius: 13,
-      backgroundColor: theme.secondaryBackground,
-      borderWidth: 0,
-      fontSize: 16,
-      ...spacings.phTy,
-      color: theme.secondaryText
-    },
     optionIcon: {
       width: 30,
       height: 30,
-      ...common.borderRadiusPrimary,
-      ...spacings.mrTy
+      borderRadius: BORDER_RADIUS_PRIMARY,
+      ...(spacings.mrTy as ImageStyle) // TODO: spacings has type mismatch with ImageStyle
     },
     searchBorderWrapperStyle: {
       borderWidth: 0,

@@ -122,7 +122,7 @@ const Authorization7702 = ({
       </Trans>
 
       {!!displayFullInformation && !!onDoNotAskMeAgainChange && (
-        <View style={[flexbox.directionRow, flexbox.alignCenter, { minHeight: '47px' }]}>
+        <View style={[flexbox.directionRow, flexbox.alignCenter, { minHeight: 47 }]}>
           <Checkbox
             value={!!doNotAskMeAgain}
             style={spacings.mb0}

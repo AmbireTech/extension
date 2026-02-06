@@ -200,10 +200,8 @@ const ManageRecoveryPhrase = ({
               type="ghost"
               size="small"
               text={t('Copy phrase')}
-              style={{
-                // @ts-ignore
-                cursor: !seed || seed === DUMMY_SEED ? 'default' : 'pointer'
-              }}
+              // @ts-ignore react-native-web supports `cursor`, but it's missing from React Native StyleProp<ViewStyle> types
+              style={{ cursor: !seed || seed === DUMMY_SEED ? 'default' : 'pointer' }}
             >
               <CopyIcon style={spacings.mlTy} width={18} />
             </Button>
