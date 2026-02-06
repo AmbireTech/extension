@@ -71,7 +71,8 @@ const Content: FC<ContentProps> = ({ children, buttons, scrollViewRef }) => {
         ...spacings.pv0,
         flex: 1,
         ...paddingHorizontalStyle,
-        ...(isTab && minHeightSize('m') ? spacings.pt2Xl : spacings.pt)
+        ...(isTab && minHeightSize('m') ? spacings.pt2Xl : spacings.pt),
+        alignItems: 'center'
       }}
       wrapperRef={scrollViewRef}
     >
