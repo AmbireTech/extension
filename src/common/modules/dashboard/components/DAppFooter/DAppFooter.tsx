@@ -1,7 +1,8 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
+import { Dapp, GetCurrentDappRes } from '@ambire-common/interfaces/dapp'
 import useTheme from '@common/hooks/useTheme'
 import useDappsControllerState from '@web/hooks/useDappsControllerState'
 import DappControl from '@web/modules/dapp-catalog/components/DappControl'
@@ -14,11 +15,21 @@ const { isPopup } = getUiType()
 
 const DAppFooter = () => {
   const { styles } = useTheme(getStyles)
-  const { currentDapp } = useDappsControllerState()
+  const { getCurrentDapp } = useDappsControllerState()
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const [hovered, setHovered] = useState(false)
+  const [currentDapp, setCurrentDapp] = useState<GetCurrentDappRes['res']>(null)
+  const [isLoading, setIsLoading] = useState(true)
 
-  if (!currentDapp || !isPopup) return null
+  useEffect(() => {
+    setIsLoading(true)
+    getCurrentDapp()
+      .then((dapp) => setCurrentDapp(dapp))
+      .catch((error) => setCurrentDapp(null))
+      .finally(() => setIsLoading(false))
+  }, [getCurrentDapp])
+
+  if (!isPopup || isLoading || !currentDapp) return null
 
   return (
     <View style={styles.footerContainer}>
