@@ -6,6 +6,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { BrowserRouter, HashRouter } from 'react-router-dom'
 
 import ErrorComponent from '@common/components/ErrorBoundary'
+import WithGlassViewSupport from '@common/components/GlassView/WithGlassViewSupport'
 import { GlobalTooltip } from '@common/components/GlobalTooltip'
 import { ErrorBoundary } from '@common/config/analytics/CrashAnalytics.web'
 import { KeyboardProvider } from '@common/contexts/keyboardContext'
@@ -101,10 +102,10 @@ const AppInit = () => {
   if (!fontsLoaded) return null
 
   const appContent = (
-    <>
+    <WithGlassViewSupport>
       <AppRouter />
       <PortalHost name="global" />
-    </>
+    </WithGlassViewSupport>
   )
 
   return (
