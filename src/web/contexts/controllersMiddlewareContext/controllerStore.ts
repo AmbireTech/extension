@@ -29,7 +29,7 @@ export class ControllerStore {
   }
   update<K extends ControllerId>(id: K, ctrl: ControllersMappingType[K], forceEmit?: boolean) {
     this.#states[id] = isExtension ? { ...ctrl } : parse(stringify(ctrl))
-
+    console.log(id, this.#states[id])
     if (!this.initializedControllers.has(id)) {
       this.initializedControllers.add(id)
       this.#checkReadiness()

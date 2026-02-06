@@ -304,7 +304,9 @@ export const CommonControllersMiddlewareProvider: React.FC<{
           eventEmitterRegistry: eventEmitterRegistry.current,
           storage: storageCtrl,
           getNetworks: () => networks,
-          sendUiMessage: () => {}
+          sendUiMessage: (params) => {
+            eventBus.emit('receiveOneTimeData', params)
+          }
         })
 
         ctrls.domains = new DomainsController({

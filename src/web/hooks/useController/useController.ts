@@ -8,7 +8,7 @@ import { ControllersMappingType } from '@web/extension-services/background/types
 import { useProvidersController } from './providers'
 
 type MethodKeys<T> = {
-  [K in keyof T]: T[K] extends (...args: any[]) => any ? K : never
+  [K in keyof T]-?: T[K] extends (...args: any[]) => any ? K : never
 }[keyof T]
 
 export type ControllerAction<K extends keyof ControllersMappingType> = {
@@ -22,7 +22,7 @@ export type ControllerAction<K extends keyof ControllersMappingType> = {
   }
 }[MethodKeys<ControllersMappingType[K]>]
 
-export type HookControllerAction<K extends keyof ControllersMappingType> = {
+type HookControllerAction<K extends keyof ControllersMappingType> = {
   [M in MethodKeys<ControllersMappingType[K]>]: {
     type: 'method'
     params: {
@@ -82,8 +82,10 @@ export default function useController<K extends keyof ControllersMappingType>(
   let ctrlSpecificMethods = {}
 
   if (id === 'ProvidersController') {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    const providersLogic = useProvidersController(state as ProvidersController, dispatch)
+    const providersLogic = useProvidersController(
+      state as ProvidersController,
+      dispatch as unknown as Dispatch<'ProvidersController'>
+    )
     ctrlSpecificMethods = providersLogic
   }
 

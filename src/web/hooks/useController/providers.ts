@@ -1,11 +1,11 @@
 import { Contract, JsonRpcProvider } from 'ethers'
-import { useCallback, useContext } from 'react'
+import { useCallback } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 
 import { ProvidersController } from '@ambire-common/controllers/providers/providers'
 import eventBus from '@web/extension-services/event/eventBus'
 
-import { Dispatch, HookControllerAction } from './useController'
+import { Dispatch } from './useController'
 
 type AsyncFn = (...args: any[]) => Promise<any>
 
@@ -25,7 +25,7 @@ export type ProviderMethod = AsyncMethodKeys<ProviderType>
 
 export function useProvidersController(
   state: ProvidersController,
-  dispatch: (action: HookControllerAction<'ProvidersController'>) => void
+  dispatch: Dispatch<'ProvidersController'>
 ) {
   const callProvider = useCallback(
     async <M extends ProviderMethod>(
@@ -35,10 +35,13 @@ export function useProvidersController(
     ): Promise<MethodResult<ProviderType, M>> => {
       const requestId = uuidv4()
 
-      // dispatch({
-      //   type: 'me',
-      //   params: { requestId, chainId, method, args }
-      // })
+      dispatch({
+        type: 'method',
+        params: {
+          method: 'callProviderAndSendResToUi',
+          args: [{ requestId, chainId, method, args }]
+        }
+      })
 
       return new Promise<MethodResult<ProviderType, M>>((resolve, reject) => {
         let settled = false
@@ -93,10 +96,13 @@ export function useProvidersController(
     }) => {
       const requestId = uuidv4()
 
-      // dispatch({
-      //   type: 'PROVIDERS_CONTROLLER_CALL_CONTRACT_AND_SEND_RES_TO_UI',
-      //   params: { requestId, chainId, address, abi, method, args }
-      // })
+      dispatch({
+        type: 'method',
+        params: {
+          method: 'callContractAndSendResToUi',
+          args: [{ requestId, chainId, address, abi, method, args }]
+        }
+      })
 
       return new Promise<string | undefined>((resolve, reject) => {
         let settled = false
