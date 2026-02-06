@@ -12,10 +12,8 @@ import useToast from '@common/hooks/useToast'
 import { isExtension } from '@web/constants/browserapi'
 import { ControllersMiddlewareContextReturnType } from '@web/contexts/controllersMiddlewareContext/types'
 import { Action } from '@web/extension-services/background/actions'
-import {
-  controllersMapping,
-  ControllersMappingType
-} from '@web/extension-services/background/types'
+import { controllersMapping } from '@web/extension-services/background/consts'
+import { ControllersMappingType } from '@web/extension-services/background/types'
 import { closeCurrentWindow } from '@web/extension-services/background/webapi/window'
 import eventBus from '@web/extension-services/event/eventBus'
 import { PortMessenger } from '@web/extension-services/messengers'
