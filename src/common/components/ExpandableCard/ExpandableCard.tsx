@@ -1,5 +1,5 @@
 /* eslint-disable react/jsx-no-useless-fragment */
-import React, { ReactElement, useState } from 'react'
+import React, { ReactNode, useState } from 'react'
 import { Pressable, View, ViewStyle } from 'react-native'
 
 import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
@@ -11,14 +11,14 @@ import flexbox from '@common/styles/utils/flexbox'
 import getStyles from './styles'
 
 type Props = {
-  content: ReactElement
-  expandedContent?: ReactElement
+  content: ReactNode
+  expandedContent?: ReactNode
   style?: ViewStyle
   enableToggleExpand?: boolean
   isInitiallyExpanded?: boolean
   hasArrow?: boolean
   arrowPosition?: 'left' | 'right'
-  children?: ReactElement | ReactElement[]
+  children?: ReactNode | ReactNode[]
   contentStyle?: ViewStyle
 }
 

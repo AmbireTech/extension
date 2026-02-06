@@ -1,6 +1,6 @@
-import React, { ReactElement, useCallback, useContext, useEffect, useState } from 'react'
+import React, { useCallback, useContext, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FlatList, StyleSheet, View } from 'react-native'
+import { FlatList, ListRenderItemInfo, StyleSheet, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { HD_PATH_TEMPLATE_TYPE } from '@ambire-common/consts/derivation'
@@ -53,7 +53,12 @@ const RecoveryPhraseSettingsScreen = () => {
     if (recoveryPhraseToManage) openBottomSheet()
   }, [openBottomSheet, recoveryPhraseToManage])
 
-  const renderItem = ({ item, index }: any): ReactElement<any, any> => {
+  const renderItem = ({
+    item,
+    index
+  }: ListRenderItemInfo<
+    NonNullable<ReturnType<typeof useKeystoreControllerState>['seeds']>[number]
+  >) => {
     const associatedAccounts = getAccountsForSeed(item.id)
     return (
       <Panel

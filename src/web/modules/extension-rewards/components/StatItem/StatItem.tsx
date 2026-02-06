@@ -136,6 +136,7 @@ const StatItem = ({ id, score, label, explanation, value, isLast, scoreChange }:
             alignItems: 'center',
             justifyContent: 'center',
             minWidth: 80,
+            // @ts-ignore value missing in the props, but it's available on web
             width: 'fit-content',
             height: 32,
             backgroundColor: '#101114',
