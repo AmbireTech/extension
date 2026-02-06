@@ -262,6 +262,7 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
           setValue={handleSetToNetworkValue}
           containerStyle={{ ...spacings.mb0, width: 168 }}
           options={toNetworksOptions}
+          selectStyle={{ ...spacings.phMi, ...spacings.prTy }}
           size="sm"
           value={getToNetworkSelectValue}
           mode="bottomSheet"
