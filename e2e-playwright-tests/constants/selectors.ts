@@ -245,7 +245,6 @@ const selectors = {
   transactionButtonReject: 'transaction-button-reject',
   totalPortfolioAmountInteger: 'total-portfolio-amount-integer',
   proceedBtn: 'proceed-btn',
-  batchBtn: 'batch-btn',
   privateKeyWarningCheckbox1: 'private-key-warning-checkbox-1',
   privateKeyWarningCheckbox2: 'private-key-warning-checkbox-2',
   nativeTokenBaseDashboard: 'token-0x0000000000000000000000000000000000000000-8453',
