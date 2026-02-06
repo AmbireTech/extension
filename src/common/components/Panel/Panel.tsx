@@ -39,13 +39,8 @@ const PanelBackButton = ({ onPress, style }: { onPress: () => void; style?: View
   return (
     <Pressable testID="panel-back-btn" onPress={onPress} style={style}>
       {({ hovered }: any) => (
-        <View
-          style={[
-            styles.backBtnWrapper,
-            { backgroundColor: hovered ? theme.quaternaryBackground : theme.secondaryBackground }
-          ]}
-        >
-          <LeftArrowIcon color={hovered ? theme.primaryBackgroundInverted : theme.iconPrimary} />
+        <View style={[styles.backBtnWrapper]}>
+          <LeftArrowIcon color={hovered ? theme.primaryText : theme.iconPrimary} />
         </View>
       )}
     </Pressable>
@@ -53,13 +48,10 @@ const PanelBackButton = ({ onPress, style }: { onPress: () => void; style?: View
 }
 
 const PanelTitle = ({ title, style }: { title: string | ReactNode; style?: TextStyle }) => {
-  const { maxWidthSize } = useWindowSize()
-
   return (
     <Text
-      fontSize={maxWidthSize('xl') ? 20 : 18}
-      weight="semiBold"
-      appearance="primaryText"
+      fontSize={20}
+      weight="medium"
       numberOfLines={1}
       style={[text.center, flexbox.flex1, style]}
     >

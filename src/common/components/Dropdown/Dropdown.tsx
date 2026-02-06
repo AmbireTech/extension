@@ -84,10 +84,7 @@ const Dropdown: FC<Props> = ({ data, externalPosition, setExternalPosition, onSe
           style={[
             styles.item,
             hovered && {
-              backgroundColor:
-                themeType === THEME_TYPES.DARK
-                  ? theme.tertiaryBackground
-                  : theme.secondaryBackground
+              backgroundColor: theme.secondaryBackground
             }
           ]}
         >

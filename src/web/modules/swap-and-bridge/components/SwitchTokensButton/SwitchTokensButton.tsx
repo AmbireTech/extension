@@ -18,14 +18,14 @@ const SwitchTokensButton = ({ disabled, ...rest }: PressableProps) => {
   })
 
   const topPathInterpolate = animatedValues
-    ? animatedValues[0].value.interpolate({
+    ? animatedValues[0]!.value.interpolate({
         inputRange: [0, 1],
         outputRange: [0, -6]
       })
     : 0
 
   const bottomPathInterpolate = animatedValues
-    ? animatedValues[0].value.interpolate({
+    ? animatedValues[0]!.value.interpolate({
         inputRange: [0, 1],
         outputRange: [0, 6]
       })

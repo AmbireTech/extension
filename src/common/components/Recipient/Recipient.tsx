@@ -10,7 +10,7 @@ import AccountsFilledIcon from '@common/assets/svg/AccountsFilledIcon'
 import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import UpArrowIcon from '@common/assets/svg/UpArrowIcon'
-import WalletFilledIcon from '@common/assets/svg/WalletFilledIcon'
+import WalletIcon from '@common/assets/svg/WalletIcon'
 import AddressBookContact from '@common/components/AddressBookContact'
 import AddressInput from '@common/components/AddressInput'
 import { InputProps } from '@common/components/Input'
@@ -30,6 +30,7 @@ import useTheme from '@common/hooks/useTheme'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { ItemPanel } from '@web/components/TransactionsScreen'
 import useAddressBookControllerState from '@web/hooks/useAddressBookControllerState'
 import useDomainsControllerState from '@web/hooks/useDomainsController/useDomainsController'
 import useHover, { AnimatedPressable } from '@web/hooks/useHover'
@@ -300,7 +301,7 @@ const Recipient: React.FC<Props> = ({
           </AnimatedPressable>
         </TitleAndIcon>
       ) : (
-        <TitleAndIcon title={t('My wallets')} icon={WalletFilledIcon} />
+        <TitleAndIcon title={t('My wallets')} icon={WalletIcon} />
       )
     },
     [bindManageBtnAnim, manageBtnAnimStyle, onManagePress, t, theme.secondaryText]
@@ -352,8 +353,13 @@ const Recipient: React.FC<Props> = ({
   )
 
   return (
-    <>
-      <Text appearance="secondaryText" fontSize={14} weight="medium" style={spacings.mbMi}>
+    <ItemPanel style={{ ...spacings.pbTy, ...spacings.mbTy }}>
+      <Text
+        appearance="secondaryText"
+        fontSize={14}
+        weight="medium"
+        style={[spacings.mbSm, spacings.mlTy]}
+      >
         {t('Add recipient')}
       </Text>
       <SectionedSelect
@@ -367,6 +373,7 @@ const Recipient: React.FC<Props> = ({
         renderSelectedOption={renderSelectedOption}
         emptyListPlaceholderText={t('No contacts found')}
         menuPosition="bottom"
+        containerStyle={spacings.mb0}
       />
 
       <AddContactBottomSheet
@@ -374,7 +381,7 @@ const Recipient: React.FC<Props> = ({
         address={ensAddress || address}
         closeBottomSheet={closeBottomSheet}
       />
-    </>
+    </ItemPanel>
   )
 }
 
