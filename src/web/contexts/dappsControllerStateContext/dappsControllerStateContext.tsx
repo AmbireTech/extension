@@ -11,10 +11,12 @@ import useControllerState from '@web/hooks/useControllerState'
 
 const DappsControllerStateContext = createContext<{
   state: IDappsController
-  getCurrentDapp: () => Promise<Dapp | null>
+  currentDapp: Dapp | null
+  isLoadingCurrentDapp: boolean
 }>({
   state: {} as IDappsController,
-  getCurrentDapp: () => Promise.resolve(null)
+  currentDapp: null,
+  isLoadingCurrentDapp: true
 })
 
 const DappsControllerStateProvider: React.FC<any> = ({ children }) => {
@@ -74,13 +76,27 @@ const DappsControllerStateProvider: React.FC<any> = ({ children }) => {
 
   const controller = 'DappsController'
   const state = useControllerState(controller)
+  const [currentDapp, setCurrentDapp] = useState<Dapp | null>(null)
+  const [isLoadingCurrentDapp, setIsLoadingCurrentDapp] = useState(true)
+
   useEffect(() => {
     dispatch({ type: 'INIT_CONTROLLER_STATE', params: { controller: 'DappsController' } })
   }, [dispatch])
 
+  useEffect(() => {
+    setIsLoadingCurrentDapp(true)
+    getCurrentDapp()
+      .then((dapp) => setCurrentDapp(dapp))
+      .catch(() => setCurrentDapp(null)) // TODO: Send crash report?
+      .finally(() => setIsLoadingCurrentDapp(false))
+  }, [getCurrentDapp])
+
   return (
     <DappsControllerStateContext.Provider
-      value={useMemo(() => ({ state, getCurrentDapp }), [state, getCurrentDapp])}
+      value={useMemo(
+        () => ({ state, currentDapp, isLoadingCurrentDapp }),
+        [state, currentDapp, isLoadingCurrentDapp]
+      )}
     >
       {children}
     </DappsControllerStateContext.Provider>
