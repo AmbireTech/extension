@@ -108,13 +108,12 @@ const DashboardOverview: FC<Props> = ({
           <Image
             source={{ uri: backgroundImage }}
             style={{
-              width: dashboardOverviewSize.width,
+              width: '100%',
               height: OVERVIEW_CONTENT_MAX_HEIGHT,
               position: 'absolute',
               objectFit: 'fill',
               top: 0,
-              left: 0,
-              backgroundColor: theme.primaryBackground
+              left: 0
             }}
           />
           <View style={{ zIndex: 2 }}>
