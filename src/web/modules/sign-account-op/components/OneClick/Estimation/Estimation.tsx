@@ -9,6 +9,7 @@ import {
   SignAccountOpError
 } from '@ambire-common/interfaces/signAccountOp'
 import { SwapAndBridgeRoute } from '@ambire-common/interfaces/swapAndBridge'
+import SuccessIcon from '@common/assets/svg/SuccessIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
@@ -145,19 +146,32 @@ const OneClickEstimation = ({
               signed={signAccountOpController.accountOp.signed || []}
               threshold={signAccountOpController.threshold}
             />
-            <Estimation
-              updateType={updateType}
-              signAccountOpState={signAccountOpController}
-              disabled={signAccountOpController.status?.type !== SigningStatus.ReadyToSign}
-              hasEstimation={!!hasEstimation}
-              // TODO<oneClickSwap>
-              slowRequest={false}
-              // TODO<oneClickSwap>
-              isViewOnly={isViewOnly}
-              isSponsored={signAccountOpController ? signAccountOpController.isSponsored : false}
-              sponsor={signAccountOpController ? signAccountOpController.sponsor : undefined}
-              serviceFee={serviceFee}
-            />
+            {signAccountOpController?.canBroadcast && (
+              <Estimation
+                updateType={updateType}
+                signAccountOpState={signAccountOpController}
+                disabled={signAccountOpController.status?.type !== SigningStatus.ReadyToSign}
+                hasEstimation={!!hasEstimation}
+                // TODO<oneClickSwap>
+                slowRequest={false}
+                // TODO<oneClickSwap>
+                isViewOnly={isViewOnly}
+                isSponsored={signAccountOpController ? signAccountOpController.isSponsored : false}
+                sponsor={signAccountOpController ? signAccountOpController.sponsor : undefined}
+                serviceFee={serviceFee}
+              />
+            )}
+            {signAccountOpController &&
+              signingErrors.length === 0 &&
+              !signAccountOpController.canBroadcast &&
+              !!signAccountOpController.account.safeCreation && (
+                <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mt]}>
+                  <SuccessIcon color={theme.successDecorative} />
+                  <Text fontSize={16} appearance="successText" style={spacings.mlSm}>
+                    {t('Ready to sign and send to safe global')}
+                  </Text>
+                </View>
+              )}
             {signingErrors.length > 0 &&
               (signingErrors.map(({ code }) => code).includes('NO_KEYS_AVAILABLE') ? (
                 <NoKeysToSignAlert style={spacings.mt} />

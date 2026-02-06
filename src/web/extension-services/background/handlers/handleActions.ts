@@ -418,6 +418,9 @@ export const handleActions = async (
     case 'SAFE_CONTROLLER_FIND_SAFE':
       return mainCtrl.safe.findSafe(params.safeAddress)
 
+    case 'SAFE_CONTROLLER_FETCH_TRANSACTIONS':
+      return mainCtrl.fetchSafeTxns(params.chainsIds)
+
     case 'MAIN_CONTROLLER_RELOAD_SELECTED_ACCOUNT': {
       return await mainCtrl.reloadSelectedAccount({
         chainIds: params?.chainId ? [BigInt(params?.chainId)] : undefined,

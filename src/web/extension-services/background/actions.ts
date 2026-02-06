@@ -772,6 +772,13 @@ type SafeControllerFindSafe = {
   }
 }
 
+type SafeControllerFetchTransactions = {
+  type: 'SAFE_CONTROLLER_FETCH_TRANSACTIONS'
+  params: {
+    chainsIds: bigint[]
+  }
+}
+
 type FlipFeature = {
   type: 'FEATURE_FLAGS_CONTROLLER_FLIP_FEATURE'
   params: {
@@ -920,5 +927,6 @@ export type Action =
   | KeystoreControllerSendEncryptedPrivateKeyToUiAction
   | KeystoreControllerSendPasswordDecryptedPrivateKeyToUiAction
   | SafeControllerFindSafe
+  | SafeControllerFetchTransactions
   | AccountsControllerAddAccounts
   | FlipFeature
