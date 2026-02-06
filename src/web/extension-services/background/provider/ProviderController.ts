@@ -24,7 +24,6 @@ import {
 import { networkChainIdToHex } from '@ambire-common/libs/networks/networks'
 import { Bundler } from '@ambire-common/services/bundlers/bundler'
 import { getBundlerByName, getDefaultBundler } from '@ambire-common/services/bundlers/getBundler'
-import { getRpcProvider } from '@ambire-common/services/provider'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import { APP_VERSION } from '@common/config/env'
@@ -425,6 +424,7 @@ export class ProviderController {
         paymasterService: {
           supported:
             isSmart &&
+            !accout.safeCreation &&
             // enabled: obvious, it means we're operaring with 4337
             // hasBundlerSupport means it might not be 4337 but we support it
             // our default may be the relayer but we will broadcast an userOp

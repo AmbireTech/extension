@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useModalize } from 'react-native-modalize'
 import { useLocation } from 'react-router-dom'
 
+import { SigningStatus } from '@ambire-common/controllers/signAccountOp/signAccountOp'
 import { SwapAndBridgeFormStatus } from '@ambire-common/controllers/swapAndBridge/swapAndBridge'
 import { SwapAndBridgeActiveRoute } from '@ambire-common/interfaces/swapAndBridge'
 import { CallsUserRequest } from '@ambire-common/interfaces/userRequest'
@@ -72,6 +73,7 @@ const useSwapAndBridgeForm = () => {
   const [latestBatchedNetwork, setLatestBatchedNetwork] = useState<bigint | undefined>()
   const [isOneClickModeDuringPriceImpact, setIsOneClickModeDuringPriceImpact] =
     useState<boolean>(false)
+  const [showSafeSigned, setShowSafeSigned] = useState(false)
   const { networks } = useNetworksControllerState()
   const currentRoute = useLocation()
   const { setSearchParams, navigate } = useNavigation()
@@ -211,6 +213,23 @@ const useSwapAndBridgeForm = () => {
     signAccountOpController,
     visibleUserRequests
   ])
+
+  useEffect(() => {
+    if (showSafeSigned) return
+    if (
+      signAccountOpController &&
+      signAccountOpController.account.safeCreation &&
+      signAccountOpController.status?.type === SigningStatus.Queued
+    ) {
+      setShowSafeSigned(true)
+      dispatch({
+        type: 'SAFE_CONTROLLER_FETCH_TRANSACTIONS',
+        params: {
+          chainsIds: [signAccountOpController.accountOp.chainId]
+        }
+      })
+    }
+  }, [showSafeSigned, signAccountOpController, dispatch])
 
   // remove session - this will be triggered only
   // when navigation to another screen internally in the extension
@@ -401,13 +420,15 @@ const useSwapAndBridgeForm = () => {
     )
   }, [activeRoutes, account])
 
-  const displayedView: 'estimate' | 'batch' | 'track' = useMemo(() => {
+  const displayedView: 'estimate' | 'batch' | 'track' | 'safe-signed' = useMemo(() => {
+    if (showSafeSigned) return 'safe-signed'
+
     if (showAddedToBatch) return 'batch'
 
     if (activeRoute) return 'track'
 
     return 'estimate'
-  }, [activeRoute, showAddedToBatch])
+  }, [activeRoute, showAddedToBatch, showSafeSigned])
 
   useEffect(() => {
     if (
@@ -484,7 +505,8 @@ const useSwapAndBridgeForm = () => {
     batchNetworkUserRequestsCount,
     networkUserRequests,
     isLocalStateOutOfSync,
-    shouldDisableAddToBatch
+    shouldDisableAddToBatch,
+    setShowSafeSigned
   }
 }
 
