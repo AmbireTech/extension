@@ -1,6 +1,6 @@
 import { useContext } from 'react'
 
-import { ControllersMiddlewareContext } from '@web/contexts/controllersMiddlewareContext/context'
+import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext/context'
 
 export default function useControllersMiddleware() {
   const context = useContext(ControllersMiddlewareContext)

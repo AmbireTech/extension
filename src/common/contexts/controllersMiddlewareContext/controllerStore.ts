@@ -1,8 +1,8 @@
 import { flushSync } from 'react-dom'
 
 import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
+import { ControllersMappingType } from '@common/constants/controllersMapping'
 import { isExtension } from '@web/constants/browserapi'
-import { ControllersMappingType } from '@web/extension-services/background/types'
 
 type ControllerId = keyof ControllersMappingType
 

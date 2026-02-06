@@ -3,9 +3,9 @@ import React, { FC, useEffect, useMemo } from 'react'
 import BaseAddress from '@common/components/HumanizerAddress/components/BaseAddress'
 import Spinner from '@common/components/Spinner'
 import { Props as TextProps } from '@common/components/Text'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useReverseLookup from '@common/hooks/useReverseLookup'
 import useContractNamesControllerState from '@web/hooks/useContractNamesController/useContractNamesController'
-import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 
 interface Props extends TextProps {
   address: string

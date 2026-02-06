@@ -2,7 +2,7 @@
 import React, { createContext, useEffect, useMemo } from 'react'
 
 import { IEmailVaultController } from '@ambire-common/interfaces/emailVault'
-import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useControllerState from '@web/hooks/useControllerState'
 
 const EmailVaultControllerStateContext = createContext<IEmailVaultController>(

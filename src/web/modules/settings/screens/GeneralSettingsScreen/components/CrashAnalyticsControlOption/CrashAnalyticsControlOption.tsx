@@ -4,9 +4,9 @@ import { useTranslation } from 'react-i18next'
 import DevIcon from '@common/assets/svg/DevIcon/DevIcon'
 import ControlOption from '@common/components/ControlOption'
 import FatToggle from '@common/components/FatToggle'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useWalletStateController from '@web/hooks/useWalletStateController'
 
 const CrashAnalyticsControlOption = () => {

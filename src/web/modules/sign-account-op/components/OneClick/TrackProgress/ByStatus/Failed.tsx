@@ -6,10 +6,10 @@ import { Hex } from '@ambire-common/interfaces/hex'
 import RetryIcon from '@common/assets/svg/RetryIcon'
 import AlertVertical from '@common/components/AlertVertical'
 import Text from '@common/components/Text'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
 
 type FailedProps = {

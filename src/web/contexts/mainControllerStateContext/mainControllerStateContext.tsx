@@ -2,8 +2,8 @@
 import React, { createContext, useEffect } from 'react'
 
 import { IMainController } from '@ambire-common/interfaces/main'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useDeepMemo from '@common/hooks/useDeepMemo'
-import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useControllerState from '@web/hooks/useControllerState'
 
 const MainControllerStateContext = createContext<IMainController>({} as IMainController)

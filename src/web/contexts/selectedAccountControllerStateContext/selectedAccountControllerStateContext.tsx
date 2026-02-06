@@ -2,7 +2,7 @@ import React, { createContext, useEffect, useMemo } from 'react'
 
 import { ISelectedAccountController } from '@ambire-common/interfaces/selectedAccount'
 import { setExtraContext } from '@common/config/analytics/CrashAnalytics'
-import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useControllerState from '@web/hooks/useControllerState'
 import useMainControllerState from '@web/hooks/useMainControllerState'
 

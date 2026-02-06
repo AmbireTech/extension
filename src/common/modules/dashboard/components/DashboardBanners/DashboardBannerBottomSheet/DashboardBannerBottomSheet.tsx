@@ -6,9 +6,9 @@ import { getIsBridgeRoute } from '@ambire-common/libs/swapAndBridge/swapAndBridg
 import BottomSheet from '@common/components/BottomSheet'
 import DualChoiceModal from '@common/components/DualChoiceModal'
 import Text from '@common/components/Text'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControllerState'
 import ActiveRouteCard from '@web/modules/swap-and-bridge/components/ActiveRouteCard'
 

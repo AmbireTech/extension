@@ -1,8 +1,8 @@
 import React, { createContext, useEffect } from 'react'
 
 import { IAddressBookController } from '@ambire-common/interfaces/addressBook'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useDeepMemo from '@common/hooks/useDeepMemo'
-import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useControllerState from '@web/hooks/useControllerState'
 import useMainControllerState from '@web/hooks/useMainControllerState'
 

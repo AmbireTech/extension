@@ -1,8 +1,8 @@
 import React, { createContext, useEffect } from 'react'
 
 import { INetworksController } from '@ambire-common/interfaces/network'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useDeepMemo from '@common/hooks/useDeepMemo'
-import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useControllerState from '@web/hooks/useControllerState'
 import useMainControllerState from '@web/hooks/useMainControllerState'
 

@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import Panel from '@common/components/Panel'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useNavigation from '@common/hooks/useNavigation'
 import usePrevious from '@common/hooks/usePrevious'
 import useTheme from '@common/hooks/useTheme'
@@ -11,7 +12,6 @@ import {
   TabLayoutContainer,
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useEmailVaultControllerState from '@web/hooks/useEmailVaultControllerState'
 import PinExtension from '@web/modules/auth/components/PinExtension'
 import KeyStoreSetNewPasswordForm from '@web/modules/keystore/components/KeyStoreSetNewPasswordForm'

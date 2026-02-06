@@ -2,9 +2,9 @@ import React, { createContext, useEffect, useState } from 'react'
 import { flushSync } from 'react-dom'
 
 import { ISignAccountOpController } from '@ambire-common/interfaces/signAccountOp'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useDeepMemo from '@common/hooks/useDeepMemo'
 import eventBus from '@web/extension-services/event/eventBus'
-import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 
 const SignAccountOpControllerStateContext = createContext<ISignAccountOpController | null>(null)
 

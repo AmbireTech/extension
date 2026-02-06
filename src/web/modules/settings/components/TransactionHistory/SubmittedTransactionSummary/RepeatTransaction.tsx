@@ -5,10 +5,10 @@ import { TouchableOpacity } from 'react-native'
 import { SubmittedAccountOp } from '@ambire-common/libs/accountOp/submittedAccountOp'
 import RepeatIcon from '@common/assets/svg/RepeatIcon'
 import Text from '@common/components/Text'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 
 type Props = {
   accountAddr: string

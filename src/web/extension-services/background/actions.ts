@@ -42,10 +42,10 @@ import { GasSpeeds } from '@ambire-common/services/bundlers/types'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import { LOG_LEVELS } from '@web/utils/logger'
 
+import { ControllersMappingType } from '../../../common/constants/controllersMapping'
 import { controllersMapping } from './consts'
 import { AUTO_LOCK_TIMES } from './controllers/auto-lock'
 import { AvatarType } from './controllers/wallet-state'
-import { ControllersMappingType } from './types'
 
 type UpdateNavigationUrl = {
   type: 'UPDATE_PORT_URL'

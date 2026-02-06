@@ -2,7 +2,7 @@
 import React, { createContext, useEffect, useMemo } from 'react'
 
 import { IInviteController } from '@ambire-common/interfaces/invite'
-import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useControllerState from '@web/hooks/useControllerState'
 import useMainControllerState from '@web/hooks/useMainControllerState'
 

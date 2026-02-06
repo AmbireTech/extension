@@ -1,6 +1,6 @@
+import { ControllersMappingType } from '@common/constants/controllersMapping'
+import { ControllerAction } from '@common/hooks/useController/useController'
 import { Action } from '@web/extension-services/background/actions'
-import { ControllersMappingType } from '@web/extension-services/background/types'
-import { ControllerAction } from '@web/hooks/useController/useController'
 
 import { ControllerStore } from './controllerStore'
 

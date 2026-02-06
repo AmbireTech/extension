@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-shadow */
 import React, { createContext, useEffect } from 'react'
 
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useDeepMemo from '@common/hooks/useDeepMemo'
 import { WalletStateController } from '@web/extension-services/background/controllers/wallet-state'
-import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useControllerState from '@web/hooks/useControllerState'
 
 const WalletStateControllerContext = createContext<WalletStateController>(

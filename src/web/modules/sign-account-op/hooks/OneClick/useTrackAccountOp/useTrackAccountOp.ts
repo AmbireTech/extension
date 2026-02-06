@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 
-import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 
 type Props = {
   address?: string

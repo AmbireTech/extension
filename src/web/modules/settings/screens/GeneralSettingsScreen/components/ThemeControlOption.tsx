@@ -6,10 +6,10 @@ import LightThemeIcon from '@common/assets/svg/LightThemeIcon'
 import SystemThemeIcon from '@common/assets/svg/SystemThemeIcon'
 import ControlOption from '@common/components/ControlOption'
 import Select from '@common/components/Select'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES, ThemeType } from '@common/styles/themeConfig'
-import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 
 const ThemeControlOption = () => {
   const { t } = useTranslation()

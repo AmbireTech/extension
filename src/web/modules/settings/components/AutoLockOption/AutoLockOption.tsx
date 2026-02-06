@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 
 import CheckIcon from '@common/assets/svg/CheckIcon'
 import Text from '@common/components/Text'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
@@ -13,7 +14,6 @@ import {
   getAutoLockLabel
 } from '@web/extension-services/background/controllers/auto-lock'
 import useAutoLockStateController from '@web/hooks/useAutoLockStateController'
-import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
 
 type Props = {

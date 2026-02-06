@@ -4,11 +4,11 @@ import { useTranslation } from 'react-i18next'
 import LockIcon from '@common/assets/svg/LockIcon'
 import Button from '@common/components/Button'
 import ControlOption from '@common/components/ControlOption'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
-import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 
 const LockAmbireControlOption = () => {

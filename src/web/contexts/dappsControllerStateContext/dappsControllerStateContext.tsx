@@ -4,9 +4,9 @@ import React, { createContext, useCallback, useEffect, useMemo, useState } from 
 import { Dapp, IDappsController } from '@ambire-common/interfaces/dapp'
 import { getDappIdFromUrl } from '@ambire-common/libs/dapps/helpers'
 import { isValidURL } from '@ambire-common/services/validations'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import { getCurrentTab } from '@web/extension-services/background/webapi/tab'
 import { getCurrentWindow } from '@web/extension-services/background/webapi/window'
-import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useControllerState from '@web/hooks/useControllerState'
 
 const DappsControllerStateContext = createContext<{

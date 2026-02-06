@@ -1,8 +1,8 @@
 import React, { createContext, useEffect } from 'react'
 
 import { IPortfolioController } from '@ambire-common/interfaces/portfolio'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useDeepMemo from '@common/hooks/useDeepMemo'
-import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useControllerState from '@web/hooks/useControllerState'
 
 const PortfolioControllerStateContext = createContext<IPortfolioController>(

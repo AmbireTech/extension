@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { flushSync } from 'react-dom'
 
-import { ControllersMappingType } from '@web/extension-services/background/types'
+import { ControllersMappingType } from '@common/constants/controllersMapping'
 import eventBus from '@web/extension-services/event/eventBus'
 
 /**

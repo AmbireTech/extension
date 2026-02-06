@@ -9,6 +9,7 @@ import Input from '@common/components/Input'
 import Panel from '@common/components/Panel'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import Header from '@common/modules/header/components/Header'
@@ -20,7 +21,6 @@ import {
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import storage from '@web/extension-services/background/webapi/storage'
 import useAccountPickerControllerState from '@web/hooks/useAccountPickerControllerState'
-import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 
 export const CARD_WIDTH = 400
 

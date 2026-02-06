@@ -6,12 +6,12 @@ import FailedToConnectIcon from '@common/assets/svg/FailedToConnectIcon'
 import Button from '@common/components/Button'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
-import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useDappsControllerState from '@web/hooks/useDappsControllerState'
 
 const DappsSkeletonLoader = () => {

@@ -5,12 +5,12 @@ import { TouchableOpacity, View } from 'react-native'
 import LeftArrowIcon from '@common/assets/svg/LeftArrowIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import Text from '@common/components/Text'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
-import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 
 const SET_CURRENT_REQUEST_PARAMS = {

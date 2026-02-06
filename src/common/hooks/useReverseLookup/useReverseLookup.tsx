@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 
 import { getAddressCaught } from '@ambire-common/utils/getAddressCaught'
-import useController from '@web/hooks/useController'
+import useController from '@common/hooks/useController'
 
 interface Props {
   address: string

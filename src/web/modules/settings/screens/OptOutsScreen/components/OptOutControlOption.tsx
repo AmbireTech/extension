@@ -3,8 +3,8 @@ import React, { useCallback } from 'react'
 import { FeatureFlags } from '@ambire-common/consts/featureFlags'
 import ControlOption from '@common/components/ControlOption'
 import FatToggle from '@common/components/FatToggle'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import spacings from '@common/styles/spacings'
-import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useFeatureFlagsControllerState from '@web/hooks/useFeatureFlagsControllerState'
 
 interface Opts {

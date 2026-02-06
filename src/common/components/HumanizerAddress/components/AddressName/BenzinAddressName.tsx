@@ -3,8 +3,8 @@ import React, { FC, useEffect, useMemo } from 'react'
 
 import Spinner from '@common/components/Spinner'
 import { Props as TextProps } from '@common/components/Text'
+import useController from '@common/hooks/useController'
 import useReverseLookup from '@common/hooks/useReverseLookup'
-import useController from '@web/hooks/useController'
 
 import BaseAddress from '../BaseAddress'
 

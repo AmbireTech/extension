@@ -11,11 +11,11 @@ import BottomSheet from '@common/components/BottomSheet'
 import DualChoiceModal from '@common/components/DualChoiceModal'
 import Input from '@common/components/Input'
 import useAddressInput from '@common/hooks/useAddressInput'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
 import useAddressBookControllerState from '@web/hooks/useAddressBookControllerState'
-import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 
 type Props = {
   id: string

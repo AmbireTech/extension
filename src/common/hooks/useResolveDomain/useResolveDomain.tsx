@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react'
 
-import useController from '@web/hooks/useController'
+import useController from '@common/hooks/useController'
 
 interface Props {
   domain: string

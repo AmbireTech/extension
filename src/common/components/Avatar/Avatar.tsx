@@ -1,10 +1,10 @@
 import React, { FC, useEffect, useRef, useState } from 'react'
 import { Animated, ViewStyle } from 'react-native'
 
+import useController from '@common/hooks/useController'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { AvatarType } from '@web/extension-services/background/controllers/wallet-state'
-import useController from '@web/hooks/useController'
 import useWalletStateController from '@web/hooks/useWalletStateController'
 
 import Blockie from './Blockies/Blockies'

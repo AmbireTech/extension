@@ -1,8 +1,8 @@
 import React, { createContext, useEffect } from 'react'
 
 import { IStorageController } from '@ambire-common/interfaces/storage'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useDeepMemo from '@common/hooks/useDeepMemo'
-import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useControllerState from '@web/hooks/useControllerState'
 
 const StorageControllerStateContext = createContext<IStorageController>({} as IStorageController)

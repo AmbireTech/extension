@@ -6,9 +6,9 @@ import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
 import { ISignAccountOpController } from '@ambire-common/interfaces/signAccountOp'
 import Button from '@common/components/Button'
 import Text from '@common/components/Text'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 
 const BundlerWarning = ({
   signAccountOpState,

@@ -3,11 +3,11 @@ import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { BrowserRouter } from 'react-router-dom'
 
 import { GlobalTooltip } from '@common/components/GlobalTooltip'
+import { CommonControllersMiddlewareProvider } from '@common/contexts/controllersMiddlewareContext/commonControllersMiddlewareContext'
 import { ThemeProvider } from '@common/contexts/themeContext'
 import { ToastProvider } from '@common/contexts/toastContext'
 import useFonts from '@common/hooks/useFonts'
 import { PortalHost, PortalProvider } from '@gorhom/portal'
-import { CommonControllersMiddlewareProvider } from '@web/contexts/controllersMiddlewareContext/commonControllersMiddlewareContext'
 
 import { BenzinNetworksContextProvider } from './context'
 import BenzinScreen from './screens/BenzinScreen'

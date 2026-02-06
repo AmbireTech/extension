@@ -5,8 +5,8 @@ import { FlatList } from 'react-native'
 
 import { Account as AccountType } from '@ambire-common/interfaces/account'
 import { isSmartAccount } from '@ambire-common/libs/account/account'
+import useController from '@common/hooks/useController'
 import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
-import useController from '@web/hooks/useController'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 
 const useAccountsList = ({

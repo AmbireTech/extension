@@ -2,8 +2,8 @@
 import React, { createContext, useCallback, useEffect, useMemo } from 'react'
 
 import { IDomainsController } from '@ambire-common/interfaces/domains'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useDeepMemo from '@common/hooks/useDeepMemo'
-import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useControllerState from '@web/hooks/useControllerState'
 
 const DomainsControllerStateContext = createContext<{

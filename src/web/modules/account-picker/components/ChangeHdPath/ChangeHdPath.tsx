@@ -6,10 +6,10 @@ import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import Button from '@common/components/Button'
 import { SelectValue } from '@common/components/Select/types'
 import { useTranslation } from '@common/config/localization'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import { FONT_FAMILIES } from '@common/hooks/useFonts'
 import spacings from '@common/styles/spacings'
 import useAccountPickerControllerState from '@web/hooks/useAccountPickerControllerState'
-import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 
 import AdvancedModeBottomSheet from './AdvancedModeBottomSheet'
 

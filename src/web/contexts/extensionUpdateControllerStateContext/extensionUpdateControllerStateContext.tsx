@@ -1,7 +1,7 @@
 import React, { createContext, useEffect, useMemo } from 'react'
 
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import { ExtensionUpdateController } from '@web/extension-services/background/controllers/extension-update'
-import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useControllerState from '@web/hooks/useControllerState'
 
 const ExtensionUpdateControllerStateContext = createContext<ExtensionUpdateController>(

@@ -2,7 +2,7 @@ import React, { useCallback, useState } from 'react'
 import { Pressable } from 'react-native'
 import { SvgProps } from 'react-native-svg'
 
-import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useInviteControllerState from '@web/hooks/useInviteControllerState'
 
 import AmbireLogoHorizontal from '../AmbireLogoHorizontal/AmbireLogoHorizontal'

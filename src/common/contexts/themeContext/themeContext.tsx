@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useEffect, useMemo } from 'react'
 import { useColorScheme } from 'react-native'
 
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import ThemeColors, {
   DEFAULT_THEME,
   THEME_TYPES,
@@ -8,7 +9,6 @@ import ThemeColors, {
   ThemeType
 } from '@common/styles/themeConfig'
 import { isExtension } from '@web/constants/browserapi'
-import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useWalletStateController from '@web/hooks/useWalletStateController'
 
 export interface ThemeContextReturnType {

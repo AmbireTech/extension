@@ -3,10 +3,10 @@ import { useForm } from 'react-hook-form'
 
 import { isDev, isTesting } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useExtraEntropy from '@common/hooks/useExtraEntropy'
 import useToast from '@common/hooks/useToast'
 import { DEFAULT_KEYSTORE_PASSWORD_DEV } from '@env'
-import useControllersMiddleware from '@web/hooks/useControllersMiddleware'
 import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 
 const useKeyStoreSetup = () => {

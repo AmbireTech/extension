@@ -1,6 +1,7 @@
 import React, { FC, ReactNode, useEffect } from 'react'
 import { createHashRouter, Navigate, RouterProvider } from 'react-router-dom'
 
+import { CommonControllersMiddlewareProvider } from '@common/contexts/controllersMiddlewareContext/commonControllersMiddlewareContext'
 import ErrorPage from '@legends/components/ErrorPage'
 import PrivateRoute from '@legends/components/PrivateRoute'
 import Season2Modal from '@legends/components/Season2Modal'
@@ -13,7 +14,6 @@ import Leaderboard from '@legends/modules/leaderboard/screens/Leaderboard'
 import RewardsPool from '@legends/modules/rewards-pool'
 import Wallet from '@legends/modules/wallet'
 import * as Sentry from '@sentry/react'
-import { CommonControllersMiddlewareProvider } from '@web/contexts/controllersMiddlewareContext/commonControllersMiddlewareContext'
 
 import { LEGENDS_ROUTES } from '../constants'
 import { LEGENDS_LEGACY_ROUTES } from '../constants/routes'
