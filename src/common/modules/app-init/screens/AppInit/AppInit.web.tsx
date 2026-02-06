@@ -26,7 +26,7 @@ import { AddressBookControllerStateProvider } from '@web/contexts/addressBookCon
 import { AutoLockControllerStateProvider } from '@web/contexts/autoLockControllerStateContext'
 import { BannerControllerStateProvider } from '@web/contexts/bannerControllerStateContext/bannerControllerStateContext'
 import { ContractNamesControllerStateProvider } from '@web/contexts/contractNamesControllerStateContext'
-import { ControllersMiddlewareProvider } from '@web/contexts/controllersMiddlewareContext'
+import { ExtensionControllersMiddlewareProvider } from '@web/contexts/controllersMiddlewareContext/extensionControllersMiddlewareContext'
 import { ControllersStateLoadedProvider } from '@web/contexts/controllersStateLoadedContext'
 import { DappsControllerStateProvider } from '@web/contexts/dappsControllerStateContext'
 import { DomainsControllerStateProvider } from '@web/contexts/domainsControllerStateContext'
@@ -65,7 +65,7 @@ const AppInit = () => {
         <SafeAreaProvider>
           <ToastProvider>
             <ErrorBoundary fallback={errorComponent}>
-              <ControllersMiddlewareProvider env="extension">
+              <ExtensionControllersMiddlewareProvider>
                 <MainControllerStateProvider>
                   <StorageControllerStateProvider>
                     <UiControllerStateProvider>
@@ -138,7 +138,7 @@ const AppInit = () => {
                     </UiControllerStateProvider>
                   </StorageControllerStateProvider>
                 </MainControllerStateProvider>
-              </ControllersMiddlewareProvider>
+              </ExtensionControllersMiddlewareProvider>
             </ErrorBoundary>
           </ToastProvider>
         </SafeAreaProvider>

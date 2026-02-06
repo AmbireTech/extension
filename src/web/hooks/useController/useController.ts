@@ -1,7 +1,7 @@
 import { useCallback, useContext, useSyncExternalStore } from 'react'
 
 import { ProvidersController } from '@ambire-common/controllers/providers/providers'
-import { ControllersMiddlewareContext } from '@web/contexts/controllersMiddlewareContext'
+import { ControllersMiddlewareContext } from '@web/contexts/controllersMiddlewareContext/context'
 import { AnyControllerAction } from '@web/contexts/controllersMiddlewareContext/types'
 import { ControllersMappingType } from '@web/extension-services/background/types'
 

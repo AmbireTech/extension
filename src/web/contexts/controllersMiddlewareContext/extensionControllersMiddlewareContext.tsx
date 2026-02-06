@@ -124,10 +124,9 @@ if (isExtension) {
   }
 }
 
-export const ExtensionControllersMiddlewareProvider: React.FC<{
-  children: React.ReactNode
-  env: 'extension'
-}> = ({ children }) => {
+export const ExtensionControllersMiddlewareProvider: React.FC<{ children: React.ReactNode }> = ({
+  children
+}) => {
   const { addToast } = useToast()
   const route = useRoute()
   const timer: any = useRef(null)
