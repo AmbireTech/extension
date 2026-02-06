@@ -24,7 +24,7 @@ const Spinner = ({
     return SpinnerAnimation
   }, [variant])
 
-  return <LottieView source={animation} style={(styles.spinner, style)} autoPlay loop />
+  return <LottieView source={animation} style={[styles.spinner, style]} autoPlay loop />
 }
 
 export default Spinner

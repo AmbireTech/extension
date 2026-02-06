@@ -87,6 +87,7 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       // @ts-ignore
       pointerEvents: 'none',
       position: 'absolute',
+      // @ts-ignore prop doesn't exist on ViewStyle, used for web
       transitionProperty: 'opacity, transform',
       transitionDuration: '500ms',
       transitionTimingFunction: 'ease'

@@ -1,5 +1,5 @@
 import React, { ReactNode, useEffect, useMemo, useState } from 'react'
-import { ColorValue, Image, View, ViewStyle } from 'react-native'
+import { ColorValue, DimensionValue, Image, View, ViewStyle } from 'react-native'
 
 import AmbireLogoHorizontal from '@common/components/AmbireLogoHorizontal'
 import AmbireLogoHorizontalWithOG from '@common/components/AmbireLogoHorizontalWithOG'
@@ -87,7 +87,9 @@ const Header = ({
       ]}
     >
       {mode !== 'custom' ? (
-        <View style={[styles.widthContainer, { maxWidth: tabLayoutWidths[width] }]}>
+        <View
+          style={[styles.widthContainer, { maxWidth: tabLayoutWidths[width] as DimensionValue }]} // minor type mismatch
+        >
           <View style={styles.sideContainer}>
             <BackButton
               displayIn={displayBackButtonIn}

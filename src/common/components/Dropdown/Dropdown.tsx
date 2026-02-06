@@ -1,5 +1,5 @@
-import React, { FC, ReactElement, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { FlatList, Pressable, TextStyle, View } from 'react-native'
+import React, { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { FlatList, ListRenderItemInfo, Pressable, TextStyle, View } from 'react-native'
 
 import KebabMenuIcon from '@common/assets/svg/KebabMenuIcon'
 import Text from '@common/components/Text'
@@ -19,7 +19,7 @@ interface Props {
 }
 
 const Dropdown: FC<Props> = ({ data, externalPosition, setExternalPosition, onSelect }) => {
-  const DropdownButton: any = useRef()
+  const DropdownButton = useRef(null)
   const { styles, theme, themeType } = useTheme(getStyles)
   const dropdownButtonRef = useRef(null)
   const { width: windowWidth } = useWindowSize()
@@ -77,7 +77,7 @@ const Dropdown: FC<Props> = ({ data, externalPosition, setExternalPosition, onSe
     [onSelect, setPosition]
   )
 
-  const renderItem = ({ item }: any): ReactElement<any, any> => (
+  const renderItem = ({ item }: ListRenderItemInfo<NonNullable<Props['data']>[number]>) => (
     <Pressable onPress={() => onItemPress(item)}>
       {({ hovered }: any) => (
         <View

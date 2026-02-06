@@ -1,13 +1,5 @@
-import React, { useState } from 'react'
-import {
-  NativeSyntheticEvent,
-  TextInput,
-  TextInputFocusEventData,
-  TextInputProps,
-  TextStyle,
-  View,
-  ViewStyle
-} from 'react-native'
+import React, { ReactNode, useState } from 'react'
+import { BlurEvent, TextInput, TextInputProps, TextStyle, View, ViewStyle } from 'react-native'
 
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
@@ -28,7 +20,7 @@ export interface InputProps extends TextInputProps {
   inputWrapperStyle?: ViewStyle | ViewStyle[]
   bottomLabelStyle?: TextStyle | TextStyle[]
   nativeInputStyle?: TextStyle
-  leftIcon?: () => JSX.Element | JSX.Element
+  leftIcon?: () => ReactNode
 }
 
 const TextArea = ({
@@ -51,11 +43,11 @@ const TextArea = ({
   const [isFocused, setIsFocused] = useState<boolean>(false)
   const { theme, styles } = useTheme(getStyles)
 
-  const handleOnFocus = (e: NativeSyntheticEvent<TextInputFocusEventData>) => {
+  const handleOnFocus = (e: BlurEvent) => {
     setIsFocused(true)
     return onFocus(e)
   }
-  const handleOnBlur = (e: NativeSyntheticEvent<TextInputFocusEventData>) => {
+  const handleOnBlur = (e: BlurEvent) => {
     setIsFocused(false)
     return onBlur(e)
   }

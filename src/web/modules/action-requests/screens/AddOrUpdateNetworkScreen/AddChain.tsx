@@ -192,11 +192,9 @@ const AddChain = ({
               <ScrollableWrapper
                 style={[
                   styles.boxWrapper,
-                  {
-                    width: '50%',
-                    height: 'fit-content',
-                    maxHeight: '100%'
-                  }
+                  { width: '50%', maxHeight: '100%' },
+                  // @ts-ignore value missing in the props, but it's available on web
+                  { height: 'fit-content' }
                 ]}
               >
                 <NetworkDetails

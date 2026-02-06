@@ -2,7 +2,7 @@ import { useRef, useState } from 'react'
 import { ScrollView } from 'react-native'
 
 const useIsScrollable = () => {
-  const scrollViewRef = useRef<ScrollView | null>(null)
+  const scrollViewRef = useRef<ScrollView>(null)
   const [isScrollable, setIsScrollable] = useState(false)
 
   const checkIsScrollable = () => {

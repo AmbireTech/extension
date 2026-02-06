@@ -80,19 +80,20 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
         ref={buttonRef}
         onPress={handleOnPress}
         disabled={disabled}
-        style={{
-          ...flexbox.directionRow,
-          ...flexbox.center,
-          ...spacings.phTy,
-          ...spacings.pvMi,
-          ...common.borderRadiusPrimary,
-          ...removeTankBtnStyle,
-          ...(!totalBalanceGasTankDetails.balanceFormatted && {
+        style={[
+          flexbox.directionRow,
+          flexbox.center,
+          spacings.phTy,
+          spacings.pvMi,
+          common.borderRadiusPrimary,
+          removeTankBtnStyle,
+          !totalBalanceGasTankDetails.balanceFormatted && {
             borderWidth: 1,
             borderColor: theme.primaryAccent
-          }),
-          ...(doesHaveTooltip && { cursor: 'default' })
-        }}
+          },
+          // @ts-ignore react-native-web supports `cursor`, but it's missing from React Native StyleProp<ViewStyle> types
+          doesHaveTooltip && { cursor: 'default' }
+        ]}
         {...bindGasTankBtnAim}
         testID="dashboard-gas-tank-button"
       >

@@ -3,7 +3,6 @@ import { StyleSheet, TextStyle } from 'react-native'
 import { isWeb } from '@common/config/env'
 
 interface Styles {
-  highlightPrimary: TextStyle
   center: TextStyle
   right: TextStyle
   left: TextStyle
@@ -13,7 +12,7 @@ interface Styles {
   underline: TextStyle
 }
 
-const textStyles: Styles = {
+const textStyles: Styles & StyleSheet.NamedStyles<any> = {
   center: {
     textAlign: 'center'
   },

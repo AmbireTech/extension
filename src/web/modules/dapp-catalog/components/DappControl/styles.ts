@@ -2,7 +2,7 @@ import { ImageStyle, StyleSheet, ViewStyle } from 'react-native'
 
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import { ThemeProps } from '@common/styles/themeConfig'
-import common from '@common/styles/utils/common'
+import common, { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
 interface Style {
@@ -31,7 +31,7 @@ const getStyles = (theme: ThemeProps) =>
     icon: {
       width: 32,
       height: 32,
-      ...common.borderRadiusPrimary
+      borderRadius: BORDER_RADIUS_PRIMARY
     },
     border: {
       borderWidth: 1,
