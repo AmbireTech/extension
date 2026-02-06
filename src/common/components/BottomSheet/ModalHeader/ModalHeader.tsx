@@ -1,4 +1,4 @@
-import React, { FC } from 'react'
+import React, { FC, ReactNode } from 'react'
 import { TouchableOpacity, View, ViewStyle } from 'react-native'
 
 import CloseIcon from '@common/assets/svg/CloseIcon'
@@ -16,7 +16,7 @@ interface Props {
   handleClose?: () => void
   withBackButton?: boolean
   title?: string
-  titleSuffix?: JSX.Element
+  titleSuffix?: ReactNode
   style?: ViewStyle
   hasAmbireLogo?: boolean
 }

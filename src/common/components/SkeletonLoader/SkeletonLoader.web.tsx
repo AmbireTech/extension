@@ -24,8 +24,8 @@ const SkeletonLoader = ({
     <div
       className={`skeleton${lowOpacity ? ' low-opacity' : ''}`}
       style={{
-        width,
-        height,
+        width: width as React.CSSProperties['width'], // type mismatch between react native view width and react web
+        height: height as React.CSSProperties['height'], // type mismatch between react native view width and react web
         background: theme[appearance || 'secondaryBackground'] as any,
         borderRadius,
         ...(isWeb ? style : {})

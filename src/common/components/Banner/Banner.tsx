@@ -32,7 +32,7 @@ export interface Props {
   title: string
   type: BannerType
   text?: string
-  children?: React.ReactElement | React.ReactElement[]
+  children?: React.ReactNode | React.ReactNode[]
   renderButtons?: React.ReactNode | React.ReactNode[]
   CustomIcon?: React.FC<any> | null
   style?: ViewStyle

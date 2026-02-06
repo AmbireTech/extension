@@ -6,7 +6,6 @@ import flexbox from '@common/styles/utils/flexbox'
 interface Style {
   container: ViewStyle
   topUpContainer: ViewStyle
-  tokenSelect: ViewStyle
 }
 
 const styles = StyleSheet.create<Style>({
@@ -16,8 +15,7 @@ const styles = StyleSheet.create<Style>({
   topUpContainer: {
     maxWidth: '100%',
     width: '100%'
-  },
-  tokenSelect: spacings.mbLg
+  }
 })
 
 export default styles
