@@ -1,5 +1,6 @@
 import { useCallback, useContext, useSyncExternalStore } from 'react'
 
+import { ProvidersController } from '@ambire-common/controllers/providers/providers'
 import { ControllersMiddlewareContext } from '@web/contexts/controllersMiddlewareContext'
 import { AnyControllerAction } from '@web/contexts/controllersMiddlewareContext/types'
 import { ControllersMappingType } from '@web/extension-services/background/types'
@@ -35,10 +36,20 @@ export type Dispatch<K extends keyof ControllersMappingType> = (
   action: HookControllerAction<K>
 ) => void
 
-interface UseControllerReturn<K extends keyof ControllersMappingType> {
+interface BaseControllerReturn<K extends keyof ControllersMappingType> {
   state: ControllersMappingType[K]
   dispatch: Dispatch<K>
 }
+
+interface ControllerLogicRegistry {
+  ProvidersController: ReturnType<typeof useProvidersController>
+  // PortfolioController: ReturnType<typeof usePortfolioController>
+  // ...
+  // ...
+}
+
+type UseControllerReturn<K extends keyof ControllersMappingType> = BaseControllerReturn<K> &
+  (K extends keyof ControllerLogicRegistry ? ControllerLogicRegistry[K] : {})
 
 export default function useController<K extends keyof ControllersMappingType>(
   id: K
@@ -72,9 +83,13 @@ export default function useController<K extends keyof ControllersMappingType>(
 
   if (id === 'ProvidersController') {
     // eslint-disable-next-line react-hooks/rules-of-hooks
-    const providersLogic = useProvidersController(state['ProvidersController'], dispatch)
+    const providersLogic = useProvidersController(state as ProvidersController, dispatch)
     ctrlSpecificMethods = providersLogic
   }
 
-  return { state: state || ({} as ControllersMappingType[K]), dispatch }
+  return {
+    state: state || ({} as ControllersMappingType[K]),
+    dispatch,
+    ...ctrlSpecificMethods
+  } as UseControllerReturn<K>
 }
