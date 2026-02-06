@@ -24,7 +24,6 @@ import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountCont
 import { sizeMultiplier } from '@web/modules/sign-account-op/components/TransactionSummary'
 
 import RepeatTransaction from './RepeatTransaction'
-import StatusBadge from './StatusBadge'
 import getStyles from './styles'
 import SubmittedOn from './SubmittedOn'
 
@@ -55,7 +54,7 @@ const Footer: FC<Props> = ({
   const { t } = useTranslation()
   const textSize = 14 * sizeMultiplier[size]
   const iconSize = 26 * sizeMultiplier[size]
-  const iconSizeSm = 14 * sizeMultiplier[size]
+  const iconSizeSm = 24 * sizeMultiplier[size]
 
   const canViewFee =
     status !== AccountOpStatus.Rejected &&
@@ -127,9 +126,8 @@ const Footer: FC<Props> = ({
   ])
 
   return (
-    <View style={spacings.phMd}>
+    <View style={spacings.phSm}>
       <View style={styles.footer}>
-        <StatusBadge status={status} textSize={textSize} />
         {canViewFee && (
           <View style={[flexbox.flex1, spacings.mrMd]}>
             <Text fontSize={textSize} appearance="secondaryText" weight="semiBold">

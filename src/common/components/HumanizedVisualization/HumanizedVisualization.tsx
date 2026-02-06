@@ -162,14 +162,14 @@ const HumanizedVisualization: FC<Props> = ({
               style={{ maxWidth: '100%', marginRight }}
               fontSize={textSize}
               weight={item.isBold || item.type === 'action' ? 'semiBold' : 'regular'}
-              appearance={
+              color={
                 item.warning
-                  ? 'warningText'
+                  ? theme.warningText
                   : item.type === 'label'
-                  ? 'secondaryText'
-                  : item.type === 'action'
-                  ? 'successText'
-                  : 'primaryText'
+                    ? theme.secondaryText
+                    : item.type === 'action'
+                      ? theme.secondaryAccent200
+                      : theme.primaryText
               }
             >
               {item.content}
