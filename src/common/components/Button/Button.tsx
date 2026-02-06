@@ -451,7 +451,7 @@ const Button = ({
         containerStylesSizes[size],
         styles.buttonContainer,
         containerStyles[type],
-        style as ViewStyle, // too crazy to properly type, so temporarily cast
+        style as ViewStyle, // TODO: too crazy to properly type, so temporarily cast
         !!accentColor && { borderColor: accentColor },
         !hasBottomSpacing && spacings.mb0,
         buttonContainerAnimatedStyle,

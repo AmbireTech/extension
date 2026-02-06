@@ -96,8 +96,8 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
     optionIcon: {
       width: 30,
       height: 30,
-      ...(common.borderRadiusPrimary as ImageStyle),
-      ...(spacings.mrTy as ImageStyle)
+      borderRadius: BORDER_RADIUS_PRIMARY,
+      ...(spacings.mrTy as ImageStyle) // TODO: spacings has type mismatch with ImageStyle
     },
     searchBorderWrapperStyle: {
       borderWidth: 0,
