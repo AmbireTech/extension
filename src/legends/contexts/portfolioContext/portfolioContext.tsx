@@ -50,7 +50,7 @@ type WalletTokenInfo = {
   }
 } | null
 
-const PortfolioControllerStateContext = createContext<{
+const PortfolioContext = createContext<{
   accountPortfolio?: AccountPortfolio
   updateAccountPortfolio: () => void
   claimableRewardsError: string | null
@@ -83,7 +83,7 @@ const stkWalletContract = new Contract(
   ethereumProvider as any
 )
 
-const PortfolioControllerStateProvider: React.FC<any> = ({ children }) => {
+const PortfolioProvider: React.FC<any> = ({ children }) => {
   const getPortfolioIntervalRef: any = useRef(null)
   const { provider } = useProviderContext()
   const { connectedAccount, v1Account, isLoading } = useAccountContext()
@@ -362,7 +362,7 @@ const PortfolioControllerStateProvider: React.FC<any> = ({ children }) => {
   }, [updateAccountPortfolio])
 
   return (
-    <PortfolioControllerStateContext.Provider
+    <PortfolioContext.Provider
       value={useMemo(
         () => ({
           accountPortfolio,
@@ -393,20 +393,18 @@ const PortfolioControllerStateProvider: React.FC<any> = ({ children }) => {
       )}
     >
       {children}
-    </PortfolioControllerStateContext.Provider>
+    </PortfolioContext.Provider>
   )
 }
 
-export { PortfolioControllerStateProvider, PortfolioControllerStateContext }
+export { PortfolioProvider, PortfolioContext }
 
-function usePortfolioControllerState() {
-  const context = React.useContext(PortfolioControllerStateContext)
+function usePortfolio() {
+  const context = React.useContext(PortfolioContext)
   if (context === undefined) {
-    throw new Error(
-      'usePortfolioControllerState must be used within PortfolioControllerStateProvider'
-    )
+    throw new Error('usePortfolio must be used within PortfolioProvider')
   }
   return context
 }
 
-export default usePortfolioControllerState
+export default usePortfolio

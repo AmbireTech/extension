@@ -318,7 +318,23 @@ export const CommonControllersMiddlewareProvider: React.FC<{
           eventEmitterRegistry: eventEmitterRegistry.current,
           fetch: fetchWithAnalytics
         })
+      } else if (env === 'rewards') {
+        const storageCtrl = new StorageController(storage)
+        ctrls.providers = new ProvidersController({
+          eventEmitterRegistry: eventEmitterRegistry.current,
+          storage: storageCtrl,
+          getNetworks: () => networks,
+          sendUiMessage: (params) => {
+            eventBus.emit('receiveOneTimeData', params)
+          }
+        })
+
+        ctrls.domains = new DomainsController({
+          eventEmitterRegistry: eventEmitterRegistry.current,
+          providers: ctrls.providers.providers
+        })
       }
+
       return ctrls
     })()
   )

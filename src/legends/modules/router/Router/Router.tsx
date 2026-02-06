@@ -7,13 +7,13 @@ import Season2Modal from '@legends/components/Season2Modal'
 import { DataPollingContextProvider } from '@legends/contexts/dataPollingContext'
 import { LeaderboardContextProvider } from '@legends/contexts/leaderboardContext'
 import { LegendsContextProvider } from '@legends/contexts/legendsContext'
-import { PortfolioControllerStateProvider } from '@legends/contexts/portfolioControllerStateContext'
+import { PortfolioProvider } from '@legends/contexts/portfolioContext'
 import Home from '@legends/modules/Home'
 import Leaderboard from '@legends/modules/leaderboard/screens/Leaderboard'
 import RewardsPool from '@legends/modules/rewards-pool'
 import Wallet from '@legends/modules/wallet'
 import * as Sentry from '@sentry/react'
-import { DomainsControllerStateProvider } from '@web/contexts/domainsControllerStateContext'
+import { CommonControllersMiddlewareProvider } from '@web/contexts/controllersMiddlewareContext/commonControllersMiddlewareContext'
 
 import { LEGENDS_ROUTES } from '../constants'
 import { LEGENDS_LEGACY_ROUTES } from '../constants/routes'
@@ -36,18 +36,18 @@ const PrivateArea: FC<{ children: ReactNode }> = ({ children }) => {
   }, [])
 
   return (
-    <LeaderboardContextProvider>
-      <LegendsContextProvider>
-        <PortfolioControllerStateProvider>
-          <DomainsControllerStateProvider>
+    <CommonControllersMiddlewareProvider env="rewards">
+      <LeaderboardContextProvider>
+        <LegendsContextProvider>
+          <PortfolioProvider>
             <DataPollingContextProvider>
               <Season2Modal />
               {children}
             </DataPollingContextProvider>
-          </DomainsControllerStateProvider>
-        </PortfolioControllerStateProvider>
-      </LegendsContextProvider>
-    </LeaderboardContextProvider>
+          </PortfolioProvider>
+        </LegendsContextProvider>
+      </LeaderboardContextProvider>
+    </CommonControllersMiddlewareProvider>
   )
 }
 

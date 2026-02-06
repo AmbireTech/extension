@@ -10,7 +10,7 @@ import { ETHEREUM_CHAIN_ID } from '@legends/constants/networks'
 import useErc5792 from '@legends/hooks/useErc5792'
 import useEscModal from '@legends/hooks/useEscModal'
 import useLegendsContext from '@legends/hooks/useLegendsContext'
-import usePortfolioControllerState from '@legends/hooks/usePortfolioControllerState/usePortfolioControllerState'
+import usePortfolio from '@legends/hooks/usePortfolio'
 import useProviderContext from '@legends/hooks/useProviderContext'
 import useSwitchNetwork from '@legends/hooks/useSwitchNetwork'
 import useToast from '@legends/hooks/useToast'
@@ -46,7 +46,7 @@ const ClaimRewardsModal: React.FC<ClaimRewardsModalProps> = ({
   card
 }) => {
   const { browserProvider } = useProviderContext()
-  const { walletTokenPrice } = usePortfolioControllerState()
+  const { walletTokenPrice } = usePortfolio()
   const { sendCalls, getCallsStatus, chainId } = useErc5792()
   const { onLegendComplete } = useLegendsContext()
 

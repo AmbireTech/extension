@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 
 import OverachieverBanner from '@legends/components/OverachieverBanner'
 import V1AccountBanner from '@legends/components/V1AccountBanner'
-import usePortfolioControllerState from '@legends/hooks/usePortfolioControllerState/usePortfolioControllerState'
+import usePortfolio from '@legends/hooks/usePortfolio'
 
 import walletCoin from './assets/wallet-coin.png'
 import styles from './Home.module.scss'
@@ -29,7 +29,7 @@ const Home = () => {
     if (node) setWidgetEl(node)
   }, [])
 
-  const { walletTokenInfo, isLoadingWalletTokenInfo } = usePortfolioControllerState()
+  const { walletTokenInfo, isLoadingWalletTokenInfo } = usePortfolio()
   const stakedWallet = walletTokenInfo && walletTokenInfo.percentageStakedWallet
 
   const marketCapFormatted = useMemo(() => {
@@ -163,8 +163,8 @@ const Home = () => {
                 {isLoadingWalletTokenInfo
                   ? 'Loading...'
                   : stakedWallet === null
-                  ? 0
-                  : `${stakedWallet.toFixed(2)}%`}
+                    ? 0
+                    : `${stakedWallet.toFixed(2)}%`}
               </span>
               Staked $WALLET
               <div className={styles.walletInfoWrapper} />
@@ -175,8 +175,8 @@ const Home = () => {
                 {isLoadingWalletTokenInfo
                   ? 'Loading...'
                   : walletTokenInfo?.apy === null || walletTokenInfo?.apy === undefined
-                  ? '0%'
-                  : `${walletTokenInfo.apy.toFixed(2)}%`}
+                    ? '0%'
+                    : `${walletTokenInfo.apy.toFixed(2)}%`}
               </span>
               Staking APY
               <div className={styles.walletInfoWrapper} />

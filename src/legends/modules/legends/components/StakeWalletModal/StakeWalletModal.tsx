@@ -27,7 +27,7 @@ import { ETHEREUM_CHAIN_ID } from '@legends/constants/networks'
 import useAccountContext from '@legends/hooks/useAccountContext'
 import useErc5792 from '@legends/hooks/useErc5792'
 import useEscModal from '@legends/hooks/useEscModal'
-import usePortfolioControllerState from '@legends/hooks/usePortfolioControllerState/usePortfolioControllerState'
+import usePortfolio from '@legends/hooks/usePortfolio'
 import useProviderContext from '@legends/hooks/useProviderContext'
 import useSwitchNetwork from '@legends/hooks/useSwitchNetwork'
 import useToast from '@legends/hooks/useToast'
@@ -82,7 +82,7 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
   }>(null)
   const { provider, browserProvider } = useProviderContext()
   const { connectedAccount, v1Account } = useAccountContext()
-  const { walletTokenInfo } = usePortfolioControllerState()
+  const { walletTokenInfo } = usePortfolio()
   const { sendCalls, getCallsStatus, chainId } = useErc5792()
   const switchNetwork = useSwitchNetwork()
   const { addToast } = useToast()
