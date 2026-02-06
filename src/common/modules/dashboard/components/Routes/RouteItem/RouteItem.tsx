@@ -1,7 +1,7 @@
-import { BlurView } from 'expo-blur'
 import React, { FC } from 'react'
 import { Pressable, View } from 'react-native'
 
+import GlassView from '@common/components/GlassView/GlassView'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useNavigation from '@common/hooks/useNavigation'
@@ -67,26 +67,18 @@ const RouteItem: FC<Props> = ({ routeItem, index, routeItemsLength }) => {
     >
       {({ hovered }: any) => (
         <>
-          <BlurView
-            intensity={80}
-            experimentalBlurMethod="dimezisBlurView"
+          <GlassView
             testID={routeItem.testID}
-            style={{
+            cssStyle={{
+              marginBottom: 4,
+              borderRadius: BORDER_RADIUS_PRIMARY,
               height: ITEM_HEIGHT,
               overflow: 'hidden',
               width: routeItem.route === WEB_ROUTES.swapAndBridge ? 88 : ITEM_HEIGHT,
-              borderRadius: BORDER_RADIUS_PRIMARY,
-              ...spacings.mbMi
+              backgroundColor: hexToRgba('#FFFFFF', hovered ? 1 : 0.12)
             }}
           >
-            <View
-              style={[
-                flexbox.center,
-                flexbox.alignCenter,
-                flexbox.flex1,
-                { backgroundColor: hexToRgba('#FFFFFF', hovered ? 1 : 0.12) }
-              ]}
-            >
+            <View style={[flexbox.center, flexbox.alignCenter, flexbox.flex1]}>
               <routeItem.icon
                 color={
                   hovered
@@ -99,7 +91,7 @@ const RouteItem: FC<Props> = ({ routeItem, index, routeItemsLength }) => {
                 width={ICON_SIZE}
               />
             </View>
-          </BlurView>
+          </GlassView>
           <Text
             color="#F2F4F7"
             weight="medium"

@@ -1,0 +1,15 @@
+import React from 'react'
+import { ViewStyle } from 'react-native'
+
+type GlassViewProps = {
+  children: React.ReactNode
+  testID?: string
+  cssStyle?: React.CSSProperties
+  style?: ViewStyle
+}
+
+type WithGlassViewSupportProps = {
+  children: React.ReactNode
+}
+
+export type { GlassViewProps, WithGlassViewSupportProps }
