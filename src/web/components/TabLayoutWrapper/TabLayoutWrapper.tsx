@@ -1,5 +1,5 @@
-import React, { ReactElement, ReactNode, useMemo } from 'react'
-import { ColorValue, View, ViewStyle } from 'react-native'
+import React, { ReactNode, useMemo } from 'react'
+import { ColorValue, DimensionValue, View, ViewStyle } from 'react-native'
 
 import ScrollableWrapper, { WrapperProps } from '@common/components/ScrollableWrapper'
 import useTheme from '@common/hooks/useTheme'
@@ -29,13 +29,13 @@ export const tabLayoutWidths = {
 
 type TabLayoutContainerProps = {
   backgroundColor?: ColorValue
-  header?: React.ReactNode
-  footer?: React.ReactNode
+  header?: ReactNode
+  footer?: ReactNode
   footerStyle?: ViewStyle
   hideFooterInPopup?: boolean
   width?: Width
-  children: ReactElement | ReactElement[] | ReactNode | ReactNode[]
-  renderDirectChildren?: () => React.ReactNode
+  children: ReactNode | ReactNode[]
+  renderDirectChildren?: () => ReactNode
   style?: ViewStyle
   withHorizontalPadding?: boolean
 }
@@ -79,7 +79,7 @@ export const TabLayoutContainer = ({
             width !== 'full' ? flexbox.alignSelfCenter : {},
             {
               backgroundColor: backgroundColor || theme.primaryBackground,
-              maxWidth: tabLayoutWidths[width],
+              maxWidth: tabLayoutWidths[width] as DimensionValue, // minor type mismatch
               width: '100%'
             },
             style
@@ -110,7 +110,7 @@ export const TabLayoutContainer = ({
 }
 
 interface TabLayoutWrapperMainContentProps extends WrapperProps {
-  children: React.ReactNode
+  children: ReactNode
   withScroll?: boolean
   wrapperRef?: any
 }

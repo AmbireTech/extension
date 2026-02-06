@@ -2,7 +2,7 @@ import { ImageStyle, StyleSheet, ViewStyle } from 'react-native'
 
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES, ThemeProps, ThemeType } from '@common/styles/themeConfig'
-import common from '@common/styles/utils/common'
+import common, { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 
 interface Style {
   container: ViewStyle
@@ -27,7 +27,7 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
     pfpSelectorItem: {
       height: 48,
       width: 48,
-      ...common.borderRadiusPrimary
+      borderRadius: BORDER_RADIUS_PRIMARY
     },
     checkIcon: {
       position: 'absolute',

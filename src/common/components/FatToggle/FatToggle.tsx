@@ -1,4 +1,5 @@
 import React from 'react'
+import { DimensionValue, ViewStyle } from 'react-native'
 
 import Toggle from '@common/components/Toggle'
 import { ToggleProps } from '@common/components/Toggle/types'
@@ -14,18 +15,18 @@ const FatToggle: React.FC<ToggleProps> = (props) => {
       trackStyle={{
         width: 52,
         height: 28,
-        // @ts-ignore mismatch between types
         borderRadius: 16,
-        ...props.trackStyle
+        ...(props.trackStyle as ViewStyle) // TODO: Figure out the mismatch between types
       }}
       toggleStyle={{
         top: 2,
         width: 24,
         height: 24,
-        transform: (props.isOn ? 'translateX(26px)' : 'translateX(2px)') as any,
-        // @ts-ignore mismatch between types
-        border: `1px solid ${theme.secondaryBorder as string}`,
-        ...props.toggleStyle
+        transform: props.isOn ? 'translateX(26px)' : 'translateX(2px)',
+        borderWidth: 1,
+        borderColor: theme.secondaryBorder,
+        borderStyle: 'solid',
+        ...(props.toggleStyle as ViewStyle) // TODO: Figure out the mismatch between types
       }}
     />
   )
