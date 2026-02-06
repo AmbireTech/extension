@@ -4,13 +4,10 @@ import { useModalize } from 'react-native-modalize'
 
 import BurgerIcon from '@common/assets/svg/BurgerIcon'
 import NetworkStatusesIcon from '@common/assets/svg/NetworkStatusIcon'
-import ReceiveIcon from '@common/assets/svg/ReceiveIcon'
 import { isAmbireNext, isDev } from '@common/config/env'
 import useNavigation from '@common/hooks/useNavigation'
-import useTheme from '@common/hooks/useTheme'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexboxStyles from '@common/styles/utils/flexbox'
 import useHover from '@web/hooks/useHover'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
@@ -26,11 +23,11 @@ const SHOULD_DISPLAY_NETWORK_STATUSES = isAmbireNext || isDev
 
 const DashboardHeader = () => {
   const { account } = useSelectedAccountControllerState()
-  const [bindBurgerAnim, burgerAnimStyle] = useHover({ preset: 'opacity' })
-  const [bindReceiveAnim, receiveAnimStyle] = useHover({ preset: 'opacity' })
-  const [bindNetworkStatusesAnim, networkStatusesAnimStyle] = useHover({ preset: 'opacity' })
+  const [bindBurgerAnim, burgerAnimStyle] = useHover({ preset: 'opacityInverted' })
+  const [bindNetworkStatusesAnim, networkStatusesAnimStyle] = useHover({
+    preset: 'opacityInverted'
+  })
   const { navigate } = useNavigation()
-  const { theme, themeType } = useTheme()
 
   const {
     ref: networkStatusesSheetRef,
@@ -58,65 +55,46 @@ const DashboardHeader = () => {
       <View
         style={[flexboxStyles.directionRow, flexboxStyles.flex1, flexboxStyles.justifySpaceBetween]}
       >
-        <View style={[flexboxStyles.directionRow]}>
-          <AccountButton />
-          <Pressable
-            testID="dashboard-button-receive"
-            style={[spacings.mlSm, spacings.pvTy, flexboxStyles.alignSelfCenter]}
-            onPress={() => navigate(WEB_ROUTES.receive)}
-            {...bindReceiveAnim}
-          >
-            <Animated.View style={receiveAnimStyle}>
-              <ReceiveIcon
-                color={
-                  themeType === THEME_TYPES.DARK
-                    ? theme.primaryBackgroundInverted
-                    : theme.primaryBackground
-                }
-                width={25}
-                height={25}
-              />
-            </Animated.View>
-          </Pressable>
-        </View>
-        <View style={[flexboxStyles.directionRow]}>
+        <AccountButton />
+        <View style={[flexboxStyles.directionRow, flexboxStyles.alignStart]}>
           {SHOULD_DISPLAY_NETWORK_STATUSES && (
             <Pressable
-              style={[spacings.phTy, spacings.pvTy, flexboxStyles.alignSelfCenter]}
+              style={[
+                flexboxStyles.justifyCenter,
+                flexboxStyles.alignCenter,
+                {
+                  width: 32,
+                  height: 32
+                }
+              ]}
               onPress={() => openNetworkStatusesSheet()}
               {...bindNetworkStatusesAnim}
             >
               <Animated.View style={networkStatusesAnimStyle}>
-                <NetworkStatusesIcon
-                  width={20}
-                  height={20}
-                  color={
-                    themeType === THEME_TYPES.DARK
-                      ? theme.primaryBackgroundInverted
-                      : theme.primaryBackground
-                  }
-                />
+                <NetworkStatusesIcon width={20} height={20} color="#FFFFFF" />
               </Animated.View>
             </Pressable>
           )}
           <Pressable
             testID="dashboard-hamburger-btn"
-            style={[spacings.mlTy, spacings.phTy, spacings.pvTy, flexboxStyles.alignSelfCenter]}
+            style={[
+              spacings.mlTy,
+              flexboxStyles.justifyCenter,
+              flexboxStyles.alignCenter,
+              {
+                borderRadius: 20,
+                width: 32,
+                height: 32,
+                backgroundColor: '#000000A3'
+              }
+            ]}
             onPress={() =>
               isPopup ? navigate(WEB_ROUTES.menu) : navigate(WEB_ROUTES.generalSettings)
             }
             {...bindBurgerAnim}
           >
             <Animated.View style={burgerAnimStyle}>
-              <BurgerIcon
-                color={
-                  themeType === THEME_TYPES.DARK
-                    ? theme.primaryBackgroundInverted
-                    : theme.primaryBackground
-                }
-                width={28}
-                height={28}
-              />
+              <BurgerIcon color="#FFFFFF" width={28} height={28} />
             </Animated.View>
           </Pressable>
         </View>

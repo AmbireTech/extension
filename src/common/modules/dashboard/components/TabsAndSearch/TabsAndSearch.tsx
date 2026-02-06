@@ -109,7 +109,7 @@ const TabsAndSearch: FC<Props> = ({
       {TABS.includes(openTab) && (
         <View style={[flexbox.directionRow, flexbox.justifySpaceBetween, flexbox.alignCenter]}>
           <SelectNetwork currentTab={currentTab} />
-          {searchControl && (
+          {/* {searchControl && (
             <AnimatedPressable
               testID={`search-glass-icon-${currentTab}`}
               onPress={toggleSearchVisibility}
@@ -129,8 +129,8 @@ const TabsAndSearch: FC<Props> = ({
             >
               <SearchIcon width={24} height={24} />
             </AnimatedPressable>
-          )}
-          {isSearchVisible && (
+          )} */}
+          {/* {isSearchVisible && (
             <View style={[styles.searchContainer]} ref={searchRef}>
               <Search
                 autoFocus
@@ -143,7 +143,7 @@ const TabsAndSearch: FC<Props> = ({
                 onSearchCleared={toggleSearchVisibility}
               />
             </View>
-          )}
+          )} */}
         </View>
       )}
     </View>

@@ -11,7 +11,7 @@ import { getUiType } from '@web/utils/uiType'
 
 import getStyles from './styles'
 
-const { isTab } = getUiType()
+const { isTab, isPopup } = getUiType()
 
 type WrapperProps = {
   children: React.ReactNode
@@ -35,7 +35,7 @@ const Wrapper: FC<WrapperProps> = ({ children, buttons }) => {
   return (
     <TabLayoutContainer
       backgroundColor={theme.secondaryBackground}
-      header={<Header withDetailedAccountData withOG />}
+      header={<Header withDetailedAccountData={!isPopup} withOG />}
       withHorizontalPadding={false}
       footer={isTab ? buttons : null}
     >

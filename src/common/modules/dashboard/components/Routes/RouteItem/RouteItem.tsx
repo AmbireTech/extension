@@ -1,3 +1,4 @@
+import { BlurView } from 'expo-blur'
 import React, { FC } from 'react'
 import { Pressable, View } from 'react-native'
 
@@ -9,7 +10,7 @@ import useToast from '@common/hooks/useToast'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
-import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
+import { BORDER_RADIUS_PRIMARY, hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { createTab } from '@web/extension-services/background/webapi/tab'
 
@@ -23,7 +24,6 @@ export type RouteItemType = {
   isExternal?: boolean
   scale: number
   scaleOnHover: number
-  backgroundImage?: string
 }
 
 interface Props {
@@ -32,8 +32,8 @@ interface Props {
   routeItemsLength: number
 }
 
-const ITEM_HEIGHT = 44
-const ICON_SIZE = 24
+const ITEM_HEIGHT = 52
+const ICON_SIZE = 28
 
 const RouteItem: FC<Props> = ({ routeItem, index, routeItemsLength }) => {
   const { theme, themeType } = useTheme()
@@ -67,63 +67,42 @@ const RouteItem: FC<Props> = ({ routeItem, index, routeItemsLength }) => {
     >
       {({ hovered }: any) => (
         <>
-          <View
+          <BlurView
+            intensity={80}
+            experimentalBlurMethod="dimezisBlurView"
             testID={routeItem.testID}
             style={{
               height: ITEM_HEIGHT,
-              width: routeItem.route === WEB_ROUTES.swapAndBridge ? ITEM_HEIGHT * 2 : ITEM_HEIGHT,
-              borderRadius: 6,
-              backgroundColor: hovered
-                ? themeType === THEME_TYPES.DARK
-                  ? '#1b2b2c'
-                  : '#141833CC'
-                : themeType === THEME_TYPES.DARK
-                  ? theme.primaryBackground
-                  : theme.primaryText,
-              ...flexbox.center,
-              ...spacings.mbTy,
-              ...(routeItem.backgroundImage
-                ? {
-                    // @ts-ignore
-                    backgroundImage: `url(${routeItem.backgroundImage})`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center'
-                  }
-                : {})
+              overflow: 'hidden',
+              width: routeItem.route === WEB_ROUTES.swapAndBridge ? 88 : ITEM_HEIGHT,
+              borderRadius: BORDER_RADIUS_PRIMARY,
+              ...spacings.mbMi
             }}
           >
             <View
               style={[
                 flexbox.center,
                 flexbox.alignCenter,
-                routeItem.route === WEB_ROUTES.swapAndBridge && { width: 70, height: 24 }
+                flexbox.flex1,
+                { backgroundColor: hexToRgba('#FFFFFF', hovered ? 1 : 0.12) }
               ]}
             >
               <routeItem.icon
                 color={
-                  themeType === THEME_TYPES.DARK
-                    ? theme.primary
-                    : hovered && !routeItem.backgroundImage
-                      ? '#c197ff'
-                      : theme.primaryBackground
+                  hovered
+                    ? '#000000'
+                    : routeItem.route === WEB_ROUTES.rewards
+                      ? undefined
+                      : '#FFFFFF'
                 }
-                // Rewards has no other hover effect so we slightly increase its size
-                height={
-                  routeItem.route === WEB_ROUTES.rewards && hovered ? ICON_SIZE + 2 : ICON_SIZE
-                }
-                width={
-                  routeItem.route === WEB_ROUTES.rewards && hovered ? ICON_SIZE + 2 : ICON_SIZE
-                }
+                height={ICON_SIZE}
+                width={ICON_SIZE}
               />
             </View>
-          </View>
+          </BlurView>
           <Text
-            color={
-              themeType === THEME_TYPES.DARK
-                ? theme.primaryBackgroundInverted
-                : theme.primaryBackground
-            }
-            weight="regular"
+            color="#F2F4F7"
+            weight="medium"
             fontSize={12}
             style={routeItem.disabled && { opacity: 0.4 }}
           >

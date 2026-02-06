@@ -19,7 +19,7 @@ import getStyles from './styles'
 
 const { isPopup } = getUiType()
 
-export const OVERVIEW_CONTENT_MAX_HEIGHT = 120
+export const OVERVIEW_CONTENT_MAX_HEIGHT = 300
 
 const DashboardScreen = () => {
   const { styles } = useTheme(getStyles)
