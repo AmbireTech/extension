@@ -65,6 +65,9 @@ export class AuthPage extends BasePage {
       selectors.getStarted.recoveryPhraseCopiedSnackbar,
       'Recovery phrase copied to clipboard'
     )
+    await this.page
+      .getByTestId(selectors.getStarted.recoveryPhraseCopiedSnackbar)
+      .waitFor({ state: 'hidden' })
     await this.click(selectors.getStarted.savedPhraseButton)
   }
 
@@ -196,7 +199,10 @@ export class AuthPage extends BasePage {
   }
 
   async selectHDPath(path: string): Promise<void> {
+    await this.page.waitForTimeout(3000)
+    await this.expectButtonEnabled(selectors.getStarted.changeHDPathButton)
     await this.click(selectors.getStarted.changeHDPathButton)
+    await this.isVisible(path)
     await this.click(path)
     await this.click(selectors.getStarted.hdPathConfirmButton)
   }
@@ -209,6 +215,7 @@ export class AuthPage extends BasePage {
     await this.click(selectors.getStarted.createRecoveryPhraseButton)
     await this.verifyRecoveryPhraseScreen()
     await this.setExtensionPassword()
+    await this.expectButtonEnabled(selectors.getStarted.addMoreAccountsButton)
     await this.click(selectors.getStarted.addMoreAccountsButton)
     await this.selectHDPath(selectors.getStarted.hdPathLegerLive)
     await this.page.locator(locators.smartAccountPicker).click()
@@ -219,6 +226,7 @@ export class AuthPage extends BasePage {
       'Added successfully'
     )
     // add another acc
+    await this.expectButtonEnabled(selectors.getStarted.addMoreAccountsButton)
     await this.click(selectors.getStarted.addMoreAccountsButton)
     await this.selectHDPath(selectors.getStarted.hdPathLegerLive)
     await this.page.locator(locators.smartAccountPicker).click()
