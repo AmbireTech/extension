@@ -340,6 +340,17 @@ const SignMessageScreen = () => {
           handleClose={() => setIsChooseSignerShown(false)}
           account={account}
         />
+        {/* <KeySelect
+          isSigning={signStatus === 'LOADING'}
+          handleChooseKey={handleSign}
+          isChooseSignerShown={isChooseSignerShown}
+          isChooseFeePayerKeyShown={false}
+          handleClose={() => setIsChooseSignerShown(false)}
+          selectedAccountKeyStoreKeys={selectedAccountKeyStoreKeys}
+          account={account}
+          // todo
+          handleSetMultisigSigners={handleSetMultisigSigners}
+        /> */}
         {view === 'reinitializing' && (
           <View style={[StyleSheet.absoluteFill, flexbox.center]}>
             <Spinner />

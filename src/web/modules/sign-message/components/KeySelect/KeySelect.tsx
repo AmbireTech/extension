@@ -1,7 +1,7 @@
 import React from 'react'
 
+import { Account } from '@ambire-common/interfaces/account'
 import { Key } from '@ambire-common/interfaces/keystore'
-import useSignAccountOpControllerState from '@web/hooks/useSignAccountOpControllerState'
 
 import MultipleSignersSelect from '../SafeSignersSelect'
 import SigningKeySelect from '../SignKeySelect'
@@ -9,56 +9,47 @@ import SigningKeySelect from '../SignKeySelect'
 const KeySelect = ({
   isChooseSignerShown,
   isChooseFeePayerKeyShown,
-  isSignLoading,
-  setIsChooseSignerShown,
-  setIsChooseFeePayerKeyShown,
-  handleChangeFeePayerKeyType,
-  handleChangeSigningKey,
-  handleSetMultisigSigners
+  isSigning,
+  handleClose,
+  handleSetMultisigSigners,
+  handleChooseKey,
+  account,
+  selectedAccountKeyStoreKeys,
+  signed,
+  threshold
 }: {
   isChooseSignerShown: boolean
   isChooseFeePayerKeyShown: boolean
-  isSignLoading: boolean
-  setIsChooseSignerShown: Function
-  setIsChooseFeePayerKeyShown: Function
-  handleChangeFeePayerKeyType: (keyAddr: Key['addr'], keyType: Key['type']) => void
-  handleChangeSigningKey: (keyAddr: Key['addr'], keyType: Key['type']) => void
+  isSigning: boolean
+  handleClose: () => void
   handleSetMultisigSigners: (signers: { addr: Key['addr']; type: Key['type'] }[]) => void
+  handleChooseKey: (keyAddr: Key['addr'], keyType: Key['type']) => void
+  account: Account
+  selectedAccountKeyStoreKeys: Key[]
+  signed: string[]
+  threshold: number
 }) => {
-  const signAccountOpState = useSignAccountOpControllerState()
-  if (!signAccountOpState) return null
-
   return (
     <>
       <SigningKeySelect
-        isVisible={
-          (isChooseSignerShown && !signAccountOpState.account.safeCreation) ||
-          isChooseFeePayerKeyShown
-        }
-        isSigning={isSignLoading || !signAccountOpState.readyToSign}
-        handleClose={() => {
-          setIsChooseSignerShown(false)
-          setIsChooseFeePayerKeyShown(false)
-        }}
-        selectedAccountKeyStoreKeys={
-          isChooseFeePayerKeyShown
-            ? signAccountOpState.feePayerKeyStoreKeys
-            : signAccountOpState.accountKeyStoreKeys
-        }
-        handleChooseKey={
-          isChooseFeePayerKeyShown ? handleChangeFeePayerKeyType : handleChangeSigningKey
-        }
+        isVisible={(isChooseSignerShown && !account.safeCreation) || isChooseFeePayerKeyShown}
+        isSigning={isSigning}
+        handleClose={handleClose}
+        selectedAccountKeyStoreKeys={selectedAccountKeyStoreKeys}
+        handleChooseKey={handleChooseKey}
         type={isChooseFeePayerKeyShown ? 'broadcasting' : 'signing'}
-        account={signAccountOpState.account}
+        account={account}
       />
-      {!!signAccountOpState.account.safeCreation ? (
+      {!!account.safeCreation ? (
         <MultipleSignersSelect
           isVisible={isChooseSignerShown}
-          isSigning={isSignLoading || !signAccountOpState.readyToSign}
+          isSigning={isSigning}
           handleSetMultisigSigners={handleSetMultisigSigners}
-          handleClose={() => {
-            setIsChooseSignerShown(false)
-          }}
+          handleClose={handleClose}
+          account={account}
+          selectedAccountKeyStoreKeys={selectedAccountKeyStoreKeys}
+          signed={signed}
+          threshold={threshold}
         />
       ) : null}
     </>

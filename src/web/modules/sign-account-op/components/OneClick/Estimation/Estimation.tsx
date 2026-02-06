@@ -22,7 +22,7 @@ import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import Estimation from '@web/modules/sign-account-op/components/Estimation'
 import Modals from '@web/modules/sign-account-op/components/Modals/Modals'
-import SigningKeySelect from '@web/modules/sign-message/components/SignKeySelect'
+import KeySelect from '@web/modules/sign-message/components/KeySelect'
 import { getUiType } from '@web/utils/uiType'
 
 import BundlerWarning from '../../Estimation/components/bundlerWarning'
@@ -73,6 +73,7 @@ const OneClickEstimation = ({
     isSignLoading,
     renderedButNotNecessarilyVisibleModal,
     handleChangeSigningKey,
+    handleSetMultisigSigners,
     onSignButtonClick,
     isSignDisabled,
     warningToPromptBeforeSign,
@@ -123,23 +124,26 @@ const OneClickEstimation = ({
         )}
         {!!signAccountOpController && (
           <View>
-            <SigningKeySelect
-              isVisible={isChooseSignerShown || isChooseFeePayerKeyShown}
+            <KeySelect
               isSigning={isSignLoading || !signAccountOpController.readyToSign}
-              handleClose={() => {
-                setIsChooseSignerShown(false)
-                setIsChooseFeePayerKeyShown(false)
-              }}
+              isChooseSignerShown={isChooseSignerShown}
+              isChooseFeePayerKeyShown={isChooseFeePayerKeyShown}
+              handleSetMultisigSigners={handleSetMultisigSigners}
+              handleChooseKey={
+                isChooseFeePayerKeyShown ? handleChangeFeePayerKeyType : handleChangeSigningKey
+              }
+              account={signAccountOpController.account}
               selectedAccountKeyStoreKeys={
                 isChooseFeePayerKeyShown
                   ? signAccountOpController.feePayerKeyStoreKeys
                   : signAccountOpController.accountKeyStoreKeys
               }
-              handleChooseKey={
-                isChooseFeePayerKeyShown ? handleChangeFeePayerKeyType : handleChangeSigningKey
-              }
-              type={isChooseFeePayerKeyShown ? 'broadcasting' : 'signing'}
-              account={signAccountOpController.account}
+              handleClose={() => {
+                setIsChooseSignerShown(false)
+                setIsChooseFeePayerKeyShown(false)
+              }}
+              signed={signAccountOpController.accountOp.signed || []}
+              threshold={signAccountOpController.threshold}
             />
             <Estimation
               updateType={updateType}

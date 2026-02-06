@@ -307,16 +307,29 @@ const SignAccountOpScreen = () => {
           </View>
         )}
       >
-        <KeySelect
-          isSignLoading={isSignLoading}
-          setIsChooseSignerShown={setIsChooseSignerShown}
-          setIsChooseFeePayerKeyShown={setIsChooseFeePayerKeyShown}
-          isChooseSignerShown={isChooseSignerShown}
-          isChooseFeePayerKeyShown={isChooseFeePayerKeyShown}
-          handleChangeFeePayerKeyType={handleChangeFeePayerKeyType}
-          handleChangeSigningKey={handleChangeSigningKey}
-          handleSetMultisigSigners={handleSetMultisigSigners}
-        />
+        {signAccountOpState && (
+          <KeySelect
+            isSigning={isSignLoading || !signAccountOpState.readyToSign}
+            isChooseSignerShown={isChooseSignerShown}
+            isChooseFeePayerKeyShown={isChooseFeePayerKeyShown}
+            handleSetMultisigSigners={handleSetMultisigSigners}
+            handleChooseKey={
+              isChooseFeePayerKeyShown ? handleChangeFeePayerKeyType : handleChangeSigningKey
+            }
+            account={signAccountOpState.account}
+            selectedAccountKeyStoreKeys={
+              isChooseFeePayerKeyShown
+                ? signAccountOpState.feePayerKeyStoreKeys
+                : signAccountOpState.accountKeyStoreKeys
+            }
+            handleClose={() => {
+              setIsChooseSignerShown(false)
+              setIsChooseFeePayerKeyShown(false)
+            }}
+            signed={signAccountOpState.accountOp.signed || []}
+            threshold={signAccountOpState.threshold}
+          />
+        )}
         <TabLayoutWrapperMainContent withScroll={false}>
           <View
             style={[
