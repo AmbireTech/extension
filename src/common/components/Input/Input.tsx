@@ -1,8 +1,7 @@
 import React, { ReactNode, useState } from 'react'
 import {
-  NativeSyntheticEvent,
+  BlurEvent,
   TextInput,
-  TextInputFocusEventData,
   TextInputProps,
   TextStyle,
   TouchableOpacityProps,
@@ -29,7 +28,7 @@ export interface InputProps extends TextInputProps {
   isValid?: boolean
   validLabel?: string
   validLabelAppearance?: TextAppearance
-  button?: string | JSX.Element | null
+  button?: string | ReactNode | null
   buttonProps?: TouchableOpacityProps & {
     withBackground?: boolean
   }
@@ -50,11 +49,11 @@ export interface InputProps extends TextInputProps {
     id: string
     content: string
   }
-  childrenBeforeButtons?: React.ReactNode
-  childrenBelowInput?: React.ReactNode
+  childrenBeforeButtons?: ReactNode
+  childrenBelowInput?: ReactNode
   borderless?: boolean
-  customInputContent?: React.ReactNode
-  renderConfirmAddress?: () => React.ReactNode
+  customInputContent?: ReactNode
+  renderConfirmAddress?: () => ReactNode
   preventJumpOnValidationChange?: boolean
 }
 
@@ -97,12 +96,12 @@ const Input = ({
   const { theme, styles, themeType } = useTheme(getStyles)
   const [bindAnim, animStyle] = useHover({ preset: 'opacityInverted' })
 
-  const handleOnFocus = (e: NativeSyntheticEvent<TextInputFocusEventData>) => {
+  const handleOnFocus = (e: BlurEvent) => {
     if (disabled) return
     setIsFocused(true)
     return onFocus(e)
   }
-  const handleOnBlur = (e: NativeSyntheticEvent<TextInputFocusEventData>) => {
+  const handleOnBlur = (e: BlurEvent) => {
     if (disabled) return
     setIsFocused(false)
     return onBlur(e)

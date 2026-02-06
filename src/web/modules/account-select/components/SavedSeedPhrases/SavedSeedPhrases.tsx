@@ -1,6 +1,6 @@
-import React, { ReactElement, useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FlatList, View } from 'react-native'
+import { FlatList, ListRenderItemInfo, View } from 'react-native'
 
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import Button from '@common/components/Button'
@@ -59,7 +59,10 @@ const SavedSeedPhrases = ({ handleClose }: { handleClose: () => void }) => {
     [dispatch]
   )
 
-  const renderItem = ({ item, index }: any): ReactElement<any, any> => {
+  const renderItem = ({
+    item,
+    index
+  }: ListRenderItemInfo<ReturnType<typeof useKeystoreControllerState>['seeds'][number]>) => {
     const seedAccounts = getAccountsForSeed(item.id) || []
 
     return (

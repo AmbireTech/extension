@@ -1,4 +1,4 @@
-import { ImageStyle, StyleSheet, ViewStyle } from 'react-native'
+import { StyleSheet, ViewStyle } from 'react-native'
 
 import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
@@ -9,8 +9,6 @@ interface Styles {
   accountButton: ViewStyle
   accountButtonRightIcon: ViewStyle
   accountButtonInfo: ViewStyle
-  accountButtonInfoIcon: ImageStyle
-  accountCopyIcon: ViewStyle
 }
 
 const { isTab } = getUiType()
@@ -37,9 +35,7 @@ const getStyles = () =>
       ...flexbox.alignCenter,
       ...flexbox.flex1,
       ...spacings.mrMi
-    },
-    accountButtonInfoIcon: { width: 32, height: 32, ...common.borderRadiusPrimary },
-    accountCopyIcon: { backgroundColor: 'transparent', borderColor: 'transparent' }
+    }
   })
 
 export default getStyles

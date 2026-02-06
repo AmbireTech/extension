@@ -1,6 +1,6 @@
 import { nanoid } from 'nanoid'
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { BackHandler, View, ViewStyle } from 'react-native'
+import React, { RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { BackHandler, ScrollView, View, ViewStyle } from 'react-native'
 import { Modalize, ModalizeProps } from 'react-native-modalize'
 
 import { isWeb } from '@common/config/env'
@@ -156,11 +156,12 @@ const BottomSheet: React.FC<Props> = ({
           // this key or without a unique key, the bottom sheet will not close when navigating
           key={id}
           ref={setRef}
-          contentRef={scrollViewRef}
+          // React 19 makes refs strictly nullable. Temporary cast until Modalize updates its types.
+          contentRef={scrollViewRef as RefObject<ScrollView>}
           modalStyle={[
             styles.bottomSheet,
             isModal
-              ? { ...styles.modal, ...(autoWidth ? { maxWidth: 'unset', width: 'auto' } : {}) }
+              ? { ...styles.modal, ...(autoWidth ? { maxWidth: null, width: 'auto' } : {}) }
               : {},
             { backgroundColor: theme[backgroundColor] },
             isPopup && isModal ? { height: '100%' } : {},

@@ -12,7 +12,7 @@ import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountCont
 const useAccountsList = ({
   flatlistRef
 }: {
-  flatlistRef?: React.RefObject<FlatList<AccountType>> | null
+  flatlistRef?: React.RefObject<FlatList<AccountType> | null>
 } = {}) => {
   const { control, watch } = useForm({
     mode: 'all',

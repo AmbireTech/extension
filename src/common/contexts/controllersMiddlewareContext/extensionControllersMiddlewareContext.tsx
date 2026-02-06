@@ -129,7 +129,7 @@ export const ExtensionControllersMiddlewareProvider: React.FC<{ children: React.
 }) => {
   const { addToast } = useToast()
   const route = useRoute()
-  const timer: any = useRef(null)
+  const timer = useRef<NodeJS.Timeout>(null)
   const isFocused = useIsScreenFocused()
   const { navigate } = useNavigation()
   const [windowId, setWindowId] = useState<number | undefined>()

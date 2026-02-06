@@ -46,10 +46,10 @@ const Page = ({
           {activeProposals.length > 0 && <Banner activeProposals={activeProposals} />}
           <div className={`${styles.container} ${customContainerSizeClass}`}>
             <div className={styles.header}>
-              {showClaimRewardsModal && <RewardsBadge />}
               <button className={styles.sidebarButton} type="button" onClick={openSidebar}>
                 <FontAwesomeIcon icon={faBars} />
               </button>
+              {showClaimRewardsModal && <RewardsBadge />}
               {connectedAccount && (
                 <div className={styles.account}>
                   <AccountInfo />

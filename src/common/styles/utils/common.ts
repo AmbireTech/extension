@@ -19,7 +19,7 @@ export const BORDER_RADIUS_PRIMARY = 6
 export const BORDER_RADIUS_SECONDARY = 12
 export const BORDER_RADIUS_TERTIARY = 2
 
-const commonStyles: Styles = {
+const commonStyles: Styles & StyleSheet.NamedStyles<any> = {
   shadowPrimary: {
     shadowColor: '#000',
     shadowOpacity: 0.25,

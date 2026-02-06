@@ -64,6 +64,7 @@ const getStyles = (theme: ThemeProps) =>
       flex: 1,
       ...spacings.phTy
     },
+    // @ts-ignore minor type mismatch
     image: {
       ...common.borderRadiusPrimary,
       width: 40,

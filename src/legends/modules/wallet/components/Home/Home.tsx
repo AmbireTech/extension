@@ -172,18 +172,6 @@ const Home = () => {
 
             <div className={styles.walletItemWrapper}>
               <span className={styles.item}>
-                {isLoadingWalletTokenInfo
-                  ? 'Loading...'
-                  : walletTokenInfo?.apy === null || walletTokenInfo?.apy === undefined
-                    ? '0%'
-                    : `${walletTokenInfo.apy.toFixed(2)}%`}
-              </span>
-              Staking APY
-              <div className={styles.walletInfoWrapper} />
-            </div>
-
-            <div className={styles.walletItemWrapper}>
-              <span className={styles.item}>
                 {isLoadingWalletTokenInfo ? 'Loading...' : marketCapFormatted}
               </span>
               <div className={styles.walletInfoWrapper}>Market Cap</div>

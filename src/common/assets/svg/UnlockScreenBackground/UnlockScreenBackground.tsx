@@ -81,7 +81,6 @@ const UnlockScreenBackground: React.FC<Props> = ({ width = 600, height = 360, ..
               ry="187.834"
               fill="#8b3dff"
               transform="translate(715 -42.984)"
-              nativeID="unlock-screen-background"
             />
           )}
           {!isSafari() && (
@@ -92,7 +91,6 @@ const UnlockScreenBackground: React.FC<Props> = ({ width = 600, height = 360, ..
               ry="221.925"
               transform="translate(1217 128.139)"
               fill="#56f6c1"
-              nativeID="unlock-screen-background"
             />
           )}
         </G>

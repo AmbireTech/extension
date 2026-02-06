@@ -136,9 +136,8 @@ const DevicePasswordRecoverySettingsScreen = () => {
         )}
         <Controller
           control={control}
-          rules={{
-            validate: isEmail
-          }}
+          // @ts-ignore minot type mismatch, (value) => isEmail(value) has no warns
+          rules={{ validate: isEmail }}
           render={({ field: { onChange, onBlur, value } }) => (
             <Input
               onBlur={onBlur}
