@@ -10,6 +10,7 @@ import { NetworkIconIdType } from '@common/components/NetworkIcon/NetworkIcon'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
+import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@web/utils/uiType'
 
@@ -62,35 +63,53 @@ const Collection: FC<Props> = ({
 
   return (
     <View style={styles.container}>
-      <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.pbTy]}>
-        <Text testID="collection-item" fontSize={isTab ? 16 : 14} weight="medium">
-          {name}
-        </Text>
-        <Text style={spacings.mlTy} fontSize={isTab ? 16 : 14} appearance="secondaryText">
-          ({collectibles.length})
-        </Text>
-      </View>
-      <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbSm]}>
-        <View
-          style={{
-            backgroundColor: theme.primaryBackground,
-            borderRadius: 8,
-            width: isTab ? 20 : 16,
-            height: isTab ? 20 : 16,
-            ...(isTab ? spacings.mrTy : spacings.mrMi)
-          }}
-        >
-          <NetworkIcon
-            size={isTab ? 20 : 16}
-            id={(networkData && networkData.chainId.toString()) || ''}
-          />
+      <View
+        style={[
+          flexbox.directionRow,
+          flexbox.alignCenter,
+          flexbox.justifySpaceBetween,
+          spacings.mbMd
+        ]}
+      >
+        <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+          <Text testID="collection-item" fontSize={16} weight="medium">
+            {name}
+          </Text>
+          <Text
+            fontSize={12}
+            appearance="secondaryText"
+            style={{
+              width: 20,
+              height: 20,
+              display: 'flex',
+              ...flexbox.center,
+              ...spacings.mlTy,
+              ...common.borderRadiusPrimary,
+              backgroundColor: theme.primaryBackground
+            }}
+          >
+            {collectibles.length}
+          </Text>
         </View>
-        <Text fontSize={isTab ? 14 : 10} appearance="secondaryText">
-          {networkData?.name || 'Unknown Network'}
-          {priceIn && priceIn.length && priceIn[0]
-            ? ` / Floor Price: ${formatCollectiblePrice(priceIn[0])}`
-            : ''}
-        </Text>
+        <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+          <View
+            style={{
+              backgroundColor: theme.primaryBackground,
+              borderRadius: 10,
+              width: isTab ? 20 : 16,
+              height: isTab ? 20 : 16,
+              ...(isTab ? spacings.mrTy : spacings.mrMi)
+            }}
+          >
+            <NetworkIcon
+              size={isTab ? 20 : 16}
+              id={(networkData && networkData.chainId.toString()) || ''}
+            />
+          </View>
+          <Text fontSize={isTab ? 14 : 12} appearance="secondaryText">
+            {networkData?.name || 'Unknown Network'}
+          </Text>
+        </View>
       </View>
       <View style={[flexbox.directionRow, flexbox.wrap]}>
         {collectibles.map((collectible) => (
