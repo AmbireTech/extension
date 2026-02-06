@@ -4,7 +4,10 @@ import { ProvidersController } from '@ambire-common/controllers/providers/provid
 import { ControllersMappingType } from '@common/constants/controllersMapping'
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext/context'
 import { AnyControllerAction } from '@common/contexts/controllersMiddlewareContext/types'
+import AutoLockController from '@web/extension-services/background/controllers/auto-lock'
 
+import { useAutoLockController } from './autoLock'
+import { useKeystoreController } from './keystore'
 import { useProvidersController } from './providers'
 
 type MethodKeys<T> = {
@@ -87,6 +90,32 @@ export default function useController<K extends keyof ControllersMappingType>(
       dispatch as unknown as Dispatch<'ProvidersController'>
     )
     ctrlSpecificMethods = providersLogic
+  }
+
+  if (id === 'AutoLockController') {
+    useAutoLockController(
+      state as AutoLockController,
+      dispatch as unknown as Dispatch<'AutoLockController'>
+    )
+  }
+
+  if (id === 'DappsController') {
+    // TODO:
+  }
+
+  if (id === 'KeystoreController' || id === 'MainController') {
+    useKeystoreController(
+      controllerStore.getSnapshot('KeystoreController'),
+      controllerStore.getSnapshot('MainController')
+    )
+  }
+
+  if (id === 'RequestsController') {
+    // TODO:
+  }
+
+  if (id === 'SelectedAccountController') {
+    // TODO:
   }
 
   return {

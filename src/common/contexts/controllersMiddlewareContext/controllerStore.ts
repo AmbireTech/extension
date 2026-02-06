@@ -63,8 +63,8 @@ export class ControllerStore {
     return () => this.#listeners.get(id)?.delete(listener)
   }
 
-  getSnapshot<K extends ControllerId>(id: K): ControllersMappingType[K] | undefined {
-    return this.#states[id]
+  getSnapshot<K extends ControllerId>(id: K): ControllersMappingType[K] {
+    return this.#states[id] || ({} as ControllersMappingType[K])
   }
 
   #checkReadiness() {
