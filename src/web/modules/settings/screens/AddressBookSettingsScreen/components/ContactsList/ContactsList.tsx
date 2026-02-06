@@ -18,7 +18,7 @@ import useWindowSize from '@common/hooks/useWindowSize'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import useAddressBookControllerState from '@web/hooks/useAddressBookControllerState'
-import useDomainsControllerState from '@web/hooks/useDomainsController/useDomainsController'
+import useController from '@web/hooks/useController'
 import SettingsPageHeader from '@web/modules/settings/components/SettingsPageHeader'
 
 import AddContactFormModal from '../AddContactFormModal'
@@ -33,7 +33,7 @@ const ContactsList = () => {
   const { contacts } = useAddressBookControllerState()
   const {
     state: { domains }
-  } = useDomainsControllerState()
+  } = useController('DomainsController')
   const { control, watch } = useForm({
     defaultValues: {
       search: ''

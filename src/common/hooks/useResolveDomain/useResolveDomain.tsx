@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react'
 
-import useDomainsControllerState from '@web/hooks/useDomainsController/useDomainsController'
+import useController from '@web/hooks/useController'
 
 interface Props {
   domain: string
@@ -16,8 +16,8 @@ type Resolver = {
 const useResolveDomain = () => {
   const {
     state: { ensToAddress, resolveDomainsStatus },
-    resolveDomain
-  } = useDomainsControllerState()
+    dispatch
+  } = useController('DomainsController')
 
   const requests = useRef<Record<string, Resolver>>({})
 
@@ -47,13 +47,17 @@ const useResolveDomain = () => {
       if (status === 'FAILED')
         return Promise.reject(new Error(`Failed to resolve domain: ${domain}`))
 
-      if (!status) resolveDomain({ domain, bip44Item })
+      if (!status)
+        dispatch({
+          type: 'method',
+          params: { method: 'resolveDomain', args: [{ domain, bip44Item }] }
+        })
 
       return new Promise((resolve, reject) => {
         requests.current[domain] = { resolve, reject }
       })
     },
-    [resolveDomain, ensToAddress, resolveDomainsStatus]
+    [dispatch, ensToAddress, resolveDomainsStatus]
   )
 
   return {

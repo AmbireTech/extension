@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { AddressState, AddressStateOptional } from '@ambire-common/interfaces/domains'
 import { Validation } from '@ambire-common/services/validations'
+import useController from '@web/hooks/useController'
 
 import useResolveDomain from '../useResolveDomain'
 import getAddressInputValidation from './utils/validation'

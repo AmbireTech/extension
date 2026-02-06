@@ -4,7 +4,7 @@ import { Animated, ViewStyle } from 'react-native'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { AvatarType } from '@web/extension-services/background/controllers/wallet-state'
-import useDomainsControllerState from '@web/hooks/useDomainsController/useDomainsController'
+import useController from '@web/hooks/useController'
 import useWalletStateController from '@web/hooks/useWalletStateController'
 
 import Blockie from './Blockies/Blockies'
@@ -52,7 +52,7 @@ const Avatar: FC<Props> = ({
   // ENS Avatar
   const {
     state: { domains, loadingAddresses }
-  } = useDomainsControllerState()
+  } = useController('DomainsController')
   // There is no wallet controller state in benzin/rewards so we need to be careful
   const walletState = useWalletStateController()
   const avatarTypeSetting = propAvatarType || walletState?.avatarType || 'jazzicons'
