@@ -220,7 +220,7 @@ export const handleActions = async (
       return mainCtrl.signMessage.update(params)
     }
     case 'MAIN_CONTROLLER_HANDLE_SIGN_MESSAGE': {
-      mainCtrl.signMessage.setSigningKey(params.keyAddr, params.keyType)
+      mainCtrl.signMessage.setSigners(params.signers)
       return await mainCtrl.handleSignMessage()
     }
     case 'MAIN_CONTROLLER_ACTIVITY_SET_ACC_OPS_FILTERS':

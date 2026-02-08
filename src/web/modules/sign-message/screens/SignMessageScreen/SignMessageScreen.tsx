@@ -19,6 +19,7 @@ import flexbox from '@common/styles/utils/flexbox'
 import HeaderAccountAndNetworkInfo from '@web/components/HeaderAccountAndNetworkInfo'
 import SmallNotificationWindowWrapper from '@web/components/SmallNotificationWindowWrapper'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
+import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useDappInfo from '@web/hooks/useDappInfo/useDappInfo'
 import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
@@ -28,8 +29,8 @@ import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountCont
 import useSignMessageControllerState from '@web/hooks/useSignMessageControllerState'
 import ActionFooter from '@web/modules/action-requests/components/ActionFooter'
 import useLedger from '@web/modules/hardware-wallet/hooks/useLedger'
-import SigningKeySelect from '@web/modules/sign-message/components/SignKeySelect'
 
+import KeySelect from '../../components/KeySelect'
 import Authorization7702 from './Contents/authorization7702'
 import Main from './Contents/main'
 import SignInWithEthereum from './Contents/signInWithEthereum'
@@ -42,6 +43,7 @@ const SignMessageScreen = () => {
   const keystoreState = useKeystoreControllerState()
   const { account } = useSelectedAccountControllerState()
   const { networks } = useNetworksControllerState()
+  const { accountStates } = useAccountsControllerState()
   const { dispatch } = useBackgroundService()
   const { isLedgerConnected } = useLedger()
   const [isChooseSignerShown, setIsChooseSignerShown] = useState(false)
@@ -80,11 +82,6 @@ const SignMessageScreen = () => {
     return userRequest.kind === 'siwe'
   }, [userRequest])
 
-  const selectedAccountKeyStoreKeys = useMemo(
-    () => keystoreState.keys.filter((key) => account?.associatedKeys.includes(key.addr)),
-    [keystoreState.keys, account?.associatedKeys]
-  )
-
   const network = useMemo(
     () =>
       networks.find((n) => {
@@ -95,6 +92,17 @@ const SignMessageScreen = () => {
       }),
     [networks, signMessageState.messageToSign]
   )
+
+  const accountState = useMemo(() => {
+    if (!account || !network) return undefined
+    return accountStates[account.addr]?.[network.chainId.toString()]
+  }, [account, network, accountStates])
+
+  const selectedAccountKeyStoreKeys = useMemo(
+    () => accountState?.importedAccountKeys || [],
+    [accountState]
+  )
+
   const isViewOnly = useMemo(
     () => selectedAccountKeyStoreKeys.length === 0,
     [selectedAccountKeyStoreKeys.length]
@@ -169,7 +177,7 @@ const SignMessageScreen = () => {
   }
 
   const handleSign = useCallback(
-    (chosenSigningKeyAddr?: Key['addr'], chosenSigningKeyType?: Key['type']) => {
+    (signers?: { addr: Key['addr']; type: Key['type'] }[]) => {
       if (isAuthorization && !makeItSmartConfirmed) {
         setMakeItSmartConfirmed(true)
         setDoNotAskMeAgain(false)
@@ -177,7 +185,7 @@ const SignMessageScreen = () => {
       }
 
       // Has more than one key, should first choose the key to sign with
-      const hasChosenSigningKey = chosenSigningKeyAddr && chosenSigningKeyType
+      const hasChosenSigningKey = signers && signers.length
       const hasMultipleKeys = selectedAccountKeyStoreKeys.length > 1
       if (hasMultipleKeys && !hasChosenSigningKey) {
         return setIsChooseSignerShown(true)
@@ -185,7 +193,7 @@ const SignMessageScreen = () => {
 
       const isLedgerKeyChosen = hasMultipleKeys
         ? // Accounts with multiple keys have an additional step to choose the key first
-          chosenSigningKeyType === 'ledger'
+          signers && signers.find((s) => s.type === 'ledger')
         : // Take the key type from the account key itself, no additional step to choose key
           selectedAccountKeyStoreKeys[0]?.type === 'ledger'
       if (isLedgerKeyChosen && !isLedgerConnected) {
@@ -193,10 +201,7 @@ const SignMessageScreen = () => {
         return
       }
 
-      const keyAddr = chosenSigningKeyAddr || selectedAccountKeyStoreKeys[0]?.addr
-      const keyType = chosenSigningKeyType || selectedAccountKeyStoreKeys[0]?.type
-
-      if (!keyAddr || !keyType) {
+      if (!selectedAccountKeyStoreKeys.length) {
         addToast(
           t(
             'No signing key available to sign the message. Please reject the request and try again.'
@@ -206,9 +211,19 @@ const SignMessageScreen = () => {
         return
       }
 
+      const finalSigners =
+        signers && signers.length
+          ? signers
+          : [
+              {
+                addr: selectedAccountKeyStoreKeys[0]!.addr,
+                type: selectedAccountKeyStoreKeys[0]!.type
+              }
+            ]
+
       dispatch({
         type: 'MAIN_CONTROLLER_HANDLE_SIGN_MESSAGE',
-        params: { keyAddr, keyType }
+        params: { signers: finalSigners }
       })
     },
     [
@@ -220,6 +235,17 @@ const SignMessageScreen = () => {
       addToast,
       t
     ]
+  )
+
+  const setSigner = useCallback(
+    (chosenSigningKeyAddr?: Key['addr'], chosenSigningKeyType?: Key['type']) => {
+      const signers =
+        chosenSigningKeyAddr && chosenSigningKeyType
+          ? [{ addr: chosenSigningKeyAddr, type: chosenSigningKeyType }]
+          : undefined
+      handleSign(signers)
+    },
+    [handleSign]
   )
 
   const resolveButtonText = useMemo(() => {
@@ -277,6 +303,10 @@ const SignMessageScreen = () => {
     userRequest?.kind
   ])
 
+  const threshold = useMemo(() => {
+    return accountState?.threshold || 0
+  }, [accountState])
+
   // In the split second when the request window opens, but the state is not yet
   // initialized, to prevent a flash of the fallback visualization, show a
   // loading spinner instead (would better be a skeleton, but whatever).
@@ -304,7 +334,7 @@ const SignMessageScreen = () => {
         footer={
           <ActionFooter
             onReject={handleReject}
-            onResolve={handleSign}
+            onResolve={setSigner}
             resolveButtonText={resolveButtonText}
             resolveDisabled={
               signStatus === 'LOADING' ||
@@ -331,26 +361,18 @@ const SignMessageScreen = () => {
             : theme.quinaryBackground
         }
       >
-        <SigningKeySelect
-          isVisible={isChooseSignerShown}
+        <KeySelect
           isSigning={signStatus === 'LOADING'}
-          selectedAccountKeyStoreKeys={selectedAccountKeyStoreKeys}
-          handleChooseKey={handleSign}
-          type="signing"
-          handleClose={() => setIsChooseSignerShown(false)}
-          account={account}
-        />
-        {/* <KeySelect
-          isSigning={signStatus === 'LOADING'}
-          handleChooseKey={handleSign}
+          handleChooseKey={setSigner}
           isChooseSignerShown={isChooseSignerShown}
           isChooseFeePayerKeyShown={false}
           handleClose={() => setIsChooseSignerShown(false)}
           selectedAccountKeyStoreKeys={selectedAccountKeyStoreKeys}
           account={account}
-          // todo
-          handleSetMultisigSigners={handleSetMultisigSigners}
-        /> */}
+          signed={[]} // todo
+          threshold={threshold}
+          handleSetMultisigSigners={handleSign}
+        />
         {view === 'reinitializing' && (
           <View style={[StyleSheet.absoluteFill, flexbox.center]}>
             <Spinner />

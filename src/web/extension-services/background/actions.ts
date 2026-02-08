@@ -249,7 +249,7 @@ type MainControllerSignMessageUpdate = {
 }
 type MainControllerHandleSignMessage = {
   type: 'MAIN_CONTROLLER_HANDLE_SIGN_MESSAGE'
-  params: { keyAddr: Key['addr']; keyType: Key['type'] }
+  params: { signers: { addr: Key['addr']; type: Key['type'] }[] }
 }
 type MainControllerActivitySetAccOpsFiltersAction = {
   type: 'MAIN_CONTROLLER_ACTIVITY_SET_ACC_OPS_FILTERS'
