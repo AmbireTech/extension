@@ -22,7 +22,6 @@ import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWr
 import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useDappInfo from '@web/hooks/useDappInfo/useDappInfo'
-import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
@@ -31,7 +30,6 @@ import ActionFooter from '@web/modules/action-requests/components/ActionFooter'
 import useLedger from '@web/modules/hardware-wallet/hooks/useLedger'
 
 import KeySelect from '../../components/KeySelect'
-import Authorization7702 from './Contents/authorization7702'
 import Main from './Contents/main'
 import SignInWithEthereum from './Contents/signInWithEthereum'
 
@@ -40,7 +38,6 @@ const SignMessageScreen = () => {
   const signMessageState = useSignMessageControllerState()
   const signStatus = signMessageState.statuses.sign
   const [hasReachedBottom, setHasReachedBottom] = useState<boolean | null>(null)
-  const keystoreState = useKeystoreControllerState()
   const { account } = useSelectedAccountControllerState()
   const { networks } = useNetworksControllerState()
   const { accountStates } = useAccountsControllerState()
@@ -48,8 +45,6 @@ const SignMessageScreen = () => {
   const { isLedgerConnected } = useLedger()
   const [isChooseSignerShown, setIsChooseSignerShown] = useState(false)
   const [shouldDisplayLedgerConnectModal, setShouldDisplayLedgerConnectModal] = useState(false)
-  const [makeItSmartConfirmed, setMakeItSmartConfirmed] = useState(false)
-  const [doNotAskMeAgain, setDoNotAskMeAgain] = useState(false)
   const { currentUserRequest } = useRequestsControllerState()
   const { theme, themeType } = useTheme()
   const { addToast } = useToast()
@@ -58,7 +53,6 @@ const SignMessageScreen = () => {
     if (
       currentUserRequest?.kind === 'message' ||
       currentUserRequest?.kind === 'typedMessage' ||
-      currentUserRequest?.kind === 'authorization-7702' ||
       currentUserRequest?.kind === 'siwe'
     )
       return currentUserRequest
@@ -67,14 +61,6 @@ const SignMessageScreen = () => {
   }, [currentUserRequest])
 
   const { name, icon } = useDappInfo(userRequest)
-
-  const isAuthorization = useMemo(() => {
-    if (!userRequest) return false
-    if (userRequest.kind !== 'authorization-7702') return false
-    if (!userRequest.meta.show7702Info) return false
-
-    return true
-  }, [userRequest])
 
   const isSiwe = useMemo(() => {
     if (!userRequest) return false
@@ -178,30 +164,19 @@ const SignMessageScreen = () => {
 
   const handleSign = useCallback(
     (signers?: { addr: Key['addr']; type: Key['type'] }[]) => {
-      if (isAuthorization && !makeItSmartConfirmed) {
-        setMakeItSmartConfirmed(true)
-        setDoNotAskMeAgain(false)
-        return
-      }
-
       // Has more than one key, should first choose the key to sign with
       const hasChosenSigningKey = signers && signers.length
-      const hasMultipleKeys = selectedAccountKeyStoreKeys.length > 1
-      if (hasMultipleKeys && !hasChosenSigningKey) {
+      const hasMultipleKeysNotInternal =
+        !selectedAccountKeyStoreKeys.find((k) => k.type === 'internal') &&
+        selectedAccountKeyStoreKeys.length > 1
+      const isSafeWithoutDefaultSigners =
+        !!account?.safeCreation && !signMessageState.signers?.length
+      if (!hasChosenSigningKey && (hasMultipleKeysNotInternal || isSafeWithoutDefaultSigners)) {
         return setIsChooseSignerShown(true)
       }
 
-      const isLedgerKeyChosen = hasMultipleKeys
-        ? // Accounts with multiple keys have an additional step to choose the key first
-          signers && signers.find((s) => s.type === 'ledger')
-        : // Take the key type from the account key itself, no additional step to choose key
-          selectedAccountKeyStoreKeys[0]?.type === 'ledger'
-      if (isLedgerKeyChosen && !isLedgerConnected) {
-        setShouldDisplayLedgerConnectModal(true)
-        return
-      }
-
-      if (!selectedAccountKeyStoreKeys.length) {
+      const chosenSigners = signers && signers.length ? signers : signMessageState.signers || []
+      if (!chosenSigners.length) {
         addToast(
           t(
             'No signing key available to sign the message. Please reject the request and try again.'
@@ -211,29 +186,25 @@ const SignMessageScreen = () => {
         return
       }
 
-      const finalSigners =
-        signers && signers.length
-          ? signers
-          : [
-              {
-                addr: selectedAccountKeyStoreKeys[0]!.addr,
-                type: selectedAccountKeyStoreKeys[0]!.type
-              }
-            ]
+      const isLedgerKeyChosen = chosenSigners.find((s) => s.type === 'ledger')
+      if (isLedgerKeyChosen && !isLedgerConnected) {
+        setShouldDisplayLedgerConnectModal(true)
+        return
+      }
 
       dispatch({
         type: 'MAIN_CONTROLLER_HANDLE_SIGN_MESSAGE',
-        params: { signers: finalSigners }
+        params: { signers: chosenSigners }
       })
     },
     [
-      isAuthorization,
-      makeItSmartConfirmed,
       selectedAccountKeyStoreKeys,
       isLedgerConnected,
       dispatch,
       addToast,
-      t
+      t,
+      signMessageState.signers,
+      account?.safeCreation
     ]
   )
 
@@ -254,16 +225,8 @@ const SignMessageScreen = () => {
 
     if (signStatus === 'LOADING') return t('Signing...')
 
-    if (isAuthorization && !makeItSmartConfirmed) return 'Add smart features'
-
     return t('Sign')
-  }, [isSiwe, t, isScrollToBottomForced, signStatus, isAuthorization, makeItSmartConfirmed])
-
-  const rejectButtonText = useMemo(() => {
-    if (isAuthorization && doNotAskMeAgain) return 'Skip'
-    if (isAuthorization) return 'Skip for now'
-    return 'Reject'
-  }, [isAuthorization, doNotAskMeAgain])
+  }, [isSiwe, t, isScrollToBottomForced, signStatus])
 
   const handleDismissLedgerConnectModal = useCallback(() => {
     setShouldDisplayLedgerConnectModal(false)
@@ -277,10 +240,6 @@ const SignMessageScreen = () => {
     return EIP_1271_NOT_SUPPORTED_BY.some((origin) => dappOrigin.includes(origin))
   }, [account, userRequest?.dappPromises])
 
-  const onDoNotAskMeAgainChange = useCallback(() => {
-    setDoNotAskMeAgain(!doNotAskMeAgain)
-  }, [doNotAskMeAgain])
-
   const view = useMemo(() => {
     // Happens when switching between requests
     const isReinitializingAfterSwitch =
@@ -290,18 +249,10 @@ const SignMessageScreen = () => {
 
     if (isReinitializingAfterSwitch) return 'reinitializing'
 
-    if (isAuthorization && !makeItSmartConfirmed) return 'authorization-7702'
-
     if (isSiwe) return 'siwe'
 
     return 'sign-message'
-  }, [
-    isAuthorization,
-    isSiwe,
-    makeItSmartConfirmed,
-    signMessageState.messageToSign,
-    userRequest?.kind
-  ])
+  }, [isSiwe, signMessageState.messageToSign, userRequest?.kind])
 
   const threshold = useMemo(() => {
     return accountState?.threshold || 0
@@ -343,7 +294,7 @@ const SignMessageScreen = () => {
               humanizationHasBlockingWarnings
             }
             resolveButtonTestID="button-sign"
-            rejectButtonText={rejectButtonText}
+            rejectButtonText="Reject"
             {...(isViewOnly
               ? {
                   resolveNode: (
@@ -355,11 +306,7 @@ const SignMessageScreen = () => {
               : {})}
           />
         }
-        backgroundColor={
-          isAuthorization && !makeItSmartConfirmed
-            ? theme.primaryBackground
-            : theme.quinaryBackground
-        }
+        backgroundColor={theme.quinaryBackground}
       >
         <KeySelect
           isSigning={signStatus === 'LOADING'}
@@ -377,13 +324,6 @@ const SignMessageScreen = () => {
           <View style={[StyleSheet.absoluteFill, flexbox.center]}>
             <Spinner />
           </View>
-        )}
-        {view === 'authorization-7702' && (
-          <Authorization7702
-            onDoNotAskMeAgainChange={onDoNotAskMeAgainChange}
-            doNotAskMeAgain={doNotAskMeAgain}
-            displayFullInformation
-          />
         )}
         {view === 'sign-message' && (
           <Main
