@@ -22,7 +22,7 @@ interface Props {
   Icon?: FC<SvgProps>
   isExternal?: boolean
   style?: ViewStyle
-  initialBackground?: ColorValue
+  isSidebarLink?: boolean
 }
 
 const SettingsLink: FC<Props> = ({
@@ -32,7 +32,7 @@ const SettingsLink: FC<Props> = ({
   isActive,
   isExternal,
   style,
-  initialBackground
+  isSidebarLink
 }) => {
   const { navigate } = useNavigation()
   const { t } = useTranslation()
@@ -41,7 +41,7 @@ const SettingsLink: FC<Props> = ({
   const [bindAnim, animStyle, isHovered] = useCustomHover({
     property: 'backgroundColor',
     values: {
-      from: initialBackground || theme.primaryBackground,
+      from: theme.primaryBackground,
       to: theme.secondaryBackground
     },
     forceHoveredStyle: isActive
@@ -64,12 +64,12 @@ const SettingsLink: FC<Props> = ({
       }}
       disabled={isDisabled}
       style={[
-        flexbox.flex1,
         flexbox.directionRow,
         flexbox.justifySpaceBetween,
         flexbox.alignCenter,
         spacings.phSm,
         spacings.pv,
+        isSidebarLink ? spacings.mbMi : flexbox.flex1,
         {
           borderRadius: BORDER_RADIUS_PRIMARY
         },
@@ -85,18 +85,20 @@ const SettingsLink: FC<Props> = ({
           {t(label)}
         </Text>
       </View>
-      <View
-        style={{
-          width: 24,
-          height: 24,
-          ...flexbox.center
-        }}
-      >
-        <LeftArrowIcon
-          style={{ transform: [{ rotate: '180deg' }] }}
-          color={isHovered || isActive ? theme.primaryText : theme.iconPrimary}
-        />
-      </View>
+      {!isSidebarLink && (
+        <View
+          style={{
+            width: 24,
+            height: 24,
+            ...flexbox.center
+          }}
+        >
+          <LeftArrowIcon
+            style={{ transform: [{ rotate: '180deg' }] }}
+            color={isHovered || isActive ? theme.primaryText : theme.iconPrimary}
+          />
+        </View>
+      )}
     </AnimatedPressable>
   )
 }

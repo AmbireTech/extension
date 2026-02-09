@@ -163,23 +163,12 @@ const NavMenu = () => {
             >
               <View style={spacings.mbXl}>
                 {SETTINGS_LINKS.map((link, i) => (
-                  <SettingsLink
-                    {...link}
-                    key={link.key}
-                    isActive={false}
-                    initialBackground={theme.primaryBackground}
-                  />
+                  <SettingsLink {...link} key={link.key} isActive={false} />
                 ))}
               </View>
               <View style={spacings.mbXl}>
                 {OTHER_LINKS.map(({ Icon, ...link }) => (
-                  <SettingsLink
-                    {...link}
-                    Icon={Icon}
-                    key={link.key}
-                    isActive={false}
-                    initialBackground={theme.primaryBackground}
-                  />
+                  <SettingsLink {...link} Icon={Icon} key={link.key} isActive={false} />
                 ))}
               </View>
               {SOCIAL.map(({ Icon, ...link }) => (
@@ -190,7 +179,6 @@ const NavMenu = () => {
                   path={link.url}
                   isActive={false}
                   isExternal
-                  initialBackground={theme.primaryBackground}
                 />
               ))}
             </ScrollView>

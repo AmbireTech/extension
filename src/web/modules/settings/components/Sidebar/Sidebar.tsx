@@ -198,6 +198,7 @@ const Sidebar = ({ activeLink }: { activeLink?: string }) => {
 
           return (
             <SettingsLink
+              isSidebarLink
               {...link}
               key={link.key}
               isActive={isActive}
@@ -219,6 +220,7 @@ const Sidebar = ({ activeLink }: { activeLink?: string }) => {
 
           return (
             <SettingsLink
+              isSidebarLink
               {...link}
               key={link.key}
               isActive={isActive}
