@@ -5,6 +5,8 @@ import { captureMessage } from '@common/config/analytics/CrashAnalytics.web'
 import { APP_VERSION } from '@common/config/env'
 import { AllControllersMappingType } from '@common/constants/controllersMapping'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
+import { isStateLoaded } from '@web/contexts/controllersStateLoadedContext//helpers'
+import { ControllersMappingType } from '@web/extension-services/background/types'
 import useAccountPickerControllerState from '@web/hooks/useAccountPickerControllerState'
 import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
 import useActivityControllerState from '@web/hooks/useActivityControllerState'
@@ -41,12 +43,6 @@ const ControllersStateLoadedContext = createContext<{
 })
 
 const { isPopup } = getUiType()
-
-export const isStateLoaded = (state: any) => {
-  if (!state || !Object.keys(state).length) return false
-  if ('isReady' in state) return state.isReady === true
-  return true
-}
 
 type Controllers = {
   [K in keyof AllControllersMappingType]: ControllerInterface<AllControllersMappingType[K]>
