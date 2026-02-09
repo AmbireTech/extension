@@ -121,7 +121,6 @@ const SelectContainer: FC<Props> = ({
                 containerStyle={spacings.mb0}
                 borderWrapperStyle={styles.searchBorderWrapperStyle}
                 inputWrapperStyle={styles.bottomSearchInputWrapperStyle}
-                leftIconStyle={spacings.pl}
               />
             )}
             {children}
@@ -133,7 +132,6 @@ const SelectContainer: FC<Props> = ({
                 containerStyle={spacings.mb0}
                 borderWrapperStyle={styles.searchBorderWrapperStyle}
                 inputWrapperStyle={styles.topSearchInputWrapperStyle}
-                leftIconStyle={spacings.pl}
               />
             )}
           </MenuContainer>
@@ -158,8 +156,6 @@ const SelectContainer: FC<Props> = ({
               setInputRef={setInputRef}
               control={control}
               containerStyle={spacings.mb}
-              leftIconStyle={spacings.pl}
-              height={48}
             />
             {children}
           </View>

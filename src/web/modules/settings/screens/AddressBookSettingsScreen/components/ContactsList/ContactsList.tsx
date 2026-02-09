@@ -120,7 +120,6 @@ const ContactsList = () => {
         testID="search-contacts-input"
         placeholder={t('Search contacts')}
         control={control}
-        height={48}
         containerStyle={{ width: isWidthS ? '50%' : '100%' }}
       />
     </View>

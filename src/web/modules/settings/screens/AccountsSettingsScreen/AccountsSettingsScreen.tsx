@@ -196,7 +196,6 @@ const AccountsSettingsScreen = () => {
           <Search
             autoFocus
             control={control}
-            height={48}
             containerStyle={{ width: isWidthS ? '50%' : '100%' }}
           />
         </View>
