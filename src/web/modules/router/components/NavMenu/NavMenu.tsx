@@ -2,8 +2,8 @@ import React, { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ScrollView, View } from 'react-native'
 
+import AmbireLogoSquare from '@common/assets/svg/AmbireLogoSquare'
 import BugIcon from '@common/assets/svg/BugIcon'
-import BulbIcon from '@common/assets/svg/BulbIcon'
 import DiscordIcon from '@common/assets/svg/DiscordIcon'
 import HelpIcon from '@common/assets/svg/HelpIcon'
 import LockIcon from '@common/assets/svg/LockIcon'
@@ -60,7 +60,7 @@ const OTHER_LINKS = [
   },
   {
     key: 'about',
-    Icon: BulbIcon,
+    Icon: AmbireLogoSquare,
     label: 'About',
     path: ROUTES.settingsAbout
   }
@@ -132,8 +132,8 @@ const NavMenu = () => {
                           id: expandViewTooltipId,
                           content: t('Expand view')
                         })}
-                        width={16}
-                        height={16}
+                        width={24}
+                        height={24}
                       />
                     </Button>
                   </View>

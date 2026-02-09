@@ -4,8 +4,8 @@ import { View } from 'react-native'
 
 import AccountsIcon from '@common/assets/svg/AccountsIcon'
 import AddressBookIcon from '@common/assets/svg/AddressBookIcon'
+import AmbireLogoSquare from '@common/assets/svg/AmbireLogoSquare'
 import BugIcon from '@common/assets/svg/BugIcon'
-import BulbIcon from '@common/assets/svg/BulbIcon'
 import CustomTokensIcon from '@common/assets/svg/CustomTokensIcon'
 import HelpIcon from '@common/assets/svg/HelpIcon'
 import KeyStoreSettingsIcon from '@common/assets/svg/KeyStoreSettingsIcon'
@@ -112,7 +112,7 @@ export const SETTINGS_LINKS = [
 const OTHER_LINKS = [
   {
     key: 'about',
-    Icon: BulbIcon,
+    Icon: AmbireLogoSquare,
     label: 'About',
     path: ROUTES.settingsAbout
   },
