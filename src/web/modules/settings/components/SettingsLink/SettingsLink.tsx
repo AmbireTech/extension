@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { ColorValue, View, ViewStyle } from 'react-native'
 import { SvgProps } from 'react-native-svg'
 
+import LeftArrowIcon from '@common/assets/svg/LeftArrowIcon'
 import Text from '@common/components/Text'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
@@ -22,17 +23,6 @@ interface Props {
   isExternal?: boolean
   style?: ViewStyle
   initialBackground?: ColorValue
-}
-
-const getColor = (isActive: boolean, isHovered: boolean) => {
-  if (isActive) {
-    return 'primary'
-  }
-  if (isHovered) {
-    return 'primaryText'
-  }
-
-  return 'secondaryText'
 }
 
 const SettingsLink: FC<Props> = ({
@@ -74,13 +64,14 @@ const SettingsLink: FC<Props> = ({
       }}
       disabled={isDisabled}
       style={[
+        flexbox.flex1,
         flexbox.directionRow,
-        spacings.pl,
+        flexbox.justifySpaceBetween,
+        flexbox.alignCenter,
+        spacings.phSm,
         spacings.pv,
-        spacings.mbMi,
         {
-          borderRadius: BORDER_RADIUS_PRIMARY,
-          width: 250
+          borderRadius: BORDER_RADIUS_PRIMARY
         },
         style,
         animStyle,
@@ -89,15 +80,22 @@ const SettingsLink: FC<Props> = ({
       {...bindAnim}
     >
       <View style={flexbox.directionRow}>
-        {Icon ? <Icon width={24} height={24} color={theme[getColor(isActive, isHovered)]} /> : null}
-        <Text
-          style={Icon ? spacings.ml : {}}
-          color={theme[getColor(isActive, isHovered)]}
-          fontSize={16}
-          weight="medium"
-        >
+        {Icon ? <Icon width={24} height={24} color={theme.iconPrimary} /> : null}
+        <Text style={Icon ? spacings.mlSm : {}} weight="medium">
           {t(label)}
         </Text>
+      </View>
+      <View
+        style={{
+          width: 24,
+          height: 24,
+          ...flexbox.center
+        }}
+      >
+        <LeftArrowIcon
+          style={{ transform: [{ rotate: '180deg' }] }}
+          color={isHovered || isActive ? theme.primaryText : theme.iconPrimary}
+        />
       </View>
     </AnimatedPressable>
   )

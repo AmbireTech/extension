@@ -1,7 +1,7 @@
 import React, { FC } from 'react'
 import { Pressable, View } from 'react-native'
 
-import GlassView from '@common/components/GlassView/GlassView'
+import GlassView from '@common/components/GlassView'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useNavigation from '@common/hooks/useNavigation'
