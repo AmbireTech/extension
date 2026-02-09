@@ -155,7 +155,11 @@ const NavMenu = () => {
             )}
             <ScrollView
               style={[flexbox.flex1, spacings.pbXl]}
-              contentContainerStyle={{ flexGrow: 1, paddingRight: 2 }}
+              contentContainerStyle={{
+                flexGrow: 1,
+                paddingRight: 2,
+                paddingBottom: 80
+              }}
             >
               <View style={spacings.mbXl}>
                 {SETTINGS_LINKS.map((link, i) => (
