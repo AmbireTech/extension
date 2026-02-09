@@ -89,7 +89,7 @@ const RewardsAndStats: FC<Props> = ({ pastTotalScore }) => {
           zIndex: 3
         }}
       >
-        <Background1 width={150} />
+        <Background1 width={128} />
         <View style={{ position: 'absolute', ...flexbox.alignCenter, ...flexbox.justifyCenter }}>
           <Text
             fontSize={32}
@@ -123,7 +123,7 @@ const RewardsAndStats: FC<Props> = ({ pastTotalScore }) => {
           zIndex: 2
         }}
       >
-        <Background2 width={190} />
+        <Background2 width={158} />
         <View style={{ position: 'absolute', ...flexbox.alignCenter, ...flexbox.justifyCenter }}>
           <Text fontSize={10} weight="medium" color="#8D93AC" style={spacings.mb0}>
             $WALLET
@@ -162,7 +162,7 @@ const RewardsAndStats: FC<Props> = ({ pastTotalScore }) => {
           ...flexbox.alignCenter
         }}
       >
-        <Background3 width={150} />
+        <Background3 width={124} />
         <View style={{ position: 'absolute', ...flexbox.alignCenter, ...flexbox.justifyCenter }}>
           <View
             style={{

@@ -158,7 +158,7 @@ const ExtensionRewardsScreen = () => {
         ...flexbox.flex1,
         ...spacings.ph,
         ...spacings.pv,
-        backgroundColor: '#101114'
+        backgroundColor: '#1B1D20'
       }}
     >
       {projectedRewardsStats?.reasonToNotDisplayProjectedRewards && (
@@ -238,8 +238,8 @@ const ExtensionRewardsScreen = () => {
           {!isProjectedRewardsLoading ? (
             <View
               style={[
-                spacings.phLg,
-                spacings.pvLg,
+                spacings.phMd,
+                spacings.pvMd,
                 {
                   backgroundColor: '#191A1F',
                   borderWidth: 1,
