@@ -4,6 +4,7 @@ import React, { createContext, useCallback, useEffect, useMemo, useState } from 
 import { Dapp, IDappsController } from '@ambire-common/interfaces/dapp'
 import { getDappIdFromUrl } from '@ambire-common/libs/dapps/helpers'
 import { isValidURL } from '@ambire-common/services/validations'
+import { captureException } from '@common/config/analytics/CrashAnalytics.web'
 import { isStateLoaded } from '@web/contexts/controllersStateLoadedContext//helpers'
 import { getCurrentTab } from '@web/extension-services/background/webapi/tab'
 import { getCurrentWindow } from '@web/extension-services/background/webapi/window'
@@ -114,7 +115,10 @@ const DappsControllerStateProvider: React.FC<any> = ({ children }) => {
     setIsLoadingCurrentDapp(true)
     getCurrentDapp()
       .then((dapp) => setCurrentDapp(dapp))
-      .catch(() => setCurrentDapp(null)) // TODO: Send crash report?
+      .catch((error) => {
+        captureException(error) // should never happen
+        setCurrentDapp(null)
+      })
       .finally(() => setIsLoadingCurrentDapp(false))
   }, [getCurrentDapp, state])
 
