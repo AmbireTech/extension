@@ -68,14 +68,17 @@ const RouteItem: FC<Props> = ({ routeItem, index, routeItemsLength }) => {
       {({ hovered }: any) => (
         <>
           <GlassView
+            tintColor1={hovered ? '#fff' : 'rgba(255, 255, 255, 0.12)'}
+            tintColor2={hovered ? '#fff' : 'rgba(255, 255, 255, 0.12)'}
+            blurAmount={20}
+            shineColor="rgba(255, 255, 255, 0.2)"
             testID={routeItem.testID}
             cssStyle={{
               marginBottom: 4,
               borderRadius: BORDER_RADIUS_PRIMARY,
               height: ITEM_HEIGHT,
               overflow: 'hidden',
-              width: routeItem.route === WEB_ROUTES.swapAndBridge ? 88 : ITEM_HEIGHT,
-              backgroundColor: hexToRgba('#FFFFFF', hovered ? 1 : 0.12)
+              width: routeItem.route === WEB_ROUTES.swapAndBridge ? 88 : ITEM_HEIGHT
             }}
           >
             <View style={[flexbox.center, flexbox.alignCenter, flexbox.flex1]}>

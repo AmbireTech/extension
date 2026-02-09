@@ -1,41 +1,31 @@
-.glass-view {
-  --c-glass: rgba(255, 255, 255, 0.12);
-  --c-light: rgba(255, 255, 255, 0.12);
-  --c-dark: #000;
-  --glass-reflex-dark: 1;
-  --glass-reflex-light: 1;
-  --saturation: 150%;
+.liquidGlass {
+  --glass-blur-amount: 4px;
 
+  position: relative;
   display: flex;
-  align-items: center;
-  box-sizing: border-box;
-  margin: 0 auto;
-  border: none;
-  border-radius: 1rem;
-  background-color: color-mix(in srgb, var(--c-glass) 100%, transparent);
-  backdrop-filter: blur(8px) url(#container-filter) saturate(var(--saturation));
-  box-shadow:
-    /* Top edge highlight fading from left to right */
-    inset 0 1px 2px 0
-      color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 60%), transparent),
-    inset 3em 0 2em -2em color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 40%), transparent),
-    /* Left edge highlight fading from top to bottom */ inset 1px 0 2px 0
-      color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 60%), transparent),
-    inset 0 3em 2em -2em color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 40%), transparent),
-    /* Bottom edge highlight fading from right to left */ inset 0 -1px 2px 0 color-mix(in srgb, var(
-            --c-light
-          )
-          calc(var(--glass-reflex-light) * 60%), transparent),
-    inset -3em 0 2em -2em
-      color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 40%), transparent),
-    /* Right edge highlight fading from bottom to top */ inset -1px 0 2px 0 color-mix(in srgb, var(
-            --c-light
-          )
-          calc(var(--glass-reflex-light) * 60%), transparent),
-    inset 0 -3em 2em -2em
-      color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 40%), transparent),
-    /* Outer shadows */ 0 0.0625em 0.3125em 0
-      color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 12%), transparent),
-    0 0.375em 1em 0
-      color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 10%), transparent);
+  font-weight: 600;
+  overflow: hidden;
+  cursor: pointer;
+  isolation: isolate;
+  /* These come from injected styles */
+  background: linear-gradient(135deg, var(--glass-tint-color-1) 0%, var(--glass-tint-color-2) 100%);
+
+  backdrop-filter: blur(var(--glass-blur-amount));
+
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 2.2);
+}
+
+.liquidGlass::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  box-shadow: inset 0px 0px 2px 1.5px var(--glass-shine-color);
+  border-top-left-radius: inherit;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: inherit;
+  border-bottom-left-radius: 0;
 }

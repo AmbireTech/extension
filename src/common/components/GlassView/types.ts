@@ -6,6 +6,10 @@ type GlassViewProps = {
   testID?: string
   cssStyle?: React.CSSProperties
   style?: ViewStyle
+  tintColor1?: string
+  tintColor2?: string
+  shineColor?: string
+  blurAmount?: number
 }
 
 type WithGlassViewSupportProps = {
