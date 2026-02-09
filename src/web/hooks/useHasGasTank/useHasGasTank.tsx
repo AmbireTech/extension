@@ -7,7 +7,7 @@ import { getIsViewOnly } from '@ambire-common/utils/accounts'
 import useKeystoreControllerState from '../useKeystoreControllerState'
 
 const useHasGasTank = ({ account }: { account: Account | null }) => {
-  if (!account) {
+  if (!account || !!account.safeCreation) {
     return {
       hasGasTank: false
     }

@@ -153,7 +153,9 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
           <View
             dataSet={createGlobalTooltipDataSet({
               id: 'gas-tank-soon',
-              content: t('Not available for hardware wallets yet.'),
+              content: account?.safeCreation
+                ? t('Not available for safe accounts, yet.')
+                : t('Not available for hardware wallets, yet.'),
               hidden: buttonState !== 'soon'
             })}
           >
