@@ -26,7 +26,8 @@ type ButtonTypes =
   | 'success'
   | 'gray'
 
-type ButtonSizes = 'regular' | 'small' | 'large' | 'tiny'
+// We should rethink these sizes
+type ButtonSizes = 'regular' | 'smaller' | 'small' | 'large' | 'tiny'
 export interface Props extends PressableProps {
   text?: string
   type?: ButtonTypes
@@ -250,6 +251,7 @@ const Button = ({
   const containerStylesSizes: { [key in ButtonSizes]: ViewStyle } = {
     large: styles.buttonContainerStylesSizeLarge,
     regular: styles.buttonContainerStylesSizeRegular,
+    smaller: styles.buttonContainerStylesSmaller,
     small: styles.buttonContainerStylesSizeSmall,
     tiny: styles.buttonContainerStylesSizeTiny
   }
@@ -348,6 +350,7 @@ const Button = ({
   const buttonTextStylesSizes: { [key in ButtonSizes]: TextStyle } = {
     large: styles.buttonTextStylesSizeLarge,
     regular: styles.buttonTextStylesSizeRegular,
+    smaller: styles.buttonTextStylesSizeSmaller,
     small: styles.buttonTextStylesSizeSmall,
     tiny: styles.buttonTextStylesSizeTiny
   }
