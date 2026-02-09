@@ -14,11 +14,11 @@ const { isPopup } = getUiType()
 
 const DAppFooter = () => {
   const { styles } = useTheme(getStyles)
-  const { currentDapp } = useDappsControllerState()
+  const { currentDapp, isLoadingCurrentDapp } = useDappsControllerState()
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const [hovered, setHovered] = useState(false)
 
-  if (!currentDapp || !isPopup) return null
+  if (!isPopup || isLoadingCurrentDapp || !currentDapp) return null
 
   return (
     <View style={styles.footerContainer}>
