@@ -43,7 +43,6 @@ import { THEME_TYPES } from '@common/styles/themeConfig'
 import { LOG_LEVELS } from '@web/utils/logger'
 
 import { AllControllersMappingType } from '../../../common/constants/controllersMapping'
-import { controllersMapping } from './consts'
 import { AUTO_LOCK_TIMES } from './controllers/auto-lock'
 import { AvatarType } from './controllers/wallet-state'
 
@@ -55,7 +54,7 @@ type UpdateNavigationUrl = {
 type InitControllerStateAction = {
   type: 'INIT_CONTROLLER_STATE'
   params: {
-    controller: keyof typeof controllersMapping
+    controller: keyof AllControllersMappingType
   }
 }
 
