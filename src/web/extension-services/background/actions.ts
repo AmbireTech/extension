@@ -544,9 +544,7 @@ type DappsControllerGetCurrentDappAndSendResToUi = {
   params: {
     requestId: string
     dappId: string
-    windowId?: number
-    tabId: number
-    tabUrl: string
+    currentSessionId?: string
   }
 }
 
