@@ -19,6 +19,7 @@ type Props = {
   resolveButtonTestID?: string
   /** Optional custom node to replace the default resolve button */
   resolveNode?: React.ReactNode
+  informationalNode?: React.ReactNode
 }
 
 const ActionFooter = ({
@@ -30,7 +31,8 @@ const ActionFooter = ({
   resolveType = 'primary',
   rejectButtonTestID,
   resolveButtonTestID,
-  resolveNode
+  resolveNode,
+  informationalNode
 }: Props) => {
   const { t } = useTranslation()
 
@@ -51,6 +53,7 @@ const ActionFooter = ({
             style={flexbox.alignSelfStart}
           />
         )}
+        {informationalNode}
       </View>
       <ActionsPagination />
       {resolveNode || (

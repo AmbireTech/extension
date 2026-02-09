@@ -238,6 +238,7 @@ type MainControllerSignMessageInitAction = {
   params: {
     dapp: { name: string; icon: string }
     messageToSign: Message
+    signed?: string[]
   }
 }
 type MainControllerSignMessageResetAction = {

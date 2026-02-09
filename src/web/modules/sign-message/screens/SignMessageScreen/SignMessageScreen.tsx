@@ -4,21 +4,26 @@ import { useTranslation } from 'react-i18next'
 import { StyleSheet, View } from 'react-native'
 
 import { Key } from '@ambire-common/interfaces/keystore'
+import { SignMessageStatus } from '@ambire-common/interfaces/signMessage'
 import { isSmartAccount } from '@ambire-common/libs/account/account'
 import { humanizeMessage } from '@ambire-common/libs/humanizer'
 import {
   EIP_1271_NOT_SUPPORTED_BY,
   toPersonalSignHex
 } from '@ambire-common/libs/signMessage/signMessage'
+import SuccessIcon from '@common/assets/svg/SuccessIcon'
 import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
 import Spinner from '@common/components/Spinner'
+import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
+import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import HeaderAccountAndNetworkInfo from '@web/components/HeaderAccountAndNetworkInfo'
 import SmallNotificationWindowWrapper from '@web/components/SmallNotificationWindowWrapper'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
+import { closeCurrentWindow } from '@web/extension-services/background/webapi/window'
 import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useDappInfo from '@web/hooks/useDappInfo/useDappInfo'
@@ -139,7 +144,8 @@ const SignMessageScreen = () => {
           accountAddr: userRequest.meta.accountAddr,
           chainId: userRequest.meta.chainId,
           signature: null
-        }
+        },
+        signed: userRequest.meta.signed
       }
     })
   }, [dispatch, userRequest, signMessageState.messageToSign?.fromRequestId, name, icon])
@@ -219,14 +225,31 @@ const SignMessageScreen = () => {
     [handleSign]
   )
 
+  const setSignerOrClose = useCallback(
+    (chosenSigningKeyAddr?: Key['addr'], chosenSigningKeyType?: Key['type']) => {
+      // safe accounts may sign the message partially only,
+      // meaning a success message will be displayed and the user will be
+      // prompt to close the action window by himself
+      if (signMessageState.status === SignMessageStatus.Partial) {
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        closeCurrentWindow()
+        return
+      }
+
+      setSigner(chosenSigningKeyAddr, chosenSigningKeyType)
+    },
+    [setSigner, signMessageState.status]
+  )
+
   const resolveButtonText = useMemo(() => {
+    if (signMessageState.status === SignMessageStatus.Partial) return 'Close'
     if (isSiwe) return t('Sign in')
     if (isScrollToBottomForced) return t('Read the message')
 
     if (signStatus === 'LOADING') return t('Signing...')
 
     return t('Sign')
-  }, [isSiwe, t, isScrollToBottomForced, signStatus])
+  }, [isSiwe, t, isScrollToBottomForced, signStatus, signMessageState.status])
 
   const handleDismissLedgerConnectModal = useCallback(() => {
     setShouldDisplayLedgerConnectModal(false)
@@ -284,8 +307,10 @@ const SignMessageScreen = () => {
         }
         footer={
           <ActionFooter
-            onReject={handleReject}
-            onResolve={setSigner}
+            onReject={
+              signMessageState.status !== SignMessageStatus.Partial ? handleReject : undefined
+            }
+            onResolve={setSignerOrClose}
             resolveButtonText={resolveButtonText}
             resolveDisabled={
               signStatus === 'LOADING' ||
@@ -304,6 +329,22 @@ const SignMessageScreen = () => {
                   )
                 }
               : {})}
+            informationalNode={
+              signMessageState.status === SignMessageStatus.Partial ? (
+                <View style={[flexbox.directionRow, flexbox.flex1, flexbox.alignCenter]}>
+                  <SuccessIcon color={theme.successDecorative} />
+                  <Text
+                    color={theme.successDecorative}
+                    style={spacings.mlSm}
+                    fontSize={16}
+                    appearance="secondaryText"
+                    numberOfLines={1}
+                  >
+                    {t('Waiting for signatures')}
+                  </Text>
+                </View>
+              ) : null
+            }
           />
         }
         backgroundColor={theme.quinaryBackground}
