@@ -59,7 +59,8 @@ export const controllersNestedInMainMapping = {
   // - key is the name of the controller
   // - value is the type of the controller
 }
-export const controllersMapping = {
+
+const allControllersMapping = {
   MainController,
   WalletStateController,
   AutoLockController,
@@ -67,6 +68,6 @@ export const controllersMapping = {
   ...controllersNestedInMainMapping
 }
 
-export type ControllersMappingType = {
-  [K in keyof typeof controllersMapping]: InstanceType<(typeof controllersMapping)[K]>
+export type AllControllersMappingType = {
+  [K in keyof typeof allControllersMapping]: InstanceType<(typeof allControllersMapping)[K]>
 }

@@ -66,7 +66,6 @@ export const handleActions = async (
       break
     }
     case 'method': {
-      console.log('in method', params)
       const { ctrlName, method, args } = params
 
       const ctrl = eventEmitterRegistry.values().find((c) => c.name === ctrlName) as any

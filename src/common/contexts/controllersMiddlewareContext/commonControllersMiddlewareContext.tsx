@@ -15,12 +15,15 @@ import { IKeystoreController } from '@ambire-common/interfaces/keystore'
 import { WindowProps } from '@ambire-common/interfaces/ui'
 import { KeystoreSigner } from '@ambire-common/libs/keystoreSigner/keystoreSigner'
 import { LIFI_EXPLORER_URL } from '@ambire-common/services/lifi/consts'
+import { ExplorerBaseControllersMappingType } from '@benzin/constants/controllersMapping'
 import { APP_VERSION } from '@common/config/env'
-import { ControllersMappingType } from '@common/constants/controllersMapping'
+import { AllControllersMappingType } from '@common/constants/controllersMapping'
 import { ToastOptions } from '@common/contexts/toastContext'
 import useNavigation from '@common/hooks/useNavigation'
 import useToast from '@common/hooks/useToast'
 import { BUNGEE_API_KEY, RELAYER_URL, VELCRO_URL } from '@env'
+import { RewardsBaseControllersMappingType } from '@legends/constants/controllersMapping'
+import { MobileBaseControllersMappingType } from '@mobile/constants/controllersMapping'
 import { Action } from '@web/extension-services/background/actions'
 import { WalletStateController } from '@web/extension-services/background/controllers/wallet-state'
 import { storage } from '@web/extension-services/background/webapi/storage'
@@ -28,7 +31,6 @@ import eventBus from '@web/extension-services/event/eventBus'
 
 import { ControllersMiddlewareContext } from './context'
 import { ControllerStore } from './controllerStore'
-import { AnyControllerAction } from './types'
 
 export const CommonControllersMiddlewareProvider: React.FC<{
   children: React.ReactNode
@@ -69,7 +71,7 @@ export const CommonControllersMiddlewareProvider: React.FC<{
     new ControllerStore({
       onInit: () => {
         return Object.values(controllers.current).map((ctrl) => {
-          const ctrlName = ctrl.name as keyof ControllersMappingType
+          const ctrlName = ctrl.name as keyof AllControllersMappingType
           controllerStore.current.update(ctrlName, ctrl)
 
           return ctrlName
@@ -102,7 +104,9 @@ export const CommonControllersMiddlewareProvider: React.FC<{
                 //   id: getExtensionInstanceId(keystoreCtrl.keyStoreUid, mainCtrl.invite.verifiedCode)
                 // })
                 if (isUnlocked && !keystoreCtrl.isUnlocked) {
-                  await controllers.current.main!.dapps.broadcastDappSessionEvent('lock')
+                  await (
+                    controllers.current as MobileBaseControllersMappingType
+                  ).MainController!.dapps.broadcastDappSessionEvent('lock')
                 }
                 setIsUnlocked(keystoreCtrl.isUnlocked)
               }
@@ -217,28 +221,20 @@ export const CommonControllersMiddlewareProvider: React.FC<{
     return fetch(url, initWithCustomHeaders)
   }, [])
 
-  const controllers = useRef<{
-    walletState?: WalletStateController
-    main?: MainController
-    providers?: ProvidersController
-    domains?: DomainsController
-    contractNames?: ContractNamesController
-  }>(
+  const controllers = useRef<
+    | MobileBaseControllersMappingType
+    | ExplorerBaseControllersMappingType
+    | RewardsBaseControllersMappingType
+    | {}
+  >(
     (() => {
-      const ctrls: {
-        walletState?: WalletStateController
-        main?: MainController
-        providers?: ProvidersController
-        domains?: DomainsController
-        contractNames?: ContractNamesController
-      } = {}
-
       if (env === 'mobile') {
-        ctrls.walletState = new WalletStateController({
+        const ctrls: MobileBaseControllersMappingType = {} as MobileBaseControllersMappingType
+        ctrls.WalletStateController = new WalletStateController({
           eventEmitterRegistry: eventEmitterRegistry.current,
           onLogLevelUpdateCallback: async () => {}
         })
-        ctrls.main = new MainController({
+        ctrls.MainController = new MainController({
           eventEmitterRegistry: eventEmitterRegistry.current,
           appVersion: APP_VERSION,
           platform: 'default',
@@ -298,44 +294,57 @@ export const CommonControllersMiddlewareProvider: React.FC<{
             }
           }
         })
-      } else if (env === 'explorer') {
-        const storageCtrl = new StorageController(storage)
-        ctrls.providers = new ProvidersController({
+
+        return ctrls
+      }
+
+      if (env === 'explorer') {
+        const ctrls: ExplorerBaseControllersMappingType = {} as ExplorerBaseControllersMappingType
+        ctrls.StorageController = new StorageController(storage)
+        ctrls.ProvidersController = new ProvidersController({
           eventEmitterRegistry: eventEmitterRegistry.current,
-          storage: storageCtrl,
+          storage: ctrls.StorageController,
           getNetworks: () => networks,
           sendUiMessage: (params) => {
             eventBus.emit('receiveOneTimeData', params)
           }
         })
 
-        ctrls.domains = new DomainsController({
+        ctrls.DomainsController = new DomainsController({
           eventEmitterRegistry: eventEmitterRegistry.current,
-          providers: ctrls.providers.providers
+          providers: ctrls.ProvidersController.providers
         })
 
-        ctrls.contractNames = new ContractNamesController({
+        ctrls.ContractNamesController = new ContractNamesController({
           eventEmitterRegistry: eventEmitterRegistry.current,
           fetch: fetchWithAnalytics
         })
-      } else if (env === 'rewards') {
-        const storageCtrl = new StorageController(storage)
-        ctrls.providers = new ProvidersController({
+
+        return ctrls
+      }
+
+      if (env === 'rewards') {
+        const ctrls: RewardsBaseControllersMappingType = {} as RewardsBaseControllersMappingType
+
+        ctrls.StorageController = new StorageController(storage)
+        ctrls.ProvidersController = new ProvidersController({
           eventEmitterRegistry: eventEmitterRegistry.current,
-          storage: storageCtrl,
+          storage: ctrls.StorageController,
           getNetworks: () => networks,
           sendUiMessage: (params) => {
             eventBus.emit('receiveOneTimeData', params)
           }
         })
 
-        ctrls.domains = new DomainsController({
+        ctrls.DomainsController = new DomainsController({
           eventEmitterRegistry: eventEmitterRegistry.current,
-          providers: ctrls.providers.providers
+          providers: ctrls.ProvidersController.providers
         })
+
+        return ctrls
       }
 
-      return ctrls
+      return {}
     })()
   )
 
@@ -384,7 +393,7 @@ export const CommonControllersMiddlewareProvider: React.FC<{
         (ctrl: any) => ctrl.name === ctrlName
       )
       if (!targetCtrl) {
-        console.error(`handleAction: Controller ${ctrlName} not found`)
+        console.error(`handleAction: Controller ${ctrlName.toString()} not found`)
 
         return
       }

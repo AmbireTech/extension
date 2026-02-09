@@ -3,7 +3,7 @@ import React, { createContext, useEffect, useMemo, useRef, useState } from 'reac
 import { ControllerInterface } from '@ambire-common/interfaces/controller'
 import { captureMessage } from '@common/config/analytics/CrashAnalytics.web'
 import { APP_VERSION } from '@common/config/env'
-import { ControllersMappingType } from '@common/constants/controllersMapping'
+import { AllControllersMappingType } from '@common/constants/controllersMapping'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useAccountPickerControllerState from '@web/hooks/useAccountPickerControllerState'
 import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
@@ -49,7 +49,7 @@ export const isStateLoaded = (state: any) => {
 }
 
 type Controllers = {
-  [K in keyof ControllersMappingType]: ControllerInterface<ControllersMappingType[K]>
+  [K in keyof AllControllersMappingType]: ControllerInterface<AllControllersMappingType[K]>
 }
 
 type ControllersToWait = Omit<

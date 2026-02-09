@@ -1,21 +1,21 @@
 import { useEffect, useState } from 'react'
 import { flushSync } from 'react-dom'
 
-import { ControllersMappingType } from '@common/constants/controllersMapping'
+import { AllControllersMappingType } from '@common/constants/controllersMapping'
 import eventBus from '@web/extension-services/event/eventBus'
 
 /**
  * A hook that listens for any controller state updates (transmitted by the EventBus)
  * and keeps the updated value in the state variable.
  */
-export default function useControllerState<K extends keyof ControllersMappingType>(
+export default function useControllerState<K extends keyof AllControllersMappingType>(
   controllerName: K,
-  onUpdateCallback?: (newState: ControllersMappingType[K]) => Promise<void> | void
-): ControllersMappingType[K] {
-  const [state, setState] = useState({} as ControllersMappingType[K])
+  onUpdateCallback?: (newState: AllControllersMappingType[K]) => Promise<void> | void
+): AllControllersMappingType[K] {
+  const [state, setState] = useState({} as AllControllersMappingType[K])
 
   useEffect(() => {
-    const onUpdate = (newState: ControllersMappingType[K], forceEmit?: boolean) => {
+    const onUpdate = (newState: AllControllersMappingType[K], forceEmit?: boolean) => {
       /**
        *
        * For certain updates, we need to override React's default behavior of batching state updates and render the update immediately.

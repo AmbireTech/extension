@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { ErrorRef } from '@ambire-common/interfaces/eventEmitter'
 import { captureMessage } from '@common/config/analytics/CrashAnalytics.web'
-import { ControllersMappingType } from '@common/constants/controllersMapping'
+import { AllControllersMappingType } from '@common/constants/controllersMapping'
 import { ControllersMiddlewareContextReturnType } from '@common/contexts/controllersMiddlewareContext/types'
 import { ToastOptions } from '@common/contexts/toastContext'
 import useIsScreenFocused from '@common/hooks/useIsScreenFocused'
@@ -141,7 +141,7 @@ export const ExtensionControllersMiddlewareProvider: React.FC<{ children: React.
       onInit: () => {
         const controllersByName = Object.keys(
           controllersMapping
-        ) as (keyof ControllersMappingType)[]
+        ) as (keyof AllControllersMappingType)[]
 
         controllersByName.forEach((key) => {
           dispatch({

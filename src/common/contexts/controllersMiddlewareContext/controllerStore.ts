@@ -1,13 +1,13 @@
 import { flushSync } from 'react-dom'
 
 import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
-import { ControllersMappingType } from '@common/constants/controllersMapping'
+import { AllControllersMappingType } from '@common/constants/controllersMapping'
 import { isExtension } from '@web/constants/browserapi'
 
-type ControllerId = keyof ControllersMappingType
+type ControllerId = keyof AllControllersMappingType
 
 export class ControllerStore {
-  #states: Partial<ControllersMappingType> = {}
+  #states: Partial<AllControllersMappingType> = {}
   #listeners: Map<string, Set<() => void>> = new Map()
   #controllersByName: ControllerId[] = []
   #onInit: () => ControllerId[]
@@ -27,7 +27,7 @@ export class ControllerStore {
     this.#controllersByName = this.#onInit()
     this.#checkReadiness()
   }
-  update<K extends ControllerId>(id: K, ctrl: ControllersMappingType[K], forceEmit?: boolean) {
+  update<K extends ControllerId>(id: K, ctrl: AllControllersMappingType[K], forceEmit?: boolean) {
     this.#states[id] = isExtension ? { ...ctrl } : parse(stringify(ctrl))
     console.log(id, this.#states[id])
     if (!this.initializedControllers.has(id)) {
@@ -63,8 +63,8 @@ export class ControllerStore {
     return () => this.#listeners.get(id)?.delete(listener)
   }
 
-  getSnapshot<K extends ControllerId>(id: K): ControllersMappingType[K] {
-    return this.#states[id] || ({} as ControllersMappingType[K])
+  getSnapshot<K extends ControllerId>(id: K): AllControllersMappingType[K] {
+    return this.#states[id] || ({} as AllControllersMappingType[K])
   }
 
   #checkReadiness() {

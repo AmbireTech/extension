@@ -1,7 +1,7 @@
-import { useCallback, useContext, useSyncExternalStore } from 'react'
+import { useCallback, useContext, useEffect, useSyncExternalStore } from 'react'
 
 import { ProvidersController } from '@ambire-common/controllers/providers/providers'
-import { ControllersMappingType } from '@common/constants/controllersMapping'
+import { AllControllersMappingType } from '@common/constants/controllersMapping'
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext/context'
 import { AnyControllerAction } from '@common/contexts/controllersMiddlewareContext/types'
 import AutoLockController from '@web/extension-services/background/controllers/auto-lock'
@@ -14,33 +14,33 @@ type MethodKeys<T> = {
   [K in keyof T]-?: T[K] extends (...args: any[]) => any ? K : never
 }[keyof T]
 
-export type ControllerAction<K extends keyof ControllersMappingType> = {
-  [M in MethodKeys<ControllersMappingType[K]>]: {
+export type ControllerAction<K extends keyof AllControllersMappingType> = {
+  [M in MethodKeys<AllControllersMappingType[K]>]: {
     type: 'method'
     params: {
       ctrlName: K
       method: M
-      args: Parameters<Extract<ControllersMappingType[K][M], (...args: any[]) => any>>
+      args: Parameters<Extract<AllControllersMappingType[K][M], (...args: any[]) => any>>
     }
   }
-}[MethodKeys<ControllersMappingType[K]>]
+}[MethodKeys<AllControllersMappingType[K]>]
 
-type HookControllerAction<K extends keyof ControllersMappingType> = {
-  [M in MethodKeys<ControllersMappingType[K]>]: {
+type HookControllerAction<K extends keyof AllControllersMappingType> = {
+  [M in MethodKeys<AllControllersMappingType[K]>]: {
     type: 'method'
     params: {
       method: M
-      args: Parameters<Extract<ControllersMappingType[K][M], (...args: any[]) => any>>
+      args: Parameters<Extract<AllControllersMappingType[K][M], (...args: any[]) => any>>
     }
   }
-}[MethodKeys<ControllersMappingType[K]>]
+}[MethodKeys<AllControllersMappingType[K]>]
 
-export type Dispatch<K extends keyof ControllersMappingType> = (
+export type Dispatch<K extends keyof AllControllersMappingType> = (
   action: HookControllerAction<K>
 ) => void
 
-interface BaseControllerReturn<K extends keyof ControllersMappingType> {
-  state: ControllersMappingType[K]
+interface BaseControllerReturn<K extends keyof AllControllersMappingType> {
+  state: AllControllersMappingType[K]
   dispatch: Dispatch<K>
 }
 
@@ -51,10 +51,10 @@ interface ControllerLogicRegistry {
   // ...
 }
 
-type UseControllerReturn<K extends keyof ControllersMappingType> = BaseControllerReturn<K> &
+type UseControllerReturn<K extends keyof AllControllersMappingType> = BaseControllerReturn<K> &
   (K extends keyof ControllerLogicRegistry ? ControllerLogicRegistry[K] : {})
 
-export default function useController<K extends keyof ControllersMappingType>(
+export default function useController<K extends keyof AllControllersMappingType>(
   id: K
 ): UseControllerReturn<K> {
   const controllersMiddleware = useContext(ControllersMiddlewareContext)
@@ -63,12 +63,22 @@ export default function useController<K extends keyof ControllersMappingType>(
     throw new Error('useController must be used within ControllersMiddlewareProvider')
   }
 
-  const { controllerStore, dispatch: controllersMiddlewareDispatch } = controllersMiddleware
+  const {
+    controllerStore,
+    isStoreReady,
+    dispatch: controllersMiddlewareDispatch
+  } = controllersMiddleware
+
+  useEffect(() => {
+    if (isStoreReady && !Object.keys(controllerStore.getSnapshot(id)).length) {
+      throw new Error(`A controller with name ${id} does not exist in the controllerStore.`)
+    }
+  }, [controllerStore, id, isStoreReady])
 
   const state = useSyncExternalStore(
     useCallback((cb) => controllerStore.subscribe(id as string, cb), [id, controllerStore]),
     useCallback(() => controllerStore.getSnapshot(id), [id, controllerStore])
-  ) as ControllersMappingType[K]
+  ) as AllControllersMappingType[K]
 
   const dispatch = useCallback(
     (action: HookControllerAction<K>) => {
@@ -119,7 +129,7 @@ export default function useController<K extends keyof ControllersMappingType>(
   }
 
   return {
-    state: state || ({} as ControllersMappingType[K]),
+    state: state || ({} as AllControllersMappingType[K]),
     dispatch,
     ...ctrlSpecificMethods
   } as UseControllerReturn<K>
