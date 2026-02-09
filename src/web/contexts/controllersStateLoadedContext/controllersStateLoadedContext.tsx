@@ -3,6 +3,7 @@ import React, { createContext, useEffect, useMemo, useRef, useState } from 'reac
 import { ControllerInterface } from '@ambire-common/interfaces/controller'
 import { captureMessage } from '@common/config/analytics/CrashAnalytics.web'
 import { APP_VERSION } from '@common/config/env'
+import { isStateLoaded } from '@web/contexts/controllersStateLoadedContext//helpers'
 import { ControllersMappingType } from '@web/extension-services/background/types'
 import useAccountPickerControllerState from '@web/hooks/useAccountPickerControllerState'
 import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
@@ -40,12 +41,6 @@ const ControllersStateLoadedContext = createContext<{
 })
 
 const { isPopup } = getUiType()
-
-const isStateLoaded = (state: any) => {
-  if (!state || !Object.keys(state).length) return false
-  if ('isReady' in state) return state.isReady === true
-  return true
-}
 
 type Controllers = {
   [K in keyof ControllersMappingType]: ControllerInterface<ControllersMappingType[K]>
