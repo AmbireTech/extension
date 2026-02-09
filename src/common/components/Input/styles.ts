@@ -12,7 +12,7 @@ export interface Style {
   borderWrapper: ViewStyle
   inputWrapper: ViewStyle
   input: TextStyle
-  nativeInput: ViewStyle
+  nativeInput: TextStyle
   button: ViewStyle
   buttonWithBackground: ViewStyle
   bottomLabel: TextStyle

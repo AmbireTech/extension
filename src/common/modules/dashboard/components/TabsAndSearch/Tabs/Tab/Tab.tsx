@@ -81,11 +81,9 @@ const Tab = ({
           style={[
             styles.toggleItem,
             spacings.phLg,
-            {
-              opacity: disabled ? 0.4 : 1,
-              // @ts-ignore cursor is web only
-              cursor: disabled ? 'not-allowed' : 'pointer'
-            },
+            { opacity: disabled ? 0.4 : 1 },
+            // @ts-ignore react-native-web supports `cursor`, but it's missing from React Native StyleProp<ViewStyle> types
+            { cursor: disabled ? 'not-allowed' : 'pointer' },
             style
           ]}
         >
@@ -97,8 +95,8 @@ const Tab = ({
                   ? theme.primary
                   : theme.primaryBackground
                 : hovered
-                  ? theme.primaryText
-                  : theme.secondaryText
+                ? theme.primaryText
+                : theme.secondaryText
             }
             fontSize={14}
           >

@@ -447,19 +447,17 @@ const Button = ({
     <AnimatedPressable
       testID={testID}
       disabled={disabled}
-      style={
-        [
-          containerStylesSizes[size],
-          styles.buttonContainer,
-          containerStyles[type],
-          style,
-          !!accentColor && { borderColor: accentColor },
-          !hasBottomSpacing && spacings.mb0,
-          buttonContainerAnimatedStyle,
-          disabled && disabledStyle ? disabledStyle : {},
-          disabled && !disabledStyle ? styles.disabled : {}
-        ] as ViewStyle
-      }
+      style={[
+        containerStylesSizes[size],
+        styles.buttonContainer,
+        containerStyles[type],
+        style as ViewStyle, // TODO: too crazy to properly type, so temporarily cast
+        !!accentColor && { borderColor: accentColor },
+        !hasBottomSpacing && spacings.mb0,
+        buttonContainerAnimatedStyle,
+        disabled && disabledStyle ? disabledStyle : {},
+        disabled && !disabledStyle ? styles.disabled : {}
+      ]}
       {...rest}
       onHoverIn={(e) => {
         if (buttonTypesWithInnerContainer.includes(type)) return
