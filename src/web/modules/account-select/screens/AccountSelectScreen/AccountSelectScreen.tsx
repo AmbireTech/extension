@@ -110,7 +110,7 @@ const AccountSelectScreen = () => {
       width="lg"
       hideFooterInPopup
     >
-      <View style={[flexbox.flex1, spacings.pv]} ref={accountsContainerRef}>
+      <View style={[spacings.pt, flexbox.flex1]} ref={accountsContainerRef}>
         <Search autoFocus control={control} style={styles.searchBar} />
         <ScrollableWrapper
           type={WRAPPER_TYPES.FLAT_LIST}
