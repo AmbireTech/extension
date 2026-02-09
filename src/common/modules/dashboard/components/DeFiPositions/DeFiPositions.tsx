@@ -27,6 +27,7 @@ import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import { getUiType } from '@web/utils/uiType'
 
+import SearchAndCurrentApp from '../SearchAndCurrentApp'
 import DefiPositionsSkeleton from './DefiPositionsSkeleton'
 import DeFiPosition from './DeFiProviderPosition'
 import styles from './styles'
@@ -39,6 +40,7 @@ interface Props {
   onScroll: FlatListProps<any>['onScroll']
   dashboardNetworkFilterName: string | null
   animatedOverviewHeight: Animated.Value
+  isSearchHidden: boolean
 }
 
 const { isPopup } = getUiType()
@@ -50,7 +52,8 @@ const DeFiPositions: FC<Props> = ({
   sessionId,
   onScroll,
   dashboardNetworkFilterName,
-  animatedOverviewHeight
+  animatedOverviewHeight,
+  isSearchHidden
 }) => {
   const { t } = useTranslation()
   const { flags } = useFeatureFlagsControllerState()
@@ -129,7 +132,6 @@ const DeFiPositions: FC<Props> = ({
               openTab={openTab}
               setOpenTab={setOpenTab}
               currentTab="defi"
-              searchControl={control}
               sessionId={sessionId}
             />
             {currentAccountBanners.length > 0 && (
@@ -256,19 +258,22 @@ const DeFiPositions: FC<Props> = ({
   }, [filteredPositions, flags.tokenAndDefiAutoDiscovery, initTab?.defi, portfolio.isAllReady])
 
   return (
-    <DashboardPageScrollContainer
-      tab="defi"
-      openTab={openTab}
-      ListHeaderComponent={<DashboardBanners />}
-      data={dataItems}
-      renderItem={renderItem}
-      keyExtractor={keyExtractor}
-      onEndReachedThreshold={isPopup ? 5 : 2.5}
-      initialNumToRender={isPopup ? 10 : 20}
-      windowSize={9} // Larger values can cause performance issues.
-      onScroll={onScroll}
-      animatedOverviewHeight={animatedOverviewHeight}
-    />
+    <>
+      <DashboardPageScrollContainer
+        tab="defi"
+        openTab={openTab}
+        ListHeaderComponent={<DashboardBanners />}
+        data={dataItems}
+        renderItem={renderItem}
+        keyExtractor={keyExtractor}
+        onEndReachedThreshold={isPopup ? 5 : 2.5}
+        initialNumToRender={isPopup ? 10 : 20}
+        windowSize={9} // Larger values can cause performance issues.
+        onScroll={onScroll}
+        animatedOverviewHeight={animatedOverviewHeight}
+      />
+      {openTab === 'defi' && <SearchAndCurrentApp control={control} isHidden={isSearchHidden} />}
+    </>
   )
 }
 
