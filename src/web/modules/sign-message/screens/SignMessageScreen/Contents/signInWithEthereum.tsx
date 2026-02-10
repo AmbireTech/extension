@@ -329,9 +329,9 @@ const SignInWithEthereum = ({
             )}
           />
         )}
-        {signMessageState.signingKeyType && signMessageState.signingKeyType !== 'internal' && (
+        {signMessageState.signer && signMessageState.signer.key.type !== 'internal' && (
           <HardwareWalletSigningModal
-            keyType={signMessageState.signingKeyType}
+            keyType={signMessageState.signer.key.type}
             isVisible={signStatus === 'LOADING'}
           />
         )}
