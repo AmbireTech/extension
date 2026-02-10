@@ -164,6 +164,16 @@ const selectors = {
     walletPage: '//span[contains(text(),"WALLET")]',
     faqPage: '//span[contains(text(),"FAQ")]'
   },
+  sigtool: {
+    connectWalletButton: '.button-connect',
+    metamaskOption: 'div[class*="wallet-button-container"] >> text=MetaMask',
+    connectionSuccessfulText: '//div[contains(text(),"Connection Successful")]',
+    humanMessageTextbox: '.messageInputHeader',
+    signButton: '.actionContainer > button > span',
+    signatureResultTitleText: '.signatureResult-title',
+    autoLoginSwitch: 'label > input[type="checkbox"] ~ div',
+    signRequestForEVMText: '//div[contains(text(), "SigTool for EVM")]'
+  },
   account: 'account',
   importMethodTrezor: 'import-method-trezor',
   trezorConnectConfirmTerms: '@analytics/continue-button',
