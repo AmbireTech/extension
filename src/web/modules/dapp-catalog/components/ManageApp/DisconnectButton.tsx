@@ -10,7 +10,13 @@ import flexbox from '@common/styles/utils/flexbox'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
 
-const DisconnectButton = ({ dapp }: { dapp: Dapp }) => {
+const DisconnectButton = ({
+  dapp,
+  setIsOpen
+}: {
+  dapp: Dapp
+  setIsOpen: React.Dispatch<React.SetStateAction<boolean>>
+}) => {
   const { dispatch } = useBackgroundService()
   const { theme } = useTheme()
 
@@ -21,6 +27,7 @@ const DisconnectButton = ({ dapp }: { dapp: Dapp }) => {
       to: theme.errorBackground
     }
   })
+
   return (
     <AnimatedPressable
       {...bindAnim}
@@ -38,6 +45,7 @@ const DisconnectButton = ({ dapp }: { dapp: Dapp }) => {
           type: 'DAPPS_CONTROLLER_DISCONNECT_DAPP',
           params: { id: dapp.id, url: dapp.url }
         })
+        setIsOpen(false)
       }}
     >
       <View style={{ width: 20, height: 20, ...flexbox.center }}>

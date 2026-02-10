@@ -54,7 +54,7 @@ const NetworkOption = ({
     >
       <View style={flexbox.directionRow}>
         <NetworkIcon id={network.chainId.toString()} size={20} />
-        <Text fontSize={14} weight="medium" style={spacings.mlTy}>
+        <Text fontSize={14} weight="medium" style={[spacings.mlTy, spacings.mrMd]}>
           {network.name}
         </Text>
       </View>

@@ -47,16 +47,22 @@ const ManageApp = ({
   parentRef: React.RefObject<View | null>
   style?: ViewStyle
   isOpen: boolean
-  setIsOpen: (isOpen: boolean) => void
+  setIsOpen: React.Dispatch<React.SetStateAction<boolean>>
 }) => {
   const { theme } = useTheme()
   const menuRef = useRef<View>(null)
-  const [position, setPosition] = useState<{ top?: number; bottom?: number; left: number }>({
-    left: 0
+  const [position, setPosition] = useState<{
+    top?: number
+    bottom?: number
+    left: number
+    isAbove: boolean
+    isAlignedRight: boolean
+  }>({
+    left: 0,
+    isAbove: false,
+    isAlignedRight: false
   })
   const [menuSize, setMenuSize] = useState({ width: 0, height: 0 })
-  const [isAbove, setIsAbove] = useState(false)
-  const [isAlignedRight, setIsAlignedRight] = useState(false)
   const scaleAnim = useRef(new Animated.Value(0)).current
   const opacityAnim = useRef(new Animated.Value(0)).current
 
@@ -102,9 +108,7 @@ const ManageApp = ({
 
       left = Math.max(GAP, left)
 
-      setPosition({ ...verticalPos, left })
-      setIsAbove(positionAbove)
-      setIsAlignedRight(alignedRight)
+      setPosition({ ...verticalPos, left, isAbove: positionAbove, isAlignedRight: alignedRight })
     })
   }, [isOpen, parentRef, menuSize])
 
@@ -181,19 +185,19 @@ const ManageApp = ({
             {
               translateY: scaleAnim.interpolate({
                 inputRange: [0, 1],
-                outputRange: [isAbove ? 20 : -20, 0]
+                outputRange: [position.isAbove ? 20 : -20, 0]
               })
             },
             { scale: scaleAnim },
             {
               translateX: scaleAnim.interpolate({
                 inputRange: [0, 1],
-                outputRange: [isAlignedRight ? 20 : -20, 0]
+                outputRange: [position.isAlignedRight ? 20 : -20, 0]
               })
             }
           ],
-          transformOrigin: `${isAbove ? 'bottom' : 'top'} ${isAlignedRight ? 'right' : 'left'}`,
-
+          transformOrigin: `${position.isAbove ? 'bottom' : 'top'} ${position.isAlignedRight ? 'right' : 'left'}`,
+          minWidth: 216,
           opacity: opacityAnim,
           ...spacings.phTy,
           ...spacings.pvTy,
@@ -203,8 +207,8 @@ const ManageApp = ({
         }}
         ref={menuRef}
       >
-        <NetworkSelector dapp={dapp} isAbove={isAbove} />
-        <DisconnectButton dapp={dapp} />
+        <NetworkSelector dapp={dapp} isAbove={position.isAbove} />
+        <DisconnectButton dapp={dapp} setIsOpen={setIsOpen} />
         <AppData dapp={dapp} />
       </Animated.View>
     </Portal>
