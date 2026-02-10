@@ -132,7 +132,7 @@ const TransactionSummary = ({
       }}
       contentStyle={{
         paddingHorizontal: SPACING_SM,
-        paddingVertical: SPACING_TY * sizeMultiplier[size]
+        paddingVertical: !isHistory ? SPACING_TY * sizeMultiplier[size] : 0
       }}
       content={
         <>
