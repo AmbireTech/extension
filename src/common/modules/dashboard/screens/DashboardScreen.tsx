@@ -58,7 +58,7 @@ const DashboardScreen = () => {
       const scrollUpThreshold = 200
       const isOverviewExpanded =
         y < scrollDownThreshold || y < scrollUpStartedAt.current - scrollUpThreshold
-      const isSearchHidden = y > 50 && y > scrollUpStartedAt.current - 50
+      const isSearchHidden = y > 50 && y > scrollUpStartedAt.current - scrollUpThreshold
 
       setIsSearchHidden(isSearchHidden)
       Animated.spring(animatedOverviewHeight, {
