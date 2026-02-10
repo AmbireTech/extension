@@ -36,7 +36,9 @@ const SearchAndCurrentApp = ({ control, displayCurrentApp = false, isHidden }: P
         bottom: animatedBottom,
         width: '100%',
         ...flexbox.center,
-        zIndex: 3
+        zIndex: 3,
+        // Allow clicking elements behind
+        pointerEvents: 'none'
       }}
     >
       <GlassView
@@ -44,7 +46,8 @@ const SearchAndCurrentApp = ({ control, displayCurrentApp = false, isHidden }: P
           borderRadius: 28
         }}
         cssStyle={{
-          borderRadius: 28
+          borderRadius: 28,
+          pointerEvents: 'all'
         }}
       >
         <View style={[spacings.phTy, spacings.pvTy, flexbox.directionRow, flexbox.alignCenter]}>
