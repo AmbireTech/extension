@@ -545,6 +545,14 @@ type DappsControllerRemoveDappAction = {
   type: 'DAPP_CONTROLLER_REMOVE_DAPP'
   params: Dapp['id']
 }
+type DappsControllerGetCurrentDappAndSendResToUi = {
+  type: 'DAPPS_CONTROLLER_GET_CURRENT_DAPP_AND_SEND_RES_TO_UI'
+  params: {
+    requestId: string
+    dappId: string
+    currentSessionId?: string
+  }
+}
 
 type SwapAndBridgeControllerInitAction = {
   type: 'SWAP_AND_BRIDGE_CONTROLLER_INIT_FORM'
@@ -874,6 +882,7 @@ export type Action =
   | DappsControllerUpdateDappAction
   | ContractNamesGetName
   | DappsControllerRemoveDappAction
+  | DappsControllerGetCurrentDappAndSendResToUi
   | SwapAndBridgeControllerInitAction
   | SwapAndBridgeControllerUnloadScreenAction
   | SwapAndBridgeControllerUpdateFormAction
