@@ -2,8 +2,8 @@ import React, { useState } from 'react'
 import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
-import useDappsControllerState from '@web/hooks/useDappsControllerState'
 import DappControl from '@web/modules/dapp-catalog/components/DappControl'
 import ManageDapp from '@web/modules/dapp-catalog/components/ManageDapp'
 import { getUiType } from '@web/utils/uiType'
@@ -14,7 +14,7 @@ const { isPopup } = getUiType()
 
 const DAppFooter = () => {
   const { styles } = useTheme(getStyles)
-  const { currentDapp, isLoadingCurrentDapp } = useDappsControllerState()
+  const { currentDapp, isLoadingCurrentDapp } = useController('DappsController')
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const [hovered, setHovered] = useState(false)
 

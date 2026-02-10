@@ -44,6 +44,11 @@ export const handleActions = async (
   // @ts-ignore
   const { type, params } = action
   switch (type) {
+    case 'HANDSHAKE': {
+      if (!pm || !port) return
+      pm.sendToPort(port, '> ui', { method: 'portReady', params: {} })
+      break
+    }
     case 'UPDATE_PORT_URL': {
       if (!port) return
 
@@ -61,7 +66,7 @@ export const handleActions = async (
       if (!pm) return
 
       const ctrl = eventEmitterRegistry.values().find((c) => c.name === params.controller)
-      if (ctrl) pm.send('> ui', { method: params.controller, params: ctrl })
+      pm.send('> ui', { method: params.controller, params: ctrl ?? null })
 
       break
     }

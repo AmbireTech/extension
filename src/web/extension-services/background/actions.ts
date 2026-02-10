@@ -58,13 +58,28 @@ type InitControllerStateAction = {
   }
 }
 
-type MethodAction = {
+type HandshakeAction = {
+  type: 'HANDSHAKE'
+}
+
+type MethodKeys<T> = {
+  [K in keyof T]-?: T[K] extends (...args: any[]) => any ? K : never
+}[keyof T]
+
+type MethodActionParams = {
+  [K in keyof AllControllersMappingType]: {
+    ctrlName: K
+  } & {
+    [M in MethodKeys<AllControllersMappingType[K]>]: {
+      method: M
+      args: Parameters<Extract<AllControllersMappingType[K][M], (...args: any[]) => any>>
+    }
+  }[MethodKeys<AllControllersMappingType[K]>]
+}[keyof AllControllersMappingType]
+
+export type MethodAction = {
   type: 'method'
-  params: {
-    ctrlName: keyof AllControllersMappingType
-    method: string
-    args: unknown[]
-  }
+  params: MethodActionParams
 }
 
 type MainControllerAccountPickerInitLedgerAction = {
@@ -797,6 +812,7 @@ export type Action =
   | MainControllerSelectAccountAction
   | MainControllerAccountPickerSelectAccountAction
   | MainControllerAccountPickerDeselectAccountAction
+  | HandshakeAction
   | MainControllerAccountPickerResetAction
   | MainControllerAccountPickerInitAction
   | ResetAccountAddingOnPageErrorAction

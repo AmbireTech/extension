@@ -30,6 +30,7 @@ import { storage } from '@web/extension-services/background/webapi/storage'
 import eventBus from '@web/extension-services/event/eventBus'
 
 import { ControllersMiddlewareContext } from './context'
+import { ControllerHelpersStore } from './controllerHelpersStore'
 import { ControllerStore } from './controllerStore'
 
 export const CommonControllersMiddlewareProvider: React.FC<{
@@ -42,11 +43,30 @@ export const CommonControllersMiddlewareProvider: React.FC<{
   const ctrlOnUpdateIsDirtyFlags = useRef<Record<string, boolean>>({})
   const [isStoreReady, setIsStoreReady] = useState(false)
 
+  const [controllerStore] = useState(
+    () =>
+      new ControllerStore({
+        onInit: () => {
+          return Object.values(controllers.current).map((ctrl) => {
+            const ctrlName = ctrl.name as keyof AllControllersMappingType
+            controllerStore.update(ctrlName as any, ctrl)
+
+            return ctrlName
+          })
+        },
+        onReady: () => {
+          setIsStoreReady(true)
+        }
+      })
+  )
+
+  const [controllerHelpersStore] = useState(() => new ControllerHelpersStore())
+
   const debounceControllerUpdates = useCallback(
     (ctrlName: string, ctrl: EventEmitter, forceEmit?: boolean): 'DEBOUNCED' | 'EMITTED' => {
       if (forceEmit) {
         eventBus.emit(ctrlName, ctrl.toJSON(), forceEmit)
-        controllerStore.current.update(ctrlName as any, ctrl, forceEmit)
+        controllerStore.update(ctrlName as any, ctrl, forceEmit)
 
         return 'EMITTED'
       }
@@ -57,35 +77,19 @@ export const CommonControllersMiddlewareProvider: React.FC<{
       setTimeout(() => {
         if (ctrlOnUpdateIsDirtyFlags.current[ctrlName]) {
           eventBus.emit(ctrlName, ctrl.toJSON(), forceEmit)
-          controllerStore.current.update(ctrlName as any, ctrl, forceEmit)
+          controllerStore.update(ctrlName as any, ctrl, forceEmit)
         }
         ctrlOnUpdateIsDirtyFlags.current[ctrlName] = false
       }, 0)
 
       return 'EMITTED'
     },
-    []
-  )
-
-  const controllerStore = useRef<ControllerStore>(
-    new ControllerStore({
-      onInit: () => {
-        return Object.values(controllers.current).map((ctrl) => {
-          const ctrlName = ctrl.name as keyof AllControllersMappingType
-          controllerStore.current.update(ctrlName, ctrl)
-
-          return ctrlName
-        })
-      },
-      onReady: () => {
-        setIsStoreReady(true)
-      }
-    })
+    [controllerStore]
   )
 
   useEffect(() => {
-    controllerStore.current.init()
-  }, [])
+    controllerStore.init()
+  }, [controllerStore])
 
   const eventEmitterRegistry = useRef<EventEmitterRegistryController>(
     new EventEmitterRegistryController(() => {
@@ -411,8 +415,13 @@ export const CommonControllersMiddlewareProvider: React.FC<{
   return (
     <ControllersMiddlewareContext.Provider
       value={useMemo(
-        () => ({ dispatch, controllerStore: controllerStore.current, isStoreReady }),
-        [dispatch, isStoreReady]
+        () => ({
+          dispatch,
+          controllerStore,
+          controllerHelpersStore,
+          isStoreReady
+        }),
+        [dispatch, controllerStore, controllerHelpersStore, isStoreReady]
       )}
     >
       {children}

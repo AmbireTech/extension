@@ -6,13 +6,13 @@ import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
 import OpenIcon from '@common/assets/svg/OpenIcon'
 import Text from '@common/components/Text'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import getStyles from '@common/modules/dashboard/components/DeFiPositions/DeFiProviderPosition/styles'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@web/extension-services/background/webapi/tab'
-import useDappsControllerState from '@web/hooks/useDappsControllerState'
 import useHover, { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
 
 import Badge from './Badge'
@@ -55,7 +55,7 @@ const DeFiPositionHeader: FC<Props> = ({
 }) => {
   const {
     state: { dapps }
-  } = useDappsControllerState()
+  } = useController('DappsController')
   const { styles, theme, themeType } = useTheme(getStyles)
   const [bindAnim, animStyle] = useCustomHover({
     property: 'backgroundColor',

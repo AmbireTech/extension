@@ -28,7 +28,6 @@ import { AutoLockControllerStateProvider } from '@web/contexts/autoLockControlle
 import { BannerControllerStateProvider } from '@web/contexts/bannerControllerStateContext/bannerControllerStateContext'
 import { ContractNamesControllerStateProvider } from '@web/contexts/contractNamesControllerStateContext'
 import { ControllersStateLoadedProvider } from '@web/contexts/controllersStateLoadedContext'
-import { DappsControllerStateProvider } from '@web/contexts/dappsControllerStateContext'
 import { DomainsControllerStateProvider } from '@web/contexts/domainsControllerStateContext'
 import { EmailVaultControllerStateProvider } from '@web/contexts/emailVaultControllerStateContext'
 import { ExtensionUpdateControllerStateProvider } from '@web/contexts/extensionUpdateControllerStateContext'
@@ -80,7 +79,6 @@ const CONTROLLER_STATE_PROVIDERS: ProviderComponent[] = [
   BannerControllerStateProvider,
   EmailVaultControllerStateProvider,
   PhishingControllerStateProvider,
-  DappsControllerStateProvider,
   DomainsControllerStateProvider,
   ContractNamesControllerStateProvider,
   AddressBookControllerStateProvider,

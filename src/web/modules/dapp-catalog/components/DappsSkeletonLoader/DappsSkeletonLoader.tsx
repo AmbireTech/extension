@@ -6,16 +6,16 @@ import FailedToConnectIcon from '@common/assets/svg/FailedToConnectIcon'
 import Button from '@common/components/Button'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
+import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
-import useDappsControllerState from '@web/hooks/useDappsControllerState'
 
 const DappsSkeletonLoader = () => {
-  const { state } = useDappsControllerState()
+  const { state } = useController('DappsController')
   const { dispatch } = useControllersMiddleware()
   const { theme } = useTheme()
   const { t } = useTranslation()

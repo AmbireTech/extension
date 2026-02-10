@@ -3,6 +3,7 @@ import { useCallback, useContext, useEffect, useSyncExternalStore } from 'react'
 import { ProvidersController } from '@ambire-common/controllers/providers/providers'
 import { AllControllersMappingType } from '@common/constants/controllersMapping'
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext/context'
+import { ControllerHelpersMapping } from '@common/contexts/controllersMiddlewareContext/controllerHelpersStore'
 import { AnyControllerAction } from '@common/contexts/controllersMiddlewareContext/types'
 import AutoLockController from '@web/extension-services/background/controllers/auto-lock'
 
@@ -52,7 +53,8 @@ interface ControllerLogicRegistry {
 }
 
 type UseControllerReturn<K extends keyof AllControllersMappingType> = BaseControllerReturn<K> &
-  (K extends keyof ControllerLogicRegistry ? ControllerLogicRegistry[K] : {})
+  (K extends keyof ControllerLogicRegistry ? ControllerLogicRegistry[K] : {}) &
+  (K extends keyof ControllerHelpersMapping ? ControllerHelpersMapping[K] : {})
 
 export default function useController<K extends keyof AllControllersMappingType>(
   id: K
@@ -65,6 +67,7 @@ export default function useController<K extends keyof AllControllersMappingType>
 
   const {
     controllerStore,
+    controllerHelpersStore,
     isStoreReady,
     dispatch: controllersMiddlewareDispatch
   } = controllersMiddleware
@@ -76,9 +79,14 @@ export default function useController<K extends keyof AllControllersMappingType>
   }, [controllerStore, id, isStoreReady])
 
   const state = useSyncExternalStore(
-    useCallback((cb) => controllerStore.subscribe(id as string, cb), [id, controllerStore]),
+    useCallback((cb) => controllerStore.subscribe(id, cb), [id, controllerStore]),
     useCallback(() => controllerStore.getSnapshot(id), [id, controllerStore])
   ) as AllControllersMappingType[K]
+
+  const helpers = useSyncExternalStore(
+    useCallback((cb) => controllerHelpersStore.subscribe(id, cb), [id, controllerHelpersStore]),
+    useCallback(() => controllerHelpersStore.getSnapshot(id), [id, controllerHelpersStore])
+  )
 
   const dispatch = useCallback(
     (action: HookControllerAction<K>) => {
@@ -102,23 +110,12 @@ export default function useController<K extends keyof AllControllersMappingType>
     ctrlSpecificMethods = providersLogic
   }
 
-  if (id === 'AutoLockController') {
-    useAutoLockController(
-      state as AutoLockController,
-      dispatch as unknown as Dispatch<'AutoLockController'>
-    )
-  }
-
-  if (id === 'DappsController') {
-    // TODO:
-  }
-
-  if (id === 'KeystoreController' || id === 'MainController') {
-    useKeystoreController(
-      controllerStore.getSnapshot('KeystoreController'),
-      controllerStore.getSnapshot('MainController')
-    )
-  }
+  // if (id === 'KeystoreController' || id === 'MainController') {
+  //   useKeystoreController(
+  //     controllerStore.getSnapshot('KeystoreController'),
+  //     controllerStore.getSnapshot('MainController')
+  //   )
+  // }
 
   if (id === 'RequestsController') {
     // TODO:
@@ -130,7 +127,8 @@ export default function useController<K extends keyof AllControllersMappingType>
 
   return {
     state: state || ({} as AllControllersMappingType[K]),
-    dispatch,
-    ...ctrlSpecificMethods
+    ...(helpers || ({} as ControllerHelpersMapping[K])),
+    ...ctrlSpecificMethods,
+    dispatch
   } as UseControllerReturn<K>
 }

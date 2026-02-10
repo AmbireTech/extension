@@ -6,14 +6,12 @@ import { APP_VERSION } from '@common/config/env'
 import { AllControllersMappingType } from '@common/constants/controllersMapping'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import { isStateLoaded } from '@web/contexts/controllersStateLoadedContext//helpers'
-import { ControllersMappingType } from '@web/extension-services/background/types'
 import useAccountPickerControllerState from '@web/hooks/useAccountPickerControllerState'
 import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
 import useActivityControllerState from '@web/hooks/useActivityControllerState'
 import useAddressBookControllerState from '@web/hooks/useAddressBookControllerState'
 import useBannersControllerState from '@web/hooks/useBannersControllerState'
 import useContractNamesControllerState from '@web/hooks/useContractNamesController/useContractNamesController'
-import useDappsControllerState from '@web/hooks/useDappsControllerState'
 import useDomainsControllerState from '@web/hooks/useDomainsController/useDomainsController'
 import useEmailVaultControllerState from '@web/hooks/useEmailVaultControllerState'
 import useExtensionUpdateControllerState from '@web/hooks/useExtensionUpdateControllerState'
@@ -86,7 +84,6 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
   const PortfolioController = usePortfolioControllerState()
   const EmailVaultController = useEmailVaultControllerState()
   const PhishingController = usePhishingControllerState()
-  const DappsController = useDappsControllerState().state
   const AddressBookController = useAddressBookControllerState()
   const DomainsController = useDomainsControllerState().state
   const InviteController = useInviteControllerState()
@@ -96,7 +93,7 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
   const ExtensionUpdateController = useExtensionUpdateControllerState()
   const FeatureFlagsController = useFeatureFlagsControllerState()
 
-  const controllers: ControllersToWait = useMemo(
+  const controllers: any = useMemo(
     () => ({
       AccountPickerController,
       KeystoreController,
@@ -114,7 +111,6 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
       PortfolioController,
       EmailVaultController,
       PhishingController,
-      DappsController,
       AddressBookController,
       DomainsController,
       InviteController,
@@ -141,7 +137,6 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
       PortfolioController,
       EmailVaultController,
       PhishingController,
-      DappsController,
       AddressBookController,
       DomainsController,
       InviteController,

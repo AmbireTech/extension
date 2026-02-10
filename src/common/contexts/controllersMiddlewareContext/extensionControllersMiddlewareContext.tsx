@@ -17,9 +17,12 @@ import { Action } from '@web/extension-services/background/actions'
 import { closeCurrentWindow } from '@web/extension-services/background/webapi/window'
 import eventBus from '@web/extension-services/event/eventBus'
 import { PortMessenger } from '@web/extension-services/messengers'
+import useAutoLockControllerHelpers from '@web/hooks/useAutoLockControllerHelpers'
+import useDappsControllerHelpers from '@web/hooks/useDappsControllerHelpers'
 import { getUiType } from '@web/utils/uiType'
 
 import { ControllersMiddlewareContext } from './context'
+import { ControllerHelpersStore } from './controllerHelpersStore'
 import { ControllerStore } from './controllerStore'
 
 let globalDispatch: ControllersMiddlewareContextReturnType['dispatch']
@@ -75,6 +78,10 @@ if (isExtension) {
         eventBus.emit(method, params)
       }
     })
+
+    setTimeout(() => {
+      pm.send('> background', { type: 'HANDSHAKE' })
+    }, 1)
 
     // Use at least 1000ms; on slower PCs, background responses can be slightly delayed,
     // causing multiple recursive connectPort calls and slowing down window initialization.
@@ -136,37 +143,38 @@ export const ExtensionControllersMiddlewareProvider: React.FC<{ children: React.
   const hasConnectedToTheBackground = useRef(false)
   const [isStoreReady, setIsStoreReady] = useState(false)
 
-  const controllerStore = useRef<ControllerStore>(
-    new ControllerStore({
-      onInit: () => {
-        const controllersByName = Object.keys(
-          controllersMapping
-        ) as (keyof AllControllersMappingType)[]
+  const [controllerStore] = useState<ControllerStore>(
+    () =>
+      new ControllerStore({
+        onInit: () => {
+          const controllersByName = Object.keys(
+            controllersMapping
+          ) as (keyof AllControllersMappingType)[]
 
-        controllersByName.forEach((key) => {
-          dispatch({
-            type: 'INIT_CONTROLLER_STATE',
-            params: { controller: key as keyof typeof controllersMapping }
+          controllersByName.forEach((key) => {
+            dispatch({
+              type: 'INIT_CONTROLLER_STATE',
+              params: { controller: key as keyof typeof controllersMapping }
+            })
           })
-        })
 
-        return controllersByName
-      },
-      onReady: () => {
-        setIsStoreReady(true)
-      }
-    })
+          return controllersByName
+        },
+        onReady: () => {
+          setIsStoreReady(true)
+        }
+      })
   )
 
   useEffect(() => {
     const initControllers = () => {
-      controllerStore.current.init()
+      controllerStore.init()
     }
 
     eventBus.addEventListener('onReady', initControllers)
 
     return () => eventBus.removeEventListener('onReady', initControllers)
-  }, [])
+  }, [controllerStore])
 
   useEffect(() => {
     if (!isExtension) return
@@ -263,13 +271,13 @@ export const ExtensionControllersMiddlewareProvider: React.FC<{ children: React.
 
   useEffect(() => {
     const onCtrlUpdate = ({ ctrlName, ctrlState }: { ctrlName: string; ctrlState: any }) => {
-      controllerStore.current.update(ctrlName as any, ctrlState)
+      if ((controllersMapping as any)[ctrlName]) controllerStore.update(ctrlName as any, ctrlState)
     }
 
     eventBus.addEventListener('ctrlUpdate', onCtrlUpdate)
 
     return () => eventBus.removeEventListener('ctrlUpdate', onCtrlUpdate)
-  }, [])
+  }, [controllerStore])
 
   useEffect(() => {
     const onError = (newState: { errors: ErrorRef[]; controller: string }) => {
@@ -315,11 +323,21 @@ export const ExtensionControllersMiddlewareProvider: React.FC<{ children: React.
     [windowId]
   )
 
+  const [controllerHelpersStore] = useState(() => new ControllerHelpersStore())
+  useDappsControllerHelpers(controllerStore, controllerHelpersStore, dispatch)
+  useAutoLockControllerHelpers(controllerStore, dispatch)
+
   return (
     <ControllersMiddlewareContext.Provider
       value={useMemo(
-        () => ({ dispatch, controllerStore: controllerStore.current, windowId, isStoreReady }),
-        [dispatch, windowId, isStoreReady]
+        () => ({
+          dispatch,
+          controllerStore,
+          controllerHelpersStore,
+          windowId,
+          isStoreReady
+        }),
+        [dispatch, controllerHelpersStore, controllerStore, windowId, isStoreReady]
       )}
     >
       {children}

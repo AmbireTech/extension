@@ -8,10 +8,16 @@ type ControllerId = keyof AllControllersMappingType
 
 export class ControllerStore {
   #states: Partial<AllControllersMappingType> = {}
+
   #listeners: Map<string, Set<() => void>> = new Map()
+
   #controllersByName: ControllerId[] = []
+
   #onInit: () => ControllerId[]
+
   #onReady: () => void
+
+  static readonly #EMPTY_STATE = Object.freeze({})
 
   constructor({ onInit, onReady }: { onInit: () => ControllerId[]; onReady: () => void }) {
     this.#onInit = onInit
@@ -22,7 +28,10 @@ export class ControllerStore {
   initializedControllers: Set<ControllerId> = new Set()
 
   init() {
-    if (this.#controllersByName.length) return
+    if (this.#controllersByName.length) {
+      this.#checkReadiness()
+      return
+    }
 
     this.#controllersByName = this.#onInit()
     this.#checkReadiness()
@@ -64,7 +73,7 @@ export class ControllerStore {
   }
 
   getSnapshot<K extends ControllerId>(id: K): AllControllersMappingType[K] {
-    return this.#states[id] || ({} as AllControllersMappingType[K])
+    return this.#states[id] || (ControllerStore.#EMPTY_STATE as AllControllersMappingType[K])
   }
 
   #checkReadiness() {
@@ -72,6 +81,13 @@ export class ControllerStore {
     // Check if every required controller exists in the initialized set
     const allReady = Array.from(this.#controllersByName).every((ctrlName) =>
       this.initializedControllers.has(ctrlName)
+    )
+
+    console.log(
+      'not ready',
+      Array.from(this.#controllersByName).filter(
+        (ctrlName) => !this.initializedControllers.has(ctrlName)
+      )
     )
 
     if (allReady) !!this.#onReady && this.#onReady()
