@@ -9,7 +9,7 @@ export class SpeculosDevice {
   }
 
   pressButton(button: Button, action: ButtonAction = 'press-and-release') {
-    return this.client.post('/button', { button, action })
+    return this.client.post(`/button/${button}`, { action })
   }
 
   pressLeftButton() {
