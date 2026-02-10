@@ -8,7 +8,7 @@
   cursor: pointer;
   isolation: isolate;
   /* These come from injected styles */
-  background: linear-gradient(135deg, var(--glass-tint-color-1) 0%, var(--glass-tint-color-2) 100%);
+  background: linear-gradient(135deg, var(--glass-tint-color-2) 0%, var(--glass-tint-color-1) 50%);
 
   backdrop-filter: blur(var(--glass-blur-amount));
 

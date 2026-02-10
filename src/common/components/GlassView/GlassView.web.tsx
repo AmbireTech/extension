@@ -22,7 +22,7 @@ const GlassView: React.FC<GlassViewProps & ViewProps> = ({
 
   const customProperties = {
     '--glass-tint-color-1': tintColor1 || hexToRgba('#D1D1D1', 0.16),
-    '--glass-tint-color-2': tintColor2 || hexToRgba(theme.primaryBackground, 0.12),
+    '--glass-tint-color-2': tintColor2 || hexToRgba('#D1D1D1', 0.06),
     '--glass-shine-color':
       shineColor || (themeType === THEME_TYPES.LIGHT ? '#fff' : hexToRgba('#FFFFFF', 0.2)),
     '--glass-blur-amount': `${blurAmount}px`,
