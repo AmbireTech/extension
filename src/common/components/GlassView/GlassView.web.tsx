@@ -32,6 +32,7 @@ const GlassView: React.FC<GlassViewProps & ViewProps> = ({
   return (
     <div className="liquidGlass" style={customProperties} data-testID={testID}>
       {children}
+      <div className="shine" />
     </div>
   )
 }

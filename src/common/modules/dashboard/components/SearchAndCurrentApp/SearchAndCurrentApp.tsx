@@ -44,8 +44,7 @@ const SearchAndCurrentApp = ({ control, displayCurrentApp = false, isHidden }: P
           borderRadius: 28
         }}
         cssStyle={{
-          borderRadius: 28,
-          overflow: 'hidden'
+          borderRadius: 28
         }}
       >
         <View style={[spacings.phTy, spacings.pvTy, flexbox.directionRow, flexbox.alignCenter]}>

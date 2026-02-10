@@ -92,7 +92,7 @@ const Tabs: React.FC<Props> = ({ openTab, setOpenTab, handleChangeQuery }) => {
 
           if (pendingBanner) {
             badgeText = pendingBanner.meta!.accountOpsCount
-            badgeTextAppearance = theme.success200
+            badgeTextAppearance = theme.info300
           }
         }
 
@@ -129,7 +129,7 @@ const Tabs: React.FC<Props> = ({ openTab, setOpenTab, handleChangeQuery }) => {
                   {type === 'activity' && !!pendingBanner ? (
                     <Spinner
                       style={{ width: '100%', height: '100%', position: 'absolute' }}
-                      variant="gradient"
+                      variant="info"
                     />
                   ) : (
                     <View

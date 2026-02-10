@@ -4,7 +4,6 @@
   position: relative;
   display: flex;
   font-weight: 600;
-  overflow: hidden;
   cursor: pointer;
   isolation: isolate;
   /* These come from injected styles */
@@ -15,14 +14,29 @@
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 2.2);
 }
 
-.liquidGlass::before {
-  content: '';
+/* Recreating the parent div to apply the effect on it.
+This is done as we don't want to put overflow: hidden
+on the parent as it would clip the children and break
+things like dropdown menus */
+.liquidGlass .shine {
+  overflow: hidden;
   position: absolute;
   left: 0;
   top: 0;
   width: 100%;
   height: 100%;
-  z-index: 2;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.liquidGlass .shine::before {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
   pointer-events: none;
   box-shadow: inset 0px 0px 2px 1.5px var(--glass-shine-color);
   border-top-left-radius: inherit;
