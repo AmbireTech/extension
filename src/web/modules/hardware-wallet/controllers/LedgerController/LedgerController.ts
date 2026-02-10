@@ -18,6 +18,7 @@ import { Signature, SignerEthBuilder, TypedDataDomain } from '@ledgerhq/device-s
 import { speculosTransportFactory } from '@ledgerhq/device-transport-kit-speculos'
 import { webHidTransportFactory } from '@ledgerhq/device-transport-kit-web-hid'
 import { isVivaldi } from '@web/constants/browserapi'
+
 console.log({ speculosTransportFactory })
 const IS_SPECULOS_TRANSPORT =
   typeof process !== 'undefined' && !!process.env && process.env.LEDGER_TRANSPORT === 'speculos'
@@ -116,6 +117,8 @@ class LedgerController implements ExternalSignerController {
    * to open the device selection prompt (click on a button, etc.).
    */
   static grantDevicePermissionIfNeeded = async () => {
+    if (IS_SPECULOS_TRANSPORT) return
+
     const dmk = new DeviceManagementKitBuilder()
       // .addLogger(new ConsoleLogger()) // for debugging only
       .addTransport(webHidTransportFactory)
@@ -249,8 +252,30 @@ class LedgerController implements ExternalSignerController {
         deviceId: this.deviceId
       })
 
+      // TODO: Figure out why this is required for speculos and if it can be imported from somewhere?
       // Create the signer using the dynamically imported constructor
-      const contextModule = new ContextModuleBuilder({ originToken: 'ambire' }).build()
+      // Create a simple logger factory for ContextModule
+      // LoggerPublisherService requires: subscribers array and error/warn/info/debug methods
+      const loggerFactory = (tag: string) => ({
+        subscribers: [],
+        error: (message: string) => {
+          console.error(`[ContextModule:${tag}]`, message)
+        },
+        warn: (message: string) => {
+          console.warn(`[ContextModule:${tag}]`, message)
+        },
+        info: (message: string) => {
+          console.info(`[ContextModule:${tag}]`, message)
+        },
+        debug: (message: string) => {
+          console.debug(`[ContextModule:${tag}]`, message)
+        }
+      })
+
+      const contextModule = new ContextModuleBuilder({
+        originToken: 'ambire',
+        loggerFactory
+      }).build()
       this.signerEth = new SignerEthBuilder({ dmk: this.walletSDK, sessionId })
         .withContextModule(contextModule)
         .build()
