@@ -79,7 +79,7 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
       },
       {
         key: 'receive-cashback',
-        icon: <ReceivingIcon width={32} height={32} fillColor={theme.primary} />,
+        icon: <ReceivingIcon width={32} height={32} fillColor={theme.primaryAccent} />,
         text: 'Receive cashback from your transactions in your Gas Tank.'
       },
       {
@@ -88,24 +88,14 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
           <SavingsIcon
             width={32}
             height={32}
-            color={
-              themeType === THEME_TYPES.DARK
-                ? theme.primaryBackgroundInverted
-                : theme.primaryBackground
-            }
+            color={theme.iconPrimary}
             fillColor={theme.successDecorative}
           />
         ),
         text: 'Save on network fees by prepaying with Gas Tank.'
       }
     ],
-    [
-      theme.successDecorative,
-      theme.primary,
-      themeType,
-      theme.primaryBackgroundInverted,
-      theme.primaryBackground
-    ]
+    [theme.iconPrimary, theme.primaryAccent, theme.successDecorative]
   )
 
   useEffect(() => {
@@ -180,13 +170,11 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
             style={{
               borderRadius: 28,
               ...spacings.phSm,
-              ...spacings.pvSm,
-              width: '100%'
+              ...spacings.pvSm
             }}
             cssStyle={{
               borderRadius: 28,
-              padding: 12,
-              width: '100%'
+              padding: 12
             }}
           >
             <View
