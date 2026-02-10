@@ -19,13 +19,14 @@ import { speculosTransportFactory } from '@ledgerhq/device-transport-kit-speculo
 import { webHidTransportFactory } from '@ledgerhq/device-transport-kit-web-hid'
 import { isVivaldi } from '@web/constants/browserapi'
 
-console.log({ speculosTransportFactory })
-const IS_SPECULOS_TRANSPORT =
-  typeof process !== 'undefined' && !!process.env && process.env.LEDGER_TRANSPORT === 'speculos'
+const LedgerEnv = {
+  isSpeculos:
+    typeof process !== 'undefined' && !!process.env && process.env.LEDGER_TRANSPORT === 'speculos',
 
-const SPECULOS_HTTP_URL =
-  (typeof process !== 'undefined' && process.env && process.env.SPECULOS_HTTP_URL) ||
-  'http://127.0.0.1:5000'
+  speculosHttpUrl:
+    (typeof process !== 'undefined' && process.env && process.env.SPECULOS_HTTP_URL) ||
+    'http://127.0.0.1:5000'
+} as const
 
 export { LedgerDeviceModels }
 export type LedgerSignature = Signature
@@ -58,7 +59,7 @@ class LedgerController implements ExternalSignerController {
   constructor() {
     // TODO: Bluetooth support?
     // When running in CI with Speculos, we use HTTP transport instead of WebHID.
-    this.isSpeculos = IS_SPECULOS_TRANSPORT
+    this.isSpeculos = LedgerEnv.isSpeculos
     this.isWebHID = !this.isSpeculos
 
     // When the `cleanUpListener` method gets passed to the navigator.hid listeners
@@ -85,7 +86,7 @@ class LedgerController implements ExternalSignerController {
    * Note: WebHID API is not available in service workers in manifest v3.
    */
   static isSupported = () =>
-    IS_SPECULOS_TRANSPORT ||
+    LedgerEnv.isSpeculos ||
     (typeof navigator !== 'undefined' && navigator !== null && 'hid' in navigator)
 
   /**
@@ -93,7 +94,7 @@ class LedgerController implements ExternalSignerController {
    * In Speculos mode, we assume the simulator is reachable when enabled.
    */
   static isConnected = async () => {
-    if (IS_SPECULOS_TRANSPORT) return true
+    if (LedgerEnv.isSpeculos) return true
 
     if (!('hid' in navigator)) return false
 
@@ -115,9 +116,10 @@ class LedgerController implements ExternalSignerController {
    * Grant permission to the extension service worker to access an HID device.
    * Should be called only from the foreground and it requires a user gesture
    * to open the device selection prompt (click on a button, etc.).
+   * In Speculos mode we don't need to grant permission, because communication is over HTTP and doesn't require it.
    */
   static grantDevicePermissionIfNeeded = async () => {
-    if (IS_SPECULOS_TRANSPORT) return
+    if (LedgerEnv.isSpeculos) return
 
     const dmk = new DeviceManagementKitBuilder()
       // .addLogger(new ConsoleLogger()) // for debugging only
@@ -211,106 +213,106 @@ class LedgerController implements ExternalSignerController {
    * is an existing SDK instance and creates a new one if needed.
    */
   async #initSDKSessionIfNeeded() {
-    if (!this.isSpeculos) {
-      const isConnected = await LedgerController.isConnected()
-      if (!isConnected)
-        throw new ExternalSignerError("Ledger is not connected. Please make sure it's plugged in.")
-    }
-
     if (this.walletSDK) return
 
-    try {
-      const dmkBuilder = new DeviceManagementKitBuilder()
-      // .addLogger(new ConsoleLogger()) // for debugging only
-
-      if (this.isSpeculos) {
-        dmkBuilder.addTransport(speculosTransportFactory(SPECULOS_HTTP_URL))
-      } else {
-        dmkBuilder.addTransport(webHidTransportFactory)
+    if (!this.isSpeculos) {
+      const isConnected = await LedgerController.isConnected()
+      if (!isConnected) {
+        throw new ExternalSignerError("Ledger is not connected. Please make sure it's plugged in.")
       }
+    }
 
-      this.walletSDK = dmkBuilder.build()
+    try {
+      this.walletSDK = this.#buildWalletSDK()
 
       const device = await this.#findDevice()
-      console.log({ device })
-
       if (!device) throw new Error('No Ledger device detected.')
-      if (!this.walletSDK) throw new Error('Connection to Ledger device lost.')
 
-      // Get device information
       const sessionId = await this.walletSDK.connect({ device })
-      console.log({ sessionId })
 
-      const connectedDevice = this.walletSDK.getConnectedDevice({ sessionId })
-      this.deviceModel = connectedDevice.modelId
-      this.deviceId = connectedDevice.id
+      this.#setConnectedDeviceInfo(sessionId)
+      this.signerEth = this.#buildEthSigner(sessionId)
 
-      console.log({
-        sessionId,
-        connectedDevice,
-        deviceModel: this.deviceModel,
-        deviceId: this.deviceId
-      })
-
-      // TODO: Figure out why this is required for speculos and if it can be imported from somewhere?
-      // Create the signer using the dynamically imported constructor
-      // Create a simple logger factory for ContextModule
-      // LoggerPublisherService requires: subscribers array and error/warn/info/debug methods
-      const loggerFactory = (tag: string) => ({
-        subscribers: [],
-        error: (message: string) => {
-          console.error(`[ContextModule:${tag}]`, message)
-        },
-        warn: (message: string) => {
-          console.warn(`[ContextModule:${tag}]`, message)
-        },
-        info: (message: string) => {
-          console.info(`[ContextModule:${tag}]`, message)
-        },
-        debug: (message: string) => {
-          console.debug(`[ContextModule:${tag}]`, message)
-        }
-      })
-
-      const contextModule = new ContextModuleBuilder({
-        originToken: 'ambire',
-        loggerFactory
-      }).build()
-      this.signerEth = new SignerEthBuilder({ dmk: this.walletSDK, sessionId })
-        .withContextModule(contextModule)
-        .build()
-
-      // To clean up no matter if the device is in the middle of an operation or not
-      navigator.hid.addEventListener('disconnect', this.cleanUpListener)
+      this.#attachDisconnectListener()
     } catch (e: any) {
+      await this.cleanUp()
       throw new ExternalSignerError(normalizeLedgerMessage(e?.message))
+    }
+  }
+
+  #buildWalletSDK() {
+    const builder = new DeviceManagementKitBuilder()
+    // .addLogger(new ConsoleLogger())
+
+    builder.addTransport(
+      this.isSpeculos ? speculosTransportFactory(LedgerEnv.speculosHttpUrl) : webHidTransportFactory
+    )
+
+    return builder.build()
+  }
+
+  #setConnectedDeviceInfo(sessionId: string) {
+    if (!this.walletSDK) throw new Error('Connection to Ledger device lost.')
+
+    const device = this.walletSDK.getConnectedDevice({ sessionId })
+    this.deviceModel = device.modelId
+    this.deviceId = device.id
+  }
+
+  #buildEthSigner(sessionId: string) {
+    const contextModule = new ContextModuleBuilder({
+      originToken: 'ambire',
+      loggerFactory: this.#createContextLogger
+    }).build()
+
+    return new SignerEthBuilder({ dmk: this.walletSDK!, sessionId })
+      .withContextModule(contextModule)
+      .build()
+  }
+
+  #createContextLogger = (tag: string) => ({
+    subscribers: [],
+    error: (message: string) => console.error(`[ContextModule:${tag}]`, message),
+    warn: (message: string) => console.warn(`[ContextModule:${tag}]`, message),
+    info: (message: string) => console.info(`[ContextModule:${tag}]`, message),
+    debug: (message: string) => console.debug(`[ContextModule:${tag}]`, message)
+  })
+
+  #attachDisconnectListener() {
+    if ('hid' in navigator) {
+      navigator.hid.addEventListener('disconnect', this.cleanUpListener)
     }
   }
 
   #findDevice = () =>
     new Promise<DiscoveredDevice>((resolve, reject) => {
-      let subscription: Subscription | undefined // may be undefined if observable emits synchronously
+      let subscription: Subscription | undefined
       let isCancelled = false
-      // eslint-disable-next-line prefer-const
+
+      const cleanup = () => {
+        subscription?.unsubscribe()
+        subscription = undefined
+      }
+
       subscription = this.walletSDK!.listenToAvailableDevices({}).subscribe({
         next: (devices) => {
           if (isCancelled) return
-          if (devices && devices.length) {
-            if (subscription) subscription.unsubscribe()
+          if (devices?.length) {
+            cleanup()
             // TODO: Multiple devices found?
             resolve(devices[0]!)
           }
         },
         error: (error) => {
           if (isCancelled) return
-          if (subscription) subscription.unsubscribe()
+          cleanup()
           reject(new Error(error?.message))
         }
       })
 
       this.#rejectSigningSubscription = () => {
         isCancelled = true
-        if (subscription) subscription.unsubscribe()
+        cleanup()
         reject(new ExternalSignerError('Operation cancelled by user'))
       }
     })
@@ -332,6 +334,11 @@ class LedgerController implements ExternalSignerController {
       let subscription: Subscription | undefined // may be undefined if observable emits synchronously
       let isCancelled = false
 
+      const cleanup = () => {
+        subscription?.unsubscribe()
+        subscription = undefined
+      }
+
       // eslint-disable-next-line prefer-const
       subscription = observable.subscribe({
         next: (response: any) => {
@@ -345,7 +352,7 @@ class LedgerController implements ExternalSignerController {
             )
 
           if (missingRequiredUserInteraction) {
-            if (subscription) subscription.unsubscribe()
+            cleanup()
             reject(
               new ExternalSignerError(
                 normalizeLedgerMessage(response.intermediateValue.requiredUserInteraction)
@@ -354,7 +361,7 @@ class LedgerController implements ExternalSignerController {
           }
 
           if (response.status === 'error') {
-            if (subscription) subscription.unsubscribe()
+            cleanup()
             // @ts-ignore Ledger types not being resolved correctly in the SDK
             const deviceMessage =
               response.error?.message || response.error?._tag || 'no response from device'
@@ -367,7 +374,7 @@ class LedgerController implements ExternalSignerController {
 
           if (response.status !== 'completed') return
 
-          if (subscription) subscription.unsubscribe()
+          cleanup()
           if (response?.output) {
             resolve(onCompleted(response.output))
           } else {
@@ -375,7 +382,7 @@ class LedgerController implements ExternalSignerController {
           }
         },
         error: (error: any) => {
-          if (subscription) subscription.unsubscribe()
+          cleanup()
           reject(new ExternalSignerError(normalizeLedgerMessage(error?.message)))
         }
       })
@@ -383,7 +390,7 @@ class LedgerController implements ExternalSignerController {
       if (isSign) {
         this.#rejectSigningSubscription = () => {
           isCancelled = true
-          if (subscription) subscription.unsubscribe()
+          cleanup()
           reject(new ExternalSignerError('Operation cancelled by user'))
         }
       }
@@ -435,14 +442,14 @@ class LedgerController implements ExternalSignerController {
     const keys: string[] = []
     let latestGetAddressError: ExternalSignerError | undefined
 
-    for (let i = 0; i < paths.length; i++) {
+    for (const path of paths) {
       try {
         // Purposely await in loop to avoid sending multiple requests at once.
         // Send them 1 by 1, the Ledger device can't handle them in parallel,
         // it throws a "device busy" error.
         // eslint-disable-next-line no-await-in-loop
         const key = await this.#handleLedgerSubscription(
-          this.signerEth!.getAddress(getHdPathWithoutRoot(paths[i])!, {
+          this.signerEth!.getAddress(getHdPathWithoutRoot(path), {
             checkOnDevice: false,
             returnChainCode: false
           }).observable,
