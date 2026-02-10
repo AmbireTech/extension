@@ -13,12 +13,12 @@ import ManageApp from '@web/modules/dapp-catalog/components/ManageApp'
 const CurrentApp = () => {
   const { theme } = useTheme()
   const { t } = useTranslation()
-  const { currentDapp } = useDappsControllerState()
+  const { currentDapp, isLoadingCurrentDapp } = useDappsControllerState()
   const [isManageAppExpanded, setIsManageAppExpanded] = useState(false)
   const isBlacklisted = currentDapp?.blacklisted === 'BLACKLISTED'
   const pressableRef = useRef<View>(null)
 
-  if (!currentDapp) return null
+  if (!currentDapp || isLoadingCurrentDapp) return null
 
   return (
     // Wrap on purpose so ManageApp is outside the pressable

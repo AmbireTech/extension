@@ -618,6 +618,9 @@ export const handleActions = async (
 
       break
     }
+    case 'DAPPS_CONTROLLER_GET_CURRENT_DAPP_AND_SEND_RES_TO_UI': {
+      return mainCtrl.dapps.getCurrentDappAndSendResToUi(params)
+    }
     case 'CHANGE_CURRENT_DAPP_NETWORK': {
       mainCtrl.dapps.updateDapp(params.id, { chainId: params.chainId })
       await mainCtrl.dapps.broadcastDappSessionEvent(
