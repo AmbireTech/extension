@@ -269,8 +269,8 @@ const Button = ({
       secondary: [
         {
           property: 'color',
-          from: '#fff',
-          to: '#fff'
+          from: theme.primaryText,
+          to: theme.primaryText
         }
       ],
       danger: [
