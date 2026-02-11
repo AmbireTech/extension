@@ -238,7 +238,7 @@ const useGetTokenSelectProps = ({
               </Text>
             )}
           </Text>
-          <Text numberOfLines={1} fontSize={12} appearance="secondaryText">
+          <Text numberOfLines={1} fontSize={12} appearance="secondaryText" weight="mono_regular">
             {isNative && 'Native'}
             {!isNative && isSelected && shortenAddress(currentToken.address, 13)}
             {!isNative && !isSelected && currentToken.address}

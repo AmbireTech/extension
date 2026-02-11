@@ -116,25 +116,12 @@ const KeyStoreUnlockScreen = () => {
       backgroundColor={theme.secondaryBackground}
       header={
         !isPopup && (
-          <Header displayBackButtonIn="never" withAmbireLogo mode="custom-inner-content">
-            <View
-              style={[
-                flexbox.flex1,
-                flexbox.directionRow,
-                flexbox.alignCenter,
-                flexbox.justifyCenter
-              ]}
-            >
-              <Text
-                fontSize={20}
-                weight="medium"
-                style={[{ marginLeft: 18 + SPACING }, spacings.mr]}
-              >
-                {t('Welcome Back')}
-              </Text>
-              <LockIcon />
-            </View>
-          </Header>
+          <Header.Wrapper style={flexbox.justifyCenter}>
+            <Text fontSize={20} weight="medium" style={[{ marginLeft: 18 + SPACING }, spacings.mr]}>
+              {t('Welcome Back')}
+            </Text>
+            <LockIcon />
+          </Header.Wrapper>
         )
       }
     >

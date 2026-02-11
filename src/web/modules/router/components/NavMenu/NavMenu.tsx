@@ -16,9 +16,7 @@ import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
-import Header from '@common/modules/header/components/Header'
-import getHeaderStyles from '@common/modules/header/components/Header/styles'
-import HeaderBackButton from '@common/modules/header/components/HeaderBackButton'
+import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import common, { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
@@ -77,7 +75,6 @@ const NavMenu = () => {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
   const { styles, theme } = useTheme(getStyles)
-  const { styles: headerStyles } = useTheme(getHeaderStyles)
   const { hasPasswordSecret } = useKeystoreControllerState()
   const { dispatch } = useBackgroundService()
   const autoLockState = useAutoLockStateController()
@@ -100,45 +97,28 @@ const NavMenu = () => {
       footer={<BackButton />}
       footerStyle={{ maxWidth: tabLayoutWidths.xl }}
       header={
-        <Header mode="custom">
-          <View style={[headerStyles.widthContainer, { maxWidth: tabLayoutWidths.xl }]}>
-            <View style={[headerStyles.sideContainer, { width: 180 }]}>
-              <HeaderBackButton />
-            </View>
-            <View style={headerStyles.containerInner}>
-              <Text
-                weight="medium"
-                fontSize={isTab ? 24 : 20}
-                style={headerStyles.title}
-                numberOfLines={2}
+        <HeaderWithTitle title={t('Menu')}>
+          {hasPasswordSecret && (
+            <View style={[flexbox.justifyCenter, flexbox.alignCenter]}>
+              <Button
+                text="Lock Ambire"
+                type="secondary"
+                size="small"
+                childrenPosition="left"
+                style={{ height: 32, ...spacings.phTy, ...spacings.mbMi, maxWidth: 130 }}
+                onPress={handleLockAmbire}
               >
-                {t('Menu')}
+                <LockFilledIcon style={spacings.mrTy} color={theme.primary} height={20} />
+              </Button>
+              <Text appearance="tertiaryText" fontSize={12} style={text.center}>
+                {t('Auto lock time:')}{' '}
+                <Text appearance="tertiaryText" fontSize={12} weight="medium">
+                  {getAutoLockLabel(autoLockState.autoLockTime)}
+                </Text>
               </Text>
             </View>
-            <View style={[headerStyles.sideContainer, { width: 180, alignItems: 'flex-end' }]}>
-              {hasPasswordSecret && (
-                <View style={[flexbox.justifyCenter, flexbox.alignCenter]}>
-                  <Button
-                    text="Lock Ambire"
-                    type="secondary"
-                    size="small"
-                    childrenPosition="left"
-                    style={{ height: 32, ...spacings.phTy, ...spacings.mbMi, maxWidth: 130 }}
-                    onPress={handleLockAmbire}
-                  >
-                    <LockFilledIcon style={spacings.mrTy} color={theme.primary} height={20} />
-                  </Button>
-                  <Text appearance="tertiaryText" fontSize={12} style={text.center}>
-                    {t('Auto lock time:')}{' '}
-                    <Text appearance="tertiaryText" fontSize={12} weight="medium">
-                      {getAutoLockLabel(autoLockState.autoLockTime)}
-                    </Text>
-                  </Text>
-                </View>
-              )}
-            </View>
-          </View>
-        </Header>
+          )}
+        </HeaderWithTitle>
       }
       style={spacings.ph0}
       withHorizontalPadding={false}

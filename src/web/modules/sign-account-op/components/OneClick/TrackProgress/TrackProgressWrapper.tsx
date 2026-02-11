@@ -6,7 +6,7 @@ import { SwapAndBridgeActiveRoute } from '@ambire-common/interfaces/swapAndBridg
 import Button from '@common/components/Button'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
-import Header from '@common/modules/header/components/Header'
+import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Header'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
@@ -38,14 +38,7 @@ const TrackProgressWrapper: FC<TrackProgressProps> = ({
   return (
     <TabLayoutContainer
       backgroundColor={theme.primaryBackground}
-      header={
-        <Header
-          backgroundColor="primaryBackground"
-          displayBackButtonIn="never"
-          mode="custom-inner-content"
-          withAmbireLogo
-        />
-      }
+      header={<HeaderWithLogoOnly />}
       withHorizontalPadding={false}
       footer={null}
       style={{ ...flexbox.alignEnd, ...spacings.pb }}

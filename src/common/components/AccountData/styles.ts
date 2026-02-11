@@ -1,17 +1,13 @@
 import { StyleSheet, ViewStyle } from 'react-native'
 
 import spacings from '@common/styles/spacings'
-import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import { getUiType } from '@web/utils/uiType'
 
 interface Styles {
   accountButton: ViewStyle
   accountButtonRightIcon: ViewStyle
-  accountButtonInfo: ViewStyle
+  accountCopyIcon: ViewStyle
 }
-
-const { isTab } = getUiType()
 
 const getStyles = () =>
   StyleSheet.create<Styles>({
@@ -20,22 +16,15 @@ const getStyles = () =>
       ...flexbox.directionRow,
       ...flexbox.alignCenter,
       height: 40,
-      maxWidth: isTab ? 412 : 324,
-      ...spacings.phMi,
-      ...common.borderRadiusPrimary,
-      ...spacings.mrSm
+      ...spacings.plMi,
+      ...spacings.prSm,
+      borderRadius: 50
     },
     accountButtonRightIcon: {
       borderColor: 'transparent',
-      ...common.borderRadiusPrimary,
-      ...spacings.mrTy
+      ...spacings.mlMd
     },
-    accountButtonInfo: {
-      ...flexbox.directionRow,
-      ...flexbox.alignCenter,
-      ...flexbox.flex1,
-      ...spacings.mrMi
-    }
+    accountCopyIcon: { backgroundColor: 'transparent', borderColor: 'transparent' }
   })
 
 export default getStyles

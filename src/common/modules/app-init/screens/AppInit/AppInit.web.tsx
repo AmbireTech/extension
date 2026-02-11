@@ -96,9 +96,9 @@ const CONTROLLER_STATE_PROVIDERS: ProviderComponent[] = [
 ]
 
 const AppInit = () => {
-  const { fontsLoaded, robotoFontsLoaded } = useFonts()
+  const { fontsLoaded } = useFonts()
 
-  if (!fontsLoaded && !robotoFontsLoaded) return null
+  if (!fontsLoaded) return null
 
   const appContent = (
     <>

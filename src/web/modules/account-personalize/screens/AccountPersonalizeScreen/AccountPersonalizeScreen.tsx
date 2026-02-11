@@ -15,6 +15,7 @@ import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import Header from '@common/modules/header/components/Header'
+import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Header'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -269,7 +270,7 @@ const AccountPersonalizeScreen = () => {
       {!!completed && !isLoading && <PinExtension />}
       <TabLayoutContainer
         backgroundColor={theme.secondaryBackground}
-        header={<Header mode="custom-inner-content" withAmbireLogo={!completed} />}
+        header={completed ? <Header.Wrapper /> : <HeaderWithLogoOnly />}
       >
         <TabLayoutWrapperMainContent>
           <Panel

@@ -28,7 +28,7 @@ const DeFiProviderPosition: FC<PositionsByProvider> = ({
   }, [])
 
   return (
-    <View style={[styles.container, !!isExpanded && styles.expandedContainer]}>
+    <View style={styles.container}>
       <DeFiPositionHeader
         providerName={providerName}
         chainId={chainId}

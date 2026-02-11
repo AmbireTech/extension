@@ -15,7 +15,7 @@ interface Styles {
   visibilityHidden: ViewStyle
 }
 
-export const BORDER_RADIUS_PRIMARY = 6
+export const BORDER_RADIUS_PRIMARY = 16
 export const BORDER_RADIUS_SECONDARY = 12
 export const BORDER_RADIUS_TERTIARY = 2
 

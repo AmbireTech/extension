@@ -29,7 +29,7 @@ const ThemeColors = {
   secondaryText: NEUTRAL_PRIMITIVES.neutral600,
   tertiaryText: NEUTRAL_PRIMITIVES.neutral500,
   // --- Border tokens ---
-  primaryBorder: NEUTRAL_PRIMITIVES.neutral300,
+  primaryBorder: NEUTRAL_PRIMITIVES.neutral100,
   secondaryBorder: NEUTRAL_PRIMITIVES.neutral300,
   // --- Icon tokens ---
   iconPrimary: NEUTRAL_PRIMITIVES.neutral500,
@@ -65,11 +65,9 @@ const ThemeColors = {
   errorBackground: FEEDBACK_PRIMITIVES.error100,
   // --- Other tokens ---
   backdrop: {
-    // @TODO: Sync up with miro
-    [THEME_TYPES.LIGHT]: `rgba(0, 0, 0, 0.5)`,
-    [THEME_TYPES.DARK]: `rgba(0, 0, 0, 0.5)`
+    [THEME_TYPES.LIGHT]: hexToRgba('#2C2F33', 0.8),
+    [THEME_TYPES.DARK]: hexToRgba('#2C2F33', 0.8)
   },
-  // @TODO: Sync up with miro
   linkText: ACCENT_PRIMITIVES.primaryAccent300,
   /**
    * @deprecated

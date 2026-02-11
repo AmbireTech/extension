@@ -15,6 +15,7 @@ import SeedPhraseIcon from '@common/assets/svg/SeedPhraseIcon'
 import TrezorMiniIcon from '@common/assets/svg/TrezorMiniIcon'
 import ViewOnlyIcon from '@common/assets/svg/ViewOnlyIcon'
 import BottomSheet from '@common/components/BottomSheet'
+import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Option from '@common/components/Option'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import useTheme from '@common/hooks/useTheme'
@@ -102,11 +103,12 @@ const AddAccount = ({ handleClose }: { handleClose: () => void }) => {
 
   return (
     <>
-      <View style={spacings.ptSm}>
-        <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg]}>
+      <View>
+        {/* <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg]}>
           <PanelBackButton onPress={handleClose} style={spacings.mrSm} />
           <PanelTitle title={t('Add an account')} style={text.left} />
-        </View>
+        </View> */}
+        <ModalHeader handleClose={handleClose} title={t('Add an account')} />
         <View style={styles.optionsWrapper}>
           <Option
             text={t('Add from stored recovery phrases')}

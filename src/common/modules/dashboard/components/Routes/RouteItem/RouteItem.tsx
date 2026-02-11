@@ -72,14 +72,14 @@ const RouteItem: FC<Props> = ({ routeItem, index, routeItemsLength }) => {
             style={{
               height: ITEM_HEIGHT,
               width: routeItem.route === WEB_ROUTES.swapAndBridge ? ITEM_HEIGHT * 2 : ITEM_HEIGHT,
-              borderRadius: BORDER_RADIUS_PRIMARY,
+              borderRadius: 6,
               backgroundColor: hovered
                 ? themeType === THEME_TYPES.DARK
                   ? '#1b2b2c'
                   : '#141833CC'
                 : themeType === THEME_TYPES.DARK
-                ? theme.primaryBackground
-                : theme.primaryText,
+                  ? theme.primaryBackground
+                  : theme.primaryText,
               ...flexbox.center,
               ...spacings.mbTy,
               ...(routeItem.backgroundImage
@@ -104,8 +104,8 @@ const RouteItem: FC<Props> = ({ routeItem, index, routeItemsLength }) => {
                   themeType === THEME_TYPES.DARK
                     ? theme.primary
                     : hovered && !routeItem.backgroundImage
-                    ? '#c197ff'
-                    : theme.primaryBackground
+                      ? '#c197ff'
+                      : theme.primaryBackground
                 }
                 // Rewards has no other hover effect so we slightly increase its size
                 height={

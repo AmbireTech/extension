@@ -19,7 +19,6 @@ import { getUiType } from '@web/utils/uiType'
 
 import NetworkStatusesBottomSheet from '../NetworkStatusesBottomSheet'
 import AccountButton from './AccountButton'
-import getStyles from './styles'
 
 const { isPopup } = getUiType()
 
@@ -31,7 +30,7 @@ const DashboardHeader = () => {
   const [bindReceiveAnim, receiveAnimStyle] = useHover({ preset: 'opacity' })
   const [bindNetworkStatusesAnim, networkStatusesAnimStyle] = useHover({ preset: 'opacity' })
   const { navigate } = useNavigation()
-  const { theme, themeType } = useTheme(getStyles)
+  const { theme, themeType } = useTheme()
 
   const {
     ref: networkStatusesSheetRef,
@@ -115,8 +114,8 @@ const DashboardHeader = () => {
                     ? theme.primaryBackgroundInverted
                     : theme.primaryBackground
                 }
-                width={20}
-                height={20}
+                width={28}
+                height={28}
               />
             </Animated.View>
           </Pressable>

@@ -210,22 +210,6 @@ const Tokens = ({
               searchControl={control}
               sessionId={sessionId}
             />
-            <View style={[flexbox.directionRow, spacings.mbTy, spacings.phTy]}>
-              <Text appearance="secondaryText" fontSize={14} weight="medium" style={{ flex: 1.5 }}>
-                {t('ASSET/AMOUNT')}
-              </Text>
-              <Text appearance="secondaryText" fontSize={14} weight="medium" style={{ flex: 0.7 }}>
-                {t('PRICE')}
-              </Text>
-              <Text
-                appearance="secondaryText"
-                fontSize={14}
-                weight="medium"
-                style={{ flex: 0.4, textAlign: 'right' }}
-              >
-                {t('USD VALUE')}
-              </Text>
-            </View>
           </View>
         )
       }

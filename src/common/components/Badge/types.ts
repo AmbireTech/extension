@@ -8,9 +8,9 @@ type BadgeType =
   | 'default'
   | 'success'
   | 'error'
-  | 'ok'
+  | 'primaryAccent'
+  | 'secondaryAccent'
   | 'new'
-  | 'projectedRewards'
 
 type SpecialBadgeType = 'metamask'
 

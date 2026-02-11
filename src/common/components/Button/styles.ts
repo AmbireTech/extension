@@ -43,7 +43,7 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
     },
 
     buttonText: {
-      fontFamily: FONT_FAMILIES.MEDIUM,
+      fontFamily: FONT_FAMILIES.REGULAR,
       ...text.center
     },
 

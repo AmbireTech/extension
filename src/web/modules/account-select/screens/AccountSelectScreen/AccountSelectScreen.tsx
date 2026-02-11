@@ -16,7 +16,7 @@ import useNavigation from '@common/hooks/useNavigation'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import DashboardSkeleton from '@common/modules/dashboard/screens/Skeleton'
-import Header from '@common/modules/header/components/Header'
+import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -97,18 +97,13 @@ const AccountSelectScreen = () => {
 
   return !pendingToBeSetSelectedAccount ? (
     <TabLayoutContainer
-      header={<Header withAmbireLogo />}
+      header={<HeaderWithTitle />}
       footer={<BackButton />}
       width="lg"
       hideFooterInPopup
     >
       <View style={[flexbox.flex1, spacings.pv]} ref={accountsContainerRef}>
-        <Search
-          autoFocus
-          control={control}
-          placeholder="Search for account"
-          style={styles.searchBar}
-        />
+        <Search autoFocus control={control} style={styles.searchBar} />
         <ScrollableWrapper
           type={WRAPPER_TYPES.FLAT_LIST}
           style={[
