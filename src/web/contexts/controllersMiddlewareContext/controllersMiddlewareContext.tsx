@@ -28,8 +28,8 @@ import { getUiType } from '@web/utils/uiType'
 let globalDispatch: ControllersMiddlewareContextReturnType['dispatch']
 let pm: PortMessenger
 const actionsBeforeBackgroundReady: Action[] = []
-let backgroundReady: boolean
-let windowReady: boolean
+let backgroundReady: boolean = false
+let controllerReady: boolean = false
 let connectPort: () => Promise<void> = () => Promise.resolve()
 const MAX_RETRIES = 20
 // Facilitate communication between the different parts of the browser extension.
@@ -57,10 +57,10 @@ if (isExtension) {
       if (method === 'portReady' && !backgroundReady) {
         backgroundReady = true
         ;(async () => {
-          if (windowReady) {
+          if (controllerReady) {
             eventBus.emit('onReady')
           } else {
-            while (!windowReady) {
+            while (!controllerReady) {
               eventBus.emit('onReady')
               await wait(100)
             }
@@ -165,8 +165,10 @@ export const ControllersMiddlewareProvider: React.FC<{ children: React.ReactNode
   )
 
   useEffect(() => {
-    if (!windowReady) windowReady = true
+    if (!controllerReady) controllerReady = true
+  }, [])
 
+  useEffect(() => {
     const initControllers = () => {
       controllerStore.init(
         Object.keys(controllersMapping) as (keyof AllControllersMappingType)[],
