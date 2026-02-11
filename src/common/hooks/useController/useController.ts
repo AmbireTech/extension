@@ -157,10 +157,6 @@ export default function useController<K extends keyof AllControllersMappingType>
     [controllersMiddlewareDispatch, id]
   )
 
-  if (id === 'SelectedAccountController') {
-    // TODO:
-  }
-
   return {
     state: state || ({} as AllControllersMappingType[K]),
     ...(helpers || ({} as ControllerHelpersMapping[K])),
