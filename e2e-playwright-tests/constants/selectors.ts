@@ -324,7 +324,8 @@ const selectors = {
   networkSuccessfullyAddedSnackbar:
     '(//div[contains(normalize-space(), "Network successfully added!")])[4]', // TODO: snackbar selector finding 8 elements; change once we have ID on FE
   contactSuccessfullyAddedSnackbar:
-    '(//div[contains(normalize-space(), "Contact added to Address Book")])[4]' // TODO: snackbar selector finding 8 elements; change once we have ID on FE
+    '(//div[contains(normalize-space(), "Contact added to Address Book")])[4]', // TODO: snackbar selector finding 8 elements; change once we have ID on FE
+  importMethodLedger: 'import-method-ledger'
 }
 
 type SelectorKey = keyof typeof selectors
