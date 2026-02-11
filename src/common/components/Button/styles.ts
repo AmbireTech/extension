@@ -58,8 +58,7 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       borderWidth: 0
     },
     buttonContainerSecondary: {
-      backgroundColor: 'transparent',
-      borderColor: theme.primary
+      borderWidth: 0
     },
     buttonContainerDanger: {
       borderColor: theme.errorDecorative
@@ -114,7 +113,8 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       fontSize: 16
     },
     buttonTextStylesSizeSmaller: {
-      fontSize: 14
+      fontSize: 14,
+      fontFamily: FONT_FAMILIES.MEDIUM
     },
     buttonTextStylesSizeSmall: {
       fontSize: 14,
