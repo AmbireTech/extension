@@ -67,7 +67,7 @@ const RpcCard = ({
           spacings.pv,
           flexbox.flex1,
           {
-            backgroundColor: isNew ? theme.featureBackground : theme.secondaryBackground,
+            backgroundColor: isNew ? theme.tertiaryBackground : theme.secondaryBackground,
             borderBottomLeftRadius: BORDER_RADIUS_PRIMARY,
             borderBottomRightRadius: BORDER_RADIUS_PRIMARY
           }

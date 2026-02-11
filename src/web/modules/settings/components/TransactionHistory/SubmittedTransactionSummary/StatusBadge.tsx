@@ -1,4 +1,4 @@
-import React, { FC } from 'react'
+import React, { FC, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
@@ -14,13 +14,15 @@ const StatusBadge: FC<Props> = ({ status, textSize }) => {
 
   switch (status) {
     case AccountOpStatus.Failure:
-      return <Badge type="error" weight="medium" text={t('Failed')} withRightSpacing />
+      return <Badge size="md" type="error" weight="medium" text={t('Failed')} withRightSpacing />
 
     case AccountOpStatus.Success:
-      return <Badge type="success" weight="medium" text={t('Confirmed')} withRightSpacing />
+      return (
+        <Badge size="md" type="success" weight="medium" text={t('Confirmed')} withRightSpacing />
+      )
 
     case AccountOpStatus.BroadcastedButNotConfirmed:
-      return <Badge type="info2" weight="medium" text={t('Pending')} withRightSpacing />
+      return <Badge size="md" type="info" weight="medium" text={t('Pending')} withRightSpacing />
 
     case AccountOpStatus.BroadcastButStuck:
       return (

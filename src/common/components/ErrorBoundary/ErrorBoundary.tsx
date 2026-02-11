@@ -12,8 +12,9 @@ import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import GestureHandler from '@common/modules/app-init/screens/AppInit/GestureHandler'
 import spacings from '@common/styles/spacings'
-import { DEFAULT_THEME, THEME_TYPES, ThemeType } from '@common/styles/themeConfig'
-import common from '@common/styles/utils/common'
+import { DEFAULT_THEME } from '@common/styles/theme/types'
+import { THEME_TYPES, ThemeType } from '@common/styles/themeConfig'
+import common, { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { setStringAsync } from '@common/utils/clipboard'
@@ -160,7 +161,7 @@ const ErrorBoundaryInner = ({ error }: Props) => {
             flexbox.alignCenter,
             common.borderRadiusPrimary,
             {
-              backgroundColor: theme.primaryBackground,
+              backgroundColor: hexToRgba(theme.primaryBackground, 0.6),
               borderColor: theme.secondaryBorder,
               borderWidth: 1
             }

@@ -29,6 +29,7 @@ import { getUiType } from '@web/utils/uiType'
 
 import DashboardBanners from '../DashboardBanners'
 import DashboardPageScrollContainer from '../DashboardPageScrollContainer'
+import SearchAndCurrentApp from '../SearchAndCurrentApp'
 import TabsAndSearch from '../TabsAndSearch'
 import { TabType } from '../TabsAndSearch/Tabs/Tab/Tab'
 import TokenItem from './TokenItem'
@@ -44,6 +45,7 @@ interface Props {
   onScroll: FlatListProps<any>['onScroll']
   dashboardNetworkFilterName: string | null
   animatedOverviewHeight: Animated.Value
+  isSearchHidden: boolean
 }
 
 // if any of the post amount (during simulation) or the current state
@@ -69,7 +71,8 @@ const Tokens = ({
   sessionId,
   onScroll,
   animatedOverviewHeight,
-  dashboardNetworkFilterName
+  dashboardNetworkFilterName,
+  isSearchHidden
 }: Props) => {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
@@ -207,25 +210,8 @@ const Tokens = ({
               openTab={openTab}
               setOpenTab={setOpenTab}
               currentTab="tokens"
-              searchControl={control}
               sessionId={sessionId}
             />
-            <View style={[flexbox.directionRow, spacings.mbTy, spacings.phTy]}>
-              <Text appearance="secondaryText" fontSize={14} weight="medium" style={{ flex: 1.5 }}>
-                {t('ASSET/AMOUNT')}
-              </Text>
-              <Text appearance="secondaryText" fontSize={14} weight="medium" style={{ flex: 0.7 }}>
-                {t('PRICE')}
-              </Text>
-              <Text
-                appearance="secondaryText"
-                fontSize={14}
-                weight="medium"
-                style={{ flex: 0.4, textAlign: 'right' }}
-              >
-                {t('USD VALUE')}
-              </Text>
-            </View>
           </View>
         )
       }
@@ -374,6 +360,9 @@ const Tokens = ({
         sheetRef={addTokenBottomSheetRef}
         handleClose={closeAddTokenBottomSheet}
       />
+      {openTab === 'tokens' && (
+        <SearchAndCurrentApp control={control} displayCurrentApp isHidden={isSearchHidden} />
+      )}
     </>
   )
 }

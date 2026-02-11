@@ -72,6 +72,7 @@
     "@ethereumjs/rlp": "5.0.2",
     "@ethersproject/providers": "5.5.2",
     "@ethersproject/shims": "5.7.0",
+    "@expo-google-fonts/geist-mono": "^0.4.1",
     "@expo-google-fonts/poppins": "0.2.2",
     "@expo-google-fonts/roboto": "0.2.3",
     "@expo/vector-icons": "15.0.3",

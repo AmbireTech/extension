@@ -8,6 +8,7 @@ import {
 } from '@ambire-common/interfaces/account'
 import { isAmbireV1LinkedAccount } from '@ambire-common/libs/account/account'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
+import CopyIcon from '@common/assets/svg/CopyIcon'
 import Avatar from '@common/components/Avatar'
 import Badge from '@common/components/Badge'
 import BadgeWithPreset from '@common/components/BadgeWithPreset'
@@ -24,10 +25,9 @@ import useToast from '@common/hooks/useToast'
 import useWindowSize from '@common/hooks/useWindowSize'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
-import common from '@common/styles/utils/common'
+import common, { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { setStringAsync } from '@common/utils/clipboard'
-import CopyIcon from '@web/assets/svg/CopyIcon'
 import {
   AccountPickerIntroStepsContext,
   SmartAccountIntroId
@@ -123,16 +123,16 @@ const Account = ({
         common.hidden,
         {
           borderWidth: 1,
-          borderColor: theme.quaternaryBackground
+          borderColor: theme.secondaryBackground
         },
         ((hovered && !isDisabled) || isSelected) && {
-          borderColor: themeType === THEME_TYPES.DARK ? theme.primaryLight80 : theme.primary20
+          borderColor: hexToRgba(theme.primaryAccent, 0.2)
         }
       ]}
       onPress={isDisabled ? undefined : toggleSelectedState}
       testID={`add-account-${account.addr}`}
     >
-      <View style={[styles.container, { backgroundColor: theme.quaternaryBackground }]}>
+      <View style={[styles.container, { backgroundColor: theme.secondaryBackground }]}>
         <Toggle
           isOn={isSelected}
           onToggle={toggleSelectedState}
@@ -170,6 +170,7 @@ const Account = ({
                       id: account.addr,
                       content: account.addr
                     })}
+                    weight="mono_regular"
                   >
                     ({shortenAddress(account.addr, 16)})
                   </Text>
@@ -190,6 +191,7 @@ const Account = ({
                     fontSize={domainName ? 14 : 16}
                     appearance={domainName ? 'secondaryText' : 'primaryText'}
                     style={spacings.mrMi}
+                    weight="mono_regular"
                   >
                     {domainName ? '(' : ''}
                     {formattedAddress}

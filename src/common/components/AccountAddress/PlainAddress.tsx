@@ -13,7 +13,12 @@ interface Props {
 }
 
 const PlainAddress: FC<Props> = ({ style, maxLength, address, hideParentheses, fontSize = 12 }) => (
-  <Text fontSize={fontSize} appearance="secondaryText" style={[spacings.mrMi, style]}>
+  <Text
+    fontSize={fontSize}
+    appearance="secondaryText"
+    weight="mono_regular"
+    style={[spacings.mrMi, style]}
+  >
     {hideParentheses ? '' : '('}
     {shortenAddress(address, maxLength)}
     {hideParentheses ? '' : ')'}

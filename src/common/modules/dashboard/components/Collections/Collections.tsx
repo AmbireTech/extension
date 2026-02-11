@@ -17,6 +17,7 @@ import { tokenOrCollectionSearch } from '@common/utils/search'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import { getUiType } from '@web/utils/uiType'
 
+import SearchAndCurrentApp from '../SearchAndCurrentApp'
 import Collection from './Collection'
 import CollectionsSkeleton from './CollectionsSkeleton'
 import styles from './styles'
@@ -32,6 +33,7 @@ interface Props {
   networks: Network[]
   dashboardNetworkFilterName: string | null
   animatedOverviewHeight: Animated.Value
+  isSearchHidden: boolean
 }
 
 const { isPopup } = getUiType()
@@ -44,7 +46,8 @@ const Collections: FC<Props> = ({
   onScroll,
   networks,
   dashboardNetworkFilterName,
-  animatedOverviewHeight
+  animatedOverviewHeight,
+  isSearchHidden
 }) => {
   const { portfolio, dashboardNetworkFilter } = useSelectedAccountControllerState()
   const { ref: modalRef, open: openModal, close: closeModal } = useModalize()
@@ -103,7 +106,6 @@ const Collections: FC<Props> = ({
               openTab={openTab}
               setOpenTab={setOpenTab}
               currentTab="collectibles"
-              searchControl={control}
               sessionId={sessionId}
             />
           </View>
@@ -207,6 +209,9 @@ const Collections: FC<Props> = ({
         bounces={false}
         animatedOverviewHeight={animatedOverviewHeight}
       />
+      {openTab === 'collectibles' && (
+        <SearchAndCurrentApp control={control} isHidden={isSearchHidden} />
+      )}
     </>
   )
 }

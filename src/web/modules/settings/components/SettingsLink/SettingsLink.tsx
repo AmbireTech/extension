@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { ColorValue, View, ViewStyle } from 'react-native'
 import { SvgProps } from 'react-native-svg'
 
+import LeftArrowIcon from '@common/assets/svg/LeftArrowIcon'
 import Text from '@common/components/Text'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
@@ -21,18 +22,7 @@ interface Props {
   Icon?: FC<SvgProps>
   isExternal?: boolean
   style?: ViewStyle
-  initialBackground?: ColorValue
-}
-
-const getColor = (isActive: boolean, isHovered: boolean) => {
-  if (isActive) {
-    return 'primary'
-  }
-  if (isHovered) {
-    return 'primaryText'
-  }
-
-  return 'secondaryText'
+  isSidebarLink?: boolean
 }
 
 const SettingsLink: FC<Props> = ({
@@ -42,7 +32,7 @@ const SettingsLink: FC<Props> = ({
   isActive,
   isExternal,
   style,
-  initialBackground
+  isSidebarLink
 }) => {
   const { navigate } = useNavigation()
   const { t } = useTranslation()
@@ -51,8 +41,8 @@ const SettingsLink: FC<Props> = ({
   const [bindAnim, animStyle, isHovered] = useCustomHover({
     property: 'backgroundColor',
     values: {
-      from: initialBackground || theme.secondaryBackground,
-      to: theme.tertiaryBackground
+      from: theme.primaryBackground,
+      to: theme.secondaryBackground
     },
     forceHoveredStyle: isActive
   })
@@ -75,12 +65,13 @@ const SettingsLink: FC<Props> = ({
       disabled={isDisabled}
       style={[
         flexbox.directionRow,
-        spacings.pl,
+        flexbox.justifySpaceBetween,
+        flexbox.alignCenter,
+        spacings.phSm,
         spacings.pv,
-        spacings.mbMi,
+        isSidebarLink ? spacings.mbMi : flexbox.flex1,
         {
-          borderRadius: BORDER_RADIUS_PRIMARY,
-          width: 250
+          borderRadius: BORDER_RADIUS_PRIMARY
         },
         style,
         animStyle,
@@ -89,16 +80,25 @@ const SettingsLink: FC<Props> = ({
       {...bindAnim}
     >
       <View style={flexbox.directionRow}>
-        {Icon ? <Icon width={24} height={24} color={theme[getColor(isActive, isHovered)]} /> : null}
-        <Text
-          style={Icon ? spacings.ml : {}}
-          color={theme[getColor(isActive, isHovered)]}
-          fontSize={16}
-          weight="medium"
-        >
+        {Icon ? <Icon width={24} height={24} color={theme.iconPrimary} /> : null}
+        <Text style={Icon ? spacings.mlSm : {}} weight="medium">
           {t(label)}
         </Text>
       </View>
+      {!isSidebarLink && (
+        <View
+          style={{
+            width: 24,
+            height: 24,
+            ...flexbox.center
+          }}
+        >
+          <LeftArrowIcon
+            style={{ transform: [{ rotate: '180deg' }] }}
+            color={isHovered || isActive ? theme.primaryText : theme.iconPrimary}
+          />
+        </View>
+      )}
     </AnimatedPressable>
   )
 }

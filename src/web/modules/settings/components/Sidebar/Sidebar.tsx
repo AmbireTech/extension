@@ -4,8 +4,8 @@ import { View } from 'react-native'
 
 import AccountsIcon from '@common/assets/svg/AccountsIcon'
 import AddressBookIcon from '@common/assets/svg/AddressBookIcon'
+import AmbireLogoSquare from '@common/assets/svg/AmbireLogoSquare'
 import BugIcon from '@common/assets/svg/BugIcon'
-import BulbIcon from '@common/assets/svg/BulbIcon'
 import CustomTokensIcon from '@common/assets/svg/CustomTokensIcon'
 import HelpIcon from '@common/assets/svg/HelpIcon'
 import KeyStoreSettingsIcon from '@common/assets/svg/KeyStoreSettingsIcon'
@@ -40,31 +40,31 @@ export const SETTINGS_LINKS = [
   },
   {
     key: 'accounts',
-    Icon: React.memo(AccountsIcon),
+    Icon: AccountsIcon,
     label: 'Accounts',
     path: ROUTES.accountsSettings
   },
   {
     key: 'address-book',
-    Icon: React.memo(AddressBookIcon),
+    Icon: AddressBookIcon,
     label: 'Address Book',
     path: ROUTES.addressBook
   },
   {
     key: 'networks',
-    Icon: React.memo(NetworksIcon),
+    Icon: NetworksIcon,
     label: 'Networks',
     path: ROUTES.networksSettings
   },
   {
     key: 'transactions',
-    Icon: React.memo(TransactionHistoryIcon),
+    Icon: TransactionHistoryIcon,
     label: 'Transaction history',
     path: ROUTES.transactions
   },
   {
     key: 'messages',
-    Icon: React.memo(SignedMessageIcon),
+    Icon: SignedMessageIcon,
     label: 'Signed messages',
     path: ROUTES.signedMessages
   },
@@ -76,26 +76,26 @@ export const SETTINGS_LINKS = [
   },
   {
     key: 'device-password-change',
-    Icon: React.memo(KeyStoreSettingsIcon),
+    Icon: KeyStoreSettingsIcon,
     label: 'Extension password',
     path: ROUTES.devicePasswordChange
   },
   {
     key: 'device-password-recovery',
-    Icon: React.memo(PasswordRecoverySettingsIcon),
+    Icon: PasswordRecoverySettingsIcon,
     label: 'Password recovery',
     path: ROUTES.devicePasswordRecovery
   },
   {
     key: 'opt-outs',
-    Icon: React.memo(PrivacyIcon),
+    Icon: PrivacyIcon,
     label: 'Privacy Opt-outs',
     path: ROUTES.optOuts
   },
   // Disabled for now - will be added in future releases
   // {
   //   key: 'email-vault',
-  //   Icon: React.memo(({ color }: SvgProps) => (
+  //   Icon: ({color }: SvgProps) => (
   //     <EmailVaultIcon strokeWidth={3.5} width={24} height={24} color={color} />
   //   )),
   //   label: 'Ambire Cloud (coming soon)',
@@ -103,7 +103,7 @@ export const SETTINGS_LINKS = [
   // },
   {
     key: 'manage-tokens',
-    Icon: React.memo(CustomTokensIcon),
+    Icon: CustomTokensIcon,
     label: 'Custom tokens',
     path: ROUTES.manageTokens
   }
@@ -112,20 +112,20 @@ export const SETTINGS_LINKS = [
 const OTHER_LINKS = [
   {
     key: 'about',
-    Icon: BulbIcon,
+    Icon: AmbireLogoSquare,
     label: 'About',
     path: ROUTES.settingsAbout
   },
   {
     key: 'help-center',
-    Icon: React.memo(HelpIcon),
+    Icon: HelpIcon,
     label: 'Help Center',
     path: 'https://help.ambire.com/hc/en-us',
     isExternal: true
   },
   {
     key: 'report-issue',
-    Icon: React.memo(BugIcon),
+    Icon: BugIcon,
     label: 'Report an issue',
     path: 'https://help.ambire.com/hc/en-us/requests/new',
     isExternal: true
@@ -198,6 +198,7 @@ const Sidebar = ({ activeLink }: { activeLink?: string }) => {
 
           return (
             <SettingsLink
+              isSidebarLink
               {...link}
               key={link.key}
               isActive={isActive}
@@ -219,6 +220,7 @@ const Sidebar = ({ activeLink }: { activeLink?: string }) => {
 
           return (
             <SettingsLink
+              isSidebarLink
               {...link}
               key={link.key}
               isActive={isActive}

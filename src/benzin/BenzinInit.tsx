@@ -14,9 +14,9 @@ import { BenzinNetworksContextProvider } from './context'
 import BenzinScreen from './screens/BenzinScreen'
 
 const BenzinInit = () => {
-  const { fontsLoaded, robotoFontsLoaded } = useFonts()
+  const { fontsLoaded } = useFonts()
 
-  if (!fontsLoaded && !robotoFontsLoaded) return null
+  if (!fontsLoaded) return null
 
   return (
     <BrowserRouter>

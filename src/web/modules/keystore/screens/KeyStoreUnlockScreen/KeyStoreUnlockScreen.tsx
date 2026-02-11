@@ -22,7 +22,7 @@ import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { DEFAULT_KEYSTORE_PASSWORD_DEV } from '@env'
 import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
-import { POPUP_WIDTH } from '@web/constants/spacings'
+import { POPUP_HEIGHT } from '@web/constants/spacings'
 import { openInternalPageInTab } from '@web/extension-services/background/webapi/tab'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useEmailVaultControllerState from '@web/hooks/useEmailVaultControllerState'
@@ -102,9 +102,9 @@ const KeyStoreUnlockScreen = () => {
   )
 
   const panelSize = useMemo(() => {
-    const MAX_SIZE = POPUP_WIDTH
-    if (isPopup) return POPUP_WIDTH
-    if (height > MAX_SIZE) return POPUP_WIDTH
+    const MAX_SIZE = POPUP_HEIGHT
+    if (isPopup) return POPUP_HEIGHT
+    if (height > MAX_SIZE) return POPUP_HEIGHT
 
     const size = height - 2 * SPACING
     return size < MIN_PANEL_SIZE ? MIN_PANEL_SIZE : size
@@ -116,25 +116,12 @@ const KeyStoreUnlockScreen = () => {
       backgroundColor={theme.secondaryBackground}
       header={
         !isPopup && (
-          <Header displayBackButtonIn="never" withAmbireLogo mode="custom-inner-content">
-            <View
-              style={[
-                flexbox.flex1,
-                flexbox.directionRow,
-                flexbox.alignCenter,
-                flexbox.justifyCenter
-              ]}
-            >
-              <Text
-                fontSize={20}
-                weight="medium"
-                style={[{ marginLeft: 18 + SPACING }, spacings.mr]}
-              >
-                {t('Welcome Back')}
-              </Text>
-              <LockIcon />
-            </View>
-          </Header>
+          <Header.Wrapper style={flexbox.justifyCenter}>
+            <Text fontSize={20} weight="medium" style={[{ marginLeft: 18 + SPACING }, spacings.mr]}>
+              {t('Welcome Back')}
+            </Text>
+            <LockIcon />
+          </Header.Wrapper>
         )
       }
     >

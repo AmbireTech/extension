@@ -1,11 +1,10 @@
 import React from 'react'
-import { View } from 'react-native'
+import { ColorValue, View } from 'react-native'
 
 import { Account as AccountInterface } from '@ambire-common/interfaces/account'
 import { Key } from '@ambire-common/interfaces/keystore'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 
@@ -21,7 +20,7 @@ const AccountKeyIconOrBanner = ({
 }: {
   type: KeyType
   isExtended: boolean
-  color: string
+  color: string | ColorValue
 }) => {
   return isExtended ? (
     <AccountKeyBanner type={type} />
@@ -45,6 +44,11 @@ const AccountKeyIcons = ({
   )
   const hasKeys = React.useMemo(() => importedKeyTypes.length > 0, [importedKeyTypes])
 
+  if (account.safeCreation)
+    return (
+      <AccountKeyIconOrBanner type="safe" isExtended={isExtended} color={theme.primaryBackground} />
+    )
+
   return (
     <View style={[flexbox.directionRow, hasKeys ? spacings.mlTy : spacings.ml0]}>
       {hasKeys ? (
@@ -55,26 +59,18 @@ const AccountKeyIcons = ({
               style={[index !== importedKeyTypes.length - 1 ? spacings.mrTy : spacings.mr0]}
             >
               <AccountKeyIconOrBanner
-                type={!!account.safeCreation ? 'safe' : type || 'internal'}
+                type={type || 'internal'}
                 isExtended={isExtended}
-                color={
-                  themeType === THEME_TYPES.DARK
-                    ? (theme.primaryBackgroundInverted as string)
-                    : (theme.primaryBackground as string)
-                }
+                color={theme.primaryBackground}
               />
             </View>
           )
         })
       ) : (
         <AccountKeyIconOrBanner
-          type={!!account.safeCreation ? 'safe' : 'none'}
+          type={'none'}
           isExtended={isExtended}
-          color={
-            themeType === THEME_TYPES.DARK
-              ? (theme.primaryBackgroundInverted as string)
-              : (theme.primaryBackground as string)
-          }
+          color={theme.primaryBackground}
         />
       )}
     </View>

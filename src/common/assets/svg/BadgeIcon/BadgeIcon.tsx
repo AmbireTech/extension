@@ -17,9 +17,9 @@ const BadgeIcon: React.FC<SvgProps> = ({ width = 24, height = 24, color, ...rest
           y2="4.99622"
           gradientUnits="userSpaceOnUse"
         >
-          <Stop stopColor="#D7FF00" />
-          <Stop offset="0.634615" stopColor="#D7FF00" />
-          <Stop offset="1" stopColor="#A9C709" />
+          <Stop stopColor={color || '#D7FF00'} />
+          <Stop offset="0.634615" stopColor={color || '#D7FF00'} />
+          <Stop offset="1" stopColor={color || '#A9C709'} />
         </LinearGradient>
       </Defs>
     </Svg>

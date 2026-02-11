@@ -14,7 +14,6 @@ import { getSanitizedAmount } from '@ambire-common/libs/transfer/amount'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
 import { getAddressFromAddressState } from '@ambire-common/utils/domains'
 import { getCallsCount } from '@ambire-common/utils/userRequest'
-import InfoIcon from '@common/assets/svg/InfoIcon'
 import Alert from '@common/components/Alert'
 import BackButton from '@common/components/BackButton'
 import SkeletonLoader from '@common/components/SkeletonLoader'
@@ -26,7 +25,7 @@ import useToast from '@common/hooks/useToast'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { Content, Form, Wrapper } from '@web/components/TransactionsScreen'
+import { Content, Wrapper } from '@web/components/TransactionsScreen'
 import { createTab } from '@web/extension-services/background/webapi/tab'
 import useActivityControllerState from '@web/hooks/useActivityControllerState'
 import useBackgroundService from '@web/hooks/useBackgroundService'
@@ -436,36 +435,6 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     ]
   )
 
-  const handleGasTankInfoPressed = useCallback(
-    () => openGasTankInfoBottomSheet(),
-    [openGasTankInfoBottomSheet]
-  )
-
-  const gasTankLabelWithInfo = useMemo(() => {
-    return (
-      <View style={[flexbox.directionRow, flexbox.flex1, flexbox.alignCenter]}>
-        <Text
-          fontSize={20}
-          weight="medium"
-          appearance="primaryText"
-          numberOfLines={1}
-          style={spacings.mrMi}
-        >
-          {t('Top Up Gas Tank')}
-        </Text>
-        <Pressable onPress={handleGasTankInfoPressed}>
-          <InfoIcon width={20} height={20} />
-        </Pressable>
-      </View>
-    )
-  }, [handleGasTankInfoPressed, t])
-
-  // Title shown in BottomSheet header
-  const headerTitle = useMemo(
-    () => (state.isTopUp ? gasTankLabelWithInfo : t('Send')),
-    [state.isTopUp, gasTankLabelWithInfo, t]
-  )
-
   const isSignAccountOpInProgress = useMemo(() => {
     if (!account || !userRequests.length || !selectedToken) return false
 
@@ -635,10 +604,10 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   }
 
   return (
-    <Wrapper title={headerTitle} buttons={buttons}>
+    <Wrapper buttons={buttons}>
       <Content buttons={buttons}>
         {state?.isInitialized ? (
-          <Form>
+          <View>
             <SendForm
               handleGoBack={handleGoBackPress}
               addressInputState={addressInputState}
@@ -693,7 +662,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
                 />
               </View>
             )}
-          </Form>
+          </View>
         ) : (
           <SkeletonLoader
             width={640}

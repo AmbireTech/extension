@@ -15,6 +15,7 @@ import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import Header from '@common/modules/header/components/Header'
+import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Header'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -269,7 +270,7 @@ const AccountPersonalizeScreen = () => {
       {!!completed && !isLoading && <PinExtension />}
       <TabLayoutContainer
         backgroundColor={theme.secondaryBackground}
-        header={<Header mode="custom-inner-content" withAmbireLogo={!completed} />}
+        header={completed ? <Header.Wrapper /> : <HeaderWithLogoOnly />}
       >
         <TabLayoutWrapperMainContent>
           <Panel
@@ -380,8 +381,10 @@ const AccountPersonalizeScreen = () => {
                         handleSave()
                         goToNextRoute(WEB_ROUTES.accountPicker)
                       }}
-                      textStyle={{ fontSize: 14, color: theme.primary, letterSpacing: -0.1 }}
-                      style={{ ...spacings.ph0, height: 22 }}
+                      style={{
+                        ...spacings.phMi
+                      }}
+                      textStyle={{ fontSize: 14, letterSpacing: -0.1 }}
                       hasBottomSpacing={false}
                       childrenPosition="left"
                     >
@@ -389,7 +392,7 @@ const AccountPersonalizeScreen = () => {
                         fontSize={24}
                         weight="light"
                         style={spacings.mrTy}
-                        color={theme.primary}
+                        color={theme.primaryText}
                       >
                         +
                       </Text>

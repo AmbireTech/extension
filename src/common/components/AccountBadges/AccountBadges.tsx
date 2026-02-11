@@ -37,8 +37,6 @@ const AccountBadges: FC<Props> = ({ accountData }) => {
       {isSmartAccount && isAmbireV1LinkedAccount && (
         <BadgeWithPreset preset="ambire-v1" style={spacings.mlTy} />
       )}
-
-      {isSafeAccount && <BadgeWithPreset preset="safe" style={spacings.mlTy} />}
     </>
   )
 }

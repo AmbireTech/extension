@@ -31,6 +31,7 @@ interface Props extends TextProps {
   chainId?: bigint
   hideLinks?: boolean
   verification?: BlacklistedStatus
+  isDisplayingPlainAddress?: boolean
 }
 
 const { isRequestWindow } = getUiType()
@@ -41,6 +42,7 @@ const BaseAddress: FC<Props> = ({
   chainId,
   hideLinks = false,
   verification,
+  isDisplayingPlainAddress,
   ...rest
 }) => {
   const { t } = useTranslation()
@@ -97,8 +99,8 @@ const BaseAddress: FC<Props> = ({
   return (
     <View style={[flexbox.alignCenter, flexbox.directionRow, flexbox.flex1]}>
       <Text
+        weight={isDisplayingPlainAddress ? 'mono_regular' : 'medium'}
         fontSize={14}
-        weight="medium"
         appearance={verification === 'BLACKLISTED' ? 'errorText' : 'primaryText'}
         selectable
         {...rest}
@@ -137,6 +139,7 @@ const BaseAddress: FC<Props> = ({
         /> */}
         <Option
           title={t('Copy Address')}
+          isAddress
           text={shortenAddress(address, 15)}
           renderIcon={() => <CopyIcon color={theme.secondaryText} width={16} height={16} />}
           onPress={handleCopyAddress}

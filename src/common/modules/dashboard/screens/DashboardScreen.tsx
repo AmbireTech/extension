@@ -6,20 +6,17 @@ import { isWeb } from '@common/config/env'
 import useDebounce from '@common/hooks/useDebounce'
 import useTheme from '@common/hooks/useTheme'
 import PendingActionWindowModal from '@common/modules/dashboard/components/PendingActionWindowModal'
-import spacings from '@common/styles/spacings'
-import flexbox from '@common/styles/utils/flexbox'
 import GasTankModal from '@web/components/GasTankModal'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import { getUiType } from '@web/utils/uiType'
 
-import DAppFooter from '../components/DAppFooter'
 import DashboardOverview from '../components/DashboardOverview'
 import DashboardPages from '../components/DashboardPages'
 import getStyles from './styles'
 
 const { isPopup } = getUiType()
 
-export const OVERVIEW_CONTENT_MAX_HEIGHT = 120
+export const OVERVIEW_CONTENT_MAX_HEIGHT = 280
 
 const DashboardScreen = () => {
   const { styles } = useTheme(getStyles)
@@ -32,6 +29,7 @@ const DashboardScreen = () => {
   })
   const debouncedDashboardOverviewSize = useDebounce({ value: dashboardOverviewSize, delay: 100 })
   const animatedOverviewHeight = useRef(new Animated.Value(OVERVIEW_CONTENT_MAX_HEIGHT)).current
+  const [isSearchHidden, setIsSearchHidden] = useState(false)
 
   const { account, portfolio } = useSelectedAccountControllerState()
 
@@ -60,7 +58,9 @@ const DashboardScreen = () => {
       const scrollUpThreshold = 200
       const isOverviewExpanded =
         y < scrollDownThreshold || y < scrollUpStartedAt.current - scrollUpThreshold
+      const isSearchHidden = y > 50 && y > scrollUpStartedAt.current - scrollUpThreshold
 
+      setIsSearchHidden(isSearchHidden)
       Animated.spring(animatedOverviewHeight, {
         toValue: isOverviewExpanded ? OVERVIEW_CONTENT_MAX_HEIGHT : 0,
         bounciness: 0,
@@ -83,16 +83,17 @@ const DashboardScreen = () => {
 
       <PendingActionWindowModal />
       <View style={styles.container}>
-        <View style={[flexbox.flex1, spacings.ptSm]}>
-          <DashboardOverview
-            openGasTankModal={openGasTankModal}
-            animatedOverviewHeight={animatedOverviewHeight}
-            dashboardOverviewSize={debouncedDashboardOverviewSize}
-            setDashboardOverviewSize={setDashboardOverviewSize}
-          />
-          <DashboardPages onScroll={onScroll} animatedOverviewHeight={animatedOverviewHeight} />
-        </View>
-        <DAppFooter />
+        <DashboardOverview
+          openGasTankModal={openGasTankModal}
+          animatedOverviewHeight={animatedOverviewHeight}
+          dashboardOverviewSize={debouncedDashboardOverviewSize}
+          setDashboardOverviewSize={setDashboardOverviewSize}
+        />
+        <DashboardPages
+          onScroll={onScroll}
+          animatedOverviewHeight={animatedOverviewHeight}
+          isSearchHidden={isSearchHidden}
+        />
       </View>
     </>
   )

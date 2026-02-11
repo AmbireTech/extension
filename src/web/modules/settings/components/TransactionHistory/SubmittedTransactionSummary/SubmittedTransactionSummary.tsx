@@ -11,14 +11,15 @@ import { humanizeAccountOp } from '@ambire-common/libs/humanizer'
 import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import useTheme from '@common/hooks/useTheme'
-import { SPACING_SM } from '@common/styles/spacings'
+import spacings, { SPACING, SPACING_SM } from '@common/styles/spacings'
+import DelegationHumanization from '@web/components/DelegationHumanization'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import TransactionSummary, {
   sizeMultiplier
 } from '@web/modules/sign-account-op/components/TransactionSummary'
 
-import DelegationHumanization from '@web/components/DelegationHumanization'
 import Footer from './Footer'
+import StatusBadge from './StatusBadge'
 import getStyles from './styles'
 
 interface Props {
@@ -81,6 +82,15 @@ const SubmittedTransactionSummaryInner = ({
         }
       ]}
     >
+      <View
+        style={{
+          ...spacings.phSm,
+          marginBottom: SPACING_SM * sizeMultiplier[size],
+          alignItems: 'flex-start'
+        }}
+      >
+        <StatusBadge status={submittedAccountOp.status} textSize={14 * sizeMultiplier[size]} />
+      </View>
       {!isDelegationTxn &&
         calls.map((call: IrCall) => (
           <TransactionSummary

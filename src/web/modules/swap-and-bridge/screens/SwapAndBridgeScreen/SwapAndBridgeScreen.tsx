@@ -15,7 +15,7 @@ import usePrevious from '@common/hooks/usePrevious'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings, { SPACING_MD, SPACING_MI } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { Content, Form, Wrapper } from '@web/components/TransactionsScreen'
+import { Content, Wrapper } from '@web/components/TransactionsScreen'
 import useBackgroundService from '@web/hooks/useBackgroundService'
 import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
@@ -256,7 +256,7 @@ const SwapAndBridgeScreen = () => {
   }
 
   return (
-    <Wrapper title={t('Swap & Bridge')} buttons={buttons}>
+    <Wrapper buttons={buttons}>
       <Content scrollViewRef={scrollViewRef} buttons={buttons}>
         {isHealthy === false && (
           <Alert
@@ -268,13 +268,13 @@ const SwapAndBridgeScreen = () => {
             style={spacings.mb}
           />
         )}
-        <Form>
+        <View>
           <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mb]}>
             {!isTab && <PanelBackButton onPress={onBackButtonPress} style={spacings.mrSm} />}
             <PanelTitle title={t('Swap & Bridge')} />
             {!isTab && <View style={{ width: 40 }} />}
           </View>
-          <View style={{ marginBottom: SPACING_MD + SPACING_MI / 2 }}>
+          <View style={spacings.mbTy}>
             <FromToken
               fromTokenOptions={fromTokenOptions}
               fromTokenValue={fromTokenValue}
@@ -285,7 +285,7 @@ const SwapAndBridgeScreen = () => {
             />
           </View>
           <ToToken simulationFailed={!!toChainSimulationError} />
-        </Form>
+        </View>
         <RouteInfo
           isEstimatingRoute={isEstimatingRoute}
           openRoutesModal={openRoutesModal}

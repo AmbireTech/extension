@@ -20,7 +20,7 @@ interface Props {
   title?: string | React.ReactNode
   titleWeight?: TextWeight
   text?: string | React.ReactNode
-  type?: 'error' | 'warning' | 'success' | 'info' | 'info2'
+  type?: 'error' | 'warning' | 'success' | 'info'
   style?: ViewStyle
   children?: React.ReactNode
   size?: 'sm' | 'md'
@@ -35,8 +35,7 @@ const ICON_MAP = {
   error: ErrorIcon,
   warning: WarningIcon,
   success: SuccessIcon,
-  info: InfoIcon,
-  info2: InfoIcon
+  info: InfoIcon
 }
 
 const { isPopup } = getUiType()
@@ -95,9 +94,7 @@ const Alert = ({
         flexbox.directionRow,
         common.borderRadiusPrimary,
         {
-          borderWidth: 1,
-          backgroundColor: theme[`${type}Background`],
-          borderColor: theme[`${type}Decorative`]
+          backgroundColor: theme[`${type}Background`]
         },
         style
       ]}
@@ -108,7 +105,7 @@ const Alert = ({
           {CustomIcon ? (
             <CustomIcon />
           ) : (
-            <Icon width={20} height={20} color={theme[`${type}Decorative`]} />
+            <Icon width={20} height={20} color={theme[`${type}Text`]} />
           )}
         </View>
       )}

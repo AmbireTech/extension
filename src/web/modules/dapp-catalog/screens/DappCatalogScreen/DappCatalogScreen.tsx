@@ -20,9 +20,8 @@ import Text from '@common/components/Text'
 import useDebounce from '@common/hooks/useDebounce'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
-import Header from '@common/modules/header/components/Header'
+import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
 import spacings, { SPACING_MI, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import {
@@ -324,7 +323,7 @@ const DappCatalogScreen = () => {
       width="xl"
       footer={<BackButton />}
       footerStyle={{ maxWidth: tabLayoutWidths.xl }}
-      header={<Header mode="title" withAmbireLogo />}
+      header={<HeaderWithTitle />}
       withHorizontalPadding={!isPopup}
     >
       {!state.isReadyToDisplayDapps || !state.dapps.length ? (
@@ -383,14 +382,13 @@ const DappCatalogScreen = () => {
                   borderWidth: 1,
                   ...(network && network.name !== ALL_CATEGORIES_OPTION.value
                     ? {
-                        borderColor:
-                          themeType === THEME_TYPES.DARK ? theme.primary : theme.primaryLight
+                        borderColor: theme.primaryAccent
                       }
                     : {})
                 }}
                 hoveredSelectStyle={{
                   backgroundColor: theme.secondaryBackground,
-                  borderColor: themeType === THEME_TYPES.DARK ? theme.primary : theme.primaryLight
+                  borderColor: theme.primaryAccent
                 }}
               />
               <Select
@@ -418,14 +416,13 @@ const DappCatalogScreen = () => {
                   borderWidth: 1,
                   ...(category && category !== ALL_CATEGORIES_OPTION.value
                     ? {
-                        borderColor:
-                          themeType === THEME_TYPES.DARK ? theme.primary : theme.primaryLight
+                        borderColor: theme.primaryAccent
                       }
                     : {})
                 }}
                 hoveredSelectStyle={{
                   backgroundColor: theme.secondaryBackground,
-                  borderColor: themeType === THEME_TYPES.DARK ? theme.primary : theme.primaryLight
+                  borderColor: theme.primaryAccent
                 }}
               />
               <FilterButton
@@ -449,7 +446,7 @@ const DappCatalogScreen = () => {
                 hoveredStyle={{ borderColor: theme.successDecorative }}
                 hoveredTextColor={theme.successDecorative}
                 activeStyle={{
-                  borderColor: themeType === THEME_TYPES.DARK ? theme.primary : theme.primaryLight
+                  borderColor: theme.primaryAccent
                 }}
               />
             </View>

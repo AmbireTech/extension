@@ -58,7 +58,7 @@ const Filters: FC<Props> = ({ control, networkFilter, setNetworkFilterValue }) =
           }}
           placeholder={t('Search tokens')}
           control={control}
-          height={50}
+          height={48}
         />
         <Select
           options={networksOptions}

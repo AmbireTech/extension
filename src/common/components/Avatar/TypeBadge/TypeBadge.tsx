@@ -67,7 +67,12 @@ const TypeBadge: FC<Props> = ({ smartAccountType, size, showTooltip = false }) =
         top: size === 'big' ? -4 : -SPACING_MI,
         paddingHorizontal: 3,
         paddingVertical: 2,
-        zIndex: 2
+        backgroundColor: theme.successText,
+        zIndex: 2,
+        borderRadius: 50,
+        borderWidth: size === 'big' ? 3 : 2,
+        borderColor:
+          themeType === THEME_TYPES.DARK ? theme.secondaryBackground : theme.primaryBackground
       }}
     />
   )

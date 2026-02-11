@@ -47,7 +47,7 @@ const HardwareWalletSigningModal = ({ keyType, isVisible, children }: Props) => 
     const Icon = keyType && iconByKeyType[keyType as keyof typeof iconByKeyType]
     if (!Icon) return undefined
 
-    return <Icon />
+    return <Icon style={spacings.mlTy} />
   }, [keyType])
 
   return (
@@ -64,12 +64,15 @@ const HardwareWalletSigningModal = ({ keyType, isVisible, children }: Props) => 
       containerInnerWrapperStyles={isTab ? { ...spacings.pv2Xl, ...spacings.ph2Xl } : {}}
     >
       <ModalHeader
-        hideLeftSideContainer
-        hideRightSideContainer
-        title={t('Sign with your {{deviceName}} device', {
-          deviceName: HARDWARE_WALLET_DEVICE_NAMES[keyType]
-        })}
-        titleSuffix={titleSuffix}
+        withBackButton={false}
+        title={
+          <>
+            {t('Sign with your {{deviceName}} device', {
+              deviceName: HARDWARE_WALLET_DEVICE_NAMES[keyType]
+            })}
+            {titleSuffix}
+          </>
+        }
         style={flexbox.justifyCenter}
       />
       <View

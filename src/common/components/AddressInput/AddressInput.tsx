@@ -1,7 +1,7 @@
 import { setStringAsync } from 'expo-clipboard'
 import React, { useCallback, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { TextInput, View } from 'react-native'
+import { Pressable, TextInput, View } from 'react-native'
 
 import { validateAddress, Validation } from '@ambire-common/services/validations'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
@@ -164,23 +164,16 @@ const AddressInput: React.FC<Props> = ({
         button={
           rest.button ||
           (value && withDetails ? (
-            <View style={[flexbox.alignCenter, flexbox.directionRow]}>
-              <Button
-                size="tiny"
-                hasBottomSpacing={false}
-                text={t('Clear')}
-                type="gray"
-                style={{ ...spacings.phTy, height: 28 }}
-                accentColor={theme.secondaryText}
-                onPress={() => {
-                  !!onChangeText && onChangeText('')
-                  inputRef?.current?.focus()
-                  !!onClearButtonPress && onClearButtonPress()
-                }}
-              >
-                <CloseIcon width={12} height={12} strokeWidth="1.75" style={spacings.mlMi} />
-              </Button>
-            </View>
+            <Pressable
+              style={{ width: 24, height: 24, ...flexbox.center }}
+              onPress={() => {
+                !!onChangeText && onChangeText('')
+                inputRef?.current?.focus()
+                !!onClearButtonPress && onClearButtonPress()
+              }}
+            >
+              <CloseIcon width={12} height={12} strokeWidth="1.75" style={spacings.mlMi} />
+            </Pressable>
           ) : null)
         }
       />
