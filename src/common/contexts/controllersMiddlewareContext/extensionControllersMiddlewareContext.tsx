@@ -3,6 +3,7 @@ import { nanoid } from 'nanoid'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { ErrorRef } from '@ambire-common/interfaces/eventEmitter'
+import wait from '@ambire-common/utils/wait'
 import { captureMessage } from '@common/config/analytics/CrashAnalytics.web'
 import { AllControllersMappingType } from '@common/constants/controllersMapping'
 import { ControllersMiddlewareContextReturnType } from '@common/contexts/controllersMiddlewareContext/types'
@@ -19,6 +20,9 @@ import eventBus from '@web/extension-services/event/eventBus'
 import { PortMessenger } from '@web/extension-services/messengers'
 import useAutoLockControllerHelpers from '@web/hooks/useAutoLockControllerHelpers'
 import useDappsControllerHelpers from '@web/hooks/useDappsControllerHelpers'
+import useKeystoreControllerHelpers from '@web/hooks/useKeystoreControllerHelpers'
+import useRequestsControllerHelpers from '@web/hooks/useRequestsControllerHelpers'
+import useSelectedAccountControllerHelpers from '@web/hooks/useSelectedAccountControllerHelpers'
 import { getUiType } from '@web/utils/uiType'
 
 import { ControllersMiddlewareContext } from './context'
@@ -78,10 +82,16 @@ if (isExtension) {
         eventBus.emit(method, params)
       }
     })
-
-    setTimeout(() => {
-      pm.send('> background', { type: 'HANDSHAKE' })
-    }, 1)
+    ;(async () => {
+      try {
+        while (!backgroundReady) {
+          pm.send('> background', { type: 'HANDSHAKE' })
+          await wait(250)
+        }
+      } catch (e) {
+        console.error(e)
+      }
+    })()
 
     // Use at least 1000ms; on slower PCs, background responses can be slightly delayed,
     // causing multiple recursive connectPort calls and slowing down window initialization.
@@ -217,7 +227,7 @@ export const ExtensionControllersMiddlewareProvider: React.FC<{ children: React.
       } catch (error) {
         console.error(error)
       }
-      timer.current = setTimeout(keepAlive, 2000)
+      timer.current = setTimeout(keepAlive, 2500)
     }
 
     if (isFocused) {
@@ -326,6 +336,9 @@ export const ExtensionControllersMiddlewareProvider: React.FC<{ children: React.
   const [controllerHelpersStore] = useState(() => new ControllerHelpersStore())
   useDappsControllerHelpers(controllerStore, controllerHelpersStore, dispatch)
   useAutoLockControllerHelpers(controllerStore, dispatch)
+  useKeystoreControllerHelpers(controllerStore)
+  useRequestsControllerHelpers(controllerStore)
+  useSelectedAccountControllerHelpers(controllerStore)
 
   return (
     <ControllersMiddlewareContext.Provider

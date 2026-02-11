@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useSyncExternalStore } from 'react'
 import { useIdleTimer } from 'react-idle-timer'
 
 import { ControllerStore } from '@common/contexts/controllersMiddlewareContext/controllerStore'
@@ -8,10 +8,12 @@ export default function useAutoLockControllerHelpers(
   controllerStore: ControllerStore,
   dispatch: (action: Action) => void
 ) {
-  const autoLockTime = useMemo(
-    () => controllerStore.getSnapshot('AutoLockController').autoLockTime,
-    [controllerStore]
+  const state = useSyncExternalStore(
+    useCallback((cb) => controllerStore.subscribe('AutoLockController', cb), [controllerStore]),
+    useCallback(() => controllerStore.getSnapshot('AutoLockController'), [controllerStore])
   )
+
+  const autoLockTime = useMemo(() => state.autoLockTime, [state.autoLockTime])
 
   useEffect(() => {
     // reset lock timer on window open

@@ -157,12 +157,6 @@ export default function useController<K extends keyof AllControllersMappingType>
     [controllersMiddlewareDispatch, id]
   )
 
-  let ctrlSpecificMethods = {}
-
-  if (id === 'RequestsController') {
-    // TODO:
-  }
-
   if (id === 'SelectedAccountController') {
     // TODO:
   }
@@ -170,7 +164,6 @@ export default function useController<K extends keyof AllControllersMappingType>
   return {
     state: state || ({} as AllControllersMappingType[K]),
     ...(helpers || ({} as ControllerHelpersMapping[K])),
-    ...ctrlSpecificMethods,
     dispatch,
     dispatchAndWait
   } as UseControllerReturn<K>

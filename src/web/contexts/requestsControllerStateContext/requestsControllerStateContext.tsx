@@ -4,8 +4,6 @@ import React, { createContext, useEffect } from 'react'
 import { IRequestsController } from '@ambire-common/interfaces/requests'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useDeepMemo from '@common/hooks/useDeepMemo'
-import useNavigation from '@common/hooks/useNavigation'
-import usePrevious from '@common/hooks/usePrevious'
 import useControllerState from '@web/hooks/useControllerState'
 import { getUiType } from '@web/utils/uiType'
 
@@ -15,7 +13,6 @@ const RequestsControllerStateProvider: React.FC<any> = ({ children }) => {
   const controller = 'RequestsController'
   const state = useControllerState(controller)
   const { dispatch } = useControllersMiddleware()
-  const { navigate } = useNavigation()
 
   useEffect(() => {
     dispatch({ type: 'INIT_CONTROLLER_STATE', params: { controller } })
@@ -25,17 +22,6 @@ const RequestsControllerStateProvider: React.FC<any> = ({ children }) => {
   }, [dispatch])
 
   const memoizedState = useDeepMemo(state, controller)
-
-  const prevCurrentUserRequestId = usePrevious(memoizedState?.currentUserRequest?.id)
-
-  useEffect(() => {
-    if (
-      getUiType().isRequestWindow &&
-      prevCurrentUserRequestId !== memoizedState?.currentUserRequest?.id
-    ) {
-      setTimeout(() => navigate('/'))
-    }
-  }, [prevCurrentUserRequestId, memoizedState?.currentUserRequest?.id, navigate])
 
   return (
     <RequestsControllerStateContext.Provider value={memoizedState}>

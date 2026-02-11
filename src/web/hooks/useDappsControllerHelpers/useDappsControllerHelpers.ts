@@ -1,10 +1,11 @@
 import { nanoid } from 'nanoid'
-import { useCallback, useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useSyncExternalStore } from 'react'
 
 import { Dapp } from '@ambire-common/interfaces/dapp'
 import { getDappIdFromUrl } from '@ambire-common/libs/dapps/helpers'
 import { isValidURL } from '@ambire-common/services/validations'
 import { captureException } from '@common/config/analytics/CrashAnalytics.web'
+import { AllControllersMappingType } from '@common/constants/controllersMapping'
 import { ControllerHelpersStore } from '@common/contexts/controllersMiddlewareContext/controllerHelpersStore'
 import { ControllerStore } from '@common/contexts/controllersMiddlewareContext/controllerStore'
 import { Action } from '@web/extension-services/background/actions'
@@ -17,10 +18,12 @@ export default function useDappsControllerHelpers(
   controllerHelpersStore: ControllerHelpersStore,
   dispatch: (action: Action) => void
 ) {
-  const dappSessions = useMemo(
-    () => controllerStore.getSnapshot('DappsController').dappSessions ?? {},
-    [controllerStore]
+  const state = useSyncExternalStore(
+    useCallback((cb) => controllerStore.subscribe('DappsController', cb), [controllerStore]),
+    useCallback(() => controllerStore.getSnapshot('DappsController'), [controllerStore])
   )
+
+  const dappSessions = useMemo(() => state.dappSessions ?? {}, [state.dappSessions])
 
   const getCurrentDapp = useCallback(async () => {
     const requestId = nanoid()
