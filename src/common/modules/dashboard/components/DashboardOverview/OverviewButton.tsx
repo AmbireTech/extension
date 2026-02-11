@@ -41,6 +41,7 @@ const OverviewButton = ({
     <AnimatedPressable
       onPress={onPress}
       disabled={disabled}
+      // @ts-ignore
       style={{
         ...flexbox.directionRow,
         ...flexbox.center,
