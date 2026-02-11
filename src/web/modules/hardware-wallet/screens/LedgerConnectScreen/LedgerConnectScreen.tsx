@@ -7,6 +7,7 @@ import LeftPointerArrowIcon from '@common/assets/svg/LeftPointerArrowIcon'
 import Button from '@common/components/Button'
 import Panel from '@common/components/Panel'
 import Text from '@common/components/Text'
+import { isSpeculos } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
@@ -27,9 +28,6 @@ import useBackgroundService from '@web/hooks/useBackgroundService'
 import useMainControllerState from '@web/hooks/useMainControllerState'
 import useLedger from '@web/modules/hardware-wallet/hooks/useLedger'
 
-const IS_SPECULOS_TRANSPORT =
-  typeof process !== 'undefined' && !!process.env && process.env.LEDGER_TRANSPORT === 'speculos'
-
 export const CARD_WIDTH = 400
 
 const LedgerConnectScreen = () => {
@@ -48,7 +46,7 @@ const LedgerConnectScreen = () => {
 
   const onPressNext = async () => {
     try {
-      if (!IS_SPECULOS_TRANSPORT) {
+      if (!isSpeculos) {
         // Request Ledger access first, before any state updates to prevent error:
         // "Failed to execute 'requestDevice' on 'HID': Must be handling a user
         // gesture to show a permission request." on Vivaldi browser.
@@ -79,7 +77,7 @@ const LedgerConnectScreen = () => {
   useEffect(() => {
     // In Speculos mode, automatically proceed with the connection flow without
     // requiring a USB/HID permission gesture.
-    if (IS_SPECULOS_TRANSPORT && !authorizeButtonPressed && !isGrantingPermission) {
+    if (isSpeculos && !authorizeButtonPressed && !isGrantingPermission) {
       // Fire and forget; errors will be surfaced via toast from onPressNext
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
       onPressNext()
@@ -88,7 +86,7 @@ const LedgerConnectScreen = () => {
   }, [authorizeButtonPressed, isGrantingPermission])
 
   useEffect(() => {
-    if (!IS_SPECULOS_TRANSPORT && !!authorizeButtonPressed && initParams && type === 'ledger') {
+    if (!isSpeculos && !!authorizeButtonPressed && initParams && type === 'ledger') {
       setAuthorizeButtonPressed(false)
       goToNextRoute()
     }
@@ -96,10 +94,7 @@ const LedgerConnectScreen = () => {
 
   useEffect(() => {
     // In Speculos mode, once the Ledger account picker init succeeds, move to the next screen
-    if (
-      IS_SPECULOS_TRANSPORT &&
-      mainCtrlState.statuses.handleAccountPickerInitLedger === 'SUCCESS'
-    ) {
+    if (isSpeculos && mainCtrlState.statuses.handleAccountPickerInitLedger === 'SUCCESS') {
       goToNextRoute()
     }
   }, [goToNextRoute, mainCtrlState.statuses.handleAccountPickerInitLedger])
@@ -122,7 +117,7 @@ const LedgerConnectScreen = () => {
         >
           <View style={[flexbox.alignSelfCenter, spacings.mbSm, spacings.ptMd]}>
             <Text weight="regular" style={spacings.mbTy} fontSize={14}>
-              {IS_SPECULOS_TRANSPORT
+              {isSpeculos
                 ? t('1. Make sure your Speculos Ledger emulator is running.')
                 : t('1. Plug in your Ledger and enter a PIN to unlock it.')}
             </Text>
@@ -131,7 +126,7 @@ const LedgerConnectScreen = () => {
               fontSize={14}
               style={minHeightSize(620) ? { marginBottom: 12 } : { marginBottom: 40 }}
             >
-              {IS_SPECULOS_TRANSPORT
+              {isSpeculos
                 ? t('2. Open the Ethereum app in the emulator.')
                 : t('2. Open the Ethereum app.')}
             </Text>
@@ -149,14 +144,14 @@ const LedgerConnectScreen = () => {
             <AmbireDevice />
           </View>
           <Text style={[spacings.mbLg, text.center]} appearance="secondaryText">
-            {IS_SPECULOS_TRANSPORT
+            {isSpeculos
               ? t('Connecting to the Speculos Ledger emulator configured for this environment.')
               : t(
                   'If not previously granted, Ambire will ask for permission to connect to a HID device.'
                 )}
           </Text>
 
-          {!IS_SPECULOS_TRANSPORT && (
+          {!isSpeculos && (
             <Button
               text={isLoading ? t('Connecting...') : t('Authorize & connect')}
               disabled={isLoading}

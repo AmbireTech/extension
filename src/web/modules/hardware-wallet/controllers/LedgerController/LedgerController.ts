@@ -6,6 +6,7 @@ import { TypedMessageUserRequest } from '@ambire-common/interfaces/userRequest'
 import { normalizeLedgerMessage } from '@ambire-common/libs/ledger/ledger'
 import { getHdPathFromTemplate, getHdPathWithoutRoot } from '@ambire-common/utils/hdPath'
 import hexStringToUint8Array from '@ambire-common/utils/hexStringToUint8Array'
+import { isSpeculos, SPECULOS_HTTP_URL } from '@common/config/env'
 import { ContextModuleBuilder } from '@ledgerhq/context-module'
 import {
   DeviceManagementKitBuilder,
@@ -20,12 +21,8 @@ import { webHidTransportFactory } from '@ledgerhq/device-transport-kit-web-hid'
 import { isVivaldi } from '@web/constants/browserapi'
 
 const LedgerEnv = {
-  isSpeculos:
-    typeof process !== 'undefined' && !!process.env && process.env.LEDGER_TRANSPORT === 'speculos',
-
-  speculosHttpUrl:
-    (typeof process !== 'undefined' && process.env && process.env.SPECULOS_HTTP_URL) ||
-    'http://127.0.0.1:5000'
+  isSpeculos: isSpeculos,
+  speculosHttpUrl: SPECULOS_HTTP_URL
 } as const
 
 export { LedgerDeviceModels }

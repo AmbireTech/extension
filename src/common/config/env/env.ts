@@ -20,6 +20,7 @@ export const isProd = process.env.APP_ENV === 'production'
 export const isStaging = process.env.APP_ENV === 'staging'
 export const isBenzin = process.env.BENZIN === 'true'
 export const isLegends = process.env.LEGENDS === 'true'
+export const isSpeculos = process.env.LEDGER_TRANSPORT === 'speculos'
 /**
  * Ambire Next is a separate production build variant used for beta testing and preview
  * before releasing features to the main production build. It allows us to have two
@@ -84,6 +85,9 @@ if (isProd) {
 } else if (isStaging) {
   CONFIG.APP_ENV = APP_ENV.STAGING
 }
+
+// This is only used for development builds, and it is not a secret, so it's fine to log it.
+export const SPECULOS_HTTP_URL = process.env.SPECULOS_HTTP_URL || 'http://localhost:5000'
 
 /**
  * Option to run the app without the Ambire Relayer. See `RELAYER_URL`
