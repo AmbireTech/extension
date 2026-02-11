@@ -1,6 +1,10 @@
-const parseEnv = (envVariables, prefix: 'SA' | 'BA') => {
-  if (prefix !== 'SA' && prefix !== 'BA') {
-    throw new Error(`Invalid ${prefix}. Expected 'SA' or 'BA'`)
+type Prefix = 'SA' | 'BA' | 'LEDGER'
+
+const PREFIXES: Prefix[] = ['SA', 'BA', 'LEDGER']
+
+const parseEnv = (envVariables: Record<string, string>, prefix: Prefix) => {
+  if (!PREFIXES.includes(prefix)) {
+    throw new Error(`Invalid ${prefix}. Expected 'SA', 'BA' or 'LEDGER'`)
   }
 
   return {

@@ -1,11 +1,12 @@
-import { KEYSTORE_PASS } from 'constants/env'
+import { KEYSTORE_PASS, ledgerParams } from 'constants/env'
 import mainConstants from 'constants/mainConstants'
 import selectors from 'constants/selectors'
 import { test } from 'fixtures/pageObjects' // your extended test with auth
 
 import { expect } from '@playwright/test'
 
-test.describe('ledger', () => {
+test.describe('ledger without storage', () => {
+  test.describe.configure({ mode: 'serial' })
   test.beforeEach(async ({ pages }) => {
     await pages.initWithoutStorage()
   })
@@ -43,4 +44,28 @@ test.describe('ledger', () => {
       await expect(page.getByText(mainConstants.addresses.ledgerAccount2)).toBeVisible()
     })
   })
+})
+
+test.describe('ledger with storage', () => {
+  test.describe.configure({ mode: 'serial' })
+
+  test.beforeEach(async ({ pages }) => {
+    await pages.initWithStorage(ledgerParams)
+  })
+
+  test.afterEach(async ({ context }) => {
+    await context.close()
+  })
+
+  //DASHBOARD TESTS
+
+  test('should have balance on the dashboard', async ({ pages }) => {
+    await pages.dashboard.checkBalanceInAccount()
+  })
+
+  //   SIGN MESSAGE TESTS
+  //   test.only('should sign plain message', async ({ pages }) => {
+  //     const message = 'Hello, Ambire!'
+  //     await pages.signMessage.signMessage(message, 'plain')
+  //   })
 })

@@ -7,9 +7,12 @@ const envVariables = loadEnv()
 export const baParams = parseEnv(envVariables, 'BA')
 // Smart Account env variables
 export const saParams = parseEnv(envVariables, 'SA')
+// Ledger env variables
+export const ledgerParams = parseEnv(envVariables, 'LEDGER')
 
 export const BA_ADDRESS = envVariables.BA_SELECTED_ACCOUNT
 export const SA_ADDRESS = envVariables.SA_SELECTED_ACCOUNT
+export const LEDGER_ADDRESS = envVariables.LEDGER_SELECTED_ACCOUNT
 export const KEYSTORE_PASS = envVariables.KEYSTORE_PASS
 export const SEED = envVariables.SEED
 export const SEED24 = envVariables.SEED_24_WORDS
