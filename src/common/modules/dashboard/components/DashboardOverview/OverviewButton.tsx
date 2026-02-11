@@ -1,4 +1,5 @@
 import React from 'react'
+import { ViewStyle } from 'react-native'
 
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import SkeletonLoader from '@common/components/SkeletonLoader'
@@ -43,7 +44,7 @@ const OverviewButton = ({
         ...flexbox.center,
         ...spacings.phSm,
         ...btnAnimStyle,
-        ...(!!tooltipText && { cursor: 'default' }),
+        ...(!!tooltipText && ({ cursor: 'default' } as unknown as ViewStyle)),
         borderColor: '#FFFFFF1F',
         borderRadius: 12,
         borderWidth: 1,
