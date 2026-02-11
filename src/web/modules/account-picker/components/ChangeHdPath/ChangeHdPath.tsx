@@ -22,7 +22,7 @@ const ChangeHdPath: React.FC<Props> = ({ setPage, disabled }) => {
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const { t } = useTranslation()
   const { dispatch } = useBackgroundService()
-  const { hdPathTemplate, isPageLocked, pageError, page } = useAccountPickerControllerState()
+  const { hdPathTemplate, accountsLoading, pageError, page } = useAccountPickerControllerState()
 
   const value = useMemo(
     () => DERIVATION_OPTIONS.find((o) => o.value === hdPathTemplate),
@@ -66,7 +66,7 @@ const ChangeHdPath: React.FC<Props> = ({ setPage, disabled }) => {
 
       <AdvancedModeBottomSheet
         sheetRef={sheetRef}
-        disabled={isPageLocked || !!pageError}
+        disabled={accountsLoading || !!pageError}
         closeBottomSheet={closeBottomSheet}
         page={page}
         value={value}

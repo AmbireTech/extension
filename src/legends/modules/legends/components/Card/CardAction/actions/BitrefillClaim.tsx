@@ -28,7 +28,7 @@ interface Props {
 }
 const BitrefillClaim = ({ meta }: Props) => {
   const [isInProgress, setIsInProgress] = useState(false)
-  const { sendCalls, getCallsStatus, chainId } = useErc5792()
+  const { sendCalls, getCallsStatus } = useErc5792()
   const { onComplete } = useCardActionContext()
   const { addToast } = useToast()
   const switchNetwork = useSwitchNetwork()
@@ -41,6 +41,9 @@ const BitrefillClaim = ({ meta }: Props) => {
       if (!browserProvider) throw new Error('No connected wallet')
       if (!connectedAccount) throw new Error('No connected account')
       setIsInProgress(true)
+      // as of feb 2026 this is not needed for latest v's of the extension, because the wallet_sendCalls method handles the chainId
+      // but we are not removing it for now, becaus there are many users right now who have not yet updated their extension to latest
+      // same applies for most other such cases in rewards
       await switchNetwork(BASE_CHAIN_ID)
 
       const signer = await browserProvider.getSigner(connectedAccount)
@@ -48,7 +51,7 @@ const BitrefillClaim = ({ meta }: Props) => {
       const useSponsorship = false
 
       const sendCallsIdentifier = await sendCalls(
-        chainId,
+        BigInt(BASE_CHAIN_ID),
         await signer.getAddress(),
         [
           {
@@ -78,7 +81,6 @@ const BitrefillClaim = ({ meta }: Props) => {
     connectedAccount,
     switchNetwork,
     sendCalls,
-    chainId,
     getCallsStatus,
     onComplete,
     addToast

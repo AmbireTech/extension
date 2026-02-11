@@ -245,7 +245,6 @@ const selectors = {
   transactionButtonReject: 'transaction-button-reject',
   totalPortfolioAmountInteger: 'total-portfolio-amount-integer',
   proceedBtn: 'proceed-btn',
-  batchBtn: 'batch-btn',
   privateKeyWarningCheckbox1: 'private-key-warning-checkbox-1',
   privateKeyWarningCheckbox2: 'private-key-warning-checkbox-2',
   nativeTokenBaseDashboard: 'token-0x0000000000000000000000000000000000000000-8453',
@@ -308,7 +307,7 @@ const selectors = {
     "//div[.//span[text()='Include Testnets']]//button[normalize-space()='Connect Wallet']",
   chainlistSearchPlaceholder: 'input[placeholder*="ETH"]',
   addToMetamaskButton: '//button[contains(text(),"Add to Metamask")]',
-  confirmaddNetworkOnChainlistButton: '//div[contains(text(),"Add network")]',
+  confirmaddNetworkOnChainlistButton: '//div[contains(text(),"Enable network")]',
   blockExplorerURL: (url: string) => `//div[contains(text(),"${url}")]`,
   networkDetailEditButton: '//div[.//div[text()="Network details"]]//div[text()="Edit"]',
   // edit network modal

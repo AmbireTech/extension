@@ -14,7 +14,6 @@ import useAddressInput from '@common/hooks/useAddressInput'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 
 interface Props {
@@ -44,7 +43,6 @@ const AddressField: FC<Props> = ({
   setValue,
   trigger
 }) => {
-  const { dispatch } = useBackgroundService()
   const accountsState = useAccountsControllerState()
   const keystoreState = useKeystoreControllerState()
   const accounts = watch('accounts')
@@ -96,9 +94,11 @@ const AddressField: FC<Props> = ({
   }, [accountsState.accounts, keystoreState.keys, value?.fieldValue])
 
   const overwriteValidation: Validation | null = useMemo(() => {
-    // We don't want to update the error message while accounts are being
-    // imported because that would stop the import process.
-    if (isLoading) return null
+    if (duplicateAccountsIndexes.includes(index))
+      return {
+        severity: 'error',
+        message: 'Duplicate address.'
+      }
 
     if (
       accountsState.accounts.find(
@@ -106,18 +106,13 @@ const AddressField: FC<Props> = ({
       )
     )
       return {
-        severity: 'error',
+        // Allow the user to proceed on purpose
+        severity: 'info',
         message: 'This address is already in your wallet.'
       }
 
-    if (duplicateAccountsIndexes.includes(index))
-      return {
-        severity: 'error',
-        message: 'Duplicate address.'
-      }
-
     return null
-  }, [duplicateAccountsIndexes, index, isLoading, accountsState.accounts, value])
+  }, [duplicateAccountsIndexes, index, accountsState.accounts, value])
 
   const handleRevalidate = useCallback(() => {
     // We don't want to update the error message while accounts are being
@@ -126,27 +121,11 @@ const AddressField: FC<Props> = ({
     trigger(`accounts.${index}.fieldValue`)
   }, [index, isLoading, trigger])
 
-  const handleCacheResolvedDomain = useCallback(
-    (address: string, ensAvatar: string | null, domain: string, type: 'ens') => {
-      dispatch({
-        type: 'DOMAINS_CONTROLLER_SAVE_RESOLVED_REVERSE_LOOKUP',
-        params: {
-          type,
-          address,
-          name: domain,
-          ensAvatar
-        }
-      })
-    },
-    [dispatch]
-  )
-
   const { validation, RHFValidate } = useAddressInput({
     addressState: value,
     setAddressState,
     overwriteValidation,
-    handleRevalidate,
-    handleCacheResolvedDomain
+    handleRevalidate
   })
 
   return (

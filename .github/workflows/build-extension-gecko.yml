@@ -92,7 +92,7 @@ jobs:
             -e SENTRY_AUTH_TOKEN="${{ secrets.SENTRY_AUTH_TOKEN_BROWSER_EXTENSIONS }}" \
             --entrypoint /bin/sh \
             node:${{ steps.node-version.outputs.NODE_VERSION }}-alpine \
-            -c "apk add --no-cache curl git openssh zip python3 make g++ linux-headers eudev-dev && yarn install --frozen-lockfile && yarn build:extensions:gecko"
+            -c "apk add --no-cache curl git openssh zip python3 make g++ linux-headers eudev-dev && yarn setup:ci && yarn build:extensions:gecko"
 
           # Give full permissions to the build directory for the GitHub Actions user
           sudo chown -R $(whoami):$(whoami) ./build

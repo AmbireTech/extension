@@ -1,5 +1,4 @@
 import * as Application from 'expo-application'
-import Constants from 'expo-constants'
 import * as Updates from 'expo-updates'
 import { Platform } from 'react-native'
 
@@ -11,6 +10,8 @@ export const isTesting = process.env.IS_TESTING === 'true'
 export const isDev = process.env.APP_ENV === 'development'
 export const isProd = process.env.APP_ENV === 'production'
 export const isStaging = process.env.APP_ENV === 'staging'
+export const isBenzin = process.env.BENZIN === 'true'
+export const isLegends = process.env.LEGENDS === 'true'
 /**
  * Ambire Next is a separate production build variant used for beta testing and preview
  * before releasing features to the main production build. It allows us to have two
@@ -24,7 +25,7 @@ export const APP_ID = Application.applicationId
  * Internal app version, example: 1.0.0 (follows semantic versioning).
  * Fallback to the appJSON version, because in web mode Constants are missing.
  */
-export const APP_VERSION = Constants?.manifest?.version || appJSON.expo.version
+export const APP_VERSION = appJSON.version
 /**
  * The internal build version of the native build (binary).
  * This is the Info.plist value for `CFBundleVersion` on iOS and
@@ -32,9 +33,12 @@ export const APP_VERSION = Constants?.manifest?.version || appJSON.expo.version
  */
 export const BUILD_NUMBER = Application.nativeBuildVersion || 'N/A'
 
-export const RELEASE_CHANNEL = Updates.releaseChannel || 'N/A'
+export const RELEASE_CHANNEL = Updates.channel || 'N/A'
 export const RUNTIME_VERSION = Updates.runtimeVersion || 'N/A'
-export const EXPO_SDK = Constants?.manifest?.sdkVersion || 'N/A'
+// FIXME: We should figure out a way to get this,
+// because 'expo-constants' uses window refs that break our extension service worker
+// export const EXPO_SDK = Constants?.manifest?.sdkVersion || 'N/A'
+export const EXPO_SDK = 'N/A'
 
 export const isiOS = Platform.OS === 'ios'
 export const isAndroid = Platform.OS === 'android'

@@ -29,9 +29,10 @@ type Receipt = {
 
 const useErc5792 = () => {
   const { provider } = useProviderContext()
+
   // all fields below marked as string should be HEX!
   const sendCalls = async (
-    chainId: string,
+    chainId: bigint,
     accAddr: string,
     calls: { to: string; data: string; value?: string }[],
     useSponsorship = true
@@ -43,13 +44,13 @@ const useErc5792 = () => {
       params: [
         {
           version: '1.0',
-          chainId,
+          chainId: '0x' + chainId.toString(16),
           from: accAddr,
           calls,
           capabilities: useSponsorship
             ? {
                 paymasterService: {
-                  [chainId]: {
+                  ['0x' + chainId.toString(16)]: {
                     url: `${RELAYER_URL}/v2/sponsorship`
                   }
                 }
@@ -101,9 +102,7 @@ const useErc5792 = () => {
 
   return {
     getCallsStatus,
-    sendCalls,
-    // the correct format for chainId when using erc5792
-    chainId: '0x2105'
+    sendCalls
   }
 }
 

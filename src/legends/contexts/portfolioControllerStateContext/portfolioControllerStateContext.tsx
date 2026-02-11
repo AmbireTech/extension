@@ -1,7 +1,7 @@
 import { Contract, formatEther, formatUnits } from 'ethers'
 import React, { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-import { STK_WALLET } from '@ambire-common/consts/addresses'
+import { STK_WALLET, UNI_V3_WALLET_WETH_POOL } from '@ambire-common/consts/addresses'
 import { networks } from '@ambire-common/consts/networks'
 import { getUniV3Positions } from '@ambire-common/libs/defiPositions/providers'
 import {
@@ -41,7 +41,6 @@ type WalletTokenInfo = {
   totalSupply: number
   stkWalletTotalSupply: number
   percentageStakedWallet: number
-  apy: number
   stakedWallets: number
   walletPrice: number
   season2PoolInfo: {
@@ -184,7 +183,9 @@ const PortfolioControllerStateProvider: React.FC<any> = ({ children }) => {
       )
       const walletEthPositionsAssets =
         uniV3Positions?.positions
-          .filter((p) => p.additionalData.inRange)
+          .filter(
+            (p) => p.additionalData.inRange && p.additionalData.pool?.id === UNI_V3_WALLET_WETH_POOL
+          )
           .filter(
             (p) =>
               p.assets.some((a) => a.symbol === 'WALLET') &&
@@ -192,6 +193,7 @@ const PortfolioControllerStateProvider: React.FC<any> = ({ children }) => {
           )
           .map((p) => p.assets)
           .flat() || []
+
       const newAmounts = {
         wallet: walletEthPositionsAssets
           ?.filter((a) => a.symbol === 'WALLET')

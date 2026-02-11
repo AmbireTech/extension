@@ -55,9 +55,9 @@ const Toggle: React.FC<ToggleProps> = ({
           background: isOn
             ? `${theme.successDecorative as string}40`
             : themeType === THEME_TYPES.DARK
-            ? (theme.quaternaryBackground as string)
-            : `${theme.secondaryText as string}3D`,
-          ...trackStyle
+              ? (theme.quaternaryBackground as string)
+              : `${theme.secondaryText as string}3D`,
+          ...(trackStyle as React.CSSProperties)
         }}
       >
         <div
@@ -73,15 +73,15 @@ const Toggle: React.FC<ToggleProps> = ({
             background: isOn
               ? (theme.successDecorative as string)
               : themeType === THEME_TYPES.DARK
-              ? (theme.secondaryBackground as string)
-              : (theme.primaryBackground as string),
+                ? (theme.secondaryBackground as string)
+                : (theme.primaryBackground as string),
             border: `1px solid ${
               themeType === THEME_TYPES.DARK
                 ? (theme.primaryBorder as string)
                 : (theme.secondaryBorder as string)
             }`,
             transform: isOn ? 'translateX(12px)' : '',
-            ...toggleStyle
+            ...(toggleStyle as React.CSSProperties)
           }}
         />
         {children}
