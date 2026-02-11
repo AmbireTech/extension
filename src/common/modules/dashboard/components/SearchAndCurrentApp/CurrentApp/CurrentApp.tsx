@@ -18,11 +18,12 @@ const CurrentApp = () => {
   const isBlacklisted = currentDapp?.blacklisted === 'BLACKLISTED'
   const pressableRef = useRef<View>(null)
 
-  if (!currentDapp || isLoadingCurrentDapp) return null
+  if (!currentDapp) return null
 
   return (
     // Wrap on purpose so ManageApp is outside the pressable
-    <View>
+    // The opacity change is done to prevent layout shifting when disconnecting an app
+    <View style={{ opacity: isLoadingCurrentDapp ? 0.4 : 1 }}>
       <ManageApp
         dapp={currentDapp}
         isOpen={isManageAppExpanded}
