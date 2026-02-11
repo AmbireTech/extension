@@ -91,11 +91,7 @@ const PayOption = ({
       <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter, spacings.mrTy]}>
         {feeOption.token.flags.onGasTank ? (
           <View style={styles.gasTankIconWrapper}>
-            <GasTankIcon
-              color={themeType === THEME_TYPES.DARK ? '#8B3DFF' : theme.primaryLight}
-              width={24}
-              height={24}
-            />
+            <GasTankIcon color={theme.primaryAccent} width={24} height={24} />
           </View>
         ) : (
           <TokenIcon

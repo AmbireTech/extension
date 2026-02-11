@@ -15,7 +15,6 @@ const getStyles = () =>
       ...flexbox.justifySpaceBetween,
       ...spacings.pvTy,
       ...spacings.phTy
-      // ...common.borderRadiusPrimary
     }
   })
 

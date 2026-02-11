@@ -1,13 +1,15 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { View } from 'react-native'
+import { Pressable, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { Account as AccountType } from '@ambire-common/interfaces/account'
-import AddIcon from '@common/assets/svg/AddIcon'
+import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
+import SettingsWheelIcon from '@common/assets/svg/SettingsWheelIcon'
 import BackButton from '@common/components/BackButton'
 import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
+import FooterGlassView from '@common/components/FooterGlassView'
 import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
 import Search from '@common/components/Search'
 import Text from '@common/components/Text'
@@ -16,8 +18,8 @@ import useNavigation from '@common/hooks/useNavigation'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import DashboardSkeleton from '@common/modules/dashboard/screens/Skeleton'
-import Header from '@common/modules/header/components/Header'
-import { ROUTES } from '@common/modules/router/constants/common'
+import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
+import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
@@ -97,18 +99,19 @@ const AccountSelectScreen = () => {
 
   return !pendingToBeSetSelectedAccount ? (
     <TabLayoutContainer
-      header={<Header withAmbireLogo />}
+      header={
+        <HeaderWithTitle>
+          <Pressable onPress={() => navigate(WEB_ROUTES.accountsSettings)}>
+            <SettingsWheelIcon width={28} height={28} />
+          </Pressable>
+        </HeaderWithTitle>
+      }
       footer={<BackButton />}
       width="lg"
       hideFooterInPopup
     >
-      <View style={[flexbox.flex1, spacings.pv]} ref={accountsContainerRef}>
-        <Search
-          autoFocus
-          control={control}
-          placeholder="Search for account"
-          style={styles.searchBar}
-        />
+      <View style={[spacings.pt, flexbox.flex1]} ref={accountsContainerRef}>
+        <Search autoFocus control={control} style={styles.searchBar} />
         <ScrollableWrapper
           type={WRAPPER_TYPES.FLAT_LIST}
           style={[
@@ -117,6 +120,7 @@ const AccountSelectScreen = () => {
               opacity: shouldDisplayAccounts ? 1 : 0
             }
           ]}
+          contentContainerStyle={{ paddingBottom: 88 }}
           wrapperRef={flatlistRef}
           data={accounts}
           renderItem={renderItem}
@@ -124,7 +128,20 @@ const AccountSelectScreen = () => {
           keyExtractor={keyExtractor}
           ListEmptyComponent={<Text>{t('No accounts found')}</Text>}
         />
-        <View style={[spacings.ptSm, { width: '100%' }]}>
+        <FooterGlassView>
+          <Button
+            testID="button-add-account"
+            text={t('Add account')}
+            size="smaller"
+            hasBottomSpacing={false}
+            onPress={openBottomSheet as any}
+            childrenPosition="left"
+            style={{ ...flexbox.alignSelfCenter, width: '100%' }}
+          >
+            <AddCircularIcon width={24} height={24} color="#fff" style={spacings.mrTy} />
+          </Button>
+        </FooterGlassView>
+        {/* <View style={[spacings.ptSm, { width: '100%' }]}>
           <Button
             testID="button-add-account"
             text={t('Add account')}
@@ -136,7 +153,7 @@ const AccountSelectScreen = () => {
           >
             <AddIcon color={theme.primary} style={spacings.mrTy} />
           </Button>
-        </View>
+        </View> */}
       </View>
       <BottomSheet
         id="account-select-add-account"

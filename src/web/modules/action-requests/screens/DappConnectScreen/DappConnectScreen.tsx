@@ -7,7 +7,7 @@ import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
-import Header from '@common/modules/header/components/Header'
+import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Header'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import useResponsiveActionWindow from '@web/hooks/useResponsiveActionWindow'
@@ -72,14 +72,8 @@ const DappConnectScreen = () => {
   return (
     <TabLayoutContainer
       width="full"
-      backgroundColor={theme.quinaryBackground}
-      header={
-        <Header
-          mode="custom-inner-content"
-          withAmbireLogo
-          backgroundColor={theme.quinaryBackground as string}
-        />
-      }
+      backgroundColor={theme.secondaryBackground}
+      header={<HeaderWithLogoOnly />}
       footer={
         <ActionFooter
           onReject={handleDenyButtonPress}

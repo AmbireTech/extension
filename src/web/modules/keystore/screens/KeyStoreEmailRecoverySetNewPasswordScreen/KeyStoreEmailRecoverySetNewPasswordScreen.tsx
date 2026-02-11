@@ -6,7 +6,7 @@ import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useNavigation from '@common/hooks/useNavigation'
 import usePrevious from '@common/hooks/usePrevious'
 import useTheme from '@common/hooks/useTheme'
-import Header from '@common/modules/header/components/Header'
+import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Header'
 import { ROUTES } from '@common/modules/router/constants/common'
 import {
   TabLayoutContainer,
@@ -49,13 +49,7 @@ const KeyStoreEmailRecoverySetNewPasswordScreen = () => {
       {!!passwordResetCompleted && <PinExtension />}
       <TabLayoutContainer
         backgroundColor={theme.secondaryBackground}
-        header={
-          passwordResetCompleted ? (
-            <Header customTitle={' '} />
-          ) : (
-            <Header mode="custom-inner-content" withAmbireLogo />
-          )
-        }
+        header={<HeaderWithLogoOnly />}
       >
         <TabLayoutWrapperMainContent withScroll={false}>
           <Panel

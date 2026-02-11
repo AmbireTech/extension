@@ -79,12 +79,12 @@ const CollectibleModal = ({
             flexbox.directionRow,
             flexbox.alignCenter,
             spacings.mbSm,
-            flexbox.alignSelfStart,
+            flexbox.justifyCenter,
             { width: '100%' }
           ]}
         >
           <Text
-            fontSize={isTab ? 18 : 14}
+            fontSize={isTab ? 18 : 16}
             weight="medium"
             style={[spacings.mrMi]}
             numberOfLines={1}
@@ -114,10 +114,7 @@ const CollectibleModal = ({
             // !hideSendNft && spacings.mbSm,
             {
               borderRadius: BORDER_RADIUS_PRIMARY,
-              backgroundColor:
-                themeType === THEME_TYPES.DARK
-                  ? theme.primaryBackground
-                  : theme.secondaryBackground,
+              backgroundColor: theme.secondaryBackground,
               width: '100%'
             }
           ]}
@@ -153,8 +150,7 @@ const CollectibleModal = ({
     theme.primaryBackground,
     theme.primaryText,
     theme.secondaryBackground,
-    theme.secondaryText,
-    themeType
+    theme.secondaryText
   ])
 
   return (
@@ -164,7 +160,6 @@ const CollectibleModal = ({
       sheetRef={modalRef}
       closeBottomSheet={handleClose}
       style={styles.modal}
-      backgroundColor={themeType === THEME_TYPES.DARK ? 'secondaryBackground' : 'primaryBackground'}
       autoWidth
     >
       <ModalInner />

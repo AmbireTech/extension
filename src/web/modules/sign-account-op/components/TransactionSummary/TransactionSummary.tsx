@@ -131,8 +131,8 @@ const TransactionSummary = ({
           : { ...style })
       }}
       contentStyle={{
-        paddingHorizontal: SPACING_SM * sizeMultiplier[size],
-        paddingVertical: SPACING_TY * sizeMultiplier[size]
+        paddingHorizontal: SPACING_SM,
+        paddingVertical: !isHistory ? SPACING_TY * sizeMultiplier[size] : 0
       }}
       content={
         <>
@@ -164,7 +164,7 @@ const TransactionSummary = ({
               {...bindDeleteIconAnim}
               testID={`delete-txn-call-${index}`}
             >
-              <DeleteIcon />
+              <DeleteIcon width={28} height={28} />
             </AnimatedPressable>
           )}
           {rightIcon && onRightIconPress && (
@@ -187,7 +187,7 @@ const TransactionSummary = ({
           }}
         >
           {call.to && (
-            <Text selectable fontSize={12} style={styles.bodyText}>
+            <Text selectable fontSize={12} style={styles.bodyText} weight="mono_regular">
               <Text fontSize={12} style={styles.bodyText} weight="regular">
                 {t('Interacting with (to): ')}
               </Text>
@@ -212,7 +212,7 @@ const TransactionSummary = ({
             <Text fontSize={12} style={styles.bodyText} weight="regular">
               {t('Data: ')}
             </Text>
-            <Text fontSize={12} style={styles.bodyText}>
+            <Text fontSize={12} style={styles.bodyText} weight="mono_regular">
               {call.data}
             </Text>
           </Text>

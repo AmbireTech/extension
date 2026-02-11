@@ -21,8 +21,8 @@ import ManifestImage from '@web/components/ManifestImage'
 import { openInTab } from '@web/extension-services/background/webapi/tab'
 import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
 import TrustedIcon from '@web/modules/action-requests/screens/DappConnectScreen/components/TrustedIcon'
-import ManageDapp from '@web/modules/dapp-catalog/components/ManageDapp'
 
+import ManageApp from '../ManageApp'
 import getStyles from './styles'
 
 function formatTVL(tvl: number) {
@@ -54,11 +54,12 @@ const DappItem = (dapp: Dapp) => {
     tvl,
     twitter
   } = dapp
-  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const { styles, theme } = useTheme(getStyles)
   const { dispatch } = useControllersMiddleware()
   const { t } = useTranslation()
   const [hovered, setHovered] = useState(false)
+  const [isManageAppOpen, setIsManageAppOpen] = useState(false)
+  const settingsButtonRef = React.useRef<View>(null)
 
   const [bindAnim, animStyle, isHovered] = useCustomHover({
     property: 'backgroundColor',
@@ -109,7 +110,7 @@ const DappItem = (dapp: Dapp) => {
             styles.container,
             isFeatured && {
               // @ts-ignore
-              boxShadow: `0 ${isHovered ? 2 : 3}px 0 0 ${String(theme.primaryLight80)}`
+              boxShadow: `0 ${isHovered ? 2 : 3}px 0 0 ${String(theme.primaryAccent)}`
             },
             animStyle
           ]}
@@ -221,25 +222,28 @@ const DappItem = (dapp: Dapp) => {
                     <Badge text={t('Blacklisted')} type="error" style={spacings.mrTy} />
                   )}
                 </View>
-                {!!hovered && !!isConnected && (
-                  <AnimatedPressable
-                    {...bindSettingsIconAnimation}
-                    onPress={openBottomSheet as any}
-                    style={[
-                      spacings.mlTy,
-                      {
-                        transform: [{ scale: settingsIconAnimationStyle.scaleX as number }]
-                      }
-                    ]}
-                  >
-                    <SettingsIcon
-                      width={18}
-                      height={18}
-                      strokeWidth="1.8"
-                      color={theme.iconPrimary}
-                    />
-                  </AnimatedPressable>
-                )}
+                <View style={{ zIndex: 999 }}>
+                  {!!hovered && !!isConnected && (
+                    <AnimatedPressable
+                      {...bindSettingsIconAnimation}
+                      onPress={() => setIsManageAppOpen((prev) => !prev)}
+                      style={[
+                        spacings.mlTy,
+                        {
+                          transform: [{ scale: settingsIconAnimationStyle.scaleX as number }]
+                        }
+                      ]}
+                      ref={settingsButtonRef}
+                    >
+                      <SettingsIcon
+                        width={18}
+                        height={18}
+                        strokeWidth="1.8"
+                        color={theme.iconPrimary}
+                      />
+                    </AnimatedPressable>
+                  )}
+                </View>
                 {isFeatured && (
                   <Badge
                     text={t('Featured')}
@@ -248,7 +252,7 @@ const DappItem = (dapp: Dapp) => {
                     }}
                     style={{
                       ...spacings.mlTy,
-                      backgroundColor: theme.primaryLight80,
+                      backgroundColor: theme.primaryAccent,
                       borderWidth: 0
                     }}
                   />
@@ -271,12 +275,11 @@ const DappItem = (dapp: Dapp) => {
           </Text>
         </AnimatedPressable>
       </div>
-      <ManageDapp
+      <ManageApp
+        isOpen={isManageAppOpen}
+        setIsOpen={setIsManageAppOpen}
         dapp={dapp}
-        isCurrentDapp={false}
-        sheetRef={sheetRef}
-        openBottomSheet={openBottomSheet}
-        closeBottomSheet={closeBottomSheet}
+        parentRef={settingsButtonRef}
       />
     </View>
   )

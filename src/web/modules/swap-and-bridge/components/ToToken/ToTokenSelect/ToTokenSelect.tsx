@@ -230,10 +230,7 @@ const ToTokenSelect: React.FC<Props> = ({
       attemptToFetchMoreOptions={handleAttemptToFetchMoreOptions}
       onSearch={handleOnSearch}
       containerStyle={{ ...spacings.mb0, ...flexbox.flex1 }}
-      selectStyle={{
-        backgroundColor: themeType === THEME_TYPES.DARK ? theme.primaryBackground : '#54597A14',
-        borderWidth: 0
-      }}
+      selectStyle={spacings.phTy}
       stickySectionHeadersEnabled
     />
   )

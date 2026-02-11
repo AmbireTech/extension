@@ -3,6 +3,7 @@ import React, { FC, useCallback, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TextInput, View } from 'react-native'
 
+import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Search from '@common/components/Search'
 import BottomSheetHeader from '@common/components/Select/components/BottomSheetHeader'
 import Text from '@common/components/Text'
@@ -120,7 +121,6 @@ const SelectContainer: FC<Props> = ({
                 containerStyle={spacings.mb0}
                 borderWrapperStyle={styles.searchBorderWrapperStyle}
                 inputWrapperStyle={styles.bottomSearchInputWrapperStyle}
-                leftIconStyle={spacings.pl}
               />
             )}
             {children}
@@ -132,7 +132,6 @@ const SelectContainer: FC<Props> = ({
                 containerStyle={spacings.mb0}
                 borderWrapperStyle={styles.searchBorderWrapperStyle}
                 inputWrapperStyle={styles.topSearchInputWrapperStyle}
-                leftIconStyle={spacings.pl}
               />
             )}
           </MenuContainer>
@@ -144,8 +143,11 @@ const SelectContainer: FC<Props> = ({
           setIsMenuOpen={setIsMenuOpen}
           toggleMenu={toggleMenu}
         >
-          <BottomSheetHeader label={bottomSheetTitle} toggleMenu={toggleMenu} />
-          <View style={[spacings.phMd, spacings.pvMd, flexbox.flex1, { height: 600 }]}>
+          <View style={[spacings.phSm, spacings.ptLg]}>
+            <ModalHeader title={bottomSheetTitle} handleClose={toggleMenu} />
+          </View>
+          {/* <BottomSheetHeader label={bottomSheetTitle} toggleMenu={toggleMenu} /> */}
+          <View style={[spacings.phSm, spacings.mbMd, flexbox.flex1, { height: 600 }]}>
             <Search
               placeholder={searchPlaceholder || t('Search...')}
               // When autoFocus is enabled, the BottomSheet animation breaks.
@@ -154,8 +156,6 @@ const SelectContainer: FC<Props> = ({
               setInputRef={setInputRef}
               control={control}
               containerStyle={spacings.mb}
-              leftIconStyle={spacings.pl}
-              height={48}
             />
             {children}
           </View>

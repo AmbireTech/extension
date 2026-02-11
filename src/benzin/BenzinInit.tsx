@@ -13,9 +13,9 @@ import useFonts from '@common/hooks/useFonts'
 import { PortalHost, PortalProvider } from '@gorhom/portal'
 
 const BenzinInit = () => {
-  const { fontsLoaded, robotoFontsLoaded } = useFonts()
+  const { fontsLoaded } = useFonts()
 
-  if (!fontsLoaded && !robotoFontsLoaded) return null
+  if (!fontsLoaded) return null
 
   return (
     <BrowserRouter>

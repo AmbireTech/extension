@@ -33,7 +33,7 @@ const TypeBadge: FC<Props> = ({ isSmart, size, showTooltip = false }) => {
         top: size === 'big' ? -SPACING_MI / 2 : -SPACING_MI,
         paddingHorizontal: 3,
         paddingVertical: 2,
-        backgroundColor: theme.successDecorative,
+        backgroundColor: theme.successText,
         zIndex: 2,
         borderRadius: 50,
         borderWidth: size === 'big' ? 3 : 2,

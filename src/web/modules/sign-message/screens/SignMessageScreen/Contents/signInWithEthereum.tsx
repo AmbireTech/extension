@@ -231,9 +231,7 @@ const SignInWithEthereum = ({
         >
           <ScrollableWrapper
             style={{
-              backgroundColor: theme.primaryBackground,
-              borderWidth: 1,
-              borderColor: theme.secondaryBorder,
+              backgroundColor: theme.secondaryBackground,
               paddingHorizontal: SPACING_SM * responsiveSizeMultiplier,
               paddingVertical: SPACING * responsiveSizeMultiplier,
               marginBottom: SPACING * responsiveSizeMultiplier,

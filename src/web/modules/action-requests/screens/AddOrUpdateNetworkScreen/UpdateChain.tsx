@@ -12,14 +12,13 @@ import Banner from '@common/components/Banner'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import { SPACING, SPACING_LG, SPACING_MD, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
-import HeaderAccountAndNetworkInfo from '@web/components/HeaderAccountAndNetworkInfo'
 import ManifestImage from '@web/components/ManifestImage'
 import NetworkAvailableFeatures from '@web/components/NetworkAvailableFeatures'
 import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
 import useDappInfo from '@web/hooks/useDappInfo'
 import useResponsiveActionWindow from '@web/hooks/useResponsiveActionWindow'
+import ActionHeader from '@web/modules/action-requests/components/ActionHeader'
 
 import ActionFooter from '../../components/ActionFooter'
 import RpcCard from './RpcCard'
@@ -54,7 +53,7 @@ const UpdateChain = ({
   rpcUrls,
   rpcUrlIndex
 }: UpdateChainProps) => {
-  const { styles, theme, themeType } = useTheme(getStyles)
+  const { styles, theme } = useTheme(getStyles)
   const { t } = useTranslation()
   const { name, icon } = useDappInfo(userRequest)
   const { responsiveSizeMultiplier } = useResponsiveActionWindow({ maxBreakpoints: 2 })
@@ -62,15 +61,7 @@ const UpdateChain = ({
   return (
     <TabLayoutContainer
       width="full"
-      header={
-        <HeaderAccountAndNetworkInfo
-          backgroundColor={
-            themeType === THEME_TYPES.DARK
-              ? (theme.tertiaryBackground as string)
-              : (theme.primaryBackground as string)
-          }
-        />
-      }
+      header={<ActionHeader />}
       footer={
         <ActionFooter
           onReject={handleDenyButtonPress}
@@ -88,7 +79,7 @@ const UpdateChain = ({
           }
         />
       }
-      backgroundColor={theme.quinaryBackground}
+      backgroundColor={theme.secondaryBackground}
     >
       <TabLayoutWrapperMainContent
         style={{
@@ -207,7 +198,7 @@ const UpdateChain = ({
                   title={t(
                     'Make sure you trust this site and provider. You can change the RPC URL anytime in the network settings.'
                   )}
-                  type="info2"
+                  type="info"
                 />
               </View>
             </>

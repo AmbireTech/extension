@@ -82,9 +82,7 @@ const RecoveryPhraseSettingsScreen = () => {
             size="small"
             type="ghost"
             text={t('Manage')}
-            textStyle={{ color: theme.primary }}
             hasBottomSpacing={false}
-            style={spacings.ph0}
             onPress={() => setRecoveryPhraseToManage(item)}
           >
             <SettingsIcon

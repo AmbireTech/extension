@@ -124,10 +124,7 @@ const NetworkIcon = ({
         {
           borderRadius: 50,
           overflow: 'hidden',
-          backgroundColor:
-            themeType === THEME_TYPES.DARK
-              ? theme.primaryBackgroundInverted
-              : theme.tertiaryBackground
+          backgroundColor: theme.neutral200
         },
         style
       ]}

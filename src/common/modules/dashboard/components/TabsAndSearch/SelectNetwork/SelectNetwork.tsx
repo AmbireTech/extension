@@ -82,9 +82,8 @@ const SelectNetwork = ({ currentTab }: Props) => {
       style={[
         flexbox.directionRow,
         flexbox.alignCenter,
-        spacings.mrTy,
         {
-          width: isPopup ? 160 : 190
+          width: 168
         }
       ]}
     >
@@ -95,8 +94,7 @@ const SelectNetwork = ({ currentTab }: Props) => {
           flexbox.justifySpaceBetween,
           flexbox.alignCenter,
           networkButtonAnimStyle,
-          spacings.plTy,
-          spacings.prTy,
+          spacings.phSm,
           {
             ...(dashboardNetworkFilter && {
               color: theme.primaryText,
@@ -118,26 +116,13 @@ const SelectNetwork = ({ currentTab }: Props) => {
       >
         {dashboardNetworkFilter ? (
           <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-            <FilterIcon
-              color={theme.primaryBackgroundInverted}
-              style={spacings.prTy}
-              width={14}
-              height={14}
-            />
-            <Text testID={`networks-dropdown-${currentTab}`} fontSize={14}>
-              {filterByNetworkName}
-            </Text>
+            <FilterIcon color={theme.primaryText} style={spacings.prTy} width={16} height={16} />
+            <Text testID={`networks-dropdown-${currentTab}`}>{filterByNetworkName}</Text>
           </View>
         ) : (
-          <Text
-            testID={`networks-dropdown-${currentTab}`}
-            fontSize={14}
-            color={isHovered ? theme.primaryText : theme.secondaryText}
-          >
-            {t('All Networks')}
-          </Text>
+          <Text testID={`networks-dropdown-${currentTab}`}>{t('All Networks')}</Text>
         )}
-        <RightArrowIcon height={12} color={isHovered ? theme.primaryText : theme.secondaryText} />
+        <RightArrowIcon height={12} color={theme.iconPrimary} />
       </AnimatedPressable>
     </View>
   )

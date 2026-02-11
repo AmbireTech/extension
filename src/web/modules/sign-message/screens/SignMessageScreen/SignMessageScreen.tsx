@@ -15,9 +15,7 @@ import Spinner from '@common/components/Spinner'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
-import HeaderAccountAndNetworkInfo from '@web/components/HeaderAccountAndNetworkInfo'
 import SmallNotificationWindowWrapper from '@web/components/SmallNotificationWindowWrapper'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import useDappInfo from '@web/hooks/useDappInfo/useDappInfo'
@@ -27,6 +25,7 @@ import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import useSignMessageControllerState from '@web/hooks/useSignMessageControllerState'
 import ActionFooter from '@web/modules/action-requests/components/ActionFooter'
+import ActionHeader from '@web/modules/action-requests/components/ActionHeader'
 import useLedger from '@web/modules/hardware-wallet/hooks/useLedger'
 import SigningKeySelect from '@web/modules/sign-message/components/SignKeySelect'
 
@@ -292,15 +291,7 @@ const SignMessageScreen = () => {
     <SmallNotificationWindowWrapper>
       <TabLayoutContainer
         width="full"
-        header={
-          <HeaderAccountAndNetworkInfo
-            backgroundColor={
-              themeType === THEME_TYPES.DARK
-                ? (theme.secondaryBackground as string)
-                : (theme.primaryBackground as string)
-            }
-          />
-        }
+        header={<ActionHeader />}
         footer={
           <ActionFooter
             onReject={handleReject}
@@ -325,11 +316,7 @@ const SignMessageScreen = () => {
               : {})}
           />
         }
-        backgroundColor={
-          isAuthorization && !makeItSmartConfirmed
-            ? theme.primaryBackground
-            : theme.quinaryBackground
-        }
+        backgroundColor={theme.primaryBackground}
       >
         <SigningKeySelect
           isVisible={isChooseSignerShown}

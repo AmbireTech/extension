@@ -6,7 +6,7 @@ import { Modalize, ModalizeProps } from 'react-native-modalize'
 import { isWeb } from '@common/config/env'
 import usePrevious from '@common/hooks/usePrevious'
 import useTheme from '@common/hooks/useTheme'
-import { HEADER_HEIGHT } from '@common/modules/header/components/Header/styles'
+import { HEADER_HEIGHT } from '@common/modules/header/components/Header/Header'
 import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import { Portal } from '@gorhom/portal'
@@ -58,7 +58,7 @@ const BottomSheet: React.FC<Props> = ({
   onBackdropPress,
   flatListProps,
   scrollViewProps,
-  backgroundColor = 'secondaryBackground',
+  backgroundColor = 'primaryBackground',
   autoWidth = false,
   autoOpen = false,
   shouldBeClosableOnDrag = true,

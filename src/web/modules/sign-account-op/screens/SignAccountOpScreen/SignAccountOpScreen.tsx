@@ -19,7 +19,6 @@ import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import { setStringAsync } from '@common/utils/clipboard'
-import HeaderAccountAndNetworkInfo from '@web/components/HeaderAccountAndNetworkInfo'
 import SmallNotificationWindowWrapper from '@web/components/SmallNotificationWindowWrapper'
 import {
   TabLayoutContainer,
@@ -29,6 +28,7 @@ import { closeCurrentWindow } from '@web/extension-services/background/webapi/wi
 import useMainControllerState from '@web/hooks/useMainControllerState'
 import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import useSignAccountOpControllerState from '@web/hooks/useSignAccountOpControllerState'
+import ActionHeader from '@web/modules/action-requests/components/ActionHeader'
 import Estimation from '@web/modules/sign-account-op/components/Estimation'
 import Footer from '@web/modules/sign-account-op/components/Footer'
 import Modals from '@web/modules/sign-account-op/components/Modals/Modals'
@@ -231,18 +231,10 @@ const SignAccountOpScreen = () => {
       />
       <TabLayoutContainer
         width="full"
-        backgroundColor={theme.quinaryBackground}
+        backgroundColor={theme.primaryBackground}
         withHorizontalPadding={false}
         style={spacings.phMd}
-        header={
-          <HeaderAccountAndNetworkInfo
-            backgroundColor={
-              themeType === THEME_TYPES.DARK
-                ? (theme.tertiaryBackground as string)
-                : (theme.primaryBackground as string)
-            }
-          />
-        }
+        header={<ActionHeader />}
         renderDirectChildren={() => (
           <View style={styles.footer}>
             {!estimationFailed ? (

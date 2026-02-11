@@ -14,7 +14,7 @@ import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import useWindowSize from '@common/hooks/useWindowSize'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
-import Header from '@common/modules/header/components/Header'
+import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Header'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
@@ -82,10 +82,7 @@ const LedgerConnectScreen = () => {
     isGrantingPermission || mainCtrlState.statuses.handleAccountPickerInitLedger === 'LOADING'
 
   return (
-    <TabLayoutContainer
-      backgroundColor={theme.secondaryBackground}
-      header={<Header mode="custom-inner-content" withAmbireLogo />}
-    >
+    <TabLayoutContainer backgroundColor={theme.secondaryBackground} header={<HeaderWithLogoOnly />}>
       <TabLayoutWrapperMainContent>
         <Panel
           spacingsSize="small"

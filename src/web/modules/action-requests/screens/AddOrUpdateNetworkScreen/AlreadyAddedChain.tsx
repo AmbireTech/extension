@@ -8,13 +8,11 @@ import SuccessAnimation from '@common/components/SuccessAnimation'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import HeaderAccountAndNetworkInfo from '@web/components/HeaderAccountAndNetworkInfo'
 import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
-
-import ActionFooter from '../../components/ActionFooter'
+import ActionFooter from '@web/modules/action-requests/components/ActionFooter'
+import ActionHeader from '@web/modules/action-requests/components/ActionHeader'
 
 type AlreadyAddedChainProps = {
   handleCloseOnAlreadyAdded: () => void
@@ -29,21 +27,13 @@ const AlreadyAddedChain = ({
   networkAlreadyAdded,
   successStateText
 }: AlreadyAddedChainProps) => {
-  const { theme, themeType } = useTheme()
+  const { theme } = useTheme()
   const { t } = useTranslation()
 
   return (
     <TabLayoutContainer
       width="full"
-      header={
-        <HeaderAccountAndNetworkInfo
-          backgroundColor={
-            themeType === THEME_TYPES.DARK
-              ? (theme.tertiaryBackground as string)
-              : (theme.primaryBackground as string)
-          }
-        />
-      }
+      header={<ActionHeader />}
       footer={
         <ActionFooter
           onReject={undefined}
@@ -55,7 +45,7 @@ const AlreadyAddedChain = ({
           }
         />
       }
-      backgroundColor={theme.quinaryBackground}
+      backgroundColor={theme.secondaryBackground}
     >
       <TabLayoutWrapperMainContent style={spacings.mbLg} withScroll={false}>
         <View style={[flexbox.flex1, flexbox.alignCenter, spacings.mt2Xl]}>

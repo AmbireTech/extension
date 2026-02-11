@@ -22,11 +22,12 @@ import Tokens from '../Tokens'
 interface Props {
   onScroll: (event: NativeSyntheticEvent<NativeScrollEvent>) => void
   animatedOverviewHeight: Animated.Value
+  isSearchHidden: boolean
 }
 
 const { isTab } = getUiType()
 
-const DashboardPages = ({ onScroll, animatedOverviewHeight }: Props) => {
+const DashboardPages = ({ onScroll, isSearchHidden, animatedOverviewHeight }: Props) => {
   const { t } = useTranslation()
   const route = useRoute()
   const [sessionId] = useState(`dashboard-${nanoid()}`)
@@ -102,6 +103,7 @@ const DashboardPages = ({ onScroll, animatedOverviewHeight }: Props) => {
         initTab={initTab}
         dashboardNetworkFilterName={dashboardNetworkFilterName}
         animatedOverviewHeight={animatedOverviewHeight}
+        isSearchHidden={isSearchHidden}
       />
       <Collections
         openTab={openTab}
@@ -112,6 +114,7 @@ const DashboardPages = ({ onScroll, animatedOverviewHeight }: Props) => {
         networks={networks}
         dashboardNetworkFilterName={dashboardNetworkFilterName}
         animatedOverviewHeight={animatedOverviewHeight}
+        isSearchHidden={isSearchHidden}
       />
 
       <DeFiPositions
@@ -122,6 +125,7 @@ const DashboardPages = ({ onScroll, animatedOverviewHeight }: Props) => {
         initTab={initTab}
         dashboardNetworkFilterName={dashboardNetworkFilterName}
         animatedOverviewHeight={animatedOverviewHeight}
+        isSearchHidden={isSearchHidden}
       />
 
       <Activity

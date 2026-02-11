@@ -3,18 +3,18 @@ import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import BatchIcon from '@common/assets/svg/BatchIcon'
+import BatchIconAnimated from '@common/components/BatchIconAnimated'
 import Button from '@common/components/Button'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import Header from '@common/modules/header/components/Header'
 import spacings from '@common/styles/spacings'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
 import { getTabLayoutPadding } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import BatchIconAnimated from '@common/components/BatchIconAnimated'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 
 type Props = {
   title: string
@@ -42,15 +42,7 @@ const BatchAdded: FC<Props> = ({
   return (
     <TabLayoutContainer
       backgroundColor={theme.primaryBackground}
-      header={
-        <Header
-          backgroundColor="primaryBackground"
-          displayBackButtonIn="never"
-          mode="title"
-          customTitle={title}
-          withAmbireLogo
-        />
-      }
+      header={<Header />}
       withHorizontalPadding={false}
       footer={null}
       style={{ ...flexbox.alignEnd, ...spacings.pb }}

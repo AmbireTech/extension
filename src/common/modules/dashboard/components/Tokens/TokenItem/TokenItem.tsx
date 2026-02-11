@@ -20,28 +20,10 @@ const TokenItem = ({ token }: { token: TokenResult }) => {
   const { t } = useTranslation()
   const { dispatch } = useControllersMiddleware()
   const { portfolio } = useSelectedAccountControllerState()
-  const { navigate } = useNavigation()
 
   const { networks } = useNetworksControllerState()
   const simulatedAccountOp = portfolio.networkSimulatedAccountOp[token.chainId.toString()]
-  const { isVesting, isRewards, isProjectedRewards } = getAndFormatTokenDetails(
-    token,
-    networks,
-    simulatedAccountOp
-  )
-
-  const handleDetailsPress = useCallback(() => {
-    navigate(WEB_ROUTES.rewards)
-  }, [navigate])
-
-  const projectedRewardsDescription = useMemo(
-    () => (
-      <Text fontSize={12} weight="regular">
-        {t('Projected Rewards')}
-      </Text>
-    ),
-    [t]
-  )
+  const { isVesting, isRewards } = getAndFormatTokenDetails(token, networks, simulatedAccountOp)
 
   const sendTransaction = useCallback(
     (type: 'claimWalletRequest' | 'mintVestingRequest') => {
@@ -53,14 +35,6 @@ const TokenItem = ({ token }: { token: TokenResult }) => {
     [dispatch, token]
   )
 
-  if (isProjectedRewards)
-    return (
-      <RewardsTokenItem
-        onPress={handleDetailsPress}
-        token={token}
-        description={projectedRewardsDescription}
-      />
-    )
   if (isRewards)
     return (
       <RewardsTokenItem

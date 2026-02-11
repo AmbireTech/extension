@@ -8,6 +8,7 @@ import { isWeb } from '@common/config/env'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
+import { getUiType } from '@web/utils/uiType'
 
 import { getDynamicTimings, TOTAL_COUNTER_DELAY } from '../StatItem/StatItem'
 import Background1 from './media/Background1'
@@ -26,6 +27,8 @@ const getInitialScore = (scoreChange: number, score: number) => {
 
   return oldScore
 }
+
+const { isPopup } = getUiType()
 
 const RewardsAndStats: FC<Props> = ({ pastTotalScore }) => {
   const { portfolio } = useSelectedAccountControllerState()
@@ -89,7 +92,7 @@ const RewardsAndStats: FC<Props> = ({ pastTotalScore }) => {
           zIndex: 3
         }}
       >
-        <Background1 width={150} />
+        <Background1 width={isPopup ? 128 : 154} />
         <View style={{ position: 'absolute', ...flexbox.alignCenter, ...flexbox.justifyCenter }}>
           <Text
             fontSize={32}
@@ -123,7 +126,7 @@ const RewardsAndStats: FC<Props> = ({ pastTotalScore }) => {
           zIndex: 2
         }}
       >
-        <Background2 width={190} />
+        <Background2 width={isPopup ? 158 : 192} />
         <View style={{ position: 'absolute', ...flexbox.alignCenter, ...flexbox.justifyCenter }}>
           <Text fontSize={10} weight="medium" color="#8D93AC" style={spacings.mb0}>
             $WALLET
@@ -162,7 +165,7 @@ const RewardsAndStats: FC<Props> = ({ pastTotalScore }) => {
           ...flexbox.alignCenter
         }}
       >
-        <Background3 width={150} />
+        <Background3 width={isPopup ? 124 : 154} />
         <View style={{ position: 'absolute', ...flexbox.alignCenter, ...flexbox.justifyCenter }}>
           <View
             style={{

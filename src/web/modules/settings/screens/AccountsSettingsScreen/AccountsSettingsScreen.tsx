@@ -150,7 +150,7 @@ const AccountsSettingsScreen = () => {
                 { cursor: 'grab', touchAction: 'manipulation' }
               ]}
             >
-              <DragIndicatorIcon color={isDragging ? theme.primary : theme.secondaryBorder} />
+              <DragIndicatorIcon color={isDragging ? theme.primary : theme.iconPrimary} />
             </Pressable>
           </div>
           <View style={flexbox.flex1}>
@@ -164,7 +164,7 @@ const AccountsSettingsScreen = () => {
         </View>
       )
     },
-    [theme.primary, theme.secondaryBorder, shortenAccountAddr, accountOptions]
+    [theme.primary, theme.iconPrimary, shortenAccountAddr, accountOptions]
   )
   const { maxWidthSize } = useWindowSize()
   const isWidthS = maxWidthSize('s')
@@ -195,9 +195,7 @@ const AccountsSettingsScreen = () => {
           />
           <Search
             autoFocus
-            placeholder={t('Search for account')}
             control={control}
-            height={48}
             containerStyle={{ width: isWidthS ? '50%' : '100%' }}
           />
         </View>

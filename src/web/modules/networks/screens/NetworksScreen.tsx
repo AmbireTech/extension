@@ -12,7 +12,7 @@ import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useNavigation from '@common/hooks/useNavigation/useNavigation.web'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
-import Header from '@common/modules/header/components/Header'
+import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -120,7 +120,7 @@ const NetworksScreen = () => {
 
   return (
     <TabLayoutContainer
-      header={<Header customTitle="Networks" withAmbireLogo />}
+      header={<HeaderWithTitle title="Networks" />}
       footer={<BackButton />}
       width="lg"
       hideFooterInPopup

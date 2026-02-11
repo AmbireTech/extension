@@ -9,7 +9,7 @@ import { useTranslation } from '@common/config/localization'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import ConfettiAnimation from '@common/modules/dashboard/components/ConfettiAnimation'
-import Header from '@common/modules/header/components/Header'
+import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Header'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
@@ -44,7 +44,7 @@ const OnboardingCompletedScreen = () => {
       <PinExtension />
       <TabLayoutContainer
         backgroundColor={theme.secondaryBackground}
-        header={<Header customTitle={' '} />}
+        header={<HeaderWithLogoOnly />}
       >
         <TabLayoutWrapperMainContent>
           <Panel type="onboarding" spacingsSize="small" style={{ overflow: 'visible' }}>

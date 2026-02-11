@@ -29,21 +29,30 @@ const PendingBadge = ({
     <View
       style={[
         spacings.pvMi,
-        spacings.phTy,
+        spacings.plSm,
+        spacings.prTy,
         spacings.mbMi,
         flexboxStyles.alignSelfStart,
         flexboxStyles.alignCenter,
         flexboxStyles.directionRow,
         {
-          borderRadius: BORDER_RADIUS_PRIMARY,
+          borderRadius: 64,
+          height: 32,
           backgroundColor
         }
       ]}
     >
-      <Text selectable color={textColor} fontSize={13} numberOfLines={1} style={[spacings.mrTy]}>
+      <Text
+        selectable
+        color={textColor}
+        weight="medium"
+        fontSize={12}
+        numberOfLines={1}
+        style={spacings.mrMi}
+      >
         {t(`${amount > 0n ? '+' : ''}${amountFormatted} ${label}`)}
       </Text>
-      <Icon color={textColor} width={13} height={13} />
+      <Icon color={textColor} width={14} height={14} />
     </View>
   )
 }

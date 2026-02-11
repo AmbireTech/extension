@@ -151,7 +151,7 @@ const AddressField: FC<Props> = ({
               ensAddress={value.ensAddress}
               isRecipientDomainResolving={value.isDomainResolving}
               onSubmitEditing={disabled ? undefined : handleSubmit}
-              button={accounts.length > 1 ? <DeleteIcon /> : null}
+              button={accounts.length > 1 ? <DeleteIcon width={24} height={24} /> : null}
               onButtonPress={() => remove(index)}
             />
           </View>
@@ -166,7 +166,7 @@ const AddressField: FC<Props> = ({
                       13
                     )}. If you continue, this address will be linked to that key and managed with full access, not as view-only.`
                   )}
-                  type="info2"
+                  type="info"
                   key={_address}
                 />
               )

@@ -10,7 +10,7 @@ import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import getStyles from '@common/modules/dashboard/components/DeFiPositions/DeFiProviderPosition/styles'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
+import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@web/extension-services/background/webapi/tab'
 import useHover, { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
@@ -56,12 +56,11 @@ const DeFiPositionHeader: FC<Props> = ({
   const {
     state: { dapps }
   } = useController('DappsController')
-  const { styles, theme, themeType } = useTheme(getStyles)
+  const { styles, theme } = useTheme(getStyles)
   const [bindAnim, animStyle] = useCustomHover({
     property: 'backgroundColor',
     values: {
-      from:
-        themeType === THEME_TYPES.DARK ? theme.tertiaryBackground : theme.quaternaryBackgroundSolid,
+      from: hexToRgba(theme.secondaryBackground, 0),
       to: theme.secondaryBackground
     },
     forceHoveredStyle: isExpanded
@@ -77,7 +76,7 @@ const DeFiPositionHeader: FC<Props> = ({
     const dapp = dapps.find((d) => d.name.toLowerCase().includes(providerNameWithoutVersion))
 
     return dapp?.url
-  }, [dapps, providerName])
+  }, [dapps, providerName, siteUrl])
 
   const openDAppUrl = useCallback(async () => {
     if (!dappUrl) return
@@ -86,7 +85,7 @@ const DeFiPositionHeader: FC<Props> = ({
     } catch (e) {
       console.error(e)
     }
-  }, [dappUrl, siteUrl])
+  }, [dappUrl])
 
   return (
     <AnimatedPressable
