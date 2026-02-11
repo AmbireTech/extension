@@ -1677,7 +1677,7 @@
     "@ethersproject/properties" "^5.8.0"
     "@ethersproject/strings" "^5.8.0"
 
-"@expo-google-fonts/geist-mono@^0.4.1":
+"@expo-google-fonts/geist-mono@0.4.1":
   version "0.4.1"
   resolved "https://registry.yarnpkg.com/@expo-google-fonts/geist-mono/-/geist-mono-0.4.1.tgz#20622a1222072f4a67b5d70f80d96366a37546c6"
   integrity sha512-4amQyslc5Qsr06CymJA7PzUaJd0ohlbpY7sWqRfZkwPp9xeVzy9JBLg05VwO3bx+M4CY+FV4AAIG/8fGRCXguw==
