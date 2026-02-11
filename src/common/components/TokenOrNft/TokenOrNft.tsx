@@ -5,10 +5,10 @@ import { resolveAssetInfo } from '@ambire-common/services/assetInfo'
 import useBenzinNetworksContext from '@benzin/hooks/useBenzinNetworksContext'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import { useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
 import useToast from '@common/hooks/useToast'
 import { SPACING_TY } from '@common/styles/spacings'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
-import useProvidersControllerState from '@web/hooks/useProvidersControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 
 import HumanizerAddress from '../HumanizerAddress'
@@ -39,10 +39,10 @@ const TokenOrNft: FC<Props> = ({
     nftInfo?: CollectionResult
   }>({})
   const { portfolio } = useSelectedAccountControllerState()
+  const { dispatchAndWait } = useController('ProvidersController')
 
   const { t } = useTranslation()
   const { networks: controllerNetworks } = useNetworksControllerState()
-  const { callContract } = useProvidersControllerState()
   const { benzinNetworks, addNetwork } = useBenzinNetworksContext()
   // Component used across Benzin and Extension, make sure to always set networks
   const networks = controllerNetworks ?? benzinNetworks
@@ -56,16 +56,24 @@ const TokenOrNft: FC<Props> = ({
   const fetchFallbackNameIfNeeded = useCallback(
     async (_assetInfo: any) => {
       if (_assetInfo.nftInfo || _assetInfo.tokenInfo) return
-      const name = await callContract({
-        chainId,
-        address,
-        abi: 'function name() view returns(string)',
-        method: 'name',
-        args: []
+      const name = await dispatchAndWait({
+        type: 'method',
+        params: {
+          method: 'callContractAndSendResToUi',
+          args: [
+            {
+              chainId,
+              address,
+              method: 'name',
+              abi: 'function name() view returns(string)',
+              args: []
+            }
+          ]
+        }
       }).catch(console.error)
       if (name) setFallbackName(name)
     },
-    [address, chainId, callContract]
+    [address, chainId, dispatchAndWait]
   )
 
   const [isLoading, setIsLoading] = useState(true)

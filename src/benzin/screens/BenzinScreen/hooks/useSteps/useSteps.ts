@@ -183,7 +183,7 @@ const useSteps = ({
   const [refetchStatus, setRefetchStatus] = useState<number>(0)
   const { dispatch } = useControllersMiddleware()
   const { accountsOps } = useActivityControllerState()
-  const { callProvider } = useController('ProvidersController')
+  const { dispatchAndWait } = useController('ProvidersController')
 
   const getIdentifiedBy = useCallback((): AccountOpIdentifiedBy => {
     if (relayerId) return { type: 'Relayer', identifier: relayerId }
@@ -380,7 +380,13 @@ const useSteps = ({
       return
     }
 
-    callProvider(network.chainId, 'getTransaction', foundTxnId)
+    dispatchAndWait({
+      type: 'method',
+      params: {
+        method: 'callProviderAndSendResToUi',
+        args: [{ chainId: network.chainId, method: 'getTransaction', args: [foundTxnId] }]
+      }
+    })
       .then((fetchedTxn: null | TransactionResponse) => {
         if (!fetchedTxn) {
           // start a refetch
@@ -405,7 +411,7 @@ const useSteps = ({
     foundTxnId,
     txn,
     setActiveStep,
-    callProvider,
+    dispatchAndWait,
     network,
     getIdentifiedBy,
     refetchTxnCounter,
@@ -518,7 +524,13 @@ const useSteps = ({
     }
 
     setIsFetching(true)
-    callProvider(network.chainId, 'getTransactionReceipt', foundTxnId)
+    dispatchAndWait({
+      type: 'method',
+      params: {
+        method: 'callProviderAndSendResToUi',
+        args: [{ chainId: network.chainId, method: 'getTransactionReceipt', args: [foundTxnId] }]
+      }
+    })
       .then((receipt: null | TransactionReceipt) => {
         if (!receipt) {
           // if there is a txn but no receipt, it means it is pending
@@ -544,7 +556,7 @@ const useSteps = ({
     }
   }, [
     foundTxnId,
-    callProvider,
+    dispatchAndWait,
     network,
     setActiveStep,
     userOpHash,
@@ -598,17 +610,31 @@ const useSteps = ({
     )
       return
 
-    callProvider(network.chainId, 'call', {
-      to: txn.to,
-      from: txn.from,
-      nonce: txn.nonce,
-      gasLimit: txn.gasLimit,
-      gasPrice: txn.gasPrice,
-      data: txn.data,
-      value: txn.value,
-      chainId: txn.chainId,
-      type: txn.type ?? undefined,
-      accessList: txn.accessList
+    dispatchAndWait({
+      type: 'method',
+      params: {
+        method: 'callProviderAndSendResToUi',
+        args: [
+          {
+            chainId: network.chainId,
+            method: 'call',
+            args: [
+              {
+                to: txn.to,
+                from: txn.from,
+                nonce: txn.nonce,
+                gasLimit: txn.gasLimit,
+                gasPrice: txn.gasPrice,
+                data: txn.data,
+                value: txn.value,
+                chainId: txn.chainId,
+                type: txn.type ?? undefined,
+                accessList: txn.accessList
+              }
+            ]
+          }
+        ]
+      }
     })
       .then(() => null)
       .catch((error: Error) => {
@@ -628,7 +654,7 @@ const useSteps = ({
               : error.message
         })
       })
-  }, [callProvider, network, txn, finalizedStatus, userOpHash, txnReceipt, extensionAccOp])
+  }, [dispatchAndWait, network, txn, finalizedStatus, userOpHash, txnReceipt, extensionAccOp])
 
   // get block
   useEffect(() => {
@@ -637,7 +663,13 @@ const useSteps = ({
     if (!blockNumber || blockData !== null || !network || !shouldTryBlockFetch) return
 
     setShouldTryBlockFetch(false)
-    callProvider(network.chainId, 'getBlock', blockNumber)
+    dispatchAndWait({
+      type: 'method',
+      params: {
+        method: 'callProviderAndSendResToUi',
+        args: [{ chainId: network.chainId, method: 'getBlock', args: [blockNumber] }]
+      }
+    })
       .then((fetchedBlockData) => {
         // we have to retry the req if the block data is not found initially
         if (!fetchedBlockData) {
@@ -654,7 +686,7 @@ const useSteps = ({
     return () => {
       if (timeout) clearTimeout(timeout)
     }
-  }, [callProvider, network, txnReceipt, blockData, shouldTryBlockFetch, activityAccOp])
+  }, [dispatchAndWait, network, txnReceipt, blockData, shouldTryBlockFetch, activityAccOp])
 
   // if it's an user op,
   // we need to call the entry point to fetch the hashes

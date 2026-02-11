@@ -159,26 +159,6 @@ type MainControllerRemoveAccount = {
 type ProvidersControllerToggleBatching = {
   type: 'PROVIDERS_CONTROLLER_TOGGLE_BATCHING'
 }
-type ProvidersControllerCallProviderAndSendResToUiAction = {
-  type: 'PROVIDERS_CONTROLLER_CALL_PROVIDER_AND_SEND_RES_TO_UI'
-  params: {
-    requestId: string
-    chainId: bigint
-    method: keyof RPCProvider
-    args: unknown[]
-  }
-}
-type ProvidersControllerCallContractAndSendResToUiAction = {
-  type: 'PROVIDERS_CONTROLLER_CALL_CONTRACT_AND_SEND_RES_TO_UI'
-  params: {
-    requestId: string
-    chainId: bigint
-    address: string
-    abi: string
-    method: keyof Contract
-    args: unknown[]
-  }
-}
 type MainControllerAccountPickerResetAction = {
   type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_RESET'
 }
@@ -835,8 +815,6 @@ export type Action =
   | MainControllerRemoveAccount
   | RequestsControllerAddCallsUserRequestAction
   | ProvidersControllerToggleBatching
-  | ProvidersControllerCallProviderAndSendResToUiAction
-  | ProvidersControllerCallContractAndSendResToUiAction
   | MainControllerLockAction
   | RequestsControllerBuildRequestAction
   | RequestsControllerRemoveUserRequestAction

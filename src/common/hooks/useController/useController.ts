@@ -1,19 +1,17 @@
 import { useCallback, useContext, useEffect, useSyncExternalStore } from 'react'
+import { v4 as uuidv4 } from 'uuid'
 
-import { ProvidersController } from '@ambire-common/controllers/providers/providers'
 import { AllControllersMappingType } from '@common/constants/controllersMapping'
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext/context'
 import { ControllerHelpersMapping } from '@common/contexts/controllersMiddlewareContext/controllerHelpersStore'
 import { AnyControllerAction } from '@common/contexts/controllersMiddlewareContext/types'
-import AutoLockController from '@web/extension-services/background/controllers/auto-lock'
-
-import { useAutoLockController } from './autoLock'
-import { useKeystoreController } from './keystore'
-import { useProvidersController } from './providers'
+import eventBus from '@web/extension-services/event/eventBus'
 
 type MethodKeys<T> = {
   [K in keyof T]-?: T[K] extends (...args: any[]) => any ? K : never
 }[keyof T]
+
+type DropLast<T extends any[]> = T extends [...infer U, any] ? U : T
 
 export type ControllerAction<K extends keyof AllControllersMappingType> = {
   [M in MethodKeys<AllControllersMappingType[K]>]: {
@@ -40,20 +38,24 @@ export type Dispatch<K extends keyof AllControllersMappingType> = (
   action: HookControllerAction<K>
 ) => void
 
+export type DispatchAndWait<K extends keyof AllControllersMappingType> = <
+  M extends MethodKeys<AllControllersMappingType[K]>,
+  R = any
+>(action: {
+  type: 'method'
+  params: {
+    method: M
+    args: DropLast<Parameters<Extract<AllControllersMappingType[K][M], (...args: any[]) => any>>>
+  }
+}) => Promise<R>
+
 interface BaseControllerReturn<K extends keyof AllControllersMappingType> {
   state: AllControllersMappingType[K]
   dispatch: Dispatch<K>
-}
-
-interface ControllerLogicRegistry {
-  ProvidersController: ReturnType<typeof useProvidersController>
-  // PortfolioController: ReturnType<typeof usePortfolioController>
-  // ...
-  // ...
+  dispatchAndWait: DispatchAndWait<K>
 }
 
 type UseControllerReturn<K extends keyof AllControllersMappingType> = BaseControllerReturn<K> &
-  (K extends keyof ControllerLogicRegistry ? ControllerLogicRegistry[K] : {}) &
   (K extends keyof ControllerHelpersMapping ? ControllerHelpersMapping[K] : {})
 
 export default function useController<K extends keyof AllControllersMappingType>(
@@ -95,27 +97,67 @@ export default function useController<K extends keyof AllControllersMappingType>
         params: { ...action.params, ctrlName: id }
       } as never as AnyControllerAction
 
-      controllersMiddlewareDispatch(ctrlAction)
+      controllersMiddlewareDispatch(ctrlAction as any)
+    },
+    [controllersMiddlewareDispatch, id]
+  )
+
+  const dispatchAndWait = useCallback(
+    <M extends MethodKeys<AllControllersMappingType[K]>, R = any>(action: {
+      type: 'method'
+      params: {
+        method: M
+        args: DropLast<
+          Parameters<Extract<AllControllersMappingType[K][M], (...args: any[]) => any>>
+        >
+      }
+    }) => {
+      const requestId = uuidv4()
+
+      const ctrlAction = {
+        ...action,
+        params: { ...action.params, ctrlName: id, args: [...action.params.args, requestId] }
+      } as never as AnyControllerAction
+      controllersMiddlewareDispatch(ctrlAction as any)
+
+      return new Promise<R>((resolve, reject) => {
+        let settled = false
+
+        const cleanup = () => {
+          eventBus.removeEventListener('receiveOneTimeData', onResponse)
+          clearTimeout(timeoutId)
+        }
+
+        const onResponse = (data: any) => {
+          if (data?.requestId !== requestId) return
+          if (settled) return
+
+          settled = true
+
+          cleanup()
+
+          if (data.ok) {
+            resolve(data.res as R)
+          } else {
+            reject(new Error(data.error ?? `Calling ${id}.${ctrlAction.params.method} failed`))
+          }
+        }
+
+        const timeoutId = setTimeout(() => {
+          if (settled) return
+          settled = true
+
+          cleanup()
+          reject(new Error(`Calling ${id}.${ctrlAction.params.method} timed out after 10 seconds`))
+        }, 10_000)
+
+        eventBus.addEventListener('receiveOneTimeData', onResponse)
+      })
     },
     [controllersMiddlewareDispatch, id]
   )
 
   let ctrlSpecificMethods = {}
-
-  if (id === 'ProvidersController') {
-    const providersLogic = useProvidersController(
-      state as ProvidersController,
-      dispatch as unknown as Dispatch<'ProvidersController'>
-    )
-    ctrlSpecificMethods = providersLogic
-  }
-
-  // if (id === 'KeystoreController' || id === 'MainController') {
-  //   useKeystoreController(
-  //     controllerStore.getSnapshot('KeystoreController'),
-  //     controllerStore.getSnapshot('MainController')
-  //   )
-  // }
 
   if (id === 'RequestsController') {
     // TODO:
@@ -129,6 +171,7 @@ export default function useController<K extends keyof AllControllersMappingType>
     state: state || ({} as AllControllersMappingType[K]),
     ...(helpers || ({} as ControllerHelpersMapping[K])),
     ...ctrlSpecificMethods,
-    dispatch
+    dispatch,
+    dispatchAndWait
   } as UseControllerReturn<K>
 }

@@ -16,7 +16,7 @@ type DefinedControllerHelpers = {
 export type ControllerHelpersMapping = {
   [K in keyof AllControllersMappingType]: K extends keyof DefinedControllerHelpers
     ? DefinedControllerHelpers[K]
-    : any
+    : {}
 }
 
 export class ControllerHelpersStore {
