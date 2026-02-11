@@ -31,7 +31,7 @@ export class ControllerHelpersStore {
     data: Partial<ControllerHelpersMapping[K]>,
     forceEmit?: boolean
   ) {
-    if (!data) return
+    if (data === undefined) return
 
     this.#states[id] = { ...(this.#states[id] ?? {}), ...data } as ControllerHelpersMapping[K]
 

@@ -36,7 +36,7 @@ export class ControllerStore {
     ctrl: AllControllersMappingType[K],
     forceEmit?: boolean
   ) {
-    if (!ctrl) return
+    if (ctrl === undefined) return
     this.#states[id] = isExtension ? { ...ctrl } : parse(stringify(ctrl))
     if (!this.initializedControllers.has(id)) {
       this.initializedControllers.add(id)

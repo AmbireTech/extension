@@ -29,6 +29,7 @@ let globalDispatch: ControllersMiddlewareContextReturnType['dispatch']
 let pm: PortMessenger
 const actionsBeforeBackgroundReady: Action[] = []
 let backgroundReady: boolean
+let windowReady: boolean
 let connectPort: () => Promise<void> = () => Promise.resolve()
 const MAX_RETRIES = 20
 // Facilitate communication between the different parts of the browser extension.
@@ -53,9 +54,18 @@ if (isExtension) {
     // connect to the portMessenger initialized in the background
     // @ts-ignore
     pm.addConnectListener(pm.ports[0].id, (messageType, { method, params, forceEmit }) => {
-      if (method === 'portReady') {
-        eventBus.emit('onReady')
+      if (method === 'portReady' && !backgroundReady) {
         backgroundReady = true
+        ;(async () => {
+          if (windowReady) {
+            eventBus.emit('onReady')
+          } else {
+            while (!windowReady) {
+              eventBus.emit('onReady')
+              await wait(100)
+            }
+          }
+        })()
         actionsBeforeBackgroundReady.forEach((a) => globalDispatch(a))
         actionsBeforeBackgroundReady.length = 0
         return
@@ -102,7 +112,6 @@ if (isExtension) {
       }
 
       if (!backgroundReady && retries < MAX_RETRIES) {
-        console.log({ retries })
         retries++
         connectPort()
       }
@@ -156,20 +165,21 @@ export const ControllersMiddlewareProvider: React.FC<{ children: React.ReactNode
   )
 
   useEffect(() => {
+    if (!windowReady) windowReady = true
+
     const initControllers = () => {
       controllerStore.init(
         Object.keys(controllersMapping) as (keyof AllControllersMappingType)[],
         (allCtrls: (keyof AllControllersMappingType)[]) => {
-          allCtrls.forEach((ctrl) => {
-            dispatch({ type: 'INIT_CONTROLLER_STATE', params: { controller: ctrl } })
+          allCtrls.forEach((ctrlName) => {
+            dispatch({ type: 'INIT_CONTROLLER_STATE', params: { controller: ctrlName } })
           })
         }
       )
+      eventBus.removeEventListener('onReady', initControllers)
     }
 
     eventBus.addEventListener('onReady', initControllers)
-
-    return () => eventBus.removeEventListener('onReady', initControllers)
   }, [controllerStore, dispatch])
 
   useEffect(() => {
