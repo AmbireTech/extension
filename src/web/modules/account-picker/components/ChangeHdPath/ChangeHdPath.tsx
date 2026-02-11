@@ -1,7 +1,13 @@
 import React, { useCallback, useMemo } from 'react'
 import { useModalize } from 'react-native-modalize'
 
-import { DERIVATION_OPTIONS, HD_PATH_TEMPLATE_TYPE } from '@ambire-common/consts/derivation'
+import {
+  BIP44_LEDGER_DERIVATION_TEMPLATE,
+  BIP44_STANDARD_TESTNET_DERIVATION_TEMPLATE,
+  DERIVATION_OPTIONS,
+  HD_PATH_TEMPLATE_TYPE
+} from '@ambire-common/consts/derivation'
+import { IAccountPickerController } from '@ambire-common/interfaces/accountPicker'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import Button from '@common/components/Button'
 import { SelectValue } from '@common/components/Select/types'
@@ -16,9 +22,10 @@ import AdvancedModeBottomSheet from './AdvancedModeBottomSheet'
 type Props = {
   setPage: (page: number) => void
   disabled?: boolean
+  type?: IAccountPickerController['type']
 }
 
-const ChangeHdPath: React.FC<Props> = ({ setPage, disabled }) => {
+const ChangeHdPath: React.FC<Props> = ({ setPage, disabled, type }) => {
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const { t } = useTranslation()
   const { dispatch } = useBackgroundService()
@@ -27,6 +34,28 @@ const ChangeHdPath: React.FC<Props> = ({ setPage, disabled }) => {
   const value = useMemo(
     () => DERIVATION_OPTIONS.find((o) => o.value === hdPathTemplate),
     [hdPathTemplate]
+  )
+
+  const availableOptions = useMemo(
+    () =>
+      DERIVATION_OPTIONS.filter((d) => {
+        // TODO: Disabled for Trezor because the flow that retrieves accounts
+        // from the device as of v4.32.0 throws "forbidden key path" when
+        // accessing non-"BIP44 Standard" paths. Alternatively, this could be
+        // enabled in Trezor Suit (settings - safety checks), but even if enabled,
+        // 1) user must explicitly allow retrieving each address (that means 25
+        // clicks to retrieve accounts of the first 5 pages, blah) and 2) The
+        // Trezor device shows a scarry note: "Wrong address path for selected
+        // coin. Continue at your own risk!", which is pretty bad UX.
+        // Note: We can't use the xpub trick because of the hardened part ('), see TrezorKeyIterator
+        if (type === 'trezor' && d.value === BIP44_LEDGER_DERIVATION_TEMPLATE) return false
+        // Popular only for Trezor devices, skip for all others to prevent confusion
+        if (type !== 'trezor' && d.value === BIP44_STANDARD_TESTNET_DERIVATION_TEMPLATE)
+          return false
+
+        return true
+      }),
+    [type]
   )
 
   const handleChangeHdPath = useCallback(
@@ -70,7 +99,7 @@ const ChangeHdPath: React.FC<Props> = ({ setPage, disabled }) => {
         closeBottomSheet={closeBottomSheet}
         page={page}
         value={value}
-        options={DERIVATION_OPTIONS}
+        options={availableOptions}
         onConfirm={(selectedOption, selectedPage) => handleConfirm(selectedOption, selectedPage)}
       />
     </>

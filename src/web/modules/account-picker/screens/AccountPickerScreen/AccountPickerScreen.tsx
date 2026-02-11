@@ -72,16 +72,8 @@ const AccountPickerScreen = () => {
     () =>
       !!(
         accountPickerState.subType === 'seed' ||
-        // TODO: Disabled for Trezor, because the flow that retrieves accounts
-        // from the device as of v4.32.0 throws "forbidden key path" when
-        // accessing non-"BIP44 Standard" paths. Alternatively, this could be
-        // enabled in Trezor Suit (settings - safety checks), but even if enabled,
-        // 1) user must explicitly allow retrieving each address (that means 25
-        // clicks to retrieve accounts of the first 5 pages, blah) and 2) The
-        // Trezor device shows a scarry note: "Wrong address path for selected
-        // coin. Continue at your own risk!", which is pretty bad UX.
-        // @ts-ignore
-        ['ledger' as 'ledger', 'lattice' as 'lattice'].includes(accountPickerState.type)
+        (accountPickerState.type &&
+          ['ledger', 'lattice', 'trezor'].includes(accountPickerState.type))
       ),
     [accountPickerState.type, accountPickerState.subType]
   )
@@ -125,6 +117,7 @@ const AccountPickerScreen = () => {
               <ChangeHdPath
                 disabled={accountPickerState.accountsLoading || !!isLoading}
                 setPage={setPage}
+                type={accountPickerState.type}
               />
             )}
           </View>
@@ -146,8 +139,8 @@ const AccountPickerScreen = () => {
                 isLoading
                   ? t('Importing...')
                   : !accountPickerState.selectedAccounts.length
-                  ? t('Continue')
-                  : t('Import accounts')
+                    ? t('Continue')
+                    : t('Import accounts')
               }
             >
               <RightArrowIcon style={spacings.ml} />
