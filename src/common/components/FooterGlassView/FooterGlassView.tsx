@@ -1,5 +1,5 @@
 import React, { FC } from 'react'
-import { View } from 'react-native'
+import { View, ViewStyle } from 'react-native'
 
 import GlassView from '@common/components/GlassView'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
@@ -7,7 +7,9 @@ import flexbox from '@common/styles/utils/flexbox'
 
 const FooterGlassView: FC<{
   children: React.ReactNode
-}> = ({ children }) => {
+  style?: ViewStyle
+  borderRadius?: number
+}> = ({ children, style = {}, borderRadius = 32 }) => {
   return (
     <View
       style={{
@@ -16,14 +18,15 @@ const FooterGlassView: FC<{
         bottom: SPACING_SM,
         width: '100%',
         ...flexbox.center,
-        zIndex: 3
+        zIndex: 3,
+        ...style
       }}
     >
       <GlassView
         style={{
-          borderRadius: 32
+          borderRadius
         }}
-        cssStyle={{ borderRadius: 32 }}
+        cssStyle={{ borderRadius }}
       >
         <View style={[spacings.ph, spacings.pv]}>{children}</View>
       </GlassView>
