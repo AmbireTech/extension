@@ -1,5 +1,5 @@
 import React, { FC, ReactNode, useEffect } from 'react'
-import { createHashRouter, Navigate, RouterProvider } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
 
 import ErrorPage from '@legends/components/ErrorPage'
 import PrivateRoute from '@legends/components/PrivateRoute'
@@ -48,59 +48,35 @@ const PrivateArea: FC<{ children: ReactNode }> = ({ children }) => {
   )
 }
 
-const sentryCreateHashRouter = Sentry.wrapCreateBrowserRouterV6(createHashRouter)
+const SentryRoutes = Sentry.withSentryReactRouterV6Routing(Routes)
 
-const router = sentryCreateHashRouter([
-  {
-    errorElement: <ErrorPage />,
-    children: [
-      {
-        element: (
+const Router = () => {
+  return (
+    <SentryRoutes>
+      <Route
+        element={
           <PrivateArea>
             <PrivateRoute />
           </PrivateArea>
-        ),
-        children: [
-          {
-            path: LEGENDS_ROUTES.leaderboard,
-            element: <Leaderboard />
-          },
-          {
-            path: LEGENDS_ROUTES.home,
-            element: <Home />
-          },
-          {
-            path: LEGENDS_ROUTES.wallet,
-            element: <Wallet />
-          },
-          {
-            path: LEGENDS_ROUTES['/'],
-            element: <Home />
-          },
-          {
-            path: LEGENDS_ROUTES.rewardsPool,
-            element: <RewardsPool />
-          },
-          {
-            path: LEGENDS_ROUTES.legacyQuests,
-            element: <Navigate to={LEGENDS_ROUTES.home} />
-          },
-          {
-            path: LEGENDS_LEGACY_ROUTES.legends,
-            element: <Navigate to={LEGENDS_ROUTES.home} />
-          },
-          {
-            path: LEGENDS_LEGACY_ROUTES.character,
-            element: <Navigate to={LEGENDS_ROUTES.home} />
-          }
-        ]
-      }
-    ]
-  }
-])
-
-const Router = () => {
-  return <RouterProvider router={router} />
+        }
+      >
+        <Route path={LEGENDS_ROUTES.leaderboard} element={<Leaderboard />} />
+        <Route path={LEGENDS_ROUTES.home} element={<Home />} />
+        <Route path={LEGENDS_ROUTES.wallet} element={<Wallet />} />
+        <Route path={LEGENDS_ROUTES['/']} element={<Home />} />
+        <Route path={LEGENDS_ROUTES.rewardsPool} element={<RewardsPool />} />
+        <Route path={LEGENDS_ROUTES.legacyQuests} element={<Navigate to={LEGENDS_ROUTES.home} />} />
+        <Route
+          path={LEGENDS_LEGACY_ROUTES.legends}
+          element={<Navigate to={LEGENDS_ROUTES.home} />}
+        />
+        <Route
+          path={LEGENDS_LEGACY_ROUTES.character}
+          element={<Navigate to={LEGENDS_ROUTES.home} />}
+        />
+      </Route>
+    </SentryRoutes>
+  )
 }
 
 export default Router

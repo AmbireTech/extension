@@ -1,4 +1,5 @@
 import React from 'react'
+import { HashRouter } from 'react-router-dom'
 
 import { ControllerStoreProvider } from '@common/contexts/controllerStoreContext'
 import { PortalHost, PortalProvider } from '@gorhom/portal'
@@ -23,20 +24,22 @@ const errorComponent = <ErrorPage />
 const LegendsInit = () => {
   return (
     <Sentry.ErrorBoundary fallback={errorComponent}>
-      <PortalProvider>
-        <ToastContextProvider>
-          <ControllerStoreProvider>
-            <ControllersMiddlewareProvider>
-              <ProviderContextProvider>
-                <AccountContextProvider>
-                  <Router />
-                </AccountContextProvider>
-              </ProviderContextProvider>
-            </ControllersMiddlewareProvider>
-          </ControllerStoreProvider>
-        </ToastContextProvider>
-        <PortalHost name="global" />
-      </PortalProvider>
+      <HashRouter>
+        <PortalProvider>
+          <ToastContextProvider>
+            <ControllerStoreProvider>
+              <ControllersMiddlewareProvider>
+                <ProviderContextProvider>
+                  <AccountContextProvider>
+                    <Router />
+                  </AccountContextProvider>
+                </ProviderContextProvider>
+              </ControllersMiddlewareProvider>
+            </ControllerStoreProvider>
+          </ToastContextProvider>
+          <PortalHost name="global" />
+        </PortalProvider>
+      </HashRouter>
     </Sentry.ErrorBoundary>
   )
 }
