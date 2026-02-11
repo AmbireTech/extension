@@ -6,7 +6,7 @@ import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import AccountsFilledIcon from '@common/assets/svg/AccountsFilledIcon'
-import WalletFilledIcon from '@common/assets/svg/WalletFilledIcon'
+import WalletIcon from '@common/assets/svg/WalletIcon'
 import AddressBookContact from '@common/components/AddressBookContact'
 import Button from '@common/components/Button'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
@@ -120,7 +120,6 @@ const ContactsList = () => {
         testID="search-contacts-input"
         placeholder={t('Search contacts')}
         control={control}
-        height={48}
         containerStyle={{ width: isWidthS ? '50%' : '100%' }}
       />
     </View>
@@ -132,7 +131,7 @@ const ContactsList = () => {
       <ScrollableWrapper style={flexbox.flex1}>
         {walletAccountsSourcedContacts.length > 0 ? (
           <>
-            <TitleAndIcon title={t('My wallets')} icon={WalletFilledIcon} />
+            <TitleAndIcon title={t('My wallets')} icon={WalletIcon} />
             {walletAccountsSourcedContacts.map((contact) => (
               <AddressBookContact
                 fontSize={16}

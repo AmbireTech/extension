@@ -19,11 +19,13 @@ interface Style {
 
   buttonContainerStylesSizeLarge: ViewStyle
   buttonContainerStylesSizeRegular: ViewStyle
+  buttonContainerStylesSmaller: ViewStyle
   buttonContainerStylesSizeSmall: ViewStyle
   buttonContainerStylesSizeTiny: ViewStyle
 
   buttonTextStylesSizeLarge: TextStyle
   buttonTextStylesSizeRegular: TextStyle
+  buttonTextStylesSizeSmaller: TextStyle
   buttonTextStylesSizeSmall: TextStyle
   buttonTextStylesSizeTiny: TextStyle
 
@@ -56,8 +58,7 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       borderWidth: 0
     },
     buttonContainerSecondary: {
-      backgroundColor: 'transparent',
-      borderColor: theme.primary
+      borderWidth: 0
     },
     buttonContainerDanger: {
       borderColor: theme.errorDecorative
@@ -85,6 +86,12 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       ...spacings.phSm,
       ...spacings.mbSm
     },
+    buttonContainerStylesSmaller: {
+      height: 48,
+      ...spacings.phSm,
+      ...spacings.pvSm,
+      ...spacings.mbSm
+    },
     buttonContainerStylesSizeSmall: {
       height: 36,
       ...spacings.pvMi,
@@ -104,6 +111,10 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
     },
     buttonTextStylesSizeLarge: {
       fontSize: 16
+    },
+    buttonTextStylesSizeSmaller: {
+      fontSize: 14,
+      fontFamily: FONT_FAMILIES.MEDIUM
     },
     buttonTextStylesSizeSmall: {
       fontSize: 14,

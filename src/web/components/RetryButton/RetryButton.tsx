@@ -24,8 +24,8 @@ const RetryButton: FC<Props> = ({ onPress, label, disabled }) => {
   const [bindAnim, animStyle] = useCustomHover({
     property: 'backgroundColor',
     values: {
-      from: hexToRgba(theme.primaryAccent, 0.08),
-      to: hexToRgba(theme.primaryAccent, 0.2)
+      from: hexToRgba(theme.primaryAccent100, 1),
+      to: hexToRgba(theme.primaryAccent200, 0.16)
     }
   })
 
@@ -75,9 +75,9 @@ const RetryButton: FC<Props> = ({ onPress, label, disabled }) => {
       ...flexbox.directionRow,
       ...flexbox.alignCenter,
       ...animStyle,
-      ...spacings.phTy,
-      minHeight: 28,
-      paddingLeft: 10,
+      paddingLeft: 6,
+      paddingRight: 2,
+      minHeight: 20,
       ...(disabled && { opacity: 0.5 })
     }),
     [animStyle, disabled]
@@ -90,11 +90,11 @@ const RetryButton: FC<Props> = ({ onPress, label, disabled }) => {
       disabled={disabled}
       {...mergedBindAnim}
     >
-      <Text fontSize={12} weight="medium" color={theme.primary} style={spacings.mrTy}>
+      <Text fontSize={12} weight="medium" color={theme.primaryAccent300} style={spacings.mrTy}>
         {buttonLabel}
       </Text>
       <Animated.View style={{ transform: [{ rotateZ: rotateInterpolate }] }}>
-        <RetryIcon color={theme.primary} />
+        <RetryIcon color={theme.primaryAccent300} />
       </Animated.View>
     </AnimatedPressable>
   )

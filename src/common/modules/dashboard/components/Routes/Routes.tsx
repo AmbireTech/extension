@@ -47,8 +47,7 @@ const Routes = () => {
       label: t('Rewards'),
       route: WEB_ROUTES.rewards,
       scale: 1,
-      scaleOnHover: 1.2,
-      backgroundImage: rewardsBg
+      scaleOnHover: 1.02
     }
   ]
 

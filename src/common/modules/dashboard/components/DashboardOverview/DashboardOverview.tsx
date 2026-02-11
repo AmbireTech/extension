@@ -1,5 +1,5 @@
 import React, { FC, useCallback, useMemo } from 'react'
-import { Animated, Pressable, View } from 'react-native'
+import { Animated, Image, Pressable, View } from 'react-native'
 
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import SkeletonLoader from '@common/components/SkeletonLoader'
@@ -7,13 +7,10 @@ import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import DashboardHeader from '@common/modules/dashboard/components/DashboardHeader'
-import Gradients from '@common/modules/dashboard/components/Gradients/Gradients'
 import Routes from '@common/modules/dashboard/components/Routes'
 import useBalanceAffectingErrors from '@common/modules/dashboard/hooks/useBalanceAffectingErrors'
 import { OVERVIEW_CONTENT_MAX_HEIGHT } from '@common/modules/dashboard/screens/DashboardScreen'
-import { DASHBOARD_OVERVIEW_BACKGROUND } from '@common/modules/dashboard/screens/styles'
-import spacings, { SPACING, SPACING_SM, SPACING_TY, SPACING_XL } from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
+import spacings, { SPACING, SPACING_MD, SPACING_TY, SPACING_XL } from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import useBackgroundService from '@web/hooks/useBackgroundService'
@@ -21,9 +18,11 @@ import useHover, { AnimatedPressable } from '@web/hooks/useHover'
 import useMainControllerState from '@web/hooks/useMainControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 
-import GasTankButton from '../DashboardHeader/GasTankButton'
+import backgroundImage from './background.png'
 import BalanceAffectingErrors from './BalanceAffectingErrors'
+import GasTankButton from './GasTankButton'
 import RefreshIcon from './RefreshIcon'
+import RewardsButton from './RewardsButton'
 import getStyles from './styles'
 
 const THRESHOLD_AMOUNT_TO_HIDE_BALANCE_DECIMALS = 10000
@@ -40,7 +39,7 @@ interface Props {
 
 // We create a reusable height constant for both the Balance amount height and the Balance skeleton.
 // We want both components to have the same height; otherwise, clicking on the RefreshIcon causes a layout shift.
-const BALANCE_HEIGHT = 38
+const BALANCE_HEIGHT = 42
 
 const DashboardOverview: FC<Props> = ({
   openGasTankModal,
@@ -50,12 +49,12 @@ const DashboardOverview: FC<Props> = ({
 }) => {
   const { dispatch } = useBackgroundService()
   const { t } = useTranslation()
-  const { theme, styles, themeType } = useTheme(getStyles)
+  const { theme, styles } = useTheme(getStyles)
   const { isOffline } = useMainControllerState()
   const { account, dashboardNetworkFilter, portfolio } = useSelectedAccountControllerState()
 
   const [bindRefreshButtonAnim, refreshButtonAnimStyle] = useHover({
-    preset: 'opacity'
+    preset: 'opacityInverted'
   })
   const {
     sheetRef,
@@ -82,7 +81,7 @@ const DashboardOverview: FC<Props> = ({
   }, [dashboardNetworkFilter, dispatch])
 
   return (
-    <View style={[spacings.phSm, spacings.mbMi]}>
+    <View style={[spacings.phSm, spacings.mb]}>
       <View style={[styles.contentContainer]}>
         <Animated.View
           style={[
@@ -92,13 +91,9 @@ const DashboardOverview: FC<Props> = ({
             {
               paddingBottom: animatedOverviewHeight.interpolate({
                 inputRange: [0, OVERVIEW_CONTENT_MAX_HEIGHT],
-                outputRange: [SPACING_TY, SPACING_SM],
+                outputRange: [SPACING_TY, SPACING_MD],
                 extrapolate: 'clamp'
               }),
-              backgroundColor:
-                themeType === THEME_TYPES.DARK
-                  ? `${DASHBOARD_OVERVIEW_BACKGROUND}80`
-                  : DASHBOARD_OVERVIEW_BACKGROUND,
               overflow: 'hidden'
             }
           ]}
@@ -109,16 +104,23 @@ const DashboardOverview: FC<Props> = ({
             })
           }}
         >
-          <Gradients
-            width={dashboardOverviewSize.width}
-            height={dashboardOverviewSize.height}
-            selectedAccount={account?.addr || null}
+          {/* TODO: Style based on selected account; Add overlay in the extension */}
+          <Image
+            source={{ uri: backgroundImage }}
+            style={{
+              width: '100%',
+              height: OVERVIEW_CONTENT_MAX_HEIGHT,
+              position: 'absolute',
+              objectFit: 'fill',
+              top: 0,
+              left: 0
+            }}
           />
           <View style={{ zIndex: 2 }}>
             <DashboardHeader />
             <Animated.View
               style={{
-                ...styles.overview,
+                ...flexbox.alignCenter,
                 paddingTop: animatedOverviewHeight.interpolate({
                   inputRange: [0, SPACING_XL],
                   outputRange: [0, SPACING],
@@ -128,13 +130,12 @@ const DashboardOverview: FC<Props> = ({
                 overflow: 'hidden'
               }}
             >
-              <View>
+              <View style={spacings.mbLg}>
                 <View
                   style={[
                     flexbox.directionRow,
                     flexbox.alignCenter,
-                    spacings.mbTy,
-                    spacings.mtMi,
+                    spacings.mbMi,
                     { height: BALANCE_HEIGHT }
                   ]}
                 >
@@ -154,7 +155,7 @@ const DashboardOverview: FC<Props> = ({
                     >
                       <Text selectable>
                         <Text
-                          fontSize={32}
+                          fontSize={36}
                           shouldScale={false}
                           weight="number_bold"
                           // Line height should be constant based on font size, not on parent height
@@ -162,9 +163,7 @@ const DashboardOverview: FC<Props> = ({
                           color={
                             networksWithErrors.length || isOffline
                               ? theme.warningDecorative2
-                              : themeType === THEME_TYPES.DARK
-                                ? theme.primaryBackgroundInverted
-                                : theme.primaryBackground
+                              : '#FFFFFF'
                           }
                           selectable
                           testID="total-portfolio-amount-integer"
@@ -173,15 +172,13 @@ const DashboardOverview: FC<Props> = ({
                         </Text>
                         {totalPortfolioAmount < THRESHOLD_AMOUNT_TO_HIDE_BALANCE_DECIMALS && (
                           <Text
-                            fontSize={20}
+                            fontSize={24}
                             shouldScale={false}
                             weight="number_bold"
                             color={
                               networksWithErrors.length || isOffline
                                 ? theme.warningDecorative2
-                                : themeType === THEME_TYPES.DARK
-                                  ? theme.primaryBackgroundInverted
-                                  : theme.primaryBackground
+                                : '#FFFFFF'
                             }
                             selectable
                           >
@@ -201,23 +198,14 @@ const DashboardOverview: FC<Props> = ({
                   >
                     <RefreshIcon
                       spin={!portfolio.isAllReady || portfolio.isReloading}
-                      color={
-                        themeType === THEME_TYPES.DARK
-                          ? theme.primaryBackgroundInverted
-                          : theme.primaryBackground
-                      }
-                      width={16}
-                      height={16}
+                      color="#E3E6EB"
+                      width={28}
+                      height={28}
                     />
                   </AnimatedPressable>
                 </View>
 
-                <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                  <GasTankButton
-                    onPress={openGasTankModal}
-                    portfolio={portfolio}
-                    account={account}
-                  />
+                <View style={[flexbox.directionRow, flexbox.justifyCenter, flexbox.alignCenter]}>
                   <BalanceAffectingErrors
                     reloadAccount={reloadAccount}
                     networksWithErrors={networksWithErrors}
@@ -228,6 +216,12 @@ const DashboardOverview: FC<Props> = ({
                     closeBottomSheetWrapped={closeBottomSheetWrapped}
                     isLoadingTakingTooLong={isLoadingTakingTooLong}
                   />
+                  <GasTankButton
+                    onPress={openGasTankModal}
+                    portfolio={portfolio}
+                    account={account}
+                  />
+                  <RewardsButton />
                 </View>
               </View>
               <Routes />

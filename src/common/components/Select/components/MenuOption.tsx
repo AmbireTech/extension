@@ -26,8 +26,8 @@ const Option = React.memo(({ item, ...rest }: { item: SelectValue }) => {
     typeof item.label === 'string'
       ? formatOptionString(item.label)
       : typeof item.value === 'string'
-      ? formatOptionString(item.value)
-      : undefined
+        ? formatOptionString(item.value)
+        : undefined
   }`
 
   if (!item) return null
@@ -97,14 +97,11 @@ const MenuOption = React.memo(
           mode === 'bottomSheet' && styles.sheetMenuOption,
           !!height && { height },
           isSelected && {
-            backgroundColor: themeType === THEME_TYPES.DARK ? '#FFFFFF1F' : theme.tertiaryBackground
+            backgroundColor: theme.secondaryBackground
           },
           isHighlighted &&
             !disabled && {
-              backgroundColor:
-                themeType === THEME_TYPES.DARK
-                  ? theme.tertiaryBackground
-                  : theme.secondaryBackground
+              backgroundColor: theme.secondaryBackground
             },
           // @ts-ignore
           disabled && { opacity: 0.6, cursor: 'not-allowed' }

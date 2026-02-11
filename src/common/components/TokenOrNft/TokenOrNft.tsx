@@ -110,7 +110,8 @@ const TokenOrNft: FC<Props> = ({
   ])
 
   if (!assetInfo.nftInfo && !assetInfo.tokenInfo)
-    if (isLoading) return <SkeletonLoader width={140} height={24} appearance="tertiaryBackground" />
+    if (isLoading)
+      return <SkeletonLoader width={140} height={24} appearance="secondaryBackground" />
     // @NOTE: temporary solution as a fallback mechanism for ERC-1155 tokens which we do not support currently
     else if (fallbackName)
       return (

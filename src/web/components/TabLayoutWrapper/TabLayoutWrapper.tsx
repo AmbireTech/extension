@@ -47,7 +47,7 @@ export const getTabLayoutPadding = (maxWidthSize: (size: WindowSizes) => boolean
     }
   }
 
-  return spacings.ph
+  return spacings.phSm
 }
 
 export const TabLayoutContainer = ({

@@ -15,12 +15,14 @@ import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
+import { ItemPanel } from '@web/components/TransactionsScreen'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import MaxAmount from '@web/modules/swap-and-bridge/components/MaxAmount'
 
 import getStyles from './styles'
 
 type Props = {
+  label: string
   fromTokenOptions: SelectValue[]
   fromTokenValue?: SelectValue
   fromAmountValue: string
@@ -42,6 +44,7 @@ type Props = {
 }
 
 const SendToken: FC<Props> = ({
+  label,
   fromTokenOptions,
   fromTokenValue,
   fromAmountValue,
@@ -101,9 +104,16 @@ const SendToken: FC<Props> = ({
           validateFromAmount?.message ? styles.outerContainerWarning : {}
         ]}
       >
-        <View
-          style={[styles.container, validateFromAmount?.message ? styles.containerWarning : {}]}
+        <ItemPanel
+          style={{
+            ...spacings.pv,
+            ...spacings.prMd,
+            ...(validateFromAmount?.message ? styles.containerWarning : {})
+          }}
         >
+          <Text appearance="secondaryText" fontSize={14} weight="medium" style={spacings.mbSm}>
+            {label}
+          </Text>
           <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
             <Select
               setValue={handleChangeFromToken}
@@ -114,11 +124,7 @@ const SendToken: FC<Props> = ({
               searchPlaceholder={t('Token name or address...')}
               emptyListPlaceholderText={t('No tokens found.')}
               containerStyle={{ ...flexbox.flex1, ...spacings.mb0 }}
-              selectStyle={{
-                backgroundColor:
-                  themeType === THEME_TYPES.DARK ? theme.primaryBackground : '#54597A14',
-                borderWidth: 0
-              }}
+              selectStyle={spacings.phTy}
               mode="bottomSheet"
             />
             <NumberInput
@@ -129,8 +135,9 @@ const SendToken: FC<Props> = ({
               inputWrapperStyle={{ backgroundColor: 'transparent' }}
               nativeInputStyle={{
                 fontFamily: FONT_FAMILIES.MEDIUM,
-                fontSize: 20,
-                textAlign: 'right'
+                fontSize: 24,
+                textAlign: 'right',
+                color: theme.primaryText
               }}
               disabled={fromTokenAmountSelectDisabled}
               containerStyle={[spacings.mb0 as ViewStyle, flexbox.flex1, { overflow: 'hidden' }]}
@@ -177,7 +184,7 @@ const SendToken: FC<Props> = ({
               flexbox.directionRow,
               flexbox.alignCenter,
               flexbox.justifySpaceBetween,
-              spacings.ptSm
+              spacings.ptMd
             ]}
           >
             {!fromTokenAmountSelectDisabled && (
@@ -200,8 +207,8 @@ const SendToken: FC<Props> = ({
                     flexbox.alignSelfStart,
                     {
                       position: 'absolute',
-                      right: -32,
-                      top: -8
+                      right: 0,
+                      top: -6
                     }
                   ]}
                   disabled={fromTokenAmountSelectDisabled}
@@ -209,18 +216,13 @@ const SendToken: FC<Props> = ({
                   {({ hovered }: any) => (
                     <View
                       style={{
-                        backgroundColor:
-                          themeType === THEME_TYPES.DARK
-                            ? hovered
-                              ? hexToRgba(theme.primaryAccent, 0.2)
-                              : hexToRgba(theme.primaryAccent, 0.08)
-                            : hovered
-                              ? '#6000FF14'
-                              : theme.infoBackground,
-                        borderRadius: 50,
-                        paddingHorizontal: 5,
-                        paddingVertical: 5,
-                        ...spacings.mrTy
+                        ...flexbox.center,
+                        borderRadius: 10,
+                        backgroundColor: hovered
+                          ? hexToRgba(theme.primaryAccent200, 0.16)
+                          : theme.primaryAccent100,
+                        width: 20,
+                        height: 20
                       }}
                     >
                       <FlipIcon width={11} height={11} color={theme.primary} />
@@ -229,7 +231,7 @@ const SendToken: FC<Props> = ({
                 </Pressable>
                 <Text
                   fontSize={12}
-                  color={themeType === THEME_TYPES.DARK ? theme.linkText : theme.primary}
+                  color={theme.secondaryText}
                   weight="medium"
                   testID="switch-currency-sab"
                 >
@@ -248,7 +250,7 @@ const SendToken: FC<Props> = ({
               <View />
             )}
           </View>
-        </View>
+        </ItemPanel>
       </View>
       {validateFromAmount?.message && (
         <Text fontSize={12} style={[spacings.mlMi, spacings.mtMi]} appearance="errorText">

@@ -14,8 +14,8 @@ const ACCENT_PRIMITIVES = {
     [THEME_TYPES.DARK]: '#9D7AFF'
   },
   primaryAccent400: {
-    [THEME_TYPES.LIGHT]: '#34128D',
-    [THEME_TYPES.DARK]: '#34128D'
+    [THEME_TYPES.LIGHT]: '#7F52FF',
+    [THEME_TYPES.DARK]: '#7F52FF'
   },
   primaryAccent500: {
     [THEME_TYPES.LIGHT]: '#2B273D',

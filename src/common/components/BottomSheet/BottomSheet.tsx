@@ -58,7 +58,7 @@ const BottomSheet: React.FC<Props> = ({
   onBackdropPress,
   flatListProps,
   scrollViewProps,
-  backgroundColor = 'secondaryBackground',
+  backgroundColor = 'primaryBackground',
   autoWidth = false,
   autoOpen = false,
   shouldBeClosableOnDrag = true,

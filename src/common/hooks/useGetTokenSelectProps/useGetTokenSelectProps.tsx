@@ -26,7 +26,7 @@ import NotSupportedNetworkTooltip from '@web/modules/swap-and-bridge/components/
 import { getTokenId } from '@web/utils/token'
 
 const TextFallbackState: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <Text weight="medium" fontSize={14}>
+  <Text fontSize={14} appearance="secondaryText" style={spacings.plTy}>
     {children}
   </Text>
 )
@@ -46,7 +46,7 @@ const getTokenOptionsEmptyState = (isToToken = false) => [
 const LOADING_TOKEN_ITEMS = [
   {
     value: 'loading',
-    label: <TextFallbackState>Fetching tokens...</TextFallbackState>,
+    label: <TextFallbackState>Loading tokens...</TextFallbackState>,
     icon: null
   }
 ]
@@ -54,7 +54,7 @@ const LOADING_TOKEN_ITEMS = [
 const NO_VALUE_SELECTED = [
   {
     value: 'no-selection',
-    label: <TextFallbackState>Please select token</TextFallbackState>,
+    label: <TextFallbackState>Select a token</TextFallbackState>,
     icon: null
   }
 ]

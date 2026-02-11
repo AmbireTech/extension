@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react'
 import { Animated, ColorValue, PressableProps, TextStyle, ViewStyle } from 'react-native'
 
+import InfoIcon from '@common/assets/svg/InfoIcon'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
@@ -11,6 +12,7 @@ import { AnimatedText } from '@web/hooks/useHover/useHover'
 import { AnimationValues } from '@web/hooks/useHover/useMultiHover'
 import useOnEnterKeyPress from '@web/hooks/useOnEnterKeyPress'
 
+import { createGlobalTooltipDataSet } from '../GlobalTooltip'
 import getStyles from './styles'
 
 type ButtonTypes =
@@ -26,7 +28,8 @@ type ButtonTypes =
   | 'success'
   | 'gray'
 
-type ButtonSizes = 'regular' | 'small' | 'large' | 'tiny'
+// We should rethink these sizes
+type ButtonSizes = 'regular' | 'smaller' | 'small' | 'large' | 'tiny'
 export interface Props extends PressableProps {
   text?: string
   type?: ButtonTypes
@@ -44,6 +47,7 @@ export interface Props extends PressableProps {
   innerContainerStyle?: (hovered: boolean) => ViewStyle
   testID?: string
   submitOnEnter?: boolean
+  tooltipDataSet?: ReturnType<typeof createGlobalTooltipDataSet>
 }
 
 const OPACITY_ANIMATION = {
@@ -154,6 +158,7 @@ const Button = ({
   childrenContainerStyle,
   testID,
   submitOnEnter: _submitOnEnter,
+  tooltipDataSet,
   ...rest
 }: Props) => {
   const { styles, theme, themeType } = useTheme(getStyles)
@@ -178,14 +183,8 @@ const Button = ({
       secondary: [
         {
           property: 'backgroundColor',
-          from:
-            themeType === THEME_TYPES.DARK
-              ? `${String(theme.primaryAccent)}00`
-              : `${String(theme.infoBackground)}00`,
-          to:
-            themeType === THEME_TYPES.DARK
-              ? `${String(theme.primaryAccent)}20`
-              : theme.infoBackground
+          from: theme.primaryBackground,
+          to: theme.tertiaryBackground
         }
       ],
       danger: [
@@ -210,7 +209,7 @@ const Button = ({
         }
       ]
     }),
-    [themeType, theme]
+    [theme]
   )
 
   const [buttonContainerBind, buttonContainerAnimatedStyle] = useMultiHover({
@@ -250,6 +249,7 @@ const Button = ({
   const containerStylesSizes: { [key in ButtonSizes]: ViewStyle } = {
     large: styles.buttonContainerStylesSizeLarge,
     regular: styles.buttonContainerStylesSizeRegular,
+    smaller: styles.buttonContainerStylesSmaller,
     small: styles.buttonContainerStylesSizeSmall,
     tiny: styles.buttonContainerStylesSizeTiny
   }
@@ -269,8 +269,8 @@ const Button = ({
       secondary: [
         {
           property: 'color',
-          from: theme.primary,
-          to: themeType === THEME_TYPES.DARK ? '#fff' : theme.primary
+          from: '#fff',
+          to: '#fff'
         }
       ],
       danger: [
@@ -348,6 +348,7 @@ const Button = ({
   const buttonTextStylesSizes: { [key in ButtonSizes]: TextStyle } = {
     large: styles.buttonTextStylesSizeLarge,
     regular: styles.buttonTextStylesSizeRegular,
+    smaller: styles.buttonTextStylesSizeSmaller,
     small: styles.buttonTextStylesSizeSmall,
     tiny: styles.buttonTextStylesSizeTiny
   }
@@ -458,6 +459,18 @@ const Button = ({
           rest?.onPressOut && rest.onPressOut(e)
         }}
       >
+        {!!tooltipDataSet && (
+          <InfoIcon
+            width={16}
+            height={16}
+            style={{
+              position: 'absolute',
+              right: 0,
+              top: 0
+            }}
+            dataSet={tooltipDataSet}
+          />
+        )}
         {childrenPosition === 'left' && (
           <Animated.View
             style={[

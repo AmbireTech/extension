@@ -2,7 +2,7 @@ import React from 'react'
 import { Pressable, View } from 'react-native'
 
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
-import WalletFilledIcon from '@common/assets/svg/WalletFilledIcon'
+import WalletIcon from '@common/assets/svg/WalletIcon'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
@@ -44,9 +44,9 @@ const MaxAmount = ({
           hidden: !simulationFailed
         })}
       >
-        <WalletFilledIcon
-          width={14}
-          height={14}
+        <WalletIcon
+          width={18}
+          height={18}
           color={simulationFailed ? theme.warningDecorative : theme.tertiaryText}
         />
         <Text
@@ -66,7 +66,11 @@ const MaxAmount = ({
         <Pressable
           style={({ hovered }: any) => [
             styles.maxButton,
-            hovered && { backgroundColor: hexToRgba(theme.primaryAccent, 0.2) }
+            {
+              backgroundColor: hovered
+                ? hexToRgba(theme.primaryAccent200, 0.16)
+                : theme.primaryAccent100
+            }
           ]}
           onPress={onMaxButtonPress}
           disabled={disabled}

@@ -8,7 +8,7 @@ const SearchIcon: React.FC<LegendsSvgProps> = ({ width = 24, height = 24, color,
   const { theme } = useTheme()
   return (
     <Svg width={width} height={height} viewBox="0 0 24 24" fill="none" {...rest}>
-      <Circle cx="11" cy="11" r="7" stroke="#96A1B1" strokeWidth="1.5" />
+      <Circle cx="11" cy="11" r="7" stroke={color || theme.iconPrimary} strokeWidth="1.5" />
       <Path
         stroke={color || theme.iconPrimary}
         strokeLinecap="round"

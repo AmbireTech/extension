@@ -25,7 +25,7 @@ const Search = ({
   control,
   containerStyle = {},
   inputWrapperStyle = {},
-  height = 48,
+  height = 40,
   hasLeftIcon = true,
   onSearchCleared,
   ...rest
@@ -45,7 +45,7 @@ const Search = ({
           placeholder={placeholder}
           style={style}
           leftIconStyle={spacings.plSm}
-          inputStyle={{ ...spacings.plSm, height: '100%' }}
+          inputStyle={{ ...spacings.plTy, height: '100%' }}
           inputWrapperStyle={[{ height, borderRadius: height + 2 }, inputWrapperStyle]}
           placeholderTextColor={theme.secondaryText}
           onBlur={onBlur}

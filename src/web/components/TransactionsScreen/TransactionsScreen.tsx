@@ -1,21 +1,21 @@
 import React, { FC, useMemo } from 'react'
-import { View } from 'react-native'
+import { View, ViewStyle } from 'react-native'
 
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import Header from '@common/modules/header/components/Header'
 import spacings from '@common/styles/spacings'
+import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
 import { getTabLayoutPadding } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import { getUiType } from '@web/utils/uiType'
 
 import getStyles from './styles'
 
-const { isTab } = getUiType()
+const { isTab, isPopup } = getUiType()
 
 type WrapperProps = {
   children: React.ReactNode
-  title: string | React.ReactNode
   buttons: React.ReactNode
 }
 
@@ -25,17 +25,33 @@ type ContentProps = {
   scrollViewRef?: React.RefObject<any>
 }
 
-type FormProps = {
+type ItemPanelProps = {
   children: React.ReactNode
+  style?: ViewStyle
+}
+
+const ItemPanel: FC<ItemPanelProps> = ({ children, style = {} }) => {
+  const { theme } = useTheme()
+
+  return (
+    <View
+      style={{
+        ...spacings.phSm,
+        ...spacings.pvSm,
+        backgroundColor: theme.secondaryBackground,
+        borderRadius: BORDER_RADIUS_PRIMARY,
+        ...style
+      }}
+    >
+      {children}
+    </View>
+  )
 }
 
 const Wrapper: FC<WrapperProps> = ({ children, buttons }) => {
-  const { theme } = useTheme(getStyles)
-
   return (
     <TabLayoutContainer
-      backgroundColor={theme.secondaryBackground}
-      header={<Header withDetailedAccountData withOG />}
+      header={<Header withDetailedAccountData={!isPopup} withOG />}
       withHorizontalPadding={false}
       footer={isTab ? buttons : null}
     >
@@ -53,9 +69,10 @@ const Content: FC<ContentProps> = ({ children, buttons, scrollViewRef }) => {
     <TabLayoutWrapperMainContent
       contentContainerStyle={{
         ...spacings.pv0,
+        flex: 1,
         ...paddingHorizontalStyle,
-        ...(isTab ? (minHeightSize('m') ? {} : spacings.pt2Xl) : {}),
-        flexGrow: 1
+        ...(isTab && minHeightSize('m') ? spacings.pt2Xl : spacings.pt),
+        alignItems: 'center'
       }}
       wrapperRef={scrollViewRef}
     >
@@ -67,10 +84,4 @@ const Content: FC<ContentProps> = ({ children, buttons, scrollViewRef }) => {
   )
 }
 
-const Form: FC<FormProps> = ({ children }) => {
-  const { styles } = useTheme(getStyles)
-
-  return <View style={styles.form}>{children}</View>
-}
-
-export { Wrapper, Content, Form }
+export { Wrapper, Content, ItemPanel }
