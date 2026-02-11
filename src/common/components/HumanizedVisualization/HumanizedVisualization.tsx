@@ -168,7 +168,7 @@ const HumanizedVisualization: FC<Props> = ({
                   : item.type === 'label'
                     ? theme.secondaryText
                     : item.type === 'action'
-                      ? theme.secondaryAccent200
+                      ? theme.secondaryAccent400
                       : theme.primaryText
               }
             >
