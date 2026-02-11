@@ -119,8 +119,6 @@ const SelectContainer: FC<Props> = ({
                 autoFocus
                 control={control}
                 containerStyle={spacings.mb0}
-                borderWrapperStyle={styles.searchBorderWrapperStyle}
-                inputWrapperStyle={styles.bottomSearchInputWrapperStyle}
               />
             )}
             {children}
@@ -130,8 +128,6 @@ const SelectContainer: FC<Props> = ({
                 autoFocus
                 control={control}
                 containerStyle={spacings.mb0}
-                borderWrapperStyle={styles.searchBorderWrapperStyle}
-                inputWrapperStyle={styles.topSearchInputWrapperStyle}
               />
             )}
           </MenuContainer>

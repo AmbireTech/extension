@@ -1,7 +1,8 @@
 import React, { FC, useCallback } from 'react'
-import { Pressable } from 'react-native'
+import { Pressable, View } from 'react-native'
 
 import OpenIcon from '@common/assets/svg/OpenIcon'
+import SuccessIcon from '@common/assets/svg/SuccessIcon'
 import SuccessAnimation from '@common/components/SuccessAnimation'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
@@ -36,7 +37,19 @@ const Completed: FC<CompletedProps> = ({
   }, [addToast, explorerLink])
 
   return (
-    <SuccessAnimation width={600}>
+    <View style={flexbox.alignCenter}>
+      <View
+        style={{
+          ...flexbox.center,
+          ...spacings.mbSm,
+          width: 72,
+          height: 72,
+          borderRadius: 36,
+          backgroundColor: theme.successBackground
+        }}
+      >
+        <SuccessIcon width={48} height={48} color={theme.success400} />
+      </View>
       <Text fontSize={20} weight="medium" style={spacings.mbTy} testID="txn-status">
         {title}
       </Text>
@@ -46,23 +59,35 @@ const Completed: FC<CompletedProps> = ({
       {!!explorerLink && (
         <Pressable
           onPress={handleOpenExplorer}
-          style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifyCenter]}
+          style={[
+            flexbox.directionRow,
+            flexbox.alignCenter,
+            flexbox.justifyCenter,
+            spacings.plSm,
+            spacings.prTy,
+            spacings.pvTy,
+            {
+              backgroundColor: theme.primaryAccent100,
+              borderRadius: 64
+            }
+          ]}
         >
-          <OpenIcon color={theme.primary} width={16} height={16} style={spacings.mrTy} />
           <Text
             weight="medium"
+            fontSize={12}
             style={{
               textDecorationLine: 'underline',
-              textDecorationColor: theme.primary,
+              textDecorationColor: theme.primaryAccent,
               textDecorationStyle: 'solid'
             }}
             appearance="primary"
           >
             {openExplorerText}
           </Text>
+          <OpenIcon color={theme.primaryAccent} width={20} height={20} style={spacings.mlMi} />
         </Pressable>
       )}
-    </SuccessAnimation>
+    </View>
   )
 }
 

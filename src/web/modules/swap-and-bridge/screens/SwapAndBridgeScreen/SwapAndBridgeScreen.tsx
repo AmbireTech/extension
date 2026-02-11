@@ -179,22 +179,18 @@ const SwapAndBridgeScreen = () => {
 
   const buttons = useMemo(() => {
     return (
-      <>
-        {isTab && <BackButton onPress={onBackButtonPress} />}
-        <Buttons
-          signAccountOpErrors={swapSignErrors}
-          isNotReadyToProceed={isNotReadyToProceed}
-          isBatchDisabled={shouldDisableAddToBatch}
-          isLoading={isLoading}
-          handleSubmitForm={handleSubmitForm}
-          isBridge={isBridge}
-          networkUserRequests={networkUserRequests}
-          isLocalStateOutOfSync={isLocalStateOutOfSync}
-        />
-      </>
+      <Buttons
+        signAccountOpErrors={swapSignErrors}
+        isNotReadyToProceed={isNotReadyToProceed}
+        isBatchDisabled={shouldDisableAddToBatch}
+        isLoading={isLoading}
+        handleSubmitForm={handleSubmitForm}
+        isBridge={isBridge}
+        networkUserRequests={networkUserRequests}
+        isLocalStateOutOfSync={isLocalStateOutOfSync}
+      />
     )
   }, [
-    onBackButtonPress,
     swapSignErrors,
     isNotReadyToProceed,
     isLoading,
@@ -256,9 +252,9 @@ const SwapAndBridgeScreen = () => {
         )}
         <View>
           <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mb]}>
-            {!isTab && <PanelBackButton onPress={onBackButtonPress} style={spacings.mrSm} />}
+            <PanelBackButton onPress={onBackButtonPress} style={spacings.mrSm} />
             <PanelTitle title={t('Swap & Bridge')} />
-            {!isTab && <View style={{ width: 40 }} />}
+            <View style={{ width: 40 }} />
           </View>
           <View style={spacings.mbTy}>
             <FromToken

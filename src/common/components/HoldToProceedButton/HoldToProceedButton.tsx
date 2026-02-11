@@ -24,7 +24,6 @@ const HoldToProceedButton: FC<Props> = ({
   buttonType = 'primary',
   ...rest
 }) => {
-  console.log('HoldToProceedButton rendered', buttonType)
   const { theme } = useTheme()
   const progressAnim = useRef(new Animated.Value(0)).current
   const scaleAnim = useRef(new Animated.Value(1)).current
@@ -40,8 +39,6 @@ const HoldToProceedButton: FC<Props> = ({
     error: theme.errorText,
     warning: theme.warningText
   }
-
-  console.log('buttonType color:', colorTypes[buttonType])
 
   const startHold = useCallback(() => {
     if (disabled) return
@@ -207,8 +204,8 @@ const HoldToProceedButton: FC<Props> = ({
   const progressColor = isCompleted
     ? theme.successDecorative
     : isHolding
-    ? colorTypes[buttonType]
-    : 'transparent'
+      ? colorTypes[buttonType]
+      : 'transparent'
 
   return (
     <Animated.View
@@ -225,12 +222,13 @@ const HoldToProceedButton: FC<Props> = ({
       <Button
         style={[
           {
-            minWidth: 160,
+            minWidth: 108,
             position: 'relative',
             backgroundColor: colorTypes[buttonType]
           },
           style
         ]}
+        size="smaller"
         hasBottomSpacing={false}
         text={buttonText}
         disabled={disabled}

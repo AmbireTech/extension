@@ -21,7 +21,7 @@ const ButtonWithLoader: FC<Props> = ({ style, isLoading, ...rest }) => {
     <Button
       style={[
         {
-          minWidth: 160,
+          minWidth: 104,
           ...spacings.mlSm
         },
         isLoading ? spacings.pr0 : {},

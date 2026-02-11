@@ -123,7 +123,7 @@ const SendToken: FC<Props> = ({
               bottomSheetTitle={t('Send token')}
               searchPlaceholder={t('Token name or address...')}
               emptyListPlaceholderText={t('No tokens found.')}
-              containerStyle={{ ...flexbox.flex1, ...spacings.mb0 }}
+              containerStyle={{ ...flexbox.flex1, ...spacings.mb0, ...spacings.mrMd }}
               selectStyle={spacings.phTy}
               mode="bottomSheet"
             />

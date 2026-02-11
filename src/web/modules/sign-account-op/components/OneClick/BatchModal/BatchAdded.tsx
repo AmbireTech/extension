@@ -1,20 +1,19 @@
-import React, { FC, useMemo, useRef } from 'react'
+import React, { FC } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
+import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
 import BatchIcon from '@common/assets/svg/BatchIcon'
 import BatchIconAnimated from '@common/components/BatchIconAnimated'
 import Button from '@common/components/Button'
+import FooterGlassView from '@common/components/FooterGlassView'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
-import useWindowSize from '@common/hooks/useWindowSize'
 import Header from '@common/modules/header/components/Header'
-import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
+import spacings, { SPACING_MD } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
-import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
-import { getTabLayoutPadding } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
+import LayoutWrapper from '@web/components/LayoutWrapper'
 
 type Props = {
   title: string
@@ -34,101 +33,81 @@ const BatchAdded: FC<Props> = ({
   onSecondaryButtonPress
 }) => {
   const { t } = useTranslation()
-  const { theme, themeType } = useTheme()
-  const { maxWidthSize } = useWindowSize()
-  const paddingHorizontalStyle = useMemo(() => getTabLayoutPadding(maxWidthSize), [maxWidthSize])
-  const scrollViewRef: any = useRef(null)
+  const { theme } = useTheme()
 
   return (
-    <TabLayoutContainer
-      backgroundColor={theme.primaryBackground}
-      header={<Header />}
-      withHorizontalPadding={false}
-      footer={null}
-      style={{ ...flexbox.alignEnd, ...spacings.pb }}
-    >
-      <TabLayoutWrapperMainContent
-        contentContainerStyle={{
-          ...spacings.pv0,
-          ...paddingHorizontalStyle,
-          ...flexbox.flex1
-        }}
-        wrapperRef={scrollViewRef}
-        withScroll={false}
+    <LayoutWrapper>
+      <Header />
+      <View
+        style={[spacings.phSm, flexbox.flex1, flexbox.alignCenter, spacings.ptMd, spacings.pbSm]}
       >
+        <Text fontSize={20} weight="medium" style={[spacings.mbMd, text.center]}>
+          {title}
+        </Text>
+        <BatchIconAnimated />
+        <Text fontSize={20} weight="medium" style={[spacings.mbSm, spacings.mtLg, text.center]}>
+          {t('Successfully added to batch!')}
+        </Text>
+        <Text
+          weight="medium"
+          appearance="secondaryText"
+          style={[text.center, { marginBottom: SPACING_MD * 2 }]}
+        >
+          {t('You are saving on gas fees compared to sending\nindividually.')}
+        </Text>
         <View
           style={[
-            flexbox.flex1,
+            flexbox.directionRow,
             flexbox.alignCenter,
-            flexbox.justifyCenter,
-            spacings.pt2Xl,
-            spacings.pbXl,
-            { alignSelf: 'center' }
+            spacings.plSm,
+            spacings.prTy,
+            spacings.mb,
+            spacings.pvTy,
+            {
+              borderRadius: 64,
+              backgroundColor: theme.primaryAccent100
+            }
           ]}
         >
-          <BatchIconAnimated />
-          <Text fontSize={20} weight="medium" style={[spacings.mbTy, spacings.mtLg, text.center]}>
-            {t('Successfully added to batch!')}
+          <BatchIcon width={24} height={24} color={theme.primaryAccent300} />
+          <Text style={[spacings.mlSm]} color={theme.primaryAccent300}>
+            {t('{{ callsCount }} transactions in batch', { callsCount })}
           </Text>
-          <Text weight="medium" appearance="secondaryText" style={text.center}>
-            {t('You are saving on gas fees compared\nto sending individually.')}
-          </Text>
+        </View>
+        <Text fontSize={12} weight="medium" appearance="tertiaryText" style={text.center}>
+          {t('You can add more transactions or\nmanage this batch in the dashboard.')}
+        </Text>
 
-          <View style={[flexbox.alignCenter, flexbox.justifyCenter, spacings.mt2Xl]}>
-            <View
-              style={[
-                flexbox.directionRow,
-                flexbox.alignCenter,
-                spacings.ph,
-                spacings.pvTy,
-                {
-                  borderRadius: 20,
-                  backgroundColor: themeType === THEME_TYPES.DARK ? '#2e2a3b' : '#6000ff14'
-                }
-              ]}
+        <FooterGlassView
+          borderRadius={28}
+          innerContainerStyle={{ ...spacings.phSm, ...spacings.pvSm }}
+        >
+          <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifySpaceBetween]}>
+            <Button
+              onPress={onSecondaryButtonPress}
+              hasBottomSpacing={false}
+              type="secondary"
+              text={secondaryButtonText}
+              textStyle={spacings.mlMi}
+              testID="add-more-button"
+              size="smaller"
+              childrenPosition="left"
+              style={spacings.mrLg}
             >
-              <BatchIcon width={16} height={16} color={theme.linkText} />
-              <Text fontSize={16} style={[spacings.mlSm]} color={theme.linkText}>
-                {t('{{ callsCount }} transactions in batch', { callsCount })}
-              </Text>
-            </View>
-            <Text
-              fontSize={12}
-              color={themeType === THEME_TYPES.DARK ? '#ffffff51' : '#767dad'}
-              weight="medium"
-              appearance="secondaryText"
-              style={[text.center, spacings.mtTy]}
-            >
-              {t('You can add more transactions or\nmanage this batch in the dashboard.')}
-            </Text>
+              <AddCircularIcon width={24} height={24} color={theme.primaryText} />
+            </Button>
+            <Button
+              onPress={onPrimaryButtonPress}
+              hasBottomSpacing={false}
+              textStyle={spacings.phTy}
+              text={primaryButtonText}
+              size="smaller"
+              testID="go-dashboard-button"
+            />
           </View>
-        </View>
-        <View
-          style={{
-            height: 1,
-            backgroundColor: theme.secondaryBorder,
-            ...spacings.mvLg
-          }}
-        />
-        <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifySpaceBetween]}>
-          <Button
-            onPress={onSecondaryButtonPress}
-            hasBottomSpacing={false}
-            type="secondary"
-            text={secondaryButtonText}
-            textStyle={spacings.phTy}
-            testID="add-more-button"
-          />
-          <Button
-            onPress={onPrimaryButtonPress}
-            hasBottomSpacing={false}
-            textStyle={spacings.phTy}
-            text={primaryButtonText}
-            testID="go-dashboard-button"
-          />
-        </View>
-      </TabLayoutWrapperMainContent>
-    </TabLayoutContainer>
+        </FooterGlassView>
+      </View>
+    </LayoutWrapper>
   )
 }
 
