@@ -14,6 +14,7 @@ import SwapAndBridgeIcon from '@common/assets/svg/SwapAndBridgeIcon'
 import TopUpIcon from '@common/assets/svg/TopUpIcon'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
+import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
@@ -27,7 +28,6 @@ import storage from '@web/extension-services/background/webapi/storage'
 import { createTab } from '@web/extension-services/background/webapi/tab'
 import useHasGasTank from '@web/hooks/useHasGasTank'
 import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControllerState'
 import { getTokenId } from '@web/utils/token'
@@ -56,7 +56,9 @@ const TokenDetails = ({
   const { account } = useSelectedAccountControllerState()
   const { supportedChainIds } = useSwapAndBridgeControllerState()
   const { dispatch } = useControllersMiddleware()
-  const { networks } = useNetworksControllerState()
+  const {
+    state: { networks }
+  } = useController('NetworksController')
   const [coinGeckoTokenSlug, setCoinGeckoTokenSlug] = useState('')
   const [isTokenInfoLoading, setIsTokenInfoLoading] = useState(false)
   const [doNotDisplayHideTokenModal, setDoNotDisplayHideTokenModal] = useState(false)

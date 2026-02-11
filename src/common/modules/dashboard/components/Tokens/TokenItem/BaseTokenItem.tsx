@@ -13,13 +13,13 @@ import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
 import { useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
 import spacings, { SPACING_2XL, SPACING_TY } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexboxStyles from '@common/styles/utils/flexbox'
 import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import { getTokenId } from '@web/utils/token'
 
@@ -51,7 +51,10 @@ const BaseTokenItem = ({
   wrapperTestID
 }: Props) => {
   const { portfolio } = useSelectedAccountControllerState()
-  const { networks } = useNetworksControllerState()
+
+  const {
+    state: { networks }
+  } = useController('NetworksController')
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
 

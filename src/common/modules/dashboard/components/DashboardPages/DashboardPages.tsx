@@ -4,12 +4,12 @@ import { useTranslation } from 'react-i18next'
 import { Animated, NativeScrollEvent, NativeSyntheticEvent, View } from 'react-native'
 import { useSearchParams } from 'react-router-dom'
 
+import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import usePrevious from '@common/hooks/usePrevious'
 import useRoute from '@common/hooks/useRoute'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import { getUiType } from '@web/utils/uiType'
 
@@ -33,7 +33,10 @@ const DashboardPages = ({ onScroll, isSearchHidden, animatedOverviewHeight }: Pr
   const [sessionId] = useState(`dashboard-${nanoid()}`)
   const [, setSearchParams] = useSearchParams()
   const { dashboardNetworkFilter } = useSelectedAccountControllerState()
-  const { networks } = useNetworksControllerState()
+
+  const {
+    state: { networks }
+  } = useController('NetworksController')
   const { dispatch } = useControllersMiddleware()
 
   const [openTab, setOpenTab] = useState(() => {

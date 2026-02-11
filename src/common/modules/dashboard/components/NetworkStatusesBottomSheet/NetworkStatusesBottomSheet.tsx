@@ -6,10 +6,10 @@ import { useModalize } from 'react-native-modalize'
 import { PortfolioNetworkResult } from '@ambire-common/libs/portfolio/interfaces'
 import BottomSheet from '@common/components/BottomSheet'
 import Text from '@common/components/Text'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 
 import NetworkStatusRow from './NetworkStatusRow'
@@ -27,7 +27,9 @@ interface Props {
  */
 const NetworkStatusesBottomSheet = ({ sheetRef, closeBottomSheet }: Props) => {
   const { t } = useTranslation()
-  const { networks } = useNetworksControllerState()
+  const {
+    state: { networks }
+  } = useController('NetworksController')
   const { portfolio } = useSelectedAccountControllerState()
   const { theme } = useTheme()
 
