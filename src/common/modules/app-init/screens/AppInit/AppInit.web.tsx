@@ -30,7 +30,6 @@ import { BannerControllerStateProvider } from '@web/contexts/bannerControllerSta
 import { ContractNamesControllerStateProvider } from '@web/contexts/contractNamesControllerStateContext'
 import { ControllersMiddlewareProvider } from '@web/contexts/controllersMiddlewareContext'
 import { ControllersStateLoadedProvider } from '@web/contexts/controllersStateLoadedContext'
-import { DomainsControllerStateProvider } from '@web/contexts/domainsControllerStateContext'
 import { EmailVaultControllerStateProvider } from '@web/contexts/emailVaultControllerStateContext'
 import { ExtensionUpdateControllerStateProvider } from '@web/contexts/extensionUpdateControllerStateContext'
 import { FeatureFlagsControllerStateProvider } from '@web/contexts/featureFlagsControllerStateContext'
@@ -81,7 +80,6 @@ const CONTROLLER_STATE_PROVIDERS: ProviderComponent[] = [
   BannerControllerStateProvider,
   EmailVaultControllerStateProvider,
   PhishingControllerStateProvider,
-  DomainsControllerStateProvider,
   ContractNamesControllerStateProvider,
   AddressBookControllerStateProvider,
   SwapAndBridgeControllerStateProvider,
