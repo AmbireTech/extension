@@ -37,6 +37,7 @@ const RewardsButton = () => {
   return (
     <OverviewButton
       text={totalFormatted}
+      isLoading={!portfolio.isReadyToVisualize}
       renderIcon={() => <RewardsCircularIcon width={14} height={14} />}
       onPress={() => navigate(WEB_ROUTES.rewards)}
     />
