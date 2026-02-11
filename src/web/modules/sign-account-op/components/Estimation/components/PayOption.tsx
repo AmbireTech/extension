@@ -12,12 +12,11 @@ import Avatar from '@common/components/Avatar'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import useSignAccountOpControllerState from '@web/hooks/useSignAccountOpControllerState'
 
@@ -40,7 +39,7 @@ const PayOption = ({
   const { styles, theme, themeType } = useTheme(getStyles)
   const { accounts } = useAccountsControllerState()
   const { account } = useSelectedAccountControllerState()
-  const { networks } = useNetworksControllerState()
+  const { networks } = useController('NetworksController').state
   const signAccountOpState = useSignAccountOpControllerState()
 
   const iconSize = 24

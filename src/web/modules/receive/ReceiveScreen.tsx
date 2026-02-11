@@ -13,6 +13,7 @@ import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import NetworkIcon from '@common/components/NetworkIcon'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
+import useController from '@common/hooks/useController'
 import useReverseLookup from '@common/hooks/useReverseLookup'
 import useTheme from '@common/hooks/useTheme'
 import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
@@ -21,7 +22,6 @@ import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 
 import getStyles from './styles'
@@ -29,7 +29,7 @@ import getStyles from './styles'
 const ReceiveScreen: FC = () => {
   const { account } = useSelectedAccountControllerState()
   const { isLoading: isDomainResolving, ens } = useReverseLookup({ address: account?.addr || '' })
-  const { networks } = useNetworksControllerState()
+  const { networks } = useController('NetworksController').state
   const { keys } = useKeystoreControllerState()
   const { t } = useTranslation()
   const { styles, themeType, theme } = useTheme(getStyles)

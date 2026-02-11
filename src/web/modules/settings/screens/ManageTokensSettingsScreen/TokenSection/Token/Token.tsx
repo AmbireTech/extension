@@ -9,6 +9,7 @@ import Dropdown from '@common/components/Dropdown'
 import NetworkIcon from '@common/components/NetworkIcon'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
+import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
@@ -16,7 +17,6 @@ import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@web/extension-services/background/webapi/tab'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import usePortfolioControllerState from '@web/hooks/usePortfolioControllerState/usePortfolioControllerState'
 
 type Props = {
@@ -35,7 +35,7 @@ const Token: FC<Props> = ({
   const { tokenPreferences } = usePortfolioControllerState()
   const { theme } = useTheme()
   const { dispatch } = useControllersMiddleware()
-  const { networks } = useNetworksControllerState()
+  const { networks } = useController('NetworksController').state
   // flags.isHidden is updated after the portfolio is updated
   // so we use tokenPreferences to get the value faster
   const isHidden = !!tokenPreferences?.find(

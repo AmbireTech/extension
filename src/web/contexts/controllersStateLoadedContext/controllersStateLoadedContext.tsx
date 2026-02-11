@@ -19,7 +19,6 @@ import useFeatureFlagsControllerState from '@web/hooks/useFeatureFlagsController
 import useInviteControllerState from '@web/hooks/useInviteControllerState'
 import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 import useMainControllerState from '@web/hooks/useMainControllerState/useMainControllerState'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import usePhishingControllerState from '@web/hooks/usePhishingControllerState'
 import usePortfolioControllerState from '@web/hooks/usePortfolioControllerState/usePortfolioControllerState'
 import useProvidersControllerState from '@web/hooks/useProvidersControllerState'
@@ -73,7 +72,6 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
   const MainController = useMainControllerState()
   const StorageController = useStorageControllerState()
   const UiController = useUiControllerState()
-  const NetworksController = useNetworksControllerState()
   const ProvidersController = useProvidersControllerState().state
   const AccountsController = useAccountsControllerState()
   const SelectedAccountController = useSelectedAccountControllerState()
@@ -100,7 +98,6 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
       MainController,
       StorageController,
       UiController,
-      NetworksController,
       ProvidersController,
       AccountsController,
       SelectedAccountController,
@@ -126,7 +123,6 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
       MainController,
       StorageController,
       UiController,
-      NetworksController,
       ProvidersController,
       AccountsController,
       SelectedAccountController,

@@ -10,13 +10,13 @@ import HumanizedVisualization from '@common/components/HumanizedVisualization'
 import Label from '@common/components/Label'
 import NetworkBadge from '@common/components/NetworkBadge'
 import Text from '@common/components/Text'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import spacings, { SPACING_LG, SPACING_MD, SPACING_TY } from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import { TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import useResponsiveActionWindow from '@web/hooks/useResponsiveActionWindow'
 import useSignMessageControllerState from '@web/hooks/useSignMessageControllerState'
 import HardwareWalletSigningModal from '@web/modules/hardware-wallet/components/HardwareWalletSigningModal'
@@ -48,7 +48,7 @@ const Main = ({
   const { styles, theme, themeType } = useTheme(getStyles)
   const { responsiveSizeMultiplier } = useResponsiveActionWindow()
   const { minHeightSize } = useWindowSize()
-  const { networks } = useNetworksControllerState()
+  const { networks } = useController('NetworksController').state
   const network = useMemo(
     () =>
       networks.find((n) => {

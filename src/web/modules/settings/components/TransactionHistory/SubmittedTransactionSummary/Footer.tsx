@@ -14,12 +14,12 @@ import LinkIcon from '@common/assets/svg/LinkIcon'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { createTab } from '@web/extension-services/background/webapi/tab'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import { sizeMultiplier } from '@web/modules/sign-account-op/components/TransactionSummary'
 
@@ -49,7 +49,7 @@ const Footer: FC<Props> = ({
 }) => {
   const { styles } = useTheme(getStyles)
   const { addToast } = useToast()
-  const { networks } = useNetworksControllerState()
+  const { networks } = useController('NetworksController').state
   const { account: selectedAccount } = useSelectedAccountControllerState()
   const { t } = useTranslation()
   const textSize = 14 * sizeMultiplier[size]

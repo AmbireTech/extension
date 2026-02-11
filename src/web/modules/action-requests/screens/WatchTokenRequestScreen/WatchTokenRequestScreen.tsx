@@ -14,6 +14,7 @@ import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
 import { useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
@@ -21,7 +22,6 @@ import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Hea
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import usePortfolioControllerState from '@web/hooks/usePortfolioControllerState/usePortfolioControllerState'
 import useProvidersControllerState from '@web/hooks/useProvidersControllerState'
 import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
@@ -53,7 +53,7 @@ const WatchTokenRequestScreen = () => {
   const { currentUserRequest } = useRequestsControllerState()
   const { temporaryTokens, validTokens, customTokens } = usePortfolioControllerState()
   const { portfolio: selectedAccountPortfolio } = useSelectedAccountControllerState()
-  const { networks } = useNetworksControllerState()
+  const { networks } = useController('NetworksController').state
   const { state } = useProvidersControllerState()
 
   const userRequest = useMemo(

@@ -2,8 +2,8 @@ import Fuse from 'fuse.js'
 import React, { useMemo } from 'react'
 import { View } from 'react-native'
 
+import useController from '@common/hooks/useController'
 import spacings from '@common/styles/spacings'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 
 import NetworkComponent from './Network'
@@ -19,7 +19,7 @@ const Networks = ({
   search: string
   onPress: (chainId: bigint | string) => void
 }) => {
-  const { networks } = useNetworksControllerState()
+  const { networks } = useController('NetworksController').state
   const { account, portfolio } = useSelectedAccountControllerState()
 
   // Use this map to avoid searching the network name for every network using find

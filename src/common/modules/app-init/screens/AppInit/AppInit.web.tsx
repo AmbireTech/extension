@@ -37,7 +37,6 @@ import { FeatureFlagsControllerStateProvider } from '@web/contexts/featureFlagsC
 import { InviteControllerStateProvider } from '@web/contexts/inviteControllerStateContext'
 import { KeystoreControllerStateProvider } from '@web/contexts/keystoreControllerStateContext'
 import { MainControllerStateProvider } from '@web/contexts/mainControllerStateContext'
-import { NetworksControllerStateProvider } from '@web/contexts/networksControllerStateContext'
 import { PhishingControllerStateProvider } from '@web/contexts/phishingControllerStateContext'
 import { PortfolioControllerStateProvider } from '@web/contexts/portfolioControllerStateContext'
 import { ProvidersControllerStateProvider } from '@web/contexts/providersControllerStateContext'
@@ -64,7 +63,6 @@ const composeProviders = (
   providers.reduceRight<React.ReactNode>((acc, Provider) => <Provider>{acc}</Provider>, children)
 
 const CONTROLLER_STATE_PROVIDERS: ProviderComponent[] = [
-  NetworksControllerStateProvider,
   AccountsControllerStateProvider,
   SelectedAccountControllerStateProvider,
   ProvidersControllerStateProvider,
