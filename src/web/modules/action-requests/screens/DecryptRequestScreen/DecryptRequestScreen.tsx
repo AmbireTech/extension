@@ -153,7 +153,7 @@ const DecryptRequestScreen = () => {
             resolveNode={actionFooterResolveNode}
           />
         }
-        backgroundColor={theme.quinaryBackground}
+        backgroundColor={theme.primaryBackground}
       >
         <TabLayoutWrapperMainContent>
           <RequestingDappInfo
@@ -190,7 +190,7 @@ const DecryptRequestScreen = () => {
                             spacings.mb
                           ]}
                         >
-                          <Text weight="semiBold" appearance="info2Text" style={{ lineHeight: 12 }}>
+                          <Text weight="semiBold" appearance="infoText" style={{ lineHeight: 12 }}>
                             {t('Encrypted message')}
                           </Text>
                           <Button
@@ -198,13 +198,13 @@ const DecryptRequestScreen = () => {
                             onPress={handleDecryptForPreview}
                             type="outline"
                             hasBottomSpacing={false}
-                            accentColor={theme.info3Button}
+                            accentColor={theme.infoDecorative}
                             disabled={isDisabled}
                             size="small"
                           />
                         </View>
 
-                        <Text appearance="info2Text" selectable>
+                        <Text appearance="infoText" selectable>
                           {encryptedMessage}
                         </Text>
                       </>
@@ -212,10 +212,7 @@ const DecryptRequestScreen = () => {
                   </View>
                 }
                 style={{
-                  backgroundColor:
-                    themeType === THEME_TYPES.DARK
-                      ? theme.tertiaryBackground
-                      : theme.primaryBackground
+                  backgroundColor: theme.secondaryBackground
                 }}
               />
             )}

@@ -20,7 +20,7 @@ const StatusBadge: FC<Props> = ({ status, textSize }) => {
       return <Badge type="success" weight="medium" text={t('Confirmed')} withRightSpacing />
 
     case AccountOpStatus.BroadcastedButNotConfirmed:
-      return <Badge type="info2" weight="medium" text={t('Pending')} withRightSpacing />
+      return <Badge type="info" weight="medium" text={t('Pending')} withRightSpacing />
 
     case AccountOpStatus.BroadcastButStuck:
       return (

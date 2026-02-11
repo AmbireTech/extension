@@ -19,7 +19,7 @@ const getStyles = (theme: ThemeProps) =>
       width: 30,
       height: 30,
       borderRadius: 15,
-      backgroundColor: theme.primaryLight80,
+      backgroundColor: theme.primaryAccent,
       alignItems: 'center',
       justifyContent: 'center'
     },

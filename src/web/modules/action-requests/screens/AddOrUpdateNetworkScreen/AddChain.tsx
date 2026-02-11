@@ -89,7 +89,7 @@ const AddChain = ({
           }
         />
       }
-      backgroundColor={theme.quinaryBackground}
+      backgroundColor={theme.secondaryBackground}
     >
       <TabLayoutWrapperMainContent
         style={{

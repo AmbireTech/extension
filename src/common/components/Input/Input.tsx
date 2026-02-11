@@ -111,12 +111,8 @@ const Input = ({
 
   const borderWrapperStyles = [
     styles.borderWrapper,
-    isFocused && {
-      borderColor:
-        themeType === THEME_TYPES.DARK ? `${theme.linkText as string}35` : theme.infoBackground
-    },
-    isValid && { borderColor: theme.successBackground },
-    !!error && { borderColor: theme.errorBackground },
+    isValid && { borderColor: theme.successDecorative },
+    !!error && { borderColor: theme.errorDecorative },
     borderless && { borderColor: 'transparent', borderWidth: 0 },
     borderWrapperStyle
   ]
@@ -124,15 +120,9 @@ const Input = ({
   const inputWrapperStyles: ViewStyle[] = [
     styles.inputWrapper,
     {
-      backgroundColor:
-        themeType === THEME_TYPES.DARK ? theme.primaryBackground : theme.secondaryBackground,
-      borderColor: theme.secondaryBorder
+      backgroundColor: theme.tertiaryBackground,
+      borderColor: 'transparent'
     },
-    isFocused
-      ? {
-          borderColor: themeType === THEME_TYPES.DARK ? theme.linkText : theme.primary
-        }
-      : {},
     isValid ? { borderColor: theme.successDecorative } : {},
     error ? { borderColor: theme.errorDecorative } : {},
     info ? { borderColor: theme.warningText } : {},
@@ -165,7 +155,7 @@ const Input = ({
         </Text>
       )}
       <View style={{ zIndex: 10 }}>
-        <View style={borderWrapperStyles} ref={inputBorderWrapperRef}>
+        <View ref={inputBorderWrapperRef}>
           <View style={inputWrapperStyles}>
             {!!leftIcon && <View style={[styles.leftIcon, leftIconStyle]}>{leftIcon()}</View>}
             {/* TextInput doesn't support border styles so we wrap it in a View */}

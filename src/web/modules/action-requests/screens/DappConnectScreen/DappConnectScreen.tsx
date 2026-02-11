@@ -72,12 +72,12 @@ const DappConnectScreen = () => {
   return (
     <TabLayoutContainer
       width="full"
-      backgroundColor={theme.quinaryBackground}
+      backgroundColor={theme.secondaryBackground}
       header={
         <Header
           mode="custom-inner-content"
           withAmbireLogo
-          backgroundColor={theme.quinaryBackground as string}
+          backgroundColor={theme.secondaryBackground as string}
         />
       }
       footer={

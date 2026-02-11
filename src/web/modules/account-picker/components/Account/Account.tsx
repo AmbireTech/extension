@@ -24,7 +24,7 @@ import useToast from '@common/hooks/useToast'
 import useWindowSize from '@common/hooks/useWindowSize'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
-import common from '@common/styles/utils/common'
+import common, { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { setStringAsync } from '@common/utils/clipboard'
 import CopyIcon from '@web/assets/svg/CopyIcon'
@@ -123,16 +123,16 @@ const Account = ({
         common.hidden,
         {
           borderWidth: 1,
-          borderColor: theme.quaternaryBackground
+          borderColor: theme.secondaryBackground
         },
         ((hovered && !isDisabled) || isSelected) && {
-          borderColor: themeType === THEME_TYPES.DARK ? theme.primaryLight80 : theme.primary20
+          borderColor: hexToRgba(theme.primaryAccent, 0.2)
         }
       ]}
       onPress={isDisabled ? undefined : toggleSelectedState}
       testID={`add-account-${account.addr}`}
     >
-      <View style={[styles.container, { backgroundColor: theme.quaternaryBackground }]}>
+      <View style={[styles.container, { backgroundColor: theme.secondaryBackground }]}>
         <Toggle
           isOn={isSelected}
           onToggle={toggleSelectedState}

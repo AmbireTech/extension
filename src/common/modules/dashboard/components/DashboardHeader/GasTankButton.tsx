@@ -89,7 +89,7 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
           removeTankBtnStyle,
           !totalBalanceGasTankDetails.balanceFormatted && {
             borderWidth: 1,
-            borderColor: theme.primaryLight
+            borderColor: theme.primaryAccent
           },
           // @ts-ignore react-native-web supports `cursor`, but it's missing from React Native StyleProp<ViewStyle> types
           doesHaveTooltip && { cursor: 'default' }

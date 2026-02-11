@@ -23,8 +23,6 @@ type ButtonTypes =
   | 'error'
   | 'warning'
   | 'info'
-  | 'info2'
-  | 'info3'
   | 'success'
   | 'gray'
 
@@ -68,7 +66,7 @@ const ButtonInnerContainer = ({
   children?: React.ReactNode
   innerContainerStyle?: (hovered: boolean) => ViewStyle
 } & PressableProps) => {
-  const { themeType, theme } = useTheme()
+  const { theme } = useTheme()
 
   const buttonInnerContainerColors = useMemo(
     () => ({
@@ -76,22 +74,13 @@ const ButtonInnerContainer = ({
       secondary: [],
       danger: [],
       outline: [],
-      ghost:
-        themeType === THEME_TYPES.DARK
-          ? [
-              {
-                property: 'backgroundColor' as any,
-                from: `${theme.primary as string}00`,
-                to: theme.primary20
-              }
-            ]
-          : [
-              {
-                property: 'backgroundColor' as any,
-                from: `${theme.primary as string}00`,
-                to: theme.primary20
-              }
-            ],
+      ghost: [
+        {
+          property: 'backgroundColor',
+          from: `${String(theme.neutral400)}00`,
+          to: theme.neutral400
+        }
+      ],
       ghost2: [],
       error: [],
       warning: [],
@@ -101,7 +90,7 @@ const ButtonInnerContainer = ({
       gray: [],
       info3: []
     }),
-    [themeType, theme]
+    [theme]
   )
 
   const [buttonInnerContainerBind, buttonInnerContainerAnimatedStyle, isHovered] = useMultiHover({
@@ -182,32 +171,21 @@ const Button = ({
       primary: [
         {
           property: 'backgroundColor',
-          from: theme.primary,
-          to: theme.primaryLight
-        },
-        ...(themeType === THEME_TYPES.DARK
-          ? [
-              {
-                property: 'borderWidth',
-                from: 0,
-                to: 1
-              },
-              {
-                property: 'borderColor',
-                from: theme.primary,
-                to: theme.primary
-              }
-            ]
-          : [])
+          from: theme.primaryAccent,
+          to: theme.primaryAccentHovered
+        }
       ],
       secondary: [
         {
           property: 'backgroundColor',
           from:
             themeType === THEME_TYPES.DARK
-              ? `${String(theme.primary)}00`
+              ? `${String(theme.primaryAccent)}00`
               : `${String(theme.infoBackground)}00`,
-          to: themeType === THEME_TYPES.DARK ? `${String(theme.primary)}20` : theme.infoBackground
+          to:
+            themeType === THEME_TYPES.DARK
+              ? `${String(theme.primaryAccent)}20`
+              : theme.infoBackground
         }
       ],
       danger: [
@@ -223,34 +201,12 @@ const Button = ({
       error: [OPACITY_ANIMATION],
       warning: [OPACITY_ANIMATION],
       info: [OPACITY_ANIMATION],
-      info2: [OPACITY_ANIMATION],
-      info3: [
-        {
-          property: 'backgroundColor',
-          from: `${String(theme.info3Button)}`,
-          to: theme.info3ButtonHover
-        }
-      ],
       success: [OPACITY_ANIMATION],
       gray: [
         {
           property: 'backgroundColor',
-          from:
-            themeType === THEME_TYPES.DARK ? theme.tertiaryBackground : theme.quaternaryBackground,
-          to:
-            themeType === THEME_TYPES.DARK
-              ? theme.secondaryBackground
-              : `${String(theme.primaryLight)}10`
-        },
-        {
-          property: 'borderWidth',
-          from: 0,
-          to: 1
-        },
-        {
-          property: 'borderColor',
-          from: theme.quaternaryBackground,
-          to: themeType === THEME_TYPES.DARK ? `${theme.linkText as string}80` : theme.primaryLight
+          from: `${String(theme.neutral400)}00`,
+          to: theme.neutral400
         }
       ]
     }),
@@ -281,20 +237,12 @@ const Button = ({
       backgroundColor: theme.infoText,
       borderWidth: 0
     },
-    info2: {
-      backgroundColor: theme.info2Text,
-      borderWidth: 0
-    },
-    info3: {
-      backgroundColor: theme.info3Button,
-      borderWidth: 0
-    },
     success: {
       backgroundColor: theme.successText,
       borderWidth: 0
     },
     gray: {
-      backgroundColor: theme.quaternaryBackground,
+      backgroundColor: theme.neutral400,
       borderWidth: 0
     }
   }
@@ -314,7 +262,7 @@ const Button = ({
       primary: [
         {
           property: 'color',
-          from: themeType === THEME_TYPES.DARK ? theme.primaryBackground : '#fff',
+          from: '#fff',
           to: '#fff'
         }
       ],
@@ -342,15 +290,15 @@ const Button = ({
       ghost: [
         {
           property: 'color',
-          from: theme.primary,
-          to: theme.primary
+          from: theme.primaryText,
+          to: theme.primaryText
         }
       ],
       ghost2: [
         {
           property: 'color',
-          from: theme.iconPrimary,
-          to: theme.primaryBackgroundInverted
+          from: theme.secondaryText,
+          to: theme.primaryText
         }
       ],
       error: [
@@ -368,20 +316,6 @@ const Button = ({
         }
       ],
       info: [
-        {
-          property: 'color',
-          from: theme.primaryBackground,
-          to: theme.primaryBackground
-        }
-      ],
-      info2: [
-        {
-          property: 'color',
-          from: theme.primaryBackground,
-          to: theme.primaryBackground
-        }
-      ],
-      info3: [
         {
           property: 'color',
           from: theme.primaryBackground,
@@ -447,17 +381,19 @@ const Button = ({
     <AnimatedPressable
       testID={testID}
       disabled={disabled}
-      style={[
-        containerStylesSizes[size],
-        styles.buttonContainer,
-        containerStyles[type],
-        style as ViewStyle, // TODO: too crazy to properly type, so temporarily cast
-        !!accentColor && { borderColor: accentColor },
-        !hasBottomSpacing && spacings.mb0,
-        buttonContainerAnimatedStyle,
-        disabled && disabledStyle ? disabledStyle : {},
-        disabled && !disabledStyle ? styles.disabled : {}
-      ]}
+      style={
+        [
+          containerStylesSizes[size],
+          styles.buttonContainer,
+          containerStyles[type],
+          style,
+          !!accentColor && { borderColor: accentColor },
+          !hasBottomSpacing && spacings.mb0,
+          buttonContainerAnimatedStyle,
+          disabled && disabledStyle ? disabledStyle : {},
+          disabled && !disabledStyle ? styles.disabled : {}
+        ] as ViewStyle[]
+      }
       {...rest}
       onHoverIn={(e) => {
         if (buttonTypesWithInnerContainer.includes(type)) return

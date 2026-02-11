@@ -9,6 +9,7 @@ import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
+import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
 import getStyles from './styles'
@@ -65,7 +66,7 @@ const MaxAmount = ({
         <Pressable
           style={({ hovered }: any) => [
             styles.maxButton,
-            hovered && { backgroundColor: theme.primary20 }
+            hovered && { backgroundColor: hexToRgba(theme.primaryAccent, 0.2) }
           ]}
           onPress={onMaxButtonPress}
           disabled={disabled}

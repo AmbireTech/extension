@@ -8,7 +8,6 @@ import flexbox from '@common/styles/utils/flexbox'
 interface Style {
   container: ViewStyle
   infoBadge: ViewStyle
-  info2Badge: ViewStyle
   defaultBadge: ViewStyle
   successBadge: ViewStyle
   warningBadge: ViewStyle
@@ -35,11 +34,6 @@ const getStyles = (theme: ThemeProps) =>
       ...label,
       borderColor: theme.infoDecorative,
       backgroundColor: theme.infoBackground
-    },
-    info2Badge: {
-      ...label,
-      borderColor: theme.info2Decorative,
-      backgroundColor: theme.info2Background
     },
     defaultBadge: {
       ...label,

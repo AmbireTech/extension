@@ -146,8 +146,8 @@ const AccountPickerScreen = () => {
                 isLoading
                   ? t('Importing...')
                   : !accountPickerState.selectedAccounts.length
-                  ? t('Continue')
-                  : t('Import accounts')
+                    ? t('Continue')
+                    : t('Import accounts')
               }
             >
               <RightArrowIcon style={spacings.ml} />

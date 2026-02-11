@@ -380,8 +380,10 @@ const AccountPersonalizeScreen = () => {
                         handleSave()
                         goToNextRoute(WEB_ROUTES.accountPicker)
                       }}
-                      textStyle={{ fontSize: 14, color: theme.primary, letterSpacing: -0.1 }}
-                      style={{ ...spacings.ph0, height: 22 }}
+                      style={{
+                        ...spacings.phMi
+                      }}
+                      textStyle={{ fontSize: 14, letterSpacing: -0.1 }}
                       hasBottomSpacing={false}
                       childrenPosition="left"
                     >
@@ -389,7 +391,7 @@ const AccountPersonalizeScreen = () => {
                         fontSize={24}
                         weight="light"
                         style={spacings.mrTy}
-                        color={theme.primary}
+                        color={theme.primaryText}
                       >
                         +
                       </Text>

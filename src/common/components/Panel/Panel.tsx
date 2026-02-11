@@ -42,7 +42,7 @@ const PanelBackButton = ({ onPress, style }: { onPress: () => void; style?: View
         <View
           style={[
             styles.backBtnWrapper,
-            { backgroundColor: hovered ? theme.quaternaryBackground : theme.quinaryBackground }
+            { backgroundColor: hovered ? theme.quaternaryBackground : theme.secondaryBackground }
           ]}
         >
           <LeftArrowIcon color={hovered ? theme.primaryBackgroundInverted : theme.iconPrimary} />

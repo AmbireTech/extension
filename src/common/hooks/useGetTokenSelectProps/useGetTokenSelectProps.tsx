@@ -208,8 +208,8 @@ const useGetTokenSelectProps = ({
                   amount={pendingToBeConfirmed}
                   amountFormatted={pendingToBeConfirmedFormatted}
                   label={t('confirming')}
-                  backgroundColor={theme.info2Background}
-                  textColor={theme.info2Text}
+                  backgroundColor={theme.infoBackground}
+                  textColor={theme.infoText}
                   Icon={PendingToBeConfirmedIcon}
                 />
               )}

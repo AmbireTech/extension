@@ -9,7 +9,7 @@ const BatchIcon: FC<SvgProps> = ({ width = 16, height = 16, style, color, ...res
     <Svg viewBox="0 0 16.944 17.555" width={width} height={height} style={style} {...rest}>
       <G
         fill="none"
-        stroke={color || theme.iconPrimary2}
+        stroke={color || theme.primaryAccent}
         strokeLinecap="round"
         strokeLinejoin="round"
         strokeWidth="1.5"

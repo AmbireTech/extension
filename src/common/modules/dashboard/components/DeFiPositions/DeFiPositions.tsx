@@ -198,7 +198,7 @@ const DeFiPositions: FC<Props> = ({
               <Text
                 onPress={() => navigate(ROUTES.optOuts)}
                 fontSize={16}
-                color={theme.info2Text}
+                color={theme.infoText}
                 style={{ textDecorationLine: 'underline' }}
               >
                 {t('You can enable them from settings')}
@@ -221,6 +221,7 @@ const DeFiPositions: FC<Props> = ({
       theme.primaryBackground,
       theme.linkText,
       theme.primary,
+      theme.infoText,
       openTab,
       setOpenTab,
       control,
@@ -229,7 +230,8 @@ const DeFiPositions: FC<Props> = ({
       searchValue,
       dashboardNetworkFilterName,
       t,
-      themeType
+      themeType,
+      navigate
     ]
   )
 

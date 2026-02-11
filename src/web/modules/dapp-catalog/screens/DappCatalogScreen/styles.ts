@@ -28,8 +28,8 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       backgroundColor: theme.secondaryBackground
     },
     filterButtonActive: {
-      backgroundColor: themeType === THEME_TYPES.DARK ? theme.primary : theme.primaryLight,
-      borderColor: themeType === THEME_TYPES.DARK ? theme.primary : theme.primaryLight
+      backgroundColor: theme.primaryAccent,
+      borderColor: theme.primaryAccent
     }
   })
 

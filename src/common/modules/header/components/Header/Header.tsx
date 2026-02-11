@@ -1,5 +1,5 @@
 import React, { ReactNode, useEffect, useMemo, useState } from 'react'
-import { DimensionValue, Image, View, ViewStyle } from 'react-native'
+import { ColorValue, DimensionValue, Image, View, ViewStyle } from 'react-native'
 
 import AmbireLogoHorizontal from '@common/components/AmbireLogoHorizontal'
 import AmbireLogoHorizontalWithOG from '@common/components/AmbireLogoHorizontalWithOG'
@@ -25,7 +25,7 @@ interface Props {
   withOG?: boolean
   image?: string
   children?: any
-  backgroundColor?: string
+  backgroundColor?: string | ColorValue
   forceBack?: boolean
   onGoBackPress?: () => void
   width?: 'sm' | 'md' | 'lg' | 'xl' | 'full'

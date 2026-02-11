@@ -1,5 +1,5 @@
 import React, { FC } from 'react'
-import { View } from 'react-native'
+import { ColorValue, View } from 'react-native'
 
 import { isSmartAccount } from '@ambire-common/libs/account/account'
 import AccountAddress from '@common/components/AccountAddress'
@@ -25,7 +25,7 @@ import getStyles from './styles'
 interface Props {
   withAmbireLogo?: boolean
   withOG?: boolean
-  backgroundColor?: string
+  backgroundColor?: string | ColorValue
 }
 
 // @TODO: Not renamed because this component will no longer exist in the near future

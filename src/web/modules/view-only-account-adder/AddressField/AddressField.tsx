@@ -166,7 +166,7 @@ const AddressField: FC<Props> = ({
                       13
                     )}. If you continue, this address will be linked to that key and managed with full access, not as view-only.`
                   )}
-                  type="info2"
+                  type="info"
                   key={_address}
                 />
               )

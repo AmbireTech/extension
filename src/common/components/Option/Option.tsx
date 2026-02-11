@@ -65,7 +65,7 @@ const Option = ({
         <View style={styles.iconWrapper}>
           <Icon
             color={
-              isHovered && themeType === THEME_TYPES.LIGHT ? theme.iconPrimary2 : theme.iconPrimary
+              isHovered && themeType === THEME_TYPES.LIGHT ? theme.primaryAccent : theme.iconPrimary
             }
             {...iconProps}
           />

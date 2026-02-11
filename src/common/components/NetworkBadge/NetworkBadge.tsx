@@ -61,8 +61,6 @@ const NetworkBadge: FC<Props> = ({
         paddingVertical: 2,
         borderRadius: 50 * responsiveSizeMultiplier,
         backgroundColor: theme.secondaryBackground,
-        borderWidth: 1,
-        borderColor: theme.tertiaryBackground,
         ...style
       }}
     >

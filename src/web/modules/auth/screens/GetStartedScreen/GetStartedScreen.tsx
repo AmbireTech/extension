@@ -107,8 +107,11 @@ const GetStartedScreen = () => {
                 hasBottomSpacing={false}
                 onPress={() => handleAuthButtonPress('view-only')}
                 text={t('Watch an address')}
+                textStyle={{
+                  color: theme.primaryAccent
+                }}
               >
-                <ViewModeIcon color={theme.primary} width={24} style={spacings.mlTy} />
+                <ViewModeIcon color={theme.primaryAccent} width={24} style={spacings.mlTy} />
               </Button>
             </ScrollableWrapper>
           </View>
@@ -117,7 +120,7 @@ const GetStartedScreen = () => {
               <Text
                 onPress={() => navigate(ROUTES.networksConfiguration)}
                 fontSize={12}
-                color={theme.info2Text}
+                color={theme.infoText}
                 style={{ textDecorationLine: 'underline' }}
               >
                 {t('Network Configuration')}

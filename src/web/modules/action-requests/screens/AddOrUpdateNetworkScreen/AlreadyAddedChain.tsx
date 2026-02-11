@@ -55,7 +55,7 @@ const AlreadyAddedChain = ({
           }
         />
       }
-      backgroundColor={theme.quinaryBackground}
+      backgroundColor={theme.secondaryBackground}
     >
       <TabLayoutWrapperMainContent style={spacings.mbLg} withScroll={false}>
         <View style={[flexbox.flex1, flexbox.alignCenter, spacings.mt2Xl]}>

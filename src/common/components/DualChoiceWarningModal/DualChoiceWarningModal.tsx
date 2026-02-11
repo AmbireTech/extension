@@ -13,7 +13,7 @@ import flexbox from '@common/styles/utils/flexbox'
 
 import getStyles from './styles'
 
-type Type = 'error' | 'warning' | 'info3'
+type Type = 'error' | 'warning'
 
 const DEFAULT_TYPE = 'warning'
 
@@ -33,7 +33,7 @@ const TitleAndIcon = ({
   style?: ViewStyle
 }) => {
   const { styles, theme } = useTheme(getStyles)
-  const Icon = type === 'error' ? ErrorIcon : type === 'info3' ? InfoIcon : WarningIcon
+  const Icon = type === 'error' ? ErrorIcon : WarningIcon
 
   return (
     <View style={[styles.titleAndIcon, style]}>
@@ -101,7 +101,7 @@ const DualChoiceWarningModal = ({
         {!!description && <Text text={description} />}
         {children}
       </ContentWrapper>
-      <ButtonWrapper reverse={type === 'info3'}>
+      <ButtonWrapper reverse={false}>
         <Button
           text={primaryButtonText}
           onPress={onPrimaryButtonPress}
