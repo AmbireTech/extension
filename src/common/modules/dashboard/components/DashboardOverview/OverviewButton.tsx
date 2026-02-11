@@ -1,4 +1,5 @@
 import React from 'react'
+import { ViewStyle } from 'react-native'
 
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import SkeletonLoader from '@common/components/SkeletonLoader'
@@ -16,6 +17,7 @@ type Props = {
   disabled?: boolean
   textTestID?: string
   isLoading?: boolean
+  style?: ViewStyle
 }
 
 const OverviewButton = ({
@@ -26,7 +28,8 @@ const OverviewButton = ({
   testID,
   textTestID,
   disabled,
-  isLoading
+  isLoading,
+  style = {}
 }: Props) => {
   const [bindBtnAnim, btnAnimStyle] = useHover({ preset: 'opacityInverted' })
 
@@ -48,7 +51,8 @@ const OverviewButton = ({
         borderRadius: 12,
         borderWidth: 1,
         backgroundColor: '#000000',
-        height: 26
+        height: 26,
+        ...style
       }}
       {...bindBtnAnim}
       testID={testID}

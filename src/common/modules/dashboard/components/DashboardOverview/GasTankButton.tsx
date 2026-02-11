@@ -4,6 +4,7 @@ import { Account } from '@ambire-common/interfaces/account'
 import { SelectedAccountPortfolio } from '@ambire-common/interfaces/selectedAccount'
 import GasTankIcon from '@common/assets/svg/GasTankIcon'
 import { useTranslation } from '@common/config/localization'
+import spacings from '@common/styles/spacings'
 import { getGasTankTokenDetails } from '@common/utils/getGasTankTokenDetails'
 import useHasGasTank from '@web/hooks/useHasGasTank'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
@@ -82,6 +83,7 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
       }
       disabled={disabled}
       isLoading={!portfolio.isReadyToVisualize}
+      style={spacings.mrMi}
     />
   )
 }
