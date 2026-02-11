@@ -94,7 +94,7 @@ const NetworkStatusesBottomSheet = ({ sheetRef, closeBottomSheet }: Props) => {
           }
         ]}
       >
-        <View style={{ flex: 2 }}>
+        <View style={{ flex: 1.75 }}>
           <Text fontSize={12} weight="semiBold" appearance="secondaryText" style={spacings.plTy}>
             {t('Network')}
           </Text>
