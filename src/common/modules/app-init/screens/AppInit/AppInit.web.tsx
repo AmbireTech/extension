@@ -8,7 +8,7 @@ import { BrowserRouter, HashRouter } from 'react-router-dom'
 import ErrorComponent from '@common/components/ErrorBoundary'
 import { GlobalTooltip } from '@common/components/GlobalTooltip'
 import { ErrorBoundary } from '@common/config/analytics/CrashAnalytics.web'
-import { ExtensionControllersMiddlewareProvider } from '@common/contexts/controllersMiddlewareContext/extensionControllersMiddlewareContext'
+import { ControllerStoreProvider } from '@common/contexts/controllerStoreContext'
 import { KeyboardProvider } from '@common/contexts/keyboardContext'
 import { NetInfoProvider } from '@common/contexts/netInfoContext'
 import { ThemeProvider } from '@common/contexts/themeContext'
@@ -27,6 +27,7 @@ import { AddressBookControllerStateProvider } from '@web/contexts/addressBookCon
 import { AutoLockControllerStateProvider } from '@web/contexts/autoLockControllerStateContext'
 import { BannerControllerStateProvider } from '@web/contexts/bannerControllerStateContext/bannerControllerStateContext'
 import { ContractNamesControllerStateProvider } from '@web/contexts/contractNamesControllerStateContext'
+import { ControllersMiddlewareProvider } from '@web/contexts/controllersMiddlewareContext'
 import { ControllersStateLoadedProvider } from '@web/contexts/controllersStateLoadedContext'
 import { DomainsControllerStateProvider } from '@web/contexts/domainsControllerStateContext'
 import { EmailVaultControllerStateProvider } from '@web/contexts/emailVaultControllerStateContext'
@@ -112,21 +113,23 @@ const AppInit = () => {
         <SafeAreaProvider>
           <ToastProvider>
             <ErrorBoundary fallback={errorComponent}>
-              <ExtensionControllersMiddlewareProvider>
-                <MainControllerStateProvider>
-                  <StorageControllerStateProvider>
-                    <UiControllerStateProvider>
-                      <WalletStateControllerProvider>
-                        <ThemeProvider>
-                          <GestureHandler>
-                            {composeProviders(CONTROLLER_STATE_PROVIDERS, appContent)}
-                          </GestureHandler>
-                        </ThemeProvider>
-                      </WalletStateControllerProvider>
-                    </UiControllerStateProvider>
-                  </StorageControllerStateProvider>
-                </MainControllerStateProvider>
-              </ExtensionControllersMiddlewareProvider>
+              <ControllerStoreProvider>
+                <ControllersMiddlewareProvider>
+                  <MainControllerStateProvider>
+                    <StorageControllerStateProvider>
+                      <UiControllerStateProvider>
+                        <WalletStateControllerProvider>
+                          <ThemeProvider>
+                            <GestureHandler>
+                              {composeProviders(CONTROLLER_STATE_PROVIDERS, appContent)}
+                            </GestureHandler>
+                          </ThemeProvider>
+                        </WalletStateControllerProvider>
+                      </UiControllerStateProvider>
+                    </StorageControllerStateProvider>
+                  </MainControllerStateProvider>
+                </ControllersMiddlewareProvider>
+              </ControllerStoreProvider>
             </ErrorBoundary>
           </ToastProvider>
         </SafeAreaProvider>

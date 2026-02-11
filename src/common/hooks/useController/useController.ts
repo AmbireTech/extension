@@ -2,9 +2,10 @@ import { useCallback, useContext, useEffect, useSyncExternalStore } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 
 import { AllControllersMappingType } from '@common/constants/controllersMapping'
-import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext/context'
-import { ControllerHelpersMapping } from '@common/contexts/controllersMiddlewareContext/controllerHelpersStore'
+import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext/controllersMiddlewareContext'
 import { AnyControllerAction } from '@common/contexts/controllersMiddlewareContext/types'
+import { ControllerHelpersMapping } from '@common/contexts/controllerStoreContext/controllerHelpersStore'
+import useControllerStore from '@common/hooks/useControllerStore'
 import eventBus from '@web/extension-services/event/eventBus'
 
 type MethodKeys<T> = {
@@ -67,12 +68,8 @@ export default function useController<K extends keyof AllControllersMappingType>
     throw new Error('useController must be used within ControllersMiddlewareProvider')
   }
 
-  const {
-    controllerStore,
-    controllerHelpersStore,
-    isStoreReady,
-    dispatch: controllersMiddlewareDispatch
-  } = controllersMiddleware
+  const { controllerStore, controllerHelpersStore, isStoreReady } = useControllerStore()
+  const { dispatch: controllersMiddlewareDispatch } = controllersMiddleware
 
   useEffect(() => {
     if (isStoreReady && !Object.keys(controllerStore.getSnapshot(id)).length) {

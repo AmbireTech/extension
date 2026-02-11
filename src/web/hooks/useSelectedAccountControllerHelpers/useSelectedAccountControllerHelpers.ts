@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useSyncExternalStore } from 'react'
 
 import { setExtraContext } from '@common/config/analytics/CrashAnalytics'
-import { ControllerStore } from '@common/contexts/controllersMiddlewareContext/controllerStore'
+import { ControllerStore } from '@common/contexts/controllerStoreContext/controllerStore'
 
 export default function useSelectedAccountControllerHelpers(controllerStore: ControllerStore) {
   const state = useSyncExternalStore(

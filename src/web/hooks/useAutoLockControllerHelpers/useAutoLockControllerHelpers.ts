@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useSyncExternalStore } from 'react'
 import { useIdleTimer } from 'react-idle-timer'
 
-import { ControllerStore } from '@common/contexts/controllersMiddlewareContext/controllerStore'
+import { ControllerStore } from '@common/contexts/controllerStoreContext/controllerStore'
 import { Action } from '@web/extension-services/background/actions'
 
 export default function useAutoLockControllerHelpers(

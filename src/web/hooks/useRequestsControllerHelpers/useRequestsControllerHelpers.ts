@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useSyncExternalStore } from 'react'
 
-import { ControllerStore } from '@common/contexts/controllersMiddlewareContext/controllerStore'
+import { ControllerStore } from '@common/contexts/controllerStoreContext/controllerStore'
 import useNavigation from '@common/hooks/useNavigation'
 import usePrevious from '@common/hooks/usePrevious'
 import { getUiType } from '@web/utils/uiType'

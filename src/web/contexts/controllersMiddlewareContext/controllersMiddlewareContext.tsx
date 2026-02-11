@@ -1,15 +1,15 @@
 import { nanoid } from 'nanoid'
 /* eslint-disable @typescript-eslint/no-floating-promises */
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 
-import { ErrorRef } from '@ambire-common/interfaces/eventEmitter'
 import wait from '@ambire-common/utils/wait'
 import { captureMessage } from '@common/config/analytics/CrashAnalytics.web'
 import { AllControllersMappingType } from '@common/constants/controllersMapping'
+import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext/controllersMiddlewareContext'
 import { ControllersMiddlewareContextReturnType } from '@common/contexts/controllersMiddlewareContext/types'
-import { ToastOptions } from '@common/contexts/toastContext'
+import { ControllerStoreContext } from '@common/contexts/controllerStoreContext'
+import { ControllerHelpersStore } from '@common/contexts/controllerStoreContext/controllerHelpersStore'
 import useIsScreenFocused from '@common/hooks/useIsScreenFocused'
-import useNavigation from '@common/hooks/useNavigation'
 import useRoute from '@common/hooks/useRoute'
 import useToast from '@common/hooks/useToast'
 import { isExtension } from '@web/constants/browserapi'
@@ -24,10 +24,6 @@ import useKeystoreControllerHelpers from '@web/hooks/useKeystoreControllerHelper
 import useRequestsControllerHelpers from '@web/hooks/useRequestsControllerHelpers'
 import useSelectedAccountControllerHelpers from '@web/hooks/useSelectedAccountControllerHelpers'
 import { getUiType } from '@web/utils/uiType'
-
-import { ControllersMiddlewareContext } from './context'
-import { ControllerHelpersStore } from './controllerHelpersStore'
-import { ControllerStore } from './controllerStore'
 
 let globalDispatch: ControllersMiddlewareContextReturnType['dispatch']
 let pm: PortMessenger
@@ -141,50 +137,40 @@ if (isExtension) {
   }
 }
 
-export const ExtensionControllersMiddlewareProvider: React.FC<{ children: React.ReactNode }> = ({
+export const ControllersMiddlewareProvider: React.FC<{ children: React.ReactNode }> = ({
   children
 }) => {
   const { addToast } = useToast()
   const route = useRoute()
   const timer = useRef<NodeJS.Timeout>(null)
   const isFocused = useIsScreenFocused()
-  const { navigate } = useNavigation()
   const [windowId, setWindowId] = useState<number | undefined>()
   const hasConnectedToTheBackground = useRef(false)
-  const [isStoreReady, setIsStoreReady] = useState(false)
+  const { controllerStore } = useContext(ControllerStoreContext)
 
-  const [controllerStore] = useState<ControllerStore>(
-    () =>
-      new ControllerStore({
-        onInit: () => {
-          const controllersByName = Object.keys(
-            controllersMapping
-          ) as (keyof AllControllersMappingType)[]
-
-          controllersByName.forEach((key) => {
-            dispatch({
-              type: 'INIT_CONTROLLER_STATE',
-              params: { controller: key as keyof typeof controllersMapping }
-            })
-          })
-
-          return controllersByName
-        },
-        onReady: () => {
-          setIsStoreReady(true)
-        }
-      })
+  const dispatch = useCallback(
+    (action: Action) => {
+      globalDispatch(action, windowId)
+    },
+    [windowId]
   )
 
   useEffect(() => {
     const initControllers = () => {
-      controllerStore.init()
+      controllerStore.init(
+        Object.keys(controllersMapping) as (keyof AllControllersMappingType)[],
+        (allCtrls: (keyof AllControllersMappingType)[]) => {
+          allCtrls.forEach((ctrl) => {
+            dispatch({ type: 'INIT_CONTROLLER_STATE', params: { controller: ctrl } })
+          })
+        }
+      )
     }
 
     eventBus.addEventListener('onReady', initControllers)
 
     return () => eventBus.removeEventListener('onReady', initControllers)
-  }, [controllerStore])
+  }, [controllerStore, dispatch])
 
   useEffect(() => {
     if (!isExtension) return
@@ -279,60 +265,6 @@ export const ExtensionControllersMiddlewareProvider: React.FC<{ children: React.
     }
   }, [addToast])
 
-  useEffect(() => {
-    const onCtrlUpdate = ({ ctrlName, ctrlState }: { ctrlName: string; ctrlState: any }) => {
-      if ((controllersMapping as any)[ctrlName]) controllerStore.update(ctrlName as any, ctrlState)
-    }
-
-    eventBus.addEventListener('ctrlUpdate', onCtrlUpdate)
-
-    return () => eventBus.removeEventListener('ctrlUpdate', onCtrlUpdate)
-  }, [controllerStore])
-
-  useEffect(() => {
-    const onError = (newState: { errors: ErrorRef[]; controller: string }) => {
-      const lastError = newState.errors[newState.errors.length - 1]
-      if (lastError) {
-        if (lastError.level !== 'silent')
-          // Most of the errors incoming are descriptive and tend to be long,
-          // so keep a longer timeout to give the user enough time to read them.
-          addToast(lastError.message, { timeout: 12000, type: 'error' })
-
-        console.error(
-          `Error in ${newState.controller} controller. Inspect background page to see the full stack trace.`
-        )
-      }
-    }
-
-    eventBus.addEventListener('error', onError)
-
-    return () => eventBus.removeEventListener('error', onError)
-  }, [addToast])
-
-  useEffect(() => {
-    const onAddToast = ({ text, options }: { text: string; options: ToastOptions }) =>
-      addToast(text, options)
-
-    eventBus.addEventListener('addToast', onAddToast)
-
-    return () => eventBus.removeEventListener('addToast', onAddToast)
-  }, [addToast])
-
-  useEffect(() => {
-    const onNavigate = ({ route: navRoute }: { route: string }) => navigate(navRoute)
-
-    eventBus.addEventListener('navigate', onNavigate)
-
-    return () => eventBus.removeEventListener('navigate', onNavigate)
-  }, [addToast, navigate])
-
-  const dispatch = useCallback(
-    (action: Action) => {
-      globalDispatch(action, windowId)
-    },
-    [windowId]
-  )
-
   const [controllerHelpersStore] = useState(() => new ControllerHelpersStore())
   useDappsControllerHelpers(controllerStore, controllerHelpersStore, dispatch)
   useAutoLockControllerHelpers(controllerStore, dispatch)
@@ -341,18 +273,7 @@ export const ExtensionControllersMiddlewareProvider: React.FC<{ children: React.
   useSelectedAccountControllerHelpers(controllerStore)
 
   return (
-    <ControllersMiddlewareContext.Provider
-      value={useMemo(
-        () => ({
-          dispatch,
-          controllerStore,
-          controllerHelpersStore,
-          windowId,
-          isStoreReady
-        }),
-        [dispatch, controllerHelpersStore, controllerStore, windowId, isStoreReady]
-      )}
-    >
+    <ControllersMiddlewareContext.Provider value={useMemo(() => ({ dispatch }), [dispatch])}>
       {children}
     </ControllersMiddlewareContext.Provider>
   )

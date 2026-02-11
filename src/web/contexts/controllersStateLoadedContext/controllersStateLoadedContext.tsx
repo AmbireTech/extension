@@ -4,7 +4,7 @@ import { ControllerInterface } from '@ambire-common/interfaces/controller'
 import { captureMessage } from '@common/config/analytics/CrashAnalytics.web'
 import { APP_VERSION } from '@common/config/env'
 import { AllControllersMappingType } from '@common/constants/controllersMapping'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
+import useControllerStore from '@common/hooks/useControllerStore'
 import { isStateLoaded } from '@web/contexts/controllersStateLoadedContext//helpers'
 import useAccountPickerControllerState from '@web/hooks/useAccountPickerControllerState'
 import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
@@ -66,7 +66,7 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
   // `isStatesLoadingTakingTooLong` flag).
   const [areControllerStatesLoaded, setAreControllerStatesLoaded] = useState(false)
   const [isStatesLoadingTakingTooLong, setIsStatesLoadingTakingTooLong] = useState(false)
-  const { isStoreReady } = useControllersMiddleware()
+  const { isStoreReady } = useControllerStore()
 
   const AccountPickerController = useAccountPickerControllerState()
   const KeystoreController = useKeystoreControllerState()

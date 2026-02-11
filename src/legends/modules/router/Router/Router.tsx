@@ -1,7 +1,6 @@
 import React, { FC, ReactNode, useEffect } from 'react'
 import { createHashRouter, Navigate, RouterProvider } from 'react-router-dom'
 
-import { CommonControllersMiddlewareProvider } from '@common/contexts/controllersMiddlewareContext/commonControllersMiddlewareContext'
 import ErrorPage from '@legends/components/ErrorPage'
 import PrivateRoute from '@legends/components/PrivateRoute'
 import Season2Modal from '@legends/components/Season2Modal'
@@ -36,18 +35,16 @@ const PrivateArea: FC<{ children: ReactNode }> = ({ children }) => {
   }, [])
 
   return (
-    <CommonControllersMiddlewareProvider env="rewards">
-      <LeaderboardContextProvider>
-        <LegendsContextProvider>
-          <PortfolioProvider>
-            <DataPollingContextProvider>
-              <Season2Modal />
-              {children}
-            </DataPollingContextProvider>
-          </PortfolioProvider>
-        </LegendsContextProvider>
-      </LeaderboardContextProvider>
-    </CommonControllersMiddlewareProvider>
+    <LeaderboardContextProvider>
+      <LegendsContextProvider>
+        <PortfolioProvider>
+          <DataPollingContextProvider>
+            <Season2Modal />
+            {children}
+          </DataPollingContextProvider>
+        </PortfolioProvider>
+      </LegendsContextProvider>
+    </LeaderboardContextProvider>
   )
 }
 

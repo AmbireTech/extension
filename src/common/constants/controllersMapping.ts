@@ -60,7 +60,7 @@ export const controllersNestedInMainMapping = {
   // - value is the type of the controller
 }
 
-const allControllersMapping = {
+export const allControllersMapping = {
   MainController,
   WalletStateController,
   AutoLockController,

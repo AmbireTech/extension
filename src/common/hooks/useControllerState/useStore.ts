@@ -1,9 +1,9 @@
 import { useCallback, useContext, useSyncExternalStore } from 'react'
 
 import { AllControllersMappingType } from '@common/constants/controllersMapping'
-import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext/context'
-import { ControllerHelpersStore } from '@common/contexts/controllersMiddlewareContext/controllerHelpersStore'
-import { ControllerStore } from '@common/contexts/controllersMiddlewareContext/controllerStore'
+import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext/controllersMiddlewareContext'
+import { ControllerHelpersStore } from '@common/contexts/controllerStoreContext/controllerHelpersStore'
+import { ControllerStore } from '@common/contexts/controllerStoreContext/controllerStore'
 
 export default function useStore<K extends keyof AllControllersMappingType>(
   store: ControllerStore | ControllerHelpersStore,

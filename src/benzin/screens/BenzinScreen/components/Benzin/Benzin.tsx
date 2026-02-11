@@ -13,7 +13,7 @@ import useBenzin from '@benzin/screens/BenzinScreen/hooks/useBenzin'
 import OpenIcon from '@common/assets/svg/OpenIcon'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
+import useControllerStore from '@common/hooks/useControllerStore'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import spacings from '@common/styles/spacings'
@@ -26,7 +26,7 @@ import getStyles from './styles'
 const Benzin = ({ state }: { state: ReturnType<typeof useBenzin> }) => {
   const { styles } = useTheme(getStyles)
   const { maxWidthSize } = useWindowSize()
-  const { isStoreReady } = useControllersMiddleware()
+  const { isStoreReady } = useControllerStore()
 
   const summary = useMemo(() => {
     const calls = state?.stepsState?.calls

@@ -1,6 +1,8 @@
 import React from 'react'
 
+import { ControllerStoreProvider } from '@common/contexts/controllerStoreContext'
 import { PortalHost, PortalProvider } from '@gorhom/portal'
+import { ControllersMiddlewareProvider } from '@legends/contexts/controllersMiddlewareContext'
 import * as Sentry from '@sentry/react'
 import { EthereumProvider } from '@web/extension-services/inpage/EthereumProvider'
 
@@ -23,11 +25,15 @@ const LegendsInit = () => {
     <Sentry.ErrorBoundary fallback={errorComponent}>
       <PortalProvider>
         <ToastContextProvider>
-          <ProviderContextProvider>
-            <AccountContextProvider>
-              <Router />
-            </AccountContextProvider>
-          </ProviderContextProvider>
+          <ControllerStoreProvider>
+            <ControllersMiddlewareProvider>
+              <ProviderContextProvider>
+                <AccountContextProvider>
+                  <Router />
+                </AccountContextProvider>
+              </ProviderContextProvider>
+            </ControllersMiddlewareProvider>
+          </ControllerStoreProvider>
         </ToastContextProvider>
         <PortalHost name="global" />
       </PortalProvider>

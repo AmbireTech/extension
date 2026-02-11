@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useSyncExternalStore } from 'react'
 
 import { setUserContext } from '@common/config/analytics/CrashAnalytics'
-import { ControllerStore } from '@common/contexts/controllersMiddlewareContext/controllerStore'
+import { ControllerStore } from '@common/contexts/controllerStoreContext/controllerStore'
 import { getExtensionInstanceId } from '@web/utils/analytics'
 
 export default function useKeystoreControllerHelpers(controllerStore: ControllerStore) {

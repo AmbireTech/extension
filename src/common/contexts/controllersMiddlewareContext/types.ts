@@ -2,9 +2,6 @@ import { AllControllersMappingType } from '@common/constants/controllersMapping'
 import { ControllerAction } from '@common/hooks/useController/useController'
 import { Action } from '@web/extension-services/background/actions'
 
-import { ControllerHelpersStore } from './controllerHelpersStore'
-import { ControllerStore } from './controllerStore'
-
 export type AnyControllerAction = ControllerAction<keyof AllControllersMappingType>
 
 export type ControllersMiddlewareContextReturnType = {
@@ -14,16 +11,8 @@ export type ControllersMiddlewareContextReturnType = {
    * It will only work when called from a focused window!
    */
   dispatch: (action: Action, windowId?: number) => void
-  windowId?: number
-  controllerStore: ControllerStore
-  controllerHelpersStore: ControllerHelpersStore
-  isStoreReady: boolean
 }
 
 export const controllersMiddlewareContextDefaults: ControllersMiddlewareContextReturnType = {
-  dispatch: Promise.resolve,
-  windowId: undefined,
-  controllerStore: {} as ControllerStore,
-  controllerHelpersStore: {} as ControllerHelpersStore,
-  isStoreReady: false
+  dispatch: Promise.resolve
 }

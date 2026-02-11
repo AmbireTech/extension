@@ -31,6 +31,8 @@ export class ControllerHelpersStore {
     data: Partial<ControllerHelpersMapping[K]>,
     forceEmit?: boolean
   ) {
+    if (!data) return
+
     this.#states[id] = { ...(this.#states[id] ?? {}), ...data } as ControllerHelpersMapping[K]
 
     const idListeners = this.#listeners.get(id as string)
