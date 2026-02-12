@@ -3,6 +3,7 @@ import { Animated, PanResponder, ViewStyle } from 'react-native'
 
 import Button, { Props as CommonButtonProps } from '@common/components/Button'
 import useTheme from '@common/hooks/useTheme'
+import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 
 type Props = Omit<CommonButtonProps, 'style' | 'children' | 'childrenPosition' | 'onPress'> & {
   style?: ViewStyle
@@ -29,6 +30,7 @@ const HoldToProceedButton: FC<Props> = ({
   const scaleAnim = useRef(new Animated.Value(1)).current
   const [isHolding, setIsHolding] = useState(false)
   const [isCompleted, setIsCompleted] = useState(false)
+  const [buttonWidth, setButtonWidth] = useState<number | undefined>(undefined)
   const holdTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const animationRef = useRef<Animated.CompositeAnimation | null>(null)
   const holdStartTimeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -213,6 +215,7 @@ const HoldToProceedButton: FC<Props> = ({
         {
           position: 'relative',
           overflow: 'hidden',
+          borderRadius: BORDER_RADIUS_PRIMARY,
           transform: [{ scale: scaleAnim }]
         },
         style
@@ -220,9 +223,12 @@ const HoldToProceedButton: FC<Props> = ({
       {...panResponder.current.panHandlers}
     >
       <Button
+        onLayout={(e) => {
+          setButtonWidth(e.nativeEvent.layout.width)
+        }}
         style={[
           {
-            minWidth: 108,
+            minWidth: buttonWidth || 108,
             position: 'relative',
             backgroundColor: colorTypes[buttonType]
           },
@@ -245,7 +251,7 @@ const HoldToProceedButton: FC<Props> = ({
           height: '100%',
           width: progressWidth,
           backgroundColor: progressColor,
-          borderRadius: 12,
+          borderRadius: BORDER_RADIUS_PRIMARY,
           opacity: 0.3,
           zIndex: 10
         }}
