@@ -5,7 +5,6 @@ import { getCurrentAccountBanners } from '@ambire-common/libs/banners/banners'
 import useController from '@common/hooks/useController'
 import useBannersControllerState from '@web/hooks/useBannersControllerState'
 import useEmailVaultControllerState from '@web/hooks/useEmailVaultControllerState'
-import useExtensionUpdateControllerState from '@web/hooks/useExtensionUpdateControllerState'
 import useMainControllerState from '@web/hooks/useMainControllerState'
 import usePortfolioControllerState from '@web/hooks/usePortfolioControllerState/usePortfolioControllerState'
 import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
@@ -34,7 +33,7 @@ export default function useBanners(): [BannerInterface[], BannerInterface[]] {
   const { banners: emailVaultBanners = [] } = useEmailVaultControllerState()
   const { banners: requestBanners = [] } = useRequestsControllerState()
   const { banners: swapAndBridgeBanners = [] } = useSwapAndBridgeControllerState()
-  const { extensionUpdateBanner } = useExtensionUpdateControllerState()
+  const { extensionUpdateBanner } = useController('ExtensionUpdateController').state
   const { hasFundedHotAccount } = usePortfolioControllerState()
 
   const controllerBanners = useMemo(() => {

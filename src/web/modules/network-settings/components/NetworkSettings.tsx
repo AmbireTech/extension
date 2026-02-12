@@ -24,7 +24,6 @@ import text from '@common/styles/utils/text'
 import NetworkAvailableFeatures from '@web/components/NetworkAvailableFeatures'
 import NetworkDetails from '@web/components/NetworkDetails'
 import { openInTab } from '@web/extension-services/background/webapi/tab'
-import useProvidersControllerState from '@web/hooks/useProvidersControllerState'
 import { SettingsRoutesContext } from '@web/modules/settings/contexts/SettingsRoutesContext'
 import Network from '@web/modules/settings/screens/NetworksSettingsScreen/Network'
 import NetworkForm from '@web/modules/settings/screens/NetworksSettingsScreen/NetworkForm'
@@ -40,7 +39,7 @@ const NetworksSettings = () => {
   const { allNetworks } = useController('NetworksController').state
   const {
     state: { providers }
-  } = useProvidersControllerState()
+  } = useController('ProvidersController')
 
   const { setCurrentSettingsPage } = useContext(SettingsRoutesContext)
   const { theme, themeType } = useTheme()

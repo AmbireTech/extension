@@ -23,7 +23,6 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import usePortfolioControllerState from '@web/hooks/usePortfolioControllerState/usePortfolioControllerState'
-import useProvidersControllerState from '@web/hooks/useProvidersControllerState'
 import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import ActionFooter from '@web/modules/action-requests/components/ActionFooter'
 import {
@@ -55,7 +54,7 @@ const WatchTokenRequestScreen = () => {
     state: { portfolio: selectedAccountPortfolio }
   } = useController('SelectedAccountController')
   const { networks } = useController('NetworksController').state
-  const { state } = useProvidersControllerState()
+  const { state } = useController('ProvidersController')
 
   const userRequest = useMemo(
     () => (currentUserRequest?.kind === 'walletWatchAsset' ? currentUserRequest : undefined),

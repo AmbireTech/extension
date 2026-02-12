@@ -23,7 +23,6 @@ import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import { searchWithNetworkName } from '@common/utils/search'
 import { openInTab } from '@web/extension-services/background/webapi/tab'
-import useFeatureFlagsControllerState from '@web/hooks/useFeatureFlagsControllerState'
 import { getUiType } from '@web/utils/uiType'
 
 import SearchAndCurrentApp from '../SearchAndCurrentApp'
@@ -55,7 +54,7 @@ const DeFiPositions: FC<Props> = ({
   isSearchHidden
 }) => {
   const { t } = useTranslation()
-  const { flags } = useFeatureFlagsControllerState()
+  const { flags } = useController('FeatureFlagsController').state
   const { control, watch, setValue } = useForm({ mode: 'all', defaultValues: { search: '' } })
   const { theme, themeType } = useTheme()
   const searchValue = watch('search')

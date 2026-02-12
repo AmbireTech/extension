@@ -12,14 +12,10 @@ import useAddressBookControllerState from '@web/hooks/useAddressBookControllerSt
 import useBannersControllerState from '@web/hooks/useBannersControllerState'
 import useContractNamesControllerState from '@web/hooks/useContractNamesController/useContractNamesController'
 import useEmailVaultControllerState from '@web/hooks/useEmailVaultControllerState'
-import useExtensionUpdateControllerState from '@web/hooks/useExtensionUpdateControllerState'
-import useFeatureFlagsControllerState from '@web/hooks/useFeatureFlagsControllerState'
-import useInviteControllerState from '@web/hooks/useInviteControllerState'
 import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 import useMainControllerState from '@web/hooks/useMainControllerState/useMainControllerState'
 import usePhishingControllerState from '@web/hooks/usePhishingControllerState'
 import usePortfolioControllerState from '@web/hooks/usePortfolioControllerState/usePortfolioControllerState'
-import useProvidersControllerState from '@web/hooks/useProvidersControllerState'
 import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import useSignMessageControllerState from '@web/hooks/useSignMessageControllerState'
 import useStorageControllerState from '@web/hooks/useStorageControllerState'
@@ -69,7 +65,6 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
   const MainController = useMainControllerState()
   const StorageController = useStorageControllerState()
   const UiController = useUiControllerState()
-  const ProvidersController = useProvidersControllerState().state
   const WalletStateController = useWalletStateController()
   const SignMessageController = useSignMessageControllerState()
   const RequestsController = useRequestsControllerState()
@@ -78,12 +73,9 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
   const EmailVaultController = useEmailVaultControllerState()
   const PhishingController = usePhishingControllerState()
   const AddressBookController = useAddressBookControllerState()
-  const InviteController = useInviteControllerState()
   const ContractNamesController = useContractNamesControllerState()
   const BannerController = useBannersControllerState()
   const SwapAndBridgeController = useSwapAndBridgeControllerState()
-  const ExtensionUpdateController = useExtensionUpdateControllerState()
-  const FeatureFlagsController = useFeatureFlagsControllerState()
 
   const controllers: any = useMemo(
     () => ({
@@ -92,7 +84,6 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
       MainController,
       StorageController,
       UiController,
-      ProvidersController,
       WalletStateController,
       SignMessageController,
       RequestsController,
@@ -101,12 +92,9 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
       EmailVaultController,
       PhishingController,
       AddressBookController,
-      InviteController,
       ContractNamesController,
       BannerController,
-      SwapAndBridgeController,
-      ExtensionUpdateController,
-      FeatureFlagsController
+      SwapAndBridgeController
     }),
     [
       AccountPickerController,
@@ -114,7 +102,6 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
       MainController,
       StorageController,
       UiController,
-      ProvidersController,
       WalletStateController,
       SignMessageController,
       RequestsController,
@@ -123,12 +110,9 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
       EmailVaultController,
       PhishingController,
       AddressBookController,
-      InviteController,
       ContractNamesController,
       BannerController,
-      SwapAndBridgeController,
-      ExtensionUpdateController,
-      FeatureFlagsController
+      SwapAndBridgeController
     ]
   )
 

@@ -23,20 +23,15 @@ import { isExtension } from '@web/constants/browserapi'
 import { AccountPickerControllerStateProvider } from '@web/contexts/accountPickerControllerStateContext'
 import { ActivityControllerStateProvider } from '@web/contexts/activityControllerStateContext'
 import { AddressBookControllerStateProvider } from '@web/contexts/addressBookControllerStateContext'
-import { AutoLockControllerStateProvider } from '@web/contexts/autoLockControllerStateContext'
 import { BannerControllerStateProvider } from '@web/contexts/bannerControllerStateContext/bannerControllerStateContext'
 import { ContractNamesControllerStateProvider } from '@web/contexts/contractNamesControllerStateContext'
 import { ControllersMiddlewareProvider } from '@web/contexts/controllersMiddlewareContext'
 import { ControllersStateLoadedProvider } from '@web/contexts/controllersStateLoadedContext'
 import { EmailVaultControllerStateProvider } from '@web/contexts/emailVaultControllerStateContext'
-import { ExtensionUpdateControllerStateProvider } from '@web/contexts/extensionUpdateControllerStateContext'
-import { FeatureFlagsControllerStateProvider } from '@web/contexts/featureFlagsControllerStateContext'
-import { InviteControllerStateProvider } from '@web/contexts/inviteControllerStateContext'
 import { KeystoreControllerStateProvider } from '@web/contexts/keystoreControllerStateContext'
 import { MainControllerStateProvider } from '@web/contexts/mainControllerStateContext'
 import { PhishingControllerStateProvider } from '@web/contexts/phishingControllerStateContext'
 import { PortfolioControllerStateProvider } from '@web/contexts/portfolioControllerStateContext'
-import { ProvidersControllerStateProvider } from '@web/contexts/providersControllerStateContext'
 import { RequestsControllerStateProvider } from '@web/contexts/requestsControllerStateContext'
 import { SignMessageControllerStateProvider } from '@web/contexts/signMessageControllerStateContext'
 import { StorageControllerStateProvider } from '@web/contexts/storageControllerStateContext'
@@ -59,11 +54,6 @@ const composeProviders = (
   providers.reduceRight<React.ReactNode>((acc, Provider) => <Provider>{acc}</Provider>, children)
 
 const CONTROLLER_STATE_PROVIDERS: ProviderComponent[] = [
-  ProvidersControllerStateProvider,
-  AutoLockControllerStateProvider,
-  ExtensionUpdateControllerStateProvider,
-  FeatureFlagsControllerStateProvider,
-  InviteControllerStateProvider,
   AccountPickerControllerStateProvider,
   KeystoreControllerStateProvider,
   SignMessageControllerStateProvider,
