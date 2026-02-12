@@ -24,7 +24,6 @@ import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
-import usePortfolioControllerState from '@web/hooks/usePortfolioControllerState/usePortfolioControllerState'
 import {
   getTokenEligibility,
   getTokenFromPortfolio,
@@ -48,7 +47,7 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
   const { dispatch } = useControllersMiddleware()
   const { networks, isInitialized } = useController('NetworksController').state
   const { addToast } = useToast()
-  const { validTokens, customTokens, temporaryTokens } = usePortfolioControllerState()
+  const { validTokens, customTokens, temporaryTokens } = useController('PortfolioController').state
   const {
     state: { portfolio: selectedAccountPortfolio }
   } = useController('SelectedAccountController')

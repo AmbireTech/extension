@@ -20,7 +20,6 @@ import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { tokenOrCollectionSearch } from '@common/utils/search'
-import usePortfolioControllerState from '@web/hooks/usePortfolioControllerState/usePortfolioControllerState'
 import AddTokenBottomSheet from '@web/modules/settings/screens/ManageTokensSettingsScreen/AddTokenBottomSheet'
 import { getTokenId } from '@web/utils/token'
 import { getUiType } from '@web/utils/uiType'
@@ -78,7 +77,7 @@ const Tokens = ({
   const {
     state: { networks }
   } = useController('NetworksController')
-  const { customTokens } = usePortfolioControllerState()
+  const { customTokens } = useController('PortfolioController').state
   const {
     state: { portfolio, dashboardNetworkFilter }
   } = useController('SelectedAccountController')

@@ -10,7 +10,6 @@ import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import flexbox from '@common/styles/utils/flexbox'
 import { tokenOrCollectionSearch } from '@common/utils/search'
 import { networkSort } from '@common/utils/sorting'
-import usePortfolioControllerState from '@web/hooks/usePortfolioControllerState/usePortfolioControllerState'
 import { SettingsRoutesContext } from '@web/modules/settings/contexts/SettingsRoutesContext'
 
 import AddTokenBottomSheet from './AddTokenBottomSheet'
@@ -25,7 +24,8 @@ const ManageTokensSettingsScreen = () => {
     open: openAddTokenBottomSheet,
     close: closeAddTokenBottomSheet
   } = useModalize()
-  const { tokenPreferences, customTokens: portfolioCustomTokens } = usePortfolioControllerState()
+  const { tokenPreferences, customTokens: portfolioCustomTokens } =
+    useController('PortfolioController').state
   const { dispatch } = useControllersMiddleware()
   const { setCurrentSettingsPage } = useContext(SettingsRoutesContext)
   const { control, watch } = useForm({ mode: 'all', defaultValues: { search: '' } })

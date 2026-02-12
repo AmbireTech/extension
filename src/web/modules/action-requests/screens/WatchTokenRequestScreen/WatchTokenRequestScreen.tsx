@@ -22,7 +22,6 @@ import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Hea
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import usePortfolioControllerState from '@web/hooks/usePortfolioControllerState/usePortfolioControllerState'
 import ActionFooter from '@web/modules/action-requests/components/ActionFooter'
 import {
   getTokenEligibility,
@@ -47,7 +46,7 @@ const WatchTokenRequestScreen = () => {
   const { theme, styles, themeType } = useTheme(getStyles)
   const { dispatch } = useControllersMiddleware()
   const { currentUserRequest } = useController('RequestsController').state
-  const { temporaryTokens, validTokens, customTokens } = usePortfolioControllerState()
+  const { temporaryTokens, validTokens, customTokens } = useController('PortfolioController').state
   const {
     state: { portfolio: selectedAccountPortfolio }
   } = useController('SelectedAccountController')

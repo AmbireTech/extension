@@ -17,7 +17,6 @@ import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@web/extension-services/background/webapi/tab'
-import usePortfolioControllerState from '@web/hooks/usePortfolioControllerState/usePortfolioControllerState'
 
 type Props = {
   onTokenPreferenceOrCustomTokenChange: () => void
@@ -32,7 +31,7 @@ const Token: FC<Props> = ({
 }) => {
   const { t } = useTranslation()
   const { addToast } = useToast()
-  const { tokenPreferences } = usePortfolioControllerState()
+  const { tokenPreferences } = useController('PortfolioController').state
   const { theme } = useTheme()
   const { dispatch } = useControllersMiddleware()
   const { networks } = useController('NetworksController').state
