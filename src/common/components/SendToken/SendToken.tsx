@@ -159,14 +159,14 @@ const SendToken: FC<Props> = ({
                     }}
                   >
                     <Text
-                      fontSize={20}
+                      fontSize={24}
                       weight="medium"
                       style={{ zIndex: 3 }}
                       appearance="secondaryText"
                     >
                       $
                       <Text
-                        fontSize={20}
+                        fontSize={24}
                         weight="medium"
                         style={{ opacity: 0 }}
                         appearance="secondaryText"
