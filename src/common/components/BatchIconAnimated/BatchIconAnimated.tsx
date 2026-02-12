@@ -12,7 +12,6 @@ const ASPECT_RATIO = 1280 / 720
 const BatchIconAnimated = ({ height = 84 }: Props) => {
   return (
     <LottieView
-      // TODO: Load a different lottie based on the theme
       animationData={iconAnimation}
       style={{
         width: height * ASPECT_RATIO,
