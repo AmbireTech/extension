@@ -18,7 +18,6 @@ import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings, { SPACING_MD, SPACING_MI } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { Content, Wrapper } from '@web/components/TransactionsScreen'
-import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControllerState'
 import useSimulationError from '@web/modules/portfolio/hooks/SimulationError/useSimulationError'
 import BatchAdded from '@web/modules/sign-account-op/components/OneClick/BatchModal/BatchAdded'
 import Buttons from '@web/modules/sign-account-op/components/OneClick/Buttons'
@@ -78,7 +77,7 @@ const SwapAndBridgeScreen = () => {
     hasProceeded,
     swapSignErrors,
     quote
-  } = useSwapAndBridgeControllerState()
+  } = useController('SwapAndBridgeController').state
   const {
     state: { portfolio }
   } = useController('SelectedAccountController')

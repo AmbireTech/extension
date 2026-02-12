@@ -17,7 +17,6 @@ import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useGetTokenSelectProps from '@common/hooks/useGetTokenSelectProps'
 import useNavigation from '@common/hooks/useNavigation'
 import { ROUTES } from '@common/modules/router/constants/common'
-import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControllerState'
 import useSyncedState from '@web/hooks/useSyncedState'
 import { getTokenId } from '@web/utils/token'
 import { getUiType } from '@web/utils/uiType'
@@ -44,7 +43,7 @@ const useSwapAndBridgeForm = () => {
     updateQuoteStatus,
     sessionIds,
     toSelectedToken
-  } = useSwapAndBridgeControllerState()
+  } = useController('SwapAndBridgeController').state
   const { dispatch } = useControllersMiddleware()
   const { userRequests } = useController('RequestsController').state
   const {

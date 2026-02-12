@@ -28,7 +28,6 @@ import storage from '@web/extension-services/background/webapi/storage'
 import { createTab } from '@web/extension-services/background/webapi/tab'
 import useHasGasTank from '@web/hooks/useHasGasTank'
 import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
-import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControllerState'
 import { getTokenId } from '@web/utils/token'
 
 import TokenDetailsButton from './Button'
@@ -55,7 +54,7 @@ const TokenDetails = ({
   const {
     state: { account }
   } = useController('SelectedAccountController')
-  const { supportedChainIds } = useSwapAndBridgeControllerState()
+  const { supportedChainIds } = useController('SwapAndBridgeController').state
   const { dispatch } = useControllersMiddleware()
   const {
     state: { networks }

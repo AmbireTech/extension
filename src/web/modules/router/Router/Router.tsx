@@ -15,7 +15,6 @@ import flexbox from '@common/styles/utils/flexbox'
 import Splash from '@web/components/Splash'
 import { ControllersStateLoadedContext } from '@web/contexts/controllersStateLoadedContext'
 import useCurrentActionSideEffects from '@web/hooks/useCurrentActionSideEffects'
-import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControllerState'
 import useTransferControllerState from '@web/hooks/useTransferControllerState'
 import KeyStoreUnlockScreen from '@web/modules/keystore/screens/KeyStoreUnlockScreen'
 import AuthenticatedRoute from '@web/modules/router/components/AuthenticatedRoute'
@@ -34,7 +33,7 @@ const Router = () => {
   const { authStatus } = useAuth()
   const keystoreState = useController('KeystoreController').state
   const requestsState = useController('RequestsController').state
-  const swapAndBridgeState = useSwapAndBridgeControllerState()
+  const swapAndBridgeState = useController('SwapAndBridgeController').state
   const transferState = useTransferControllerState()
   const { areControllerStatesLoaded, isStatesLoadingTakingTooLong } = useContext(
     ControllersStateLoadedContext

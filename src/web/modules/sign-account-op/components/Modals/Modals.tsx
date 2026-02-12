@@ -4,12 +4,12 @@ import { useTranslation } from 'react-i18next'
 import { ISignAccountOpController } from '@ambire-common/interfaces/signAccountOp'
 import BottomSheet from '@common/components/BottomSheet'
 import DualChoiceWarningModal from '@common/components/DualChoiceWarningModal'
+import useController from '@common/hooks/useController'
 import useSign from '@common/hooks/useSign'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import text from '@common/styles/utils/text'
 import useSignAccountOpControllerState from '@web/hooks/useSignAccountOpControllerState'
-import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControllerState'
 import useTransferControllerState from '@web/hooks/useTransferControllerState'
 import LedgerConnectModal from '@web/modules/hardware-wallet/components/LedgerConnectModal'
 import SignAccountOpHardwareWalletSigningModal from '@web/modules/sign-account-op/components/SignAccountOpHardwareWalletSigningModal'
@@ -54,7 +54,8 @@ const Modals: FC<Props> = ({
 }) => {
   const { styles } = useTheme(getStyles)
   const { t } = useTranslation()
-  const { signAccountOpController: swapAndBridgeSignAccountOp } = useSwapAndBridgeControllerState()
+  const { signAccountOpController: swapAndBridgeSignAccountOp } =
+    useController('SwapAndBridgeController').state
   const {
     state: { signAccountOpController: transferSignAccountOp }
   } = useTransferControllerState()

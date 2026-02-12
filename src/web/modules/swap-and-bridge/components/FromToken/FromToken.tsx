@@ -4,8 +4,8 @@ import { useTranslation } from 'react-i18next'
 import { TokenResult } from '@ambire-common/libs/portfolio'
 import { SelectValue } from '@common/components/Select/types'
 import SendToken from '@common/components/SendToken'
+import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
-import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControllerState'
 import useSwapAndBridgeForm from '@web/modules/swap-and-bridge/hooks/useSwapAndBridgeForm'
 import { getTokenId } from '@web/utils/token'
 
@@ -38,7 +38,7 @@ const FromToken: FC<Props> = ({
     fromAmountFieldMode,
     maxFromAmount,
     validateFromAmount
-  } = useSwapAndBridgeControllerState()
+  } = useController('SwapAndBridgeController').state
 
   const handleChangeFromToken = useCallback(
     ({ value }: SelectValue) => {

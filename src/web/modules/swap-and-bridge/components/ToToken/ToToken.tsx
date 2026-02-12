@@ -23,7 +23,6 @@ import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import { ItemPanel } from '@web/components/TransactionsScreen'
-import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControllerState'
 import SwitchTokensButton from '@web/modules/swap-and-bridge/components/SwitchTokensButton'
 import ToTokenSelect from '@web/modules/swap-and-bridge/components/ToToken/ToTokenSelect'
 import { getTokenId } from '@web/utils/token'
@@ -52,7 +51,7 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
     switchTokensStatus,
     supportedChainIds,
     signAccountOpController
-  } = useSwapAndBridgeControllerState()
+  } = useController('SwapAndBridgeController').state
 
   const { networks } = useController('NetworksController').state
   const {
