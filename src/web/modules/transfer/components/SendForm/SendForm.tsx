@@ -144,7 +144,7 @@ const SendForm = ({
 
       {(!state.selectedToken && tokens.length) ||
       !portfolio?.isReadyToVisualize ||
-      !state.isReady ? (
+      !state.areDefaultsSet ? (
         <SkeletonLoader width="100%" height={115} />
       ) : (
         <SendToken
