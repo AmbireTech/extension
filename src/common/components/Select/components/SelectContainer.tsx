@@ -118,7 +118,7 @@ const SelectContainer: FC<Props> = ({
                 placeholder={searchPlaceholder || t('Search...')}
                 autoFocus
                 control={control}
-                containerStyle={spacings.mb0}
+                containerStyle={{ ...spacings.mb0, ...spacings.mtTy, ...spacings.phTy }}
               />
             )}
             {children}
@@ -127,7 +127,7 @@ const SelectContainer: FC<Props> = ({
                 placeholder={searchPlaceholder || t('Search...')}
                 autoFocus
                 control={control}
-                containerStyle={spacings.mb0}
+                containerStyle={{ ...spacings.mb0, ...spacings.mbTy, ...spacings.phTy }}
               />
             )}
           </MenuContainer>

@@ -59,8 +59,7 @@ const BatchAdded: FC<Props> = ({
           style={[
             flexbox.directionRow,
             flexbox.alignCenter,
-            spacings.plSm,
-            spacings.prTy,
+            spacings.phSm,
             spacings.mb,
             spacings.pvTy,
             {

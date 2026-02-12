@@ -70,9 +70,7 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
     },
     sheetMenuOption: {
       marginBottom: SPACING_MI / 2,
-      borderRadius: BORDER_RADIUS_PRIMARY,
-      borderWidth: 1,
-      borderColor: 'transparent'
+      borderRadius: BORDER_RADIUS_PRIMARY
     },
     smMenuOption: {
       height: SELECT_SIZE_TO_HEIGHT.sm,

@@ -15,6 +15,7 @@ import Alert from '@common/components/Alert'
 import Select, { SectionedSelect } from '@common/components/Select'
 import { SelectValue } from '@common/components/Select/types'
 import Text from '@common/components/Text'
+import TitleAndIcon from '@common/components/TitleAndIcon'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import spacings from '@common/styles/spacings'
@@ -260,7 +261,7 @@ const Estimation = ({
     return [
       {
         title: {
-          icon: <FeeIcon color={theme.secondaryText} width={16} height={16} />,
+          icon: FeeIcon,
           text: t('With fee tokens from current account')
         },
         data: payOptionsPaidByUsOrGasTank,
@@ -268,14 +269,14 @@ const Estimation = ({
       },
       {
         title: {
-          icon: <AssetIcon color={theme.secondaryText} width={16} height={16} />,
+          icon: AssetIcon,
           text: t('With native assets of my EOA accounts')
         },
         data: payOptionsPaidByEOA,
         key: 'eoa-tokens'
       }
     ]
-  }, [payOptionsPaidByEOA, payOptionsPaidByUsOrGasTank, t, theme.secondaryText])
+  }, [payOptionsPaidByEOA, payOptionsPaidByUsOrGasTank, t])
 
   const nativeFeeOption = signAccountOpState?.estimation.availableFeeOptions.find(
     (feeOption) =>
@@ -305,35 +306,16 @@ const Estimation = ({
       if (section.data.length === 0 || !section.title) return null
 
       return (
-        <View
-          style={[
-            flexbox.directionRow,
-            flexbox.alignCenter,
-            spacings.phTy,
-            spacings.pvTy,
-            {
-              backgroundColor: theme.primaryBackground,
-              height: FEE_SECTION_LIST_MENU_HEADER_HEIGHT
-            },
-            section?.key === 'eoa-tokens' && {
-              borderTopWidth: 1,
-              borderTopColor: theme.secondaryBorder
-            }
-          ]}
-        >
-          {section.title.icon}
-          <Text
-            style={minWidthSize('xl') ? spacings.mlMi : spacings.mlTy}
-            fontSize={minWidthSize('xl') ? 12 : 14}
-            weight="medium"
-            appearance="secondaryText"
-          >
-            {section.title.text}
-          </Text>
-        </View>
+        <TitleAndIcon
+          icon={section.title.icon}
+          title={section.title.text}
+          style={{
+            backgroundColor: theme.secondaryBackground
+          }}
+        />
       )
     },
-    [minWidthSize, theme.primaryBackground, theme.secondaryBorder]
+    [theme.secondaryBackground]
   )
 
   if (!hasEstimation && !!slowRequest) {
@@ -397,10 +379,10 @@ const Estimation = ({
           flexbox.directionRow,
           flexbox.alignCenter,
           flexbox.justifySpaceBetween,
-          spacings.mbMi
+          spacings.mbSm
         ]}
       >
-        <Text fontSize={18} weight="medium">
+        <Text fontSize={20} weight="medium">
           {t('Pay fee with')}
         </Text>
         {selectedFee && (
@@ -409,8 +391,8 @@ const Estimation = ({
             // @ts-ignore
             setValue={onFeeSelect}
             options={feeSpeedOptions}
-            selectStyle={{ height: 32, borderWidth: themeType === THEME_TYPES.DARK ? 0 : 1 }}
-            menuOptionHeight={32}
+            selectStyle={{ height: 40, backgroundColor: theme.secondaryBackground }}
+            menuOptionHeight={40}
             // Display a wider menu if the fee token price is unavailable
             // as the native amount takes up more space
             menuLeftHorizontalOffset={feeTokenPriceUnavailableWarning ? 100 : 48}
@@ -434,10 +416,9 @@ const Estimation = ({
           (!payOptionsPaidByUsOrGasTank.length && !payOptionsPaidByEOA.length) ||
           !signAccountOpState.selectedOption
         }
+        extraSearchProps={{}}
+        selectStyle={{ backgroundColor: theme.secondaryBackground }}
         defaultValue={payValue ?? undefined}
-        selectStyle={{
-          borderWidth: themeType === THEME_TYPES.DARK ? 0 : 1
-        }}
         withSearch={!!payOptionsPaidByUsOrGasTank.length || !!payOptionsPaidByEOA.length}
         stickySectionHeadersEnabled
       />

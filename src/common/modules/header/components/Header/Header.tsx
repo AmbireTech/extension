@@ -41,8 +41,6 @@ const Wrapper = ({
 
   const paddingHorizontalStyle = useMemo(() => getTabLayoutPadding(maxWidthSize), [maxWidthSize])
 
-  console.log(path)
-
   return (
     <View
       style={[

@@ -12,6 +12,7 @@ import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import { SectionedSelect } from '@common/components/Select'
 import { SelectValue } from '@common/components/Select/types'
 import Text from '@common/components/Text'
+import TitleAndIcon from '@common/components/TitleAndIcon'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES, ThemeProps } from '@common/styles/themeConfig'
@@ -167,7 +168,7 @@ const ToTokenSelect: React.FC<Props> = ({
     return [
       {
         title: {
-          icon: <CoinsIcon />,
+          icon: CoinsIcon,
           text: toTokenSearchTerm
             ? t('Tokens found in current account')
             : t('Tokens in current account')
@@ -177,7 +178,7 @@ const ToTokenSelect: React.FC<Props> = ({
       },
       {
         title: {
-          icon: <StarFilledIcon />,
+          icon: StarFilledIcon,
           text: toTokenSearchTerm ? t('Search results') : t('Popular tokens')
         },
         data: restToTokenOptions,
@@ -186,30 +187,11 @@ const ToTokenSelect: React.FC<Props> = ({
     ]
   }, [toTokenOptions, toTokenListError, t, portfolio.tokens, theme, toTokenSearchTerm])
 
-  const renderFeeOptionSectionHeader = useCallback(
-    ({ section }: any) => {
-      if (section.data.length === 0 || !section.title) return null
+  const renderFeeOptionSectionHeader = useCallback(({ section }: any) => {
+    if (section.data.length === 0 || !section.title) return null
 
-      return (
-        <View
-          style={[
-            flexbox.directionRow,
-            flexbox.alignCenter,
-            spacings.ph,
-            spacings.pt,
-            section?.key === 'swap-and-bridge-to-account-tokens' ? spacings.pbSm : spacings.pbSm,
-            { height: SECTION_MENU_HEADER_HEIGHT, backgroundColor: theme.primaryBackground }
-          ]}
-        >
-          {section.title.icon}
-          <Text style={spacings.mlMi} fontSize={14} weight="medium" appearance="secondaryText">
-            {section.title.text}
-          </Text>
-        </View>
-      )
-    },
-    [theme]
-  )
+    return <TitleAndIcon icon={section.title.icon} title={section.title.text} />
+  }, [])
 
   return (
     <SectionedSelect
