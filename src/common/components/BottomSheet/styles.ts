@@ -27,7 +27,7 @@ const getStyles = (theme: ThemeProps) =>
     modal: {
       borderBottomEndRadius: BORDER_RADIUS_PRIMARY,
       borderBottomStartRadius: BORDER_RADIUS_PRIMARY,
-      maxWidth: 600,
+      maxWidth: 540,
       width: '100%',
       margin: 'auto'
     },
