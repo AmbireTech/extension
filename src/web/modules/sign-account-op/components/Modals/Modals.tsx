@@ -9,8 +9,6 @@ import useSign from '@common/hooks/useSign'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import text from '@common/styles/utils/text'
-import useSignAccountOpControllerState from '@web/hooks/useSignAccountOpControllerState'
-import useTransferControllerState from '@web/hooks/useTransferControllerState'
 import LedgerConnectModal from '@web/modules/hardware-wallet/components/LedgerConnectModal'
 import SignAccountOpHardwareWalletSigningModal from '@web/modules/sign-account-op/components/SignAccountOpHardwareWalletSigningModal'
 import { getUiType } from '@web/utils/uiType'
@@ -58,8 +56,8 @@ const Modals: FC<Props> = ({
     useController('SwapAndBridgeController').state
   const {
     state: { signAccountOpController: transferSignAccountOp }
-  } = useTransferControllerState()
-  const currentSignAccountOp = useSignAccountOpControllerState()
+  } = useController('TransferController')
+  const currentSignAccountOp = useController('SignAccountOpController').state
 
   if (renderedButNotNecessarilyVisibleModal === 'warnings') {
     return (

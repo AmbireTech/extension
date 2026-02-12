@@ -18,7 +18,6 @@ import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useSignAccountOpControllerState from '@web/hooks/useSignAccountOpControllerState'
 import PendingTokenSummary from '@web/modules/sign-account-op/components/PendingTokenSummary'
 
 import SimulationSkeleton from './SimulationSkeleton'
@@ -35,7 +34,7 @@ interface Props {
 const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
-  const signAccountOpState = useSignAccountOpControllerState()
+  const signAccountOpState = useController('SignAccountOpController').state
   const {
     state: {
       portfolio: { tokens, collections, portfolioState, networkSimulatedAccountOp }
@@ -202,7 +201,7 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
 
     // If the user is view only we are not displaying the error elsewhere
     // thus we have to show it in the Simulation
-    if (signAccountOpState.status?.type === SigningStatus.EstimationError && !isViewOnly)
+    if (signAccountOpState?.status?.type === SigningStatus.EstimationError && !isViewOnly)
       return 'error-handled-elsewhere'
 
     if (simulationErrorMsg) return 'error'
@@ -211,7 +210,11 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
       return 'changes'
 
     // no-changes from here
-    if (!isSmartAccount(signAccountOpState.account) && !!network?.rpcNoStateOverride)
+    if (
+      signAccountOpState?.account &&
+      !isSmartAccount(signAccountOpState.account) &&
+      !!network?.rpcNoStateOverride
+    )
       return 'simulation-not-supported'
 
     return 'no-changes'

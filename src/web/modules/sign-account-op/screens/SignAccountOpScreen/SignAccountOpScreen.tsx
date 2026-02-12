@@ -26,7 +26,6 @@ import {
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import { closeCurrentWindow } from '@web/extension-services/background/webapi/window'
-import useSignAccountOpControllerState from '@web/hooks/useSignAccountOpControllerState'
 import ActionHeader from '@web/modules/action-requests/components/ActionHeader'
 import Estimation from '@web/modules/sign-account-op/components/Estimation'
 import Footer from '@web/modules/sign-account-op/components/Footer'
@@ -46,7 +45,7 @@ const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }: Nati
 
 const SignAccountOpScreen = () => {
   const { currentUserRequest, visibleUserRequests } = useController('RequestsController').state
-  const signAccountOpState = useSignAccountOpControllerState()
+  const signAccountOpState = useController('SignAccountOpController').state
   const mainState = useController('MainController').state
   const { dispatch } = useControllersMiddleware()
   const { t } = useTranslation()
@@ -153,7 +152,7 @@ const SignAccountOpScreen = () => {
   const copySignAccountOpError = useCallback(async () => {
     if (!signAccountOpState?.errors?.length) return
 
-    const errorCode = signAccountOpState.errors[0].code
+    const errorCode = signAccountOpState.errors[0]?.code
 
     if (!errorCode) return
 
@@ -348,7 +347,7 @@ const SignAccountOpScreen = () => {
               <AlertVertical
                 type="warning"
                 size="sm"
-                title={signAccountOpState.errors[0].title}
+                title={signAccountOpState.errors[0]?.title}
                 text={errorText}
               />
             ) : (

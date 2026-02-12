@@ -16,7 +16,6 @@ import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useSignAccountOpControllerState from '@web/hooks/useSignAccountOpControllerState'
 
 import getStyles from './styles'
 
@@ -40,7 +39,7 @@ const PayOption = ({
     state: { account }
   } = useController('SelectedAccountController')
   const { networks } = useController('NetworksController').state
-  const signAccountOpState = useSignAccountOpControllerState()
+  const signAccountOpState = useController('SignAccountOpController').state
 
   const iconSize = 24
 

@@ -51,7 +51,9 @@ export type DispatchAndWait<K extends keyof AllControllersMappingType> = <
 }) => Promise<R>
 
 interface BaseControllerReturn<K extends keyof AllControllersMappingType> {
-  state: AllControllersMappingType[K]
+  state: K extends 'SignAccountOpController'
+    ? AllControllersMappingType[K] | null
+    : AllControllersMappingType[K]
   dispatch: Dispatch<K>
   dispatchAndWait: DispatchAndWait<K>
 }
@@ -72,6 +74,8 @@ export default function useController<K extends keyof AllControllersMappingType>
   const { dispatch: controllersMiddlewareDispatch } = controllersMiddleware
 
   useEffect(() => {
+    if (id === 'SignAccountOpController') return
+
     if (isStoreReady && !Object.keys(controllerStore.getSnapshot(id)).length) {
       throw new Error(`A controller with name ${id} does not exist in the controllerStore.`)
     }
@@ -154,8 +158,11 @@ export default function useController<K extends keyof AllControllersMappingType>
     [controllersMiddlewareDispatch, id]
   )
 
+  const stateToReturn =
+    id === 'SignAccountOpController' ? state || null : state || ({} as AllControllersMappingType[K])
+
   return {
-    state: state || ({} as AllControllersMappingType[K]),
+    state: stateToReturn,
     ...(helpers || ({} as ControllerHelpersMapping[K])),
     dispatch,
     dispatchAndWait

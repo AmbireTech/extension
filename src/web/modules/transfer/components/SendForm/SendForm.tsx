@@ -50,22 +50,23 @@ const SendForm = ({
 }) => {
   const { validation } = addressInputState
   const {
-    state,
-    state: { tokens }
-  } = useTransferControllerState()
+    state: {
+      tokens,
+      maxAmount,
+      amountFieldMode,
+      amountInFiat,
+      selectedToken,
+      isTopUp,
+      addressState,
+      amount: controllerAmount,
+      isReady
+    }
+  } = useController('TransferController')
   const { dispatch } = useControllersMiddleware()
   const {
     state: { portfolio }
   } = useController('SelectedAccountController')
-  const {
-    maxAmount,
-    amountFieldMode,
-    amountInFiat,
-    selectedToken,
-    isTopUp,
-    addressState,
-    amount: controllerAmount
-  } = state
+
   const { t } = useTranslation()
   const { networks } = useController('NetworksController').state
   const amountIsError = amountErrorSeverity === 'error' && !!amountErrorMessage
@@ -143,9 +144,7 @@ const SendForm = ({
         )}
       </View>
 
-      {(!state.selectedToken && tokens.length) ||
-      !portfolio?.isReadyToVisualize ||
-      !state.isReady ? (
+      {(!selectedToken && tokens.length) || !portfolio?.isReadyToVisualize || !isReady ? (
         <SkeletonLoader width="100%" height={115} />
       ) : (
         <SendToken

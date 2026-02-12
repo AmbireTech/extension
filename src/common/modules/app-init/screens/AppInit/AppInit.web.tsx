@@ -22,7 +22,6 @@ import { PortalHost, PortalProvider } from '@gorhom/portal'
 import { isExtension } from '@web/constants/browserapi'
 import { ControllersMiddlewareProvider } from '@web/contexts/controllersMiddlewareContext'
 import { ControllersStateLoadedProvider } from '@web/contexts/controllersStateLoadedContext'
-import { TransferControllerStateProvider } from '@web/contexts/transferControllerStateContext'
 
 const Router = isExtension ? HashRouter : BrowserRouter
 
@@ -38,7 +37,6 @@ const composeProviders = (
   providers.reduceRight<React.ReactNode>((acc, Provider) => <Provider>{acc}</Provider>, children)
 
 const CONTROLLER_STATE_PROVIDERS: ProviderComponent[] = [
-  TransferControllerStateProvider,
   // Reading from controllers in components, rendered above ControllersStateLoadedProvider
   // must be done very carefully, as it is not guaranteed that the state is loaded.
   ControllersStateLoadedProvider,

@@ -42,7 +42,7 @@ const SignAccountOpHardwareWalletSigningModal: React.FC<Props> = ({
   const { dispatch } = useControllersMiddleware()
   const { addToast } = useToast()
 
-  const prevTransactionCount = usePrevious(signedTransactionsCount)
+  const prevTransactionCount = usePrevious<number | null | undefined>(signedTransactionsCount)
 
   const shouldBeVisible = useMemo(() => {
     // we're not signing or broadcasting on paused updates
@@ -103,7 +103,7 @@ const SignAccountOpHardwareWalletSigningModal: React.FC<Props> = ({
   return (
     <HardwareWalletSigningModal
       isVisible={shouldBeVisible}
-      keyType={currentlyInvolvedSignOrBroadcastKeyType}
+      keyType={currentlyInvolvedSignOrBroadcastKeyType as 'trezor' | 'ledger' | 'lattice'}
     >
       {typeof signedTransactionsCount === 'number' ? (
         <View style={[flexbox.alignCenter, flexbox.justifyCenter, spacings.ptLg]}>
