@@ -21,10 +21,8 @@ import { OnboardingNavigationProvider } from '@common/modules/auth/contexts/onbo
 import { PortalHost, PortalProvider } from '@gorhom/portal'
 import { isExtension } from '@web/constants/browserapi'
 import { AddressBookControllerStateProvider } from '@web/contexts/addressBookControllerStateContext'
-import { ContractNamesControllerStateProvider } from '@web/contexts/contractNamesControllerStateContext'
 import { ControllersMiddlewareProvider } from '@web/contexts/controllersMiddlewareContext'
 import { ControllersStateLoadedProvider } from '@web/contexts/controllersStateLoadedContext'
-import { PhishingControllerStateProvider } from '@web/contexts/phishingControllerStateContext'
 import { StorageControllerStateProvider } from '@web/contexts/storageControllerStateContext'
 import { SwapAndBridgeControllerStateProvider } from '@web/contexts/swapAndBridgeControllerStateContext'
 import { TransferControllerStateProvider } from '@web/contexts/transferControllerStateContext'
@@ -45,8 +43,6 @@ const composeProviders = (
   providers.reduceRight<React.ReactNode>((acc, Provider) => <Provider>{acc}</Provider>, children)
 
 const CONTROLLER_STATE_PROVIDERS: ProviderComponent[] = [
-  PhishingControllerStateProvider,
-  ContractNamesControllerStateProvider,
   AddressBookControllerStateProvider,
   SwapAndBridgeControllerStateProvider,
   TransferControllerStateProvider,

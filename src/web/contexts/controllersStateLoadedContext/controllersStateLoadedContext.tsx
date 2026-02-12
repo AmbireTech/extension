@@ -5,8 +5,6 @@ import { APP_VERSION } from '@common/config/env'
 import useControllerStore from '@common/hooks/useControllerStore'
 import { isStateLoaded } from '@web/contexts/controllersStateLoadedContext//helpers'
 import useAddressBookControllerState from '@web/hooks/useAddressBookControllerState'
-import useContractNamesControllerState from '@web/hooks/useContractNamesController/useContractNamesController'
-import usePhishingControllerState from '@web/hooks/usePhishingControllerState'
 import useStorageControllerState from '@web/hooks/useStorageControllerState'
 import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControllerState'
 import useUiControllerState from '@web/hooks/useUiControllerState'
@@ -39,9 +37,7 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
   const StorageController = useStorageControllerState()
   const UiController = useUiControllerState()
   const WalletStateController = useWalletStateController()
-  const PhishingController = usePhishingControllerState()
   const AddressBookController = useAddressBookControllerState()
-  const ContractNamesController = useContractNamesControllerState()
   const SwapAndBridgeController = useSwapAndBridgeControllerState()
 
   const controllers: any = useMemo(
@@ -49,18 +45,14 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
       StorageController,
       UiController,
       WalletStateController,
-      PhishingController,
       AddressBookController,
-      ContractNamesController,
       SwapAndBridgeController
     }),
     [
       StorageController,
       UiController,
       WalletStateController,
-      PhishingController,
       AddressBookController,
-      ContractNamesController,
       SwapAndBridgeController
     ]
   )
