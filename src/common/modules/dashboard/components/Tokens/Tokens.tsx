@@ -1,4 +1,3 @@
-import Fuse from 'fuse.js'
 import React, { useCallback, useEffect, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { Animated, FlatListProps, Pressable, View } from 'react-native'
@@ -6,7 +5,6 @@ import { useModalize } from 'react-native-modalize'
 
 import { PINNED_TOKENS } from '@ambire-common/consts/pinnedTokens'
 import { Network } from '@ambire-common/interfaces/network'
-import { SelectedAccountPortfolioTokenResult } from '@ambire-common/interfaces/selectedAccount'
 import { AssetType } from '@ambire-common/libs/defiPositions/types'
 import { getTokenAmount, getTokenBalanceInUSD } from '@ambire-common/libs/portfolio/helpers'
 import { TokenResult } from '@ambire-common/libs/portfolio/interfaces'
@@ -121,7 +119,8 @@ const Tokens = ({
       tokens
         .filter((token) => {
           if (isGasTankTokenOnCustomNetwork(token, networks)) return false
-          if (token?.flags.isHidden) return false
+          if (token?.flags.isHidden || token.flags.rewardsType === 'wallet-projected-rewards')
+            return false
 
           const hasTokenAmount = hasAmount(token)
           const isCustom = customTokens.find(

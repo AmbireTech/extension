@@ -47,7 +47,7 @@ const OverviewButton = ({
         ...flexbox.center,
         ...spacings.phSm,
         ...btnAnimStyle,
-        ...(!!tooltipText && { cursor: 'default' }),
+        ...(!!tooltipText && ({ cursor: 'default' } as unknown as ViewStyle)),
         borderColor: '#FFFFFF1F',
         borderRadius: 12,
         borderWidth: 1,
