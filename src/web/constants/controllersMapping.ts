@@ -19,7 +19,3 @@ export const controllersMapping = {
 export type ExtensionBaseControllersMappingType = {
   [K in keyof typeof baseControllersMapping]: InstanceType<(typeof baseControllersMapping)[K]>
 }
-
-export type ExtensionAllControllersMappingType = {
-  [K in keyof typeof controllersMapping]: InstanceType<(typeof controllersMapping)[K]>
-}

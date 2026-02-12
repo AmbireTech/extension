@@ -13,7 +13,3 @@ export const controllersMapping = {
 export type ExplorerBaseControllersMappingType = {
   [K in keyof typeof controllersMapping]: InstanceType<(typeof controllersMapping)[K]>
 }
-
-export type ExplorerAllControllersMappingType = {
-  [K in keyof typeof controllersMapping]: InstanceType<(typeof controllersMapping)[K]>
-}

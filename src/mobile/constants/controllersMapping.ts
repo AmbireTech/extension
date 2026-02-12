@@ -15,7 +15,3 @@ export const controllersMapping = {
 export type MobileBaseControllersMappingType = {
   [K in keyof typeof baseControllersMapping]: InstanceType<(typeof baseControllersMapping)[K]>
 }
-
-export type MobileAllControllersMappingType = {
-  [K in keyof typeof controllersMapping]: InstanceType<(typeof controllersMapping)[K]>
-}

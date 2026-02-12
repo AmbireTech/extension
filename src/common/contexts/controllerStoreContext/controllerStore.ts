@@ -89,7 +89,7 @@ export class ControllerStore {
       if (!this.initializedControllers.has(ctrlName)) return false
 
       if ('isReady' in (this.#states?.[ctrlName] || {})) {
-        return (this.#states[ctrlName] as any)?.isReady === true
+        return (this.#states[ctrlName] as any).isReady === true
       }
 
       return true

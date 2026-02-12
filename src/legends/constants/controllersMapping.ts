@@ -11,7 +11,3 @@ export const controllersMapping = {
 export type RewardsBaseControllersMappingType = {
   [K in keyof typeof controllersMapping]: InstanceType<(typeof controllersMapping)[K]>
 }
-
-export type RewardsAllControllersMappingType = {
-  [K in keyof typeof controllersMapping]: InstanceType<(typeof controllersMapping)[K]>
-}
