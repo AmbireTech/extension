@@ -63,7 +63,7 @@ const Router = () => {
     authStatus,
     requestsState,
     swapAndBridgeState,
-    transferState: transferState.state
+    transferState
   })
 
   if (initialRoute && !pathname) {
