@@ -58,6 +58,7 @@ jobs:
       # Enables Playwright to intercept network requests initiated by Service Workers.
       # We use it to mock or block background requests that can't be intercepted via page.route().
       PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS: '1'
+      LEDGER_TRANSPORT: 'speculos'
 
     steps:
       - name: Checkout full Git history
@@ -97,6 +98,18 @@ jobs:
         run: |
           docker pull ghcr.io/trezor/trezor-user-env
           docker compose -f ./docker-compose-mac.yml up --force-recreate -d
+
+      - name: Start ledger simulator
+        working-directory: ./e2e-playwright-tests/ledger-simulator
+        run: |
+          ./start-speculos.sh
+
+      - name: Check ledger simulator connection
+        working-directory: ./e2e-playwright-tests/ledger-simulator
+        run: |
+          npm -g i ts-node
+          npm i @ledgerhq/hw-transport-node-speculos @ledgerhq/hw-app-eth ethers
+          ts-node test.ts
 
       - name: Install e2e test dependencies
         working-directory: ./e2e-playwright-tests
