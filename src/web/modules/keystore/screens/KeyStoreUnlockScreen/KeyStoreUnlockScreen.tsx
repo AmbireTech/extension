@@ -125,7 +125,7 @@ const KeyStoreUnlockScreen = () => {
               value={value}
               onSubmitEditing={handleSubmit((data) => handleUnlock(data))}
               error={passwordFieldError}
-              containerStyle={{ ...spacings.mb, ...flexbox.flex1 }}
+              containerStyle={{ ...spacings.mb, width: '100%' }}
             />
           )}
           name="password"
