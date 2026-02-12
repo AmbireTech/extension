@@ -569,7 +569,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   }
 
   return (
-    <Wrapper buttons={buttons}>
+    <Wrapper>
       <Content buttons={buttons}>
         {state?.isInitialized ? (
           <View>

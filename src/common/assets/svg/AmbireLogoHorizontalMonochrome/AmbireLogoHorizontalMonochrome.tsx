@@ -92,7 +92,7 @@ const AmbireLogoHorizontalMonochrome: FC<
   }
   return (
     <Svg width={width} height={height} viewBox="0 0 72 24" fill="none" {...props}>
-      <G clipPath="url(#a)">
+      <G clipPath="url(#logo-monochrome)">
         <Path
           fill={String(theme.neutral900)}
           fillRule="evenodd"
@@ -126,7 +126,7 @@ const AmbireLogoHorizontalMonochrome: FC<
         />
       </G>
       <Defs>
-        <ClipPath id="a">
+        <ClipPath id="logo-monochrome">
           <Path fill={String(theme.neutral900)} d="M0 0h72v24H0z" />
         </ClipPath>
       </Defs>

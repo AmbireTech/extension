@@ -7,13 +7,12 @@ import { SigningStatus } from '@ambire-common/controllers/signAccountOp/signAcco
 import { SwapAndBridgeFormStatus } from '@ambire-common/controllers/swapAndBridge/swapAndBridge'
 import { Key } from '@ambire-common/interfaces/keystore'
 import Alert from '@common/components/Alert'
-import BackButton from '@common/components/BackButton'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import Spinner from '@common/components/Spinner'
 import useNavigation from '@common/hooks/useNavigation'
 import usePrevious from '@common/hooks/usePrevious'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
-import spacings, { SPACING_MD, SPACING_MI } from '@common/styles/spacings'
+import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { Content, Wrapper } from '@web/components/TransactionsScreen'
 import useBackgroundService from '@web/hooks/useBackgroundService'
@@ -34,7 +33,7 @@ import PriceImpactWarningModal from '../../components/PriceImpactWarningModal'
 import RouteInfo from '../../components/RouteInfo'
 import ToToken from '../../components/ToToken'
 
-const { isTab, isRequestWindow } = getUiType()
+const { isRequestWindow } = getUiType()
 
 const SwapAndBridgeScreen = () => {
   const { t } = useTranslation()
@@ -238,8 +237,8 @@ const SwapAndBridgeScreen = () => {
   }
 
   return (
-    <Wrapper buttons={buttons}>
-      <Content scrollViewRef={scrollViewRef} buttons={buttons}>
+    <Wrapper>
+      <Content buttons={buttons}>
         {isHealthy === false && (
           <Alert
             type="error"
