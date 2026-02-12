@@ -1,80 +1,35 @@
 import React from 'react'
-import Svg, { G, Path, SvgProps } from 'react-native-svg'
+import Svg, { Circle, Path, SvgProps } from 'react-native-svg'
 
 import useTheme from '@common/hooks/useTheme'
 
-const ImportAccountIcon: React.FC<SvgProps> = ({
-  width = 32,
-  height = 32,
-  color,
-  strokeWidth = 1.5
-}) => {
+const ImportAccountIcon: React.FC<SvgProps> = ({ width = 24, height = 24, color }) => {
   const { theme } = useTheme()
   return (
-    <Svg width={width} height={height} viewBox="0 0 32.186 32.259">
-      <G transform="translate(0.75 0.75)">
-        <G transform="translate(0 2.759)">
-          <Path
-            d="M12.792,16.392a4.141,4.141,0,1,0-4.141-4.141A4.141,4.141,0,0,0,12.792,16.392Z"
-            transform="translate(1.148 -0.579)"
-            fill="none"
-            stroke={color || theme.iconPrimary}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={strokeWidth}
-          />
-          <Path
-            d="M21.568,22.2c0-3.434-3.419-6.234-7.648-6.234S6.271,18.755,6.271,22.2"
-            transform="translate(0.021 3.144)"
-            fill="none"
-            stroke={color || theme.iconPrimary}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={strokeWidth}
-          />
-          <Path
-            d="M30,17A13.956,13.956,0,1,1,21.454,4.091a5.974,5.974,0,0,0-.295,1.857,5.778,5.778,0,0,0,.855,3.036,5.428,5.428,0,0,0,1.12,1.341,5.778,5.778,0,0,0,3.92,1.518,5.432,5.432,0,0,0,1.842-.31A14.1,14.1,0,0,1,30,17Z"
-            transform="translate(-2.001 -3)"
-            fill="none"
-            stroke={color || theme.iconPrimary}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={strokeWidth}
-          />
-        </G>
-        <G transform="translate(19.132)">
-          <Path
-            d="M26.555,6.777a5.19,5.19,0,0,1-.173,1.343,5.393,5.393,0,0,1-.664,1.632,5.629,5.629,0,0,1-3.134,2.5,5.323,5.323,0,0,1-1.805.3,5.663,5.663,0,0,1-3.842-1.488,5.32,5.32,0,0,1-1.1-1.314A5.663,5.663,0,0,1,15,6.777a5.854,5.854,0,0,1,.289-1.82,5.7,5.7,0,0,1,1.343-2.21A5.769,5.769,0,0,1,20.778,1a5.7,5.7,0,0,1,4.289,1.921A5.754,5.754,0,0,1,26.555,6.777Z"
-            transform="translate(-15.002 -1)"
-            fill="none"
-            stroke={color || theme.iconPrimary}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeMiterlimit="10"
-            strokeWidth={strokeWidth}
-          />
-          <Path
-            d="M21.815,4.98h-4.3"
-            transform="translate(-13.886 0.769)"
-            fill="none"
-            stroke={color || theme.iconPrimary}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeMiterlimit="10"
-            strokeWidth={strokeWidth}
-          />
-          <Path
-            d="M19,3.52V7.838"
-            transform="translate(-13.224 0.12)"
-            fill="none"
-            stroke={color || theme.iconPrimary}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeMiterlimit="10"
-            strokeWidth={strokeWidth}
-          />
-        </G>
-      </G>
+    <Svg width={width} height={height} viewBox="0 0 24 24" fill="none">
+      <Circle
+        cx="9"
+        cy="9"
+        r="3.25"
+        stroke={color || theme.iconPrimary}
+        strokeLinecap="round"
+        strokeWidth="1.5"
+      />
+      <Path
+        stroke={color || theme.iconPrimary}
+        strokeWidth="1.5"
+        d="M12.409 8.409a2.25 2.25 0 1 1-.464 2.506"
+      />
+      <Path
+        fill={color || theme.iconPrimary}
+        d="M14 15v-.75.75Zm3.72 2.904.707-.25-.707.25ZM13.881 19l-.735.148.121.602h.614V19Zm-2.098-3.287-.454-.597-.867.658.924.575.397-.636ZM13.999 15v.75c1.806 0 2.628 1.316 3.014 2.405l.707-.25.707-.251c-.454-1.28-1.642-3.404-4.428-3.404V15Zm3.721 2.904-.707.25a.084.084 0 0 1 .005.022v.008a.058.058 0 0 1-.008.01c-.017.021-.063.056-.143.056v1.5c1.009 0 1.97-.942 1.56-2.096l-.707.25ZM16.867 19v-.75H13.88v1.5h2.986V19Zm-2.986 0 .736-.148c-.213-1.055-.798-2.754-2.438-3.776l-.396.637-.397.636c1.124.7 1.58 1.908 1.76 2.8l.735-.149Zm-2.098-3.287.453.597c.43-.325.992-.56 1.764-.56v-1.5c-1.109 0-1.989.347-2.67.866l.453.597Z"
+      />
+      <Path
+        stroke={color || theme.iconPrimary}
+        strokeLinecap="round"
+        strokeWidth="1.5"
+        d="M9 15c3.572 0 4.592 2.551 4.883 4.009.109.541-.33.991-.883.991H5c-.552 0-.992-.45-.883-.991C4.408 17.55 5.428 15 9 15ZM19 3v4M21 5h-4"
+      />
     </Svg>
   )
 }

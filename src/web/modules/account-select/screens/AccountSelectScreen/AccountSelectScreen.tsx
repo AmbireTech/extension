@@ -7,7 +7,6 @@ import { Account as AccountType } from '@ambire-common/interfaces/account'
 import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
 import SettingsWheelIcon from '@common/assets/svg/SettingsWheelIcon'
 import BackButton from '@common/components/BackButton'
-import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
 import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
@@ -26,7 +25,6 @@ import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWr
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import Account from '@web/modules/account-select/components/Account'
 import AddAccount from '@web/modules/account-select/components/AddAccount'
-import { getUiType } from '@web/utils/uiType'
 
 import getStyles from './styles'
 
@@ -141,29 +139,8 @@ const AccountSelectScreen = () => {
             <AddCircularIcon width={24} height={24} color="#fff" style={spacings.mrTy} />
           </Button>
         </FooterGlassView>
-        {/* <View style={[spacings.ptSm, { width: '100%' }]}>
-          <Button
-            testID="button-add-account"
-            text={t('Add account')}
-            type="secondary"
-            hasBottomSpacing={false}
-            onPress={openBottomSheet as any}
-            childrenPosition="left"
-            style={{ ...flexbox.alignSelfCenter, width: '100%' }}
-          >
-            <AddIcon color={theme.primary} style={spacings.mrTy} />
-          </Button>
-        </View> */}
       </View>
-      <BottomSheet
-        id="account-select-add-account"
-        sheetRef={sheetRef}
-        adjustToContentHeight={!getUiType().isPopup}
-        closeBottomSheet={closeBottomSheet}
-        scrollViewProps={{ showsVerticalScrollIndicator: false }}
-      >
-        <AddAccount handleClose={closeBottomSheet as any} />
-      </BottomSheet>
+      <AddAccount sheetRef={sheetRef} closeBottomSheet={closeBottomSheet} />
     </TabLayoutContainer>
   ) : (
     <DashboardSkeleton />
