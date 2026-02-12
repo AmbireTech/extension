@@ -133,11 +133,12 @@ const DashboardOverview: FC<Props> = ({
                 overflow: 'hidden'
               }}
             >
-              <View style={spacings.mbLg}>
+              <View style={[spacings.mbLg, flexbox.alignCenter]}>
                 <View
                   style={[
                     flexbox.directionRow,
                     flexbox.alignCenter,
+                    flexbox.justifyCenter,
                     spacings.mbMi,
                     { height: BALANCE_HEIGHT }
                   ]}
@@ -198,7 +199,7 @@ const DashboardOverview: FC<Props> = ({
                         position: 'absolute',
                         right: -8,
                         top: '50%',
-                        transform: [{ translateY: -14 }, { translateX: -28 }]
+                        transform: [{ translateY: -14 }, { translateX: 28 }]
                       },
                       refreshButtonAnimStyle
                     ]}
