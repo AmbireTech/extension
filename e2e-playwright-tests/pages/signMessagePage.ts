@@ -1,12 +1,17 @@
 import { BA_ADDRESS } from 'constants/env'
 import selectors from 'constants/selectors'
+import { SpeculosDevice } from 'libs/speculos-device'
 
 import { expect } from '@playwright/test'
 
 import { BasePage } from './basePage'
 
 export class SignMessagePage extends BasePage {
-  async signMessage(message: string, type: 'plain' | 'hex' | 'typed') {
+  async signMessage(
+    message: string,
+    type: 'plain' | 'hex' | 'typed',
+    ledgerSimulatorControls: SpeculosDevice = undefined
+  ) {
     await this.page.goto('https://sigtool.ambire.com/')
 
     const dappSelectors = {
@@ -53,8 +58,26 @@ export class SignMessagePage extends BasePage {
     const signActionWindowPagePromise = this.handleNewPage(sign)
 
     const signActionWindowPage = await signActionWindowPagePromise
+    await this.page.waitForTimeout(2000)
     const signMessageButton = signActionWindowPage.getByTestId(selectors.signMessageButton)
     await signMessageButton.click()
+
+    if (ledgerSimulatorControls) {
+      const isReadyToSign = await ledgerSimulatorControls.waitForEvent(
+        ({ text }) => text === 'Review message'
+      )
+
+      if (isReadyToSign) {
+        await ledgerSimulatorControls.pressRightButton()
+        await this.page.waitForTimeout(2000)
+        await ledgerSimulatorControls.pressRightButton()
+        await this.page.waitForTimeout(2000)
+        await ledgerSimulatorControls.pressBothButtons()
+        await this.page.waitForTimeout(2000)
+      } else {
+        console.log('No signing request event received on the device within the timeout period')
+      }
+    }
 
     const signature = await this.page.locator('.signatureResult-signature').first().innerText()
 

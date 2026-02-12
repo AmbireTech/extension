@@ -5,6 +5,10 @@ import { test } from 'fixtures/pageObjects' // your extended test with auth
 
 import { expect } from '@playwright/test'
 
+import { SpeculosDevice } from '../../libs/speculos-device/device'
+
+const LEDGER_SIMULATIUON_URL = process.env.SPECULOS_HTTP_URL || 'http://127.0.0.1:5000'
+
 test.describe('ledger without storage', () => {
   test.describe.configure({ mode: 'serial' })
   test.beforeEach(async ({ pages }) => {
@@ -58,14 +62,15 @@ test.describe('ledger with storage', () => {
   })
 
   //DASHBOARD TESTS
-
   test('should have balance on the dashboard', async ({ pages }) => {
     await pages.dashboard.checkBalanceInAccount()
   })
 
   //   SIGN MESSAGE TESTS
-  //   test.only('should sign plain message', async ({ pages }) => {
-  //     const message = 'Hello, Ambire!'
-  //     await pages.signMessage.signMessage(message, 'plain')
-  //   })
+  test.only('should sign plain message', async ({ pages }) => {
+    const ledgerSimulatorControls = new SpeculosDevice({ baseUrl: LEDGER_SIMULATIUON_URL })
+    const message = 'Hello, Ambire!'
+
+    await pages.signMessage.signMessage(message, 'plain', ledgerSimulatorControls)
+  })
 })
