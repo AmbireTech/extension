@@ -5,7 +5,6 @@ import { APP_VERSION } from '@common/config/env'
 import useControllerStore from '@common/hooks/useControllerStore'
 import { isStateLoaded } from '@web/contexts/controllersStateLoadedContext//helpers'
 import useAddressBookControllerState from '@web/hooks/useAddressBookControllerState'
-import useStorageControllerState from '@web/hooks/useStorageControllerState'
 import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControllerState'
 import useUiControllerState from '@web/hooks/useUiControllerState'
 import useWalletStateController from '@web/hooks/useWalletStateController'
@@ -34,7 +33,6 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
   const [isStatesLoadingTakingTooLong, setIsStatesLoadingTakingTooLong] = useState(false)
   const { isStoreReady } = useControllerStore()
 
-  const StorageController = useStorageControllerState()
   const UiController = useUiControllerState()
   const WalletStateController = useWalletStateController()
   const AddressBookController = useAddressBookControllerState()
@@ -42,25 +40,18 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
 
   const controllers: any = useMemo(
     () => ({
-      StorageController,
       UiController,
       WalletStateController,
       AddressBookController,
       SwapAndBridgeController
     }),
-    [
-      StorageController,
-      UiController,
-      WalletStateController,
-      AddressBookController,
-      SwapAndBridgeController
-    ]
+    [UiController, WalletStateController, AddressBookController, SwapAndBridgeController]
   )
 
   const isViewReady = useMemo(() => {
     if (!isPopup) return true
 
-    const popupView = controllers.UiController?.views?.find((v) => v.type === 'popup')
+    const popupView = controllers.UiController?.views?.find((v: any) => v.type === 'popup')
 
     return !!popupView?.isReady
   }, [controllers.UiController])

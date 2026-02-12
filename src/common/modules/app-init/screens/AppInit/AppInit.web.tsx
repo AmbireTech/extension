@@ -23,7 +23,6 @@ import { isExtension } from '@web/constants/browserapi'
 import { AddressBookControllerStateProvider } from '@web/contexts/addressBookControllerStateContext'
 import { ControllersMiddlewareProvider } from '@web/contexts/controllersMiddlewareContext'
 import { ControllersStateLoadedProvider } from '@web/contexts/controllersStateLoadedContext'
-import { StorageControllerStateProvider } from '@web/contexts/storageControllerStateContext'
 import { SwapAndBridgeControllerStateProvider } from '@web/contexts/swapAndBridgeControllerStateContext'
 import { TransferControllerStateProvider } from '@web/contexts/transferControllerStateContext'
 import { UiControllerStateProvider } from '@web/contexts/uiControllerStateContext'
@@ -76,17 +75,15 @@ const AppInit = () => {
             <ErrorBoundary fallback={errorComponent as any}>
               <ControllerStoreProvider>
                 <ControllersMiddlewareProvider>
-                  <StorageControllerStateProvider>
-                    <UiControllerStateProvider>
-                      <WalletStateControllerProvider>
-                        <ThemeProvider>
-                          <GestureHandler>
-                            {composeProviders(CONTROLLER_STATE_PROVIDERS, appContent)}
-                          </GestureHandler>
-                        </ThemeProvider>
-                      </WalletStateControllerProvider>
-                    </UiControllerStateProvider>
-                  </StorageControllerStateProvider>
+                  <UiControllerStateProvider>
+                    <WalletStateControllerProvider>
+                      <ThemeProvider>
+                        <GestureHandler>
+                          {composeProviders(CONTROLLER_STATE_PROVIDERS, appContent)}
+                        </GestureHandler>
+                      </ThemeProvider>
+                    </WalletStateControllerProvider>
+                  </UiControllerStateProvider>
                 </ControllersMiddlewareProvider>
               </ControllerStoreProvider>
             </ErrorBoundary>

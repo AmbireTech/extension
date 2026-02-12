@@ -15,7 +15,6 @@ import spacings, { SPACING_TY } from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
-import useStorageControllerState from '@web/hooks/useStorageControllerState'
 import Account from '@web/modules/account-select/components/Account'
 import SettingsPageHeader from '@web/modules/settings/components/SettingsPageHeader'
 import { SettingsRoutesContext } from '@web/modules/settings/contexts/SettingsRoutesContext'
@@ -24,7 +23,7 @@ import ManageRecoveryPhrase from '@web/modules/settings/ManageRecoveryPhrase'
 const RecoveryPhraseSettingsScreen = () => {
   const { t } = useTranslation()
   const { theme, themeType } = useTheme()
-  const { statuses } = useStorageControllerState()
+  const { statuses } = useController('StorageController').state
   const { accounts } = useController('AccountsController').state
   const { seeds, keys } = useController('KeystoreController').state
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()

@@ -15,13 +15,12 @@ import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
-import useStorageControllerState from '@web/hooks/useStorageControllerState'
 import Account from '@web/modules/account-select/components/Account'
 
 const SavedSeedPhrases = ({ handleClose }: { handleClose: () => void }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { statuses } = useStorageControllerState()
+  const { statuses } = useController('StorageController').state
   const { accounts } = useController('AccountsController').state
   const { seeds, keys } = useController('KeystoreController').state
   const { dispatch } = useControllersMiddleware()
