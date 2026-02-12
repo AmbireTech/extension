@@ -5,13 +5,13 @@ import { Banner, MarketingBannerTypes } from '@ambire-common/interfaces/banner'
 import AmbireBackgroundLogo from '@common/assets/svg/AmbireBackgroundLogo'
 import CloseIcon from '@common/assets/svg/CloseIcon'
 import Text from '@common/components/Text'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import ThemeColors, { THEME_TYPES } from '@common/styles/themeConfig'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@web/extension-services/background/webapi/tab'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import { getUiType } from '@web/utils/uiType'
 
 import getStyles from './styles'
@@ -65,7 +65,7 @@ const typeBannerColorsMap: Record<Exclude<MarketingBannerTypes, 'alert'>, Banner
 
 const MarketingBanner: React.FC<Props> = ({ banner }) => {
   const { isTab, isPopup } = getUiType()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { styles } = useTheme(getStyles)
   const { text, type: bannerType = 'updates', actions } = banner
   const type = (

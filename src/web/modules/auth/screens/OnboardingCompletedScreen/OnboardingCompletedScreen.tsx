@@ -6,6 +6,7 @@ import Button from '@common/components/Button'
 import Panel from '@common/components/Panel'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import ConfettiAnimation from '@common/modules/dashboard/components/ConfettiAnimation'
 import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Header'
@@ -18,7 +19,6 @@ import {
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import { engine } from '@web/constants/browserapi'
 import { TAB_CONTENT_WIDTH } from '@web/constants/spacings'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import useWalletStateController from '@web/hooks/useWalletStateController'
 import PinExtension from '@web/modules/auth/components/PinExtension'
 
@@ -26,7 +26,7 @@ export const CARD_WIDTH = 400
 
 const OnboardingCompletedScreen = () => {
   const { t } = useTranslation()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { isPinned } = useWalletStateController()
 
   const { theme } = useTheme()

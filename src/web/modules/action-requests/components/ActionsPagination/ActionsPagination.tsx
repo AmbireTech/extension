@@ -5,12 +5,12 @@ import { TouchableOpacity, View } from 'react-native'
 import LeftArrowIcon from '@common/assets/svg/LeftArrowIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import Text from '@common/components/Text'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 
 const SET_CURRENT_REQUEST_PARAMS = {
@@ -20,7 +20,7 @@ const SET_CURRENT_REQUEST_PARAMS = {
 const ActionsPagination = () => {
   const { currentUserRequest, visibleUserRequests } = useRequestsControllerState()
   const { t } = useTranslation()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { theme, themeType } = useTheme()
   const currentRequestIndex = useMemo(() => {
     if (!currentUserRequest) return undefined

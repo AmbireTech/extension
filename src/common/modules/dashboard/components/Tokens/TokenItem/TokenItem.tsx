@@ -3,10 +3,10 @@ import { useTranslation } from 'react-i18next'
 
 import { TokenResult } from '@ambire-common/libs/portfolio'
 import Text from '@common/components/Text'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useNavigation from '@common/hooks/useNavigation'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import { getUiType } from '@web/utils/uiType'
@@ -18,7 +18,7 @@ const { isPopup } = getUiType()
 
 const TokenItem = ({ token }: { token: TokenResult }) => {
   const { t } = useTranslation()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { portfolio } = useSelectedAccountControllerState()
 
   const { networks } = useNetworksControllerState()

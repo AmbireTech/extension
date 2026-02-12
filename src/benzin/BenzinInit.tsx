@@ -2,16 +2,15 @@ import React from 'react'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { BrowserRouter } from 'react-router-dom'
 
+import { BenzinNetworksContextProvider } from '@benzin/contexts/benzinNetworksContext'
+import { ControllersMiddlewareProvider } from '@benzin/contexts/controllersMiddlewareContext'
+import BenzinScreen from '@benzin/screens/BenzinScreen'
 import { GlobalTooltip } from '@common/components/GlobalTooltip'
-import { ContractNamesContextProvider } from '@common/contexts/contractNamesContext'
+import { ControllerStoreProvider } from '@common/contexts/controllerStoreContext'
 import { ThemeProvider } from '@common/contexts/themeContext'
 import { ToastProvider } from '@common/contexts/toastContext'
 import useFonts from '@common/hooks/useFonts'
 import { PortalHost, PortalProvider } from '@gorhom/portal'
-import { DomainsControllerStateProvider } from '@web/contexts/domainsControllerStateContext'
-
-import { BenzinNetworksContextProvider } from './context'
-import BenzinScreen from './screens/BenzinScreen'
 
 const BenzinInit = () => {
   const { fontsLoaded } = useFonts()
@@ -25,14 +24,14 @@ const BenzinInit = () => {
         <ThemeProvider>
           <SafeAreaProvider>
             <ToastProvider>
-              <ContractNamesContextProvider>
-                <BenzinNetworksContextProvider>
-                  <DomainsControllerStateProvider>
+              <ControllerStoreProvider>
+                <ControllersMiddlewareProvider>
+                  <BenzinNetworksContextProvider>
                     <BenzinScreen />
                     <PortalHost name="global" />
-                  </DomainsControllerStateProvider>
-                </BenzinNetworksContextProvider>
-              </ContractNamesContextProvider>
+                  </BenzinNetworksContextProvider>
+                </ControllersMiddlewareProvider>
+              </ControllerStoreProvider>
             </ToastProvider>
           </SafeAreaProvider>
         </ThemeProvider>

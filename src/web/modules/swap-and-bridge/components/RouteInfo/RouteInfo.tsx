@@ -9,12 +9,12 @@ import InfoIcon from '@common/assets/svg/InfoIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import Text from '@common/components/Text'
 import Tooltip from '@common/components/Tooltip'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import formatTime from '@common/utils/formatTime'
 import RetryButton from '@web/components/RetryButton'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControllerState'
 
 import SelectRoute from './SelectRoute'
@@ -34,7 +34,7 @@ const RouteInfo: FC<Props> = ({
     useSwapAndBridgeControllerState()
   const { theme } = useTheme()
   const { t } = useTranslation()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
 
   const allRoutesFailed = useMemo(() => {
     if (!quote || !quote.routes.length) return false

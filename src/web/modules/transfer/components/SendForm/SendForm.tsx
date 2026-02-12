@@ -10,10 +10,10 @@ import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useAddressInput from '@common/hooks/useAddressInput'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useGetTokenSelectProps from '@common/hooks/useGetTokenSelectProps'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import useTransferControllerState from '@web/hooks/useTransferControllerState'
@@ -54,7 +54,7 @@ const SendForm = ({
     state,
     state: { tokens }
   } = useTransferControllerState()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { portfolio } = useSelectedAccountControllerState()
   const {
     maxAmount,
@@ -144,7 +144,7 @@ const SendForm = ({
 
       {(!state.selectedToken && tokens.length) ||
       !portfolio?.isReadyToVisualize ||
-      !state.isReady ? (
+      !state.areDefaultsSet ? (
         <SkeletonLoader width="100%" height={115} />
       ) : (
         <SendToken

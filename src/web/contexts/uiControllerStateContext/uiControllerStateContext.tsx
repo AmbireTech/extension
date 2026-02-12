@@ -2,8 +2,8 @@
 import React, { createContext, useEffect } from 'react'
 
 import { IUiController } from '@ambire-common/interfaces/ui'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useDeepMemo from '@common/hooks/useDeepMemo'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import useControllerState from '@web/hooks/useControllerState'
 
 const UiControllerStateContext = createContext<IUiController>({} as IUiController)
@@ -11,7 +11,7 @@ const UiControllerStateContext = createContext<IUiController>({} as IUiControlle
 const UiControllerStateProvider: React.FC<any> = ({ children }) => {
   const controller = 'UiController'
   const state = useControllerState(controller)
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
 
   useEffect(() => {
     if (!Object.keys(state).length)

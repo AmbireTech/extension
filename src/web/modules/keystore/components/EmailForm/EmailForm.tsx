@@ -14,12 +14,12 @@ import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import usePrevious from '@common/hooks/usePrevious'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import useEmailVaultControllerState from '@web/hooks/useEmailVaultControllerState'
 
 import EmailConfirmation from '../EmailConfirmation'
@@ -37,7 +37,7 @@ const EmailForm = () => {
     defaultValues: { email: '' }
   })
 
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const emailVault = useEmailVaultControllerState()
   const {
     ref: confirmationModalRef,

@@ -11,6 +11,7 @@ import Panel from '@common/components/Panel'
 import SuccessAnimation from '@common/components/SuccessAnimation'
 import Text from '@common/components/Text'
 import { Trans, useTranslation } from '@common/config/localization'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
@@ -27,7 +28,6 @@ import {
 import { createTab } from '@web/extension-services/background/webapi/tab'
 import useAccountPickerControllerState from '@web/hooks/useAccountPickerControllerState'
 import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import useWalletStateController from '@web/hooks/useWalletStateController'
 import AccountPersonalizeCard from '@web/modules/account-personalize/components/AccountPersonalizeCard'
 import AccountsLoadingAnimation from '@web/modules/account-personalize/components/AccountsLoadingAnimation'
@@ -43,7 +43,7 @@ const AccountPersonalizeScreen = () => {
   const { goToNextRoute, goToPrevRoute, setAccountsToPersonalize, accountsToPersonalize } =
     useOnboardingNavigation()
   const { theme } = useTheme(getStyles)
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const accountPickerState = useAccountPickerControllerState()
   const accountsState = useAccountsControllerState()
   const { accounts } = useAccountsControllerState()

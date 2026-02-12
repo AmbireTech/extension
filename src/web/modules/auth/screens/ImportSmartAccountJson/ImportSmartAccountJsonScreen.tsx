@@ -15,6 +15,7 @@ import Panel from '@common/components/Panel'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import { Trans, useTranslation } from '@common/config/localization'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Header'
@@ -27,7 +28,6 @@ import {
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import eventBus from '@web/extension-services/event/eventBus'
 import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import PasswordConfirmation from '@web/modules/settings/components/PasswordConfirmation'
 
 import getStyles from './styles'
@@ -176,7 +176,7 @@ const SmartAccountImportScreen = () => {
     iv: string
   } | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
 
   const { accounts } = useAccountsControllerState()
   const newAccounts: Account[] = useMemo(() => accounts.filter((a) => a.newlyAdded), [accounts])

@@ -6,11 +6,11 @@ import { Hex } from '@ambire-common/interfaces/hex'
 import RetryIcon from '@common/assets/svg/RetryIcon'
 import AlertVertical from '@common/components/AlertVertical'
 import Text from '@common/components/Text'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
 
 type FailedProps = {
@@ -27,7 +27,7 @@ type FailedProps = {
 const Failed: FC<FailedProps> = ({ title, errorMessage, handleClose, toToken, amount }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const [bindAnim, animStyle] = useCustomHover({
     property: 'backgroundColor',
     values: {

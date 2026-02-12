@@ -14,6 +14,7 @@ import SwapAndBridgeIcon from '@common/assets/svg/SwapAndBridgeIcon'
 import TopUpIcon from '@common/assets/svg/TopUpIcon'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
@@ -24,7 +25,6 @@ import flexbox from '@common/styles/utils/flexbox'
 import { RELAYER_URL } from '@env'
 import storage from '@web/extension-services/background/webapi/storage'
 import { createTab } from '@web/extension-services/background/webapi/tab'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import useHasGasTank from '@web/hooks/useHasGasTank'
 import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
@@ -55,7 +55,7 @@ const TokenDetails = ({
   const { t } = useTranslation()
   const { account } = useSelectedAccountControllerState()
   const { supportedChainIds } = useSwapAndBridgeControllerState()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { networks } = useNetworksControllerState()
   const [coinGeckoTokenSlug, setCoinGeckoTokenSlug] = useState('')
   const [isTokenInfoLoading, setIsTokenInfoLoading] = useState(false)
@@ -162,8 +162,8 @@ const TokenDetails = ({
               { network: network?.name || t('This') }
             )
           : isGasTankOrRewardsToken
-          ? unavailableBecauseGasTankOrRewardsTokenTooltipText
-          : undefined,
+            ? unavailableBecauseGasTankOrRewardsTokenTooltipText
+            : undefined,
         strokeWidth: 1.5
       },
       // TODO: Temporarily hidden as of v4.49.0, because displaying it disabled
@@ -206,10 +206,10 @@ const TokenDetails = ({
         tooltipText: !hasGasTank
           ? t('Not available for hardware wallets yet.')
           : !canToToppedUp
-          ? t(
-              'This token is not eligible for filling up the Gas Tank. Please select a supported token instead.'
-            )
-          : gasTankAssetsError || undefined,
+            ? t(
+                'This token is not eligible for filling up the Gas Tank. Please select a supported token instead.'
+              )
+            : gasTankAssetsError || undefined,
         strokeWidth: 1,
         testID: 'top-up-button'
       },

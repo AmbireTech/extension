@@ -56,19 +56,8 @@ export class PortMessenger {
   }
 
   addOrUpdatePort(port: Port, onPortAddOrUpdate: (port: Port) => void) {
-    const index = this.ports.findIndex((p) => p.id === port.id)
-
-    if (index >= 0) {
-      const oldPort = this.ports[index]
-      this.#removePort(oldPort)
-      oldPort.disconnect()
-
-      this.ports[index] = port
-    } else {
-      this.ports.push(port)
-    }
-
-    this.sendToPort(port, '> ui', { method: 'portReady', params: {} })
+    this.ports = this.ports.filter((p) => p.id !== port.id)
+    this.ports.push(port)
     onPortAddOrUpdate(port)
   }
 

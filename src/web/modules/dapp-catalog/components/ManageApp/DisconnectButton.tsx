@@ -4,10 +4,10 @@ import { View } from 'react-native'
 import { Dapp } from '@ambire-common/interfaces/dapp'
 import PlugDisconnectIcon from '@common/assets/svg/PlugDisconnectIcon'
 import Text from '@common/components/Text'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
 
 const DisconnectButton = ({
@@ -17,7 +17,7 @@ const DisconnectButton = ({
   dapp: Dapp
   setIsOpen: React.Dispatch<React.SetStateAction<boolean>>
 }) => {
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { theme } = useTheme()
 
   const [bindAnim, animStyle, isHovered] = useCustomHover({

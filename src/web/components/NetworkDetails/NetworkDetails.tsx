@@ -15,13 +15,13 @@ import DialogFooter from '@common/components/Dialog/DialogFooter'
 import NetworkIcon from '@common/components/NetworkIcon'
 import Text from '@common/components/Text'
 import { isAmbireNext, isDev } from '@common/config/env'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings, { SPACING, SPACING_MD, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import NetworkForm from '@web/modules/settings/screens/NetworksSettingsScreen/NetworkForm'
 
@@ -60,7 +60,7 @@ const NetworkDetails = ({
 }: Props) => {
   const { t } = useTranslation()
   const { theme, styles, themeType } = useTheme(getStyles)
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { statuses, allNetworks } = useNetworksControllerState()
   const { ref: dialogRef, open: openDialog, close: closeDialog } = useModalize()
 

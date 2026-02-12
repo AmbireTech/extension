@@ -2,8 +2,8 @@
 import React, { createContext, useEffect, useMemo } from 'react'
 import { useIdleTimer } from 'react-idle-timer'
 
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import { AutoLockController } from '@web/extension-services/background/controllers/auto-lock'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import useControllerState from '@web/hooks/useControllerState'
 
 const AutoLockControllerStateContext = createContext<AutoLockController>({} as AutoLockController)
@@ -11,7 +11,7 @@ const AutoLockControllerStateContext = createContext<AutoLockController>({} as A
 const AutoLockControllerStateProvider: React.FC<any> = ({ children }) => {
   const controller = 'AutoLockController'
   const state = useControllerState(controller)
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
 
   useEffect(() => {
     dispatch({

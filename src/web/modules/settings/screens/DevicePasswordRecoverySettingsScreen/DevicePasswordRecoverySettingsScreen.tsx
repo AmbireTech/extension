@@ -14,6 +14,7 @@ import { PanelTitle } from '@common/components/Panel/Panel'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import { ROUTES } from '@common/modules/router/constants/common'
@@ -21,7 +22,6 @@ import spacings, { SPACING_XL } from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import useEmailVaultControllerState from '@web/hooks/useEmailVaultControllerState'
 import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 import EmailConfirmation from '@web/modules/keystore/components/EmailConfirmation'
@@ -42,7 +42,7 @@ const DevicePasswordRecoverySettingsScreen = () => {
 
   const { ref: successModalRef, open: openSuccessModal, close: closeSuccessModal } = useModalize()
 
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
 
   const {
     control,
@@ -168,8 +168,8 @@ const DevicePasswordRecoverySettingsScreen = () => {
             isSubmitting || ev.currentState === EmailVaultState.Loading
               ? t('Loading...')
               : ev.hasKeystoreRecovery
-              ? t('Enabled')
-              : t('Enable')
+                ? t('Enabled')
+                : t('Enable')
           }
           onPress={handleFormSubmit}
         />
