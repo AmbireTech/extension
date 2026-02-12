@@ -37,7 +37,11 @@ export class ControllerStore {
     forceEmit?: boolean
   ) {
     if (ctrl === undefined) return
-    this.#states[id] = isExtension ? { ...ctrl } : parse(stringify(ctrl))
+    try {
+      this.#states[id] = isExtension ? { ...ctrl } : parse(stringify(ctrl))
+    } catch (error) {
+      console.error(error)
+    }
     if (!this.initializedControllers.has(id)) {
       this.initializedControllers.add(id)
       this.#checkReadiness()
