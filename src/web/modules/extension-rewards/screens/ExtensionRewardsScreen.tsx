@@ -111,14 +111,14 @@ const ExtensionRewardsScreen = () => {
 
     const storageData = localStorage.getItem('pastProjectedRewardsScores') as string | undefined
     const parsed = storageData ? (parse(storageData) as PastProjectedRewardsScoresStorage) : null
-    console.log('parsed', parsed)
+
     if (!parsed || parsed.extensionVersion !== APP_VERSION || !account) {
       setArePastProjectedRewardsScoresLoading(false)
       return
     }
 
     const scores = parsed.data[account.addr]
-    console.log('scores', scores)
+
     if (!scores) {
       setArePastProjectedRewardsScoresLoading(false)
       return
