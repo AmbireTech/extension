@@ -29,7 +29,6 @@ import useWindowSize from '@common/hooks/useWindowSize'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
-import useActivityControllerState from '@web/hooks/useActivityControllerState'
 import SettingsPageHeader from '@web/modules/settings/components/SettingsPageHeader'
 import { SettingsRoutesContext } from '@web/modules/settings/contexts/SettingsRoutesContext'
 
@@ -58,7 +57,7 @@ const ALL_NETWORKS_OPTION = {
 
 const HistorySettingsPage: FC<Props> = ({ HistoryComponent, historyType, sessionId }) => {
   const { networks } = useController('NetworksController').state
-  const activityState = useActivityControllerState()
+  const activityState = useController('ActivityController').state
   const { accounts } = useController('AccountsController').state
   const {
     state: { account: accountData }

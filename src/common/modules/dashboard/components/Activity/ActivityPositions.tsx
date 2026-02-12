@@ -22,7 +22,6 @@ import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@web/extension-services/background/webapi/tab'
-import useActivityControllerState from '@web/hooks/useActivityControllerState'
 import SubmittedTransactionSummary from '@web/modules/settings/components/TransactionHistory/SubmittedTransactionSummary'
 import { getUiType } from '@web/utils/uiType'
 
@@ -63,7 +62,7 @@ const ActivityPositions: FC<Props> = ({
   const { theme } = useTheme()
 
   const { dispatch } = useControllersMiddleware()
-  const { accountsOps, banners } = useActivityControllerState()
+  const { accountsOps, banners } = useController('ActivityController').state
   const {
     state: { account, dashboardNetworkFilter }
   } = useController('SelectedAccountController')

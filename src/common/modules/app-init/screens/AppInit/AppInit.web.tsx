@@ -20,7 +20,6 @@ import { AuthProvider } from '@common/modules/auth/contexts/authContext'
 import { OnboardingNavigationProvider } from '@common/modules/auth/contexts/onboardingNavigationContext'
 import { PortalHost, PortalProvider } from '@gorhom/portal'
 import { isExtension } from '@web/constants/browserapi'
-import { ActivityControllerStateProvider } from '@web/contexts/activityControllerStateContext'
 import { AddressBookControllerStateProvider } from '@web/contexts/addressBookControllerStateContext'
 import { BannerControllerStateProvider } from '@web/contexts/bannerControllerStateContext/bannerControllerStateContext'
 import { ContractNamesControllerStateProvider } from '@web/contexts/contractNamesControllerStateContext'
@@ -50,7 +49,6 @@ const composeProviders = (
   providers.reduceRight<React.ReactNode>((acc, Provider) => <Provider>{acc}</Provider>, children)
 
 const CONTROLLER_STATE_PROVIDERS: ProviderComponent[] = [
-  ActivityControllerStateProvider,
   RequestsControllerStateProvider,
   PortfolioControllerStateProvider,
   BannerControllerStateProvider,

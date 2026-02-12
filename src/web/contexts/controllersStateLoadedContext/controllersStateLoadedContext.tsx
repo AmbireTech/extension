@@ -2,10 +2,8 @@ import React, { createContext, useEffect, useMemo, useRef, useState } from 'reac
 
 import { captureMessage } from '@common/config/analytics/CrashAnalytics.web'
 import { APP_VERSION } from '@common/config/env'
-import useController from '@common/hooks/useController'
 import useControllerStore from '@common/hooks/useControllerStore'
 import { isStateLoaded } from '@web/contexts/controllersStateLoadedContext//helpers'
-import useActivityControllerState from '@web/hooks/useActivityControllerState'
 import useAddressBookControllerState from '@web/hooks/useAddressBookControllerState'
 import useBannersControllerState from '@web/hooks/useBannersControllerState'
 import useContractNamesControllerState from '@web/hooks/useContractNamesController/useContractNamesController'
@@ -46,7 +44,6 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
   const UiController = useUiControllerState()
   const WalletStateController = useWalletStateController()
   const RequestsController = useRequestsControllerState()
-  const ActivityController = useActivityControllerState()
   const PortfolioController = usePortfolioControllerState()
   const EmailVaultController = useEmailVaultControllerState()
   const PhishingController = usePhishingControllerState()
@@ -61,7 +58,6 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
       UiController,
       WalletStateController,
       RequestsController,
-      ActivityController,
       PortfolioController,
       EmailVaultController,
       PhishingController,
@@ -75,7 +71,6 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
       UiController,
       WalletStateController,
       RequestsController,
-      ActivityController,
       PortfolioController,
       EmailVaultController,
       PhishingController,

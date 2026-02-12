@@ -29,7 +29,6 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { Content, Wrapper } from '@web/components/TransactionsScreen'
 import { createTab } from '@web/extension-services/background/webapi/tab'
-import useActivityControllerState from '@web/hooks/useActivityControllerState'
 import useHasGasTank from '@web/hooks/useHasGasTank'
 import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import useSyncedState from '@web/hooks/useSyncedState'
@@ -93,7 +92,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     open: openGasTankInfoBottomSheet,
     close: closeGasTankInfoBottomSheet
   } = useModalize()
-  const { accountsOps } = useActivityControllerState()
+  const { accountsOps } = useController('ActivityController').state
   const { hasGasTank } = useHasGasTank({ account })
   const recipientMenuClosedAutomatically = useRef(false)
 
