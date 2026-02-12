@@ -301,22 +301,11 @@ const Estimation = ({
     return mappedFeeOption
   }, [hasEstimation, signAccountOpState, serviceFee, nativeFeeOption])
 
-  const renderFeeOptionSectionHeader = useCallback(
-    ({ section }: any) => {
-      if (section.data.length === 0 || !section.title) return null
+  const renderFeeOptionSectionHeader = useCallback(({ section }: any) => {
+    if (section.data.length === 0 || !section.title) return null
 
-      return (
-        <TitleAndIcon
-          icon={section.title.icon}
-          title={section.title.text}
-          style={{
-            backgroundColor: theme.secondaryBackground
-          }}
-        />
-      )
-    },
-    [theme.secondaryBackground]
-  )
+    return <TitleAndIcon icon={section.title.icon} title={section.title.text} />
+  }, [])
 
   if (!hasEstimation && !!slowRequest) {
     return (

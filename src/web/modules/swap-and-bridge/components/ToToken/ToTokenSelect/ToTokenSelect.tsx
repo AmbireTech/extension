@@ -187,11 +187,20 @@ const ToTokenSelect: React.FC<Props> = ({
     ]
   }, [toTokenOptions, toTokenListError, t, portfolio.tokens, theme, toTokenSearchTerm])
 
-  const renderFeeOptionSectionHeader = useCallback(({ section }: any) => {
-    if (section.data.length === 0 || !section.title) return null
+  const renderFeeOptionSectionHeader = useCallback(
+    ({ section }: any) => {
+      if (section.data.length === 0 || !section.title) return null
 
-    return <TitleAndIcon icon={section.title.icon} title={section.title.text} />
-  }, [])
+      return (
+        <TitleAndIcon
+          icon={section.title.icon}
+          title={section.title.text}
+          style={{ backgroundColor: theme.primaryBackground }}
+        />
+      )
+    },
+    [theme.primaryBackground]
+  )
 
   return (
     <SectionedSelect

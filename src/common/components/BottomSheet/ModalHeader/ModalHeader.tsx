@@ -19,7 +19,7 @@ const ModalHeader: FC<Props> = ({ handleClose, withBackButton = true, title, sty
   return (
     <Header.Wrapper
       containerStyle={{ ...spacings.ptTy, ...spacings.pb0, ...spacings.ph0 }}
-      style={{ ...spacings.mbLg, ...style }}
+      style={{ ...spacings.mbLg, ...style, minHeight: 28 }}
     >
       {withSideContainers && (
         <Header.Container side="left">
