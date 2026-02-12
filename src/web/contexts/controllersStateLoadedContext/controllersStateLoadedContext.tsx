@@ -12,7 +12,6 @@ import useActivityControllerState from '@web/hooks/useActivityControllerState'
 import useAddressBookControllerState from '@web/hooks/useAddressBookControllerState'
 import useBannersControllerState from '@web/hooks/useBannersControllerState'
 import useContractNamesControllerState from '@web/hooks/useContractNamesController/useContractNamesController'
-import useDomainsControllerState from '@web/hooks/useDomainsController/useDomainsController'
 import useEmailVaultControllerState from '@web/hooks/useEmailVaultControllerState'
 import useExtensionUpdateControllerState from '@web/hooks/useExtensionUpdateControllerState'
 import useFeatureFlagsControllerState from '@web/hooks/useFeatureFlagsControllerState'
@@ -83,7 +82,6 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
   const EmailVaultController = useEmailVaultControllerState()
   const PhishingController = usePhishingControllerState()
   const AddressBookController = useAddressBookControllerState()
-  const DomainsController = useDomainsControllerState().state
   const InviteController = useInviteControllerState()
   const ContractNamesController = useContractNamesControllerState()
   const BannerController = useBannersControllerState()
@@ -109,7 +107,6 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
       EmailVaultController,
       PhishingController,
       AddressBookController,
-      DomainsController,
       InviteController,
       ContractNamesController,
       BannerController,
@@ -134,7 +131,6 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
       EmailVaultController,
       PhishingController,
       AddressBookController,
-      DomainsController,
       InviteController,
       ContractNamesController,
       BannerController,
