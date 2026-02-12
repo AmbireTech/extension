@@ -21,7 +21,6 @@ import SmallNotificationWindowWrapper from '@web/components/SmallNotificationWin
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import useDappInfo from '@web/hooks/useDappInfo/useDappInfo'
 import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
-import useSignMessageControllerState from '@web/hooks/useSignMessageControllerState'
 import ActionFooter from '@web/modules/action-requests/components/ActionFooter'
 import ActionHeader from '@web/modules/action-requests/components/ActionHeader'
 import useLedger from '@web/modules/hardware-wallet/hooks/useLedger'
@@ -33,7 +32,7 @@ import SignInWithEthereum from './Contents/signInWithEthereum'
 
 const SignMessageScreen = () => {
   const { t } = useTranslation()
-  const signMessageState = useSignMessageControllerState()
+  const signMessageState = useController('SignMessageController').state
   const signStatus = signMessageState.statuses.sign
   const [hasReachedBottom, setHasReachedBottom] = useState<boolean | null>(null)
   const keystoreState = useController('KeystoreController').state
@@ -48,7 +47,7 @@ const SignMessageScreen = () => {
   const [makeItSmartConfirmed, setMakeItSmartConfirmed] = useState(false)
   const [doNotAskMeAgain, setDoNotAskMeAgain] = useState(false)
   const { currentUserRequest } = useRequestsControllerState()
-  const { theme, themeType } = useTheme()
+  const { theme } = useTheme()
   const { addToast } = useToast()
 
   const userRequest = useMemo(() => {

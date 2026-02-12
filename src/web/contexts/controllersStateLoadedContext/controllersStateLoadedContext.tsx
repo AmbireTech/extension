@@ -2,6 +2,7 @@ import React, { createContext, useEffect, useMemo, useRef, useState } from 'reac
 
 import { captureMessage } from '@common/config/analytics/CrashAnalytics.web'
 import { APP_VERSION } from '@common/config/env'
+import useController from '@common/hooks/useController'
 import useControllerStore from '@common/hooks/useControllerStore'
 import { isStateLoaded } from '@web/contexts/controllersStateLoadedContext//helpers'
 import useActivityControllerState from '@web/hooks/useActivityControllerState'
@@ -12,7 +13,6 @@ import useEmailVaultControllerState from '@web/hooks/useEmailVaultControllerStat
 import usePhishingControllerState from '@web/hooks/usePhishingControllerState'
 import usePortfolioControllerState from '@web/hooks/usePortfolioControllerState/usePortfolioControllerState'
 import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
-import useSignMessageControllerState from '@web/hooks/useSignMessageControllerState'
 import useStorageControllerState from '@web/hooks/useStorageControllerState'
 import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControllerState'
 import useUiControllerState from '@web/hooks/useUiControllerState'
@@ -45,7 +45,6 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
   const StorageController = useStorageControllerState()
   const UiController = useUiControllerState()
   const WalletStateController = useWalletStateController()
-  const SignMessageController = useSignMessageControllerState()
   const RequestsController = useRequestsControllerState()
   const ActivityController = useActivityControllerState()
   const PortfolioController = usePortfolioControllerState()
@@ -61,7 +60,6 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
       StorageController,
       UiController,
       WalletStateController,
-      SignMessageController,
       RequestsController,
       ActivityController,
       PortfolioController,
@@ -76,7 +74,6 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
       StorageController,
       UiController,
       WalletStateController,
-      SignMessageController,
       RequestsController,
       ActivityController,
       PortfolioController,

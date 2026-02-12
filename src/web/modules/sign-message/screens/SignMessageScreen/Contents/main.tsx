@@ -43,7 +43,7 @@ const Main = ({
   shouldDisplayEIP1271Warning
 }: Props) => {
   const { t } = useTranslation()
-  const signMessageState = useSignMessageControllerState()
+  const signMessageState = useController('SignMessageController').state
   const signStatus = signMessageState.statuses.sign
   const { styles, theme, themeType } = useTheme(getStyles)
   const { responsiveSizeMultiplier } = useResponsiveActionWindow()

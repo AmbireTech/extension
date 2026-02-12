@@ -94,7 +94,7 @@ const SignInWithEthereum = ({
   handleDismissLedgerConnectModal
 }: Props) => {
   const { t } = useTranslation()
-  const signMessageState = useSignMessageControllerState()
+  const signMessageState = useController('SignMessageController').state
   const signStatus = signMessageState.statuses.sign
   const { styles } = useTheme(getStyles)
   const { theme } = useTheme()
