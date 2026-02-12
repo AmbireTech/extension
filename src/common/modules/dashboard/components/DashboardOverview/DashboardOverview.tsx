@@ -84,7 +84,7 @@ const DashboardOverview: FC<Props> = ({
   }, [dashboardNetworkFilter, dispatch])
 
   return (
-    <View style={[spacings.phSm, banners.length ? spacings.mbSm : spacings.mb]}>
+    <View style={[spacings.phSm, banners.length ? spacings.mbTy : spacings.mb]}>
       <View style={[styles.contentContainer]}>
         <Animated.View
           style={[
@@ -193,7 +193,15 @@ const DashboardOverview: FC<Props> = ({
                     </Pressable>
                   )}
                   <AnimatedPressable
-                    style={[spacings.mlTy, refreshButtonAnimStyle]}
+                    style={[
+                      {
+                        position: 'absolute',
+                        right: -8,
+                        top: '50%',
+                        transform: [{ translateY: -14 }, { translateX: -28 }]
+                      },
+                      refreshButtonAnimStyle
+                    ]}
                     onPress={reloadAccount}
                     {...bindRefreshButtonAnim}
                     disabled={!portfolio.isAllReady || portfolio.isReloading}
