@@ -47,11 +47,16 @@ const TitleAndIcon = ({
   )
 }
 
-const Text = ({ text, type, ...rest }: { text: string; type: Type } & Omit<Props, 'type'>) => {
+const Text = ({ text, type, ...rest }: { text: string; type?: Type } & Omit<Props, 'type'>) => {
   const { theme } = useTheme()
 
   return (
-    <CommonText fontSize={16} color={theme[`${type}Text`]} style={spacings.mb3Xl} {...rest}>
+    <CommonText
+      fontSize={16}
+      color={theme[`${type || 'secondary'}Text`]}
+      style={spacings.mb3Xl}
+      {...rest}
+    >
       {text}
     </CommonText>
   )
