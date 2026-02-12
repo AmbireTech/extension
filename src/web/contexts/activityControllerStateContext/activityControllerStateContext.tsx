@@ -2,10 +2,10 @@
 import React, { createContext, useEffect } from 'react'
 
 import { IActivityController } from '@ambire-common/interfaces/activity'
+import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useDeepMemo from '@common/hooks/useDeepMemo'
 import useControllerState from '@web/hooks/useControllerState'
-import useMainControllerState from '@web/hooks/useMainControllerState'
 
 const ActivityControllerStateContext = createContext<IActivityController>({} as IActivityController)
 
@@ -13,16 +13,16 @@ const ActivityControllerStateProvider: React.FC<any> = ({ children }) => {
   const controller = 'ActivityController'
   const state = useControllerState(controller)
   const { dispatch } = useControllersMiddleware()
-  const mainState = useMainControllerState()
+  const { isReady } = useController('MainController').state
 
   useEffect(() => {
-    if (mainState.isReady && !Object.keys(state).length) {
+    if (isReady && !Object.keys(state).length) {
       dispatch({
         type: 'INIT_CONTROLLER_STATE',
         params: { controller }
       })
     }
-  }, [dispatch, mainState.isReady, state])
+  }, [dispatch, isReady, state])
 
   const memoizedState = useDeepMemo(state, controller)
 

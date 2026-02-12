@@ -1,9 +1,7 @@
 import React, { createContext, useEffect, useMemo, useRef, useState } from 'react'
 
-import { ControllerInterface } from '@ambire-common/interfaces/controller'
 import { captureMessage } from '@common/config/analytics/CrashAnalytics.web'
 import { APP_VERSION } from '@common/config/env'
-import { AllControllersMappingType } from '@common/constants/controllersMapping'
 import useControllerStore from '@common/hooks/useControllerStore'
 import { isStateLoaded } from '@web/contexts/controllersStateLoadedContext//helpers'
 import useActivityControllerState from '@web/hooks/useActivityControllerState'
@@ -11,7 +9,6 @@ import useAddressBookControllerState from '@web/hooks/useAddressBookControllerSt
 import useBannersControllerState from '@web/hooks/useBannersControllerState'
 import useContractNamesControllerState from '@web/hooks/useContractNamesController/useContractNamesController'
 import useEmailVaultControllerState from '@web/hooks/useEmailVaultControllerState'
-import useMainControllerState from '@web/hooks/useMainControllerState/useMainControllerState'
 import usePhishingControllerState from '@web/hooks/usePhishingControllerState'
 import usePortfolioControllerState from '@web/hooks/usePortfolioControllerState/usePortfolioControllerState'
 import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
@@ -32,19 +29,6 @@ const ControllersStateLoadedContext = createContext<{
 
 const { isPopup } = getUiType()
 
-type Controllers = {
-  [K in keyof AllControllersMappingType]: ControllerInterface<AllControllersMappingType[K]>
-}
-
-type ControllersToWait = Omit<
-  Controllers,
-  | 'SignAccountOpController'
-  | 'AutoLockController'
-  | 'TransferController'
-  | 'DefiPositionsController'
-  | 'AutoLoginController'
->
-
 const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
   const startTimeRef = useRef(Date.now())
   const timeoutRef = useRef<NodeJS.Timeout>(null)
@@ -58,7 +42,6 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
   const [isStatesLoadingTakingTooLong, setIsStatesLoadingTakingTooLong] = useState(false)
   const { isStoreReady } = useControllerStore()
 
-  const MainController = useMainControllerState()
   const StorageController = useStorageControllerState()
   const UiController = useUiControllerState()
   const WalletStateController = useWalletStateController()
@@ -75,7 +58,6 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
 
   const controllers: any = useMemo(
     () => ({
-      MainController,
       StorageController,
       UiController,
       WalletStateController,
@@ -91,7 +73,6 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
       SwapAndBridgeController
     }),
     [
-      MainController,
       StorageController,
       UiController,
       WalletStateController,

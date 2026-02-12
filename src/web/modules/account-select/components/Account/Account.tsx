@@ -20,7 +20,6 @@ import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
-import useMainControllerState from '@web/hooks/useMainControllerState'
 import { getUiType } from '@web/utils/uiType'
 
 import getStyles from './styles'
@@ -59,7 +58,7 @@ const Account = ({
   const { t } = useTranslation()
   const { theme, styles } = useTheme(getStyles)
   const { addToast } = useToast()
-  const { statuses: mainStatuses } = useMainControllerState()
+  const { statuses: mainStatuses } = useController('MainController').state
   const {
     state: { account: selectedAccount }
   } = useController('SelectedAccountController')

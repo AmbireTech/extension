@@ -4,7 +4,6 @@ import { useModalize } from 'react-native-modalize'
 
 import { SelectedAccountBalanceError } from '@ambire-common/libs/selectedAccount/errors'
 import useController from '@common/hooks/useController'
-import useMainControllerState from '@web/hooks/useMainControllerState'
 
 const useBalanceAffectingErrors = () => {
   const { t } = useTranslation()
@@ -12,7 +11,7 @@ const useBalanceAffectingErrors = () => {
     state: { balanceAffectingErrors, portfolio }
   } = useController('SelectedAccountController')
   const isLoadingTakingTooLong = portfolio.shouldShowPartialResult
-  const { isOffline } = useMainControllerState()
+  const { isOffline } = useController('MainController').state
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   /** Because errors change frequently due to background updates we have to store a snapshot
    * of the errors when the user clicks on the warning icon to display the errors in the bottom sheet.

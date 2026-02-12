@@ -16,7 +16,6 @@ import spacings, { SPACING, SPACING_MD, SPACING_TY, SPACING_XL } from '@common/s
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import useHover, { AnimatedPressable } from '@web/hooks/useHover'
-import useMainControllerState from '@web/hooks/useMainControllerState'
 
 import backgroundImage from './background.png'
 import BalanceAffectingErrors from './BalanceAffectingErrors'
@@ -50,7 +49,7 @@ const DashboardOverview: FC<Props> = ({
   const { dispatch } = useControllersMiddleware()
   const { t } = useTranslation()
   const { theme, styles } = useTheme(getStyles)
-  const { isOffline } = useMainControllerState()
+  const { isOffline } = useController('MainController').state
   const {
     state: { account, dashboardNetworkFilter, portfolio }
   } = useController('SelectedAccountController')

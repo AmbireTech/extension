@@ -10,6 +10,7 @@ import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Button from '@common/components/Button'
 import Text from '@common/components/Text'
 import { Trans, useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
@@ -18,7 +19,6 @@ import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { openInternalPageInTab } from '@web/extension-services/background/webapi/tab'
-import useMainControllerState from '@web/hooks/useMainControllerState'
 import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import useLedger from '@web/modules/hardware-wallet/hooks/useLedger'
 import { getUiType } from '@web/utils/uiType'
@@ -43,7 +43,7 @@ const LedgerConnectModal = ({
   displayOptionToAuthorize = true
 }: Props) => {
   const { ref, open, close } = useModalize()
-  const mainCtrlState = useMainControllerState()
+  const mainCtrlState = useController('MainController').state
   const { requestLedgerDeviceAccess } = useLedger()
   const { addToast } = useToast()
   const { t } = useTranslation()

@@ -11,6 +11,7 @@ import Alert from '@common/components/Alert'
 import AlertVertical from '@common/components/AlertVertical'
 import NetworkBadge from '@common/components/NetworkBadge'
 import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
+import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useSign from '@common/hooks/useSign'
 import useTheme from '@common/hooks/useTheme'
@@ -25,7 +26,6 @@ import {
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import { closeCurrentWindow } from '@web/extension-services/background/webapi/window'
-import useMainControllerState from '@web/hooks/useMainControllerState'
 import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import useSignAccountOpControllerState from '@web/hooks/useSignAccountOpControllerState'
 import ActionHeader from '@web/modules/action-requests/components/ActionHeader'
@@ -48,7 +48,7 @@ const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }: Nati
 const SignAccountOpScreen = () => {
   const { currentUserRequest, visibleUserRequests } = useRequestsControllerState()
   const signAccountOpState = useSignAccountOpControllerState()
-  const mainState = useMainControllerState()
+  const mainState = useController('MainController').state
   const { dispatch } = useControllersMiddleware()
   const { t } = useTranslation()
   const { addToast } = useToast()

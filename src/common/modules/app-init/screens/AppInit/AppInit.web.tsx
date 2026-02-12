@@ -27,7 +27,6 @@ import { ContractNamesControllerStateProvider } from '@web/contexts/contractName
 import { ControllersMiddlewareProvider } from '@web/contexts/controllersMiddlewareContext'
 import { ControllersStateLoadedProvider } from '@web/contexts/controllersStateLoadedContext'
 import { EmailVaultControllerStateProvider } from '@web/contexts/emailVaultControllerStateContext'
-import { MainControllerStateProvider } from '@web/contexts/mainControllerStateContext'
 import { PhishingControllerStateProvider } from '@web/contexts/phishingControllerStateContext'
 import { PortfolioControllerStateProvider } from '@web/contexts/portfolioControllerStateContext'
 import { RequestsControllerStateProvider } from '@web/contexts/requestsControllerStateContext'
@@ -93,19 +92,17 @@ const AppInit = () => {
             <ErrorBoundary fallback={errorComponent as any}>
               <ControllerStoreProvider>
                 <ControllersMiddlewareProvider>
-                  <MainControllerStateProvider>
-                    <StorageControllerStateProvider>
-                      <UiControllerStateProvider>
-                        <WalletStateControllerProvider>
-                          <ThemeProvider>
-                            <GestureHandler>
-                              {composeProviders(CONTROLLER_STATE_PROVIDERS, appContent)}
-                            </GestureHandler>
-                          </ThemeProvider>
-                        </WalletStateControllerProvider>
-                      </UiControllerStateProvider>
-                    </StorageControllerStateProvider>
-                  </MainControllerStateProvider>
+                  <StorageControllerStateProvider>
+                    <UiControllerStateProvider>
+                      <WalletStateControllerProvider>
+                        <ThemeProvider>
+                          <GestureHandler>
+                            {composeProviders(CONTROLLER_STATE_PROVIDERS, appContent)}
+                          </GestureHandler>
+                        </ThemeProvider>
+                      </WalletStateControllerProvider>
+                    </UiControllerStateProvider>
+                  </StorageControllerStateProvider>
                 </ControllersMiddlewareProvider>
               </ControllerStoreProvider>
             </ErrorBoundary>

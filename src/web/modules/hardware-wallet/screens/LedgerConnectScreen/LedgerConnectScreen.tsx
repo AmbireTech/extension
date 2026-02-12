@@ -24,13 +24,12 @@ import {
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import { closeCurrentWindow } from '@web/extension-services/background/webapi/window'
-import useMainControllerState from '@web/hooks/useMainControllerState'
 import useLedger from '@web/modules/hardware-wallet/hooks/useLedger'
 
 export const CARD_WIDTH = 400
 
 const LedgerConnectScreen = () => {
-  const mainCtrlState = useMainControllerState()
+  const mainCtrlState = useController('MainController').state
   const { requestLedgerDeviceAccess } = useLedger()
   const { addToast } = useToast()
   const { t } = useTranslation()

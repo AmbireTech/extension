@@ -5,7 +5,6 @@ import { getCurrentAccountBanners } from '@ambire-common/libs/banners/banners'
 import useController from '@common/hooks/useController'
 import useBannersControllerState from '@web/hooks/useBannersControllerState'
 import useEmailVaultControllerState from '@web/hooks/useEmailVaultControllerState'
-import useMainControllerState from '@web/hooks/useMainControllerState'
 import usePortfolioControllerState from '@web/hooks/usePortfolioControllerState/usePortfolioControllerState'
 import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControllerState'
@@ -24,7 +23,7 @@ const OFFLINE_BANNER: BannerInterface = {
 }
 
 export default function useBanners(): [BannerInterface[], BannerInterface[]] {
-  const { isOffline } = useMainControllerState()
+  const { isOffline } = useController('MainController').state
   const { banners: marketingBanners } = useBannersControllerState()
   const {
     state: { account, portfolio, deprecatedSmartAccountBanner }
