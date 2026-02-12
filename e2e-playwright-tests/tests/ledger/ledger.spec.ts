@@ -67,7 +67,7 @@ test.describe('ledger with storage', () => {
   })
 
   //   SIGN MESSAGE TESTS
-  test.only('should sign plain message', async ({ pages }) => {
+  test('should sign plain message', async ({ pages }) => {
     const ledgerSimulatorControls = new SpeculosDevice({ baseUrl: LEDGER_SIMULATIUON_URL })
     const message = 'Hello, Ambire!'
 
