@@ -3,14 +3,16 @@ import { useMemo } from 'react'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import { safeTokenAmountAndNumberMultiplication } from '@ambire-common/utils/numbers/formatters'
 import RewardsCircularIcon from '@common/assets/svg/RewardsCircularIcon/RewardsCircularIcon'
+import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 
 import OverviewButton from './OverviewButton'
 
 const RewardsButton = () => {
-  const { portfolio } = useSelectedAccountControllerState()
+  const {
+    state: { portfolio }
+  } = useController('SelectedAccountController')
   const { navigate } = useNavigation()
 
   const total: number = useMemo(() => {

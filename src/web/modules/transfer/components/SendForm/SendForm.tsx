@@ -15,7 +15,6 @@ import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useGetTokenSelectProps from '@common/hooks/useGetTokenSelectProps'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import useTransferControllerState from '@web/hooks/useTransferControllerState'
 import useSimulationError from '@web/modules/portfolio/hooks/SimulationError/useSimulationError'
 import { getTokenId } from '@web/utils/token'
@@ -55,7 +54,9 @@ const SendForm = ({
     state: { tokens }
   } = useTransferControllerState()
   const { dispatch } = useControllersMiddleware()
-  const { portfolio } = useSelectedAccountControllerState()
+  const {
+    state: { portfolio }
+  } = useController('SelectedAccountController')
   const {
     maxAmount,
     amountFieldMode,

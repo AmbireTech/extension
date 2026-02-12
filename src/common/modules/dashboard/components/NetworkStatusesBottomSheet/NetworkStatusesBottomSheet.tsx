@@ -10,7 +10,6 @@ import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 
 import NetworkStatusRow from './NetworkStatusRow'
 
@@ -30,7 +29,9 @@ const NetworkStatusesBottomSheet = ({ sheetRef, closeBottomSheet }: Props) => {
   const {
     state: { networks }
   } = useController('NetworksController')
-  const { portfolio } = useSelectedAccountControllerState()
+  const {
+    state: { portfolio }
+  } = useController('SelectedAccountController')
   const { theme } = useTheme()
 
   const sortedNetworks = useMemo(() => {

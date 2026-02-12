@@ -23,7 +23,6 @@ import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import { ItemPanel } from '@web/components/TransactionsScreen'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControllerState'
 import SwitchTokensButton from '@web/modules/swap-and-bridge/components/SwitchTokensButton'
 import ToTokenSelect from '@web/modules/swap-and-bridge/components/ToToken/ToTokenSelect'
@@ -56,7 +55,9 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
   } = useSwapAndBridgeControllerState()
 
   const { networks } = useController('NetworksController').state
-  const { account } = useSelectedAccountControllerState()
+  const {
+    state: { account }
+  } = useController('SelectedAccountController')
   const { dispatch } = useControllersMiddleware()
 
   const handleSwitchFromAndToTokens = useCallback(

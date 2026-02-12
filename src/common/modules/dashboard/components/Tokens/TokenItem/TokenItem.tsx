@@ -5,7 +5,6 @@ import { TokenResult } from '@ambire-common/libs/portfolio'
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import { getUiType } from '@web/utils/uiType'
 
 import BaseTokenItem from './BaseTokenItem'
@@ -16,7 +15,9 @@ const { isPopup } = getUiType()
 const TokenItem = ({ token }: { token: TokenResult }) => {
   const { t } = useTranslation()
   const { dispatch } = useControllersMiddleware()
-  const { portfolio } = useSelectedAccountControllerState()
+  const {
+    state: { portfolio }
+  } = useController('SelectedAccountController')
 
   const {
     state: { networks }

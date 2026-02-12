@@ -10,6 +10,7 @@ import Alert from '@common/components/Alert'
 import BackButton from '@common/components/BackButton'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import Spinner from '@common/components/Spinner'
+import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useNavigation from '@common/hooks/useNavigation'
 import usePrevious from '@common/hooks/usePrevious'
@@ -18,7 +19,6 @@ import spacings, { SPACING_MD, SPACING_MI } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { Content, Wrapper } from '@web/components/TransactionsScreen'
 import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControllerState'
 import useSimulationError from '@web/modules/portfolio/hooks/SimulationError/useSimulationError'
 import BatchAdded from '@web/modules/sign-account-op/components/OneClick/BatchModal/BatchAdded'
@@ -80,7 +80,9 @@ const SwapAndBridgeScreen = () => {
     swapSignErrors,
     quote
   } = useSwapAndBridgeControllerState()
-  const { portfolio } = useSelectedAccountControllerState()
+  const {
+    state: { portfolio }
+  } = useController('SelectedAccountController')
 
   const { statuses: requestsCtrlStatuses } = useRequestsControllerState()
   const prevSelectedAccActiveRoutes: any[] | undefined = usePrevious(selectedAccActiveRoutes)

@@ -11,7 +11,6 @@ import flexbox from '@common/styles/utils/flexbox'
 import { tokenOrCollectionSearch } from '@common/utils/search'
 import { networkSort } from '@common/utils/sorting'
 import usePortfolioControllerState from '@web/hooks/usePortfolioControllerState/usePortfolioControllerState'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import { SettingsRoutesContext } from '@web/modules/settings/contexts/SettingsRoutesContext'
 
 import AddTokenBottomSheet from './AddTokenBottomSheet'
@@ -32,8 +31,10 @@ const ManageTokensSettingsScreen = () => {
   const { control, watch } = useForm({ mode: 'all', defaultValues: { search: '' } })
   const { networks } = useController('NetworksController').state
   const {
-    portfolio: { isAllReady, tokens }
-  } = useSelectedAccountControllerState()
+    state: {
+      portfolio: { isAllReady, tokens }
+    }
+  } = useController('SelectedAccountController')
   const [networkFilter, setNetworkFilter] = useState('all')
   const search = watch('search')
 

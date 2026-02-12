@@ -18,7 +18,6 @@ import useGetTokenSelectProps from '@common/hooks/useGetTokenSelectProps'
 import useNavigation from '@common/hooks/useNavigation'
 import { ROUTES } from '@common/modules/router/constants/common'
 import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControllerState'
 import useSyncedState from '@web/hooks/useSyncedState'
 import { getTokenId } from '@web/utils/token'
@@ -49,7 +48,9 @@ const useSwapAndBridgeForm = () => {
   } = useSwapAndBridgeControllerState()
   const { dispatch } = useControllersMiddleware()
   const { userRequests } = useRequestsControllerState()
-  const { account, portfolio } = useSelectedAccountControllerState()
+  const {
+    state: { account, portfolio }
+  } = useController('SelectedAccountController')
   const controllerAmountFieldValue = fromAmountFieldMode === 'token' ? fromAmount : fromAmountInFiat
   const [fromAmountValue, setFromAmountValue] = useSyncedState<string>({
     backgroundState: controllerAmountFieldValue,

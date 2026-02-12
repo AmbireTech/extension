@@ -3,12 +3,14 @@ import { useTranslation } from 'react-i18next'
 import { useModalize } from 'react-native-modalize'
 
 import { SelectedAccountBalanceError } from '@ambire-common/libs/selectedAccount/errors'
+import useController from '@common/hooks/useController'
 import useMainControllerState from '@web/hooks/useMainControllerState'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 
 const useBalanceAffectingErrors = () => {
   const { t } = useTranslation()
-  const { balanceAffectingErrors, portfolio } = useSelectedAccountControllerState()
+  const {
+    state: { balanceAffectingErrors, portfolio }
+  } = useController('SelectedAccountController')
   const isLoadingTakingTooLong = portfolio.shouldShowPartialResult
   const { isOffline } = useMainControllerState()
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()

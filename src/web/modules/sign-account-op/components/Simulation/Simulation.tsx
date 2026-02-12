@@ -18,7 +18,6 @@ import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import useSignAccountOpControllerState from '@web/hooks/useSignAccountOpControllerState'
 import PendingTokenSummary from '@web/modules/sign-account-op/components/PendingTokenSummary'
 
@@ -38,8 +37,10 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
   const { styles, theme } = useTheme(getStyles)
   const signAccountOpState = useSignAccountOpControllerState()
   const {
-    portfolio: { tokens, collections, portfolioState, networkSimulatedAccountOp }
-  } = useSelectedAccountControllerState()
+    state: {
+      portfolio: { tokens, collections, portfolioState, networkSimulatedAccountOp }
+    }
+  } = useController('SelectedAccountController')
   const [initialSimulationLoaded, setInitialSimulationLoaded] = useState(false)
   const [shouldRespectIsLoading, setShouldRespectIsLoading] = useState(true)
   const { networks } = useController('NetworksController').state

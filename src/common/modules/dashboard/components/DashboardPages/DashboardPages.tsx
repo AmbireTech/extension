@@ -10,7 +10,6 @@ import usePrevious from '@common/hooks/usePrevious'
 import useRoute from '@common/hooks/useRoute'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import { getUiType } from '@web/utils/uiType'
 
 import Activity from '../Activity'
@@ -32,7 +31,9 @@ const DashboardPages = ({ onScroll, isSearchHidden, animatedOverviewHeight }: Pr
   const route = useRoute()
   const [sessionId] = useState(`dashboard-${nanoid()}`)
   const [, setSearchParams] = useSearchParams()
-  const { dashboardNetworkFilter } = useSelectedAccountControllerState()
+  const {
+    state: { dashboardNetworkFilter }
+  } = useController('SelectedAccountController')
 
   const {
     state: { networks }

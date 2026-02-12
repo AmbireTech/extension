@@ -20,7 +20,6 @@ import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { createTab } from '@web/extension-services/background/webapi/tab'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import { sizeMultiplier } from '@web/modules/sign-account-op/components/TransactionSummary'
 
 import RepeatTransaction from './RepeatTransaction'
@@ -50,7 +49,9 @@ const Footer: FC<Props> = ({
   const { styles } = useTheme(getStyles)
   const { addToast } = useToast()
   const { networks } = useController('NetworksController').state
-  const { account: selectedAccount } = useSelectedAccountControllerState()
+  const {
+    state: { account: selectedAccount }
+  } = useController('SelectedAccountController')
   const { t } = useTranslation()
   const textSize = 14 * sizeMultiplier[size]
   const iconSize = 24 * sizeMultiplier[size]

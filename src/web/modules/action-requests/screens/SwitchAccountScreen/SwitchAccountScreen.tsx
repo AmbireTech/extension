@@ -18,7 +18,6 @@ import text from '@common/styles/utils/text'
 import ManifestImage from '@web/components/ManifestImage'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import ActionFooter from '@web/modules/action-requests/components/ActionFooter'
 
 import Account from './components/Account'
@@ -28,7 +27,9 @@ const SwitchAccountScreen = () => {
   const { t } = useTranslation()
   const { theme, styles } = useTheme(getStyles)
   const { addToast } = useToast()
-  const { account } = useSelectedAccountControllerState()
+  const {
+    state: { account }
+  } = useController('SelectedAccountController')
   const { dispatch } = useControllersMiddleware()
   const { currentUserRequest } = useRequestsControllerState()
   const { accounts } = useController('AccountsController').state

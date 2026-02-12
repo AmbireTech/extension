@@ -25,7 +25,6 @@ import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWr
 import usePortfolioControllerState from '@web/hooks/usePortfolioControllerState/usePortfolioControllerState'
 import useProvidersControllerState from '@web/hooks/useProvidersControllerState'
 import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import ActionFooter from '@web/modules/action-requests/components/ActionFooter'
 import {
   getTokenEligibility,
@@ -52,7 +51,9 @@ const WatchTokenRequestScreen = () => {
   const { dispatch } = useControllersMiddleware()
   const { currentUserRequest } = useRequestsControllerState()
   const { temporaryTokens, validTokens, customTokens } = usePortfolioControllerState()
-  const { portfolio: selectedAccountPortfolio } = useSelectedAccountControllerState()
+  const {
+    state: { portfolio: selectedAccountPortfolio }
+  } = useController('SelectedAccountController')
   const { networks } = useController('NetworksController').state
   const { state } = useProvidersControllerState()
 

@@ -24,7 +24,6 @@ import flexbox from '@common/styles/utils/flexbox'
 import { searchWithNetworkName } from '@common/utils/search'
 import { openInTab } from '@web/extension-services/background/webapi/tab'
 import useFeatureFlagsControllerState from '@web/hooks/useFeatureFlagsControllerState'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import { getUiType } from '@web/utils/uiType'
 
 import SearchAndCurrentApp from '../SearchAndCurrentApp'
@@ -63,8 +62,9 @@ const DeFiPositions: FC<Props> = ({
   const {
     state: { networks }
   } = useController('NetworksController')
-  const { account, portfolio, dashboardNetworkFilter, banners } =
-    useSelectedAccountControllerState()
+  const {
+    state: { account, portfolio, dashboardNetworkFilter, banners }
+  } = useController('SelectedAccountController')
   const { setSearchParams, navigate } = useNavigation()
 
   const { dispatch } = useControllersMiddleware()

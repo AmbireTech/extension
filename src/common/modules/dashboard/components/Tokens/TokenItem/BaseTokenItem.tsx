@@ -20,7 +20,6 @@ import spacings, { SPACING_2XL, SPACING_TY } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexboxStyles from '@common/styles/utils/flexbox'
 import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import { getTokenId } from '@web/utils/token'
 
 import TokenDetails from '../TokenDetails'
@@ -50,7 +49,9 @@ const BaseTokenItem = ({
   onPress,
   wrapperTestID
 }: Props) => {
-  const { portfolio } = useSelectedAccountControllerState()
+  const {
+    state: { portfolio }
+  } = useController('SelectedAccountController')
 
   const {
     state: { networks }

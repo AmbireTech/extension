@@ -14,7 +14,6 @@ import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { AnimatedPressable, DURATIONS, useMultiHover } from '@web/hooks/useHover'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import { getUiType } from '@web/utils/uiType'
 
 import getStyles from './styles'
@@ -33,7 +32,9 @@ interface Props {
 const SelectNetwork = ({ currentTab }: Props) => {
   const { styles } = useTheme(getStyles)
   const { t } = useTranslation()
-  const { dashboardNetworkFilter } = useSelectedAccountControllerState()
+  const {
+    state: { dashboardNetworkFilter }
+  } = useController('SelectedAccountController')
   const { navigate } = useNavigation()
   const {
     state: { networks }

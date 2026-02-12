@@ -21,7 +21,6 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { tokenOrCollectionSearch } from '@common/utils/search'
 import usePortfolioControllerState from '@web/hooks/usePortfolioControllerState/usePortfolioControllerState'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import AddTokenBottomSheet from '@web/modules/settings/screens/ManageTokensSettingsScreen/AddTokenBottomSheet'
 import { getTokenId } from '@web/utils/token'
 import { getUiType } from '@web/utils/uiType'
@@ -80,7 +79,9 @@ const Tokens = ({
     state: { networks }
   } = useController('NetworksController')
   const { customTokens } = usePortfolioControllerState()
-  const { portfolio, dashboardNetworkFilter } = useSelectedAccountControllerState()
+  const {
+    state: { portfolio, dashboardNetworkFilter }
+  } = useController('SelectedAccountController')
   const {
     ref: addTokenBottomSheetRef,
     open: openAddTokenBottomSheet,

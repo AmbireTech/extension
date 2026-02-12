@@ -22,7 +22,6 @@ import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWr
 import useDappInfo from '@web/hooks/useDappInfo/useDappInfo'
 import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import useSignMessageControllerState from '@web/hooks/useSignMessageControllerState'
 import ActionFooter from '@web/modules/action-requests/components/ActionFooter'
 import ActionHeader from '@web/modules/action-requests/components/ActionHeader'
@@ -39,7 +38,9 @@ const SignMessageScreen = () => {
   const signStatus = signMessageState.statuses.sign
   const [hasReachedBottom, setHasReachedBottom] = useState<boolean | null>(null)
   const keystoreState = useKeystoreControllerState()
-  const { account } = useSelectedAccountControllerState()
+  const {
+    state: { account }
+  } = useController('SelectedAccountController')
   const { networks } = useController('NetworksController').state
   const { dispatch } = useControllersMiddleware()
   const { isLedgerConnected } = useLedger()

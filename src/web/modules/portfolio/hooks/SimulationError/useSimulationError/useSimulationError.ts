@@ -1,13 +1,14 @@
 import { useMemo } from 'react'
 
 import useController from '@common/hooks/useController'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 
 interface Props {
   chainId?: bigint | number | null
 }
 const useSimulationError = ({ chainId }: Props) => {
-  const { portfolio } = useSelectedAccountControllerState()
+  const {
+    state: { portfolio }
+  } = useController('SelectedAccountController')
   const { networks } = useController('NetworksController').state
 
   const network = useMemo(() => {

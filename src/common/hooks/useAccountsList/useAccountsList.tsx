@@ -6,7 +6,6 @@ import { FlatList } from 'react-native'
 import { Account as AccountType } from '@ambire-common/interfaces/account'
 import { isSmartAccount } from '@ambire-common/libs/account/account'
 import useController from '@common/hooks/useController'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 
 const useAccountsList = ({
   flatlistRef
@@ -25,7 +24,9 @@ const useAccountsList = ({
     state: { domains }
   } = useController('DomainsController')
   const { accounts } = useController('AccountsController').state
-  const { account: selectedAccount } = useSelectedAccountControllerState()
+  const {
+    state: { account: selectedAccount }
+  } = useController('SelectedAccountController')
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   const searchableAccounts = useMemo(

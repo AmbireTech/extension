@@ -7,9 +7,9 @@ import Alert from '@common/components/Alert'
 import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
 import flexbox from '@common/styles/utils/flexbox'
 import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 
 interface Props {
   requestType?: 'encrypt' | 'decrypt'
@@ -21,7 +21,9 @@ interface Props {
  */
 export const useEncryptionCapability = ({ requestType }: Props = { requestType: 'encrypt' }) => {
   const { t } = useTranslation()
-  const { account } = useSelectedAccountControllerState()
+  const {
+    state: { account }
+  } = useController('SelectedAccountController')
   const keystoreState = useKeystoreControllerState()
 
   const isViewOnly = getIsViewOnly(keystoreState.keys, account?.associatedKeys || [])

@@ -5,6 +5,7 @@ import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import DashboardHeader from '@common/modules/dashboard/components/DashboardHeader'
@@ -16,7 +17,6 @@ import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import useHover, { AnimatedPressable } from '@web/hooks/useHover'
 import useMainControllerState from '@web/hooks/useMainControllerState'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 
 import backgroundImage from './background.png'
 import BalanceAffectingErrors from './BalanceAffectingErrors'
@@ -51,7 +51,9 @@ const DashboardOverview: FC<Props> = ({
   const { t } = useTranslation()
   const { theme, styles } = useTheme(getStyles)
   const { isOffline } = useMainControllerState()
-  const { account, dashboardNetworkFilter, portfolio } = useSelectedAccountControllerState()
+  const {
+    state: { account, dashboardNetworkFilter, portfolio }
+  } = useController('SelectedAccountController')
 
   const [bindRefreshButtonAnim, refreshButtonAnimStyle] = useHover({
     preset: 'opacityInverted'

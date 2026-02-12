@@ -22,12 +22,13 @@ import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 
 import getStyles from './styles'
 
 const ReceiveScreen: FC = () => {
-  const { account } = useSelectedAccountControllerState()
+  const {
+    state: { account }
+  } = useController('SelectedAccountController')
   const { isLoading: isDomainResolving, ens } = useReverseLookup({ address: account?.addr || '' })
   const { networks } = useController('NetworksController').state
   const { keys } = useKeystoreControllerState()

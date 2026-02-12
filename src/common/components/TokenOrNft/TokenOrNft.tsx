@@ -8,7 +8,6 @@ import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useToast from '@common/hooks/useToast'
 import { SPACING_TY } from '@common/styles/spacings'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 
 import HumanizerAddress from '../HumanizerAddress'
 import Nft from './components/Nft'
@@ -37,7 +36,9 @@ const TokenOrNft: FC<Props> = ({
     tokenInfo?: TokenResult
     nftInfo?: CollectionResult
   }>({})
-  const { portfolio } = useSelectedAccountControllerState()
+  const {
+    state: { portfolio }
+  } = useController('SelectedAccountController')
   const { dispatchAndWait } = useController('ProvidersController')
 
   const { t } = useTranslation()

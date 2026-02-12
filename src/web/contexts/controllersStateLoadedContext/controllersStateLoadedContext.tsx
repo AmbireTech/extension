@@ -21,7 +21,6 @@ import usePhishingControllerState from '@web/hooks/usePhishingControllerState'
 import usePortfolioControllerState from '@web/hooks/usePortfolioControllerState/usePortfolioControllerState'
 import useProvidersControllerState from '@web/hooks/useProvidersControllerState'
 import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import useSignMessageControllerState from '@web/hooks/useSignMessageControllerState'
 import useStorageControllerState from '@web/hooks/useStorageControllerState'
 import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControllerState'
@@ -71,7 +70,6 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
   const StorageController = useStorageControllerState()
   const UiController = useUiControllerState()
   const ProvidersController = useProvidersControllerState().state
-  const SelectedAccountController = useSelectedAccountControllerState()
   const WalletStateController = useWalletStateController()
   const SignMessageController = useSignMessageControllerState()
   const RequestsController = useRequestsControllerState()
@@ -95,7 +93,6 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
       StorageController,
       UiController,
       ProvidersController,
-      SelectedAccountController,
       WalletStateController,
       SignMessageController,
       RequestsController,
@@ -118,7 +115,6 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
       StorageController,
       UiController,
       ProvidersController,
-      SelectedAccountController,
       WalletStateController,
       SignMessageController,
       RequestsController,

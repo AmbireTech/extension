@@ -3,7 +3,6 @@ import React, { createContext, useMemo } from 'react'
 
 import useController from '@common/hooks/useController'
 import { AUTH_STATUS } from '@common/modules/auth/constants/authStatus'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 
 type AuthContextData = {
   authStatus: AUTH_STATUS
@@ -15,7 +14,9 @@ const AuthContext = createContext<AuthContextData>({
 
 const AuthProvider: React.FC = ({ children }: any) => {
   const accountsState = useController('AccountsController').state
-  const { account, isReady } = useSelectedAccountControllerState()
+  const {
+    state: { account, isReady }
+  } = useController('SelectedAccountController')
 
   const authStatus = useMemo(() => {
     if (!accountsState.accounts || !isReady) return AUTH_STATUS.LOADING

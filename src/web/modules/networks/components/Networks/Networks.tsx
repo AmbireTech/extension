@@ -4,7 +4,6 @@ import { View } from 'react-native'
 
 import useController from '@common/hooks/useController'
 import spacings from '@common/styles/spacings'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 
 import NetworkComponent from './Network'
 
@@ -20,7 +19,9 @@ const Networks = ({
   onPress: (chainId: bigint | string) => void
 }) => {
   const { networks } = useController('NetworksController').state
-  const { account, portfolio } = useSelectedAccountControllerState()
+  const {
+    state: { account, portfolio }
+  } = useController('SelectedAccountController')
 
   // Use this map to avoid searching the network name for every network using find
   const networkChainIdToNameMap = useMemo(() => {

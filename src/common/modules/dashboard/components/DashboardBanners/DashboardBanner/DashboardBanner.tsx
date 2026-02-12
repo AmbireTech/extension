@@ -8,13 +8,13 @@ import {
 } from '@ambire-common/interfaces/banner'
 import BatchIcon from '@common/assets/svg/BatchIcon'
 import Banner, { BannerButton } from '@common/components/Banner'
+import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useNavigation from '@common/hooks/useNavigation'
 import useToast from '@common/hooks/useToast'
 import DashboardBannerBottomSheet from '@common/modules/dashboard/components/DashboardBanners/DashboardBannerBottomSheet'
 import { ROUTES } from '@common/modules/router/constants/common'
 import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 
 const ERROR_ACTIONS = [
   'reject-accountOp',
@@ -33,7 +33,9 @@ const DashboardBanner = ({
   const { addToast } = useToast()
   const { navigate } = useNavigation()
   const { statuses, visibleUserRequests } = useRequestsControllerState()
-  const { portfolio } = useSelectedAccountControllerState()
+  const {
+    state: { portfolio }
+  } = useController('SelectedAccountController')
   const { ref: sheetRef, close: closeBottomSheet, open: openBottomSheet } = useModalize()
 
   const Icon = useMemo(() => {

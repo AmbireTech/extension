@@ -38,7 +38,6 @@ import { PhishingControllerStateProvider } from '@web/contexts/phishingControlle
 import { PortfolioControllerStateProvider } from '@web/contexts/portfolioControllerStateContext'
 import { ProvidersControllerStateProvider } from '@web/contexts/providersControllerStateContext'
 import { RequestsControllerStateProvider } from '@web/contexts/requestsControllerStateContext'
-import { SelectedAccountControllerStateProvider } from '@web/contexts/selectedAccountControllerStateContext'
 import { SignMessageControllerStateProvider } from '@web/contexts/signMessageControllerStateContext'
 import { StorageControllerStateProvider } from '@web/contexts/storageControllerStateContext'
 import { SwapAndBridgeControllerStateProvider } from '@web/contexts/swapAndBridgeControllerStateContext'
@@ -60,7 +59,6 @@ const composeProviders = (
   providers.reduceRight<React.ReactNode>((acc, Provider) => <Provider>{acc}</Provider>, children)
 
 const CONTROLLER_STATE_PROVIDERS: ProviderComponent[] = [
-  SelectedAccountControllerStateProvider,
   ProvidersControllerStateProvider,
   AutoLockControllerStateProvider,
   ExtensionUpdateControllerStateProvider,

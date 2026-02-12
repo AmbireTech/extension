@@ -19,7 +19,6 @@ import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 
 import ManageContact from './ManageContact'
 import getStyles from './styles'
@@ -56,7 +55,9 @@ const AddressBookContact: FC<Props> = ({
   const { addToast } = useToast()
   const { dispatch } = useControllersMiddleware()
   const { accounts } = useController('AccountsController').state
-  const { account: selectedAccount } = useSelectedAccountControllerState()
+  const {
+    state: { account: selectedAccount }
+  } = useController('SelectedAccountController')
   const { ens, isLoading } = useReverseLookup({ address })
   const [bindAnim, animStyle] = useCustomHover({
     property: 'backgroundColor',

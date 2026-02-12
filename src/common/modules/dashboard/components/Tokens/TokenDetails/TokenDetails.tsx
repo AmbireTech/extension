@@ -28,7 +28,6 @@ import storage from '@web/extension-services/background/webapi/storage'
 import { createTab } from '@web/extension-services/background/webapi/tab'
 import useHasGasTank from '@web/hooks/useHasGasTank'
 import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControllerState'
 import { getTokenId } from '@web/utils/token'
 
@@ -53,7 +52,9 @@ const TokenDetails = ({
   } = useModalize()
   const { addToast } = useToast()
   const { t } = useTranslation()
-  const { account } = useSelectedAccountControllerState()
+  const {
+    state: { account }
+  } = useController('SelectedAccountController')
   const { supportedChainIds } = useSwapAndBridgeControllerState()
   const { dispatch } = useControllersMiddleware()
   const {

@@ -30,7 +30,6 @@ import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import useActivityControllerState from '@web/hooks/useActivityControllerState'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import SettingsPageHeader from '@web/modules/settings/components/SettingsPageHeader'
 import { SettingsRoutesContext } from '@web/modules/settings/contexts/SettingsRoutesContext'
 
@@ -61,7 +60,9 @@ const HistorySettingsPage: FC<Props> = ({ HistoryComponent, historyType, session
   const { networks } = useController('NetworksController').state
   const activityState = useActivityControllerState()
   const { accounts } = useController('AccountsController').state
-  const { account: accountData } = useSelectedAccountControllerState()
+  const {
+    state: { account: accountData }
+  } = useController('SelectedAccountController')
   const { dispatch } = useControllersMiddleware()
   const [page, setPage] = useState(1)
   const { t } = useTranslation()
