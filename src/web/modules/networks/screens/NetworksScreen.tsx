@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react'
+import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
@@ -11,6 +12,7 @@ import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
 import Input from '@common/components/Input'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
+import Search from '@common/components/Search'
 import useNavigation from '@common/hooks/useNavigation/useNavigation.web'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
@@ -40,7 +42,6 @@ const NetworksScreen = () => {
   const { addToast } = useToast()
   const { dispatch } = useBackgroundService()
   const { navigate } = useNavigation()
-  const { theme } = useTheme()
   const { account, dashboardNetworkFilter } = useSelectedAccountControllerState()
   const [settingsChainId, setSettingsChainId] = useState<bigint | string | null>(null)
   const [searchParams] = useSearchParams()
@@ -58,7 +59,8 @@ const NetworksScreen = () => {
     open: openAddNetworkBottomSheet,
     close: closeAddNetworkBottomSheet
   } = useModalize()
-  const [search, setSearch] = useState('')
+  const { control, watch } = useForm({ mode: 'all', defaultValues: { search: '' } })
+  const search = watch('search')
 
   // Navigate back to the dashboard only if `dashboardNetworkFilter` is already set in SelectedAccountControllerState.
   // Otherwise, a race condition occurs, and we navigate to the dashboard faster than `dashboardNetworkFilter` is set,
@@ -126,13 +128,7 @@ const NetworksScreen = () => {
     <LayoutWrapper>
       <HeaderWithTitle displayBackButtonIn="always" />
       <View style={[flexbox.flex1, spacings.pv, spacings.phSm]}>
-        <Input
-          testID="search-for-network-field"
-          autoFocus
-          value={search}
-          onChangeText={setSearch}
-          placeholder={t('Search for network')}
-        />
+        <Search control={control} containerStyle={spacings.mbSm} />
         <NetworkBottomSheet
           chainId={settingsChainId}
           sheetRef={settingsBottomSheetRef}
