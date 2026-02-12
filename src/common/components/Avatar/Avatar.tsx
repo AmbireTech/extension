@@ -5,7 +5,6 @@ import useController from '@common/hooks/useController'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { AvatarType } from '@web/extension-services/background/controllers/wallet-state'
-import useWalletStateController from '@web/hooks/useWalletStateController'
 
 import Blockie from './Blockies/Blockies'
 import EnsAvatar from './EnsAvatar'
@@ -78,7 +77,7 @@ const Avatar: FC<Props> = ({
     state: { domains, loadingAddresses }
   } = useController('DomainsController')
   // There is no wallet controller state in benzin/rewards so we need to be careful
-  const walletState = useWalletStateController()
+  const walletState = useController('WalletStateController').state
   const avatarTypeSetting = propAvatarType || walletState?.avatarType || 'jazzicons'
 
   const isEnsLoading = address

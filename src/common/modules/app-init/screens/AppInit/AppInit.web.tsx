@@ -25,8 +25,6 @@ import { ControllersMiddlewareProvider } from '@web/contexts/controllersMiddlewa
 import { ControllersStateLoadedProvider } from '@web/contexts/controllersStateLoadedContext'
 import { SwapAndBridgeControllerStateProvider } from '@web/contexts/swapAndBridgeControllerStateContext'
 import { TransferControllerStateProvider } from '@web/contexts/transferControllerStateContext'
-import { UiControllerStateProvider } from '@web/contexts/uiControllerStateContext'
-import { WalletStateControllerProvider } from '@web/contexts/walletStateControllerContext'
 
 const Router = isExtension ? HashRouter : BrowserRouter
 
@@ -75,15 +73,11 @@ const AppInit = () => {
             <ErrorBoundary fallback={errorComponent as any}>
               <ControllerStoreProvider>
                 <ControllersMiddlewareProvider>
-                  <UiControllerStateProvider>
-                    <WalletStateControllerProvider>
-                      <ThemeProvider>
-                        <GestureHandler>
-                          {composeProviders(CONTROLLER_STATE_PROVIDERS, appContent)}
-                        </GestureHandler>
-                      </ThemeProvider>
-                    </WalletStateControllerProvider>
-                  </UiControllerStateProvider>
+                  <ThemeProvider>
+                    <GestureHandler>
+                      {composeProviders(CONTROLLER_STATE_PROVIDERS, appContent)}
+                    </GestureHandler>
+                  </ThemeProvider>
                 </ControllersMiddlewareProvider>
               </ControllerStoreProvider>
             </ErrorBoundary>

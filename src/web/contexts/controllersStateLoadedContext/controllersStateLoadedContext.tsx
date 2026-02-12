@@ -1,13 +1,8 @@
 import React, { createContext, useEffect, useMemo, useRef, useState } from 'react'
 
 import { captureMessage } from '@common/config/analytics/CrashAnalytics.web'
-import { APP_VERSION } from '@common/config/env'
+import useController from '@common/hooks/useController'
 import useControllerStore from '@common/hooks/useControllerStore'
-import { isStateLoaded } from '@web/contexts/controllersStateLoadedContext//helpers'
-import useAddressBookControllerState from '@web/hooks/useAddressBookControllerState'
-import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControllerState'
-import useUiControllerState from '@web/hooks/useUiControllerState'
-import useWalletStateController from '@web/hooks/useWalletStateController'
 import { getUiType } from '@web/utils/uiType'
 
 const ControllersStateLoadedContext = createContext<{
@@ -33,48 +28,18 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
   const [isStatesLoadingTakingTooLong, setIsStatesLoadingTakingTooLong] = useState(false)
   const { isStoreReady } = useControllerStore()
 
-  const UiController = useUiControllerState()
-  const WalletStateController = useWalletStateController()
-  const AddressBookController = useAddressBookControllerState()
-  const SwapAndBridgeController = useSwapAndBridgeControllerState()
-
-  const controllers: any = useMemo(
-    () => ({
-      UiController,
-      WalletStateController,
-      AddressBookController,
-      SwapAndBridgeController
-    }),
-    [UiController, WalletStateController, AddressBookController, SwapAndBridgeController]
-  )
+  const { state: uiControllerState } = useController('UiController')
 
   const isViewReady = useMemo(() => {
     if (!isPopup) return true
 
-    const popupView = controllers.UiController?.views?.find((v: any) => v.type === 'popup')
+    const popupView = uiControllerState?.views?.find((v: any) => v.type === 'popup')
 
     return !!popupView?.isReady
-  }, [controllers.UiController])
+  }, [uiControllerState])
 
   useEffect(() => {
     if (areControllerStatesLoaded) return
-
-    const status: Record<string, boolean> = {}
-    const loadingControllers: string[] = []
-
-    Object.entries(controllers).forEach(([name, state]) => {
-      const ready = isStateLoaded(state)
-      status[name] = ready
-      if (!ready) loadingControllers.push(name)
-    })
-
-    errorDataRef.current = {
-      loadingControllers,
-      isPopup,
-      isPopupReady: isViewReady,
-      backgroundVersion: WalletStateController?.extensionVersion,
-      uiVersion: APP_VERSION
-    }
 
     // Don't clear this timeout to ensure that the state will be set
     // Also start it only once
@@ -93,9 +58,7 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
       }, 10000)
     }
 
-    const shouldLoad = !loadingControllers.length && isViewReady
-
-    if (shouldLoad) {
+    if (isViewReady) {
       if (timeoutRef.current) clearTimeout(timeoutRef.current)
 
       const elapsed = Date.now() - startTimeRef.current
@@ -105,7 +68,7 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
         setAreControllerStatesLoaded(true)
       }, wait)
     }
-  }, [areControllerStatesLoaded, isViewReady, controllers, WalletStateController?.extensionVersion])
+  }, [areControllerStatesLoaded, isViewReady])
 
   const contextValue = useMemo(
     () => ({

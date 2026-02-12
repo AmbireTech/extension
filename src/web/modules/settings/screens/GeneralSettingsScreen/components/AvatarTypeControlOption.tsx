@@ -11,12 +11,11 @@ import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { AvatarType } from '@web/extension-services/background/controllers/wallet-state'
 import useHover, { AnimatedPressable } from '@web/hooks/useHover'
-import useWalletStateController from '@web/hooks/useWalletStateController'
 
 const AVATAR_TYPES: AvatarType[] = ['blockies', 'jazzicons', 'polycons']
 
 const AvatarOption: FC<{ type: AvatarType }> = ({ type }) => {
-  const { avatarType } = useWalletStateController()
+  const { avatarType } = useController('WalletStateController').state
   const {
     state: { account }
   } = useController('SelectedAccountController')

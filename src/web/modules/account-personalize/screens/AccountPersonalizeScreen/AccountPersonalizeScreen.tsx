@@ -27,7 +27,6 @@ import {
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import { createTab } from '@web/extension-services/background/webapi/tab'
-import useWalletStateController from '@web/hooks/useWalletStateController'
 import AccountPersonalizeCard from '@web/modules/account-personalize/components/AccountPersonalizeCard'
 import AccountsLoadingAnimation from '@web/modules/account-personalize/components/AccountsLoadingAnimation'
 import AccountsLoadingDotsAnimation from '@web/modules/account-personalize/components/AccountsLoadingDotsAnimation'
@@ -45,7 +44,7 @@ const AccountPersonalizeScreen = () => {
   const { dispatch } = useControllersMiddleware()
   const accountPickerState = useController('AccountPickerController').state
   const { statuses, accounts } = useController('AccountsController').state
-  const { isSetupComplete } = useWalletStateController()
+  const { isSetupComplete } = useController('WalletStateController').state
   const { addToast } = useToast()
   const initPassed = useRef(false)
   const newlyAddedAccounts = useMemo(() => accounts.filter((a) => a.newlyAdded) || [], [accounts])
