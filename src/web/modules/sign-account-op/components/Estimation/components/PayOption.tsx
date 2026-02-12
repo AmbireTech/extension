@@ -16,7 +16,6 @@ import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import useSignAccountOpControllerState from '@web/hooks/useSignAccountOpControllerState'
 
@@ -37,7 +36,7 @@ const PayOption = ({
 }) => {
   const { t } = useTranslation()
   const { styles, theme, themeType } = useTheme(getStyles)
-  const { accounts } = useAccountsControllerState()
+  const { accounts } = useController('AccountsController').state
   const { account } = useSelectedAccountControllerState()
   const { networks } = useController('NetworksController').state
   const signAccountOpState = useSignAccountOpControllerState()

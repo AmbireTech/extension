@@ -11,9 +11,9 @@ import DeleteIcon from '@common/assets/svg/DeleteIcon'
 import AddressInput from '@common/components/AddressInput'
 import Banner from '@common/components/Banner/Banner'
 import useAddressInput from '@common/hooks/useAddressInput'
+import useController from '@common/hooks/useController'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
 import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 
 interface Props {
@@ -43,7 +43,7 @@ const AddressField: FC<Props> = ({
   setValue,
   trigger
 }) => {
-  const accountsState = useAccountsControllerState()
+  const accountsState = useController('AccountsController').state
   const keystoreState = useKeystoreControllerState()
   const accounts = watch('accounts')
   const value = watch(`accounts.${index}`)

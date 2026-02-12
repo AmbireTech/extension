@@ -5,8 +5,8 @@ import { BlacklistedStatus } from '@ambire-common/interfaces/phishing'
 import { HumanizerMetaAddress } from '@ambire-common/libs/humanizer/interfaces'
 import { getAddressCaught } from '@ambire-common/utils/getAddressCaught'
 import { Props as TextProps } from '@common/components/Text'
+import useController from '@common/hooks/useController'
 import { isExtension } from '@web/constants/browserapi'
-import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
 import useAddressBookControllerState from '@web/hooks/useAddressBookControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 
@@ -32,7 +32,7 @@ const HumanizerAddressInner: FC<Props> = ({
   ...rest
 }) => {
   const { portfolio } = useSelectedAccountControllerState()
-  const accountsState = useAccountsControllerState()
+  const accountsState = useController('AccountsController').state
   const { contacts = [] } = useAddressBookControllerState()
   const checksummedAddress = getAddressCaught(address)
 

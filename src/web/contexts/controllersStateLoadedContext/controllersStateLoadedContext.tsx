@@ -7,7 +7,6 @@ import { AllControllersMappingType } from '@common/constants/controllersMapping'
 import useControllerStore from '@common/hooks/useControllerStore'
 import { isStateLoaded } from '@web/contexts/controllersStateLoadedContext//helpers'
 import useAccountPickerControllerState from '@web/hooks/useAccountPickerControllerState'
-import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
 import useActivityControllerState from '@web/hooks/useActivityControllerState'
 import useAddressBookControllerState from '@web/hooks/useAddressBookControllerState'
 import useBannersControllerState from '@web/hooks/useBannersControllerState'
@@ -72,7 +71,6 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
   const StorageController = useStorageControllerState()
   const UiController = useUiControllerState()
   const ProvidersController = useProvidersControllerState().state
-  const AccountsController = useAccountsControllerState()
   const SelectedAccountController = useSelectedAccountControllerState()
   const WalletStateController = useWalletStateController()
   const SignMessageController = useSignMessageControllerState()
@@ -97,7 +95,6 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
       StorageController,
       UiController,
       ProvidersController,
-      AccountsController,
       SelectedAccountController,
       WalletStateController,
       SignMessageController,
@@ -121,7 +118,6 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
       StorageController,
       UiController,
       ProvidersController,
-      AccountsController,
       SelectedAccountController,
       WalletStateController,
       SignMessageController,

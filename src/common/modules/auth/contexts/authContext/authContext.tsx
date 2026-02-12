@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-floating-promises */
 import React, { createContext, useMemo } from 'react'
 
+import useController from '@common/hooks/useController'
 import { AUTH_STATUS } from '@common/modules/auth/constants/authStatus'
-import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 
 type AuthContextData = {
@@ -14,7 +14,7 @@ const AuthContext = createContext<AuthContextData>({
 })
 
 const AuthProvider: React.FC = ({ children }: any) => {
-  const accountsState = useAccountsControllerState()
+  const accountsState = useController('AccountsController').state
   const { account, isReady } = useSelectedAccountControllerState()
 
   const authStatus = useMemo(() => {

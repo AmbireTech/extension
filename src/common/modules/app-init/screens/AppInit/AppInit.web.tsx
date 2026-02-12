@@ -1,4 +1,3 @@
-// @ts-nocheck TODO: fix provider types
 import '@web/utils/instrument'
 
 import React from 'react'
@@ -22,7 +21,6 @@ import { OnboardingNavigationProvider } from '@common/modules/auth/contexts/onbo
 import { PortalHost, PortalProvider } from '@gorhom/portal'
 import { isExtension } from '@web/constants/browserapi'
 import { AccountPickerControllerStateProvider } from '@web/contexts/accountPickerControllerStateContext'
-import { AccountsControllerStateProvider } from '@web/contexts/accountsControllerStateContext'
 import { ActivityControllerStateProvider } from '@web/contexts/activityControllerStateContext'
 import { AddressBookControllerStateProvider } from '@web/contexts/addressBookControllerStateContext'
 import { AutoLockControllerStateProvider } from '@web/contexts/autoLockControllerStateContext'
@@ -62,7 +60,6 @@ const composeProviders = (
   providers.reduceRight<React.ReactNode>((acc, Provider) => <Provider>{acc}</Provider>, children)
 
 const CONTROLLER_STATE_PROVIDERS: ProviderComponent[] = [
-  AccountsControllerStateProvider,
   SelectedAccountControllerStateProvider,
   ProvidersControllerStateProvider,
   AutoLockControllerStateProvider,
@@ -109,7 +106,7 @@ const AppInit = () => {
         <GlobalTooltip />
         <SafeAreaProvider>
           <ToastProvider>
-            <ErrorBoundary fallback={errorComponent}>
+            <ErrorBoundary fallback={errorComponent as any}>
               <ControllerStoreProvider>
                 <ControllersMiddlewareProvider>
                   <MainControllerStateProvider>
