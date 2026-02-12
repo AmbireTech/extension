@@ -57,14 +57,11 @@ if (isExtension) {
       if (method === 'portReady' && !backgroundReady) {
         backgroundReady = true
         ;(async () => {
-          if (controllerReady) {
+          while (!controllerReady) {
             eventBus.emit('onReady')
-          } else {
-            while (!controllerReady) {
-              eventBus.emit('onReady')
-              await wait(100)
-            }
+            await wait(100)
           }
+          eventBus.emit('onReady')
         })()
         actionsBeforeBackgroundReady.forEach((a) => globalDispatch(a))
         actionsBeforeBackgroundReady.length = 0
@@ -165,10 +162,6 @@ export const ControllersMiddlewareProvider: React.FC<{ children: React.ReactNode
   )
 
   useEffect(() => {
-    if (!controllerReady) controllerReady = true
-  }, [])
-
-  useEffect(() => {
     const initControllers = () => {
       controllerStore.init(
         Object.keys(controllersMapping) as (keyof AllControllersMappingType)[],
@@ -182,6 +175,7 @@ export const ControllersMiddlewareProvider: React.FC<{ children: React.ReactNode
     }
 
     eventBus.addEventListener('onReady', initControllers)
+    if (!controllerReady) controllerReady = true
   }, [controllerStore, dispatch])
 
   useEffect(() => {
