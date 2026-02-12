@@ -147,7 +147,7 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
   const isViewReady = useMemo(() => {
     if (!isPopup) return true
 
-    const popupView = controllers.UiController?.views?.find((v) => v.type === 'popup')
+    const popupView = controllers.UiController?.views?.find((v: any) => v.type === 'popup')
 
     return !!popupView?.isReady
   }, [controllers.UiController])
