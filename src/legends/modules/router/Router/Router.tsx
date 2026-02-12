@@ -1,7 +1,6 @@
 import React, { FC, ReactNode, useEffect } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 
-import ErrorPage from '@legends/components/ErrorPage'
 import PrivateRoute from '@legends/components/PrivateRoute'
 import Season2Modal from '@legends/components/Season2Modal'
 import { DataPollingContextProvider } from '@legends/contexts/dataPollingContext'
@@ -12,7 +11,6 @@ import Home from '@legends/modules/Home'
 import Leaderboard from '@legends/modules/leaderboard/screens/Leaderboard'
 import RewardsPool from '@legends/modules/rewards-pool'
 import Wallet from '@legends/modules/wallet'
-import * as Sentry from '@sentry/react'
 
 import { LEGENDS_ROUTES } from '../constants'
 import { LEGENDS_LEGACY_ROUTES } from '../constants/routes'
@@ -48,11 +46,9 @@ const PrivateArea: FC<{ children: ReactNode }> = ({ children }) => {
   )
 }
 
-const SentryRoutes = Sentry.withSentryReactRouterV6Routing(Routes)
-
 const Router = () => {
   return (
-    <SentryRoutes>
+    <Routes>
       <Route
         element={
           <PrivateArea>
@@ -75,7 +71,7 @@ const Router = () => {
           element={<Navigate to={LEGENDS_ROUTES.home} />}
         />
       </Route>
-    </SentryRoutes>
+    </Routes>
   )
 }
 
