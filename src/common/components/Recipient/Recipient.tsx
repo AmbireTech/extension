@@ -32,7 +32,6 @@ import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { ItemPanel } from '@web/components/TransactionsScreen'
-import useAddressBookControllerState from '@web/hooks/useAddressBookControllerState'
 import useHover, { AnimatedPressable } from '@web/hooks/useHover'
 
 import styles from './styles'
@@ -164,7 +163,7 @@ const Recipient: React.FC<Props> = ({
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
-  const { contacts } = useAddressBookControllerState()
+  const { contacts } = useController('AddressBookController').state
   const {
     state: { domains }
   } = useController('DomainsController')

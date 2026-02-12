@@ -7,7 +7,6 @@ import { getAddressCaught } from '@ambire-common/utils/getAddressCaught'
 import { Props as TextProps } from '@common/components/Text'
 import useController from '@common/hooks/useController'
 import { isExtension } from '@web/constants/browserapi'
-import useAddressBookControllerState from '@web/hooks/useAddressBookControllerState'
 
 import { AddressName, BenzinAddressName } from '../AddressName'
 import BaseAddress from '../BaseAddress'
@@ -34,7 +33,7 @@ const HumanizerAddressInner: FC<Props> = ({
     state: { portfolio }
   } = useController('SelectedAccountController')
   const accountsState = useController('AccountsController').state
-  const { contacts = [] } = useAddressBookControllerState()
+  const { contacts = [] } = useController('AddressBookController').state
   const checksummedAddress = getAddressCaught(address)
 
   const localAddressLabel = useMemo(() => {
