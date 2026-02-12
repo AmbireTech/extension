@@ -64,7 +64,6 @@ const HardwareWalletSigningModal = ({ keyType, isVisible, children }: Props) => 
       containerInnerWrapperStyles={isTab ? { ...spacings.pv2Xl, ...spacings.ph2Xl } : {}}
     >
       <ModalHeader
-        withBackButton={false}
         title={
           <>
             {t('Sign with your {{deviceName}} device', {

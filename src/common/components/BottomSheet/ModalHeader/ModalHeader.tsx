@@ -6,15 +6,14 @@ import spacings from '@common/styles/spacings'
 
 interface Props {
   handleClose?: () => void
-  withBackButton?: boolean
   title?: React.ReactNode
   style?: ViewStyle
   hasAmbireLogo?: boolean
   children?: React.ReactNode
 }
 
-const ModalHeader: FC<Props> = ({ handleClose, withBackButton = true, title, style, children }) => {
-  const withSideContainers = withBackButton || !!children
+const ModalHeader: FC<Props> = ({ handleClose, title, style, children }) => {
+  const withSideContainers = !!handleClose || !!children
 
   return (
     <Header.Wrapper
@@ -23,7 +22,7 @@ const ModalHeader: FC<Props> = ({ handleClose, withBackButton = true, title, sty
     >
       {withSideContainers && (
         <Header.Container side="left">
-          {withBackButton && <Header.BackButton onGoBackPress={handleClose} forceBack />}
+          {handleClose && <Header.BackButton onGoBackPress={handleClose} forceBack />}
         </Header.Container>
       )}
       {/* We are making the title absolute to be able to fit different sized elements on the right
