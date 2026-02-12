@@ -5,7 +5,6 @@ import { APP_VERSION } from '@common/config/env'
 import useControllerStore from '@common/hooks/useControllerStore'
 import { isStateLoaded } from '@web/contexts/controllersStateLoadedContext//helpers'
 import useAddressBookControllerState from '@web/hooks/useAddressBookControllerState'
-import useBannersControllerState from '@web/hooks/useBannersControllerState'
 import useContractNamesControllerState from '@web/hooks/useContractNamesController/useContractNamesController'
 import useEmailVaultControllerState from '@web/hooks/useEmailVaultControllerState'
 import usePhishingControllerState from '@web/hooks/usePhishingControllerState'
@@ -45,7 +44,6 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
   const PhishingController = usePhishingControllerState()
   const AddressBookController = useAddressBookControllerState()
   const ContractNamesController = useContractNamesControllerState()
-  const BannerController = useBannersControllerState()
   const SwapAndBridgeController = useSwapAndBridgeControllerState()
 
   const controllers: any = useMemo(
@@ -57,7 +55,6 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
       PhishingController,
       AddressBookController,
       ContractNamesController,
-      BannerController,
       SwapAndBridgeController
     }),
     [
@@ -68,7 +65,6 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
       PhishingController,
       AddressBookController,
       ContractNamesController,
-      BannerController,
       SwapAndBridgeController
     ]
   )
