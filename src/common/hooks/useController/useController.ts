@@ -1,6 +1,8 @@
 import { useCallback, useContext, useEffect, useSyncExternalStore } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 
+import { captureException } from '@common/config/analytics/CrashAnalytics'
+import { isDev } from '@common/config/env'
 import { AllControllersMappingType } from '@common/constants/controllersMapping'
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext/controllersMiddlewareContext'
 import { AnyControllerAction } from '@common/contexts/controllersMiddlewareContext/types'
@@ -73,7 +75,12 @@ export default function useController<K extends keyof AllControllersMappingType>
 
   useEffect(() => {
     if (isStoreReady && !Object.keys(controllerStore.getSnapshot(id)).length) {
-      throw new Error(`A controller with name ${id} does not exist in the controllerStore.`)
+      const error = new Error(`A controller with name ${id} does not exist in the controllerStore.`)
+      if (isDev) {
+        throw error
+      } else {
+        captureException(error)
+      }
     }
   }, [controllerStore, id, isStoreReady])
 
