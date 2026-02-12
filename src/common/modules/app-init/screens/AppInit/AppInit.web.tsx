@@ -24,7 +24,6 @@ import { AddressBookControllerStateProvider } from '@web/contexts/addressBookCon
 import { ContractNamesControllerStateProvider } from '@web/contexts/contractNamesControllerStateContext'
 import { ControllersMiddlewareProvider } from '@web/contexts/controllersMiddlewareContext'
 import { ControllersStateLoadedProvider } from '@web/contexts/controllersStateLoadedContext'
-import { EmailVaultControllerStateProvider } from '@web/contexts/emailVaultControllerStateContext'
 import { PhishingControllerStateProvider } from '@web/contexts/phishingControllerStateContext'
 import { StorageControllerStateProvider } from '@web/contexts/storageControllerStateContext'
 import { SwapAndBridgeControllerStateProvider } from '@web/contexts/swapAndBridgeControllerStateContext'
@@ -46,7 +45,6 @@ const composeProviders = (
   providers.reduceRight<React.ReactNode>((acc, Provider) => <Provider>{acc}</Provider>, children)
 
 const CONTROLLER_STATE_PROVIDERS: ProviderComponent[] = [
-  EmailVaultControllerStateProvider,
   PhishingControllerStateProvider,
   ContractNamesControllerStateProvider,
   AddressBookControllerStateProvider,

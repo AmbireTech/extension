@@ -3,7 +3,6 @@ import { useMemo } from 'react'
 import { Banner as BannerInterface } from '@ambire-common/interfaces/banner'
 import { getCurrentAccountBanners } from '@ambire-common/libs/banners/banners'
 import useController from '@common/hooks/useController'
-import useEmailVaultControllerState from '@web/hooks/useEmailVaultControllerState'
 import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControllerState'
 
 const OFFLINE_BANNER: BannerInterface = {
@@ -26,7 +25,7 @@ export default function useBanners(): [BannerInterface[], BannerInterface[]] {
     state: { account, portfolio, deprecatedSmartAccountBanner }
   } = useController('SelectedAccountController')
 
-  const { banners: emailVaultBanners = [] } = useEmailVaultControllerState()
+  const { banners: emailVaultBanners = [] } = useController('EmailVaultController').state
   const { banners: requestBanners = [] } = useController('RequestsController').state
   const { banners: swapAndBridgeBanners = [] } = useSwapAndBridgeControllerState()
   const { extensionUpdateBanner } = useController('ExtensionUpdateController').state

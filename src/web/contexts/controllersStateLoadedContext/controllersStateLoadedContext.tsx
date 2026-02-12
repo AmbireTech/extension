@@ -6,7 +6,6 @@ import useControllerStore from '@common/hooks/useControllerStore'
 import { isStateLoaded } from '@web/contexts/controllersStateLoadedContext//helpers'
 import useAddressBookControllerState from '@web/hooks/useAddressBookControllerState'
 import useContractNamesControllerState from '@web/hooks/useContractNamesController/useContractNamesController'
-import useEmailVaultControllerState from '@web/hooks/useEmailVaultControllerState'
 import usePhishingControllerState from '@web/hooks/usePhishingControllerState'
 import useStorageControllerState from '@web/hooks/useStorageControllerState'
 import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControllerState'
@@ -40,7 +39,6 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
   const StorageController = useStorageControllerState()
   const UiController = useUiControllerState()
   const WalletStateController = useWalletStateController()
-  const EmailVaultController = useEmailVaultControllerState()
   const PhishingController = usePhishingControllerState()
   const AddressBookController = useAddressBookControllerState()
   const ContractNamesController = useContractNamesControllerState()
@@ -51,7 +49,6 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
       StorageController,
       UiController,
       WalletStateController,
-      EmailVaultController,
       PhishingController,
       AddressBookController,
       ContractNamesController,
@@ -61,7 +58,6 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
       StorageController,
       UiController,
       WalletStateController,
-      EmailVaultController,
       PhishingController,
       AddressBookController,
       ContractNamesController,

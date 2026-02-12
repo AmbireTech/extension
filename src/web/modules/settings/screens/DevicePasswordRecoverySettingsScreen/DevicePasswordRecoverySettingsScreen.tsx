@@ -23,12 +23,11 @@ import spacings, { SPACING_XL } from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
-import useEmailVaultControllerState from '@web/hooks/useEmailVaultControllerState'
 import EmailConfirmation from '@web/modules/keystore/components/EmailConfirmation'
 import { SettingsRoutesContext } from '@web/modules/settings/contexts/SettingsRoutesContext'
 
 const DevicePasswordRecoverySettingsScreen = () => {
-  const ev = useEmailVaultControllerState()
+  const ev = useController('EmailVaultController').state
   const keystoreState = useController('KeystoreController').state
   const { t } = useTranslation()
   const { setCurrentSettingsPage } = useContext(SettingsRoutesContext)
