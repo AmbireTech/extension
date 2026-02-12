@@ -6,7 +6,6 @@ import { APP_VERSION } from '@common/config/env'
 import { AllControllersMappingType } from '@common/constants/controllersMapping'
 import useControllerStore from '@common/hooks/useControllerStore'
 import { isStateLoaded } from '@web/contexts/controllersStateLoadedContext//helpers'
-import useAccountPickerControllerState from '@web/hooks/useAccountPickerControllerState'
 import useActivityControllerState from '@web/hooks/useActivityControllerState'
 import useAddressBookControllerState from '@web/hooks/useAddressBookControllerState'
 import useBannersControllerState from '@web/hooks/useBannersControllerState'
@@ -60,7 +59,6 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
   const [isStatesLoadingTakingTooLong, setIsStatesLoadingTakingTooLong] = useState(false)
   const { isStoreReady } = useControllerStore()
 
-  const AccountPickerController = useAccountPickerControllerState()
   const KeystoreController = useKeystoreControllerState()
   const MainController = useMainControllerState()
   const StorageController = useStorageControllerState()
@@ -79,7 +77,6 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
 
   const controllers: any = useMemo(
     () => ({
-      AccountPickerController,
       KeystoreController,
       MainController,
       StorageController,
@@ -97,7 +94,6 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
       SwapAndBridgeController
     }),
     [
-      AccountPickerController,
       KeystoreController,
       MainController,
       StorageController,

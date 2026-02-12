@@ -27,7 +27,6 @@ import {
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import { createTab } from '@web/extension-services/background/webapi/tab'
-import useAccountPickerControllerState from '@web/hooks/useAccountPickerControllerState'
 import useWalletStateController from '@web/hooks/useWalletStateController'
 import AccountPersonalizeCard from '@web/modules/account-personalize/components/AccountPersonalizeCard'
 import AccountsLoadingAnimation from '@web/modules/account-personalize/components/AccountsLoadingAnimation'
@@ -44,7 +43,7 @@ const AccountPersonalizeScreen = () => {
     useOnboardingNavigation()
   const { theme } = useTheme(getStyles)
   const { dispatch } = useControllersMiddleware()
-  const accountPickerState = useAccountPickerControllerState()
+  const accountPickerState = useController('AccountPickerController').state
   const { statuses, accounts } = useController('AccountsController').state
   const { isSetupComplete } = useWalletStateController()
   const { addToast } = useToast()

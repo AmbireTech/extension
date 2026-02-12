@@ -18,7 +18,6 @@ import {
   TabLayoutContainer,
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import useAccountPickerControllerState from '@web/hooks/useAccountPickerControllerState'
 import AccountsOnPageList from '@web/modules/account-picker/components/AccountsOnPageList'
 import ChangeHdPath from '@web/modules/account-picker/components/ChangeHdPath'
 import useAccountPicker from '@web/modules/account-picker/hooks/useAccountPicker/useAccountPicker'
@@ -37,7 +36,7 @@ const AccountPickerScreen = () => {
   const { t } = useTranslation()
   const { theme } = useTheme()
 
-  const accountPickerState = useAccountPickerControllerState()
+  const accountPickerState = useController('AccountPickerController').state
   const { accounts } = useController('AccountsController').state
   const { isReady, onImportReady, setPage } = useAccountPicker()
   const { goToPrevRoute } = useOnboardingNavigation()

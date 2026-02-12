@@ -13,7 +13,6 @@ import { AUTH_STATUS } from '@common/modules/auth/constants/authStatus'
 import useAuth from '@common/modules/auth/hooks/useAuth'
 import { ONBOARDING_WEB_ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import { ControllersStateLoadedContext } from '@web/contexts/controllersStateLoadedContext'
-import useAccountPickerControllerState from '@web/hooks/useAccountPickerControllerState'
 import useEmailVaultControllerState from '@web/hooks/useEmailVaultControllerState'
 import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 import useWalletStateController from '@web/hooks/useWalletStateController'
@@ -74,7 +73,8 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
   const { dispatch } = useControllersMiddleware()
   const { isSetupComplete } = useWalletStateController()
   const { accounts } = useController('AccountsController').state
-  const { isInitialized, subType, initParams, type } = useAccountPickerControllerState()
+  const { isInitialized, subType, initParams, type } =
+    useController('AccountPickerController').state
   const isOnboardingRoute = useMemo(
     () => ONBOARDING_WEB_ROUTES.includes((path || '').substring(1)),
     [path]
