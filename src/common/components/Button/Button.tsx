@@ -91,8 +91,7 @@ const ButtonInnerContainer = ({
       info: [],
       info2: [],
       success: [],
-      gray: [],
-      info3: []
+      gray: []
     }),
     [theme]
   )
