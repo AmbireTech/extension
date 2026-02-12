@@ -27,7 +27,6 @@ import { ContractNamesControllerStateProvider } from '@web/contexts/contractName
 import { ControllersMiddlewareProvider } from '@web/contexts/controllersMiddlewareContext'
 import { ControllersStateLoadedProvider } from '@web/contexts/controllersStateLoadedContext'
 import { EmailVaultControllerStateProvider } from '@web/contexts/emailVaultControllerStateContext'
-import { KeystoreControllerStateProvider } from '@web/contexts/keystoreControllerStateContext'
 import { MainControllerStateProvider } from '@web/contexts/mainControllerStateContext'
 import { PhishingControllerStateProvider } from '@web/contexts/phishingControllerStateContext'
 import { PortfolioControllerStateProvider } from '@web/contexts/portfolioControllerStateContext'
@@ -53,7 +52,6 @@ const composeProviders = (
   providers.reduceRight<React.ReactNode>((acc, Provider) => <Provider>{acc}</Provider>, children)
 
 const CONTROLLER_STATE_PROVIDERS: ProviderComponent[] = [
-  KeystoreControllerStateProvider,
   SignMessageControllerStateProvider,
   ActivityControllerStateProvider,
   RequestsControllerStateProvider,

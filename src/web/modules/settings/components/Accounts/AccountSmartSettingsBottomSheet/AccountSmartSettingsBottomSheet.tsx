@@ -26,7 +26,6 @@ import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { TAB_CONTENT_WIDTH } from '@web/constants/spacings'
-import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 import Authorization7702 from '@web/modules/sign-message/screens/SignMessageScreen/Contents/authorization7702'
 
 interface Props {
@@ -37,7 +36,7 @@ interface Props {
 
 const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet, account }) => {
   const { accountStates } = useController('AccountsController').state
-  const { keys } = useKeystoreControllerState()
+  const { keys } = useController('KeystoreController').state
   const { networks } = useController('NetworksController').state
   const { theme, themeType } = useTheme()
   const { dispatch } = useControllersMiddleware()

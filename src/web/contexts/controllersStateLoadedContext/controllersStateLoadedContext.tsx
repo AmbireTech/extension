@@ -11,7 +11,6 @@ import useAddressBookControllerState from '@web/hooks/useAddressBookControllerSt
 import useBannersControllerState from '@web/hooks/useBannersControllerState'
 import useContractNamesControllerState from '@web/hooks/useContractNamesController/useContractNamesController'
 import useEmailVaultControllerState from '@web/hooks/useEmailVaultControllerState'
-import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 import useMainControllerState from '@web/hooks/useMainControllerState/useMainControllerState'
 import usePhishingControllerState from '@web/hooks/usePhishingControllerState'
 import usePortfolioControllerState from '@web/hooks/usePortfolioControllerState/usePortfolioControllerState'
@@ -59,7 +58,6 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
   const [isStatesLoadingTakingTooLong, setIsStatesLoadingTakingTooLong] = useState(false)
   const { isStoreReady } = useControllerStore()
 
-  const KeystoreController = useKeystoreControllerState()
   const MainController = useMainControllerState()
   const StorageController = useStorageControllerState()
   const UiController = useUiControllerState()
@@ -77,7 +75,6 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
 
   const controllers: any = useMemo(
     () => ({
-      KeystoreController,
       MainController,
       StorageController,
       UiController,
@@ -94,7 +91,6 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
       SwapAndBridgeController
     }),
     [
-      KeystoreController,
       MainController,
       StorageController,
       UiController,

@@ -24,7 +24,6 @@ import {
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import eventBus from '@web/extension-services/event/eventBus'
-import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 
 const CreateSeedPhraseWriteScreen = () => {
   const { goToNextRoute, goToPrevRoute } = useOnboardingNavigation()
@@ -32,7 +31,7 @@ const CreateSeedPhraseWriteScreen = () => {
   const { theme } = useTheme()
   const { addToast } = useToast()
   const { dispatch } = useControllersMiddleware()
-  const { hasTempSeed } = useKeystoreControllerState()
+  const { hasTempSeed } = useController('KeystoreController').state
   const [tempSeed, setTempSeed] = useState<KeystoreSeed | null>(null)
   const { initParams, subType } = useController('AccountPickerController').state
   const [submitButtonPressed, setSubmitButtonPressed] = useState(false)

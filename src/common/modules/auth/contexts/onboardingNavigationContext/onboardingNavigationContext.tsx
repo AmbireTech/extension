@@ -13,9 +13,6 @@ import { AUTH_STATUS } from '@common/modules/auth/constants/authStatus'
 import useAuth from '@common/modules/auth/hooks/useAuth'
 import { ONBOARDING_WEB_ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import { ControllersStateLoadedContext } from '@web/contexts/controllersStateLoadedContext'
-import useEmailVaultControllerState from '@web/hooks/useEmailVaultControllerState'
-import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
-import useWalletStateController from '@web/hooks/useWalletStateController'
 import { getUiType } from '@web/utils/uiType'
 
 export type OnboardingRoute = (typeof ONBOARDING_WEB_ROUTES)[number]
@@ -64,14 +61,14 @@ const getAccountsToPersonalizeFromSession = (): Account[] => {
 }
 
 const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode }) => {
-  const { hasPasswordSecret } = useKeystoreControllerState()
-  const { statuses: emailVaultStatuses } = useEmailVaultControllerState()
+  const { hasPasswordSecret } = useController('KeystoreController').state
+  const { statuses: emailVaultStatuses } = useController('EmailVaultController').state
   const { path, params } = useRoute()
   const prevPath: string | undefined = usePrevious(path)
   const { navigate } = useNavigation()
   const { authStatus } = useAuth()
   const { dispatch } = useControllersMiddleware()
-  const { isSetupComplete } = useWalletStateController()
+  const { isSetupComplete } = useController('WalletStateController').state
   const { accounts } = useController('AccountsController').state
   const { isInitialized, subType, initParams, type } =
     useController('AccountPickerController').state

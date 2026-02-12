@@ -11,6 +11,7 @@ import InputPassword from '@common/components/InputPassword'
 import Text from '@common/components/Text'
 import { isDev, isTesting, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useDisableNavigatingBack from '@common/hooks/useDisableNavigatingBack'
 import useElementSize from '@common/hooks/useElementSize'
@@ -26,7 +27,6 @@ import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components
 import { POPUP_HEIGHT } from '@web/constants/spacings'
 import { openInternalPageInTab } from '@web/extension-services/background/webapi/tab'
 import useEmailVaultControllerState from '@web/hooks/useEmailVaultControllerState'
-import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import { getUiType } from '@web/utils/uiType'
 
@@ -46,7 +46,7 @@ const KeyStoreUnlockScreen = () => {
   const { navigate } = useNavigation()
   const { dispatch } = useControllersMiddleware()
   const { hasKeystoreRecovery } = useEmailVaultControllerState()
-  const { isUnlocked, statuses, errorMessage } = useKeystoreControllerState()
+  const { isUnlocked, statuses, errorMessage } = useController('KeystoreController').state
   const { requestWindow } = useRequestsControllerState()
   const { height } = useElementSize(contentContainerRef)
   const {

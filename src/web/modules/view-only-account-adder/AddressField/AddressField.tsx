@@ -14,7 +14,6 @@ import useAddressInput from '@common/hooks/useAddressInput'
 import useController from '@common/hooks/useController'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 
 interface Props {
   duplicateAccountsIndexes: number[]
@@ -44,7 +43,7 @@ const AddressField: FC<Props> = ({
   trigger
 }) => {
   const accountsState = useController('AccountsController').state
-  const keystoreState = useKeystoreControllerState()
+  const keystoreState = useController('KeystoreController').state
   const accounts = watch('accounts')
   const value = watch(`accounts.${index}`)
   const { t } = useTranslation()

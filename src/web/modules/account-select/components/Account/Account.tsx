@@ -20,7 +20,6 @@ import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
-import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 import useMainControllerState from '@web/hooks/useMainControllerState'
 import { getUiType } from '@web/utils/uiType'
 
@@ -66,7 +65,7 @@ const Account = ({
   } = useController('SelectedAccountController')
   const { dispatch } = useControllersMiddleware()
   const { ens, isLoading } = useReverseLookup({ address: addr })
-  const { keys } = useKeystoreControllerState()
+  const { keys } = useController('KeystoreController').state
   const [bindAnim, animStyle] = useCustomHover({
     property: 'backgroundColor',
     values: {

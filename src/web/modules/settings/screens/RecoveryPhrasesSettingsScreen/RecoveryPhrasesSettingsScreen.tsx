@@ -15,7 +15,6 @@ import spacings, { SPACING_TY } from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
-import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 import useStorageControllerState from '@web/hooks/useStorageControllerState'
 import Account from '@web/modules/account-select/components/Account'
 import SettingsPageHeader from '@web/modules/settings/components/SettingsPageHeader'
@@ -27,7 +26,7 @@ const RecoveryPhraseSettingsScreen = () => {
   const { theme, themeType } = useTheme()
   const { statuses } = useStorageControllerState()
   const { accounts } = useController('AccountsController').state
-  const { seeds, keys } = useKeystoreControllerState()
+  const { seeds, keys } = useController('KeystoreController').state
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const [recoveryPhraseToManage, setRecoveryPhraseToManage] = useState<{
     id: string
@@ -57,7 +56,7 @@ const RecoveryPhraseSettingsScreen = () => {
     item,
     index
   }: ListRenderItemInfo<
-    NonNullable<ReturnType<typeof useKeystoreControllerState>['seeds']>[number]
+    NonNullable<ReturnType<typeof useController<'KeystoreController'>>['state']['seeds']>[number]
   >) => {
     const associatedAccounts = getAccountsForSeed(item.id)
     return (

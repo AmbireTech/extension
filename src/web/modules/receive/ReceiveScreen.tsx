@@ -21,7 +21,6 @@ import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 
 import getStyles from './styles'
 
@@ -31,7 +30,7 @@ const ReceiveScreen: FC = () => {
   } = useController('SelectedAccountController')
   const { isLoading: isDomainResolving, ens } = useReverseLookup({ address: account?.addr || '' })
   const { networks } = useController('NetworksController').state
-  const { keys } = useKeystoreControllerState()
+  const { keys } = useController('KeystoreController').state
   const { t } = useTranslation()
   const { styles, themeType, theme } = useTheme(getStyles)
   const qrCodeRef: any = useRef(null)

@@ -20,7 +20,6 @@ import flexbox from '@common/styles/utils/flexbox'
 import SmallNotificationWindowWrapper from '@web/components/SmallNotificationWindowWrapper'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import useDappInfo from '@web/hooks/useDappInfo/useDappInfo'
-import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import useSignMessageControllerState from '@web/hooks/useSignMessageControllerState'
 import ActionFooter from '@web/modules/action-requests/components/ActionFooter'
@@ -37,7 +36,7 @@ const SignMessageScreen = () => {
   const signMessageState = useSignMessageControllerState()
   const signStatus = signMessageState.statuses.sign
   const [hasReachedBottom, setHasReachedBottom] = useState<boolean | null>(null)
-  const keystoreState = useKeystoreControllerState()
+  const keystoreState = useController('KeystoreController').state
   const {
     state: { account }
   } = useController('SelectedAccountController')

@@ -29,7 +29,6 @@ import {
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import { DISCORD_URL, TELEGRAM_URL, TWITTER_URL } from '@web/constants/social'
 import { openInTab } from '@web/extension-services/background/webapi/tab'
-import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 import SettingsLink from '@web/modules/settings/components/SettingsLink'
 import { SETTINGS_LINKS } from '@web/modules/settings/components/Sidebar/Sidebar'
 import commonWebStyles from '@web/styles/utils/common'
@@ -73,7 +72,7 @@ const NavMenu = () => {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
   const { styles, theme } = useTheme(getStyles)
-  const { hasPasswordSecret } = useKeystoreControllerState()
+  const { hasPasswordSecret } = useController('KeystoreController').state
   const { dispatch } = useControllersMiddleware()
   const autoLockState = useController('AutoLockController').state
   const handleLockAmbire = () => {

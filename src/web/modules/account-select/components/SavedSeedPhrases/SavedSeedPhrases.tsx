@@ -15,7 +15,6 @@ import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
-import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 import useStorageControllerState from '@web/hooks/useStorageControllerState'
 import Account from '@web/modules/account-select/components/Account'
 
@@ -24,7 +23,7 @@ const SavedSeedPhrases = ({ handleClose }: { handleClose: () => void }) => {
   const { theme } = useTheme()
   const { statuses } = useStorageControllerState()
   const { accounts } = useController('AccountsController').state
-  const { seeds, keys } = useKeystoreControllerState()
+  const { seeds, keys } = useController('KeystoreController').state
   const { dispatch } = useControllersMiddleware()
   const { subType, initParams } = useController('AccountPickerController').state
   const [addAccountButtonPressed, setAddAccountButtonPressed] = useState(false)
@@ -61,7 +60,9 @@ const SavedSeedPhrases = ({ handleClose }: { handleClose: () => void }) => {
   const renderItem = ({
     item,
     index
-  }: ListRenderItemInfo<ReturnType<typeof useKeystoreControllerState>['seeds'][number]>) => {
+  }: ListRenderItemInfo<
+    ReturnType<typeof useController<'KeystoreController'>>['state']['seeds'][number]
+  >) => {
     const seedAccounts = getAccountsForSeed(item.id) || []
 
     return (
