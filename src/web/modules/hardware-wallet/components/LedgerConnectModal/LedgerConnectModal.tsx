@@ -19,7 +19,6 @@ import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { openInternalPageInTab } from '@web/extension-services/background/webapi/tab'
-import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import useLedger from '@web/modules/hardware-wallet/hooks/useLedger'
 import { getUiType } from '@web/utils/uiType'
 
@@ -48,7 +47,7 @@ const LedgerConnectModal = ({
   const { addToast } = useToast()
   const { t } = useTranslation()
   const [isGrantingPermission, setIsGrantingPermission] = useState(false)
-  const { currentUserRequest, requestWindow } = useRequestsControllerState()
+  const { currentUserRequest, requestWindow } = useController('RequestsController').state
   const { theme, themeType } = useTheme()
 
   useEffect(() => {

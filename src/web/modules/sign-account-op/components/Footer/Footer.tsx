@@ -14,7 +14,6 @@ import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
-import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import useSignAccountOpControllerState from '@web/hooks/useSignAccountOpControllerState'
 import ActionsPagination from '@web/modules/action-requests/components/ActionsPagination'
 
@@ -49,7 +48,7 @@ const Footer = ({
 }: Props) => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
-  const { userRequests } = useRequestsControllerState()
+  const { userRequests } = useController('RequestsController').state
   const {
     state: { account }
   } = useController('SelectedAccountController')

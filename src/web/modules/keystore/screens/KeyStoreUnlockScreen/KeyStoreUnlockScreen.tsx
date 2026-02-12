@@ -27,7 +27,6 @@ import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components
 import { POPUP_HEIGHT } from '@web/constants/spacings'
 import { openInternalPageInTab } from '@web/extension-services/background/webapi/tab'
 import useEmailVaultControllerState from '@web/hooks/useEmailVaultControllerState'
-import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import { getUiType } from '@web/utils/uiType'
 
 import getStyles from './styles'
@@ -47,7 +46,7 @@ const KeyStoreUnlockScreen = () => {
   const { dispatch } = useControllersMiddleware()
   const { hasKeystoreRecovery } = useEmailVaultControllerState()
   const { isUnlocked, statuses, errorMessage } = useController('KeystoreController').state
-  const { requestWindow } = useRequestsControllerState()
+  const { requestWindow } = useController('RequestsController').state
   const { height } = useElementSize(contentContainerRef)
   const {
     control,

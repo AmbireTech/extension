@@ -17,7 +17,6 @@ import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useGetTokenSelectProps from '@common/hooks/useGetTokenSelectProps'
 import useNavigation from '@common/hooks/useNavigation'
 import { ROUTES } from '@common/modules/router/constants/common'
-import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControllerState'
 import useSyncedState from '@web/hooks/useSyncedState'
 import { getTokenId } from '@web/utils/token'
@@ -47,7 +46,7 @@ const useSwapAndBridgeForm = () => {
     toSelectedToken
   } = useSwapAndBridgeControllerState()
   const { dispatch } = useControllersMiddleware()
-  const { userRequests } = useRequestsControllerState()
+  const { userRequests } = useController('RequestsController').state
   const {
     state: { account, portfolio }
   } = useController('SelectedAccountController')
@@ -87,7 +86,7 @@ const useSwapAndBridgeForm = () => {
     open: openPriceImpactModal,
     close: closePriceImpactModal
   } = useModalize()
-  const { visibleUserRequests } = useRequestsControllerState()
+  const { visibleUserRequests } = useController('RequestsController').state
   const sessionIdsRequestedToBeInit = useRef<SessionId[]>([])
   const sessionId = useMemo(() => {
     if (isPopup) return 'popup'

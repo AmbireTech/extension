@@ -14,7 +14,6 @@ import useNavigation from '@common/hooks/useNavigation'
 import useToast from '@common/hooks/useToast'
 import DashboardBannerBottomSheet from '@common/modules/dashboard/components/DashboardBanners/DashboardBannerBottomSheet'
 import { ROUTES } from '@common/modules/router/constants/common'
-import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 
 const ERROR_ACTIONS = [
   'reject-accountOp',
@@ -32,7 +31,7 @@ const DashboardBanner = ({
   const { dispatch } = useControllersMiddleware()
   const { addToast } = useToast()
   const { navigate } = useNavigation()
-  const { statuses, visibleUserRequests } = useRequestsControllerState()
+  const { statuses, visibleUserRequests } = useController('RequestsController').state
   const {
     state: { portfolio }
   } = useController('SelectedAccountController')

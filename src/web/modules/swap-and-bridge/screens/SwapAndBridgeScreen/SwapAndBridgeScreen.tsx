@@ -18,7 +18,6 @@ import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings, { SPACING_MD, SPACING_MI } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { Content, Wrapper } from '@web/components/TransactionsScreen'
-import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControllerState'
 import useSimulationError from '@web/modules/portfolio/hooks/SimulationError/useSimulationError'
 import BatchAdded from '@web/modules/sign-account-op/components/OneClick/BatchModal/BatchAdded'
@@ -84,7 +83,7 @@ const SwapAndBridgeScreen = () => {
     state: { portfolio }
   } = useController('SelectedAccountController')
 
-  const { statuses: requestsCtrlStatuses } = useRequestsControllerState()
+  const { statuses: requestsCtrlStatuses } = useController('RequestsController').state
   const prevSelectedAccActiveRoutes: any[] | undefined = usePrevious(selectedAccActiveRoutes)
   const scrollViewRef: any = useRef(null)
   const { dispatch } = useControllersMiddleware()

@@ -17,7 +17,6 @@ import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import ManifestImage from '@web/components/ManifestImage'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import ActionFooter from '@web/modules/action-requests/components/ActionFooter'
 
 import Account from './components/Account'
@@ -31,7 +30,7 @@ const SwitchAccountScreen = () => {
     state: { account }
   } = useController('SelectedAccountController')
   const { dispatch } = useControllersMiddleware()
-  const { currentUserRequest } = useRequestsControllerState()
+  const { currentUserRequest } = useController('RequestsController').state
   const { accounts } = useController('AccountsController').state
   const [isAuthorizing, setIsAuthorizing] = useState(false)
   const { minHeightSize } = useWindowSize()

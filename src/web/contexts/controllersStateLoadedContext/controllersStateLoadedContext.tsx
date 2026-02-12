@@ -10,7 +10,6 @@ import useContractNamesControllerState from '@web/hooks/useContractNamesControll
 import useEmailVaultControllerState from '@web/hooks/useEmailVaultControllerState'
 import usePhishingControllerState from '@web/hooks/usePhishingControllerState'
 import usePortfolioControllerState from '@web/hooks/usePortfolioControllerState/usePortfolioControllerState'
-import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import useStorageControllerState from '@web/hooks/useStorageControllerState'
 import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControllerState'
 import useUiControllerState from '@web/hooks/useUiControllerState'
@@ -43,7 +42,6 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
   const StorageController = useStorageControllerState()
   const UiController = useUiControllerState()
   const WalletStateController = useWalletStateController()
-  const RequestsController = useRequestsControllerState()
   const PortfolioController = usePortfolioControllerState()
   const EmailVaultController = useEmailVaultControllerState()
   const PhishingController = usePhishingControllerState()
@@ -57,7 +55,6 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
       StorageController,
       UiController,
       WalletStateController,
-      RequestsController,
       PortfolioController,
       EmailVaultController,
       PhishingController,
@@ -70,7 +67,6 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
       StorageController,
       UiController,
       WalletStateController,
-      RequestsController,
       PortfolioController,
       EmailVaultController,
       PhishingController,

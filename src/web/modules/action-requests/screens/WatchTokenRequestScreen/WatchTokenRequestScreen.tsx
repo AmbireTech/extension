@@ -23,7 +23,6 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import usePortfolioControllerState from '@web/hooks/usePortfolioControllerState/usePortfolioControllerState'
-import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import ActionFooter from '@web/modules/action-requests/components/ActionFooter'
 import {
   getTokenEligibility,
@@ -46,9 +45,8 @@ export type TokenData = {
 const WatchTokenRequestScreen = () => {
   const { t } = useTranslation()
   const { theme, styles, themeType } = useTheme(getStyles)
-
   const { dispatch } = useControllersMiddleware()
-  const { currentUserRequest } = useRequestsControllerState()
+  const { currentUserRequest } = useController('RequestsController').state
   const { temporaryTokens, validTokens, customTokens } = usePortfolioControllerState()
   const {
     state: { portfolio: selectedAccountPortfolio }

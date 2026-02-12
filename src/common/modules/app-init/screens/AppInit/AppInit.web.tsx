@@ -28,7 +28,6 @@ import { ControllersStateLoadedProvider } from '@web/contexts/controllersStateLo
 import { EmailVaultControllerStateProvider } from '@web/contexts/emailVaultControllerStateContext'
 import { PhishingControllerStateProvider } from '@web/contexts/phishingControllerStateContext'
 import { PortfolioControllerStateProvider } from '@web/contexts/portfolioControllerStateContext'
-import { RequestsControllerStateProvider } from '@web/contexts/requestsControllerStateContext'
 import { StorageControllerStateProvider } from '@web/contexts/storageControllerStateContext'
 import { SwapAndBridgeControllerStateProvider } from '@web/contexts/swapAndBridgeControllerStateContext'
 import { TransferControllerStateProvider } from '@web/contexts/transferControllerStateContext'
@@ -49,7 +48,6 @@ const composeProviders = (
   providers.reduceRight<React.ReactNode>((acc, Provider) => <Provider>{acc}</Provider>, children)
 
 const CONTROLLER_STATE_PROVIDERS: ProviderComponent[] = [
-  RequestsControllerStateProvider,
   PortfolioControllerStateProvider,
   BannerControllerStateProvider,
   EmailVaultControllerStateProvider,

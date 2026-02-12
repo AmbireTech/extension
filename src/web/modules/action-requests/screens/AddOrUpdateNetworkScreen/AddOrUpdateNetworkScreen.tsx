@@ -9,7 +9,6 @@ import Spinner from '@common/components/Spinner'
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import flexbox from '@common/styles/utils/flexbox'
-import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import validateRequestParams from '@web/modules/action-requests/screens/AddOrUpdateNetworkScreen/validateRequestParams'
 
 import AddChain from './AddChain'
@@ -24,7 +23,7 @@ import UpdateChain from './UpdateChain'
 const AddOrUpdateNetworkScreen = () => {
   const { t } = useTranslation()
   const { dispatch } = useControllersMiddleware()
-  const { currentUserRequest } = useRequestsControllerState()
+  const { currentUserRequest } = useController('RequestsController').state
   const { statuses, networkToAddOrUpdate, disabledNetworks, networks } =
     useController('NetworksController').state
   const [features, setFeatures] = useState<NetworkFeature[]>(getFeatures(undefined, undefined))

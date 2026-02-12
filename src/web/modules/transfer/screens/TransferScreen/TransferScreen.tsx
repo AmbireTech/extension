@@ -30,7 +30,6 @@ import flexbox from '@common/styles/utils/flexbox'
 import { Content, Wrapper } from '@web/components/TransactionsScreen'
 import { createTab } from '@web/extension-services/background/webapi/tab'
 import useHasGasTank from '@web/hooks/useHasGasTank'
-import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import useSyncedState from '@web/hooks/useSyncedState'
 import useTransferControllerState from '@web/hooks/useTransferControllerState'
 import BatchAdded from '@web/modules/sign-account-op/components/OneClick/BatchModal/BatchAdded'
@@ -81,11 +80,11 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
 
   const { navigate } = useNavigation()
   const { t } = useTranslation()
-  const { visibleUserRequests } = useRequestsControllerState()
+  const { visibleUserRequests } = useController('RequestsController').state
   const {
     state: { account, portfolio }
   } = useController('SelectedAccountController')
-  const { userRequests } = useRequestsControllerState()
+  const { userRequests } = useController('RequestsController').state
 
   const {
     ref: gasTankSheetRef,

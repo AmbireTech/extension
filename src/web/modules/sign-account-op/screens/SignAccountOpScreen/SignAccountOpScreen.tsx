@@ -26,7 +26,6 @@ import {
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import { closeCurrentWindow } from '@web/extension-services/background/webapi/window'
-import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import useSignAccountOpControllerState from '@web/hooks/useSignAccountOpControllerState'
 import ActionHeader from '@web/modules/action-requests/components/ActionHeader'
 import Estimation from '@web/modules/sign-account-op/components/Estimation'
@@ -46,7 +45,7 @@ const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }: Nati
 }
 
 const SignAccountOpScreen = () => {
-  const { currentUserRequest, visibleUserRequests } = useRequestsControllerState()
+  const { currentUserRequest, visibleUserRequests } = useController('RequestsController').state
   const signAccountOpState = useSignAccountOpControllerState()
   const mainState = useController('MainController').state
   const { dispatch } = useControllersMiddleware()

@@ -20,7 +20,6 @@ import flexbox from '@common/styles/utils/flexbox'
 import SmallNotificationWindowWrapper from '@web/components/SmallNotificationWindowWrapper'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import useDappInfo from '@web/hooks/useDappInfo/useDappInfo'
-import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import ActionFooter from '@web/modules/action-requests/components/ActionFooter'
 import ActionHeader from '@web/modules/action-requests/components/ActionHeader'
 import useLedger from '@web/modules/hardware-wallet/hooks/useLedger'
@@ -46,7 +45,7 @@ const SignMessageScreen = () => {
   const [shouldDisplayLedgerConnectModal, setShouldDisplayLedgerConnectModal] = useState(false)
   const [makeItSmartConfirmed, setMakeItSmartConfirmed] = useState(false)
   const [doNotAskMeAgain, setDoNotAskMeAgain] = useState(false)
-  const { currentUserRequest } = useRequestsControllerState()
+  const { currentUserRequest } = useController('RequestsController').state
   const { theme } = useTheme()
   const { addToast } = useToast()
 
