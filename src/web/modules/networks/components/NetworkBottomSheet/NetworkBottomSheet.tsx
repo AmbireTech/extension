@@ -51,14 +51,14 @@ const NetworkBottomSheet = ({ sheetRef, chainId, closeBottomSheet, openBlockExpl
       sheetRef={sheetRef}
       closeBottomSheet={closeBottomSheet}
     >
-      <View style={[styles.item, spacings.pvSm, spacings.mb3Xl]}>
-        {!!chainId && <NetworkIcon size={32} id={chainId.toString()} />}
-        <Text fontSize={16} weight="medium" style={spacings.mlMi}>
+      <View style={[styles.item, spacings.pvSm, spacings.mbLg]}>
+        {!!chainId && <NetworkIcon size={28} id={chainId.toString()} />}
+        <Text fontSize={16} weight="medium" style={spacings.mlTy}>
           {networkData?.name || t('Unknown Network')}
         </Text>
       </View>
       <Option
-        renderIcon={<SettingsIcon width={27} height={27} color={theme.secondaryText} />}
+        renderIcon={<SettingsIcon width={24} height={24} color={theme.secondaryText} />}
         title={t('Go to Network Settings')}
         onPress={() => {
           try {
@@ -69,7 +69,7 @@ const NetworkBottomSheet = ({ sheetRef, chainId, closeBottomSheet, openBlockExpl
         }}
       />
       <Option
-        renderIcon={<OpenIcon width={20} height={20} color={theme.secondaryText} />}
+        renderIcon={<OpenIcon width={24} height={24} color={theme.secondaryText} />}
         title={t('Open current account in block explorer')}
         disabled={isMissingBlockExplorer}
         tooltip={isMissingBlockExplorer ? NO_BLOCK_EXPLORER_AVAILABLE_TOOLTIP : ''}

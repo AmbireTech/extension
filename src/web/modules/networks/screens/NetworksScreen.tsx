@@ -4,10 +4,13 @@ import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 import { useSearchParams } from 'react-router-dom'
 
+import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
 import AddIcon from '@common/assets/svg/AddIcon'
 import BackButton from '@common/components/BackButton'
 import Button from '@common/components/Button'
+import FooterGlassView from '@common/components/FooterGlassView'
 import Input from '@common/components/Input'
+import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import useNavigation from '@common/hooks/useNavigation/useNavigation.web'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
@@ -15,6 +18,7 @@ import { HeaderWithTitle } from '@common/modules/header/components/Header/Header
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import LayoutWrapper from '@web/components/LayoutWrapper'
 import {
   TabLayoutContainer,
   tabLayoutWidths,
@@ -119,13 +123,9 @@ const NetworksScreen = () => {
   )
 
   return (
-    <TabLayoutContainer
-      header={<HeaderWithTitle title="Networks" />}
-      footer={<BackButton />}
-      width="lg"
-      hideFooterInPopup
-    >
-      <View style={[flexbox.flex1, spacings.pv]}>
+    <LayoutWrapper>
+      <HeaderWithTitle displayBackButtonIn="always" />
+      <View style={[flexbox.flex1, spacings.pv, spacings.phSm]}>
         <Input
           testID="search-for-network-field"
           autoFocus
@@ -133,17 +133,17 @@ const NetworksScreen = () => {
           onChangeText={setSearch}
           placeholder={t('Search for network')}
         />
-        <TabLayoutWrapperMainContent>
-          <NetworkBottomSheet
-            chainId={settingsChainId}
-            sheetRef={settingsBottomSheetRef}
-            closeBottomSheet={handleCloseSettingsBottomSheet}
-            openBlockExplorer={openBlockExplorer}
-          />
-          <AddNetworkBottomSheet
-            sheetRef={addNetworkBottomSheetRef}
-            closeBottomSheet={closeAddNetworkBottomSheet}
-          />
+        <NetworkBottomSheet
+          chainId={settingsChainId}
+          sheetRef={settingsBottomSheetRef}
+          closeBottomSheet={handleCloseSettingsBottomSheet}
+          openBlockExplorer={openBlockExplorer}
+        />
+        <AddNetworkBottomSheet
+          sheetRef={addNetworkBottomSheetRef}
+          closeBottomSheet={closeAddNetworkBottomSheet}
+        />
+        <ScrollableWrapper style={{ paddingBottom: 72 }}>
           <AllNetworksOption onPress={handleChangeNetwork} />
           <Networks
             search={search}
@@ -151,21 +151,22 @@ const NetworksScreen = () => {
             openSettingsBottomSheet={handleOpenSettingsBottomSheet}
             onPress={handleChangeNetwork}
           />
-        </TabLayoutWrapperMainContent>
-        <View style={[spacings.ptSm, { width: '100%' }]}>
+        </ScrollableWrapper>
+        {/* TODO: Change padding */}
+        <FooterGlassView borderRadius={28}>
           <Button
-            text={t('Add New Network')}
-            type="secondary"
+            text={t('Add new network')}
+            size="smaller"
             hasBottomSpacing={false}
-            style={{ maxWidth: tabLayoutWidths.lg, ...flexbox.alignSelfCenter, width: '100%' }}
+            style={{ minWidth: 174 }}
             childrenPosition="left"
             onPress={handleOpenAddNetworkBottomSheet}
           >
-            <AddIcon color={theme.primary} style={spacings.mrTy} />
+            <AddCircularIcon width={24} height={24} color="#fff" style={spacings.mrMi} />
           </Button>
-        </View>
+        </FooterGlassView>
       </View>
-    </TabLayoutContainer>
+    </LayoutWrapper>
   )
 }
 
