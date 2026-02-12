@@ -37,8 +37,15 @@ export class ControllerStore {
     forceEmit?: boolean
   ) {
     if (ctrl === undefined) return
-    this.#states[id] = isExtension ? { ...ctrl } : parse(stringify(ctrl))
-    if (!this.initializedControllers.has(id)) {
+    try {
+      this.#states[id] = isExtension ? { ...ctrl } : parse(stringify(ctrl))
+    } catch (error) {
+      console.error(error)
+    }
+    if (
+      !this.initializedControllers.has(id) ||
+      (!('isReady' in (this.#states?.[id] || {})) && !(this.#states?.[id] as any).isReady)
+    ) {
       this.initializedControllers.add(id)
       this.#checkReadiness()
     }
@@ -78,9 +85,15 @@ export class ControllerStore {
   #checkReadiness() {
     if (!this.#controllersByName.length) return
     // Check if every required controller exists in the initialized set
-    const allReady = Array.from(this.#controllersByName).every((ctrlName) =>
-      this.initializedControllers.has(ctrlName)
-    )
+    const allReady = Array.from(this.#controllersByName).every((ctrlName) => {
+      if (!this.initializedControllers.has(ctrlName)) return false
+
+      if ('isReady' in (this.#states?.[ctrlName] || {})) {
+        return (this.#states[ctrlName] as any).isReady === true
+      }
+
+      return true
+    })
 
     if (allReady) !!this.#onReady && this.#onReady()
   }

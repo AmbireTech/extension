@@ -30,8 +30,15 @@ const ControllersStateLoadedProvider = ({ children }: { children: ReactNode }) =
   const isViewReady = useMemo(() => {
     if (!isPopup) return true
 
+<<<<<<< HEAD
     return uiControllerState?.views?.some((v: any) => v.type === 'popup' && v.isReady) ?? false
   }, [uiControllerState])
+=======
+    const popupView = controllers.UiController?.views?.find((v: any) => v.type === 'popup')
+
+    return !!popupView?.isReady
+  }, [controllers.UiController])
+>>>>>>> refactor/make-main-controller-compatible-for-different-environments
 
   useEffect(() => {
     if (areControllerStatesLoaded) return

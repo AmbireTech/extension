@@ -2,7 +2,6 @@ import { EventEmitter as Emitter } from 'events'
 /* eslint-disable @typescript-eslint/no-floating-promises */
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 
-import EventEmitter from '@ambire-common/controllers/eventEmitter/eventEmitter'
 import { EventEmitterRegistryController } from '@ambire-common/controllers/eventEmitterRegistry/eventEmitterRegistry'
 import { MainController } from '@ambire-common/controllers/main/main'
 import { IKeystoreController } from '@ambire-common/interfaces/keystore'
@@ -24,8 +23,7 @@ export const ControllersMiddlewareProvider: React.FC<{
   children: React.ReactNode
 }> = ({ children }) => {
   const [isUnlocked, setIsUnlocked] = useState(false)
-  const ctrlOnUpdateIsDirtyFlags = useRef<Record<string, boolean>>({})
-  const { controllerStore } = useContext(ControllerStoreContext)
+  const { controllerStore, debounceControllerUpdates } = useContext(ControllerStoreContext)
 
   useEffect(() => {
     controllerStore.init(
@@ -37,31 +35,6 @@ export const ControllersMiddlewareProvider: React.FC<{
       }
     )
   }, [controllerStore])
-
-  const debounceControllerUpdates = useCallback(
-    (ctrlName: string, ctrl: EventEmitter, forceEmit?: boolean): 'DEBOUNCED' | 'EMITTED' => {
-      if (forceEmit) {
-        eventBus.emit(ctrlName, ctrl.toJSON(), forceEmit)
-        controllerStore.update(ctrlName as any, ctrl, forceEmit)
-
-        return 'EMITTED'
-      }
-
-      if (ctrlOnUpdateIsDirtyFlags.current[ctrlName]) return 'DEBOUNCED'
-      ctrlOnUpdateIsDirtyFlags.current[ctrlName] = true
-      // Debounce multiple emits in the same tick and only execute one of them
-      setTimeout(() => {
-        if (ctrlOnUpdateIsDirtyFlags.current[ctrlName]) {
-          eventBus.emit(ctrlName, ctrl.toJSON(), forceEmit)
-          controllerStore.update(ctrlName as any, ctrl, forceEmit)
-        }
-        ctrlOnUpdateIsDirtyFlags.current[ctrlName] = false
-      }, 0)
-
-      return 'EMITTED'
-    },
-    [controllerStore]
-  )
 
   const eventEmitterRegistry = useRef<EventEmitterRegistryController>(
     new EventEmitterRegistryController(() => {

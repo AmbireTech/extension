@@ -1,4 +1,3 @@
-import Fuse from 'fuse.js'
 import React, { useCallback, useEffect, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { Animated, FlatListProps, Pressable, View } from 'react-native'
@@ -122,7 +121,8 @@ const Tokens = ({
       tokens
         .filter((token) => {
           if (isGasTankTokenOnCustomNetwork(token, networks)) return false
-          if (token?.flags.isHidden) return false
+          if (token?.flags.isHidden || token.flags.rewardsType === 'wallet-projected-rewards')
+            return false
 
           const hasTokenAmount = hasAmount(token)
           const isCustom = customTokens.find(

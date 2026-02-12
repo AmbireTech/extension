@@ -57,7 +57,7 @@ const SendForm = ({
       isTopUp,
       addressState,
       amount: controllerAmount,
-      isReady
+      areDefaultsSet
     }
   } = useController('TransferController')
   const { dispatch } = useControllersMiddleware()
@@ -142,7 +142,7 @@ const SendForm = ({
         )}
       </View>
 
-      {(!selectedToken && tokens.length) || !portfolio?.isReadyToVisualize || !isReady ? (
+      {(!selectedToken && tokens.length) || !portfolio?.isReadyToVisualize || !areDefaultsSet ? (
         <SkeletonLoader width="100%" height={115} />
       ) : (
         <SendToken

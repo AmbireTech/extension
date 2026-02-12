@@ -3,9 +3,8 @@ import { Controller, useForm } from 'react-hook-form'
 import { TouchableOpacity, View } from 'react-native'
 
 import { isValidPassword } from '@ambire-common/services/validations'
-import AmbireLogoWithTextMonochrome from '@common/assets/svg/AmbireLogoWithTextMonochrome'
+import AmbireLogoWithBackgroundAndLogotype from '@common/assets/svg/AmbireLogoWithBackgroundAndLogotype'
 import LockIcon from '@common/assets/svg/LockIcon'
-import UnlockScreenBackground from '@common/assets/svg/UnlockScreenBackground'
 import Button from '@common/components/Button'
 import InputPassword from '@common/components/InputPassword'
 import Text from '@common/components/Text'
@@ -14,39 +13,29 @@ import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useDisableNavigatingBack from '@common/hooks/useDisableNavigatingBack'
-import useElementSize from '@common/hooks/useElementSize'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
-import Header from '@common/modules/header/components/Header'
 import { ROUTES } from '@common/modules/router/constants/common'
-import spacings, { SPACING } from '@common/styles/spacings'
-import flexbox from '@common/styles/utils/flexbox'
+import spacings from '@common/styles/spacings'
 import text from '@common/styles/utils/text'
 import { DEFAULT_KEYSTORE_PASSWORD_DEV } from '@env'
-import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
-import { POPUP_HEIGHT } from '@web/constants/spacings'
+import LayoutWrapper from '@web/components/LayoutWrapper'
 import { openInternalPageInTab } from '@web/extension-services/background/webapi/tab'
 import { getUiType } from '@web/utils/uiType'
 
 import getStyles from './styles'
 
 const FOOTER_BUTTON_HIT_SLOP = { top: 10, bottom: 15 }
-const MIN_PANEL_SIZE = 480
-
-const isPopup = getUiType().isPopup
-
-const Container = isPopup ? View : TabLayoutWrapperMainContent
 
 const KeyStoreUnlockScreen = () => {
-  const contentContainerRef = useRef(null)
   const { t } = useTranslation()
-  const { styles, theme } = useTheme(getStyles)
+  const { styles } = useTheme(getStyles)
   const { navigate } = useNavigation()
   const { dispatch } = useControllersMiddleware()
   const { hasKeystoreRecovery } = useController('EmailVaultController').state
   const { isUnlocked, statuses, errorMessage } = useController('KeystoreController').state
   const { requestWindow } = useController('RequestsController').state
-  const { height } = useElementSize(contentContainerRef)
+  const { theme } = useTheme()
   const {
     control,
     handleSubmit,
@@ -99,139 +88,75 @@ const KeyStoreUnlockScreen = () => {
     [disableSubmit, dispatch]
   )
 
-  const panelSize = useMemo(() => {
-    const MAX_SIZE = POPUP_HEIGHT
-    if (isPopup) return POPUP_HEIGHT
-    if (height > MAX_SIZE) return POPUP_HEIGHT
-
-    const size = height - 2 * SPACING
-    return size < MIN_PANEL_SIZE ? MIN_PANEL_SIZE : size
-  }, [height])
-
   return (
-    <TabLayoutContainer
-      withHorizontalPadding={!isPopup}
-      backgroundColor={theme.secondaryBackground}
-      header={
-        !isPopup && (
-          <Header.Wrapper style={flexbox.justifyCenter}>
-            <Text fontSize={20} weight="medium" style={[{ marginLeft: 18 + SPACING }, spacings.mr]}>
-              {t('Welcome Back')}
-            </Text>
-            <LockIcon />
-          </Header.Wrapper>
-        )
-      }
-    >
-      <Container
-        contentContainerStyle={[flexbox.alignCenter, spacings.pv0]}
-        style={flexbox.flex1}
-        wrapperRef={contentContainerRef}
-        withScroll
-      >
-        <View
-          style={[
-            styles.container,
-            { aspectRatio: 1, minHeight: MIN_PANEL_SIZE, maxHeight: panelSize }
-          ]}
+    <LayoutWrapper style={styles.panel}>
+      <View style={styles.container}>
+        <Text fontSize={20} weight="semiBold" appearance="primaryText" style={spacings.mb3Xl}>
+          {t('Welcome Back')}
+        </Text>
+        <AmbireLogoWithBackgroundAndLogotype style={spacings.mbXl} />
+        <Text
+          weight="medium"
+          appearance="secondaryText"
+          style={[text.center, { marginBottom: 84 }]}
         >
-          <View style={styles.backgroundWrapper}>
-            <View style={styles.backgroundSVG}>
-              <UnlockScreenBackground />
-            </View>
-            {!!isPopup && (
-              <View style={styles.panelHeader}>
-                <View
-                  style={[
-                    flexbox.flex1,
-                    flexbox.directionRow,
-                    flexbox.alignCenter,
-                    flexbox.justifyCenter
-                  ]}
-                >
-                  <Text
-                    fontSize={20}
-                    weight="medium"
-                    color="white"
-                    style={[{ marginLeft: 18 + SPACING }, spacings.mr]}
-                  >
-                    {t('Welcome Back')}
-                  </Text>
-                  <LockIcon color="white" />
-                </View>
-              </View>
-            )}
-            <View style={[flexbox.flex1, flexbox.alignCenter, flexbox.justifyCenter]}>
-              <AmbireLogoWithTextMonochrome
-                width={122}
-                height={height < 550 && !isPopup ? 90 : 128}
-              />
-            </View>
-            <View>
-              <Text
-                fontSize={14}
-                weight="medium"
-                color="white"
-                style={[text.center, spacings.mbXl]}
-              >
-                {t('Easy and secure self-custody for the\nEthereum ecosystem')}
-              </Text>
-            </View>
-          </View>
-          <View
-            style={[flexbox.alignCenter, flexbox.justifyCenter, spacings.pvLg, { minHeight: 240 }]}
-          >
-            <Controller
-              control={control}
-              render={({ field: { onChange, onBlur, value } }) => (
-                <InputPassword
-                  testID="passphrase-field"
-                  onBlur={onBlur}
-                  placeholder={t('Enter Your Password')}
-                  autoFocus={isWeb}
-                  onChangeText={(val: string) => {
-                    onChange(val)
-                    if (errorMessage) {
-                      dispatch({ type: 'KEYSTORE_CONTROLLER_RESET_ERROR_STATE' })
-                    }
-                  }}
-                  isValid={!errors.password && isValidPassword(value)}
-                  value={value}
-                  onSubmitEditing={handleSubmit((data) => handleUnlock(data))}
-                  error={passwordFieldError}
-                  containerStyle={{ ...spacings.mbLg, width: 342 }}
-                />
-              )}
-              name="password"
-            />
-            <Button
-              testID="button-unlock"
-              style={{ width: 342, ...spacings.mbLg }}
-              disabled={disableSubmit}
-              text={statuses.unlockWithSecret === 'LOADING' ? t('Unlocking...') : t('Unlock')}
-              onPress={handleSubmit((data) => handleUnlock(data))}
-            />
-
-            {hasKeystoreRecovery && (
-              <TouchableOpacity
-                onPress={() =>
-                  openInternalPageInTab({
-                    route: ROUTES.keyStoreEmailRecovery,
-                    shouldCloseCurrentWindow: !getUiType().isTab,
-                    windowId: requestWindow?.windowProps?.createdFromWindowId
-                  })
+          {t('Easy and secure self-custody for the\nEthereum ecosystem')}
+        </Text>
+        <Controller
+          control={control}
+          render={({ field: { onChange, onBlur, value } }) => (
+            <InputPassword
+              testID="passphrase-field"
+              onBlur={onBlur}
+              placeholder={t('Enter your password')}
+              autoFocus={isWeb}
+              inputStyle={{ height: 54 }} // 56-2px border
+              inputWrapperStyle={{ backgroundColor: theme.secondaryBackground, height: 56 }}
+              onChangeText={(val: string) => {
+                onChange(val)
+                if (errorMessage) {
+                  dispatch({ type: 'KEYSTORE_CONTROLLER_RESET_ERROR_STATE' })
                 }
-                hitSlop={FOOTER_BUTTON_HIT_SLOP}
-              >
-                <Text weight="medium" appearance="secondaryText" fontSize={14} underline>
-                  {t('Forgot extension password?')}
-                </Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        </View>
-      </Container>
-    </TabLayoutContainer>
+              }}
+              isValid={!errors.password && isValidPassword(value)}
+              value={value}
+              onSubmitEditing={handleSubmit((data) => handleUnlock(data))}
+              error={passwordFieldError}
+              containerStyle={{ ...spacings.mb, width: '100%' }}
+            />
+          )}
+          name="password"
+        />
+        <Button
+          testID="button-unlock"
+          disabled={disableSubmit}
+          style={{ width: '100%' }}
+          text={statuses.unlockWithSecret === 'LOADING' ? t('Unlocking...') : t('Unlock')}
+          onPress={handleSubmit((data) => handleUnlock(data))}
+          childrenPosition="left"
+        >
+          <LockIcon width={24} height={24} color="#fff" style={spacings.mrMi} />
+        </Button>
+
+        {hasKeystoreRecovery && (
+          <TouchableOpacity
+            onPress={() =>
+              openInternalPageInTab({
+                route: ROUTES.keyStoreEmailRecovery,
+                shouldCloseCurrentWindow: !getUiType().isTab,
+                windowId: requestWindow?.windowProps?.createdFromWindowId
+              })
+            }
+            style={spacings.mtXl}
+            hitSlop={FOOTER_BUTTON_HIT_SLOP}
+          >
+            <Text weight="medium" appearance="secondaryText" fontSize={14} underline>
+              {t('Forgot extension password?')}
+            </Text>
+          </TouchableOpacity>
+        )}
+      </View>
+    </LayoutWrapper>
   )
 }
 

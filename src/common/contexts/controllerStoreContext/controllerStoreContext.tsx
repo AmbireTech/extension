@@ -40,7 +40,11 @@ export const ControllerStoreProvider: React.FC<{
   const debounceControllerUpdates = useCallback(
     (ctrlName: string, ctrl: EventEmitter, forceEmit?: boolean): 'DEBOUNCED' | 'EMITTED' => {
       if (forceEmit) {
-        eventBus.emit(ctrlName, ctrl.toJSON(), forceEmit)
+        try {
+          eventBus.emit(ctrlName, ctrl.toJSON(), forceEmit)
+        } catch (error) {
+          console.error(error)
+        }
         controllerStore.update(ctrlName as any, ctrl, forceEmit)
 
         return 'EMITTED'
