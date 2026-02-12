@@ -1,7 +1,6 @@
 import React, { FC, ReactNode, useEffect } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 
-import ErrorPage from '@legends/components/ErrorPage'
 import PrivateRoute from '@legends/components/PrivateRoute'
 import Season2Modal from '@legends/components/Season2Modal'
 import { DataPollingContextProvider } from '@legends/contexts/dataPollingContext'
@@ -48,11 +47,9 @@ const PrivateArea: FC<{ children: ReactNode }> = ({ children }) => {
   )
 }
 
-const SentryRoutes = Sentry.withSentryReactRouterV6Routing(Routes)
-
 const Router = () => {
   return (
-    <SentryRoutes>
+    <Routes>
       <Route
         element={
           <PrivateArea>
@@ -75,7 +72,7 @@ const Router = () => {
           element={<Navigate to={LEGENDS_ROUTES.home} />}
         />
       </Route>
-    </SentryRoutes>
+    </Routes>
   )
 }
 

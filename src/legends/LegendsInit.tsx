@@ -21,10 +21,12 @@ declare global {
 
 const errorComponent = <ErrorPage />
 
+const SentryRouter = Sentry.withSentryReactRouterV6Routing(HashRouter)
+
 const LegendsInit = () => {
   return (
     <Sentry.ErrorBoundary fallback={errorComponent}>
-      <HashRouter>
+      <SentryRouter>
         <PortalProvider>
           <ToastContextProvider>
             <ControllerStoreProvider>
@@ -39,7 +41,7 @@ const LegendsInit = () => {
           </ToastContextProvider>
           <PortalHost name="global" />
         </PortalProvider>
-      </HashRouter>
+      </SentryRouter>
     </Sentry.ErrorBoundary>
   )
 }

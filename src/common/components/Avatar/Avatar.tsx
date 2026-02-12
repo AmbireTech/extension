@@ -1,6 +1,7 @@
 import React, { FC, useEffect, useRef, useState } from 'react'
 import { Animated, ViewStyle } from 'react-native'
 
+import { isBenzin, isLegends } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -77,8 +78,16 @@ const Avatar: FC<Props> = ({
     state: { domains, loadingAddresses }
   } = useController('DomainsController')
   // There is no wallet controller state in benzin/rewards so we need to be careful
-  const walletState = useController('WalletStateController').state
-  const avatarTypeSetting = propAvatarType || walletState?.avatarType || 'jazzicons'
+
+  let avatarTypeSetting: AvatarType | Omit<AvatarType, 'ens'> = 'jazzicons'
+  if (!isLegends && !isBenzin) {
+    const walletState = useController('WalletStateController').state
+    avatarTypeSetting = propAvatarType || walletState?.avatarType || 'jazzicons'
+  }
+
+  useEffect(() => {
+    throw new Error('Avatar: propAvatarType is not implemented')
+  }, [propAvatarType])
 
   const isEnsLoading = address
     ? (domains && !domains[address]) || loadingAddresses?.includes(address)
