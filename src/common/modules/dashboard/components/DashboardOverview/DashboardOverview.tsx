@@ -9,6 +9,7 @@ import useTheme from '@common/hooks/useTheme'
 import DashboardHeader from '@common/modules/dashboard/components/DashboardHeader'
 import Routes from '@common/modules/dashboard/components/Routes'
 import useBalanceAffectingErrors from '@common/modules/dashboard/hooks/useBalanceAffectingErrors'
+import useBanners from '@common/modules/dashboard/hooks/useBanners'
 import { OVERVIEW_CONTENT_MAX_HEIGHT } from '@common/modules/dashboard/screens/DashboardScreen'
 import spacings, { SPACING, SPACING_MD, SPACING_TY, SPACING_XL } from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
@@ -50,6 +51,8 @@ const DashboardOverview: FC<Props> = ({
   const { dispatch } = useBackgroundService()
   const { t } = useTranslation()
   const { theme, styles } = useTheme(getStyles)
+  const [controllerBanners, marketingBanners] = useBanners()
+  const banners = [...controllerBanners, ...marketingBanners]
   const { isOffline } = useMainControllerState()
   const { account, dashboardNetworkFilter, portfolio } = useSelectedAccountControllerState()
 
@@ -81,7 +84,7 @@ const DashboardOverview: FC<Props> = ({
   }, [dashboardNetworkFilter, dispatch])
 
   return (
-    <View style={[spacings.phSm, spacings.mb]}>
+    <View style={[spacings.phSm, banners.length ? spacings.mbSm : spacings.mb]}>
       <View style={[styles.contentContainer]}>
         <Animated.View
           style={[
