@@ -14,7 +14,6 @@ import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
@@ -37,13 +36,11 @@ const PayOption = ({
   disabledTextAppearance?: 'errorText' | 'infoText'
 }) => {
   const { t } = useTranslation()
-  const { styles, theme, themeType } = useTheme(getStyles)
+  const { styles, theme } = useTheme(getStyles)
   const { accounts } = useAccountsControllerState()
   const { account } = useSelectedAccountControllerState()
   const { networks } = useNetworksControllerState()
   const signAccountOpState = useSignAccountOpControllerState()
-
-  const iconSize = 24
 
   const paidByAccountData = useMemo(
     () => accounts.find((a) => a.addr === feeOption.paidBy),
@@ -91,17 +88,23 @@ const PayOption = ({
       <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter, spacings.mrTy]}>
         {feeOption.token.flags.onGasTank ? (
           <View style={styles.gasTankIconWrapper}>
-            <GasTankIcon color={theme.primaryAccent} width={24} height={24} />
+            <GasTankIcon
+              color={theme.primaryAccent300}
+              width={20}
+              height={20}
+              style={{ marginLeft: 2 }}
+            />
           </View>
         ) : (
           <TokenIcon
             containerStyle={{
-              width: iconSize,
-              height: iconSize
+              width: 32,
+              height: 32
             }}
-            width={iconSize}
-            height={iconSize}
-            networkSize={12}
+            withContainer
+            width={28}
+            height={28}
+            networkSize={14}
             address={feeOption.token.address}
             chainId={feeOption.token.chainId}
             onGasTank={feeOption.token.flags.onGasTank}
@@ -110,33 +113,28 @@ const PayOption = ({
         )}
 
         <View style={[flexbox.flex1, spacings.mlTy]}>
-          <Text weight="semiBold" fontSize={12} numberOfLines={1}>
+          <Text weight="semiBold" fontSize={13} numberOfLines={1}>
             {formattedAmount} {feeOption.token.symbol}{' '}
-            {feeOption.token.flags.onGasTank ? (
+            {!!feeOption.token.flags.onGasTank && (
               <View style={styles.gasTankBadge}>
                 <Text fontSize={10} color="white" weight="medium">
                   {t('Gas Tank')}
                 </Text>
               </View>
-            ) : (
-              <>
-                <Text fontSize={12}>{t('on ')}</Text>
-                <Text fontSize={12}>{feeTokenNetworkName}</Text>
-              </>
             )}
           </Text>
 
           {disabledReason ? (
             <Text
               weight="medium"
-              fontSize={10}
+              fontSize={12}
               numberOfLines={1}
               appearance={disabledTextAppearance}
             >
               {disabledReason}
             </Text>
           ) : (
-            <Text appearance="secondaryText" weight="medium" fontSize={10}>
+            <Text appearance="secondaryText" weight="medium" fontSize={12}>
               {formatDecimals(Number(amountUsd), 'value')}
             </Text>
           )}
@@ -153,7 +151,7 @@ const PayOption = ({
               isSmart={false}
               displayTypeBadge={false}
             />
-            <Text fontSize={10} weight="semiBold" numberOfLines={1}>
+            <Text fontSize={12} weight="semiBold" numberOfLines={1}>
               {paidByLabel}
             </Text>
           </View>

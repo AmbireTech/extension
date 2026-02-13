@@ -428,31 +428,27 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
 
   const buttons = useMemo(() => {
     return (
-      <>
-        {isTab && <BackButton onPress={onBack} />}
-        <Buttons
-          handleSubmitForm={(isOneClickMode) =>
-            addTransaction(isOneClickMode ? 'open-request-window' : 'queue')
-          }
-          proceedBtnText={submitButtonText}
-          isBatchDisabled={isSendingBatch || isSignAccountOpInProgress}
-          isNotReadyToProceed={!isTransferFormValid}
-          signAccountOpErrors={[]}
-          networkUserRequests={networkUserRequests}
-          isLocalStateOutOfSync={isLocalStateOutOfSync}
-          shouldHoldToProceed={
-            (isRecipientAddressUnknown &&
-              !isRecipientAddressUnknownAgreed &&
-              !isRecipientHumanizerKnownTokenOrSmartContract &&
-              isRecipientAddressFirstTimeSend) ||
-            isRecipientAddressViewOnly
-          }
-          onRecipientAddressUnknownAgree={onRecipientAddressUnknownAgree}
-        />
-      </>
+      <Buttons
+        handleSubmitForm={(isOneClickMode) =>
+          addTransaction(isOneClickMode ? 'open-request-window' : 'queue')
+        }
+        proceedBtnText={submitButtonText}
+        isBatchDisabled={isSendingBatch || isSignAccountOpInProgress}
+        isNotReadyToProceed={!isTransferFormValid}
+        signAccountOpErrors={[]}
+        networkUserRequests={networkUserRequests}
+        isLocalStateOutOfSync={isLocalStateOutOfSync}
+        shouldHoldToProceed={
+          (isRecipientAddressUnknown &&
+            !isRecipientAddressUnknownAgreed &&
+            !isRecipientHumanizerKnownTokenOrSmartContract &&
+            isRecipientAddressFirstTimeSend) ||
+          isRecipientAddressViewOnly
+        }
+        onRecipientAddressUnknownAgree={onRecipientAddressUnknownAgree}
+      />
     )
   }, [
-    onBack,
     submitButtonText,
     isSendingBatch,
     isSignAccountOpInProgress,
@@ -573,7 +569,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   }
 
   return (
-    <Wrapper buttons={buttons}>
+    <Wrapper>
       <Content buttons={buttons}>
         {state?.isInitialized ? (
           <View>

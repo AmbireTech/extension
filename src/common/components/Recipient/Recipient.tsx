@@ -6,7 +6,7 @@ import { useModalize } from 'react-native-modalize'
 import { Contact } from '@ambire-common/controllers/addressBook/addressBook'
 import { TokenResult } from '@ambire-common/libs/portfolio'
 import { validateAddress, Validation } from '@ambire-common/services/validations'
-import AccountsFilledIcon from '@common/assets/svg/AccountsFilledIcon'
+import AddressBookIcon from '@common/assets/svg/AddressBookIcon'
 import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import UpArrowIcon from '@common/assets/svg/UpArrowIcon'
@@ -288,7 +288,7 @@ const Recipient: React.FC<Props> = ({
       if (section.data.length === 0) return null
 
       return section.key === 'contacts' ? (
-        <TitleAndIcon title={t('Address Book')} icon={AccountsFilledIcon}>
+        <TitleAndIcon title={t('Address Book')} icon={AddressBookIcon}>
           <AnimatedPressable
             style={[flexbox.directionRow, flexbox.alignCenter, manageBtnAnimStyle]}
             onPress={onManagePress}

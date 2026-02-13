@@ -8,6 +8,8 @@ import {
   SwapAndBridgeStep
 } from '@ambire-common/interfaces/swapAndBridge'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
+import BungeeIcon from '@common/assets/svg/BungeeIcon/BungeeIcon'
+import LiFiIcon from '@common/assets/svg/LiFiIcon/LiFiIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
@@ -17,8 +19,6 @@ import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import formatTime from '@common/utils/formatTime'
 
-import BungeeIcon from '@common/assets/svg/BungeeIcon/BungeeIcon'
-import LiFiIcon from '@common/assets/svg/LiFiIcon/LiFiIcon'
 import RouteStepsArrow from '../RouteStepsArrow'
 import RouteStepsToken from '../RouteStepsToken'
 import styles from './styles'
@@ -126,7 +126,7 @@ const RouteStepsPreview = ({
           if (isLast) {
             return (
               <Fragment key={step.type}>
-                <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
+                <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignStart]}>
                   <RouteStepsToken
                     amountInUsd={inputValueInUsd}
                     uri={step.fromAsset.icon}
@@ -136,7 +136,7 @@ const RouteStepsPreview = ({
                     amount={isOnlyOneStep ? formattedFromAmount : formattedRefundedAmount}
                   />
                   <RouteStepsArrow
-                    containerStyle={flexbox.flex1}
+                    containerStyle={{ ...flexbox.flex1, ...spacings.mt }}
                     type={getLastStepType(step)}
                     badge={
                       <>
@@ -176,10 +176,7 @@ const RouteStepsPreview = ({
           }
 
           return (
-            <View
-              key={step.type}
-              style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}
-            >
+            <View key={step.type} style={[flexbox.flex1, flexbox.directionRow, flexbox.alignStart]}>
               <RouteStepsToken
                 address={step.fromAsset.address}
                 chainId={BigInt(step.fromAsset.chainId)}
@@ -188,7 +185,7 @@ const RouteStepsPreview = ({
                 amount={isFirst ? formattedFromAmount : ''}
               />
               <RouteStepsArrow
-                containerStyle={flexbox.flex1}
+                containerStyle={{ ...flexbox.flex1, ...spacings.mt }}
                 type={step.userTxIndex < currentStep ? 'success' : 'default'}
                 badge={
                   <>

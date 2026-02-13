@@ -9,7 +9,8 @@ const FooterGlassView: FC<{
   children: React.ReactNode
   style?: ViewStyle
   borderRadius?: number
-}> = ({ children, style = {}, borderRadius = 32 }) => {
+  innerContainerStyle?: ViewStyle
+}> = ({ children, style = {}, innerContainerStyle, borderRadius = 32 }) => {
   return (
     <View
       style={{
@@ -28,7 +29,7 @@ const FooterGlassView: FC<{
         }}
         cssStyle={{ borderRadius }}
       >
-        <View style={[spacings.ph, spacings.pv]}>{children}</View>
+        <View style={[spacings.ph, spacings.pv, innerContainerStyle]}>{children}</View>
       </GlassView>
     </View>
   )
