@@ -12,7 +12,7 @@ const DiscoveryIcon: React.FC<SvgProps> = ({ width = 21, height = 21, color }) =
           transform="translate(801.268 868)"
           fill="none"
           stroke={color || theme.iconPrimary}
-          stroke-width="1.5"
+          strokeWidth="1.5"
         >
           <Circle cx="8.854" cy="8.854" r="8.854" stroke="none" />
           <Circle cx="8.854" cy="8.854" r="8.104" fill="none" />
@@ -23,7 +23,7 @@ const DiscoveryIcon: React.FC<SvgProps> = ({ width = 21, height = 21, color }) =
           fill="none"
           stroke={color || theme.iconPrimary}
           stroke-linecap="round"
-          stroke-width="1.5"
+          strokeWidth="1.5"
         />
       </G>
     </Svg>

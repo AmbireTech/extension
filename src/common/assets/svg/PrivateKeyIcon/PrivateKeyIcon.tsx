@@ -14,7 +14,7 @@ const PrivateKeyIcon: React.FC<SvgProps> = ({
 
   return (
     <Svg width={width} height={height} viewBox="0 0 24 24" {...rest} fill="none">
-      <G stroke={color || theme.iconPrimary} stroke-width="1.5" clipPath="url(#private-key-icon)">
+      <G stroke={color || theme.iconPrimary} strokeWidth="1.5" clipPath="url(#private-key-icon)">
         <Path
           strokeLinecap="round"
           strokeLinejoin="round"
