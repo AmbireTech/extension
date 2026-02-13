@@ -87,7 +87,7 @@ if (isProd) {
 }
 
 // This is only used for development builds, and it is not a secret, so it's fine to log it.
-export const SPECULOS_HTTP_URL = process.env.SPECULOS_HTTP_URL || 'http://localhost:5000'
+export const SPECULOS_HTTP_URL = process.env.SPECULOS_HTTP_URL
 
 /**
  * Option to run the app without the Ambire Relayer. See `RELAYER_URL`

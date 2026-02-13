@@ -22,7 +22,7 @@ import { isVivaldi } from '@web/constants/browserapi'
 
 const LedgerEnv = {
   isE2ETestLedgerTransport: isE2ETestLedgerTransport,
-  speculosHttpUrl: SPECULOS_HTTP_URL
+  speculosHttpUrl: SPECULOS_HTTP_URL || 'http://127.0.0.1:5000'
 } as const
 
 export { LedgerDeviceModels }
