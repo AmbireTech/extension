@@ -27,7 +27,7 @@ const ThemeProvider: React.FC<{
 }> = ({ children, forceThemeType }) => {
   const systemThemeType = useColorScheme()
   const { dispatch } = useControllersMiddleware() || {}
-  const { themeType: selectedThemeType } = useController('WalletStateController') || {}
+  const { themeType: selectedThemeType } = useController('WalletStateController').state || {}
 
   useEffect(() => {
     if (!isExtension) return
