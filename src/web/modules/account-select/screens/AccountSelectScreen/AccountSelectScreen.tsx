@@ -82,7 +82,15 @@ const AccountSelectScreen = () => {
   )
 
   const renderItem = ({ item: acc }: { item: AccountType }) => {
-    return <Account onSelect={onAccountSelect} key={acc.addr} account={acc} withSettings={false} />
+    return (
+      <Account
+        onSelect={onAccountSelect}
+        key={acc.addr}
+        account={acc}
+        withSettings={false}
+        options={{ markSelected: true }}
+      />
+    )
   }
 
   useEffect(() => {

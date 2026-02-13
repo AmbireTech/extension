@@ -36,6 +36,7 @@ const Account = ({
   isSelectable = true,
   withKeyType = true,
   renderRightChildren,
+  inverseInteractionColors = false,
   options = {
     withOptionsButton: false
   },
@@ -46,10 +47,12 @@ const Account = ({
   maxAccountAddrLength?: number
   withSettings?: boolean
   isSelectable?: boolean
+  inverseInteractionColors?: boolean
   withKeyType?: boolean
   renderRightChildren?: () => React.ReactNode
   options?: {
-    withOptionsButton: boolean
+    withOptionsButton?: boolean
+    markSelected?: boolean
     setAccountToImportOrExport?: React.Dispatch<React.SetStateAction<AccountInterface | null>>
     setSmartSettingsAccount?: React.Dispatch<React.SetStateAction<AccountInterface | null>>
     setAccountToRemove?: React.Dispatch<React.SetStateAction<AccountInterface | null>>
@@ -68,10 +71,10 @@ const Account = ({
   const [bindAnim, animStyle] = useCustomHover({
     property: 'backgroundColor',
     values: {
-      from: theme.primaryBackground,
-      to: !options.setAccountToImportOrExport ? theme.secondaryBackground : theme.primaryBackground
+      from: !inverseInteractionColors ? theme.primaryBackground : theme.secondaryBackground,
+      to: !inverseInteractionColors ? theme.secondaryBackground : theme.primaryBackground
     },
-    forceHoveredStyle: !options.setAccountToImportOrExport && addr === selectedAccount?.addr
+    forceHoveredStyle: options.markSelected && addr === selectedAccount?.addr
   })
 
   const [dropdownPosition, setDropdownPosition] = useState({ x: 0, y: 0 })

@@ -18,7 +18,6 @@ import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Option from '@common/components/Option'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
-import useTheme from '@common/hooks/useTheme'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
@@ -176,7 +175,6 @@ const AddAccount = ({
         id="seed-phrases-bottom-sheet"
         sheetRef={seedPhraseSheetRef}
         adjustToContentHeight
-        containerInnerWrapperStyles={{ flex: 1 }}
         isScrollEnabled={false}
         closeBottomSheet={closeSeedPhraseBottomSheet}
       >
