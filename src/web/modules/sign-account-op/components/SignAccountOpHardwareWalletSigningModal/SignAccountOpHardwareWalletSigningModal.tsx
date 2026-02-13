@@ -5,11 +5,11 @@ import { SigningStatus } from '@ambire-common/controllers/signAccountOp/signAcco
 import { Key } from '@ambire-common/interfaces/keystore'
 import { AccountOp } from '@ambire-common/libs/accountOp/accountOp'
 import Text from '@common/components/Text'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import usePrevious from '@common/hooks/usePrevious'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import HardwareWalletSigningModal from '@web/modules/hardware-wallet/components/HardwareWalletSigningModal'
 import { getUiType } from '@web/utils/uiType'
 
@@ -39,7 +39,7 @@ const SignAccountOpHardwareWalletSigningModal: React.FC<Props> = ({
   accountOp,
   actionType
 }: Props) => {
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { addToast } = useToast()
 
   const prevTransactionCount = usePrevious(signedTransactionsCount)

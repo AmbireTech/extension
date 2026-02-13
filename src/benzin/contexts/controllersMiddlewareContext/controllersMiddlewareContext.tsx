@@ -1,0 +1,133 @@
+import { EventEmitter as Emitter } from 'events'
+/* eslint-disable @typescript-eslint/no-floating-promises */
+import React, { useCallback, useContext, useEffect, useMemo, useRef } from 'react'
+
+import { networks } from '@ambire-common/consts/networks'
+import { ContractNamesController } from '@ambire-common/controllers/contractNames/contractNames'
+import { DomainsController } from '@ambire-common/controllers/domains/domains'
+import { EventEmitterRegistryController } from '@ambire-common/controllers/eventEmitterRegistry/eventEmitterRegistry'
+import { ProvidersController } from '@ambire-common/controllers/providers/providers'
+import { StorageController } from '@ambire-common/controllers/storage/storage'
+import { ExplorerBaseControllersMappingType } from '@benzin/constants/controllersMapping'
+import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext'
+import { ControllerStoreContext } from '@common/contexts/controllerStoreContext'
+import { Action } from '@web/extension-services/background/actions'
+import { storage } from '@web/extension-services/background/webapi/storage'
+import eventBus from '@web/extension-services/event/eventBus'
+
+export const ControllersMiddlewareProvider: React.FC<{
+  children: React.ReactNode
+}> = ({ children }) => {
+  const { controllerStore, debounceControllerUpdates } = useContext(ControllerStoreContext)
+
+  useEffect(() => {
+    controllerStore.init(
+      Object.keys(controllers.current) as (keyof ExplorerBaseControllersMappingType)[],
+      (allCtrls: any) => {
+        allCtrls.forEach((ctrlName: any) => {
+          controllerStore.update(ctrlName, (controllers.current as any)[ctrlName])
+        })
+      }
+    )
+  }, [controllerStore])
+
+  const eventEmitterRegistry = useRef<EventEmitterRegistryController>(
+    new EventEmitterRegistryController(() => {
+      eventEmitterRegistry.current.values().forEach((ctrl) => {
+        const hasOnUpdateInitialized = ctrl.onUpdateIds.includes('background')
+        if (!hasOnUpdateInitialized) {
+          ctrl.onUpdate(async (forceEmit) => {
+            debounceControllerUpdates(ctrl.name, ctrl, forceEmit)
+          }, 'background')
+        }
+      })
+
+      //
+      // Add onError listeners
+      //
+
+      eventEmitterRegistry.current.values().forEach((ctrl) => {
+        const hasOnErrorInitialized = ctrl.onErrorIds.includes('background')
+
+        if (!hasOnErrorInitialized) {
+          ctrl.onError(() => {
+            eventBus.emit('error', { errors: ctrl.emittedErrors, controller: ctrl.name })
+            // TODO: sentry
+            // captureBackgroundExceptionFromControllerError(error, ctrl.name)
+          }, 'background')
+        }
+      })
+    })
+  )
+
+  // @ts-ignore
+  const fetchWithAnalytics: Fetch = useCallback((url, init) => {
+    const urlString = url.toString()
+    try {
+      const urlObj = new URL(urlString)
+      if (!urlObj.hostname.endsWith('.ambire.com') && urlObj.hostname !== 'ambire.com') {
+        return fetch(url, init)
+      }
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error(error)
+      // If URL parsing fails, skip analytics for safety
+      return fetch(url, init)
+    }
+  }, [])
+
+  const controllers = useRef<ExplorerBaseControllersMappingType>(
+    (() => {
+      const ctrls: ExplorerBaseControllersMappingType = {} as ExplorerBaseControllersMappingType
+      ctrls.StorageController = new StorageController(storage)
+      ctrls.ProvidersController = new ProvidersController({
+        eventEmitterRegistry: eventEmitterRegistry.current,
+        storage: ctrls.StorageController,
+        getNetworks: () => networks,
+        sendUiMessage: (params) => {
+          eventBus.emit('receiveOneTimeData', params)
+        }
+      })
+
+      ctrls.DomainsController = new DomainsController({
+        eventEmitterRegistry: eventEmitterRegistry.current,
+        providers: ctrls.ProvidersController.providers
+      })
+
+      ctrls.ContractNamesController = new ContractNamesController({
+        eventEmitterRegistry: eventEmitterRegistry.current,
+        fetch: fetchWithAnalytics
+      })
+
+      return ctrls
+    })()
+  )
+
+  const dispatch = useCallback((action: Action) => {
+    if (action.type === 'method') {
+      const { ctrlName, method, args } = action.params
+
+      let targetCtrl: any = Object.values(controllers.current).find(
+        (ctrl) => ctrl.name === ctrlName
+      )
+      if (!targetCtrl) {
+        console.error(`handleAction: Controller ${ctrlName.toString()} not found`)
+        return
+      }
+
+      if (targetCtrl && typeof targetCtrl[method] === 'function') {
+        targetCtrl[method](...args)
+      }
+
+      return
+    }
+
+    //TODO: handle common actions if any for the benzin app
+  }, [])
+
+  return (
+    <ControllersMiddlewareContext.Provider value={useMemo(() => ({ dispatch }), [dispatch])}>
+      {children}
+    </ControllersMiddlewareContext.Provider>
+  )
+}

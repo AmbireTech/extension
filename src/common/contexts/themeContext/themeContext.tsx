@@ -1,10 +1,10 @@
 import React, { createContext, useCallback, useEffect, useMemo } from 'react'
 import { useColorScheme } from 'react-native'
 
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import { DEFAULT_THEME } from '@common/styles/theme/types'
 import ThemeColors, { THEME_TYPES, ThemeProps, ThemeType } from '@common/styles/themeConfig'
 import { isExtension } from '@web/constants/browserapi'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import useWalletStateController from '@web/hooks/useWalletStateController'
 
 export interface ThemeContextReturnType {
@@ -26,7 +26,7 @@ const ThemeProvider: React.FC<{
   forceThemeType?: ThemeType
 }> = ({ children, forceThemeType }) => {
   const systemThemeType = useColorScheme()
-  const { dispatch } = useBackgroundService() || {}
+  const { dispatch } = useControllersMiddleware() || {}
   const { themeType: selectedThemeType } = useWalletStateController() || {}
 
   useEffect(() => {

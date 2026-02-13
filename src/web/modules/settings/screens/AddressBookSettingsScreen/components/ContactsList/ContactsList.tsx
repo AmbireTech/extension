@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
-import AccountsFilledIcon from '@common/assets/svg/AccountsFilledIcon'
+import AddressBookIcon from '@common/assets/svg/AddressBookIcon'
 import WalletIcon from '@common/assets/svg/WalletIcon'
 import AddressBookContact from '@common/components/AddressBookContact'
 import Button from '@common/components/Button'
@@ -13,12 +13,12 @@ import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Search from '@common/components/Search'
 import Text from '@common/components/Text'
 import TitleAndIcon from '@common/components/TitleAndIcon'
+import useController from '@common/hooks/useController'
 import useDebounce from '@common/hooks/useDebounce'
 import useWindowSize from '@common/hooks/useWindowSize'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import useAddressBookControllerState from '@web/hooks/useAddressBookControllerState'
-import useDomainsControllerState from '@web/hooks/useDomainsController/useDomainsController'
 import SettingsPageHeader from '@web/modules/settings/components/SettingsPageHeader'
 
 import AddContactFormModal from '../AddContactFormModal'
@@ -33,7 +33,7 @@ const ContactsList = () => {
   const { contacts } = useAddressBookControllerState()
   const {
     state: { domains }
-  } = useDomainsControllerState()
+  } = useController('DomainsController')
   const { control, watch } = useForm({
     defaultValues: {
       search: ''
@@ -148,7 +148,7 @@ const ContactsList = () => {
         ) : null}
         {manuallyAddedContacts.length > 0 ? (
           <>
-            <TitleAndIcon title={t('Contacts')} icon={AccountsFilledIcon} />
+            <TitleAndIcon title={t('Contacts')} icon={AddressBookIcon} />
             {manuallyAddedContacts.map((contact) => (
               <AddressBookContact
                 testID="contact-name-text"

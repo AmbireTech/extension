@@ -9,6 +9,7 @@ import { titleChangeEventStream } from '@common/hooks/useNavigation'
 import useRoute from '@common/hooks/useRoute'
 import useWindowSize from '@common/hooks/useWindowSize'
 import routesConfig from '@common/modules/router/config/routesConfig'
+import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { tabLayoutWidths } from '@web/components/TabLayoutWrapper'
@@ -19,6 +20,10 @@ import HeaderBackButton, { DisplayIn } from '../HeaderBackButton'
 type Width = 'sm' | 'md' | 'lg' | 'xl' | 'full'
 
 const HEADER_HEIGHT = 60
+
+// This is the easiest way to fix the layout while the redesign is ongoing, without passing a lot of props
+// that will slow down the development and be deleted shortly after.
+const SCREENS_USING_NEW_LAYOUT = [ROUTES.transfer, ROUTES.swapAndBridge]
 
 const Wrapper = ({
   children,
@@ -32,13 +37,16 @@ const Wrapper = ({
   width?: Width
 }) => {
   const { maxWidthSize } = useWindowSize()
+  const { path } = useRoute()
 
   const paddingHorizontalStyle = useMemo(() => getTabLayoutPadding(maxWidthSize), [maxWidthSize])
 
   return (
     <View
       style={[
-        paddingHorizontalStyle,
+        SCREENS_USING_NEW_LAYOUT.includes(path?.slice(1) || '')
+          ? spacings.phSm
+          : paddingHorizontalStyle,
         spacings.pbSm,
         spacings.ptMd,
         {

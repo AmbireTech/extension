@@ -9,6 +9,7 @@ import ErrorComponent from '@common/components/ErrorBoundary'
 import WithGlassViewSupport from '@common/components/GlassView/WithGlassViewSupport'
 import { GlobalTooltip } from '@common/components/GlobalTooltip'
 import { ErrorBoundary } from '@common/config/analytics/CrashAnalytics.web'
+import { ControllerStoreProvider } from '@common/contexts/controllerStoreContext'
 import { KeyboardProvider } from '@common/contexts/keyboardContext'
 import { NetInfoProvider } from '@common/contexts/netInfoContext'
 import { ThemeProvider } from '@common/contexts/themeContext'
@@ -25,12 +26,10 @@ import { AccountsControllerStateProvider } from '@web/contexts/accountsControlle
 import { ActivityControllerStateProvider } from '@web/contexts/activityControllerStateContext'
 import { AddressBookControllerStateProvider } from '@web/contexts/addressBookControllerStateContext'
 import { AutoLockControllerStateProvider } from '@web/contexts/autoLockControllerStateContext'
-import { BackgroundServiceProvider } from '@web/contexts/backgroundServiceContext'
 import { BannerControllerStateProvider } from '@web/contexts/bannerControllerStateContext/bannerControllerStateContext'
 import { ContractNamesControllerStateProvider } from '@web/contexts/contractNamesControllerStateContext'
+import { ControllersMiddlewareProvider } from '@web/contexts/controllersMiddlewareContext'
 import { ControllersStateLoadedProvider } from '@web/contexts/controllersStateLoadedContext'
-import { DappsControllerStateProvider } from '@web/contexts/dappsControllerStateContext'
-import { DomainsControllerStateProvider } from '@web/contexts/domainsControllerStateContext'
 import { EmailVaultControllerStateProvider } from '@web/contexts/emailVaultControllerStateContext'
 import { ExtensionUpdateControllerStateProvider } from '@web/contexts/extensionUpdateControllerStateContext'
 import { FeatureFlagsControllerStateProvider } from '@web/contexts/featureFlagsControllerStateContext'
@@ -81,8 +80,6 @@ const CONTROLLER_STATE_PROVIDERS: ProviderComponent[] = [
   BannerControllerStateProvider,
   EmailVaultControllerStateProvider,
   PhishingControllerStateProvider,
-  DappsControllerStateProvider,
-  DomainsControllerStateProvider,
   ContractNamesControllerStateProvider,
   AddressBookControllerStateProvider,
   SwapAndBridgeControllerStateProvider,
@@ -115,21 +112,23 @@ const AppInit = () => {
         <SafeAreaProvider>
           <ToastProvider>
             <ErrorBoundary fallback={errorComponent}>
-              <BackgroundServiceProvider>
-                <MainControllerStateProvider>
-                  <StorageControllerStateProvider>
-                    <UiControllerStateProvider>
-                      <WalletStateControllerProvider>
-                        <ThemeProvider>
-                          <GestureHandler>
-                            {composeProviders(CONTROLLER_STATE_PROVIDERS, appContent)}
-                          </GestureHandler>
-                        </ThemeProvider>
-                      </WalletStateControllerProvider>
-                    </UiControllerStateProvider>
-                  </StorageControllerStateProvider>
-                </MainControllerStateProvider>
-              </BackgroundServiceProvider>
+              <ControllerStoreProvider withErrorToasts>
+                <ControllersMiddlewareProvider>
+                  <MainControllerStateProvider>
+                    <StorageControllerStateProvider>
+                      <UiControllerStateProvider>
+                        <WalletStateControllerProvider>
+                          <ThemeProvider>
+                            <GestureHandler>
+                              {composeProviders(CONTROLLER_STATE_PROVIDERS, appContent)}
+                            </GestureHandler>
+                          </ThemeProvider>
+                        </WalletStateControllerProvider>
+                      </UiControllerStateProvider>
+                    </StorageControllerStateProvider>
+                  </MainControllerStateProvider>
+                </ControllersMiddlewareProvider>
+              </ControllerStoreProvider>
             </ErrorBoundary>
           </ToastProvider>
         </SafeAreaProvider>

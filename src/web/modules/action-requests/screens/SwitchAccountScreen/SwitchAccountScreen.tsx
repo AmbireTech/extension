@@ -7,6 +7,7 @@ import ManifestFallbackIcon from '@common/assets/svg/ManifestFallbackIcon'
 import AmbireLogoHorizontal from '@common/components/AmbireLogoHorizontal'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import useWindowSize from '@common/hooks/useWindowSize'
@@ -16,7 +17,6 @@ import text from '@common/styles/utils/text'
 import ManifestImage from '@web/components/ManifestImage'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import ActionFooter from '@web/modules/action-requests/components/ActionFooter'
@@ -29,7 +29,7 @@ const SwitchAccountScreen = () => {
   const { theme, styles } = useTheme(getStyles)
   const { addToast } = useToast()
   const { account } = useSelectedAccountControllerState()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { currentUserRequest } = useRequestsControllerState()
   const { accounts } = useAccountsControllerState()
   const [isAuthorizing, setIsAuthorizing] = useState(false)

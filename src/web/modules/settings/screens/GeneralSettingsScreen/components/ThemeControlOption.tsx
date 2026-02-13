@@ -6,15 +6,15 @@ import LightThemeIcon from '@common/assets/svg/LightThemeIcon'
 import SystemThemeIcon from '@common/assets/svg/SystemThemeIcon'
 import ControlOption from '@common/components/ControlOption'
 import Select from '@common/components/Select'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES, ThemeType } from '@common/styles/themeConfig'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 
 const ThemeControlOption = () => {
   const { t } = useTranslation()
   const { selectedThemeType, theme } = useTheme()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
 
   const THEME_SELECT_OPTIONS = useMemo(
     () => [

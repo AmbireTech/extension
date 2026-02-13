@@ -18,8 +18,7 @@ const OFFLINE_BANNER: BannerInterface = {
   text: 'Your network connection is too slow or you may be offline. Please check your internet connection.',
   actions: [
     {
-      actionName: 'reload-selected-account',
-      label: 'Retry'
+      actionName: 'reload-selected-account'
     }
   ]
 }

@@ -8,11 +8,11 @@ import CheckIcon from '@common/assets/svg/CheckIcon'
 import NetworksIcon from '@common/assets/svg/NetworksIcon'
 import NetworkIcon from '@common/components/NetworkIcon'
 import Text from '@common/components/Text'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import ChevronDownIcon from '@legends/common/assets/svg/ChevronDownIcon'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 
@@ -64,7 +64,7 @@ const NetworkOption = ({
 }
 
 const NetworkSelector = ({ dapp, isAbove = false }: { dapp: Dapp; isAbove?: boolean }) => {
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
 
   const { networks } = useNetworksControllerState()
   const [isExpanded, setIsExpanded] = useState(false)

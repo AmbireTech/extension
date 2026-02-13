@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { TokenResult } from '@ambire-common/libs/portfolio'
 import { SelectValue } from '@common/components/Select/types'
 import SendToken from '@common/components/SendToken'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControllerState'
 import useSwapAndBridgeForm from '@web/modules/swap-and-bridge/hooks/useSwapAndBridgeForm'
 import { getTokenId } from '@web/utils/token'
@@ -26,7 +26,7 @@ const FromToken: FC<Props> = ({
   onFromAmountChange,
   simulationFailed
 }) => {
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { t } = useTranslation()
 
   const {

@@ -5,10 +5,10 @@ import { View } from 'react-native'
 import { Action } from '@ambire-common/libs/selectedAccount/errors'
 import Select from '@common/components/Select'
 import Text from '@common/components/Text'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 
 type Props = Action & {
@@ -17,7 +17,7 @@ type Props = Action & {
 
 const BalanceAffectingErrorActions: FC<Props> = ({ actionName, meta, closeBottomSheet }) => {
   const { t } = useTranslation()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { networks, statuses } = useNetworksControllerState()
   const { addToast } = useToast()
 

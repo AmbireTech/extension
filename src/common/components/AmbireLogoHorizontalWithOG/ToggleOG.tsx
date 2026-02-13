@@ -3,7 +3,7 @@ import { Pressable } from 'react-native'
 import { SvgProps } from 'react-native-svg'
 
 import AmbireLogoHorizontalMonochrome from '@common/assets/svg/AmbireLogoHorizontalMonochrome'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useInviteControllerState from '@web/hooks/useInviteControllerState'
 
 import styles from './styles'
@@ -11,7 +11,7 @@ import styles from './styles'
 const PRESS_THRESHOLD = 7
 
 const ToggleOG: React.FC<SvgProps> = ({ ...rest }) => {
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { isOG } = useInviteControllerState()
   const [, setPressCount] = useState(0)
 

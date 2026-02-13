@@ -18,6 +18,8 @@ import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
+import useController from '@common/hooks/useController'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import usePrevious from '@common/hooks/usePrevious'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
@@ -32,9 +34,7 @@ import spacings, {
 } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
-import useProvidersControllerState from '@web/hooks/useProvidersControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 
 import getStyles from './styles'
@@ -65,8 +65,9 @@ const NetworkAvailableFeatures = ({
   const { pathname } = useRoute()
   const { account } = useSelectedAccountControllerState()
   const { networks } = useNetworksControllerState()
-  const { callProvider } = useProvidersControllerState()
-  const { dispatch } = useBackgroundService()
+
+  const { dispatchAndWait } = useController('ProvidersController')
+  const { dispatch } = useControllersMiddleware()
   const { addToast } = useToast()
   const [checkedDeployFor, setCheckedDeployFor] = useState<bigint | undefined>()
   const tooltipId = useId()
@@ -88,7 +89,15 @@ const NetworkAvailableFeatures = ({
 
     setCheckedDeployFor(selectedNetwork.chainId)
 
-    callProvider(selectedNetwork.chainId, 'getCode', AMBIRE_ACCOUNT_FACTORY)
+    dispatchAndWait({
+      type: 'method',
+      params: {
+        method: 'callProviderAndSendResToUi',
+        args: [
+          { chainId: selectedNetwork.chainId, method: 'getCode', args: [AMBIRE_ACCOUNT_FACTORY] }
+        ]
+      }
+    })
       .then((factoryCode) => {
         if (factoryCode !== '0x') {
           dispatch({
@@ -101,7 +110,7 @@ const NetworkAvailableFeatures = ({
         // eslint-disable-next-line no-console
         console.error(error)
       })
-  }, [dispatch, selectedNetwork, checkedDeployFor, callProvider])
+  }, [dispatch, selectedNetwork, checkedDeployFor, dispatchAndWait])
 
   const handleDeploy = useCallback(async () => {
     if (!selectedNetwork) return // this should not happen...

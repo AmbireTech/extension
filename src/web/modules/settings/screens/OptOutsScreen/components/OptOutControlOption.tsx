@@ -3,8 +3,8 @@ import React, { useCallback } from 'react'
 import { FeatureFlags } from '@ambire-common/consts/featureFlags'
 import ControlOption from '@common/components/ControlOption'
 import FatToggle from '@common/components/FatToggle'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import spacings from '@common/styles/spacings'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import useFeatureFlagsControllerState from '@web/hooks/useFeatureFlagsControllerState'
 
 interface Opts {
@@ -15,7 +15,7 @@ interface Opts {
 }
 
 const OptOutControlOption = (opts: Opts) => {
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { flags } = useFeatureFlagsControllerState()
   const { title, description, icon, flag } = opts
 
