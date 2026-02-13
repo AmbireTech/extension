@@ -6,7 +6,7 @@ import { TypedMessageUserRequest } from '@ambire-common/interfaces/userRequest'
 import { normalizeLedgerMessage } from '@ambire-common/libs/ledger/ledger'
 import { getHdPathFromTemplate, getHdPathWithoutRoot } from '@ambire-common/utils/hdPath'
 import hexStringToUint8Array from '@ambire-common/utils/hexStringToUint8Array'
-import { isSpeculos, SPECULOS_HTTP_URL } from '@common/config/env'
+import { isE2ETestLedgerTransport, SPECULOS_HTTP_URL } from '@common/config/env'
 import { ContextModuleBuilder } from '@ledgerhq/context-module'
 import {
   DeviceManagementKitBuilder,
@@ -21,7 +21,7 @@ import { webHidTransportFactory } from '@ledgerhq/device-transport-kit-web-hid'
 import { isVivaldi } from '@web/constants/browserapi'
 
 const LedgerEnv = {
-  isSpeculos: isSpeculos,
+  isE2ETestLedgerTransport: isE2ETestLedgerTransport,
   speculosHttpUrl: SPECULOS_HTTP_URL
 } as const
 
@@ -37,7 +37,7 @@ class LedgerController implements ExternalSignerController {
 
   isWebHID: boolean
 
-  isSpeculos: boolean
+  isE2ETestLedgerTransport: boolean
 
   signerEth: ReturnType<SignerEthBuilder['build']> | null = null
 
@@ -56,8 +56,8 @@ class LedgerController implements ExternalSignerController {
   constructor() {
     // TODO: Bluetooth support?
     // When running in CI with Speculos, we use HTTP transport instead of WebHID.
-    this.isSpeculos = LedgerEnv.isSpeculos
-    this.isWebHID = !this.isSpeculos
+    this.isE2ETestLedgerTransport = LedgerEnv.isE2ETestLedgerTransport
+    this.isWebHID = !this.isE2ETestLedgerTransport
 
     // When the `cleanUpListener` method gets passed to the navigator.hid listeners
     // the `this` context gets lost, so we need to bind it here. The `this` context
@@ -83,7 +83,7 @@ class LedgerController implements ExternalSignerController {
    * Note: WebHID API is not available in service workers in manifest v3.
    */
   static isSupported = () =>
-    LedgerEnv.isSpeculos ||
+    LedgerEnv.isE2ETestLedgerTransport ||
     (typeof navigator !== 'undefined' && navigator !== null && 'hid' in navigator)
 
   /**
@@ -91,7 +91,7 @@ class LedgerController implements ExternalSignerController {
    * In Speculos mode, we assume the simulator is reachable when enabled.
    */
   static isConnected = async () => {
-    if (LedgerEnv.isSpeculos) return true
+    if (LedgerEnv.isE2ETestLedgerTransport) return true
 
     if (!('hid' in navigator)) return false
 
@@ -116,7 +116,7 @@ class LedgerController implements ExternalSignerController {
    * In Speculos mode we don't need to grant permission, because communication is over HTTP and doesn't require it.
    */
   static grantDevicePermissionIfNeeded = async () => {
-    if (LedgerEnv.isSpeculos) return
+    if (LedgerEnv.isE2ETestLedgerTransport) return
 
     const dmk = new DeviceManagementKitBuilder()
       // .addLogger(new ConsoleLogger()) // for debugging only
@@ -212,7 +212,7 @@ class LedgerController implements ExternalSignerController {
   async #initSDKSessionIfNeeded() {
     if (this.walletSDK) return
 
-    if (!this.isSpeculos) {
+    if (!this.isE2ETestLedgerTransport) {
       const isConnected = await LedgerController.isConnected()
       if (!isConnected) {
         throw new ExternalSignerError("Ledger is not connected. Please make sure it's plugged in.")
@@ -242,7 +242,9 @@ class LedgerController implements ExternalSignerController {
     // .addLogger(new ConsoleLogger())
 
     builder.addTransport(
-      this.isSpeculos ? speculosTransportFactory(LedgerEnv.speculosHttpUrl) : webHidTransportFactory
+      this.isE2ETestLedgerTransport
+        ? speculosTransportFactory(LedgerEnv.speculosHttpUrl)
+        : webHidTransportFactory
     )
 
     return builder.build()
@@ -404,7 +406,7 @@ class LedgerController implements ExternalSignerController {
 
     if (this.isUnlocked(path, expectedKeyOnThisPath)) return 'ALREADY_UNLOCKED'
 
-    if (!this.isWebHID && !this.isSpeculos)
+    if (!this.isWebHID && !this.isE2ETestLedgerTransport)
       throw new ExternalSignerError(
         'Ledger only supports USB connection between Ambire and your device. Please connect your device via USB.'
       )
