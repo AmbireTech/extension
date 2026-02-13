@@ -2,14 +2,13 @@ import Fuse from 'fuse.js'
 import React, { ReactNode, useCallback, useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
-import { ColorValue, View, ViewStyle } from 'react-native'
+import { View, ViewStyle } from 'react-native'
 
 import { Dapp } from '@ambire-common/interfaces/dapp'
 import { Network } from '@ambire-common/interfaces/network'
 import ConnectedIcon from '@common/assets/svg/ConnectedIcon'
 import NetworksIcon from '@common/assets/svg/NetworksIcon'
 import StarIcon from '@common/assets/svg/StarIcon'
-import BackButton from '@common/components/BackButton'
 import Button from '@common/components/Button'
 import NetworkIcon from '@common/components/NetworkIcon'
 import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
@@ -22,14 +21,11 @@ import useDebounce from '@common/hooks/useDebounce'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
-import spacings, { SPACING_MI, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
+import spacings, { SPACING_MI, SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
-import {
-  TabLayoutContainer,
-  tabLayoutWidths
-} from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import { AnimatedPressable, useMultiHover } from '@web/hooks/useHover'
+import LayoutWrapper from '@web/components/LayoutWrapper'
+import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import DappItem from '@web/modules/dapp-catalog/components/DappItem'
 import { getUiType } from '@web/utils/uiType'
@@ -40,87 +36,31 @@ import getStyles from './styles'
 const { isPopup } = getUiType()
 
 type FilterButtonType = {
-  value: 'favorites' | 'connected'
-  icon: ReactNode
-  active?: boolean
-  onPress: (type: 'favorites' | 'connected') => void
+  onPress: () => void
+  children: ReactNode
   style?: ViewStyle
-  textColor?: ColorValue
-  hoveredStyle?: ViewStyle
-  hoveredTextColor?: ColorValue
-  activeStyle?: ViewStyle
-  activeTextColor?: ColorValue
 }
 
-const FilterButton = React.memo(
-  ({
-    value,
-    icon,
-    active,
-    style,
-    textColor,
-    hoveredStyle,
-    hoveredTextColor,
-    activeStyle,
-    activeTextColor,
-    onPress
-  }: FilterButtonType) => {
-    const { styles, theme } = useTheme(getStyles)
+const FilterButton = React.memo(({ children, style, onPress }: FilterButtonType) => {
+  const { styles, theme } = useTheme(getStyles)
+  const [bindAnim, animStyle] = useCustomHover({
+    property: 'backgroundColor',
+    values: {
+      from: theme.secondaryBackground,
+      to: theme.tertiaryBackground
+    }
+  })
 
-    const buttonColors = useMemo(
-      () => ({
-        filterButton: [
-          {
-            property: 'borderColor',
-            from: theme.secondaryBorder,
-            to: theme.primary
-          }
-        ]
-      }),
-      [theme]
-    )
-
-    const [bind, animatedStyle, isHovered] = useMultiHover({
-      values: buttonColors.filterButton as any
-    })
-
-    return (
-      <AnimatedPressable
-        {...bind}
-        style={[
-          styles.filterButton,
-          animatedStyle,
-          isHovered && styles.filterButtonHovered,
-          active && styles.filterButtonActive,
-          style,
-          isHovered && hoveredStyle,
-          active && activeStyle
-        ]}
-        onPress={() => onPress(value)}
-      >
-        {({ hovered }: any) => (
-          <>
-            <Text
-              fontSize={12}
-              weight="medium"
-              style={spacings.mrTy}
-              color={
-                active
-                  ? activeTextColor || theme.primaryBackground
-                  : hovered
-                    ? hoveredTextColor || theme.primary
-                    : textColor || theme.secondaryText
-              }
-            >
-              {`${value.charAt(0).toUpperCase()}${value.slice(1)}`}
-            </Text>
-            {icon}
-          </>
-        )}
-      </AnimatedPressable>
-    )
-  }
-)
+  return (
+    <AnimatedPressable
+      {...bindAnim}
+      style={[styles.filterButton, animStyle, style]}
+      onPress={onPress}
+    >
+      {children}
+    </AnimatedPressable>
+  )
+})
 
 const DappCatalogScreen = () => {
   const { control, watch, setValue } = useForm({ defaultValues: { search: '' } })
@@ -134,8 +74,7 @@ const DappCatalogScreen = () => {
   const [favoritesSelected, setFavoritesSelected] = useState(false)
   const [connectedSelected, setConnectedSelected] = useState(false)
   const { allNetworks } = useNetworksControllerState()
-  const { theme, themeType } = useTheme()
-  const { maxWidthSize } = useWindowSize()
+  const { theme } = useTheme()
 
   const searchableDapps = useMemo(
     () =>
@@ -208,7 +147,19 @@ const DappCatalogScreen = () => {
           {t('All networks')}
         </Text>
       ),
-      icon: <NetworksIcon width={17} height={17} color={theme.iconPrimary} />
+      icon: (
+        <View
+          style={{
+            width: 24,
+            height: 24,
+            borderRadius: 12,
+            backgroundColor: theme.neutral200,
+            ...flexbox.center
+          }}
+        >
+          <NetworksIcon width={20} height={20} color={theme.iconPrimary} />
+        </View>
+      )
     }),
     [theme, t]
   )
@@ -223,7 +174,7 @@ const DappCatalogScreen = () => {
             {n.name}
           </Text>
         ),
-        icon: <NetworkIcon size={18} key={n.chainId.toString()} id={n.chainId.toString()} />
+        icon: <NetworkIcon size={24} key={n.chainId.toString()} id={n.chainId.toString()} />
       }))
     ],
     [allNetworks, ALL_NETWORKS_OPTION]
@@ -318,26 +269,13 @@ const DappCatalogScreen = () => {
   ])
 
   return (
-    <TabLayoutContainer
-      hideFooterInPopup
-      width="xl"
-      footer={<BackButton />}
-      footerStyle={{ maxWidth: tabLayoutWidths.xl }}
-      header={<HeaderWithTitle />}
-      withHorizontalPadding={!isPopup}
-    >
+    <LayoutWrapper>
+      <HeaderWithTitle />
       {!state.isReadyToDisplayDapps || !state.dapps.length ? (
         <DappsSkeletonLoader />
       ) : (
         <View style={[flexbox.flex1]}>
-          <View
-            style={[
-              !!isPopup && spacings.phSm,
-              spacings.pvSm,
-              maxWidthSize(830) && flexbox.directionRow,
-              maxWidthSize(830) && flexbox.alignCenter
-            ]}
-          >
+          <View style={[spacings.phSm, spacings.pvSm, spacings.mbSm]}>
             <Search
               placeholder={t('Search for an app')}
               control={control}
@@ -345,24 +283,17 @@ const DappCatalogScreen = () => {
               setValue={setValue}
               autoFocus
               containerStyle={{
-                marginBottom: !maxWidthSize(830) ? SPACING_TY : 0,
-                marginRight: !maxWidthSize(830) ? 0 : SPACING_SM,
+                ...spacings.mbSm,
                 ...flexbox.flex1
               }}
             />
-            <View
-              style={[
-                flexbox.directionRow,
-                flexbox.alignCenter,
-                !maxWidthSize(830) && flexbox.justifySpaceBetween
-              ]}
-            >
+            <View style={[flexbox.directionRow, flexbox.alignCenter]}>
               <Select
                 setValue={handleSetNetworkValue}
                 containerStyle={{
                   width: 164,
                   marginBottom: 0,
-                  marginRight: !maxWidthSize(830) ? 0 : SPACING_SM
+                  ...spacings.mrTy
                 }}
                 menuOptionHeight={32}
                 options={networksOptions}
@@ -378,17 +309,12 @@ const DappCatalogScreen = () => {
                 selectStyle={{
                   borderRadius: 50,
                   height: 32,
-                  backgroundColor: theme.primaryBackground,
-                  borderWidth: 1,
-                  ...(network && network.name !== ALL_CATEGORIES_OPTION.value
-                    ? {
-                        borderColor: theme.primaryAccent
-                      }
-                    : {})
+                  ...spacings.prSm,
+                  ...spacings.plMi,
+                  backgroundColor: theme.secondaryBackground
                 }}
                 hoveredSelectStyle={{
-                  backgroundColor: theme.secondaryBackground,
-                  borderColor: theme.primaryAccent
+                  backgroundColor: theme.tertiaryBackground
                 }}
               />
               <Select
@@ -396,7 +322,7 @@ const DappCatalogScreen = () => {
                 containerStyle={{
                   width: 164,
                   marginBottom: 0,
-                  marginRight: !maxWidthSize(830) ? 0 : SPACING_SM
+                  ...spacings.mrTy
                 }}
                 options={categoryOptions}
                 value={
@@ -412,52 +338,40 @@ const DappCatalogScreen = () => {
                 selectStyle={{
                   borderRadius: 50,
                   height: 32,
-                  backgroundColor: theme.primaryBackground,
-                  borderWidth: 1,
-                  ...(category && category !== ALL_CATEGORIES_OPTION.value
-                    ? {
-                        borderColor: theme.primaryAccent
-                      }
-                    : {})
+                  ...spacings.phSm,
+                  backgroundColor: theme.secondaryBackground
                 }}
                 hoveredSelectStyle={{
-                  backgroundColor: theme.secondaryBackground,
-                  borderColor: theme.primaryAccent
+                  backgroundColor: theme.tertiaryBackground
                 }}
               />
               <FilterButton
-                value="favorites"
-                active={favoritesSelected}
-                onPress={handleSelectPredefinedFilter}
-                icon={<StarIcon isFilled={favoritesSelected} />}
-                style={{ marginRight: !maxWidthSize(830) ? 0 : SPACING_SM }}
-              />
-              <FilterButton
-                value="connected"
-                active={connectedSelected}
-                onPress={handleSelectPredefinedFilter}
-                icon={
-                  <ConnectedIcon
-                    width={18}
-                    height={18}
-                    color={connectedSelected ? theme.primaryBackground : theme.successDecorative}
-                  />
-                }
-                hoveredStyle={{ borderColor: theme.successDecorative }}
-                hoveredTextColor={theme.successDecorative}
-                activeStyle={{
-                  borderColor: theme.primaryAccent
-                }}
-              />
+                onPress={() => handleSelectPredefinedFilter('favorites')}
+                style={spacings.mrTy}
+              >
+                <StarIcon
+                  width={20}
+                  height={20}
+                  color={favoritesSelected ? theme.warning400 : theme.iconPrimary}
+                />
+              </FilterButton>
+              <FilterButton onPress={() => handleSelectPredefinedFilter('connected')}>
+                <ConnectedIcon
+                  width={20}
+                  height={20}
+                  color={connectedSelected ? theme.success400 : theme.iconPrimary}
+                />
+              </FilterButton>
             </View>
           </View>
           <ScrollableWrapper
             type={WRAPPER_TYPES.FLAT_LIST}
             contentContainerStyle={[
-              spacings.pbTy,
-              !!isPopup && spacings.plSm,
-              !!isPopup && { paddingRight: SPACING_SM - SPACING_MI / 2 }
+              spacings.plSm,
+              spacings.pbSm,
+              { paddingRight: SPACING_SM - SPACING_MI / 2 }
             ]}
+            style={!isPopup ? spacings.pbSm : {}}
             data={filteredDapps}
             renderItem={renderItem}
             keyExtractor={(item: Dapp) => item.url.toString()}
@@ -488,7 +402,7 @@ const DappCatalogScreen = () => {
           />
         </View>
       )}
-    </TabLayoutContainer>
+    </LayoutWrapper>
   )
 }
 

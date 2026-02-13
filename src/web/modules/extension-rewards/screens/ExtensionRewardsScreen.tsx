@@ -194,7 +194,7 @@ const ExtensionRewardsScreen = () => {
             ...spacings.mbLg
           }}
         >
-          <HeaderBackButton color="#8E98A8" displayIn="always" />
+          <HeaderBackButton color="#8E98A8" />
 
           <AnimatedPressable
             {...bindAnim}
