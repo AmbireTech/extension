@@ -64,8 +64,13 @@ const AppInit = () => {
         <GlobalTooltip />
         <SafeAreaProvider>
           <ToastProvider>
+<<<<<<< HEAD
             <ErrorBoundary fallback={errorComponent as any}>
               <ControllerStoreProvider>
+=======
+            <ErrorBoundary fallback={errorComponent}>
+              <ControllerStoreProvider withErrorToasts>
+>>>>>>> v2
                 <ControllersMiddlewareProvider>
                   <ThemeProvider>
                     <GestureHandler>
