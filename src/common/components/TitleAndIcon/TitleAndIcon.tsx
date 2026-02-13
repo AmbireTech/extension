@@ -29,13 +29,13 @@ const TitleAndIcon = ({
         spacings.pt,
         spacings.phSm,
         spacings.pbTy,
-        { backgroundColor: theme.tertiaryBackground },
+        { backgroundColor: theme.primaryBackground },
         style
       ]}
     >
       <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-        <Icon width={16} height={16} color={theme.secondaryText} />
-        <Text fontSize={14} appearance="secondaryText" weight="medium" style={spacings.mlTy}>
+        <Icon width={20} height={20} color={theme.secondaryText} />
+        <Text fontSize={14} appearance="secondaryText" weight="medium" style={spacings.mlMi}>
           {title}
         </Text>
       </View>

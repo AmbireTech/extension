@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
-import AccountsFilledIcon from '@common/assets/svg/AccountsFilledIcon'
+import AddressBookIcon from '@common/assets/svg/AddressBookIcon'
 import WalletIcon from '@common/assets/svg/WalletIcon'
 import AddressBookContact from '@common/components/AddressBookContact'
 import Button from '@common/components/Button'
@@ -148,7 +148,7 @@ const ContactsList = () => {
         ) : null}
         {manuallyAddedContacts.length > 0 ? (
           <>
-            <TitleAndIcon title={t('Contacts')} icon={AccountsFilledIcon} />
+            <TitleAndIcon title={t('Contacts')} icon={AddressBookIcon} />
             {manuallyAddedContacts.map((contact) => (
               <AddressBookContact
                 testID="contact-name-text"

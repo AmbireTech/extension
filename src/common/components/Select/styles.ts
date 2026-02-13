@@ -54,7 +54,7 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       ...spacings.ph
     },
     menuContainer: {
-      backgroundColor: theme.tertiaryBackground,
+      backgroundColor: theme.primaryBackground,
       ...spacings.mvMi,
       ...common.borderRadiusPrimary,
       overflow: 'hidden',
