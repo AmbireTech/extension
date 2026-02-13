@@ -243,7 +243,7 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
               style={[styles.simulationContainer, !!pendingReceiveTokens.length && spacings.mrTy]}
             >
               <View style={styles.simulationContainerHeader}>
-                <Text fontSize={14} appearance="secondaryText" numberOfLines={1}>
+                <Text fontSize={14} weight="semiBold" appearance="secondaryText" numberOfLines={1}>
                   {t('Assets out')}
                 </Text>
               </View>
@@ -287,9 +287,9 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
             </View>
           )}
           {(!!pendingReceiveTokens.length || !!pendingReceiveCollection.length) && (
-            <View style={[styles.simulationContainer, spacings.mlTy]}>
+            <View style={styles.simulationContainer}>
               <View style={styles.simulationContainerHeader}>
-                <Text fontSize={14} appearance="secondaryText" numberOfLines={1}>
+                <Text fontSize={14} weight="semiBold" appearance="secondaryText" numberOfLines={1}>
                   {t('Assets in')}
                 </Text>
               </View>

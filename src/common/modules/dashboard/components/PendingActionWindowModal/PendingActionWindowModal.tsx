@@ -92,8 +92,7 @@ const PendingActionWindowModal = () => {
         id="import-seed-phrase"
         sheetRef={sheetRef}
         closeBottomSheet={closeBottomSheet}
-        backgroundColor="secondaryBackground"
-        style={{ overflow: 'hidden', width: 496, ...spacings.ph0, ...spacings.pv0 }}
+        style={{ overflow: 'hidden', ...spacings.ph0, ...spacings.pv0 }}
         type="modal"
         autoOpen
       >

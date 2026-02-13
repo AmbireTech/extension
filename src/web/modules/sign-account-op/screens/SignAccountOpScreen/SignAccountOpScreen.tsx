@@ -9,6 +9,7 @@ import { getErrorCodeStringFromReason } from '@ambire-common/libs/errorDecoder/h
 import CopyIcon from '@common/assets/svg/CopyIcon'
 import Alert from '@common/components/Alert'
 import AlertVertical from '@common/components/AlertVertical'
+import GlassView from '@common/components/GlassView'
 import NetworkBadge from '@common/components/NetworkBadge'
 import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
@@ -17,6 +18,7 @@ import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
+import { BORDER_RADIUS_PRIMARY, hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { setStringAsync } from '@common/utils/clipboard'
 import SmallNotificationWindowWrapper from '@web/components/SmallNotificationWindowWrapper'
@@ -38,6 +40,7 @@ import SectionHeading from '@web/modules/sign-account-op/components/SectionHeadi
 import Simulation from '@web/modules/sign-account-op/components/Simulation'
 import SigningKeySelect from '@web/modules/sign-message/components/SignKeySelect'
 
+import Gradient from './Gradient'
 import getStyles from './styles'
 
 const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }: NativeScrollEvent) => {
@@ -236,59 +239,67 @@ const SignAccountOpScreen = () => {
         style={spacings.phMd}
         header={<ActionHeader />}
         renderDirectChildren={() => (
-          <View style={styles.footer}>
-            {!estimationFailed ? (
-              <>
-                <Estimation
-                  signAccountOpState={signAccountOpState}
-                  disabled={isSignLoading}
-                  hasEstimation={!!hasEstimation}
-                  slowRequest={slowRequest}
-                  isViewOnly={isViewOnly}
-                  isSponsored={signAccountOpState ? signAccountOpState.isSponsored : false}
-                  sponsor={signAccountOpState ? signAccountOpState.sponsor : undefined}
-                  updateType="Requests"
-                  bundlerNonceDiscrepancy={bundlerNonceDiscrepancy}
-                />
+          <View style={[spacings.mh, spacings.mv]}>
+            <GlassView
+              tintColor2={hexToRgba('#D1D1D1', 0.12)}
+              style={{ borderRadius: BORDER_RADIUS_PRIMARY }}
+              cssStyle={{ borderRadius: BORDER_RADIUS_PRIMARY }}
+            >
+              {/* Gradient */}
+              <Gradient
+                style={{
+                  position: 'absolute',
+                  top: -70,
+                  right: -70,
+                  zIndex: -1
+                }}
+              />
+              <View style={[spacings.ph, spacings.pv, flexbox.flex1]}>
+                {!estimationFailed ? (
+                  <View style={spacings.mbXl}>
+                    <Estimation
+                      signAccountOpState={signAccountOpState}
+                      disabled={isSignLoading}
+                      hasEstimation={!!hasEstimation}
+                      slowRequest={slowRequest}
+                      isViewOnly={isViewOnly}
+                      isSponsored={signAccountOpState ? signAccountOpState.isSponsored : false}
+                      sponsor={signAccountOpState ? signAccountOpState.sponsor : undefined}
+                      updateType="Requests"
+                      bundlerNonceDiscrepancy={bundlerNonceDiscrepancy}
+                    />
+                  </View>
+                ) : null}
 
-                <View
-                  style={{
-                    height: 1,
-                    backgroundColor:
-                      themeType === THEME_TYPES.DARK ? theme.primaryBorder : theme.secondaryBorder,
-                    ...spacings.mvLg
-                  }}
+                <Footer
+                  onReject={handleRejectAccountOp}
+                  onAddToCart={handleAddToCart}
+                  isAddToCartDisplayed={
+                    !!signAccountOpState &&
+                    !!network &&
+                    signAccountOpState.accountOp.meta?.setDelegation === undefined
+                  }
+                  isSignLoading={isSignLoading}
+                  isSignDisabled={isSignDisabled || !hasReachedBottom}
+                  buttonTooltipText={
+                    typeof hasReachedBottom === 'boolean' && !hasReachedBottom
+                      ? t('Scroll to the bottom of the transaction overview to sign.')
+                      : undefined
+                  }
+                  // Allow view only accounts or if no funds for gas to add to cart even if the txn is not ready to sign
+                  // because they can't sign it anyway
+                  isAddToCartDisabled={isAddToCartDisabled}
+                  onSign={onSignButtonClick}
+                  inProgressButtonText={
+                    signAccountOpState?.status?.type === SigningStatus.WaitingForPaymaster
+                      ? t('Sending...')
+                      : t('Signing...')
+                  }
+                  buttonText={primaryButtonText}
+                  shouldHoldToProceed={shouldHoldToProceed}
                 />
-              </>
-            ) : null}
-
-            <Footer
-              onReject={handleRejectAccountOp}
-              onAddToCart={handleAddToCart}
-              isAddToCartDisplayed={
-                !!signAccountOpState &&
-                !!network &&
-                signAccountOpState.accountOp.meta?.setDelegation === undefined
-              }
-              isSignLoading={isSignLoading}
-              isSignDisabled={isSignDisabled || !hasReachedBottom}
-              buttonTooltipText={
-                typeof hasReachedBottom === 'boolean' && !hasReachedBottom
-                  ? t('Scroll to the bottom of the transaction overview to sign.')
-                  : undefined
-              }
-              // Allow view only accounts or if no funds for gas to add to cart even if the txn is not ready to sign
-              // because they can't sign it anyway
-              isAddToCartDisabled={isAddToCartDisabled}
-              onSign={onSignButtonClick}
-              inProgressButtonText={
-                signAccountOpState?.status?.type === SigningStatus.WaitingForPaymaster
-                  ? t('Sending...')
-                  : t('Signing...')
-              }
-              buttonText={primaryButtonText}
-              shouldHoldToProceed={shouldHoldToProceed}
-            />
+              </View>
+            </GlassView>
           </View>
         )}
       >
@@ -318,7 +329,7 @@ const SignAccountOpScreen = () => {
               flexbox.directionRow,
               flexbox.alignCenter,
               flexbox.justifySpaceBetween,
-              spacings.mbSm
+              spacings.mb
             ]}
           >
             <SectionHeading withMb={false}>{t('Overview')}</SectionHeading>

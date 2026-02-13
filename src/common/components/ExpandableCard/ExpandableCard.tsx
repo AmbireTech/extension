@@ -1,5 +1,5 @@
 /* eslint-disable react/jsx-no-useless-fragment */
-import React, { ReactNode, useState } from 'react'
+import React, { ReactNode, useMemo, useState } from 'react'
 import { Pressable, View, ViewStyle } from 'react-native'
 
 import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
@@ -38,6 +38,22 @@ const ExpandableCard = ({
 
   const Element = enableToggleExpand ? Pressable : View
 
+  const icon = useMemo(
+    () => (
+      <View
+        style={{
+          opacity: enableToggleExpand ? 1 : 0.5,
+          width: 28,
+          height: 28,
+          ...flexbox.center
+        }}
+      >
+        {isExpanded ? <UpArrowIcon /> : <DownArrowIcon />}
+      </View>
+    ),
+    [enableToggleExpand, isExpanded]
+  )
+
   return (
     <View style={[styles.container, style]}>
       <Element onPress={() => !!enableToggleExpand && setIsExpanded((prevState) => !prevState)}>
@@ -50,19 +66,11 @@ const ExpandableCard = ({
             contentStyle
           ]}
         >
-          {!!hasArrow && arrowPosition === 'left' && (
-            <View style={{ opacity: enableToggleExpand ? 1 : 0.5 }}>
-              {isExpanded ? <UpArrowIcon /> : <DownArrowIcon />}
-            </View>
-          )}
+          {!!hasArrow && arrowPosition === 'left' && icon}
           <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1]}>
             {!!content && content}
           </View>
-          {!!hasArrow && arrowPosition === 'right' && (
-            <View style={{ opacity: enableToggleExpand ? 1 : 0.5 }}>
-              {isExpanded ? <UpArrowIcon /> : <DownArrowIcon />}
-            </View>
-          )}
+          {!!hasArrow && arrowPosition === 'right' && icon}
         </View>
         {children}
       </Element>
