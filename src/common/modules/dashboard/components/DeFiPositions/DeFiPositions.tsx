@@ -226,7 +226,6 @@ const DeFiPositions: FC<Props> = ({
       theme.infoText,
       openTab,
       setOpenTab,
-      control,
       sessionId,
       currentAccountBanners,
       searchValue,
