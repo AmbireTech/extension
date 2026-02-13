@@ -51,7 +51,7 @@ const getStyles = (theme: ThemeProps) =>
       ...flexbox.flex1,
       height: INPUT_HEIGHT,
       borderWidth: 0,
-      ...spacings.ph
+      ...spacings.phSm
     },
     nativeInput: {
       height: '100%',

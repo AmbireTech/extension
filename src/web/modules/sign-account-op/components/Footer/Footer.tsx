@@ -148,6 +148,8 @@ const Footer = ({
               disabled={isSignDisabled}
               onHoldComplete={onSign}
               testID="proceed-btn"
+              style={{ minWidth: 128 }}
+              size="large"
             />
           ) : (
             <ButtonWithLoader
@@ -158,6 +160,7 @@ const Footer = ({
               text={isSignLoading ? inProgressButtonText : buttonText}
               onPress={onSign}
               size="large"
+              style={{ minWidth: 128 }}
             />
           )}
         </View>

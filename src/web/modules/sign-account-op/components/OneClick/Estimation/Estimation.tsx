@@ -9,12 +9,13 @@ import {
   SignAccountOpError
 } from '@ambire-common/interfaces/signAccountOp'
 import { SwapAndBridgeRoute } from '@ambire-common/interfaces/swapAndBridge'
+import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
+import GlassView from '@common/components/GlassView'
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
 import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
-import Text from '@common/components/Text'
 import useSign from '@common/hooks/useSign'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
@@ -100,11 +101,9 @@ const OneClickEstimation = ({
         id="estimation-modal"
         sheetRef={estimationModalRef}
         type={isTab ? 'modal' : 'bottom-sheet'}
-        backgroundColor={
-          themeType === THEME_TYPES.DARK ? 'secondaryBackground' : 'primaryBackground'
-        }
         // NOTE: This must be lower than SigningKeySelect's z-index
         customZIndex={5}
+        style={spacings.pb}
         autoOpen={hasProceeded || (isRequestWindow && !!signAccountOpController)}
         isScrollEnabled={false}
         shouldBeClosableOnDrag={false}
@@ -158,50 +157,46 @@ const OneClickEstimation = ({
               (signingErrors.map(({ code }) => code).includes('NO_KEYS_AVAILABLE') ? (
                 <NoKeysToSignAlert style={spacings.mt} />
               ) : (
-                <View style={[flexbox.directionRow, flexbox.alignEnd, spacings.mt]}>
-                  <Text fontSize={12} appearance="errorText">
-                    {t(signingErrors[0]?.title || '')}
-                  </Text>
-                </View>
+                <Alert title={t(signingErrors[0]!.title)} type="error" style={spacings.mt} />
               ))}
             <BundlerWarning
               signAccountOpState={signAccountOpController}
               bundlerNonceDiscrepancy={bundlerNonceDiscrepancy}
             />
-            <View
-              style={{
-                height: 1,
-                backgroundColor: theme.secondaryBorder,
-                ...spacings.mvLg
-              }}
-            />
-            <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifySpaceBetween]}>
-              <Button
-                testID="back-button"
-                type="secondary"
-                text={t('Back')}
-                onPress={closeEstimationModal}
-                hasBottomSpacing={false}
-                disabled={isSignLoading}
-                style={{ width: 98 }}
-              />
+            <View style={[flexbox.directionRow, flexbox.justifyCenter, spacings.pt]}>
+              <GlassView style={{ borderRadius: 28 }} cssStyle={{ borderRadius: 28 }}>
+                <View style={[flexbox.directionRow, spacings.phSm, spacings.pvSm]}>
+                  <Button
+                    testID="back-button"
+                    type="secondary"
+                    text={t('Back')}
+                    onPress={closeEstimationModal}
+                    hasBottomSpacing={false}
+                    disabled={isSignLoading}
+                    style={{ width: 98, ...spacings.mrLg }}
+                    size="smaller"
+                  />
 
-              {!!banners && !!banners.length ? (
-                <HoldToProceedButton
-                  testID="sign-proceed-btn"
-                  text={t('Hold to sign')}
-                  disabled={isSignDisabled || signingErrors.length > 0}
-                  onHoldComplete={onSignButtonClick}
-                />
-              ) : (
-                <ButtonWithLoader
-                  testID="sign-button"
-                  text={primaryButtonText}
-                  isLoading={isSignLoading}
-                  disabled={isSignDisabled || signingErrors.length > 0}
-                  onPress={onSignButtonClick}
-                />
-              )}
+                  {!!banners && !!banners.length ? (
+                    <HoldToProceedButton
+                      testID="sign-proceed-btn"
+                      text={t('Hold to sign')}
+                      disabled={isSignDisabled || signingErrors.length > 0}
+                      onHoldComplete={onSignButtonClick}
+                      size="smaller"
+                    />
+                  ) : (
+                    <ButtonWithLoader
+                      testID="sign-button"
+                      text={primaryButtonText}
+                      isLoading={isSignLoading}
+                      disabled={isSignDisabled || signingErrors.length > 0}
+                      onPress={onSignButtonClick}
+                      size="smaller"
+                    />
+                  )}
+                </View>
+              </GlassView>
             </View>
           </View>
         )}

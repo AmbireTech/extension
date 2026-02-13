@@ -119,9 +119,9 @@ const SendForm = ({
       contentContainerStyle={[flexbox.flex1, isTopUp ? styles.topUpContainer : {}]}
     >
       <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mb]}>
-        {!isTab && <PanelBackButton onPress={handleGoBack} style={spacings.mrSm} />}
+        <PanelBackButton onPress={handleGoBack} style={spacings.mrSm} />
         <PanelTitle title={isTopUp ? t('Top up Gas Tank') : t('Send')} />
-        {!isTab && <View style={{ width: 40 }} />}
+        <View style={{ width: 40 }} />
       </View>
       <View>
         {!isTopUp && (
