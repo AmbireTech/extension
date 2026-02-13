@@ -284,12 +284,11 @@ class LedgerController implements ExternalSignerController {
 
   #findDevice = () =>
     new Promise<DiscoveredDevice>((resolve, reject) => {
-      let subscription: Subscription | undefined
+      let subscription: Subscription
       let isCancelled = false
 
       const cleanup = () => {
-        subscription?.unsubscribe()
-        subscription = undefined
+        subscription.unsubscribe()
       }
 
       subscription = this.walletSDK!.listenToAvailableDevices({}).subscribe({
@@ -329,12 +328,11 @@ class LedgerController implements ExternalSignerController {
     const { onCompleted, errorMessage, isSign } = options
 
     const subscriptionPromise = new Promise<T>((resolve, reject) => {
-      let subscription: Subscription | undefined // may be undefined if observable emits synchronously
+      let subscription: Subscription // so it is always defined inside the subscribe callback
       let isCancelled = false
 
       const cleanup = () => {
-        subscription?.unsubscribe()
-        subscription = undefined
+        subscription.unsubscribe()
       }
 
       // eslint-disable-next-line prefer-const
