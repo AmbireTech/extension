@@ -3,7 +3,6 @@ import { EventEmitter as Emitter } from 'events'
 import React, { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import EventEmitter from '@ambire-common/controllers/eventEmitter/eventEmitter'
-import { ErrorRef } from '@ambire-common/interfaces/eventEmitter'
 import { allControllersMapping } from '@common/constants/controllersMapping'
 import { ToastOptions } from '@common/contexts/toastContext'
 import useNavigation from '@common/hooks/useNavigation'
@@ -76,26 +75,6 @@ export const ControllerStoreProvider: React.FC<{
 
     return () => eventBus.removeEventListener('ctrlUpdate', onCtrlUpdate)
   }, [controllerStore])
-
-  useEffect(() => {
-    const onError = (newState: { errors: ErrorRef[]; controller: string }) => {
-      const lastError = newState.errors[newState.errors.length - 1]
-      if (lastError) {
-        if (lastError.level !== 'silent')
-          // Most of the errors incoming are descriptive and tend to be long,
-          // so keep a longer timeout to give the user enough time to read them.
-          addToast(lastError.message, { timeout: 12000, type: 'error' })
-
-        console.error(
-          `Error in ${newState.controller} controller. Inspect background page to see the full stack trace.`
-        )
-      }
-    }
-
-    eventBus.addEventListener('error', onError)
-
-    return () => eventBus.removeEventListener('error', onError)
-  }, [addToast])
 
   useEffect(() => {
     const onAddToast = ({ text, options }: { text: string; options: ToastOptions }) =>

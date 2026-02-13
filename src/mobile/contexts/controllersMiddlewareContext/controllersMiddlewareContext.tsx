@@ -4,6 +4,7 @@ import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } 
 
 import { EventEmitterRegistryController } from '@ambire-common/controllers/eventEmitterRegistry/eventEmitterRegistry'
 import { MainController } from '@ambire-common/controllers/main/main'
+import { ErrorRef } from '@ambire-common/interfaces/eventEmitter'
 import { IKeystoreController } from '@ambire-common/interfaces/keystore'
 import { WindowProps } from '@ambire-common/interfaces/ui'
 import { KeystoreSigner } from '@ambire-common/libs/keystoreSigner/keystoreSigner'
@@ -12,6 +13,7 @@ import { APP_VERSION } from '@common/config/env'
 import { AllControllersMappingType } from '@common/constants/controllersMapping'
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext'
 import { ControllerStoreContext } from '@common/contexts/controllerStoreContext'
+import useToast from '@common/hooks/useToast'
 import { BUNGEE_API_KEY, RELAYER_URL, VELCRO_URL } from '@env'
 import { MobileBaseControllersMappingType } from '@mobile/constants/controllersMapping'
 import { Action } from '@web/extension-services/background/actions'
@@ -24,6 +26,7 @@ export const ControllersMiddlewareProvider: React.FC<{
 }> = ({ children }) => {
   const [isUnlocked, setIsUnlocked] = useState(false)
   const { controllerStore, debounceControllerUpdates } = useContext(ControllerStoreContext)
+  const { addToast } = useToast()
 
   useEffect(() => {
     controllerStore.init(
@@ -266,6 +269,26 @@ export const ControllersMiddlewareProvider: React.FC<{
 
     //TODO: handle common actions for the mobile app
   }, [])
+
+  useEffect(() => {
+    const onError = (newState: { errors: ErrorRef[]; controller: string }) => {
+      const lastError = newState.errors[newState.errors.length - 1]
+      if (lastError) {
+        if (lastError.level !== 'silent')
+          // Most of the errors incoming are descriptive and tend to be long,
+          // so keep a longer timeout to give the user enough time to read them.
+          addToast(lastError.message, { timeout: 12000, type: 'error' })
+
+        console.error(
+          `Error in ${newState.controller} controller. Inspect background page to see the full stack trace.`
+        )
+      }
+    }
+
+    eventBus.addEventListener('error', onError)
+
+    return () => eventBus.removeEventListener('error', onError)
+  }, [addToast])
 
   return (
     <ControllersMiddlewareContext.Provider value={useMemo(() => ({ dispatch }), [dispatch])}>
