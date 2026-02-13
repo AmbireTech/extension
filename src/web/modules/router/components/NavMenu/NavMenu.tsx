@@ -15,6 +15,7 @@ import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView/FooterGlassView'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
@@ -28,7 +29,6 @@ import {
 import { DISCORD_URL, TELEGRAM_URL, TWITTER_URL } from '@web/constants/social'
 import { openInTab } from '@web/extension-services/background/webapi/tab'
 import useAutoLockStateController from '@web/hooks/useAutoLockStateController'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 import SettingsLink from '@web/modules/settings/components/SettingsLink'
 import { SETTINGS_LINKS } from '@web/modules/settings/components/Sidebar/Sidebar'
@@ -74,7 +74,7 @@ const NavMenu = () => {
   const { navigate } = useNavigation()
   const { styles, theme } = useTheme(getStyles)
   const { hasPasswordSecret } = useKeystoreControllerState()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const autoLockState = useAutoLockStateController()
   const handleLockAmbire = () => {
     dispatch({

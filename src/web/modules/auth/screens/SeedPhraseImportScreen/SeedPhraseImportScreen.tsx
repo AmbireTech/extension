@@ -13,6 +13,7 @@ import Text from '@common/components/Text'
 import TextArea from '@common/components/TextArea'
 import Toggle from '@common/components/Toggle'
 import { useTranslation } from '@common/config/localization'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Header'
@@ -23,7 +24,6 @@ import {
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import useAccountPickerControllerState from '@web/hooks/useAccountPickerControllerState'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 
 import getStyles from './styles'
 
@@ -34,7 +34,7 @@ const SeedPhraseImportScreen = () => {
   const { t } = useTranslation()
 
   const { theme, styles } = useTheme(getStyles)
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { initParams, subType } = useAccountPickerControllerState()
   const {
     watch,

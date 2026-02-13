@@ -4,8 +4,8 @@ import { useTranslation } from 'react-i18next'
 import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
 import { ISignAccountOpController } from '@ambire-common/interfaces/signAccountOp'
 import Alert from '@common/components/Alert'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import spacings from '@common/styles/spacings'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 
 const BundlerWarning = ({
   signAccountOpState,
@@ -17,7 +17,7 @@ const BundlerWarning = ({
     title: string
   }
 }) => {
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { t } = useTranslation()
 
   if (!bundlerNonceDiscrepancy || !signAccountOpState) return null

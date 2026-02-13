@@ -10,17 +10,16 @@ import InputPassword from '@common/components/InputPassword'
 import Text from '@common/components/Text'
 import { isDev, isTesting, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useDisableNavigatingBack from '@common/hooks/useDisableNavigatingBack'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
-import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { DEFAULT_KEYSTORE_PASSWORD_DEV } from '@env'
 import LayoutWrapper from '@web/components/LayoutWrapper'
 import { openInternalPageInTab } from '@web/extension-services/background/webapi/tab'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import useEmailVaultControllerState from '@web/hooks/useEmailVaultControllerState'
 import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
@@ -34,7 +33,7 @@ const KeyStoreUnlockScreen = () => {
   const { t } = useTranslation()
   const { styles } = useTheme(getStyles)
   const { navigate } = useNavigation()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { hasKeystoreRecovery } = useEmailVaultControllerState()
   const { isUnlocked, statuses, errorMessage } = useKeystoreControllerState()
   const { requestWindow } = useRequestsControllerState()
@@ -125,7 +124,7 @@ const KeyStoreUnlockScreen = () => {
               value={value}
               onSubmitEditing={handleSubmit((data) => handleUnlock(data))}
               error={passwordFieldError}
-              containerStyle={{ ...spacings.mb, ...flexbox.flex1 }}
+              containerStyle={{ ...spacings.mb, width: '100%' }}
             />
           )}
           name="password"
