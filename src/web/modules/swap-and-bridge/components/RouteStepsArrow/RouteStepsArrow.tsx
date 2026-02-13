@@ -29,7 +29,7 @@ const RouteStepsArrow = ({
     if (type === 'warning') return theme.warningDecorative
     if (type === 'success') return theme.successDecorative
 
-    return theme.secondaryBorder
+    return theme.neutral500
   }, [theme, type])
 
   return (

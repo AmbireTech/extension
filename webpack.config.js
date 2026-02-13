@@ -468,7 +468,12 @@ module.exports = async function (env, argv) {
     return config
   }
   if (isAmbireExplorer) {
-    if (process.env.APP_ENV === 'development') {
+    // Not entering this branch causes the error:
+    // handleAction: Controller ProvidersController not found
+    // This is a temporary fix
+    const ARE_CONTROLLERS_BROKEN_WITH_MINIMIZE = true
+
+    if (process.env.APP_ENV === 'development' || ARE_CONTROLLERS_BROKEN_WITH_MINIMIZE) {
       config.optimization = { minimize: false }
     } else {
       delete config.optimization.splitChunks

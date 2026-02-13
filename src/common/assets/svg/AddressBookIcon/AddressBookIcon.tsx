@@ -3,38 +3,50 @@ import Svg, { Circle, Path, Rect, SvgProps } from 'react-native-svg'
 
 import useTheme from '@common/hooks/useTheme'
 
-const AddressBookIcon: React.FC<SvgProps> = ({ width = 24, height = 24, color }) => {
+const AddressBookIcon: React.FC<SvgProps> = ({ width = 24, height = 24, color, ...props }) => {
   const { theme } = useTheme()
   return (
-    <Svg width={width} height={height} viewBox="0 0 24 24" fill="none">
+    <Svg width={width} height={height} viewBox="0 0 20 20" fill="none" {...props}>
       <Rect
-        width="15"
-        height="17"
-        x="5"
-        y="4"
+        x="4.16663"
+        y="3.33325"
+        width="12.5"
+        height="14.1667"
+        rx="2"
         stroke={color || theme.iconPrimary}
         strokeWidth="1.5"
-        rx="2"
       />
       <Path
+        d="M2.5 6.66675H5.83333"
         stroke={color || theme.iconPrimary}
-        strokeLinecap="round"
         strokeWidth="1.5"
-        d="M3 8h4M3 12h4M3 16h4"
+        strokeLinecap="round"
+      />
+      <Path
+        d="M2.5 10H5.83333"
+        stroke={color || theme.iconPrimary}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+      <Path
+        d="M2.5 13.3333H5.83333"
+        stroke={color || theme.iconPrimary}
+        strokeWidth="1.5"
+        strokeLinecap="round"
       />
       <Circle
-        cx="14"
-        cy="9.2"
-        r="2.45"
+        cx="11.6668"
+        cy="7.66667"
+        r="1.91667"
         stroke={color || theme.iconPrimary}
-        strokeLinecap="round"
         strokeWidth="1.5"
+        strokeLinecap="round"
       />
       <Path
+        d="M11.6667 11.6667C13.8004 11.6667 14.5683 13.0325 14.8447 14.0156C14.9941 14.5473 14.5523 15.0001 14 15.0001H9.33337C8.78109 15.0001 8.33929 14.5473 8.48876 14.0156C8.76513 13.0325 9.53303 11.6667 11.6667 11.6667Z"
         stroke={color || theme.iconPrimary}
-        strokeLinecap="round"
         strokeWidth="1.5"
-        d="M14 14c2.704 0 3.58 1.828 3.864 3.012.129.537-.312.988-.864.988h-6c-.552 0-.993-.45-.864-.988C10.42 15.828 11.296 14 14 14Z"
+        strokeLinecap="round"
       />
     </Svg>
   )

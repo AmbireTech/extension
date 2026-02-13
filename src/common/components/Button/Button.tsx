@@ -91,8 +91,7 @@ const ButtonInnerContainer = ({
       info: [],
       info2: [],
       success: [],
-      gray: [],
-      info3: []
+      gray: []
     }),
     [theme]
   )
@@ -225,7 +224,7 @@ const Button = ({
     ghost: styles.buttonContainerGhost,
     ghost2: {},
     error: {
-      backgroundColor: theme.errorText,
+      backgroundColor: theme.error200,
       borderWidth: 0
     },
     warning: {
@@ -304,8 +303,8 @@ const Button = ({
       error: [
         {
           property: 'color',
-          from: theme.primaryBackground,
-          to: theme.primaryBackground
+          from: '#fff',
+          to: '#fff'
         }
       ],
       warning: [

@@ -14,9 +14,10 @@ type Props = {
   onPress: () => void
   label?: string
   disabled?: boolean
+  isLarge?: boolean
 }
 
-const RetryButton: FC<Props> = ({ onPress, label, disabled }) => {
+const RetryButton: FC<Props> = ({ onPress, label, disabled, isLarge }) => {
   const { theme } = useTheme()
   const { t } = useTranslation()
   const buttonLabel = label ?? t('Retry')
@@ -77,10 +78,10 @@ const RetryButton: FC<Props> = ({ onPress, label, disabled }) => {
       ...animStyle,
       paddingLeft: 6,
       paddingRight: 2,
-      minHeight: 20,
+      minHeight: isLarge ? 28 : 20,
       ...(disabled && { opacity: 0.5 })
     }),
-    [animStyle, disabled]
+    [animStyle, disabled, isLarge]
   )
 
   return (
@@ -90,7 +91,7 @@ const RetryButton: FC<Props> = ({ onPress, label, disabled }) => {
       disabled={disabled}
       {...mergedBindAnim}
     >
-      <Text fontSize={12} weight="medium" color={theme.primaryAccent300} style={spacings.mrTy}>
+      <Text fontSize={12} weight="medium" color={theme.primaryAccent300} style={spacings.mrMi}>
         {buttonLabel}
       </Text>
       <Animated.View style={{ transform: [{ rotateZ: rotateInterpolate }] }}>

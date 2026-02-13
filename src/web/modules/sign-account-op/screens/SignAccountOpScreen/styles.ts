@@ -22,7 +22,7 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       ...spacings.mt,
       ...spacings.pvMd,
       ...spacings.phMd,
-      backgroundColor: theme.secondaryBackground,
+      backgroundColor: theme.primaryBackground,
       shadowColor: themeType === THEME_TYPES.DARK ? '#00000052' : '#B8BDE080',
       shadowOffset: { width: 0, height: -4 },
       shadowOpacity: 0.64,
