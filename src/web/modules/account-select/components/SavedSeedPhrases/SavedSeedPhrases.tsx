@@ -112,7 +112,7 @@ const SavedSeedPhrases = ({ handleClose }: { handleClose: () => void }) => {
               key={a.addr}
               account={a}
               withSettings={false}
-              inverseInteractionColors
+              isSelectable={false}
               withKeyType={false}
             />
           )
