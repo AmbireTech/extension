@@ -96,8 +96,18 @@ const SafeImportScreen = () => {
     }
   }, [goToNextRoute, addToast, dispatch, t, safe, safeInfo, reset, isLoading])
 
+  const getSplitAddress = (value: string) => {
+    const addr = value.trim()
+    // sometimes safe addresses come like eth:address
+    // so we split it, if it has a :, and then we validate
+    if (addr.indexOf(':') !== -1) {
+      return addr.split(':')[1]!
+    }
+    return addr
+  }
+
   const handleValidation = (value: string) => {
-    const trimmedValue = value.trim()
+    const trimmedValue = getSplitAddress(value)
 
     if (!trimmedValue.length) return t('Field is required.')
 
@@ -107,7 +117,7 @@ const SafeImportScreen = () => {
   }
 
   useEffect(() => {
-    const safeAddr = safeAddressValue.trim()
+    const safeAddr = getSplitAddress(safeAddressValue)
     if (!safeAddr.length || !isAddress(safeAddr)) {
       setSafe('')
       return
