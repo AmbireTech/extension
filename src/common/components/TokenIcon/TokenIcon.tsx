@@ -79,9 +79,6 @@ const TokenIcon: React.FC<Props> = ({
     }
 
     // attempt to load from config
-    if (network?.chainId === 4114n) {
-      console.log(network)
-    }
     if (network?.tokenIcons?.[address]) {
       const tokenUrl = network.tokenIcons[address]
       const imageExists = await checkIfImageExists(tokenUrl)
