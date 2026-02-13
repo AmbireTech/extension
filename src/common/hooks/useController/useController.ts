@@ -165,8 +165,12 @@ export default function useController<K extends keyof AllControllersMappingType>
     [controllersMiddlewareDispatch, id]
   )
 
-  const stateToReturn =
-    id === 'SignAccountOpController' ? state || null : state || ({} as AllControllersMappingType[K])
+  let stateToReturn: BaseControllerReturn<K>['state'] = (state ||
+    {}) as BaseControllerReturn<K>['state']
+
+  if (id === 'SignAccountOpController') {
+    stateToReturn = (Object.keys(state).length ? state : null) as BaseControllerReturn<K>['state']
+  }
 
   return {
     state: stateToReturn,
