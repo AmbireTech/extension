@@ -220,8 +220,8 @@ const ToTokenSelect: React.FC<Props> = ({
       }
       attemptToFetchMoreOptions={handleAttemptToFetchMoreOptions}
       onSearch={handleOnSearch}
-      containerStyle={{ ...spacings.mb0, ...flexbox.flex1 }}
-      selectStyle={spacings.phTy}
+      containerStyle={{ ...spacings.mb0, ...flexbox.flex1, ...spacings.mrMd }}
+      selectStyle={{ ...spacings.plTy, ...spacings.prSm }}
       stickySectionHeadersEnabled
     />
   )
