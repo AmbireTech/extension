@@ -153,8 +153,7 @@ const Account = ({
         styles.accountContainer,
         containerStyle,
         // @ts-ignore
-        options.setAccountToImportOrExport ? { cursor: 'default' } : {},
-        isSelectable ? animStyle : {}
+        isSelectable ? animStyle : { cursor: 'default' }
       ]}
     >
       <View style={[flexbox.flex1, flexbox.directionRow]}>
