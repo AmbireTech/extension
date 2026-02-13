@@ -29,7 +29,6 @@ const SCROLLBAR_TRIGGER_THRESHOLD = 4
 
 const getFlatListStyle = (tab: TabType, openTab: TabType, allBannersLength: number) => [
   spacings.ph0,
-  commonWebStyles.contentContainer,
   openTab !== tab ? HIDDEN_STYLE : {}
 ]
 

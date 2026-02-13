@@ -38,14 +38,7 @@ const DashboardHeader = () => {
   if (!account) return null
 
   return (
-    <View
-      style={[
-        flexboxStyles.directionRow,
-        flexboxStyles.alignCenter,
-        flexboxStyles.flex1,
-        commonWebStyles.contentContainer
-      ]}
-    >
+    <View style={[flexboxStyles.directionRow, flexboxStyles.alignCenter, flexboxStyles.flex1]}>
       {SHOULD_DISPLAY_NETWORK_STATUSES && (
         <NetworkStatusesBottomSheet
           sheetRef={networkStatusesSheetRef}

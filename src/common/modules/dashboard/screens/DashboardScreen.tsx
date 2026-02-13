@@ -7,6 +7,7 @@ import useDebounce from '@common/hooks/useDebounce'
 import useTheme from '@common/hooks/useTheme'
 import PendingActionWindowModal from '@common/modules/dashboard/components/PendingActionWindowModal'
 import GasTankModal from '@web/components/GasTankModal'
+import LayoutWrapper from '@web/components/LayoutWrapper'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import { getUiType } from '@web/utils/uiType'
 
@@ -73,7 +74,7 @@ const DashboardScreen = () => {
   )
 
   return (
-    <>
+    <LayoutWrapper>
       <GasTankModal
         modalRef={gasTankModalRef}
         handleClose={closeGasTankModal}
@@ -95,7 +96,7 @@ const DashboardScreen = () => {
           isSearchHidden={isSearchHidden}
         />
       </View>
-    </>
+    </LayoutWrapper>
   )
 }
 

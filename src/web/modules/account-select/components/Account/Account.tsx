@@ -22,11 +22,8 @@ import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
 import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 import useMainControllerState from '@web/hooks/useMainControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
-import { getUiType } from '@web/utils/uiType'
 
 import getStyles from './styles'
-
-const { isTab } = getUiType()
 
 const Account = ({
   account,
@@ -171,7 +168,7 @@ const Account = ({
           <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
             {!withSettings ? (
               <>
-                <Text fontSize={isTab ? 16 : 14} weight="medium" numberOfLines={1}>
+                <Text fontSize={withSettings ? 16 : 14} weight="medium" numberOfLines={1}>
                   {account.preferences.label}
                 </Text>
                 {!!withKeyType && (
@@ -186,7 +183,7 @@ const Account = ({
               <Editable
                 initialValue={account.preferences.label}
                 onSave={onSave}
-                fontSize={isTab ? 16 : 14}
+                fontSize={withSettings ? 16 : 14}
                 height={24}
                 textProps={{
                   weight: 'medium'
