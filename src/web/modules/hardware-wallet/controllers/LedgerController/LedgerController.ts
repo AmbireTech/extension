@@ -28,6 +28,8 @@ const LedgerEnv = {
 export { LedgerDeviceModels }
 export type LedgerSignature = Signature
 
+type LedgerTransportMode = 'webhid' | 'speculos'
+
 const TIMEOUT_FOR_RETRIEVING_FROM_LEDGER = 5000
 
 class LedgerController implements ExternalSignerController {
@@ -35,9 +37,7 @@ class LedgerController implements ExternalSignerController {
 
   unlockedPathKeyAddr: string = ''
 
-  isWebHID: boolean
-
-  isE2ETestLedgerTransport: boolean
+  transportMode: LedgerTransportMode
 
   signerEth: ReturnType<SignerEthBuilder['build']> | null = null
 
@@ -56,8 +56,7 @@ class LedgerController implements ExternalSignerController {
   constructor() {
     // TODO: Bluetooth support?
     // When running in CI with Speculos, we use HTTP transport instead of WebHID.
-    this.isE2ETestLedgerTransport = LedgerEnv.isE2ETestLedgerTransport
-    this.isWebHID = !this.isE2ETestLedgerTransport
+    this.transportMode = LedgerEnv.isE2ETestLedgerTransport ? 'speculos' : 'webhid'
 
     // When the `cleanUpListener` method gets passed to the navigator.hid listeners
     // the `this` context gets lost, so we need to bind it here. The `this` context
@@ -212,7 +211,7 @@ class LedgerController implements ExternalSignerController {
   async #initSDKSessionIfNeeded() {
     if (this.walletSDK) return
 
-    if (!this.isE2ETestLedgerTransport) {
+    if (this.transportMode !== 'speculos') {
       const isConnected = await LedgerController.isConnected()
       if (!isConnected) {
         throw new ExternalSignerError("Ledger is not connected. Please make sure it's plugged in.")
@@ -242,7 +241,7 @@ class LedgerController implements ExternalSignerController {
     // .addLogger(new ConsoleLogger())
 
     builder.addTransport(
-      this.isE2ETestLedgerTransport
+      this.transportMode === 'speculos'
         ? speculosTransportFactory(LedgerEnv.speculosHttpUrl)
         : webHidTransportFactory
     )
@@ -406,10 +405,11 @@ class LedgerController implements ExternalSignerController {
 
     if (this.isUnlocked(path, expectedKeyOnThisPath)) return 'ALREADY_UNLOCKED'
 
-    if (!this.isWebHID && !this.isE2ETestLedgerTransport)
+    if (this.transportMode !== 'webhid' && this.transportMode !== 'speculos') {
       throw new ExternalSignerError(
         'Ledger only supports USB connection between Ambire and your device. Please connect your device via USB.'
       )
+    }
 
     if (!this.walletSDK || !this.signerEth) throw new ExternalSignerError(normalizeLedgerMessage()) // no message, indicating no connection
 
