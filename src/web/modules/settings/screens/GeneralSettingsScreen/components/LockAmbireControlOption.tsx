@@ -4,15 +4,15 @@ import { useTranslation } from 'react-i18next'
 import LockIcon from '@common/assets/svg/LockIcon'
 import Button from '@common/components/Button'
 import ControlOption from '@common/components/ControlOption'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 
 const LockAmbireControlOption = () => {
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { navigate } = useNavigation()

@@ -5,6 +5,7 @@ import Button from '@common/components/Button'
 import ExpandableCard from '@common/components/ExpandableCard'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
@@ -13,7 +14,6 @@ import RequestingDappInfo from '@web/components/RequestingDappInfo'
 import SmallNotificationWindowWrapper from '@web/components/SmallNotificationWindowWrapper'
 import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
 import eventBus from '@web/extension-services/event/eventBus'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import useDappInfo from '@web/hooks/useDappInfo'
 import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import ActionFooter from '@web/modules/action-requests/components/ActionFooter'
@@ -22,7 +22,7 @@ import { useEncryptionCapability } from '@web/modules/action-requests/hooks'
 
 const DecryptRequestScreen = () => {
   const { t } = useTranslation()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { currentUserRequest } = useRequestsControllerState()
   const { theme } = useTheme()
   const { addToast } = useToast()

@@ -13,10 +13,10 @@ import {
   getIsTokenEligibleForSwapAndBridge
 } from '@ambire-common/libs/swapAndBridge/swapAndBridge'
 import { getCallsCount } from '@ambire-common/utils/userRequest'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useGetTokenSelectProps from '@common/hooks/useGetTokenSelectProps'
 import useNavigation from '@common/hooks/useNavigation'
 import { ROUTES } from '@common/modules/router/constants/common'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
@@ -48,7 +48,7 @@ const useSwapAndBridgeForm = () => {
     sessionIds,
     toSelectedToken
   } = useSwapAndBridgeControllerState()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { userRequests } = useRequestsControllerState()
   const { account, portfolio } = useSelectedAccountControllerState()
   const controllerAmountFieldValue = fromAmountFieldMode === 'token' ? fromAmount : fromAmountInFiat

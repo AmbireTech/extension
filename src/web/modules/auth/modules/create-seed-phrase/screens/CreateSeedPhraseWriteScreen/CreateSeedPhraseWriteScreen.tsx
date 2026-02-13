@@ -9,6 +9,7 @@ import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
@@ -23,7 +24,6 @@ import {
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import eventBus from '@web/extension-services/event/eventBus'
 import useAccountPickerControllerState from '@web/hooks/useAccountPickerControllerState'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 
 const CreateSeedPhraseWriteScreen = () => {
@@ -31,7 +31,7 @@ const CreateSeedPhraseWriteScreen = () => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { addToast } = useToast()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { hasTempSeed } = useKeystoreControllerState()
   const [tempSeed, setTempSeed] = useState<KeystoreSeed | null>(null)
   const { initParams, subType } = useAccountPickerControllerState()

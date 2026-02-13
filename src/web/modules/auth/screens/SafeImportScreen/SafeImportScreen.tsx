@@ -12,6 +12,7 @@ import Panel from '@common/components/Panel'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
@@ -22,7 +23,6 @@ import {
   TabLayoutContainer,
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import useSafeControllerState from '@web/hooks/useSafeControllerState'
 
 const SafeImportScreen = () => {
@@ -47,7 +47,7 @@ const SafeImportScreen = () => {
   const [safe, setSafe] = useState<string | null>('')
 
   const { theme } = useTheme()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
 
   const handleFormSubmit = useCallback(async () => {
     if (!safe || !safeInfo || isLoading) return
@@ -123,10 +123,7 @@ const SafeImportScreen = () => {
   }, [dispatch, safeAddressValue, safeInfo?.address, safe])
 
   return (
-    <TabLayoutContainer
-      backgroundColor={theme.secondaryBackground}
-      header={<Header mode="custom-inner-content" withAmbireLogo />}
-    >
+    <TabLayoutContainer backgroundColor={theme.secondaryBackground} header={<Header />}>
       <TabLayoutWrapperMainContent>
         <Panel
           type="onboarding"
@@ -176,7 +173,7 @@ const SafeImportScreen = () => {
                           <NetworkIcon
                             key={c}
                             id={c.toString()}
-                            style={i === 0 ? { marginLeft: '0' } : { marginLeft: '-11px' }}
+                            style={i === 0 ? { marginLeft: 0 } : { marginLeft: -11 }}
                             size={22}
                           />
                         ))}

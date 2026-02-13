@@ -8,11 +8,11 @@ import { isAmbireV1LinkedAccount } from '@ambire-common/libs/account/account'
 import AccountKey, { AccountKeyType } from '@common/components/AccountKey/AccountKey'
 import Alert from '@common/components/Alert'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 
@@ -35,7 +35,7 @@ const AccountKeys: FC<Props> = ({
   const { accountStates } = useAccountsControllerState()
   const { networks } = useNetworksControllerState()
   const { keys } = useKeystoreControllerState()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const accountStateCheckedForRef = React.useRef<string | null>(null)
 
   const accountState = useMemo(() => {

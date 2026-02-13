@@ -17,6 +17,7 @@ import Search from '@common/components/Search'
 import Select from '@common/components/Select'
 import { SelectValue } from '@common/components/Select/types'
 import Text from '@common/components/Text'
+import useController from '@common/hooks/useController'
 import useDebounce from '@common/hooks/useDebounce'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
@@ -28,7 +29,6 @@ import {
   TabLayoutContainer,
   tabLayoutWidths
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import useDappsControllerState from '@web/hooks/useDappsControllerState'
 import { AnimatedPressable, useMultiHover } from '@web/hooks/useHover'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import DappItem from '@web/modules/dapp-catalog/components/DappItem'
@@ -125,7 +125,7 @@ const FilterButton = React.memo(
 const DappCatalogScreen = () => {
   const { control, watch, setValue } = useForm({ defaultValues: { search: '' } })
   const { t } = useTranslation()
-  const { state } = useDappsControllerState()
+  const { state } = useController('DappsController')
   const search = watch('search')
   const debouncedSearch = useDebounce({ value: search, delay: 350 })
   const [initialDAppListState, setInitialDAppListState] = useState<Dapp[]>([])

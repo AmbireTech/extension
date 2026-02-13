@@ -1,8 +1,8 @@
 import React, { createContext, useEffect } from 'react'
 
 import { IStorageController } from '@ambire-common/interfaces/storage'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useDeepMemo from '@common/hooks/useDeepMemo'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import useControllerState from '@web/hooks/useControllerState'
 
 const StorageControllerStateContext = createContext<IStorageController>({} as IStorageController)
@@ -10,7 +10,7 @@ const StorageControllerStateContext = createContext<IStorageController>({} as IS
 const StorageControllerStateProvider: React.FC<any> = ({ children }) => {
   const controller = 'StorageController'
   const state = useControllerState(controller)
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
 
   useEffect(() => {
     if (!Object.keys(state).length)

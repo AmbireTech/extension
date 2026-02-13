@@ -12,12 +12,12 @@ import Dropdown from '@common/components/Dropdown'
 import Editable from '@common/components/Editable'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useReverseLookup from '@common/hooks/useReverseLookup'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
 import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 import useMainControllerState from '@web/hooks/useMainControllerState'
@@ -62,7 +62,7 @@ const Account = ({
   const { addToast } = useToast()
   const { statuses: mainStatuses } = useMainControllerState()
   const { account: selectedAccount } = useSelectedAccountControllerState()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { ens, isLoading } = useReverseLookup({ address: addr })
   const { keys } = useKeystoreControllerState()
   const [bindAnim, animStyle] = useCustomHover({

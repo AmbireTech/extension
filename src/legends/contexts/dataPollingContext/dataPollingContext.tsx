@@ -2,7 +2,7 @@ import React, { createContext, useCallback, useEffect, useMemo, useRef } from 'r
 
 import useLeaderboardContext from '@legends/hooks/useLeaderboardContext'
 import useLegendsContext from '@legends/hooks/useLegendsContext'
-import usePortfolioControllerState from '@legends/hooks/usePortfolioControllerState/usePortfolioControllerState'
+import usePortfolio from '@legends/hooks/usePortfolio'
 
 type DataPollingContextType = {
   startPolling: () => void
@@ -39,7 +39,7 @@ const log = (...args: any[]) => {
 const DataPollingContextProvider: React.FC<any> = ({ children }) => {
   const { updateLeaderboard } = useLeaderboardContext()
   const { getLegends } = useLegendsContext()
-  const { updateAccountPortfolio } = usePortfolioControllerState()
+  const { updateAccountPortfolio } = usePortfolio()
 
   // Polling timeout id
   const pollingIntervalRef: any = useRef(null)

@@ -4,11 +4,11 @@ import { View } from 'react-native'
 
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
 import { useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Header'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useDappsControllerState from '@web/hooks/useDappsControllerState'
 import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import useResponsiveActionWindow from '@web/hooks/useResponsiveActionWindow'
 import ActionFooter from '@web/modules/action-requests/components/ActionFooter'
@@ -21,12 +21,12 @@ import getStyles from './styles'
 const DappConnectScreen = () => {
   const { t } = useTranslation()
   const { theme, styles } = useTheme(getStyles)
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { currentUserRequest } = useRequestsControllerState()
 
   const [isAuthorizing, setIsAuthorizing] = useState(false)
   const { responsiveSizeMultiplier } = useResponsiveActionWindow()
-  const { state: dappsState } = useDappsControllerState()
+  const { state: dappsState } = useController('DappsController')
 
   const dappToConnect = useMemo(() => dappsState.dappToConnect || null, [dappsState.dappToConnect])
 

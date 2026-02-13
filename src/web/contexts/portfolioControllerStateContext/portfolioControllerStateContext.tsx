@@ -1,8 +1,8 @@
 import React, { createContext, useEffect } from 'react'
 
 import { IPortfolioController } from '@ambire-common/interfaces/portfolio'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useDeepMemo from '@common/hooks/useDeepMemo'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import useControllerState from '@web/hooks/useControllerState'
 
 const PortfolioControllerStateContext = createContext<IPortfolioController>(
@@ -12,7 +12,7 @@ const PortfolioControllerStateContext = createContext<IPortfolioController>(
 const PortfolioControllerStateProvider: React.FC<any> = ({ children }) => {
   const controller = 'PortfolioController'
   const state = useControllerState(controller)
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
 
   useEffect(() => {
     if (!Object.keys(state).length) {

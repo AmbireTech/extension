@@ -3,16 +3,15 @@ import React, { createContext, useEffect, useMemo, useRef, useState } from 'reac
 import { ControllerInterface } from '@ambire-common/interfaces/controller'
 import { captureMessage } from '@common/config/analytics/CrashAnalytics.web'
 import { APP_VERSION } from '@common/config/env'
+import { AllControllersMappingType } from '@common/constants/controllersMapping'
+import useControllerStore from '@common/hooks/useControllerStore'
 import { isStateLoaded } from '@web/contexts/controllersStateLoadedContext//helpers'
-import { ControllersMappingType } from '@web/extension-services/background/types'
 import useAccountPickerControllerState from '@web/hooks/useAccountPickerControllerState'
 import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
 import useActivityControllerState from '@web/hooks/useActivityControllerState'
 import useAddressBookControllerState from '@web/hooks/useAddressBookControllerState'
 import useBannersControllerState from '@web/hooks/useBannersControllerState'
 import useContractNamesControllerState from '@web/hooks/useContractNamesController/useContractNamesController'
-import useDappsControllerState from '@web/hooks/useDappsControllerState'
-import useDomainsControllerState from '@web/hooks/useDomainsController/useDomainsController'
 import useEmailVaultControllerState from '@web/hooks/useEmailVaultControllerState'
 import useExtensionUpdateControllerState from '@web/hooks/useExtensionUpdateControllerState'
 import useFeatureFlagsControllerState from '@web/hooks/useFeatureFlagsControllerState'
@@ -43,7 +42,7 @@ const ControllersStateLoadedContext = createContext<{
 const { isPopup } = getUiType()
 
 type Controllers = {
-  [K in keyof ControllersMappingType]: ControllerInterface<ControllersMappingType[K]>
+  [K in keyof AllControllersMappingType]: ControllerInterface<AllControllersMappingType[K]>
 }
 
 type ControllersToWait = Omit<
@@ -66,6 +65,7 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
   // `isStatesLoadingTakingTooLong` flag).
   const [areControllerStatesLoaded, setAreControllerStatesLoaded] = useState(false)
   const [isStatesLoadingTakingTooLong, setIsStatesLoadingTakingTooLong] = useState(false)
+  const { isStoreReady } = useControllerStore()
 
   const AccountPickerController = useAccountPickerControllerState()
   const KeystoreController = useKeystoreControllerState()
@@ -83,9 +83,7 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
   const PortfolioController = usePortfolioControllerState()
   const EmailVaultController = useEmailVaultControllerState()
   const PhishingController = usePhishingControllerState()
-  const DappsController = useDappsControllerState().state
   const AddressBookController = useAddressBookControllerState()
-  const DomainsController = useDomainsControllerState().state
   const InviteController = useInviteControllerState()
   const ContractNamesController = useContractNamesControllerState()
   const BannerController = useBannersControllerState()
@@ -93,7 +91,7 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
   const ExtensionUpdateController = useExtensionUpdateControllerState()
   const FeatureFlagsController = useFeatureFlagsControllerState()
 
-  const controllers: ControllersToWait = useMemo(
+  const controllers: any = useMemo(
     () => ({
       AccountPickerController,
       KeystoreController,
@@ -111,9 +109,7 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
       PortfolioController,
       EmailVaultController,
       PhishingController,
-      DappsController,
       AddressBookController,
-      DomainsController,
       InviteController,
       ContractNamesController,
       BannerController,
@@ -138,9 +134,7 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
       PortfolioController,
       EmailVaultController,
       PhishingController,
-      DappsController,
       AddressBookController,
-      DomainsController,
       InviteController,
       ContractNamesController,
       BannerController,
@@ -153,7 +147,7 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
   const isViewReady = useMemo(() => {
     if (!isPopup) return true
 
-    const popupView = controllers.UiController?.views?.find((v) => v.type === 'popup')
+    const popupView = controllers.UiController?.views?.find((v: any) => v.type === 'popup')
 
     return !!popupView?.isReady
   }, [controllers.UiController])
@@ -210,8 +204,11 @@ const ControllersStateLoadedProvider: React.FC<any> = ({ children }) => {
   }, [areControllerStatesLoaded, isViewReady, controllers, WalletStateController?.extensionVersion])
 
   const contextValue = useMemo(
-    () => ({ areControllerStatesLoaded, isStatesLoadingTakingTooLong }),
-    [areControllerStatesLoaded, isStatesLoadingTakingTooLong]
+    () => ({
+      areControllerStatesLoaded: areControllerStatesLoaded && isStoreReady,
+      isStatesLoadingTakingTooLong
+    }),
+    [areControllerStatesLoaded, isStoreReady, isStatesLoadingTakingTooLong]
   )
 
   return (

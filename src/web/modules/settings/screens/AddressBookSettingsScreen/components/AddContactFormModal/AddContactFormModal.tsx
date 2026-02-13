@@ -11,11 +11,11 @@ import BottomSheet from '@common/components/BottomSheet'
 import DualChoiceModal from '@common/components/DualChoiceModal'
 import Input from '@common/components/Input'
 import useAddressInput from '@common/hooks/useAddressInput'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
 import useAddressBookControllerState from '@web/hooks/useAddressBookControllerState'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 
 type Props = {
   id: string
@@ -25,7 +25,7 @@ type Props = {
 
 const AddContactFormModal = ({ id, sheetRef, closeBottomSheet }: Props) => {
   const { t } = useTranslation()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { contacts } = useAddressBookControllerState()
   const { accounts } = useAccountsControllerState()
 

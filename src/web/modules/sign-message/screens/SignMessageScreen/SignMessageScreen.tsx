@@ -15,6 +15,7 @@ import SuccessIcon from '@common/assets/svg/SuccessIcon'
 import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
@@ -23,7 +24,6 @@ import SmallNotificationWindowWrapper from '@web/components/SmallNotificationWin
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import { closeCurrentWindow } from '@web/extension-services/background/webapi/window'
 import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import useDappInfo from '@web/hooks/useDappInfo/useDappInfo'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
@@ -45,7 +45,7 @@ const SignMessageScreen = () => {
   const { account } = useSelectedAccountControllerState()
   const { networks } = useNetworksControllerState()
   const { accountStates } = useAccountsControllerState()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { isLedgerConnected } = useLedger()
   const [isChooseSignerShown, setIsChooseSignerShown] = useState(false)
   const [shouldDisplayLedgerConnectModal, setShouldDisplayLedgerConnectModal] = useState(false)

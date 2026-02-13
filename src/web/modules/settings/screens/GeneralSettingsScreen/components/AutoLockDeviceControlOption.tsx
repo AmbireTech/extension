@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import LockWithTimerIcon from '@common/assets/svg/LockWithTimerIcon'
 import ControlOption from '@common/components/ControlOption'
 import Select from '@common/components/Select'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import {
@@ -11,7 +12,6 @@ import {
   getAutoLockLabel
 } from '@web/extension-services/background/controllers/auto-lock'
 import useAutoLockStateController from '@web/hooks/useAutoLockStateController'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 
 const AUTO_LOCK_OPTIONS = [
   {
@@ -41,7 +41,7 @@ const AUTO_LOCK_OPTIONS = [
 ]
 
 const AutoLockDeviceControlOption = () => {
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { autoLockTime } = useAutoLockStateController()

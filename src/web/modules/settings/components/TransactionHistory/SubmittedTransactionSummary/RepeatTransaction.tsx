@@ -5,10 +5,10 @@ import { TouchableOpacity } from 'react-native'
 import { SubmittedAccountOp } from '@ambire-common/libs/accountOp/submittedAccountOp'
 import RefreshIcon from '@common/assets/svg/RefreshIcon'
 import Text from '@common/components/Text'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 
 type Props = {
   accountAddr: string
@@ -29,7 +29,7 @@ const RepeatTransaction: FC<Props> = ({
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
 
   const handleRepeatTransaction = useCallback(() => {
     if (!rawCalls) return

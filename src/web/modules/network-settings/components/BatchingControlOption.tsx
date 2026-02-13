@@ -4,13 +4,13 @@ import { useTranslation } from 'react-i18next'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import Button from '@common/components/Button'
 import ControlOption from '@common/components/ControlOption'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import useProvidersControllerState from '@web/hooks/useProvidersControllerState'
 
 const BatchingControlOption = () => {
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { t } = useTranslation()
   const { theme } = useTheme()
   const {

@@ -1,8 +1,8 @@
 import React, { createContext, useEffect } from 'react'
 
 import { ISafeController } from '@ambire-common/interfaces/safe'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useDeepMemo from '@common/hooks/useDeepMemo'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import useControllerState from '@web/hooks/useControllerState'
 import useMainControllerState from '@web/hooks/useMainControllerState'
 
@@ -11,7 +11,7 @@ const SafeControllerStateContext = createContext<ISafeController>({} as ISafeCon
 const SafeControllerStateProvider = ({ children }: { children: any }) => {
   const controller = 'SafeController'
   const state = useControllerState(controller)
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const mainState = useMainControllerState()
 
   useEffect(() => {

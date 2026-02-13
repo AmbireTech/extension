@@ -6,8 +6,8 @@ import { View } from 'react-native'
 import { AddNetworkRequestParams, Network, NetworkFeature } from '@ambire-common/interfaces/network'
 import { getFeatures } from '@ambire-common/libs/networks/networks'
 import Spinner from '@common/components/Spinner'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import flexbox from '@common/styles/utils/flexbox'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import validateRequestParams from '@web/modules/action-requests/screens/AddOrUpdateNetworkScreen/validateRequestParams'
@@ -23,7 +23,7 @@ import UpdateChain from './UpdateChain'
  */
 const AddOrUpdateNetworkScreen = () => {
   const { t } = useTranslation()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { currentUserRequest } = useRequestsControllerState()
   const { statuses, networkToAddOrUpdate, disabledNetworks, networks } =
     useNetworksControllerState()

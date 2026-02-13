@@ -2,8 +2,8 @@
 import React, { createContext, useEffect } from 'react'
 
 import { ISwapAndBridgeController } from '@ambire-common/interfaces/swapAndBridge'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useDeepMemo from '@common/hooks/useDeepMemo'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import useControllerState from '@web/hooks/useControllerState'
 import useMainControllerState from '@web/hooks/useMainControllerState'
 
@@ -14,7 +14,7 @@ const SwapAndBridgeControllerStateContext = createContext<ISwapAndBridgeControll
 const SwapAndBridgeControllerStateProvider: React.FC<any> = ({ children }) => {
   const controller = 'SwapAndBridgeController'
   const state = useControllerState(controller)
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const mainState = useMainControllerState()
 
   useEffect(() => {
