@@ -24,6 +24,7 @@
   },
   "author": "Filip",
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
     "@types/node": "^20.16.1",
     "@typescript-eslint/eslint-plugin": "^5.34.0",
     "@typescript-eslint/parser": "^5.34.0",
@@ -38,7 +39,6 @@
     "typescript": "^4.1.5"
   },
   "dependencies": {
-    "@playwright/test": "^1.52.0",
     "@trezor/connect-plugin-ethereum": "9.1.5",
     "@trezor/connect-webextension": "9.7.1",
     "@trezor/trezor-user-env-link": "^1.0.0",
