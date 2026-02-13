@@ -15,12 +15,12 @@ import Alert from '@common/components/Alert'
 import Select, { SectionedSelect } from '@common/components/Select'
 import { SelectValue } from '@common/components/Select/types'
 import Text from '@common/components/Text'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 
 import BundlerWarning from './components/bundlerWarning'
 import EstimationSkeleton from './components/EstimationSkeleton'
@@ -97,7 +97,7 @@ const Estimation = ({
   bundlerNonceDiscrepancy,
   serviceFee
 }: Props) => {
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { t } = useTranslation()
   const { theme, themeType } = useTheme(getStyles)
   const { minWidthSize } = useWindowSize()

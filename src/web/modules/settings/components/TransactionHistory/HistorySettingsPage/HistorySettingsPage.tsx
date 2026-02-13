@@ -22,6 +22,7 @@ import { SelectValue } from '@common/components/Select/types'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import spacings from '@common/styles/spacings'
@@ -29,7 +30,6 @@ import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
 import useActivityControllerState from '@web/hooks/useActivityControllerState'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import SettingsPageHeader from '@web/modules/settings/components/SettingsPageHeader'
@@ -63,7 +63,7 @@ const HistorySettingsPage: FC<Props> = ({ HistoryComponent, historyType, session
   const activityState = useActivityControllerState()
   const { accounts } = useAccountsControllerState()
   const { account: accountData } = useSelectedAccountControllerState()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const [page, setPage] = useState(1)
   const { t } = useTranslation()
   const { maxWidthSize } = useWindowSize()

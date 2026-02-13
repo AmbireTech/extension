@@ -4,6 +4,7 @@ import { NavigateOptions } from 'react-router-dom'
 
 import { Account } from '@ambire-common/interfaces/account'
 import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useNavigation from '@common/hooks/useNavigation'
 import usePrevious from '@common/hooks/usePrevious'
 import useRoute from '@common/hooks/useRoute'
@@ -13,7 +14,6 @@ import { ONBOARDING_WEB_ROUTES, WEB_ROUTES } from '@common/modules/router/consta
 import { ControllersStateLoadedContext } from '@web/contexts/controllersStateLoadedContext'
 import useAccountPickerControllerState from '@web/hooks/useAccountPickerControllerState'
 import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import useEmailVaultControllerState from '@web/hooks/useEmailVaultControllerState'
 import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 import useWalletStateController from '@web/hooks/useWalletStateController'
@@ -71,7 +71,7 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
   const prevPath: string | undefined = usePrevious(path)
   const { navigate } = useNavigation()
   const { authStatus } = useAuth()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { isSetupComplete } = useWalletStateController()
   const { accounts } = useAccountsControllerState()
   const { isInitialized, subType, initParams, type } = useAccountPickerControllerState()

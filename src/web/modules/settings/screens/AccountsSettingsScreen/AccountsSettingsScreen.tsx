@@ -14,6 +14,7 @@ import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableW
 import Search from '@common/components/Search'
 import Text from '@common/components/Text'
 import useAccountsList from '@common/hooks/useAccountsList'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useElementSize from '@common/hooks/useElementSize'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
@@ -21,7 +22,6 @@ import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import Account from '@web/modules/account-select/components/Account'
 import AddAccount from '@web/modules/account-select/components/AddAccount'
 import AccountSmartSettingsBottomSheet from '@web/modules/settings/components/Accounts/AccountSmartSettingsBottomSheet'
@@ -36,7 +36,7 @@ const AccountsSettingsScreen = () => {
   const accountsContainerRef = useRef(null)
   const { minElementWidthSize, maxElementWidthSize } = useElementSize(accountsContainerRef)
   const { setCurrentSettingsPage } = useContext(SettingsRoutesContext)
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { themeType, theme } = useTheme()
   const {
     ref: sheetRefExportImportKey,

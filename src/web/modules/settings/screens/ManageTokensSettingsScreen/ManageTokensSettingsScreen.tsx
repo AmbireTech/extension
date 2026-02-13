@@ -5,10 +5,10 @@ import { useModalize } from 'react-native-modalize'
 
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import { SelectValue } from '@common/components/Select/types'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import flexbox from '@common/styles/utils/flexbox'
 import { tokenOrCollectionSearch } from '@common/utils/search'
 import { networkSort } from '@common/utils/sorting'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import usePortfolioControllerState from '@web/hooks/usePortfolioControllerState/usePortfolioControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
@@ -27,7 +27,7 @@ const ManageTokensSettingsScreen = () => {
     close: closeAddTokenBottomSheet
   } = useModalize()
   const { tokenPreferences, customTokens: portfolioCustomTokens } = usePortfolioControllerState()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { setCurrentSettingsPage } = useContext(SettingsRoutesContext)
   const { control, watch } = useForm({ mode: 'all', defaultValues: { search: '' } })
   const { networks } = useNetworksControllerState()

@@ -11,6 +11,7 @@ import XIcon from '@common/assets/svg/XIcon'
 import Badge from '@common/components/Badge'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING_TY } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
@@ -18,7 +19,6 @@ import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import ManifestImage from '@web/components/ManifestImage'
 import { openInTab } from '@web/extension-services/background/webapi/tab'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
 import TrustedIcon from '@web/modules/action-requests/screens/DappConnectScreen/components/TrustedIcon'
 
@@ -55,7 +55,7 @@ const DappItem = (dapp: Dapp) => {
     twitter
   } = dapp
   const { styles, theme } = useTheme(getStyles)
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { t } = useTranslation()
   const [hovered, setHovered] = useState(false)
   const [isManageAppOpen, setIsManageAppOpen] = useState(false)

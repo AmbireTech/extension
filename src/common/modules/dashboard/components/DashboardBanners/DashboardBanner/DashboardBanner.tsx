@@ -8,11 +8,11 @@ import {
 } from '@ambire-common/interfaces/banner'
 import BatchIcon from '@common/assets/svg/BatchIcon'
 import Banner from '@common/components/Banner'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useNavigation from '@common/hooks/useNavigation'
 import useToast from '@common/hooks/useToast'
 import DashboardBannerBottomSheet from '@common/modules/dashboard/components/DashboardBanners/DashboardBannerBottomSheet'
 import { ROUTES } from '@common/modules/router/constants/common'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 
 const DashboardBanner = ({
@@ -21,7 +21,7 @@ const DashboardBanner = ({
   banner: Omit<BannerType, 'type'> & { type: NonMarketingBannerType }
 }) => {
   const { type, category, title, text, actions = [], dismissAction } = banner
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { addToast } = useToast()
   const { navigate } = useNavigation()
   const { visibleUserRequests } = useRequestsControllerState()

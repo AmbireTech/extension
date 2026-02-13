@@ -2,7 +2,7 @@
 import React, { createContext, useEffect, useMemo } from 'react'
 
 import { IInviteController } from '@ambire-common/interfaces/invite'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useControllerState from '@web/hooks/useControllerState'
 import useMainControllerState from '@web/hooks/useMainControllerState'
 
@@ -11,7 +11,7 @@ const InviteControllerStateContext = createContext<IInviteController>({} as IInv
 const CONTROLLER_NAME = 'InviteController'
 const InviteControllerStateProvider: React.FC<any> = ({ children }) => {
   const state = useControllerState(CONTROLLER_NAME)
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const mainState = useMainControllerState()
 
   useEffect(() => {

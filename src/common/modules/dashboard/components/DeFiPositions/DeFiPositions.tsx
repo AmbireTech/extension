@@ -7,6 +7,7 @@ import { BannerType } from '@ambire-common/interfaces/banner'
 import { getCurrentAccountBanners } from '@ambire-common/libs/banners/banners'
 import PrivacyIcon from '@common/assets/svg/PrivacyIcon'
 import Text from '@common/components/Text'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useNavigation from '@common/hooks/useNavigation'
 import usePrevious from '@common/hooks/usePrevious'
 import useTheme from '@common/hooks/useTheme'
@@ -21,7 +22,6 @@ import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import { searchWithNetworkName } from '@common/utils/search'
 import { openInTab } from '@web/extension-services/background/webapi/tab'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import useFeatureFlagsControllerState from '@web/hooks/useFeatureFlagsControllerState'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
@@ -65,7 +65,7 @@ const DeFiPositions: FC<Props> = ({
     useSelectedAccountControllerState()
   const { setSearchParams, navigate } = useNavigation()
 
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const prevInitTab: any = usePrevious(initTab)
 
   const currentAccountBanners = useMemo(

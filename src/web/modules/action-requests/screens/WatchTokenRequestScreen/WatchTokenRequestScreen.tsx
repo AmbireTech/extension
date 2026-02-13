@@ -14,13 +14,13 @@ import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
 import { useTranslation } from '@common/config/localization'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
 import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Header'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import usePortfolioControllerState from '@web/hooks/usePortfolioControllerState/usePortfolioControllerState'
 import useProvidersControllerState from '@web/hooks/useProvidersControllerState'
@@ -49,7 +49,7 @@ const WatchTokenRequestScreen = () => {
   const { t } = useTranslation()
   const { theme, styles, themeType } = useTheme(getStyles)
 
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { currentUserRequest } = useRequestsControllerState()
   const { temporaryTokens, validTokens, customTokens } = usePortfolioControllerState()
   const { portfolio: selectedAccountPortfolio } = useSelectedAccountControllerState()

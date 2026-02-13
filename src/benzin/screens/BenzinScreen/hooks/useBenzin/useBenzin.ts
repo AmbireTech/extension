@@ -1,4 +1,3 @@
-import { JsonRpcProvider } from 'ethers'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Linking } from 'react-native'
 
@@ -9,7 +8,6 @@ import {
 } from '@ambire-common/libs/accountOp/submittedAccountOp'
 import { relayerCall } from '@ambire-common/libs/relayerCall/relayerCall'
 import { BundlerSwitcher } from '@ambire-common/services/bundlers/bundlerSwitcher'
-import { getRpcProvider } from '@ambire-common/services/provider'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
 import useBenzinNetworksContext from '@benzin/hooks/useBenzinNetworksContext'
 import useSteps from '@benzin/screens/BenzinScreen/hooks/useSteps'
@@ -70,18 +68,6 @@ const useBenzin = ({ onOpenExplorer, extensionAccOp }: Props = {}) => {
     return actualNetworks.find((n) => n.chainId === bigintChainId) || null
   }, [actualNetworks, bigintChainId])
 
-  const provider = useMemo(() => {
-    if (!network || bigintChainId === 0n) return null
-    // We are using ethers 6.14 in the app, while ambire-common is on 6.8. This causes ts errors
-    // TODO: Implement the callProvider func to use the global provider once the refactor is complete and
-    // all controllers from the MainController are shared across Benzin, Legends, Extension, and Mobile
-    return getRpcProvider(
-      network.rpcUrls,
-      bigintChainId,
-      network.selectedRpcUrl
-    ) as unknown as JsonRpcProvider
-  }, [network, bigintChainId])
-
   const switcher = useMemo(() => {
     if (!network) return null
     return new BundlerSwitcher(
@@ -103,7 +89,6 @@ const useBenzin = ({ onOpenExplorer, extensionAccOp }: Props = {}) => {
     network,
     standardOptions,
     setActiveStep,
-    provider,
     switcher,
     extensionAccOp,
     networks: actualNetworks

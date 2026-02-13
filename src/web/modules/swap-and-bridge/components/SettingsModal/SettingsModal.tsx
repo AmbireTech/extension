@@ -5,11 +5,11 @@ import SettingsIcon from '@common/assets/svg/SettingsIcon/SettingsIcon'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useElementSize from '@common/hooks/useElementSize'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING, SPACING_TY } from '@common/styles/spacings'
 import { Portal } from '@gorhom/portal'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import { useCustomHover } from '@web/hooks/useHover'
 import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControllerState'
 
@@ -65,7 +65,7 @@ const SettingsModal: React.FC<Props> = ({ handleToggleSettingsMenu, settingModal
   const settingButtonRef: any = useRef(null)
   const settingMenuRef: any = useRef(null)
   const { routePriority } = useSwapAndBridgeControllerState()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { x: settingButtonX, y: settingButtonY } = useElementSize(settingButtonRef)
   const [bindAnim, , isHovered, , animatedValues] = useCustomHover({
     property: 'rotateZ' as any,

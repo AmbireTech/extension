@@ -4,12 +4,12 @@ import { Image, Pressable, View } from 'react-native'
 import { Banner, MarketingBannerTypes } from '@ambire-common/interfaces/banner'
 import CloseIcon from '@common/assets/svg/CloseIcon'
 import Text from '@common/components/Text'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY, hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@web/extension-services/background/webapi/tab'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import { AnimatedPressable, useMultiHover } from '@web/hooks/useHover'
 import { getUiType } from '@web/utils/uiType'
 
@@ -35,7 +35,7 @@ const typeImageMap: {
 
 const MarketingBanner: React.FC<Props> = ({ banner }) => {
   const { isPopup } = getUiType()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { theme } = useTheme()
   const { text, title, type: bannerType = 'updates', actions } = banner
   const type = (

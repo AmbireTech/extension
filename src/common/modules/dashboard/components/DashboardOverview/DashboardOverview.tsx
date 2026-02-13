@@ -5,6 +5,7 @@ import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import DashboardHeader from '@common/modules/dashboard/components/DashboardHeader'
 import Routes from '@common/modules/dashboard/components/Routes'
@@ -14,7 +15,6 @@ import { OVERVIEW_CONTENT_MAX_HEIGHT } from '@common/modules/dashboard/screens/D
 import spacings, { SPACING, SPACING_MD, SPACING_TY, SPACING_XL } from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import useHover, { AnimatedPressable } from '@web/hooks/useHover'
 import useMainControllerState from '@web/hooks/useMainControllerState'
 import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
@@ -48,7 +48,7 @@ const DashboardOverview: FC<Props> = ({
   dashboardOverviewSize,
   setDashboardOverviewSize
 }) => {
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { t } = useTranslation()
   const { theme, styles } = useTheme(getStyles)
   const [controllerBanners, marketingBanners] = useBanners()
