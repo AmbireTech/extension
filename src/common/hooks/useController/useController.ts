@@ -53,6 +53,14 @@ export type DispatchAndWait<K extends keyof AllControllersMappingType> = <
 }) => Promise<R>
 
 interface BaseControllerReturn<K extends keyof AllControllersMappingType> {
+  /**
+   * We have to handle SignAccountOpController separately because it can be null
+   * because it is a dynamic controller that exists only when a window with sign
+   * request is open.
+   *
+   * Rest of the controllers are static and exist in the controllerStore from the start
+   * and once isStoreReady is true, we can be sure that their states are initialized.
+   */
   state: K extends 'SignAccountOpController'
     ? AllControllersMappingType[K] | null
     : AllControllersMappingType[K]
