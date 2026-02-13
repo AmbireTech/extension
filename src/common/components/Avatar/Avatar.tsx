@@ -85,10 +85,6 @@ const Avatar: FC<Props> = ({
     avatarTypeSetting = propAvatarType || walletState?.avatarType || 'jazzicons'
   }
 
-  useEffect(() => {
-    throw new Error('Avatar: propAvatarType is not implemented')
-  }, [propAvatarType])
-
   const isEnsLoading = address
     ? (domains && !domains[address]) || loadingAddresses?.includes(address)
     : false

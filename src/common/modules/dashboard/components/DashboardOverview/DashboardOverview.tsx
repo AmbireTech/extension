@@ -11,6 +11,7 @@ import useTheme from '@common/hooks/useTheme'
 import DashboardHeader from '@common/modules/dashboard/components/DashboardHeader'
 import Routes from '@common/modules/dashboard/components/Routes'
 import useBalanceAffectingErrors from '@common/modules/dashboard/hooks/useBalanceAffectingErrors'
+import useBanners from '@common/modules/dashboard/hooks/useBanners'
 import { OVERVIEW_CONTENT_MAX_HEIGHT } from '@common/modules/dashboard/screens/DashboardScreen'
 import spacings, { SPACING, SPACING_MD, SPACING_TY, SPACING_XL } from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
@@ -49,10 +50,12 @@ const DashboardOverview: FC<Props> = ({
   const { dispatch } = useControllersMiddleware()
   const { t } = useTranslation()
   const { theme, styles } = useTheme(getStyles)
+  const [controllerBanners, marketingBanners] = useBanners()
+  const banners = [...controllerBanners, ...marketingBanners]
   const { isOffline } = useController('MainController').state
-  const {
-    state: { account, dashboardNetworkFilter, portfolio }
-  } = useController('SelectedAccountController')
+  const { account, dashboardNetworkFilter, portfolio } = useController(
+    'SelectedAccountController'
+  ).state
 
   const [bindRefreshButtonAnim, refreshButtonAnimStyle] = useHover({
     preset: 'opacityInverted'
@@ -82,7 +85,7 @@ const DashboardOverview: FC<Props> = ({
   }, [dashboardNetworkFilter, dispatch])
 
   return (
-    <View style={[spacings.phSm, spacings.mb]}>
+    <View style={[spacings.phSm, banners.length ? spacings.mbTy : spacings.mb]}>
       <View style={[styles.contentContainer]}>
         <Animated.View
           style={[
@@ -131,11 +134,12 @@ const DashboardOverview: FC<Props> = ({
                 overflow: 'hidden'
               }}
             >
-              <View style={spacings.mbLg}>
+              <View style={[spacings.mbLg, flexbox.alignCenter]}>
                 <View
                   style={[
                     flexbox.directionRow,
                     flexbox.alignCenter,
+                    flexbox.justifyCenter,
                     spacings.mbMi,
                     { height: BALANCE_HEIGHT }
                   ]}
@@ -191,7 +195,15 @@ const DashboardOverview: FC<Props> = ({
                     </Pressable>
                   )}
                   <AnimatedPressable
-                    style={[spacings.mlTy, refreshButtonAnimStyle]}
+                    style={[
+                      {
+                        position: 'absolute',
+                        right: -8,
+                        top: '50%',
+                        transform: [{ translateY: -14 }, { translateX: 28 }]
+                      },
+                      refreshButtonAnimStyle
+                    ]}
                     onPress={reloadAccount}
                     {...bindRefreshButtonAnim}
                     disabled={!portfolio.isAllReady || portfolio.isReloading}
