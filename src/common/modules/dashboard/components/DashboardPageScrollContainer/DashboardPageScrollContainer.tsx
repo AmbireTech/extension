@@ -27,8 +27,8 @@ const HIDDEN_STYLE: ViewStyle = {
 
 const SCROLLBAR_TRIGGER_THRESHOLD = 4
 
-const getFlatListStyle = (tab: TabType, openTab: TabType, allBannersLength: number) => [
-  spacings.ph0,
+const getFlatListStyle = (tab: TabType, openTab: TabType) => [
+  spacings.phSm,
   openTab !== tab ? HIDDEN_STYLE : {}
 ]
 
@@ -44,10 +44,7 @@ const DashboardPageScrollContainer: FC<Props> = ({
   const [controllerBanners] = useBanners()
   const flatlistRef = useRef<FlatList | null>(null)
 
-  const style = useMemo(
-    () => getFlatListStyle(tab, openTab, controllerBanners.length),
-    [controllerBanners.length, openTab, tab]
-  )
+  const style = useMemo(() => getFlatListStyle(tab, openTab), [openTab, tab])
 
   const contentContainerStyle = useMemo(() => {
     const popUpPaddingRight = hasScrollBar ? spacings.prTy : spacings.prSm
