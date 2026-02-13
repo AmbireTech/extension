@@ -78,9 +78,23 @@ const TokenIcon: React.FC<Props> = ({
       }
     }
 
+    // attempt to load from config
+    if (network?.chainId === 4114n) {
+      console.log(network)
+    }
+    if (network?.tokenIcons?.[address]) {
+      const tokenUrl = network.tokenIcons[address]
+      const imageExists = await checkIfImageExists(tokenUrl)
+      if (imageExists) {
+        setImageUrl(tokenUrl)
+        setUriStatus(UriStatus.IMAGE_EXISTS)
+        return
+      }
+    }
+
     setUriStatus(UriStatus.IMAGE_MISSING)
     setImageUrl(undefined)
-  }, [fallbackUri])
+  }, [fallbackUri, address, network?.tokenIcons])
 
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
