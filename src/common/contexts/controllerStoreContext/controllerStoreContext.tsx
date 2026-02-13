@@ -79,15 +79,15 @@ export const ControllerStoreProvider: React.FC<{
   }, [controllerStore])
 
   useEffect(() => {
-    if (!withErrorToasts) return
-
     const onError = (newState: { errors: ErrorRef[]; controller: string }) => {
       const lastError = newState.errors[newState.errors.length - 1]
       if (lastError) {
         if (lastError.level !== 'silent')
-          // Most of the errors incoming are descriptive and tend to be long,
-          // so keep a longer timeout to give the user enough time to read them.
-          addToast(lastError.message, { timeout: 12000, type: 'error' })
+          if (withErrorToasts) {
+            // Most of the errors incoming are descriptive and tend to be long,
+            // so keep a longer timeout to give the user enough time to read them.
+            addToast(lastError.message, { timeout: 12000, type: 'error' })
+          }
 
         console.error(
           `Error in ${newState.controller} controller. Inspect background page to see the full stack trace.`
@@ -98,7 +98,7 @@ export const ControllerStoreProvider: React.FC<{
     eventBus.addEventListener('error', onError)
 
     return () => eventBus.removeEventListener('error', onError)
-  }, [addToast])
+  }, [addToast, withErrorToasts])
 
   useEffect(() => {
     const onAddToast = ({ text, options }: { text: string; options: ToastOptions }) =>
