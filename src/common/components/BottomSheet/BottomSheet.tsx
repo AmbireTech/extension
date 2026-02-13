@@ -19,6 +19,7 @@ import getStyles from './styles'
 interface Props {
   id?: string
   sheetRef: React.RefObject<Modalize>
+  scrollViewRef?: React.RefObject<ScrollView>
   closeBottomSheet?: (dest?: 'alwaysOpen' | 'default' | undefined) => void
   onBackdropPress?: () => void
   onClosed?: () => void
@@ -48,6 +49,7 @@ const BottomSheet: React.FC<Props> = ({
   id: _id,
   type: _type,
   sheetRef,
+  scrollViewRef: externalScrollViewRef,
   children,
   closeBottomSheet = () => {},
   adjustToContentHeight = true,
@@ -72,7 +74,12 @@ const BottomSheet: React.FC<Props> = ({
   const [isOpen, setIsOpen] = useState(false)
   const prevIsOpen = usePrevious(isOpen)
   const [isBackdropVisible, setIsBackdropVisible] = useState(false)
-  const { isScrollable, checkIsScrollable, scrollViewRef } = useIsScrollable()
+  const {
+    isScrollable,
+    checkIsScrollable,
+    scrollViewRef: internalScrollViewRef
+  } = useIsScrollable()
+  const scrollViewRef = externalScrollViewRef || internalScrollViewRef
 
   // Ensures ID is unique per component to avoid duplicates when multiple bottom sheets are rendered
   const id = useMemo(() => `${_id || 'bottom-sheet'}-${nanoid(6)}`, [_id])

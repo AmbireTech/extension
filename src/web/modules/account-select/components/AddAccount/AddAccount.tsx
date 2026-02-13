@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import React, { useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
@@ -39,6 +39,7 @@ const AddAccount = ({
   const { goToNextRoute, setTriggeredHwWalletFlow } = useOnboardingNavigation()
   const { seeds } = useKeystoreControllerState()
   const [height, setHeight] = useState<number>(0)
+  const scrollViewRef = useRef<any>(null)
 
   const {
     ref: seedPhraseSheetRef,
@@ -117,10 +118,19 @@ const AddAccount = ({
         style: { maxHeight: height },
         showsVerticalScrollIndicator: false
       }}
+      scrollViewRef={scrollViewRef}
       containerInnerWrapperStyles={spacings.pr0}
     >
       <View
         onLayout={(e) => {
+          if (scrollViewRef.current) {
+            // Scroll to the bottom of the scroll view if the new height is
+            // larger than the current height, ensuring that the user sees the newly expanded options
+            if (e.nativeEvent.layout.height > height) {
+              scrollViewRef.current.scrollToEnd({ animated: true })
+            }
+          }
+
           if (height) return
 
           setHeight(e.nativeEvent.layout.height)
