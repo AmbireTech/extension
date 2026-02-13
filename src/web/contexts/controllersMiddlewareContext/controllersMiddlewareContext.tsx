@@ -2,7 +2,6 @@ import { nanoid } from 'nanoid'
 /* eslint-disable @typescript-eslint/no-floating-promises */
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 
-import { ErrorRef } from '@ambire-common/interfaces/eventEmitter'
 import wait from '@ambire-common/utils/wait'
 import { captureMessage } from '@common/config/analytics/CrashAnalytics.web'
 import { AllControllersMappingType } from '@common/constants/controllersMapping'
@@ -270,26 +269,6 @@ export const ControllersMiddlewareProvider: React.FC<{ children: React.ReactNode
       )
       sessionStorage.removeItem('backgroundState')
     }
-  }, [addToast])
-
-  useEffect(() => {
-    const onError = (newState: { errors: ErrorRef[]; controller: string }) => {
-      const lastError = newState.errors[newState.errors.length - 1]
-      if (lastError) {
-        if (lastError.level !== 'silent')
-          // Most of the errors incoming are descriptive and tend to be long,
-          // so keep a longer timeout to give the user enough time to read them.
-          addToast(lastError.message, { timeout: 12000, type: 'error' })
-
-        console.error(
-          `Error in ${newState.controller} controller. Inspect background page to see the full stack trace.`
-        )
-      }
-    }
-
-    eventBus.addEventListener('error', onError)
-
-    return () => eventBus.removeEventListener('error', onError)
   }, [addToast])
 
   const [controllerHelpersStore] = useState(() => new ControllerHelpersStore())
