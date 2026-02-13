@@ -69,11 +69,11 @@ export class SignMessagePage extends BasePage {
 
       if (isReadyToSign) {
         await ledgerSimulatorControls.pressRightButton()
-        await this.page.waitForTimeout(2000)
+        await this.page.waitForTimeout(100)
         await ledgerSimulatorControls.pressRightButton()
-        await this.page.waitForTimeout(2000)
+        await this.page.waitForTimeout(100)
         await ledgerSimulatorControls.pressBothButtons()
-        await this.page.waitForTimeout(2000)
+        await this.page.waitForTimeout(100)
       } else {
         console.log('No signing request event received on the device within the timeout period')
       }

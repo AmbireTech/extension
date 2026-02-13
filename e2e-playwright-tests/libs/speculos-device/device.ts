@@ -41,10 +41,9 @@ export class SpeculosDevice {
 
     while (Date.now() - startTime < timeout) {
       const { events } = await this.getEvents()
-      console.log('AllFound events:', events)
+
       const event = events.find(predicate)
       if (event) {
-        console.log('Found event:', event)
         return event
       }
       await new Promise((resolve) => setTimeout(resolve, 500))
