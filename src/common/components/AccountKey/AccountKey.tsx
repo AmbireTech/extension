@@ -187,7 +187,7 @@ const AccountKey: React.FC<Props> = ({
                     <NetworkIcon
                       key={c}
                       id={c.toString()}
-                      style={i === 0 ? { marginLeft: '0' } : { marginLeft: '-10px' }}
+                      style={i === 0 ? { marginLeft: 0 } : { marginLeft: -11 }}
                       size={20}
                     />
                   ))}

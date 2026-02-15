@@ -100,6 +100,7 @@ const MultipleSignersSelect = ({
                 value={!!selectedSigners.find((s) => s.addr === key.addr && s.type === key.type)}
                 onValueChange={() => onSignerSelected(notSigned[i]!)}
                 style={[flexbox.directionRow, flexbox.alignCenter]}
+                uncheckedBorderColor={theme.iconPrimary}
               >
                 <AccountKey
                   addr={key.addr}
