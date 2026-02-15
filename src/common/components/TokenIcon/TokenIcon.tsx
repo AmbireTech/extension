@@ -7,6 +7,7 @@ import NetworkIcon from '@common/components/NetworkIcon'
 import useTheme from '@common/hooks/useTheme'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import { checkIfImageExists } from '@common/utils/checkIfImageExists'
+import { getHardcodedCitreaIcons } from '@common/utils/getHardcodedCitreaIcons'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 
 import SkeletonLoader from '../SkeletonLoader'
@@ -78,10 +79,10 @@ const TokenIcon: React.FC<Props> = ({
       }
     }
 
-    // attempt to load from config
-    if (network?.tokenIcons?.[address]) {
-      const tokenUrl = network.tokenIcons[address]
-      const imageExists = await checkIfImageExists(tokenUrl)
+    // hardcoded icons for citrea
+    if (network?.chainId === 4114n) {
+      const tokenUrl = getHardcodedCitreaIcons(address.toLowerCase())
+      const imageExists = tokenUrl && (await checkIfImageExists(tokenUrl))
       if (imageExists) {
         setImageUrl(tokenUrl)
         setUriStatus(UriStatus.IMAGE_EXISTS)
@@ -91,7 +92,7 @@ const TokenIcon: React.FC<Props> = ({
 
     setUriStatus(UriStatus.IMAGE_MISSING)
     setImageUrl(undefined)
-  }, [fallbackUri, address, network?.tokenIcons])
+  }, [fallbackUri, address, network?.chainId])
 
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
