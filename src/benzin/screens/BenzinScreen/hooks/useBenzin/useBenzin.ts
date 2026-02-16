@@ -70,6 +70,18 @@ const useBenzin = ({ onOpenExplorer, extensionAccOp }: Props = {}) => {
     return actualNetworks.find((n) => n.chainId === bigintChainId) || null
   }, [actualNetworks, bigintChainId])
 
+  const {
+    dispatch: providerDispatch,
+    state: { providers }
+  } = useController('ProvidersController')
+
+  useEffect(() => {
+    if (!network) return
+    if (providers[network.chainId.toString()]) return
+
+    providerDispatch({ type: 'method', params: { method: 'setProvider', args: [network] } })
+  }, [network, providers, providerDispatch])
+
   const switcher = useMemo(() => {
     if (!network) return null
     return new BundlerSwitcher(
