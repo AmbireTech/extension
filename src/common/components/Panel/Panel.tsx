@@ -104,7 +104,7 @@ const Panel: React.FC<Props> = ({
           styles.onboardingContainer,
           {
             width: '100%',
-            minHeight: minHeightSize(620) ? 444 : 486,
+            minHeight: minHeightSize(620) ? 520 : 560,
             maxWidth: panelWidth,
             alignSelf: 'center',
             maxHeight: minHeightSize('l') ? '95%' : '92%'
@@ -127,7 +127,7 @@ const Panel: React.FC<Props> = ({
           {...rest}
         >
           {(!!title || !!withBackButton) && (
-            <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbMd]}>
+            <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mb2Xl]}>
               {!!withBackButton && <PanelBackButton onPress={onBackButtonPress} />}
               {!!title && <PanelTitle title={title} />}
               {!!withBackButton && <View style={{ width: 20 }} />}
