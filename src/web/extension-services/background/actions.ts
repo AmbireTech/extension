@@ -1,5 +1,3 @@
-import { Contract } from 'ethers'
-
 import { HD_PATH_TEMPLATE_TYPE } from '@ambire-common/consts/derivation'
 import { FeatureFlags } from '@ambire-common/consts/featureFlags'
 import { Filters, Pagination } from '@ambire-common/controllers/activity/activity'
@@ -10,6 +8,7 @@ import { Account, AccountPreferences } from '@ambire-common/interfaces/account'
 import { Banner } from '@ambire-common/interfaces/banner'
 import { Dapp } from '@ambire-common/interfaces/dapp'
 import { MagicLinkFlow } from '@ambire-common/interfaces/emailVault'
+import { Hex } from '@ambire-common/interfaces/hex'
 import {
   Key,
   KeyPreferences,
@@ -17,7 +16,6 @@ import {
   ReadyToAddKeys
 } from '@ambire-common/interfaces/keystore'
 import { AddNetworkRequestParams, ChainId, Network } from '@ambire-common/interfaces/network'
-import { RPCProvider } from '@ambire-common/interfaces/provider'
 import { BuildRequest } from '@ambire-common/interfaces/requests'
 import { SignMessageUpdateParams } from '@ambire-common/interfaces/signMessage'
 import {
@@ -243,6 +241,8 @@ type MainControllerSignMessageInitAction = {
     dapp: { name: string; icon: string }
     messageToSign: Message
     signed?: string[]
+    hash?: Hex
+    safeAppId?: number
   }
 }
 type MainControllerSignMessageResetAction = {

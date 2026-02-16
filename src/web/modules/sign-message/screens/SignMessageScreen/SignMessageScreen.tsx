@@ -141,7 +141,9 @@ const SignMessageScreen = () => {
           chainId: userRequest.meta.chainId,
           signature: null
         },
-        signed: userRequest.meta.signed
+        signed: userRequest.meta.signed,
+        hash: userRequest.meta.hash,
+        safeAppId: userRequest.meta.safeAppId
       }
     })
   }, [dispatch, userRequest, signMessageState.messageToSign?.fromRequestId, name, icon])
