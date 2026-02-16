@@ -347,6 +347,15 @@ export class EthereumProvider extends EventEmitter {
 
     this.#requestPromiseCheckVisibility()
 
+    // Some dapps poll this method very frequently, so we return early
+    // to prevent unnecessary messaging requests to the background service that
+    // clog up the communication channel and block requests for other methods
+    if (data.method === 'eth_chainId') {
+      logInfoWithPrefix('[request]', data)
+      logInfoWithPrefix('[request: success]', data.method, this.chainId)
+      return this.chainId
+    }
+
     // store in the EthereumProvider state the valid RPC URLs of the connected dapp to use them for forwarding
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     ;(async () => {
