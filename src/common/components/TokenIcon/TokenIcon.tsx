@@ -7,6 +7,7 @@ import NetworkIcon from '@common/components/NetworkIcon'
 import useTheme from '@common/hooks/useTheme'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import { checkIfImageExists } from '@common/utils/checkIfImageExists'
+import { getHardcodedCitreaIcons } from '@common/utils/getHardcodedCitreaIcons'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 
 import SkeletonLoader from '../SkeletonLoader'
@@ -78,9 +79,20 @@ const TokenIcon: React.FC<Props> = ({
       }
     }
 
+    // hardcoded icons for citrea
+    if (network?.chainId === 4114n) {
+      const tokenUrl = getHardcodedCitreaIcons(address.toLowerCase())
+      const imageExists = tokenUrl && (await checkIfImageExists(tokenUrl))
+      if (imageExists) {
+        setImageUrl(tokenUrl)
+        setUriStatus(UriStatus.IMAGE_EXISTS)
+        return
+      }
+    }
+
     setUriStatus(UriStatus.IMAGE_MISSING)
     setImageUrl(undefined)
-  }, [fallbackUri])
+  }, [fallbackUri, address, network?.chainId])
 
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
