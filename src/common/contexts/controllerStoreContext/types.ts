@@ -7,7 +7,8 @@ import { SubscriptionManager } from '../controllerStoreContext/subscriptionManag
 export type ControllerStoreContextReturnType = {
   controllerStore: ControllerStore
   controllerHelpersStore: ControllerHelpersStore
-  subscriptionManager: SubscriptionManager
+  stateSubscriptionManager: SubscriptionManager
+  helpersSubscriptionManager: SubscriptionManager
   isStoreReady: boolean
   debounceControllerUpdates: (
     ctrlName: string,
@@ -19,7 +20,8 @@ export type ControllerStoreContextReturnType = {
 export const controllerStoreContextDefaults: ControllerStoreContextReturnType = {
   controllerStore: {} as ControllerStore,
   controllerHelpersStore: {} as ControllerHelpersStore,
-  subscriptionManager: {} as SubscriptionManager,
+  stateSubscriptionManager: {} as SubscriptionManager,
+  helpersSubscriptionManager: {} as SubscriptionManager,
   isStoreReady: false,
   debounceControllerUpdates: () => 'EMITTED'
 }

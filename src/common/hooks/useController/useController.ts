@@ -94,8 +94,13 @@ export default function useController<
     throw new Error('useController must be used within ControllersMiddlewareProvider')
   }
 
-  const { controllerStore, controllerHelpersStore, subscriptionManager, isStoreReady } =
-    useControllerStore()
+  const {
+    controllerStore,
+    controllerHelpersStore,
+    stateSubscriptionManager,
+    helpersSubscriptionManager,
+    isStoreReady
+  } = useControllerStore()
   const { dispatch: controllersMiddlewareDispatch } = controllersMiddleware
 
   // Create the error object here to capture the stack trace of the call site (the component using this hook)
@@ -113,23 +118,23 @@ export default function useController<
 
   const state = useSyncExternalStore(
     useCallback(
-      (cb) => subscriptionManager.subscribe(id, cb, controllerStore, selector),
-      [id, controllerStore, selector, subscriptionManager]
+      (cb) => stateSubscriptionManager.subscribe(id, cb, controllerStore, selector),
+      [id, controllerStore, selector, stateSubscriptionManager]
     ),
     useCallback(
-      () => subscriptionManager.getSnapshot(id, controllerStore, selector),
-      [id, controllerStore, selector, subscriptionManager]
+      () => stateSubscriptionManager.getSnapshot(id, controllerStore, selector),
+      [id, controllerStore, selector, stateSubscriptionManager]
     )
   ) as S
 
   const helpers = useSyncExternalStore(
     useCallback(
-      (cb) => subscriptionManager.subscribe(id, cb, controllerHelpersStore),
-      [id, controllerHelpersStore, subscriptionManager]
+      (cb) => helpersSubscriptionManager.subscribe(id, cb, controllerHelpersStore),
+      [id, controllerHelpersStore, helpersSubscriptionManager]
     ),
     useCallback(
-      () => subscriptionManager.getSnapshot(id, controllerHelpersStore),
-      [id, controllerHelpersStore, subscriptionManager]
+      () => helpersSubscriptionManager.getSnapshot(id, controllerHelpersStore),
+      [id, controllerHelpersStore, helpersSubscriptionManager]
     )
   )
 
