@@ -373,6 +373,15 @@ export class EthereumProvider extends EventEmitter {
     })()
 
     return this.#requestPromise.call(async () => {
+      // Some dapps poll this method very frequently, so we return early
+      // to prevent unnecessary messaging requests to the background service
+      // clogging up the communication channel and blocking requests for other methods
+      if (data.method === 'eth_chainId') {
+        logInfoWithPrefix('[request]', data)
+        logInfoWithPrefix('[request: success]', data.method, this.chainId)
+        return this.chainId
+      }
+
       if (
         data.method.startsWith('eth_') &&
         !ETH_RPC_METHODS_AMBIRE_MUST_HANDLE.includes(data.method)
