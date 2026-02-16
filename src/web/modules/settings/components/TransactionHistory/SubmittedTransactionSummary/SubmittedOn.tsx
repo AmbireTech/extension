@@ -60,7 +60,8 @@ const SubmittedOn = ({
             ...spacings.pv0,
             ...spacings.pl0,
             ...spacings.pr0,
-            borderWidth: 0
+            borderWidth: 0,
+            height: 'auto'
           }}
           iconSize={iconSize}
           iconStyle={spacings.mlMi}

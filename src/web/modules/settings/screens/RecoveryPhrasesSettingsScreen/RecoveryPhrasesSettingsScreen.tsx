@@ -5,6 +5,7 @@ import { useModalize } from 'react-native-modalize'
 
 import { HD_PATH_TEMPLATE_TYPE } from '@ambire-common/consts/derivation'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
+import SettingsWheelIcon from '@common/assets/svg/SettingsWheelIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
 import Panel from '@common/components/Panel/Panel'
@@ -81,16 +82,16 @@ const RecoveryPhraseSettingsScreen = () => {
           <Button
             size="small"
             type="ghost"
+            childrenPosition="left"
             text={t('Manage')}
             hasBottomSpacing={false}
             onPress={() => setRecoveryPhraseToManage(item)}
           >
-            <SettingsIcon
-              width={18}
-              height={18}
-              color={theme.primary}
-              style={spacings.mlTy}
-              strokeWidth="1.7"
+            <SettingsWheelIcon
+              width={20}
+              height={20}
+              style={spacings.mrMi}
+              color={theme.primaryText}
             />
           </Button>
         </View>
@@ -102,9 +103,6 @@ const RecoveryPhraseSettingsScreen = () => {
               withSettings={false}
               isSelectable={false}
               containerStyle={{
-                borderWidth: 1,
-                borderColor: theme.secondaryBorder,
-                backgroundColor: theme.secondaryBackground,
                 marginBottom: accIdx < associatedAccounts.length - 1 ? SPACING_TY : 0
               }}
               withKeyType={false}

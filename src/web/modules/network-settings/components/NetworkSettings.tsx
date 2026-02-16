@@ -231,10 +231,7 @@ const NetworksSettings = () => {
           contentContainerStyle: { flex: 1 }
         }}
         containerInnerWrapperStyles={{ flex: 1 }}
-        backgroundColor={
-          themeType === THEME_TYPES.DARK ? 'secondaryBackground' : 'primaryBackground'
-        }
-        style={{ ...spacings.ph0, ...spacings.pv0, overflow: 'hidden' }}
+        style={{ ...spacings.ph0, ...spacings.pv0, overflow: 'hidden', maxWidth: 880 }}
         autoOpen={shouldOpenBottomSheet}
       >
         <NetworkForm onCancel={closeBottomSheet} onSaved={closeBottomSheet} />

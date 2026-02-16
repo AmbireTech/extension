@@ -82,7 +82,7 @@ export const RpcSelectorItem = React.memo(
             index !== rpcUrlsLength - 1 && styles.selectRpcItemBorder,
             (rpcUrlsLength <= 2 || forceLargeItems) && { height: 40 },
             style,
-            hovered && { backgroundColor: theme.tertiaryBackground }
+            hovered && { backgroundColor: theme.secondaryBackground }
           ]}
           onPress={() => {
             if (url !== selectedRpcUrl) onPress(url)
@@ -574,7 +574,7 @@ const NetworkForm = ({
               <NetworkIcon
                 id={selectedNetwork.chainId.toString()}
                 style={spacings.mrTy}
-                size={40}
+                size={28}
               />
               <Text appearance="secondaryText" weight="regular" style={spacings.mrMi} fontSize={16}>
                 {selectedNetwork.name || t('Unknown network')}
@@ -601,7 +601,7 @@ const NetworkForm = ({
                     onBlur={onBlur}
                     onChangeText={onChange}
                     value={value}
-                    inputWrapperStyle={{ height: 40 }}
+                    inputWrapperStyle={{ height: 40, backgroundColor: theme.tertiaryBackground }}
                     inputStyle={{ height: 40 }}
                     containerStyle={{ ...spacings.mb, ...spacings.mrMi, flex: 1 }}
                     label={t('Network name')}
@@ -619,9 +619,9 @@ const NetworkForm = ({
                       onBlur={onBlur}
                       onChangeText={onChange}
                       value={value}
-                      inputWrapperStyle={{ height: 40 }}
+                      inputWrapperStyle={{ height: 40, backgroundColor: theme.tertiaryBackground }}
                       inputStyle={{ height: 40 }}
-                      containerStyle={{ ...spacings.mb, ...spacings.mlMi, flex: 1 }}
+                      containerStyle={{ ...spacings.mb, flex: 1 }}
                       label={t('Currency Symbol')}
                       disabled={selectedChainId !== 'add-custom-network'}
                       error={handleErrors(errors.nativeAssetSymbol)}
@@ -636,7 +636,7 @@ const NetworkForm = ({
                       onBlur={onBlur}
                       onChangeText={onChange}
                       value={value}
-                      inputWrapperStyle={{ height: 40 }}
+                      inputWrapperStyle={{ height: 40, backgroundColor: theme.tertiaryBackground }}
                       inputStyle={{ height: 40 }}
                       containerStyle={{ ...spacings.mb, ...spacings.mlMi, flex: 1 }}
                       label={t('Currency Name')}
@@ -656,7 +656,7 @@ const NetworkForm = ({
                       onBlur={onBlur}
                       onChangeText={onChange}
                       value={value}
-                      inputWrapperStyle={{ height: 40 }}
+                      inputWrapperStyle={{ height: 40, backgroundColor: theme.tertiaryBackground }}
                       inputStyle={{ height: 40 }}
                       containerStyle={{ ...spacings.mb, ...spacings.mrTy, flex: 1 }}
                       label={t('RPC URL')}
@@ -669,7 +669,7 @@ const NetworkForm = ({
                             ? t('Adding...')
                             : t('Add')
                         }
-                        type="secondary"
+                        type="gray"
                         disabled={
                           !value.length ||
                           (!!errors.rpcUrl &&
@@ -736,7 +736,7 @@ const NetworkForm = ({
                       onBlur={onBlur}
                       onChangeText={onChange}
                       value={value as any}
-                      inputWrapperStyle={{ height: 40 }}
+                      inputWrapperStyle={{ height: 40, backgroundColor: theme.tertiaryBackground }}
                       inputStyle={{ height: 40 }}
                       containerStyle={{ ...spacings.mrMi, flex: 1 }}
                       label={t('Chain ID')}
@@ -753,7 +753,7 @@ const NetworkForm = ({
                       onBlur={onBlur}
                       onChangeText={onChange}
                       value={value}
-                      inputWrapperStyle={{ height: 40 }}
+                      inputWrapperStyle={{ height: 40, backgroundColor: theme.tertiaryBackground }}
                       inputStyle={{ height: 40 }}
                       containerStyle={{ ...spacings.mlMi, flex: 2 }}
                       label={t('Block Explorer URL')}
@@ -773,7 +773,7 @@ const NetworkForm = ({
                       value={value as any}
                       disabled
                       placeholder="Coming soon..."
-                      inputWrapperStyle={{ height: 40 }}
+                      inputWrapperStyle={{ height: 40, backgroundColor: theme.tertiaryBackground }}
                       inputStyle={{ height: 40 }}
                       containerStyle={{ ...spacings.mrMi, flex: 1 }}
                       label={t('Coingecko platform ID')}
@@ -791,7 +791,7 @@ const NetworkForm = ({
                       value={value}
                       disabled
                       placeholder="Coming soon..."
-                      inputWrapperStyle={{ height: 40 }}
+                      inputWrapperStyle={{ height: 40, backgroundColor: theme.tertiaryBackground }}
                       inputStyle={{ height: 40 }}
                       containerStyle={{ ...spacings.mlMi, flex: 1 }}
                       label={t('Coingecko native asset ID')}
@@ -823,7 +823,7 @@ const NetworkForm = ({
                           </>
                         )
                       }}
-                      inputWrapperStyle={{ height: 40 }}
+                      inputWrapperStyle={{ height: 40, backgroundColor: theme.tertiaryBackground }}
                       inputStyle={{ height: 40 }}
                       containerStyle={{ ...spacings.mb, ...spacings.mrMi, flex: 1 }}
                       label={t('Custom bundler url (Experimental)')}
@@ -855,19 +855,19 @@ const NetworkForm = ({
                   <Button
                     onPress={onCancel}
                     text={t('Cancel')}
-                    type="secondary"
+                    type="gray"
                     hasBottomSpacing={false}
-                    style={[flexbox.flex1, spacings.mr, { width: 160 }]}
-                    size="large"
+                    style={[flexbox.flex1, spacings.mrSm, { width: 90 }]}
+                    size="smaller"
                   />
 
                   <Button
                     onPress={handleSubmitButtonPress}
                     text={isSomethingUpdated ? t('Save') : t('No changes')}
                     disabled={!isSomethingUpdated || isSaveOrAddButtonDisabled}
-                    style={[spacings.mlMi, flexbox.flex1, { width: 180 }]}
+                    style={[spacings.mlMi, flexbox.flex1, { width: 124 }]}
                     hasBottomSpacing={false}
-                    size="large"
+                    size="smaller"
                   />
                 </View>
               )}

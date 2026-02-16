@@ -67,9 +67,7 @@ const Filters: FC<Props> = ({ control, networkFilter, setNetworkFilterValue }) =
               ? networksOptions.filter((opt) => opt.value === networkFilter)[0]
               : ALL_NETWORKS_OPTION
           }
-          selectStyle={
-            themeType === THEME_TYPES.DARK ? { backgroundColor: theme.tertiaryBackground } : {}
-          }
+          selectStyle={{ backgroundColor: theme.secondaryBackground }}
           setValue={setNetworkFilterValue}
           containerStyle={{ width: 260, marginBottom: 0, ...spacings.mrTy }}
         />

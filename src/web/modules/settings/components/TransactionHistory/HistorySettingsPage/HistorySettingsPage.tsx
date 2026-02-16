@@ -212,15 +212,15 @@ const HistorySettingsPage: FC<Props> = ({ HistoryComponent, historyType, session
       <SettingsPageHeader
         title={historyType === 'messages' ? 'Signed messages' : 'Transaction history'}
       />
-      <View style={[flexbox.directionRow, spacings.mbLg]}>
+      <View style={[flexbox.directionRow, flexbox.justifySpaceBetween, spacings.mbSm]}>
         <Select
           setValue={handleSetAccountValue}
           containerStyle={{ width: maxWidthSize('xl') ? 420 : 340, ...spacings.mr }}
           options={accountsOptions}
           value={accountsOptions.filter((opt) => opt.value === account.addr)[0]}
-          selectStyle={
-            themeType === THEME_TYPES.DARK ? { backgroundColor: theme.tertiaryBackground } : {}
-          }
+          selectStyle={{
+            backgroundColor: theme.secondaryBackground
+          }}
         />
         {historyType !== 'messages' && (
           <Select
@@ -230,9 +230,9 @@ const HistorySettingsPage: FC<Props> = ({ HistoryComponent, historyType, session
             value={
               networksOptions.filter((opt) => opt.value === network?.name)[0] ?? ALL_NETWORKS_OPTION
             }
-            selectStyle={
-              themeType === THEME_TYPES.DARK ? { backgroundColor: theme.tertiaryBackground } : {}
-            }
+            selectStyle={{
+              backgroundColor: theme.secondaryBackground
+            }}
           />
         )}
       </View>

@@ -154,7 +154,7 @@ const AccountKey: React.FC<Props> = ({
         >
           {!!isImported && (
             <View style={spacings.mrTy}>
-              <AccountKeyIcon type={type || 'internal'} color={keyIconColor} />
+              <AccountKeyIcon iconSize={20} type={type || 'internal'} color={keyIconColor} />
             </View>
           )}
 
@@ -245,8 +245,8 @@ const AccountKey: React.FC<Props> = ({
                       text={t('Export')}
                     >
                       <ExportIcon
-                        style={[spacings.mlTy]}
-                        color={theme.primary}
+                        style={spacings.mlTy}
+                        color={theme.iconPrimary}
                         width={16}
                         height={16}
                       />

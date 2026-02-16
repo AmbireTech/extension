@@ -314,28 +314,24 @@ const NetworkDetails = ({
           {!!shouldDisplayEditButton && (
             <Button
               style={[
-                { maxHeight: 32 * responsiveSizeMultiplier },
+                { maxHeight: 40 * responsiveSizeMultiplier },
                 !!shouldDisplayDisableButton && {
                   marginRight: SPACING_TY * responsiveSizeMultiplier
                 }
               ]}
               text={t('Edit')}
               type="secondary"
+              size="smaller"
               onPress={openBottomSheet as any}
               hasBottomSpacing={false}
+              childrenPosition="left"
             >
-              <View
-                style={{
-                  paddingLeft: SPACING_TY * responsiveSizeMultiplier
-                }}
-              >
-                <EditPenIcon width={12} height={12} color={theme.primary} />
-              </View>
+              <EditPenIcon width={20} height={20} color={theme.primaryText} style={spacings.mrMi} />
             </Button>
           )}
           {!!shouldDisplayDisableButton && (
             <Button
-              style={{ maxHeight: 32 * responsiveSizeMultiplier }}
+              style={{ maxHeight: 40 * responsiveSizeMultiplier }}
               disabled={statuses.updateNetwork !== 'INITIAL'}
               text={!networkData?.disabled ? t('Disable') : t('Enable')}
               testID="disable-network-btn" // @TODO
@@ -390,10 +386,7 @@ const NetworkDetails = ({
           contentContainerStyle: { flex: 1 }
         }}
         containerInnerWrapperStyles={{ flex: 1 }}
-        backgroundColor={
-          themeType === THEME_TYPES.DARK ? 'secondaryBackground' : 'primaryBackground'
-        }
-        style={{ ...spacings.ph0, ...spacings.pv0, overflow: 'hidden' }}
+        style={{ ...spacings.ph0, ...spacings.pv0, overflow: 'hidden', maxWidth: 880 }}
       >
         <NetworkForm
           selectedChainId={chainId.toString()}

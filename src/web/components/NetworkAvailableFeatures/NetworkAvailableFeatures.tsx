@@ -1,4 +1,3 @@
-/* eslint-disable jsx-a11y/anchor-is-valid */
 import { Interface } from 'ethers'
 /* eslint-disable react/jsx-no-useless-fragment */
 import React, { useCallback, useEffect, useId, useMemo, useState } from 'react'
@@ -176,6 +175,7 @@ const NetworkAvailableFeatures = ({
       <Text
         fontSize={titleSize || 18 * responsiveSizeMultiplier}
         weight="medium"
+        appearance="infoText"
         style={[spacings.mbMd, titleStyle]}
       >
         {t('Available features')}

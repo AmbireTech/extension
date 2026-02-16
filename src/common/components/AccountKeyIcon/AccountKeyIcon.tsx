@@ -8,11 +8,19 @@ import SingleKeyIcon from '@common/assets/svg/SingleKeyIcon'
 import TrezorLockIcon from '@common/assets/svg/TrezorLockIcon'
 import { KeyType } from '@common/components/AccountKeyIcons/AccountKeyIcons'
 
-const AccountKeyIcon = ({ type, color }: { type: KeyType; color?: string | ColorValue }) => {
+const AccountKeyIcon = ({
+  type,
+  color,
+  iconSize = 16
+}: {
+  type: KeyType
+  color?: string | ColorValue
+  iconSize?: number
+}) => {
   const props = {
     color,
-    width: 16,
-    height: 16
+    width: iconSize,
+    height: iconSize
   }
 
   if (type === 'lattice') return <LatticeIcon {...props} />
