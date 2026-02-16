@@ -115,6 +115,8 @@ const Main = ({
           {shouldDisplayEIP1271Warning && (
             <Alert
               type="error"
+              size="sm"
+              style={spacings.mt}
               title="This app has been flagged to not support Smart Account signatures."
               text="If you encounter issues, please use an EOA account and contact the app to resolve this."
             />
