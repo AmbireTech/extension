@@ -379,6 +379,7 @@ const SignMessageScreen = () => {
             shouldDisplayLedgerConnectModal={shouldDisplayLedgerConnectModal}
             isLedgerConnected={isLedgerConnected}
             handleDismissLedgerConnectModal={handleDismissLedgerConnectModal}
+            isSafeNotDeployed={isSafeNotDeployed}
           />
         )}
       </TabLayoutContainer>

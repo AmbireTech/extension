@@ -29,6 +29,7 @@ interface Props {
   shouldDisplayLedgerConnectModal: boolean
   isLedgerConnected: boolean
   handleDismissLedgerConnectModal: () => void
+  isSafeNotDeployed: boolean
 }
 
 const Label = ({
@@ -91,7 +92,8 @@ const Row = ({
 const SignInWithEthereum = ({
   shouldDisplayLedgerConnectModal,
   isLedgerConnected,
-  handleDismissLedgerConnectModal
+  handleDismissLedgerConnectModal,
+  isSafeNotDeployed
 }: Props) => {
   const { t } = useTranslation()
   const signMessageState = useSignMessageControllerState()
@@ -325,6 +327,12 @@ const SignInWithEthereum = ({
             text={t(
               "The app you're attempting to sign in to does not match the domain in the message. This may be a phishing attempt."
             )}
+          />
+        )}
+        {isSafeNotDeployed && (
+          <Alert
+            type="error"
+            title="Safe account not enabled on this network. Please activate it from Safe global"
           />
         )}
         {signMessageState.signer && signMessageState.signer.key.type !== 'internal' && (
