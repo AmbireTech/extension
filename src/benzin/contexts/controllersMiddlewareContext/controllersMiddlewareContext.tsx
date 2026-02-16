@@ -60,22 +60,6 @@ export const ControllersMiddlewareProvider: React.FC<{
     })
   )
 
-  // @ts-ignore
-  const fetchWithAnalytics: Fetch = useCallback((url, init) => {
-    const urlString = url.toString()
-    try {
-      const urlObj = new URL(urlString)
-      if (!urlObj.hostname.endsWith('.ambire.com') && urlObj.hostname !== 'ambire.com') {
-        return fetch(url, init)
-      }
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error(error)
-      // If URL parsing fails, skip analytics for safety
-      return fetch(url, init)
-    }
-  }, [])
-
   const controllers = useRef<ExplorerBaseControllersMappingType>(
     (() => {
       const ctrls: ExplorerBaseControllersMappingType = {} as ExplorerBaseControllersMappingType
@@ -96,7 +80,7 @@ export const ControllersMiddlewareProvider: React.FC<{
 
       ctrls.ContractNamesController = new ContractNamesController({
         eventEmitterRegistry: eventEmitterRegistry.current,
-        fetch: fetchWithAnalytics
+        fetch: window.fetch.bind(window) as any
       })
 
       return ctrls

@@ -6,10 +6,10 @@ import { Circle, G, Path, Svg, SvgProps } from 'react-native-svg'
 import { UPDATE_SWAP_AND_BRIDGE_QUOTE_INTERVAL } from '@ambire-common/consts/intervals'
 import { SwapAndBridgeFormStatus } from '@ambire-common/controllers/swapAndBridge/swapAndBridge'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
+import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import usePrevious from '@common/hooks/usePrevious'
 import useTheme from '@common/hooks/useTheme'
-import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControllerState'
 
 const radius = 9.5
 const strokeWidth = 1
@@ -20,7 +20,7 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
 const RoutesRefreshButton = ({ width = 32, height = 32 }: SvgProps) => {
   const [progress, setProgress] = useState(0)
   const { dispatch } = useControllersMiddleware()
-  const { updateQuoteStatus, formStatus } = useSwapAndBridgeControllerState()
+  const { updateQuoteStatus, formStatus } = useController('SwapAndBridgeController').state
   const prevUpdateQuoteStatus = usePrevious(updateQuoteStatus)
   const { t } = useTranslation()
   const { theme } = useTheme()

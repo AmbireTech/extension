@@ -9,13 +9,13 @@ import InfoIcon from '@common/assets/svg/InfoIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import Text from '@common/components/Text'
 import Tooltip from '@common/components/Tooltip'
+import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import formatTime from '@common/utils/formatTime'
 import RetryButton from '@web/components/RetryButton'
-import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControllerState'
 
 import SelectRoute from './SelectRoute'
 
@@ -31,7 +31,7 @@ const RouteInfo: FC<Props> = ({
   openRoutesModal
 }) => {
   const { formStatus, signAccountOpController, quote, swapSignErrors } =
-    useSwapAndBridgeControllerState()
+    useController('SwapAndBridgeController').state
   const { theme } = useTheme()
   const { t } = useTranslation()
   const { dispatch } = useControllersMiddleware()

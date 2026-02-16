@@ -10,6 +10,7 @@ import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Search from '@common/components/Search'
+import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useNavigation from '@common/hooks/useNavigation/useNavigation.web'
 import useToast from '@common/hooks/useToast'
@@ -19,7 +20,6 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import LayoutWrapper from '@web/components/LayoutWrapper'
 import { createTab } from '@web/extension-services/background/webapi/tab'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import Networks from '@web/modules/networks/components/Networks'
 
 import AddNetworkBottomSheet from '../components/AddNetworkBottomSheet'
@@ -33,7 +33,9 @@ const NetworksScreen = () => {
   const { addToast } = useToast()
   const { dispatch } = useControllersMiddleware()
   const { navigate } = useNavigation()
-  const { account, dashboardNetworkFilter } = useSelectedAccountControllerState()
+  const {
+    state: { account, dashboardNetworkFilter }
+  } = useController('SelectedAccountController')
   const [settingsChainId, setSettingsChainId] = useState<bigint | string | null>(null)
   const [searchParams] = useSearchParams()
   const [changedNetwork, setChangedNetwork] = useState<undefined | null | bigint | string>(

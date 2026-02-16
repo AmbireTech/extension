@@ -3,12 +3,12 @@ import { Animated, NativeScrollEvent, NativeSyntheticEvent, View } from 'react-n
 import { useModalize } from 'react-native-modalize'
 
 import { isWeb } from '@common/config/env'
+import useController from '@common/hooks/useController'
 import useDebounce from '@common/hooks/useDebounce'
 import useTheme from '@common/hooks/useTheme'
 import PendingActionWindowModal from '@common/modules/dashboard/components/PendingActionWindowModal'
 import GasTankModal from '@web/components/GasTankModal'
 import LayoutWrapper from '@web/components/LayoutWrapper'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import { getUiType } from '@web/utils/uiType'
 
 import DashboardOverview from '../components/DashboardOverview'
@@ -32,7 +32,9 @@ const DashboardScreen = () => {
   const animatedOverviewHeight = useRef(new Animated.Value(OVERVIEW_CONTENT_MAX_HEIGHT)).current
   const [isSearchHidden, setIsSearchHidden] = useState(false)
 
-  const { account, portfolio } = useSelectedAccountControllerState()
+  const {
+    state: { account, portfolio }
+  } = useController('SelectedAccountController')
 
   const onScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {

@@ -608,7 +608,7 @@ const init = async () => {
      * ensuring that the state update is immediately applied at the application level (React/Extension).
      *
      * For more info, please refer to:
-     * EventEmitter.forceEmitUpdate() or useControllerState().
+     * EventEmitter.forceEmitUpdate()
      */
     if (forceEmit) {
       sendUpdate()

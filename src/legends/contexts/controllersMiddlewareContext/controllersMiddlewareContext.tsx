@@ -18,7 +18,8 @@ import eventBus from '@web/extension-services/event/eventBus'
 export const ControllersMiddlewareProvider: React.FC<{
   children: React.ReactNode
 }> = ({ children }) => {
-  const { controllerStore, debounceControllerUpdates } = useContext(ControllerStoreContext)
+  const { controllerStore, debounceControllerUpdates, isStoreReady } =
+    useContext(ControllerStoreContext)
 
   useEffect(() => {
     controllerStore.init(
@@ -82,27 +83,31 @@ export const ControllersMiddlewareProvider: React.FC<{
     })()
   )
 
-  const dispatch = useCallback((action: Action) => {
-    if (action.type === 'method') {
-      const { ctrlName, method, args } = action.params
+  const dispatch = useCallback(
+    (action: Action) => {
+      if (action.type === 'method') {
+        const { ctrlName, method, args } = action.params
 
-      let targetCtrl: any = Object.values(controllers.current).find(
-        (ctrl) => ctrl.name === ctrlName
-      )
-      if (!targetCtrl) {
-        console.error(`handleAction: Controller ${ctrlName.toString()} not found`)
+        let targetCtrl: any = eventEmitterRegistry.current
+          .values()
+          .find((ctrl) => ctrl.name === ctrlName)
+        if (!targetCtrl) {
+          console.log('!!!', eventEmitterRegistry.current.values(), isStoreReady, controllerStore)
+          console.error(`handleAction: Controller ${ctrlName.toString()} not found`)
+          return
+        }
+
+        if (targetCtrl && typeof targetCtrl[method] === 'function') {
+          targetCtrl[method](...args)
+        }
+
         return
       }
 
-      if (targetCtrl && typeof targetCtrl[method] === 'function') {
-        targetCtrl[method](...args)
-      }
-
-      return
-    }
-
-    //TODO: handle common actions if any for the legends app
-  }, [])
+      //TODO: handle common actions if any for the legends app
+    },
+    [controllerStore, isStoreReady]
+  )
 
   return (
     <ControllersMiddlewareContext.Provider value={useMemo(() => ({ dispatch }), [dispatch])}>

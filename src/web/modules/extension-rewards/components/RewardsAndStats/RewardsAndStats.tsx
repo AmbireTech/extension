@@ -5,9 +5,9 @@ import { Animated, View } from 'react-native'
 import TrophyIcon from '@common/assets/svg/TrophyIcon'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
+import useController from '@common/hooks/useController'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import { getUiType } from '@web/utils/uiType'
 
 import { getDynamicTimings, TOTAL_COUNTER_DELAY } from '../StatItem/StatItem'
@@ -31,7 +31,9 @@ const getInitialScore = (scoreChange: number, score: number) => {
 const { isPopup } = getUiType()
 
 const RewardsAndStats: FC<Props> = ({ pastTotalScore }) => {
-  const { portfolio } = useSelectedAccountControllerState()
+  const {
+    state: { portfolio }
+  } = useController('SelectedAccountController')
   const { projectedRewardsStats } = portfolio
   const { t } = useTranslation()
 
