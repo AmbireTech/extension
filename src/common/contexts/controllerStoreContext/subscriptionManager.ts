@@ -17,8 +17,6 @@ type Unsubscribe = () => void
  *    triggering updates only when that specific slice changes.
  */
 export class SubscriptionManager {
-  static #instance: SubscriptionManager
-
   #stores: Map<
     any,
     Map<
