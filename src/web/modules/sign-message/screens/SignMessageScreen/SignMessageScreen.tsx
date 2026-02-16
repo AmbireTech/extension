@@ -280,6 +280,11 @@ const SignMessageScreen = () => {
     return accountState?.threshold || 0
   }, [accountState])
 
+  const isSafeNotDeployed = useMemo(() => {
+    if (!account?.safeCreation) return false
+    return !accountState?.isDeployed
+  }, [account?.safeCreation, accountState?.isDeployed])
+
   // In the split second when the request window opens, but the state is not yet
   // initialized, to prevent a flash of the fallback visualization, show a
   // loading spinner instead (would better be a skeleton, but whatever).
@@ -307,7 +312,8 @@ const SignMessageScreen = () => {
               signStatus === 'LOADING' ||
               isScrollToBottomForced ||
               isViewOnly ||
-              humanizationHasBlockingWarnings
+              humanizationHasBlockingWarnings ||
+              isSafeNotDeployed
             }
             resolveButtonTestID="button-sign"
             rejectButtonText="Reject"
@@ -365,6 +371,7 @@ const SignMessageScreen = () => {
             hasReachedBottom={hasReachedBottom}
             setHasReachedBottom={setHasReachedBottom}
             shouldDisplayEIP1271Warning={shouldDisplayEIP1271Warning}
+            isSafeNotDeployed={isSafeNotDeployed}
           />
         )}
         {view === 'siwe' && (

@@ -13,7 +13,6 @@ import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import spacings, { SPACING_LG, SPACING_MD, SPACING_TY } from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import { TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
@@ -32,6 +31,7 @@ interface Props {
   hasReachedBottom: boolean | null
   setHasReachedBottom: Dispatch<SetStateAction<boolean | null>>
   shouldDisplayEIP1271Warning: boolean
+  isSafeNotDeployed: boolean
 }
 
 const Main = ({
@@ -40,7 +40,8 @@ const Main = ({
   handleDismissLedgerConnectModal,
   hasReachedBottom,
   setHasReachedBottom,
-  shouldDisplayEIP1271Warning
+  shouldDisplayEIP1271Warning,
+  isSafeNotDeployed
 }: Props) => {
   const { t } = useTranslation()
   const signMessageState = useSignMessageControllerState()
@@ -117,6 +118,12 @@ const Main = ({
               type="error"
               title="This app has been flagged to not support Smart Account signatures."
               text="If you encounter issues, please use an EOA account and contact the app to resolve this."
+            />
+          )}
+          {isSafeNotDeployed && (
+            <Alert
+              type="error"
+              title="Safe account not enabled on this network. Please activate it from Safe global"
             />
           )}
         </View>
