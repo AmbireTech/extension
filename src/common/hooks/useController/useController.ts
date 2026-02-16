@@ -1,13 +1,13 @@
-import { useCallback, useContext, useEffect, useMemo, useSyncExternalStore } from 'react'
+import { useCallback, useContext } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 
-import { isDev } from '@common/config/env'
 import { AllControllersMappingType } from '@common/constants/controllersMapping'
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext/controllersMiddlewareContext'
 import { AnyControllerAction } from '@common/contexts/controllersMiddlewareContext/types'
 import { ControllerHelpersMapping } from '@common/contexts/controllerStoreContext/controllerHelpersStore'
-import useControllerStore from '@common/hooks/useControllerStore'
 import eventBus from '@web/extension-services/event/eventBus'
+
+import useStore from '../useStore'
 
 type MethodKeys<T> = {
   [K in keyof T]-?: T[K] extends (...args: any[]) => any ? K : never
@@ -94,49 +94,8 @@ export default function useController<
     throw new Error('useController must be used within ControllersMiddlewareProvider')
   }
 
-  const {
-    controllerStore,
-    controllerHelpersStore,
-    stateSubscriptionManager,
-    helpersSubscriptionManager,
-    isStoreReady
-  } = useControllerStore()
+  const { state, helpers } = useStore(id, selector)
   const { dispatch: controllersMiddlewareDispatch } = controllersMiddleware
-
-  // Create the error object here to capture the stack trace of the call site (the component using this hook)
-  const missingControllerError = useMemo(() => {
-    return new Error(`A controller with name ${id} does not exist in the controllerStore.`)
-  }, [id])
-
-  useEffect(() => {
-    if (id === 'SignAccountOpController') return
-
-    if (isStoreReady && !Object.keys(controllerStore.getSnapshot(id)).length) {
-      if (isDev) console.warn(missingControllerError)
-    }
-  }, [controllerStore, id, isStoreReady, missingControllerError])
-
-  const state = useSyncExternalStore(
-    useCallback(
-      (cb) => stateSubscriptionManager.subscribe(id, cb, controllerStore, selector),
-      [id, controllerStore, selector, stateSubscriptionManager]
-    ),
-    useCallback(
-      () => stateSubscriptionManager.getSnapshot(id, controllerStore, selector),
-      [id, controllerStore, selector, stateSubscriptionManager]
-    )
-  ) as S
-
-  const helpers = useSyncExternalStore(
-    useCallback(
-      (cb) => helpersSubscriptionManager.subscribe(id, cb, controllerHelpersStore),
-      [id, controllerHelpersStore, helpersSubscriptionManager]
-    ),
-    useCallback(
-      () => helpersSubscriptionManager.getSnapshot(id, controllerHelpersStore),
-      [id, controllerHelpersStore, helpersSubscriptionManager]
-    )
-  )
 
   const dispatch = useCallback(
     (action: HookControllerAction<K>) => {
@@ -205,19 +164,8 @@ export default function useController<
     [controllersMiddlewareDispatch, id]
   )
 
-  let stateToReturn: any = state || {}
-
-  if (id === 'SignAccountOpController' && !selector) {
-    stateToReturn = Object.keys(stateToReturn).length ? stateToReturn : null
-  }
-
-  // If selector is present, we return 'state' directly (which is S)
-  if (selector) {
-    stateToReturn = state
-  }
-
   return {
-    state: stateToReturn,
+    state,
     ...(helpers || ({} as ControllerHelpersMapping[K])),
     dispatch,
     dispatchAndWait
