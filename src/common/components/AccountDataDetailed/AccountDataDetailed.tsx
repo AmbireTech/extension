@@ -1,7 +1,6 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { View } from 'react-native'
 
-import { isSmartAccount } from '@ambire-common/libs/account/account'
 import AccountAddress from '@common/components/AccountAddress'
 import AccountBadges from '@common/components/AccountBadges'
 import Avatar from '@common/components/Avatar'
@@ -17,12 +16,18 @@ const AccountDataDetailed = () => {
 
   if (!account) return null
 
+  const smartAccountType = useMemo(() => {
+    if (account?.creation) return 'Ambire'
+    if (account?.safeCreation) return 'Safe'
+    return undefined
+  }, [account])
+
   return (
     <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1]}>
       <Avatar
         address={account.addr}
         pfp={account.preferences.pfp}
-        isSmart={isSmartAccount(account)}
+        smartAccountType={smartAccountType}
       />
       <View style={flexbox.flex1}>
         <View style={[flexbox.flex1, flexbox.directionRow]}>

@@ -17,7 +17,7 @@ const { isPopup } = getUiType()
 
 interface Props {
   signingKeyType?: AccountOp['signingKeyType']
-  feePayerKeyType?: Key['type']
+  feePayerKeyType?: Key['type'] | null
   isSignAndBroadcastInProgress: boolean
   signAccountOpStatusType?: SigningStatus
   shouldSignAuth: {

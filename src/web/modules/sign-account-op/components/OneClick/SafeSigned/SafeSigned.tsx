@@ -5,7 +5,7 @@ import { View } from 'react-native'
 import Button from '@common/components/Button'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
-import Header from '@common/modules/header/components/Header'
+import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
@@ -29,15 +29,7 @@ const SafeSigned: FC<Props> = ({ title, primaryButtonText, onPrimaryButtonPress 
   return (
     <TabLayoutContainer
       backgroundColor={theme.primaryBackground}
-      header={
-        <Header
-          backgroundColor="primaryBackground"
-          displayBackButtonIn="never"
-          mode="title"
-          customTitle={title}
-          withAmbireLogo
-        />
-      }
+      header={<HeaderWithTitle displayBackButtonIn="never" title={title} />}
       withHorizontalPadding={false}
       footer={null}
       style={{ ...flexbox.alignEnd, ...spacings.pb }}
