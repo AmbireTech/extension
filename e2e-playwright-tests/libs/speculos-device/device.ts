@@ -35,15 +35,17 @@ export class SpeculosDevice {
 
   async waitForEvent(
     predicate: (event: SpeculosEvent) => boolean,
+    // TODO: adjust the default
     timeout = 5000000
   ): Promise<SpeculosEvent> {
     const startTime = Date.now()
 
     while (Date.now() - startTime < timeout) {
       const { events } = await this.getEvents()
-
+      // console.log('Received events from device:', events)
       const event = events.find(predicate)
       if (event) {
+        // console.log('Matching event found:', event)
         return event
       }
       await new Promise((resolve) => setTimeout(resolve, 500))

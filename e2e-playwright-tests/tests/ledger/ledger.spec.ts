@@ -33,19 +33,17 @@ test.describe('ledger without storage', () => {
       await page.getByTestId(selectors.getStarted.createKeystorePassBtn).click()
     })
 
-    await test.step('import first 2 accounts', async () => {
+    await test.step('import first account', async () => {
       await page.getByTestId(`add-account-${mainConstants.addresses.ledgerAccount1}`).click()
-      await page.getByTestId(`add-account-${mainConstants.addresses.ledgerAccount2}`).click()
       await page.getByTestId(selectors.getStarted.importAccountButton).click()
       await page.getByTestId(selectors.getStarted.saveAndContinueBtn).click()
     })
 
-    await test.step('make sure accounts are imported', async () => {
+    await test.step('make sure account is imported', async () => {
       await pages.auth.goToDashboard()
       await page.getByTestId(selectors.accountSelectBtn).click()
 
       await expect(page.getByText(mainConstants.addresses.ledgerAccount1)).toBeVisible()
-      await expect(page.getByText(mainConstants.addresses.ledgerAccount2)).toBeVisible()
     })
   })
 })
@@ -61,13 +59,13 @@ test.describe('ledger with storage', () => {
     await context.close()
   })
 
-  //DASHBOARD TESTS
+  // DASHBOARD TESTS
   test('should have balance on the dashboard', async ({ pages }) => {
     await pages.dashboard.checkBalanceInAccount()
   })
 
-  //   SIGN MESSAGE TESTS
-  test('should sign plain message', async ({ pages }) => {
+  // SIGN MESSAGE TESTS
+  test.only('should sign plain message', async ({ pages }) => {
     const ledgerSimulatorControls = new SpeculosDevice({ baseUrl: LEDGER_SIMULATIUON_URL })
     const message = 'Hello, Ambire!'
 

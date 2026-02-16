@@ -1,4 +1,4 @@
-import { BA_ADDRESS } from 'constants/env'
+import { BA_ADDRESS, LEDGER_ADDRESS } from 'constants/env'
 import selectors from 'constants/selectors'
 import { SpeculosDevice } from 'libs/speculos-device'
 
@@ -68,12 +68,13 @@ export class SignMessagePage extends BasePage {
       )
 
       if (isReadyToSign) {
+        await this.page.waitForTimeout(2000)
         await ledgerSimulatorControls.pressRightButton()
-        await this.page.waitForTimeout(100)
+        await this.page.waitForTimeout(2000)
         await ledgerSimulatorControls.pressRightButton()
-        await this.page.waitForTimeout(100)
+        await this.page.waitForTimeout(2000)
         await ledgerSimulatorControls.pressBothButtons()
-        await this.page.waitForTimeout(100)
+        await this.page.waitForTimeout(2000)
       } else {
         console.log('No signing request event received on the device within the timeout period')
       }
@@ -86,7 +87,11 @@ export class SignMessagePage extends BasePage {
     await verifyTab.click()
 
     const signerAddress = this.page.getByRole('textbox', { name: 'Signer address (0x....)' })
-    await signerAddress.fill(BA_ADDRESS)
+    if (ledgerSimulatorControls) {
+      await signerAddress.fill(LEDGER_ADDRESS)
+    } else {
+      await signerAddress.fill(BA_ADDRESS)
+    }
 
     await verifySubTab.click()
 
@@ -101,8 +106,13 @@ export class SignMessagePage extends BasePage {
     // Polygon is selected since Ethereum RPC verification fails in SigTool.
     // For testing purposes, this is not an issue because signing the same message
     // on Ethereum or Polygon yields an identical signature.
-    const polygon = this.page.locator('.networkName', { hasText: 'Polygon' })
-    await polygon.click()
+    let selectedNetwork
+    if (ledgerSimulatorControls) {
+      selectedNetwork = this.page.locator('.networkName', { hasText: 'Ethereum' })
+    } else {
+      selectedNetwork = this.page.locator('.networkName', { hasText: 'Polygon' })
+    }
+    await selectedNetwork.click()
 
     const verifyButton = this.page.getByRole('button', { name: 'Verify' })
     await verifyButton.click()
