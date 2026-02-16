@@ -242,7 +242,6 @@ type MainControllerSignMessageInitAction = {
     messageToSign: Message
     signed?: string[]
     hash?: Hex
-    safeAppId?: number
   }
 }
 type MainControllerSignMessageResetAction = {
