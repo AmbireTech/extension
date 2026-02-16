@@ -486,6 +486,29 @@ module.exports = async function (env, argv) {
       crypto: require.resolve('crypto-browserify')
     }
 
+    const terserPlugin = config.optimization.minimizer?.find(
+      (minimizer) => minimizer.constructor.name === 'TerserPlugin'
+    )
+    if (terserPlugin) {
+      const terserRealOptions = terserPlugin.options.minimizer?.options
+
+      if (terserRealOptions) {
+        terserRealOptions.compress = {
+          ...(terserRealOptions.compress || {}),
+          pure_getters: true,
+          passes: 3
+        }
+
+        terserRealOptions.output = {
+          ...(terserRealOptions.output || {}),
+          ascii_only: true,
+          comments: false
+        }
+
+        terserRealOptions.mangle = false
+      }
+    }
+
     config.plugins = [
       ...defaultExpoConfigPlugins,
       new NodePolyfillPlugin(),
@@ -579,6 +602,29 @@ module.exports = async function (env, argv) {
         use: ['style-loader', 'css-loader', 'sass-loader']
       }
     ]
+
+    const terserPlugin = config.optimization.minimizer?.find(
+      (minimizer) => minimizer.constructor.name === 'TerserPlugin'
+    )
+    if (terserPlugin) {
+      const terserRealOptions = terserPlugin.options.minimizer?.options
+
+      if (terserRealOptions) {
+        terserRealOptions.compress = {
+          ...(terserRealOptions.compress || {}),
+          pure_getters: true,
+          passes: 3
+        }
+
+        terserRealOptions.output = {
+          ...(terserRealOptions.output || {}),
+          ascii_only: true,
+          comments: false
+        }
+
+        terserRealOptions.mangle = false
+      }
+    }
 
     config.plugins = [
       ...defaultExpoConfigPlugins,

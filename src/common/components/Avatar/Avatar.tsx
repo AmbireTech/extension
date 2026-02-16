@@ -1,11 +1,11 @@
 import React, { FC, useEffect, useRef, useState } from 'react'
 import { Animated, ViewStyle } from 'react-native'
 
+import { isBenzin, isLegends } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { AvatarType } from '@web/extension-services/background/controllers/wallet-state'
-import useWalletStateController from '@web/hooks/useWalletStateController'
 
 import Blockie from './Blockies/Blockies'
 import EnsAvatar from './EnsAvatar'
@@ -78,8 +78,13 @@ const Avatar: FC<Props> = ({
     state: { domains, loadingAddresses }
   } = useController('DomainsController')
   // There is no wallet controller state in benzin/rewards so we need to be careful
-  const walletState = useWalletStateController()
-  const avatarTypeSetting = propAvatarType || walletState?.avatarType || 'jazzicons'
+
+  let avatarTypeSetting: AvatarType | Omit<AvatarType, 'ens'> = propAvatarType || 'jazzicons'
+
+  if (!isLegends && !isBenzin && !propAvatarType) {
+    const walletState = useController('WalletStateController').state
+    avatarTypeSetting = walletState?.avatarType || 'jazzicons'
+  }
 
   const isEnsLoading = address
     ? (domains && !domains[address]) || loadingAddresses?.includes(address)

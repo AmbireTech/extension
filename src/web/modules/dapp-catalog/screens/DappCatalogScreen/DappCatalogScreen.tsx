@@ -30,7 +30,6 @@ import {
   tabLayoutWidths
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import { AnimatedPressable, useMultiHover } from '@web/hooks/useHover'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import DappItem from '@web/modules/dapp-catalog/components/DappItem'
 import { getUiType } from '@web/utils/uiType'
 
@@ -133,7 +132,7 @@ const DappCatalogScreen = () => {
   const [category, setCategory] = useState<string | null>(null)
   const [favoritesSelected, setFavoritesSelected] = useState(false)
   const [connectedSelected, setConnectedSelected] = useState(false)
-  const { allNetworks } = useNetworksControllerState()
+  const { networks: allNetworks } = useController('NetworksController').state
   const { theme, themeType } = useTheme()
   const { maxWidthSize } = useWindowSize()
 

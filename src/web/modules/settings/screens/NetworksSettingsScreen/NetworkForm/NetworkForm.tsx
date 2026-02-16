@@ -16,6 +16,7 @@ import NumberInput from '@common/components/NumberInput'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
 import Tooltip from '@common/components/Tooltip'
+import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
@@ -25,7 +26,6 @@ import text from '@common/styles/utils/text'
 import { setStringAsync } from '@common/utils/clipboard'
 import NetworkAvailableFeatures from '@web/components/NetworkAvailableFeatures'
 import useHover, { AnimatedPressable } from '@web/hooks/useHover'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import {
   getAreDefaultsChanged,
   handleErrors
@@ -147,7 +147,7 @@ const NetworkForm = ({
   const { t } = useTranslation()
   const { dispatch } = useControllersMiddleware()
   const { addToast } = useToast()
-  const { allNetworks, networkToAddOrUpdate, statuses } = useNetworksControllerState()
+  const { allNetworks, networkToAddOrUpdate, statuses } = useController('NetworksController').state
   const [isValidatingRPC, setValidatingRPC] = useState<boolean>(false)
   const { styles, theme } = useTheme(getStyles)
 

@@ -5,19 +5,20 @@ import { View } from 'react-native'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import NetworksIcon from '@common/assets/svg/NetworksIcon'
 import Text from '@common/components/Text'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import { AnimatedPressable, useMultiHover } from '@web/hooks/useHover'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import getStyles from '@web/modules/networks/screens/styles'
 
 const AllNetworksOption = ({ onPress }: { onPress: (chainId: bigint | null) => void }) => {
   const { t } = useTranslation()
   const { themeType, theme, styles } = useTheme(getStyles)
-  const { portfolio: selectedAccountPortfolio, dashboardNetworkFilter } =
-    useSelectedAccountControllerState()
+  const {
+    state: { portfolio: selectedAccountPortfolio, dashboardNetworkFilter }
+  } = useController('SelectedAccountController')
 
   const [bindAnim, animStyle] = useMultiHover({
     values: [

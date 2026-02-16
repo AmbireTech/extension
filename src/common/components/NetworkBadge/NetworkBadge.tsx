@@ -4,10 +4,10 @@ import { TextStyle, View, ViewStyle } from 'react-native'
 
 import NetworkIcon from '@common/components/NetworkIcon'
 import Text, { TextWeight } from '@common/components/Text'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import { SPACING, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 
 interface Props {
   chainId?: bigint
@@ -36,7 +36,9 @@ const NetworkBadge: FC<Props> = ({
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { networks } = useNetworksControllerState()
+  const {
+    state: { networks }
+  } = useController('NetworksController')
 
   const network = useMemo(() => {
     return networks.find((n) => n.chainId === chainId)

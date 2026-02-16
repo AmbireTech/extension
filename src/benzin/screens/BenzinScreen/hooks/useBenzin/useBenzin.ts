@@ -12,11 +12,11 @@ import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
 import useBenzinNetworksContext from '@benzin/hooks/useBenzinNetworksContext'
 import useSteps from '@benzin/screens/BenzinScreen/hooks/useSteps'
 import { ActiveStepType } from '@benzin/screens/BenzinScreen/interfaces/steps'
+import useController from '@common/hooks/useController'
 import useRoute from '@common/hooks/useRoute'
 import useToast from '@common/hooks/useToast'
 import { setStringAsync } from '@common/utils/clipboard'
 import { RELAYER_URL } from '@env'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 
 const fetch = window.fetch.bind(window) as any
 const standardOptions = {
@@ -49,7 +49,9 @@ const useBenzin = ({ onOpenExplorer, extensionAccOp }: Props = {}) => {
     route?.search
   )
 
-  const { networks } = useNetworksControllerState()
+  const {
+    state: { networks }
+  } = useController('NetworksController')
   const {
     benzinNetworks,
     loadingBenzinNetworks = [],
@@ -67,6 +69,18 @@ const useBenzin = ({ onOpenExplorer, extensionAccOp }: Props = {}) => {
   const network = useMemo(() => {
     return actualNetworks.find((n) => n.chainId === bigintChainId) || null
   }, [actualNetworks, bigintChainId])
+
+  const {
+    dispatch: providerDispatch,
+    state: { providers }
+  } = useController('ProvidersController')
+
+  useEffect(() => {
+    if (!network) return
+    if (providers[network.chainId.toString()]) return
+
+    providerDispatch({ type: 'method', params: { method: 'setProvider', args: [network] } })
+  }, [network, providers, providerDispatch])
 
   const switcher = useMemo(() => {
     if (!network) return null

@@ -6,12 +6,14 @@ import AccountBadges from '@common/components/AccountBadges'
 import Avatar from '@common/components/Avatar'
 import DomainBadge from '@common/components/Avatar/DomainBadge'
 import Text from '@common/components/Text'
+import useController from '@common/hooks/useController'
 import useReverseLookup from '@common/hooks/useReverseLookup'
 import flexbox from '@common/styles/utils/flexbox'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 
 const AccountDataDetailed = () => {
-  const { account } = useSelectedAccountControllerState()
+  const {
+    state: { account }
+  } = useController('SelectedAccountController')
   const { isLoading, ens } = useReverseLookup({ address: account?.addr || '' })
 
   if (!account) return null

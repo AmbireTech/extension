@@ -8,12 +8,12 @@ import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import Avatar from '@common/components/Avatar'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import { setStringAsync } from '@common/utils/clipboard'
 import useHover, { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 
 import getStyles from './styles'
 
@@ -32,7 +32,7 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
   const { addToast } = useToast()
   const { styles } = useTheme(getStyles)
 
-  const { account } = useSelectedAccountControllerState()
+  const { account } = useController('SelectedAccountController').state
   const [bindAddressAnim, addressAnimStyle] = useHover({
     preset: 'opacityInverted'
   })

@@ -12,6 +12,7 @@ import Panel from '@common/components/Panel'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
@@ -23,10 +24,9 @@ import {
   TabLayoutContainer,
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import useSafeControllerState from '@web/hooks/useSafeControllerState'
 
 const SafeImportScreen = () => {
-  const { statuses, importError, safeInfo } = useSafeControllerState()
+  const { statuses, importError, safeInfo } = useController('SafeController').state
   const {
     control,
     handleSubmit,

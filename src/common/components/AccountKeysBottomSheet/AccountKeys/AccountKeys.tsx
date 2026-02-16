@@ -8,13 +8,11 @@ import { isAmbireV1LinkedAccount } from '@ambire-common/libs/account/account'
 import AccountKey, { AccountKeyType } from '@common/components/AccountKey/AccountKey'
 import Alert from '@common/components/Alert'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
+import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
-import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
-import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 
 interface Props {
   account: Account
@@ -32,9 +30,9 @@ const AccountKeys: FC<Props> = ({
   showExportImport
 }) => {
   const { t } = useTranslation()
-  const { accountStates } = useAccountsControllerState()
-  const { networks } = useNetworksControllerState()
-  const { keys } = useKeystoreControllerState()
+  const { accountStates } = useController('AccountsController').state
+  const { networks } = useController('NetworksController').state
+  const { keys } = useController('KeystoreController').state
   const { dispatch } = useControllersMiddleware()
   const accountStateCheckedForRef = React.useRef<string | null>(null)
 

@@ -1,10 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
+import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import usePrevious from '@common/hooks/usePrevious'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
-import useAccountPickerControllerState from '@web/hooks/useAccountPickerControllerState'
 
 const useAccountPicker = () => {
   const { goToNextRoute, goToPrevRoute } = useOnboardingNavigation()
@@ -15,7 +15,7 @@ const useAccountPicker = () => {
     initParams,
     selectedAccountsFromCurrentSession,
     addAccountsStatus
-  } = useAccountPickerControllerState()
+  } = useController('AccountPickerController').state
   const prevIsInitialized = usePrevious(isInitialized)
   const shouldResetAccountsSelectionOnUnmount = useRef(true)
   const { dispatch } = useControllersMiddleware()

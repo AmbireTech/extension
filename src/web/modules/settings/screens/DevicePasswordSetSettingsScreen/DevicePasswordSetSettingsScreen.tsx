@@ -3,11 +3,11 @@ import { View } from 'react-native'
 
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 import KeyStoreSetupForm from '@web/modules/keystore/components/KeyStoreSetupForm'
 import { SettingsRoutesContext } from '@web/modules/settings/contexts/SettingsRoutesContext'
 
@@ -20,7 +20,7 @@ const DevicePasswordSetSettingsScreen = () => {
   const { setCurrentSettingsPage } = useContext(SettingsRoutesContext)
   const { t } = useTranslation()
   const { navigate } = useNavigation()
-  const keystoreState = useKeystoreControllerState()
+  const keystoreState = useController('KeystoreController').state
 
   useEffect(() => {
     setCurrentSettingsPage('device-password-set')

@@ -7,6 +7,7 @@ import { BannerType } from '@ambire-common/interfaces/banner'
 import { getCurrentAccountBanners } from '@ambire-common/libs/banners/banners'
 import PrivacyIcon from '@common/assets/svg/PrivacyIcon'
 import Text from '@common/components/Text'
+import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useNavigation from '@common/hooks/useNavigation'
 import usePrevious from '@common/hooks/usePrevious'
@@ -22,9 +23,6 @@ import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import { searchWithNetworkName } from '@common/utils/search'
 import { openInTab } from '@web/extension-services/background/webapi/tab'
-import useFeatureFlagsControllerState from '@web/hooks/useFeatureFlagsControllerState'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import { getUiType } from '@web/utils/uiType'
 
 import SearchAndCurrentApp from '../SearchAndCurrentApp'
@@ -56,13 +54,16 @@ const DeFiPositions: FC<Props> = ({
   isSearchHidden
 }) => {
   const { t } = useTranslation()
-  const { flags } = useFeatureFlagsControllerState()
+  const { flags } = useController('FeatureFlagsController').state
   const { control, watch, setValue } = useForm({ mode: 'all', defaultValues: { search: '' } })
   const { theme, themeType } = useTheme()
   const searchValue = watch('search')
-  const { networks } = useNetworksControllerState()
-  const { account, portfolio, dashboardNetworkFilter, banners } =
-    useSelectedAccountControllerState()
+  const {
+    state: { networks }
+  } = useController('NetworksController')
+  const {
+    state: { account, portfolio, dashboardNetworkFilter, banners }
+  } = useController('SelectedAccountController')
   const { setSearchParams, navigate } = useNavigation()
 
   const { dispatch } = useControllersMiddleware()
@@ -226,7 +227,6 @@ const DeFiPositions: FC<Props> = ({
       theme.infoText,
       openTab,
       setOpenTab,
-      control,
       sessionId,
       currentAccountBanners,
       searchValue,
