@@ -170,6 +170,8 @@ const Sidebar = ({ activeLink }: { activeLink?: string }) => {
         ...spacings.mlTy,
         ...spacings.mvTy,
         maxHeight: '100%',
+        // @ts-ignore
+        height: 'fit-content',
         position: 'relative'
       }}
     >
