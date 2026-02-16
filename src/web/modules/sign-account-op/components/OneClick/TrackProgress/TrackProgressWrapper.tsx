@@ -56,8 +56,7 @@ const TrackProgressWrapper: FC<TrackProgressProps> = ({
             style={[
               routeStatus !== 'failed' ? flexbox.directionRow : flexbox.directionRowReverse,
               flexbox.alignCenter,
-              !isRequestWindow ? flexbox.justifySpaceBetween : flexbox.justifyCenter,
-              isRequestWindow && spacings.pt2Xl
+              !isRequestWindow ? flexbox.justifySpaceBetween : flexbox.justifyCenter
             ]}
           >
             {!isRequestWindow ? (
