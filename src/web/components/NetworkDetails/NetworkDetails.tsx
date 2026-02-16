@@ -21,7 +21,6 @@ import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings, { SPACING, SPACING_MD, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import NetworkForm from '@web/modules/settings/screens/NetworksSettingsScreen/NetworkForm'
 
@@ -59,7 +58,7 @@ const NetworkDetails = ({
   responsiveSizeMultiplier = 1
 }: Props) => {
   const { t } = useTranslation()
-  const { theme, styles, themeType } = useTheme(getStyles)
+  const { theme, styles } = useTheme(getStyles)
   const { dispatch } = useControllersMiddleware()
 
   const {
@@ -164,14 +163,15 @@ const NetworkDetails = ({
                   id={chainId.toString()}
                   name={name}
                   uris={iconUrls.length ? iconUrls : undefined}
-                  size={(type === 'vertical' ? 26 : 32) * responsiveSizeMultiplier}
+                  size={24 * responsiveSizeMultiplier}
                 />
               </View>
             )}
             <Text
               fontSize={14 * responsiveSizeMultiplier}
-              appearance={value === 'Invalid Chain ID' ? 'errorText' : 'primaryText'}
+              appearance={value === 'Invalid Chain ID' ? 'errorText' : 'secondaryText'}
               numberOfLines={1}
+              weight="medium"
               selectable
             >
               {value}
@@ -251,8 +251,9 @@ const NetworkDetails = ({
           {!showAllRpcUrls ? (
             <Text
               fontSize={14 * responsiveSizeMultiplier}
-              appearance="primaryText"
+              appearance="secondaryText"
               numberOfLines={1}
+              weight="medium"
               selectable
             >
               {sortedRpcUrls[0]}
@@ -262,8 +263,8 @@ const NetworkDetails = ({
               <Text
                 key={rpcUrl}
                 fontSize={14 * responsiveSizeMultiplier}
-                appearance={i === 0 ? 'primaryText' : 'secondaryText'}
-                weight={i === 0 ? 'regular' : 'light'}
+                appearance={i === 0 ? 'secondaryText' : 'tertiaryText'}
+                weight={i === 0 ? 'medium' : 'regular'}
                 numberOfLines={1}
                 style={i !== sortedRpcUrls.length - 1 && spacings.mbMi}
                 selectable

@@ -185,14 +185,7 @@ const NetworksSettings = () => {
           </View>
         </View>
 
-        <View
-          style={[
-            { flex: 2 },
-            maxWidthSize('xl') ? spacings.plXl : spacings.plLg,
-            maxWidthSize('xl') ? spacings.mlXl : spacings.mlLg,
-            { borderLeftWidth: 1, borderColor: theme.secondaryBorder }
-          ]}
-        >
+        <View style={[{ flex: 1.75 }, spacings.mlLg]}>
           <ScrollableWrapper contentContainerStyle={{ flexGrow: 1 }}>
             <View style={spacings.mb}>
               <NetworkDetails
