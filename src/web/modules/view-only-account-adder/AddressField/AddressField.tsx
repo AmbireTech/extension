@@ -9,9 +9,10 @@ import { getAddressFromAddressState } from '@ambire-common/utils/domains'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import DeleteIcon from '@common/assets/svg/DeleteIcon'
 import AddressInput from '@common/components/AddressInput'
-import Banner from '@common/components/Banner/Banner'
+import Alert from '@common/components/Alert'
 import useAddressInput from '@common/hooks/useAddressInput'
 import useController from '@common/hooks/useController'
+import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -47,6 +48,7 @@ const AddressField: FC<Props> = ({
   const accounts = watch('accounts')
   const value = watch(`accounts.${index}`)
   const { t } = useTranslation()
+  const { theme } = useTheme()
 
   const setAddressState = useCallback(
     (newState: AddressStateOptional) => {
@@ -146,6 +148,7 @@ const AddressField: FC<Props> = ({
               onChangeText={onChange}
               value={value.fieldValue}
               autoFocus
+              backgroundColor={theme.secondaryBackground}
               disabled={isLoading}
               ensAddress={value.ensAddress}
               isRecipientDomainResolving={value.isDomainResolving}
@@ -157,7 +160,7 @@ const AddressField: FC<Props> = ({
           {addressesInAssociatedKeys?.length > 0 &&
             addressesInAssociatedKeys.map((_address) => {
               return (
-                <Banner
+                <Alert
                   title={t('This account’s key is already imported.')}
                   text={t(
                     `It’s the same key associated with ${shortenAddress(
