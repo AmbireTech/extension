@@ -4,19 +4,19 @@ import { useTranslation } from 'react-i18next'
 import LockIcon from '@common/assets/svg/LockIcon'
 import Button from '@common/components/Button'
 import ControlOption from '@common/components/ControlOption'
+import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
-import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 
 const LockAmbireControlOption = () => {
   const { dispatch } = useControllersMiddleware()
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { navigate } = useNavigation()
-  const { hasPasswordSecret } = useKeystoreControllerState()
+  const { hasPasswordSecret } = useController('KeystoreController').state
 
   const handleLockAmbire = useCallback(() => {
     dispatch({

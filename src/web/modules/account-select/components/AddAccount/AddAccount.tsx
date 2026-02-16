@@ -18,6 +18,7 @@ import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Option from '@common/components/Option'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
+import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
@@ -25,7 +26,6 @@ import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
-import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 import SavedSeedPhrases from '@web/modules/account-select/components/SavedSeedPhrases'
 
 import ExpandableOptionSection from './ExpandableOptionSection'
@@ -36,8 +36,7 @@ const AddAccount = ({ handleClose }: { handleClose: () => void }) => {
   const { styles } = useTheme(getStyles)
   const { dispatch } = useControllersMiddleware()
   const { goToNextRoute, setTriggeredHwWalletFlow } = useOnboardingNavigation()
-  const { seeds } = useKeystoreControllerState()
-
+  const { seeds } = useController('KeystoreController').state
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
 
   const optionsHW = useMemo(() => {

@@ -42,7 +42,6 @@ import { ActiveStepType, FinalizedStatusType } from '@benzin/screens/BenzinScree
 import { UserOperation } from '@benzin/screens/BenzinScreen/interfaces/userOperation'
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
-import useActivityControllerState from '@web/hooks/useActivityControllerState'
 
 import { decodeUserOp, entryPointTxnSplit, reproduceCallsFromTxn } from './utils/reproduceCalls'
 
@@ -182,7 +181,7 @@ const useSteps = ({
   const [shouldTryBlockFetch, setShouldTryBlockFetch] = useState<boolean>(true)
   const [refetchStatus, setRefetchStatus] = useState<number>(0)
   const { dispatch } = useControllersMiddleware()
-  const { accountsOps } = useActivityControllerState()
+  const { accountsOps } = useController('ActivityController').state
   const { dispatchAndWait } = useController('ProvidersController')
 
   const getIdentifiedBy = useCallback((): AccountOpIdentifiedBy => {

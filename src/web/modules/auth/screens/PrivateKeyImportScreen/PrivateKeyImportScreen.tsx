@@ -9,6 +9,7 @@ import Input from '@common/components/Input'
 import Panel from '@common/components/Panel'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
@@ -20,7 +21,6 @@ import {
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import storage from '@web/extension-services/background/webapi/storage'
-import useAccountPickerControllerState from '@web/hooks/useAccountPickerControllerState'
 
 export const CARD_WIDTH = 400
 
@@ -39,7 +39,7 @@ const PrivateKeyImportScreen = () => {
 
   const { theme } = useTheme()
   const { dispatch } = useControllersMiddleware()
-  const { initParams, subType } = useAccountPickerControllerState()
+  const { initParams, subType } = useController('AccountPickerController').state
   const [agreedToBackupWarning, setAgreedToBackupWarning] = useState(false)
   const [importButtonPressed, setImportButtonPressed] = useState(false)
 

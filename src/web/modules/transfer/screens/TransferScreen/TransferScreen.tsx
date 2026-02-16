@@ -20,6 +20,7 @@ import SkeletonLoader from '@common/components/SkeletonLoader'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import useAddressInput from '@common/hooks/useAddressInput'
+import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useNavigation from '@common/hooks/useNavigation'
 import useToast from '@common/hooks/useToast'
@@ -28,12 +29,8 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { Content, Wrapper } from '@web/components/TransactionsScreen'
 import { createTab } from '@web/extension-services/background/webapi/tab'
-import useActivityControllerState from '@web/hooks/useActivityControllerState'
 import useHasGasTank from '@web/hooks/useHasGasTank'
-import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import useSyncedState from '@web/hooks/useSyncedState'
-import useTransferControllerState from '@web/hooks/useTransferControllerState'
 import BatchAdded from '@web/modules/sign-account-op/components/OneClick/BatchModal/BatchAdded'
 import Buttons from '@web/modules/sign-account-op/components/OneClick/Buttons'
 import Estimation from '@web/modules/sign-account-op/components/OneClick/Estimation'
@@ -51,7 +48,7 @@ const { isTab, isRequestWindow } = getUiType()
 const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   const { dispatch } = useControllersMiddleware()
   const { addToast } = useToast()
-  const { state } = useTransferControllerState()
+  const { state } = useController('TransferController')
   const {
     isTopUp,
     validationFormMsgs,
@@ -82,16 +79,18 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
 
   const { navigate } = useNavigation()
   const { t } = useTranslation()
-  const { visibleUserRequests } = useRequestsControllerState()
-  const { account, portfolio } = useSelectedAccountControllerState()
-  const { userRequests } = useRequestsControllerState()
+  const { visibleUserRequests } = useController('RequestsController').state
+  const {
+    state: { account, portfolio }
+  } = useController('SelectedAccountController')
+  const { userRequests } = useController('RequestsController').state
 
   const {
     ref: gasTankSheetRef,
     open: openGasTankInfoBottomSheet,
     close: closeGasTankInfoBottomSheet
   } = useModalize()
-  const { accountsOps } = useActivityControllerState()
+  const { accountsOps } = useController('ActivityController').state
   const { hasGasTank } = useHasGasTank({ account })
   const recipientMenuClosedAutomatically = useRef(false)
 

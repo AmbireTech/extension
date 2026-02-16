@@ -10,10 +10,10 @@ import {
 import { humanizeAccountOp } from '@ambire-common/libs/humanizer'
 import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import SkeletonLoader from '@common/components/SkeletonLoader'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING, SPACING_SM } from '@common/styles/spacings'
 import DelegationHumanization from '@web/components/DelegationHumanization'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import TransactionSummary, {
   sizeMultiplier
 } from '@web/modules/sign-account-op/components/TransactionSummary'
@@ -37,7 +37,7 @@ const SubmittedTransactionSummaryInner = ({
   defaultType
 }: Props) => {
   const { styles } = useTheme(getStyles)
-  const { networks } = useNetworksControllerState()
+  const { networks } = useController('NetworksController').state
 
   const network: Network | undefined = useMemo(
     () => networks.find((n) => n.chainId === submittedAccountOp.chainId),

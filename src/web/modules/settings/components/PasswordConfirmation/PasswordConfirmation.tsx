@@ -8,13 +8,13 @@ import Button from '@common/components/Button'
 import InputPassword from '@common/components/InputPassword'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import { useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useNavigation from '@common/hooks/useNavigation'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import textStyles from '@common/styles/utils/text'
-import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 
 interface Props {
   onPasswordConfirmed: (password: string) => void
@@ -33,7 +33,7 @@ const PasswordConfirmation: React.FC<Props> = ({
 }) => {
   const { t } = useTranslation()
   const { dispatch } = useControllersMiddleware()
-  const keystoreState = useKeystoreControllerState()
+  const keystoreState = useController('KeystoreController').state
   const inputRef = useRef<TextInput | null>(null)
   const { navigate } = useNavigation()
 

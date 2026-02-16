@@ -7,13 +7,12 @@ import OpenIcon from '@common/assets/svg/OpenIcon'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import NetworkIcon from '@common/components/NetworkIcon'
 import Text from '@common/components/Text'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { AnimatedPressable, DURATIONS, useCustomHover, useMultiHover } from '@web/hooks/useHover'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import { NO_BLOCK_EXPLORER_AVAILABLE_TOOLTIP } from '@web/modules/networks/components/NetworkBottomSheet'
 import getStyles from '@web/modules/networks/screens/styles'
 
@@ -26,8 +25,10 @@ interface Props {
 
 const Network: FC<Props> = ({ chainId, openBlockExplorer, openSettingsBottomSheet, onPress }) => {
   const { theme, styles } = useTheme(getStyles)
-  const { networks } = useNetworksControllerState()
-  const { portfolio, dashboardNetworkFilter } = useSelectedAccountControllerState()
+  const { networks } = useController('NetworksController').state
+  const {
+    state: { portfolio, dashboardNetworkFilter }
+  } = useController('SelectedAccountController')
   const [bindAnim, animStyle, isHovered, triggerHovered] = useMultiHover({
     values: [
       {

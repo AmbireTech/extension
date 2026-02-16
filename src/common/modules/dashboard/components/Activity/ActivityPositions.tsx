@@ -10,6 +10,7 @@ import Banner from '@common/components/Banner'
 import Button from '@common/components/Button'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
+import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import usePrevious from '@common/hooks/usePrevious'
 import useTheme from '@common/hooks/useTheme'
@@ -21,8 +22,6 @@ import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@web/extension-services/background/webapi/tab'
-import useActivityControllerState from '@web/hooks/useActivityControllerState'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import SubmittedTransactionSummary from '@web/modules/settings/components/TransactionHistory/SubmittedTransactionSummary'
 import { getUiType } from '@web/utils/uiType'
 
@@ -63,8 +62,10 @@ const ActivityPositions: FC<Props> = ({
   const { theme } = useTheme()
 
   const { dispatch } = useControllersMiddleware()
-  const { accountsOps, banners } = useActivityControllerState()
-  const { account, dashboardNetworkFilter } = useSelectedAccountControllerState()
+  const { accountsOps, banners } = useController('ActivityController').state
+  const {
+    state: { account, dashboardNetworkFilter }
+  } = useController('SelectedAccountController')
   const prevOpenTab = usePrevious(openTab)
 
   const currentAccountBanners = useMemo(() => {

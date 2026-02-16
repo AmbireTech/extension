@@ -4,11 +4,9 @@ import { ColorValue, View } from 'react-native'
 import { getCurrentAccountBanners } from '@ambire-common/libs/banners/banners'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
-import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useActivityControllerState from '@web/hooks/useActivityControllerState'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 
 import getStyles from './styles'
 import Tab from './Tab'
@@ -51,8 +49,10 @@ const TABS: {
 const Tabs: React.FC<Props> = ({ openTab, setOpenTab, handleChangeQuery }) => {
   const { styles, theme } = useTheme(getStyles)
 
-  const { banners } = useActivityControllerState()
-  const { account, banners: defiBanners } = useSelectedAccountControllerState()
+  const { banners } = useController('ActivityController').state
+  const {
+    state: { account, banners: defiBanners }
+  } = useController('SelectedAccountController')
 
   const currentDefiBanners = useMemo(
     () => getCurrentAccountBanners(defiBanners, account?.addr),

@@ -13,17 +13,16 @@ import { SectionedSelect } from '@common/components/Select'
 import { SelectValue } from '@common/components/Select/types'
 import Text from '@common/components/Text'
 import TitleAndIcon from '@common/components/TitleAndIcon'
+import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { ThemeProps } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
-import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControllerState'
 
 interface Props {
   toTokenOptions: SelectValue[]
-  toTokenValue: SelectValue
+  toTokenValue: SelectValue | undefined
   toTokenAmountSelectDisabled: boolean
   handleChangeToToken: (value: SelectValue) => void
   addToTokenByAddressStatus: ISwapAndBridgeController['statuses']['addToTokenByAddress']
@@ -80,8 +79,11 @@ const ToTokenSelect: React.FC<Props> = ({
 }) => {
   const { t } = useTranslation()
   const { theme, themeType } = useTheme()
-  const { errors, isTokenListLoading, toTokenSearchTerm } = useSwapAndBridgeControllerState()
-  const { portfolio } = useSelectedAccountControllerState()
+  const { errors, isTokenListLoading, toTokenSearchTerm } =
+    useController('SwapAndBridgeController').state
+  const {
+    state: { portfolio }
+  } = useController('SelectedAccountController')
   const [didAttemptSearchingTokenByAddress, setDidAttemptSearchingTokenByAddress] =
     React.useState(false)
   const { dispatch } = useControllersMiddleware()

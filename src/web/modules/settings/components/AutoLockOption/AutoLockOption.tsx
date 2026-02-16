@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 
 import CheckIcon from '@common/assets/svg/CheckIcon'
 import Text from '@common/components/Text'
+import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
@@ -13,7 +14,6 @@ import {
   AUTO_LOCK_TIMES,
   getAutoLockLabel
 } from '@web/extension-services/background/controllers/auto-lock'
-import useAutoLockStateController from '@web/hooks/useAutoLockStateController'
 import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
 
 type Props = {
@@ -24,7 +24,7 @@ const AutoLockOption: FC<Props> = ({ time }: Props) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { dispatch } = useControllersMiddleware()
-  const { autoLockTime } = useAutoLockStateController()
+  const { autoLockTime } = useController('AutoLockController').state
   const { addToast } = useToast()
   const isSelected = useMemo(() => autoLockTime === time, [autoLockTime, time])
 

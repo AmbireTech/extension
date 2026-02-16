@@ -8,12 +8,12 @@ import {
 } from '@ambire-common/interfaces/banner'
 import BatchIcon from '@common/assets/svg/BatchIcon'
 import Banner from '@common/components/Banner'
+import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useNavigation from '@common/hooks/useNavigation'
 import useToast from '@common/hooks/useToast'
 import DashboardBannerBottomSheet from '@common/modules/dashboard/components/DashboardBanners/DashboardBannerBottomSheet'
 import { ROUTES } from '@common/modules/router/constants/common'
-import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 
 const DashboardBanner = ({
   banner
@@ -24,7 +24,7 @@ const DashboardBanner = ({
   const { dispatch } = useControllersMiddleware()
   const { addToast } = useToast()
   const { navigate } = useNavigation()
-  const { visibleUserRequests } = useRequestsControllerState()
+  const { visibleUserRequests } = useController('RequestsController').state
   const { ref: sheetRef, close: closeBottomSheet, open: openBottomSheet } = useModalize()
   const primaryAction = actions[0]
 
