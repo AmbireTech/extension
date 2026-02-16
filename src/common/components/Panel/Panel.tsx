@@ -22,6 +22,7 @@ interface Props extends ViewProps {
   totalSteps?: number
   panelWidth?: number
   panelRef?: React.MutableRefObject<any>
+  innerStyle?: ViewStyle
 }
 
 export const getPanelPaddings = (
@@ -72,6 +73,7 @@ const Panel: React.FC<Props> = ({
   totalSteps = 2,
   panelWidth = 400,
   panelRef,
+  innerStyle,
   ...rest
 }) => {
   const { styles, theme } = useTheme(getStyles)
@@ -119,7 +121,8 @@ const Panel: React.FC<Props> = ({
               width: '100%',
               maxWidth: panelWidth,
               alignSelf: 'center'
-            }
+            },
+            innerStyle
           ]}
           {...rest}
         >
