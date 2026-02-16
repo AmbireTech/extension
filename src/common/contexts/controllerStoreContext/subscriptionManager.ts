@@ -17,9 +17,9 @@ type Unsubscribe = () => void
  *    triggering updates only when that specific slice changes.
  */
 export class SubscriptionManager {
-  private static instance: SubscriptionManager
+  static #instance: SubscriptionManager
 
-  private stores: Map<
+  #stores: Map<
     any,
     Map<
       string,
@@ -30,25 +30,16 @@ export class SubscriptionManager {
     >
   > = new Map()
 
-  constructor() {}
-
-  public static getInstance(): SubscriptionManager {
-    if (!SubscriptionManager.instance) {
-      SubscriptionManager.instance = new SubscriptionManager()
-    }
-    return SubscriptionManager.instance
-  }
-
-  public subscribe(
+  subscribe(
     id: string,
     listener: Listener,
     store: ControllerStore | ControllerHelpersStore,
     selector?: (state: any) => any
   ): Unsubscribe {
-    if (!this.stores.has(store)) {
-      this.stores.set(store, new Map())
+    if (!this.#stores.has(store)) {
+      this.#stores.set(store, new Map())
     }
-    const storeSubs = this.stores.get(store)!
+    const storeSubs = this.#stores.get(store)!
 
     if (!storeSubs.has(id)) {
       const unsub = store.subscribe(id, () => this.onStoreUpdate(id, store))
@@ -68,14 +59,14 @@ export class SubscriptionManager {
         subState.unsub()
         storeSubs.delete(id)
         if (storeSubs.size === 0) {
-          this.stores.delete(store)
+          this.#stores.delete(store)
         }
       }
     }
   }
 
   private onStoreUpdate(id: string, store: ControllerStore | ControllerHelpersStore) {
-    const storeSubs = this.stores.get(store)
+    const storeSubs = this.#stores.get(store)
     if (!storeSubs) return
 
     const subState = storeSubs.get(id)
@@ -95,7 +86,7 @@ export class SubscriptionManager {
     })
   }
 
-  public getSnapshot(
+  getSnapshot(
     id: string,
     store: ControllerStore | ControllerHelpersStore,
     selector?: (state: any) => any
