@@ -106,6 +106,7 @@ export class SignMessagePage extends BasePage {
     // Polygon is selected since Ethereum RPC verification fails in SigTool.
     // For testing purposes, this is not an issue because signing the same message
     // on Ethereum or Polygon yields an identical signature.
+    // TODO: Check is Polygon is needed in general, because in the sigtool is already fixed
     let selectedNetwork
     if (ledgerSimulatorControls) {
       selectedNetwork = this.page.locator('.networkName', { hasText: 'Ethereum' })

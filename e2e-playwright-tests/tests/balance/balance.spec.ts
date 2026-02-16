@@ -20,7 +20,8 @@ test.describe('Basic Account - Tokens balance check', { tag: '@balanceCheck' }, 
       [tokens.wallet.base, 1],
       // These tokens are used to pay fees in transactions, so we need more funds here:
       [tokens.usdc.base, 2],
-      [tokens.usdc.optimism, 2]
+      [tokens.usdc.optimism, 2],
+      [tokens.eth.optimism, 1]
     ]
 
     await pages.dashboard.checkBalances({

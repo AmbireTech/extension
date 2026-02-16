@@ -1,7 +1,9 @@
-import { KEYSTORE_PASS, ledgerParams } from 'constants/env'
+import { KEYSTORE_PASS, ledgerParams, SA_ADDRESS } from 'constants/env'
 import mainConstants from 'constants/mainConstants'
 import selectors from 'constants/selectors'
+import tokens from 'constants/tokens'
 import { test } from 'fixtures/pageObjects' // your extended test with auth
+import { runSimpleTransferFlow } from 'flows/transferFlow'
 
 import { expect } from '@playwright/test'
 
@@ -65,10 +67,24 @@ test.describe('ledger with storage', () => {
   })
 
   // SIGN MESSAGE TESTS
-  test.only('should sign plain message', async ({ pages }) => {
+  test('should sign plain message', async ({ pages }) => {
     const ledgerSimulatorControls = new SpeculosDevice({ baseUrl: LEDGER_SIMULATIUON_URL })
     const message = 'Hello, Ambire!'
 
     await pages.signMessage.signMessage(message, 'plain', ledgerSimulatorControls)
+  })
+
+  test.only('should send a transaction and pay with the current account gas tank', async ({
+    pages
+  }) => {
+    await runSimpleTransferFlow({
+      pages,
+      sendToken: tokens.usdc.optimism,
+      recipientAddress: SA_ADDRESS,
+      feeToken: tokens.eth.optimism,
+      payWithGasTank: false,
+      message: 'Transfer done!',
+      assertNoInitialTx: true
+    })
   })
 })
