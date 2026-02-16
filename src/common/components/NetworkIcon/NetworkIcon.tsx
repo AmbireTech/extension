@@ -65,7 +65,7 @@ const NetworkIcon = ({
     [networkName, network]
   )
 
-  const iconScale = useMemo(() => scale || (size < 28 ? 0.8 : 0.6), [size, scale])
+  const iconScale = useMemo(() => scale || 0.8, [scale])
 
   const { theme, themeType } = useTheme()
   const Icon = icons[networkName]

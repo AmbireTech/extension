@@ -22,7 +22,9 @@ const ModalHeader: FC<Props> = ({ handleClose, title, style, children }) => {
     >
       {withSideContainers && (
         <Header.Container side="left">
-          {handleClose && <Header.BackButton onGoBackPress={handleClose} forceBack />}
+          {handleClose && (
+            <Header.BackButton onGoBackPress={handleClose} forceBack displayIn="always" />
+          )}
         </Header.Container>
       )}
       {/* We are making the title absolute to be able to fit different sized elements on the right

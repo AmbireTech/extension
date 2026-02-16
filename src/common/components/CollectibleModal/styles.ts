@@ -12,7 +12,7 @@ interface Style {
 
 const { isTab } = getUiType()
 
-export const COLLECTIBLE_IMAGE_SIZE = isTab ? 400 : 300
+export const COLLECTIBLE_IMAGE_SIZE = 300
 
 const getStyles = () =>
   StyleSheet.create<Style>({

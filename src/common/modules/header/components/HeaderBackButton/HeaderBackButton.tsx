@@ -13,7 +13,7 @@ const { isPopup, isTab, isRequestWindow } = getUiType()
 export type DisplayIn = 'popup' | 'tab' | 'request-window' | 'always' | 'never'
 
 const HeaderBackButton = ({
-  displayIn = 'popup',
+  displayIn = 'always',
   onGoBackPress,
   forceBack,
   color

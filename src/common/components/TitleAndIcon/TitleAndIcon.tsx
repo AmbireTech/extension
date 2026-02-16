@@ -26,7 +26,7 @@ const TitleAndIcon = ({
         flexbox.directionRow,
         flexbox.alignCenter,
         flexbox.justifySpaceBetween,
-        spacings.pt,
+        spacings.ptTy,
         spacings.phSm,
         spacings.pbTy,
         { backgroundColor: theme.primaryBackground },

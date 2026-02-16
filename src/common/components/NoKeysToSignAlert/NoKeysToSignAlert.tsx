@@ -14,9 +14,6 @@ import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import AddAccount from '@web/modules/account-select/components/AddAccount'
-import { getUiType } from '@web/utils/uiType'
-
-import BottomSheet from '../BottomSheet'
 
 interface Props {
   style?: ViewStyle
@@ -90,15 +87,7 @@ const NoKeysToSignAlert: FC<Props> = ({ style, isTransaction = true, type = 'lon
         showExportImport
         openAddAccountBottomSheet={openAddAccounts}
       />
-      <BottomSheet
-        id="no-key-add-account"
-        sheetRef={addAccountsRef}
-        adjustToContentHeight={!getUiType().isPopup}
-        closeBottomSheet={closeBottomSheet}
-        scrollViewProps={{ showsVerticalScrollIndicator: false }}
-      >
-        <AddAccount handleClose={closeAddAccounts as any} />
-      </BottomSheet>
+      <AddAccount sheetRef={sheetRef} closeBottomSheet={closeBottomSheet} />
     </View>
   )
 }
