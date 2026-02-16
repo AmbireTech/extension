@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import { humanizeMessage } from '@ambire-common/libs/humanizer'
-import ErrorOutlineIcon from '@common/assets/svg/ErrorOutlineIcon'
+import WarningIcon from '@common/assets/svg/WarningIcon'
 import Alert from '@common/components/Alert'
 import ExpandableCard from '@common/components/ExpandableCard'
 import HumanizedVisualization from '@common/components/HumanizedVisualization'
@@ -13,7 +13,6 @@ import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import spacings, { SPACING_LG, SPACING_MD, SPACING_TY } from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import { TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
 import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
@@ -152,9 +151,10 @@ const Main = ({
                       marginRight: SPACING_TY * responsiveSizeMultiplier
                     }}
                   >
-                    <ErrorOutlineIcon
+                    <WarningIcon
                       width={24 * responsiveSizeMultiplier}
                       height={24 * responsiveSizeMultiplier}
+                      color={theme.warningText}
                     />
                   </View>
                   <Text fontSize={14 * responsiveSizeMultiplier} appearance="warningText">
