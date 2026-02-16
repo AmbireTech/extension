@@ -4,9 +4,9 @@ import { View } from 'react-native'
 
 import { Hex } from '@ambire-common/interfaces/hex'
 import { Network } from '@ambire-common/interfaces/network'
+import useController from '@common/hooks/useController'
 import spacings from '@common/styles/spacings'
 import DelegationHumanization from '@web/components/DelegationHumanization'
-import useSignAccountOpControllerState from '@web/hooks/useSignAccountOpControllerState'
 import TransactionSummary from '@web/modules/sign-account-op/components/TransactionSummary'
 
 import SafetyChecksBanner from '../SafetyChecksBanner'
@@ -20,7 +20,7 @@ interface Props {
 
 const PendingTransactions: FC<Props> = ({ network, setDelegation, delegatedContract }) => {
   const { t } = useTranslation()
-  const { humanization, banners } = useSignAccountOpControllerState() || {}
+  const { humanization, banners } = useController('SignAccountOpController').state || {}
 
   return (
     <View style={spacings.mbLg}>
@@ -45,7 +45,7 @@ const PendingTransactions: FC<Props> = ({ network, setDelegation, delegatedContr
         humanization.map((call, i) => (
           <TransactionSummary
             key={call.id}
-            style={i !== humanization.length - 1 ? spacings.mbTy : {}}
+            style={i !== (humanization?.length || 0) - 1 ? spacings.mbTy || {} : {}}
             call={call}
             chainId={network.chainId}
             index={i}

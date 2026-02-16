@@ -5,15 +5,15 @@ import { View } from 'react-native'
 import { Sponsor } from '@ambire-common/libs/erc7677/types'
 import ManifestFallbackIcon from '@common/assets/svg/ManifestFallbackIcon'
 import Text from '@common/components/Text'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import ManifestImage from '@web/components/ManifestImage'
-import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 
 const Sponsored = ({ sponsor }: { sponsor?: Sponsor }) => {
   const { t } = useTranslation()
-  const { currentUserRequest } = useRequestsControllerState()
+  const { currentUserRequest } = useController('RequestsController').state
   const { theme } = useTheme()
 
   return (

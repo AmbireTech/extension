@@ -22,16 +22,13 @@ import { SelectValue } from '@common/components/Select/types'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
-import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
-import useActivityControllerState from '@web/hooks/useActivityControllerState'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import SettingsPageHeader from '@web/modules/settings/components/SettingsPageHeader'
 import { SettingsRoutesContext } from '@web/modules/settings/contexts/SettingsRoutesContext'
 
@@ -59,10 +56,12 @@ const ALL_NETWORKS_OPTION = {
 }
 
 const HistorySettingsPage: FC<Props> = ({ HistoryComponent, historyType, sessionId }) => {
-  const { networks } = useNetworksControllerState()
-  const activityState = useActivityControllerState()
-  const { accounts } = useAccountsControllerState()
-  const { account: accountData } = useSelectedAccountControllerState()
+  const { networks } = useController('NetworksController').state
+  const activityState = useController('ActivityController').state
+  const { accounts } = useController('AccountsController').state
+  const {
+    state: { account: accountData }
+  } = useController('SelectedAccountController')
   const { dispatch } = useControllersMiddleware()
   const [page, setPage] = useState(1)
   const { t } = useTranslation()
@@ -80,8 +79,8 @@ const HistorySettingsPage: FC<Props> = ({ HistoryComponent, historyType, session
       ? activityState.signedMessages?.[sessionId]?.result.itemsTotal
       : activityState.accountsOps?.[sessionId]?.result.itemsTotal) || 0
 
-  const [account, setAccount] = useState<Account>(
-    accounts.filter((acc) => acc.addr === accountData?.addr)[0]
+  const [account, setAccount] = useState<Account | undefined>(
+    accounts.find((acc) => acc.addr === accountData?.addr)
   )
   const [network, setNetwork] = useState<Network | null>(null)
 
@@ -107,16 +106,16 @@ const HistorySettingsPage: FC<Props> = ({ HistoryComponent, historyType, session
 
   const isLoading = useMemo(() => {
     if (historyType === 'messages') {
-      return account.addr !== activityState.signedMessages[sessionId]?.filters.account
+      return account?.addr !== activityState.signedMessages[sessionId]?.filters.account
     }
 
     // Loading check for history type = 'transactions'
     return (
-      account.addr !== activityState.accountsOps[sessionId]?.filters.account ||
+      account?.addr !== activityState.accountsOps[sessionId]?.filters.account ||
       network?.chainId !== activityState.accountsOps[sessionId]?.filters.chainId
     )
   }, [
-    account.addr,
+    account?.addr,
     activityState.signedMessages,
     activityState.accountsOps,
     sessionId,
@@ -144,7 +143,7 @@ const HistorySettingsPage: FC<Props> = ({ HistoryComponent, historyType, session
         }
       }
     })
-  }, [dispatch, account.addr, network, page, sessionId, historyType])
+  }, [dispatch, account?.addr, network, page, sessionId, historyType])
 
   useEffect(() => {
     // Initialize the port session. This is necessary to automatically terminate the session when the tab is closed.
@@ -198,7 +197,7 @@ const HistorySettingsPage: FC<Props> = ({ HistoryComponent, historyType, session
         setNetwork(null)
         return
       }
-      setNetwork(networks.filter((n) => n.name === networkOption.value)[0])
+      setNetwork(networks.filter((n) => n.name === networkOption.value)[0] ?? null)
     },
     [networks]
   )
@@ -206,6 +205,14 @@ const HistorySettingsPage: FC<Props> = ({ HistoryComponent, historyType, session
   const goToNextPageDisabled = useMemo(() => {
     return ITEMS_PER_PAGE * page - itemsTotal >= 0
   }, [itemsTotal, page])
+
+  if (!account) {
+    return (
+      <View style={[flexbox.flex1, flexbox.center]}>
+        <Spinner />
+      </View>
+    )
+  }
 
   return (
     <>
@@ -217,7 +224,7 @@ const HistorySettingsPage: FC<Props> = ({ HistoryComponent, historyType, session
           setValue={handleSetAccountValue}
           containerStyle={{ width: maxWidthSize('xl') ? 420 : 340, ...spacings.mr }}
           options={accountsOptions}
-          value={accountsOptions.filter((opt) => opt.value === account.addr)[0]}
+          value={accountsOptions.find((opt) => opt.value === account.addr)}
           selectStyle={
             themeType === THEME_TYPES.DARK ? { backgroundColor: theme.tertiaryBackground } : {}
           }
@@ -228,7 +235,7 @@ const HistorySettingsPage: FC<Props> = ({ HistoryComponent, historyType, session
             containerStyle={{ width: 260 }}
             options={networksOptions}
             value={
-              networksOptions.filter((opt) => opt.value === network?.name)[0] ?? ALL_NETWORKS_OPTION
+              networksOptions.find((opt) => opt.value === network?.name) ?? ALL_NETWORKS_OPTION
             }
             selectStyle={
               themeType === THEME_TYPES.DARK ? { backgroundColor: theme.tertiaryBackground } : {}

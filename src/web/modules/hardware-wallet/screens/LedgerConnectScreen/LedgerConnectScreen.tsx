@@ -8,6 +8,7 @@ import Button from '@common/components/Button'
 import Panel from '@common/components/Panel'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
@@ -23,14 +24,12 @@ import {
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import { closeCurrentWindow } from '@web/extension-services/background/webapi/window'
-import useAccountPickerControllerState from '@web/hooks/useAccountPickerControllerState'
-import useMainControllerState from '@web/hooks/useMainControllerState'
 import useLedger from '@web/modules/hardware-wallet/hooks/useLedger'
 
 export const CARD_WIDTH = 400
 
 const LedgerConnectScreen = () => {
-  const mainCtrlState = useMainControllerState()
+  const mainCtrlState = useController('MainController').state
   const { requestLedgerDeviceAccess } = useLedger()
   const { addToast } = useToast()
   const { t } = useTranslation()
@@ -38,7 +37,7 @@ const LedgerConnectScreen = () => {
   const { theme } = useTheme()
   const { goToPrevRoute, goToNextRoute } = useOnboardingNavigation()
   const { dispatch } = useControllersMiddleware()
-  const { initParams, type } = useAccountPickerControllerState()
+  const { initParams, type } = useController('AccountPickerController').state
   const [authorizeButtonPressed, setAuthorizeButtonPressed] = useState(false)
   const route = useRoute()
   const { minHeightSize } = useWindowSize()

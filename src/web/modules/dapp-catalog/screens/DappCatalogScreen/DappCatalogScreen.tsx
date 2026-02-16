@@ -19,14 +19,12 @@ import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
 import useDebounce from '@common/hooks/useDebounce'
 import useTheme from '@common/hooks/useTheme'
-import useWindowSize from '@common/hooks/useWindowSize'
 import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
 import spacings, { SPACING_MI, SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import LayoutWrapper from '@web/components/LayoutWrapper'
 import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import DappItem from '@web/modules/dapp-catalog/components/DappItem'
 import { getUiType } from '@web/utils/uiType'
 
@@ -73,7 +71,7 @@ const DappCatalogScreen = () => {
   const [category, setCategory] = useState<string | null>(null)
   const [favoritesSelected, setFavoritesSelected] = useState(false)
   const [connectedSelected, setConnectedSelected] = useState(false)
-  const { allNetworks } = useNetworksControllerState()
+  const { networks: allNetworks } = useController('NetworksController').state
   const { theme } = useTheme()
 
   const searchableDapps = useMemo(

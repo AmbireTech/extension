@@ -7,16 +7,13 @@ import Recipient from '@common/components/Recipient'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import SendToken from '@common/components/SendToken'
 import SkeletonLoader from '@common/components/SkeletonLoader'
-import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useAddressInput from '@common/hooks/useAddressInput'
+import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useGetTokenSelectProps from '@common/hooks/useGetTokenSelectProps'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
-import useTransferControllerState from '@web/hooks/useTransferControllerState'
 import useSimulationError from '@web/modules/portfolio/hooks/SimulationError/useSimulationError'
 import { getTokenId } from '@web/utils/token'
 import { getUiType } from '@web/utils/uiType'
@@ -51,22 +48,25 @@ const SendForm = ({
 }) => {
   const { validation } = addressInputState
   const {
-    state,
-    state: { tokens }
-  } = useTransferControllerState()
+    state: {
+      tokens,
+      maxAmount,
+      amountFieldMode,
+      amountInFiat,
+      selectedToken,
+      isTopUp,
+      addressState,
+      amount: controllerAmount,
+      areDefaultsSet
+    }
+  } = useController('TransferController')
   const { dispatch } = useControllersMiddleware()
-  const { portfolio } = useSelectedAccountControllerState()
   const {
-    maxAmount,
-    amountFieldMode,
-    amountInFiat,
-    selectedToken,
-    isTopUp,
-    addressState,
-    amount: controllerAmount
-  } = state
+    state: { portfolio }
+  } = useController('SelectedAccountController')
+
   const { t } = useTranslation()
-  const { networks } = useNetworksControllerState()
+  const { networks } = useController('NetworksController').state
   const amountIsError = amountErrorSeverity === 'error' && !!amountErrorMessage
 
   const {
@@ -142,9 +142,7 @@ const SendForm = ({
         )}
       </View>
 
-      {(!state.selectedToken && tokens.length) ||
-      !portfolio?.isReadyToVisualize ||
-      !state.areDefaultsSet ? (
+      {(!selectedToken && tokens.length) || !portfolio?.isReadyToVisualize || !areDefaultsSet ? (
         <SkeletonLoader width="100%" height={115} />
       ) : (
         <SendToken

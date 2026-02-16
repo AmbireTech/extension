@@ -14,6 +14,7 @@ import Checkbox from '@common/components/Checkbox'
 import Editable from '@common/components/Editable'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import Text from '@common/components/Text'
+import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
@@ -24,7 +25,6 @@ import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { setStringAsync } from '@common/utils/clipboard'
 import eventBus from '@web/extension-services/event/eventBus'
-import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 import PasswordConfirmation from '@web/modules/settings/components/PasswordConfirmation'
 
 import getStyles from './styles'
@@ -44,7 +44,7 @@ const ManageRecoveryPhrase = ({
 }) => {
   const { dispatch } = useControllersMiddleware()
   const [deleteSeedIsConfirmed, setDeleteSeedIsConfirmed] = useState<boolean>(false)
-  const keystoreState = useKeystoreControllerState()
+  const keystoreState = useController('KeystoreController').state
   const [seed, setSeed] = useState<string | null>(DUMMY_SEED)
   const [seedPassphrase, setSeedPassphrase] = useState<string | null>(null)
   const [blurred, setBlurred] = useState<boolean>(true)

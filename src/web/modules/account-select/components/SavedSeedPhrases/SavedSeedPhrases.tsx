@@ -7,6 +7,7 @@ import SettingsWheelIcon from '@common/assets/svg/SettingsWheelIcon'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Button from '@common/components/Button'
 import Text from '@common/components/Text'
+import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
@@ -16,20 +17,16 @@ import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
-import useAccountPickerControllerState from '@web/hooks/useAccountPickerControllerState'
-import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
-import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
-import useStorageControllerState from '@web/hooks/useStorageControllerState'
 import Account from '@web/modules/account-select/components/Account'
 
 const SavedSeedPhrases = ({ handleClose }: { handleClose: () => void }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { statuses } = useStorageControllerState()
-  const { accounts } = useAccountsControllerState()
-  const { seeds, keys } = useKeystoreControllerState()
+  const { statuses } = useController('StorageController').state
+  const { accounts } = useController('AccountsController').state
+  const { seeds, keys } = useController('KeystoreController').state
   const { dispatch } = useControllersMiddleware()
-  const { subType, initParams } = useAccountPickerControllerState()
+  const { subType, initParams } = useController('AccountPickerController').state
   const [addAccountButtonPressed, setAddAccountButtonPressed] = useState(false)
   const { goToNextRoute } = useOnboardingNavigation()
   const { navigate } = useNavigation()
@@ -64,7 +61,9 @@ const SavedSeedPhrases = ({ handleClose }: { handleClose: () => void }) => {
   const renderItem = ({
     item,
     index
-  }: ListRenderItemInfo<ReturnType<typeof useKeystoreControllerState>['seeds'][number]>) => {
+  }: ListRenderItemInfo<
+    ReturnType<typeof useController<'KeystoreController'>>['state']['seeds'][number]
+  >) => {
     const seedAccounts = getAccountsForSeed(item.id) || []
 
     return (

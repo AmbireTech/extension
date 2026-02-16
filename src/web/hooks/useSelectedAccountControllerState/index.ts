@@ -1,3 +1,0 @@
-import useSelectedAccountControllerState from './useSelectedAccountControllerState'
-
-export default useSelectedAccountControllerState

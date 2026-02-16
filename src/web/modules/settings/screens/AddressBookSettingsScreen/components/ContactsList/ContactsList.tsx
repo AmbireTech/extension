@@ -18,7 +18,6 @@ import useDebounce from '@common/hooks/useDebounce'
 import useWindowSize from '@common/hooks/useWindowSize'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useAddressBookControllerState from '@web/hooks/useAddressBookControllerState'
 import SettingsPageHeader from '@web/modules/settings/components/SettingsPageHeader'
 
 import AddContactFormModal from '../AddContactFormModal'
@@ -30,7 +29,7 @@ const ContactsList = () => {
     open: openAddContactForm,
     close: closeAddContactForm
   } = useModalize()
-  const { contacts } = useAddressBookControllerState()
+  const { contacts } = useController('AddressBookController').state
   const {
     state: { domains }
   } = useController('DomainsController')

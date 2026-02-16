@@ -8,6 +8,7 @@ import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import Button from '@common/components/Button'
 import Panel from '@common/components/Panel'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Header'
@@ -17,8 +18,6 @@ import {
   TabLayoutContainer,
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import useAccountPickerControllerState from '@web/hooks/useAccountPickerControllerState'
-import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
 import AccountsOnPageList from '@web/modules/account-picker/components/AccountsOnPageList'
 import ChangeHdPath from '@web/modules/account-picker/components/ChangeHdPath'
 import useAccountPicker from '@web/modules/account-picker/hooks/useAccountPicker/useAccountPicker'
@@ -37,8 +36,8 @@ const AccountPickerScreen = () => {
   const { t } = useTranslation()
   const { theme } = useTheme()
 
-  const accountPickerState = useAccountPickerControllerState()
-  const { accounts } = useAccountsControllerState()
+  const accountPickerState = useController('AccountPickerController').state
+  const { accounts } = useController('AccountsController').state
   const { isReady, onImportReady, setPage } = useAccountPicker()
   const { goToPrevRoute } = useOnboardingNavigation()
 

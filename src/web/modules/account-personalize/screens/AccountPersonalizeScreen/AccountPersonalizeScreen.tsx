@@ -11,6 +11,7 @@ import Panel from '@common/components/Panel'
 import SuccessAnimation from '@common/components/SuccessAnimation'
 import Text from '@common/components/Text'
 import { Trans, useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
@@ -26,9 +27,6 @@ import {
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import { createTab } from '@web/extension-services/background/webapi/tab'
-import useAccountPickerControllerState from '@web/hooks/useAccountPickerControllerState'
-import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
-import useWalletStateController from '@web/hooks/useWalletStateController'
 import AccountPersonalizeCard from '@web/modules/account-personalize/components/AccountPersonalizeCard'
 import AccountsLoadingAnimation from '@web/modules/account-personalize/components/AccountsLoadingAnimation'
 import AccountsLoadingDotsAnimation from '@web/modules/account-personalize/components/AccountsLoadingDotsAnimation'
@@ -44,10 +42,9 @@ const AccountPersonalizeScreen = () => {
     useOnboardingNavigation()
   const { theme } = useTheme(getStyles)
   const { dispatch } = useControllersMiddleware()
-  const accountPickerState = useAccountPickerControllerState()
-  const accountsState = useAccountsControllerState()
-  const { accounts } = useAccountsControllerState()
-  const { isSetupComplete } = useWalletStateController()
+  const accountPickerState = useController('AccountPickerController').state
+  const { statuses, accounts } = useController('AccountsController').state
+  const { isSetupComplete } = useController('WalletStateController').state
   const { addToast } = useToast()
   const initPassed = useRef(false)
   const newlyAddedAccounts = useMemo(() => accounts.filter((a) => a.newlyAdded) || [], [accounts])
@@ -209,7 +206,7 @@ const AccountPersonalizeScreen = () => {
     accountPickerState.addedAccountsFromCurrentSession,
     accountsToPersonalize.length,
     newlyAddedAccounts,
-    accountsState.statuses.addAccounts,
+    statuses.addAccounts,
     setAccountsToPersonalize,
     goToNextRoute
   ])

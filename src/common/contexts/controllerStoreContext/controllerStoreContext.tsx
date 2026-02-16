@@ -12,6 +12,7 @@ import eventBus from '@web/extension-services/event/eventBus'
 
 import { ControllerHelpersStore } from './controllerHelpersStore'
 import { ControllerStore } from './controllerStore'
+import { SubscriptionManager } from './subscriptionManager'
 import { controllerStoreContextDefaults, ControllerStoreContextReturnType } from './types'
 
 export const ControllerStoreContext = createContext<ControllerStoreContextReturnType>(
@@ -35,6 +36,8 @@ export const ControllerStoreProvider: React.FC<{
         }
       })
   )
+
+  const [subscriptionManager] = useState(() => new SubscriptionManager())
 
   const [controllerHelpersStore] = useState(() => new ControllerHelpersStore())
 
@@ -89,9 +92,7 @@ export const ControllerStoreProvider: React.FC<{
             addToast(lastError.message, { timeout: 12000, type: 'error' })
           }
 
-        console.error(
-          `Error in ${newState.controller} controller. Inspect background page to see the full stack trace.`
-        )
+        console.error(`Error in ${newState.controller} controller: ${lastError.message}`)
       }
     }
 
@@ -123,10 +124,17 @@ export const ControllerStoreProvider: React.FC<{
         () => ({
           controllerStore,
           controllerHelpersStore,
+          subscriptionManager,
           isStoreReady,
           debounceControllerUpdates
         }),
-        [controllerStore, controllerHelpersStore, isStoreReady, debounceControllerUpdates]
+        [
+          controllerStore,
+          controllerHelpersStore,
+          subscriptionManager,
+          isStoreReady,
+          debounceControllerUpdates
+        ]
       )}
     >
       {children}

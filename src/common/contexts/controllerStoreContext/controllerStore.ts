@@ -4,12 +4,16 @@ import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
 import { AllControllersMappingType } from '@common/constants/controllersMapping'
 import { isExtension } from '@web/constants/browserapi'
 
+const MAX_LOADING_TIME = 10000
+
 export class ControllerStore {
+  isReady = false
+
   #states: Partial<AllControllersMappingType> = {}
 
-  #listeners: Map<string, Set<() => void>> = new Map()
+  #listeners: Map<string, Set<(eventData?: any) => void>> = new Map()
 
-  #controllersByName: (keyof AllControllersMappingType)[] = []
+  controllersByName: (keyof AllControllersMappingType)[] = []
 
   #onReady: () => void
 
@@ -17,6 +21,12 @@ export class ControllerStore {
 
   constructor({ onReady }: { onReady: () => void }) {
     this.#onReady = onReady
+
+    setTimeout(() => {
+      if (!this.isReady && this.#listeners.has('events')) {
+        this.#listeners.get('events')!.forEach((cb) => cb('controllersLoadingTakingTooLong'))
+      }
+    }, MAX_LOADING_TIME)
   }
 
   // Track which controllers have received their first update
@@ -26,7 +36,7 @@ export class ControllerStore {
     allControllersByName: (keyof AllControllersMappingType)[],
     onInitReady: (allControllersByName: (keyof AllControllersMappingType)[]) => void
   ) {
-    this.#controllersByName = allControllersByName
+    this.controllersByName = allControllersByName
     onInitReady(allControllersByName)
     this.#checkReadiness()
   }
@@ -82,10 +92,20 @@ export class ControllerStore {
     return this.#states[id] || (ControllerStore.#EMPTY_STATE as AllControllersMappingType[K])
   }
 
+  getAllSnapshots(): Partial<AllControllersMappingType> {
+    return this.#states
+  }
+
+  addEventsListener(listener: (eventData?: any) => void) {
+    if (!this.#listeners.has('events')) this.#listeners.set('events', new Set())
+    this.#listeners.get('events')!.add(listener)
+    return () => this.#listeners.get('events')?.delete(listener)
+  }
+
   #checkReadiness() {
-    if (!this.#controllersByName.length) return
+    if (!this.controllersByName.length) return
     // Check if every required controller exists in the initialized set
-    const allReady = Array.from(this.#controllersByName).every((ctrlName) => {
+    const allReady = Array.from(this.controllersByName).every((ctrlName) => {
       if (!this.initializedControllers.has(ctrlName)) return false
 
       if ('isReady' in (this.#states?.[ctrlName] || {})) {
@@ -95,6 +115,12 @@ export class ControllerStore {
       return true
     })
 
-    if (allReady) !!this.#onReady && this.#onReady()
+    if (allReady) {
+      this.isReady = true
+      if (this.#listeners.has('events')) {
+        this.#listeners.get('events')!.forEach((cb) => cb('controllersReady'))
+      }
+      !!this.#onReady && this.#onReady()
+    }
   }
 }

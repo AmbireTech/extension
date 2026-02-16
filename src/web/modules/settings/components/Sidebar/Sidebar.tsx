@@ -19,6 +19,7 @@ import SignedMessageIcon from '@common/assets/svg/SignedMessageIcon'
 import TransactionHistoryIcon from '@common/assets/svg/TransactionHistoryIcon'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
+import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
@@ -26,7 +27,6 @@ import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
-import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 import SettingsLink from '@web/modules/settings/components/SettingsLink'
 
 import getStyles from './styles'
@@ -133,7 +133,7 @@ const OTHER_LINKS = [
 ]
 
 const Sidebar = ({ activeLink }: { activeLink?: string }) => {
-  const keystoreState = useKeystoreControllerState()
+  const keystoreState = useController('KeystoreController').state
   const { theme, themeType, styles } = useTheme(getStyles)
   const { state } = useRoute()
   const { navigate } = useNavigation()

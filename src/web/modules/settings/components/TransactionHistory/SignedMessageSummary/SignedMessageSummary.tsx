@@ -9,11 +9,11 @@ import ExpandableCard from '@common/components/ExpandableCard'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import HumanizedVisualization from '@common/components/HumanizedVisualization/HumanizedVisualization'
 import Text from '@common/components/Text'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import ManifestImage from '@web/components/ManifestImage'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import FallbackVisualization from '@web/modules/sign-message/screens/SignMessageScreen/FallbackVisualization'
 
 import getStyles from './styles'
@@ -25,7 +25,7 @@ interface Props {
 
 const SignedMessageSummary = ({ signedMessage, style }: Props) => {
   const { styles } = useTheme(getStyles)
-  const { networks } = useNetworksControllerState()
+  const { networks } = useController('NetworksController').state
 
   const humanizedMessage = useMemo(() => {
     return humanizeMessage(signedMessage)
