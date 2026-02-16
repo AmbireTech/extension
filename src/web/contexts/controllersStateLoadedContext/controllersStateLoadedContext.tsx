@@ -17,7 +17,7 @@ const ControllersStateLoadedContext = createContext<ControllersStateLoadedContex
 })
 
 const { isPopup } = getUiType()
-const MIN_LOADING_TIME = 400
+const MIN_LOADING_TIME = 300
 
 const ControllersStateLoadedProvider = ({ children }: { children: ReactNode }) => {
   const startTimeRef = useRef(Date.now())

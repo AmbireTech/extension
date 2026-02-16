@@ -44,9 +44,7 @@ const NetworkIcon = ({
   name,
   ...rest
 }: Props) => {
-  const {
-    state: { allNetworks }
-  } = useController('NetworksController')
+  const { state: allNetworks } = useController('NetworksController', (state) => state.allNetworks)
 
   const network = useMemo(() => {
     return benzinNetwork ?? allNetworks.find((n) => n.chainId.toString() === id)

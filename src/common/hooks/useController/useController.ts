@@ -51,7 +51,7 @@ export type DispatchAndWait<K extends keyof AllControllersMappingType> = <
   }
 }) => Promise<R>
 
-interface BaseControllerReturn<K extends keyof AllControllersMappingType> {
+interface BaseControllerReturn<K extends keyof AllControllersMappingType, S> {
   /**
    * We have to handle SignAccountOpController separately because it can be null
    * because it is a dynamic controller that exists only when a window with sign
@@ -60,33 +60,52 @@ interface BaseControllerReturn<K extends keyof AllControllersMappingType> {
    * Rest of the controllers are static and exist in the controllerStore from the start
    * and once isStoreReady is true, we can be sure that their states are initialized.
    */
-  state: K extends 'SignAccountOpController'
-    ? AllControllersMappingType[K] | null
-    : AllControllersMappingType[K]
+  state: S
   dispatch: Dispatch<K>
   dispatchAndWait: DispatchAndWait<K>
 }
 
-type UseControllerReturn<K extends keyof AllControllersMappingType> = BaseControllerReturn<K> &
+type UseControllerReturn<K extends keyof AllControllersMappingType, S> = BaseControllerReturn<
+  K,
+  S
+> &
   (K extends keyof ControllerHelpersMapping ? ControllerHelpersMapping[K] : {})
+
+type DefaultState<K extends keyof AllControllersMappingType> = K extends 'SignAccountOpController'
+  ? AllControllersMappingType[K] | null
+  : AllControllersMappingType[K]
 
 export default function useController<K extends keyof AllControllersMappingType>(
   id: K
-): UseControllerReturn<K> {
+): UseControllerReturn<K, DefaultState<K>>
+
+export default function useController<K extends keyof AllControllersMappingType, S>(
+  id: K,
+  selector: (state: AllControllersMappingType[K]) => S
+): UseControllerReturn<K, S>
+
+export default function useController<
+  K extends keyof AllControllersMappingType,
+  S = AllControllersMappingType[K]
+>(id: K, selector?: (state: AllControllersMappingType[K]) => S): UseControllerReturn<K, S> {
   const controllersMiddleware = useContext(ControllersMiddlewareContext)
 
   if (!controllersMiddleware) {
     throw new Error('useController must be used within ControllersMiddlewareProvider')
   }
 
-  const { controllerStore, controllerHelpersStore, isStoreReady } = useControllerStore()
+  const { controllerStore, controllerHelpersStore, subscriptionManager, isStoreReady } =
+    useControllerStore()
   const { dispatch: controllersMiddlewareDispatch } = controllersMiddleware
 
   // Create the error object here to capture the stack trace of the call site (the component using this hook)
-  const missingControllerError = useMemo(
-    () => new Error(`A controller with name ${id} does not exist in the controllerStore.`),
-    [id]
-  )
+  const missingControllerError = useMemo(() => {
+    if (id === 'NetworksController') {
+      console.count('a')
+      console.log(new Error(`A controller with name ${id} does not exist in the controllerStore.`))
+    }
+    return new Error(`A controller with name ${id} does not exist in the controllerStore.`)
+  }, [id])
 
   useEffect(() => {
     if (id === 'SignAccountOpController') return
@@ -97,13 +116,25 @@ export default function useController<K extends keyof AllControllersMappingType>
   }, [controllerStore, id, isStoreReady, missingControllerError])
 
   const state = useSyncExternalStore(
-    useCallback((cb) => controllerStore.subscribe(id, cb), [id, controllerStore]),
-    useCallback(() => controllerStore.getSnapshot(id), [id, controllerStore])
-  ) as AllControllersMappingType[K]
+    useCallback(
+      (cb) => subscriptionManager.subscribe(id, cb, controllerStore, selector),
+      [id, controllerStore, selector, subscriptionManager]
+    ),
+    useCallback(
+      () => subscriptionManager.getSnapshot(id, controllerStore, selector),
+      [id, controllerStore, selector, subscriptionManager]
+    )
+  ) as S
 
   const helpers = useSyncExternalStore(
-    useCallback((cb) => controllerHelpersStore.subscribe(id, cb), [id, controllerHelpersStore]),
-    useCallback(() => controllerHelpersStore.getSnapshot(id), [id, controllerHelpersStore])
+    useCallback(
+      (cb) => subscriptionManager.subscribe(id, cb, controllerHelpersStore),
+      [id, controllerHelpersStore, subscriptionManager]
+    ),
+    useCallback(
+      () => subscriptionManager.getSnapshot(id, controllerHelpersStore),
+      [id, controllerHelpersStore, subscriptionManager]
+    )
   )
 
   const dispatch = useCallback(
@@ -173,11 +204,15 @@ export default function useController<K extends keyof AllControllersMappingType>
     [controllersMiddlewareDispatch, id]
   )
 
-  let stateToReturn: BaseControllerReturn<K>['state'] = (state ||
-    {}) as BaseControllerReturn<K>['state']
+  let stateToReturn: any = state || {}
 
-  if (id === 'SignAccountOpController') {
-    stateToReturn = (Object.keys(state).length ? state : null) as BaseControllerReturn<K>['state']
+  if (id === 'SignAccountOpController' && !selector) {
+    stateToReturn = Object.keys(stateToReturn).length ? stateToReturn : null
+  }
+
+  // If selector is present, we return 'state' directly (which is S)
+  if (selector) {
+    stateToReturn = state
   }
 
   return {
@@ -185,5 +220,5 @@ export default function useController<K extends keyof AllControllersMappingType>
     ...(helpers || ({} as ControllerHelpersMapping[K])),
     dispatch,
     dispatchAndWait
-  } as UseControllerReturn<K>
+  } as UseControllerReturn<K, S>
 }

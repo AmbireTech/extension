@@ -1,5 +1,4 @@
 import React, { useCallback } from 'react'
-import { useTranslation } from 'react-i18next'
 
 import { TokenResult } from '@ambire-common/libs/portfolio'
 import useController from '@common/hooks/useController'
@@ -13,15 +12,12 @@ import RewardsTokenItem from './RewardsTokenItem'
 const { isPopup } = getUiType()
 
 const TokenItem = ({ token }: { token: TokenResult }) => {
-  const { t } = useTranslation()
   const { dispatch } = useControllersMiddleware()
-  const {
-    state: { portfolio }
-  } = useController('SelectedAccountController')
-
-  const {
-    state: { networks }
-  } = useController('NetworksController')
+  const { state: portfolio } = useController(
+    'SelectedAccountController',
+    (state) => state.portfolio
+  )
+  const { state: networks } = useController('NetworksController', (state) => state.networks)
   const simulatedAccountOp = portfolio.networkSimulatedAccountOp[token.chainId.toString()]
   const { isVesting, isRewards } = getAndFormatTokenDetails(token, networks, simulatedAccountOp)
 

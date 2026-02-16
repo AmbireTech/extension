@@ -57,12 +57,10 @@ const TokenIcon: React.FC<Props> = ({
   const { styles } = useTheme(getStyles)
   const [uriStatus, setUriStatus] = useState<UriStatus>(UriStatus.UNKNOWN)
   const [imageUrl, setImageUrl] = useState<string | undefined>()
-  const {
-    state: { networks: controllerNetworks }
-  } = useController('NetworksController')
+  const { state: ctrlNetworks } = useController('NetworksController', (state) => state.networks)
   const { benzinNetworks } = useBenzinNetworksContext()
   // Component used across Benzin and Extension, make sure to always set networks
-  const networks = controllerNetworks ?? benzinNetworks
+  const networks = ctrlNetworks ?? benzinNetworks
 
   const network = useMemo(
     () => networks.find((n) => String(n.chainId) === String(chainId)),

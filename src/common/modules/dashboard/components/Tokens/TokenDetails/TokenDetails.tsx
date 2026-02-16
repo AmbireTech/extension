@@ -51,14 +51,13 @@ const TokenDetails = ({
   } = useModalize()
   const { addToast } = useToast()
   const { t } = useTranslation()
-  const {
-    state: { account }
-  } = useController('SelectedAccountController')
-  const { supportedChainIds } = useController('SwapAndBridgeController').state
+  const { state: account } = useController('SelectedAccountController', (state) => state.account)
+  const { state: supportedChainIds } = useController(
+    'SwapAndBridgeController',
+    (state) => state.supportedChainIds
+  )
   const { dispatch } = useControllersMiddleware()
-  const {
-    state: { networks }
-  } = useController('NetworksController')
+  const { state: networks } = useController('NetworksController', (state) => state.networks)
   const [coinGeckoTokenSlug, setCoinGeckoTokenSlug] = useState('')
   const [isTokenInfoLoading, setIsTokenInfoLoading] = useState(false)
   const [doNotDisplayHideTokenModal, setDoNotDisplayHideTokenModal] = useState(false)
