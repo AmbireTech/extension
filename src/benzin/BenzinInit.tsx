@@ -21,20 +21,20 @@ const BenzinInit = () => {
     <BrowserRouter>
       <PortalProvider>
         <GlobalTooltip />
-        <ThemeProvider>
-          <SafeAreaProvider>
-            <ToastProvider>
-              <ControllerStoreProvider>
-                <ControllersMiddlewareProvider>
+        <SafeAreaProvider>
+          <ControllerStoreProvider>
+            <ControllersMiddlewareProvider>
+              <ThemeProvider>
+                <ToastProvider>
                   <BenzinNetworksContextProvider>
                     <BenzinScreen />
                     <PortalHost name="global" />
                   </BenzinNetworksContextProvider>
-                </ControllersMiddlewareProvider>
-              </ControllerStoreProvider>
-            </ToastProvider>
-          </SafeAreaProvider>
-        </ThemeProvider>
+                </ToastProvider>
+              </ThemeProvider>
+            </ControllersMiddlewareProvider>
+          </ControllerStoreProvider>
+        </SafeAreaProvider>
       </PortalProvider>
     </BrowserRouter>
   )

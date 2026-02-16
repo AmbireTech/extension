@@ -45,7 +45,7 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
     },
 
     buttonText: {
-      fontFamily: FONT_FAMILIES.REGULAR,
+      fontFamily: FONT_FAMILIES.MEDIUM,
       ...text.center
     },
 
@@ -114,8 +114,7 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       fontSize: 14
     },
     buttonTextStylesSizeSmaller: {
-      fontSize: 14,
-      fontFamily: FONT_FAMILIES.MEDIUM
+      fontSize: 14
     },
     buttonTextStylesSizeSmall: {
       fontSize: 14,

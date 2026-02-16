@@ -4,6 +4,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 
 import Alert from '@common/components/Alert'
 import { useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import { AUTH_STATUS } from '@common/modules/auth/constants/authStatus'
@@ -14,10 +15,6 @@ import flexbox from '@common/styles/utils/flexbox'
 import Splash from '@web/components/Splash'
 import { ControllersStateLoadedContext } from '@web/contexts/controllersStateLoadedContext'
 import useCurrentActionSideEffects from '@web/hooks/useCurrentActionSideEffects'
-import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
-import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
-import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControllerState'
-import useTransferControllerState from '@web/hooks/useTransferControllerState'
 import KeyStoreUnlockScreen from '@web/modules/keystore/screens/KeyStoreUnlockScreen'
 import AuthenticatedRoute from '@web/modules/router/components/AuthenticatedRoute'
 import KeystoreUnlockedRoute from '@web/modules/router/components/KeystoreUnlockedRoute'
@@ -33,10 +30,10 @@ const Router = () => {
   const { path } = useRoute()
   const pathname = path?.substring(1)
   const { authStatus } = useAuth()
-  const keystoreState = useKeystoreControllerState()
-  const requestsState = useRequestsControllerState()
-  const swapAndBridgeState = useSwapAndBridgeControllerState()
-  const transferState = useTransferControllerState()
+  const keystoreState = useController('KeystoreController').state
+  const requestsState = useController('RequestsController').state
+  const swapAndBridgeState = useController('SwapAndBridgeController').state
+  const transferState = useController('TransferController').state
   const { areControllerStatesLoaded, isStatesLoadingTakingTooLong } = useContext(
     ControllersStateLoadedContext
   )
@@ -66,7 +63,7 @@ const Router = () => {
     authStatus,
     requestsState,
     swapAndBridgeState,
-    transferState: transferState.state
+    transferState
   })
 
   if (initialRoute && !pathname) {

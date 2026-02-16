@@ -8,12 +8,10 @@ import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoad
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
 import { useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
-import useSignAccountOpControllerState from '@web/hooks/useSignAccountOpControllerState'
 import ActionsPagination from '@web/modules/action-requests/components/ActionsPagination'
 
 import getStyles from './styles'
@@ -47,9 +45,11 @@ const Footer = ({
 }: Props) => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
-  const { userRequests } = useRequestsControllerState()
-  const { account } = useSelectedAccountControllerState()
-  const { accountOp } = useSignAccountOpControllerState() || {}
+  const { userRequests } = useController('RequestsController').state
+  const {
+    state: { account }
+  } = useController('SelectedAccountController')
+  const { accountOp } = useController('SignAccountOpController').state || {}
   const chainId = accountOp?.chainId
 
   const batchCount = useMemo(() => {

@@ -2,6 +2,7 @@ import React, { FC } from 'react'
 import { View, ViewStyle } from 'react-native'
 
 import useTheme from '@common/hooks/useTheme'
+import { SPACING_2XL } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@web/utils/uiType'
@@ -12,7 +13,7 @@ type Props = {
   style?: ViewStyle
 }
 
-const { isPopup } = getUiType()
+const { isTab, isRequestWindow } = getUiType()
 
 const LayoutWrapper: FC<Props> = ({ children, backgroundStyle = {}, style = {} }) => {
   const { theme } = useTheme()
@@ -22,7 +23,8 @@ const LayoutWrapper: FC<Props> = ({ children, backgroundStyle = {}, style = {} }
       style={[
         flexbox.flex1,
         flexbox.alignCenter,
-        !isPopup && { paddingTop: 124 },
+        isTab && { paddingTop: 124 },
+        isRequestWindow && { paddingTop: SPACING_2XL },
         { backgroundColor: theme.secondaryBackground },
         backgroundStyle
       ]}

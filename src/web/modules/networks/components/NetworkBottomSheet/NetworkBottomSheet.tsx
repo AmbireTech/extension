@@ -9,12 +9,12 @@ import BottomSheet from '@common/components/BottomSheet'
 import NetworkIcon from '@common/components/NetworkIcon'
 import Text from '@common/components/Text'
 import i18n from '@common/config/localization/localization'
+import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 
 import Option from '../Option'
 import getStyles from './styles'
@@ -35,7 +35,7 @@ const NetworkBottomSheet = ({ sheetRef, chainId, closeBottomSheet, openBlockExpl
   const { navigate } = useNavigation()
   const { addToast } = useToast()
   const { theme, styles } = useTheme(getStyles)
-  const { networks } = useNetworksControllerState()
+  const { networks } = useController('NetworksController').state
   const networkData = networks.find((network) => String(network.chainId) === String(chainId))
 
   const handleOpenBlockExplorer = useCallback(

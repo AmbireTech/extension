@@ -15,6 +15,7 @@ import { SelectValue } from '@common/components/Select/types'
 import getStyles from '@common/components/SendToken/styles'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
+import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useGetTokenSelectProps from '@common/hooks/useGetTokenSelectProps'
 import useTheme from '@common/hooks/useTheme'
@@ -22,9 +23,6 @@ import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import { ItemPanel } from '@web/components/TransactionsScreen'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
-import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControllerState'
 import SwitchTokensButton from '@web/modules/swap-and-bridge/components/SwitchTokensButton'
 import ToTokenSelect from '@web/modules/swap-and-bridge/components/ToToken/ToTokenSelect'
 import { getTokenId } from '@web/utils/token'
@@ -53,10 +51,12 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
     switchTokensStatus,
     supportedChainIds,
     signAccountOpController
-  } = useSwapAndBridgeControllerState()
+  } = useController('SwapAndBridgeController').state
 
-  const { networks } = useNetworksControllerState()
-  const { account } = useSelectedAccountControllerState()
+  const { networks } = useController('NetworksController').state
+  const {
+    state: { account }
+  } = useController('SelectedAccountController')
   const { dispatch } = useControllersMiddleware()
 
   const handleSwitchFromAndToTokens = useCallback(

@@ -8,6 +8,7 @@ import Panel from '@common/components/Panel'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
@@ -23,7 +24,6 @@ import {
   TabLayoutContainer,
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import useWalletStateController from '@web/hooks/useWalletStateController'
 
 import getStyles from './styles'
 
@@ -38,7 +38,7 @@ const GetStartedScreen = () => {
   const { authStatus } = useAuth()
   const { dispatch } = useControllersMiddleware()
 
-  const state = useWalletStateController()
+  const state = useController('WalletStateController').state
 
   const resetIsSetupCompleteIfNeeded = useCallback(() => {
     if (authStatus === AUTH_STATUS.NOT_AUTHENTICATED && !state.isPinned && state.isSetupComplete) {

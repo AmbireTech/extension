@@ -17,11 +17,11 @@ import ViewOnlyIcon from '@common/assets/svg/ViewOnlyIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Option from '@common/components/Option'
+import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
-import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 import SavedSeedPhrases from '@web/modules/account-select/components/SavedSeedPhrases'
 
 import ExpandableOptionSection from './ExpandableOptionSection'
@@ -36,7 +36,6 @@ const AddAccount = ({
   const { t } = useTranslation()
   const { dispatch } = useControllersMiddleware()
   const { goToNextRoute, setTriggeredHwWalletFlow } = useOnboardingNavigation()
-  const { seeds } = useKeystoreControllerState()
   const [height, setHeight] = useState<number>(0)
   const scrollViewRef = useRef<any>(null)
 
@@ -45,6 +44,7 @@ const AddAccount = ({
     open: openSeedPhraseBottomSheet,
     close: closeSeedPhraseBottomSheet
   } = useModalize()
+  const { seeds } = useController('KeystoreController').state
 
   const optionsHW = useMemo(() => {
     return [

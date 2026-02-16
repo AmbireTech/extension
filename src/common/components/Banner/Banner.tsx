@@ -81,7 +81,7 @@ const Banner = React.memo(
         {...(onPress ? { ...bindAnim, onPress } : {})}
         testID={`dashboard-${type}-banner`}
       >
-        <View style={[spacings.mrMi, { marginTop: 2 }]}>
+        <View style={[spacings.mrMi, { marginTop: 1 }]}>
           <Icon width={24} height={24} color={theme[`${type}Text`]} />
         </View>
 

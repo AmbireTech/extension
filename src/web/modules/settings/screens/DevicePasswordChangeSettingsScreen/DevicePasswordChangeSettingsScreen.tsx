@@ -12,6 +12,7 @@ import InputPassword from '@common/components/InputPassword'
 import { PanelTitle } from '@common/components/Panel/Panel'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useExtraEntropy from '@common/hooks/useExtraEntropy'
 import useNavigation from '@common/hooks/useNavigation'
@@ -21,7 +22,6 @@ import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings, { SPACING_XL } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
-import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 import { SettingsRoutesContext } from '@web/modules/settings/contexts/SettingsRoutesContext'
 
 const DevicePasswordChangeSettingsScreen = () => {
@@ -29,7 +29,7 @@ const DevicePasswordChangeSettingsScreen = () => {
   const { addToast } = useToast()
   const { dispatch } = useControllersMiddleware()
   const { navigate } = useNavigation()
-  const state = useKeystoreControllerState()
+  const state = useController('KeystoreController').state
   const { ref: modalRef, open: openModal, close: closeModal } = useModalize()
   const { setCurrentSettingsPage } = useContext(SettingsRoutesContext)
   const { theme } = useTheme()

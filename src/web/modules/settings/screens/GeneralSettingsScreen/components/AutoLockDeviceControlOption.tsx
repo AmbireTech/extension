@@ -4,13 +4,13 @@ import { useTranslation } from 'react-i18next'
 import LockWithTimerIcon from '@common/assets/svg/LockWithTimerIcon'
 import ControlOption from '@common/components/ControlOption'
 import Select from '@common/components/Select'
+import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import spacings from '@common/styles/spacings'
 import {
   AUTO_LOCK_TIMES,
   getAutoLockLabel
 } from '@web/extension-services/background/controllers/auto-lock'
-import useAutoLockStateController from '@web/hooks/useAutoLockStateController'
 
 const AUTO_LOCK_OPTIONS = [
   {
@@ -42,7 +42,7 @@ const AUTO_LOCK_OPTIONS = [
 const AutoLockDeviceControlOption = () => {
   const { dispatch } = useControllersMiddleware()
   const { t } = useTranslation()
-  const { autoLockTime } = useAutoLockStateController()
+  const { autoLockTime } = useController('AutoLockController').state
 
   const selectedOption = useMemo(() => {
     return AUTO_LOCK_OPTIONS.find((option) => option.value === autoLockTime) || AUTO_LOCK_OPTIONS[0]

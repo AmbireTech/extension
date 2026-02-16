@@ -13,7 +13,7 @@ import flexbox from '@common/styles/utils/flexbox'
 import GlassView from '../GlassView'
 import getStyles from './styles'
 
-type Type = 'error' | 'warning'
+type Type = 'error' | 'warning' | 'info'
 
 const DEFAULT_TYPE = 'warning'
 

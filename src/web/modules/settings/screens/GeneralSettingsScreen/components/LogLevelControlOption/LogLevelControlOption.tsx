@@ -4,16 +4,16 @@ import { useTranslation } from 'react-i18next'
 import DevIcon from '@common/assets/svg/DevIcon/DevIcon'
 import ControlOption from '@common/components/ControlOption'
 import FatToggle from '@common/components/FatToggle'
+import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import useWalletStateController from '@web/hooks/useWalletStateController'
 import { LOG_LEVELS } from '@web/utils/logger'
 
 const LogLevelControlOption = () => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { logLevel } = useWalletStateController()
+  const { logLevel } = useController('WalletStateController').state
   const { dispatch } = useControllersMiddleware()
 
   const handleToggleLogLevel = useCallback(() => {

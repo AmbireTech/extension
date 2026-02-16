@@ -12,6 +12,7 @@ import Dropdown from '@common/components/Dropdown'
 import Editable from '@common/components/Editable'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useReverseLookup from '@common/hooks/useReverseLookup'
 import useTheme from '@common/hooks/useTheme'
@@ -19,9 +20,6 @@ import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
-import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
-import useMainControllerState from '@web/hooks/useMainControllerState'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 
 import getStyles from './styles'
 
@@ -60,11 +58,13 @@ const Account = ({
   const { t } = useTranslation()
   const { theme, styles } = useTheme(getStyles)
   const { addToast } = useToast()
-  const { statuses: mainStatuses } = useMainControllerState()
-  const { account: selectedAccount } = useSelectedAccountControllerState()
+  const { statuses: mainStatuses } = useController('MainController').state
+  const {
+    state: { account: selectedAccount }
+  } = useController('SelectedAccountController')
   const { dispatch } = useControllersMiddleware()
   const { ens, isLoading } = useReverseLookup({ address: addr })
-  const { keys } = useKeystoreControllerState()
+  const { keys } = useController('KeystoreController').state
   const [bindAnim, animStyle] = useCustomHover({
     property: 'backgroundColor',
     values: {

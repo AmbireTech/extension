@@ -8,11 +8,11 @@ import Search from '@common/components/Search'
 import Select from '@common/components/Select'
 import { SelectValue } from '@common/components/Select/types'
 import Text from '@common/components/Text'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 
 type Props = {
   control: any
@@ -32,7 +32,7 @@ const ALL_NETWORKS_OPTION = {
 
 const Filters: FC<Props> = ({ control, networkFilter, setNetworkFilterValue }) => {
   const { t } = useTranslation()
-  const { networks } = useNetworksControllerState()
+  const { networks } = useController('NetworksController').state
   const { themeType, theme } = useTheme()
   const networksOptions: SelectValue[] = useMemo(
     () => [

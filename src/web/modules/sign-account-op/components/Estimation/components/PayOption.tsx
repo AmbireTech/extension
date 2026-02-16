@@ -12,13 +12,10 @@ import Avatar from '@common/components/Avatar'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
-import useSignAccountOpControllerState from '@web/hooks/useSignAccountOpControllerState'
 
 import getStyles from './styles'
 
@@ -37,10 +34,12 @@ const PayOption = ({
 }) => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
-  const { accounts } = useAccountsControllerState()
-  const { account } = useSelectedAccountControllerState()
-  const { networks } = useNetworksControllerState()
-  const signAccountOpState = useSignAccountOpControllerState()
+  const { accounts } = useController('AccountsController').state
+  const {
+    state: { account }
+  } = useController('SelectedAccountController')
+  const { networks } = useController('NetworksController').state
+  const signAccountOpState = useController('SignAccountOpController').state
 
   const paidByAccountData = useMemo(
     () => accounts.find((a) => a.addr === feeOption.paidBy),
