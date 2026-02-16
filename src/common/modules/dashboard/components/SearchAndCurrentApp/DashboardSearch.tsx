@@ -71,7 +71,8 @@ const DashboardSearch: FC<Props> = ({ control }) => {
               inputWrapperStyle={{
                 height: 40,
                 paddingVertical: 0,
-                width: '100%'
+                width: '100%',
+                backgroundColor: theme.tertiaryBackground
               }}
               inputStyle={{ height: '100%', ...spacings.plMi, ...spacings.prTy }}
               containerStyle={{

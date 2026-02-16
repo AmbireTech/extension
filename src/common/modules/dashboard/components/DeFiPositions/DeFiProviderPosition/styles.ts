@@ -28,10 +28,13 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       ...flexbox.justifySpaceBetween,
       ...spacings.pvSm,
       ...spacings.phSm,
-      ...common.borderRadiusPrimary
+      ...common.borderRadiusPrimary,
+      borderWidth: 1,
+      borderColor: 'transparent'
     },
     expandedHeader: {
-      backgroundColor: theme.secondaryBackground
+      backgroundColor: theme.tertiaryBackground,
+      borderColor: 'transparent'
     },
     providerData: {
       ...flexbox.directionRow,

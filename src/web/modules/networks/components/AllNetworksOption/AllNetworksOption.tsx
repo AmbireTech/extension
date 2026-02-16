@@ -8,14 +8,14 @@ import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
+import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { AnimatedPressable, useMultiHover } from '@web/hooks/useHover'
 import getStyles from '@web/modules/networks/screens/styles'
 
 const AllNetworksOption = ({ onPress }: { onPress: (chainId: bigint | null) => void }) => {
   const { t } = useTranslation()
-  const { themeType, theme, styles } = useTheme(getStyles)
+  const { theme, styles } = useTheme(getStyles)
   const {
     state: { portfolio: selectedAccountPortfolio, dashboardNetworkFilter }
   } = useController('SelectedAccountController')
@@ -24,13 +24,13 @@ const AllNetworksOption = ({ onPress }: { onPress: (chainId: bigint | null) => v
     values: [
       {
         property: 'backgroundColor',
-        from: `${String(theme.secondaryBackground)}00`,
+        from: theme.primaryBackground,
         to: theme.secondaryBackground
       },
       {
         property: 'borderColor',
-        from: theme.primaryAccent,
-        to: theme.primaryAccentHovered
+        from: hexToRgba(theme.neutral400, 0),
+        to: theme.neutral400
       }
     ],
     forceHoveredStyle: !dashboardNetworkFilter
@@ -43,25 +43,26 @@ const AllNetworksOption = ({ onPress }: { onPress: (chainId: bigint | null) => v
   return (
     <AnimatedPressable
       onPress={handleOnPress}
-      style={[styles.network, styles.noKebabNetwork, animStyle]}
+      style={[styles.network, { borderWidth: 2 }, styles.noKebabNetwork, animStyle]}
       {...bindAnim}
     >
       <View style={[flexbox.alignCenter, flexbox.directionRow]}>
         <View
           style={{
-            width: 32,
-            height: 32,
-            ...flexbox.center
+            ...flexbox.center,
+            width: 28,
+            height: 28,
+            borderRadius: 14,
+            backgroundColor: theme.neutral200
           }}
         >
-          {/* @ts-ignore */}
-          <NetworksIcon width={20} height={20} />
+          <NetworksIcon color={theme.iconPrimary} width={24} height={24} />
         </View>
-        <Text style={spacings.mlTy} fontSize={16}>
+        <Text style={spacings.mlTy} weight="medium" fontSize={16}>
           {t('All Networks')}
         </Text>
       </View>
-      <Text fontSize={!dashboardNetworkFilter ? 20 : 16} weight="semiBold">
+      <Text fontSize={20} weight="semiBold" appearance="primaryText">
         {`$${formatDecimals(Number(selectedAccountPortfolio?.totalBalance || 0))}` || '$-'}
       </Text>
     </AnimatedPressable>

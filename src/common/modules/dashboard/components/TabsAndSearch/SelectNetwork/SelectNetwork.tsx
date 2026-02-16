@@ -75,8 +75,6 @@ const SelectNetwork = ({ currentTab }: Props) => {
       networkName = `${networkName.slice(0, maxNetworkNameLength)}...`
     }
 
-    networkName = `${networkName} ${!isPopup ? t('Portfolio') : ''}`
-
     return networkName
   }, [dashboardNetworkFilter, networks, t])
 
@@ -101,8 +99,7 @@ const SelectNetwork = ({ currentTab }: Props) => {
           {
             ...(dashboardNetworkFilter && {
               color: theme.primaryText,
-              borderColor: theme.primary,
-              backgroundColor: theme.infoBackground
+              borderColor: theme.neutral400
             })
           }
         ]}

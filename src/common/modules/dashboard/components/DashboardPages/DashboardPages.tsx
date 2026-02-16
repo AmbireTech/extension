@@ -98,7 +98,7 @@ const DashboardPages = ({ onScroll, isSearchHidden, animatedOverviewHeight }: Pr
   }, [dispatch, sessionId])
 
   return (
-    <View style={[flexbox.flex1, isTab ? spacings.phSm : {}]}>
+    <View style={flexbox.flex1}>
       <Tokens
         openTab={openTab}
         sessionId={sessionId}

@@ -5,12 +5,12 @@ import { SvgProps } from 'react-native-svg'
 import DiagonalRightArrowIcon from '@common/assets/svg/DiagonalRightArrowIcon'
 import ImportJsonIcon from '@common/assets/svg/ImportJsonIcon'
 import LatticeWithBorderIcon from '@common/assets/svg/LatticeWithBorderIcon'
-import LedgerIcon from '@common/assets/svg/LedgerIcon'
+import LedgerLetterIcon from '@common/assets/svg/LedgerLetterIcon'
 import PrivateKeyIcon from '@common/assets/svg/PrivateKeyIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import SafeIcon from '@common/assets/svg/SafeIcon'
 import SeedPhraseIcon from '@common/assets/svg/SeedPhraseIcon'
-import TrezorIcon from '@common/assets/svg/TrezorIcon'
+import TrezorLockIcon from '@common/assets/svg/TrezorLockIcon'
 import Button from '@common/components/Button'
 import Panel from '@common/components/Panel'
 import Text from '@common/components/Text'
@@ -85,14 +85,14 @@ const ImportExistingAccountSelectorScreen = () => {
             dispatch({ type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_TREZOR' })
           }
         },
-        icon: TrezorIcon
+        icon: TrezorLockIcon
       },
       {
         title: 'Ledger',
         onPress: () => {
           goToNextRoute(WEB_ROUTES.ledgerConnect)
         },
-        icon: LedgerIcon
+        icon: LedgerLetterIcon
       },
       {
         title: 'Grid Plus',
@@ -162,17 +162,12 @@ const ImportExistingAccountSelectorScreen = () => {
                     }}
                   >
                     <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                      <IconComponent
-                        width={24}
-                        {...(themeType === THEME_TYPES.DARK ? { color: theme.primaryText } : {})}
-                      />
+                      <IconComponent width={32} height={32} color={theme.primaryText} />
                       <Text style={spacings.mlSm} fontSize={14} weight="medium">
                         {t(title)}
                       </Text>
                     </View>
-                    <RightArrowIcon
-                      {...(themeType === THEME_TYPES.DARK ? { color: theme.primaryText } : {})}
-                    />
+                    <RightArrowIcon color={theme.iconPrimary} />
                   </Button>
                 ))}
               <Animated.View

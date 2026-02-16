@@ -37,18 +37,16 @@ const OptionItem = ({
   const { t } = useTranslation()
 
   return (
-    <View style={{ ...styles.optionWrapper, width: wrapperWidth }}>
-      <Pressable
-        style={({ hovered }: any) => [styles.option, hovered && styles.optionHovered]}
-        onPress={onPress}
-        testID={testID}
-      >
-        <Icon width={44} height={44} />
-        <Text fontSize={14} weight="medium" style={spacings.mtMi} numberOfLines={1}>
-          {t(text)}
-        </Text>
-      </Pressable>
-    </View>
+    <Pressable
+      style={({ hovered }: any) => [styles.option, hovered && styles.optionHovered]}
+      onPress={onPress}
+      testID={testID}
+    >
+      <Icon width={24} height={24} />
+      <Text weight="medium" style={spacings.mlSm} numberOfLines={1}>
+        {t(text)}
+      </Text>
+    </Pressable>
   )
 }
 
@@ -75,7 +73,6 @@ const ExpandableOptionSection = ({
     <Option
       text={t(dropdownText)}
       icon={dropdownIcon}
-      iconProps={{ width: 30, height: 30 }}
       onPress={toggleHwOptions}
       testID={dropdownTestID}
       status={isOptionExpanded ? 'expanded' : 'collapsed'}

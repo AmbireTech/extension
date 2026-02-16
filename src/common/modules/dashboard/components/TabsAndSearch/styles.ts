@@ -17,7 +17,6 @@ type Style = {
 const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
   StyleSheet.create<Style>({
     container: {
-      ...commonWebStyles.contentContainer,
       ...flexbox.directionRow,
       ...flexbox.justifySpaceBetween,
       ...flexbox.alignCenter,
