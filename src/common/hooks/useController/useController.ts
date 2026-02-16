@@ -1,7 +1,6 @@
-import { useCallback, useContext, useEffect, useSyncExternalStore } from 'react'
+import { useCallback, useContext, useEffect, useMemo, useSyncExternalStore } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 
-import { captureException } from '@common/config/analytics/CrashAnalytics'
 import { isDev } from '@common/config/env'
 import { AllControllersMappingType } from '@common/constants/controllersMapping'
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext/controllersMiddlewareContext'
@@ -83,18 +82,19 @@ export default function useController<K extends keyof AllControllersMappingType>
   const { controllerStore, controllerHelpersStore, isStoreReady } = useControllerStore()
   const { dispatch: controllersMiddlewareDispatch } = controllersMiddleware
 
+  // Create the error object here to capture the stack trace of the call site (the component using this hook)
+  const missingControllerError = useMemo(
+    () => new Error(`A controller with name ${id} does not exist in the controllerStore.`),
+    [id]
+  )
+
   useEffect(() => {
     if (id === 'SignAccountOpController') return
 
     if (isStoreReady && !Object.keys(controllerStore.getSnapshot(id)).length) {
-      const error = new Error(`A controller with name ${id} does not exist in the controllerStore.`)
-      if (isDev) {
-        throw error
-      } else {
-        captureException(error)
-      }
+      if (isDev) console.warn(missingControllerError)
     }
-  }, [controllerStore, id, isStoreReady])
+  }, [controllerStore, id, isStoreReady, missingControllerError])
 
   const state = useSyncExternalStore(
     useCallback((cb) => controllerStore.subscribe(id, cb), [id, controllerStore]),
