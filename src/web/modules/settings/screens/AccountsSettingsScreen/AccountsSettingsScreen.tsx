@@ -199,6 +199,7 @@ const AccountsSettingsScreen = () => {
             text={t('Add account')}
             type="primary"
             size="smaller"
+            textStyle={{ fontSize: 12, marginTop: 2 }}
             style={[spacings.phSm, { height: 40 }]}
             hasBottomSpacing={false}
             onPress={openBottomSheet as any}

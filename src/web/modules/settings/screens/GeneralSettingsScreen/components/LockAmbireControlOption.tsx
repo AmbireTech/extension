@@ -39,7 +39,7 @@ const LockAmbireControlOption = () => {
     >
       <Button
         testID="lock-extension-button"
-        size="small"
+        textStyle={{ fontSize: 12, marginTop: 2 }}
         hasBottomSpacing={false}
         style={{ width: 92, height: 40 }}
         childrenPosition="left"
