@@ -247,7 +247,16 @@ const NetworkAvailableFeatures = ({
                         </>
                       )}
                     {!!feature.msg && (
-                      <View style={[spacings.ptMi, spacings.plMi]}>
+                      <View
+                        style={[
+                          spacings.plMi,
+                          {
+                            // @ts-ignore web style
+                            verticalAlign: 'middle',
+                            paddingBottom: 3
+                          }
+                        ]}
+                      >
                         <InfoIcon
                           width={16 * responsiveSizeMultiplier}
                           height={16 * responsiveSizeMultiplier}
