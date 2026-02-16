@@ -134,7 +134,7 @@ const DecryptRequestScreen = () => {
       <TabLayoutContainer
         width="full"
         header={<ActionHeader />}
-        footer={
+        renderDirectChildren={() => (
           <ActionFooter
             onReject={handleDeny}
             onResolve={handleDecrypt}
@@ -143,8 +143,7 @@ const DecryptRequestScreen = () => {
             resolveButtonTestID="button-decrypt"
             resolveNode={actionFooterResolveNode}
           />
-        }
-        backgroundColor={theme.primaryBackground}
+        )}
       >
         <TabLayoutWrapperMainContent>
           <RequestingDappInfo

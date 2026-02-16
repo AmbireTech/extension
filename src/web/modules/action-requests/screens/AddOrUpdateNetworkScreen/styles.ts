@@ -32,9 +32,7 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       borderRadius: BORDER_RADIUS_PRIMARY,
       overflow: 'hidden',
       ...common.borderRadiusPrimary,
-      ...(themeType === THEME_TYPES.DARK ? common.shadowTertiaryDarkMode : common.shadowTertiary),
-      backgroundColor:
-        themeType === THEME_TYPES.DARK ? theme.secondaryBackground : theme.primaryBackground,
+      backgroundColor: theme.secondaryBackground,
       minHeight: 200
     }
   })

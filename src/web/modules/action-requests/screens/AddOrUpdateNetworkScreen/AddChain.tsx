@@ -65,7 +65,7 @@ const AddChain = ({
     <TabLayoutContainer
       width="full"
       header={<ActionHeader />}
-      footer={
+      renderDirectChildren={() => (
         <ActionFooter
           onReject={handleDenyButtonPress}
           onResolve={handlePrimaryButtonPress}
@@ -80,8 +80,7 @@ const AddChain = ({
             actionButtonPressedRef.current
           }
         />
-      }
-      backgroundColor={theme.secondaryBackground}
+      )}
     >
       <TabLayoutWrapperMainContent
         style={{
@@ -199,10 +198,7 @@ const AddChain = ({
                   nativeAssetName={networkDetails.nativeAssetName}
                   explorerUrl={networkDetails.explorerUrl || '-'}
                   style={{
-                    backgroundColor:
-                      themeType === THEME_TYPES.DARK
-                        ? theme.secondaryBackground
-                        : theme.primaryBackground
+                    backgroundColor: theme.secondaryBackground
                   }}
                   responsiveSizeMultiplier={responsiveSizeMultiplier}
                   type="vertical"

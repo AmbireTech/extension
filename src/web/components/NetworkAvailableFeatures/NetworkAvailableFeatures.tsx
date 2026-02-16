@@ -3,16 +3,16 @@ import { Interface } from 'ethers'
 /* eslint-disable react/jsx-no-useless-fragment */
 import React, { useCallback, useEffect, useId, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { View } from 'react-native'
+import { TextStyle, View } from 'react-native'
 
 import DeployHelper from '@ambire-common/../contracts/compiled/DeployHelper.json'
 import { AMBIRE_ACCOUNT_FACTORY, SINGLETON } from '@ambire-common/consts/deploy'
 import { NetworkFeature } from '@ambire-common/interfaces/network'
 import { isSmartAccount } from '@ambire-common/libs/account/account'
 import CheckIcon from '@common/assets/svg/CheckIcon'
-import ErrorFilledIcon from '@common/assets/svg/ErrorFilledIcon'
-import InformationIcon from '@common/assets/svg/InformationIcon'
-import WarningFilledIcon from '@common/assets/svg/WarningFilledIcon'
+import ErrorIcon from '@common/assets/svg/ErrorIcon'
+import InfoIcon from '@common/assets/svg/InfoIcon'
+import WarningIcon from '@common/assets/svg/WarningIcon'
 import Button from '@common/components/Button'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
@@ -48,6 +48,7 @@ type Props = {
   titleSize?: number
   responsiveSizeMultiplier?: number
   withScroll?: boolean
+  titleStyle?: TextStyle
 }
 
 const NetworkAvailableFeatures = ({
@@ -58,7 +59,8 @@ const NetworkAvailableFeatures = ({
   hideBackgroundAndBorders = false,
   titleSize,
   responsiveSizeMultiplier = 1,
-  withScroll = false
+  withScroll = false,
+  titleStyle
 }: Props) => {
   const { t } = useTranslation()
   const { theme, styles } = useTheme(getStyles)
@@ -165,7 +167,7 @@ const NetworkAvailableFeatures = ({
     [features, withRetryButton]
   )
 
-  const iconSize = 14 * responsiveSizeMultiplier
+  const iconSize = 20 * responsiveSizeMultiplier
 
   const Wrapper = withScroll ? ScrollableWrapper : View
 
@@ -174,7 +176,7 @@ const NetworkAvailableFeatures = ({
       <Text
         fontSize={titleSize || 18 * responsiveSizeMultiplier}
         weight="medium"
-        style={spacings.mbMd}
+        style={[spacings.mbMd, titleStyle]}
       >
         {t('Available features')}
       </Text>
@@ -206,10 +208,10 @@ const NetworkAvailableFeatures = ({
                   )}
                   {feature.level === 'success' && <CheckIcon width={iconSize} height={iconSize} />}
                   {feature.level === 'warning' && (
-                    <WarningFilledIcon width={iconSize} height={iconSize} />
+                    <WarningIcon color={theme.warning400} width={iconSize} height={iconSize} />
                   )}
                   {feature.level === 'danger' && (
-                    <ErrorFilledIcon width={iconSize} height={iconSize} />
+                    <ErrorIcon color={theme.error300} width={iconSize} height={iconSize} />
                   )}
                 </View>
                 <View style={[flexbox.directionRow, flexbox.flex1, flexbox.alignCenter]}>
@@ -242,17 +244,15 @@ const NetworkAvailableFeatures = ({
                         </>
                       )}
                     {!!feature.msg && (
-                      <View style={{ width: 1 }}>
-                        <View style={{ position: 'absolute', top: -11.5, left: 6 }}>
-                          <InformationIcon
-                            width={iconSize}
-                            height={iconSize}
-                            dataSet={createGlobalTooltipDataSet({
-                              id: `feature-message-tooltip-${feature.id}-${tooltipId}`,
-                              content: feature.msg
-                            })}
-                          />
-                        </View>
+                      <View style={[spacings.ptMi, spacings.plMi]}>
+                        <InfoIcon
+                          width={16 * responsiveSizeMultiplier}
+                          height={16 * responsiveSizeMultiplier}
+                          dataSet={createGlobalTooltipDataSet({
+                            id: `feature-message-tooltip-${feature.id}-${tooltipId}`,
+                            content: feature.msg
+                          })}
+                        />
                       </View>
                     )}
                   </Text>

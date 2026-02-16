@@ -271,9 +271,8 @@ const WatchTokenRequestScreen = () => {
   return (
     <TabLayoutContainer
       width="full"
-      backgroundColor={theme.primaryBackground}
       header={<HeaderWithLogoOnly />}
-      footer={
+      renderDirectChildren={() => (
         <ActionFooter
           onReject={handleCancel}
           onResolve={handleAddToken}
@@ -285,7 +284,7 @@ const WatchTokenRequestScreen = () => {
             !!tokenValidation?.error?.message
           }
         />
-      }
+      )}
     >
       <View style={[styles.container]}>
         <View style={styles.content}>

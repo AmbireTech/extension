@@ -108,10 +108,10 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
 
     // Button text sizes (regular/small)
     buttonTextStylesSizeRegular: {
-      fontSize: 16
+      fontSize: 14
     },
     buttonTextStylesSizeLarge: {
-      fontSize: 16
+      fontSize: 14
     },
     buttonTextStylesSizeSmaller: {
       fontSize: 14,

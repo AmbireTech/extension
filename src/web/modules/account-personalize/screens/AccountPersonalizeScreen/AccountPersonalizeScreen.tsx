@@ -321,24 +321,17 @@ const AccountPersonalizeScreen = () => {
               </View>
             ) : (
               <>
-                <SuccessAnimation
-                  noBackgroundShapes
-                  width={352}
-                  height={156}
-                  style={{ ...spacings.pv0, ...spacings.ph0, ...spacings.mbXl }}
-                  animationContainerStyle={{ width: 200, height: 140 }}
+                <SuccessAnimation style={spacings.mbXl} />
+                <Text
+                  testID="added-successfully-text"
+                  weight="semiBold"
+                  fontSize={20}
+                  style={spacings.mtSm}
                 >
-                  <Text
-                    testID="added-successfully-text"
-                    weight="semiBold"
-                    fontSize={20}
-                    style={spacings.mtSm}
-                  >
-                    {accountsToPersonalize.length
-                      ? t('Added successfully')
-                      : t('No new accounts added')}
-                  </Text>
-                </SuccessAnimation>
+                  {accountsToPersonalize.length
+                    ? t('Added successfully')
+                    : t('No new accounts added')}
+                </Text>
                 <ScrollView style={spacings.mbLg}>
                   {accountsToPersonalize.map((acc, index) => (
                     <AccountPersonalizeCard
