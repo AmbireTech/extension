@@ -100,10 +100,6 @@ export default function useController<
 
   // Create the error object here to capture the stack trace of the call site (the component using this hook)
   const missingControllerError = useMemo(() => {
-    if (id === 'NetworksController') {
-      console.count('a')
-      console.log(new Error(`A controller with name ${id} does not exist in the controllerStore.`))
-    }
     return new Error(`A controller with name ${id} does not exist in the controllerStore.`)
   }, [id])
 
