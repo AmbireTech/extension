@@ -15,7 +15,6 @@ import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
 import { getAddressFromAddressState } from '@ambire-common/utils/domains'
 import { getCallsCount } from '@ambire-common/utils/userRequest'
 import Alert from '@common/components/Alert'
-import BackButton from '@common/components/BackButton'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
@@ -42,12 +41,12 @@ import GasTankInfoModal from '@web/modules/transfer/components/GasTankInfoModal'
 import SendForm from '@web/modules/transfer/components/SendForm/SendForm'
 import { getUiType } from '@web/utils/uiType'
 
-const { isTab, isRequestWindow } = getUiType()
+const { isRequestWindow } = getUiType()
 
 const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   const { addToast } = useToast()
   const { state: transferState, dispatch: transferDispatch } = useController('TransferController')
-  const { state: requestsState, dispatch: requestsDispatch } = useController('RequestsController')
+  const { dispatch: requestsDispatch } = useController('RequestsController')
   const { state: mainCtrl } = useController('MainController')
   const {
     isTopUp,
@@ -394,17 +393,24 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
         }
 
         // Batch
-        dispatch({
-          type: 'REQUESTS_CONTROLLER_BUILD_REQUEST',
+        requestsDispatch({
+          type: 'method',
           params: {
-            type: 'transferRequest',
-            params: {
-              amount: transferState.amount,
-              amountInFiat: amountInFiatBigInt, // used only for topUp calcs
-              selectedToken: transferState.selectedToken,
-              recipientAddress: isTopUp ? FEE_COLLECTOR : getAddressFromAddressState(addressState),
-              executionType
-            }
+            method: 'build',
+            args: [
+              {
+                type: 'transferRequest',
+                params: {
+                  amount: transferState.amount,
+                  amountInFiat: amountInFiatBigInt, // used only for topUp calcs
+                  selectedToken: transferState.selectedToken,
+                  recipientAddress: isTopUp
+                    ? FEE_COLLECTOR
+                    : getAddressFromAddressState(addressState),
+                  executionType
+                }
+              }
+            ]
           }
         })
 
@@ -421,7 +427,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
       transferState.amount,
       amountInFiatBigInt,
       visibleUserRequests,
-      dispatch,
+      requestsDispatch,
       addToast,
       t,
       isTopUp,
@@ -486,27 +492,38 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     if (!isRequestWindow) {
       navigate(ROUTES.dashboard)
     } else {
-      dispatch({
-        type: 'CLOSE_SIGNING_REQUEST_WINDOW',
+      if (!mainCtrl.selectedAccount.account) return
+
+      requestsDispatch({
+        type: 'method',
         params: {
-          type: 'transfer'
+          method: 'removeUserRequests',
+          args: [[`${mainCtrl.selectedAccount.account.addr}-transfer-sign`]]
         }
       })
     }
-  }, [navigate, dispatch])
+  }, [navigate, requestsDispatch, mainCtrl.selectedAccount.account])
 
   const onBatchAddedPrimaryButtonPress = useCallback(() => {
-    dispatch({
-      type: 'TRANSFER_CONTROLLER_DESTROY_LATEST_BROADCASTED_ACCOUNT_OP'
+    transferDispatch({
+      type: 'method',
+      params: {
+        method: 'destroyLatestBroadcastedAccountOp',
+        args: []
+      }
     })
     navigate(WEB_ROUTES.dashboard)
-  }, [dispatch, navigate])
+  }, [transferDispatch, navigate])
   const onBatchAddedSecondaryButtonPress = useCallback(() => {
-    dispatch({
-      type: 'TRANSFER_CONTROLLER_DESTROY_LATEST_BROADCASTED_ACCOUNT_OP'
+    transferDispatch({
+      type: 'method',
+      params: {
+        method: 'destroyLatestBroadcastedAccountOp',
+        args: []
+      }
     })
     setShowAddedToBatch(false)
-  }, [dispatch, setShowAddedToBatch])
+  }, [transferDispatch, setShowAddedToBatch])
 
   if (displayedView === 'loading') {
     return (
@@ -522,8 +539,12 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
         onPrimaryButtonPress={navigateOut}
         secondaryButtonText={t('Add more')}
         handleClose={() => {
-          dispatch({
-            type: 'TRANSFER_CONTROLLER_DESTROY_LATEST_BROADCASTED_ACCOUNT_OP'
+          transferDispatch({
+            type: 'method',
+            params: {
+              method: 'destroyLatestBroadcastedAccountOp',
+              args: []
+            }
           })
         }}
       >
