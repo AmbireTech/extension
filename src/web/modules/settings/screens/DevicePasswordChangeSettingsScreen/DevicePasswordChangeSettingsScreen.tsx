@@ -20,7 +20,6 @@ import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings, { SPACING_XL } from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { SettingsRoutesContext } from '@web/modules/settings/contexts/SettingsRoutesContext'
@@ -33,7 +32,7 @@ const DevicePasswordChangeSettingsScreen = () => {
   const state = useController('KeystoreController').state
   const { ref: modalRef, open: openModal, close: closeModal } = useModalize()
   const { setCurrentSettingsPage } = useContext(SettingsRoutesContext)
-  const { themeType } = useTheme()
+  const { theme } = useTheme()
   const {
     control,
     handleSubmit,
@@ -126,6 +125,7 @@ const DevicePasswordChangeSettingsScreen = () => {
               }
               autoFocus
               containerStyle={spacings.mbTy}
+              inputWrapperStyle={{ backgroundColor: theme.tertiaryBackground }}
               onSubmitEditing={handleChangeKeystorePassword}
             />
           )}
@@ -146,7 +146,8 @@ const DevicePasswordChangeSettingsScreen = () => {
                 errors.newPassword &&
                 (t('Please fill in at least 8 characters for password.') as string)
               }
-              containerStyle={[spacings.mbTy]}
+              containerStyle={spacings.mbTy}
+              inputWrapperStyle={{ backgroundColor: theme.tertiaryBackground }}
               onSubmitEditing={handleChangeKeystorePassword}
             />
           )}
@@ -169,7 +170,8 @@ const DevicePasswordChangeSettingsScreen = () => {
               secureTextEntry
               error={errors.confirmNewPassword && (t("The new passwords don't match.") as string)}
               autoCorrect={false}
-              containerStyle={[spacings.mbXl]}
+              containerStyle={spacings.mbXl}
+              inputWrapperStyle={{ backgroundColor: theme.tertiaryBackground }}
               onSubmitEditing={handleChangeKeystorePassword}
             />
           )}
@@ -189,14 +191,7 @@ const DevicePasswordChangeSettingsScreen = () => {
           onPress={handleChangeKeystorePassword}
         />
       </View>
-      <BottomSheet
-        id="device-password-success-modal"
-        sheetRef={modalRef}
-        style={{ width: 400 }}
-        backgroundColor={
-          themeType === THEME_TYPES.DARK ? 'secondaryBackground' : 'primaryBackground'
-        }
-      >
+      <BottomSheet id="device-password-success-modal" sheetRef={modalRef}>
         <PanelTitle title={t('Extension password')} style={spacings.mbXl} />
         <KeyStoreIcon style={[flexbox.alignSelfCenter, spacings.mbXl]} />
         <Text fontSize={16} style={[spacings.mbLg, text.center]} appearance="secondaryText">

@@ -13,7 +13,7 @@ import { THEME_TYPES, ThemeType } from '@common/styles/themeConfig'
 
 const ThemeControlOption = () => {
   const { t } = useTranslation()
-  const { selectedThemeType, theme } = useTheme()
+  const { selectedThemeType } = useTheme()
   const { dispatch } = useControllersMiddleware()
 
   const THEME_SELECT_OPTIONS = useMemo(
@@ -48,11 +48,11 @@ const ThemeControlOption = () => {
       style={spacings.mbTy}
       renderIcon={
         selectedThemeType === THEME_TYPES.SYSTEM ? (
-          <SystemThemeIcon color={theme.primaryText} />
+          <SystemThemeIcon />
         ) : selectedThemeType === THEME_TYPES.DARK ? (
-          <DarkThemeIcon color={theme.primaryText} />
+          <DarkThemeIcon />
         ) : (
-          <LightThemeIcon color={theme.primaryText} />
+          <LightThemeIcon />
         )
       }
     >
