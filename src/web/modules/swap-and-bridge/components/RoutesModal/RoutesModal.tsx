@@ -5,6 +5,7 @@ import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
 import { SwapAndBridgeRoute } from '@ambire-common/interfaces/swapAndBridge'
 import LeftArrowIcon from '@common/assets/svg/LeftArrowIcon'
 import BottomSheet from '@common/components/BottomSheet'
+import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Spinner from '@common/components/Spinner'
@@ -138,7 +139,7 @@ const RoutesModal = ({
             styles.itemContainer,
             index + 1 === quote?.routes?.length && spacings.mb0,
             item.disabled && styles.disabledItem,
-            (isSelected || hovered) && styles.selectedItem,
+            isSelected && styles.selectedItem,
             isEstimationLoading && !isEstimatingRoute && styles.otherItemLoading
           ]}
           testID={isSelected ? 'selected-route' : ''}
@@ -207,7 +208,6 @@ const RoutesModal = ({
       id="select-routes-modal"
       sheetRef={sheetRef}
       closeBottomSheet={closeBottomSheet}
-      backgroundColor="secondaryBackground"
       style={{
         overflow: 'hidden',
         width: !isPopup ? TRANSACTION_FORM_WIDTH : '100%',
@@ -237,38 +237,16 @@ const RoutesModal = ({
       }}
       containerInnerWrapperStyles={flexbox.flex1}
     >
-      <View
-        style={[
-          flexbox.directionRow,
-          flexbox.alignCenter,
-          flexbox.justifySpaceBetween,
-          spacings.mbXl
-        ]}
-      >
-        <View style={flexbox.directionRow}>
-          <Pressable
-            onPress={() => closeBottomSheet()}
-            style={{
-              width: 28,
-              height: 28,
-              justifyContent: 'center',
-              alignItems: 'center'
-            }}
-          >
-            <LeftArrowIcon width={16} height={16} />
-          </Pressable>
-          <Text fontSize={20} weight="semiBold" numberOfLines={1} style={spacings.mlTy}>
-            {t('Select route')}
-          </Text>
-        </View>
+      <ModalHeader title={t('Select route')} handleClose={closeBottomSheet}>
         <RetryButton
           onPress={updateQuote}
           label={t('Request new quote')}
           disabled={isQuoteLoading}
+          isLarge
         />
-      </View>
+      </ModalHeader>
       {isQuoteLoading ? (
-        <SkeletonLoader width="100%" height={700} appearance="tertiaryBackground" />
+        <SkeletonLoader width="100%" height={700} appearance="secondaryBackground" />
       ) : (
         <ScrollableWrapper
           type={WRAPPER_TYPES.FLAT_LIST}

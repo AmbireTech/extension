@@ -259,14 +259,8 @@ const useGetTokenSelectProps = ({
           dataSet={{ tooltipId: tooltipIdNotSupported }}
           style={flexbox.flex1}
         >
-          <Text fontSize={16} weight="medium">
+          <Text fontSize={16} weight="semiBold">
             {symbol}
-          </Text>
-          <Text fontSize={14} appearance="secondaryText">
-            {' on '}
-          </Text>
-          <Text fontSize={14} appearance="secondaryText">
-            {network?.name || 'Unknown network'}
           </Text>
         </Text>
         {!isSelected && formattedBalancesLabel}
@@ -290,9 +284,11 @@ const useGetTokenSelectProps = ({
       icon: (
         <TokenIcon
           key={`${currentToken.chainId}-${currentToken.address}`}
-          containerHeight={30}
-          containerWidth={30}
-          networkSize={12}
+          containerHeight={isSelected ? 28 : 32}
+          containerWidth={isSelected ? 28 : 32}
+          width={isSelected ? 24 : 28}
+          height={isSelected ? 24 : 28}
+          networkSize={isSelected ? 12 : 14}
           withContainer
           withNetworkIcon={!_isToToken}
           uri={getIsToTokenTypeGuard(currentToken) ? currentToken.icon : undefined}

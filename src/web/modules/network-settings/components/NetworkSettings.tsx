@@ -167,7 +167,7 @@ const NetworksSettings = () => {
                 style={{ height: 48, ...spacings.mbTy }}
                 childrenPosition="left"
               >
-                <ChainlistIcon width={20} height={20} color={theme.primary} style={spacings.mrTy} />
+                <ChainlistIcon width={24} height={24} style={spacings.mrTy} />
               </Button>
             )}
             <Button

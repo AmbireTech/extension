@@ -125,8 +125,8 @@ const SendToken: FC<Props> = ({
               bottomSheetTitle={t('Send token')}
               searchPlaceholder={t('Token name or address...')}
               emptyListPlaceholderText={t('No tokens found.')}
-              containerStyle={{ ...flexbox.flex1, ...spacings.mb0 }}
-              selectStyle={spacings.phTy}
+              containerStyle={{ ...flexbox.flex1, ...spacings.mb0, ...spacings.mrMd }}
+              selectStyle={{ ...spacings.plTy, ...spacings.prSm }}
               mode="bottomSheet"
             />
             <NumberInput
@@ -161,14 +161,14 @@ const SendToken: FC<Props> = ({
                     }}
                   >
                     <Text
-                      fontSize={20}
+                      fontSize={24}
                       weight="medium"
                       style={{ zIndex: 3 }}
                       appearance="secondaryText"
                     >
                       $
                       <Text
-                        fontSize={20}
+                        fontSize={24}
                         weight="medium"
                         style={{ opacity: 0 }}
                         appearance="secondaryText"

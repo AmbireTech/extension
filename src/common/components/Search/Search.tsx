@@ -45,8 +45,14 @@ const Search = ({
           placeholder={placeholder}
           style={style}
           leftIconStyle={spacings.plSm}
-          inputStyle={{ ...spacings.plTy, height: '100%' }}
-          inputWrapperStyle={[{ height, borderRadius: height + 2 }, inputWrapperStyle]}
+          inputStyle={{
+            ...spacings.plTy,
+            height: '100%'
+          }}
+          inputWrapperStyle={[
+            { height, borderRadius: height + 2, backgroundColor: theme.tertiaryBackground },
+            inputWrapperStyle
+          ]}
           placeholderTextColor={theme.secondaryText}
           onBlur={onBlur}
           onChange={onChange}

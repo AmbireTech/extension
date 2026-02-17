@@ -27,7 +27,6 @@ import AddAccount from '@web/modules/account-select/components/AddAccount'
 import AccountSmartSettingsBottomSheet from '@web/modules/settings/components/Accounts/AccountSmartSettingsBottomSheet'
 import SettingsPageHeader from '@web/modules/settings/components/SettingsPageHeader'
 import { SettingsRoutesContext } from '@web/modules/settings/contexts/SettingsRoutesContext'
-import { getUiType } from '@web/utils/uiType'
 
 const AccountsSettingsScreen = () => {
   const { t } = useTranslation()
@@ -277,15 +276,7 @@ const AccountsSettingsScreen = () => {
           />
         </View>
       </BottomSheet>
-      <BottomSheet
-        id="account-settings-add-account"
-        sheetRef={sheetRef}
-        adjustToContentHeight={!getUiType().isPopup}
-        closeBottomSheet={closeBottomSheet}
-        scrollViewProps={{ showsVerticalScrollIndicator: false }}
-      >
-        <AddAccount handleClose={closeBottomSheet as any} />
-      </BottomSheet>
+      <AddAccount sheetRef={sheetRef} closeBottomSheet={closeBottomSheet} />
     </>
   )
 }

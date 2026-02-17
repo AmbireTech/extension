@@ -9,7 +9,6 @@ import { AssetType } from '@ambire-common/libs/defiPositions/types'
 import { getTokenAmount, getTokenBalanceInUSD } from '@ambire-common/libs/portfolio/helpers'
 import { TokenResult } from '@ambire-common/libs/portfolio/interfaces'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
-import Button from '@common/components/Button'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
@@ -279,11 +278,6 @@ const Tokens = ({
                 <RightArrowIcon height={12} color={theme.secondaryText as string} />
               </Pressable>
             )}
-            <Button
-              type="secondary"
-              text={t('+ Add custom token')}
-              onPress={navigateToAddCustomToken}
-            />
           </View>
         ) : null
       }
@@ -305,7 +299,6 @@ const Tokens = ({
       theme.secondaryText,
       openTab,
       setOpenTab,
-      control,
       sessionId,
       t,
       searchValue,
@@ -314,7 +307,6 @@ const Tokens = ({
       sortedTokens.length,
       hiddenTokensCount,
       dashboardNetworkFilter,
-      navigateToAddCustomToken,
       navigate
     ]
   )

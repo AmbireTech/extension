@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react'
+import React, { ReactNode, useState } from 'react'
 import {
   BlurEvent,
   TextInput,
@@ -93,13 +93,17 @@ const Input = ({
 }: InputProps) => {
   const { theme, styles } = useTheme(getStyles)
   const [bindAnim, animStyle] = useHover({ preset: 'opacityInverted' })
+  const [isFocused, setIsFocused] = useState(false)
 
   const handleOnFocus = (e: BlurEvent) => {
     if (disabled) return
+    setIsFocused(true)
+
     return onFocus(e)
   }
   const handleOnBlur = (e: BlurEvent) => {
     if (disabled) return
+    setIsFocused(false)
     return onBlur(e)
   }
 
@@ -108,10 +112,11 @@ const Input = ({
   const inputWrapperStyles: ViewStyle[] = [
     styles.inputWrapper,
     {
-      backgroundColor: theme.tertiaryBackground,
+      backgroundColor: theme.primaryBackground,
       borderColor: 'transparent'
     },
     isValid ? { borderColor: theme.successDecorative } : {},
+    isFocused ? { backgroundColor: theme.tertiaryBackground } : {},
     error ? { borderColor: theme.errorDecorative } : {},
     info ? { borderColor: theme.warningText } : {},
     disabled ? styles.disabled : {},

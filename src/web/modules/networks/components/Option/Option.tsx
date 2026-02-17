@@ -6,7 +6,6 @@ import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import { AnimatedPressable, useMultiHover } from '@web/hooks/useHover'
 import getStyles from '@web/modules/networks/components/NetworkBottomSheet/styles'
@@ -26,16 +25,13 @@ const Option = ({
   tooltip?: string
   onPress: () => void
 }) => {
-  const { styles, theme, themeType } = useTheme(getStyles)
+  const { styles, theme } = useTheme(getStyles)
   const [bindAnim, animStyle] = useMultiHover({
     values: [
       {
-        property: 'borderColor',
-        from:
-          themeType === THEME_TYPES.DARK
-            ? `${String(theme.linkText)}00`
-            : `${String(theme.primary)}00`,
-        to: theme.primaryAccent
+        property: 'backgroundColor',
+        from: theme.primaryBackground,
+        to: theme.secondaryBackground
       },
       {
         property: 'left',
@@ -67,8 +63,7 @@ const Option = ({
         styles.item,
         flexbox.justifySpaceBetween,
         {
-          borderWidth: 1,
-          borderColor: animStyle.borderColor
+          backgroundColor: animStyle.backgroundColor
         },
         disabled && { opacity: 0.4 }
       ]}

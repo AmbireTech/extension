@@ -49,13 +49,12 @@ const BaseTokenItem = ({
   onPress,
   wrapperTestID
 }: Props) => {
-  const {
-    state: { portfolio }
-  } = useController('SelectedAccountController')
+  const { state: portfolio } = useController(
+    'SelectedAccountController',
+    (state) => state.portfolio
+  )
 
-  const {
-    state: { networks }
-  } = useController('NetworksController')
+  const { state: networks } = useController('NetworksController', (state) => state.networks)
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
 

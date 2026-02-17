@@ -1,6 +1,7 @@
 import React, { createContext, ReactNode, useEffect, useMemo, useRef, useState } from 'react'
 
 import { captureMessage } from '@common/config/analytics/CrashAnalytics.web'
+import { APP_VERSION } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useControllerStore from '@common/hooks/useControllerStore'
 import { getUiType } from '@web/utils/uiType'
@@ -16,15 +17,15 @@ const ControllersStateLoadedContext = createContext<ControllersStateLoadedContex
 })
 
 const { isPopup } = getUiType()
-const MIN_LOADING_TIME = 400
-const TIMEOUT_LIMIT = 10000
+const MIN_LOADING_TIME = 300
 
 const ControllersStateLoadedProvider = ({ children }: { children: ReactNode }) => {
   const startTimeRef = useRef(Date.now())
+  const unsubscribeRef = useRef<(() => void) | null>(null)
   const [areControllerStatesLoaded, setAreControllerStatesLoaded] = useState(false)
   const [isStatesLoadingTakingTooLong, setIsStatesLoadingTakingTooLong] = useState(false)
 
-  const { isStoreReady } = useControllerStore()
+  const { isStoreReady, controllerStore } = useControllerStore()
   const { state: uiControllerState } = useController('UiController')
 
   const isViewReady = useMemo(() => {
@@ -36,16 +37,35 @@ const ControllersStateLoadedProvider = ({ children }: { children: ReactNode }) =
   useEffect(() => {
     if (areControllerStatesLoaded) return
 
-    const timeoutId = setTimeout(() => {
-      setIsStatesLoadingTakingTooLong(true)
-      const msg = 'ControllersStateLoadedProvider: states loading taking too long'
+    unsubscribeRef.current = controllerStore.addEventsListener((eventData: string) => {
+      if (eventData === 'controllersLoadingTakingTooLong') {
+        const msg = 'ControllersStateLoadedProvider: states loading taking too long'
 
-      captureMessage(msg, { level: 'warning' })
-      console.error(msg)
-    }, TIMEOUT_LIMIT)
+        const loadingControllers = Array.from(controllerStore.controllersByName).filter(
+          (controllerName) => !controllerStore.initializedControllers.has(controllerName)
+        )
+        const errorData: any = {
+          loadingControllers,
+          isPopup,
+          isPopupReady: isViewReady,
+          uiVersion: APP_VERSION
+        }
 
-    return () => clearTimeout(timeoutId)
-  }, [areControllerStatesLoaded])
+        if (controllerStore.initializedControllers.has('WalletStateController')) {
+          errorData.backgroundVersion =
+            controllerStore.getSnapshot('WalletStateController').extensionVersion
+        }
+
+        setIsStatesLoadingTakingTooLong(true)
+        captureMessage(msg, { level: 'warning', extra: errorData })
+        console.error(msg)
+      }
+
+      if (eventData === 'controllersReady') {
+        unsubscribeRef.current?.()
+      }
+    })
+  }, [areControllerStatesLoaded, isViewReady, controllerStore])
 
   useEffect(() => {
     if (!isViewReady || areControllerStatesLoaded) return

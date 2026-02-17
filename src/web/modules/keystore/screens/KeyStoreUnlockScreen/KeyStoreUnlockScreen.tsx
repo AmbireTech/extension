@@ -130,7 +130,7 @@ const KeyStoreUnlockScreen = () => {
         <Button
           testID="button-unlock"
           disabled={disableSubmit}
-          style={{ width: '100%' }}
+          style={{ width: '100%', marginBottom: 0 }}
           text={statuses.unlockWithSecret === 'LOADING' ? t('Unlocking...') : t('Unlock')}
           onPress={handleSubmit((data) => handleUnlock(data))}
           childrenPosition="left"

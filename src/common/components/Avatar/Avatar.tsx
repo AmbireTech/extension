@@ -79,10 +79,11 @@ const Avatar: FC<Props> = ({
   } = useController('DomainsController')
   // There is no wallet controller state in benzin/rewards so we need to be careful
 
-  let avatarTypeSetting: AvatarType | Omit<AvatarType, 'ens'> = 'jazzicons'
-  if (!isLegends && !isBenzin) {
+  let avatarTypeSetting: AvatarType | Omit<AvatarType, 'ens'> = propAvatarType || 'jazzicons'
+
+  if (!isLegends && !isBenzin && !propAvatarType) {
     const walletState = useController('WalletStateController').state
-    avatarTypeSetting = propAvatarType || walletState?.avatarType || 'jazzicons'
+    avatarTypeSetting = walletState?.avatarType || 'jazzicons'
   }
 
   const isEnsLoading = address

@@ -98,7 +98,6 @@ const LedgerConnectModal = ({
     <BottomSheet
       id="ledger-connect-modal"
       sheetRef={ref}
-      backgroundColor={themeType === THEME_TYPES.DARK ? 'secondaryBackground' : 'primaryBackground'}
       autoWidth={false}
       closeBottomSheet={handleClose}
       onClosed={handleClose}
@@ -108,7 +107,7 @@ const LedgerConnectModal = ({
       containerInnerWrapperStyles={isTab ? { ...spacings.pv2Xl, ...spacings.ph2Xl } : {}}
       withBackdropBlur={false}
     >
-      <ModalHeader title={t('Connect Ledger')} />
+      <ModalHeader title={t('Connect Ledger')} handleClose={handleClose} />
       <View style={[flexbox.alignSelfCenter, spacings.mbSm]}>
         <Text weight="regular" style={spacings.mbTy} fontSize={14}>
           {t('1. Plug in your Ledger via cable and enter a PIN to unlock it.')}
