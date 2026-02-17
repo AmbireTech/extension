@@ -1,3 +1,3 @@
-import useStore from './useStore'
+import useControllerState from './useControllerState'
 
-export default useStore
+export default useControllerState
