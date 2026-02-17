@@ -404,12 +404,12 @@ const TokenDetails = ({
         </View>
         {!onGasTank && !isRewards && !isVesting && !isProjectedRewards && (
           <Button
-            type="secondary" // @TODO: Change to tertiary
+            type="tertiary"
             onPress={handleHideTokenFromButton}
             testID="hide-token-button"
             text={t('Hide token')}
             size="smaller"
-            style={{ height: 40 }}
+            style={{ height: 40, borderRadius: 20 }}
             childrenPosition="left"
           >
             <InvisibilityIcon

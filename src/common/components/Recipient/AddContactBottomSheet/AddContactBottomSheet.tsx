@@ -54,6 +54,7 @@ const AddContactBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet, address 
         onChangeText={setName}
         defaultValue={name}
         maxLength={32}
+        backgroundColor={theme.secondaryBackground}
         onSubmitEditing={handleAddContact}
       />
       <Text fontSize={14} appearance="secondaryText">
