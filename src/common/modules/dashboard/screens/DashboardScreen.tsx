@@ -41,7 +41,8 @@ const DashboardScreen = () => {
       if (!isPopup) return
 
       const {
-        contentOffset: { y }
+        contentOffset: { y },
+        contentSize: { height: contentHeight }
       } = event.nativeEvent
 
       if (scrollUpStartedAt.current === 0 && lastOffsetY.current > y) {
@@ -60,7 +61,11 @@ const DashboardScreen = () => {
       // because the height will change as the overview animates from small to large.
       const scrollUpThreshold = 200
       const isOverviewExpanded =
-        y < scrollDownThreshold || y < scrollUpStartedAt.current - scrollUpThreshold
+        y < scrollDownThreshold ||
+        y < scrollUpStartedAt.current - scrollUpThreshold ||
+        // Don't allow the overview to expand if the content is not tall enough to be scrollable
+        // after the collapse
+        contentHeight < OVERVIEW_CONTENT_MAX_HEIGHT * 2
       const isSearchHidden = y > 50 && y > scrollUpStartedAt.current - scrollUpThreshold
 
       setIsSearchHidden(isSearchHidden)

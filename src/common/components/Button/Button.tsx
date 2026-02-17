@@ -4,7 +4,6 @@ import { Animated, ColorValue, PressableProps, TextStyle, ViewStyle } from 'reac
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import common, { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { AnimatedPressable, useCustomHover, useMultiHover } from '@web/hooks/useHover'

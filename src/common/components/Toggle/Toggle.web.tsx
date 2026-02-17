@@ -1,8 +1,7 @@
-import React, { ReactNode } from 'react'
+import React from 'react'
 
-import Text, { Props as TextProps } from '@common/components/Text'
+import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import { hexToRgba } from '@common/styles/utils/common'
 
 import { ToggleProps } from './types'

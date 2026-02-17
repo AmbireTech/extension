@@ -9,7 +9,6 @@ import NetworkIcon from '@common/components/NetworkIcon'
 import TokenIcon from '@common/components/TokenIcon'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import common from '@common/styles/utils/common'
 
 const POSITION_TO_ICON: {
