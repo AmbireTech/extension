@@ -4,6 +4,7 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable @typescript-eslint/no-use-before-define */
 /* eslint-disable @typescript-eslint/no-shadow */
+import './ses-lockdown'
 import 'setimmediate'
 
 import { nanoid } from 'nanoid'
