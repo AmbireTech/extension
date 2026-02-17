@@ -252,6 +252,7 @@
     "@expo/webpack-config": "19.0.1",
     "@lavamoat/allow-scripts": "3.4.2",
     "@lavamoat/preinstall-always-fail": "2.1.1",
+    "@lavamoat/webpack": "1.5.8",
     "@lifi/types": "17.46.0",
     "@sentry/cli": "3.1.0",
     "@types/aes-js": "3.1.4",
