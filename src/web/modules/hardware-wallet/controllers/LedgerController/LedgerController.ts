@@ -124,16 +124,18 @@ class LedgerController implements ExternalSignerController {
 
     return new Promise((resolve, reject) => {
       // Start discovering - this will scan for any connected devices
-      let subscription: Subscription // so it is always defined inside the subscribe callback
+      let subscription: Subscription | undefined // so it is always defined inside the subscribe callback
       // eslint-disable-next-line prefer-const
       subscription = dmk.startDiscovering({}).subscribe({
         next: async (device) => {
-          subscription.unsubscribe()
+          subscription?.unsubscribe()
+          subscription = undefined
           dmk.close()
           resolve(device)
         },
         error: (error) => {
-          subscription.unsubscribe()
+          subscription?.unsubscribe()
+          subscription = undefined
           reject(new ExternalSignerError(normalizeLedgerMessage(error?.message)))
         }
       })
@@ -284,11 +286,12 @@ class LedgerController implements ExternalSignerController {
 
   #findDevice = () =>
     new Promise<DiscoveredDevice>((resolve, reject) => {
-      let subscription: Subscription
+      let subscription: Subscription | undefined
       let isCancelled = false
 
       const cleanup = () => {
-        subscription.unsubscribe()
+        subscription?.unsubscribe()
+        subscription = undefined
       }
 
       subscription = this.walletSDK!.listenToAvailableDevices({}).subscribe({
@@ -328,11 +331,12 @@ class LedgerController implements ExternalSignerController {
     const { onCompleted, errorMessage, isSign } = options
 
     const subscriptionPromise = new Promise<T>((resolve, reject) => {
-      let subscription: Subscription // so it is always defined inside the subscribe callback
+      let subscription: Subscription | undefined // so it is always defined inside the subscribe callback
       let isCancelled = false
 
       const cleanup = () => {
-        subscription.unsubscribe()
+        subscription?.unsubscribe()
+        subscription = undefined
       }
 
       // eslint-disable-next-line prefer-const
