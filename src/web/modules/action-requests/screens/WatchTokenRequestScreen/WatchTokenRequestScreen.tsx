@@ -297,22 +297,17 @@ const WatchTokenRequestScreen = () => {
                 containerWidth={56}
                 networkSize={20}
                 address={tokenData?.address}
-                width={50}
-                height={50}
-                networkWrapperStyle={{
-                  left: -8,
-                  top: -4
-                }}
+                width={48}
+                height={48}
               />
             </View>
-            <Text weight="semiBold" fontSize={20} numberOfLines={1}>
+            <Text weight="semiBold" fontSize={20} numberOfLines={1} style={spacings.mbTy}>
               {tokenData?.symbol}
             </Text>
             <NetworkBadge
               withOnPrefix
               chainId={tokenNetwork?.chainId}
-              fontSize={14}
-              iconSize={20}
+              fontSize={12}
               style={{
                 backgroundColor: theme.primaryBackground,
                 ...spacings.mb,

@@ -120,13 +120,11 @@ const TokenIcon: React.FC<Props> = ({
         height: withContainer ? containerHeight : height
       },
       withContainer && styles.withContainerStyle,
-      withContainer && withNetworkIcon && { borderTopLeftRadius: 7 },
       containerStyle
     ],
     [
       containerStyle,
       withContainer,
-      withNetworkIcon,
       containerWidth,
       width,
       containerHeight,

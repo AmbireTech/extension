@@ -26,7 +26,7 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       ...common.fullWidth,
       borderRadius: BORDER_RADIUS_PRIMARY,
       overflow: 'hidden',
-      backgroundColor: theme.secondaryBackground
+      backgroundColor: theme.tertiaryBackground
     },
     contentHeader: {
       ...flexbox.flex1,
@@ -35,12 +35,12 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       ...spacings.phMd
     },
     contentBody: {
-      backgroundColor: theme.tertiaryBackground,
+      backgroundColor: theme.secondaryBackground,
       ...spacings.pvMd,
       ...spacings.phMd
     },
     tokenInfoContainer: {
-      backgroundColor: theme.tertiaryBackground,
+      backgroundColor: theme.secondaryBackground,
       height: 36,
       ...spacings.phTy,
       ...flexbox.directionRow,
