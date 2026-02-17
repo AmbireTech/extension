@@ -7,7 +7,6 @@ import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import { Portal } from '@gorhom/portal'
 
 import getStyles from './styles'

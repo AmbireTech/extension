@@ -22,7 +22,6 @@ import TabsAndSearch from '@common/modules/dashboard/components/TabsAndSearch'
 import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tab/Tab'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import { searchWithNetworkName } from '@common/utils/search'
 import { openInTab } from '@web/extension-services/background/webapi/tab'
@@ -184,7 +183,7 @@ const DeFiPositions: FC<Props> = ({
                 testID="open-ticket-link"
                 fontSize={14}
                 appearance="primary"
-                color={themeType === THEME_TYPES.DARK ? theme.linkText : theme.primary}
+                color={theme.linkText}
                 onPress={() => {
                   // eslint-disable-next-line @typescript-eslint/no-floating-promises
                   openInTab({ url: 'https://help.ambire.com/hc/en-us' })

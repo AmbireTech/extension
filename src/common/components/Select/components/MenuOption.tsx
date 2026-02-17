@@ -4,7 +4,6 @@ import { Image, Pressable, View } from 'react-native'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 
 import getStyles from '../styles'

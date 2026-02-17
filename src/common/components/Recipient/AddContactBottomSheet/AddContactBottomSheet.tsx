@@ -1,22 +1,17 @@
 import React, { FC, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { View } from 'react-native'
 
 import AddressBookContact from '@common/components/AddressBookContact'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
-import GlassView from '@common/components/GlassView'
 import Input from '@common/components/Input'
 import Text from '@common/components/Text'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
-import flexbox from '@common/styles/utils/flexbox'
-import { getUiType } from '@web/utils/uiType'
 
 interface Props {
   sheetRef: any
