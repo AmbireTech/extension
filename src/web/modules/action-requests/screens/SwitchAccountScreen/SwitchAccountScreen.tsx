@@ -29,6 +29,7 @@ const SwitchAccountScreen = () => {
   const {
     state: { account }
   } = useController('SelectedAccountController')
+  const { dispatch: mainDispatch } = useController('MainController')
   const { dispatch } = useControllersMiddleware()
   const { currentUserRequest } = useController('RequestsController').state
   const { accounts } = useController('AccountsController').state
@@ -83,11 +84,11 @@ const SwitchAccountScreen = () => {
 
     setIsAuthorizing(true)
 
-    dispatch({
-      type: 'MAIN_CONTROLLER_SELECT_ACCOUNT',
-      params: { accountAddr: nextAccount }
+    mainDispatch({
+      type: 'method',
+      params: { method: 'selectAccount', args: [nextAccount] }
     })
-  }, [addToast, userRequest, dispatch, nextAccount, t])
+  }, [addToast, userRequest, mainDispatch, nextAccount, t])
 
   const responsiveSizeMultiplier = useMemo(() => {
     if (minHeightSize('s')) return 0.85

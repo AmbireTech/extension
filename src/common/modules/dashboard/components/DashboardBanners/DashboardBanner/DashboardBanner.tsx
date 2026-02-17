@@ -25,6 +25,7 @@ const DashboardBanner = ({
   const { addToast } = useToast()
   const { navigate } = useNavigation()
   const { visibleUserRequests } = useController('RequestsController').state
+  const { dispatch: networksDispatch } = useController('NetworksController')
   const { ref: sheetRef, close: closeBottomSheet, open: openBottomSheet } = useModalize()
   const primaryAction = actions[0]
 
@@ -151,9 +152,12 @@ const DashboardBanner = ({
           break
 
         case 'enable-networks':
-          dispatch({
-            type: 'MAIN_CONTROLLER_UPDATE_NETWORKS',
-            params: { network: { disabled: false }, chainIds: action.meta.networkChainIds }
+          networksDispatch({
+            type: 'method',
+            params: {
+              method: 'updateNetworks',
+              args: [{ disabled: false }, action.meta.networkChainIds]
+            }
           })
           break
 
@@ -165,7 +169,7 @@ const DashboardBanner = ({
           break
       }
     },
-    [dispatch, navigate, addToast, visibleUserRequests, type, openBottomSheet]
+    [dispatch, networksDispatch, navigate, addToast, visibleUserRequests, type, openBottomSheet]
   )
 
   return (

@@ -42,6 +42,8 @@ const TrackProgress: FC<Props> = ({ activeRoute, handleClose }) => {
   const { navigate } = useNavigation()
   const { dispatch } = useControllersMiddleware()
   const { activeRoutes } = useController('SwapAndBridgeController').state
+  const { dispatch: requestsDispatch } = useController('RequestsController')
+  const { account } = useController('SelectedAccountController').state
 
   const lastCompletedRoute =
     activeRoutes.find((r) => r.activeRouteId === activeRoute?.activeRouteId) || activeRoute
@@ -71,16 +73,19 @@ const TrackProgress: FC<Props> = ({ activeRoute, handleClose }) => {
 
   const navigateOut = useCallback(() => {
     if (isRequestWindow) {
-      dispatch({
-        type: 'CLOSE_SIGNING_REQUEST_WINDOW',
+      if (!account) return
+
+      requestsDispatch({
+        type: 'method',
         params: {
-          type: 'swapAndBridge'
+          method: 'removeUserRequests',
+          args: [[`${account.addr}-swap-and-bridge-sign`]]
         }
       })
     } else {
       navigate(WEB_ROUTES.dashboard)
     }
-  }, [dispatch, navigate])
+  }, [account, navigate, requestsDispatch])
 
   const { sessionHandler } = useTrackAccountOp({
     address: lastCompletedRoute?.route?.userAddress,

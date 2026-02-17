@@ -43,7 +43,10 @@ const AccountPersonalizeScreen = () => {
   const { theme } = useTheme(getStyles)
   const { dispatch } = useControllersMiddleware()
   const accountPickerState = useController('AccountPickerController').state
-  const { statuses, accounts } = useController('AccountsController').state
+  const {
+    state: { statuses, accounts },
+    dispatch: accountsDispatch
+  } = useController('AccountsController')
   const { isSetupComplete } = useController('WalletStateController').state
   const { addToast } = useToast()
   const initPassed = useRef(false)
@@ -214,9 +217,15 @@ const AccountPersonalizeScreen = () => {
   // prevents showing accounts to personalize from prev sessions
   useEffect(() => {
     if (newlyAddedAccounts.length && accountPickerState.isInitialized) {
-      dispatch({ type: 'ACCOUNTS_CONTROLLER_RESET_ACCOUNTS_NEWLY_ADDED_STATE' })
+      accountsDispatch({
+        type: 'method',
+        params: {
+          method: 'resetAccountsNewlyAddedState',
+          args: []
+        }
+      })
     }
-  }, [newlyAddedAccounts.length, accountPickerState.isInitialized, dispatch])
+  }, [newlyAddedAccounts.length, accountPickerState.isInitialized, accountsDispatch])
 
   useEffect(() => {
     setValue('accounts', accountsToPersonalize)
@@ -227,12 +236,15 @@ const AccountPersonalizeScreen = () => {
   const handleSave = useCallback(
     (data?: { accounts: Account[] }) => {
       const newAccounts = data?.accounts || getValues('accounts')
-      dispatch({
-        type: 'ACCOUNTS_CONTROLLER_UPDATE_ACCOUNT_PREFERENCES',
-        params: newAccounts.map((a) => ({ addr: a.addr, preferences: a.preferences }))
+      accountsDispatch({
+        type: 'method',
+        params: {
+          method: 'updateAccountPreferences',
+          args: [newAccounts.map((a) => ({ addr: a.addr, preferences: a.preferences }))]
+        }
       })
     },
-    [dispatch, getValues]
+    [accountsDispatch, getValues]
   )
 
   useEffect(() => {
@@ -245,14 +257,20 @@ const AccountPersonalizeScreen = () => {
 
   const handleComplete = useCallback(async () => {
     await handleSubmit(handleSave)()
-    dispatch({ type: 'ACCOUNTS_CONTROLLER_RESET_ACCOUNTS_NEWLY_ADDED_STATE' })
+    accountsDispatch({
+      type: 'method',
+      params: {
+        method: 'resetAccountsNewlyAddedState',
+        args: []
+      }
+    })
     if (isSetupComplete) {
       initPassed.current = false
       dispatch({ type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_RESET' })
     } else {
       setCompleted(true)
     }
-  }, [isSetupComplete, dispatch, handleSave, handleSubmit])
+  }, [isSetupComplete, accountsDispatch, dispatch, handleSave, handleSubmit])
 
   const handleContactSupport = useCallback(async () => {
     try {

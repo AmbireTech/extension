@@ -86,8 +86,6 @@ export const handleActions = async (
       }
       break
     }
-    case 'MAIN_CONTROLLER_LOCK':
-      return mainCtrl.lock()
     case 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LEDGER': {
       return await mainCtrl.handleAccountPickerInitLedger(LedgerKeyIterator)
     }
@@ -114,45 +112,7 @@ export const handleActions = async (
       })
       break
     }
-    case 'PROVIDERS_CONTROLLER_TOGGLE_BATCHING': {
-      return await mainCtrl.providers.toggleBatching()
-    }
-    case 'MAIN_CONTROLLER_ADD_NETWORK': {
-      return await mainCtrl.addNetwork(params)
-    }
-    case 'ACCOUNTS_CONTROLLER_UPDATE_ACCOUNT_PREFERENCES': {
-      return await mainCtrl.accounts.updateAccountPreferences(params)
-    }
-    case 'ACCOUNTS_CONTROLLER_REORDER_ACCOUNTS': {
-      return await mainCtrl.accounts.reorderAccounts(params)
-    }
-    case 'ACCOUNTS_CONTROLLER_UPDATE_ACCOUNT_STATE': {
-      return await mainCtrl.accounts.updateAccountState(params.addr, 'latest', params.chainIds)
-    }
-    case 'ACCOUNTS_CONTROLLER_RESET_ACCOUNTS_NEWLY_ADDED_STATE': {
-      return await mainCtrl.accounts.resetAccountsNewlyAddedState()
-    }
-    case 'NETWORKS_CONTROLLER_SET_NETWORK_TO_ADD_OR_UPDATE': {
-      return await mainCtrl.networks.setNetworkToAddOrUpdate(params)
-    }
-    case 'NETWORKS_CONTROLLER_RESET_NETWORK_TO_ADD_OR_UPDATE': {
-      return await mainCtrl.networks.setNetworkToAddOrUpdate(null)
-    }
-    case 'KEYSTORE_CONTROLLER_UPDATE_KEY_PREFERENCES': {
-      return await mainCtrl.keystore.updateKeyPreferences(params)
-    }
-    case 'MAIN_CONTROLLER_UPDATE_NETWORK': {
-      return await mainCtrl.networks.updateNetwork(params.network, params.chainId)
-    }
-    case 'MAIN_CONTROLLER_UPDATE_NETWORKS': {
-      return await mainCtrl.networks.updateNetworks(params.network, params.chainIds)
-    }
-    case 'MAIN_CONTROLLER_SELECT_ACCOUNT': {
-      return await mainCtrl.selectAccount(params.accountAddr)
-    }
-    case 'MAIN_CONTROLLER_ACCOUNT_PICKER_SELECT_ACCOUNT': {
-      return mainCtrl.accountPicker.selectAccount(params.account)
-    }
+
     case 'MAIN_CONTROLLER_ACCOUNT_PICKER_DESELECT_ACCOUNT': {
       return mainCtrl.accountPicker.deselectAccount(params.account)
     }
@@ -390,15 +350,6 @@ export const handleActions = async (
           executionType: 'open-request-window'
         }
       )
-    }
-    case 'CLOSE_SIGNING_REQUEST_WINDOW': {
-      if (!mainCtrl.selectedAccount.account) throw new Error('No selected account')
-
-      const idSuffix = params.type === 'swapAndBridge' ? 'swap-and-bridge-sign' : 'transfer-sign'
-
-      return mainCtrl.requests.removeUserRequests([
-        `${mainCtrl.selectedAccount.account.addr}-${idSuffix}`
-      ])
     }
     case 'TRANSFER_CONTROLLER_UPDATE_FORM':
       return mainCtrl.transfer.update(params.formValues)

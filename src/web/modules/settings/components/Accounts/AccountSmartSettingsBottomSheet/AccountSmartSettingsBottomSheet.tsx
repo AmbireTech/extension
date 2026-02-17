@@ -35,7 +35,10 @@ interface Props {
 }
 
 const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet, account }) => {
-  const { accountStates } = useController('AccountsController').state
+  const {
+    state: { accountStates },
+    dispatch: accountsDispatch
+  } = useController('AccountsController')
   const { keys } = useController('KeystoreController').state
   const { networks } = useController('NetworksController').state
   const { theme, themeType } = useTheme()
@@ -58,14 +61,14 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
 
     accountStateCheckedForRef.current = account.addr
 
-    dispatch({
-      type: 'ACCOUNTS_CONTROLLER_UPDATE_ACCOUNT_STATE',
+    accountsDispatch({
+      type: 'method',
       params: {
-        addr: account.addr,
-        chainIds: delegationNetworks.map((n) => n.chainId)
+        method: 'updateAccountState',
+        args: [account.addr, 'latest', delegationNetworks.map((n) => n.chainId)]
       }
     })
-  }, [accountState, delegationNetworks, account, dispatch])
+  }, [accountState, delegationNetworks, account, accountsDispatch])
 
   const is7702 = useMemo(() => {
     if (!account) return false

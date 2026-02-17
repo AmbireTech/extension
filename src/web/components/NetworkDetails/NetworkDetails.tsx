@@ -16,7 +16,6 @@ import NetworkIcon from '@common/components/NetworkIcon'
 import Text from '@common/components/Text'
 import { isAmbireNext, isDev } from '@common/config/env'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import { ROUTES } from '@common/modules/router/constants/common'
@@ -60,10 +59,10 @@ const NetworkDetails = ({
 }: Props) => {
   const { t } = useTranslation()
   const { theme, styles, themeType } = useTheme(getStyles)
-  const { dispatch } = useControllersMiddleware()
 
   const {
-    state: { statuses, allNetworks }
+    state: { statuses, allNetworks },
+    dispatch: networksDispatch
   } = useController('NetworksController')
   const { ref: dialogRef, open: openDialog, close: closeDialog } = useModalize()
 
@@ -95,22 +94,20 @@ const NetworkDetails = ({
 
   const shouldDisplayDisableButton = useMemo(
     () => isEditableRoute && !isEmpty && allowRemoveNetwork && String(chainId) !== '1',
-    [pathname, isEmpty, allowRemoveNetwork, chainId]
+    [isEmpty, allowRemoveNetwork, chainId, isEditableRoute]
   )
 
   const updateNetworkDisabled = useCallback(() => {
     if (statuses.updateNetwork !== 'INITIAL') return
-    dispatch({
-      type: 'MAIN_CONTROLLER_UPDATE_NETWORK',
+    networksDispatch({
+      type: 'method',
       params: {
-        chainId: BigInt(chainId),
-        network: {
-          disabled: !networkData?.disabled
-        }
+        method: 'updateNetwork',
+        args: [{ disabled: !networkData?.disabled }, BigInt(chainId)]
       }
     })
     closeDialog()
-  }, [chainId, closeDialog, dispatch, networkData?.disabled, statuses.updateNetwork])
+  }, [chainId, closeDialog, networkData?.disabled, networksDispatch, statuses.updateNetwork])
 
   const toggleNetworkDisabled = useCallback(() => {
     if (networkData?.disabled || allowDisableWithoutConfirmation) {
@@ -118,7 +115,7 @@ const NetworkDetails = ({
     } else {
       openDialog()
     }
-  }, [networkData?.disabled, openDialog, updateNetworkDisabled])
+  }, [networkData?.disabled, openDialog, updateNetworkDisabled, allowDisableWithoutConfirmation])
 
   const renderInfoItem = useCallback(
     (title: string, value: string, withBottomSpacing = true) => {

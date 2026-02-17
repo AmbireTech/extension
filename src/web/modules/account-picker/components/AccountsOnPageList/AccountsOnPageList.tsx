@@ -55,7 +55,8 @@ const AccountsOnPageList = ({
   const { t } = useTranslation()
   const { dispatch } = useControllersMiddleware()
   const { networks: allNetworks } = useController('NetworksController').state
-  const accountPickerState = useController('AccountPickerController').state
+  const { state: accountPickerState, dispatch: accountPickerDispatch } =
+    useController('AccountPickerController')
   const [hasReachedBottom, setHasReachedBottom] = useState<null | boolean>(null)
   const [containerHeight, setContainerHeight] = useState(0)
   const [contentHeight, setContentHeight] = useState(0)
@@ -85,12 +86,12 @@ const AccountsOnPageList = ({
 
   const handleSelectAccount = useCallback(
     (account: AccountInterface) => {
-      dispatch({
-        type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_SELECT_ACCOUNT',
-        params: { account }
+      accountPickerDispatch({
+        type: 'method',
+        params: { method: 'selectAccount', args: [account] }
       })
     },
-    [dispatch]
+    [accountPickerDispatch]
   )
 
   const handleDeselectAccount = useCallback(

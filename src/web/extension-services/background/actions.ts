@@ -1,12 +1,10 @@
-import { Contract } from 'ethers'
-
 import { HD_PATH_TEMPLATE_TYPE } from '@ambire-common/consts/derivation'
 import { FeatureFlags } from '@ambire-common/consts/featureFlags'
 import { Filters, Pagination } from '@ambire-common/controllers/activity/activity'
 import { Contact } from '@ambire-common/controllers/addressBook/addressBook'
 import { SignAccountOpType } from '@ambire-common/controllers/signAccountOp/helper'
 import { FeeSpeed, SigningStatus } from '@ambire-common/controllers/signAccountOp/signAccountOp'
-import { Account, AccountPreferences } from '@ambire-common/interfaces/account'
+import { Account } from '@ambire-common/interfaces/account'
 import { Banner } from '@ambire-common/interfaces/banner'
 import { Dapp } from '@ambire-common/interfaces/dapp'
 import { MagicLinkFlow } from '@ambire-common/interfaces/emailVault'
@@ -16,8 +14,7 @@ import {
   KeystoreSeed,
   ReadyToAddKeys
 } from '@ambire-common/interfaces/keystore'
-import { AddNetworkRequestParams, ChainId, Network } from '@ambire-common/interfaces/network'
-import { RPCProvider } from '@ambire-common/interfaces/provider'
+import { ChainId, Network } from '@ambire-common/interfaces/network'
 import { BuildRequest } from '@ambire-common/interfaces/requests'
 import { SignMessageUpdateParams } from '@ambire-common/interfaces/signMessage'
 import {
@@ -103,18 +100,7 @@ type MainControllerAccountPickerInitFromSavedSeedPhraseAction = {
   type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_FROM_SAVED_SEED_PHRASE'
   params: { id: string }
 }
-type MainControllerSelectAccountAction = {
-  type: 'MAIN_CONTROLLER_SELECT_ACCOUNT'
-  params: {
-    accountAddr: Account['addr']
-  }
-}
-type MainControllerAccountPickerSelectAccountAction = {
-  type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_SELECT_ACCOUNT'
-  params: {
-    account: Account
-  }
-}
+
 type MainControllerAccountPickerDeselectAccountAction = {
   type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_DESELECT_ACCOUNT'
   params: {
@@ -156,9 +142,6 @@ type MainControllerRemoveAccount = {
     accountAddr: Account['addr']
   }
 }
-type ProvidersControllerToggleBatching = {
-  type: 'PROVIDERS_CONTROLLER_TOGGLE_BATCHING'
-}
 type MainControllerAccountPickerResetAction = {
   type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_RESET'
 }
@@ -171,65 +154,6 @@ type ResetAccountAddingOnPageErrorAction = {
 }
 type MainControllerAccountPickerResetAccountsSelectionAction = {
   type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_RESET_ACCOUNTS_SELECTION'
-}
-
-type MainControllerAddNetwork = {
-  type: 'MAIN_CONTROLLER_ADD_NETWORK'
-  params: AddNetworkRequestParams
-}
-
-type AccountsControllerUpdateAccountPreferences = {
-  type: 'ACCOUNTS_CONTROLLER_UPDATE_ACCOUNT_PREFERENCES'
-  params: { addr: string; preferences: AccountPreferences }[]
-}
-
-type AccountsControllerReorderAccountsAction = {
-  type: 'ACCOUNTS_CONTROLLER_REORDER_ACCOUNTS'
-  params: { fromIndex: number; toIndex: number }
-}
-
-type AccountsControllerUpdateAccountState = {
-  type: 'ACCOUNTS_CONTROLLER_UPDATE_ACCOUNT_STATE'
-  params: { addr: string; chainIds: bigint[] }
-}
-type AccountsControllerResetAccountsNewlyAddedStateAction = {
-  type: 'ACCOUNTS_CONTROLLER_RESET_ACCOUNTS_NEWLY_ADDED_STATE'
-}
-
-type NetworksControllerSetNetworkToAddOrUpdate = {
-  type: 'NETWORKS_CONTROLLER_SET_NETWORK_TO_ADD_OR_UPDATE'
-  params: {
-    chainId: Network['chainId']
-    rpcUrl: string
-  }
-}
-
-type NetworksControllerResetNetworkToAddOrUpdate = {
-  type: 'NETWORKS_CONTROLLER_RESET_NETWORK_TO_ADD_OR_UPDATE'
-}
-
-type KeystoreControllerUpdateKeyPreferencesAction = {
-  type: 'KEYSTORE_CONTROLLER_UPDATE_KEY_PREFERENCES'
-  params: {
-    addr: Key['addr']
-    type: Key['type']
-    preferences: KeyPreferences
-  }[]
-}
-
-type MainControllerUpdateNetworkAction = {
-  type: 'MAIN_CONTROLLER_UPDATE_NETWORK'
-  params: {
-    network: Partial<Network>
-    chainId: ChainId
-  }
-}
-type MainControllerUpdateNetworksAction = {
-  type: 'MAIN_CONTROLLER_UPDATE_NETWORKS'
-  params: {
-    network: Partial<Network>
-    chainIds: ChainId[]
-  }
 }
 
 type MainControllerSignMessageInitAction = {
@@ -411,10 +335,6 @@ type CurrentSignAccountOpReestimateAction = {
 type MainControllerHandleSignAndBroadcastAccountOp = {
   type: 'MAIN_CONTROLLER_HANDLE_SIGN_AND_BROADCAST_ACCOUNT_OP'
   params: { type: SignAccountOpType; fromRequestId: string | number }
-}
-
-type MainControllerLockAction = {
-  type: 'MAIN_CONTROLLER_LOCK'
 }
 
 type KeystoreControllerAddSecretAction = {
@@ -632,12 +552,6 @@ type OpenSigningActionWindow = {
     type: 'swapAndBridge' | 'transfer'
   }
 }
-type CloseSigningActionWindow = {
-  type: 'CLOSE_SIGNING_REQUEST_WINDOW'
-  params: {
-    type: 'swapAndBridge' | 'transfer'
-  }
-}
 type TransferControllerUpdateForm = {
   type: 'TRANSFER_CONTROLLER_UPDATE_FORM'
   params: { formValues: TransferUpdate }
@@ -789,24 +703,12 @@ export type Action =
   | MainControllerAccountPickerInitLedgerAction
   | MainControllerAccountPickerInitPrivateKeyOrSeedPhraseAction
   | MainControllerAccountPickerInitFromSavedSeedPhraseAction
-  | MainControllerSelectAccountAction
-  | MainControllerAccountPickerSelectAccountAction
   | MainControllerAccountPickerDeselectAccountAction
   | HandshakeAction
   | MainControllerAccountPickerResetAction
   | MainControllerAccountPickerInitAction
   | ResetAccountAddingOnPageErrorAction
   | MainControllerAccountPickerResetAccountsSelectionAction
-  | AccountsControllerReorderAccountsAction
-  | AccountsControllerUpdateAccountPreferences
-  | AccountsControllerUpdateAccountState
-  | AccountsControllerResetAccountsNewlyAddedStateAction
-  | NetworksControllerSetNetworkToAddOrUpdate
-  | NetworksControllerResetNetworkToAddOrUpdate
-  | MainControllerAddNetwork
-  | KeystoreControllerUpdateKeyPreferencesAction
-  | MainControllerUpdateNetworkAction
-  | MainControllerUpdateNetworksAction
   | MainControllerAccountPickerSetPageAction
   | MainControllerAccountPickerFindAndSetLinkedAccountsAction
   | MainControllerAccountPickerSetHdPathTemplateAction
@@ -814,8 +716,6 @@ export type Action =
   | MainControllerAddAccounts
   | MainControllerRemoveAccount
   | RequestsControllerAddCallsUserRequestAction
-  | ProvidersControllerToggleBatching
-  | MainControllerLockAction
   | RequestsControllerBuildRequestAction
   | RequestsControllerRemoveUserRequestAction
   | RequestsControllerResolveUserRequestAction
@@ -907,7 +807,6 @@ export type Action =
   | SwapAndBridgeControllerOpenSigningActionWindow
   | SwapAndBridgeControllerUserProceededAction
   | OpenSigningActionWindow
-  | CloseSigningActionWindow
   | TransferControllerUpdateForm
   | TransferControllerResetForm
   | TransferControllerDestroyLatestBroadcastedAccountOp

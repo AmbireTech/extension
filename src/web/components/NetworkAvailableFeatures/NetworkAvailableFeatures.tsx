@@ -66,7 +66,8 @@ const NetworkAvailableFeatures = ({
   } = useController('SelectedAccountController')
 
   const {
-    state: { networks }
+    state: { networks },
+    dispatch: networksDispatch
   } = useController('NetworksController')
 
   const { dispatchAndWait } = useController('ProvidersController')
@@ -103,9 +104,12 @@ const NetworkAvailableFeatures = ({
     })
       .then((factoryCode) => {
         if (factoryCode !== '0x') {
-          dispatch({
-            type: 'MAIN_CONTROLLER_UPDATE_NETWORK',
-            params: { network: { areContractsDeployed: true }, chainId: selectedNetwork.chainId }
+          networksDispatch({
+            type: 'method',
+            params: {
+              method: 'updateNetwork',
+              args: [{ areContractsDeployed: true }, selectedNetwork.chainId]
+            }
           })
         }
       })
@@ -113,7 +117,7 @@ const NetworkAvailableFeatures = ({
         // eslint-disable-next-line no-console
         console.error(error)
       })
-  }, [dispatch, selectedNetwork, checkedDeployFor, dispatchAndWait])
+  }, [networksDispatch, selectedNetwork, checkedDeployFor, dispatchAndWait])
 
   const handleDeploy = useCallback(async () => {
     if (!selectedNetwork) return // this should not happen...
