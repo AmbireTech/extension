@@ -141,7 +141,13 @@ const SavedSeedPhrases = ({ handleClose }: { handleClose: () => void }) => {
             navigate(WEB_ROUTES.recoveryPhrasesSettings)
           }}
         >
-          <SettingsWheelIcon width={28} height={28} color={theme.iconPrimary} />
+          {({ hovered }: any) => (
+            <SettingsWheelIcon
+              width={28}
+              height={28}
+              color={hovered ? theme.primaryText : theme.iconPrimary}
+            />
+          )}
         </Pressable>
       </ModalHeader>
       <FlatList data={seeds} renderItem={renderItem} keyExtractor={(item) => item.id} />
