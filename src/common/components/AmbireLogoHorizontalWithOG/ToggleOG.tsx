@@ -2,18 +2,17 @@ import React, { useCallback, useState } from 'react'
 import { Pressable } from 'react-native'
 import { SvgProps } from 'react-native-svg'
 
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useInviteControllerState from '@web/hooks/useInviteControllerState'
+import AmbireLogoHorizontalMonochrome from '@common/assets/svg/AmbireLogoHorizontalMonochrome'
+import useController from '@common/hooks/useController'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 
-import AmbireLogoHorizontal from '../AmbireLogoHorizontal/AmbireLogoHorizontal'
-import AmbireLogoHorizontalOG from './AmbireLogoHorizontalOG'
 import styles from './styles'
 
 const PRESS_THRESHOLD = 7
 
 const ToggleOG: React.FC<SvgProps> = ({ ...rest }) => {
-  const { dispatch } = useBackgroundService()
-  const { isOG } = useInviteControllerState()
+  const { dispatch } = useControllersMiddleware()
+  const { isOG } = useController('InviteController').state
   const [, setPressCount] = useState(0)
 
   const toggleOG = useCallback(() => {
@@ -36,7 +35,7 @@ const ToggleOG: React.FC<SvgProps> = ({ ...rest }) => {
 
   return (
     <Pressable style={styles.pressable} onPress={handlePress}>
-      {isOG ? <AmbireLogoHorizontalOG {...rest} /> : <AmbireLogoHorizontal {...rest} />}
+      <AmbireLogoHorizontalMonochrome {...rest} isOG={isOG} />
     </Pressable>
   )
 }

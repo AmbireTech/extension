@@ -5,14 +5,12 @@ import { FlatList } from 'react-native'
 
 import { Account as AccountType } from '@ambire-common/interfaces/account'
 import { isSmartAccount } from '@ambire-common/libs/account/account'
-import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
-import useDomainsControllerState from '@web/hooks/useDomainsController/useDomainsController'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
+import useController from '@common/hooks/useController'
 
 const useAccountsList = ({
   flatlistRef
 }: {
-  flatlistRef?: React.RefObject<FlatList<AccountType>> | null
+  flatlistRef?: React.RefObject<FlatList<AccountType> | null>
 } = {}) => {
   const { control, watch } = useForm({
     mode: 'all',
@@ -24,9 +22,11 @@ const useAccountsList = ({
   const [shouldDisplayAccounts, setShouldDisplayAccounts] = useState(false)
   const {
     state: { domains }
-  } = useDomainsControllerState()
-  const { accounts } = useAccountsControllerState()
-  const { account: selectedAccount } = useSelectedAccountControllerState()
+  } = useController('DomainsController')
+  const { accounts } = useController('AccountsController').state
+  const {
+    state: { account: selectedAccount }
+  } = useController('SelectedAccountController')
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   const searchableAccounts = useMemo(

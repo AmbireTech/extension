@@ -5,19 +5,20 @@ import { SvgProps } from 'react-native-svg'
 import DiagonalRightArrowIcon from '@common/assets/svg/DiagonalRightArrowIcon'
 import ImportJsonIcon from '@common/assets/svg/ImportJsonIcon'
 import LatticeWithBorderIcon from '@common/assets/svg/LatticeWithBorderIcon'
-import LedgerIcon from '@common/assets/svg/LedgerIcon'
+import LedgerLetterIcon from '@common/assets/svg/LedgerLetterIcon'
 import PrivateKeyIcon from '@common/assets/svg/PrivateKeyIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import SeedPhraseIcon from '@common/assets/svg/SeedPhraseIcon'
-import TrezorIcon from '@common/assets/svg/TrezorIcon'
+import TrezorLockIcon from '@common/assets/svg/TrezorLockIcon'
 import Button from '@common/components/Button'
 import Panel from '@common/components/Panel'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
-import Header from '@common/modules/header/components/Header'
+import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Header'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
@@ -27,7 +28,6 @@ import {
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import { isSafari } from '@web/constants/browserapi'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 
 import getStyles from './styles'
 
@@ -51,7 +51,7 @@ const ImportExistingAccountSelectorScreen = () => {
   const animatedHeight = useRef(new Animated.Value(0)).current
   const animatedOpacity = useRef(new Animated.Value(0)).current
   const { addToast } = useToast()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
 
   const buttons: ButtonType[] = useMemo(
     () => [
@@ -84,14 +84,14 @@ const ImportExistingAccountSelectorScreen = () => {
             dispatch({ type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_TREZOR' })
           }
         },
-        icon: TrezorIcon
+        icon: TrezorLockIcon
       },
       {
         title: 'Ledger',
         onPress: () => {
           goToNextRoute(WEB_ROUTES.ledgerConnect)
         },
-        icon: LedgerIcon
+        icon: LedgerLetterIcon
       },
       {
         title: 'Grid Plus',
@@ -127,10 +127,7 @@ const ImportExistingAccountSelectorScreen = () => {
   }, [animatedHeight, animatedOpacity, showMore, buttons.length])
 
   return (
-    <TabLayoutContainer
-      backgroundColor={theme.secondaryBackground}
-      header={<Header mode="custom-inner-content" withAmbireLogo />}
-    >
+    <TabLayoutContainer backgroundColor={theme.secondaryBackground} header={<HeaderWithLogoOnly />}>
       <TabLayoutWrapperMainContent wrapperRef={wrapperRef} contentContainerStyle={spacings.mbLg}>
         <Panel
           type="onboarding"
@@ -157,17 +154,12 @@ const ImportExistingAccountSelectorScreen = () => {
                     }}
                   >
                     <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                      <IconComponent
-                        width={24}
-                        {...(themeType === THEME_TYPES.DARK ? { color: theme.primaryText } : {})}
-                      />
+                      <IconComponent width={32} height={32} color={theme.primaryText} />
                       <Text style={spacings.mlSm} fontSize={14} weight="medium">
                         {t(title)}
                       </Text>
                     </View>
-                    <RightArrowIcon
-                      {...(themeType === THEME_TYPES.DARK ? { color: theme.primaryText } : {})}
-                    />
+                    <RightArrowIcon color={theme.iconPrimary} />
                   </Button>
                 ))}
               <Animated.View

@@ -9,10 +9,12 @@ import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
-import Header from '@common/modules/header/components/Header'
+import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Header'
 import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -22,19 +24,16 @@ import {
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import eventBus from '@web/extension-services/event/eventBus'
-import useAccountPickerControllerState from '@web/hooks/useAccountPickerControllerState'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 
 const CreateSeedPhraseWriteScreen = () => {
   const { goToNextRoute, goToPrevRoute } = useOnboardingNavigation()
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { addToast } = useToast()
-  const { dispatch } = useBackgroundService()
-  const { hasTempSeed } = useKeystoreControllerState()
+  const { dispatch } = useControllersMiddleware()
+  const { hasTempSeed } = useController('KeystoreController').state
   const [tempSeed, setTempSeed] = useState<KeystoreSeed | null>(null)
-  const { initParams, subType } = useAccountPickerControllerState()
+  const { initParams, subType } = useController('AccountPickerController').state
   const [submitButtonPressed, setSubmitButtonPressed] = useState(false)
 
   useEffect(() => {
@@ -93,13 +92,10 @@ const CreateSeedPhraseWriteScreen = () => {
   }, [tempSeed])
 
   return (
-    <TabLayoutContainer
-      backgroundColor={theme.secondaryBackground}
-      header={<Header mode="custom-inner-content" withAmbireLogo />}
-    >
+    <TabLayoutContainer backgroundColor={theme.secondaryBackground} header={<HeaderWithLogoOnly />}>
       <TabLayoutWrapperMainContent>
         <Panel
-          testID='back-up-recovery-phrase-text'
+          testID="back-up-recovery-phrase-text"
           type="onboarding"
           spacingsSize="small"
           step={1}

@@ -14,17 +14,15 @@ import LinkIcon from '@common/assets/svg/LinkIcon'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { createTab } from '@web/extension-services/background/webapi/tab'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import { sizeMultiplier } from '@web/modules/sign-account-op/components/TransactionSummary'
 
 import RepeatTransaction from './RepeatTransaction'
-import StatusBadge from './StatusBadge'
 import getStyles from './styles'
 import SubmittedOn from './SubmittedOn'
 
@@ -50,12 +48,13 @@ const Footer: FC<Props> = ({
 }) => {
   const { styles } = useTheme(getStyles)
   const { addToast } = useToast()
-  const { networks } = useNetworksControllerState()
-  const { account: selectedAccount } = useSelectedAccountControllerState()
+  const { networks } = useController('NetworksController').state
+  const {
+    state: { account: selectedAccount }
+  } = useController('SelectedAccountController')
   const { t } = useTranslation()
   const textSize = 14 * sizeMultiplier[size]
-  const iconSize = 26 * sizeMultiplier[size]
-  const iconSizeSm = 14 * sizeMultiplier[size]
+  const iconSize = 24 * sizeMultiplier[size]
 
   const canViewFee =
     status !== AccountOpStatus.Rejected &&
@@ -127,13 +126,17 @@ const Footer: FC<Props> = ({
   ])
 
   return (
-    <View style={spacings.phMd}>
+    <View style={spacings.phSm}>
       <View style={styles.footer}>
-        <StatusBadge status={status} textSize={textSize} />
         {canViewFee && (
-          <View style={[flexbox.flex1, spacings.mrMd]}>
-            <Text fontSize={textSize} appearance="secondaryText" weight="semiBold">
-              {t('Fee')}:
+          <View style={[flexbox.flex1, spacings.mrSm]}>
+            <Text
+              fontSize={textSize}
+              appearance="secondaryText"
+              weight="semiBold"
+              style={{ ...spacings.mbMi }}
+            >
+              {t('Fee')}
             </Text>
 
             {gasFeePayment?.isSponsored ? (
@@ -156,7 +159,7 @@ const Footer: FC<Props> = ({
         />
         <View style={[flexbox.alignEnd]}>
           <TouchableOpacity
-            style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbMi]}
+            style={[flexbox.directionRow, flexbox.alignCenter]}
             onPress={handleViewTransaction}
           >
             <Text
@@ -169,7 +172,7 @@ const Footer: FC<Props> = ({
             >
               {t('View transaction')}
             </Text>
-            <LinkIcon width={iconSizeSm} height={iconSizeSm} />
+            <LinkIcon width={iconSize} height={iconSize} />
           </TouchableOpacity>
           {rawCalls?.length && selectedAccount?.addr === accountAddr ? (
             <RepeatTransaction
@@ -177,7 +180,7 @@ const Footer: FC<Props> = ({
               chainId={network.chainId}
               rawCalls={rawCalls}
               textSize={textSize}
-              iconSize={iconSizeSm}
+              iconSize={iconSize}
             />
           ) : (
             <View />

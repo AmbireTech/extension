@@ -1,14 +1,11 @@
 import React from 'react'
 import { useTranslation } from 'react-i18next'
-import { View } from 'react-native'
 
 import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
 import { ISignAccountOpController } from '@ambire-common/interfaces/signAccountOp'
-import Button from '@common/components/Button'
-import Text from '@common/components/Text'
+import Alert from '@common/components/Alert'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import spacings from '@common/styles/spacings'
-import flexbox from '@common/styles/utils/flexbox'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 
 const BundlerWarning = ({
   signAccountOpState,
@@ -20,35 +17,31 @@ const BundlerWarning = ({
     title: string
   }
 }) => {
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { t } = useTranslation()
 
   if (!bundlerNonceDiscrepancy || !signAccountOpState) return null
 
   return (
-    <View
-      style={[flexbox.directionRow, spacings.mt, flexbox.alignCenter, flexbox.justifySpaceBetween]}
-    >
-      <Text fontSize={12} appearance="warningText" style={spacings.mr}>
-        {t(bundlerNonceDiscrepancy.title)}
-      </Text>
-      <Button
-        type="warning"
-        text={t('Retry')}
-        onPress={() => {
+    <Alert
+      type="warning"
+      title={bundlerNonceDiscrepancy.title}
+      style={spacings.mt}
+      buttonProps={{
+        type: 'warning',
+        text: t('Retry'),
+        onPress: () => {
           dispatch({
             type: 'CURRENT_SIGN_ACCOUNT_OP_REESTIMATE',
             params: {
               type: signAccountOpState.type
             }
           })
-        }}
-        disabled={signAccountOpState.estimation.status === EstimationStatus.Loading}
-        hasBottomSpacing={false}
-        size="tiny"
-        style={{ width: 98 }}
-      />
-    </View>
+        },
+        disabled: signAccountOpState.estimation.status === EstimationStatus.Loading,
+        size: 'small'
+      }}
+    />
   )
 }
 

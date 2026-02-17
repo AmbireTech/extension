@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react'
 import { Animated, ColorValue, PressableProps, TextStyle, ViewStyle } from 'react-native'
 
+import InfoIcon from '@common/assets/svg/InfoIcon'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
@@ -11,6 +12,7 @@ import { AnimatedText } from '@web/hooks/useHover/useHover'
 import { AnimationValues } from '@web/hooks/useHover/useMultiHover'
 import useOnEnterKeyPress from '@web/hooks/useOnEnterKeyPress'
 
+import { createGlobalTooltipDataSet } from '../GlobalTooltip'
 import getStyles from './styles'
 
 type ButtonTypes =
@@ -23,12 +25,11 @@ type ButtonTypes =
   | 'error'
   | 'warning'
   | 'info'
-  | 'info2'
-  | 'info3'
   | 'success'
   | 'gray'
 
-type ButtonSizes = 'regular' | 'small' | 'large' | 'tiny'
+// We should rethink these sizes
+type ButtonSizes = 'regular' | 'smaller' | 'small' | 'large' | 'tiny'
 export interface Props extends PressableProps {
   text?: string
   type?: ButtonTypes
@@ -46,6 +47,7 @@ export interface Props extends PressableProps {
   innerContainerStyle?: (hovered: boolean) => ViewStyle
   testID?: string
   submitOnEnter?: boolean
+  tooltipDataSet?: ReturnType<typeof createGlobalTooltipDataSet>
 }
 
 const OPACITY_ANIMATION = {
@@ -68,7 +70,7 @@ const ButtonInnerContainer = ({
   children?: React.ReactNode
   innerContainerStyle?: (hovered: boolean) => ViewStyle
 } & PressableProps) => {
-  const { themeType, theme } = useTheme()
+  const { theme } = useTheme()
 
   const buttonInnerContainerColors = useMemo(
     () => ({
@@ -76,32 +78,22 @@ const ButtonInnerContainer = ({
       secondary: [],
       danger: [],
       outline: [],
-      ghost:
-        themeType === THEME_TYPES.DARK
-          ? [
-              {
-                property: 'backgroundColor' as any,
-                from: `${theme.primary as string}00`,
-                to: theme.primary20
-              }
-            ]
-          : [
-              {
-                property: 'backgroundColor' as any,
-                from: `${theme.primary as string}00`,
-                to: theme.primary20
-              }
-            ],
+      ghost: [
+        {
+          property: 'backgroundColor',
+          from: `${String(theme.neutral400)}00`,
+          to: theme.neutral400
+        }
+      ],
       ghost2: [],
       error: [],
       warning: [],
       info: [],
       info2: [],
       success: [],
-      gray: [],
-      info3: []
+      gray: []
     }),
-    [themeType, theme]
+    [theme]
   )
 
   const [buttonInnerContainerBind, buttonInnerContainerAnimatedStyle, isHovered] = useMultiHover({
@@ -165,6 +157,7 @@ const Button = ({
   childrenContainerStyle,
   testID,
   submitOnEnter: _submitOnEnter,
+  tooltipDataSet,
   ...rest
 }: Props) => {
   const { styles, theme, themeType } = useTheme(getStyles)
@@ -182,39 +175,22 @@ const Button = ({
       primary: [
         {
           property: 'backgroundColor',
-          from: theme.primary,
-          to: theme.primaryLight
-        },
-        ...(themeType === THEME_TYPES.DARK
-          ? [
-              {
-                property: 'borderWidth',
-                from: 0,
-                to: 1
-              },
-              {
-                property: 'borderColor',
-                from: theme.primary,
-                to: theme.primary
-              }
-            ]
-          : [])
+          from: theme.primaryAccent,
+          to: theme.primaryAccentHovered
+        }
       ],
       secondary: [
         {
           property: 'backgroundColor',
-          from:
-            themeType === THEME_TYPES.DARK
-              ? `${String(theme.primary)}00`
-              : `${String(theme.infoBackground)}00`,
-          to: themeType === THEME_TYPES.DARK ? `${String(theme.primary)}20` : theme.infoBackground
+          from: theme.primaryBackground,
+          to: theme.tertiaryBackground
         }
       ],
       danger: [
         {
           property: 'backgroundColor',
-          from: `${String(theme.errorBackground)}00`,
-          to: theme.errorBackground
+          from: theme.errorBackground,
+          to: theme.error300
         }
       ],
       outline: [OPACITY_ANIMATION],
@@ -223,38 +199,16 @@ const Button = ({
       error: [OPACITY_ANIMATION],
       warning: [OPACITY_ANIMATION],
       info: [OPACITY_ANIMATION],
-      info2: [OPACITY_ANIMATION],
-      info3: [
-        {
-          property: 'backgroundColor',
-          from: `${String(theme.info3Button)}`,
-          to: theme.info3ButtonHover
-        }
-      ],
       success: [OPACITY_ANIMATION],
       gray: [
         {
           property: 'backgroundColor',
-          from:
-            themeType === THEME_TYPES.DARK ? theme.tertiaryBackground : theme.quaternaryBackground,
-          to:
-            themeType === THEME_TYPES.DARK
-              ? theme.secondaryBackground
-              : `${String(theme.primaryLight)}10`
-        },
-        {
-          property: 'borderWidth',
-          from: 0,
-          to: 1
-        },
-        {
-          property: 'borderColor',
-          from: theme.quaternaryBackground,
-          to: themeType === THEME_TYPES.DARK ? `${theme.linkText as string}80` : theme.primaryLight
+          from: `${String(theme.neutral400)}00`,
+          to: theme.neutral400
         }
       ]
     }),
-    [themeType, theme]
+    [theme]
   )
 
   const [buttonContainerBind, buttonContainerAnimatedStyle] = useMultiHover({
@@ -270,7 +224,7 @@ const Button = ({
     ghost: styles.buttonContainerGhost,
     ghost2: {},
     error: {
-      backgroundColor: theme.errorText,
+      backgroundColor: theme.error200,
       borderWidth: 0
     },
     warning: {
@@ -281,20 +235,12 @@ const Button = ({
       backgroundColor: theme.infoText,
       borderWidth: 0
     },
-    info2: {
-      backgroundColor: theme.info2Text,
-      borderWidth: 0
-    },
-    info3: {
-      backgroundColor: theme.info3Button,
-      borderWidth: 0
-    },
     success: {
       backgroundColor: theme.successText,
       borderWidth: 0
     },
     gray: {
-      backgroundColor: theme.quaternaryBackground,
+      backgroundColor: theme.neutral400,
       borderWidth: 0
     }
   }
@@ -302,6 +248,7 @@ const Button = ({
   const containerStylesSizes: { [key in ButtonSizes]: ViewStyle } = {
     large: styles.buttonContainerStylesSizeLarge,
     regular: styles.buttonContainerStylesSizeRegular,
+    smaller: styles.buttonContainerStylesSmaller,
     small: styles.buttonContainerStylesSizeSmall,
     tiny: styles.buttonContainerStylesSizeTiny
   }
@@ -314,22 +261,22 @@ const Button = ({
       primary: [
         {
           property: 'color',
-          from: themeType === THEME_TYPES.DARK ? theme.primaryBackground : '#fff',
+          from: '#fff',
           to: '#fff'
         }
       ],
       secondary: [
         {
           property: 'color',
-          from: theme.primary,
-          to: themeType === THEME_TYPES.DARK ? '#fff' : theme.primary
+          from: theme.primaryText,
+          to: theme.primaryText
         }
       ],
       danger: [
         {
           property: 'color',
-          from: themeType === THEME_TYPES.DARK ? theme.errorText : theme.errorDecorative,
-          to: themeType === THEME_TYPES.DARK ? theme.errorText : theme.errorDecorative
+          from: theme.errorText,
+          to: theme.error100
         }
       ],
       outline: [
@@ -342,22 +289,22 @@ const Button = ({
       ghost: [
         {
           property: 'color',
-          from: theme.primary,
-          to: theme.primary
+          from: theme.primaryText,
+          to: theme.primaryText
         }
       ],
       ghost2: [
         {
           property: 'color',
-          from: theme.iconPrimary,
-          to: theme.primaryBackgroundInverted
+          from: theme.secondaryText,
+          to: theme.primaryText
         }
       ],
       error: [
         {
           property: 'color',
-          from: theme.primaryBackground,
-          to: theme.primaryBackground
+          from: '#fff',
+          to: '#fff'
         }
       ],
       warning: [
@@ -368,20 +315,6 @@ const Button = ({
         }
       ],
       info: [
-        {
-          property: 'color',
-          from: theme.primaryBackground,
-          to: theme.primaryBackground
-        }
-      ],
-      info2: [
-        {
-          property: 'color',
-          from: theme.primaryBackground,
-          to: theme.primaryBackground
-        }
-      ],
-      info3: [
         {
           property: 'color',
           from: theme.primaryBackground,
@@ -414,6 +347,7 @@ const Button = ({
   const buttonTextStylesSizes: { [key in ButtonSizes]: TextStyle } = {
     large: styles.buttonTextStylesSizeLarge,
     regular: styles.buttonTextStylesSizeRegular,
+    smaller: styles.buttonTextStylesSizeSmaller,
     small: styles.buttonTextStylesSizeSmall,
     tiny: styles.buttonTextStylesSizeTiny
   }
@@ -458,7 +392,7 @@ const Button = ({
           buttonContainerAnimatedStyle,
           disabled && disabledStyle ? disabledStyle : {},
           disabled && !disabledStyle ? styles.disabled : {}
-        ] as ViewStyle
+        ] as ViewStyle[]
       }
       {...rest}
       onHoverIn={(e) => {
@@ -524,6 +458,18 @@ const Button = ({
           rest?.onPressOut && rest.onPressOut(e)
         }}
       >
+        {!!tooltipDataSet && (
+          <InfoIcon
+            width={16}
+            height={16}
+            style={{
+              position: 'absolute',
+              right: 0,
+              top: 0
+            }}
+            dataSet={tooltipDataSet}
+          />
+        )}
         {childrenPosition === 'left' && (
           <Animated.View
             style={[

@@ -3,23 +3,21 @@ import { Animated, NativeScrollEvent, NativeSyntheticEvent, View } from 'react-n
 import { useModalize } from 'react-native-modalize'
 
 import { isWeb } from '@common/config/env'
+import useController from '@common/hooks/useController'
 import useDebounce from '@common/hooks/useDebounce'
 import useTheme from '@common/hooks/useTheme'
 import PendingActionWindowModal from '@common/modules/dashboard/components/PendingActionWindowModal'
-import spacings from '@common/styles/spacings'
-import flexbox from '@common/styles/utils/flexbox'
 import GasTankModal from '@web/components/GasTankModal'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
+import LayoutWrapper from '@web/components/LayoutWrapper'
 import { getUiType } from '@web/utils/uiType'
 
-import DAppFooter from '../components/DAppFooter'
 import DashboardOverview from '../components/DashboardOverview'
 import DashboardPages from '../components/DashboardPages'
 import getStyles from './styles'
 
 const { isPopup } = getUiType()
 
-export const OVERVIEW_CONTENT_MAX_HEIGHT = 120
+export const OVERVIEW_CONTENT_MAX_HEIGHT = 280
 
 const DashboardScreen = () => {
   const { styles } = useTheme(getStyles)
@@ -32,8 +30,11 @@ const DashboardScreen = () => {
   })
   const debouncedDashboardOverviewSize = useDebounce({ value: dashboardOverviewSize, delay: 100 })
   const animatedOverviewHeight = useRef(new Animated.Value(OVERVIEW_CONTENT_MAX_HEIGHT)).current
+  const [isSearchHidden, setIsSearchHidden] = useState(false)
 
-  const { account, portfolio } = useSelectedAccountControllerState()
+  const {
+    state: { account, portfolio }
+  } = useController('SelectedAccountController')
 
   const onScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -54,13 +55,15 @@ const DashboardScreen = () => {
       // This is done, because hiding the overview will subtract the height of the overview from the height of the
       // scroll view, thus a shorter scroll container may no longer be scrollable after hiding the overview
       // and if that happens, the user will not be able to scroll up to expand the overview again.
-      const scrollDownThreshold = dashboardOverviewSize.height
+      const scrollDownThreshold = dashboardOverviewSize.height / 2
       // scrollUpThreshold must be a constant value and not dependent on the height of the overview,
       // because the height will change as the overview animates from small to large.
       const scrollUpThreshold = 200
       const isOverviewExpanded =
         y < scrollDownThreshold || y < scrollUpStartedAt.current - scrollUpThreshold
+      const isSearchHidden = y > 50 && y > scrollUpStartedAt.current - scrollUpThreshold
 
+      setIsSearchHidden(isSearchHidden)
       Animated.spring(animatedOverviewHeight, {
         toValue: isOverviewExpanded ? OVERVIEW_CONTENT_MAX_HEIGHT : 0,
         bounciness: 0,
@@ -73,7 +76,7 @@ const DashboardScreen = () => {
   )
 
   return (
-    <>
+    <LayoutWrapper>
       <GasTankModal
         modalRef={gasTankModalRef}
         handleClose={closeGasTankModal}
@@ -83,18 +86,19 @@ const DashboardScreen = () => {
 
       <PendingActionWindowModal />
       <View style={styles.container}>
-        <View style={[flexbox.flex1, spacings.ptSm]}>
-          <DashboardOverview
-            openGasTankModal={openGasTankModal}
-            animatedOverviewHeight={animatedOverviewHeight}
-            dashboardOverviewSize={debouncedDashboardOverviewSize}
-            setDashboardOverviewSize={setDashboardOverviewSize}
-          />
-          <DashboardPages onScroll={onScroll} animatedOverviewHeight={animatedOverviewHeight} />
-        </View>
-        <DAppFooter />
+        <DashboardOverview
+          openGasTankModal={openGasTankModal}
+          animatedOverviewHeight={animatedOverviewHeight}
+          dashboardOverviewSize={debouncedDashboardOverviewSize}
+          setDashboardOverviewSize={setDashboardOverviewSize}
+        />
+        <DashboardPages
+          onScroll={onScroll}
+          animatedOverviewHeight={animatedOverviewHeight}
+          isSearchHidden={isSearchHidden}
+        />
       </View>
-    </>
+    </LayoutWrapper>
   )
 }
 

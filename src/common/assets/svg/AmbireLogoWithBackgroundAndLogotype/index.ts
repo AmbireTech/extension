@@ -1,0 +1,3 @@
+import AmbireLogoWithBackgroundAndLogotype from './AmbireLogoWithBackgroundAndLogotype'
+
+export default AmbireLogoWithBackgroundAndLogotype

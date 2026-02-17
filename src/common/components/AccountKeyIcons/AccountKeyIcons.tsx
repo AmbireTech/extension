@@ -1,13 +1,13 @@
 import React from 'react'
-import { View } from 'react-native'
+import { ColorValue, View } from 'react-native'
 
 import { Account as AccountInterface } from '@ambire-common/interfaces/account'
 import { Key } from '@ambire-common/interfaces/keystore'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
-import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 
 import AccountKeyBanner from '../AccountKeyBanner'
 import AccountKeyIcon from '../AccountKeyIcon/AccountKeyIcon'
@@ -21,7 +21,7 @@ const AccountKeyIconOrBanner = ({
 }: {
   type: KeyType
   isExtended: boolean
-  color: string
+  color: string | ColorValue
 }) => {
   return isExtended ? (
     <AccountKeyBanner type={type} />
@@ -37,7 +37,7 @@ const AccountKeyIcons = ({
   account: AccountInterface
   isExtended: boolean
 }) => {
-  const { keys } = useKeystoreControllerState()
+  const { keys } = useController('KeystoreController').state
   const { theme, themeType } = useTheme()
   const associatedKeys = account?.associatedKeys || []
   const importedKeyTypes = Array.from(
@@ -57,11 +57,7 @@ const AccountKeyIcons = ({
               <AccountKeyIconOrBanner
                 type={type || 'internal'}
                 isExtended={isExtended}
-                color={
-                  themeType === THEME_TYPES.DARK
-                    ? (theme.primaryBackgroundInverted as string)
-                    : (theme.primaryBackground as string)
-                }
+                color={theme.primaryBackground}
               />
             </View>
           )
@@ -70,11 +66,7 @@ const AccountKeyIcons = ({
         <AccountKeyIconOrBanner
           type="none"
           isExtended={isExtended}
-          color={
-            themeType === THEME_TYPES.DARK
-              ? (theme.primaryBackgroundInverted as string)
-              : (theme.primaryBackground as string)
-          }
+          color={theme.primaryBackground}
         />
       )}
     </View>

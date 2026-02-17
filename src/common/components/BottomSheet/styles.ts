@@ -27,7 +27,7 @@ const getStyles = (theme: ThemeProps) =>
     modal: {
       borderBottomEndRadius: BORDER_RADIUS_PRIMARY,
       borderBottomStartRadius: BORDER_RADIUS_PRIMARY,
-      maxWidth: TAB_CONTENT_WIDTH,
+      maxWidth: 540,
       width: '100%',
       margin: 'auto'
     },
@@ -35,7 +35,7 @@ const getStyles = (theme: ThemeProps) =>
       width: 60,
       height: 3,
       borderRadius: 4,
-      backgroundColor: theme.secondaryBorder,
+      backgroundColor: theme.neutral500,
       top: 10
     },
     backDrop: {

@@ -7,12 +7,12 @@ import GasTankIcon from '@common/assets/svg/GasTankIcon'
 import RewardsIcon from '@common/assets/svg/RewardsIcon'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import { SPACING_MI, SPACING_TY } from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import ManifestImage from '@web/components/ManifestImage'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 
 export type NetworkIconIdType = string | 'gasTank' | 'rewards'
 
@@ -44,7 +44,7 @@ const NetworkIcon = ({
   name,
   ...rest
 }: Props) => {
-  const { allNetworks } = useNetworksControllerState()
+  const { state: allNetworks } = useController('NetworksController', (state) => state.allNetworks)
 
   const network = useMemo(() => {
     return benzinNetwork ?? allNetworks.find((n) => n.chainId.toString() === id)
@@ -65,7 +65,7 @@ const NetworkIcon = ({
     [networkName, network]
   )
 
-  const iconScale = useMemo(() => scale || (size < 28 ? 0.8 : 0.6), [size, scale])
+  const iconScale = useMemo(() => scale || 0.8, [scale])
 
   const { theme, themeType } = useTheme()
   const Icon = icons[networkName]
@@ -124,10 +124,7 @@ const NetworkIcon = ({
         {
           borderRadius: 50,
           overflow: 'hidden',
-          backgroundColor:
-            themeType === THEME_TYPES.DARK
-              ? theme.primaryBackgroundInverted
-              : theme.tertiaryBackground
+          backgroundColor: theme.neutral200
         },
         style
       ]}

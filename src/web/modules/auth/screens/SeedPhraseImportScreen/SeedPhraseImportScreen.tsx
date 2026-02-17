@@ -13,17 +13,17 @@ import Text from '@common/components/Text'
 import TextArea from '@common/components/TextArea'
 import Toggle from '@common/components/Toggle'
 import { useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
-import Header from '@common/modules/header/components/Header'
+import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Header'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import {
   TabLayoutContainer,
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import useAccountPickerControllerState from '@web/hooks/useAccountPickerControllerState'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 
 import getStyles from './styles'
 
@@ -34,8 +34,8 @@ const SeedPhraseImportScreen = () => {
   const { t } = useTranslation()
 
   const { theme, styles } = useTheme(getStyles)
-  const { dispatch } = useBackgroundService()
-  const { initParams, subType } = useAccountPickerControllerState()
+  const { dispatch } = useControllersMiddleware()
+  const { initParams, subType } = useController('AccountPickerController').state
   const {
     watch,
     control,
@@ -117,17 +117,14 @@ const SeedPhraseImportScreen = () => {
       // If the value contains multiple words, it could be a pasted seed phrase
       // Don't display errors in this case, otherwise an error flashes when pasting
       if (!formattedSeed || couldValueBeAPastedSeed) return undefined
-      if (!wordlists.english.includes(value)) return t('invalid-bip39-word')
+      if (!wordlists.english?.includes(value)) return t('invalid-bip39-word')
       return undefined
     },
     [t]
   )
 
   return (
-    <TabLayoutContainer
-      backgroundColor={theme.secondaryBackground}
-      header={<Header mode="custom-inner-content" withAmbireLogo />}
-    >
+    <TabLayoutContainer backgroundColor={theme.secondaryBackground} header={<HeaderWithLogoOnly />}>
       <TabLayoutWrapperMainContent>
         <Panel
           type="onboarding"
@@ -155,7 +152,7 @@ const SeedPhraseImportScreen = () => {
                       {words.map((word, index) => {
                         const isWhitespace = /^\s+$/.test(word)
                         const cleanWord = word.trim().toLowerCase()
-                        const isValidWord = isWhitespace || wordlists.english.includes(cleanWord)
+                        const isValidWord = isWhitespace || wordlists.english?.includes(cleanWord)
 
                         if (isWhitespace) {
                           return (

@@ -15,9 +15,11 @@ import Panel from '@common/components/Panel'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import { Trans, useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
-import Header from '@common/modules/header/components/Header'
+import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Header'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import text from '@common/styles/utils/text'
@@ -26,8 +28,6 @@ import {
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import eventBus from '@web/extension-services/event/eventBus'
-import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import PasswordConfirmation from '@web/modules/settings/components/PasswordConfirmation'
 
 import getStyles from './styles'
@@ -176,9 +176,9 @@ const SmartAccountImportScreen = () => {
     iv: string
   } | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
 
-  const { accounts } = useAccountsControllerState()
+  const { accounts } = useController('AccountsController').state
   const newAccounts: Account[] = useMemo(() => accounts.filter((a) => a.newlyAdded), [accounts])
   const { goToNextRoute, goToPrevRoute } = useOnboardingNavigation()
 
@@ -311,7 +311,7 @@ const SmartAccountImportScreen = () => {
     <TabLayoutContainer
       backgroundColor={theme.secondaryBackground}
       width="md"
-      header={<Header mode="custom-inner-content" withAmbireLogo />}
+      header={<HeaderWithLogoOnly />}
     >
       <TabLayoutWrapperMainContent>
         <Panel

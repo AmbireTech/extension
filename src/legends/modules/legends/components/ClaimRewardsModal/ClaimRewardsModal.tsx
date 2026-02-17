@@ -10,7 +10,7 @@ import { ETHEREUM_CHAIN_ID } from '@legends/constants/networks'
 import useErc5792 from '@legends/hooks/useErc5792'
 import useEscModal from '@legends/hooks/useEscModal'
 import useLegendsContext from '@legends/hooks/useLegendsContext'
-import usePortfolioControllerState from '@legends/hooks/usePortfolioControllerState/usePortfolioControllerState'
+import usePortfolio from '@legends/hooks/usePortfolio'
 import useProviderContext from '@legends/hooks/useProviderContext'
 import useSwitchNetwork from '@legends/hooks/useSwitchNetwork'
 import useToast from '@legends/hooks/useToast'
@@ -46,8 +46,8 @@ const ClaimRewardsModal: React.FC<ClaimRewardsModalProps> = ({
   card
 }) => {
   const { browserProvider } = useProviderContext()
-  const { walletTokenPrice } = usePortfolioControllerState()
-  const { sendCalls, getCallsStatus, chainId } = useErc5792()
+  const { walletTokenPrice } = usePortfolio()
+  const { sendCalls, getCallsStatus } = useErc5792()
   const { onLegendComplete } = useLegendsContext()
 
   const cardDisabled = card?.status === CardStatus.disabled
@@ -65,6 +65,9 @@ const ClaimRewardsModal: React.FC<ClaimRewardsModalProps> = ({
   const onButtonClick = useCallback(async () => {
     if (!browserProvider) return
     if (!action || !('calls' in action) || !action.calls) return
+    // as of feb 2026 this is not needed for latest v's of the extension, because the wallet_sendCalls method handles the chainId
+    // but we are not removing it for now, becaus there are many users right now who have not yet updated their extension to latest
+    // same applies for most other such cases in rewards
     await switchNetwork(ETHEREUM_CHAIN_ID)
 
     try {
@@ -75,7 +78,7 @@ const ClaimRewardsModal: React.FC<ClaimRewardsModalProps> = ({
       })
 
       const sendCallsIdentifier = await sendCalls(
-        chainId,
+        BigInt(ETHEREUM_CHAIN_ID),
         await signer.getAddress(),
         formattedCalls,
         false
@@ -97,7 +100,6 @@ const ClaimRewardsModal: React.FC<ClaimRewardsModalProps> = ({
     action,
     onLegendComplete,
     sendCalls,
-    chainId,
     getCallsStatus,
     handleClose,
     addToast

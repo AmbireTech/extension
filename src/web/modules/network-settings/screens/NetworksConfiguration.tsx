@@ -5,7 +5,7 @@ import { View } from 'react-native'
 import Button from '@common/components/Button'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
-import Header from '@common/modules/header/components/Header'
+import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -21,10 +21,7 @@ const NetworksConfiguration = () => {
   const { navigate } = useNavigation()
 
   return (
-    <TabLayoutContainer
-      backgroundColor={theme.secondaryBackground}
-      header={<Header mode="title" withAmbireLogo />}
-    >
+    <TabLayoutContainer backgroundColor={theme.secondaryBackground} header={<HeaderWithTitle />}>
       <View style={[styles.contentContainer]}>
         <SettingsPageHeader
           title={t('Networks Configuration')}

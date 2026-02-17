@@ -12,7 +12,7 @@ export interface Style {
   borderWrapper: ViewStyle
   inputWrapper: ViewStyle
   input: TextStyle
-  nativeInput: ViewStyle
+  nativeInput: TextStyle
   button: ViewStyle
   buttonWithBackground: ViewStyle
   bottomLabel: TextStyle
@@ -51,7 +51,7 @@ const getStyles = (theme: ThemeProps) =>
       ...flexbox.flex1,
       height: INPUT_HEIGHT,
       borderWidth: 0,
-      ...spacings.ph
+      ...spacings.phSm
     },
     nativeInput: {
       height: '100%',

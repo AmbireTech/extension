@@ -1,12 +1,12 @@
 import { nanoid } from 'nanoid'
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { BackHandler, View, ViewStyle } from 'react-native'
+import React, { RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { BackHandler, ScrollView, View, ViewStyle } from 'react-native'
 import { Modalize, ModalizeProps } from 'react-native-modalize'
 
 import { isWeb } from '@common/config/env'
 import usePrevious from '@common/hooks/usePrevious'
 import useTheme from '@common/hooks/useTheme'
-import { HEADER_HEIGHT } from '@common/modules/header/components/Header/styles'
+import { HEADER_HEIGHT } from '@common/modules/header/components/Header/Header'
 import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import { Portal } from '@gorhom/portal'
@@ -19,6 +19,7 @@ import getStyles from './styles'
 interface Props {
   id?: string
   sheetRef: React.RefObject<Modalize>
+  scrollViewRef?: React.RefObject<ScrollView>
   closeBottomSheet?: (dest?: 'alwaysOpen' | 'default' | undefined) => void
   onBackdropPress?: () => void
   onClosed?: () => void
@@ -48,6 +49,7 @@ const BottomSheet: React.FC<Props> = ({
   id: _id,
   type: _type,
   sheetRef,
+  scrollViewRef: externalScrollViewRef,
   children,
   closeBottomSheet = () => {},
   adjustToContentHeight = true,
@@ -58,7 +60,7 @@ const BottomSheet: React.FC<Props> = ({
   onBackdropPress,
   flatListProps,
   scrollViewProps,
-  backgroundColor = 'secondaryBackground',
+  backgroundColor = 'primaryBackground',
   autoWidth = false,
   autoOpen = false,
   shouldBeClosableOnDrag = true,
@@ -72,7 +74,12 @@ const BottomSheet: React.FC<Props> = ({
   const [isOpen, setIsOpen] = useState(false)
   const prevIsOpen = usePrevious(isOpen)
   const [isBackdropVisible, setIsBackdropVisible] = useState(false)
-  const { isScrollable, checkIsScrollable, scrollViewRef } = useIsScrollable()
+  const {
+    isScrollable,
+    checkIsScrollable,
+    scrollViewRef: internalScrollViewRef
+  } = useIsScrollable()
+  const scrollViewRef = externalScrollViewRef || internalScrollViewRef
 
   // Ensures ID is unique per component to avoid duplicates when multiple bottom sheets are rendered
   const id = useMemo(() => `${_id || 'bottom-sheet'}-${nanoid(6)}`, [_id])
@@ -156,14 +163,14 @@ const BottomSheet: React.FC<Props> = ({
           // this key or without a unique key, the bottom sheet will not close when navigating
           key={id}
           ref={setRef}
-          contentRef={scrollViewRef}
+          // React 19 makes refs strictly nullable. Temporary cast until Modalize updates its types.
+          contentRef={scrollViewRef as RefObject<ScrollView>}
           modalStyle={[
             styles.bottomSheet,
             isModal
-              ? { ...styles.modal, ...(autoWidth ? { maxWidth: 'unset', width: 'auto' } : {}) }
+              ? { ...styles.modal, ...(autoWidth ? { maxWidth: null, width: 'auto' } : {}) }
               : {},
             { backgroundColor: theme[backgroundColor] },
-            isPopup && isModal ? { height: '100%' } : {},
             style
           ]}
           rootStyle={[isPopup && isModal ? spacings.phSm : {}]}

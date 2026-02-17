@@ -1,4 +1,4 @@
-import React, { ReactElement, useMemo } from 'react'
+import React, { ReactNode, useMemo } from 'react'
 import { View, ViewStyle } from 'react-native'
 
 import CheckIcon from '@common/assets/svg/CheckIcon'
@@ -17,7 +17,7 @@ const RouteStepsArrow = ({
   isLoading
 }: {
   containerStyle?: ViewStyle
-  badge?: ReactElement | null
+  badge?: ReactNode | null
   badgePosition?: 'top' | 'middle'
   badgeStyle?: ViewStyle
   type?: 'default' | 'warning' | 'success'
@@ -29,7 +29,7 @@ const RouteStepsArrow = ({
     if (type === 'warning') return theme.warningDecorative
     if (type === 'success') return theme.successDecorative
 
-    return theme.secondaryBorder
+    return theme.neutral500
   }, [theme, type])
 
   return (

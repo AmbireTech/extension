@@ -18,13 +18,12 @@ import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
-import useAccountPickerControllerState from '@web/hooks/useAccountPickerControllerState'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import Account from '@web/modules/account-picker/components/Account'
 import AnimatedDownArrow from '@web/modules/account-picker/components/AccountsOnPageList/AnimatedDownArrow/AnimatedDownArrow'
 import AccountsRetrieveError from '@web/modules/account-picker/components/AccountsRetrieveError'
@@ -54,9 +53,9 @@ const AccountsOnPageList = ({
   children
 }: Props) => {
   const { t } = useTranslation()
-  const { dispatch } = useBackgroundService()
-  const { allNetworks } = useNetworksControllerState()
-  const accountPickerState = useAccountPickerControllerState()
+  const { dispatch } = useControllersMiddleware()
+  const { networks: allNetworks } = useController('NetworksController').state
+  const accountPickerState = useController('AccountPickerController').state
   const [hasReachedBottom, setHasReachedBottom] = useState<null | boolean>(null)
   const [containerHeight, setContainerHeight] = useState(0)
   const [contentHeight, setContentHeight] = useState(0)

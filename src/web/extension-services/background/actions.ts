@@ -42,9 +42,9 @@ import { GasSpeeds } from '@ambire-common/services/bundlers/types'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import { LOG_LEVELS } from '@web/utils/logger'
 
+import { AllControllersMappingType } from '../../../common/constants/controllersMapping'
 import { AUTO_LOCK_TIMES } from './controllers/auto-lock'
 import { AvatarType } from './controllers/wallet-state'
-import { controllersMapping } from './types'
 
 type UpdateNavigationUrl = {
   type: 'UPDATE_PORT_URL'
@@ -54,8 +54,32 @@ type UpdateNavigationUrl = {
 type InitControllerStateAction = {
   type: 'INIT_CONTROLLER_STATE'
   params: {
-    controller: keyof typeof controllersMapping
+    controller: keyof AllControllersMappingType
   }
+}
+
+type HandshakeAction = {
+  type: 'HANDSHAKE'
+}
+
+type MethodKeys<T> = {
+  [K in keyof T]-?: T[K] extends (...args: any[]) => any ? K : never
+}[keyof T]
+
+type MethodActionParams = {
+  [K in keyof AllControllersMappingType]: {
+    ctrlName: K
+  } & {
+    [M in MethodKeys<AllControllersMappingType[K]>]: {
+      method: M
+      args: Parameters<Extract<AllControllersMappingType[K][M], (...args: any[]) => any>>
+    }
+  }[MethodKeys<AllControllersMappingType[K]>]
+}[keyof AllControllersMappingType]
+
+export type MethodAction = {
+  type: 'method'
+  params: MethodActionParams
 }
 
 type MainControllerAccountPickerInitLedgerAction = {
@@ -134,26 +158,6 @@ type MainControllerRemoveAccount = {
 }
 type ProvidersControllerToggleBatching = {
   type: 'PROVIDERS_CONTROLLER_TOGGLE_BATCHING'
-}
-type ProvidersControllerCallProviderAndSendResToUiAction = {
-  type: 'PROVIDERS_CONTROLLER_CALL_PROVIDER_AND_SEND_RES_TO_UI'
-  params: {
-    requestId: string
-    chainId: bigint
-    method: keyof RPCProvider
-    args: unknown[]
-  }
-}
-type ProvidersControllerCallContractAndSendResToUiAction = {
-  type: 'PROVIDERS_CONTROLLER_CALL_CONTRACT_AND_SEND_RES_TO_UI'
-  params: {
-    requestId: string
-    chainId: bigint
-    address: string
-    abi: string
-    method: keyof Contract
-    args: unknown[]
-  }
 }
 type MainControllerAccountPickerResetAction = {
   type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_RESET'
@@ -539,6 +543,14 @@ type DappsControllerRemoveDappAction = {
   type: 'DAPP_CONTROLLER_REMOVE_DAPP'
   params: Dapp['id']
 }
+type DappsControllerGetCurrentDappAndSendResToUi = {
+  type: 'DAPPS_CONTROLLER_GET_CURRENT_DAPP_AND_SEND_RES_TO_UI'
+  params: {
+    requestId: string
+    dappId: string
+    currentSessionId?: string
+  }
+}
 
 type SwapAndBridgeControllerInitAction = {
   type: 'SWAP_AND_BRIDGE_CONTROLLER_INIT_FORM'
@@ -771,6 +783,7 @@ type FlipFeature = {
 export type Action =
   | UpdateNavigationUrl
   | InitControllerStateAction
+  | MethodAction
   | MainControllerAccountPickerInitLatticeAction
   | MainControllerAccountPickerInitTrezorAction
   | MainControllerAccountPickerInitLedgerAction
@@ -779,6 +792,7 @@ export type Action =
   | MainControllerSelectAccountAction
   | MainControllerAccountPickerSelectAccountAction
   | MainControllerAccountPickerDeselectAccountAction
+  | HandshakeAction
   | MainControllerAccountPickerResetAction
   | MainControllerAccountPickerInitAction
   | ResetAccountAddingOnPageErrorAction
@@ -801,8 +815,6 @@ export type Action =
   | MainControllerRemoveAccount
   | RequestsControllerAddCallsUserRequestAction
   | ProvidersControllerToggleBatching
-  | ProvidersControllerCallProviderAndSendResToUiAction
-  | ProvidersControllerCallContractAndSendResToUiAction
   | MainControllerLockAction
   | RequestsControllerBuildRequestAction
   | RequestsControllerRemoveUserRequestAction
@@ -854,6 +866,7 @@ export type Action =
   | DappsControllerUpdateDappAction
   | ContractNamesGetName
   | DappsControllerRemoveDappAction
+  | DappsControllerGetCurrentDappAndSendResToUi
   | SwapAndBridgeControllerInitAction
   | SwapAndBridgeControllerUnloadScreenAction
   | SwapAndBridgeControllerUpdateFormAction

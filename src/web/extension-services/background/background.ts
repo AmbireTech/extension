@@ -24,6 +24,7 @@ import { KeystoreSigner } from '@ambire-common/libs/keystoreSigner/keystoreSigne
 import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
 import wait from '@ambire-common/utils/wait'
 import CONFIG, { APP_VERSION, isAmbireNext, isDev, isProd } from '@common/config/env'
+import { controllersNestedInMainMapping } from '@common/constants/controllersMapping'
 import {
   BROWSER_EXTENSION_LOG_UPDATED_CONTROLLER_STATE_ONLY,
   BROWSER_EXTENSION_MEMORY_INTENSIVE_LOGS,
@@ -48,7 +49,6 @@ import {
 } from '@web/extension-services/background/handlers/handleScripting'
 import handleProviderRequests from '@web/extension-services/background/provider/handleProviderRequests'
 import { providerRequestTransport } from '@web/extension-services/background/provider/providerRequestTransport'
-import { controllersNestedInMainMapping } from '@web/extension-services/background/types'
 import { notificationManager } from '@web/extension-services/background/webapi/notification'
 import { storage } from '@web/extension-services/background/webapi/storage'
 import windowManager from '@web/extension-services/background/webapi/window'
@@ -608,7 +608,7 @@ const init = async () => {
      * ensuring that the state update is immediately applied at the application level (React/Extension).
      *
      * For more info, please refer to:
-     * EventEmitter.forceEmitUpdate() or useControllerState().
+     * EventEmitter.forceEmitUpdate()
      */
     if (forceEmit) {
       sendUpdate()

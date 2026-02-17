@@ -5,11 +5,14 @@ import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
 import { SwapAndBridgeRoute } from '@ambire-common/interfaces/swapAndBridge'
 import LeftArrowIcon from '@common/assets/svg/LeftArrowIcon'
 import BottomSheet from '@common/components/BottomSheet'
+import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import spacings, { SPACING_LG } from '@common/styles/spacings'
@@ -17,8 +20,6 @@ import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import RetryButton from '@web/components/RetryButton'
 import { TRANSACTION_FORM_WIDTH } from '@web/components/TransactionsScreen/styles'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControllerState'
 import RouteStepsPreview from '@web/modules/swap-and-bridge/components/RouteStepsPreview'
 import { getUiType } from '@web/utils/uiType'
 
@@ -37,8 +38,9 @@ const RoutesModal = ({
 }) => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
-  const { quote, signAccountOpController, updateQuoteStatus } = useSwapAndBridgeControllerState()
-  const { dispatch } = useBackgroundService()
+  const { quote, signAccountOpController, updateQuoteStatus } =
+    useController('SwapAndBridgeController').state
+  const { dispatch } = useControllersMiddleware()
   const scrollRef = useRef<FlatList<SwapAndBridgeRoute>>(null)
   const { height } = useWindowSize()
   // there's a small discrepancy between ticks and we want to capture that
@@ -137,7 +139,7 @@ const RoutesModal = ({
             styles.itemContainer,
             index + 1 === quote?.routes?.length && spacings.mb0,
             item.disabled && styles.disabledItem,
-            (isSelected || hovered) && styles.selectedItem,
+            isSelected && styles.selectedItem,
             isEstimationLoading && !isEstimatingRoute && styles.otherItemLoading
           ]}
           testID={isSelected ? 'selected-route' : ''}
@@ -206,7 +208,6 @@ const RoutesModal = ({
       id="select-routes-modal"
       sheetRef={sheetRef}
       closeBottomSheet={closeBottomSheet}
-      backgroundColor="secondaryBackground"
       style={{
         overflow: 'hidden',
         width: !isPopup ? TRANSACTION_FORM_WIDTH : '100%',
@@ -236,38 +237,16 @@ const RoutesModal = ({
       }}
       containerInnerWrapperStyles={flexbox.flex1}
     >
-      <View
-        style={[
-          flexbox.directionRow,
-          flexbox.alignCenter,
-          flexbox.justifySpaceBetween,
-          spacings.mbXl
-        ]}
-      >
-        <View style={flexbox.directionRow}>
-          <Pressable
-            onPress={() => closeBottomSheet()}
-            style={{
-              width: 28,
-              height: 28,
-              justifyContent: 'center',
-              alignItems: 'center'
-            }}
-          >
-            <LeftArrowIcon width={16} height={16} />
-          </Pressable>
-          <Text fontSize={20} weight="semiBold" numberOfLines={1} style={spacings.mlTy}>
-            {t('Select route')}
-          </Text>
-        </View>
+      <ModalHeader title={t('Select route')} handleClose={closeBottomSheet}>
         <RetryButton
           onPress={updateQuote}
           label={t('Request new quote')}
           disabled={isQuoteLoading}
+          isLarge
         />
-      </View>
+      </ModalHeader>
       {isQuoteLoading ? (
-        <SkeletonLoader width="100%" height={700} appearance="tertiaryBackground" />
+        <SkeletonLoader width="100%" height={700} appearance="secondaryBackground" />
       ) : (
         <ScrollableWrapper
           type={WRAPPER_TYPES.FLAT_LIST}

@@ -11,10 +11,9 @@ import DeleteIcon from '@common/assets/svg/DeleteIcon'
 import AddressInput from '@common/components/AddressInput'
 import Banner from '@common/components/Banner/Banner'
 import useAddressInput from '@common/hooks/useAddressInput'
+import useController from '@common/hooks/useController'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
-import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 
 interface Props {
   duplicateAccountsIndexes: number[]
@@ -43,8 +42,8 @@ const AddressField: FC<Props> = ({
   setValue,
   trigger
 }) => {
-  const accountsState = useAccountsControllerState()
-  const keystoreState = useKeystoreControllerState()
+  const accountsState = useController('AccountsController').state
+  const keystoreState = useController('KeystoreController').state
   const accounts = watch('accounts')
   const value = watch(`accounts.${index}`)
   const { t } = useTranslation()
@@ -151,7 +150,7 @@ const AddressField: FC<Props> = ({
               ensAddress={value.ensAddress}
               isRecipientDomainResolving={value.isDomainResolving}
               onSubmitEditing={disabled ? undefined : handleSubmit}
-              button={accounts.length > 1 ? <DeleteIcon /> : null}
+              button={accounts.length > 1 ? <DeleteIcon width={24} height={24} /> : null}
               onButtonPress={() => remove(index)}
             />
           </View>
@@ -166,7 +165,7 @@ const AddressField: FC<Props> = ({
                       13
                     )}. If you continue, this address will be linked to that key and managed with full access, not as view-only.`
                   )}
-                  type="info2"
+                  type="info"
                   key={_address}
                 />
               )

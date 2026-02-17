@@ -6,9 +6,11 @@ import Button from '@common/components/Button'
 import Panel from '@common/components/Panel'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import ConfettiAnimation from '@common/modules/dashboard/components/ConfettiAnimation'
-import Header from '@common/modules/header/components/Header'
+import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Header'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
@@ -18,16 +20,14 @@ import {
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import { engine } from '@web/constants/browserapi'
 import { TAB_CONTENT_WIDTH } from '@web/constants/spacings'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useWalletStateController from '@web/hooks/useWalletStateController'
 import PinExtension from '@web/modules/auth/components/PinExtension'
 
 export const CARD_WIDTH = 400
 
 const OnboardingCompletedScreen = () => {
   const { t } = useTranslation()
-  const { dispatch } = useBackgroundService()
-  const { isPinned } = useWalletStateController()
+  const { dispatch } = useControllersMiddleware()
+  const { isPinned } = useController('WalletStateController').state
 
   const { theme } = useTheme()
 
@@ -44,7 +44,7 @@ const OnboardingCompletedScreen = () => {
       <PinExtension />
       <TabLayoutContainer
         backgroundColor={theme.secondaryBackground}
-        header={<Header customTitle={' '} />}
+        header={<HeaderWithLogoOnly />}
       >
         <TabLayoutWrapperMainContent>
           <Panel type="onboarding" spacingsSize="small" style={{ overflow: 'visible' }}>
@@ -57,7 +57,7 @@ const OnboardingCompletedScreen = () => {
                 style={[spacings.mtLg, spacings.mb, text.center]}
                 weight="semiBold"
                 fontSize={20}
-                testID='wallet-ready-to-use-text'
+                testID="wallet-ready-to-use-text"
               >
                 {t('Ambire Wallet is ready to use')}
               </Text>

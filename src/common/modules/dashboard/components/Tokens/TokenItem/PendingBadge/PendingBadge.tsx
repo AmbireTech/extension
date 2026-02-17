@@ -5,7 +5,6 @@ import { SvgProps } from 'react-native-svg'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import spacings from '@common/styles/spacings'
-import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexboxStyles from '@common/styles/utils/flexbox'
 
 const PendingBadge = ({
@@ -29,21 +28,30 @@ const PendingBadge = ({
     <View
       style={[
         spacings.pvMi,
-        spacings.phTy,
+        spacings.plSm,
+        spacings.prTy,
         spacings.mbMi,
         flexboxStyles.alignSelfStart,
         flexboxStyles.alignCenter,
         flexboxStyles.directionRow,
         {
-          borderRadius: BORDER_RADIUS_PRIMARY,
+          borderRadius: 64,
+          height: 32,
           backgroundColor
         }
       ]}
     >
-      <Text selectable color={textColor} fontSize={13} numberOfLines={1} style={[spacings.mrTy]}>
+      <Text
+        selectable
+        color={textColor}
+        weight="medium"
+        fontSize={12}
+        numberOfLines={1}
+        style={spacings.mrMi}
+      >
         {t(`${amount > 0n ? '+' : ''}${amountFormatted} ${label}`)}
       </Text>
-      <Icon color={textColor} width={13} height={13} />
+      <Icon color={textColor} width={20} height={20} />
     </View>
   )
 }

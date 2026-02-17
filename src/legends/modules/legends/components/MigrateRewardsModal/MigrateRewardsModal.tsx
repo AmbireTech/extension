@@ -11,7 +11,7 @@ import useAccountContext from '@legends/hooks/useAccountContext'
 import useErc5792 from '@legends/hooks/useErc5792'
 import useEscModal from '@legends/hooks/useEscModal'
 import useLegendsContext from '@legends/hooks/useLegendsContext'
-import usePortfolioControllerState from '@legends/hooks/usePortfolioControllerState/usePortfolioControllerState'
+import usePortfolio from '@legends/hooks/usePortfolio'
 import useProviderContext from '@legends/hooks/useProviderContext'
 import useSwitchNetwork from '@legends/hooks/useSwitchNetwork'
 import useToast from '@legends/hooks/useToast'
@@ -47,8 +47,8 @@ const MigrateRewardsModal: React.FC<MigrateRewardsModalProps> = ({
   action,
   meta
 }) => {
-  const { xWalletClaimableBalance } = usePortfolioControllerState()
-  const { sendCalls, getCallsStatus, chainId } = useErc5792()
+  const { xWalletClaimableBalance } = usePortfolio()
+  const { sendCalls, getCallsStatus } = useErc5792()
   const { onLegendComplete } = useLegendsContext()
 
   const { addToast } = useToast()
@@ -98,6 +98,9 @@ const MigrateRewardsModal: React.FC<MigrateRewardsModalProps> = ({
   const onButtonClick = useCallback(async () => {
     if (!browserProvider) return
     if (!action || !('calls' in action) || !action.calls) return
+    // as of feb 2026 this is not needed for latest v's of the extension, because the wallet_sendCalls method handles the chainId
+    // but we are not removing it for now, becaus there are many users right now who have not yet updated their extension to latest
+    // same applies for most other such cases in rewards
     await switchNetwork(ETHEREUM_CHAIN_ID)
 
     try {
@@ -110,7 +113,7 @@ const MigrateRewardsModal: React.FC<MigrateRewardsModalProps> = ({
       setIsSigning(true)
 
       const sendCallsIdentifier = await sendCalls(
-        chainId,
+        BigInt(ETHEREUM_CHAIN_ID),
         await signer.getAddress(),
         formattedCalls,
         false
@@ -139,7 +142,6 @@ const MigrateRewardsModal: React.FC<MigrateRewardsModalProps> = ({
     onLegendComplete,
     sendCalls,
     getXWalletBalance,
-    chainId,
     handleClose,
     addToast
   ])

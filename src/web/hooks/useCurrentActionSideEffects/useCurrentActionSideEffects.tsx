@@ -1,21 +1,20 @@
 import { useContext, useEffect } from 'react'
 
+import useController from '@common/hooks/useController'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import { AUTH_STATUS } from '@common/modules/auth/constants/authStatus'
 import useAuth from '@common/modules/auth/hooks/useAuth'
 import { ControllersStateLoadedContext } from '@web/contexts/controllersStateLoadedContext'
 import { closeCurrentWindow } from '@web/extension-services/background/webapi/window'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
-import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import { getUiType } from '@web/utils/uiType'
 
 const { isRequestWindow } = getUiType()
 
 const useCurrentActionSideEffects = () => {
   const { authStatus } = useAuth()
-  const { dispatch } = useBackgroundService()
-  const keystoreState = useKeystoreControllerState()
-  const { currentUserRequest } = useRequestsControllerState()
+  const { dispatch } = useControllersMiddleware()
+  const keystoreState = useController('KeystoreController').state
+  const { currentUserRequest } = useController('RequestsController').state
   const { areControllerStatesLoaded } = useContext(ControllersStateLoadedContext)
 
   useEffect(() => {

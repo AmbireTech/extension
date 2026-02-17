@@ -7,6 +7,8 @@ import { BannerType } from '@ambire-common/interfaces/banner'
 import { getCurrentAccountBanners } from '@ambire-common/libs/banners/banners'
 import PrivacyIcon from '@common/assets/svg/PrivacyIcon'
 import Text from '@common/components/Text'
+import useController from '@common/hooks/useController'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useNavigation from '@common/hooks/useNavigation'
 import usePrevious from '@common/hooks/usePrevious'
 import useTheme from '@common/hooks/useTheme'
@@ -21,12 +23,9 @@ import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import { searchWithNetworkName } from '@common/utils/search'
 import { openInTab } from '@web/extension-services/background/webapi/tab'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useFeatureFlagsControllerState from '@web/hooks/useFeatureFlagsControllerState'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import { getUiType } from '@web/utils/uiType'
 
+import SearchAndCurrentApp from '../SearchAndCurrentApp'
 import DefiPositionsSkeleton from './DefiPositionsSkeleton'
 import DeFiPosition from './DeFiProviderPosition'
 import styles from './styles'
@@ -39,6 +38,7 @@ interface Props {
   onScroll: FlatListProps<any>['onScroll']
   dashboardNetworkFilterName: string | null
   animatedOverviewHeight: Animated.Value
+  isSearchHidden: boolean
 }
 
 const { isPopup } = getUiType()
@@ -50,19 +50,23 @@ const DeFiPositions: FC<Props> = ({
   sessionId,
   onScroll,
   dashboardNetworkFilterName,
-  animatedOverviewHeight
+  animatedOverviewHeight,
+  isSearchHidden
 }) => {
   const { t } = useTranslation()
-  const { flags } = useFeatureFlagsControllerState()
+  const { flags } = useController('FeatureFlagsController').state
   const { control, watch, setValue } = useForm({ mode: 'all', defaultValues: { search: '' } })
   const { theme, themeType } = useTheme()
   const searchValue = watch('search')
-  const { networks } = useNetworksControllerState()
-  const { account, portfolio, dashboardNetworkFilter, banners } =
-    useSelectedAccountControllerState()
+  const {
+    state: { networks }
+  } = useController('NetworksController')
+  const {
+    state: { account, portfolio, dashboardNetworkFilter, banners }
+  } = useController('SelectedAccountController')
   const { setSearchParams, navigate } = useNavigation()
 
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const prevInitTab: any = usePrevious(initTab)
 
   const currentAccountBanners = useMemo(
@@ -129,7 +133,6 @@ const DeFiPositions: FC<Props> = ({
               openTab={openTab}
               setOpenTab={setOpenTab}
               currentTab="defi"
-              searchControl={control}
               sessionId={sessionId}
             />
             {currentAccountBanners.length > 0 && (
@@ -198,7 +201,7 @@ const DeFiPositions: FC<Props> = ({
               <Text
                 onPress={() => navigate(ROUTES.optOuts)}
                 fontSize={16}
-                color={theme.info2Text}
+                color={theme.infoText}
                 style={{ textDecorationLine: 'underline' }}
               >
                 {t('You can enable them from settings')}
@@ -221,15 +224,16 @@ const DeFiPositions: FC<Props> = ({
       theme.primaryBackground,
       theme.linkText,
       theme.primary,
+      theme.infoText,
       openTab,
       setOpenTab,
-      control,
       sessionId,
       currentAccountBanners,
       searchValue,
       dashboardNetworkFilterName,
       t,
-      themeType
+      themeType,
+      navigate
     ]
   )
 
@@ -254,19 +258,22 @@ const DeFiPositions: FC<Props> = ({
   }, [filteredPositions, flags.tokenAndDefiAutoDiscovery, initTab?.defi, portfolio.isAllReady])
 
   return (
-    <DashboardPageScrollContainer
-      tab="defi"
-      openTab={openTab}
-      ListHeaderComponent={<DashboardBanners />}
-      data={dataItems}
-      renderItem={renderItem}
-      keyExtractor={keyExtractor}
-      onEndReachedThreshold={isPopup ? 5 : 2.5}
-      initialNumToRender={isPopup ? 10 : 20}
-      windowSize={9} // Larger values can cause performance issues.
-      onScroll={onScroll}
-      animatedOverviewHeight={animatedOverviewHeight}
-    />
+    <>
+      <DashboardPageScrollContainer
+        tab="defi"
+        openTab={openTab}
+        ListHeaderComponent={<DashboardBanners />}
+        data={dataItems}
+        renderItem={renderItem}
+        keyExtractor={keyExtractor}
+        onEndReachedThreshold={isPopup ? 5 : 2.5}
+        initialNumToRender={isPopup ? 10 : 20}
+        windowSize={9} // Larger values can cause performance issues.
+        onScroll={onScroll}
+        animatedOverviewHeight={animatedOverviewHeight}
+      />
+      {openTab === 'defi' && <SearchAndCurrentApp control={control} isHidden={isSearchHidden} />}
+    </>
   )
 }
 

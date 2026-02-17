@@ -25,15 +25,15 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
     simulationContainer: {
       borderWidth: 1,
       ...common.borderRadiusPrimary,
-      borderColor: themeType === THEME_TYPES.DARK ? theme.primaryBorder : theme.secondaryBorder,
+      borderColor: theme.primaryBorder,
       overflow: 'hidden',
       ...flexbox.flex1,
       maxHeight: '100%'
     },
     simulationContainerHeader: {
       backgroundColor: theme.secondaryBackground,
-      ...spacings.phTy,
-      ...spacings.pvMi
+      ...spacings.phSm,
+      ...spacings.pvTy
     },
     spinner: {
       alignSelf: 'center'

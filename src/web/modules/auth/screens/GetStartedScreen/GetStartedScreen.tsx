@@ -8,12 +8,14 @@ import Panel from '@common/components/Panel'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import { AUTH_STATUS } from '@common/modules/auth/constants/authStatus'
 import useAuth from '@common/modules/auth/hooks/useAuth'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
-import Header from '@common/modules/header/components/Header'
+import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Header'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -22,8 +24,6 @@ import {
   TabLayoutContainer,
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useWalletStateController from '@web/hooks/useWalletStateController'
 
 import getStyles from './styles'
 
@@ -36,9 +36,9 @@ const GetStartedScreen = () => {
   const { goToNextRoute } = useOnboardingNavigation()
 
   const { authStatus } = useAuth()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
 
-  const state = useWalletStateController()
+  const state = useController('WalletStateController').state
 
   const resetIsSetupCompleteIfNeeded = useCallback(() => {
     if (authStatus === AUTH_STATUS.NOT_AUTHENTICATED && !state.isPinned && state.isSetupComplete) {
@@ -73,10 +73,7 @@ const GetStartedScreen = () => {
   )
 
   return (
-    <TabLayoutContainer
-      backgroundColor={theme.secondaryBackground}
-      header={<Header mode="custom-inner-content" withAmbireLogo />}
-    >
+    <TabLayoutContainer backgroundColor={theme.secondaryBackground} header={<HeaderWithLogoOnly />}>
       <TabLayoutWrapperMainContent>
         <Panel spacingsSize="small" type="onboarding">
           <View style={[flexbox.justifySpaceBetween, flexbox.flex1]}>
@@ -107,8 +104,11 @@ const GetStartedScreen = () => {
                 hasBottomSpacing={false}
                 onPress={() => handleAuthButtonPress('view-only')}
                 text={t('Watch an address')}
+                textStyle={{
+                  color: theme.primaryAccent
+                }}
               >
-                <ViewModeIcon color={theme.primary} width={24} style={spacings.mlTy} />
+                <ViewModeIcon color={theme.primaryAccent} width={24} style={spacings.mlTy} />
               </Button>
             </ScrollableWrapper>
           </View>
@@ -117,7 +117,7 @@ const GetStartedScreen = () => {
               <Text
                 onPress={() => navigate(ROUTES.networksConfiguration)}
                 fontSize={12}
-                color={theme.info2Text}
+                color={theme.infoText}
                 style={{ textDecorationLine: 'underline' }}
               >
                 {t('Network Configuration')}

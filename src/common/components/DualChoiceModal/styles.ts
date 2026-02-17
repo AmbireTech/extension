@@ -21,8 +21,7 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       ...flexbox.directionRow
     },
     modalInnerContainer: {
-      backgroundColor:
-        themeType === THEME_TYPES.DARK ? theme.tertiaryBackground : theme.primaryBackground,
+      backgroundColor: theme.primaryBackground,
       ...spacings.pv2Xl,
       ...flexbox.directionRow,
       ...flexbox.alignCenter,

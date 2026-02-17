@@ -14,19 +14,14 @@ import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
 import { useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
-import Header from '@common/modules/header/components/Header'
+import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Header'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
-import usePortfolioControllerState from '@web/hooks/usePortfolioControllerState/usePortfolioControllerState'
-import useProvidersControllerState from '@web/hooks/useProvidersControllerState'
-import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import ActionFooter from '@web/modules/action-requests/components/ActionFooter'
 import {
   getTokenEligibility,
@@ -49,13 +44,14 @@ export type TokenData = {
 const WatchTokenRequestScreen = () => {
   const { t } = useTranslation()
   const { theme, styles, themeType } = useTheme(getStyles)
-
-  const { dispatch } = useBackgroundService()
-  const { currentUserRequest } = useRequestsControllerState()
-  const { temporaryTokens, validTokens, customTokens } = usePortfolioControllerState()
-  const { portfolio: selectedAccountPortfolio } = useSelectedAccountControllerState()
-  const { networks } = useNetworksControllerState()
-  const { state } = useProvidersControllerState()
+  const { dispatch } = useControllersMiddleware()
+  const { currentUserRequest } = useController('RequestsController').state
+  const { temporaryTokens, validTokens, customTokens } = useController('PortfolioController').state
+  const {
+    state: { portfolio: selectedAccountPortfolio }
+  } = useController('SelectedAccountController')
+  const { networks } = useController('NetworksController').state
+  const { state } = useController('ProvidersController')
 
   const userRequest = useMemo(
     () => (currentUserRequest?.kind === 'walletWatchAsset' ? currentUserRequest : undefined),
@@ -272,15 +268,8 @@ const WatchTokenRequestScreen = () => {
   return (
     <TabLayoutContainer
       width="full"
-      backgroundColor={theme.quinaryBackground}
-      header={
-        <Header
-          mode="custom-inner-content"
-          withAmbireLogo
-          backgroundColor={theme.quinaryBackground as string}
-        />
-      }
-      footer={
+      header={<HeaderWithLogoOnly />}
+      renderDirectChildren={() => (
         <ActionFooter
           onReject={handleCancel}
           onResolve={handleAddToken}
@@ -292,7 +281,7 @@ const WatchTokenRequestScreen = () => {
             !!tokenValidation?.error?.message
           }
         />
-      }
+      )}
     >
       <View style={[styles.container]}>
         <View style={styles.content}>
@@ -325,7 +314,7 @@ const WatchTokenRequestScreen = () => {
               fontSize={14}
               iconSize={20}
               style={{
-                backgroundColor: theme.quaternaryBackground,
+                backgroundColor: theme.primaryBackground,
                 ...spacings.mb,
                 ...spacings.pr
               }}
@@ -351,49 +340,26 @@ const WatchTokenRequestScreen = () => {
             <View style={[styles.tokenInfoContainer, spacings.mbTy]}>
               <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mr]}>
                 <View style={styles.tokenInfoIconWrapper}>
-                  <AmountIcon
-                    color={
-                      themeType === THEME_TYPES.DARK ? theme.secondaryText : theme.tertiaryText
-                    }
-                  />
+                  <AmountIcon color={theme.secondaryText} />
                 </View>
-                <Text
-                  fontSize={14}
-                  color={themeType === THEME_TYPES.DARK ? theme.secondaryText : theme.tertiaryText}
-                >
+                <Text fontSize={14} color={theme.secondaryText}>
                   {t('Amount')}
                 </Text>
               </View>
-              <Text
-                weight="medium"
-                fontSize={14}
-                color={themeType === THEME_TYPES.DARK ? theme.secondaryText : theme.tertiaryText}
-                numberOfLines={1}
-              >
+              <Text weight="medium" fontSize={14} color={theme.secondaryText} numberOfLines={1}>
                 {tokenDetails?.balance || '0.00'} {tokenData?.symbol}
               </Text>
             </View>
             <View style={[styles.tokenInfoContainer, spacings.mbTy]}>
               <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mr]}>
                 <View style={styles.tokenInfoIconWrapper}>
-                  <DollarIcon
-                    color={
-                      themeType === THEME_TYPES.DARK ? theme.secondaryText : theme.tertiaryText
-                    }
-                  />
+                  <DollarIcon color={theme.secondaryText} />
                 </View>
-                <Text
-                  fontSize={14}
-                  color={themeType === THEME_TYPES.DARK ? theme.secondaryText : theme.tertiaryText}
-                >
+                <Text fontSize={14} color={theme.secondaryText}>
                   {t('Price')}
                 </Text>
               </View>
-              <Text
-                weight="medium"
-                fontSize={14}
-                color={themeType === THEME_TYPES.DARK ? theme.secondaryText : theme.tertiaryText}
-              >
+              <Text weight="medium" fontSize={14} color={theme.secondaryText}>
                 {isLoading ? (
                   <View style={[flexbox.flex1, flexbox.alignCenter, flexbox.justifyCenter]}>
                     <Spinner style={{ width: 18, height: 18 }} />
@@ -406,24 +372,13 @@ const WatchTokenRequestScreen = () => {
             <View style={[styles.tokenInfoContainer]}>
               <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mr]}>
                 <View style={styles.tokenInfoIconWrapper}>
-                  <ValueIcon
-                    color={
-                      themeType === THEME_TYPES.DARK ? theme.secondaryText : theme.tertiaryText
-                    }
-                  />
+                  <ValueIcon color={theme.secondaryText} />
                 </View>
-                <Text
-                  fontSize={14}
-                  color={themeType === THEME_TYPES.DARK ? theme.secondaryText : theme.tertiaryText}
-                >
+                <Text fontSize={14} color={theme.secondaryText}>
                   {t('Value')}
                 </Text>
               </View>
-              <Text
-                weight="medium"
-                fontSize={14}
-                color={themeType === THEME_TYPES.DARK ? theme.secondaryText : theme.tertiaryText}
-              >
+              <Text weight="medium" fontSize={14} color={theme.secondaryText}>
                 {tokenDetails?.balanceUSDFormatted || '-'}
               </Text>
             </View>
@@ -432,7 +387,7 @@ const WatchTokenRequestScreen = () => {
               <View style={spacings.ptMd}>
                 <Alert
                   size="sm"
-                  type="info2"
+                  type="info"
                   title={
                     isTokenCustom
                       ? t('This token is already added as a custom token.')

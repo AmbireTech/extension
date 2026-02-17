@@ -6,6 +6,7 @@ import FilterIcon from '@common/assets/svg/FilterIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tab/Tab'
@@ -13,8 +14,6 @@ import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { AnimatedPressable, DURATIONS, useMultiHover } from '@web/hooks/useHover'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import { getUiType } from '@web/utils/uiType'
 
 import getStyles from './styles'
@@ -33,9 +32,13 @@ interface Props {
 const SelectNetwork = ({ currentTab }: Props) => {
   const { styles } = useTheme(getStyles)
   const { t } = useTranslation()
-  const { dashboardNetworkFilter } = useSelectedAccountControllerState()
+  const {
+    state: { dashboardNetworkFilter }
+  } = useController('SelectedAccountController')
   const { navigate } = useNavigation()
-  const { networks } = useNetworksControllerState()
+  const {
+    state: { networks }
+  } = useController('NetworksController')
   const { theme } = useTheme()
   const [searchParams] = useSearchParams()
 
@@ -72,8 +75,6 @@ const SelectNetwork = ({ currentTab }: Props) => {
       networkName = `${networkName.slice(0, maxNetworkNameLength)}...`
     }
 
-    networkName = `${networkName} ${!isPopup ? t('Portfolio') : ''}`
-
     return networkName
   }, [dashboardNetworkFilter, networks, t])
 
@@ -82,9 +83,8 @@ const SelectNetwork = ({ currentTab }: Props) => {
       style={[
         flexbox.directionRow,
         flexbox.alignCenter,
-        spacings.mrTy,
         {
-          width: isPopup ? 160 : 190
+          width: 168
         }
       ]}
     >
@@ -95,13 +95,11 @@ const SelectNetwork = ({ currentTab }: Props) => {
           flexbox.justifySpaceBetween,
           flexbox.alignCenter,
           networkButtonAnimStyle,
-          spacings.plTy,
-          spacings.prTy,
+          spacings.phSm,
           {
             ...(dashboardNetworkFilter && {
               color: theme.primaryText,
-              borderColor: theme.primary,
-              backgroundColor: theme.infoBackground
+              borderColor: theme.neutral400
             })
           }
         ]}
@@ -118,26 +116,13 @@ const SelectNetwork = ({ currentTab }: Props) => {
       >
         {dashboardNetworkFilter ? (
           <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-            <FilterIcon
-              color={theme.primaryBackgroundInverted}
-              style={spacings.prTy}
-              width={14}
-              height={14}
-            />
-            <Text testID={`networks-dropdown-${currentTab}`} fontSize={14}>
-              {filterByNetworkName}
-            </Text>
+            <FilterIcon color={theme.primaryText} style={spacings.prTy} width={16} height={16} />
+            <Text testID={`networks-dropdown-${currentTab}`}>{filterByNetworkName}</Text>
           </View>
         ) : (
-          <Text
-            testID={`networks-dropdown-${currentTab}`}
-            fontSize={14}
-            color={isHovered ? theme.primaryText : theme.secondaryText}
-          >
-            {t('All Networks')}
-          </Text>
+          <Text testID={`networks-dropdown-${currentTab}`}>{t('All Networks')}</Text>
         )}
-        <RightArrowIcon height={12} color={isHovered ? theme.primaryText : theme.secondaryText} />
+        <RightArrowIcon height={12} color={theme.iconPrimary} />
       </AnimatedPressable>
     </View>
   )

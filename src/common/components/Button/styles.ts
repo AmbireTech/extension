@@ -19,11 +19,13 @@ interface Style {
 
   buttonContainerStylesSizeLarge: ViewStyle
   buttonContainerStylesSizeRegular: ViewStyle
+  buttonContainerStylesSmaller: ViewStyle
   buttonContainerStylesSizeSmall: ViewStyle
   buttonContainerStylesSizeTiny: ViewStyle
 
   buttonTextStylesSizeLarge: TextStyle
   buttonTextStylesSizeRegular: TextStyle
+  buttonTextStylesSizeSmaller: TextStyle
   buttonTextStylesSizeSmall: TextStyle
   buttonTextStylesSizeTiny: TextStyle
 
@@ -56,12 +58,11 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       borderWidth: 0
     },
     buttonContainerSecondary: {
-      backgroundColor: 'transparent',
-      borderWidth: 1,
-      borderColor: theme.primary
+      borderWidth: 0
     },
     buttonContainerDanger: {
-      borderColor: theme.errorDecorative
+      borderColor: theme.errorDecorative,
+      borderWidth: 0
     },
     buttonContainerOutline: {
       borderColor: themeType === THEME_TYPES.DARK ? theme.primary : theme.successDecorative
@@ -69,6 +70,7 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
     buttonContainerGhost: {
       backgroundColor: 'transparent',
       minHeight: 'auto',
+      height: 'auto',
       ...spacings.pv0
     },
 
@@ -83,6 +85,12 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       height: 56,
       ...spacings.pvMi,
       ...spacings.phSm,
+      ...spacings.mbSm
+    },
+    buttonContainerStylesSmaller: {
+      height: 48,
+      ...spacings.phSm,
+      ...spacings.pvSm,
       ...spacings.mbSm
     },
     buttonContainerStylesSizeSmall: {
@@ -100,10 +108,13 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
 
     // Button text sizes (regular/small)
     buttonTextStylesSizeRegular: {
-      fontSize: 16
+      fontSize: 14
     },
     buttonTextStylesSizeLarge: {
-      fontSize: 16
+      fontSize: 14
+    },
+    buttonTextStylesSizeSmaller: {
+      fontSize: 14
     },
     buttonTextStylesSizeSmall: {
       fontSize: 14,

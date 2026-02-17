@@ -11,10 +11,13 @@ import Panel from '@common/components/Panel'
 import SuccessAnimation from '@common/components/SuccessAnimation'
 import Text from '@common/components/Text'
 import { Trans, useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import Header from '@common/modules/header/components/Header'
+import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Header'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -24,10 +27,6 @@ import {
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import { createTab } from '@web/extension-services/background/webapi/tab'
-import useAccountPickerControllerState from '@web/hooks/useAccountPickerControllerState'
-import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useWalletStateController from '@web/hooks/useWalletStateController'
 import AccountPersonalizeCard from '@web/modules/account-personalize/components/AccountPersonalizeCard'
 import AccountsLoadingAnimation from '@web/modules/account-personalize/components/AccountsLoadingAnimation'
 import AccountsLoadingDotsAnimation from '@web/modules/account-personalize/components/AccountsLoadingDotsAnimation'
@@ -42,11 +41,10 @@ const AccountPersonalizeScreen = () => {
   const { goToNextRoute, goToPrevRoute, setAccountsToPersonalize, accountsToPersonalize } =
     useOnboardingNavigation()
   const { theme } = useTheme(getStyles)
-  const { dispatch } = useBackgroundService()
-  const accountPickerState = useAccountPickerControllerState()
-  const accountsState = useAccountsControllerState()
-  const { accounts } = useAccountsControllerState()
-  const { isSetupComplete } = useWalletStateController()
+  const { dispatch } = useControllersMiddleware()
+  const accountPickerState = useController('AccountPickerController').state
+  const { statuses, accounts } = useController('AccountsController').state
+  const { isSetupComplete } = useController('WalletStateController').state
   const { addToast } = useToast()
   const initPassed = useRef(false)
   const newlyAddedAccounts = useMemo(() => accounts.filter((a) => a.newlyAdded) || [], [accounts])
@@ -208,7 +206,7 @@ const AccountPersonalizeScreen = () => {
     accountPickerState.addedAccountsFromCurrentSession,
     accountsToPersonalize.length,
     newlyAddedAccounts,
-    accountsState.statuses.addAccounts,
+    statuses.addAccounts,
     setAccountsToPersonalize,
     goToNextRoute
   ])
@@ -269,7 +267,7 @@ const AccountPersonalizeScreen = () => {
       {!!completed && !isLoading && <PinExtension />}
       <TabLayoutContainer
         backgroundColor={theme.secondaryBackground}
-        header={<Header mode="custom-inner-content" withAmbireLogo={!completed} />}
+        header={completed ? <Header.Wrapper /> : <HeaderWithLogoOnly />}
       >
         <TabLayoutWrapperMainContent>
           <Panel
@@ -320,24 +318,17 @@ const AccountPersonalizeScreen = () => {
               </View>
             ) : (
               <>
-                <SuccessAnimation
-                  noBackgroundShapes
-                  width={352}
-                  height={156}
-                  style={{ ...spacings.pv0, ...spacings.ph0, ...spacings.mbXl }}
-                  animationContainerStyle={{ width: 200, height: 140 }}
+                <SuccessAnimation style={spacings.mbXl} />
+                <Text
+                  testID="added-successfully-text"
+                  weight="semiBold"
+                  fontSize={20}
+                  style={spacings.mtSm}
                 >
-                  <Text
-                    testID="added-successfully-text"
-                    weight="semiBold"
-                    fontSize={20}
-                    style={spacings.mtSm}
-                  >
-                    {accountsToPersonalize.length
-                      ? t('Added successfully')
-                      : t('No new accounts added')}
-                  </Text>
-                </SuccessAnimation>
+                  {accountsToPersonalize.length
+                    ? t('Added successfully')
+                    : t('No new accounts added')}
+                </Text>
                 <ScrollView style={spacings.mbLg}>
                   {accountsToPersonalize.map((acc, index) => (
                     <AccountPersonalizeCard
@@ -380,8 +371,10 @@ const AccountPersonalizeScreen = () => {
                         handleSave()
                         goToNextRoute(WEB_ROUTES.accountPicker)
                       }}
-                      textStyle={{ fontSize: 14, color: theme.primary, letterSpacing: -0.1 }}
-                      style={{ ...spacings.ph0, height: 22 }}
+                      style={{
+                        ...spacings.phMi
+                      }}
+                      textStyle={{ fontSize: 14, letterSpacing: -0.1 }}
                       hasBottomSpacing={false}
                       childrenPosition="left"
                     >
@@ -389,7 +382,7 @@ const AccountPersonalizeScreen = () => {
                         fontSize={24}
                         weight="light"
                         style={spacings.mrTy}
-                        color={theme.primary}
+                        color={theme.primaryText}
                       >
                         +
                       </Text>
