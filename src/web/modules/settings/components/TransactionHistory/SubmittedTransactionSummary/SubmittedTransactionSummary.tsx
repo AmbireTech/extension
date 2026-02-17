@@ -98,7 +98,7 @@ const SubmittedTransactionSummaryInner = ({
             style={{ ...styles.summaryItem, marginBottom: SPACING_SM * sizeMultiplier[size] }}
             call={call}
             chainId={submittedAccountOp.chainId}
-            isHistory
+            type="history"
             enableExpand={defaultType === 'full-info'}
             size={size}
             hideLinks
