@@ -1,17 +1,11 @@
-import { useCallback, useEffect, useMemo, useSyncExternalStore } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useIdleTimer } from 'react-idle-timer'
 
-import { ControllerStore } from '@common/contexts/controllerStoreContext/controllerStore'
+import useControllerState from '@common/hooks/useControllerState'
 import { Action } from '@web/extension-services/background/actions'
 
-export default function useAutoLockControllerHelpers(
-  controllerStore: ControllerStore,
-  dispatch: (action: Action) => void
-) {
-  const state = useSyncExternalStore(
-    useCallback((cb) => controllerStore.subscribe('AutoLockController', cb), [controllerStore]),
-    useCallback(() => controllerStore.getSnapshot('AutoLockController'), [controllerStore])
-  )
+export default function useAutoLockControllerHelpers(dispatch: (action: Action) => void) {
+  const { state } = useControllerState({ id: 'AutoLockController' })
 
   const autoLockTime = useMemo(() => state.autoLockTime, [state.autoLockTime])
 

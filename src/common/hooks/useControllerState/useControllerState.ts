@@ -58,6 +58,7 @@ interface BaseControllerReturn<K extends keyof AllControllersMappingType, S> {
    */
   state: S
   helpers: ControllerHelpersMapping[K]
+  updateHelpers: (data: Partial<ControllerHelpersMapping[K]>, forceEmit?: boolean) => void
 }
 
 type UseControllerReturn<K extends keyof AllControllersMappingType, S> = BaseControllerReturn<
@@ -155,6 +156,13 @@ export default function useControllerState<
     }, [id, controllerHelpersStore, helpersSubscriptionManager])
   )
 
+  const updateHelpers = useCallback(
+    (data: Partial<ControllerHelpersMapping[K]>, forceEmit?: boolean) => {
+      controllerHelpersStore.update(id, data, forceEmit)
+    },
+    [controllerHelpersStore, id]
+  )
+
   // Create the error object here to capture the stack trace of the call site (the component using this hook)
   const missingControllerError = useMemo(() => {
     return new Error(`A controller with name ${id} does not exist in the controllerStore.`)
@@ -181,6 +189,7 @@ export default function useControllerState<
 
   return {
     state: stateToReturn,
-    helpers
+    helpers,
+    updateHelpers
   } as UseControllerReturn<K, S>
 }
