@@ -190,7 +190,7 @@ const Account = ({
                 initialValue={account.preferences.label}
                 onSave={onSave}
                 fontSize={withSettings ? 16 : 14}
-                height={24}
+                height={20}
                 textProps={{
                   weight: 'medium'
                 }}
@@ -210,6 +210,7 @@ const Account = ({
           <View style={[flexbox.directionRow, flexbox.alignCenter]}>
             <DomainBadge ens={ens} />
             <AccountAddress
+              containerStyle={spacings.pb0}
               isLoading={isLoading}
               ens={ens}
               address={addr}
@@ -226,6 +227,7 @@ const Account = ({
             externalPosition={dropdownPosition}
             setExternalPosition={setDropdownPosition}
             onSelect={onDropdownSelect}
+            kebabIconProps={{ width: 28, height: 28 }}
           />
         )}
       </View>

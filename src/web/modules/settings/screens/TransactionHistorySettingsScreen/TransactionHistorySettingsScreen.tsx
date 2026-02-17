@@ -50,6 +50,7 @@ const AccountOpHistory: FC<{ network?: Network; account: Account; sessionId: str
       {items.map((item: SubmittedAccountOp, i) => (
         <SubmittedTransactionSummary
           key={item.txnId}
+          size="md"
           defaultType="full-info"
           submittedAccountOp={item}
           style={i !== items.length - 1 ? spacings.mbLg : {}}

@@ -189,8 +189,8 @@ const Button = ({
       danger: [
         {
           property: 'backgroundColor',
-          from: `${String(theme.errorBackground)}00`,
-          to: theme.errorBackground
+          from: theme.errorBackground,
+          to: theme.error300
         }
       ],
       outline: [OPACITY_ANIMATION],
@@ -275,8 +275,8 @@ const Button = ({
       danger: [
         {
           property: 'color',
-          from: themeType === THEME_TYPES.DARK ? theme.errorText : theme.errorDecorative,
-          to: themeType === THEME_TYPES.DARK ? theme.errorText : theme.errorDecorative
+          from: theme.errorText,
+          to: theme.error100
         }
       ],
       outline: [

@@ -110,8 +110,7 @@ const SwitchAccountScreen = () => {
   return (
     <TabLayoutContainer
       width="full"
-      backgroundColor={theme.secondaryBackground}
-      footer={
+      renderDirectChildren={() => (
         <ActionFooter
           onReject={handleDenyButtonPress}
           onResolve={handleAuthorizeButtonPress}
@@ -120,7 +119,7 @@ const SwitchAccountScreen = () => {
           rejectButtonText={t('Deny')}
           resolveButtonTestID="switch-account-button"
         />
-      }
+      )}
     >
       <View
         style={[

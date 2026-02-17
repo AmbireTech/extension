@@ -2,14 +2,11 @@ import React, { createContext, Fragment, useMemo, useState } from 'react'
 import { ScrollView, View } from 'react-native'
 import { Outlet } from 'react-router-dom'
 
-import AmbireLogoHorizontal from '@common/components/AmbireLogoHorizontal'
-import Panel from '@common/components/Panel'
-import { getPanelPaddings } from '@common/components/Panel/Panel'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import { ROUTES } from '@common/modules/router/constants/common'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_2XL, SPACING_4XL } from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import Sidebar from '@web/modules/settings/components/Sidebar'
 
@@ -30,7 +27,6 @@ const SettingsRoutesProvider = () => {
   const { maxWidthSize } = useWindowSize()
   const isScreenXxl = maxWidthSize('xxl')
   const isScreenXl = maxWidthSize('xl')
-  const panelPaddings = getPanelPaddings(maxWidthSize, 'large')
   const { pathname } = useRoute()
   const [currentSettingsPage, setCurrentSettingsPage] = useState<string | undefined>()
 
@@ -46,7 +42,13 @@ const SettingsRoutesProvider = () => {
     )
   }, [pathname])
 
-  const wrapperProps = withScrollView ? { contentContainerStyle: panelPaddings } : {}
+  const leftMargin = useMemo(() => {
+    if (isScreenXxl) return 120
+    if (isScreenXl) return SPACING_4XL
+
+    return SPACING_2XL
+  }, [isScreenXl, isScreenXxl])
+
   const Wrapper = withScrollView ? ScrollView : Fragment
 
   return (
@@ -62,21 +64,18 @@ const SettingsRoutesProvider = () => {
       <View style={styles.background}>
         <View style={[styles.container, !isScreenXl ? common.fullWidth : {}]}>
           <Sidebar activeLink={currentSettingsPage} />
-          <View style={styles.contentContainer}>
-            <View style={styles.header}>
-              <AmbireLogoHorizontal />
-            </View>
-            <Panel
+          <View style={{ ...styles.contentContainer, marginLeft: leftMargin }}>
+            <View
               style={[
                 styles.panel,
                 !isScreenXl ? common.fullWidth : {},
                 withScrollView ? { ...spacings.ph0, ...spacings.pv0 } : {}
               ]}
             >
-              <Wrapper {...wrapperProps}>
+              <Wrapper>
                 <Outlet />
               </Wrapper>
-            </Panel>
+            </View>
           </View>
           {isScreenXxl ? (
             <View style={styles.sideContainer}>

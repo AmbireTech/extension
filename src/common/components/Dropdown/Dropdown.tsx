@@ -1,5 +1,6 @@
 import React, { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { FlatList, ListRenderItemInfo, Pressable, TextStyle, View } from 'react-native'
+import { SvgProps } from 'react-native-svg'
 
 import KebabMenuIcon from '@common/assets/svg/KebabMenuIcon'
 import Text from '@common/components/Text'
@@ -12,13 +13,20 @@ import { Portal } from '@gorhom/portal'
 import getStyles from './styles'
 
 interface Props {
+  kebabIconProps?: SvgProps
   data: Array<{ label: string; value: string; style?: TextStyle }>
   externalPosition?: { x: number; y: number }
   setExternalPosition?: React.Dispatch<React.SetStateAction<{ x: number; y: number }>>
   onSelect: (item: { label: string; value: string }) => void
 }
 
-const Dropdown: FC<Props> = ({ data, externalPosition, setExternalPosition, onSelect }) => {
+const Dropdown: FC<Props> = ({
+  data,
+  externalPosition,
+  kebabIconProps = {},
+  setExternalPosition,
+  onSelect
+}) => {
   const DropdownButton = useRef(null)
   const { styles, theme, themeType } = useTheme(getStyles)
   const dropdownButtonRef = useRef(null)
@@ -101,7 +109,7 @@ const Dropdown: FC<Props> = ({ data, externalPosition, setExternalPosition, onSe
       <View ref={dropdownButtonRef}>
         <Pressable onPress={toggleDropdown} ref={DropdownButton}>
           <View style={styles.button}>
-            <KebabMenuIcon />
+            <KebabMenuIcon {...kebabIconProps} />
           </View>
         </Pressable>
       </View>

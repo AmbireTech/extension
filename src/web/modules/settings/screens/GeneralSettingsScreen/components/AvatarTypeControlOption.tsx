@@ -76,7 +76,7 @@ const AvatarTypeControlOption = () => {
       description={t(
         'Choose from three unique icon styles to help you identify accounts at a glance.'
       )}
-      renderIcon={<AvatarIcon width={22} height={22} color={theme.primaryText} />}
+      renderIcon={<AvatarIcon />}
     >
       {AVATAR_TYPES.map((type) => (
         <AvatarOption key={type} type={type} />

@@ -27,7 +27,7 @@ const LogLevelControlOption = () => {
       style={spacings.mbTy}
       title={t('Development logs')}
       description={t('Expose technical details in your browser console only, never shared.')}
-      renderIcon={<DevIcon color={theme.primaryText} />}
+      renderIcon={<DevIcon />}
     >
       <FatToggle isOn={logLevel === LOG_LEVELS.DEV} onToggle={handleToggleLogLevel} />
     </ControlOption>
