@@ -2,7 +2,6 @@ import React, { FC, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 import { Modalize } from 'react-native-modalize'
-import { v4 as uuidv4 } from 'uuid'
 
 import { Account } from '@ambire-common/interfaces/account'
 import { has7702 } from '@ambire-common/libs/7702/7702'
@@ -22,7 +21,6 @@ import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { TAB_CONTENT_WIDTH } from '@web/constants/spacings'
@@ -38,7 +36,7 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
   const { accountStates } = useController('AccountsController').state
   const { keys } = useController('KeystoreController').state
   const { networks } = useController('NetworksController').state
-  const { theme, themeType } = useTheme()
+  const { theme } = useTheme()
   const { dispatch } = useControllersMiddleware()
   const { t } = useTranslation()
   const accountStateCheckedForRef = React.useRef<string | null>(null)
@@ -101,7 +99,6 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
       id="account-delegations-bottom-sheet"
       sheetRef={sheetRef}
       closeBottomSheet={closeBottomSheet}
-      backgroundColor={themeType === THEME_TYPES.DARK ? 'secondaryBackground' : 'primaryBackground'}
       scrollViewProps={{ contentContainerStyle: { flex: 1 } }}
       isScrollEnabled={false}
       containerInnerWrapperStyles={{ flex: 1 }}
@@ -156,10 +153,7 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
                   style={[
                     {
                       borderBottomWidth: i !== delegationNetworks.length - 1 ? 1 : 0,
-                      borderBottomColor:
-                        themeType === THEME_TYPES.DARK
-                          ? theme.primaryBorder
-                          : theme.tertiaryBackground
+                      borderBottomColor: theme.secondaryBorder
                     },
                     flexbox.directionRow,
                     flexbox.alignCenter,
