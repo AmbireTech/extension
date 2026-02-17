@@ -66,7 +66,7 @@ const NetworkIcon = ({
 
   const iconScale = useMemo(() => scale || 0.8, [scale])
 
-  const { theme, themeType } = useTheme()
+  const { theme } = useTheme()
   const Icon = icons[networkName]
 
   const renderDefaultIcon = useCallback(() => {
@@ -137,6 +137,7 @@ const NetworkIcon = ({
           iconScale={iconScale}
           isRound
           fallback={() => renderDefaultIcon()}
+          imageStyle={{ backgroundColor: 'transparent' }}
         />
       )}
     </View>
