@@ -65,7 +65,7 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       borderWidth: 0
     },
     buttonContainerOutline: {
-      borderColor: themeType === THEME_TYPES.DARK ? theme.primary : theme.successDecorative
+      borderColor: theme.primaryBorder
     },
     buttonContainerGhost: {
       backgroundColor: 'transparent',
