@@ -8,7 +8,6 @@ import Button from '@common/components/Button'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import { isExtension } from '@web/constants/browserapi'
 
 import getStyles from './styles'
@@ -22,18 +21,18 @@ interface Props {
 }
 
 const OpenExplorerButton: FC<Pick<Props, 'handleOpenExplorer'>> = ({ handleOpenExplorer }) => {
-  const { styles, theme, themeType } = useTheme(getStyles)
+  const { styles, theme } = useTheme(getStyles)
 
   return (
     <Pressable style={styles.openExplorer}>
       <OpenIcon
         width={IS_MOBILE_UP_BENZIN_BREAKPOINT ? 20 : 16}
         height={IS_MOBILE_UP_BENZIN_BREAKPOINT ? 20 : 16}
-        color={themeType === THEME_TYPES.DARK ? theme.linkText : theme.primary}
+        color={theme.linkText}
       />
       <Text
         fontSize={IS_MOBILE_UP_BENZIN_BREAKPOINT ? 16 : 14}
-        color={themeType === THEME_TYPES.DARK ? theme.linkText : theme.primary}
+        color={theme.linkText}
         weight="medium"
         style={styles.openExplorerText}
         onPress={handleOpenExplorer}
