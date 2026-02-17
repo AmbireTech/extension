@@ -9,6 +9,7 @@ import ExpandableCard from '@common/components/ExpandableCard'
 import HumanizedVisualization from '@common/components/HumanizedVisualization'
 import Label from '@common/components/Label'
 import Text from '@common/components/Text'
+import { isBenzin } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
@@ -132,7 +133,7 @@ const TransactionSummary = ({
       }}
       contentStyle={{
         paddingHorizontal: SPACING_SM,
-        paddingVertical: !isHistory ? SPACING_SM * sizeMultiplier[size] : 0
+        paddingVertical: !isHistory || isBenzin ? SPACING_SM * sizeMultiplier[size] : 0
       }}
       content={
         <>
