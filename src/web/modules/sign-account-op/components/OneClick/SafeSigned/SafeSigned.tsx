@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import Button from '@common/components/Button'
+import FooterGlassView from '@common/components/FooterGlassView'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
@@ -60,22 +61,21 @@ const SafeSigned: FC<Props> = ({ title, primaryButtonText, onPrimaryButtonPress 
             explorerLink="https://app.safe.global"
           />
         </View>
-        <View
-          style={{
-            height: 1,
-            backgroundColor: theme.secondaryBorder,
-            ...spacings.mvLg
-          }}
-        />
-        <View style={[flexbox.directionRow, flexbox.justifyEnd]}>
-          <Button
-            onPress={onPrimaryButtonPress}
-            hasBottomSpacing={false}
-            textStyle={spacings.phTy}
-            text={primaryButtonText}
-            testID="go-dashboard-button"
-          />
-        </View>
+        <FooterGlassView
+          borderRadius={28}
+          innerContainerStyle={{ ...spacings.phSm, ...spacings.pvSm }}
+        >
+          <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifySpaceBetween]}>
+            <Button
+              onPress={onPrimaryButtonPress}
+              hasBottomSpacing={false}
+              textStyle={spacings.phTy}
+              text={primaryButtonText}
+              size="smaller"
+              testID="go-dashboard-button"
+            />
+          </View>
+        </FooterGlassView>
       </TabLayoutWrapperMainContent>
     </TabLayoutContainer>
   )

@@ -164,9 +164,16 @@ const OneClickEstimation = ({
               signingErrors.length === 0 &&
               !signAccountOpController.canBroadcast &&
               !!signAccountOpController.account.safeCreation && (
-                <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mt]}>
+                <View
+                  style={[
+                    flexbox.directionRow,
+                    flexbox.justifyCenter,
+                    flexbox.alignCenter,
+                    spacings.mt
+                  ]}
+                >
                   <SuccessIcon color={theme.successDecorative} />
-                  <Text fontSize={16} appearance="successText" style={spacings.mlSm}>
+                  <Text fontSize={14} appearance="successText" style={spacings.mlSm}>
                     {t('Ready to sign and send to safe global')}
                   </Text>
                 </View>
