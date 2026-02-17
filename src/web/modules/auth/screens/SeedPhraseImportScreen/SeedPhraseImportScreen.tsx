@@ -192,6 +192,7 @@ const SeedPhraseImportScreen = () => {
                         inputWrapperStyle={{
                           position: 'relative',
                           backgroundColor: 'transparent',
+                          borderColor: theme.neutral500,
                           zIndex: 2
                         }}
                         placeholder={t('Write or paste your recovery phrase')}
@@ -230,6 +231,7 @@ const SeedPhraseImportScreen = () => {
                       <InputPassword
                         testID="input-passphrase"
                         onBlur={onBlur}
+                        backgroundColor={theme.secondaryBackground}
                         onChangeText={onChange}
                         value={value}
                         placeholder="Recovery phrase passphrase"

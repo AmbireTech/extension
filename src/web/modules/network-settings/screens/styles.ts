@@ -1,7 +1,7 @@
 import { StyleSheet, ViewStyle } from 'react-native'
 
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES, ThemeProps, ThemeType } from '@common/styles/themeConfig'
+import { ThemeProps } from '@common/styles/themeConfig'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import commonWebStyles from '@web/styles/utils/common'
@@ -11,7 +11,7 @@ interface Style {
   overview: ViewStyle
 }
 
-const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
+const getStyles = (theme: ThemeProps) =>
   StyleSheet.create<Style>({
     overview: {
       ...flexbox.directionRow,

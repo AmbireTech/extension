@@ -20,7 +20,7 @@ const NetworksConfiguration = () => {
   const { navigate } = useNavigation()
 
   return (
-    <TabLayoutContainer backgroundColor={theme.secondaryBackground}>
+    <TabLayoutContainer backgroundColor={theme.secondaryBackground} style={spacings.pt3Xl}>
       <View style={[styles.contentContainer]}>
         <SettingsPageHeader
           title={t('Networks Configuration')}

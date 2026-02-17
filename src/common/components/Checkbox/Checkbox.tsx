@@ -48,7 +48,7 @@ const Checkbox = ({
             {
               borderColor: value
                 ? checkedColor || theme.success400
-                : uncheckedBorderColor || theme.secondaryBorder
+                : uncheckedBorderColor || theme.neutral600
             },
             !!value && { backgroundColor: checkedColor || theme.success400 }
           ]}

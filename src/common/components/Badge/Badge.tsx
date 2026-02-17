@@ -4,6 +4,7 @@ import { View } from 'react-native'
 
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import MetamaskIcon from '@common/assets/svg/Metamask/MetamaskIcon'
+import StarsIcon from '@common/assets/svg/StarsIcon'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
@@ -22,6 +23,10 @@ const getBadgeTypes = (theme: ThemeProps) => ({
   default: {
     color: theme.neutral500,
     backgroundColor: theme.secondaryBackground
+  },
+  outline: {
+    color: theme.neutral500,
+    backgroundColor: 'transparent'
   },
   success: {
     color: theme.successText,
@@ -85,6 +90,7 @@ const Badge = ({
           height: sizeMultiplier * 20,
           backgroundColor: backgroundColor
         },
+        type === 'outline' && styles.outlineBadge,
         type === 'new' && styles.newBadge,
         withRightSpacing && spacings.mrMd,
         (!!tooltipText || !!children) && {
@@ -100,10 +106,17 @@ const Badge = ({
           weight={weight || 'medium'}
           fontSize={sizeMultiplier * 10}
           color={color}
-          style={[!!tooltipText && spacings.mrMi, textStyle]}
+          style={[(!!tooltipText || type === 'new') && spacings.mrMi, textStyle]}
         >
           {text}
         </Text>
+      )}
+      {type === 'new' && (
+        <StarsIcon
+          width={12 * sizeMultiplier}
+          height={12 * sizeMultiplier}
+          color={theme.neutral400}
+        />
       )}
       {children}
       {!!tooltipText && !specialType && (

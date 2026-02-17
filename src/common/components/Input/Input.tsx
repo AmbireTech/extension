@@ -40,7 +40,6 @@ export interface InputProps extends TextInputProps {
   setInputRef?: (ref: TextInput | null) => void
   inputBorderWrapperRef?: React.RefObject<View>
   nativeInputStyle?: ViewStyle & TextStyle
-  borderWrapperStyle?: ViewStyle
   inputWrapperStyle?: ViewStyle | ViewStyle[]
   bottomLabelStyle?: TextStyle | TextStyle[]
   leftIcon?: () => ReactNode
@@ -76,7 +75,6 @@ const Input = ({
   containerStyle,
   inputStyle,
   nativeInputStyle,
-  borderWrapperStyle,
   inputWrapperStyle,
   bottomLabelStyle,
   leftIcon,

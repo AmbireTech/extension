@@ -107,6 +107,8 @@ const PrivateKeyImportScreen = () => {
                     isValid={!handleValidation(value) && !!value.length}
                     validLabel={t('✅ Valid private key')}
                     secureTextEntry
+                    containerStyle={spacings.mbLg}
+                    backgroundColor={theme.secondaryBackground}
                     error={value.length ? errors?.privateKey?.message : ''}
                     autoCorrect={false}
                     onSubmitEditing={handleFormSubmit}

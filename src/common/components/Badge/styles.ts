@@ -8,6 +8,7 @@ interface Style {
   container: ViewStyle
   badge: ViewStyle
   newBadge: ViewStyle
+  outlineBadge: ViewStyle
 }
 
 const getStyles = (theme: ThemeProps) =>
@@ -22,9 +23,16 @@ const getStyles = (theme: ThemeProps) =>
       ...flexbox.directionRow
     },
     newBadge: {
-      borderColor: theme.infoDecorative,
-      // @ts-ignore
-      backgroundImage: 'linear-gradient(90deg, #6000FF 0%, #FFA000 100%)'
+      ...spacings.plTy,
+      ...spacings.prMi,
+      borderRadius: 64,
+      backgroundColor: theme.success400,
+      borderWidth: 1,
+      borderColor: theme.neutral400
+    },
+    outlineBadge: {
+      borderWidth: 1,
+      borderColor: theme.neutral500
     }
   })
 
