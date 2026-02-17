@@ -141,8 +141,7 @@ const NetworksScreen = () => {
             onPress={handleChangeNetwork}
           />
         </ScrollableWrapper>
-        {/* TODO: Change padding */}
-        <FooterGlassView borderRadius={28}>
+        <FooterGlassView size="sm">
           <Button
             text={t('Add new network')}
             size="smaller"

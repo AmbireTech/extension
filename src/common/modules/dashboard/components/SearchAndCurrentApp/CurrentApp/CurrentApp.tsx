@@ -15,6 +15,7 @@ const CurrentApp = () => {
   const { t } = useTranslation()
   const { currentDapp, isLoadingCurrentDapp } = useController('DappsController')
   const [isManageAppExpanded, setIsManageAppExpanded] = useState(false)
+  const [isNetworkSelectorExpanded, setIsNetworkSelectorExpanded] = useState(false)
   const isBlacklisted = currentDapp?.blacklisted === 'BLACKLISTED'
   const pressableRef = useRef<View>(null)
 
@@ -29,6 +30,8 @@ const CurrentApp = () => {
         isOpen={isManageAppExpanded}
         setIsOpen={setIsManageAppExpanded}
         parentRef={pressableRef}
+        isNetworkSelectorExpanded={isNetworkSelectorExpanded}
+        setIsNetworkSelectorExpanded={setIsNetworkSelectorExpanded}
       />
       <Pressable
         style={{
@@ -59,6 +62,7 @@ const CurrentApp = () => {
         disabled={!currentDapp || !currentDapp.isConnected}
         onPress={() => {
           setIsManageAppExpanded((prev) => !prev)
+          setIsNetworkSelectorExpanded(false)
         }}
       >
         <DappIcon dapp={currentDapp} withNetworkIcon />

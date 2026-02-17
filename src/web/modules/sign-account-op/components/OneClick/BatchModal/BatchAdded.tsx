@@ -77,10 +77,7 @@ const BatchAdded: FC<Props> = ({
           {t('You can add more transactions or\nmanage this batch in the dashboard.')}
         </Text>
 
-        <FooterGlassView
-          borderRadius={28}
-          innerContainerStyle={{ ...spacings.phSm, ...spacings.pvSm }}
-        >
+        <FooterGlassView size="sm">
           <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifySpaceBetween]}>
             <Button
               onPress={onSecondaryButtonPress}

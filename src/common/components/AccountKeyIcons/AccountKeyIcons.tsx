@@ -6,7 +6,6 @@ import { Key } from '@ambire-common/interfaces/keystore'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 
 import AccountKeyBanner from '../AccountKeyBanner'
@@ -38,7 +37,7 @@ const AccountKeyIcons = ({
   isExtended: boolean
 }) => {
   const { keys } = useController('KeystoreController').state
-  const { theme, themeType } = useTheme()
+  const { theme } = useTheme()
   const associatedKeys = account?.associatedKeys || []
   const importedKeyTypes = Array.from(
     new Set(keys.filter(({ addr }) => associatedKeys.includes(addr)).map((key) => key.type))

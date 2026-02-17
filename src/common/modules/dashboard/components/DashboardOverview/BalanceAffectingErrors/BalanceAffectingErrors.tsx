@@ -14,7 +14,6 @@ import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useBalanceAffectingErrors from '@common/modules/dashboard/hooks/useBalanceAffectingErrors'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 
 import BalanceAffectingErrorActions from './BalanceAffectingErrorActions'
@@ -142,9 +141,6 @@ const BalanceAffectingErrors: FC<Props> = ({
       <BottomSheet
         style={{ maxWidth: 720, ...spacings.pvLg, ...spacings.phXl, width: '100%' }}
         id="portfolio-errors"
-        backgroundColor={
-          themeType === THEME_TYPES.DARK ? 'secondaryBackground' : 'primaryBackground'
-        }
         sheetRef={sheetRef}
         closeBottomSheet={closeBottomSheetWrapped}
         flatListProps={{

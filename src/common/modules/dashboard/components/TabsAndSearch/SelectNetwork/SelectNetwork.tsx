@@ -42,18 +42,12 @@ const SelectNetwork = ({ currentTab }: Props) => {
   const { theme } = useTheme()
   const [searchParams] = useSearchParams()
 
-  const [bindNetworkButtonAnim, networkButtonAnimStyle, isHovered] = useMultiHover({
+  const [bindNetworkButtonAnim, networkButtonAnimStyle] = useMultiHover({
     values: [
       {
         property: 'backgroundColor',
         from: theme.secondaryBackground,
         to: theme.tertiaryBackground,
-        duration: DURATIONS.REGULAR
-      },
-      {
-        property: 'borderColor',
-        from: theme.secondaryBorder,
-        to: theme.tertiaryText,
         duration: DURATIONS.REGULAR
       }
     ]
@@ -61,9 +55,6 @@ const SelectNetwork = ({ currentTab }: Props) => {
 
   const filterByNetworkName = useMemo(() => {
     if (!dashboardNetworkFilter) return ''
-
-    if (dashboardNetworkFilter === 'rewards') return t('Ambire Rewards Portfolio')
-    if (dashboardNetworkFilter === 'gasTank') return t('Gas Tank Portfolio')
 
     const network = networks.find((n) => n.chainId.toString() === dashboardNetworkFilter.toString())
 

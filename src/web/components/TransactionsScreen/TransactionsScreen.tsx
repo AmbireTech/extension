@@ -59,10 +59,7 @@ const Content: FC<ContentProps> = ({ children, buttons }) => {
   return (
     <View style={[flexbox.flex1, spacings.phSm, spacings.pvSm]}>
       {children}
-      <FooterGlassView
-        innerContainerStyle={{ ...spacings.phSm, ...spacings.pvSm }}
-        borderRadius={28}
-      >
+      <FooterGlassView size="sm">
         <View style={[flexbox.directionRow, flexbox.alignCenter]}>{buttons}</View>
       </FooterGlassView>
     </View>

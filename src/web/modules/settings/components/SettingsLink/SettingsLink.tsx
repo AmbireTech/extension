@@ -42,9 +42,8 @@ const SettingsLink: FC<Props> = ({
     property: 'backgroundColor',
     values: {
       from: isSidebarLink ? hexToRgba(theme.secondaryBackground, 0) : theme.primaryBackground,
-      to: theme.primaryBackground
-    },
-    forceHoveredStyle: isActive
+      to: isSidebarLink ? theme.primaryBackground : theme.secondaryBackground
+    }
   })
   const isDisabled = !Object.values(ROUTES).includes(path) && !isExternal
 
@@ -76,6 +75,9 @@ const SettingsLink: FC<Props> = ({
         },
         style,
         animStyle,
+        isActive && {
+          backgroundColor: isSidebarLink ? theme.primaryBackground : theme.secondaryBackground
+        },
         isDisabled ? { opacity: 0.6 } : {}
       ]}
       {...bindAnim}

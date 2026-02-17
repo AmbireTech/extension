@@ -63,11 +63,20 @@ const NetworkOption = ({
   )
 }
 
-const NetworkSelector = ({ dapp, isAbove = false }: { dapp: Dapp; isAbove?: boolean }) => {
+const NetworkSelector = ({
+  dapp,
+  isAbove = false,
+  isExpanded,
+  setIsExpanded
+}: {
+  dapp: Dapp
+  isAbove?: boolean
+  isExpanded: boolean
+  setIsExpanded: React.Dispatch<React.SetStateAction<boolean>>
+}) => {
   const { dispatch } = useControllersMiddleware()
 
   const { networks } = useController('NetworksController').state
-  const [isExpanded, setIsExpanded] = useState(false)
   const { theme } = useTheme()
   const { t } = useTranslation()
 
@@ -92,7 +101,7 @@ const NetworkSelector = ({ dapp, isAbove = false }: { dapp: Dapp; isAbove?: bool
       })
       setIsExpanded(false)
     },
-    [dispatch, dapp.id]
+    [dispatch, dapp.id, setIsExpanded]
   )
 
   const networkList = (

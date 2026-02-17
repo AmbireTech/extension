@@ -2,7 +2,7 @@ import { StyleSheet, TextStyle, ViewStyle } from 'react-native'
 
 import { FONT_FAMILIES } from '@common/hooks/useFonts'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES, ThemeProps, ThemeType } from '@common/styles/themeConfig'
+import { ThemeProps, ThemeType } from '@common/styles/themeConfig'
 import commonStyles from '@common/styles/utils/common'
 import text from '@common/styles/utils/text'
 
@@ -65,7 +65,7 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       borderWidth: 0
     },
     buttonContainerOutline: {
-      borderColor: themeType === THEME_TYPES.DARK ? theme.primary : theme.successDecorative
+      borderColor: theme.primaryBorder
     },
     buttonContainerGhost: {
       backgroundColor: 'transparent',

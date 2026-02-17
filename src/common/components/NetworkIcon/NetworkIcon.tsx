@@ -10,7 +10,6 @@ import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import { SPACING_MI, SPACING_TY } from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import ManifestImage from '@web/components/ManifestImage'
 
@@ -67,7 +66,7 @@ const NetworkIcon = ({
 
   const iconScale = useMemo(() => scale || 0.8, [scale])
 
-  const { theme, themeType } = useTheme()
+  const { theme } = useTheme()
   const Icon = icons[networkName]
 
   const renderDefaultIcon = useCallback(() => {
@@ -138,7 +137,7 @@ const NetworkIcon = ({
           iconScale={iconScale}
           isRound
           fallback={() => renderDefaultIcon()}
-          imageStyle={themeType === THEME_TYPES.DARK ? { backgroundColor: 'transparent' } : {}}
+          imageStyle={{ backgroundColor: 'transparent' }}
         />
       )}
     </View>

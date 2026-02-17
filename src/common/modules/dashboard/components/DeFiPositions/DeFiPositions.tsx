@@ -4,7 +4,10 @@ import { useTranslation } from 'react-i18next'
 import { Animated, FlatListProps, TouchableOpacity, View } from 'react-native'
 
 import { BannerType } from '@ambire-common/interfaces/banner'
-import { getCurrentAccountBanners } from '@ambire-common/libs/banners/banners'
+import {
+  defiPositionsOnDisabledNetworksBannerId,
+  getCurrentAccountBanners
+} from '@ambire-common/libs/banners/banners'
 import PrivacyIcon from '@common/assets/svg/PrivacyIcon'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
@@ -19,7 +22,6 @@ import TabsAndSearch from '@common/modules/dashboard/components/TabsAndSearch'
 import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tab/Tab'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import { searchWithNetworkName } from '@common/utils/search'
 import { openInTab } from '@web/extension-services/background/webapi/tab'
@@ -70,7 +72,10 @@ const DeFiPositions: FC<Props> = ({
   const prevInitTab: any = usePrevious(initTab)
 
   const currentAccountBanners = useMemo(
-    () => getCurrentAccountBanners(banners, account?.addr),
+    () =>
+      getCurrentAccountBanners(banners, account?.addr).filter(
+        ({ id }) => id === defiPositionsOnDisabledNetworksBannerId
+      ),
     [banners, account]
   )
 
@@ -135,16 +140,19 @@ const DeFiPositions: FC<Props> = ({
               currentTab="defi"
               sessionId={sessionId}
             />
-            {currentAccountBanners.length > 0 && (
-              <View style={spacings.mbMi}>
-                {currentAccountBanners.map((banner) => (
-                  <DashboardBanner
-                    key={banner.id}
-                    banner={{ ...banner, type: banner.type as BannerType }}
-                  />
-                ))}
-              </View>
-            )}
+          </View>
+        )
+      }
+
+      if (item === 'banners') {
+        return (
+          <View style={spacings.mbMi}>
+            {currentAccountBanners.map((banner) => (
+              <DashboardBanner
+                key={banner.id}
+                banner={{ ...banner, type: banner.type as BannerType }}
+              />
+            ))}
           </View>
         )
       }
@@ -175,7 +183,7 @@ const DeFiPositions: FC<Props> = ({
                 testID="open-ticket-link"
                 fontSize={14}
                 appearance="primary"
-                color={themeType === THEME_TYPES.DARK ? theme.linkText : theme.primary}
+                color={theme.linkText}
                 onPress={() => {
                   // eslint-disable-next-line @typescript-eslint/no-floating-promises
                   openInTab({ url: 'https://help.ambire.com/hc/en-us' })
@@ -245,6 +253,10 @@ const DeFiPositions: FC<Props> = ({
 
   const dataItems = useMemo(() => {
     const items = ['header']
+
+    if (currentAccountBanners.length > 0) {
+      items.push('banners')
+    }
     if (flags.tokenAndDefiAutoDiscovery) {
       items.push(!portfolio.isAllReady ? 'skeleton' : 'keep-this-to-avoid-key-warning')
       if (initTab?.defi && portfolio.isAllReady) {
@@ -254,8 +266,15 @@ const DeFiPositions: FC<Props> = ({
     } else {
       items.push('disabled')
     }
+
     return items
-  }, [filteredPositions, flags.tokenAndDefiAutoDiscovery, initTab?.defi, portfolio.isAllReady])
+  }, [
+    currentAccountBanners.length,
+    filteredPositions,
+    flags.tokenAndDefiAutoDiscovery,
+    initTab?.defi,
+    portfolio.isAllReady
+  ])
 
   return (
     <>
