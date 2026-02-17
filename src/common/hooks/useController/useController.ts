@@ -1,13 +1,12 @@
-import { useCallback, useContext } from 'react'
+import { useCallback, useContext, useMemo, useState } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 
 import { AllControllersMappingType } from '@common/constants/controllersMapping'
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext/controllersMiddlewareContext'
 import { AnyControllerAction } from '@common/contexts/controllersMiddlewareContext/types'
 import { ControllerHelpersMapping } from '@common/contexts/controllerStoreContext/controllerHelpersStore'
+import useControllerState from '@common/hooks/useControllerState'
 import eventBus from '@web/extension-services/event/eventBus'
-
-import useStore from '../useStore'
 
 type MethodKeys<T> = {
   [K in keyof T]-?: T[K] extends (...args: any[]) => any ? K : never
@@ -94,7 +93,8 @@ export default function useController<
     throw new Error('useController must be used within ControllersMiddlewareProvider')
   }
 
-  const { state, helpers } = useStore(id, selector)
+  const [isSubscribed, setIsSubscribed] = useState(false)
+  const { state, helpers } = useControllerState({ id, selector, subscriptionEnabled: isSubscribed })
   const { dispatch: controllersMiddlewareDispatch } = controllersMiddleware
 
   const dispatch = useCallback(
@@ -164,10 +164,33 @@ export default function useController<
     [controllersMiddlewareDispatch, id]
   )
 
-  return {
-    state,
-    ...(helpers || ({} as ControllerHelpersMapping[K])),
-    dispatch,
-    dispatchAndWait
-  } as UseControllerReturn<K, S>
+  // return {
+  //   state,
+  //   ...(helpers || ({} as ControllerHelpersMapping[K])),
+  //   dispatch,
+  //   dispatchAndWait
+  // } as UseControllerReturn<K, S>
+
+  // Memoize the return object so the Proxy is stable
+  const resultObject = useMemo(() => {
+    return {
+      state,
+      ...(helpers || ({} as ControllerHelpersMapping[K])),
+      dispatch,
+      dispatchAndWait
+    } as UseControllerReturn<K, S>
+  }, [state, helpers, dispatch, dispatchAndWait])
+
+  return useMemo(() => {
+    return new Proxy(resultObject, {
+      get: (target, prop) => {
+        // If they access state/helpers and we aren't subscribed yet, toggle it.
+        if ((prop === 'state' || prop === 'helpers' || prop in (helpers || {})) && !isSubscribed) {
+          setIsSubscribed(true)
+        }
+
+        return Reflect.get(target, prop)
+      }
+    })
+  }, [resultObject, isSubscribed, helpers])
 }

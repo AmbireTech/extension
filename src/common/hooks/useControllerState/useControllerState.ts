@@ -70,27 +70,51 @@ type DefaultState<K extends keyof AllControllersMappingType> = K extends 'SignAc
   ? AllControllersMappingType[K] | null
   : AllControllersMappingType[K]
 
-export default function useStore<K extends keyof AllControllersMappingType>(
+export default function useControllerState<K extends keyof AllControllersMappingType>({
+  id,
+  selector,
+  subscriptionEnabled
+}: {
   id: K
-): UseControllerReturn<K, DefaultState<K>>
+  selector?: undefined
+  subscriptionEnabled?: boolean
+}): UseControllerReturn<K, DefaultState<K>>
 
-export default function useStore<
+export default function useControllerState<
   K extends keyof AllControllersMappingType,
   S extends keyof AllControllersMappingType[K]
->(id: K, selector: S): UseControllerReturn<K, AllControllersMappingType[K][S]>
+>({
+  id,
+  selector,
+  subscriptionEnabled
+}: {
+  id: K
+  selector: S
+  subscriptionEnabled?: boolean
+}): UseControllerReturn<K, AllControllersMappingType[K][S]>
 
-export default function useStore<K extends keyof AllControllersMappingType, S>(
-  id: K,
+export default function useControllerState<K extends keyof AllControllersMappingType, S>({
+  id,
+  selector,
+  subscriptionEnabled
+}: {
+  id: K
   selector?: (state: AllControllersMappingType[K]) => S
-): UseControllerReturn<K, S>
+  subscriptionEnabled?: boolean
+}): UseControllerReturn<K, S>
 
-export default function useStore<
+export default function useControllerState<
   K extends keyof AllControllersMappingType,
   S = AllControllersMappingType[K]
->(
-  id: K,
+>({
+  id,
+  selector,
+  subscriptionEnabled = true
+}: {
+  id: K
   selector?: ((state: AllControllersMappingType[K]) => S) | keyof AllControllersMappingType[K]
-): UseControllerReturn<K, S> {
+  subscriptionEnabled?: boolean
+}): UseControllerReturn<K, S> {
   const {
     controllerStore,
     controllerHelpersStore,
@@ -107,24 +131,28 @@ export default function useStore<
 
   const state = useSyncExternalStore(
     useCallback(
-      (cb) => stateSubscriptionManager.subscribe(id, cb, controllerStore, derivedSelector),
-      [id, controllerStore, derivedSelector, stateSubscriptionManager]
+      (cb) => {
+        if (!subscriptionEnabled) return () => {}
+        return stateSubscriptionManager.subscribe(id, cb, controllerStore, derivedSelector)
+      },
+      [id, controllerStore, derivedSelector, stateSubscriptionManager, subscriptionEnabled]
     ),
-    useCallback(
-      () => stateSubscriptionManager.getSnapshot(id, controllerStore, derivedSelector),
-      [id, controllerStore, derivedSelector, stateSubscriptionManager]
-    )
+    useCallback(() => {
+      return stateSubscriptionManager.getSnapshot(id, controllerStore, derivedSelector)
+    }, [id, controllerStore, derivedSelector, stateSubscriptionManager])
   )
 
   const helpers = useSyncExternalStore(
     useCallback(
-      (cb) => helpersSubscriptionManager.subscribe(id, cb, controllerHelpersStore),
-      [id, controllerHelpersStore, helpersSubscriptionManager]
+      (cb) => {
+        if (!subscriptionEnabled) return () => {}
+        return helpersSubscriptionManager.subscribe(id, cb, controllerHelpersStore)
+      },
+      [id, controllerHelpersStore, helpersSubscriptionManager, subscriptionEnabled]
     ),
-    useCallback(
-      () => helpersSubscriptionManager.getSnapshot(id, controllerHelpersStore),
-      [id, controllerHelpersStore, helpersSubscriptionManager]
-    )
+    useCallback(() => {
+      return helpersSubscriptionManager.getSnapshot(id, controllerHelpersStore)
+    }, [id, controllerHelpersStore, helpersSubscriptionManager])
   )
 
   // Create the error object here to capture the stack trace of the call site (the component using this hook)
