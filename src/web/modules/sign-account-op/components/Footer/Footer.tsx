@@ -3,7 +3,6 @@ import { View } from 'react-native'
 
 import { getCallsCount } from '@ambire-common/utils/userRequest'
 import BatchIcon from '@common/assets/svg/BatchIcon'
-import InfoIcon from '@common/assets/svg/InfoIcon'
 import Button from '@common/components/Button'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
@@ -13,7 +12,6 @@ import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
 import ActionsPagination from '@web/modules/action-requests/components/ActionsPagination'
 
 import getStyles from './styles'
@@ -72,14 +70,6 @@ const Footer = ({
     [t]
   )
 
-  const [bindAnim, animStyle] = useCustomHover({
-    property: 'backgroundColor',
-    values: {
-      from: 'transparent',
-      to: theme.quaternaryBackground
-    }
-  })
-
   return (
     <View style={styles.container}>
       <View style={[!isAddToCartDisplayed && flexbox.flex1, flexbox.alignStart]}>
@@ -102,8 +92,8 @@ const Footer = ({
           <View style={[flexbox.directionRow, flexbox.alignCenter]}>
             <Button
               testID="queue-and-sign-later-button"
-              type="outline"
-              accentColor={theme.primary}
+              type="secondary"
+              childrenPosition="left"
               text={
                 batchCount > 1
                   ? t('Add to batch ({{batchCount}})', {
@@ -116,23 +106,13 @@ const Footer = ({
               hasBottomSpacing={false}
               style={{ minWidth: 160, ...spacings.ph }}
               size="large"
-            >
-              <BatchIcon style={spacings.mlTy} />
-            </Button>
-            <View
-              style={spacings.mlMi}
-              dataSet={createGlobalTooltipDataSet({
+              tooltipDataSet={createGlobalTooltipDataSet({
                 id: 'start-batch-info-tooltip',
                 content: startBatchingInfo
               })}
             >
-              <AnimatedPressable
-                style={[spacings.phTy, spacings.pvTy, { borderRadius: 50 }, animStyle]}
-                {...bindAnim}
-              >
-                <InfoIcon color={theme.tertiaryText} width={20} height={20} />
-              </AnimatedPressable>
-            </View>
+              <BatchIcon style={spacings.mrMi} />
+            </Button>
           </View>
         )}
         <View
@@ -160,7 +140,7 @@ const Footer = ({
               text={isSignLoading ? inProgressButtonText : buttonText}
               onPress={onSign}
               size="large"
-              style={{ minWidth: 128 }}
+              style={{ minWidth: 128, ...spacings.mlLg }}
             />
           )}
         </View>

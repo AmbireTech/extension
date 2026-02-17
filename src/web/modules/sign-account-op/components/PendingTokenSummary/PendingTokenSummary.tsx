@@ -5,7 +5,7 @@ import { View } from 'react-native'
 
 import { TokenResult } from '@ambire-common/libs/portfolio/interfaces'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
-import WarningFilledIcon from '@common/assets/svg/WarningFilledIcon'
+import WarningIcon from '@common/assets/svg/WarningIcon'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
@@ -63,8 +63,8 @@ const PendingTokenSummary = ({ token, chainId, hasBottomSpacing = true }: Props)
   }, [token.simulationAmount])
 
   const amountToSendTextColor = useMemo(() => {
-    if (token.simulationAmount! < 0) return theme.errorDecorative
-    if (token.simulationAmount! > 0) return theme.successDecorative
+    if (token.simulationAmount! < 0) return theme.error300
+    if (token.simulationAmount! > 0) return theme.success400
 
     return theme.secondaryText
   }, [token.simulationAmount, theme])
@@ -84,6 +84,9 @@ const PendingTokenSummary = ({ token, chainId, hasBottomSpacing = true }: Props)
         <TokenIcon
           width={20}
           height={20}
+          withContainer
+          containerHeight={24}
+          containerWidth={24}
           chainId={chainId}
           address={token.address}
           withNetworkIcon={false}
@@ -107,10 +110,16 @@ const PendingTokenSummary = ({ token, chainId, hasBottomSpacing = true }: Props)
             content: String(fullAmount)
           })}
         >{`${amountToSendSign}${formattedAmount}`}</Text>
-        <Text fontSize={16} weight="medium">
+        <Text fontSize={16} weight="medium" appearance="secondaryText">
           {` ${token.symbol}`}
         </Text>
-        {!!priceInUsd && <Text fontSize={16} weight="medium">{` ($${priceInUsd}) `}</Text>}
+        {!!priceInUsd && (
+          <Text
+            fontSize={16}
+            weight="medium"
+            appearance="secondaryText"
+          >{` ($${priceInUsd}) `}</Text>
+        )}
       </Text>
       {token.flags.suspectedType && (
         <View
@@ -121,7 +130,7 @@ const PendingTokenSummary = ({ token, chainId, hasBottomSpacing = true }: Props)
             content: suspiciousTokenTooltipContent ?? undefined
           })}
         >
-          <WarningFilledIcon />
+          <WarningIcon />
         </View>
       )}
     </View>

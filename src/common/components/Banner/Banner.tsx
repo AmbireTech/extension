@@ -95,18 +95,20 @@ const Banner = React.memo(
             </Text>
           )}
         </View>
-        <Pressable
-          onPress={onClosePress}
-          hitSlop={8}
-          style={{
-            width: 24,
-            height: 24,
-            ...flexbox.center
-          }}
-          testID="banner-button-reject"
-        >
-          <CloseIcon color={theme.iconPrimary} strokeWidth="2" width={12} height={12} />
-        </Pressable>
+        {!!onClosePress && (
+          <Pressable
+            onPress={onClosePress}
+            hitSlop={8}
+            style={{
+              width: 24,
+              height: 24,
+              ...flexbox.center
+            }}
+            testID="banner-button-reject"
+          >
+            <CloseIcon color={theme.iconPrimary} strokeWidth="2" width={12} height={12} />
+          </Pressable>
+        )}
         {children}
       </WrapperElement>
     )

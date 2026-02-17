@@ -290,7 +290,7 @@ const SignMessageScreen = () => {
       <TabLayoutContainer
         width="full"
         header={<ActionHeader />}
-        footer={
+        renderDirectChildren={() => (
           <ActionFooter
             onReject={handleReject}
             onResolve={handleSign}
@@ -313,8 +313,7 @@ const SignMessageScreen = () => {
                 }
               : {})}
           />
-        }
-        backgroundColor={theme.primaryBackground}
+        )}
       >
         <SigningKeySelect
           isVisible={isChooseSignerShown}

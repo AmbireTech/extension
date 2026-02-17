@@ -82,7 +82,7 @@ const GetEncryptionPublicKeyRequestScreen = () => {
       <TabLayoutContainer
         width="full"
         header={<ActionHeader />}
-        footer={
+        renderDirectChildren={() => (
           <ActionFooter
             onReject={handleDeny}
             onResolve={handleAccept}
@@ -91,8 +91,7 @@ const GetEncryptionPublicKeyRequestScreen = () => {
             resolveButtonTestID="button-provide"
             resolveNode={actionFooterResolveNode}
           />
-        }
-        backgroundColor={theme.secondaryBackground}
+        )}
       >
         <TabLayoutWrapperMainContent>
           <RequestingDappInfo
