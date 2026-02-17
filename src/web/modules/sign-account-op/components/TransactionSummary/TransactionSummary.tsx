@@ -29,6 +29,7 @@ interface Props {
   rightIcon?: React.ReactNode
   onRightIconPress?: () => void
   hideLinks?: boolean
+  hideDeleteIcon?: boolean
 }
 
 export const sizeMultiplier = {
@@ -47,7 +48,8 @@ const TransactionSummary = ({
   enableExpand = true,
   rightIcon,
   onRightIconPress,
-  hideLinks = false
+  hideLinks = false,
+  hideDeleteIcon
 }: Props) => {
   const textSize = 16 * sizeMultiplier[size]
   const imageSize = 32 * sizeMultiplier[size]
@@ -156,7 +158,7 @@ const TransactionSummary = ({
               hasPadding={enableExpand}
             />
           )}
-          {!!call.id && !isHistory && !rightIcon && (
+          {!!call.id && !isHistory && !rightIcon && !hideDeleteIcon && (
             <AnimatedPressable
               style={deleteIconAnimStyle}
               onPress={handleRemoveCall}

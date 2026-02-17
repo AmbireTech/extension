@@ -351,6 +351,7 @@ const SignAccountOpScreen = () => {
               network={network}
               setDelegation={signAccountOpState?.accountOp.meta?.setDelegation}
               delegatedContract={signAccountOpState?.delegatedContract}
+              hideDeleteIcon={!!signAccountOpState?.accountOp.signed?.length}
             />
             {/* Display errors only if the user is not in view-only mode */}
             {signAccountOpState?.errors?.length && !isViewOnly ? (
