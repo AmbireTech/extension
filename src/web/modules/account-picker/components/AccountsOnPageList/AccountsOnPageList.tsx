@@ -155,11 +155,10 @@ const AccountsOnPageList = ({
             // Otherwise, multiple smart accounts could be displayed as "new",
             // because they could have identity on the Relayer, but still be unused.
             shouldBeDisplayedAsNew={
-              // isLastSlot &&
-              // getType(acc) === 'smart' &&
-              // isUnused &&
-              // acc.importStatus === ImportStatus.NotImported
-              true
+              isLastSlot &&
+              getType(acc) === 'smart' &&
+              isUnused &&
+              acc.importStatus === ImportStatus.NotImported
             }
           />
         )
