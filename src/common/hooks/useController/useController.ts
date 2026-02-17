@@ -177,7 +177,7 @@ export default function useController<
   return useMemo(() => {
     return new Proxy(resultObject, {
       get: (target, prop) => {
-        // If they access state/helpers and we aren't subscribed yet, toggle it.
+        // If a component tries to access state/helpers and we aren't subscribed yet, toggle it.
         if ((prop === 'state' || prop === 'helpers' || prop in (helpers || {})) && !isSubscribed) {
           setIsSubscribed(true)
         }
