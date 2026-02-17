@@ -110,12 +110,12 @@ const Token: FC<Props> = ({
           address={address}
           chainId={chainId}
           onGasTank={flags.onGasTank}
-          containerHeight={40}
-          containerWidth={40}
+          containerHeight={32}
+          containerWidth={32}
           width={28}
           height={28}
         />
-        <Text testID="hidden-token-name" weight="medium" selectable style={spacings.mrTy}>
+        <Text testID="hidden-token-name" weight="medium" selectable style={spacings.mlTy}>
           {symbol}
         </Text>
         {flags.isCustom && <Badge text="Custom" />}

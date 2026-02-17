@@ -865,7 +865,7 @@ const NetworkForm = ({
                     onPress={handleSubmitButtonPress}
                     text={isSomethingUpdated ? t('Save') : t('No changes')}
                     disabled={!isSomethingUpdated || isSaveOrAddButtonDisabled}
-                    style={[spacings.mlMi, flexbox.flex1, { width: 124 }]}
+                    style={[spacings.mlMi, flexbox.flex1, { minWidth: 124 }]}
                     hasBottomSpacing={false}
                     size="smaller"
                   />
