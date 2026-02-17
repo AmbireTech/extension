@@ -164,13 +164,6 @@ export default function useController<
     [controllersMiddlewareDispatch, id]
   )
 
-  // return {
-  //   state,
-  //   ...(helpers || ({} as ControllerHelpersMapping[K])),
-  //   dispatch,
-  //   dispatchAndWait
-  // } as UseControllerReturn<K, S>
-
   // Memoize the return object so the Proxy is stable
   const resultObject = useMemo(() => {
     return {
