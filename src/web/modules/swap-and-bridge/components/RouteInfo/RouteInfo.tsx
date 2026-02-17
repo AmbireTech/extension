@@ -10,7 +10,6 @@ import WarningIcon from '@common/assets/svg/WarningIcon'
 import Text from '@common/components/Text'
 import Tooltip from '@common/components/Tooltip'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -30,11 +29,12 @@ const RouteInfo: FC<Props> = ({
   shouldEnableRoutesSelection,
   openRoutesModal
 }) => {
-  const { formStatus, signAccountOpController, quote, swapSignErrors } =
-    useController('SwapAndBridgeController').state
+  const {
+    state: { formStatus, signAccountOpController, quote, swapSignErrors },
+    dispatch: swapAndBridgeDispatch
+  } = useController('SwapAndBridgeController')
   const { theme } = useTheme()
   const { t } = useTranslation()
-  const { dispatch } = useControllersMiddleware()
 
   const allRoutesFailed = useMemo(() => {
     if (!quote || !quote.routes.length) return false
@@ -42,10 +42,11 @@ const RouteInfo: FC<Props> = ({
   }, [quote])
 
   const updateQuote = useCallback(() => {
-    dispatch({
-      type: 'SWAP_AND_BRIDGE_CONTROLLER_UPDATE_QUOTE'
+    swapAndBridgeDispatch({
+      type: 'method',
+      params: { method: 'updateQuote', args: [] }
     })
-  }, [dispatch])
+  }, [swapAndBridgeDispatch])
 
   return (
     <View

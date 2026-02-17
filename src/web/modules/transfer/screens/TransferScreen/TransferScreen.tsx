@@ -47,7 +47,6 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   const { addToast } = useToast()
   const { state: transferState, dispatch: transferDispatch } = useController('TransferController')
   const { dispatch: requestsDispatch } = useController('RequestsController')
-  const { state: mainCtrl } = useController('MainController')
   const {
     isTopUp,
     validationFormMsgs,
@@ -160,19 +159,19 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
 
   const navigateOut = useCallback(() => {
     if (isRequestWindow) {
-      if (!mainCtrl.selectedAccount.account?.addr) return
+      if (!account) return
 
       requestsDispatch({
         type: 'method',
         params: {
           method: 'removeUserRequests',
-          args: [[`${mainCtrl.selectedAccount.account.addr}-transfer-sign`]]
+          args: [[`${account.addr}-transfer-sign`]]
         }
       })
     } else {
       navigate(WEB_ROUTES.dashboard)
     }
-  }, [requestsDispatch, navigate, mainCtrl.selectedAccount.account?.addr])
+  }, [requestsDispatch, navigate, account])
 
   const { sessionHandler } = useTrackAccountOp({
     address: latestBroadcastedAccountOp?.accountAddr,
@@ -492,17 +491,17 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     if (!isRequestWindow) {
       navigate(ROUTES.dashboard)
     } else {
-      if (!mainCtrl.selectedAccount.account) return
+      if (!account) return
 
       requestsDispatch({
         type: 'method',
         params: {
           method: 'removeUserRequests',
-          args: [[`${mainCtrl.selectedAccount.account.addr}-transfer-sign`]]
+          args: [[`${account.addr}-transfer-sign`]]
         }
       })
     }
-  }, [navigate, requestsDispatch, mainCtrl.selectedAccount.account])
+  }, [navigate, requestsDispatch, account])
 
   const onBatchAddedPrimaryButtonPress = useCallback(() => {
     transferDispatch({

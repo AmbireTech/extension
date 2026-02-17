@@ -12,7 +12,6 @@ import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import spacings, { SPACING_LG } from '@common/styles/spacings'
@@ -40,7 +39,7 @@ const RoutesModal = ({
   const { styles, theme } = useTheme(getStyles)
   const { quote, signAccountOpController, updateQuoteStatus } =
     useController('SwapAndBridgeController').state
-  const { dispatch } = useControllersMiddleware()
+  const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
   const scrollRef = useRef<FlatList<SwapAndBridgeRoute>>(null)
   const { height } = useWindowSize()
   // there's a small discrepancy between ticks and we want to capture that
@@ -72,21 +71,22 @@ const RoutesModal = ({
         return
       }
 
-      dispatch({
-        type: 'SWAP_AND_BRIDGE_CONTROLLER_SELECT_ROUTE',
-        params: { route }
+      swapAndBridgeDispatch({
+        type: 'method',
+        params: { method: 'selectRoute', args: [route, { isManualSelection: true }] }
       })
       setUserSelectedRoute(route)
       setIsEstimationLoading(true)
     },
-    [closeBottomSheet, dispatch, persistedSelectedRoute, disabledRoutes]
+    [closeBottomSheet, swapAndBridgeDispatch, persistedSelectedRoute, disabledRoutes]
   )
 
   const updateQuote = useCallback(() => {
-    dispatch({
-      type: 'SWAP_AND_BRIDGE_CONTROLLER_UPDATE_QUOTE'
+    swapAndBridgeDispatch({
+      type: 'method',
+      params: { method: 'updateQuote', args: [] }
     })
-  }, [dispatch])
+  }, [swapAndBridgeDispatch])
 
   const isQuoteLoading = updateQuoteStatus === 'LOADING'
 
@@ -100,10 +100,11 @@ const RoutesModal = ({
       signAccountOpController.estimation.status === EstimationStatus.Error
     ) {
       setIsEstimationLoading(false)
-      dispatch({
-        type: 'SWAP_AND_BRIDGE_CONTROLLER_MARK_SELECTED_ROUTE_AS_FAILED',
+      swapAndBridgeDispatch({
+        type: 'method',
         params: {
-          disabledReason: signAccountOpController.estimation.error?.message || 'Estimation failed'
+          method: 'markSelectedRouteAsFailed',
+          args: [signAccountOpController.estimation.error?.message || 'Estimation failed']
         }
       })
     }
@@ -122,7 +123,7 @@ const RoutesModal = ({
     persistedSelectedRoute,
     isEstimationLoading,
     disabledRoutes,
-    dispatch
+    swapAndBridgeDispatch
   ])
 
   const renderItem = useCallback(

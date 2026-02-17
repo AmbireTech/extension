@@ -44,9 +44,12 @@ const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }: Nati
 }
 
 const SignAccountOpScreen = () => {
-  const { currentUserRequest, visibleUserRequests } = useController('RequestsController').state
+  const {
+    state: { currentUserRequest, visibleUserRequests },
+    dispatch: requestsDispatch
+  } = useController('RequestsController')
   const signAccountOpState = useController('SignAccountOpController').state
-  const mainState = useController('MainController').state
+  const { signAccOpInitError } = useController('MainController').state
   const { dispatch } = useControllersMiddleware()
   const { t } = useTranslation()
   const { addToast } = useToast()
@@ -118,17 +121,18 @@ const SignAccountOpScreen = () => {
   const handleRejectAccountOp = useCallback(() => {
     if (!accountOpRequest) return
 
-    dispatch({
-      type: 'REQUESTS_CONTROLLER_REJECT_USER_REQUEST',
+    requestsDispatch({
+      type: 'method',
       params: {
-        err: 'User rejected the transaction request.',
-        id: accountOpRequest.id,
-        options: {
-          shouldOpenNextRequest: visibleUserRequests.length > 1
-        }
+        method: 'rejectUserRequests',
+        args: [
+          'User rejected the transaction request.',
+          [accountOpRequest.id],
+          { shouldOpenNextRequest: visibleUserRequests.length > 1 }
+        ]
       }
     })
-  }, [dispatch, accountOpRequest, visibleUserRequests.length])
+  }, [requestsDispatch, accountOpRequest, visibleUserRequests.length])
 
   const handleAddToCart = useCallback(() => {
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -189,10 +193,10 @@ const SignAccountOpScreen = () => {
     return undefined
   }, [copySignAccountOpError, signAccountOpState?.errors, styles.alertText, theme.warningText])
 
-  if (mainState.signAccOpInitError) {
+  if (signAccOpInitError) {
     return (
       <View style={[StyleSheet.absoluteFill, flexbox.alignCenter, flexbox.justifyCenter]}>
-        <Alert type="error" title={mainState.signAccOpInitError} />
+        <Alert type="error" title={signAccOpInitError} />
       </View>
     )
   }
