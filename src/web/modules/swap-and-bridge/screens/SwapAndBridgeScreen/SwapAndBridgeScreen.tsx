@@ -10,7 +10,6 @@ import Alert from '@common/components/Alert'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import Spinner from '@common/components/Spinner'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useNavigation from '@common/hooks/useNavigation'
 import usePrevious from '@common/hooks/usePrevious'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
@@ -90,7 +89,6 @@ const SwapAndBridgeScreen = () => {
   } = useController('RequestsController')
   const prevSelectedAccActiveRoutes: any[] | undefined = usePrevious(selectedAccActiveRoutes)
   const scrollViewRef: any = useRef(null)
-  const { dispatch } = useControllersMiddleware()
 
   const { simulationError: fromChainSimulationError } = useSimulationError({ chainId: fromChainId })
   const { simulationError: toChainSimulationError } = useSimulationError({ chainId: toChainId })
@@ -162,27 +160,27 @@ const SwapAndBridgeScreen = () => {
 
   const handleUpdateStatus = useCallback(
     (status: SigningStatus) => {
-      dispatch({
-        type: 'CURRENT_SIGN_ACCOUNT_OP_UPDATE_STATUS',
+      swapAndBridgeDispatch({
+        type: 'method',
         params: {
-          updateType: 'Swap&Bridge',
-          status
+          method: 'callSignAccountOpMethod',
+          args: ['updateStatus', [status]]
         }
       })
     },
-    [dispatch]
+    [swapAndBridgeDispatch]
   )
   const updateController = useCallback(
     (params: { signingKeyAddr?: Key['addr']; signingKeyType?: Key['type'] }) => {
-      dispatch({
-        type: 'CURRENT_SIGN_ACCOUNT_OP_UPDATE',
+      swapAndBridgeDispatch({
+        type: 'method',
         params: {
-          updateType: 'Swap&Bridge',
-          ...params
+          method: 'callSignAccountOpMethod',
+          args: ['update', [params]]
         }
       })
     },
-    [dispatch]
+    [swapAndBridgeDispatch]
   )
 
   const buttons = useMemo(() => {

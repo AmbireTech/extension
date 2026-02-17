@@ -31,7 +31,10 @@ const SwitchAccountScreen = () => {
   } = useController('SelectedAccountController')
   const { dispatch: mainDispatch } = useController('MainController')
   const { dispatch } = useControllersMiddleware()
-  const { currentUserRequest } = useController('RequestsController').state
+  const {
+    state: { currentUserRequest },
+    dispatch: requestsDispatch
+  } = useController('RequestsController')
   const { accounts } = useController('AccountsController').state
   const [isAuthorizing, setIsAuthorizing] = useState(false)
   const { minHeightSize } = useWindowSize()
@@ -61,11 +64,14 @@ const SwitchAccountScreen = () => {
   const handleDenyButtonPress = useCallback(() => {
     if (!userRequest) return
 
-    dispatch({
-      type: 'REQUESTS_CONTROLLER_REJECT_USER_REQUEST',
-      params: { err: t('User rejected the request.'), id: userRequest.id }
+    requestsDispatch({
+      type: 'method',
+      params: {
+        method: 'rejectUserRequests',
+        args: [t('User rejected the request.'), [userRequest.id]]
+      }
     })
-  }, [userRequest, t, dispatch])
+  }, [userRequest, t, requestsDispatch])
 
   const handleAuthorizeButtonPress = useCallback(() => {
     if (!userRequest) return
@@ -101,11 +107,14 @@ const SwitchAccountScreen = () => {
   useEffect(() => {
     if (account?.addr !== nextAccount || !userRequest || !userRequest) return
 
-    dispatch({
-      type: 'REQUESTS_CONTROLLER_RESOLVE_USER_REQUEST',
-      params: { data: null, id: userRequest.id }
+    requestsDispatch({
+      type: 'method',
+      params: {
+        method: 'resolveUserRequest',
+        args: [null, userRequest.id]
+      }
     })
-  }, [account?.addr, userRequest, dispatch, nextAccount])
+  }, [account?.addr, userRequest, requestsDispatch, nextAccount])
 
   return (
     <TabLayoutContainer

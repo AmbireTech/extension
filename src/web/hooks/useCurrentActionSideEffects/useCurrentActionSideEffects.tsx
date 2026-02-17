@@ -1,7 +1,6 @@
 import { useContext, useEffect } from 'react'
 
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import { AUTH_STATUS } from '@common/modules/auth/constants/authStatus'
 import useAuth from '@common/modules/auth/hooks/useAuth'
 import { ControllersStateLoadedContext } from '@web/contexts/controllersStateLoadedContext'
@@ -12,9 +11,11 @@ const { isRequestWindow } = getUiType()
 
 const useCurrentActionSideEffects = () => {
   const { authStatus } = useAuth()
-  const { dispatch } = useControllersMiddleware()
   const keystoreState = useController('KeystoreController').state
-  const { currentUserRequest } = useController('RequestsController').state
+  const {
+    state: { currentUserRequest },
+    dispatch: requestsDispatch
+  } = useController('RequestsController')
   const { areControllerStatesLoaded } = useContext(ControllersStateLoadedContext)
 
   useEffect(() => {
@@ -28,9 +29,12 @@ const useCurrentActionSideEffects = () => {
 
     if (isRequestWindow && currentUserRequest) {
       if (currentUserRequest.kind === 'unlock') {
-        dispatch({
-          type: 'REQUESTS_CONTROLLER_RESOLVE_USER_REQUEST',
-          params: { data: null, id: currentUserRequest.id }
+        requestsDispatch({
+          type: 'method',
+          params: {
+            method: 'resolveUserRequest',
+            args: [null, currentUserRequest.id]
+          }
         })
       }
     }
@@ -38,7 +42,7 @@ const useCurrentActionSideEffects = () => {
     currentUserRequest,
     areControllerStatesLoaded,
     authStatus,
-    dispatch,
+    requestsDispatch,
     keystoreState.isReadyToStoreKeys,
     keystoreState.isUnlocked
   ])

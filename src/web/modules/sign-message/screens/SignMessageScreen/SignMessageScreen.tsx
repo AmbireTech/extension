@@ -14,7 +14,6 @@ import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
 import Spinner from '@common/components/Spinner'
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
-import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import flexbox from '@common/styles/utils/flexbox'
 import SmallNotificationWindowWrapper from '@web/components/SmallNotificationWindowWrapper'
@@ -46,8 +45,10 @@ const SignMessageScreen = () => {
   const [shouldDisplayLedgerConnectModal, setShouldDisplayLedgerConnectModal] = useState(false)
   const [makeItSmartConfirmed, setMakeItSmartConfirmed] = useState(false)
   const [doNotAskMeAgain, setDoNotAskMeAgain] = useState(false)
-  const { currentUserRequest } = useController('RequestsController').state
-  const { theme } = useTheme()
+  const {
+    state: { currentUserRequest },
+    dispatch: requestsDispatch
+  } = useController('RequestsController')
   const { addToast } = useToast()
 
   const userRequest = useMemo(() => {
@@ -162,11 +163,11 @@ const SignMessageScreen = () => {
   const handleReject = () => {
     if (!userRequest) return
 
-    dispatch({
-      type: 'REQUESTS_CONTROLLER_REJECT_USER_REQUEST',
+    requestsDispatch({
+      type: 'method',
       params: {
-        err: t('User rejected the request.'),
-        id: userRequest.id
+        method: 'rejectUserRequests',
+        args: [t('User rejected the request.'), [userRequest.id]]
       }
     })
   }

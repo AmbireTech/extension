@@ -13,7 +13,6 @@ import GlassView from '@common/components/GlassView'
 import NetworkBadge from '@common/components/NetworkBadge'
 import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useSign from '@common/hooks/useSign'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
@@ -51,9 +50,9 @@ const SignAccountOpScreen = () => {
     state: { currentUserRequest, visibleUserRequests },
     dispatch: requestsDispatch
   } = useController('RequestsController')
-  const signAccountOpState = useController('SignAccountOpController').state
+  const { state: signAccountOpState, dispatch: signAccountOpDispatch } =
+    useController('SignAccountOpController')
   const { signAccOpInitError } = useController('MainController').state
-  const { dispatch } = useControllersMiddleware()
   const { t } = useTranslation()
   const { addToast } = useToast()
   const { styles, theme, themeType } = useTheme(getStyles)
@@ -63,24 +62,27 @@ const SignAccountOpScreen = () => {
 
   const handleUpdateStatus = useCallback(
     (status: SigningStatus) => {
-      dispatch({
-        type: 'CURRENT_SIGN_ACCOUNT_OP_UPDATE_STATUS',
-        params: { updateType: 'Requests', status }
-      })
-    },
-    [dispatch]
-  )
-  const updateController = useCallback(
-    (params: { signingKeyAddr?: Key['addr']; signingKeyType?: Key['type'] }) => {
-      dispatch({
-        type: 'CURRENT_SIGN_ACCOUNT_OP_UPDATE',
+      signAccountOpDispatch({
+        type: 'method',
         params: {
-          updateType: 'Requests',
-          ...params
+          method: 'updateStatus',
+          args: [status]
         }
       })
     },
-    [dispatch]
+    [signAccountOpDispatch]
+  )
+  const updateController = useCallback(
+    (params: { signingKeyAddr?: Key['addr']; signingKeyType?: Key['type'] }) => {
+      signAccountOpDispatch({
+        type: 'method',
+        params: {
+          method: 'update',
+          args: [params]
+        }
+      })
+    },
+    [signAccountOpDispatch]
   )
 
   const {

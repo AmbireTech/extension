@@ -45,7 +45,10 @@ const WatchTokenRequestScreen = () => {
   const { t } = useTranslation()
   const { theme, styles, themeType } = useTheme(getStyles)
   const { dispatch } = useControllersMiddleware()
-  const { currentUserRequest } = useController('RequestsController').state
+  const {
+    state: { currentUserRequest },
+    dispatch: requestsDispatch
+  } = useController('RequestsController')
   const { temporaryTokens, validTokens, customTokens } = useController('PortfolioController').state
   const {
     state: { portfolio: selectedAccountPortfolio }
@@ -68,11 +71,6 @@ const WatchTokenRequestScreen = () => {
   const [isLoading, setIsLoading] = useState(true)
   const [tokenNetwork, setTokenNetwork] = useState(network)
   const [isTemporaryTokenRequested, setTemporaryTokenRequested] = useState(false)
-
-  const isLoadingTemporaryToken = useMemo(
-    () => tokenNetwork?.chainId && temporaryTokens?.[tokenNetwork?.chainId.toString()]?.isLoading,
-    [tokenNetwork?.chainId, temporaryTokens]
-  )
 
   const networkWithFailedRPC =
     tokenNetwork?.chainId &&
@@ -108,11 +106,14 @@ const WatchTokenRequestScreen = () => {
   const handleCancel = useCallback(() => {
     if (!userRequest) return
 
-    dispatch({
-      type: 'REQUESTS_CONTROLLER_REJECT_USER_REQUEST',
-      params: { err: t('User rejected the request.'), id: userRequest.id }
+    requestsDispatch({
+      type: 'method',
+      params: {
+        method: 'rejectUserRequests',
+        args: [t('User rejected the request.'), [userRequest.id]]
+      }
     })
-  }, [userRequest, t, dispatch])
+  }, [userRequest, t, requestsDispatch])
 
   // Handle the case its already in token preferences
   const isTokenCustom = !!customTokens.find(
@@ -242,11 +243,14 @@ const WatchTokenRequestScreen = () => {
       }
     })
 
-    dispatch({
-      type: 'REQUESTS_CONTROLLER_RESOLVE_USER_REQUEST',
-      params: { data: null, id: userRequest.id }
+    requestsDispatch({
+      type: 'method',
+      params: {
+        method: 'resolveUserRequest',
+        args: [null, userRequest.id]
+      }
     })
-  }, [dispatch, userRequest, tokenData, tokenNetwork])
+  }, [requestsDispatch, dispatch, userRequest, tokenData, tokenNetwork])
 
   const tokenDetails = useMemo(() => {
     const token = portfolioToken || temporaryToken

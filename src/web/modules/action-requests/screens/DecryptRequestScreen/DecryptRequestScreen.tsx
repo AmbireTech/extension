@@ -23,7 +23,10 @@ import { useEncryptionCapability } from '@web/modules/action-requests/hooks'
 const DecryptRequestScreen = () => {
   const { t } = useTranslation()
   const { dispatch } = useControllersMiddleware()
-  const { currentUserRequest } = useController('RequestsController').state
+  const {
+    state: { currentUserRequest },
+    dispatch: requestsDispatch
+  } = useController('RequestsController')
   const { theme } = useTheme()
   const { addToast } = useToast()
   const [decryptedMessage, setDecryptedMessage] = useState<string>('')
@@ -103,17 +106,20 @@ const DecryptRequestScreen = () => {
       return
     }
 
-    dispatch({
-      type: 'REQUESTS_CONTROLLER_RESOLVE_USER_REQUEST',
+    requestsDispatch({
+      type: 'method',
       params: {
-        data: { encryptedMessage, keyAddr: internalKey.addr, keyType: internalKey.type },
-        id: userRequest.id
+        method: 'resolveUserRequest',
+        args: [
+          { encryptedMessage, keyAddr: internalKey.addr, keyType: internalKey.type },
+          userRequest.id
+        ]
       }
     })
   }, [
     t,
     userRequest,
-    dispatch,
+    requestsDispatch,
     selectedAccountKeyStoreKeys,
     internalKey,
     encryptedMessage,
@@ -123,11 +129,14 @@ const DecryptRequestScreen = () => {
   const handleDeny = useCallback(() => {
     if (!userRequest) return
 
-    dispatch({
-      type: 'REQUESTS_CONTROLLER_REJECT_USER_REQUEST',
-      params: { err: t('User rejected the request.'), id: userRequest.id }
+    requestsDispatch({
+      type: 'method',
+      params: {
+        method: 'rejectUserRequests',
+        args: [t('User rejected the request.'), [userRequest.id]]
+      }
     })
-  }, [userRequest, t, dispatch])
+  }, [userRequest, t, requestsDispatch])
 
   return (
     <SmallNotificationWindowWrapper>

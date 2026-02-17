@@ -1,41 +1,17 @@
 import { HD_PATH_TEMPLATE_TYPE } from '@ambire-common/consts/derivation'
 import { FeatureFlags } from '@ambire-common/consts/featureFlags'
-import { Filters, Pagination } from '@ambire-common/controllers/activity/activity'
 import { Contact } from '@ambire-common/controllers/addressBook/addressBook'
-import { SignAccountOpType } from '@ambire-common/controllers/signAccountOp/helper'
-import { FeeSpeed, SigningStatus } from '@ambire-common/controllers/signAccountOp/signAccountOp'
 import { Account } from '@ambire-common/interfaces/account'
 import { Banner } from '@ambire-common/interfaces/banner'
 import { Dapp } from '@ambire-common/interfaces/dapp'
 import { MagicLinkFlow } from '@ambire-common/interfaces/emailVault'
-import {
-  Key,
-  KeyPreferences,
-  KeystoreSeed,
-  ReadyToAddKeys
-} from '@ambire-common/interfaces/keystore'
-import { ChainId, Network } from '@ambire-common/interfaces/network'
-import { BuildRequest } from '@ambire-common/interfaces/requests'
-import { SignMessageUpdateParams } from '@ambire-common/interfaces/signMessage'
-import {
-  SwapAndBridgeActiveRoute,
-  SwapAndBridgeRoute,
-  SwapAndBridgeToToken
-} from '@ambire-common/interfaces/swapAndBridge'
+import { Key, KeystoreSeed, ReadyToAddKeys } from '@ambire-common/interfaces/keystore'
+import { Network } from '@ambire-common/interfaces/network'
+import { SwapAndBridgeActiveRoute } from '@ambire-common/interfaces/swapAndBridge'
 import { TransferUpdate } from '@ambire-common/interfaces/transfer'
-import {
-  CallsUserRequest,
-  Message,
-  OpenRequestWindowParams,
-  RequestExecutionType,
-  RequestPosition,
-  UserRequest
-} from '@ambire-common/interfaces/userRequest'
-import { AccountOp } from '@ambire-common/libs/accountOp/accountOp'
-import { FullEstimation } from '@ambire-common/libs/estimate/interfaces'
+import { OpenRequestWindowParams, UserRequest } from '@ambire-common/interfaces/userRequest'
 import { TokenResult } from '@ambire-common/libs/portfolio'
 import { CustomToken, TokenPreference } from '@ambire-common/libs/portfolio/customToken'
-import { GasSpeeds } from '@ambire-common/services/bundlers/types'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import { LOG_LEVELS } from '@web/utils/logger'
 
@@ -122,34 +98,6 @@ type MainControllerUpdateSelectedAccountPortfolio = {
   }
 }
 
-type RequestsControllerRemoveUserRequestAction = {
-  type: 'REQUESTS_CONTROLLER_REMOVE_USER_REQUEST'
-  params: { id: UserRequest['id'] }
-}
-type RequestsControllerResolveUserRequestAction = {
-  type: 'REQUESTS_CONTROLLER_RESOLVE_USER_REQUEST'
-  params: { data: any; id: UserRequest['id'] }
-}
-type RequestsControllerRejectUserRequestAction = {
-  type: 'REQUESTS_CONTROLLER_REJECT_USER_REQUEST'
-  params: {
-    err: string
-    id: UserRequest['id']
-    options?: {
-      shouldRemoveSwapAndBridgeRoute?: boolean
-      shouldOpenNextRequest?: boolean
-    }
-  }
-}
-type RequestsControllerRejectCallFromUserRequestAction = {
-  type: 'REQUESTS_CONTROLLER_REJECT_CALL_FROM_USER_REQUEST'
-  params: { callId: string }
-}
-type RequestsControllerSwapAndBridgeActiveRouteBuildNextUserRequestAction = {
-  type: 'REQUESTS_CONTROLLER_SWAP_AND_BRIDGE_ACTIVE_ROUTE_BUILD_NEXT_USER_REQUEST'
-  params: { activeRouteId: SwapAndBridgeActiveRoute['activeRouteId'] }
-}
-
 type DefiControllerAddSessionAction = {
   type: 'DEFI_CONTOLLER_ADD_SESSION'
   params: { sessionId: string }
@@ -158,14 +106,6 @@ type DefiControllerAddSessionAction = {
 type DefiControllerRemoveSessionAction = {
   type: 'DEFI_CONTOLLER_REMOVE_SESSION'
   params: { sessionId: string }
-}
-
-type SelectedAccountSetDashboardNetworkFilter = {
-  type: 'SELECTED_ACCOUNT_SET_DASHBOARD_NETWORK_FILTER'
-  params: { dashboardNetworkFilter: bigint | string | null }
-}
-type SelectedAccountDismissDefiPositionsBannerAction = {
-  type: 'DISMISS_DEFI_POSITIONS_BANNER'
 }
 
 type PortfolioControllerGetTemporaryToken = {
@@ -206,33 +146,6 @@ type PortfolioControllerCheckToken = {
     token: { address: TokenResult['address']; chainId: bigint }
     allNetworks: boolean
   }
-}
-
-type CurrentSignAccountOpUpdateAction = {
-  type: 'CURRENT_SIGN_ACCOUNT_OP_UPDATE'
-  params: {
-    updateType: 'Requests' | 'Swap&Bridge' | 'Transfer&TopUp'
-    accountOp?: AccountOp
-    gasPrices?: GasSpeeds
-    estimation?: FullEstimation
-    feeToken?: TokenResult
-    paidBy?: string
-    speed?: FeeSpeed
-    signingKeyAddr?: Key['addr']
-    signingKeyType?: Key['type']
-    gasUsedTooHighAgreed?: boolean
-  }
-}
-type CurrentSignAccountOpUpdateStatusAction = {
-  type: 'CURRENT_SIGN_ACCOUNT_OP_UPDATE_STATUS'
-  params: {
-    updateType: 'Requests' | 'Swap&Bridge' | 'Transfer&TopUp'
-    status: SigningStatus
-  }
-}
-type CurrentSignAccountOpReestimateAction = {
-  type: 'CURRENT_SIGN_ACCOUNT_OP_REESTIMATE'
-  params: { type: SignAccountOpType }
 }
 
 type KeystoreControllerAddSecretAction = {
@@ -366,86 +279,11 @@ type DappsControllerGetCurrentDappAndSendResToUi = {
   }
 }
 
-type SwapAndBridgeControllerInitAction = {
-  type: 'SWAP_AND_BRIDGE_CONTROLLER_INIT_FORM'
-  params: {
-    sessionId: string
-    preselectedFromToken?: Pick<TokenResult, 'address' | 'chainId'>
-    preselectedToToken?: Pick<TokenResult, 'address' | 'chainId'>
-    fromAmount?: string
-    activeRouteIdToDelete?: string
-  }
-}
-type SwapAndBridgeControllerUserProceededAction = {
-  type: 'SWAP_AND_BRIDGE_CONTROLLER_HAS_USER_PROCEEDED'
-  params: { proceeded: boolean }
-}
-type SwapAndBridgeControllerUnloadScreenAction = {
-  type: 'SWAP_AND_BRIDGE_CONTROLLER_UNLOAD_SCREEN'
-  params: { sessionId: string; forceUnload?: boolean }
-}
-type SwapAndBridgeControllerUpdateFormAction = {
-  type: 'SWAP_AND_BRIDGE_CONTROLLER_UPDATE_FORM'
-  params: {
-    formValues: {
-      fromAmount?: string
-      fromAmountInFiat?: string
-      fromAmountFieldMode?: 'fiat' | 'token'
-      shouldSetMaxAmount?: boolean
-      fromChainId?: bigint | number
-      fromSelectedToken?: TokenResult | null
-      toChainId?: bigint | number
-      toSelectedTokenAddr?: SwapAndBridgeToToken['address'] | null
-      routePriority?: 'output' | 'time'
-    }
-    updateProps?: {
-      emitUpdate?: boolean
-      updateQuote?: boolean
-      shouldIncrementFromAmountUpdateCounter?: boolean
-    }
-  }
-}
-type SwapAndBridgeControllerAddToTokenByAddress = {
-  type: 'SWAP_AND_BRIDGE_CONTROLLER_ADD_TO_TOKEN_BY_ADDRESS'
-  params: { address: string }
-}
-type SwapAndBridgeControllerSearchToToken = {
-  type: 'SWAP_AND_BRIDGE_CONTROLLER_SEARCH_TO_TOKEN'
-  params: { searchTerm: string }
-}
-type SwapAndBridgeControllerSwitchFromAndToTokensAction = {
-  type: 'SWAP_AND_BRIDGE_CONTROLLER_SWITCH_FROM_AND_TO_TOKENS'
-}
-type SwapAndBridgeControllerSelectRouteAction = {
-  type: 'SWAP_AND_BRIDGE_CONTROLLER_SELECT_ROUTE'
-  params: { route: SwapAndBridgeRoute }
-}
-type SwapAndBridgeControllerResetForm = {
-  type: 'SWAP_AND_BRIDGE_CONTROLLER_RESET_FORM'
-}
-type SwapAndBridgeControllerUpdateQuoteAction = {
-  type: 'SWAP_AND_BRIDGE_CONTROLLER_UPDATE_QUOTE'
-}
 type SwapAndBridgeControllerRemoveActiveRouteAction = {
   type: 'MAIN_CONTROLLER_REMOVE_ACTIVE_ROUTE'
   params: { activeRouteId: SwapAndBridgeActiveRoute['activeRouteId'] }
 }
-type SwapAndBridgeControllerMarkSelectedRouteAsFailed = {
-  type: 'SWAP_AND_BRIDGE_CONTROLLER_MARK_SELECTED_ROUTE_AS_FAILED'
-  params: { disabledReason: string }
-}
-type SwapAndBridgeControllerDestroySignAccountOp = {
-  type: 'SWAP_AND_BRIDGE_CONTROLLER_DESTROY_SIGN_ACCOUNT_OP'
-}
-type SwapAndBridgeControllerOpenSigningActionWindow = {
-  type: 'SWAP_AND_BRIDGE_CONTROLLER_OPEN_SIGNING_REQUEST_WINDOW'
-}
-type OpenSigningActionWindow = {
-  type: 'OPEN_SIGNING_REQUEST_WINDOW'
-  params: {
-    type: 'swapAndBridge' | 'transfer'
-  }
-}
+
 type TransferControllerUpdateForm = {
   type: 'TRANSFER_CONTROLLER_UPDATE_FORM'
   params: { formValues: TransferUpdate }
@@ -599,17 +437,11 @@ export type Action =
   | MainControllerAccountPickerInitFromSavedSeedPhraseAction
   | HandshakeAction
   | ResetAccountAddingOnPageErrorAction
-  | RequestsControllerRemoveUserRequestAction
-  | RequestsControllerResolveUserRequestAction
-  | RequestsControllerRejectUserRequestAction
-  | RequestsControllerRejectCallFromUserRequestAction
   | MainControllerHandleSignMessage
   | MainControllerReloadSelectedAccount
   | MainControllerUpdateSelectedAccountPortfolio
   | DefiControllerAddSessionAction
   | DefiControllerRemoveSessionAction
-  | SelectedAccountSetDashboardNetworkFilter
-  | SelectedAccountDismissDefiPositionsBannerAction
   | PortfolioControllerAddCustomToken
   | PortfolioControllerGetTemporaryToken
   | PortfolioControllerToggleHideToken
@@ -641,16 +473,6 @@ export type Action =
   | ContractNamesGetName
   | DappsControllerRemoveDappAction
   | DappsControllerGetCurrentDappAndSendResToUi
-  | SwapAndBridgeControllerInitAction
-  | SwapAndBridgeControllerUnloadScreenAction
-  | SwapAndBridgeControllerUpdateFormAction
-  | SwapAndBridgeControllerAddToTokenByAddress
-  | SwapAndBridgeControllerSearchToToken
-  | SwapAndBridgeControllerSwitchFromAndToTokensAction
-  | SwapAndBridgeControllerSelectRouteAction
-  | SwapAndBridgeControllerResetForm
-  | RequestsControllerSwapAndBridgeActiveRouteBuildNextUserRequestAction
-  | SwapAndBridgeControllerUpdateQuoteAction
   | SwapAndBridgeControllerRemoveActiveRouteAction
   | RequestsControllerFocusRequestWindow
   | RequestsControllerSetCurrentRequestById
@@ -673,14 +495,6 @@ export type Action =
   | KeystoreControllerDeleteSeedAction
   | ExtensionUpdateControllerApplyUpdate
   | OpenExtensionPopupAction
-  | CurrentSignAccountOpUpdateAction
-  | CurrentSignAccountOpUpdateStatusAction
-  | CurrentSignAccountOpReestimateAction
-  | SwapAndBridgeControllerMarkSelectedRouteAsFailed
-  | SwapAndBridgeControllerDestroySignAccountOp
-  | SwapAndBridgeControllerOpenSigningActionWindow
-  | SwapAndBridgeControllerUserProceededAction
-  | OpenSigningActionWindow
   | TransferControllerUpdateForm
   | TransferControllerResetForm
   | TransferControllerDestroyLatestBroadcastedAccountOp

@@ -5,7 +5,6 @@ import Alert from '@common/components/Alert'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
-import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import RequestingDappInfo from '@web/components/RequestingDappInfo'
@@ -19,8 +18,10 @@ import { useEncryptionCapability } from '@web/modules/action-requests/hooks'
 const GetEncryptionPublicKeyRequestScreen = () => {
   const { t } = useTranslation()
   const { dispatch } = useControllersMiddleware()
-  const { currentUserRequest } = useController('RequestsController').state
-  const { theme } = useTheme()
+  const {
+    state: { currentUserRequest },
+    dispatch: requestsDispatch
+  } = useController('RequestsController')
   const { addToast } = useToast()
   const {
     internalKey,
@@ -62,20 +63,26 @@ const GetEncryptionPublicKeyRequestScreen = () => {
     const keyAddr = internalKey.addr
     const keyType = internalKey.type
 
-    dispatch({
-      type: 'REQUESTS_CONTROLLER_RESOLVE_USER_REQUEST',
-      params: { data: { keyAddr, keyType }, id: userRequest.id }
+    requestsDispatch({
+      type: 'method',
+      params: {
+        method: 'resolveUserRequest',
+        args: [{ keyAddr, keyType }, userRequest.id]
+      }
     })
-  }, [t, userRequest, dispatch, addToast, internalKey, selectedAccountKeyStoreKeys])
+  }, [t, userRequest, requestsDispatch, addToast, internalKey, selectedAccountKeyStoreKeys])
 
   const handleDeny = useCallback(() => {
     if (!userRequest) return
 
-    dispatch({
-      type: 'REQUESTS_CONTROLLER_REJECT_USER_REQUEST',
-      params: { err: t('User rejected the request.'), id: userRequest.id }
+    requestsDispatch({
+      type: 'method',
+      params: {
+        method: 'rejectUserRequests',
+        args: [t('User rejected the request.'), [userRequest.id]]
+      }
     })
-  }, [userRequest, t, dispatch])
+  }, [userRequest, t, requestsDispatch])
 
   return (
     <SmallNotificationWindowWrapper>

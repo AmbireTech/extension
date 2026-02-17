@@ -24,8 +24,12 @@ const DashboardBanner = ({
   const { dispatch } = useControllersMiddleware()
   const { addToast } = useToast()
   const { navigate } = useNavigation()
-  const { visibleUserRequests } = useController('RequestsController').state
+  const {
+    state: { visibleUserRequests },
+    dispatch: requestsDispatch
+  } = useController('RequestsController')
   const { dispatch: networksDispatch } = useController('NetworksController')
+  const { dispatch: selectedAccountDispatch } = useController('SelectedAccountController')
   const { ref: sheetRef, close: closeBottomSheet, open: openBottomSheet } = useModalize()
   const primaryAction = actions[0]
 
@@ -57,12 +61,15 @@ const DashboardBanner = ({
           break
 
         case 'reject-accountOp':
-          dispatch({
-            type: 'REQUESTS_CONTROLLER_REJECT_USER_REQUEST',
+          requestsDispatch({
+            type: 'method',
             params: {
-              err: action.meta.err,
-              id: action.meta.requestId,
-              options: { shouldOpenNextRequest: action.meta.shouldOpenNextAction }
+              method: 'rejectUserRequests',
+              args: [
+                action.meta.err,
+                [action.meta.requestId],
+                { shouldOpenNextRequest: action.meta.shouldOpenNextAction }
+              ]
             }
           })
           break
@@ -111,9 +118,17 @@ const DashboardBanner = ({
           break
 
         case 'proceed-bridge':
-          dispatch({
-            type: 'REQUESTS_CONTROLLER_SWAP_AND_BRIDGE_ACTIVE_ROUTE_BUILD_NEXT_USER_REQUEST',
-            params: { activeRouteId: action.meta.activeRouteId }
+          requestsDispatch({
+            type: 'method',
+            params: {
+              method: 'build',
+              args: [
+                {
+                  type: 'swapAndBridgeRequest',
+                  params: { openActionWindow: true, activeRouteId: action.meta.activeRouteId }
+                }
+              ]
+            }
           })
           break
 
@@ -162,14 +177,27 @@ const DashboardBanner = ({
           break
 
         case 'dismiss-defi-positions-banner':
-          dispatch({ type: 'DISMISS_DEFI_POSITIONS_BANNER' })
+          selectedAccountDispatch({
+            type: 'method',
+            params: { method: 'dismissDefiPositionsBannerForTheSelectedAccount', args: [] }
+          })
           break
 
         default:
           break
       }
     },
-    [dispatch, networksDispatch, navigate, addToast, visibleUserRequests, type, openBottomSheet]
+    [
+      dispatch,
+      networksDispatch,
+      navigate,
+      addToast,
+      visibleUserRequests,
+      type,
+      openBottomSheet,
+      selectedAccountDispatch,
+      requestsDispatch
+    ]
   )
 
   return (
