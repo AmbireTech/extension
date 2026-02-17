@@ -25,7 +25,7 @@ interface Props {
   sizeMultiplierSize?: number
   textSize?: number
   chainId: bigint
-  type: 'history' | 'benzin' | 'default'
+  type?: 'history' | 'benzin' | 'default'
   testID?: string
   hasPadding?: boolean
   imageSize?: number
@@ -38,7 +38,7 @@ const HumanizedVisualization: FC<Props> = ({
   sizeMultiplierSize = 1,
   textSize = 16,
   chainId,
-  type,
+  type = 'default',
   testID,
   hasPadding = true,
   imageSize = 36,
