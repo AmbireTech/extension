@@ -12,7 +12,6 @@ import SuccessAnimation from '@common/components/SuccessAnimation'
 import Text from '@common/components/Text'
 import { Trans, useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
@@ -41,8 +40,8 @@ const AccountPersonalizeScreen = () => {
   const { goToNextRoute, goToPrevRoute, setAccountsToPersonalize, accountsToPersonalize } =
     useOnboardingNavigation()
   const { theme } = useTheme(getStyles)
-  const { dispatch } = useControllersMiddleware()
-  const accountPickerState = useController('AccountPickerController').state
+  const { state: accountPickerState, dispatch: accountPickerDispatch } =
+    useController('AccountPickerController')
   const {
     state: { statuses, accounts },
     dispatch: accountsDispatch
@@ -68,14 +67,20 @@ const AccountPersonalizeScreen = () => {
     if (accountPickerState.isInitialized) return
     if (initPassed.current && !completed) return
 
-    dispatch({ type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT' })
+    accountPickerDispatch({
+      type: 'method',
+      params: {
+        method: 'init',
+        args: []
+      }
+    })
     if (!isLoading) setIsLoading(true)
     if (completed) setCompleted(false)
     if (accountsToPersonalize.length) setAccountsToPersonalize([])
     initPassed.current = true
   }, [
     isLoading,
-    dispatch,
+    accountPickerDispatch,
     accountPickerState.isInitialized,
     accountPickerState.initParams,
     completed,
@@ -266,11 +271,17 @@ const AccountPersonalizeScreen = () => {
     })
     if (isSetupComplete) {
       initPassed.current = false
-      dispatch({ type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_RESET' })
+      accountPickerDispatch({
+        type: 'method',
+        params: {
+          method: 'reset',
+          args: []
+        }
+      })
     } else {
       setCompleted(true)
     }
-  }, [isSetupComplete, accountsDispatch, dispatch, handleSave, handleSubmit])
+  }, [isSetupComplete, accountsDispatch, accountPickerDispatch, handleSave, handleSubmit])
 
   const handleContactSupport = useCallback(async () => {
     try {

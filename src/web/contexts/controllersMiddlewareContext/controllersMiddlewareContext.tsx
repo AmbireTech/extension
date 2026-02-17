@@ -119,10 +119,13 @@ if (isExtension) {
 }
 
 if (isExtension) {
-  const ACTIONS_TO_DISPATCH_EVEN_WHEN_HIDDEN = [
-    'INIT_CONTROLLER_STATE',
-    'MAIN_CONTROLLER_ACTIVITY_SET_ACC_OPS_FILTERS',
-    'MAIN_CONTROLLER_ACTIVITY_RESET_ACC_OPS_FILTERS'
+  const ACTION_TYPES_TO_DISPATCH_EVEN_WHEN_HIDDEN = ['INIT_CONTROLLER_STATE']
+
+  const ACTION_METHODS_TO_DISPATCH_EVEN_WHEN_HIDDEN = [
+    'filterAccountsOps',
+    'filterSignedMessages',
+    'resetAccountsOpsFilters',
+    'resetSignedMessagesFilters'
   ]
 
   globalDispatch = (action, windowId?: number) => {
@@ -133,7 +136,12 @@ if (isExtension) {
     // because we can have only one instance of request-window and only one instance for the given action screen
     // (an action screen could not be opened in tab or popup window by design)
     const shouldBlockDispatch = document.hidden && !getUiType().isRequestWindow
-    if (shouldBlockDispatch && !ACTIONS_TO_DISPATCH_EVEN_WHEN_HIDDEN.includes(action.type)) return
+    if (
+      shouldBlockDispatch &&
+      !ACTION_TYPES_TO_DISPATCH_EVEN_WHEN_HIDDEN.includes(action.type) &&
+      !ACTION_METHODS_TO_DISPATCH_EVEN_WHEN_HIDDEN.includes((action as any).params?.method)
+    )
+      return
 
     if (!backgroundReady) {
       actionsBeforeBackgroundReady.push(action)

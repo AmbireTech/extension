@@ -22,8 +22,10 @@ const ChangeHdPath: React.FC<Props> = ({ setPage, disabled }) => {
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const { t } = useTranslation()
   const { dispatch } = useControllersMiddleware()
-  const { hdPathTemplate, accountsLoading, pageError, page } =
-    useController('AccountPickerController').state
+  const {
+    state: { hdPathTemplate, accountsLoading, pageError, page },
+    dispatch: accountPickerDispatch
+  } = useController('AccountPickerController')
 
   const value = useMemo(
     () => DERIVATION_OPTIONS.find((o) => o.value === hdPathTemplate),
@@ -32,12 +34,15 @@ const ChangeHdPath: React.FC<Props> = ({ setPage, disabled }) => {
 
   const handleChangeHdPath = useCallback(
     (s: SelectValue) => {
-      dispatch({
-        type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_SET_HD_PATH_TEMPLATE',
-        params: { hdPathTemplate: s.value as HD_PATH_TEMPLATE_TYPE }
+      accountPickerDispatch({
+        type: 'method',
+        params: {
+          method: 'setHDPathTemplate',
+          args: [{ hdPathTemplate: s.value as HD_PATH_TEMPLATE_TYPE }]
+        }
       })
     },
-    [dispatch]
+    [accountPickerDispatch]
   )
 
   const handleConfirm = useCallback(

@@ -19,7 +19,6 @@ import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
@@ -53,7 +52,6 @@ const AccountsOnPageList = ({
   children
 }: Props) => {
   const { t } = useTranslation()
-  const { dispatch } = useControllersMiddleware()
   const { networks: allNetworks } = useController('NetworksController').state
   const { state: accountPickerState, dispatch: accountPickerDispatch } =
     useController('AccountPickerController')
@@ -96,17 +94,23 @@ const AccountsOnPageList = ({
 
   const handleDeselectAccount = useCallback(
     (account: AccountInterface) => {
-      dispatch({
-        type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_DESELECT_ACCOUNT',
-        params: { account }
+      accountPickerDispatch({
+        type: 'method',
+        params: { method: 'deselectAccount', args: [account] }
       })
     },
-    [dispatch]
+    [accountPickerDispatch]
   )
 
   const handleRetryFindingLinkedAccounts = useCallback(() => {
-    dispatch({ type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_FIND_AND_SET_LINKED_ACCOUNTS' })
-  }, [dispatch])
+    accountPickerDispatch({
+      type: 'method',
+      params: {
+        method: 'findAndSetLinkedAccounts',
+        args: []
+      }
+    })
+  }, [accountPickerDispatch])
 
   const getType = useCallback((acc: any) => {
     if (!acc.account.creation) return 'basic'

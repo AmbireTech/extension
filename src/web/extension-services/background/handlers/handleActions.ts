@@ -113,17 +113,6 @@ export const handleActions = async (
       break
     }
 
-    case 'MAIN_CONTROLLER_ACCOUNT_PICKER_DESELECT_ACCOUNT': {
-      return mainCtrl.accountPicker.deselectAccount(params.account)
-    }
-    case 'MAIN_CONTROLLER_ACCOUNT_PICKER_RESET': {
-      await mainCtrl.accountPicker.reset()
-      break
-    }
-    case 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT': {
-      mainCtrl.accountPicker.init()
-      break
-    }
     case 'RESET_ACCOUNT_ADDING_ON_PAGE_ERROR': {
       await mainCtrl.accountPicker.reset()
       const accounts = [...mainCtrl.accounts.accounts]
@@ -137,22 +126,7 @@ export const handleActions = async (
 
       break
     }
-    case 'MAIN_CONTROLLER_ACCOUNT_PICKER_RESET_ACCOUNTS_SELECTION': {
-      mainCtrl.accountPicker.resetAccountsSelection()
-      break
-    }
-    case 'MAIN_CONTROLLER_ACCOUNT_PICKER_SET_PAGE':
-      return await mainCtrl.accountPicker.setPage(params)
-    case 'MAIN_CONTROLLER_ACCOUNT_PICKER_FIND_AND_SET_LINKED_ACCOUNTS': {
-      return await mainCtrl.accountPicker.findAndSetLinkedAccounts()
-    }
-    case 'MAIN_CONTROLLER_ACCOUNT_PICKER_SET_HD_PATH_TEMPLATE': {
-      return await mainCtrl.accountPicker.setHDPathTemplate(params)
-    }
-    case 'MAIN_CONTROLLER_ACCOUNT_PICKER_ADD_ACCOUNTS': {
-      await mainCtrl.accountPicker.addAccounts()
-      break
-    }
+
     case 'IMPORT_SMART_ACCOUNT_JSON': {
       // Add accounts first, because some of the next steps have validation
       // if accounts exists.
@@ -166,62 +140,12 @@ export const handleActions = async (
 
       return await mainCtrl.keystore.addKeys(params.keys)
     }
-    case 'KEYSTORE_CONTROLLER_SEND_PASSWORD_DECRYPTED_PRIVATE_KEY_TO_UI': {
-      return await mainCtrl.keystore.sendPasswordDecryptedPrivateKeyToUi(
-        params.secret,
-        params.key,
-        params.salt,
-        params.iv,
-        params.associatedKeys
-      )
-    }
-    case 'MAIN_CONTROLLER_ADD_VIEW_ONLY_ACCOUNTS': {
-      // Since these accounts are view-only, directly add them in the
-      // MainController, bypassing the AccountPicker flow.
-      await mainCtrl.accounts.addAccounts(params.accounts)
-      break
-    }
-    case 'MAIN_CONTROLLER_REMOVE_ACCOUNT': {
-      return await mainCtrl.removeAccount(params.accountAddr)
-    }
-    case 'MAIN_CONTROLLER_SIGN_MESSAGE_INIT': {
-      return await mainCtrl.signMessage.init(params)
-    }
-    case 'MAIN_CONTROLLER_SIGN_MESSAGE_RESET':
-      return mainCtrl.signMessage.reset()
-    case 'MAIN_CONTROLLER_SIGN_MESSAGE_UPDATE': {
-      return mainCtrl.signMessage.update(params)
-    }
+
     case 'MAIN_CONTROLLER_HANDLE_SIGN_MESSAGE': {
       mainCtrl.signMessage.setSigningKey(params.keyAddr, params.keyType)
       return await mainCtrl.handleSignMessage()
     }
-    case 'MAIN_CONTROLLER_ACTIVITY_SET_ACC_OPS_FILTERS':
-      return mainCtrl.activity.filterAccountsOps(
-        params.sessionId,
-        params.filters,
-        params.pagination
-      )
-    case 'MAIN_CONTROLLER_ACTIVITY_SET_SIGNED_MESSAGES_FILTERS':
-      return mainCtrl.activity.filterSignedMessages(
-        params.sessionId,
-        params.filters,
-        params.pagination
-      )
-    case 'MAIN_CONTROLLER_ACTIVITY_RESET_ACC_OPS_FILTERS':
-      return mainCtrl.activity.resetAccountsOpsFilters(params.sessionId)
-    case 'MAIN_CONTROLLER_ACTIVITY_RESET_SIGNED_MESSAGES_FILTERS':
-      return mainCtrl.activity.resetSignedMessagesFilters(params.sessionId)
 
-    case 'MAIN_CONTROLLER_HANDLE_SIGN_AND_BROADCAST_ACCOUNT_OP': {
-      return await mainCtrl.handleSignAndBroadcastAccountOp(params.type, params.fromRequestId)
-    }
-
-    case 'REQUESTS_CONTROLLER_BUILD_REQUEST':
-      return await mainCtrl.requests.build(params)
-    case 'REQUESTS_CONTROLLER_ADD_CALLS_USER_REQUEST': {
-      return await mainCtrl.requests.build({ type: 'calls', params })
-    }
     case 'REQUESTS_CONTROLLER_REMOVE_USER_REQUEST':
       return mainCtrl.requests.removeUserRequests([params.id])
     case 'REQUESTS_CONTROLLER_RESOLVE_USER_REQUEST':

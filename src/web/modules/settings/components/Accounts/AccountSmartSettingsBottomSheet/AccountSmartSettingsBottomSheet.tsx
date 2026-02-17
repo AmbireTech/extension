@@ -2,7 +2,6 @@ import React, { FC, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 import { Modalize } from 'react-native-modalize'
-import { v4 as uuidv4 } from 'uuid'
 
 import { Account } from '@ambire-common/interfaces/account'
 import { has7702 } from '@ambire-common/libs/7702/7702'
@@ -19,7 +18,6 @@ import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
@@ -41,8 +39,8 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
   } = useController('AccountsController')
   const { keys } = useController('KeystoreController').state
   const { networks } = useController('NetworksController').state
+  const { dispatch: requestsDispatch } = useController('RequestsController')
   const { theme, themeType } = useTheme()
-  const { dispatch } = useControllersMiddleware()
   const { t } = useTranslation()
   const accountStateCheckedForRef = React.useRef<string | null>(null)
 
@@ -83,18 +81,25 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
     const network = networks.find((n) => n.chainId === chainId)
     if (!network || !account || !accountState || !accountState[chainId.toString()]) return
 
-    dispatch({
-      type: 'REQUESTS_CONTROLLER_ADD_CALLS_USER_REQUEST',
+    requestsDispatch({
+      type: 'method',
       params: {
-        userRequestParams: {
-          calls: [{ to: ZERO_ADDRESS, data: '0x', value: BigInt(0) }],
-          meta: {
-            chainId: network.chainId,
-            accountAddr: account.addr,
-            setDelegation: !accountState?.[chainId.toString()]?.delegatedContract
+        method: 'build',
+        args: [
+          {
+            type: 'calls',
+            params: {
+              userRequestParams: {
+                calls: [{ to: ZERO_ADDRESS, data: '0x', value: BigInt(0) }],
+                meta: {
+                  chainId: network.chainId,
+                  accountAddr: account.addr,
+                  setDelegation: !accountState?.[chainId.toString()]?.delegatedContract
+                }
+              }
+            }
           }
-        },
-        allowAccountSwitch: true
+        ]
       }
     })
   }

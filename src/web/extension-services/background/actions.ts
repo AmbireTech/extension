@@ -101,95 +101,15 @@ type MainControllerAccountPickerInitFromSavedSeedPhraseAction = {
   params: { id: string }
 }
 
-type MainControllerAccountPickerDeselectAccountAction = {
-  type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_DESELECT_ACCOUNT'
-  params: {
-    account: Account
-  }
-}
-
-type MainControllerAccountPickerSetPageAction = {
-  type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_SET_PAGE'
-  params: {
-    page: number
-    pageSize?: number
-    shouldSearchForLinkedAccounts?: boolean
-    shouldGetAccountsUsedOnNetworks?: boolean
-  }
-}
-type MainControllerAccountPickerFindAndSetLinkedAccountsAction = {
-  type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_FIND_AND_SET_LINKED_ACCOUNTS'
-}
-
-type MainControllerAccountPickerSetHdPathTemplateAction = {
-  type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_SET_HD_PATH_TEMPLATE'
-  params: { hdPathTemplate: HD_PATH_TEMPLATE_TYPE }
-}
-type MainControllerAccountPickerAddAccounts = {
-  type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_ADD_ACCOUNTS'
-}
-type MainControllerAddAccounts = {
-  type: 'MAIN_CONTROLLER_ADD_VIEW_ONLY_ACCOUNTS'
-  params: {
-    accounts: (Account & {
-      domainName: string | null
-    })[]
-  }
-}
-type MainControllerRemoveAccount = {
-  type: 'MAIN_CONTROLLER_REMOVE_ACCOUNT'
-  params: {
-    accountAddr: Account['addr']
-  }
-}
-type MainControllerAccountPickerResetAction = {
-  type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_RESET'
-}
-type MainControllerAccountPickerInitAction = {
-  type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT'
-}
-
 type ResetAccountAddingOnPageErrorAction = {
   type: 'RESET_ACCOUNT_ADDING_ON_PAGE_ERROR'
 }
-type MainControllerAccountPickerResetAccountsSelectionAction = {
-  type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_RESET_ACCOUNTS_SELECTION'
-}
 
-type MainControllerSignMessageInitAction = {
-  type: 'MAIN_CONTROLLER_SIGN_MESSAGE_INIT'
-  params: {
-    dapp: { name: string; icon: string }
-    messageToSign: Message
-  }
-}
-type MainControllerSignMessageResetAction = {
-  type: 'MAIN_CONTROLLER_SIGN_MESSAGE_RESET'
-}
-type MainControllerSignMessageUpdate = {
-  type: 'MAIN_CONTROLLER_SIGN_MESSAGE_UPDATE'
-  params: SignMessageUpdateParams
-}
 type MainControllerHandleSignMessage = {
   type: 'MAIN_CONTROLLER_HANDLE_SIGN_MESSAGE'
   params: { keyAddr: Key['addr']; keyType: Key['type'] }
 }
-type MainControllerActivitySetAccOpsFiltersAction = {
-  type: 'MAIN_CONTROLLER_ACTIVITY_SET_ACC_OPS_FILTERS'
-  params: { filters: Filters; pagination?: Pagination; sessionId: string }
-}
-type MainControllerActivitySetSignedMessagesFiltersAction = {
-  type: 'MAIN_CONTROLLER_ACTIVITY_SET_SIGNED_MESSAGES_FILTERS'
-  params: { filters: Filters; pagination?: Pagination; sessionId: string }
-}
-type MainControllerActivityResetAccOpsAction = {
-  type: 'MAIN_CONTROLLER_ACTIVITY_RESET_ACC_OPS_FILTERS'
-  params: { sessionId: string }
-}
-type MainControllerActivityResetSignedMessagesAction = {
-  type: 'MAIN_CONTROLLER_ACTIVITY_RESET_SIGNED_MESSAGES_FILTERS'
-  params: { sessionId: string }
-}
+
 type MainControllerReloadSelectedAccount = {
   type: 'MAIN_CONTROLLER_RELOAD_SELECTED_ACCOUNT'
   params?: { chainId?: bigint | string }
@@ -202,24 +122,6 @@ type MainControllerUpdateSelectedAccountPortfolio = {
   }
 }
 
-type RequestsControllerAddCallsUserRequestAction = {
-  type: 'REQUESTS_CONTROLLER_ADD_CALLS_USER_REQUEST'
-  params: {
-    userRequestParams: {
-      calls: CallsUserRequest['signAccountOp']['accountOp']['calls']
-      meta: CallsUserRequest['meta']
-    }
-    position?: RequestPosition
-    executionType?: RequestExecutionType
-    allowAccountSwitch?: boolean
-    skipFocus?: boolean
-  }
-}
-
-type RequestsControllerBuildRequestAction = {
-  type: 'REQUESTS_CONTROLLER_BUILD_REQUEST'
-  params: BuildRequest
-}
 type RequestsControllerRemoveUserRequestAction = {
   type: 'REQUESTS_CONTROLLER_REMOVE_USER_REQUEST'
   params: { id: UserRequest['id'] }
@@ -332,10 +234,6 @@ type CurrentSignAccountOpReestimateAction = {
   type: 'CURRENT_SIGN_ACCOUNT_OP_REESTIMATE'
   params: { type: SignAccountOpType }
 }
-type MainControllerHandleSignAndBroadcastAccountOp = {
-  type: 'MAIN_CONTROLLER_HANDLE_SIGN_AND_BROADCAST_ACCOUNT_OP'
-  params: { type: SignAccountOpType; fromRequestId: string | number }
-}
 
 type KeystoreControllerAddSecretAction = {
   type: 'KEYSTORE_CONTROLLER_ADD_SECRET'
@@ -379,10 +277,6 @@ type KeystoreControllerSendPrivateKeyToUiAction = {
 type KeystoreControllerSendEncryptedPrivateKeyToUiAction = {
   type: 'KEYSTORE_CONTROLLER_SEND_ENCRYPTED_PRIVATE_KEY_TO_UI'
   params: { keyAddr: string; secret: string; entropy: string }
-}
-type KeystoreControllerSendPasswordDecryptedPrivateKeyToUiAction = {
-  type: 'KEYSTORE_CONTROLLER_SEND_PASSWORD_DECRYPTED_PRIVATE_KEY_TO_UI'
-  params: { secret: string; key: string; salt: string; iv: string; associatedKeys: string[] }
 }
 type KeystoreControllerDeleteSeedAction = {
   type: 'KEYSTORE_CONTROLLER_DELETE_SEED'
@@ -703,33 +597,13 @@ export type Action =
   | MainControllerAccountPickerInitLedgerAction
   | MainControllerAccountPickerInitPrivateKeyOrSeedPhraseAction
   | MainControllerAccountPickerInitFromSavedSeedPhraseAction
-  | MainControllerAccountPickerDeselectAccountAction
   | HandshakeAction
-  | MainControllerAccountPickerResetAction
-  | MainControllerAccountPickerInitAction
   | ResetAccountAddingOnPageErrorAction
-  | MainControllerAccountPickerResetAccountsSelectionAction
-  | MainControllerAccountPickerSetPageAction
-  | MainControllerAccountPickerFindAndSetLinkedAccountsAction
-  | MainControllerAccountPickerSetHdPathTemplateAction
-  | MainControllerAccountPickerAddAccounts
-  | MainControllerAddAccounts
-  | MainControllerRemoveAccount
-  | RequestsControllerAddCallsUserRequestAction
-  | RequestsControllerBuildRequestAction
   | RequestsControllerRemoveUserRequestAction
   | RequestsControllerResolveUserRequestAction
   | RequestsControllerRejectUserRequestAction
   | RequestsControllerRejectCallFromUserRequestAction
-  | MainControllerSignMessageInitAction
-  | MainControllerSignMessageResetAction
-  | MainControllerSignMessageUpdate
   | MainControllerHandleSignMessage
-  | MainControllerActivitySetAccOpsFiltersAction
-  | MainControllerActivitySetSignedMessagesFiltersAction
-  | MainControllerActivityResetAccOpsAction
-  | MainControllerActivityResetSignedMessagesAction
-  | MainControllerHandleSignAndBroadcastAccountOp
   | MainControllerReloadSelectedAccount
   | MainControllerUpdateSelectedAccountPortfolio
   | DefiControllerAddSessionAction
@@ -818,5 +692,4 @@ export type Action =
   | SetCrashAnalyticsAction
   | DismissBanner
   | KeystoreControllerSendEncryptedPrivateKeyToUiAction
-  | KeystoreControllerSendPasswordDecryptedPrivateKeyToUiAction
   | FlipFeature

@@ -31,7 +31,8 @@ import SignInWithEthereum from './Contents/signInWithEthereum'
 
 const SignMessageScreen = () => {
   const { t } = useTranslation()
-  const signMessageState = useController('SignMessageController').state
+  const { state: signMessageState, dispatch: signMessageDispatch } =
+    useController('SignMessageController')
   const signStatus = signMessageState.statuses.sign
   const [hasReachedBottom, setHasReachedBottom] = useState<boolean | null>(null)
   const keystoreState = useController('KeystoreController').state
@@ -129,29 +130,34 @@ const SignMessageScreen = () => {
     if (userRequest.kind === 'message' || userRequest.kind === 'siwe')
       userRequest.meta.params.message = toPersonalSignHex(userRequest.meta.params.message)
 
-    dispatch({
-      type: 'MAIN_CONTROLLER_SIGN_MESSAGE_INIT',
+    signMessageDispatch({
+      type: 'method',
       params: {
-        dapp: { name, icon },
-        messageToSign: {
-          fromRequestId: userRequest.id,
-          content: {
-            kind: userRequest.kind,
-            ...(userRequest.meta.params as any)
-          },
-          accountAddr: userRequest.meta.accountAddr,
-          chainId: userRequest.meta.chainId,
-          signature: null
-        }
+        method: 'init',
+        args: [
+          {
+            dapp: { name, icon },
+            messageToSign: {
+              fromRequestId: userRequest.id,
+              content: {
+                kind: userRequest.kind,
+                ...(userRequest.meta.params as any)
+              },
+              accountAddr: userRequest.meta.accountAddr,
+              chainId: userRequest.meta.chainId,
+              signature: null
+            }
+          }
+        ]
       }
     })
-  }, [dispatch, userRequest, signMessageState.messageToSign?.fromRequestId, name, icon])
+  }, [signMessageDispatch, userRequest, signMessageState.messageToSign?.fromRequestId, name, icon])
 
   useEffect(() => {
     return () => {
-      dispatch({ type: 'MAIN_CONTROLLER_SIGN_MESSAGE_RESET' })
+      signMessageDispatch({ type: 'method', params: { method: 'reset', args: [] } })
     }
-  }, [dispatch])
+  }, [signMessageDispatch])
 
   const handleReject = () => {
     if (!userRequest) return

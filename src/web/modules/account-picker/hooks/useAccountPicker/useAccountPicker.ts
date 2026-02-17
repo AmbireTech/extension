@@ -9,13 +9,16 @@ import { WEB_ROUTES } from '@common/modules/router/constants/common'
 const useAccountPicker = () => {
   const { goToNextRoute, goToPrevRoute } = useOnboardingNavigation()
   const {
-    pageSize,
-    subType,
-    isInitialized,
-    initParams,
-    selectedAccountsFromCurrentSession,
-    addAccountsStatus
-  } = useController('AccountPickerController').state
+    state: {
+      pageSize,
+      subType,
+      isInitialized,
+      initParams,
+      selectedAccountsFromCurrentSession,
+      addAccountsStatus
+    },
+    dispatch: accountPickerDispatch
+  } = useController('AccountPickerController')
   const prevIsInitialized = usePrevious(isInitialized)
   const shouldResetAccountsSelectionOnUnmount = useRef(true)
   const { dispatch } = useControllersMiddleware()
@@ -28,17 +31,22 @@ const useAccountPicker = () => {
 
   const setPage = React.useCallback(
     (page = 1) => {
-      dispatch({
-        type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_SET_PAGE',
+      accountPickerDispatch({
+        type: 'method',
         params: {
-          page,
-          pageSize: ACCOUNT_PICKER_PAGE_SIZE,
-          shouldSearchForLinkedAccounts: true,
-          shouldGetAccountsUsedOnNetworks: true
+          method: 'setPage',
+          args: [
+            {
+              page,
+              pageSize: ACCOUNT_PICKER_PAGE_SIZE,
+              shouldSearchForLinkedAccounts: true,
+              shouldGetAccountsUsedOnNetworks: true
+            }
+          ]
         }
       })
     },
-    [dispatch, ACCOUNT_PICKER_PAGE_SIZE]
+    [accountPickerDispatch, ACCOUNT_PICKER_PAGE_SIZE]
   )
 
   useEffect(() => {
@@ -49,8 +57,14 @@ const useAccountPicker = () => {
 
   useEffect(() => {
     if (isInitialized) return
-    dispatch({ type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT' })
-  }, [dispatch, isInitialized])
+    accountPickerDispatch({
+      type: 'method',
+      params: {
+        method: 'init',
+        args: []
+      }
+    })
+  }, [accountPickerDispatch, isInitialized])
 
   useEffect(() => {
     if (!prevIsInitialized && isInitialized) {
@@ -74,19 +88,31 @@ const useAccountPicker = () => {
   const onImportReady = useCallback(() => {
     shouldResetAccountsSelectionOnUnmount.current = false
     setOnImportPressed(true)
-    dispatch({ type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_ADD_ACCOUNTS' })
+    accountPickerDispatch({
+      type: 'method',
+      params: {
+        method: 'addAccounts',
+        args: []
+      }
+    })
     if (selectedAccountsFromCurrentSession.length) {
       goToNextRoute(WEB_ROUTES.accountPersonalize)
     }
-  }, [goToNextRoute, dispatch, selectedAccountsFromCurrentSession])
+  }, [goToNextRoute, accountPickerDispatch, selectedAccountsFromCurrentSession])
 
   useEffect(() => {
     return () => {
       if (shouldResetAccountsSelectionOnUnmount.current) {
-        dispatch({ type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_RESET_ACCOUNTS_SELECTION' })
+        accountPickerDispatch({
+          type: 'method',
+          params: {
+            method: 'resetAccountsSelection',
+            args: []
+          }
+        })
       }
     }
-  }, [dispatch])
+  }, [accountPickerDispatch])
 
   return { isReady, setPage, onImportReady }
 }

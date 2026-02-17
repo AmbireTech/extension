@@ -1,4 +1,3 @@
-/* eslint-disable jsx-a11y/anchor-is-valid */
 import { Interface } from 'ethers'
 /* eslint-disable react/jsx-no-useless-fragment */
 import React, { useCallback, useEffect, useId, useMemo, useState } from 'react'
@@ -71,7 +70,7 @@ const NetworkAvailableFeatures = ({
   } = useController('NetworksController')
 
   const { dispatchAndWait } = useController('ProvidersController')
-  const { dispatch } = useControllersMiddleware()
+  const { dispatch: requestsDispatch } = useController('RequestsController')
   const { addToast } = useToast()
   const [checkedDeployFor, setCheckedDeployFor] = useState<bigint | undefined>()
   const tooltipId = useId()
@@ -147,25 +146,33 @@ const NetworkAvailableFeatures = ({
     ]
     const singletonInterface = new Interface(singletonABI)
 
-    dispatch({
-      type: 'REQUESTS_CONTROLLER_ADD_CALLS_USER_REQUEST',
+    requestsDispatch({
+      type: 'method',
       params: {
-        userRequestParams: {
-          calls: [
-            {
-              to: SINGLETON,
-              value: 0n,
-              data: singletonInterface.encodeFunctionData('deploy', [bytecode, salt])
+        method: 'build',
+        args: [
+          {
+            type: 'calls',
+            params: {
+              userRequestParams: {
+                calls: [
+                  {
+                    to: SINGLETON,
+                    value: 0n,
+                    data: singletonInterface.encodeFunctionData('deploy', [bytecode, salt])
+                  }
+                ],
+                meta: {
+                  chainId: selectedNetwork.chainId,
+                  accountAddr: account.addr as string
+                }
+              }
             }
-          ],
-          meta: {
-            chainId: selectedNetwork.chainId,
-            accountAddr: account.addr as string
           }
-        }
+        ]
       }
     })
-  }, [addToast, dispatch, account, selectedNetwork])
+  }, [addToast, requestsDispatch, account, selectedNetwork])
 
   const shouldRenderRetryButton = useMemo(
     () => !!features && !!features.find((f) => f.id === 'flagged') && withRetryButton,
