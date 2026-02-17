@@ -63,20 +63,16 @@ export class SignMessagePage extends BasePage {
     await signMessageButton.click()
 
     if (ledgerSimulatorControls) {
+      // Wait for the "Review message" screen to appear on the Ledger device before confirming the transaction flow.
       const isReadyToSign = await ledgerSimulatorControls.waitForEvent(
         ({ text }) => text === 'Review message'
       )
 
       if (isReadyToSign) {
-        await this.page.waitForTimeout(2000)
-        await ledgerSimulatorControls.pressRightButton()
-        await this.page.waitForTimeout(2000)
-        await ledgerSimulatorControls.pressRightButton()
-        await this.page.waitForTimeout(2000)
-        await ledgerSimulatorControls.pressBothButtons()
-        await this.page.waitForTimeout(2000)
+        // Confirm the transaction flow on the Ledger device.
+        await ledgerSimulatorControls.confirmTransactionFlow()
       } else {
-        console.log('No signing request event received on the device within the timeout period')
+        throw new Error('Ledger device is not ready to sign the message')
       }
     }
 
