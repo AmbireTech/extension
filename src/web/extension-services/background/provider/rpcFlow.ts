@@ -1,11 +1,10 @@
 /* eslint-disable @typescript-eslint/no-floating-promises */
-import 'reflect-metadata'
-
 import { ethErrors } from 'eth-rpc-errors'
 import { v4 as uuidv4 } from 'uuid'
 
 import { MainController } from '@ambire-common/controllers/main/main'
 import { DappProviderRequest } from '@ambire-common/interfaces/dapp'
+import { getMetadata } from '@web/extension-services/background/provider/metadata'
 import { ProviderController } from '@web/extension-services/background/provider/ProviderController'
 import { RequestRes } from '@web/extension-services/background/provider/types'
 import PromiseFlow from '@web/utils/promiseFlow'
@@ -46,7 +45,7 @@ const flowContext = flow
     } = request
     const providerCtrl = new ProviderController(mainCtrl)
 
-    if (!Reflect.getMetadata('SAFE', providerCtrl, mapMethod)) {
+    if (!getMetadata('SAFE', providerCtrl, mapMethod)) {
       const isUnlocked = mainCtrl.keystore.isReadyToStoreKeys ? mainCtrl.keystore.isUnlocked : true
 
       if (!isUnlocked && mainCtrl.dapps.hasPermission(id)) {
@@ -79,7 +78,7 @@ const flowContext = flow
       session: { id, origin: url }
     } = request
     const providerCtrl = new ProviderController(mainCtrl)
-    if (!Reflect.getMetadata('SAFE', providerCtrl, mapMethod)) {
+    if (!getMetadata('SAFE', providerCtrl, mapMethod)) {
       if (!mainCtrl.dapps.hasPermission(id)) {
         try {
           if (connectOrigins[url] === undefined) {
@@ -110,8 +109,8 @@ const flowContext = flow
     const { request, mainCtrl, mapMethod } = props
     const providerCtrl = new ProviderController(mainCtrl)
 
-    const [requestType, condition] =
-      Reflect.getMetadata('ACTION_REQUEST', providerCtrl, mapMethod) || []
+    const [requestType, condition] = (getMetadata('ACTION_REQUEST', providerCtrl, mapMethod) ||
+      []) as [string?, ((...args: any[]) => any)?]
     if (requestType && (!condition || !condition(props))) {
       // eslint-disable-next-line no-param-reassign
       props.requestRes = await new Promise((resolve, reject) => {
