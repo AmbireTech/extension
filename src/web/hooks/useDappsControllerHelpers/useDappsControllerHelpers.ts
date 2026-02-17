@@ -1,27 +1,21 @@
 import { nanoid } from 'nanoid'
-import { useCallback, useEffect, useMemo, useSyncExternalStore } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 
 import { Dapp } from '@ambire-common/interfaces/dapp'
 import { getDappIdFromUrl } from '@ambire-common/libs/dapps/helpers'
 import { isValidURL } from '@ambire-common/services/validations'
 import { captureException } from '@common/config/analytics/CrashAnalytics.web'
-import { AllControllersMappingType } from '@common/constants/controllersMapping'
-import { ControllerHelpersStore } from '@common/contexts/controllerStoreContext/controllerHelpersStore'
-import { ControllerStore } from '@common/contexts/controllerStoreContext/controllerStore'
+import useControllerState from '@common/hooks/useControllerState'
 import { Action } from '@web/extension-services/background/actions'
 import { getCurrentTab } from '@web/extension-services/background/webapi/tab'
 import { getCurrentWindow } from '@web/extension-services/background/webapi/window'
 import eventBus from '@web/extension-services/event/eventBus'
 
-export default function useDappsControllerHelpers(
-  controllerStore: ControllerStore,
-  controllerHelpersStore: ControllerHelpersStore,
-  dispatch: (action: Action) => void
-) {
-  const state = useSyncExternalStore(
-    useCallback((cb) => controllerStore.subscribe('DappsController', cb), [controllerStore]),
-    useCallback(() => controllerStore.getSnapshot('DappsController'), [controllerStore])
-  )
+export default function useDappsControllerHelpers(dispatch: (action: Action) => void) {
+  const { state, updateHelpers } = useControllerState({
+    id: 'DappsController',
+    subscriptionEnabled: true
+  })
 
   const dappSessions = useMemo(() => state.dappSessions ?? {}, [state.dappSessions])
 
@@ -107,21 +101,28 @@ export default function useDappsControllerHelpers(
 
   useEffect(() => {
     // Update the store with the method so it can be used by useController('DappsController')
-    controllerHelpersStore.update('DappsController', { getCurrentDapp })
-  }, [getCurrentDapp, controllerHelpersStore])
+    updateHelpers({ getCurrentDapp })
+  }, [getCurrentDapp, updateHelpers])
 
   useEffect(() => {
-    controllerHelpersStore.update('DappsController', { isLoadingCurrentDapp: true })
+    let isCancelled = false
+
+    updateHelpers({ isLoadingCurrentDapp: true })
     getCurrentDapp()
       .then((dapp) => {
-        controllerHelpersStore.update('DappsController', { currentDapp: dapp })
+        if (!isCancelled) {
+          updateHelpers({ currentDapp: dapp, isLoadingCurrentDapp: false })
+        }
       })
       .catch((error) => {
-        captureException(error) // should never happen
-        controllerHelpersStore.update('DappsController', { currentDapp: null })
+        if (!isCancelled) {
+          captureException(error)
+          updateHelpers({ currentDapp: null, isLoadingCurrentDapp: false })
+        }
       })
-      .finally(() => {
-        controllerHelpersStore.update('DappsController', { isLoadingCurrentDapp: false })
-      })
-  }, [getCurrentDapp, controllerHelpersStore])
+
+    return () => {
+      isCancelled = true
+    }
+  }, [getCurrentDapp, updateHelpers])
 }

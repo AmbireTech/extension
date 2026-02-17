@@ -37,7 +37,8 @@ export const ControllerStoreProvider: React.FC<{
       })
   )
 
-  const [subscriptionManager] = useState(() => new SubscriptionManager())
+  const [stateSubscriptionManager] = useState(() => new SubscriptionManager())
+  const [helpersSubscriptionManager] = useState(() => new SubscriptionManager())
 
   const [controllerHelpersStore] = useState(() => new ControllerHelpersStore())
 
@@ -124,14 +125,16 @@ export const ControllerStoreProvider: React.FC<{
         () => ({
           controllerStore,
           controllerHelpersStore,
-          subscriptionManager,
+          stateSubscriptionManager,
+          helpersSubscriptionManager,
           isStoreReady,
           debounceControllerUpdates
         }),
         [
           controllerStore,
           controllerHelpersStore,
-          subscriptionManager,
+          stateSubscriptionManager,
+          helpersSubscriptionManager,
           isStoreReady,
           debounceControllerUpdates
         ]
