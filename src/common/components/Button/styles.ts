@@ -45,7 +45,7 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
     },
 
     buttonText: {
-      fontFamily: FONT_FAMILIES.REGULAR,
+      fontFamily: FONT_FAMILIES.MEDIUM,
       ...text.center
     },
 
@@ -61,7 +61,8 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       borderWidth: 0
     },
     buttonContainerDanger: {
-      borderColor: theme.errorDecorative
+      borderColor: theme.errorDecorative,
+      borderWidth: 0
     },
     buttonContainerOutline: {
       borderColor: themeType === THEME_TYPES.DARK ? theme.primary : theme.successDecorative
@@ -107,14 +108,13 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
 
     // Button text sizes (regular/small)
     buttonTextStylesSizeRegular: {
-      fontSize: 16
+      fontSize: 14
     },
     buttonTextStylesSizeLarge: {
-      fontSize: 16
+      fontSize: 14
     },
     buttonTextStylesSizeSmaller: {
-      fontSize: 14,
-      fontFamily: FONT_FAMILIES.MEDIUM
+      fontSize: 14
     },
     buttonTextStylesSizeSmall: {
       fontSize: 14,

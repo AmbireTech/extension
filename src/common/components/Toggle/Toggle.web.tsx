@@ -53,10 +53,7 @@ const Toggle: React.FC<ToggleProps> = ({
           height: '12px',
           borderRadius: '13px',
           transition: 'border 0.2s',
-          background: hexToRgba(
-            String(isOn ? theme.successText : theme.secondaryText),
-            isOn ? 0.4 : 0.2
-          ),
+          background: hexToRgba(String(isOn ? theme.success400 : theme.neutral600)),
           ...(trackStyle as React.CSSProperties)
         }}
       >
@@ -70,9 +67,10 @@ const Toggle: React.FC<ToggleProps> = ({
             width: '16px',
             borderRadius: '13px',
             transition: 'transform 0.2s',
-            background: String(isOn ? theme.successText : theme.secondaryText),
+            background: String(theme.neutral300),
             border: 'transparent',
             transform: isOn ? 'translateX(12px)' : '',
+            boxShadow: '0px 2px 2px 0px #00000040',
             ...(toggleStyle as React.CSSProperties)
           }}
         />

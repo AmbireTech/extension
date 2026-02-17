@@ -58,7 +58,7 @@ const ControlOption: FC<Props> = ({
         flexbox.alignCenter,
         flexbox.justifySpaceBetween,
         {
-          backgroundColor: theme.primaryBackground
+          backgroundColor: theme.secondaryBackground
         },
         onPress ? animStyle : {},
         style
@@ -81,14 +81,14 @@ const ControlOption: FC<Props> = ({
           </Text>
           <Text appearance="secondaryText" fontSize={14}>
             {description}
-            {readMoreLink && (
+            {!!readMoreLink && ' '}
+            {!!readMoreLink && (
               <Text
                 fontSize={14}
-                color={themeType === THEME_TYPES.DARK ? theme.linkText : theme.primary}
-                style={{ fontStyle: 'italic' }}
+                color={theme.linkText}
+                style={{ textDecorationLine: 'underline' }}
                 onPress={openReadMoreLink}
               >
-                {' '}
                 {t('Read more')}
               </Text>
             )}

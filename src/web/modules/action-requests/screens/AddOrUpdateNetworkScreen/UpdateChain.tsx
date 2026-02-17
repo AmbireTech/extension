@@ -62,7 +62,7 @@ const UpdateChain = ({
     <TabLayoutContainer
       width="full"
       header={<ActionHeader />}
-      footer={
+      renderDirectChildren={() => (
         <ActionFooter
           onReject={handleDenyButtonPress}
           onResolve={handleUpdateNetwork}
@@ -78,8 +78,7 @@ const UpdateChain = ({
             actionButtonPressedRef.current
           }
         />
-      }
-      backgroundColor={theme.secondaryBackground}
+      )}
     >
       <TabLayoutWrapperMainContent
         style={{
@@ -132,7 +131,7 @@ const UpdateChain = ({
             </View>
             <Text
               fontSize={16 * responsiveSizeMultiplier}
-              weight="semiBold"
+              weight="medium"
               appearance="secondaryText"
               style={{
                 marginBottom: SPACING * responsiveSizeMultiplier
@@ -159,7 +158,7 @@ const UpdateChain = ({
                 <RpcCard title="Old RPC URL" url={networkAlreadyAdded.selectedRpcUrl}>
                   <NetworkAvailableFeatures
                     hideBackgroundAndBorders
-                    titleSize={14 * responsiveSizeMultiplier}
+                    titleSize={16 * responsiveSizeMultiplier}
                     features={networkAlreadyAdded.features}
                     chainId={networkAlreadyAdded.chainId}
                     withRetryButton={!!rpcUrls.length && rpcUrlIndex < rpcUrls.length - 1}
@@ -173,19 +172,22 @@ const UpdateChain = ({
                     // Align-self center, instead of aligning the parent, to avoid weird behaviour when the
                     // container is scrollable
                     alignSelf: 'center',
-                    marginHorizontal: SPACING_MD * responsiveSizeMultiplier
+                    marginHorizontal: SPACING_TY * responsiveSizeMultiplier
                   }}
+                  containerColor={theme.secondaryBackground}
+                  color={theme.iconPrimary}
                 />
                 <RpcCard title="New RPC URL" url={networkDetails.selectedRpcUrl} isNew>
                   <NetworkAvailableFeatures
                     hideBackgroundAndBorders
-                    titleSize={14 * responsiveSizeMultiplier}
+                    titleSize={16 * responsiveSizeMultiplier}
                     features={features}
                     chainId={networkDetails.chainId}
                     withRetryButton={!!rpcUrls.length && rpcUrlIndex < rpcUrls.length - 1}
                     handleRetryWithDifferentRpcUrl={handleRetryWithDifferentRpcUrl}
                     responsiveSizeMultiplier={responsiveSizeMultiplier}
                     withScroll
+                    titleStyle={{ color: theme.success400 }}
                   />
                 </RpcCard>
               </View>

@@ -47,7 +47,7 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
     },
     smSelect: {
       height: SELECT_SIZE_TO_HEIGHT.sm,
-      ...spacings.phTy
+      ...spacings.phSm
     },
     mdSelect: {
       height: SELECT_SIZE_TO_HEIGHT.md,

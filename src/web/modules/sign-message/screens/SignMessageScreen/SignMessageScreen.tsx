@@ -297,7 +297,7 @@ const SignMessageScreen = () => {
       <TabLayoutContainer
         width="full"
         header={<ActionHeader />}
-        footer={
+        renderDirectChildren={() => (
           <ActionFooter
             onReject={
               signMessageState.status !== SignMessageStatus.Partial ? handleReject : undefined
@@ -339,8 +339,7 @@ const SignMessageScreen = () => {
               ) : null
             }
           />
-        }
-        backgroundColor={theme.primaryBackground}
+        )}
       >
         <KeySelect
           isSigning={signStatus === 'LOADING'}

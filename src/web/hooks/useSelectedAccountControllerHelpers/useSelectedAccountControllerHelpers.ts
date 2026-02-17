@@ -1,16 +1,10 @@
-import { useCallback, useEffect, useSyncExternalStore } from 'react'
+import { useEffect } from 'react'
 
 import { setExtraContext } from '@common/config/analytics/CrashAnalytics'
-import { ControllerStore } from '@common/contexts/controllerStoreContext/controllerStore'
+import useControllerState from '@common/hooks/useControllerState'
 
-export default function useSelectedAccountControllerHelpers(controllerStore: ControllerStore) {
-  const state = useSyncExternalStore(
-    useCallback(
-      (cb) => controllerStore.subscribe('SelectedAccountController', cb),
-      [controllerStore]
-    ),
-    useCallback(() => controllerStore.getSnapshot('SelectedAccountController'), [controllerStore])
-  )
+export default function useSelectedAccountControllerHelpers() {
+  const { state } = useControllerState({ id: 'SelectedAccountController' })
 
   useEffect(() => {
     if (!state.account?.addr) return

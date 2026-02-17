@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import { humanizeMessage } from '@ambire-common/libs/humanizer'
-import ErrorOutlineIcon from '@common/assets/svg/ErrorOutlineIcon'
+import WarningIcon from '@common/assets/svg/WarningIcon'
 import Alert from '@common/components/Alert'
 import ExpandableCard from '@common/components/ExpandableCard'
 import HumanizedVisualization from '@common/components/HumanizedVisualization'
@@ -115,6 +115,8 @@ const Main = ({
           {shouldDisplayEIP1271Warning && (
             <Alert
               type="error"
+              size="sm"
+              style={spacings.mt}
               title="This app has been flagged to not support Smart Account signatures."
               text="If you encounter issues, please use an EOA account and contact the app to resolve this."
             />
@@ -156,9 +158,10 @@ const Main = ({
                       marginRight: SPACING_TY * responsiveSizeMultiplier
                     }}
                   >
-                    <ErrorOutlineIcon
+                    <WarningIcon
                       width={24 * responsiveSizeMultiplier}
                       height={24 * responsiveSizeMultiplier}
+                      color={theme.warningText}
                     />
                   </View>
                   <Text fontSize={14 * responsiveSizeMultiplier} appearance="warningText">

@@ -8,7 +8,6 @@ import { AllControllersMappingType } from '@common/constants/controllersMapping'
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext/controllersMiddlewareContext'
 import { ControllersMiddlewareContextReturnType } from '@common/contexts/controllersMiddlewareContext/types'
 import { ControllerStoreContext } from '@common/contexts/controllerStoreContext'
-import { ControllerHelpersStore } from '@common/contexts/controllerStoreContext/controllerHelpersStore'
 import useIsScreenFocused from '@common/hooks/useIsScreenFocused'
 import useRoute from '@common/hooks/useRoute'
 import useToast from '@common/hooks/useToast'
@@ -271,12 +270,11 @@ export const ControllersMiddlewareProvider: React.FC<{ children: React.ReactNode
     }
   }, [addToast])
 
-  const [controllerHelpersStore] = useState(() => new ControllerHelpersStore())
-  useDappsControllerHelpers(controllerStore, controllerHelpersStore, dispatch)
-  useAutoLockControllerHelpers(controllerStore, dispatch)
-  useKeystoreControllerHelpers(controllerStore)
-  useRequestsControllerHelpers(controllerStore)
-  useSelectedAccountControllerHelpers(controllerStore)
+  useDappsControllerHelpers(dispatch)
+  useAutoLockControllerHelpers(dispatch)
+  useKeystoreControllerHelpers()
+  useRequestsControllerHelpers()
+  useSelectedAccountControllerHelpers()
 
   return (
     <ControllersMiddlewareContext.Provider value={useMemo(() => ({ dispatch }), [dispatch])}>
