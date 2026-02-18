@@ -3,30 +3,24 @@ import Svg, { G, Path, SvgProps } from 'react-native-svg'
 
 import useTheme from '@common/hooks/useTheme'
 
-const LinkIcon: React.FC<SvgProps> = ({ width = 14, height = 14, color, ...rest }) => {
+const LinkIcon: React.FC<SvgProps> = ({ width = 20, height = 20, color, ...rest }) => {
   const { theme } = useTheme()
+
   return (
-    <Svg width={width} height={height} viewBox="0 0 13.5 13.5" {...rest}>
-      <G transform="translate(-2.498 -2.411)">
-        <Path
-          d="M9.942,10.94a3.921,3.921,0,1,1-5.546,0"
-          transform="translate(0 -2.473)"
-          fill="none"
-          stroke={color || theme.iconPrimary}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="1.5"
-        />
-        <Path
-          d="M10.034,10.152a4.095,4.095,0,1,1,5.791,0"
-          transform="translate(-1.777 0)"
-          fill="none"
-          stroke={color || theme.iconPrimary}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="1.5"
-        />
-      </G>
+    <Svg width={width} height={height} viewBox="0 0 20 20" fill="none" {...rest}>
+      <Path
+        stroke={theme.iconPrimary}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.5"
+        d="m11.667 8.333-3.333 3.334"
+      />
+      <Path
+        stroke={theme.iconPrimary}
+        strokeLinecap="round"
+        strokeWidth="1.5"
+        d="M13.333 10.833 15 9.167A2.946 2.946 0 0 0 10.833 5L9.166 6.667m-2.5 2.5L5 10.833A2.946 2.946 0 0 0 9.167 15l1.666-1.667"
+      />
     </Svg>
   )
 }

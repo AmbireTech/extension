@@ -11,7 +11,7 @@ import useAccountContext from '@legends/hooks/useAccountContext'
 import useErc5792 from '@legends/hooks/useErc5792'
 import useEscModal from '@legends/hooks/useEscModal'
 import useLegendsContext from '@legends/hooks/useLegendsContext'
-import usePortfolioControllerState from '@legends/hooks/usePortfolioControllerState/usePortfolioControllerState'
+import usePortfolio from '@legends/hooks/usePortfolio'
 import useProviderContext from '@legends/hooks/useProviderContext'
 import useSwitchNetwork from '@legends/hooks/useSwitchNetwork'
 import useToast from '@legends/hooks/useToast'
@@ -47,7 +47,7 @@ const MigrateRewardsModal: React.FC<MigrateRewardsModalProps> = ({
   action,
   meta
 }) => {
-  const { xWalletClaimableBalance } = usePortfolioControllerState()
+  const { xWalletClaimableBalance } = usePortfolio()
   const { sendCalls, getCallsStatus } = useErc5792()
   const { onLegendComplete } = useLegendsContext()
 

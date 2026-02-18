@@ -7,6 +7,8 @@ import ManifestFallbackIcon from '@common/assets/svg/ManifestFallbackIcon'
 import AmbireLogoHorizontal from '@common/components/AmbireLogoHorizontal'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
+import useController from '@common/hooks/useController'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import useWindowSize from '@common/hooks/useWindowSize'
@@ -15,10 +17,6 @@ import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import ManifestImage from '@web/components/ManifestImage'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import ActionFooter from '@web/modules/action-requests/components/ActionFooter'
 
 import Account from './components/Account'
@@ -28,10 +26,12 @@ const SwitchAccountScreen = () => {
   const { t } = useTranslation()
   const { theme, styles } = useTheme(getStyles)
   const { addToast } = useToast()
-  const { account } = useSelectedAccountControllerState()
-  const { dispatch } = useBackgroundService()
-  const { currentUserRequest } = useRequestsControllerState()
-  const { accounts } = useAccountsControllerState()
+  const {
+    state: { account }
+  } = useController('SelectedAccountController')
+  const { dispatch } = useControllersMiddleware()
+  const { currentUserRequest } = useController('RequestsController').state
+  const { accounts } = useController('AccountsController').state
   const [isAuthorizing, setIsAuthorizing] = useState(false)
   const { minHeightSize } = useWindowSize()
 
@@ -109,8 +109,7 @@ const SwitchAccountScreen = () => {
   return (
     <TabLayoutContainer
       width="full"
-      backgroundColor={theme.secondaryBackground}
-      footer={
+      renderDirectChildren={() => (
         <ActionFooter
           onReject={handleDenyButtonPress}
           onResolve={handleAuthorizeButtonPress}
@@ -119,7 +118,7 @@ const SwitchAccountScreen = () => {
           rejectButtonText={t('Deny')}
           resolveButtonTestID="switch-account-button"
         />
-      }
+      )}
     >
       <View
         style={[

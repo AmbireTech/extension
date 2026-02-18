@@ -6,10 +6,9 @@ import { View } from 'react-native'
 import { AddNetworkRequestParams, Network, NetworkFeature } from '@ambire-common/interfaces/network'
 import { getFeatures } from '@ambire-common/libs/networks/networks'
 import Spinner from '@common/components/Spinner'
+import useController from '@common/hooks/useController'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import flexbox from '@common/styles/utils/flexbox'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
-import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import validateRequestParams from '@web/modules/action-requests/screens/AddOrUpdateNetworkScreen/validateRequestParams'
 
 import AddChain from './AddChain'
@@ -23,10 +22,10 @@ import UpdateChain from './UpdateChain'
  */
 const AddOrUpdateNetworkScreen = () => {
   const { t } = useTranslation()
-  const { dispatch } = useBackgroundService()
-  const { currentUserRequest } = useRequestsControllerState()
+  const { dispatch } = useControllersMiddleware()
+  const { currentUserRequest } = useController('RequestsController').state
   const { statuses, networkToAddOrUpdate, disabledNetworks, networks } =
-    useNetworksControllerState()
+    useController('NetworksController').state
   const [features, setFeatures] = useState<NetworkFeature[]>(getFeatures(undefined, undefined))
   const [rpcUrlIndex, setRpcUrlIndex] = useState<number>(0)
   const [existingNetwork, setExistingNetwork] = useState<Network | null | undefined>(undefined)

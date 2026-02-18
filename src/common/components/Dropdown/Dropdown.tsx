@@ -1,25 +1,32 @@
-import React, { FC, ReactElement, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { FlatList, Pressable, TextStyle, View } from 'react-native'
+import React, { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { FlatList, ListRenderItemInfo, Pressable, TextStyle, View } from 'react-native'
+import { SvgProps } from 'react-native-svg'
 
 import KebabMenuIcon from '@common/assets/svg/KebabMenuIcon'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import { Portal } from '@gorhom/portal'
 
 import getStyles from './styles'
 
 interface Props {
+  kebabIconProps?: SvgProps
   data: Array<{ label: string; value: string; style?: TextStyle }>
   externalPosition?: { x: number; y: number }
   setExternalPosition?: React.Dispatch<React.SetStateAction<{ x: number; y: number }>>
   onSelect: (item: { label: string; value: string }) => void
 }
 
-const Dropdown: FC<Props> = ({ data, externalPosition, setExternalPosition, onSelect }) => {
-  const DropdownButton: any = useRef()
+const Dropdown: FC<Props> = ({
+  data,
+  externalPosition,
+  kebabIconProps = {},
+  setExternalPosition,
+  onSelect
+}) => {
+  const DropdownButton = useRef(null)
   const { styles, theme, themeType } = useTheme(getStyles)
   const dropdownButtonRef = useRef(null)
   const { width: windowWidth } = useWindowSize()
@@ -77,17 +84,14 @@ const Dropdown: FC<Props> = ({ data, externalPosition, setExternalPosition, onSe
     [onSelect, setPosition]
   )
 
-  const renderItem = ({ item }: any): ReactElement<any, any> => (
+  const renderItem = ({ item }: ListRenderItemInfo<NonNullable<Props['data']>[number]>) => (
     <Pressable onPress={() => onItemPress(item)}>
       {({ hovered }: any) => (
         <View
           style={[
             styles.item,
             hovered && {
-              backgroundColor:
-                themeType === THEME_TYPES.DARK
-                  ? theme.tertiaryBackground
-                  : theme.secondaryBackground
+              backgroundColor: theme.secondaryBackground
             }
           ]}
         >
@@ -104,7 +108,7 @@ const Dropdown: FC<Props> = ({ data, externalPosition, setExternalPosition, onSe
       <View ref={dropdownButtonRef}>
         <Pressable onPress={toggleDropdown} ref={DropdownButton}>
           <View style={styles.button}>
-            <KebabMenuIcon />
+            <KebabMenuIcon {...kebabIconProps} />
           </View>
         </Pressable>
       </View>

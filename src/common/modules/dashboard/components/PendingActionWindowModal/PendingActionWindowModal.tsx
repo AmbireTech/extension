@@ -5,9 +5,9 @@ import { useModalize } from 'react-native-modalize'
 import PendingActionWindowIcon from '@common/assets/svg/PendingActionWindowIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import DualChoiceModal from '@common/components/DualChoiceModal'
+import useController from '@common/hooks/useController'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import spacings from '@common/styles/spacings'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import { getUiType } from '@web/utils/uiType'
 
 const isPopup = getUiType().isPopup
@@ -15,8 +15,8 @@ const isPopup = getUiType().isPopup
 const PendingActionWindowModal = () => {
   const { ref: sheetRef, close: closeBottomSheet } = useModalize()
   const { t } = useTranslation()
-  const { dispatch } = useBackgroundService()
-  const { requestWindow, currentUserRequest } = useRequestsControllerState()
+  const { dispatch } = useControllersMiddleware()
+  const { requestWindow, currentUserRequest } = useController('RequestsController').state
   const onPrimaryButtonPress = useCallback(() => {
     dispatch({ type: 'REQUESTS_CONTROLLER_FOCUS_REQUEST_WINDOW' })
   }, [dispatch])
@@ -92,8 +92,7 @@ const PendingActionWindowModal = () => {
         id="import-seed-phrase"
         sheetRef={sheetRef}
         closeBottomSheet={closeBottomSheet}
-        backgroundColor="secondaryBackground"
-        style={{ overflow: 'hidden', width: 496, ...spacings.ph0, ...spacings.pv0 }}
+        style={{ overflow: 'hidden', ...spacings.ph0, ...spacings.pv0 }}
         type="modal"
         autoOpen
       >

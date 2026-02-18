@@ -14,27 +14,23 @@ import { getSanitizedAmount } from '@ambire-common/libs/transfer/amount'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
 import { getAddressFromAddressState } from '@ambire-common/utils/domains'
 import { getCallsCount } from '@ambire-common/utils/userRequest'
-import InfoIcon from '@common/assets/svg/InfoIcon'
 import Alert from '@common/components/Alert'
 import BackButton from '@common/components/BackButton'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import useAddressInput from '@common/hooks/useAddressInput'
+import useController from '@common/hooks/useController'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useNavigation from '@common/hooks/useNavigation'
 import useToast from '@common/hooks/useToast'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { Content, Form, Wrapper } from '@web/components/TransactionsScreen'
+import { Content, Wrapper } from '@web/components/TransactionsScreen'
 import { createTab } from '@web/extension-services/background/webapi/tab'
-import useActivityControllerState from '@web/hooks/useActivityControllerState'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import useHasGasTank from '@web/hooks/useHasGasTank'
-import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import useSyncedState from '@web/hooks/useSyncedState'
-import useTransferControllerState from '@web/hooks/useTransferControllerState'
 import BatchAdded from '@web/modules/sign-account-op/components/OneClick/BatchModal/BatchAdded'
 import Buttons from '@web/modules/sign-account-op/components/OneClick/Buttons'
 import Estimation from '@web/modules/sign-account-op/components/OneClick/Estimation'
@@ -50,9 +46,9 @@ import { getUiType } from '@web/utils/uiType'
 const { isTab, isRequestWindow } = getUiType()
 
 const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { addToast } = useToast()
-  const { state } = useTransferControllerState()
+  const { state } = useController('TransferController')
   const {
     isTopUp,
     validationFormMsgs,
@@ -83,16 +79,18 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
 
   const { navigate } = useNavigation()
   const { t } = useTranslation()
-  const { visibleUserRequests } = useRequestsControllerState()
-  const { account, portfolio } = useSelectedAccountControllerState()
-  const { userRequests } = useRequestsControllerState()
+  const { visibleUserRequests } = useController('RequestsController').state
+  const {
+    state: { account, portfolio }
+  } = useController('SelectedAccountController')
+  const { userRequests } = useController('RequestsController').state
 
   const {
     ref: gasTankSheetRef,
     open: openGasTankInfoBottomSheet,
     close: closeGasTankInfoBottomSheet
   } = useModalize()
-  const { accountsOps } = useActivityControllerState()
+  const { accountsOps } = useController('ActivityController').state
   const { hasGasTank } = useHasGasTank({ account })
   const recipientMenuClosedAutomatically = useRef(false)
 
@@ -415,36 +413,6 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     ]
   )
 
-  const handleGasTankInfoPressed = useCallback(
-    () => openGasTankInfoBottomSheet(),
-    [openGasTankInfoBottomSheet]
-  )
-
-  const gasTankLabelWithInfo = useMemo(() => {
-    return (
-      <View style={[flexbox.directionRow, flexbox.flex1, flexbox.alignCenter]}>
-        <Text
-          fontSize={20}
-          weight="medium"
-          appearance="primaryText"
-          numberOfLines={1}
-          style={spacings.mrMi}
-        >
-          {t('Top Up Gas Tank')}
-        </Text>
-        <Pressable onPress={handleGasTankInfoPressed}>
-          <InfoIcon width={20} height={20} />
-        </Pressable>
-      </View>
-    )
-  }, [handleGasTankInfoPressed, t])
-
-  // Title shown in BottomSheet header
-  const headerTitle = useMemo(
-    () => (state.isTopUp ? gasTankLabelWithInfo : t('Send')),
-    [state.isTopUp, gasTankLabelWithInfo, t]
-  )
-
   const isSignAccountOpInProgress = useMemo(() => {
     if (!account || !userRequests.length || !selectedToken) return false
 
@@ -459,31 +427,27 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
 
   const buttons = useMemo(() => {
     return (
-      <>
-        {isTab && <BackButton onPress={onBack} />}
-        <Buttons
-          handleSubmitForm={(isOneClickMode) =>
-            addTransaction(isOneClickMode ? 'open-request-window' : 'queue')
-          }
-          proceedBtnText={submitButtonText}
-          isBatchDisabled={isSendingBatch || isSignAccountOpInProgress}
-          isNotReadyToProceed={!isTransferFormValid}
-          signAccountOpErrors={[]}
-          networkUserRequests={networkUserRequests}
-          isLocalStateOutOfSync={isLocalStateOutOfSync}
-          shouldHoldToProceed={
-            (isRecipientAddressUnknown &&
-              !isRecipientAddressUnknownAgreed &&
-              !isRecipientHumanizerKnownTokenOrSmartContract &&
-              isRecipientAddressFirstTimeSend) ||
-            isRecipientAddressViewOnly
-          }
-          onRecipientAddressUnknownAgree={onRecipientAddressUnknownAgree}
-        />
-      </>
+      <Buttons
+        handleSubmitForm={(isOneClickMode) =>
+          addTransaction(isOneClickMode ? 'open-request-window' : 'queue')
+        }
+        proceedBtnText={submitButtonText}
+        isBatchDisabled={isSendingBatch || isSignAccountOpInProgress}
+        isNotReadyToProceed={!isTransferFormValid}
+        signAccountOpErrors={[]}
+        networkUserRequests={networkUserRequests}
+        isLocalStateOutOfSync={isLocalStateOutOfSync}
+        shouldHoldToProceed={
+          (isRecipientAddressUnknown &&
+            !isRecipientAddressUnknownAgreed &&
+            !isRecipientHumanizerKnownTokenOrSmartContract &&
+            isRecipientAddressFirstTimeSend) ||
+          isRecipientAddressViewOnly
+        }
+        onRecipientAddressUnknownAgree={onRecipientAddressUnknownAgree}
+      />
     )
   }, [
-    onBack,
     submitButtonText,
     isSendingBatch,
     isSignAccountOpInProgress,
@@ -604,10 +568,10 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   }
 
   return (
-    <Wrapper title={headerTitle} buttons={buttons}>
+    <Wrapper>
       <Content buttons={buttons}>
         {state?.isInitialized ? (
-          <Form>
+          <View>
             <SendForm
               handleGoBack={handleGoBackPress}
               addressInputState={addressInputState}
@@ -662,7 +626,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
                 />
               </View>
             )}
-          </Form>
+          </View>
         ) : (
           <SkeletonLoader
             width={640}

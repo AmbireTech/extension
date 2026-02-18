@@ -6,20 +6,20 @@ import KeyStoreIcon from '@common/assets/svg/KeyStoreIcon'
 import Button from '@common/components/Button'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { engine } from '@web/constants/browserapi'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useWalletStateController from '@web/hooks/useWalletStateController'
 import PasswordResetCompletedAnimation from '@web/modules/keystore/components/KeyStoreSetNewPasswordCompleted/password-reset-completed-animation.json'
 
 export const CARD_WIDTH = 400
 
 const KeyStoreSetNewPasswordCompleted = () => {
   const { t } = useTranslation()
-  const { dispatch } = useBackgroundService()
-  const { isPinned } = useWalletStateController()
+  const { dispatch } = useControllersMiddleware()
+  const { isPinned } = useController('WalletStateController').state
 
   useEffect(() => {
     dispatch({ type: 'SET_IS_SETUP_COMPLETE', params: { isSetupComplete: true } })

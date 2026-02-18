@@ -1,4 +1,4 @@
-import { StyleSheet, ViewStyle } from 'react-native'
+import { StyleSheet, TextStyle, ViewStyle } from 'react-native'
 
 import spacings, { SPACING_MI } from '@common/styles/spacings'
 import { THEME_TYPES, ThemeProps, ThemeType } from '@common/styles/themeConfig'
@@ -8,8 +8,8 @@ import text from '@common/styles/utils/text'
 
 interface Style {
   container: ViewStyle
-  element: ViewStyle
-  activeElement: ViewStyle
+  element: TextStyle
+  activeElement: TextStyle
 }
 
 const getStyles = (theme: ThemeProps, themeType: ThemeType) =>

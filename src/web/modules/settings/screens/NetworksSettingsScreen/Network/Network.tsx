@@ -22,8 +22,7 @@ const Network: FC<Props> = ({ network, selectedChainId, handleSelectNetwork }) =
     values: {
       from: `${String(theme.secondaryBackground)}00`,
       to: theme.secondaryBackground
-    },
-    forceHoveredStyle: network.chainId === selectedChainId
+    }
   })
 
   return (
@@ -37,12 +36,23 @@ const Network: FC<Props> = ({ network, selectedChainId, handleSelectNetwork }) =
         spacings.phTy,
         common.borderRadiusPrimary,
         spacings.mbMi,
-        animStyle
+        {
+          backgroundColor:
+            network.chainId === selectedChainId
+              ? theme.secondaryBackground
+              : animStyle.backgroundColor
+        }
       ]}
       {...bindAnim}
     >
-      <NetworkIcon id={network.chainId.toString()} />
-      <Text fontSize={16} weight="regular" style={spacings.mlMi} numberOfLines={1}>
+      <NetworkIcon size={28} id={network.chainId.toString()} />
+      <Text
+        fontSize={16}
+        weight="medium"
+        appearance="secondaryText"
+        style={spacings.mlTy}
+        numberOfLines={1}
+      >
         {network.name}
       </Text>
     </AnimatedPressable>

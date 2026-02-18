@@ -1,11 +1,11 @@
-import { StyleSheet, ViewStyle } from 'react-native'
+import { StyleSheet, TextStyle } from 'react-native'
 
 import { FONT_FAMILIES } from '@common/hooks/useFonts'
 import spacings from '@common/styles/spacings'
 
 interface Styles {
-  text: ViewStyle
-  bold: ViewStyle
+  text: TextStyle
+  bold: TextStyle
 }
 
 const styles = StyleSheet.create<Styles>({

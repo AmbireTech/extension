@@ -3,17 +3,17 @@ import Svg, { Defs, LinearGradient, Path, Stop, SvgProps } from 'react-native-sv
 
 const Background3 = (props: SvgProps) => {
   return (
-    <Svg viewBox="0 0 152 98" fill="none" {...props}>
+    <Svg viewBox="0 0 124 98" fill="none" {...props}>
       <Path
-        d="M144 0C148.418 2.17247e-06 152 3.58173 152 8V90C152 94.4182 148.418 98 144 98H1C0.447797 98 0.000131945 97.5522 0 97V1C3.79881e-06 0.447719 0.447718 2.36645e-08 1 0H144Z"
-        fill="url(#paint0_linear_6176_1733)"
+        d="M115.048 0C119.466 0.000146957 123.048 3.58182 123.048 8V90C123.048 94.4181 119.466 97.9999 115.048 98H1C0.447797 98 0.000131965 97.5522 0 97V1C3.80054e-06 0.447719 0.447718 2.60474e-08 1 0H115.048Z"
+        fill="url(#paint0_linear_985_7572)"
       />
       <Defs>
         <LinearGradient
-          id="paint0_linear_6176_1733"
+          id="paint0_linear_985_7572"
           x1="0"
           y1="49"
-          x2="160.161"
+          x2="129.654"
           y2="49"
           gradientUnits="userSpaceOnUse"
         >

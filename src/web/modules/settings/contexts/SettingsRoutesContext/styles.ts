@@ -21,7 +21,7 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
     background: {
       ...flexbox.alignCenter,
       ...flexbox.flex1,
-      backgroundColor: theme.secondaryBackground
+      backgroundColor: theme.primaryBackground
     },
     container: {
       ...flexbox.directionRow,
@@ -29,8 +29,8 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
     },
     contentContainer: {
       ...spacings.mhLg,
-      ...flexbox.flex1,
-      width: TAB_CONTENT_WIDTH
+      ...spacings.ptXl,
+      ...flexbox.flex1
     },
     header: {
       ...flexbox.directionRow,
@@ -41,10 +41,9 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
     panel: {
       ...spacings.mbLg,
       ...flexbox.flex1,
-      width: TAB_CONTENT_WIDTH,
-      maxHeight: '100%',
-      backgroundColor: theme.primaryBackground,
-      borderWidth: themeType === THEME_TYPES.DARK ? 0 : 1
+      width: 800,
+      maxHeight: '100%'
+      // backgroundColor: theme.secondaryBackground
     },
     sideContainer: {
       opacity: 0,

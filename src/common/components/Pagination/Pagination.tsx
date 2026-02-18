@@ -81,8 +81,8 @@ const Pagination: FC<Props> = ({
       >
         {({ hovered }: any) => (
           <View style={flexbox.directionRow}>
-            <LeftArrowIcon color={hovered ? theme.primaryBackgroundInverted : theme.iconPrimary} />
-            <LeftArrowIcon color={hovered ? theme.primaryBackgroundInverted : theme.iconPrimary} />
+            <LeftArrowIcon color={hovered ? theme.primaryText : theme.iconPrimary} />
+            <LeftArrowIcon color={hovered ? theme.primaryText : theme.iconPrimary} />
           </View>
         )}
       </Pressable>
@@ -95,7 +95,7 @@ const Pagination: FC<Props> = ({
         ]}
       >
         {({ hovered }: any) => (
-          <LeftArrowIcon color={hovered ? theme.primaryBackgroundInverted : theme.iconPrimary} />
+          <LeftArrowIcon color={hovered ? theme.primaryText : theme.iconPrimary} />
         )}
       </Pressable>
       <View style={[flexbox.directionRow, spacings.phTy]}>
@@ -125,7 +125,7 @@ const Pagination: FC<Props> = ({
         onPress={handleSmallPageStepIncrement}
       >
         {({ hovered }: any) => (
-          <RightArrowIcon color={hovered ? theme.primaryBackgroundInverted : theme.iconPrimary} />
+          <RightArrowIcon color={hovered ? theme.primaryText : theme.iconPrimary} />
         )}
       </Pressable>
       <Pressable
@@ -135,8 +135,8 @@ const Pagination: FC<Props> = ({
       >
         {({ hovered }: any) => (
           <View style={flexbox.directionRow}>
-            <RightArrowIcon color={hovered ? theme.primaryBackgroundInverted : theme.iconPrimary} />
-            <RightArrowIcon color={hovered ? theme.primaryBackgroundInverted : theme.iconPrimary} />
+            <RightArrowIcon color={hovered ? theme.primaryText : theme.iconPrimary} />
+            <RightArrowIcon color={hovered ? theme.primaryText : theme.iconPrimary} />
           </View>
         )}
       </Pressable>

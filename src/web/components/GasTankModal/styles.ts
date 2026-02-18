@@ -8,10 +8,7 @@ import flexbox from '@common/styles/utils/flexbox'
 type Style = {
   containerInnerWrapper: ViewStyle
   content: ViewStyle
-  balancesWrapper: ViewStyle
   descriptionTextWrapper: ViewStyle
-  rightPartWrapper: ViewStyle
-  rightPartInnerWrapper: ViewStyle
   buttonWrapper: ViewStyle
   overlay: ViewStyle
   iconWrapper: ViewStyle
@@ -21,8 +18,6 @@ type Style = {
 const getStyles = (theme: ThemeProps) =>
   StyleSheet.create<Style>({
     containerInnerWrapper: {
-      ...flexbox.alignCenter,
-      ...flexbox.justifyCenter,
       ...common.shadowSecondary,
       maxHeight: 600
     },
@@ -41,27 +36,11 @@ const getStyles = (theme: ThemeProps) =>
       ...spacings.ph,
       ...spacings.mbXl
     },
-    balancesWrapper: {
-      ...flexbox.directionRow,
-      ...flexbox.justifySpaceBetween,
-      ...spacings.pv,
-      ...spacings.ph,
-      backgroundColor: theme.primaryBackground,
-      ...common.borderRadiusPrimary,
-      ...spacings.mbMd
-    },
     overlay: {
       ...StyleSheet.absoluteFillObject,
       backgroundColor: 'white',
       opacity: 0.5,
       zIndex: 1
-    },
-    rightPartWrapper: { ...flexbox.justifyEnd, minWidth: 154 },
-    rightPartInnerWrapper: {
-      ...flexbox.directionRow,
-      ...flexbox.justifySpaceBetween,
-      alignItems: 'baseline',
-      width: '100%'
     },
     buttonWrapper: { ...flexbox.directionRow, ...flexbox.alignSelfEnd },
     iconWrapper: {

@@ -7,15 +7,13 @@ interface Style {
   arrowButtonWrapper: ViewStyle
 }
 
-const getStyles = (theme: ThemeProps) => {
+const getStyles = () => {
   return StyleSheet.create<Style>({
     arrowButtonWrapper: {
       width: 24,
       height: 24,
-      borderRadius: 4,
       ...flexbox.alignCenter,
-      ...flexbox.justifyCenter,
-      backgroundColor: theme.quaternaryBackground
+      ...flexbox.justifyCenter
     }
   })
 }

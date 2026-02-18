@@ -2,7 +2,7 @@ import { Storage } from '@ambire-common/interfaces/storage'
 import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
 import { browser, isExtension } from '@web/constants/browserapi'
 
-const benzinStorage = {
+const commonStorage = {
   get: (key: string, defaultValue: any): any => {
     const serialized = localStorage.getItem(key)
     return Promise.resolve(serialized ? parse(serialized) : defaultValue)
@@ -45,7 +45,7 @@ export const remove = async (key: string): Promise<null> => {
   return null
 }
 
-export const storage: Storage = isExtension ? { get, set, remove } : benzinStorage
+export const storage: Storage = isExtension ? { get, set, remove } : commonStorage
 
 export default {
   get,

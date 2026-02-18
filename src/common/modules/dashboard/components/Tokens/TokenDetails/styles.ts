@@ -1,4 +1,4 @@
-import { StyleSheet, ViewStyle } from 'react-native'
+import { StyleSheet, TextStyle, ViewStyle } from 'react-native'
 
 import spacings, { SPACING, SPACING_MI, SPACING_TY } from '@common/styles/spacings'
 import { ThemeProps } from '@common/styles/themeConfig'
@@ -13,7 +13,7 @@ interface Style {
   networkIcon: ViewStyle
   actionsContainer: ViewStyle
   action: ViewStyle
-  hideTokenButton: ViewStyle
+  hideTokenButton: TextStyle
 }
 
 const getStyles = (theme: ThemeProps) =>
@@ -25,7 +25,7 @@ const getStyles = (theme: ThemeProps) =>
       ...flexbox.alignCenter
     },
     tokenInfo: {
-      ...spacings.plTy,
+      ...spacings.mh,
       ...flexbox.flex1
     },
     balance: {
@@ -43,10 +43,9 @@ const getStyles = (theme: ThemeProps) =>
       ...flexbox.directionRow
     },
     actionsContainer: {
-      ...spacings.ph,
-      ...spacings.pv,
-      backgroundColor: theme.primaryBackground,
-      ...common.borderRadiusPrimary,
+      ...flexbox.flex1,
+      ...spacings.phSm,
+      ...spacings.pvSm,
       ...flexbox.directionRow,
       ...flexbox.wrap
     },

@@ -2,7 +2,7 @@ import React from 'react'
 import Svg, { G, Path, SvgProps } from 'react-native-svg'
 
 const CoingeckoIcon: React.FC<SvgProps> = ({ width = 15, height = 15, ...rest }) => (
-  <Svg width={width} height={height} {...rest}>
+  <Svg width={width} height={height} viewBox="0 0 15 15" {...rest}>
     <G transform="translate(-5.6 -4.211)">
       <Path
         d="M36.47,27.012a7.064,7.064,0,1,1-7.1-7.033A7.064,7.064,0,0,1,36.47,27.012Z"

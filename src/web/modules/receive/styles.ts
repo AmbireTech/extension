@@ -31,7 +31,8 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       backgroundColor:
         themeType === THEME_TYPES.DARK ? theme.secondaryBackground : theme.primaryBackground,
       ...common.borderRadiusSecondary,
-      ...(themeType === THEME_TYPES.DARK ? {} : common.shadowTertiary),
+      shadowColor: theme.neutral400,
+      ...common.shadowTertiary,
       width: '100%',
       maxWidth: 600
     },
@@ -87,6 +88,7 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       // @ts-ignore
       pointerEvents: 'none',
       position: 'absolute',
+      // @ts-ignore prop doesn't exist on ViewStyle, used for web
       transitionProperty: 'opacity, transform',
       transitionDuration: '500ms',
       transitionTimingFunction: 'ease'

@@ -1,16 +1,32 @@
 import React, { FC } from 'react'
 import { Path, Svg, SvgProps } from 'react-native-svg'
 
-const RefreshIcon: FC<SvgProps> = ({ color = '#fff', width = 32, height = 32 }) => {
+const RefreshIcon: FC<SvgProps> = ({
+  color = '#E3E6EB',
+  width = 32,
+  height = 32,
+  strokeWidth = 1.5,
+  ...rest
+}) => {
   return (
-    <Svg width={width} height={height} viewBox="0 0 16 16" fill="none">
+    <Svg width={width} height={height} viewBox="0 0 28 28" fill="none" {...rest}>
       <Path
-        d="M14.748 7.75a7 7 0 0 1-7 7c-3.864 0-6.223-3.892-6.223-3.892m0 0h3.164m-3.164 0v3.5M.748 7.75a6.985 6.985 0 0 1 7-7 8.611 8.611 0 0 1 7 3.892m0 0v-3.5m0 3.5h-3.106"
-        fill="none"
         stroke={color}
         strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="1.5"
+        strokeWidth={strokeWidth}
+        d="m9.333 15.167-3.5-3.5-3.5 3.5"
+      />
+      <Path
+        stroke={color}
+        strokeLinecap="round"
+        strokeWidth={strokeWidth}
+        d="M18.083 21.073a8.165 8.165 0 0 1-12.205-7.927M18.667 12.833l3.5 3.5 3.5-3.5"
+      />
+      <Path
+        stroke={color}
+        strokeLinecap="round"
+        strokeWidth={strokeWidth}
+        d="M9.917 6.927a8.167 8.167 0 0 1 12.205 7.927"
       />
     </Svg>
   )

@@ -4,29 +4,29 @@ import { useTranslation } from 'react-i18next'
 import { Pressable, View } from 'react-native'
 
 import { SwapAndBridgeActiveRoute } from '@ambire-common/interfaces/swapAndBridge'
+import { isTxnBridge } from '@ambire-common/libs/swapAndBridge/swapAndBridge'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import CloseIcon from '@common/assets/svg/CloseIcon'
 import Button from '@common/components/Button'
 import Panel from '@common/components/Panel'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import formatTime from '@common/utils/formatTime'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import RouteStepsPreview from '@web/modules/swap-and-bridge/components/RouteStepsPreview'
 
-import { isTxnBridge } from '@ambire-common/libs/swapAndBridge/swapAndBridge'
 import MoreDetails from './MoreDetails'
 import getStyles from './styles'
 
 const ActiveRouteCard = ({ activeRoute }: { activeRoute: SwapAndBridgeActiveRoute }) => {
   const { styles, theme } = useTheme(getStyles)
   const { t } = useTranslation()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { navigate } = useNavigation()
 
   const activeTransaction = useMemo(() => {

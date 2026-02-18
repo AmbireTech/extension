@@ -6,11 +6,11 @@ import { useModalize } from 'react-native-modalize'
 import { Contact } from '@ambire-common/controllers/addressBook/addressBook'
 import { TokenResult } from '@ambire-common/libs/portfolio'
 import { validateAddress, Validation } from '@ambire-common/services/validations'
-import AccountsFilledIcon from '@common/assets/svg/AccountsFilledIcon'
+import AddressBookIcon from '@common/assets/svg/AddressBookIcon'
 import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import UpArrowIcon from '@common/assets/svg/UpArrowIcon'
-import WalletFilledIcon from '@common/assets/svg/WalletFilledIcon'
+import WalletIcon from '@common/assets/svg/WalletIcon'
 import AddressBookContact from '@common/components/AddressBookContact'
 import AddressInput from '@common/components/AddressInput'
 import { InputProps } from '@common/components/Input'
@@ -24,16 +24,15 @@ import {
 } from '@common/components/Select/types'
 import Text from '@common/components/Text'
 import TitleAndIcon from '@common/components/TitleAndIcon'
+import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import usePrevious from '@common/hooks/usePrevious'
 import useTheme from '@common/hooks/useTheme'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useAddressBookControllerState from '@web/hooks/useAddressBookControllerState'
-import useDomainsControllerState from '@web/hooks/useDomainsController/useDomainsController'
+import { ItemPanel } from '@web/components/TransactionsScreen'
 import useHover, { AnimatedPressable } from '@web/hooks/useHover'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 
 import styles from './styles'
 
@@ -156,16 +155,18 @@ const Recipient: React.FC<Props> = ({
   isRecipientDomainResolving,
   disabled
 }) => {
-  const { account } = useSelectedAccountControllerState()
+  const {
+    state: { account }
+  } = useController('SelectedAccountController')
   const actualAddress = ensAddress || address
   const { navigate } = useNavigation()
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
-  const { contacts } = useAddressBookControllerState()
+  const { contacts } = useController('AddressBookController').state
   const {
     state: { domains }
-  } = useDomainsControllerState()
+  } = useController('DomainsController')
   const [bindManageBtnAnim, manageBtnAnimStyle] = useHover({
     preset: 'opacityInverted'
   })
@@ -287,7 +288,7 @@ const Recipient: React.FC<Props> = ({
       if (section.data.length === 0) return null
 
       return section.key === 'contacts' ? (
-        <TitleAndIcon title={t('Address Book')} icon={AccountsFilledIcon}>
+        <TitleAndIcon title={t('Address Book')} icon={AddressBookIcon}>
           <AnimatedPressable
             style={[flexbox.directionRow, flexbox.alignCenter, manageBtnAnimStyle]}
             onPress={onManagePress}
@@ -300,7 +301,7 @@ const Recipient: React.FC<Props> = ({
           </AnimatedPressable>
         </TitleAndIcon>
       ) : (
-        <TitleAndIcon title={t('My wallets')} icon={WalletFilledIcon} />
+        <TitleAndIcon title={t('My wallets')} icon={WalletIcon} />
       )
     },
     [bindManageBtnAnim, manageBtnAnimStyle, onManagePress, t, theme.secondaryText]
@@ -352,8 +353,13 @@ const Recipient: React.FC<Props> = ({
   )
 
   return (
-    <>
-      <Text appearance="secondaryText" fontSize={14} weight="medium" style={spacings.mbMi}>
+    <ItemPanel style={{ ...spacings.pbTy, ...spacings.mbTy }}>
+      <Text
+        appearance="secondaryText"
+        fontSize={14}
+        weight="medium"
+        style={[spacings.mbSm, spacings.mlTy]}
+      >
         {t('Add recipient')}
       </Text>
       <SectionedSelect
@@ -367,6 +373,7 @@ const Recipient: React.FC<Props> = ({
         renderSelectedOption={renderSelectedOption}
         emptyListPlaceholderText={t('No contacts found')}
         menuPosition="bottom"
+        containerStyle={spacings.mb0}
       />
 
       <AddContactBottomSheet
@@ -374,7 +381,7 @@ const Recipient: React.FC<Props> = ({
         address={ensAddress || address}
         closeBottomSheet={closeBottomSheet}
       />
-    </>
+    </ItemPanel>
   )
 }
 

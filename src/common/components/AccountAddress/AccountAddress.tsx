@@ -1,6 +1,6 @@
 import React, { FC } from 'react'
 import { useTranslation } from 'react-i18next'
-import { View } from 'react-native'
+import { View, ViewStyle } from 'react-native'
 
 import PlainAddress from '@common/components/AccountAddress/PlainAddress'
 import PlainAddressWithCopy from '@common/components/AccountAddress/PlainAddressWithCopy'
@@ -14,6 +14,7 @@ interface Props extends ReturnType<typeof useReverseLookup> {
   plainAddressMaxLength?: number
   withCopy?: boolean
   fontSize?: number
+  containerStyle?: ViewStyle
 }
 
 const AccountAddress: FC<Props> = ({
@@ -22,12 +23,13 @@ const AccountAddress: FC<Props> = ({
   address,
   plainAddressMaxLength = 42,
   withCopy = true,
-  fontSize = 12
+  fontSize = 12,
+  containerStyle = {}
 }) => {
   const { t } = useTranslation()
 
   return (
-    <View style={[flexbox.flex1, { paddingVertical: 3 }]} testID="address">
+    <View style={[flexbox.flex1, { paddingVertical: 3 }, containerStyle]} testID="address">
       {ens || isLoading ? (
         <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
           {!isLoading ? (

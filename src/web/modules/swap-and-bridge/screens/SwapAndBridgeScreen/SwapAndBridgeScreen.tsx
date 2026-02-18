@@ -7,19 +7,16 @@ import { SigningStatus } from '@ambire-common/controllers/signAccountOp/signAcco
 import { SwapAndBridgeFormStatus } from '@ambire-common/controllers/swapAndBridge/swapAndBridge'
 import { Key } from '@ambire-common/interfaces/keystore'
 import Alert from '@common/components/Alert'
-import BackButton from '@common/components/BackButton'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import Spinner from '@common/components/Spinner'
+import useController from '@common/hooks/useController'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useNavigation from '@common/hooks/useNavigation'
 import usePrevious from '@common/hooks/usePrevious'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
-import spacings, { SPACING_MD, SPACING_MI } from '@common/styles/spacings'
+import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { Content, Form, Wrapper } from '@web/components/TransactionsScreen'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
-import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControllerState'
+import { Content, Wrapper } from '@web/components/TransactionsScreen'
 import useSimulationError from '@web/modules/portfolio/hooks/SimulationError/useSimulationError'
 import BatchAdded from '@web/modules/sign-account-op/components/OneClick/BatchModal/BatchAdded'
 import Buttons from '@web/modules/sign-account-op/components/OneClick/Buttons'
@@ -34,7 +31,7 @@ import PriceImpactWarningModal from '../../components/PriceImpactWarningModal'
 import RouteInfo from '../../components/RouteInfo'
 import ToToken from '../../components/ToToken'
 
-const { isTab, isRequestWindow } = getUiType()
+const { isRequestWindow } = getUiType()
 
 const SwapAndBridgeScreen = () => {
   const { t } = useTranslation()
@@ -79,13 +76,15 @@ const SwapAndBridgeScreen = () => {
     hasProceeded,
     swapSignErrors,
     quote
-  } = useSwapAndBridgeControllerState()
-  const { portfolio } = useSelectedAccountControllerState()
+  } = useController('SwapAndBridgeController').state
+  const {
+    state: { portfolio }
+  } = useController('SelectedAccountController')
 
-  const { statuses: requestsCtrlStatuses } = useRequestsControllerState()
+  const { statuses: requestsCtrlStatuses } = useController('RequestsController').state
   const prevSelectedAccActiveRoutes: any[] | undefined = usePrevious(selectedAccActiveRoutes)
   const scrollViewRef: any = useRef(null)
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
 
   const { simulationError: fromChainSimulationError } = useSimulationError({ chainId: fromChainId })
   const { simulationError: toChainSimulationError } = useSimulationError({ chainId: toChainId })
@@ -179,22 +178,18 @@ const SwapAndBridgeScreen = () => {
 
   const buttons = useMemo(() => {
     return (
-      <>
-        {isTab && <BackButton onPress={onBackButtonPress} />}
-        <Buttons
-          signAccountOpErrors={swapSignErrors}
-          isNotReadyToProceed={isNotReadyToProceed}
-          isBatchDisabled={shouldDisableAddToBatch}
-          isLoading={isLoading}
-          handleSubmitForm={handleSubmitForm}
-          isBridge={isBridge}
-          networkUserRequests={networkUserRequests}
-          isLocalStateOutOfSync={isLocalStateOutOfSync}
-        />
-      </>
+      <Buttons
+        signAccountOpErrors={swapSignErrors}
+        isNotReadyToProceed={isNotReadyToProceed}
+        isBatchDisabled={shouldDisableAddToBatch}
+        isLoading={isLoading}
+        handleSubmitForm={handleSubmitForm}
+        isBridge={isBridge}
+        networkUserRequests={networkUserRequests}
+        isLocalStateOutOfSync={isLocalStateOutOfSync}
+      />
     )
   }, [
-    onBackButtonPress,
     swapSignErrors,
     isNotReadyToProceed,
     isLoading,
@@ -242,8 +237,8 @@ const SwapAndBridgeScreen = () => {
   }
 
   return (
-    <Wrapper title={t('Swap & Bridge')} buttons={buttons}>
-      <Content scrollViewRef={scrollViewRef} buttons={buttons}>
+    <Wrapper>
+      <Content buttons={buttons}>
         {isHealthy === false && (
           <Alert
             type="error"
@@ -254,13 +249,13 @@ const SwapAndBridgeScreen = () => {
             style={spacings.mb}
           />
         )}
-        <Form>
+        <View>
           <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mb]}>
-            {!isTab && <PanelBackButton onPress={onBackButtonPress} style={spacings.mrSm} />}
+            <PanelBackButton onPress={onBackButtonPress} style={spacings.mrSm} />
             <PanelTitle title={t('Swap & Bridge')} />
-            {!isTab && <View style={{ width: 40 }} />}
+            <View style={{ width: 40 }} />
           </View>
-          <View style={{ marginBottom: SPACING_MD + SPACING_MI / 2 }}>
+          <View style={spacings.mbTy}>
             <FromToken
               fromTokenOptions={fromTokenOptions}
               fromTokenValue={fromTokenValue}
@@ -271,7 +266,7 @@ const SwapAndBridgeScreen = () => {
             />
           </View>
           <ToToken simulationFailed={!!toChainSimulationError} />
-        </Form>
+        </View>
         <RouteInfo
           isEstimatingRoute={isEstimatingRoute}
           openRoutesModal={openRoutesModal}

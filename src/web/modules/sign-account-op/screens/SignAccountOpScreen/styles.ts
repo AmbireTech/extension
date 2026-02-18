@@ -19,21 +19,8 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       maxWidth: '100%'
     },
     footer: {
-      ...spacings.mt,
-      ...spacings.pvMd,
-      ...spacings.phMd,
-      backgroundColor:
-        themeType === THEME_TYPES.DARK ? theme.tertiaryBackground : theme.primaryBackground,
-      shadowColor: themeType === THEME_TYPES.DARK ? '#00000052' : '#B8BDE080',
-      shadowOffset: { width: 0, height: -4 },
-      shadowOpacity: 0.64,
-      shadowRadius: 8,
-      elevation: 5,
-      borderWidth: 1,
-      borderColor: themeType === THEME_TYPES.DARK ? theme.primaryLight80 : theme.primary,
-      borderBottomWidth: 0,
-      borderTopLeftRadius: 12,
-      borderTopRightRadius: 12
+      ...spacings.mv,
+      ...spacings.mh
     }
   })
 

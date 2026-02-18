@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 
 import Alert from '@legends/components/Alert'
 import Page from '@legends/components/Page'
-import usePortfolioControllerState from '@legends/hooks/usePortfolioControllerState/usePortfolioControllerState'
+import usePortfolio from '@legends/hooks/usePortfolio'
 
 import RewardsPoolChart from './components/RewardsPoolChart'
 import styles from './RewardsPool.module.scss'
@@ -14,7 +14,7 @@ const MIN_SWAP_VOLUME = 3 * 1_000_000
 
 const RewardsPool = () => {
   const { t } = useTranslation()
-  const { isLoadingWalletTokenInfo: isLoading, walletTokenInfo } = usePortfolioControllerState()
+  const { isLoadingWalletTokenInfo: isLoading, walletTokenInfo } = usePortfolio()
   const [timeLeft, setTimeLeft] = useState('')
   const timerTimeout = useRef<NodeJS.Timeout | null>(null)
   const swapVolume = walletTokenInfo?.season2PoolInfo.totalVolumeSwapAndBridge ?? null

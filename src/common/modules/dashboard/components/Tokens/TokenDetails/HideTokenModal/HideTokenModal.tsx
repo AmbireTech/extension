@@ -9,7 +9,6 @@ import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 
 import getStyles from './styles'
 
@@ -32,7 +31,6 @@ const HideTokenModal = ({
       sheetRef={modalRef}
       // id="confirm-password-bottom-sheet"
       type="modal"
-      backgroundColor={themeType === THEME_TYPES.DARK ? 'secondaryBackground' : 'primaryBackground'}
       closeBottomSheet={handleClose}
       scrollViewProps={{ contentContainerStyle: { flex: 1 } }}
       containerInnerWrapperStyles={{ flex: 1 }}

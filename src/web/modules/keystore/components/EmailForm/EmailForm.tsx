@@ -14,13 +14,13 @@ import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import usePrevious from '@common/hooks/usePrevious'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useEmailVaultControllerState from '@web/hooks/useEmailVaultControllerState'
 
 import EmailConfirmation from '../EmailConfirmation'
 
@@ -37,8 +37,8 @@ const EmailForm = () => {
     defaultValues: { email: '' }
   })
 
-  const { dispatch } = useBackgroundService()
-  const emailVault = useEmailVaultControllerState()
+  const { dispatch } = useControllersMiddleware()
+  const emailVault = useController('EmailVaultController').state
   const {
     ref: confirmationModalRef,
     open: openConfirmationModal,
@@ -102,13 +102,14 @@ const EmailForm = () => {
           )}
         </Text>
         <Banner
-          type="info2"
+          type="info"
           style={spacings.mbMd}
           title={t('Recovery works only if you have already enabled it in settings.')}
           titleFontSize={14}
         />
         <Controller
           control={control}
+          // @ts-ignore minot type mismatch, (value) => isEmail(value) has no warns
           rules={{ validate: isEmail }}
           render={({ field: { onChange, onBlur, value } }) => (
             <Input

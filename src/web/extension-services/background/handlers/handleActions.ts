@@ -22,29 +22,36 @@ import sessionStorage from '../webapi/sessionStorage'
 export const handleActions = async (
   action: Action,
   {
-    pm,
-    port,
     eventEmitterRegistry,
     mainCtrl,
     walletStateCtrl,
     autoLockCtrl,
     extensionUpdateCtrl,
+    pm,
+    port,
     windowId
   }: {
-    pm: PortMessenger
-    port: Port
     eventEmitterRegistry: IEventEmitterRegistryController
     mainCtrl: MainController
     walletStateCtrl: WalletStateController
-    autoLockCtrl: AutoLockController
-    extensionUpdateCtrl: ExtensionUpdateController
+    autoLockCtrl?: AutoLockController
+    extensionUpdateCtrl?: ExtensionUpdateController
+    pm?: PortMessenger
+    port?: Port
     windowId?: number
   }
 ) => {
   // @ts-ignore
   const { type, params } = action
   switch (type) {
+    case 'HANDSHAKE': {
+      if (!pm || !port) return
+      pm.sendToPort(port, '> ui', { method: 'portReady', params: {} })
+      break
+    }
     case 'UPDATE_PORT_URL': {
+      if (!port) return
+
       if (port.sender) {
         port.sender.url = params.url
         if (port.sender.tab) port.sender.tab.url = params.url
@@ -56,9 +63,27 @@ export const handleActions = async (
       break
     }
     case 'INIT_CONTROLLER_STATE': {
-      const ctrl = eventEmitterRegistry.values().find((c) => c.name === params.controller)
-      if (ctrl) pm.send('> ui', { method: params.controller, params: ctrl })
+      if (!pm) return
 
+      const ctrl = eventEmitterRegistry.values().find((c) => c.name === params.controller)
+      pm.send('> ui', { method: params.controller, params: ctrl ?? null })
+
+      break
+    }
+    case 'method': {
+      const { ctrlName, method, args } = params
+
+      const ctrl = eventEmitterRegistry.values().find((c) => c.name === ctrlName) as any
+
+      if (!ctrl) {
+        console.error(`handleAction: Controller ${ctrlName} not found`)
+
+        return
+      }
+
+      if (ctrl && typeof ctrl[method] === 'function') {
+        ctrl[method](...args)
+      }
       break
     }
     case 'MAIN_CONTROLLER_LOCK':
@@ -91,14 +116,6 @@ export const handleActions = async (
     }
     case 'PROVIDERS_CONTROLLER_TOGGLE_BATCHING': {
       return await mainCtrl.providers.toggleBatching()
-    }
-    case 'PROVIDERS_CONTROLLER_CALL_PROVIDER_AND_SEND_RES_TO_UI': {
-      mainCtrl.providers.callProviderAndSendResToUi(params)
-      break
-    }
-    case 'PROVIDERS_CONTROLLER_CALL_CONTRACT_AND_SEND_RES_TO_UI': {
-      mainCtrl.providers.callContractAndSendResToUi(params)
-      break
     }
     case 'MAIN_CONTROLLER_ADD_NETWORK': {
       return await mainCtrl.addNetwork(params)
@@ -585,10 +602,12 @@ export const handleActions = async (
       break
     }
     case 'AUTO_LOCK_CONTROLLER_SET_LAST_ACTIVE_TIME': {
-      autoLockCtrl.setLastActiveTime()
+      autoLockCtrl?.setLastActiveTime()
       break
     }
     case 'AUTO_LOCK_CONTROLLER_SET_AUTO_LOCK_TIME': {
+      if (!autoLockCtrl) return
+
       autoLockCtrl.autoLockTime = params
       break
     }
@@ -618,6 +637,9 @@ export const handleActions = async (
 
       break
     }
+    case 'DAPPS_CONTROLLER_GET_CURRENT_DAPP_AND_SEND_RES_TO_UI': {
+      return mainCtrl.dapps.getCurrentDappAndSendResToUi(params)
+    }
     case 'CHANGE_CURRENT_DAPP_NETWORK': {
       mainCtrl.dapps.updateDapp(params.id, { chainId: params.chainId })
       await mainCtrl.dapps.broadcastDappSessionEvent(
@@ -637,15 +659,17 @@ export const handleActions = async (
       return mainCtrl.dapps.removeDapp(params)
     }
     case 'EXTENSION_UPDATE_CONTROLLER_APPLY_UPDATE': {
-      extensionUpdateCtrl.applyUpdate()
+      extensionUpdateCtrl?.applyUpdate()
       break
     }
 
     case 'OPEN_EXTENSION_POPUP': {
+      if (!pm) return
+
       // eslint-disable-next-line no-inner-declarations
       async function waitForPopupOpen(timeout = 10000, interval = 100) {
         const startTime = Date.now()
-        while (!pm.ports.some((p) => p.name === 'popup')) {
+        while (!pm!.ports.some((p) => p.name === 'popup')) {
           if (Date.now() - startTime > timeout) break
           await wait(interval)
         }

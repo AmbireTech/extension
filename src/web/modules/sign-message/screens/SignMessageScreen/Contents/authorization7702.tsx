@@ -3,9 +3,9 @@ import { Trans, useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import BasicToSmart from '@common/assets/svg/BasicToSmart'
-import BundleTxns from '@common/assets/svg/BundleTxns'
-import PayGas from '@common/assets/svg/PayGas'
-import PreviewOutcome from '@common/assets/svg/PreviewOutcome'
+import BatchIcon from '@common/assets/svg/BatchIcon'
+import GasTankIcon from '@common/assets/svg/GasTankIcon'
+import VisibilityIcon from '@common/assets/svg/VisibilityIcon'
 import Alert from '@common/components/Alert'
 import Checkbox from '@common/components/Checkbox'
 import Text from '@common/components/Text'
@@ -33,17 +33,17 @@ const Authorization7702 = ({
     {
       id: 1,
       text: 'Pay gas fees in ERC-20 tokens, stablecoins, and native tokens.',
-      image: PayGas
+      image: GasTankIcon
     },
     {
       id: 2,
       text: 'Bundle multiple actions, i.e., transaction approvals and the transactions themselves.',
-      image: BundleTxns
+      image: BatchIcon
     },
     {
       id: 3,
       text: 'Preview the outcome of your transactions, including the future account balance, before signing.',
-      image: PreviewOutcome,
+      image: VisibilityIcon,
       styles: [spacings.mr0]
     }
   ]
@@ -80,8 +80,8 @@ const Authorization7702 = ({
               options.length === index + 1
                 ? spacings.mr0
                 : displayFullInformation
-                ? spacings.mrMd
-                : spacings.mrLg,
+                  ? spacings.mrMd
+                  : spacings.mrLg,
               flexbox.flex1,
               flexbox.center,
               spacings.phXl,
@@ -98,7 +98,7 @@ const Authorization7702 = ({
             text={option.text}
             textProps={{ fontSize: 12, weight: 'medium' }}
             icon={option.image}
-            iconWrapperStyles={[{ height: 66 }]}
+            iconProps={{ width: 48, height: 48 }}
             isDisabled
           />
         ))}
@@ -122,7 +122,7 @@ const Authorization7702 = ({
       </Trans>
 
       {!!displayFullInformation && !!onDoNotAskMeAgainChange && (
-        <View style={[flexbox.directionRow, flexbox.alignCenter, { minHeight: '47px' }]}>
+        <View style={[flexbox.directionRow, flexbox.alignCenter, { minHeight: 47 }]}>
           <Checkbox
             value={!!doNotAskMeAgain}
             style={spacings.mb0}

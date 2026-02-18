@@ -1,6 +1,6 @@
 import { useContext } from 'react'
 
-import { benzinNetworksContext } from '@benzin/context'
+import { benzinNetworksContext } from '@benzin/contexts/benzinNetworksContext'
 
 export default function useBenzinNetworksContext() {
   const context = useContext(benzinNetworksContext)

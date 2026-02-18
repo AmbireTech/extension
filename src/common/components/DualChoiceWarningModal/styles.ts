@@ -14,18 +14,18 @@ const getStyles = () =>
   StyleSheet.create<Styles>({
     container: {},
     content: {
-      ...spacings.phXl,
-      ...spacings.pvXl
+      ...spacings.mbXl,
+      ...spacings.ptLg
     },
     titleAndIcon: {
+      ...flexbox.directionRow,
       ...flexbox.alignCenter,
-      ...spacings.mbXl
+      ...spacings.mb
     },
     buttons: {
-      ...spacings.pvLg,
-      ...spacings.phXl,
       ...flexbox.directionRow,
-      ...flexbox.justifySpaceBetween
+      ...spacings.phSm,
+      ...spacings.pvSm
     }
   })
 

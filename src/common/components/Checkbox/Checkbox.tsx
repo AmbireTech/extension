@@ -2,6 +2,7 @@ import React, { ReactNode } from 'react'
 import { ColorValue, TouchableOpacity, View, ViewProps } from 'react-native'
 
 import CheckIcon from '@common/assets/svg/CheckIcon'
+import CheckIcon2 from '@common/assets/svg/CheckIcon2'
 import Text, { Props as TextProps } from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import flexboxStyles from '@common/styles/utils/flexbox'
@@ -46,17 +47,19 @@ const Checkbox = ({
             styles.webCheckbox,
             {
               borderColor: value
-                ? checkedColor || theme.successDecorative
-                : uncheckedBorderColor || theme.primaryBorder
+                ? checkedColor || theme.success400
+                : uncheckedBorderColor || theme.neutral600
             },
-            !!value && { backgroundColor: checkedColor || theme.successDecorative }
+            !!value && { backgroundColor: checkedColor || theme.success400 }
           ]}
           testID={testID}
           onPress={onChange}
           activeOpacity={0.6}
           disabled={isDisabled}
         >
-          {!!value && <CheckIcon color={checkedColor || theme.successDecorative} />}
+          {!!value && (
+            <CheckIcon2 color={theme.success400} checkColor={checkedColor || theme.neutral100} />
+          )}
         </TouchableOpacity>
       </View>
       <View style={flexboxStyles.flex1}>

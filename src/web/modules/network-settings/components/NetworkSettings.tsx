@@ -12,6 +12,7 @@ import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Search from '@common/components/Search'
 import Text from '@common/components/Text'
 import { isAmbireNext, isDev } from '@common/config/env'
+import useController from '@common/hooks/useController'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
@@ -23,8 +24,6 @@ import text from '@common/styles/utils/text'
 import NetworkAvailableFeatures from '@web/components/NetworkAvailableFeatures'
 import NetworkDetails from '@web/components/NetworkDetails'
 import { openInTab } from '@web/extension-services/background/webapi/tab'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
-import useProvidersControllerState from '@web/hooks/useProvidersControllerState'
 import { SettingsRoutesContext } from '@web/modules/settings/contexts/SettingsRoutesContext'
 import Network from '@web/modules/settings/screens/NetworksSettingsScreen/Network'
 import NetworkForm from '@web/modules/settings/screens/NetworksSettingsScreen/NetworkForm'
@@ -37,10 +36,10 @@ const NetworksSettings = () => {
   const { control, watch } = useForm({ defaultValues: { search: '' } })
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const { maxWidthSize } = useWindowSize()
-  const { allNetworks } = useNetworksControllerState()
+  const { allNetworks } = useController('NetworksController').state
   const {
     state: { providers }
-  } = useProvidersControllerState()
+  } = useController('ProvidersController')
 
   const { setCurrentSettingsPage } = useContext(SettingsRoutesContext)
   const { theme, themeType } = useTheme()
@@ -168,7 +167,7 @@ const NetworksSettings = () => {
                 style={{ height: 48, ...spacings.mbTy }}
                 childrenPosition="left"
               >
-                <ChainlistIcon width={20} height={20} color={theme.primary} style={spacings.mrTy} />
+                <ChainlistIcon width={24} height={24} style={spacings.mrTy} />
               </Button>
             )}
             <Button
@@ -186,14 +185,7 @@ const NetworksSettings = () => {
           </View>
         </View>
 
-        <View
-          style={[
-            { flex: 2 },
-            maxWidthSize('xl') ? spacings.plXl : spacings.plLg,
-            maxWidthSize('xl') ? spacings.mlXl : spacings.mlLg,
-            { borderLeftWidth: 1, borderColor: theme.secondaryBorder }
-          ]}
-        >
+        <View style={[{ flex: 1.75 }, spacings.mlLg]}>
           <ScrollableWrapper contentContainerStyle={{ flexGrow: 1 }}>
             <View style={spacings.mb}>
               <NetworkDetails
@@ -231,10 +223,7 @@ const NetworksSettings = () => {
           contentContainerStyle: { flex: 1 }
         }}
         containerInnerWrapperStyles={{ flex: 1 }}
-        backgroundColor={
-          themeType === THEME_TYPES.DARK ? 'secondaryBackground' : 'primaryBackground'
-        }
-        style={{ ...spacings.ph0, ...spacings.pv0, overflow: 'hidden' }}
+        style={{ ...spacings.ph0, ...spacings.pv0, overflow: 'hidden', maxWidth: 880 }}
         autoOpen={shouldOpenBottomSheet}
       >
         <NetworkForm onCancel={closeBottomSheet} onSaved={closeBottomSheet} />

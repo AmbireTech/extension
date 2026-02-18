@@ -4,16 +4,16 @@ import { useTranslation } from 'react-i18next'
 import DevIcon from '@common/assets/svg/DevIcon/DevIcon'
 import ControlOption from '@common/components/ControlOption'
 import FatToggle from '@common/components/FatToggle'
+import useController from '@common/hooks/useController'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useWalletStateController from '@web/hooks/useWalletStateController'
 
 const CrashAnalyticsControlOption = () => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { crashAnalyticsEnabled } = useWalletStateController()
-  const { dispatch } = useBackgroundService()
+  const { crashAnalyticsEnabled } = useController('WalletStateController').state
+  const { dispatch } = useControllersMiddleware()
 
   const handleToggleCrashAnalytics = useCallback(() => {
     dispatch({

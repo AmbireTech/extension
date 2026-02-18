@@ -6,6 +6,7 @@ import RetryIcon from '@common/assets/svg/RetryIcon'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
+import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
 
@@ -13,9 +14,10 @@ type Props = {
   onPress: () => void
   label?: string
   disabled?: boolean
+  isLarge?: boolean
 }
 
-const RetryButton: FC<Props> = ({ onPress, label, disabled }) => {
+const RetryButton: FC<Props> = ({ onPress, label, disabled, isLarge }) => {
   const { theme } = useTheme()
   const { t } = useTranslation()
   const buttonLabel = label ?? t('Retry')
@@ -23,8 +25,8 @@ const RetryButton: FC<Props> = ({ onPress, label, disabled }) => {
   const [bindAnim, animStyle] = useCustomHover({
     property: 'backgroundColor',
     values: {
-      from: `${theme.primary as string}14`,
-      to: theme.primary20
+      from: hexToRgba(theme.primaryAccent100, 1),
+      to: hexToRgba(theme.primaryAccent200, 0.16)
     }
   })
 
@@ -74,12 +76,12 @@ const RetryButton: FC<Props> = ({ onPress, label, disabled }) => {
       ...flexbox.directionRow,
       ...flexbox.alignCenter,
       ...animStyle,
-      ...spacings.phTy,
-      minHeight: 28,
-      paddingLeft: 10,
+      paddingLeft: 6,
+      paddingRight: 2,
+      minHeight: isLarge ? 28 : 20,
       ...(disabled && { opacity: 0.5 })
     }),
-    [animStyle, disabled]
+    [animStyle, disabled, isLarge]
   )
 
   return (
@@ -89,11 +91,11 @@ const RetryButton: FC<Props> = ({ onPress, label, disabled }) => {
       disabled={disabled}
       {...mergedBindAnim}
     >
-      <Text fontSize={12} weight="medium" color={theme.primary} style={spacings.mrTy}>
+      <Text fontSize={12} weight="medium" color={theme.primaryAccent300} style={spacings.mrMi}>
         {buttonLabel}
       </Text>
       <Animated.View style={{ transform: [{ rotateZ: rotateInterpolate }] }}>
-        <RetryIcon color={theme.primary} />
+        <RetryIcon color={theme.primaryAccent300} />
       </Animated.View>
     </AnimatedPressable>
   )

@@ -4,6 +4,8 @@ import { NavigateOptions } from 'react-router-dom'
 
 import { Account } from '@ambire-common/interfaces/account'
 import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
+import useController from '@common/hooks/useController'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useNavigation from '@common/hooks/useNavigation'
 import usePrevious from '@common/hooks/usePrevious'
 import useRoute from '@common/hooks/useRoute'
@@ -11,12 +13,6 @@ import { AUTH_STATUS } from '@common/modules/auth/constants/authStatus'
 import useAuth from '@common/modules/auth/hooks/useAuth'
 import { ONBOARDING_WEB_ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import { ControllersStateLoadedContext } from '@web/contexts/controllersStateLoadedContext'
-import useAccountPickerControllerState from '@web/hooks/useAccountPickerControllerState'
-import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useEmailVaultControllerState from '@web/hooks/useEmailVaultControllerState'
-import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
-import useWalletStateController from '@web/hooks/useWalletStateController'
 import { getUiType } from '@web/utils/uiType'
 
 export type OnboardingRoute = (typeof ONBOARDING_WEB_ROUTES)[number]
@@ -65,16 +61,17 @@ const getAccountsToPersonalizeFromSession = (): Account[] => {
 }
 
 const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode }) => {
-  const { hasPasswordSecret } = useKeystoreControllerState()
-  const { statuses: emailVaultStatuses } = useEmailVaultControllerState()
+  const { hasPasswordSecret } = useController('KeystoreController').state
+  const { statuses: emailVaultStatuses } = useController('EmailVaultController').state
   const { path, params } = useRoute()
   const prevPath: string | undefined = usePrevious(path)
   const { navigate } = useNavigation()
   const { authStatus } = useAuth()
-  const { dispatch } = useBackgroundService()
-  const { isSetupComplete } = useWalletStateController()
-  const { accounts } = useAccountsControllerState()
-  const { isInitialized, subType, initParams, type } = useAccountPickerControllerState()
+  const { dispatch } = useControllersMiddleware()
+  const { isSetupComplete } = useController('WalletStateController').state
+  const { accounts } = useController('AccountsController').state
+  const { isInitialized, subType, initParams, type } =
+    useController('AccountPickerController').state
   const isOnboardingRoute = useMemo(
     () => ONBOARDING_WEB_ROUTES.includes((path || '').substring(1)),
     [path]
