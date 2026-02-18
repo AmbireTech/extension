@@ -1,6 +1,7 @@
 import React, { ReactNode, useState } from 'react'
 import {
   BlurEvent,
+  ColorValue,
   TextInput,
   TextInputProps,
   TextStyle,
@@ -39,7 +40,6 @@ export interface InputProps extends TextInputProps {
   setInputRef?: (ref: TextInput | null) => void
   inputBorderWrapperRef?: React.RefObject<View>
   nativeInputStyle?: ViewStyle & TextStyle
-  borderWrapperStyle?: ViewStyle
   inputWrapperStyle?: ViewStyle | ViewStyle[]
   bottomLabelStyle?: TextStyle | TextStyle[]
   leftIcon?: () => ReactNode
@@ -48,6 +48,7 @@ export interface InputProps extends TextInputProps {
     id: string
     content: string
   }
+  backgroundColor?: ColorValue
   childrenBeforeButtons?: ReactNode
   childrenBelowInput?: ReactNode
   borderless?: boolean
@@ -74,7 +75,6 @@ const Input = ({
   containerStyle,
   inputStyle,
   nativeInputStyle,
-  borderWrapperStyle,
   inputWrapperStyle,
   bottomLabelStyle,
   leftIcon,
@@ -87,6 +87,7 @@ const Input = ({
   inputBorderWrapperRef,
   customInputContent,
   editable,
+  backgroundColor,
   renderConfirmAddress,
   preventJumpOnValidationChange,
   ...rest
@@ -112,7 +113,7 @@ const Input = ({
   const inputWrapperStyles: ViewStyle[] = [
     styles.inputWrapper,
     {
-      backgroundColor: theme.primaryBackground,
+      backgroundColor: backgroundColor || theme.primaryBackground,
       borderColor: 'transparent'
     },
     isValid ? { borderColor: theme.successDecorative } : {},

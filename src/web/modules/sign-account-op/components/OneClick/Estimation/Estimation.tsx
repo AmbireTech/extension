@@ -14,7 +14,7 @@ import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
-import GlassView from '@common/components/GlassView'
+import FooterGlassView from '@common/components/FooterGlassView'
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
 import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
 import Text from '@common/components/Text'
@@ -188,41 +188,37 @@ const OneClickEstimation = ({
               signAccountOpState={signAccountOpController}
               bundlerNonceDiscrepancy={bundlerNonceDiscrepancy}
             />
-            <View style={[flexbox.directionRow, flexbox.justifyCenter, spacings.pt]}>
-              <GlassView style={{ borderRadius: 28 }} cssStyle={{ borderRadius: 28 }}>
-                <View style={[flexbox.directionRow, spacings.phSm, spacings.pvSm]}>
-                  <Button
-                    testID="back-button"
-                    type="secondary"
-                    text={t('Back')}
-                    onPress={closeEstimationModal}
-                    hasBottomSpacing={false}
-                    disabled={isSignLoading}
-                    style={{ width: 98, ...spacings.mrLg }}
-                    size="smaller"
-                  />
+            <FooterGlassView size="sm" absolute={false} style={spacings.pt}>
+              <Button
+                testID="back-button"
+                type="secondary"
+                text={t('Back')}
+                onPress={closeEstimationModal}
+                hasBottomSpacing={false}
+                disabled={isSignLoading}
+                style={{ width: 98, ...spacings.mrLg }}
+                size="smaller"
+              />
 
-                  {!!banners && !!banners.length ? (
-                    <HoldToProceedButton
-                      testID="sign-proceed-btn"
-                      text={t('Hold to sign')}
-                      disabled={isSignDisabled || signingErrors.length > 0}
-                      onHoldComplete={onSignButtonClick}
-                      size="smaller"
-                    />
-                  ) : (
-                    <ButtonWithLoader
-                      testID="sign-button"
-                      text={primaryButtonText}
-                      isLoading={isSignLoading}
-                      disabled={isSignDisabled || signingErrors.length > 0}
-                      onPress={onSignButtonClick}
-                      size="smaller"
-                    />
-                  )}
-                </View>
-              </GlassView>
-            </View>
+              {!!banners && !!banners.length ? (
+                <HoldToProceedButton
+                  testID="sign-proceed-btn"
+                  text={t('Hold to sign')}
+                  disabled={isSignDisabled || signingErrors.length > 0}
+                  onHoldComplete={onSignButtonClick}
+                  size="smaller"
+                />
+              ) : (
+                <ButtonWithLoader
+                  testID="sign-button"
+                  text={primaryButtonText}
+                  isLoading={isSignLoading}
+                  disabled={isSignDisabled || signingErrors.length > 0}
+                  onPress={onSignButtonClick}
+                  size="smaller"
+                />
+              )}
+            </FooterGlassView>
           </View>
         )}
       </BottomSheet>

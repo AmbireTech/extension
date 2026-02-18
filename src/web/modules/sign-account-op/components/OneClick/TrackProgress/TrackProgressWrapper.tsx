@@ -51,7 +51,7 @@ const TrackProgressWrapper: FC<TrackProgressProps> = ({
           <View style={{ height: 1, backgroundColor: theme.secondaryBorder, ...spacings.mvLg }} />
         )}
 
-        <FooterGlassView borderRadius={28} style={{ bottom: SPACING }}>
+        <FooterGlassView size="sm" style={{ bottom: SPACING }}>
           <View
             style={[
               routeStatus !== 'failed' ? flexbox.directionRow : flexbox.directionRowReverse,

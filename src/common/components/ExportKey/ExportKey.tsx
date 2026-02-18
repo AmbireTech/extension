@@ -14,9 +14,7 @@ import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useExtraEntropy from '@common/hooks/useExtraEntropy'
 import usePrevious from '@common/hooks/usePrevious'
-import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import eventBus from '@web/extension-services/event/eventBus'
@@ -45,7 +43,6 @@ const ExportKey = ({
   const [blurred, setBlurred] = useState<boolean>(true)
   const prevBlurred = usePrevious(blurred)
 
-  const { themeType } = useTheme()
   const {
     ref: sheetRefConfirmPassword,
     open: openConfirmPassword,
@@ -147,9 +144,6 @@ const ExportKey = ({
         sheetRef={sheetRefConfirmPassword}
         id="confirm-password-bottom-sheet"
         type="modal"
-        backgroundColor={
-          themeType === THEME_TYPES.DARK ? 'secondaryBackground' : 'primaryBackground'
-        }
         closeBottomSheet={closeConfirmPassword}
         scrollViewProps={{ contentContainerStyle: { flex: 1 } }}
         containerInnerWrapperStyles={{ flex: 1 }}

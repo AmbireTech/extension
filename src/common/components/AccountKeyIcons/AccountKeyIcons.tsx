@@ -37,7 +37,7 @@ const AccountKeyIcons = ({
   isExtended: boolean
 }) => {
   const { keys } = useController('KeystoreController').state
-  const { theme, themeType } = useTheme()
+  const { theme } = useTheme()
   const associatedKeys = account?.associatedKeys || []
   const importedKeyTypes = Array.from(
     new Set(keys.filter(({ addr }) => associatedKeys.includes(addr)).map((key) => key.type))

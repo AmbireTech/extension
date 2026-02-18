@@ -4,8 +4,7 @@ import { Animated, ColorValue, PressableProps, TextStyle, ViewStyle } from 'reac
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
-import common from '@common/styles/utils/common'
+import common, { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { AnimatedPressable, useCustomHover, useMultiHover } from '@web/hooks/useHover'
 import { AnimatedText } from '@web/hooks/useHover/useHover'
@@ -18,6 +17,7 @@ import getStyles from './styles'
 type ButtonTypes =
   | 'primary'
   | 'secondary'
+  | 'tertiary'
   | 'danger'
   | 'outline'
   | 'ghost'
@@ -76,6 +76,7 @@ const ButtonInnerContainer = ({
     () => ({
       primary: [],
       secondary: [],
+      tertiary: [],
       danger: [],
       outline: [],
       ghost: [
@@ -160,7 +161,7 @@ const Button = ({
   tooltipDataSet,
   ...rest
 }: Props) => {
-  const { styles, theme, themeType } = useTheme(getStyles)
+  const { styles, theme } = useTheme(getStyles)
   const submitOnEnter = _submitOnEnter ?? type === 'primary'
 
   useOnEnterKeyPress({
@@ -186,6 +187,13 @@ const Button = ({
           to: theme.tertiaryBackground
         }
       ],
+      tertiary: [
+        {
+          property: 'backgroundColor',
+          from: theme.secondaryBackground,
+          to: theme.tertiaryBackground
+        }
+      ],
       danger: [
         {
           property: 'backgroundColor',
@@ -193,7 +201,18 @@ const Button = ({
           to: theme.error300
         }
       ],
-      outline: [OPACITY_ANIMATION],
+      outline: [
+        {
+          property: 'backgroundColor',
+          from: hexToRgba(theme.tertiaryBackground, 0),
+          to: hexToRgba(theme.tertiaryBackground, 1)
+        },
+        {
+          property: 'borderColor',
+          from: theme.primaryBorder,
+          to: theme.neutral400
+        }
+      ],
       ghost: [],
       ghost2: [],
       error: [OPACITY_ANIMATION],
@@ -219,6 +238,7 @@ const Button = ({
   const containerStyles: { [key in ButtonTypes]: ViewStyle } = {
     primary: styles.buttonContainerPrimary,
     secondary: styles.buttonContainerSecondary,
+    tertiary: styles.buttonContainerSecondary,
     danger: styles.buttonContainerDanger,
     outline: styles.buttonContainerOutline,
     ghost: styles.buttonContainerGhost,
@@ -272,6 +292,13 @@ const Button = ({
           to: theme.primaryText
         }
       ],
+      tertiary: [
+        {
+          property: 'color',
+          from: theme.primaryText,
+          to: theme.primaryText
+        }
+      ],
       danger: [
         {
           property: 'color',
@@ -282,8 +309,8 @@ const Button = ({
       outline: [
         {
           property: 'color',
-          from: themeType === THEME_TYPES.DARK ? theme.primary : theme.successDecorative,
-          to: themeType === THEME_TYPES.DARK ? '#fff' : theme.successDecorative
+          from: theme.primaryText,
+          to: theme.primaryText
         }
       ],
       ghost: [
@@ -336,7 +363,7 @@ const Button = ({
         }
       ]
     }),
-    [themeType, theme]
+    [theme]
   )
 
   const [buttonTextBind, buttonTextAnimatedStyle, isHovered] = useMultiHover({

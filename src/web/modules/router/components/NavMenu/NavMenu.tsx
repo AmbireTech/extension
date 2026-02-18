@@ -71,10 +71,9 @@ const expandViewTooltipId = 'expand-view-tooltip'
 const NavMenu = () => {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
-  const { styles, theme } = useTheme(getStyles)
+  const { theme } = useTheme(getStyles)
   const { hasPasswordSecret } = useController('KeystoreController').state
   const { dispatch } = useControllersMiddleware()
-  const autoLockState = useController('AutoLockController').state
   const handleLockAmbire = () => {
     dispatch({
       type: 'MAIN_CONTROLLER_LOCK'
