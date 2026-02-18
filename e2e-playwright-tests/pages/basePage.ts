@@ -47,9 +47,8 @@ export class BasePage {
     await tokenLocator.click()
   }
 
-  async clickOnMenuFeeToken(paidByAddress: string, token: Token, onGasTank?: boolean) {
-    const selectMenu = this.page.getByTestId(selectors.feeTokensSelect)
-    await selectMenu.click()
+  async selectFeeToken(paidByAddress: string, token: Token, onGasTank?: boolean) {
+    await this.click(selectors.transaction.feeTokensSelectDropdown)
 
     // If the token is outside the viewport, we ensure it becomes visible by searching for its symbol
     await this.entertext(selectors.searchInput, token.symbol)
@@ -65,20 +64,16 @@ export class BasePage {
       .getByTestId('select-menu')
       .getByTestId(`option-${paidBy + tokenAddress + tokenSymbol + gasTank}`)
     await tokenLocator.click()
-  }
-
-  // TODO: refactor, this method can be depracated; switch to getByTestId
-  async typeTextInInputField(locator: string, text: string): Promise<void> {
-    await this.page.locator(locator).clear()
-    await this.page.locator(locator).pressSequentially(text)
+    await this.page.waitForTimeout(1000)
   }
 
   async clearFieldInput(selector: string): Promise<void> {
     await this.page.getByTestId(selector).fill('')
   }
 
-  async getText(selector: string): Promise<string> {
-    return this.page.getByTestId(selector).innerText()
+  async getText(selector: string, options?: { index?: number }): Promise<string> {
+    const index = options?.index ?? 0
+    return this.page.getByTestId(selector).nth(index).innerText()
   }
 
   async entertext(selector: string, text: string, index?: number): Promise<void> {
@@ -92,8 +87,8 @@ export class BasePage {
     return this.page.getByTestId(selector).inputValue()
   }
 
-  async handleNewPage(locator: Locator): Promise<Page> {
-    const context = this.page.context()
+  async handleNewPage(locator: Locator, page: Page = this.page): Promise<Page> {
+    const context = page.context()
 
     // const [actionWindowPagePromise] = await Promise.all([
     //   context.waitForEvent('page', { timeout: 10000 }),
@@ -105,11 +100,11 @@ export class BasePage {
     // return actionWindowPagePromise
 
     // wait for locator before click
-    await locator.waitFor({ state: 'visible' })
+    await locator.waitFor({ state: 'visible', timeout: 100000 })
     await expect(locator).toBeEnabled()
 
     // setup listener for new page event
-    const newPagePromise = context.waitForEvent('page', { timeout: 10000 })
+    const newPagePromise = context.waitForEvent('page', { timeout: 15000 })
 
     // initiate new page event
     await locator.click({ timeout: 5000 })
@@ -132,20 +127,30 @@ export class BasePage {
     expect(this.page.url()).toContain(url)
   }
 
-  async expectButtonVisible(selector: string) {
-    await expect(this.page.getByTestId(selector)).toBeVisible()
+  async expectElementVisible(selector: string) {
+    await expect(this.page.getByTestId(selector)).toBeVisible({ timeout: 15000 })
   }
 
   async expectButtonEnabled(selector: string) {
-    await expect(this.page.getByTestId(selector)).toBeEnabled({ timeout: 5000 })
+    await expect(this.page.getByTestId(selector)).toBeEnabled({ timeout: 10000 })
   }
 
-  async compareText(selector: string, text: string, index?: number) {
-    await expect(this.page.getByTestId(selector).nth(index ?? 0)).toContainText(text)
+  async compareText(
+    selector: string,
+    text: string,
+    options?: { index?: number; timeout?: number }
+  ) {
+    const { index = 0, timeout = 30000 } = options ?? {}
+    await expect(this.page.getByTestId(selector).nth(index ?? 0)).toContainText(text, {
+      timeout
+    })
   }
 
-  async isVisible(selector: string): Promise<boolean> {
-    return this.page.getByTestId(selector).isVisible()
+  async isVisible(selector: string, index?: number): Promise<boolean> {
+    return this.page
+      .getByTestId(selector)
+      .nth(index ?? 0)
+      .isVisible()
   }
 
   async expectElementNotVisible(selector: string): Promise<void> {
@@ -165,14 +170,48 @@ export class BasePage {
     this._monitorInstalled = true
   }
 
+  stopMonitorRequests() {
+    if (this._monitorInstalled && this._reqListener) {
+      this.context.off('request', this._reqListener)
+      this._monitorInstalled = false
+    }
+
+    this.collectedRequests = []
+  }
+
   getCategorizedRequests() {
     return categorizeRequests(this.collectedRequests)
   }
 
   async getDashboardTokenBalance(token: Token) {
     const balanceText = await this.getText(`token-balance-${token.address}.${token.chainId}`)
-    const tokenBalance = parseFloat(balanceText)
+    const parseText = balanceText.replace(/,/g, '')
+    const tokenBalance = parseFloat(parseText)
 
     return tokenBalance
+  }
+
+  // approve the high impact modal if appears
+  async handlePriceWarningModals() {
+    const isHighPrice = await this.page
+      .waitForSelector(selectors.highPriceImpactSab, { timeout: 1000 })
+      .catch(() => null)
+
+    const isHighSlippage = await this.page
+      .waitForSelector(selectors.highSlippageModal, { timeout: 1000 })
+      .catch(() => null)
+
+    if (isHighPrice || isHighSlippage) {
+      // TODO: change methods once we have IDs
+      await this.click(selectors.continueAnywayCheckboxSaB)
+      await this.page.locator(selectors.continueAnywayButton).click()
+    }
+  }
+
+  async longPressButton(selector: string, pressTime: number) {
+    await this.page.getByTestId(selector).hover()
+    await this.page.mouse.down()
+    await this.page.waitForTimeout(pressTime * 1000)
+    await this.page.mouse.up()
   }
 }

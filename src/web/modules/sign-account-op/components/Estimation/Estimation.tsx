@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Pressable, View } from 'react-native'
+import { View } from 'react-native'
 
 import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
 import { getFeeSpeedIdentifier } from '@ambire-common/controllers/signAccountOp/helper'
@@ -11,27 +11,24 @@ import { ZERO_ADDRESS } from '@ambire-common/services/socket/constants'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import AssetIcon from '@common/assets/svg/AssetIcon'
 import FeeIcon from '@common/assets/svg/FeeIcon'
-import InfoIcon from '@common/assets/svg/InfoIcon'
-import ManifestFallbackIcon from '@common/assets/svg/ManifestFallbackIcon'
 import Alert from '@common/components/Alert'
 import Select, { SectionedSelect } from '@common/components/Select'
 import { SelectValue } from '@common/components/Select/types'
 import Text from '@common/components/Text'
-import Tooltip from '@common/components/Tooltip'
+import TitleAndIcon from '@common/components/TitleAndIcon'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
-import ManifestImage from '@web/components/ManifestImage'
-import { openInTab } from '@web/extension-services/background/webapi/tab'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 
 import BundlerWarning from './components/bundlerWarning'
 import EstimationSkeleton from './components/EstimationSkeleton'
 import PayOption from './components/PayOption'
+import ServiceFee from './components/ServiceFee'
+import Sponsored from './components/Sponsored'
 import { NO_FEE_OPTIONS } from './consts'
-import { getDefaultFeeOption, mapFeeOptions, sortFeeOptions } from './helpers'
+import { mapFeeOptions, sortFeeOptions } from './helpers'
 import getStyles from './styles'
 import { Props } from './types'
 
@@ -100,10 +97,9 @@ const Estimation = ({
   bundlerNonceDiscrepancy,
   serviceFee
 }: Props) => {
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { t } = useTranslation()
-  const { theme, themeType, styles } = useTheme(getStyles)
-  const { minWidthSize } = useWindowSize()
+  const { theme } = useTheme(getStyles)
 
   const feeTokenPriceUnavailableWarning = useMemo(() => {
     return signAccountOpState?.warnings.find((warning) => warning.id === 'feeTokenPriceUnavailable')
@@ -127,11 +123,6 @@ const Estimation = ({
       .map((feeOption) => mapFeeOptions(feeOption, signAccountOpState))
   }, [hasEstimation, signAccountOpState])
 
-  const defaultFeeOption = useMemo(
-    () => getDefaultFeeOption(payOptionsPaidByUsOrGasTank, payOptionsPaidByEOA),
-    [payOptionsPaidByEOA, payOptionsPaidByUsOrGasTank]
-  )
-
   const [selectedFeeOption, setSelectedFeeOption] = useState<SelectValue['value'] | null>(null)
 
   const payValue = useMemo(() => {
@@ -142,69 +133,41 @@ const Estimation = ({
   }, [payOptionsPaidByUsOrGasTank, payOptionsPaidByEOA, selectedFeeOption])
 
   const setFeeOption = useCallback(
-    (localPayValue: any) => {
+    (localPayValue: any, skipDispatch?: boolean) => {
       if (!signAccountOpState?.selectedFeeSpeed) return
       setSelectedFeeOption(localPayValue.value)
 
-      dispatch({
-        type: 'SIGN_ACCOUNT_OP_UPDATE',
-        params: {
-          updateType,
-          feeToken: localPayValue.token,
-          paidBy: localPayValue.paidBy,
-          speed: localPayValue.speedCoverage.includes(signAccountOpState.selectedFeeSpeed)
-            ? signAccountOpState.selectedFeeSpeed
-            : FeeSpeed.Fast
-        }
-      })
+      if (!skipDispatch) {
+        dispatch({
+          type: 'CURRENT_SIGN_ACCOUNT_OP_UPDATE',
+          params: {
+            updateType,
+            feeToken: localPayValue.token,
+            paidBy: localPayValue.paidBy,
+            speed: localPayValue.speedCoverage.includes(signAccountOpState.selectedFeeSpeed)
+              ? signAccountOpState.selectedFeeSpeed
+              : FeeSpeed.Fast
+          }
+        })
+      }
     },
     [dispatch, signAccountOpState?.selectedFeeSpeed, updateType]
   )
 
   useEffect(() => {
-    if (!hasEstimation) return
+    if (!hasEstimation || !signAccountOpState) return
 
-    const isInitialValueSet = !!payValue
-    const canPayFeeAfterNotBeingAbleToPayInitially =
-      payValue?.value === NO_FEE_OPTIONS.value && defaultFeeOption.value !== NO_FEE_OPTIONS.value
-    const feeOptionNoLongerViable = payValue?.disabled !== defaultFeeOption.disabled
-
-    if (
-      !isInitialValueSet ||
-      canPayFeeAfterNotBeingAbleToPayInitially ||
-      feeOptionNoLongerViable ||
-      (payValue &&
-        !payOptionsPaidByUsOrGasTank.find(
-          (payOption) =>
-            payOption.paidBy === payValue.paidBy &&
-            payOption.token.address === payValue.token?.address
-        ) &&
-        !payOptionsPaidByEOA.find(
-          (payOption) =>
-            payOption.paidBy === payValue.paidBy &&
-            payOption.token.address === payValue.token?.address
-        ))
-    ) {
-      setFeeOption(defaultFeeOption)
+    if (!payValue && signAccountOpState.selectedOption) {
+      setFeeOption(mapFeeOptions(signAccountOpState.selectedOption, signAccountOpState), true)
     }
-  }, [
-    payValue,
-    setFeeOption,
-    hasEstimation,
-    defaultFeeOption.value,
-    defaultFeeOption,
-    signAccountOpState?.account.addr,
-    payOptionsPaidByUsOrGasTank,
-    payOptionsPaidByEOA
-  ])
+  }, [payValue, setFeeOption, hasEstimation, signAccountOpState])
 
   const feeSpeeds = useMemo(() => {
     if (!signAccountOpState?.selectedOption) return []
 
     const identifier = getFeeSpeedIdentifier(
       signAccountOpState.selectedOption,
-      signAccountOpState.accountOp.accountAddr,
-      signAccountOpState.rbfAccountOps[signAccountOpState.selectedOption.paidBy]
+      signAccountOpState.accountOp.accountAddr
     )
 
     // The fallback array covers a corner case, that I could not reproduce,
@@ -213,8 +176,7 @@ const Estimation = ({
   }, [
     signAccountOpState?.feeSpeeds,
     signAccountOpState?.selectedOption,
-    signAccountOpState?.accountOp.accountAddr,
-    signAccountOpState?.rbfAccountOps
+    signAccountOpState?.accountOp.accountAddr
   ])
 
   const isGaslessTransaction = useMemo(() => {
@@ -275,7 +237,7 @@ const Estimation = ({
       }
 
       dispatch({
-        type: 'SIGN_ACCOUNT_OP_UPDATE',
+        type: 'CURRENT_SIGN_ACCOUNT_OP_UPDATE',
         params: {
           updateType,
           speed: value as FeeSpeed
@@ -297,7 +259,7 @@ const Estimation = ({
     return [
       {
         title: {
-          icon: <FeeIcon color={theme.secondaryText} width={16} height={16} />,
+          icon: FeeIcon,
           text: t('With fee tokens from current account')
         },
         data: payOptionsPaidByUsOrGasTank,
@@ -305,14 +267,14 @@ const Estimation = ({
       },
       {
         title: {
-          icon: <AssetIcon color={theme.secondaryText} width={16} height={16} />,
+          icon: AssetIcon,
           text: t('With native assets of my EOA accounts')
         },
         data: payOptionsPaidByEOA,
         key: 'eoa-tokens'
       }
     ]
-  }, [payOptionsPaidByEOA, payOptionsPaidByUsOrGasTank, t, theme.secondaryText])
+  }, [payOptionsPaidByEOA, payOptionsPaidByUsOrGasTank, t])
 
   const nativeFeeOption = signAccountOpState?.estimation.availableFeeOptions.find(
     (feeOption) =>
@@ -337,41 +299,11 @@ const Estimation = ({
     return mappedFeeOption
   }, [hasEstimation, signAccountOpState, serviceFee, nativeFeeOption])
 
-  const renderFeeOptionSectionHeader = useCallback(
-    ({ section }: any) => {
-      if (section.data.length === 0 || !section.title) return null
+  const renderFeeOptionSectionHeader = useCallback(({ section }: any) => {
+    if (section.data.length === 0 || !section.title) return null
 
-      return (
-        <View
-          style={[
-            flexbox.directionRow,
-            flexbox.alignCenter,
-            spacings.phTy,
-            spacings.pvTy,
-            {
-              backgroundColor: theme.primaryBackground,
-              height: FEE_SECTION_LIST_MENU_HEADER_HEIGHT
-            },
-            section?.key === 'eoa-tokens' && {
-              borderTopWidth: 1,
-              borderTopColor: theme.secondaryBorder
-            }
-          ]}
-        >
-          {section.title.icon}
-          <Text
-            style={minWidthSize('xl') ? spacings.mlMi : spacings.mlTy}
-            fontSize={minWidthSize('xl') ? 12 : 14}
-            weight="medium"
-            appearance="secondaryText"
-          >
-            {section.title.text}
-          </Text>
-        </View>
-      )
-    },
-    [minWidthSize, theme.primaryBackground, theme.secondaryBorder]
-  )
+    return <TitleAndIcon icon={section.title.icon} title={section.title.text} />
+  }, [])
 
   if (!hasEstimation && !!slowRequest) {
     return (
@@ -391,48 +323,28 @@ const Estimation = ({
 
   if (
     !signAccountOpState ||
-    // <Bobby>: the line below may be incorrect and may cause
-    // estimation flashing
     (!hasEstimation && signAccountOpState.estimation.estimationRetryError) ||
     !payValue
   ) {
-    return <EstimationSkeleton />
+    return (
+      <EstimationSkeleton
+        // Overwrite the appearance in Swap/Transfer as the background behind the skeleton is different
+        // and it isn't visible in dark mode otherwise
+        appearance={updateType === 'Requests' ? undefined : 'tertiaryBackground'}
+      />
+    )
   }
 
   if (isSponsored) {
     return (
-      <View>
-        {sponsor ? (
-          <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-            {sponsor.icon && (
-              <ManifestImage
-                uri={sponsor.icon}
-                size={64}
-                fallback={() => <ManifestFallbackIcon width={64} height={64} />}
-              />
-            )}
-            <View style={spacings.ml}>
-              <Text fontSize={18} weight="semiBold" style={spacings.mbMi}>
-                {sponsor.name}
-              </Text>
-              <Text fontSize={16} appearance="secondaryText">
-                {t('is 🪄 sponsoring 🪄 this transaction')}
-              </Text>
-            </View>
-          </View>
-        ) : (
-          <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-            <View style={spacings.ml}>
-              <Text fontSize={18} weight="semiBold" style={spacings.mbMi}>
-                {t("The dapp you're connected to")}
-              </Text>
-              <Text fontSize={16} appearance="secondaryText">
-                {t('is 🪄 sponsoring 🪄 this transaction')}
-              </Text>
-            </View>
-          </View>
-        )}
-      </View>
+      <>
+        {(!serviceFee || !paidByNativeValue || !nativeFeeOption) && <Sponsored sponsor={sponsor} />}
+        <ServiceFee
+          serviceFee={serviceFee}
+          paidByNativeValue={paidByNativeValue}
+          nativeFeeOption={nativeFeeOption}
+        />
+      </>
     )
   }
 
@@ -454,10 +366,10 @@ const Estimation = ({
           flexbox.directionRow,
           flexbox.alignCenter,
           flexbox.justifySpaceBetween,
-          spacings.mbMi
+          spacings.mbSm
         ]}
       >
-        <Text fontSize={18} weight="medium">
+        <Text fontSize={20} weight="medium">
           {t('Pay fee with')}
         </Text>
         {selectedFee && (
@@ -466,8 +378,8 @@ const Estimation = ({
             // @ts-ignore
             setValue={onFeeSelect}
             options={feeSpeedOptions}
-            selectStyle={{ height: 32, borderWidth: themeType === THEME_TYPES.DARK ? 0 : 1 }}
-            menuOptionHeight={32}
+            selectStyle={{ height: 40, backgroundColor: theme.secondaryBackground }}
+            menuOptionHeight={40}
             // Display a wider menu if the fee token price is unavailable
             // as the native amount takes up more space
             menuLeftHorizontalOffset={feeTokenPriceUnavailableWarning ? 100 : 48}
@@ -489,69 +401,19 @@ const Estimation = ({
         disabled={
           disabled ||
           (!payOptionsPaidByUsOrGasTank.length && !payOptionsPaidByEOA.length) ||
-          defaultFeeOption.label === NO_FEE_OPTIONS.label
+          !signAccountOpState.selectedOption
         }
+        extraSearchProps={{}}
+        selectStyle={{ backgroundColor: theme.secondaryBackground }}
         defaultValue={payValue ?? undefined}
-        selectStyle={{
-          borderWidth: themeType === THEME_TYPES.DARK ? 0 : 1
-        }}
         withSearch={!!payOptionsPaidByUsOrGasTank.length || !!payOptionsPaidByEOA.length}
         stickySectionHeadersEnabled
       />
-      {serviceFee && paidByNativeValue && nativeFeeOption && (
-        <>
-          <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
-            <Text fontSize={12} style={spacings.mvTy}>
-              {t('+ Additional bridge fee')}
-            </Text>
-            <InfoIcon
-              width={16}
-              height={16}
-              data-tooltip-id="bridge-fee-icon"
-              style={spacings.mlTy}
-            />
-            <Tooltip id="bridge-fee-icon" clickable>
-              <View>
-                <Text fontSize={14} appearance="secondaryText" style={spacings.mbMi}>
-                  {t(
-                    `The selected bridge provider demands an additional service fee, paid out in ${paidByNativeValue.token.symbol}. This additional fee is not included in the gas fee displayed above or the quote. `
-                  )}
-                  <Pressable
-                    onPress={() => {
-                      // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                      openInTab({ url: 'https://help.ambire.com/hc/en-us/articles/20618326653596' })
-                    }}
-                  >
-                    <Text fontSize={14} weight="medium" appearance="primary">
-                      {t('Learn more')}
-                    </Text>
-                  </Pressable>
-                </Text>
-              </View>
-            </Tooltip>
-          </View>
-          <Select
-            options={[paidByNativeValue]}
-            containerStyle={spacings.mb0}
-            value={paidByNativeValue}
-            disabled
-            defaultValue={paidByNativeValue}
-            selectStyle={{
-              borderWidth: themeType === THEME_TYPES.DARK ? 0 : 1
-            }}
-            renderSelectedOption={() => (
-              <View style={styles.nativeBridgeFeeContainer}>
-                <PayOption
-                  amount={BigInt(serviceFee.amount)}
-                  amountUsd={serviceFee.amountUSD}
-                  feeOption={nativeFeeOption}
-                />
-              </View>
-            )}
-            withSearch={false}
-          />
-        </>
-      )}
+      <ServiceFee
+        serviceFee={serviceFee}
+        paidByNativeValue={paidByNativeValue}
+        nativeFeeOption={nativeFeeOption}
+      />
       <BundlerWarning
         signAccountOpState={signAccountOpState}
         bundlerNonceDiscrepancy={bundlerNonceDiscrepancy}

@@ -12,9 +12,7 @@ const Skeleton = () => {
 
   return (
     <View style={[spacings.phSm, spacings.ptSm, spacings.mbMi]}>
-      <View style={[styles.contentContainer]}>
-        <SkeletonLoader width="100%" height={150} />
-      </View>
+      <SkeletonLoader width="100%" height={150} />
     </View>
   )
 }

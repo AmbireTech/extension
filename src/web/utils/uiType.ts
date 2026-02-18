@@ -1,19 +1,19 @@
 import { isWeb } from '@common/config/env'
 import { isExtension } from '@web/constants/browserapi'
 
-type Pathname = 'index' | 'tab' | 'action-window'
+type Pathname = 'index' | 'tab' | 'request-window'
 
-type UiType = 'popup' | 'tab' | 'action-window'
+type UiType = 'popup' | 'tab' | 'request-window'
 
 const UI_TYPE: { [key: string]: Pathname } = {
   Tab: 'tab',
   Popup: 'index',
-  ActionWindow: 'action-window'
+  RequestWindow: 'request-window'
 }
 
 type UiTypeCheck = {
   isTab: boolean
-  isActionWindow: boolean
+  isRequestWindow: boolean
   isPopup: boolean
   uiType?: UiType
 }
@@ -36,11 +36,11 @@ const pathToUiType = (pathname: string): UiType => {
 
 export const getUiType = (): UiTypeCheck => {
   if (!isWeb) {
-    return { isActionWindow: false, isPopup: false, isTab: false }
+    return { isRequestWindow: false, isPopup: false, isTab: false }
   }
 
   if (isWeb && !isExtension) {
-    return { isActionWindow: false, isPopup: false, isTab: true }
+    return { isRequestWindow: false, isPopup: false, isTab: true }
   }
 
   const { pathname } = window.location

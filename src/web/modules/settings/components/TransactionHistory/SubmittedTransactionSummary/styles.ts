@@ -20,7 +20,6 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       backgroundColor: theme.secondaryBackground
     },
     summaryItem: {
-      ...spacings.phTy,
       backgroundColor: 'transparent',
       borderWidth: 0
     },

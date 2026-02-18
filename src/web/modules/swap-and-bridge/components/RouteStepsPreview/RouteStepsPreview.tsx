@@ -8,6 +8,8 @@ import {
   SwapAndBridgeStep
 } from '@ambire-common/interfaces/swapAndBridge'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
+import BungeeIcon from '@common/assets/svg/BungeeIcon/BungeeIcon'
+import LiFiIcon from '@common/assets/svg/LiFiIcon/LiFiIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
@@ -17,8 +19,6 @@ import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import formatTime from '@common/utils/formatTime'
 
-import BungeeIcon from '@common/assets/svg/BungeeIcon/BungeeIcon'
-import LiFiIcon from '@common/assets/svg/LiFiIcon/LiFiIcon'
 import RouteStepsArrow from '../RouteStepsArrow'
 import RouteStepsToken from '../RouteStepsToken'
 import styles from './styles'
@@ -30,11 +30,11 @@ const RouteStepsPreview = ({
   estimationInSeconds,
   currentStep = 0,
   loadingEnabled,
-  isSelected,
   isDisabled,
   routeStatus,
   disabledReason = 'Route failed',
-  providerId
+  providerId,
+  isBridge
 }: {
   steps: SwapAndBridgeStep[]
   inputValueInUsd?: number
@@ -42,11 +42,11 @@ const RouteStepsPreview = ({
   estimationInSeconds?: number
   currentStep?: number
   loadingEnabled?: boolean
-  isSelected?: boolean
   isDisabled?: boolean
   routeStatus?: SwapAndBridgeActiveRoute['routeStatus']
   disabledReason?: string
   providerId: string
+  isBridge: boolean
 }) => {
   const { theme } = useTheme()
   const { t } = useTranslation()
@@ -126,7 +126,7 @@ const RouteStepsPreview = ({
           if (isLast) {
             return (
               <Fragment key={step.type}>
-                <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
+                <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignStart]}>
                   <RouteStepsToken
                     amountInUsd={inputValueInUsd}
                     uri={step.fromAsset.icon}
@@ -136,7 +136,7 @@ const RouteStepsPreview = ({
                     amount={isOnlyOneStep ? formattedFromAmount : formattedRefundedAmount}
                   />
                   <RouteStepsArrow
-                    containerStyle={flexbox.flex1}
+                    containerStyle={{ ...flexbox.flex1, ...spacings.mt }}
                     type={getLastStepType(step)}
                     badge={
                       <>
@@ -176,10 +176,7 @@ const RouteStepsPreview = ({
           }
 
           return (
-            <View
-              key={step.type}
-              style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}
-            >
+            <View key={step.type} style={[flexbox.flex1, flexbox.directionRow, flexbox.alignStart]}>
               <RouteStepsToken
                 address={step.fromAsset.address}
                 chainId={BigInt(step.fromAsset.chainId)}
@@ -188,7 +185,7 @@ const RouteStepsPreview = ({
                 amount={isFirst ? formattedFromAmount : ''}
               />
               <RouteStepsArrow
-                containerStyle={flexbox.flex1}
+                containerStyle={{ ...flexbox.flex1, ...spacings.mt }}
                 type={step.userTxIndex < currentStep ? 'success' : 'default'}
                 badge={
                   <>
@@ -215,10 +212,11 @@ const RouteStepsPreview = ({
           )
         })}
       </View>
-      {!!estimationInSeconds && (
-        <View style={[flexbox.directionRow, flexbox.justifySpaceBetween]}>
-          {!!estimationInSeconds && !isDisabled && (
-            <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+
+      <View style={[flexbox.directionRow, flexbox.justifySpaceBetween]}>
+        {!isDisabled ? (
+          <>
+            <View>
               {!!shouldWarnForLongEstimation && (
                 <WarningIcon
                   color={theme.warningDecorative}
@@ -233,42 +231,38 @@ const RouteStepsPreview = ({
                 weight={shouldWarnForLongEstimation ? 'semiBold' : 'medium'}
                 appearance={shouldWarnForLongEstimation ? 'warningText' : 'primaryText'}
               >
-                {t('Estimation: around {{time}}', {
-                  time: formatTime(estimationInSeconds)
-                })}
+                {isBridge && !!estimationInSeconds
+                  ? t('Estimation: around {{time}}', {
+                      time: formatTime(estimationInSeconds)
+                    })
+                  : ''}
               </Text>
             </View>
-          )}
 
-          {!isDisabled && (
-            <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-              {providerId === 'socket' ? (
-                <BungeeIcon width={56.7} height={11.2} />
-              ) : (
-                <LiFiIcon width={39.75} height={14} />
-              )}
-            </View>
-          )}
-
-          {isDisabled && (
-            <View style={[flexbox.directionRow, flexbox.alignCenter, { maxWidth: '100%' }]}>
-              <Text
-                fontSize={12}
-                weight="medium"
-                color={theme.warningText}
-                style={[
-                  spacings.phTy,
-                  {
-                    backgroundColor: theme.warningBackground
-                  }
-                ]}
-              >
-                {disabledReason}
-              </Text>
-            </View>
-          )}
-        </View>
-      )}
+            {providerId === 'socket' ? (
+              <BungeeIcon width={56.7} height={11.2} />
+            ) : (
+              <LiFiIcon width={39.75} height={14} />
+            )}
+          </>
+        ) : (
+          <View style={[flexbox.directionRow, flexbox.alignCenter, { maxWidth: '100%' }]}>
+            <Text
+              fontSize={12}
+              weight="medium"
+              color={theme.warningText}
+              style={[
+                spacings.phTy,
+                {
+                  backgroundColor: theme.warningBackground
+                }
+              ]}
+            >
+              {disabledReason}
+            </Text>
+          </View>
+        )}
+      </View>
     </View>
   )
 }

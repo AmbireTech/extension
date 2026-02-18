@@ -9,10 +9,9 @@ import flexbox from '@common/styles/utils/flexbox'
 
 export interface Style {
   inputContainer: ViewStyle
-  borderWrapper: ViewStyle
   inputWrapper: ViewStyle
   input: TextStyle
-  nativeInput: ViewStyle
+  nativeInput: TextStyle
   button: ViewStyle
   buttonWithBackground: ViewStyle
   bottomLabel: TextStyle
@@ -21,6 +20,7 @@ export interface Style {
   disabled: ViewStyle
   tooltipWrapper: ViewStyle
   tooltip: ViewStyle
+  errorContainer: ViewStyle
 }
 
 const INPUT_HEIGHT = 48
@@ -31,12 +31,6 @@ const getStyles = (theme: ThemeProps) =>
     inputContainer: {
       ...spacings.mbSm,
       zIndex: 10
-    },
-    borderWrapper: {
-      borderWidth: 2,
-      borderRadius: 8,
-      borderColor: 'transparent',
-      ...common.hidden
     },
     inputWrapper: {
       ...flexbox.directionRow,
@@ -50,7 +44,7 @@ const getStyles = (theme: ThemeProps) =>
       ...flexbox.flex1,
       height: INPUT_HEIGHT,
       borderWidth: 0,
-      ...spacings.ph
+      ...spacings.phSm
     },
     nativeInput: {
       height: '100%',
@@ -62,6 +56,7 @@ const getStyles = (theme: ThemeProps) =>
       ...spacings.phMi,
       ...spacings.mbMI,
       ...spacings.phTy,
+      ...spacings.mtTy,
       paddingTop: SPACING_MI / 2
     },
     label: {
@@ -100,6 +95,10 @@ const getStyles = (theme: ThemeProps) =>
       borderRadius: 6,
       borderColor: theme.secondaryBorder,
       borderWidth: 2
+    },
+    errorContainer: {
+      ...flexbox.directionRow,
+      ...flexbox.justifySpaceBetween
     }
   })
 

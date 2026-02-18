@@ -3,32 +3,25 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { StyleSheet, View } from 'react-native'
 
-import { SignMessageAction } from '@ambire-common/interfaces/actions'
 import { Key } from '@ambire-common/interfaces/keystore'
-import { PlainTextMessage, TypedMessage } from '@ambire-common/interfaces/userRequest'
 import { isSmartAccount } from '@ambire-common/libs/account/account'
 import { humanizeMessage } from '@ambire-common/libs/humanizer'
 import {
   EIP_1271_NOT_SUPPORTED_BY,
   toPersonalSignHex
 } from '@ambire-common/libs/signMessage/signMessage'
-import { isPlainTextMessage } from '@ambire-common/libs/transfer/userRequest'
 import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
 import Spinner from '@common/components/Spinner'
+import useController from '@common/hooks/useController'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
-import { THEME_TYPES } from '@common/styles/themeConfig'
+import useToast from '@common/hooks/useToast'
 import flexbox from '@common/styles/utils/flexbox'
-import HeaderAccountAndNetworkInfo from '@web/components/HeaderAccountAndNetworkInfo'
 import SmallNotificationWindowWrapper from '@web/components/SmallNotificationWindowWrapper'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import useActionsControllerState from '@web/hooks/useActionsControllerState'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import useDappInfo from '@web/hooks/useDappInfo/useDappInfo'
-import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
-import useSignMessageControllerState from '@web/hooks/useSignMessageControllerState'
 import ActionFooter from '@web/modules/action-requests/components/ActionFooter'
+import ActionHeader from '@web/modules/action-requests/components/ActionHeader'
 import useLedger from '@web/modules/hardware-wallet/hooks/useLedger'
 import SigningKeySelect from '@web/modules/sign-message/components/SignKeySelect'
 
@@ -38,54 +31,51 @@ import SignInWithEthereum from './Contents/signInWithEthereum'
 
 const SignMessageScreen = () => {
   const { t } = useTranslation()
-  const signMessageState = useSignMessageControllerState()
+  const signMessageState = useController('SignMessageController').state
   const signStatus = signMessageState.statuses.sign
   const [hasReachedBottom, setHasReachedBottom] = useState<boolean | null>(null)
-  const keystoreState = useKeystoreControllerState()
-  const { account } = useSelectedAccountControllerState()
-  const { networks } = useNetworksControllerState()
-  const { dispatch } = useBackgroundService()
+  const keystoreState = useController('KeystoreController').state
+  const {
+    state: { account }
+  } = useController('SelectedAccountController')
+  const { networks } = useController('NetworksController').state
+  const { dispatch } = useControllersMiddleware()
   const { isLedgerConnected } = useLedger()
   const [isChooseSignerShown, setIsChooseSignerShown] = useState(false)
   const [shouldDisplayLedgerConnectModal, setShouldDisplayLedgerConnectModal] = useState(false)
   const [makeItSmartConfirmed, setMakeItSmartConfirmed] = useState(false)
   const [doNotAskMeAgain, setDoNotAskMeAgain] = useState(false)
-  const actionState = useActionsControllerState()
-  const { theme, themeType } = useTheme()
-
-  const signMessageAction = useMemo(() => {
-    if (actionState.currentAction?.type !== 'signMessage') return undefined
-
-    return actionState.currentAction as SignMessageAction
-  }, [actionState.currentAction])
+  const { currentUserRequest } = useController('RequestsController').state
+  const { theme } = useTheme()
+  const { addToast } = useToast()
 
   const userRequest = useMemo(() => {
-    if (!signMessageAction) return undefined
     if (
-      !['typedMessage', 'message', 'authorization-7702', 'siwe'].includes(
-        signMessageAction.userRequest.action.kind
-      )
+      currentUserRequest?.kind === 'message' ||
+      currentUserRequest?.kind === 'typedMessage' ||
+      currentUserRequest?.kind === 'authorization-7702' ||
+      currentUserRequest?.kind === 'siwe'
     )
-      return undefined
+      return currentUserRequest
 
-    return signMessageAction.userRequest
-  }, [signMessageAction])
+    return undefined
+  }, [currentUserRequest])
 
   const { name, icon } = useDappInfo(userRequest)
 
   const isAuthorization = useMemo(() => {
-    if (!signMessageAction) return false
-    if (signMessageAction.userRequest.action.kind !== 'authorization-7702') return false
-    if (!signMessageAction.userRequest.meta.show7702Info) return false
+    if (!userRequest) return false
+    if (userRequest.kind !== 'authorization-7702') return false
+    if (!userRequest.meta.show7702Info) return false
 
     return true
-  }, [signMessageAction])
+  }, [userRequest])
 
   const isSiwe = useMemo(() => {
-    if (!signMessageAction) return false
+    if (!userRequest) return false
 
-    return signMessageAction.userRequest.action.kind === 'siwe'
-  }, [signMessageAction])
+    return userRequest.kind === 'siwe'
+  }, [userRequest])
 
   const selectedAccountKeyStoreKeys = useMemo(
     () => keystoreState.keys.filter((key) => account?.associatedKeys.includes(key.addr)),
@@ -111,6 +101,11 @@ const SignMessageScreen = () => {
     return humanizeMessage(signMessageState.messageToSign)
   }, [signMessageState])
 
+  const humanizationHasBlockingWarnings = useMemo(
+    () => !!humanizedMessage?.warnings?.some((w) => w.blocking),
+    [humanizedMessage?.warnings]
+  )
+
   const visualizeHumanized = useMemo(
     () =>
       humanizedMessage?.fullVisualization &&
@@ -125,36 +120,32 @@ const SignMessageScreen = () => {
   )
 
   useEffect(() => {
-    const isAlreadyInit = signMessageState.messageToSign?.fromActionId === signMessageAction?.id
+    const isAlreadyInit = signMessageState.messageToSign?.fromRequestId === userRequest?.id
 
-    if (!userRequest || !signMessageAction || isAlreadyInit) return
+    if (!userRequest || !userRequest || isAlreadyInit) return
 
     // Similarly to other wallets, attempt to normalize the input to a hex string,
     // because some dapps not always pass hex strings, but plain text or Uint8Array.
-    if (isPlainTextMessage(userRequest.action))
-      userRequest.action.message = toPersonalSignHex(userRequest.action.message)
+    if (userRequest.kind === 'message' || userRequest.kind === 'siwe')
+      userRequest.meta.params.message = toPersonalSignHex(userRequest.meta.params.message)
 
     dispatch({
       type: 'MAIN_CONTROLLER_SIGN_MESSAGE_INIT',
       params: {
         dapp: { name, icon },
         messageToSign: {
+          fromRequestId: userRequest.id,
+          content: {
+            kind: userRequest.kind,
+            ...(userRequest.meta.params as any)
+          },
           accountAddr: userRequest.meta.accountAddr,
           chainId: userRequest.meta.chainId,
-          content: userRequest.action as PlainTextMessage | TypedMessage,
-          fromActionId: signMessageAction.id,
           signature: null
         }
       }
     })
-  }, [
-    dispatch,
-    userRequest,
-    signMessageAction,
-    signMessageState.messageToSign?.fromActionId,
-    name,
-    icon
-  ])
+  }, [dispatch, userRequest, signMessageState.messageToSign?.fromRequestId, name, icon])
 
   useEffect(() => {
     return () => {
@@ -163,7 +154,7 @@ const SignMessageScreen = () => {
   }, [dispatch])
 
   const handleReject = () => {
-    if (!signMessageAction || !userRequest) return
+    if (!userRequest) return
 
     dispatch({
       type: 'REQUESTS_CONTROLLER_REJECT_USER_REQUEST',
@@ -193,14 +184,24 @@ const SignMessageScreen = () => {
         ? // Accounts with multiple keys have an additional step to choose the key first
           chosenSigningKeyType === 'ledger'
         : // Take the key type from the account key itself, no additional step to choose key
-          selectedAccountKeyStoreKeys[0].type === 'ledger'
+          selectedAccountKeyStoreKeys[0]?.type === 'ledger'
       if (isLedgerKeyChosen && !isLedgerConnected) {
         setShouldDisplayLedgerConnectModal(true)
         return
       }
 
-      const keyAddr = chosenSigningKeyAddr || selectedAccountKeyStoreKeys[0].addr
-      const keyType = chosenSigningKeyType || selectedAccountKeyStoreKeys[0].type
+      const keyAddr = chosenSigningKeyAddr || selectedAccountKeyStoreKeys[0]?.addr
+      const keyType = chosenSigningKeyType || selectedAccountKeyStoreKeys[0]?.type
+
+      if (!keyAddr || !keyType) {
+        addToast(
+          t(
+            'No signing key available to sign the message. Please reject the request and try again.'
+          ),
+          { type: 'error' }
+        )
+        return
+      }
 
       dispatch({
         type: 'MAIN_CONTROLLER_HANDLE_SIGN_MESSAGE',
@@ -208,11 +209,13 @@ const SignMessageScreen = () => {
       })
     },
     [
-      dispatch,
-      isLedgerConnected,
-      selectedAccountKeyStoreKeys,
+      isAuthorization,
       makeItSmartConfirmed,
-      isAuthorization
+      selectedAccountKeyStoreKeys,
+      isLedgerConnected,
+      dispatch,
+      addToast,
+      t
     ]
   )
 
@@ -238,29 +241,43 @@ const SignMessageScreen = () => {
   }, [])
 
   const shouldDisplayEIP1271Warning = useMemo(() => {
-    const dappOrigin = userRequest?.session?.origin
+    const dappOrigin = userRequest?.dappPromises[0]?.session?.origin
 
     if (!dappOrigin || !isSmartAccount(account)) return false
 
     return EIP_1271_NOT_SUPPORTED_BY.some((origin) => dappOrigin.includes(origin))
-  }, [account, userRequest?.session?.origin])
+  }, [account, userRequest?.dappPromises])
 
   const onDoNotAskMeAgainChange = useCallback(() => {
     setDoNotAskMeAgain(!doNotAskMeAgain)
   }, [doNotAskMeAgain])
 
   const view = useMemo(() => {
+    // Happens when switching between requests
+    const isReinitializingAfterSwitch =
+      userRequest?.kind &&
+      signMessageState.messageToSign &&
+      userRequest.kind !== signMessageState.messageToSign.content.kind
+
+    if (isReinitializingAfterSwitch) return 'reinitializing'
+
     if (isAuthorization && !makeItSmartConfirmed) return 'authorization-7702'
 
     if (isSiwe) return 'siwe'
 
     return 'sign-message'
-  }, [isAuthorization, isSiwe, makeItSmartConfirmed])
+  }, [
+    isAuthorization,
+    isSiwe,
+    makeItSmartConfirmed,
+    signMessageState.messageToSign,
+    userRequest?.kind
+  ])
 
-  // In the split second when the action window opens, but the state is not yet
+  // In the split second when the request window opens, but the state is not yet
   // initialized, to prevent a flash of the fallback visualization, show a
   // loading spinner instead (would better be a skeleton, but whatever).
-  if (!signMessageState.isInitialized || !account || !signMessageAction) {
+  if (!signMessageState.isInitialized || !account || !userRequest) {
     return (
       <View style={[StyleSheet.absoluteFill, flexbox.center]}>
         <Spinner />
@@ -272,21 +289,18 @@ const SignMessageScreen = () => {
     <SmallNotificationWindowWrapper>
       <TabLayoutContainer
         width="full"
-        header={
-          <HeaderAccountAndNetworkInfo
-            backgroundColor={
-              themeType === THEME_TYPES.DARK
-                ? (theme.secondaryBackground as string)
-                : (theme.primaryBackground as string)
-            }
-          />
-        }
-        footer={
+        header={<ActionHeader />}
+        renderDirectChildren={() => (
           <ActionFooter
             onReject={handleReject}
             onResolve={handleSign}
             resolveButtonText={resolveButtonText}
-            resolveDisabled={signStatus === 'LOADING' || isScrollToBottomForced || isViewOnly}
+            resolveDisabled={
+              signStatus === 'LOADING' ||
+              isScrollToBottomForced ||
+              isViewOnly ||
+              humanizationHasBlockingWarnings
+            }
             resolveButtonTestID="button-sign"
             rejectButtonText={rejectButtonText}
             {...(isViewOnly
@@ -299,12 +313,7 @@ const SignMessageScreen = () => {
                 }
               : {})}
           />
-        }
-        backgroundColor={
-          isAuthorization && !makeItSmartConfirmed
-            ? theme.primaryBackground
-            : theme.quinaryBackground
-        }
+        )}
       >
         <SigningKeySelect
           isVisible={isChooseSignerShown}
@@ -315,6 +324,11 @@ const SignMessageScreen = () => {
           handleClose={() => setIsChooseSignerShown(false)}
           account={account}
         />
+        {view === 'reinitializing' && (
+          <View style={[StyleSheet.absoluteFill, flexbox.center]}>
+            <Spinner />
+          </View>
+        )}
         {view === 'authorization-7702' && (
           <Authorization7702
             onDoNotAskMeAgainChange={onDoNotAskMeAgainChange}

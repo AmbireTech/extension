@@ -1,0 +1,3 @@
+import AmbireLogoHorizontalMonochrome from './AmbireLogoHorizontalMonochrome'
+
+export default AmbireLogoHorizontalMonochrome

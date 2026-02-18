@@ -72,7 +72,7 @@ const DualChoiceModal: FC<Props> = ({
           <Button
             text={secondaryButtonText}
             onPress={onSecondaryButtonPress}
-            type="secondary"
+            type="tertiary"
             hasBottomSpacing={false}
             size="large"
             style={[styles.button, spacings.mr]}

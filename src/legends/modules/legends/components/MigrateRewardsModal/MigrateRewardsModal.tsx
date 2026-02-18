@@ -11,14 +11,14 @@ import useAccountContext from '@legends/hooks/useAccountContext'
 import useErc5792 from '@legends/hooks/useErc5792'
 import useEscModal from '@legends/hooks/useEscModal'
 import useLegendsContext from '@legends/hooks/useLegendsContext'
-import usePortfolioControllerState from '@legends/hooks/usePortfolioControllerState/usePortfolioControllerState'
+import usePortfolio from '@legends/hooks/usePortfolio'
 import useProviderContext from '@legends/hooks/useProviderContext'
 import useSwitchNetwork from '@legends/hooks/useSwitchNetwork'
 import useToast from '@legends/hooks/useToast'
 import { humanizeError } from '@legends/modules/legends/utils/errors/humanizeError'
 import { getRewardsButtonText } from '@legends/utils/getRewardsButtonText'
 
-import { CardActionCalls, CardActionPredefined, CardFromResponse } from '../../types'
+import { CardAction, CardActionCalls, CardActionPredefined, CardFromResponse } from '../../types'
 import CardActionButton from '../Card/CardAction/actions/CardActionButton'
 import styles from './MigrateRewardsModal.module.scss'
 
@@ -28,7 +28,7 @@ type Action = CardActionPredefined & {
 interface MigrateRewardsModalProps {
   isOpen: boolean
   handleClose: () => void
-  action: Action | undefined
+  action: Action | CardAction | undefined
   meta: CardFromResponse['meta'] | undefined
   card: CardFromResponse['card'] | undefined
 }
@@ -47,8 +47,8 @@ const MigrateRewardsModal: React.FC<MigrateRewardsModalProps> = ({
   action,
   meta
 }) => {
-  const { xWalletClaimableBalance } = usePortfolioControllerState()
-  const { sendCalls, getCallsStatus, chainId } = useErc5792()
+  const { xWalletClaimableBalance } = usePortfolio()
+  const { sendCalls, getCallsStatus } = useErc5792()
   const { onLegendComplete } = useLegendsContext()
 
   const { addToast } = useToast()
@@ -74,8 +74,8 @@ const MigrateRewardsModal: React.FC<MigrateRewardsModalProps> = ({
     const ethereumProvider = new JsonRpcProvider('https://invictus.ambire.com/ethereum')
     const walletContract = new Contract(X_WALLET_TOKEN, xWalletIface, ethereumProvider)
     Promise.all([
-      walletContract.balanceOf(connectedAccount),
-      walletContract.lockedShares(connectedAccount)
+      walletContract.balanceOf!(connectedAccount),
+      walletContract.lockedShares!(connectedAccount)
     ])
       .then(([xWalletBalance, lockedShares]: [bigint, bigint]) =>
         setMigratableXWalletBalance(xWalletBalance - lockedShares)
@@ -97,7 +97,10 @@ const MigrateRewardsModal: React.FC<MigrateRewardsModalProps> = ({
 
   const onButtonClick = useCallback(async () => {
     if (!browserProvider) return
-    if (!action || !action.calls) return
+    if (!action || !('calls' in action) || !action.calls) return
+    // as of feb 2026 this is not needed for latest v's of the extension, because the wallet_sendCalls method handles the chainId
+    // but we are not removing it for now, becaus there are many users right now who have not yet updated their extension to latest
+    // same applies for most other such cases in rewards
     await switchNetwork(ETHEREUM_CHAIN_ID)
 
     try {
@@ -110,14 +113,14 @@ const MigrateRewardsModal: React.FC<MigrateRewardsModalProps> = ({
       setIsSigning(true)
 
       const sendCallsIdentifier = await sendCalls(
-        chainId,
+        BigInt(ETHEREUM_CHAIN_ID),
         await signer.getAddress(),
         formattedCalls,
         false
       )
 
       const receipt = await getCallsStatus(sendCallsIdentifier)
-      if (receipt.transactionHash) {
+      if (receipt?.transactionHash) {
         addToast('Transaction completed successfully', { type: 'success' })
         setIsSigning(false)
         getXWalletBalance()
@@ -139,7 +142,6 @@ const MigrateRewardsModal: React.FC<MigrateRewardsModalProps> = ({
     onLegendComplete,
     sendCalls,
     getXWalletBalance,
-    chainId,
     handleClose,
     addToast
   ])
@@ -169,9 +171,9 @@ const MigrateRewardsModal: React.FC<MigrateRewardsModalProps> = ({
                       : 'Loading...'}
                   </p>
                   <p className={styles.usdValue}>
-                    {migratableXWalletBalance
+                    {migratableXWalletBalance && xWalletClaimableBalance?.priceIn.length
                       ? formatDecimals(
-                          xWalletClaimableBalance.priceIn[0].price *
+                          xWalletClaimableBalance.priceIn![0]!.price *
                             Number(formatEther(migratableXWalletBalance)),
                           'value'
                         )
@@ -186,8 +188,8 @@ const MigrateRewardsModal: React.FC<MigrateRewardsModalProps> = ({
 
           {meta?.hasAlreadyMigrated && (
             <div className={styles.alreadyMigratedWarning}>
-              You will not receive XP from this action as you already migrated some of your $xWALLET
-              tokens!
+              If you confirm unstaking your stkWALLET tokens, the amount won&apos;t be counted to
+              your overall stkWALLET score.
             </div>
           )}
           <CardActionButton

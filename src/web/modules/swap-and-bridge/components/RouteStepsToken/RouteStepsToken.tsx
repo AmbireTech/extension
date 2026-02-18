@@ -4,8 +4,6 @@ import { View, ViewStyle } from 'react-native'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
-import useTheme from '@common/hooks/useTheme'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 
 import styles from './styles'
 
@@ -30,7 +28,6 @@ const RouteStepsToken: React.FC<Props> = ({
   amountInUsd,
   wrapperStyle
 }) => {
-  const { theme, themeType } = useTheme()
   return (
     <View
       style={[
@@ -42,8 +39,8 @@ const RouteStepsToken: React.FC<Props> = ({
       <View style={styles.tokenContainer}>
         <TokenIcon
           uri={uri}
-          width={30}
-          height={30}
+          width={28}
+          height={28}
           address={address}
           chainId={chainId}
           withNetworkIcon
@@ -62,12 +59,7 @@ const RouteStepsToken: React.FC<Props> = ({
           {symbol}
         </Text>
         {!!amountInUsd && (
-          <Text
-            style={styles.text}
-            fontSize={12}
-            color={themeType === THEME_TYPES.DARK ? theme.linkText : theme.primary}
-            weight="medium"
-          >
+          <Text style={styles.text} fontSize={12} appearance="secondaryText" weight="medium">
             {formatDecimals(amountInUsd, 'price')}
           </Text>
         )}

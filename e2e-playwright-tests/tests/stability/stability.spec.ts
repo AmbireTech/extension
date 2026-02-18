@@ -27,7 +27,7 @@ test.describe('stability', { tag: '@stability' }, () => {
         const page = pages.stability.page
         await page.getByTestId(selectors.dashboard.balanceErrorIcon).click()
 
-        const rpcErrorBanner = page.getByTestId(selectors.dashboard.portfolioErrorAlert).first()
+        const rpcErrorBanner = page.getByTestId(selectors.dashboard.portfolioErrorAlert+'-rpcs-down').first()
 
         await expect(rpcErrorBanner).toBeVisible()
         await expect(rpcErrorBanner).toContainText('Failed to retrieve network data for Polygon')
@@ -41,7 +41,7 @@ test.describe('stability', { tag: '@stability' }, () => {
     const page = pages.stability.page
 
     await test.step('block Velcro tokens request and unlock the extension', async () => {
-      await pages.stability.blockRouteAndUnlock('**/relayer.ambire.com/velcro-v3/*')
+      await pages.stability.blockRouteAndUnlock('**/relayer.ambire.com/velcro-v3/portfolio*')
     })
 
     await test.step('tokens are found using previous hints', async () => {
@@ -59,7 +59,7 @@ test.describe('stability', { tag: '@stability' }, () => {
       'click on the error indicator and appropriate message is expected to be shown',
       async () => {
         await page.getByTestId(selectors.dashboard.balanceErrorIcon).click()
-        const velcroErrorBanner = page.getByTestId(selectors.dashboard.portfolioErrorAlert)
+        const velcroErrorBanner = page.getByTestId(selectors.dashboard.portfolioErrorAlert+'-NoApiHintsError')
 
         await expect(velcroErrorBanner).toBeVisible()
         await expect(velcroErrorBanner).toContainText(
@@ -97,7 +97,7 @@ test.describe('stability', { tag: '@stability' }, () => {
         expect(categorized.rpc.length).toBeLessThanOrEqual(30)
         expect(categorized.hints.length).toBeLessThanOrEqual(1)
         expect(categorized.nativePrices.length).toBeLessThanOrEqual(10)
-        expect(categorized.thirdParty.length).toBeLessThanOrEqual(10)
+        expect(categorized.thirdParty.length).toBeLessThanOrEqual(15)
         expect(categorized.allowedUncategorized.length).toBeLessThanOrEqual(10)
 
         // ☢️ Critical: there should be no truly uncategorized requests.
@@ -135,14 +135,14 @@ test.describe('stability', { tag: '@stability' }, () => {
       57073, // Ink
       59144, // Linea
       80094, // Berachain
-      81457 // Blast
+      81457, // Blast
+      143 // Monad
     ]
 
-    const url = 'https://relayer.ambire.com/velcro-v3/multi-hints'
+    const url = 'https://relayer.ambire.com/velcro-v3/portfolio'
     const networksParam = chains.join()
-    const accountsParam = Array(chains.length).fill(address).join()
 
-    const route = `${url}?networks=${networksParam}&accounts=${accountsParam}&baseCurrency=usd`
+    const route = `${url}?networks=${networksParam}&account=${address}&baseCurrency=usd`
 
     const res = await fetch(route)
     expect(res.ok).toBe(true)

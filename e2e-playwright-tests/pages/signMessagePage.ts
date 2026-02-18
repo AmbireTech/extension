@@ -34,7 +34,7 @@ export class SignMessagePage extends BasePage {
     const connect = this.page.getByRole('button', { name: 'connect wallet' })
     await connect.click()
 
-    // Dapp Request action window
+    // Dapp Request request window
     const ambire = this.page.getByRole('button', { name: 'MetaMask' })
     const actionWindowPagePromise = this.handleNewPage(ambire)
 

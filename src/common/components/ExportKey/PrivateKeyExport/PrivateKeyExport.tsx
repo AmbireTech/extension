@@ -10,8 +10,7 @@ import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
-import spacings, { SPACING_SM } from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
+import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { setStringAsync } from '@common/utils/clipboard'
 
@@ -58,10 +57,7 @@ const PrivateKeyExport: FC<Props> = ({ privateKey, blurred, setBlurred, openConf
             spacings.pvMd,
             spacings.phMd,
             {
-              backgroundColor:
-                themeType === THEME_TYPES.DARK
-                  ? theme.tertiaryBackground
-                  : theme.secondaryBackground
+              backgroundColor: theme.secondaryBackground
             }
           ]}
         >
@@ -74,8 +70,7 @@ const PrivateKeyExport: FC<Props> = ({ privateKey, blurred, setBlurred, openConf
             flexbox.directionRow,
             flexbox.alignCenter,
             flexbox.justifySpaceBetween,
-            spacings.mtTy,
-            { marginHorizontal: -SPACING_SM }
+            spacings.mtTy
           ]}
         >
           <View style={{ opacity: privateKey ? 1 : 0 }}>
@@ -85,10 +80,8 @@ const PrivateKeyExport: FC<Props> = ({ privateKey, blurred, setBlurred, openConf
               type="ghost"
               size="small"
               text={t('Copy key')}
-              style={{
-                // @ts-ignore
-                cursor: !privateKey ? 'default' : 'pointer'
-              }}
+              // @ts-ignore react-native-web supports `cursor`, but it's missing from React Native StyleProp<ViewStyle> types
+              style={{ cursor: !privateKey ? 'default' : 'pointer' }}
             >
               <CopyIcon style={spacings.mlTy} width={18} color={theme.iconPrimary} />
             </Button>
@@ -99,7 +92,6 @@ const PrivateKeyExport: FC<Props> = ({ privateKey, blurred, setBlurred, openConf
             hasBottomSpacing={false}
             type="ghost"
             size="small"
-            style={{ minWidth: 137 }}
             text={blurred ? t('Reveal key') : t('Hide key')}
           >
             {blurred ? (

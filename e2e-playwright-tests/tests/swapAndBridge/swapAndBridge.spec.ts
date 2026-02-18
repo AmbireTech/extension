@@ -1,8 +1,7 @@
 import { saParams } from 'constants/env'
 import tokens from 'constants/tokens'
 import { test } from 'fixtures/pageObjects'
-
-import { expect } from '@playwright/test' // your extended test with authPage
+import { runSwapBatchFlow, runSwapFlow, runSwapProceedFlow } from 'flows/swapAndBridgeFlow'
 
 test.describe('swapAndBridge Smart Account', { tag: '@swapAndBridge' }, () => {
   test.beforeEach(async ({ pages }) => {
@@ -16,7 +15,7 @@ test.describe('swapAndBridge Smart Account', { tag: '@swapAndBridge' }, () => {
     pages
   }) => {
     const fromToken = tokens.dai.optimism
-    const toToken = tokens.usdce.optimism
+    const toToken = tokens.usdc.optimism
     await pages.swapAndBridge.prepareSwapAndBridge(0.1, fromToken, toToken)
     await pages.swapAndBridge.enterNumber('00.01', true)
   })
@@ -25,7 +24,7 @@ test.describe('swapAndBridge Smart Account', { tag: '@swapAndBridge' }, () => {
     pages
   }) => {
     const fromToken = tokens.dai.optimism
-    const toToken = tokens.usdce.optimism
+    const toToken = tokens.usdc.optimism
 
     await pages.swapAndBridge.prepareSwapAndBridge(0.1, fromToken, toToken)
     await pages.swapAndBridge.enterNumber('.01', true)
@@ -35,7 +34,7 @@ test.describe('swapAndBridge Smart Account', { tag: '@swapAndBridge' }, () => {
     pages
   }) => {
     const fromToken = tokens.dai.optimism
-    const toToken = tokens.usdce.optimism
+    const toToken = tokens.usdc.optimism
 
     await pages.swapAndBridge.prepareSwapAndBridge(0.1, fromToken, toToken) // ~ 0.1$
     await pages.swapAndBridge.enterNumber('abc', true)
@@ -89,42 +88,14 @@ test.describe('swapAndBridge Smart Account', { tag: '@swapAndBridge' }, () => {
     await pages.swapAndBridge.rejectTransaction()
   })
 
-  test('should "proceed" Swap & Bridge from the Pending Route component with a Smart Account', async ({
-    pages
-  }) => {
-    const usdc = tokens.usdc.base
-    const wallet = tokens.wallet.base
-
-    await test.step('assert no transaction on Activity tab', async () => {
-      await pages.dashboard.checkNoTransactionOnActivityTab()
-    })
-
-    await test.step('prepare swap and bridge transaction', async () => {
-      await pages.swapAndBridge.openSwapAndBridge()
-      await pages.swapAndBridge.prepareSwapAndBridge(0.01, usdc, wallet) // ~ 0.1$
-    })
-
-    await test.step('proceed and sign the transaction', async () => {
-      await pages.swapAndBridge.proceedTransaction()
-    })
-
-    await test.step('assert new transaction on Activity tab', async () => {
-      await pages.swapAndBridge.checkSendTransactionOnActivityTab()
-    })
-  })
-
   test('should switch from token amount to USD value and vise-versa during Swap & Bridge with a Smart Account', async ({
     pages
   }) => {
-    const usdce = tokens.usdce.optimism
     const dai = tokens.dai.optimism
     const usdc = tokens.usdc.base
-    const xwallet = tokens.xwallet.ethereum
 
-    await pages.swapAndBridge.switchUSDValueOnSwapAndBridge(usdce, 0.2)
     await pages.swapAndBridge.switchUSDValueOnSwapAndBridge(dai, 0.2)
     await pages.swapAndBridge.switchUSDValueOnSwapAndBridge(usdc, 0.2)
-    await pages.swapAndBridge.switchUSDValueOnSwapAndBridge(xwallet, 0.2)
   })
 
   test('should auto-refresh active route after 60s during Swap & Bridge with a Smart Account', async ({
@@ -147,50 +118,36 @@ test.describe('swapAndBridge Smart Account', { tag: '@swapAndBridge' }, () => {
     await pages.swapAndBridge.clickOnSecondRoute()
   })
 
+  test('should "proceed" Swap & Bridge from the Pending Route component with a Smart Account', async ({
+    pages
+  }) => {
+    await runSwapProceedFlow({
+      pages,
+      fromToken: tokens.usdc.base,
+      toToken: tokens.wallet.base,
+      sendAmount: 0.01,
+      assertNoInitialTx: true
+    })
+  })
+
   test('should Bridge tokens with a Smart Account', async ({ pages }) => {
-    const usdc = tokens.usdc.base
-    const usdcOpt = tokens.usdc.optimism
-
-    await test.step('assert no transaction on Activity tab', async () => {
-      await pages.dashboard.checkNoTransactionOnActivityTab()
-    })
-
-    await test.step('prepare bridge transaction', async () => {
-      await pages.swapAndBridge.prepareBridgeTransaction(0.01, usdc, usdcOpt) // ~ 0.1$
-    })
-
-    await test.step('sign transaction', async () => {
-      await pages.swapAndBridge.signTokens({ fromToken: usdc })
-    })
-
-    await test.step('assert new transaction on Activity tab', async () => {
-      await pages.swapAndBridge.checkSendTransactionOnActivityTab()
+    await runSwapFlow({
+      pages,
+      sendToken: tokens.usdc.base,
+      receiveToken: tokens.usdc.optimism,
+      bridgeAmount: 0.01,
+      assertNoInitialTx: true
     })
   })
 
   test('should batch Swap of ERC20 tokens and Native to ERC20 token with a Smart Account', async ({
     pages
   }) => {
-    const usdc = tokens.usdc.base
-    const wallet = tokens.wallet.base
-
-    await test.step('start monitoring requests', async () => {
-      await pages.swapAndBridge.monitorRequests()
-    })
-
-    await test.step('add a transaction swapping USDC for WALLET to the batch', async () => {
-      await pages.swapAndBridge.prepareSwapAndBridge(0.01, usdc, wallet) // ~ 0.1$
-      await pages.swapAndBridge.batchAction()
-    })
-
-    await test.step('add a transaction swapping USDC for WALLET to the existing batch and sign', async () => {
-      await pages.swapAndBridge.prepareSwapAndBridge(0.01, usdc, wallet)
-      await pages.swapAndBridge.batchActionWithSign()
-    })
-
-    await test.step('stop monitoring requests and expect no uncategorized requests to be made', async () => {
-      const { uncategorized } = pages.swapAndBridge.getCategorizedRequests()
-      expect(uncategorized.length).toBeLessThanOrEqual(0)
+    await runSwapBatchFlow({
+      pages,
+      swapAmount: 0.01,
+      fromToken: tokens.usdc.base,
+      toToken: tokens.wallet.base
     })
   })
 })

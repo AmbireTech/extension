@@ -9,24 +9,22 @@ import { AssetType } from '@ambire-common/libs/defiPositions/types'
 import { getTokenAmount, getTokenBalanceInUSD } from '@ambire-common/libs/portfolio/helpers'
 import { TokenResult } from '@ambire-common/libs/portfolio/interfaces'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
-import Button from '@common/components/Button'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { tokenSearch } from '@common/utils/search'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
-import usePortfolioControllerState from '@web/hooks/usePortfolioControllerState/usePortfolioControllerState'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
+import { tokenOrCollectionSearch } from '@common/utils/search'
 import AddTokenBottomSheet from '@web/modules/settings/screens/ManageTokensSettingsScreen/AddTokenBottomSheet'
 import { getTokenId } from '@web/utils/token'
 import { getUiType } from '@web/utils/uiType'
 
 import DashboardBanners from '../DashboardBanners'
 import DashboardPageScrollContainer from '../DashboardPageScrollContainer'
+import SearchAndCurrentApp from '../SearchAndCurrentApp'
 import TabsAndSearch from '../TabsAndSearch'
 import { TabType } from '../TabsAndSearch/Tabs/Tab/Tab'
 import TokenItem from './TokenItem'
@@ -42,12 +40,16 @@ interface Props {
   onScroll: FlatListProps<any>['onScroll']
   dashboardNetworkFilterName: string | null
   animatedOverviewHeight: Animated.Value
+  isSearchHidden: boolean
 }
 
 // if any of the post amount (during simulation) or the current state
 // has a balance above 0, we should consider it legit and show it
 const hasAmount = (token: TokenResult) => {
-  return token.amount > 0n || (token.amountPostSimulation && token.amountPostSimulation > 0n)
+  return (
+    (token.amount > 0n || (token.amountPostSimulation && token.amountPostSimulation > 0n)) &&
+    !token.flags.isHidden
+  )
 }
 // if the token is on the gas tank and the network is not a relayer network (a custom network)
 // we should not show it on dashboard
@@ -64,14 +66,19 @@ const Tokens = ({
   sessionId,
   onScroll,
   animatedOverviewHeight,
-  dashboardNetworkFilterName
+  dashboardNetworkFilterName,
+  isSearchHidden
 }: Props) => {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
   const { theme } = useTheme()
-  const { networks } = useNetworksControllerState()
-  const { customTokens } = usePortfolioControllerState()
-  const { portfolio, dashboardNetworkFilter } = useSelectedAccountControllerState()
+  const {
+    state: { networks }
+  } = useController('NetworksController')
+  const { customTokens } = useController('PortfolioController').state
+  const {
+    state: { portfolio, dashboardNetworkFilter }
+  } = useController('SelectedAccountController')
   const {
     ref: addTokenBottomSheetRef,
     open: openAddTokenBottomSheet,
@@ -86,24 +93,20 @@ const Tokens = ({
 
   const searchValue = watch('search')
 
-  const tokens = useMemo(
-    () =>
-      (portfolio?.tokens || [])
-        // Hide gas tank and borrowed defi tokens from the list
-        .filter((token) => !token.flags.onGasTank && token.flags.defiTokenType !== AssetType.Borrow)
-        .filter((token) => {
-          if (!dashboardNetworkFilter) return true
-          if (dashboardNetworkFilter === 'rewards') return token.flags.rewardsType
-          if (dashboardNetworkFilter === 'gasTank') return token.flags.onGasTank
+  const tokens = useMemo(() => {
+    const tokenList = (portfolio?.tokens || []).filter((token) => {
+      // Hide gas tank and borrowed defi tokens from the list
+      if (token.flags.onGasTank || token.flags.defiTokenType === AssetType.Borrow) return false
 
-          return (
-            token?.chainId?.toString() === dashboardNetworkFilter.toString() &&
-            !token.flags.onGasTank
-          )
-        })
-        .filter((token) => tokenSearch({ search: searchValue, token, networks })),
-    [portfolio?.tokens, dashboardNetworkFilter, searchValue, networks]
-  )
+      if (!dashboardNetworkFilter) return true
+      if (dashboardNetworkFilter === 'rewards') return token.flags.rewardsType
+      if (dashboardNetworkFilter === 'gasTank') return token.flags.onGasTank
+
+      return token?.chainId?.toString() === dashboardNetworkFilter.toString()
+    })
+
+    return tokenOrCollectionSearch({ networks, assets: tokenList, search: searchValue })
+  }, [portfolio?.tokens, networks, searchValue, dashboardNetworkFilter])
 
   const userHasNoBalance = useMemo(
     // Exclude gas tank tokens from the check
@@ -117,12 +120,15 @@ const Tokens = ({
       tokens
         .filter((token) => {
           if (isGasTankTokenOnCustomNetwork(token, networks)) return false
-          if (token?.flags.isHidden) return false
+          if (token?.flags.isHidden || token.flags.rewardsType === 'wallet-projected-rewards')
+            return false
 
           const hasTokenAmount = hasAmount(token)
           const isCustom = customTokens.find(
             ({ address, chainId }) =>
-              token.address.toLowerCase() === address.toLowerCase() && token.chainId === chainId
+              token.address.toLowerCase() === address.toLowerCase() &&
+              token.chainId === chainId &&
+              !token.flags.rewardsType // exclude rewards from custom tokens
           )
           const isPinned = PINNED_TOKENS.find(
             ({ address, chainId }) =>
@@ -204,25 +210,8 @@ const Tokens = ({
               openTab={openTab}
               setOpenTab={setOpenTab}
               currentTab="tokens"
-              searchControl={control}
               sessionId={sessionId}
             />
-            <View style={[flexbox.directionRow, spacings.mbTy, spacings.phTy]}>
-              <Text appearance="secondaryText" fontSize={14} weight="medium" style={{ flex: 1.5 }}>
-                {t('ASSET/AMOUNT')}
-              </Text>
-              <Text appearance="secondaryText" fontSize={14} weight="medium" style={{ flex: 0.7 }}>
-                {t('PRICE')}
-              </Text>
-              <Text
-                appearance="secondaryText"
-                fontSize={14}
-                weight="medium"
-                style={{ flex: 0.4, textAlign: 'right' }}
-              >
-                {t('USD VALUE')}
-              </Text>
-            </View>
           </View>
         )
       }
@@ -284,16 +273,11 @@ const Tokens = ({
                     count: hiddenTokensCount,
                     tokensLabel: hiddenTokensCount > 1 ? t('tokens') : t('token')
                   })}{' '}
-                  {dashboardNetworkFilter && t('on this network')}
+                  {!!dashboardNetworkFilter && t('on this network')}
                 </Text>
-                <RightArrowIcon height={12} color={theme.secondaryText} />
+                <RightArrowIcon height={12} color={theme.secondaryText as string} />
               </Pressable>
             )}
-            <Button
-              type="secondary"
-              text={t('+ Add custom token')}
-              onPress={navigateToAddCustomToken}
-            />
           </View>
         ) : null
       }
@@ -315,7 +299,6 @@ const Tokens = ({
       theme.secondaryText,
       openTab,
       setOpenTab,
-      control,
       sessionId,
       t,
       searchValue,
@@ -324,7 +307,6 @@ const Tokens = ({
       sortedTokens.length,
       hiddenTokensCount,
       dashboardNetworkFilter,
-      navigateToAddCustomToken,
       navigate
     ]
   )
@@ -371,6 +353,9 @@ const Tokens = ({
         sheetRef={addTokenBottomSheetRef}
         handleClose={closeAddTokenBottomSheet}
       />
+      {openTab === 'tokens' && (
+        <SearchAndCurrentApp control={control} displayCurrentApp isHidden={isSearchHidden} />
+      )}
     </>
   )
 }

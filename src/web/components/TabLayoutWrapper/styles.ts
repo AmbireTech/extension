@@ -29,8 +29,7 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       ...flexbox.flex1,
       maxHeight: 80,
       ...spacings.ph3Xl,
-      backgroundColor:
-        themeType === THEME_TYPES.DARK ? theme.tertiaryBackground : theme.primaryBackground,
+      backgroundColor: theme.secondaryBackground,
       shadowColor: themeType === THEME_TYPES.DARK ? '#00000052' : '#B8BDE080',
       shadowOffset: { width: 0, height: -2 },
       shadowRadius: 4,

@@ -6,7 +6,7 @@ import {
   ExternalSignerController,
   KeystoreSignerInterface
 } from '@ambire-common/interfaces/keystore'
-import { TypedMessage } from '@ambire-common/interfaces/userRequest'
+import { TypedMessageUserRequest } from '@ambire-common/interfaces/userRequest'
 import {
   getMessageFromTrezorErrorCode,
   normalizeTrezorMessage
@@ -221,7 +221,7 @@ class TrezorSigner implements KeystoreSignerInterface {
     types: _types,
     message,
     primaryType: _primaryType
-  }: TypedMessage) => {
+  }: TypedMessageUserRequest['meta']['params']) => {
     await this.#prepareForSigning()
 
     const path = getHdPathFromTemplate(this.key.meta.hdPathTemplate, this.key.meta.index)

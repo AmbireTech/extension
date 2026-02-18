@@ -2,6 +2,7 @@ import './Skeleton.css'
 
 import React, { memo } from 'react'
 
+import { isWeb } from '@common/config/env/env'
 import useTheme from '@common/hooks/useTheme'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 
@@ -15,7 +16,7 @@ const SkeletonLoader = ({
   lowOpacity = false,
   appearance
 }: SkeletonLoaderProps & {
-  style: React.CSSProperties
+  style?: React.CSSProperties
 }) => {
   const { theme } = useTheme()
 
@@ -23,11 +24,11 @@ const SkeletonLoader = ({
     <div
       className={`skeleton${lowOpacity ? ' low-opacity' : ''}`}
       style={{
-        width,
-        height,
+        width: width as React.CSSProperties['width'], // type mismatch between react native view width and react web
+        height: height as React.CSSProperties['height'], // type mismatch between react native view width and react web
         background: theme[appearance || 'secondaryBackground'] as any,
         borderRadius,
-        ...style
+        ...(isWeb ? style : {})
       }}
     />
   )

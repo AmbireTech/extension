@@ -5,16 +5,18 @@ import { Pressable, ScrollView, View } from 'react-native'
 
 import { Account } from '@ambire-common/interfaces/account'
 import wait from '@ambire-common/utils/wait'
+import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
 import Alert from '@common/components/Alert'
 import Button from '@common/components/Button'
 import Panel from '@common/components/Panel'
 import SuccessAnimation from '@common/components/SuccessAnimation'
 import Text from '@common/components/Text'
 import { Trans, useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
-import Header from '@common/modules/header/components/Header'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -24,10 +26,6 @@ import {
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import { createTab } from '@web/extension-services/background/webapi/tab'
-import useAccountPickerControllerState from '@web/hooks/useAccountPickerControllerState'
-import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useWalletStateController from '@web/hooks/useWalletStateController'
 import AccountPersonalizeCard from '@web/modules/account-personalize/components/AccountPersonalizeCard'
 import AccountsLoadingAnimation from '@web/modules/account-personalize/components/AccountsLoadingAnimation'
 import AccountsLoadingDotsAnimation from '@web/modules/account-personalize/components/AccountsLoadingDotsAnimation'
@@ -42,11 +40,10 @@ const AccountPersonalizeScreen = () => {
   const { goToNextRoute, goToPrevRoute, setAccountsToPersonalize, accountsToPersonalize } =
     useOnboardingNavigation()
   const { theme } = useTheme(getStyles)
-  const { dispatch } = useBackgroundService()
-  const accountPickerState = useAccountPickerControllerState()
-  const accountsState = useAccountsControllerState()
-  const { accounts } = useAccountsControllerState()
-  const { isSetupComplete } = useWalletStateController()
+  const { dispatch } = useControllersMiddleware()
+  const accountPickerState = useController('AccountPickerController').state
+  const { statuses, accounts } = useController('AccountsController').state
+  const { isSetupComplete } = useController('WalletStateController').state
   const { addToast } = useToast()
   const initPassed = useRef(false)
   const newlyAddedAccounts = useMemo(() => accounts.filter((a) => a.newlyAdded) || [], [accounts])
@@ -107,50 +104,82 @@ const AccountPersonalizeScreen = () => {
     if (!isSetupComplete && !!completed) goToNextRoute()
   }, [completed, goToNextRoute, isSetupComplete])
 
-  // hold the loading state for 1.1 seconds before displaying the accountsToPersonalize for better UX
+  const accountPickerInitializedRef = useRef(accountPickerState.isInitialized)
+  const accountsToPersonalizeRef = useRef(accountsToPersonalize)
+  const newlyAddedAccountsRef = useRef(newlyAddedAccounts)
+  const isLoadingRef = useRef(isLoading)
+
   useEffect(() => {
+    accountPickerInitializedRef.current = accountPickerState.isInitialized
+  }, [accountPickerState.isInitialized])
+
+  useEffect(() => {
+    accountsToPersonalizeRef.current = accountsToPersonalize
+  }, [accountsToPersonalize])
+
+  useEffect(() => {
+    newlyAddedAccountsRef.current = newlyAddedAccounts
+  }, [newlyAddedAccounts])
+
+  useEffect(() => {
+    isLoadingRef.current = isLoading
+  }, [isLoading])
+
+  useEffect(() => {
+    // We reference the latest values via refs. Accessing state directly inside this
+    // async effect could read outdated values, since state updates are not guaranteed
+    // to sync during the async wait loops.
+    const getShouldStopLoadingBasedOnLatestState = () =>
+      !!accountPickerInitializedRef.current ||
+      (accountsToPersonalizeRef.current && accountsToPersonalizeRef.current.length > 0) ||
+      (newlyAddedAccountsRef.current && newlyAddedAccountsRef.current.length > 0)
+
+    // We reference the latest values via refs. Accessing state directly inside this
+    // async effect could read outdated values, since state updates are not guaranteed
+    // to sync during the async wait loops.
+    const getShouldComplete = () =>
+      !accountPickerInitializedRef.current &&
+      (accountsToPersonalizeRef.current?.length ?? 0) === 0 &&
+      (newlyAddedAccountsRef.current?.length ?? 0) === 0
+
+    let resolved = false
+
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     ;(async () => {
+      // initial UX delay
       await wait(1100)
+      if (resolved) return
 
-      if (
-        accountPickerState.isInitialized &&
-        accountPickerState.selectNextAccountStatus === 'INITIAL' &&
-        !accountPickerState.selectedAccountsFromCurrentSession.length &&
-        accountPickerState.addAccountsStatus === 'INITIAL'
-      ) {
-        setIsLoading(false)
+      if (getShouldStopLoadingBasedOnLatestState()) {
+        if (!resolved) setIsLoading(false)
+        return
       }
 
-      if (
-        !accountPickerState.initParams &&
-        !accountPickerState.isInitialized &&
-        accountsToPersonalize.length
-      ) {
-        setIsLoading(false)
+      const timeoutMs = 3000 // Poll for up to 3s to allow controller updates to arrive.
+      const intervalMs = 200 // Poll interval
+      const start = Date.now()
+
+      while (Date.now() - start < timeoutMs && !resolved) {
+        // eslint-disable-next-line no-await-in-loop
+        await wait(intervalMs)
+        if (resolved) return
+        if (getShouldStopLoadingBasedOnLatestState()) {
+          if (!resolved) setIsLoading(false)
+          return
+        }
       }
 
-      // this covers the case when the screen is opened via the browser navigation instead of the internal
-      // navigation. After 1.1 sec the loading state will be set to false and the hook below will be triggered
-      // that will navigate the user to the dashboard screen because there will be no accounts to personalize
-      if (
-        !accountPickerState.initParams &&
-        !accountPickerState.isInitialized &&
-        accountsState.statuses.addAccounts === 'INITIAL'
-      ) {
-        setIsLoading(false)
-      }
+      if (resolved) return
+      if (!isLoadingRef.current) return
+
+      setIsLoading(false)
+      if (getShouldComplete()) setCompleted(true)
     })()
-  }, [
-    accountPickerState.initParams,
-    accountPickerState.isInitialized,
-    accountPickerState.readyToRemoveAccounts.length,
-    accountPickerState.selectNextAccountStatus,
-    accountPickerState.selectedAccountsFromCurrentSession.length,
-    accountsToPersonalize,
-    accountPickerState.addAccountsStatus,
-    accountsState.statuses.addAccounts
-  ])
+
+    return () => {
+      resolved = true
+    }
+  }, [isLoading])
 
   // the hook inits the list with accountsToPersonalize
   useEffect(() => {
@@ -176,7 +205,7 @@ const AccountPersonalizeScreen = () => {
     accountPickerState.addedAccountsFromCurrentSession,
     accountsToPersonalize.length,
     newlyAddedAccounts,
-    accountsState.statuses.addAccounts,
+    statuses.addAccounts,
     setAccountsToPersonalize,
     goToNextRoute
   ])
@@ -235,10 +264,7 @@ const AccountPersonalizeScreen = () => {
   return (
     <>
       {!!completed && !isLoading && <PinExtension />}
-      <TabLayoutContainer
-        backgroundColor={theme.secondaryBackground}
-        header={<Header mode="custom-inner-content" withAmbireLogo={!completed} />}
-      >
+      <TabLayoutContainer backgroundColor={theme.secondaryBackground}>
         <TabLayoutWrapperMainContent>
           <Panel
             type="onboarding"
@@ -252,18 +278,13 @@ const AccountPersonalizeScreen = () => {
           >
             {isLoading && !accountPickerState.pageError ? (
               <View style={[flexbox.alignCenter]}>
-                <View style={spacings.mbLg}>
+                <View style={spacings.mbXl}>
                   <AccountsLoadingAnimation />
                 </View>
-                <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                  <View style={flexbox.flex1} />
-                  <Text fontSize={20} weight="semiBold" style={[text.center, spacings.phMi]}>
-                    {t('Loading accounts')}
-                  </Text>
-                  <View style={[flexbox.flex1, flexbox.justifyEnd, { height: '75%' }]}>
-                    <AccountsLoadingDotsAnimation />
-                  </View>
-                </View>
+                <Text fontSize={20} weight="semiBold" style={[text.center, spacings.mbSm]}>
+                  {t('Loading accounts')}
+                </Text>
+                <AccountsLoadingDotsAnimation />
               </View>
             ) : accountPickerState.pageError ? (
               <View style={flexbox.alignCenter}>
@@ -289,16 +310,18 @@ const AccountPersonalizeScreen = () => {
             ) : (
               <>
                 <SuccessAnimation
-                  noBackgroundShapes
-                  width={352}
-                  height={156}
-                  style={{ ...spacings.pv0, ...spacings.ph0, ...spacings.mbXl }}
-                  animationContainerStyle={{ width: 200, height: 140 }}
+                  style={{ ...spacings.mb2Xl, ...flexbox.alignSelfCenter, ...spacings.mt }}
+                />
+                <Text
+                  testID="added-successfully-text"
+                  weight="medium"
+                  fontSize={20}
+                  style={{ alignSelf: 'center', ...spacings.mbXl }}
                 >
-                  <Text weight="semiBold" fontSize={20} style={spacings.mtSm}>
-                    {t('Added successfully')}
-                  </Text>
-                </SuccessAnimation>
+                  {accountsToPersonalize.length
+                    ? t('Added successfully')
+                    : t('No new accounts added')}
+                </Text>
                 <ScrollView style={spacings.mbLg}>
                   {accountsToPersonalize.map((acc, index) => (
                     <AccountPersonalizeCard
@@ -327,35 +350,33 @@ const AccountPersonalizeScreen = () => {
                   />
                 )}
                 {!completed && ['seed', 'hw'].includes(accountPickerState.subType as any) && (
-                  <View style={spacings.ptLg}>
-                    <Button
-                      testID="add-more-accounts-btn"
-                      type="ghost"
-                      text={t('Add more accounts from this {{source}}', {
-                        source:
-                          accountPickerState.subType === 'hw'
-                            ? 'hardware wallet'
-                            : 'recovery phrase'
-                      })}
-                      onPress={() => {
-                        handleSave()
-                        goToNextRoute(WEB_ROUTES.accountPicker)
-                      }}
-                      textStyle={{ fontSize: 14, color: theme.primary, letterSpacing: -0.1 }}
-                      style={{ ...spacings.ph0, height: 22 }}
-                      hasBottomSpacing={false}
-                      childrenPosition="left"
-                    >
-                      <Text
-                        fontSize={24}
-                        weight="light"
-                        style={spacings.mrTy}
-                        color={theme.primary}
-                      >
-                        +
-                      </Text>
-                    </Button>
-                  </View>
+                  <Button
+                    testID="add-more-accounts-btn"
+                    type="outline"
+                    text={t('Add more accounts from this {{source}}', {
+                      source:
+                        accountPickerState.subType === 'hw' ? 'hardware wallet' : 'recovery phrase'
+                    })}
+                    onPress={() => {
+                      handleSave()
+                      goToNextRoute(WEB_ROUTES.accountPicker)
+                    }}
+                    style={{
+                      ...spacings.phMi,
+                      ...spacings.mtSm,
+                      height: 40
+                    }}
+                    size="tiny"
+                    hasBottomSpacing={false}
+                    childrenPosition="left"
+                  >
+                    <AddCircularIcon
+                      width={20}
+                      height={20}
+                      color={theme.primaryText}
+                      style={spacings.mrMi}
+                    />
+                  </Button>
                 )}
               </>
             )}

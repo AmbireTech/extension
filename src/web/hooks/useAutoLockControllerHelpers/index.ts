@@ -1,0 +1,3 @@
+import useAutoLockControllerHelpers from './useAutoLockControllerHelpers'
+
+export default useAutoLockControllerHelpers

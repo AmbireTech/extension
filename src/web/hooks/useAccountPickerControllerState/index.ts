@@ -1,3 +1,0 @@
-import useAccountPickerControllerState from './useAccountPickerControllerState'
-
-export default useAccountPickerControllerState

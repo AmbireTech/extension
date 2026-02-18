@@ -5,8 +5,8 @@ import {
   isAmbireV1LinkedAccount as getIsAmbireV1LinkedAccount,
   isSmartAccount as getIsSmartAccount
 } from '@ambire-common/libs/account/account'
+import useController from '@common/hooks/useController'
 import spacings from '@common/styles/spacings'
-import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 
 import BadgeWithPreset from '../BadgeWithPreset'
 
@@ -15,7 +15,7 @@ interface Props {
 }
 
 const AccountBadges: FC<Props> = ({ accountData }) => {
-  const keystoreCtrl = useKeystoreControllerState()
+  const keystoreCtrl = useController('KeystoreController').state
 
   const isSmartAccount = useMemo(
     () => getIsSmartAccount(accountData),

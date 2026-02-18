@@ -5,12 +5,11 @@ import { Pressable, View } from 'react-native'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@web/extension-services/background/webapi/tab'
 
 const Header: FC = () => {
-  const { theme, themeType } = useTheme()
+  const { theme } = useTheme()
   const { t } = useTranslation()
 
   const openHelpCenter = useCallback(
@@ -24,23 +23,26 @@ const Header: FC = () => {
         flexbox.alignCenter,
         flexbox.justifySpaceBetween,
         spacings.mbSm,
-        spacings.pbTy
+        spacings.pbTy,
+        {
+          backgroundColor: theme.secondaryBackground
+        }
       ]}
     >
       <Text fontSize={20} weight="medium" color={theme.primaryText}>
         {t('Portfolio errors')}
       </Text>
       <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-        <Text fontSize={14} weight="medium" appearance="secondaryText" style={spacings.mrSm}>
-          {t('Experiencing frequent issues?')}
+        <Text fontSize={12} weight="medium" appearance="secondaryText" style={spacings.mrSm}>
+          {t('Frequent issues?')}
         </Text>
         <Pressable onPress={openHelpCenter}>
           <Text
-            fontSize={14}
+            fontSize={12}
             weight="medium"
-            color={themeType === THEME_TYPES.DARK ? theme.linkText : theme.primary}
+            color={theme.linkText}
             style={{
-              textDecorationColor: themeType === THEME_TYPES.DARK ? theme.linkText : theme.primary,
+              textDecorationColor: theme.linkText,
               textDecorationLine: 'underline'
             }}
           >

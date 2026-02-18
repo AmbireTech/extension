@@ -20,7 +20,7 @@ interface Props extends InputProps {
 }
 
 const Search = ({
-  placeholder = 'Search',
+  placeholder = 'Search...',
   style,
   control,
   containerStyle = {},
@@ -40,15 +40,23 @@ const Search = ({
       name="search"
       render={({ field: { onChange, onBlur, value } }) => (
         <Input
-          containerStyle={[spacings.mb0, containerStyle]}
+          containerStyle={[spacings.mb0 as ViewStyle, containerStyle]}
           leftIcon={hasLeftIcon ? () => <SearchIcon color={theme.secondaryText} /> : undefined}
           placeholder={placeholder}
           style={style}
-          inputWrapperStyle={[{ height }, inputWrapperStyle]}
-          inputStyle={{ height: height - 2 }}
+          leftIconStyle={spacings.plSm}
+          inputStyle={{
+            ...spacings.plTy,
+            height: '100%'
+          }}
+          inputWrapperStyle={[
+            { height, borderRadius: height + 2, backgroundColor: theme.tertiaryBackground },
+            inputWrapperStyle
+          ]}
           placeholderTextColor={theme.secondaryText}
           onBlur={onBlur}
           onChange={onChange}
+          nativeInputStyle={{ fontSize: height >= 36 ? 16 : 14 }}
           value={value}
           button={
             // A trick to prevent layout shift when the clear search icon appears

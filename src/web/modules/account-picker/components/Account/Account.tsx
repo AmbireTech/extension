@@ -1,19 +1,24 @@
 import React, { useCallback, useContext, useEffect, useMemo } from 'react'
 import { Pressable, View } from 'react-native'
 
-import { Account as AccountInterface, ImportStatus } from '@ambire-common/interfaces/account'
-import { Network } from '@ambire-common/interfaces/network'
+import {
+  Account as AccountInterface,
+  AccountWithNetworkMeta,
+  ImportStatus
+} from '@ambire-common/interfaces/account'
 import { isAmbireV1LinkedAccount, isSmartAccount } from '@ambire-common/libs/account/account'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
+import CopyIcon from '@common/assets/svg/CopyIcon'
 import Avatar from '@common/components/Avatar'
 import Badge from '@common/components/Badge'
 import BadgeWithPreset from '@common/components/BadgeWithPreset'
+import FatToggle from '@common/components/FatToggle'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Label from '@common/components/Label'
 import NetworkIcon from '@common/components/NetworkIcon'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import Toggle from '@common/components/Toggle'
-import Tooltip from '@common/components/Tooltip'
 import { useTranslation } from '@common/config/localization'
 import useReverseLookup from '@common/hooks/useReverseLookup'
 import useTheme from '@common/hooks/useTheme'
@@ -21,10 +26,9 @@ import useToast from '@common/hooks/useToast'
 import useWindowSize from '@common/hooks/useWindowSize'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
-import common from '@common/styles/utils/common'
+import common, { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { setStringAsync } from '@common/utils/clipboard'
-import CopyIcon from '@web/assets/svg/CopyIcon'
 import {
   AccountPickerIntroStepsContext,
   SmartAccountIntroId
@@ -47,7 +51,7 @@ const Account = ({
   displayTypePill = true,
   shouldBeDisplayedAsNew = false
 }: {
-  account: AccountInterface & { usedOnNetworks: Network[] }
+  account: AccountWithNetworkMeta
   type: 'basic' | 'smart' | 'linked'
   unused: boolean
   isSelected: boolean
@@ -58,7 +62,6 @@ const Account = ({
   isDisabled?: boolean
   importStatus: ImportStatus
   displayTypeBadge?: boolean
-  withQuaternaryBackground?: boolean
   displayTypePill?: boolean
   shouldBeDisplayedAsNew?: boolean
 }) => {
@@ -70,6 +73,10 @@ const Account = ({
   const { minWidthSize, maxWidthSize } = useWindowSize()
   const { addToast } = useToast()
   const isAccountImported = importStatus !== ImportStatus.NotImported
+  const usedOnNetworks = Array.isArray(account.usedOnNetworks) ? account.usedOnNetworks : undefined
+  const isUsedOnNetworksLoading = account.usedOnNetworks !== null && !usedOnNetworks
+  const hasUsedOnNetworks = !!usedOnNetworks && usedOnNetworks.length > 0
+  const shouldShowUsedOnNetworks = !unused && (hasUsedOnNetworks || isUsedOnNetworksLoading)
 
   const toggleSelectedState = useCallback(() => {
     if (isSelected) {
@@ -102,7 +109,7 @@ const Account = ({
   }, [account.addr, addToast, t])
 
   if (isDomainResolving) {
-    return <SkeletonLoader height={56} width="100%" style={spacings.mbTy} />
+    return <SkeletonLoader height={48} width="100%" style={spacings.mbTy} />
   }
 
   if (!account.addr) return null
@@ -110,28 +117,23 @@ const Account = ({
   return (
     <Pressable
       key={account.addr}
-      style={({ hovered }: any) => [
+      style={[
         flexbox.alignCenter,
         withBottomSpacing ? spacings.mbTy : spacings.mb0,
         common.borderRadiusPrimary,
-        common.hidden,
-        {
-          borderWidth: 1,
-          borderColor: theme.quaternaryBackground
-        },
-        ((hovered && !isDisabled) || isSelected) && {
-          borderColor: themeType === THEME_TYPES.DARK ? theme.primaryLight80 : theme.primary20
-        }
+        common.hidden
       ]}
       onPress={isDisabled ? undefined : toggleSelectedState}
       testID={`add-account-${account.addr}`}
     >
-      <View style={[styles.container, { backgroundColor: theme.quaternaryBackground }]}>
-        <Toggle
+      <View style={[styles.container, { backgroundColor: theme.secondaryBackground }]}>
+        <FatToggle
           isOn={isSelected}
           onToggle={toggleSelectedState}
           disabled={isDisabled}
           style={flexbox.alignSelfStart}
+          width={44}
+          height={24}
         />
 
         <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
@@ -140,6 +142,7 @@ const Account = ({
               {isAccountImported ? (
                 <>
                   <Avatar
+                    address={account.addr}
                     pfp={account.preferences.pfp}
                     size={24}
                     isSmart={isSmartAccount(account)}
@@ -157,12 +160,14 @@ const Account = ({
                     fontSize={14}
                     appearance="secondaryText"
                     style={spacings.mrMi}
-                    // @ts-ignore
-                    dataSet={{ tooltipId: account.addr }}
+                    dataSet={createGlobalTooltipDataSet({
+                      id: account.addr,
+                      content: account.addr
+                    })}
+                    weight="mono_regular"
                   >
                     ({shortenAddress(account.addr, 16)})
                   </Text>
-                  <Tooltip content={account.addr} id={account.addr} />
                 </>
               ) : (
                 <>
@@ -177,9 +182,10 @@ const Account = ({
                     </Text>
                   ) : null}
                   <Text
-                    fontSize={domainName ? 14 : 16}
-                    appearance={domainName ? 'secondaryText' : 'primaryText'}
+                    fontSize={14}
+                    appearance="secondaryText"
                     style={spacings.mrMi}
+                    weight="mono_regular"
                   >
                     {domainName ? '(' : ''}
                     {formattedAddress}
@@ -198,7 +204,7 @@ const Account = ({
               <>
                 {type === 'smart' && (
                   <BadgeWithPreset
-                    withRightSpacing
+                    style={spacings.mrMi}
                     preset="smart-account"
                     {...(shouldAddIntroStepsIds && { nativeID: SmartAccountIntroId })}
                   />
@@ -206,9 +212,9 @@ const Account = ({
 
                 {type === 'linked' && (
                   <>
-                    <BadgeWithPreset preset="linked" withRightSpacing />
+                    <BadgeWithPreset preset="linked" style={spacings.mrMi} />
                     {isAmbireV1LinkedAccount(account.creation?.factoryAddr) && (
-                      <BadgeWithPreset preset="ambire-v1" withRightSpacing />
+                      <BadgeWithPreset preset="ambire-v1" style={spacings.mrMi} />
                     )}
                   </>
                 )}
@@ -216,34 +222,43 @@ const Account = ({
             )}
           </View>
           <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-            {!!account.usedOnNetworks.length && (
+            {shouldShowUsedOnNetworks && (
               <View style={[flexbox.directionRow, flexbox.alignCenter]}>
                 <Text fontSize={12} weight="regular">
                   {t('used on ')}
                 </Text>
-                {account.usedOnNetworks.slice(0, 7).map((n, index: number, arr: string | any[]) => {
-                  return (
-                    <View
-                      style={[
-                        styles.networkIcon,
-                        { marginLeft: index ? -5 : 0, zIndex: arr.length - index }
-                      ]}
-                      key={n.chainId.toString()}
-                    >
-                      <NetworkIcon
-                        style={{ backgroundColor: '#fff' }}
-                        id={n.chainId.toString()}
-                        size={18}
-                      />
-                    </View>
-                  )
-                })}
+                {hasUsedOnNetworks && usedOnNetworks ? (
+                  usedOnNetworks.slice(0, 7).map((n, index: number, arr: string | any[]) => {
+                    return (
+                      <View
+                        style={[
+                          styles.networkIcon,
+                          { marginLeft: index ? -5 : 0, zIndex: arr.length - index }
+                        ]}
+                        key={n.chainId.toString()}
+                      >
+                        <NetworkIcon
+                          style={{ backgroundColor: '#fff' }}
+                          id={n.chainId.toString()}
+                          size={18}
+                        />
+                      </View>
+                    )
+                  })
+                ) : (
+                  <SkeletonLoader
+                    width={54}
+                    height={20}
+                    borderRadius={6}
+                    appearance="tertiaryBackground"
+                  />
+                )}
               </View>
             )}
             {!!unused && (
               <Badge
-                type={shouldBeDisplayedAsNew ? 'new' : 'default'}
-                text={shouldBeDisplayedAsNew ? t('new') : t('unused')}
+                type={shouldBeDisplayedAsNew ? 'new' : 'outline'}
+                text={shouldBeDisplayedAsNew ? t('New') : t('unused')}
               />
             )}
           </View>

@@ -12,7 +12,7 @@
     margin-bottom: 2rem;
 
     .title {
-        margin-bottom: 0;
+      margin-bottom: 0;
     }
     .buttons {
       display: flex;
@@ -21,7 +21,7 @@
 
       .button,
       .arrowButton {
-        background-color: #191a1f;
+        background-color: $neutral-700;
         border-radius: 0.5rem;
       }
 
@@ -81,6 +81,15 @@
 
     :global(.swiper) {
       margin-left: 0;
+    }
+  }
+
+  @include breakpoint-down-from(small-desktop) {
+    padding-left: 2rem;
+
+    .titleAndButtons {
+      margin-left: 0;
+      margin-right: 2rem;
     }
   }
 

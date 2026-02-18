@@ -10,14 +10,12 @@ interface Style {
   iconWrapper: ViewStyle
 }
 
-const getStyles = (theme: ThemeProps) =>
+const getStyles = () =>
   StyleSheet.create<Style>({
     container: {
       ...spacings.phTy,
       ...spacings.pvTy,
-      ...common.borderRadiusPrimary,
-      backgroundColor: theme.primaryBackground,
-      borderWidth: 1
+      ...common.borderRadiusPrimary
     },
     iconWrapper: {
       width: 40,

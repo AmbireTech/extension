@@ -5,7 +5,7 @@
   justify-content: center;
   align-items: flex-end;
   margin: 3rem 0 2.875rem;
-  gap: .75rem;
+  gap: 0.75rem;
 
   .step {
     display: flex;
@@ -14,17 +14,13 @@
     background-color: rgba($whiteText, 0.05);
     width: 7.5rem;
     position: relative;
-    border-radius: .5rem;
+    border-radius: 0.5rem;
   }
 
-  .avatar {
-    width: 5rem;
-    height: 5rem;
-    margin-bottom: 0.5rem;
-    border-radius: 50%;
-    background-color: $blue-200;
-    max-width: 100%;
-    object-fit: cover;
+  .trophy {
+    width: 2.125rem;
+    height: auto;
+    margin-bottom: 0.75rem;
   }
 
   .contentWrapper {
@@ -34,12 +30,8 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    top: -2rem;
     flex: 1;
-
-    .avatar {
-      z-index: 2;
-    }
+    top: -1.25rem;
   }
 
   .currentUserWrapper {
@@ -71,7 +63,7 @@
   .name {
     font-size: 0.75rem;
     font-weight: 300;
-    margin-bottom: .5rem;
+    margin-bottom: 0.5rem;
     line-height: 1rem;
     color: $primaryText;
   }
@@ -82,20 +74,15 @@
     position: relative;
     z-index: 2;
 
-    .contentWrapper {
-      top: -3rem;
-    }
     .xp {
       font-weight: 500;
       font-size: 1.75rem;
     }
 
-    .xp, .name {
+    .xp,
+    .name,
+    .trophy {
       color: $goldDecorative;
-    }
-    .avatar {
-      border: 0.125rem solid $goldDecorative;
-      margin-bottom: 1.125rem;
     }
   }
 
@@ -106,16 +93,10 @@
     z-index: 4;
     border-right: none;
 
-    .xp, .name {
+    .xp,
+    .name,
+    .trophy {
       color: $silverDecorative;
-    }
-
-    .avatar {
-      width: 4rem;
-      height: 4rem;
-      border: 0.125rem solid $silverDecorative;
-      margin-bottom: .6875rem;
-
     }
   }
 
@@ -125,15 +106,11 @@
     position: relative;
     z-index: 4;
     border-left: none;
-    
-    .xp, .name {
+
+    .xp,
+    .name,
+    .trophy {
       color: $bronzeDecorative;
-    }
-    .avatar {
-      width: 4rem;
-      height: 4rem;
-      border: 0.125rem solid $bronzeDecorative;
-      margin-bottom: 1.25rem;
     }
   }
 }

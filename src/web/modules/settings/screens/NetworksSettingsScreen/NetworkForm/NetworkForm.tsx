@@ -8,6 +8,7 @@ import { getFeatures } from '@ambire-common/libs/networks/networks'
 import { getRpcProvider } from '@ambire-common/services/provider'
 import { isValidURL } from '@ambire-common/services/validations'
 import CopyIcon from '@common/assets/svg/CopyIcon'
+import WarningIcon from '@common/assets/svg/WarningIcon'
 import Button from '@common/components/Button'
 import Input from '@common/components/Input'
 import NetworkIcon from '@common/components/NetworkIcon'
@@ -15,6 +16,8 @@ import NumberInput from '@common/components/NumberInput'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
 import Tooltip from '@common/components/Tooltip'
+import useController from '@common/hooks/useController'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
@@ -22,9 +25,7 @@ import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { setStringAsync } from '@common/utils/clipboard'
 import NetworkAvailableFeatures from '@web/components/NetworkAvailableFeatures'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import useHover, { AnimatedPressable } from '@web/hooks/useHover'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import {
   getAreDefaultsChanged,
   handleErrors
@@ -81,7 +82,7 @@ export const RpcSelectorItem = React.memo(
             index !== rpcUrlsLength - 1 && styles.selectRpcItemBorder,
             (rpcUrlsLength <= 2 || forceLargeItems) && { height: 40 },
             style,
-            hovered && { backgroundColor: theme.tertiaryBackground }
+            hovered && { backgroundColor: theme.secondaryBackground }
           ]}
           onPress={() => {
             if (url !== selectedRpcUrl) onPress(url)
@@ -101,6 +102,7 @@ export const RpcSelectorItem = React.memo(
               fontSize={14}
               appearance={selectedRpcUrl === url ? 'primaryText' : 'secondaryText'}
               numberOfLines={1}
+              style={flexbox.flex1}
             >
               {url}
             </Text>
@@ -143,20 +145,15 @@ const NetworkForm = ({
   onSaved: () => void
 }) => {
   const { t } = useTranslation()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { addToast } = useToast()
-  const { allNetworks, networkToAddOrUpdate, statuses } = useNetworksControllerState()
+  const { allNetworks, networkToAddOrUpdate, statuses } = useController('NetworksController').state
   const [isValidatingRPC, setValidatingRPC] = useState<boolean>(false)
-  const { styles } = useTheme(getStyles)
+  const { styles, theme } = useTheme(getStyles)
 
   const selectedNetwork = useMemo(
     () => allNetworks.find((network) => network.chainId.toString() === selectedChainId.toString()),
     [allNetworks, selectedChainId]
-  )
-
-  const isPredefinedNetwork = useMemo(
-    () => selectedNetwork && selectedNetwork.predefined,
-    [selectedNetwork]
   )
 
   const {
@@ -177,7 +174,8 @@ const NetworkForm = ({
       nativeAssetName: '',
       explorerUrl: '',
       coingeckoPlatformId: '',
-      coingeckoNativeAssetId: ''
+      coingeckoNativeAssetId: '',
+      customBundlerUrl: ''
     },
     values: {
       name: selectedNetwork?.name || '',
@@ -187,7 +185,8 @@ const NetworkForm = ({
       nativeAssetName: selectedNetwork?.nativeAssetName || '',
       explorerUrl: selectedNetwork?.explorerUrl || '',
       coingeckoPlatformId: (selectedNetwork?.platformId as string) || '',
-      coingeckoNativeAssetId: (selectedNetwork?.nativeAssetId as string) || ''
+      coingeckoNativeAssetId: (selectedNetwork?.nativeAssetId as string) || '',
+      customBundlerUrl: (selectedNetwork?.customBundlerUrl as string) || ''
     }
   })
   const [rpcUrls, setRpcUrls] = useState(selectedNetwork?.rpcUrls || [])
@@ -205,14 +204,14 @@ const NetworkForm = ({
       networkToAddOrUpdate?.info
         ? getFeatures(networkToAddOrUpdate?.info, selectedNetwork)
         : errors.chainId
-        ? getFeatures(undefined, selectedNetwork)
-        : selectedNetwork?.features || getFeatures(undefined, selectedNetwork),
+          ? getFeatures(undefined, selectedNetwork)
+          : selectedNetwork?.features || getFeatures(undefined, selectedNetwork),
     [errors.chainId, networkToAddOrUpdate?.info, selectedNetwork]
   )
 
   useEffect(() => {
     dispatch({
-      type: 'SETTINGS_CONTROLLER_RESET_NETWORK_TO_ADD_OR_UPDATE'
+      type: 'NETWORKS_CONTROLLER_RESET_NETWORK_TO_ADD_OR_UPDATE'
     })
   }, [dispatch])
 
@@ -220,7 +219,7 @@ const NetworkForm = ({
     async (rpcUrl?: string, chainId?: string | number, type: 'add' | 'change' = 'change') => {
       setValidatingRPC(true)
       if (type === 'change') {
-        dispatch({ type: 'SETTINGS_CONTROLLER_RESET_NETWORK_TO_ADD_OR_UPDATE' })
+        dispatch({ type: 'NETWORKS_CONTROLLER_RESET_NETWORK_TO_ADD_OR_UPDATE' })
       }
       if (!rpcUrl && !selectedRpcUrl) {
         setValidatingRPC(false)
@@ -254,6 +253,7 @@ const NetworkForm = ({
 
       try {
         if (!rpcUrl) throw new Error('No RPC URL provided')
+        // no need to call the global provider from ambire-common
         const rpc = getRpcProvider([rpcUrl], chainId ? Number(chainId) : undefined)
         const network = await rpc.getNetwork()
         rpc.destroy()
@@ -294,13 +294,15 @@ const NetworkForm = ({
             return
           }
           dispatch({
-            type: 'SETTINGS_CONTROLLER_SET_NETWORK_TO_ADD_OR_UPDATE',
+            type: 'NETWORKS_CONTROLLER_SET_NETWORK_TO_ADD_OR_UPDATE',
             params: { rpcUrl: rpcUrl as string, chainId: BigInt(chainId) }
           })
         }
         setValidatingRPC(false)
         clearErrors('rpcUrl')
       } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error(error)
         setValidatingRPC(false)
         setError('rpcUrl', { type: 'custom-error', message: 'Invalid RPC URL' })
       }
@@ -327,7 +329,7 @@ const NetworkForm = ({
     // when resetting the form.
     const subscription = watch(async (value, { name }) => {
       if (name && !value[name]) {
-        if (name !== 'rpcUrl') {
+        if (name !== 'rpcUrl' && name !== 'customBundlerUrl') {
           setError(name, { type: 'custom-error', message: 'Field is required' })
           return
         }
@@ -435,8 +437,13 @@ const NetworkForm = ({
       if (selectedChainId === 'add-custom-network') {
         emptyFields = Object.keys(formFields).filter(
           (key) =>
-            !['rpcUrl', 'rpcUrls', 'coingeckoPlatformId', 'coingeckoNativeAssetId'].includes(key) &&
-            !formFields[key].length
+            ![
+              'rpcUrl',
+              'rpcUrls',
+              'coingeckoPlatformId',
+              'coingeckoNativeAssetId',
+              'customBundlerUrl'
+            ].includes(key) && !formFields[key].length
         )
       } else {
         emptyFields = Object.keys(formFields).filter(
@@ -468,7 +475,8 @@ const NetworkForm = ({
             rpcUrls,
             selectedRpcUrl,
             chainId: BigInt(networkFormValues.chainId),
-            iconUrls: []
+            iconUrls: [],
+            customBundlerUrl: networkFormValues.customBundlerUrl
           }
         })
       } else {
@@ -478,7 +486,8 @@ const NetworkForm = ({
             network: {
               rpcUrls,
               selectedRpcUrl,
-              explorerUrl: networkFormValues.explorerUrl
+              explorerUrl: networkFormValues.explorerUrl,
+              customBundlerUrl: networkFormValues.customBundlerUrl
             },
             chainId: BigInt(networkFormValues.chainId)
           }
@@ -495,7 +504,7 @@ const NetworkForm = ({
         const chainId = watch('chainId')
         if (chainId) {
           dispatch({
-            type: 'SETTINGS_CONTROLLER_SET_NETWORK_TO_ADD_OR_UPDATE',
+            type: 'NETWORKS_CONTROLLER_SET_NETWORK_TO_ADD_OR_UPDATE',
             params: { rpcUrl: url, chainId: BigInt(chainId) }
           })
         }
@@ -506,21 +515,19 @@ const NetworkForm = ({
 
   const handleRemoveRpcUrl = useCallback(
     (url: string) => {
-      if (
-        isPredefinedNetwork &&
-        allNetworks.filter((n) => n.predefined).find((n) => n.rpcUrls.includes(url))
-      )
+      if (rpcUrls.length <= 1) {
+        addToast('There must be at least one RPC provider', { type: 'error' })
         return
-
+      }
       const filteredRpcUrls = rpcUrls.filter((u) => u !== url)
       if (url === selectedRpcUrl) {
         if (filteredRpcUrls.length) {
-          handleSelectRpcUrl(filteredRpcUrls[0])
+          handleSelectRpcUrl(filteredRpcUrls[0]!)
         }
       }
       setRpcUrls(filteredRpcUrls)
     },
-    [isPredefinedNetwork, allNetworks, rpcUrls, selectedRpcUrl, handleSelectRpcUrl]
+    [rpcUrls, selectedRpcUrl, addToast, handleSelectRpcUrl]
   )
 
   const handleAddRpcUrl = useCallback(
@@ -567,7 +574,7 @@ const NetworkForm = ({
               <NetworkIcon
                 id={selectedNetwork.chainId.toString()}
                 style={spacings.mrTy}
-                size={40}
+                size={28}
               />
               <Text appearance="secondaryText" weight="regular" style={spacings.mrMi} fontSize={16}>
                 {selectedNetwork.name || t('Unknown network')}
@@ -594,7 +601,7 @@ const NetworkForm = ({
                     onBlur={onBlur}
                     onChangeText={onChange}
                     value={value}
-                    inputWrapperStyle={{ height: 40 }}
+                    inputWrapperStyle={{ height: 40, backgroundColor: theme.tertiaryBackground }}
                     inputStyle={{ height: 40 }}
                     containerStyle={{ ...spacings.mb, ...spacings.mrMi, flex: 1 }}
                     label={t('Network name')}
@@ -612,9 +619,9 @@ const NetworkForm = ({
                       onBlur={onBlur}
                       onChangeText={onChange}
                       value={value}
-                      inputWrapperStyle={{ height: 40 }}
+                      inputWrapperStyle={{ height: 40, backgroundColor: theme.tertiaryBackground }}
                       inputStyle={{ height: 40 }}
-                      containerStyle={{ ...spacings.mb, ...spacings.mlMi, flex: 1 }}
+                      containerStyle={{ ...spacings.mb, flex: 1 }}
                       label={t('Currency Symbol')}
                       disabled={selectedChainId !== 'add-custom-network'}
                       error={handleErrors(errors.nativeAssetSymbol)}
@@ -629,7 +636,7 @@ const NetworkForm = ({
                       onBlur={onBlur}
                       onChangeText={onChange}
                       value={value}
-                      inputWrapperStyle={{ height: 40 }}
+                      inputWrapperStyle={{ height: 40, backgroundColor: theme.tertiaryBackground }}
                       inputStyle={{ height: 40 }}
                       containerStyle={{ ...spacings.mb, ...spacings.mlMi, flex: 1 }}
                       label={t('Currency Name')}
@@ -649,7 +656,7 @@ const NetworkForm = ({
                       onBlur={onBlur}
                       onChangeText={onChange}
                       value={value}
-                      inputWrapperStyle={{ height: 40 }}
+                      inputWrapperStyle={{ height: 40, backgroundColor: theme.tertiaryBackground }}
                       inputStyle={{ height: 40 }}
                       containerStyle={{ ...spacings.mb, ...spacings.mrTy, flex: 1 }}
                       label={t('RPC URL')}
@@ -662,7 +669,7 @@ const NetworkForm = ({
                             ? t('Adding...')
                             : t('Add')
                         }
-                        type="secondary"
+                        type="gray"
                         disabled={
                           !value.length ||
                           (!!errors.rpcUrl &&
@@ -697,11 +704,10 @@ const NetworkForm = ({
                         rpcUrlsLength={rpcUrls.length}
                         onPress={handleSelectRpcUrl}
                         shouldShowRemove={
-                          isPredefinedNetwork
-                            ? !allNetworks
-                                .filter((n) => n.predefined)
-                                .find((n) => n.rpcUrls.includes(url))
-                            : true
+                          !!selectedNetwork?.rpcUrls.length &&
+                          selectedNetwork.rpcUrls.length > 1 &&
+                          url !== selectedNetwork?.selectedRpcUrl &&
+                          !url.includes('invictus.ambire.com')
                         }
                         onRemove={handleRemoveRpcUrl}
                       />
@@ -730,7 +736,7 @@ const NetworkForm = ({
                       onBlur={onBlur}
                       onChangeText={onChange}
                       value={value as any}
-                      inputWrapperStyle={{ height: 40 }}
+                      inputWrapperStyle={{ height: 40, backgroundColor: theme.tertiaryBackground }}
                       inputStyle={{ height: 40 }}
                       containerStyle={{ ...spacings.mrMi, flex: 1 }}
                       label={t('Chain ID')}
@@ -747,7 +753,7 @@ const NetworkForm = ({
                       onBlur={onBlur}
                       onChangeText={onChange}
                       value={value}
-                      inputWrapperStyle={{ height: 40 }}
+                      inputWrapperStyle={{ height: 40, backgroundColor: theme.tertiaryBackground }}
                       inputStyle={{ height: 40 }}
                       containerStyle={{ ...spacings.mlMi, flex: 2 }}
                       label={t('Block Explorer URL')}
@@ -767,7 +773,7 @@ const NetworkForm = ({
                       value={value as any}
                       disabled
                       placeholder="Coming soon..."
-                      inputWrapperStyle={{ height: 40 }}
+                      inputWrapperStyle={{ height: 40, backgroundColor: theme.tertiaryBackground }}
                       inputStyle={{ height: 40 }}
                       containerStyle={{ ...spacings.mrMi, flex: 1 }}
                       label={t('Coingecko platform ID')}
@@ -785,7 +791,7 @@ const NetworkForm = ({
                       value={value}
                       disabled
                       placeholder="Coming soon..."
-                      inputWrapperStyle={{ height: 40 }}
+                      inputWrapperStyle={{ height: 40, backgroundColor: theme.tertiaryBackground }}
                       inputStyle={{ height: 40 }}
                       containerStyle={{ ...spacings.mlMi, flex: 1 }}
                       label={t('Coingecko native asset ID')}
@@ -793,6 +799,38 @@ const NetworkForm = ({
                     />
                   )}
                   name="coingeckoNativeAssetId"
+                />
+              </View>
+              <View style={[flexbox.directionRow, flexbox.alignStart]}>
+                <Controller
+                  control={control}
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <Input
+                      onBlur={onBlur}
+                      onChangeText={onChange}
+                      value={value}
+                      leftIcon={() => {
+                        return (
+                          <>
+                            <WarningIcon
+                              color={theme.warningDecorative}
+                              data-tooltip-id="customBundlerId"
+                            />
+                            <Tooltip
+                              id="customBundlerId"
+                              content="The custom bundler is an experimental feature. The extension might not work well with it. Proceed with caution"
+                            />
+                          </>
+                        )
+                      }}
+                      inputWrapperStyle={{ height: 40, backgroundColor: theme.tertiaryBackground }}
+                      inputStyle={{ height: 40 }}
+                      containerStyle={{ ...spacings.mb, ...spacings.mrMi, flex: 1 }}
+                      label={t('Custom bundler url (Experimental)')}
+                      error={handleErrors(errors.customBundlerUrl)}
+                    />
+                  )}
+                  name="customBundlerUrl"
                 />
               </View>
             </ScrollableWrapper>
@@ -817,19 +855,19 @@ const NetworkForm = ({
                   <Button
                     onPress={onCancel}
                     text={t('Cancel')}
-                    type="secondary"
+                    type="gray"
                     hasBottomSpacing={false}
-                    style={[flexbox.flex1, spacings.mr, { width: 160 }]}
-                    size="large"
+                    style={[flexbox.flex1, spacings.mrSm, { width: 90 }]}
+                    size="smaller"
                   />
 
                   <Button
                     onPress={handleSubmitButtonPress}
                     text={isSomethingUpdated ? t('Save') : t('No changes')}
                     disabled={!isSomethingUpdated || isSaveOrAddButtonDisabled}
-                    style={[spacings.mlMi, flexbox.flex1, { width: 180 }]}
+                    style={[spacings.mlMi, flexbox.flex1, { minWidth: 124 }]}
                     hasBottomSpacing={false}
-                    size="large"
+                    size="smaller"
                   />
                 </View>
               )}
@@ -837,7 +875,6 @@ const NetworkForm = ({
           </View>
         </View>
       </View>
-      <Tooltip id="chainId" />
     </>
   )
 }

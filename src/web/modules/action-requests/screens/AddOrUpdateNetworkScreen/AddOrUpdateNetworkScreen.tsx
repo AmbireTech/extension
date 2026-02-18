@@ -4,13 +4,11 @@ import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import { AddNetworkRequestParams, Network, NetworkFeature } from '@ambire-common/interfaces/network'
-import { isDappRequestAction } from '@ambire-common/libs/actions/actions'
 import { getFeatures } from '@ambire-common/libs/networks/networks'
 import Spinner from '@common/components/Spinner'
+import useController from '@common/hooks/useController'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import flexbox from '@common/styles/utils/flexbox'
-import useActionsControllerState from '@web/hooks/useActionsControllerState'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import validateRequestParams from '@web/modules/action-requests/screens/AddOrUpdateNetworkScreen/validateRequestParams'
 
 import AddChain from './AddChain'
@@ -24,10 +22,10 @@ import UpdateChain from './UpdateChain'
  */
 const AddOrUpdateNetworkScreen = () => {
   const { t } = useTranslation()
-  const { dispatch } = useBackgroundService()
-  const state = useActionsControllerState()
+  const { dispatch } = useControllersMiddleware()
+  const { currentUserRequest } = useController('RequestsController').state
   const { statuses, networkToAddOrUpdate, disabledNetworks, networks } =
-    useNetworksControllerState()
+    useController('NetworksController').state
   const [features, setFeatures] = useState<NetworkFeature[]>(getFeatures(undefined, undefined))
   const [rpcUrlIndex, setRpcUrlIndex] = useState<number>(0)
   const [existingNetwork, setExistingNetwork] = useState<Network | null | undefined>(undefined)
@@ -36,21 +34,16 @@ const AddOrUpdateNetworkScreen = () => {
     t('already added to your wallet.')
   )
 
-  const dappAction = useMemo(
-    () => (isDappRequestAction(state.currentAction) ? state.currentAction : null),
-    [state.currentAction]
-  )
-
   const userRequest = useMemo(() => {
-    if (!dappAction) return undefined
-    if (dappAction.userRequest.action.kind !== 'walletAddEthereumChain') return undefined
+    if (!currentUserRequest) return undefined
+    if (currentUserRequest.kind !== 'walletAddEthereumChain') return undefined
 
-    return dappAction.userRequest
-  }, [dappAction])
+    return currentUserRequest
+  }, [currentUserRequest])
 
-  const requestData = useMemo(() => userRequest?.action?.params?.[0], [userRequest])
+  const requestData = useMemo(() => userRequest?.meta?.params?.[0], [userRequest])
 
-  const requestKind = useMemo(() => userRequest?.action?.kind, [userRequest?.action?.kind])
+  const requestKind = useMemo(() => userRequest?.kind, [userRequest?.kind])
 
   const areParamsValid = useMemo(
     () => validateRequestParams(requestKind, requestData),
@@ -85,6 +78,7 @@ const AddOrUpdateNetworkScreen = () => {
 
   const networkDetails: AddNetworkRequestParams | undefined = useMemo(() => {
     if (!areParamsValid || !requestData) return undefined
+
     if (!requestData.rpcUrls) return
     if (existingNetwork) {
       return {
@@ -101,7 +95,7 @@ const AddOrUpdateNetworkScreen = () => {
       return {
         name,
         rpcUrls,
-        selectedRpcUrl: rpcUrls[rpcUrlIndex],
+        selectedRpcUrl: rpcUrls[rpcUrlIndex]!,
         chainId: BigInt(requestData.chainId),
         nativeAssetSymbol,
         nativeAssetName,
@@ -127,7 +121,7 @@ const AddOrUpdateNetworkScreen = () => {
     if (!networkDetails || existingNetwork) return
 
     dispatch({
-      type: 'SETTINGS_CONTROLLER_SET_NETWORK_TO_ADD_OR_UPDATE',
+      type: 'NETWORKS_CONTROLLER_SET_NETWORK_TO_ADD_OR_UPDATE',
       params: { chainId: networkDetails.chainId, rpcUrl: networkDetails.selectedRpcUrl }
     })
   }, [dispatch, rpcUrlIndex, networkDetails, existingNetwork, networkToAddOrUpdate?.chainId])
@@ -152,7 +146,7 @@ const AddOrUpdateNetworkScreen = () => {
   }, [networkToAddOrUpdate?.info, networkDetails, existingNetwork])
 
   useEffect(() => {
-    if (!dappAction) return
+    if (!userRequest) return
     if (statuses.addNetwork === 'SUCCESS') {
       setSuccessStateText(t('successfully added to your wallet.'))
     } else if (statuses.updateNetwork === 'SUCCESS') {
@@ -160,30 +154,36 @@ const AddOrUpdateNetworkScreen = () => {
     } else if (statuses.addNetwork === 'ERROR' || statuses.updateNetwork === 'ERROR') {
       actionButtonPressedRef.current = false
     }
-  }, [dispatch, t, statuses.addNetwork, dappAction, statuses.updateNetwork])
+  }, [dispatch, t, statuses.addNetwork, userRequest, statuses.updateNetwork])
 
   const handleDenyButtonPress = useCallback(() => {
-    if (!dappAction) return
+    if (!userRequest) return
 
     actionButtonPressedRef.current = true
     dispatch({
       type: 'REQUESTS_CONTROLLER_REJECT_USER_REQUEST',
-      params: { err: t('User rejected the request.'), id: dappAction.id }
+      params: { err: t('User rejected the request.'), id: userRequest.id }
     })
-  }, [dappAction, t, dispatch])
+    dispatch({
+      type: 'NETWORKS_CONTROLLER_RESET_NETWORK_TO_ADD_OR_UPDATE'
+    })
+  }, [userRequest, t, dispatch])
 
   const handleCloseOnAlreadyAdded = useCallback(() => {
-    if (!dappAction) return
+    if (!userRequest) return
 
     actionButtonPressedRef.current = true
     dispatch({
       type: 'REQUESTS_CONTROLLER_RESOLVE_USER_REQUEST',
-      params: { data: null, id: dappAction.id }
+      params: { data: null, id: userRequest.id }
     })
-  }, [dappAction, dispatch])
+    dispatch({
+      type: 'NETWORKS_CONTROLLER_RESET_NETWORK_TO_ADD_OR_UPDATE'
+    })
+  }, [userRequest, dispatch])
 
   const handleUpdateNetwork = useCallback(() => {
-    if (!networkDetails || !dappAction) return
+    if (!networkDetails || !userRequest) return
 
     actionButtonPressedRef.current = true
 
@@ -207,9 +207,9 @@ const AddOrUpdateNetworkScreen = () => {
 
     dispatch({
       type: 'REQUESTS_CONTROLLER_RESOLVE_USER_REQUEST',
-      params: { data: null, id: dappAction.id }
+      params: { data: null, id: userRequest.id }
     })
-  }, [dappAction, dispatch, networkDetails, networks])
+  }, [userRequest, dispatch, networkDetails, networks])
 
   const handlePrimaryButtonPress = useCallback(() => {
     if (!networkDetails) return
@@ -268,60 +268,52 @@ const AddOrUpdateNetworkScreen = () => {
     )
   }
 
-  if (view === 'update') {
+  if (view === 'update' && networkAlreadyAdded) {
     return (
-      <>
-        {networkDetails && networkAlreadyAdded && (
-          <UpdateChain
-            handleDenyButtonPress={handleDenyButtonPress}
-            handleUpdateNetwork={handleUpdateNetwork}
-            handleRetryWithDifferentRpcUrl={handleRetryWithDifferentRpcUrl}
-            areParamsValid={areParamsValid}
-            statuses={statuses}
-            features={features}
-            networkDetails={networkDetails}
-            networkAlreadyAdded={networkAlreadyAdded}
-            userRequest={userRequest}
-            actionButtonPressedRef={actionButtonPressedRef}
-            rpcUrls={rpcUrls}
-            rpcUrlIndex={rpcUrlIndex}
-          />
-        )}
-      </>
+      <UpdateChain
+        handleDenyButtonPress={handleDenyButtonPress}
+        handleUpdateNetwork={handleUpdateNetwork}
+        handleRetryWithDifferentRpcUrl={handleRetryWithDifferentRpcUrl}
+        areParamsValid={areParamsValid}
+        statuses={statuses}
+        features={features}
+        networkDetails={networkDetails}
+        networkAlreadyAdded={networkAlreadyAdded}
+        userRequest={userRequest}
+        actionButtonPressedRef={actionButtonPressedRef}
+        rpcUrls={rpcUrls}
+        rpcUrlIndex={rpcUrlIndex}
+      />
     )
   }
 
-  if (view === 'alreadyAdded') {
+  if (view === 'alreadyAdded' && networkAlreadyAdded) {
     return (
       <AlreadyAddedChain
         handleCloseOnAlreadyAdded={handleCloseOnAlreadyAdded}
         statuses={statuses}
-        networkAlreadyAdded={networkAlreadyAdded!}
+        networkAlreadyAdded={networkAlreadyAdded}
         successStateText={successStateText}
       />
     )
   }
 
   return (
-    <>
-      {networkDetails && (
-        <AddChain
-          handleDenyButtonPress={handleDenyButtonPress}
-          handlePrimaryButtonPress={handlePrimaryButtonPress}
-          handleRetryWithDifferentRpcUrl={handleRetryWithDifferentRpcUrl}
-          areParamsValid={areParamsValid}
-          statuses={statuses}
-          features={features}
-          networkDetails={networkDetails}
-          actionButtonPressedRef={actionButtonPressedRef}
-          rpcUrls={rpcUrls}
-          rpcUrlIndex={rpcUrlIndex}
-          resolveButtonText={resolveButtonText}
-          existingNetwork={existingNetwork}
-          userRequest={userRequest}
-        />
-      )}
-    </>
+    <AddChain
+      handleDenyButtonPress={handleDenyButtonPress}
+      handlePrimaryButtonPress={handlePrimaryButtonPress}
+      handleRetryWithDifferentRpcUrl={handleRetryWithDifferentRpcUrl}
+      areParamsValid={areParamsValid}
+      statuses={statuses}
+      features={features}
+      networkDetails={networkDetails}
+      actionButtonPressedRef={actionButtonPressedRef}
+      rpcUrls={rpcUrls}
+      rpcUrlIndex={rpcUrlIndex}
+      resolveButtonText={resolveButtonText}
+      existingNetwork={existingNetwork}
+      userRequest={userRequest}
+    />
   )
 }
 

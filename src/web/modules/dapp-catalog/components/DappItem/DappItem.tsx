@@ -1,28 +1,26 @@
 import React, { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import { Dapp } from '@ambire-common/interfaces/dapp'
 import ConnectedIcon from '@common/assets/svg/ConnectedIcon'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import StarIcon from '@common/assets/svg/StarIcon'
-import XIcon from '@common/assets/svg/XIcon'
+import TwitterIcon from '@common/assets/svg/TwitterIcon'
 import Badge from '@common/components/Badge'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
-import Tooltip from '@common/components/Tooltip'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING_TY } from '@common/styles/spacings'
-import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import ManifestImage from '@web/components/ManifestImage'
 import { openInTab } from '@web/extension-services/background/webapi/tab'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
 import TrustedIcon from '@web/modules/action-requests/screens/DappConnectScreen/components/TrustedIcon'
-import ManageDapp from '@web/modules/dapp-catalog/components/ManageDapp'
 
+import ManageApp from '../ManageApp'
 import getStyles from './styles'
 
 function formatTVL(tvl: number) {
@@ -48,23 +46,25 @@ const DappItem = (dapp: Dapp) => {
     icon,
     description,
     isConnected,
+    isFeatured,
     favorite,
     blacklisted,
-    isCustom,
     tvl,
     twitter
   } = dapp
-  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const { styles, theme } = useTheme(getStyles)
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { t } = useTranslation()
   const [hovered, setHovered] = useState(false)
+  const [isManageAppOpen, setIsManageAppOpen] = useState(false)
+  const [isNetworkSelectorOpen, setIsNetworkSelectorOpen] = useState(false)
+  const settingsButtonRef = React.useRef<View>(null)
 
-  const [bindAnim, animStyle] = useCustomHover({
+  const [bindAnim, animStyle, isHovered] = useCustomHover({
     property: 'backgroundColor',
     values: {
-      from: blacklisted ? theme.errorBackground : theme.secondaryBackground,
-      to: blacklisted ? theme.errorBackground : theme.tertiaryBackground
+      from: blacklisted === 'BLACKLISTED' ? theme.errorBackground : theme.secondaryBackground,
+      to: blacklisted === 'BLACKLISTED' ? theme.errorBackground : theme.tertiaryBackground
     }
   })
 
@@ -85,7 +85,7 @@ const DappItem = (dapp: Dapp) => {
 
   const getInitials = useCallback((fullName: string) => {
     const words = fullName.split(' ').filter((word) => word.length > 0)
-    return words.length > 0 ? words[0][0].toUpperCase() : ''
+    return words.length > 0 ? words[0]?.[0]?.toUpperCase() : ''
   }, [])
 
   const fallbackIcon = useCallback(
@@ -105,13 +105,21 @@ const DappItem = (dapp: Dapp) => {
         onMouseLeave={() => setHovered(false)}
       >
         <AnimatedPressable
-          style={[styles.container, animStyle]}
+          style={[
+            styles.container,
+            isFeatured && {
+              // @ts-ignore
+              boxShadow: `0 ${isHovered ? 2 : 3}px 0 0 ${String(theme.primaryAccent)}`,
+              borderColor: theme.primaryAccent
+            },
+            animStyle
+          ]}
           onPress={() => openInTab({ url })}
           {...bindAnim}
         >
-          <View style={[flexbox.directionRow, !!description && spacings.mbTy]}>
+          <View style={[flexbox.directionRow, !!description && spacings.mbSm]}>
             <View style={spacings.mrTy}>
-              {!isCustom && !blacklisted && (
+              {blacklisted === 'VERIFIED' && (
                 <View
                   style={{
                     position: 'absolute',
@@ -119,30 +127,39 @@ const DappItem = (dapp: Dapp) => {
                     top: -3,
                     zIndex: 1
                   }}
-                  // @ts-ignore
-                  dataSet={{ tooltipId: id, tooltipContent: 'Verified app' }}
+                  dataSet={createGlobalTooltipDataSet({
+                    id,
+                    content: t('Verified app'),
+                    delayShow: 250,
+                    border: `1px solid ${theme.successDecorative as string}`,
+                    style: {
+                      fontSize: 12,
+                      backgroundColor: theme.successBackground as string,
+                      padding: SPACING_TY,
+                      color: theme.successDecorative as string
+                    }
+                  })}
                 >
-                  <TrustedIcon width={16} height={16} />
+                  <TrustedIcon width={20} height={20} />
                 </View>
               )}
               <ManifestImage
                 uri={icon || ''}
                 size={40}
                 fallback={fallbackIcon}
-                containerStyle={{ backgroundColor: theme.primaryBackground }}
+                containerStyle={{ backgroundColor: theme.primaryBackground, borderRadius: 8 }}
                 iconScale={1}
-                imageStyle={{ borderRadius: BORDER_RADIUS_PRIMARY }}
               />
             </View>
             <View style={[flexbox.flex1]}>
-              <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+              <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbMi]}>
                 <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1]}>
                   <Text
                     weight="semiBold"
                     fontSize={14}
                     appearance="primaryText"
                     numberOfLines={1}
-                    style={[text.left, spacings.mrTy]}
+                    style={[text.left, spacings.mrTy, { lineHeight: 20 }]}
                   >
                     {name}
                   </Text>
@@ -161,16 +178,20 @@ const DappItem = (dapp: Dapp) => {
                       })
                     }}
                   >
-                    <StarIcon isFilled={favorite} />
+                    <StarIcon
+                      width={20}
+                      height={20}
+                      color={favorite ? theme.warning400 : theme.iconPrimary}
+                    />
                   </AnimatedPressable>
-                  {!!isConnected && <ConnectedIcon style={spacings.mrTy} width={18} height={18} />}
+                  {!!isConnected && <ConnectedIcon style={spacings.mrTy} width={20} height={20} />}
                   {!!tvl && (
                     <View
                       style={[
                         spacings.phTy,
                         flexbox.alignCenter,
                         flexbox.justifyCenter,
-                        { height: 20, borderLeftWidth: 1, borderColor: theme.secondaryBorder }
+                        { height: 20 }
                       ]}
                     >
                       <Text fontSize={12} weight="semiBold" appearance="secondaryText">
@@ -179,55 +200,65 @@ const DappItem = (dapp: Dapp) => {
                     </View>
                   )}
                   {!!twitter && (
-                    <View
+                    <AnimatedPressable
                       style={[
-                        spacings.phTy,
-                        flexbox.alignCenter,
-                        flexbox.justifyCenter,
-                        { height: 20, borderLeftWidth: 1, borderColor: theme.secondaryBorder }
+                        {
+                          transform: [{ scale: xIconAnimationStyle.scaleX as number }]
+                        }
                       ]}
+                      {...bindXIconAnimation}
+                      onPress={() => openInTab({ url: `https://x.com/${twitter}` })}
                     >
-                      <AnimatedPressable
-                        style={[
-                          {
-                            transform: [{ scale: xIconAnimationStyle.scaleX as number }]
-                          }
-                        ]}
-                        {...bindXIconAnimation}
-                        onPress={() => openInTab({ url: `https://x.com/${twitter}` })}
-                      >
-                        <XIcon width={13} />
-                      </AnimatedPressable>
-                    </View>
+                      <TwitterIcon width={20} height={20} />
+                    </AnimatedPressable>
                   )}
-                  {!!blacklisted && (
+                  {blacklisted === 'BLACKLISTED' && (
                     <Badge text={t('Blacklisted')} type="error" style={spacings.mrTy} />
                   )}
                 </View>
-                {!!hovered && !!isConnected && (
-                  <AnimatedPressable
-                    {...bindSettingsIconAnimation}
-                    onPress={openBottomSheet as any}
-                    style={[
-                      spacings.mlTy,
-                      {
-                        transform: [{ scale: settingsIconAnimationStyle.scaleX as number }]
-                      }
-                    ]}
-                  >
-                    <SettingsIcon
-                      width={18}
-                      height={18}
-                      strokeWidth="1.8"
-                      color={theme.iconPrimary}
-                    />
-                  </AnimatedPressable>
+                <View style={{ zIndex: 999 }}>
+                  {!!hovered && !!isConnected && (
+                    <AnimatedPressable
+                      {...bindSettingsIconAnimation}
+                      onPress={() => {
+                        setIsManageAppOpen((prev) => !prev)
+                        setIsNetworkSelectorOpen(false)
+                      }}
+                      style={[
+                        spacings.mlTy,
+                        {
+                          transform: [{ scale: settingsIconAnimationStyle.scaleX as number }]
+                        }
+                      ]}
+                      ref={settingsButtonRef}
+                    >
+                      <SettingsIcon
+                        width={18}
+                        height={18}
+                        strokeWidth="1.8"
+                        color={theme.iconPrimary}
+                      />
+                    </AnimatedPressable>
+                  )}
+                </View>
+                {isFeatured && (
+                  <Badge
+                    text={t('Featured')}
+                    textStyle={{
+                      color: theme.primaryText
+                    }}
+                    style={{
+                      ...spacings.mlTy,
+                      backgroundColor: theme.primaryAccent,
+                      borderWidth: 0
+                    }}
+                  />
                 )}
               </View>
               <Text
                 weight="medium"
-                fontSize={11}
-                appearance="secondaryText"
+                fontSize={10}
+                appearance="tertiaryText"
                 numberOfLines={1}
                 style={[text.left, spacings.mrTy]}
               >
@@ -239,25 +270,15 @@ const DappItem = (dapp: Dapp) => {
           <Text fontSize={12} appearance="secondaryText" numberOfLines={isConnected ? 2 : 3}>
             {description}
           </Text>
-          <Tooltip
-            id={id}
-            delayShow={500}
-            border={`1px solid ${theme.successDecorative as string}`}
-            style={{
-              fontSize: 12,
-              backgroundColor: theme.successBackground as string,
-              padding: SPACING_TY,
-              color: theme.successDecorative as string
-            }}
-          />
         </AnimatedPressable>
       </div>
-      <ManageDapp
+      <ManageApp
+        isOpen={isManageAppOpen}
+        setIsOpen={setIsManageAppOpen}
         dapp={dapp}
-        isCurrentDapp={false}
-        sheetRef={sheetRef}
-        openBottomSheet={openBottomSheet}
-        closeBottomSheet={closeBottomSheet}
+        parentRef={settingsButtonRef}
+        isNetworkSelectorExpanded={isNetworkSelectorOpen}
+        setIsNetworkSelectorExpanded={setIsNetworkSelectorOpen}
       />
     </View>
   )

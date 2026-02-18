@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useModalize } from 'react-native-modalize'
 
 import ChainlistIcon from '@common/assets/svg/ChainlistIcon'
-import SettingsIcon from '@common/assets/svg/SettingsIcon'
+import SettingsWheelIcon from '@common/assets/svg/SettingsWheelIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import Text from '@common/components/Text'
 import useNavigation from '@common/hooks/useNavigation'
@@ -34,13 +34,13 @@ const AddNetworkBottomSheet = ({ sheetRef, closeBottomSheet }: Props) => {
         {t('Add Network')}
       </Text>
       <Option
-        renderIcon={<ChainlistIcon width={23} height={32} color={theme.secondaryText} />}
+        renderIcon={<ChainlistIcon width={24} height={24} color={theme.secondaryText} />}
         title={t('Go to Chainlist')}
         text={t('Add any EVM network')}
         onPress={() => openInTab({ url: 'https://chainlist.org/', shouldCloseCurrentWindow: true })}
       />
       <Option
-        renderIcon={<SettingsIcon width={20} height={20} color={theme.secondaryText} />}
+        renderIcon={<SettingsWheelIcon width={24} height={24} color={theme.secondaryText} />}
         title={t('Go to Settings')}
         onPress={() => {
           navigate(WEB_ROUTES.networksSettings)

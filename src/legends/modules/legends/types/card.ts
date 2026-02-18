@@ -115,7 +115,7 @@ export interface CardFromResponse {
     }[]
     usedInvitationSlots?: number
     accountLinkingHistory: { invitedEoaOrV1: string; date: string }[]
-    availableToClaim?: BigInt
+    availableToClaim?: number
     notMetLvlThreshold?: true
     hasAlreadyMigrated?: true
     hasPenalty?: boolean
@@ -128,13 +128,4 @@ export interface CardFromResponse {
   contentSteps?: string[]
   contentImageV2?: string
   contentVideoV2?: string
-}
-
-export interface ChestCard extends Omit<CardFromResponse, 'id' | 'meta'> {
-  id: 'chest'
-  meta: {
-    streak: number
-    points: number[]
-    expiresOrResetsAt: string
-  }
 }

@@ -1,3 +1,4 @@
+/* eslint-disable no-param-reassign */
 /* eslint-disable no-console */
 /* eslint-disable no-await-in-loop */
 /* eslint-disable no-restricted-syntax */
@@ -11,15 +12,19 @@ import EmittableError from '@ambire-common/classes/EmittableError'
 import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
 import { ProviderError } from '@ambire-common/classes/ProviderError'
 import EventEmitter from '@ambire-common/controllers/eventEmitter/eventEmitter'
+import { EventEmitterRegistryController } from '@ambire-common/controllers/eventEmitterRegistry/eventEmitterRegistry'
 import { MainController } from '@ambire-common/controllers/main/main'
 import { ErrorRef } from '@ambire-common/interfaces/eventEmitter'
 import { Fetch } from '@ambire-common/interfaces/fetch'
+import { IKeystoreController } from '@ambire-common/interfaces/keystore'
+import { ISelectedAccountController } from '@ambire-common/interfaces/selectedAccount'
 import { UiManager } from '@ambire-common/interfaces/ui'
 import { getAccountKeysCount } from '@ambire-common/libs/keys/keys'
 import { KeystoreSigner } from '@ambire-common/libs/keystoreSigner/keystoreSigner'
 import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
 import wait from '@ambire-common/utils/wait'
 import CONFIG, { APP_VERSION, isAmbireNext, isDev, isProd } from '@common/config/env'
+import { controllersNestedInMainMapping } from '@common/constants/controllersMapping'
 import {
   BROWSER_EXTENSION_LOG_UPDATED_CONTROLLER_STATE_ONLY,
   BROWSER_EXTENSION_MEMORY_INTENSIVE_LOGS,
@@ -44,7 +49,6 @@ import {
 } from '@web/extension-services/background/handlers/handleScripting'
 import handleProviderRequests from '@web/extension-services/background/provider/handleProviderRequests'
 import { providerRequestTransport } from '@web/extension-services/background/provider/providerRequestTransport'
-import { controllersNestedInMainMapping } from '@web/extension-services/background/types'
 import { notificationManager } from '@web/extension-services/background/webapi/notification'
 import { storage } from '@web/extension-services/background/webapi/storage'
 import windowManager from '@web/extension-services/background/webapi/window'
@@ -89,15 +93,9 @@ function stateDebug(
   // Instead of logging with `logInfoWithPrefix` in production, we rely on EventEmitter.emitError() to log individual errors
   // (instead of the entire state) to the user console, which aids in debugging without significant performance costs.
   if (logLevel === LOG_LEVELS.PROD) return
+  if (!stateToLog) return
 
-  const args = parse(stringify(stateToLog))
-  let ctrlState = args
-
-  if (ctrlName === 'main' || !Object.keys(controllersNestedInMainMapping).includes(ctrlName)) {
-    ctrlState = args
-  } else {
-    ctrlState = args[ctrlName] || {}
-  }
+  const clonedState = parse(stringify(stateToLog))
 
   const now = new Date()
   const timeWithMs = `${now.toLocaleTimeString('en-US', { hour12: false })}.${now
@@ -109,17 +107,15 @@ function stateDebug(
     type === 'error'
       ? `${ctrlName} ctrl emitted an error at ${timeWithMs}`
       : `${ctrlName} ctrl emitted an update at ${timeWithMs}`
-  const value =
-    BROWSER_EXTENSION_LOG_UPDATED_CONTROLLER_STATE_ONLY === 'true' ? ctrlState : { ...args }
 
   if (BROWSER_EXTENSION_MEMORY_INTENSIVE_LOGS === 'true' && isDev) {
-    logInfoWithPrefix(key, value)
+    logInfoWithPrefix(key, clonedState)
     return
   }
 
   debugLogs.unshift({
     key,
-    value
+    value: clonedState
   })
 
   if (debugLogs.length > 200) {
@@ -151,7 +147,9 @@ const IGNORED_ERROR_SUBSTRINGS = ['failed to fetch', 'network error']
 const checkSubstrings = (text: string, substrings: string[]) =>
   substrings.some((substring) => text.toLowerCase().includes(substring))
 
-const isIgnoredError = (message?: string, shortMessage?: string) => {
+const isIgnoredError = (error?: any) => {
+  const { message, shortMessage } = error || {}
+
   return (
     (!!message && checkSubstrings(message, IGNORED_ERROR_SUBSTRINGS)) ||
     (!!shortMessage && checkSubstrings(shortMessage, IGNORED_SHORT_MESSAGE_SUBSTRINGS))
@@ -159,11 +157,16 @@ const isIgnoredError = (message?: string, shortMessage?: string) => {
 }
 
 const getErrorType = (error: any) => {
-  const { statusCode, shortMessage, message } = error
+  const { statusCode, message, isProviderInvictus } = error
 
   if (typeof statusCode === 'number') {
     if (statusCode >= 200 && statusCode < 300) {
       return '2xx'
+    }
+
+    if (typeof isProviderInvictus === 'boolean' && !isProviderInvictus) {
+      // No need to report custom RPC non-2xx errors
+      return 'ignored-error'
     }
 
     return 'non-2xx'
@@ -173,7 +176,7 @@ const getErrorType = (error: any) => {
 
   // Ethers doesn't return a status code for 2XX responses, so we treat undefined as 2XX
   // and have handling just in case statusCode is explicitly set to 200-299
-  return isIgnoredError(message, shortMessage) ? 'ignored-error' : '2xx'
+  return isIgnoredError(error) ? 'ignored-error' : '2xx'
 }
 
 let isInitialized = false
@@ -201,33 +204,41 @@ if (CONFIG.SENTRY_DSN_BROWSER_EXTENSION) {
         }
 
         // Always delete breadcrumbs to reduce event size.
-        // eslint-disable-next-line no-param-reassign
         delete event.breadcrumbs
 
         if (errorType !== '2xx') {
           // We don't care about any data for non-2XX errors
           // We only want to know how many of them happened and group them accordingly
 
-          // eslint-disable-next-line no-param-reassign
           delete event.user
-          // eslint-disable-next-line no-param-reassign
           delete event.extra
-          // eslint-disable-next-line no-param-reassign
           delete event.contexts
         }
 
-        // eslint-disable-next-line no-param-reassign
         event.extra = {
           ...(event.extra || {}),
           providerUrl: error.providerUrl
         }
 
-        // eslint-disable-next-line no-param-reassign
         event.fingerprint = [
           '{{ default }}',
           error.isProviderInvictus ? error.providerUrl || 'invictus' : 'custom-rpc',
           errorType
         ]
+
+        if (error.isProviderInvictus) {
+          event.tags = {
+            ...(event.tags || {}),
+            // Allows us to filter issues by provider in Sentry's UI
+            providerUrl: error.providerUrl || 'should-never-be-undefined',
+            providerType: 'invictus'
+          }
+        } else {
+          event.tags = {
+            ...(event.tags || {}),
+            providerType: 'custom-rpc'
+          }
+        }
       }
 
       // We don't want to miss errors that occur before the controllers are initialized
@@ -328,11 +339,27 @@ const init = async () => {
   const trezorCtrl = new TrezorController(windowManager as UiManager['window'])
   const latticeCtrl = new LatticeController()
 
-  // Extension-specific additional trackings
+  // Skip adding custom headers and URL modifications for 3rd party URLs
+  // (only internal Ambire APIs need the x-app-* headers and tracking params)
   // @ts-ignore
   const fetchWithAnalytics: Fetch = (url, init) => {
+    const urlString = url.toString()
+    try {
+      const urlObj = new URL(urlString)
+      if (!urlObj.hostname.endsWith('.ambire.com') && urlObj.hostname !== 'ambire.com') {
+        // @ts-ignore
+        return fetch(url, init)
+      }
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error(error)
+      // If URL parsing fails, skip analytics for safety
+      // @ts-ignore
+      return fetch(url, init)
+    }
+
     // As of v4.26.0, custom extension-specific headers. TBD for the other apps.
-    const initWithCustomHeaders = init || { headers: { 'x-app-source': '' } }
+    const initWithCustomHeaders = init || { headers: { 'x-app-source': '', 'x-app-version': '' } }
     initWithCustomHeaders.headers = initWithCustomHeaders.headers || {}
 
     // if the fetch method is called while the keystore is constructing the keyStoreUid won't be defined yet
@@ -344,29 +371,8 @@ const init = async () => {
       )
 
       initWithCustomHeaders.headers['x-app-source'] = instanceId
-    }
-
-    // As of v4.36.0, for metric purposes, pass the account keys count as an
-    // additional param for the batched velcro discovery requests.
-    const shouldAttachKeyCountParam = url.toString().startsWith(`${VELCRO_URL}/multi-hints?`)
-    if (shouldAttachKeyCountParam) {
-      const urlObj = new URL(url.toString())
-      const accounts = urlObj.searchParams.get('accounts')
-
-      if (accounts) {
-        const accountKeysCount = accounts.split(',').map((accountAddr) => {
-          return getAccountKeysCount({
-            accountAddr,
-            keys: mainCtrl.keystore.keys,
-            accounts: mainCtrl.accounts.accounts
-          })
-        })
-
-        urlObj.searchParams.append('sigs', accountKeysCount.join(','))
-        // Override the URL and replace encoded commas (%2C) with actual commas
-        // eslint-disable-next-line no-param-reassign
-        url = urlObj.toString().replace(/%2C/g, ',')
-      }
+      const versionHeader = `extension-${APP_VERSION}-${process.env.WEB_ENGINE}`
+      initWithCustomHeaders.headers['x-app-version'] = versionHeader
     }
 
     // we want to calculate the TVL of our users
@@ -413,7 +419,65 @@ const init = async () => {
     return fetch(url, initWithCustomHeaders)
   }
 
+  const eventEmitterRegistry = new EventEmitterRegistryController(() => {
+    eventEmitterRegistry.values().forEach((ctrl) => {
+      const hasOnUpdateInitialized = ctrl.onUpdateIds.includes('background')
+      if (!hasOnUpdateInitialized) {
+        ctrl.onUpdate(async (forceEmit) => {
+          const res = debounceFrontEndEventUpdatesOnSameTick(ctrl.name, ctrl, mainCtrl, forceEmit)
+          if (res === 'DEBOUNCED') return
+
+          if (ctrl.name === 'KeystoreController') {
+            const keystoreCtrl = ctrl as IKeystoreController
+            if (keystoreCtrl.isReadyToStoreKeys) {
+              setBackgroundUserContext({
+                id: getExtensionInstanceId(keystoreCtrl.keyStoreUid, mainCtrl.invite.verifiedCode)
+              })
+              if (backgroundState.isUnlocked && !keystoreCtrl.isUnlocked) {
+                await mainCtrl.dapps.broadcastDappSessionEvent('lock')
+              } else if (!backgroundState.isUnlocked && keystoreCtrl.isUnlocked) {
+                autoLockCtrl.setLastActiveTime()
+                await mainCtrl.dapps.broadcastDappSessionEvent('unlock', [
+                  mainCtrl.selectedAccount.account?.addr
+                ])
+              }
+              backgroundState.isUnlocked = keystoreCtrl.isUnlocked
+            }
+          }
+
+          if (ctrl.name === 'SelectedAccountController') {
+            const selectedAccountCtrl = ctrl as ISelectedAccountController
+
+            if (selectedAccountCtrl?.account?.addr) {
+              setBackgroundExtraContext('account', selectedAccountCtrl.account.addr)
+            }
+          }
+        }, 'background')
+      }
+    })
+
+    //
+    // Add onError listeners
+    //
+
+    eventEmitterRegistry.values().forEach((ctrl) => {
+      const hasOnErrorInitialized = ctrl.onErrorIds.includes('background')
+
+      if (!hasOnErrorInitialized) {
+        ctrl.onError((error) => {
+          stateDebug(walletStateCtrl.logLevel, ctrl, ctrl.name, 'error')
+          pm.send('> ui-error', {
+            method: ctrl.name,
+            params: { errors: ctrl.emittedErrors, controller: mainCtrl.name }
+          })
+          captureBackgroundExceptionFromControllerError(error, ctrl.name)
+        }, 'background')
+      }
+    })
+  })
+
   mainCtrl = new MainController({
+    eventEmitterRegistry,
     appVersion: APP_VERSION,
     platform,
     storageAPI: storage,
@@ -478,13 +542,14 @@ const init = async () => {
   })
 
   walletStateCtrl = new WalletStateController({
+    eventEmitterRegistry,
     onLogLevelUpdateCallback: async (nextLogLevel: LOG_LEVELS) => {
       await mainCtrl.dapps.broadcastDappSessionEvent('logLevelUpdate', nextLogLevel)
     }
   })
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const badgesCtrl = new BadgesController(mainCtrl, walletStateCtrl)
-  autoLockCtrl = new AutoLockController(() => {
+  autoLockCtrl = new AutoLockController(eventEmitterRegistry, () => {
     // Prevents sending multiple notifications if the event is triggered multiple times
     if (mainCtrl.keystore.isUnlocked) {
       notificationManager
@@ -498,32 +563,43 @@ const init = async () => {
     }
     mainCtrl.lock()
   })
-  const extensionUpdateCtrl = new ExtensionUpdateController()
+  const extensionUpdateCtrl = new ExtensionUpdateController(eventEmitterRegistry)
 
   function debounceFrontEndEventUpdatesOnSameTick(
     ctrlName: string,
-    ctrl: any,
-    stateToLog: any,
+    ctrl: EventEmitter,
+    mainCtrl: EventEmitter | undefined,
     forceEmit?: boolean
   ): 'DEBOUNCED' | 'EMITTED' {
     const sendUpdate = () => {
-      let stateToSendToFE
+      // Controller updates
+      const stateToSendToFE = ctrl.toJSON()
 
-      if (ctrlName === 'main') {
-        const state = { ...ctrl.toJSON() }
+      if (ctrlName === 'MainController') {
         // We are removing the state of the nested controllers in main to avoid the CPU-intensive task of parsing + stringifying.
         // We should access the state of the nested controllers directly from their context instead of accessing them through the main ctrl state on the FE.
         // Keep in mind: if we just spread `ctrl` instead of calling `ctrl.toJSON()`, the getters won't be included.
         Object.keys(controllersNestedInMainMapping).forEach((nestedCtrlName) => {
-          delete state[nestedCtrlName]
+          delete (stateToSendToFE as any)[nestedCtrlName]
         })
-
-        stateToSendToFE = state
-      } else {
-        stateToSendToFE = ctrl
       }
 
       pm.send('> ui', { method: ctrlName, params: stateToSendToFE, forceEmit })
+
+      // Debug logs
+      const logOnlyUpdatedState = BROWSER_EXTENSION_LOG_UPDATED_CONTROLLER_STATE_ONLY === 'true'
+      let stateToLog: object = stateToSendToFE
+
+      if (
+        // If it's main we have to log the main controller itself and not the data that is sent to the UI
+        // as the latter is stripped from nested controllers' states.
+        ctrlName === 'MainController' ||
+        // Log main if not configured otherwise, the controller is nested in main and main exists
+        (!logOnlyUpdatedState && ctrlName in controllersNestedInMainMapping && mainCtrl)
+      ) {
+        stateToLog = mainCtrl as EventEmitter
+      }
+
       stateDebug(walletStateCtrl.logLevel, stateToLog, ctrlName, 'update')
     }
 
@@ -532,7 +608,7 @@ const init = async () => {
      * ensuring that the state update is immediately applied at the application level (React/Extension).
      *
      * For more info, please refer to:
-     * EventEmitter.forceEmitUpdate() or useControllerState().
+     * EventEmitter.forceEmitUpdate()
      */
     if (forceEmit) {
       sendUpdate()
@@ -545,7 +621,16 @@ const init = async () => {
     // Debounce multiple emits in the same tick and only execute one of them
     setTimeout(() => {
       if (backgroundState.ctrlOnUpdateIsDirtyFlags[ctrlName]) {
-        sendUpdate()
+        // If the toJSON method of a controller ever throws, we want to catch it here
+        // otherwise the ctrlOnUpdateIsDirtyFlags flag will remain true forever and no further updates
+        // will be sent to the UI for that controller
+        try {
+          sendUpdate()
+        } catch (err) {
+          ;(err as any).controllerName = ctrlName
+          console.error('Debug: Failed to send update to UI for ctrl', ctrlName, err)
+          captureBackgroundException(err)
+        }
       }
       backgroundState.ctrlOnUpdateIsDirtyFlags[ctrlName] = false
     }, 0)
@@ -553,155 +638,10 @@ const init = async () => {
     return 'EMITTED'
   }
 
-  /**
-    Initialize the onUpdate callback for the MainController. Once the mainCtrl load is ready,
-    initialize the rest of the onUpdate callbacks for the nested controllers of the main controller.
-   */
-  mainCtrl.onUpdate((forceEmit) => {
-    const res = debounceFrontEndEventUpdatesOnSameTick('main', mainCtrl, mainCtrl, forceEmit)
-    if (res === 'DEBOUNCED') return
-
-    Object.keys(controllersNestedInMainMapping).forEach((ctrlName) => {
-      const controller = (mainCtrl as any)[ctrlName]
-      if (Array.isArray(controller?.onUpdateIds)) {
-        /**
-         * We have the capability to incorporate multiple onUpdate callbacks for a specific controller, allowing multiple listeners for updates in different files.
-         * However, in the context of this background service, we only need a single instance of the onUpdate callback for each controller.
-         */
-        const hasOnUpdateInitialized = controller.onUpdateIds.includes('background')
-
-        if (!hasOnUpdateInitialized) {
-          controller?.onUpdate(async (forceEmit?: boolean) => {
-            const res = debounceFrontEndEventUpdatesOnSameTick(
-              ctrlName,
-              controller,
-              mainCtrl,
-              forceEmit
-            )
-            if (res === 'DEBOUNCED') return
-
-            if (ctrlName === 'keystore') {
-              if (controller.isReadyToStoreKeys) {
-                setBackgroundUserContext({
-                  id: getExtensionInstanceId(controller.keyStoreUid, mainCtrl.invite.verifiedCode)
-                })
-                if (backgroundState.isUnlocked && !controller.isUnlocked) {
-                  await mainCtrl.dapps.broadcastDappSessionEvent('lock')
-                } else if (!backgroundState.isUnlocked && controller.isUnlocked) {
-                  autoLockCtrl.setLastActiveTime()
-                  await mainCtrl.dapps.broadcastDappSessionEvent('unlock', [
-                    mainCtrl.selectedAccount.account?.addr
-                  ])
-                }
-                backgroundState.isUnlocked = controller.isUnlocked
-              }
-            }
-
-            if (ctrlName === 'selectedAccount') {
-              if (controller?.account?.addr) {
-                setBackgroundExtraContext('account', controller.account.addr)
-              }
-            }
-          }, 'background')
-        }
-      }
-    })
-    try {
-      setupMainControllerErrorListeners(mainCtrl, ['main'])
-    } catch (error) {
-      console.error('Failed to setup mainControllerErrorListeners')
-    }
-  }, 'background')
-
-  function setupMainControllerErrorListeners(ctrl: any, ctrlNamePath: any[] = []) {
-    if (!ctrl || typeof ctrl !== 'object') return
-
-    if (ctrl instanceof EventEmitter) {
-      const ctrlName = ctrlNamePath.join(' -> ')
-      const hasOnErrorInitialized = ctrl.onErrorIds.includes('background')
-
-      if (!hasOnErrorInitialized) {
-        ctrl.onError((error) => {
-          stateDebug(walletStateCtrl.logLevel, ctrl, ctrlName, 'error')
-          pm.send('> ui-error', {
-            method: ctrlName,
-            params: { errors: ctrl.emittedErrors, controller: ctrlName }
-          })
-          captureBackgroundExceptionFromControllerError(error, ctrlName)
-        }, 'background')
-      }
-    }
-
-    function hasEvents(prop: any) {
-      return prop && typeof prop === 'object' && prop instanceof EventEmitter
-    }
-
-    function hasChildControllers(prop: any) {
-      return (
-        prop &&
-        typeof prop === 'object' &&
-        Object.values(prop).some((p) => p && typeof p === 'object' && p instanceof EventEmitter)
-      )
-    }
-
-    for (const key of Object.keys(ctrl)) {
-      if (hasEvents(ctrl[key]) || hasChildControllers(ctrl[key])) {
-        setupMainControllerErrorListeners(ctrl[key], [...ctrlNamePath, key])
-      }
-    }
-  }
-
-  // Broadcast onUpdate for the wallet state controller
-  walletStateCtrl.onUpdate((forceEmit) => {
-    debounceFrontEndEventUpdatesOnSameTick(
-      'walletState',
-      walletStateCtrl,
-      walletStateCtrl,
-      forceEmit
-    )
-  })
-  walletStateCtrl.onError((error) => {
-    pm.send('> ui-error', {
-      method: 'walletState',
-      params: { errors: walletStateCtrl.emittedErrors, controller: 'walletState' }
-    })
-    captureBackgroundExceptionFromControllerError(error, 'walletState')
-  })
-
-  // Broadcast onUpdate for the auto-lock controller
-  autoLockCtrl.onUpdate((forceEmit) => {
-    debounceFrontEndEventUpdatesOnSameTick('autoLock', autoLockCtrl, autoLockCtrl, forceEmit)
-  })
-  autoLockCtrl.onError((error) => {
-    pm.send('> ui-error', {
-      method: 'autoLock',
-      params: { errors: autoLockCtrl.emittedErrors, controller: 'autoLock' }
-    })
-    captureBackgroundExceptionFromControllerError(error, 'autoLock')
-  })
-
-  // Broadcast onUpdate for the extension-update controller
-  extensionUpdateCtrl.onUpdate((forceEmit) => {
-    debounceFrontEndEventUpdatesOnSameTick(
-      'extensionUpdate',
-      extensionUpdateCtrl,
-      extensionUpdateCtrl,
-      forceEmit
-    )
-  })
-  extensionUpdateCtrl.onError((error) => {
-    pm.send('> ui-error', {
-      method: 'extensionUpdate',
-      params: { errors: extensionUpdateCtrl.emittedErrors, controller: 'extensionUpdate' }
-    })
-    captureBackgroundExceptionFromControllerError(error, 'extensionUpdate')
-  })
-
   // listen for messages from UI
   browser.runtime.onConnect.addListener(async (port: Port) => {
     const [name, id] = port.name.split(':') as [Port['name'], Port['id']]
-    if (['popup', 'tab', 'action-window'].includes(name)) {
-      const isAlreadyAdded = pm.ports.some((p) => p.id === id)
+    if (['popup', 'tab', 'request-window'].includes(name)) {
       // eslint-disable-next-line no-param-reassign
       port.id = id || nanoid()
       // eslint-disable-next-line no-param-reassign
@@ -721,6 +661,7 @@ const init = async () => {
                 await handleActions(action, {
                   pm,
                   port,
+                  eventEmitterRegistry,
                   mainCtrl,
                   walletStateCtrl,
                   autoLockCtrl,
@@ -773,18 +714,13 @@ const init = async () => {
           // Example: the user has the dashboard opened in tab, opens the popup
           // and closes it immediately.
           if (disconnectedPort.name === 'popup') mainCtrl.portfolio.forceEmitUpdate()
-          if (disconnectedPort.name === 'tab' || disconnectedPort.name === 'action-window') {
+          if (disconnectedPort.name === 'tab' || disconnectedPort.name === 'request-window') {
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             ledgerCtrl.cleanUp()
             trezorCtrl.cleanUp()
           }
         })
       })
-
-      // ignore executions if the port was already added (identified by id)
-      if (isAlreadyAdded) return
-
-      mainCtrl.phishing.updateIfNeeded()
     }
   })
 }

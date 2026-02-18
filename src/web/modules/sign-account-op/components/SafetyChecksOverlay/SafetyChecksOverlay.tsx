@@ -15,7 +15,7 @@ interface Props {
   shouldBeVisible: boolean
 }
 
-const MAX_DISPLAY_TIME = 3000
+const MAX_DISPLAY_TIME = 2500
 const MIN_DISPLAY_TIME = 500
 
 const SafetyChecksOverlay: FC<Props> = ({ shouldBeVisible }) => {

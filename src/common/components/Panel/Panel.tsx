@@ -22,6 +22,7 @@ interface Props extends ViewProps {
   totalSteps?: number
   panelWidth?: number
   panelRef?: React.MutableRefObject<any>
+  innerStyle?: ViewStyle
 }
 
 export const getPanelPaddings = (
@@ -39,13 +40,8 @@ const PanelBackButton = ({ onPress, style }: { onPress: () => void; style?: View
   return (
     <Pressable testID="panel-back-btn" onPress={onPress} style={style}>
       {({ hovered }: any) => (
-        <View
-          style={[
-            styles.backBtnWrapper,
-            { backgroundColor: hovered ? theme.quaternaryBackground : theme.quinaryBackground }
-          ]}
-        >
-          <LeftArrowIcon color={hovered ? theme.primaryBackgroundInverted : theme.iconPrimary} />
+        <View style={[styles.backBtnWrapper]}>
+          <LeftArrowIcon color={hovered ? theme.primaryText : theme.iconPrimary} />
         </View>
       )}
     </Pressable>
@@ -53,13 +49,10 @@ const PanelBackButton = ({ onPress, style }: { onPress: () => void; style?: View
 }
 
 const PanelTitle = ({ title, style }: { title: string | ReactNode; style?: TextStyle }) => {
-  const { maxWidthSize } = useWindowSize()
-
   return (
     <Text
-      fontSize={maxWidthSize('xl') ? 20 : 18}
-      weight="semiBold"
-      appearance="primaryText"
+      fontSize={20}
+      weight="medium"
       numberOfLines={1}
       style={[text.center, flexbox.flex1, style]}
     >
@@ -80,6 +73,7 @@ const Panel: React.FC<Props> = ({
   totalSteps = 2,
   panelWidth = 400,
   panelRef,
+  innerStyle,
   ...rest
 }) => {
   const { styles, theme } = useTheme(getStyles)
@@ -110,7 +104,7 @@ const Panel: React.FC<Props> = ({
           styles.onboardingContainer,
           {
             width: '100%',
-            minHeight: minHeightSize(620) ? 444 : 486,
+            minHeight: minHeightSize(620) ? 520 : 560,
             maxWidth: panelWidth,
             alignSelf: 'center',
             maxHeight: minHeightSize('l') ? '95%' : '92%'
@@ -127,12 +121,13 @@ const Panel: React.FC<Props> = ({
               width: '100%',
               maxWidth: panelWidth,
               alignSelf: 'center'
-            }
+            },
+            innerStyle
           ]}
           {...rest}
         >
           {(!!title || !!withBackButton) && (
-            <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbMd]}>
+            <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mb2Xl]}>
               {!!withBackButton && <PanelBackButton onPress={onBackButtonPress} />}
               {!!title && <PanelTitle title={title} />}
               {!!withBackButton && <View style={{ width: 20 }} />}

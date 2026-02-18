@@ -1,11 +1,22 @@
 import React from 'react'
+import { ColorValue } from 'react-native'
 import Svg, { G, Path, Rect, SvgProps } from 'react-native-svg'
 
-const ArrowRightIcon: React.FC<SvgProps> = ({ width = 32, height = 32, color, ...props }) => {
+const ArrowRightIcon: React.FC<
+  SvgProps & {
+    containerColor?: ColorValue
+  }
+> = ({ width = 32, height = 32, color, containerColor, ...props }) => {
   return (
     <Svg width={32} height={32} viewBox="0 0 32 32" {...props}>
       <G transform="translate(-1225 976) rotate(-90)">
-        <Rect width={width} height={height} rx={16} transform="translate(944 1225)" fill="#fff" />
+        <Rect
+          width={width}
+          height={height}
+          rx={16}
+          transform="translate(944 1225)"
+          fill={containerColor || '#fff'}
+        />
         <G transform="translate(970 1231) rotate(90)">
           <Rect width={20} height={20} transform="translate(20 0) rotate(90)" fill="none" />
           <G transform="translate(4.358 4.07)">

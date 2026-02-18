@@ -29,9 +29,10 @@ type Receipt = {
 
 const useErc5792 = () => {
   const { provider } = useProviderContext()
+
   // all fields below marked as string should be HEX!
   const sendCalls = async (
-    chainId: string,
+    chainId: bigint,
     accAddr: string,
     calls: { to: string; data: string; value?: string }[],
     useSponsorship = true
@@ -43,13 +44,13 @@ const useErc5792 = () => {
       params: [
         {
           version: '1.0',
-          chainId,
+          chainId: '0x' + chainId.toString(16),
           from: accAddr,
           calls,
           capabilities: useSponsorship
             ? {
                 paymasterService: {
-                  [chainId]: {
+                  ['0x' + chainId.toString(16)]: {
                     url: `${RELAYER_URL}/v2/sponsorship`
                   }
                 }
@@ -65,9 +66,9 @@ const useErc5792 = () => {
   // the callsId should be an identifier return by the wallet
   // from wallet_sendCalls
   const getCallsStatus = async (
-    callsId: string,
-    is4337Required: boolean = true
-  ): Promise<Receipt> => {
+    callsId: string
+    // is4337Required: boolean = true
+  ): Promise<Receipt | undefined> => {
     if (!provider) return
 
     let receipt = null
@@ -92,21 +93,16 @@ const useErc5792 = () => {
     }
 
     if (Number(receipt.status) === 0)
-      throw new HumanReadableError(
-        'The transaction failed and will not grant any XP. Please try signing again.',
-        {
-          cause: ERRORS.txFailed
-        }
-      )
+      throw new HumanReadableError('The transaction failed. Please try signing again.', {
+        cause: ERRORS.txFailed
+      })
 
     return receipt
   }
 
   return {
     getCallsStatus,
-    sendCalls,
-    // the correct format for chainId when using erc5792
-    chainId: '0x2105'
+    sendCalls
   }
 }
 

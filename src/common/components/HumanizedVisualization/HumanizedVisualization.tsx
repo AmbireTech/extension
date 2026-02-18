@@ -25,7 +25,7 @@ interface Props {
   sizeMultiplierSize?: number
   textSize?: number
   chainId: bigint
-  isHistory?: boolean
+  type?: 'history' | 'benzin' | 'default'
   testID?: string
   hasPadding?: boolean
   imageSize?: number
@@ -38,7 +38,7 @@ const HumanizedVisualization: FC<Props> = ({
   sizeMultiplierSize = 1,
   textSize = 16,
   chainId,
-  isHistory,
+  type = 'default',
   testID,
   hasPadding = true,
   imageSize = 36,
@@ -81,12 +81,17 @@ const HumanizedVisualization: FC<Props> = ({
         if (item.type === 'address' && item.address) {
           return (
             <View key={key} style={{ marginRight }}>
-              <HumanizerAddress fontSize={textSize} address={item.address} chainId={chainId} />
+              <HumanizerAddress
+                fontSize={textSize}
+                address={item.address}
+                chainId={chainId}
+                verification={item.verification}
+              />
             </View>
           )
         }
 
-        if (item.type === 'deadline' && item.value && !isHistory)
+        if (item.type === 'deadline' && item.value && type !== 'default')
           return (
             <DeadlineItem
               key={key}
@@ -157,14 +162,14 @@ const HumanizedVisualization: FC<Props> = ({
               style={{ maxWidth: '100%', marginRight }}
               fontSize={textSize}
               weight={item.isBold || item.type === 'action' ? 'semiBold' : 'regular'}
-              appearance={
+              color={
                 item.warning
-                  ? 'warningText'
+                  ? theme.warningText
                   : item.type === 'label'
-                  ? 'secondaryText'
-                  : item.type === 'action'
-                  ? 'successText'
-                  : 'primaryText'
+                    ? theme.secondaryText
+                    : item.type === 'action'
+                      ? theme.secondaryAccent400
+                      : theme.primaryText
               }
             >
               {item.content}

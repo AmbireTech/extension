@@ -100,46 +100,6 @@
     }
   }
 
-  .leaderSection {
-    padding-top: 1rem;
-    padding-bottom: 3.75rem;
-
-    .leaderHeader {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 0.35rem;
-
-      .inviteTitle {
-        font-size: 1rem;
-        font-weight: 400;
-        line-height: 1.5rem;
-        color: $quaternaryText;
-      }
-    }
-
-    .leaderCopyButton {
-      cursor: pointer;
-      color: $neutral-600;
-    }
-
-    .leaderInvitationKey {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0.5rem;
-      background: $primaryBackground;
-      padding: 0.25rem 0.625rem;
-      gap: 10px;
-      border-radius: 0.5rem;
-      border-radius: $primaryBorderRadius;
-      background: $primaryBackground200;
-      font-size: 1rem;
-      font-weight: 400;
-    }
-  }
-
-
   @include breakpoint-from(large-tablet) {
     position: static;
 
@@ -166,10 +126,6 @@
         padding-top: 1rem;
       }
     }
-
-    .leaderSection {
-      padding-bottom: 1rem;
-    }
   }
 
   @media screen and (max-height: 900px) {
@@ -177,10 +133,6 @@
       .links {
         padding-top: 2.9375rem;
       }
-    }
-
-    .leaderSection {
-      padding-top: 0.5rem;
     }
   }
 

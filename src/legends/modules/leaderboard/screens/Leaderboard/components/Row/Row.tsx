@@ -6,17 +6,21 @@ import { faTrophy } from '@fortawesome/free-solid-svg-icons/faTrophy'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import Address from '@legends/components/Address'
 import useAccountContext from '@legends/hooks/useAccountContext'
-import usePortfolioControllerState from '@legends/hooks/usePortfolioControllerState/usePortfolioControllerState'
+import usePortfolio from '@legends/hooks/usePortfolio'
 import styles from '@legends/modules/leaderboard/screens/Leaderboard/Leaderboard.module.scss'
 import { LeaderboardEntry } from '@legends/modules/leaderboard/types'
 
-type Props = LeaderboardEntry['currentUser'] & {
+type Props = Omit<
+  NonNullable<LeaderboardEntry['currentUser']>,
+  'projectedRewards' | 'projectedRewardsUsd'
+> & {
   stickyPosition: string | null
-  projectedRewards?: number | 'Loading...'
+  projectedRewardsSeason1?: number | string
+  projectedRewardsSeason2Usd?: number
   currentUserRef: React.RefObject<HTMLDivElement>
   reward?: number | ''
+  image_avatar?: string
 }
-
 const calculateRowStyle = (isConnectedAccountRow: boolean, stickyPosition: string | null) => {
   return {
     position: (isConnectedAccountRow && stickyPosition ? 'sticky' : 'relative') as
@@ -48,23 +52,26 @@ function prettifyProjectedRewards(amount: number) {
   return Math.floor(amount)
 }
 
+const formatXp = (xp: number) => {
+  return xp.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
+}
+
 const Row: FC<Props> = ({
   account,
-  image_avatar,
   rank,
   xp,
-  projectedRewards,
   level,
+  points,
+  image_avatar,
+  projectedRewardsSeason1,
+  projectedRewardsSeason2Usd,
   stickyPosition,
   currentUserRef,
   reward
 }) => {
   const { connectedAccount } = useAccountContext()
-  const { walletTokenInfo } = usePortfolioControllerState()
+  const { walletTokenPrice } = usePortfolio()
   const isConnectedAccountRow = account === connectedAccount
-  const formatXp = (xp: number) => {
-    return xp.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
-  }
 
   const [maxAddressLength, setMaxAddressLength] = React.useState(23)
 
@@ -83,7 +90,7 @@ const Row: FC<Props> = ({
     // Clean up
     return () => window.removeEventListener('resize', handleResize)
   }, [])
-  const formattedXp = formatXp(xp)
+  const formattedXp = formatXp(xp || 0)
 
   const amountFormatted = reward ? Math.round(reward * 1e18) : 0
   const tokenBalanceInUSD = getTokenBalanceInUSD({
@@ -95,7 +102,7 @@ const Row: FC<Props> = ({
     symbol: 'stkWALLET',
     name: 'Staked $WALLET',
     decimals: 18,
-    priceIn: [{ baseCurrency: 'usd', price: walletTokenInfo?.walletPrice || 0 }],
+    priceIn: [{ baseCurrency: 'usd', price: walletTokenPrice || 0 }],
     flags: {
       onGasTank: false,
       rewardsType: 'wallet-projected-rewards' as const,
@@ -115,7 +122,7 @@ const Row: FC<Props> = ({
     >
       <div className={styles.cell}>
         <div className={styles.rankWrapper}>{rank > 3 ? rank : getBadge(rank)}</div>
-        <img src={image_avatar} alt="avatar" className={styles.avatar} />
+        {!!image_avatar && <img src={image_avatar} alt="avatar" className={styles.avatar} />}
         {isConnectedAccountRow ? (
           <>
             You (
@@ -136,12 +143,14 @@ const Row: FC<Props> = ({
           />
         )}
       </div>
-      <h5 className={styles.cell}>{level}</h5>
-      {typeof projectedRewards !== 'undefined' && (
+      {typeof level === 'number' && (
+        <h5 className={`${styles.cell} ${styles.levelCell}`}>{level}</h5>
+      )}
+      {typeof projectedRewardsSeason1 !== 'undefined' && (
         <h5 className={`${styles.cell} ${styles.weight}`}>
-          {typeof projectedRewards === 'number'
-            ? prettifyProjectedRewards(projectedRewards)
-            : projectedRewards}
+          {typeof projectedRewardsSeason1 === 'number'
+            ? prettifyProjectedRewards(projectedRewardsSeason1)
+            : projectedRewardsSeason1}
         </h5>
       )}
       {typeof reward !== 'undefined' && (
@@ -157,7 +166,17 @@ const Row: FC<Props> = ({
           </h5>
         </>
       )}
-      <h5 className={styles.cell}>{formattedXp}</h5>
+      {typeof projectedRewardsSeason2Usd !== 'undefined' && (
+        <h5 className={`${styles.cell} ${styles.dollarReward}`}>
+          {walletTokenPrice
+            ? Number(projectedRewardsSeason2Usd / walletTokenPrice).toLocaleString(undefined, {
+                maximumFractionDigits: 0
+              })
+            : 'Loading...'}
+        </h5>
+      )}
+
+      <h5 className={styles.cell}>{points ? Math.floor(points) : formattedXp}</h5>
     </div>
   )
 }

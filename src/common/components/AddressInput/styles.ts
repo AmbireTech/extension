@@ -9,7 +9,6 @@ import getInputStyles from '../Input/styles'
 interface Style {
   label: TextStyle
   domainIcons: ViewStyle
-  plTy: ViewStyle
   button: ViewStyle
   bottomLabel: TextStyle
 }
@@ -24,7 +23,6 @@ const getStyles = (theme: ThemeProps) =>
       ...flexbox.alignCenter,
       ...spacings.mlTy
     },
-    plTy: spacings.plTy,
     button: getInputStyles(theme).button,
     bottomLabel: {
       fontSize: 12

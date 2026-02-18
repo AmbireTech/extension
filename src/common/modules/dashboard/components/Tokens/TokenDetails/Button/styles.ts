@@ -16,7 +16,6 @@ const getStyles = () =>
       ...flexbox.alignCenter,
       ...flexbox.justifyCenter,
       ...spacings.phMi,
-      ...spacings.pvSm,
       ...common.borderRadiusPrimary
     }
   })

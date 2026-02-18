@@ -1,16 +1,13 @@
-import { Contract, JsonRpcProvider } from 'ethers'
 import React, { FC, memo, useCallback, useEffect, useMemo, useState } from 'react'
 
 import { CollectionResult, TokenResult } from '@ambire-common/libs/portfolio'
 import { resolveAssetInfo } from '@ambire-common/services/assetInfo'
-import { getRpcProvider } from '@ambire-common/services/provider'
 import useBenzinNetworksContext from '@benzin/hooks/useBenzinNetworksContext'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import { useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
 import useToast from '@common/hooks/useToast'
 import { SPACING_TY } from '@common/styles/spacings'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 
 import HumanizerAddress from '../HumanizerAddress'
 import Nft from './components/Nft'
@@ -39,11 +36,15 @@ const TokenOrNft: FC<Props> = ({
     tokenInfo?: TokenResult
     nftInfo?: CollectionResult
   }>({})
-  const [provider, setProvider] = useState<JsonRpcProvider | null>(null)
-  const { portfolio } = useSelectedAccountControllerState()
+  const {
+    state: { portfolio }
+  } = useController('SelectedAccountController')
+  const { dispatchAndWait } = useController('ProvidersController')
 
   const { t } = useTranslation()
-  const { networks: controllerNetworks } = useNetworksControllerState()
+  const {
+    state: { networks: controllerNetworks }
+  } = useController('NetworksController')
   const { benzinNetworks, addNetwork } = useBenzinNetworksContext()
   // Component used across Benzin and Extension, make sure to always set networks
   const networks = controllerNetworks ?? benzinNetworks
@@ -52,27 +53,29 @@ const TokenOrNft: FC<Props> = ({
     [networks, chainId]
   )
 
-  const [fallbackName, setFallbackName] = useState()
-
-  useEffect(() => {
-    if (!network) return
-    const rpcUrl = network.selectedRpcUrl || network.rpcUrls[0]
-    if (!provider) setProvider(getRpcProvider([rpcUrl], network.chainId))
-    return () => {
-      if (provider && provider.destroy) provider.destroy()
-    }
-  }, [network, provider])
+  const [fallbackName, setFallbackName] = useState<string | undefined>()
 
   const fetchFallbackNameIfNeeded = useCallback(
     async (_assetInfo: any) => {
-      if (!network) return
       if (_assetInfo.nftInfo || _assetInfo.tokenInfo) return
-      if (!provider) return
-      const contract = new Contract(address, ['function name() view returns(string)'], provider)
-      const name = await contract.name().catch(console.error)
-      setFallbackName(name)
+      const name = await dispatchAndWait({
+        type: 'method',
+        params: {
+          method: 'callContractAndSendResToUi',
+          args: [
+            {
+              chainId,
+              address,
+              method: 'name',
+              abi: 'function name() view returns(string)',
+              args: []
+            }
+          ]
+        }
+      }).catch(console.error)
+      if (name) setFallbackName(name)
     },
-    [network, address, provider]
+    [address, chainId, dispatchAndWait]
   )
 
   const [isLoading, setIsLoading] = useState(true)
@@ -117,7 +120,8 @@ const TokenOrNft: FC<Props> = ({
   ])
 
   if (!assetInfo.nftInfo && !assetInfo.tokenInfo)
-    if (isLoading) return <SkeletonLoader width={140} height={24} appearance="tertiaryBackground" />
+    if (isLoading)
+      return <SkeletonLoader width={140} height={24} appearance="secondaryBackground" />
     // @NOTE: temporary solution as a fallback mechanism for ERC-1155 tokens which we do not support currently
     else if (fallbackName)
       return (

@@ -3,9 +3,8 @@ import * as React from 'react'
 import { NavigationContainerRef } from '@react-navigation/native'
 
 // TODO: switch from <any> to <RootParamList>
-export const navigationRef: React.RefObject<NavigationContainerRef<any>> =
-  React.createRef<NavigationContainerRef<any>>()
-export const routeNameRef: React.RefObject<string> = React.createRef()
+export const navigationRef = React.createRef<NavigationContainerRef<any | null>>()
+export const routeNameRef = React.createRef<string | null>()
 
 // Mechanism for being able to navigate without the navigation prop.
 // {@link https://reactnavigation.org/docs/navigating-without-navigation-prop/}

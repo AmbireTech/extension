@@ -18,16 +18,15 @@ import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
 import Editable from '@common/components/Editable'
 import ExportKey from '@common/components/ExportKey'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
-import Tooltip from '@common/components/Tooltip'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { setStringAsync } from '@common/utils/clipboard'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import useHover, { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
 import { getUiType } from '@web/utils/uiType'
 
@@ -49,6 +48,7 @@ type Props = AccountKeyType & {
   account: Account
   keyIconColor?: string
   showExportImport?: boolean
+  containerStyle?: ViewStyle
 }
 
 const { isPopup } = getUiType()
@@ -62,6 +62,7 @@ const AccountKey: React.FC<Props> = ({
   type,
   isImported,
   style,
+  containerStyle,
   enableEditing = true,
   openAddAccountBottomSheet,
   account,
@@ -73,7 +74,7 @@ const AccountKey: React.FC<Props> = ({
   const { t } = useTranslation()
   const { theme, themeType } = useTheme()
   const { addToast } = useToast()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const [isEditing, setIsEditing] = useState(false)
 
   const [bindKeyDetailsAnim, keyDetailsAnimStyles] = useCustomHover({
@@ -122,9 +123,9 @@ const AccountKey: React.FC<Props> = ({
     <View
       style={[
         {
-          backgroundColor:
-            themeType === THEME_TYPES.DARK ? theme.primaryBackground : theme.secondaryBackground,
-          borderRadius: BORDER_RADIUS_PRIMARY
+          backgroundColor: theme.secondaryBackground,
+          borderRadius: BORDER_RADIUS_PRIMARY,
+          ...containerStyle
         },
         isLast ? spacings.mb0 : spacings.mbTy
       ]}
@@ -151,7 +152,7 @@ const AccountKey: React.FC<Props> = ({
         >
           {!!isImported && (
             <View style={spacings.mrTy}>
-              <AccountKeyIcon type={type || 'internal'} color={keyIconColor} />
+              <AccountKeyIcon iconSize={20} type={type || 'internal'} color={keyIconColor} />
             </View>
           )}
 
@@ -173,8 +174,12 @@ const AccountKey: React.FC<Props> = ({
 
           {!isEditing && (
             <>
-              {/* @ts-ignore */}
-              <View dataSet={{ tooltipId: `key-${addr}-tooltip` }}>
+              <View
+                dataSet={createGlobalTooltipDataSet({
+                  id: `key-${addr}-tooltip`,
+                  content: addr
+                })}
+              >
                 <Text
                   color={dedicatedToOneSA ? theme.infoDecorative : theme.primaryText}
                   fontSize={fontSize - 1}
@@ -189,11 +194,6 @@ const AccountKey: React.FC<Props> = ({
                   {dedicatedToOneSA ? t('(dedicated key)') : label ? `(${shortAddr})` : shortAddr}
                 </Text>
               </View>
-              <Tooltip id={`key-${addr}-tooltip`}>
-                <Text fontSize={14} weight="medium" appearance="secondaryText">
-                  {addr}
-                </Text>
-              </Tooltip>
               {!!showCopyAddr && (
                 <AnimatedPressable
                   style={[spacings.mlMi, copyIconAnimStyle]}
@@ -226,8 +226,13 @@ const AccountKey: React.FC<Props> = ({
                 So even the tooltip will not work.
                 The workaround is to set a wrapping <View> and make it the tooltip target
               */}
-                  {/* @ts-ignore */}
-                  <View dataSet={{ tooltipId: `export-${addr}-tooltip` }}>
+                  <View
+                    dataSet={createGlobalTooltipDataSet({
+                      id: `export-${addr}-tooltip`,
+                      content: t('Export unavailable as this is a hardware wallet key'),
+                      hidden: canExportKey
+                    })}
+                  >
                     <Button
                       style={{ height: 32 }}
                       hasBottomSpacing={false}
@@ -238,22 +243,13 @@ const AccountKey: React.FC<Props> = ({
                       text={t('Export')}
                     >
                       <ExportIcon
-                        style={[spacings.mlTy]}
-                        color={theme.primary}
+                        style={spacings.mlTy}
+                        color={theme.iconPrimary}
                         width={16}
                         height={16}
                       />
                     </Button>
                   </View>
-                  {!canExportKey && (
-                    <Tooltip id={`export-${addr}-tooltip`}>
-                      <View>
-                        <Text fontSize={14} appearance="secondaryText">
-                          {t('Export unavailable as this is a hardware wallet key')}
-                        </Text>
-                      </View>
-                    </Tooltip>
-                  )}
                 </View>
                 <AnimatedPressable
                   onPress={() => {
@@ -335,9 +331,6 @@ const AccountKey: React.FC<Props> = ({
         sheetRef={sheetRefExportKey}
         id="confirm-password-bottom-sheet"
         type="modal"
-        backgroundColor={
-          themeType === THEME_TYPES.DARK ? 'secondaryBackground' : 'primaryBackground'
-        }
         closeBottomSheet={closeExportKey}
         scrollViewProps={{ contentContainerStyle: { flex: 1 } }}
         containerInnerWrapperStyles={{ flex: 1 }}

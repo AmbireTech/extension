@@ -1,24 +1,21 @@
 import Fuse from 'fuse.js'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { Contact } from '@ambire-common/controllers/addressBook/addressBook'
-import { ITransferController } from '@ambire-common/interfaces/transfer'
 import { TokenResult } from '@ambire-common/libs/portfolio'
-import { validateAddress } from '@ambire-common/services/validations'
-import AccountsFilledIcon from '@common/assets/svg/AccountsFilledIcon'
+import { validateAddress, Validation } from '@ambire-common/services/validations'
+import AddressBookIcon from '@common/assets/svg/AddressBookIcon'
 import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import UpArrowIcon from '@common/assets/svg/UpArrowIcon'
-import WalletFilledIcon from '@common/assets/svg/WalletFilledIcon'
+import WalletIcon from '@common/assets/svg/WalletIcon'
 import AddressBookContact from '@common/components/AddressBookContact'
 import AddressInput from '@common/components/AddressInput'
-import { AddressValidation } from '@common/components/AddressInput/AddressInput'
 import { InputProps } from '@common/components/Input'
 import AddContactBottomSheet from '@common/components/Recipient/AddContactBottomSheet'
-import ConfirmAddress from '@common/components/Recipient/ConfirmAddress'
+import AddToAddressBook from '@common/components/Recipient/AddToAddressBook'
 import { SectionedSelect } from '@common/components/Select'
 import {
   RenderSelectedOptionParams,
@@ -27,16 +24,15 @@ import {
 } from '@common/components/Select/types'
 import Text from '@common/components/Text'
 import TitleAndIcon from '@common/components/TitleAndIcon'
+import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import usePrevious from '@common/hooks/usePrevious'
 import useTheme from '@common/hooks/useTheme'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useAddressBookControllerState from '@web/hooks/useAddressBookControllerState'
-import useDomainsControllerState from '@web/hooks/useDomainsController/useDomainsController'
+import { ItemPanel } from '@web/components/TransactionsScreen'
 import useHover, { AnimatedPressable } from '@web/hooks/useHover'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 
 import styles from './styles'
 
@@ -47,24 +43,20 @@ interface Props extends InputProps {
   addressValidationMsg: string
   isRecipientHumanizerKnownTokenOrSmartContract: boolean
   isRecipientAddressUnknown: boolean
-  isRecipientAddressUnknownAgreed: ITransferController['isRecipientAddressUnknownAgreed']
-  onRecipientCheckboxClick: () => void
-  validation: AddressValidation
+  validation: Validation
   isRecipientDomainResolving: boolean
-  isSWWarningVisible: boolean
-  isSWWarningAgreed: boolean
   selectedTokenSymbol?: TokenResult['symbol']
   menuPosition?: 'top' | 'bottom'
 }
 
-const ADDRESS_BOOK_VISIBLE_VALIDATION = {
-  isError: true, // Don't let the user submit, just in case there is an error
+const ADDRESS_BOOK_VISIBLE_VALIDATION: Validation = {
+  severity: 'error', // Don't let the user submit, just in case there is an error
   message: ''
 }
 
 const SelectedMenuOption: React.FC<{
   selectRef: React.RefObject<any>
-  validation: AddressValidation
+  validation: Validation
   isMenuOpen: boolean
   ensAddress: string
   isRecipientDomainResolving: boolean
@@ -73,6 +65,7 @@ const SelectedMenuOption: React.FC<{
   disabled?: boolean
   setIsMenuOpen: (isMenuOpen: boolean) => void
   filteredContacts: Contact[]
+  renderConfirmAddress?: () => React.ReactNode
 }> = ({
   selectRef,
   filteredContacts,
@@ -83,13 +76,14 @@ const SelectedMenuOption: React.FC<{
   address,
   setAddress,
   disabled,
-  setIsMenuOpen
+  setIsMenuOpen,
+  renderConfirmAddress
 }) => {
   const [isFocused, setIsFocused] = useState(false)
   const prevFilteredContactsLength = usePrevious(filteredContacts.length)
 
   const isValidAddress = useMemo(
-    () => !!validateAddress(ensAddress || address).success,
+    () => validateAddress(ensAddress || address).severity === 'success',
     [ensAddress, address]
   )
   const prevIsValidAddress = usePrevious(isValidAddress)
@@ -126,6 +120,7 @@ const SelectedMenuOption: React.FC<{
       withDetails
       onChangeText={setAddress}
       disabled={disabled}
+      renderConfirmAddress={renderConfirmAddress}
       onFocus={() => {
         setIsFocused(true)
         if (filteredContacts.length) {
@@ -154,23 +149,24 @@ const Recipient: React.FC<Props> = ({
   address,
   ensAddress,
   addressValidationMsg,
-  isRecipientAddressUnknownAgreed,
-  onRecipientCheckboxClick,
   isRecipientHumanizerKnownTokenOrSmartContract,
   isRecipientAddressUnknown,
   validation,
   isRecipientDomainResolving,
-  disabled,
-  isSWWarningVisible
+  disabled
 }) => {
-  const { account } = useSelectedAccountControllerState()
+  const {
+    state: { account }
+  } = useController('SelectedAccountController')
   const actualAddress = ensAddress || address
   const { navigate } = useNavigation()
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
-  const { contacts } = useAddressBookControllerState()
-  const { domains } = useDomainsControllerState()
+  const { contacts } = useController('AddressBookController').state
+  const {
+    state: { domains }
+  } = useController('DomainsController')
   const [bindManageBtnAnim, manageBtnAnimStyle] = useHover({
     preset: 'opacityInverted'
   })
@@ -183,13 +179,9 @@ const Recipient: React.FC<Props> = ({
     () =>
       contacts.map((contact) => ({
         contact,
-        searchableText: [
-          contact.address.toLowerCase(),
-          contact.name.toLowerCase(),
-          domains[contact.address]?.ens?.toLowerCase().trim() || ''
-        ]
-          .filter(Boolean)
-          .join(' ')
+        name: contact.name.toLowerCase(),
+        address: contact.address.toLowerCase(),
+        domain: domains[contact.address]?.ens?.toLowerCase().trim() || ''
       })),
     [contacts, domains]
   )
@@ -198,7 +190,11 @@ const Recipient: React.FC<Props> = ({
     if (!actualAddress) return contacts
 
     const fuse = new Fuse(searchableContacts, {
-      keys: ['searchableText'],
+      keys: [
+        { name: 'name', weight: 0.5 },
+        { name: 'domain', weight: 0.3 },
+        { name: 'address', weight: 0.2 }
+      ],
       threshold: 0.3,
       ignoreLocation: true,
       minMatchCharLength: 1
@@ -212,11 +208,9 @@ const Recipient: React.FC<Props> = ({
     ({ value: newAddress }: Pick<SelectValue, 'value'>) => {
       if (typeof newAddress !== 'string') return
 
-      const correspondingDomain = domains[newAddress]?.ens
-
-      setAddress(correspondingDomain || newAddress)
+      setAddress(newAddress)
     },
-    [domains, setAddress]
+    [setAddress]
   )
 
   const walletAccountsSourcedContactOptions = useMemo(
@@ -294,7 +288,7 @@ const Recipient: React.FC<Props> = ({
       if (section.data.length === 0) return null
 
       return section.key === 'contacts' ? (
-        <TitleAndIcon title={t('Address Book')} icon={AccountsFilledIcon}>
+        <TitleAndIcon title={t('Address Book')} icon={AddressBookIcon}>
           <AnimatedPressable
             style={[flexbox.directionRow, flexbox.alignCenter, manageBtnAnimStyle]}
             onPress={onManagePress}
@@ -307,7 +301,7 @@ const Recipient: React.FC<Props> = ({
           </AnimatedPressable>
         </TitleAndIcon>
       ) : (
-        <TitleAndIcon title={t('My wallets')} icon={WalletFilledIcon} />
+        <TitleAndIcon title={t('My wallets')} icon={WalletIcon} />
       )
     },
     [bindManageBtnAnim, manageBtnAnimStyle, onManagePress, t, theme.secondaryText]
@@ -327,6 +321,17 @@ const Recipient: React.FC<Props> = ({
           address={address}
           setAddress={setAddress}
           disabled={disabled}
+          renderConfirmAddress={() => (
+            <AddToAddressBook
+              isRecipientHumanizerKnownTokenOrSmartContract={
+                isRecipientHumanizerKnownTokenOrSmartContract
+              }
+              isRecipientAddressUnknown={isRecipientAddressUnknown}
+              isRecipientAddressSameAsSender={actualAddress === account?.addr}
+              addressValidationMsg={addressValidationMsg}
+              onAddToAddressBookPress={openBottomSheet}
+            />
+          )}
         />
       )
     },
@@ -337,13 +342,24 @@ const Recipient: React.FC<Props> = ({
       isRecipientDomainResolving,
       address,
       setAddress,
-      disabled
+      disabled,
+      isRecipientHumanizerKnownTokenOrSmartContract,
+      isRecipientAddressUnknown,
+      actualAddress,
+      account?.addr,
+      addressValidationMsg,
+      openBottomSheet
     ]
   )
 
   return (
-    <>
-      <Text appearance="secondaryText" fontSize={14} weight="medium" style={spacings.mbMi}>
+    <ItemPanel style={{ ...spacings.pbTy, ...spacings.mbTy }}>
+      <Text
+        appearance="secondaryText"
+        fontSize={14}
+        weight="medium"
+        style={[spacings.mbSm, spacings.mlTy]}
+      >
         {t('Add recipient')}
       </Text>
       <SectionedSelect
@@ -357,27 +373,15 @@ const Recipient: React.FC<Props> = ({
         renderSelectedOption={renderSelectedOption}
         emptyListPlaceholderText={t('No contacts found')}
         menuPosition="bottom"
+        containerStyle={spacings.mb0}
       />
-      <View style={styles.inputBottom}>
-        <ConfirmAddress
-          onRecipientCheckboxClick={onRecipientCheckboxClick}
-          isRecipientHumanizerKnownTokenOrSmartContract={
-            isRecipientHumanizerKnownTokenOrSmartContract
-          }
-          isRecipientAddressUnknown={isRecipientAddressUnknown}
-          isRecipientAddressUnknownAgreed={isRecipientAddressUnknownAgreed}
-          isRecipientAddressSameAsSender={actualAddress === account?.addr}
-          addressValidationMsg={addressValidationMsg}
-          isSWWarningVisible={isSWWarningVisible}
-          onAddToAddressBookPress={openBottomSheet}
-        />
-      </View>
+
       <AddContactBottomSheet
         sheetRef={sheetRef}
         address={ensAddress || address}
         closeBottomSheet={closeBottomSheet}
       />
-    </>
+    </ItemPanel>
   )
 }
 

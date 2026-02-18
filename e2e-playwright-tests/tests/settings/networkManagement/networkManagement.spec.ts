@@ -1,6 +1,6 @@
 import { saParams } from 'constants/env'
-
 import { test } from '../../../fixtures/pageObjects'
+import { runAddManualNetworkFlow, runChainlistFlow } from '../../../flows/networkManagementFlow'
 
 test.describe('network management', { tag: '@networkManagement' }, () => {
   test.beforeEach(async ({ pages }) => {
@@ -12,12 +12,10 @@ test.describe('network management', { tag: '@networkManagement' }, () => {
   })
 
   test('adding network manually', async ({ pages }) => {
-    await pages.settings.addNetworkManually('FLR')
+    await runAddManualNetworkFlow({ pages })
   })
 
   test('add, edit and disable network from Chainlist', async ({ pages }) => {
-    await pages.settings.addNetworkFromChainlist('FLOW')
-    await pages.settings.editNetwork('FLOW')
-    await pages.settings.disableNetwork()
+    await runChainlistFlow({ pages })
   })
 })

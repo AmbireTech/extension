@@ -4,13 +4,13 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  width: 17.3125rem;
-  height: 13.375rem;
+  width: 17.8125rem;
+  height: 13.4375rem;
   background-color: $neutral-700;
   border-radius: 1rem;
   transition: all 0.1s ease;
 
-  border: .0625rem solid rgba($neutral-600, 0.2);
+  border: 0.0625rem solid rgba($neutral-600, 0.2);
 
   &:not(.disabled) {
     cursor: pointer;
@@ -25,35 +25,34 @@
         box-sizing: content-box;
         width: calc(100%);
         height: calc(100%);
-        border: 0.25rem solid transparent;
+        border: 0.125rem solid transparent;
         z-index: 0;
         background-clip: padding-box, border-box;
         background-color: $neutral-700;
         background-origin: padding-box, border-box;
         background-image: linear-gradient($secondaryBackground, $secondaryBackground),
-          linear-gradient(152.35deg, rgba(207, 162, 255, 0.6) 9.38%, rgba(78, 25, 168, 0.6) 96.89%);
+          linear-gradient(101.08deg, #b082ff 8.27%, #5f02ff 96.34%);
+
         border-radius: 1rem;
       }
 
-      .contentAndAction {
-        .content {
-          .image {
-            opacity: 1;
-          }
+      .content {
+        .image {
+          opacity: 1;
+        }
 
-          .backgroundEffect {
-            opacity: 0.5;
-          }
+        .backgroundEffect {
+          opacity: 1;
         }
       }
     }
   }
 
   &.disabled .overlay {
-    background-color: #191a1f80;
+    background-color: rgba($neutral-700, 0.6);
   }
   &.disabled {
-    .contentAndAction {
+    .content {
       opacity: 0.5;
     }
   }
@@ -87,7 +86,7 @@
         fill: $red-400;
         stroke: $red-400;
       }
-  
+
       path:nth-child(2) {
         fill: $neutral-700;
       }
@@ -102,7 +101,7 @@
     }
   }
 
-  .contentAndAction {
+  .content {
     flex: 1;
     background-color: $neutral-700;
     z-index: 3;
@@ -112,170 +111,73 @@
     justify-content: space-between;
     padding: 0 0 1.25rem 1.5rem;
     border-radius: 1rem;
+    overflow: hidden;
 
-    .actionAndRewards {
-      display: flex;
-      gap: 1rem;
-      align-items: flex-end;
+    .heading {
+      font-size: 1.25rem;
+      font-weight: 400;
+      margin-bottom: 0.25rem;
+      padding-top: 1.5rem;
+      width: 9rem;
+      line-height: 1.5rem;
+      height: 7.875rem;
+      z-index: 2;
+    }
 
-      .button {
-        @include primary-button;
-        text-transform: none;
-        font-size: 1rem;
-        width: 6.75rem;
-      }
+    // Used for the hover effect on the card
+    .backgroundEffect {
+      transition: opacity 0.2s ease;
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 9.375rem;
+      width: 9.375rem;
+      opacity: 0;
+      z-index: 0;
+    }
 
-      .rewardTitle {
-        font-size: 0.75rem;
-        font-weight: 300;
-        color: rgba($whiteText, 0.5);
-      }
+    .image {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+      z-index: 1;
+      opacity: 0.3;
+      transition: opacity 0.1s ease;
+      width: auto;
+    }
 
-      .xp {
-        color: $whiteText;
-        font-size: 1.25rem;
-        font-weight: 300;
-        margin-right: 0.1875rem;
-        line-height: 100%;
-      }
+    .rewardsHeading {
+      line-height: 1.25rem;
+      margin-bottom: 0.5rem;
+      font-family: $secondaryFont;
+      font-size: 0.875rem;
+      color: $secondaryText;
+      font-weight: 400;
 
-      .xpText {
-        font-weight: 200;
-        vertical-align: top;
-        color: rgba($whiteText, 0.5);
-      }
-
-      .rewardFrequencyWrapper {
-        width: 8.375rem;
-
-        .rewardFrequency {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 0.75rem;
-          text-align: center;
-          line-height: 1rem;
-          letter-spacing: 0.0063rem;
-          font-weight: 400;
-          color: $neutral-300;
-          border-radius: 3.125rem;
-          height: 2rem;
-          padding: 0 0.5rem;
-          width: fit-content;
-          min-width: 3.125rem;
-          background-color: $purple-850;
-        }
-        .rewardFrequencyDaily {
-          background-color: $purple-700;
-        }
-
-        .rewardFrequencyWeekly {
-          background-color: $blue-700;
-        }
-
-        .rewardFrequencyOneTime {
-          background-color: $blue-800;
-        }
-
-        .streak {
-          display: flex;
-          align-items: center;
-          background-color: $purple-600;
-          justify-content: space-between;
-          border-radius: 3.125rem;
-          padding: 0.375rem 0.5rem;
-          gap: 0.1875rem;
-          width: fit-content;
-
-          .streakNumber {
-            font-size: 1rem;
-            line-height: 1rem;
-            font-weight: 700;
-            color: $yellowText;
-          }
-
-          .streakLabel {
-            font-size: 0.75rem;
-            font-weight: 400;
-            line-height: 1rem;
-            letter-spacing: 0.1;
-            text-align: center;
-            color: $neutral-300;
-          }
-        }
+      .repeatableIcon {
+        display: inline;
+        color: $secondaryText;
       }
     }
 
-    .content {
+    .rewards {
       display: flex;
-
-      .heading {
-        font-size: 1.25rem;
-        font-weight: 400;
-        margin-bottom: 0.25rem;
-        padding-top: 1.5rem;
-        width: 10.9375rem;
-        line-height: 1.5rem;
-        height: 7.875rem;
-        z-index: 2;
-      }
-
-      // Used for the hover effect on the card
-      .backgroundEffect {
-        position: absolute;
-        top: -1.5625rem;
-        right: 0;
-        width: 10.6875rem;
-        height: 11.937196731567383rem;
-        opacity: 0;
-        z-index: 1;
-      }
-
-      .image {
-        position: absolute;
-        top: 0;
-        right: 0;
-        z-index: 1;
-        opacity: 0.3;
-        transition: opacity 0.1s ease;
-        height: 9rem;
-      }
-
-      .rewardsHeading {
-        line-height: 1.25rem;
-        margin-bottom: 0.5rem;
-        font-family: $secondaryFont;
-        font-size: 0.875rem;
-        color: $secondaryText;
-        font-weight: 400;
-
-        .repeatableIcon {
-          display: inline;
-          color: $secondaryText;
-        }
-      }
-
-      .rewards {
-        display: flex;
-        justify-content: space-between;
-        width: 100%;
-        background-color: $tertiaryBackground;
-        border-radius: $primaryBorderRadius;
-        padding: 0.563rem 0.5rem;
-        margin-bottom: 1.5rem;
-      }
+      justify-content: space-between;
+      width: 100%;
+      background-color: $tertiaryBackground;
+      border-radius: $primaryBorderRadius;
+      padding: 0.563rem 0.5rem;
+      margin-bottom: 1.5rem;
     }
   }
 
-
   @include breakpoint-down-from(tablet) {
     width: 100%;
-    .contentAndAction {
-      .content {
-        .image {
-          width: 9.375rem;
-          height: 100%;
-        }
+    .content {
+      .image {
+        width: 9.375rem;
+        height: 100%;
       }
     }
   }

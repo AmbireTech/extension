@@ -47,7 +47,7 @@ const useLedger = () => {
 
     // The WebHID API requires: 1) A user gesture (click) to open the device
     // selection prompt (to allow the extension to access a HID device) and
-    // 2) To call this in the extension foreground on a new tab (not in an action window).
+    // 2) To call this in the extension foreground on a new tab (not in an request window).
     await LedgerController.grantDevicePermissionIfNeeded()
   }, [])
 

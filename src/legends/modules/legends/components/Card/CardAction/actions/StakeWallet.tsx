@@ -27,7 +27,7 @@ const stkWalletIface = new Interface(['function enter(uint256 amount) external']
 const StakeWallet = () => {
   const [isLoading, setIsLoading] = useState(true)
   const [isInProgress, setIsInProgress] = useState(false)
-  const { sendCalls, getCallsStatus, chainId } = useErc5792()
+  const { sendCalls, getCallsStatus } = useErc5792()
   const { onComplete, handleClose } = useCardActionContext()
 
   const { addToast } = useToast()
@@ -48,8 +48,7 @@ const StakeWallet = () => {
     const ethereumProvider = new JsonRpcProvider('https://invictus.ambire.com/ethereum')
     const walletContract = new Contract(WALLET_TOKEN, walletIface, ethereumProvider)
     // @TODO use the pending $WALLET balance in the future
-    walletContract
-      .balanceOf(connectedAccount)
+    walletContract.balanceOf!(connectedAccount)
       .then(setWalletBalance)
       .catch((e) => {
         console.error(e)
@@ -71,7 +70,7 @@ const StakeWallet = () => {
       const useSponsorship = false
 
       const sendCallsIdentifier = await sendCalls(
-        chainId,
+        BigInt(ETHEREUM_CHAIN_ID),
         await signer.getAddress(),
         [
           {
@@ -86,6 +85,9 @@ const StakeWallet = () => {
         useSponsorship
       )
       const receipt = await getCallsStatus(sendCallsIdentifier)
+
+      if (!receipt) throw new HumanReadableError('Transaction failed.')
+
       onComplete(receipt.transactionHash)
       handleClose()
     } catch (e: any) {
@@ -101,7 +103,6 @@ const StakeWallet = () => {
     connectedAccount,
     walletBalance,
     sendCalls,
-    chainId,
     getCallsStatus,
     onComplete,
     handleClose,
@@ -121,6 +122,9 @@ const StakeWallet = () => {
         })
       return
     }
+    // as of feb 2026 this is not needed for latest v's of the extension, because the wallet_sendCalls method handles the chainId
+    // but we are not removing it for now, becaus there are many users right now who have not yet updated their extension to latest
+    // same applies for most other such cases in rewards
     await switchNetwork(ETHEREUM_CHAIN_ID)
     await stakeWallet()
   }, [provider, switchNetwork, stakeWallet, walletBalance])
@@ -134,10 +138,10 @@ const StakeWallet = () => {
         disabledButton
           ? buttonText
           : isLoading
-          ? 'Loading...'
-          : !walletBalance
-          ? 'Buy $WALLET'
-          : 'Stake'
+            ? 'Loading...'
+            : !walletBalance
+              ? 'Buy $WALLET'
+              : 'Stake'
       }
       onButtonClick={onButtonClick}
     />

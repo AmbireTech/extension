@@ -1,25 +1,26 @@
-import React, { useCallback, useContext, useEffect } from 'react'
+import React, { useContext, useEffect } from 'react'
 import { View } from 'react-native'
 
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
-import useRoute from '@common/hooks/useRoute'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 import KeyStoreSetupForm from '@web/modules/keystore/components/KeyStoreSetupForm'
-import useKeyStoreSetup from '@web/modules/keystore/components/KeyStoreSetupForm/hooks/useKeyStoreSetup/useKeyStoreSetup'
 import { SettingsRoutesContext } from '@web/modules/settings/contexts/SettingsRoutesContext'
 
+/**
+ * Since sometime, device password creation is mandatory and therefore -
+ * when user lands to the Settings screen he must already have one.
+ * @deprecated
+ */
 const DevicePasswordSetSettingsScreen = () => {
   const { setCurrentSettingsPage } = useContext(SettingsRoutesContext)
   const { t } = useTranslation()
   const { navigate } = useNavigation()
-  const { params } = useRoute()
-  const keyStoreSetup = useKeyStoreSetup()
-  const keystoreState = useKeystoreControllerState()
+  const keystoreState = useController('KeystoreController').state
 
   useEffect(() => {
     setCurrentSettingsPage('device-password-set')
@@ -38,20 +39,12 @@ const DevicePasswordSetSettingsScreen = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate])
 
-  const onKeyStoreCreation = useCallback(() => {
-    if (params?.flow === 'password-recovery') {
-      navigate(WEB_ROUTES.devicePasswordRecovery)
-    } else {
-      navigate(WEB_ROUTES.devicePasswordChange)
-    }
-  }, [params?.flow, navigate])
-
   return (
     <View style={{ ...flexbox.flex1, maxWidth: 440 }}>
       <Text weight="medium" fontSize={20} style={[spacings.mtTy, spacings.mb2Xl]}>
         {t('Extension password')}
       </Text>
-      <KeyStoreSetupForm showSubmitButton onContinue={onKeyStoreCreation} {...keyStoreSetup} />
+      <KeyStoreSetupForm agreedWithTerms />
     </View>
   )
 }

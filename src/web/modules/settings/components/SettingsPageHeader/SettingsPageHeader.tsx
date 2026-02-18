@@ -24,7 +24,7 @@ const SettingsPageHeader: FC<Props> = ({ title, children, style }) => {
         isWidthL && flexbox.directionRow,
         flexbox.alignCenter,
         flexbox.justifySpaceBetween,
-        isWidthL ? spacings.mbXl : spacings.mbLg,
+        spacings.mb,
         {
           minHeight: 48
         },

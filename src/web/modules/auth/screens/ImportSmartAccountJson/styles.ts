@@ -6,39 +6,22 @@ import common, { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
 interface Styles {
-  dropAreaContainer: ViewStyle
   dropArea: ViewStyle
 }
 
 const getStyles = (theme: ThemeProps) =>
   StyleSheet.create<Styles>({
-    dropAreaContainer: {
-      ...common.borderRadiusPrimary,
-      borderWidth: 1,
-      borderColor: theme.tertiaryBackground,
-      ...spacings.phMi,
-      ...spacings.pvMi,
-      shadowColor: '#767DAD29',
-      shadowOpacity: 1,
-      shadowOffset: {
-        width: 0,
-        height: 3
-      },
-      shadowRadius: 6,
-      // @ts-ignore
-      cursor: 'pointer',
-      ...flexbox.flex1,
-      ...spacings.mbLg
-    },
     dropArea: {
-      borderRadius: BORDER_RADIUS_PRIMARY,
       ...flexbox.flex1,
+      ...spacings.pvLg,
+      borderRadius: BORDER_RADIUS_PRIMARY,
       borderWidth: 1,
       borderStyle: 'dashed',
-      borderColor: theme.tertiaryBackground,
+      borderColor: theme.neutral600,
       ...flexbox.alignCenter,
       ...flexbox.justifyCenter,
-      ...spacings.phTy
+      ...spacings.mbXl,
+      ...spacings.phLg
     }
   })
 

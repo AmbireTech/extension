@@ -3,14 +3,16 @@ import { useTranslation } from 'react-i18next'
 import { useModalize } from 'react-native-modalize'
 
 import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
+import { SignAccountOpType } from '@ambire-common/controllers/signAccountOp/helper'
 import {
   SignAccountOpUpdateProps,
   SigningStatus
 } from '@ambire-common/controllers/signAccountOp/signAccountOp'
 import { Key } from '@ambire-common/interfaces/keystore'
 import { ISignAccountOpController } from '@ambire-common/interfaces/signAccountOp'
+import useController from '@common/hooks/useController'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import usePrevious from '@common/hooks/usePrevious'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import useLedger from '@web/modules/hardware-wallet/hooks/useLedger'
 import { OneClickEstimationProps } from '@web/modules/sign-account-op/components/OneClick/Estimation/Estimation'
 import { getIsSignLoading } from '@web/modules/sign-account-op/utils/helpers'
@@ -39,7 +41,6 @@ const PRIMARY_BUTTON_LABELS: Record<
 
 type Props = {
   handleUpdateStatus: (status: SigningStatus) => void
-  handleBroadcast: () => void
   handleUpdate: (params: SignAccountOpUpdateProps) => void
   signAccountOpState: ISignAccountOpController | null
   isOneClickSign?: boolean
@@ -49,13 +50,15 @@ type Props = {
 const useSign = ({
   handleUpdateStatus,
   signAccountOpState,
-  handleBroadcast,
   handleUpdate,
   isOneClickSign,
   updateType = undefined
 }: Props) => {
   const { t } = useTranslation()
-  const { networks } = useNetworksControllerState()
+  const {
+    state: { networks }
+  } = useController('NetworksController')
+  const { dispatch } = useControllersMiddleware()
   const [isChooseSignerShown, setIsChooseSignerShown] = useState(false)
   const [isChooseFeePayerKeyShown, setIsChooseFeePayerKeyShown] = useState(false)
   const [shouldDisplayLedgerConnectModal, setShouldDisplayLedgerConnectModal] = useState(false)
@@ -65,7 +68,6 @@ const useSign = ({
   const [slowPaymasterRequest, setSlowPaymasterRequest] = useState<boolean>(true)
   const [acknowledgedWarnings, setAcknowledgedWarnings] = useState<string[]>([])
   const { ref: warningModalRef, open: openWarningModal, close: closeWarningModal } = useModalize()
-  const [initDispatchedForId, setInitDispatchedForId] = useState<number | string | null>(null)
 
   const hasEstimation = useMemo(
     () =>
@@ -168,6 +170,24 @@ const useSign = ({
       }),
     [acknowledgedWarnings, isOneClickSign, signAccountOpState?.warnings]
   )
+
+  const handleBroadcast = useCallback(() => {
+    if (!signAccountOpState) return // should never happen
+
+    let type: SignAccountOpType = 'default'
+
+    if (updateType === 'Swap&Bridge') {
+      type = 'one-click-swap-and-bridge'
+    }
+
+    if (updateType === 'Transfer&TopUp') {
+      type = 'one-click-transfer'
+    }
+    dispatch({
+      type: 'MAIN_CONTROLLER_HANDLE_SIGN_AND_BROADCAST_ACCOUNT_OP',
+      params: { type, fromRequestId: signAccountOpState.fromRequestId }
+    })
+  }, [dispatch, signAccountOpState, updateType])
 
   const handleSign = useCallback(
     (_chosenSigningKeyType?: Key['type'], _warningAccepted?: boolean) => {
@@ -357,13 +377,12 @@ const useSign = ({
     shouldDisplayLedgerConnectModal,
     network,
     notReadyToSignButAlsoNotDone,
-    initDispatchedForId,
-    setInitDispatchedForId,
     isSignDisabled,
     primaryButtonText,
     bundlerNonceDiscrepancy,
     isChooseFeePayerKeyShown,
-    setIsChooseFeePayerKeyShown
+    setIsChooseFeePayerKeyShown,
+    shouldHoldToProceed: !!signAccountOpState?.banners?.length
   }
 }
 

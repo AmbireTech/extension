@@ -7,15 +7,11 @@ interface Style {
   container: ViewStyle
 }
 
-const getStyles = (theme: ThemeProps) =>
+const getStyles = () =>
   StyleSheet.create<Style>({
     container: {
       ...flexbox.directionRow,
-      ...flexbox.alignCenter,
-      backgroundColor: theme.secondaryBackground,
-      borderRadius: 16,
-      height: 32,
-      paddingHorizontal: 2
+      ...flexbox.alignCenter
     }
   })
 

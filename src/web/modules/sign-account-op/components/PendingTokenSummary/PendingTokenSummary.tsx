@@ -5,10 +5,10 @@ import { View } from 'react-native'
 
 import { TokenResult } from '@ambire-common/libs/portfolio/interfaces'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
-import WarningFilledIcon from '@common/assets/svg/WarningFilledIcon'
+import WarningIcon from '@common/assets/svg/WarningIcon'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
-import Tooltip from '@common/components/Tooltip'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { BigIntMath } from '@common/utils/bigint'
@@ -63,8 +63,8 @@ const PendingTokenSummary = ({ token, chainId, hasBottomSpacing = true }: Props)
   }, [token.simulationAmount])
 
   const amountToSendTextColor = useMemo(() => {
-    if (token.simulationAmount! < 0) return theme.errorDecorative
-    if (token.simulationAmount! > 0) return theme.successDecorative
+    if (token.simulationAmount! < 0) return theme.error300
+    if (token.simulationAmount! > 0) return theme.success400
 
     return theme.secondaryText
   }, [token.simulationAmount, theme])
@@ -73,14 +73,10 @@ const PendingTokenSummary = ({ token, chainId, hasBottomSpacing = true }: Props)
     const reason = token.flags.suspectedType
     if (!reason) return null
 
-    if (reason === 'no-latin-symbol')
-      return 'This token has a non-latin symbol which is commonly used by suspicious tokens.'
-    if (reason === 'no-latin-name')
-      return 'This token has a non-latin name which is commonly used by suspicious tokens.'
-    if (reason === 'suspected') return 'This may be a suspicious token.'
+    if (reason === 'suspected') return t('This may be a suspicious token.')
 
     return null
-  }, [token.flags.suspectedType])
+  }, [token.flags.suspectedType, t])
 
   return (
     <View style={[styles.container, !hasBottomSpacing && spacings.mb0]}>
@@ -88,6 +84,9 @@ const PendingTokenSummary = ({ token, chainId, hasBottomSpacing = true }: Props)
         <TokenIcon
           width={20}
           height={20}
+          withContainer
+          containerHeight={24}
+          containerWidth={24}
           chainId={chainId}
           address={token.address}
           withNetworkIcon={false}
@@ -106,29 +105,32 @@ const PendingTokenSummary = ({ token, chainId, hasBottomSpacing = true }: Props)
           // @ts-ignore
           style={{ cursor: 'pointer' }}
           color={amountToSendTextColor}
-          dataSet={{
-            tooltipId: `${amountToSendSign}token-amount-${tokenId}`
-          }}
+          dataSet={createGlobalTooltipDataSet({
+            id: `${amountToSendSign}token-amount-${tokenId}`,
+            content: String(fullAmount)
+          })}
         >{`${amountToSendSign}${formattedAmount}`}</Text>
-        <Tooltip content={String(fullAmount)} id={`${amountToSendSign}token-amount-${tokenId}`} />
-        <Text fontSize={16} weight="medium">
+        <Text fontSize={16} weight="medium" appearance="secondaryText">
           {` ${token.symbol}`}
         </Text>
-        {!!priceInUsd && <Text fontSize={16} weight="medium">{` ($${priceInUsd}) `}</Text>}
+        {!!priceInUsd && (
+          <Text
+            fontSize={16}
+            weight="medium"
+            appearance="secondaryText"
+          >{` ($${priceInUsd}) `}</Text>
+        )}
       </Text>
       {token.flags.suspectedType && (
         <View
           // @ts-ignore
           style={[spacings.mlMi, { cursor: 'pointer' }]}
-          dataSet={{
-            tooltipId: `token-amount-${tokenId}`
-          }}
+          dataSet={createGlobalTooltipDataSet({
+            id: `token-amount-${tokenId}`,
+            content: suspiciousTokenTooltipContent ?? undefined
+          })}
         >
-          <WarningFilledIcon />
-          <Tooltip
-            content={t('{{content}}', { content: suspiciousTokenTooltipContent })}
-            id={`token-amount-${tokenId}`}
-          />
+          <WarningIcon />
         </View>
       )}
     </View>

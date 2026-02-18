@@ -12,6 +12,7 @@ const WEB_ROUTES = {
   ...COMMON_ROUTES,
   keyStoreUnlock: 'unlock',
   getStarted: 'get-started',
+  rewards: 'rewards',
   accountPicker: 'account-picker',
   dashboard: 'dashboard',
   earn: 'earn',
@@ -30,6 +31,7 @@ const WEB_ROUTES = {
   keyStoreEmailRecovery: 'extension-password-email-recovery',
   keyStoreEmailRecoverySetNewPassword: 'set-new-extension-password',
   getEncryptionPublicKeyRequest: 'get-encryption-public-key-request',
+  decryptRequest: 'decryptRequest',
   dappConnectRequest: 'dapp-connect-request',
   watchAsset: 'watch-asset',
   addChain: 'add-chain',
@@ -41,6 +43,7 @@ const WEB_ROUTES = {
   accountSelect: 'account-select',
   viewOnlyAccountAdder: 'view-only-account-adder',
   networks: 'networks',
+  networksConfiguration: 'networks-configuration',
   generalSettings: 'settings/general',
   settingsTerms: 'settings/terms',
   settingsAbout: 'settings/about',
@@ -61,8 +64,9 @@ const WEB_ROUTES = {
   benzin: 'benzin',
   swapAndBridge: 'swap-and-bridge',
   recoveryPhrasesSettings: 'settings/recovery-phrases',
-  securityAndPrivacy: 'settings/security-and-privacy',
-  onboardingCompleted: 'wallet-setup-completed'
+  onboardingCompleted: 'wallet-setup-completed',
+  receive: 'receive',
+  optOuts: 'settings/opt-outs'
 }
 
 const ROUTES = { ...MOBILE_ROUTES, ...WEB_ROUTES }

@@ -6,15 +6,14 @@ import { humanizeMessage } from '@ambire-common/libs/humanizer'
 import { ENTRY_POINT_AUTHORIZATION_REQUEST_ID } from '@ambire-common/libs/userOperation/userOperation'
 import ManifestFallbackIcon from '@common/assets/svg/ManifestFallbackIcon'
 import ExpandableCard from '@common/components/ExpandableCard'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import HumanizedVisualization from '@common/components/HumanizedVisualization/HumanizedVisualization'
 import Text from '@common/components/Text'
-import Tooltip from '@common/components/Tooltip'
-import { useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import ManifestImage from '@web/components/ManifestImage'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import FallbackVisualization from '@web/modules/sign-message/screens/SignMessageScreen/FallbackVisualization'
 
 import getStyles from './styles'
@@ -26,8 +25,7 @@ interface Props {
 
 const SignedMessageSummary = ({ signedMessage, style }: Props) => {
   const { styles } = useTheme(getStyles)
-  const { t } = useTranslation()
-  const { networks } = useNetworksControllerState()
+  const { networks } = useController('NetworksController').state
 
   const humanizedMessage = useMemo(() => {
     return humanizeMessage(signedMessage)
@@ -45,7 +43,7 @@ const SignedMessageSummary = ({ signedMessage, style }: Props) => {
   )
 
   const dAppName = useMemo(() => {
-    if (signedMessage.fromActionId === ENTRY_POINT_AUTHORIZATION_REQUEST_ID) {
+    if (signedMessage.fromRequestId === ENTRY_POINT_AUTHORIZATION_REQUEST_ID) {
       return 'Entry Point Authorization'
     }
     if (signedMessage.content.kind === 'authorization-7702') {
@@ -53,7 +51,7 @@ const SignedMessageSummary = ({ signedMessage, style }: Props) => {
     }
 
     return signedMessage.dapp?.name || 'Unknown App'
-  }, [signedMessage.dapp?.name, signedMessage.fromActionId, signedMessage.content.kind])
+  }, [signedMessage.dapp?.name, signedMessage.fromRequestId, signedMessage.content.kind])
 
   const dAppNameTooltipId = useMemo(() => {
     // Filter out spaces and special characters
@@ -72,7 +70,7 @@ const SignedMessageSummary = ({ signedMessage, style }: Props) => {
       content={
         <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1]}>
           <View style={[flexbox.alignCenter, flexbox.directionRow, flexbox.flex1, spacings.prTy]}>
-            {signedMessage.fromActionId !== ENTRY_POINT_AUTHORIZATION_REQUEST_ID &&
+            {signedMessage.fromRequestId !== ENTRY_POINT_AUTHORIZATION_REQUEST_ID &&
               signedMessage.content.kind !== 'authorization-7702' && (
                 <ManifestImage
                   uri={signedMessage?.dapp?.icon || ''}
@@ -85,13 +83,13 @@ const SignedMessageSummary = ({ signedMessage, style }: Props) => {
               fontSize={16}
               weight="semiBold"
               numberOfLines={2}
-              dataSet={{
-                tooltipId: dAppNameTooltipId
-              }}
+              dataSet={createGlobalTooltipDataSet({
+                id: dAppNameTooltipId,
+                content: dAppName
+              })}
             >
               {dAppName}
             </Text>
-            <Tooltip content={dAppName} id={dAppNameTooltipId} />
           </View>
           <View style={flexbox.flex1}>
             {new Date(signedMessage.timestamp).toString() !== 'Invalid Date' && (
@@ -119,14 +117,14 @@ const SignedMessageSummary = ({ signedMessage, style }: Props) => {
                 data={humanizedMessage?.fullVisualization}
                 chainId={network?.chainId || 1n}
                 style={[{ marginBottom: SPACING }]}
-                isHistory
+                type="history"
               />
             )}
           </View>
           <ScrollView contentContainerStyle={styles.rawMessage}>
             <FallbackVisualization
               setHasReachedBottom={() => {}}
-              hasReachedBottom={true}
+              hasReachedBottom
               messageToSign={signedMessage}
             />
           </ScrollView>

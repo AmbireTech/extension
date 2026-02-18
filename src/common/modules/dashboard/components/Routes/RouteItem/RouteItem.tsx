@@ -1,6 +1,7 @@
 import React, { FC } from 'react'
 import { Pressable, View } from 'react-native'
 
+import GlassView from '@common/components/GlassView'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useNavigation from '@common/hooks/useNavigation'
@@ -8,29 +9,30 @@ import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
-import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
+import { BORDER_RADIUS_PRIMARY, hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { createTab } from '@web/extension-services/background/webapi/tab'
 
+export type RouteItemType = {
+  icon: any
+  label: string
+  route?: string
+  disabled?: boolean
+  onPress?: () => void
+  testID?: string
+  isExternal?: boolean
+  scale: number
+  scaleOnHover: number
+}
+
 interface Props {
-  routeItem: {
-    icon: any
-    label: string
-    route?: string
-    isExternal: boolean
-    disabled?: boolean
-    onPress?: () => void
-    testID?: string
-    scale: number
-    scaleOnHover: number
-    backgroundImage?: string
-  }
+  routeItem: RouteItemType
   index: number
   routeItemsLength: number
 }
 
-const ITEM_HEIGHT = 44
+const ITEM_HEIGHT = 52
+const ICON_SIZE = 28
 
 const RouteItem: FC<Props> = ({ routeItem, index, routeItemsLength }) => {
   const { theme, themeType } = useTheme()
@@ -64,65 +66,37 @@ const RouteItem: FC<Props> = ({ routeItem, index, routeItemsLength }) => {
     >
       {({ hovered }: any) => (
         <>
-          <View
+          <GlassView
+            tintColor1={hovered ? '#fff' : 'rgba(255, 255, 255, 0.12)'}
+            tintColor2={hovered ? '#fff' : 'rgba(255, 255, 255, 0.12)'}
+            blurAmount={20}
+            shineColor="rgba(255, 255, 255, 0.2)"
             testID={routeItem.testID}
-            style={{
-              height: ITEM_HEIGHT,
-              paddingHorizontal: 9, // this way it gets equal to ITEM_HEIGHT (when square), and flexible otherwise
+            cssStyle={{
+              marginBottom: 4,
               borderRadius: BORDER_RADIUS_PRIMARY,
-              backgroundColor: hovered
-                ? themeType === THEME_TYPES.DARK
-                  ? '#1b2b2c'
-                  : '#141833CC'
-                : themeType === THEME_TYPES.DARK
-                ? theme.primaryBackground
-                : theme.primaryText,
-              ...flexbox.center,
-              ...spacings.mbTy
+              height: ITEM_HEIGHT,
+              overflow: 'hidden',
+              width: routeItem.route === WEB_ROUTES.swapAndBridge ? 88 : ITEM_HEIGHT
             }}
           >
-            {routeItem.backgroundImage && (
-              <View
-                style={{
-                  position: 'absolute',
-                  width: '100%',
-                  height: '100%',
-                  opacity: hovered ? 1 : 0.64,
-                  borderRadius: BORDER_RADIUS_PRIMARY,
-                  overflow: 'hidden',
-                  backgroundImage: `url(${routeItem.backgroundImage})`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center',
-                  transition: 'opacity 0.2s ease-in-out'
-                }}
-              />
-            )}
-            <View
-              style={[
-                flexbox.center,
-                flexbox.alignCenter,
-                routeItem.route === WEB_ROUTES.swapAndBridge && { width: 70, height: 24 }
-              ]}
-            >
+            <View style={[flexbox.center, flexbox.alignCenter, flexbox.flex1]}>
               <routeItem.icon
                 color={
-                  themeType === THEME_TYPES.DARK
-                    ? theme.primary
-                    : hovered && !routeItem.backgroundImage
-                    ? '#c197ff'
-                    : theme.primaryBackground
+                  hovered
+                    ? '#000000'
+                    : routeItem.route === WEB_ROUTES.rewards
+                      ? undefined
+                      : '#FFFFFF'
                 }
-                height={ITEM_HEIGHT}
+                height={ICON_SIZE}
+                width={ICON_SIZE}
               />
             </View>
-          </View>
+          </GlassView>
           <Text
-            color={
-              themeType === THEME_TYPES.DARK
-                ? theme.primaryBackgroundInverted
-                : theme.primaryBackground
-            }
-            weight="regular"
+            color="#F2F4F7"
+            weight="medium"
             fontSize={12}
             style={routeItem.disabled && { opacity: 0.4 }}
           >

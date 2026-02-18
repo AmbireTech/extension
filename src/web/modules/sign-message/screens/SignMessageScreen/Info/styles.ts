@@ -6,24 +6,11 @@ import common, { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
 interface Style {
-  image: ImageStyle
-  fallbackIcon: ImageStyle
   verifyingContract: ViewStyle
 }
 
 const getStyles = (theme: ThemeProps) =>
   StyleSheet.create<Style>({
-    image: {
-      alignSelf: 'flex-start',
-      borderRadius: BORDER_RADIUS_PRIMARY
-    },
-    fallbackIcon: {
-      backgroundColor: theme.secondaryBackground,
-      alignSelf: 'flex-start',
-      ...spacings.pvMi,
-      ...spacings.phMi,
-      borderRadius: BORDER_RADIUS_PRIMARY
-    },
     verifyingContract: {
       backgroundColor: theme.secondaryBackground,
       borderRadius: BORDER_RADIUS_PRIMARY,

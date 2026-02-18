@@ -1,13 +1,12 @@
 import { ZeroAddress } from 'ethers'
 import React, { FC, useMemo } from 'react'
 
+import { BlacklistedStatus } from '@ambire-common/interfaces/phishing'
 import { HumanizerMetaAddress } from '@ambire-common/libs/humanizer/interfaces'
 import { getAddressCaught } from '@ambire-common/utils/getAddressCaught'
 import { Props as TextProps } from '@common/components/Text'
+import useController from '@common/hooks/useController'
 import { isExtension } from '@web/constants/browserapi'
-import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
-import useAddressBookControllerState from '@web/hooks/useAddressBookControllerState'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 
 import { AddressName, BenzinAddressName } from '../AddressName'
 import BaseAddress from '../BaseAddress'
@@ -19,6 +18,7 @@ interface Props extends TextProps {
   humanizerInfo?: HumanizerMetaAddress
   hideLinks?: boolean
   chainId: bigint
+  verification?: BlacklistedStatus
 }
 
 const HumanizerAddressInner: FC<Props> = ({
@@ -29,9 +29,11 @@ const HumanizerAddressInner: FC<Props> = ({
   chainId,
   ...rest
 }) => {
-  const { portfolio } = useSelectedAccountControllerState()
-  const accountsState = useAccountsControllerState()
-  const { contacts = [] } = useAddressBookControllerState()
+  const {
+    state: { portfolio }
+  } = useController('SelectedAccountController')
+  const accountsState = useController('AccountsController').state
+  const { contacts = [] } = useController('AddressBookController').state
   const checksummedAddress = getAddressCaught(address)
 
   const localAddressLabel = useMemo(() => {

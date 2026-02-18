@@ -44,8 +44,9 @@ function getIconWithRetry(delay = 1000): Promise<string> {
     if (linkIcon?.href) {
       try {
         return new URL(linkIcon.href, document.baseURI).href
-      } catch {
-        // silent fail
+      } catch (error: any) {
+        // eslint-disable-next-line no-console
+        console.error(error)
       }
     }
 
@@ -53,8 +54,9 @@ function getIconWithRetry(delay = 1000): Promise<string> {
     if (metaImage?.content) {
       try {
         return new URL(metaImage.content, document.baseURI).href
-      } catch {
-        // silent fail
+      } catch (error: any) {
+        // eslint-disable-next-line no-console
+        console.error(error)
       }
     }
 
@@ -316,8 +318,9 @@ export class EthereumProvider extends EventEmitter {
         this.emit('connect', { chainId })
         this.#pushEventHandlers.chainChanged({ chain: chainId, networkVersion })
         this.#pushEventHandlers.accountsChanged(accounts)
-      } catch {
-        // silent fail
+      } catch (error: any) {
+        // eslint-disable-next-line no-console
+        console.error(error)
       }
     }
 
@@ -344,6 +347,15 @@ export class EthereumProvider extends EventEmitter {
 
     this.#requestPromiseCheckVisibility()
 
+    // Some dapps poll this method very frequently, so we return early
+    // to prevent unnecessary messaging requests to the background service that
+    // clog up the communication channel and block requests for other methods
+    if (data.method === 'eth_chainId') {
+      logInfoWithPrefix('[request]', data)
+      logInfoWithPrefix('[request: success]', data.method, this.chainId)
+      return this.chainId
+    }
+
     // store in the EthereumProvider state the valid RPC URLs of the connected dapp to use them for forwarding
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     ;(async () => {
@@ -361,7 +373,8 @@ export class EthereumProvider extends EventEmitter {
             const chainId = await this.#forwardRpcRequests(url, 'eth_chainId', [])
             if (chainId) this.#dappProviderUrls[Number(chainId).toString()] = url
           } catch (error) {
-            // silent fail
+            // eslint-disable-next-line no-console
+            console.error(error)
           }
           this.#configuredDappRpcUrls.push(url)
         }

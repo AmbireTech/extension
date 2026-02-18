@@ -4,7 +4,7 @@ import { View } from 'react-native'
 
 import { Statuses } from '@ambire-common/interfaces/eventEmitter'
 import { AddNetworkRequestParams, Network, NetworkFeature } from '@ambire-common/interfaces/network'
-import { DappUserRequest } from '@ambire-common/interfaces/userRequest'
+import { UserRequest } from '@ambire-common/interfaces/userRequest'
 import ManifestFallbackIcon from '@common/assets/svg/ManifestFallbackIcon'
 import Alert from '@common/components/Alert'
 import NetworkIcon from '@common/components/NetworkIcon'
@@ -14,15 +14,15 @@ import useTheme from '@common/hooks/useTheme'
 import { SPACING, SPACING_LG, SPACING_MD } from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
-import HeaderAccountAndNetworkInfo from '@web/components/HeaderAccountAndNetworkInfo'
 import ManifestImage from '@web/components/ManifestImage'
 import NetworkAvailableFeatures from '@web/components/NetworkAvailableFeatures'
 import NetworkDetails from '@web/components/NetworkDetails'
 import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
 import useDappInfo from '@web/hooks/useDappInfo'
 import useResponsiveActionWindow from '@web/hooks/useResponsiveActionWindow'
+import ActionFooter from '@web/modules/action-requests/components/ActionFooter'
+import ActionHeader from '@web/modules/action-requests/components/ActionHeader'
 
-import ActionFooter from '../../components/ActionFooter'
 import getStyles from './styles'
 
 type AddChainProps = {
@@ -32,13 +32,13 @@ type AddChainProps = {
   areParamsValid: boolean | null
   statuses: Statuses<'addNetwork' | 'updateNetwork'> & Statuses<string>
   features: NetworkFeature[]
-  networkDetails: AddNetworkRequestParams
+  networkDetails?: AddNetworkRequestParams
   actionButtonPressedRef: React.MutableRefObject<boolean>
   rpcUrls: string[]
   rpcUrlIndex: number
   resolveButtonText: string
   existingNetwork: Network | null | undefined
-  userRequest: DappUserRequest | undefined
+  userRequest: UserRequest | undefined
 }
 
 const AddChain = ({
@@ -64,16 +64,8 @@ const AddChain = ({
   return (
     <TabLayoutContainer
       width="full"
-      header={
-        <HeaderAccountAndNetworkInfo
-          backgroundColor={
-            themeType === THEME_TYPES.DARK
-              ? (theme.tertiaryBackground as string)
-              : (theme.primaryBackground as string)
-          }
-        />
-      }
-      footer={
+      header={<ActionHeader />}
+      renderDirectChildren={() => (
         <ActionFooter
           onReject={handleDenyButtonPress}
           onResolve={handlePrimaryButtonPress}
@@ -88,8 +80,7 @@ const AddChain = ({
             actionButtonPressedRef.current
           }
         />
-      }
-      backgroundColor={theme.quinaryBackground}
+      )}
     >
       <TabLayoutWrapperMainContent
         style={{
@@ -192,27 +183,22 @@ const AddChain = ({
               <ScrollableWrapper
                 style={[
                   styles.boxWrapper,
-                  {
-                    width: '50%',
-                    height: 'fit-content',
-                    maxHeight: '100%'
-                  }
+                  { width: '50%', maxHeight: '100%' },
+                  // @ts-ignore value missing in the props, but it's available on web
+                  { height: 'fit-content' }
                 ]}
               >
                 <NetworkDetails
-                  name={networkDetails.name || userRequest?.action?.params?.[0]?.chainName}
+                  name={networkDetails.name || userRequest?.meta?.params?.[0]?.chainName}
                   iconUrls={networkDetails?.iconUrls || []}
                   chainId={networkDetails.chainId}
                   rpcUrls={networkDetails.rpcUrls}
                   selectedRpcUrl={rpcUrls[rpcUrlIndex]}
                   nativeAssetSymbol={networkDetails.nativeAssetSymbol}
                   nativeAssetName={networkDetails.nativeAssetName}
-                  explorerUrl={networkDetails.explorerUrl}
+                  explorerUrl={networkDetails.explorerUrl || '-'}
                   style={{
-                    backgroundColor:
-                      themeType === THEME_TYPES.DARK
-                        ? theme.secondaryBackground
-                        : theme.primaryBackground
+                    backgroundColor: theme.secondaryBackground
                   }}
                   responsiveSizeMultiplier={responsiveSizeMultiplier}
                   type="vertical"
@@ -225,7 +211,7 @@ const AddChain = ({
                     features={features}
                     chainId={networkDetails.chainId}
                     withRetryButton={!!rpcUrls.length && rpcUrlIndex < rpcUrls.length - 1}
-                    handleRetry={handleRetryWithDifferentRpcUrl}
+                    handleRetryWithDifferentRpcUrl={handleRetryWithDifferentRpcUrl}
                     responsiveSizeMultiplier={responsiveSizeMultiplier}
                   />
                 )}
@@ -236,9 +222,12 @@ const AddChain = ({
             <View style={[flexbox.flex1, flexbox.alignCenter, flexbox.justifyCenter]}>
               <Alert
                 title={t('Invalid Request Params')}
-                text={t('{{name}} provided invalid params for adding a new network.', {
-                  name: name || 'The App'
-                })}
+                text={t(
+                  '{{name}} provided invalid params for adding a new network. Try adding it from another App or manually from Settings.',
+                  {
+                    name: name || 'The App'
+                  }
+                )}
                 type="error"
               />
             </View>

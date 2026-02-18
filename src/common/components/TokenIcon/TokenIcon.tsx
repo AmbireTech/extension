@@ -4,10 +4,11 @@ import { Image, ImageProps, View, ViewStyle } from 'react-native'
 import useBenzinNetworksContext from '@benzin/hooks/useBenzinNetworksContext'
 import MissingTokenIcon from '@common/assets/svg/MissingTokenIcon'
 import NetworkIcon from '@common/components/NetworkIcon'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import { checkIfImageExists } from '@common/utils/checkIfImageExists'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
+import { getHardcodedCitreaIcons } from '@common/utils/getHardcodedCitreaIcons'
 
 import SkeletonLoader from '../SkeletonLoader'
 import { SkeletonLoaderProps } from '../SkeletonLoader/types'
@@ -57,10 +58,10 @@ const TokenIcon: React.FC<Props> = ({
   const { styles } = useTheme(getStyles)
   const [uriStatus, setUriStatus] = useState<UriStatus>(UriStatus.UNKNOWN)
   const [imageUrl, setImageUrl] = useState<string | undefined>()
-  const { networks: controllerNetworks } = useNetworksControllerState()
+  const { state: ctrlNetworks } = useController('NetworksController', (state) => state.networks)
   const { benzinNetworks } = useBenzinNetworksContext()
   // Component used across Benzin and Extension, make sure to always set networks
-  const networks = controllerNetworks ?? benzinNetworks
+  const networks = ctrlNetworks ?? benzinNetworks
 
   const network = useMemo(
     () => networks.find((n) => String(n.chainId) === String(chainId)),
@@ -78,9 +79,20 @@ const TokenIcon: React.FC<Props> = ({
       }
     }
 
+    // hardcoded icons for citrea
+    if (network?.chainId === 4114n) {
+      const tokenUrl = getHardcodedCitreaIcons(address.toLowerCase())
+      const imageExists = tokenUrl && (await checkIfImageExists(tokenUrl))
+      if (imageExists) {
+        setImageUrl(tokenUrl)
+        setUriStatus(UriStatus.IMAGE_EXISTS)
+        return
+      }
+    }
+
     setUriStatus(UriStatus.IMAGE_MISSING)
     setImageUrl(undefined)
-  }, [fallbackUri])
+  }, [fallbackUri, address, network?.chainId])
 
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -108,13 +120,11 @@ const TokenIcon: React.FC<Props> = ({
         height: withContainer ? containerHeight : height
       },
       withContainer && styles.withContainerStyle,
-      withContainer && withNetworkIcon && { borderTopLeftRadius: 7 },
       containerStyle
     ],
     [
       containerStyle,
       withContainer,
-      withNetworkIcon,
       containerWidth,
       width,
       containerHeight,

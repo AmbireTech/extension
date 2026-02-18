@@ -33,7 +33,7 @@ const Account: FC<Props> = ({ addr, creation, preferences, style }) => {
         style
       ]}
     >
-      <Avatar isSmart={!!creation} size={32} pfp={pfp} />
+      <Avatar isSmart={!!creation} size={32} pfp={pfp} address={addr} />
       <View>
         <Text fontSize={14} weight="medium">
           {label}

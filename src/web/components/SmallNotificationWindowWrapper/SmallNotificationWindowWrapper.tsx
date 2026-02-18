@@ -10,7 +10,7 @@ const SmallNotificationWindowWrapper: FC<Props> = ({ children }) => {
     <View
       style={{
         flex: 1,
-        // Even the the action window is created with a width of 720px
+        // Even the the request window is created with a width of 720px
         // it is not guaranteed that the page will be 720px wide
         // as the user may have zoomed in or out.
         // That's why we set a higher maxWidth

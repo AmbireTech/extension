@@ -17,13 +17,10 @@ const getStyles = (theme: ThemeProps) =>
       ...flexbox.alignCenter,
       ...flexbox.justifySpaceBetween,
       ...flexbox.directionRow,
-      ...spacings.phTy,
-      ...spacings.prSm,
-      ...spacings.pvMi,
+      ...spacings.phSm,
+      ...spacings.pvSm,
       marginBottom: SPACING_MI / 2,
-      borderRadius: BORDER_RADIUS_PRIMARY,
-      borderWidth: 1,
-      borderColor: 'transparent'
+      borderRadius: BORDER_RADIUS_PRIMARY
     },
     noKebabNetwork: {
       paddingRight: SPACING_XL + SPACING_TY

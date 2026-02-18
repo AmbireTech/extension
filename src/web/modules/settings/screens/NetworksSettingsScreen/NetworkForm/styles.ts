@@ -16,19 +16,22 @@ interface Style {
   radioSelectedInner: ViewStyle
 }
 
-const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
+const getStyles = (theme: ThemeProps) =>
   StyleSheet.create<Style>({
     modalHeader: {
-      backgroundColor:
-        themeType === THEME_TYPES.DARK ? theme.tertiaryBackground : theme.secondaryBackground,
-      height: 60,
-      width: '100%',
-      ...spacings.phXl,
       ...flexbox.directionRow,
-      ...flexbox.alignCenter
+      ...flexbox.alignCenter,
+      ...spacings.mhMi,
+      ...spacings.mvMi,
+      ...spacings.phXl,
+      borderRadius: 12,
+      height: 60,
+      backgroundColor: theme.secondaryBackground,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.neutral400
     },
     rpcUrlsContainer: {
-      backgroundColor: theme.secondaryBackground,
+      backgroundColor: theme.tertiaryBackground,
       ...common.borderRadiusPrimary,
       maxHeight: 104,
       ...spacings.mb

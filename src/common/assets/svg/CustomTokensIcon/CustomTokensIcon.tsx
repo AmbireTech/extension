@@ -1,31 +1,26 @@
 import React from 'react'
-import Svg, { G, Path, SvgProps } from 'react-native-svg'
+import Svg, { Path, SvgProps } from 'react-native-svg'
 
 import useTheme from '@common/hooks/useTheme'
 
-const CustomTokensIcon: React.FC<SvgProps> = ({ width = 24, height = 24, color }) => {
+const CustomTokensIcon: React.FC<SvgProps> = ({ width = 24, height = 24, color, ...rest }) => {
   const { theme } = useTheme()
   return (
-    <Svg width={width} height={height} viewBox="0 0 21.524 21.5">
-      <G>
-        <G
-          fill="none"
-          stroke={color || theme.iconSecondary}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="1.5"
-        >
-          <G>
-            <Path d="M7.183 12.172a1.965 1.965 0 0 0 1.922 2.053h2.042a1.778 1.778 0 0 0 1.682-1.8 1.651 1.651 0 0 0-1.081-1.8L8.383 9.349c-.841-.128-1.2-.513-1.2-1.54a1.7 1.7 0 0 1 1.682-1.8h2.162a1.965 1.965 0 0 1 1.922 2.053" />
-            <Path d="M9.945 5.073v10.088" />
-          </G>
-          <Path d="M19.417 8.772A9.383 9.383 0 0 0 .75 10.132a9.461 9.461 0 0 0 7.978 9.278" />
-          <G>
-            <Path d="m17.126 12.607-4.612 4.612a1.605 1.605 0 0 0-.391.769l-.248 1.759a.827.827 0 0 0 .99.99l1.759-.248a1.55 1.55 0 0 0 .769-.396l4.612-4.612a1.778 1.778 0 0 0 0-2.892 1.772 1.772 0 0 0-2.879.018Z" />
-            <Path d="M16.462 13.272a4.15 4.15 0 0 0 2.892 2.892" />
-          </G>
-        </G>
-      </G>
+    <Svg width={width} height={height} viewBox="0 0 24 24" {...rest} fill="none">
+      <Path
+        stroke={color || theme.iconPrimary}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.5"
+        d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M19.775 15.42l1.071-1.071a1.19 1.19 0 0 1 1.684 1.683l-4.62 4.62c-.336.337-.75.583-1.205.719L15 21.879l.508-1.705c.135-.455.382-.869.718-1.205l3.549-3.549Zm0 0 1.675 1.675"
+      />
+      <Path
+        stroke={color || theme.iconPrimary}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.5"
+        d="M20.863 10.437a9 9 0 1 0-9.93 10.5"
+      />
     </Svg>
   )
 }

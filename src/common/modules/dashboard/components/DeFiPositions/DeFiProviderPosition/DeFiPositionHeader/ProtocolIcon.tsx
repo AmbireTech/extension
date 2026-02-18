@@ -9,7 +9,6 @@ import NetworkIcon from '@common/components/NetworkIcon'
 import TokenIcon from '@common/components/TokenIcon'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import common from '@common/styles/utils/common'
 
 const POSITION_TO_ICON: {
@@ -42,35 +41,24 @@ const ProtocolIcon = ({
           withContainer
           chainId={chainId}
           uri={iconUrl}
-          containerHeight={40}
-          containerWidth={40}
-          width={28}
-          height={28}
-          containerStyle={{
-            backgroundColor:
-              themeType === THEME_TYPES.DARK ? theme.secondaryBackground : theme.tertiaryBackground
-          }}
-          networkWrapperStyle={{
-            borderColor:
-              themeType === THEME_TYPES.DARK ? theme.secondaryBackground : theme.tertiaryBackground
-          }}
+          containerHeight={32}
+          containerWidth={32}
+          width={24}
+          height={24}
         />
       ) : Icon ? (
         <View>
           <View
             style={{
-              width: 40,
-              height: 40,
+              width: 32,
+              height: 32,
               alignItems: 'center',
               justifyContent: 'center',
-              backgroundColor:
-                themeType === THEME_TYPES.DARK
-                  ? theme.secondaryBackground
-                  : theme.tertiaryBackground,
+              backgroundColor: theme.neutral200,
               ...common.borderRadiusPrimary
             }}
           >
-            <Icon width={28} height={28} />
+            <Icon width={24} height={24} />
           </View>
           <View
             style={{
@@ -79,23 +67,11 @@ const ProtocolIcon = ({
               top: -1,
               zIndex: 3,
               borderWidth: 1,
-              borderColor:
-                themeType === THEME_TYPES.DARK
-                  ? theme.secondaryBackground
-                  : theme.tertiaryBackground,
+              borderColor: theme.neutral200,
               borderRadius: 12
             }}
           >
-            <NetworkIcon
-              id={chainId.toString()}
-              size={14}
-              style={{
-                backgroundColor:
-                  themeType === THEME_TYPES.DARK
-                    ? theme.primaryBackgroundInverted
-                    : theme.primaryBackground
-              }}
-            />
+            <NetworkIcon id={chainId.toString()} size={14} />
           </View>
         </View>
       ) : null}

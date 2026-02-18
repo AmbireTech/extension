@@ -1,92 +1,116 @@
 import React, { useCallback, useMemo } from 'react'
 import { View } from 'react-native'
 
-import { isDappRequestAction } from '@ambire-common/libs/actions/actions'
-import ManifestFallbackIcon from '@common/assets/svg/ManifestFallbackIcon'
-import Button from '@common/components/Button'
-import Panel from '@common/components/Panel'
-import ScrollableWrapper from '@common/components/ScrollableWrapper'
-import Text from '@common/components/Text'
-import Title from '@common/components/Title'
-import { Trans, useTranslation } from '@common/config/localization'
+import Alert from '@common/components/Alert'
+import { useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
+import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
-import flexboxStyles from '@common/styles/utils/flexbox'
-import textStyles from '@common/styles/utils/text'
-import HeaderAccountAndNetworkInfo from '@web/components/HeaderAccountAndNetworkInfo'
-import ManifestImage from '@web/components/ManifestImage'
-import useActionsControllerState from '@web/hooks/useActionsControllerState'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import RequestingDappInfo from '@web/components/RequestingDappInfo'
+import SmallNotificationWindowWrapper from '@web/components/SmallNotificationWindowWrapper'
+import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
 import useDappInfo from '@web/hooks/useDappInfo'
-
-import styles from './styles'
+import ActionFooter from '@web/modules/action-requests/components/ActionFooter'
+import ActionHeader from '@web/modules/action-requests/components/ActionHeader'
+import { useEncryptionCapability } from '@web/modules/action-requests/hooks'
 
 const GetEncryptionPublicKeyRequestScreen = () => {
   const { t } = useTranslation()
-  const { dispatch } = useBackgroundService()
-  const state = useActionsControllerState()
+  const { dispatch } = useControllersMiddleware()
+  const { currentUserRequest } = useController('RequestsController').state
   const { theme } = useTheme()
-  const dappAction = useMemo(
-    () => (isDappRequestAction(state.currentAction) ? state.currentAction : null),
-    [state.currentAction]
+  const { addToast } = useToast()
+  const {
+    internalKey,
+    errorNode,
+    actionFooterResolveNode,
+    selectedAccountKeyStoreKeys,
+    isDisabled
+  } = useEncryptionCapability()
+
+  const userRequest = useMemo(
+    () =>
+      currentUserRequest?.kind === 'ethGetEncryptionPublicKey' ? currentUserRequest : undefined,
+    [currentUserRequest]
   )
-
-  const userRequest = useMemo(() => {
-    if (!dappAction) return undefined
-
-    return dappAction?.userRequest || undefined
-  }, [dappAction])
 
   const { name, icon } = useDappInfo(userRequest)
 
+  const handleAccept = useCallback(() => {
+    if (!userRequest) {
+      const message = t(
+        'The app request is missing required details. Please try to trigger the request again from the app.'
+      )
+      addToast(message, { type: 'error' })
+      return
+    }
+
+    // should never happen (because the UI blocks it), but just in case
+    if (!internalKey) {
+      const selectedAccountKeyTypes = selectedAccountKeyStoreKeys.map((k) => k.type).join(' and ')
+      const keyWord = selectedAccountKeyTypes.length === 1 ? t('key') : t('keys')
+      const message = t(
+        'This account uses {{selectedAccountKeyTypes}} {{keyWord}} that does not support getting encryption public key.',
+        { selectedAccountKeyTypes, keyWord }
+      )
+      addToast(message, { type: 'error' })
+      return
+    }
+
+    const keyAddr = internalKey.addr
+    const keyType = internalKey.type
+
+    dispatch({
+      type: 'REQUESTS_CONTROLLER_RESOLVE_USER_REQUEST',
+      params: { data: { keyAddr, keyType }, id: userRequest.id }
+    })
+  }, [t, userRequest, dispatch, addToast, internalKey, selectedAccountKeyStoreKeys])
+
   const handleDeny = useCallback(() => {
-    if (!dappAction) return
+    if (!userRequest) return
 
     dispatch({
       type: 'REQUESTS_CONTROLLER_REJECT_USER_REQUEST',
-      params: { err: t('User rejected the request.'), id: dappAction.id }
+      params: { err: t('User rejected the request.'), id: userRequest.id }
     })
-  }, [dappAction, t, dispatch])
+  }, [userRequest, t, dispatch])
 
   return (
-    <>
-      <HeaderAccountAndNetworkInfo />
-      <ScrollableWrapper hasBottomTabNav={false}>
-        <Panel>
-          <View style={[spacings.pvSm, flexboxStyles.alignCenter]}>
-            <ManifestImage uri={icon} size={64} fallback={() => <ManifestFallbackIcon />} />
-          </View>
+    <SmallNotificationWindowWrapper>
+      <TabLayoutContainer
+        width="full"
+        header={<ActionHeader />}
+        renderDirectChildren={() => (
+          <ActionFooter
+            onReject={handleDeny}
+            onResolve={handleAccept}
+            resolveButtonText={t('Provide')}
+            resolveDisabled={isDisabled}
+            resolveButtonTestID="button-provide"
+            resolveNode={actionFooterResolveNode}
+          />
+        )}
+      >
+        <TabLayoutWrapperMainContent>
+          <RequestingDappInfo
+            name={name}
+            icon={icon}
+            intentText={t('wants to get your public encryption key')}
+          />
 
-          <Title style={[textStyles.center, spacings.phSm, spacings.pbLg]}>
-            {userRequest?.session?.origin ? new URL(userRequest.session.origin).hostname : ''}
-          </Title>
-
-          <View>
-            <Trans>
-              <Text style={[textStyles.center, spacings.phSm, spacings.mbLg]}>
-                <Text fontSize={14} weight="regular">
-                  {'The App '}
-                </Text>
-                <Text fontSize={14} weight="regular" color={theme.primaryLight}>
-                  {name}
-                </Text>
-                <Text fontSize={14} weight="regular">
-                  {
-                    ' wants to get your public encryption key. This method is deprecated and Ambire does not support it.'
-                  }
-                </Text>
-              </Text>
-            </Trans>
+          <View style={spacings.mtLg}>
+            {errorNode || (
+              <Alert
+                title={t('This app will be able to compose encrypted messages to you.')}
+                type="info"
+              />
+            )}
           </View>
-
-          <View style={styles.buttonsContainer}>
-            <View style={styles.buttonWrapper}>
-              <Button type="outline" onPress={handleDeny} text={t('Okay')} />
-            </View>
-          </View>
-        </Panel>
-      </ScrollableWrapper>
-    </>
+        </TabLayoutWrapperMainContent>
+      </TabLayoutContainer>
+    </SmallNotificationWindowWrapper>
   )
 }
 

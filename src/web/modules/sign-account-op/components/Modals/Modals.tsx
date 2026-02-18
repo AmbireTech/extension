@@ -4,11 +4,11 @@ import { useTranslation } from 'react-i18next'
 import { ISignAccountOpController } from '@ambire-common/interfaces/signAccountOp'
 import BottomSheet from '@common/components/BottomSheet'
 import DualChoiceWarningModal from '@common/components/DualChoiceWarningModal'
+import useController from '@common/hooks/useController'
 import useSign from '@common/hooks/useSign'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import text from '@common/styles/utils/text'
-import useMainControllerState from '@web/hooks/useMainControllerState'
 import LedgerConnectModal from '@web/modules/hardware-wallet/components/LedgerConnectModal'
 import SignAccountOpHardwareWalletSigningModal from '@web/modules/sign-account-op/components/SignAccountOpHardwareWalletSigningModal'
 import { getUiType } from '@web/utils/uiType'
@@ -52,7 +52,12 @@ const Modals: FC<Props> = ({
 }) => {
   const { styles } = useTheme(getStyles)
   const { t } = useTranslation()
-  const mainState = useMainControllerState()
+  const { signAccountOpController: swapAndBridgeSignAccountOp } =
+    useController('SwapAndBridgeController').state
+  const {
+    state: { signAccountOpController: transferSignAccountOp }
+  } = useController('TransferController')
+  const currentSignAccountOp = useController('SignAccountOpController').state
 
   if (renderedButNotNecessarilyVisibleModal === 'warnings') {
     return (
@@ -115,7 +120,16 @@ const Modals: FC<Props> = ({
       <SignAccountOpHardwareWalletSigningModal
         signingKeyType={signingKeyType}
         feePayerKeyType={feePayerKeyType}
-        signAndBroadcastAccountOpStatus={mainState.statuses.signAndBroadcastAccountOp}
+        isSignAndBroadcastInProgress={(() => {
+          if (actionType === 'swapAndBridge') {
+            return !!swapAndBridgeSignAccountOp?.isSignAndBroadcastInProgress
+          }
+          if (actionType === 'transfer') {
+            return !!transferSignAccountOp?.isSignAndBroadcastInProgress
+          }
+
+          return currentSignAccountOp ? currentSignAccountOp.isSignAndBroadcastInProgress : false
+        })()}
         signAccountOpStatusType={signAccountOpState.status?.type}
         shouldSignAuth={signAccountOpState.shouldSignAuth}
         signedTransactionsCount={signAccountOpState.signedTransactionsCount}

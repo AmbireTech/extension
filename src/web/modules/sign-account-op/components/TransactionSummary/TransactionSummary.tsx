@@ -9,10 +9,11 @@ import ExpandableCard from '@common/components/ExpandableCard'
 import HumanizedVisualization from '@common/components/HumanizedVisualization'
 import Label from '@common/components/Label'
 import Text from '@common/components/Text'
+import { isBenzin } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import useHover, { AnimatedPressable } from '@web/hooks/useHover'
 
 import FallbackVisualization from './FallbackVisualization'
@@ -23,7 +24,7 @@ interface Props {
   call: IrCall
   chainId: bigint
   size?: 'sm' | 'md' | 'lg'
-  isHistory?: boolean
+  type?: 'history' | 'benzin' | 'default'
   index?: number
   enableExpand?: boolean
   rightIcon?: React.ReactNode
@@ -42,7 +43,7 @@ const TransactionSummary = ({
   call,
   chainId,
   size = 'lg',
-  isHistory,
+  type = 'default',
   index,
   enableExpand = true,
   rightIcon,
@@ -52,7 +53,7 @@ const TransactionSummary = ({
   const textSize = 16 * sizeMultiplier[size]
   const imageSize = 32 * sizeMultiplier[size]
   const { t } = useTranslation()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { styles } = useTheme(getStyles)
   /**
    * It takes some time to remove the call from the controller state, so we optimistically
@@ -84,7 +85,7 @@ const TransactionSummary = ({
 
     setIsCallRemovedOptimistic(true)
     dispatch({
-      type: 'MAIN_CONTROLLER_REJECT_SIGN_ACCOUNT_OP_CALL',
+      type: 'REQUESTS_CONTROLLER_REJECT_CALL_FROM_USER_REQUEST',
       params: { callId: call.id }
     })
   }, [isCallRemovedOptimistic, dispatch, call.id])
@@ -112,6 +113,13 @@ const TransactionSummary = ({
     }
   }, [isCallRemovedOptimistic])
 
+  const humanizerWarningLabels = useMemo(() => {
+    if (type !== 'default') return null
+    return call.warnings?.map((warning) => {
+      return <Label size={size} key={warning.content} text={warning.content} type="warning" />
+    })
+  }, [type, call.warnings, size])
+
   if (isCallRemovedOptimistic) return null
 
   return (
@@ -119,11 +127,13 @@ const TransactionSummary = ({
       enableToggleExpand={enableExpand}
       hasArrow={enableExpand}
       style={{
-        ...(call.warnings?.length ? { ...styles.warningContainer, ...style } : { ...style })
+        ...(call.warnings?.length && type === 'default'
+          ? { ...styles.warningContainer, ...style }
+          : { ...style })
       }}
       contentStyle={{
-        paddingHorizontal: SPACING_SM * sizeMultiplier[size],
-        paddingVertical: SPACING_TY * sizeMultiplier[size]
+        paddingHorizontal: SPACING_SM,
+        paddingVertical: type !== 'history' ? SPACING_SM * sizeMultiplier[size] : 0
       }}
       content={
         <>
@@ -134,7 +144,7 @@ const TransactionSummary = ({
               textSize={textSize}
               imageSize={imageSize}
               chainId={chainId}
-              isHistory={isHistory}
+              type={type}
               testID={`recipient-address-${index}`}
               hasPadding={enableExpand}
               hideLinks={hideLinks}
@@ -147,7 +157,7 @@ const TransactionSummary = ({
               hasPadding={enableExpand}
             />
           )}
-          {!!call.fromUserRequestId && !isHistory && !rightIcon && (
+          {!!call.id && type === 'default' && !rightIcon && (
             <AnimatedPressable
               style={deleteIconAnimStyle}
               onPress={handleRemoveCall}
@@ -155,7 +165,7 @@ const TransactionSummary = ({
               {...bindDeleteIconAnim}
               testID={`delete-txn-call-${index}`}
             >
-              <DeleteIcon />
+              <DeleteIcon width={28} height={28} />
             </AnimatedPressable>
           )}
           {rightIcon && onRightIconPress && (
@@ -178,7 +188,7 @@ const TransactionSummary = ({
           }}
         >
           {call.to && (
-            <Text selectable fontSize={12} style={styles.bodyText}>
+            <Text selectable fontSize={12} style={styles.bodyText} weight="mono_regular">
               <Text fontSize={12} style={styles.bodyText} weight="regular">
                 {t('Interacting with (to): ')}
               </Text>
@@ -203,7 +213,7 @@ const TransactionSummary = ({
             <Text fontSize={12} style={styles.bodyText} weight="regular">
               {t('Data: ')}
             </Text>
-            <Text fontSize={12} style={styles.bodyText}>
+            <Text fontSize={12} style={styles.bodyText} weight="mono_regular">
               {call.data}
             </Text>
           </Text>
@@ -216,16 +226,7 @@ const TransactionSummary = ({
         }}
       >
         {!call.validationError ? (
-          call.warnings?.map((warning) => {
-            return (
-              <Label
-                size={size}
-                key={warning.content + warning.level}
-                text={warning.content}
-                type="warning"
-              />
-            )
-          })
+          humanizerWarningLabels
         ) : (
           <Label size={size} key={call.validationError} text={call.validationError} type="error" />
         )}

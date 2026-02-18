@@ -69,7 +69,7 @@ module.exports = async function (env, argv) {
       'Fast & secure Web3 wallet to supercharge your account on Ethereum and EVM networks.'
 
     // Maintain the same versioning between the web extension and the mobile app
-    manifest.version = appJSON.expo.version
+    manifest.version = appJSON.version
 
     // Directives to disallow a set of script-related privileges for a
     // specific page. They prevent the browser extension being embedded or
@@ -190,6 +190,22 @@ module.exports = async function (env, argv) {
       // As far as we could debug, these are not critical and lib specific.
       // Webpack can't find source maps for specific packages, which is fine.
       message: /Failed to parse source map/
+    },
+    // react-native-worklets uses Metro-specific require.getModules()/resolveWeak();
+    // those APIs don't exist in webpack. Safe to ignore for web/extension builds.
+    (warning, compilation) => {
+      if (
+        typeof warning.message !== 'string' ||
+        !warning.message.includes(
+          'Critical dependency: require function is used in a way in which dependencies cannot be statically extracted'
+        )
+      ) {
+        return false
+      }
+      const requestShortener = compilation?.requestShortener
+      const moduleId = warning.module?.readableIdentifier?.(requestShortener) ?? ''
+      const file = warning.file || warning.module?.resource || ''
+      return moduleId.includes('react-native-worklets') || file.includes('react-native-worklets')
     }
   ]
 
@@ -205,13 +221,7 @@ module.exports = async function (env, argv) {
     '@web': path.resolve(__dirname, 'src/web'),
     '@benzin': path.resolve(__dirname, 'src/benzin'),
     '@legends': path.resolve(__dirname, 'src/legends'),
-    react: path.resolve(__dirname, 'node_modules/react'),
-    // TODO: Temporarily, for Ambire Next, use a pre-release version of gridplus-sdk that supports EIP-7702, look for all #gridplus-sdk-temporary
-    ...(isAmbireNext
-      ? {
-          'gridplus-sdk': path.resolve(__dirname, 'node_modules/gridplus-sdk-e3d6ac0')
-        }
-      : {})
+    react: path.resolve(__dirname, 'node_modules/react')
   }
 
   config.resolve.fallback = {
@@ -268,6 +278,7 @@ module.exports = async function (env, argv) {
     config.entry = Object.fromEntries(
       Object.entries({
         main: config.entry[0],
+        rootTheme: './src/web/public/rootTheme.ts',
         background: './src/web/extension-services/background/background.ts',
         'content-script':
           './src/web/extension-services/content-script/content-script-messenger-bridge.ts',
@@ -324,19 +335,19 @@ module.exports = async function (env, argv) {
         template: './src/web/public/index.html',
         filename: 'index.html',
         inject: 'body', // to auto inject the main.js bundle in the body
-        chunks: ['main'] // include only chunks from the main entry
+        chunks: ['rootTheme', 'main'] // include only chunks from the main entry
       }),
       new HtmlWebpackPlugin({
-        template: './src/web/public/action-window.html',
-        filename: 'action-window.html',
+        template: './src/web/public/request-window.html',
+        filename: 'request-window.html',
         inject: 'body', // to auto inject the main.js bundle in the body
-        chunks: ['main'] // include only chunks from the main entry
+        chunks: ['rootTheme', 'main'] // include only chunks from the main entry
       }),
       new HtmlWebpackPlugin({
         template: './src/web/public/tab.html',
         filename: 'tab.html',
         inject: 'body', // to auto inject the main.js bundle in the body
-        chunks: ['main'] // include only chunks from the main entry
+        chunks: ['rootTheme', 'main'] // include only chunks from the main entry
       }),
       new CopyPlugin({ patterns: extensionCopyPatterns })
     ]
@@ -457,13 +468,46 @@ module.exports = async function (env, argv) {
     return config
   }
   if (isAmbireExplorer) {
-    if (process.env.APP_ENV === 'development') {
+    // Not entering this branch causes the error:
+    // handleAction: Controller ProvidersController not found
+    // This is a temporary fix
+    const ARE_CONTROLLERS_BROKEN_WITH_MINIMIZE = true
+
+    if (process.env.APP_ENV === 'development' || ARE_CONTROLLERS_BROKEN_WITH_MINIMIZE) {
       config.optimization = { minimize: false }
     } else {
       delete config.optimization.splitChunks
     }
 
     config.entry = './src/benzin/index.js'
+
+    config.resolve.fallback = {
+      stream: require.resolve('stream-browserify'),
+      crypto: require.resolve('crypto-browserify')
+    }
+
+    const terserPlugin = config.optimization.minimizer?.find(
+      (minimizer) => minimizer.constructor.name === 'TerserPlugin'
+    )
+    if (terserPlugin) {
+      const terserRealOptions = terserPlugin.options.minimizer?.options
+
+      if (terserRealOptions) {
+        terserRealOptions.compress = {
+          ...(terserRealOptions.compress || {}),
+          pure_getters: true,
+          passes: 3
+        }
+
+        terserRealOptions.output = {
+          ...(terserRealOptions.output || {}),
+          ascii_only: true,
+          comments: false
+        }
+
+        terserRealOptions.mangle = false
+      }
+    }
 
     config.plugins = [
       ...defaultExpoConfigPlugins,
@@ -494,11 +538,21 @@ module.exports = async function (env, argv) {
       })
     ]
 
+    config.module.rules.push({
+      test: /\.cjs$/,
+      type: 'javascript/auto'
+    })
+
     return config
   }
   if (isLegends) {
     config.output.clean = true
     config.entry = './src/legends/index.js'
+
+    config.resolve.fallback = {
+      stream: require.resolve('stream-browserify'),
+      crypto: require.resolve('crypto-browserify')
+    }
 
     if (process.env.APP_ENV === 'development') {
       config.optimization = { minimize: false }
@@ -549,12 +603,36 @@ module.exports = async function (env, argv) {
       }
     ]
 
+    const terserPlugin = config.optimization.minimizer?.find(
+      (minimizer) => minimizer.constructor.name === 'TerserPlugin'
+    )
+    if (terserPlugin) {
+      const terserRealOptions = terserPlugin.options.minimizer?.options
+
+      if (terserRealOptions) {
+        terserRealOptions.compress = {
+          ...(terserRealOptions.compress || {}),
+          pure_getters: true,
+          passes: 3
+        }
+
+        terserRealOptions.output = {
+          ...(terserRealOptions.output || {}),
+          ascii_only: true,
+          comments: false
+        }
+
+        terserRealOptions.mangle = false
+      }
+    }
+
     config.plugins = [
       ...defaultExpoConfigPlugins,
       new webpack.ProvidePlugin({
         Buffer: ['buffer', 'Buffer'],
         process: 'process'
       }),
+      new NodePolyfillPlugin(),
       new HtmlWebpackPlugin({
         template: './src/legends/public/index.html',
         filename: 'index.html',
@@ -573,6 +651,11 @@ module.exports = async function (env, argv) {
         ]
       })
     ]
+
+    config.module.rules.push({
+      test: /\.cjs$/,
+      type: 'javascript/auto'
+    })
 
     return config
   }

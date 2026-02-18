@@ -1,21 +1,16 @@
 import React, { FC, ReactNode, useEffect } from 'react'
-import { createHashRouter, Navigate, RouterProvider } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
 
-import { DomainsContextProvider } from '@common/contexts/domainsContext'
-import ErrorPage from '@legends/components/ErrorPage'
 import PrivateRoute from '@legends/components/PrivateRoute'
-import { ActivityContextProvider } from '@legends/contexts/activityContext'
+import Season2Modal from '@legends/components/Season2Modal'
 import { DataPollingContextProvider } from '@legends/contexts/dataPollingContext'
 import { LeaderboardContextProvider } from '@legends/contexts/leaderboardContext'
 import { LegendsContextProvider } from '@legends/contexts/legendsContext'
-import { MidnightTimerContextProvider } from '@legends/contexts/midnightTimerContext'
-import { PortfolioControllerStateProvider } from '@legends/contexts/portfolioControllerStateContext'
-import CharacterSelect from '@legends/modules/character/screens/CharacterSelect'
+import { PortfolioProvider } from '@legends/contexts/portfolioContext'
 import Home from '@legends/modules/Home'
 import Leaderboard from '@legends/modules/leaderboard/screens/Leaderboard'
-import Legends from '@legends/modules/legends/screens/Legends'
+import RewardsPool from '@legends/modules/rewards-pool'
 import Wallet from '@legends/modules/wallet'
-import * as Sentry from '@sentry/react'
 
 import { LEGENDS_ROUTES } from '../constants'
 import { LEGENDS_LEGACY_ROUTES } from '../constants/routes'
@@ -39,70 +34,45 @@ const PrivateArea: FC<{ children: ReactNode }> = ({ children }) => {
 
   return (
     <LeaderboardContextProvider>
-      <ActivityContextProvider>
-        <LegendsContextProvider>
-          <PortfolioControllerStateProvider>
-            <DomainsContextProvider>
-              <DataPollingContextProvider>
-                <MidnightTimerContextProvider>{children}</MidnightTimerContextProvider>
-              </DataPollingContextProvider>
-            </DomainsContextProvider>
-          </PortfolioControllerStateProvider>
-        </LegendsContextProvider>
-      </ActivityContextProvider>
+      <LegendsContextProvider>
+        <PortfolioProvider>
+          <DataPollingContextProvider>
+            <Season2Modal />
+            {children}
+          </DataPollingContextProvider>
+        </PortfolioProvider>
+      </LegendsContextProvider>
     </LeaderboardContextProvider>
   )
 }
 
-const sentryCreateHashRouter = Sentry.wrapCreateBrowserRouterV6(createHashRouter)
-
-const router = sentryCreateHashRouter([
-  {
-    errorElement: <ErrorPage />,
-    children: [
-      {
-        element: (
+const Router = () => {
+  return (
+    <Routes>
+      <Route
+        element={
           <PrivateArea>
             <PrivateRoute />
           </PrivateArea>
-        ),
-        children: [
-          {
-            path: LEGENDS_ROUTES.quests,
-            element: <Legends />
-          },
-          {
-            path: LEGENDS_ROUTES.leaderboard,
-            element: <Leaderboard />
-          },
-          {
-            path: LEGENDS_ROUTES.home,
-            element: <Home />
-          },
-          {
-            path: LEGENDS_ROUTES.wallet,
-            element: <Wallet />
-          },
-          {
-            path: LEGENDS_ROUTES['/'],
-            element: <Home />
-          },
-          {
-            path: LEGENDS_LEGACY_ROUTES.legends,
-            element: <Navigate to={LEGENDS_ROUTES.quests} />
-          },
-          {
-            path: LEGENDS_LEGACY_ROUTES.character,
-            element: <Navigate to={LEGENDS_ROUTES.home} />
-          }
-        ]
-      }
-    ]
-  }
-])
-
-const Router = () => {
-  return <RouterProvider router={router} />
+        }
+      >
+        <Route path={LEGENDS_ROUTES.leaderboard} element={<Leaderboard />} />
+        <Route path={LEGENDS_ROUTES.home} element={<Home />} />
+        <Route path={LEGENDS_ROUTES.wallet} element={<Wallet />} />
+        <Route path={LEGENDS_ROUTES['/']} element={<Home />} />
+        <Route path={LEGENDS_ROUTES.rewardsPool} element={<RewardsPool />} />
+        <Route path={LEGENDS_ROUTES.legacyQuests} element={<Navigate to={LEGENDS_ROUTES.home} />} />
+        <Route
+          path={LEGENDS_LEGACY_ROUTES.legends}
+          element={<Navigate to={LEGENDS_ROUTES.home} />}
+        />
+        <Route
+          path={LEGENDS_LEGACY_ROUTES.character}
+          element={<Navigate to={LEGENDS_ROUTES.home} />}
+        />
+      </Route>
+    </Routes>
+  )
 }
 
 export default Router

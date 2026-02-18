@@ -6,19 +6,19 @@ import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
 import OpenIcon from '@common/assets/svg/OpenIcon'
 import Text from '@common/components/Text'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import getStyles from '@common/modules/dashboard/components/DeFiPositions/DeFiProviderPosition/styles'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
+import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@web/extension-services/background/webapi/tab'
-import useDappsControllerState from '@web/hooks/useDappsControllerState'
-import useHover, { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
+import useHover, { AnimatedPressable, useCustomHover, useMultiHover } from '@web/hooks/useHover'
 
 import Badge from './Badge'
 import ProtocolIcon from './ProtocolIcon'
 
-type Props = Omit<PositionsByProvider, 'type' | 'positionInUSD' | 'positions'> & {
+type Props = Omit<PositionsByProvider, 'type' | 'positionInUSD' | 'positions' | 'source'> & {
   toggleExpanded: () => void
   isExpanded: boolean
   positionInUSD?: string
@@ -55,15 +55,21 @@ const DeFiPositionHeader: FC<Props> = ({
 }) => {
   const {
     state: { dapps }
-  } = useDappsControllerState()
-  const { styles, theme, themeType } = useTheme(getStyles)
-  const [bindAnim, animStyle] = useCustomHover({
-    property: 'backgroundColor',
-    values: {
-      from:
-        themeType === THEME_TYPES.DARK ? theme.tertiaryBackground : theme.quaternaryBackgroundSolid,
-      to: theme.secondaryBackground
-    },
+  } = useController('DappsController')
+  const { styles, theme } = useTheme(getStyles)
+  const [bindAnim, animStyle] = useMultiHover({
+    values: [
+      {
+        property: 'backgroundColor',
+        from: theme.secondaryBackground,
+        to: theme.tertiaryBackground
+      },
+      {
+        property: 'borderColor',
+        from: hexToRgba(theme.primaryBorder, 0),
+        to: theme.primaryBorder
+      }
+    ],
     forceHoveredStyle: isExpanded
   })
   const [bindOpenIconAnim, openIconAnimStyle] = useHover({
@@ -71,19 +77,22 @@ const DeFiPositionHeader: FC<Props> = ({
   })
 
   const dappUrl = useMemo(() => {
-    const providerNameWithoutVersion = providerName.split(' ')[0].toLowerCase()
+    if (siteUrl) return siteUrl
+
+    const providerNameWithoutVersion = providerName.split(' ')[0]?.toLowerCase() || ''
     const dapp = dapps.find((d) => d.name.toLowerCase().includes(providerNameWithoutVersion))
 
     return dapp?.url
-  }, [dapps, providerName])
+  }, [dapps, providerName, siteUrl])
 
   const openDAppUrl = useCallback(async () => {
+    if (!dappUrl) return
     try {
-      await openInTab({ url: siteUrl || dappUrl! })
+      await openInTab({ url: dappUrl })
     } catch (e) {
       console.error(e)
     }
-  }, [dappUrl, siteUrl])
+  }, [dappUrl])
 
   return (
     <AnimatedPressable

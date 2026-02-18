@@ -1,6 +1,9 @@
 import { StyleSheet, ViewStyle } from 'react-native'
 
+import spacings from '@common/styles/spacings'
+import { ThemeProps } from '@common/styles/themeConfig'
 import common from '@common/styles/utils/common'
+import flexbox from '@common/styles/utils/flexbox'
 
 import { SETTINGS_HEADER_HEIGHT } from '../../contexts/SettingsRoutesContext/styles'
 
@@ -8,12 +11,15 @@ interface Style {
   settingsTitleWrapper: ViewStyle
 }
 
-const getStyles = () =>
+const getStyles = (theme: ThemeProps) =>
   StyleSheet.create<Style>({
     settingsTitleWrapper: {
       ...common.fullWidth,
-      height: SETTINGS_HEADER_HEIGHT,
-      justifyContent: 'center'
+      ...spacings.plSm,
+      ...flexbox.directionRow,
+      ...flexbox.justifySpaceBetween,
+      ...flexbox.alignCenter,
+      height: SETTINGS_HEADER_HEIGHT
     }
   })
 

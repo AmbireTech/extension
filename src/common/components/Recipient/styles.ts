@@ -9,9 +9,9 @@ interface Style {
 }
 
 const styles = StyleSheet.create<Style>({
-  inputContainer: spacings.mbMi,
-  inputBottom: spacings.mlTy,
-  doubleCheckMessage: spacings.mbSm
+  inputContainer: { ...spacings.mbMi },
+  inputBottom: { ...spacings.mlTy },
+  doubleCheckMessage: { ...spacings.mbSm }
 })
 
 export default styles

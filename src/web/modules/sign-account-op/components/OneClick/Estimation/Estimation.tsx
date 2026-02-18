@@ -9,25 +9,26 @@ import {
   SignAccountOpError
 } from '@ambire-common/interfaces/signAccountOp'
 import { SwapAndBridgeRoute } from '@ambire-common/interfaces/swapAndBridge'
+import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
+import FooterGlassView from '@common/components/FooterGlassView'
+import HoldToProceedButton from '@common/components/HoldToProceedButton'
 import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
-import Text from '@common/components/Text'
 import useSign from '@common/hooks/useSign'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
-import flexbox from '@common/styles/utils/flexbox'
 import Estimation from '@web/modules/sign-account-op/components/Estimation'
 import Modals from '@web/modules/sign-account-op/components/Modals/Modals'
 import SigningKeySelect from '@web/modules/sign-message/components/SignKeySelect'
 import { getUiType } from '@web/utils/uiType'
+
 import BundlerWarning from '../../Estimation/components/bundlerWarning'
+import SafetyChecksBanner from '../../SafetyChecksBanner'
 
 export type OneClickEstimationProps = {
   closeEstimationModal: () => void
-  handleBroadcastAccountOp: () => void
   handleUpdateStatus: (status: SigningStatus) => void
   updateController: (params: { signingKeyAddr?: Key['addr']; signingKeyType?: Key['type'] }) => void
   estimationModalRef: React.RefObject<any>
@@ -38,11 +39,10 @@ export type OneClickEstimationProps = {
   serviceFee?: SwapAndBridgeRoute['serviceFee']
 }
 
-const { isActionWindow, isTab } = getUiType()
+const { isRequestWindow, isTab } = getUiType()
 
 const OneClickEstimation = ({
   closeEstimationModal,
-  handleBroadcastAccountOp,
   handleUpdateStatus,
   updateController,
   estimationModalRef,
@@ -86,28 +86,38 @@ const OneClickEstimation = ({
     bundlerNonceDiscrepancy
   } = useSign({
     signAccountOpState: signAccountOpController,
-    handleBroadcast: handleBroadcastAccountOp,
     handleUpdate: updateController,
     handleUpdateStatus,
     isOneClickSign: true,
     updateType
   })
 
+  const { banners } = signAccountOpController || {}
   return (
     <>
       <BottomSheet
         id="estimation-modal"
         sheetRef={estimationModalRef}
         type={isTab ? 'modal' : 'bottom-sheet'}
-        backgroundColor={
-          themeType === THEME_TYPES.DARK ? 'secondaryBackground' : 'primaryBackground'
-        }
         // NOTE: This must be lower than SigningKeySelect's z-index
         customZIndex={5}
-        autoOpen={hasProceeded || (isActionWindow && !!signAccountOpController)}
+        style={spacings.pb}
+        autoOpen={hasProceeded || (isRequestWindow && !!signAccountOpController)}
         isScrollEnabled={false}
         shouldBeClosableOnDrag={false}
       >
+        {!!banners && !!banners.length && (
+          <View style={spacings.mbTy}>
+            {banners.map((banner) => (
+              <SafetyChecksBanner
+                key={banner.id}
+                type={banner.type}
+                text={banner.text}
+                style={spacings.mbTy}
+              />
+            ))}
+          </View>
+        )}
         {!!signAccountOpController && (
           <View>
             <SigningKeySelect
@@ -145,24 +155,13 @@ const OneClickEstimation = ({
               (signingErrors.map(({ code }) => code).includes('NO_KEYS_AVAILABLE') ? (
                 <NoKeysToSignAlert style={spacings.mt} />
               ) : (
-                <View style={[flexbox.directionRow, flexbox.alignEnd, spacings.mt]}>
-                  <Text fontSize={12} appearance="errorText">
-                    {t(signingErrors[0].title)}
-                  </Text>
-                </View>
+                <Alert title={t(signingErrors[0]!.title)} type="error" style={spacings.mt} />
               ))}
             <BundlerWarning
               signAccountOpState={signAccountOpController}
               bundlerNonceDiscrepancy={bundlerNonceDiscrepancy}
             />
-            <View
-              style={{
-                height: 1,
-                backgroundColor: theme.secondaryBorder,
-                ...spacings.mvLg
-              }}
-            />
-            <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifySpaceBetween]}>
+            <FooterGlassView size="sm" absolute={false} style={spacings.pt}>
               <Button
                 testID="back-button"
                 type="secondary"
@@ -170,16 +169,29 @@ const OneClickEstimation = ({
                 onPress={closeEstimationModal}
                 hasBottomSpacing={false}
                 disabled={isSignLoading}
-                style={{ width: 98 }}
+                style={{ width: 98, ...spacings.mrLg }}
+                size="smaller"
               />
-              <ButtonWithLoader
-                testID="sign-button"
-                text={primaryButtonText}
-                isLoading={isSignLoading}
-                disabled={isSignDisabled || signingErrors.length > 0}
-                onPress={onSignButtonClick}
-              />
-            </View>
+
+              {!!banners && !!banners.length ? (
+                <HoldToProceedButton
+                  testID="sign-proceed-btn"
+                  text={t('Hold to sign')}
+                  disabled={isSignDisabled || signingErrors.length > 0}
+                  onHoldComplete={onSignButtonClick}
+                  size="smaller"
+                />
+              ) : (
+                <ButtonWithLoader
+                  testID="sign-button"
+                  text={primaryButtonText}
+                  isLoading={isSignLoading}
+                  disabled={isSignDisabled || signingErrors.length > 0}
+                  onPress={onSignButtonClick}
+                  size="smaller"
+                />
+              )}
+            </FooterGlassView>
           </View>
         )}
       </BottomSheet>

@@ -35,32 +35,29 @@
   background-color: $secondaryBackground;
   border-radius: $tertiaryBorderRadius;
   padding: 2.75rem;
-  border: 0.25rem solid transparent;
+  border: 0.0625rem solid transparent;
   background-clip: padding-box, border-box;
   background-origin: padding-box, border-box;
-  background-image: linear-gradient($secondaryBackground, $secondaryBackground), 
-                    linear-gradient(152.35deg, rgba(207, 162, 255, 0.6) 9.38%, rgba(78, 25, 168, 0.6) 96.89%);
-
+  background-image: linear-gradient($secondaryBackground, $secondaryBackground),
+    linear-gradient(15.37deg, $blue-300 6.35%, $purple-650 54.11%);
 
   width: 30rem;
   opacity: 0.5;
   transform: scale(0.7);
   transition: opacity 0.3s ease-out, transform 0.2s ease-out;
   transform-origin: top;
-  
+
   .closeButton {
     position: absolute;
     right: 1rem;
     top: 1rem;
-    
+
     svg {
       width: 2rem;
       height: 2rem;
     }
   }
-  
- 
-  
+
   @include breakpoint-down-from(medium-desktop) {
     padding: 2rem;
     padding-top: 2.5rem;

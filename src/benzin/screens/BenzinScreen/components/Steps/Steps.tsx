@@ -48,11 +48,9 @@ const Steps: FC<Props> = ({ activeStep, txnId, userOpHash, stepsState, summary, 
               spacings.mlTy,
               spacings.pvMi,
               spacings.phSm,
-              {
-                backgroundColor: '#6000FF14',
-                borderRadius: 20,
-                width: 'fit-content'
-              }
+              { backgroundColor: '#6000FF14', borderRadius: 20 },
+              // @ts-ignore value missing in the props, but it's available on web
+              { width: 'fit-content' }
             ]}
           >
             <StarsIcon width={14} height={14} />
@@ -169,6 +167,7 @@ const Steps: FC<Props> = ({ activeStep, txnId, userOpHash, stepsState, summary, 
                 userOpHash &&
                 stepsState.userOp &&
                 stepsState.userOp.callData === '' &&
+                !stepsState.extensionAccOp &&
                 stepsState.finalizedStatus?.status !== 'fetching' && (
                   <Text appearance="errorText" fontSize={14}>
                     Could not decode calldata. Open the explorer for a better summarization

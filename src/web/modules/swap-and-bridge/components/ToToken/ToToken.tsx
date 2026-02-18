@@ -7,40 +7,33 @@ import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
 import { SwapAndBridgeFormStatus } from '@ambire-common/controllers/swapAndBridge/swapAndBridge'
 import { getIsNetworkSupported } from '@ambire-common/libs/swapAndBridge/swapAndBridge'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
-import WalletFilledIcon from '@common/assets/svg/WalletFilledIcon'
+import WalletIcon from '@common/assets/svg/WalletIcon'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import NetworkIcon from '@common/components/NetworkIcon'
 import Select from '@common/components/Select'
 import { SelectValue } from '@common/components/Select/types'
 import getStyles from '@common/components/SendToken/styles'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
-import Tooltip from '@common/components/Tooltip'
+import useController from '@common/hooks/useController'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useGetTokenSelectProps from '@common/hooks/useGetTokenSelectProps'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
-import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControllerState'
+import { ItemPanel } from '@web/components/TransactionsScreen'
 import SwitchTokensButton from '@web/modules/swap-and-bridge/components/SwitchTokensButton'
 import ToTokenSelect from '@web/modules/swap-and-bridge/components/ToToken/ToTokenSelect'
-import useSwapAndBridgeForm from '@web/modules/swap-and-bridge/hooks/useSwapAndBridgeForm'
 import { getTokenId } from '@web/utils/token'
 
 import NotSupportedNetworkTooltip from '../NotSupportedNetworkTooltip'
 
-type Props = Pick<ReturnType<typeof useSwapAndBridgeForm>, 'setIsAutoSelectRouteDisabled'> & {
-  isAutoSelectRouteDisabled: boolean
+type Props = {
   simulationFailed?: boolean
 }
 
-const ToToken: FC<Props> = ({
-  isAutoSelectRouteDisabled,
-  setIsAutoSelectRouteDisabled,
-  simulationFailed
-}) => {
+const ToToken: FC<Props> = ({ simulationFailed }) => {
   const { theme, styles, themeType } = useTheme(getStyles)
   const { t } = useTranslation()
   const {
@@ -58,11 +51,13 @@ const ToToken: FC<Props> = ({
     switchTokensStatus,
     supportedChainIds,
     signAccountOpController
-  } = useSwapAndBridgeControllerState()
+  } = useController('SwapAndBridgeController').state
 
-  const { networks } = useNetworksControllerState()
-  const { account } = useSelectedAccountControllerState()
-  const { dispatch } = useBackgroundService()
+  const { networks } = useController('NetworksController').state
+  const {
+    state: { account }
+  } = useController('SelectedAccountController')
+  const { dispatch } = useControllersMiddleware()
 
   const handleSwitchFromAndToTokens = useCallback(
     () =>
@@ -78,7 +73,7 @@ const ToToken: FC<Props> = ({
         type: 'SWAP_AND_BRIDGE_CONTROLLER_UPDATE_FORM',
         params: {
           formValues: {
-            toChainId: networks.filter((n) => String(n.chainId) === networkOption.value)[0].chainId
+            toChainId: networks.filter((n) => String(n.chainId) === networkOption.value)[0]?.chainId
           }
         }
       })
@@ -116,10 +111,10 @@ const ToToken: FC<Props> = ({
 
   const shouldShowAmountOnEstimationFailure = useMemo(() => {
     return (
-      isAutoSelectRouteDisabled &&
+      quote?.selectedRoute?.isSelectedManually &&
       signAccountOpController?.estimation.status === EstimationStatus.Error
     )
-  }, [isAutoSelectRouteDisabled, signAccountOpController?.estimation.status])
+  }, [quote?.selectedRoute?.isSelectedManually, signAccountOpController?.estimation.status])
 
   const isReadyToDisplayAmounts =
     (formStatus === SwapAndBridgeFormStatus.Empty ||
@@ -127,7 +122,8 @@ const ToToken: FC<Props> = ({
       formStatus === SwapAndBridgeFormStatus.NoRoutesFound ||
       formStatus === SwapAndBridgeFormStatus.ReadyToSubmit ||
       formStatus === SwapAndBridgeFormStatus.Proceeded ||
-      (formStatus === SwapAndBridgeFormStatus.InvalidRouteSelected && isAutoSelectRouteDisabled) ||
+      (formStatus === SwapAndBridgeFormStatus.InvalidRouteSelected &&
+        quote?.selectedRoute?.isSelectedManually) ||
       shouldShowAmountOnEstimationFailure) &&
     updateQuoteStatus !== 'LOADING'
 
@@ -152,7 +148,8 @@ const ToToken: FC<Props> = ({
             label: (
               <>
                 <Text
-                  fontSize={14}
+                  fontSize={16}
+                  appearance="secondaryText"
                   weight="medium"
                   dataSet={{ tooltipId }}
                   style={flexbox.flex1}
@@ -180,7 +177,6 @@ const ToToken: FC<Props> = ({
 
   const handleChangeToToken = useCallback(
     ({ address: toSelectedTokenAddr }: SelectValue) => {
-      setIsAutoSelectRouteDisabled(false)
       const isSameAsFromToken =
         !!fromSelectedToken &&
         !!toChainId &&
@@ -198,7 +194,7 @@ const ToToken: FC<Props> = ({
         }
       })
     },
-    [setIsAutoSelectRouteDisabled, fromSelectedToken, toChainId, dispatch]
+    [fromSelectedToken, toChainId, dispatch]
   )
 
   const handleAddToTokenByAddress = useCallback(
@@ -240,134 +236,133 @@ const ToToken: FC<Props> = ({
     'pendingBalanceFormatted' in toTokenValue &&
     'balanceFormatted' in toTokenValue
 
-  // @ts-ignore
   return (
-    <View>
+    <ItemPanel
+      style={{
+        ...spacings.pv,
+        ...spacings.pl,
+        ...spacings.prMd
+      }}
+    >
+      <SwitchTokensButton
+        onPress={handleSwitchFromAndToTokens}
+        disabled={
+          switchTokensStatus === 'LOADING' ||
+          updateQuoteStatus === 'LOADING' ||
+          updateToTokenListStatus === 'LOADING'
+        }
+      />
       <View
         style={[flexbox.directionRow, flexbox.alignEnd, flexbox.justifySpaceBetween, spacings.mbMi]}
       >
-        <SwitchTokensButton
-          onPress={handleSwitchFromAndToTokens}
-          disabled={
-            switchTokensStatus === 'LOADING' ||
-            updateQuoteStatus === 'LOADING' ||
-            updateToTokenListStatus === 'LOADING'
-          }
-        />
-        <Text appearance="secondaryText" fontSize={16} weight="medium">
-          {t('Receive')}
+        <Text appearance="secondaryText" fontSize={14} weight="medium" style={spacings.mbSm}>
+          {t('You receive')}
         </Text>
         <Select
           setValue={handleSetToNetworkValue}
-          containerStyle={{ ...spacings.mb0, width: 160 }}
+          containerStyle={{ ...spacings.mb0, width: 168 }}
           options={toNetworksOptions}
+          selectStyle={{ ...spacings.phMi, ...spacings.prTy }}
           size="sm"
           value={getToNetworkSelectValue}
           mode="bottomSheet"
           bottomSheetTitle={t('Receive token network')}
-          selectStyle={{
-            backgroundColor:
-              themeType === THEME_TYPES.DARK ? theme.secondaryBackground : '#54597A14',
-            borderWidth: 0
-          }}
         />
       </View>
-      <View style={[styles.container, spacings.prXl]}>
-        <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-          <ToTokenSelect
-            toTokenOptions={toTokenOptions}
-            toTokenValue={toTokenValue}
-            handleChangeToToken={handleChangeToToken}
-            toTokenAmountSelectDisabled={toTokenAmountSelectDisabled}
-            addToTokenByAddressStatus={swapAndBridgeCtrlStatuses.addToTokenByAddress}
-            handleAddToTokenByAddress={handleAddToTokenByAddress}
-          />
-          <View style={[spacings.plSm, flexbox.flex1]}>
-            {isReadyToDisplayAmounts ? (
-              <>
-                <Text
-                  fontSize={20}
-                  weight="medium"
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                  appearance={
-                    formattedToAmount && formattedToAmount !== '0' ? 'primaryText' : 'secondaryText'
-                  }
-                  dataSet={{ tooltipId: 'to-amount' }}
-                  style={{ textAlign: 'right' }}
-                >
-                  {formattedToAmount}
-                </Text>
-                {formattedToAmount !== '0' && <Tooltip id="to-amount" content={toAmount} />}
-              </>
-            ) : (
-              <SkeletonLoader
-                appearance="tertiaryBackground"
-                width={100}
-                height={32}
-                style={{ marginLeft: 'auto' }}
-              />
-            )}
-          </View>
-        </View>
-        <View
-          style={[
-            flexbox.directionRow,
-            flexbox.alignCenter,
-            flexbox.justifySpaceBetween,
-            spacings.ptSm,
-            {
-              height: 32 // Prevents layout shifts
-            }
-          ]}
-        >
-          {hasSelectedToToken && (
-            <View
-              style={[flexbox.directionRow, flexbox.alignCenter]}
-              // @ts-ignore
-              dataSet={{ tooltipId: 'to-token-balance-tooltip' }}
-            >
-              <WalletFilledIcon
-                width={14}
-                height={14}
-                color={simulationFailed ? theme.warningDecorative : theme.tertiaryText}
-              />
-              <Text
-                testID="max-available-amount"
-                numberOfLines={1}
-                fontSize={12}
-                style={spacings.mlMi}
-                weight="medium"
-                appearance="tertiaryText"
-                ellipsizeMode="tail"
-                color={simulationFailed ? theme.warningDecorative : theme.tertiaryText}
-              >
-                {`${
-                  toTokenValue.isPending
-                    ? toTokenValue.pendingBalanceFormatted
-                    : toTokenValue.balanceFormatted
-                } ${toTokenValue.symbol}`}
-              </Text>
-              <Tooltip
-                content={simulationFailed ? 'Balance may be inaccurate' : ''}
-                id="to-token-balance-tooltip"
-              />
-            </View>
-          )}
-          {!!quote?.selectedRoute && isReadyToDisplayAmounts && (
+      <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+        <ToTokenSelect
+          toTokenOptions={toTokenOptions}
+          toTokenValue={toTokenValue}
+          handleChangeToToken={handleChangeToToken}
+          toTokenAmountSelectDisabled={toTokenAmountSelectDisabled}
+          addToTokenByAddressStatus={swapAndBridgeCtrlStatuses.addToTokenByAddress}
+          handleAddToTokenByAddress={handleAddToTokenByAddress}
+        />
+        <View style={[spacings.plSm, flexbox.flex1]}>
+          {isReadyToDisplayAmounts ? (
             <Text
-              fontSize={12}
-              color={themeType === THEME_TYPES.DARK ? theme.linkText : theme.primary}
+              fontSize={20}
               weight="medium"
-              testID="switch-currency-sab"
-              style={{ marginLeft: 'auto' }}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+              appearance={
+                formattedToAmount && formattedToAmount !== '0' ? 'primaryText' : 'secondaryText'
+              }
+              dataSet={createGlobalTooltipDataSet({
+                id: 'to-amount',
+                content: toAmount,
+                hidden: formattedToAmount === '0'
+              })}
+              style={{ textAlign: 'right' }}
             >
-              {formatDecimals(quote.selectedRoute.outputValueInUsd || 0, 'price')}
+              {formattedToAmount}
             </Text>
+          ) : (
+            <SkeletonLoader
+              appearance="primaryBackground"
+              width={100}
+              height={32}
+              style={{ marginLeft: 'auto' }}
+            />
           )}
         </View>
       </View>
-    </View>
+      <View
+        style={[
+          flexbox.directionRow,
+          flexbox.alignCenter,
+          flexbox.justifySpaceBetween,
+          spacings.ptSm,
+          {
+            height: 32 // Prevents layout shifts
+          }
+        ]}
+      >
+        {hasSelectedToToken && (
+          <View
+            style={[flexbox.directionRow, flexbox.alignCenter]}
+            dataSet={createGlobalTooltipDataSet({
+              id: 'to-token-balance-tooltip',
+              content: t('Balance may be inaccurate'),
+              hidden: !simulationFailed
+            })}
+          >
+            <WalletIcon
+              width={18}
+              height={18}
+              color={simulationFailed ? theme.warningDecorative : theme.tertiaryText}
+            />
+            <Text
+              testID="max-available-amount"
+              numberOfLines={1}
+              fontSize={12}
+              style={spacings.mlMi}
+              weight="medium"
+              appearance="tertiaryText"
+              ellipsizeMode="tail"
+              color={simulationFailed ? theme.warningDecorative : theme.tertiaryText}
+            >
+              {`${
+                toTokenValue.isPending
+                  ? toTokenValue.pendingBalanceFormatted
+                  : toTokenValue.balanceFormatted
+              } ${toTokenValue.symbol}`}
+            </Text>
+          </View>
+        )}
+        {!!quote?.selectedRoute && isReadyToDisplayAmounts && (
+          <Text
+            fontSize={12}
+            color={themeType === THEME_TYPES.DARK ? theme.linkText : theme.primary}
+            weight="medium"
+            testID="switch-currency-sab"
+            style={{ marginLeft: 'auto' }}
+          >
+            {formatDecimals(quote.selectedRoute.outputValueInUsd || 0, 'price')}
+          </Text>
+        )}
+      </View>
+    </ItemPanel>
   )
 }
 

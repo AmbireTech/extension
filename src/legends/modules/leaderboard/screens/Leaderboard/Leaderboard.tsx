@@ -1,74 +1,73 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 
-import { calculateRewardsForSeason } from '@ambire-common/utils/rewards'
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import Tooltip from '@common/components/Tooltip'
+import background from '@legends/common/assets/images/background.png'
 import Alert from '@legends/components/Alert'
 import Page from '@legends/components/Page'
 import Spinner from '@legends/components/Spinner'
 import useAccountContext from '@legends/hooks/useAccountContext'
 import useLeaderboardContext from '@legends/hooks/useLeaderboardContext'
-import usePortfolioControllerState from '@legends/hooks/usePortfolioControllerState/usePortfolioControllerState'
+import usePortfolio from '@legends/hooks/usePortfolio'
+import { reorderLeaderboardWithLiveData } from '@legends/utils/leaderboards'
 
+import { LeaderboardEntry } from '../../types'
 import Podium from './components/Podium'
 import Row from './components/Row'
 import styles from './Leaderboard.module.scss'
 import Ribbon from './Ribbon'
-import smokeAndLights from './Smoke-and-lights.png'
 
+enum ActiveTab {
+  Season0 = 'Season0',
+  Season1 = 'Season1',
+  Season2 = 'Season2'
+}
 const LeaderboardContainer: React.FC = () => {
   const {
-    fullLeaderboardData,
     season0LeaderboardData,
     season1LeaderboardData,
+    season2LeaderboardData,
     isLeaderboardLoading: loading,
     error,
     updateLeaderboard
   } = useLeaderboardContext()
 
-  const { rewardsProjectionData, accountPortfolio } = usePortfolioControllerState()
+  const { userRewardsStats, isLoadingClaimableRewards } = usePortfolio()
   const { connectedAccount } = useAccountContext()
-
-  const currentTotalBalanceOnSupportedChains =
-    (accountPortfolio && accountPortfolio?.amount) || undefined
-
-  const parsedSnapshotsBalance = rewardsProjectionData?.currentSeasonSnapshots.map(
-    (snapshot: { week: number; balance: number }) => snapshot.balance
-  )
-
-  const projectedAmount =
-    rewardsProjectionData &&
-    calculateRewardsForSeason(
-      rewardsProjectionData?.userLevel,
-      parsedSnapshotsBalance,
-      currentTotalBalanceOnSupportedChains ?? 0,
-      rewardsProjectionData?.numberOfWeeksSinceStartOfSeason,
-      rewardsProjectionData?.totalWeightNonUser,
-      rewardsProjectionData?.totalRewardsPool,
-      rewardsProjectionData?.minLvl,
-      rewardsProjectionData?.minBalance
-    )
 
   const tableRef = useRef<HTMLDivElement>(null)
   const pageRef = useRef<HTMLDivElement>(null)
   const currentUserRef = useRef<HTMLDivElement>(null)
-  const [activeTab, setActiveTab] = useState(2)
+  const [activeTab, setActiveTab] = useState<ActiveTab>(ActiveTab.Season2)
 
   const [stickyPosition, setStickyPosition] = useState<'top' | 'bottom' | null>(null)
   const leaderboardSources = useMemo(
-    () => [fullLeaderboardData, season0LeaderboardData, season1LeaderboardData],
-    [fullLeaderboardData, season0LeaderboardData, season1LeaderboardData]
+    () => ({
+      [ActiveTab.Season0]: season0LeaderboardData,
+      [ActiveTab.Season1]: season1LeaderboardData,
+      [ActiveTab.Season2]: season2LeaderboardData
+    }),
+    [season0LeaderboardData, season1LeaderboardData, season2LeaderboardData]
   )
 
-  const leaderboardData = useMemo(
-    () => leaderboardSources[activeTab]?.entries || [],
-    [leaderboardSources, activeTab]
-  )
-
-  const userLeaderboardData = useMemo(
-    () => leaderboardSources[activeTab]?.currentUser,
-    [leaderboardSources, activeTab]
-  )
+  const {
+    entries: leaderboardData,
+    currentUser: userLeaderboardData
+  }: {
+    entries: LeaderboardEntry['entries'] | null
+    currentUser?: LeaderboardEntry['currentUser'] | null
+  } = useMemo(() => {
+    const fullLeaderboardData = leaderboardSources[activeTab]
+    if (!fullLeaderboardData) return { entries: null, currentUser: null }
+    if (activeTab !== ActiveTab.Season2) {
+      return {
+        entries: fullLeaderboardData.entries,
+        currentUser: fullLeaderboardData.currentUser
+      }
+    }
+    if (isLoadingClaimableRewards) return { entries: null, currentUser: null }
+    return reorderLeaderboardWithLiveData(fullLeaderboardData, userRewardsStats, connectedAccount)
+  }, [activeTab, leaderboardSources, userRewardsStats, isLoadingClaimableRewards, connectedAccount])
 
   useLayoutEffect(() => {
     const handleScroll = () => {
@@ -114,7 +113,7 @@ const LeaderboardContainer: React.FC = () => {
       containerSize="lg"
       pageRef={pageRef}
       style={{
-        backgroundImage: `url(${smokeAndLights})`,
+        backgroundImage: `url(${background})`,
         backgroundPosition: 'top right',
         backgroundRepeat: 'no-repeat',
         backgroundSize: 'cover'
@@ -124,7 +123,8 @@ const LeaderboardContainer: React.FC = () => {
         <div className={styles.heading}>
           <h1 className={styles.title}>Leaderboard</h1>
           <p className={styles.subtitle}>
-            Complete quests, earn XP and climb the leaderboard to secure Ambire rewards.
+            Find your current position on the Ambire Rewards Leaderboard or check the archives of
+            the previous seasons
           </p>
         </div>
         {error && <Alert className={styles.leaderboardError} type="error" title={error} />}
@@ -135,36 +135,40 @@ const LeaderboardContainer: React.FC = () => {
             <div className={styles.tabs}>
               <button
                 type="button"
-                className={`${styles.tab} ${!activeTab ? styles.active : ''}`}
-                onClick={() => setActiveTab(0)}
-              >
-                Total XP
-              </button>
-              <button
-                type="button"
-                className={`${styles.tab} ${activeTab === 1 ? styles.active : ''}`}
-                onClick={() => setActiveTab(1)}
+                className={`${styles.tab} ${activeTab === ActiveTab.Season0 ? styles.active : ''}`}
+                onClick={() => setActiveTab(ActiveTab.Season0)}
               >
                 Season 0
               </button>
               <button
                 type="button"
-                className={`${styles.tab} ${activeTab === 2 ? styles.active : ''}`}
-                onClick={() => setActiveTab(2)}
+                className={`${styles.tab} ${activeTab === ActiveTab.Season1 ? styles.active : ''}`}
+                onClick={() => setActiveTab(ActiveTab.Season1)}
               >
-                <Ribbon className={styles.ribbon} />
-                Season 1<span className={styles.current}>current</span>
+                Season 1
+              </button>
+              <button
+                type="button"
+                className={`${styles.tab} ${styles.current} ${
+                  activeTab === ActiveTab.Season2 ? styles.active : ''
+                }`}
+                onClick={() => setActiveTab(ActiveTab.Season2)}
+              >
+                <div className={styles.ribbonWrapper}>
+                  <Ribbon className={styles.icon} />
+                  <span className={styles.label}>Current</span>
+                </div>
+                Season 2
               </button>
             </div>
             <Podium data={leaderboardData.slice(0, 3)} />
-            <div
-              ref={tableRef}
-              className={`${styles.table} ${leaderboardData[0].reward ? styles.withReward : ''}`}
-            >
+            <div ref={tableRef} className={`${styles.table} ${styles[`season${activeTab}`]}`}>
               <div className={styles.header}>
                 <div className={styles.cell}>
                   <h5>#</h5>
-                  <h5 className={styles.playerCell}>player</h5>
+                  <h5 className={styles.playerCell}>
+                    {activeTab !== ActiveTab.Season2 ? 'Player' : 'Account'}
+                  </h5>
                 </div>
                 {leaderboardData.some((i) => i.level) && <h5 className={styles.cell}>Level</h5>}
                 {leaderboardData.some((i) => i.reward) && (
@@ -221,7 +225,7 @@ const LeaderboardContainer: React.FC = () => {
                     />
                   </div>
                 )}
-                {leaderboardData.some((i) => i.projectedRewards) && (
+                {leaderboardData.some((i) => i.projectedRewards || i.projectedRewardsInUsd) && (
                   <div className={styles.cell}>
                     <h5 className={styles.weightText}>Rewards</h5>
                     <InfoIcon
@@ -248,21 +252,25 @@ const LeaderboardContainer: React.FC = () => {
                     />
                   </div>
                 )}
-                <h5 className={styles.cell}>XP</h5>
+
+                <h5 className={`${styles.cell} ${styles.scoreCell}`}>
+                  {activeTab === ActiveTab.Season2 ? 'Score' : 'XP'}
+                </h5>
               </div>
               {leaderboardData.map((item) => (
+                // maybe we can split this components into multiple, one for each season
                 <Row
                   key={item.account}
                   {...item}
-                  projectedRewards={
-                    activeTab === 2
-                      ? connectedAccount === item.account
-                        ? projectedAmount
-                        : typeof item.projectedRewards === 'number'
-                        ? item.projectedRewards
-                        : 'Loading...'
+                  projectedRewardsSeason1={
+                    activeTab === ActiveTab.Season1
+                      ? item.projectedRewards || 'Loading...'
                       : undefined
                   }
+                  projectedRewardsSeason2Usd={
+                    activeTab === ActiveTab.Season2 ? item.projectedRewardsInUsd : undefined
+                  }
+                  points={activeTab === ActiveTab.Season2 ? item.points : undefined}
                   stickyPosition={stickyPosition}
                   currentUserRef={currentUserRef}
                 />
@@ -274,7 +282,19 @@ const LeaderboardContainer: React.FC = () => {
                   <Row
                     key={userLeaderboardData.account}
                     {...userLeaderboardData}
-                    projectedRewards={activeTab === 2 ? projectedAmount?.walletRewards : undefined}
+                    projectedRewardsSeason1={
+                      activeTab === ActiveTab.Season1
+                        ? userLeaderboardData.projectedRewards
+                        : undefined
+                    }
+                    projectedRewardsSeason2Usd={
+                      activeTab === ActiveTab.Season2
+                        ? userLeaderboardData.projectedRewardsInUsd
+                        : undefined
+                    }
+                    points={
+                      activeTab === ActiveTab.Season2 ? userLeaderboardData.points : undefined
+                    }
                     stickyPosition={stickyPosition}
                     currentUserRef={currentUserRef}
                   />

@@ -1,30 +1,24 @@
+import { Contract } from 'ethers'
+
 import { HD_PATH_TEMPLATE_TYPE } from '@ambire-common/consts/derivation'
+import { FeatureFlags } from '@ambire-common/consts/featureFlags'
 import { Filters, Pagination } from '@ambire-common/controllers/activity/activity'
 import { Contact } from '@ambire-common/controllers/addressBook/addressBook'
 import { SignAccountOpType } from '@ambire-common/controllers/signAccountOp/helper'
 import { FeeSpeed, SigningStatus } from '@ambire-common/controllers/signAccountOp/signAccountOp'
-import { Account, AccountPreferences, AccountStates } from '@ambire-common/interfaces/account'
-import {
-  AccountOpAction,
-  ActionExecutionType,
-  Action as ActionFromActionsQueue,
-  ActionPosition,
-  OpenActionWindowParams
-} from '@ambire-common/interfaces/actions'
+import { Account, AccountPreferences } from '@ambire-common/interfaces/account'
 import { Banner } from '@ambire-common/interfaces/banner'
 import { Dapp } from '@ambire-common/interfaces/dapp'
 import { MagicLinkFlow } from '@ambire-common/interfaces/emailVault'
 import {
-  ExternalKey,
-  InternalKey,
   Key,
   KeyPreferences,
   KeystoreSeed,
   ReadyToAddKeys
 } from '@ambire-common/interfaces/keystore'
 import { AddNetworkRequestParams, ChainId, Network } from '@ambire-common/interfaces/network'
+import { RPCProvider } from '@ambire-common/interfaces/provider'
 import { BuildRequest } from '@ambire-common/interfaces/requests'
-import { CashbackStatus } from '@ambire-common/interfaces/selectedAccount'
 import { SignMessageUpdateParams } from '@ambire-common/interfaces/signMessage'
 import {
   SwapAndBridgeActiveRoute,
@@ -32,28 +26,60 @@ import {
   SwapAndBridgeToToken
 } from '@ambire-common/interfaces/swapAndBridge'
 import { TransferUpdate } from '@ambire-common/interfaces/transfer'
-import { Message, UserRequest } from '@ambire-common/interfaces/userRequest'
+import {
+  CallsUserRequest,
+  Message,
+  OpenRequestWindowParams,
+  RequestExecutionType,
+  RequestPosition,
+  UserRequest
+} from '@ambire-common/interfaces/userRequest'
 import { AccountOp } from '@ambire-common/libs/accountOp/accountOp'
 import { FullEstimation } from '@ambire-common/libs/estimate/interfaces'
-import { GasRecommendation } from '@ambire-common/libs/gasPrice/gasPrice'
 import { TokenResult } from '@ambire-common/libs/portfolio'
 import { CustomToken, TokenPreference } from '@ambire-common/libs/portfolio/customToken'
+import { GasSpeeds } from '@ambire-common/services/bundlers/types'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import { LOG_LEVELS } from '@web/utils/logger'
 
+import { AllControllersMappingType } from '../../../common/constants/controllersMapping'
 import { AUTO_LOCK_TIMES } from './controllers/auto-lock'
-import { controllersMapping } from './types'
+import { AvatarType } from './controllers/wallet-state'
 
 type UpdateNavigationUrl = {
   type: 'UPDATE_PORT_URL'
-  params: { url: string; route?: string }
+  params: { url: string; route?: string; searchParams?: { [key: string]: string } }
 }
 
 type InitControllerStateAction = {
   type: 'INIT_CONTROLLER_STATE'
   params: {
-    controller: keyof typeof controllersMapping
+    controller: keyof AllControllersMappingType
   }
+}
+
+type HandshakeAction = {
+  type: 'HANDSHAKE'
+}
+
+type MethodKeys<T> = {
+  [K in keyof T]-?: T[K] extends (...args: any[]) => any ? K : never
+}[keyof T]
+
+type MethodActionParams = {
+  [K in keyof AllControllersMappingType]: {
+    ctrlName: K
+  } & {
+    [M in MethodKeys<AllControllersMappingType[K]>]: {
+      method: M
+      args: Parameters<Extract<AllControllersMappingType[K][M], (...args: any[]) => any>>
+    }
+  }[MethodKeys<AllControllersMappingType[K]>]
+}[keyof AllControllersMappingType]
+
+export type MethodAction = {
+  type: 'method'
+  params: MethodActionParams
 }
 
 type MainControllerAccountPickerInitLedgerAction = {
@@ -130,6 +156,9 @@ type MainControllerRemoveAccount = {
     accountAddr: Account['addr']
   }
 }
+type ProvidersControllerToggleBatching = {
+  type: 'PROVIDERS_CONTROLLER_TOGGLE_BATCHING'
+}
 type MainControllerAccountPickerResetAction = {
   type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_RESET'
 }
@@ -167,16 +196,16 @@ type AccountsControllerResetAccountsNewlyAddedStateAction = {
   type: 'ACCOUNTS_CONTROLLER_RESET_ACCOUNTS_NEWLY_ADDED_STATE'
 }
 
-type SettingsControllerSetNetworkToAddOrUpdate = {
-  type: 'SETTINGS_CONTROLLER_SET_NETWORK_TO_ADD_OR_UPDATE'
+type NetworksControllerSetNetworkToAddOrUpdate = {
+  type: 'NETWORKS_CONTROLLER_SET_NETWORK_TO_ADD_OR_UPDATE'
   params: {
     chainId: Network['chainId']
     rpcUrl: string
   }
 }
 
-type SettingsControllerResetNetworkToAddOrUpdate = {
-  type: 'SETTINGS_CONTROLLER_RESET_NETWORK_TO_ADD_OR_UPDATE'
+type NetworksControllerResetNetworkToAddOrUpdate = {
+  type: 'NETWORKS_CONTROLLER_RESET_NETWORK_TO_ADD_OR_UPDATE'
 }
 
 type KeystoreControllerUpdateKeyPreferencesAction = {
@@ -203,21 +232,10 @@ type MainControllerUpdateNetworksAction = {
   }
 }
 
-type MainControllerRejectSignAccountOpCall = {
-  type: 'MAIN_CONTROLLER_REJECT_SIGN_ACCOUNT_OP_CALL'
-  params: { callId: string }
-}
-type MainControllerRejectAccountOpAction = {
-  type: 'MAIN_CONTROLLER_REJECT_ACCOUNT_OP'
-  params: { err: string; actionId: AccountOpAction['id']; shouldOpenNextAction: boolean }
-}
 type MainControllerSignMessageInitAction = {
   type: 'MAIN_CONTROLLER_SIGN_MESSAGE_INIT'
   params: {
-    dapp: {
-      name: string
-      icon: string
-    }
+    dapp: { name: string; icon: string }
     messageToSign: Message
   }
 }
@@ -260,16 +278,20 @@ type MainControllerUpdateSelectedAccountPortfolio = {
   }
 }
 
-type RequestsControllerAddUserRequestAction = {
-  type: 'REQUESTS_CONTROLLER_ADD_USER_REQUEST'
+type RequestsControllerAddCallsUserRequestAction = {
+  type: 'REQUESTS_CONTROLLER_ADD_CALLS_USER_REQUEST'
   params: {
-    userRequest: UserRequest
-    actionPosition?: ActionPosition
-    actionExecutionType?: ActionExecutionType
+    userRequestParams: {
+      calls: CallsUserRequest['signAccountOp']['accountOp']['calls']
+      meta: CallsUserRequest['meta']
+    }
+    position?: RequestPosition
+    executionType?: RequestExecutionType
     allowAccountSwitch?: boolean
     skipFocus?: boolean
   }
 }
+
 type RequestsControllerBuildRequestAction = {
   type: 'REQUESTS_CONTROLLER_BUILD_REQUEST'
   params: BuildRequest
@@ -284,7 +306,18 @@ type RequestsControllerResolveUserRequestAction = {
 }
 type RequestsControllerRejectUserRequestAction = {
   type: 'REQUESTS_CONTROLLER_REJECT_USER_REQUEST'
-  params: { err: string; id: UserRequest['id'] }
+  params: {
+    err: string
+    id: UserRequest['id']
+    options?: {
+      shouldRemoveSwapAndBridgeRoute?: boolean
+      shouldOpenNextRequest?: boolean
+    }
+  }
+}
+type RequestsControllerRejectCallFromUserRequestAction = {
+  type: 'REQUESTS_CONTROLLER_REJECT_CALL_FROM_USER_REQUEST'
+  params: { callId: string }
 }
 type RequestsControllerSwapAndBridgeActiveRouteBuildNextUserRequestAction = {
   type: 'REQUESTS_CONTROLLER_SWAP_AND_BRIDGE_ACTIVE_ROUTE_BUILD_NEXT_USER_REQUEST'
@@ -345,54 +378,16 @@ type PortfolioControllerCheckToken = {
   type: 'PORTFOLIO_CONTROLLER_CHECK_TOKEN'
   params: {
     token: { address: TokenResult['address']; chainId: bigint }
+    allNetworks: boolean
   }
 }
 
-type PortfolioControllerUpdateConfettiToShown = {
-  type: 'SELECTED_ACCOUNT_CONTROLLER_UPDATE_CASHBACK_STATUS'
-  params: CashbackStatus
-}
-
-type MainControllerSignAccountOpInitAction = {
-  type: 'MAIN_CONTROLLER_SIGN_ACCOUNT_OP_INIT'
+type CurrentSignAccountOpUpdateAction = {
+  type: 'CURRENT_SIGN_ACCOUNT_OP_UPDATE'
   params: {
-    actionId: AccountOpAction['id']
-  }
-}
-type MainControllerSignAccountOpDestroyAction = {
-  type: 'MAIN_CONTROLLER_SIGN_ACCOUNT_OP_DESTROY'
-}
-type MainControllerSignAccountOpUpdateMainDepsAction = {
-  type: 'MAIN_CONTROLLER_SIGN_ACCOUNT_OP_UPDATE_MAIN_DEPS'
-  params: {
-    accounts?: Account[]
-    networks?: Network[]
-    accountStates?: AccountStates
-  }
-}
-type MainControllerSignAccountOpUpdateAction = {
-  type:
-    | 'MAIN_CONTROLLER_SIGN_ACCOUNT_OP_UPDATE'
-    | 'SWAP_AND_BRIDGE_CONTROLLER_SIGN_ACCOUNT_OP_UPDATE'
-    | 'TRANSFER_CONTROLLER_SIGN_ACCOUNT_OP_UPDATE'
-  params: {
+    updateType: 'Requests' | 'Swap&Bridge' | 'Transfer&TopUp'
     accountOp?: AccountOp
-    gasPrices?: GasRecommendation[]
-    estimation?: FullEstimation
-    feeToken?: TokenResult
-    paidBy?: string
-    speed?: FeeSpeed
-    signingKeyAddr?: Key['addr']
-    signingKeyType?: InternalKey['type'] | ExternalKey['type']
-    gasUsedTooHighAgreed?: boolean
-  }
-}
-type SignAccountOpUpdateAction = {
-  type: 'SIGN_ACCOUNT_OP_UPDATE'
-  params: {
-    updateType: 'Main' | 'Swap&Bridge' | 'Transfer&TopUp'
-    accountOp?: AccountOp
-    gasPrices?: GasRecommendation[]
+    gasPrices?: GasSpeeds
     estimation?: FullEstimation
     feeToken?: TokenResult
     paidBy?: string
@@ -402,24 +397,20 @@ type SignAccountOpUpdateAction = {
     gasUsedTooHighAgreed?: boolean
   }
 }
-type SignAccountOpReestimateAction = {
-  type: 'SIGN_ACCOUNT_OP_REESTIMATE'
+type CurrentSignAccountOpUpdateStatusAction = {
+  type: 'CURRENT_SIGN_ACCOUNT_OP_UPDATE_STATUS'
   params: {
-    type: SignAccountOpType
-  }
-}
-type MainControllerSignAccountOpUpdateStatus = {
-  type:
-    | 'MAIN_CONTROLLER_SIGN_ACCOUNT_OP_UPDATE_STATUS'
-    | 'SWAP_AND_BRIDGE_CONTROLLER_SIGN_ACCOUNT_OP_UPDATE_STATUS'
-    | 'TRANSFER_CONTROLLER_SIGN_ACCOUNT_OP_UPDATE_STATUS'
-  params: {
+    updateType: 'Requests' | 'Swap&Bridge' | 'Transfer&TopUp'
     status: SigningStatus
   }
 }
+type CurrentSignAccountOpReestimateAction = {
+  type: 'CURRENT_SIGN_ACCOUNT_OP_REESTIMATE'
+  params: { type: SignAccountOpType }
+}
 type MainControllerHandleSignAndBroadcastAccountOp = {
   type: 'MAIN_CONTROLLER_HANDLE_SIGN_AND_BROADCAST_ACCOUNT_OP'
-  params: { type: SignAccountOpType }
+  params: { type: SignAccountOpType; fromRequestId: string | number }
 }
 
 type MainControllerLockAction = {
@@ -433,6 +424,10 @@ type KeystoreControllerAddSecretAction = {
 type KeystoreControllerAddTempSeedAction = {
   type: 'KEYSTORE_CONTROLLER_ADD_TEMP_SEED'
   params: Omit<KeystoreSeed, 'id' | 'label'>
+}
+type KeystoreControllerGenerateTempSeedAction = {
+  type: 'KEYSTORE_CONTROLLER_GENERATE_TEMP_SEED'
+  params: { extraEntropy?: string }
 }
 type KeystoreControllerUpdateSeedAction = {
   type: 'KEYSTORE_CONTROLLER_UPDATE_SEED'
@@ -480,6 +475,14 @@ type KeystoreControllerSendSeedToUiAction = {
 type KeystoreControllerSendTempSeedToUiAction = {
   type: 'KEYSTORE_CONTROLLER_SEND_TEMP_SEED_TO_UI'
 }
+type KeystoreControllerSendDecryptedMessageToUiAction = {
+  type: 'KEYSTORE_CONTROLLER_SEND_DECRYPTED_MESSAGE_TO_UI'
+  params: {
+    encryptedMessage: string
+    keyAddr: Key['addr']
+    keyType: Key['type']
+  }
+}
 
 type EmailVaultControllerGetInfoAction = {
   type: 'EMAIL_VAULT_CONTROLLER_GET_INFO'
@@ -517,13 +520,9 @@ type DomainsControllerReverseLookupAction = {
   params: { address: string }
 }
 
-type DomainsControllerSaveResolvedReverseLookupAction = {
-  type: 'DOMAINS_CONTROLLER_SAVE_RESOLVED_REVERSE_LOOKUP'
-  params: {
-    address: string
-    name: string
-    type: 'ens'
-  }
+type DomainsControllerResolveDomainAction = {
+  type: 'DOMAINS_CONTROLLER_RESOLVE_DOMAIN'
+  params: { domain: string; bip44Item?: number[][] }
 }
 
 type DappsControllerFetchAndUpdateDappsAction = {
@@ -531,7 +530,10 @@ type DappsControllerFetchAndUpdateDappsAction = {
 }
 type DappsControllerRemoveConnectedSiteAction = {
   type: 'DAPPS_CONTROLLER_DISCONNECT_DAPP'
-  params: Dapp['id']
+  params: {
+    id: Dapp['id']
+    url: Dapp['url']
+  }
 }
 type DappsControllerUpdateDappAction = {
   type: 'DAPP_CONTROLLER_UPDATE_DAPP'
@@ -540,6 +542,14 @@ type DappsControllerUpdateDappAction = {
 type DappsControllerRemoveDappAction = {
   type: 'DAPP_CONTROLLER_REMOVE_DAPP'
   params: Dapp['id']
+}
+type DappsControllerGetCurrentDappAndSendResToUi = {
+  type: 'DAPPS_CONTROLLER_GET_CURRENT_DAPP_AND_SEND_RES_TO_UI'
+  params: {
+    requestId: string
+    dappId: string
+    currentSessionId?: string
+  }
 }
 
 type SwapAndBridgeControllerInitAction = {
@@ -555,10 +565,6 @@ type SwapAndBridgeControllerInitAction = {
 type SwapAndBridgeControllerUserProceededAction = {
   type: 'SWAP_AND_BRIDGE_CONTROLLER_HAS_USER_PROCEEDED'
   params: { proceeded: boolean }
-}
-type SwapAndBridgeControllerIsAutoSelectRouteDisabled = {
-  type: 'SWAP_AND_BRIDGE_CONTROLLER_IS_AUTO_SELECT_ROUTE_DISABLED'
-  params: { isDisabled: boolean }
 }
 type SwapAndBridgeControllerUnloadScreenAction = {
   type: 'SWAP_AND_BRIDGE_CONTROLLER_UNLOAD_SCREEN'
@@ -598,7 +604,7 @@ type SwapAndBridgeControllerSwitchFromAndToTokensAction = {
 }
 type SwapAndBridgeControllerSelectRouteAction = {
   type: 'SWAP_AND_BRIDGE_CONTROLLER_SELECT_ROUTE'
-  params: { route: SwapAndBridgeRoute; isAutoSelectDisabled?: boolean }
+  params: { route: SwapAndBridgeRoute }
 }
 type SwapAndBridgeControllerResetForm = {
   type: 'SWAP_AND_BRIDGE_CONTROLLER_RESET_FORM'
@@ -618,16 +624,16 @@ type SwapAndBridgeControllerDestroySignAccountOp = {
   type: 'SWAP_AND_BRIDGE_CONTROLLER_DESTROY_SIGN_ACCOUNT_OP'
 }
 type SwapAndBridgeControllerOpenSigningActionWindow = {
-  type: 'SWAP_AND_BRIDGE_CONTROLLER_OPEN_SIGNING_ACTION_WINDOW'
+  type: 'SWAP_AND_BRIDGE_CONTROLLER_OPEN_SIGNING_REQUEST_WINDOW'
 }
 type OpenSigningActionWindow = {
-  type: 'OPEN_SIGNING_ACTION_WINDOW'
+  type: 'OPEN_SIGNING_REQUEST_WINDOW'
   params: {
     type: 'swapAndBridge' | 'transfer'
   }
 }
 type CloseSigningActionWindow = {
-  type: 'CLOSE_SIGNING_ACTION_WINDOW'
+  type: 'CLOSE_SIGNING_REQUEST_WINDOW'
   params: {
     type: 'swapAndBridge' | 'transfer'
   }
@@ -642,9 +648,6 @@ type TransferControllerResetForm = {
 type TransferControllerDestroyLatestBroadcastedAccountOp = {
   type: 'TRANSFER_CONTROLLER_DESTROY_LATEST_BROADCASTED_ACCOUNT_OP'
 }
-type TransferControllerUnloadScreen = {
-  type: 'TRANSFER_CONTROLLER_UNLOAD_SCREEN'
-}
 type TransferControllerUserProceededAction = {
   type: 'TRANSFER_CONTROLLER_HAS_USER_PROCEEDED'
   params: { proceeded: boolean }
@@ -653,35 +656,28 @@ type TransferControllerShouldSkipTransactionQueuedModal = {
   type: 'TRANSFER_CONTROLLER_SHOULD_SKIP_TRANSACTION_QUEUED_MODAL'
   params: { shouldSkip: boolean }
 }
-type ActionsControllerRemoveFromActionsQueue = {
-  type: 'ACTIONS_CONTROLLER_REMOVE_FROM_ACTIONS_QUEUE'
-  params: { id: ActionFromActionsQueue['id']; shouldOpenNextAction: boolean }
-}
-type ActionsControllerFocusActionWindow = {
-  type: 'ACTIONS_CONTROLLER_FOCUS_ACTION_WINDOW'
+
+type RequestsControllerFocusRequestWindow = {
+  type: 'REQUESTS_CONTROLLER_FOCUS_REQUEST_WINDOW'
 }
 
-type ActionsControllerMakeAllActionsActive = {
-  type: 'ACTIONS_CONTROLLER_MAKE_ALL_ACTIONS_ACTIVE'
-}
-
-type ActionsControllerSetCurrentActionById = {
-  type: 'ACTIONS_CONTROLLER_SET_CURRENT_ACTION_BY_ID'
+type RequestsControllerSetCurrentRequestById = {
+  type: 'REQUESTS_CONTROLLER_SET_CURRENT_REQUEST_BY_ID'
   params: {
-    actionId: ActionFromActionsQueue['id']
+    requestId: UserRequest['id']
   }
 }
 
-type ActionsControllerSetCurrentActionByIndex = {
-  type: 'ACTIONS_CONTROLLER_SET_CURRENT_ACTION_BY_INDEX'
+type RequestsControllerSetCurrentRequestByIndex = {
+  type: 'REQUESTS_CONTROLLER_SET_CURRENT_REQUEST_BY_INDEX'
   params: {
     index: number
-    params?: OpenActionWindowParams
+    params?: OpenRequestWindowParams
   }
 }
 
-type ActionsControllerSetWindowLoaded = {
-  type: 'ACTIONS_CONTROLLER_SET_WINDOW_LOADED'
+type RequestsControllerSetWindowLoaded = {
+  type: 'REQUESTS_CONTROLLER_SET_WINDOW_LOADED'
 }
 
 type AddressBookControllerAddContact = {
@@ -710,6 +706,15 @@ type ChangeCurrentDappNetworkAction = {
   params: { chainId: number; id: string }
 }
 
+type ContractNamesGetName = {
+  type: 'CONTRACT_NAMES_CONTROLLER_GET_NAME'
+  params: { address: string; chainId: bigint }
+}
+
+type SetAvatarTypeAction = {
+  type: 'SET_AVATAR_TYPE'
+  params: { avatarType: AvatarType }
+}
 type SetIsPinnedAction = {
   type: 'SET_IS_PINNED'
   params: { isPinned: boolean }
@@ -737,11 +742,6 @@ type InviteControllerRevokeOGAction = { type: 'INVITE_CONTROLLER_REVOKE_OG' }
 type ImportSmartAccountJson = {
   type: 'IMPORT_SMART_ACCOUNT_JSON'
   params: { readyToAddAccount: Account; keys: ReadyToAddKeys['internal'] }
-}
-
-type PhishingControllerGetIsBlacklistedAndSendToUiAction = {
-  type: 'PHISHING_CONTROLLER_GET_IS_BLACKLISTED_AND_SEND_TO_UI'
-  params: { url: string }
 }
 
 type ExtensionUpdateControllerApplyUpdate = {
@@ -772,9 +772,18 @@ type DismissBanner = {
   }
 }
 
+type FlipFeature = {
+  type: 'FEATURE_FLAGS_CONTROLLER_FLIP_FEATURE'
+  params: {
+    flag: keyof FeatureFlags
+    isEnabled: boolean
+  }
+}
+
 export type Action =
   | UpdateNavigationUrl
   | InitControllerStateAction
+  | MethodAction
   | MainControllerAccountPickerInitLatticeAction
   | MainControllerAccountPickerInitTrezorAction
   | MainControllerAccountPickerInitLedgerAction
@@ -783,6 +792,7 @@ export type Action =
   | MainControllerSelectAccountAction
   | MainControllerAccountPickerSelectAccountAction
   | MainControllerAccountPickerDeselectAccountAction
+  | HandshakeAction
   | MainControllerAccountPickerResetAction
   | MainControllerAccountPickerInitAction
   | ResetAccountAddingOnPageErrorAction
@@ -791,8 +801,8 @@ export type Action =
   | AccountsControllerUpdateAccountPreferences
   | AccountsControllerUpdateAccountState
   | AccountsControllerResetAccountsNewlyAddedStateAction
-  | SettingsControllerSetNetworkToAddOrUpdate
-  | SettingsControllerResetNetworkToAddOrUpdate
+  | NetworksControllerSetNetworkToAddOrUpdate
+  | NetworksControllerResetNetworkToAddOrUpdate
   | MainControllerAddNetwork
   | KeystoreControllerUpdateKeyPreferencesAction
   | MainControllerUpdateNetworkAction
@@ -803,14 +813,14 @@ export type Action =
   | MainControllerAccountPickerAddAccounts
   | MainControllerAddAccounts
   | MainControllerRemoveAccount
-  | RequestsControllerAddUserRequestAction
+  | RequestsControllerAddCallsUserRequestAction
+  | ProvidersControllerToggleBatching
   | MainControllerLockAction
   | RequestsControllerBuildRequestAction
   | RequestsControllerRemoveUserRequestAction
   | RequestsControllerResolveUserRequestAction
   | RequestsControllerRejectUserRequestAction
-  | MainControllerRejectSignAccountOpCall
-  | MainControllerRejectAccountOpAction
+  | RequestsControllerRejectCallFromUserRequestAction
   | MainControllerSignMessageInitAction
   | MainControllerSignMessageResetAction
   | MainControllerSignMessageUpdate
@@ -819,12 +829,7 @@ export type Action =
   | MainControllerActivitySetSignedMessagesFiltersAction
   | MainControllerActivityResetAccOpsAction
   | MainControllerActivityResetSignedMessagesAction
-  | MainControllerSignAccountOpInitAction
-  | MainControllerSignAccountOpDestroyAction
-  | MainControllerSignAccountOpUpdateMainDepsAction
   | MainControllerHandleSignAndBroadcastAccountOp
-  | MainControllerSignAccountOpUpdateAction
-  | MainControllerSignAccountOpUpdateStatus
   | MainControllerReloadSelectedAccount
   | MainControllerUpdateSelectedAccountPortfolio
   | DefiControllerAddSessionAction
@@ -836,15 +841,16 @@ export type Action =
   | PortfolioControllerToggleHideToken
   | PortfolioControllerRemoveCustomToken
   | PortfolioControllerCheckToken
-  | PortfolioControllerUpdateConfettiToShown
   | KeystoreControllerAddSecretAction
   | KeystoreControllerAddTempSeedAction
+  | KeystoreControllerGenerateTempSeedAction
   | KeystoreControllerUpdateSeedAction
   | KeystoreControllerUnlockWithSecretAction
   | KeystoreControllerResetErrorStateAction
   | KeystoreControllerChangePasswordAction
   | KeystoreControllerChangePasswordFromRecoveryAction
   | KeystoreControllerSendPrivateKeyToUiAction
+  | KeystoreControllerSendDecryptedMessageToUiAction
   | EmailVaultControllerGetInfoAction
   | EmailVaultControllerUploadKeystoreSecretAction
   | EmailVaultControllerCancelConfirmationAction
@@ -854,11 +860,13 @@ export type Action =
   | EmailVaultControllerRequestKeysSyncAction
   | EmailVaultControllerDismissBannerAction
   | DomainsControllerReverseLookupAction
-  | DomainsControllerSaveResolvedReverseLookupAction
+  | DomainsControllerResolveDomainAction
   | DappsControllerFetchAndUpdateDappsAction
   | DappsControllerRemoveConnectedSiteAction
   | DappsControllerUpdateDappAction
+  | ContractNamesGetName
   | DappsControllerRemoveDappAction
+  | DappsControllerGetCurrentDappAndSendResToUi
   | SwapAndBridgeControllerInitAction
   | SwapAndBridgeControllerUnloadScreenAction
   | SwapAndBridgeControllerUpdateFormAction
@@ -870,12 +878,10 @@ export type Action =
   | RequestsControllerSwapAndBridgeActiveRouteBuildNextUserRequestAction
   | SwapAndBridgeControllerUpdateQuoteAction
   | SwapAndBridgeControllerRemoveActiveRouteAction
-  | ActionsControllerRemoveFromActionsQueue
-  | ActionsControllerFocusActionWindow
-  | ActionsControllerMakeAllActionsActive
-  | ActionsControllerSetCurrentActionById
-  | ActionsControllerSetCurrentActionByIndex
-  | ActionsControllerSetWindowLoaded
+  | RequestsControllerFocusRequestWindow
+  | RequestsControllerSetCurrentRequestById
+  | RequestsControllerSetCurrentRequestByIndex
+  | RequestsControllerSetWindowLoaded
   | AddressBookControllerAddContact
   | AddressBookControllerRenameContact
   | AddressBookControllerRemoveContact
@@ -891,27 +897,27 @@ export type Action =
   | KeystoreControllerSendSeedToUiAction
   | KeystoreControllerSendTempSeedToUiAction
   | KeystoreControllerDeleteSeedAction
-  | PhishingControllerGetIsBlacklistedAndSendToUiAction
   | ExtensionUpdateControllerApplyUpdate
   | OpenExtensionPopupAction
-  | SignAccountOpUpdateAction
-  | SignAccountOpReestimateAction
+  | CurrentSignAccountOpUpdateAction
+  | CurrentSignAccountOpUpdateStatusAction
+  | CurrentSignAccountOpReestimateAction
   | SwapAndBridgeControllerMarkSelectedRouteAsFailed
   | SwapAndBridgeControllerDestroySignAccountOp
   | SwapAndBridgeControllerOpenSigningActionWindow
   | SwapAndBridgeControllerUserProceededAction
-  | SwapAndBridgeControllerIsAutoSelectRouteDisabled
   | OpenSigningActionWindow
   | CloseSigningActionWindow
   | TransferControllerUpdateForm
   | TransferControllerResetForm
   | TransferControllerDestroyLatestBroadcastedAccountOp
-  | TransferControllerUnloadScreen
   | TransferControllerUserProceededAction
   | TransferControllerShouldSkipTransactionQueuedModal
   | SetThemeTypeAction
+  | SetAvatarTypeAction
   | SetLogLevelTypeAction
   | SetCrashAnalyticsAction
   | DismissBanner
   | KeystoreControllerSendEncryptedPrivateKeyToUiAction
   | KeystoreControllerSendPasswordDecryptedPrivateKeyToUiAction
+  | FlipFeature

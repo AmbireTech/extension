@@ -1,7 +1,7 @@
-import { StyleSheet, ViewProps } from 'react-native'
+import { StyleSheet, ViewStyle } from 'react-native'
 
 interface Style {
-  lottie: ViewProps
+  lottie: ViewStyle
 }
 
 const styles = StyleSheet.create<Style>({

@@ -5,13 +5,13 @@ import { Route, Routes, useLocation } from 'react-router-dom'
 import NoConnectionScreen from '@common/modules/no-connection/screens/NoConnectionScreen'
 import routesConfig from '@common/modules/router/config/routesConfig'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
-import { SignAccountOpControllerStateProvider } from '@web/contexts/signAccountOpControllerStateContext'
 import AccountPersonalizeScreen from '@web/modules/account-personalize/screens/AccountPersonalizeScreen'
 import AccountPickerScreen from '@web/modules/account-picker/screens/AccountPickerScreen'
 import AccountSelectScreen from '@web/modules/account-select/screens/AccountSelectScreen'
 import AddOrUpdateNetworkScreen from '@web/modules/action-requests/screens/AddOrUpdateNetworkScreen'
 import BenzinScreen from '@web/modules/action-requests/screens/BenzinScreen'
 import DappConnectScreen from '@web/modules/action-requests/screens/DappConnectScreen'
+import DecryptRequestScreen from '@web/modules/action-requests/screens/DecryptRequestScreen'
 import GetEncryptionPublicKeyRequestScreen from '@web/modules/action-requests/screens/GetEncryptionPublicKeyRequestScreen'
 import SwitchAccountScreen from '@web/modules/action-requests/screens/SwitchAccountScreen'
 import WatchTokenRequestScreen from '@web/modules/action-requests/screens/WatchTokenRequestScreen'
@@ -27,11 +27,14 @@ import OnboardingCompletedScreen from '@web/modules/auth/screens/OnboardingCompl
 import PrivateKeyImportScreen from '@web/modules/auth/screens/PrivateKeyImportScreen'
 import SeedPhraseImportScreen from '@web/modules/auth/screens/SeedPhraseImportScreen'
 import DappCatalogScreen from '@web/modules/dapp-catalog/screens/DappCatalogScreen'
+import ExtensionRewardsScreen from '@web/modules/extension-rewards/screens/ExtensionRewardsScreen'
 import LedgerConnectScreen from '@web/modules/hardware-wallet/screens/LedgerConnectScreen/LedgerConnectScreen'
 import KeyStoreEmailRecoveryScreen from '@web/modules/keystore/screens/KeyStoreEmailRecoveryScreen/KeyStoreEmailRecoveryScreen'
 import KeyStoreEmailRecoverySetNewPasswordScreen from '@web/modules/keystore/screens/KeyStoreEmailRecoverySetNewPasswordScreen'
 import KeyStoreSetupScreen from '@web/modules/keystore/screens/KeyStoreSetupScreen'
+import NetworksConfiguration from '@web/modules/network-settings/screens'
 import NetworksScreen from '@web/modules/networks/screens'
+import ReceiveScreen from '@web/modules/receive'
 import AuthenticatedRoute from '@web/modules/router/components/AuthenticatedRoute'
 import KeystoreUnlockedRoute from '@web/modules/router/components/KeystoreUnlockedRoute'
 import NavMenu from '@web/modules/router/components/NavMenu'
@@ -46,8 +49,8 @@ import DevicePasswordSetSettingsScreen from '@web/modules/settings/screens/Devic
 import GeneralSettingsScreen from '@web/modules/settings/screens/GeneralSettingsScreen'
 import ManageTokensSettingsScreen from '@web/modules/settings/screens/ManageTokensSettingsScreen'
 import NetworksSettingsScreen from '@web/modules/settings/screens/NetworksSettingsScreen/NetworksSettingsScreen'
+import OptOutsScreen from '@web/modules/settings/screens/OptOutsScreen'
 import RecoveryPhrasesSettingsScreen from '@web/modules/settings/screens/RecoveryPhrasesSettingsScreen'
-import SecurityAndPrivacyScreen from '@web/modules/settings/screens/SecurityAndPrivacyScreen'
 import SignedMessageHistorySettingsScreen from '@web/modules/settings/screens/SignedMessageHistorySettingsScreen'
 import TermsSettingsScreen from '@web/modules/settings/screens/TermsSettingsScreen'
 import TransactionHistorySettingsScreen from '@web/modules/settings/screens/TransactionHistorySettingsScreen'
@@ -75,6 +78,7 @@ const MainRoutes = () => {
       <Route path={WEB_ROUTES.noConnection} element={<NoConnectionScreen />} />
 
       <Route element={<TabOnlyRoute />}>
+        <Route path={WEB_ROUTES.networksConfiguration} element={<NetworksConfiguration />} />
         <Route path={WEB_ROUTES.keyStoreSetup} element={<KeyStoreSetupScreen />} />
         <Route path={WEB_ROUTES.keyStoreEmailRecovery} element={<KeyStoreEmailRecoveryScreen />} />
         <Route
@@ -118,7 +122,6 @@ const MainRoutes = () => {
           <Route element={<AuthenticatedRoute />}>
             <Route element={<SettingsRoutesProvider />}>
               <Route path={WEB_ROUTES.generalSettings} element={<GeneralSettingsScreen />} />
-              <Route path={WEB_ROUTES.securityAndPrivacy} element={<SecurityAndPrivacyScreen />} />
               <Route path={WEB_ROUTES.accountsSettings} element={<AccountsSettingsScreen />} />
               <Route
                 path={WEB_ROUTES.recoveryPhrasesSettings}
@@ -145,6 +148,7 @@ const MainRoutes = () => {
                 path={WEB_ROUTES.devicePasswordRecovery}
                 element={<DevicePasswordRecoverySettingsScreen />}
               />
+              <Route path={WEB_ROUTES.optOuts} element={<OptOutsScreen />} />
               <Route path={WEB_ROUTES.manageTokens} element={<ManageTokensSettingsScreen />} />
               <Route path={WEB_ROUTES.addressBook} element={<AddressBookSettingsScreen />} />
               <Route path={WEB_ROUTES.settingsTerms} element={<TermsSettingsScreen />} />
@@ -158,14 +162,7 @@ const MainRoutes = () => {
         <Route element={<AuthenticatedRoute />}>
           <Route path={WEB_ROUTES.transfer} element={<TransferScreen />} />
           <Route path={WEB_ROUTES.topUpGasTank} element={<TransferScreen isTopUpScreen />} />
-          <Route
-            path={WEB_ROUTES.signAccountOp}
-            element={
-              <SignAccountOpControllerStateProvider>
-                <SignAccountOpScreen />
-              </SignAccountOpControllerStateProvider>
-            }
-          />
+          <Route path={WEB_ROUTES.signAccountOp} element={<SignAccountOpScreen />} />
           <Route path={WEB_ROUTES.swapAndBridge} element={<SwapAndBridgeScreen />} />
           <Route path={WEB_ROUTES.signMessage} element={<SignMessageScreen />} />
           <Route path={WEB_ROUTES.benzin} element={<BenzinScreen />} />
@@ -179,11 +176,14 @@ const MainRoutes = () => {
             path={WEB_ROUTES.getEncryptionPublicKeyRequest}
             element={<GetEncryptionPublicKeyRequestScreen />}
           />
+          <Route path={WEB_ROUTES.decryptRequest} element={<DecryptRequestScreen />} />
 
           <Route path={WEB_ROUTES.menu} element={<NavMenu />} />
           <Route path={WEB_ROUTES.accountSelect} element={<AccountSelectScreen />} />
+          <Route path={WEB_ROUTES.receive} element={<ReceiveScreen />} />
           <Route path={WEB_ROUTES.apps} element={<DappCatalogScreen />} />
           <Route path={WEB_ROUTES.networks} element={<NetworksScreen />} />
+          <Route path={WEB_ROUTES.rewards} element={<ExtensionRewardsScreen />} />
         </Route>
       </Route>
     </Routes>

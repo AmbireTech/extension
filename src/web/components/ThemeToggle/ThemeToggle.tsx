@@ -5,14 +5,14 @@ import DarkModeIcon from '@common/assets/svg/DarkModeIcon'
 import LightModeIcon from '@common/assets/svg/LightModeIcon'
 import FatToggle from '@common/components/FatToggle'
 import Toggle from '@common/components/Toggle'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 
 const ThemeToggle = () => {
   const { theme, themeType } = useTheme()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
 
   const handleSetTheme = useCallback(() => {
     dispatch({

@@ -6,14 +6,12 @@ import { SignAccountOpError } from '@ambire-common/interfaces/signAccountOp'
 import { UserRequest } from '@ambire-common/interfaces/userRequest'
 import { getCallsCount } from '@ambire-common/utils/userRequest'
 import BatchIcon from '@common/assets/svg/BatchIcon'
-import InfoIcon from '@common/assets/svg/InfoIcon'
 import Button from '@common/components/Button'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
-import Tooltip from '@common/components/Tooltip'
-import useTheme from '@common/hooks/useTheme'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
+import HoldToProceedButton from '@common/components/HoldToProceedButton'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
 import { getUiType } from '@web/utils/uiType'
 
 type Props = {
@@ -26,9 +24,11 @@ type Props = {
   isLocalStateOutOfSync?: boolean
   isBatchDisabled?: boolean
   networkUserRequests: UserRequest[]
+  shouldHoldToProceed?: boolean
+  onRecipientAddressUnknownAgree?: () => void
 }
 
-const { isActionWindow } = getUiType()
+const { isRequestWindow } = getUiType()
 
 const Buttons: FC<Props> = ({
   signAccountOpErrors,
@@ -39,6 +39,8 @@ const Buttons: FC<Props> = ({
   isBatchDisabled,
   isBridge,
   networkUserRequests = [],
+  shouldHoldToProceed,
+  onRecipientAddressUnknownAgree,
   // Used to disable the actions of the buttons when the local state is out of sync.
   // To prevent button flickering when the user is typing we just do nothing when the button is clicked.
   // As it would be a rare case for a user to manage to click it in the 300-400ms that it takes to sync the state,
@@ -47,11 +49,10 @@ const Buttons: FC<Props> = ({
 }) => {
   const { t } = useTranslation()
   const callsCount = getCallsCount(networkUserRequests)
-  const { theme } = useTheme()
 
   const oneClickDisabledReason = useMemo(() => {
     if (signAccountOpErrors.length > 0) {
-      return signAccountOpErrors[0].title
+      return signAccountOpErrors[0]?.title
     }
 
     if (callsCount && isBridge) {
@@ -92,20 +93,16 @@ const Buttons: FC<Props> = ({
       : proceedBtnText
   }, [proceedBtnText, callsCount, t])
 
-  const [bindAnim, animStyle] = useCustomHover({
-    property: 'backgroundColor',
-    values: {
-      from: 'transparent',
-      to: theme.quaternaryBackground
-    }
-  })
-
   return (
     <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifyEnd]}>
-      {!isActionWindow && (
-        <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-          {/* @ts-ignore */}
-          <View dataSet={{ tooltipId: 'batch-btn-tooltip' }}>
+      {!isRequestWindow && (
+        <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mrLg]}>
+          <View
+            dataSet={createGlobalTooltipDataSet({
+              id: 'batch-btn-tooltip',
+              content: batchDisabledReason
+            })}
+          >
             <Button
               hasBottomSpacing={false}
               text={
@@ -115,8 +112,14 @@ const Buttons: FC<Props> = ({
                     })
                   : t('Start a batch')
               }
+              size="smaller"
               disabled={startBatchingDisabled}
               type="secondary"
+              tooltipDataSet={createGlobalTooltipDataSet({
+                id: 'start-batch-info-tooltip',
+                content: startBatchingInfo
+              })}
+              childrenPosition="left"
               style={{ minWidth: 160, ...spacings.phMd }}
               onPress={() => {
                 if (isLocalStateOutOfSync) return
@@ -125,37 +128,44 @@ const Buttons: FC<Props> = ({
               }}
               testID="batch-btn"
             >
-              <BatchIcon style={spacings.mlTy} />
+              <BatchIcon style={spacings.mrMi} />
             </Button>
-          </View>
-          {/* @ts-ignore */}
-          <View style={spacings.mlTy} dataSet={{ tooltipId: 'start-batch-info-tooltip' }}>
-            <AnimatedPressable
-              style={[spacings.phTy, spacings.pvTy, { borderRadius: 50 }, animStyle]}
-              {...bindAnim}
-            >
-              <InfoIcon color={theme.tertiaryText} width={20} height={20} />
-            </AnimatedPressable>
           </View>
         </View>
       )}
-      {/* @ts-ignore */}
-      <View dataSet={{ tooltipId: 'proceed-btn-tooltip' }}>
-        <ButtonWithLoader
-          text={primaryButtonText}
-          disabled={isNotReadyToProceed || isLoading || !!oneClickDisabledReason}
-          isLoading={isLoading}
-          onPress={() => {
-            if (isLocalStateOutOfSync) return
+      <View
+        dataSet={createGlobalTooltipDataSet({
+          id: 'proceed-btn-tooltip',
+          content: oneClickDisabledReason
+        })}
+      >
+        {shouldHoldToProceed ? (
+          <HoldToProceedButton
+            text={t('Hold to proceed')}
+            disabled={isNotReadyToProceed || isLoading || !!oneClickDisabledReason}
+            onHoldComplete={() => {
+              if (isLocalStateOutOfSync) return
+              onRecipientAddressUnknownAgree?.()
 
-            handleSubmitForm(true)
-          }}
-          testID="proceed-btn"
-        />
+              handleSubmitForm(true)
+            }}
+            testID="proceed-btn"
+          />
+        ) : (
+          <ButtonWithLoader
+            text={primaryButtonText}
+            disabled={isNotReadyToProceed || isLoading || !!oneClickDisabledReason}
+            isLoading={isLoading}
+            onPress={() => {
+              if (isLocalStateOutOfSync) return
+
+              handleSubmitForm(true)
+            }}
+            size="smaller"
+            testID="proceed-btn"
+          />
+        )}
       </View>
-      <Tooltip content={oneClickDisabledReason} id="proceed-btn-tooltip" />
-      <Tooltip content={batchDisabledReason} id="batch-btn-tooltip" />
-      <Tooltip content={startBatchingInfo} id="start-batch-info-tooltip" />
     </View>
   )
 }

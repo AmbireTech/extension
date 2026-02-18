@@ -7,19 +7,20 @@ import { AddressState } from '@ambire-common/interfaces/domains'
 import { getDefaultAccountPreferences } from '@ambire-common/libs/account/account'
 import { normalizeIdentityResponse } from '@ambire-common/libs/accountPicker/accountPicker'
 import { getAddressFromAddressState } from '@ambire-common/utils/domains'
+import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
 import Button from '@common/components/Button'
 import Panel from '@common/components/Panel'
-import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
+import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
-import Header from '@common/modules/header/components/Header'
+import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
-import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import useHover, { AnimatedPressable } from '@web/hooks/useHover'
 
 import AddressField from './AddressField'
@@ -48,10 +49,11 @@ const DEFAULT_ADDRESS_FIELD_VALUE = {
 }
 
 const ViewOnlyScreen = () => {
-  const { dispatch } = useBackgroundService()
-  const accountsState = useAccountsControllerState()
+  const { dispatch } = useControllersMiddleware()
+  const accountsState = useController('AccountsController').state
   const { t } = useTranslation()
   const { addToast } = useToast()
+  const { navigate } = useNavigation()
   const { theme } = useTheme()
   const { goToNextRoute, goToPrevRoute } = useOnboardingNavigation()
   const [bindAnim, animStyle] = useHover({
@@ -89,7 +91,25 @@ const ViewOnlyScreen = () => {
     [duplicateAccountsIndexes.length, isLoading, isSubmitting, isValid]
   )
 
+  const isEveryAccountImported = useMemo(
+    () =>
+      isValid &&
+      accounts.length &&
+      accounts.every((account) =>
+        accountsState.accounts.some(
+          (existingAccount) =>
+            existingAccount.addr.toLowerCase() === getAddressFromAddressState(account).toLowerCase()
+        )
+      ),
+    [accounts, accountsState.accounts, isValid]
+  )
+
   const handleFormSubmit = useCallback(async () => {
+    if (isEveryAccountImported) {
+      navigate(ROUTES.dashboard)
+      return
+    }
+
     const accountsToAdd = accounts.map((account, i) => {
       const address = getAddressFromAddressState(account)
       // Use defaults, fetch identity later so account import isn’t blocked by failures
@@ -132,13 +152,27 @@ const ViewOnlyScreen = () => {
 
       throw e
     }
-  }, [accounts, accountsState.accounts, goToNextRoute, addToast, dispatch, t])
+  }, [
+    isEveryAccountImported,
+    accounts,
+    navigate,
+    accountsState.accounts,
+    dispatch,
+    goToNextRoute,
+    addToast,
+    t
+  ])
+
+  const buttonText = useMemo(() => {
+    if (isEveryAccountImported) {
+      return t('Continue')
+    }
+
+    return isLoading ? t('Importing...') : t('Import')
+  }, [isEveryAccountImported, isLoading, t])
 
   return (
-    <TabLayoutContainer
-      backgroundColor={theme.secondaryBackground}
-      header={<Header mode="custom-inner-content" withAmbireLogo />}
-    >
+    <TabLayoutContainer backgroundColor={theme.secondaryBackground}>
       <TabLayoutWrapperMainContent>
         <Panel
           type="onboarding"
@@ -168,17 +202,23 @@ const ViewOnlyScreen = () => {
                     trigger={trigger}
                   />
                 ))}
-                <AnimatedPressable
+                <Button
+                  type="outline"
                   testID="add-one-more-address"
                   disabled={isSubmitting}
+                  style={{ height: 40 }}
+                  size="tiny"
                   onPress={() => append({ ...DEFAULT_ADDRESS_FIELD_VALUE })}
-                  style={[spacings.ptTy, animStyle]}
-                  {...bindAnim}
+                  childrenPosition="left"
+                  text={t('Add another address')}
                 >
-                  <Text fontSize={14} underline appearance="secondaryText">
-                    {t('+ Add another address')}
-                  </Text>
-                </AnimatedPressable>
+                  <AddCircularIcon
+                    width={20}
+                    height={20}
+                    color={theme.primaryText}
+                    style={spacings.mrMi}
+                  />
+                </Button>
               </View>
             </ScrollView>
             <Button
@@ -186,7 +226,7 @@ const ViewOnlyScreen = () => {
               size="large"
               disabled={disabled}
               hasBottomSpacing={false}
-              text={isLoading ? t('Importing...') : t('Import')}
+              text={buttonText}
               onPress={handleSubmit(handleFormSubmit)}
             />
           </View>

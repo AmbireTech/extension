@@ -3,7 +3,7 @@ import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
 import { browser } from '@web/constants/browserapi'
 import { Action as ActionType } from '@web/extension-services/background/actions'
 
-export type Port = chrome.runtime.Port & { id: string; name: 'popup' | 'tab' | 'action-window' }
+export type Port = chrome.runtime.Port & { id: string; name: 'popup' | 'tab' | 'request-window' }
 
 type MessageType = '> ui' | '> ui-error' | '> ui-toast' | '> background'
 
@@ -56,19 +56,8 @@ export class PortMessenger {
   }
 
   addOrUpdatePort(port: Port, onPortAddOrUpdate: (port: Port) => void) {
-    const index = this.ports.findIndex((p) => p.id === port.id)
-
-    if (index >= 0) {
-      const oldPort = this.ports[index]
-      this.#removePort(oldPort)
-      oldPort.disconnect()
-
-      this.ports[index] = port
-    } else {
-      this.ports.push(port)
-    }
-
-    this.sendToPort(port, '> ui', { method: 'portReady', params: {} })
+    this.ports = this.ports.filter((p) => p.id !== port.id)
+    this.ports.push(port)
     onPortAddOrUpdate(port)
   }
 

@@ -10,6 +10,7 @@ import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Button from '@common/components/Button'
 import Text from '@common/components/Text'
 import { Trans, useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
@@ -18,8 +19,6 @@ import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { openInternalPageInTab } from '@web/extension-services/background/webapi/tab'
-import useActionsControllerState from '@web/hooks/useActionsControllerState'
-import useMainControllerState from '@web/hooks/useMainControllerState'
 import useLedger from '@web/modules/hardware-wallet/hooks/useLedger'
 import { getUiType } from '@web/utils/uiType'
 
@@ -29,7 +28,7 @@ type Props = {
   handleOnConnect?: () => void
   /**
    * The WebHID API allows the authorization to happen only in the extension
-   * foreground and on a new tab (not in an action window).
+   * foreground and on a new tab (not in an request window).
    */
   displayOptionToAuthorize?: boolean
 }
@@ -43,12 +42,12 @@ const LedgerConnectModal = ({
   displayOptionToAuthorize = true
 }: Props) => {
   const { ref, open, close } = useModalize()
-  const mainCtrlState = useMainControllerState()
+  const mainCtrlState = useController('MainController').state
   const { requestLedgerDeviceAccess } = useLedger()
   const { addToast } = useToast()
   const { t } = useTranslation()
   const [isGrantingPermission, setIsGrantingPermission] = useState(false)
-  const { currentAction, actionWindow } = useActionsControllerState()
+  const { currentUserRequest, requestWindow } = useController('RequestsController').state
   const { theme, themeType } = useTheme()
 
   useEffect(() => {
@@ -79,13 +78,17 @@ const LedgerConnectModal = ({
   const handleOnLedgerReauthorize = useCallback(
     () =>
       openInternalPageInTab({
-        route: `${WEB_ROUTES.ledgerConnect}?actionId=${currentAction?.id}`,
-        // Don't close the action window if the current action is a sign message
+        route: `${WEB_ROUTES.ledgerConnect}?requestId=${currentUserRequest?.id}`,
+        // Don't close the request window if the current request is a sign message
         // as that would reject the message automatically.
-        shouldCloseCurrentWindow: currentAction?.type === 'accountOp',
-        windowId: actionWindow.windowProps?.createdFromWindowId
+        shouldCloseCurrentWindow: currentUserRequest?.kind === 'calls',
+        windowId: requestWindow.windowProps?.createdFromWindowId
       }),
-    [currentAction?.id, currentAction?.type, actionWindow.windowProps?.createdFromWindowId]
+    [
+      currentUserRequest?.id,
+      currentUserRequest?.kind,
+      requestWindow.windowProps?.createdFromWindowId
+    ]
   )
 
   const isLoading =
@@ -95,7 +98,6 @@ const LedgerConnectModal = ({
     <BottomSheet
       id="ledger-connect-modal"
       sheetRef={ref}
-      backgroundColor={themeType === THEME_TYPES.DARK ? 'secondaryBackground' : 'primaryBackground'}
       autoWidth={false}
       closeBottomSheet={handleClose}
       onClosed={handleClose}
@@ -105,7 +107,7 @@ const LedgerConnectModal = ({
       containerInnerWrapperStyles={isTab ? { ...spacings.pv2Xl, ...spacings.ph2Xl } : {}}
       withBackdropBlur={false}
     >
-      <ModalHeader title={t('Connect Ledger')} />
+      <ModalHeader title={t('Connect Ledger')} handleClose={handleClose} />
       <View style={[flexbox.alignSelfCenter, spacings.mbSm]}>
         <Text weight="regular" style={spacings.mbTy} fontSize={14}>
           {t('1. Plug in your Ledger via cable and enter a PIN to unlock it.')}
@@ -133,7 +135,7 @@ const LedgerConnectModal = ({
               weight="semiBold"
               fontSize={14}
               underline
-              color={theme.primaryLight}
+              color={theme.infoDecorative}
               onPress={handleOnLedgerReauthorize}
             >
               try re-authorizing Ambire to connect

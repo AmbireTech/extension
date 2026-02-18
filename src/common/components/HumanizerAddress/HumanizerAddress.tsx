@@ -3,6 +3,7 @@ import React, { FC, useMemo } from 'react'
 import { Image, View } from 'react-native'
 
 import humanizerInfo from '@ambire-common/consts/humanizer/humanizerInfo.json'
+import { BlacklistedStatus } from '@ambire-common/interfaces/phishing'
 import { HumanizerMeta } from '@ambire-common/libs/humanizer/interfaces'
 import { Props as TextProps } from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
@@ -19,6 +20,7 @@ interface Props extends TextProps {
   hideLinks?: boolean
   hideLogo?: boolean
   chainId: bigint
+  verification?: BlacklistedStatus
 }
 const HUMANIZER_META = humanizerInfo as HumanizerMeta
 

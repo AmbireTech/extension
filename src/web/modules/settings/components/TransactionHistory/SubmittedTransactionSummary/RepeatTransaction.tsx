@@ -2,15 +2,13 @@ import React, { FC, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TouchableOpacity } from 'react-native'
 
-import { Session } from '@ambire-common/classes/session'
-import { UserRequest } from '@ambire-common/interfaces/userRequest'
 import { SubmittedAccountOp } from '@ambire-common/libs/accountOp/submittedAccountOp'
-import RepeatIcon from '@common/assets/svg/RepeatIcon'
+import RefreshIcon from '@common/assets/svg/RefreshIcon'
 import Text from '@common/components/Text'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 
 type Props = {
   accountAddr: string
@@ -31,31 +29,21 @@ const RepeatTransaction: FC<Props> = ({
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { dispatch, windowId } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
 
   const handleRepeatTransaction = useCallback(() => {
     if (!rawCalls) return
-    const userTx = {
-      kind: 'calls' as const,
-      calls: rawCalls
-    }
-
-    const userRequest: UserRequest = {
-      id: new Date().getTime(),
-      action: userTx,
-      session: new Session({ windowId }),
-      meta: {
-        isSignAction: true,
-        chainId,
-        accountAddr
-      }
-    }
 
     dispatch({
-      type: 'REQUESTS_CONTROLLER_ADD_USER_REQUEST',
-      params: { userRequest }
+      type: 'REQUESTS_CONTROLLER_ADD_CALLS_USER_REQUEST',
+      params: {
+        userRequestParams: {
+          calls: rawCalls,
+          meta: { chainId, accountAddr }
+        }
+      }
     })
-  }, [rawCalls, windowId, chainId, accountAddr, dispatch])
+  }, [rawCalls, chainId, accountAddr, dispatch])
 
   return (
     <TouchableOpacity
@@ -65,7 +53,7 @@ const RepeatTransaction: FC<Props> = ({
       <Text fontSize={textSize} appearance="secondaryText" weight="medium" style={spacings.mrMi}>
         {text || t('Repeat Transaction')}
       </Text>
-      <RepeatIcon width={iconSize} height={iconSize} color={theme.secondaryText} strokeWidth={2} />
+      <RefreshIcon width={iconSize} height={iconSize} color={theme.iconPrimary} strokeWidth={2} />
     </TouchableOpacity>
   )
 }

@@ -1,0 +1,65 @@
+diff --git a/node_modules/@trezor/connect-webextension/build/trezor-connect-webextension.js b/node_modules/@trezor/connect-webextension/build/trezor-connect-webextension.js
+index 65bf5a3..9918815 100644
+--- a/node_modules/@trezor/connect-webextension/build/trezor-connect-webextension.js
++++ b/node_modules/@trezor/connect-webextension/build/trezor-connect-webextension.js
+@@ -2508,18 +2508,39 @@ class PopupManager extends (events_default()) {
+         // Request coming from extension popup,
+         // create new window above instead of opening new tab
+         if (currentWindow.type !== 'normal') {
+-          chrome.windows.create({
+-            url
+-          }, newWindow => {
+-            chrome.tabs.query({
+-              windowId: newWindow?.id,
+-              active: true
+-            }, tabs => {
+-              this.popupWindow = {
+-                mode: 'tab',
+-                tab: tabs[0]
+-              };
+-              this.injectContentScript(tabs[0].id);
++          // More consistent approach for opening the popup window in the correct position.
++          // For webkit browsers, this aligns it better with the main browser window
++          // in terms of top-left corner. For gecko browsers, solves the problem
++          // where 2nd time onwards the popup window is NOT being opened with the
++          // correct sizing (compared to the main browser window), but relative
++          // to the Ambire request window, that could be too tiny.
++          chrome.windows.getAll({ windowTypes: ['normal'] }, (wins) => {
++            const largestParentWindow = wins.length
++              ? wins.sort((a, b) => ((b.width || 0) * (b.height || 0)) - ((a.width || 0) * (a.height || 0)))[0]
++              : { left: 0, top: 0, width: 800, height: 600, incognito: false };
++            const shrink = 40; // px on each side
++            const width = Math.max(200, (largestParentWindow.width || 800) - shrink * 2);
++            const height = Math.max(200, (largestParentWindow.height || 600) - shrink * 2);
++            const left = (largestParentWindow.left || 0) + Math.floor(((largestParentWindow.width || width) - width) / 2);
++            const top = (largestParentWindow.top || 0) + Math.floor(((largestParentWindow.height || height) - height) / 2);
++            const bounds = { left, top, width, height };
++            chrome.windows.create({
++              url,
++              type: 'popup',
++              state: 'normal',
++              ...bounds,
++              incognito: largestParentWindow.incognito
++            }, newWindow => {
++              chrome.tabs.query({
++                windowId: newWindow?.id,
++                active: true
++              }, tabs => {
++                this.popupWindow = {
++                  mode: 'tab',
++                  tab: tabs[0]
++                };
++                this.injectContentScript(tabs[0].id);
++              });
+             });
+           });
+         } else {
+@@ -3684,7 +3705,7 @@ trezorContentScript();
+           this.logger.error('content script injection error', error);
+           throw error;
+         }), {
+-          attempts: new Array(3).fill({
++          attempts: new Array(10).fill({
+             timeout: 100
+           })
+         });

@@ -7,15 +7,14 @@ import WarningIcon from '@common/assets/svg/WarningIcon'
 import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
-import Tooltip from '@common/components/Tooltip'
 import { isWeb } from '@common/config/env'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useBalanceAffectingErrors from '@common/modules/dashboard/hooks/useBalanceAffectingErrors'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 
 import BalanceAffectingErrorActions from './BalanceAffectingErrorActions'
 import Header from './Header'
@@ -36,7 +35,9 @@ const BalanceAffectingErrors: FC<Props> = ({
 }) => {
   const { t } = useTranslation()
   const { theme, themeType } = useTheme()
-  const { balanceAffectingErrors, portfolio } = useSelectedAccountControllerState()
+  const {
+    state: { balanceAffectingErrors, portfolio }
+  } = useController('SelectedAccountController')
 
   const areErrorsOutdatedAndPortfolioIsReady = useMemo(() => {
     return (
@@ -59,8 +60,10 @@ const BalanceAffectingErrors: FC<Props> = ({
       <WarningIcon
         color={theme.warningDecorative2}
         style={spacings.mlTy}
-        data-tooltip-id="balance-affecting-error"
-        data-tooltip-content={warningMessage}
+        dataSet={createGlobalTooltipDataSet({
+          id: 'balance-affecting-error',
+          content: warningMessage
+        })}
         width={21}
         height={21}
       />
@@ -75,7 +78,7 @@ const BalanceAffectingErrors: FC<Props> = ({
         title={title}
         text={text}
         type={type}
-        testID="portfolio-error-alert"
+        testID={'portfolio-error-alert-' + id}
       >
         {actions &&
           actions.map(({ actionName, ...rest }: Action) => {
@@ -135,13 +138,9 @@ const BalanceAffectingErrors: FC<Props> = ({
           {renderWarningIcon()}
         </Pressable>
       )}
-      <Tooltip id="balance-affecting-error" />
       <BottomSheet
         style={{ maxWidth: 720, ...spacings.pvLg, ...spacings.phXl, width: '100%' }}
         id="portfolio-errors"
-        backgroundColor={
-          themeType === THEME_TYPES.DARK ? 'secondaryBackground' : 'primaryBackground'
-        }
         sheetRef={sheetRef}
         closeBottomSheet={closeBottomSheetWrapped}
         flatListProps={{

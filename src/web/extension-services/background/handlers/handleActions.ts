@@ -3,6 +3,8 @@
 /* eslint-disable @typescript-eslint/return-await */
 import { BIP44_STANDARD_DERIVATION_TEMPLATE } from '@ambire-common/consts/derivation'
 import { MainController } from '@ambire-common/controllers/main/main'
+import { IEventEmitterRegistryController } from '@ambire-common/interfaces/eventEmitter'
+import { SwapAndBridgeRequest } from '@ambire-common/interfaces/userRequest'
 import { KeyIterator } from '@ambire-common/libs/keyIterator/keyIterator'
 import wait from '@ambire-common/utils/wait'
 import { browser } from '@web/constants/browserapi'
@@ -10,7 +12,6 @@ import { Action } from '@web/extension-services/background/actions'
 import AutoLockController from '@web/extension-services/background/controllers/auto-lock'
 import { ExtensionUpdateController } from '@web/extension-services/background/controllers/extension-update'
 import { WalletStateController } from '@web/extension-services/background/controllers/wallet-state'
-import { controllersNestedInMainMapping } from '@web/extension-services/background/types'
 import { Port, PortMessenger } from '@web/extension-services/messengers'
 import LatticeKeyIterator from '@web/modules/hardware-wallet/libs/latticeKeyIterator'
 import LedgerKeyIterator from '@web/modules/hardware-wallet/libs/ledgerKeyIterator'
@@ -21,55 +22,67 @@ import sessionStorage from '../webapi/sessionStorage'
 export const handleActions = async (
   action: Action,
   {
-    pm,
-    port,
+    eventEmitterRegistry,
     mainCtrl,
     walletStateCtrl,
     autoLockCtrl,
     extensionUpdateCtrl,
+    pm,
+    port,
     windowId
   }: {
-    pm: PortMessenger
-    port: Port
+    eventEmitterRegistry: IEventEmitterRegistryController
     mainCtrl: MainController
     walletStateCtrl: WalletStateController
-    autoLockCtrl: AutoLockController
-    extensionUpdateCtrl: ExtensionUpdateController
+    autoLockCtrl?: AutoLockController
+    extensionUpdateCtrl?: ExtensionUpdateController
+    pm?: PortMessenger
+    port?: Port
     windowId?: number
   }
 ) => {
   // @ts-ignore
   const { type, params } = action
   switch (type) {
+    case 'HANDSHAKE': {
+      if (!pm || !port) return
+      pm.sendToPort(port, '> ui', { method: 'portReady', params: {} })
+      break
+    }
     case 'UPDATE_PORT_URL': {
+      if (!port) return
+
       if (port.sender) {
         port.sender.url = params.url
         if (port.sender.tab) port.sender.tab.url = params.url
       }
-      mainCtrl.ui.updateView(port.id, { currentRoute: params.route })
+      mainCtrl.ui.updateView(port.id, {
+        currentRoute: params.route,
+        searchParams: params.searchParams
+      })
       break
     }
     case 'INIT_CONTROLLER_STATE': {
-      if (params.controller === ('main' as any)) {
-        const mainCtrlState: any = { ...mainCtrl.toJSON() }
-        // We are removing the state of the nested controllers in main to avoid the CPU-intensive task of parsing + stringifying.
-        // We should access the state of the nested controllers directly from their context instead of accessing them through the main ctrl state on the FE.
-        // Keep in mind: if we just spread `ctrl` instead of calling `ctrl.toJSON()`, the getters won't be included.
-        Object.keys(controllersNestedInMainMapping).forEach((nestedCtrlName) => {
-          delete mainCtrlState[nestedCtrlName]
-        })
-        pm.send('> ui', { method: 'main', params: mainCtrlState })
-      } else if (params.controller === ('walletState' as any)) {
-        pm.send('> ui', { method: 'walletState', params: walletStateCtrl })
-      } else if (params.controller === ('autoLock' as any)) {
-        pm.send('> ui', { method: 'autoLock', params: autoLockCtrl })
-      } else if (params.controller === ('extensionUpdate' as any)) {
-        pm.send('> ui', { method: 'extensionUpdate', params: extensionUpdateCtrl })
-      } else {
-        pm.send('> ui', {
-          method: params.controller,
-          params: (mainCtrl as any)[params.controller]
-        })
+      if (!pm) return
+
+      const ctrl = eventEmitterRegistry.values().find((c) => c.name === params.controller)
+      pm.send('> ui', { method: params.controller, params: ctrl ?? null })
+
+      break
+    }
+    case 'method': {
+      const { ctrlName, method, args } = params
+
+      const ctrl = eventEmitterRegistry.values().find((c) => c.name === ctrlName) as any
+
+      if (!ctrl) {
+        console.error(`handleAction: Controller ${ctrlName} not found`)
+
+        return
+      }
+
+      if (ctrl && typeof ctrl[method] === 'function') {
+        ctrl[method](...args)
       }
       break
     }
@@ -101,6 +114,9 @@ export const handleActions = async (
       })
       break
     }
+    case 'PROVIDERS_CONTROLLER_TOGGLE_BATCHING': {
+      return await mainCtrl.providers.toggleBatching()
+    }
     case 'MAIN_CONTROLLER_ADD_NETWORK': {
       return await mainCtrl.addNetwork(params)
     }
@@ -116,10 +132,10 @@ export const handleActions = async (
     case 'ACCOUNTS_CONTROLLER_RESET_ACCOUNTS_NEWLY_ADDED_STATE': {
       return await mainCtrl.accounts.resetAccountsNewlyAddedState()
     }
-    case 'SETTINGS_CONTROLLER_SET_NETWORK_TO_ADD_OR_UPDATE': {
+    case 'NETWORKS_CONTROLLER_SET_NETWORK_TO_ADD_OR_UPDATE': {
       return await mainCtrl.networks.setNetworkToAddOrUpdate(params)
     }
-    case 'SETTINGS_CONTROLLER_RESET_NETWORK_TO_ADD_OR_UPDATE': {
+    case 'NETWORKS_CONTROLLER_RESET_NETWORK_TO_ADD_OR_UPDATE': {
       return await mainCtrl.networks.setNetworkToAddOrUpdate(null)
     }
     case 'KEYSTORE_CONTROLLER_UPDATE_KEY_PREFERENCES': {
@@ -208,15 +224,6 @@ export const handleActions = async (
     case 'MAIN_CONTROLLER_REMOVE_ACCOUNT': {
       return await mainCtrl.removeAccount(params.accountAddr)
     }
-    case 'MAIN_CONTROLLER_REJECT_SIGN_ACCOUNT_OP_CALL': {
-      return mainCtrl.rejectSignAccountOpCall(params.callId)
-    }
-    case 'MAIN_CONTROLLER_REJECT_ACCOUNT_OP':
-      return mainCtrl.rejectAccountOpAction(
-        params.err,
-        params.actionId,
-        params.shouldOpenNextAction
-      )
     case 'MAIN_CONTROLLER_SIGN_MESSAGE_INIT': {
       return await mainCtrl.signMessage.init(params)
     }
@@ -246,37 +253,32 @@ export const handleActions = async (
     case 'MAIN_CONTROLLER_ACTIVITY_RESET_SIGNED_MESSAGES_FILTERS':
       return mainCtrl.activity.resetSignedMessagesFilters(params.sessionId)
 
-    case 'MAIN_CONTROLLER_SIGN_ACCOUNT_OP_UPDATE':
-      return mainCtrl?.signAccountOp?.update(params)
-    case 'MAIN_CONTROLLER_SIGN_ACCOUNT_OP_UPDATE_STATUS':
-      return mainCtrl?.signAccountOp?.updateStatus(params.status)
     case 'MAIN_CONTROLLER_HANDLE_SIGN_AND_BROADCAST_ACCOUNT_OP': {
-      return await mainCtrl.handleSignAndBroadcastAccountOp(params.type)
+      return await mainCtrl.handleSignAndBroadcastAccountOp(params.type, params.fromRequestId)
     }
-    case 'MAIN_CONTROLLER_SIGN_ACCOUNT_OP_INIT':
-      return mainCtrl.initSignAccOp(params.actionId)
-    case 'MAIN_CONTROLLER_SIGN_ACCOUNT_OP_DESTROY':
-      return mainCtrl.destroySignAccOp()
 
     case 'REQUESTS_CONTROLLER_BUILD_REQUEST':
       return await mainCtrl.requests.build(params)
-    case 'REQUESTS_CONTROLLER_ADD_USER_REQUEST':
-      return await mainCtrl.requests.addUserRequests([params.userRequest], {
-        actionPosition: params.actionPosition,
-        actionExecutionType: params.actionExecutionType,
-        allowAccountSwitch: params.allowAccountSwitch,
-        skipFocus: params.skipFocus
-      })
+    case 'REQUESTS_CONTROLLER_ADD_CALLS_USER_REQUEST': {
+      return await mainCtrl.requests.build({ type: 'calls', params })
+    }
     case 'REQUESTS_CONTROLLER_REMOVE_USER_REQUEST':
       return mainCtrl.requests.removeUserRequests([params.id])
     case 'REQUESTS_CONTROLLER_RESOLVE_USER_REQUEST':
       return mainCtrl.requests.resolveUserRequest(params.data, params.id)
     case 'REQUESTS_CONTROLLER_REJECT_USER_REQUEST':
-      return mainCtrl.requests.rejectUserRequests(params.err, [params.id])
+      return mainCtrl.requests.rejectUserRequests(params.err, [params.id], params.options)
+    case 'REQUESTS_CONTROLLER_REJECT_CALL_FROM_USER_REQUEST': {
+      await mainCtrl.requests.rejectCalls({ callIds: [params.callId] })
+      break
+    }
 
-    case 'SIGN_ACCOUNT_OP_UPDATE': {
-      if (params.updateType === 'Main') {
-        return mainCtrl?.signAccountOp?.update(params)
+    case 'CURRENT_SIGN_ACCOUNT_OP_UPDATE': {
+      if (
+        params.updateType === 'Requests' &&
+        mainCtrl.requests.currentUserRequest?.kind === 'calls'
+      ) {
+        return mainCtrl.requests.currentUserRequest.signAccountOp.update(params)
       }
       if (params.updateType === 'Swap&Bridge') {
         return mainCtrl?.swapAndBridge?.signAccountOpController?.update(params)
@@ -285,9 +287,23 @@ export const handleActions = async (
       // 'Transfer&TopUp'
       return mainCtrl?.transfer?.signAccountOpController?.update(params)
     }
-    case 'SIGN_ACCOUNT_OP_REESTIMATE': {
-      if (params.type === 'default') {
-        return mainCtrl?.signAccountOp?.retry('simulate')
+    case 'CURRENT_SIGN_ACCOUNT_OP_UPDATE_STATUS': {
+      if (
+        params.updateType === 'Requests' &&
+        mainCtrl.requests.currentUserRequest?.kind === 'calls'
+      ) {
+        return mainCtrl?.requests?.currentUserRequest?.signAccountOp.updateStatus(params.status)
+      }
+      if (params.updateType === 'Swap&Bridge') {
+        return mainCtrl?.swapAndBridge?.signAccountOpController?.updateStatus(params.status)
+      }
+
+      // 'Transfer&TopUp'
+      return mainCtrl?.transfer?.signAccountOpController?.updateStatus(params.status)
+    }
+    case 'CURRENT_SIGN_ACCOUNT_OP_REESTIMATE': {
+      if (params.type === 'default' && mainCtrl.requests.currentUserRequest?.kind === 'calls') {
+        return mainCtrl.requests.currentUserRequest.signAccountOp.retry('simulate')
       }
       if (params.type === 'one-click-swap-and-bridge') {
         return mainCtrl?.swapAndBridge?.signAccountOpController?.retry('estimate')
@@ -325,7 +341,9 @@ export const handleActions = async (
     case 'SWAP_AND_BRIDGE_CONTROLLER_SEARCH_TO_TOKEN':
       return await mainCtrl.swapAndBridge.searchToToken(params.searchTerm)
     case 'SWAP_AND_BRIDGE_CONTROLLER_SELECT_ROUTE':
-      return await mainCtrl.swapAndBridge.selectRoute(params.route, params.isAutoSelectDisabled)
+      return await mainCtrl.swapAndBridge.selectRoute(params.route, {
+        isManualSelection: true
+      })
     case 'REQUESTS_CONTROLLER_SWAP_AND_BRIDGE_ACTIVE_ROUTE_BUILD_NEXT_USER_REQUEST':
       return await mainCtrl.requests.build({
         type: 'swapAndBridgeRequest',
@@ -347,46 +365,38 @@ export const handleActions = async (
       return mainCtrl.swapAndBridge.resetForm()
     case 'SWAP_AND_BRIDGE_CONTROLLER_MARK_SELECTED_ROUTE_AS_FAILED':
       return mainCtrl.swapAndBridge.markSelectedRouteAsFailed(params.disabledReason)
-    case 'SWAP_AND_BRIDGE_CONTROLLER_SIGN_ACCOUNT_OP_UPDATE':
-      return mainCtrl?.swapAndBridge?.signAccountOpController?.update(params)
-    case 'SWAP_AND_BRIDGE_CONTROLLER_SIGN_ACCOUNT_OP_UPDATE_STATUS':
-      return mainCtrl?.swapAndBridge?.signAccountOpController?.updateStatus(params.status)
     case 'SWAP_AND_BRIDGE_CONTROLLER_HAS_USER_PROCEEDED':
       return mainCtrl?.swapAndBridge.setUserProceeded(params.proceeded)
-    case 'SWAP_AND_BRIDGE_CONTROLLER_IS_AUTO_SELECT_ROUTE_DISABLED':
-      return mainCtrl?.swapAndBridge.setIsAutoSelectRouteDisabled(params.isDisabled)
     case 'SWAP_AND_BRIDGE_CONTROLLER_DESTROY_SIGN_ACCOUNT_OP':
       return mainCtrl?.swapAndBridge.destroySignAccountOp()
-    case 'OPEN_SIGNING_ACTION_WINDOW': {
+    case 'OPEN_SIGNING_REQUEST_WINDOW': {
       if (!mainCtrl.selectedAccount.account) throw new Error('No selected account')
 
       const idSuffix = params.type === 'swapAndBridge' ? 'swap-and-bridge-sign' : 'transfer-sign'
 
-      return mainCtrl.requests.actions.addOrUpdateActions(
+      return mainCtrl.requests.addUserRequests(
         [
           {
             id: `${mainCtrl.selectedAccount.account.addr}-${idSuffix}`,
-            type: params.type,
-            userRequest: {
-              meta: {
-                accountAddr: mainCtrl.selectedAccount.account.addr
-              }
-            }
-          }
+            kind: params.type,
+            meta: {
+              accountAddr: mainCtrl.selectedAccount.account.addr
+            },
+            dappPromises: []
+          } as SwapAndBridgeRequest
         ],
         {
           position: 'last',
-          executionType: 'open-action-window',
-          baseWindowId: windowId
+          executionType: 'open-request-window'
         }
       )
     }
-    case 'CLOSE_SIGNING_ACTION_WINDOW': {
+    case 'CLOSE_SIGNING_REQUEST_WINDOW': {
       if (!mainCtrl.selectedAccount.account) throw new Error('No selected account')
 
       const idSuffix = params.type === 'swapAndBridge' ? 'swap-and-bridge-sign' : 'transfer-sign'
 
-      return mainCtrl.requests.actions.removeActions([
+      return mainCtrl.requests.removeUserRequests([
         `${mainCtrl.selectedAccount.account.addr}-${idSuffix}`
       ])
     }
@@ -394,8 +404,6 @@ export const handleActions = async (
       return mainCtrl.transfer.update(params.formValues)
     case 'TRANSFER_CONTROLLER_RESET_FORM':
       return mainCtrl.transfer.resetForm()
-    case 'TRANSFER_CONTROLLER_UNLOAD_SCREEN':
-      return mainCtrl.transfer.unloadScreen(false)
     case 'TRANSFER_CONTROLLER_DESTROY_LATEST_BROADCASTED_ACCOUNT_OP':
       return mainCtrl.transfer.destroyLatestBroadcastedAccountOp()
     case 'TRANSFER_CONTROLLER_HAS_USER_PROCEEDED':
@@ -403,34 +411,27 @@ export const handleActions = async (
     case 'TRANSFER_CONTROLLER_SHOULD_SKIP_TRANSACTION_QUEUED_MODAL':
       mainCtrl.transfer.shouldSkipTransactionQueuedModal = params.shouldSkip
       return
-    case 'TRANSFER_CONTROLLER_SIGN_ACCOUNT_OP_UPDATE':
-      return mainCtrl?.transfer?.signAccountOpController?.update(params)
-    case 'TRANSFER_CONTROLLER_SIGN_ACCOUNT_OP_UPDATE_STATUS':
-      return mainCtrl?.transfer?.signAccountOpController?.updateStatus(params.status)
     case 'MAIN_CONTROLLER_REMOVE_ACTIVE_ROUTE':
       return mainCtrl.removeActiveRoute(params.activeRouteId)
 
-    case 'ACTIONS_CONTROLLER_REMOVE_FROM_ACTIONS_QUEUE':
-      return mainCtrl.requests.actions.removeActions([params.id], params.shouldOpenNextAction)
-    case 'ACTIONS_CONTROLLER_FOCUS_ACTION_WINDOW':
-      return mainCtrl.requests.actions.focusActionWindow()
-    case 'ACTIONS_CONTROLLER_SET_CURRENT_ACTION_BY_ID':
-      return mainCtrl.requests.actions.setCurrentActionById(params.actionId, {
+    case 'REQUESTS_CONTROLLER_FOCUS_REQUEST_WINDOW':
+      return mainCtrl.requests.focusRequestWindow()
+    case 'REQUESTS_CONTROLLER_SET_CURRENT_REQUEST_BY_ID':
+      return mainCtrl.requests.setCurrentUserRequestById(params.requestId, {
         baseWindowId: windowId
       })
-    case 'ACTIONS_CONTROLLER_SET_CURRENT_ACTION_BY_INDEX':
-      return mainCtrl.requests.actions.setCurrentActionByIndex(params.index, {
+    case 'REQUESTS_CONTROLLER_SET_CURRENT_REQUEST_BY_INDEX':
+      return mainCtrl.requests.setCurrentUserRequestByIndex(params.index, {
         ...params.params,
         baseWindowId: windowId
       })
-    case 'ACTIONS_CONTROLLER_SET_WINDOW_LOADED':
-      return mainCtrl.requests.actions.setWindowLoaded()
+    case 'REQUESTS_CONTROLLER_SET_WINDOW_LOADED':
+      return mainCtrl.requests.setWindowLoaded()
 
     case 'MAIN_CONTROLLER_RELOAD_SELECTED_ACCOUNT': {
       return await mainCtrl.reloadSelectedAccount({
         chainIds: params?.chainId ? [BigInt(params?.chainId)] : undefined,
-        isManualReload: true,
-        maxDataAgeMs: 10 * 1000
+        isManualReload: true
       })
     }
     case 'MAIN_CONTROLLER_UPDATE_SELECTED_ACCOUNT_PORTFOLIO': {
@@ -438,11 +439,11 @@ export const handleActions = async (
     }
 
     case 'DEFI_CONTOLLER_ADD_SESSION': {
-      mainCtrl.defiPositions.addSession(params.sessionId)
+      mainCtrl.portfolio.addDefiSession(params.sessionId)
       break
     }
     case 'DEFI_CONTOLLER_REMOVE_SESSION': {
-      mainCtrl.defiPositions.removeSession(params.sessionId)
+      mainCtrl.portfolio.removeDefiSession(params.sessionId)
       break
     }
 
@@ -480,11 +481,9 @@ export const handleActions = async (
       if (!mainCtrl.selectedAccount.account) return
       return await mainCtrl.portfolio.updateTokenValidationByStandard(
         params.token,
-        mainCtrl.selectedAccount.account.addr
+        mainCtrl.selectedAccount.account.addr,
+        params.allNetworks
       )
-    }
-    case 'SELECTED_ACCOUNT_CONTROLLER_UPDATE_CASHBACK_STATUS': {
-      return await mainCtrl.selectedAccount.changeCashbackStatus(params)
     }
     case 'KEYSTORE_CONTROLLER_ADD_SECRET':
       return await mainCtrl.keystore.addSecret(
@@ -495,6 +494,8 @@ export const handleActions = async (
       )
     case 'KEYSTORE_CONTROLLER_ADD_TEMP_SEED':
       return await mainCtrl.keystore.addTempSeed(params)
+    case 'KEYSTORE_CONTROLLER_GENERATE_TEMP_SEED':
+      return await mainCtrl.keystore.generateTempSeed(params)
     case 'KEYSTORE_CONTROLLER_UPDATE_SEED':
       return await mainCtrl.keystore.updateSeed(params)
     case 'KEYSTORE_CONTROLLER_UNLOCK_WITH_SECRET':
@@ -529,6 +530,12 @@ export const handleActions = async (
       return await mainCtrl.keystore.sendTempSeedToUi()
     case 'KEYSTORE_CONTROLLER_DELETE_SEED':
       return await mainCtrl.keystore.deleteSeed(params.id)
+    case 'KEYSTORE_CONTROLLER_SEND_DECRYPTED_MESSAGE_TO_UI':
+      return await mainCtrl.keystore.sendDecryptedMessageToUi({
+        encryptedMessage: params.encryptedMessage,
+        keyAddr: params.keyAddr,
+        keyType: params.keyType
+      })
 
     case 'EMAIL_VAULT_CONTROLLER_GET_INFO':
       return await mainCtrl.emailVault?.getEmailVaultInfo(params.email)
@@ -578,12 +585,16 @@ export const handleActions = async (
       return await mainCtrl.addressBook.removeManuallyAddedContact(params.address)
     case 'DOMAINS_CONTROLLER_REVERSE_LOOKUP':
       return await mainCtrl.domains.reverseLookup(params.address)
-    case 'DOMAINS_CONTROLLER_SAVE_RESOLVED_REVERSE_LOOKUP':
-      return mainCtrl.domains.saveResolvedReverseLookup(params)
+    case 'DOMAINS_CONTROLLER_RESOLVE_DOMAIN':
+      return mainCtrl.domains.resolveDomain(params)
     case 'CONTRACT_NAMES_CONTROLLER_GET_NAME':
       return mainCtrl.contractNames.getName(params.address, params.chainId)
     case 'SET_IS_PINNED': {
       walletStateCtrl.isPinned = params.isPinned
+      break
+    }
+    case 'SET_AVATAR_TYPE': {
+      walletStateCtrl.setAvatarType(params.avatarType)
       break
     }
     case 'SET_IS_SETUP_COMPLETE': {
@@ -591,12 +602,18 @@ export const handleActions = async (
       break
     }
     case 'AUTO_LOCK_CONTROLLER_SET_LAST_ACTIVE_TIME': {
-      autoLockCtrl.setLastActiveTime()
+      autoLockCtrl?.setLastActiveTime()
       break
     }
     case 'AUTO_LOCK_CONTROLLER_SET_AUTO_LOCK_TIME': {
+      if (!autoLockCtrl) return
+
       autoLockCtrl.autoLockTime = params
       break
+    }
+
+    case 'FEATURE_FLAGS_CONTROLLER_FLIP_FEATURE': {
+      return await mainCtrl.featureFlags.setFeatureFlag(params.flag, params.isEnabled)
     }
 
     case 'INVITE_CONTROLLER_VERIFY': {
@@ -614,9 +631,14 @@ export const handleActions = async (
       break
     }
     case 'DAPPS_CONTROLLER_DISCONNECT_DAPP': {
-      await mainCtrl.dapps.broadcastDappSessionEvent('disconnect', undefined, params)
-      mainCtrl.dapps.updateDapp(params, { isConnected: false })
+      await mainCtrl.dapps.broadcastDappSessionEvent('disconnect', undefined, params.id)
+      mainCtrl.dapps.updateDapp(params.id, { isConnected: false })
+      await mainCtrl.autoLogin.revokeAllPoliciesForDomain(params.id, params.url)
+
       break
+    }
+    case 'DAPPS_CONTROLLER_GET_CURRENT_DAPP_AND_SEND_RES_TO_UI': {
+      return mainCtrl.dapps.getCurrentDappAndSendResToUi(params)
     }
     case 'CHANGE_CURRENT_DAPP_NETWORK': {
       mainCtrl.dapps.updateDapp(params.id, { chainId: params.chainId })
@@ -636,19 +658,18 @@ export const handleActions = async (
     case 'DAPP_CONTROLLER_REMOVE_DAPP': {
       return mainCtrl.dapps.removeDapp(params)
     }
-    case 'PHISHING_CONTROLLER_GET_IS_BLACKLISTED_AND_SEND_TO_UI': {
-      return mainCtrl.phishing.sendIsBlacklistedToUi(params.url)
-    }
     case 'EXTENSION_UPDATE_CONTROLLER_APPLY_UPDATE': {
-      extensionUpdateCtrl.applyUpdate()
+      extensionUpdateCtrl?.applyUpdate()
       break
     }
 
     case 'OPEN_EXTENSION_POPUP': {
+      if (!pm) return
+
       // eslint-disable-next-line no-inner-declarations
       async function waitForPopupOpen(timeout = 10000, interval = 100) {
         const startTime = Date.now()
-        while (!pm.ports.some((p) => p.name === 'popup')) {
+        while (!pm!.ports.some((p) => p.name === 'popup')) {
           if (Date.now() - startTime > timeout) break
           await wait(interval)
         }

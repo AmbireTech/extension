@@ -1,32 +1,33 @@
 import React from 'react'
-import Svg, { G, Path, SvgProps } from 'react-native-svg'
+import Svg, { Path, SvgProps } from 'react-native-svg'
 
 import useTheme from '@common/hooks/useTheme'
 
-interface Props extends SvgProps {
-  width?: number
-  height?: number
-}
-
-const TopUpIcon: React.FC<Props> = ({ width = 30, height = 30, color, strokeWidth = '1.5' }) => {
+const TopUpIcon: React.FC<SvgProps> = ({
+  width = 24,
+  height = 24,
+  color,
+  strokeWidth = '1.5',
+  ...props
+}) => {
   const { theme } = useTheme()
+
   return (
-    <Svg width={width} height={height} viewBox="0 0 16 16">
-      <G fill="none">
-        <G
-          stroke={color || theme.iconSecondary}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={strokeWidth}
-        >
-          <Path d="M5.777 9.556a1.52 1.52 0 0 0 1.484 1.555h1.671a1.323 1.323 0 0 0 1.289-1.36 1.174 1.174 0 0 0-.88-1.289l-2.675-.933a1.168 1.168 0 0 1-.88-1.289 1.329 1.329 0 0 1 1.291-1.358h1.671a1.52 1.52 0 0 1 1.484 1.555" />
-          <Path d="M7.999 4.002v8" />
-          <Path d="M14.5 8A6.5 6.5 0 1 1 8 1.5" />
-          <Path d="M11.641 2.072v2.287h2.288" />
-          <Path d="m14.5 1.5-2.859 2.859" />
-        </G>
-        <Path d="M0 16V0h16v16z" />
-      </G>
+    <Svg width={width} height={height} viewBox="0 0 24 24" fill="none" {...props}>
+      <Path
+        stroke={color || theme.iconPrimary}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.5"
+        d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33"
+      />
+      <Path
+        stroke={color || theme.iconPrimary}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.5"
+        d="M20.572 12A8.57 8.57 0 1 1 12 3.429M17.143 5.143v2.571h2.572M20.572 4.286l-3.429 3.428"
+      />
     </Svg>
   )
 }

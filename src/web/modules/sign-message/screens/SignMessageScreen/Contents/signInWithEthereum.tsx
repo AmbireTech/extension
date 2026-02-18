@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import { AUTO_LOGIN_DURATION_OPTIONS } from '@ambire-common/controllers/autoLogin/autoLogin'
-import { SiweMessage } from '@ambire-common/interfaces/userRequest'
+import { SiweMessageUserRequest } from '@ambire-common/interfaces/userRequest'
 import Alert from '@common/components/Alert'
 import NetworkBadge from '@common/components/NetworkBadge'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
@@ -11,15 +11,14 @@ import Select from '@common/components/Select'
 import Text from '@common/components/Text'
 import Toggle from '@common/components/Toggle'
 import Tooltip from '@common/components/Tooltip'
+import useController from '@common/hooks/useController'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING, SPACING_LG, SPACING_MD, SPACING_SM } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import useResponsiveActionWindow from '@web/hooks/useResponsiveActionWindow'
-import useSignMessageControllerState from '@web/hooks/useSignMessageControllerState'
 import HardwareWalletSigningModal from '@web/modules/hardware-wallet/components/HardwareWalletSigningModal'
 import LedgerConnectModal from '@web/modules/hardware-wallet/components/LedgerConnectModal'
 import Info from '@web/modules/sign-message/screens/SignMessageScreen/Info'
@@ -58,9 +57,7 @@ const Value = ({
     <Text
       appearance="secondaryText"
       fontSize={14 * responsiveSizeMultiplier}
-      dataSet={{
-        tooltipId
-      }}
+      dataSet={{ tooltipId }}
     >
       {children}
     </Text>
@@ -96,18 +93,18 @@ const SignInWithEthereum = ({
   handleDismissLedgerConnectModal
 }: Props) => {
   const { t } = useTranslation()
-  const signMessageState = useSignMessageControllerState()
+  const signMessageState = useController('SignMessageController').state
   const signStatus = signMessageState.statuses.sign
   const { styles } = useTheme(getStyles)
   const { theme } = useTheme()
-  const { networks } = useNetworksControllerState()
+  const { networks } = useController('NetworksController').state
   const { responsiveSizeMultiplier } = useResponsiveActionWindow()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
 
   const siweMessageToSign = useMemo(() => {
     // It's validated beforehand. This component is never rendered if the
     // message is not a SIWE one.
-    return signMessageState.messageToSign!.content as SiweMessage
+    return signMessageState.messageToSign!.content as SiweMessageUserRequest['meta']['params']
   }, [signMessageState.messageToSign])
   const isAutoLoginEnabledByUser = siweMessageToSign?.isAutoLoginEnabledByUser || false
 
@@ -233,9 +230,7 @@ const SignInWithEthereum = ({
         >
           <ScrollableWrapper
             style={{
-              backgroundColor: theme.primaryBackground,
-              borderWidth: 1,
-              borderColor: theme.secondaryBorder,
+              backgroundColor: theme.secondaryBackground,
               paddingHorizontal: SPACING_SM * responsiveSizeMultiplier,
               paddingVertical: SPACING * responsiveSizeMultiplier,
               marginBottom: SPACING * responsiveSizeMultiplier,
@@ -328,22 +323,6 @@ const SignInWithEthereum = ({
             title={t('Deceptive app request')}
             text={t(
               "The app you're attempting to sign in to does not match the domain in the message. This may be a phishing attempt."
-            )}
-          />
-        )}
-        {siweMessageToSign.siweValidityStatus === 'invalid' && (
-          <Alert
-            type="error"
-            title={t('Invalid Sign-In request')}
-            text={t('The Sign-In message is invalid. Please verify its contents before signing.')}
-          />
-        )}
-        {siweMessageToSign.siweValidityStatus === 'invalid-critical' && (
-          <Alert
-            type="error"
-            title={t('Potentially dangerous Sign-In request')}
-            text={t(
-              'The Sign-In message is invalid and may pose a security risk. Please do not sign this message.'
             )}
           />
         )}

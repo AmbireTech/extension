@@ -18,12 +18,13 @@ type Props = {
   isViewOnly: boolean
   isSponsored: boolean
   sponsor: Sponsor | undefined
-  updateType: 'Main' | 'Swap&Bridge' | 'Transfer&TopUp'
+  updateType: 'Requests' | 'Swap&Bridge' | 'Transfer&TopUp'
   bundlerNonceDiscrepancy?: {
     id: string
     title: string
   }
   serviceFee?: SwapAndBridgeRoute['serviceFee']
+  withTitle?: boolean
 }
 
 export type { FeeOption, Props }

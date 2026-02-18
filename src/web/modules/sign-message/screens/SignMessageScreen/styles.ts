@@ -9,6 +9,7 @@ interface Style {
   container: ViewStyle
   noKeysToSignAlert: ViewStyle
   kindOfMessage: ViewStyle
+  warningContainer: ViewStyle
 }
 
 const getStyles = (theme: ThemeProps) =>
@@ -34,6 +35,11 @@ const getStyles = (theme: ThemeProps) =>
       ...flexbox.directionRow,
       ...flexbox.alignCenter,
       ...spacings.ph
+    },
+    warningContainer: {
+      borderWidth: 1,
+      backgroundColor: theme.warningBackground,
+      borderColor: theme.warningDecorative
     }
   })
 

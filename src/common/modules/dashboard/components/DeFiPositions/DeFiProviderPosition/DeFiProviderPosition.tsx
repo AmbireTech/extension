@@ -19,7 +19,7 @@ const DeFiProviderPosition: FC<PositionsByProvider> = ({
   positions
 }) => {
   const [isExpanded, setIsExpanded] = useState(false)
-  const { styles } = useTheme(getStyles)
+  const { styles, theme } = useTheme(getStyles)
 
   const positionInUSDFormatted = formatDecimals(positionInUSD, 'value')
 
@@ -28,14 +28,25 @@ const DeFiProviderPosition: FC<PositionsByProvider> = ({
   }, [])
 
   return (
-    <View style={[styles.container, !!isExpanded && styles.expandedContainer]}>
+    <View
+      style={[
+        styles.container,
+        isExpanded && {
+          borderColor: theme.primaryBorder
+        }
+      ]}
+    >
       <DeFiPositionHeader
         providerName={providerName}
         chainId={chainId}
         toggleExpanded={toggleExpanded}
         isExpanded={isExpanded}
         positionInUSD={positionInUSDFormatted}
-        healthRate={positions.length === 1 ? positions[0].additionalData.healthRate : undefined}
+        healthRate={
+          positions.length === 1 && positions[0]
+            ? positions[0].additionalData.healthRate
+            : undefined
+        }
         iconUrl={iconUrl}
         siteUrl={siteUrl}
       />

@@ -1,3 +1,4 @@
+import Fuse from 'fuse.js'
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
@@ -7,15 +8,16 @@ import { useModalize } from 'react-native-modalize'
 import { Network } from '@ambire-common/interfaces/network'
 import CollectibleModal, { SelectedCollectible } from '@common/components/CollectibleModal'
 import Text from '@common/components/Text'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import DashboardBanners from '@common/modules/dashboard/components/DashboardBanners'
 import DashboardPageScrollContainer from '@common/modules/dashboard/components/DashboardPageScrollContainer'
 import TabsAndSearch from '@common/modules/dashboard/components/TabsAndSearch'
 import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tab/Tab'
-import { getDoesNetworkMatch } from '@common/utils/search'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
+import { tokenOrCollectionSearch } from '@common/utils/search'
 import { getUiType } from '@web/utils/uiType'
 
+import SearchAndCurrentApp from '../SearchAndCurrentApp'
 import Collection from './Collection'
 import CollectionsSkeleton from './CollectionsSkeleton'
 import styles from './styles'
@@ -31,6 +33,7 @@ interface Props {
   networks: Network[]
   dashboardNetworkFilterName: string | null
   animatedOverviewHeight: Animated.Value
+  isSearchHidden: boolean
 }
 
 const { isPopup } = getUiType()
@@ -43,9 +46,12 @@ const Collections: FC<Props> = ({
   onScroll,
   networks,
   dashboardNetworkFilterName,
-  animatedOverviewHeight
+  animatedOverviewHeight,
+  isSearchHidden
 }) => {
-  const { portfolio, dashboardNetworkFilter } = useSelectedAccountControllerState()
+  const {
+    state: { portfolio, dashboardNetworkFilter }
+  } = useController('SelectedAccountController')
   const { ref: modalRef, open: openModal, close: closeModal } = useModalize()
   const { t } = useTranslation()
   const { theme } = useTheme()
@@ -65,9 +71,9 @@ const Collections: FC<Props> = ({
     [openModal]
   )
 
-  const filteredPortfolioCollections = useMemo(
-    () =>
-      (portfolio?.collections || []).filter(({ name, address, chainId, collectibles }) => {
+  const filteredPortfolioCollections = useMemo(() => {
+    const searchableCollections = (portfolio?.collections || []).filter(
+      ({ chainId, collectibles }) => {
         let isMatchingNetwork = true
         let isMatchingSearch = true
 
@@ -75,18 +81,17 @@ const Collections: FC<Props> = ({
           isMatchingNetwork = chainId === BigInt(dashboardNetworkFilter)
         }
 
-        if (searchValue) {
-          const lowercaseSearch = searchValue.toLowerCase()
-          isMatchingSearch =
-            name.toLowerCase().includes(lowercaseSearch) ||
-            address.toLowerCase().includes(lowercaseSearch) ||
-            getDoesNetworkMatch({ networks, itemChainId: chainId, lowercaseSearch })
-        }
-
         return isMatchingNetwork && isMatchingSearch && collectibles.length
-      }),
-    [portfolio?.collections, dashboardNetworkFilter, searchValue, networks]
-  )
+      }
+    )
+
+    return tokenOrCollectionSearch({
+      networks,
+      assets: searchableCollections,
+      search: searchValue,
+      searchType: 'collection'
+    })
+  }, [portfolio?.collections, networks, searchValue, dashboardNetworkFilter])
 
   const isReadyToVisualizeCollections = useMemo(() => {
     if (portfolio.isAllReady) return true
@@ -103,7 +108,6 @@ const Collections: FC<Props> = ({
               openTab={openTab}
               setOpenTab={setOpenTab}
               currentTab="collectibles"
-              searchControl={control}
               sessionId={sessionId}
             />
           </View>
@@ -122,7 +126,7 @@ const Collections: FC<Props> = ({
               !dashboardNetworkFilterName &&
               t("You don't have any collectibles (NFTs) yet.")}
             {!searchValue &&
-              dashboardNetworkFilter &&
+              !!dashboardNetworkFilter &&
               t(`You don't have any collectibles (NFTs) on ${dashboardNetworkFilterName}.`)}
             {searchValue &&
               t(
@@ -207,6 +211,9 @@ const Collections: FC<Props> = ({
         bounces={false}
         animatedOverviewHeight={animatedOverviewHeight}
       />
+      {openTab === 'collectibles' && (
+        <SearchAndCurrentApp control={control} isHidden={isSearchHidden} />
+      )}
     </>
   )
 }

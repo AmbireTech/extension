@@ -1,7 +1,7 @@
 import './RefreshIcon.css'
 
 import React, { memo } from 'react'
-import { ColorValue, ViewStyle } from 'react-native'
+import { SvgProps } from 'react-native-svg'
 
 import RefreshSvg from '@common/assets/svg/RefreshIcon'
 
@@ -13,10 +13,10 @@ const RefreshIcon = ({
   width,
   height
 }: {
-  color?: ColorValue
+  color?: SvgProps['color']
   spin?: boolean
-  width: ViewStyle['width']
-  height: ViewStyle['height']
+  width: SvgProps['width']
+  height: SvgProps['height']
 }) => {
   return (
     <div className={spin ? 'spinAnimation' : ''} style={{ width, height }}>

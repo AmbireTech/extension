@@ -94,12 +94,6 @@ const PriceImpactWarningModal: FC<Props> = ({
       id="warning-modal"
       closeBottomSheet={closeBottomSheetWrapped}
       sheetRef={sheetRef}
-      style={{
-        backgroundColor: theme.primaryBackground,
-        paddingHorizontal: 0,
-        paddingVertical: 0,
-        overflow: 'hidden'
-      }}
       type={isTab ? 'modal' : 'bottom-sheet'}
       withBackdropBlur={false}
       shouldBeClosableOnDrag={false}

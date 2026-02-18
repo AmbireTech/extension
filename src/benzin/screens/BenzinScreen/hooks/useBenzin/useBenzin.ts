@@ -8,16 +8,15 @@ import {
 } from '@ambire-common/libs/accountOp/submittedAccountOp'
 import { relayerCall } from '@ambire-common/libs/relayerCall/relayerCall'
 import { BundlerSwitcher } from '@ambire-common/services/bundlers/bundlerSwitcher'
-import { getRpcProvider } from '@ambire-common/services/provider'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
 import useBenzinNetworksContext from '@benzin/hooks/useBenzinNetworksContext'
 import useSteps from '@benzin/screens/BenzinScreen/hooks/useSteps'
 import { ActiveStepType } from '@benzin/screens/BenzinScreen/interfaces/steps'
+import useController from '@common/hooks/useController'
 import useRoute from '@common/hooks/useRoute'
 import useToast from '@common/hooks/useToast'
 import { setStringAsync } from '@common/utils/clipboard'
 import { RELAYER_URL } from '@env'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 
 const fetch = window.fetch.bind(window) as any
 const standardOptions = {
@@ -50,23 +49,38 @@ const useBenzin = ({ onOpenExplorer, extensionAccOp }: Props = {}) => {
     route?.search
   )
 
-  const { networks } = useNetworksControllerState()
-  const { benzinNetworks, loadingBenzinNetworks = [], addNetwork } = useBenzinNetworksContext()
+  const {
+    state: { networks }
+  } = useController('NetworksController')
+  const {
+    benzinNetworks,
+    loadingBenzinNetworks = [],
+    addNetwork,
+    notFoundNetworks
+  } = useBenzinNetworksContext()
   const bigintChainId = BigInt(chainId || '') || 0n
   const actualNetworks = networks ?? benzinNetworks
   const areRelayerNetworksLoaded = actualNetworks && actualNetworks.length
   const isNetworkLoading = loadingBenzinNetworks.includes(bigintChainId)
   const [activeStep, setActiveStep] = useState<ActiveStepType>('signed')
-  const isInitialized = !isNetworkLoading && areRelayerNetworksLoaded
+  const isInitialized =
+    !isNetworkLoading && areRelayerNetworksLoaded && (!!extensionAccOp || activeStep !== 'signed')
 
   const network = useMemo(() => {
     return actualNetworks.find((n) => n.chainId === bigintChainId) || null
   }, [actualNetworks, bigintChainId])
 
-  const provider = useMemo(() => {
-    if (!network || bigintChainId === 0n) return null
-    return getRpcProvider(network.rpcUrls, bigintChainId, network.selectedRpcUrl)
-  }, [network, bigintChainId])
+  const {
+    dispatch: providerDispatch,
+    state: { providers }
+  } = useController('ProvidersController')
+
+  useEffect(() => {
+    if (!network) return
+    if (providers[network.chainId.toString()]) return
+
+    providerDispatch({ type: 'method', params: { method: 'setProvider', args: [network] } })
+  }, [network, providers, providerDispatch])
 
   const switcher = useMemo(() => {
     if (!network) return null
@@ -89,7 +103,6 @@ const useBenzin = ({ onOpenExplorer, extensionAccOp }: Props = {}) => {
     network,
     standardOptions,
     setActiveStep,
-    provider,
     switcher,
     extensionAccOp,
     networks: actualNetworks
@@ -174,9 +187,11 @@ const useBenzin = ({ onOpenExplorer, extensionAccOp }: Props = {}) => {
     txnId: stepsState.txnId,
     userOpHash,
     isRenderedInternally,
+    bigintChainId,
     showCopyBtn,
     showOpenExplorerBtn,
-    isInitialized
+    isInitialized,
+    isNetworkNotFound: notFoundNetworks.includes(bigintChainId)
   }
 }
 

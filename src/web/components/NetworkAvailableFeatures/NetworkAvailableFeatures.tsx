@@ -1,26 +1,25 @@
-/* eslint-disable jsx-a11y/anchor-is-valid */
 import { Interface } from 'ethers'
 /* eslint-disable react/jsx-no-useless-fragment */
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useId, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { View } from 'react-native'
+import { TextStyle, View } from 'react-native'
 
 import DeployHelper from '@ambire-common/../contracts/compiled/DeployHelper.json'
-import { Session } from '@ambire-common/classes/session'
 import { AMBIRE_ACCOUNT_FACTORY, SINGLETON } from '@ambire-common/consts/deploy'
 import { NetworkFeature } from '@ambire-common/interfaces/network'
-import { SignUserRequest } from '@ambire-common/interfaces/userRequest'
 import { isSmartAccount } from '@ambire-common/libs/account/account'
-import { getRpcProvider } from '@ambire-common/services/provider'
 import CheckIcon from '@common/assets/svg/CheckIcon'
-import ErrorFilledIcon from '@common/assets/svg/ErrorFilledIcon'
-import InformationIcon from '@common/assets/svg/InformationIcon'
-import WarningFilledIcon from '@common/assets/svg/WarningFilledIcon'
+import ErrorIcon from '@common/assets/svg/ErrorIcon'
+import InfoIcon from '@common/assets/svg/InfoIcon'
+import WarningIcon from '@common/assets/svg/WarningIcon'
 import Button from '@common/components/Button'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
-import Tooltip from '@common/components/Tooltip'
+import useController from '@common/hooks/useController'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
+import usePrevious from '@common/hooks/usePrevious'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
@@ -34,9 +33,6 @@ import spacings, {
 } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 
 import getStyles from './styles'
 
@@ -44,61 +40,81 @@ type Props = {
   chainId?: bigint
   features: NetworkFeature[] | undefined
   withRetryButton?: boolean
-  handleRetry?: () => void
+  handleRetryWithDifferentRpcUrl?: () => void
   hideBackgroundAndBorders?: boolean
   titleSize?: number
   responsiveSizeMultiplier?: number
   withScroll?: boolean
+  titleStyle?: TextStyle
 }
 
 const NetworkAvailableFeatures = ({
   chainId,
   features,
   withRetryButton,
-  handleRetry,
+  handleRetryWithDifferentRpcUrl,
   hideBackgroundAndBorders = false,
   titleSize,
   responsiveSizeMultiplier = 1,
-  withScroll = false
+  withScroll = false,
+  titleStyle
 }: Props) => {
   const { t } = useTranslation()
   const { theme, styles } = useTheme(getStyles)
   const { pathname } = useRoute()
-  const { account } = useSelectedAccountControllerState()
-  const { networks } = useNetworksControllerState()
-  const { dispatch, windowId } = useBackgroundService()
+  const {
+    state: { account }
+  } = useController('SelectedAccountController')
+
+  const {
+    state: { networks }
+  } = useController('NetworksController')
+
+  const { dispatchAndWait } = useController('ProvidersController')
+  const { dispatch } = useControllersMiddleware()
   const { addToast } = useToast()
-  const [checkedDeploy, setCheckedDeploy] = useState<boolean>(false)
+  const [checkedDeployFor, setCheckedDeployFor] = useState<bigint | undefined>()
+  const tooltipId = useId()
 
   const selectedNetwork = useMemo(
     () => networks.find((network) => network.chainId === chainId),
     [networks, chainId]
   )
+  const prevSelectedNetwork: any = usePrevious(selectedNetwork)
 
   useEffect(() => {
-    if (!selectedNetwork || selectedNetwork.areContractsDeployed || checkedDeploy) return
+    if (!selectedNetwork) return
 
-    setCheckedDeploy(true)
-    const provider = getRpcProvider(selectedNetwork.rpcUrls, selectedNetwork.chainId)
-    provider
-      .getCode(AMBIRE_ACCOUNT_FACTORY)
-      .then((factoryCode: string) => {
+    if (selectedNetwork.chainId !== checkedDeployFor) setCheckedDeployFor(undefined)
+  }, [selectedNetwork, prevSelectedNetwork, checkedDeployFor])
+
+  useEffect(() => {
+    if (!selectedNetwork || selectedNetwork.areContractsDeployed || checkedDeployFor) return
+
+    setCheckedDeployFor(selectedNetwork.chainId)
+
+    dispatchAndWait({
+      type: 'method',
+      params: {
+        method: 'callProviderAndSendResToUi',
+        args: [
+          { chainId: selectedNetwork.chainId, method: 'getCode', args: [AMBIRE_ACCOUNT_FACTORY] }
+        ]
+      }
+    })
+      .then((factoryCode) => {
         if (factoryCode !== '0x') {
           dispatch({
             type: 'MAIN_CONTROLLER_UPDATE_NETWORK',
             params: { network: { areContractsDeployed: true }, chainId: selectedNetwork.chainId }
           })
         }
-        provider.destroy()
       })
-      .catch(() => {
-        provider.destroy()
+      .catch((error) => {
+        // eslint-disable-next-line no-console
+        console.error(error)
       })
-
-    return () => {
-      provider.destroy()
-    }
-  }, [dispatch, selectedNetwork, checkedDeploy])
+  }, [dispatch, selectedNetwork, checkedDeployFor, dispatchAndWait])
 
   const handleDeploy = useCallback(async () => {
     if (!selectedNetwork) return // this should not happen...
@@ -127,37 +143,33 @@ const NetworkAvailableFeatures = ({
       }
     ]
     const singletonInterface = new Interface(singletonABI)
-    const txn = {
-      kind: 'calls' as const,
-      calls: [
-        {
-          to: SINGLETON,
-          value: 0n,
-          data: singletonInterface.encodeFunctionData('deploy', [bytecode, salt])
+
+    dispatch({
+      type: 'REQUESTS_CONTROLLER_ADD_CALLS_USER_REQUEST',
+      params: {
+        userRequestParams: {
+          calls: [
+            {
+              to: SINGLETON,
+              value: 0n,
+              data: singletonInterface.encodeFunctionData('deploy', [bytecode, salt])
+            }
+          ],
+          meta: {
+            chainId: selectedNetwork.chainId,
+            accountAddr: account.addr as string
+          }
         }
-      ]
-    }
-
-    const userRequest: SignUserRequest = {
-      id: new Date().getTime(),
-      session: new Session({ windowId }),
-      meta: {
-        isSignAction: true,
-        chainId: selectedNetwork.chainId,
-        accountAddr: account.addr as string
-      },
-      action: txn
-    }
-
-    dispatch({ type: 'REQUESTS_CONTROLLER_ADD_USER_REQUEST', params: { userRequest } })
-  }, [addToast, dispatch, account, selectedNetwork, windowId])
+      }
+    })
+  }, [addToast, dispatch, account, selectedNetwork])
 
   const shouldRenderRetryButton = useMemo(
     () => !!features && !!features.find((f) => f.id === 'flagged') && withRetryButton,
     [features, withRetryButton]
   )
 
-  const iconSize = 14 * responsiveSizeMultiplier
+  const iconSize = 20 * responsiveSizeMultiplier
 
   const Wrapper = withScroll ? ScrollableWrapper : View
 
@@ -166,7 +178,8 @@ const NetworkAvailableFeatures = ({
       <Text
         fontSize={titleSize || 18 * responsiveSizeMultiplier}
         weight="medium"
-        style={spacings.mbMd}
+        appearance="infoText"
+        style={[spacings.mbMd, titleStyle]}
       >
         {t('Available features')}
       </Text>
@@ -198,10 +211,10 @@ const NetworkAvailableFeatures = ({
                   )}
                   {feature.level === 'success' && <CheckIcon width={iconSize} height={iconSize} />}
                   {feature.level === 'warning' && (
-                    <WarningFilledIcon width={iconSize} height={iconSize} />
+                    <WarningIcon color={theme.warning400} width={iconSize} height={iconSize} />
                   )}
                   {feature.level === 'danger' && (
-                    <ErrorFilledIcon width={iconSize} height={iconSize} />
+                    <ErrorIcon color={theme.error300} width={iconSize} height={iconSize} />
                   )}
                 </View>
                 <View style={[flexbox.directionRow, flexbox.flex1, flexbox.alignCenter]}>
@@ -234,17 +247,24 @@ const NetworkAvailableFeatures = ({
                         </>
                       )}
                     {!!feature.msg && (
-                      <View style={{ width: 1 }}>
-                        <View style={{ position: 'absolute', top: -11.5, left: 6 }}>
-                          <InformationIcon
-                            width={iconSize}
-                            height={iconSize}
-                            dataSet={{
-                              tooltipId: 'feature-message-tooltip',
-                              tooltipContent: feature.msg
-                            }}
-                          />
-                        </View>
+                      <View
+                        style={[
+                          spacings.plMi,
+                          {
+                            // @ts-ignore web style
+                            verticalAlign: 'middle',
+                            paddingBottom: 3
+                          }
+                        ]}
+                      >
+                        <InfoIcon
+                          width={16 * responsiveSizeMultiplier}
+                          height={16 * responsiveSizeMultiplier}
+                          dataSet={createGlobalTooltipDataSet({
+                            id: `feature-message-tooltip-${feature.id}-${tooltipId}`,
+                            content: feature.msg
+                          })}
+                        />
                       </View>
                     )}
                   </Text>
@@ -277,15 +297,12 @@ const NetworkAvailableFeatures = ({
             </Text>
             <Button
               size="small"
-              text={t('Retry')}
+              text={t('Try next RPC URL')}
               style={{ maxHeight: 32 }}
-              onPress={() => {
-                !!handleRetry && handleRetry()
-              }}
+              onPress={handleRetryWithDifferentRpcUrl}
             />
           </View>
         )}
-        <Tooltip id="feature-message-tooltip" />
       </View>
     </Wrapper>
   )

@@ -7,35 +7,33 @@
 */
 
 // Theme Colors
-$mainText:#f4f4f7;
-$secondaryText: #8d93ac;
-$icons: #6a6f86;
-$hover: #393C48;
-$interactiveElement: #292B34;
-$cardBg: #848486;
+$mainText: #f4f4f7;
 $mainBg: #101114;
 
 // Neutrals
-$neutral-100: #F4F4F7;
-$neutral-200: #E8E8E9;
-$neutral-300: #CADBEB;
-$neutral-400: #8D93AC;
-$neutral-500: #7d84A4;
-$neutral-600: #6A6F86;
-$neutral-700: #191A1F;
+$neutral-100: #f4f4f7;
+$neutral-200: #e8e8e9;
+$neutral-300: #cadbeb;
+$neutral-400: #8d93ac;
+$neutral-450: #8e98a8;
+$neutral-500: #7d84a4;
+$neutral-600: #6a6f86;
+$neutral-700: #191a1f;
 $neutral-800: #101114;
-$neutral-900: #23242B;
+$neutral-900: #23242b;
 
 // Purple Shades
 $purple-100: #f0ebff;
 $purple-200: #d0c0ff;
 $purple-300: #b9a2ff;
-$purple-400: #9978ff;
+$purple-400: #a182ff;
 $purple-500: #855dff;
+$purple-550: #b37aff;
+$purple-650: #785aff;
 $purple-600: #6735ff;
 $purple-700: #5e30e8;
 $purple-800: #4926b5;
-$purple-850: #6C2B99;
+$purple-850: #6c2b99;
 $purple-900: #391d8c;
 $purple-1000: #2b166b;
 
@@ -45,15 +43,18 @@ $dark-purple: #350586;
 // $blue-50: #f4f4f7;
 // $blue-100: #dcdee5;
 $blue-200: #cbcdd9;
+$blue-300: #00bfff;
+$blue-400: #00d4ff;
+$blue-500: #00d5ff;
 // $blue-300: #b3b7c7;
 // $blue-400: #a4a9bd;
 // $blue-500: #8d93ac;
 // $blue-600: #80869d;
-$blue-700: #005BA3;
-$blue-800: #0D6D86;
+$blue-700: #005ba3;
+$blue-800: #0d6d86;
 // $blue-800: #4e515f;
 // $blue-900: #3b3e48;
-$teal: #1B709B;
+$teal: #1b709b;
 
 // Red Shades
 $red-50: #fbe6ef;
@@ -95,17 +96,17 @@ $green-900: #004f3d;
 $primaryText: $neutral-100;
 $secondaryText: $neutral-400;
 $tertiaryText: $neutral-600;
-$quaternaryText: $neutral-500;
+$quaternaryText: #54597a;
 $quinaryText: $neutral-300;
 
 $primaryBackground: $neutral-800;
 $primaryBackground200: rgba($neutral-600, 0.2);
-$primaryBackground300: #26272C;
+$primaryBackground300: #26272c;
 $secondaryBackground: $neutral-700;
-$tertiaryBackground:$neutral-700;
+$tertiaryBackground: $neutral-700;
 
-$whiteText: #FFFFFF;
-$purpleText: #A670FF;
+$whiteText: #ffffff;
+$purpleText: #a670ff;
 $blackText: #000000;
 
 $accent: $purple-600;
@@ -116,39 +117,33 @@ $goldDecorative: $yellow-300;
 $backdrop: rgba($blackText, 0.5);
 
 // One time used colors
-$hover-dark: #373B43;
-$charcoal: #1E1F24;
+$hover-dark: #373b43;
+$charcoal: #1e1f24;
 $blackText: #000000;
 $backdrop: rgba($blackText, 0.5);
-$midnightDark: #17191E;
 
 $primaryBorder: $hover-dark;
 
 // Old colors
 $alternativeText: #efefef;
-// $primaryBorder: #ebdeca;
 $secondaryBorder: #c9c5be;
 $tertiaryBorder: #706048;
-// $tertiaryBackground: #efe3d3;
-$secondaryAccent200: #d8ebca;
 $bronzeBackground: #f5d4b5;
 $bronzeText: #8a6037;
 $silverBackground: #e8e6e3;
 $silverText: #686663;
 $goldBackground: #f8e3b7;
 $goldText: #b67d02;
-$yellowText: #F7BA2F;
+$yellowText: #f7ba2f;
 
 $primaryBadgeBackground: #2c567d;
 $primaryBadgeDecorative: #113a60;
 $secondaryBadgeBackground: #7d2c2d;
 $secondaryBadgeDecorative: #601119;
-$tertiaryBadgeBackground: #500808;
 
 // Landing colors
 // These colors are here in hopes that
 // they the two colors schemes will be merged in the future.
-$landingBoxShadow: #372f23;
 $landingAccent: #374d26;
 
 $success: #4e9200;
@@ -167,22 +162,13 @@ $info: #1a66df;
 $infoText: #1552b2;
 $infoBackground: rgba(26, 102, 223, 0.2);
 
-$primaryGradient: linear-gradient(
-  90deg,
-  #d8b98c 0%,
-  #ffe8c6 27%,
-  #fff 46%,
-  #f7d7a7 65%,
-  #7f643d 100%
-);
-
-$secondaryGradient: linear-gradient(90deg, #fee852 0%, #f6b92e 64%, #d19a3a 100%);
+$primaryGradient: linear-gradient(81.89deg, $blue-500 5.63%, #a25aff 95.17%);
 
 // Typography
 $primaryFont: 'FunnelDisplay', sans-serif;
 $secondaryFont: 'FunnelDisplay', sans-serif;
 
 // Other
-$primaryBorderRadius: 0.375rem;
+$primaryBorderRadius: 0.5rem;
 $secondaryBorderRadius: 0.75rem;
-$tertiaryBorderRadius: 2rem;
+$tertiaryBorderRadius: 1rem;

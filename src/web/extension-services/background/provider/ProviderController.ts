@@ -2,7 +2,7 @@
 import 'reflect-metadata'
 
 import { ethErrors } from 'eth-rpc-errors'
-import { isAddress, toBeHex, TransactionReceipt } from 'ethers'
+import { getAddress, isAddress } from 'ethers'
 import cloneDeep from 'lodash/cloneDeep'
 import { nanoid } from 'nanoid'
 
@@ -18,12 +18,10 @@ import {
 import { getBaseAccount } from '@ambire-common/libs/account/getBaseAccount'
 import {
   AccountOpIdentifiedBy,
-  fetchTxnId,
   isIdentifiedByMultipleTxn
 } from '@ambire-common/libs/accountOp/submittedAccountOp'
+import { AccountOpStatus } from '@ambire-common/libs/accountOp/types'
 import { networkChainIdToHex } from '@ambire-common/libs/networks/networks'
-import { getBundlerByName, getDefaultBundler } from '@ambire-common/services/bundlers/getBundler'
-import { getRpcProvider } from '@ambire-common/services/provider'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import { APP_VERSION } from '@common/config/env'
@@ -110,6 +108,7 @@ export class ProviderController {
     if (!this.mainCtrl.dapps.hasPermission(id) && !SAFE_RPC_METHODS.includes(method)) {
       throw ethErrors.provider.unauthorized()
     }
+    if (!provider) throw ethErrors.rpc.invalidParams('provider not found')
 
     return provider.send(method, params)
   }
@@ -199,7 +198,7 @@ export class ProviderController {
           }
         )
         if (!token) return
-        res[chainId].push({
+        res[chainId]!.push({
           address: token.address,
           balance: `0x${(token.amountPostSimulation || token.amount || 0).toString(16)}`,
           type: 'ERC20',
@@ -283,28 +282,77 @@ export class ProviderController {
   @Reflect.metadata('ACTION_REQUEST', [
     'AddChain',
     ({ request }: { request: ProviderRequest; mainCtrl: MainController }) => {
-      const { params } = request
-      if (!params[0]) {
-        throw ethErrors.rpc.invalidParams('params is required but got []')
+      const chainParams = request.params[0]
+
+      if (!chainParams)
+        throw ethErrors.rpc.invalidParams(
+          'Missing network details. Please specify a chain ID and the required network information.'
+        )
+
+      if (!chainParams?.chainId || typeof chainParams.chainId !== 'string')
+        throw ethErrors.rpc.invalidParams(
+          `Expected 0x-prefixed, unpadded, non-zero hexadecimal string 'chainId'. Received: ${chainParams?.chainId}`
+        )
+
+      const { chainId } = chainParams
+      const chainIdNumber = Number(chainId)
+      if (isNaN(chainIdNumber) || chainIdNumber > Number.MAX_SAFE_INTEGER)
+        throw ethErrors.rpc.invalidParams(
+          `Invalid chain ID "${chainId}": numerical value greater than max safe value. Received: ${chainId}`
+        )
+
+      if (!chainParams?.chainName || typeof chainParams.chainName !== 'string') {
+        throw ethErrors.rpc.invalidParams("'chainName' is required and must be a string")
       }
-      if (!params[0]?.chainId) {
-        throw ethErrors.rpc.invalidParams('chainId is required')
-      }
+
+      if (!chainParams?.nativeCurrency || typeof chainParams.nativeCurrency !== 'object')
+        throw ethErrors.rpc.invalidParams("'nativeCurrency' is required and must be an object")
+
+      const { nativeCurrency } = chainParams
+      if (
+        !nativeCurrency.decimals ||
+        typeof nativeCurrency.decimals !== 'number' ||
+        !Number.isInteger(nativeCurrency.decimals)
+      )
+        throw ethErrors.rpc.invalidParams(
+          "'nativeCurrency.decimals' is required and must be an integer"
+        )
+
+      if (!nativeCurrency.name || typeof nativeCurrency.name !== 'string')
+        throw ethErrors.rpc.invalidParams("'nativeCurrency.name' is required and must be a string")
+
+      if (!nativeCurrency.symbol || typeof nativeCurrency.symbol !== 'string')
+        throw ethErrors.rpc.invalidParams(
+          "'nativeCurrency.symbol' is required and must be a string"
+        )
+
+      const ticker = nativeCurrency.symbol
+      if (ticker.length < 2 || ticker.length > 6)
+        throw ethErrors.rpc.invalidParams(
+          `Expected 2-6 character string 'nativeCurrency.symbol'. Received: ${ticker}`
+        )
+
+      // Validate rpcUrls
+      if (!chainParams?.rpcUrls || !Array.isArray(chainParams.rpcUrls))
+        throw ethErrors.rpc.invalidParams("'rpcUrls' is required and must be an array")
+      if (chainParams.rpcUrls.length === 0)
+        throw ethErrors.rpc.invalidParams("'rpcUrls' must contain at least one URL")
+
+      if (!chainParams.rpcUrls.every((url: any) => typeof url === 'string'))
+        throw ethErrors.rpc.invalidParams("'rpcUrls' must be an array of strings")
 
       return false
     }
   ])
   walletAddEthereumChain = async ({ params: [chainParams], session: { id } }: ProviderRequest) => {
-    let chainId = chainParams.chainId
-    if (typeof chainId === 'string') {
-      chainId = Number(chainId)
-    }
-
+    const chainId = Number(chainParams.chainId)
     const network = this.mainCtrl.networks.networks.find((n) => Number(n.chainId) === chainId)
 
-    if (!network) {
-      throw new Error('This chain is not supported by Ambire yet.')
-    }
+    // should never happen
+    if (!network)
+      throw new Error(
+        'Something went wrong while adding the network. Please try again later or contact Ambire support.'
+      )
 
     this.mainCtrl.dapps.updateDapp(id, { chainId })
     await this.mainCtrl.dapps.broadcastDappSessionEvent(
@@ -383,7 +431,7 @@ export class ProviderController {
             // hasBundlerSupport means it might not be 4337 but we support it
             // our default may be the relayer but we will broadcast an userOp
             // in case of sponsorships
-            (network.erc4337.enabled || network.erc4337.hasBundlerSupport)
+            network.erc4337.hasBundlerSupport
         },
         atomic: {
           status: baseAccount.getAtomicStatus()
@@ -396,6 +444,13 @@ export class ProviderController {
   @Reflect.metadata('ACTION_REQUEST', ['SendTransaction', false])
   walletSendCalls = async (data: any) => {
     if (data.requestRes && data.requestRes.hash) {
+      const version = data.params?.[0]?.version
+      if (version === '2.0.0')
+        return {
+          id: data.requestRes.hash
+        }
+
+      // v1 response
       return data.requestRes.hash
     }
 
@@ -421,11 +476,14 @@ export class ProviderController {
       identifier,
       bundler: bundlerName
     }
+    if (!identifier) throw ethErrors.rpc.invalidParams('no identifier passed')
 
     const dappNetwork = this.getDappNetwork(data.session.id)
     const network = this.mainCtrl.networks.networks.filter(
       (n) => n.chainId === dappNetwork.chainId
     )[0]
+    if (!network) throw ethErrors.rpc.invalidParams('invalid chain')
+
     const accOp = this.mainCtrl.selectedAccount.account
       ? this.mainCtrl.activity.findByIdentifiedBy(
           identifiedBy,
@@ -435,82 +493,84 @@ export class ProviderController {
       : undefined
     const version = getVersion(accOp)
 
-    const txnIdData = await fetchTxnId(identifiedBy, network, this.mainCtrl.callRelayer)
-    if (txnIdData.status === 'rejected') {
+    if (!accOp) throw ethErrors.rpc.invalidParams('invalid identifier passed')
+
+    if (
+      accOp.status === AccountOpStatus.Rejected ||
+      accOp.status === AccountOpStatus.UnknownButPastNonce ||
+      accOp.status === AccountOpStatus.BroadcastButStuck
+    ) {
       return {
         status: getFailureStatus(version)
       }
     }
-    if (txnIdData.status !== 'success') {
+
+    if (
+      !accOp.status ||
+      accOp.status === AccountOpStatus.BroadcastedButNotConfirmed ||
+      accOp.status === AccountOpStatus.Pending ||
+      !accOp.txnId
+    ) {
       return {
         status: getPendingStatus(version)
       }
     }
 
-    const isMultipleTxn = isIdentifiedByMultipleTxn(identifiedBy)
-    const txnId = txnIdData.txnId as string
-    const provider = getRpcProvider(network.rpcUrls, network.chainId, network.selectedRpcUrl)
-    const isUserOp = identifiedBy.type === 'UserOperation'
-    const bundler = bundlerName ? getBundlerByName(bundlerName) : getDefaultBundler(network)
+    const txnId = accOp.txnId
+    const provider = this.mainCtrl.providers.providers[network.chainId.toString()]
 
-    if (isUserOp) {
-      const userOpReceipt = await bundler
-        .getReceipt(identifiedBy.identifier, network)
-        .catch(() => null)
-      if (!userOpReceipt) {
-        return {
-          status: getPendingStatus(version)
-        }
-      }
+    // check to satisfy the TS; should never happen
+    if (!provider) {
+      throw ethErrors.rpc.internal(
+        `RPC provider with chainId: ${network.chainId.toString()} not found`
+      )
+    }
 
-      const txnStatus =
-        'status' in userOpReceipt.receipt
-          ? toBeHex(userOpReceipt.receipt.status as number, 1)
-          : toBeHex(+userOpReceipt.success, 1)
-      const status = txnStatus === '0x01' || txnStatus === '0x1' ? '0x1' : '0x0'
+    if (identifiedBy.type === 'UserOperation') {
       return {
         version,
         id: identifiedBy,
-        atomic: !isMultipleTxn,
+        atomic: true,
         status: getSuccessStatus(version),
         receipts: [
           {
-            logs: userOpReceipt.logs,
-            status,
+            logs: [],
+            status: accOp.status === AccountOpStatus.Success ? '0x1' : '0x0',
             chainId: networkChainIdToHex(network.chainId),
-            blockHash: userOpReceipt.receipt.blockHash,
-            blockNumber: userOpReceipt.receipt.blockNumber,
-            gasUsed: userOpReceipt.receipt.gasUsed,
-            transactionHash: userOpReceipt.receipt.transactionHash
+            blockHash: accOp.blockHash,
+            gasUsed: accOp.gasUsed,
+            blockNumber: accOp.blockNumber,
+            transactionHash: accOp.txnId
           }
         ]
       }
     }
 
     const receipts = []
+    const isMultipleTxn = isIdentifiedByMultipleTxn(identifiedBy)
     if (!isMultipleTxn) {
-      const txnReceipt = await provider.getTransactionReceipt(txnId).catch(() => null)
-      if (!txnReceipt) {
-        return {
-          status: getPendingStatus(version)
-        }
-      }
-
-      receipts.push(txnReceipt)
+      receipts.push({
+        logs: [],
+        status: accOp.status === AccountOpStatus.Success ? '0x1' : '0x0',
+        chainId: networkChainIdToHex(network.chainId),
+        blockHash: accOp.blockHash,
+        gasUsed: accOp.gasUsed,
+        blockNumber: accOp.blockNumber,
+        transactionHash: accOp.txnId
+      })
     } else {
-      const txnIds = identifiedBy.identifier.split('-')
-      const txnReceipts = await Promise.all(
-        txnIds.map((oneTxnId) => provider.getTransactionReceipt(oneTxnId).catch(() => null))
-      )
-      const foundTxnReceipts = txnReceipts.filter((r) => r)
-
-      if (!foundTxnReceipts.length || foundTxnReceipts.length < txnIds.length) {
-        return {
-          status: getPendingStatus(version)
-        }
+      for (let i = 0; i < accOp.calls.length; i++) {
+        const call = accOp.calls[i]!
+        receipts.push({
+          logs: [],
+          status: call.status === AccountOpStatus.Success ? '0x1' : '0x0',
+          chainId: networkChainIdToHex(network.chainId),
+          blockHash: call.blockHash,
+          gasUsed: call.gasUsed,
+          blockNumber: call.blockNumber,
+          transactionHash: call.txnId
+        })
       }
-
-      receipts.push(...foundTxnReceipts)
     }
 
     return {
@@ -518,20 +578,7 @@ export class ProviderController {
       id: identifiedBy,
       atomic: !isMultipleTxn,
       status: getSuccessStatus(version),
-      receipts: receipts.map((receipt) => {
-        const txnReceipt = receipt as unknown as TransactionReceipt
-        const txnStatus = toBeHex(txnReceipt.status as number, 1)
-        const status = txnStatus === '0x01' || txnStatus === '0x1' ? '0x1' : '0x0'
-        return {
-          logs: txnReceipt.logs,
-          status,
-          chainId: networkChainIdToHex(network.chainId),
-          blockHash: txnReceipt.blockHash,
-          blockNumber: toBeHex(txnReceipt.blockNumber as number),
-          gasUsed: toBeHex(txnReceipt.gasUsed),
-          transactionHash: txnReceipt.hash
-        }
-      })
+      receipts
     }
   }
 
@@ -579,6 +626,7 @@ export class ProviderController {
     const network = this.mainCtrl.networks.networks.filter(
       (n) => n.chainId === dappNetwork.chainId
     )[0]
+    if (!network) throw ethErrors.rpc.invalidParams('invalid chain')
     const chainId = Number(network.chainId)
 
     const link = `https://explorer.ambire.com/${getBenzinUrlParams({
@@ -593,20 +641,28 @@ export class ProviderController {
   @Reflect.metadata('ACTION_REQUEST', [
     'AddChain',
     ({ request, mainCtrl }: { request: ProviderRequest; mainCtrl: MainController }) => {
-      const { params, session } = request
-      if (!params[0]) {
-        throw ethErrors.rpc.invalidParams('params is required but got []')
-      }
-      if (!params[0]?.chainId) {
-        throw ethErrors.rpc.invalidParams('chainId is required')
-      }
-      const dapp = mainCtrl.dapps.getDapp(session.id)
-      const { chainId } = params[0]
-      const network = mainCtrl.networks.networks.find(
-        (n: any) => Number(n.chainId) === Number(chainId)
-      )
+      const chainParams = request.params[0]
+      if (!chainParams)
+        throw ethErrors.rpc.invalidParams(
+          'Missing network details. Please specify a chain ID and the required network information.'
+        )
+
+      if (!chainParams?.chainId || typeof chainParams.chainId !== 'string')
+        throw ethErrors.rpc.invalidParams(
+          `Expected 0x-prefixed, unpadded, non-zero hexadecimal string 'chainId'. Received: ${chainParams?.chainId}`
+        )
+
+      const { chainId } = chainParams
+      const chainIdNumber = Number(chainId)
+      if (isNaN(chainIdNumber) || chainIdNumber > Number.MAX_SAFE_INTEGER)
+        throw ethErrors.rpc.invalidParams(
+          `Invalid chain ID "${chainId}": numerical value greater than max safe value. Received: ${chainId}`
+        )
+
+      const dapp = mainCtrl.dapps.getDapp(request.session.id)
       if (!dapp?.isConnected) return false
 
+      const network = mainCtrl.networks.networks.find((n) => Number(n.chainId) === Number(chainId))
       if (!network) {
         throw ethErrors.provider.custom({
           code: 4902,
@@ -614,6 +670,7 @@ export class ProviderController {
             'Unrecognized chain ID. Try adding the chain using wallet_addEthereumChain first.'
         })
       }
+
       return true
     }
   ])
@@ -621,11 +678,14 @@ export class ProviderController {
     params: [chainParams],
     session: { id, origin, name }
   }: ProviderRequest) => {
-    let chainId = chainParams.chainId
-    if (typeof chainId === 'string') chainId = Number(chainId)
-
+    const chainId = Number(chainParams.chainId)
     const network = this.mainCtrl.networks.networks.find((n) => Number(n.chainId) === chainId)
-    if (!network) throw new Error('This chain is not supported by Ambire yet.')
+
+    // should never happen, because this gets validated beforehand
+    if (!network)
+      throw new Error(
+        'Something went wrong while switching network. Please try again later or contact Ambire support.'
+      )
 
     const dapp = this.mainCtrl.dapps.getDapp(id)
 
@@ -656,20 +716,128 @@ export class ProviderController {
   @Reflect.metadata('ACTION_REQUEST', [
     'WalletWatchAsset',
     ({ request }: { request: ProviderRequest; mainCtrl: MainController }) => {
-      const tokenAddress = request.params?.options?.address
+      const options = request.params?.options
+      const tokenAddress = options?.address
 
       if (!tokenAddress) throw ethErrors.rpc.invalidParams('Token address is required')
-      if (!isAddress(tokenAddress)) throw ethErrors.rpc.invalidParams('Invalid token address')
+      if (!isAddress(tokenAddress))
+        throw ethErrors.rpc.invalidParams(`Invalid address '${tokenAddress}'.`)
 
-      return false // Return false to allow action window to open (address is valid)
+      // Validate symbol if provided
+      if (options?.symbol !== undefined) {
+        if (typeof options.symbol !== 'string') {
+          throw ethErrors.rpc.invalidParams('Invalid symbol: not a string.')
+        }
+        if (options.symbol.length > 11) {
+          throw ethErrors.rpc.invalidParams(
+            `Invalid symbol '${options.symbol}': longer than 11 characters.`
+          )
+        }
+      }
+
+      // Validate decimals if provided
+      if (options?.decimals !== undefined) {
+        // Some apps (e.g. CoinGecko) send `decimals` as a string (spec expects an integer). Workaround by parsing it.
+        if (typeof options?.decimals === 'string') options.decimals = +options.decimals
+
+        if (typeof options.decimals !== 'number' || !Number.isInteger(options.decimals)) {
+          throw ethErrors.rpc.invalidParams(
+            `Invalid decimals '${options.decimals}': must be 0 <= 36.`
+          )
+        }
+        if (options.decimals < 0 || options.decimals > 36) {
+          throw ethErrors.rpc.invalidParams(
+            `Invalid decimals '${options.decimals}': must be 0 <= 36.`
+          )
+        }
+      }
+
+      // Validate image if provided
+      if (options?.image !== undefined) {
+        if (typeof options.image !== 'string') {
+          throw ethErrors.rpc.invalidParams('Invalid image: not a string.')
+        }
+      }
+
+      return false // Return false to allow request window to open (all params are valid)
     }
   ])
   walletWatchAsset = () => true
 
-  @Reflect.metadata('ACTION_REQUEST', ['GetEncryptionPublicKey', false])
-  ethGetEncryptionPublicKey = ({ requestRes }: ProviderRequest) => ({
-    result: requestRes
-  })
+  @Reflect.metadata('ACTION_REQUEST', [
+    'GetEncryptionPublicKey',
+    ({ request, mainCtrl }: { request: ProviderRequest; mainCtrl: MainController }) => {
+      let incomingAddress
+      try {
+        incomingAddress = getAddress(request.params?.[0])
+      } catch (e: any) {
+        throw ethErrors.rpc.invalidParams(e?.shortMessage || 'invalid address')
+      }
+
+      const addressesMismatch = incomingAddress !== mainCtrl.selectedAccount.account?.addr
+      if (addressesMismatch)
+        throw ethErrors.rpc.invalidParams(
+          'Account mismatch. The encryption public key request does not match the currently selected account.'
+        )
+
+      return false // Return false to allow request window to open
+    }
+  ])
+  ethGetEncryptionPublicKey = async ({ requestRes }: ProviderRequest) => {
+    const { keyAddr, keyType } = requestRes
+    // should never happen (because the UI blocks it), but just in case
+    if (!keyAddr || !keyType) {
+      const message = `Missing required parameters: keyAddr: ${keyAddr}, keyType: ${keyType}.`
+      throw ethErrors.rpc.invalidParams(message)
+    }
+
+    const signer = await this.mainCtrl.keystore.getSigner(keyAddr, keyType)
+    // should never happen (because the UI blocks it), but just in case
+    if (!signer.getEncryptionPublicKey) {
+      const message = `This account uses a ${keyType} key, which does not support getting encryption public key.`
+      throw ethErrors.rpc.invalidParams(message)
+    }
+
+    return signer.getEncryptionPublicKey()
+  }
+
+  @Reflect.metadata('ACTION_REQUEST', [
+    'Decrypt',
+    ({ request, mainCtrl }: { request: ProviderRequest; mainCtrl: MainController }) => {
+      let incomingAddress
+      try {
+        incomingAddress = getAddress(request.params?.[1])
+      } catch (e: any) {
+        throw ethErrors.rpc.invalidParams(e?.shortMessage || 'invalid address')
+      }
+
+      const addressesMismatch = incomingAddress !== mainCtrl.selectedAccount.account?.addr
+      if (addressesMismatch)
+        throw ethErrors.rpc.invalidParams(
+          'Account mismatch. The decryption request does not match the currently selected account.'
+        )
+
+      if (!request.params?.[0] || typeof request.params?.[0] !== 'string')
+        throw ethErrors.rpc.invalidParams('The encrypted message is required and must be a string')
+
+      return false // Return false to allow request window to open
+    }
+  ])
+  ethDecrypt = ({ requestRes }: ProviderRequest) => {
+    const { keyAddr, keyType, encryptedMessage } = requestRes
+    // should never happen (because the UI blocks it), but just in case
+    if (!keyAddr || !keyType || !encryptedMessage) {
+      const message = `Missing required parameters: keyAddr: ${keyAddr}, keyType: ${keyType}, encryptedMessage: ${encryptedMessage}.`
+      throw ethErrors.rpc.invalidParams(message)
+    }
+
+    try {
+      return this.mainCtrl.keystore.decryptMessage({ keyAddr, keyType, encryptedMessage })
+    } catch (e) {
+      const message = `Failed to decrypt message. Error details: <${e}>`
+      throw ethErrors.provider.unauthorized(message)
+    }
+  }
 
   walletRequestPermissions = ({ params: permissions, session }: DappProviderRequest) => {
     const result: Web3WalletPermission[] = []

@@ -10,15 +10,14 @@ import PrivateKeyExport from '@common/components/ExportKey/PrivateKeyExport'
 import SmartAccountExport from '@common/components/ExportKey/SmartAccountExport'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useExtraEntropy from '@common/hooks/useExtraEntropy'
-import useTheme from '@common/hooks/useTheme'
+import usePrevious from '@common/hooks/usePrevious'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import eventBus from '@web/extension-services/event/eventBus'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 import PasswordConfirmation from '@web/modules/settings/components/PasswordConfirmation'
 import { getUiType } from '@web/utils/uiType'
 
@@ -36,18 +35,27 @@ const ExportKey = ({
   onBackButtonPress: () => void
 }) => {
   const { t } = useTranslation()
-  const { dispatch } = useBackgroundService()
-  const keystoreState = useKeystoreControllerState()
+  const { dispatch } = useControllersMiddleware()
+  const keystoreState = useController('KeystoreController').state
   const [privateKey, setPrivateKey] = useState<string | null>(null)
   const [salt, setSalt] = useState<string | null>(null)
   const [iv, setIv] = useState<string | null>(null)
   const [blurred, setBlurred] = useState<boolean>(true)
-  const { themeType } = useTheme()
+  const prevBlurred = usePrevious(blurred)
+
   const {
     ref: sheetRefConfirmPassword,
     open: openConfirmPassword,
     close: closeConfirmPassword
   } = useModalize()
+
+  useEffect(() => {
+    if (!prevBlurred && !!blurred) {
+      setPrivateKey(null)
+      setSalt(null)
+      setIv(null)
+    }
+  }, [blurred, prevBlurred])
 
   const isExportingV2SA =
     isSmartAccount(account) && !isAmbireV1LinkedAccount(account?.creation?.factoryAddr)
@@ -76,7 +84,7 @@ const ExportKey = ({
   }, [isExportingV2SA])
 
   const { getExtraEntropy } = useExtraEntropy()
-  const onPasswordConfirmed = (password?: string) => {
+  const onPasswordConfirmed = (password: string) => {
     if (isExportingV2SA) {
       dispatch({
         type: 'KEYSTORE_CONTROLLER_SEND_ENCRYPTED_PRIVATE_KEY_TO_UI',
@@ -136,9 +144,6 @@ const ExportKey = ({
         sheetRef={sheetRefConfirmPassword}
         id="confirm-password-bottom-sheet"
         type="modal"
-        backgroundColor={
-          themeType === THEME_TYPES.DARK ? 'secondaryBackground' : 'primaryBackground'
-        }
         closeBottomSheet={closeConfirmPassword}
         scrollViewProps={{ contentContainerStyle: { flex: 1 } }}
         containerInnerWrapperStyles={{ flex: 1 }}

@@ -23,8 +23,12 @@ const getAreDefaultsChanged = (values: any, selectedNetwork?: Network) => {
     if (key === 'rpcUrls') {
       return (
         values[key].some((u: string) => !(selectedNetwork.rpcUrls || []).includes(u)) ||
+        values[key].length !== (selectedNetwork.rpcUrls || []).length ||
         !values[key].length
       )
+    }
+    if (key === 'customBundlerUrl') {
+      return values[key] !== (selectedNetwork[key] || '')
     }
 
     return key in selectedNetwork && values[key] !== selectedNetwork[key as keyof Network]

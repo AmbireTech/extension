@@ -1,34 +1,22 @@
 import React from 'react'
-import Svg, { G, Path, SvgProps } from 'react-native-svg'
+import Svg, { Path, SvgProps } from 'react-native-svg'
 
 import useTheme from '@common/hooks/useTheme'
 
-const EditPenIcon: React.FC<SvgProps> = ({ width = 16, height = 16, color }) => {
+const EditPenIcon: React.FC<SvgProps> = ({ width = 24, height = 24, color }) => {
   const { theme } = useTheme()
+
   return (
-    <Svg width={width} height={height} viewBox="0 0 15.503 15.517">
-      <G transform="translate(-7.652 -1.236)">
-        <G transform="translate(8.405 2)">
-          <Path
-            d="M23.462,16.343,16.2,23.608a2.528,2.528,0,0,0-.616,1.211l-.39,2.77a1.3,1.3,0,0,0,1.56,1.56l2.771-.39a2.442,2.442,0,0,0,1.211-.616L28,20.878c1.252-1.252,1.847-2.709,0-4.556C26.171,14.5,24.714,15.091,23.462,16.343Z"
-            transform="translate(-15.171 -15.167)"
-            fill="none"
-            stroke={color || theme.iconPrimary}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="1.5"
-          />
-          <Path
-            d="M18.7,16.25a6.538,6.538,0,0,0,4.557,4.556"
-            transform="translate(-11.458 -14.028)"
-            fill="none"
-            stroke={color || theme.iconPrimary}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="1.5"
-          />
-        </G>
-      </G>
+    <Svg width={width} height={height} viewBox="0 0 20 20" fill="none">
+      <Path
+        stroke={color || theme.iconPrimary}
+        strokeWidth="1.5"
+        d="M12.183 4.693c.21-.038.425-.038.634 0 .327.06.582.223.795.396.203.164.425.388.668.63.243.244.468.466.632.669.173.213.334.468.395.795.038.21.038.425 0 .634-.06.327-.222.582-.395.795-.164.203-.389.425-.632.668L8.423 15.14c-.167.166-.344.352-.571.481-.228.129-.479.185-.707.242l-1.988.496c-.156.04-.356.092-.527.109-.18.018-.537.019-.826-.27-.29-.289-.288-.646-.27-.827.016-.171.069-.371.108-.527l.497-1.988c.057-.228.113-.478.242-.706.129-.227.314-.404.48-.57l5.859-5.86c.242-.242.465-.466.668-.63.213-.173.468-.335.795-.396Z"
+      />
+      <Path
+        fill={color || theme.iconPrimary}
+        d="m10.417 6.25 2.5-1.667 2.5 2.5-1.667 2.5-3.333-3.333Z"
+      />
     </Svg>
   )
 }

@@ -29,8 +29,7 @@ const styles = StyleSheet.create<Style>({
   },
   tokenContainer: {
     ...flexbox.alignSelfCenter,
-    ...spacings.mbMi,
-    ...spacings.mtSm
+    ...spacings.mbMi
   }
 })
 

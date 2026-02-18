@@ -33,8 +33,7 @@ const ICON_MAP = {
   error: ErrorIcon,
   warning: WarningIcon,
   success: SuccessIcon,
-  info: InfoIcon,
-  info2: InfoIcon
+  info: InfoIcon
 }
 
 const ANIMATION_VALUES: {
