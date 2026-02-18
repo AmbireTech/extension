@@ -191,6 +191,18 @@ const SafeImportScreen = () => {
                     </View>
                   )}
 
+                  {safe && safeInfo && safeInfo.requiresModules && (
+                    <View style={[flexbox.alignCenter, flexbox.justifyCenter, spacings.mt]}>
+                      <Alert
+                        type="warning"
+                        text={t(
+                          'To send transactions, this Safe account requires modules that are not implemented in Ambire. You can still import it as a view-only account.'
+                        )}
+                        style={{ maxWidth: '100%' }}
+                      />
+                    </View>
+                  )}
+
                   {importError && safe && safe === importError.address && (
                     <View style={[flexbox.alignCenter, flexbox.justifyCenter]}>
                       <Alert type="error" text={importError.message} style={{ maxWidth: '100%' }} />
