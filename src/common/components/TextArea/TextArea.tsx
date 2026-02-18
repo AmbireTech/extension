@@ -52,20 +52,12 @@ const TextArea = ({
     return onBlur(e)
   }
 
-  const borderWrapperStyles = [
-    styles.borderWrapper,
-    isFocused && { borderColor: theme.infoBackground },
-    isValid && { borderColor: theme.successBackground },
-    !!error && { borderColor: theme.errorBackground }
-  ]
-
   const inputWrapperStyles = [
     styles.inputWrapper,
     {
       backgroundColor: theme.secondaryBackground,
       borderColor: theme.secondaryBorder
     },
-    isFocused && { borderColor: theme.primary },
     isValid && { borderColor: theme.successDecorative },
     !!error && { borderColor: theme.errorDecorative },
     disabled && styles.disabled,
@@ -81,27 +73,25 @@ const TextArea = ({
           {label}
         </Text>
       )}
-      <View style={borderWrapperStyles}>
-        <View style={inputWrapperStyles}>
-          {!!leftIcon && <View style={styles.leftIcon}>{leftIcon()}</View>}
-          {/* TextInput doesn't support border styles so we wrap it in a View */}
-          <View style={inputStyles}>
-            <TextInput
-              placeholderTextColor={theme.secondaryText}
-              autoCapitalize="none"
-              autoCorrect={false}
-              editable={!disabled}
-              onBlur={handleOnBlur}
-              onFocus={handleOnFocus}
-              {...rest}
-              style={{
-                ...styles.nativeInput,
-                // @ts-ignore outline: 'none'
-                outline: 'none',
-                ...nativeInputStyle
-              }}
-            />
-          </View>
+      <View style={inputWrapperStyles}>
+        {!!leftIcon && <View style={styles.leftIcon}>{leftIcon()}</View>}
+        {/* TextInput doesn't support border styles so we wrap it in a View */}
+        <View style={inputStyles}>
+          <TextInput
+            placeholderTextColor={theme.secondaryText}
+            autoCapitalize="none"
+            autoCorrect={false}
+            editable={!disabled}
+            onBlur={handleOnBlur}
+            onFocus={handleOnFocus}
+            {...rest}
+            style={{
+              ...styles.nativeInput,
+              // @ts-ignore outline: 'none'
+              outline: 'none',
+              ...nativeInputStyle
+            }}
+          />
         </View>
       </View>
       {!!error && (

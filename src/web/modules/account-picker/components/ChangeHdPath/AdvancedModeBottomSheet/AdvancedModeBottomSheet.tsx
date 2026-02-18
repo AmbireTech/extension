@@ -13,7 +13,6 @@ import { SelectValue } from '@common/components/Select/types'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -89,27 +88,37 @@ const CustomHDPathBottomSheet: FC<Props> = ({
       id="custom-hd-path"
       sheetRef={sheetRef}
       closeBottomSheet={closeBottomSheetWrapped}
-      backgroundColor={themeType === THEME_TYPES.DARK ? 'secondaryBackground' : 'primaryBackground'}
-      style={{ ...spacings.ph0, ...spacings.pv0, width: 672 }}
+      style={{ ...spacings.ph0, ...spacings.pv0, maxWidth: 624 }}
     >
       <View
-        style={[
-          flexbox.justifySpaceBetween,
-          flexbox.directionRow,
-          flexbox.alignCenter,
-          spacings.phMd,
-          spacings.pvMd,
-          {
-            backgroundColor: theme.secondaryBackground,
-            borderTopEndRadius: 6,
-            borderTopStartRadius: 6
-          }
-        ]}
+        style={{
+          ...flexbox.directionRow,
+          ...flexbox.justifySpaceBetween,
+          ...flexbox.alignCenter,
+          ...spacings.mhMi,
+          ...spacings.mvMi,
+          ...spacings.phXl,
+          borderRadius: 12,
+          height: 60,
+          backgroundColor: theme.secondaryBackground,
+          borderBottomWidth: 1,
+          borderBottomColor: theme.neutral400
+        }}
       >
-        <Text fontSize={20} weight="medium">
+        <View style={{ width: 32, height: 32 }} />
+        <Text fontSize={20} weight="semiBold">
           {t('Custom address HD path')}
         </Text>
-        <Pressable onPress={closeBottomSheetWrapped} style={[flexbox.center, spacings.pvTy]}>
+        <Pressable
+          onPress={closeBottomSheetWrapped}
+          style={[
+            flexbox.center,
+            {
+              width: 32,
+              height: 32
+            }
+          ]}
+        >
           {({ hovered }: any) => (
             <View style={[hovered && { backgroundColor: theme.secondaryBackground }]}>
               <CloseIcon />
@@ -117,9 +126,9 @@ const CustomHDPathBottomSheet: FC<Props> = ({
           )}
         </Pressable>
       </View>
-      <View style={[spacings.phMd, spacings.pt2Xl, spacings.pbMd]}>
-        <Text fontSize={16} weight="medium" style={[spacings.mbTy]}>
-          {t('Select HD path')}:
+      <View style={[spacings.phMd, spacings.ptXl, spacings.pbMd]}>
+        <Text fontSize={16} weight="medium" style={spacings.mbSm}>
+          {t('Select HD path')}
         </Text>
         <View
           style={[
@@ -127,7 +136,7 @@ const CustomHDPathBottomSheet: FC<Props> = ({
             flexbox.wrap,
             flexbox.flex1,
             flexbox.justifySpaceBetween,
-            spacings.mbTy
+            spacings.mb
           ]}
         >
           {options.map((option) => {
@@ -142,27 +151,19 @@ const CustomHDPathBottomSheet: FC<Props> = ({
                   flexbox.center,
                   flexbox.directionRow,
                   common.borderRadiusPrimary,
-                  { width: 200, height: 56 },
+                  { width: 168, height: 56 },
                   {
                     borderWidth: 1,
-                    borderColor: 'transparent',
-                    backgroundColor: isActive
-                      ? `${String(theme.primary)}14`
-                      : themeType === THEME_TYPES.DARK
-                        ? theme.tertiaryBackground
-                        : theme.secondaryBackground
+                    borderColor: theme.primaryBorder,
+                    backgroundColor: 'transparent'
                   },
-                  !!hovered &&
-                    !isActive && {
-                      borderColor: theme.primaryAccent
-                    }
+                  (!!hovered || isActive) && {
+                    backgroundColor: theme.tertiaryBackground,
+                    borderColor: theme.neutral400
+                  }
                 ]}
               >
-                <Text
-                  fontSize={16}
-                  weight="medium"
-                  color={isActive ? theme.primary : theme.secondaryText}
-                >
+                <Text fontSize={14} weight="medium">
                   {option.label}
                 </Text>
               </Pressable>
@@ -171,7 +172,7 @@ const CustomHDPathBottomSheet: FC<Props> = ({
         </View>
 
         {!!options.find((o) => o.value === selectedOption.value)?.description && (
-          <Text fontSize={14} appearance="secondaryText" style={[spacings.mb2Xl]}>
+          <Text fontSize={14} appearance="secondaryText" style={[spacings.mb3Xl]}>
             {options.find((o) => o.value === selectedOption.value)?.description}
           </Text>
         )}
@@ -195,6 +196,7 @@ const CustomHDPathBottomSheet: FC<Props> = ({
                 testID="hd-path-start-index-input"
                 value={value}
                 onChangeText={onChange}
+                backgroundColor={theme.secondaryBackground}
                 error={errors.startIndex && errors.startIndex.message}
               />
             )}
@@ -203,7 +205,7 @@ const CustomHDPathBottomSheet: FC<Props> = ({
         <View style={[flexbox.directionRow, flexbox.center]}>
           <Button
             testID="hd-path-confirm-btn"
-            style={{ width: '50%' }}
+            style={{ width: 200 }}
             text={t('Confirm')}
             onPress={handleSubmit(onSubmit)}
           />

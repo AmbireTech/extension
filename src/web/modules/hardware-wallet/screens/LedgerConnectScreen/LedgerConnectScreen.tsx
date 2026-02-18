@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import { View } from 'react-native'
 
-import AmbireDevice from '@common/assets/svg/AmbireDevice'
-import DriveIcon from '@common/assets/svg/DriveIcon'
-import LeftPointerArrowIcon from '@common/assets/svg/LeftPointerArrowIcon'
+import LedgerLetterIcon from '@common/assets/svg/LedgerLetterIcon'
+import LedgerLetterIconFilled from '@common/assets/svg/LedgerLetterIconFilled'
 import Button from '@common/components/Button'
 import Panel from '@common/components/Panel'
 import Text from '@common/components/Text'
@@ -15,10 +14,8 @@ import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import useWindowSize from '@common/hooks/useWindowSize'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
-import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Header'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import text from '@common/styles/utils/text'
 import {
   TabLayoutContainer,
   TabLayoutWrapperMainContent
@@ -81,7 +78,7 @@ const LedgerConnectScreen = () => {
     isGrantingPermission || mainCtrlState.statuses.handleAccountPickerInitLedger === 'LOADING'
 
   return (
-    <TabLayoutContainer backgroundColor={theme.secondaryBackground} header={<HeaderWithLogoOnly />}>
+    <TabLayoutContainer backgroundColor={theme.secondaryBackground}>
       <TabLayoutWrapperMainContent>
         <Panel
           spacingsSize="small"
@@ -90,40 +87,25 @@ const LedgerConnectScreen = () => {
           onBackButtonPress={goToPrevRoute}
           title={t('Connect Ledger')}
         >
-          <View style={[flexbox.alignSelfCenter, spacings.mbSm, spacings.ptMd]}>
-            <Text weight="regular" style={spacings.mbTy} fontSize={14}>
-              {t('1. Plug in your Ledger and enter a PIN to unlock it.')}
-            </Text>
-            <Text
-              weight="regular"
-              fontSize={14}
-              style={minHeightSize(620) ? { marginBottom: 12 } : { marginBottom: 40 }}
-            >
-              {t('2. Open the Ethereum app.')}
-            </Text>
-          </View>
-          <View
-            style={[
-              flexbox.directionRow,
-              flexbox.alignSelfCenter,
-              flexbox.alignCenter,
-              minHeightSize(620) ? spacings.mbLg : spacings.mb2Xl
-            ]}
-          >
-            <DriveIcon style={spacings.mrLg} />
-            <LeftPointerArrowIcon style={spacings.mrLg} color={theme.iconPrimary} />
-            <AmbireDevice />
-          </View>
-          <Text style={[spacings.mbLg, text.center]} appearance="secondaryText">
+          <LedgerLetterIconFilled
+            style={{ alignSelf: 'center', marginBottom: 124 }}
+            width={96}
+            height={96}
+          />
+          <Text weight="medium" style={spacings.mbSm} fontSize={14}>
+            {t('1. Plug in your Ledger and enter a PIN to unlock it.')}
+          </Text>
+          <Text weight="medium" fontSize={14} style={spacings.mbXl}>
+            {t('2. Open the Ethereum app.')}
+          </Text>
+          <Text style={spacings.mbXl} fontSize={14} appearance="secondaryText">
             {t(
               'If not previously granted, Ambire will ask for permission to connect to a HID device.'
             )}
           </Text>
-
           <Button
             text={isLoading ? t('Connecting...') : t('Authorize & connect')}
             disabled={isLoading}
-            style={{ width: 264, ...flexbox.alignSelfCenter }}
             onPress={onPressNext}
             hasBottomSpacing={false}
           />

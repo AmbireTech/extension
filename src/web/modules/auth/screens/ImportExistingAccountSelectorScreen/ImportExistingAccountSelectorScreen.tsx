@@ -18,16 +18,17 @@ import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
-import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Header'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
+import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import {
   TabLayoutContainer,
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import { isSafari } from '@web/constants/browserapi'
+import { AnimatedPressable, useCustomHover, useMultiHover } from '@web/hooks/useHover'
 
 import getStyles from './styles'
 
@@ -52,6 +53,25 @@ const ImportExistingAccountSelectorScreen = () => {
   const animatedOpacity = useRef(new Animated.Value(0)).current
   const { addToast } = useToast()
   const { dispatch } = useControllersMiddleware()
+  const [bindAnim, animStyle] = useMultiHover({
+    values: [
+      {
+        property: 'backgroundColor',
+        from: hexToRgba(theme.secondaryBackground, 0),
+        to: theme.secondaryBackground
+      },
+      {
+        property: 'translateX',
+        from: 0,
+        to: showMore ? -2 : 2
+      },
+      {
+        property: 'translateY',
+        from: 0,
+        to: 2
+      }
+    ]
+  })
 
   const buttons: ButtonType[] = useMemo(
     () => [
@@ -127,7 +147,7 @@ const ImportExistingAccountSelectorScreen = () => {
   }, [animatedHeight, animatedOpacity, showMore, buttons.length])
 
   return (
-    <TabLayoutContainer backgroundColor={theme.secondaryBackground} header={<HeaderWithLogoOnly />}>
+    <TabLayoutContainer backgroundColor={theme.secondaryBackground}>
       <TabLayoutWrapperMainContent wrapperRef={wrapperRef} contentContainerStyle={spacings.mbLg}>
         <Panel
           type="onboarding"
@@ -143,7 +163,7 @@ const ImportExistingAccountSelectorScreen = () => {
                 .map(({ title, onPress, icon: IconComponent }) => (
                   <Button
                     key={title}
-                    type="gray"
+                    type="tertiary"
                     onPress={onPress}
                     testID={`import-method-${title.toLocaleLowerCase().split(' ').join('-')}`}
                     childrenContainerStyle={{
@@ -154,8 +174,8 @@ const ImportExistingAccountSelectorScreen = () => {
                     }}
                   >
                     <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                      <IconComponent width={32} height={32} color={theme.primaryText} />
-                      <Text style={spacings.mlSm} fontSize={14} weight="medium">
+                      <IconComponent width={24} height={24} color={theme.iconPrimary} />
+                      <Text style={spacings.mlSm} fontSize={16} weight="medium">
                         {t(title)}
                       </Text>
                     </View>
@@ -170,7 +190,7 @@ const ImportExistingAccountSelectorScreen = () => {
                   .map(({ title, onPress, icon: IconComponent }) => (
                     <Button
                       key={title}
-                      type="gray"
+                      type="tertiary"
                       onPress={onPress}
                       testID={`import-method-${title.toLocaleLowerCase().split(' ').join('-')}`}
                       childrenContainerStyle={{
@@ -181,10 +201,7 @@ const ImportExistingAccountSelectorScreen = () => {
                       }}
                     >
                       <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                        <IconComponent
-                          width={24}
-                          {...(themeType === THEME_TYPES.DARK ? { color: theme.primaryText } : {})}
-                        />
+                        <IconComponent width={24} height={24} color={theme.iconPrimary} />
                         <Text style={spacings.mlSm} fontSize={14} weight="medium">
                           {t(title)}
                         </Text>
@@ -197,24 +214,48 @@ const ImportExistingAccountSelectorScreen = () => {
               </Animated.View>
             </ScrollView>
             {buttons.length > VISIBLE_BUTTONS_COUNT && (
-              <Button
-                hasBottomSpacing={false}
-                type="ghost"
+              <AnimatedPressable
                 onPress={() => setShowMore(!showMore)}
                 testID="show-more-btn"
+                style={[
+                  flexbox.directionRow,
+                  flexbox.alignCenter,
+                  spacings.pvMi,
+                  spacings.prTy,
+                  spacings.plSm,
+                  {
+                    borderRadius: 50,
+                    alignSelf: 'center',
+                    backgroundColor: animStyle.backgroundColor
+                  }
+                ]}
+                {...bindAnim}
               >
-                <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                  <Text appearance="primary" style={spacings.mrSm} weight="medium">
-                    {t(showMore ? 'Less' : 'More')}
-                  </Text>
-                  {/* TODO: Add animation on hover */}
+                <Text appearance="tertiaryText" style={spacings.mrMi} fontSize={14} weight="medium">
+                  {t(showMore ? 'Less' : 'More')}
+                </Text>
+                <Animated.View
+                  style={{
+                    transform: [
+                      {
+                        translateX: animStyle.translateX as any
+                      },
+                      {
+                        translateY: animStyle.translateY as any
+                      }
+                    ]
+                  }}
+                >
                   <DiagonalRightArrowIcon
-                    color={theme.primary}
-                    style={[{ transform: [{ rotate: !showMore ? '90deg' : '0deg' }] }]}
-                    height={16}
+                    color={theme.iconPrimary}
+                    height={20}
+                    width={20}
+                    style={{
+                      transform: [{ rotate: showMore ? '90deg' : '0deg' }]
+                    }}
                   />
-                </View>
-              </Button>
+                </Animated.View>
+              </AnimatedPressable>
             )}
           </View>
         </Panel>
