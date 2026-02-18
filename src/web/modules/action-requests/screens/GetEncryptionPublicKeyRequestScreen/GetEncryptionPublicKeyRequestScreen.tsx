@@ -3,6 +3,7 @@ import { View } from 'react-native'
 
 import Alert from '@common/components/Alert'
 import { useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
@@ -11,7 +12,6 @@ import RequestingDappInfo from '@web/components/RequestingDappInfo'
 import SmallNotificationWindowWrapper from '@web/components/SmallNotificationWindowWrapper'
 import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
 import useDappInfo from '@web/hooks/useDappInfo'
-import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import ActionFooter from '@web/modules/action-requests/components/ActionFooter'
 import ActionHeader from '@web/modules/action-requests/components/ActionHeader'
 import { useEncryptionCapability } from '@web/modules/action-requests/hooks'
@@ -19,7 +19,7 @@ import { useEncryptionCapability } from '@web/modules/action-requests/hooks'
 const GetEncryptionPublicKeyRequestScreen = () => {
   const { t } = useTranslation()
   const { dispatch } = useControllersMiddleware()
-  const { currentUserRequest } = useRequestsControllerState()
+  const { currentUserRequest } = useController('RequestsController').state
   const { theme } = useTheme()
   const { addToast } = useToast()
   const {
@@ -82,7 +82,7 @@ const GetEncryptionPublicKeyRequestScreen = () => {
       <TabLayoutContainer
         width="full"
         header={<ActionHeader />}
-        footer={
+        renderDirectChildren={() => (
           <ActionFooter
             onReject={handleDeny}
             onResolve={handleAccept}
@@ -91,8 +91,7 @@ const GetEncryptionPublicKeyRequestScreen = () => {
             resolveButtonTestID="button-provide"
             resolveNode={actionFooterResolveNode}
           />
-        }
-        backgroundColor={theme.secondaryBackground}
+        )}
       >
         <TabLayoutWrapperMainContent>
           <RequestingDappInfo

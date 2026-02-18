@@ -1,3 +1,0 @@
-import useEmailVaultControllerState from './useEmailVaultControllerState'
-
-export default useEmailVaultControllerState

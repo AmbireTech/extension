@@ -5,12 +5,12 @@ import { useModalize } from 'react-native-modalize'
 import BurgerIcon from '@common/assets/svg/BurgerIcon'
 import NetworkStatusesIcon from '@common/assets/svg/NetworkStatusIcon'
 import { isAmbireNext, isDev } from '@common/config/env'
+import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexboxStyles from '@common/styles/utils/flexbox'
 import useHover from '@web/hooks/useHover'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import commonWebStyles from '@web/styles/utils/common'
 import { getUiType } from '@web/utils/uiType'
 
@@ -22,7 +22,9 @@ const { isPopup } = getUiType()
 const SHOULD_DISPLAY_NETWORK_STATUSES = isAmbireNext || isDev
 
 const DashboardHeader = () => {
-  const { account } = useSelectedAccountControllerState()
+  const {
+    state: { account }
+  } = useController('SelectedAccountController')
   const [bindBurgerAnim, burgerAnimStyle] = useHover({ preset: 'opacityInverted' })
   const [bindNetworkStatusesAnim, networkStatusesAnimStyle] = useHover({
     preset: 'opacityInverted'
@@ -38,14 +40,7 @@ const DashboardHeader = () => {
   if (!account) return null
 
   return (
-    <View
-      style={[
-        flexboxStyles.directionRow,
-        flexboxStyles.alignCenter,
-        flexboxStyles.flex1,
-        commonWebStyles.contentContainer
-      ]}
-    >
+    <View style={[flexboxStyles.directionRow, flexboxStyles.alignCenter, flexboxStyles.flex1]}>
       {SHOULD_DISPLAY_NETWORK_STATUSES && (
         <NetworkStatusesBottomSheet
           sheetRef={networkStatusesSheetRef}

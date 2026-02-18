@@ -65,7 +65,11 @@ const ManageContact: FC<Props> = ({ address, name, tooltipRef }) => {
         }}
       >
         {({ hovered }: any) => (
-          <KebabMenuIcon color={hovered ? theme.primaryText : theme.secondaryText} height={16} />
+          <KebabMenuIcon
+            color={hovered ? theme.primaryText : theme.secondaryText}
+            height={28}
+            width={28}
+          />
         )}
       </Pressable>
       <Tooltip

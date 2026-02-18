@@ -25,7 +25,7 @@ interface Props {
   sizeMultiplierSize?: number
   textSize?: number
   chainId: bigint
-  isHistory?: boolean
+  type?: 'history' | 'benzin' | 'default'
   testID?: string
   hasPadding?: boolean
   imageSize?: number
@@ -38,7 +38,7 @@ const HumanizedVisualization: FC<Props> = ({
   sizeMultiplierSize = 1,
   textSize = 16,
   chainId,
-  isHistory,
+  type = 'default',
   testID,
   hasPadding = true,
   imageSize = 36,
@@ -91,7 +91,7 @@ const HumanizedVisualization: FC<Props> = ({
           )
         }
 
-        if (item.type === 'deadline' && item.value && !isHistory)
+        if (item.type === 'deadline' && item.value && type !== 'default')
           return (
             <DeadlineItem
               key={key}

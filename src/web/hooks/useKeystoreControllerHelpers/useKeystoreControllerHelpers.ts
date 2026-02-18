@@ -1,19 +1,12 @@
-import { useCallback, useEffect, useMemo, useSyncExternalStore } from 'react'
+import { useEffect, useMemo } from 'react'
 
 import { setUserContext } from '@common/config/analytics/CrashAnalytics'
-import { ControllerStore } from '@common/contexts/controllerStoreContext/controllerStore'
+import useControllerState from '@common/hooks/useControllerState'
 import { getExtensionInstanceId } from '@web/utils/analytics'
 
-export default function useKeystoreControllerHelpers(controllerStore: ControllerStore) {
-  const mainState = useSyncExternalStore(
-    useCallback((cb) => controllerStore.subscribe('MainController', cb), [controllerStore]),
-    useCallback(() => controllerStore.getSnapshot('MainController'), [controllerStore])
-  )
-
-  const keystoreState = useSyncExternalStore(
-    useCallback((cb) => controllerStore.subscribe('KeystoreController', cb), [controllerStore]),
-    useCallback(() => controllerStore.getSnapshot('KeystoreController'), [controllerStore])
-  )
+export default function useKeystoreControllerHelpers() {
+  const { state: mainState } = useControllerState({ id: 'MainController' })
+  const { state: keystoreState } = useControllerState({ id: 'KeystoreController' })
 
   const verifiedCode = useMemo(
     () => mainState.invite?.verifiedCode || '',

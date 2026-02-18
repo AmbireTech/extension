@@ -1,13 +1,13 @@
 import React, { FC, memo, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { TextStyle, View, ViewStyle } from 'react-native'
+import { View, ViewStyle } from 'react-native'
 
 import NetworkIcon from '@common/components/NetworkIcon'
 import Text, { TextWeight } from '@common/components/Text'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
-import { SPACING, SPACING_TY } from '@common/styles/spacings'
+import { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 
 interface Props {
   chainId?: bigint
@@ -36,7 +36,9 @@ const NetworkBadge: FC<Props> = ({
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { networks } = useNetworksControllerState()
+  const {
+    state: { networks }
+  } = useController('NetworksController')
 
   const network = useMemo(() => {
     return networks.find((n) => n.chainId === chainId)
@@ -45,7 +47,7 @@ const NetworkBadge: FC<Props> = ({
   const networkName = useMemo(() => network?.name || t('Unknown network'), [network?.name, t])
 
   const iconSizeScaled = useMemo(() => {
-    return (iconSize || 32) * responsiveSizeMultiplier
+    return (iconSize || 24) * responsiveSizeMultiplier
   }, [iconSize, responsiveSizeMultiplier])
 
   if (!chainId) return null
@@ -55,11 +57,13 @@ const NetworkBadge: FC<Props> = ({
       style={{
         ...flexbox.directionRow,
         ...flexbox.alignCenter,
-        paddingLeft: SPACING * responsiveSizeMultiplier,
+        paddingLeft: SPACING_SM * responsiveSizeMultiplier,
         paddingRight: SPACING_TY * responsiveSizeMultiplier,
         paddingVertical: 2,
         borderRadius: 50 * responsiveSizeMultiplier,
-        backgroundColor: theme.secondaryBackground,
+        borderWidth: 1,
+        height: 40,
+        borderColor: theme.primaryBorder,
         ...style
       }}
     >
@@ -68,15 +72,7 @@ const NetworkBadge: FC<Props> = ({
         weight={weight || 'medium'}
         appearance="secondaryText"
       >
-        {withOnPrefix ? (
-          <Text
-            fontSize={fontSize || 16 * responsiveSizeMultiplier}
-            weight={weight || 'medium'}
-            appearance="tertiaryText"
-          >
-            on{' '}
-          </Text>
-        ) : null}
+        {withOnPrefix ? t('on ') : null}
         {!renderNetworkName ? networkName : renderNetworkName(networkName)}
       </Text>
       {withIcon && (

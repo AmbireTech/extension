@@ -6,14 +6,13 @@ import { useModalize } from 'react-native-modalize'
 import { Account as AccountType } from '@ambire-common/interfaces/account'
 import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
 import SettingsWheelIcon from '@common/assets/svg/SettingsWheelIcon'
-import BackButton from '@common/components/BackButton'
-import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
 import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
 import Search from '@common/components/Search'
 import Text from '@common/components/Text'
 import useAccountsList from '@common/hooks/useAccountsList'
+import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
@@ -22,11 +21,9 @@ import { HeaderWithTitle } from '@common/modules/header/components/Header/Header
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
+import LayoutWrapper from '@web/components/LayoutWrapper'
 import Account from '@web/modules/account-select/components/Account'
 import AddAccount from '@web/modules/account-select/components/AddAccount'
-import { getUiType } from '@web/utils/uiType'
 
 import getStyles from './styles'
 
@@ -51,14 +48,16 @@ const extractTriggerAddAccountSheetParam = (search: string | undefined): boolean
 }
 
 const AccountSelectScreen = () => {
-  const { styles, theme } = useTheme(getStyles)
+  const { styles } = useTheme(getStyles)
   const flatlistRef = useRef(null)
   const { accounts, control, keyExtractor, getItemLayout, shouldDisplayAccounts } = useAccountsList(
     { flatlistRef }
   )
   const { search: routeParams } = useRoute()
   const { navigate } = useNavigation()
-  const { account } = useSelectedAccountControllerState()
+  const {
+    state: { account }
+  } = useController('SelectedAccountController')
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const { t } = useTranslation()
   const accountsContainerRef = useRef(null)
@@ -84,7 +83,15 @@ const AccountSelectScreen = () => {
   )
 
   const renderItem = ({ item: acc }: { item: AccountType }) => {
-    return <Account onSelect={onAccountSelect} key={acc.addr} account={acc} withSettings={false} />
+    return (
+      <Account
+        onSelect={onAccountSelect}
+        key={acc.addr}
+        account={acc}
+        withSettings={false}
+        options={{ markSelected: true }}
+      />
+    )
   }
 
   useEffect(() => {
@@ -98,19 +105,13 @@ const AccountSelectScreen = () => {
   }, [account, navigate, pendingToBeSetSelectedAccount])
 
   return !pendingToBeSetSelectedAccount ? (
-    <TabLayoutContainer
-      header={
-        <HeaderWithTitle>
-          <Pressable onPress={() => navigate(WEB_ROUTES.accountsSettings)}>
-            <SettingsWheelIcon width={28} height={28} />
-          </Pressable>
-        </HeaderWithTitle>
-      }
-      footer={<BackButton />}
-      width="lg"
-      hideFooterInPopup
-    >
-      <View style={[spacings.pt, flexbox.flex1]} ref={accountsContainerRef}>
+    <LayoutWrapper>
+      <HeaderWithTitle>
+        <Pressable onPress={() => navigate(WEB_ROUTES.accountsSettings)}>
+          <SettingsWheelIcon width={28} height={28} />
+        </Pressable>
+      </HeaderWithTitle>
+      <View style={[spacings.pt, spacings.phSm, flexbox.flex1]} ref={accountsContainerRef}>
         <Search autoFocus control={control} style={styles.searchBar} />
         <ScrollableWrapper
           type={WRAPPER_TYPES.FLAT_LIST}
@@ -141,30 +142,9 @@ const AccountSelectScreen = () => {
             <AddCircularIcon width={24} height={24} color="#fff" style={spacings.mrTy} />
           </Button>
         </FooterGlassView>
-        {/* <View style={[spacings.ptSm, { width: '100%' }]}>
-          <Button
-            testID="button-add-account"
-            text={t('Add account')}
-            type="secondary"
-            hasBottomSpacing={false}
-            onPress={openBottomSheet as any}
-            childrenPosition="left"
-            style={{ ...flexbox.alignSelfCenter, width: '100%' }}
-          >
-            <AddIcon color={theme.primary} style={spacings.mrTy} />
-          </Button>
-        </View> */}
       </View>
-      <BottomSheet
-        id="account-select-add-account"
-        sheetRef={sheetRef}
-        adjustToContentHeight={!getUiType().isPopup}
-        closeBottomSheet={closeBottomSheet}
-        scrollViewProps={{ showsVerticalScrollIndicator: false }}
-      >
-        <AddAccount handleClose={closeBottomSheet as any} />
-      </BottomSheet>
-    </TabLayoutContainer>
+      <AddAccount sheetRef={sheetRef} closeBottomSheet={closeBottomSheet} />
+    </LayoutWrapper>
   ) : (
     <DashboardSkeleton />
   )

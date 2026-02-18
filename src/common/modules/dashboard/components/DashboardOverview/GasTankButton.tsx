@@ -4,10 +4,10 @@ import { Account } from '@ambire-common/interfaces/account'
 import { SelectedAccountPortfolio } from '@ambire-common/interfaces/selectedAccount'
 import GasTankIcon from '@common/assets/svg/GasTankIcon'
 import { useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
 import spacings from '@common/styles/spacings'
 import { getGasTankTokenDetails } from '@common/utils/getGasTankTokenDetails'
 import useHasGasTank from '@web/hooks/useHasGasTank'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 
 import OverviewButton from './OverviewButton'
 
@@ -20,8 +20,10 @@ type Props = {
 const GasTankButton = ({ onPress, portfolio, account }: Props) => {
   const { t } = useTranslation()
   const { hasGasTank, isViewOnly } = useHasGasTank({ account })
-  const { networks } = useNetworksControllerState()
 
+  const {
+    state: { networks }
+  } = useController('NetworksController')
   const totalBalanceGasTankDetails = useMemo(
     () => getGasTankTokenDetails(portfolio, account, networks, 'amount'),
     [account, networks, portfolio]

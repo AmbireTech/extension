@@ -1,6 +1,6 @@
 import { randomBytes } from 'ethers'
 import React, { memo, useMemo } from 'react'
-import { Image, ScrollView, View } from 'react-native'
+import { Image, ScrollView, View, ViewStyle } from 'react-native'
 
 // @ts-ignore
 import meshGradientLarge from '@benzin/assets/images/mesh-gradient-large.png'
@@ -35,7 +35,7 @@ const Benzin = ({ state }: { state: ReturnType<typeof useBenzin> }) => {
     return calls.map((call, i) => (
       <TransactionSummary
         key={call.data + randomBytes(6)}
-        style={i !== calls.length! - 1 ? spacings.mbSm : {}}
+        style={i !== calls.length! - 1 ? (spacings.mbSm as ViewStyle) : {}}
         call={call}
         chainId={state.network!.chainId}
         rightIcon={
@@ -46,7 +46,7 @@ const Benzin = ({ state }: { state: ReturnType<typeof useBenzin> }) => {
         }
         onRightIconPress={state?.handleOpenExplorer}
         size={IS_MOBILE_UP_BENZIN_BREAKPOINT ? 'lg' : 'sm'}
-        isHistory
+        type="benzin"
       />
     ))
     // Prevents unnecessary re-renders of the humanizer

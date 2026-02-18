@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react'
-import { View, ViewProps, ViewStyle } from 'react-native'
+import React, { useEffect, useState } from 'react'
+import { View, ViewStyle } from 'react-native'
 
 import AccountData from '@common/components/AccountData'
 import AccountDataDetailed from '@common/components/AccountDataDetailed'
@@ -12,7 +12,6 @@ import routesConfig from '@common/modules/router/config/routesConfig'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { tabLayoutWidths } from '@web/components/TabLayoutWrapper'
-import { getTabLayoutPadding } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 
 import HeaderBackButton, { DisplayIn } from '../HeaderBackButton'
 
@@ -33,12 +32,10 @@ const Wrapper = ({
 }) => {
   const { maxWidthSize } = useWindowSize()
 
-  const paddingHorizontalStyle = useMemo(() => getTabLayoutPadding(maxWidthSize), [maxWidthSize])
-
   return (
     <View
       style={[
-        paddingHorizontalStyle,
+        spacings.phSm,
         spacings.pbSm,
         spacings.ptMd,
         {

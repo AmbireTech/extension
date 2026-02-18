@@ -13,7 +13,7 @@ import spacings from '@common/styles/spacings'
 import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@web/extension-services/background/webapi/tab'
-import useHover, { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
+import useHover, { AnimatedPressable, useCustomHover, useMultiHover } from '@web/hooks/useHover'
 
 import Badge from './Badge'
 import ProtocolIcon from './ProtocolIcon'
@@ -57,12 +57,19 @@ const DeFiPositionHeader: FC<Props> = ({
     state: { dapps }
   } = useController('DappsController')
   const { styles, theme } = useTheme(getStyles)
-  const [bindAnim, animStyle] = useCustomHover({
-    property: 'backgroundColor',
-    values: {
-      from: hexToRgba(theme.secondaryBackground, 0),
-      to: theme.secondaryBackground
-    },
+  const [bindAnim, animStyle] = useMultiHover({
+    values: [
+      {
+        property: 'backgroundColor',
+        from: theme.secondaryBackground,
+        to: theme.tertiaryBackground
+      },
+      {
+        property: 'borderColor',
+        from: hexToRgba(theme.primaryBorder, 0),
+        to: theme.primaryBorder
+      }
+    ],
     forceHoveredStyle: isExpanded
   })
   const [bindOpenIconAnim, openIconAnimStyle] = useHover({

@@ -9,14 +9,13 @@ import NumberInput from '@common/components/NumberInput'
 import Select from '@common/components/Select'
 import { SelectValue } from '@common/components/Select/types'
 import Text from '@common/components/Text'
+import useController from '@common/hooks/useController'
 import { FONT_FAMILIES } from '@common/hooks/useFonts'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { ItemPanel } from '@web/components/TransactionsScreen'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import MaxAmount from '@web/modules/swap-and-bridge/components/MaxAmount'
 
 import getStyles from './styles'
@@ -64,7 +63,9 @@ const SendToken: FC<Props> = ({
   maxAmountDisabled,
   simulationFailed
 }) => {
-  const { portfolio } = useSelectedAccountControllerState()
+  const {
+    state: { portfolio }
+  } = useController('SelectedAccountController')
   const { theme, styles, themeType } = useTheme(getStyles)
   const { t } = useTranslation()
 
@@ -123,8 +124,8 @@ const SendToken: FC<Props> = ({
               bottomSheetTitle={t('Send token')}
               searchPlaceholder={t('Token name or address...')}
               emptyListPlaceholderText={t('No tokens found.')}
-              containerStyle={{ ...flexbox.flex1, ...spacings.mb0 }}
-              selectStyle={spacings.phTy}
+              containerStyle={{ ...flexbox.flex1, ...spacings.mb0, ...spacings.mrMd }}
+              selectStyle={{ ...spacings.plTy, ...spacings.prSm }}
               mode="bottomSheet"
             />
             <NumberInput
@@ -159,14 +160,14 @@ const SendToken: FC<Props> = ({
                     }}
                   >
                     <Text
-                      fontSize={20}
+                      fontSize={24}
                       weight="medium"
                       style={{ zIndex: 3 }}
                       appearance="secondaryText"
                     >
                       $
                       <Text
-                        fontSize={20}
+                        fontSize={24}
                         weight="medium"
                         style={{ opacity: 0 }}
                         appearance="secondaryText"

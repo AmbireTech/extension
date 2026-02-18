@@ -22,7 +22,7 @@ interface Props {
   children?: React.ReactNode
   testID?: string
   disabled?: boolean
-  status?: 'default' | 'expanded' | 'collapsed'
+  status?: 'default' | 'expanded' | 'collapsed' | 'none'
   icons?: { key: string; component: React.FC<any> }[]
 }
 
@@ -40,10 +40,10 @@ const Option = ({
 }: Props) => {
   const { theme, styles, themeType } = useTheme(getStyles)
   const [bindAnim, animStyle, isHovered] = useCustomHover({
-    property: 'borderColor',
+    property: 'backgroundColor',
     values: {
       from: theme.primaryBackground,
-      to: themeType === THEME_TYPES.DARK ? (theme.linkText as string) : theme.primary
+      to: theme.secondaryBackground
     }
   })
 
@@ -54,6 +54,9 @@ const Option = ({
         styles.container,
         withBottomSpacing && spacings.mb,
         animStyle,
+        status === 'expanded' && {
+          backgroundColor: theme.secondaryBackground
+        },
         disabled && { opacity: 0.5 }
       ]}
       onPress={onPress}

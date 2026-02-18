@@ -41,13 +41,17 @@ const ManageApp = ({
   style = {},
   isOpen,
   setIsOpen,
-  parentRef
+  parentRef,
+  isNetworkSelectorExpanded,
+  setIsNetworkSelectorExpanded
 }: {
   dapp: Dapp
   parentRef: React.RefObject<View | null>
   style?: ViewStyle
   isOpen: boolean
   setIsOpen: React.Dispatch<React.SetStateAction<boolean>>
+  isNetworkSelectorExpanded: boolean
+  setIsNetworkSelectorExpanded: React.Dispatch<React.SetStateAction<boolean>>
 }) => {
   const { theme } = useTheme()
   const menuRef = useRef<View>(null)
@@ -207,7 +211,12 @@ const ManageApp = ({
         }}
         ref={menuRef}
       >
-        <NetworkSelector dapp={dapp} isAbove={position.isAbove} />
+        <NetworkSelector
+          dapp={dapp}
+          isAbove={position.isAbove}
+          isExpanded={isNetworkSelectorExpanded}
+          setIsExpanded={setIsNetworkSelectorExpanded}
+        />
         <DisconnectButton dapp={dapp} setIsOpen={setIsOpen} />
         <AppData dapp={dapp} />
       </Animated.View>

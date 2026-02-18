@@ -10,16 +10,14 @@ import PrivateKeyExport from '@common/components/ExportKey/PrivateKeyExport'
 import SmartAccountExport from '@common/components/ExportKey/SmartAccountExport'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useExtraEntropy from '@common/hooks/useExtraEntropy'
 import usePrevious from '@common/hooks/usePrevious'
-import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import eventBus from '@web/extension-services/event/eventBus'
-import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 import PasswordConfirmation from '@web/modules/settings/components/PasswordConfirmation'
 import { getUiType } from '@web/utils/uiType'
 
@@ -38,14 +36,13 @@ const ExportKey = ({
 }) => {
   const { t } = useTranslation()
   const { dispatch } = useControllersMiddleware()
-  const keystoreState = useKeystoreControllerState()
+  const keystoreState = useController('KeystoreController').state
   const [privateKey, setPrivateKey] = useState<string | null>(null)
   const [salt, setSalt] = useState<string | null>(null)
   const [iv, setIv] = useState<string | null>(null)
   const [blurred, setBlurred] = useState<boolean>(true)
   const prevBlurred = usePrevious(blurred)
 
-  const { themeType } = useTheme()
   const {
     ref: sheetRefConfirmPassword,
     open: openConfirmPassword,
@@ -147,9 +144,6 @@ const ExportKey = ({
         sheetRef={sheetRefConfirmPassword}
         id="confirm-password-bottom-sheet"
         type="modal"
-        backgroundColor={
-          themeType === THEME_TYPES.DARK ? 'secondaryBackground' : 'primaryBackground'
-        }
         closeBottomSheet={closeConfirmPassword}
         scrollViewProps={{ contentContainerStyle: { flex: 1 } }}
         containerInnerWrapperStyles={{ flex: 1 }}

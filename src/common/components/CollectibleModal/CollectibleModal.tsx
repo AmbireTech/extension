@@ -5,15 +5,14 @@ import { Pressable, View } from 'react-native'
 import OpenIcon from '@common/assets/svg/OpenIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import Text from '@common/components/Text'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import ImageIcon from '@web/assets/svg/ImageIcon'
 import ManifestImage from '@web/components/ManifestImage'
 import { createTab } from '@web/extension-services/background/webapi/tab'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import { getUiType } from '@web/utils/uiType'
 
 import Row from './Row'
@@ -44,8 +43,9 @@ const CollectibleModal = ({
 }) => {
   const { t } = useTranslation()
   const { styles, theme, themeType } = useTheme(getStyles)
-  const { networks } = useNetworksControllerState()
-
+  const {
+    state: { networks }
+  } = useController('NetworksController')
   const ModalInner = useCallback(() => {
     if (!selectedCollectible) return null
 

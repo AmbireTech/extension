@@ -16,12 +16,12 @@ import PendingToBeConfirmedIcon from '@common/assets/svg/PendingToBeConfirmedIco
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
 import Tooltip from '@common/components/Tooltip'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import PendingBadge from '@common/modules/dashboard/components/Tokens/TokenItem/PendingBadge'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import NotSupportedNetworkTooltip from '@web/modules/swap-and-bridge/components/NotSupportedNetworkTooltip'
 import { getTokenId } from '@web/utils/token'
 
@@ -76,7 +76,9 @@ const useGetTokenSelectProps = ({
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { portfolio } = useSelectedAccountControllerState()
+  const {
+    state: { portfolio }
+  } = useController('SelectedAccountController')
 
   if (isLoading)
     return {
@@ -257,14 +259,8 @@ const useGetTokenSelectProps = ({
           dataSet={{ tooltipId: tooltipIdNotSupported }}
           style={flexbox.flex1}
         >
-          <Text fontSize={16} weight="medium">
+          <Text fontSize={16} weight="semiBold">
             {symbol}
-          </Text>
-          <Text fontSize={14} appearance="secondaryText">
-            {' on '}
-          </Text>
-          <Text fontSize={14} appearance="secondaryText">
-            {network?.name || 'Unknown network'}
           </Text>
         </Text>
         {!isSelected && formattedBalancesLabel}
@@ -288,9 +284,11 @@ const useGetTokenSelectProps = ({
       icon: (
         <TokenIcon
           key={`${currentToken.chainId}-${currentToken.address}`}
-          containerHeight={30}
-          containerWidth={30}
-          networkSize={12}
+          containerHeight={isSelected ? 28 : 32}
+          containerWidth={isSelected ? 28 : 32}
+          width={isSelected ? 24 : 28}
+          height={isSelected ? 24 : 28}
+          networkSize={isSelected ? 12 : 14}
           withContainer
           withNetworkIcon={!_isToToken}
           uri={getIsToTokenTypeGuard(currentToken) ? currentToken.icon : undefined}

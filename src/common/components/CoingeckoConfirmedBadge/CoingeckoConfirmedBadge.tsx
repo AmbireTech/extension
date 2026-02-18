@@ -26,6 +26,7 @@ type Props = {
 const CoingeckoConfirmedBadge = ({ text, address, network, containerStyle }: Props) => {
   const { styles } = useTheme(getStyles)
   const { addToast } = useToast()
+  const { theme } = useTheme()
   const { t } = useTranslation()
   const [coinGeckoTokenSlug, setCoinGeckoTokenSlug] = useState('')
   const [isTokenInfoLoading, setIsTokenInfoLoading] = useState(false)
@@ -65,11 +66,11 @@ const CoingeckoConfirmedBadge = ({ text, address, network, containerStyle }: Pro
 
   return (
     <Pressable style={[styles.container, containerStyle]} onPress={onCoingeckoBadgePress}>
-      <Text weight="medium" fontSize={10} color="#8DC63F" style={spacings.mrMi}>
+      <Text weight="medium" fontSize={10} color={theme.success400} style={spacings.mrMi}>
         {text}
       </Text>
-      <SuccessIcon color="#8DC63F" width={20} height={20} withCirc={false} />
-      <CoingeckoIcon />
+      <SuccessIcon color={theme.success400} width={20} height={20} withCirc={false} />
+      <CoingeckoIcon width={20} height={20} />
     </Pressable>
   )
 }

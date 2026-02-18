@@ -9,11 +9,16 @@ import { TokenResult } from '@ambire-common/libs/portfolio'
 import { getTokenAmount } from '@ambire-common/libs/portfolio/helpers'
 import { getIsNetworkSupported } from '@ambire-common/libs/swapAndBridge/swapAndBridge'
 import InfoIcon from '@common/assets/svg/InfoIcon'
+import InvisibilityIcon from '@common/assets/svg/InvisibilityIcon'
 import SendIcon from '@common/assets/svg/SendIcon'
 import SwapAndBridgeIcon from '@common/assets/svg/SwapAndBridgeIcon'
 import TopUpIcon from '@common/assets/svg/TopUpIcon'
+import ModalHeader from '@common/components/BottomSheet/ModalHeader'
+import Button from '@common/components/Button'
+import GlassView from '@common/components/GlassView'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
+import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
@@ -26,14 +31,9 @@ import { RELAYER_URL } from '@env'
 import storage from '@web/extension-services/background/webapi/storage'
 import { createTab } from '@web/extension-services/background/webapi/tab'
 import useHasGasTank from '@web/hooks/useHasGasTank'
-import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
-import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControllerState'
 import { getTokenId } from '@web/utils/token'
 
 import TokenDetailsButton from './Button'
-import CopyTokenAddress from './CopyTokenAddress'
 import HideTokenModal from './HideTokenModal'
 import getStyles from './styles'
 
@@ -53,10 +53,13 @@ const TokenDetails = ({
   } = useModalize()
   const { addToast } = useToast()
   const { t } = useTranslation()
-  const { account } = useSelectedAccountControllerState()
-  const { supportedChainIds } = useSwapAndBridgeControllerState()
+  const { state: account } = useController('SelectedAccountController', (state) => state.account)
+  const { state: supportedChainIds } = useController(
+    'SwapAndBridgeController',
+    (state) => state.supportedChainIds
+  )
   const { dispatch } = useControllersMiddleware()
-  const { networks } = useNetworksControllerState()
+  const { state: networks } = useController('NetworksController', (state) => state.networks)
   const [coinGeckoTokenSlug, setCoinGeckoTokenSlug] = useState('')
   const [isTokenInfoLoading, setIsTokenInfoLoading] = useState(false)
   const [doNotDisplayHideTokenModal, setDoNotDisplayHideTokenModal] = useState(false)
@@ -68,13 +71,6 @@ const TokenDetails = ({
     () => networks.find((n) => n.chainId === token?.chainId),
     [networks, token?.chainId]
   )
-  const [bindAnimHide, animStyleHide] = useCustomHover({
-    property: 'backgroundColor',
-    values: {
-      from: theme.secondaryBackground,
-      to: theme.tertiaryBackground
-    }
-  })
 
   // if the token is a gas tank token, all actions except
   // top up and maybe token info should be disabled
@@ -189,7 +185,7 @@ const TokenDetails = ({
       // },
       {
         id: 'top-up',
-        text: t('Top Up Gas Tank'),
+        text: t('Top up gas tank'),
         icon: TopUpIcon,
         onPress: async ({ chainId, address }: TokenResult) => {
           if (!gasTankAssets || gasTankAssetsError) return
@@ -308,8 +304,7 @@ const TokenDetails = ({
     isRewards,
     isVesting,
     isProjectedRewards,
-    networkData,
-    balance
+    balanceFormatted
   } = getAndFormatTokenDetails(token, networks)
 
   const hideToken = useCallback(() => {
@@ -345,6 +340,7 @@ const TokenDetails = ({
   )
   return (
     <View>
+      <ModalHeader title={t('Token information')} handleClose={handleClose} />
       <HideTokenModal
         modalRef={hideTokenModalRef}
         handleClose={closeHideTokenModal}
@@ -352,11 +348,11 @@ const TokenDetails = ({
       />
       <View style={styles.tokenInfoAndIcon}>
         <TokenIcon
-          containerHeight={48}
-          containerWidth={48}
+          containerHeight={40}
+          containerWidth={40}
           width={36}
           height={36}
-          networkSize={16}
+          networkSize={14}
           withContainer
           address={address}
           onGasTank={onGasTank}
@@ -364,62 +360,30 @@ const TokenDetails = ({
         />
         <View style={styles.tokenInfo}>
           <View style={styles.tokenSymbolAndNetwork}>
-            <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1]}>
-              <Text>
-                <Text selectable fontSize={20} weight="semiBold" style={spacings.mrSm}>
-                  {symbol}
-                </Text>
-                <Text fontSize={16}>{isRewards && t('Claimable rewards')}</Text>
-                <Text fontSize={16}>{isVesting && t('Claimable early supporters vesting')}</Text>
-                <Text fontSize={16}>{!isRewards && !isVesting && t('on ')}</Text>
-                <Text fontSize={16}>{onGasTank && t('Gas Tank')}</Text>
-                <Text fontSize={16}>
-                  {!onGasTank && !isRewards && !isVesting && networkData?.name}
-                </Text>{' '}
-                <CopyTokenAddress address={address} isRewards={isRewards} isVesting={isVesting} />
+            <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbMi]}>
+              <Text selectable weight="semiBold" style={spacings.mrSm}>
+                {balanceFormatted} {symbol}
+              </Text>
+              <Text fontSize={12} weight="medium">
+                {isRewards && t('Claimable rewards')}
+              </Text>
+              <Text fontSize={12} weight="medium">
+                {isVesting && t('Claimable early supporters vesting')}
               </Text>
             </View>
-            {!onGasTank && !isRewards && !isVesting && !isProjectedRewards && (
-              <View style={[flexbox.alignSelfEnd]}>
-                <AnimatedPressable
-                  {...bindAnimHide}
-                  onPress={handleHideTokenFromButton}
-                  style={animStyleHide}
-                >
-                  <Text
-                    testID="hide-token-button"
-                    style={styles.hideTokenButton}
-                    weight="medium"
-                    fontSize={12}
-                  >
-                    {t('Hide token')}
-                  </Text>
-                </AnimatedPressable>
-              </View>
-            )}
           </View>
           <View style={styles.balance}>
-            <Text
-              selectable
-              style={spacings.mrMi}
-              fontSize={12}
-              weight="number_bold"
-              numberOfLines={1}
-              dataSet={{ tooltipId: `${tokenId}-details-balance` }}
-            >
-              {String(balance)} {symbol}
-            </Text>
             <View style={[flexbox.directionRow, flexbox.alignCenter]}>
               <Text
                 selectable
-                style={spacings.mrMi}
-                fontSize={12}
-                weight="number_bold"
+                style={spacings.mrTy}
+                fontSize={14}
+                weight="number_medium"
                 appearance="secondaryText"
               >
                 {balanceUSDFormatted}
               </Text>
-              <Text selectable fontSize={12} weight="number_regular" appearance="secondaryText">
+              <Text selectable fontSize={14} weight="number_medium" appearance="secondaryText">
                 (1 ${symbol} ≈ {priceUSDFormatted})
               </Text>
             </View>
@@ -438,21 +402,41 @@ const TokenDetails = ({
             </View>
           )}
         </View>
+        {!onGasTank && !isRewards && !isVesting && !isProjectedRewards && (
+          <Button
+            type="tertiary"
+            onPress={handleHideTokenFromButton}
+            testID="hide-token-button"
+            text={t('Hide token')}
+            size="smaller"
+            style={{ height: 40, borderRadius: 20 }}
+            childrenPosition="left"
+          >
+            <InvisibilityIcon
+              width={20}
+              height={20}
+              color={theme.iconPrimary}
+              style={spacings.mrMi}
+            />
+          </Button>
+        )}
       </View>
 
-      <View style={styles.actionsContainer}>
-        {actions.map((action) => (
-          <TokenDetailsButton
-            key={action.id}
-            {...action}
-            isDisabled={!!action.isDisabled}
-            token={token}
-            isTokenInfoLoading={isTokenInfoLoading}
-            handleClose={handleClose}
-            iconWidth={action.iconWidth}
-          />
-        ))}
-      </View>
+      <GlassView style={{ borderRadius: 28 }} cssStyle={{ borderRadius: 28 }}>
+        <View style={styles.actionsContainer}>
+          {actions.map((action) => (
+            <TokenDetailsButton
+              key={action.id}
+              {...action}
+              isDisabled={!!action.isDisabled}
+              token={token}
+              isTokenInfoLoading={isTokenInfoLoading}
+              handleClose={handleClose}
+              iconWidth={action.iconWidth}
+            />
+          ))}
+        </View>
+      </GlassView>
     </View>
   )
 }

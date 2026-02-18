@@ -1,7 +1,9 @@
-import React, { FC } from 'react'
+import React, { FC, useMemo } from 'react'
 import { View, ViewStyle } from 'react-native'
 
 import useTheme from '@common/hooks/useTheme'
+import useWindowSize from '@common/hooks/useWindowSize'
+import { SPACING_2XL } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@web/utils/uiType'
@@ -12,17 +14,31 @@ type Props = {
   style?: ViewStyle
 }
 
-const { isPopup } = getUiType()
+const { isPopup, isRequestWindow } = getUiType()
 
 const LayoutWrapper: FC<Props> = ({ children, backgroundStyle = {}, style = {} }) => {
   const { theme } = useTheme()
+  const { minHeightSize } = useWindowSize()
+
+  const paddingTop = useMemo(() => {
+    if (isRequestWindow) return SPACING_2XL
+    if (isPopup) return 0
+
+    if (minHeightSize(700)) return 24
+
+    if (minHeightSize(800)) return 48
+
+    if (minHeightSize(900)) return 96
+
+    return 124
+  }, [minHeightSize])
 
   return (
     <View
       style={[
         flexbox.flex1,
         flexbox.alignCenter,
-        !isPopup && { paddingTop: 124 },
+        { paddingTop: paddingTop },
         { backgroundColor: theme.secondaryBackground },
         backgroundStyle
       ]}

@@ -468,7 +468,12 @@ module.exports = async function (env, argv) {
     return config
   }
   if (isAmbireExplorer) {
-    if (process.env.APP_ENV === 'development') {
+    // Not entering this branch causes the error:
+    // handleAction: Controller ProvidersController not found
+    // This is a temporary fix
+    const ARE_CONTROLLERS_BROKEN_WITH_MINIMIZE = true
+
+    if (process.env.APP_ENV === 'development' || ARE_CONTROLLERS_BROKEN_WITH_MINIMIZE) {
       config.optimization = { minimize: false }
     } else {
       delete config.optimization.splitChunks
@@ -479,6 +484,29 @@ module.exports = async function (env, argv) {
     config.resolve.fallback = {
       stream: require.resolve('stream-browserify'),
       crypto: require.resolve('crypto-browserify')
+    }
+
+    const terserPlugin = config.optimization.minimizer?.find(
+      (minimizer) => minimizer.constructor.name === 'TerserPlugin'
+    )
+    if (terserPlugin) {
+      const terserRealOptions = terserPlugin.options.minimizer?.options
+
+      if (terserRealOptions) {
+        terserRealOptions.compress = {
+          ...(terserRealOptions.compress || {}),
+          pure_getters: true,
+          passes: 3
+        }
+
+        terserRealOptions.output = {
+          ...(terserRealOptions.output || {}),
+          ascii_only: true,
+          comments: false
+        }
+
+        terserRealOptions.mangle = false
+      }
     }
 
     config.plugins = [
@@ -574,6 +602,29 @@ module.exports = async function (env, argv) {
         use: ['style-loader', 'css-loader', 'sass-loader']
       }
     ]
+
+    const terserPlugin = config.optimization.minimizer?.find(
+      (minimizer) => minimizer.constructor.name === 'TerserPlugin'
+    )
+    if (terserPlugin) {
+      const terserRealOptions = terserPlugin.options.minimizer?.options
+
+      if (terserRealOptions) {
+        terserRealOptions.compress = {
+          ...(terserRealOptions.compress || {}),
+          pure_getters: true,
+          passes: 3
+        }
+
+        terserRealOptions.output = {
+          ...(terserRealOptions.output || {}),
+          ascii_only: true,
+          comments: false
+        }
+
+        terserRealOptions.mangle = false
+      }
+    }
 
     config.plugins = [
       ...defaultExpoConfigPlugins,

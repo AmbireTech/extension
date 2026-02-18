@@ -1,32 +1,19 @@
 import React from 'react'
-import Svg, { G, Path, SvgProps } from 'react-native-svg'
+import Svg, { Circle, Path, SvgProps } from 'react-native-svg'
 
 import useTheme from '@common/hooks/useTheme'
 
-const LightModeIcon: React.FC<SvgProps> = ({ width = 18, height = 18, color, ...rest }) => {
+const LightModeIcon: React.FC<SvgProps> = ({ width = 24, height = 24, color, ...rest }) => {
   const { theme } = useTheme()
   return (
-    <Svg width={width} height={height} viewBox="0 0 18 18" {...rest}>
-      <G transform="translate(-604 -552)">
-        <Path
-          d="M10.7,15.9a5.2,5.2,0,1,0-5.2-5.2A5.2,5.2,0,0,0,10.7,15.9Z"
-          transform="translate(602.299 550.3)"
-          fill="none"
-          stroke={color || theme.primary}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="1.5"
-        />
-        <Path
-          d="M15.713,15.712l-.1-.1m0-11.216.1-.1ZM4.289,15.712l.1-.1ZM10,2.064v0ZM10,18v0ZM2.065,10h0ZM18,10h0ZM4.393,4.392l-.1-.1Z"
-          transform="translate(602.999 551)"
-          fill="none"
-          stroke={color || theme.primary}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="2"
-        />
-      </G>
+    <Svg width={width} height={height} fill="none" viewBox="0 0 24 24" {...rest}>
+      <Circle cx="12" cy="12" r="3.25" stroke={color || theme.iconPrimary} strokeWidth="1.5" />
+      <Path
+        stroke={color || theme.iconPrimary}
+        strokeLinecap="round"
+        strokeWidth="1.5"
+        d="M12 5V3M12 21v-2M16.95 7.05l1.414-1.414M5.637 18.364 7.05 16.95M19 12h2M3 12h2M16.95 16.95l1.414 1.414M5.637 5.636 7.05 7.05"
+      />
     </Svg>
   )
 }

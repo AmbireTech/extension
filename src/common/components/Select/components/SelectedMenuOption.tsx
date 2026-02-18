@@ -8,7 +8,6 @@ import UpArrowIcon from '@common/assets/svg/UpArrowIcon'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 
 import getStyles from '../styles'
@@ -64,10 +63,6 @@ const SelectedMenuOption: FC<SelectedMenuOptionProps> = ({
         styles.selectBorderWrapper,
         // @ts-ignore
         disabled && { opacity: 0.6, cursor: 'default' },
-        isMenuOpen && {
-          borderColor:
-            themeType === THEME_TYPES.DARK ? `${theme.linkText as string}35` : theme.infoBackground
-        },
         selectBorderWrapperStyle
       ]}
       onPress={onPressWrapped}
@@ -78,13 +73,6 @@ const SelectedMenuOption: FC<SelectedMenuOptionProps> = ({
           style={[
             styles.select,
             size && styles[`${size}Select`],
-            {
-              borderColor: isMenuOpen
-                ? themeType === THEME_TYPES.DARK
-                  ? theme.linkText
-                  : theme.primary
-                : theme.secondaryBorder
-            },
             selectStyle,
             (hovered || isMenuOpen) && hoveredSelectStyle
           ]}

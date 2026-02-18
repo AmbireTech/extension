@@ -14,6 +14,7 @@ import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
 import { useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
@@ -21,11 +22,6 @@ import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Hea
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
-import usePortfolioControllerState from '@web/hooks/usePortfolioControllerState/usePortfolioControllerState'
-import useProvidersControllerState from '@web/hooks/useProvidersControllerState'
-import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import ActionFooter from '@web/modules/action-requests/components/ActionFooter'
 import {
   getTokenEligibility,
@@ -48,13 +44,14 @@ export type TokenData = {
 const WatchTokenRequestScreen = () => {
   const { t } = useTranslation()
   const { theme, styles, themeType } = useTheme(getStyles)
-
   const { dispatch } = useControllersMiddleware()
-  const { currentUserRequest } = useRequestsControllerState()
-  const { temporaryTokens, validTokens, customTokens } = usePortfolioControllerState()
-  const { portfolio: selectedAccountPortfolio } = useSelectedAccountControllerState()
-  const { networks } = useNetworksControllerState()
-  const { state } = useProvidersControllerState()
+  const { currentUserRequest } = useController('RequestsController').state
+  const { temporaryTokens, validTokens, customTokens } = useController('PortfolioController').state
+  const {
+    state: { portfolio: selectedAccountPortfolio }
+  } = useController('SelectedAccountController')
+  const { networks } = useController('NetworksController').state
+  const { state } = useController('ProvidersController')
 
   const userRequest = useMemo(
     () => (currentUserRequest?.kind === 'walletWatchAsset' ? currentUserRequest : undefined),
@@ -271,9 +268,8 @@ const WatchTokenRequestScreen = () => {
   return (
     <TabLayoutContainer
       width="full"
-      backgroundColor={theme.primaryBackground}
       header={<HeaderWithLogoOnly />}
-      footer={
+      renderDirectChildren={() => (
         <ActionFooter
           onReject={handleCancel}
           onResolve={handleAddToken}
@@ -285,7 +281,7 @@ const WatchTokenRequestScreen = () => {
             !!tokenValidation?.error?.message
           }
         />
-      }
+      )}
     >
       <View style={[styles.container]}>
         <View style={styles.content}>
@@ -301,22 +297,17 @@ const WatchTokenRequestScreen = () => {
                 containerWidth={56}
                 networkSize={20}
                 address={tokenData?.address}
-                width={50}
-                height={50}
-                networkWrapperStyle={{
-                  left: -8,
-                  top: -4
-                }}
+                width={48}
+                height={48}
               />
             </View>
-            <Text weight="semiBold" fontSize={20} numberOfLines={1}>
+            <Text weight="semiBold" fontSize={20} numberOfLines={1} style={spacings.mbTy}>
               {tokenData?.symbol}
             </Text>
             <NetworkBadge
               withOnPrefix
               chainId={tokenNetwork?.chainId}
-              fontSize={14}
-              iconSize={20}
+              fontSize={12}
               style={{
                 backgroundColor: theme.primaryBackground,
                 ...spacings.mb,

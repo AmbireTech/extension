@@ -12,17 +12,17 @@ import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import { SectionedSelect } from '@common/components/Select'
 import { SelectValue } from '@common/components/Select/types'
 import Text from '@common/components/Text'
+import TitleAndIcon from '@common/components/TitleAndIcon'
+import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES, ThemeProps } from '@common/styles/themeConfig'
+import { ThemeProps } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
-import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControllerState'
 
 interface Props {
   toTokenOptions: SelectValue[]
-  toTokenValue: SelectValue
+  toTokenValue: SelectValue | undefined
   toTokenAmountSelectDisabled: boolean
   handleChangeToToken: (value: SelectValue) => void
   addToTokenByAddressStatus: ISwapAndBridgeController['statuses']['addToTokenByAddress']
@@ -79,8 +79,11 @@ const ToTokenSelect: React.FC<Props> = ({
 }) => {
   const { t } = useTranslation()
   const { theme, themeType } = useTheme()
-  const { errors, isTokenListLoading, toTokenSearchTerm } = useSwapAndBridgeControllerState()
-  const { portfolio } = useSelectedAccountControllerState()
+  const { errors, isTokenListLoading, toTokenSearchTerm } =
+    useController('SwapAndBridgeController').state
+  const {
+    state: { portfolio }
+  } = useController('SelectedAccountController')
   const [didAttemptSearchingTokenByAddress, setDidAttemptSearchingTokenByAddress] =
     React.useState(false)
   const { dispatch } = useControllersMiddleware()
@@ -167,7 +170,7 @@ const ToTokenSelect: React.FC<Props> = ({
     return [
       {
         title: {
-          icon: <CoinsIcon />,
+          icon: CoinsIcon,
           text: toTokenSearchTerm
             ? t('Tokens found in current account')
             : t('Tokens in current account')
@@ -177,7 +180,7 @@ const ToTokenSelect: React.FC<Props> = ({
       },
       {
         title: {
-          icon: <StarFilledIcon />,
+          icon: StarFilledIcon,
           text: toTokenSearchTerm ? t('Search results') : t('Popular tokens')
         },
         data: restToTokenOptions,
@@ -191,24 +194,14 @@ const ToTokenSelect: React.FC<Props> = ({
       if (section.data.length === 0 || !section.title) return null
 
       return (
-        <View
-          style={[
-            flexbox.directionRow,
-            flexbox.alignCenter,
-            spacings.ph,
-            spacings.pt,
-            section?.key === 'swap-and-bridge-to-account-tokens' ? spacings.pbSm : spacings.pbSm,
-            { height: SECTION_MENU_HEADER_HEIGHT, backgroundColor: theme.primaryBackground }
-          ]}
-        >
-          {section.title.icon}
-          <Text style={spacings.mlMi} fontSize={14} weight="medium" appearance="secondaryText">
-            {section.title.text}
-          </Text>
-        </View>
+        <TitleAndIcon
+          icon={section.title.icon}
+          title={section.title.text}
+          style={{ backgroundColor: theme.primaryBackground }}
+        />
       )
     },
-    [theme]
+    [theme.primaryBackground]
   )
 
   return (
@@ -229,8 +222,8 @@ const ToTokenSelect: React.FC<Props> = ({
       }
       attemptToFetchMoreOptions={handleAttemptToFetchMoreOptions}
       onSearch={handleOnSearch}
-      containerStyle={{ ...spacings.mb0, ...flexbox.flex1 }}
-      selectStyle={spacings.phTy}
+      containerStyle={{ ...spacings.mb0, ...flexbox.flex1, ...spacings.mrMd }}
+      selectStyle={{ ...spacings.plTy, ...spacings.prSm }}
       stickySectionHeadersEnabled
     />
   )

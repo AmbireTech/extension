@@ -8,8 +8,8 @@ import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Header'
+import spacings from '@common/styles/spacings'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import useResponsiveActionWindow from '@web/hooks/useResponsiveActionWindow'
 import ActionFooter from '@web/modules/action-requests/components/ActionFooter'
 
@@ -22,7 +22,7 @@ const DappConnectScreen = () => {
   const { t } = useTranslation()
   const { theme, styles } = useTheme(getStyles)
   const { dispatch } = useControllersMiddleware()
-  const { currentUserRequest } = useRequestsControllerState()
+  const { currentUserRequest } = useController('RequestsController').state
 
   const [isAuthorizing, setIsAuthorizing] = useState(false)
   const { responsiveSizeMultiplier } = useResponsiveActionWindow()
@@ -72,9 +72,8 @@ const DappConnectScreen = () => {
   return (
     <TabLayoutContainer
       width="full"
-      backgroundColor={theme.secondaryBackground}
       header={<HeaderWithLogoOnly />}
-      footer={
+      renderDirectChildren={() => (
         <ActionFooter
           onReject={handleDenyButtonPress}
           onResolve={!shouldHoldToProceed ? handleAuthorizeButtonPress : () => {}}
@@ -84,6 +83,7 @@ const DappConnectScreen = () => {
                 testID="dapp-connect-button"
                 onHoldComplete={handleAuthorizeButtonPress}
                 holdDuration={1600}
+                style={{ height: 56 }}
                 text={resolveButtonText}
                 buttonType={((): 'error' | 'warning' => {
                   if (!!dappToConnect && dappToConnect.blacklisted === 'BLACKLISTED') return 'error'
@@ -102,7 +102,8 @@ const DappConnectScreen = () => {
           rejectButtonText={t('Deny')}
           resolveButtonTestID={!shouldHoldToProceed ? 'dapp-connect-button' : undefined}
         />
-      }
+      )}
+      style={spacings.ptXl}
     >
       {!!dappToConnect && (
         <View style={[styles.container]}>

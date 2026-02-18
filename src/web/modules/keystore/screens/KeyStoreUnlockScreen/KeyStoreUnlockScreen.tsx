@@ -10,6 +10,7 @@ import InputPassword from '@common/components/InputPassword'
 import Text from '@common/components/Text'
 import { isDev, isTesting, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useDisableNavigatingBack from '@common/hooks/useDisableNavigatingBack'
 import useNavigation from '@common/hooks/useNavigation'
@@ -20,9 +21,6 @@ import text from '@common/styles/utils/text'
 import { DEFAULT_KEYSTORE_PASSWORD_DEV } from '@env'
 import LayoutWrapper from '@web/components/LayoutWrapper'
 import { openInternalPageInTab } from '@web/extension-services/background/webapi/tab'
-import useEmailVaultControllerState from '@web/hooks/useEmailVaultControllerState'
-import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
-import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import { getUiType } from '@web/utils/uiType'
 
 import getStyles from './styles'
@@ -34,9 +32,9 @@ const KeyStoreUnlockScreen = () => {
   const { styles } = useTheme(getStyles)
   const { navigate } = useNavigation()
   const { dispatch } = useControllersMiddleware()
-  const { hasKeystoreRecovery } = useEmailVaultControllerState()
-  const { isUnlocked, statuses, errorMessage } = useKeystoreControllerState()
-  const { requestWindow } = useRequestsControllerState()
+  const { hasKeystoreRecovery } = useController('EmailVaultController').state
+  const { isUnlocked, statuses, errorMessage } = useController('KeystoreController').state
+  const { requestWindow } = useController('RequestsController').state
   const { theme } = useTheme()
   const {
     control,
@@ -132,7 +130,7 @@ const KeyStoreUnlockScreen = () => {
         <Button
           testID="button-unlock"
           disabled={disableSubmit}
-          style={{ width: '100%' }}
+          style={{ width: '100%', marginBottom: 0 }}
           text={statuses.unlockWithSecret === 'LOADING' ? t('Unlocking...') : t('Unlock')}
           onPress={handleSubmit((data) => handleUnlock(data))}
           childrenPosition="left"
