@@ -33,30 +33,25 @@ export class SpeculosDevice {
     await this.client.delete('/events')
   }
 
-  // TODO: maybe it has to be removed
+  async waitForText(text: string, timeout = 10000) {
+    const start = Date.now()
 
-  async waitForEvent(
-    predicate: (event: SpeculosEvent) => boolean,
-    // TODO: adjust the default
-    timeout = 5000000
-  ): Promise<SpeculosEvent> {
-    const startTime = Date.now()
+    while (Date.now() - start < timeout) {
+      const events = await this.getEvents()
 
-    while (Date.now() - startTime < timeout) {
-      const { events } = await this.getEvents()
-      console.log('Received events from device:', events)
-      const event = events.find(predicate)
-      if (event) {
-        console.log('Matching event found:', event)
-        return event
+      const screenText = JSON.stringify(events)
+
+      if (screenText.includes(text)) {
+        return text
       }
-      await new Promise((resolve) => setTimeout(resolve, 500))
+
+      await new Promise((r) => setTimeout(r, 300))
     }
 
-    throw new Error('Timeout waiting for event')
+    throw new Error(`Timeout waiting for text: ${text}`)
   }
 
-  async waitForText(text: string, timeout = 10000) {
+  async nextUntilText(text: string, timeout = 10000) {
     const start = Date.now()
 
     while (Date.now() - start < timeout) {
@@ -68,6 +63,7 @@ export class SpeculosDevice {
         return
       }
 
+      await this.pressRightButton()
       await new Promise((r) => setTimeout(r, 300))
     }
 
@@ -96,5 +92,75 @@ export class SpeculosDevice {
     }
 
     await this.pressBothButtons()
+  }
+
+  /**
+   * Enables Blind Signing in the Ethereum Ledger app.
+   *
+   * Flow:
+   * 1. Open Settings
+   * 2. Navigate to "Blind signing"
+   * 3. Toggle to Enabled
+   * 4. Exit settings
+   */
+  async enableBlindSigning() {
+    // Go to Settings (usually first screen after app open)
+    await this.waitForText('app is ready')
+    await this.pressRightButton() // navigate to Settings
+    await this.waitForText('App settings')
+    await this.pressBothButtons() // enter Settings
+
+    // Navigate to Blind signing
+    // enable Blind signing
+    // NOTE: THIS SHOULD BE ENABLED FOR TESTING SIGNING TRANSACTIONS WITH LEDGER, OTHERWISE TRANSACTIONS WON'T BE SIGNED
+    await this.waitForText('Blind signing')
+    await this.pressBothButtons()
+
+    // Display nonce in transaction
+    await this.pressRightButton()
+
+    // Display raw content of EIP712 messages
+    await this.pressRightButton()
+
+    // NOTE: THIS SHOULD BE ENABLED FOR TESTING SIGNING TRANSACTIONS WITH LEDGER, OTHERWISE TRANSACTIONS WON'T BE SIGNED
+    // Display contract data details
+    await this.pressRightButton()
+    await this.pressBothButtons()
+
+    // Enable EIP-7702 authorization
+    await this.pressRightButton()
+
+    // Always display the transaction hash
+    await this.pressRightButton()
+
+    await this.pressRightButton()
+
+    await this.waitForText('Back')
+    await this.pressBothButtons() // confirm going back to main screen
+    await this.pressLeftButton()
+  }
+
+  async signTransaction() {
+    await this.waitForText('Verify selector')
+    await this.nextUntilText('Confirm selector')
+    await this.pressBothButtons()
+
+    await this.waitForText('Verify selector')
+    await this.nextUntilText('Confirm parameter')
+    await this.pressBothButtons()
+
+    await this.waitForText('Verify parameter')
+    await this.pressRightButton()
+    await this.pressRightButton()
+
+    await this.waitForText('Confirm parameter')
+    await this.pressBothButtons()
+
+    await this.waitForText('both buttons')
+    await this.pressBothButtons()
+
+    await this.waitForText('Review transaction')
+
+    await this.confirmTransactionFlow()
   }
 }

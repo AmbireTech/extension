@@ -64,9 +64,7 @@ export class SignMessagePage extends BasePage {
 
     if (ledgerSimulatorControls) {
       // Wait for the "Review message" screen to appear on the Ledger device before confirming the transaction flow.
-      const isReadyToSign = await ledgerSimulatorControls.waitForEvent(
-        ({ text }) => text === 'Review message'
-      )
+      const isReadyToSign = await ledgerSimulatorControls.waitForText('Review message')
 
       if (isReadyToSign) {
         // Confirm the transaction flow on the Ledger device.

@@ -67,16 +67,17 @@ test.describe('ledger with storage', () => {
   })
 
   // SIGN MESSAGE TESTS
-  test('should sign plain message', async ({ pages }) => {
+  test.only('should sign plain message', async ({ pages }) => {
     const ledgerSimulatorControls = new SpeculosDevice({ baseUrl: LEDGER_SIMULATIUON_URL })
     const message = 'Hello, Ambire!'
 
     await pages.signMessage.signMessage(message, 'plain', ledgerSimulatorControls)
   })
 
-  test.only('should send a transaction and pay with the current account gas tank', async ({
-    pages
-  }) => {
+  test('should send a transaction and pay with the current account gas tank', async ({ pages }) => {
+    const ledgerSimulatorControls = new SpeculosDevice({ baseUrl: LEDGER_SIMULATIUON_URL })
+    await ledgerSimulatorControls.enableBlindSigning()
+
     await runSimpleTransferFlow({
       pages,
       sendToken: tokens.usdc.optimism,
@@ -84,7 +85,8 @@ test.describe('ledger with storage', () => {
       feeToken: tokens.eth.optimism,
       payWithGasTank: false,
       message: 'Transfer done!',
-      assertNoInitialTx: true
+      assertNoInitialTx: true,
+      ledgerSimulatorControls: ledgerSimulatorControls
     })
   })
 })
