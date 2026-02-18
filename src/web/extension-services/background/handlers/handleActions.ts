@@ -435,6 +435,9 @@ export const handleActions = async (
     case 'SAFE_CONTROLLER_FIND_SAFE':
       return mainCtrl.safe.findSafe(params.safeAddress)
 
+    case 'SAFE_CONTROLLER_RESET_FIND':
+      return mainCtrl.safe.resetFind()
+
     case 'SAFE_CONTROLLER_FETCH_TRANSACTIONS':
       return mainCtrl.fetchSafeTxns(params.chainsIds)
 

@@ -45,7 +45,6 @@ const SafeImportScreen = () => {
   const { goToPrevRoute, goToNextRoute } = useOnboardingNavigation()
   const { t } = useTranslation()
   const [safe, setSafe] = useState<string | null>('')
-
   const { theme } = useTheme()
   const { dispatch } = useControllersMiddleware()
 
@@ -131,6 +130,13 @@ const SafeImportScreen = () => {
       })
     }
   }, [dispatch, safeAddressValue, safeInfo?.address, safe])
+
+  // run on unmount
+  useEffect(() => {
+    return () => {
+      dispatch({ type: 'SAFE_CONTROLLER_RESET_FIND' })
+    }
+  }, [dispatch])
 
   return (
     <TabLayoutContainer backgroundColor={theme.secondaryBackground} header={<Header />}>

@@ -784,6 +784,10 @@ type SafeControllerFindSafe = {
   }
 }
 
+type SafeControllerResetFind = {
+  type: 'SAFE_CONTROLLER_RESET_FIND'
+}
+
 type SafeControllerFetchTransactions = {
   type: 'SAFE_CONTROLLER_FETCH_TRANSACTIONS'
   params: {
@@ -941,5 +945,6 @@ export type Action =
   | KeystoreControllerSendPasswordDecryptedPrivateKeyToUiAction
   | SafeControllerFindSafe
   | SafeControllerFetchTransactions
+  | SafeControllerResetFind
   | AccountsControllerAddAccounts
   | FlipFeature
