@@ -15,6 +15,7 @@ import { isExtension } from '@web/constants/browserapi'
 // eslint-disable-next-line no-console
 SplashScreen.preventAutoHideAsync().catch(console.warn) // TODO: log a sentry error
 
+// TODO: Not allowed in lavamoat sandbox, remove?
 // eslint-disable-next-line no-console
 const consoleWarn = console.warn
 const SUPPRESSED_WARNINGS = [
