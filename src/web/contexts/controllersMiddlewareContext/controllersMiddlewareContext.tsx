@@ -11,9 +11,9 @@ import { ControllerStoreContext } from '@common/contexts/controllerStoreContext'
 import useIsScreenFocused from '@common/hooks/useIsScreenFocused'
 import useRoute from '@common/hooks/useRoute'
 import useToast from '@common/hooks/useToast'
+import { Action, MethodAction } from '@common/types/actions'
 import { isExtension } from '@web/constants/browserapi'
 import { controllersMapping } from '@web/constants/controllersMapping'
-import { Action } from '@web/extension-services/background/actions'
 import { closeCurrentWindow } from '@web/extension-services/background/webapi/window'
 import eventBus from '@web/extension-services/event/eventBus'
 import { PortMessenger } from '@web/extension-services/messengers'
@@ -26,7 +26,7 @@ import { getUiType } from '@web/utils/uiType'
 
 let globalDispatch: ControllersMiddlewareContextReturnType['dispatch']
 let pm: PortMessenger
-const actionsBeforeBackgroundReady: Action[] = []
+const actionsBeforeBackgroundReady: (MethodAction | Action)[] = []
 let backgroundReady: boolean = false
 let controllerReady: boolean = false
 let connectPort: () => Promise<void> = () => Promise.resolve()
@@ -162,7 +162,7 @@ export const ControllersMiddlewareProvider: React.FC<{ children: React.ReactNode
   const { controllerStore } = useContext(ControllerStoreContext)
 
   const dispatch = useCallback(
-    (action: Action) => {
+    (action: MethodAction | Action) => {
       globalDispatch(action, windowId)
     },
     [windowId]

@@ -6,9 +6,8 @@ import { MainController } from '@ambire-common/controllers/main/main'
 import { IEventEmitterRegistryController } from '@ambire-common/interfaces/eventEmitter'
 import { KeyIterator } from '@ambire-common/libs/keyIterator/keyIterator'
 import wait from '@ambire-common/utils/wait'
+import { Action, MethodAction } from '@common/types/actions'
 import { browser } from '@web/constants/browserapi'
-import { Action } from '@web/extension-services/background/actions'
-import { WalletStateController } from '@web/extension-services/background/controllers/wallet-state'
 import { Port, PortMessenger } from '@web/extension-services/messengers'
 import LatticeKeyIterator from '@web/modules/hardware-wallet/libs/latticeKeyIterator'
 import LedgerKeyIterator from '@web/modules/hardware-wallet/libs/ledgerKeyIterator'
@@ -17,17 +16,15 @@ import TrezorKeyIterator from '@web/modules/hardware-wallet/libs/trezorKeyIterat
 import sessionStorage from '../webapi/sessionStorage'
 
 export const handleActions = async (
-  action: Action,
+  action: MethodAction | Action,
   {
     eventEmitterRegistry,
     mainCtrl,
-    walletStateCtrl,
     pm,
     port
   }: {
     eventEmitterRegistry: IEventEmitterRegistryController
     mainCtrl: MainController
-    walletStateCtrl: WalletStateController
     pm?: PortMessenger
     port?: Port
   }
@@ -35,6 +32,22 @@ export const handleActions = async (
   // @ts-ignore
   const { type, params } = action
   switch (type) {
+    case 'method': {
+      const { ctrlName, method, args } = params
+
+      const ctrl = eventEmitterRegistry.values().find((c) => c.name === ctrlName) as any
+
+      if (!ctrl) {
+        console.error(`handleAction: Controller ${ctrlName} not found`)
+
+        return
+      }
+
+      if (ctrl && typeof ctrl[method] === 'function') {
+        ctrl[method](...args)
+      }
+      break
+    }
     case 'HANDSHAKE': {
       if (!pm || !port) return
       pm.sendToPort(port, '> ui', { method: 'portReady', params: {} })
@@ -59,22 +72,6 @@ export const handleActions = async (
       const ctrl = eventEmitterRegistry.values().find((c) => c.name === params.controller)
       pm.send('> ui', { method: params.controller, params: ctrl ?? null })
 
-      break
-    }
-    case 'method': {
-      const { ctrlName, method, args } = params
-
-      const ctrl = eventEmitterRegistry.values().find((c) => c.name === ctrlName) as any
-
-      if (!ctrl) {
-        console.error(`handleAction: Controller ${ctrlName} not found`)
-
-        return
-      }
-
-      if (ctrl && typeof ctrl[method] === 'function') {
-        ctrl[method](...args)
-      }
       break
     }
     case 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LEDGER': {

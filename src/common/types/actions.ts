@@ -20,6 +20,11 @@ type MethodActionParams = {
   }[MethodKeys<AllControllersMappingType[K]>]
 }[keyof AllControllersMappingType]
 
+export type MethodAction = {
+  type: 'method'
+  params: MethodActionParams
+}
+
 type InitControllerStateAction = {
   type: 'INIT_CONTROLLER_STATE'
   params: {
@@ -29,11 +34,6 @@ type InitControllerStateAction = {
 
 type HandshakeAction = {
   type: 'HANDSHAKE'
-}
-
-type MethodAction = {
-  type: 'method'
-  params: MethodActionParams
 }
 
 type UpdateNavigationUrl = {
@@ -112,7 +112,6 @@ type OpenExtensionPopupAction = {
 export type Action =
   | UpdateNavigationUrl
   | InitControllerStateAction
-  | MethodAction
   | MainControllerAccountPickerInitLatticeAction
   | MainControllerAccountPickerInitTrezorAction
   | MainControllerAccountPickerInitLedgerAction

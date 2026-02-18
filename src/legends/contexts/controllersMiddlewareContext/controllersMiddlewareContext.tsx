@@ -1,4 +1,3 @@
-import { EventEmitter as Emitter } from 'events'
 /* eslint-disable @typescript-eslint/no-floating-promises */
 import React, { useCallback, useContext, useEffect, useMemo, useRef } from 'react'
 
@@ -10,8 +9,8 @@ import { StorageController } from '@ambire-common/controllers/storage/storage'
 import { AllControllersMappingType } from '@common/constants/controllersMapping'
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext'
 import { ControllerStoreContext } from '@common/contexts/controllerStoreContext'
+import { MethodAction } from '@common/types/actions'
 import { RewardsBaseControllersMappingType } from '@legends/constants/controllersMapping'
-import { Action } from '@web/extension-services/background/actions'
 import { storage } from '@web/extension-services/background/webapi/storage'
 import eventBus from '@web/extension-services/event/eventBus'
 
@@ -84,7 +83,7 @@ export const ControllersMiddlewareProvider: React.FC<{
   )
 
   const dispatch = useCallback(
-    (action: Action) => {
+    (action: MethodAction) => {
       if (action.type === 'method') {
         const { ctrlName, method, args } = action.params
 
