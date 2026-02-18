@@ -1,9 +1,9 @@
-import { KEYSTORE_PASS, ledgerParams, SA_ADDRESS } from 'constants/env'
+import { KEYSTORE_PASS, ledgerParams, ledgerSaParams, SA_ADDRESS } from 'constants/env'
 import mainConstants from 'constants/mainConstants'
 import selectors from 'constants/selectors'
 import tokens from 'constants/tokens'
 import { test } from 'fixtures/pageObjects' // your extended test with auth
-import { runSimpleTransferFlow } from 'flows/transferFlow'
+import { runBatchTransferFlow, runSimpleTransferFlow } from 'flows/transferFlow'
 
 import { expect } from '@playwright/test'
 
@@ -61,21 +61,21 @@ test.describe('ledger with storage', () => {
     await context.close()
   })
 
-  // DASHBOARD TESTS
   test('should have balance on the dashboard', async ({ pages }) => {
     await pages.dashboard.checkBalanceInAccount()
   })
 
-  // SIGN MESSAGE TESTS
-  test.only('should sign plain message', async ({ pages }) => {
+  test('should sign plain message', async ({ pages }) => {
     const ledgerSimulatorControls = new SpeculosDevice({ baseUrl: LEDGER_SIMULATIUON_URL })
     const message = 'Hello, Ambire!'
 
     await pages.signMessage.signMessage(message, 'plain', ledgerSimulatorControls)
   })
 
-  test('should send a transaction and pay with the current account gas tank', async ({ pages }) => {
+  test('should send a transaction and pay with native token', async ({ pages }) => {
     const ledgerSimulatorControls = new SpeculosDevice({ baseUrl: LEDGER_SIMULATIUON_URL })
+
+    // Enable blind signing in Ledger settings, otherwise the transaction won't be signed
     await ledgerSimulatorControls.enableBlindSigning()
 
     await runSimpleTransferFlow({
@@ -86,6 +86,31 @@ test.describe('ledger with storage', () => {
       payWithGasTank: false,
       message: 'Transfer done!',
       assertNoInitialTx: true,
+      ledgerSimulatorControls: ledgerSimulatorControls
+    })
+  })
+})
+
+test.describe('ledger SA with storage', () => {
+  test.describe.configure({ mode: 'serial' })
+
+  test.beforeEach(async ({ pages }) => {
+    await pages.initWithStorage(ledgerSaParams)
+  })
+
+  test.afterEach(async ({ context }) => {
+    await context.close()
+  })
+
+  test('should batch multiple transfer transactions', async ({ pages }) => {
+    const ledgerSimulatorControls = new SpeculosDevice({ baseUrl: LEDGER_SIMULATIUON_URL })
+
+    await ledgerSimulatorControls.enableBlindSigning()
+
+    await runBatchTransferFlow({
+      pages,
+      sendToken: tokens.usdc.base,
+      recipientAddress: SA_ADDRESS,
       ledgerSimulatorControls: ledgerSimulatorControls
     })
   })

@@ -170,4 +170,10 @@ export class SpeculosDevice {
 
     await this.confirmTransactionFlow()
   }
+
+  async signSmartAccountTransaction() {
+    await this.waitForText('both buttons')
+    await this.pressBothButtons()
+    await this.confirmTransactionFlow()
+  }
 }

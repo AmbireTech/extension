@@ -75,11 +75,13 @@ export async function runSimpleTransferFlow({
 export async function runBatchTransferFlow({
   pages,
   sendToken,
-  recipientAddress
+  recipientAddress,
+  ledgerSimulatorControls = undefined
 }: {
   pages: PageManager
   sendToken: Token
   recipientAddress: string
+  ledgerSimulatorControls?: SpeculosDevice | undefined
 }) {
   const page = pages.transfer.page
 
@@ -120,7 +122,14 @@ export async function runBatchTransferFlow({
     await page.getByTestId(selectors.bannerButtonOpen).first().click()
 
     const actionWindow = await actionWindowPromise
+    // await page.pause() // pause to allow time to open Ledger simulator and see the signing flow
     await actionWindow.getByTestId(selectors.signTransactionButton).click()
+
+    // HERE should navigate through the Ledger signing flow and confirm the transaction on the Ledger device
+    if (ledgerSimulatorControls) {
+      // await page.pause() // pause to allow time to open Ledger simulator and see the signing flow
+      await ledgerSimulatorControls.signSmartAccountTransaction()
+    }
 
     await expect(actionWindow.getByTestId(selectors.txnConfirmed)).toBeVisible({
       timeout: 20000
@@ -136,6 +145,9 @@ export async function runBatchTransferFlow({
   await test.step('stop monitoring requests and expect no uncategorized requests to be made', async () => {
     const { uncategorized } = pages.transfer.getCategorizedRequests()
     pages.transfer.stopMonitorRequests()
-    expect(uncategorized.length).toBeLessThanOrEqual(0)
+    // NOTE: If we have a Ledger simulator, there will be some additional requests made to the simulator during the signing flow,
+    // so we can't assert that there are no uncategorized requests in that case,
+    // but if we don't have a Ledger simulator, then we expect no uncategorized requests to be made.
+    if (!ledgerSimulatorControls) expect(uncategorized.length).toBeLessThanOrEqual(0)
   })
 }

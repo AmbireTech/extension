@@ -9,6 +9,8 @@ export const baParams = parseEnv(envVariables, 'BA')
 export const saParams = parseEnv(envVariables, 'SA')
 // Ledger env variables
 export const ledgerParams = parseEnv(envVariables, 'LEDGER')
+// Ledger SA env variables
+export const ledgerSaParams = parseEnv(envVariables, 'LEDGER_SA')
 
 export const BA_ADDRESS = envVariables.BA_SELECTED_ACCOUNT
 export const SA_ADDRESS = envVariables.SA_SELECTED_ACCOUNT

@@ -1,10 +1,10 @@
-type Prefix = 'SA' | 'BA' | 'LEDGER'
+type Prefix = 'SA' | 'BA' | 'LEDGER' | 'LEDGER_SA'
 
-const PREFIXES: Prefix[] = ['SA', 'BA', 'LEDGER']
+const PREFIXES: Prefix[] = ['SA', 'BA', 'LEDGER', 'LEDGER_SA']
 
 const parseEnv = (envVariables: Record<string, string>, prefix: Prefix) => {
   if (!PREFIXES.includes(prefix)) {
-    throw new Error(`Invalid ${prefix}. Expected 'SA', 'BA' or 'LEDGER'`)
+    throw new Error(`Invalid ${prefix}. Expected 'SA', 'BA', 'LEDGER' or 'LEDGER_SA'`)
   }
 
   return {
