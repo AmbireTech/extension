@@ -217,7 +217,6 @@
     "rxjs": "7.8.2",
     "scrypt-js": "3.0.1",
     "secp256k1": "5.0.1",
-    "ses": "1.14.0",
     "setimmediate": "1.0.5",
     "siwe": "3.0.0",
     "stream-browserify": "3.0.0",
