@@ -27,13 +27,22 @@ export const CARD_WIDTH = 400
 const OnboardingCompletedScreen = () => {
   const { t } = useTranslation()
   const { dispatch } = useControllersMiddleware()
-  const { isPinned } = useController('WalletStateController').state
+  const {
+    state: { isPinned },
+    dispatch: walletStateDispatch
+  } = useController('WalletStateController')
 
   const { theme } = useTheme()
 
   useEffect(() => {
-    dispatch({ type: 'SET_IS_SETUP_COMPLETE', params: { isSetupComplete: true } })
-  }, [dispatch])
+    walletStateDispatch({
+      type: 'method',
+      params: {
+        method: 'setIsSetupComplete',
+        args: [true]
+      }
+    })
+  }, [walletStateDispatch])
 
   const handleOpenDashboardPress = useCallback(async () => {
     dispatch({ type: 'OPEN_EXTENSION_POPUP' })

@@ -4,20 +4,11 @@ import { Contact } from '@ambire-common/controllers/addressBook/addressBook'
 import { Account } from '@ambire-common/interfaces/account'
 import { Banner } from '@ambire-common/interfaces/banner'
 import { Dapp } from '@ambire-common/interfaces/dapp'
-import { MagicLinkFlow } from '@ambire-common/interfaces/emailVault'
-import { Key, KeystoreSeed, ReadyToAddKeys } from '@ambire-common/interfaces/keystore'
-import { Network } from '@ambire-common/interfaces/network'
-import { SwapAndBridgeActiveRoute } from '@ambire-common/interfaces/swapAndBridge'
-import { TransferUpdate } from '@ambire-common/interfaces/transfer'
-import { OpenRequestWindowParams, UserRequest } from '@ambire-common/interfaces/userRequest'
-import { TokenResult } from '@ambire-common/libs/portfolio'
-import { CustomToken, TokenPreference } from '@ambire-common/libs/portfolio/customToken'
+import { Key, ReadyToAddKeys } from '@ambire-common/interfaces/keystore'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import { LOG_LEVELS } from '@web/utils/logger'
 
 import { AllControllersMappingType } from '../../../common/constants/controllersMapping'
-import { AUTO_LOCK_TIMES } from './controllers/auto-lock'
-import { AvatarType } from './controllers/wallet-state'
 
 type UpdateNavigationUrl = {
   type: 'UPDATE_PORT_URL'
@@ -86,47 +77,6 @@ type MainControllerHandleSignMessage = {
   params: { keyAddr: Key['addr']; keyType: Key['type'] }
 }
 
-type EmailVaultControllerGetInfoAction = {
-  type: 'EMAIL_VAULT_CONTROLLER_GET_INFO'
-  params: { email: string }
-}
-type EmailVaultControllerUploadKeystoreSecretAction = {
-  type: 'EMAIL_VAULT_CONTROLLER_UPLOAD_KEYSTORE_SECRET'
-  params: { email: string }
-}
-type EmailVaultControllerCancelConfirmationAction = {
-  type: 'EMAIL_VAULT_CONTROLLER_CANCEL_CONFIRMATION'
-}
-type EmailVaultControllerHandleMagicLinkKeyAction = {
-  type: 'EMAIL_VAULT_CONTROLLER_HANDLE_MAGIC_LINK_KEY'
-  params: { email: string; flow: MagicLinkFlow }
-}
-type EmailVaultControllerRecoverKeystoreAction = {
-  type: 'EMAIL_VAULT_CONTROLLER_RECOVER_KEYSTORE'
-  params: { email: string; newPass: string }
-}
-type EmailVaultControllerCleanMagicAndSessionKeysAction = {
-  type: 'EMAIL_VAULT_CONTROLLER_CLEAN_MAGIC_AND_SESSION_KEYS'
-}
-type EmailVaultControllerRequestKeysSyncAction = {
-  type: 'EMAIL_VAULT_CONTROLLER_REQUEST_KEYS_SYNC'
-  params: { email: string; keys: string[] }
-}
-
-type EmailVaultControllerDismissBannerAction = {
-  type: 'EMAIL_VAULT_CONTROLLER_DISMISS_BANNER'
-}
-
-type DomainsControllerReverseLookupAction = {
-  type: 'DOMAINS_CONTROLLER_REVERSE_LOOKUP'
-  params: { address: string }
-}
-
-type DomainsControllerResolveDomainAction = {
-  type: 'DOMAINS_CONTROLLER_RESOLVE_DOMAIN'
-  params: { domain: string; bip44Item?: number[][] }
-}
-
 type DappsControllerFetchAndUpdateDappsAction = {
   type: 'DAPPS_CONTROLLER_FETCH_AND_UPDATE_DAPPS'
 }
@@ -168,42 +118,10 @@ type AddressBookControllerRenameContact = {
     newName: Contact['name']
   }
 }
-type AddressBookControllerRemoveContact = {
-  type: 'ADDRESS_BOOK_CONTROLLER_REMOVE_CONTACT'
-  params: {
-    address: Contact['address']
-  }
-}
 
 type ChangeCurrentDappNetworkAction = {
   type: 'CHANGE_CURRENT_DAPP_NETWORK'
   params: { chainId: number; id: string }
-}
-
-type ContractNamesGetName = {
-  type: 'CONTRACT_NAMES_CONTROLLER_GET_NAME'
-  params: { address: string; chainId: bigint }
-}
-
-type SetAvatarTypeAction = {
-  type: 'SET_AVATAR_TYPE'
-  params: { avatarType: AvatarType }
-}
-type SetIsPinnedAction = {
-  type: 'SET_IS_PINNED'
-  params: { isPinned: boolean }
-}
-type SetIsSetupCompleteAction = {
-  type: 'SET_IS_SETUP_COMPLETE'
-  params: { isSetupComplete: boolean }
-}
-
-type AutoLockControllerSetLastActiveTimeAction = {
-  type: 'AUTO_LOCK_CONTROLLER_SET_LAST_ACTIVE_TIME'
-}
-type AutoLockControllerSetAutoLockTimeAction = {
-  type: 'AUTO_LOCK_CONTROLLER_SET_AUTO_LOCK_TIME'
-  params: AUTO_LOCK_TIMES
 }
 
 type InviteControllerVerifyAction = {
@@ -216,10 +134,6 @@ type InviteControllerRevokeOGAction = { type: 'INVITE_CONTROLLER_REVOKE_OG' }
 type ImportSmartAccountJson = {
   type: 'IMPORT_SMART_ACCOUNT_JSON'
   params: { readyToAddAccount: Account; keys: ReadyToAddKeys['internal'] }
-}
-
-type ExtensionUpdateControllerApplyUpdate = {
-  type: 'EXTENSION_UPDATE_CONTROLLER_APPLY_UPDATE'
 }
 
 type OpenExtensionPopupAction = {
@@ -266,40 +180,20 @@ export type Action =
   | HandshakeAction
   | ResetAccountAddingOnPageErrorAction
   | MainControllerHandleSignMessage
-  | KeystoreControllerSendDecryptedMessageToUiAction
-  | EmailVaultControllerGetInfoAction
-  | EmailVaultControllerUploadKeystoreSecretAction
-  | EmailVaultControllerCancelConfirmationAction
-  | EmailVaultControllerHandleMagicLinkKeyAction
-  | EmailVaultControllerRecoverKeystoreAction
-  | EmailVaultControllerCleanMagicAndSessionKeysAction
-  | EmailVaultControllerRequestKeysSyncAction
-  | EmailVaultControllerDismissBannerAction
-  | DomainsControllerReverseLookupAction
-  | DomainsControllerResolveDomainAction
   | DappsControllerFetchAndUpdateDappsAction
   | DappsControllerRemoveConnectedSiteAction
   | DappsControllerUpdateDappAction
-  | ContractNamesGetName
   | DappsControllerRemoveDappAction
   | DappsControllerGetCurrentDappAndSendResToUi
   | AddressBookControllerAddContact
   | AddressBookControllerRenameContact
-  | AddressBookControllerRemoveContact
   | ChangeCurrentDappNetworkAction
-  | SetIsPinnedAction
-  | SetIsSetupCompleteAction
-  | AutoLockControllerSetLastActiveTimeAction
-  | AutoLockControllerSetAutoLockTimeAction
   | InviteControllerVerifyAction
   | InviteControllerBecomeOGAction
   | InviteControllerRevokeOGAction
   | ImportSmartAccountJson
-  | KeystoreControllerDeleteSeedAction
-  | ExtensionUpdateControllerApplyUpdate
   | OpenExtensionPopupAction
   | SetThemeTypeAction
-  | SetAvatarTypeAction
   | SetLogLevelTypeAction
   | SetCrashAnalyticsAction
   | DismissBanner

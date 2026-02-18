@@ -9,7 +9,6 @@ import {
 import BatchIcon from '@common/assets/svg/BatchIcon'
 import Banner from '@common/components/Banner'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useNavigation from '@common/hooks/useNavigation'
 import useToast from '@common/hooks/useToast'
 import DashboardBannerBottomSheet from '@common/modules/dashboard/components/DashboardBanners/DashboardBannerBottomSheet'
@@ -21,7 +20,6 @@ const DashboardBanner = ({
   banner: Omit<BannerType, 'type'> & { type: NonMarketingBannerType }
 }) => {
   const { type, category, title, text, actions = [], dismissAction } = banner
-  const { dispatch } = useControllersMiddleware()
   const { addToast } = useToast()
   const { navigate } = useNavigation()
   const {
@@ -31,6 +29,8 @@ const DashboardBanner = ({
   const { dispatch: networksDispatch } = useController('NetworksController')
   const { dispatch: selectedAccountDispatch } = useController('SelectedAccountController')
   const { dispatch: mainDispatch } = useController('MainController')
+  const { dispatch: emailVaultDispatch } = useController('EmailVaultController')
+  const { dispatch: extensionUpdateDispatch } = useController('ExtensionUpdateController')
   const { ref: sheetRef, close: closeBottomSheet, open: openBottomSheet } = useModalize()
   const primaryAction = actions[0]
 
@@ -94,9 +94,12 @@ const DashboardBanner = ({
 
         case 'sync-keys': {
           if (type !== 'info') break
-          dispatch({
-            type: 'EMAIL_VAULT_CONTROLLER_REQUEST_KEYS_SYNC',
-            params: { email: action.meta.email, keys: action.meta.keys }
+          emailVaultDispatch({
+            type: 'method',
+            params: {
+              method: 'requestKeysSync',
+              args: [action.meta.email, action.meta.keys]
+            }
           })
           break
         }
@@ -151,8 +154,12 @@ const DashboardBanner = ({
             break
           }
 
-          dispatch({
-            type: 'EXTENSION_UPDATE_CONTROLLER_APPLY_UPDATE'
+          extensionUpdateDispatch({
+            type: 'method',
+            params: {
+              method: 'applyUpdate',
+              args: []
+            }
           })
 
           break
@@ -174,8 +181,12 @@ const DashboardBanner = ({
           break
 
         case 'dismiss-email-vault':
-          dispatch({
-            type: 'EMAIL_VAULT_CONTROLLER_DISMISS_BANNER'
+          emailVaultDispatch({
+            type: 'method',
+            params: {
+              method: 'dismissBanner',
+              args: []
+            }
           })
           addToast(
             'Password recovery can be enabled anytime in Settings. We’ll remind you in a week.',
@@ -207,8 +218,10 @@ const DashboardBanner = ({
       }
     },
     [
-      dispatch,
+      extensionUpdateDispatch,
       networksDispatch,
+      emailVaultDispatch,
+      mainDispatch,
       navigate,
       addToast,
       visibleUserRequests,

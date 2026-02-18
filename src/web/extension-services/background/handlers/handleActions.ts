@@ -8,8 +8,6 @@ import { KeyIterator } from '@ambire-common/libs/keyIterator/keyIterator'
 import wait from '@ambire-common/utils/wait'
 import { browser } from '@web/constants/browserapi'
 import { Action } from '@web/extension-services/background/actions'
-import AutoLockController from '@web/extension-services/background/controllers/auto-lock'
-import { ExtensionUpdateController } from '@web/extension-services/background/controllers/extension-update'
 import { WalletStateController } from '@web/extension-services/background/controllers/wallet-state'
 import { Port, PortMessenger } from '@web/extension-services/messengers'
 import LatticeKeyIterator from '@web/modules/hardware-wallet/libs/latticeKeyIterator'
@@ -24,20 +22,14 @@ export const handleActions = async (
     eventEmitterRegistry,
     mainCtrl,
     walletStateCtrl,
-    autoLockCtrl,
-    extensionUpdateCtrl,
     pm,
-    port,
-    windowId
+    port
   }: {
     eventEmitterRegistry: IEventEmitterRegistryController
     mainCtrl: MainController
     walletStateCtrl: WalletStateController
-    autoLockCtrl?: AutoLockController
-    extensionUpdateCtrl?: ExtensionUpdateController
     pm?: PortMessenger
     port?: Port
-    windowId?: number
   }
 ) => {
   // @ts-ignore
@@ -145,22 +137,6 @@ export const handleActions = async (
       return await mainCtrl.handleSignMessage()
     }
 
-    case 'EMAIL_VAULT_CONTROLLER_GET_INFO':
-      return await mainCtrl.emailVault?.getEmailVaultInfo(params.email)
-    case 'EMAIL_VAULT_CONTROLLER_UPLOAD_KEYSTORE_SECRET':
-      return await mainCtrl.emailVault?.uploadKeyStoreSecret(params.email)
-    case 'EMAIL_VAULT_CONTROLLER_HANDLE_MAGIC_LINK_KEY':
-      return await mainCtrl.emailVault?.handleMagicLinkKey(params.email, undefined, params.flow)
-    case 'EMAIL_VAULT_CONTROLLER_CANCEL_CONFIRMATION':
-      return mainCtrl.emailVault?.cancelEmailConfirmation()
-    case 'EMAIL_VAULT_CONTROLLER_RECOVER_KEYSTORE':
-      return await mainCtrl.emailVault?.recoverKeyStore(params.email, params.newPass)
-    case 'EMAIL_VAULT_CONTROLLER_CLEAN_MAGIC_AND_SESSION_KEYS':
-      return await mainCtrl.emailVault?.cleanMagicAndSessionKeys()
-    case 'EMAIL_VAULT_CONTROLLER_REQUEST_KEYS_SYNC':
-      return await mainCtrl.emailVault?.requestKeysSync(params.email, params.keys)
-    case 'EMAIL_VAULT_CONTROLLER_DISMISS_BANNER':
-      return mainCtrl.emailVault?.dismissBanner()
     case 'ADDRESS_BOOK_CONTROLLER_ADD_CONTACT': {
       await mainCtrl.addressBook.addContact(params.name, params.address)
       await mainCtrl.transfer.checkIsRecipientAddressUnknown()
@@ -188,36 +164,6 @@ export const handleActions = async (
           }
         }
       ])
-    }
-    case 'ADDRESS_BOOK_CONTROLLER_REMOVE_CONTACT':
-      return await mainCtrl.addressBook.removeManuallyAddedContact(params.address)
-    case 'DOMAINS_CONTROLLER_REVERSE_LOOKUP':
-      return await mainCtrl.domains.reverseLookup(params.address)
-    case 'DOMAINS_CONTROLLER_RESOLVE_DOMAIN':
-      return mainCtrl.domains.resolveDomain(params)
-    case 'CONTRACT_NAMES_CONTROLLER_GET_NAME':
-      return mainCtrl.contractNames.getName(params.address, params.chainId)
-    case 'SET_IS_PINNED': {
-      walletStateCtrl.isPinned = params.isPinned
-      break
-    }
-    case 'SET_AVATAR_TYPE': {
-      walletStateCtrl.setAvatarType(params.avatarType)
-      break
-    }
-    case 'SET_IS_SETUP_COMPLETE': {
-      walletStateCtrl.isSetupComplete = params.isSetupComplete
-      break
-    }
-    case 'AUTO_LOCK_CONTROLLER_SET_LAST_ACTIVE_TIME': {
-      autoLockCtrl?.setLastActiveTime()
-      break
-    }
-    case 'AUTO_LOCK_CONTROLLER_SET_AUTO_LOCK_TIME': {
-      if (!autoLockCtrl) return
-
-      autoLockCtrl.autoLockTime = params
-      break
     }
 
     case 'FEATURE_FLAGS_CONTROLLER_FLIP_FEATURE': {
@@ -265,10 +211,6 @@ export const handleActions = async (
     }
     case 'DAPP_CONTROLLER_REMOVE_DAPP': {
       return mainCtrl.dapps.removeDapp(params)
-    }
-    case 'EXTENSION_UPDATE_CONTROLLER_APPLY_UPDATE': {
-      extensionUpdateCtrl?.applyUpdate()
-      break
     }
 
     case 'OPEN_EXTENSION_POPUP': {

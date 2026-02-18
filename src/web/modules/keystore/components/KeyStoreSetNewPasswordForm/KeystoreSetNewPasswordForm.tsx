@@ -23,7 +23,7 @@ import getStyles from './styles'
 const KeystoreSetNewPasswordForm = () => {
   const { t } = useTranslation()
 
-  const emailVault = useController('EmailVaultController').state
+  const { state: emailVault, dispatch: evDispatch } = useController('EmailVaultController')
   const { dispatch } = useControllersMiddleware()
   const {
     watch,
@@ -41,12 +41,15 @@ const KeystoreSetNewPasswordForm = () => {
 
   const handleSetNewPassword = useCallback(async () => {
     await handleSubmit(({ password: newPass }) => {
-      dispatch({
-        type: 'EMAIL_VAULT_CONTROLLER_RECOVER_KEYSTORE',
-        params: { email, newPass }
+      evDispatch({
+        type: 'method',
+        params: {
+          method: 'recoverKeyStore',
+          args: [email!, newPass]
+        }
       })
     })()
-  }, [dispatch, email, handleSubmit])
+  }, [email, evDispatch, handleSubmit])
 
   return (
     <>
