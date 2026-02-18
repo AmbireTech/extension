@@ -5,7 +5,7 @@
     "jsx": "react-native",
     "module": "ES2020",
     "lib": ["ES2020", "ESNext", "DOM", "WebWorker"],
-    "types": ["chrome", "firefox-webext-browser", "reflect-metadata", "jest", "w3c-web-hid"],
+    "types": ["chrome", "firefox-webext-browser", "jest", "w3c-web-hid"],
     "paths": {
       "@ambire-common/*": ["src/ambire-common/src/*"],
       "@contracts/*": ["src/ambire-common/contracts/*"],

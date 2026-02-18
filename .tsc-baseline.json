@@ -1798,18 +1798,6 @@
       "count": 1,
       "message": "Type 'ViewStyle | TextStyle | ImageStyle | undefined' is not assignable to type 'ViewStyle | TextStyle | ImageStyle'."
     },
-    "ac364911b8c93dfc1ff4e00b0c971aefee70481f": {
-      "file": "src/web/utils/persistStore.ts",
-      "code": "TS2345",
-      "count": 1,
-      "message": "Argument of type 'Promise<null>' is not assignable to parameter of type 'Function'."
-    },
-    "8863cd4cb745358e00f8e6f3faea3dba8097ac34": {
-      "file": "src/web/utils/persistStore.ts",
-      "code": "TS7053",
-      "count": 1,
-      "message": "Element implicitly has an 'any' type because expression of type 'string | symbol' can't be used to index type '{}'."
-    },
     "21cb7b44cace10b71d017bcaa8a66ee4bbb27515": {
       "file": "src/web/utils/uiType.ts",
       "code": "TS7053",
