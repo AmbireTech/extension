@@ -37,8 +37,8 @@ const ManifestImage = ({
     index: 0,
     uri: uri || uris[0]
   })
-  const scaledSize = typeof size !== 'string' ? size * iconScale : size
-  const roundBorderRadius = typeof scaledSize !== 'string' ? scaledSize / 2 : 50
+  const scaledSize = typeof size === 'number' ? size * iconScale : size
+  const roundBorderRadius = typeof scaledSize === 'number' ? scaledSize / 2 : 50
 
   const onError = useCallback(() => {
     setHasError(true)

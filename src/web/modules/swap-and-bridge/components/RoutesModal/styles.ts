@@ -1,7 +1,7 @@
 import { StyleSheet, ViewStyle } from 'react-native'
 
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES, ThemeProps, ThemeType } from '@common/styles/themeConfig'
+import { ThemeProps } from '@common/styles/themeConfig'
 import common from '@common/styles/utils/common'
 
 interface Style {
@@ -11,16 +11,17 @@ interface Style {
   selectedItem: ViewStyle
 }
 
-const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
+const getStyles = (theme: ThemeProps) =>
   StyleSheet.create<Style>({
     itemContainer: {
-      backgroundColor: theme.primaryBackground,
+      backgroundColor: theme.secondaryBackground,
       ...common.borderRadiusPrimary,
-      ...spacings.pv,
-      ...spacings.ph,
-      ...spacings.mbSm,
+      ...spacings.pbSm,
+      ...spacings.pt,
+      ...spacings.phSm,
+      ...spacings.mbTy,
       borderWidth: 1,
-      borderColor: theme.primaryBackground
+      borderColor: 'transparent'
     },
     disabledItem: {
       opacity: 0.5
@@ -29,7 +30,7 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       opacity: 0.7
     },
     selectedItem: {
-      borderColor: themeType === THEME_TYPES.DARK ? theme.linkText : theme.primary
+      borderColor: theme.successDecorative
     }
   })
 

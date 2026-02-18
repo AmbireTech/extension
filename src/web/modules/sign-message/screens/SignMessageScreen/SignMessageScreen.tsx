@@ -12,21 +12,16 @@ import {
 } from '@ambire-common/libs/signMessage/signMessage'
 import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
 import Spinner from '@common/components/Spinner'
+import useController from '@common/hooks/useController'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
-import HeaderAccountAndNetworkInfo from '@web/components/HeaderAccountAndNetworkInfo'
 import SmallNotificationWindowWrapper from '@web/components/SmallNotificationWindowWrapper'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import useDappInfo from '@web/hooks/useDappInfo/useDappInfo'
-import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
-import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
-import useSignMessageControllerState from '@web/hooks/useSignMessageControllerState'
 import ActionFooter from '@web/modules/action-requests/components/ActionFooter'
+import ActionHeader from '@web/modules/action-requests/components/ActionHeader'
 import useLedger from '@web/modules/hardware-wallet/hooks/useLedger'
 import SigningKeySelect from '@web/modules/sign-message/components/SignKeySelect'
 
@@ -36,20 +31,22 @@ import SignInWithEthereum from './Contents/signInWithEthereum'
 
 const SignMessageScreen = () => {
   const { t } = useTranslation()
-  const signMessageState = useSignMessageControllerState()
+  const signMessageState = useController('SignMessageController').state
   const signStatus = signMessageState.statuses.sign
   const [hasReachedBottom, setHasReachedBottom] = useState<boolean | null>(null)
-  const keystoreState = useKeystoreControllerState()
-  const { account } = useSelectedAccountControllerState()
-  const { networks } = useNetworksControllerState()
-  const { dispatch } = useBackgroundService()
+  const keystoreState = useController('KeystoreController').state
+  const {
+    state: { account }
+  } = useController('SelectedAccountController')
+  const { networks } = useController('NetworksController').state
+  const { dispatch } = useControllersMiddleware()
   const { isLedgerConnected } = useLedger()
   const [isChooseSignerShown, setIsChooseSignerShown] = useState(false)
   const [shouldDisplayLedgerConnectModal, setShouldDisplayLedgerConnectModal] = useState(false)
   const [makeItSmartConfirmed, setMakeItSmartConfirmed] = useState(false)
   const [doNotAskMeAgain, setDoNotAskMeAgain] = useState(false)
-  const { currentUserRequest } = useRequestsControllerState()
-  const { theme, themeType } = useTheme()
+  const { currentUserRequest } = useController('RequestsController').state
+  const { theme } = useTheme()
   const { addToast } = useToast()
 
   const userRequest = useMemo(() => {
@@ -292,16 +289,8 @@ const SignMessageScreen = () => {
     <SmallNotificationWindowWrapper>
       <TabLayoutContainer
         width="full"
-        header={
-          <HeaderAccountAndNetworkInfo
-            backgroundColor={
-              themeType === THEME_TYPES.DARK
-                ? (theme.secondaryBackground as string)
-                : (theme.primaryBackground as string)
-            }
-          />
-        }
-        footer={
+        header={<ActionHeader />}
+        renderDirectChildren={() => (
           <ActionFooter
             onReject={handleReject}
             onResolve={handleSign}
@@ -324,12 +313,7 @@ const SignMessageScreen = () => {
                 }
               : {})}
           />
-        }
-        backgroundColor={
-          isAuthorization && !makeItSmartConfirmed
-            ? theme.primaryBackground
-            : theme.quinaryBackground
-        }
+        )}
       >
         <SigningKeySelect
           isVisible={isChooseSignerShown}

@@ -10,12 +10,11 @@ import Button from '@common/components/Button'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useBalanceAffectingErrors from '@common/modules/dashboard/hooks/useBalanceAffectingErrors'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 
 import BalanceAffectingErrorActions from './BalanceAffectingErrorActions'
 import Header from './Header'
@@ -36,7 +35,9 @@ const BalanceAffectingErrors: FC<Props> = ({
 }) => {
   const { t } = useTranslation()
   const { theme, themeType } = useTheme()
-  const { balanceAffectingErrors, portfolio } = useSelectedAccountControllerState()
+  const {
+    state: { balanceAffectingErrors, portfolio }
+  } = useController('SelectedAccountController')
 
   const areErrorsOutdatedAndPortfolioIsReady = useMemo(() => {
     return (
@@ -140,9 +141,6 @@ const BalanceAffectingErrors: FC<Props> = ({
       <BottomSheet
         style={{ maxWidth: 720, ...spacings.pvLg, ...spacings.phXl, width: '100%' }}
         id="portfolio-errors"
-        backgroundColor={
-          themeType === THEME_TYPES.DARK ? 'secondaryBackground' : 'primaryBackground'
-        }
         sheetRef={sheetRef}
         closeBottomSheet={closeBottomSheetWrapped}
         flatListProps={{

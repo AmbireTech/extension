@@ -4,12 +4,12 @@ import { View } from 'react-native'
 
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
 import { useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
-import Header from '@common/modules/header/components/Header'
+import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Header'
+import spacings from '@common/styles/spacings'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useDappsControllerState from '@web/hooks/useDappsControllerState'
-import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import useResponsiveActionWindow from '@web/hooks/useResponsiveActionWindow'
 import ActionFooter from '@web/modules/action-requests/components/ActionFooter'
 
@@ -21,12 +21,12 @@ import getStyles from './styles'
 const DappConnectScreen = () => {
   const { t } = useTranslation()
   const { theme, styles } = useTheme(getStyles)
-  const { dispatch } = useBackgroundService()
-  const { currentUserRequest } = useRequestsControllerState()
+  const { dispatch } = useControllersMiddleware()
+  const { currentUserRequest } = useController('RequestsController').state
 
   const [isAuthorizing, setIsAuthorizing] = useState(false)
   const { responsiveSizeMultiplier } = useResponsiveActionWindow()
-  const { state: dappsState } = useDappsControllerState()
+  const { state: dappsState } = useController('DappsController')
 
   const dappToConnect = useMemo(() => dappsState.dappToConnect || null, [dappsState.dappToConnect])
 
@@ -72,15 +72,8 @@ const DappConnectScreen = () => {
   return (
     <TabLayoutContainer
       width="full"
-      backgroundColor={theme.quinaryBackground}
-      header={
-        <Header
-          mode="custom-inner-content"
-          withAmbireLogo
-          backgroundColor={theme.quinaryBackground as string}
-        />
-      }
-      footer={
+      header={<HeaderWithLogoOnly />}
+      renderDirectChildren={() => (
         <ActionFooter
           onReject={handleDenyButtonPress}
           onResolve={!shouldHoldToProceed ? handleAuthorizeButtonPress : () => {}}
@@ -90,6 +83,7 @@ const DappConnectScreen = () => {
                 testID="dapp-connect-button"
                 onHoldComplete={handleAuthorizeButtonPress}
                 holdDuration={1600}
+                style={{ height: 56 }}
                 text={resolveButtonText}
                 buttonType={((): 'error' | 'warning' => {
                   if (!!dappToConnect && dappToConnect.blacklisted === 'BLACKLISTED') return 'error'
@@ -108,7 +102,8 @@ const DappConnectScreen = () => {
           rejectButtonText={t('Deny')}
           resolveButtonTestID={!shouldHoldToProceed ? 'dapp-connect-button' : undefined}
         />
-      }
+      )}
+      style={spacings.ptXl}
     >
       {!!dappToConnect && (
         <View style={[styles.container]}>

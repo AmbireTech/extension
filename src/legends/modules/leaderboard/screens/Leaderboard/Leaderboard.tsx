@@ -8,7 +8,7 @@ import Page from '@legends/components/Page'
 import Spinner from '@legends/components/Spinner'
 import useAccountContext from '@legends/hooks/useAccountContext'
 import useLeaderboardContext from '@legends/hooks/useLeaderboardContext'
-import usePortfolioControllerState from '@legends/hooks/usePortfolioControllerState/usePortfolioControllerState'
+import usePortfolio from '@legends/hooks/usePortfolio'
 import { reorderLeaderboardWithLiveData } from '@legends/utils/leaderboards'
 
 import { LeaderboardEntry } from '../../types'
@@ -32,7 +32,7 @@ const LeaderboardContainer: React.FC = () => {
     updateLeaderboard
   } = useLeaderboardContext()
 
-  const { userRewardsStats, isLoadingClaimableRewards } = usePortfolioControllerState()
+  const { userRewardsStats, isLoadingClaimableRewards } = usePortfolio()
   const { connectedAccount } = useAccountContext()
 
   const tableRef = useRef<HTMLDivElement>(null)

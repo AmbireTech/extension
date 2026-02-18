@@ -4,9 +4,8 @@ import { useTranslation } from 'react-i18next'
 import { TokenResult } from '@ambire-common/libs/portfolio'
 import { SelectValue } from '@common/components/Select/types'
 import SendToken from '@common/components/SendToken'
-import Text from '@common/components/Text'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControllerState'
+import useController from '@common/hooks/useController'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useSwapAndBridgeForm from '@web/modules/swap-and-bridge/hooks/useSwapAndBridgeForm'
 import { getTokenId } from '@web/utils/token'
 
@@ -27,7 +26,7 @@ const FromToken: FC<Props> = ({
   onFromAmountChange,
   simulationFailed
 }) => {
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
   const { t } = useTranslation()
 
   const {
@@ -39,7 +38,7 @@ const FromToken: FC<Props> = ({
     fromAmountFieldMode,
     maxFromAmount,
     validateFromAmount
-  } = useSwapAndBridgeControllerState()
+  } = useController('SwapAndBridgeController').state
 
   const handleChangeFromToken = useCallback(
     ({ value }: SelectValue) => {
@@ -85,30 +84,26 @@ const FromToken: FC<Props> = ({
   }, [fromAmountFieldMode, dispatch])
 
   return (
-    <>
-      <Text appearance="secondaryText" fontSize={16} weight="medium">
-        {t('Send')}
-      </Text>
-      <SendToken
-        fromTokenOptions={fromTokenOptions}
-        fromTokenValue={fromTokenValue}
-        fromAmountValue={fromAmountValue}
-        fromTokenAmountSelectDisabled={fromTokenAmountSelectDisabled}
-        handleChangeFromToken={handleChangeFromToken}
-        fromSelectedToken={fromSelectedToken}
-        fromAmount={fromAmount}
-        fromAmountInFiat={fromAmountInFiat}
-        fromAmountFieldMode={fromAmountFieldMode}
-        maxFromAmount={maxFromAmount}
-        validateFromAmount={validateFromAmount}
-        onFromAmountChange={onFromAmountChange}
-        handleSwitchFromAmountFieldMode={handleSwitchFromAmountFieldMode}
-        handleSetMaxFromAmount={handleSetMaxFromAmount}
-        inputTestId="from-amount-input-sab"
-        selectTestId="from-token-select"
-        simulationFailed={simulationFailed}
-      />
-    </>
+    <SendToken
+      label={t('You send')}
+      fromTokenOptions={fromTokenOptions}
+      fromTokenValue={fromTokenValue}
+      fromAmountValue={fromAmountValue}
+      fromTokenAmountSelectDisabled={fromTokenAmountSelectDisabled}
+      handleChangeFromToken={handleChangeFromToken}
+      fromSelectedToken={fromSelectedToken}
+      fromAmount={fromAmount}
+      fromAmountInFiat={fromAmountInFiat}
+      fromAmountFieldMode={fromAmountFieldMode}
+      maxFromAmount={maxFromAmount}
+      validateFromAmount={validateFromAmount}
+      onFromAmountChange={onFromAmountChange}
+      handleSwitchFromAmountFieldMode={handleSwitchFromAmountFieldMode}
+      handleSetMaxFromAmount={handleSetMaxFromAmount}
+      inputTestId="from-amount-input-sab"
+      selectTestId="from-token-select"
+      simulationFailed={simulationFailed}
+    />
   )
 }
 

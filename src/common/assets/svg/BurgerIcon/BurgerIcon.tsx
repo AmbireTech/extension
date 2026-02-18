@@ -1,24 +1,18 @@
 import React from 'react'
-import Svg, { G, Path, SvgProps } from 'react-native-svg'
+import Svg, { Path, SvgProps } from 'react-native-svg'
 
 import useTheme from '@common/hooks/useTheme'
 
-const BurgerIcon: React.FC<SvgProps> = ({ width = 21.5, height = 14.5, color, ...rest }) => {
+const BurgerIcon: React.FC<SvgProps> = ({ width = 24, height = 24, color, ...rest }) => {
   const { theme } = useTheme()
   return (
-    <Svg viewBox="0 0 21.5 14.5" width={width} height={height} {...rest}>
-      <G>
-        <G
-          fill="none"
-          stroke={color || theme.iconSecondary}
-          strokeLinecap="round"
-          strokeWidth="1.5"
-        >
-          <Path d="M.75 13.75h20" />
-          <Path d="M2.75 7.25h16" />
-          <Path d="M.75.75h20" />
-        </G>
-      </G>
+    <Svg width={width} height={height} viewBox="0 0 28 28" fill="none" {...rest}>
+      <Path
+        stroke={color || theme.iconPrimary}
+        strokeLinecap="round"
+        strokeWidth="1.5"
+        d="M5.833 8.167h16.334M5.833 14h16.334M5.833 19.833h16.334"
+      />
     </Svg>
   )
 }

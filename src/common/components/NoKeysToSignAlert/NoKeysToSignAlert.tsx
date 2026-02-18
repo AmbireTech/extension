@@ -8,15 +8,12 @@ import AccountKeysBottomSheet from '@common/components/AccountKeysBottomSheet'
 import Alert from '@common/components/Alert'
 import Button from '@common/components/Button'
 import Text from '@common/components/Text'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import AddAccount from '@web/modules/account-select/components/AddAccount'
-import { getUiType } from '@web/utils/uiType'
-
-import BottomSheet from '../BottomSheet'
 
 interface Props {
   style?: ViewStyle
@@ -25,7 +22,9 @@ interface Props {
 }
 
 const NoKeysToSignAlert: FC<Props> = ({ style, isTransaction = true, type = 'long' }) => {
-  const { account } = useSelectedAccountControllerState()
+  const {
+    state: { account }
+  } = useController('SelectedAccountController')
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const { ref: addAccountsRef, open: openAddAccounts, close: closeAddAccounts } = useModalize()
   const { t } = useTranslation()
@@ -88,15 +87,7 @@ const NoKeysToSignAlert: FC<Props> = ({ style, isTransaction = true, type = 'lon
         showExportImport
         openAddAccountBottomSheet={openAddAccounts}
       />
-      <BottomSheet
-        id="no-key-add-account"
-        sheetRef={addAccountsRef}
-        adjustToContentHeight={!getUiType().isPopup}
-        closeBottomSheet={closeBottomSheet}
-        scrollViewProps={{ showsVerticalScrollIndicator: false }}
-      >
-        <AddAccount handleClose={closeAddAccounts as any} />
-      </BottomSheet>
+      <AddAccount sheetRef={sheetRef} closeBottomSheet={closeBottomSheet} />
     </View>
   )
 }

@@ -1,20 +1,19 @@
 import React from 'react'
-import { Pressable, View } from 'react-native'
+import { Image, Pressable, View } from 'react-native'
 
 import { Banner, MarketingBannerTypes } from '@ambire-common/interfaces/banner'
-import AmbireBackgroundLogo from '@common/assets/svg/AmbireBackgroundLogo'
 import CloseIcon from '@common/assets/svg/CloseIcon'
 import Text from '@common/components/Text'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import ThemeColors, { THEME_TYPES } from '@common/styles/themeConfig'
-import common from '@common/styles/utils/common'
+import { BORDER_RADIUS_PRIMARY, hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@web/extension-services/background/webapi/tab'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import { AnimatedPressable, useMultiHover } from '@web/hooks/useHover'
 import { getUiType } from '@web/utils/uiType'
 
-import getStyles from './styles'
+import temporaryImage from './assets/temporary-image.png'
 
 const RELAYER_BANNER_TYPES = ['updates', 'rewards', 'new', 'vote', 'tips', 'alert'] as const
 
@@ -22,131 +21,67 @@ interface Props {
   banner: Banner
 }
 
-const typeEmojiMap: Record<string, string> = {
-  updates: '💜',
-  rewards: '💎',
-  new: '📢',
-  vote: '✋',
-  tips: '💡'
-}
-interface BannerColors {
-  background: string
-  border: string
-  logoColor: string
-}
-
-const typeBannerColorsMap: Record<Exclude<MarketingBannerTypes, 'alert'>, BannerColors> = {
-  updates: {
-    background: '#9D7AFF',
-    border: '#7B59E7',
-    logoColor: '#7443F8'
-  },
-  rewards: {
-    background: '#191B1F',
-    border: '#323D73',
-    logoColor: '#2D2467'
-  },
-  new: {
-    background: '#B14904',
-    border: '#CD6020',
-    logoColor: '#E29101'
-  },
-  vote: {
-    background: '#6C38F7',
-    border: '#946EFD',
-    logoColor: '#946EFD'
-  },
-  tips: {
-    background: '#003A3C',
-    border: '#3A6762',
-    logoColor: '#188B89'
-  }
+// @TODO: Replace temporary images
+const typeImageMap: {
+  [key in (typeof RELAYER_BANNER_TYPES)[number]]: string
+} = {
+  updates: temporaryImage,
+  rewards: temporaryImage,
+  new: temporaryImage,
+  vote: temporaryImage,
+  tips: temporaryImage,
+  alert: temporaryImage
 }
 
 const MarketingBanner: React.FC<Props> = ({ banner }) => {
-  const { isTab, isPopup } = getUiType()
-  const { dispatch } = useBackgroundService()
-  const { styles } = useTheme(getStyles)
-  const { text, type: bannerType = 'updates', actions } = banner
+  const { isPopup } = getUiType()
+  const { dispatch } = useControllersMiddleware()
+  const { theme } = useTheme()
+  const { text, title, type: bannerType = 'updates', actions } = banner
   const type = (
     RELAYER_BANNER_TYPES.includes(bannerType as any) ? bannerType : 'updates'
   ) as Exclude<MarketingBannerTypes, 'alert'>
-  const url = actions?.find((action) => action.actionName === 'open-link')?.meta?.url || ''
-  const colors = typeBannerColorsMap[type]
+  const action = actions?.[0]
+  const url = action?.actionName === 'open-link' ? action.meta.url : ''
+  const [bindAnim, animStyle] = useMultiHover({
+    values: [
+      {
+        property: 'backgroundColor',
+        from: theme.secondaryBackground,
+        to: theme.tertiaryBackground
+      },
+      {
+        property: 'borderColor',
+        from: hexToRgba(theme.neutral100, 0),
+        to: theme.neutral100
+      }
+    ]
+  })
 
   return (
-    <View
+    <AnimatedPressable
       style={[
-        styles.container,
-        {
-          backgroundColor: colors.background,
-          borderColor: colors.border
-        }
+        spacings.phTy,
+        spacings.pvTy,
+        flexbox.directionRow,
+        { borderRadius: BORDER_RADIUS_PRIMARY, borderWidth: 1 },
+        spacings.mbTy,
+        animStyle
       ]}
+      onPress={async () => {
+        await openInTab({ url, shouldCloseCurrentWindow: isPopup })
+      }}
+      {...bindAnim}
     >
-      <View style={styles.backgroundLogo}>
-        <AmbireBackgroundLogo color={typeBannerColorsMap[type]?.logoColor} />
-      </View>
-      <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter, spacings.plSm]}>
-        <View
-          style={{
-            width: 32,
-            height: 33,
-            ...flexbox.directionRow,
-            ...flexbox.alignCenter,
-            ...flexbox.justifyCenter,
-            ...spacings.mrSm
-          }}
-        >
-          <Text fontSize={24}>{typeEmojiMap[type] || ''}</Text>
-        </View>
-        <View style={[flexbox.flex1, spacings.pvTy]}>
-          <Text
-            weight="medium"
-            fontSize={isTab ? 16 : 14}
-            color={ThemeColors.primaryText[THEME_TYPES.DARK]}
-          >
-            {text}
-          </Text>
-        </View>
-      </View>
-
-      <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-        <Pressable
-          testID="marketing-banner-button"
-          onPress={async () => {
-            await openInTab({ url, shouldCloseCurrentWindow: isPopup })
-          }}
-        >
-          {({ hovered }: any) => (
-            <View
-              style={[
-                flexbox.alignCenter,
-                flexbox.justifyCenter,
-                common.borderRadiusPrimary,
-                {
-                  minWidth: 80,
-                  backgroundColor: hovered
-                    ? '#1b2b2c'
-                    : ThemeColors.primaryBackground[THEME_TYPES.DARK],
-                  borderWidth: 1,
-                  borderColor: ThemeColors.primary[THEME_TYPES.DARK],
-                  padding: 8
-                }
-              ]}
-            >
-              <Text
-                style={{ color: hovered ? '#FFFFFF' : ThemeColors.primary[THEME_TYPES.DARK] }}
-                weight="medium"
-                fontSize={14}
-              >
-                Open
-              </Text>
-            </View>
-          )}
-        </Pressable>
-
-        <View>
+      <Image
+        source={{ uri: typeImageMap[type] }}
+        width={64}
+        height={64}
+        style={{ width: 64, height: 64 }}
+      />
+      <View style={[spacings.ml, flexbox.flex1]}>
+        <View style={[flexbox.directionRow, flexbox.justifySpaceBetween]}>
+          <Text weight="medium">{title}</Text>
           <Pressable
             onPress={() => {
               dispatch({
@@ -155,34 +90,21 @@ const MarketingBanner: React.FC<Props> = ({ banner }) => {
               })
             }}
             hitSlop={8}
+            style={{
+              width: 24,
+              height: 24,
+              ...flexbox.center
+            }}
+            testID="banner-button-reject"
           >
-            {({ hovered }: any) => (
-              <View
-                style={[
-                  spacings.mhSm,
-                  spacings.mvSm,
-                  spacings.pvTy,
-                  spacings.phTy,
-                  {
-                    borderRadius: 50,
-                    backgroundColor: hovered
-                      ? '#1b2b2c'
-                      : ThemeColors.primaryBackground[THEME_TYPES.DARK]
-                  }
-                ]}
-              >
-                <CloseIcon
-                  strokeWidth="2"
-                  width={10}
-                  height={10}
-                  color={hovered ? '#FFFFFF' : ThemeColors.primary[THEME_TYPES.DARK]}
-                />
-              </View>
-            )}
+            <CloseIcon color={theme.iconPrimary} strokeWidth="2" width={12} height={12} />
           </Pressable>
         </View>
+        <Text appearance="secondaryText" fontSize={14} style={spacings.prLg}>
+          {text}
+        </Text>
       </View>
-    </View>
+    </AnimatedPressable>
   )
 }
 

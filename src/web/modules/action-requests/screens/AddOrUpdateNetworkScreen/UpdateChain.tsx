@@ -12,14 +12,13 @@ import Banner from '@common/components/Banner'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import { SPACING, SPACING_LG, SPACING_MD, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
-import HeaderAccountAndNetworkInfo from '@web/components/HeaderAccountAndNetworkInfo'
 import ManifestImage from '@web/components/ManifestImage'
 import NetworkAvailableFeatures from '@web/components/NetworkAvailableFeatures'
 import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
 import useDappInfo from '@web/hooks/useDappInfo'
 import useResponsiveActionWindow from '@web/hooks/useResponsiveActionWindow'
+import ActionHeader from '@web/modules/action-requests/components/ActionHeader'
 
 import ActionFooter from '../../components/ActionFooter'
 import RpcCard from './RpcCard'
@@ -54,7 +53,7 @@ const UpdateChain = ({
   rpcUrls,
   rpcUrlIndex
 }: UpdateChainProps) => {
-  const { styles, theme, themeType } = useTheme(getStyles)
+  const { styles, theme } = useTheme(getStyles)
   const { t } = useTranslation()
   const { name, icon } = useDappInfo(userRequest)
   const { responsiveSizeMultiplier } = useResponsiveActionWindow({ maxBreakpoints: 2 })
@@ -62,16 +61,8 @@ const UpdateChain = ({
   return (
     <TabLayoutContainer
       width="full"
-      header={
-        <HeaderAccountAndNetworkInfo
-          backgroundColor={
-            themeType === THEME_TYPES.DARK
-              ? (theme.tertiaryBackground as string)
-              : (theme.primaryBackground as string)
-          }
-        />
-      }
-      footer={
+      header={<ActionHeader />}
+      renderDirectChildren={() => (
         <ActionFooter
           onReject={handleDenyButtonPress}
           onResolve={handleUpdateNetwork}
@@ -87,8 +78,7 @@ const UpdateChain = ({
             actionButtonPressedRef.current
           }
         />
-      }
-      backgroundColor={theme.quinaryBackground}
+      )}
     >
       <TabLayoutWrapperMainContent
         style={{
@@ -141,7 +131,7 @@ const UpdateChain = ({
             </View>
             <Text
               fontSize={16 * responsiveSizeMultiplier}
-              weight="semiBold"
+              weight="medium"
               appearance="secondaryText"
               style={{
                 marginBottom: SPACING * responsiveSizeMultiplier
@@ -168,7 +158,7 @@ const UpdateChain = ({
                 <RpcCard title="Old RPC URL" url={networkAlreadyAdded.selectedRpcUrl}>
                   <NetworkAvailableFeatures
                     hideBackgroundAndBorders
-                    titleSize={14 * responsiveSizeMultiplier}
+                    titleSize={16 * responsiveSizeMultiplier}
                     features={networkAlreadyAdded.features}
                     chainId={networkAlreadyAdded.chainId}
                     withRetryButton={!!rpcUrls.length && rpcUrlIndex < rpcUrls.length - 1}
@@ -182,19 +172,22 @@ const UpdateChain = ({
                     // Align-self center, instead of aligning the parent, to avoid weird behaviour when the
                     // container is scrollable
                     alignSelf: 'center',
-                    marginHorizontal: SPACING_MD * responsiveSizeMultiplier
+                    marginHorizontal: SPACING_TY * responsiveSizeMultiplier
                   }}
+                  containerColor={theme.secondaryBackground}
+                  color={theme.iconPrimary}
                 />
                 <RpcCard title="New RPC URL" url={networkDetails.selectedRpcUrl} isNew>
                   <NetworkAvailableFeatures
                     hideBackgroundAndBorders
-                    titleSize={14 * responsiveSizeMultiplier}
+                    titleSize={16 * responsiveSizeMultiplier}
                     features={features}
                     chainId={networkDetails.chainId}
                     withRetryButton={!!rpcUrls.length && rpcUrlIndex < rpcUrls.length - 1}
                     handleRetryWithDifferentRpcUrl={handleRetryWithDifferentRpcUrl}
                     responsiveSizeMultiplier={responsiveSizeMultiplier}
                     withScroll
+                    titleStyle={{ color: theme.success400 }}
                   />
                 </RpcCard>
               </View>
@@ -207,7 +200,7 @@ const UpdateChain = ({
                   title={t(
                     'Make sure you trust this site and provider. You can change the RPC URL anytime in the network settings.'
                   )}
-                  type="info2"
+                  type="info"
                 />
               </View>
             </>

@@ -20,7 +20,7 @@ interface Styles {
   justifyEnd: ViewStyle
 }
 
-const styles: Styles = {
+const styles: Styles & StyleSheet.NamedStyles<any> = {
   flex1: {
     flex: 1
   },

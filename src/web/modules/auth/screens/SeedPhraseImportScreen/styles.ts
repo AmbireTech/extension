@@ -32,8 +32,8 @@ const getStyles = () =>
       zIndex: 1,
       ...flexbox.directionRow,
       ...flexbox.wrap,
-      height: 22,
-      padding: 19
+      height: 21,
+      padding: 14.5
     },
     textAreaWrapper: { position: 'relative', ...spacings.mbSm }
   })

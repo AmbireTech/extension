@@ -10,11 +10,11 @@ import { PortfolioGasTankResult } from '@ambire-common/libs/portfolio/interfaces
 import BottomSheet from '@common/components/BottomSheet'
 import DualChoiceModal from '@common/components/DualChoiceModal'
 import Text from '@common/components/Text'
+import useController from '@common/hooks/useController'
 import useToast from '@common/hooks/useToast'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
 import spacings from '@common/styles/spacings'
 import { createTab } from '@web/extension-services/background/webapi/tab'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 
 type Props = {
   id: string
@@ -36,7 +36,7 @@ const GasTankInfoModal = ({
   const { t } = useTranslation()
   const { addToast } = useToast()
   const isSA = useMemo(() => isSmartAccount(account), [account])
-  const { networks } = useNetworksControllerState()
+  const { networks } = useController('NetworksController').state
 
   const token = useMemo(() => {
     const result = portfolio?.portfolioState?.gasTank?.result as PortfolioGasTankResult
@@ -49,7 +49,7 @@ const GasTankInfoModal = ({
   }, [isSA, portfolio?.portfolioState?.gasTank?.result])
 
   const balanceFormatted = useMemo(
-    () => (token ? getAndFormatTokenDetails(token, networks)?.balanceFormatted ?? 0 : 0),
+    () => (token ? (getAndFormatTokenDetails(token, networks)?.balanceFormatted ?? 0) : 0),
     [networks, token]
   )
 

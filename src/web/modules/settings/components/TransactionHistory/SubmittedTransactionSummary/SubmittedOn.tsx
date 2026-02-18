@@ -5,9 +5,7 @@ import { View } from 'react-native'
 import { SubmittedAccountOp } from '@ambire-common/libs/accountOp/submittedAccountOp'
 import NetworkBadge from '@common/components/NetworkBadge'
 import Text from '@common/components/Text'
-import useTheme from '@common/hooks/useTheme'
-import spacings, { SPACING_TY } from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
+import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@web/utils/uiType'
 
@@ -30,17 +28,27 @@ const SubmittedOn = ({
 }: Props) => {
   const { t } = useTranslation()
   const date = new Date(timestamp)
-  const { theme, themeType } = useTheme()
+
   return (
     <View
       style={[
-        spacings.mrMd,
-        { flex: 2 },
+        spacings.mrSm,
+        { flex: 1.5 },
         numberOfLines === 1 && flexbox.directionRow,
         numberOfLines === 1 && flexbox.alignCenter
       ]}
     >
-      <Text fontSize={fontSize} appearance="secondaryText" weight="semiBold">
+      <Text
+        fontSize={fontSize}
+        appearance="secondaryText"
+        weight="semiBold"
+        style={{
+          display: 'flex',
+          ...flexbox.alignCenter,
+          ...flexbox.directionRow,
+          ...spacings.mbMi
+        }}
+      >
         {t('Submitted ')}
 
         <NetworkBadge
@@ -52,9 +60,11 @@ const SubmittedOn = ({
             ...spacings.pv0,
             ...spacings.pl0,
             ...spacings.pr0,
-            borderWidth: 0
+            borderWidth: 0,
+            height: 'auto'
           }}
           iconSize={iconSize}
+          iconStyle={spacings.mlMi}
           renderNetworkName={(networkName) => {
             if (isPopup)
               return networkName.length > 7 ? `${networkName.slice(0, 7)}...` : networkName

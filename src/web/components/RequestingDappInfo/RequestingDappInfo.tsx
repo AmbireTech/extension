@@ -38,6 +38,8 @@ const RequestingDappInfo: FC<Props> = ({ name, icon, intentText }) => {
         <View
           style={{
             ...styles.fallbackIcon,
+            ...spacings.pvMi,
+            ...spacings.phMi,
             width: 48 * responsiveSizeMultiplier,
             height: 48 * responsiveSizeMultiplier
           }}

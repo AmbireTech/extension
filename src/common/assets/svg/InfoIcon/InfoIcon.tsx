@@ -1,23 +1,21 @@
 import React from 'react'
-import Svg, { G, Path } from 'react-native-svg'
+import Svg, { Circle, Path } from 'react-native-svg'
 
 import useTheme from '@common/hooks/useTheme'
 import { LegendsSvgProps } from '@legends/types/svg'
 
 const InfoIcon: React.FC<LegendsSvgProps> = ({ width = 24, height = 24, color, ...rest }) => {
   const { theme } = useTheme()
+
   return (
-    <Svg width={width} height={height} fill="none" viewBox="0 0 22 22" {...rest}>
-      <G
-        fill="none"
-        stroke={color || theme.iconSecondary}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <Path d="M10.75 15.05V9.8" strokeWidth="1.5" />
-        <Path d="M10.75 6.6v-.1" strokeWidth="2" />
-        <Path d="M10.75 20.75a10 10 0 1 0-10-10 10.029 10.029 0 0 0 10 10Z" strokeWidth="1.5" />
-      </G>
+    <Svg width={width} height={height} viewBox="0 0 16 16" fill="none" {...rest}>
+      <Circle cx="8" cy="8" r="6" stroke={color || theme.iconPrimary} />
+      <Path
+        fill={color || theme.iconPrimary}
+        stroke={color || theme.iconPrimary}
+        d="M8.333 5a.333.333 0 1 1-.666 0 .333.333 0 0 1 .666 0Z"
+      />
+      <Path stroke={color || theme.iconPrimary} d="M8 11.333V6.667" />
     </Svg>
   )
 }

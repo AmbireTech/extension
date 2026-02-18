@@ -3,12 +3,12 @@ import { useTranslation } from 'react-i18next'
 import { TouchableOpacity } from 'react-native'
 
 import { SubmittedAccountOp } from '@ambire-common/libs/accountOp/submittedAccountOp'
-import RepeatIcon from '@common/assets/svg/RepeatIcon'
+import RefreshIcon from '@common/assets/svg/RefreshIcon'
 import Text from '@common/components/Text'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 
 type Props = {
   accountAddr: string
@@ -29,7 +29,7 @@ const RepeatTransaction: FC<Props> = ({
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { dispatch } = useBackgroundService()
+  const { dispatch } = useControllersMiddleware()
 
   const handleRepeatTransaction = useCallback(() => {
     if (!rawCalls) return
@@ -53,7 +53,7 @@ const RepeatTransaction: FC<Props> = ({
       <Text fontSize={textSize} appearance="secondaryText" weight="medium" style={spacings.mrMi}>
         {text || t('Repeat Transaction')}
       </Text>
-      <RepeatIcon width={iconSize} height={iconSize} color={theme.secondaryText} strokeWidth={2} />
+      <RefreshIcon width={iconSize} height={iconSize} color={theme.iconPrimary} strokeWidth={2} />
     </TouchableOpacity>
   )
 }

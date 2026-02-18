@@ -8,27 +8,18 @@ import flexbox from '@common/styles/utils/flexbox'
 import { SETTINGS_HEADER_HEIGHT } from '../../contexts/SettingsRoutesContext/styles'
 
 interface Style {
-  backToDashboardButton: ViewStyle
   settingsTitleWrapper: ViewStyle
 }
 
 const getStyles = (theme: ThemeProps) =>
   StyleSheet.create<Style>({
-    backToDashboardButton: {
-      ...common.fullWidth,
-      height: SETTINGS_HEADER_HEIGHT,
-      borderBottomWidth: 1,
-      borderBottomColor: theme.secondaryBorder,
-      ...spacings.pv,
-      ...spacings.ph,
-      ...flexbox.directionRow,
-      ...flexbox.alignCenter,
-      ...spacings.mbLg
-    },
     settingsTitleWrapper: {
       ...common.fullWidth,
-      height: SETTINGS_HEADER_HEIGHT,
-      justifyContent: 'center'
+      ...spacings.plSm,
+      ...flexbox.directionRow,
+      ...flexbox.justifySpaceBetween,
+      ...flexbox.alignCenter,
+      height: SETTINGS_HEADER_HEIGHT
     }
   })
 

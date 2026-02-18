@@ -6,7 +6,7 @@ import { faTrophy } from '@fortawesome/free-solid-svg-icons/faTrophy'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import Address from '@legends/components/Address'
 import useAccountContext from '@legends/hooks/useAccountContext'
-import usePortfolioControllerState from '@legends/hooks/usePortfolioControllerState/usePortfolioControllerState'
+import usePortfolio from '@legends/hooks/usePortfolio'
 import styles from '@legends/modules/leaderboard/screens/Leaderboard/Leaderboard.module.scss'
 import { LeaderboardEntry } from '@legends/modules/leaderboard/types'
 
@@ -70,7 +70,7 @@ const Row: FC<Props> = ({
   reward
 }) => {
   const { connectedAccount } = useAccountContext()
-  const { walletTokenPrice } = usePortfolioControllerState()
+  const { walletTokenPrice } = usePortfolio()
   const isConnectedAccountRow = account === connectedAccount
 
   const [maxAddressLength, setMaxAddressLength] = React.useState(23)

@@ -1,13 +1,12 @@
 import React, { FC } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Pressable } from 'react-native'
 
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
-import { useTranslation } from 'react-i18next'
 
 type Props = {
   shouldEnableRoutesSelection: boolean
@@ -15,7 +14,7 @@ type Props = {
 }
 
 const SelectRoute: FC<Props> = ({ shouldEnableRoutesSelection, openRoutesModal }) => {
-  const { theme, themeType } = useTheme()
+  const { theme } = useTheme()
   const { t } = useTranslation()
 
   return (
@@ -31,24 +30,19 @@ const SelectRoute: FC<Props> = ({ shouldEnableRoutesSelection, openRoutesModal }
       disabled={!shouldEnableRoutesSelection}
     >
       <Text
-        fontSize={14}
+        fontSize={12}
         weight="medium"
-        color={themeType === THEME_TYPES.DARK ? theme.linkText : theme.primary}
+        color={theme.primaryAccent300}
         style={{
-          ...spacings.mr,
-          textDecorationColor: themeType === THEME_TYPES.DARK ? theme.linkText : theme.primary,
+          ...spacings.mrTy,
+          textDecorationColor: theme.primaryAccent300,
           textDecorationLine: 'underline'
         }}
         testID="select-route"
       >
         {t('Select route')}
       </Text>
-      <RightArrowIcon
-        weight="2"
-        width={5}
-        height={16}
-        color={themeType === THEME_TYPES.DARK ? theme.linkText : theme.primary}
-      />
+      <RightArrowIcon weight="2" width={8} height={16} color={theme.primaryAccent300} />
     </Pressable>
   )
 }

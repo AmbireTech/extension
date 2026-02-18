@@ -1,3 +1,0 @@
-import useSignAccountOpControllerState from './useSignAccountOpControllerState'
-
-export default useSignAccountOpControllerState

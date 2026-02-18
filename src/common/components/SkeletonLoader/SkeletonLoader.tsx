@@ -3,7 +3,6 @@ import { Animated, Easing } from 'react-native'
 
 import { isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 
 import { SkeletonLoaderProps } from './types'
@@ -23,7 +22,7 @@ const SkeletonLoader = ({
   appearance
 }: SkeletonLoaderProps) => {
   const pulseAnim = useRef(new Animated.Value(0)).current
-  const { theme, themeType } = useTheme()
+  const { theme } = useTheme()
 
   useEffect(() => {
     Animated.loop(
@@ -53,12 +52,7 @@ const SkeletonLoader = ({
         {
           width,
           height,
-          backgroundColor:
-            theme[
-              appearance || themeType === THEME_TYPES.DARK
-                ? 'secondaryBackgroundInverted'
-                : 'secondaryBackground'
-            ],
+          backgroundColor: theme[appearance || 'secondaryBackground'],
           borderRadius
         },
         { opacity: pulseAnim },

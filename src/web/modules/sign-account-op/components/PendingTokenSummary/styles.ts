@@ -12,7 +12,6 @@ const getStyles = () =>
     container: {
       ...flexbox.alignCenter,
       ...flexbox.directionRow,
-      ...spacings.phTy,
       ...spacings.mbTy
     }
   })

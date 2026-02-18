@@ -1,9 +1,0 @@
-#unlock-screen-background {
-  filter: blur(50px);
-  opacity: 0.6;
-}
-
-#unlock-screen-background-safari {
-  filter: blur(26px);
-  opacity: 0.6;
-}
