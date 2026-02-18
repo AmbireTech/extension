@@ -29,6 +29,18 @@
       "packages": {
         "@ledgerhq/context-module>reflect-metadata": true
       }
+    },
+    "@ethersproject/providers>@ethersproject/random": {
+      "globals": {
+        "crypto": true,
+        "msCrypto": true
+      }
+    },
+    "ethers": {
+      "globals": {
+        "crypto": true,
+        "msCrypto": true
+      }
     }
   }
 }
