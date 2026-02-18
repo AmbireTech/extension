@@ -404,19 +404,19 @@ module.exports = async function (env, argv) {
         template: './src/web/public/index.html',
         filename: 'index.html',
         inject: 'body', // to auto inject the main.js bundle in the body
-        chunks: ['main'] // include only chunks from the main entry
+        chunks: ['rootTheme', 'main'] // include only chunks from the main entry
       }),
       new HtmlWebpackPlugin({
         template: './src/web/public/request-window.html',
         filename: 'request-window.html',
         inject: 'body', // to auto inject the main.js bundle in the body
-        chunks: ['main'] // include only chunks from the main entry
+        chunks: ['rootTheme', 'main'] // include only chunks from the main entry
       }),
       new HtmlWebpackPlugin({
         template: './src/web/public/tab.html',
         filename: 'tab.html',
         inject: 'body', // to auto inject the main.js bundle in the body
-        chunks: ['main'] // include only chunks from the main entry
+        chunks: ['rootTheme', 'main'] // include only chunks from the main entry
       }),
       new CopyPlugin({ patterns: extensionCopyPatterns })
     ]
