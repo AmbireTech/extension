@@ -131,7 +131,6 @@ export const TabLayoutWrapperMainContent: React.FC<TabLayoutWrapperMainContentPr
       <ScrollableWrapper
         contentContainerStyle={[
           styles.contentContainer,
-          isOnboardingRoute && (minHeightSize('l') ? spacings.pv0 : spacings.pt2Xl),
           isTab && minHeightSize('m') && spacings.mt0,
           contentContainerStyle
         ]}
@@ -149,7 +148,7 @@ export const TabLayoutWrapperMainContent: React.FC<TabLayoutWrapperMainContentPr
       ref={wrapperRef}
       style={[
         styles.contentContainer,
-        isOnboardingRoute && (minHeightSize('l') ? spacings.pv0 : spacings.pt2Xl),
+        isOnboardingRoute && (minHeightSize('l') ? spacings.pv : spacings.pt2Xl),
         isTab && minHeightSize('m') && spacings.mt0,
         contentContainerStyle
       ]}

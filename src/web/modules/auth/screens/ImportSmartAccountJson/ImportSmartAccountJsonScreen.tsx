@@ -9,8 +9,10 @@ import { Account, AccountCreation } from '@ambire-common/interfaces/account'
 import { ReadyToAddKeys } from '@ambire-common/interfaces/keystore'
 import { getDefaultAccountPreferences } from '@ambire-common/libs/account/account'
 import { isValidPrivateKey } from '@ambire-common/libs/keyIterator/keyIterator'
+import UploadIcon from '@common/assets/svg/UploadIcon'
 import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
+import Button from '@common/components/Button'
 import Panel from '@common/components/Panel'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
@@ -19,9 +21,9 @@ import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
-import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Header'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
+import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import {
   TabLayoutContainer,
@@ -132,7 +134,7 @@ const validateJson = (json: ImportedJson): { error?: string; success: boolean } 
       }
     }
 
-    if (computeAddress(json.privateKey) !== getAddress(json.associatedKeys[0])) {
+    if (computeAddress(json.privateKey) !== getAddress(json.associatedKeys[0]!)) {
       return {
         error:
           'PrivateKey and associatedKey address mismatch. Are you providing the correct private key?',
@@ -284,7 +286,9 @@ const SmartAccountImportScreen = () => {
     if (newAccounts.length) goToNextRoute()
   }, [newAccounts.length, goToNextRoute])
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop: handleFileUpload })
+  const { getRootProps, getInputProps, open, isDragActive } = useDropzone({
+    onDrop: handleFileUpload
+  })
 
   const handleGuideLinkPressed = useCallback(
     () =>
@@ -314,11 +318,7 @@ const SmartAccountImportScreen = () => {
   }
 
   return (
-    <TabLayoutContainer
-      backgroundColor={theme.secondaryBackground}
-      width="md"
-      header={<HeaderWithLogoOnly />}
-    >
+    <TabLayoutContainer backgroundColor={theme.secondaryBackground} width="md">
       <TabLayoutWrapperMainContent>
         <Panel
           title={t('Import JSON backup file')}
@@ -335,56 +335,65 @@ const SmartAccountImportScreen = () => {
               flexDirection: 'column'
             }}
           >
-            <View style={styles.dropAreaContainer}>
-              <View style={styles.dropArea}>
-                <input {...getInputProps()} />
-                <Trans>
-                  {isDragActive ? (
-                    <Text appearance="secondaryText" style={text.center}>
-                      Drop your file here...
-                    </Text>
-                  ) : (
-                    <Text appearance="secondaryText" style={text.center}>
-                      {t('Drag & drop your file here or ')}
-                      <Text appearance="primary" weight="medium">
-                        upload
-                      </Text>
-                      <Text appearance="secondaryText">{' it from your computer'}</Text>
-                      {isLoading && (
-                        <View style={spacings.mlTy}>
-                          <Spinner style={{ width: 16, height: 16 }} />
-                        </View>
-                      )}
-                    </Text>
-                  )}
-                </Trans>
-              </View>
-              {!!error && (
-                <Text weight="regular" fontSize={14} appearance="errorText">
-                  {error}
+            <View style={styles.dropArea}>
+              <input {...getInputProps()} />
+              {isLoading ? (
+                <View style={[flexbox.flex1, flexbox.center]}>
+                  <Spinner style={{ width: 16, height: 16 }} />
+                </View>
+              ) : isDragActive ? (
+                <Text appearance="secondaryText" style={text.center}>
+                  Drop your file here...
                 </Text>
+              ) : (
+                <View style={[flexbox.flex1, flexbox.center]}>
+                  <UploadIcon width={32} height={32} style={spacings.mbSm} />
+                  <Text style={spacings.mbTy} appearance="secondaryText" weight="medium">
+                    {t('Drag&Drop your file here')}
+                  </Text>
+                  <Text
+                    style={spacings.mbTy}
+                    fontSize={12}
+                    appearance="secondaryText"
+                    weight="medium"
+                  >
+                    {t('or')}
+                  </Text>
+                  <Button
+                    type="outline"
+                    size="tiny"
+                    style={{ height: 40, ...spacings.phSm }}
+                    text={t('Browse files')}
+                    onPress={open}
+                    hasBottomSpacing={false}
+                  />
+                </View>
               )}
             </View>
-            <Trans>
+            {!!error ? (
+              <Alert type="error" text={error} style={{ ...spacings.mtTy, ...spacings.mb }} />
+            ) : (
               <Alert
                 title="Ambire v2 Smart Accounts only"
                 type="warning"
                 size="sm"
                 text={
-                  <Text fontSize={14} appearance="secondaryText">
-                    You can import backups only for v2 Smart Accounts created in the Ambire
-                    Extension. If you are looking to import v1 Smart Accounts from the web or mobile
-                    wallet check{' '}
-                    <TouchableOpacity onPress={handleGuideLinkPressed}>
-                      <Text color={theme.infoDecorative} fontSize={14} underline weight="medium">
-                        this guide
-                      </Text>
-                    </TouchableOpacity>
-                    .
-                  </Text>
+                  <Trans>
+                    <Text fontSize={14} appearance="secondaryText">
+                      You can import backups only for v2 Smart Accounts created in the Ambire
+                      Extension. If you are looking to import v1 Smart Accounts from the web or
+                      mobile wallet check{' '}
+                      <TouchableOpacity onPress={handleGuideLinkPressed}>
+                        <Text color={theme.linkText} fontSize={14} weight="medium">
+                          this guide
+                        </Text>
+                      </TouchableOpacity>
+                      .
+                    </Text>
+                  </Trans>
                 }
               />
-            </Trans>
+            )}
           </div>
         </Panel>
         <BottomSheet

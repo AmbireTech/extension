@@ -4,14 +4,13 @@ import { View } from 'react-native'
 
 import { HARDWARE_WALLET_DEVICE_NAMES } from '@ambire-common/consts/hardwareWallets'
 import AccountPickerController from '@ambire-common/controllers/accountPicker/accountPicker'
-import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
+import ImportAccountIcon from '@common/assets/svg/ImportAccountIcon'
 import Button from '@common/components/Button'
 import Panel from '@common/components/Panel'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
-import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Header'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import {
@@ -107,13 +106,15 @@ const AccountPickerScreen = () => {
   )
 
   return (
-    <TabLayoutContainer
-      backgroundColor={theme.secondaryBackground}
-      width="lg"
-      header={<HeaderWithLogoOnly />}
-    >
-      <TabLayoutWrapperMainContent contentContainerStyle={[spacings.pt0]}>
-        <Panel type="onboarding" spacingsSize="small" panelWidth={900} style={{ minHeight: '92%' }}>
+    <TabLayoutContainer backgroundColor={theme.secondaryBackground} width="lg">
+      <TabLayoutWrapperMainContent>
+        <Panel
+          type="onboarding"
+          spacingsSize="small"
+          panelWidth={720}
+          innerStyle={{ ...spacings.phSm }}
+          style={{ maxHeight: 680, height: '100%' }}
+        >
           <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbMd]}>
             <PanelBackButton onPress={goToPrevRoute} style={spacings.mr} />
             <PanelTitle
@@ -141,6 +142,7 @@ const AccountPickerScreen = () => {
               onPress={onImportReady}
               size="large"
               disabled={isImportDisabled}
+              style={flexbox.alignSelfCenter}
               text={
                 isLoading
                   ? t('Importing...')
@@ -148,8 +150,11 @@ const AccountPickerScreen = () => {
                     ? t('Continue')
                     : t('Import accounts')
               }
+              childrenPosition="left"
             >
-              <RightArrowIcon style={spacings.ml} />
+              {!!accountPickerState.selectedAccounts.length && (
+                <ImportAccountIcon width={24} height={24} color="#fff" style={spacings.mrMi} />
+              )}
             </Button>
           </AccountsOnPageList>
         </Panel>

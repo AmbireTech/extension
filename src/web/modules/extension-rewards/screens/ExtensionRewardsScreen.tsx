@@ -65,7 +65,8 @@ const ExtensionRewardsScreen = () => {
   const [arePastProjectedRewardsScoresLoading, setArePastProjectedRewardsScoresLoading] =
     useState(true)
   const isProjectedRewardsLoading =
-    !portfolio.portfolioState.projectedRewards?.isReady || arePastProjectedRewardsScoresLoading
+    portfolio.portfolioState.projectedRewards?.isReady !== true &&
+    arePastProjectedRewardsScoresLoading
 
   const sections: Stat[] = useMemo(
     () =>

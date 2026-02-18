@@ -2,13 +2,11 @@ import React from 'react'
 import { View } from 'react-native'
 
 import SkeletonLoader from '@common/components/SkeletonLoader'
-import useTheme from '@common/hooks/useTheme'
 
 import makeStyles from '../styles'
 
 const Skeleton = () => {
-  const { theme, themeType } = useTheme()
-  const styles = makeStyles(theme, themeType)
+  const styles = makeStyles()
 
   return (
     <View style={[styles.container, { marginHorizontal: 0 }]}>

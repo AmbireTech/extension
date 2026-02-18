@@ -57,6 +57,7 @@ const DappItem = (dapp: Dapp) => {
   const { t } = useTranslation()
   const [hovered, setHovered] = useState(false)
   const [isManageAppOpen, setIsManageAppOpen] = useState(false)
+  const [isNetworkSelectorOpen, setIsNetworkSelectorOpen] = useState(false)
   const settingsButtonRef = React.useRef<View>(null)
 
   const [bindAnim, animStyle, isHovered] = useCustomHover({
@@ -222,7 +223,10 @@ const DappItem = (dapp: Dapp) => {
                   {!!hovered && !!isConnected && (
                     <AnimatedPressable
                       {...bindSettingsIconAnimation}
-                      onPress={() => setIsManageAppOpen((prev) => !prev)}
+                      onPress={() => {
+                        setIsManageAppOpen((prev) => !prev)
+                        setIsNetworkSelectorOpen(false)
+                      }}
                       style={[
                         spacings.mlTy,
                         {
@@ -276,6 +280,8 @@ const DappItem = (dapp: Dapp) => {
         setIsOpen={setIsManageAppOpen}
         dapp={dapp}
         parentRef={settingsButtonRef}
+        isNetworkSelectorExpanded={isNetworkSelectorOpen}
+        setIsNetworkSelectorExpanded={setIsNetworkSelectorOpen}
       />
     </View>
   )

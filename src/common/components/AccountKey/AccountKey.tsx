@@ -24,7 +24,6 @@ import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { setStringAsync } from '@common/utils/clipboard'
@@ -127,8 +126,7 @@ const AccountKey: React.FC<Props> = ({
     <View
       style={[
         {
-          backgroundColor:
-            themeType === THEME_TYPES.DARK ? theme.primaryBackground : theme.secondaryBackground,
+          backgroundColor: theme.secondaryBackground,
           borderRadius: BORDER_RADIUS_PRIMARY,
           ...containerStyle
         },
@@ -336,9 +334,6 @@ const AccountKey: React.FC<Props> = ({
         sheetRef={sheetRefExportKey}
         id="confirm-password-bottom-sheet"
         type="modal"
-        backgroundColor={
-          themeType === THEME_TYPES.DARK ? 'secondaryBackground' : 'primaryBackground'
-        }
         closeBottomSheet={closeExportKey}
         scrollViewProps={{ contentContainerStyle: { flex: 1 } }}
         containerInnerWrapperStyles={{ flex: 1 }}

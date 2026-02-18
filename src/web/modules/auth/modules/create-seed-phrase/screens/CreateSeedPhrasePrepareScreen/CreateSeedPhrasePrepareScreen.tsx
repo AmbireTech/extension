@@ -11,7 +11,6 @@ import useController from '@common/hooks/useController'
 import useExtraEntropy from '@common/hooks/useExtraEntropy'
 import useTheme from '@common/hooks/useTheme'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
-import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Header'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
@@ -79,7 +78,7 @@ const CreateSeedPhrasePrepareScreen = () => {
   }
 
   return (
-    <TabLayoutContainer backgroundColor={theme.secondaryBackground} header={<HeaderWithLogoOnly />}>
+    <TabLayoutContainer backgroundColor={theme.secondaryBackground}>
       <TabLayoutWrapperMainContent>
         <Panel
           type="onboarding"
@@ -110,7 +109,7 @@ const CreateSeedPhrasePrepareScreen = () => {
               >
                 <Checkbox
                   style={spacings.mb0}
-                  value={checkboxesState[id]}
+                  value={checkboxesState[id]!}
                   onValueChange={() => {
                     handleCheckboxPress(id)
                   }}

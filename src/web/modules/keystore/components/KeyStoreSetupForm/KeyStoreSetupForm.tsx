@@ -60,7 +60,7 @@ const KeyStoreSetupForm = ({ agreedWithTerms, children }: Props) => {
                 formState.errors.password &&
                 (t('Your password must be unique and at least 8 characters long.') as string)
               }
-              containerStyle={spacings.mbTy}
+              containerStyle={spacings.mbXl}
               onSubmitEditing={handleCreateButtonPress}
             />
           )}

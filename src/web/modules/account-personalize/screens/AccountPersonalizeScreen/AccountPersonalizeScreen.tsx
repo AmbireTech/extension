@@ -5,6 +5,7 @@ import { Pressable, ScrollView, View } from 'react-native'
 
 import { Account } from '@ambire-common/interfaces/account'
 import wait from '@ambire-common/utils/wait'
+import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
 import Alert from '@common/components/Alert'
 import Button from '@common/components/Button'
 import Panel from '@common/components/Panel'
@@ -15,8 +16,6 @@ import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
-import Header from '@common/modules/header/components/Header'
-import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Header'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -294,10 +293,7 @@ const AccountPersonalizeScreen = () => {
   return (
     <>
       {!!completed && !isLoading && <PinExtension />}
-      <TabLayoutContainer
-        backgroundColor={theme.secondaryBackground}
-        header={completed ? <Header.Wrapper /> : <HeaderWithLogoOnly />}
-      >
+      <TabLayoutContainer backgroundColor={theme.secondaryBackground}>
         <TabLayoutWrapperMainContent>
           <Panel
             type="onboarding"
@@ -311,18 +307,13 @@ const AccountPersonalizeScreen = () => {
           >
             {isLoading && !accountPickerState.pageError ? (
               <View style={[flexbox.alignCenter]}>
-                <View style={spacings.mbLg}>
+                <View style={spacings.mbXl}>
                   <AccountsLoadingAnimation />
                 </View>
-                <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                  <View style={flexbox.flex1} />
-                  <Text fontSize={20} weight="semiBold" style={[text.center, spacings.phMi]}>
-                    {t('Loading accounts')}
-                  </Text>
-                  <View style={[flexbox.flex1, flexbox.justifyEnd, { height: '75%' }]}>
-                    <AccountsLoadingDotsAnimation />
-                  </View>
-                </View>
+                <Text fontSize={20} weight="semiBold" style={[text.center, spacings.mbSm]}>
+                  {t('Loading accounts')}
+                </Text>
+                <AccountsLoadingDotsAnimation />
               </View>
             ) : accountPickerState.pageError ? (
               <View style={flexbox.alignCenter}>
@@ -347,12 +338,14 @@ const AccountPersonalizeScreen = () => {
               </View>
             ) : (
               <>
-                <SuccessAnimation style={spacings.mbXl} />
+                <SuccessAnimation
+                  style={{ ...spacings.mb2Xl, ...flexbox.alignSelfCenter, ...spacings.mt }}
+                />
                 <Text
                   testID="added-successfully-text"
-                  weight="semiBold"
+                  weight="medium"
                   fontSize={20}
-                  style={spacings.mtSm}
+                  style={{ alignSelf: 'center', ...spacings.mbXl }}
                 >
                   {accountsToPersonalize.length
                     ? t('Added successfully')
@@ -386,37 +379,33 @@ const AccountPersonalizeScreen = () => {
                   />
                 )}
                 {!completed && ['seed', 'hw'].includes(accountPickerState.subType as any) && (
-                  <View style={spacings.ptLg}>
-                    <Button
-                      testID="add-more-accounts-btn"
-                      type="ghost"
-                      text={t('Add more accounts from this {{source}}', {
-                        source:
-                          accountPickerState.subType === 'hw'
-                            ? 'hardware wallet'
-                            : 'recovery phrase'
-                      })}
-                      onPress={() => {
-                        handleSave()
-                        goToNextRoute(WEB_ROUTES.accountPicker)
-                      }}
-                      style={{
-                        ...spacings.phMi
-                      }}
-                      textStyle={{ fontSize: 14, letterSpacing: -0.1 }}
-                      hasBottomSpacing={false}
-                      childrenPosition="left"
-                    >
-                      <Text
-                        fontSize={24}
-                        weight="light"
-                        style={spacings.mrTy}
-                        color={theme.primaryText}
-                      >
-                        +
-                      </Text>
-                    </Button>
-                  </View>
+                  <Button
+                    testID="add-more-accounts-btn"
+                    type="outline"
+                    text={t('Add more accounts from this {{source}}', {
+                      source:
+                        accountPickerState.subType === 'hw' ? 'hardware wallet' : 'recovery phrase'
+                    })}
+                    onPress={() => {
+                      handleSave()
+                      goToNextRoute(WEB_ROUTES.accountPicker)
+                    }}
+                    style={{
+                      ...spacings.phMi,
+                      ...spacings.mtSm,
+                      height: 40
+                    }}
+                    size="tiny"
+                    hasBottomSpacing={false}
+                    childrenPosition="left"
+                  >
+                    <AddCircularIcon
+                      width={20}
+                      height={20}
+                      color={theme.primaryText}
+                      style={spacings.mrMi}
+                    />
+                  </Button>
                 )}
               </>
             )}

@@ -12,6 +12,7 @@ import CopyIcon from '@common/assets/svg/CopyIcon'
 import Avatar from '@common/components/Avatar'
 import Badge from '@common/components/Badge'
 import BadgeWithPreset from '@common/components/BadgeWithPreset'
+import FatToggle from '@common/components/FatToggle'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Label from '@common/components/Label'
 import NetworkIcon from '@common/components/NetworkIcon'
@@ -108,7 +109,7 @@ const Account = ({
   }, [account.addr, addToast, t])
 
   if (isDomainResolving) {
-    return <SkeletonLoader height={56} width="100%" style={spacings.mbTy} />
+    return <SkeletonLoader height={48} width="100%" style={spacings.mbTy} />
   }
 
   if (!account.addr) return null
@@ -116,28 +117,23 @@ const Account = ({
   return (
     <Pressable
       key={account.addr}
-      style={({ hovered }: any) => [
+      style={[
         flexbox.alignCenter,
         withBottomSpacing ? spacings.mbTy : spacings.mb0,
         common.borderRadiusPrimary,
-        common.hidden,
-        {
-          borderWidth: 1,
-          borderColor: theme.secondaryBackground
-        },
-        ((hovered && !isDisabled) || isSelected) && {
-          borderColor: hexToRgba(theme.primaryAccent, 0.2)
-        }
+        common.hidden
       ]}
       onPress={isDisabled ? undefined : toggleSelectedState}
       testID={`add-account-${account.addr}`}
     >
       <View style={[styles.container, { backgroundColor: theme.secondaryBackground }]}>
-        <Toggle
+        <FatToggle
           isOn={isSelected}
           onToggle={toggleSelectedState}
           disabled={isDisabled}
           style={flexbox.alignSelfStart}
+          width={44}
+          height={24}
         />
 
         <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
@@ -186,8 +182,8 @@ const Account = ({
                     </Text>
                   ) : null}
                   <Text
-                    fontSize={domainName ? 14 : 16}
-                    appearance={domainName ? 'secondaryText' : 'primaryText'}
+                    fontSize={14}
+                    appearance="secondaryText"
                     style={spacings.mrMi}
                     weight="mono_regular"
                   >
@@ -208,7 +204,7 @@ const Account = ({
               <>
                 {type === 'smart' && (
                   <BadgeWithPreset
-                    withRightSpacing
+                    style={spacings.mrMi}
                     preset="smart-account"
                     {...(shouldAddIntroStepsIds && { nativeID: SmartAccountIntroId })}
                   />
@@ -216,9 +212,9 @@ const Account = ({
 
                 {type === 'linked' && (
                   <>
-                    <BadgeWithPreset preset="linked" withRightSpacing />
+                    <BadgeWithPreset preset="linked" style={spacings.mrMi} />
                     {isAmbireV1LinkedAccount(account.creation?.factoryAddr) && (
-                      <BadgeWithPreset preset="ambire-v1" withRightSpacing />
+                      <BadgeWithPreset preset="ambire-v1" style={spacings.mrMi} />
                     )}
                   </>
                 )}
@@ -261,8 +257,8 @@ const Account = ({
             )}
             {!!unused && (
               <Badge
-                type={shouldBeDisplayedAsNew ? 'new' : 'default'}
-                text={shouldBeDisplayedAsNew ? t('new') : t('unused')}
+                type={shouldBeDisplayedAsNew ? 'new' : 'outline'}
+                text={shouldBeDisplayedAsNew ? t('New') : t('unused')}
               />
             )}
           </View>

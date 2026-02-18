@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect } from 'react'
 import { View } from 'react-native'
 
-import AmbireLogo from '@common/assets/svg/AmbireLogo'
+import AmbireLogoWithBackgroundAndLogotype from '@common/assets/svg/AmbireLogoWithBackgroundAndLogotype'
 import Button from '@common/components/Button'
 import Panel from '@common/components/Panel'
 import Text from '@common/components/Text'
@@ -10,7 +10,6 @@ import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import ConfettiAnimation from '@common/modules/dashboard/components/ConfettiAnimation'
-import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Header'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
@@ -51,19 +50,26 @@ const OnboardingCompletedScreen = () => {
   return (
     <>
       <PinExtension />
-      <TabLayoutContainer
-        backgroundColor={theme.secondaryBackground}
-        header={<HeaderWithLogoOnly />}
-      >
-        <TabLayoutWrapperMainContent>
-          <Panel type="onboarding" spacingsSize="small" style={{ overflow: 'visible' }}>
+      <TabLayoutContainer backgroundColor={theme.secondaryBackground}>
+        {/* Padding to fit the pin info */}
+        <TabLayoutWrapperMainContent withScroll={false} contentContainerStyle={{ paddingTop: 128 }}>
+          <Panel
+            type="onboarding"
+            spacingsSize="small"
+            style={{ overflow: 'visible', minHeight: 520 }}
+          >
             <View style={[flexbox.flex1, flexbox.alignCenter, spacings.pt3Xl]}>
               <View style={[flexbox.alignCenter, flexbox.justifyCenter]}>
-                <ConfettiAnimation width={TAB_CONTENT_WIDTH} height={380} autoPlay={false} />
-                <AmbireLogo height={96} withWrapper />
+                <ConfettiAnimation
+                  width={TAB_CONTENT_WIDTH}
+                  height={380}
+                  autoPlay={false}
+                  loop={false}
+                />
+                <AmbireLogoWithBackgroundAndLogotype />
               </View>
               <Text
-                style={[spacings.mtLg, spacings.mb, text.center]}
+                style={[spacings.mtXl, spacings.mb, text.center]}
                 weight="semiBold"
                 fontSize={20}
                 testID="wallet-ready-to-use-text"
@@ -80,11 +86,12 @@ const OnboardingCompletedScreen = () => {
                 </Text>
               )}
               {engine !== 'gecko' && (
-                <View style={[flexbox.flex1, flexbox.justifyEnd]}>
+                <View style={{ ...flexbox.flex1, width: '100%', ...flexbox.justifyEnd }}>
                   <Button
                     testID="onboarding-completed-open-dashboard-btn"
                     text={t('Open wallet')}
                     hasBottomSpacing={false}
+                    style={{ width: '100%' }}
                     onPress={handleOpenDashboardPress}
                   />
                 </View>

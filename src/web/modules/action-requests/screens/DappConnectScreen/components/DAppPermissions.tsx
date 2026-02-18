@@ -93,7 +93,7 @@ const DAppPermissions: FC<{
           <VisibilityIcon
             width={responsiveSizeMultiplier * 24}
             height={responsiveSizeMultiplier * 24}
-            color={theme.infoDecorative}
+            color={theme.info300}
           />
         </DAppPermissionIcon>
         <DAppPermissionText style={spacings.ptMi}>
@@ -102,11 +102,11 @@ const DAppPermissions: FC<{
         </DAppPermissionText>
       </DAppPermissionWrapper>
       <DAppPermissionWrapper responsiveSizeMultiplier={responsiveSizeMultiplier}>
-        <DAppPermissionIcon backgroundColor={theme.infoBackground}>
+        <DAppPermissionIcon backgroundColor={theme.primaryAccent100}>
           <TransactionsIcon
             width={responsiveSizeMultiplier * 18}
             height={responsiveSizeMultiplier * 18}
-            color={theme.infoDecorative}
+            color={theme.primaryAccent300}
           />
         </DAppPermissionIcon>
         <DAppPermissionText style={spacings.ptMi}>
@@ -117,9 +117,9 @@ const DAppPermissions: FC<{
       <DAppPermissionWrapper responsiveSizeMultiplier={responsiveSizeMultiplier}>
         <DAppPermissionIcon backgroundColor={theme.successBackground}>
           <LockIcon
-            width={responsiveSizeMultiplier * 22}
-            height={responsiveSizeMultiplier * 22}
-            color={theme.successDecorative}
+            width={responsiveSizeMultiplier * 24}
+            height={responsiveSizeMultiplier * 24}
+            color={theme.success400}
           />
         </DAppPermissionIcon>
         <DAppPermissionText style={spacings.ptMi}>
