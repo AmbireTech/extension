@@ -5,22 +5,26 @@ import DevIcon from '@common/assets/svg/DevIcon/DevIcon'
 import ControlOption from '@common/components/ControlOption'
 import FatToggle from '@common/components/FatToggle'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 
 const CrashAnalyticsControlOption = () => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { crashAnalyticsEnabled } = useController('WalletStateController').state
-  const { dispatch } = useControllersMiddleware()
+  const {
+    state: { crashAnalyticsEnabled },
+    dispatch: walletStateDispatch
+  } = useController('WalletStateController')
 
   const handleToggleCrashAnalytics = useCallback(() => {
-    dispatch({
-      type: 'SET_CRASH_ANALYTICS',
-      params: { enabled: !crashAnalyticsEnabled }
+    walletStateDispatch({
+      type: 'method',
+      params: {
+        method: 'setCrashAnalytics',
+        args: [!crashAnalyticsEnabled]
+      }
     })
-  }, [dispatch, crashAnalyticsEnabled])
+  }, [walletStateDispatch, crashAnalyticsEnabled])
 
   return (
     <ControlOption

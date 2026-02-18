@@ -663,10 +663,7 @@ const init = async () => {
                   port,
                   eventEmitterRegistry,
                   mainCtrl,
-                  walletStateCtrl,
-                  autoLockCtrl,
-                  extensionUpdateCtrl,
-                  windowId
+                  walletStateCtrl
                 })
               }
             } catch (err: any) {

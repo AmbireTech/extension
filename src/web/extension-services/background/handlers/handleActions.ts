@@ -166,33 +166,12 @@ export const handleActions = async (
       ])
     }
 
-    case 'FEATURE_FLAGS_CONTROLLER_FLIP_FEATURE': {
-      return await mainCtrl.featureFlags.setFeatureFlag(params.flag, params.isEnabled)
-    }
-
-    case 'INVITE_CONTROLLER_VERIFY': {
-      return await mainCtrl.invite.verify(params.code)
-    }
-    case 'INVITE_CONTROLLER_BECOME_OG': {
-      return await mainCtrl.invite.becomeOG()
-    }
-    case 'INVITE_CONTROLLER_REVOKE_OG': {
-      return await mainCtrl.invite.revokeOG()
-    }
-
-    case 'DAPPS_CONTROLLER_FETCH_AND_UPDATE_DAPPS': {
-      await mainCtrl.dapps.fetchAndUpdateDapps()
-      break
-    }
     case 'DAPPS_CONTROLLER_DISCONNECT_DAPP': {
       await mainCtrl.dapps.broadcastDappSessionEvent('disconnect', undefined, params.id)
       mainCtrl.dapps.updateDapp(params.id, { isConnected: false })
       await mainCtrl.autoLogin.revokeAllPoliciesForDomain(params.id, params.url)
 
       break
-    }
-    case 'DAPPS_CONTROLLER_GET_CURRENT_DAPP_AND_SEND_RES_TO_UI': {
-      return mainCtrl.dapps.getCurrentDappAndSendResToUi(params)
     }
     case 'CHANGE_CURRENT_DAPP_NETWORK': {
       mainCtrl.dapps.updateDapp(params.id, { chainId: params.chainId })
@@ -205,12 +184,6 @@ export const handleActions = async (
         params.id
       )
       break
-    }
-    case 'DAPP_CONTROLLER_UPDATE_DAPP': {
-      return mainCtrl.dapps.updateDapp(params.id, params.dapp)
-    }
-    case 'DAPP_CONTROLLER_REMOVE_DAPP': {
-      return mainCtrl.dapps.removeDapp(params)
     }
 
     case 'OPEN_EXTENSION_POPUP': {
@@ -242,24 +215,6 @@ export const handleActions = async (
         }
       }
       await sessionStorage.set('isOpenExtensionPopupLoading', false)
-      break
-    }
-
-    case 'SET_THEME_TYPE': {
-      await walletStateCtrl.setThemeType(params.themeType)
-      break
-    }
-    case 'SET_LOG_LEVEL': {
-      await walletStateCtrl.setLogLevel(params.logLevel)
-      break
-    }
-    case 'SET_CRASH_ANALYTICS': {
-      await walletStateCtrl.setCrashAnalytics(params.enabled)
-      break
-    }
-
-    case 'DISMISS_BANNER': {
-      await mainCtrl.banner.dismissBanner(params.bannerId)
       break
     }
 
