@@ -6,7 +6,6 @@ import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import DashboardHeader from '@common/modules/dashboard/components/DashboardHeader'
 import Routes from '@common/modules/dashboard/components/Routes'
@@ -46,7 +45,6 @@ const DashboardOverview: FC<Props> = ({
   animatedOverviewHeight,
   setDashboardOverviewSize
 }) => {
-  const { dispatch } = useControllersMiddleware()
   const { t } = useTranslation()
   const { theme } = useTheme(getStyles)
   const [controllerBanners, marketingBanners] = useBanners()

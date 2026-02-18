@@ -31,16 +31,25 @@ const CreateSeedPhraseWriteScreen = () => {
   const { theme } = useTheme()
   const { addToast } = useToast()
   const { dispatch } = useControllersMiddleware()
-  const { hasTempSeed } = useController('KeystoreController').state
+  const {
+    state: { hasTempSeed },
+    dispatch: keystoreDispatch
+  } = useController('KeystoreController')
   const [tempSeed, setTempSeed] = useState<KeystoreSeed | null>(null)
   const { initParams, subType } = useController('AccountPickerController').state
   const [submitButtonPressed, setSubmitButtonPressed] = useState(false)
 
   useEffect(() => {
     if (!tempSeed && hasTempSeed) {
-      dispatch({ type: 'KEYSTORE_CONTROLLER_SEND_TEMP_SEED_TO_UI' })
+      keystoreDispatch({
+        type: 'method',
+        params: {
+          method: 'sendTempSeedToUi',
+          args: []
+        }
+      })
     }
-  }, [dispatch, tempSeed, hasTempSeed])
+  }, [keystoreDispatch, tempSeed, hasTempSeed])
 
   useEffect(() => {
     const onReceiveOneTimeData = (data: any) => {

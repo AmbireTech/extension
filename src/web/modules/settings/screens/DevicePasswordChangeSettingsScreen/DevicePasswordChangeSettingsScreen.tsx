@@ -13,7 +13,6 @@ import { PanelTitle } from '@common/components/Panel/Panel'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useExtraEntropy from '@common/hooks/useExtraEntropy'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
@@ -27,9 +26,8 @@ import { SettingsRoutesContext } from '@web/modules/settings/contexts/SettingsRo
 const DevicePasswordChangeSettingsScreen = () => {
   const { t } = useTranslation()
   const { addToast } = useToast()
-  const { dispatch } = useControllersMiddleware()
   const { navigate } = useNavigation()
-  const state = useController('KeystoreController').state
+  const { state, dispatch: keystoreDispatch } = useController('KeystoreController')
   const { ref: modalRef, open: openModal, close: closeModal } = useModalize()
   const { setCurrentSettingsPage } = useContext(SettingsRoutesContext)
   const { theme } = useTheme()
@@ -87,12 +85,11 @@ const DevicePasswordChangeSettingsScreen = () => {
 
   const handleChangeKeystorePassword = handleSubmit(
     ({ password, newPassword: newPasswordFieldValue }) =>
-      dispatch({
-        type: 'KEYSTORE_CONTROLLER_CHANGE_PASSWORD',
+      keystoreDispatch({
+        type: 'method',
         params: {
-          secret: password,
-          newSecret: newPasswordFieldValue,
-          extraEntropy: getExtraEntropy()
+          method: 'changeKeystorePassword',
+          args: [password, newPasswordFieldValue, getExtraEntropy()]
         }
       })
   )
@@ -114,7 +111,13 @@ const DevicePasswordChangeSettingsScreen = () => {
               onChangeText={(val: string) => {
                 onChange(val)
                 if (state.errorMessage) {
-                  dispatch({ type: 'KEYSTORE_CONTROLLER_RESET_ERROR_STATE' })
+                  keystoreDispatch({
+                    type: 'method',
+                    params: {
+                      method: 'resetErrorState',
+                      args: []
+                    }
+                  })
                 }
               }}
               isValid={isValidPassword(value)}

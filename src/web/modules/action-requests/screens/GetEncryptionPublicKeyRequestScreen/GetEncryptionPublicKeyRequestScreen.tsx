@@ -4,7 +4,6 @@ import { View } from 'react-native'
 import Alert from '@common/components/Alert'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import RequestingDappInfo from '@web/components/RequestingDappInfo'
@@ -17,7 +16,7 @@ import { useEncryptionCapability } from '@web/modules/action-requests/hooks'
 
 const GetEncryptionPublicKeyRequestScreen = () => {
   const { t } = useTranslation()
-  const { dispatch } = useControllersMiddleware()
+
   const {
     state: { currentUserRequest },
     dispatch: requestsDispatch

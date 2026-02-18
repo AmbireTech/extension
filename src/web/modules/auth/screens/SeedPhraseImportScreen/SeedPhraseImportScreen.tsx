@@ -36,6 +36,7 @@ const SeedPhraseImportScreen = () => {
   const { theme, styles } = useTheme(getStyles)
   const { dispatch } = useControllersMiddleware()
   const { initParams, subType } = useController('AccountPickerController').state
+  const { dispatch: keystoreDispatch } = useController('KeystoreController')
   const {
     watch,
     control,
@@ -78,12 +79,17 @@ const SeedPhraseImportScreen = () => {
     await handleSubmit(({ seed, passphrase }) => {
       const formattedSeed = seed.trim().toLowerCase().replace(/\s+/g, ' ')
       setImportButtonPressed(true)
-      dispatch({
-        type: 'KEYSTORE_CONTROLLER_ADD_TEMP_SEED',
+      keystoreDispatch({
+        type: 'method',
         params: {
-          seed: formattedSeed,
-          seedPassphrase: passphrase || null,
-          hdPathTemplate: BIP44_STANDARD_DERIVATION_TEMPLATE
+          method: 'addTempSeed',
+          args: [
+            {
+              seed: formattedSeed,
+              seedPassphrase: passphrase || null,
+              hdPathTemplate: BIP44_STANDARD_DERIVATION_TEMPLATE
+            }
+          ]
         }
       })
       dispatch({
@@ -91,7 +97,7 @@ const SeedPhraseImportScreen = () => {
         params: { privKeyOrSeed: formattedSeed, seedPassphrase: passphrase || null }
       })
     })()
-  }, [dispatch, handleSubmit])
+  }, [dispatch, keystoreDispatch, handleSubmit])
 
   useEffect(() => {
     if (!getValues('seed')) return
@@ -99,7 +105,7 @@ const SeedPhraseImportScreen = () => {
       setImportButtonPressed(false)
       goToNextRoute()
     }
-  }, [goToNextRoute, dispatch, getValues, initParams, subType, importButtonPressed])
+  }, [goToNextRoute, getValues, initParams, subType, importButtonPressed])
 
   useEffect(() => {
     if (!enablePassphrase) {

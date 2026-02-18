@@ -145,58 +145,6 @@ export const handleActions = async (
       return await mainCtrl.handleSignMessage()
     }
 
-    case 'KEYSTORE_CONTROLLER_ADD_SECRET':
-      return await mainCtrl.keystore.addSecret(
-        params.secretId,
-        params.secret,
-        params.extraEntropy,
-        params.leaveUnlocked
-      )
-    case 'KEYSTORE_CONTROLLER_ADD_TEMP_SEED':
-      return await mainCtrl.keystore.addTempSeed(params)
-    case 'KEYSTORE_CONTROLLER_GENERATE_TEMP_SEED':
-      return await mainCtrl.keystore.generateTempSeed(params)
-    case 'KEYSTORE_CONTROLLER_UPDATE_SEED':
-      return await mainCtrl.keystore.updateSeed(params)
-    case 'KEYSTORE_CONTROLLER_UNLOCK_WITH_SECRET':
-      return await mainCtrl.keystore.unlockWithSecret(params.secretId, params.secret)
-    case 'KEYSTORE_CONTROLLER_RESET_ERROR_STATE':
-      return mainCtrl.keystore.resetErrorState()
-    case 'KEYSTORE_CONTROLLER_CHANGE_PASSWORD':
-      return await mainCtrl.keystore.changeKeystorePassword(
-        params.newSecret,
-        params.secret,
-        params.extraEntropy
-      )
-    case 'KEYSTORE_CONTROLLER_CHANGE_PASSWORD_FROM_RECOVERY':
-      // In the case we change the user's device password through the recovery process,
-      // we don't know the old password, which is why we send only the new password.
-      return await mainCtrl.keystore.changeKeystorePassword(
-        params.newSecret,
-        undefined,
-        params.extraEntropy
-      )
-    case 'KEYSTORE_CONTROLLER_SEND_PRIVATE_KEY_TO_UI':
-      return await mainCtrl.keystore.sendPrivateKeyToUi(params.keyAddr)
-    case 'KEYSTORE_CONTROLLER_SEND_ENCRYPTED_PRIVATE_KEY_TO_UI':
-      return await mainCtrl.keystore.sendPasswordEncryptedPrivateKeyToUi(
-        params.keyAddr,
-        params.secret,
-        params.entropy
-      )
-    case 'KEYSTORE_CONTROLLER_SEND_SEED_TO_UI':
-      return await mainCtrl.keystore.sendSeedToUi(params.id)
-    case 'KEYSTORE_CONTROLLER_SEND_TEMP_SEED_TO_UI':
-      return await mainCtrl.keystore.sendTempSeedToUi()
-    case 'KEYSTORE_CONTROLLER_DELETE_SEED':
-      return await mainCtrl.keystore.deleteSeed(params.id)
-    case 'KEYSTORE_CONTROLLER_SEND_DECRYPTED_MESSAGE_TO_UI':
-      return await mainCtrl.keystore.sendDecryptedMessageToUi({
-        encryptedMessage: params.encryptedMessage,
-        keyAddr: params.keyAddr,
-        keyType: params.keyType
-      })
-
     case 'EMAIL_VAULT_CONTROLLER_GET_INFO':
       return await mainCtrl.emailVault?.getEmailVaultInfo(params.email)
     case 'EMAIL_VAULT_CONTROLLER_UPLOAD_KEYSTORE_SECRET':

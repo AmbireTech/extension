@@ -11,7 +11,6 @@ import Text from '@common/components/Text'
 import { isDev, isTesting, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useDisableNavigatingBack from '@common/hooks/useDisableNavigatingBack'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
@@ -31,9 +30,11 @@ const KeyStoreUnlockScreen = () => {
   const { t } = useTranslation()
   const { styles } = useTheme(getStyles)
   const { navigate } = useNavigation()
-  const { dispatch } = useControllersMiddleware()
   const { hasKeystoreRecovery } = useController('EmailVaultController').state
-  const { isUnlocked, statuses, errorMessage } = useController('KeystoreController').state
+  const {
+    state: { isUnlocked, statuses, errorMessage },
+    dispatch: keystoreDispatch
+  } = useController('KeystoreController')
   const { requestWindow } = useController('RequestsController').state
   const { theme } = useTheme()
   const {
@@ -80,12 +81,15 @@ const KeyStoreUnlockScreen = () => {
     ({ password }: { password: string }) => {
       if (disableSubmit) return
 
-      dispatch({
-        type: 'KEYSTORE_CONTROLLER_UNLOCK_WITH_SECRET',
-        params: { secretId: 'password', secret: password }
+      keystoreDispatch({
+        type: 'method',
+        params: {
+          method: 'unlockWithSecret',
+          args: ['password', password]
+        }
       })
     },
-    [disableSubmit, dispatch]
+    [disableSubmit, keystoreDispatch]
   )
 
   return (
@@ -115,7 +119,13 @@ const KeyStoreUnlockScreen = () => {
               onChangeText={(val: string) => {
                 onChange(val)
                 if (errorMessage) {
-                  dispatch({ type: 'KEYSTORE_CONTROLLER_RESET_ERROR_STATE' })
+                  keystoreDispatch({
+                    type: 'method',
+                    params: {
+                      method: 'resetErrorState',
+                      args: []
+                    }
+                  })
                 }
               }}
               isValid={!errors.password && isValidPassword(value)}

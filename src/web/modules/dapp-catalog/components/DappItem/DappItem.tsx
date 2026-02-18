@@ -10,7 +10,7 @@ import TwitterIcon from '@common/assets/svg/TwitterIcon'
 import Badge from '@common/components/Badge'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -53,7 +53,7 @@ const DappItem = (dapp: Dapp) => {
     twitter
   } = dapp
   const { styles, theme } = useTheme(getStyles)
-  const { dispatch } = useControllersMiddleware()
+  const { dispatch: dappsDispatch } = useController('DappsController')
   const { t } = useTranslation()
   const [hovered, setHovered] = useState(false)
   const [isManageAppOpen, setIsManageAppOpen] = useState(false)
@@ -171,9 +171,12 @@ const DappItem = (dapp: Dapp) => {
                       }
                     ]}
                     onPress={() => {
-                      dispatch({
-                        type: 'DAPP_CONTROLLER_UPDATE_DAPP',
-                        params: { id, dapp: { favorite: !favorite } }
+                      dappsDispatch({
+                        type: 'method',
+                        params: {
+                          method: 'updateDapp',
+                          args: [id, { favorite: !favorite }]
+                        }
                       })
                     }}
                   >

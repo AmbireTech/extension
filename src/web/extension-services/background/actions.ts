@@ -86,69 +86,6 @@ type MainControllerHandleSignMessage = {
   params: { keyAddr: Key['addr']; keyType: Key['type'] }
 }
 
-type KeystoreControllerAddSecretAction = {
-  type: 'KEYSTORE_CONTROLLER_ADD_SECRET'
-  params: { secretId: string; secret: string; extraEntropy: string; leaveUnlocked: boolean }
-}
-type KeystoreControllerAddTempSeedAction = {
-  type: 'KEYSTORE_CONTROLLER_ADD_TEMP_SEED'
-  params: Omit<KeystoreSeed, 'id' | 'label'>
-}
-type KeystoreControllerGenerateTempSeedAction = {
-  type: 'KEYSTORE_CONTROLLER_GENERATE_TEMP_SEED'
-  params: { extraEntropy?: string }
-}
-type KeystoreControllerUpdateSeedAction = {
-  type: 'KEYSTORE_CONTROLLER_UPDATE_SEED'
-  params: {
-    id: KeystoreSeed['id']
-    label?: KeystoreSeed['label']
-    hdPathTemplate?: KeystoreSeed['hdPathTemplate']
-  }
-}
-type KeystoreControllerUnlockWithSecretAction = {
-  type: 'KEYSTORE_CONTROLLER_UNLOCK_WITH_SECRET'
-  params: { secretId: string; secret: string }
-}
-type KeystoreControllerResetErrorStateAction = {
-  type: 'KEYSTORE_CONTROLLER_RESET_ERROR_STATE'
-}
-type KeystoreControllerChangePasswordAction = {
-  type: 'KEYSTORE_CONTROLLER_CHANGE_PASSWORD'
-  params: { secret: string; newSecret: string; extraEntropy: string }
-}
-type KeystoreControllerChangePasswordFromRecoveryAction = {
-  type: 'KEYSTORE_CONTROLLER_CHANGE_PASSWORD_FROM_RECOVERY'
-  params: { newSecret: string; extraEntropy: string }
-}
-type KeystoreControllerSendPrivateKeyToUiAction = {
-  type: 'KEYSTORE_CONTROLLER_SEND_PRIVATE_KEY_TO_UI'
-  params: { keyAddr: string }
-}
-type KeystoreControllerSendEncryptedPrivateKeyToUiAction = {
-  type: 'KEYSTORE_CONTROLLER_SEND_ENCRYPTED_PRIVATE_KEY_TO_UI'
-  params: { keyAddr: string; secret: string; entropy: string }
-}
-type KeystoreControllerDeleteSeedAction = {
-  type: 'KEYSTORE_CONTROLLER_DELETE_SEED'
-  params: { id: string }
-}
-type KeystoreControllerSendSeedToUiAction = {
-  type: 'KEYSTORE_CONTROLLER_SEND_SEED_TO_UI'
-  params: { id: string }
-}
-type KeystoreControllerSendTempSeedToUiAction = {
-  type: 'KEYSTORE_CONTROLLER_SEND_TEMP_SEED_TO_UI'
-}
-type KeystoreControllerSendDecryptedMessageToUiAction = {
-  type: 'KEYSTORE_CONTROLLER_SEND_DECRYPTED_MESSAGE_TO_UI'
-  params: {
-    encryptedMessage: string
-    keyAddr: Key['addr']
-    keyType: Key['type']
-  }
-}
-
 type EmailVaultControllerGetInfoAction = {
   type: 'EMAIL_VAULT_CONTROLLER_GET_INFO'
   params: { email: string }
@@ -329,18 +266,6 @@ export type Action =
   | HandshakeAction
   | ResetAccountAddingOnPageErrorAction
   | MainControllerHandleSignMessage
-  | PortfolioControllerToggleHideToken
-  | PortfolioControllerRemoveCustomToken
-  | PortfolioControllerCheckToken
-  | KeystoreControllerAddSecretAction
-  | KeystoreControllerAddTempSeedAction
-  | KeystoreControllerGenerateTempSeedAction
-  | KeystoreControllerUpdateSeedAction
-  | KeystoreControllerUnlockWithSecretAction
-  | KeystoreControllerResetErrorStateAction
-  | KeystoreControllerChangePasswordAction
-  | KeystoreControllerChangePasswordFromRecoveryAction
-  | KeystoreControllerSendPrivateKeyToUiAction
   | KeystoreControllerSendDecryptedMessageToUiAction
   | EmailVaultControllerGetInfoAction
   | EmailVaultControllerUploadKeystoreSecretAction
@@ -370,8 +295,6 @@ export type Action =
   | InviteControllerBecomeOGAction
   | InviteControllerRevokeOGAction
   | ImportSmartAccountJson
-  | KeystoreControllerSendSeedToUiAction
-  | KeystoreControllerSendTempSeedToUiAction
   | KeystoreControllerDeleteSeedAction
   | ExtensionUpdateControllerApplyUpdate
   | OpenExtensionPopupAction
@@ -380,5 +303,4 @@ export type Action =
   | SetLogLevelTypeAction
   | SetCrashAnalyticsAction
   | DismissBanner
-  | KeystoreControllerSendEncryptedPrivateKeyToUiAction
   | FlipFeature

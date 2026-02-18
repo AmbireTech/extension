@@ -8,7 +8,6 @@ import AmbireLogoHorizontal from '@common/components/AmbireLogoHorizontal'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import useWindowSize from '@common/hooks/useWindowSize'
@@ -30,7 +29,7 @@ const SwitchAccountScreen = () => {
     state: { account }
   } = useController('SelectedAccountController')
   const { dispatch: mainDispatch } = useController('MainController')
-  const { dispatch } = useControllersMiddleware()
+
   const {
     state: { currentUserRequest },
     dispatch: requestsDispatch

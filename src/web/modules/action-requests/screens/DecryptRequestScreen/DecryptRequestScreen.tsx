@@ -6,7 +6,6 @@ import ExpandableCard from '@common/components/ExpandableCard'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
@@ -22,7 +21,7 @@ import { useEncryptionCapability } from '@web/modules/action-requests/hooks'
 
 const DecryptRequestScreen = () => {
   const { t } = useTranslation()
-  const { dispatch } = useControllersMiddleware()
+  const { dispatch: keystoreDispatch } = useController('KeystoreController')
   const {
     state: { currentUserRequest },
     dispatch: requestsDispatch
@@ -65,15 +64,20 @@ const DecryptRequestScreen = () => {
       return
     }
 
-    dispatch({
-      type: 'KEYSTORE_CONTROLLER_SEND_DECRYPTED_MESSAGE_TO_UI',
+    keystoreDispatch({
+      type: 'method',
       params: {
-        encryptedMessage: userRequest?.meta?.params[0],
-        keyAddr: internalKey.addr,
-        keyType: internalKey.type
+        method: 'sendDecryptedMessageToUi',
+        args: [
+          {
+            encryptedMessage: userRequest?.meta?.params[0],
+            keyAddr: internalKey.addr,
+            keyType: internalKey.type
+          }
+        ]
       }
     })
-  }, [t, dispatch, internalKey, userRequest, addToast, selectedAccountKeyStoreKeys])
+  }, [t, keystoreDispatch, internalKey, userRequest, addToast, selectedAccountKeyStoreKeys])
 
   useEffect(() => {
     const onReceiveOneTimeData = (data: any) => {
