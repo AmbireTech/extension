@@ -98,10 +98,13 @@ export class SpeculosDevice {
    * Enables Blind Signing in the Ethereum Ledger app.
    *
    * Flow:
-   * 1. Open Settings
-   * 2. Navigate to "Blind signing"
-   * 3. Toggle to Enabled
-   * 4. Exit settings
+    * 1. From the main screen, navigate to "Settings" and enter it.
+    * 2. Navigate to "Blind signing" and enter it.
+    * 3. Enable the following settings:
+        - Display contract data details (IMPORTANT: this should be enabled for testing signing transactions with Ledger, otherwise transactions won't be signed)
+    * 4. Go back to the main screen.
+   *
+   * Note: Make sure to enable Blind signing before running tests that involve signing transactions with Ledger, otherwise the transactions won't be signed.
    */
   async enableBlindSigning() {
     // Go to Settings (usually first screen after app open)
@@ -140,6 +143,12 @@ export class SpeculosDevice {
     await this.pressLeftButton()
   }
 
+  /**
+   * Helper method to sign transactions in tests.
+   * It navigates through the transaction confirmation flow and confirms the transaction on the Ledger device.
+   * Make sure to enable Blind signing in the Ledger settings before using this method, otherwise the transaction won't be signed.
+   */
+
   async signTransaction() {
     await this.waitForText('Verify selector')
     await this.nextUntilText('Confirm selector')
@@ -158,8 +167,6 @@ export class SpeculosDevice {
 
     await this.waitForText('both buttons')
     await this.pressBothButtons()
-
-    await this.waitForText('Review transaction')
 
     await this.confirmTransactionFlow()
   }
