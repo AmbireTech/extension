@@ -21,7 +21,6 @@ import ExportKey from '@common/components/ExportKey'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
@@ -76,7 +75,6 @@ const AccountKey: React.FC<Props> = ({
   const { t } = useTranslation()
   const { theme, themeType } = useTheme()
   const { addToast } = useToast()
-  const { dispatch } = useControllersMiddleware()
   const { dispatch: keystoreDispatch } = useController('KeystoreController')
   const [isEditing, setIsEditing] = useState(false)
 

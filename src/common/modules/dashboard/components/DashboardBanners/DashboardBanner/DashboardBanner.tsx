@@ -30,6 +30,7 @@ const DashboardBanner = ({
   } = useController('RequestsController')
   const { dispatch: networksDispatch } = useController('NetworksController')
   const { dispatch: selectedAccountDispatch } = useController('SelectedAccountController')
+  const { dispatch: mainDispatch } = useController('MainController')
   const { ref: sheetRef, close: closeBottomSheet, open: openBottomSheet } = useModalize()
   const primaryAction = actions[0]
 
@@ -46,17 +47,23 @@ const DashboardBanner = ({
           if (!visibleUserRequests.length) break
           const dappRequests = visibleUserRequests.filter((r) => r.kind !== 'calls')
           if (!dappRequests.length) break
-          dispatch({
-            type: 'REQUESTS_CONTROLLER_SET_CURRENT_REQUEST_BY_ID',
-            params: { requestId: dappRequests[0]!.id }
+          requestsDispatch({
+            type: 'method',
+            params: {
+              method: 'setCurrentUserRequestById',
+              args: [dappRequests[0]!.id]
+            }
           })
           break
         }
 
         case 'open-accountOp':
-          dispatch({
-            type: 'REQUESTS_CONTROLLER_SET_CURRENT_REQUEST_BY_ID',
-            params: action.meta
+          requestsDispatch({
+            type: 'method',
+            params: {
+              method: 'setCurrentUserRequestById',
+              args: [action.meta.requestId]
+            }
           })
           break
 
@@ -110,9 +117,12 @@ const DashboardBanner = ({
         case 'reject-bridge':
         case 'close-bridge':
           action.meta.activeRouteIds.forEach((activeRouteId) => {
-            dispatch({
-              type: 'MAIN_CONTROLLER_REMOVE_ACTIVE_ROUTE',
-              params: { activeRouteId }
+            mainDispatch({
+              type: 'method',
+              params: {
+                method: 'removeActiveRoute',
+                args: [activeRouteId]
+              }
             })
           })
           break
@@ -149,9 +159,18 @@ const DashboardBanner = ({
         }
 
         case 'reload-selected-account':
-          dispatch({
-            type: 'MAIN_CONTROLLER_RELOAD_SELECTED_ACCOUNT'
+          mainDispatch({
+            type: 'method',
+            params: {
+              method: 'reloadSelectedAccount',
+              args: [
+                {
+                  isManualReload: true
+                }
+              ]
+            }
           })
+
           break
 
         case 'dismiss-email-vault':

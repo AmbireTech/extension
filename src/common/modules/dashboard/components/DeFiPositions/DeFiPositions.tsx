@@ -8,7 +8,6 @@ import { getCurrentAccountBanners } from '@ambire-common/libs/banners/banners'
 import PrivacyIcon from '@common/assets/svg/PrivacyIcon'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useNavigation from '@common/hooks/useNavigation'
 import usePrevious from '@common/hooks/usePrevious'
 import useTheme from '@common/hooks/useTheme'
@@ -61,12 +60,12 @@ const DeFiPositions: FC<Props> = ({
   const {
     state: { networks }
   } = useController('NetworksController')
+  const { dispatch: portfolioDispatch } = useController('PortfolioController')
   const {
     state: { account, portfolio, dashboardNetworkFilter, banners }
   } = useController('SelectedAccountController')
   const { setSearchParams, navigate } = useNavigation()
 
-  const { dispatch } = useControllersMiddleware()
   const prevInitTab: any = usePrevious(initTab)
 
   const currentAccountBanners = useMemo(
@@ -80,7 +79,13 @@ const DeFiPositions: FC<Props> = ({
 
   useEffect(() => {
     if (!prevInitTab?.defi && initTab?.defi) {
-      dispatch({ type: 'DEFI_CONTOLLER_ADD_SESSION', params: { sessionId } })
+      portfolioDispatch({
+        type: 'method',
+        params: {
+          method: 'addDefiSession',
+          args: [sessionId]
+        }
+      })
       setSearchParams((prev) => {
         prev.set('sessionId', sessionId)
         return prev
@@ -88,15 +93,27 @@ const DeFiPositions: FC<Props> = ({
     }
 
     if (prevInitTab?.defi && !initTab?.defi) {
-      dispatch({ type: 'DEFI_CONTOLLER_REMOVE_SESSION', params: { sessionId } })
+      portfolioDispatch({
+        type: 'method',
+        params: {
+          method: 'removeDefiSession',
+          args: [sessionId]
+        }
+      })
     }
-  }, [dispatch, setSearchParams, prevInitTab?.defi, initTab?.defi, sessionId])
+  }, [portfolioDispatch, setSearchParams, prevInitTab?.defi, initTab?.defi, sessionId])
 
   useEffect(() => {
     return () => {
-      dispatch({ type: 'DEFI_CONTOLLER_REMOVE_SESSION', params: { sessionId } })
+      portfolioDispatch({
+        type: 'method',
+        params: {
+          method: 'removeDefiSession',
+          args: [sessionId]
+        }
+      })
     }
-  }, [sessionId, dispatch])
+  }, [sessionId, portfolioDispatch])
 
   const filteredPositions = useMemo(() => {
     const defiToSearch = portfolio.defiPositions

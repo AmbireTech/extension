@@ -15,7 +15,6 @@ import TopUpIcon from '@common/assets/svg/TopUpIcon'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
@@ -56,7 +55,7 @@ const TokenDetails = ({
     'SwapAndBridgeController',
     (state) => state.supportedChainIds
   )
-  const { dispatch } = useControllersMiddleware()
+  const { dispatch: portfolioDispatch } = useController('PortfolioController')
   const { state: networks } = useController('NetworksController', (state) => state.networks)
   const [coinGeckoTokenSlug, setCoinGeckoTokenSlug] = useState('')
   const [isTokenInfoLoading, setIsTokenInfoLoading] = useState(false)
@@ -315,17 +314,20 @@ const TokenDetails = ({
 
   const hideToken = useCallback(() => {
     if (!token) return
-    dispatch({
-      type: 'PORTFOLIO_CONTROLLER_TOGGLE_HIDE_TOKEN',
+    portfolioDispatch({
+      type: 'method',
       params: {
-        token: {
-          address: token.address,
-          chainId: token.chainId
-        },
-        shouldUpdatePortfolio: true
+        method: 'toggleHideToken',
+        args: [
+          {
+            address: token.address,
+            chainId: token.chainId
+          },
+          account?.addr
+        ]
       }
     })
-  }, [dispatch, token])
+  }, [portfolioDispatch, token, account?.addr])
 
   const handleHideTokenFromButton = useCallback(async () => {
     if (doNotDisplayHideTokenModal) hideToken()

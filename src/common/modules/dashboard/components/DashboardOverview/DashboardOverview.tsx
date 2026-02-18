@@ -44,15 +44,17 @@ const BALANCE_HEIGHT = 42
 const DashboardOverview: FC<Props> = ({
   openGasTankModal,
   animatedOverviewHeight,
-  dashboardOverviewSize,
   setDashboardOverviewSize
 }) => {
   const { dispatch } = useControllersMiddleware()
   const { t } = useTranslation()
-  const { theme, styles } = useTheme(getStyles)
+  const { theme } = useTheme(getStyles)
   const [controllerBanners, marketingBanners] = useBanners()
   const banners = [...controllerBanners, ...marketingBanners]
-  const { isOffline } = useController('MainController').state
+  const {
+    state: { isOffline },
+    dispatch: mainDispatch
+  } = useController('MainController')
   const { account, dashboardNetworkFilter, portfolio } = useController(
     'SelectedAccountController'
   ).state
@@ -76,13 +78,19 @@ const DashboardOverview: FC<Props> = ({
     formatDecimals(totalPortfolioAmount, 'value').split('.')
 
   const reloadAccount = useCallback(() => {
-    dispatch({
-      type: 'MAIN_CONTROLLER_RELOAD_SELECTED_ACCOUNT',
+    mainDispatch({
+      type: 'method',
       params: {
-        chainId: dashboardNetworkFilter ?? undefined
+        method: 'reloadSelectedAccount',
+        args: [
+          {
+            chainIds: dashboardNetworkFilter ? [BigInt(dashboardNetworkFilter)] : undefined,
+            isManualReload: true
+          }
+        ]
       }
     })
-  }, [dashboardNetworkFilter, dispatch])
+  }, [dashboardNetworkFilter, mainDispatch])
 
   return (
     <View style={[spacings.phSm, banners.length ? spacings.mbTy : spacings.mb]}>

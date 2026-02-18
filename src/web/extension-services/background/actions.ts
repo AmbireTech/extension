@@ -86,68 +86,6 @@ type MainControllerHandleSignMessage = {
   params: { keyAddr: Key['addr']; keyType: Key['type'] }
 }
 
-type MainControllerReloadSelectedAccount = {
-  type: 'MAIN_CONTROLLER_RELOAD_SELECTED_ACCOUNT'
-  params?: { chainId?: bigint | string }
-}
-
-type MainControllerUpdateSelectedAccountPortfolio = {
-  type: 'MAIN_CONTROLLER_UPDATE_SELECTED_ACCOUNT_PORTFOLIO'
-  params?: {
-    networks?: Network[]
-  }
-}
-
-type DefiControllerAddSessionAction = {
-  type: 'DEFI_CONTOLLER_ADD_SESSION'
-  params: { sessionId: string }
-}
-
-type DefiControllerRemoveSessionAction = {
-  type: 'DEFI_CONTOLLER_REMOVE_SESSION'
-  params: { sessionId: string }
-}
-
-type PortfolioControllerGetTemporaryToken = {
-  type: 'PORTFOLIO_CONTROLLER_GET_TEMPORARY_TOKENS'
-  params: {
-    additionalHint: TokenResult['address']
-    chainId: bigint
-  }
-}
-
-type PortfolioControllerAddCustomToken = {
-  type: 'PORTFOLIO_CONTROLLER_ADD_CUSTOM_TOKEN'
-  params: {
-    token: CustomToken
-    shouldUpdatePortfolio?: boolean
-  }
-}
-
-type PortfolioControllerRemoveCustomToken = {
-  type: 'PORTFOLIO_CONTROLLER_REMOVE_CUSTOM_TOKEN'
-  params: {
-    token: Omit<CustomToken, 'standard'>
-    shouldUpdatePortfolio?: boolean
-  }
-}
-
-type PortfolioControllerToggleHideToken = {
-  type: 'PORTFOLIO_CONTROLLER_TOGGLE_HIDE_TOKEN'
-  params: {
-    token: Omit<TokenPreference, 'isHidden'>
-    shouldUpdatePortfolio?: boolean
-  }
-}
-
-type PortfolioControllerCheckToken = {
-  type: 'PORTFOLIO_CONTROLLER_CHECK_TOKEN'
-  params: {
-    token: { address: TokenResult['address']; chainId: bigint }
-    allNetworks: boolean
-  }
-}
-
 type KeystoreControllerAddSecretAction = {
   type: 'KEYSTORE_CONTROLLER_ADD_SECRET'
   params: { secretId: string; secret: string; extraEntropy: string; leaveUnlocked: boolean }
@@ -279,53 +217,6 @@ type DappsControllerGetCurrentDappAndSendResToUi = {
   }
 }
 
-type SwapAndBridgeControllerRemoveActiveRouteAction = {
-  type: 'MAIN_CONTROLLER_REMOVE_ACTIVE_ROUTE'
-  params: { activeRouteId: SwapAndBridgeActiveRoute['activeRouteId'] }
-}
-
-type TransferControllerUpdateForm = {
-  type: 'TRANSFER_CONTROLLER_UPDATE_FORM'
-  params: { formValues: TransferUpdate }
-}
-type TransferControllerResetForm = {
-  type: 'TRANSFER_CONTROLLER_RESET_FORM'
-}
-type TransferControllerDestroyLatestBroadcastedAccountOp = {
-  type: 'TRANSFER_CONTROLLER_DESTROY_LATEST_BROADCASTED_ACCOUNT_OP'
-}
-type TransferControllerUserProceededAction = {
-  type: 'TRANSFER_CONTROLLER_HAS_USER_PROCEEDED'
-  params: { proceeded: boolean }
-}
-type TransferControllerShouldSkipTransactionQueuedModal = {
-  type: 'TRANSFER_CONTROLLER_SHOULD_SKIP_TRANSACTION_QUEUED_MODAL'
-  params: { shouldSkip: boolean }
-}
-
-type RequestsControllerFocusRequestWindow = {
-  type: 'REQUESTS_CONTROLLER_FOCUS_REQUEST_WINDOW'
-}
-
-type RequestsControllerSetCurrentRequestById = {
-  type: 'REQUESTS_CONTROLLER_SET_CURRENT_REQUEST_BY_ID'
-  params: {
-    requestId: UserRequest['id']
-  }
-}
-
-type RequestsControllerSetCurrentRequestByIndex = {
-  type: 'REQUESTS_CONTROLLER_SET_CURRENT_REQUEST_BY_INDEX'
-  params: {
-    index: number
-    params?: OpenRequestWindowParams
-  }
-}
-
-type RequestsControllerSetWindowLoaded = {
-  type: 'REQUESTS_CONTROLLER_SET_WINDOW_LOADED'
-}
-
 type AddressBookControllerAddContact = {
   type: 'ADDRESS_BOOK_CONTROLLER_ADD_CONTACT'
   params: {
@@ -438,12 +329,6 @@ export type Action =
   | HandshakeAction
   | ResetAccountAddingOnPageErrorAction
   | MainControllerHandleSignMessage
-  | MainControllerReloadSelectedAccount
-  | MainControllerUpdateSelectedAccountPortfolio
-  | DefiControllerAddSessionAction
-  | DefiControllerRemoveSessionAction
-  | PortfolioControllerAddCustomToken
-  | PortfolioControllerGetTemporaryToken
   | PortfolioControllerToggleHideToken
   | PortfolioControllerRemoveCustomToken
   | PortfolioControllerCheckToken
@@ -473,11 +358,6 @@ export type Action =
   | ContractNamesGetName
   | DappsControllerRemoveDappAction
   | DappsControllerGetCurrentDappAndSendResToUi
-  | SwapAndBridgeControllerRemoveActiveRouteAction
-  | RequestsControllerFocusRequestWindow
-  | RequestsControllerSetCurrentRequestById
-  | RequestsControllerSetCurrentRequestByIndex
-  | RequestsControllerSetWindowLoaded
   | AddressBookControllerAddContact
   | AddressBookControllerRenameContact
   | AddressBookControllerRemoveContact
@@ -495,11 +375,6 @@ export type Action =
   | KeystoreControllerDeleteSeedAction
   | ExtensionUpdateControllerApplyUpdate
   | OpenExtensionPopupAction
-  | TransferControllerUpdateForm
-  | TransferControllerResetForm
-  | TransferControllerDestroyLatestBroadcastedAccountOp
-  | TransferControllerUserProceededAction
-  | TransferControllerShouldSkipTransactionQueuedModal
   | SetThemeTypeAction
   | SetAvatarTypeAction
   | SetLogLevelTypeAction

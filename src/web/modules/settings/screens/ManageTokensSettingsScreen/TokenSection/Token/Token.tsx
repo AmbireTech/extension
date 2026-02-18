@@ -31,7 +31,11 @@ const Token: FC<Props> = ({
 }) => {
   const { t } = useTranslation()
   const { addToast } = useToast()
-  const { tokenPreferences } = useController('PortfolioController').state
+  const {
+    state: { tokenPreferences },
+    dispatch: portfolioDispatch
+  } = useController('PortfolioController')
+  const { account } = useController('SelectedAccountController').state
   const { theme } = useTheme()
   const { dispatch } = useControllersMiddleware()
   const { networks } = useController('NetworksController').state
@@ -47,23 +51,50 @@ const Token: FC<Props> = ({
       timeout: 2000
     })
 
-    dispatch({
-      type: 'PORTFOLIO_CONTROLLER_TOGGLE_HIDE_TOKEN',
-      params: { token: { address, chainId } }
+    portfolioDispatch({
+      type: 'method',
+      params: {
+        method: 'toggleHideToken',
+        args: [{ address, chainId }, account?.addr]
+      }
     })
     onTokenPreferenceOrCustomTokenChange()
-  }, [addToast, t, dispatch, address, chainId, onTokenPreferenceOrCustomTokenChange])
+  }, [
+    addToast,
+    t,
+    portfolioDispatch,
+    address,
+    chainId,
+    onTokenPreferenceOrCustomTokenChange,
+    account?.addr
+  ])
 
   const removeCustomToken = useCallback(() => {
     addToast(t('Token removed'), {
       timeout: 2000
+    })
+    portfolioDispatch({
+      type: 'method',
+      params: {
+        method: 'removeCustomToken',
+        args: [{ address, chainId }, account?.addr]
+      }
     })
     dispatch({
       type: 'PORTFOLIO_CONTROLLER_REMOVE_CUSTOM_TOKEN',
       params: { token: { address, chainId } }
     })
     onTokenPreferenceOrCustomTokenChange()
-  }, [addToast, address, dispatch, chainId, onTokenPreferenceOrCustomTokenChange, t])
+  }, [
+    addToast,
+    address,
+    portfolioDispatch,
+    dispatch,
+    chainId,
+    onTokenPreferenceOrCustomTokenChange,
+    t,
+    account?.addr
+  ])
 
   const dropdownOptions = useMemo(() => {
     return [
