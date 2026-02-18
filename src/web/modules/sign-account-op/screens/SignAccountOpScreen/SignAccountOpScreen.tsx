@@ -259,7 +259,9 @@ const SignAccountOpScreen = () => {
                 }}
               />
               <View style={[spacings.ph, spacings.pv, flexbox.flex1]}>
-                {!estimationFailed && signAccountOpState?.canBroadcast ? (
+                {!estimationFailed &&
+                signAccountOpState?.canBroadcast &&
+                signAccountOpState?.status?.type !== SigningStatus.Queued ? (
                   <View style={spacings.mbXl}>
                     <Estimation
                       signAccountOpState={signAccountOpState}
