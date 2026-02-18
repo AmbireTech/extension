@@ -514,10 +514,10 @@
     },
     "@ledgerhq/context-module>inversify>@inversifyjs/container": {
       "packages": {
-        "$root$": true,
         "@ledgerhq/context-module>inversify>@inversifyjs/common": true,
         "@ledgerhq/context-module>inversify>@inversifyjs/core": true,
-        "@ledgerhq/context-module>inversify>@inversifyjs/core>@inversifyjs/reflect-metadata-utils": true
+        "@ledgerhq/context-module>inversify>@inversifyjs/core>@inversifyjs/reflect-metadata-utils": true,
+        "@ledgerhq/context-module>reflect-metadata": true
       }
     },
     "@ledgerhq/context-module>inversify>@inversifyjs/core": {
@@ -529,13 +529,13 @@
     },
     "@ledgerhq/context-module": {
       "packages": {
-        "$root$": true,
         "@ledgerhq/device-management-kit": true,
         "@ledgerhq/context-module>axios": true,
         "crypto-js": true,
         "ethers": true,
         "@ledgerhq/context-module>inversify": true,
-        "purify-ts": true
+        "purify-ts": true,
+        "@ledgerhq/context-module>reflect-metadata": true
       }
     },
     "@ledgerhq/device-management-kit": {
@@ -556,7 +556,6 @@
         "vi.fn": true
       },
       "packages": {
-        "$root$": true,
         "@noble/hashes": true,
         "@ledgerhq/context-module>axios": true,
         "buffer": true,
@@ -564,6 +563,7 @@
         "@ledgerhq/context-module>inversify": true,
         "@ledgerhq/device-management-kit>isomorphic-ws": true,
         "purify-ts": true,
+        "@ledgerhq/context-module>reflect-metadata": true,
         "rxjs": true,
         "@ledgerhq/device-management-kit>semver": true,
         "@ledgerhq/device-management-kit>url": true,
@@ -576,13 +576,13 @@
         "TextEncoder": true
       },
       "packages": {
-        "$root$": true,
         "@ledgerhq/context-module": true,
         "@ledgerhq/device-management-kit": true,
         "@ledgerhq/device-signer-kit-ethereum>@ledgerhq/signer-utils": true,
         "ethers": true,
         "@ledgerhq/context-module>inversify": true,
         "purify-ts": true,
+        "@ledgerhq/context-module>reflect-metadata": true,
         "@ledgerhq/device-signer-kit-ethereum>semver": true,
         "@ledgerhq/device-management-kit>xstate": true
       }
@@ -1799,10 +1799,10 @@
     },
     "@ledgerhq/context-module>inversify": {
       "packages": {
-        "$root$": true,
         "@ledgerhq/context-module>inversify>@inversifyjs/common": true,
         "@ledgerhq/context-module>inversify>@inversifyjs/container": true,
-        "@ledgerhq/context-module>inversify>@inversifyjs/core": true
+        "@ledgerhq/context-module>inversify>@inversifyjs/core": true,
+        "@ledgerhq/context-module>reflect-metadata": true
       }
     },
     "node-polyfill-webpack-plugin>util>is-arguments": {
@@ -2682,6 +2682,12 @@
         "process": true,
         "node-polyfill-webpack-plugin>stream-http>readable-stream>string_decoder": true,
         "stream-browserify>readable-stream>util-deprecate": true
+      }
+    },
+    "@ledgerhq/context-module>reflect-metadata": {
+      "globals": {
+        "crypto": true,
+        "msCrypto": true
       }
     },
     "crypto-browserify>pbkdf2>ripemd160": {

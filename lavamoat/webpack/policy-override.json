@@ -20,85 +20,13 @@
         "primordialMutations": true
       }
     },
-    "@expo-google-fonts/geist-mono": {
-      "globals": {
-        "require": true
-      },
-      "packages": {
-        "expo-font": true,
-        "react": true
-      }
-    },
-    "@expo-google-fonts/poppins": {
-      "globals": {
-        "require": true
-      },
-      "packages": {
-        "expo-font": true,
-        "react": true
-      }
-    },
-    "@expo-google-fonts/roboto": {
-      "globals": {
-        "require": true
-      },
-      "packages": {
-        "expo-font": true,
-        "react": true
-      }
-    },
-    "@ledgerhq/context-module>reflect-metadata": {
-      "globals": {
-        "crypto": true,
-        "msCrypto": true
-      }
-    },
-    "@ledgerhq/device-management-kit>reflect-metadata": {
-      "globals": {
-        "crypto": true,
-        "msCrypto": true
-      }
-    },
-    "@ledgerhq/device-signer-kit-ethereum>reflect-metadata": {
-      "globals": {
-        "crypto": true,
-        "msCrypto": true
-      }
-    },
-    "@ledgerhq/context-module": {
-      "packages": {
-        "@ledgerhq/context-module>reflect-metadata": true
-      }
-    },
-    "@ledgerhq/context-module>inversify": {
-      "packages": {
-        "@ledgerhq/context-module>reflect-metadata": true
-      }
-    },
     "@ledgerhq/context-module>inversify>@inversifyjs/common": {
-      "packages": {
-        "@ledgerhq/context-module>reflect-metadata": true
-      }
-    },
-    "@ledgerhq/context-module>inversify>@inversifyjs/container": {
       "packages": {
         "@ledgerhq/context-module>reflect-metadata": true
       }
     },
     "@ledgerhq/context-module>inversify>@inversifyjs/core": {
       "packages": {
-        "@ledgerhq/context-module>reflect-metadata": true
-      }
-    },
-    "@ledgerhq/device-management-kit": {
-      "packages": {
-        "@ledgerhq/device-management-kit>reflect-metadata": true,
-        "@ledgerhq/context-module>reflect-metadata": true
-      }
-    },
-    "@ledgerhq/device-signer-kit-ethereum": {
-      "packages": {
-        "@ledgerhq/device-signer-kit-ethereum>reflect-metadata": true,
         "@ledgerhq/context-module>reflect-metadata": true
       }
     }
