@@ -12,7 +12,6 @@ import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -24,7 +23,6 @@ const KeystoreSetNewPasswordForm = () => {
   const { t } = useTranslation()
 
   const { state: emailVault, dispatch: evDispatch } = useController('EmailVaultController')
-  const { dispatch } = useControllersMiddleware()
   const {
     watch,
     control,

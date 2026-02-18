@@ -7,7 +7,6 @@ import Button from '@common/components/Button'
 import { SelectValue } from '@common/components/Select/types'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import { FONT_FAMILIES } from '@common/hooks/useFonts'
 import spacings from '@common/styles/spacings'
 
@@ -21,7 +20,6 @@ type Props = {
 const ChangeHdPath: React.FC<Props> = ({ setPage, disabled }) => {
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const { t } = useTranslation()
-  const { dispatch } = useControllersMiddleware()
   const {
     state: { hdPathTemplate, accountsLoading, pageError, page },
     dispatch: accountPickerDispatch

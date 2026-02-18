@@ -11,7 +11,6 @@ import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
@@ -40,7 +39,6 @@ const TrackProgress: FC<Props> = ({ activeRoute, handleClose }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { navigate } = useNavigation()
-  const { dispatch } = useControllersMiddleware()
   const { activeRoutes } = useController('SwapAndBridgeController').state
   const { dispatch: requestsDispatch } = useController('RequestsController')
   const { account } = useController('SelectedAccountController').state
@@ -110,7 +108,6 @@ const TrackProgress: FC<Props> = ({ activeRoute, handleClose }) => {
       sessionHandler.killSession()
     }
   }, [
-    dispatch,
     lastCompletedRoute?.route?.fromChainId,
     lastCompletedRoute?.route?.userAddress,
     lastCompletedRoute?.userTxHash,

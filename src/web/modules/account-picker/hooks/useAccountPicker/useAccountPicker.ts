@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import usePrevious from '@common/hooks/usePrevious'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
@@ -21,7 +20,6 @@ const useAccountPicker = () => {
   } = useController('AccountPickerController')
   const prevIsInitialized = usePrevious(isInitialized)
   const shouldResetAccountsSelectionOnUnmount = useRef(true)
-  const { dispatch } = useControllersMiddleware()
   const [isReady, setIsReady] = useState(false)
   const [onImportPressed, setOnImportPressed] = useState(false)
 
@@ -53,7 +51,7 @@ const useAccountPicker = () => {
     if (!initParams) {
       goToPrevRoute()
     }
-  }, [dispatch, initParams, goToPrevRoute])
+  }, [initParams, goToPrevRoute])
 
   useEffect(() => {
     if (isInitialized) return

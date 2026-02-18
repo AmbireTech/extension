@@ -10,7 +10,6 @@ import NetworkIcon from '@common/components/NetworkIcon'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
@@ -37,7 +36,6 @@ const Token: FC<Props> = ({
   } = useController('PortfolioController')
   const { account } = useController('SelectedAccountController').state
   const { theme } = useTheme()
-  const { dispatch } = useControllersMiddleware()
   const { networks } = useController('NetworksController').state
   // flags.isHidden is updated after the portfolio is updated
   // so we use tokenPreferences to get the value faster
@@ -80,16 +78,11 @@ const Token: FC<Props> = ({
         args: [{ address, chainId }, account?.addr]
       }
     })
-    dispatch({
-      type: 'PORTFOLIO_CONTROLLER_REMOVE_CUSTOM_TOKEN',
-      params: { token: { address, chainId } }
-    })
     onTokenPreferenceOrCustomTokenChange()
   }, [
     addToast,
     address,
     portfolioDispatch,
-    dispatch,
     chainId,
     onTokenPreferenceOrCustomTokenChange,
     t,
