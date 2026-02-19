@@ -13,7 +13,6 @@ import Editable from '@common/components/Editable'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useReverseLookup from '@common/hooks/useReverseLookup'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
@@ -58,11 +57,14 @@ const Account = ({
   const { t } = useTranslation()
   const { theme, styles } = useTheme(getStyles)
   const { addToast } = useToast()
-  const { statuses: mainStatuses } = useController('MainController').state
+  const {
+    state: { statuses: mainStatuses },
+    dispatch: mainDispatch
+  } = useController('MainController')
   const {
     state: { account: selectedAccount }
   } = useController('SelectedAccountController')
-  const { dispatch } = useControllersMiddleware()
+  const { dispatch: accountsDispatch } = useController('AccountsController')
   const { ens, isLoading } = useReverseLookup({ address: addr })
   const { keys } = useController('KeystoreController').state
   const [bindAnim, animStyle] = useCustomHover({
@@ -82,24 +84,29 @@ const Account = ({
     }
 
     if (selectedAccount?.addr !== addr) {
-      dispatch({
-        type: 'MAIN_CONTROLLER_SELECT_ACCOUNT',
-        params: { accountAddr: addr }
+      mainDispatch({
+        type: 'method',
+        params: { method: 'selectAccount', args: [addr] }
       })
     }
 
     onSelect && onSelect(addr)
-  }, [addr, dispatch, onSelect, selectedAccount, options.setAccountToImportOrExport])
+  }, [addr, mainDispatch, onSelect, selectedAccount, options.setAccountToImportOrExport])
 
   const onSave = useCallback(
     (value: string) => {
-      dispatch({
-        type: 'ACCOUNTS_CONTROLLER_UPDATE_ACCOUNT_PREFERENCES',
-        params: [{ addr, preferences: { label: value, pfp: preferences.pfp } }]
+      if (!addr) return
+
+      accountsDispatch({
+        type: 'method',
+        params: {
+          method: 'updateAccountPreferences',
+          args: [[{ addr, preferences: { label: value, pfp: preferences.pfp } }]]
+        }
       })
       addToast(t('Account label updated.'))
     },
-    [addToast, addr, dispatch, preferences.pfp, t]
+    [addToast, addr, accountsDispatch, preferences.pfp, t]
   )
 
   const onDropdownSelect = (item: { label: string; value: string }) => {

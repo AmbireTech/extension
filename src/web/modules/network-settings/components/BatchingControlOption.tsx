@@ -10,19 +10,20 @@ import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 
 const BatchingControlOption = () => {
-  const { dispatch } = useControllersMiddleware()
   const { t } = useTranslation()
   const { theme } = useTheme()
   const {
-    state: { isBatchingEnabled, statuses }
+    state: { isBatchingEnabled, statuses },
+    dispatch: providersDispatch
   } = useController('ProvidersController')
   const isLoading = statuses.toggleBatching === 'LOADING'
 
   const handleToggleBatching = useCallback(() => {
-    dispatch({
-      type: 'PROVIDERS_CONTROLLER_TOGGLE_BATCHING'
+    providersDispatch({
+      type: 'method',
+      params: { method: 'toggleBatching', args: [] }
     })
-  }, [dispatch])
+  }, [providersDispatch])
 
   const buttonText = useMemo(() => {
     if (isLoading) {
