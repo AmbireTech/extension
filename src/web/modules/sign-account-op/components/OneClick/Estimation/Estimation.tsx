@@ -174,7 +174,7 @@ const OneClickEstimation = ({
                 >
                   <SuccessIcon color={theme.successDecorative} />
                   <Text fontSize={14} appearance="successText" style={spacings.mlSm}>
-                    {t('Ready to sign and send to safe global')}
+                    {t('Ready to sign and send to Safe global')}
                   </Text>
                 </View>
               )}

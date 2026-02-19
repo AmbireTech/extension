@@ -107,7 +107,8 @@ const useSwapAndBridgeForm = () => {
       (r) =>
         r.kind === 'calls' &&
         r.meta.accountAddr === account.addr &&
-        r.meta.chainId === fromSelectedToken.chainId
+        r.meta.chainId === fromSelectedToken.chainId &&
+        !r.signAccountOp.accountOp.signature
     )
   }, [fromSelectedToken, userRequests, account])
 
@@ -118,7 +119,8 @@ const useSwapAndBridgeForm = () => {
       (r) =>
         r.kind === 'calls' &&
         r.meta.accountAddr === account.addr &&
-        r.meta.chainId === latestBatchedNetwork
+        r.meta.chainId === latestBatchedNetwork &&
+        !r.signAccountOp.accountOp.signature
     )
 
     return getCallsCount(reqs)

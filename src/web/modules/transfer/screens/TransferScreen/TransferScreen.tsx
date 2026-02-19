@@ -139,7 +139,8 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
       (r) =>
         r.kind === 'calls' &&
         r.meta.accountAddr === account.addr &&
-        !r.signAccountOp.isSignAndBroadcastInProgress
+        !r.signAccountOp.isSignAndBroadcastInProgress &&
+        !r.signAccountOp.accountOp.signature
     )
   }, [userRequests, account])
 

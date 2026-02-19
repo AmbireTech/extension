@@ -100,7 +100,7 @@ const Footer = ({
             appearance="secondaryText"
             numberOfLines={1}
           >
-            {t('Sent to safe global!')}
+            {t('Sent to Safe global!')}
           </Text>
           <ActionsPagination />
         </View>

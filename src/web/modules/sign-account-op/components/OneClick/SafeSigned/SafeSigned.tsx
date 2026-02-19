@@ -56,15 +56,12 @@ const SafeSigned: FC<Props> = ({ title, primaryButtonText, onPrimaryButtonPress 
         >
           <Completed
             title={t('Signed')}
-            titleSecondary={t('Successfully signed and sent to safe global!')}
+            titleSecondary={t('Successfully signed and sent to Safe global!')}
             openExplorerText={t('Safe global')}
             explorerLink="https://app.safe.global"
           />
         </View>
-        <FooterGlassView
-          borderRadius={28}
-          innerContainerStyle={{ ...spacings.phSm, ...spacings.pvSm }}
-        >
+        <FooterGlassView innerContainerStyle={{ ...spacings.phSm, ...spacings.pvSm }}>
           <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifySpaceBetween]}>
             <Button
               onPress={onPrimaryButtonPress}
