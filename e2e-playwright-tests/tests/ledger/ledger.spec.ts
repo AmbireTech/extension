@@ -3,6 +3,7 @@ import mainConstants from 'constants/mainConstants'
 import selectors from 'constants/selectors'
 import tokens from 'constants/tokens'
 import { test } from 'fixtures/pageObjects' // your extended test with auth
+import { runSwapProceedFlow } from 'flows/swapAndBridgeFlow'
 import { runBatchTransferFlow, runSimpleTransferFlow } from 'flows/transferFlow'
 
 import { expect } from '@playwright/test'
@@ -104,7 +105,6 @@ test.describe('ledger SA with storage', () => {
 
   test('should batch multiple transfer transactions', async ({ pages }) => {
     const ledgerSimulatorControls = new SpeculosDevice({ baseUrl: LEDGER_SIMULATIUON_URL })
-
     await ledgerSimulatorControls.enableBlindSigning()
 
     await runBatchTransferFlow({
@@ -114,4 +114,22 @@ test.describe('ledger SA with storage', () => {
       ledgerSimulatorControls: ledgerSimulatorControls
     })
   })
+
+  // swap
+  test.only('should "proceed" Swap & Bridge from the Pending Route component with a Smart Account', async ({
+    pages
+  }) => {
+    const ledgerSimulatorControls = new SpeculosDevice({ baseUrl: LEDGER_SIMULATIUON_URL })
+    await ledgerSimulatorControls.enableBlindSigning()
+
+    await runSwapProceedFlow({
+      pages,
+      fromToken: tokens.usdc.base,
+      toToken: tokens.wallet.base,
+      sendAmount: 0.01,
+      assertNoInitialTx: true
+    })
+  })
+  // bridge
+  // gas tank top-up
 })
