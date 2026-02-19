@@ -7,7 +7,6 @@ import { UPDATE_SWAP_AND_BRIDGE_QUOTE_INTERVAL } from '@ambire-common/consts/int
 import { SwapAndBridgeFormStatus } from '@ambire-common/controllers/swapAndBridge/swapAndBridge'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import usePrevious from '@common/hooks/usePrevious'
 import useTheme from '@common/hooks/useTheme'
 
@@ -19,8 +18,10 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
 
 const RoutesRefreshButton = ({ width = 32, height = 32 }: SvgProps) => {
   const [progress, setProgress] = useState(0)
-  const { dispatch } = useControllersMiddleware()
-  const { updateQuoteStatus, formStatus } = useController('SwapAndBridgeController').state
+  const {
+    state: { updateQuoteStatus, formStatus },
+    dispatch: swapAndBridgeDispatch
+  } = useController('SwapAndBridgeController')
   const prevUpdateQuoteStatus = usePrevious(updateQuoteStatus)
   const { t } = useTranslation()
   const { theme } = useTheme()
@@ -84,10 +85,11 @@ const RoutesRefreshButton = ({ width = 32, height = 32 }: SvgProps) => {
   })
 
   const handleOnPress = useCallback(() => {
-    dispatch({
-      type: 'SWAP_AND_BRIDGE_CONTROLLER_UPDATE_QUOTE'
+    swapAndBridgeDispatch({
+      type: 'method',
+      params: { method: 'updateQuote', args: [] }
     })
-  }, [dispatch])
+  }, [swapAndBridgeDispatch])
 
   const opacity = useMemo(() => {
     if (formStatus !== SwapAndBridgeFormStatus.ReadyToSubmit) {

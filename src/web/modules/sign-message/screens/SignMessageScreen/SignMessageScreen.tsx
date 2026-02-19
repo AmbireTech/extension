@@ -14,7 +14,6 @@ import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
 import Spinner from '@common/components/Spinner'
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
-import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import flexbox from '@common/styles/utils/flexbox'
 import SmallNotificationWindowWrapper from '@web/components/SmallNotificationWindowWrapper'
@@ -31,7 +30,8 @@ import SignInWithEthereum from './Contents/signInWithEthereum'
 
 const SignMessageScreen = () => {
   const { t } = useTranslation()
-  const signMessageState = useController('SignMessageController').state
+  const { state: signMessageState, dispatch: signMessageDispatch } =
+    useController('SignMessageController')
   const signStatus = signMessageState.statuses.sign
   const [hasReachedBottom, setHasReachedBottom] = useState<boolean | null>(null)
   const keystoreState = useController('KeystoreController').state
@@ -45,8 +45,10 @@ const SignMessageScreen = () => {
   const [shouldDisplayLedgerConnectModal, setShouldDisplayLedgerConnectModal] = useState(false)
   const [makeItSmartConfirmed, setMakeItSmartConfirmed] = useState(false)
   const [doNotAskMeAgain, setDoNotAskMeAgain] = useState(false)
-  const { currentUserRequest } = useController('RequestsController').state
-  const { theme } = useTheme()
+  const {
+    state: { currentUserRequest },
+    dispatch: requestsDispatch
+  } = useController('RequestsController')
   const { addToast } = useToast()
 
   const userRequest = useMemo(() => {
@@ -129,38 +131,43 @@ const SignMessageScreen = () => {
     if (userRequest.kind === 'message' || userRequest.kind === 'siwe')
       userRequest.meta.params.message = toPersonalSignHex(userRequest.meta.params.message)
 
-    dispatch({
-      type: 'MAIN_CONTROLLER_SIGN_MESSAGE_INIT',
+    signMessageDispatch({
+      type: 'method',
       params: {
-        dapp: { name, icon },
-        messageToSign: {
-          fromRequestId: userRequest.id,
-          content: {
-            kind: userRequest.kind,
-            ...(userRequest.meta.params as any)
-          },
-          accountAddr: userRequest.meta.accountAddr,
-          chainId: userRequest.meta.chainId,
-          signature: null
-        }
+        method: 'init',
+        args: [
+          {
+            dapp: { name, icon },
+            messageToSign: {
+              fromRequestId: userRequest.id,
+              content: {
+                kind: userRequest.kind,
+                ...(userRequest.meta.params as any)
+              },
+              accountAddr: userRequest.meta.accountAddr,
+              chainId: userRequest.meta.chainId,
+              signature: null
+            }
+          }
+        ]
       }
     })
-  }, [dispatch, userRequest, signMessageState.messageToSign?.fromRequestId, name, icon])
+  }, [signMessageDispatch, userRequest, signMessageState.messageToSign?.fromRequestId, name, icon])
 
   useEffect(() => {
     return () => {
-      dispatch({ type: 'MAIN_CONTROLLER_SIGN_MESSAGE_RESET' })
+      signMessageDispatch({ type: 'method', params: { method: 'reset', args: [] } })
     }
-  }, [dispatch])
+  }, [signMessageDispatch])
 
   const handleReject = () => {
     if (!userRequest) return
 
-    dispatch({
-      type: 'REQUESTS_CONTROLLER_REJECT_USER_REQUEST',
+    requestsDispatch({
+      type: 'method',
       params: {
-        err: t('User rejected the request.'),
-        id: userRequest.id
+        method: 'rejectUserRequests',
+        args: [t('User rejected the request.'), [userRequest.id]]
       }
     })
   }

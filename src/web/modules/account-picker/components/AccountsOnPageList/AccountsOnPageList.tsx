@@ -20,7 +20,6 @@ import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -54,9 +53,9 @@ const AccountsOnPageList = ({
   children
 }: Props) => {
   const { t } = useTranslation()
-  const { dispatch } = useControllersMiddleware()
   const { networks: allNetworks } = useController('NetworksController').state
-  const accountPickerState = useController('AccountPickerController').state
+  const { state: accountPickerState, dispatch: accountPickerDispatch } =
+    useController('AccountPickerController')
   const [hasReachedBottom, setHasReachedBottom] = useState<null | boolean>(null)
   const [containerHeight, setContainerHeight] = useState(0)
   const [contentHeight, setContentHeight] = useState(0)
@@ -86,27 +85,33 @@ const AccountsOnPageList = ({
 
   const handleSelectAccount = useCallback(
     (account: AccountInterface) => {
-      dispatch({
-        type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_SELECT_ACCOUNT',
-        params: { account }
+      accountPickerDispatch({
+        type: 'method',
+        params: { method: 'selectAccount', args: [account] }
       })
     },
-    [dispatch]
+    [accountPickerDispatch]
   )
 
   const handleDeselectAccount = useCallback(
     (account: AccountInterface) => {
-      dispatch({
-        type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_DESELECT_ACCOUNT',
-        params: { account }
+      accountPickerDispatch({
+        type: 'method',
+        params: { method: 'deselectAccount', args: [account] }
       })
     },
-    [dispatch]
+    [accountPickerDispatch]
   )
 
   const handleRetryFindingLinkedAccounts = useCallback(() => {
-    dispatch({ type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_FIND_AND_SET_LINKED_ACCOUNTS' })
-  }, [dispatch])
+    accountPickerDispatch({
+      type: 'method',
+      params: {
+        method: 'findAndSetLinkedAccounts',
+        args: []
+      }
+    })
+  }, [accountPickerDispatch])
 
   const getType = useCallback((acc: any) => {
     if (!acc.account.creation) return 'basic'

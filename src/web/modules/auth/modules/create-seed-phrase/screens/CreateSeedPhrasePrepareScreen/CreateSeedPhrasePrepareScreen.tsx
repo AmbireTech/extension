@@ -7,7 +7,7 @@ import Panel from '@common/components/Panel'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
+import useController from '@common/hooks/useController'
 import useExtraEntropy from '@common/hooks/useExtraEntropy'
 import useTheme from '@common/hooks/useTheme'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
@@ -43,22 +43,31 @@ const CreateSeedPhrasePrepareScreen = () => {
   const [checkboxesState, setCheckboxesState] = useState([false, false, false])
   const allCheckboxesChecked = checkboxesState.every((checkbox) => checkbox)
 
-  const { dispatch } = useControllersMiddleware()
+  const { dispatch: keystoreDispatch } = useController('KeystoreController')
 
   const { getExtraEntropy } = useExtraEntropy()
 
   useEffect(() => {
-    dispatch({ type: 'KEYSTORE_CONTROLLER_SEND_TEMP_SEED_TO_UI' })
-  }, [dispatch])
+    keystoreDispatch({
+      type: 'method',
+      params: {
+        method: 'sendTempSeedToUi',
+        args: []
+      }
+    })
+  }, [keystoreDispatch])
 
   const handleSubmit = useCallback(() => {
-    dispatch({
-      type: 'KEYSTORE_CONTROLLER_GENERATE_TEMP_SEED',
-      params: { extraEntropy: getExtraEntropy() }
+    keystoreDispatch({
+      type: 'method',
+      params: {
+        method: 'generateTempSeed',
+        args: [{ extraEntropy: getExtraEntropy() }]
+      }
     })
 
     goToNextRoute(WEB_ROUTES.createSeedPhraseWrite)
-  }, [getExtraEntropy, goToNextRoute, dispatch])
+  }, [getExtraEntropy, goToNextRoute, keystoreDispatch])
 
   const handleCheckboxPress = (id: number) => {
     setCheckboxesState((prevState) => {
