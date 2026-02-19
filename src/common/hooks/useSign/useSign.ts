@@ -359,8 +359,11 @@ const useSign = ({
 
       buttonLabelType = 'Safe'
 
-      // if signers are not configured, prompt the user to do so
-      if ((signAccountOpState?.accountOp.signers?.length || 0) === 0)
+      // if signers are not configured and configurable, prompt the user to do so
+      if (
+        signAccountOpState?.accountOp.signingKeyAddr &&
+        (signAccountOpState?.accountOp.signers?.length || 0) === 0
+      )
         return PRIMARY_BUTTON_LABELS[buttonLabelType].config as string
     }
 
@@ -377,7 +380,8 @@ const useSign = ({
     signAccountOpState?.account.safeCreation,
     signAccountOpState?.accountOp.signed?.length,
     signAccountOpState?.accountOp.signers?.length,
-    signAccountOpState?.threshold
+    signAccountOpState?.threshold,
+    signAccountOpState?.accountOp.signingKeyAddr
   ])
 
   // When being done, there is a corner case if the sign succeeds, but the broadcast fails.

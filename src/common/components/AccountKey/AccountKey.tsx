@@ -19,7 +19,6 @@ import ExportKey from '@common/components/ExportKey'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import NetworkIcon from '@common/components/NetworkIcon'
 import Text from '@common/components/Text'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
@@ -42,7 +41,6 @@ export type AccountKeyType = {
 type Props = AccountKeyType & {
   isLast?: boolean
   style?: ViewStyle
-  enableEditing?: boolean
   openAddAccountBottomSheet?: () => void
   showCopyAddr?: boolean
   account: Account
@@ -63,7 +61,6 @@ const AccountKey: React.FC<Props> = ({
   isImported,
   style,
   containerStyle,
-  enableEditing = true,
   openAddAccountBottomSheet,
   account,
   meta,
@@ -74,8 +71,6 @@ const AccountKey: React.FC<Props> = ({
   const { t } = useTranslation()
   const { theme, themeType } = useTheme()
   const { addToast } = useToast()
-  const { dispatch } = useControllersMiddleware()
-  const [isEditing, setIsEditing] = useState(false)
 
   const [bindKeyDetailsAnim, keyDetailsAnimStyles] = useCustomHover({
     property: 'bottom',
@@ -144,58 +139,52 @@ const AccountKey: React.FC<Props> = ({
             </View>
           )}
 
-          {!isEditing && (
-            <>
-              <View
-                dataSet={createGlobalTooltipDataSet({
-                  id: `key-${addr}-tooltip`,
-                  content: addr
-                })}
+          <>
+            <View
+              dataSet={createGlobalTooltipDataSet({
+                id: `key-${addr}-tooltip`,
+                content: addr
+              })}
+            >
+              <Text
+                color={dedicatedToOneSA ? theme.infoDecorative : theme.primaryText}
+                fontSize={fontSize - 1}
+                weight={dedicatedToOneSA ? 'semiBold' : 'regular'}
+                style={[
+                  label || isImported ? spacings.mlMi : {},
+                  // Reduce the letter spacing as a hack to be able to fit all elements
+                  // on the row, even for the extreme case when the key label is max length
+                  dedicatedToOneSA && { letterSpacing: -0.2 }
+                ]}
               >
-                <Text
-                  color={dedicatedToOneSA ? theme.infoDecorative : theme.primaryText}
-                  fontSize={fontSize - 1}
-                  weight={dedicatedToOneSA ? 'semiBold' : 'regular'}
-                  style={[
-                    label || isImported ? spacings.mlMi : {},
-                    // Reduce the letter spacing as a hack to be able to fit all elements
-                    // on the row, even for the extreme case when the key label is max length
-                    dedicatedToOneSA && { letterSpacing: -0.2 }
-                  ]}
-                >
-                  {dedicatedToOneSA ? t('(dedicated key)') : label ? `(${shortAddr})` : shortAddr}
-                </Text>
-              </View>
-              {!!showCopyAddr && (
-                <AnimatedPressable
-                  style={[spacings.mlMi, copyIconAnimStyle]}
-                  onPress={handleCopy}
-                  {...bindCopyIconAnim}
-                >
-                  <CopyIcon
-                    width={fontSize + 2}
-                    height={fontSize + 2}
-                    color={theme.secondaryText}
+                {dedicatedToOneSA ? t('(dedicated key)') : label ? `(${shortAddr})` : shortAddr}
+              </Text>
+            </View>
+            {!!showCopyAddr && (
+              <AnimatedPressable
+                style={[spacings.mlMi, copyIconAnimStyle]}
+                onPress={handleCopy}
+                {...bindCopyIconAnim}
+              >
+                <CopyIcon width={fontSize + 2} height={fontSize + 2} color={theme.secondaryText} />
+              </AnimatedPressable>
+            )}
+            {onChains && onChains.length && (
+              <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mlTy]}>
+                {onChains.map((c, i) => (
+                  <NetworkIcon
+                    key={c}
+                    id={c.toString()}
+                    style={i === 0 ? { marginLeft: 0 } : { marginLeft: -11 }}
+                    size={20}
                   />
-                </AnimatedPressable>
-              )}
-              {onChains && onChains.length && (
-                <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mlTy]}>
-                  {onChains.map((c, i) => (
-                    <NetworkIcon
-                      key={c}
-                      id={c.toString()}
-                      style={i === 0 ? { marginLeft: 0 } : { marginLeft: -11 }}
-                      size={20}
-                    />
-                  ))}
-                </View>
-              )}
-            </>
-          )}
+                ))}
+              </View>
+            )}
+          </>
         </View>
 
-        {!isEditing && !!canExportOrImportKey && (
+        {!!canExportOrImportKey && (
           <View>
             {isImported ? (
               <View style={[flexbox.directionRow, flexbox.alignCenter]}>

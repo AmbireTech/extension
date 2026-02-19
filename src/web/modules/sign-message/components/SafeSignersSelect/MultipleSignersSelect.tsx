@@ -107,7 +107,6 @@ const MultipleSignersSelect = ({
                   type={key.type}
                   dedicatedToOneSA={false}
                   isImported
-                  enableEditing={false}
                   account={account}
                   isLast={true}
                   keyIconColor={theme.iconPrimary as string}
