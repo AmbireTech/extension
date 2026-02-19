@@ -300,6 +300,10 @@ const Estimation = ({
     return mappedFeeOption
   }, [hasEstimation, signAccountOpState, serviceFee, nativeFeeOption])
 
+  const v1warning = useMemo(() => {
+    return signAccountOpState?.warnings.find((w) => w.id === 'v1Acc')
+  }, [signAccountOpState?.warnings])
+
   const renderFeeOptionSectionHeader = useCallback(
     ({ section }: any) => {
       if (section.data.length === 0 || !section.title) return null
@@ -450,6 +454,20 @@ const Estimation = ({
         signAccountOpState={signAccountOpState}
         bundlerNonceDiscrepancy={bundlerNonceDiscrepancy}
       />
+      {v1warning && !signAccountOpState.errors.length && (
+        <View
+          style={[
+            flexbox.directionRow,
+            spacings.mt,
+            flexbox.alignCenter,
+            flexbox.justifySpaceBetween
+          ]}
+        >
+          <Text fontSize={12} appearance="warningText" style={spacings.mr}>
+            {t(v1warning.title)}
+          </Text>
+        </View>
+      )}
     </>
   )
 }
