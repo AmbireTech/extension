@@ -10,7 +10,7 @@ fi
 # Start the Ledger simulator
 docker pull ghcr.io/ledgerhq/speculos:0.25.13 && \
 docker image tag ghcr.io/ledgerhq/speculos:0.25.13 speculos && \
-docker run --rm -it \
+docker run --rm -d \
   -p 9999:9999 \
   -p 5000:5000 \
   -v ./apps:/speculos/apps \
