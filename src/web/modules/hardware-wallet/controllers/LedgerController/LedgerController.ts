@@ -65,18 +65,18 @@ class LedgerController implements ExternalSignerController {
 
   /**
    * Checks if Ledger transport is supported.
-   * In Emulator mode we always consider it supported (communication is over HTTP).
    * Note: WebHID API is not available in service workers in manifest v3.
    */
   static isSupported = () =>
+    // In emulator mode, we always consider it supported (communication is over HTTP).
     isLedgerEmulator ||
     (typeof navigator !== 'undefined' && navigator !== null && 'hid' in navigator)
 
   /**
    * Checks if at least one Ledger device is connected.
-   * In Emulator mode, we assume the emulator is reachable when enabled.
    */
   static isConnected = async () => {
+    // Assume always reachable when Ledger emulator is used
     if (isLedgerEmulator) return true
 
     if (!('hid' in navigator)) return false
@@ -99,9 +99,9 @@ class LedgerController implements ExternalSignerController {
    * Grant permission to the extension service worker to access an HID device.
    * Should be called only from the foreground and it requires a user gesture
    * to open the device selection prompt (click on a button, etc.).
-   * In Emulator mode we don't need to grant permission, because communication is over HTTP and doesn't require it.
    */
   static grantDevicePermissionIfNeeded = async () => {
+    // In emulator mode we don't need to grant permission, because communication is over HTTP and doesn't require it.
     if (isLedgerEmulator) return
 
     const dmk = new DeviceManagementKitBuilder()
