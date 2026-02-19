@@ -87,10 +87,12 @@ export class SettingsPage extends BasePage {
 
     // confirm adding rpc url
     await this.page.locator(selectors.addRPCURLButton).click()
+    await this.page.waitForTimeout(5000) // wait for adding rpc
     await this.typeNetworkField('Block Explorer URL', network.explorerUrl)
 
     // add network
-    await this.page.locator(selectors.addNetworkButton).click({ timeout: 5000 })
+    await this.page.locator(selectors.addNetworkButton).click()
+
     await expect(this.page.locator(selectors.networkSuccessfullyAddedSnackbar)).toHaveText(
       'Network successfully added!'
     )
