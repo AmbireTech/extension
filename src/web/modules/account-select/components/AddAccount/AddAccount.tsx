@@ -175,7 +175,7 @@ const AddAccount = ({
         id="seed-phrases-bottom-sheet"
         sheetRef={seedPhraseSheetRef}
         adjustToContentHeight
-        isScrollEnabled={false}
+        isScrollEnabled={true}
         closeBottomSheet={closeSeedPhraseBottomSheet}
       >
         <SavedSeedPhrases handleClose={closeSeedPhraseBottomSheet as any} />
