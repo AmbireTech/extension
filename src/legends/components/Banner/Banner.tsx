@@ -1,10 +1,9 @@
-import React, { useMemo } from 'react'
+import React from 'react'
 
 import { CardFromResponse } from '@legends/modules/legends/types'
 
 import styles from './Banner.module.scss'
 import governance from './governance.png'
-import usePortfolio from '@legends/hooks/usePortfolio'
 
 interface Props {
   activeProposals: NonNullable<NonNullable<CardFromResponse['meta']>['activeProposals']>
@@ -12,9 +11,8 @@ interface Props {
 const emojis = ['🚀', '🔥', '🗣', '📢']
 const Banner: React.FC<Props> = ({ activeProposals }) => {
 
-  const { claimableRewards } = usePortfolio()
   // @TODO custom banner variance for season 0 claiming can be removed after the specified date
-  const shouldDisplayBannerClaimingS0 = useMemo(() => Number(claimableRewards?.amount || 0) > 0 && Date.now() < new Date('2026-02-27').getTime(), [claimableRewards?.amount])
+  const shouldDisplayBannerClaimingS0 = Date.now() < new Date('2026-02-27').getTime()
   if (shouldDisplayBannerClaimingS0)
     return (
       <div className={styles.container}>
