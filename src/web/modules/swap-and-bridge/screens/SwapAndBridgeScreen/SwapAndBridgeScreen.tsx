@@ -133,11 +133,15 @@ const SwapAndBridgeScreen = () => {
   }, [formStatus, isLoading])
 
   const onBatchAddedPrimaryButtonPress = useCallback(() => {
-    dispatch({
-      type: 'SWAP_AND_BRIDGE_CONTROLLER_RESET_FORM'
+    swapAndBridgeDispatch({
+      type: 'method',
+      params: {
+        method: 'resetForm',
+        args: []
+      }
     })
     navigate(WEB_ROUTES.dashboard)
-  }, [dispatch, navigate])
+  }, [swapAndBridgeDispatch, navigate])
   const onBatchAddedSecondaryButtonPress = useCallback(() => {
     setShowAddedToBatch(false)
   }, [setShowAddedToBatch])
