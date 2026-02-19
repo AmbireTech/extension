@@ -6,7 +6,7 @@ import LightThemeIcon from '@common/assets/svg/LightThemeIcon'
 import SystemThemeIcon from '@common/assets/svg/SystemThemeIcon'
 import ControlOption from '@common/components/ControlOption'
 import Select from '@common/components/Select'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES, ThemeType } from '@common/styles/themeConfig'
@@ -14,7 +14,7 @@ import { THEME_TYPES, ThemeType } from '@common/styles/themeConfig'
 const ThemeControlOption = () => {
   const { t } = useTranslation()
   const { selectedThemeType } = useTheme()
-  const { dispatch } = useControllersMiddleware()
+  const { dispatch: walletStateDispatch } = useController('WalletStateController')
 
   const THEME_SELECT_OPTIONS = useMemo(
     () => [
@@ -58,7 +58,13 @@ const ThemeControlOption = () => {
     >
       <Select
         setValue={(option) => {
-          dispatch({ type: 'SET_THEME_TYPE', params: { themeType: option.value as ThemeType } })
+          walletStateDispatch({
+            type: 'method',
+            params: {
+              method: 'setThemeType',
+              args: [option.value as ThemeType]
+            }
+          })
         }}
         withSearch={false}
         options={THEME_SELECT_OPTIONS}

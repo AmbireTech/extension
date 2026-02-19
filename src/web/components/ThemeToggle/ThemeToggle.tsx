@@ -4,22 +4,24 @@ import { View } from 'react-native'
 import DarkModeIcon from '@common/assets/svg/DarkModeIcon'
 import LightModeIcon from '@common/assets/svg/LightModeIcon'
 import FatToggle from '@common/components/FatToggle'
-import Toggle from '@common/components/Toggle'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 
 const ThemeToggle = () => {
   const { theme, themeType } = useTheme()
-  const { dispatch } = useControllersMiddleware()
+  const { dispatch: walletStateDispatch } = useController('WalletStateController')
 
   const handleSetTheme = useCallback(() => {
-    dispatch({
-      type: 'SET_THEME_TYPE',
-      params: { themeType: themeType === THEME_TYPES.DARK ? THEME_TYPES.LIGHT : THEME_TYPES.DARK }
+    walletStateDispatch({
+      type: 'method',
+      params: {
+        method: 'setThemeType',
+        args: [themeType === THEME_TYPES.DARK ? THEME_TYPES.LIGHT : THEME_TYPES.DARK]
+      }
     })
-  }, [dispatch, themeType])
+  }, [walletStateDispatch, themeType])
 
   return (
     <FatToggle

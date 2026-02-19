@@ -7,7 +7,6 @@ import { AddNetworkRequestParams, Network, NetworkFeature } from '@ambire-common
 import { getFeatures } from '@ambire-common/libs/networks/networks'
 import Spinner from '@common/components/Spinner'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import flexbox from '@common/styles/utils/flexbox'
 import validateRequestParams from '@web/modules/action-requests/screens/AddOrUpdateNetworkScreen/validateRequestParams'
 
@@ -22,10 +21,15 @@ import UpdateChain from './UpdateChain'
  */
 const AddOrUpdateNetworkScreen = () => {
   const { t } = useTranslation()
-  const { dispatch } = useControllersMiddleware()
-  const { currentUserRequest } = useController('RequestsController').state
-  const { statuses, networkToAddOrUpdate, disabledNetworks, networks } =
-    useController('NetworksController').state
+  const {
+    state: { currentUserRequest },
+    dispatch: requestsDispatch
+  } = useController('RequestsController')
+  const {
+    state: { statuses, networkToAddOrUpdate, disabledNetworks, networks },
+    dispatch: networksDispatch
+  } = useController('NetworksController')
+  const { dispatch: mainDispatch } = useController('MainController')
   const [features, setFeatures] = useState<NetworkFeature[]>(getFeatures(undefined, undefined))
   const [rpcUrlIndex, setRpcUrlIndex] = useState<number>(0)
   const [existingNetwork, setExistingNetwork] = useState<Network | null | undefined>(undefined)
@@ -120,11 +124,20 @@ const AddOrUpdateNetworkScreen = () => {
     // Don't set the network to add or update if the network is already in the extension
     if (!networkDetails || existingNetwork) return
 
-    dispatch({
-      type: 'NETWORKS_CONTROLLER_SET_NETWORK_TO_ADD_OR_UPDATE',
-      params: { chainId: networkDetails.chainId, rpcUrl: networkDetails.selectedRpcUrl }
+    networksDispatch({
+      type: 'method',
+      params: {
+        method: 'setNetworkToAddOrUpdate',
+        args: [{ chainId: networkDetails.chainId, rpcUrl: networkDetails.selectedRpcUrl }]
+      }
     })
-  }, [dispatch, rpcUrlIndex, networkDetails, existingNetwork, networkToAddOrUpdate?.chainId])
+  }, [
+    networksDispatch,
+    rpcUrlIndex,
+    networkDetails,
+    existingNetwork,
+    networkToAddOrUpdate?.chainId
+  ])
 
   useEffect(() => {
     if (existingNetwork) {
@@ -154,33 +167,47 @@ const AddOrUpdateNetworkScreen = () => {
     } else if (statuses.addNetwork === 'ERROR' || statuses.updateNetwork === 'ERROR') {
       actionButtonPressedRef.current = false
     }
-  }, [dispatch, t, statuses.addNetwork, userRequest, statuses.updateNetwork])
+  }, [t, statuses.addNetwork, userRequest, statuses.updateNetwork])
 
   const handleDenyButtonPress = useCallback(() => {
     if (!userRequest) return
 
     actionButtonPressedRef.current = true
-    dispatch({
-      type: 'REQUESTS_CONTROLLER_REJECT_USER_REQUEST',
-      params: { err: t('User rejected the request.'), id: userRequest.id }
+    requestsDispatch({
+      type: 'method',
+      params: {
+        method: 'rejectUserRequests',
+        args: [t('User rejected the request.') as string, [userRequest.id]]
+      }
     })
-    dispatch({
-      type: 'NETWORKS_CONTROLLER_RESET_NETWORK_TO_ADD_OR_UPDATE'
+    networksDispatch({
+      type: 'method',
+      params: {
+        method: 'setNetworkToAddOrUpdate',
+        args: [null]
+      }
     })
-  }, [userRequest, t, dispatch])
+  }, [userRequest, t, requestsDispatch, networksDispatch])
 
   const handleCloseOnAlreadyAdded = useCallback(() => {
     if (!userRequest) return
 
     actionButtonPressedRef.current = true
-    dispatch({
-      type: 'REQUESTS_CONTROLLER_RESOLVE_USER_REQUEST',
-      params: { data: null, id: userRequest.id }
+    requestsDispatch({
+      type: 'method',
+      params: {
+        method: 'resolveUserRequest',
+        args: [null, userRequest.id]
+      }
     })
-    dispatch({
-      type: 'NETWORKS_CONTROLLER_RESET_NETWORK_TO_ADD_OR_UPDATE'
+    networksDispatch({
+      type: 'method',
+      params: {
+        method: 'setNetworkToAddOrUpdate',
+        args: [null]
+      }
     })
-  }, [userRequest, dispatch])
+  }, [userRequest, requestsDispatch, networksDispatch])
 
   const handleUpdateNetwork = useCallback(() => {
     if (!networkDetails || !userRequest) return
@@ -194,43 +221,55 @@ const AddOrUpdateNetworkScreen = () => {
       (url) => url !== networkDetails.selectedRpcUrl
     )
 
-    dispatch({
-      type: 'MAIN_CONTROLLER_UPDATE_NETWORK',
+    networksDispatch({
+      type: 'method',
       params: {
-        network: {
-          rpcUrls: Array.from(new Set([...updatedRpcUrls, networkDetails.selectedRpcUrl])),
-          selectedRpcUrl: networkDetails.selectedRpcUrl
-        },
-        chainId: networkDetails.chainId
+        method: 'updateNetwork',
+        args: [
+          {
+            rpcUrls: Array.from(new Set([...updatedRpcUrls, networkDetails.selectedRpcUrl])),
+            selectedRpcUrl: networkDetails.selectedRpcUrl
+          },
+          networkDetails.chainId
+        ]
       }
     })
 
-    dispatch({
-      type: 'REQUESTS_CONTROLLER_RESOLVE_USER_REQUEST',
-      params: { data: null, id: userRequest.id }
+    requestsDispatch({
+      type: 'method',
+      params: {
+        method: 'resolveUserRequest',
+        args: [null, userRequest.id]
+      }
     })
-  }, [userRequest, dispatch, networkDetails, networks])
+  }, [userRequest, networksDispatch, requestsDispatch, networkDetails, networks])
 
   const handlePrimaryButtonPress = useCallback(() => {
     if (!networkDetails) return
     actionButtonPressedRef.current = true
     if (existingNetwork) {
-      dispatch({
-        type: 'MAIN_CONTROLLER_UPDATE_NETWORK',
+      networksDispatch({
+        type: 'method',
         params: {
-          chainId: existingNetwork.chainId,
-          network: {
-            disabled: false
-          }
+          method: 'updateNetwork',
+          args: [
+            {
+              disabled: false
+            },
+            existingNetwork.chainId
+          ]
         }
       })
     } else {
-      dispatch({
-        type: 'MAIN_CONTROLLER_ADD_NETWORK',
-        params: networkDetails
+      networksDispatch({
+        type: 'method',
+        params: {
+          method: 'addNetwork',
+          args: [networkDetails]
+        }
       })
     }
-  }, [dispatch, existingNetwork, networkDetails])
+  }, [networksDispatch, existingNetwork, networkDetails])
 
   const handleRetryWithDifferentRpcUrl = useCallback(() => {
     setRpcUrlIndex((prev) => prev + 1)

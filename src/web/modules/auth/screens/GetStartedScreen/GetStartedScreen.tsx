@@ -14,7 +14,6 @@ import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import { AUTH_STATUS } from '@common/modules/auth/constants/authStatus'
@@ -41,15 +40,20 @@ const GetStartedScreen = () => {
   const { goToNextRoute } = useOnboardingNavigation()
 
   const { authStatus } = useAuth()
-  const { dispatch } = useControllersMiddleware()
 
-  const state = useController('WalletStateController').state
+  const { state, dispatch: walletStateDispatch } = useController('WalletStateController')
 
   const resetIsSetupCompleteIfNeeded = useCallback(() => {
     if (authStatus === AUTH_STATUS.NOT_AUTHENTICATED && !state.isPinned && state.isSetupComplete) {
-      dispatch({ type: 'SET_IS_SETUP_COMPLETE', params: { isSetupComplete: false } })
+      walletStateDispatch({
+        type: 'method',
+        params: {
+          method: 'setIsSetupComplete',
+          args: [false]
+        }
+      })
     }
-  }, [authStatus, dispatch, state.isPinned, state.isSetupComplete])
+  }, [authStatus, walletStateDispatch, state.isPinned, state.isSetupComplete])
 
   useEffect(() => {
     if (authStatus === AUTH_STATUS.AUTHENTICATED) {

@@ -4,7 +4,6 @@ import BaseAddress from '@common/components/HumanizerAddress/components/BaseAddr
 import Spinner from '@common/components/Spinner'
 import { Props as TextProps } from '@common/components/Text'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useReverseLookup from '@common/hooks/useReverseLookup'
 
 interface Props extends TextProps {
@@ -14,8 +13,10 @@ interface Props extends TextProps {
 
 const AddressName: FC<Props> = ({ address, chainId, ...rest }) => {
   const { ens, isLoading } = useReverseLookup({ address })
-  const { contractNames } = useController('ContractNamesController').state
-  const { dispatch } = useControllersMiddleware()
+  const {
+    state: { contractNames },
+    dispatch: contractNamesDispatch
+  } = useController('ContractNamesController')
 
   const contract = useMemo(() => {
     return contractNames[address]
@@ -28,11 +29,14 @@ const AddressName: FC<Props> = ({ address, chainId, ...rest }) => {
   useEffect(() => {
     if (contractName) return
 
-    dispatch({
-      type: 'CONTRACT_NAMES_CONTROLLER_GET_NAME',
-      params: { address, chainId }
+    contractNamesDispatch({
+      type: 'method',
+      params: {
+        method: 'getName',
+        args: [address, chainId]
+      }
     })
-  }, [dispatch, address, chainId, contractName])
+  }, [contractNamesDispatch, address, chainId, contractName])
 
   if (isLoading) return <Spinner style={{ width: 16, height: 16 }} />
 

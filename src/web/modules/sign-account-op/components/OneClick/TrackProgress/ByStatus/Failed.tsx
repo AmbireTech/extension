@@ -6,7 +6,7 @@ import { Hex } from '@ambire-common/interfaces/hex'
 import RetryIcon from '@common/assets/svg/RetryIcon'
 import AlertVertical from '@common/components/AlertVertical'
 import Text from '@common/components/Text'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { hexToRgba } from '@common/styles/utils/common'
@@ -27,7 +27,7 @@ type FailedProps = {
 const Failed: FC<FailedProps> = ({ title, errorMessage, handleClose, toToken, amount }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { dispatch } = useControllersMiddleware()
+  const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
   const [bindAnim, animStyle] = useCustomHover({
     property: 'backgroundColor',
     values: {
@@ -54,17 +54,20 @@ const Failed: FC<FailedProps> = ({ title, errorMessage, handleClose, toToken, am
                 ...animStyle
               }}
               onPress={() => {
-                dispatch({
-                  type: 'SWAP_AND_BRIDGE_CONTROLLER_UPDATE_FORM',
+                swapAndBridgeDispatch({
+                  type: 'method',
                   params: {
-                    formValues: {
-                      toSelectedTokenAddr: toToken?.address,
-                      toChainId: BigInt(toToken?.chainId),
-                      fromAmount: amount
-                    },
-                    updateProps: {
-                      shouldIncrementFromAmountUpdateCounter: true
-                    }
+                    method: 'updateForm',
+                    args: [
+                      {
+                        toSelectedTokenAddr: toToken?.address,
+                        toChainId: BigInt(toToken?.chainId),
+                        fromAmount: amount
+                      },
+                      {
+                        shouldIncrementFromAmountUpdateCounter: true
+                      }
+                    ]
                   }
                 })
                 if (handleClose) handleClose()

@@ -5,7 +5,6 @@ import { TokenResult } from '@ambire-common/libs/portfolio'
 import { SelectValue } from '@common/components/Select/types'
 import SendToken from '@common/components/SendToken'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useSwapAndBridgeForm from '@web/modules/swap-and-bridge/hooks/useSwapAndBridgeForm'
 import { getTokenId } from '@web/utils/token'
 
@@ -26,7 +25,7 @@ const FromToken: FC<Props> = ({
   onFromAmountChange,
   simulationFailed
 }) => {
-  const { dispatch } = useControllersMiddleware()
+  const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
   const { t } = useTranslation()
 
   const {
@@ -53,35 +52,40 @@ const FromToken: FC<Props> = ({
         tokenToSelect.address === toSelectedToken.address &&
         tokenToSelect.chainId === BigInt(toSelectedToken.chainId || 0)
       ) {
-        dispatch({
-          type: 'SWAP_AND_BRIDGE_CONTROLLER_SWITCH_FROM_AND_TO_TOKENS'
+        swapAndBridgeDispatch({
+          type: 'method',
+          params: { method: 'switchFromAndToTokens', args: [] }
         })
         return
       }
 
-      dispatch({
-        type: 'SWAP_AND_BRIDGE_CONTROLLER_UPDATE_FORM',
-        params: { formValues: { fromSelectedToken: tokenToSelect } }
+      swapAndBridgeDispatch({
+        type: 'method',
+        params: { method: 'updateForm', args: [{ fromSelectedToken: tokenToSelect }, undefined] }
       })
     },
-    [portfolioTokenList, toSelectedToken, dispatch]
+    [portfolioTokenList, toSelectedToken, swapAndBridgeDispatch]
   )
 
   const handleSetMaxFromAmount = useCallback(() => {
-    dispatch({
-      type: 'SWAP_AND_BRIDGE_CONTROLLER_UPDATE_FORM',
-      params: { formValues: { shouldSetMaxAmount: true } }
+    swapAndBridgeDispatch({
+      type: 'method',
+      params: { method: 'updateForm', args: [{ shouldSetMaxAmount: true }, undefined] }
     })
-  }, [dispatch])
+  }, [swapAndBridgeDispatch])
 
   const handleSwitchFromAmountFieldMode = useCallback(() => {
-    dispatch({
-      type: 'SWAP_AND_BRIDGE_CONTROLLER_UPDATE_FORM',
+    swapAndBridgeDispatch({
+      type: 'method',
       params: {
-        formValues: { fromAmountFieldMode: fromAmountFieldMode === 'token' ? 'fiat' : 'token' }
+        method: 'updateForm',
+        args: [
+          { fromAmountFieldMode: fromAmountFieldMode === 'token' ? 'fiat' : 'token' },
+          undefined
+        ]
       }
     })
-  }, [fromAmountFieldMode, dispatch])
+  }, [fromAmountFieldMode, swapAndBridgeDispatch])
 
   return (
     <SendToken

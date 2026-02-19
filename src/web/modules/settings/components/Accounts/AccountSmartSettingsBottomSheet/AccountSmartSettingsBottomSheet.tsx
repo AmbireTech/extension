@@ -18,7 +18,6 @@ import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -33,11 +32,14 @@ interface Props {
 }
 
 const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet, account }) => {
-  const { accountStates } = useController('AccountsController').state
+  const {
+    state: { accountStates },
+    dispatch: accountsDispatch
+  } = useController('AccountsController')
   const { keys } = useController('KeystoreController').state
   const { networks } = useController('NetworksController').state
+  const { dispatch: requestsDispatch } = useController('RequestsController')
   const { theme } = useTheme()
-  const { dispatch } = useControllersMiddleware()
   const { t } = useTranslation()
   const accountStateCheckedForRef = React.useRef<string | null>(null)
 
@@ -56,14 +58,14 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
 
     accountStateCheckedForRef.current = account.addr
 
-    dispatch({
-      type: 'ACCOUNTS_CONTROLLER_UPDATE_ACCOUNT_STATE',
+    accountsDispatch({
+      type: 'method',
       params: {
-        addr: account.addr,
-        chainIds: delegationNetworks.map((n) => n.chainId)
+        method: 'updateAccountState',
+        args: [account.addr, 'latest', delegationNetworks.map((n) => n.chainId)]
       }
     })
-  }, [accountState, delegationNetworks, account, dispatch])
+  }, [accountState, delegationNetworks, account, accountsDispatch])
 
   const is7702 = useMemo(() => {
     if (!account) return false
@@ -78,18 +80,25 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
     const network = networks.find((n) => n.chainId === chainId)
     if (!network || !account || !accountState || !accountState[chainId.toString()]) return
 
-    dispatch({
-      type: 'REQUESTS_CONTROLLER_ADD_CALLS_USER_REQUEST',
+    requestsDispatch({
+      type: 'method',
       params: {
-        userRequestParams: {
-          calls: [{ to: ZERO_ADDRESS, data: '0x', value: BigInt(0) }],
-          meta: {
-            chainId: network.chainId,
-            accountAddr: account.addr,
-            setDelegation: !accountState?.[chainId.toString()]?.delegatedContract
+        method: 'build',
+        args: [
+          {
+            type: 'calls',
+            params: {
+              userRequestParams: {
+                calls: [{ to: ZERO_ADDRESS, data: '0x', value: BigInt(0) }],
+                meta: {
+                  chainId: network.chainId,
+                  accountAddr: account.addr,
+                  setDelegation: !accountState?.[chainId.toString()]?.delegatedContract
+                }
+              }
+            }
           }
-        },
-        allowAccountSwitch: true
+        ]
       }
     })
   }

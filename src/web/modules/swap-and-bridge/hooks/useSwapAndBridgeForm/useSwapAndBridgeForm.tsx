@@ -44,8 +44,9 @@ const useSwapAndBridgeForm = () => {
     sessionIds,
     toSelectedToken
   } = useController('SwapAndBridgeController').state
-  const { dispatch } = useControllersMiddleware()
-  const { userRequests } = useController('RequestsController').state
+  const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
+  const { dispatch: requestsDispatch, state: requestsState } = useController('RequestsController')
+  const { userRequests } = requestsState
   const {
     state: { account, portfolio }
   } = useController('SelectedAccountController')
@@ -53,9 +54,12 @@ const useSwapAndBridgeForm = () => {
   const [fromAmountValue, setFromAmountValue] = useSyncedState<string>({
     backgroundState: controllerAmountFieldValue,
     updateBackgroundState: (newAmount) => {
-      dispatch({
-        type: 'SWAP_AND_BRIDGE_CONTROLLER_UPDATE_FORM',
-        params: { formValues: { fromAmount: newAmount } }
+      swapAndBridgeDispatch({
+        type: 'method',
+        params: {
+          method: 'updateForm',
+          args: [{ fromAmount: newAmount }, undefined]
+        }
       })
     },
     forceUpdateOnChangeList: [fromAmountUpdateCounter, fromAmountFieldMode]
@@ -134,16 +138,23 @@ const useSwapAndBridgeForm = () => {
       if (isPopup) {
         if (signAccountOpController) {
           window.close()
-          dispatch({
-            type: 'REQUESTS_CONTROLLER_FOCUS_REQUEST_WINDOW'
+          requestsDispatch({
+            type: 'method',
+            params: {
+              method: 'focusRequestWindow',
+              args: []
+            }
           })
           return
         }
 
-        dispatch({
-          type: 'CLOSE_SIGNING_REQUEST_WINDOW',
+        if (!account) return
+
+        requestsDispatch({
+          type: 'method',
           params: {
-            type: 'swapAndBridge'
+            method: 'removeUserRequests',
+            args: [[`${account.addr}-swap-and-bridge-sign`]]
           }
         })
         navigate(ROUTES.dashboard)
@@ -155,9 +166,12 @@ const useSwapAndBridgeForm = () => {
       // and closes the window the popup session will remain open and the swap and bridge
       // screen will open on load
       if (isRequestWindow && sessionIds.includes('popup') && sessionIds.includes(sessionId)) {
-        dispatch({
-          type: 'SWAP_AND_BRIDGE_CONTROLLER_UNLOAD_SCREEN',
-          params: { sessionId: 'popup', forceUnload: true }
+        swapAndBridgeDispatch({
+          type: 'method',
+          params: {
+            method: 'unloadScreen',
+            args: ['popup', true]
+          }
         })
       }
     }
@@ -183,14 +197,19 @@ const useSwapAndBridgeForm = () => {
         getIsTokenEligibleForSwapAndBridge(t)
     )
 
-    dispatch({
-      type: 'SWAP_AND_BRIDGE_CONTROLLER_INIT_FORM',
+    swapAndBridgeDispatch({
+      type: 'method',
       params: {
-        sessionId,
-        preselectedFromToken: tokenToSelectOnInit,
-        preselectedToToken: routeState?.preselectedToToken,
-        fromAmount: routeState?.fromAmount,
-        activeRouteIdToDelete: routeState?.activeRouteIdToDelete
+        method: 'initForm',
+        args: [
+          sessionId,
+          {
+            preselectedFromToken: tokenToSelectOnInit,
+            preselectedToToken: routeState?.preselectedToToken,
+            fromAmount: routeState?.fromAmount,
+            activeRouteIdToDelete: routeState?.activeRouteIdToDelete
+          }
+        ]
       }
     })
     sessionIdsRequestedToBeInit.current.push(sessionId)
@@ -199,15 +218,17 @@ const useSwapAndBridgeForm = () => {
       return prev
     })
   }, [
+    account,
     currentRoute.state,
-    dispatch,
     navigate,
     portfolio.isReadyToVisualize,
     portfolio.tokens,
+    requestsDispatch,
     sessionId,
     sessionIds,
     setSearchParams,
     signAccountOpController,
+    swapAndBridgeDispatch,
     visibleUserRequests
   ])
 
@@ -217,9 +238,12 @@ const useSwapAndBridgeForm = () => {
   // in the port.onDisconnect callback in the background
   useEffect(() => {
     return () => {
-      dispatch({ type: 'SWAP_AND_BRIDGE_CONTROLLER_UNLOAD_SCREEN', params: { sessionId } })
+      swapAndBridgeDispatch({
+        type: 'method',
+        params: { method: 'unloadScreen', args: [sessionId, undefined] }
+      })
     }
-  }, [dispatch, sessionId])
+  }, [swapAndBridgeDispatch, sessionId])
 
   const {
     options: fromTokenOptions,
@@ -265,27 +289,33 @@ const useSwapAndBridgeForm = () => {
   ])
 
   const openEstimationModalAndDispatch = useCallback(() => {
-    dispatch({
-      type: 'SWAP_AND_BRIDGE_CONTROLLER_HAS_USER_PROCEEDED',
+    swapAndBridgeDispatch({
+      type: 'method',
       params: {
-        proceeded: true
+        method: 'setUserProceeded',
+        args: [true]
       }
     })
     openEstimationModal()
-  }, [openEstimationModal, dispatch])
+  }, [openEstimationModal, swapAndBridgeDispatch])
 
   const acknowledgeHighPriceImpact = useCallback(() => {
     closePriceImpactModal()
 
     if (isOneClickModeDuringPriceImpact) {
       if (networkUserRequests.length > 0) {
-        dispatch({
-          type: 'REQUESTS_CONTROLLER_BUILD_REQUEST',
+        requestsDispatch({
+          type: 'method',
           params: {
-            type: 'swapAndBridgeRequest',
-            params: {
-              openActionWindow: true
-            }
+            method: 'build',
+            args: [
+              {
+                type: 'swapAndBridgeRequest',
+                params: {
+                  openActionWindow: true
+                }
+              }
+            ]
           }
         })
         window.close()
@@ -293,13 +323,18 @@ const useSwapAndBridgeForm = () => {
         openEstimationModalAndDispatch()
       }
     } else {
-      dispatch({
-        type: 'REQUESTS_CONTROLLER_BUILD_REQUEST',
+      requestsDispatch({
+        type: 'method',
         params: {
-          type: 'swapAndBridgeRequest',
-          params: {
-            openActionWindow: false
-          }
+          method: 'build',
+          args: [
+            {
+              type: 'swapAndBridgeRequest',
+              params: {
+                openActionWindow: false
+              }
+            }
+          ]
         }
       })
       setShowAddedToBatch(true)
@@ -308,7 +343,7 @@ const useSwapAndBridgeForm = () => {
   }, [
     closePriceImpactModal,
     openEstimationModalAndDispatch,
-    dispatch,
+    requestsDispatch,
     isOneClickModeDuringPriceImpact,
     setShowAddedToBatch,
     networkUserRequests,
@@ -328,13 +363,18 @@ const useSwapAndBridgeForm = () => {
       // build/add a swap user request on batch
       if (isOneClickMode) {
         if (networkUserRequests.length > 0) {
-          dispatch({
-            type: 'REQUESTS_CONTROLLER_BUILD_REQUEST',
+          requestsDispatch({
+            type: 'method',
             params: {
-              type: 'swapAndBridgeRequest',
-              params: {
-                openActionWindow: true
-              }
+              method: 'build',
+              args: [
+                {
+                  type: 'swapAndBridgeRequest',
+                  params: {
+                    openActionWindow: true
+                  }
+                }
+              ]
             }
           })
           window.close()
@@ -342,13 +382,18 @@ const useSwapAndBridgeForm = () => {
           openEstimationModalAndDispatch()
         }
       } else {
-        dispatch({
-          type: 'REQUESTS_CONTROLLER_BUILD_REQUEST',
+        requestsDispatch({
+          type: 'method',
           params: {
-            type: 'swapAndBridgeRequest',
-            params: {
-              openActionWindow: false
-            }
+            method: 'build',
+            args: [
+              {
+                type: 'swapAndBridgeRequest',
+                params: {
+                  openActionWindow: false
+                }
+              }
+            ]
           }
         })
         setShowAddedToBatch(true)
@@ -356,7 +401,7 @@ const useSwapAndBridgeForm = () => {
       }
     },
     [
-      dispatch,
+      requestsDispatch,
       highPriceImpactOrSlippageWarning,
       openEstimationModalAndDispatch,
       openPriceImpactModal,
@@ -372,19 +417,24 @@ const useSwapAndBridgeForm = () => {
     // The form is cleared and the user decides to reject the txn.
     // The signAccountOp must be destroyed
     if (formStatus === SwapAndBridgeFormStatus.Empty) {
-      dispatch({
-        type: 'SWAP_AND_BRIDGE_CONTROLLER_DESTROY_SIGN_ACCOUNT_OP'
+      swapAndBridgeDispatch({
+        type: 'method',
+        params: {
+          method: 'destroySignAccountOp',
+          args: []
+        }
       })
     } else {
-      dispatch({
-        type: 'SWAP_AND_BRIDGE_CONTROLLER_HAS_USER_PROCEEDED',
+      swapAndBridgeDispatch({
+        type: 'method',
         params: {
-          proceeded: false
+          method: 'setUserProceeded',
+          args: [false]
         }
       })
     }
     closeEstimationModal()
-  }, [closeEstimationModal, dispatch, formStatus])
+  }, [closeEstimationModal, swapAndBridgeDispatch, formStatus])
   /**
    * @deprecated - the settings menu is not used anymore
    */
@@ -409,6 +459,7 @@ const useSwapAndBridgeForm = () => {
   }, [activeRoute, showAddedToBatch])
 
   useEffect(() => {
+    if (!account) return
     if (
       signAccountOpController?.broadcastStatus === 'SUCCESS' &&
       selectedAccActiveRoutes.length &&
@@ -419,9 +470,12 @@ const useSwapAndBridgeForm = () => {
       )
 
       if (!route && isRequestWindow) {
-        dispatch({
-          type: 'CLOSE_SIGNING_REQUEST_WINDOW',
-          params: { type: 'swapAndBridge' }
+        requestsDispatch({
+          type: 'method',
+          params: {
+            method: 'removeUserRequests',
+            args: [[`${account.addr}-swap-and-bridge-sign`]]
+          }
         })
         return
       }
@@ -432,8 +486,9 @@ const useSwapAndBridgeForm = () => {
     selectedAccActiveRoutes,
     signAccountOpController?.broadcastStatus,
     signAccountOpController?.accountOp.meta?.swapTxn?.activeRouteId,
-    dispatch,
-    activeRoute
+    requestsDispatch,
+    activeRoute,
+    account
   ])
 
   useEffect(() => {

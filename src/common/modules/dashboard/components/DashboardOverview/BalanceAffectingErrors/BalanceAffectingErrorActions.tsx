@@ -6,7 +6,6 @@ import { Action } from '@ambire-common/libs/selectedAccount/errors'
 import Select from '@common/components/Select'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -17,7 +16,7 @@ type Props = Action & {
 
 const BalanceAffectingErrorActions: FC<Props> = ({ actionName, meta, closeBottomSheet }) => {
   const { t } = useTranslation()
-  const { dispatch } = useControllersMiddleware()
+  const { dispatch: networksDispatch } = useController('NetworksController')
 
   const {
     state: { networks, statuses }
@@ -42,22 +41,28 @@ const BalanceAffectingErrorActions: FC<Props> = ({ actionName, meta, closeBottom
     const handleSelectRpcUrl = useCallback(
       ({ value }: any) => {
         if (network) {
-          dispatch({
-            type: 'NETWORKS_CONTROLLER_SET_NETWORK_TO_ADD_OR_UPDATE',
-            params: { rpcUrl: value, chainId: BigInt(network.chainId) }
+          networksDispatch({
+            type: 'method',
+            params: {
+              method: 'setNetworkToAddOrUpdate',
+              args: [{ rpcUrl: value, chainId: BigInt(network.chainId) }]
+            }
           })
           // dispatch on next tick
           setTimeout(() => {
-            dispatch({
-              type: 'MAIN_CONTROLLER_UPDATE_NETWORK',
-              params: { network: { selectedRpcUrl: value }, chainId: network.chainId }
+            networksDispatch({
+              type: 'method',
+              params: {
+                method: 'updateNetwork',
+                args: [{ selectedRpcUrl: value }, network.chainId]
+              }
             })
           }, 1)
           closeBottomSheet()
           addToast(t('The RPC url will be updated shortly.', { type: 'info' }))
         }
       },
-      [addToast, closeBottomSheet, dispatch, network, t]
+      [addToast, closeBottomSheet, networksDispatch, network, t]
     )
 
     const selectOptions = useMemo(() => {

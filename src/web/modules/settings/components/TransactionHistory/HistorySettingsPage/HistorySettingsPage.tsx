@@ -23,7 +23,6 @@ import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import spacings from '@common/styles/spacings'
@@ -57,12 +56,11 @@ const ALL_NETWORKS_OPTION = {
 
 const HistorySettingsPage: FC<Props> = ({ HistoryComponent, historyType, sessionId }) => {
   const { networks } = useController('NetworksController').state
-  const activityState = useController('ActivityController').state
+  const { state: activityState, dispatch: activityDispatch } = useController('ActivityController')
   const { accounts } = useController('AccountsController').state
   const {
     state: { account: accountData }
   } = useController('SelectedAccountController')
-  const { dispatch } = useControllersMiddleware()
   const [page, setPage] = useState(1)
   const { t } = useTranslation()
   const { maxWidthSize } = useWindowSize()
@@ -126,24 +124,44 @@ const HistorySettingsPage: FC<Props> = ({ HistoryComponent, historyType, session
   useEffect(() => {
     if (!account?.addr) return
 
-    dispatch({
-      type:
-        historyType === 'transactions'
-          ? 'MAIN_CONTROLLER_ACTIVITY_SET_ACC_OPS_FILTERS'
-          : 'MAIN_CONTROLLER_ACTIVITY_SET_SIGNED_MESSAGES_FILTERS',
-      params: {
-        sessionId,
-        filters: {
-          account: account.addr,
-          chainId: network?.chainId
-        },
-        pagination: {
-          itemsPerPage: ITEMS_PER_PAGE,
-          fromPage: page - 1
+    if (historyType === 'transactions') {
+      activityDispatch({
+        type: 'method',
+        params: {
+          method: 'filterAccountsOps',
+          args: [
+            sessionId,
+            {
+              account: account.addr,
+              chainId: network?.chainId
+            },
+            {
+              itemsPerPage: ITEMS_PER_PAGE,
+              fromPage: page - 1
+            }
+          ]
         }
-      }
-    })
-  }, [dispatch, account?.addr, network, page, sessionId, historyType])
+      })
+    } else {
+      activityDispatch({
+        type: 'method',
+        params: {
+          method: 'filterSignedMessages',
+          args: [
+            sessionId,
+            {
+              account: account.addr,
+              chainId: network?.chainId
+            },
+            {
+              itemsPerPage: ITEMS_PER_PAGE,
+              fromPage: page - 1
+            }
+          ]
+        }
+      })
+    }
+  }, [activityDispatch, account?.addr, network, page, sessionId, historyType])
 
   useEffect(() => {
     // Initialize the port session. This is necessary to automatically terminate the session when the tab is closed.
@@ -158,13 +176,23 @@ const HistorySettingsPage: FC<Props> = ({ HistoryComponent, historyType, session
     // The session removal when the window is forcefully closed is handled
     // in the port.onDisconnect callback in the background.
     const killSession = () => {
-      dispatch({
-        type:
-          historyType === 'transactions'
-            ? 'MAIN_CONTROLLER_ACTIVITY_RESET_ACC_OPS_FILTERS'
-            : 'MAIN_CONTROLLER_ACTIVITY_RESET_SIGNED_MESSAGES_FILTERS',
-        params: { sessionId }
-      })
+      if (historyType === 'transactions') {
+        activityDispatch({
+          type: 'method',
+          params: {
+            method: 'resetAccountsOpsFilters',
+            args: [sessionId]
+          }
+        })
+      } else {
+        activityDispatch({
+          type: 'method',
+          params: {
+            method: 'resetSignedMessagesFilters',
+            args: [sessionId]
+          }
+        })
+      }
     }
 
     return () => {
@@ -173,7 +201,7 @@ const HistorySettingsPage: FC<Props> = ({ HistoryComponent, historyType, session
     // setSearchParams must not be in the dependency array
     // as it changes on call and kills the session prematurely
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [historyType, sessionId, dispatch])
+  }, [historyType, sessionId, activityDispatch])
 
   // Reset network filter state when a network is removed
   useEffect(() => {

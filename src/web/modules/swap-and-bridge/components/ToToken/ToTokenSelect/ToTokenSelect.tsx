@@ -14,7 +14,6 @@ import { SelectValue } from '@common/components/Select/types'
 import Text from '@common/components/Text'
 import TitleAndIcon from '@common/components/TitleAndIcon'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { ThemeProps } from '@common/styles/themeConfig'
@@ -86,7 +85,7 @@ const ToTokenSelect: React.FC<Props> = ({
   } = useController('SelectedAccountController')
   const [didAttemptSearchingTokenByAddress, setDidAttemptSearchingTokenByAddress] =
     React.useState(false)
-  const { dispatch } = useControllersMiddleware()
+  const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
 
   const handleAttemptToFetchMoreOptions = useCallback(
     (searchTerm: string) => {
@@ -102,12 +101,12 @@ const ToTokenSelect: React.FC<Props> = ({
 
   const handleOnSearch = useCallback(
     (searchTerm: string) => {
-      dispatch({
-        type: 'SWAP_AND_BRIDGE_CONTROLLER_SEARCH_TO_TOKEN',
-        params: { searchTerm }
+      swapAndBridgeDispatch({
+        type: 'method',
+        params: { method: 'searchToToken', args: [searchTerm] }
       })
     },
-    [dispatch]
+    [swapAndBridgeDispatch]
   )
 
   const isAttemptingToAddToTokenByAddress = addToTokenByAddressStatus !== 'INITIAL'
