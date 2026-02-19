@@ -6,7 +6,7 @@ import { TypedMessageUserRequest } from '@ambire-common/interfaces/userRequest'
 import { normalizeLedgerMessage } from '@ambire-common/libs/ledger/ledger'
 import { getHdPathFromTemplate, getHdPathWithoutRoot } from '@ambire-common/utils/hdPath'
 import hexStringToUint8Array from '@ambire-common/utils/hexStringToUint8Array'
-import { isE2ETestLedgerTransport, SPECULOS_HTTP_URL } from '@common/config/env'
+import { isLedgerEmulator, LEDGER_EMULATOR_HTTP_URL } from '@common/config/env'
 import { ContextModuleBuilder } from '@ledgerhq/context-module'
 import {
   DeviceManagementKitBuilder,
@@ -20,15 +20,8 @@ import { speculosTransportFactory } from '@ledgerhq/device-transport-kit-speculo
 import { webHidTransportFactory } from '@ledgerhq/device-transport-kit-web-hid'
 import { isVivaldi } from '@web/constants/browserapi'
 
-const LedgerEnv = {
-  isE2ETestLedgerTransport: isE2ETestLedgerTransport,
-  speculosHttpUrl: SPECULOS_HTTP_URL || 'http://127.0.0.1:5000'
-} as const
-
 export { LedgerDeviceModels }
 export type LedgerSignature = Signature
-
-type LedgerTransportMode = 'webhid' | 'speculos'
 
 const TIMEOUT_FOR_RETRIEVING_FROM_LEDGER = 5000
 
@@ -36,8 +29,6 @@ class LedgerController implements ExternalSignerController {
   unlockedPath: string = ''
 
   unlockedPathKeyAddr: string = ''
-
-  transportMode: LedgerTransportMode
 
   signerEth: ReturnType<SignerEthBuilder['build']> | null = null
 
@@ -54,10 +45,6 @@ class LedgerController implements ExternalSignerController {
   #rejectSigningSubscription: (() => void) | null = null
 
   constructor() {
-    // TODO: Bluetooth support?
-    // When running in CI with Speculos, we use HTTP transport instead of WebHID.
-    this.transportMode = LedgerEnv.isE2ETestLedgerTransport ? 'speculos' : 'webhid'
-
     // When the `cleanUpListener` method gets passed to the navigator.hid listeners
     // the `this` context gets lost, so we need to bind it here. The `this` context
     // in the `cleanUp` method should be the `LedgerController` instance.
@@ -82,7 +69,7 @@ class LedgerController implements ExternalSignerController {
    * Note: WebHID API is not available in service workers in manifest v3.
    */
   static isSupported = () =>
-    LedgerEnv.isE2ETestLedgerTransport ||
+    isLedgerEmulator ||
     (typeof navigator !== 'undefined' && navigator !== null && 'hid' in navigator)
 
   /**
@@ -90,7 +77,7 @@ class LedgerController implements ExternalSignerController {
    * In Speculos mode, we assume the simulator is reachable when enabled.
    */
   static isConnected = async () => {
-    if (LedgerEnv.isE2ETestLedgerTransport) return true
+    if (isLedgerEmulator) return true
 
     if (!('hid' in navigator)) return false
 
@@ -115,7 +102,7 @@ class LedgerController implements ExternalSignerController {
    * In Speculos mode we don't need to grant permission, because communication is over HTTP and doesn't require it.
    */
   static grantDevicePermissionIfNeeded = async () => {
-    if (LedgerEnv.isE2ETestLedgerTransport) return
+    if (isLedgerEmulator) return
 
     const dmk = new DeviceManagementKitBuilder()
       // .addLogger(new ConsoleLogger()) // for debugging only
@@ -213,7 +200,7 @@ class LedgerController implements ExternalSignerController {
   async #initSDKSessionIfNeeded() {
     if (this.walletSDK) return
 
-    if (this.transportMode !== 'speculos') {
+    if (isLedgerEmulator) {
       const isConnected = await LedgerController.isConnected()
       if (!isConnected) {
         throw new ExternalSignerError("Ledger is not connected. Please make sure it's plugged in.")
@@ -243,9 +230,7 @@ class LedgerController implements ExternalSignerController {
     // .addLogger(new ConsoleLogger())
 
     builder.addTransport(
-      this.transportMode === 'speculos'
-        ? speculosTransportFactory(LedgerEnv.speculosHttpUrl)
-        : webHidTransportFactory
+      isLedgerEmulator ? speculosTransportFactory(LEDGER_EMULATOR_HTTP_URL) : webHidTransportFactory
     )
 
     return builder.build()
@@ -406,12 +391,6 @@ class LedgerController implements ExternalSignerController {
     await this.#initSDKSessionIfNeeded()
 
     if (this.isUnlocked(path, expectedKeyOnThisPath)) return 'ALREADY_UNLOCKED'
-
-    if (this.transportMode !== 'webhid' && this.transportMode !== 'speculos') {
-      throw new ExternalSignerError(
-        'Ledger only supports USB connection between Ambire and your device. Please connect your device via USB.'
-      )
-    }
 
     if (!this.walletSDK || !this.signerEth) throw new ExternalSignerError(normalizeLedgerMessage()) // no message, indicating no connection
 

@@ -20,7 +20,7 @@ export const isProd = process.env.APP_ENV === 'production'
 export const isStaging = process.env.APP_ENV === 'staging'
 export const isBenzin = process.env.BENZIN === 'true'
 export const isLegends = process.env.LEGENDS === 'true'
-export const isE2ETestLedgerTransport = process.env.LEDGER_TRANSPORT_MODE === 'speculos'
+export const isLedgerEmulator = process.env.IS_LEDGER_EMULATOR === 'true'
 /**
  * Ambire Next is a separate production build variant used for beta testing and preview
  * before releasing features to the main production build. It allows us to have two
@@ -87,7 +87,7 @@ if (isProd) {
 }
 
 // This is only used for development builds, and it is not a secret, so it's fine to log it.
-export const SPECULOS_HTTP_URL = process.env.SPECULOS_HTTP_URL
+export const LEDGER_EMULATOR_HTTP_URL = process.env.LEDGER_EMULATOR_HTTP_URL
 
 /**
  * Option to run the app without the Ambire Relayer. See `RELAYER_URL`

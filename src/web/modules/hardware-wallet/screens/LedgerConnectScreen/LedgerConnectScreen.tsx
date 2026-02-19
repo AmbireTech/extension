@@ -7,7 +7,7 @@ import LeftPointerArrowIcon from '@common/assets/svg/LeftPointerArrowIcon'
 import Button from '@common/components/Button'
 import Panel from '@common/components/Panel'
 import Text from '@common/components/Text'
-import { isE2ETestLedgerTransport } from '@common/config/env'
+import { isLedgerEmulator } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
@@ -46,7 +46,7 @@ const LedgerConnectScreen = () => {
 
   const onPressNext = async () => {
     try {
-      if (!isE2ETestLedgerTransport) {
+      if (!isLedgerEmulator) {
         // Request Ledger access first, before any state updates to prevent error:
         // "Failed to execute 'requestDevice' on 'HID': Must be handling a user
         // gesture to show a permission request." on Vivaldi browser.
@@ -77,7 +77,7 @@ const LedgerConnectScreen = () => {
   useEffect(() => {
     // In Speculos mode, automatically proceed with the connection flow without
     // requiring a USB/HID permission gesture.
-    if (isE2ETestLedgerTransport && !authorizeButtonPressed && !isGrantingPermission) {
+    if (isLedgerEmulator && !authorizeButtonPressed && !isGrantingPermission) {
       // Fire and forget; errors will be surfaced via toast from onPressNext
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
       onPressNext()
@@ -86,7 +86,7 @@ const LedgerConnectScreen = () => {
   }, [authorizeButtonPressed, isGrantingPermission])
 
   useEffect(() => {
-    if (!isE2ETestLedgerTransport && !!authorizeButtonPressed && initParams && type === 'ledger') {
+    if (!isLedgerEmulator && !!authorizeButtonPressed && initParams && type === 'ledger') {
       setAuthorizeButtonPressed(false)
       goToNextRoute()
     }
@@ -94,10 +94,7 @@ const LedgerConnectScreen = () => {
 
   useEffect(() => {
     // In Speculos mode, once the Ledger account picker init succeeds, move to the next screen
-    if (
-      isE2ETestLedgerTransport &&
-      mainCtrlState.statuses.handleAccountPickerInitLedger === 'SUCCESS'
-    ) {
+    if (isLedgerEmulator && mainCtrlState.statuses.handleAccountPickerInitLedger === 'SUCCESS') {
       goToNextRoute()
     }
   }, [goToNextRoute, mainCtrlState.statuses.handleAccountPickerInitLedger])
@@ -120,7 +117,7 @@ const LedgerConnectScreen = () => {
         >
           <View style={[flexbox.alignSelfCenter, spacings.mbSm, spacings.ptMd]}>
             <Text weight="regular" style={spacings.mbTy} fontSize={14}>
-              {isE2ETestLedgerTransport
+              {isLedgerEmulator
                 ? t('1. Make sure your Speculos Ledger emulator is running.')
                 : t('1. Plug in your Ledger and enter a PIN to unlock it.')}
             </Text>
@@ -129,7 +126,7 @@ const LedgerConnectScreen = () => {
               fontSize={14}
               style={minHeightSize(620) ? { marginBottom: 12 } : { marginBottom: 40 }}
             >
-              {isE2ETestLedgerTransport
+              {isLedgerEmulator
                 ? t('2. Open the Ethereum app in the emulator.')
                 : t('2. Open the Ethereum app.')}
             </Text>
@@ -147,14 +144,14 @@ const LedgerConnectScreen = () => {
             <AmbireDevice />
           </View>
           <Text style={[spacings.mbLg, text.center]} appearance="secondaryText">
-            {isE2ETestLedgerTransport
+            {isLedgerEmulator
               ? t('Connecting to the Speculos Ledger emulator configured for this environment.')
               : t(
                   'If not previously granted, Ambire will ask for permission to connect to a HID device.'
                 )}
           </Text>
 
-          {!isE2ETestLedgerTransport && (
+          {!isLedgerEmulator && (
             <Button
               text={isLoading ? t('Connecting...') : t('Authorize & connect')}
               disabled={isLoading}
