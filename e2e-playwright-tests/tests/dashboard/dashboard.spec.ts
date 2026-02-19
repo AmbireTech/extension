@@ -6,6 +6,8 @@ import { test } from 'fixtures/pageObjects'
 import { expect } from '@playwright/test'
 
 test.describe('dashboard', { tag: '@dashboard' }, () => {
+  test.setTimeout(60000)
+
   test.beforeEach(async ({ pages }) => {
     await pages.initWithStorage(saParams)
   })

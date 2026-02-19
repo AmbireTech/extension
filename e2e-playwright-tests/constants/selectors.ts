@@ -254,7 +254,6 @@ const selectors = {
   bannerButtonReject: 'banner-button-reject',
   confettiModalActionButton: 'confetti-modal-action-button',
   refreshButton: 'refresh-button',
-  dashboardGasTankButton: 'dashboard-gas-tank-button',
   dashboardGasTankBalance: 'dashboard-gas-tank-balance',
   createSmartAccountGasTankModalButton: 'create-smart-account-gas-tank-modal-button',
   recieveNetworkBase: 'option-8453',
