@@ -52,7 +52,7 @@ const PlainAddressWithCopy: FC<Props> = ({
         fontSize={fontSize}
       />
       <AnimatedPressable onPress={handleCopy} style={animStyle} {...bindAnim}>
-        <CopyIcon width={fontSize + 2} height={fontSize + 2} color={theme.secondaryText} />
+        <CopyIcon width={fontSize + 8} height={fontSize + 8} color={theme.secondaryText} />
       </AnimatedPressable>
     </View>
   )

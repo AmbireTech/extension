@@ -28,7 +28,7 @@ const DeFiPositionAssetsHeader: FC<Props> = ({ columns }) => {
         flexbox.alignCenter,
         {
           width: '100%',
-          backgroundColor: theme.quaternaryBackground
+          backgroundColor: theme.secondaryBackground
         }
       ]}
     >

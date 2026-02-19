@@ -10,6 +10,8 @@ import Banner from '@common/components/Banner'
 import Button from '@common/components/Button'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
+import useController from '@common/hooks/useController'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import usePrevious from '@common/hooks/usePrevious'
 import useTheme from '@common/hooks/useTheme'
 import ActivityPositionsSkeleton from '@common/modules/dashboard/components/Activity/ActivityPositionsSkeleton'
@@ -20,9 +22,6 @@ import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@web/extension-services/background/webapi/tab'
-import useActivityControllerState from '@web/hooks/useActivityControllerState'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import SubmittedTransactionSummary from '@web/modules/settings/components/TransactionHistory/SubmittedTransactionSummary'
 import { getUiType } from '@web/utils/uiType'
 
@@ -62,9 +61,11 @@ const ActivityPositions: FC<Props> = ({
   const { t } = useTranslation()
   const { theme } = useTheme()
 
-  const { dispatch } = useBackgroundService()
-  const { accountsOps, banners } = useActivityControllerState()
-  const { account, dashboardNetworkFilter } = useSelectedAccountControllerState()
+  const { dispatch } = useControllersMiddleware()
+  const { accountsOps, banners } = useController('ActivityController').state
+  const {
+    state: { account, dashboardNetworkFilter }
+  } = useController('SelectedAccountController')
   const prevOpenTab = usePrevious(openTab)
 
   const currentAccountBanners = useMemo(() => {
@@ -120,8 +121,8 @@ const ActivityPositions: FC<Props> = ({
                     CustomIcon={() => {
                       return (
                         <View style={[flexbox.alignCenter, flexbox.justifyCenter]}>
-                          {banner.type === 'info2' ? (
-                            <Spinner style={{ width: 20, height: 20 }} variant="info2" />
+                          {banner.type === 'info' ? (
+                            <Spinner style={{ width: 20, height: 20 }} variant="info" />
                           ) : (
                             <View
                               style={{
@@ -159,7 +160,7 @@ const ActivityPositions: FC<Props> = ({
       if (item === 'empty') {
         return (
           <View style={styles.noPositionsWrapper}>
-            <InfoIcon width={32} height={32} color={theme.info3Decorative} style={spacings.mtSm} />
+            <InfoIcon width={32} height={32} color={theme.infoText} style={spacings.mtSm} />
             <Text
               testID="no-transaction-history-text"
               fontSize={16}

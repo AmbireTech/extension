@@ -8,10 +8,10 @@ import { isAmbireV1LinkedAccount } from '@ambire-common/libs/account/account'
 import AccountKey, { AccountKeyType } from '@common/components/AccountKey/AccountKey'
 import Alert from '@common/components/Alert'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
+import useController from '@common/hooks/useController'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
-import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 
 interface Props {
   account: Account
@@ -30,7 +30,7 @@ const AccountKeys: FC<Props> = ({
 }) => {
   const { t } = useTranslation()
 
-  const { keys } = useKeystoreControllerState()
+  const { keys } = useController('KeystoreController').state
   const associatedKeys = account?.associatedKeys || []
   const importedAccountKeys = keys.filter(({ addr }) => associatedKeys.includes(addr))
   const notImportedAccountKeys = associatedKeys.filter(

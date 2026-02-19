@@ -1,8 +1,8 @@
-import React, { ReactNode } from 'react'
+import React from 'react'
 
-import Text, { Props as TextProps } from '@common/components/Text'
+import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
-import { THEME_TYPES } from '@common/styles/themeConfig'
+import { hexToRgba } from '@common/styles/utils/common'
 
 import { ToggleProps } from './types'
 
@@ -52,11 +52,7 @@ const Toggle: React.FC<ToggleProps> = ({
           height: '12px',
           borderRadius: '13px',
           transition: 'border 0.2s',
-          background: isOn
-            ? `${theme.successDecorative as string}40`
-            : themeType === THEME_TYPES.DARK
-              ? (theme.quaternaryBackground as string)
-              : `${theme.secondaryText as string}3D`,
+          background: hexToRgba(String(isOn ? theme.success400 : theme.neutral600)),
           ...(trackStyle as React.CSSProperties)
         }}
       >
@@ -70,17 +66,10 @@ const Toggle: React.FC<ToggleProps> = ({
             width: '16px',
             borderRadius: '13px',
             transition: 'transform 0.2s',
-            background: isOn
-              ? (theme.successDecorative as string)
-              : themeType === THEME_TYPES.DARK
-                ? (theme.secondaryBackground as string)
-                : (theme.primaryBackground as string),
-            border: `1px solid ${
-              themeType === THEME_TYPES.DARK
-                ? (theme.primaryBorder as string)
-                : (theme.secondaryBorder as string)
-            }`,
+            background: String(theme.neutral300),
+            border: 'transparent',
             transform: isOn ? 'translateX(12px)' : '',
+            boxShadow: '0px 2px 2px 0px #00000040',
             ...(toggleStyle as React.CSSProperties)
           }}
         />

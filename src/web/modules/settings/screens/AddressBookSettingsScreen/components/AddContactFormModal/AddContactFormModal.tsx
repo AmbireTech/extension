@@ -11,11 +11,11 @@ import BottomSheet from '@common/components/BottomSheet'
 import DualChoiceModal from '@common/components/DualChoiceModal'
 import Input from '@common/components/Input'
 import useAddressInput from '@common/hooks/useAddressInput'
+import useController from '@common/hooks/useController'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
+import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
-import useAddressBookControllerState from '@web/hooks/useAddressBookControllerState'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 
 type Props = {
   id: string
@@ -25,9 +25,10 @@ type Props = {
 
 const AddContactFormModal = ({ id, sheetRef, closeBottomSheet }: Props) => {
   const { t } = useTranslation()
-  const { dispatch } = useBackgroundService()
-  const { contacts } = useAddressBookControllerState()
-  const { accounts } = useAccountsControllerState()
+  const { theme } = useTheme()
+  const { dispatch } = useControllersMiddleware()
+  const { contacts } = useController('AddressBookController').state
+  const { accounts } = useController('AccountsController').state
 
   const {
     control,
@@ -123,14 +124,14 @@ const AddContactFormModal = ({ id, sheetRef, closeBottomSheet }: Props) => {
       id={id}
       sheetRef={sheetRef}
       closeBottomSheet={closeBottomSheet}
-      backgroundColor="secondaryBackground"
-      style={{ overflow: 'hidden', maxWidth: 496, ...spacings.ph0, ...spacings.pv0 }}
       type="modal"
+      style={{ ...spacings.ph0, ...spacings.pv0 }}
     >
       <DualChoiceModal
         title={t('Add new contact')}
+        style={flexbox.flex1}
         description={
-          <View style={[{ width: 440 }]}>
+          <>
             <Controller
               name="name"
               control={control}
@@ -149,6 +150,8 @@ const AddContactFormModal = ({ id, sheetRef, closeBottomSheet }: Props) => {
                   onBlur={onBlur}
                   error={errors.name?.message}
                   isValid={!!name && !errors.name}
+                  backgroundColor={theme.secondaryBackground}
+                  containerStyle={{ width: '100%', ...spacings.mb }}
                 />
               )}
             />
@@ -160,23 +163,26 @@ const AddContactFormModal = ({ id, sheetRef, closeBottomSheet }: Props) => {
                 required: true
               }}
               render={({ field: { onChange, onBlur } }) => (
-                <AddressInput
-                  label={t('Address / ENS')}
-                  onChangeText={(text) => {
-                    onChange(text)
-                    trigger('addressState.fieldValue')
-                  }}
-                  onBlur={onBlur}
-                  validation={validation}
-                  ensAddress={addressState.ensAddress}
-                  value={addressState.fieldValue}
-                  isRecipientDomainResolving={addressState.isDomainResolving}
-                  containerStyle={spacings.mbLg}
-                  onSubmitEditing={submitForm}
-                />
+                <View style={{ width: '100%' }}>
+                  <AddressInput
+                    label={t('Address / ENS')}
+                    onChangeText={(text) => {
+                      onChange(text)
+                      trigger('addressState.fieldValue')
+                    }}
+                    onBlur={onBlur}
+                    validation={validation}
+                    ensAddress={addressState.ensAddress}
+                    value={addressState.fieldValue}
+                    isRecipientDomainResolving={addressState.isDomainResolving}
+                    containerStyle={{ ...spacings.mbLg, width: '100%' }}
+                    onSubmitEditing={submitForm}
+                    backgroundColor={theme.secondaryBackground}
+                  />
+                </View>
               )}
             />
-          </View>
+          </>
         }
         primaryButtonText={t('+ Add to Address Book')}
         primaryButtonTestID="add-to-address-book-button"

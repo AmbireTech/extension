@@ -11,20 +11,20 @@ import InputPassword from '@common/components/InputPassword'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
+import useController from '@common/hooks/useController'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useEmailVaultControllerState from '@web/hooks/useEmailVaultControllerState'
 
 import getStyles from './styles'
 
 const KeystoreSetNewPasswordForm = () => {
   const { t } = useTranslation()
 
-  const emailVault = useEmailVaultControllerState()
-  const { dispatch } = useBackgroundService()
+  const emailVault = useController('EmailVaultController').state
+  const { dispatch } = useControllersMiddleware()
   const {
     watch,
     control,
