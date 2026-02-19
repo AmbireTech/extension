@@ -5,8 +5,6 @@ module.exports = function (api) {
   const pathAliases = {
     '@ambire-common': './src/ambire-common/src',
     '@contracts': './src/ambire-common/contracts',
-    // v1 is legacy and should be removed when v1 imports are replaced with @ambire-common
-    '@ambire-common-v1': './src/ambire-common/v1',
     '@common': './src/common',
     '@mobile': './src/mobile',
     '@web': './src/web',
@@ -82,16 +80,12 @@ module.exports = function (api) {
             '.json'
           ],
           alias: {
-            // alias for better crypto performance on mobile
-            'scrypt-js': './src/common/config/alias/scrypt.js',
-            // alias for better crypto performance on mobile
-            '@ethersproject/pbkdf2': './src/common/config/alias/pbkdf2.js',
-            // node's crypto polyfill for React Native
             crypto: 'react-native-quick-crypto',
-            // stream-browserify: used by react-native-quick-crypto
-            stream: 'stream-browserify',
-            // @craftzdog/react-native-buffer: used by react-native-quick-crypto
-            buffer: '@craftzdog/react-native-buffer',
+            stream: 'readable-stream',
+            buffer: 'buffer',
+            http: 'stream-http',
+            https: 'https-browserify',
+            zlib: 'browserify-zlib',
 
             // absolute imports
             ...pathAliases
