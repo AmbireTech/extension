@@ -335,10 +335,6 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
       : isFormValid && addressInputState.validation.severity !== 'error')
   }, [addressInputState.validation.severity, isFormValid, isTopUp])
 
-  const onBack = useCallback(() => {
-    navigate(ROUTES.dashboard)
-  }, [navigate])
-
   const resetTransferForm = useCallback(() => {
     dispatch({
       type: 'TRANSFER_CONTROLLER_RESET_FORM'

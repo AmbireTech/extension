@@ -59,6 +59,7 @@ const SafeSigned: FC<Props> = ({ title, primaryButtonText, onPrimaryButtonPress 
             titleSecondary={t('Successfully signed and sent to Safe global!')}
             openExplorerText={t('Safe global')}
             explorerLink="https://app.safe.global"
+            beforeLinkOpenHandler={onPrimaryButtonPress}
           />
         </View>
         <FooterGlassView innerContainerStyle={{ ...spacings.phSm, ...spacings.pvSm }}>
