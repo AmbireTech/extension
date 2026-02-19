@@ -16,7 +16,6 @@ import FooterGlassView from '@common/components/FooterGlassView/FooterGlassView'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
@@ -73,11 +72,9 @@ const NavMenu = () => {
   const { navigate } = useNavigation()
   const { theme } = useTheme(getStyles)
   const { hasPasswordSecret } = useController('KeystoreController').state
-  const { dispatch } = useControllersMiddleware()
+  const { dispatch: mainDispatch } = useController('MainController')
   const handleLockAmbire = () => {
-    dispatch({
-      type: 'MAIN_CONTROLLER_LOCK'
-    })
+    mainDispatch({ type: 'method', params: { method: 'lock', args: [] } })
   }
 
   useEffect(() => {

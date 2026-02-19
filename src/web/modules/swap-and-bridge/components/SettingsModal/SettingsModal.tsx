@@ -6,7 +6,6 @@ import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useElementSize from '@common/hooks/useElementSize'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING, SPACING_TY } from '@common/styles/spacings'
@@ -65,7 +64,7 @@ const SettingsModal: React.FC<Props> = ({ handleToggleSettingsMenu, settingModal
   const settingButtonRef: any = useRef(null)
   const settingMenuRef: any = useRef(null)
   const { routePriority } = useController('SwapAndBridgeController').state
-  const { dispatch } = useControllersMiddleware()
+  const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
   const { x: settingButtonX, y: settingButtonY } = useElementSize(settingButtonRef)
   const [bindAnim, , isHovered, , animatedValues] = useCustomHover({
     property: 'rotateZ' as any,
@@ -92,12 +91,12 @@ const SettingsModal: React.FC<Props> = ({ handleToggleSettingsMenu, settingModal
 
   const handleSelectPriority = useCallback(
     (value: string) => {
-      dispatch({
-        type: 'SWAP_AND_BRIDGE_CONTROLLER_UPDATE_FORM',
-        params: { formValues: { routePriority: value as any } }
+      swapAndBridgeDispatch({
+        type: 'method',
+        params: { method: 'updateForm', args: [{ routePriority: value as any }, undefined] }
       })
     },
-    [dispatch]
+    [swapAndBridgeDispatch]
   )
 
   const rotateInterpolate =

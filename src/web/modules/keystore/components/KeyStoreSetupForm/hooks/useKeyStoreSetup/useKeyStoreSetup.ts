@@ -4,7 +4,6 @@ import { useForm } from 'react-hook-form'
 import { isDev, isTesting } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useExtraEntropy from '@common/hooks/useExtraEntropy'
 import useToast from '@common/hooks/useToast'
 import { DEFAULT_KEYSTORE_PASSWORD_DEV } from '@env'
@@ -12,8 +11,7 @@ import { DEFAULT_KEYSTORE_PASSWORD_DEV } from '@env'
 const useKeyStoreSetup = () => {
   const { t } = useTranslation()
   const { addToast } = useToast()
-  const state = useController('KeystoreController').state
-  const { dispatch } = useControllersMiddleware()
+  const { state, dispatch: keystoreDispatch } = useController('KeystoreController')
   const { control, handleSubmit, watch, trigger, getValues, formState } = useForm({
     mode: 'all',
     defaultValues: {
@@ -42,13 +40,11 @@ const useKeyStoreSetup = () => {
 
   const handleKeystoreSetup = async () => {
     await handleSubmit(({ password: passwordFieldValue }) => {
-      dispatch({
-        type: 'KEYSTORE_CONTROLLER_ADD_SECRET',
+      keystoreDispatch({
+        type: 'method',
         params: {
-          secretId: 'password',
-          secret: passwordFieldValue,
-          extraEntropy: getExtraEntropy(),
-          leaveUnlocked: true
+          method: 'addSecret',
+          args: ['password', passwordFieldValue, getExtraEntropy(), true]
         }
       })
     })()

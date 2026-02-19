@@ -11,7 +11,6 @@ import {
 import { Key } from '@ambire-common/interfaces/keystore'
 import { ISignAccountOpController } from '@ambire-common/interfaces/signAccountOp'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import usePrevious from '@common/hooks/usePrevious'
 import useLedger from '@web/modules/hardware-wallet/hooks/useLedger'
 import { OneClickEstimationProps } from '@web/modules/sign-account-op/components/OneClick/Estimation/Estimation'
@@ -65,7 +64,7 @@ const useSign = ({
   const {
     state: { networks }
   } = useController('NetworksController')
-  const { dispatch } = useControllersMiddleware()
+  const { dispatch: mainControllerDispatch } = useController('MainController')
   const [isChooseSignerShown, setIsChooseSignerShown] = useState(false)
   const [isChooseFeePayerKeyShown, setIsChooseFeePayerKeyShown] = useState(false)
   const [shouldDisplayLedgerConnectModal, setShouldDisplayLedgerConnectModal] = useState(false)
@@ -190,11 +189,14 @@ const useSign = ({
     if (updateType === 'Transfer&TopUp') {
       type = 'one-click-transfer'
     }
-    dispatch({
-      type: 'MAIN_CONTROLLER_HANDLE_SIGN_AND_BROADCAST_ACCOUNT_OP',
-      params: { type, fromRequestId: signAccountOpState.fromRequestId }
+    mainControllerDispatch({
+      type: 'method',
+      params: {
+        method: 'handleSignAndBroadcastAccountOp',
+        args: [type, signAccountOpState.fromRequestId]
+      }
     })
-  }, [dispatch, signAccountOpState, updateType])
+  }, [mainControllerDispatch, signAccountOpState, updateType])
 
   const handleSign = useCallback(
     (_chosenSigningKeyTypes?: Key['type'][], _warningAccepted?: boolean) => {

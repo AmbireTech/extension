@@ -70,8 +70,10 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
   const { dispatch } = useControllersMiddleware()
   const { isSetupComplete } = useController('WalletStateController').state
   const { accounts } = useController('AccountsController').state
-  const { isInitialized, subType, initParams, type } =
-    useController('AccountPickerController').state
+  const {
+    state: { isInitialized, subType, initParams, type },
+    dispatch: accountPickerDispatch
+  } = useController('AccountPickerController')
   const isOnboardingRoute = useMemo(
     () => ONBOARDING_WEB_ROUTES.includes((path || '').substring(1)),
     [path]
@@ -348,9 +350,15 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
     ].some((r) => currentRoute.includes(r))
 
     if (shouldResetAccountPicker) {
-      dispatch({ type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_RESET' })
+      accountPickerDispatch({
+        type: 'method',
+        params: {
+          method: 'reset',
+          args: []
+        }
+      })
     }
-  }, [onboardingInitialized, path, dispatch, isInitialized, history])
+  }, [onboardingInitialized, path, accountPickerDispatch, isInitialized, history])
 
   // Some routes are protected and should only be accessed through internal navigation.
   // If a user attempts to access one of these routes directly via the URL bar,

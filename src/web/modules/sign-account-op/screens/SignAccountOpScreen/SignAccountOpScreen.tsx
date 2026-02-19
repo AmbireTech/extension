@@ -13,7 +13,6 @@ import GlassView from '@common/components/GlassView'
 import NetworkBadge from '@common/components/NetworkBadge'
 import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useSign from '@common/hooks/useSign'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
@@ -46,10 +45,13 @@ const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }: Nati
 }
 
 const SignAccountOpScreen = () => {
-  const { currentUserRequest, visibleUserRequests } = useController('RequestsController').state
-  const signAccountOpState = useController('SignAccountOpController').state
-  const mainState = useController('MainController').state
-  const { dispatch } = useControllersMiddleware()
+  const {
+    state: { currentUserRequest, visibleUserRequests },
+    dispatch: requestsDispatch
+  } = useController('RequestsController')
+  const { state: signAccountOpState, dispatch: signAccountOpDispatch } =
+    useController('SignAccountOpController')
+  const { signAccOpInitError } = useController('MainController').state
   const { t } = useTranslation()
   const { addToast } = useToast()
   const { styles, theme, themeType } = useTheme(getStyles)
@@ -59,24 +61,27 @@ const SignAccountOpScreen = () => {
 
   const handleUpdateStatus = useCallback(
     (status: SigningStatus) => {
-      dispatch({
-        type: 'CURRENT_SIGN_ACCOUNT_OP_UPDATE_STATUS',
-        params: { updateType: 'Requests', status }
-      })
-    },
-    [dispatch]
-  )
-  const updateController = useCallback(
-    (params: { signingKeyAddr?: Key['addr']; signingKeyType?: Key['type'] }) => {
-      dispatch({
-        type: 'CURRENT_SIGN_ACCOUNT_OP_UPDATE',
+      signAccountOpDispatch({
+        type: 'method',
         params: {
-          updateType: 'Requests',
-          ...params
+          method: 'updateStatus',
+          args: [status]
         }
       })
     },
-    [dispatch]
+    [signAccountOpDispatch]
+  )
+  const updateController = useCallback(
+    (params: { signingKeyAddr?: Key['addr']; signingKeyType?: Key['type'] }) => {
+      signAccountOpDispatch({
+        type: 'method',
+        params: {
+          method: 'update',
+          args: [params]
+        }
+      })
+    },
+    [signAccountOpDispatch]
   )
 
   const {
@@ -121,17 +126,18 @@ const SignAccountOpScreen = () => {
   const handleRejectAccountOp = useCallback(() => {
     if (!accountOpRequest) return
 
-    dispatch({
-      type: 'REQUESTS_CONTROLLER_REJECT_USER_REQUEST',
+    requestsDispatch({
+      type: 'method',
       params: {
-        err: 'User rejected the transaction request.',
-        id: accountOpRequest.id,
-        options: {
-          shouldOpenNextRequest: visibleUserRequests.length > 1
-        }
+        method: 'rejectUserRequests',
+        args: [
+          'User rejected the transaction request.',
+          [accountOpRequest.id],
+          { shouldOpenNextRequest: visibleUserRequests.length > 1 }
+        ]
       }
     })
-  }, [dispatch, accountOpRequest, visibleUserRequests.length])
+  }, [requestsDispatch, accountOpRequest, visibleUserRequests.length])
 
   const handleAddToCart = useCallback(() => {
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -192,10 +198,10 @@ const SignAccountOpScreen = () => {
     return undefined
   }, [copySignAccountOpError, signAccountOpState?.errors, styles.alertText, theme.warningText])
 
-  if (mainState.signAccOpInitError) {
+  if (signAccOpInitError) {
     return (
       <View style={[StyleSheet.absoluteFill, flexbox.alignCenter, flexbox.justifyCenter]}>
-        <Alert type="error" title={mainState.signAccOpInitError} />
+        <Alert type="error" title={signAccOpInitError} />
       </View>
     )
   }

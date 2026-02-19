@@ -4,7 +4,6 @@ import {
   formatUnits,
   getAddress,
   isAddress,
-  JsonRpcProvider,
   keccak256,
   TransactionReceipt,
   TransactionResponse,
@@ -41,7 +40,6 @@ import {
 import { ActiveStepType, FinalizedStatusType } from '@benzin/screens/BenzinScreen/interfaces/steps'
 import { UserOperation } from '@benzin/screens/BenzinScreen/interfaces/userOperation'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 
 import { decodeUserOp, entryPointTxnSplit, reproduceCallsFromTxn } from './utils/reproduceCalls'
 
@@ -180,8 +178,10 @@ const useSteps = ({
   const [activityAccOp, setActivityAccOp] = useState<SubmittedAccountOp | null>(null)
   const [shouldTryBlockFetch, setShouldTryBlockFetch] = useState<boolean>(true)
   const [refetchStatus, setRefetchStatus] = useState<number>(0)
-  const { dispatch } = useControllersMiddleware()
-  const { accountsOps } = useController('ActivityController').state
+  const {
+    state: { accountsOps },
+    dispatch: activityDispatch
+  } = useController('ActivityController')
   const { dispatchAndWait } = useController('ProvidersController')
 
   const getIdentifiedBy = useCallback((): AccountOpIdentifiedBy => {
@@ -213,26 +213,29 @@ const useSteps = ({
       setRefetchStatus((prev) => prev + 1)
     }, 2000)
 
-    dispatch({
-      type: 'MAIN_CONTROLLER_ACTIVITY_SET_ACC_OPS_FILTERS',
+    activityDispatch({
+      type: 'method',
       params: {
-        sessionId: 'benzin',
-        filters: {
-          identifiedBy: extensionAccOp.identifiedBy,
-          account: extensionAccOp.accountAddr,
-          chainId: extensionAccOp.chainId
-        },
-        pagination: {
-          itemsPerPage: 1,
-          fromPage: 0
-        }
+        method: 'filterAccountsOps',
+        args: [
+          'benzin',
+          {
+            identifiedBy: extensionAccOp.identifiedBy,
+            account: extensionAccOp.accountAddr,
+            chainId: extensionAccOp.chainId
+          },
+          {
+            itemsPerPage: 1,
+            fromPage: 0
+          }
+        ]
       }
     })
 
     return () => {
       if (timeout) clearTimeout(timeout)
     }
-  }, [extensionAccOp, activityAccOp, setRefetchStatus, refetchStatus, dispatch])
+  }, [extensionAccOp, activityAccOp, setRefetchStatus, refetchStatus, activityDispatch])
 
   // set the found account op from the activity
   useEffect(() => {

@@ -105,6 +105,10 @@ export class WalletStateController extends EventEmitter {
     this.#isPinnedTimeout = setTimeout(this.#initContinuousCheckIsPinned.bind(this), 1000)
   }
 
+  setIsSetupComplete(isSetupComplete: boolean) {
+    this.#isSetupComplete = isSetupComplete
+  }
+
   async setThemeType(type: ThemeType) {
     this.themeType = type
     await storage.set('themeType', type)

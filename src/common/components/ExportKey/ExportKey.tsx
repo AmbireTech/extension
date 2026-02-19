@@ -11,7 +11,6 @@ import SmartAccountExport from '@common/components/ExportKey/SmartAccountExport'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useExtraEntropy from '@common/hooks/useExtraEntropy'
 import usePrevious from '@common/hooks/usePrevious'
 import spacings from '@common/styles/spacings'
@@ -35,8 +34,7 @@ const ExportKey = ({
   onBackButtonPress: () => void
 }) => {
   const { t } = useTranslation()
-  const { dispatch } = useControllersMiddleware()
-  const keystoreState = useController('KeystoreController').state
+  const { state: keystoreState, dispatch: keystoreDispatch } = useController('KeystoreController')
   const [privateKey, setPrivateKey] = useState<string | null>(null)
   const [salt, setSalt] = useState<string | null>(null)
   const [iv, setIv] = useState<string | null>(null)
@@ -86,14 +84,20 @@ const ExportKey = ({
   const { getExtraEntropy } = useExtraEntropy()
   const onPasswordConfirmed = (password: string) => {
     if (isExportingV2SA) {
-      dispatch({
-        type: 'KEYSTORE_CONTROLLER_SEND_ENCRYPTED_PRIVATE_KEY_TO_UI',
-        params: { keyAddr, secret: password, entropy: getExtraEntropy() }
+      keystoreDispatch({
+        type: 'method',
+        params: {
+          method: 'sendPasswordEncryptedPrivateKeyToUi',
+          args: [keyAddr, password, getExtraEntropy()]
+        }
       })
     } else {
-      dispatch({
-        type: 'KEYSTORE_CONTROLLER_SEND_PRIVATE_KEY_TO_UI',
-        params: { keyAddr }
+      keystoreDispatch({
+        type: 'method',
+        params: {
+          method: 'sendPrivateKeyToUi',
+          args: [keyAddr]
+        }
       })
     }
 

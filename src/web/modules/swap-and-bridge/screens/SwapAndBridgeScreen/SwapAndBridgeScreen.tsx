@@ -10,7 +10,6 @@ import Alert from '@common/components/Alert'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import Spinner from '@common/components/Spinner'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useNavigation from '@common/hooks/useNavigation'
 import usePrevious from '@common/hooks/usePrevious'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
@@ -66,26 +65,31 @@ const SwapAndBridgeScreen = () => {
     shouldDisableAddToBatch
   } = useSwapAndBridgeForm()
   const {
-    sessionIds,
-    formStatus,
-    fromChainId,
-    toChainId,
-    isHealthy,
-    shouldEnableRoutesSelection,
-    updateQuoteStatus,
-    signAccountOpController,
-    hasProceeded,
-    swapSignErrors,
-    quote
-  } = useController('SwapAndBridgeController').state
+    state: {
+      sessionIds,
+      formStatus,
+      fromChainId,
+      toChainId,
+      isHealthy,
+      shouldEnableRoutesSelection,
+      updateQuoteStatus,
+      signAccountOpController,
+      hasProceeded,
+      swapSignErrors,
+      quote
+    },
+    dispatch: swapAndBridgeDispatch
+  } = useController('SwapAndBridgeController')
   const {
-    state: { portfolio }
+    state: { portfolio, account }
   } = useController('SelectedAccountController')
 
-  const { statuses: requestsCtrlStatuses } = useController('RequestsController').state
+  const {
+    dispatch: requestsCtrlDispatch,
+    state: { statuses: requestsCtrlStatuses }
+  } = useController('RequestsController')
   const prevSelectedAccActiveRoutes: any[] | undefined = usePrevious(selectedAccActiveRoutes)
   const scrollViewRef: any = useRef(null)
-  const { dispatch } = useControllersMiddleware()
 
   const { simulationError: fromChainSimulationError } = useSimulationError({ chainId: fromChainId })
   const { simulationError: toChainSimulationError } = useSimulationError({ chainId: toChainId })
@@ -139,45 +143,48 @@ const SwapAndBridgeScreen = () => {
   }, [setShowAddedToBatch])
 
   const onBackButtonPress = useCallback(() => {
-    dispatch({
-      type: 'SWAP_AND_BRIDGE_CONTROLLER_UNLOAD_SCREEN',
-      params: { sessionId, forceUnload: true }
+    swapAndBridgeDispatch({
+      type: 'method',
+      params: { method: 'unloadScreen', args: [sessionId, true] }
     })
     if (isRequestWindow) {
-      dispatch({
-        type: 'CLOSE_SIGNING_REQUEST_WINDOW',
+      if (!account) return
+
+      requestsCtrlDispatch({
+        type: 'method',
         params: {
-          type: 'swapAndBridge'
+          method: 'removeUserRequests',
+          args: [[`${account.addr}-swap-and-bridge-sign`]]
         }
       })
     } else {
       navigate(ROUTES.dashboard)
     }
-  }, [dispatch, navigate, sessionId])
+  }, [requestsCtrlDispatch, account, navigate, sessionId, swapAndBridgeDispatch])
 
   const handleUpdateStatus = useCallback(
     (status: SigningStatus) => {
-      dispatch({
-        type: 'CURRENT_SIGN_ACCOUNT_OP_UPDATE_STATUS',
+      swapAndBridgeDispatch({
+        type: 'method',
         params: {
-          updateType: 'Swap&Bridge',
-          status
+          method: 'callSignAccountOpMethod',
+          args: ['updateStatus', [status]]
         }
       })
     },
-    [dispatch]
+    [swapAndBridgeDispatch]
   )
   const updateController = useCallback(
     (params: { signingKeyAddr?: Key['addr']; signingKeyType?: Key['type'] }) => {
-      dispatch({
-        type: 'CURRENT_SIGN_ACCOUNT_OP_UPDATE',
+      swapAndBridgeDispatch({
+        type: 'method',
         params: {
-          updateType: 'Swap&Bridge',
-          ...params
+          method: 'callSignAccountOpMethod',
+          args: ['update', [params]]
         }
       })
     },
-    [dispatch]
+    [swapAndBridgeDispatch]
   )
 
   const buttons = useMemo(() => {

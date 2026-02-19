@@ -32,7 +32,7 @@ const AccountKeys: FC<Props> = ({
   chainId
 }) => {
   const { t } = useTranslation()
-  const { accountStates } = useController('AccountsController').state
+  const { state: accounstState, dispatch: accountsDispatch } = useController('AccountsController')
   const { networks } = useController('NetworksController').state
   const { keys } = useController('KeystoreController').state
   const { dispatch } = useControllersMiddleware()
@@ -41,8 +41,8 @@ const AccountKeys: FC<Props> = ({
   const accountState = useMemo(() => {
     if (!account) return null
 
-    return accountStates[account.addr] || null
-  }, [account, accountStates])
+    return accounstState.accountStates[account.addr] || null
+  }, [account, accounstState.accountStates])
 
   const usedNetworks = useMemo(() => {
     return account.safeCreation && chainId
@@ -60,14 +60,14 @@ const AccountKeys: FC<Props> = ({
 
     accountStateCheckedForRef.current = account.addr
 
-    dispatch({
-      type: 'ACCOUNTS_CONTROLLER_UPDATE_ACCOUNT_STATE',
+    accountsDispatch({
+      type: 'method',
       params: {
-        addr: account.addr,
-        chainIds: networkStates.map((n) => n.chainId)
+        method: 'updateAccountState',
+        args: [account.addr, 'latest', networkStates.map((n) => n.chainId)]
       }
     })
-  }, [accountState, usedNetworks, account, dispatch])
+  }, [accountState, usedNetworks, account, accountsDispatch])
 
   /**
    * Get the safe owners by network if the account is a safe

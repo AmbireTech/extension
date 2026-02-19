@@ -10,7 +10,7 @@ import HumanizedVisualization from '@common/components/HumanizedVisualization'
 import Label from '@common/components/Label'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import useHover, { AnimatedPressable } from '@web/hooks/useHover'
@@ -54,7 +54,7 @@ const TransactionSummary = ({
   const textSize = 16 * sizeMultiplier[size]
   const imageSize = 32 * sizeMultiplier[size]
   const { t } = useTranslation()
-  const { dispatch } = useControllersMiddleware()
+  const { dispatch: requestsDispatch } = useController('RequestsController')
   const { styles } = useTheme(getStyles)
   /**
    * It takes some time to remove the call from the controller state, so we optimistically
@@ -85,11 +85,14 @@ const TransactionSummary = ({
     if (!call.id || isCallRemovedOptimistic) return
 
     setIsCallRemovedOptimistic(true)
-    dispatch({
-      type: 'REQUESTS_CONTROLLER_REJECT_CALL_FROM_USER_REQUEST',
-      params: { callId: call.id }
+    requestsDispatch({
+      type: 'method',
+      params: {
+        method: 'rejectCalls',
+        args: [{ callIds: [call.id] }]
+      }
     })
-  }, [isCallRemovedOptimistic, dispatch, call.id])
+  }, [isCallRemovedOptimistic, requestsDispatch, call.id])
 
   useEffect(() => {
     let isMounted = true
