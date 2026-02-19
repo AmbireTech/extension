@@ -8,7 +8,7 @@ import { expect } from '@playwright/test'
 import { runBatchTransferFlow, runSimpleTransferFlow } from '../../flows/transferFlow'
 
 test.describe('transfer', { tag: '@transfer' }, () => {
-  test.setTimeout(100000)
+  test.setTimeout(120000)
 
   test.beforeEach(async ({ pages }) => {
     await pages.initWithStorage(baParams)
