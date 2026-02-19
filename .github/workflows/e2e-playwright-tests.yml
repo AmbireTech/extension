@@ -99,17 +99,17 @@ jobs:
           docker pull ghcr.io/trezor/trezor-user-env
           docker compose -f ./docker-compose-mac.yml up --force-recreate -d
 
-      - name: Start ledger simulator
-        working-directory: ./e2e-playwright-tests/ledger-simulator
+      - name: Start ledger emulator
+        working-directory: ./e2e-playwright-tests/ledger-emulator
         run: |
-          ./start-speculos.sh
+          ./start-emulator.sh
 
-      - name: Check ledger simulator connection
-        working-directory: ./e2e-playwright-tests/ledger-simulator
+      - name: Check ledger emulator connection
+        working-directory: ./e2e-playwright-tests/ledger-emulator
         run: |
           npm -g i ts-node
           npm i @ledgerhq/hw-transport-node-speculos @ledgerhq/hw-app-eth ethers
-          ts-node test.ts
+          ts-node ledger-emulator-health-check.ts
 
       - name: Install e2e test dependencies
         working-directory: ./e2e-playwright-tests

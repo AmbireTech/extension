@@ -75,7 +75,7 @@ const LedgerConnectScreen = () => {
   }
 
   useEffect(() => {
-    // In Speculos mode, automatically proceed with the connection flow without
+    // In Emulator mode, automatically proceed with the connection flow without
     // requiring a USB/HID permission gesture.
     if (isLedgerEmulator && !authorizeButtonPressed && !isGrantingPermission) {
       // Fire and forget; errors will be surfaced via toast from onPressNext
@@ -93,7 +93,7 @@ const LedgerConnectScreen = () => {
   }, [authorizeButtonPressed, goToNextRoute, dispatch, initParams, type])
 
   useEffect(() => {
-    // In Speculos mode, once the Ledger account picker init succeeds, move to the next screen
+    // In Emulator mode, once the Ledger account picker init succeeds, move to the next screen
     if (isLedgerEmulator && mainCtrlState.statuses.handleAccountPickerInitLedger === 'SUCCESS') {
       goToNextRoute()
     }
@@ -118,7 +118,7 @@ const LedgerConnectScreen = () => {
           <View style={[flexbox.alignSelfCenter, spacings.mbSm, spacings.ptMd]}>
             <Text weight="regular" style={spacings.mbTy} fontSize={14}>
               {isLedgerEmulator
-                ? t('1. Make sure your Speculos Ledger emulator is running.')
+                ? t('1. Make sure your Ledger emulator is running.')
                 : t('1. Plug in your Ledger and enter a PIN to unlock it.')}
             </Text>
             <Text
@@ -145,7 +145,7 @@ const LedgerConnectScreen = () => {
           </View>
           <Text style={[spacings.mbLg, text.center]} appearance="secondaryText">
             {isLedgerEmulator
-              ? t('Connecting to the Speculos Ledger emulator configured for this environment.')
+              ? t('Connecting to the Ledger emulator configured for this environment.')
               : t(
                   'If not previously granted, Ambire will ask for permission to connect to a HID device.'
                 )}

@@ -65,7 +65,7 @@ class LedgerController implements ExternalSignerController {
 
   /**
    * Checks if Ledger transport is supported.
-   * In Speculos mode we always consider it supported (communication is over HTTP).
+   * In Emulator mode we always consider it supported (communication is over HTTP).
    * Note: WebHID API is not available in service workers in manifest v3.
    */
   static isSupported = () =>
@@ -74,7 +74,7 @@ class LedgerController implements ExternalSignerController {
 
   /**
    * Checks if at least one Ledger device is connected.
-   * In Speculos mode, we assume the simulator is reachable when enabled.
+   * In Emulator mode, we assume the emulator is reachable when enabled.
    */
   static isConnected = async () => {
     if (isLedgerEmulator) return true
@@ -99,7 +99,7 @@ class LedgerController implements ExternalSignerController {
    * Grant permission to the extension service worker to access an HID device.
    * Should be called only from the foreground and it requires a user gesture
    * to open the device selection prompt (click on a button, etc.).
-   * In Speculos mode we don't need to grant permission, because communication is over HTTP and doesn't require it.
+   * In Emulator mode we don't need to grant permission, because communication is over HTTP and doesn't require it.
    */
   static grantDevicePermissionIfNeeded = async () => {
     if (isLedgerEmulator) return
