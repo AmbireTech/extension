@@ -166,6 +166,13 @@ const selectors = {
     walletPage: '//span[contains(text(),"WALLET")]',
     faqPage: '//span[contains(text(),"FAQ")]'
   },
+  swapAndBridge: {
+    fromTokenDropdown: 'from-token-select',
+    receiveTokenDropdown: 'to-token-select',
+    oneInchSwapRoute: '//div[contains(text(), "1Inch")]',
+    kyberSwapRoute: '//div[contains(text(), "Kyberswap")]',
+    sushiSwapRoute: 'div:has-text("SushiSwap Aggregator")' // no route
+  },
   account: 'account',
   importMethodTrezor: 'import-method-trezor',
   trezorConnectConfirmTerms: '@analytics/continue-button',
@@ -264,15 +271,12 @@ const selectors = {
   maxAvailableAmount: 'max-available-amount',
   searchInput: 'search-input',
   // Swap & Bridge selectors
-  sendTokenSab: 'from-token-select',
-  receiveTokenSab: 'to-token-select',
   selectRouteButton: 'select-route',
   routeLoadingTextSab: 'route-loading-text-sab',
   fromAmountInputSab: 'from-amount-input-sab',
   switchTokensTooltipSab: 'switch-tokens-condition-tooltip-sab',
   switchCurrencySab: 'switch-currency-sab',
   routePrioritySab: 'route-priority-sab',
-  sushiSwapRoute: 'div:has-text("SushiSwap Aggregator")',
   highPriceImpactSab: '//div[contains(text(), "Very high price impact")]', // TODO: change with ID when we add it
   highSlippageModal: '//div[contains(text(), "higher slippage")]', // TODO: change with ID when we add it
   settingsAddNetworkManually: 'add-network-manually',
