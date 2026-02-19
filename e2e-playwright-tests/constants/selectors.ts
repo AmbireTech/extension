@@ -126,7 +126,7 @@ const selectors = {
     feeSpeedFast: 'option-fast',
     feeSpeedApe: 'option-ape',
     feeGasTankInDollars: '//span[contains(text(),"Gas Tank")]/../../../div[contains(text(),"$")]', // returning e.g. "<$0.01"
-    feeTokenInDollars: '//span[contains(text(),"")]/../../div[contains(text(),"$")]',
+    feeTokenInDollars: '//div[contains(text(),"<$")]',
     confirmingYourTransactionText: 'confirming-your',
     explorer: {
       txnSignedStep: 'signed-step',
@@ -250,7 +250,7 @@ const selectors = {
   privateKeyWarningCheckbox1: 'private-key-warning-checkbox-1',
   privateKeyWarningCheckbox2: 'private-key-warning-checkbox-2',
   nativeTokenBaseDashboard: 'token-0x0000000000000000000000000000000000000000-8453',
-  bannerButtonOpen: 'banner-info-open',
+  bannerButtonOpen: 'dashboard-info-banner',
   bannerButtonReject: 'banner-button-reject',
   confettiModalActionButton: 'confetti-modal-action-button',
   refreshButton: 'refresh-button',
