@@ -221,8 +221,5 @@ export class DashboardPage extends BasePage {
     expect(newTab.url()).toContain('https://rewards.ambire.com/')
 
     await newTab.close()
-
-    // return to dashboard
-    await this.page.locator(selectors.dashboard.backRewardsButton).click()
   }
 }
