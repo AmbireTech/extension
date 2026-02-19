@@ -60,9 +60,10 @@ const ChangeHdPath: React.FC<Props> = ({ setPage, disabled }) => {
         hasBottomSpacing={false}
         disabled={disabled}
         text={t('Advanced mode')}
+        childrenPosition="left"
         textStyle={{ fontSize: 14, fontFamily: FONT_FAMILIES.REGULAR }}
       >
-        <SettingsIcon width={16} style={spacings.mlTy} />
+        <SettingsIcon width={20} style={spacings.mrTy} />
       </Button>
 
       <AdvancedModeBottomSheet

@@ -22,6 +22,7 @@ interface Props extends ViewProps {
   totalSteps?: number
   panelWidth?: number
   panelRef?: React.MutableRefObject<any>
+  innerStyle?: ViewStyle
 }
 
 export const getPanelPaddings = (
@@ -72,6 +73,7 @@ const Panel: React.FC<Props> = ({
   totalSteps = 2,
   panelWidth = 400,
   panelRef,
+  innerStyle,
   ...rest
 }) => {
   const { styles, theme } = useTheme(getStyles)
@@ -102,7 +104,7 @@ const Panel: React.FC<Props> = ({
           styles.onboardingContainer,
           {
             width: '100%',
-            minHeight: minHeightSize(620) ? 444 : 486,
+            minHeight: minHeightSize(620) ? 520 : 560,
             maxWidth: panelWidth,
             alignSelf: 'center',
             maxHeight: minHeightSize('l') ? '95%' : '92%'
@@ -119,12 +121,13 @@ const Panel: React.FC<Props> = ({
               width: '100%',
               maxWidth: panelWidth,
               alignSelf: 'center'
-            }
+            },
+            innerStyle
           ]}
           {...rest}
         >
           {(!!title || !!withBackButton) && (
-            <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbMd]}>
+            <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mb2Xl]}>
               {!!withBackButton && <PanelBackButton onPress={onBackButtonPress} />}
               {!!title && <PanelTitle title={title} />}
               {!!withBackButton && <View style={{ width: 20 }} />}

@@ -57,26 +57,7 @@ const RpcCard = ({
             {url}
           </Text>
         </View>
-        {isNew && (
-          <View
-            style={{
-              height: 20,
-              ...flexbox.directionRow,
-              ...flexbox.alignCenter,
-              ...spacings.plTy,
-              ...spacings.prMi,
-              borderRadius: 64,
-              backgroundColor: theme.success200,
-              borderWidth: 1,
-              borderColor: theme.neutral400
-            }}
-          >
-            <Text fontSize={10} weight="medium" style={spacings.mrMi} color={theme.neutral400}>
-              {t('New')}
-            </Text>
-            <StarsIcon width={12} height={12} color={theme.neutral400} />
-          </View>
-        )}
+        {isNew && <Badge type="new" text={t('New')} />}
       </View>
       <View
         style={[

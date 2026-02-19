@@ -1,8 +1,13 @@
 import React, { useCallback, useEffect } from 'react'
 import { TouchableOpacity, View } from 'react-native'
 
+import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
 import AmbireLogo from '@common/assets/svg/AmbireLogo'
+import AmbireLogoWithBackgroundAndLogotype from '@common/assets/svg/AmbireLogoWithBackgroundAndLogotype'
+import ImportAccountIcon from '@common/assets/svg/ImportAccountIcon'
+import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import ViewModeIcon from '@common/assets/svg/ViewModeIcon'
+import ViewOnlyIcon from '@common/assets/svg/ViewOnlyIcon'
 import Button from '@common/components/Button'
 import Panel from '@common/components/Panel'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
@@ -73,52 +78,68 @@ const GetStartedScreen = () => {
   )
 
   return (
-    <TabLayoutContainer backgroundColor={theme.secondaryBackground} header={<HeaderWithLogoOnly />}>
+    <TabLayoutContainer backgroundColor={theme.secondaryBackground}>
       <TabLayoutWrapperMainContent>
-        <Panel spacingsSize="small" type="onboarding">
+        <Panel spacingsSize="small" type="onboarding" innerStyle={spacings.pt3Xl}>
           <View style={[flexbox.justifySpaceBetween, flexbox.flex1]}>
             <View
-              style={[flexbox.justifyCenter, flexbox.alignCenter, flexbox.flex1, spacings.mbSm]}
+              style={[flexbox.justifyCenter, flexbox.alignCenter, flexbox.flex1, spacings.mb3Xl]}
             >
-              <AmbireLogo height={96} withWrapper />
+              <AmbireLogoWithBackgroundAndLogotype />
               <Text style={[spacings.mtLg, text.center]} weight="medium" appearance="secondaryText">
                 {t('The Web3 wallet that makes self-custody easy and secure.')}
               </Text>
             </View>
-            <ScrollableWrapper contentContainerStyle={[flexbox.justifySpaceBetween]}>
-              <Button
-                testID="create-new-account-btn"
-                type="primary"
-                text={t('Create new account')}
-                onPress={() => handleAuthButtonPress('create-new-account')}
+            <Button
+              testID="create-new-account-btn"
+              type="primary"
+              text={t('Create new account')}
+              onPress={() => handleAuthButtonPress('create-new-account')}
+              childrenPosition="left"
+            >
+              <AddCircularIcon width={24} height={24} color="#fff" style={spacings.mrMi} />
+            </Button>
+            <Button
+              testID="import-existing-account-btn"
+              type="tertiary"
+              text={t('Import existing account')}
+              onPress={() => handleAuthButtonPress('import-existing-account')}
+              childrenPosition="left"
+            >
+              <ImportAccountIcon
+                width={24}
+                height={24}
+                color={theme.primaryText}
+                style={spacings.mrMi}
               />
-              <Button
-                testID="import-existing-account-btn"
-                type="secondary"
-                text={t('Import existing account')}
-                onPress={() => handleAuthButtonPress('import-existing-account')}
+            </Button>
+            <Button
+              testID="watch-an-address-button"
+              type="outline"
+              hasBottomSpacing={false}
+              onPress={() => handleAuthButtonPress('view-only')}
+              text={t('Watch an address')}
+              childrenPosition="left"
+            >
+              <ViewOnlyIcon
+                color={theme.primaryText}
+                width={24}
+                height={24}
+                style={spacings.mrMi}
               />
-              <Button
-                testID="watch-an-address-button"
-                type="ghost"
-                hasBottomSpacing={false}
-                onPress={() => handleAuthButtonPress('view-only')}
-                text={t('Watch an address')}
-                textStyle={{
-                  color: theme.primaryAccent
-                }}
-              >
-                <ViewModeIcon color={theme.primaryAccent} width={24} style={spacings.mlTy} />
-              </Button>
-            </ScrollableWrapper>
+            </Button>
           </View>
           <View style={[flexbox.directionRow, flexbox.alignSelfCenter, spacings.mt]}>
-            <TouchableOpacity onPress={() => navigate(ROUTES.networksConfiguration)}>
+            <TouchableOpacity
+              onPress={() => navigate(ROUTES.networksConfiguration)}
+              style={[flexbox.directionRow, flexbox.alignCenter]}
+            >
+              <SettingsIcon width={20} height={20} style={spacings.mrTy} />
               <Text
                 onPress={() => navigate(ROUTES.networksConfiguration)}
-                fontSize={12}
-                color={theme.infoText}
-                style={{ textDecorationLine: 'underline' }}
+                fontSize={14}
+                weight="medium"
+                color={theme.tertiaryText}
               >
                 {t('Network Configuration')}
               </Text>

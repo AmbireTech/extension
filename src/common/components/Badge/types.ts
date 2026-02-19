@@ -11,6 +11,7 @@ type BadgeType =
   | 'primaryAccent'
   | 'secondaryAccent'
   | 'new'
+  | 'outline'
 
 type SpecialBadgeType = 'metamask' | 'safe'
 
