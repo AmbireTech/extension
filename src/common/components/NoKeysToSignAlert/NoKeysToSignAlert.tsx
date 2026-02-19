@@ -19,9 +19,10 @@ interface Props {
   style?: ViewStyle
   isTransaction?: boolean
   type?: 'long' | 'short'
+  chainId?: bigint
 }
 
-const NoKeysToSignAlert: FC<Props> = ({ style, isTransaction = true, type = 'long' }) => {
+const NoKeysToSignAlert: FC<Props> = ({ style, isTransaction = true, type = 'long', chainId }) => {
   const {
     state: { account }
   } = useController('SelectedAccountController')
@@ -94,6 +95,7 @@ const NoKeysToSignAlert: FC<Props> = ({ style, isTransaction = true, type = 'lon
         account={account}
         showExportImport
         openAddAccountBottomSheet={openAddAccounts}
+        chainId={chainId}
       />
       <AddAccount sheetRef={addAccountsRef} closeBottomSheet={closeAddAccounts} showImportOnly />
     </View>

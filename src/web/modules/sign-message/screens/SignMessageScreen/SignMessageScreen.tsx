@@ -317,7 +317,11 @@ const SignMessageScreen = () => {
               ? {
                   resolveNode: (
                     <View style={[{ flex: 3 }, flexbox.directionRow, flexbox.justifyEnd]}>
-                      <NoKeysToSignAlert type="short" isTransaction={false} />
+                      <NoKeysToSignAlert
+                        type="short"
+                        isTransaction={false}
+                        chainId={signMessageState.network?.chainId}
+                      />
                     </View>
                   )
                 }

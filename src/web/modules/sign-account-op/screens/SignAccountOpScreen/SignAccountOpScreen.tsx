@@ -380,7 +380,7 @@ const SignAccountOpScreen = () => {
                 isEstimationComplete={!!signAccountOpState?.isInitialized && !!network}
               />
             )}
-            {isViewOnly && <NoKeysToSignAlert />}
+            {isViewOnly && <NoKeysToSignAlert chainId={signAccountOpState?.accountOp?.chainId} />}
           </ScrollView>
         </TabLayoutWrapperMainContent>
       </TabLayoutContainer>

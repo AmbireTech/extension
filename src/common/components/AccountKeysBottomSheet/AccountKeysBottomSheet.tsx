@@ -14,6 +14,7 @@ interface Props {
   account: Account | null
   openAddAccountBottomSheet?: () => void
   showExportImport?: boolean
+  chainId?: bigint
 }
 
 const AccountKeysBottomSheet: FC<Props> = ({
@@ -21,7 +22,8 @@ const AccountKeysBottomSheet: FC<Props> = ({
   closeBottomSheet,
   account,
   openAddAccountBottomSheet,
-  showExportImport = false
+  showExportImport = false,
+  chainId
 }) => {
   const handleOpenAccountBottomSheet = useCallback(() => {
     closeBottomSheet()
@@ -47,6 +49,7 @@ const AccountKeysBottomSheet: FC<Props> = ({
           closeBottomSheet={closeBottomSheet}
           keyIconColor={theme.iconPrimary as string}
           showExportImport={showExportImport}
+          chainId={chainId}
         />
       )}
     </BottomSheet>

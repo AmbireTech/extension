@@ -180,7 +180,10 @@ const OneClickEstimation = ({
               )}
             {signingErrors.length > 0 &&
               (signingErrors.map(({ code }) => code).includes('NO_KEYS_AVAILABLE') ? (
-                <NoKeysToSignAlert style={spacings.mt} />
+                <NoKeysToSignAlert
+                  style={spacings.mt}
+                  chainId={signAccountOpController?.accountOp?.chainId}
+                />
               ) : (
                 <Alert title={t(signingErrors[0]!.title)} type="error" style={spacings.mt} />
               ))}

@@ -20,6 +20,7 @@ interface Props {
   closeBottomSheet: () => void
   keyIconColor?: string
   showExportImport?: boolean
+  chainId?: bigint
 }
 
 const AccountKeys: FC<Props> = ({
@@ -27,7 +28,8 @@ const AccountKeys: FC<Props> = ({
   openAddAccountBottomSheet,
   closeBottomSheet,
   keyIconColor,
-  showExportImport
+  showExportImport,
+  chainId
 }) => {
   const { t } = useTranslation()
   const { accountStates } = useController('AccountsController').state
@@ -42,12 +44,18 @@ const AccountKeys: FC<Props> = ({
     return accountStates[account.addr] || null
   }, [account, accountStates])
 
+  const usedNetworks = useMemo(() => {
+    return account.safeCreation && chainId
+      ? networks.filter((n) => n.chainId === chainId)
+      : networks
+  }, [chainId, networks, account.safeCreation])
+
   useEffect(() => {
     const checkedForThisAcc = accountStateCheckedForRef.current === account?.addr
-    const networkStates = networks.filter(
+    const networkStates = usedNetworks.filter(
       (n) => !accountState || !accountState[n.chainId.toString()]
     )
-    if (checkedForThisAcc && (!account || networkStates.length === 0 || networks.length === 0))
+    if (checkedForThisAcc && (!account || networkStates.length === 0 || usedNetworks.length === 0))
       return
 
     accountStateCheckedForRef.current = account.addr
@@ -59,17 +67,17 @@ const AccountKeys: FC<Props> = ({
         chainIds: networkStates.map((n) => n.chainId)
       }
     })
-  }, [accountState, networks, account, dispatch])
+  }, [accountState, usedNetworks, account, dispatch])
 
   /**
    * Get the safe owners by network if the account is a safe
    * We do not display network icons for the others as it doesn't make sense
    */
   const safeOwnersByNetwork: { [address: string]: bigint[] } = useMemo(() => {
-    if (!account.safeCreation || !networks.length || !accountState) return {}
+    if (!account.safeCreation || !usedNetworks.length || !accountState) return {}
 
     const associatedKeysByNetwork: { [address: string]: bigint[] } = {}
-    networks.forEach((n) => {
+    usedNetworks.forEach((n) => {
       const networkState = accountState[n.chainId.toString()]
       if (!networkState) return
       networkState.associatedKeys.forEach((key) => {
@@ -78,7 +86,7 @@ const AccountKeys: FC<Props> = ({
       })
     })
     return associatedKeysByNetwork
-  }, [accountState, networks, account.safeCreation])
+  }, [accountState, usedNetworks, account.safeCreation])
 
   /**
    * Get all the associatedKeys for this account found accross networks.
@@ -86,10 +94,10 @@ const AccountKeys: FC<Props> = ({
    * different owners across networks
    */
   const associatedKeys: string[] = useMemo(() => {
-    if (!networks.length || !accountState) return []
+    if (!usedNetworks.length || !accountState) return []
     return [
       ...new Set(
-        networks
+        usedNetworks
           .map((n) => {
             const networkState = accountState[n.chainId.toString()]
             if (!networkState) return []
@@ -98,7 +106,7 @@ const AccountKeys: FC<Props> = ({
           .flat()
       )
     ]
-  }, [accountState, networks])
+  }, [accountState, usedNetworks])
 
   const importedAccountKeys = keys.filter(({ addr }) => associatedKeys.includes(addr))
   const notImportedAccountKeys = associatedKeys.filter(
