@@ -184,8 +184,8 @@ const OneClickEstimation = ({
                 chainId={signAccountOpController?.accountOp?.chainId}
               />
             )}
-            {!isViewOnly && signingErrors.length && (
-              <Alert title={t(signingErrors[0]!.title)} type="error" style={spacings.mt} />
+            {!isViewOnly && signingErrors && signingErrors[0] && (
+              <Alert title={t(signingErrors[0].title)} type="error" style={spacings.mt} />
             )}
             <BundlerWarning
               signAccountOpState={signAccountOpController}
