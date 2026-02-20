@@ -17,6 +17,7 @@ const { validateEnvVariables } = require('./scripts/validateEnv')
 const appJSON = require('./app.json')
 const AssetReplacePlugin = require('./plugins/AssetReplacePlugin')
 const createReflectMetadataShimPlugin = require('./lavamoat/shims/reflect-metadata-shim-plugin')
+const createSetImmediateShimPlugin = require('./lavamoat/shims/setimmediate-shim-plugin')
 
 const isWebkit = process.env.WEB_ENGINE?.startsWith('webkit')
 const isGecko = process.env.WEB_ENGINE === 'gecko'
@@ -395,7 +396,8 @@ module.exports = async function (env, argv) {
             // Inject reflect-metadata between SES repair and harden in background.js.
             // See createReflectMetadataShimPlugin() comments above.
             // Only needed when LavaMoatPlugin is active (production builds).
-            createReflectMetadataShimPlugin()
+            createReflectMetadataShimPlugin(),
+            createSetImmediateShimPlugin()
           ]
         : []),
       new NodePolyfillPlugin(),
