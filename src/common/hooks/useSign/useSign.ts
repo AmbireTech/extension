@@ -65,6 +65,9 @@ const useSign = ({
     state: { networks }
   } = useController('NetworksController')
   const { dispatch: mainControllerDispatch } = useController('MainController')
+  const {
+    state: { accountStates }
+  } = useController('AccountsController')
   const [isChooseSignerShown, setIsChooseSignerShown] = useState(false)
   const [isChooseFeePayerKeyShown, setIsChooseFeePayerKeyShown] = useState(false)
   const [shouldDisplayLedgerConnectModal, setShouldDisplayLedgerConnectModal] = useState(false)
@@ -312,10 +315,27 @@ const useSign = ({
     closeWarningModal()
   }, [handleUpdateStatus, closeWarningModal])
 
-  const isViewOnly = useMemo(
-    () => signAccountOpState?.accountKeyStoreKeys.length === 0,
-    [signAccountOpState?.accountKeyStoreKeys]
-  )
+  const isViewOnly = useMemo(() => {
+    // for all accounts except safe, check if the account has keys
+    const noKeysImported = signAccountOpState?.accountKeyStoreKeys.length === 0
+    if (!signAccountOpState?.account.safeCreation) return noKeysImported
+
+    // for safe accounts, do not treat accounts that are not deployed
+    // on the network as view only as it will mislead the user into
+    // thinking that the account is deployed but no owners have been
+    // imported
+    const isDeployed =
+      !!accountStates[signAccountOpState?.account.addr]?.[
+        signAccountOpState?.accountOp.chainId.toString()
+      ]?.isDeployed
+
+    return isDeployed && noKeysImported
+  }, [
+    signAccountOpState?.accountKeyStoreKeys,
+    accountStates,
+    signAccountOpState?.account,
+    signAccountOpState?.accountOp.chainId
+  ])
 
   const isAtLeastOneOfTheKeysInvolvedExternal = useMemo(
     () =>
