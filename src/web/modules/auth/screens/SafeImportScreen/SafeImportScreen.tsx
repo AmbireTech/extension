@@ -1,9 +1,10 @@
 import { getAddress, isAddress } from 'ethers'
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { Controller, useForm, useWatch } from 'react-hook-form'
 import { View } from 'react-native'
 
 import SafeIcon from '@common/assets/svg/SafeIcon'
+import SuccessIcon from '@common/assets/svg/SuccessIcon'
 import Alert from '@common/components/Alert'
 import Button from '@common/components/Button'
 import Input from '@common/components/Input'
@@ -13,7 +14,6 @@ import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
@@ -26,7 +26,10 @@ import {
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 
 const SafeImportScreen = () => {
-  const { statuses, importError, safeInfo } = useController('SafeController').state
+  const { dispatch: safeDispatch, state } = useController('SafeController')
+  const { dispatch: accountsDispatch, state: accountsState } = useController('AccountsController')
+  const { statuses, importError, safeInfo } = state
+  const { accounts } = accountsState
   const {
     control,
     handleSubmit,
@@ -46,35 +49,36 @@ const SafeImportScreen = () => {
   const { t } = useTranslation()
   const [safe, setSafe] = useState<string | null>('')
   const { theme } = useTheme()
-  const { dispatch } = useControllersMiddleware()
 
   const handleFormSubmit = useCallback(async () => {
     if (!safe || !safeInfo || isLoading) return
 
     try {
-      // TODO: configure ens?
       setIsLoading(true)
-      dispatch({
-        type: 'ACCOUNTS_CONTROLLER_ADD_ACCOUNTS',
+      accountsDispatch({
+        type: 'method',
         params: {
-          accounts: [
-            {
-              addr: safe,
-              associatedKeys: safeInfo.owners,
-              initialPrivileges: safeInfo.owners.map((o) => [o, '0x01']),
-              creation: null,
-              safeCreation: {
-                factoryAddr: safeInfo.factoryAddr,
-                singleton: safeInfo.singleton,
-                setupData: safeInfo.setupData,
-                saltNonce: safeInfo.saltNonce,
-                version: safeInfo.version
-              },
-              preferences: {
-                label: 'Safe',
-                pfp: safe
+          method: 'addAccounts',
+          args: [
+            [
+              {
+                addr: safe,
+                associatedKeys: safeInfo.owners,
+                initialPrivileges: safeInfo.owners.map((o) => [o, '0x01']),
+                creation: null,
+                safeCreation: {
+                  factoryAddr: safeInfo.factoryAddr,
+                  singleton: safeInfo.singleton,
+                  setupData: safeInfo.setupData,
+                  saltNonce: safeInfo.saltNonce,
+                  version: safeInfo.version
+                },
+                preferences: {
+                  label: 'Safe',
+                  pfp: safe
+                }
               }
-            }
+            ]
           ]
         }
       })
@@ -93,7 +97,7 @@ const SafeImportScreen = () => {
 
       throw e
     }
-  }, [goToNextRoute, addToast, dispatch, t, safe, safeInfo, reset, isLoading])
+  }, [goToNextRoute, addToast, accountsDispatch, t, safe, safeInfo, reset, isLoading])
 
   const getSplitAddress = (value: string) => {
     const addr = value.trim()
@@ -124,19 +128,27 @@ const SafeImportScreen = () => {
 
     if (safeAddr !== safe) setSafe(getAddress(safeAddr))
     if (safeAddr !== safe && safeAddr !== safeInfo?.address) {
-      dispatch({
-        type: 'SAFE_CONTROLLER_FIND_SAFE',
-        params: { safeAddress: safeAddr }
-      })
+      safeDispatch({ type: 'method', params: { method: 'findSafe', args: [safeAddr] } })
     }
-  }, [dispatch, safeAddressValue, safeInfo?.address, safe])
+  }, [safeDispatch, safeAddressValue, safeInfo?.address, safe])
 
   // run on unmount
   useEffect(() => {
     return () => {
-      dispatch({ type: 'SAFE_CONTROLLER_RESET_FIND' })
+      safeDispatch({ type: 'method', params: { method: 'resetFind', args: [] } })
     }
-  }, [dispatch])
+  }, [safeDispatch])
+
+  const isSafeImported = useMemo(() => {
+    return safe && safeInfo && accounts.find((a) => a.addr === safe)
+  }, [safe, safeInfo, accounts])
+
+  const btnText = useMemo(() => {
+    if (isSafeImported) {
+      return isLoading ? 'Proceeding...' : 'Proceed'
+    }
+    return isLoading ? 'Importing...' : 'Import'
+  }, [isSafeImported, isLoading])
 
   return (
     <TabLayoutContainer backgroundColor={theme.secondaryBackground} header={<Header />}>
@@ -197,6 +209,15 @@ const SafeImportScreen = () => {
                     </View>
                   )}
 
+                  {isSafeImported && (
+                    <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mt]}>
+                      <SuccessIcon color={theme.successDecorative} width={20} height={20} />
+                      <Text appearance="successText" style={spacings.mlTy}>
+                        {t('Safe already imported')}
+                      </Text>
+                    </View>
+                  )}
+
                   {safe && safeInfo && safeInfo.requiresModules && (
                     <View style={[flexbox.alignCenter, flexbox.justifyCenter, spacings.mt]}>
                       <Alert
@@ -221,7 +242,7 @@ const SafeImportScreen = () => {
             <Button
               testID="import-button"
               size="large"
-              text={isLoading ? t('Importing...') : t('Import')}
+              text={`${t(btnText)}`}
               hasBottomSpacing={false}
               onPress={handleSubmit(handleFormSubmit)}
               disabled={!isValid || !!importError || statuses.findSafe === 'LOADING'}

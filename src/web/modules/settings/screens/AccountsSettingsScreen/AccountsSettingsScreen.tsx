@@ -295,7 +295,7 @@ const AccountsSettingsScreen = () => {
           />
         </View>
       </BottomSheet>
-      <AddAccount sheetRef={sheetRef} closeBottomSheet={closeBottomSheet} showImportOnly />
+      <AddAccount sheetRef={sheetRef} closeBottomSheet={closeBottomSheet} />
     </>
   )
 }
