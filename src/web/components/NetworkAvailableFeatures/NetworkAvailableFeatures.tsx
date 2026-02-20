@@ -196,7 +196,7 @@ const NetworkAvailableFeatures = ({
                   }
                 ]}
               >
-                <View style={[spacings.mrTy, feature.level !== 'initial' && { marginTop: 3 }]}>
+                <View style={[spacings.mrTy, feature.level === 'danger' && { marginTop: 3 }]}>
                   {feature.level === 'initial' && (
                     <Text
                       fontSize={14 * responsiveSizeMultiplier}
