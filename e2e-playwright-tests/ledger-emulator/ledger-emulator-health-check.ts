@@ -1,5 +1,9 @@
-import Eth from '@ledgerhq/hw-app-eth'
-import TransportNodeSpeculos from '@ledgerhq/hw-transport-node-speculos'
+import EthImport from '@ledgerhq/hw-app-eth'
+import TransportNodeSpeculosImport from '@ledgerhq/hw-transport-node-speculos'
+
+const Eth = (EthImport as any).default ?? EthImport
+const TransportNodeSpeculos =
+  (TransportNodeSpeculosImport as any).default ?? TransportNodeSpeculosImport
 
 const EMULATOR_HOST = '127.0.0.1'
 const EMULATOR_APDU_PORT = 9999
@@ -19,16 +23,13 @@ async function main() {
     const eth = new Eth(transport)
 
     console.log('Requesting Ethereum address from Ledger (path:', ETH_DERIVATION_PATH, ')')
-    const addressResult = await eth.getAddress(ETH_DERIVATION_PATH, false, true)
+    const addressResult = await eth.getAddress(ETH_DERIVATION_PATH)
 
-    console.log('Ledger emulator is UP and running :muscle:')
+    console.log('Ledger emulator is UP and running!')
     console.log('Device Ethereum address:')
     console.log('  Address:', addressResult.address)
     console.log('  Public key:', addressResult.publicKey)
     console.log('  Chain code:', addressResult.chainCode)
-
-    // Optionally, you could combine the signature back into a fully signed tx
-    // if you want to broadcast it using ethers or another library.
   } finally {
     await transport.close()
   }

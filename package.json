@@ -55,8 +55,7 @@
     "extension:type:check": "tsc --noEmit --project tsconfig.typecheck-extension.json",
     "extension:type:check-new": "yarn extension:type:check | yarn tsc-baseline check",
     "setup": "yarn install && yarn allow-scripts && yarn patch-package",
-    "setup:ci": "yarn install --frozen-lockfile && yarn allow-scripts && yarn patch-package",
-    "speculos:test:eth-address": "node ./scripts/speculos-eth-address.js"
+    "setup:ci": "yarn install --frozen-lockfile && yarn allow-scripts && yarn patch-package"
   },
   "engines": {
     "node": ">=24.13.0 <25.0.0",
@@ -251,8 +250,6 @@
     "@babel/preset-react": "7.28.5",
     "@babel/preset-typescript": "7.28.5",
     "@babel/runtime": "7.28.6",
-    "@ledgerhq/hw-app-eth": "7.3.2",
-    "@ledgerhq/hw-transport-node-speculos": "6.28.0",
     "@expo/webpack-config": "19.0.1",
     "@lavamoat/allow-scripts": "3.4.2",
     "@lavamoat/preinstall-always-fail": "2.1.1",
