@@ -2,9 +2,11 @@ import { useEffect, useMemo } from 'react'
 import { useIdleTimer } from 'react-idle-timer'
 
 import useControllerState from '@common/hooks/useControllerState'
-import { Action } from '@web/extension-services/background/actions'
+import { Action, MethodAction } from '@common/types/actions'
 
-export default function useAutoLockControllerHelpers(dispatch: (action: Action) => void) {
+export default function useAutoLockControllerHelpers(
+  dispatch: (action: MethodAction | Action) => void
+) {
   const { state } = useControllerState({ id: 'AutoLockController' })
 
   const autoLockTime = useMemo(() => state.autoLockTime, [state.autoLockTime])

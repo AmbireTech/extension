@@ -11,7 +11,7 @@ import Button from '@common/components/Button'
 import Panel from '@common/components/Panel'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
+import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
@@ -26,7 +26,7 @@ import getStyles from './styles'
 const ActiveRouteCard = ({ activeRoute }: { activeRoute: SwapAndBridgeActiveRoute }) => {
   const { styles, theme } = useTheme(getStyles)
   const { t } = useTranslation()
-  const { dispatch } = useControllersMiddleware()
+  const { dispatch: mainDispatch } = useController('MainController')
   const { navigate } = useNavigation()
 
   const activeTransaction = useMemo(() => {
@@ -47,11 +47,14 @@ const ActiveRouteCard = ({ activeRoute }: { activeRoute: SwapAndBridgeActiveRout
   const outputValueInUsd = activeRoute.route?.outputValueInUsd
 
   const handleRejectActiveRoute = useCallback(() => {
-    dispatch({
-      type: 'MAIN_CONTROLLER_REMOVE_ACTIVE_ROUTE',
-      params: { activeRouteId: activeRoute.activeRouteId }
+    mainDispatch({
+      type: 'method',
+      params: {
+        method: 'removeActiveRoute',
+        args: [activeRoute.activeRouteId]
+      }
     })
-  }, [activeRoute.activeRouteId, dispatch])
+  }, [activeRoute.activeRouteId, mainDispatch])
 
   const getPanelContainerStyle = useCallback(() => {
     let panelStyles = {}

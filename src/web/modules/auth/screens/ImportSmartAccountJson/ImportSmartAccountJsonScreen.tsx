@@ -180,7 +180,10 @@ const SmartAccountImportScreen = () => {
   const [isLoading, setIsLoading] = useState(false)
   const { dispatch } = useControllersMiddleware()
 
-  const { accounts } = useController('AccountsController').state
+  const {
+    state: { accounts }
+  } = useController('AccountsController')
+  const { dispatch: keystoreDispatch } = useController('KeystoreController')
   const newAccounts: Account[] = useMemo(() => accounts.filter((a) => a.newlyAdded), [accounts])
   const { goToNextRoute, goToPrevRoute } = useOnboardingNavigation()
 
@@ -299,14 +302,17 @@ const SmartAccountImportScreen = () => {
     // shouldn't happen
     if (!encryptedKey || !accountToImport) return
 
-    dispatch({
-      type: 'KEYSTORE_CONTROLLER_SEND_PASSWORD_DECRYPTED_PRIVATE_KEY_TO_UI',
+    keystoreDispatch({
+      type: 'method',
       params: {
-        secret: password,
-        key: encryptedKey.key,
-        salt: encryptedKey.salt,
-        iv: encryptedKey.iv,
-        associatedKeys: accountToImport.associatedKeys
+        method: 'sendPasswordDecryptedPrivateKeyToUi',
+        args: [
+          password,
+          encryptedKey.key,
+          encryptedKey.salt,
+          encryptedKey.iv,
+          accountToImport.associatedKeys
+        ]
       }
     })
   }

@@ -11,7 +11,6 @@ import Button from '@common/components/Button'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import usePrevious from '@common/hooks/usePrevious'
 import useTheme from '@common/hooks/useTheme'
 import ActivityPositionsSkeleton from '@common/modules/dashboard/components/Activity/ActivityPositionsSkeleton'
@@ -61,8 +60,10 @@ const ActivityPositions: FC<Props> = ({
   const { t } = useTranslation()
   const { theme } = useTheme()
 
-  const { dispatch } = useControllersMiddleware()
-  const { accountsOps, banners } = useController('ActivityController').state
+  const {
+    state: { accountsOps, banners },
+    dispatch: activityDispatch
+  } = useController('ActivityController')
   const {
     state: { account, dashboardNetworkFilter }
   } = useController('SelectedAccountController')
@@ -74,31 +75,37 @@ const ActivityPositions: FC<Props> = ({
 
   useEffect(() => {
     if (prevOpenTab === 'activity' && openTab !== 'activity') {
-      dispatch({ type: 'MAIN_CONTROLLER_ACTIVITY_RESET_ACC_OPS_FILTERS', params: { sessionId } })
+      activityDispatch({
+        type: 'method',
+        params: { method: 'resetAccountsOpsFilters', args: [sessionId] }
+      })
     }
-  }, [prevOpenTab, openTab, dispatch, sessionId])
+  }, [prevOpenTab, openTab, activityDispatch, sessionId])
 
   useEffect(() => {
     // Optimization: Don't apply filtration if we are not on Activity tab
     if (!account?.addr || openTab !== 'activity') return
 
-    dispatch({
-      type: 'MAIN_CONTROLLER_ACTIVITY_SET_ACC_OPS_FILTERS',
+    activityDispatch({
+      type: 'method',
       params: {
-        sessionId,
-        filters: {
-          account: account.addr,
-          ...(dashboardNetworkFilter && {
-            chainId: dashboardNetworkFilter ? BigInt(dashboardNetworkFilter) : undefined
-          })
-        },
-        pagination: {
-          itemsPerPage: ITEMS_PER_PAGE,
-          fromPage: 0
-        }
+        method: 'filterAccountsOps',
+        args: [
+          sessionId,
+          {
+            account: account.addr,
+            ...(dashboardNetworkFilter && {
+              chainId: dashboardNetworkFilter ? BigInt(dashboardNetworkFilter) : undefined
+            })
+          },
+          {
+            itemsPerPage: ITEMS_PER_PAGE,
+            fromPage: 0
+          }
+        ]
       }
     })
-  }, [openTab, account?.addr, dispatch, dashboardNetworkFilter, sessionId])
+  }, [openTab, account?.addr, activityDispatch, dashboardNetworkFilter, sessionId])
 
   const renderItem = useCallback(
     ({ item }: any) => {
@@ -212,21 +219,25 @@ const ActivityPositions: FC<Props> = ({
               size="small"
               style={[flexbox.alignSelfCenter, spacings.mbSm]}
               onPress={() => {
-                dispatch({
-                  type: 'MAIN_CONTROLLER_ACTIVITY_SET_ACC_OPS_FILTERS',
+                activityDispatch({
+                  type: 'method',
                   params: {
-                    sessionId,
-                    filters: {
-                      account: account!.addr,
-                      ...(dashboardNetworkFilter && {
-                        chainId: dashboardNetworkFilter ? BigInt(dashboardNetworkFilter) : undefined
-                      })
-                    },
-                    pagination: {
-                      itemsPerPage:
-                        (accountsOps[sessionId]?.pagination.itemsPerPage || 0) + ITEMS_PER_PAGE,
-                      fromPage: 0
-                    }
+                    method: 'filterAccountsOps',
+                    args: [
+                      sessionId,
+                      {
+                        account: account!.addr,
+                        ...(dashboardNetworkFilter && {
+                          chainId: dashboardNetworkFilter
+                            ? BigInt(dashboardNetworkFilter)
+                            : undefined
+                        })
+                      },
+                      {
+                        itemsPerPage: ITEMS_PER_PAGE,
+                        fromPage: result.currentPage + 1
+                      }
+                    ]
                   }
                 })
               }}
@@ -257,7 +268,7 @@ const ActivityPositions: FC<Props> = ({
       t,
       network?.explorerUrl,
       account,
-      dispatch,
+      activityDispatch,
       dashboardNetworkFilter
     ]
   )

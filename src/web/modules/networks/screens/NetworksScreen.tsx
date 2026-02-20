@@ -11,7 +11,6 @@ import FooterGlassView from '@common/components/FooterGlassView'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Search from '@common/components/Search'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useNavigation from '@common/hooks/useNavigation/useNavigation.web'
 import useToast from '@common/hooks/useToast'
 import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
@@ -31,10 +30,11 @@ import NetworkBottomSheet, {
 const NetworksScreen = () => {
   const { t } = useTranslation()
   const { addToast } = useToast()
-  const { dispatch } = useControllersMiddleware()
+
   const { navigate } = useNavigation()
   const {
-    state: { account, dashboardNetworkFilter }
+    state: { account, dashboardNetworkFilter },
+    dispatch: selectedAccountDispatch
   } = useController('SelectedAccountController')
   const [settingsChainId, setSettingsChainId] = useState<bigint | string | null>(null)
   const [searchParams] = useSearchParams()
@@ -71,13 +71,13 @@ const NetworksScreen = () => {
 
   const handleChangeNetwork = useCallback(
     (chainId: bigint | string | null) => {
-      dispatch({
-        type: 'SELECTED_ACCOUNT_SET_DASHBOARD_NETWORK_FILTER',
-        params: { dashboardNetworkFilter: chainId }
+      selectedAccountDispatch({
+        type: 'method',
+        params: { method: 'setDashboardNetworkFilter', args: [chainId] }
       })
       setChangedNetwork(chainId)
     },
-    [dispatch, setChangedNetwork]
+    [selectedAccountDispatch, setChangedNetwork]
   )
 
   const handleOpenSettingsBottomSheet = useCallback(

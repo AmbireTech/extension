@@ -5,22 +5,19 @@ import LockIcon from '@common/assets/svg/LockIcon'
 import Button from '@common/components/Button'
 import ControlOption from '@common/components/ControlOption'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useNavigation from '@common/hooks/useNavigation'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 
 const LockAmbireControlOption = () => {
-  const { dispatch } = useControllersMiddleware()
   const { t } = useTranslation()
   const { navigate } = useNavigation()
   const { hasPasswordSecret } = useController('KeystoreController').state
+  const { dispatch: mainDispatch } = useController('MainController')
 
   const handleLockAmbire = useCallback(() => {
-    dispatch({
-      type: 'MAIN_CONTROLLER_LOCK'
-    })
-  }, [dispatch])
+    mainDispatch({ type: 'method', params: { method: 'lock', args: [] } })
+  }, [mainDispatch])
 
   const handleGoToDevicePasswordSet = useCallback(() => {
     navigate(WEB_ROUTES.devicePasswordSet)

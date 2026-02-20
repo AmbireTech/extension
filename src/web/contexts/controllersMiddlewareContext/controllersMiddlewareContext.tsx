@@ -11,9 +11,9 @@ import { ControllerStoreContext } from '@common/contexts/controllerStoreContext'
 import useIsScreenFocused from '@common/hooks/useIsScreenFocused'
 import useRoute from '@common/hooks/useRoute'
 import useToast from '@common/hooks/useToast'
+import { Action, MethodAction } from '@common/types/actions'
 import { isExtension } from '@web/constants/browserapi'
 import { controllersMapping } from '@web/constants/controllersMapping'
-import { Action } from '@web/extension-services/background/actions'
 import { closeCurrentWindow } from '@web/extension-services/background/webapi/window'
 import eventBus from '@web/extension-services/event/eventBus'
 import { PortMessenger } from '@web/extension-services/messengers'
@@ -26,7 +26,7 @@ import { getUiType } from '@web/utils/uiType'
 
 let globalDispatch: ControllersMiddlewareContextReturnType['dispatch']
 let pm: PortMessenger
-const actionsBeforeBackgroundReady: Action[] = []
+const actionsBeforeBackgroundReady: (MethodAction | Action)[] = []
 let backgroundReady: boolean = false
 let controllerReady: boolean = false
 let connectPort: () => Promise<void> = () => Promise.resolve()
@@ -118,10 +118,13 @@ if (isExtension) {
 }
 
 if (isExtension) {
-  const ACTIONS_TO_DISPATCH_EVEN_WHEN_HIDDEN = [
-    'INIT_CONTROLLER_STATE',
-    'MAIN_CONTROLLER_ACTIVITY_SET_ACC_OPS_FILTERS',
-    'MAIN_CONTROLLER_ACTIVITY_RESET_ACC_OPS_FILTERS'
+  const ACTION_TYPES_TO_DISPATCH_EVEN_WHEN_HIDDEN = ['INIT_CONTROLLER_STATE']
+
+  const ACTION_METHODS_TO_DISPATCH_EVEN_WHEN_HIDDEN = [
+    'filterAccountsOps',
+    'filterSignedMessages',
+    'resetAccountsOpsFilters',
+    'resetSignedMessagesFilters'
   ]
 
   globalDispatch = (action, windowId?: number) => {
@@ -132,7 +135,12 @@ if (isExtension) {
     // because we can have only one instance of request-window and only one instance for the given action screen
     // (an action screen could not be opened in tab or popup window by design)
     const shouldBlockDispatch = document.hidden && !getUiType().isRequestWindow
-    if (shouldBlockDispatch && !ACTIONS_TO_DISPATCH_EVEN_WHEN_HIDDEN.includes(action.type)) return
+    if (
+      shouldBlockDispatch &&
+      !ACTION_TYPES_TO_DISPATCH_EVEN_WHEN_HIDDEN.includes(action.type) &&
+      !ACTION_METHODS_TO_DISPATCH_EVEN_WHEN_HIDDEN.includes((action as any).params?.method)
+    )
+      return
 
     if (!backgroundReady) {
       actionsBeforeBackgroundReady.push(action)
@@ -154,7 +162,7 @@ export const ControllersMiddlewareProvider: React.FC<{ children: React.ReactNode
   const { controllerStore } = useContext(ControllerStoreContext)
 
   const dispatch = useCallback(
-    (action: Action) => {
+    (action: MethodAction | Action) => {
       globalDispatch(action, windowId)
     },
     [windowId]

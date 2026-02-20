@@ -10,7 +10,7 @@ import DialogButton from '@common/components/Dialog/DialogButton'
 import DialogFooter from '@common/components/Dialog/DialogFooter'
 import Text from '@common/components/Text'
 import Tooltip from '@common/components/Tooltip'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
@@ -28,7 +28,7 @@ const ManageContact: FC<Props> = ({ address, name, tooltipRef }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { addToast } = useToast()
-  const { dispatch } = useControllersMiddleware()
+  const { dispatch: addressBookDispatch } = useController('AddressBookController')
   const { ref: dialogRef, open: openDialog, close: closeDialog } = useModalize()
   const [bindRemoveBtnAnim, removeBtnAnimStyle] = useCustomHover({
     property: 'backgroundColor',
@@ -39,10 +39,11 @@ const ManageContact: FC<Props> = ({ address, name, tooltipRef }) => {
   })
 
   const removeContact = () => {
-    dispatch({
-      type: 'ADDRESS_BOOK_CONTROLLER_REMOVE_CONTACT',
+    addressBookDispatch({
+      type: 'method',
       params: {
-        address
+        method: 'removeManuallyAddedContact',
+        args: [address]
       }
     })
     closeDialog()

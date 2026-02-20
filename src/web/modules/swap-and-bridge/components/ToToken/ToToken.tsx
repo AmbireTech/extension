@@ -16,7 +16,6 @@ import getStyles from '@common/components/SendToken/styles'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useGetTokenSelectProps from '@common/hooks/useGetTokenSelectProps'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
@@ -52,33 +51,39 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
     supportedChainIds,
     signAccountOpController
   } = useController('SwapAndBridgeController').state
+  const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
 
   const { networks } = useController('NetworksController').state
   const {
     state: { account }
   } = useController('SelectedAccountController')
-  const { dispatch } = useControllersMiddleware()
 
   const handleSwitchFromAndToTokens = useCallback(
     () =>
-      dispatch({
-        type: 'SWAP_AND_BRIDGE_CONTROLLER_SWITCH_FROM_AND_TO_TOKENS'
+      swapAndBridgeDispatch({
+        type: 'method',
+        params: { method: 'switchFromAndToTokens', args: [] }
       }),
-    [dispatch]
+    [swapAndBridgeDispatch]
   )
 
   const handleSetToNetworkValue = useCallback(
     (networkOption: SelectValue) => {
-      dispatch({
-        type: 'SWAP_AND_BRIDGE_CONTROLLER_UPDATE_FORM',
+      swapAndBridgeDispatch({
+        type: 'method',
         params: {
-          formValues: {
-            toChainId: networks.filter((n) => String(n.chainId) === networkOption.value)[0]?.chainId
-          }
+          method: 'updateForm',
+          args: [
+            {
+              toChainId: networks.filter((n) => String(n.chainId) === networkOption.value)[0]
+                ?.chainId
+            },
+            undefined
+          ]
         }
       })
     },
-    [networks, dispatch]
+    [networks, swapAndBridgeDispatch]
   )
 
   const tokensInToTokenSelect = useMemo(() => {
@@ -183,18 +188,22 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
         toSelectedTokenAddr === fromSelectedToken.address &&
         BigInt(toChainId) === fromSelectedToken.chainId
 
-      dispatch({
-        type: 'SWAP_AND_BRIDGE_CONTROLLER_UPDATE_FORM',
+      swapAndBridgeDispatch({
+        type: 'method',
         params: {
-          formValues: {
-            toSelectedTokenAddr,
-            // Reset the from token if it's the same. undefined acts as "do nothing", null as reset
-            fromSelectedToken: isSameAsFromToken ? null : undefined
-          }
+          method: 'updateForm',
+          args: [
+            {
+              toSelectedTokenAddr,
+              // Reset the from token if it's the same. undefined acts as "do nothing", null as reset
+              fromSelectedToken: isSameAsFromToken ? null : undefined
+            },
+            undefined
+          ]
         }
       })
     },
-    [fromSelectedToken, toChainId, dispatch]
+    [fromSelectedToken, toChainId, swapAndBridgeDispatch]
   )
 
   const handleAddToTokenByAddress = useCallback(
@@ -202,12 +211,12 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
       const isValidTokenAddress = isAddress(searchTerm)
       if (!isValidTokenAddress) return
 
-      dispatch({
-        type: 'SWAP_AND_BRIDGE_CONTROLLER_ADD_TO_TOKEN_BY_ADDRESS',
-        params: { address: searchTerm }
+      swapAndBridgeDispatch({
+        type: 'method',
+        params: { method: 'addToTokenByAddress', args: [searchTerm] }
       })
     },
-    [dispatch]
+    [swapAndBridgeDispatch]
   )
 
   const toAmount = useMemo(() => {

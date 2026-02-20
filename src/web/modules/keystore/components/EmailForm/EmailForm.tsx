@@ -15,7 +15,6 @@ import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import usePrevious from '@common/hooks/usePrevious'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
@@ -37,8 +36,7 @@ const EmailForm = () => {
     defaultValues: { email: '' }
   })
 
-  const { dispatch } = useControllersMiddleware()
-  const emailVault = useController('EmailVaultController').state
+  const { state: emailVault, dispatch: evDispatch } = useController('EmailVaultController')
   const {
     ref: confirmationModalRef,
     open: openConfirmationModal,
@@ -76,16 +74,25 @@ const EmailForm = () => {
   }, [formEmail, email, isWaitingConfirmation, setValue])
 
   const handleSendRecoveryEmail = useCallback(async () => {
-    dispatch({
-      type: 'EMAIL_VAULT_CONTROLLER_HANDLE_MAGIC_LINK_KEY',
-      params: { email: formEmail, flow: 'recovery' }
+    evDispatch({
+      type: 'method',
+      params: {
+        method: 'handleMagicLinkKey',
+        args: [formEmail, undefined, 'recovery']
+      }
     })
-  }, [formEmail, dispatch])
+  }, [formEmail, evDispatch])
 
   const handleCancelLoginAttempt = useCallback(() => {
-    dispatch({ type: 'EMAIL_VAULT_CONTROLLER_CANCEL_CONFIRMATION' })
+    evDispatch({
+      type: 'method',
+      params: {
+        method: 'cancelEmailConfirmation',
+        args: []
+      }
+    })
     closeConfirmationModal()
-  }, [dispatch, closeConfirmationModal])
+  }, [evDispatch, closeConfirmationModal])
 
   return (
     <>

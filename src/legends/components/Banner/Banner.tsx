@@ -10,6 +10,21 @@ interface Props {
 }
 const emojis = ['🚀', '🔥', '🗣', '📢']
 const Banner: React.FC<Props> = ({ activeProposals }) => {
+
+  // @TODO custom banner variance for season 0 claiming can be removed after the specified date
+  const shouldDisplayBannerClaimingS0 = Date.now() < new Date('2026-02-27').getTime()
+  if (shouldDisplayBannerClaimingS0)
+    return (
+      <div className={styles.container}>
+        <img className={styles.iconPlaceholder} src={governance} alt="Governance banner icon" />
+        <div className={styles.textContent}>
+          <div className={styles.title}>
+            Claim Season 0 rewards before March 1st
+          </div>
+        </div>
+      </div>
+    )
+
   const firstProposal = activeProposals?.[0]
 
   if (!firstProposal) {

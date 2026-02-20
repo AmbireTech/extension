@@ -17,7 +17,6 @@ import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
 import Tooltip from '@common/components/Tooltip'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
@@ -145,9 +144,11 @@ const NetworkForm = ({
   onSaved: () => void
 }) => {
   const { t } = useTranslation()
-  const { dispatch } = useControllersMiddleware()
   const { addToast } = useToast()
-  const { allNetworks, networkToAddOrUpdate, statuses } = useController('NetworksController').state
+  const {
+    state: { allNetworks, networkToAddOrUpdate, statuses },
+    dispatch: networksDispatch
+  } = useController('NetworksController')
   const [isValidatingRPC, setValidatingRPC] = useState<boolean>(false)
   const { styles, theme } = useTheme(getStyles)
 
@@ -210,16 +211,26 @@ const NetworkForm = ({
   )
 
   useEffect(() => {
-    dispatch({
-      type: 'NETWORKS_CONTROLLER_RESET_NETWORK_TO_ADD_OR_UPDATE'
+    networksDispatch({
+      type: 'method',
+      params: {
+        method: 'setNetworkToAddOrUpdate',
+        args: [null]
+      }
     })
-  }, [dispatch])
+  }, [networksDispatch])
 
   const validateRpcUrlAndRecalculateFeatures = useCallback(
     async (rpcUrl?: string, chainId?: string | number, type: 'add' | 'change' = 'change') => {
       setValidatingRPC(true)
       if (type === 'change') {
-        dispatch({ type: 'NETWORKS_CONTROLLER_RESET_NETWORK_TO_ADD_OR_UPDATE' })
+        networksDispatch({
+          type: 'method',
+          params: {
+            method: 'setNetworkToAddOrUpdate',
+            args: [null]
+          }
+        })
       }
       if (!rpcUrl && !selectedRpcUrl) {
         setValidatingRPC(false)
@@ -293,9 +304,13 @@ const NetworkForm = ({
             addToast('Invalid RPC url', { type: 'error' })
             return
           }
-          dispatch({
-            type: 'NETWORKS_CONTROLLER_SET_NETWORK_TO_ADD_OR_UPDATE',
-            params: { rpcUrl: rpcUrl as string, chainId: BigInt(chainId) }
+
+          networksDispatch({
+            type: 'method',
+            params: {
+              method: 'setNetworkToAddOrUpdate',
+              args: [{ rpcUrl: rpcUrl as string, chainId: BigInt(chainId) }]
+            }
           })
         }
         setValidatingRPC(false)
@@ -310,7 +325,7 @@ const NetworkForm = ({
     [
       selectedRpcUrl,
       rpcUrls,
-      dispatch,
+      networksDispatch,
       setError,
       allNetworks,
       selectedChainId,
@@ -464,32 +479,40 @@ const NetworkForm = ({
       if (emptyFields.length || !rpcUrls.length || !selectedRpcUrl) return
 
       if (selectedChainId === 'add-custom-network') {
-        dispatch({
-          type: 'MAIN_CONTROLLER_ADD_NETWORK',
+        networksDispatch({
+          type: 'method',
           params: {
-            ...networkFormValues,
-            name: networkFormValues.name,
-            nativeAssetSymbol: networkFormValues.nativeAssetSymbol,
-            nativeAssetName: networkFormValues.nativeAssetName,
-            explorerUrl: networkFormValues.explorerUrl,
-            rpcUrls,
-            selectedRpcUrl,
-            chainId: BigInt(networkFormValues.chainId),
-            iconUrls: [],
-            customBundlerUrl: networkFormValues.customBundlerUrl
+            method: 'addNetwork',
+            args: [
+              {
+                ...networkFormValues,
+                name: networkFormValues.name,
+                nativeAssetSymbol: networkFormValues.nativeAssetSymbol,
+                nativeAssetName: networkFormValues.nativeAssetName,
+                explorerUrl: networkFormValues.explorerUrl,
+                rpcUrls,
+                selectedRpcUrl,
+                chainId: BigInt(networkFormValues.chainId),
+                iconUrls: [],
+                customBundlerUrl: networkFormValues.customBundlerUrl
+              }
+            ]
           }
         })
       } else {
-        dispatch({
-          type: 'MAIN_CONTROLLER_UPDATE_NETWORK',
+        networksDispatch({
+          type: 'method',
           params: {
-            network: {
-              rpcUrls,
-              selectedRpcUrl,
-              explorerUrl: networkFormValues.explorerUrl,
-              customBundlerUrl: networkFormValues.customBundlerUrl
-            },
-            chainId: BigInt(networkFormValues.chainId)
+            method: 'updateNetwork',
+            args: [
+              {
+                rpcUrls,
+                selectedRpcUrl,
+                explorerUrl: networkFormValues.explorerUrl,
+                customBundlerUrl: networkFormValues.customBundlerUrl
+              },
+              BigInt(networkFormValues.chainId)
+            ]
           }
         })
       }
@@ -503,14 +526,17 @@ const NetworkForm = ({
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         const chainId = watch('chainId')
         if (chainId) {
-          dispatch({
-            type: 'NETWORKS_CONTROLLER_SET_NETWORK_TO_ADD_OR_UPDATE',
-            params: { rpcUrl: url, chainId: BigInt(chainId) }
+          networksDispatch({
+            type: 'method',
+            params: {
+              method: 'setNetworkToAddOrUpdate',
+              args: [{ rpcUrl: url, chainId: BigInt(chainId) }]
+            }
           })
         }
       }
     },
-    [selectedRpcUrl, dispatch, watch]
+    [selectedRpcUrl, networksDispatch, watch]
   )
 
   const handleRemoveRpcUrl = useCallback(

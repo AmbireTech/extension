@@ -11,7 +11,7 @@ import { StorageController } from '@ambire-common/controllers/storage/storage'
 import { ExplorerBaseControllersMappingType } from '@benzin/constants/controllersMapping'
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext'
 import { ControllerStoreContext } from '@common/contexts/controllerStoreContext'
-import { Action } from '@web/extension-services/background/actions'
+import { Action, MethodAction } from '@common/types/actions'
 import { storage } from '@web/extension-services/background/webapi/storage'
 import eventBus from '@web/extension-services/event/eventBus'
 
@@ -87,7 +87,7 @@ export const ControllersMiddlewareProvider: React.FC<{
     })()
   )
 
-  const dispatch = useCallback((action: Action) => {
+  const dispatch = useCallback((action: MethodAction | Action) => {
     if (action.type === 'method') {
       const { ctrlName, method, args } = action.params
 

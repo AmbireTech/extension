@@ -36,7 +36,7 @@ const SavedSeedPhrases = ({ handleClose }: { handleClose: () => void }) => {
       setAddAccountButtonPressed(false)
       goToNextRoute(WEB_ROUTES.accountPersonalize)
     }
-  }, [addAccountButtonPressed, goToNextRoute, dispatch, initParams, subType])
+  }, [addAccountButtonPressed, goToNextRoute, initParams, subType])
 
   const getAccountsForSeed = useCallback(
     (seedId: string) => {

@@ -6,7 +6,6 @@ import { useModalize } from 'react-native-modalize'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import { SelectValue } from '@common/components/Select/types'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import flexbox from '@common/styles/utils/flexbox'
 import { tokenOrCollectionSearch } from '@common/utils/search'
 import { networkSort } from '@common/utils/sorting'
@@ -26,10 +25,10 @@ const ManageTokensSettingsScreen = () => {
   } = useModalize()
   const { tokenPreferences, customTokens: portfolioCustomTokens } =
     useController('PortfolioController').state
-  const { dispatch } = useControllersMiddleware()
   const { setCurrentSettingsPage } = useContext(SettingsRoutesContext)
   const { control, watch } = useForm({ mode: 'all', defaultValues: { search: '' } })
   const { networks } = useController('NetworksController').state
+  const { dispatch: mainDispatch } = useController('MainController')
   const {
     state: {
       portfolio: { isAllReady, tokens }
@@ -114,12 +113,16 @@ const ManageTokensSettingsScreen = () => {
     }
 
     debouncedPortfolioUpdateInterval.current = setTimeout(() => {
-      dispatch({
-        type: 'MAIN_CONTROLLER_UPDATE_SELECTED_ACCOUNT_PORTFOLIO'
+      mainDispatch({
+        type: 'method',
+        params: {
+          method: 'updateSelectedAccountPortfolio',
+          args: []
+        }
       })
       debouncedPortfolioUpdateInterval.current = null
     }, 1000)
-  }, [dispatch])
+  }, [mainDispatch])
 
   const handleCloseAddTokenBottomSheet = useCallback(() => {
     closeAddTokenBottomSheet()

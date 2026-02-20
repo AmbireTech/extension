@@ -4,22 +4,37 @@ import { SvgProps } from 'react-native-svg'
 
 import AmbireLogoHorizontalMonochrome from '@common/assets/svg/AmbireLogoHorizontalMonochrome'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 
 import styles from './styles'
 
 const PRESS_THRESHOLD = 7
 
 const ToggleOG: React.FC<SvgProps> = ({ ...rest }) => {
-  const { dispatch } = useControllersMiddleware()
-  const { isOG } = useController('InviteController').state
+  const {
+    state: { isOG },
+    dispatch: inviteDispatch
+  } = useController('InviteController')
   const [, setPressCount] = useState(0)
 
   const toggleOG = useCallback(() => {
-    dispatch({
-      type: isOG ? 'INVITE_CONTROLLER_REVOKE_OG' : 'INVITE_CONTROLLER_BECOME_OG'
-    })
-  }, [dispatch, isOG])
+    if (isOG) {
+      inviteDispatch({
+        type: 'method',
+        params: {
+          method: 'becomeOG',
+          args: []
+        }
+      })
+    } else {
+      inviteDispatch({
+        type: 'method',
+        params: {
+          method: 'revokeOG',
+          args: []
+        }
+      })
+    }
+  }, [inviteDispatch, isOG])
 
   const handlePress = useCallback(() => {
     setPressCount((prevCount) => {
