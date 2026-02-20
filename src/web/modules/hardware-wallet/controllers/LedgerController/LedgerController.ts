@@ -6,7 +6,7 @@ import { TypedMessageUserRequest } from '@ambire-common/interfaces/userRequest'
 import { normalizeLedgerMessage } from '@ambire-common/libs/ledger/ledger'
 import { getHdPathFromTemplate, getHdPathWithoutRoot } from '@ambire-common/utils/hdPath'
 import hexStringToUint8Array from '@ambire-common/utils/hexStringToUint8Array'
-import { isLedgerEmulator, LEDGER_EMULATOR_HTTP_URL } from '@common/config/env'
+import { isLedgerEmulator, isProd, LEDGER_EMULATOR_HTTP_URL } from '@common/config/env'
 import { ContextModuleBuilder } from '@ledgerhq/context-module'
 import {
   DeviceManagementKitBuilder,
@@ -234,21 +234,33 @@ class LedgerController implements ExternalSignerController {
       // Create the signer using the dynamically imported constructor
       // Create a simple logger factory for ContextModule
       // LoggerPublisherService requires: subscribers array and error/warn/info/debug methods
-      const loggerFactory = (tag: string) => ({
-        subscribers: [],
-        error: (message: string) => {
-          console.error(`[ContextModule:${tag}]`, message)
-        },
-        warn: (message: string) => {
-          console.warn(`[ContextModule:${tag}]`, message)
-        },
-        info: (message: string) => {
-          console.info(`[ContextModule:${tag}]`, message)
-        },
-        debug: (message: string) => {
-          console.debug(`[ContextModule:${tag}]`, message)
+      const loggerFactory = (tag: string) => {
+        if (isProd) {
+          return {
+            subscribers: [],
+            error: () => {},
+            warn: () => {},
+            info: () => {},
+            debug: () => {}
+          }
         }
-      })
+
+        return {
+          subscribers: [],
+          error: (message: string) => {
+            console.error(`[ContextModule:${tag}]`, message)
+          },
+          warn: (message: string) => {
+            console.warn(`[ContextModule:${tag}]`, message)
+          },
+          info: (message: string) => {
+            console.info(`[ContextModule:${tag}]`, message)
+          },
+          debug: (message: string) => {
+            console.debug(`[ContextModule:${tag}]`, message)
+          }
+        }
+      }
 
       const contextModule = new ContextModuleBuilder({
         originToken: 'ambire',
