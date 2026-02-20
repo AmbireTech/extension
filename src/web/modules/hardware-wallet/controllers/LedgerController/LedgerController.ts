@@ -219,25 +219,16 @@ class LedgerController implements ExternalSignerController {
       this.walletSDK = dmkBuilder.build()
 
       const device = await this.#findDevice()
-      console.log({ device })
 
       if (!device) throw new Error('No Ledger device detected.')
       if (!this.walletSDK) throw new Error('Connection to Ledger device lost.')
 
       // Get device information
       const sessionId = await this.walletSDK.connect({ device })
-      console.log({ sessionId })
 
       const connectedDevice = this.walletSDK.getConnectedDevice({ sessionId })
       this.deviceModel = connectedDevice.modelId
       this.deviceId = connectedDevice.id
-
-      console.log({
-        sessionId,
-        connectedDevice,
-        deviceModel: this.deviceModel,
-        deviceId: this.deviceId
-      })
 
       // TODO: Figure out why this is required for speculos and if it can be imported from somewhere?
       // Create the signer using the dynamically imported constructor
