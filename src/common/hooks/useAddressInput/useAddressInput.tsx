@@ -118,6 +118,11 @@ const useAddressInput = ({
       return
     }
 
+    // If we already have an ENS address for this domain, don't resolve again
+    if (addressState.ensAddress && !addressState.isDomainResolving) {
+      return
+    }
+
     setAddressState({
       isDomainResolving: true
     })
@@ -140,7 +145,13 @@ const useAddressInput = ({
     return () => {
       clearTimeout(timeout)
     }
-  }, [fieldValue, setAddressState, resolveDomain])
+  }, [
+    fieldValue,
+    addressState.ensAddress,
+    addressState.isDomainResolving,
+    setAddressState,
+    resolveDomain
+  ])
 
   useEffect(() => {
     fieldValueRef.current = addressState.fieldValue
