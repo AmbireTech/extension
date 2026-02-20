@@ -125,7 +125,10 @@ const MultipleSignersSelect = ({
           text={t('Sign')}
           isLoading={isSigning}
           disabled={selectedSigners.length !== leftThreshold}
-          onPress={() => handleSetMultisigSigners(selectedSigners)}
+          onPress={() => {
+            handleSetMultisigSigners(selectedSigners)
+            handleClose()
+          }}
           style={spacings.ml0}
           size="small"
         />

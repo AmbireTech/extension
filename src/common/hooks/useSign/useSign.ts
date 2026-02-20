@@ -281,7 +281,9 @@ const useSign = ({
     if (!signAccountOpState) return
 
     const isSafeWithManualSigners =
-      !!signAccountOpState?.account.safeCreation && !signAccountOpState.accountOp.signers?.length
+      !!signAccountOpState?.account.safeCreation &&
+      !signAccountOpState.accountOp.signers?.length &&
+      (signAccountOpState.accountOp.signed?.length || 0) < signAccountOpState.threshold
 
     // If the account has only one signer, we don't need to show the select signer overlay,
     // and we will sign the transaction with the only one available signer (it is set by default in the controller).
