@@ -21,4 +21,4 @@ docker run --rm -it \
   --apdu-port 9999 \
   --api-port 5000 \
   --transport HID \
-  --seed "$LEDGER_SEED"
+  --seed "$LEDGER_EMULATOR_SEED"
