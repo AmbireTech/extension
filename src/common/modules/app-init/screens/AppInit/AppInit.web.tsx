@@ -22,6 +22,7 @@ import { PortalHost, PortalProvider } from '@gorhom/portal'
 import { isExtension } from '@web/constants/browserapi'
 import { ControllersMiddlewareProvider } from '@web/contexts/controllersMiddlewareContext'
 import { ControllersStateLoadedProvider } from '@web/contexts/controllersStateLoadedContext'
+import { getUiType } from '@web/utils/uiType'
 
 const Router = isExtension ? HashRouter : BrowserRouter
 
@@ -29,22 +30,6 @@ const errorComponent = ({ error }: { error: Error }) => <ErrorComponent error={e
 
 // Composed at runtime to avoid Babel JSX transform bug with very deep nesting (~40+ levels).
 type ProviderComponent = React.ComponentType<{ children: React.ReactNode }>
-
-const composeProviders = (
-  providers: ProviderComponent[],
-  children: React.ReactNode
-): React.ReactNode =>
-  providers.reduceRight<React.ReactNode>((acc, Provider) => <Provider>{acc}</Provider>, children)
-
-const CONTROLLER_STATE_PROVIDERS: ProviderComponent[] = [
-  // Reading from controllers in components, rendered above ControllersStateLoadedProvider
-  // must be done very carefully, as it is not guaranteed that the state is loaded.
-  ControllersStateLoadedProvider,
-  KeyboardProvider,
-  NetInfoProvider,
-  AuthProvider,
-  OnboardingNavigationProvider
-]
 
 const AppInit = () => {
   const { fontsLoaded } = useFonts()
@@ -69,7 +54,17 @@ const AppInit = () => {
                 <ControllersMiddlewareProvider>
                   <ThemeProvider>
                     <GestureHandler>
-                      {composeProviders(CONTROLLER_STATE_PROVIDERS, appContent)}
+                      <ControllersStateLoadedProvider>
+                        <KeyboardProvider>
+                          <NetInfoProvider>
+                            <AuthProvider>
+                              <OnboardingNavigationProvider uiType={getUiType().uiType}>
+                                {appContent}
+                              </OnboardingNavigationProvider>
+                            </AuthProvider>
+                          </NetInfoProvider>
+                        </KeyboardProvider>
+                      </ControllersStateLoadedProvider>
                     </GestureHandler>
                   </ThemeProvider>
                 </ControllersMiddlewareProvider>

@@ -3,7 +3,7 @@ import { isExtension } from '@web/constants/browserapi'
 
 type Pathname = 'index' | 'tab' | 'request-window'
 
-type UiType = 'popup' | 'tab' | 'request-window'
+export type UiType = 'popup' | 'tab' | 'request-window'
 
 const UI_TYPE: { [key: string]: Pathname } = {
   Tab: 'tab',

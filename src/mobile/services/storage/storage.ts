@@ -20,4 +20,9 @@ const storage: Storage = {
   }
 }
 
-export { storage }
+const syncStorage = {
+  getItem: (key: string) => instance.getString(key) || null,
+  setItem: (key: string, value: string) => instance.set(key, value)
+}
+
+export { storage, syncStorage }

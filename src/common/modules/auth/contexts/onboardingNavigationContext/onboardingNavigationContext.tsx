@@ -4,6 +4,7 @@ import { NavigateOptions } from 'react-router-dom'
 
 import { Account } from '@ambire-common/interfaces/account'
 import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
+import { ControllersStateLoadedContext } from '@common/contexts/controllersStateLoadedContext'
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useNavigation from '@common/hooks/useNavigation'
@@ -12,8 +13,7 @@ import useRoute from '@common/hooks/useRoute'
 import { AUTH_STATUS } from '@common/modules/auth/constants/authStatus'
 import useAuth from '@common/modules/auth/hooks/useAuth'
 import { ONBOARDING_WEB_ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
-import { ControllersStateLoadedContext } from '@web/contexts/controllersStateLoadedContext'
-import { getUiType } from '@web/utils/uiType'
+import { UiType } from '@web/utils/uiType'
 
 export type OnboardingRoute = (typeof ONBOARDING_WEB_ROUTES)[number]
 type HwWalletsNeedingRedirect = 'trezor' | 'lattice' | null
@@ -60,7 +60,13 @@ const getAccountsToPersonalizeFromSession = (): Account[] => {
   }
 }
 
-const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode }) => {
+const OnboardingNavigationProvider = ({
+  children,
+  uiType
+}: {
+  children: React.ReactNode
+  uiType?: UiType
+}) => {
   const { hasPasswordSecret } = useController('KeystoreController').state
   const { statuses: emailVaultStatuses } = useController('EmailVaultController').state
   const { path, params } = useRoute()
@@ -305,7 +311,7 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
   const [triggeredHwWalletFlow, setTriggeredHwWalletFlow] = useState<HwWalletsNeedingRedirect>(null)
 
   useEffect(() => {
-    if (getUiType().isPopup) return
+    if (uiType === 'popup') return
 
     const currentRoute = path?.substring(1)
     if (!currentRoute) return
@@ -317,7 +323,7 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
     if (!ONBOARDING_WEB_ROUTES.includes(currentRoute) && onboardingInitialized) {
       setOnboardingInitialized(false)
     }
-  }, [onboardingInitialized, path])
+  }, [onboardingInitialized, uiType, path])
 
   useEffect(() => {
     const shouldRedirectToHwWalletFlow =
@@ -363,7 +369,7 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
   // If a user attempts to access one of these routes directly via the URL bar,
   // this hook should block the navigation and redirect them back to the previous route.
   useEffect(() => {
-    if (getUiType().isPopup) return
+    if (uiType === 'popup') return
     const currentRoute = path?.substring(1)
     const prevRoute = prevPath?.substring(1)
     if (!currentRoute) return
@@ -380,7 +386,7 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
         !!prevRoute && navigate(prevRoute, { state: { internal: true } })
       }
     }
-  }, [path, prevPath, params, deepSearchRouteNode, navigate, onboardingRoutesTree, history])
+  }, [path, prevPath, params, deepSearchRouteNode, navigate, onboardingRoutesTree, history, uiType])
 
   // Reset the onboarding history state in case we are no longer on an onboarding route
   useEffect(() => {
@@ -390,7 +396,7 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
   }, [history.length, path])
 
   useEffect(() => {
-    if (getUiType().isPopup) return
+    if (uiType === 'popup') return
 
     const handleBackButton = () => {
       const changedRoute = window.location.hash.replace('#/', '')
@@ -408,7 +414,7 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
     return () => {
       window.removeEventListener('hashchange', handleBackButton)
     }
-  }, [goToPrevRoute, history, deepSearchRouteNode, onboardingRoutesTree])
+  }, [goToPrevRoute, history, deepSearchRouteNode, onboardingRoutesTree, uiType])
 
   useEffect(() => {
     const currentRoute = path?.substring(1)

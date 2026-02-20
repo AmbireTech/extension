@@ -2,19 +2,13 @@ import React, { createContext, ReactNode, useEffect, useMemo, useRef, useState }
 
 import { captureMessage } from '@common/config/analytics/CrashAnalytics.web'
 import { APP_VERSION } from '@common/config/env'
+import {
+  ControllersStateLoadedContext,
+  ControllersStateLoadedContextType
+} from '@common/contexts/controllersStateLoadedContext'
 import useController from '@common/hooks/useController'
 import useControllerStore from '@common/hooks/useControllerStore'
 import { getUiType } from '@web/utils/uiType'
-
-interface ControllersStateLoadedContextType {
-  areControllerStatesLoaded: boolean
-  isStatesLoadingTakingTooLong: boolean
-}
-
-const ControllersStateLoadedContext = createContext<ControllersStateLoadedContextType>({
-  areControllerStatesLoaded: false,
-  isStatesLoadingTakingTooLong: false
-})
 
 const { isPopup } = getUiType()
 const MIN_LOADING_TIME = 300

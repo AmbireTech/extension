@@ -1,71 +1,56 @@
-// @ts-nocheck TODO: fix provider types
-
 import React from 'react'
-import { Text } from 'react-native'
+import { SafeAreaProvider } from 'react-native-safe-area-context'
+import { NativeRouter } from 'react-router-native'
 
-// import { SafeAreaProvider } from 'react-native-safe-area-context'
-// import { BiometricsProvider } from '@common/contexts/biometricsContext'
-// import { ConstantsProvider } from '@common/contexts/constantsContext'
-// import { KeyboardProvider } from '@common/contexts/keyboardContext'
-// import { NetInfoProvider } from '@common/contexts/netInfoContext'
-// import { ThemeProvider } from '@common/contexts/themeContext'
-// import { ToastProvider } from '@common/contexts/toastContext'
+import WithGlassViewSupport from '@common/components/GlassView/WithGlassViewSupport'
+import { ControllerStoreProvider } from '@common/contexts/controllerStoreContext'
+import { KeyboardProvider } from '@common/contexts/keyboardContext'
+import { NetInfoProvider } from '@common/contexts/netInfoContext'
+import { ThemeProvider } from '@common/contexts/themeContext'
+import { ToastProvider } from '@common/contexts/toastContext'
 import useFonts from '@common/hooks/useFonts'
-
-// import AppRouter from '@common/modules/app-init/components/AppRouter'
-// import { AuthProvider } from '@common/modules/auth/contexts/authContext'
-// import { navigationContainerDarkTheme } from '@common/modules/router/styles'
-// import { navigationRef, routeNameRef } from '@common/services/navigation'
-// import { PortalHost, PortalProvider } from '@gorhom/portal'
-// TODO: v2
-// import { Web3Provider } from '@mobile/modules/web3/contexts/web3Context'
-// import { NavigationContainer } from '@react-navigation/native'
-
-const handleOnReady = () => {
-  // @ts-ignore for some reason TS complains about this 👇
-  routeNameRef.current = navigationRef.current.getCurrentRoute()?.name
-}
+import AppRouter from '@common/modules/app-init/components/AppRouter'
+import GestureHandler from '@common/modules/app-init/screens/AppInit/GestureHandler'
+import { AuthProvider } from '@common/modules/auth/contexts/authContext'
+import { OnboardingNavigationProvider } from '@common/modules/auth/contexts/onboardingNavigationContext'
+import { PortalHost, PortalProvider } from '@gorhom/portal'
+import { ControllersMiddlewareProvider } from '@mobile/contexts/controllersMiddlewareContext'
 
 const AppInit = () => {
   const { fontsLoaded } = useFonts()
 
   if (!fontsLoaded) return null
 
-  return <Text>Hello World!</Text>
-
-  // return (
-  // <NavigationContainer
-  //   // Part of the mechanism for being able to navigate without the navigation prop.
-  //   // For more details, see the NavigationService.
-  //   ref={navigationRef}
-  //   onReady={handleOnReady}
-  //   theme={navigationContainerDarkTheme}
-  // >
-  //   <PortalProvider>
-  //     <ThemeProvider>
-  //       <SafeAreaProvider>
-  //         <KeyboardProvider>
-  //           <NetInfoProvider>
-  //             <ToastProvider>
-  //               <ConstantsProvider>
-  //                 <AuthProvider>
-  //                   {/* TODO: v2 */}
-  //                   {/* <Web3Provider> */}
-  //                   <BiometricsProvider>
-  //                     {/* <AppRouter /> */}
-  //                     <PortalHost name="global" />
-  //                   </BiometricsProvider>
-  //                   {/* </Web3Provider> */}
-  //                 </AuthProvider>
-  //               </ConstantsProvider>
-  //             </ToastProvider>
-  //           </NetInfoProvider>
-  //         </KeyboardProvider>
-  //       </SafeAreaProvider>
-  //     </ThemeProvider>
-  //   </PortalProvider>
-  // </NavigationContainer>
-  // )
+  return (
+    <NativeRouter>
+      <PortalProvider>
+        <SafeAreaProvider>
+          <ToastProvider>
+            <ControllerStoreProvider withErrorToasts>
+              <ControllersMiddlewareProvider>
+                <ThemeProvider>
+                  <GestureHandler>
+                    <KeyboardProvider>
+                      <NetInfoProvider>
+                        <AuthProvider>
+                          <OnboardingNavigationProvider>
+                            <WithGlassViewSupport>
+                              <AppRouter />
+                              <PortalHost name="global" />
+                            </WithGlassViewSupport>
+                          </OnboardingNavigationProvider>
+                        </AuthProvider>
+                      </NetInfoProvider>
+                    </KeyboardProvider>
+                  </GestureHandler>
+                </ThemeProvider>
+              </ControllersMiddlewareProvider>
+            </ControllerStoreProvider>
+          </ToastProvider>
+        </SafeAreaProvider>
+      </PortalProvider>
+    </NativeRouter>
+  )
 }
 
 export default AppInit

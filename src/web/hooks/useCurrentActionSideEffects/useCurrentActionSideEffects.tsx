@@ -1,9 +1,9 @@
 import { useContext, useEffect } from 'react'
 
+import { ControllersStateLoadedContext } from '@common/contexts/controllersStateLoadedContext'
 import useController from '@common/hooks/useController'
 import { AUTH_STATUS } from '@common/modules/auth/constants/authStatus'
 import useAuth from '@common/modules/auth/hooks/useAuth'
-import { ControllersStateLoadedContext } from '@web/contexts/controllersStateLoadedContext'
 import { closeCurrentWindow } from '@web/extension-services/background/webapi/window'
 import { getUiType } from '@web/utils/uiType'
 
