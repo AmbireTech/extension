@@ -78,6 +78,7 @@ module.exports = function (api) {
             '.json'
           ],
           alias: {
+            'eth-crypto': './src/mobile/shims/eth-crypto',
             crypto: 'react-native-quick-crypto',
             stream: 'readable-stream',
             buffer: 'buffer',
