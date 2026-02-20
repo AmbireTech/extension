@@ -4,15 +4,19 @@ import { browser, isExtension } from '@web/constants/browserapi'
 
 const commonStorage = {
   get: (key: string, defaultValue: any): any => {
-    const serialized = localStorage.getItem(key)
+    const serialized = typeof localStorage !== 'undefined' ? localStorage.getItem(key) : null
     return Promise.resolve(serialized ? parse(serialized) : defaultValue)
   },
   set: (key: string, value: any) => {
-    localStorage.setItem(key, stringify(value))
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(key, stringify(value))
+    }
     return Promise.resolve(null)
   },
   remove: (key: string) => {
-    localStorage.removeItem(key)
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem(key)
+    }
     return Promise.resolve(null)
   }
 }

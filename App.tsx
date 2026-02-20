@@ -6,6 +6,7 @@ import React from 'react'
 import { Text, View } from 'react-native'
 
 // So that the localization gets initialized at the beginning.
+import AmbireLogo from '@common/assets/svg/AmbireLogo'
 
 // import { GestureHandlerRootView } from 'react-native-gesture-handler'
 
@@ -48,6 +49,7 @@ const App = () => {
         backgroundColor: 'red'
       }}
     >
+      <AmbireLogo />
       <Text style={{ color: 'white', fontSize: 20 }}>Hello World!</Text>
     </View>
     // <GestureHandlerRootView

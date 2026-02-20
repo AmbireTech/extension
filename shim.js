@@ -17,3 +17,10 @@ if (typeof process === 'undefined') {
   }
 }
 process.browser = false
+
+if (typeof window === 'undefined') {
+  global.window = global
+}
+
+window.addEventListener = window.addEventListener || (() => {})
+window.removeEventListener = window.removeEventListener || (() => {})

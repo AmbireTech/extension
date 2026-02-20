@@ -12,12 +12,11 @@ import { APP_VERSION } from '@common/config/env'
 import { AllControllersMappingType } from '@common/constants/controllersMapping'
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext'
 import { ControllerStoreContext } from '@common/contexts/controllerStoreContext'
+import eventBus from '@common/services/event/eventBus'
 import { Action, MethodAction } from '@common/types/actions'
 import { BUNGEE_API_KEY, RELAYER_URL, VELCRO_URL } from '@env'
 import { MobileBaseControllersMappingType } from '@mobile/constants/controllersMapping'
-import { WalletStateController } from '@web/extension-services/background/controllers/wallet-state'
-import { storage } from '@web/extension-services/background/webapi/storage'
-import eventBus from '@web/extension-services/event/eventBus'
+import { storage } from '@mobile/services/storage'
 
 export const ControllersMiddlewareProvider: React.FC<{
   children: React.ReactNode
@@ -177,10 +176,6 @@ export const ControllersMiddlewareProvider: React.FC<{
 
   if (Object.keys(controllers.current).length === 0) {
     const ctrls: MobileBaseControllersMappingType = {} as MobileBaseControllersMappingType
-    ctrls.WalletStateController = new WalletStateController({
-      eventEmitterRegistry: eventEmitterRegistry.current,
-      onLogLevelUpdateCallback: async () => {}
-    })
     ctrls.MainController = new MainController({
       eventEmitterRegistry: eventEmitterRegistry.current,
       appVersion: APP_VERSION,
