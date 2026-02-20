@@ -198,74 +198,79 @@ class LedgerController implements ExternalSignerController {
    * is an existing SDK instance and creates a new one if needed.
    */
   async #initSDKSessionIfNeeded() {
+    if (!isLedgerEmulator) {
+      const isConnected = await LedgerController.isConnected()
+      if (!isConnected)
+        throw new ExternalSignerError("Ledger is not connected. Please make sure it's plugged in.")
+    }
+
     if (this.walletSDK) return
 
-    if (isLedgerEmulator) {
-      const isConnected = await LedgerController.isConnected()
-      if (!isConnected) {
-        throw new ExternalSignerError("Ledger is not connected. Please make sure it's plugged in.")
-      }
-    }
-
     try {
-      this.walletSDK = this.#buildWalletSDK()
+      const dmkBuilder = new DeviceManagementKitBuilder()
+      // .addLogger(new ConsoleLogger()) // for debugging only
+
+      if (isLedgerEmulator) {
+        dmkBuilder.addTransport(speculosTransportFactory(LEDGER_EMULATOR_HTTP_URL))
+      } else {
+        dmkBuilder.addTransport(webHidTransportFactory)
+      }
+
+      this.walletSDK = dmkBuilder.build()
 
       const device = await this.#findDevice()
+      console.log({ device })
+
       if (!device) throw new Error('No Ledger device detected.')
+      if (!this.walletSDK) throw new Error('Connection to Ledger device lost.')
 
+      // Get device information
       const sessionId = await this.walletSDK.connect({ device })
+      console.log({ sessionId })
 
-      this.#setConnectedDeviceInfo(sessionId)
-      this.signerEth = this.#buildEthSigner(sessionId)
+      const connectedDevice = this.walletSDK.getConnectedDevice({ sessionId })
+      this.deviceModel = connectedDevice.modelId
+      this.deviceId = connectedDevice.id
 
-      this.#attachDisconnectListener()
-    } catch (e: any) {
-      await this.cleanUp()
-      throw new ExternalSignerError(normalizeLedgerMessage(e?.message))
-    }
-  }
+      console.log({
+        sessionId,
+        connectedDevice,
+        deviceModel: this.deviceModel,
+        deviceId: this.deviceId
+      })
 
-  #buildWalletSDK() {
-    const builder = new DeviceManagementKitBuilder()
-    // .addLogger(new ConsoleLogger())
+      // TODO: Figure out why this is required for speculos and if it can be imported from somewhere?
+      // Create the signer using the dynamically imported constructor
+      // Create a simple logger factory for ContextModule
+      // LoggerPublisherService requires: subscribers array and error/warn/info/debug methods
+      const loggerFactory = (tag: string) => ({
+        subscribers: [],
+        error: (message: string) => {
+          console.error(`[ContextModule:${tag}]`, message)
+        },
+        warn: (message: string) => {
+          console.warn(`[ContextModule:${tag}]`, message)
+        },
+        info: (message: string) => {
+          console.info(`[ContextModule:${tag}]`, message)
+        },
+        debug: (message: string) => {
+          console.debug(`[ContextModule:${tag}]`, message)
+        }
+      })
 
-    builder.addTransport(
-      isLedgerEmulator ? speculosTransportFactory(LEDGER_EMULATOR_HTTP_URL) : webHidTransportFactory
-    )
+      const contextModule = new ContextModuleBuilder({
+        originToken: 'ambire',
+        loggerFactory
+      }).build()
+      this.signerEth = new SignerEthBuilder({ dmk: this.walletSDK, sessionId })
+        .withContextModule(contextModule)
+        .build()
 
-    return builder.build()
-  }
-
-  #setConnectedDeviceInfo(sessionId: string) {
-    if (!this.walletSDK) throw new Error('Connection to Ledger device lost.')
-
-    const device = this.walletSDK.getConnectedDevice({ sessionId })
-    this.deviceModel = device.modelId
-    this.deviceId = device.id
-  }
-
-  #buildEthSigner(sessionId: string) {
-    const contextModule = new ContextModuleBuilder({
-      originToken: 'ambire',
-      loggerFactory: this.#createContextLogger
-    }).build()
-
-    return new SignerEthBuilder({ dmk: this.walletSDK!, sessionId })
-      .withContextModule(contextModule)
-      .build()
-  }
-
-  #createContextLogger = (tag: string) => ({
-    subscribers: [],
-    error: (message: string) => console.error(`[ContextModule:${tag}]`, message),
-    warn: (message: string) => console.warn(`[ContextModule:${tag}]`, message),
-    info: (message: string) => console.info(`[ContextModule:${tag}]`, message),
-    debug: (message: string) => console.debug(`[ContextModule:${tag}]`, message)
-  })
-
-  #attachDisconnectListener() {
-    if ('hid' in navigator) {
+      // To clean up no matter if the device is in the middle of an operation or not
       navigator.hid.addEventListener('disconnect', this.cleanUpListener)
+    } catch (e: any) {
+      throw new ExternalSignerError(normalizeLedgerMessage(e?.message))
     }
   }
 
