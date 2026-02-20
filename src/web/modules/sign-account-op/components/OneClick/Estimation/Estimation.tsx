@@ -56,7 +56,7 @@ const OneClickEstimation = ({
   serviceFee
 }: OneClickEstimationProps) => {
   const { t } = useTranslation()
-  const { theme, themeType } = useTheme()
+  const { theme } = useTheme()
 
   const signingErrors = useMemo(() => {
     const signAccountOpErrors = signAccountOpController ? signAccountOpController.errors : []
@@ -178,12 +178,13 @@ const OneClickEstimation = ({
                   </Text>
                 </View>
               )}
-            {isViewOnly ? (
+            {isViewOnly && (
               <NoKeysToSignAlert
                 style={spacings.mt}
                 chainId={signAccountOpController?.accountOp?.chainId}
               />
-            ) : (
+            )}
+            {!isViewOnly && signingErrors.length && (
               <Alert title={t(signingErrors[0]!.title)} type="error" style={spacings.mt} />
             )}
             <BundlerWarning
