@@ -5,7 +5,7 @@ import { TouchableOpacity } from 'react-native'
 import { SubmittedAccountOp } from '@ambire-common/libs/accountOp/submittedAccountOp'
 import RefreshIcon from '@common/assets/svg/RefreshIcon'
 import Text from '@common/components/Text'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -29,21 +29,29 @@ const RepeatTransaction: FC<Props> = ({
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { dispatch } = useControllersMiddleware()
+  const { dispatch: requestsDispatch } = useController('RequestsController')
 
   const handleRepeatTransaction = useCallback(() => {
     if (!rawCalls) return
 
-    dispatch({
-      type: 'REQUESTS_CONTROLLER_ADD_CALLS_USER_REQUEST',
+    requestsDispatch({
+      type: 'method',
       params: {
-        userRequestParams: {
-          calls: rawCalls,
-          meta: { chainId, accountAddr }
-        }
+        method: 'build',
+        args: [
+          {
+            type: 'calls',
+            params: {
+              userRequestParams: {
+                calls: rawCalls,
+                meta: { chainId, accountAddr }
+              }
+            }
+          }
+        ]
       }
     })
-  }, [rawCalls, chainId, accountAddr, dispatch])
+  }, [rawCalls, chainId, accountAddr, requestsDispatch])
 
   return (
     <TouchableOpacity

@@ -21,7 +21,7 @@ interface Props {
 
 const AddContactBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet, address }) => {
   const { t } = useTranslation()
-  const { theme, themeType } = useTheme()
+  const { theme } = useTheme()
   const { addToast } = useToast()
   const { dispatch } = useControllersMiddleware()
   const [name, setName] = useState('')

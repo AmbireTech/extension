@@ -15,7 +15,6 @@ import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
 import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Header'
@@ -44,11 +43,16 @@ export type TokenData = {
 const WatchTokenRequestScreen = () => {
   const { t } = useTranslation()
   const { theme, styles, themeType } = useTheme(getStyles)
-  const { dispatch } = useControllersMiddleware()
-  const { currentUserRequest } = useController('RequestsController').state
-  const { temporaryTokens, validTokens, customTokens } = useController('PortfolioController').state
   const {
-    state: { portfolio: selectedAccountPortfolio }
+    state: { currentUserRequest },
+    dispatch: requestsDispatch
+  } = useController('RequestsController')
+  const {
+    state: { temporaryTokens, validTokens, customTokens },
+    dispatch: portfolioDispatch
+  } = useController('PortfolioController')
+  const {
+    state: { portfolio: selectedAccountPortfolio, account }
   } = useController('SelectedAccountController')
   const { networks } = useController('NetworksController').state
   const { state } = useController('ProvidersController')
@@ -68,11 +72,6 @@ const WatchTokenRequestScreen = () => {
   const [isLoading, setIsLoading] = useState(true)
   const [tokenNetwork, setTokenNetwork] = useState(network)
   const [isTemporaryTokenRequested, setTemporaryTokenRequested] = useState(false)
-
-  const isLoadingTemporaryToken = useMemo(
-    () => tokenNetwork?.chainId && temporaryTokens?.[tokenNetwork?.chainId.toString()]?.isLoading,
-    [tokenNetwork?.chainId, temporaryTokens]
-  )
 
   const networkWithFailedRPC =
     tokenNetwork?.chainId &&
@@ -108,11 +107,14 @@ const WatchTokenRequestScreen = () => {
   const handleCancel = useCallback(() => {
     if (!userRequest) return
 
-    dispatch({
-      type: 'REQUESTS_CONTROLLER_REJECT_USER_REQUEST',
-      params: { err: t('User rejected the request.'), id: userRequest.id }
+    requestsDispatch({
+      type: 'method',
+      params: {
+        method: 'rejectUserRequests',
+        args: [t('User rejected the request.'), [userRequest.id]]
+      }
     })
-  }, [userRequest, t, dispatch])
+  }, [userRequest, t, requestsDispatch])
 
   // Handle the case its already in token preferences
   const isTokenCustom = !!customTokens.find(
@@ -132,9 +134,14 @@ const WatchTokenRequestScreen = () => {
   )
 
   const handleTokenType = (chainId: bigint) => {
-    dispatch({
-      type: 'PORTFOLIO_CONTROLLER_CHECK_TOKEN',
-      params: { token: { address: tokenData?.address, chainId }, allNetworks: false }
+    if (!account) return
+
+    portfolioDispatch({
+      type: 'method',
+      params: {
+        method: 'updateTokenValidationByStandard',
+        args: [{ address: tokenData?.address, chainId }, account.addr, false]
+      }
     })
   }
 
@@ -187,11 +194,13 @@ const WatchTokenRequestScreen = () => {
 
           if (tokenTypeEligibility && !isTokenInHints && !isTemporaryTokenRequested) {
             setTemporaryTokenRequested(true)
-            dispatch({
-              type: 'PORTFOLIO_CONTROLLER_GET_TEMPORARY_TOKENS',
+            if (!account) return
+
+            portfolioDispatch({
+              type: 'method',
               params: {
-                chainId: tokenNetwork?.chainId,
-                additionalHint: getAddress(tokenData?.address)
+                method: 'getTemporaryTokens',
+                args: [account.addr, tokenNetwork?.chainId, getAddress(tokenData?.address)]
               }
             })
           }
@@ -229,24 +238,32 @@ const WatchTokenRequestScreen = () => {
   const handleAddToken = useCallback(async () => {
     if (!userRequest) return
     if (!tokenNetwork?.chainId) return
+    if (!account) return
 
-    dispatch({
-      type: 'PORTFOLIO_CONTROLLER_ADD_CUSTOM_TOKEN',
+    portfolioDispatch({
+      type: 'method',
       params: {
-        token: {
-          address: getAddress(tokenData.address),
-          standard: 'ERC20',
-          chainId: tokenNetwork?.chainId
-        },
-        shouldUpdatePortfolio: true
+        method: 'addCustomToken',
+        args: [
+          {
+            address: getAddress(tokenData.address),
+            standard: 'ERC20',
+            chainId: tokenNetwork?.chainId
+          },
+          account.addr,
+          true
+        ]
       }
     })
 
-    dispatch({
-      type: 'REQUESTS_CONTROLLER_RESOLVE_USER_REQUEST',
-      params: { data: null, id: userRequest.id }
+    requestsDispatch({
+      type: 'method',
+      params: {
+        method: 'resolveUserRequest',
+        args: [null, userRequest.id]
+      }
     })
-  }, [dispatch, userRequest, tokenData, tokenNetwork])
+  }, [requestsDispatch, portfolioDispatch, userRequest, tokenData, tokenNetwork, account])
 
   const tokenDetails = useMemo(() => {
     const token = portfolioToken || temporaryToken

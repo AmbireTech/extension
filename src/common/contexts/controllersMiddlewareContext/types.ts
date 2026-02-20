@@ -1,6 +1,6 @@
 import { AllControllersMappingType } from '@common/constants/controllersMapping'
 import { ControllerAction } from '@common/hooks/useController/useController'
-import { Action } from '@web/extension-services/background/actions'
+import { Action, MethodAction } from '@common/types/actions'
 
 export type AnyControllerAction = ControllerAction<keyof AllControllersMappingType>
 
@@ -10,7 +10,7 @@ export type ControllersMiddlewareContextReturnType = {
    * Does not return the result of the action.
    * It will only work when called from a focused window!
    */
-  dispatch: (action: Action, windowId?: number) => void
+  dispatch: (action: MethodAction | Action, windowId?: number) => void
 }
 
 export const controllersMiddlewareContextDefaults: ControllersMiddlewareContextReturnType = {
