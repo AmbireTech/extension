@@ -1,10 +1,11 @@
-// So that the localization gets initialized at the beginning.
 import '@common/config/localization'
 
 import * as SplashScreen from 'expo-splash-screen'
 // import { StatusBar } from 'expo-status-bar'
 import React from 'react'
-import { Text } from 'react-native'
+import { Text, View } from 'react-native'
+
+// So that the localization gets initialized at the beginning.
 
 // import { GestureHandlerRootView } from 'react-native-gesture-handler'
 
@@ -34,8 +35,21 @@ const SUPPRESSED_WARNINGS = [
 const App = () => {
   // const { theme } = useTheme()
 
+  React.useEffect(() => {
+    SplashScreen.hideAsync().catch(() => {})
+  }, [])
+
   return (
-    <Text>App</Text>
+    <View
+      style={{
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: 'red'
+      }}
+    >
+      <Text style={{ color: 'white', fontSize: 20 }}>Hello World!</Text>
+    </View>
     // <GestureHandlerRootView
     //   style={[flexboxStyles.flex1, { backgroundColor: theme.primaryBackground }]}
     // >

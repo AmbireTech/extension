@@ -18,8 +18,6 @@ module.exports = function (api) {
       ['@babel/plugin-transform-export-namespace-from'],
       ['transform-inline-environment-variables'],
       ['@babel/plugin-proposal-decorators', { legacy: true }],
-      ['@babel/plugin-transform-class-properties', { loose: true }],
-      ['@babel/plugin-transform-private-methods', { loose: true }],
       [
         'module:react-native-dotenv',
         {
