@@ -208,7 +208,7 @@ export class DashboardPage extends BasePage {
     const selector = this.page.getByTestId(selectors.dashboard.openTicketLink)
     const newTab = await this.handleNewPage(selector)
 
-    expect(newTab.url()).toContain('help.ambire.com/hc/en-us')
+    expect(newTab.url()).toContain('https://help.ambire.com/en')
   }
 
   async checkRewardsPageRedirection(selector: string) {
