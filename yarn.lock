@@ -2512,10 +2512,10 @@
   resolved "https://registry.yarnpkg.com/@lavamoat/preinstall-always-fail/-/preinstall-always-fail-2.1.1.tgz#1df713b4c6ede11461b148a80615a8ec92d682b3"
   integrity sha512-8eyQm26cQtEek2z1vM+iSVOoKrchkHBEvUQ3VnbDEqQ7hDL5sU/rhHo/FnoMgY8J31r6LSesEzpwYQe4omgqbA==
 
-"@ledgerhq/context-module@1.13.0":
-  version "1.13.0"
-  resolved "https://registry.yarnpkg.com/@ledgerhq/context-module/-/context-module-1.13.0.tgz#04dd5143a3451f05a1edce1d1b848d70454bdbeb"
-  integrity sha512-QwBh6cqxRdDQJDIMJuvEvuuLvvB55rskdEzFaMmuyVyGYT31yFl74rWVXJCg1clVQCMKADwbrLWOyJ/yRwM92g==
+"@ledgerhq/context-module@1.14.0":
+  version "1.14.0"
+  resolved "https://registry.yarnpkg.com/@ledgerhq/context-module/-/context-module-1.14.0.tgz#73cdaa6a1ba5b136c1cf680f6343e1bce0c0df6f"
+  integrity sha512-q4N6YxYS9YE4FlMlD2aZZZKxFkUX1pMLMUsT8R8+LSPPPNlZfVUzFoJ1qid8XO3N1Q2we8hB4WKhUjKxvfcwtw==
   dependencies:
     axios "1.13.2"
     crypto-js "^4.2.0"

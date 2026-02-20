@@ -227,42 +227,7 @@ class LedgerController implements ExternalSignerController {
       this.deviceModel = connectedDevice.modelId
       this.deviceId = connectedDevice.id
 
-      // TODO: Figure out why this is required for speculos and if it can be imported from somewhere?
-      // Create the signer using the dynamically imported constructor
-      // Create a simple logger factory for ContextModule
-      // LoggerPublisherService requires: subscribers array and error/warn/info/debug methods
-      const loggerFactory = (tag: string) => {
-        if (isProd) {
-          return {
-            subscribers: [],
-            error: () => {},
-            warn: () => {},
-            info: () => {},
-            debug: () => {}
-          }
-        }
-
-        return {
-          subscribers: [],
-          error: (message: string) => {
-            console.error(`[ContextModule:${tag}]`, message)
-          },
-          warn: (message: string) => {
-            console.warn(`[ContextModule:${tag}]`, message)
-          },
-          info: (message: string) => {
-            console.info(`[ContextModule:${tag}]`, message)
-          },
-          debug: (message: string) => {
-            console.debug(`[ContextModule:${tag}]`, message)
-          }
-        }
-      }
-
-      const contextModule = new ContextModuleBuilder({
-        originToken: 'ambire',
-        loggerFactory
-      }).build()
+      const contextModule = new ContextModuleBuilder({ originToken: 'ambire' }).build()
       this.signerEth = new SignerEthBuilder({ dmk: this.walletSDK, sessionId })
         .withContextModule(contextModule)
         .build()
