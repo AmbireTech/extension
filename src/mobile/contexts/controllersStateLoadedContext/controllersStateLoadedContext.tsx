@@ -50,7 +50,7 @@ const ControllersStateLoadedProvider = ({ children }: { children: ReactNode }) =
   }, [areControllerStatesLoaded, controllerStore])
 
   useEffect(() => {
-    if (!areControllerStatesLoaded) return
+    if (areControllerStatesLoaded) return
 
     const elapsed = Date.now() - startTimeRef.current
     const delay = Math.max(0, MIN_LOADING_TIME - elapsed)

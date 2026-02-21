@@ -10,9 +10,9 @@ import { AllControllersMappingType } from '@common/constants/controllersMapping'
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext'
 import { ControllerStoreContext } from '@common/contexts/controllerStoreContext'
 import eventBus from '@common/services/event/eventBus'
+import { storage } from '@common/services/storage'
 import { MethodAction } from '@common/types/actions'
 import { RewardsBaseControllersMappingType } from '@legends/constants/controllersMapping'
-import { storage } from '@web/extension-services/background/webapi/storage'
 
 export const ControllersMiddlewareProvider: React.FC<{
   children: React.ReactNode

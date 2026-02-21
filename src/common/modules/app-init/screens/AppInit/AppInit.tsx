@@ -15,6 +15,7 @@ import { AuthProvider } from '@common/modules/auth/contexts/authContext'
 import { OnboardingNavigationProvider } from '@common/modules/auth/contexts/onboardingNavigationContext'
 import { PortalHost, PortalProvider } from '@gorhom/portal'
 import { ControllersMiddlewareProvider } from '@mobile/contexts/controllersMiddlewareContext'
+import { ControllersStateLoadedProvider } from '@mobile/contexts/controllersStateLoadedContext'
 
 const AppInit = () => {
   const { fontsLoaded } = useFonts()
@@ -30,18 +31,20 @@ const AppInit = () => {
               <ControllersMiddlewareProvider>
                 <ThemeProvider>
                   <GestureHandler>
-                    <KeyboardProvider>
-                      <NetInfoProvider>
-                        <AuthProvider>
-                          <OnboardingNavigationProvider>
-                            <WithGlassViewSupport>
-                              <AppRouter />
-                              <PortalHost name="global" />
-                            </WithGlassViewSupport>
-                          </OnboardingNavigationProvider>
-                        </AuthProvider>
-                      </NetInfoProvider>
-                    </KeyboardProvider>
+                    <ControllersStateLoadedProvider>
+                      <KeyboardProvider>
+                        <NetInfoProvider>
+                          <AuthProvider>
+                            <OnboardingNavigationProvider>
+                              <WithGlassViewSupport>
+                                <AppRouter />
+                                <PortalHost name="global" />
+                              </WithGlassViewSupport>
+                            </OnboardingNavigationProvider>
+                          </AuthProvider>
+                        </NetInfoProvider>
+                      </KeyboardProvider>
+                    </ControllersStateLoadedProvider>
                   </GestureHandler>
                 </ThemeProvider>
               </ControllersMiddlewareProvider>

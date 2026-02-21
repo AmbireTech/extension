@@ -13,10 +13,10 @@ import { AllControllersMappingType } from '@common/constants/controllersMapping'
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext'
 import { ControllerStoreContext } from '@common/contexts/controllerStoreContext'
 import eventBus from '@common/services/event/eventBus'
+import { storage } from '@common/services/storage'
 import { Action, MethodAction } from '@common/types/actions'
 import { BUNGEE_API_KEY, RELAYER_URL, VELCRO_URL } from '@env'
 import { MobileBaseControllersMappingType } from '@mobile/constants/controllersMapping'
-import { storage } from '@mobile/services/storage'
 
 export const ControllersMiddlewareProvider: React.FC<{
   children: React.ReactNode

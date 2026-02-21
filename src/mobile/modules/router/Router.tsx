@@ -21,6 +21,11 @@ const Router = () => {
   const keystoreState = useController('KeystoreController').state
   const { areControllerStatesLoaded } = useContext(ControllersStateLoadedContext)
 
+  console.log('Router', {
+    authStatus,
+    areControllerStatesLoaded
+  })
+
   // Wait for controllers and auth status
   if (authStatus === AUTH_STATUS.LOADING || !areControllerStatesLoaded) {
     return <Splash />

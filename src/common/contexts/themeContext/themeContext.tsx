@@ -1,10 +1,10 @@
-import React, { createContext, useCallback, useEffect, useMemo } from 'react'
+import React, { useCallback, useEffect, useMemo } from 'react'
 import { useColorScheme } from 'react-native'
 
 import useController from '@common/hooks/useController'
+import { syncStorage } from '@common/services/storage'
 import { DEFAULT_THEME } from '@common/styles/theme/types'
 import ThemeColors, { THEME_TYPES, ThemeProps, ThemeType } from '@common/styles/themeConfig'
-import { syncStorage } from '@mobile/services/storage'
 
 import { ThemeContext } from './context'
 
@@ -19,14 +19,13 @@ const ThemeProvider: React.FC<{
   useEffect(() => {
     if (!selectedThemeType) return
 
-    if (syncStorage.getItem('fallbackSelectedThemeType') !== selectedThemeType) {
-      syncStorage.setItem('fallbackSelectedThemeType', selectedThemeType)
+    if (syncStorage.get('fallbackSelectedThemeType') !== selectedThemeType) {
+      syncStorage.set('fallbackSelectedThemeType', selectedThemeType)
     }
   }, [selectedThemeType])
 
   const themeType = useMemo(() => {
-    const type =
-      forceThemeType ?? selectedThemeType ?? syncStorage.getItem('fallbackSelectedThemeType')
+    const type = forceThemeType ?? selectedThemeType ?? syncStorage.get('fallbackSelectedThemeType')
 
     return type === THEME_TYPES.SYSTEM
       ? (systemThemeType as THEME_TYPES.LIGHT | THEME_TYPES.DARK)

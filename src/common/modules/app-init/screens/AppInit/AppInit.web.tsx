@@ -28,9 +28,6 @@ const Router = isExtension ? HashRouter : BrowserRouter
 
 const errorComponent = ({ error }: { error: Error }) => <ErrorComponent error={error} />
 
-// Composed at runtime to avoid Babel JSX transform bug with very deep nesting (~40+ levels).
-type ProviderComponent = React.ComponentType<{ children: React.ReactNode }>
-
 const AppInit = () => {
   const { fontsLoaded } = useFonts()
 

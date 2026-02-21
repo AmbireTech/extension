@@ -25,6 +25,7 @@ import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
 import wait from '@ambire-common/utils/wait'
 import CONFIG, { APP_VERSION, isAmbireNext, isDev, isProd } from '@common/config/env'
 import { controllersNestedInMainMapping } from '@common/constants/controllersMapping'
+import { storage } from '@common/services/storage'
 import { Action, MethodAction } from '@common/types/actions'
 import {
   BROWSER_EXTENSION_LOG_UPDATED_CONTROLLER_STATE_ONLY,
@@ -50,7 +51,6 @@ import {
 import handleProviderRequests from '@web/extension-services/background/provider/handleProviderRequests'
 import { providerRequestTransport } from '@web/extension-services/background/provider/providerRequestTransport'
 import { notificationManager } from '@web/extension-services/background/webapi/notification'
-import { storage } from '@web/extension-services/background/webapi/storage'
 import windowManager from '@web/extension-services/background/webapi/window'
 import {
   initializeMessenger,

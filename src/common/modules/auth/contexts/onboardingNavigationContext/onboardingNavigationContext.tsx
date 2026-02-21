@@ -13,6 +13,7 @@ import useRoute from '@common/hooks/useRoute'
 import { AUTH_STATUS } from '@common/modules/auth/constants/authStatus'
 import useAuth from '@common/modules/auth/hooks/useAuth'
 import { ONBOARDING_WEB_ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
+import { syncSessionStorage } from '@common/services/storage'
 import { UiType } from '@web/utils/uiType'
 
 export type OnboardingRoute = (typeof ONBOARDING_WEB_ROUTES)[number]
@@ -53,7 +54,7 @@ class RouteNode {
 
 const getAccountsToPersonalizeFromSession = (): Account[] => {
   try {
-    const stored = sessionStorage.getItem('accountsToPersonalize')
+    const stored = syncSessionStorage.get('accountsToPersonalize')
     return stored ? parse(stored) : []
   } catch {
     return []
@@ -97,13 +98,13 @@ const OnboardingNavigationProvider = ({
   useEffect(() => {
     const currentRoute = path?.substring(1)
     if (currentRoute === WEB_ROUTES.accountPersonalize)
-      sessionStorage.setItem('accountsToPersonalize', stringify(accountsToPersonalize))
+      syncSessionStorage.set('accountsToPersonalize', stringify(accountsToPersonalize))
   }, [accountsToPersonalize, path])
 
   useEffect(() => {
     const currentRoute = path?.substring(1)
     if (currentRoute !== WEB_ROUTES.accountPersonalize) {
-      sessionStorage.removeItem('accountsToPersonalize')
+      syncSessionStorage.remove('accountsToPersonalize')
       if (accountsToPersonalize.length) setAccountsToPersonalize([])
     }
   }, [path, accountsToPersonalize.length])
@@ -184,7 +185,7 @@ const OnboardingNavigationProvider = ({
 
   const loadHistory = () => {
     try {
-      const savedHistory = sessionStorage.getItem('onboarding_history')
+      const savedHistory = syncSessionStorage.get('onboarding_history')
       if (savedHistory) return JSON.parse(savedHistory)
     } catch (error) {
       console.error('Failed to load navigation state:', error)
@@ -195,7 +196,7 @@ const OnboardingNavigationProvider = ({
   const [history, setHistory] = useState<string[]>(loadHistory())
 
   useEffect(() => {
-    sessionStorage.setItem('onboarding_history', JSON.stringify(history))
+    syncSessionStorage.set('onboarding_history', JSON.stringify(history))
   }, [history])
 
   const deepSearchRouteNode = useCallback(

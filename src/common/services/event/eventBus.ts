@@ -1,3 +1,4 @@
+// @ts-nocheck
 type Listener = (params?: any, forceEmit?: boolean) => void
 
 class EventBus {

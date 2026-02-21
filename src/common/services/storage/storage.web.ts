@@ -2,7 +2,7 @@ import { Storage } from '@ambire-common/interfaces/storage'
 import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
 import { browser, isExtension } from '@web/constants/browserapi'
 
-const commonStorage = {
+const commonAsyncStorage: Storage = {
   get: (key: string, defaultValue: any): any => {
     const serialized = typeof localStorage !== 'undefined' ? localStorage.getItem(key) : null
     return Promise.resolve(serialized ? parse(serialized) : defaultValue)
@@ -29,7 +29,7 @@ const formatValue = (value: any, defaultValue?: any) => {
   }
 }
 
-export const get = async (key: string, defaultValue?: any) => {
+const get = async (key: string, defaultValue?: any) => {
   const res = await browser.storage.local.get(key)
 
   if (!res[key]) return defaultValue
@@ -37,23 +37,44 @@ export const get = async (key: string, defaultValue?: any) => {
   return formatValue(res[key])
 }
 
-export const set = async (key: string, value: any): Promise<null> => {
+const set = async (key: string, value: any): Promise<null> => {
   await browser.storage.local.set({
     [key]: typeof value === 'string' ? value : stringify(value)
   })
   return null
 }
 
-export const remove = async (key: string): Promise<null> => {
+const remove = async (key: string): Promise<null> => {
   await browser.storage.local.remove([key])
   return null
 }
 
-export const storage: Storage = isExtension ? { get, set, remove } : commonStorage
+const extensionAsyncStorage: Storage = { get, set, remove }
 
-export default {
-  get,
-  set,
-  remove,
-  storage
+const asyncStorage: Storage = isExtension ? extensionAsyncStorage : commonAsyncStorage
+
+const syncStorage = {
+  get: (key: string, defaultValue: any): any => {
+    return localStorage.get(key, defaultValue)
+  },
+  set: (key: string, value: any) => {
+    return localStorage.set(key, value)
+  },
+  remove: (key: string) => {
+    return localStorage.remove(key)
+  }
 }
+
+const syncSessionStorage = {
+  get: (key: string, defaultValue: any): any => {
+    return sessionStorage.get(key, defaultValue)
+  },
+  set: (key: string, value: any) => {
+    return sessionStorage.set(key, value)
+  },
+  remove: (key: string) => {
+    return sessionStorage.remove(key)
+  }
+}
+
+export { asyncStorage as storage, syncStorage, syncSessionStorage }
