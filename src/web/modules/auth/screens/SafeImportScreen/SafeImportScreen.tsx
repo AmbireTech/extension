@@ -140,7 +140,7 @@ const SafeImportScreen = () => {
   }, [safeDispatch])
 
   const isSafeImported = useMemo(() => {
-    return safe && safeInfo && accounts.find((a) => a.addr === safe)
+    return safe && safeInfo && accounts.find((a) => a.addr === safe && !!a.safeCreation)
   }, [safe, safeInfo, accounts])
 
   const btnText = useMemo(() => {
