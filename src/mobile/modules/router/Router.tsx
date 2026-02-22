@@ -4,6 +4,7 @@ import { Navigate, Route, Routes } from 'react-router-native'
 
 import { ControllersStateLoadedContext } from '@common/contexts/controllersStateLoadedContext'
 import useController from '@common/hooks/useController'
+import useRoute from '@common/hooks/useRoute'
 import { AUTH_STATUS } from '@common/modules/auth/constants/authStatus'
 import useAuth from '@common/modules/auth/hooks/useAuth'
 import DashboardScreen from '@common/modules/dashboard/screens'
@@ -17,6 +18,8 @@ import MainRoutes from '@mobile/modules/router/components/MainRoutes'
 import { getInitialRoute } from '@mobile/modules/router/helpers'
 
 const Router = () => {
+  const { path } = useRoute()
+  const pathname = path?.substring(1)
   const { authStatus } = useAuth()
   const keystoreState = useController('KeystoreController').state
   const { areControllerStatesLoaded } = useContext(ControllersStateLoadedContext)
@@ -43,7 +46,7 @@ const Router = () => {
 
   return (
     <View style={flexbox.flex1}>
-      {initialRoute && <Navigate to={initialRoute} replace />}
+      {initialRoute && !pathname && <Navigate to={initialRoute} replace />}
       <Routes>
         <Route element={<KeystoreUnlockedRoute />}>
           <Route element={<AuthenticatedRoute />}>

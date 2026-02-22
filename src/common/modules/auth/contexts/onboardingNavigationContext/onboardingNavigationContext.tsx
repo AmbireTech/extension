@@ -66,7 +66,7 @@ const OnboardingNavigationProvider = ({
   uiType
 }: {
   children: React.ReactNode
-  uiType?: UiType
+  uiType?: UiType | 'mobile'
 }) => {
   const { hasPasswordSecret } = useController('KeystoreController').state
   const { statuses: emailVaultStatuses } = useController('EmailVaultController').state
@@ -256,9 +256,8 @@ const OnboardingNavigationProvider = ({
         if (!currentNode) return
         nextRoute = findNextEnabledRoute(currentNode.children, routeName)
       }
-
       if (nextRoute) {
-        if (nextRoute.name === '/') {
+        if (nextRoute.name === '/' && uiType !== 'mobile') {
           dispatch({ type: 'OPEN_EXTENSION_POPUP' })
         } else {
           navigate(nextRoute.name, {
@@ -277,7 +276,8 @@ const OnboardingNavigationProvider = ({
       deepSearchRouteNode,
       path,
       history,
-      dispatch
+      dispatch,
+      uiType
     ]
   )
 
@@ -370,7 +370,7 @@ const OnboardingNavigationProvider = ({
   // If a user attempts to access one of these routes directly via the URL bar,
   // this hook should block the navigation and redirect them back to the previous route.
   useEffect(() => {
-    if (uiType === 'popup') return
+    if (uiType === 'popup' || uiType === 'mobile') return
     const currentRoute = path?.substring(1)
     const prevRoute = prevPath?.substring(1)
     if (!currentRoute) return
@@ -397,7 +397,7 @@ const OnboardingNavigationProvider = ({
   }, [history.length, path])
 
   useEffect(() => {
-    if (uiType === 'popup') return
+    if (uiType === 'popup' || uiType === 'mobile') return
 
     const handleBackButton = () => {
       const changedRoute = window.location.hash.replace('#/', '')
