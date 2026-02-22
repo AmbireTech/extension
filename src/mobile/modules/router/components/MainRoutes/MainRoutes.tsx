@@ -41,6 +41,8 @@ const MainRoutes = () => {
         <Route path={ROUTES.accountPersonalize} element={<AccountPersonalizeScreen />} />
         <Route path={ROUTES.onboardingCompleted} element={<OnboardingCompletedScreen />} />
       </Route>
+      {/* Fallback route to suppress "No routes matched location" warnings when multiple Routes blocks are rendered */}
+      <Route path="*" element={null} />
     </Routes>
   )
 }

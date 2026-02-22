@@ -51,6 +51,8 @@ const Router = () => {
           </Route>
         </Route>
         <Route path={ROUTES.keyStoreUnlock} element={<KeyStoreUnlockScreen />} />
+        {/* Fallback route to suppress "No routes matched location" warnings when multiple Routes blocks are rendered */}
+        <Route path="*" element={null} />
       </Routes>
       <Suspense fallback={<Splash />}>
         <MainRoutes />

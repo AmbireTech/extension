@@ -23,13 +23,8 @@ const useNavigation = (): UseNavigationReturnType => {
       if (typeof to === 'number') {
         return nav(to)
       }
-
-      let destination = to
-      if (typeof destination === 'string' && destination?.[0] !== '/') {
-        destination = `/${destination}`
-      }
-
-      return nav(destination, {
+      console.log('to', to)
+      return nav(to, {
         ...options,
         state: {
           ...(options?.state || {}),

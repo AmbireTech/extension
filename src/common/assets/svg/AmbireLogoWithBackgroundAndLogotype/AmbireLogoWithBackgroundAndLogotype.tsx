@@ -1,5 +1,5 @@
 import React, { FC } from 'react'
-import Svg, { Defs, G, LinearGradient, Mask, Path, Stop, SvgProps } from 'react-native-svg'
+import Svg, { Defs, G, LinearGradient, Mask, Path, Rect, Stop, SvgProps } from 'react-native-svg'
 
 import useTheme from '@common/hooks/useTheme'
 
@@ -20,7 +20,7 @@ const AmbireLogoWithBackgroundAndLogotype: FC<SvgProps> = ({
         maskUnits="userSpaceOnUse"
         style={{ maskType: 'alpha' }}
       >
-        <rect width="80" height="80" fill="#EFB0B0" rx="16" />
+        <Rect width="80" height="80" fill="#EFB0B0" rx="16" />
       </Mask>
       <G mask="url(#a)">
         <Path fill="#6000FF" d="M0 0h80v80H0z" />
