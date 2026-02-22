@@ -127,7 +127,8 @@ const GetStartedScreen = () => {
               />
             </Button>
           </View>
-          <View style={[flexbox.directionRow, flexbox.alignSelfCenter, spacings.mt]}>
+          {/* TODO: implement for mobile */}
+          {/* <View style={[flexbox.directionRow, flexbox.alignSelfCenter, spacings.mt]}>
             <TouchableOpacity
               onPress={() => navigate(ROUTES.networksConfiguration)}
               style={[flexbox.directionRow, flexbox.alignCenter]}
@@ -142,7 +143,7 @@ const GetStartedScreen = () => {
                 {t('Network Configuration')}
               </Text>
             </TouchableOpacity>
-          </View>
+          </View> */}
         </Panel>
       </MobileLayoutWrapperMainContent>
     </MobileLayoutContainer>

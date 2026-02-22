@@ -244,7 +244,7 @@ export const ControllersMiddlewareProvider: React.FC<{
     if (action.type === 'method') {
       const { ctrlName, method, args } = action.params
 
-      let targetCtrl: any = Object.values(controllers.current as any).find(
+      let targetCtrl: any = Object.values(eventEmitterRegistry.current.values()).find(
         (ctrl: any) => ctrl.name === ctrlName
       )
       if (!targetCtrl) {
