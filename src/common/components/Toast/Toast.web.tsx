@@ -1,5 +1,5 @@
 import React from 'react'
-import { TouchableOpacity, View } from 'react-native'
+import { View, ViewStyle } from 'react-native'
 
 import CloseIcon from '@common/assets/svg/CloseIcon'
 import Text from '@common/components/Text'
@@ -8,9 +8,42 @@ import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
+import { TAB_CONTENT_WIDTH } from '@web/constants/spacings'
+import { openInTab } from '@web/extension-services/background/webapi/tab'
+import { AnimatedPressable, useMultiHover } from '@web/hooks/useHover'
+import { getUiType } from '@web/utils/uiType'
 
 import { ICON_MAP, parseTextLinks, TOAST_CLOSE_BACKGROUND_COLOR } from './helpers'
 import { ParsedTextLink } from './types'
+
+const { isPopup } = getUiType()
+
+const ANIMATION_VALUES: {
+  property: keyof ViewStyle
+  from: number
+  to: number
+}[] = [
+  {
+    property: 'width',
+    from: 20,
+    to: 32
+  },
+  {
+    property: 'height',
+    from: 20,
+    to: 32
+  },
+  {
+    property: 'top',
+    from: 0.5,
+    to: -5.5
+  },
+  {
+    property: 'right',
+    from: 0.5,
+    to: -5.5
+  }
+]
 
 const Toast = ({
   text,
@@ -26,9 +59,14 @@ const Toast = ({
 
   const Icon = ICON_MAP[type]
 
+  const [bindAnim, animStyle] = useMultiHover({
+    values: ANIMATION_VALUES
+  })
+
   return (
     <View
       style={{
+        maxWidth: TAB_CONTENT_WIDTH,
         width: '100%',
         ...common.borderRadiusPrimary,
         ...spacings.mbTy,
@@ -38,8 +76,8 @@ const Toast = ({
     >
       <View
         style={[
-          spacings.phSm,
-          spacings.pvSm,
+          !isPopup ? spacings.ph : spacings.phSm,
+          !isPopup ? spacings.pv : spacings.pvSm,
           flexbox.directionRow,
           common.borderRadiusPrimary,
           {
@@ -76,7 +114,10 @@ const Toast = ({
                     appearance={type ? `${type}Text` : 'infoText'}
                     fontSize={14}
                     weight="semiBold"
-                    style={{ textDecorationLine: 'underline' } as any}
+                    style={{ textDecorationLine: 'underline', cursor: 'pointer' } as any}
+                    onPress={async () => {
+                      await openInTab({ url: element.url })
+                    }}
                   >
                     {element.text}
                   </Text>
@@ -84,20 +125,20 @@ const Toast = ({
               })}
             </Text>
           </Text>
-          <TouchableOpacity
+          <AnimatedPressable
+            {...bindAnim}
             style={{
               ...flexbox.center,
               position: 'absolute',
               right: 0,
               backgroundColor: TOAST_CLOSE_BACKGROUND_COLOR[type],
               borderRadius: 16,
-              width: 20,
-              height: 20
+              ...animStyle
             }}
             onPress={() => removeToast(id)}
           >
             <CloseIcon width={8} height={8} color={theme[`${type}Decorative`]} strokeWidth="2.5" />
-          </TouchableOpacity>
+          </AnimatedPressable>
         </View>
       </View>
     </View>
