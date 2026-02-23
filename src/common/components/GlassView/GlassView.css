@@ -3,15 +3,11 @@
 
   position: relative;
   display: flex;
-  font-weight: 600;
   cursor: pointer;
   isolation: isolate;
   /* These come from injected styles */
   background: linear-gradient(135deg, var(--glass-tint-color-2) 0%, var(--glass-tint-color-1) 50%);
-
   backdrop-filter: blur(var(--glass-blur-amount));
-
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 2.2);
 }
 
 /* Recreating the parent div to apply the effect on it.
@@ -38,9 +34,27 @@ things like dropdown menus */
   top: 0;
   left: 0;
   pointer-events: none;
-  box-shadow: inset 0px 0px 2px 1.5px var(--glass-shine-color);
+  box-shadow: inset 0px 0px 1px 1.5px var(--glass-shine-color);
   border-top-left-radius: inherit;
   border-top-right-radius: 0;
   border-bottom-right-radius: inherit;
   border-bottom-left-radius: 0;
+}
+
+.liquidGlass .shine::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    circle var(--shine-radius, 120px) at var(--mouse-x, 50%) var(--mouse-y, 50%),
+    var(--glass-cursor-shine-color) 0%,
+    transparent 100%
+  );
+  opacity: var(--shine-opacity, 0);
+  transition: opacity 0.3s ease;
+  border-radius: inherit;
 }

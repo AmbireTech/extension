@@ -26,7 +26,15 @@ const FooterGlassView: FC<{
   innerContainerStyle?: ViewStyle
   size?: 'sm' | 'md'
   absolute?: boolean
-}> = ({ children, style = {}, innerContainerStyle, size = 'md', absolute = true }) => {
+  withCursorShine?: boolean
+}> = ({
+  children,
+  style = {},
+  innerContainerStyle,
+  size = 'md',
+  absolute = true,
+  withCursorShine
+}) => {
   return (
     <View
       style={{
@@ -43,6 +51,7 @@ const FooterGlassView: FC<{
         style={{
           borderRadius: params[size].borderRadius
         }}
+        withCursorShine={withCursorShine}
         cssStyle={{ borderRadius: params[size].borderRadius as number }}
       >
         <View

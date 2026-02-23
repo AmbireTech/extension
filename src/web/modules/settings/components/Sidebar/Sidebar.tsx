@@ -174,7 +174,7 @@ const Sidebar = ({ activeLink }: { activeLink?: string }) => {
         position: 'relative'
       }}
     >
-      <GlassView cssStyle={glassViewStyle} style={glassViewStyle}>
+      <GlassView cssStyle={glassViewStyle} style={glassViewStyle} withCursorShine={false}>
         <View style={styles.settingsTitleWrapper}>
           <View style={[flexbox.directionRow, flexbox.alignCenter]}>
             <AmbireLogoSquare width={28} height={28} color={theme.neutral900} />

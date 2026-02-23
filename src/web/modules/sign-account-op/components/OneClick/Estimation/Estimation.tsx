@@ -161,7 +161,7 @@ const OneClickEstimation = ({
               signAccountOpState={signAccountOpController}
               bundlerNonceDiscrepancy={bundlerNonceDiscrepancy}
             />
-            <FooterGlassView size="sm" absolute={false} style={spacings.pt}>
+            <FooterGlassView withCursorShine={false} size="sm" absolute={false} style={spacings.pt}>
               <Button
                 testID="back-button"
                 type="secondary"
