@@ -5,7 +5,10 @@
  * C++ (JSI) implementation, avoiding the deeply recursive JS chunking
  * that overflows Hermes's native call stack.
  */
-import { scrypt as quickScrypt } from 'react-native-quick-crypto'
+import { scrypt as quickScrypt, scryptSync as quickScryptSync } from 'react-native-quick-crypto'
+
+// 256 MB — covers N=131072, r=8 which needs 128*N*r = 128 MB
+const MAX_MEM = 256 * 1024 * 1024
 
 /**
  * Compatible with the scrypt-js export signature:
@@ -21,12 +24,34 @@ export async function scrypt(
   _progressCallback?: (progress: number) => void
 ): Promise<Uint8Array> {
   return new Promise((resolve, reject) => {
-    quickScrypt(password, salt, dkLen, { N, r, p }, (err, derivedKey) => {
-      if (err) {
-        reject(err)
-        return
-      }
-      resolve(new Uint8Array(derivedKey!))
-    })
+    try {
+      quickScrypt(password as any, salt as any, dkLen, { N, r, p, maxmem: MAX_MEM }, ((
+        err: Error | null,
+        derivedKey?: any
+      ) => {
+        if (err) {
+          reject(err)
+          return
+        }
+        resolve(new Uint8Array(derivedKey!))
+      }) as any)
+    } catch (e: any) {
+      reject(e)
+    }
   })
+}
+
+/**
+ * Synchronous variant — used by some scrypt-js callers.
+ */
+export function syncScrypt(
+  password: Uint8Array,
+  salt: Uint8Array,
+  N: number,
+  r: number,
+  p: number,
+  dkLen: number
+): Uint8Array {
+  const result = quickScryptSync(password as any, salt as any, dkLen, { N, r, p, maxmem: MAX_MEM })
+  return new Uint8Array(result)
 }
