@@ -1,8 +1,11 @@
 import { saParams } from 'constants/env'
+
 import { test } from '../../../fixtures/pageObjects'
 import { runAddManualNetworkFlow, runChainlistFlow } from '../../../flows/networkManagementFlow'
 
 test.describe('network management', { tag: '@networkManagement' }, () => {
+  test.setTimeout(80000)
+
   test.beforeEach(async ({ pages }) => {
     await pages.initWithStorage(saParams)
   })

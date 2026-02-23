@@ -170,24 +170,30 @@ export class DashboardPage extends BasePage {
     )
   }
 
-  async search(searchInput: string, tabName: Tabs) {
-    // click on magnifying glass icon
-    await this.click(`${selectors.dashboard.magnifyingGlassIcon}-${tabName}`)
+  async searchByNetworkOnTab(searchInput: string, tabName: Tabs) {
+    // map selectors by tab
+    const networkDropdownByTab: Record<Tabs, string> = {
+      tokens: selectors.dashboard.tokensNetworksDropdownButton,
+      collectibles: selectors.dashboard.nftNetworkDropdownButton,
+      defi: selectors.dashboard.defiNetworkDropdownButton,
+      activity: selectors.dashboard.activityNetworkDropdownButton
+    }
+
+    // open networks pagek
+    await this.click(networkDropdownByTab[tabName])
 
     // enter search phrase
     await this.entertext(selectors.searchInput, searchInput)
-  }
-
-  async searchByNetworkDropdown(searchInput: string, tabName: Tabs) {
-    // open dropdown
-    await this.click(`${selectors.dashboard.networksDropdown}-${tabName}`)
-
-    // search network
-    await this.entertext(selectors.dashboard.searchForNetwork, searchInput)
 
     // click on searched network
     const networkSelector = this.page.locator(`//div[text()="${searchInput}"]`)
     await networkSelector.click()
+  }
+
+  // TODO: change when we have test ids
+  async searchByMagnifyingGlassIcon(searchInput: string) {
+    await this.page.locator('.liquidGlass').last().click()
+    await this.page.locator('input').fill(searchInput)
   }
 
   async checkOpenTicketPage() {
@@ -202,7 +208,7 @@ export class DashboardPage extends BasePage {
     const selector = this.page.getByTestId(selectors.dashboard.openTicketLink)
     const newTab = await this.handleNewPage(selector)
 
-    expect(newTab.url()).toContain('help.ambire.com/hc/en-us')
+    expect(newTab.url()).toContain('https://help.ambire.com/en')
   }
 
   async checkRewardsPageRedirection(selector: string) {
@@ -215,8 +221,5 @@ export class DashboardPage extends BasePage {
     expect(newTab.url()).toContain('https://rewards.ambire.com/')
 
     await newTab.close()
-
-    // return to dashboard
-    await this.page.locator(selectors.dashboard.backRewardsButton).click()
   }
 }
