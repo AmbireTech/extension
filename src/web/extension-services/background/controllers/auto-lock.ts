@@ -78,6 +78,10 @@ export class AutoLockController extends EventEmitter {
     this.#resetTimer()
   }
 
+  setAutoLockTime(newValue: AUTO_LOCK_TIMES) {
+    this.autoLockTime = newValue
+  }
+
   toJSON() {
     return {
       ...this,

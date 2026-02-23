@@ -16,9 +16,8 @@ import Select, { SectionedSelect } from '@common/components/Select'
 import { SelectValue } from '@common/components/Select/types'
 import Text from '@common/components/Text'
 import TitleAndIcon from '@common/components/TitleAndIcon'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
-import useWindowSize from '@common/hooks/useWindowSize'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -97,7 +96,9 @@ const Estimation = ({
   bundlerNonceDiscrepancy,
   serviceFee
 }: Props) => {
-  const { dispatch } = useControllersMiddleware()
+  const { dispatch: signAccountOpDispatch } = useController('SignAccountOpController')
+  const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
+  const { dispatch: transferDispatch } = useController('TransferController')
   const { t } = useTranslation()
   const { theme } = useTheme(getStyles)
 
@@ -138,20 +139,70 @@ const Estimation = ({
       setSelectedFeeOption(localPayValue.value)
 
       if (!skipDispatch) {
-        dispatch({
-          type: 'CURRENT_SIGN_ACCOUNT_OP_UPDATE',
-          params: {
-            updateType,
-            feeToken: localPayValue.token,
-            paidBy: localPayValue.paidBy,
-            speed: localPayValue.speedCoverage.includes(signAccountOpState.selectedFeeSpeed)
-              ? signAccountOpState.selectedFeeSpeed
-              : FeeSpeed.Fast
-          }
-        })
+        if (updateType === 'Swap&Bridge') {
+          swapAndBridgeDispatch({
+            type: 'method',
+            params: {
+              method: 'callSignAccountOpMethod',
+              args: [
+                'update',
+                [
+                  {
+                    feeToken: localPayValue.token,
+                    paidBy: localPayValue.paidBy,
+                    speed: localPayValue.speedCoverage.includes(signAccountOpState.selectedFeeSpeed)
+                      ? signAccountOpState.selectedFeeSpeed
+                      : FeeSpeed.Fast
+                  }
+                ]
+              ]
+            }
+          })
+        } else if (updateType === 'Transfer&TopUp') {
+          transferDispatch({
+            type: 'method',
+            params: {
+              method: 'callSignAccountOpMethod',
+              args: [
+                'update',
+                [
+                  {
+                    feeToken: localPayValue.token,
+                    paidBy: localPayValue.paidBy,
+                    speed: localPayValue.speedCoverage.includes(signAccountOpState.selectedFeeSpeed)
+                      ? signAccountOpState.selectedFeeSpeed
+                      : FeeSpeed.Fast
+                  }
+                ]
+              ]
+            }
+          })
+        } else {
+          signAccountOpDispatch({
+            type: 'method',
+            params: {
+              method: 'update',
+              args: [
+                {
+                  feeToken: localPayValue.token,
+                  paidBy: localPayValue.paidBy,
+                  speed: localPayValue.speedCoverage.includes(signAccountOpState.selectedFeeSpeed)
+                    ? signAccountOpState.selectedFeeSpeed
+                    : FeeSpeed.Fast
+                }
+              ]
+            }
+          })
+        }
       }
     },
-    [dispatch, signAccountOpState?.selectedFeeSpeed, updateType]
+    [
+      signAccountOpDispatch,
+      updateType,
+      signAccountOpState?.selectedFeeSpeed,
+      swapAndBridgeDispatch,
+      transferDispatch
+    ]
   )
 
   useEffect(() => {
@@ -236,15 +287,51 @@ const Estimation = ({
         return
       }
 
-      dispatch({
-        type: 'CURRENT_SIGN_ACCOUNT_OP_UPDATE',
-        params: {
-          updateType,
-          speed: value as FeeSpeed
-        }
-      })
+      if (updateType === 'Swap&Bridge') {
+        swapAndBridgeDispatch({
+          type: 'method',
+          params: {
+            method: 'callSignAccountOpMethod',
+            args: [
+              'update',
+              [
+                {
+                  speed: value as FeeSpeed
+                }
+              ]
+            ]
+          }
+        })
+      } else if (updateType === 'Transfer&TopUp') {
+        transferDispatch({
+          type: 'method',
+          params: {
+            method: 'callSignAccountOpMethod',
+            args: [
+              'update',
+              [
+                {
+                  speed: value as FeeSpeed
+                }
+              ]
+            ]
+          }
+        })
+      } else {
+        signAccountOpDispatch({
+          type: 'method',
+          params: {
+            method: 'update',
+            args: [
+              {
+                speed: value as FeeSpeed
+              }
+            ]
+          }
+        })
+      }
     },
-    [dispatch, updateType]
+    [signAccountOpDispatch, swapAndBridgeDispatch, transferDispatch, updateType]
   )
 
   const feeOptionSelectSections = useMemo(() => {
@@ -298,6 +385,10 @@ const Estimation = ({
     )
     return mappedFeeOption
   }, [hasEstimation, signAccountOpState, serviceFee, nativeFeeOption])
+
+  const v1warning = useMemo(() => {
+    return signAccountOpState?.warnings.find((w) => w.id === 'v1Acc')
+  }, [signAccountOpState?.warnings])
 
   const renderFeeOptionSectionHeader = useCallback(({ section }: any) => {
     if (section.data.length === 0 || !section.title) return null
@@ -418,6 +509,20 @@ const Estimation = ({
         signAccountOpState={signAccountOpState}
         bundlerNonceDiscrepancy={bundlerNonceDiscrepancy}
       />
+      {v1warning && !signAccountOpState.errors.length && (
+        <View
+          style={[
+            flexbox.directionRow,
+            spacings.mt,
+            flexbox.alignCenter,
+            flexbox.justifySpaceBetween
+          ]}
+        >
+          <Text fontSize={12} appearance="warningText" style={spacings.mr}>
+            {t(v1warning.title)}
+          </Text>
+        </View>
+      )}
     </>
   )
 }

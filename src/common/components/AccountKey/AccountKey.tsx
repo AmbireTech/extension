@@ -20,7 +20,7 @@ import Editable from '@common/components/Editable'
 import ExportKey from '@common/components/ExportKey'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
@@ -74,7 +74,7 @@ const AccountKey: React.FC<Props> = ({
   const { t } = useTranslation()
   const { theme, themeType } = useTheme()
   const { addToast } = useToast()
-  const { dispatch } = useControllersMiddleware()
+  const { dispatch: keystoreDispatch } = useController('KeystoreController')
   const [isEditing, setIsEditing] = useState(false)
 
   const [bindKeyDetailsAnim, keyDetailsAnimStyles] = useCustomHover({
@@ -100,9 +100,12 @@ const AccountKey: React.FC<Props> = ({
   }
 
   const editKeyLabel = (newLabel: string) => {
-    dispatch({
-      type: 'KEYSTORE_CONTROLLER_UPDATE_KEY_PREFERENCES',
-      params: [{ addr, type: type || 'internal', preferences: { label: newLabel } }]
+    keystoreDispatch({
+      type: 'method',
+      params: {
+        method: 'updateKeyPreferences',
+        args: [[{ addr, type: type || 'internal', preferences: { label: newLabel } }]]
+      }
     })
     addToast(t('Key label updated'), { type: 'success' })
   }

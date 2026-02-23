@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next'
 
 import Panel from '@common/components/Panel'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useNavigation from '@common/hooks/useNavigation'
 import usePrevious from '@common/hooks/usePrevious'
 import useTheme from '@common/hooks/useTheme'
@@ -24,14 +23,19 @@ const KeyStoreEmailRecoverySetNewPasswordScreen = () => {
 
   const { theme } = useTheme()
   const { navigate } = useNavigation()
-  const emailVault = useController('EmailVaultController').state
-  const { dispatch } = useControllersMiddleware()
+  const { state: emailVault, dispatch: evDispatch } = useController('EmailVaultController')
 
   const prevRecoverKeyStoreStatus = usePrevious(emailVault.statuses.recoverKeyStore)
   const handleBackButtonPress = useCallback(() => {
-    dispatch({ type: 'EMAIL_VAULT_CONTROLLER_CANCEL_CONFIRMATION' })
+    evDispatch({
+      type: 'method',
+      params: {
+        method: 'cancelEmailConfirmation',
+        args: []
+      }
+    })
     navigate(ROUTES.keyStoreEmailRecovery)
-  }, [navigate, dispatch])
+  }, [navigate, evDispatch])
 
   useEffect(() => {}, [])
 

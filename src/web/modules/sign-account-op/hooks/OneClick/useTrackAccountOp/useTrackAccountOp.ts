@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
+import useController from '@common/hooks/useController'
 
 type Props = {
   address?: string
@@ -9,36 +9,42 @@ type Props = {
 }
 
 const useTrackAccountOp = ({ address, chainId, sessionId }: Props) => {
-  const { dispatch } = useControllersMiddleware()
+  const { dispatch: activityDispatch } = useController('ActivityController')
 
   const sessionHandler = useMemo(() => {
     return {
       initSession: () => {
         if (!address || !chainId) return
 
-        dispatch({
-          type: 'MAIN_CONTROLLER_ACTIVITY_SET_ACC_OPS_FILTERS',
+        activityDispatch({
+          type: 'method',
           params: {
-            sessionId,
-            filters: {
-              account: address,
-              chainId
-            },
-            pagination: {
-              itemsPerPage: 10,
-              fromPage: 0
-            }
+            method: 'filterAccountsOps',
+            args: [
+              sessionId,
+              {
+                account: address,
+                chainId
+              },
+              {
+                itemsPerPage: 10,
+                fromPage: 0
+              }
+            ]
           }
         })
       },
       killSession: () => {
-        dispatch({
-          type: 'MAIN_CONTROLLER_ACTIVITY_RESET_ACC_OPS_FILTERS',
-          params: { sessionId }
+        activityDispatch({
+          type: 'method',
+          params: {
+            method: 'resetAccountsOpsFilters',
+            args: [sessionId]
+          }
         })
       }
     }
-  }, [address, chainId, dispatch, sessionId])
+  }, [address, chainId, activityDispatch, sessionId])
 
   return { sessionHandler }
 }

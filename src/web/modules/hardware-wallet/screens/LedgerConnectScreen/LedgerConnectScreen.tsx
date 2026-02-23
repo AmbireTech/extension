@@ -27,6 +27,7 @@ export const CARD_WIDTH = 400
 
 const LedgerConnectScreen = () => {
   const mainCtrlState = useController('MainController').state
+  const { dispatch: requestsDispatch } = useController('RequestsController')
   const { requestLedgerDeviceAccess } = useLedger()
   const { addToast } = useToast()
   const { t } = useTranslation()
@@ -52,7 +53,13 @@ const LedgerConnectScreen = () => {
       const params = new URLSearchParams(route?.search)
       const requestId = params.get('requestId')
       if (requestId) {
-        dispatch({ type: 'REQUESTS_CONTROLLER_SET_CURRENT_REQUEST_BY_ID', params: { requestId } })
+        requestsDispatch({
+          type: 'method',
+          params: {
+            method: 'setCurrentUserRequestById',
+            args: [requestId]
+          }
+        })
         await closeCurrentWindow()
       } else {
         dispatch({ type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LEDGER' })

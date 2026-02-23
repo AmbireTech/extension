@@ -12,9 +12,9 @@ import { APP_VERSION } from '@common/config/env'
 import { AllControllersMappingType } from '@common/constants/controllersMapping'
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext'
 import { ControllerStoreContext } from '@common/contexts/controllerStoreContext'
+import { Action, MethodAction } from '@common/types/actions'
 import { BUNGEE_API_KEY, RELAYER_URL, VELCRO_URL } from '@env'
 import { MobileBaseControllersMappingType } from '@mobile/constants/controllersMapping'
-import { Action } from '@web/extension-services/background/actions'
 import { WalletStateController } from '@web/extension-services/background/controllers/wallet-state'
 import { storage } from '@web/extension-services/background/webapi/storage'
 import eventBus from '@web/extension-services/event/eventBus'
@@ -245,7 +245,7 @@ export const ControllersMiddlewareProvider: React.FC<{
     controllers.current = ctrls
   }
 
-  const dispatch = useCallback((action: Action) => {
+  const dispatch = useCallback((action: MethodAction | Action) => {
     if (action.type === 'method') {
       const { ctrlName, method, args } = action.params
 

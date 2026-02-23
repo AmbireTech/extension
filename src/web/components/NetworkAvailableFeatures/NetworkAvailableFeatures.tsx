@@ -67,11 +67,12 @@ const NetworkAvailableFeatures = ({
   } = useController('SelectedAccountController')
 
   const {
-    state: { networks }
+    state: { networks },
+    dispatch: networksDispatch
   } = useController('NetworksController')
 
   const { dispatchAndWait } = useController('ProvidersController')
-  const { dispatch } = useControllersMiddleware()
+  const { dispatch: requestsDispatch } = useController('RequestsController')
   const { addToast } = useToast()
   const [checkedDeployFor, setCheckedDeployFor] = useState<bigint | undefined>()
   const tooltipId = useId()
@@ -104,9 +105,12 @@ const NetworkAvailableFeatures = ({
     })
       .then((factoryCode) => {
         if (factoryCode !== '0x') {
-          dispatch({
-            type: 'MAIN_CONTROLLER_UPDATE_NETWORK',
-            params: { network: { areContractsDeployed: true }, chainId: selectedNetwork.chainId }
+          networksDispatch({
+            type: 'method',
+            params: {
+              method: 'updateNetwork',
+              args: [{ areContractsDeployed: true }, selectedNetwork.chainId]
+            }
           })
         }
       })
@@ -114,7 +118,7 @@ const NetworkAvailableFeatures = ({
         // eslint-disable-next-line no-console
         console.error(error)
       })
-  }, [dispatch, selectedNetwork, checkedDeployFor, dispatchAndWait])
+  }, [networksDispatch, selectedNetwork, checkedDeployFor, dispatchAndWait])
 
   const handleDeploy = useCallback(async () => {
     if (!selectedNetwork) return // this should not happen...
@@ -144,25 +148,33 @@ const NetworkAvailableFeatures = ({
     ]
     const singletonInterface = new Interface(singletonABI)
 
-    dispatch({
-      type: 'REQUESTS_CONTROLLER_ADD_CALLS_USER_REQUEST',
+    requestsDispatch({
+      type: 'method',
       params: {
-        userRequestParams: {
-          calls: [
-            {
-              to: SINGLETON,
-              value: 0n,
-              data: singletonInterface.encodeFunctionData('deploy', [bytecode, salt])
+        method: 'build',
+        args: [
+          {
+            type: 'calls',
+            params: {
+              userRequestParams: {
+                calls: [
+                  {
+                    to: SINGLETON,
+                    value: 0n,
+                    data: singletonInterface.encodeFunctionData('deploy', [bytecode, salt])
+                  }
+                ],
+                meta: {
+                  chainId: selectedNetwork.chainId,
+                  accountAddr: account.addr as string
+                }
+              }
             }
-          ],
-          meta: {
-            chainId: selectedNetwork.chainId,
-            accountAddr: account.addr as string
           }
-        }
+        ]
       }
     })
-  }, [addToast, dispatch, account, selectedNetwork])
+  }, [addToast, requestsDispatch, account, selectedNetwork])
 
   const shouldRenderRetryButton = useMemo(
     () => !!features && !!features.find((f) => f.id === 'flagged') && withRetryButton,

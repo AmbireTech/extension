@@ -12,15 +12,22 @@ import { LOG_LEVELS } from '@web/utils/logger'
 
 const LogLevelControlOption = () => {
   const { t } = useTranslation()
-  const { theme } = useTheme()
-  const { logLevel } = useController('WalletStateController').state
-  const { dispatch } = useControllersMiddleware()
+  const {
+    state: { logLevel },
+    dispatch: walletStateDispatch
+  } = useController('WalletStateController')
 
   const handleToggleLogLevel = useCallback(() => {
     const nextLogLevel = logLevel === LOG_LEVELS.DEV ? LOG_LEVELS.PROD : LOG_LEVELS.DEV
 
-    dispatch({ type: 'SET_LOG_LEVEL', params: { logLevel: nextLogLevel } })
-  }, [dispatch, logLevel])
+    walletStateDispatch({
+      type: 'method',
+      params: {
+        method: 'setLogLevel',
+        args: [nextLogLevel]
+      }
+    })
+  }, [walletStateDispatch, logLevel])
 
   return (
     <ControlOption

@@ -12,7 +12,6 @@ import Text from '@common/components/Text'
 import Toggle from '@common/components/Toggle'
 import Tooltip from '@common/components/Tooltip'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING, SPACING_LG, SPACING_MD, SPACING_SM } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
@@ -93,13 +92,13 @@ const SignInWithEthereum = ({
   handleDismissLedgerConnectModal
 }: Props) => {
   const { t } = useTranslation()
-  const signMessageState = useController('SignMessageController').state
+  const { state: signMessageState, dispatch: signMessageDispatch } =
+    useController('SignMessageController')
   const signStatus = signMessageState.statuses.sign
   const { styles } = useTheme(getStyles)
   const { theme } = useTheme()
   const { networks } = useController('NetworksController').state
   const { responsiveSizeMultiplier } = useResponsiveActionWindow()
-  const { dispatch } = useControllersMiddleware()
 
   const siweMessageToSign = useMemo(() => {
     // It's validated beforehand. This component is never rendered if the
@@ -168,26 +167,28 @@ const SignInWithEthereum = ({
 
   const updateIsAutoLoginEnabled = useCallback(
     (enabled: boolean) => {
-      dispatch({
-        type: 'MAIN_CONTROLLER_SIGN_MESSAGE_UPDATE',
+      signMessageDispatch({
+        type: 'method',
         params: {
-          isAutoLoginEnabledByUser: enabled
+          method: 'update',
+          args: [{ isAutoLoginEnabledByUser: enabled }]
         }
       })
     },
-    [dispatch]
+    [signMessageDispatch]
   )
 
   const updateAutoLoginExpirationTime = useCallback(
     (autoLoginDuration: number) => {
-      dispatch({
-        type: 'MAIN_CONTROLLER_SIGN_MESSAGE_UPDATE',
+      signMessageDispatch({
+        type: 'method',
         params: {
-          autoLoginDuration
+          method: 'update',
+          args: [{ autoLoginDuration }]
         }
       })
     },
-    [dispatch]
+    [signMessageDispatch]
   )
 
   return (
