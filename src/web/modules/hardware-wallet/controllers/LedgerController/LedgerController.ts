@@ -116,13 +116,11 @@ class LedgerController implements ExternalSignerController {
       subscription = dmk.startDiscovering({}).subscribe({
         next: async (device) => {
           subscription?.unsubscribe()
-          subscription = undefined
           dmk.close()
           resolve(device)
         },
         error: (error) => {
           subscription?.unsubscribe()
-          subscription = undefined
           reject(new ExternalSignerError(normalizeLedgerMessage(error?.message)))
         }
       })
@@ -230,7 +228,10 @@ class LedgerController implements ExternalSignerController {
       this.deviceModel = connectedDevice.modelId
       this.deviceId = connectedDevice.id
 
-      const contextModule = new ContextModuleBuilder({ originToken: 'ambire' }).build()
+      const contextModule = new ContextModuleBuilder({
+        originToken: 'ambire',
+        ...(isLedgerEmulator && { loggerFactory: this.#createContextLogger })
+      }).build()
       this.signerEth = new SignerEthBuilder({ dmk: this.walletSDK, sessionId })
         .withContextModule(contextModule)
         .build()
@@ -242,35 +243,50 @@ class LedgerController implements ExternalSignerController {
     }
   }
 
+  #createContextLogger = (tag: string) => {
+    if (isProd) {
+      return {
+        subscribers: [],
+        error: () => {},
+        warn: () => {},
+        info: () => {},
+        debug: () => {}
+      }
+    }
+
+    return {
+      subscribers: [],
+      error: (message: string) => console.error(`[ContextModule:${tag}]`, message),
+      warn: (message: string) => console.warn(`[ContextModule:${tag}]`, message),
+      info: (message: string) => console.info(`[ContextModule:${tag}]`, message),
+      debug: (message: string) => console.debug(`[ContextModule:${tag}]`, message)
+    }
+  }
+
   #findDevice = () =>
     new Promise<DiscoveredDevice>((resolve, reject) => {
       let subscription: Subscription | undefined
       let isCancelled = false
 
-      const cleanup = () => {
-        subscription?.unsubscribe()
-        subscription = undefined
-      }
-
       subscription = this.walletSDK!.listenToAvailableDevices({}).subscribe({
         next: (devices) => {
           if (isCancelled) return
           if (devices?.length) {
-            cleanup()
+            subscription?.unsubscribe()
             // TODO: Multiple devices found?
             resolve(devices[0]!)
           }
         },
         error: (error) => {
           if (isCancelled) return
-          cleanup()
+          subscription?.unsubscribe()
           reject(new Error(error?.message))
         }
       })
 
       this.#rejectSigningSubscription = () => {
         isCancelled = true
-        cleanup()
+        subscription?.unsubscribe()
         reject(new ExternalSignerError('Operation cancelled by user'))
       }
     })
@@ -292,11 +308,6 @@ class LedgerController implements ExternalSignerController {
       let subscription: Subscription | undefined // so it is always defined inside the subscribe callback
       let isCancelled = false
 
-      const cleanup = () => {
-        subscription?.unsubscribe()
-        subscription = undefined
-      }
-
       // eslint-disable-next-line prefer-const
       subscription = observable.subscribe({
         next: (response: any) => {
@@ -310,7 +321,7 @@ class LedgerController implements ExternalSignerController {
             )
 
           if (missingRequiredUserInteraction) {
-            cleanup()
+            subscription?.unsubscribe()
             reject(
               new ExternalSignerError(
                 normalizeLedgerMessage(response.intermediateValue.requiredUserInteraction)
@@ -319,7 +330,7 @@ class LedgerController implements ExternalSignerController {
           }
 
           if (response.status === 'error') {
-            cleanup()
+            subscription?.unsubscribe()
             // @ts-ignore Ledger types not being resolved correctly in the SDK
             const deviceMessage =
               response.error?.message || response.error?._tag || 'no response from device'
@@ -332,7 +343,7 @@ class LedgerController implements ExternalSignerController {
 
           if (response.status !== 'completed') return
 
-          cleanup()
+          subscription?.unsubscribe()
           if (response?.output) {
             resolve(onCompleted(response.output))
           } else {
@@ -340,7 +351,7 @@ class LedgerController implements ExternalSignerController {
           }
         },
         error: (error: any) => {
-          cleanup()
+          subscription?.unsubscribe()
           reject(new ExternalSignerError(normalizeLedgerMessage(error?.message)))
         }
       })
@@ -348,7 +359,7 @@ class LedgerController implements ExternalSignerController {
       if (isSign) {
         this.#rejectSigningSubscription = () => {
           isCancelled = true
-          cleanup()
+          subscription?.unsubscribe()
           reject(new ExternalSignerError('Operation cancelled by user'))
         }
       }
