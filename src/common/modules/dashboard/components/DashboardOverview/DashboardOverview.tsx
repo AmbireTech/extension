@@ -115,7 +115,7 @@ const DashboardOverview: FC<Props> = ({
       >
         {/* TODO: Style based on selected account; Add overlay in the extension */}
         <Image
-          source={{ uri: backgroundImage }}
+          source={typeof backgroundImage === 'string' ? { uri: backgroundImage } : backgroundImage}
           style={{
             width: '100%',
             height: OVERVIEW_CONTENT_MAX_HEIGHT,
