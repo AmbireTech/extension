@@ -43,7 +43,7 @@ const OptionItem = ({
       testID={testID}
     >
       <Icon width={24} height={24} />
-      <Text weight="medium" style={spacings.mlSm} numberOfLines={1}>
+      <Text weight="medium" fontSize={14} style={spacings.mlSm} numberOfLines={1}>
         {t(text)}
       </Text>
     </Pressable>

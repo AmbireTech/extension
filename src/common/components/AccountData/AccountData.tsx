@@ -14,6 +14,7 @@ import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import { setStringAsync } from '@common/utils/clipboard'
 import useHover, { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
+import { getUiType } from '@web/utils/uiType'
 
 import getStyles from './styles'
 
@@ -31,7 +32,7 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
   const { t } = useTranslation()
   const { addToast } = useToast()
   const { styles } = useTheme(getStyles)
-
+  const { isPopup } = getUiType()
   const { account } = useController('SelectedAccountController').state
   const [bindAddressAnim, addressAnimStyle] = useHover({
     preset: 'opacityInverted'
@@ -88,7 +89,7 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
         <Text
           numberOfLines={1}
           weight="semiBold"
-          style={[spacings.mlTy, spacings.mrTy]}
+          style={[spacings.mlTy, spacings.mrTy, { maxWidth: isPopup ? 112 : 160 }]}
           color="#FFFFFF"
           fontSize={14}
         >

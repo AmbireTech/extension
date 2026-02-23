@@ -456,6 +456,8 @@ module.exports = async function (env, argv) {
           // because the mangling messes up the gridplus-sdk package somehow.
           // The drawback is larger bundle size.
           terserRealOptions.mangle = false
+          // Preserve class names so `this.constructor.name` logic works dynamically
+          terserRealOptions.keep_classnames = true
         }
       }
     }
@@ -506,6 +508,7 @@ module.exports = async function (env, argv) {
         }
 
         terserRealOptions.mangle = false
+        terserRealOptions.keep_classnames = true
       }
     }
 
@@ -623,6 +626,7 @@ module.exports = async function (env, argv) {
         }
 
         terserRealOptions.mangle = false
+        terserRealOptions.keep_classnames = true
       }
     }
 

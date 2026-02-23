@@ -6,7 +6,6 @@ import AccountKeys from '@common/components/AccountKeysBottomSheet/AccountKeys'
 import BottomSheet from '@common/components/BottomSheet'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 
 interface Props {
   sheetRef: React.RefObject<Modalize>
@@ -29,13 +28,12 @@ const AccountKeysBottomSheet: FC<Props> = ({
     closeBottomSheet()
     openAddAccountBottomSheet && openAddAccountBottomSheet()
   }, [closeBottomSheet, openAddAccountBottomSheet])
-  const { theme, themeType } = useTheme()
+  const { theme } = useTheme()
   return (
     <BottomSheet
       id="account-keys-bottom-sheet"
       sheetRef={sheetRef}
       closeBottomSheet={closeBottomSheet}
-      backgroundColor={themeType === THEME_TYPES.DARK ? 'secondaryBackground' : 'primaryBackground'}
       scrollViewProps={{ contentContainerStyle: { flex: 1 } }}
       isScrollEnabled={false}
       containerInnerWrapperStyles={{ flex: 1 }}

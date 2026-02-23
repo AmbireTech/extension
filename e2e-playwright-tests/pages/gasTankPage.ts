@@ -14,7 +14,7 @@ export class GasTankPage extends BasePage {
   }
 
   async topUpGasTank(token: Token, amount: string) {
-    await this.page.getByTestId(selectors.dashboardGasTankButton).click()
+    await this.page.getByTestId(selectors.dashboardGasTankBalance).click()
     await this.page.getByTestId(selectors.topUpButton).click()
 
     await this.clickOnMenuToken(token)

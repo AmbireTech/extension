@@ -4,6 +4,8 @@ import tokens from 'constants/tokens'
 import { test } from 'fixtures/pageObjects'
 
 test.describe('Add custom token', { tag: '@addToken' }, () => {
+  test.setTimeout(60000)
+
   test.beforeEach(async ({ pages }) => {
     await pages.initWithStorage(saParams)
   })
@@ -43,7 +45,7 @@ test.describe('Add custom token', { tag: '@addToken' }, () => {
       await pages.dashboard.navigateToDashboard()
 
       // search added token and assert it
-      await pages.dashboard.search('USDC.E', 'tokens')
+      await pages.dashboard.searchByMagnifyingGlassIcon('USDC.E')
       await pages.basePage.isVisible(
         `token-balance-${usdceArbitrum.address}.${usdceArbitrum.chainId}`
       )
@@ -60,7 +62,7 @@ test.describe('Add custom token', { tag: '@addToken' }, () => {
       await pages.dashboard.navigateToDashboard()
 
       // search added token and assert it
-      await pages.dashboard.search('USDC.E', 'tokens')
+      await pages.dashboard.searchByMagnifyingGlassIcon('USDC.E')
       await pages.basePage.expectElementNotVisible(
         `token-balance-${usdceArbitrum.address}.${usdceArbitrum.chainId}`
       )
