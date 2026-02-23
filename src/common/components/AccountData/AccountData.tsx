@@ -10,11 +10,11 @@ import Avatar from '@common/components/Avatar'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
+import useHover, { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import { setStringAsync } from '@common/utils/clipboard'
-import useHover, { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
 
 import getStyles from './styles'
 

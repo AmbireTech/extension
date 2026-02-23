@@ -17,8 +17,8 @@ import eventBus from '@common/services/event/eventBus'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
+import { getUiType } from '@common/utils/uiType'
 import PasswordConfirmation from '@web/modules/settings/components/PasswordConfirmation'
-import { getUiType } from '@web/utils/uiType'
 
 import { PanelBackButton, PanelTitle } from '../Panel/Panel'
 

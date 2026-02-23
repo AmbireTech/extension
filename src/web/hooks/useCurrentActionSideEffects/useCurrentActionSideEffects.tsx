@@ -4,8 +4,8 @@ import { ControllersStateLoadedContext } from '@common/contexts/controllersState
 import useController from '@common/hooks/useController'
 import { AUTH_STATUS } from '@common/modules/auth/constants/authStatus'
 import useAuth from '@common/modules/auth/hooks/useAuth'
+import { getUiType } from '@common/utils/uiType'
 import { closeCurrentWindow } from '@web/extension-services/background/webapi/window'
-import { getUiType } from '@web/utils/uiType'
 
 const { isRequestWindow } = getUiType()
 

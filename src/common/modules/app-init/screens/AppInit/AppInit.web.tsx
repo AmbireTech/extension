@@ -22,7 +22,6 @@ import { PortalHost, PortalProvider } from '@gorhom/portal'
 import { isExtension } from '@web/constants/browserapi'
 import { ControllersMiddlewareProvider } from '@web/contexts/controllersMiddlewareContext'
 import { ControllersStateLoadedProvider } from '@web/contexts/controllersStateLoadedContext'
-import { getUiType } from '@web/utils/uiType'
 
 const Router = isExtension ? HashRouter : BrowserRouter
 
@@ -55,7 +54,7 @@ const AppInit = () => {
                         <KeyboardProvider>
                           <NetInfoProvider>
                             <AuthProvider>
-                              <OnboardingNavigationProvider uiType={getUiType().uiType}>
+                              <OnboardingNavigationProvider>
                                 {appContent}
                               </OnboardingNavigationProvider>
                             </AuthProvider>

@@ -7,8 +7,8 @@ import Header from '@common/modules/header/components/Header'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
+import { getUiType } from '@common/utils/uiType'
 import ActionHeader from '@web/modules/action-requests/components/ActionHeader'
-import { getUiType } from '@web/utils/uiType'
 
 import LayoutWrapper from '../LayoutWrapper'
 

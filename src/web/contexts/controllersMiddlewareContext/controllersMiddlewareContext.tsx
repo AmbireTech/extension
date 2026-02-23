@@ -13,6 +13,7 @@ import useRoute from '@common/hooks/useRoute'
 import useToast from '@common/hooks/useToast'
 import eventBus from '@common/services/event/eventBus'
 import { Action, MethodAction } from '@common/types/actions'
+import { getUiType } from '@common/utils/uiType'
 import { isExtension } from '@web/constants/browserapi'
 import { controllersMapping } from '@web/constants/controllersMapping'
 import { closeCurrentWindow } from '@web/extension-services/background/webapi/window'
@@ -22,7 +23,6 @@ import useDappsControllerHelpers from '@web/hooks/useDappsControllerHelpers'
 import useKeystoreControllerHelpers from '@web/hooks/useKeystoreControllerHelpers'
 import useRequestsControllerHelpers from '@web/hooks/useRequestsControllerHelpers'
 import useSelectedAccountControllerHelpers from '@web/hooks/useSelectedAccountControllerHelpers'
-import { getUiType } from '@web/utils/uiType'
 
 let globalDispatch: ControllersMiddlewareContextReturnType['dispatch']
 let pm: PortMessenger

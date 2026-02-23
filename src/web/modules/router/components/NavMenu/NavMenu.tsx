@@ -22,6 +22,7 @@ import { HeaderWithTitle } from '@common/modules/header/components/Header/Header
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { getUiType } from '@common/utils/uiType'
 import {
   TabLayoutContainer,
   tabLayoutWidths
@@ -31,7 +32,6 @@ import { openInTab } from '@web/extension-services/background/webapi/tab'
 import SettingsLink from '@web/modules/settings/components/SettingsLink'
 import { SETTINGS_LINKS } from '@web/modules/settings/components/Sidebar/Sidebar'
 import commonWebStyles from '@web/styles/utils/common'
-import { getUiType } from '@web/utils/uiType'
 
 import getStyles from './styles'
 

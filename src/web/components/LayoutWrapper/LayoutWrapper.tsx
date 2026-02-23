@@ -6,7 +6,7 @@ import useWindowSize from '@common/hooks/useWindowSize'
 import { SPACING_2XL } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import { getUiType } from '@web/utils/uiType'
+import { getUiType } from '@common/utils/uiType'
 
 type Props = {
   children: React.ReactNode

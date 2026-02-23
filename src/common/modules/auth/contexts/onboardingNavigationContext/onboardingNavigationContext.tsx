@@ -14,7 +14,7 @@ import { AUTH_STATUS } from '@common/modules/auth/constants/authStatus'
 import useAuth from '@common/modules/auth/hooks/useAuth'
 import { ONBOARDING_WEB_ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import { syncSessionStorage } from '@common/services/storage'
-import { UiType } from '@web/utils/uiType'
+import { getUiType } from '@common/utils/uiType'
 
 export type OnboardingRoute = (typeof ONBOARDING_WEB_ROUTES)[number]
 type HwWalletsNeedingRedirect = 'trezor' | 'lattice' | null
@@ -61,13 +61,7 @@ const getAccountsToPersonalizeFromSession = (): Account[] => {
   }
 }
 
-const OnboardingNavigationProvider = ({
-  children,
-  uiType
-}: {
-  children: React.ReactNode
-  uiType?: UiType | 'mobile'
-}) => {
+const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode }) => {
   const { hasPasswordSecret } = useController('KeystoreController').state
   const { statuses: emailVaultStatuses } = useController('EmailVaultController').state
   const { path, params } = useRoute()
@@ -257,7 +251,7 @@ const OnboardingNavigationProvider = ({
         nextRoute = findNextEnabledRoute(currentNode.children, routeName)
       }
       if (nextRoute) {
-        if (nextRoute.name === '/' && uiType !== 'mobile') {
+        if (nextRoute.name === '/' && !getUiType().isMobileApp) {
           dispatch({ type: 'OPEN_EXTENSION_POPUP' })
         } else {
           navigate(nextRoute.name, {
@@ -276,8 +270,7 @@ const OnboardingNavigationProvider = ({
       deepSearchRouteNode,
       path,
       history,
-      dispatch,
-      uiType
+      dispatch
     ]
   )
 
@@ -312,7 +305,7 @@ const OnboardingNavigationProvider = ({
   const [triggeredHwWalletFlow, setTriggeredHwWalletFlow] = useState<HwWalletsNeedingRedirect>(null)
 
   useEffect(() => {
-    if (uiType === 'popup') return
+    if (getUiType().isPopup) return
 
     const currentRoute = path?.substring(1)
     if (!currentRoute) return
@@ -324,7 +317,7 @@ const OnboardingNavigationProvider = ({
     if (!ONBOARDING_WEB_ROUTES.includes(currentRoute) && onboardingInitialized) {
       setOnboardingInitialized(false)
     }
-  }, [onboardingInitialized, uiType, path])
+  }, [onboardingInitialized, path])
 
   useEffect(() => {
     const shouldRedirectToHwWalletFlow =
@@ -370,7 +363,7 @@ const OnboardingNavigationProvider = ({
   // If a user attempts to access one of these routes directly via the URL bar,
   // this hook should block the navigation and redirect them back to the previous route.
   useEffect(() => {
-    if (uiType === 'popup' || uiType === 'mobile') return
+    if (getUiType().isPopup || getUiType().isMobileApp) return
     const currentRoute = path?.substring(1)
     const prevRoute = prevPath?.substring(1)
     if (!currentRoute) return
@@ -387,7 +380,7 @@ const OnboardingNavigationProvider = ({
         !!prevRoute && navigate(prevRoute, { state: { internal: true } })
       }
     }
-  }, [path, prevPath, params, deepSearchRouteNode, navigate, onboardingRoutesTree, history, uiType])
+  }, [path, prevPath, params, deepSearchRouteNode, navigate, onboardingRoutesTree, history])
 
   // Reset the onboarding history state in case we are no longer on an onboarding route
   useEffect(() => {
@@ -397,7 +390,7 @@ const OnboardingNavigationProvider = ({
   }, [history.length, path])
 
   useEffect(() => {
-    if (uiType === 'popup' || uiType === 'mobile') return
+    if (getUiType().isPopup || getUiType().isMobileApp) return
 
     const handleBackButton = () => {
       const changedRoute = window.location.hash.replace('#/', '')
@@ -415,7 +408,7 @@ const OnboardingNavigationProvider = ({
     return () => {
       window.removeEventListener('hashchange', handleBackButton)
     }
-  }, [goToPrevRoute, history, deepSearchRouteNode, onboardingRoutesTree, uiType])
+  }, [goToPrevRoute, history, deepSearchRouteNode, onboardingRoutesTree])
 
   useEffect(() => {
     const currentRoute = path?.substring(1)

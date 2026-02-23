@@ -18,9 +18,8 @@ import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { tokenOrCollectionSearch } from '@common/utils/search'
-import AddTokenBottomSheet from '@web/modules/settings/screens/ManageTokensSettingsScreen/AddTokenBottomSheet'
-import { getTokenId } from '@web/utils/token'
-import { getUiType } from '@web/utils/uiType'
+import { getTokenId } from '@common/utils/token'
+import { getUiType } from '@common/utils/uiType'
 
 import DashboardBanners from '../DashboardBanners'
 import DashboardPageScrollContainer from '../DashboardPageScrollContainer'
@@ -41,6 +40,7 @@ interface Props {
   dashboardNetworkFilterName: string | null
   animatedOverviewHeight: Animated.Value
   isSearchHidden: boolean
+  onAddCustomToken?: () => void
 }
 
 // if any of the post amount (during simulation) or the current state
@@ -67,7 +67,8 @@ const Tokens = ({
   onScroll,
   animatedOverviewHeight,
   dashboardNetworkFilterName,
-  isSearchHidden
+  isSearchHidden,
+  onAddCustomToken
 }: Props) => {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
@@ -79,11 +80,6 @@ const Tokens = ({
   const {
     state: { portfolio, dashboardNetworkFilter }
   } = useController('SelectedAccountController')
-  const {
-    ref: addTokenBottomSheetRef,
-    open: openAddTokenBottomSheet,
-    close: closeAddTokenBottomSheet
-  } = useModalize()
   const { control, watch, setValue } = useForm({
     mode: 'all',
     defaultValues: {
@@ -198,8 +194,8 @@ const Tokens = ({
   )
 
   const navigateToAddCustomToken = useCallback(() => {
-    openAddTokenBottomSheet()
-  }, [openAddTokenBottomSheet])
+    onAddCustomToken?.()
+  }, [onAddCustomToken])
 
   const renderItem = useCallback(
     ({ item, index }: any) => {
@@ -348,10 +344,6 @@ const Tokens = ({
         initialNumToRender={isPopup ? 10 : 20}
         windowSize={9} // Larger values can cause performance issues.
         onScroll={onScroll}
-      />
-      <AddTokenBottomSheet
-        sheetRef={addTokenBottomSheetRef}
-        handleClose={closeAddTokenBottomSheet}
       />
       {openTab === 'tokens' && (
         <SearchAndCurrentApp control={control} displayCurrentApp isHidden={isSearchHidden} />

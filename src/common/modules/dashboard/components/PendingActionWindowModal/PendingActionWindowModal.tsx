@@ -7,7 +7,7 @@ import BottomSheet from '@common/components/BottomSheet'
 import DualChoiceModal from '@common/components/DualChoiceModal'
 import useController from '@common/hooks/useController'
 import spacings from '@common/styles/spacings'
-import { getUiType } from '@web/utils/uiType'
+import { getUiType } from '@common/utils/uiType'
 
 const isPopup = getUiType().isPopup
 

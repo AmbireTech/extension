@@ -11,7 +11,7 @@ import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY, hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import { createTab } from '@web/extension-services/background/webapi/tab'
+import { createTab } from '@common/utils/links'
 
 export type RouteItemType = {
   icon: any

@@ -6,6 +6,7 @@ import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
+import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import DashboardHeader from '@common/modules/dashboard/components/DashboardHeader'
 import Routes from '@common/modules/dashboard/components/Routes'
@@ -15,7 +16,6 @@ import { OVERVIEW_CONTENT_MAX_HEIGHT } from '@common/modules/dashboard/screens/D
 import spacings, { SPACING, SPACING_MD, SPACING_TY, SPACING_XL } from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import useHover, { AnimatedPressable } from '@web/hooks/useHover'
 
 import backgroundImage from './background.png'
 import BalanceAffectingErrors from './BalanceAffectingErrors'
@@ -27,7 +27,7 @@ import getStyles from './styles'
 const THRESHOLD_AMOUNT_TO_HIDE_BALANCE_DECIMALS = 10000
 
 interface Props {
-  openGasTankModal: () => void
+  openGasTankModal?: () => void
   animatedOverviewHeight: Animated.Value
   dashboardOverviewSize: {
     width: number
@@ -229,7 +229,11 @@ const DashboardOverview: FC<Props> = ({
                   closeBottomSheetWrapped={closeBottomSheetWrapped}
                   isLoadingTakingTooLong={isLoadingTakingTooLong}
                 />
-                <GasTankButton onPress={openGasTankModal} portfolio={portfolio} account={account} />
+                <GasTankButton
+                  onPress={() => openGasTankModal?.()}
+                  portfolio={portfolio}
+                  account={account}
+                />
                 <RewardsButton />
               </View>
             </View>

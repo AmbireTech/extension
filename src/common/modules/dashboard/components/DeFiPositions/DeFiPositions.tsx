@@ -22,9 +22,9 @@ import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { openInTab } from '@common/utils/links'
 import { searchWithNetworkName } from '@common/utils/search'
-import { openInTab } from '@web/extension-services/background/webapi/tab'
-import { getUiType } from '@web/utils/uiType'
+import { getUiType } from '@common/utils/uiType'
 
 import SearchAndCurrentApp from '../SearchAndCurrentApp'
 import DefiPositionsSkeleton from './DefiPositionsSkeleton'

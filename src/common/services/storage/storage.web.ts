@@ -55,25 +55,25 @@ const asyncStorage: Storage = isExtension ? extensionAsyncStorage : commonAsyncS
 
 const syncStorage = {
   get: (key: string, defaultValue: any): any => {
-    return localStorage.get(key, defaultValue)
+    return localStorage.getItem(key) ?? defaultValue
   },
   set: (key: string, value: any) => {
-    return localStorage.set(key, value)
+    return localStorage.setItem(key, value)
   },
   remove: (key: string) => {
-    return localStorage.remove(key)
+    return localStorage.removeItem(key)
   }
 }
 
 const syncSessionStorage = {
   get: (key: string, defaultValue: any): any => {
-    return sessionStorage.get(key, defaultValue)
+    return sessionStorage.getItem(key) ?? defaultValue
   },
   set: (key: string, value: any) => {
-    return sessionStorage.set(key, value)
+    return sessionStorage.setItem(key, value)
   },
   remove: (key: string) => {
-    return sessionStorage.remove(key)
+    return sessionStorage.removeItem(key)
   }
 }
 

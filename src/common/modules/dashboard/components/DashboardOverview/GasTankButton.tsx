@@ -5,13 +5,13 @@ import { SelectedAccountPortfolio } from '@ambire-common/interfaces/selectedAcco
 import GasTankIcon from '@common/assets/svg/GasTankIcon'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
+import useHasGasTank from '@common/hooks/useHasGasTank'
 import spacings from '@common/styles/spacings'
 import { getGasTankTokenDetails } from '@common/utils/getGasTankTokenDetails'
-import useHasGasTank from '@web/hooks/useHasGasTank'
 
 import OverviewButton from './OverviewButton'
 
-type Props = {
+interface Props {
   onPress: () => void
   portfolio: SelectedAccountPortfolio
   account: Account | null

@@ -8,7 +8,7 @@ import {
 } from '@common/contexts/controllersStateLoadedContext'
 import useController from '@common/hooks/useController'
 import useControllerStore from '@common/hooks/useControllerStore'
-import { getUiType } from '@web/utils/uiType'
+import { getUiType } from '@common/utils/uiType'
 
 const { isPopup } = getUiType()
 const MIN_LOADING_TIME = 300

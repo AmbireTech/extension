@@ -7,9 +7,9 @@ import BottomSheet from '@common/components/BottomSheet'
 import DualChoiceModal from '@common/components/DualChoiceModal'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
+import ActiveRouteCard from '@common/modules/swap-and-bridge/components/ActiveRouteCard'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import ActiveRouteCard from '@web/modules/swap-and-bridge/components/ActiveRouteCard'
 
 type Props = {
   id: string

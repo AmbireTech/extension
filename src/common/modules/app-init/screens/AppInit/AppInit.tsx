@@ -35,7 +35,7 @@ const AppInit = () => {
                       <KeyboardProvider>
                         <NetInfoProvider>
                           <AuthProvider>
-                            <OnboardingNavigationProvider uiType="mobile">
+                            <OnboardingNavigationProvider>
                               <WithGlassViewSupport>
                                 <AppRouter />
                                 <PortalHost name="global" />

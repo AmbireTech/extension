@@ -9,8 +9,8 @@ import useTheme from '@common/hooks/useTheme'
 import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Header'
 import spacings, { SPACING } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { getUiType } from '@common/utils/uiType'
 import LayoutWrapper from '@web/components/LayoutWrapper'
-import { getUiType } from '@web/utils/uiType'
 
 const { isRequestWindow } = getUiType()
 

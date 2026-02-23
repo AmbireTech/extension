@@ -6,10 +6,10 @@ import Avatar from '@common/components/Avatar'
 import ControlOption from '@common/components/ControlOption'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import useController from '@common/hooks/useController'
+import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { AvatarType } from '@web/extension-services/background/controllers/wallet-state'
-import useHover, { AnimatedPressable } from '@web/hooks/useHover'
 
 const AVATAR_TYPES: AvatarType[] = ['blockies', 'jazzicons', 'polycons']
 
