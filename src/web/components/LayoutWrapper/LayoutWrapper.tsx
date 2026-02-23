@@ -49,7 +49,7 @@ const LayoutWrapper: FC<Props> = ({ children, backgroundStyle = {}, style = {} }
           width: '100%',
           height: 600,
           backgroundColor: theme.primaryBackground,
-          borderRadius: BORDER_RADIUS_PRIMARY,
+          borderRadius: isPopup ? 0 : BORDER_RADIUS_PRIMARY,
           overflow: 'hidden',
           shadowColor: theme.neutral400,
           shadowOffset: { width: 0, height: 12 },
