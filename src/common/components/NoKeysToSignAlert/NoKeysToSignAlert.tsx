@@ -87,7 +87,7 @@ const NoKeysToSignAlert: FC<Props> = ({ style, isTransaction = true, type = 'lon
         showExportImport
         openAddAccountBottomSheet={openAddAccounts}
       />
-      <AddAccount sheetRef={sheetRef} closeBottomSheet={closeBottomSheet} />
+      <AddAccount sheetRef={addAccountsRef} closeBottomSheet={closeBottomSheet} />
     </View>
   )
 }

@@ -61,8 +61,8 @@ const NEUTRAL_PRIMITIVES = {
     [THEME_TYPES.DARK]: '#000000'
   },
   neutral500: {
-    [THEME_TYPES.LIGHT]: '#96A1B1',
-    [THEME_TYPES.DARK]: '#96A1B1'
+    [THEME_TYPES.LIGHT]: '#B9BFC9',
+    [THEME_TYPES.DARK]: '#B9BFC9'
   },
   neutral600: {
     [THEME_TYPES.LIGHT]: '#50555D',
