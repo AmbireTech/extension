@@ -1,13 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { NativeScrollEvent, Pressable, ScrollView, View } from 'react-native'
+import { NativeScrollEvent, ScrollView, View } from 'react-native'
 
 import { SigningStatus } from '@ambire-common/controllers/signAccountOp/signAccountOp'
 import { Key } from '@ambire-common/interfaces/keystore'
 import { CallsUserRequest } from '@ambire-common/interfaces/userRequest'
-import { getErrorCodeStringFromReason } from '@ambire-common/libs/errorDecoder/helpers'
-import CopyIcon from '@common/assets/svg/CopyIcon'
-import AlertVertical from '@common/components/AlertVertical'
 import GlassView from '@common/components/GlassView'
 import NetworkBadge from '@common/components/NetworkBadge'
 import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
@@ -18,7 +15,6 @@ import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY, hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import { setStringAsync } from '@common/utils/clipboard'
 import SmallNotificationWindowWrapper from '@web/components/SmallNotificationWindowWrapper'
 import {
   TabLayoutContainer,
@@ -35,7 +31,7 @@ import SectionHeading from '@web/modules/sign-account-op/components/SectionHeadi
 import Simulation from '@web/modules/sign-account-op/components/Simulation'
 import SigningKeySelect from '@web/modules/sign-message/components/SignKeySelect'
 
-import Tenderly from '../../components/Tenderly'
+import ErrorInformation from '../../components/ErrorInformation'
 import Gradient from './Gradient'
 import getStyles from './styles'
 
@@ -155,46 +151,6 @@ const SignAccountOpScreen = () => {
     hasEstimation,
     isSignDisabled
   ])
-
-  const copySignAccountOpError = useCallback(async () => {
-    if (!signAccountOpState?.errors?.length) return
-
-    const errorCode = signAccountOpState.errors[0]?.code
-
-    if (!errorCode) return
-
-    await setStringAsync(errorCode)
-    addToast(t('Error code copied to clipboard'))
-  }, [addToast, signAccountOpState?.errors, t])
-
-  const errorText = useMemo(() => {
-    const { code, text } = signAccountOpState?.errors?.[0] || {}
-
-    if (code) {
-      return (
-        <AlertVertical.Text type="warning" size="sm" style={styles.alertText}>
-          {getErrorCodeStringFromReason(code || '', false)}
-          <Pressable
-            // @ts-ignore web style
-            style={{ verticalAlign: 'middle', ...spacings.mlMi, ...spacings.mbMi }}
-            onPress={copySignAccountOpError}
-          >
-            <CopyIcon strokeWidth={1.5} width={20} height={20} color={theme.warningText} />
-          </Pressable>
-        </AlertVertical.Text>
-      )
-    }
-
-    if (text) {
-      return (
-        <AlertVertical.Text type="warning" size="sm" style={styles.alertText}>
-          {text}
-        </AlertVertical.Text>
-      )
-    }
-
-    return undefined
-  }, [copySignAccountOpError, signAccountOpState?.errors, styles.alertText, theme.warningText])
 
   const isAddToCartDisabled = useMemo(() => {
     const readyToSign = signAccountOpState?.readyToSign
@@ -351,12 +307,7 @@ const SignAccountOpScreen = () => {
             />
             {/* Display errors only if the user is not in view-only mode */}
             {signAccountOpState?.errors?.length && !isViewOnly ? (
-              <AlertVertical
-                type="warning"
-                size="sm"
-                title={signAccountOpState.errors[0]?.title}
-                text={errorText}
-              />
+              <ErrorInformation />
             ) : (
               <Simulation
                 network={network}
@@ -365,7 +316,6 @@ const SignAccountOpScreen = () => {
               />
             )}
             {isViewOnly && <NoKeysToSignAlert />}
-            <Tenderly />
           </ScrollView>
         </TabLayoutWrapperMainContent>
       </TabLayoutContainer>
