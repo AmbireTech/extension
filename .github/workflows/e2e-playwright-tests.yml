@@ -108,7 +108,6 @@ jobs:
         working-directory: ./e2e-playwright-tests/ledger-emulator
         run: |
           npm -g i ts-node
-          npm i @ledgerhq/hw-transport-node-speculos @ledgerhq/hw-app-eth ethers
           ts-node ledger-emulator-health-check.ts
 
       - name: Install e2e test dependencies
