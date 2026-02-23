@@ -104,13 +104,16 @@ jobs:
         run: |
           ./start-emulator.sh
 
+      - name: Check ledger emulator connection
+        working-directory: ./e2e-playwright-tests/ledger-emulator
+        run: |
+          npm -g i ts-node
+          npm i @ledgerhq/hw-transport-node-speculos @ledgerhq/hw-app-eth ethers
+          ts-node ledger-emulator-health-check.ts
+
       - name: Install e2e test dependencies
         working-directory: ./e2e-playwright-tests
         run: npm ci
-
-      - name: Check ledger emulator connection
-        working-directory: ./e2e-playwright-tests/ledger-emulator
-        run: npx ts-node ledger-emulator-health-check.ts
 
       - name: Get Playwright version
         id: playwright-version
