@@ -6,12 +6,12 @@ import { View } from 'react-native'
 
 import { BIP44_STANDARD_DERIVATION_TEMPLATE } from '@ambire-common/consts/derivation'
 import Button from '@common/components/Button'
+import FatToggle from '@common/components/FatToggle'
 import InputPassword from '@common/components/InputPassword'
 import Panel from '@common/components/Panel'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
 import TextArea from '@common/components/TextArea'
-import Toggle from '@common/components/Toggle'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
@@ -216,16 +216,13 @@ const SeedPhraseImportScreen = () => {
                   )
                 }}
               />
-              <Toggle
+              <FatToggle
                 testID="enable-passphrase-toggle"
                 isOn={enablePassphrase}
                 onToggle={() => setEnablePassphrase((prev) => !prev)}
                 label={t('Advanced mode')}
-                labelProps={{
-                  fontSize: 14,
-                  weight: 'regular',
-                  appearance: 'secondaryText'
-                }}
+                width={44}
+                height={22}
                 style={flexbox.alignSelfStart}
               />
               {enablePassphrase ? (
