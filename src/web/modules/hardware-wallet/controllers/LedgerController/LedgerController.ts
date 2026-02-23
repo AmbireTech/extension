@@ -104,7 +104,10 @@ class LedgerController implements ExternalSignerController {
     // In emulator mode we don't need to grant permission, because communication is over HTTP and doesn't require it.
     if (isLedgerEmulator) return
 
-    const dmk = new DeviceManagementKitBuilder().addTransport(webHidTransportFactory).build()
+    const dmk = new DeviceManagementKitBuilder()
+      // .addLogger(new ConsoleLogger()) // for debugging only
+      .addTransport(webHidTransportFactory)
+      .build()
 
     return new Promise((resolve, reject) => {
       // Start discovering - this will scan for any connected devices
