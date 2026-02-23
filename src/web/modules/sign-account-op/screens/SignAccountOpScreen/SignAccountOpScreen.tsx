@@ -1,13 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { NativeScrollEvent, Pressable, ScrollView, StyleSheet, View } from 'react-native'
+import { NativeScrollEvent, Pressable, ScrollView, View } from 'react-native'
 
 import { SigningStatus } from '@ambire-common/controllers/signAccountOp/signAccountOp'
 import { Key } from '@ambire-common/interfaces/keystore'
 import { CallsUserRequest } from '@ambire-common/interfaces/userRequest'
 import { getErrorCodeStringFromReason } from '@ambire-common/libs/errorDecoder/helpers'
 import CopyIcon from '@common/assets/svg/CopyIcon'
-import Alert from '@common/components/Alert'
 import AlertVertical from '@common/components/AlertVertical'
 import GlassView from '@common/components/GlassView'
 import NetworkBadge from '@common/components/NetworkBadge'
@@ -17,7 +16,6 @@ import useSign from '@common/hooks/useSign'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import { BORDER_RADIUS_PRIMARY, hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { setStringAsync } from '@common/utils/clipboard'
@@ -37,6 +35,7 @@ import SectionHeading from '@web/modules/sign-account-op/components/SectionHeadi
 import Simulation from '@web/modules/sign-account-op/components/Simulation'
 import SigningKeySelect from '@web/modules/sign-message/components/SignKeySelect'
 
+import Tenderly from '../../components/Tenderly'
 import Gradient from './Gradient'
 import getStyles from './styles'
 
@@ -52,7 +51,6 @@ const SignAccountOpScreen = () => {
   } = useController('RequestsController')
   const { state: signAccountOpState, dispatch: signAccountOpDispatch } =
     useController('SignAccountOpController')
-  const { signAccOpInitError } = useController('MainController').state
   const { t } = useTranslation()
   const { addToast } = useToast()
   const { styles, theme, themeType } = useTheme(getStyles)
@@ -197,14 +195,6 @@ const SignAccountOpScreen = () => {
 
     return undefined
   }, [copySignAccountOpError, signAccountOpState?.errors, styles.alertText, theme.warningText])
-
-  if (signAccOpInitError) {
-    return (
-      <View style={[StyleSheet.absoluteFill, flexbox.alignCenter, flexbox.justifyCenter]}>
-        <Alert type="error" title={signAccOpInitError} />
-      </View>
-    )
-  }
 
   const isAddToCartDisabled = useMemo(() => {
     const readyToSign = signAccountOpState?.readyToSign
@@ -375,6 +365,7 @@ const SignAccountOpScreen = () => {
               />
             )}
             {isViewOnly && <NoKeysToSignAlert />}
+            <Tenderly />
           </ScrollView>
         </TabLayoutWrapperMainContent>
       </TabLayoutContainer>
