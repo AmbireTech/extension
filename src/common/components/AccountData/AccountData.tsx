@@ -85,7 +85,7 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
         <Text
           numberOfLines={1}
           weight="semiBold"
-          style={[spacings.mlTy, spacings.mrTy, { maxWidth: isPopup ? 120 : 180 }]}
+          style={[spacings.mlTy, spacings.mrTy, { maxWidth: isPopup ? 112 : 160 }]}
           color="#FFFFFF"
           fontSize={14}
         >

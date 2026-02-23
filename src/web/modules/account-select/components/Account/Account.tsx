@@ -167,7 +167,12 @@ const Account = ({
           <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
             {!withSettings ? (
               <>
-                <Text fontSize={withSettings ? 16 : 14} weight="medium" numberOfLines={1}>
+                <Text
+                  fontSize={withSettings ? 16 : 14}
+                  weight="medium"
+                  numberOfLines={1}
+                  style={!withSettings ? { maxWidth: 200 } : {}}
+                >
                   {account.preferences.label}
                 </Text>
                 {!!withKeyType && (
