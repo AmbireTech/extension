@@ -2,6 +2,8 @@ import React, { useCallback, useRef, useState } from 'react'
 import { Animated, NativeScrollEvent, NativeSyntheticEvent, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
+import GasTankModal from '@common/components/GasTankModal'
+import LayoutWrapper from '@common/components/LayoutWrapper'
 import { isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useDebounce from '@common/hooks/useDebounce'
@@ -11,8 +13,6 @@ import DashboardPages from '@common/modules/dashboard/components/DashboardPages'
 import PendingActionWindowModal from '@common/modules/dashboard/components/PendingActionWindowModal'
 import getStyles from '@common/modules/dashboard/screens/styles'
 import { getUiType } from '@common/utils/uiType'
-import GasTankModal from '@web/components/GasTankModal'
-import LayoutWrapper from '@web/components/LayoutWrapper'
 
 const { isPopup } = getUiType()
 

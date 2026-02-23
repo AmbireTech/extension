@@ -10,7 +10,7 @@ import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@common/utils/uiType'
 import ActionHeader from '@web/modules/action-requests/components/ActionHeader'
 
-import LayoutWrapper from '../LayoutWrapper'
+import LayoutWrapper from '../../../common/components/LayoutWrapper'
 
 const { isPopup } = getUiType()
 

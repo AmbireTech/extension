@@ -1,6 +1,9 @@
 import React, { useCallback, useRef, useState } from 'react'
 import { Animated, NativeScrollEvent, NativeSyntheticEvent, View } from 'react-native'
+import { useModalize } from 'react-native-modalize'
 
+import GasTankModal from '@common/components/GasTankModal'
+import LayoutWrapper from '@common/components/LayoutWrapper'
 import useController from '@common/hooks/useController'
 import useDebounce from '@common/hooks/useDebounce'
 import useTheme from '@common/hooks/useTheme'
@@ -13,6 +16,7 @@ export const OVERVIEW_CONTENT_MAX_HEIGHT = 280
 
 const DashboardScreen = () => {
   const { styles } = useTheme(getStyles)
+  const { ref: gasTankModalRef, open: openGasTankModal, close: closeGasTankModal } = useModalize()
   const lastOffsetY = useRef(0)
   const scrollUpStartedAt = useRef(0)
   const [dashboardOverviewSize, setDashboardOverviewSize] = useState({
@@ -65,10 +69,17 @@ const DashboardScreen = () => {
   if (!account) return null
 
   return (
-    <>
+    <LayoutWrapper>
+      <GasTankModal
+        modalRef={gasTankModalRef}
+        handleClose={closeGasTankModal}
+        portfolio={portfolio}
+        account={account}
+      />
       <PendingActionWindowModal />
       <View style={styles.container}>
         <DashboardOverview
+          openGasTankModal={openGasTankModal}
           animatedOverviewHeight={animatedOverviewHeight}
           dashboardOverviewSize={debouncedDashboardOverviewSize}
           setDashboardOverviewSize={setDashboardOverviewSize}
@@ -79,7 +90,7 @@ const DashboardScreen = () => {
           isSearchHidden={isSearchHidden}
         />
       </View>
-    </>
+    </LayoutWrapper>
   )
 }
 

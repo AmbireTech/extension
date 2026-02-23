@@ -79,7 +79,8 @@ module.exports = function (api) {
           ],
           alias: {
             'eth-crypto': './src/mobile/shims/eth-crypto',
-            'scrypt-js': './src/mobile/shims/scrypt-js',
+            'scrypt-js': './src/mobile/shims/scrypt-js', // improves performance
+            pbkdf2: './src/mobile/shims/pbkdf2', // improves performance
             crypto: 'react-native-quick-crypto',
             stream: 'readable-stream',
             buffer: 'buffer',

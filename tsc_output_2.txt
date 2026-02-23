@@ -1,0 +1,1054 @@
+yarn run v1.22.22
+$ /Applications/Ambire/ambire-mobile-wallet/node_modules/.bin/tsc --noEmit
+e2e-playwright-tests/common-helpers/bootstrap.ts(1,31): error TS2307: Cannot find module 'constants/env' or its corresponding type declarations.
+e2e-playwright-tests/common-helpers/bootstrap.ts(2,27): error TS2307: Cannot find module 'constants/mainConstants' or its corresponding type declarations.
+e2e-playwright-tests/common-helpers/bootstrap.ts(3,23): error TS2307: Cannot find module 'constants/selectors' or its corresponding type declarations.
+e2e-playwright-tests/common-helpers/bootstrap.ts(5,48): error TS2307: Cannot find module '@playwright/test' or its corresponding type declarations.
+e2e-playwright-tests/common-helpers/bootstrap.ts(73,14): error TS7006: Parameter 'sw' implicitly has an 'any' type.
+e2e-playwright-tests/common-helpers/bootstrap.ts(91,34): error TS7006: Parameter 'msg' implicitly has an 'any' type.
+e2e-playwright-tests/common-helpers/bootstrap.ts(102,31): error TS7006: Parameter 'serviceWorker' implicitly has an 'any' type.
+e2e-playwright-tests/common-helpers/bootstrap.ts(146,3): error TS7006: Parameter 'namespace' implicitly has an 'any' type.
+e2e-playwright-tests/common-helpers/bootstrap.ts(147,3): error TS7006: Parameter 'storageParams' implicitly has an 'any' type.
+e2e-playwright-tests/common-helpers/bootstrap.ts(180,33): error TS7006: Parameter 'params' implicitly has an 'any' type.
+e2e-playwright-tests/common-helpers/buildSelector.ts(1,31): error TS7006: Parameter 'testId' implicitly has an 'any' type.
+e2e-playwright-tests/common-helpers/buildSelector.ts(1,39): error TS7006: Parameter 'index' implicitly has an 'any' type.
+e2e-playwright-tests/common-helpers/clickOnElement.ts(4,38): error TS7006: Parameter 'page' implicitly has an 'any' type.
+e2e-playwright-tests/common-helpers/clickOnElement.ts(4,44): error TS7006: Parameter 'selector' implicitly has an 'any' type.
+e2e-playwright-tests/common-helpers/clickOnElement.ts(5,7): error TS7034: Variable 'elementToClick' implicitly has type 'any' in some locations where its type cannot be determined.
+e2e-playwright-tests/common-helpers/clickOnElement.ts(13,10): error TS7005: Variable 'elementToClick' implicitly has an 'any' type.
+e2e-playwright-tests/common-helpers/clickOnElement.ts(20,35): error TS7006: Parameter 'el' implicitly has an 'any' type.
+e2e-playwright-tests/common-helpers/clickOnElement.ts(34,46): error TS7006: Parameter '_selector' implicitly has an 'any' type.
+e2e-playwright-tests/common-helpers/completeOnboardingSteps.ts(1,24): error TS2307: Cannot find module '@playwright/test' or its corresponding type declarations.
+e2e-playwright-tests/common-helpers/completeOnboardingSteps.ts(3,27): error TS2307: Cannot find module 'constants/selectors' or its corresponding type declarations.
+e2e-playwright-tests/common-helpers/completeOnboardingSteps.ts(6,47): error TS7006: Parameter 'page' implicitly has an 'any' type.
+e2e-playwright-tests/common-helpers/typeText.ts(1,32): error TS7006: Parameter 'page' implicitly has an 'any' type.
+e2e-playwright-tests/common-helpers/typeText.ts(1,38): error TS7006: Parameter 'selector' implicitly has an 'any' type.
+e2e-playwright-tests/common-helpers/typeText.ts(1,48): error TS7006: Parameter 'text' implicitly has an 'any' type.
+e2e-playwright-tests/constants/env.ts(1,21): error TS2307: Cannot find module 'utils/env/loadEnv' or its corresponding type declarations.
+e2e-playwright-tests/constants/env.ts(2,22): error TS2307: Cannot find module 'utils/env/parseEnv' or its corresponding type declarations.
+e2e-playwright-tests/constants/selectors.ts(1,31): error TS2307: Cannot find module '@helpers/buildSelector' or its corresponding type declarations.
+e2e-playwright-tests/fixtures/pageObjects.ts(1,31): error TS2307: Cannot find module 'pages/stabilityPage' or its corresponding type declarations.
+e2e-playwright-tests/fixtures/pageObjects.ts(3,30): error TS2307: Cannot find module '@playwright/test' or its corresponding type declarations.
+e2e-playwright-tests/fixtures/pageObjects.ts(13,21): error TS7006: Parameter 'use' implicitly has an 'any' type.
+e2e-playwright-tests/flows/swapAndBridgeFlow.ts(1,30): error TS2307: Cannot find module '@playwright/test' or its corresponding type declarations.
+e2e-playwright-tests/flows/swapAndBridgeFlow.ts(2,24): error TS2307: Cannot find module 'interfaces/token' or its corresponding type declarations.
+e2e-playwright-tests/flows/swapAndBridgeFlow.ts(3,34): error TS2307: Cannot find module 'pages/utils/page_instances' or its corresponding type declarations.
+e2e-playwright-tests/flows/transferFlow.ts(1,23): error TS2307: Cannot find module 'constants/selectors' or its corresponding type declarations.
+e2e-playwright-tests/flows/transferFlow.ts(3,36): error TS2307: Cannot find module '@playwright/test' or its corresponding type declarations.
+e2e-playwright-tests/flows/transferFlow.ts(5,24): error TS2307: Cannot find module 'interfaces/token' or its corresponding type declarations.
+e2e-playwright-tests/flows/transferFlow.ts(6,34): error TS2307: Cannot find module 'pages/utils/page_instances' or its corresponding type declarations.
+e2e-playwright-tests/interfaces/bootstrapContext.ts(1,38): error TS2307: Cannot find module '@playwright/test' or its corresponding type declarations.
+e2e-playwright-tests/pages/authPage.ts(1,44): error TS2307: Cannot find module 'constants/env' or its corresponding type declarations.
+e2e-playwright-tests/pages/authPage.ts(2,22): error TS2307: Cannot find module 'constants/locators' or its corresponding type declarations.
+e2e-playwright-tests/pages/authPage.ts(3,23): error TS2307: Cannot find module 'constants/selectors' or its corresponding type declarations.
+e2e-playwright-tests/pages/authPage.ts(4,30): error TS2307: Cannot find module 'interfaces/bootstrapContext' or its corresponding type declarations.
+e2e-playwright-tests/pages/basePage.ts(1,23): error TS2307: Cannot find module 'constants/selectors' or its corresponding type declarations.
+e2e-playwright-tests/pages/basePage.ts(2,30): error TS2307: Cannot find module 'interfaces/bootstrapContext' or its corresponding type declarations.
+e2e-playwright-tests/pages/basePage.ts(3,19): error TS2307: Cannot find module 'interfaces/token' or its corresponding type declarations.
+e2e-playwright-tests/pages/basePage.ts(5,77): error TS2307: Cannot find module '@playwright/test' or its corresponding type declarations.
+e2e-playwright-tests/pages/dashboardPage.ts(1,22): error TS2307: Cannot find module 'constants/locators' or its corresponding type declarations.
+e2e-playwright-tests/pages/dashboardPage.ts(2,23): error TS2307: Cannot find module 'constants/selectors' or its corresponding type declarations.
+e2e-playwright-tests/pages/dashboardPage.ts(3,30): error TS2307: Cannot find module 'interfaces/bootstrapContext' or its corresponding type declarations.
+e2e-playwright-tests/pages/dashboardPage.ts(4,18): error TS2307: Cannot find module 'interfaces/tabs' or its corresponding type declarations.
+e2e-playwright-tests/pages/dashboardPage.ts(5,43): error TS2307: Cannot find module 'interfaces/threshold' or its corresponding type declarations.
+e2e-playwright-tests/pages/dashboardPage.ts(7,24): error TS2307: Cannot find module '@playwright/test' or its corresponding type declarations.
+e2e-playwright-tests/pages/dashboardPage.ts(51,8): error TS7006: Parameter 'elements' implicitly has an 'any' type.
+e2e-playwright-tests/pages/dashboardPage.ts(61,71): error TS7006: Parameter 'el' implicitly has an 'any' type.
+e2e-playwright-tests/pages/dashboardPage.ts(183,22): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+e2e-playwright-tests/pages/gasTankPage.ts(1,23): error TS2307: Cannot find module 'constants/selectors' or its corresponding type declarations.
+e2e-playwright-tests/pages/gasTankPage.ts(3,24): error TS2307: Cannot find module '@playwright/test' or its corresponding type declarations.
+e2e-playwright-tests/pages/settingsPage.ts(1,31): error TS2307: Cannot find module 'constants/env' or its corresponding type declarations.
+e2e-playwright-tests/pages/settingsPage.ts(2,26): error TS2307: Cannot find module 'constants/networks' or its corresponding type declarations.
+e2e-playwright-tests/pages/settingsPage.ts(3,23): error TS2307: Cannot find module 'constants/selectors' or its corresponding type declarations.
+e2e-playwright-tests/pages/settingsPage.ts(5,24): error TS2307: Cannot find module '@playwright/test' or its corresponding type declarations.
+e2e-playwright-tests/pages/signMessagePage.ts(1,28): error TS2307: Cannot find module 'constants/env' or its corresponding type declarations.
+e2e-playwright-tests/pages/signMessagePage.ts(2,23): error TS2307: Cannot find module 'constants/selectors' or its corresponding type declarations.
+e2e-playwright-tests/pages/signMessagePage.ts(4,24): error TS2307: Cannot find module '@playwright/test' or its corresponding type declarations.
+e2e-playwright-tests/pages/stabilityPage.ts(1,30): error TS2307: Cannot find module 'interfaces/bootstrapContext' or its corresponding type declarations.
+e2e-playwright-tests/pages/stabilityPage.ts(31,40): error TS7006: Parameter 'params' implicitly has an 'any' type.
+e2e-playwright-tests/pages/stabilityPage.ts(43,51): error TS7006: Parameter 'route' implicitly has an 'any' type.
+e2e-playwright-tests/pages/stabilityPage.ts(59,45): error TS7006: Parameter 'route' implicitly has an 'any' type.
+e2e-playwright-tests/pages/stabilityPage.ts(59,52): error TS7006: Parameter 'request' implicitly has an 'any' type.
+e2e-playwright-tests/pages/swapAndBridgePage.ts(1,26): error TS2307: Cannot find module 'common-helpers/typeText' or its corresponding type declarations.
+e2e-playwright-tests/pages/swapAndBridgePage.ts(2,22): error TS2307: Cannot find module 'constants/locators' or its corresponding type declarations.
+e2e-playwright-tests/pages/swapAndBridgePage.ts(3,38): error TS2307: Cannot find module 'constants/selectors' or its corresponding type declarations.
+e2e-playwright-tests/pages/swapAndBridgePage.ts(5,24): error TS2307: Cannot find module '@playwright/test' or its corresponding type declarations.
+e2e-playwright-tests/pages/swapAndBridgePage.ts(12,15): error TS7006: Parameter 'amount' implicitly has an 'any' type.
+e2e-playwright-tests/pages/swapAndBridgePage.ts(19,20): error TS7006: Parameter 'selector' implicitly has an 'any' type.
+e2e-playwright-tests/pages/swapAndBridgePage.ts(37,21): error TS7006: Parameter 'new_amount' implicitly has an 'any' type.
+e2e-playwright-tests/pages/swapAndBridgePage.ts(70,9): error TS7030: Not all code paths return a value.
+e2e-playwright-tests/pages/swapAndBridgePage.ts(93,67): error TS18046: 'error' is of type 'unknown'.
+e2e-playwright-tests/pages/swapAndBridgePage.ts(114,50): error TS7006: Parameter 'element' implicitly has an 'any' type.
+e2e-playwright-tests/pages/swapAndBridgePage.ts(214,29): error TS7006: Parameter 'page' implicitly has an 'any' type.
+e2e-playwright-tests/pages/swapAndBridgePage.ts(258,56): error TS18048: 'sendAmount' is possibly 'undefined'.
+e2e-playwright-tests/pages/swapAndBridgePage.ts(300,20): error TS18047: 'amount' is possibly 'null'.
+e2e-playwright-tests/pages/swapAndBridgePage.ts(300,47): error TS2322: Type 'string | null' is not assignable to type 'string'.
+  Type 'null' is not assignable to type 'string'.
+e2e-playwright-tests/pages/swapAndBridgePage.ts(371,67): error TS18046: 'error' is of type 'unknown'.
+e2e-playwright-tests/pages/swapAndBridgePage.ts(406,35): error TS7006: Parameter 'page' implicitly has an 'any' type.
+e2e-playwright-tests/pages/swapAndBridgePage.ts(431,39): error TS7006: Parameter 'page' implicitly has an 'any' type.
+e2e-playwright-tests/pages/transferPage.ts(1,26): error TS2307: Cannot find module 'constants/env' or its corresponding type declarations.
+e2e-playwright-tests/pages/transferPage.ts(2,23): error TS2307: Cannot find module 'constants/selectors' or its corresponding type declarations.
+e2e-playwright-tests/pages/transferPage.ts(3,19): error TS2307: Cannot find module 'interfaces/token' or its corresponding type declarations.
+e2e-playwright-tests/pages/transferPage.ts(5,30): error TS2307: Cannot find module '@playwright/test' or its corresponding type declarations.
+e2e-playwright-tests/pages/utils/page_instances.ts(1,30): error TS2307: Cannot find module 'interfaces/bootstrapContext' or its corresponding type declarations.
+e2e-playwright-tests/pages/utils/page_instances.ts(2,26): error TS2307: Cannot find module 'pages/authPage' or its corresponding type declarations.
+e2e-playwright-tests/pages/utils/page_instances.ts(3,26): error TS2307: Cannot find module 'pages/basePage' or its corresponding type declarations.
+e2e-playwright-tests/pages/utils/page_instances.ts(4,31): error TS2307: Cannot find module 'pages/dashboardPage' or its corresponding type declarations.
+e2e-playwright-tests/pages/utils/page_instances.ts(5,29): error TS2307: Cannot find module 'pages/gasTankPage' or its corresponding type declarations.
+e2e-playwright-tests/pages/utils/page_instances.ts(6,30): error TS2307: Cannot find module 'pages/settingsPage' or its corresponding type declarations.
+e2e-playwright-tests/pages/utils/page_instances.ts(7,33): error TS2307: Cannot find module 'pages/signMessagePage' or its corresponding type declarations.
+e2e-playwright-tests/pages/utils/page_instances.ts(8,31): error TS2307: Cannot find module 'pages/stabilityPage' or its corresponding type declarations.
+e2e-playwright-tests/pages/utils/page_instances.ts(9,35): error TS2307: Cannot find module 'pages/swapAndBridgePage' or its corresponding type declarations.
+e2e-playwright-tests/pages/utils/page_instances.ts(10,30): error TS2307: Cannot find module 'pages/transferPage' or its corresponding type declarations.
+e2e-playwright-tests/pages/utils/page_instances.ts(12,49): error TS2307: Cannot find module '@helpers/bootstrap' or its corresponding type declarations.
+e2e-playwright-tests/playwright.config.ts(3,38): error TS2307: Cannot find module '@playwright/test' or its corresponding type declarations.
+e2e-playwright-tests/tests/ambireRewards/ambireRewards.spec.ts(1,26): error TS2307: Cannot find module 'constants/env' or its corresponding type declarations.
+e2e-playwright-tests/tests/ambireRewards/ambireRewards.spec.ts(2,23): error TS2307: Cannot find module 'constants/selectors' or its corresponding type declarations.
+e2e-playwright-tests/tests/ambireRewards/ambireRewards.spec.ts(3,22): error TS2307: Cannot find module 'fixtures/pageObjects' or its corresponding type declarations.
+e2e-playwright-tests/tests/ambireRewards/ambireRewards.spec.ts(4,35): error TS2307: Cannot find module 'pages/utils/data/ambireRewardsText' or its corresponding type declarations.
+e2e-playwright-tests/tests/ambireRewards/ambireRewards.spec.ts(6,30): error TS2307: Cannot find module '@playwright/test' or its corresponding type declarations.
+e2e-playwright-tests/tests/ambireRewards/ambireRewards.spec.ts(11,28): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/ambireRewards/ambireRewards.spec.ts(15,27): error TS7031: Binding element 'context' implicitly has an 'any' type.
+e2e-playwright-tests/tests/ambireRewards/ambireRewards.spec.ts(19,61): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/ambireRewards/ambireRewards.spec.ts(29,46): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/auth/auth.spec.ts(1,37): error TS2307: Cannot find module 'constants/env' or its corresponding type declarations.
+e2e-playwright-tests/tests/auth/auth.spec.ts(2,27): error TS2307: Cannot find module 'constants/mainConstants' or its corresponding type declarations.
+e2e-playwright-tests/tests/auth/auth.spec.ts(3,23): error TS2307: Cannot find module 'constants/selectors' or its corresponding type declarations.
+e2e-playwright-tests/tests/auth/auth.spec.ts(4,22): error TS2307: Cannot find module 'fixtures/pageObjects' or its corresponding type declarations.
+e2e-playwright-tests/tests/auth/auth.spec.ts(6,24): error TS2307: Cannot find module '@playwright/test' or its corresponding type declarations.
+e2e-playwright-tests/tests/auth/auth.spec.ts(14,28): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/auth/auth.spec.ts(18,27): error TS7031: Binding element 'context' implicitly has an 'any' type.
+e2e-playwright-tests/tests/auth/auth.spec.ts(22,58): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/auth/auth.spec.ts(26,58): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/auth/auth.spec.ts(30,45): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/auth/auth.spec.ts(34,58): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/auth/auth.spec.ts(46,5): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/auth/auth.spec.ts(52,5): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/auth/auth.spec.ts(61,5): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/auth/auth.spec.ts(66,59): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/auth/auth.spec.ts(72,50): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/auth/auth.spec.ts(85,28): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/auth/auth.spec.ts(89,27): error TS7031: Binding element 'context' implicitly has an 'any' type.
+e2e-playwright-tests/tests/auth/auth.spec.ts(112,5): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/balance/balance.spec.ts(1,36): error TS2307: Cannot find module 'constants/env' or its corresponding type declarations.
+e2e-playwright-tests/tests/balance/balance.spec.ts(2,20): error TS2307: Cannot find module 'constants/tokens' or its corresponding type declarations.
+e2e-playwright-tests/tests/balance/balance.spec.ts(3,22): error TS2307: Cannot find module 'fixtures/pageObjects' or its corresponding type declarations.
+e2e-playwright-tests/tests/balance/balance.spec.ts(4,23): error TS2307: Cannot find module 'interfaces/threshold' or its corresponding type declarations.
+e2e-playwright-tests/tests/balance/balance.spec.ts(9,28): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/balance/balance.spec.ts(13,27): error TS7031: Binding element 'context' implicitly has an 'any' type.
+e2e-playwright-tests/tests/balance/balance.spec.ts(17,49): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/balance/balance.spec.ts(36,28): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/balance/balance.spec.ts(40,27): error TS7031: Binding element 'context' implicitly has an 'any' type.
+e2e-playwright-tests/tests/balance/balance.spec.ts(44,49): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/dashboard/dashboard.spec.ts(1,26): error TS2307: Cannot find module 'constants/env' or its corresponding type declarations.
+e2e-playwright-tests/tests/dashboard/dashboard.spec.ts(2,23): error TS2307: Cannot find module 'constants/selectors' or its corresponding type declarations.
+e2e-playwright-tests/tests/dashboard/dashboard.spec.ts(3,20): error TS2307: Cannot find module 'constants/tokens' or its corresponding type declarations.
+e2e-playwright-tests/tests/dashboard/dashboard.spec.ts(4,22): error TS2307: Cannot find module 'fixtures/pageObjects' or its corresponding type declarations.
+e2e-playwright-tests/tests/dashboard/dashboard.spec.ts(6,24): error TS2307: Cannot find module '@playwright/test' or its corresponding type declarations.
+e2e-playwright-tests/tests/dashboard/dashboard.spec.ts(11,28): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/dashboard/dashboard.spec.ts(15,27): error TS7031: Binding element 'context' implicitly has an 'any' type.
+e2e-playwright-tests/tests/dashboard/dashboard.spec.ts(19,57): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/dashboard/dashboard.spec.ts(23,80): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/dashboard/dashboard.spec.ts(27,78): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/dashboard/dashboard.spec.ts(31,64): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/dashboard/dashboard.spec.ts(49,45): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/dashboard/dashboard.spec.ts(70,48): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/dashboard/dashboard.spec.ts(87,56): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/dashboard/dashboard.spec.ts(108,78): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/dashboard/dashboard.spec.ts(118,43): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/dashboard/dashboard.spec.ts(139,46): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/dashboard/dashboard.spec.ts(153,55): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/dashboard/dashboard.spec.ts(174,76): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/dashboard/dashboard.spec.ts(207,86): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/dashboard/dashboard.spec.ts(228,81): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/gasTank/gasTank.spec.ts(1,26): error TS2307: Cannot find module 'constants/env' or its corresponding type declarations.
+e2e-playwright-tests/tests/gasTank/gasTank.spec.ts(9,28): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/gasTank/gasTank.spec.ts(13,27): error TS7031: Binding element 'context' implicitly has an 'any' type.
+e2e-playwright-tests/tests/gasTank/gasTank.spec.ts(17,54): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/settings/addAccount/addAccount.spec.ts(1,26): error TS2307: Cannot find module 'constants/env' or its corresponding type declarations.
+e2e-playwright-tests/tests/settings/addAccount/addAccount.spec.ts(2,23): error TS2307: Cannot find module 'constants/selectors' or its corresponding type declarations.
+e2e-playwright-tests/tests/settings/addAccount/addAccount.spec.ts(3,22): error TS2307: Cannot find module 'fixtures/pageObjects' or its corresponding type declarations.
+e2e-playwright-tests/tests/settings/addAccount/addAccount.spec.ts(8,28): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/settings/addAccount/addAccount.spec.ts(12,27): error TS7031: Binding element 'context' implicitly has an 'any' type.
+e2e-playwright-tests/tests/settings/addAccount/addAccount.spec.ts(16,63): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/settings/addCustomToken/addCustomToken.spec.ts(1,26): error TS2307: Cannot find module 'constants/env' or its corresponding type declarations.
+e2e-playwright-tests/tests/settings/addCustomToken/addCustomToken.spec.ts(2,23): error TS2307: Cannot find module 'constants/selectors' or its corresponding type declarations.
+e2e-playwright-tests/tests/settings/addCustomToken/addCustomToken.spec.ts(3,20): error TS2307: Cannot find module 'constants/tokens' or its corresponding type declarations.
+e2e-playwright-tests/tests/settings/addCustomToken/addCustomToken.spec.ts(4,22): error TS2307: Cannot find module 'fixtures/pageObjects' or its corresponding type declarations.
+e2e-playwright-tests/tests/settings/addCustomToken/addCustomToken.spec.ts(9,28): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/settings/addCustomToken/addCustomToken.spec.ts(13,27): error TS7031: Binding element 'context' implicitly has an 'any' type.
+e2e-playwright-tests/tests/settings/addCustomToken/addCustomToken.spec.ts(17,67): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/settings/keystore/keystore.spec.ts(1,41): error TS2307: Cannot find module 'constants/env' or its corresponding type declarations.
+e2e-playwright-tests/tests/settings/keystore/keystore.spec.ts(8,28): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/settings/keystore/keystore.spec.ts(12,27): error TS7031: Binding element 'context' implicitly has an 'any' type.
+e2e-playwright-tests/tests/settings/keystore/keystore.spec.ts(16,41): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/settings/keystore/keystore.spec.ts(20,43): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/settings/keystore/keystore.spec.ts(24,52): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/settings/networkManagement/networkManagement.spec.ts(1,26): error TS2307: Cannot find module 'constants/env' or its corresponding type declarations.
+e2e-playwright-tests/tests/settings/networkManagement/networkManagement.spec.ts(9,28): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/settings/networkManagement/networkManagement.spec.ts(13,27): error TS7031: Binding element 'context' implicitly has an 'any' type.
+e2e-playwright-tests/tests/settings/networkManagement/networkManagement.spec.ts(17,44): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/settings/networkManagement/networkManagement.spec.ts(21,65): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/sharedState/sharedState.spec.ts(1,38): error TS2307: Cannot find module 'constants/env' or its corresponding type declarations.
+e2e-playwright-tests/tests/sharedState/sharedState.spec.ts(2,20): error TS2307: Cannot find module 'constants/tokens' or its corresponding type declarations.
+e2e-playwright-tests/tests/sharedState/sharedState.spec.ts(3,22): error TS2307: Cannot find module 'fixtures/pageObjects' or its corresponding type declarations.
+e2e-playwright-tests/tests/sharedState/sharedState.spec.ts(15,27): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/signMessage/signMessage.spec.ts(1,26): error TS2307: Cannot find module 'constants/env' or its corresponding type declarations.
+e2e-playwright-tests/tests/signMessage/signMessage.spec.ts(2,22): error TS2307: Cannot find module 'fixtures/pageObjects' or its corresponding type declarations.
+e2e-playwright-tests/tests/signMessage/signMessage.spec.ts(7,28): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/signMessage/signMessage.spec.ts(11,27): error TS7031: Binding element 'context' implicitly has an 'any' type.
+e2e-playwright-tests/tests/signMessage/signMessage.spec.ts(15,46): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/signMessage/signMessage.spec.ts(20,44): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/signMessage/signMessage.spec.ts(26,46): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/stability/stability.spec.ts(1,26): error TS2307: Cannot find module 'constants/env' or its corresponding type declarations.
+e2e-playwright-tests/tests/stability/stability.spec.ts(4,24): error TS2307: Cannot find module '@playwright/test' or its corresponding type declarations.
+e2e-playwright-tests/tests/stability/stability.spec.ts(13,28): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/stability/stability.spec.ts(17,27): error TS7031: Binding element 'context' implicitly has an 'any' type.
+e2e-playwright-tests/tests/stability/stability.spec.ts(21,87): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/stability/stability.spec.ts(40,5): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/stability/stability.spec.ts(72,56): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/stability/stability.spec.ts(151,19): error TS7006: Parameter 'item' implicitly has an 'any' type.
+e2e-playwright-tests/tests/stability/stability.spec.ts(151,25): error TS7006: Parameter 'idx' implicitly has an 'any' type.
+e2e-playwright-tests/tests/swapAndBridge/swapAndBridge.spec.ts(1,26): error TS2307: Cannot find module 'constants/env' or its corresponding type declarations.
+e2e-playwright-tests/tests/swapAndBridge/swapAndBridge.spec.ts(2,20): error TS2307: Cannot find module 'constants/tokens' or its corresponding type declarations.
+e2e-playwright-tests/tests/swapAndBridge/swapAndBridge.spec.ts(3,22): error TS2307: Cannot find module 'fixtures/pageObjects' or its corresponding type declarations.
+e2e-playwright-tests/tests/swapAndBridge/swapAndBridge.spec.ts(4,67): error TS2307: Cannot find module 'flows/swapAndBridgeFlow' or its corresponding type declarations.
+e2e-playwright-tests/tests/swapAndBridge/swapAndBridge.spec.ts(7,28): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/swapAndBridge/swapAndBridge.spec.ts(11,27): error TS7031: Binding element 'context' implicitly has an 'any' type.
+e2e-playwright-tests/tests/swapAndBridge/swapAndBridge.spec.ts(15,5): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/swapAndBridge/swapAndBridge.spec.ts(25,5): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/swapAndBridge/swapAndBridge.spec.ts(35,5): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/swapAndBridge/swapAndBridge.spec.ts(44,83): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/swapAndBridge/swapAndBridge.spec.ts(54,5): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/swapAndBridge/swapAndBridge.spec.ts(64,5): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/swapAndBridge/swapAndBridge.spec.ts(75,5): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/swapAndBridge/swapAndBridge.spec.ts(83,5): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/swapAndBridge/swapAndBridge.spec.ts(93,5): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/swapAndBridge/swapAndBridge.spec.ts(103,5): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/swapAndBridge/swapAndBridge.spec.ts(113,5): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/swapAndBridge/swapAndBridge.spec.ts(123,5): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/swapAndBridge/swapAndBridge.spec.ts(134,62): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/swapAndBridge/swapAndBridge.spec.ts(145,5): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/transfer/transfer.spec.ts(1,38): error TS2307: Cannot find module 'constants/env' or its corresponding type declarations.
+e2e-playwright-tests/tests/transfer/transfer.spec.ts(2,23): error TS2307: Cannot find module 'constants/selectors' or its corresponding type declarations.
+e2e-playwright-tests/tests/transfer/transfer.spec.ts(3,20): error TS2307: Cannot find module 'constants/tokens' or its corresponding type declarations.
+e2e-playwright-tests/tests/transfer/transfer.spec.ts(4,22): error TS2307: Cannot find module 'fixtures/pageObjects' or its corresponding type declarations.
+e2e-playwright-tests/tests/transfer/transfer.spec.ts(6,24): error TS2307: Cannot find module '@playwright/test' or its corresponding type declarations.
+e2e-playwright-tests/tests/transfer/transfer.spec.ts(13,28): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/transfer/transfer.spec.ts(17,27): error TS7031: Binding element 'context' implicitly has an 'any' type.
+e2e-playwright-tests/tests/transfer/transfer.spec.ts(21,88): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/transfer/transfer.spec.ts(34,5): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/transfer/transfer.spec.ts(47,64): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/transfer/transfer.spec.ts(56,5): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/tests/transfer/transfer.spec.ts(130,5): error TS7031: Binding element 'pages' implicitly has an 'any' type.
+e2e-playwright-tests/utils/env/parseEnv.ts(1,19): error TS7006: Parameter 'envVariables' implicitly has an 'any' type.
+e2e-playwright-tests/utils/env/validateEnv.ts(25,22): error TS7006: Parameter 'envVariables' implicitly has an 'any' type.
+e2e-playwright-tests/utils/requests.ts(46,24): error TS2345: Argument of type 'string' is not assignable to parameter of type 'never'.
+e2e-playwright-tests/utils/requests.ts(48,31): error TS2345: Argument of type 'string' is not assignable to parameter of type 'never'.
+e2e-playwright-tests/utils/requests.ts(53,32): error TS2345: Argument of type 'string' is not assignable to parameter of type 'never'.
+e2e-playwright-tests/utils/requests.ts(55,22): error TS2345: Argument of type 'string' is not assignable to parameter of type 'never'.
+e2e-playwright-tests/utils/requests.ts(57,29): error TS2345: Argument of type 'string' is not assignable to parameter of type 'never'.
+e2e-playwright-tests/utils/requests.ts(59,39): error TS2345: Argument of type 'string' is not assignable to parameter of type 'never'.
+e2e-playwright-tests/utils/requests.ts(61,32): error TS2345: Argument of type 'string' is not assignable to parameter of type 'never'.
+e2e-playwright-tests/utils/trezorEmulator.ts(82,22): error TS7030: Not all code paths return a value.
+e2e-playwright-tests/utils/trezorEmulator.ts(82,29): error TS7006: Parameter 'trezorUserEnvLink' implicitly has an 'any' type.
+e2e-playwright-tests/utils/trezorEmulator.ts(82,48): error TS7006: Parameter 'options' implicitly has an 'any' type.
+e2e-playwright-tests/utils/trezorEmulator.ts(99,9): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{ mnemonic_all: string; mnemonic_12: string; mnemonic_abandon: string; }'.
+e2e-playwright-tests/utils/trezorEmulator.ts(114,69): error TS18046: 'e' is of type 'unknown'.
+e2e-playwright-tests/utils/trezorEmulator.ts(124,41): error TS7006: Parameter 'trezorUserEnvLink' implicitly has an 'any' type.
+e2e-playwright-tests/utils/trezorEmulator.ts(124,60): error TS7006: Parameter 'options' implicitly has an 'any' type.
+e2e-playwright-tests/utils/trezorEmulator.ts(133,20): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Argument of type 'string' is not assignable to parameter of type '"ui-bundle_progress"'.
+e2e-playwright-tests/utils/trezorEmulator.ts(135,7): error TS2322: Type 'string' is not assignable to type '"ui-receive_permission" | "ui-receive_confirmation" | "ui-receive_pin" | "ui-receive_passphrase" | "ui-receive_device" | "ui-receive_account" | "ui-receive_fee" | "ui-receive_word" | ... 4 more ... | "ui-receive_firmware"'.
+e2e-playwright-tests/utils/trezorEmulator.ts(140,20): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Argument of type 'string' is not assignable to parameter of type '"ui-bundle_progress"'.
+src/ambire-common/hardhat.config.ts(7,35): error TS2307: Cannot find module 'hardhat/config' or its corresponding type declarations.
+src/ambire-common/scripts/combineHumanizerJsons.ts(4,31): error TS2307: Cannot find module 'libs/humanizer/interfaces' or its corresponding type declarations.
+src/ambire-common/src/consts/dapps/mockDapps.ts(1,35): error TS2307: Cannot find module 'interfaces/dapp' or its corresponding type declarations.
+src/ambire-common/src/controllers/accounts/accounts.ts(217,13): error TS2345: Argument of type 'RPCProvider | undefined' is not assignable to parameter of type 'RPCProvider'.
+  Type 'undefined' is not assignable to type 'RPCProvider'.
+    Type 'undefined' is not assignable to type 'JsonRpcProvider'.
+src/ambire-common/src/controllers/accounts/accounts.ts(349,40): error TS2345: Argument of type 'Account | undefined' is not assignable to parameter of type 'Account'.
+  Type 'undefined' is not assignable to type 'Account'.
+src/ambire-common/src/controllers/accounts/accounts.ts(369,5): error TS2322: Type '{ [chainId: string]: AccountOnchainState; } | undefined' is not assignable to type '{ [chainId: string]: AccountOnchainState; }'.
+  Type 'undefined' is not assignable to type '{ [chainId: string]: AccountOnchainState; }'.
+src/ambire-common/src/controllers/accounts/accounts.ts(386,12): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/controllers/accounts/accounts.ts(396,5): error TS2322: Type 'AccountOnchainState | undefined' is not assignable to type 'AccountOnchainState'.
+  Type 'undefined' is not assignable to type 'AccountOnchainState'.
+src/ambire-common/src/controllers/accounts/accounts.ts(396,12): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/controllers/accounts/accounts.ts(471,11): error TS2322: Type '{ associatedKeys: [string | undefined, string][]; creation: { factoryAddr: string; salt: string; baseIdentityAddr: string; }; email?: string | undefined; addr: string; }[]' is not assignable to type 'AmbireSmartAccountIdentityCreateRequest[]'.
+  Type '{ associatedKeys: [string | undefined, string][]; creation: { factoryAddr: string; salt: string; baseIdentityAddr: string; }; email?: string | undefined; addr: string; }' is not assignable to type 'AmbireSmartAccountIdentityCreateRequest'.
+    Types of property 'associatedKeys' are incompatible.
+      Type '[string | undefined, string][]' is not assignable to type '[string, string][]'.
+        Type '[string | undefined, string]' is not assignable to type '[string, string]'.
+          Type at position 0 in source is not compatible with type at position 0 in target.
+            Type 'string | undefined' is not assignable to type 'string'.
+              Type 'undefined' is not assignable to type 'string'.
+src/ambire-common/src/controllers/addressBook/addressBook.test.ts(130,42): error TS2345: Argument of type 'Account | undefined' is not assignable to parameter of type 'Account | null'.
+  Type 'undefined' is not assignable to type 'Account | null'.
+src/ambire-common/src/controllers/contractNames/contractNames.test.ts(56,12): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/controllers/contractNames/contractNames.test.ts(58,12): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/controllers/contractNames/contractNames.test.ts(59,12): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/controllers/contractNames/contractNames.test.ts(62,12): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/controllers/contractNames/contractNames.test.ts(95,12): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/controllers/contractNames/contractNames.test.ts(146,12): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/controllers/contractNames/contractNames.test.ts(147,12): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/controllers/contractNames/contractNames.test.ts(169,12): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/controllers/contractNames/contractNames.test.ts(170,12): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/controllers/dapps/dapps.test.ts(239,11): error TS2353: Object literal may only specify known properties, and 'dapp' does not exist in type 'DappPromise'.
+src/ambire-common/src/controllers/emailVault/emailVault.test.ts(103,24): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/controllers/emailVault/emailVault.test.ts(105,24): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/controllers/emailVault/emailVault.test.ts(114,24): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/controllers/emailVault/emailVault.test.ts(116,24): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/controllers/emailVault/emailVault.test.ts(185,12): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/controllers/emailVault/emailVault.test.ts(188,12): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/controllers/emailVault/emailVault.ts(280,5): error TS2322: Type 'string | undefined' is not assignable to type 'string | null'.
+  Type 'undefined' is not assignable to type 'string | null'.
+src/ambire-common/src/controllers/emailVault/emailVault.ts(513,7): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/controllers/emailVault/emailVault.ts(542,13): error TS18048: 'op' is possibly 'undefined'.
+src/ambire-common/src/controllers/emailVault/emailVault.ts(542,45): error TS18048: 'op' is possibly 'undefined'.
+src/ambire-common/src/controllers/emailVault/emailVault.ts(543,45): error TS18048: 'op' is possibly 'undefined'.
+src/ambire-common/src/controllers/emailVault/emailVault.ts(556,21): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/controllers/emailVault/emailVault.ts(578,24): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/controllers/emailVault/emailVault.ts(639,9): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/controllers/emailVault/emailVault.ts(690,21): error TS18048: 'emailVaultData' is possibly 'undefined'.
+src/ambire-common/src/controllers/signAccountOp/helper.ts(79,7): error TS2322: Type 'Warning | undefined' is not assignable to type 'Warning | null'.
+  Type 'undefined' is not assignable to type 'Warning | null'.
+src/ambire-common/src/controllers/signAccountOp/helper.ts(88,7): error TS2322: Type 'Warning | undefined' is not assignable to type 'Warning | null'.
+  Type 'undefined' is not assignable to type 'Warning | null'.
+src/ambire-common/src/controllers/signAccountOp/helper.ts(103,29): error TS2322: Type 'Warning | undefined' is not assignable to type 'Warning | null'.
+  Type 'undefined' is not assignable to type 'Warning | null'.
+src/ambire-common/src/controllers/signAccountOp/helper.ts(112,3): error TS2322: Type 'Warning | undefined' is not assignable to type 'Warning | null'.
+  Type 'undefined' is not assignable to type 'Warning | null'.
+src/ambire-common/src/controllers/signMessage/signMessage.ts(202,28): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/controllers/signMessage/signMessage.ts(214,13): error TS2345: Argument of type 'AccountOnchainState | undefined' is not assignable to parameter of type 'AccountOnchainState'.
+  Type 'undefined' is not assignable to type 'AccountOnchainState'.
+src/ambire-common/src/controllers/signMessage/signMessage.ts(231,13): error TS2345: Argument of type 'AccountOnchainState | undefined' is not assignable to parameter of type 'AccountOnchainState'.
+  Type 'undefined' is not assignable to type 'AccountOnchainState'.
+src/ambire-common/src/controllers/signMessage/signMessage.ts(268,66): error TS2345: Argument of type 'AccountOnchainState | undefined' is not assignable to parameter of type 'AccountOnchainState'.
+  Type 'undefined' is not assignable to type 'AccountOnchainState'.
+src/ambire-common/src/controllers/signMessage/signMessage.ts(290,52): error TS2345: Argument of type '{ message: Uint8Array<ArrayBuffer>; provider: RPCProvider | undefined; signer: string; signature: `0x${string}`; } | { typedData: { domain: TypedDataDomain; types: Record<...>; message: Record<...>; primaryType: string; }; provider: RPCProvider | undefined; signer: string; signature: `0x${string}`; } | { ...; }' is not assignable to parameter of type 'Props'.
+  Type '{ message: Uint8Array<ArrayBuffer>; provider: RPCProvider | undefined; signer: string; signature: `0x${string}`; }' is not assignable to type 'Props'.
+    Type '{ message: Uint8Array<ArrayBuffer>; provider: RPCProvider | undefined; signer: string; signature: `0x${string}`; }' is not assignable to type '{ provider: JsonRpcProvider; signer: string; signature: string | Uint8Array<ArrayBufferLike>; } & { message: string | Uint8Array<ArrayBufferLike>; typedData?: undefined; authorization?: undefined; }'.
+      Type '{ message: Uint8Array<ArrayBuffer>; provider: RPCProvider | undefined; signer: string; signature: `0x${string}`; }' is not assignable to type '{ provider: JsonRpcProvider; signer: string; signature: string | Uint8Array<ArrayBufferLike>; }'.
+        Types of property 'provider' are incompatible.
+          Type 'RPCProvider | undefined' is not assignable to type 'JsonRpcProvider'.
+            Type 'undefined' is not assignable to type 'JsonRpcProvider'.
+src/ambire-common/src/controllers/signMessage/signMessage.ts(302,56): error TS2345: Argument of type 'AccountOnchainState | undefined' is not assignable to parameter of type 'AccountOnchainState'.
+  Type 'undefined' is not assignable to type 'AccountOnchainState'.
+src/ambire-common/src/controllers/transaction/transactionFormState.ts(669,23): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/controllers/transaction/transactionFormState.ts(679,9): error TS2322: Type '{ serviceProviderId?: string | undefined; fromAsset?: SocketAPIToken; toAsset?: SocketAPIToken; fromAssetAddress?: string | undefined; ... 9 more ...; error?: string; }' is not assignable to type 'SwapAndBridgeActiveRoute'.
+  Types of property 'serviceProviderId' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+src/ambire-common/src/controllers/transaction/transactionFormState.ts(684,9): error TS2322: Type '{ serviceProviderId?: string | undefined; fromAsset?: SocketAPIToken; toAsset?: SocketAPIToken; fromAssetAddress?: string | undefined; ... 9 more ...; error?: string; }' is not assignable to type 'SwapAndBridgeActiveRoute'.
+  Types of property 'serviceProviderId' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+src/ambire-common/src/controllers/transaction/transactionFormState.ts(690,34): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/controllers/transaction/transactionFormState.ts(698,34): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/account/account.ts(343,32): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(o: {}): string[]', gave the following error.
+    Argument of type '{ [chainId: string]: AccountOnchainState; } | undefined' is not assignable to parameter of type '{}'.
+      Type 'undefined' is not assignable to type '{}'.
+  Overload 2 of 2, '(o: object): string[]', gave the following error.
+    Argument of type '{ [chainId: string]: AccountOnchainState; } | undefined' is not assignable to parameter of type 'object'.
+      Type 'undefined' is not assignable to type 'object'.
+src/ambire-common/src/libs/account/account.ts(345,26): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/account/account.ts(345,46): error TS2538: Type 'undefined' cannot be used as an index type.
+src/ambire-common/src/libs/emailVault/emailVault.test.ts(28,40): error TS2345: Argument of type 'String' is not assignable to parameter of type 'string'.
+  'string' is a primitive, but 'String' is a wrapper object. Prefer using 'string' when possible.
+src/ambire-common/src/libs/emailVault/emailVault.test.ts(31,40): error TS2345: Argument of type 'String' is not assignable to parameter of type 'string'.
+  'string' is a primitive, but 'String' is a wrapper object. Prefer using 'string' when possible.
+src/ambire-common/src/libs/emailVault/emailVault.test.ts(45,43): error TS2345: Argument of type 'String' is not assignable to parameter of type 'string'.
+  'string' is a primitive, but 'String' is a wrapper object. Prefer using 'string' when possible.
+src/ambire-common/src/libs/emailVault/emailVault.test.ts(58,45): error TS2538: Type 'undefined' cannot be used as an index type.
+src/ambire-common/src/libs/emailVault/emailVault.test.ts(109,48): error TS2345: Argument of type '{ type: OperationRequestType; requester: string; key: string; } | undefined' is not assignable to parameter of type 'Record<string, unknown> | Record<string, unknown>[]'.
+  Type 'undefined' is not assignable to type 'Record<string, unknown> | Record<string, unknown>[]'.
+src/ambire-common/src/libs/entropyGenerator/entropyGenerator.test.ts(54,67): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/entropyGenerator/entropyGenerator.ts(28,7): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/entropyGenerator/entropyGenerator.ts(28,34): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/erc7677/erc7677.ts(39,3): error TS18048: 'paymasterService' is possibly 'undefined'.
+src/ambire-common/src/libs/errorDecoder/errorDecoder.test.ts(3,24): error TS2307: Cannot find module 'hardhat' or its corresponding type declarations.
+src/ambire-common/src/libs/errorDecoder/handlers/bundler.ts(35,13): error TS18048: 'regex' is possibly 'undefined'.
+src/ambire-common/src/libs/errorHumanizer/estimationErrorHumanizer.test.ts(2,24): error TS2307: Cannot find module 'hardhat' or its corresponding type declarations.
+src/ambire-common/src/libs/errorHumanizer/humanizeCommonCases.test.ts(2,24): error TS2307: Cannot find module 'hardhat' or its corresponding type declarations.
+src/ambire-common/src/libs/humanizer/humanizerModules.test.ts(358,5): error TS2322: Type '(Call | undefined)[]' is not assignable to type 'Call[]'.
+  Type 'Call | undefined' is not assignable to type 'Call'.
+    Type 'undefined' is not assignable to type 'Call'.
+src/ambire-common/src/libs/humanizer/index.test.ts(9,10): error TS2305: Module '"../../interfaces/userRequest"' has no exported member 'TypedMessage'.
+src/ambire-common/src/libs/humanizer/messageModules/legendsModule.ts(26,33): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/ambire-common/src/libs/humanizer/modules/1Inch/index.ts(99,42): error TS2722: Cannot invoke an object which is possibly 'undefined'.
+src/ambire-common/src/libs/humanizer/modules/Aave/aave.test.ts(99,27): error TS2488: Type 'Call[] | undefined' must have a '[Symbol.iterator]()' method that returns an iterator.
+src/ambire-common/src/libs/humanizer/modules/Aave/aaveV3.ts(199,25): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/humanizer/modules/Aave/aaveV3.ts(207,18): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/humanizer/modules/Aave/aaveV3.ts(207,18): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/ambire-common/src/libs/humanizer/modules/Across/index.ts(73,42): error TS2722: Cannot invoke an object which is possibly 'undefined'.
+src/ambire-common/src/libs/humanizer/modules/AsciiModule/asciiModule.test.ts(51,27): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/humanizer/modules/Curve/index.ts(20,33): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/ambire-common/src/libs/humanizer/modules/Curve/index.ts(22,33): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/ambire-common/src/libs/humanizer/modules/Curve/index.ts(38,42): error TS2722: Cannot invoke an object which is possibly 'undefined'.
+src/ambire-common/src/libs/humanizer/modules/ENS/index.ts(120,46): error TS2722: Cannot invoke an object which is possibly 'undefined'.
+src/ambire-common/src/libs/humanizer/modules/ENS/index.ts(128,17): error TS2722: Cannot invoke an object which is possibly 'undefined'.
+src/ambire-common/src/libs/humanizer/modules/FallbackHumanizer/fallbackHumanizer.test.ts(1,31): error TS2307: Cannot find module 'libs/humanizer/interfaces' or its corresponding type declarations.
+src/ambire-common/src/libs/humanizer/modules/FallbackHumanizer/fallbackHumanizer.test.ts(87,7): error TS2554: Expected 3 arguments, but got 4.
+src/ambire-common/src/libs/humanizer/modules/FallbackHumanizer/fallBackHumanizer.ts(61,13): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/humanizer/modules/FallbackHumanizer/fallBackHumanizer.ts(70,15): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/humanizer/modules/FallbackHumanizer/fallBackHumanizer.ts(70,15): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/humanizer/modules/FallbackHumanizer/fallBackHumanizer.ts(70,15): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/humanizer/modules/GasTankModule/gasTank.test.ts(36,58): error TS2554: Expected 2 arguments, but got 3.
+src/ambire-common/src/libs/humanizer/modules/GasTankModule/gasTankModule.ts(30,7): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/humanizer/modules/Guild/index.ts(36,42): error TS2722: Cannot invoke an object which is possibly 'undefined'.
+src/ambire-common/src/libs/humanizer/modules/KyberSwap/index.ts(43,42): error TS2722: Cannot invoke an object which is possibly 'undefined'.
+src/ambire-common/src/libs/humanizer/modules/Legends/index.ts(46,18): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/humanizer/modules/Legends/index.ts(46,18): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/ambire-common/src/libs/humanizer/modules/Legends/index.ts(46,49): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/humanizer/modules/Legends/index.ts(55,18): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/humanizer/modules/Legends/index.ts(55,18): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/ambire-common/src/libs/humanizer/modules/Legends/index.ts(55,54): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/humanizer/modules/Legends/index.ts(109,42): error TS2722: Cannot invoke an object which is possibly 'undefined'.
+src/ambire-common/src/libs/humanizer/modules/OpenSea/index.ts(88,7): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/humanizer/modules/OpenSea/index.ts(89,7): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/humanizer/modules/OpenSea/index.ts(93,3): error TS18048: 'finalOrder' is possibly 'undefined'.
+src/ambire-common/src/libs/humanizer/modules/OpenSea/index.ts(93,3): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/humanizer/modules/OpenSea/index.ts(94,3): error TS18048: 'finalOrder' is possibly 'undefined'.
+src/ambire-common/src/libs/humanizer/modules/OpenSea/index.ts(94,3): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/humanizer/modules/OpenSea/index.ts(95,3): error TS18048: 'finalOrder' is possibly 'undefined'.
+src/ambire-common/src/libs/humanizer/modules/OpenSea/index.ts(95,3): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/humanizer/modules/OpenSea/index.ts(180,20): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/humanizer/modules/OpenSea/index.ts(180,40): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/humanizer/modules/OpenSea/index.ts(182,20): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/humanizer/modules/OpenSea/index.ts(182,48): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/humanizer/modules/OpenSea/index.ts(183,23): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/humanizer/modules/Pancake/index.ts(35,42): error TS2722: Cannot invoke an object which is possibly 'undefined'.
+src/ambire-common/src/libs/humanizer/modules/PostProcessing/postProcessing.test.ts(20,7): error TS2554: Expected 3 arguments, but got 4.
+src/ambire-common/src/libs/humanizer/modules/SingletonFactory/singletonFactory.test.ts(29,58): error TS2554: Expected 2 arguments, but got 3.
+src/ambire-common/src/libs/humanizer/modules/Socket/socketModules.ts(232,18): error TS2345: Argument of type 'bigint | undefined' is not assignable to parameter of type 'bigint'.
+  Type 'undefined' is not assignable to type 'bigint'.
+src/ambire-common/src/libs/humanizer/modules/Socket/socketModules.ts(929,13): error TS2722: Cannot invoke an object which is possibly 'undefined'.
+src/ambire-common/src/libs/humanizer/modules/Socket/socketModules.ts(984,28): error TS2722: Cannot invoke an object which is possibly 'undefined'.
+src/ambire-common/src/libs/humanizer/modules/Sushiswap/sushiSwapModule.ts(37,14): error TS2722: Cannot invoke an object which is possibly 'undefined'.
+src/ambire-common/src/libs/humanizer/modules/Tokens/tokens.test.ts(142,7): error TS2554: Expected 2 arguments, but got 4.
+src/ambire-common/src/libs/humanizer/modules/Tokens/tokens.test.ts(165,7): error TS2554: Expected 3 arguments, but got 4.
+src/ambire-common/src/libs/humanizer/modules/Tokens/tokens.ts(86,30): error TS2722: Cannot invoke an object which is possibly 'undefined'.
+src/ambire-common/src/libs/humanizer/modules/TraderJoe/index.ts(109,42): error TS2722: Cannot invoke an object which is possibly 'undefined'.
+src/ambire-common/src/libs/humanizer/modules/Uniswap/uniswap.test.ts(197,84): error TS2554: Expected 3 arguments, but got 4.
+src/ambire-common/src/libs/humanizer/modules/Uniswap/uniUniversalRouter.ts(176,26): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/ambire-common/src/libs/humanizer/modules/Uniswap/uniUniversalRouter.ts(178,26): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/ambire-common/src/libs/humanizer/modules/Uniswap/uniUniversalRouter.ts(188,26): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/ambire-common/src/libs/humanizer/modules/Uniswap/uniUniversalRouter.ts(190,26): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/ambire-common/src/libs/humanizer/modules/Uniswap/uniV3.ts(114,18): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/ambire-common/src/libs/humanizer/modules/Uniswap/uniV3.ts(116,18): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/ambire-common/src/libs/humanizer/modules/Uniswap/uniV3.ts(164,18): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/ambire-common/src/libs/humanizer/modules/Uniswap/uniV3.ts(166,18): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/ambire-common/src/libs/humanizer/modules/Uniswap/uniV3.ts(361,18): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/ambire-common/src/libs/humanizer/modules/Uniswap/uniV3.ts(363,18): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/ambire-common/src/libs/humanizer/modules/Uniswap/uniV3.ts(392,18): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/ambire-common/src/libs/humanizer/modules/Uniswap/uniV3.ts(394,18): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/ambire-common/src/libs/humanizer/modules/WALLET/index.ts(77,30): error TS2722: Cannot invoke an object which is possibly 'undefined'.
+src/ambire-common/src/libs/humanizer/modules/WALLET/index.ts(84,28): error TS2722: Cannot invoke an object which is possibly 'undefined'.
+src/ambire-common/src/libs/humanizer/modules/WALLET/index.ts(94,28): error TS2722: Cannot invoke an object which is possibly 'undefined'.
+src/ambire-common/src/libs/humanizer/modules/WALLET/stakingPools.ts(32,18): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/humanizer/modules/WALLET/stakingPools.ts(32,18): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/ambire-common/src/libs/humanizer/testHelpers.ts(16,54): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/keystoreSigner/keystoreSigner.test.ts(68,7): error TS2353: Object literal may only specify known properties, and 'kind' does not exist in type '{ domain: TypedDataDomain; types: Record<string, TypedDataField[]>; message: Record<string, any>; primaryType: string; }'.
+src/ambire-common/src/libs/networks/networks.test.ts(48,14): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/networks/networks.test.ts(49,14): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/networks/networks.test.ts(50,14): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/networks/networks.test.ts(53,14): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/networks/networks.test.ts(54,14): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/networks/networks.test.ts(55,14): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/networks/networks.test.ts(65,16): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/networks/networks.test.ts(69,9): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/networks/networks.test.ts(76,16): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/networks/networks.test.ts(77,16): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/networks/networks.test.ts(87,14): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/networks/networks.test.ts(88,14): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/networks/networks.test.ts(91,7): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/networks/networks.test.ts(92,7): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/networks/networks.test.ts(100,14): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/networks/networks.test.ts(101,14): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/networks/networks.test.ts(102,14): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/networks/networks.test.ts(111,14): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/networks/networks.test.ts(111,44): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/networks/networks.test.ts(112,14): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/networks/networks.test.ts(113,14): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/networks/networks.test.ts(114,14): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/networks/networks.test.ts(117,7): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/networks/networks.test.ts(118,7): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/networks/networks.test.ts(120,7): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/networks/networks.test.ts(129,14): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/networks/networks.test.ts(134,14): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/networks/networks.test.ts(135,14): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/networks/networks.test.ts(137,14): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/networks/networks.test.ts(150,14): error TS18048: 'ethereum' is possibly 'undefined'.
+src/ambire-common/src/libs/networks/networks.test.ts(155,7): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/networks/networks.test.ts(156,7): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/networks/networks.test.ts(157,7): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/networks/networks.test.ts(165,14): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/networks/networks.test.ts(166,14): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/networks/networks.test.ts(176,14): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/networks/networks.test.ts(177,14): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/networks/networks.test.ts(186,14): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/networks/networks.test.ts(190,7): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/networks/networks.test.ts(191,7): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/networks/networks.test.ts(199,14): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/networks/networks.test.ts(200,14): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/networks/networks.test.ts(223,14): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/networks/networks.test.ts(224,14): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/networks/networks.test.ts(225,14): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/networks/networks.test.ts(299,19): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/networks/networks.test.ts(300,16): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/networks/networks.test.ts(313,19): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/networks/networks.test.ts(314,16): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/portfolio/gecko.ts(31,5): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/portfolio/getOnchainBalances.ts(96,37): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/portfolio/getOnchainBalances.ts(210,58): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/portfolio/helpers.test.ts(91,12): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/portfolio/helpers.test.ts(93,12): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/portfolio/helpers.test.ts(97,7): error TS2353: Object literal may only specify known properties, and 'networkId' does not exist in type 'ExternalHintsAPIResponse'.
+src/ambire-common/src/libs/portfolio/helpers.test.ts(160,54): error TS2345: Argument of type '[string, bigint[]] | undefined' is not assignable to parameter of type '[string, bigint[]]'.
+  Type 'undefined' is not assignable to type '[string, bigint[]]'.
+src/ambire-common/src/libs/portfolio/helpers.test.ts(165,54): error TS2345: Argument of type '[string, bigint[]] | undefined' is not assignable to parameter of type '[string, bigint[]]'.
+  Type 'undefined' is not assignable to type '[string, bigint[]]'.
+src/ambire-common/src/libs/portfolio/helpers.test.ts(193,9): error TS2322: Type '""' is not assignable to type 'number | "latest" | "pending" | "both"'.
+src/ambire-common/src/libs/portfolio/helpers.test.ts(205,9): error TS2322: Type '""' is not assignable to type 'number | "latest" | "pending" | "both"'.
+src/ambire-common/src/libs/portfolio/helpers.test.ts(212,9): error TS2322: Type '""' is not assignable to type 'number | "latest" | "pending" | "both"'.
+src/ambire-common/src/libs/portfolio/helpers.test.ts(229,9): error TS2322: Type '""' is not assignable to type 'number | "latest" | "pending" | "both"'.
+src/ambire-common/src/libs/portfolio/helpers.ts(394,7): error TS2722: Cannot invoke an object which is possibly 'undefined'.
+src/ambire-common/src/libs/portfolio/helpers.ts(395,7): error TS2722: Cannot invoke an object which is possibly 'undefined'.
+src/ambire-common/src/libs/portfolio/helpers.ts(396,7): error TS2722: Cannot invoke an object which is possibly 'undefined'.
+src/ambire-common/src/libs/portfolio/portfolio.test.ts(38,47): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/portfolio/portfolio.test.ts(63,25): error TS2722: Cannot invoke an object which is possibly 'undefined'.
+src/ambire-common/src/libs/portfolio/portfolio.test.ts(63,25): error TS18048: 'accountContract.nonce' is possibly 'undefined'.
+src/ambire-common/src/libs/portfolio/portfolio.test.ts(71,31): error TS2722: Cannot invoke an object which is possibly 'undefined'.
+src/ambire-common/src/libs/portfolio/portfolio.test.ts(71,31): error TS18048: 'usdtContract.balanceOf' is possibly 'undefined'.
+src/ambire-common/src/libs/portfolio/portfolio.test.ts(179,9): error TS2322: Type 'AccountOnchainState | undefined' is not assignable to type 'AccountOnchainState'.
+  Type 'undefined' is not assignable to type 'AccountOnchainState'.
+src/ambire-common/src/libs/portfolio/portfolio.test.ts(179,16): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/portfolio/portfolio.test.ts(244,11): error TS2322: Type 'AccountOnchainState | undefined' is not assignable to type 'AccountOnchainState'.
+  Type 'undefined' is not assignable to type 'AccountOnchainState'.
+src/ambire-common/src/libs/portfolio/portfolio.test.ts(244,18): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/portfolio/portfolio.test.ts(297,9): error TS2322: Type 'AccountOnchainState | undefined' is not assignable to type 'AccountOnchainState'.
+  Type 'undefined' is not assignable to type 'AccountOnchainState'.
+src/ambire-common/src/libs/portfolio/portfolio.test.ts(297,16): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/portfolio/portfolio.test.ts(340,9): error TS2322: Type 'AccountOnchainState | undefined' is not assignable to type 'AccountOnchainState'.
+  Type 'undefined' is not assignable to type 'AccountOnchainState'.
+src/ambire-common/src/libs/portfolio/portfolio.test.ts(340,16): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/portfolio/portfolio.test.ts(386,11): error TS2322: Type 'AccountOnchainState | undefined' is not assignable to type 'AccountOnchainState'.
+  Type 'undefined' is not assignable to type 'AccountOnchainState'.
+src/ambire-common/src/libs/portfolio/portfolio.test.ts(386,18): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/portfolio/portfolio.test.ts(403,11): error TS2322: Type 'AccountOnchainState | undefined' is not assignable to type 'AccountOnchainState'.
+  Type 'undefined' is not assignable to type 'AccountOnchainState'.
+src/ambire-common/src/libs/portfolio/portfolio.test.ts(403,18): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/portfolio/portfolio.test.ts(453,11): error TS2322: Type 'AccountOnchainState | undefined' is not assignable to type 'AccountOnchainState'.
+  Type 'undefined' is not assignable to type 'AccountOnchainState'.
+src/ambire-common/src/libs/portfolio/portfolio.test.ts(453,18): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/portfolio/portfolio.test.ts(497,11): error TS2322: Type 'AccountOnchainState | undefined' is not assignable to type 'AccountOnchainState'.
+  Type 'undefined' is not assignable to type 'AccountOnchainState'.
+src/ambire-common/src/libs/portfolio/portfolio.test.ts(497,18): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/portfolio/portfolio.test.ts(546,9): error TS2322: Type 'AccountOnchainState | undefined' is not assignable to type 'AccountOnchainState'.
+  Type 'undefined' is not assignable to type 'AccountOnchainState'.
+src/ambire-common/src/libs/portfolio/portfolio.test.ts(546,16): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/portfolio/portfolio.test.ts(596,11): error TS2322: Type 'AccountOnchainState | undefined' is not assignable to type 'AccountOnchainState'.
+  Type 'undefined' is not assignable to type 'AccountOnchainState'.
+src/ambire-common/src/libs/portfolio/portfolio.test.ts(596,18): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/portfolio/portfolio.ts(413,23): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/portfolio/testData.ts(222,9): error TS2353: Object literal may only specify known properties, and 'isLoading' does not exist in type 'NetworkState'.
+src/ambire-common/src/libs/portfolio/testData.ts(462,9): error TS2353: Object literal may only specify known properties, and 'isLoading' does not exist in type 'NetworkState'.
+src/ambire-common/src/libs/relayerCall/relayerCall.test.ts(1,24): error TS2307: Cannot find module 'hardhat' or its corresponding type declarations.
+src/ambire-common/src/libs/signMessage/signMessage.test.ts(145,36): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/signMessage/signMessage.test.ts(204,7): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/signMessage/signMessage.test.ts(204,7): error TS2345: Argument of type 'AccountOnchainState | undefined' is not assignable to parameter of type 'AccountOnchainState'.
+  Type 'undefined' is not assignable to type 'AccountOnchainState'.
+src/ambire-common/src/libs/signMessage/signMessage.test.ts(220,7): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/signMessage/signMessage.test.ts(220,7): error TS2345: Argument of type 'AccountOnchainState | undefined' is not assignable to parameter of type 'AccountOnchainState'.
+  Type 'undefined' is not assignable to type 'AccountOnchainState'.
+src/ambire-common/src/libs/signMessage/signMessage.test.ts(235,7): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/signMessage/signMessage.test.ts(235,7): error TS2345: Argument of type 'AccountOnchainState | undefined' is not assignable to parameter of type 'AccountOnchainState'.
+  Type 'undefined' is not assignable to type 'AccountOnchainState'.
+src/ambire-common/src/libs/signMessage/signMessage.test.ts(254,7): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/signMessage/signMessage.test.ts(254,7): error TS2345: Argument of type 'AccountOnchainState | undefined' is not assignable to parameter of type 'AccountOnchainState'.
+  Type 'undefined' is not assignable to type 'AccountOnchainState'.
+src/ambire-common/src/libs/signMessage/signMessage.test.ts(270,30): error TS2722: Cannot invoke an object which is possibly 'undefined'.
+src/ambire-common/src/libs/signMessage/signMessage.test.ts(270,30): error TS18048: 'contract.isValidSignature' is possibly 'undefined'.
+src/ambire-common/src/libs/signMessage/signMessage.test.ts(282,7): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/signMessage/signMessage.test.ts(282,7): error TS2345: Argument of type 'AccountOnchainState | undefined' is not assignable to parameter of type 'AccountOnchainState'.
+  Type 'undefined' is not assignable to type 'AccountOnchainState'.
+src/ambire-common/src/libs/signMessage/signMessage.test.ts(306,9): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/signMessage/signMessage.test.ts(306,9): error TS2345: Argument of type 'AccountOnchainState | undefined' is not assignable to parameter of type 'AccountOnchainState'.
+  Type 'undefined' is not assignable to type 'AccountOnchainState'.
+src/ambire-common/src/libs/signMessage/signMessage.test.ts(322,26): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/signMessage/signMessage.test.ts(328,7): error TS2345: Argument of type 'AccountOnchainState | undefined' is not assignable to parameter of type 'AccountOnchainState'.
+  Type 'undefined' is not assignable to type 'AccountOnchainState'.
+src/ambire-common/src/libs/signMessage/signMessage.test.ts(341,7): error TS2345: Argument of type 'AccountOnchainState | undefined' is not assignable to parameter of type 'AccountOnchainState'.
+  Type 'undefined' is not assignable to type 'AccountOnchainState'.
+src/ambire-common/src/libs/signMessage/signMessage.test.ts(352,26): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/signMessage/signMessage.test.ts(357,7): error TS18048: 'accountState' is possibly 'undefined'.
+src/ambire-common/src/libs/signMessage/signMessage.test.ts(364,7): error TS2345: Argument of type 'AccountOnchainState | undefined' is not assignable to parameter of type 'AccountOnchainState'.
+  Type 'undefined' is not assignable to type 'AccountOnchainState'.
+src/ambire-common/src/libs/signMessage/signMessage.test.ts(378,7): error TS18048: 'accountState' is possibly 'undefined'.
+src/ambire-common/src/libs/signMessage/signMessage.test.ts(384,7): error TS2345: Argument of type 'AccountOnchainState | undefined' is not assignable to parameter of type 'AccountOnchainState'.
+  Type 'undefined' is not assignable to type 'AccountOnchainState'.
+src/ambire-common/src/libs/signMessage/signMessage.test.ts(399,26): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/signMessage/signMessage.test.ts(616,7): error TS2345: Argument of type 'AccountOnchainState | undefined' is not assignable to parameter of type 'AccountOnchainState'.
+  Type 'undefined' is not assignable to type 'AccountOnchainState'.
+src/ambire-common/src/libs/signMessage/signMessage.test.ts(630,26): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/signMessage/signMessage.test.ts(635,7): error TS18048: 'accountState' is possibly 'undefined'.
+src/ambire-common/src/libs/signMessage/signMessage.test.ts(641,7): error TS2345: Argument of type 'AccountOnchainState | undefined' is not assignable to parameter of type 'AccountOnchainState'.
+  Type 'undefined' is not assignable to type 'AccountOnchainState'.
+src/ambire-common/src/libs/signMessage/signMessage.test.ts(658,30): error TS2722: Cannot invoke an object which is possibly 'undefined'.
+src/ambire-common/src/libs/signMessage/signMessage.test.ts(658,30): error TS18048: 'contract.isValidSignature' is possibly 'undefined'.
+src/ambire-common/src/libs/signMessage/signMessage.test.ts(669,26): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/signMessage/signMessage.test.ts(674,7): error TS18048: 'accountState' is possibly 'undefined'.
+src/ambire-common/src/libs/signMessage/signMessage.test.ts(680,7): error TS2345: Argument of type 'AccountOnchainState | undefined' is not assignable to parameter of type 'AccountOnchainState'.
+  Type 'undefined' is not assignable to type 'AccountOnchainState'.
+src/ambire-common/src/libs/signMessage/signMessage.test.ts(698,26): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/signMessage/signMessage.test.ts(707,7): error TS2345: Argument of type 'AccountOnchainState | undefined' is not assignable to parameter of type 'AccountOnchainState'.
+  Type 'undefined' is not assignable to type 'AccountOnchainState'.
+src/ambire-common/src/libs/signMessage/signMessage.test.ts(725,26): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/signMessage/signMessage.test.ts(734,54): error TS2345: Argument of type 'AccountOnchainState | undefined' is not assignable to parameter of type 'AccountOnchainState'.
+  Type 'undefined' is not assignable to type 'AccountOnchainState'.
+src/ambire-common/src/libs/signMessage/signMessage.test.ts(745,28): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/signMessage/signMessage.test.ts(770,7): error TS2345: Argument of type 'AccountOnchainState | undefined' is not assignable to parameter of type 'AccountOnchainState'.
+  Type 'undefined' is not assignable to type 'AccountOnchainState'.
+src/ambire-common/src/libs/signMessage/signMessage.test.ts(781,35): error TS2722: Cannot invoke an object which is possibly 'undefined'.
+src/ambire-common/src/libs/signMessage/signMessage.test.ts(781,35): error TS18048: 'contractV2.isValidSignature' is possibly 'undefined'.
+src/ambire-common/src/libs/signMessage/signMessage.test.ts(786,30): error TS2722: Cannot invoke an object which is possibly 'undefined'.
+src/ambire-common/src/libs/signMessage/signMessage.test.ts(786,30): error TS18048: 'contract.isValidSignature' is possibly 'undefined'.
+src/ambire-common/src/libs/signMessage/signMessage.test.ts(800,28): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/signMessage/signMessage.test.ts(807,7): error TS2345: Argument of type 'AccountOnchainState | undefined' is not assignable to parameter of type 'AccountOnchainState'.
+  Type 'undefined' is not assignable to type 'AccountOnchainState'.
+src/ambire-common/src/libs/signMessage/signMessage.test.ts(827,28): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/signMessage/signMessage.test.ts(834,7): error TS2345: Argument of type 'AccountOnchainState | undefined' is not assignable to parameter of type 'AccountOnchainState'.
+  Type 'undefined' is not assignable to type 'AccountOnchainState'.
+src/ambire-common/src/libs/signMessage/signMessage.test.ts(853,28): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/signMessage/signMessage.test.ts(869,57): error TS2345: Argument of type 'AccountOnchainState | undefined' is not assignable to parameter of type 'AccountOnchainState'.
+  Type 'undefined' is not assignable to type 'AccountOnchainState'.
+src/ambire-common/src/libs/signMessage/signMessage.test.ts(895,9): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/signMessage/signMessage.test.ts(895,9): error TS2345: Argument of type 'AccountOnchainState | undefined' is not assignable to parameter of type 'AccountOnchainState'.
+  Type 'undefined' is not assignable to type 'AccountOnchainState'.
+src/ambire-common/src/libs/signMessage/signMessage.test.ts(914,9): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/signMessage/signMessage.test.ts(914,9): error TS2345: Argument of type 'AccountOnchainState | undefined' is not assignable to parameter of type 'AccountOnchainState'.
+  Type 'undefined' is not assignable to type 'AccountOnchainState'.
+src/ambire-common/src/libs/signMessage/signMessage.test.ts(923,7): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/signMessage/signMessage.test.ts(925,7): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/ambire-common/src/libs/signMessage/signMessage.test.ts(933,7): error TS2345: Argument of type 'AccountOnchainState | undefined' is not assignable to parameter of type 'AccountOnchainState'.
+  Type 'undefined' is not assignable to type 'AccountOnchainState'.
+src/ambire-common/src/libs/signMessage/signMessage.test.ts(977,7): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/signMessage/signMessage.test.ts(977,7): error TS2345: Argument of type 'AccountOnchainState | undefined' is not assignable to parameter of type 'AccountOnchainState'.
+  Type 'undefined' is not assignable to type 'AccountOnchainState'.
+src/ambire-common/src/libs/signMessage/signMessage.test.ts(985,30): error TS2722: Cannot invoke an object which is possibly 'undefined'.
+src/ambire-common/src/libs/signMessage/signMessage.test.ts(985,30): error TS18048: 'contract.isValidSignature' is possibly 'undefined'.
+src/ambire-common/src/libs/signMessage/signMessage.test.ts(998,26): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/signMessage/signMessage.test.ts(1003,7): error TS18048: 'accountState' is possibly 'undefined'.
+src/ambire-common/src/libs/signMessage/signMessage.test.ts(1007,57): error TS2345: Argument of type 'AccountOnchainState | undefined' is not assignable to parameter of type 'AccountOnchainState'.
+  Type 'undefined' is not assignable to type 'AccountOnchainState'.
+src/ambire-common/src/libs/tracer/debugTraceCall.test.ts(155,12): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/tracer/debugTraceCall.test.ts(156,12): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/tracer/debugTraceCall.ts(158,7): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/tracer/debugTraceCall.ts(208,54): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/userOperation/userOperation.test.ts(45,9): error TS2322: Type 'string | undefined' is not assignable to type 'string | null'.
+  Type 'undefined' is not assignable to type 'string | null'.
+src/ambire-common/src/libs/userOperation/userOperation.test.ts(59,7): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/userOperation/userOperation.test.ts(59,7): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/userOperation/userOperation.test.ts(62,9): error TS2322: Type 'AccountOnchainState | undefined' is not assignable to type 'AccountOnchainState'.
+  Type 'undefined' is not assignable to type 'AccountOnchainState'.
+src/ambire-common/src/libs/userOperation/userOperation.test.ts(62,23): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/userOperation/userOperation.test.ts(74,9): error TS2322: Type 'string | undefined' is not assignable to type 'string | null'.
+  Type 'undefined' is not assignable to type 'string | null'.
+src/ambire-common/src/libs/userOperation/userOperation.test.ts(90,9): error TS2322: Type 'AccountOnchainState | undefined' is not assignable to type 'AccountOnchainState'.
+  Type 'undefined' is not assignable to type 'AccountOnchainState'.
+src/ambire-common/src/libs/userOperation/userOperation.test.ts(90,23): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/userOperation/userOperation.test.ts(101,9): error TS2322: Type 'string | undefined' is not assignable to type 'string | null'.
+  Type 'undefined' is not assignable to type 'string | null'.
+src/ambire-common/src/libs/userOperation/userOperation.test.ts(115,7): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/userOperation/userOperation.test.ts(115,7): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/userOperation/userOperation.test.ts(118,9): error TS2322: Type 'AccountOnchainState | undefined' is not assignable to type 'AccountOnchainState'.
+  Type 'undefined' is not assignable to type 'AccountOnchainState'.
+src/ambire-common/src/libs/userOperation/userOperation.test.ts(118,23): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/libs/userOperation/userOperation.ts(235,10): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/services/assetInfo/assetInfo.test.ts(40,48): error TS2345: Argument of type 'Network | undefined' is not assignable to parameter of type 'Network'.
+  Type 'undefined' is not assignable to type 'Network'.
+src/ambire-common/src/services/assetInfo/assetInfo.test.ts(41,48): error TS2345: Argument of type 'Network | undefined' is not assignable to parameter of type 'Network'.
+  Type 'undefined' is not assignable to type 'Network'.
+src/ambire-common/src/services/assetInfo/assetInfo.test.ts(42,50): error TS2345: Argument of type 'Network | undefined' is not assignable to parameter of type 'Network'.
+  Type 'undefined' is not assignable to type 'Network'.
+src/ambire-common/src/services/assetInfo/assetInfo.test.ts(43,51): error TS2345: Argument of type 'Network | undefined' is not assignable to parameter of type 'Network'.
+  Type 'undefined' is not assignable to type 'Network'.
+src/ambire-common/src/services/assetInfo/assetInfo.test.ts(55,48): error TS2345: Argument of type 'Network | undefined' is not assignable to parameter of type 'Network'.
+  Type 'undefined' is not assignable to type 'Network'.
+src/ambire-common/src/services/assetInfo/assetInfo.test.ts(56,48): error TS2345: Argument of type 'Network | undefined' is not assignable to parameter of type 'Network'.
+  Type 'undefined' is not assignable to type 'Network'.
+src/ambire-common/src/services/assetInfo/assetInfo.test.ts(57,50): error TS2345: Argument of type 'Network | undefined' is not assignable to parameter of type 'Network'.
+  Type 'undefined' is not assignable to type 'Network'.
+src/ambire-common/src/services/assetInfo/assetInfo.test.ts(58,51): error TS2345: Argument of type 'Network | undefined' is not assignable to parameter of type 'Network'.
+  Type 'undefined' is not assignable to type 'Network'.
+src/ambire-common/src/services/bundlers/bundler.test.ts(247,9): error TS2322: Type 'string | undefined' is not assignable to type 'string | null'.
+  Type 'undefined' is not assignable to type 'string | null'.
+src/ambire-common/src/services/bundlers/bundler.test.ts(261,28): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/services/bundlers/bundler.test.ts(265,9): error TS2322: Type 'AccountOnchainState | undefined' is not assignable to type 'AccountOnchainState'.
+  Type 'undefined' is not assignable to type 'AccountOnchainState'.
+src/ambire-common/src/services/bundlers/bundler.test.ts(293,9): error TS2322: Type 'string | undefined' is not assignable to type 'string | null'.
+  Type 'undefined' is not assignable to type 'string | null'.
+src/ambire-common/src/services/bundlers/bundler.test.ts(307,28): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/services/bundlers/bundler.test.ts(311,9): error TS2322: Type 'AccountOnchainState | undefined' is not assignable to type 'AccountOnchainState'.
+  Type 'undefined' is not assignable to type 'AccountOnchainState'.
+src/ambire-common/src/services/bundlers/bundler.test.ts(343,9): error TS2322: Type 'string | undefined' is not assignable to type 'string | null'.
+  Type 'undefined' is not assignable to type 'string | null'.
+src/ambire-common/src/services/bundlers/bundler.test.ts(366,28): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/services/bundlers/bundler.test.ts(370,9): error TS2322: Type 'AccountOnchainState | undefined' is not assignable to type 'AccountOnchainState'.
+  Type 'undefined' is not assignable to type 'AccountOnchainState'.
+src/ambire-common/src/services/bundlers/bundler.test.ts(403,9): error TS2322: Type 'string | undefined' is not assignable to type 'string | null'.
+  Type 'undefined' is not assignable to type 'string | null'.
+src/ambire-common/src/services/bundlers/bundler.test.ts(417,28): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/services/bundlers/bundler.test.ts(421,9): error TS2322: Type 'AccountOnchainState | undefined' is not assignable to type 'AccountOnchainState'.
+  Type 'undefined' is not assignable to type 'AccountOnchainState'.
+src/ambire-common/src/services/bundlers/bundler.test.ts(460,9): error TS2322: Type 'string | undefined' is not assignable to type 'string | null'.
+  Type 'undefined' is not assignable to type 'string | null'.
+src/ambire-common/src/services/bundlers/bundler.test.ts(474,28): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/services/bundlers/bundler.test.ts(478,9): error TS2322: Type 'AccountOnchainState | undefined' is not assignable to type 'AccountOnchainState'.
+  Type 'undefined' is not assignable to type 'AccountOnchainState'.
+src/ambire-common/src/services/bundlers/bundler.test.ts(517,9): error TS2322: Type 'string | undefined' is not assignable to type 'string | null'.
+  Type 'undefined' is not assignable to type 'string | null'.
+src/ambire-common/src/services/bundlers/bundler.test.ts(540,28): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/services/bundlers/bundler.test.ts(544,9): error TS2322: Type 'AccountOnchainState | undefined' is not assignable to type 'AccountOnchainState'.
+  Type 'undefined' is not assignable to type 'AccountOnchainState'.
+src/ambire-common/src/services/bundlers/bundler.test.ts(575,9): error TS2322: Type 'string | undefined' is not assignable to type 'string | null'.
+  Type 'undefined' is not assignable to type 'string | null'.
+src/ambire-common/src/services/bundlers/bundler.test.ts(592,9): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/services/bundlers/bundler.test.ts(596,9): error TS2322: Type 'AccountOnchainState | undefined' is not assignable to type 'AccountOnchainState'.
+  Type 'undefined' is not assignable to type 'AccountOnchainState'.
+src/ambire-common/src/services/bundlers/bundler.test.ts(619,9): error TS2322: Type 'string | undefined' is not assignable to type 'string | null'.
+  Type 'undefined' is not assignable to type 'string | null'.
+src/ambire-common/src/services/bundlers/bundler.test.ts(635,28): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/services/bundlers/bundler.test.ts(639,9): error TS2322: Type 'AccountOnchainState | undefined' is not assignable to type 'AccountOnchainState'.
+  Type 'undefined' is not assignable to type 'AccountOnchainState'.
+src/ambire-common/src/services/bundlers/bundler.test.ts(671,9): error TS2322: Type 'string | undefined' is not assignable to type 'string | null'.
+  Type 'undefined' is not assignable to type 'string | null'.
+src/ambire-common/src/services/bundlers/bundler.test.ts(685,28): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/services/bundlers/bundler.test.ts(689,9): error TS2322: Type 'AccountOnchainState | undefined' is not assignable to type 'AccountOnchainState'.
+  Type 'undefined' is not assignable to type 'AccountOnchainState'.
+src/ambire-common/src/services/bundlers/bundler.test.ts(720,9): error TS2322: Type 'string | undefined' is not assignable to type 'string | null'.
+  Type 'undefined' is not assignable to type 'string | null'.
+src/ambire-common/src/services/bundlers/bundler.test.ts(742,28): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/services/bundlers/bundler.test.ts(746,9): error TS2322: Type 'AccountOnchainState | undefined' is not assignable to type 'AccountOnchainState'.
+  Type 'undefined' is not assignable to type 'AccountOnchainState'.
+src/ambire-common/src/services/bundlers/bundler.test.ts(784,9): error TS2322: Type 'string | undefined' is not assignable to type 'string | null'.
+  Type 'undefined' is not assignable to type 'string | null'.
+src/ambire-common/src/services/bundlers/bundler.test.ts(798,28): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/services/bundlers/bundler.test.ts(802,9): error TS2322: Type 'AccountOnchainState | undefined' is not assignable to type 'AccountOnchainState'.
+  Type 'undefined' is not assignable to type 'AccountOnchainState'.
+src/ambire-common/src/services/bundlers/bundler.test.ts(834,9): error TS2322: Type 'string | undefined' is not assignable to type 'string | null'.
+  Type 'undefined' is not assignable to type 'string | null'.
+src/ambire-common/src/services/bundlers/bundler.test.ts(848,28): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/services/bundlers/bundler.test.ts(852,9): error TS2322: Type 'AccountOnchainState | undefined' is not assignable to type 'AccountOnchainState'.
+  Type 'undefined' is not assignable to type 'AccountOnchainState'.
+src/ambire-common/src/services/bundlers/bundlerSwitcher.test.ts(48,36): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/services/bundlers/bundlerSwitcher.test.ts(59,26): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/services/bundlers/bundlerSwitcher.test.ts(60,54): error TS2345: Argument of type 'AccountOnchainState | undefined' is not assignable to parameter of type 'AccountOnchainState'.
+  Type 'undefined' is not assignable to type 'AccountOnchainState'.
+src/ambire-common/src/services/bundlers/bundlerSwitcher.test.ts(72,26): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/services/bundlers/bundlerSwitcher.test.ts(73,54): error TS2345: Argument of type 'AccountOnchainState | undefined' is not assignable to parameter of type 'AccountOnchainState'.
+  Type 'undefined' is not assignable to type 'AccountOnchainState'.
+src/ambire-common/src/services/bundlers/bundlerSwitcher.test.ts(82,26): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/services/bundlers/bundlerSwitcher.test.ts(83,54): error TS2345: Argument of type 'AccountOnchainState | undefined' is not assignable to parameter of type 'AccountOnchainState'.
+  Type 'undefined' is not assignable to type 'AccountOnchainState'.
+src/ambire-common/src/services/bundlers/bundlerSwitcher.test.ts(92,26): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/services/bundlers/bundlerSwitcher.test.ts(93,54): error TS2345: Argument of type 'AccountOnchainState | undefined' is not assignable to parameter of type 'AccountOnchainState'.
+  Type 'undefined' is not assignable to type 'AccountOnchainState'.
+src/ambire-common/src/services/bundlers/bundlerSwitcher.test.ts(106,26): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/src/services/bundlers/bundlerSwitcher.test.ts(107,54): error TS2345: Argument of type 'AccountOnchainState | undefined' is not assignable to parameter of type 'AccountOnchainState'.
+  Type 'undefined' is not assignable to type 'AccountOnchainState'.
+src/ambire-common/src/services/bundlers/bundlerSwitcher.ts(78,5): error TS2322: Type 'Bundler | undefined' is not assignable to type 'Bundler'.
+  Type 'undefined' is not assignable to type 'Bundler'.
+src/ambire-common/src/services/bundlers/bundlerSwitcher.ts(95,7): error TS2322: Type 'Bundler | undefined' is not assignable to type 'Bundler'.
+  Type 'undefined' is not assignable to type 'Bundler'.
+src/ambire-common/src/services/bundlers/bundlerSwitcher.ts(99,5): error TS2322: Type 'Bundler | undefined' is not assignable to type 'Bundler'.
+  Type 'undefined' is not assignable to type 'Bundler'.
+src/ambire-common/src/services/paymaster/FailedPaymasters.ts(35,32): error TS2722: Cannot invoke an object which is possibly 'undefined'.
+src/ambire-common/src/utils/networks.ts(35,56): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/ambire-common/src/utils/networks.ts(38,5): error TS2322: Type 'string | undefined' is not assignable to type 'string | null'.
+  Type 'undefined' is not assignable to type 'string | null'.
+src/ambire-common/src/utils/networks.ts(60,9): error TS2322: Type 'string | null' is not assignable to type 'string'.
+  Type 'null' is not assignable to type 'string'.
+src/ambire-common/test/AmbireAccount/721and1155Test.ts(1,24): error TS2307: Cannot find module 'hardhat' or its corresponding type declarations.
+src/ambire-common/test/AmbireAccount/BasicTest.ts(2,24): error TS2307: Cannot find module 'hardhat' or its corresponding type declarations.
+src/ambire-common/test/AmbireAccount/BasicTest.ts(22,3): error TS2304: Cannot find name 'before'.
+src/ambire-common/test/AmbireAccount/erc4337deployTest.ts(2,24): error TS2307: Cannot find module 'hardhat' or its corresponding type declarations.
+src/ambire-common/test/AmbireAccount/erc4337deployTest.ts(57,3): error TS2304: Cannot find name 'before'.
+src/ambire-common/test/AmbireAccount/ETHReceiveTest.ts(1,24): error TS2307: Cannot find module 'hardhat' or its corresponding type declarations.
+src/ambire-common/test/AmbireAccount/MultiSigTest.ts(1,24): error TS2307: Cannot find module 'hardhat' or its corresponding type declarations.
+src/ambire-common/test/AmbireAccount/MultiSigTest.ts(141,3): error TS2304: Cannot find name 'before'.
+src/ambire-common/test/AmbireAccount/SchnorrTest.ts(1,24): error TS2307: Cannot find module 'hardhat' or its corresponding type declarations.
+src/ambire-common/test/AmbireAccount/SchnorrTest.ts(3,33): error TS2307: Cannot find module '@borislav.itskov/schnorrkel.js' or its corresponding type declarations.
+src/ambire-common/test/AmbireAccount/SchnorrTest.ts(24,3): error TS2304: Cannot find name 'before'.
+src/ambire-common/test/AmbireAccountFactory/DeployTest.ts(1,24): error TS2307: Cannot find module 'hardhat' or its corresponding type declarations.
+src/ambire-common/test/AmbireAccountState/StateChecksTest.ts(1,24): error TS2307: Cannot find module 'hardhat' or its corresponding type declarations.
+src/ambire-common/test/ambireSign.ts(2,24): error TS2307: Cannot find module 'hardhat' or its corresponding type declarations.
+src/ambire-common/test/ambireSign.ts(4,37): error TS2307: Cannot find module 'libs/userOperation/types' or its corresponding type declarations.
+src/ambire-common/test/config.ts(1,30): error TS2307: Cannot find module 'chai' or its corresponding type declarations.
+src/ambire-common/test/config.ts(2,33): error TS2307: Cannot find module 'chai-assertions-count' or its corresponding type declarations.
+src/ambire-common/test/config.ts(3,24): error TS2307: Cannot find module 'hardhat' or its corresponding type declarations.
+src/ambire-common/test/helpers.ts(2,24): error TS2307: Cannot find module 'hardhat' or its corresponding type declarations.
+src/ambire-common/test/helpers.ts(6,53): error TS2307: Cannot find module '../../interfaces/fetch' or its corresponding type declarations.
+src/ambire-common/test/helpers.ts(273,23): error TS2345: Argument of type 'RPCProvider | undefined' is not assignable to parameter of type 'RPCProvider'.
+  Type 'undefined' is not assignable to type 'RPCProvider'.
+    Type 'undefined' is not assignable to type 'JsonRpcProvider'.
+src/ambire-common/test/helpers.ts(281,36): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/test/implementations.ts(2,24): error TS2307: Cannot find module 'hardhat' or its corresponding type declarations.
+src/ambire-common/test/implementations.ts(41,22): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/test/implementations.ts(41,46): error TS2532: Object is possibly 'undefined'.
+src/ambire-common/test/LegendsNft/LegendsNft.ts(3,24): error TS2307: Cannot find module 'chai' or its corresponding type declarations.
+src/ambire-common/test/LegendsNft/LegendsNft.ts(5,24): error TS2307: Cannot find module 'hardhat' or its corresponding type declarations.
+src/ambire-common/test/LegendsNft/LegendsNft.ts(14,14): error TS2345: Argument of type 'string' is not assignable to parameter of type 'ProvidesHookCallback'.
+src/ambire-common/test/Paymaster/SendUserOpTest.ts(1,24): error TS2307: Cannot find module 'hardhat' or its corresponding type declarations.
+src/ambire-common/test/Paymaster/SendUserOpTest.ts(16,3): error TS2304: Cannot find name 'before'.
+src/ambire-common/test/RewardsNft/rewardsNft.ts(3,24): error TS2307: Cannot find module 'chai' or its corresponding type declarations.
+src/ambire-common/test/RewardsNft/rewardsNft.ts(5,24): error TS2307: Cannot find module 'hardhat' or its corresponding type declarations.
+src/ambire-common/test/RewardsNft/rewardsNft.ts(15,14): error TS2345: Argument of type 'string' is not assignable to parameter of type 'ProvidesHookCallback'.
+src/ambire-common/test/stkWallet/stkWallet.ts(3,24): error TS2307: Cannot find module 'chai' or its corresponding type declarations.
+src/ambire-common/test/stkWallet/stkWallet.ts(5,33): error TS2307: Cannot find module 'hardhat' or its corresponding type declarations.
+src/ambire-common/test/stkWallet/stkWallet.ts(21,3): error TS2304: Cannot find name 'before'.
+src/ambire-common/test/stkWallet/stkWallet.ts(36,14): error TS2345: Argument of type 'string' is not assignable to parameter of type 'ProvidesHookCallback'.
+src/ambire-common/test/stkWallet/stkWallet.ts(56,36): error TS2722: Cannot invoke an object which is possibly 'undefined'.
+src/ambire-common/test/stkWallet/stkWallet.ts(56,36): error TS18048: 'xWalletContract.balanceOf' is possibly 'undefined'.
+src/ambire-common/test/stkWallet/stkWallet.ts(59,18): error TS2722: Cannot invoke an object which is possibly 'undefined'.
+src/ambire-common/test/stkWallet/stkWallet.ts(68,51): error TS2722: Cannot invoke an object which is possibly 'undefined'.
+src/ambire-common/test/stkWallet/stkWallet.ts(68,51): error TS18048: 'xWalletContract.balanceOf' is possibly 'undefined'.
+src/ambire-common/test/stkWallet/stkWallet.ts(70,50): error TS2722: Cannot invoke an object which is possibly 'undefined'.
+src/ambire-common/test/stkWallet/stkWallet.ts(70,50): error TS18048: 'xWalletContract.balanceOf' is possibly 'undefined'.
+src/benzin/screens/BenzinScreen/hooks/useSteps/utils/reproduceCalls.ts(141,14): error TS2722: Cannot invoke an object which is possibly 'undefined'.
+src/common/contexts/biometricsContext/biometricsContext.tsx(16,41): error TS2339: Property 'children' does not exist on type '{}'.
+src/common/contexts/constantsContext/constantsContext.tsx(23,40): error TS2339: Property 'children' does not exist on type '{}'.
+src/common/contexts/constantsContext/constantsContext.tsx(25,9): error TS2739: Type 'UseConstantsReturnType' is missing the following properties from type 'ConstantsType': tokenList, humanizerInfo, lastFetched, customTokens
+src/common/contexts/constantsContext/constantsContext.tsx(25,11): error TS2339: Property 'constants' does not exist on type 'ConstantsType | null'.
+src/common/contexts/constantsContext/constantsContext.tsx(25,22): error TS2339: Property 'isLoading' does not exist on type 'ConstantsType | null'.
+src/common/contexts/constantsContext/constantsContext.tsx(25,33): error TS2339: Property 'retryFetch' does not exist on type 'ConstantsType | null'.
+src/common/contexts/constantsContext/constantsContext.tsx(25,45): error TS2339: Property 'hasError' does not exist on type 'ConstantsType | null'.
+src/common/contexts/constantsContext/constantsContext.tsx(28,24): error TS2339: Property 'CONSTANTS_ENDPOINT' does not exist on type 'Config'.
+src/common/contexts/netInfoContext/netInfoContext.web.tsx(8,38): error TS2339: Property 'children' does not exist on type '{}'.
+src/common/hooks/useLoader/useLoader.ts(3,31): error TS2307: Cannot find module '@common/contexts/loaderContext' or its corresponding type declarations.
+src/common/hooks/useRelayerData/useRelayerData.ts(4,58): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(this: (this: { url: string; fetch: Fetch; }, path: string, method?: string, body?: any, headers?: any, timeoutMs?: number) => Promise<any>, thisArg: { url: string; fetch: Fetch; }): (path: string, method?: string | undefined, body?: any, headers?: any, timeoutMs?: number | undefined) => Promise<...>', gave the following error.
+    Type '{ (input: URL | RequestInfo, init?: RequestInit | undefined): Promise<Response>; (input: URL | RequestInfo, init?: RequestInit | undefined): Promise<...>; (input: RequestInfo, init?: RequestInit | undefined): Promise<...>; (input: string | ... 1 more ... | Request, init?: RequestInit | undefined): Promise<...>; }' is not assignable to type 'Fetch'.
+      Types of parameters 'input' and 'input' are incompatible.
+        Type 'RequestInfo' is not assignable to type 'URL | RequestInfo'.
+          Type 'URLLike' is not assignable to type 'URL | RequestInfo'.
+            Type 'URLLike' is missing the following properties from type 'URL': hash, host, hostname, origin, and 8 more.
+  Overload 2 of 2, '(this: (this: { url: string; fetch: Fetch; }, path: string, method?: string | undefined, body?: any, headers?: any, timeoutMs?: number | undefined) => Promise<...>, thisArg: { url: string; fetch: Fetch; }): (path: string, method?: string | undefined, body?: any, headers?: any, timeoutMs?: number | undefined) => Promise<...>', gave the following error.
+    Type '{ (input: URL | RequestInfo, init?: RequestInit | undefined): Promise<Response>; (input: URL | RequestInfo, init?: RequestInit | undefined): Promise<...>; (input: RequestInfo, init?: RequestInit | undefined): Promise<...>; (input: string | ... 1 more ... | Request, init?: RequestInit | undefined): Promise<...>; }' is not assignable to type 'Fetch'.
+      Types of parameters 'input' and 'input' are incompatible.
+        Type 'RequestInfo' is not assignable to type 'URL | RequestInfo'.
+          Type 'URLLike' is not assignable to type 'URL | RequestInfo'.
+            Type 'URLLike' is missing the following properties from type 'URL': hash, host, hostname, origin, and 8 more.
+src/common/modules/dashboard/components/DeFiPositions/DeFiPositions.tsx(94,24): error TS7006: Parameter 'prev' implicitly has an 'any' type.
+src/common/modules/swap-and-bridge/components/ActiveRouteCard/ActiveRouteCard.tsx(94,17): error TS18048: 'firstStep' is possibly 'undefined'.
+src/common/modules/swap-and-bridge/components/ActiveRouteCard/ActiveRouteCard.tsx(95,16): error TS18048: 'firstStep' is possibly 'undefined'.
+src/common/modules/swap-and-bridge/components/ActiveRouteCard/ActiveRouteCard.tsx(100,15): error TS18048: 'firstStep' is possibly 'undefined'.
+src/common/modules/swap-and-bridge/components/ActiveRouteCard/ActiveRouteCard.tsx(101,14): error TS18048: 'lastCompletedStep' is possibly 'undefined'.
+src/common/modules/swap-and-bridge/components/ActiveRouteCard/ActiveRouteCard.tsx(225,36): error TS2532: Object is possibly 'undefined'.
+src/common/modules/swap-and-bridge/components/ActiveRouteCard/ActiveRouteCard.tsx(226,43): error TS2532: Object is possibly 'undefined'.
+src/common/modules/swap-and-bridge/components/ActiveRouteCard/ActiveRouteCard.tsx(229,36): error TS2532: Object is possibly 'undefined'.
+src/common/modules/swap-and-bridge/components/ActiveRouteCard/ActiveRouteCard.tsx(230,43): error TS2532: Object is possibly 'undefined'.
+src/common/modules/swap-and-bridge/components/ActiveRouteCard/ActiveRouteCard.tsx(233,46): error TS2532: Object is possibly 'undefined'.
+src/common/modules/swap-and-bridge/components/ActiveRouteCard/ActiveRouteCard.tsx(233,67): error TS2532: Object is possibly 'undefined'.
+src/common/utils/getGasTankTokenDetails.ts(39,35): error TS2345: Argument of type 'GasTankTokenResult | undefined' is not assignable to parameter of type 'GasTankTokenResult'.
+  Type 'undefined' is not assignable to type 'GasTankTokenResult'.
+    Type 'undefined' is not assignable to type 'TokenResult'.
+src/common/utils/mixHexColors.ts(22,24): error TS18048: 'r1' is possibly 'undefined'.
+src/common/utils/mixHexColors.ts(22,37): error TS18048: 'r2' is possibly 'undefined'.
+src/common/utils/mixHexColors.ts(23,24): error TS18048: 'g1' is possibly 'undefined'.
+src/common/utils/mixHexColors.ts(23,37): error TS18048: 'g2' is possibly 'undefined'.
+src/common/utils/mixHexColors.ts(24,24): error TS18048: 'b1' is possibly 'undefined'.
+src/common/utils/mixHexColors.ts(24,37): error TS18048: 'b2' is possibly 'undefined'.
+src/legends/common/assets/svg/CoinIcon/CoinIcon.tsx(16,9): error TS2322: Type '{ style: { mixBlendMode: string; }; d: string; fill: string; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<Path> & Readonly<PathProps>'.
+  Property 'style' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<Path> & Readonly<PathProps>'.
+src/legends/common/assets/svg/CoinIcon/CoinIcon.tsx(31,9): error TS2322: Type '{ style: { mixBlendMode: string; }; d: string; fill: string; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<Path> & Readonly<PathProps>'.
+  Property 'style' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<Path> & Readonly<PathProps>'.
+src/legends/common/assets/svg/CoinIcon/CoinIcon.tsx(66,9): error TS2322: Type '{ style: { mixBlendMode: string; }; d: string; fill: string; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<Path> & Readonly<PathProps>'.
+  Property 'style' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<Path> & Readonly<PathProps>'.
+src/legends/common/assets/svg/CoinIcon/CoinIcon.tsx(78,11): error TS2322: Type '{ style: { mixBlendMode: string; }; d: string; fill: string; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<Path> & Readonly<PathProps>'.
+  Property 'style' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<Path> & Readonly<PathProps>'.
+src/legends/common/assets/svg/CoinIcon/CoinIcon.tsx(85,11): error TS2322: Type '{ style: { mixBlendMode: string; }; d: string; fill: string; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<Path> & Readonly<PathProps>'.
+  Property 'style' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<Path> & Readonly<PathProps>'.
+src/legends/common/assets/svg/CoinIcon/CoinIcon.tsx(93,9): error TS2322: Type '{ style: { mixBlendMode: string; }; opacity: number; d: string; fill: string; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<Path> & Readonly<PathProps>'.
+  Property 'style' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<Path> & Readonly<PathProps>'.
+src/legends/common/assets/svg/CrownIcon/CrownIcon.tsx(27,9): error TS2322: Type '{ d: string; fill: string; style: { mixBlendMode: string; }; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<Path> & Readonly<PathProps>'.
+  Property 'style' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<Path> & Readonly<PathProps>'.
+src/legends/common/assets/svg/CrownIcon/CrownIcon.tsx(111,9): error TS2322: Type '{ d: string; style: { mixBlendMode: string; }; fill: string; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<Path> & Readonly<PathProps>'.
+  Property 'style' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<Path> & Readonly<PathProps>'.
+src/legends/common/assets/svg/CrownIcon/CrownIcon.tsx(127,9): error TS2322: Type '{ d: string; fill: string; opacity: number; style: { mixBlendMode: string; }; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<Path> & Readonly<PathProps>'.
+  Property 'style' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<Path> & Readonly<PathProps>'.
+src/legends/common/assets/svg/CrownIcon/CrownIcon.tsx(178,9): error TS2322: Type '{ d: string; fill: string; opacity: number; style: { mixBlendMode: string; }; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<Path> & Readonly<PathProps>'.
+  Property 'style' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<Path> & Readonly<PathProps>'.
+src/legends/common/assets/svg/CrownIcon/CrownIcon.tsx(183,9): error TS2322: Type '{ d: string; fill: string; style: { mixBlendMode: string; }; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<Path> & Readonly<PathProps>'.
+  Property 'style' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<Path> & Readonly<PathProps>'.
+src/legends/common/assets/svg/DiamondIcon/DiamondIcon.tsx(36,9): error TS2322: Type '{ style: { mixBlendMode: string; }; d: string; fill: string; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<Path> & Readonly<PathProps>'.
+  Property 'style' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<Path> & Readonly<PathProps>'.
+src/legends/common/assets/svg/DiamondIcon/DiamondIcon.tsx(66,9): error TS2322: Type '{ style: { mixBlendMode: string; }; opacity: number; d: string; fill: string; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<Path> & Readonly<PathProps>'.
+  Property 'style' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<Path> & Readonly<PathProps>'.
+src/legends/common/assets/svg/DiamondIcon/DiamondIcon.tsx(74,9): error TS2322: Type '{ style: { mixBlendMode: string; }; opacity: number; d: string; fill: string; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<Path> & Readonly<PathProps>'.
+  Property 'style' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<Path> & Readonly<PathProps>'.
+src/legends/common/assets/svg/DiamondIcon/DiamondIcon.tsx(87,9): error TS2322: Type '{ style: { mixBlendMode: string; }; d: string; fill: string; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<Path> & Readonly<PathProps>'.
+  Property 'style' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<Path> & Readonly<PathProps>'.
+src/legends/common/assets/svg/DiamondIcon/DiamondIcon.tsx(103,9): error TS2322: Type '{ style: { mixBlendMode: string; }; d: string; fill: string; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<Path> & Readonly<PathProps>'.
+  Property 'style' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<Path> & Readonly<PathProps>'.
+src/legends/common/assets/svg/DiamondIcon/DiamondIcon.tsx(119,9): error TS2322: Type '{ style: { mixBlendMode: string; }; d: string; fill: string; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<Path> & Readonly<PathProps>'.
+  Property 'style' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<Path> & Readonly<PathProps>'.
+src/legends/common/assets/svg/DiamondIcon/DiamondIcon.tsx(139,9): error TS2322: Type '{ style: { mixBlendMode: string; }; d: string; fill: string; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<Path> & Readonly<PathProps>'.
+  Property 'style' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<Path> & Readonly<PathProps>'.
+src/legends/common/assets/svg/DiamondIcon/DiamondIcon.tsx(165,9): error TS2322: Type '{ style: { mixBlendMode: string; }; opacity: number; d: string; fill: string; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<Path> & Readonly<PathProps>'.
+  Property 'style' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<Path> & Readonly<PathProps>'.
+src/legends/common/assets/svg/DiamondIcon/DiamondIcon.tsx(188,9): error TS2322: Type '{ style: { mixBlendMode: string; }; d: string; fill: string; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<Path> & Readonly<PathProps>'.
+  Property 'style' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<Path> & Readonly<PathProps>'.
+src/legends/common/assets/svg/DiamondIcon/DiamondIcon.tsx(197,9): error TS2322: Type '{ d: string; fill: string; style: { mixBlendMode: string; }; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<Path> & Readonly<PathProps>'.
+  Property 'style' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<Path> & Readonly<PathProps>'.
+src/legends/common/assets/svg/DiamondIcon/DiamondIcon.tsx(202,9): error TS2322: Type '{ style: { mixBlendMode: string; }; opacity: number; d: string; fill: string; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<Path> & Readonly<PathProps>'.
+  Property 'style' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<Path> & Readonly<PathProps>'.
+src/legends/common/assets/svg/DiamondIcon/DiamondIcon.tsx(214,9): error TS2322: Type '{ style: { mixBlendMode: string; }; d: string; fill: string; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<Path> & Readonly<PathProps>'.
+  Property 'style' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<Path> & Readonly<PathProps>'.
+src/legends/common/assets/svg/SwordIcon/SwordIcon.tsx(199,9): error TS2322: Type '{ style: { mixBlendMode: string; }; opacity: number; d: string; fill: string; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<Path> & Readonly<PathProps>'.
+  Property 'style' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<Path> & Readonly<PathProps>'.
+src/legends/common/assets/svg/SwordIcon/SwordIcon.tsx(211,9): error TS2322: Type '{ style: { mixBlendMode: string; }; opacity: number; d: string; fill: string; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<Path> & Readonly<PathProps>'.
+  Property 'style' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<Path> & Readonly<PathProps>'.
+src/legends/contexts/controllersMiddlewareContext/controllersMiddlewareContext.tsx(112,44): error TS2322: Type '{ dispatch: (action: MethodAction) => void; }' is not assignable to type 'ControllersMiddlewareContextReturnType'.
+  Types of property 'dispatch' are incompatible.
+    Type '(action: MethodAction) => void' is not assignable to type '(action: MethodAction | Action, windowId?: number | undefined) => void'.
+      Types of parameters 'action' and 'action' are incompatible.
+        Type 'MethodAction | Action' is not assignable to type 'MethodAction'.
+          Type 'InitControllerStateAction' is not assignable to type 'MethodAction'.
+            Types of property 'type' are incompatible.
+              Type '"INIT_CONTROLLER_STATE"' is not assignable to type '"method"'.
+src/legends/modules/leaderboard/screens/Leaderboard/Leaderboard.tsx(114,7): error TS2322: Type 'RefObject<HTMLDivElement | null>' is not assignable to type 'RefObject<HTMLDivElement>'.
+  Type 'HTMLDivElement | null' is not assignable to type 'HTMLDivElement'.
+    Type 'null' is not assignable to type 'HTMLDivElement'.
+src/legends/modules/leaderboard/screens/Leaderboard/Leaderboard.tsx(275,19): error TS2322: Type 'RefObject<HTMLDivElement | null>' is not assignable to type 'RefObject<HTMLDivElement>'.
+  Type 'HTMLDivElement | null' is not assignable to type 'HTMLDivElement'.
+    Type 'null' is not assignable to type 'HTMLDivElement'.
+src/legends/modules/leaderboard/screens/Leaderboard/Leaderboard.tsx(299,21): error TS2322: Type 'RefObject<HTMLDivElement | null>' is not assignable to type 'RefObject<HTMLDivElement>'.
+  Type 'HTMLDivElement | null' is not assignable to type 'HTMLDivElement'.
+    Type 'null' is not assignable to type 'HTMLDivElement'.
+src/legends/modules/legends/components/Card/CardAction/actions/BitrefillClaim.tsx(118,17): error TS2322: Type '{ marginLeft: "1.25rem"; }' is not assignable to type 'StyleProp<ViewStyle>'.
+  Types of property 'marginLeft' are incompatible.
+    Type '"1.25rem"' is not assignable to type 'DimensionValue | undefined'.
+src/mobile/shims/pbkdf2.ts(4,7): error TS2451: Cannot redeclare block-scoped variable 'crypto'.
+src/mobile/shims/pbkdf2.ts(6,29): error TS2339: Property 'pbkdf2Sync' does not exist on type 'Crypto'.
+src/mobile/shims/pbkdf2.ts(17,24): error TS2339: Property 'pbkdf2Sync' does not exist on type 'Crypto'.
+src/mobile/shims/scrypt.ts(4,7): error TS2451: Cannot redeclare block-scoped variable 'crypto'.
+src/mobile/shims/scrypt.ts(8,25): error TS2339: Property 'scrypt' does not exist on type 'Crypto'.
+src/web/constants/browserapi.ts(37,32): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/web/extension-services/background/provider/handleProviderRequests.ts(66,33): error TS2532: Object is possibly 'undefined'.
+src/web/extension-services/background/provider/handleProviderRequests.ts(81,7): error TS2532: Object is possibly 'undefined'.
+src/web/extension-services/content-script/content-script-ambire-injection.ts(2,7): error TS2451: Cannot redeclare block-scoped variable 'injectProviderScript'.
+src/web/extension-services/content-script/content-script-ambire-injection.ts(12,46): error TS2345: Argument of type 'Element | undefined' is not assignable to parameter of type 'Node | null'.
+  Type 'undefined' is not assignable to type 'Node | null'.
+src/web/extension-services/content-script/content-script-ethereum-injection.ts(2,7): error TS2451: Cannot redeclare block-scoped variable 'injectProviderScript'.
+src/web/extension-services/content-script/content-script-ethereum-injection.ts(12,48): error TS2345: Argument of type 'Element | undefined' is not assignable to parameter of type 'Node | null'.
+  Type 'undefined' is not assignable to type 'Node | null'.
+src/web/extension-services/inpage/EthereumProvider.ts(339,20): error TS7006: Parameter 'data' implicitly has an 'any' type.
+src/web/extension-services/inpage/EthereumProvider.ts(343,21): error TS7006: Parameter 'data' implicitly has an 'any' type.
+src/web/extension-services/inpage/EthereumProvider.ts(429,11): error TS18048: 'response' is possibly 'undefined'.
+src/web/extension-services/inpage/EthereumProvider.ts(429,20): error TS2339: Property 'id' does not exist on type 'boolean | { id: number; error: Error; result?: undefined; } | { id: number; error?: undefined; result: any; }'.
+  Property 'id' does not exist on type 'false'.
+src/web/extension-services/inpage/EthereumProvider.ts(430,11): error TS18048: 'response' is possibly 'undefined'.
+src/web/extension-services/inpage/EthereumProvider.ts(430,20): error TS2339: Property 'error' does not exist on type 'boolean | { id: number; error: Error; result?: undefined; } | { id: number; error?: undefined; result: any; }'.
+  Property 'error' does not exist on type 'false'.
+src/web/extension-services/inpage/EthereumProvider.ts(432,12): error TS18048: 'response' is possibly 'undefined'.
+src/web/extension-services/inpage/EthereumProvider.ts(432,21): error TS2339: Property 'error' does not exist on type 'boolean | { id: number; error: Error; result?: undefined; } | { id: number; error?: undefined; result: any; }'.
+  Property 'error' does not exist on type 'false'.
+src/web/extension-services/inpage/EthereumProvider.ts(432,44): error TS18048: 'response' is possibly 'undefined'.
+src/web/extension-services/inpage/EthereumProvider.ts(432,53): error TS2339: Property 'error' does not exist on type 'boolean | { id: number; error: Error; result?: undefined; } | { id: number; error?: undefined; result: any; }'.
+  Property 'error' does not exist on type 'false'.
+src/web/extension-services/inpage/EthereumProvider.ts(433,15): error TS18048: 'response' is possibly 'undefined'.
+src/web/extension-services/inpage/EthereumProvider.ts(433,24): error TS2339: Property 'error' does not exist on type 'boolean | { id: number; error: Error; result?: undefined; } | { id: number; error?: undefined; result: any; }'.
+  Property 'error' does not exist on type 'false'.
+src/web/extension-services/inpage/EthereumProvider.ts(434,30): error TS18048: 'response' is possibly 'undefined'.
+src/web/extension-services/inpage/EthereumProvider.ts(434,39): error TS2339: Property 'error' does not exist on type 'boolean | { id: number; error: Error; result?: undefined; } | { id: number; error?: undefined; result: any; }'.
+  Property 'error' does not exist on type 'false'.
+src/web/extension-services/inpage/EthereumProvider.ts(444,60): error TS18048: 'response' is possibly 'undefined'.
+src/web/extension-services/inpage/EthereumProvider.ts(444,69): error TS2339: Property 'result' does not exist on type 'boolean | { id: number; error: Error; result?: undefined; } | { id: number; error?: undefined; result: any; }'.
+  Property 'result' does not exist on type 'false'.
+src/web/extension-services/inpage/EthereumProvider.ts(445,14): error TS18048: 'response' is possibly 'undefined'.
+src/web/extension-services/inpage/EthereumProvider.ts(445,23): error TS2339: Property 'result' does not exist on type 'boolean | { id: number; error: Error; result?: undefined; } | { id: number; error?: undefined; result: any; }'.
+  Property 'result' does not exist on type 'false'.
+src/web/extension-services/inpage/EthereumProvider.ts(449,29): error TS7006: Parameter 'data' implicitly has an 'any' type.
+src/web/extension-services/inpage/EthereumProvider.ts(454,15): error TS7030: Not all code paths return a value.
+src/web/extension-services/inpage/EthereumProvider.ts(454,16): error TS7006: Parameter 'payload' implicitly has an 'any' type.
+src/web/extension-services/inpage/EthereumProvider.ts(454,25): error TS7006: Parameter 'callback' implicitly has an 'any' type.
+src/web/extension-services/inpage/EthereumProvider.ts(460,37): error TS7006: Parameter 'err' implicitly has an 'any' type.
+src/web/extension-services/inpage/EthereumProvider.ts(460,42): error TS7006: Parameter 'res' implicitly has an 'any' type.
+src/web/extension-services/inpage/EthereumProvider.ts(474,11): error TS7006: Parameter 'payload' implicitly has an 'any' type.
+src/web/extension-services/inpage/EthereumProvider.ts(474,20): error TS7006: Parameter 'callback' implicitly has an 'any' type.
+src/web/extension-services/inpage/EthereumProvider.ts(520,12): error TS2538: Type 'undefined' cannot be used as an index type.
+src/web/extension-services/inpage/services/dedupePromise.ts(24,11): error TS2532: Object is possibly 'undefined'.
+src/web/extension-services/messengers/initializeMessenger.ts(6,3): error TS2305: Module '"@web/extension-services/messengers/utils/detectScriptType"' has no exported member 'ScriptType'.
+src/web/extension-services/messengers/internal/bridge.ts(83,46): error TS7030: Not all code paths return a value.
+src/web/extension-services/messengers/internal/portMessenger.ts(75,13): error TS2532: Object is possibly 'undefined'.
+src/web/extension-services/messengers/internal/portMessenger.ts(76,15): error TS2532: Object is possibly 'undefined'.
+src/web/modules/action-requests/screens/AddOrUpdateNetworkScreen/AddChain.tsx(196,19): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/web/modules/auth/screens/EmailLoginScreen/EmailLoginScreen.tsx(6,11): error TS2741: Property 'children' is missing in type '{}' but required in type 'TabLayoutWrapperMainContentProps'.
+src/web/modules/auth/screens/EmailRegisterScreen/EmailRegisterScreen.tsx(6,11): error TS2741: Property 'children' is missing in type '{}' but required in type 'TabLayoutWrapperMainContentProps'.
+src/web/modules/auth/utils/emailVault.ts(1,29): error TS2307: Cannot find module '@common/services/fetch' or its corresponding type declarations.
+src/web/modules/hardware-wallet/controllers/LatticeController/LatticeController.ts(22,7): error TS2420: Class 'LatticeController' incorrectly implements interface 'ExternalSignerController'.
+  Type 'LatticeController' is missing the following properties from type 'ExternalSignerController': unlockedPath, unlockedPathKeyAddr, cleanUp
+src/web/modules/hardware-wallet/controllers/LatticeController/LatticeController.ts(205,22): error TS7006: Parameter 'id' implicitly has an 'any' type.
+src/web/modules/hardware-wallet/controllers/LatticeController/LatticeController.ts(207,23): error TS7006: Parameter 'tab' implicitly has an 'any' type.
+src/web/modules/hardware-wallet/controllers/LatticeController/LatticeController.ts(315,24): error TS2339: Property 'stateData' does not exist on type '{ name: string; baseUrl: any; timeout: number; privKey: Buffer<ArrayBufferLike>; skipRetryOnWrongWallet: boolean; }'.
+src/web/modules/hardware-wallet/controllers/LedgerController/LedgerController.ts(240,21): error TS2345: Argument of type 'DiscoveredDevice | undefined' is not assignable to parameter of type 'DiscoveredDevice | PromiseLike<DiscoveredDevice>'.
+  Type 'undefined' is not assignable to type 'DiscoveredDevice | PromiseLike<DiscoveredDevice>'.
+src/web/modules/hardware-wallet/controllers/LedgerController/LedgerController.ts(384,59): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/web/modules/hardware-wallet/libs/latticeKeyIterator/latticeKeyIterator.ts(41,11): error TS2532: Object is possibly 'undefined'.
+src/web/modules/hardware-wallet/libs/trezorKeyIterator/trezorKeyIterator.ts(75,43): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(params: Params<{ showOnTrezor?: boolean | undefined; chunkify?: boolean | undefined; suppressBackupWarning?: boolean | undefined; path: string | number[]; } & { unlockPath?: { mac?: string | undefined; address_n: number[]; } | undefined; ... 4 more ...; ecdsaCurveName?: string | undefined; }>): Response<...>', gave the following error.
+    Type 'string | undefined' is not assignable to type 'string | number[]'.
+      Type 'undefined' is not assignable to type 'string | number[]'.
+  Overload 2 of 2, '(params: BundledParams<{ showOnTrezor?: boolean | undefined; chunkify?: boolean | undefined; suppressBackupWarning?: boolean | undefined; path: string | number[]; } & { unlockPath?: { mac?: string | undefined; address_n: number[]; } | undefined; ... 4 more ...; ecdsaCurveName?: string | undefined; }>): Response<...>', gave the following error.
+    Object literal may only specify known properties, and 'coin' does not exist in type 'BundledParams<{ showOnTrezor?: boolean | undefined; chunkify?: boolean | undefined; suppressBackupWarning?: boolean | undefined; path: string | number[]; } & { unlockPath?: { mac?: string | undefined; address_n: number[]; } | undefined; ... 4 more ...; ecdsaCurveName?: string | undefined; }>'.
+src/web/modules/hardware-wallet/libs/TrezorSigner/TrezorSigner.ts(41,3): error TS2416: Property 'key' in type 'TrezorSigner' is not assignable to the same property in base type 'KeystoreSignerInterface'.
+  Type 'ExternalKey' is not assignable to type 'Key'.
+    Type 'ExternalKey' is not assignable to type 'ExternalKey & { isExternallyStored: boolean; }'.
+      Property 'isExternallyStored' is missing in type 'ExternalKey' but required in type '{ isExternallyStored: boolean; }'.
+src/web/modules/settings/screens/AccountsSettingsScreen/AccountsSettingsScreen.tsx(227,11): error TS2322: Type '(item: AccountInterface, index: number, isDragging: boolean, listeners: any, attributes: any) => React.JSX.Element' is not assignable to type 'ListRenderItem<any> & SectionListRenderItem<any, any> & ((item: any, index: number, isDragging: boolean, listeners: any, attributes: any) => ReactElement<...> | null)'.
+  Type '(item: AccountInterface, index: number, isDragging: boolean, listeners: any, attributes: any) => React.JSX.Element' is not assignable to type 'ListRenderItem<any>'.
+    Target signature provides too few arguments. Expected 5 or more, but got 1.
+src/web/modules/settings/screens/SignedMessageHistorySettingsScreen/SignedMessageHistorySettingsScreen.tsx(59,19): error TS2532: Object is possibly 'undefined'.
+src/web/modules/settings/screens/TransactionHistorySettingsScreen/Tabs/Tabs.tsx(59,85): error TS2532: Object is possibly 'undefined'.
+src/web/modules/settings/screens/TransactionHistorySettingsScreen/Tabs/Tabs.tsx(63,85): error TS2532: Object is possibly 'undefined'.
+src/web/modules/sign-account-op/components/CustomFee/CustomFee.tsx(7,24): error TS2307: Cannot find module '@web/modules/sign-account-op/components/FeeWrapper' or its corresponding type declarations.
+src/web/modules/sign-account-op/components/Modals/Modals.tsx(122,9): error TS2322: Type '"internal" | "trezor" | "ledger" | "lattice" | null | undefined' is not assignable to type '"internal" | "trezor" | "ledger" | "lattice" | undefined'.
+  Type 'null' is not assignable to type '"internal" | "trezor" | "ledger" | "lattice" | undefined'.
+src/web/modules/sign-account-op/components/OneClick/BatchModal/index.ts(1,24): error TS2307: Cannot find module './BatchModal' or its corresponding type declarations.
+src/web/utils/persistStore.ts(9,12): error TS2345: Argument of type 'Promise<null>' is not assignable to parameter of type 'Function'.
+  Type 'Promise<null>' is missing the following properties from type 'Function': apply, call, bind, prototype, and 6 more.
+src/web/utils/persistStore.ts(36,9): error TS7053: Element implicitly has an 'any' type because expression of type 'string | symbol' can't be used to index type '{}'.
+  No index signature with a parameter of type 'string' was found on type '{}'.
+info Visit https://yarnpkg.com/en/docs/cli/run for documentation about this command.
