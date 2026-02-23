@@ -230,7 +230,7 @@ class LedgerController implements ExternalSignerController {
 
       const contextModule = new ContextModuleBuilder({
         originToken: 'ambire',
-        ...(isLedgerEmulator && { loggerFactory: this.#createContextLogger })
+        loggerFactory: this.#createContextLogger
       }).build()
       this.signerEth = new SignerEthBuilder({ dmk: this.walletSDK, sessionId })
         .withContextModule(contextModule)
