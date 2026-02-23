@@ -11,7 +11,7 @@ interface Style {
 const getStyles = () =>
   StyleSheet.create<Style>({
     panel: {
-      paddingTop: SPACING_MD * 2,
+      ...spacings.ptSm,
       ...spacings.pbLg
     },
     container: {
