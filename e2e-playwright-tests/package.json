@@ -39,6 +39,8 @@
     "typescript": "^4.1.5"
   },
   "dependencies": {
+    "@ledgerhq/hw-app-eth": "7.3.2",
+    "@ledgerhq/hw-transport-node-speculos": "6.28.0",
     "@trezor/connect-plugin-ethereum": "9.1.5",
     "@trezor/connect-webextension": "9.7.1",
     "@trezor/trezor-user-env-link": "^1.0.0",
