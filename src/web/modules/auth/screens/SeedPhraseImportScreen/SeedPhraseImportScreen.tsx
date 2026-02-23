@@ -215,11 +215,8 @@ const SeedPhraseImportScreen = () => {
                 isOn={enablePassphrase}
                 onToggle={() => setEnablePassphrase((prev) => !prev)}
                 label={t('Advanced mode')}
-                labelProps={{
-                  fontSize: 14,
-                  weight: 'regular',
-                  appearance: 'secondaryText'
-                }}
+                width={44}
+                height={22}
                 style={flexbox.alignSelfStart}
               />
               {enablePassphrase ? (
