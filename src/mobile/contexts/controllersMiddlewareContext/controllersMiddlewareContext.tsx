@@ -1,6 +1,7 @@
 import { EventEmitter as Emitter } from 'events'
 /* eslint-disable @typescript-eslint/no-floating-promises */
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { Platform as RNPlatform } from 'react-native'
 
 import { EventEmitterRegistryController } from '@ambire-common/controllers/eventEmitterRegistry/eventEmitterRegistry'
 import { MainController } from '@ambire-common/controllers/main/main'
@@ -179,7 +180,7 @@ export const ControllersMiddlewareProvider: React.FC<{
     ctrls.MainController = new MainController({
       eventEmitterRegistry: eventEmitterRegistry.current,
       appVersion: APP_VERSION,
-      platform: 'default',
+      platform: `mobile-${RNPlatform.OS}` as any,
       storageAPI: storage,
       fetch: fetchWithAnalytics,
       relayerUrl: RELAYER_URL,

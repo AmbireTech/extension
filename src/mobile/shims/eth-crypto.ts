@@ -5,7 +5,11 @@
  * This ensures that none of the library's top-level code (which depends on specific
  * prototype behaviors that crash Hermes during initial evaluation) is executed
  * until a function is actually called.
+ *
+ * `publicKeyByPrivateKey` is re-implemented using ethers.js SigningKey to avoid
+ * Hermes native call stack overflow caused by eth-crypto's elliptic curve polyfills.
  */
+import { SigningKey } from 'ethers'
 
 const getEthCrypto = () => require('eth-crypto')
 
@@ -21,8 +25,19 @@ const lazySubObject = (name: string) =>
 // Named Exports (Static declarations for bundler compatibility)
 export const createIdentity = (...args: any[]) => getEthCrypto().createIdentity(...args)
 export const publicKey = lazySubObject('publicKey')
-export const publicKeyByPrivateKey = (...args: any[]) =>
-  getEthCrypto().publicKeyByPrivateKey(...args)
+
+/**
+ * Derives the uncompressed public key from a private key using ethers.js SigningKey.
+ * This replaces the original eth-crypto implementation whose deeply nested elliptic
+ * curve polyfills overflow Hermes's native call stack.
+ */
+export const publicKeyByPrivateKey = (privateKey: string): string => {
+  const key = privateKey.startsWith('0x') ? privateKey : `0x${privateKey}`
+  // SigningKey.publicKey returns the compressed key; computePublicKey gives the full uncompressed key
+  const signingKey = new SigningKey(key)
+  // Remove the '0x04' prefix to match eth-crypto's format (raw 128-char hex)
+  return signingKey.publicKey.slice(4)
+}
 export const sign = (...args: any[]) => getEthCrypto().sign(...args)
 export const recover = (...args: any[]) => getEthCrypto().recover(...args)
 export const recoverPublicKey = (...args: any[]) => getEthCrypto().recoverPublicKey(...args)
