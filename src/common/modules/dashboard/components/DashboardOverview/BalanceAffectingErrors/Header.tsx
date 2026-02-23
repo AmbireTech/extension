@@ -25,7 +25,7 @@ const Header: FC = () => {
         spacings.mbSm,
         spacings.pbTy,
         {
-          backgroundColor: theme.secondaryBackground
+          backgroundColor: theme.primaryBackground
         }
       ]}
     >

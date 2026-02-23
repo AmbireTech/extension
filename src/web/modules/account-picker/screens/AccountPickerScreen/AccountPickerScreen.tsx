@@ -111,7 +111,7 @@ const AccountPickerScreen = () => {
         <Panel
           type="onboarding"
           spacingsSize="small"
-          panelWidth={720}
+          panelWidth={800}
           innerStyle={{ ...spacings.phSm }}
           style={{ maxHeight: 680, height: '100%' }}
         >

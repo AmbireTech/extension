@@ -160,7 +160,8 @@ const Sidebar = ({ activeLink }: { activeLink?: string }) => {
     paddingLeft: SPACING_TY,
     paddingBottom: SPACING_TY,
     paddingRight: SPACING_TY,
-    height: '100%'
+    height: '100%',
+    display: 'flex'
   }
 
   return (
@@ -169,9 +170,7 @@ const Sidebar = ({ activeLink }: { activeLink?: string }) => {
         ...spacings.pbLg,
         ...spacings.mlTy,
         ...spacings.mvTy,
-        maxHeight: '100%',
-        // @ts-ignore
-        height: 'fit-content',
+        height: '100%',
         position: 'relative'
       }}
     >
