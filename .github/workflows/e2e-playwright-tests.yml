@@ -104,12 +104,6 @@ jobs:
         run: |
           ./start-emulator.sh
 
-      - name: Debug versions
-        working-directory: ./e2e-playwright-tests
-        run: |
-          node --version
-          npm --version
-
       - name: Install e2e test dependencies
         working-directory: ./e2e-playwright-tests
         run: npm ci
