@@ -16,7 +16,6 @@ import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@web/utils/uiType'
 
@@ -37,7 +36,7 @@ const { isTab } = getUiType()
 const HardwareWalletSigningModal = ({ keyType, isVisible, children }: Props) => {
   const { t } = useTranslation()
   const { ref, open, close } = useModalize()
-  const { theme, themeType } = useTheme()
+  const { theme } = useTheme()
   useEffect(() => {
     if (isVisible) open()
     else close()
@@ -53,7 +52,6 @@ const HardwareWalletSigningModal = ({ keyType, isVisible, children }: Props) => 
   return (
     <BottomSheet
       id="hardware-wallet-signing-modal"
-      backgroundColor={themeType === THEME_TYPES.DARK ? 'secondaryBackground' : 'primaryBackground'}
       // The modal is displayed in tab in swap and bridge
       type={!isTab ? 'bottom-sheet' : 'modal'}
       autoWidth
