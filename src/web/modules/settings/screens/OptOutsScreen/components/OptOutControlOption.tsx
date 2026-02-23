@@ -3,9 +3,8 @@ import React, { useCallback } from 'react'
 import { FeatureFlags } from '@ambire-common/consts/featureFlags'
 import ControlOption from '@common/components/ControlOption'
 import FatToggle from '@common/components/FatToggle'
+import useController from '@common/hooks/useController'
 import spacings from '@common/styles/spacings'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useFeatureFlagsControllerState from '@web/hooks/useFeatureFlagsControllerState'
 
 interface Opts {
   title: string
@@ -15,19 +14,21 @@ interface Opts {
 }
 
 const OptOutControlOption = (opts: Opts) => {
-  const { dispatch } = useBackgroundService()
-  const { flags } = useFeatureFlagsControllerState()
+  const {
+    state: { flags },
+    dispatch: featureFlagsDispatch
+  } = useController('FeatureFlagsController')
   const { title, description, icon, flag } = opts
 
   const handleToggle = useCallback(() => {
-    dispatch({
-      type: 'FEATURE_FLAGS_CONTROLLER_FLIP_FEATURE',
+    featureFlagsDispatch({
+      type: 'method',
       params: {
-        flag,
-        isEnabled: !flags[flag]
+        method: 'setFeatureFlag',
+        args: [flag, !flags[flag]]
       }
     })
-  }, [dispatch, flags, flag])
+  }, [featureFlagsDispatch, flags, flag])
 
   return (
     <ControlOption style={spacings.mbTy} title={title} description={description} renderIcon={icon}>

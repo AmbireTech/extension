@@ -1,14 +1,8 @@
-import React, { useCallback, useMemo } from 'react'
-import { useTranslation } from 'react-i18next'
+import React, { useCallback } from 'react'
 
 import { TokenResult } from '@ambire-common/libs/portfolio'
-import Text from '@common/components/Text'
-import useNavigation from '@common/hooks/useNavigation'
+import useController from '@common/hooks/useController'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
-import { WEB_ROUTES } from '@common/modules/router/constants/common'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import { getUiType } from '@web/utils/uiType'
 
 import BaseTokenItem from './BaseTokenItem'
@@ -17,50 +11,28 @@ import RewardsTokenItem from './RewardsTokenItem'
 const { isPopup } = getUiType()
 
 const TokenItem = ({ token }: { token: TokenResult }) => {
-  const { t } = useTranslation()
-  const { dispatch } = useBackgroundService()
-  const { portfolio } = useSelectedAccountControllerState()
-  const { navigate } = useNavigation()
-
-  const { networks } = useNetworksControllerState()
+  const { dispatch: requestsDispatch } = useController('RequestsController')
+  const { state: portfolio } = useController(
+    'SelectedAccountController',
+    (state) => state.portfolio
+  )
+  const { state: networks } = useController('NetworksController', (state) => state.networks)
   const simulatedAccountOp = portfolio.networkSimulatedAccountOp[token.chainId.toString()]
-  const { isVesting, isRewards, isProjectedRewards } = getAndFormatTokenDetails(
-    token,
-    networks,
-    simulatedAccountOp
-  )
-
-  const handleDetailsPress = useCallback(() => {
-    navigate(WEB_ROUTES.rewards)
-  }, [navigate])
-
-  const projectedRewardsDescription = useMemo(
-    () => (
-      <Text fontSize={12} weight="regular">
-        {t('Projected Rewards')}
-      </Text>
-    ),
-    [t]
-  )
+  const { isVesting, isRewards } = getAndFormatTokenDetails(token, networks, simulatedAccountOp)
 
   const sendTransaction = useCallback(
     (type: 'claimWalletRequest' | 'mintVestingRequest') => {
-      dispatch({
-        type: 'REQUESTS_CONTROLLER_BUILD_REQUEST',
-        params: { type, params: { token } }
+      requestsDispatch({
+        type: 'method',
+        params: {
+          method: 'build',
+          args: [{ type, params: { token } }]
+        }
       })
     },
-    [dispatch, token]
+    [requestsDispatch, token]
   )
 
-  if (isProjectedRewards)
-    return (
-      <RewardsTokenItem
-        onPress={handleDetailsPress}
-        token={token}
-        description={projectedRewardsDescription}
-      />
-    )
   if (isRewards)
     return (
       <RewardsTokenItem

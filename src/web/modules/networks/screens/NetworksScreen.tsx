@@ -1,28 +1,24 @@
 import React, { useCallback, useEffect, useState } from 'react'
+import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 import { useSearchParams } from 'react-router-dom'
 
-import AddIcon from '@common/assets/svg/AddIcon'
-import BackButton from '@common/components/BackButton'
+import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
 import Button from '@common/components/Button'
-import Input from '@common/components/Input'
+import FooterGlassView from '@common/components/FooterGlassView'
+import ScrollableWrapper from '@common/components/ScrollableWrapper'
+import Search from '@common/components/Search'
+import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation/useNavigation.web'
-import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
-import Header from '@common/modules/header/components/Header'
+import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import {
-  TabLayoutContainer,
-  tabLayoutWidths,
-  TabLayoutWrapperMainContent
-} from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
+import LayoutWrapper from '@web/components/LayoutWrapper'
 import { createTab } from '@web/extension-services/background/webapi/tab'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import Networks from '@web/modules/networks/components/Networks'
 
 import AddNetworkBottomSheet from '../components/AddNetworkBottomSheet'
@@ -34,10 +30,12 @@ import NetworkBottomSheet, {
 const NetworksScreen = () => {
   const { t } = useTranslation()
   const { addToast } = useToast()
-  const { dispatch } = useBackgroundService()
+
   const { navigate } = useNavigation()
-  const { theme } = useTheme()
-  const { account, dashboardNetworkFilter } = useSelectedAccountControllerState()
+  const {
+    state: { account, dashboardNetworkFilter },
+    dispatch: selectedAccountDispatch
+  } = useController('SelectedAccountController')
   const [settingsChainId, setSettingsChainId] = useState<bigint | string | null>(null)
   const [searchParams] = useSearchParams()
   const [changedNetwork, setChangedNetwork] = useState<undefined | null | bigint | string>(
@@ -54,7 +52,8 @@ const NetworksScreen = () => {
     open: openAddNetworkBottomSheet,
     close: closeAddNetworkBottomSheet
   } = useModalize()
-  const [search, setSearch] = useState('')
+  const { control, watch } = useForm({ mode: 'all', defaultValues: { search: '' } })
+  const search = watch('search')
 
   // Navigate back to the dashboard only if `dashboardNetworkFilter` is already set in SelectedAccountControllerState.
   // Otherwise, a race condition occurs, and we navigate to the dashboard faster than `dashboardNetworkFilter` is set,
@@ -72,13 +71,13 @@ const NetworksScreen = () => {
 
   const handleChangeNetwork = useCallback(
     (chainId: bigint | string | null) => {
-      dispatch({
-        type: 'SELECTED_ACCOUNT_SET_DASHBOARD_NETWORK_FILTER',
-        params: { dashboardNetworkFilter: chainId }
+      selectedAccountDispatch({
+        type: 'method',
+        params: { method: 'setDashboardNetworkFilter', args: [chainId] }
       })
       setChangedNetwork(chainId)
     },
-    [dispatch, setChangedNetwork]
+    [selectedAccountDispatch, setChangedNetwork]
   )
 
   const handleOpenSettingsBottomSheet = useCallback(
@@ -119,31 +118,21 @@ const NetworksScreen = () => {
   )
 
   return (
-    <TabLayoutContainer
-      header={<Header customTitle="Networks" withAmbireLogo />}
-      footer={<BackButton />}
-      width="lg"
-      hideFooterInPopup
-    >
-      <View style={[flexbox.flex1, spacings.pv]}>
-        <Input
-          testID="search-for-network-field"
-          autoFocus
-          value={search}
-          onChangeText={setSearch}
-          placeholder={t('Search for network')}
+    <LayoutWrapper>
+      <HeaderWithTitle displayBackButtonIn="always" />
+      <View style={[flexbox.flex1, spacings.pv, spacings.phSm]}>
+        <Search control={control} autoFocus containerStyle={spacings.mbSm} />
+        <NetworkBottomSheet
+          chainId={settingsChainId}
+          sheetRef={settingsBottomSheetRef}
+          closeBottomSheet={handleCloseSettingsBottomSheet}
+          openBlockExplorer={openBlockExplorer}
         />
-        <TabLayoutWrapperMainContent>
-          <NetworkBottomSheet
-            chainId={settingsChainId}
-            sheetRef={settingsBottomSheetRef}
-            closeBottomSheet={handleCloseSettingsBottomSheet}
-            openBlockExplorer={openBlockExplorer}
-          />
-          <AddNetworkBottomSheet
-            sheetRef={addNetworkBottomSheetRef}
-            closeBottomSheet={closeAddNetworkBottomSheet}
-          />
+        <AddNetworkBottomSheet
+          sheetRef={addNetworkBottomSheetRef}
+          closeBottomSheet={closeAddNetworkBottomSheet}
+        />
+        <ScrollableWrapper style={{ paddingBottom: 72 }}>
           <AllNetworksOption onPress={handleChangeNetwork} />
           <Networks
             search={search}
@@ -151,21 +140,21 @@ const NetworksScreen = () => {
             openSettingsBottomSheet={handleOpenSettingsBottomSheet}
             onPress={handleChangeNetwork}
           />
-        </TabLayoutWrapperMainContent>
-        <View style={[spacings.ptSm, { width: '100%' }]}>
+        </ScrollableWrapper>
+        <FooterGlassView size="sm">
           <Button
-            text={t('Add New Network')}
-            type="secondary"
+            text={t('Add new network')}
+            size="smaller"
             hasBottomSpacing={false}
-            style={{ maxWidth: tabLayoutWidths.lg, ...flexbox.alignSelfCenter, width: '100%' }}
+            style={{ minWidth: 174 }}
             childrenPosition="left"
             onPress={handleOpenAddNetworkBottomSheet}
           >
-            <AddIcon color={theme.primary} style={spacings.mrTy} />
+            <AddCircularIcon width={24} height={24} color="#fff" style={spacings.mrMi} />
           </Button>
-        </View>
+        </FooterGlassView>
       </View>
-    </TabLayoutContainer>
+    </LayoutWrapper>
   )
 }
 

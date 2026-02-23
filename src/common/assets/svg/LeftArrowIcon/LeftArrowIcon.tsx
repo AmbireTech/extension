@@ -4,13 +4,7 @@ import Svg, { Path } from 'react-native-svg'
 import useTheme from '@common/hooks/useTheme'
 import { LegendsSvgProps } from '@legends/types/svg'
 
-interface Props extends LegendsSvgProps {
-  width?: number
-  height?: number
-  weight?: string
-}
-
-const LeftArrowIcon: React.FC<Props> = ({ width = 8, height = 15, color, ...rest }) => {
+const LeftArrowIcon: React.FC<LegendsSvgProps> = ({ width = 8, height = 15, color, ...rest }) => {
   const { theme } = useTheme()
   return (
     <Svg width={width} height={height} viewBox="0 0 8.467 14.879" {...rest}>

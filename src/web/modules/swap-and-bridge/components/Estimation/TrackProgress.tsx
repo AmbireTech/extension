@@ -10,6 +10,7 @@ import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import Text from '@common/components/Text'
+import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
@@ -17,8 +18,6 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import formatTime from '@common/utils/formatTime'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControllerState'
 import TrackProgressWrapper from '@web/modules/sign-account-op/components/OneClick/TrackProgress'
 import Completed from '@web/modules/sign-account-op/components/OneClick/TrackProgress/ByStatus/Completed'
 import Failed from '@web/modules/sign-account-op/components/OneClick/TrackProgress/ByStatus/Failed'
@@ -40,8 +39,9 @@ const TrackProgress: FC<Props> = ({ activeRoute, handleClose }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { navigate } = useNavigation()
-  const { dispatch } = useBackgroundService()
-  const { activeRoutes } = useSwapAndBridgeControllerState()
+  const { activeRoutes } = useController('SwapAndBridgeController').state
+  const { dispatch: requestsDispatch } = useController('RequestsController')
+  const { account } = useController('SelectedAccountController').state
 
   const lastCompletedRoute =
     activeRoutes.find((r) => r.activeRouteId === activeRoute?.activeRouteId) || activeRoute
@@ -71,16 +71,19 @@ const TrackProgress: FC<Props> = ({ activeRoute, handleClose }) => {
 
   const navigateOut = useCallback(() => {
     if (isRequestWindow) {
-      dispatch({
-        type: 'CLOSE_SIGNING_REQUEST_WINDOW',
+      if (!account) return
+
+      requestsDispatch({
+        type: 'method',
         params: {
-          type: 'swapAndBridge'
+          method: 'removeUserRequests',
+          args: [[`${account.addr}-swap-and-bridge-sign`]]
         }
       })
     } else {
       navigate(WEB_ROUTES.dashboard)
     }
-  }, [dispatch, navigate])
+  }, [account, navigate, requestsDispatch])
 
   const { sessionHandler } = useTrackAccountOp({
     address: lastCompletedRoute?.route?.userAddress,
@@ -105,7 +108,6 @@ const TrackProgress: FC<Props> = ({ activeRoute, handleClose }) => {
       sessionHandler.killSession()
     }
   }, [
-    dispatch,
     lastCompletedRoute?.route?.fromChainId,
     lastCompletedRoute?.route?.userAddress,
     lastCompletedRoute?.userTxHash,

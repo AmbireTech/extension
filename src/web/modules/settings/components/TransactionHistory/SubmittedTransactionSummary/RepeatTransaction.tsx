@@ -3,12 +3,12 @@ import { useTranslation } from 'react-i18next'
 import { TouchableOpacity } from 'react-native'
 
 import { SubmittedAccountOp } from '@ambire-common/libs/accountOp/submittedAccountOp'
-import RepeatIcon from '@common/assets/svg/RepeatIcon'
+import RefreshIcon from '@common/assets/svg/RefreshIcon'
 import Text from '@common/components/Text'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 
 type Props = {
   accountAddr: string
@@ -29,21 +29,29 @@ const RepeatTransaction: FC<Props> = ({
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { dispatch } = useBackgroundService()
+  const { dispatch: requestsDispatch } = useController('RequestsController')
 
   const handleRepeatTransaction = useCallback(() => {
     if (!rawCalls) return
 
-    dispatch({
-      type: 'REQUESTS_CONTROLLER_ADD_CALLS_USER_REQUEST',
+    requestsDispatch({
+      type: 'method',
       params: {
-        userRequestParams: {
-          calls: rawCalls,
-          meta: { chainId, accountAddr }
-        }
+        method: 'build',
+        args: [
+          {
+            type: 'calls',
+            params: {
+              userRequestParams: {
+                calls: rawCalls,
+                meta: { chainId, accountAddr }
+              }
+            }
+          }
+        ]
       }
     })
-  }, [rawCalls, chainId, accountAddr, dispatch])
+  }, [rawCalls, chainId, accountAddr, requestsDispatch])
 
   return (
     <TouchableOpacity
@@ -53,7 +61,7 @@ const RepeatTransaction: FC<Props> = ({
       <Text fontSize={textSize} appearance="secondaryText" weight="medium" style={spacings.mrMi}>
         {text || t('Repeat Transaction')}
       </Text>
-      <RepeatIcon width={iconSize} height={iconSize} color={theme.secondaryText} strokeWidth={2} />
+      <RefreshIcon width={iconSize} height={iconSize} color={theme.iconPrimary} strokeWidth={2} />
     </TouchableOpacity>
   )
 }

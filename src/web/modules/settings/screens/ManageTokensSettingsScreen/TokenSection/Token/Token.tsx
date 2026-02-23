@@ -9,15 +9,13 @@ import Dropdown from '@common/components/Dropdown'
 import NetworkIcon from '@common/components/NetworkIcon'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@web/extension-services/background/webapi/tab'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
-import usePortfolioControllerState from '@web/hooks/usePortfolioControllerState/usePortfolioControllerState'
 
 type Props = {
   onTokenPreferenceOrCustomTokenChange: () => void
@@ -32,10 +30,13 @@ const Token: FC<Props> = ({
 }) => {
   const { t } = useTranslation()
   const { addToast } = useToast()
-  const { tokenPreferences } = usePortfolioControllerState()
+  const {
+    state: { tokenPreferences },
+    dispatch: portfolioDispatch
+  } = useController('PortfolioController')
+  const { account } = useController('SelectedAccountController').state
   const { theme } = useTheme()
-  const { dispatch } = useBackgroundService()
-  const { networks } = useNetworksControllerState()
+  const { networks } = useController('NetworksController').state
   // flags.isHidden is updated after the portfolio is updated
   // so we use tokenPreferences to get the value faster
   const isHidden = !!tokenPreferences?.find(
@@ -48,23 +49,45 @@ const Token: FC<Props> = ({
       timeout: 2000
     })
 
-    dispatch({
-      type: 'PORTFOLIO_CONTROLLER_TOGGLE_HIDE_TOKEN',
-      params: { token: { address, chainId } }
+    portfolioDispatch({
+      type: 'method',
+      params: {
+        method: 'toggleHideToken',
+        args: [{ address, chainId }, account?.addr]
+      }
     })
     onTokenPreferenceOrCustomTokenChange()
-  }, [addToast, t, dispatch, address, chainId, onTokenPreferenceOrCustomTokenChange])
+  }, [
+    addToast,
+    t,
+    portfolioDispatch,
+    address,
+    chainId,
+    onTokenPreferenceOrCustomTokenChange,
+    account?.addr
+  ])
 
   const removeCustomToken = useCallback(() => {
     addToast(t('Token removed'), {
       timeout: 2000
     })
-    dispatch({
-      type: 'PORTFOLIO_CONTROLLER_REMOVE_CUSTOM_TOKEN',
-      params: { token: { address, chainId } }
+    portfolioDispatch({
+      type: 'method',
+      params: {
+        method: 'removeCustomToken',
+        args: [{ address, chainId }, account?.addr]
+      }
     })
     onTokenPreferenceOrCustomTokenChange()
-  }, [addToast, address, dispatch, chainId, onTokenPreferenceOrCustomTokenChange, t])
+  }, [
+    addToast,
+    address,
+    portfolioDispatch,
+    chainId,
+    onTokenPreferenceOrCustomTokenChange,
+    t,
+    account?.addr
+  ])
 
   const dropdownOptions = useMemo(() => {
     return [
@@ -111,12 +134,12 @@ const Token: FC<Props> = ({
           address={address}
           chainId={chainId}
           onGasTank={flags.onGasTank}
-          containerHeight={40}
-          containerWidth={40}
+          containerHeight={32}
+          containerWidth={32}
           width={28}
           height={28}
         />
-        <Text testID="hidden-token-name" weight="medium" selectable style={spacings.mrTy}>
+        <Text testID="hidden-token-name" weight="medium" selectable style={spacings.mlTy}>
           {symbol}
         </Text>
         {flags.isCustom && <Badge text="Custom" />}

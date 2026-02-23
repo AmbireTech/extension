@@ -5,22 +5,23 @@ import { TouchableOpacity, View } from 'react-native'
 import LeftArrowIcon from '@common/assets/svg/LeftArrowIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import Text from '@common/components/Text'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 
 const SET_CURRENT_REQUEST_PARAMS = {
   skipFocus: true
 }
 
 const ActionsPagination = () => {
-  const { currentUserRequest, visibleUserRequests } = useRequestsControllerState()
+  const {
+    state: { currentUserRequest, visibleUserRequests },
+    dispatch: requestsDispatch
+  } = useController('RequestsController')
   const { t } = useTranslation()
-  const { dispatch } = useBackgroundService()
   const { theme, themeType } = useTheme()
   const currentRequestIndex = useMemo(() => {
     if (!currentUserRequest) return undefined
@@ -36,31 +37,43 @@ const ActionsPagination = () => {
 
   const handleSmallPageStepDecrement = () => {
     if (typeof currentRequestIndex !== 'number') return
-    dispatch({
-      type: 'REQUESTS_CONTROLLER_SET_CURRENT_REQUEST_BY_INDEX',
-      params: { index: currentRequestIndex - 1, params: SET_CURRENT_REQUEST_PARAMS }
+    requestsDispatch({
+      type: 'method',
+      params: {
+        method: 'setCurrentUserRequestByIndex',
+        args: [currentRequestIndex - 1, SET_CURRENT_REQUEST_PARAMS]
+      }
     })
   }
 
   const handleSmallPageStepIncrement = () => {
     if (typeof currentRequestIndex !== 'number') return
-    dispatch({
-      type: 'REQUESTS_CONTROLLER_SET_CURRENT_REQUEST_BY_INDEX',
-      params: { index: currentRequestIndex + 1, params: SET_CURRENT_REQUEST_PARAMS }
+    requestsDispatch({
+      type: 'method',
+      params: {
+        method: 'setCurrentUserRequestByIndex',
+        args: [currentRequestIndex + 1, SET_CURRENT_REQUEST_PARAMS]
+      }
     })
   }
 
   const handleLargePageStepDecrement = () => {
-    dispatch({
-      type: 'REQUESTS_CONTROLLER_SET_CURRENT_REQUEST_BY_INDEX',
-      params: { index: 0, params: SET_CURRENT_REQUEST_PARAMS }
+    requestsDispatch({
+      type: 'method',
+      params: {
+        method: 'setCurrentUserRequestByIndex',
+        args: [0, SET_CURRENT_REQUEST_PARAMS]
+      }
     })
   }
 
   const handleLargePageStepIncrement = () => {
-    dispatch({
-      type: 'REQUESTS_CONTROLLER_SET_CURRENT_REQUEST_BY_INDEX',
-      params: { index: visibleUserRequests.length - 1, params: SET_CURRENT_REQUEST_PARAMS }
+    requestsDispatch({
+      type: 'method',
+      params: {
+        method: 'setCurrentUserRequestByIndex',
+        args: [visibleUserRequests.length - 1, SET_CURRENT_REQUEST_PARAMS]
+      }
     })
   }
 

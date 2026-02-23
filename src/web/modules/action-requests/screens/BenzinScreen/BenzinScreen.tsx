@@ -10,17 +10,18 @@ import {
 import useBenzin from '@benzin/screens/BenzinScreen/hooks/useBenzin'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import Button from '@common/components/Button'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 
 const BenzinScreen = () => {
   const { t } = useTranslation()
-  const { dispatch } = useBackgroundService()
-  const { currentUserRequest, visibleUserRequests } = useRequestsControllerState()
+  const {
+    state: { currentUserRequest, visibleUserRequests },
+    dispatch: requestsDispatch
+  } = useController('RequestsController')
   const { theme } = useTheme()
 
   const userRequest = useMemo(
@@ -30,11 +31,14 @@ const BenzinScreen = () => {
 
   const resolveAction = useCallback(() => {
     if (!userRequest) return
-    dispatch({
-      type: 'REQUESTS_CONTROLLER_RESOLVE_USER_REQUEST',
-      params: { data: {}, id: userRequest.id as number }
+    requestsDispatch({
+      type: 'method',
+      params: {
+        method: 'resolveUserRequest',
+        args: [{}, userRequest.id as number]
+      }
     })
-  }, [userRequest, dispatch])
+  }, [userRequest, requestsDispatch])
 
   const extensionAccOp = userRequest?.meta?.submittedAccountOp
 

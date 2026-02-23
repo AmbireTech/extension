@@ -1,7 +1,7 @@
 import { setStringAsync } from 'expo-clipboard'
 import React, { useCallback, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { TextInput, View } from 'react-native'
+import { Pressable, TextInput, View } from 'react-native'
 
 import { validateAddress, Validation } from '@ambire-common/services/validations'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
@@ -9,14 +9,13 @@ import CloseIcon from '@common/assets/svg/CloseIcon'
 import CopyIcon from '@common/assets/svg/CopyIcon'
 import EnsIcon from '@common/assets/svg/EnsIcon'
 import AddressBookContact from '@common/components/AddressBookContact'
-import Button from '@common/components/Button'
 import Input, { InputProps } from '@common/components/Input'
 import Text from '@common/components/Text'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useAddressBookControllerState from '@web/hooks/useAddressBookControllerState'
 import useHover, { AnimatedPressable } from '@web/hooks/useHover'
 
 import getStyles from './styles'
@@ -48,8 +47,8 @@ const AddressInput: React.FC<Props> = ({
 }) => {
   const { t } = useTranslation()
   const { addToast } = useToast()
-  const { styles, theme } = useTheme(getStyles)
-  const { contacts } = useAddressBookControllerState()
+  const { styles } = useTheme(getStyles)
+  const { contacts } = useController('AddressBookController').state
   const { message, severity } = validation
   const isError = severity === 'error'
 
@@ -164,23 +163,16 @@ const AddressInput: React.FC<Props> = ({
         button={
           rest.button ||
           (value && withDetails ? (
-            <View style={[flexbox.alignCenter, flexbox.directionRow]}>
-              <Button
-                size="tiny"
-                hasBottomSpacing={false}
-                text={t('Clear')}
-                type="gray"
-                style={{ ...spacings.phTy, height: 28 }}
-                accentColor={theme.secondaryText}
-                onPress={() => {
-                  !!onChangeText && onChangeText('')
-                  inputRef?.current?.focus()
-                  !!onClearButtonPress && onClearButtonPress()
-                }}
-              >
-                <CloseIcon width={12} height={12} strokeWidth="1.75" style={spacings.mlMi} />
-              </Button>
-            </View>
+            <Pressable
+              style={{ width: 24, height: 24, ...flexbox.center }}
+              onPress={() => {
+                !!onChangeText && onChangeText('')
+                inputRef?.current?.focus()
+                !!onClearButtonPress && onClearButtonPress()
+              }}
+            >
+              <CloseIcon width={12} height={12} strokeWidth="1.75" style={spacings.mlMi} />
+            </Pressable>
           ) : null)
         }
       />

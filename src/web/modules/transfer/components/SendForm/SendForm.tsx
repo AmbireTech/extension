@@ -7,23 +7,17 @@ import Recipient from '@common/components/Recipient'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import SendToken from '@common/components/SendToken'
 import SkeletonLoader from '@common/components/SkeletonLoader'
-import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useAddressInput from '@common/hooks/useAddressInput'
+import useController from '@common/hooks/useController'
 import useGetTokenSelectProps from '@common/hooks/useGetTokenSelectProps'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
-import useTransferControllerState from '@web/hooks/useTransferControllerState'
 import useSimulationError from '@web/modules/portfolio/hooks/SimulationError/useSimulationError'
 import { getTokenId } from '@web/utils/token'
-import { getUiType } from '@web/utils/uiType'
 
 import styles from './styles'
 
-const isTab = getUiType().isTab
 const SendForm = ({
   addressInputState,
   hasGasTank,
@@ -51,22 +45,25 @@ const SendForm = ({
 }) => {
   const { validation } = addressInputState
   const {
-    state,
-    state: { tokens }
-  } = useTransferControllerState()
-  const { dispatch } = useBackgroundService()
-  const { portfolio } = useSelectedAccountControllerState()
+    state: {
+      tokens,
+      maxAmount,
+      amountFieldMode,
+      amountInFiat,
+      selectedToken,
+      isTopUp,
+      addressState,
+      amount: controllerAmount,
+      areDefaultsSet
+    },
+    dispatch: transferDispatch
+  } = useController('TransferController')
   const {
-    maxAmount,
-    amountFieldMode,
-    amountInFiat,
-    selectedToken,
-    isTopUp,
-    addressState,
-    amount: controllerAmount
-  } = state
+    state: { portfolio }
+  } = useController('SelectedAccountController')
+
   const { t } = useTranslation()
-  const { networks } = useNetworksControllerState()
+  const { networks } = useController('NetworksController').state
   const amountIsError = amountErrorSeverity === 'error' && !!amountErrorMessage
 
   const {
@@ -87,40 +84,59 @@ const SendForm = ({
   const handleChangeToken = useCallback(
     (value: string) => {
       const tokenToSelect = tokens.find((tokenRes: TokenResult) => getTokenId(tokenRes) === value)
-      dispatch({
-        type: 'TRANSFER_CONTROLLER_UPDATE_FORM',
-        params: { formValues: { selectedToken: tokenToSelect, amount: '' } }
+      transferDispatch({
+        type: 'method',
+        params: {
+          method: 'update',
+          args: [
+            {
+              selectedToken: tokenToSelect,
+              amount: ''
+            }
+          ]
+        }
       })
     },
-    [tokens, dispatch]
+    [tokens, transferDispatch]
   )
 
   const setMaxAmount = useCallback(() => {
-    dispatch({
-      type: 'TRANSFER_CONTROLLER_UPDATE_FORM',
+    transferDispatch({
+      type: 'method',
       params: {
-        formValues: { shouldSetMaxAmount: true }
+        method: 'update',
+        args: [
+          {
+            shouldSetMaxAmount: true
+          }
+        ]
       }
     })
-  }, [dispatch])
+  }, [transferDispatch])
 
   const switchAmountFieldMode = useCallback(() => {
-    dispatch({
-      type: 'TRANSFER_CONTROLLER_UPDATE_FORM',
+    transferDispatch({
+      type: 'method',
       params: {
-        formValues: { amountFieldMode: amountFieldMode === 'token' ? 'fiat' : 'token' }
+        method: 'update',
+        args: [
+          {
+            amountFieldMode: amountFieldMode === 'token' ? 'fiat' : 'token'
+          }
+        ]
       }
     })
-  }, [amountFieldMode, dispatch])
+  }, [amountFieldMode, transferDispatch])
 
   return (
     <ScrollableWrapper
-      contentContainerStyle={[styles.container, isTopUp ? styles.topUpContainer : {}]}
+      style={flexbox.flex1}
+      contentContainerStyle={[flexbox.flex1, isTopUp ? styles.topUpContainer : {}]}
     >
       <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mb]}>
-        {!isTab && <PanelBackButton onPress={handleGoBack} style={spacings.mrSm} />}
+        <PanelBackButton onPress={handleGoBack} style={spacings.mrSm} />
         <PanelTitle title={isTopUp ? t('Top up Gas Tank') : t('Send')} />
-        {!isTab && <View style={{ width: 40 }} />}
+        <View style={{ width: 40 }} />
       </View>
       <View>
         {!isTopUp && (
@@ -140,15 +156,12 @@ const SendForm = ({
           />
         )}
       </View>
-      <Text appearance="secondaryText" fontSize={14} weight="medium" style={spacings.mbMi}>
-        {!portfolio?.isReadyToVisualize ? t('Loading tokens...') : t('Select token')}
-      </Text>
-      {(!state.selectedToken && tokens.length) ||
-      !portfolio?.isReadyToVisualize ||
-      !state.isReady ? (
+
+      {(!selectedToken && tokens.length) || !portfolio?.isReadyToVisualize || !areDefaultsSet ? (
         <SkeletonLoader width="100%" height={115} />
       ) : (
         <SendToken
+          label={t('Send token')}
           fromTokenOptions={options}
           fromTokenValue={tokenSelectValue}
           fromAmountValue={amountFieldValue}

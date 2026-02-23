@@ -9,13 +9,12 @@ import InfoIcon from '@common/assets/svg/InfoIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import Text from '@common/components/Text'
 import Tooltip from '@common/components/Tooltip'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import formatTime from '@common/utils/formatTime'
 import RetryButton from '@web/components/RetryButton'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControllerState'
 
 import SelectRoute from './SelectRoute'
 
@@ -30,11 +29,12 @@ const RouteInfo: FC<Props> = ({
   shouldEnableRoutesSelection,
   openRoutesModal
 }) => {
-  const { formStatus, signAccountOpController, quote, swapSignErrors } =
-    useSwapAndBridgeControllerState()
+  const {
+    state: { formStatus, signAccountOpController, quote, swapSignErrors },
+    dispatch: swapAndBridgeDispatch
+  } = useController('SwapAndBridgeController')
   const { theme } = useTheme()
   const { t } = useTranslation()
-  const { dispatch } = useBackgroundService()
 
   const allRoutesFailed = useMemo(() => {
     if (!quote || !quote.routes.length) return false
@@ -42,10 +42,11 @@ const RouteInfo: FC<Props> = ({
   }, [quote])
 
   const updateQuote = useCallback(() => {
-    dispatch({
-      type: 'SWAP_AND_BRIDGE_CONTROLLER_UPDATE_QUOTE'
+    swapAndBridgeDispatch({
+      type: 'method',
+      params: { method: 'updateQuote', args: [] }
     })
-  }, [dispatch])
+  }, [swapAndBridgeDispatch])
 
   return (
     <View
@@ -53,15 +54,14 @@ const RouteInfo: FC<Props> = ({
         flexbox.directionRow,
         flexbox.alignCenter,
         flexbox.justifySpaceBetween,
-        spacings.mh,
-        { height: 25 }, // Prevents layout shifts,
-        spacings.mtTy
+        { height: 20 }, // Prevents layout shifts,
+        spacings.mtSm
       ]}
     >
       {swapSignErrors.length > 0 && (
         <View style={[flexbox.directionRow, flexbox.alignCenter, { maxWidth: '100%' }]}>
-          <WarningIcon width={14} height={14} color={theme.warningDecorative} />
-          <Text fontSize={14} weight="medium" appearance="warningText" style={spacings.mlMi}>
+          <WarningIcon strokeWidth={2} width={20} height={20} color={theme.warningText} />
+          <Text fontSize={12} weight="medium" appearance="warningText" style={spacings.mlMi}>
             {swapSignErrors[0]!.title}
           </Text>
         </View>
@@ -76,8 +76,8 @@ const RouteInfo: FC<Props> = ({
           ]}
         >
           <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-            <WarningIcon width={14} height={14} color={theme.warningDecorative} />
-            <Text fontSize={14} weight="medium" appearance="warningText" style={spacings.mlMi}>
+            <WarningIcon strokeWidth={2} width={20} height={20} color={theme.warningText} />
+            <Text fontSize={12} weight="medium" appearance="warningText" style={spacings.mlMi}>
               {t('No routes now, but note some markets may change often.')}
             </Text>
           </View>
@@ -113,7 +113,7 @@ const RouteInfo: FC<Props> = ({
                         appearance={
                           quote?.selectedRoute?.withConvenienceFee ? 'tertiaryText' : 'primary'
                         }
-                        fontSize={14}
+                        fontSize={12}
                         weight="medium"
                       >
                         {t('Ambire fee: {{fee}}', {
@@ -123,8 +123,8 @@ const RouteInfo: FC<Props> = ({
                       {!quote?.selectedRoute?.withConvenienceFee && (
                         <>
                           <InfoIcon
-                            width={16}
-                            height={16}
+                            width={14}
+                            height={14}
                             data-tooltip-id="no-convenience-fee"
                             style={spacings.mlTy}
                             color={theme.primary}
@@ -142,7 +142,7 @@ const RouteInfo: FC<Props> = ({
                     {quote?.selectedRoute?.serviceTime ? (
                       <Text
                         appearance="tertiaryText"
-                        fontSize={14}
+                        fontSize={12}
                         weight="medium"
                         style={spacings.mlLg}
                       >
@@ -172,9 +172,9 @@ const RouteInfo: FC<Props> = ({
                 ]}
               >
                 <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                  <WarningIcon width={14} height={14} color={theme.warningDecorative} />
+                  <WarningIcon strokeWidth={2} width={20} height={20} color={theme.warningText} />
                   <Text
-                    fontSize={14}
+                    fontSize={12}
                     weight="medium"
                     appearance="warningText"
                     style={spacings.mlMi}
@@ -196,7 +196,7 @@ const RouteInfo: FC<Props> = ({
                     onPress={openRoutesModal as any}
                   >
                     <Text
-                      fontSize={14}
+                      fontSize={12}
                       weight="medium"
                       color={theme.warningText}
                       style={{
@@ -225,9 +225,9 @@ const RouteInfo: FC<Props> = ({
                   ]}
                 >
                   <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                    <WarningIcon width={14} height={14} color={theme.warningDecorative} />
+                    <WarningIcon strokeWidth={2} width={20} height={20} color={theme.warningText} />
                     <Text
-                      fontSize={14}
+                      fontSize={12}
                       weight="medium"
                       appearance="warningText"
                       style={spacings.mlMi}
@@ -235,14 +235,14 @@ const RouteInfo: FC<Props> = ({
                       {t('An error occurred. More details:')}
                     </Text>
                     <InfoIcon
-                      width={16}
-                      height={16}
+                      width={14}
+                      height={14}
                       data-tooltip-id="error-info-icon"
                       style={spacings.mlTy}
                     />
                     <Tooltip id="error-info-icon" clickable>
                       <View>
-                        <Text fontSize={14} appearance="secondaryText" style={spacings.mbMi}>
+                        <Text fontSize={12} appearance="secondaryText" style={spacings.mbMi}>
                           {quote && quote.selectedRoute && quote.selectedRoute.disabled
                             ? quote.selectedRoute.disabledReason
                             : signAccountOpController?.estimation.error?.message}

@@ -5,6 +5,7 @@ import { Pressable, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { Account as AccountInterface } from '@ambire-common/interfaces/account'
+import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
 import DragIndicatorIcon from '@common/assets/svg/DragIndicatorIcon'
 import AccountKeysBottomSheet from '@common/components/AccountKeysBottomSheet'
 import BottomSheet from '@common/components/BottomSheet'
@@ -14,20 +15,20 @@ import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableW
 import Search from '@common/components/Search'
 import Text from '@common/components/Text'
 import useAccountsList from '@common/hooks/useAccountsList'
+import useController from '@common/hooks/useController'
 import useElementSize from '@common/hooks/useElementSize'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
+import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import Account from '@web/modules/account-select/components/Account'
 import AddAccount from '@web/modules/account-select/components/AddAccount'
 import AccountSmartSettingsBottomSheet from '@web/modules/settings/components/Accounts/AccountSmartSettingsBottomSheet'
 import SettingsPageHeader from '@web/modules/settings/components/SettingsPageHeader'
 import { SettingsRoutesContext } from '@web/modules/settings/contexts/SettingsRoutesContext'
-import { getUiType } from '@web/utils/uiType'
 
 const AccountsSettingsScreen = () => {
   const { t } = useTranslation()
@@ -36,7 +37,8 @@ const AccountsSettingsScreen = () => {
   const accountsContainerRef = useRef(null)
   const { minElementWidthSize, maxElementWidthSize } = useElementSize(accountsContainerRef)
   const { setCurrentSettingsPage } = useContext(SettingsRoutesContext)
-  const { dispatch } = useBackgroundService()
+  const { dispatch: accountsDispatch } = useController('AccountsController')
+  const { dispatch: mainDispatch } = useController('MainController')
   const { themeType, theme } = useTheme()
   const {
     ref: sheetRefExportImportKey,
@@ -78,15 +80,18 @@ const AccountsSettingsScreen = () => {
       setLocalAccounts((prev) => {
         const updated = [...prev]
         const [moved] = updated.splice(fromIndex, 1)
-        updated.splice(toIndex, 0, moved)
-        dispatch({
-          type: 'ACCOUNTS_CONTROLLER_REORDER_ACCOUNTS',
-          params: { fromIndex, toIndex }
+        updated.splice(toIndex, 0, moved!)
+        accountsDispatch({
+          type: 'method',
+          params: {
+            method: 'reorderAccounts',
+            args: [{ fromIndex, toIndex }]
+          }
         })
         return updated
       })
     },
-    [dispatch]
+    [accountsDispatch]
   )
 
   useEffect(() => {
@@ -121,12 +126,16 @@ const AccountsSettingsScreen = () => {
 
   const removeAccount = useCallback(() => {
     if (!accountToRemove) return
-    dispatch({
-      type: 'MAIN_CONTROLLER_REMOVE_ACCOUNT',
-      params: { accountAddr: accountToRemove.addr }
+
+    mainDispatch({
+      type: 'method',
+      params: {
+        method: 'removeAccount',
+        args: [accountToRemove.addr]
+      }
     })
     closeRemoveAccount()
-  }, [accountToRemove, dispatch, closeRemoveAccount])
+  }, [accountToRemove, mainDispatch, closeRemoveAccount])
 
   const renderItem = useCallback(
     (
@@ -137,7 +146,18 @@ const AccountsSettingsScreen = () => {
       attributes: any
     ) => {
       return (
-        <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
+        <View
+          style={[
+            flexbox.flex1,
+            flexbox.directionRow,
+            flexbox.alignCenter,
+            spacings.mbTy,
+            {
+              backgroundColor: theme.secondaryBackground,
+              borderRadius: BORDER_RADIUS_PRIMARY
+            }
+          ]}
+        >
           <div {...listeners} {...attributes}>
             <Pressable
               style={[
@@ -150,7 +170,7 @@ const AccountsSettingsScreen = () => {
                 { cursor: 'grab', touchAction: 'manipulation' }
               ]}
             >
-              <DragIndicatorIcon color={isDragging ? theme.primary : theme.secondaryBorder} />
+              <DragIndicatorIcon color={isDragging ? theme.primary : theme.iconPrimary} />
             </Pressable>
           </div>
           <View style={flexbox.flex1}>
@@ -158,13 +178,21 @@ const AccountsSettingsScreen = () => {
               account={item}
               maxAccountAddrLength={shortenAccountAddr()}
               options={accountOptions}
+              inverseInteractionColors
               isSelectable={false}
+              containerStyle={{ ...spacings.mb0, ...spacings.pvSm }}
             />
           </View>
         </View>
       )
     },
-    [theme.primary, theme.secondaryBorder, shortenAccountAddr, accountOptions]
+    [
+      theme.secondaryBackground,
+      theme.primary,
+      theme.iconPrimary,
+      shortenAccountAddr,
+      accountOptions
+    ]
   )
   const { maxWidthSize } = useWindowSize()
   const isWidthS = maxWidthSize('s')
@@ -172,35 +200,23 @@ const AccountsSettingsScreen = () => {
   return (
     <>
       <SettingsPageHeader title="Accounts">
-        <View
-          style={[
-            flexbox.flex1,
-            isWidthS && flexbox.directionRow,
-            flexbox.justifyEnd,
-            flexbox.alignCenter
-          ]}
-        >
+        <>
+          <Search autoFocus control={control} containerStyle={{ width: isWidthS ? 320 : 200 }} />
           <Button
             testID="add-account-modal"
-            text={t('+ Add account')}
+            text={t('Add account')}
             type="primary"
-            style={[
-              spacings.mrTy,
-              spacings.phXl,
-              { height: 48, width: isWidthS ? undefined : '100%' }
-            ]}
+            size="smaller"
+            textStyle={{ fontSize: 12 }}
+            style={[spacings.phSm, { height: 40 }]}
             hasBottomSpacing={false}
             onPress={openBottomSheet as any}
             submitOnEnter={false}
-          />
-          <Search
-            autoFocus
-            placeholder={t('Search for account')}
-            control={control}
-            height={48}
-            containerStyle={{ width: isWidthS ? '50%' : '100%' }}
-          />
-        </View>
+            childrenPosition="left"
+          >
+            <AddCircularIcon color="#fff" width={20} height={20} style={spacings.mrMi} />
+          </Button>
+        </>
       </SettingsPageHeader>
       <View style={[flexbox.flex1]} ref={accountsContainerRef}>
         <ScrollableWrapper
@@ -279,15 +295,7 @@ const AccountsSettingsScreen = () => {
           />
         </View>
       </BottomSheet>
-      <BottomSheet
-        id="account-settings-add-account"
-        sheetRef={sheetRef}
-        adjustToContentHeight={!getUiType().isPopup}
-        closeBottomSheet={closeBottomSheet}
-        scrollViewProps={{ showsVerticalScrollIndicator: false }}
-      >
-        <AddAccount handleClose={closeBottomSheet as any} />
-      </BottomSheet>
+      <AddAccount sheetRef={sheetRef} closeBottomSheet={closeBottomSheet} />
     </>
   )
 }

@@ -14,6 +14,7 @@ import Checkbox from '@common/components/Checkbox'
 import Editable from '@common/components/Editable'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import Text from '@common/components/Text'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
@@ -23,8 +24,6 @@ import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { setStringAsync } from '@common/utils/clipboard'
 import eventBus from '@web/extension-services/event/eventBus'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 import PasswordConfirmation from '@web/modules/settings/components/PasswordConfirmation'
 
 import getStyles from './styles'
@@ -42,9 +41,8 @@ const ManageRecoveryPhrase = ({
   }
   onBackButtonPress: () => void
 }) => {
-  const { dispatch } = useBackgroundService()
+  const { state: keystoreState, dispatch: keystoreDispatch } = useController('KeystoreController')
   const [deleteSeedIsConfirmed, setDeleteSeedIsConfirmed] = useState<boolean>(false)
-  const keystoreState = useKeystoreControllerState()
   const [seed, setSeed] = useState<string | null>(DUMMY_SEED)
   const [seedPassphrase, setSeedPassphrase] = useState<string | null>(null)
   const [blurred, setBlurred] = useState<boolean>(true)
@@ -64,9 +62,9 @@ const ManageRecoveryPhrase = ({
   const { t } = useTranslation()
 
   const onPasswordConfirmed = () => {
-    dispatch({
-      type: 'KEYSTORE_CONTROLLER_SEND_SEED_TO_UI',
-      params: { id: recoveryPhrase.id }
+    keystoreDispatch({
+      type: 'method',
+      params: { method: 'sendSeedToUi', args: [recoveryPhrase.id] }
     })
     if (blurred) setBlurred(false)
     closeConfirmPassword()
@@ -118,18 +116,21 @@ const ManageRecoveryPhrase = ({
 
   const deleteSavedSeed = async () => {
     if (!deleteSeedIsConfirmed) return
-    dispatch({ type: 'KEYSTORE_CONTROLLER_DELETE_SEED', params: { id: recoveryPhrase.id } })
+    keystoreDispatch({
+      type: 'method',
+      params: { method: 'deleteSeed', args: [recoveryPhrase.id] }
+    })
   }
 
   const onSave = useCallback(
     (value: string) => {
-      dispatch({
-        type: 'KEYSTORE_CONTROLLER_UPDATE_SEED',
-        params: { id: recoveryPhrase.id, label: value }
+      keystoreDispatch({
+        type: 'method',
+        params: { method: 'updateSeed', args: [{ id: recoveryPhrase.id, label: value }] }
       })
       addToast(t('Recovery phrase label updated.'))
     },
-    [addToast, dispatch, recoveryPhrase.id, t]
+    [addToast, keystoreDispatch, recoveryPhrase.id, t]
   )
 
   return (

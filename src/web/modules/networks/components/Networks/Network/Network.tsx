@@ -7,13 +7,12 @@ import OpenIcon from '@common/assets/svg/OpenIcon'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import NetworkIcon from '@common/components/NetworkIcon'
 import Text from '@common/components/Text'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
+import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import { AnimatedPressable, DURATIONS, useCustomHover, useMultiHover } from '@web/hooks/useHover'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
+import { AnimatedPressable, DURATIONS, useCustomHover } from '@web/hooks/useHover'
 import { NO_BLOCK_EXPLORER_AVAILABLE_TOOLTIP } from '@web/modules/networks/components/NetworkBottomSheet'
 import getStyles from '@web/modules/networks/screens/styles'
 
@@ -25,27 +24,19 @@ interface Props {
 }
 
 const Network: FC<Props> = ({ chainId, openBlockExplorer, openSettingsBottomSheet, onPress }) => {
-  const { themeType, theme, styles } = useTheme(getStyles)
-  const { networks } = useNetworksControllerState()
-  const { portfolio, dashboardNetworkFilter } = useSelectedAccountControllerState()
-  const [bindAnim, animStyle, isHovered, triggerHovered] = useMultiHover({
-    values: [
-      {
-        property: 'backgroundColor',
-        from: `${String(theme.secondaryBackground)}00`,
-        to: theme.secondaryBackground
-      },
-      {
-        property: 'borderColor',
-        from:
-          themeType === THEME_TYPES.DARK
-            ? `${String(theme.primaryLight)}00`
-            : `${String(theme.secondaryBorder)}00`,
-        to: themeType === THEME_TYPES.DARK ? theme.primaryLight80 : theme.secondaryBorder
-      }
-    ],
-    forceHoveredStyle: dashboardNetworkFilter === chainId
+  const { theme, styles } = useTheme(getStyles)
+  const [bindAnim, animStyle, isHovered, triggerHovered] = useCustomHover({
+    property: 'backgroundColor',
+    values: {
+      from: hexToRgba(theme.secondaryBackground, 0),
+      to: theme.secondaryBackground
+    }
   })
+  const { networks } = useController('NetworksController').state
+  const {
+    state: { portfolio, dashboardNetworkFilter }
+  } = useController('SelectedAccountController')
+
   const isInternalNetwork = chainId === 'rewards' || chainId === 'gasTank'
   // Doesn't have to be binded
   const [, explorerIconAnimStyle] = useCustomHover({
@@ -88,8 +79,12 @@ const Network: FC<Props> = ({ chainId, openBlockExplorer, openSettingsBottomShee
       {...bindAnim}
     >
       <View style={[flexbox.alignCenter, flexbox.directionRow]}>
-        <NetworkIcon size={32} id={chainId.toString()} />
-        <Text style={spacings.mlTy} fontSize={16}>
+        <NetworkIcon size={28} id={chainId.toString()} />
+        <Text
+          style={spacings.mlTy}
+          appearance={dashboardNetworkFilter === chainId ? 'primaryText' : 'secondaryText'}
+          weight="medium"
+        >
           {networkName}
         </Text>
         <AnimatedPressable
@@ -106,29 +101,32 @@ const Network: FC<Props> = ({ chainId, openBlockExplorer, openSettingsBottomShee
         >
           {({ hovered }: any) => (
             <OpenIcon
-              width={16}
-              height={16}
-              color={hovered ? theme.primaryText : theme.secondaryText}
+              width={24}
+              height={24}
+              color={hovered ? theme.primaryText : theme.iconPrimary}
               style={isBlockExplorerMissing && { opacity: 0.4 }}
             />
           )}
         </AnimatedPressable>
       </View>
       <View style={[flexbox.alignCenter, flexbox.directionRow]}>
-        <Text fontSize={dashboardNetworkFilter === chainId ? 20 : 16} weight="semiBold">
+        <Text
+          weight="medium"
+          appearance={dashboardNetworkFilter === chainId ? 'primaryText' : 'secondaryText'}
+        >
           {`${formatDecimals(networkBalance, 'value')}` || '$-'}
         </Text>
         {!isInternalNetwork && (
           <Pressable
             onHoverIn={triggerHovered}
             onPress={() => openSettingsBottomSheet(chainId)}
-            style={spacings.mlSm}
+            style={spacings.mlTy}
           >
             {({ hovered }: any) => (
               <KebabMenuIcon
-                width={16}
-                height={16}
-                color={hovered ? theme.primaryText : theme.secondaryText}
+                width={28}
+                height={28}
+                color={hovered ? theme.primaryText : theme.iconPrimary}
               />
             )}
           </Pressable>

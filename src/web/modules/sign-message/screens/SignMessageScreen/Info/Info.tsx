@@ -4,11 +4,11 @@ import { View } from 'react-native'
 
 import HumanizerAddress from '@common/components/HumanizerAddress'
 import Text from '@common/components/Text'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING, SPACING_MD, SPACING_SM } from '@common/styles/spacings'
 import RequestingDappInfo from '@web/components/RequestingDappInfo'
 import useResponsiveActionWindow from '@web/hooks/useResponsiveActionWindow'
-import useSignMessageControllerState from '@web/hooks/useSignMessageControllerState'
 
 import getStyles from './styles'
 
@@ -19,7 +19,7 @@ interface Props {
 const Info: FC<Props> = () => {
   const { t } = useTranslation()
   const { styles } = useTheme(getStyles)
-  const { dapp, messageToSign } = useSignMessageControllerState()
+  const { dapp, messageToSign } = useController('SignMessageController').state
   const { responsiveSizeMultiplier } = useResponsiveActionWindow()
 
   return (

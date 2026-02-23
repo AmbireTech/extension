@@ -10,6 +10,7 @@ import Banner from '@common/components/Banner'
 import Button from '@common/components/Button'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
+import useController from '@common/hooks/useController'
 import usePrevious from '@common/hooks/usePrevious'
 import useTheme from '@common/hooks/useTheme'
 import ActivityPositionsSkeleton from '@common/modules/dashboard/components/Activity/ActivityPositionsSkeleton'
@@ -20,9 +21,6 @@ import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@web/extension-services/background/webapi/tab'
-import useActivityControllerState from '@web/hooks/useActivityControllerState'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import SubmittedTransactionSummary from '@web/modules/settings/components/TransactionHistory/SubmittedTransactionSummary'
 import { getUiType } from '@web/utils/uiType'
 
@@ -62,9 +60,13 @@ const ActivityPositions: FC<Props> = ({
   const { t } = useTranslation()
   const { theme } = useTheme()
 
-  const { dispatch } = useBackgroundService()
-  const { accountsOps, banners } = useActivityControllerState()
-  const { account, dashboardNetworkFilter } = useSelectedAccountControllerState()
+  const {
+    state: { accountsOps, banners },
+    dispatch: activityDispatch
+  } = useController('ActivityController')
+  const {
+    state: { account, dashboardNetworkFilter }
+  } = useController('SelectedAccountController')
   const prevOpenTab = usePrevious(openTab)
 
   const currentAccountBanners = useMemo(() => {
@@ -73,31 +75,37 @@ const ActivityPositions: FC<Props> = ({
 
   useEffect(() => {
     if (prevOpenTab === 'activity' && openTab !== 'activity') {
-      dispatch({ type: 'MAIN_CONTROLLER_ACTIVITY_RESET_ACC_OPS_FILTERS', params: { sessionId } })
+      activityDispatch({
+        type: 'method',
+        params: { method: 'resetAccountsOpsFilters', args: [sessionId] }
+      })
     }
-  }, [prevOpenTab, openTab, dispatch, sessionId])
+  }, [prevOpenTab, openTab, activityDispatch, sessionId])
 
   useEffect(() => {
     // Optimization: Don't apply filtration if we are not on Activity tab
     if (!account?.addr || openTab !== 'activity') return
 
-    dispatch({
-      type: 'MAIN_CONTROLLER_ACTIVITY_SET_ACC_OPS_FILTERS',
+    activityDispatch({
+      type: 'method',
       params: {
-        sessionId,
-        filters: {
-          account: account.addr,
-          ...(dashboardNetworkFilter && {
-            chainId: dashboardNetworkFilter ? BigInt(dashboardNetworkFilter) : undefined
-          })
-        },
-        pagination: {
-          itemsPerPage: ITEMS_PER_PAGE,
-          fromPage: 0
-        }
+        method: 'filterAccountsOps',
+        args: [
+          sessionId,
+          {
+            account: account.addr,
+            ...(dashboardNetworkFilter && {
+              chainId: dashboardNetworkFilter ? BigInt(dashboardNetworkFilter) : undefined
+            })
+          },
+          {
+            itemsPerPage: ITEMS_PER_PAGE,
+            fromPage: 0
+          }
+        ]
       }
     })
-  }, [openTab, account?.addr, dispatch, dashboardNetworkFilter, sessionId])
+  }, [openTab, account?.addr, activityDispatch, dashboardNetworkFilter, sessionId])
 
   const renderItem = useCallback(
     ({ item }: any) => {
@@ -120,8 +128,8 @@ const ActivityPositions: FC<Props> = ({
                     CustomIcon={() => {
                       return (
                         <View style={[flexbox.alignCenter, flexbox.justifyCenter]}>
-                          {banner.type === 'info2' ? (
-                            <Spinner style={{ width: 20, height: 20 }} variant="info2" />
+                          {banner.type === 'info' ? (
+                            <Spinner style={{ width: 20, height: 20 }} variant="info" />
                           ) : (
                             <View
                               style={{
@@ -159,7 +167,7 @@ const ActivityPositions: FC<Props> = ({
       if (item === 'empty') {
         return (
           <View style={styles.noPositionsWrapper}>
-            <InfoIcon width={32} height={32} color={theme.info3Decorative} style={spacings.mtSm} />
+            <InfoIcon width={32} height={32} color={theme.infoText} style={spacings.mtSm} />
             <Text
               testID="no-transaction-history-text"
               fontSize={16}
@@ -211,21 +219,25 @@ const ActivityPositions: FC<Props> = ({
               size="small"
               style={[flexbox.alignSelfCenter, spacings.mbSm]}
               onPress={() => {
-                dispatch({
-                  type: 'MAIN_CONTROLLER_ACTIVITY_SET_ACC_OPS_FILTERS',
+                activityDispatch({
+                  type: 'method',
                   params: {
-                    sessionId,
-                    filters: {
-                      account: account!.addr,
-                      ...(dashboardNetworkFilter && {
-                        chainId: dashboardNetworkFilter ? BigInt(dashboardNetworkFilter) : undefined
-                      })
-                    },
-                    pagination: {
-                      itemsPerPage:
-                        (accountsOps[sessionId]?.pagination.itemsPerPage || 0) + ITEMS_PER_PAGE,
-                      fromPage: 0
-                    }
+                    method: 'filterAccountsOps',
+                    args: [
+                      sessionId,
+                      {
+                        account: account!.addr,
+                        ...(dashboardNetworkFilter && {
+                          chainId: dashboardNetworkFilter
+                            ? BigInt(dashboardNetworkFilter)
+                            : undefined
+                        })
+                      },
+                      {
+                        itemsPerPage: ITEMS_PER_PAGE,
+                        fromPage: result.currentPage + 1
+                      }
+                    ]
                   }
                 })
               }}
@@ -256,7 +268,7 @@ const ActivityPositions: FC<Props> = ({
       t,
       network?.explorerUrl,
       account,
-      dispatch,
+      activityDispatch,
       dashboardNetworkFilter
     ]
   )

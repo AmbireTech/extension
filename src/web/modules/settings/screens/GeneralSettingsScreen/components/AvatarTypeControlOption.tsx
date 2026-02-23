@@ -5,20 +5,22 @@ import AvatarIcon from '@common/assets/svg/AvatarIcon'
 import Avatar from '@common/components/Avatar'
 import ControlOption from '@common/components/ControlOption'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { AvatarType } from '@web/extension-services/background/controllers/wallet-state'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import useHover, { AnimatedPressable } from '@web/hooks/useHover'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
-import useWalletStateController from '@web/hooks/useWalletStateController'
 
 const AVATAR_TYPES: AvatarType[] = ['blockies', 'jazzicons', 'polycons']
 
 const AvatarOption: FC<{ type: AvatarType }> = ({ type }) => {
-  const { avatarType } = useWalletStateController()
-  const { account } = useSelectedAccountControllerState()
-  const { dispatch } = useBackgroundService()
+  const {
+    state: { avatarType },
+    dispatch: walletStateDispatch
+  } = useController('WalletStateController')
+  const {
+    state: { account }
+  } = useController('SelectedAccountController')
   const { theme } = useTheme()
   const { t } = useTranslation()
   const [bindAnim, animStyle] = useHover({ preset: 'opacityInverted' })
@@ -27,10 +29,11 @@ const AvatarOption: FC<{ type: AvatarType }> = ({ type }) => {
     <AnimatedPressable
       key={type}
       onPress={() => {
-        dispatch({
-          type: 'SET_AVATAR_TYPE',
+        walletStateDispatch({
+          type: 'method',
           params: {
-            avatarType: type
+            method: 'setAvatarType',
+            args: [type]
           }
         })
       }}
@@ -75,7 +78,7 @@ const AvatarTypeControlOption = () => {
       description={t(
         'Choose from three unique icon styles to help you identify accounts at a glance.'
       )}
-      renderIcon={<AvatarIcon width={22} height={22} color={theme.primaryText} />}
+      renderIcon={<AvatarIcon />}
     >
       {AVATAR_TYPES.map((type) => (
         <AvatarOption key={type} type={type} />

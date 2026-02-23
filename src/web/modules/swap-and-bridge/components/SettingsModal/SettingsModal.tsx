@@ -5,13 +5,12 @@ import SettingsIcon from '@common/assets/svg/SettingsIcon/SettingsIcon'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
 import useElementSize from '@common/hooks/useElementSize'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING, SPACING_TY } from '@common/styles/spacings'
 import { Portal } from '@gorhom/portal'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import { useCustomHover } from '@web/hooks/useHover'
-import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControllerState'
 
 import getStyles, { SETTINGS_MODAL_WIDTH } from './styles'
 
@@ -64,8 +63,8 @@ const SettingsModal: React.FC<Props> = ({ handleToggleSettingsMenu, settingModal
   const { styles, theme } = useTheme(getStyles)
   const settingButtonRef: any = useRef(null)
   const settingMenuRef: any = useRef(null)
-  const { routePriority } = useSwapAndBridgeControllerState()
-  const { dispatch } = useBackgroundService()
+  const { routePriority } = useController('SwapAndBridgeController').state
+  const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
   const { x: settingButtonX, y: settingButtonY } = useElementSize(settingButtonRef)
   const [bindAnim, , isHovered, , animatedValues] = useCustomHover({
     property: 'rotateZ' as any,
@@ -92,20 +91,21 @@ const SettingsModal: React.FC<Props> = ({ handleToggleSettingsMenu, settingModal
 
   const handleSelectPriority = useCallback(
     (value: string) => {
-      dispatch({
-        type: 'SWAP_AND_BRIDGE_CONTROLLER_UPDATE_FORM',
-        params: { formValues: { routePriority: value as any } }
+      swapAndBridgeDispatch({
+        type: 'method',
+        params: { method: 'updateForm', args: [{ routePriority: value as any }, undefined] }
       })
     },
-    [dispatch]
+    [swapAndBridgeDispatch]
   )
 
-  const rotateInterpolate = animatedValues
-    ? animatedValues[0].value.interpolate({
-        inputRange: [0, 1],
-        outputRange: ['0deg', '110deg']
-      })
-    : null
+  const rotateInterpolate =
+    animatedValues && animatedValues[0]
+      ? animatedValues[0].value.interpolate({
+          inputRange: [0, 1],
+          outputRange: ['0deg', '110deg']
+        })
+      : null
 
   return (
     <>

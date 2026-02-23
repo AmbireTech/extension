@@ -2,7 +2,7 @@ import { nanoid } from 'nanoid'
 import React from 'react'
 import { View } from 'react-native'
 
-import InformationIcon from '@common/assets/svg/InformationIcon'
+import InfoIcon from '@common/assets/svg/InfoIcon'
 import MetamaskIcon from '@common/assets/svg/Metamask/MetamaskIcon'
 import StarsIcon from '@common/assets/svg/StarsIcon'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
@@ -18,39 +18,39 @@ import { Props } from './types'
 const getBadgeTypes = (theme: ThemeProps) => ({
   info: {
     color: theme.infoText,
-    iconColor: theme.infoDecorative
-  },
-  info2: {
-    color: theme.info2Text,
-    iconColor: theme.info2Decorative
+    backgroundColor: theme.infoBackground
   },
   default: {
-    color: theme.secondaryText,
-    iconColor: theme.secondaryText
+    color: theme.neutral500,
+    backgroundColor: theme.secondaryBackground
+  },
+  outline: {
+    color: theme.neutral500,
+    backgroundColor: 'transparent'
   },
   success: {
     color: theme.successText,
-    iconColor: theme.successDecorative
+    backgroundColor: theme.successBackground
   },
   warning: {
     color: theme.warningText,
-    iconColor: theme.warningDecorative
+    backgroundColor: theme.warningBackground
   },
   error: {
     color: theme.errorText,
-    iconColor: theme.errorDecorative
+    backgroundColor: theme.errorBackground
   },
-  ok: {
-    color: theme.secondaryText,
-    iconColor: theme.successText
+  primaryAccent: {
+    color: theme.primaryAccent300,
+    backgroundColor: theme.primaryAccent100
   },
-  projectedRewards: {
-    color: theme.projectedRewards,
-    iconColor: theme.projectedRewards
+  secondaryAccent: {
+    color: theme.secondaryAccent400,
+    backgroundColor: theme.secondaryAccent100
   },
   new: {
     color: '#fff',
-    iconColor: '#fff'
+    backgroundColor: 'transparent'
   }
 })
 
@@ -76,7 +76,7 @@ const Badge = ({
 }: Props) => {
   const { styles, theme } = useTheme(getStyles)
   const badgeTypes = getBadgeTypes(theme)
-  const { color, iconColor } = badgeTypes[type] || badgeTypes.default
+  const { color, backgroundColor } = badgeTypes[type] || badgeTypes.default
   const tooltipId = nanoid(6)
   const sizeMultiplier = SIZES[size]
 
@@ -85,19 +85,17 @@ const Badge = ({
       style={[
         flexbox.directionRow,
         flexbox.alignCenter,
-        type === 'success' && styles.successBadge,
-        type === 'default' && styles.defaultBadge,
-        type === 'warning' && styles.warningBadge,
-        type === 'info' && styles.infoBadge,
-        type === 'info2' && styles.info2Badge,
-        type === 'error' && styles.errorBadge,
-        type === 'new' && styles.newBadge,
-        type === 'projectedRewards' && styles.projectedRewards,
+        styles.badge,
         {
-          height: sizeMultiplier * 20
+          height: sizeMultiplier * 20,
+          backgroundColor: backgroundColor
         },
+        type === 'outline' && styles.outlineBadge,
+        type === 'new' && styles.newBadge,
         withRightSpacing && spacings.mrMd,
-        !!tooltipText && spacings.prMi,
+        (!!tooltipText || !!children) && {
+          paddingRight: sizeMultiplier * 2
+        },
         style
       ]}
       nativeID={nativeID}
@@ -105,47 +103,42 @@ const Badge = ({
     >
       {text && (
         <Text
-          weight={weight || (type === 'new' ? 'semiBold' : 'regular')}
+          weight={weight || 'medium'}
           fontSize={sizeMultiplier * 10}
           color={color}
-          style={[!!tooltipText && spacings.mrMi, textStyle]}
+          style={[(!!tooltipText || type === 'new') && spacings.mrMi, textStyle]}
         >
           {text}
         </Text>
       )}
+      {type === 'new' && (
+        <StarsIcon
+          width={12 * sizeMultiplier}
+          height={12 * sizeMultiplier}
+          color={theme.neutral400}
+        />
+      )}
       {children}
-      {!!tooltipText && type !== 'new' && !specialType && (
-        <InformationIcon
+      {!!tooltipText && !specialType && (
+        <InfoIcon
           dataSet={createGlobalTooltipDataSet({
             id: tooltipId,
             content: tooltipText
           })}
           data-tooltip-id={tooltipId}
-          color={iconColor}
-          width={sizeMultiplier * 14}
-          height={sizeMultiplier * 14}
+          color={color}
+          width={sizeMultiplier * 16}
+          height={sizeMultiplier * 16}
         />
       )}
-      {!!tooltipText &&
-        type !== 'new' &&
-        specialType &&
-        specialType === 'metamask' &&
-        text === 'Metamask' && (
-          <MetamaskIcon
-            dataSet={createGlobalTooltipDataSet({
-              id: tooltipId,
-              content: tooltipText
-            })}
-            width={sizeMultiplier * 14}
-            height={sizeMultiplier * 14}
-          />
-        )}
-      {type === 'new' && (
-        <StarsIcon
-          style={spacings.mlMi}
-          color={iconColor}
-          width={sizeMultiplier * 11}
-          height={sizeMultiplier * 11}
+      {!!tooltipText && specialType && specialType === 'metamask' && text === 'Metamask' && (
+        <MetamaskIcon
+          dataSet={createGlobalTooltipDataSet({
+            id: tooltipId,
+            content: tooltipText
+          })}
+          width={sizeMultiplier * 14}
+          height={sizeMultiplier * 14}
         />
       )}
     </View>

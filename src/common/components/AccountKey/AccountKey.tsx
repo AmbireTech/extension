@@ -20,14 +20,13 @@ import Editable from '@common/components/Editable'
 import ExportKey from '@common/components/ExportKey'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { setStringAsync } from '@common/utils/clipboard'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import useHover, { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
 import { getUiType } from '@web/utils/uiType'
 
@@ -75,7 +74,7 @@ const AccountKey: React.FC<Props> = ({
   const { t } = useTranslation()
   const { theme, themeType } = useTheme()
   const { addToast } = useToast()
-  const { dispatch } = useBackgroundService()
+  const { dispatch: keystoreDispatch } = useController('KeystoreController')
   const [isEditing, setIsEditing] = useState(false)
 
   const [bindKeyDetailsAnim, keyDetailsAnimStyles] = useCustomHover({
@@ -101,9 +100,12 @@ const AccountKey: React.FC<Props> = ({
   }
 
   const editKeyLabel = (newLabel: string) => {
-    dispatch({
-      type: 'KEYSTORE_CONTROLLER_UPDATE_KEY_PREFERENCES',
-      params: [{ addr, type: type || 'internal', preferences: { label: newLabel } }]
+    keystoreDispatch({
+      type: 'method',
+      params: {
+        method: 'updateKeyPreferences',
+        args: [[{ addr, type: type || 'internal', preferences: { label: newLabel } }]]
+      }
     })
     addToast(t('Key label updated'), { type: 'success' })
   }
@@ -124,8 +126,7 @@ const AccountKey: React.FC<Props> = ({
     <View
       style={[
         {
-          backgroundColor:
-            themeType === THEME_TYPES.DARK ? theme.primaryBackground : theme.secondaryBackground,
+          backgroundColor: theme.secondaryBackground,
           borderRadius: BORDER_RADIUS_PRIMARY,
           ...containerStyle
         },
@@ -154,7 +155,7 @@ const AccountKey: React.FC<Props> = ({
         >
           {!!isImported && (
             <View style={spacings.mrTy}>
-              <AccountKeyIcon type={type || 'internal'} color={keyIconColor} />
+              <AccountKeyIcon iconSize={20} type={type || 'internal'} color={keyIconColor} />
             </View>
           )}
 
@@ -245,8 +246,8 @@ const AccountKey: React.FC<Props> = ({
                       text={t('Export')}
                     >
                       <ExportIcon
-                        style={[spacings.mlTy]}
-                        color={theme.primary}
+                        style={spacings.mlTy}
+                        color={theme.iconPrimary}
                         width={16}
                         height={16}
                       />
@@ -333,9 +334,6 @@ const AccountKey: React.FC<Props> = ({
         sheetRef={sheetRefExportKey}
         id="confirm-password-bottom-sheet"
         type="modal"
-        backgroundColor={
-          themeType === THEME_TYPES.DARK ? 'secondaryBackground' : 'primaryBackground'
-        }
         closeBottomSheet={closeExportKey}
         scrollViewProps={{ contentContainerStyle: { flex: 1 } }}
         containerInnerWrapperStyles={{ flex: 1 }}

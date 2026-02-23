@@ -9,26 +9,25 @@ import { getErrorCodeStringFromReason } from '@ambire-common/libs/errorDecoder/h
 import CopyIcon from '@common/assets/svg/CopyIcon'
 import Alert from '@common/components/Alert'
 import AlertVertical from '@common/components/AlertVertical'
+import GlassView from '@common/components/GlassView'
 import NetworkBadge from '@common/components/NetworkBadge'
 import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
+import useController from '@common/hooks/useController'
 import useSign from '@common/hooks/useSign'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
+import { BORDER_RADIUS_PRIMARY, hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { setStringAsync } from '@common/utils/clipboard'
-import HeaderAccountAndNetworkInfo from '@web/components/HeaderAccountAndNetworkInfo'
 import SmallNotificationWindowWrapper from '@web/components/SmallNotificationWindowWrapper'
 import {
   TabLayoutContainer,
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import { closeCurrentWindow } from '@web/extension-services/background/webapi/window'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useMainControllerState from '@web/hooks/useMainControllerState'
-import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
-import useSignAccountOpControllerState from '@web/hooks/useSignAccountOpControllerState'
+import ActionHeader from '@web/modules/action-requests/components/ActionHeader'
 import Estimation from '@web/modules/sign-account-op/components/Estimation'
 import Footer from '@web/modules/sign-account-op/components/Footer'
 import Modals from '@web/modules/sign-account-op/components/Modals/Modals'
@@ -38,6 +37,7 @@ import SectionHeading from '@web/modules/sign-account-op/components/SectionHeadi
 import Simulation from '@web/modules/sign-account-op/components/Simulation'
 import SigningKeySelect from '@web/modules/sign-message/components/SignKeySelect'
 
+import Gradient from './Gradient'
 import getStyles from './styles'
 
 const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }: NativeScrollEvent) => {
@@ -46,10 +46,13 @@ const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }: Nati
 }
 
 const SignAccountOpScreen = () => {
-  const { currentUserRequest, visibleUserRequests } = useRequestsControllerState()
-  const signAccountOpState = useSignAccountOpControllerState()
-  const mainState = useMainControllerState()
-  const { dispatch } = useBackgroundService()
+  const {
+    state: { currentUserRequest, visibleUserRequests },
+    dispatch: requestsDispatch
+  } = useController('RequestsController')
+  const { state: signAccountOpState, dispatch: signAccountOpDispatch } =
+    useController('SignAccountOpController')
+  const { signAccOpInitError } = useController('MainController').state
   const { t } = useTranslation()
   const { addToast } = useToast()
   const { styles, theme, themeType } = useTheme(getStyles)
@@ -59,24 +62,27 @@ const SignAccountOpScreen = () => {
 
   const handleUpdateStatus = useCallback(
     (status: SigningStatus) => {
-      dispatch({
-        type: 'CURRENT_SIGN_ACCOUNT_OP_UPDATE_STATUS',
-        params: { updateType: 'Requests', status }
-      })
-    },
-    [dispatch]
-  )
-  const updateController = useCallback(
-    (params: { signingKeyAddr?: Key['addr']; signingKeyType?: Key['type'] }) => {
-      dispatch({
-        type: 'CURRENT_SIGN_ACCOUNT_OP_UPDATE',
+      signAccountOpDispatch({
+        type: 'method',
         params: {
-          updateType: 'Requests',
-          ...params
+          method: 'updateStatus',
+          args: [status]
         }
       })
     },
-    [dispatch]
+    [signAccountOpDispatch]
+  )
+  const updateController = useCallback(
+    (params: { signingKeyAddr?: Key['addr']; signingKeyType?: Key['type'] }) => {
+      signAccountOpDispatch({
+        type: 'method',
+        params: {
+          method: 'update',
+          args: [params]
+        }
+      })
+    },
+    [signAccountOpDispatch]
   )
 
   const {
@@ -120,17 +126,18 @@ const SignAccountOpScreen = () => {
   const handleRejectAccountOp = useCallback(() => {
     if (!accountOpRequest) return
 
-    dispatch({
-      type: 'REQUESTS_CONTROLLER_REJECT_USER_REQUEST',
+    requestsDispatch({
+      type: 'method',
       params: {
-        err: 'User rejected the transaction request.',
-        id: accountOpRequest.id,
-        options: {
-          shouldOpenNextRequest: visibleUserRequests.length > 1
-        }
+        method: 'rejectUserRequests',
+        args: [
+          'User rejected the transaction request.',
+          [accountOpRequest.id],
+          { shouldOpenNextRequest: visibleUserRequests.length > 1 }
+        ]
       }
     })
-  }, [dispatch, accountOpRequest, visibleUserRequests.length])
+  }, [requestsDispatch, accountOpRequest, visibleUserRequests.length])
 
   const handleAddToCart = useCallback(() => {
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -154,7 +161,7 @@ const SignAccountOpScreen = () => {
   const copySignAccountOpError = useCallback(async () => {
     if (!signAccountOpState?.errors?.length) return
 
-    const errorCode = signAccountOpState.errors[0].code
+    const errorCode = signAccountOpState.errors[0]?.code
 
     if (!errorCode) return
 
@@ -191,10 +198,10 @@ const SignAccountOpScreen = () => {
     return undefined
   }, [copySignAccountOpError, signAccountOpState?.errors, styles.alertText, theme.warningText])
 
-  if (mainState.signAccOpInitError) {
+  if (signAccOpInitError) {
     return (
       <View style={[StyleSheet.absoluteFill, flexbox.alignCenter, flexbox.justifyCenter]}>
-        <Alert type="error" title={mainState.signAccOpInitError} />
+        <Alert type="error" title={signAccOpInitError} />
       </View>
     )
   }
@@ -231,72 +238,72 @@ const SignAccountOpScreen = () => {
       />
       <TabLayoutContainer
         width="full"
-        backgroundColor={theme.quinaryBackground}
+        backgroundColor={theme.primaryBackground}
         withHorizontalPadding={false}
         style={spacings.phMd}
-        header={
-          <HeaderAccountAndNetworkInfo
-            backgroundColor={
-              themeType === THEME_TYPES.DARK
-                ? (theme.tertiaryBackground as string)
-                : (theme.primaryBackground as string)
-            }
-          />
-        }
+        header={<ActionHeader />}
         renderDirectChildren={() => (
-          <View style={styles.footer}>
-            {!estimationFailed ? (
-              <>
-                <Estimation
-                  signAccountOpState={signAccountOpState}
-                  disabled={isSignLoading}
-                  hasEstimation={!!hasEstimation}
-                  slowRequest={slowRequest}
-                  isViewOnly={isViewOnly}
-                  isSponsored={signAccountOpState ? signAccountOpState.isSponsored : false}
-                  sponsor={signAccountOpState ? signAccountOpState.sponsor : undefined}
-                  updateType="Requests"
-                  bundlerNonceDiscrepancy={bundlerNonceDiscrepancy}
-                />
+          <View style={[spacings.mh, spacings.mv]}>
+            <GlassView
+              tintColor2={hexToRgba('#D1D1D1', 0.12)}
+              style={{ borderRadius: BORDER_RADIUS_PRIMARY }}
+              cssStyle={{ borderRadius: BORDER_RADIUS_PRIMARY }}
+            >
+              {/* Gradient */}
+              <Gradient
+                style={{
+                  position: 'absolute',
+                  top: -70,
+                  right: -70,
+                  zIndex: -1
+                }}
+              />
+              <View style={[spacings.ph, spacings.pv, flexbox.flex1]}>
+                {!estimationFailed ? (
+                  <View style={spacings.mbXl}>
+                    <Estimation
+                      signAccountOpState={signAccountOpState}
+                      disabled={isSignLoading}
+                      hasEstimation={!!hasEstimation}
+                      slowRequest={slowRequest}
+                      isViewOnly={isViewOnly}
+                      isSponsored={signAccountOpState ? signAccountOpState.isSponsored : false}
+                      sponsor={signAccountOpState ? signAccountOpState.sponsor : undefined}
+                      updateType="Requests"
+                      bundlerNonceDiscrepancy={bundlerNonceDiscrepancy}
+                    />
+                  </View>
+                ) : null}
 
-                <View
-                  style={{
-                    height: 1,
-                    backgroundColor:
-                      themeType === THEME_TYPES.DARK ? theme.primaryBorder : theme.secondaryBorder,
-                    ...spacings.mvLg
-                  }}
+                <Footer
+                  onReject={handleRejectAccountOp}
+                  onAddToCart={handleAddToCart}
+                  isAddToCartDisplayed={
+                    !!signAccountOpState &&
+                    !!network &&
+                    signAccountOpState.accountOp.meta?.setDelegation === undefined
+                  }
+                  isSignLoading={isSignLoading}
+                  isSignDisabled={isSignDisabled || !hasReachedBottom}
+                  buttonTooltipText={
+                    typeof hasReachedBottom === 'boolean' && !hasReachedBottom
+                      ? t('Scroll to the bottom of the transaction overview to sign.')
+                      : undefined
+                  }
+                  // Allow view only accounts or if no funds for gas to add to cart even if the txn is not ready to sign
+                  // because they can't sign it anyway
+                  isAddToCartDisabled={isAddToCartDisabled}
+                  onSign={onSignButtonClick}
+                  inProgressButtonText={
+                    signAccountOpState?.status?.type === SigningStatus.WaitingForPaymaster
+                      ? t('Sending...')
+                      : t('Signing...')
+                  }
+                  buttonText={primaryButtonText}
+                  shouldHoldToProceed={shouldHoldToProceed}
                 />
-              </>
-            ) : null}
-
-            <Footer
-              onReject={handleRejectAccountOp}
-              onAddToCart={handleAddToCart}
-              isAddToCartDisplayed={
-                !!signAccountOpState &&
-                !!network &&
-                signAccountOpState.accountOp.meta?.setDelegation === undefined
-              }
-              isSignLoading={isSignLoading}
-              isSignDisabled={isSignDisabled || !hasReachedBottom}
-              buttonTooltipText={
-                typeof hasReachedBottom === 'boolean' && !hasReachedBottom
-                  ? t('Scroll to the bottom of the transaction overview to sign.')
-                  : undefined
-              }
-              // Allow view only accounts or if no funds for gas to add to cart even if the txn is not ready to sign
-              // because they can't sign it anyway
-              isAddToCartDisabled={isAddToCartDisabled}
-              onSign={onSignButtonClick}
-              inProgressButtonText={
-                signAccountOpState?.status?.type === SigningStatus.WaitingForPaymaster
-                  ? t('Sending...')
-                  : t('Signing...')
-              }
-              buttonText={primaryButtonText}
-              shouldHoldToProceed={shouldHoldToProceed}
-            />
+              </View>
+            </GlassView>
           </View>
         )}
       >
@@ -326,7 +333,7 @@ const SignAccountOpScreen = () => {
               flexbox.directionRow,
               flexbox.alignCenter,
               flexbox.justifySpaceBetween,
-              spacings.mbSm
+              spacings.mb
             ]}
           >
             <SectionHeading withMb={false}>{t('Overview')}</SectionHeading>
@@ -357,7 +364,7 @@ const SignAccountOpScreen = () => {
               <AlertVertical
                 type="warning"
                 size="sm"
-                title={signAccountOpState.errors[0].title}
+                title={signAccountOpState.errors[0]?.title}
                 text={errorText}
               />
             ) : (

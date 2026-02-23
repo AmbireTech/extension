@@ -24,28 +24,20 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
     content: {
       ...common.fullWidth,
       borderRadius: BORDER_RADIUS_PRIMARY,
-      overflow: 'hidden',
-      shadowColor: themeType === THEME_TYPES.DARK ? '#00000052' : '#6770B3',
-      shadowOffset: { width: 0, height: SPACING_SM },
-      shadowOpacity: themeType === THEME_TYPES.DARK ? 1 : 0.3,
-      shadowRadius: SPACING_SM,
-      elevation: SPACING_SM
+      overflow: 'hidden'
     },
     contentHeader: {
       ...flexbox.flex1,
-      ...flexbox.alignStart
+      ...flexbox.alignCenter
     },
     contentBody: {
-      backgroundColor:
-        themeType === THEME_TYPES.DARK ? theme.tertiaryBackground : theme.primaryBackground
+      backgroundColor: theme.secondaryBackground
     },
     securityChecksContainer: {
-      backgroundColor: theme.secondaryBackground,
+      backgroundColor: theme.primaryBackground,
       ...common.borderRadiusPrimary,
       ...spacings.phSm,
-      ...spacings.pvTy,
-      borderWidth: 1,
-      borderColor: theme.secondaryBackground
+      ...spacings.pvTy
     }
   })
 

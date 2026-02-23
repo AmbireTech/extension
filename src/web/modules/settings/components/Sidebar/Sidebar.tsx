@@ -1,15 +1,15 @@
 import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { View } from 'react-native'
+import { Pressable, View, ViewStyle } from 'react-native'
 
 import AccountsIcon from '@common/assets/svg/AccountsIcon'
 import AddressBookIcon from '@common/assets/svg/AddressBookIcon'
+import AmbireLogoSquare from '@common/assets/svg/AmbireLogoSquare'
 import BugIcon from '@common/assets/svg/BugIcon'
-import BulbIcon from '@common/assets/svg/BulbIcon'
 import CustomTokensIcon from '@common/assets/svg/CustomTokensIcon'
+import DashboardIcon from '@common/assets/svg/DashboardIcon'
 import HelpIcon from '@common/assets/svg/HelpIcon'
 import KeyStoreSettingsIcon from '@common/assets/svg/KeyStoreSettingsIcon'
-import LeftArrowIcon from '@common/assets/svg/LeftArrowIcon'
 import NetworksIcon from '@common/assets/svg/NetworksIcon'
 import PasswordRecoverySettingsIcon from '@common/assets/svg/PasswordRecoverySettingsIcon'
 import PrivacyIcon from '@common/assets/svg/PrivacyIcon'
@@ -17,16 +17,17 @@ import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import SidebarSecurityIcon from '@common/assets/svg/SidebarSecurityIcon'
 import SignedMessageIcon from '@common/assets/svg/SignedMessageIcon'
 import TransactionHistoryIcon from '@common/assets/svg/TransactionHistoryIcon'
+import GlassView from '@common/components/GlassView'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
+import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
-import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
-import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
-import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
+import spacings, { SPACING_TY } from '@common/styles/spacings'
+import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
+import flexbox from '@common/styles/utils/flexbox'
 import SettingsLink from '@web/modules/settings/components/SettingsLink'
 
 import getStyles from './styles'
@@ -40,31 +41,31 @@ export const SETTINGS_LINKS = [
   },
   {
     key: 'accounts',
-    Icon: React.memo(AccountsIcon),
+    Icon: AccountsIcon,
     label: 'Accounts',
     path: ROUTES.accountsSettings
   },
   {
     key: 'address-book',
-    Icon: React.memo(AddressBookIcon),
+    Icon: AddressBookIcon,
     label: 'Address Book',
     path: ROUTES.addressBook
   },
   {
     key: 'networks',
-    Icon: React.memo(NetworksIcon),
+    Icon: NetworksIcon,
     label: 'Networks',
     path: ROUTES.networksSettings
   },
   {
     key: 'transactions',
-    Icon: React.memo(TransactionHistoryIcon),
+    Icon: TransactionHistoryIcon,
     label: 'Transaction history',
     path: ROUTES.transactions
   },
   {
     key: 'messages',
-    Icon: React.memo(SignedMessageIcon),
+    Icon: SignedMessageIcon,
     label: 'Signed messages',
     path: ROUTES.signedMessages
   },
@@ -76,26 +77,26 @@ export const SETTINGS_LINKS = [
   },
   {
     key: 'device-password-change',
-    Icon: React.memo(KeyStoreSettingsIcon),
+    Icon: KeyStoreSettingsIcon,
     label: 'Extension password',
     path: ROUTES.devicePasswordChange
   },
   {
     key: 'device-password-recovery',
-    Icon: React.memo(PasswordRecoverySettingsIcon),
+    Icon: PasswordRecoverySettingsIcon,
     label: 'Password recovery',
     path: ROUTES.devicePasswordRecovery
   },
   {
     key: 'opt-outs',
-    Icon: React.memo(PrivacyIcon),
+    Icon: PrivacyIcon,
     label: 'Privacy Opt-outs',
     path: ROUTES.optOuts
   },
   // Disabled for now - will be added in future releases
   // {
   //   key: 'email-vault',
-  //   Icon: React.memo(({ color }: SvgProps) => (
+  //   Icon: ({color }: SvgProps) => (
   //     <EmailVaultIcon strokeWidth={3.5} width={24} height={24} color={color} />
   //   )),
   //   label: 'Ambire Cloud (coming soon)',
@@ -103,7 +104,7 @@ export const SETTINGS_LINKS = [
   // },
   {
     key: 'manage-tokens',
-    Icon: React.memo(CustomTokensIcon),
+    Icon: CustomTokensIcon,
     label: 'Custom tokens',
     path: ROUTES.manageTokens
   }
@@ -112,20 +113,20 @@ export const SETTINGS_LINKS = [
 const OTHER_LINKS = [
   {
     key: 'about',
-    Icon: BulbIcon,
-    label: 'About',
+    Icon: AmbireLogoSquare,
+    label: 'About Ambire',
     path: ROUTES.settingsAbout
   },
   {
     key: 'help-center',
-    Icon: React.memo(HelpIcon),
+    Icon: HelpIcon,
     label: 'Help Center',
     path: 'https://help.ambire.com/hc/en-us',
     isExternal: true
   },
   {
     key: 'report-issue',
-    Icon: React.memo(BugIcon),
+    Icon: BugIcon,
     label: 'Report an issue',
     path: 'https://help.ambire.com/hc/en-us/requests/new',
     isExternal: true
@@ -133,20 +134,13 @@ const OTHER_LINKS = [
 ]
 
 const Sidebar = ({ activeLink }: { activeLink?: string }) => {
-  const keystoreState = useKeystoreControllerState()
-  const { theme, themeType, styles } = useTheme(getStyles)
+  const { theme, styles } = useTheme(getStyles)
+  const keystoreState = useController('KeystoreController').state
   const { state } = useRoute()
   const { navigate } = useNavigation()
   const [validBackRoute, setValidBackRoute] = useState<'dashboard' | 'transfer' | null>(null)
   const isTransferPreviousPage = state?.prevRoute?.pathname?.includes(ROUTES.transfer)
   const isDashboardPreviousPage = state?.prevRoute?.pathname.includes(WEB_ROUTES.dashboard)
-  const [bindAnim, animStyle] = useCustomHover({
-    property: 'backgroundColor',
-    values: {
-      from: theme.secondaryBackground,
-      to: theme.tertiaryBackground
-    }
-  })
   const { t } = useTranslation()
 
   useEffect(() => {
@@ -160,73 +154,83 @@ const Sidebar = ({ activeLink }: { activeLink?: string }) => {
     }
   }, [isDashboardPreviousPage, isTransferPreviousPage, validBackRoute])
 
+  const glassViewStyle: ViewStyle & React.CSSProperties = {
+    borderRadius: BORDER_RADIUS_PRIMARY,
+    flexDirection: 'column',
+    paddingLeft: SPACING_TY,
+    paddingBottom: SPACING_TY,
+    paddingRight: SPACING_TY,
+    height: '100%',
+    display: 'flex'
+  }
+
   return (
-    <View style={{ ...spacings.pbLg, position: 'relative', height: '100%' }}>
-      {validBackRoute && (
-        <AnimatedPressable
-          style={[styles.backToDashboardButton, animStyle]}
-          onPress={() => {
-            if (validBackRoute === 'transfer') {
-              navigate(ROUTES.transfer)
-              return
-            }
+    <View
+      style={{
+        ...spacings.pbLg,
+        ...spacings.mlTy,
+        ...spacings.mvTy,
+        height: '100%',
+        position: 'relative'
+      }}
+    >
+      <GlassView cssStyle={glassViewStyle} style={glassViewStyle}>
+        <View style={styles.settingsTitleWrapper}>
+          <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+            <AmbireLogoSquare width={28} height={28} color={theme.neutral900} />
+            <Text fontSize={20} style={spacings.mlMi} weight="semiBold">
+              {t('Settings')}
+            </Text>
+          </View>
+          {!!validBackRoute && (
+            <Pressable
+              style={{ width: 56, height: 56, ...flexbox.center }}
+              onPress={() => {
+                navigate(WEB_ROUTES.dashboard)
+              }}
+            >
+              {({ hovered }: any) => (
+                <DashboardIcon color={hovered ? theme.primaryText : theme.iconPrimary} />
+              )}
+            </Pressable>
+          )}
+        </View>
+        <ScrollableWrapper>
+          {SETTINGS_LINKS.map((_link, i) => {
+            // If the KeyStore device password is not configured yet, redirect to DevicePassword->Set route under the hood,
+            // instead of loading DevicePassword->Change route.
+            const link =
+              !keystoreState.hasPasswordSecret && _link.key === 'device-password-change'
+                ? { ..._link, key: 'device-password-set', path: ROUTES.devicePasswordSet }
+                : _link
+            const isActive = activeLink === link.key
 
-            navigate(WEB_ROUTES.dashboard)
-          }}
-          {...bindAnim}
-        >
-          <LeftArrowIcon color={theme.secondaryText} />
-          <Text fontSize={16} weight="medium" appearance="secondaryText" style={spacings.mlLg}>
-            {validBackRoute === 'transfer' ? t('Send') : t('Dashboard')}
-          </Text>
-        </AnimatedPressable>
-      )}
-      <View style={styles.settingsTitleWrapper}>
-        <Text style={[spacings.ml]} fontSize={20} weight="medium">
-          {t('Settings')}
-        </Text>
-      </View>
-      <ScrollableWrapper>
-        {SETTINGS_LINKS.map((_link, i) => {
-          // If the KeyStore device password is not configured yet, redirect to DevicePassword->Set route under the hood,
-          // instead of loading DevicePassword->Change route.
-          const link =
-            !keystoreState.hasPasswordSecret && _link.key === 'device-password-change'
-              ? { ..._link, key: 'device-password-set', path: ROUTES.devicePasswordSet }
-              : _link
-          const isActive = activeLink === link.key
+            return (
+              <SettingsLink
+                isSidebarLink
+                {...link}
+                key={link.key}
+                isActive={isActive}
+                style={i === SETTINGS_LINKS.length - 1 ? spacings.mb0 : {}}
+              />
+            )
+          })}
+          <View style={spacings.mbXl} />
+          {OTHER_LINKS.map((link, i) => {
+            const isActive = activeLink === link.key
 
-          return (
-            <SettingsLink
-              {...link}
-              key={link.key}
-              isActive={isActive}
-              style={i === SETTINGS_LINKS.length - 1 ? spacings.mb0 : {}}
-            />
-          )
-        })}
-        <View
-          style={{
-            width: '100%',
-            borderBottomWidth: 1,
-            borderColor:
-              themeType === THEME_TYPES.DARK ? theme.primaryBorder : theme.secondaryBorder,
-            ...spacings.mv
-          }}
-        />
-        {OTHER_LINKS.map((link, i) => {
-          const isActive = activeLink === link.key
-
-          return (
-            <SettingsLink
-              {...link}
-              key={link.key}
-              isActive={isActive}
-              style={i === OTHER_LINKS.length - 1 ? spacings.mb0 : {}}
-            />
-          )
-        })}
-      </ScrollableWrapper>
+            return (
+              <SettingsLink
+                isSidebarLink
+                {...link}
+                key={link.key}
+                isActive={isActive}
+                style={i === OTHER_LINKS.length - 1 ? spacings.mb0 : {}}
+              />
+            )
+          })}
+        </ScrollableWrapper>
+      </GlassView>
     </View>
   )
 }

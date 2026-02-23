@@ -40,6 +40,7 @@
   background: none;
   border: none;
   cursor: pointer;
+
   svg {
     width: 2em;
     height: 2em;
@@ -117,6 +118,7 @@
   display: flex;
   flex-direction: column;
 }
+
 .infoRow {
   display: flex;
   justify-content: space-between;
@@ -145,6 +147,7 @@
   display: flex;
   flex-direction: column;
   margin-bottom: 1.5rem;
+
   .label {
     flex: 1;
     text-align: left;
@@ -160,6 +163,7 @@
   align-items: center;
   justify-content: space-between;
 }
+
 .stakeInputMax {
   font-weight: 300;
   font-size: 0.875rem;
@@ -177,6 +181,7 @@
     color: $red-400;
   }
 }
+
 .percentageButton,
 .stakeInput {
   display: flex;
@@ -195,6 +200,7 @@
   font-weight: 500;
   padding: 0.75rem 1rem;
 }
+
 .percentageButton {
   flex: 1;
   font-weight: 300;
@@ -208,6 +214,7 @@
   display: flex;
   margin-top: 0.25rem;
 }
+
 .blur {
   filter: blur(5px) brightness(0.5);
 }
@@ -259,7 +266,7 @@
 .readyToWithdrawText {
   position: absolute;
   align-self: center;
-  margin-top: 25%;
+  margin-top: 10%;
   padding: auto;
   display: flex;
   flex-direction: column;
@@ -291,12 +298,12 @@
   align-items: center;
 }
 
-.timerContainer > :nth-child(2) {
+.timerContainer> :nth-child(2) {
   font-weight: 500;
   font-size: 1.25rem;
 }
 
-.timerContainer > :nth-child(4) {
+.timerContainer> :nth-child(4) {
   font-weight: 500;
   font-size: 1.25rem;
 }
@@ -311,6 +318,7 @@
 
   text-align: center;
   vertical-align: middle;
+
   a {
     color: #4872ff;
   }
@@ -323,10 +331,12 @@
   display: flex;
   flex-direction: column;
   width: 35rem;
+
   .heading {
     font-weight: 500;
     font-size: 2.5rem;
   }
+
   .infoText {
     font-weight: 300;
     font-style: Light;
@@ -334,14 +344,17 @@
     line-height: 2rem;
     text-align: center;
   }
+
   .buttonWrapper {
     display: flex;
     gap: 2rem;
     width: 100%;
+
     .cancelButton {
       @include gray-button;
       font-size: 1.25rem;
     }
+
     .confirmButton {
       @include primary-button;
       font-size: 1.25rem;

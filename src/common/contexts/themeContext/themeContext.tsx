@@ -1,15 +1,10 @@
 import React, { createContext, useCallback, useEffect, useMemo } from 'react'
 import { useColorScheme } from 'react-native'
 
-import ThemeColors, {
-  DEFAULT_THEME,
-  THEME_TYPES,
-  ThemeProps,
-  ThemeType
-} from '@common/styles/themeConfig'
+import useController from '@common/hooks/useController'
+import { DEFAULT_THEME } from '@common/styles/theme/types'
+import ThemeColors, { THEME_TYPES, ThemeProps, ThemeType } from '@common/styles/themeConfig'
 import { isExtension } from '@web/constants/browserapi'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useWalletStateController from '@web/hooks/useWalletStateController'
 
 export interface ThemeContextReturnType {
   theme: ThemeProps
@@ -30,8 +25,8 @@ const ThemeProvider: React.FC<{
   forceThemeType?: ThemeType
 }> = ({ children, forceThemeType }) => {
   const systemThemeType = useColorScheme()
-  const { dispatch } = useBackgroundService() || {}
-  const { themeType: selectedThemeType } = useWalletStateController() || {}
+  const { dispatch } = useController('WalletStateController') || {}
+  const { themeType: selectedThemeType } = useController('WalletStateController').state || {}
 
   useEffect(() => {
     if (!isExtension) return
@@ -74,7 +69,13 @@ const ThemeProvider: React.FC<{
 
   const setThemeType = useCallback(
     (type: THEME_TYPES) => {
-      dispatch({ type: 'SET_THEME_TYPE', params: { themeType: type } })
+      dispatch({
+        type: 'method',
+        params: {
+          method: 'setThemeType',
+          args: [type]
+        }
+      })
     },
     [dispatch]
   )

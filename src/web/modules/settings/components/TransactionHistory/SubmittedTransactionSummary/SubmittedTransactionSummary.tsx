@@ -10,15 +10,16 @@ import {
 import { humanizeAccountOp } from '@ambire-common/libs/humanizer'
 import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import SkeletonLoader from '@common/components/SkeletonLoader'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
-import { SPACING_SM } from '@common/styles/spacings'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
+import spacings, { SPACING_SM } from '@common/styles/spacings'
+import DelegationHumanization from '@web/components/DelegationHumanization'
 import TransactionSummary, {
   sizeMultiplier
 } from '@web/modules/sign-account-op/components/TransactionSummary'
 
-import DelegationHumanization from '@web/components/DelegationHumanization'
 import Footer from './Footer'
+import StatusBadge from './StatusBadge'
 import getStyles from './styles'
 
 interface Props {
@@ -36,7 +37,7 @@ const SubmittedTransactionSummaryInner = ({
   defaultType
 }: Props) => {
   const { styles } = useTheme(getStyles)
-  const { networks } = useNetworksControllerState()
+  const { networks } = useController('NetworksController').state
 
   const network: Network | undefined = useMemo(
     () => networks.find((n) => n.chainId === submittedAccountOp.chainId),
@@ -81,6 +82,15 @@ const SubmittedTransactionSummaryInner = ({
         }
       ]}
     >
+      <View
+        style={{
+          ...spacings.phSm,
+          marginBottom: SPACING_SM * sizeMultiplier[size],
+          alignItems: 'flex-start'
+        }}
+      >
+        <StatusBadge status={submittedAccountOp.status} textSize={14 * sizeMultiplier[size]} />
+      </View>
       {!isDelegationTxn &&
         calls.map((call: IrCall) => (
           <TransactionSummary
@@ -88,7 +98,7 @@ const SubmittedTransactionSummaryInner = ({
             style={{ ...styles.summaryItem, marginBottom: SPACING_SM * sizeMultiplier[size] }}
             call={call}
             chainId={submittedAccountOp.chainId}
-            isHistory
+            type="history"
             enableExpand={defaultType === 'full-info'}
             size={size}
             hideLinks

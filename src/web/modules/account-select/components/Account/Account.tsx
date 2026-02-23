@@ -12,21 +12,15 @@ import Dropdown from '@common/components/Dropdown'
 import Editable from '@common/components/Editable'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
 import useReverseLookup from '@common/hooks/useReverseLookup'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
-import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
-import useMainControllerState from '@web/hooks/useMainControllerState'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
-import { getUiType } from '@web/utils/uiType'
 
 import getStyles from './styles'
-
-const { isTab } = getUiType()
 
 const Account = ({
   account,
@@ -36,6 +30,7 @@ const Account = ({
   isSelectable = true,
   withKeyType = true,
   renderRightChildren,
+  inverseInteractionColors = false,
   options = {
     withOptionsButton: false
   },
@@ -46,10 +41,12 @@ const Account = ({
   maxAccountAddrLength?: number
   withSettings?: boolean
   isSelectable?: boolean
+  inverseInteractionColors?: boolean
   withKeyType?: boolean
   renderRightChildren?: () => React.ReactNode
   options?: {
-    withOptionsButton: boolean
+    withOptionsButton?: boolean
+    markSelected?: boolean
     setAccountToImportOrExport?: React.Dispatch<React.SetStateAction<AccountInterface | null>>
     setSmartSettingsAccount?: React.Dispatch<React.SetStateAction<AccountInterface | null>>
     setAccountToRemove?: React.Dispatch<React.SetStateAction<AccountInterface | null>>
@@ -60,18 +57,23 @@ const Account = ({
   const { t } = useTranslation()
   const { theme, styles } = useTheme(getStyles)
   const { addToast } = useToast()
-  const { statuses: mainStatuses } = useMainControllerState()
-  const { account: selectedAccount } = useSelectedAccountControllerState()
-  const { dispatch } = useBackgroundService()
+  const {
+    state: { statuses: mainStatuses },
+    dispatch: mainDispatch
+  } = useController('MainController')
+  const {
+    state: { account: selectedAccount }
+  } = useController('SelectedAccountController')
+  const { dispatch: accountsDispatch } = useController('AccountsController')
   const { ens, isLoading } = useReverseLookup({ address: addr })
-  const { keys } = useKeystoreControllerState()
+  const { keys } = useController('KeystoreController').state
   const [bindAnim, animStyle] = useCustomHover({
     property: 'backgroundColor',
     values: {
-      from: theme.primaryBackground,
-      to: !options.setAccountToImportOrExport ? theme.secondaryBackground : theme.primaryBackground
+      from: !inverseInteractionColors ? theme.primaryBackground : theme.secondaryBackground,
+      to: !inverseInteractionColors ? theme.secondaryBackground : theme.primaryBackground
     },
-    forceHoveredStyle: !options.setAccountToImportOrExport && addr === selectedAccount?.addr
+    forceHoveredStyle: options.markSelected && addr === selectedAccount?.addr
   })
 
   const [dropdownPosition, setDropdownPosition] = useState({ x: 0, y: 0 })
@@ -82,24 +84,29 @@ const Account = ({
     }
 
     if (selectedAccount?.addr !== addr) {
-      dispatch({
-        type: 'MAIN_CONTROLLER_SELECT_ACCOUNT',
-        params: { accountAddr: addr }
+      mainDispatch({
+        type: 'method',
+        params: { method: 'selectAccount', args: [addr] }
       })
     }
 
     onSelect && onSelect(addr)
-  }, [addr, dispatch, onSelect, selectedAccount, options.setAccountToImportOrExport])
+  }, [addr, mainDispatch, onSelect, selectedAccount, options.setAccountToImportOrExport])
 
   const onSave = useCallback(
     (value: string) => {
-      dispatch({
-        type: 'ACCOUNTS_CONTROLLER_UPDATE_ACCOUNT_PREFERENCES',
-        params: [{ addr, preferences: { label: value, pfp: preferences.pfp } }]
+      if (!addr) return
+
+      accountsDispatch({
+        type: 'method',
+        params: {
+          method: 'updateAccountPreferences',
+          args: [[{ addr, preferences: { label: value, pfp: preferences.pfp } }]]
+        }
       })
       addToast(t('Account label updated.'))
     },
-    [addToast, addr, dispatch, preferences.pfp, t]
+    [addToast, addr, accountsDispatch, preferences.pfp, t]
   )
 
   const onDropdownSelect = (item: { label: string; value: string }) => {
@@ -153,8 +160,7 @@ const Account = ({
         styles.accountContainer,
         containerStyle,
         // @ts-ignore
-        options.setAccountToImportOrExport ? { cursor: 'default' } : {},
-        isSelectable ? animStyle : {}
+        isSelectable ? animStyle : { cursor: 'default' }
       ]}
     >
       <View style={[flexbox.flex1, flexbox.directionRow]}>
@@ -168,7 +174,12 @@ const Account = ({
           <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
             {!withSettings ? (
               <>
-                <Text fontSize={isTab ? 16 : 14} weight="medium" numberOfLines={1}>
+                <Text
+                  fontSize={withSettings ? 16 : 14}
+                  weight="medium"
+                  numberOfLines={1}
+                  style={!withSettings ? { maxWidth: 200 } : {}}
+                >
                   {account.preferences.label}
                 </Text>
                 {!!withKeyType && (
@@ -183,8 +194,8 @@ const Account = ({
               <Editable
                 initialValue={account.preferences.label}
                 onSave={onSave}
-                fontSize={isTab ? 16 : 14}
-                height={24}
+                fontSize={withSettings ? 16 : 14}
+                height={20}
                 textProps={{
                   weight: 'medium'
                 }}
@@ -204,6 +215,7 @@ const Account = ({
           <View style={[flexbox.directionRow, flexbox.alignCenter]}>
             <DomainBadge ens={ens} />
             <AccountAddress
+              containerStyle={spacings.pb0}
               isLoading={isLoading}
               ens={ens}
               address={addr}
@@ -220,6 +232,7 @@ const Account = ({
             externalPosition={dropdownPosition}
             setExternalPosition={setDropdownPosition}
             onSelect={onDropdownSelect}
+            kebabIconProps={{ width: 28, height: 28 }}
           />
         )}
       </View>

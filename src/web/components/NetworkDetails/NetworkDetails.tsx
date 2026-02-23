@@ -15,14 +15,12 @@ import DialogFooter from '@common/components/Dialog/DialogFooter'
 import NetworkIcon from '@common/components/NetworkIcon'
 import Text from '@common/components/Text'
 import { isAmbireNext, isDev } from '@common/config/env'
+import useController from '@common/hooks/useController'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings, { SPACING, SPACING_MD, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import NetworkForm from '@web/modules/settings/screens/NetworksSettingsScreen/NetworkForm'
 
 import getStyles from './styles'
@@ -59,9 +57,12 @@ const NetworkDetails = ({
   responsiveSizeMultiplier = 1
 }: Props) => {
   const { t } = useTranslation()
-  const { theme, styles, themeType } = useTheme(getStyles)
-  const { dispatch } = useBackgroundService()
-  const { statuses, allNetworks } = useNetworksControllerState()
+  const { theme, styles } = useTheme(getStyles)
+
+  const {
+    state: { statuses, allNetworks },
+    dispatch: networksDispatch
+  } = useController('NetworksController')
   const { ref: dialogRef, open: openDialog, close: closeDialog } = useModalize()
 
   const { pathname } = useRoute()
@@ -92,22 +93,20 @@ const NetworkDetails = ({
 
   const shouldDisplayDisableButton = useMemo(
     () => isEditableRoute && !isEmpty && allowRemoveNetwork && String(chainId) !== '1',
-    [pathname, isEmpty, allowRemoveNetwork, chainId]
+    [isEmpty, allowRemoveNetwork, chainId, isEditableRoute]
   )
 
   const updateNetworkDisabled = useCallback(() => {
     if (statuses.updateNetwork !== 'INITIAL') return
-    dispatch({
-      type: 'MAIN_CONTROLLER_UPDATE_NETWORK',
+    networksDispatch({
+      type: 'method',
       params: {
-        chainId: BigInt(chainId),
-        network: {
-          disabled: !networkData?.disabled
-        }
+        method: 'updateNetwork',
+        args: [{ disabled: !networkData?.disabled }, BigInt(chainId)]
       }
     })
     closeDialog()
-  }, [chainId, closeDialog, dispatch, networkData?.disabled, statuses.updateNetwork])
+  }, [chainId, closeDialog, networkData?.disabled, networksDispatch, statuses.updateNetwork])
 
   const toggleNetworkDisabled = useCallback(() => {
     if (networkData?.disabled || allowDisableWithoutConfirmation) {
@@ -115,7 +114,7 @@ const NetworkDetails = ({
     } else {
       openDialog()
     }
-  }, [networkData?.disabled, openDialog, updateNetworkDisabled])
+  }, [networkData?.disabled, openDialog, updateNetworkDisabled, allowDisableWithoutConfirmation])
 
   const renderInfoItem = useCallback(
     (title: string, value: string, withBottomSpacing = true) => {
@@ -161,14 +160,15 @@ const NetworkDetails = ({
                   id={chainId.toString()}
                   name={name}
                   uris={iconUrls.length ? iconUrls : undefined}
-                  size={(type === 'vertical' ? 26 : 32) * responsiveSizeMultiplier}
+                  size={24 * responsiveSizeMultiplier}
                 />
               </View>
             )}
             <Text
               fontSize={14 * responsiveSizeMultiplier}
-              appearance={value === 'Invalid Chain ID' ? 'errorText' : 'primaryText'}
+              appearance={value === 'Invalid Chain ID' ? 'errorText' : 'secondaryText'}
               numberOfLines={1}
+              weight="medium"
               selectable
             >
               {value}
@@ -199,7 +199,7 @@ const NetworkDetails = ({
         <Text
           style={spacings.mrMi}
           fontSize={12 * responsiveSizeMultiplier}
-          color={themeType === THEME_TYPES.DARK ? theme.linkText : theme.featureDecorative}
+          color={theme.linkText}
           underline
         >
           {!showAllRpcUrls &&
@@ -212,33 +212,14 @@ const NetworkDetails = ({
             })}
         </Text>
         {!!showAllRpcUrls && (
-          <UpArrowIcon
-            width={12}
-            height={6}
-            color={themeType === THEME_TYPES.DARK ? theme.linkText : theme.featureDecorative}
-            strokeWidth="1.7"
-          />
+          <UpArrowIcon width={12} height={6} color={theme.linkText} strokeWidth="1.7" />
         )}
         {!showAllRpcUrls && (
-          <DownArrowIcon
-            width={12}
-            height={6}
-            color={themeType === THEME_TYPES.DARK ? theme.linkText : theme.featureDecorative}
-            strokeWidth="1.7"
-          />
+          <DownArrowIcon width={12} height={6} color={theme.linkText} strokeWidth="1.7" />
         )}
       </Pressable>
     ) : null
-  }, [
-    sortedRpcUrls.length,
-    type,
-    responsiveSizeMultiplier,
-    themeType,
-    theme.linkText,
-    theme.featureDecorative,
-    showAllRpcUrls,
-    t
-  ])
+  }, [sortedRpcUrls.length, type, responsiveSizeMultiplier, theme.linkText, showAllRpcUrls, t])
 
   const renderRpcUrlsItem = useCallback(() => {
     return (
@@ -267,8 +248,9 @@ const NetworkDetails = ({
           {!showAllRpcUrls ? (
             <Text
               fontSize={14 * responsiveSizeMultiplier}
-              appearance="primaryText"
+              appearance="secondaryText"
               numberOfLines={1}
+              weight="medium"
               selectable
             >
               {sortedRpcUrls[0]}
@@ -278,8 +260,8 @@ const NetworkDetails = ({
               <Text
                 key={rpcUrl}
                 fontSize={14 * responsiveSizeMultiplier}
-                appearance={i === 0 ? 'primaryText' : 'secondaryText'}
-                weight={i === 0 ? 'regular' : 'light'}
+                appearance={i === 0 ? 'secondaryText' : 'tertiaryText'}
+                weight={i === 0 ? 'medium' : 'regular'}
                 numberOfLines={1}
                 style={i !== sortedRpcUrls.length - 1 && spacings.mbMi}
                 selectable
@@ -333,28 +315,24 @@ const NetworkDetails = ({
           {!!shouldDisplayEditButton && (
             <Button
               style={[
-                { maxHeight: 32 * responsiveSizeMultiplier },
+                { maxHeight: 40 * responsiveSizeMultiplier },
                 !!shouldDisplayDisableButton && {
                   marginRight: SPACING_TY * responsiveSizeMultiplier
                 }
               ]}
               text={t('Edit')}
               type="secondary"
+              size="smaller"
               onPress={openBottomSheet as any}
               hasBottomSpacing={false}
+              childrenPosition="left"
             >
-              <View
-                style={{
-                  paddingLeft: SPACING_TY * responsiveSizeMultiplier
-                }}
-              >
-                <EditPenIcon width={12} height={12} color={theme.primary} />
-              </View>
+              <EditPenIcon width={20} height={20} color={theme.primaryText} style={spacings.mrMi} />
             </Button>
           )}
           {!!shouldDisplayDisableButton && (
             <Button
-              style={{ maxHeight: 32 * responsiveSizeMultiplier }}
+              style={{ maxHeight: 40 * responsiveSizeMultiplier }}
               disabled={statuses.updateNetwork !== 'INITIAL'}
               text={!networkData?.disabled ? t('Disable') : t('Enable')}
               testID="disable-network-btn" // @TODO
@@ -409,10 +387,7 @@ const NetworkDetails = ({
           contentContainerStyle: { flex: 1 }
         }}
         containerInnerWrapperStyles={{ flex: 1 }}
-        backgroundColor={
-          themeType === THEME_TYPES.DARK ? 'secondaryBackground' : 'primaryBackground'
-        }
-        style={{ ...spacings.ph0, ...spacings.pv0, overflow: 'hidden' }}
+        style={{ ...spacings.ph0, ...spacings.pv0, overflow: 'hidden', maxWidth: 880 }}
       >
         <NetworkForm
           selectedChainId={chainId.toString()}

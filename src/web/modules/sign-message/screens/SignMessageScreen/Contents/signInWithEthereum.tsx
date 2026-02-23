@@ -11,15 +11,13 @@ import Select from '@common/components/Select'
 import Text from '@common/components/Text'
 import Toggle from '@common/components/Toggle'
 import Tooltip from '@common/components/Tooltip'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING, SPACING_LG, SPACING_MD, SPACING_SM } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import useResponsiveActionWindow from '@web/hooks/useResponsiveActionWindow'
-import useSignMessageControllerState from '@web/hooks/useSignMessageControllerState'
 import HardwareWalletSigningModal from '@web/modules/hardware-wallet/components/HardwareWalletSigningModal'
 import LedgerConnectModal from '@web/modules/hardware-wallet/components/LedgerConnectModal'
 import Info from '@web/modules/sign-message/screens/SignMessageScreen/Info'
@@ -94,13 +92,13 @@ const SignInWithEthereum = ({
   handleDismissLedgerConnectModal
 }: Props) => {
   const { t } = useTranslation()
-  const signMessageState = useSignMessageControllerState()
+  const { state: signMessageState, dispatch: signMessageDispatch } =
+    useController('SignMessageController')
   const signStatus = signMessageState.statuses.sign
   const { styles } = useTheme(getStyles)
   const { theme } = useTheme()
-  const { networks } = useNetworksControllerState()
+  const { networks } = useController('NetworksController').state
   const { responsiveSizeMultiplier } = useResponsiveActionWindow()
-  const { dispatch } = useBackgroundService()
 
   const siweMessageToSign = useMemo(() => {
     // It's validated beforehand. This component is never rendered if the
@@ -169,26 +167,28 @@ const SignInWithEthereum = ({
 
   const updateIsAutoLoginEnabled = useCallback(
     (enabled: boolean) => {
-      dispatch({
-        type: 'MAIN_CONTROLLER_SIGN_MESSAGE_UPDATE',
+      signMessageDispatch({
+        type: 'method',
         params: {
-          isAutoLoginEnabledByUser: enabled
+          method: 'update',
+          args: [{ isAutoLoginEnabledByUser: enabled }]
         }
       })
     },
-    [dispatch]
+    [signMessageDispatch]
   )
 
   const updateAutoLoginExpirationTime = useCallback(
     (autoLoginDuration: number) => {
-      dispatch({
-        type: 'MAIN_CONTROLLER_SIGN_MESSAGE_UPDATE',
+      signMessageDispatch({
+        type: 'method',
         params: {
-          autoLoginDuration
+          method: 'update',
+          args: [{ autoLoginDuration }]
         }
       })
     },
-    [dispatch]
+    [signMessageDispatch]
   )
 
   return (
@@ -231,9 +231,7 @@ const SignInWithEthereum = ({
         >
           <ScrollableWrapper
             style={{
-              backgroundColor: theme.primaryBackground,
-              borderWidth: 1,
-              borderColor: theme.secondaryBorder,
+              backgroundColor: theme.secondaryBackground,
               paddingHorizontal: SPACING_SM * responsiveSizeMultiplier,
               paddingVertical: SPACING * responsiveSizeMultiplier,
               marginBottom: SPACING * responsiveSizeMultiplier,

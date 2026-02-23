@@ -8,7 +8,7 @@ import ChevronDownIcon from '@legends/common/assets/svg/ChevronDownIcon'
 import Page from '@legends/components/Page'
 import useAccountContext from '@legends/hooks/useAccountContext'
 import useLeaderboardContext from '@legends/hooks/useLeaderboardContext'
-import usePortfolioControllerState from '@legends/hooks/usePortfolioControllerState/usePortfolioControllerState'
+import usePortfolio from '@legends/hooks/usePortfolio'
 import FaqSection from '@legends/modules/Home/components/FaqSection'
 import { reorderLeaderboardWithLiveData } from '@legends/utils/leaderboards'
 
@@ -19,7 +19,7 @@ import Background3 from './media/Background3'
 
 const Dashboard = () => {
   const { season2LeaderboardData } = useLeaderboardContext()
-  const { userRewardsStats, isLoadingClaimableRewards } = usePortfolioControllerState()
+  const { userRewardsStats, isLoadingClaimableRewards } = usePortfolio()
   const [expandedIds, setExpandedIds] = React.useState<Set<Stat['id']>>(new Set())
   const { connectedAccount } = useAccountContext()
 

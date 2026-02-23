@@ -12,21 +12,15 @@ import {
 } from '@ambire-common/libs/signMessage/signMessage'
 import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
 import Spinner from '@common/components/Spinner'
-import useTheme from '@common/hooks/useTheme'
+import useController from '@common/hooks/useController'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useToast from '@common/hooks/useToast'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
-import HeaderAccountAndNetworkInfo from '@web/components/HeaderAccountAndNetworkInfo'
 import SmallNotificationWindowWrapper from '@web/components/SmallNotificationWindowWrapper'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import useDappInfo from '@web/hooks/useDappInfo/useDappInfo'
-import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
-import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
-import useSignMessageControllerState from '@web/hooks/useSignMessageControllerState'
 import ActionFooter from '@web/modules/action-requests/components/ActionFooter'
+import ActionHeader from '@web/modules/action-requests/components/ActionHeader'
 import useLedger from '@web/modules/hardware-wallet/hooks/useLedger'
 import SigningKeySelect from '@web/modules/sign-message/components/SignKeySelect'
 
@@ -36,20 +30,25 @@ import SignInWithEthereum from './Contents/signInWithEthereum'
 
 const SignMessageScreen = () => {
   const { t } = useTranslation()
-  const signMessageState = useSignMessageControllerState()
+  const { state: signMessageState, dispatch: signMessageDispatch } =
+    useController('SignMessageController')
   const signStatus = signMessageState.statuses.sign
   const [hasReachedBottom, setHasReachedBottom] = useState<boolean | null>(null)
-  const keystoreState = useKeystoreControllerState()
-  const { account } = useSelectedAccountControllerState()
-  const { networks } = useNetworksControllerState()
-  const { dispatch } = useBackgroundService()
+  const keystoreState = useController('KeystoreController').state
+  const {
+    state: { account }
+  } = useController('SelectedAccountController')
+  const { networks } = useController('NetworksController').state
+  const { dispatch } = useControllersMiddleware()
   const { isLedgerConnected } = useLedger()
   const [isChooseSignerShown, setIsChooseSignerShown] = useState(false)
   const [shouldDisplayLedgerConnectModal, setShouldDisplayLedgerConnectModal] = useState(false)
   const [makeItSmartConfirmed, setMakeItSmartConfirmed] = useState(false)
   const [doNotAskMeAgain, setDoNotAskMeAgain] = useState(false)
-  const { currentUserRequest } = useRequestsControllerState()
-  const { theme, themeType } = useTheme()
+  const {
+    state: { currentUserRequest },
+    dispatch: requestsDispatch
+  } = useController('RequestsController')
   const { addToast } = useToast()
 
   const userRequest = useMemo(() => {
@@ -132,38 +131,43 @@ const SignMessageScreen = () => {
     if (userRequest.kind === 'message' || userRequest.kind === 'siwe')
       userRequest.meta.params.message = toPersonalSignHex(userRequest.meta.params.message)
 
-    dispatch({
-      type: 'MAIN_CONTROLLER_SIGN_MESSAGE_INIT',
+    signMessageDispatch({
+      type: 'method',
       params: {
-        dapp: { name, icon },
-        messageToSign: {
-          fromRequestId: userRequest.id,
-          content: {
-            kind: userRequest.kind,
-            ...(userRequest.meta.params as any)
-          },
-          accountAddr: userRequest.meta.accountAddr,
-          chainId: userRequest.meta.chainId,
-          signature: null
-        }
+        method: 'init',
+        args: [
+          {
+            dapp: { name, icon },
+            messageToSign: {
+              fromRequestId: userRequest.id,
+              content: {
+                kind: userRequest.kind,
+                ...(userRequest.meta.params as any)
+              },
+              accountAddr: userRequest.meta.accountAddr,
+              chainId: userRequest.meta.chainId,
+              signature: null
+            }
+          }
+        ]
       }
     })
-  }, [dispatch, userRequest, signMessageState.messageToSign?.fromRequestId, name, icon])
+  }, [signMessageDispatch, userRequest, signMessageState.messageToSign?.fromRequestId, name, icon])
 
   useEffect(() => {
     return () => {
-      dispatch({ type: 'MAIN_CONTROLLER_SIGN_MESSAGE_RESET' })
+      signMessageDispatch({ type: 'method', params: { method: 'reset', args: [] } })
     }
-  }, [dispatch])
+  }, [signMessageDispatch])
 
   const handleReject = () => {
     if (!userRequest) return
 
-    dispatch({
-      type: 'REQUESTS_CONTROLLER_REJECT_USER_REQUEST',
+    requestsDispatch({
+      type: 'method',
       params: {
-        err: t('User rejected the request.'),
-        id: userRequest.id
+        method: 'rejectUserRequests',
+        args: [t('User rejected the request.'), [userRequest.id]]
       }
     })
   }
@@ -292,16 +296,8 @@ const SignMessageScreen = () => {
     <SmallNotificationWindowWrapper>
       <TabLayoutContainer
         width="full"
-        header={
-          <HeaderAccountAndNetworkInfo
-            backgroundColor={
-              themeType === THEME_TYPES.DARK
-                ? (theme.secondaryBackground as string)
-                : (theme.primaryBackground as string)
-            }
-          />
-        }
-        footer={
+        header={<ActionHeader />}
+        renderDirectChildren={() => (
           <ActionFooter
             onReject={handleReject}
             onResolve={handleSign}
@@ -324,12 +320,7 @@ const SignMessageScreen = () => {
                 }
               : {})}
           />
-        }
-        backgroundColor={
-          isAuthorization && !makeItSmartConfirmed
-            ? theme.primaryBackground
-            : theme.quinaryBackground
-        }
+        )}
       >
         <SigningKeySelect
           isVisible={isChooseSignerShown}

@@ -13,15 +13,13 @@ import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
 import { useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
 import spacings, { SPACING_2XL, SPACING_TY } from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexboxStyles from '@common/styles/utils/flexbox'
 import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import { getTokenId } from '@web/utils/token'
 
 import TokenDetails from '../TokenDetails'
@@ -51,40 +49,19 @@ const BaseTokenItem = ({
   onPress,
   wrapperTestID
 }: Props) => {
-  const { portfolio } = useSelectedAccountControllerState()
-  const { networks } = useNetworksControllerState()
+  const { state: portfolio } = useController(
+    'SelectedAccountController',
+    (state) => state.portfolio
+  )
+
+  const { state: networks } = useController('NetworksController', (state) => state.networks)
   const { t } = useTranslation()
-  const { styles, theme, themeType } = useTheme(getStyles)
+  const { styles, theme } = useTheme(getStyles)
 
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
-
-  const isDark = themeType === THEME_TYPES.DARK
-  const hasRewardsStyle = Boolean(rewardsStyle)
-  const getColors = useMemo(() => {
-    if (!hasRewardsStyle) {
-      return {
-        from: theme.primaryBackground,
-        to: isDark ? theme.tertiaryBackground : theme.secondaryBackground
-      }
-    }
-
-    return {
-      from: isDark ? theme.tertiaryBackground : theme.secondaryBackground,
-      to: isDark ? theme.secondaryBackground : theme.tertiaryBackground
-    }
-  }, [
-    hasRewardsStyle,
-    isDark,
-    theme.secondaryBackground,
-    theme.tertiaryBackground,
-    theme.primaryBackground
-  ])
-
-  const { from, to } = getColors
-
   const [bindAnim, animStyle, isHovered] = useCustomHover({
     property: 'backgroundColor',
-    values: { from, to }
+    values: { from: theme.primaryBackground, to: theme.secondaryBackground }
   })
 
   const tokenId = getTokenId(token)
@@ -103,7 +80,6 @@ const BaseTokenItem = ({
     balanceLatestFormatted,
     priceUSDFormatted,
     balanceUSDFormatted,
-    networkData,
     isPending: hasPendingBadges,
     pendingBalance,
     pendingBalanceFormatted,
@@ -118,8 +94,8 @@ const BaseTokenItem = ({
 
   const textColor = useMemo(() => {
     if (!isPending) return theme.primaryText
-    return pendingToBeSigned ? theme.warningText : theme.info2Text
-  }, [isPending, pendingToBeSigned, theme.primaryText, theme.warningText, theme.info2Text])
+    return pendingToBeSigned ? theme.warningText : theme.infoText
+  }, [isPending, pendingToBeSigned, theme.primaryText, theme.warningText, theme.infoText])
 
   return (
     <AnimatedPressable
@@ -131,7 +107,7 @@ const BaseTokenItem = ({
           borderRadius: borderRadius || BORDER_RADIUS_PRIMARY,
           marginBottom: hasBottomSpacing ? SPACING_TY : 0,
           ...(rewardsStyle && {
-            boxShadow: `0 ${isHovered ? 2 : 3}px 0 0 ${String(theme.iconPrimary2)}`
+            boxShadow: `0 ${isHovered ? 2 : 3}px 0 0 ${String(theme.primaryAccent)}`
           })
         },
         animStyle
@@ -147,93 +123,84 @@ const BaseTokenItem = ({
       </BottomSheet>
 
       <View style={flexboxStyles.flex1}>
-        <View
-          style={[
-            flexboxStyles.directionRow,
-            flexboxStyles.flex1,
-            rewardsStyle ? flexboxStyles.alignCenter : {}
-          ]}
-        >
-          <View style={[flexboxStyles.directionRow, { flex: 1.5 }]}>
-            <View style={[spacings.mr, flexboxStyles.justifyCenter]}>
-              {rewardsStyle ? (
-                <Image source={rewardsImage as any} style={{ width: 40, height: 40 }} />
-              ) : (
-                <TokenIcon
-                  withContainer
-                  address={address}
-                  chainId={chainId}
-                  onGasTank={onGasTank}
-                  containerHeight={40}
-                  containerWidth={40}
-                  width={28}
-                  height={28}
-                />
-              )}
-            </View>
-
-            <View style={[flexboxStyles.flex1, spacings.mr]}>
-              <View
-                style={[
-                  flexboxStyles.flex1,
-                  flexboxStyles.directionRow,
-                  flexboxStyles.justifySpaceBetween,
-                  flexboxStyles.alignCenter
-                ]}
-              >
-                <View>
-                  <Text
-                    selectable
-                    style={spacings.mrTy}
-                    color={textColor}
-                    fontSize={16}
-                    weight="number_bold"
-                    numberOfLines={1}
-                    dataSet={createGlobalTooltipDataSet({
-                      id: `${tokenId}-balance`,
-                      content: String(isPending ? pendingBalance : balance)
-                    })}
-                    testID={`token-balance-${tokenId}`}
-                  >
-                    <Text
-                      weight="number_bold"
-                      color={rewardsStyle ? theme.projectedRewards : textColor}
-                    >
-                      {isPending ? pendingBalanceFormatted : balanceFormatted}
-                    </Text>{' '}
-                    {symbol}{' '}
-                  </Text>
-                  <Text weight="regular" style={[spacings.mrMi]} fontSize={12}>
-                    {!label
-                      ? networkData && t('on {{network}}', { network: networkData.name })
-                      : label}
-                  </Text>
-                </View>
-                {/* area for optional actions (Claim button etc) */}
-                {extraActions}
-              </View>
-            </View>
+        <View style={[flexboxStyles.directionRow, flexboxStyles.flex1]}>
+          <View style={[spacings.mr, flexboxStyles.justifyCenter]}>
+            {rewardsStyle ? (
+              <Image source={rewardsImage as any} style={{ width: 40, height: 40 }} />
+            ) : (
+              <TokenIcon
+                withContainer
+                address={address}
+                chainId={chainId}
+                onGasTank={onGasTank}
+                containerHeight={40}
+                containerWidth={40}
+                width={28}
+                height={28}
+              />
+            )}
           </View>
 
-          <Text
-            selectable
-            fontSize={16}
-            color={textColor}
-            weight="number_regular"
-            style={{ flex: 0.7 }}
-          >
-            {priceUSDFormatted}
-          </Text>
-
-          <Text
-            selectable
-            fontSize={16}
-            weight="number_bold"
-            color={textColor}
-            style={{ flex: 0.4, textAlign: 'right' }}
-          >
-            {isPending ? pendingBalanceUSDFormatted : balanceUSDFormatted}
-          </Text>
+          <View style={[flexboxStyles.flex1, spacings.mr]}>
+            <View
+              style={[
+                flexboxStyles.flex1,
+                flexboxStyles.directionRow,
+                flexboxStyles.justifySpaceBetween,
+                flexboxStyles.alignCenter
+              ]}
+            >
+              <View>
+                <Text
+                  selectable
+                  color={textColor}
+                  fontSize={16}
+                  weight="semiBold"
+                  numberOfLines={1}
+                >
+                  {symbol}
+                </Text>
+                <Text
+                  selectable
+                  fontSize={14}
+                  weight="number_medium"
+                  numberOfLines={1}
+                  dataSet={createGlobalTooltipDataSet({
+                    id: `${tokenId}-balance`,
+                    content: String(isPending ? pendingBalance : balance)
+                  })}
+                  appearance="secondaryText"
+                  testID={`token-balance-${tokenId}`}
+                >
+                  {isPending ? pendingBalanceFormatted : balanceFormatted}
+                </Text>
+              </View>
+              {/* area for optional actions (Claim button etc) */}
+              {extraActions}
+            </View>
+          </View>
+          <View style={flexboxStyles.alignEnd}>
+            <Text
+              selectable
+              fontSize={16}
+              weight="number_bold"
+              color={textColor}
+              style={{ lineHeight: 20 }}
+            >
+              {isPending ? pendingBalanceUSDFormatted : balanceUSDFormatted}
+            </Text>
+            <Text
+              style={{
+                lineHeight: 18
+              }}
+              selectable
+              fontSize={14}
+              appearance="secondaryText"
+              weight="number_medium"
+            >
+              {priceUSDFormatted}
+            </Text>
+          </View>
         </View>
 
         {isPending && (
@@ -254,32 +221,31 @@ const BaseTokenItem = ({
                   amount={pendingToBeConfirmed}
                   amountFormatted={pendingToBeConfirmedFormatted}
                   label="confirming"
-                  backgroundColor={theme.info2Background}
-                  textColor={theme.info2Text}
+                  backgroundColor={theme.infoBackground}
+                  textColor={theme.infoText}
                   Icon={PendingToBeConfirmedIcon}
                 />
               )}
             </View>
 
-            <View style={[flexboxStyles.directionRow, flexboxStyles.alignCenter]}>
+            <View
+              style={[
+                flexboxStyles.directionRow,
+                flexboxStyles.alignCenter,
+                spacings.phSm,
+                {
+                  height: 30
+                }
+              ]}
+            >
               <Text
                 selectable
-                style={[spacings.mrMi, { opacity: 0.7 }]}
                 color={theme.successText}
-                fontSize={14}
-                weight="number_bold"
-                numberOfLines={1}
-              >
-                {balanceLatestFormatted}
-              </Text>
-              <Text
-                selectable
-                style={{ opacity: 0.7 }}
-                color={theme.successText}
+                weight="medium"
                 fontSize={12}
                 numberOfLines={1}
               >
-                {t('(Onchain)')}
+                {balanceLatestFormatted} {t('(Onchain)')}
               </Text>
             </View>
           </View>

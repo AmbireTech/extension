@@ -456,6 +456,8 @@ module.exports = async function (env, argv) {
           // because the mangling messes up the gridplus-sdk package somehow.
           // The drawback is larger bundle size.
           terserRealOptions.mangle = false
+          // Preserve class names so `this.constructor.name` logic works dynamically
+          terserRealOptions.keep_classnames = true
         }
       }
     }
@@ -468,13 +470,47 @@ module.exports = async function (env, argv) {
     return config
   }
   if (isAmbireExplorer) {
-    if (process.env.APP_ENV === 'development') {
+    // Not entering this branch causes the error:
+    // handleAction: Controller ProvidersController not found
+    // This is a temporary fix
+    const ARE_CONTROLLERS_BROKEN_WITH_MINIMIZE = true
+
+    if (process.env.APP_ENV === 'development' || ARE_CONTROLLERS_BROKEN_WITH_MINIMIZE) {
       config.optimization = { minimize: false }
     } else {
       delete config.optimization.splitChunks
     }
 
     config.entry = './src/benzin/index.js'
+
+    config.resolve.fallback = {
+      stream: require.resolve('stream-browserify'),
+      crypto: require.resolve('crypto-browserify')
+    }
+
+    const terserPlugin = config.optimization.minimizer?.find(
+      (minimizer) => minimizer.constructor.name === 'TerserPlugin'
+    )
+    if (terserPlugin) {
+      const terserRealOptions = terserPlugin.options.minimizer?.options
+
+      if (terserRealOptions) {
+        terserRealOptions.compress = {
+          ...(terserRealOptions.compress || {}),
+          pure_getters: true,
+          passes: 3
+        }
+
+        terserRealOptions.output = {
+          ...(terserRealOptions.output || {}),
+          ascii_only: true,
+          comments: false
+        }
+
+        terserRealOptions.mangle = false
+        terserRealOptions.keep_classnames = true
+      }
+    }
 
     config.plugins = [
       ...defaultExpoConfigPlugins,
@@ -505,11 +541,21 @@ module.exports = async function (env, argv) {
       })
     ]
 
+    config.module.rules.push({
+      test: /\.cjs$/,
+      type: 'javascript/auto'
+    })
+
     return config
   }
   if (isLegends) {
     config.output.clean = true
     config.entry = './src/legends/index.js'
+
+    config.resolve.fallback = {
+      stream: require.resolve('stream-browserify'),
+      crypto: require.resolve('crypto-browserify')
+    }
 
     if (process.env.APP_ENV === 'development') {
       config.optimization = { minimize: false }
@@ -560,6 +606,30 @@ module.exports = async function (env, argv) {
       }
     ]
 
+    const terserPlugin = config.optimization.minimizer?.find(
+      (minimizer) => minimizer.constructor.name === 'TerserPlugin'
+    )
+    if (terserPlugin) {
+      const terserRealOptions = terserPlugin.options.minimizer?.options
+
+      if (terserRealOptions) {
+        terserRealOptions.compress = {
+          ...(terserRealOptions.compress || {}),
+          pure_getters: true,
+          passes: 3
+        }
+
+        terserRealOptions.output = {
+          ...(terserRealOptions.output || {}),
+          ascii_only: true,
+          comments: false
+        }
+
+        terserRealOptions.mangle = false
+        terserRealOptions.keep_classnames = true
+      }
+    }
+
     config.plugins = [
       ...defaultExpoConfigPlugins,
       new webpack.ProvidePlugin({
@@ -585,6 +655,11 @@ module.exports = async function (env, argv) {
         ]
       })
     ]
+
+    config.module.rules.push({
+      test: /\.cjs$/,
+      type: 'javascript/auto'
+    })
 
     return config
   }

@@ -6,17 +6,15 @@ import FailedToConnectIcon from '@common/assets/svg/FailedToConnectIcon'
 import Button from '@common/components/Button'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useDappsControllerState from '@web/hooks/useDappsControllerState'
 
 const DappsSkeletonLoader = () => {
-  const { state } = useDappsControllerState()
-  const { dispatch } = useBackgroundService()
+  const { state, dispatch: dappsDispatch } = useController('DappsController')
   const { theme } = useTheme()
   const { t } = useTranslation()
 
@@ -65,7 +63,10 @@ const DappsSkeletonLoader = () => {
               text={t('Try again')}
               type="warning"
               onPress={() => {
-                dispatch({ type: 'DAPPS_CONTROLLER_FETCH_AND_UPDATE_DAPPS' })
+                dappsDispatch({
+                  type: 'method',
+                  params: { method: 'fetchAndUpdateDapps', args: [] }
+                })
               }}
               size="small"
               style={{ height: 40 }}

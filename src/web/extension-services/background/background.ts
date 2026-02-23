@@ -24,6 +24,8 @@ import { KeystoreSigner } from '@ambire-common/libs/keystoreSigner/keystoreSigne
 import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
 import wait from '@ambire-common/utils/wait'
 import CONFIG, { APP_VERSION, isAmbireNext, isDev, isProd } from '@common/config/env'
+import { controllersNestedInMainMapping } from '@common/constants/controllersMapping'
+import { Action, MethodAction } from '@common/types/actions'
 import {
   BROWSER_EXTENSION_LOG_UPDATED_CONTROLLER_STATE_ONLY,
   BROWSER_EXTENSION_MEMORY_INTENSIVE_LOGS,
@@ -34,7 +36,6 @@ import {
 } from '@env'
 import * as Sentry from '@sentry/browser'
 import { browser, platform } from '@web/constants/browserapi'
-import { Action } from '@web/extension-services/background/actions'
 import AutoLockController from '@web/extension-services/background/controllers/auto-lock'
 import { BadgesController } from '@web/extension-services/background/controllers/badges'
 import ExtensionUpdateController from '@web/extension-services/background/controllers/extension-update'
@@ -48,7 +49,6 @@ import {
 } from '@web/extension-services/background/handlers/handleScripting'
 import handleProviderRequests from '@web/extension-services/background/provider/handleProviderRequests'
 import { providerRequestTransport } from '@web/extension-services/background/provider/providerRequestTransport'
-import { controllersNestedInMainMapping } from '@web/extension-services/background/types'
 import { notificationManager } from '@web/extension-services/background/webapi/notification'
 import { storage } from '@web/extension-services/background/webapi/storage'
 import windowManager from '@web/extension-services/background/webapi/window'
@@ -608,7 +608,7 @@ const init = async () => {
      * ensuring that the state update is immediately applied at the application level (React/Extension).
      *
      * For more info, please refer to:
-     * EventEmitter.forceEmitUpdate() or useControllerState().
+     * EventEmitter.forceEmitUpdate()
      */
     if (forceEmit) {
       sendUpdate()
@@ -652,22 +652,13 @@ const init = async () => {
         pm.addConnectListener(
           port.id,
           // @ts-ignore
-          async (messageType, action: Action, meta: MessageMeta = {}) => {
+          async (messageType, action: MethodAction | Action, meta: MessageMeta = {}) => {
             const { type } = action
             const { windowId } = meta
 
             try {
               if (messageType === '> background' && type) {
-                await handleActions(action, {
-                  pm,
-                  port,
-                  eventEmitterRegistry,
-                  mainCtrl,
-                  walletStateCtrl,
-                  autoLockCtrl,
-                  extensionUpdateCtrl,
-                  windowId
-                })
+                await handleActions(action, { pm, port, eventEmitterRegistry, mainCtrl })
               }
             } catch (err: any) {
               console.error(`${type} action failed:`, err)

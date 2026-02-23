@@ -4,11 +4,9 @@ import { ColorValue, View } from 'react-native'
 import { getCurrentAccountBanners } from '@ambire-common/libs/banners/banners'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
-import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useActivityControllerState from '@web/hooks/useActivityControllerState'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 
 import getStyles from './styles'
 import Tab from './Tab'
@@ -51,8 +49,10 @@ const TABS: {
 const Tabs: React.FC<Props> = ({ openTab, setOpenTab, handleChangeQuery }) => {
   const { styles, theme } = useTheme(getStyles)
 
-  const { banners } = useActivityControllerState()
-  const { account, banners: defiBanners } = useSelectedAccountControllerState()
+  const { banners } = useController('ActivityController').state
+  const {
+    state: { account, banners: defiBanners }
+  } = useController('SelectedAccountController')
 
   const currentDefiBanners = useMemo(
     () => getCurrentAccountBanners(defiBanners, account?.addr),
@@ -74,12 +74,8 @@ const Tabs: React.FC<Props> = ({ openTab, setOpenTab, handleChangeQuery }) => {
   return (
     <View style={[styles.container]}>
       {TABS.map(({ type, tabLabel, disabled, testID }, tabIndex) => {
-        const openTabIndex = TABS.findIndex((t) => t.type === openTab)
-        const indexDiff = tabIndex - openTabIndex
-
         const isActive = openTab === type
 
-        let customColors: [string, string] | undefined
         const withBadge =
           (type === 'activity' && !isActive && (!!pendingBanner || !!failedBanner)) ||
           (type === 'defi' && currentDefiBanners.length > 0)
@@ -96,28 +92,14 @@ const Tabs: React.FC<Props> = ({ openTab, setOpenTab, handleChangeQuery }) => {
 
           if (pendingBanner) {
             badgeText = pendingBanner.meta!.accountOpsCount
-            badgeTextAppearance = theme.info2Text
-          }
-
-          if (!isActive && failedBanner) {
-            customColors = [
-              `${theme.errorDecorative as any}45`,
-              `${theme.errorDecorative as any}07`
-            ]
-          }
-
-          if (!isActive && pendingBanner) {
-            customColors = [
-              `${theme.info2Decorative as any}45`,
-              `${theme.info2Decorative as any}07`
-            ]
+            badgeTextAppearance = theme.info300
           }
         }
 
         if (type === 'defi' && currentDefiBanners.length > 0) {
-          badgeBorderColor = isActive ? '#39F7EF' : theme.secondaryText
+          badgeBorderColor = theme.info300
+          badgeTextAppearance = theme.info300
           badgeText = 1
-          badgeTextAppearance = isActive ? '#39F7EF' : theme.secondaryText
         }
 
         return (
@@ -130,18 +112,15 @@ const Tabs: React.FC<Props> = ({ openTab, setOpenTab, handleChangeQuery }) => {
               setOpenTab={setOpenTab}
               handleChangeQuery={handleChangeQuery}
               disabled={disabled}
-              customColors={customColors}
-              style={
-                type === 'activity' ? { width: 100 } : type === 'defi' ? { width: 90 } : undefined
-              }
             >
               {!!withBadge && (
                 <View
                   style={[
-                    spacings.mlMi,
                     flexbox.alignCenter,
                     flexbox.justifyCenter,
                     {
+                      // 6 because of the border of the badge
+                      marginLeft: 6,
                       width: 18,
                       height: 18
                     }
@@ -150,45 +129,30 @@ const Tabs: React.FC<Props> = ({ openTab, setOpenTab, handleChangeQuery }) => {
                   {type === 'activity' && !!pendingBanner ? (
                     <Spinner
                       style={{ width: '100%', height: '100%', position: 'absolute' }}
-                      variant="info2"
+                      variant="info"
                     />
                   ) : (
                     <View
                       style={{
                         width: '100%',
                         height: '100%',
-                        borderWidth: 2,
+                        position: 'absolute',
                         borderRadius: 50,
-                        borderColor: badgeBorderColor,
-                        position: 'absolute'
+                        borderWidth: 2,
+                        borderColor: badgeBorderColor
                       }}
                     />
                   )}
                   <Text
                     fontSize={10}
-                    weight="medium"
                     color={badgeTextAppearance}
-                    style={{ marginTop: 1 }}
+                    style={{ marginTop: 2, lineHeight: 12 }}
                   >
                     {badgeText}
                   </Text>
                 </View>
               )}
             </Tab>
-            {tabIndex !== TABS.length - 1 && (
-              <View
-                style={{
-                  borderRightWidth: 1,
-                  height: 24,
-                  borderRightColor:
-                    TABS[tabIndex + 1]?.type === 'activity' && (!!pendingBanner || !!failedBanner)
-                      ? 'transparent'
-                      : indexDiff >= 1 || indexDiff < -1
-                      ? theme.secondaryBorder
-                      : 'transparent'
-                }}
-              />
-            )}
           </View>
         )
       })}

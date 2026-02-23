@@ -1,19 +1,38 @@
 import React from 'react'
-import Svg, { G, Path, Rect, SvgProps } from 'react-native-svg'
+import Svg, { Mask, Path, Rect, SvgProps } from 'react-native-svg'
 
-const GasTankIcon: React.FC<SvgProps> = ({
-  width = 32,
-  height = 32,
-  color = '#ae60ff',
-  ...rest
-}) => (
-  <Svg width={width} height={height} viewBox="0 0 32 32" {...rest}>
-    <Rect width={width} height={height} fill="none" rx="6" />
-    <G fill={color}>
-      <Path d="M7.628 26a.9.9 0 0 1-.9-.9v-.581a.9.9 0 0 1 .9-.9H18.74a.9.9 0 0 1 .9.9v.581a.9.9 0 0 1-.9.9Zm.1-3.414V7.256a1.251 1.251 0 0 1 .374-.887A1.251 1.251 0 0 1 8.989 6h8.444a1.255 1.255 0 0 1 1.157.767 1.252 1.252 0 0 1 .1.489c-.025 9.458.058 10.308 0 15.33Zm2.331-13.214v3.569a.6.6 0 0 0 .6.6h4.977a.6.6 0 0 0 .6-.6V9.372a.6.6 0 0 0-.6-.6h-4.974a.6.6 0 0 0-.603.6Z" />
-      <Path d="M18.69 17.272h.34a1.882 1.882 0 0 1 1.329.552 1.86 1.86 0 0 1 .552 1.329v1.876a.99.99 0 0 0 1.979-.008v-4.282h-1.07a.445.445 0 0 1-.446-.446v-4.48a.45.45 0 0 1 .255-.4l2.749-1.293v-1l-2.763-1.424a.446.446 0 0 1 .406-.793l3.009 1.549a.443.443 0 0 1 .241.395v7.45a.447.447 0 0 1-.446.446h-.947v4.28a1.966 1.966 0 0 1-.579 1.4 1.981 1.981 0 0 1-3.221-.632 1.993 1.993 0 0 1-.151-.622v-1.918a.992.992 0 0 0-.989-.989h-.248Z" />
-    </G>
-  </Svg>
-)
+import useTheme from '@common/hooks/useTheme'
 
-export default GasTankIcon
+const GasTankIcon: React.FC<SvgProps> = ({ width = 32, height = 32, color, ...rest }) => {
+  const { theme } = useTheme()
+
+  return (
+    <Svg width={width} height={height} viewBox="0 0 24 24" fill="none" {...rest}>
+      <Rect
+        width="14"
+        height="22"
+        x=".75"
+        y=".75"
+        stroke={color || theme.iconPrimary}
+        strokeWidth="1.5"
+        rx="2"
+      />
+      <Mask id="a" fill="#fff">
+        <Path d="M11.614 10.285a4 4 0 1 0-7.728 0l1.464-.392a2.485 2.485 0 1 1 4.8 0l1.464.392Z" />
+      </Mask>
+      <Path
+        stroke={color || theme.iconPrimary}
+        strokeWidth="3"
+        d="M11.614 10.285a4 4 0 1 0-7.728 0l1.464-.392a2.485 2.485 0 1 1 4.8 0l1.464.392Z"
+        mask="url(#a)"
+      />
+      <Path
+        fill={color || theme.iconPrimary}
+        d="M11.374 5.166a.75.75 0 1 0-1.248-.832l.624.416.624.416ZM9.75 6.25l.624.416 1-1.5-.624-.416-.624-.416-1 1.5.624.416ZM23.244 4.314a.75.75 0 0 0-.988-1.128l.494.564.494.564Zm-3.24 1.838-.494-.564.494.564ZM14.75 19.75v.75h2.571V19H14.75v.75Zm4.571-2h.75V7.658h-1.5V17.75h.75Zm.683-11.598.494.565 2.746-2.403-.494-.564-.494-.564-2.745 2.402.493.564Zm-.683 1.506h.75c0-.36.156-.704.427-.941l-.494-.565-.494-.564a2.75 2.75 0 0 0-.939 2.07h.75Zm-2 12.092v.75a2.75 2.75 0 0 0 2.75-2.75h-1.5c0 .69-.56 1.25-1.25 1.25v.75Z"
+      />
+      <Path stroke={color || theme.iconPrimary} strokeWidth="1.5" d="M.75 10h14" />
+    </Svg>
+  )
+}
+
+export default React.memo(GasTankIcon)

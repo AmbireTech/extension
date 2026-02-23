@@ -6,18 +6,18 @@ import PinIcon from '@common/assets/svg/PinIcon'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import AmbireIcon from '@web/assets/images/xicon@128.png'
 import { engine } from '@web/constants/browserapi'
-import useWalletStateController from '@web/hooks/useWalletStateController'
 
 import getStyles from './styles'
 
 const PinExtension = () => {
   const { t } = useTranslation()
-  const { isPinned } = useWalletStateController()
+  const { isPinned } = useController('WalletStateController').state
   const { styles } = useTheme(getStyles)
 
   const notPinnedRightOffset = useMemo(() => (engine === 'gecko' ? 46 : 96), [])
