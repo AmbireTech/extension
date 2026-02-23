@@ -12,9 +12,12 @@ const HtmlWebpackPlugin = require('html-webpack-plugin')
 const expoEnv = require('@expo/webpack-config/env')
 const NodePolyfillPlugin = require('node-polyfill-webpack-plugin')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
+const LavaMoatPlugin = require('@lavamoat/webpack')
 const { validateEnvVariables } = require('./scripts/validateEnv')
 const appJSON = require('./app.json')
 const AssetReplacePlugin = require('./plugins/AssetReplacePlugin')
+const createReflectMetadataShimPlugin = require('./lavamoat/shims/reflect-metadata-shim-plugin')
+const createSetImmediateShimPlugin = require('./lavamoat/shims/setimmediate-shim-plugin')
 
 const isWebkit = process.env.WEB_ENGINE?.startsWith('webkit')
 const isGecko = process.env.WEB_ENGINE === 'gecko'
@@ -329,6 +332,74 @@ module.exports = async function (env, argv) {
 
     config.plugins = [
       ...defaultExpoConfigPlugins,
+      // LavaMoatPlugin wraps module generators (normalModuleFactory.hooks.generator)
+      // and must be registered before other plugins that process modules (like Terser)
+      // to avoid conflicts. Note: plugin order in array doesn't guarantee execution order;
+      // LavaMoatPlugin registers on early hooks (beforeRun, thisCompilation) which ensures
+      // it runs before optimization/minification plugins.
+      // See README.MD for policy generation workflow and when to regenerate policies.
+      // Only enabled in production builds to avoid HMR conflicts in development.
+      ...(config.mode === 'production'
+        ? [
+            new LavaMoatPlugin({
+              generatePolicy: process.env.LAVAMOAT_GENERATE_POLICY === 'true',
+              // Where policy.json and policy-override.json live
+              policyLocation: path.resolve(__dirname, 'lavamoat/webpack'),
+              // Inline the SES lockdown shim directly into the background chunk.
+              // This is critical for MV3 service workers where we can't control
+              // script load order via <script> tags.
+              inlineLockdown: /^background\.js$/,
+              lockdown: {
+                // 'unsafe' preserves Error.stack for Sentry and debugging
+                errorTaming: 'unsafe',
+                // 'verbose' keeps full stack traces (no filtering of SES frames)
+                stackFiltering: 'verbose',
+                // 'severe' allows Object.defineProperty overrides on frozen prototypes,
+                // needed by ProvidePlugin globals (Buffer, process) and many libraries
+                overrideTaming: 'severe',
+                // 'unsafe' preserves locale-dependent methods (toLocaleString, etc.)
+                localeTaming: 'unsafe',
+                // 'unsafe' preserves original console behavior for debugging
+                consoleTaming: 'unsafe'
+              },
+              // Keep resource IDs readable for easier debugging and policy maintenance.
+              // Set to true during policy generation for easier debugging, false in production
+              // to reduce bundle size. Same policy works for both gecko and webkit builds.
+              readableResourceIds: process.env.LAVAMOAT_GENERATE_POLICY === 'true',
+              // HtmlWebpackPluginInterop is only used when inlineLockdown is NOT set.
+              // Since we use inlineLockdown (required for MV3 service workers), this
+              // is a no-op. SES is prepended directly into background.js, which works
+              // for both MV3 (service worker) and Gecko (loaded via <script> tag).
+              HtmlWebpackPluginInterop: false,
+              // Policy validation checks. Disable during initial policy generation to
+              // avoid CodeGenerationError issues. Re-enable once policy.json is stable
+              // to catch policy violations early.
+              runChecks: process.env.LAVAMOAT_GENERATE_POLICY !== 'true',
+              // Only the background entry runs under full LavaMoat enforcement
+              // (Compartment-based isolation + policy checks). All other entries
+              // use the unlocked runtime (a simple passthrough without Compartments):
+              //   - main / rootTheme: UI popup/tab rendering layer, communicates
+              //     with background via message passing, doesn't handle secrets
+              //   - content-script / inpage scripts: run in web page contexts,
+              //     not the trusted extension background
+              // This matches MetaMask's architecture: harden the controller layer,
+              // leave the UI and injection scripts unlocked.
+              unlockedChunksUnsafe:
+                /^(main|rootTheme|ambire-inpage|ethereum-inpage|content-script|content-script-ambire-injection|content-script-ethereum-injection)$/,
+              // Diagnostics verbosity (0-2):
+              //   0: Minimal logging (recommended for normal builds)
+              //   1: Moderate logging (useful for debugging policy issues)
+              //   2: Verbose logging (use only when investigating deep issues)
+              // Set to 0 to avoid error logging conflicts with Expo's progress bar.
+              diagnosticsVerbosity: process.env.LAVAMOAT_GENERATE_POLICY === 'true' ? 1 : 0
+            }),
+            // Inject reflect-metadata between SES repair and harden in background.js.
+            // See createReflectMetadataShimPlugin() comments above.
+            // Only needed when LavaMoatPlugin is active (production builds).
+            createReflectMetadataShimPlugin(),
+            createSetImmediateShimPlugin()
+          ]
+        : []),
       new NodePolyfillPlugin(),
       new webpack.ProvidePlugin({ Buffer: ['buffer', 'Buffer'], process: 'process' }),
       new HtmlWebpackPlugin({
@@ -427,35 +498,48 @@ module.exports = async function (env, argv) {
         }
       }
 
+      // Check if we're generating LavaMoat policy - disable minification during policy generation
+      // because Terser cannot properly parse LavaMoat-wrapped modules
+      const isGeneratingPolicy = config.plugins.some(
+        (plugin) =>
+          plugin.constructor.name === 'LavaMoatPlugin' && plugin.options?.generatePolicy === true
+      )
+
       // Find and configure TerserPlugin in the minimizer array
       const terserPlugin = config.optimization.minimizer?.find(
         (minimizer) => minimizer.constructor.name === 'TerserPlugin'
       )
       if (terserPlugin) {
-        const terserRealOptions = terserPlugin.options.minimizer?.options
+        // Disable minification entirely when generating LavaMoat policy
+        // to avoid Terser conflicts with wrapped modules
+        if (isGeneratingPolicy) {
+          config.optimization.minimize = false
+        } else {
+          const terserRealOptions = terserPlugin.options.minimizer?.options
 
-        if (terserRealOptions) {
-          terserRealOptions.compress = {
-            ...(terserRealOptions.compress || {}),
-            pure_getters: true,
-            passes: 3
+          if (terserRealOptions) {
+            terserRealOptions.compress = {
+              ...(terserRealOptions.compress || {}),
+              pure_getters: true,
+              passes: 3
+            }
+
+            terserRealOptions.output = {
+              ...(terserRealOptions.output || {}),
+              ascii_only: true,
+              comments: false
+            }
+
+            // Disable mangling:
+            // 1) For Firefox, to ensure bit-for-bit deterministic builds across
+            // platforms (e.g. x64 vs arm64). This avoids differences in
+            // variable/function names (e.g. P vs x) that can cause review rejections.
+            // 2) For Webkit as well avoid issues with GridPlus SDK - signing
+            // EIP-712 messages fail with PROD build on Linux (work just fine on DEV)
+            // because the mangling messes up the gridplus-sdk package somehow.
+            // The drawback is larger bundle size.
+            terserRealOptions.mangle = false
           }
-
-          terserRealOptions.output = {
-            ...(terserRealOptions.output || {}),
-            ascii_only: true,
-            comments: false
-          }
-
-          // Disable mangling:
-          // 1) For Firefox, to ensure bit-for-bit deterministic builds across
-          // platforms (e.g. x64 vs arm64). This avoids differences in
-          // variable/function names (e.g. P vs x) that can cause review rejections.
-          // 2) For Webkit as well avoid issues with GridPlus SDK - signing
-          // EIP-712 messages fail with PROD build on Linux (work just fine on DEV)
-          // because the mangling messes up the gridplus-sdk package somehow.
-          // The drawback is larger bundle size.
-          terserRealOptions.mangle = false
         }
       }
     }

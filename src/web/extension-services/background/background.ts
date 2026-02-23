@@ -4,7 +4,13 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable @typescript-eslint/no-use-before-define */
 /* eslint-disable @typescript-eslint/no-shadow */
-import './ses-lockdown'
+
+// We include `setImmediate` because ethers / viem cryptographic operations
+// (e.g. scrypt keystore unlock) rely on it for fast cooperative scheduling —
+// without it they fall back to slower timers and performance drops significantly.
+//
+// It is imported in background for development builds, and injected via Webpack
+// plugin for production where LavaMoat + SES isolate modules and harden intrinsics.
 import 'setimmediate'
 
 import { nanoid } from 'nanoid'

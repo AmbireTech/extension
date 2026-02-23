@@ -1,0 +1,46 @@
+{
+  "resources": {
+    "patch-package>json-stable-stringify>object-keys": {
+      "allow": {
+        "primordialMutations": true
+      }
+    },
+    "@sentry/react>@sentry/core": {
+      "allow": {
+        "primordialMutations": true
+      }
+    },
+    "eth-crypto>ethers>@ethersproject/keccak256>js-sha3": {
+      "allow": {
+        "primordialMutations": true
+      }
+    },
+    "ses": {
+      "allow": {
+        "primordialMutations": true
+      }
+    },
+    "@ledgerhq/context-module>inversify>@inversifyjs/common": {
+      "packages": {
+        "@ledgerhq/context-module>reflect-metadata": true
+      }
+    },
+    "@ledgerhq/context-module>inversify>@inversifyjs/core": {
+      "packages": {
+        "@ledgerhq/context-module>reflect-metadata": true
+      }
+    },
+    "@ethersproject/providers>@ethersproject/random": {
+      "globals": {
+        "crypto": true,
+        "msCrypto": true
+      }
+    },
+    "ethers": {
+      "globals": {
+        "crypto": true,
+        "msCrypto": true
+      }
+    }
+  }
+}
