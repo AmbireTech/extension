@@ -225,6 +225,25 @@ And find the resulting build in the "build/legends-prod" folder.
 
 ## Others
 
+### Starting the Ledger Emulator Locally
+
+You can run the Ledger emulator locally for testing purposes. Make sure **Docker** is installed on your machine before proceeding.
+
+#### Steps
+
+1. **Navigate to the emulator folder**:
+
+```bash
+cd e2e-playwright-tests/ledger-emulator
+```
+
+2. **Start the emulator**:
+
+```bash
+$LEDGER_EMULATOR_SEED='<LEDGER-SEED-PHRASE>' ./start-emulator.sh
+```
+ **Note:** Ensure that port `5000` is free before starting the emulator.
+
 ### Browser Extensions E2E Tests
 
 #### Configuration
