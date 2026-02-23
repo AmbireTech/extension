@@ -9,7 +9,6 @@ import CreateSeedPhraseWriteScreen from '@mobile/modules/auth/modules/create-see
 import GetStartedScreen from '@mobile/modules/auth/screens/GetStartedScreen'
 import ImportExistingAccountSelectorScreen from '@mobile/modules/auth/screens/ImportExistingAccountSelectorScreen'
 import ImportSmartAccountJsonScreen from '@mobile/modules/auth/screens/ImportSmartAccountJson'
-import OnboardingCompletedScreen from '@mobile/modules/auth/screens/OnboardingCompletedScreen'
 import PrivateKeyImportScreen from '@mobile/modules/auth/screens/PrivateKeyImportScreen'
 import SeedPhraseImportScreen from '@mobile/modules/auth/screens/SeedPhraseImportScreen'
 import LedgerConnectScreen from '@mobile/modules/hardware-wallet/screens/LedgerConnectScreen'
@@ -39,7 +38,6 @@ const MainRoutes = () => {
 
         <Route path={ROUTES.accountPicker} element={<AccountPickerScreen />} />
         <Route path={ROUTES.accountPersonalize} element={<AccountPersonalizeScreen />} />
-        <Route path={ROUTES.onboardingCompleted} element={<OnboardingCompletedScreen />} />
       </Route>
       {/* Fallback route to suppress "No routes matched location" warnings when multiple Routes blocks are rendered */}
       <Route path="*" element={null} />

@@ -104,25 +104,25 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
   }, [path, accountsToPersonalize.length])
 
   const onboardingRoutesTree = useMemo(() => {
+    // on mobile, we skip onboardingCompleted and go straight to the dashboard ('/')
+    const afterPersonalizeRoutes = getUiType().isMobileApp
+      ? [new RouteNode('/')]
+      : [
+          new RouteNode(
+            WEB_ROUTES.onboardingCompleted,
+            [new RouteNode('/')],
+            isSetupComplete || !accounts?.length
+          ),
+          new RouteNode('/')
+        ]
+
     const nextAccountPickerRoutes =
       subType === 'hw'
         ? [
             new RouteNode(
               WEB_ROUTES.accountPicker,
               [
-                new RouteNode(
-                  WEB_ROUTES.accountPersonalize,
-                  [
-                    new RouteNode(
-                      WEB_ROUTES.onboardingCompleted,
-                      [new RouteNode('/')],
-                      isSetupComplete || !accounts?.length
-                    ),
-                    new RouteNode('/')
-                  ],
-                  false,
-                  false
-                ),
+                new RouteNode(WEB_ROUTES.accountPersonalize, afterPersonalizeRoutes, false, false),
                 new RouteNode('/')
               ],
               false,
@@ -133,12 +133,7 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
             new RouteNode(
               WEB_ROUTES.accountPersonalize,
               [
-                new RouteNode(
-                  WEB_ROUTES.onboardingCompleted,
-                  [new RouteNode('/')],
-                  isSetupComplete || !accounts?.length
-                ),
-                new RouteNode('/'),
+                ...afterPersonalizeRoutes,
                 new RouteNode(WEB_ROUTES.accountPicker, [new RouteNode('/')], false, false)
               ],
               false,
