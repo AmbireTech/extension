@@ -6,7 +6,7 @@ import { getIsViewOnly } from '@ambire-common/utils/accounts'
 import useController from '@common/hooks/useController'
 
 const useHasGasTank = ({ account }: { account: Account | null }) => {
-  if (!account) {
+  if (!account || !!account.safeCreation) {
     return {
       hasGasTank: false
     }

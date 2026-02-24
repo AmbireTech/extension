@@ -13,6 +13,7 @@ import Button from '@common/components/Button'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper'
 
@@ -22,7 +23,7 @@ const BenzinScreen = () => {
     state: { currentUserRequest, visibleUserRequests },
     dispatch: requestsDispatch
   } = useController('RequestsController')
-  const { theme } = useTheme()
+  const { theme, themeType } = useTheme()
 
   const userRequest = useMemo(
     () => (currentUserRequest?.kind === 'benzin' ? currentUserRequest : undefined),
@@ -71,7 +72,9 @@ const BenzinScreen = () => {
             >
               {!!pendingRequests.length && (
                 <View style={spacings.pl}>
-                  <RightArrowIcon color={theme.primary} />
+                  <RightArrowIcon
+                    color={themeType === THEME_TYPES.DARK ? theme.primaryBackground : '#fff'}
+                  />
                 </View>
               )}
             </Button>

@@ -3,7 +3,7 @@ import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { Account } from '@ambire-common/interfaces/account'
-import { isAmbireV1LinkedAccount, isSmartAccount } from '@ambire-common/libs/account/account'
+import { isAmbireV1LinkedAccount } from '@ambire-common/libs/account/account'
 import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
 import PrivateKeyExport from '@common/components/ExportKey/PrivateKeyExport'
@@ -56,7 +56,7 @@ const ExportKey = ({
   }, [blurred, prevBlurred])
 
   const isExportingV2SA =
-    isSmartAccount(account) && !isAmbireV1LinkedAccount(account?.creation?.factoryAddr)
+    !!account.creation && !isAmbireV1LinkedAccount(account?.creation?.factoryAddr)
 
   const key = useMemo(
     () => keystoreState.keys.find((aKey) => aKey.addr === keyAddr),

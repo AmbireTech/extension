@@ -409,12 +409,7 @@ export class ProviderController {
       }
 
       const accout = this.mainCtrl.accounts.accounts.find((acc) => acc.addr === accountAddr)!
-      const baseAccount = getBaseAccount(
-        accout,
-        accountState,
-        this.mainCtrl.keystore.keys.filter((key) => accout.associatedKeys.includes(key.addr)),
-        network
-      )
+      const baseAccount = getBaseAccount(accout, accountState, network)
       const isSmart = baseAccount.getAtomicStatus() !== 'unsupported'
 
       capabilities[networkChainIdToHex(network.chainId)] = {
@@ -427,6 +422,7 @@ export class ProviderController {
         paymasterService: {
           supported:
             isSmart &&
+            !accout.safeCreation &&
             // enabled: obvious, it means we're operaring with 4337
             // hasBundlerSupport means it might not be 4337 but we support it
             // our default may be the relayer but we will broadcast an userOp
@@ -516,7 +512,6 @@ export class ProviderController {
       }
     }
 
-    const txnId = accOp.txnId
     const provider = this.mainCtrl.providers.providers[network.chainId.toString()]
 
     // check to satisfy the TS; should never happen

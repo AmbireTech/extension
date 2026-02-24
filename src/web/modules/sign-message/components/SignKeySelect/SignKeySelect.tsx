@@ -71,7 +71,6 @@ const SigningKeySelect = ({
                     dedicatedToOneSA={key.dedicatedToOneSA}
                     label={key.label || `Key ${i + 1}`}
                     isImported={isImported}
-                    enableEditing={false}
                     account={account}
                     keyIconColor={theme.iconPrimary as string}
                     isLast

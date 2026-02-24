@@ -114,7 +114,6 @@ export const handleActions = async (
 
       break
     }
-
     case 'IMPORT_SMART_ACCOUNT_JSON': {
       // Add accounts first, because some of the next steps have validation
       // if accounts exists.
@@ -130,7 +129,7 @@ export const handleActions = async (
     }
 
     case 'MAIN_CONTROLLER_HANDLE_SIGN_MESSAGE': {
-      mainCtrl.signMessage.setSigningKey(params.keyAddr, params.keyType)
+      mainCtrl.signMessage.setSigners(params.signers)
       return await mainCtrl.handleSignMessage()
     }
 
