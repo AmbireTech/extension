@@ -1,6 +1,5 @@
 import React from 'react'
 import { Image } from 'react-native'
-import { btoa } from 'react-native-quick-base64'
 
 import Jazzicon from '@raugfer/jazzicon'
 
