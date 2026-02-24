@@ -244,11 +244,7 @@ const SignAccountOpScreen = () => {
         header={<ActionHeader />}
         renderDirectChildren={() => (
           <View style={[spacings.mh, spacings.mv]}>
-            <GlassView
-              tintColor2={hexToRgba('#D1D1D1', 0.12)}
-              style={{ borderRadius: BORDER_RADIUS_PRIMARY }}
-              cssStyle={{ borderRadius: BORDER_RADIUS_PRIMARY }}
-            >
+            <GlassView tintColor2={hexToRgba('#D1D1D1', 0.12)}>
               {/* Gradient */}
               <Gradient
                 style={{

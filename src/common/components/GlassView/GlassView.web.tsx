@@ -1,13 +1,18 @@
 import './GlassView.css'
 
-import React, { useCallback, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { ViewProps } from 'react-native'
 
 import useTheme from '@common/hooks/useTheme'
 import { THEME_TYPES } from '@common/styles/themeConfig'
-import { hexToRgba } from '@common/styles/utils/common'
+import { BORDER_RADIUS_PRIMARY, hexToRgba } from '@common/styles/utils/common'
 
+import { getDisplacementFilter } from './helpers.web'
 import { GlassViewProps } from './types'
+
+const getShineColors = (shineBase: string): [string, string, string] => {
+  return [hexToRgba(shineBase, 0.8), hexToRgba(shineBase, 0.2), hexToRgba(shineBase, 0)]
+}
 
 const GlassView: React.FC<GlassViewProps & ViewProps> = ({
   children,
@@ -16,56 +21,66 @@ const GlassView: React.FC<GlassViewProps & ViewProps> = ({
   tintColor1,
   tintColor2,
   shineColor,
-  blurAmount = 4,
-  withCursorShine = true
+  borderRadius = BORDER_RADIUS_PRIMARY,
+  blurAmount = 4
 }) => {
   const { themeType } = useTheme()
   const divRef = useRef<HTMLDivElement>(null)
-
-  const handleMouseMove = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      const el = divRef.current
-      if (!el || !withCursorShine) return
-      const rect = el.getBoundingClientRect()
-      const x = ((e.clientX - rect.left) / rect.width) * 100
-      const y = ((e.clientY - rect.top) / rect.height) * 100
-      const radius = Math.min(Math.max(rect.width, rect.height) * 0.6, 200)
-      el.style.setProperty('--mouse-x', `${x}%`)
-      el.style.setProperty('--mouse-y', `${y}%`)
-      el.style.setProperty('--shine-radius', `${radius}px`)
-      el.style.setProperty('--shine-opacity', '1')
-    },
-    [withCursorShine]
-  )
-
-  const handleMouseLeave = useCallback(() => {
-    const el = divRef.current
-    if (!el || !withCursorShine) return
-    el.style.setProperty('--shine-opacity', '0')
-  }, [withCursorShine])
+  const [size, setSize] = useState({ width: 0, height: 0 })
+  const shineBase = shineColor || (themeType === THEME_TYPES.LIGHT ? '#ffffff' : '#cccccc')
+  const shineColors = getShineColors(shineBase)
 
   const customProperties = {
-    '--glass-tint-color-1': tintColor1 || hexToRgba('#D1D1D1', 0.16),
-    '--glass-tint-color-2': tintColor2 || hexToRgba('#D1D1D1', 0.06),
-    '--glass-shine-color':
-      shineColor || (themeType === THEME_TYPES.LIGHT ? '#fff' : hexToRgba('#FFFFFF', 0.2)),
-    '--glass-cursor-shine-color':
-      themeType === THEME_TYPES.LIGHT ? '#fff' : hexToRgba('#FFFFFF', 0.1),
+    '--glass-tint-color-1': tintColor1 || hexToRgba('#96A1B1', 0.16),
+    '--glass-tint-color-2': tintColor2 || hexToRgba('#96A1B1', 0.06),
+    '--glass-shine-color-1': shineColors[0],
+    '--glass-shine-color-2': shineColors[1],
+    '--glass-shine-color-3': shineColors[2],
     '--glass-blur-amount': `${blurAmount}px`,
+    '--glass-shine-width': `${themeType === THEME_TYPES.DARK || shineColor ? 1 : 1.75}px`,
+    fontSize: `${borderRadius}px`,
+    borderRadius,
     ...cssStyle
   } as React.CSSProperties
 
+  useEffect(() => {
+    const el = divRef.current
+    if (!el) return
+
+    const updateSize = () => {
+      setSize({
+        width: el.offsetWidth,
+        height: el.offsetHeight
+      })
+    }
+
+    updateSize()
+    window.addEventListener('resize', updateSize)
+    return () => window.removeEventListener('resize', updateSize)
+  }, [])
+
   return (
-    <div
-      ref={divRef}
-      className="liquidGlass"
-      style={customProperties}
-      data-testid={testID}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-    >
+    <div ref={divRef} className="liquidGlass" style={customProperties} data-testid={testID}>
       {children}
-      <div className="shine" />
+      <div
+        className="morph"
+        style={{
+          filter: `blur(${blurAmount / 2}px) url('${getDisplacementFilter({
+            height: size.height || 100,
+            width: size.width || 100,
+            radius: borderRadius,
+            depth: 10,
+            strength: themeType === THEME_TYPES.DARK ? 100 : 5,
+            chromaticAberration: 1
+          })}') blur(${blurAmount}px) brightness(${themeType === THEME_TYPES.DARK ? 1.15 : 1}) saturate(${themeType === THEME_TYPES.DARK ? 1.5 : 1}) `
+        }}
+      />
+      <div className="shine-container">
+        <div className="shine">
+          <div className="shine-top-left" />
+          <div className="shine-bottom-right" />
+        </div>
+      </div>
     </div>
   )
 }

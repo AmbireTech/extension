@@ -7,54 +7,79 @@
   isolation: isolate;
   /* These come from injected styles */
   background: linear-gradient(135deg, var(--glass-tint-color-2) 0%, var(--glass-tint-color-1) 50%);
-  backdrop-filter: blur(var(--glass-blur-amount));
 }
 
-/* Recreating the parent div to apply the effect on it.
-This is done as we don't want to put overflow: hidden
-on the parent as it would clip the children and break
-things like dropdown menus */
-.liquidGlass .shine {
-  overflow: hidden;
+.morph {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  backdrop-filter: blur(var(--glass-blur-amount));
+  border-radius: inherit;
+}
+
+.shine-container {
+  border-radius: inherit;
   position: absolute;
   left: 0;
   top: 0;
   width: 100%;
   height: 100%;
   z-index: -1;
-  border-radius: inherit;
-  pointer-events: none;
+  overflow: hidden;
+  font-size: 1em;
 }
 
-.liquidGlass .shine::before {
-  content: '';
+.shine {
   position: absolute;
+  left: 0;
+  top: 0;
   width: 100%;
   height: 100%;
   top: 0;
   left: 0;
   pointer-events: none;
-  box-shadow: inset 0px 0px 1px 1.5px var(--glass-shine-color);
+  z-index: -1;
+  box-sizing: border-box;
+
+  font-size: 1em;
+  border-radius: calc(1em * 0.8);
+
   border-top-left-radius: inherit;
-  border-top-right-radius: 0;
   border-bottom-right-radius: inherit;
-  border-bottom-left-radius: 0;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  padding: var(--glass-shine-width, 1px);
 }
 
-.liquidGlass .shine::after {
-  content: '';
+.shine-top-left {
   position: absolute;
+  left: 0;
+  top: 0;
   width: 100%;
   height: 100%;
-  top: 0;
-  left: 0;
-  pointer-events: none;
   background: radial-gradient(
-    circle var(--shine-radius, 120px) at var(--mouse-x, 50%) var(--mouse-y, 50%),
-    var(--glass-cursor-shine-color) 0%,
-    transparent 100%
+    circle at -20% -20%,
+    var(--glass-shine-color-1) 0%,
+    var(--glass-shine-color-2) 40%,
+    var(--glass-shine-color-3) 65%
   );
-  opacity: var(--shine-opacity, 0);
-  transition: opacity 0.3s ease;
+
+  border-radius: inherit;
+}
+
+.shine-bottom-right {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(
+    circle at 100% 100%,
+    var(--glass-shine-color-1) 0%,
+    var(--glass-shine-color-2) 40%,
+    var(--glass-shine-color-3) 65%
+  );
   border-radius: inherit;
 }

@@ -155,7 +155,6 @@ const Sidebar = ({ activeLink }: { activeLink?: string }) => {
   }, [isDashboardPreviousPage, isTransferPreviousPage, validBackRoute])
 
   const glassViewStyle: ViewStyle & React.CSSProperties = {
-    borderRadius: BORDER_RADIUS_PRIMARY,
     flexDirection: 'column',
     paddingLeft: SPACING_TY,
     paddingBottom: SPACING_TY,

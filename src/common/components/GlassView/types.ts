@@ -10,6 +10,7 @@ type GlassViewProps = {
   tintColor2?: string
   shineColor?: string
   blurAmount?: number
+  borderRadius?: number
   withCursorShine?: boolean
 }
 
