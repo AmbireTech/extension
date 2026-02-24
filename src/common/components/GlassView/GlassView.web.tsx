@@ -40,6 +40,14 @@ const GlassView: React.FC<GlassViewProps & ViewProps> = ({
     '--glass-shine-width': `${themeType === THEME_TYPES.DARK || shineColor ? 1 : 1.75}px`,
     fontSize: `${borderRadius}px`,
     borderRadius,
+    backdropFilter: `blur(${blurAmount / 2}px) url('${getDisplacementFilter({
+      height: size.height || 100,
+      width: size.width || 100,
+      radius: borderRadius,
+      depth: 2,
+      strength: themeType === THEME_TYPES.DARK ? 100 : 25,
+      chromaticAberration: 4
+    })}') blur(${blurAmount}px) brightness(${themeType === THEME_TYPES.DARK ? 1.1 : 1}) saturate(${themeType === THEME_TYPES.DARK ? 1.5 : 1}) `,
     ...cssStyle
   } as React.CSSProperties
 
@@ -62,19 +70,6 @@ const GlassView: React.FC<GlassViewProps & ViewProps> = ({
   return (
     <div ref={divRef} className="liquidGlass" style={customProperties} data-testid={testID}>
       {children}
-      <div
-        className="morph"
-        style={{
-          filter: `blur(${blurAmount / 2}px) url('${getDisplacementFilter({
-            height: size.height || 100,
-            width: size.width || 100,
-            radius: borderRadius,
-            depth: 10,
-            strength: themeType === THEME_TYPES.DARK ? 100 : 5,
-            chromaticAberration: 1
-          })}') blur(${blurAmount}px) brightness(${themeType === THEME_TYPES.DARK ? 1.15 : 1}) saturate(${themeType === THEME_TYPES.DARK ? 1.5 : 1}) `
-        }}
-      />
       <div className="shine-container">
         <div className="shine">
           <div className="shine-top-left" />
