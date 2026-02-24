@@ -1,5 +1,6 @@
 import React, { ReactNode } from 'react'
 import { ColorValue, View, ViewStyle } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import ScrollableWrapper, { WrapperProps } from '@common/components/ScrollableWrapper'
 import useTheme from '@common/hooks/useTheme'
@@ -32,9 +33,19 @@ export const MobileLayoutContainer = ({
   withHorizontalPadding = true
 }: MobileLayoutContainerProps) => {
   const { theme, styles } = useTheme(getStyles)
+  const insets = useSafeAreaInsets()
 
   return (
-    <View style={[flexbox.flex1, { backgroundColor: backgroundColor || theme.primaryBackground }]}>
+    <View
+      style={[
+        flexbox.flex1,
+        {
+          backgroundColor: backgroundColor || theme.primaryBackground,
+          paddingTop: insets.top,
+          paddingBottom: insets.bottom
+        }
+      ]}
+    >
       {!!header && header}
       <View style={[flexbox.flex1, withHorizontalPadding ? spacings.phSm : undefined]}>
         <View
@@ -92,14 +103,7 @@ export const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainCon
   }
 
   return (
-    <View
-      ref={wrapperRef}
-      style={[
-        styles.contentContainer,
-        isOnboardingRoute && (minHeightSize('l') ? spacings.pv : spacings.pt2Xl),
-        contentContainerStyle
-      ]}
-    >
+    <View ref={wrapperRef} style={[styles.contentContainer, contentContainerStyle]}>
       {children}
     </View>
   )

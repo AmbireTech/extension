@@ -11,6 +11,8 @@ import DashboardOverview from '@common/modules/dashboard/components/DashboardOve
 import DashboardPages from '@common/modules/dashboard/components/DashboardPages'
 import PendingActionWindowModal from '@common/modules/dashboard/components/PendingActionWindowModal'
 import getStyles from '@common/modules/dashboard/screens/styles' // Keeping styles in common
+import flexbox from '@common/styles/utils/flexbox'
+import { MobileLayoutContainer } from '@mobile/components/MobileLayoutWrapper'
 
 export const OVERVIEW_CONTENT_MAX_HEIGHT = 280
 
@@ -30,6 +32,8 @@ const DashboardScreen = () => {
   const {
     state: { account, portfolio }
   } = useController('SelectedAccountController')
+
+  const isOverviewExpandedRef = useRef(true)
 
   const onScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -55,13 +59,17 @@ const DashboardScreen = () => {
       const isSearchHiddenVal = y > 50 && y > scrollUpStartedAt.current - scrollUpThreshold
 
       setIsSearchHidden(isSearchHiddenVal)
-      Animated.spring(animatedOverviewHeight, {
-        toValue: isOverviewExpanded ? OVERVIEW_CONTENT_MAX_HEIGHT : 0,
-        bounciness: 0,
-        speed: 2.8,
-        overshootClamping: true,
-        useNativeDriver: true
-      }).start()
+
+      if (isOverviewExpandedRef.current !== isOverviewExpanded) {
+        isOverviewExpandedRef.current = isOverviewExpanded
+        Animated.spring(animatedOverviewHeight, {
+          toValue: isOverviewExpanded ? OVERVIEW_CONTENT_MAX_HEIGHT : 0,
+          bounciness: 0,
+          speed: 2.8,
+          overshootClamping: true,
+          useNativeDriver: false // maxHeight/padding do not support native driver
+        }).start()
+      }
     },
     [animatedOverviewHeight, dashboardOverviewSize.height, lastOffsetY, scrollUpStartedAt]
   )
@@ -69,28 +77,30 @@ const DashboardScreen = () => {
   if (!account) return null
 
   return (
-    <LayoutWrapper>
-      <GasTankModal
-        modalRef={gasTankModalRef}
-        handleClose={closeGasTankModal}
-        portfolio={portfolio}
-        account={account}
-      />
-      <PendingActionWindowModal />
-      <View style={styles.container}>
-        <DashboardOverview
-          openGasTankModal={openGasTankModal}
-          animatedOverviewHeight={animatedOverviewHeight}
-          dashboardOverviewSize={debouncedDashboardOverviewSize}
-          setDashboardOverviewSize={setDashboardOverviewSize}
+    <MobileLayoutContainer>
+      <View style={flexbox.flex1}>
+        <GasTankModal
+          modalRef={gasTankModalRef}
+          handleClose={closeGasTankModal}
+          portfolio={portfolio}
+          account={account}
         />
-        <DashboardPages
-          onScroll={onScroll}
-          animatedOverviewHeight={animatedOverviewHeight}
-          isSearchHidden={isSearchHidden}
-        />
+        <PendingActionWindowModal />
+        <View style={styles.container}>
+          <DashboardOverview
+            openGasTankModal={openGasTankModal}
+            animatedOverviewHeight={animatedOverviewHeight}
+            dashboardOverviewSize={debouncedDashboardOverviewSize}
+            setDashboardOverviewSize={setDashboardOverviewSize}
+          />
+          <DashboardPages
+            onScroll={onScroll}
+            animatedOverviewHeight={animatedOverviewHeight}
+            isSearchHidden={isSearchHidden}
+          />
+        </View>
       </View>
-    </LayoutWrapper>
+    </MobileLayoutContainer>
   )
 }
 

@@ -21,8 +21,7 @@ const getStyles = () =>
       borderRadius: 50
     },
     accountButtonRightIcon: {
-      borderColor: 'transparent',
-      ...spacings.mlMd
+      borderColor: 'transparent'
     },
     accountCopyIcon: { backgroundColor: 'transparent', borderColor: 'transparent' }
   })

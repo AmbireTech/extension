@@ -39,16 +39,14 @@ const DashboardHeader = () => {
   if (!account) return null
 
   return (
-    <View style={[flexboxStyles.directionRow, flexboxStyles.alignCenter, flexboxStyles.flex1]}>
+    <View style={[flexboxStyles.directionRow, flexboxStyles.alignCenter, { width: '100%' }]}>
       {SHOULD_DISPLAY_NETWORK_STATUSES && (
         <NetworkStatusesBottomSheet
           sheetRef={networkStatusesSheetRef}
           closeBottomSheet={closeNetworkStatusesSheet}
         />
       )}
-      <View
-        style={[flexboxStyles.directionRow, flexboxStyles.flex1, flexboxStyles.justifySpaceBetween]}
-      >
+      <View style={[flexboxStyles.directionRow, { flex: 1 }, flexboxStyles.justifySpaceBetween]}>
         <AccountButton />
         <View style={[flexboxStyles.directionRow, flexboxStyles.alignStart]}>
           {SHOULD_DISPLAY_NETWORK_STATUSES && (

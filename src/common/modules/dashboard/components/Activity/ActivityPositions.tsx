@@ -299,6 +299,7 @@ const ActivityPositions: FC<Props> = ({
       initialNumToRender={isPopup ? 10 : 20}
       windowSize={9} // Larger values can cause performance issues.
       onScroll={onScroll}
+      scrollEventThrottle={16}
       animatedOverviewHeight={animatedOverviewHeight}
     />
   )

@@ -74,7 +74,7 @@ const DashboardScreen = () => {
         bounciness: 0,
         speed: 2.8,
         overshootClamping: true,
-        useNativeDriver: !isWeb
+        useNativeDriver: false
       }).start()
     },
     [animatedOverviewHeight, dashboardOverviewSize.height, lastOffsetY, scrollUpStartedAt]

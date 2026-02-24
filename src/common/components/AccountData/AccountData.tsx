@@ -14,6 +14,7 @@ import useController from '@common/hooks/useController'
 import useHover, { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
+import useWindowSize from '@common/hooks/useWindowSize'
 import spacings from '@common/styles/spacings'
 import { setStringAsync } from '@common/utils/clipboard'
 import { getUiType } from '@common/utils/uiType'
@@ -34,6 +35,7 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
   const { t } = useTranslation()
   const { addToast } = useToast()
   const { styles } = useTheme(getStyles)
+  const { maxWidthSize } = useWindowSize()
   const { isPopup } = getUiType()
   const { account } = useController('SelectedAccountController').state
   const [bindAddressAnim, addressAnimStyle] = useHover({
@@ -91,15 +93,30 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
         >
           {account.preferences.label}
         </Text>
-        <Text color="#E3E6EB" style={spacings.mrMi} weight="mono_regular" fontSize={14}>
-          ({shortenAddress(account.addr, 13)})
-        </Text>
-        <AnimatedPressable style={addressAnimStyle} onPress={handleCopyText} {...bindAddressAnim}>
-          <CopyIcon width={24} height={24} color="#E3E6EB" />
-        </AnimatedPressable>
+        {maxWidthSize(480) && (
+          <>
+            <Text color="#E3E6EB" style={spacings.mrMi} weight="mono_regular" fontSize={14}>
+              ({shortenAddress(account.addr, 13)})
+            </Text>
+            <AnimatedPressable
+              style={addressAnimStyle}
+              onPress={handleCopyText}
+              {...bindAddressAnim}
+            >
+              <CopyIcon width={24} height={24} color="#E3E6EB" />
+            </AnimatedPressable>
+          </>
+        )}
         {!!withArrowRightIcon && (
           <Animated.View style={accountBtnAnimStyle}>
-            <RightArrowIcon style={styles.accountButtonRightIcon} width={12} color="#E3E6EB" />
+            <RightArrowIcon
+              style={[
+                styles.accountButtonRightIcon,
+                maxWidthSize(480) ? spacings.mlMd : spacings.mlSm
+              ]}
+              width={12}
+              color="#E3E6EB"
+            />
           </Animated.View>
         )}
       </>

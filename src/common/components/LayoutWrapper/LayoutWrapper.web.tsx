@@ -1,6 +1,5 @@
 import React, { FC, useMemo } from 'react'
 import { View, ViewStyle } from 'react-native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
@@ -20,9 +19,8 @@ const { isPopup, isRequestWindow } = getUiType()
 const LayoutWrapper: FC<Props> = ({ children, backgroundStyle = {}, style = {} }) => {
   const { theme } = useTheme()
   const { minHeightSize } = useWindowSize()
-  const insets = useSafeAreaInsets()
 
-  const calculatedPaddingTop = useMemo(() => {
+  const paddingTop = useMemo(() => {
     if (isRequestWindow) {
       if (minHeightSize(800)) return SPACING
 
@@ -44,19 +42,19 @@ const LayoutWrapper: FC<Props> = ({ children, backgroundStyle = {}, style = {} }
       style={[
         flexbox.flex1,
         flexbox.alignCenter,
-        {
-          backgroundColor: theme.secondaryBackground,
-          paddingTop: Math.max(insets.top, calculatedPaddingTop),
-          paddingBottom: insets.bottom
-        },
+        { paddingTop: paddingTop },
+        { backgroundColor: theme.secondaryBackground },
         backgroundStyle
       ]}
     >
       <View
         style={{
-          flex: 1,
+          maxWidth: 600,
+          width: '100%',
+          height: 600,
           backgroundColor: theme.primaryBackground,
           borderRadius: isPopup ? 0 : BORDER_RADIUS_PRIMARY,
+          overflow: 'hidden',
           shadowColor: theme.neutral400,
           shadowOffset: { width: 0, height: 12 },
           shadowOpacity: 1,

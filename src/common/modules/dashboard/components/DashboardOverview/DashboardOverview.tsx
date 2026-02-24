@@ -1,5 +1,5 @@
 import React, { FC, useCallback, useMemo } from 'react'
-import { Animated, Image, Pressable, View } from 'react-native'
+import { Animated, Image, Platform, Pressable, StyleSheet, View } from 'react-native'
 
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import SkeletonLoader from '@common/components/SkeletonLoader'
@@ -116,14 +116,8 @@ const DashboardOverview: FC<Props> = ({
         {/* TODO: Style based on selected account; Add overlay in the extension */}
         <Image
           source={typeof backgroundImage === 'string' ? { uri: backgroundImage } : backgroundImage}
-          style={{
-            width: '100%',
-            height: OVERVIEW_CONTENT_MAX_HEIGHT,
-            position: 'absolute',
-            objectFit: 'fill',
-            top: 0,
-            left: 0
-          }}
+          resizeMode="cover"
+          style={[StyleSheet.absoluteFill, { height: OVERVIEW_CONTENT_MAX_HEIGHT }]}
         />
         <View style={{ zIndex: 2 }}>
           <DashboardHeader />
@@ -164,7 +158,7 @@ const DashboardOverview: FC<Props> = ({
                         shouldScale={false}
                         weight="number_bold"
                         // Line height should be constant based on font size, not on parent height
-                        style={{ lineHeight: 28 }}
+                        style={Platform.OS !== 'web' ? { lineHeight: 36 } : { lineHeight: 28 }}
                         color={
                           networksWithErrors.length || isOffline
                             ? theme.warningDecorative2

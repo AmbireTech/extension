@@ -3,6 +3,7 @@ import { View } from 'react-native'
 import { useSearchParams } from 'react-router-dom'
 
 import useTheme from '@common/hooks/useTheme'
+import useWindowSize from '@common/hooks/useWindowSize'
 import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tab/Tab'
 import Tabs from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tabs'
 import useBanners from '@common/modules/dashboard/hooks/useBanners'
@@ -28,6 +29,7 @@ const TabsAndSearch: FC<Props> = ({ openTab, setOpenTab, currentTab, sessionId }
   const { styles } = useTheme(getStyles)
   const [controllerBanners] = useBanners()
   const [isSearchVisible, setIsSearchVisible] = useState(false)
+  const { maxWidthSize } = useWindowSize()
 
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
@@ -56,7 +58,7 @@ const TabsAndSearch: FC<Props> = ({ openTab, setOpenTab, currentTab, sessionId }
         setOpenTab={setOpenTab}
         openTab={openTab}
       />
-      {TABS.includes(openTab) && (
+      {maxWidthSize(480) && TABS.includes(openTab) && (
         <View style={[flexbox.directionRow, flexbox.justifySpaceBetween, flexbox.alignCenter]}>
           <SelectNetwork currentTab={currentTab} />
         </View>
