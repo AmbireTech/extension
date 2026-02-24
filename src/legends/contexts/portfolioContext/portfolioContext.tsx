@@ -129,7 +129,7 @@ const PortfolioProvider: React.FC<any> = ({ children }) => {
       )
 
       const additionalPortfolioJson = await additionalPortfolioResponse.json()
-      // legacy
+
       const xWalletClaimableBalanceData =
         additionalPortfolioJson?.data?.rewards?.xWalletClaimableBalance
 
