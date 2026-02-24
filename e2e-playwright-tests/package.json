@@ -20,6 +20,7 @@
     "swap:and:bridge": "npx playwright test -g @swapAndBridge",
     "transfer": "npx playwright test -g @transfer",
     "ambire:rewards": "npx playwright test -g @rewards",
+    "auto:login": "npx playwright test -g @autoLogin",
     "postinstall": "patch-package"
   },
   "author": "Filip",
