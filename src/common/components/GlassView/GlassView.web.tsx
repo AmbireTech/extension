@@ -46,7 +46,7 @@ const GlassView: React.FC<GlassViewProps & ViewProps> = ({
       radius: borderRadius,
       depth: 2,
       strength: themeType === THEME_TYPES.DARK ? 100 : 25,
-      chromaticAberration: 4
+      chromaticAberration: 3
     })}') blur(${blurAmount}px) brightness(${themeType === THEME_TYPES.DARK ? 1.1 : 1}) saturate(${themeType === THEME_TYPES.DARK ? 1.5 : 1}) `,
     ...cssStyle
   } as React.CSSProperties

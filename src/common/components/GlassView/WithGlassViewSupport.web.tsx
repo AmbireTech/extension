@@ -10,7 +10,7 @@ const WithGlassViewSupport: FC<WithGlassViewSupportProps> = ({ children }) => {
       <svg style={{ display: 'none' }}>
         <filter
           id="glass-distortion"
-          color-interpolation-filters="sRGB"
+          colorInterpolationFilters="sRGB"
           filterUnits="objectBoundingBox"
           primitiveUnits="userSpaceOnUse"
         >
