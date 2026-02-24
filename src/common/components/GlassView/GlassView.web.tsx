@@ -6,6 +6,7 @@ import { ViewProps } from 'react-native'
 import useTheme from '@common/hooks/useTheme'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import { BORDER_RADIUS_PRIMARY, hexToRgba } from '@common/styles/utils/common'
+import { engine } from '@web/constants/browserapi'
 
 import { getDisplacementFilter } from './helpers.web'
 import { GlassViewProps } from './types'
@@ -40,14 +41,18 @@ const GlassView: React.FC<GlassViewProps & ViewProps> = ({
     '--glass-shine-width': `${themeType === THEME_TYPES.DARK || shineColor ? 1 : 1.75}px`,
     fontSize: `${borderRadius}px`,
     borderRadius,
-    backdropFilter: `blur(${blurAmount / 2}px) url('${getDisplacementFilter({
-      height: size.height || 100,
-      width: size.width || 100,
-      radius: borderRadius,
-      depth: 2,
-      strength: themeType === THEME_TYPES.DARK ? 100 : 25,
-      chromaticAberration: 3
-    })}') blur(${blurAmount}px) brightness(${themeType === THEME_TYPES.DARK ? 1.1 : 1}) saturate(${themeType === THEME_TYPES.DARK ? 1.5 : 1}) `,
+    // SVG blurs are supported only in Webkit browsers
+    backdropFilter:
+      engine !== 'webkit'
+        ? `blur(${blurAmount}px)`
+        : `blur(${blurAmount / 2}px) url('${getDisplacementFilter({
+            height: size.height || 100,
+            width: size.width || 100,
+            radius: borderRadius,
+            depth: 2,
+            strength: themeType === THEME_TYPES.DARK ? 100 : 25,
+            chromaticAberration: 3
+          })}') blur(${blurAmount}px) brightness(${themeType === THEME_TYPES.DARK ? 1.1 : 1}) saturate(${themeType === THEME_TYPES.DARK ? 1.5 : 1})`,
     ...cssStyle
   } as React.CSSProperties
 
