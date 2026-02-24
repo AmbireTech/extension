@@ -8,7 +8,6 @@ import LatticeWithBorderIcon from '@common/assets/svg/LatticeWithBorderIcon'
 import LedgerLetterIcon from '@common/assets/svg/LedgerLetterIcon'
 import PrivateKeyIcon from '@common/assets/svg/PrivateKeyIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
-import SafeIcon from '@common/assets/svg/SafeIcon'
 import SeedPhraseIcon from '@common/assets/svg/SeedPhraseIcon'
 import TrezorLockIcon from '@common/assets/svg/TrezorLockIcon'
 import Button from '@common/components/Button'
@@ -29,7 +28,7 @@ import {
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import { isSafari } from '@web/constants/browserapi'
-import { AnimatedPressable, useCustomHover, useMultiHover } from '@web/hooks/useHover'
+import { AnimatedPressable, useMultiHover } from '@web/hooks/useHover'
 
 import getStyles from './styles'
 
@@ -122,13 +121,13 @@ const ImportExistingAccountSelectorScreen = () => {
         },
         icon: LatticeWithBorderIcon
       },
-      {
-        title: 'Safe',
-        onPress: () => {
-          goToNextRoute(WEB_ROUTES.safeImport)
-        },
-        icon: SafeIcon
-      },
+      // {
+      //   title: 'Safe',
+      //   onPress: () => {
+      //     goToNextRoute(WEB_ROUTES.safeImport)
+      //   },
+      //   icon: SafeIcon
+      // },
       {
         title: 'JSON backup file',
         onPress: () => {
