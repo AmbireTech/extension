@@ -70,7 +70,7 @@ const RouteItem: FC<Props> = ({ routeItem, index, routeItemsLength }) => {
             tintColor1={hovered ? '#fff' : undefined}
             tintColor2={hovered ? '#fff' : undefined}
             blurAmount={20}
-            shineColor="#cccccc"
+            shineColor="#96A1B129"
             testID={routeItem.testID}
             cssStyle={{
               marginBottom: 4,

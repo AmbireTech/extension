@@ -7,6 +7,171 @@ export type DisplacementOptions = {
   chromaticAberration?: number
 }
 
+export type SpecularMapOptions = {
+  /** Rendered pixel width of the element */
+  width: number
+  /** Rendered pixel height of the element */
+  height: number
+  /** Border-radius (px) – also controls the default bezel width */
+  radius: number
+  /**
+   * How wide the glass bezel (rim) is in pixels.
+   * Defaults to `radius` when omitted.
+   */
+  bezelWidth?: number
+  /**
+   * Angle (degrees, screen-space convention where Y increases downward).
+   */
+  lightAngleDeg?: number
+  /** Overall brightness multiplier (default 1). */
+  strength?: number
+  /** Hex colour to tint the highlight (default '#ffffff'). */
+  tintHex?: string
+}
+
+// ---------------------------------------------------------------------------
+// Signed-distance function for a rounded rectangle.
+// Returns < 0 inside, > 0 outside, ≈ 0 on the boundary.
+// ---------------------------------------------------------------------------
+function sdRoundedRect(
+  px: number,
+  py: number,
+  cx: number,
+  cy: number,
+  hw: number,
+  hh: number,
+  r: number
+): number {
+  const dx = Math.max(Math.abs(px - cx) - hw, 0)
+  const dy = Math.max(Math.abs(py - cy) - hh, 0)
+  return Math.sqrt(dx * dx + dy * dy) - r
+}
+
+/**
+ * Generates a physics-based specular highlight map via an off-screen Canvas.
+ *
+ * For every pixel inside the bezel region:
+ *  1. The outward surface normal is estimated as the normalised SDF gradient.
+ *  2. `dot(normal, lightDir)` gives the directional specular intensity — this
+ *     is the same "rim-light" technique described in kube.io/blog/liquid-glass-css-svg/.
+ *  3. A radial falloff envelope makes the highlight peak at the outer rim and
+ *     fade smoothly toward the flat interior, matching the physical curvature
+ *     of the glass bezel.
+ *
+ * Returns a PNG data-URL
+ */
+export function generateSpecularMap({
+  width,
+  height,
+  radius,
+  bezelWidth,
+  lightAngleDeg = 45,
+  strength = 1,
+  tintHex = '#ffffff'
+}: SpecularMapOptions): string {
+  const bw = bezelWidth ?? radius
+
+  // Scale everything by devicePixelRatio so the canvas has one physical pixel
+  // per screen pixel on HiDPI displays. Without this, the browser upscales the
+  // 1× PNG via bilinear interpolation, which produces different-looking results
+  // at different corners depending on edge orientation — the root cause of the
+  // top-left vs. bottom-right asymmetry the user observed on screen.
+  const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1
+  const pw = Math.round(width * dpr)
+  const ph = Math.round(height * dpr)
+  const pr = radius * dpr
+  const pbw = bw * dpr
+
+  const canvas = document.createElement('canvas')
+  canvas.width = pw
+  canvas.height = ph
+  const ctx = canvas.getContext('2d')!
+  const imageData = ctx.createImageData(pw, ph)
+  const data = imageData.data
+
+  // Shape geometry (in physical pixels)
+  const cx = pw / 2
+  const cy = ph / 2
+  const hw = Math.max(0, pw / 2 - pr)
+  const hh = Math.max(0, ph / 2 - pr)
+
+  // Parse tint colour
+  const hex = tintHex.replace('#', '').padEnd(6, 'f')
+  const tR = parseInt(hex.slice(0, 2), 16)
+  const tG = parseInt(hex.slice(2, 4), 16)
+  const tB = parseInt(hex.slice(4, 6), 16)
+
+  // ---------------------------------------------------------------------------
+  // Two corner hotspots.
+  //
+  // A directional dot-product lights an entire straight edge uniformly — no
+  // falloff along it. Instead we use an angular falloff that peaks at the two
+  // hotspot corners and fades as we travel around the rim away from each one.
+  //
+  // The primary hotspot is driven by lightAngleDeg so callers can choose which
+  // corner is brightest. With the default 225° (screen-space, Y-down) this is
+  // the top-left corner. The secondary is always the diametrically opposite
+  // corner (bottom-right at 45°).
+  // ---------------------------------------------------------------------------
+  const primaryRad = (lightAngleDeg * Math.PI) / 180
+  const secondaryRad = primaryRad + Math.PI
+
+  // Helper: wrap angle difference to [-π, π]
+  const wrapDiff = (a: number, b: number) => Math.atan2(Math.sin(a - b), Math.cos(a - b))
+
+  // 1-physical-pixel fringe outside for outer-edge anti-aliasing
+  const eps = 1.0
+
+  for (let py = 0; py < ph; py++) {
+    for (let px = 0; px < pw; px++) {
+      const sdf = sdRoundedRect(px, py, cx, cy, hw, hh, pr)
+
+      // Bezel band + smooth fringe on both edges
+      if (sdf > eps || sdf < -(pbw + eps)) continue
+
+      // Angular position of this rim pixel relative to the shape centre.
+      // This is what drives the corner-focused falloff: pixels near the
+      // top-left corner have an angle close to primaryRad, so they get the
+      // strongest intensity; pixels on the far side of the rim are ≈ 180° away
+      // and get near-zero weight — producing the "fades from the corner" look.
+      const pixelAngle = Math.atan2(py - cy, px - cx)
+
+      // Angular distance to each hotspot, in [0, π]
+      const dPrimary = Math.abs(wrapDiff(pixelAngle, primaryRad))
+      const dSecondary = Math.abs(wrapDiff(pixelAngle, secondaryRad))
+
+      // Identical formula for both corners — same power, same weight, just
+      // mirrored angles. This guarantees both hotspots look exactly the same.
+      const primary = Math.pow(Math.max(0, Math.cos(dPrimary)), 2) * 0.4
+      const secondary = Math.pow(Math.max(0, Math.cos(dSecondary)), 2) * 0.4
+      const angularIntensity = Math.max(primary, secondary)
+
+      // Exponential radial falloff: bright at the outer rim, near-zero inward
+      const rimT = Math.max(0, -sdf) / pbw
+      const radialFalloff = Math.exp(-8 * rimT)
+
+      // Smooth outer edge (sdf: +eps → 0)
+      const outerAA = Math.max(0, Math.min(1, (eps - sdf) / eps))
+      // Smooth inner edge (sdf: -pbw → -(pbw+eps))
+      const innerAA = Math.max(0, Math.min(1, (sdf + pbw + eps) / eps))
+
+      const intensity = Math.min(
+        1.0,
+        angularIntensity * radialFalloff * outerAA * innerAA * strength * 2.5
+      )
+
+      const idx = (py * pw + px) * 4
+      data[idx] = tR
+      data[idx + 1] = tG
+      data[idx + 2] = tB
+      data[idx + 3] = Math.round(intensity * 255)
+    }
+  }
+
+  ctx.putImageData(imageData, 0, 0)
+  return canvas.toDataURL('image/png')
+}
+
 /**
  * Creating the displacement map that is used by feDisplacementMap filter.
  * Gradients take into account the radius of the element.

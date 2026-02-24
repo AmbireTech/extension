@@ -8,12 +8,8 @@ import { THEME_TYPES } from '@common/styles/themeConfig'
 import { BORDER_RADIUS_PRIMARY, hexToRgba } from '@common/styles/utils/common'
 import { engine } from '@web/constants/browserapi'
 
-import { getDisplacementFilter } from './helpers.web'
+import { generateSpecularMap, getDisplacementFilter } from './helpers.web'
 import { GlassViewProps } from './types'
-
-const getShineColors = (shineBase: string): [string, string, string] => {
-  return [hexToRgba(shineBase, 0.8), hexToRgba(shineBase, 0.2), hexToRgba(shineBase, 0)]
-}
 
 const GlassView: React.FC<GlassViewProps & ViewProps> = ({
   children,
@@ -28,17 +24,16 @@ const GlassView: React.FC<GlassViewProps & ViewProps> = ({
   const { themeType } = useTheme()
   const divRef = useRef<HTMLDivElement>(null)
   const [size, setSize] = useState({ width: 0, height: 0 })
-  const shineBase = shineColor || (themeType === THEME_TYPES.LIGHT ? '#ffffff' : '#cccccc')
-  const shineColors = getShineColors(shineBase)
+  const [specularDataUrl, setSpecularDataUrl] = useState<string | null>(null)
+
+  // Tint colour for the specular highlight.
+  // Light mode → pure white; dark mode → near-white with a slight cool tint.
+  const shineBase = shineColor || (themeType === THEME_TYPES.LIGHT ? '#ffffff' : '#96A1B129')
 
   const customProperties = {
     '--glass-tint-color-1': tintColor1 || hexToRgba('#96A1B1', 0.16),
     '--glass-tint-color-2': tintColor2 || hexToRgba('#96A1B1', 0.06),
-    '--glass-shine-color-1': shineColors[0],
-    '--glass-shine-color-2': shineColors[1],
-    '--glass-shine-color-3': shineColors[2],
     '--glass-blur-amount': `${blurAmount}px`,
-    '--glass-shine-width': `${themeType === THEME_TYPES.DARK || shineColor ? 1 : 1.75}px`,
     fontSize: `${borderRadius}px`,
     borderRadius,
     // SVG blurs are supported only in Webkit browsers
@@ -72,15 +67,30 @@ const GlassView: React.FC<GlassViewProps & ViewProps> = ({
     return () => window.removeEventListener('resize', updateSize)
   }, [])
 
+  // Re-generate the physics-based specular map whenever the element size,
+  // border-radius, or theme changes.  The canvas pixel-loop is the same
+  // SDF-gradient + dot-product technique described at kube.io/blog/liquid-glass-css-svg/.
+  useEffect(() => {
+    if (!size.width || !size.height) return
+
+    const dataUrl = generateSpecularMap({
+      width: size.width,
+      height: size.height,
+      radius: borderRadius,
+      bezelWidth: 7,
+      lightAngleDeg: 225,
+      strength: themeType === THEME_TYPES.DARK || shineBase ? 1 : 2,
+      tintHex: shineBase
+    })
+    setSpecularDataUrl(dataUrl)
+  }, [size.width, size.height, borderRadius, themeType, shineBase])
+
   return (
     <div ref={divRef} className="liquidGlass" style={customProperties} data-testid={testID}>
       {children}
-      <div className="shine-container">
-        <div className="shine">
-          <div className="shine-top-left" />
-          <div className="shine-bottom-right" />
-        </div>
-      </div>
+      {specularDataUrl && (
+        <div className="specular-shine" style={{ backgroundImage: `url(${specularDataUrl})` }} />
+      )}
     </div>
   )
 }
