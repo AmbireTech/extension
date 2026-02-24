@@ -74,6 +74,7 @@ const DashboardScreen = () => {
         bounciness: 0,
         speed: 2.8,
         overshootClamping: true,
+        // useNativeDriver: true is not supported for layout properties like height/maxHeight
         useNativeDriver: false
       }).start()
     },
