@@ -30,6 +30,7 @@ interface Props {
   hasReachedBottom: boolean | null
   setHasReachedBottom: Dispatch<SetStateAction<boolean | null>>
   shouldDisplayEIP1271Warning: boolean
+  isSafeNotDeployed: boolean
 }
 
 const Main = ({
@@ -38,7 +39,8 @@ const Main = ({
   handleDismissLedgerConnectModal,
   hasReachedBottom,
   setHasReachedBottom,
-  shouldDisplayEIP1271Warning
+  shouldDisplayEIP1271Warning,
+  isSafeNotDeployed
 }: Props) => {
   const { t } = useTranslation()
   const signMessageState = useController('SignMessageController').state
@@ -119,6 +121,12 @@ const Main = ({
               text="If you encounter issues, please use an EOA account and contact the app to resolve this."
             />
           )}
+          {isSafeNotDeployed && (
+            <Alert
+              type="error"
+              title="Safe account not enabled on this network. Please activate it from Safe global"
+            />
+          )}
         </View>
         <View style={flexbox.flex1}>
           <ExpandableCard
@@ -191,9 +199,9 @@ const Main = ({
             })}
           </ExpandableCard>
         </View>
-        {signMessageState.signingKeyType && signMessageState.signingKeyType !== 'internal' && (
+        {signMessageState.signer && signMessageState.signer.key.type !== 'internal' && (
           <HardwareWalletSigningModal
-            keyType={signMessageState.signingKeyType}
+            keyType={signMessageState.signer.key.type}
             isVisible={signStatus === 'LOADING'}
           />
         )}

@@ -16,9 +16,11 @@ import useLedger from '@web/modules/hardware-wallet/hooks/useLedger'
 import { OneClickEstimationProps } from '@web/modules/sign-account-op/components/OneClick/Estimation/Estimation'
 import { getIsSignLoading } from '@web/modules/sign-account-op/utils/helpers'
 
+type ButtonMode = OneClickEstimationProps['updateType'] | 'Sign' | 'HW' | 'Safe'
+
 const PRIMARY_BUTTON_LABELS: Record<
-  OneClickEstimationProps['updateType'] | 'Sign' | 'HW',
-  { default: string; isLoading: string }
+  ButtonMode,
+  { default: string; isLoading: string; config?: string }
 > = {
   'Swap&Bridge': {
     default: 'Swap',
@@ -35,6 +37,11 @@ const PRIMARY_BUTTON_LABELS: Record<
   HW: {
     default: 'Begin signing',
     isLoading: 'Signing...'
+  },
+  Safe: {
+    default: 'Sign',
+    isLoading: 'Signing...',
+    config: 'Choose signers'
   }
 }
 
@@ -58,6 +65,9 @@ const useSign = ({
     state: { networks }
   } = useController('NetworksController')
   const { dispatch: mainControllerDispatch } = useController('MainController')
+  const {
+    state: { accountStates }
+  } = useController('AccountsController')
   const [isChooseSignerShown, setIsChooseSignerShown] = useState(false)
   const [isChooseFeePayerKeyShown, setIsChooseFeePayerKeyShown] = useState(false)
   const [shouldDisplayLedgerConnectModal, setShouldDisplayLedgerConnectModal] = useState(false)
@@ -192,7 +202,7 @@ const useSign = ({
   }, [mainControllerDispatch, signAccountOpState, updateType])
 
   const handleSign = useCallback(
-    (_chosenSigningKeyType?: Key['type'], _warningAccepted?: boolean) => {
+    (_chosenSigningKeyTypes?: Key['type'][], _warningAccepted?: boolean) => {
       // Prioritize warning(s) modals over all others
       // Warning modals are not displayed in the one-click swap flow
       if (warningToPromptBeforeSign && !_warningAccepted) {
@@ -204,9 +214,10 @@ const useSign = ({
       const isFeePayerSameAsSigner =
         signAccountOpState?.accountOp.signingKeyAddr ===
         signAccountOpState?.accountOp.gasFeePayment?.paidBy
-      const isLedgerKeyInvolvedInTheJustChosenKeys = _chosenSigningKeyType
-        ? _chosenSigningKeyType === 'ledger' || feePayerKeyType === 'ledger'
-        : isAtLeastOneOfTheKeysInvolvedLedger
+      const isLedgerKeyInvolvedInTheJustChosenKeys =
+        _chosenSigningKeyTypes && _chosenSigningKeyTypes.length
+          ? _chosenSigningKeyTypes.indexOf('ledger') !== -1 || feePayerKeyType === 'ledger'
+          : isAtLeastOneOfTheKeysInvolvedLedger
 
       if (isLedgerKeyInvolvedInTheJustChosenKeys && !isLedgerConnected) {
         setShouldDisplayLedgerConnectModal(true)
@@ -241,7 +252,17 @@ const useSign = ({
       // Explicitly pass the currently selected signing key type, because
       // the signing key type in the state might not be updated yet,
       // and Sign Account Op controller assigns a default signing upfront
-      handleSign(_chosenSigningKeyType)
+      handleSign([_chosenSigningKeyType])
+    },
+    [handleSign, handleUpdate]
+  )
+
+  const handleSetMultisigSigners = useCallback(
+    (signers: { addr: Key['addr']; type: Key['type'] }[]) => {
+      handleUpdate({ signers })
+
+      // pass all the key types to check if ledger is there
+      handleSign(signers.map((s) => s.type))
     },
     [handleSign, handleUpdate]
   )
@@ -259,9 +280,16 @@ const useSign = ({
   const onSignButtonClick = useCallback(() => {
     if (!signAccountOpState) return
 
+    const isSafeWithManualSigners =
+      !!signAccountOpState?.account.safeCreation &&
+      !signAccountOpState.accountOp.signers?.length &&
+      (signAccountOpState.accountOp.signed?.length || 0) < signAccountOpState.threshold
+
     // If the account has only one signer, we don't need to show the select signer overlay,
     // and we will sign the transaction with the only one available signer (it is set by default in the controller).
-    if (signAccountOpState?.accountKeyStoreKeys.length === 1) {
+    // Or if the account is a safe with hot signers OR signers from one hardware wallet only,
+    // the user can sign automatically
+    if (signAccountOpState?.accountKeyStoreKeys.length === 1 || !isSafeWithManualSigners) {
       handleSign()
       return
     }
@@ -289,10 +317,27 @@ const useSign = ({
     closeWarningModal()
   }, [handleUpdateStatus, closeWarningModal])
 
-  const isViewOnly = useMemo(
-    () => signAccountOpState?.accountKeyStoreKeys.length === 0,
-    [signAccountOpState?.accountKeyStoreKeys]
-  )
+  const isViewOnly = useMemo(() => {
+    // for all accounts except safe, check if the account has keys
+    const noKeysImported = signAccountOpState?.accountKeyStoreKeys.length === 0
+    if (!signAccountOpState?.account.safeCreation) return noKeysImported
+
+    // for safe accounts, do not treat accounts that are not deployed
+    // on the network as view only as it will mislead the user into
+    // thinking that the account is deployed but no owners have been
+    // imported
+    const isDeployed =
+      !!accountStates[signAccountOpState?.account.addr]?.[
+        signAccountOpState?.accountOp.chainId.toString()
+      ]?.isDeployed
+
+    return isDeployed && noKeysImported
+  }, [
+    signAccountOpState?.accountKeyStoreKeys,
+    accountStates,
+    signAccountOpState?.account,
+    signAccountOpState?.accountOp.chainId
+  ])
 
   const isAtLeastOneOfTheKeysInvolvedExternal = useMemo(
     () =>
@@ -326,14 +371,42 @@ const useSign = ({
     ])
 
   const primaryButtonText = useMemo(() => {
-    const buttonLabelType = updateType || (isAtLeastOneOfTheKeysInvolvedExternal ? 'HW' : 'Sign')
+    let buttonLabelType: ButtonMode =
+      updateType || (isAtLeastOneOfTheKeysInvolvedExternal ? 'HW' : 'Sign')
+
+    if (signAccountOpState?.account.safeCreation) {
+      const isBroadcast =
+        (signAccountOpState?.accountOp.signed?.length || 0) >= signAccountOpState?.threshold
+      if (isBroadcast) {
+        return isSignLoading ? 'Broadcasting...' : 'Broadcast'
+      }
+
+      buttonLabelType = 'Safe'
+
+      // if signers are not configured and configurable, prompt the user to do so
+      if (
+        signAccountOpState?.accountOp.signingKeyAddr &&
+        (signAccountOpState?.accountOp.signers?.length || 0) === 0
+      )
+        return PRIMARY_BUTTON_LABELS[buttonLabelType].config as string
+    }
 
     return t(
       isSignLoading
         ? PRIMARY_BUTTON_LABELS[buttonLabelType].isLoading
         : PRIMARY_BUTTON_LABELS[buttonLabelType].default
     )
-  }, [isAtLeastOneOfTheKeysInvolvedExternal, isSignLoading, t, updateType])
+  }, [
+    isAtLeastOneOfTheKeysInvolvedExternal,
+    isSignLoading,
+    t,
+    updateType,
+    signAccountOpState?.account.safeCreation,
+    signAccountOpState?.accountOp.signed?.length,
+    signAccountOpState?.accountOp.signers?.length,
+    signAccountOpState?.threshold,
+    signAccountOpState?.accountOp.signingKeyAddr
+  ])
 
   // When being done, there is a corner case if the sign succeeds, but the broadcast fails.
   // If so, the "Sign" button should NOT be disabled, so the user can retry broadcasting.
@@ -384,7 +457,8 @@ const useSign = ({
     bundlerNonceDiscrepancy,
     isChooseFeePayerKeyShown,
     setIsChooseFeePayerKeyShown,
-    shouldHoldToProceed: !!signAccountOpState?.banners?.length
+    shouldHoldToProceed: !!signAccountOpState?.banners?.length,
+    handleSetMultisigSigners
   }
 }
 

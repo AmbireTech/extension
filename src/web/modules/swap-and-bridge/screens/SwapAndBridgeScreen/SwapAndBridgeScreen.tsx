@@ -20,6 +20,7 @@ import useSimulationError from '@web/modules/portfolio/hooks/SimulationError/use
 import BatchAdded from '@web/modules/sign-account-op/components/OneClick/BatchModal/BatchAdded'
 import Buttons from '@web/modules/sign-account-op/components/OneClick/Buttons'
 import Estimation from '@web/modules/sign-account-op/components/OneClick/Estimation'
+import SafeSigned from '@web/modules/sign-account-op/components/OneClick/SafeSigned'
 import RoutesModal from '@web/modules/swap-and-bridge/components/RoutesModal'
 import useSwapAndBridgeForm from '@web/modules/swap-and-bridge/hooks/useSwapAndBridgeForm'
 import { getUiType } from '@web/utils/uiType'
@@ -132,8 +133,15 @@ const SwapAndBridgeScreen = () => {
   }, [formStatus, isLoading])
 
   const onBatchAddedPrimaryButtonPress = useCallback(() => {
+    swapAndBridgeDispatch({
+      type: 'method',
+      params: {
+        method: 'resetForm',
+        args: []
+      }
+    })
     navigate(WEB_ROUTES.dashboard)
-  }, [navigate])
+  }, [swapAndBridgeDispatch, navigate])
   const onBatchAddedSecondaryButtonPress = useCallback(() => {
     setShowAddedToBatch(false)
   }, [setShowAddedToBatch])
@@ -239,6 +247,16 @@ const SwapAndBridgeScreen = () => {
         secondaryButtonText={t('Add more')}
         onPrimaryButtonPress={onBatchAddedPrimaryButtonPress}
         onSecondaryButtonPress={onBatchAddedSecondaryButtonPress}
+      />
+    )
+  }
+
+  if (displayedView === 'safe-signed') {
+    return (
+      <SafeSigned
+        title={t('Swap & Bridge')}
+        primaryButtonText={t('Open dashboard')}
+        onPrimaryButtonPress={onBatchAddedPrimaryButtonPress}
       />
     )
   }

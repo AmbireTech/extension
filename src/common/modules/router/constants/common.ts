@@ -66,6 +66,7 @@ const WEB_ROUTES = {
   recoveryPhrasesSettings: 'settings/recovery-phrases',
   onboardingCompleted: 'wallet-setup-completed',
   receive: 'receive',
+  safeImport: 'safe-import',
   optOuts: 'settings/opt-outs'
 }
 
@@ -84,7 +85,8 @@ const ONBOARDING_WEB_ROUTES = [
   WEB_ROUTES.keyStoreSetup,
   WEB_ROUTES.accountPersonalize,
   WEB_ROUTES.accountPicker,
-  WEB_ROUTES.onboardingCompleted
+  WEB_ROUTES.onboardingCompleted,
+  WEB_ROUTES.safeImport
 ] as const
 
 export { MOBILE_ROUTES, ONBOARDING_WEB_ROUTES, ROUTES, WEB_ROUTES }

@@ -28,7 +28,7 @@ import {
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import { isSafari } from '@web/constants/browserapi'
-import { AnimatedPressable, useCustomHover, useMultiHover } from '@web/hooks/useHover'
+import { AnimatedPressable, useMultiHover } from '@web/hooks/useHover'
 
 import getStyles from './styles'
 
@@ -121,6 +121,13 @@ const ImportExistingAccountSelectorScreen = () => {
         },
         icon: LatticeWithBorderIcon
       },
+      // {
+      //   title: 'Safe',
+      //   onPress: () => {
+      //     goToNextRoute(WEB_ROUTES.safeImport)
+      //   },
+      //   icon: SafeIcon
+      // },
       {
         title: 'JSON backup file',
         onPress: () => {

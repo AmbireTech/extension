@@ -17,6 +17,7 @@ import { PhishingController } from '@ambire-common/controllers/phishing/phishing
 import { PortfolioController } from '@ambire-common/controllers/portfolio/portfolio'
 import { ProvidersController } from '@ambire-common/controllers/providers/providers'
 import { RequestsController } from '@ambire-common/controllers/requests/requests'
+import { SafeController } from '@ambire-common/controllers/safe/safe'
 import { SelectedAccountController } from '@ambire-common/controllers/selectedAccount/selectedAccount'
 import { SignAccountOpController } from '@ambire-common/controllers/signAccountOp/signAccountOp'
 import { SignMessageController } from '@ambire-common/controllers/signMessage/signMessage'
@@ -53,7 +54,8 @@ export const controllersNestedInMainMapping = {
   FeatureFlagsController,
   BannerController,
   UiController,
-  AutoLoginController
+  AutoLoginController,
+  SafeController
 
   // Add the rest of the controllers that are part of the main controller:
   // - key is the name of the controller

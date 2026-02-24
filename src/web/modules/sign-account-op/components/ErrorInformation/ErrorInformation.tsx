@@ -37,7 +37,7 @@ const ErrorInformation = () => {
   }, [signAccountOpState, accountStates])
 
   const estimationUsesStateOverrides = useMemo(() => {
-    if (!signAccountOpState || !state) return false
+    if (!signAccountOpState || !!signAccountOpState.account.safeCreation || !state) return false
 
     return state.isEOA && !state.isSmarterEoa && signAccountOpState.accountOp.calls.length > 1
   }, [signAccountOpState, state])

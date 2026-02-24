@@ -3,7 +3,6 @@ import { Control, Controller } from 'react-hook-form'
 import { View } from 'react-native'
 
 import { Account } from '@ambire-common/interfaces/account'
-import { isSmartAccount } from '@ambire-common/libs/account/account'
 import AccountAddress from '@common/components/AccountAddress'
 import AccountBadges from '@common/components/AccountBadges'
 import Avatar from '@common/components/Avatar'
@@ -53,7 +52,11 @@ const AccountPersonalizeCard = ({
           testID="personalize-account"
           style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}
         >
-          <Avatar address={account.addr} isSmart={isSmartAccount(account)} pfp={preferences.pfp} />
+          <Avatar
+            address={account.addr}
+            smartAccountType={(account.creation && 'Ambire') || (account.safeCreation && 'Safe')}
+            pfp={preferences.pfp}
+          />
           <View style={flexbox.flex1}>
             <View style={[flexbox.directionRow, flexbox.flex1]}>
               <Controller

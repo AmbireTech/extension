@@ -32,6 +32,7 @@ import useSyncedState from '@web/hooks/useSyncedState'
 import BatchAdded from '@web/modules/sign-account-op/components/OneClick/BatchModal/BatchAdded'
 import Buttons from '@web/modules/sign-account-op/components/OneClick/Buttons'
 import Estimation from '@web/modules/sign-account-op/components/OneClick/Estimation'
+import SafeSigned from '@web/modules/sign-account-op/components/OneClick/SafeSigned'
 import TrackProgress from '@web/modules/sign-account-op/components/OneClick/TrackProgress'
 import Completed from '@web/modules/sign-account-op/components/OneClick/TrackProgress/ByStatus/Completed'
 import Failed from '@web/modules/sign-account-op/components/OneClick/TrackProgress/ByStatus/Failed'
@@ -47,6 +48,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   const { addToast } = useToast()
   const { state: transferState, dispatch: transferDispatch } = useController('TransferController')
   const { dispatch: requestsDispatch } = useController('RequestsController')
+  const { dispatch: mainDispatch } = useController('MainController')
   const {
     isTopUp,
     validationFormMsgs,
@@ -93,6 +95,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   const recipientMenuClosedAutomatically = useRef(false)
 
   const [showAddedToBatch, setShowAddedToBatch] = useState(false)
+  const [showSafeSigned, setShowSafeSigned] = useState(false)
   const [latestBatchedNetwork, setLatestBatchedNetwork] = useState<bigint | undefined>()
 
   const controllerAmountFieldValue = amountFieldMode === 'token' ? controllerAmount : amountInFiat
@@ -139,7 +142,8 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
       (r) =>
         r.kind === 'calls' &&
         r.meta.accountAddr === account.addr &&
-        !r.signAccountOp.isSignAndBroadcastInProgress
+        !r.signAccountOp.isSignAndBroadcastInProgress &&
+        !r.signAccountOp.accountOp.signature
     )
   }, [userRequests, account])
 
@@ -200,17 +204,37 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     }
   }, [latestBroadcastedAccountOp?.accountAddr, latestBroadcastedAccountOp?.chainId, sessionHandler])
 
-  const displayedView: 'transfer' | 'batch' | 'track' | 'loading' = useMemo(() => {
+  useEffect(() => {
+    if (showSafeSigned) return
+    if (
+      signAccountOpController &&
+      signAccountOpController.account.safeCreation &&
+      signAccountOpController.status?.type === SigningStatus.Queued
+    ) {
+      setShowSafeSigned(true)
+      mainDispatch({
+        type: 'method',
+        params: {
+          method: 'fetchSafeTxns',
+          args: [[signAccountOpController.accountOp.chainId]]
+        }
+      })
+    }
+  }, [showSafeSigned, signAccountOpController, mainDispatch])
+
+  const displayedView: 'transfer' | 'batch' | 'track' | 'safe-signed' | 'loading' = useMemo(() => {
     // If the screen type doesn't match the controller state, we show a loading state
     // This avoids showing the wrong screen for a brief moment0
     if (!!isTopUpScreen !== !!isTopUp) return 'loading'
+
+    if (showSafeSigned) return 'safe-signed'
 
     if (showAddedToBatch) return 'batch'
 
     if (latestBroadcastedAccountOp) return 'track'
 
     return 'transfer'
-  }, [isTopUp, isTopUpScreen, latestBroadcastedAccountOp, showAddedToBatch])
+  }, [isTopUp, showSafeSigned, isTopUpScreen, latestBroadcastedAccountOp, showAddedToBatch])
 
   const {
     ref: estimationModalRef,
@@ -323,10 +347,6 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
       ? isFormValid
       : isFormValid && addressInputState.validation.severity !== 'error')
   }, [addressInputState.validation.severity, isFormValid, isTopUp])
-
-  const onBack = useCallback(() => {
-    navigate(ROUTES.dashboard)
-  }, [navigate])
 
   const resetTransferForm = useCallback(() => {
     transferDispatch({
@@ -602,6 +622,16 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
         secondaryButtonText={t('Add more')}
         onPrimaryButtonPress={onBatchAddedPrimaryButtonPress}
         onSecondaryButtonPress={onBatchAddedSecondaryButtonPress}
+      />
+    )
+  }
+
+  if (displayedView === 'safe-signed') {
+    return (
+      <SafeSigned
+        title={isTopUp ? t('Top Up Gas Tank') : t('Send')}
+        primaryButtonText={t('Open dashboard')}
+        onPrimaryButtonPress={onBatchAddedPrimaryButtonPress}
       />
     )
   }

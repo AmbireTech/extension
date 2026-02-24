@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useModalize } from 'react-native-modalize'
 import { useLocation } from 'react-router-dom'
 
+import { SigningStatus } from '@ambire-common/controllers/signAccountOp/signAccountOp'
 import { SwapAndBridgeFormStatus } from '@ambire-common/controllers/swapAndBridge/swapAndBridge'
 import { SwapAndBridgeActiveRoute } from '@ambire-common/interfaces/swapAndBridge'
 import { CallsUserRequest } from '@ambire-common/interfaces/userRequest'
@@ -13,7 +14,6 @@ import {
 } from '@ambire-common/libs/swapAndBridge/swapAndBridge'
 import { getCallsCount } from '@ambire-common/utils/userRequest'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useGetTokenSelectProps from '@common/hooks/useGetTokenSelectProps'
 import useNavigation from '@common/hooks/useNavigation'
 import { ROUTES } from '@common/modules/router/constants/common'
@@ -46,6 +46,7 @@ const useSwapAndBridgeForm = () => {
   } = useController('SwapAndBridgeController').state
   const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
   const { dispatch: requestsDispatch, state: requestsState } = useController('RequestsController')
+  const { dispatch: mainDispatch } = useController('MainController')
   const { userRequests } = requestsState
   const {
     state: { account, portfolio }
@@ -75,6 +76,7 @@ const useSwapAndBridgeForm = () => {
   const [latestBatchedNetwork, setLatestBatchedNetwork] = useState<bigint | undefined>()
   const [isOneClickModeDuringPriceImpact, setIsOneClickModeDuringPriceImpact] =
     useState<boolean>(false)
+  const [showSafeSigned, setShowSafeSigned] = useState(false)
   const { networks } = useController('NetworksController').state
   const currentRoute = useLocation()
   const { setSearchParams, navigate } = useNavigation()
@@ -109,7 +111,8 @@ const useSwapAndBridgeForm = () => {
       (r) =>
         r.kind === 'calls' &&
         r.meta.accountAddr === account.addr &&
-        r.meta.chainId === fromSelectedToken.chainId
+        r.meta.chainId === fromSelectedToken.chainId &&
+        !r.signAccountOp.accountOp.signature
     )
   }, [fromSelectedToken, userRequests, account])
 
@@ -120,7 +123,8 @@ const useSwapAndBridgeForm = () => {
       (r) =>
         r.kind === 'calls' &&
         r.meta.accountAddr === account.addr &&
-        r.meta.chainId === latestBatchedNetwork
+        r.meta.chainId === latestBatchedNetwork &&
+        !r.signAccountOp.accountOp.signature
     )
 
     return getCallsCount(reqs)
@@ -231,6 +235,24 @@ const useSwapAndBridgeForm = () => {
     swapAndBridgeDispatch,
     visibleUserRequests
   ])
+
+  useEffect(() => {
+    if (showSafeSigned) return
+    if (
+      signAccountOpController &&
+      signAccountOpController.account.safeCreation &&
+      signAccountOpController.status?.type === SigningStatus.Queued
+    ) {
+      setShowSafeSigned(true)
+      mainDispatch({
+        type: 'method',
+        params: {
+          method: 'fetchSafeTxns',
+          args: [[signAccountOpController.accountOp.chainId]]
+        }
+      })
+    }
+  }, [showSafeSigned, signAccountOpController, mainDispatch])
 
   // remove session - this will be triggered only
   // when navigation to another screen internally in the extension
@@ -450,13 +472,15 @@ const useSwapAndBridgeForm = () => {
     )
   }, [activeRoutes, account])
 
-  const displayedView: 'estimate' | 'batch' | 'track' = useMemo(() => {
+  const displayedView: 'estimate' | 'batch' | 'track' | 'safe-signed' = useMemo(() => {
+    if (showSafeSigned) return 'safe-signed'
+
     if (showAddedToBatch) return 'batch'
 
     if (activeRoute) return 'track'
 
     return 'estimate'
-  }, [activeRoute, showAddedToBatch])
+  }, [activeRoute, showAddedToBatch, showSafeSigned])
 
   useEffect(() => {
     if (!account) return
@@ -538,7 +562,8 @@ const useSwapAndBridgeForm = () => {
     batchNetworkUserRequestsCount,
     networkUserRequests,
     isLocalStateOutOfSync,
-    shouldDisableAddToBatch
+    shouldDisableAddToBatch,
+    setShowSafeSigned
   }
 }
 

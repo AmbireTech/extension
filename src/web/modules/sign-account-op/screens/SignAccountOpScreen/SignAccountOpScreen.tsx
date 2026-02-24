@@ -29,7 +29,7 @@ import PendingTransactions from '@web/modules/sign-account-op/components/Pending
 import SafetyChecksOverlay from '@web/modules/sign-account-op/components/SafetyChecksOverlay'
 import SectionHeading from '@web/modules/sign-account-op/components/SectionHeading'
 import Simulation from '@web/modules/sign-account-op/components/Simulation'
-import SigningKeySelect from '@web/modules/sign-message/components/SignKeySelect'
+import KeySelect from '@web/modules/sign-message/components/KeySelect'
 
 import ErrorInformation from '../../components/ErrorInformation'
 import Gradient from './Gradient'
@@ -105,7 +105,8 @@ const SignAccountOpScreen = () => {
     isSignDisabled,
     bundlerNonceDiscrepancy,
     primaryButtonText,
-    shouldHoldToProceed
+    shouldHoldToProceed,
+    handleSetMultisigSigners
   } = useSign({
     handleUpdateStatus,
     signAccountOpState,
@@ -153,10 +154,16 @@ const SignAccountOpScreen = () => {
   ])
 
   const isAddToCartDisabled = useMemo(() => {
+    if (signAccountOpState?.account.safeCreation) return false
     const readyToSign = signAccountOpState?.readyToSign
 
     return isSignLoading || (!readyToSign && !isViewOnly)
-  }, [isSignLoading, isViewOnly, signAccountOpState?.readyToSign])
+  }, [
+    isSignLoading,
+    isViewOnly,
+    signAccountOpState?.readyToSign,
+    signAccountOpState?.account.safeCreation
+  ])
 
   const estimationFailed = signAccountOpState?.status?.type === SigningStatus.EstimationError
 
@@ -205,7 +212,9 @@ const SignAccountOpScreen = () => {
                 }}
               />
               <View style={[spacings.ph, spacings.pv, flexbox.flex1]}>
-                {!estimationFailed ? (
+                {!estimationFailed &&
+                signAccountOpState?.canBroadcast &&
+                signAccountOpState?.status?.type !== SigningStatus.Queued ? (
                   <View style={spacings.mbXl}>
                     <Estimation
                       signAccountOpState={signAccountOpState}
@@ -253,26 +262,29 @@ const SignAccountOpScreen = () => {
           </View>
         )}
       >
-        {signAccountOpState ? (
-          <SigningKeySelect
-            isVisible={isChooseSignerShown || isChooseFeePayerKeyShown}
+        {signAccountOpState && (
+          <KeySelect
             isSigning={isSignLoading || !signAccountOpState.readyToSign}
-            handleClose={() => {
-              setIsChooseSignerShown(false)
-              setIsChooseFeePayerKeyShown(false)
-            }}
+            isChooseSignerShown={isChooseSignerShown}
+            isChooseFeePayerKeyShown={isChooseFeePayerKeyShown}
+            handleSetMultisigSigners={handleSetMultisigSigners}
+            handleChooseKey={
+              isChooseFeePayerKeyShown ? handleChangeFeePayerKeyType : handleChangeSigningKey
+            }
+            account={signAccountOpState.account}
             selectedAccountKeyStoreKeys={
               isChooseFeePayerKeyShown
                 ? signAccountOpState.feePayerKeyStoreKeys
                 : signAccountOpState.accountKeyStoreKeys
             }
-            handleChooseKey={
-              isChooseFeePayerKeyShown ? handleChangeFeePayerKeyType : handleChangeSigningKey
-            }
-            type={isChooseFeePayerKeyShown ? 'broadcasting' : 'signing'}
-            account={signAccountOpState.account}
+            handleClose={() => {
+              setIsChooseSignerShown(false)
+              setIsChooseFeePayerKeyShown(false)
+            }}
+            signed={signAccountOpState.accountOp.signed || []}
+            threshold={signAccountOpState.threshold}
           />
-        ) : null}
+        )}
         <TabLayoutWrapperMainContent withScroll={false}>
           <View
             style={[
@@ -304,6 +316,7 @@ const SignAccountOpScreen = () => {
               network={network}
               setDelegation={signAccountOpState?.accountOp.meta?.setDelegation}
               delegatedContract={signAccountOpState?.delegatedContract}
+              hideDeleteIcon={!!signAccountOpState?.accountOp.signed?.length}
             />
             {/* Display errors only if the user is not in view-only mode */}
             {signAccountOpState?.errors?.length && !isViewOnly ? (
@@ -315,7 +328,7 @@ const SignAccountOpScreen = () => {
                 isEstimationComplete={!!signAccountOpState?.isInitialized && !!network}
               />
             )}
-            {isViewOnly && <NoKeysToSignAlert />}
+            {isViewOnly && <NoKeysToSignAlert chainId={signAccountOpState?.accountOp?.chainId} />}
           </ScrollView>
         </TabLayoutWrapperMainContent>
       </TabLayoutContainer>

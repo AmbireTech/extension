@@ -16,9 +16,15 @@ interface Props {
   network?: Network
   setDelegation?: boolean
   delegatedContract?: Hex | null
+  hideDeleteIcon?: boolean
 }
 
-const PendingTransactions: FC<Props> = ({ network, setDelegation, delegatedContract }) => {
+const PendingTransactions: FC<Props> = ({
+  network,
+  setDelegation,
+  delegatedContract,
+  hideDeleteIcon
+}) => {
   const { t } = useTranslation()
   const { humanization, banners } = useController('SignAccountOpController').state || {}
 
@@ -49,6 +55,7 @@ const PendingTransactions: FC<Props> = ({ network, setDelegation, delegatedContr
             call={call}
             chainId={network.chainId}
             index={i}
+            hideDeleteIcon={hideDeleteIcon}
           />
         ))
       ) : (
