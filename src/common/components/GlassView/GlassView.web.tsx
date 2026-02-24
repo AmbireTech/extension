@@ -1,6 +1,6 @@
 import './GlassView.css'
 
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useLayoutEffect, useRef, useState } from 'react'
 import { ViewProps } from 'react-native'
 
 import useTheme from '@common/hooks/useTheme'
@@ -23,7 +23,6 @@ const GlassView: React.FC<GlassViewProps & ViewProps> = ({
 }) => {
   const { themeType } = useTheme()
   const divRef = useRef<HTMLDivElement>(null)
-  const [size, setSize] = useState({ width: 0, height: 0 })
   const [specularDataUrl, setSpecularDataUrl] = useState<string | null>(null)
 
   // Tint colour for the specular highlight.
@@ -41,8 +40,8 @@ const GlassView: React.FC<GlassViewProps & ViewProps> = ({
       engine !== 'webkit'
         ? `blur(${blurAmount}px)`
         : `blur(${blurAmount / 2}px) url('${getDisplacementFilter({
-            height: size.height || 100,
-            width: size.width || 100,
+            height: divRef.current?.offsetHeight || 100,
+            width: divRef.current?.offsetWidth || 100,
             radius: borderRadius,
             depth: 2,
             strength: themeType === THEME_TYPES.DARK ? 100 : 25,
@@ -51,39 +50,32 @@ const GlassView: React.FC<GlassViewProps & ViewProps> = ({
     ...cssStyle
   } as React.CSSProperties
 
-  useEffect(() => {
+  // useLayoutEffect so it's computed immediately
+  useLayoutEffect(() => {
     const el = divRef.current
     if (!el) return
 
-    const updateSize = () => {
-      setSize({
-        width: el.offsetWidth,
-        height: el.offsetHeight
-      })
+    const generate = () => {
+      const w = el.offsetWidth
+      const h = el.offsetHeight
+      if (!w || !h) return
+      setSpecularDataUrl(
+        generateSpecularMap({
+          width: w,
+          height: h,
+          radius: borderRadius,
+          bezelWidth: 7,
+          lightAngleDeg: 225,
+          strength: themeType === THEME_TYPES.DARK || shineBase ? 1 : 2,
+          tintHex: shineBase
+        })
+      )
     }
 
-    updateSize()
-    window.addEventListener('resize', updateSize)
-    return () => window.removeEventListener('resize', updateSize)
-  }, [])
-
-  // Re-generate the physics-based specular map whenever the element size,
-  // border-radius, or theme changes.  The canvas pixel-loop is the same
-  // SDF-gradient + dot-product technique described at kube.io/blog/liquid-glass-css-svg/.
-  useEffect(() => {
-    if (!size.width || !size.height) return
-
-    const dataUrl = generateSpecularMap({
-      width: size.width,
-      height: size.height,
-      radius: borderRadius,
-      bezelWidth: 7,
-      lightAngleDeg: 225,
-      strength: themeType === THEME_TYPES.DARK || shineBase ? 1 : 2,
-      tintHex: shineBase
-    })
-    setSpecularDataUrl(dataUrl)
-  }, [size.width, size.height, borderRadius, themeType, shineBase])
+    generate()
+    window.addEventListener('resize', generate)
+    return () => window.removeEventListener('resize', generate)
+  }, [borderRadius, themeType, shineBase])
 
   return (
     <div ref={divRef} className="liquidGlass" style={customProperties} data-testid={testID}>
