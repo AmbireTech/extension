@@ -78,14 +78,22 @@ module.exports = function (api) {
             '.json'
           ],
           alias: {
+            // Lazy load eth-crypto to prevent load-time errors in the Hermes engine
             'eth-crypto': './src/mobile/shims/eth-crypto',
-            'scrypt-js': './src/mobile/shims/scrypt-js', // improves performance
-            pbkdf2: './src/mobile/shims/pbkdf2', // improves performance
+            // Shim scrypt-js to use native implementations, drastically improving keystore performance
+            'scrypt-js': './src/mobile/shims/scrypt-js',
+            // Shim pbkdf2 to use native implementations for better performance during wallet operations
+            pbkdf2: './src/mobile/shims/pbkdf2',
+            // Use react-native-quick-crypto for high-performance native crypto operations instead of slow JS polyfills
             crypto: 'react-native-quick-crypto',
+            // Polyfill Node.js built-ins for compatibility with libraries using Node.js features (e.g. ethers.js, stream-based libs)
             stream: 'readable-stream',
+            // Provide Buffer global for cryptographic and binary data processing
             buffer: 'buffer',
+            // Redirect http/https to browser-compatible versions for networking libraries
             http: 'stream-http',
             https: 'https-browserify',
+            // Provide compression support for libraries requiring Node's zlib
             zlib: 'browserify-zlib',
 
             // absolute imports

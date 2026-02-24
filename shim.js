@@ -22,5 +22,6 @@ if (typeof window === 'undefined') {
   global.window = global
 }
 
+// Event listener shims for mobile app compatibility for cetain common files between web and mobile
 window.addEventListener = window.addEventListener || (() => {})
 window.removeEventListener = window.removeEventListener || (() => {})
