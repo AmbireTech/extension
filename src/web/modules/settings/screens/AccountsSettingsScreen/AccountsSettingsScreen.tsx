@@ -288,6 +288,7 @@ const AccountsSettingsScreen = () => {
         </View>
         <View style={flexbox.alignCenter}>
           <Button
+            testID="confirm-remove-account-button"
             type="danger"
             style={spacings.mtTy}
             text={t('Remove account')}
