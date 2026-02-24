@@ -27,7 +27,7 @@ const GlassView: React.FC<GlassViewProps & ViewProps> = ({
 
   // Tint colour for the specular highlight.
   // Light mode → pure white; dark mode → near-white with a slight cool tint.
-  const shineBase = shineColor || (themeType === THEME_TYPES.LIGHT ? '#ffffff' : '#96A1B129')
+  const shineBase = shineColor || (themeType === THEME_TYPES.LIGHT ? '#ffffff' : '#96A1B1')
 
   const customProperties = {
     '--glass-tint-color-1': tintColor1 || hexToRgba('#96A1B1', 0.16),
@@ -66,7 +66,7 @@ const GlassView: React.FC<GlassViewProps & ViewProps> = ({
           radius: borderRadius,
           bezelWidth: 7,
           lightAngleDeg: 225,
-          strength: themeType === THEME_TYPES.DARK || shineColor ? 1 : 2.5,
+          strength: shineColor ? 1 : themeType === THEME_TYPES.DARK ? 1.25 : 2.5,
           tintHex: shineBase
         })
       )

@@ -1,3 +1,5 @@
+import { hexToRgba } from '@common/styles/utils/common'
+
 export type DisplacementOptions = {
   height: number
   width: number
@@ -71,10 +73,10 @@ export function generateSpecularMap({
 }: SpecularMapOptions): string {
   const bw = bezelWidth ?? radius
 
-  // Render at 2× CSS pixel size (supersampling). CSS background-size: 100% 100%
-  // downscales it back to the element's CSS size, which acts as a free 2× AA
+  // Render at 4× CSS pixel size (supersampling). CSS background-size: 100% 100%
+  // downscales it back to the element's CSS size, which acts as a free 4× AA
   // pass — perfectly rotationally symmetric, so both corners look equally smooth.
-  const ss = 2
+  const ss = 4
   const pw = Math.round(width * ss)
   const ph = Math.round(height * ss)
   const pr = radius * ss
@@ -93,11 +95,8 @@ export function generateSpecularMap({
   const hw = Math.max(0, pw / 2 - pr)
   const hh = Math.max(0, ph / 2 - pr)
 
-  // Parse tint colour
-  const hex = tintHex.replace('#', '').padEnd(6, 'f')
-  const tR = parseInt(hex.slice(0, 2), 16)
-  const tG = parseInt(hex.slice(2, 4), 16)
-  const tB = parseInt(hex.slice(4, 6), 16)
+  const rgb = hexToRgba(tintHex, 1)
+  const [tR = 255, tG = 255, tB = 255] = rgb.match(/\d+/g)?.map(Number) || []
 
   // ---------------------------------------------------------------------------
   // Two corner hotspots.
@@ -117,8 +116,8 @@ export function generateSpecularMap({
   // Helper: wrap angle difference to [-π, π]
   const wrapDiff = (a: number, b: number) => Math.atan2(Math.sin(a - b), Math.cos(a - b))
 
-  // 2-supersampled-pixel fringe for smooth AA at both edges
-  const eps = 2.0
+  // 4-supersampled-pixel fringe for smooth AA at both edges
+  const eps = 4.0
 
   for (let py = 0; py < ph; py++) {
     for (let px = 0; px < pw; px++) {
