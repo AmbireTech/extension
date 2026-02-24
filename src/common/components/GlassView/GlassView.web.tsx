@@ -66,7 +66,7 @@ const GlassView: React.FC<GlassViewProps & ViewProps> = ({
           radius: borderRadius,
           bezelWidth: 7,
           lightAngleDeg: 225,
-          strength: themeType === THEME_TYPES.DARK || shineBase ? 1 : 2,
+          strength: themeType === THEME_TYPES.DARK || shineColor ? 1 : 2.5,
           tintHex: shineBase
         })
       )
@@ -75,7 +75,7 @@ const GlassView: React.FC<GlassViewProps & ViewProps> = ({
     generate()
     window.addEventListener('resize', generate)
     return () => window.removeEventListener('resize', generate)
-  }, [borderRadius, themeType, shineBase])
+  }, [borderRadius, themeType, shineBase, shineColor])
 
   return (
     <div ref={divRef} className="liquidGlass" style={customProperties} data-testid={testID}>

@@ -71,16 +71,14 @@ export function generateSpecularMap({
 }: SpecularMapOptions): string {
   const bw = bezelWidth ?? radius
 
-  // Scale everything by devicePixelRatio so the canvas has one physical pixel
-  // per screen pixel on HiDPI displays. Without this, the browser upscales the
-  // 1× PNG via bilinear interpolation, which produces different-looking results
-  // at different corners depending on edge orientation — the root cause of the
-  // top-left vs. bottom-right asymmetry the user observed on screen.
-  const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1
-  const pw = Math.round(width * dpr)
-  const ph = Math.round(height * dpr)
-  const pr = radius * dpr
-  const pbw = bw * dpr
+  // Render at 2× CSS pixel size (supersampling). CSS background-size: 100% 100%
+  // downscales it back to the element's CSS size, which acts as a free 2× AA
+  // pass — perfectly rotationally symmetric, so both corners look equally smooth.
+  const ss = 2
+  const pw = Math.round(width * ss)
+  const ph = Math.round(height * ss)
+  const pr = radius * ss
+  const pbw = bw * ss
 
   const canvas = document.createElement('canvas')
   canvas.width = pw
@@ -119,8 +117,8 @@ export function generateSpecularMap({
   // Helper: wrap angle difference to [-π, π]
   const wrapDiff = (a: number, b: number) => Math.atan2(Math.sin(a - b), Math.cos(a - b))
 
-  // 1-physical-pixel fringe outside for outer-edge anti-aliasing
-  const eps = 1.0
+  // 2-supersampled-pixel fringe for smooth AA at both edges
+  const eps = 2.0
 
   for (let py = 0; py < ph; py++) {
     for (let px = 0; px < pw; px++) {
