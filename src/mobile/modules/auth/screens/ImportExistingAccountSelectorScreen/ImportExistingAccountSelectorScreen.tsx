@@ -3,18 +3,13 @@ import { Animated, ScrollView, TouchableOpacity, View } from 'react-native'
 import { SvgProps } from 'react-native-svg'
 
 import DiagonalRightArrowIcon from '@common/assets/svg/DiagonalRightArrowIcon'
-import ImportJsonIcon from '@common/assets/svg/ImportJsonIcon'
-import LatticeWithBorderIcon from '@common/assets/svg/LatticeWithBorderIcon'
-import LedgerLetterIcon from '@common/assets/svg/LedgerLetterIcon'
 import PrivateKeyIcon from '@common/assets/svg/PrivateKeyIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import SeedPhraseIcon from '@common/assets/svg/SeedPhraseIcon'
-import TrezorLockIcon from '@common/assets/svg/TrezorLockIcon'
 import Button from '@common/components/Button'
 import Panel from '@common/components/Panel'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import { ROUTES } from '@common/modules/router/constants/common'
@@ -41,12 +36,11 @@ const ImportExistingAccountSelectorScreen = () => {
   const { t } = useTranslation()
   const wrapperRef = useRef<View | null>(null)
 
-  const { goToPrevRoute, goToNextRoute, setTriggeredHwWalletFlow } = useOnboardingNavigation()
+  const { goToPrevRoute, goToNextRoute } = useOnboardingNavigation()
   const [showMore, setShowMore] = useState(false)
 
   const animatedHeight = useRef(new Animated.Value(0)).current
   const animatedOpacity = useRef(new Animated.Value(0)).current
-  const { dispatch } = useControllersMiddleware()
 
   const buttons: ButtonType[] = useMemo(
     () => [
@@ -63,54 +57,54 @@ const ImportExistingAccountSelectorScreen = () => {
           goToNextRoute(ROUTES.importSeedPhrase)
         },
         icon: SeedPhraseIcon
-      },
-      {
-        title: 'Trezor',
-        onPress: () => {
-          setTriggeredHwWalletFlow('trezor')
-          dispatch({ type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_TREZOR' })
-        },
-        icon: TrezorLockIcon
-      },
-      {
-        title: 'Ledger',
-        onPress: () => {
-          goToNextRoute(ROUTES.ledgerConnect)
-        },
-        icon: LedgerLetterIcon
-      },
-      {
-        title: 'Grid Plus',
-        onPress: () => {
-          setTriggeredHwWalletFlow('lattice')
-          dispatch({ type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LATTICE' })
-        },
-        icon: LatticeWithBorderIcon
-      },
-      {
-        title: 'JSON backup file',
-        onPress: () => {
-          goToNextRoute(ROUTES.importSmartAccountJson)
-        },
-        icon: ImportJsonIcon
       }
+      // {
+      //   title: 'Trezor',
+      //   onPress: () => {
+      //     setTriggeredHwWalletFlow('trezor')
+      //     dispatch({ type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_TREZOR' })
+      //   },
+      //   icon: TrezorLockIcon
+      // },
+      // {
+      //   title: 'Ledger',
+      //   onPress: () => {
+      //     goToNextRoute(ROUTES.ledgerConnect)
+      //   },
+      //   icon: LedgerLetterIcon
+      // },
+      // {
+      //   title: 'Grid Plus',
+      //   onPress: () => {
+      //     setTriggeredHwWalletFlow('lattice')
+      //     dispatch({ type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LATTICE' })
+      //   },
+      //   icon: LatticeWithBorderIcon
+      // },
+      // {
+      //   title: 'JSON backup file',
+      //   onPress: () => {
+      //     goToNextRoute(ROUTES.importSmartAccountJson)
+      //   },
+      //   icon: ImportJsonIcon
+      // }
     ],
-    [goToNextRoute, dispatch, setTriggeredHwWalletFlow]
+    [goToNextRoute]
   )
 
-  useEffect(() => {
-    Animated.timing(animatedOpacity, {
-      toValue: showMore ? 1 : 0,
-      duration: 300,
-      useNativeDriver: true
-    }).start()
+  // useEffect(() => {
+  //   Animated.timing(animatedOpacity, {
+  //     toValue: showMore ? 1 : 0,
+  //     duration: 300,
+  //     useNativeDriver: true
+  //   }).start()
 
-    Animated.timing(animatedHeight, {
-      toValue: showMore ? (buttons.length - VISIBLE_BUTTONS_COUNT) * 70 : 0,
-      duration: 300,
-      useNativeDriver: true
-    }).start()
-  }, [animatedHeight, animatedOpacity, showMore, buttons.length])
+  //   Animated.timing(animatedHeight, {
+  //     toValue: showMore ? (buttons.length - VISIBLE_BUTTONS_COUNT) * 70 : 0,
+  //     duration: 300,
+  //     useNativeDriver: true
+  //   }).start()
+  // }, [animatedHeight, animatedOpacity, showMore, buttons.length])
 
   return (
     <MobileLayoutContainer backgroundColor={theme.secondaryBackground}>

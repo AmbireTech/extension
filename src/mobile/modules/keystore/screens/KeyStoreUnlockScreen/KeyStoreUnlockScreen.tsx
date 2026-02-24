@@ -111,7 +111,7 @@ const KeyStoreUnlockScreen = () => {
           >
             <Image
               source={
-                typeof backgroundImage === 'string' ? { uri: backgroundImage } : backgroundImage
+                typeof backgroundImage === 'number' ? backgroundImage : { uri: backgroundImage }
               }
               style={{
                 width: '100%',

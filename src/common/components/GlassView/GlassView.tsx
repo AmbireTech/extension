@@ -21,7 +21,14 @@ const GlassView: FC<GlassViewProps> = ({
   const { themeType } = useTheme()
 
   // Convert web cssStyle to React Native style if passed (some props overlap like borderRadius)
-  const compatibleStyle = (cssStyle as ViewStyle) || {}
+  // Filter out web-only CSS values that aren't valid in React Native
+  // (e.g. pointerEvents: 'all' is valid CSS but crashes on RN Android)
+  const rawCssStyle = (cssStyle as any) || {}
+  const { pointerEvents: cssPointerEvents, ...restCssStyle } = rawCssStyle
+  const compatibleStyle: ViewStyle = {
+    ...restCssStyle,
+    ...(cssPointerEvents && cssPointerEvents !== 'all' ? { pointerEvents: cssPointerEvents } : {})
+  }
 
   const defaultTint1 = tintColor1 || hexToRgba('#D1D1D1', 0.16)
   const defaultTint2 = tintColor2 || hexToRgba('#D1D1D1', 0.06)

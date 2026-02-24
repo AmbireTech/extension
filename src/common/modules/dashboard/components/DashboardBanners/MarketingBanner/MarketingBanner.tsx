@@ -74,7 +74,9 @@ const MarketingBanner: React.FC<Props> = ({ banner }) => {
       {...bindAnim}
     >
       <Image
-        source={{ uri: typeImageMap[type] }}
+        source={
+          typeof typeImageMap[type] === 'number' ? typeImageMap[type] : { uri: typeImageMap[type] }
+        }
         width={64}
         height={64}
         style={{ width: 64, height: 64 }}
