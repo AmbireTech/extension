@@ -8,7 +8,7 @@ import LockIcon from '@common/assets/svg/LockIcon'
 import Button from '@common/components/Button'
 import InputPassword from '@common/components/InputPassword'
 import Text from '@common/components/Text'
-import { isDev, isTesting } from '@common/config/env'
+import { isDev, isTesting, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useDisableNavigatingBack from '@common/hooks/useDisableNavigatingBack'
@@ -16,13 +16,11 @@ import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import backgroundImage from '@common/modules/dashboard/components/DashboardOverview/background.png'
 import spacings from '@common/styles/spacings'
+import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { DEFAULT_KEYSTORE_PASSWORD_DEV } from '@env'
-import {
-  MobileLayoutContainer,
-  MobileLayoutWrapperMainContent
-} from '@mobile/components/MobileLayoutWrapper/MobileLayoutWrapper'
+import { MobileLayoutContainer } from '@mobile/components/MobileLayoutWrapper'
 
 import getStyles from './styles'
 
@@ -30,10 +28,12 @@ const KeyStoreUnlockScreen = () => {
   const { t } = useTranslation()
   const { styles } = useTheme(getStyles)
   const { navigate } = useNavigation()
+  const { hasKeystoreRecovery } = useController('EmailVaultController').state
   const {
     state: { isUnlocked, statuses, errorMessage },
     dispatch: keystoreDispatch
   } = useController('KeystoreController')
+  const { requestWindow } = useController('RequestsController').state
   const { theme } = useTheme()
   const {
     control,
@@ -91,22 +91,50 @@ const KeyStoreUnlockScreen = () => {
   )
 
   return (
-    <MobileLayoutContainer backgroundColor={theme.secondaryBackground}>
-      <MobileLayoutWrapperMainContent withScroll={true}>
-        <View style={styles.imageContainer}>
-          <Image source={{ uri: backgroundImage }} style={styles.image as any} />
-          <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mb3Xl]}>
-            <Text fontSize={20} weight="semiBold" color="#fff" appearance="primaryText">
-              {t('Welcome Back')}
+    <MobileLayoutContainer style={styles.panel}>
+      <View style={flexbox.flex1}>
+        <View
+          style={{
+            height: 324,
+            width: '100%',
+            marginBottom: 56
+          }}
+        >
+          <View
+            style={{
+              width: '100%',
+              height: '100%',
+              borderRadius: BORDER_RADIUS_PRIMARY,
+              overflow: 'hidden',
+              ...flexbox.center
+            }}
+          >
+            <Image
+              source={
+                typeof backgroundImage === 'string' ? { uri: backgroundImage } : backgroundImage
+              }
+              style={{
+                width: '100%',
+                height: '100%',
+                position: 'absolute',
+                objectFit: 'fill',
+                top: 0,
+                left: 0,
+                zIndex: -1
+              }}
+            />
+            <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mb3Xl]}>
+              <Text fontSize={20} weight="semiBold" color="#fff" appearance="primaryText">
+                {t('Welcome Back')}
+              </Text>
+              <LockIcon width={24} height={24} color="#fff" style={spacings.mlTy} />
+            </View>
+            <AmbireLogoWithBackgroundAndLogotype color="#fff" style={spacings.mbXl} />
+            <Text weight="medium" color={theme.neutral500} style={text.center}>
+              {t('Easy and secure self-custody for the\nEthereum ecosystem')}
             </Text>
-            <LockIcon width={24} height={24} color="#fff" style={spacings.mlTy} />
           </View>
-          <AmbireLogoWithBackgroundAndLogotype color="#fff" style={spacings.mbXl} />
-          <Text weight="medium" color={theme.neutral500} style={text.center}>
-            {t('Easy and secure self-custody for the\nEthereum ecosystem')}
-          </Text>
         </View>
-
         <View style={styles.container}>
           <Controller
             control={control}
@@ -115,8 +143,8 @@ const KeyStoreUnlockScreen = () => {
                 testID="passphrase-field"
                 onBlur={onBlur}
                 placeholder={t('Enter your password')}
-                autoFocus={false}
-                inputStyle={{ height: 54 }}
+                autoFocus={isWeb}
+                inputStyle={{ height: 54 }} // 56-2px border
                 inputWrapperStyle={{ backgroundColor: theme.secondaryBackground, height: 56 }}
                 onChangeText={(val: string) => {
                   onChange(val)
@@ -146,8 +174,26 @@ const KeyStoreUnlockScreen = () => {
             text={statuses.unlockWithSecret === 'LOADING' ? t('Unlocking...') : t('Unlock')}
             onPress={handleSubmit((data) => handleUnlock(data))}
           />
+
+          {/* {hasKeystoreRecovery && (
+          <TouchableOpacity
+            onPress={() =>
+              openInternalPageInTab({
+                route: ROUTES.keyStoreEmailRecovery,
+                shouldCloseCurrentWindow: !getUiType().isTab,
+                windowId: requestWindow?.windowProps?.createdFromWindowId
+              })
+            }
+            style={spacings.mtXl}
+            hitSlop={FOOTER_BUTTON_HIT_SLOP}
+          >
+            <Text weight="medium" appearance="secondaryText" fontSize={14} underline>
+              {t('Forgot extension password?')}
+            </Text>
+          </TouchableOpacity>
+        )} */}
         </View>
-      </MobileLayoutWrapperMainContent>
+      </View>
     </MobileLayoutContainer>
   )
 }

@@ -29,7 +29,7 @@ const TabsAndSearch: FC<Props> = ({ openTab, setOpenTab, currentTab, sessionId }
   const { styles } = useTheme(getStyles)
   const [controllerBanners] = useBanners()
   const [isSearchVisible, setIsSearchVisible] = useState(false)
-  const { maxWidthSize } = useWindowSize()
+  const { maxWidthSize, minWidthSize } = useWindowSize()
 
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
@@ -52,7 +52,13 @@ const TabsAndSearch: FC<Props> = ({ openTab, setOpenTab, currentTab, sessionId }
   }, [isSearchVisible])
 
   return (
-    <View style={[styles.container, !!controllerBanners.length && spacings.ptTy]}>
+    <View
+      style={[
+        styles.container,
+        !!controllerBanners.length && spacings.ptTy,
+        minWidthSize(480) && spacings.pl
+      ]}
+    >
       <Tabs
         handleChangeQuery={(tab) => setSearchParams({ tab, sessionId })}
         setOpenTab={setOpenTab}

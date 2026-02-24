@@ -1,8 +1,12 @@
 import React from 'react'
-import { View } from 'react-native'
-import { SvgXml } from 'react-native-svg'
+import { Image } from 'react-native'
 
 import Jazzicon from '@raugfer/jazzicon'
+
+// builds an image data url for embedding
+function buildDataUrl(address: string): string {
+  return `data:image/svg+xml;base64,${btoa(Jazzicon(address))}`
+}
 
 // sample code for react component
 export default function JazzIcon({
@@ -14,17 +18,15 @@ export default function JazzIcon({
   size: number
   borderRadius: number
 }) {
-  const svgString = Jazzicon(address)
+  const imageUrl = buildDataUrl(address)
   return (
-    <View
+    <Image
+      source={{ uri: imageUrl }}
       style={{
         width: size,
         height: size,
-        borderRadius,
-        overflow: 'hidden'
+        borderRadius
       }}
-    >
-      <SvgXml xml={svgString} width={size} height={size} />
-    </View>
+    />
   )
 }
