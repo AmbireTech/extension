@@ -9,7 +9,6 @@ import ExpandableCard from '@common/components/ExpandableCard'
 import HumanizedVisualization from '@common/components/HumanizedVisualization'
 import Label from '@common/components/Label'
 import Text from '@common/components/Text'
-import { isBenzin } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
@@ -30,6 +29,7 @@ interface Props {
   rightIcon?: React.ReactNode
   onRightIconPress?: () => void
   hideLinks?: boolean
+  hideDeleteIcon?: boolean
 }
 
 export const sizeMultiplier = {
@@ -48,7 +48,8 @@ const TransactionSummary = ({
   enableExpand = true,
   rightIcon,
   onRightIconPress,
-  hideLinks = false
+  hideLinks = false,
+  hideDeleteIcon
 }: Props) => {
   const textSize = 16 * sizeMultiplier[size]
   const imageSize = 32 * sizeMultiplier[size]
@@ -160,7 +161,7 @@ const TransactionSummary = ({
               hasPadding={enableExpand}
             />
           )}
-          {!!call.id && type === 'default' && !rightIcon && (
+          {!!call.id && type === 'default' && !rightIcon && !hideDeleteIcon && (
             <AnimatedPressable
               style={deleteIconAnimStyle}
               onPress={handleRemoveCall}

@@ -199,7 +199,7 @@ const TokenDetails = ({
         },
         isDisabled: !canToToppedUp || !hasGasTank,
         tooltipText: !hasGasTank
-          ? t('Not available for hardware wallets yet.')
+          ? t(`Not available for ${account?.safeCreation ? 'safe' : 'hardware'} wallets, yet.`)
           : !canToToppedUp
             ? t(
                 'This token is not eligible for filling up the Gas Tank. Please select a supported token instead.'
