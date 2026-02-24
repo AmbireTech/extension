@@ -119,29 +119,58 @@ test.describe('auto-login', { tag: '@autoLogin' }, () => {
     })
   })
 
-  test.only('Changing the network requires a new signature', async ({ pages }) => {
+  test('Changing the network requires a new signature', async ({ pages }) => {
     const page = pages.basePage.page
     // selectors
     const textBox = page.getByRole('textbox', { name: 'Message (Hello world)' })
     const signButton = page.locator(selectors.sigtool.signButton)
-    const messageSignatureTitle = page.locator(selectors.sigtool.messageSignatureTitle)
 
-    await test.step('Change network to Base', async () => {
-      await pages.dashboard.navigateToDashboard()
+    await test.step('navigate to sigtool and connect wallet', async () => {
+      const connectWallet = page.locator(selectors.sigtool.connectWalletButton)
+      const metamask = page.locator(selectors.sigtool.metamaskOption)
 
       await pages.basePage.navigateToURL('https://sigtool.ambire.com/')
+
+      // connect wallet
+      await connectWallet.click()
+      await metamask.click()
     })
 
-    await test.step('modify chainId and enter message', async () => {
+    await test.step('enter message with chainId set to Base', async () => {
       const messageWithDifferentChainId = {
         ...baseMessageConfig,
         chainId: 8453
       }
-
-      console.log(messageWithDifferentChainId)
-
       const message = createSiweMessage(messageWithDifferentChainId)
+
       await textBox.fill(message)
+    })
+
+    await test.step('sing action opens SIWE page', async () => {
+      const signMessageWindow = await pages.basePage.handleNewPage(signButton)
+      await signMessageWindow.locator(selectors.sigtool.signRequestForEVMText).isVisible()
+
+      await signMessageWindow.locator(selectors.sigtool.signInSiweButton).click()
+    })
+
+    await test.step('remove account used for sign from ambire', async () => {
+      await pages.dashboard.navigateToDashboard()
+      await pages.settings.openAccountsPage()
+      await pages.settings.removeLastAccount()
+    })
+
+    await test.step('enter message', async () => {
+      await pages.auth.pause()
+      await pages.basePage.navigateToURL('https://sigtool.ambire.com/')
+
+      await textBox.fill(message)
+    })
+
+    await test.step('sing action should trigger error since account is removed', async () => {
+      await page.locator(selectors.sigtool.signButton).click()
+      await expect(page.locator(selectors.sigtool.error)).toHaveText(
+        'Sign error: SIWE message address does not match the requested signing address'
+      )
     })
   })
 
@@ -163,7 +192,7 @@ test.describe('auto-login', { tag: '@autoLogin' }, () => {
       await textBox.fill(message)
     })
 
-    await test.step('sing action should render the regular sign message screen', async () => {
+    await test.step('sing action opens SIWE page', async () => {
       const signMessageWindow = await pages.basePage.handleNewPage(signButton)
       await signMessageWindow.locator(selectors.sigtool.signRequestForEVMText).isVisible()
     })
@@ -187,7 +216,7 @@ test.describe('auto-login', { tag: '@autoLogin' }, () => {
       await textBox.fill(message)
     })
 
-    await test.step('sing action should result with error', async () => {
+    await test.step('sing action should result with error on SIWE page', async () => {
       const signMessageWindow = await pages.basePage.handleNewPage(signButton)
       await expect(signMessageWindow.locator(selectors.sigtool.deceptiveAppError)).toHaveText(
         'Deceptive app request'

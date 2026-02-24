@@ -96,7 +96,10 @@ const selectors = {
     hiddenTokenName: 'hidden-token-name', // works for custom tokens section
     hiddenTokenNetwork: 'hidden-token-network', // works for custom tokens section
     unhideTokenButton: 'unhide-button',
-    youDontHaveInfoText: 'you-dont-have-any-text', // there can be multiple on same page
+    youDontHaveInfoText: 'you-dont-have-any-text', // there can be multiple on same page,
+    manageAccountTreeDotsButton: 'account', // on accounts page, has multiple sam IDs,
+    removeAccountButton: '//div[contains(text(),"Remove account")]',
+    confirmRemoveAccountButton: 'confirm-remove-account-button',
     customTokens: {
       addCustomTokenButton: 'add-custom-token-button',
       addTokenModalTitle: 'add-token-modal-title-text',
@@ -174,7 +177,9 @@ const selectors = {
     autoLoginSwitch: 'label > input[type="checkbox"] ~ div',
     signRequestForEVMText: '//div[contains(text(), "SigTool for EVM")]',
     deceptiveAppError: '//span[contains(text(),"Deceptive")]',
-    deceptiveAppErrorDescription: '//div[contains(text(),"The app")]'
+    deceptiveAppErrorDescription: '//div[contains(text(),"The app")]',
+    signInSiweButton: '//div[contains(text(),"Sign in")]',
+    error: '#error'
   },
   swapAndBridge: {
     fromTokenDropdown: 'from-token-select',
