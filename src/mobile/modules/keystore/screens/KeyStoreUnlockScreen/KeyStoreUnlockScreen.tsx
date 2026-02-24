@@ -20,10 +20,7 @@ import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { DEFAULT_KEYSTORE_PASSWORD_DEV } from '@env'
-import {
-  MobileLayoutContainer,
-  MobileLayoutWrapperMainContent
-} from '@mobile/components/MobileLayoutWrapper'
+import { MobileLayoutContainer } from '@mobile/components/MobileLayoutWrapper'
 
 import getStyles from './styles'
 
