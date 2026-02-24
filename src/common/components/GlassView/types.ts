@@ -14,8 +14,4 @@ type GlassViewProps = {
   withCursorShine?: boolean
 }
 
-type WithGlassViewSupportProps = {
-  children: React.ReactNode
-}
-
-export type { GlassViewProps, WithGlassViewSupportProps }
+export type { GlassViewProps }
