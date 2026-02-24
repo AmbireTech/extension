@@ -7,8 +7,8 @@
       stored === 'dark'
         ? true
         : stored === 'light'
-        ? false
-        : window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+          ? false
+          : window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
 
     document.documentElement.classList.add(isDark ? 'dark-scrollbar' : 'light-scrollbar')
     const root = document.getElementById('root')

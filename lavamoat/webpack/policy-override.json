@@ -41,6 +41,30 @@
         "crypto": true,
         "msCrypto": true
       }
+    },
+    "@endo/immutable-arraybuffer": {
+      "allow": {
+        "primordialMutations": true
+      }
+    },
+    "react-dom": {
+      "globals": {
+        "Element": true,
+        "HTMLElement": true,
+        "Node": true,
+        "Document": true,
+        "ShadowRoot": true,
+        "MutationObserver": true,
+        "HTMLIFrameElement": true
+      }
+    },
+    "react-native-web": {
+      "globals": {
+        "window": true,
+        "document": true,
+        "screen": true,
+        "visualViewport": true
+      }
     }
   }
 }
