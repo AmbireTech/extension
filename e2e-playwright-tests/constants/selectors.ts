@@ -170,9 +170,11 @@ const selectors = {
     connectionSuccessfulText: '//div[contains(text(),"Connection Successful")]',
     humanMessageTextbox: '.messageInputHeader',
     signButton: '.actionContainer > button > span',
-    signatureResultTitleText: '.signatureResult-title',
+    messageSignatureTitle: '.signatureResult-title',
     autoLoginSwitch: 'label > input[type="checkbox"] ~ div',
-    signRequestForEVMText: '//div[contains(text(), "SigTool for EVM")]'
+    signRequestForEVMText: '//div[contains(text(), "SigTool for EVM")]',
+    deceptiveAppError: '//span[contains(text(),"Deceptive")]',
+    deceptiveAppErrorDescription: '//div[contains(text(),"The app")]'
   },
   swapAndBridge: {
     fromTokenDropdown: 'from-token-select',
