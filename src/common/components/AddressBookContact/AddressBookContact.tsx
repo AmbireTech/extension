@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next'
 import { View, ViewStyle } from 'react-native'
 import { TooltipRefProps } from 'react-tooltip'
 
-import { isSmartAccount } from '@ambire-common/libs/account/account'
 import AccountAddress from '@common/components/AccountAddress'
 import Avatar from '@common/components/Avatar'
 import DomainBadge from '@common/components/Avatar/DomainBadge'
@@ -99,8 +98,10 @@ const AddressBookContact: FC<Props> = ({
     }
   }, [closeTooltip])
 
-  const isSmart = useMemo(() => {
-    return account ? isSmartAccount(account) : false
+  const smartAccountType = useMemo(() => {
+    if (account?.creation) return 'Ambire'
+    if (account?.safeCreation) return 'Safe'
+    return undefined
   }, [account])
 
   const displayTypeBadge = useMemo(() => {
@@ -129,7 +130,7 @@ const AddressBookContact: FC<Props> = ({
           {...(avatarSize && { size: avatarSize })}
           pfp={address}
           address={address}
-          isSmart={isSmart}
+          smartAccountType={smartAccountType}
           displayTypeBadge={displayTypeBadge}
         />
         <View>

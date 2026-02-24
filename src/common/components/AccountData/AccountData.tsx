@@ -1,9 +1,7 @@
-import { get } from 'lodash'
-import React, { FC, memo } from 'react'
+import React, { FC, memo, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Animated } from 'react-native'
 
-import { isSmartAccount } from '@ambire-common/libs/account/account'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import CopyIcon from '@common/assets/svg/CopyIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
@@ -63,6 +61,12 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
     }
   }
 
+  const smartAccountType = useMemo(() => {
+    if (account?.creation) return 'Ambire'
+    if (account?.safeCreation) return 'Safe'
+    return undefined
+  }, [account])
+
   return (
     <AnimatedPressable
       testID="account-select-btn"
@@ -82,7 +86,7 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
           pfp={account.preferences.pfp}
           address={account.addr}
           size={32}
-          isSmart={isSmartAccount(account)}
+          smartAccountType={smartAccountType}
         />
         <Text
           numberOfLines={1}

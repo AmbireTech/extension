@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef } from 'react'
+import React, { useCallback, useMemo } from 'react'
 
 import { Account } from '@ambire-common/interfaces/account'
 import { SelectedAccountPortfolio } from '@ambire-common/interfaces/selectedAccount'
@@ -64,7 +64,8 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
 
   const tooltip = useMemo(() => {
     if (buttonState === 'soon') {
-      return t('Not available for hardware wallets yet.')
+      if (!!account?.safeCreation) return t('Not available for safe wallets, yet.')
+      return t('Not available for hardware wallets, yet.')
     }
 
     if (buttonState === 'error') {
@@ -72,7 +73,7 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
     }
 
     return ''
-  }, [buttonState, t])
+  }, [buttonState, account?.safeCreation, t])
 
   return (
     <OverviewButton

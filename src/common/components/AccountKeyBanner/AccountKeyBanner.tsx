@@ -1,6 +1,7 @@
 import React from 'react'
 
 import LedgerLetterIcon from '@common/assets/svg/LedgerLetterIcon'
+import SafeIcon from '@common/assets/svg/SafeIcon'
 import SingleKeyIcon from '@common/assets/svg/SingleKeyIcon'
 import TrezorLockIcon from '@common/assets/svg/TrezorLockIcon'
 import { KeyType } from '@common/components/AccountKeyIcons/AccountKeyIcons'
@@ -31,6 +32,13 @@ const AccountKeyBanner = ({ type }: { type: KeyType }) => {
     return (
       <Wrapper text="Ledger">
         <LedgerLetterIcon {...props} />
+      </Wrapper>
+    )
+
+  if (type === 'safe')
+    return (
+      <Wrapper text="Safe">
+        <SafeIcon {...props} />
       </Wrapper>
     )
 

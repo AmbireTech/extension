@@ -13,6 +13,7 @@ interface Props {
   account: Account | null
   openAddAccountBottomSheet?: () => void
   showExportImport?: boolean
+  chainId?: bigint
 }
 
 const AccountKeysBottomSheet: FC<Props> = ({
@@ -20,7 +21,8 @@ const AccountKeysBottomSheet: FC<Props> = ({
   closeBottomSheet,
   account,
   openAddAccountBottomSheet,
-  showExportImport = false
+  showExportImport = false,
+  chainId
 }) => {
   const handleOpenAccountBottomSheet = useCallback(() => {
     closeBottomSheet()
@@ -35,7 +37,7 @@ const AccountKeysBottomSheet: FC<Props> = ({
       scrollViewProps={{ contentContainerStyle: { flex: 1 } }}
       isScrollEnabled={false}
       containerInnerWrapperStyles={{ flex: 1 }}
-      style={{ maxWidth: 432, minHeight: 432, ...spacings.pvLg }}
+      style={{ maxWidth: 492, minHeight: 432, ...spacings.pvLg }}
       shouldBeClosableOnDrag={false}
     >
       {!!account && (
@@ -45,6 +47,7 @@ const AccountKeysBottomSheet: FC<Props> = ({
           closeBottomSheet={closeBottomSheet}
           keyIconColor={theme.iconPrimary as string}
           showExportImport={showExportImport}
+          chainId={chainId}
         />
       )}
     </BottomSheet>

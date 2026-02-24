@@ -57,7 +57,6 @@ const AvatarOption: FC<{ type: AvatarType }> = ({ type }) => {
       <Avatar
         pfp=""
         address={account?.addr || ''}
-        isSmart={false}
         size={36}
         avatarType={type}
         // Ensures that there won't be any visual glitches between the border

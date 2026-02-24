@@ -66,4 +66,4 @@ const Content: FC<ContentProps> = ({ children, buttons }) => {
   )
 }
 
-export { Wrapper, Content, ItemPanel }
+export { Content, ItemPanel, Wrapper }

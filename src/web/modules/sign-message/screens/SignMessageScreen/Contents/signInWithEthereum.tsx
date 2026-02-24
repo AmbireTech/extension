@@ -27,6 +27,7 @@ interface Props {
   shouldDisplayLedgerConnectModal: boolean
   isLedgerConnected: boolean
   handleDismissLedgerConnectModal: () => void
+  isSafeNotDeployed: boolean
 }
 
 const Label = ({
@@ -89,7 +90,8 @@ const Row = ({
 const SignInWithEthereum = ({
   shouldDisplayLedgerConnectModal,
   isLedgerConnected,
-  handleDismissLedgerConnectModal
+  handleDismissLedgerConnectModal,
+  isSafeNotDeployed
 }: Props) => {
   const { t } = useTranslation()
   const { state: signMessageState, dispatch: signMessageDispatch } =
@@ -327,9 +329,15 @@ const SignInWithEthereum = ({
             )}
           />
         )}
-        {signMessageState.signingKeyType && signMessageState.signingKeyType !== 'internal' && (
+        {isSafeNotDeployed && (
+          <Alert
+            type="error"
+            title="Safe account not enabled on this network. Please activate it from Safe global"
+          />
+        )}
+        {signMessageState.signer && signMessageState.signer.key.type !== 'internal' && (
           <HardwareWalletSigningModal
-            keyType={signMessageState.signingKeyType}
+            keyType={signMessageState.signer.key.type}
             isVisible={signStatus === 'LOADING'}
           />
         )}

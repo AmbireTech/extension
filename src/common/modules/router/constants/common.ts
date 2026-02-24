@@ -14,7 +14,8 @@ const COMMON_ROUTES = {
   accountPersonalize: 'account-personalize',
   accountPicker: 'account-picker',
   onboardingCompleted: 'wallet-setup-completed',
-  viewOnlyAccountAdder: 'view-only-account-adder'
+  viewOnlyAccountAdder: 'view-only-account-adder',
+  safeImport: 'safe-import'
 }
 
 const MOBILE_ROUTES = {
@@ -64,6 +65,7 @@ const WEB_ROUTES = {
   swapAndBridge: 'swap-and-bridge',
   recoveryPhrasesSettings: 'settings/recovery-phrases',
   receive: 'receive',
+  safeImport: 'safe-import',
   optOuts: 'settings/opt-outs'
 }
 
@@ -82,7 +84,8 @@ const ONBOARDING_WEB_ROUTES = [
   COMMON_ROUTES.keyStoreSetup,
   COMMON_ROUTES.accountPersonalize,
   COMMON_ROUTES.accountPicker,
-  COMMON_ROUTES.onboardingCompleted
+  COMMON_ROUTES.onboardingCompleted,
+  COMMON_ROUTES.safeImport
 ] as const
 
 export { MOBILE_ROUTES, ONBOARDING_WEB_ROUTES, ROUTES, WEB_ROUTES }

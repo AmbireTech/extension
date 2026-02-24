@@ -15,25 +15,30 @@ type CompletedProps = {
   titleSecondary: string
   openExplorerText: string
   explorerLink?: string
+  beforeLinkOpenHandler?: Function
 }
 
 const Completed: FC<CompletedProps> = ({
   title,
   titleSecondary,
   openExplorerText,
-  explorerLink
+  explorerLink,
+  beforeLinkOpenHandler
 }) => {
   const { addToast } = useToast()
   const { theme } = useTheme()
 
   const handleOpenExplorer = useCallback(async () => {
     if (!explorerLink) return
+
+    if (beforeLinkOpenHandler) await beforeLinkOpenHandler()
+
     try {
       await openInTab({ url: explorerLink })
     } catch {
       addToast('Error opening explorer', { type: 'error' })
     }
-  }, [addToast, explorerLink])
+  }, [addToast, explorerLink, beforeLinkOpenHandler])
 
   return (
     <View style={flexbox.alignCenter}>

@@ -461,7 +461,7 @@ const Estimation = ({
         ]}
       >
         <Text fontSize={20} weight="medium">
-          {t('Pay fee with')}
+          {t(signAccountOpState.canAccountBroadcastByItself ? 'Pay fee with' : 'Broadcast from')}
         </Text>
         {selectedFee && (
           <Select
