@@ -317,7 +317,8 @@ const TokenDetails = ({
             address: token.address,
             chainId: token.chainId
           },
-          account?.addr
+          account?.addr,
+          true
         ]
       }
     })
