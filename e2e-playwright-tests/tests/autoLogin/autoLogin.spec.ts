@@ -207,26 +207,26 @@ test.describe('auto-login', { tag: '@autoLogin' }, () => {
       await metamask.click()
     })
 
-    await test.step('enter message', async () => {
-      await textBox.fill(message)
-    })
-
-    // await test.step('sing on SIWE page', async () => {
-    //   const signMessageWindow = await pages.basePage.handleNewPage(signButton)
-    //   await signMessageWindow.locator(selectors.sigtool.signRequestForEVMText).isVisible()
-
-    //   await signMessageWindow.locator(selectors.sigtool.signInSiweButton).click()
-    // })
-
     await test.step('remove account used for sign from ambire', async () => {
       await pages.dashboard.navigateToDashboard()
       await pages.settings.openAccountsPage()
       await pages.settings.removeLastAccount()
+      await pages.auth.pause()
+    })
+
+    await test.step('navigate to sigtool', async () => {
+      await pages.basePage.navigateToURL('https://sigtool.ambire.com/')
+    })
+
+    await test.step('connect wallet to metamask', async () => {
+      const connectWallet = page.locator(selectors.sigtool.connectWalletButton)
+      const metamask = page.locator(selectors.sigtool.metamaskOption)
+
+      await connectWallet.click()
+      await metamask.click()
     })
 
     await test.step('enter message', async () => {
-      await pages.basePage.navigateToURL('https://sigtool.ambire.com/')
-
       await textBox.fill(message)
     })
 
