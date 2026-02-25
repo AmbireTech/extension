@@ -11,7 +11,6 @@ import DashboardHeader from '@common/modules/dashboard/components/DashboardHeade
 import Routes from '@common/modules/dashboard/components/Routes'
 import useBalanceAffectingErrors from '@common/modules/dashboard/hooks/useBalanceAffectingErrors'
 import useBanners from '@common/modules/dashboard/hooks/useBanners'
-import { OVERVIEW_CONTENT_MAX_HEIGHT } from '@common/modules/dashboard/screens/DashboardScreen'
 import spacings, { SPACING, SPACING_MD, SPACING_TY, SPACING_XL } from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -25,6 +24,7 @@ import RewardsButton from './RewardsButton'
 import getStyles from './styles'
 
 const THRESHOLD_AMOUNT_TO_HIDE_BALANCE_DECIMALS = 10000
+export const OVERVIEW_CONTENT_MAX_HEIGHT = 280
 
 interface Props {
   openGasTankModal?: () => void

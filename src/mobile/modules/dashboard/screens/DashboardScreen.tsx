@@ -3,18 +3,16 @@ import { Animated, NativeScrollEvent, NativeSyntheticEvent, View } from 'react-n
 import { useModalize } from 'react-native-modalize'
 
 import GasTankModal from '@common/components/GasTankModal'
-import LayoutWrapper from '@common/components/LayoutWrapper'
 import useController from '@common/hooks/useController'
 import useDebounce from '@common/hooks/useDebounce'
 import useTheme from '@common/hooks/useTheme'
 import DashboardOverview from '@common/modules/dashboard/components/DashboardOverview'
+import { OVERVIEW_CONTENT_MAX_HEIGHT } from '@common/modules/dashboard/components/DashboardOverview/DashboardOverview'
 import DashboardPages from '@common/modules/dashboard/components/DashboardPages'
 import PendingActionWindowModal from '@common/modules/dashboard/components/PendingActionWindowModal'
 import getStyles from '@common/modules/dashboard/screens/styles' // Keeping styles in common
 import flexbox from '@common/styles/utils/flexbox'
 import { MobileLayoutContainer } from '@mobile/components/MobileLayoutWrapper'
-
-export const OVERVIEW_CONTENT_MAX_HEIGHT = 280
 
 const DashboardScreen = () => {
   const { styles } = useTheme(getStyles)
