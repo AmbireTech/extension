@@ -10,10 +10,7 @@ type GlassViewProps = {
   tintColor2?: string
   shineColor?: string
   blurAmount?: number
+  borderRadius?: number
 }
 
-type WithGlassViewSupportProps = {
-  children: React.ReactNode
-}
-
-export type { GlassViewProps, WithGlassViewSupportProps }
+export type { GlassViewProps }

@@ -42,7 +42,7 @@ const ActionFooter = ({
 
   return (
     <View style={[flexbox.alignCenter, spacings.pb]}>
-      <GlassView style={{ borderRadius: 28 }} cssStyle={{ borderRadius: 28 }}>
+      <GlassView borderRadius={28}>
         <View style={[flexbox.directionRow, spacings.phSm, spacings.pvSm]}>
           <View style={flexbox.flex1}>
             {showReject && (

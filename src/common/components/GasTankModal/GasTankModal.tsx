@@ -167,13 +167,12 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
             </Pressable>
           </View>
           <GlassView
+            borderRadius={28}
             style={{
-              borderRadius: 28,
               ...spacings.phSm,
               ...spacings.pvSm
             }}
             cssStyle={{
-              borderRadius: 28,
               padding: 12
             }}
           >
