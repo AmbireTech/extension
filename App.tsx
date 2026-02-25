@@ -15,23 +15,6 @@ import { isExtension } from '@web/constants/browserapi'
 // eslint-disable-next-line no-console
 SplashScreen.preventAutoHideAsync().catch(console.warn) // TODO: log a sentry error
 
-// TODO: Not allowed in lavamoat sandbox, remove?
-// eslint-disable-next-line no-console
-const consoleWarn = console.warn
-const SUPPRESSED_WARNINGS = [
-  // 2 <Routes > components are rendered in the tree at the same time to allow for lazy loading.
-  'No routes matched location',
-  'setNativeProps is deprecated. Please update props using React state instead.',
-  'Animated: `useNativeDriver` is not supported because the native animated module is missing. Falling back to JS-based animation.'
-]
-
-// eslint-disable-next-line no-console
-console.warn = function filterWarnings(msg, ...args) {
-  if (!SUPPRESSED_WARNINGS.some((entry) => msg?.includes(entry))) {
-    consoleWarn(msg, ...args)
-  }
-}
-
 const App = () => {
   const { theme } = useTheme()
   // Because this tree is only rendered for the extension we check if

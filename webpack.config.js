@@ -18,6 +18,7 @@ const appJSON = require('./app.json')
 const AssetReplacePlugin = require('./plugins/AssetReplacePlugin')
 const createReflectMetadataShimPlugin = require('./lavamoat/shims/reflect-metadata-shim-plugin')
 const createSetImmediateShimPlugin = require('./lavamoat/shims/setimmediate-shim-plugin')
+const createConsoleWarnShimPlugin = require('./lavamoat/shims/console-warn-shim-plugin')
 
 const isWebkit = process.env.WEB_ENGINE?.startsWith('webkit')
 const isGecko = process.env.WEB_ENGINE === 'gecko'
@@ -345,10 +346,15 @@ module.exports = async function (env, argv) {
               generatePolicy: process.env.LAVAMOAT_GENERATE_POLICY === 'true',
               // Where policy.json and policy-override.json live
               policyLocation: path.resolve(__dirname, 'lavamoat/webpack'),
-              // Inline the SES lockdown shim directly into the background chunk.
+              // Inline the SES lockdown shim directly into the background and main UI chunks.
               // This is critical for MV3 service workers where we can't control
-              // script load order via <script> tags.
-              inlineLockdown: /^background\.js$/,
+              // script load order via <script> tags and ensures that popup/tab UIs
+              // run under SES lockdown. rootTheme runs outside SES for now due to
+              // immutable-arraybuffer shim limitations.
+              // Note: Chunk files (e.g. 738.js in build/webpack-prod) do NOT need inline SES:
+              // they are always loaded by the webpack runtime inside background.js or
+              // main.js and execute in the same realm, which is already locked down.
+              inlineLockdown: /^(background|main)\.js$/,
               lockdown: {
                 // 'unsafe' preserves Error.stack for Sentry and debugging
                 errorTaming: 'unsafe',
@@ -375,17 +381,13 @@ module.exports = async function (env, argv) {
               // avoid CodeGenerationError issues. Re-enable once policy.json is stable
               // to catch policy violations early.
               runChecks: process.env.LAVAMOAT_GENERATE_POLICY !== 'true',
-              // Only the background entry runs under full LavaMoat enforcement
-              // (Compartment-based isolation + policy checks). All other entries
-              // use the unlocked runtime (a simple passthrough without Compartments):
-              //   - main / rootTheme: UI popup/tab rendering layer, communicates
-              //     with background via message passing, doesn't handle secrets
-              //   - content-script / inpage scripts: run in web page contexts,
-              //     not the trusted extension background
-              // This matches MetaMask's architecture: harden the controller layer,
-              // leave the UI and injection scripts unlocked.
+              // The background and main UI entry run under full LavaMoat
+              // enforcement (Compartment-based isolation + policy checks).
+              // rootTheme, inpage и content-script entries use the unlocked runtime
+              // (a simple passthrough without Compartments), because they run in
+              // webpage contexts and are much more sensitive to compatibility issues.
               unlockedChunksUnsafe:
-                /^(main|rootTheme|ambire-inpage|ethereum-inpage|content-script|content-script-ambire-injection|content-script-ethereum-injection)$/,
+                /^(rootTheme|ambire-inpage|ethereum-inpage|content-script|content-script-ambire-injection|content-script-ethereum-injection)$/,
               // Diagnostics verbosity (0-2):
               //   0: Minimal logging (recommended for normal builds)
               //   1: Moderate logging (useful for debugging policy issues)
@@ -397,7 +399,8 @@ module.exports = async function (env, argv) {
             // See createReflectMetadataShimPlugin() comments above.
             // Only needed when LavaMoatPlugin is active (production builds).
             createReflectMetadataShimPlugin(),
-            createSetImmediateShimPlugin()
+            createSetImmediateShimPlugin(),
+            createConsoleWarnShimPlugin()
           ]
         : []),
       new NodePolyfillPlugin(),
