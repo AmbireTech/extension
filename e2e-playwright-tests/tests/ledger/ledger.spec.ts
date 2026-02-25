@@ -87,7 +87,7 @@ test.describe('ledger with storage', () => {
       payWithGasTank: false,
       message: 'Transfer done!',
       assertNoInitialTx: true,
-      ledgerSimulatorControls: ledgerSimulatorControls
+      ledgerSimulatorControls
     })
   })
 })
@@ -111,7 +111,7 @@ test.describe('ledger SA with storage', () => {
       pages,
       sendToken: tokens.usdc.base,
       recipientAddress: SA_ADDRESS,
-      ledgerSimulatorControls: ledgerSimulatorControls
+      ledgerSimulatorControls
     })
   })
 
@@ -127,7 +127,7 @@ test.describe('ledger SA with storage', () => {
       toToken: tokens.wallet.base,
       sendAmount: 0.01,
       assertNoInitialTx: true,
-      ledgerSimulatorControls: ledgerSimulatorControls
+      ledgerSimulatorControls
     })
   })
 
@@ -143,9 +143,31 @@ test.describe('ledger SA with storage', () => {
       receiveToken: tokens.usdc.optimism,
       bridgeAmount: 0.01,
       assertNoInitialTx: true,
-      ledgerSimulatorControls: ledgerSimulatorControls
+      ledgerSimulatorControls
     })
   })
 
-  // gas tank top-up
+  test.only('top up Gas Tank with 0.1$ on Base', async ({ pages }) => {
+    const ledgerSimulatorControls = new SpeculosDevice({ baseUrl: LEDGER_SIMULATIUON_URL })
+    await ledgerSimulatorControls.enableBlindSigning()
+    const sendToken = tokens.usdc.base
+    const message = 'Top up ready!'
+
+    await test.step('assert no transaction on Activity tab', async () => {
+      await pages.dashboard.checkNoTransactionOnActivityTab()
+    })
+
+    await test.step('top up gas tank', async () => {
+      await pages.gasTank.topUpGasTank(sendToken, '0.01')
+      await pages.transfer.signSlowSpeedTransaction({
+        sendToken,
+        message,
+        ledgerSimulatorControls
+      })
+    })
+
+    await test.step('assert new transaction on Activity tab', async () => {
+      await pages.gasTank.checkSendTransactionOnActivityTab()
+    })
+  })
 })
