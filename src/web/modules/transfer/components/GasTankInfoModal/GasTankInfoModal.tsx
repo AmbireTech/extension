@@ -14,7 +14,7 @@ import useController from '@common/hooks/useController'
 import useToast from '@common/hooks/useToast'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
 import spacings from '@common/styles/spacings'
-import { createTab } from '@web/extension-services/background/webapi/tab'
+import { openInTab } from '@common/utils/links'
 
 type Props = {
   id: string
@@ -86,9 +86,9 @@ const GasTankInfoModal = ({
               <Pressable
                 onPress={async () => {
                   try {
-                    await createTab(
-                      'https://help.ambire.com/hc/en-us/articles/5397969913884-What-is-the-Gas-Tank'
-                    )
+                    await openInTab({
+                      url: 'https://help.ambire.com/hc/en-us/articles/5397969913884-What-is-the-Gas-Tank'
+                    })
                   } catch {
                     addToast("Couldn't open link", { type: 'error' })
                   }

@@ -11,16 +11,15 @@ import Text from '@common/components/Text'
 import { Trans, useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
+import KeyStoreSetupForm from '@common/modules/keystore/components/KeyStoreSetupForm'
+import TermsComponent from '@common/modules/terms/components'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import {
   TabLayoutContainer,
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import KeyStoreSetupForm from '@web/modules/keystore/components/KeyStoreSetupForm'
-import TermsComponent from '@web/modules/terms/components'
 
 const KeyStoreSetupScreen = () => {
   const { t } = useTranslation()

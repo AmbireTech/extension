@@ -4,6 +4,7 @@ import { NavigateOptions } from 'react-router-dom'
 
 import { Account } from '@ambire-common/interfaces/account'
 import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
+import { ControllersStateLoadedContext } from '@common/contexts/controllersStateLoadedContext'
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useNavigation from '@common/hooks/useNavigation'
@@ -12,8 +13,8 @@ import useRoute from '@common/hooks/useRoute'
 import { AUTH_STATUS } from '@common/modules/auth/constants/authStatus'
 import useAuth from '@common/modules/auth/hooks/useAuth'
 import { ONBOARDING_WEB_ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
-import { ControllersStateLoadedContext } from '@web/contexts/controllersStateLoadedContext'
-import { getUiType } from '@web/utils/uiType'
+import { syncSessionStorage } from '@common/services/storage'
+import { getUiType } from '@common/utils/uiType'
 
 export type OnboardingRoute = (typeof ONBOARDING_WEB_ROUTES)[number]
 type HwWalletsNeedingRedirect = 'trezor' | 'lattice' | null
@@ -53,7 +54,7 @@ class RouteNode {
 
 const getAccountsToPersonalizeFromSession = (): Account[] => {
   try {
-    const stored = sessionStorage.getItem('accountsToPersonalize')
+    const stored = syncSessionStorage.get('accountsToPersonalize')
     return stored ? parse(stored) : []
   } catch {
     return []
@@ -91,37 +92,37 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
   useEffect(() => {
     const currentRoute = path?.substring(1)
     if (currentRoute === WEB_ROUTES.accountPersonalize)
-      sessionStorage.setItem('accountsToPersonalize', stringify(accountsToPersonalize))
+      syncSessionStorage.set('accountsToPersonalize', stringify(accountsToPersonalize))
   }, [accountsToPersonalize, path])
 
   useEffect(() => {
     const currentRoute = path?.substring(1)
     if (currentRoute !== WEB_ROUTES.accountPersonalize) {
-      sessionStorage.removeItem('accountsToPersonalize')
+      syncSessionStorage.remove('accountsToPersonalize')
       if (accountsToPersonalize.length) setAccountsToPersonalize([])
     }
   }, [path, accountsToPersonalize.length])
 
   const onboardingRoutesTree = useMemo(() => {
+    // on mobile, we skip onboardingCompleted and go straight to the dashboard ('/')
+    const afterPersonalizeRoutes = getUiType().isMobileApp
+      ? [new RouteNode('/')]
+      : [
+          new RouteNode(
+            WEB_ROUTES.onboardingCompleted,
+            [new RouteNode('/')],
+            isSetupComplete || !accounts?.length
+          ),
+          new RouteNode('/')
+        ]
+
     const nextAccountPickerRoutes =
       subType === 'hw'
         ? [
             new RouteNode(
               WEB_ROUTES.accountPicker,
               [
-                new RouteNode(
-                  WEB_ROUTES.accountPersonalize,
-                  [
-                    new RouteNode(
-                      WEB_ROUTES.onboardingCompleted,
-                      [new RouteNode('/')],
-                      isSetupComplete || !accounts?.length
-                    ),
-                    new RouteNode('/')
-                  ],
-                  false,
-                  false
-                ),
+                new RouteNode(WEB_ROUTES.accountPersonalize, afterPersonalizeRoutes, false, false),
                 new RouteNode('/')
               ],
               false,
@@ -132,12 +133,7 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
             new RouteNode(
               WEB_ROUTES.accountPersonalize,
               [
-                new RouteNode(
-                  WEB_ROUTES.onboardingCompleted,
-                  [new RouteNode('/')],
-                  isSetupComplete || !accounts?.length
-                ),
-                new RouteNode('/'),
+                ...afterPersonalizeRoutes,
                 new RouteNode(WEB_ROUTES.accountPicker, [new RouteNode('/')], false, false)
               ],
               false,
@@ -179,7 +175,7 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
 
   const loadHistory = () => {
     try {
-      const savedHistory = sessionStorage.getItem('onboarding_history')
+      const savedHistory = syncSessionStorage.get('onboarding_history')
       if (savedHistory) return JSON.parse(savedHistory)
     } catch (error) {
       console.error('Failed to load navigation state:', error)
@@ -190,7 +186,7 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
   const [history, setHistory] = useState<string[]>(loadHistory())
 
   useEffect(() => {
-    sessionStorage.setItem('onboarding_history', JSON.stringify(history))
+    syncSessionStorage.set('onboarding_history', JSON.stringify(history))
   }, [history])
 
   const deepSearchRouteNode = useCallback(
@@ -250,9 +246,8 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
         if (!currentNode) return
         nextRoute = findNextEnabledRoute(currentNode.children, routeName)
       }
-
       if (nextRoute) {
-        if (nextRoute.name === '/') {
+        if (nextRoute.name === '/' && !getUiType().isMobileApp) {
           dispatch({ type: 'OPEN_EXTENSION_POPUP' })
         } else {
           navigate(nextRoute.name, {
@@ -364,7 +359,7 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
   // If a user attempts to access one of these routes directly via the URL bar,
   // this hook should block the navigation and redirect them back to the previous route.
   useEffect(() => {
-    if (getUiType().isPopup) return
+    if (getUiType().isPopup || getUiType().isMobileApp) return
     const currentRoute = path?.substring(1)
     const prevRoute = prevPath?.substring(1)
     if (!currentRoute) return
@@ -391,7 +386,7 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
   }, [history.length, path])
 
   useEffect(() => {
-    if (getUiType().isPopup) return
+    if (getUiType().isPopup || getUiType().isMobileApp) return
 
     const handleBackButton = () => {
       const changedRoute = window.location.hash.replace('#/', '')

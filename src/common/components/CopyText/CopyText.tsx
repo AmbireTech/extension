@@ -3,10 +3,10 @@ import { useTranslation } from 'react-i18next'
 import { ColorValue, ViewStyle } from 'react-native'
 
 import CopyIcon from '@common/assets/svg/CopyIcon'
+import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import { setStringAsync } from '@common/utils/clipboard'
-import useHover, { AnimatedPressable } from '@web/hooks/useHover'
 
 interface Props {
   text: string

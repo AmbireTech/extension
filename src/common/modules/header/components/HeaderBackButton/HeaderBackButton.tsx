@@ -6,7 +6,7 @@ import useNavigation from '@common/hooks/useNavigation'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import flexbox from '@common/styles/utils/flexbox'
-import { getUiType } from '@web/utils/uiType'
+import { getUiType } from '@common/utils/uiType'
 
 const { isPopup, isTab, isRequestWindow } = getUiType()
 

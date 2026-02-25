@@ -5,12 +5,12 @@ import { TokenResult } from '@ambire-common/libs/portfolio'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import Tooltip from '@common/components/Tooltip'
+import { useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
-import { useCustomHover } from '@web/hooks/useHover'
 
 import getStyles from './styles'
 

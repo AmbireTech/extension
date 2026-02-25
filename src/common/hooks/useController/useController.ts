@@ -6,7 +6,7 @@ import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddle
 import { AnyControllerAction } from '@common/contexts/controllersMiddlewareContext/types'
 import { ControllerHelpersMapping } from '@common/contexts/controllerStoreContext/controllerHelpersStore'
 import useControllerState from '@common/hooks/useControllerState'
-import eventBus from '@web/extension-services/event/eventBus'
+import eventBus from '@common/services/event/eventBus'
 
 type MethodKeys<T> = {
   [K in keyof T]-?: T[K] extends (...args: any[]) => any ? K : never

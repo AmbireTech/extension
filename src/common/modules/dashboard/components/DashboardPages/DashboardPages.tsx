@@ -8,7 +8,7 @@ import useController from '@common/hooks/useController'
 import usePrevious from '@common/hooks/usePrevious'
 import useRoute from '@common/hooks/useRoute'
 import flexbox from '@common/styles/utils/flexbox'
-import { getUiType } from '@web/utils/uiType'
+import { getUiType } from '@common/utils/uiType'
 
 import Activity from '../Activity'
 import Collections from '../Collections'

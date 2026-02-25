@@ -12,7 +12,7 @@ import TokenIcon from '@common/components/TokenIcon'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { BigIntMath } from '@common/utils/bigint'
-import { getTokenId } from '@web/utils/token'
+import { getTokenId } from '@common/utils/token'
 
 import getStyles from './styles'
 

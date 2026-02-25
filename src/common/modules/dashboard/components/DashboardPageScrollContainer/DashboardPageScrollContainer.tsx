@@ -57,7 +57,7 @@ const DashboardPageScrollContainer: FC<Props> = ({
         bounciness: 0,
         speed: 2.8,
         overshootClamping: true,
-        useNativeDriver: !isWeb
+        useNativeDriver: false
       }).start()
     }
   }, [animatedOverviewHeight, openTab, tab])
@@ -71,6 +71,7 @@ const DashboardPageScrollContainer: FC<Props> = ({
       removeClippedSubviews
       bounces={false}
       alwaysBounceVertical={false}
+      scrollEventThrottle={16}
       {...rest}
     />
   )

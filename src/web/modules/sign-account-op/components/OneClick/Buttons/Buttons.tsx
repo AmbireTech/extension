@@ -12,7 +12,7 @@ import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { getUiType } from '@web/utils/uiType'
+import { getUiType } from '@common/utils/uiType'
 
 type Props = {
   handleSubmitForm: (isOneClickMode: boolean) => void

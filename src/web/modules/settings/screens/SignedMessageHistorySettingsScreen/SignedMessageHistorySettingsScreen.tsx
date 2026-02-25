@@ -12,8 +12,8 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 
-import HistorySettingsPage from '../../components/TransactionHistory/HistorySettingsPage'
-import SignedMessageSummary from '../../components/TransactionHistory/SignedMessageSummary'
+import HistorySettingsPage from '../../../../../common/modules/settings/components/TransactionHistory/HistorySettingsPage'
+import SignedMessageSummary from '../../../../../common/modules/settings/components/TransactionHistory/SignedMessageSummary'
 
 const SignedMessageHistory: FC<{
   page?: number

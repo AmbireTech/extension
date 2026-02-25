@@ -1,11 +1,12 @@
 import React, { FC, useCallback, useMemo } from 'react'
-import { Animated, Image, Pressable, View } from 'react-native'
+import { Animated, Image, Platform, Pressable, StyleSheet, View } from 'react-native'
 
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
+import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import DashboardHeader from '@common/modules/dashboard/components/DashboardHeader'
 import Routes from '@common/modules/dashboard/components/Routes'
@@ -15,7 +16,6 @@ import { OVERVIEW_CONTENT_MAX_HEIGHT } from '@common/modules/dashboard/screens/D
 import spacings, { SPACING, SPACING_MD, SPACING_TY, SPACING_XL } from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import useHover, { AnimatedPressable } from '@web/hooks/useHover'
 
 import backgroundImage from './background.png'
 import BalanceAffectingErrors from './BalanceAffectingErrors'
@@ -27,7 +27,7 @@ import getStyles from './styles'
 const THRESHOLD_AMOUNT_TO_HIDE_BALANCE_DECIMALS = 10000
 
 interface Props {
-  openGasTankModal: () => void
+  openGasTankModal?: () => void
   animatedOverviewHeight: Animated.Value
   dashboardOverviewSize: {
     width: number
@@ -115,15 +115,9 @@ const DashboardOverview: FC<Props> = ({
       >
         {/* TODO: Style based on selected account; Add overlay in the extension */}
         <Image
-          source={{ uri: backgroundImage }}
-          style={{
-            width: '100%',
-            height: OVERVIEW_CONTENT_MAX_HEIGHT,
-            position: 'absolute',
-            objectFit: 'fill',
-            top: 0,
-            left: 0
-          }}
+          source={typeof backgroundImage === 'number' ? backgroundImage : { uri: backgroundImage }}
+          resizeMode="cover"
+          style={[StyleSheet.absoluteFill, { height: OVERVIEW_CONTENT_MAX_HEIGHT }]}
         />
         <View style={{ zIndex: 2 }}>
           <DashboardHeader />
@@ -164,7 +158,7 @@ const DashboardOverview: FC<Props> = ({
                         shouldScale={false}
                         weight="number_bold"
                         // Line height should be constant based on font size, not on parent height
-                        style={{ lineHeight: 28 }}
+                        style={Platform.OS !== 'web' ? { lineHeight: 36 } : { lineHeight: 28 }}
                         color={
                           networksWithErrors.length || isOffline
                             ? theme.warningDecorative2
@@ -229,7 +223,11 @@ const DashboardOverview: FC<Props> = ({
                   closeBottomSheetWrapped={closeBottomSheetWrapped}
                   isLoadingTakingTooLong={isLoadingTakingTooLong}
                 />
-                <GasTankButton onPress={openGasTankModal} portfolio={portfolio} account={account} />
+                <GasTankButton
+                  onPress={() => openGasTankModal?.()}
+                  portfolio={portfolio}
+                  account={account}
+                />
                 <RewardsButton />
               </View>
             </View>

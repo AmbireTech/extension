@@ -8,7 +8,7 @@ import { isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { getUiType } from '@web/utils/uiType'
+import { getUiType } from '@common/utils/uiType'
 
 import { getDynamicTimings, TOTAL_COUNTER_DELAY } from '../StatItem/StatItem'
 import Background1 from './media/Background1'
