@@ -36,6 +36,14 @@ export class SettingsPage extends BasePage {
     await this.checkUrl('/settings/manage-tokens')
   }
 
+  async removeLastAccount() {
+    const account = this.page.getByTestId(selectors.settings.manageAccountTreeDotsButton).last()
+    await account.locator('div>div>div>div>svg').last().click() // should be last, try to add ID for more test
+
+    await this.page.locator(selectors.settings.removeAccountButton).click({ timeout: 5000 })
+    await this.click(selectors.settings.confirmRemoveAccountButton)
+  }
+
   async lockKeystore(): Promise<void> {
     await this.openSettingsGeneral()
 
