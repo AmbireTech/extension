@@ -87,7 +87,7 @@ export async function runSwapProceedFlow({
   toToken: Token
   sendAmount: number
   assertNoInitialTx?: boolean
-  ledgerSimulatorControls: SpeculosDevice
+  ledgerSimulatorControls?: SpeculosDevice
 }) {
   if (assertNoInitialTx) {
     await test.step('assert no transaction on Activity tab', async () => {
