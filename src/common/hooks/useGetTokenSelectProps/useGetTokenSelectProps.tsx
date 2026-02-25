@@ -20,10 +20,10 @@ import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import PendingBadge from '@common/modules/dashboard/components/Tokens/TokenItem/PendingBadge'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
+import NotSupportedNetworkTooltip from '@common/modules/swap-and-bridge/components/NotSupportedNetworkTooltip'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import NotSupportedNetworkTooltip from '@web/modules/swap-and-bridge/components/NotSupportedNetworkTooltip'
-import { getTokenId } from '@web/utils/token'
+import { getTokenId } from '@common/utils/token'
 
 const TextFallbackState: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <Text fontSize={14} appearance="secondaryText" style={spacings.plTy}>

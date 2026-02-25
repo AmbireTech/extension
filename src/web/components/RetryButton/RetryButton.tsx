@@ -4,11 +4,11 @@ import { Animated } from 'react-native'
 
 import RetryIcon from '@common/assets/svg/RetryIcon'
 import Text from '@common/components/Text'
+import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
 
 type Props = {
   onPress: () => void

@@ -20,15 +20,16 @@ import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import useAddressInput from '@common/hooks/useAddressInput'
 import useController from '@common/hooks/useController'
+import useHasGasTank from '@common/hooks/useHasGasTank'
 import useNavigation from '@common/hooks/useNavigation'
+import useSyncedState from '@common/hooks/useSyncedState'
 import useToast from '@common/hooks/useToast'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { openInTab } from '@common/utils/links'
+import { getUiType } from '@common/utils/uiType'
 import { Content, Wrapper } from '@web/components/TransactionsScreen'
-import { createTab } from '@web/extension-services/background/webapi/tab'
-import useHasGasTank from '@web/hooks/useHasGasTank'
-import useSyncedState from '@web/hooks/useSyncedState'
 import BatchAdded from '@web/modules/sign-account-op/components/OneClick/BatchModal/BatchAdded'
 import Buttons from '@web/modules/sign-account-op/components/OneClick/Buttons'
 import Estimation from '@web/modules/sign-account-op/components/OneClick/Estimation'
@@ -40,7 +41,6 @@ import InProgress from '@web/modules/sign-account-op/components/OneClick/TrackPr
 import useTrackAccountOp from '@web/modules/sign-account-op/hooks/OneClick/useTrackAccountOp'
 import GasTankInfoModal from '@web/modules/transfer/components/GasTankInfoModal'
 import SendForm from '@web/modules/transfer/components/SendForm/SendForm'
-import { getUiType } from '@web/utils/uiType'
 
 const { isRequestWindow } = getUiType()
 
@@ -667,9 +667,9 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
                       <Pressable
                         onPress={async () => {
                           try {
-                            await createTab(
-                              'https://help.ambire.com/hc/en-us/articles/5397969913884-What-is-the-Gas-Tank'
-                            )
+                            await openInTab({
+                              url: 'https://help.ambire.com/hc/en-us/articles/5397969913884-What-is-the-Gas-Tank'
+                            })
                           } catch {
                             addToast("Couldn't open link", { type: 'error' })
                           }

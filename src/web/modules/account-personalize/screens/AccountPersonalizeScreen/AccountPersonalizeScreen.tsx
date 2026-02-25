@@ -15,19 +15,19 @@ import { Trans, useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
+import AccountPersonalizeCard from '@common/modules/account-personalize/components/AccountPersonalizeCard'
+import AccountsLoadingAnimation from '@common/modules/account-personalize/components/AccountsLoadingAnimation'
+import AccountsLoadingDotsAnimation from '@common/modules/account-personalize/components/AccountsLoadingDotsAnimation'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
+import { openInTab } from '@common/utils/links'
 import {
   TabLayoutContainer,
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import { createTab } from '@web/extension-services/background/webapi/tab'
-import AccountPersonalizeCard from '@web/modules/account-personalize/components/AccountPersonalizeCard'
-import AccountsLoadingAnimation from '@web/modules/account-personalize/components/AccountsLoadingAnimation'
-import AccountsLoadingDotsAnimation from '@web/modules/account-personalize/components/AccountsLoadingDotsAnimation'
 import PinExtension from '@web/modules/auth/components/PinExtension'
 
 import getStyles from './styles'
@@ -284,7 +284,7 @@ const AccountPersonalizeScreen = () => {
 
   const handleContactSupport = useCallback(async () => {
     try {
-      await createTab('https://help.ambire.com/hc/en-us/requests/new')
+      await openInTab({ url: 'https://help.ambire.com/hc/en-us/requests/new' })
     } catch {
       addToast("Couldn't open link", { type: 'error' })
     }

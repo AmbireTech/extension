@@ -7,7 +7,7 @@ import Alert from '@common/components/Alert'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import text from '@common/styles/utils/text'
-import { createTab } from '@web/extension-services/background/webapi/tab'
+import { openInTab } from '@common/utils/links'
 
 interface Props {
   pageError: AccountPickerController['pageError']
@@ -29,7 +29,7 @@ const AccountsRetrieveError: React.FC<Props> = ({ pageError, page, setPage }) =>
 
   const handleContactSupport = useCallback(async () => {
     try {
-      await createTab('https://help.ambire.com/hc/en-us/requests/new')
+      await openInTab({ url: 'https://help.ambire.com/hc/en-us/requests/new' })
     } catch {
       addToast("Couldn't open link", { type: 'error' })
     }

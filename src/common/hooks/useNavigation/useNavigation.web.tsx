@@ -15,11 +15,16 @@ const useNavigation = (): UseNavigationReturnType => {
 
   const navigate = useCallback<UseNavigationReturnType['navigate']>(
     (to, options) => {
-      if (typeof to === 'string' && to?.[0] !== '/') {
-        to = `/${to}`
+      if (typeof to === 'number') {
+        return nav(to as any)
       }
 
-      return nav(to, {
+      let destination = to as string
+      if (destination?.[0] !== '/') {
+        destination = `/${destination}`
+      }
+
+      return nav(destination, {
         ...options,
         state: {
           ...(options?.state || {}),

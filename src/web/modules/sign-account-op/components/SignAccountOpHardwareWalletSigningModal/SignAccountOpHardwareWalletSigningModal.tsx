@@ -10,8 +10,8 @@ import usePrevious from '@common/hooks/usePrevious'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { getUiType } from '@common/utils/uiType'
 import HardwareWalletSigningModal from '@web/modules/hardware-wallet/components/HardwareWalletSigningModal'
-import { getUiType } from '@web/utils/uiType'
 
 const { isPopup } = getUiType()
 

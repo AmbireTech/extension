@@ -11,7 +11,7 @@ import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import { getUiType } from '@web/utils/uiType'
+import { getUiType } from '@common/utils/uiType'
 
 import Text, { TextWeight } from '../Text'
 

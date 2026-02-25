@@ -19,14 +19,14 @@ import ExportKey from '@common/components/ExportKey'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import NetworkIcon from '@common/components/NetworkIcon'
 import Text from '@common/components/Text'
+import useHover, { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { setStringAsync } from '@common/utils/clipboard'
-import useHover, { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
-import { getUiType } from '@web/utils/uiType'
+import { getUiType } from '@common/utils/uiType'
 
 export type AccountKeyType = {
   isImported: boolean

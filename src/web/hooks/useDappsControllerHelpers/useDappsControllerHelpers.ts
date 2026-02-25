@@ -6,10 +6,10 @@ import { getDappIdFromUrl } from '@ambire-common/libs/dapps/helpers'
 import { isValidURL } from '@ambire-common/services/validations'
 import { captureException } from '@common/config/analytics/CrashAnalytics.web'
 import useControllerState from '@common/hooks/useControllerState'
+import eventBus from '@common/services/event/eventBus'
 import { Action, MethodAction } from '@common/types/actions'
 import { getCurrentTab } from '@web/extension-services/background/webapi/tab'
 import { getCurrentWindow } from '@web/extension-services/background/webapi/window'
-import eventBus from '@web/extension-services/event/eventBus'
 
 export default function useDappsControllerHelpers(
   dispatch: (action: MethodAction | Action) => void

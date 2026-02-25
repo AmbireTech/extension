@@ -13,9 +13,9 @@ import {
 import InformationIcon from '@common/assets/svg/InformationIcon'
 import Text, { TextAppearance } from '@common/components/Text'
 import { isWeb } from '@common/config/env'
+import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import useHover, { AnimatedPressable } from '@web/hooks/useHover'
 
 import getStyles from './styles'
 
