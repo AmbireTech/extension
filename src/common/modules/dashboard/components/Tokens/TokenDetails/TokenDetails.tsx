@@ -426,7 +426,7 @@ const TokenDetails = ({
         )}
       </View>
 
-      <GlassView style={{ borderRadius: 28 }} cssStyle={{ borderRadius: 28 }}>
+      <GlassView borderRadius={28}>
         <View style={styles.actionsContainer}>
           {actions.map((action) => (
             <TokenDetailsButton

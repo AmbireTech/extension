@@ -40,9 +40,7 @@ const FooterGlassView: FC<{
       }}
     >
       <GlassView
-        style={{
-          borderRadius: params[size].borderRadius
-        }}
+        borderRadius={Number(params[size].borderRadius)}
         cssStyle={{ borderRadius: params[size].borderRadius as number }}
       >
         <View
