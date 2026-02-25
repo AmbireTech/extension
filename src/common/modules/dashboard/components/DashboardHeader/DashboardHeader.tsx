@@ -55,8 +55,8 @@ const DashboardHeader = () => {
                 flexboxStyles.justifyCenter,
                 flexboxStyles.alignCenter,
                 {
-                  width: 32,
-                  height: 32
+                  width: 40,
+                  height: 40
                 }
               ]}
               onPress={() => openNetworkStatusesSheet()}
@@ -75,8 +75,8 @@ const DashboardHeader = () => {
               flexboxStyles.alignCenter,
               {
                 borderRadius: 20,
-                width: 32,
-                height: 32,
+                width: 40,
+                height: 40,
                 backgroundColor: '#000000A3'
               }
             ]}
