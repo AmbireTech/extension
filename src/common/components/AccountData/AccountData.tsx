@@ -91,7 +91,7 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
         <Text
           numberOfLines={1}
           weight="semiBold"
-          style={[spacings.mlTy, spacings.mrTy, { maxWidth: isPopup ? 112 : 160 }]}
+          style={[spacings.mrMi, { maxWidth: isPopup ? 112 : 160 }]}
           color="#FFFFFF"
           fontSize={14}
         >
@@ -99,7 +99,7 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
         </Text>
         {maxWidthSize(480) && (
           <>
-            <Text color="#E3E6EB" style={spacings.mrMi} weight="mono_regular" fontSize={14}>
+            <Text color="#B9BFC9" style={spacings.mrTy} weight="mono_regular" fontSize={12}>
               ({shortenAddress(account.addr, 13)})
             </Text>
             <AnimatedPressable
