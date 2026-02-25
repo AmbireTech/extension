@@ -1,4 +1,7 @@
-import { test, expect } from '@playwright/test'
+import { SpeculosDevice } from 'libs/speculos-device/device'
+
+import { expect, test } from '@playwright/test'
+
 import type Token from 'interfaces/token'
 import type { PageManager } from 'pages/utils/page_instances'
 
@@ -76,13 +79,15 @@ export async function runSwapProceedFlow({
   fromToken,
   toToken,
   sendAmount,
-  assertNoInitialTx = false
+  assertNoInitialTx = false,
+  ledgerSimulatorControls
 }: {
   pages: PageManager
   fromToken: Token
   toToken: Token
   sendAmount: number
   assertNoInitialTx?: boolean
+  ledgerSimulatorControls: SpeculosDevice
 }) {
   if (assertNoInitialTx) {
     await test.step('assert no transaction on Activity tab', async () => {
@@ -96,7 +101,7 @@ export async function runSwapProceedFlow({
   })
 
   await test.step('proceed and sign transaction', async () => {
-    await pages.swapAndBridge.proceedTransaction()
+    await pages.swapAndBridge.proceedTransaction(ledgerSimulatorControls)
   })
 
   await test.step('assert new transaction on Activity tab', async () => {

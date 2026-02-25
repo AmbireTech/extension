@@ -115,8 +115,7 @@ test.describe('ledger SA with storage', () => {
     })
   })
 
-  // swap
-  test.only('should "proceed" Swap & Bridge from the Pending Route component with a Smart Account', async ({
+  test('should "proceed" Swap & Bridge from the Pending Route component with a Smart Account', async ({
     pages
   }) => {
     const ledgerSimulatorControls = new SpeculosDevice({ baseUrl: LEDGER_SIMULATIUON_URL })
@@ -127,7 +126,8 @@ test.describe('ledger SA with storage', () => {
       fromToken: tokens.usdc.base,
       toToken: tokens.wallet.base,
       sendAmount: 0.01,
-      assertNoInitialTx: true
+      assertNoInitialTx: true,
+      ledgerSimulatorControls: ledgerSimulatorControls
     })
   })
   // bridge

@@ -1,6 +1,7 @@
 import { typeText } from 'common-helpers/typeText'
 import locators from 'constants/locators'
 import selectors, { SELECTORS } from 'constants/selectors'
+import { SpeculosDevice } from 'libs/speculos-device/device'
 
 import { expect } from '@playwright/test'
 
@@ -199,7 +200,7 @@ export class SwapAndBridgePage extends BasePage {
     await expect(this.page.getByText('Transaction waiting to be').first()).not.toBeVisible()
   }
 
-  async proceedTransaction(): Promise<void> {
+  async proceedTransaction(ledgerSimulatorControls: SpeculosDevice): Promise<void> {
     // "Select route" step may take more time to appear, as it depends on the Li.Fi response.
     await this.page.waitForSelector(locators.selectRouteButton, {
       state: 'visible',
@@ -216,10 +217,10 @@ export class SwapAndBridgePage extends BasePage {
     await openTransactionButton.waitFor({ state: 'visible' })
 
     const newPage = await this.handleNewPage(openTransactionButton)
-    await this.signTransactionPage(newPage)
+    await this.signTransactionPage(newPage, ledgerSimulatorControls)
   }
 
-  async signTransactionPage(page): Promise<void> {
+  async signTransactionPage(page, ledgerSimulatorControls: SpeculosDevice): Promise<void> {
     const signButton = page.getByTestId(selectors.signTransactionButton)
 
     try {
@@ -228,6 +229,8 @@ export class SwapAndBridgePage extends BasePage {
       await page.getByTestId(selectors.transaction.feeSpeedSlow).first().click()
 
       // check fee
+      // Note: it checks the GAS TANK fee
+      // TODO: add param with what you pay the fee
       const feeSelector = await page.locator(selectors.transaction.feeGasTankInDollars).innerText() // returns e.g. '<$0.01'
 
       const feeDollarsAmount = Number(feeSelector.replace(/[<$]/g, ''))
@@ -240,6 +243,12 @@ export class SwapAndBridgePage extends BasePage {
         await expect(signButton).toBeVisible({ timeout: 5000 })
         await expect(signButton).toBeEnabled({ timeout: 5000 })
         await page.getByTestId(selectors.signTransactionButton).click()
+        if (ledgerSimulatorControls) {
+          await page.waitForTimeout(3000) // waiting for Ledger pop up to appear
+          await ledgerSimulatorControls.pressBothButtons()
+          await ledgerSimulatorControls.confirmTransactionFlow()
+        }
+
         await page.waitForTimeout(5000)
 
         // close transaction progress pop up
