@@ -351,6 +351,9 @@ module.exports = async function (env, argv) {
               // script load order via <script> tags and ensures that popup/tab UIs
               // run under SES lockdown. rootTheme runs outside SES for now due to
               // immutable-arraybuffer shim limitations.
+              // Note: Chunk files (e.g. 738.js in build/webpack-prod) do NOT need inline SES:
+              // they are always loaded by the webpack runtime inside background.js or
+              // main.js and execute in the same realm, which is already locked down.
               inlineLockdown: /^(background|main)\.js$/,
               lockdown: {
                 // 'unsafe' preserves Error.stack for Sentry and debugging
