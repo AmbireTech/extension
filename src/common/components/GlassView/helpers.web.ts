@@ -106,9 +106,7 @@ export function generateSpecularMap({
   // hotspot corners and fades as we travel around the rim away from each one.
   //
   // The primary hotspot is driven by lightAngleDeg so callers can choose which
-  // corner is brightest. With the default 225° (screen-space, Y-down) this is
-  // the top-left corner. The secondary is always the diametrically opposite
-  // corner (bottom-right at 45°).
+  // corner is brightest.
   // ---------------------------------------------------------------------------
   const primaryRad = (lightAngleDeg * Math.PI) / 180
   const secondaryRad = primaryRad + Math.PI

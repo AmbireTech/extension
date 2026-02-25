@@ -26,7 +26,6 @@ const GlassView: React.FC<GlassViewProps & ViewProps> = ({
   const [specularDataUrl, setSpecularDataUrl] = useState<string | null>(null)
 
   // Tint colour for the specular highlight.
-  // Light mode → pure white; dark mode → near-white with a slight cool tint.
   const shineBase = shineColor || (themeType === THEME_TYPES.LIGHT ? '#ffffff' : '#96A1B1')
 
   const customProperties = {
@@ -36,6 +35,7 @@ const GlassView: React.FC<GlassViewProps & ViewProps> = ({
     fontSize: `${borderRadius}px`,
     borderRadius,
     // SVG blurs are supported only in Webkit browsers
+    // This filter represents the "liquid glass" part of the effect.
     backdropFilter:
       engine !== 'webkit'
         ? `blur(${blurAmount}px)`
@@ -82,6 +82,8 @@ const GlassView: React.FC<GlassViewProps & ViewProps> = ({
   return (
     <div ref={divRef} className="liquidGlass" style={customProperties} data-testid={testID}>
       {children}
+      {/* This is the shining specular highlight. It's generated on demand for every element and 
+      is regenerated on resize to maintain the correct size and position of the highlight. */}
       {specularDataUrl && (
         <div className="specular-shine" style={{ backgroundImage: `url(${specularDataUrl})` }} />
       )}
