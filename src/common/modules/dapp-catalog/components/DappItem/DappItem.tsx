@@ -98,7 +98,7 @@ const DappItem = (dapp: Dapp) => {
   )
 
   return (
-    <View style={styles.dappItemWrapper}>
+    <View testID="dapp-wrapper" style={styles.dappItemWrapper}>
       <div
         style={{ display: 'flex', flex: 1 }}
         onMouseEnter={() => setHovered(true)}
@@ -219,7 +219,7 @@ const DappItem = (dapp: Dapp) => {
                     <Badge text={t('Blacklisted')} type="error" style={spacings.mrTy} />
                   )}
                 </View>
-                <View style={{ zIndex: 999 }}>
+                <View testID="manage-dapp-dropdown" style={{ zIndex: 999 }}>
                   {!!hovered && !!isConnected && (
                     <AnimatedPressable
                       {...bindSettingsIconAnimation}
