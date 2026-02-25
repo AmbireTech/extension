@@ -11,24 +11,13 @@ import { GlassViewProps } from './types'
 const GlassView: FC<GlassViewProps> = ({
   children,
   style,
-  cssStyle, // From web compatibility
   testID,
   tintColor1,
+  borderRadius,
   tintColor2,
-  shineColor,
-  blurAmount = 4
+  shineColor
 }) => {
   const { themeType } = useTheme()
-
-  // Convert web cssStyle to React Native style if passed (some props overlap like borderRadius)
-  // Filter out web-only CSS values that aren't valid in React Native
-  // (e.g. pointerEvents: 'all' is valid CSS but crashes on RN Android)
-  const rawCssStyle = (cssStyle as any) || {}
-  const { pointerEvents: cssPointerEvents, ...restCssStyle } = rawCssStyle
-  const compatibleStyle: ViewStyle = {
-    ...restCssStyle,
-    ...(cssPointerEvents && cssPointerEvents !== 'all' ? { pointerEvents: cssPointerEvents } : {})
-  }
 
   const defaultTint1 = tintColor1 || hexToRgba('#D1D1D1', 0.16)
   const defaultTint2 = tintColor2 || hexToRgba('#D1D1D1', 0.06)
@@ -43,9 +32,13 @@ const GlassView: FC<GlassViewProps> = ({
         testID={testID}
         style={[
           styles.container,
-          { backgroundColor: defaultTint1, borderColor: defaultShine, borderWidth: 1 },
-          style,
-          compatibleStyle
+          {
+            backgroundColor: defaultTint1,
+            borderColor: defaultShine,
+            borderRadius,
+            borderWidth: 1
+          },
+          style
         ]}
       >
         {children}
@@ -55,7 +48,7 @@ const GlassView: FC<GlassViewProps> = ({
 
   // iOS uses expo-glass-effect which wraps the native visual effect view
   return (
-    <View testID={testID} style={[styles.container, style, compatibleStyle]}>
+    <View testID={testID} style={[styles.container, { borderRadius }, style]}>
       <ExpoGlassView
         glassEffectStyle="regular"
         colorScheme={themeType === THEME_TYPES.LIGHT ? 'light' : 'dark'}
