@@ -136,27 +136,25 @@ const Footer = ({
         style={[flexbox.directionRow, !isAddToCartDisplayed && flexbox.flex1, flexbox.justifyEnd]}
       >
         {isAddToCartDisplayed && (
-          <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-            <Button
-              testID="queue-and-sign-later-button"
-              type="secondary"
-              childrenPosition="left"
-              text={batchBtnText}
-              onPress={onAddToCart}
-              disabled={isAddToCartDisabled}
-              hasBottomSpacing={false}
-              style={{ minWidth: 160, ...spacings.ph }}
-              size="large"
-              {...(!isMultisigSigned && {
-                tooltipDataSet: createGlobalTooltipDataSet({
-                  id: 'start-batch-info-tooltip',
-                  content: startBatchingInfo
-                })
-              })}
-            >
-              {!isMultisigSigned && <BatchIcon style={spacings.mlTy} />}
-            </Button>
-          </View>
+          <Button
+            testID="queue-and-sign-later-button"
+            type="secondary"
+            childrenPosition="left"
+            text={batchBtnText}
+            onPress={onAddToCart}
+            disabled={isAddToCartDisabled}
+            hasBottomSpacing={false}
+            style={{ minWidth: 160, ...spacings.ph, ...spacings.mrLg }}
+            size="large"
+            {...(!isMultisigSigned && {
+              tooltipDataSet: createGlobalTooltipDataSet({
+                id: 'start-batch-info-tooltip',
+                content: startBatchingInfo
+              })
+            })}
+          >
+            {!isMultisigSigned && <BatchIcon style={spacings.mlTy} />}
+          </Button>
         )}
         <View
           dataSet={createGlobalTooltipDataSet({
@@ -183,7 +181,7 @@ const Footer = ({
               text={isSignLoading ? inProgressButtonText : buttonText}
               onPress={onSign}
               size="large"
-              style={{ minWidth: 128, ...spacings.mlLg }}
+              style={{ minWidth: 128 }}
             />
           )}
         </View>
