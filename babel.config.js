@@ -33,6 +33,11 @@ module.exports = function (api) {
     ...config,
     plugins: [
       ...config.plugins,
+      // Required for @Reflect.metadata() decorators on class properties (e.g. ProviderController).
+      // Must run after the decorators transform, and use loose: true to match legacy decorator mode.
+      // Not included in mobile config as Hermes handles class properties natively and these cause issues there.
+      ['@babel/plugin-transform-class-properties', { loose: true }],
+      ['@babel/plugin-transform-private-methods', { loose: true }],
       [
         'module-resolver',
         {
