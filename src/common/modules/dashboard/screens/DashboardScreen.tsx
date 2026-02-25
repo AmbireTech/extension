@@ -2,14 +2,14 @@ import React, { useCallback, useRef, useState } from 'react'
 import { Animated, NativeScrollEvent, NativeSyntheticEvent, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
+import GasTankModal from '@common/components/GasTankModal'
+import LayoutWrapper from '@common/components/LayoutWrapper'
 import { isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useDebounce from '@common/hooks/useDebounce'
 import useTheme from '@common/hooks/useTheme'
 import PendingActionWindowModal from '@common/modules/dashboard/components/PendingActionWindowModal'
-import GasTankModal from '@web/components/GasTankModal'
-import LayoutWrapper from '@web/components/LayoutWrapper'
-import { getUiType } from '@web/utils/uiType'
+import { getUiType } from '@common/utils/uiType'
 
 import DashboardOverview from '../components/DashboardOverview'
 import DashboardPages from '../components/DashboardPages'
@@ -74,7 +74,8 @@ const DashboardScreen = () => {
         bounciness: 0,
         speed: 2.8,
         overshootClamping: true,
-        useNativeDriver: !isWeb
+        // useNativeDriver: true is not supported for layout properties like height/maxHeight
+        useNativeDriver: false
       }).start()
     },
     [animatedOverviewHeight, dashboardOverviewSize.height, lastOffsetY, scrollUpStartedAt]

@@ -19,18 +19,18 @@ import GlassView from '@common/components/GlassView'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
 import useController from '@common/hooks/useController'
+import useHasGasTank from '@common/hooks/useHasGasTank'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
+import { storage } from '@common/services/storage'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { openInTab } from '@common/utils/links'
+import { getTokenId } from '@common/utils/token'
 import { RELAYER_URL } from '@env'
-import storage from '@web/extension-services/background/webapi/storage'
-import { createTab } from '@web/extension-services/background/webapi/tab'
-import useHasGasTank from '@web/hooks/useHasGasTank'
-import { getTokenId } from '@web/utils/token'
 
 import TokenDetailsButton from './Button'
 import HideTokenModal from './HideTokenModal'
@@ -233,7 +233,7 @@ const TokenDetails = ({
           }
 
           try {
-            await createTab(getCoinGeckoTokenUrl(coinGeckoTokenSlug))
+            await openInTab({ url: getCoinGeckoTokenUrl(coinGeckoTokenSlug) })
             handleClose()
           } catch {
             addToast(t('Could not open token info'), { type: 'error' })
@@ -257,6 +257,7 @@ const TokenDetails = ({
       addToast,
       token,
       handleClose,
+      account?.safeCreation,
       network,
       shouldDisableSwapAndBridge,
       isNetworkNotSupportedForSwapAndBridge,
@@ -317,7 +318,8 @@ const TokenDetails = ({
             address: token.address,
             chainId: token.chainId
           },
-          account?.addr
+          account?.addr,
+          true
         ]
       }
     })

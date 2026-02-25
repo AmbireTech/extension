@@ -13,8 +13,8 @@ import useController from '@common/hooks/useController'
 import useGetTokenSelectProps from '@common/hooks/useGetTokenSelectProps'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { getTokenId } from '@common/utils/token'
 import useSimulationError from '@web/modules/portfolio/hooks/SimulationError/useSimulationError'
-import { getTokenId } from '@web/utils/token'
 
 import styles from './styles'
 
