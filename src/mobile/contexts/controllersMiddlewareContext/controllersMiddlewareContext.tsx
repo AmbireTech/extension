@@ -1,6 +1,7 @@
 import { EventEmitter as Emitter } from 'events'
 /* eslint-disable @typescript-eslint/no-floating-promises */
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { Platform as RNPlatform } from 'react-native'
 
 import { EventEmitterRegistryController } from '@ambire-common/controllers/eventEmitterRegistry/eventEmitterRegistry'
 import { MainController } from '@ambire-common/controllers/main/main'
@@ -12,12 +13,11 @@ import { APP_VERSION } from '@common/config/env'
 import { AllControllersMappingType } from '@common/constants/controllersMapping'
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext'
 import { ControllerStoreContext } from '@common/contexts/controllerStoreContext'
+import eventBus from '@common/services/event/eventBus'
+import { storage } from '@common/services/storage'
 import { Action, MethodAction } from '@common/types/actions'
 import { BUNGEE_API_KEY, RELAYER_URL, VELCRO_URL } from '@env'
 import { MobileBaseControllersMappingType } from '@mobile/constants/controllersMapping'
-import { WalletStateController } from '@web/extension-services/background/controllers/wallet-state'
-import { storage } from '@web/extension-services/background/webapi/storage'
-import eventBus from '@web/extension-services/event/eventBus'
 
 export const ControllersMiddlewareProvider: React.FC<{
   children: React.ReactNode
@@ -177,14 +177,10 @@ export const ControllersMiddlewareProvider: React.FC<{
 
   if (Object.keys(controllers.current).length === 0) {
     const ctrls: MobileBaseControllersMappingType = {} as MobileBaseControllersMappingType
-    ctrls.WalletStateController = new WalletStateController({
-      eventEmitterRegistry: eventEmitterRegistry.current,
-      onLogLevelUpdateCallback: async () => {}
-    })
     ctrls.MainController = new MainController({
       eventEmitterRegistry: eventEmitterRegistry.current,
       appVersion: APP_VERSION,
-      platform: 'default',
+      platform: `mobile-${RNPlatform.OS}` as any,
       storageAPI: storage,
       fetch: fetchWithAnalytics,
       relayerUrl: RELAYER_URL,
@@ -249,7 +245,7 @@ export const ControllersMiddlewareProvider: React.FC<{
     if (action.type === 'method') {
       const { ctrlName, method, args } = action.params
 
-      let targetCtrl: any = Object.values(controllers.current as any).find(
+      let targetCtrl: any = Object.values(eventEmitterRegistry.current.values()).find(
         (ctrl: any) => ctrl.name === ctrlName
       )
       if (!targetCtrl) {

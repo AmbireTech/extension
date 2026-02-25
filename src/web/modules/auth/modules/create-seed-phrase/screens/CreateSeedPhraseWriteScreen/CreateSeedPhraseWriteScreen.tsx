@@ -14,6 +14,7 @@ import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
+import eventBus from '@common/services/event/eventBus'
 import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -22,7 +23,6 @@ import {
   TabLayoutContainer,
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import eventBus from '@web/extension-services/event/eventBus'
 
 const CreateSeedPhraseWriteScreen = () => {
   const { goToNextRoute, goToPrevRoute } = useOnboardingNavigation()

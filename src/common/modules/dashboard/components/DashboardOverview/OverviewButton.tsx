@@ -4,9 +4,9 @@ import { ViewStyle } from 'react-native'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
+import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useHover, { AnimatedPressable } from '@web/hooks/useHover'
 
 type Props = {
   text: string

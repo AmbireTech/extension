@@ -10,7 +10,6 @@ import {
   View,
   ViewStyle
 } from 'react-native'
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { isWeb } from '@common/config/env'
@@ -144,30 +143,6 @@ const ScrollableWrapper = ({
         alwaysBounceVertical={false}
         {...rest}
       />
-    )
-  }
-
-  if (type === WRAPPER_TYPES.KEYBOARD_AWARE_SCROLL_VIEW) {
-    return (
-      <KeyboardAwareScrollView
-        ref={wrapperRef}
-        style={scrollableWrapperStyles}
-        contentContainerStyle={scrollableWrapperContentContainerStyles}
-        keyboardShouldPersistTaps={keyboardShouldPersistTaps || 'handled'}
-        keyboardDismissMode={keyboardDismissMode || 'none'}
-        alwaysBounceVertical={false}
-        // Glitchy on Android, even without `extraScrollHeight` and
-        // `extraHeight` props set.
-        // TODO: Find a better package, that supports Android better.
-        enableOnAndroid={false}
-        keyboardOpeningTime={100}
-        extraScrollHeight={hasBottomTabNav ? -TAB_BAR_HEIGHT : 0}
-        // Adds extra offset between the keyboard and the focused input
-        extraHeight={extraHeight || 75}
-        {...rest}
-      >
-        {children}
-      </KeyboardAwareScrollView>
     )
   }
 

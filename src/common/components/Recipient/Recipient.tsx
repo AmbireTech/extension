@@ -25,6 +25,7 @@ import {
 import Text from '@common/components/Text'
 import TitleAndIcon from '@common/components/TitleAndIcon'
 import useController from '@common/hooks/useController'
+import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useNavigation from '@common/hooks/useNavigation'
 import usePrevious from '@common/hooks/usePrevious'
 import useTheme from '@common/hooks/useTheme'
@@ -32,7 +33,6 @@ import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { ItemPanel } from '@web/components/TransactionsScreen'
-import useHover, { AnimatedPressable } from '@web/hooks/useHover'
 
 import styles from './styles'
 

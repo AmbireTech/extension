@@ -12,11 +12,11 @@ import AddressBookContact from '@common/components/AddressBookContact'
 import Input, { InputProps } from '@common/components/Input'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
+import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useHover, { AnimatedPressable } from '@web/hooks/useHover'
 
 import getStyles from './styles'
 

@@ -3,7 +3,7 @@ import { StyleSheet, ViewStyle } from 'react-native'
 import spacings, { SPACING_MD } from '@common/styles/spacings'
 import { THEME_TYPES, ThemeProps, ThemeType } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
-import { getUiType } from '@web/utils/uiType'
+import { getUiType } from '@common/utils/uiType'
 
 interface Style {
   contentContainer: ViewStyle

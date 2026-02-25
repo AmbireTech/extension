@@ -3,11 +3,11 @@ import { useTranslation } from 'react-i18next'
 import { View, ViewStyle } from 'react-native'
 
 import CopyIcon from '@common/assets/svg/CopyIcon'
+import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import flexbox from '@common/styles/utils/flexbox'
 import { setStringAsync } from '@common/utils/clipboard'
-import useHover, { AnimatedPressable } from '@web/hooks/useHover'
 
 import PlainAddress from './PlainAddress'
 

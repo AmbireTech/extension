@@ -5,13 +5,13 @@ import { Banner, MarketingBannerTypes } from '@ambire-common/interfaces/banner'
 import CloseIcon from '@common/assets/svg/CloseIcon'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
+import { AnimatedPressable, useMultiHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY, hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import { openInTab } from '@web/extension-services/background/webapi/tab'
-import { AnimatedPressable, useMultiHover } from '@web/hooks/useHover'
-import { getUiType } from '@web/utils/uiType'
+import { openInTab } from '@common/utils/links'
+import { getUiType } from '@common/utils/uiType'
 
 import temporaryImage from './assets/temporary-image.png'
 
@@ -74,7 +74,9 @@ const MarketingBanner: React.FC<Props> = ({ banner }) => {
       {...bindAnim}
     >
       <Image
-        source={{ uri: typeImageMap[type] }}
+        source={
+          typeof typeImageMap[type] === 'number' ? typeImageMap[type] : { uri: typeImageMap[type] }
+        }
         width={64}
         height={64}
         style={{ width: 64, height: 64 }}

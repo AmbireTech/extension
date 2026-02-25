@@ -22,13 +22,12 @@ import useSign from '@common/hooks/useSign'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { getUiType } from '@common/utils/uiType'
 import Estimation from '@web/modules/sign-account-op/components/Estimation'
+import BundlerWarning from '@web/modules/sign-account-op/components/Estimation/components/bundlerWarning'
 import Modals from '@web/modules/sign-account-op/components/Modals/Modals'
+import SafetyChecksBanner from '@web/modules/sign-account-op/components/SafetyChecksBanner'
 import KeySelect from '@web/modules/sign-message/components/KeySelect'
-import { getUiType } from '@web/utils/uiType'
-
-import BundlerWarning from '../../Estimation/components/bundlerWarning'
-import SafetyChecksBanner from '../../SafetyChecksBanner'
 
 export type OneClickEstimationProps = {
   closeEstimationModal: () => void

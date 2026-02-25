@@ -8,6 +8,7 @@ import { useSearchParams } from 'react-router-dom'
 import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
 import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
+import LayoutWrapper from '@common/components/LayoutWrapper'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Search from '@common/components/Search'
 import useController from '@common/hooks/useController'
@@ -17,8 +18,7 @@ import { HeaderWithTitle } from '@common/modules/header/components/Header/Header
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import LayoutWrapper from '@web/components/LayoutWrapper'
-import { createTab } from '@web/extension-services/background/webapi/tab'
+import { openInTab } from '@common/utils/links'
 import Networks from '@web/modules/networks/components/Networks'
 
 import AddNetworkBottomSheet from '../components/AddNetworkBottomSheet'
@@ -107,7 +107,7 @@ const NetworksScreen = () => {
       }
 
       try {
-        await createTab(`${url}/address/${account?.addr}`)
+        await openInTab({ url: `${url}/address/${account?.addr}` })
       } catch {
         addToast(t('Failed to open block explorer in a new tab.'), {
           type: 'info'
