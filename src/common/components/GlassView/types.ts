@@ -11,7 +11,6 @@ type GlassViewProps = {
   shineColor?: string
   blurAmount?: number
   borderRadius?: number
-  withCursorShine?: boolean
 }
 
 export type { GlassViewProps }
