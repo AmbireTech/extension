@@ -73,8 +73,10 @@ const GlassView: React.FC<GlassViewProps & ViewProps> = ({
     }
 
     generate()
-    window.addEventListener('resize', generate)
-    return () => window.removeEventListener('resize', generate)
+    const observer = new ResizeObserver(() => generate())
+    observer.observe(el)
+
+    return () => observer.disconnect()
   }, [borderRadius, themeType, shineBase, shineColor])
 
   return (
