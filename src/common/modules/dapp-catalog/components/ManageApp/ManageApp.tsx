@@ -15,6 +15,13 @@ import DisconnectButton from './DisconnectButton'
 import NetworkSelector from './NetworkSelector'
 
 const AppData = ({ dapp }: { dapp: Dapp }) => {
+  let hostname = ''
+  try {
+    hostname = new URL(dapp.url).hostname.replace('www.', '')
+  } catch (e) {
+    console.error('Error parsing dapp URL:', e, 'URL:', dapp.url, 'Dapp id:', dapp.id)
+  }
+
   return (
     <View
       style={{
@@ -29,7 +36,7 @@ const AppData = ({ dapp }: { dapp: Dapp }) => {
           {dapp.name}
         </Text>
         <Text fontSize={12} appearance="tertiaryText">
-          {new URL(dapp.url).hostname.replace('www.', '')}
+          {hostname}
         </Text>
       </View>
     </View>
