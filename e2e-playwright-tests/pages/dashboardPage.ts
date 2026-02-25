@@ -170,6 +170,43 @@ export class DashboardPage extends BasePage {
     )
   }
 
+  // TODO: works only for base now
+  async changeSigToolNetwork() {
+    // open apps page
+    await this.click(selectors.dashboard.appsButton)
+
+    // enter search phrase
+    await this.entertext(selectors.searchInput, 'SigTool')
+    await this.page.waitForTimeout(2000) // wait for search result
+
+    // make icon for dapp manage visible
+    await this.page.getByTestId(selectors.sigtool.dappWrapper).hover()
+    await this.page.mouse.down()
+    await this.page.waitForTimeout(1000)
+    // change network
+    await this.click(selectors.sigtool.sigToolIconButton)
+    await this.page.locator(selectors.sigtool.sigToolNetworkEth).first().click()
+    await this.page.locator(selectors.sigtool.sigToolNetworkBase).click()
+  }
+
+  async disconnectFromSigToolDapp() {
+    // open apps page
+    await this.click(selectors.dashboard.appsButton)
+
+    // enter search phrase
+    await this.entertext(selectors.searchInput, 'SigTool')
+    await this.page.waitForTimeout(2000) // wait for search result
+
+    // make icon for dapp manage visible
+    await this.page.getByTestId(selectors.sigtool.dappWrapper).hover()
+    await this.page.mouse.down()
+    await this.page.waitForTimeout(1000)
+
+    // disconnect
+    await this.click(selectors.sigtool.sigToolIconButton)
+    await this.page.locator(selectors.sigtool.disconnectButton).click()
+  }
+
   async searchByNetworkOnTab(searchInput: string, tabName: Tabs) {
     // map selectors by tab
     const networkDropdownByTab: Record<Tabs, string> = {

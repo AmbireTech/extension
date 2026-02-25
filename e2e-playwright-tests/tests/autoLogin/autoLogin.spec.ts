@@ -4,7 +4,7 @@ import tokens from 'constants/tokens'
 import { test } from 'fixtures/pageObjects'
 import { createSiweMessage } from 'viem/siwe'
 
-import { expect } from '@playwright/test'
+import { expect, Page } from '@playwright/test'
 
 test.describe('auto-login', { tag: '@autoLogin' }, () => {
   test.setTimeout(60000)
@@ -119,7 +119,78 @@ test.describe('auto-login', { tag: '@autoLogin' }, () => {
     })
   })
 
-  test('Changing the network requires a new signature', async ({ pages }) => {
+  test('Changing the network requires a new signature', async ({ pages, context }) => {
+    const page = pages.basePage.page
+    // selectors
+    const textBox = page.getByRole('textbox', { name: 'Message (Hello world)' })
+    const signButton = page.locator(selectors.sigtool.signButton)
+
+    await test.step('change network to base on Ambire', async () => {
+      await pages.dashboard.navigateToDashboard()
+      await pages.dashboard.changeSigToolNetwork()
+
+      // return to sigtool page
+      await pages.basePage.navigateToURL('https://sigtool.ambire.com/')
+    })
+
+    await test.step('connect wallet to metamask again', async () => {
+      const connectWallet = page.locator(selectors.sigtool.connectWalletButton)
+      const metamask = page.locator(selectors.sigtool.metamaskOption)
+
+      await connectWallet.click()
+      await metamask.click()
+    })
+
+    await test.step('enter message with chainId set to Base', async () => {
+      const messageWithDifferentChainId = {
+        ...baseMessageConfig,
+        chainId: 8453
+      }
+      const message = createSiweMessage(messageWithDifferentChainId)
+
+      await textBox.fill(message)
+    })
+
+    await test.step('sing on SIWE page', async () => {
+      const signMessageWindow = await pages.basePage.handleNewPage(signButton)
+      await signMessageWindow.locator(selectors.sigtool.signRequestForEVMText).isVisible()
+
+      await signMessageWindow.locator(selectors.sigtool.signInSiweButton).click()
+    })
+
+    await test.step('disconnect account from Ambire extension', async () => {
+      await pages.dashboard.navigateToDashboard()
+      await pages.dashboard.disconnectFromSigToolDapp()
+    })
+
+    await test.step('navigate to sigtool opens app connect request window', async () => {
+      const page = pages.basePage.page
+      const context = page.context()
+
+      const [appConnectWindow] = await Promise.all([
+        context.waitForEvent('page'),
+        pages.basePage.navigateToURL('https://sigtool.ambire.com/')
+      ])
+
+      // wait for new window
+      await appConnectWindow.waitForLoadState()
+      // confirm connect request
+      await appConnectWindow.locator(selectors.sigtool.signRequestForEVMText).isVisible()
+      await appConnectWindow.getByTestId(selectors.dappConnectButton).click()
+    })
+
+    await test.step('enter message', async () => {
+      await textBox.fill(message)
+    })
+
+    await test.step('sing action opens SIWE page', async () => {
+      await page.pause()
+      const signMessageWindow = await pages.basePage.handleNewPage(signButton)
+      await signMessageWindow.locator(selectors.sigtool.signRequestForEVMText).isVisible()
+    })
+  })
+
+  test('Remove account from extension and sign should return error', async ({ pages }) => {
     const page = pages.basePage.page
     // selectors
     const textBox = page.getByRole('textbox', { name: 'Message (Hello world)' })
@@ -136,22 +207,16 @@ test.describe('auto-login', { tag: '@autoLogin' }, () => {
       await metamask.click()
     })
 
-    await test.step('enter message with chainId set to Base', async () => {
-      const messageWithDifferentChainId = {
-        ...baseMessageConfig,
-        chainId: 8453
-      }
-      const message = createSiweMessage(messageWithDifferentChainId)
-
+    await test.step('enter message', async () => {
       await textBox.fill(message)
     })
 
-    await test.step('sing action opens SIWE page', async () => {
-      const signMessageWindow = await pages.basePage.handleNewPage(signButton)
-      await signMessageWindow.locator(selectors.sigtool.signRequestForEVMText).isVisible()
+    // await test.step('sing on SIWE page', async () => {
+    //   const signMessageWindow = await pages.basePage.handleNewPage(signButton)
+    //   await signMessageWindow.locator(selectors.sigtool.signRequestForEVMText).isVisible()
 
-      await signMessageWindow.locator(selectors.sigtool.signInSiweButton).click()
-    })
+    //   await signMessageWindow.locator(selectors.sigtool.signInSiweButton).click()
+    // })
 
     await test.step('remove account used for sign from ambire', async () => {
       await pages.dashboard.navigateToDashboard()
@@ -160,7 +225,6 @@ test.describe('auto-login', { tag: '@autoLogin' }, () => {
     })
 
     await test.step('enter message', async () => {
-      await pages.auth.pause()
       await pages.basePage.navigateToURL('https://sigtool.ambire.com/')
 
       await textBox.fill(message)

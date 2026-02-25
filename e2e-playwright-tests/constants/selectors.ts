@@ -43,6 +43,7 @@ const selectors = {
     smartAccountPicker: 'add-account-' // need add index 5
   },
   dashboard: {
+    appsButton: 'dashboard-button-apps',
     tokensTabButton: 'tokens-defi',
     noTokensText: 'no-tokens-text',
     tokenTitleText: '[data-testid^="token-balance-"]',
@@ -179,7 +180,12 @@ const selectors = {
     deceptiveAppError: '//span[contains(text(),"Deceptive")]',
     deceptiveAppErrorDescription: '//div[contains(text(),"The app")]',
     signInSiweButton: '//div[contains(text(),"Sign in")]',
-    error: '#error'
+    error: '#error',
+    dappWrapper: 'dapp-wrapper',
+    sigToolIconButton: 'manage-dapp-dropdown',
+    sigToolNetworkEth: '//div[contains(text(), "Ethereum")]',
+    sigToolNetworkBase: '//div[contains(text(), "Base")]',
+    disconnectButton: '//div[contains(text(), "Disconnect")]'
   },
   swapAndBridge: {
     fromTokenDropdown: 'from-token-select',
