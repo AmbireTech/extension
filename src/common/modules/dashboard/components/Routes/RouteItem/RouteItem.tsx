@@ -11,7 +11,7 @@ import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY, hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import { createTab } from '@common/utils/links'
+import { openInTab } from '@common/utils/links'
 
 export type RouteItemType = {
   icon: any
@@ -53,7 +53,7 @@ const RouteItem: FC<Props> = ({ routeItem, index, routeItemsLength }) => {
 
         if (routeItem.isExternal && routeItem.route) {
           try {
-            await createTab(routeItem.route)
+            await openInTab({ url: routeItem.route })
           } catch {
             addToast(t('Failed to open new tab.'), { type: 'error' })
           }

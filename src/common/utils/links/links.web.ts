@@ -1,1 +1,1 @@
-export { openInTab, createTab } from '@web/extension-services/background/webapi/tab'
+export { openInTab } from '@web/extension-services/background/webapi/tab'

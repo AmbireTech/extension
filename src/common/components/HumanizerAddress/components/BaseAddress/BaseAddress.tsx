@@ -20,9 +20,9 @@ import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { setStringAsync } from '@common/utils/clipboard'
+import { openInTab } from '@common/utils/links'
 import { getUiType } from '@common/utils/uiType'
 import { isExtension } from '@web/constants/browserapi'
-import { openInTab } from '@web/extension-services/background/webapi/tab'
 
 import Option from './BaseAddressOption'
 

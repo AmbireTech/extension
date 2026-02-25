@@ -27,9 +27,9 @@ import useToast from '@common/hooks/useToast'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { openInTab } from '@common/utils/links'
 import { getUiType } from '@common/utils/uiType'
 import { Content, Wrapper } from '@web/components/TransactionsScreen'
-import { createTab } from '@web/extension-services/background/webapi/tab'
 import BatchAdded from '@web/modules/sign-account-op/components/OneClick/BatchModal/BatchAdded'
 import Buttons from '@web/modules/sign-account-op/components/OneClick/Buttons'
 import Estimation from '@web/modules/sign-account-op/components/OneClick/Estimation'
@@ -667,9 +667,9 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
                       <Pressable
                         onPress={async () => {
                           try {
-                            await createTab(
-                              'https://help.ambire.com/hc/en-us/articles/5397969913884-What-is-the-Gas-Tank'
-                            )
+                            await openInTab({
+                              url: 'https://help.ambire.com/hc/en-us/articles/5397969913884-What-is-the-Gas-Tank'
+                            })
                           } catch {
                             addToast("Couldn't open link", { type: 'error' })
                           }

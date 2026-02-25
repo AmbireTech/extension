@@ -18,7 +18,7 @@ import { HeaderWithTitle } from '@common/modules/header/components/Header/Header
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { createTab } from '@web/extension-services/background/webapi/tab'
+import { openInTab } from '@common/utils/links'
 import Networks from '@web/modules/networks/components/Networks'
 
 import AddNetworkBottomSheet from '../components/AddNetworkBottomSheet'
@@ -107,7 +107,7 @@ const NetworksScreen = () => {
       }
 
       try {
-        await createTab(`${url}/address/${account?.addr}`)
+        await openInTab({ url: `${url}/address/${account?.addr}` })
       } catch {
         addToast(t('Failed to open block explorer in a new tab.'), {
           type: 'info'

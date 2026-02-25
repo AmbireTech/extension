@@ -28,7 +28,7 @@ import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import { storage } from '@common/services/storage'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { createTab } from '@common/utils/links'
+import { openInTab } from '@common/utils/links'
 import { getTokenId } from '@common/utils/token'
 import { RELAYER_URL } from '@env'
 
@@ -233,7 +233,7 @@ const TokenDetails = ({
           }
 
           try {
-            await createTab(getCoinGeckoTokenUrl(coinGeckoTokenSlug))
+            await openInTab({ url: getCoinGeckoTokenUrl(coinGeckoTokenSlug) })
             handleClose()
           } catch {
             addToast(t('Could not open token info'), { type: 'error' })
@@ -257,6 +257,7 @@ const TokenDetails = ({
       addToast,
       token,
       handleClose,
+      account?.safeCreation,
       network,
       shouldDisableSwapAndBridge,
       isNetworkNotSupportedForSwapAndBridge,

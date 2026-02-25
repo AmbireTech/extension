@@ -24,7 +24,7 @@ import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { getGasTankTokenDetails } from '@common/utils/getGasTankTokenDetails'
-import { createTab } from '@common/utils/links'
+import { openInTab } from '@common/utils/links'
 import { getUiType } from '@common/utils/uiType'
 
 import getStyles from './styles'
@@ -153,9 +153,9 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
             <Pressable
               onPress={async () => {
                 try {
-                  await createTab(
-                    'https://help.ambire.com/hc/en-us/articles/5397969913884-What-is-the-Gas-Tank'
-                  )
+                  await openInTab({
+                    url: 'https://help.ambire.com/hc/en-us/articles/5397969913884-What-is-the-Gas-Tank'
+                  })
                 } catch {
                   addToast("Couldn't open link", { type: 'error' })
                 }

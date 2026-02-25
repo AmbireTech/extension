@@ -25,10 +25,10 @@ import { networkChainIdToHex } from '@ambire-common/libs/networks/networks'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import { APP_VERSION } from '@common/config/env'
+import { openInTab } from '@common/utils/links'
 import { SAFE_RPC_METHODS } from '@web/constants/common'
 import { notificationManager } from '@web/extension-services/background/webapi/notification'
 
-import { createTab } from '../webapi/tab'
 import { RequestRes, Web3WalletPermission } from './types'
 
 type ProviderRequest = DappProviderRequest & { requestRes: RequestRes }
@@ -630,7 +630,7 @@ export class ProviderController {
       identifiedBy
     })}`
 
-    await createTab(link)
+    await openInTab({ url: link })
   }
 
   @Reflect.metadata('ACTION_REQUEST', [

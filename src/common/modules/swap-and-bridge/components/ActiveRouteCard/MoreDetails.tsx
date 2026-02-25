@@ -7,7 +7,7 @@ import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
-import { openInTab } from '@web/extension-services/background/webapi/tab'
+import { openInTab } from '@common/utils/links'
 
 const MoreDetails = ({
   activeRoute,

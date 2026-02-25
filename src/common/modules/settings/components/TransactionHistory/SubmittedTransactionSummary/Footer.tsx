@@ -19,7 +19,7 @@ import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { createTab } from '@web/extension-services/background/webapi/tab'
+import { openInTab } from '@common/utils/links'
 import { sizeMultiplier } from '@web/modules/sign-account-op/components/TransactionSummary'
 
 import RepeatTransaction from './RepeatTransaction'
@@ -83,7 +83,7 @@ const Footer: FC<Props> = ({
     })}`
 
     try {
-      await createTab(link)
+      await openInTab({ url: link })
     } catch (e: any) {
       addToast(e?.message || 'Error opening explorer', { type: 'error' })
     }

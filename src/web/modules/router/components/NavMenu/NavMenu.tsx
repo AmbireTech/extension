@@ -22,13 +22,13 @@ import { HeaderWithTitle } from '@common/modules/header/components/Header/Header
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { openInTab } from '@common/utils/links'
 import { getUiType } from '@common/utils/uiType'
 import {
   TabLayoutContainer,
   tabLayoutWidths
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import { DISCORD_URL, TELEGRAM_URL, TWITTER_URL } from '@web/constants/social'
-import { openInTab } from '@web/extension-services/background/webapi/tab'
 import SettingsLink from '@web/modules/settings/components/SettingsLink'
 import { SETTINGS_LINKS } from '@web/modules/settings/components/Sidebar/Sidebar'
 import commonWebStyles from '@web/styles/utils/common'

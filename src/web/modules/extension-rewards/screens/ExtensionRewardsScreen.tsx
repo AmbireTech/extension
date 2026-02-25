@@ -14,8 +14,8 @@ import HeaderBackButton from '@common/modules/header/components/HeaderBackButton
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
+import { openInTab } from '@common/utils/links'
 import { getUiType } from '@common/utils/uiType'
-import { openInTab } from '@web/extension-services/background/webapi/tab'
 
 import rewardsPageBackground from '../../../assets/images/rewardsPageBackground.png'
 import userBlacklistedIcon from '../../../assets/images/userBlacklisted.png'
