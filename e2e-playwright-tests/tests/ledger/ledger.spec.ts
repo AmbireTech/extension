@@ -3,7 +3,7 @@ import mainConstants from 'constants/mainConstants'
 import selectors from 'constants/selectors'
 import tokens from 'constants/tokens'
 import { test } from 'fixtures/pageObjects' // your extended test with auth
-import { runSwapProceedFlow } from 'flows/swapAndBridgeFlow'
+import { runSwapFlow, runSwapProceedFlow } from 'flows/swapAndBridgeFlow'
 import { runBatchTransferFlow, runSimpleTransferFlow } from 'flows/transferFlow'
 
 import { expect } from '@playwright/test'
@@ -115,7 +115,7 @@ test.describe('ledger SA with storage', () => {
     })
   })
 
-  test('should "proceed" Swap & Bridge from the Pending Route component with a Smart Account', async ({
+  test('should "proceed" Swap from the Pending Route component with a Smart Account', async ({
     pages
   }) => {
     const ledgerSimulatorControls = new SpeculosDevice({ baseUrl: LEDGER_SIMULATIUON_URL })
@@ -130,6 +130,22 @@ test.describe('ledger SA with storage', () => {
       ledgerSimulatorControls: ledgerSimulatorControls
     })
   })
-  // bridge
+
+  test('should "proceed" Bridge from the Pending Route component with a Smart Account', async ({
+    pages
+  }) => {
+    const ledgerSimulatorControls = new SpeculosDevice({ baseUrl: LEDGER_SIMULATIUON_URL })
+    await ledgerSimulatorControls.enableBlindSigning()
+
+    await runSwapFlow({
+      pages,
+      sendToken: tokens.usdc.base,
+      receiveToken: tokens.usdc.optimism,
+      bridgeAmount: 0.01,
+      assertNoInitialTx: true,
+      ledgerSimulatorControls: ledgerSimulatorControls
+    })
+  })
+
   // gas tank top-up
 })

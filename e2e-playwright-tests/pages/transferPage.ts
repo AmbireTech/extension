@@ -108,7 +108,7 @@ export class TransferPage extends BasePage {
     feeToken,
     payWithGasTank = true, // pay with gas tank by default
     message,
-    ledgerSimulatorControls = undefined
+    ledgerSimulatorControls
   }: {
     sendToken: Token
     feeToken?: Token
@@ -154,8 +154,10 @@ export class TransferPage extends BasePage {
       await this.expectButtonEnabled(selectors.signButton)
       await this.click(selectors.signButton)
 
-      if (ledgerSimulatorControls) {
-        ledgerSimulatorControls.signTransaction()
+      if (ledgerSimulatorControls && !payWithGasTank) {
+        await ledgerSimulatorControls.signTransaction()
+      } else if (ledgerSimulatorControls && payWithGasTank) {
+        await ledgerSimulatorControls.signSmartAccountTransaction()
       }
 
       await this.isVisible(selectors.transaction.confirmingYourTransactionText)

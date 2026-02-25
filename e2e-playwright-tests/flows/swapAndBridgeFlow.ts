@@ -11,7 +11,8 @@ export async function runSwapFlow({
   receiveToken,
   bridgeAmount,
   message = 'Nice trade!',
-  assertNoInitialTx = false
+  assertNoInitialTx = false,
+  ledgerSimulatorControls
 }: {
   pages: PageManager
   sendToken: Token
@@ -19,6 +20,7 @@ export async function runSwapFlow({
   bridgeAmount: number
   message?: string
   assertNoInitialTx?: boolean
+  ledgerSimulatorControls?: SpeculosDevice
 }) {
   if (assertNoInitialTx) {
     await test.step('assert no transaction on Activity tab', async () => {
@@ -33,7 +35,8 @@ export async function runSwapFlow({
   await test.step('sign transaction', async () => {
     await pages.transfer.signSlowSpeedTransaction({
       sendToken,
-      message
+      message,
+      ledgerSimulatorControls
     })
   })
 

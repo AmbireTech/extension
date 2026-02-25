@@ -200,7 +200,7 @@ export class SwapAndBridgePage extends BasePage {
     await expect(this.page.getByText('Transaction waiting to be').first()).not.toBeVisible()
   }
 
-  async proceedTransaction(ledgerSimulatorControls: SpeculosDevice): Promise<void> {
+  async proceedTransaction(ledgerSimulatorControls?: SpeculosDevice): Promise<void> {
     // "Select route" step may take more time to appear, as it depends on the Li.Fi response.
     await this.page.waitForSelector(locators.selectRouteButton, {
       state: 'visible',
@@ -220,7 +220,7 @@ export class SwapAndBridgePage extends BasePage {
     await this.signTransactionPage(newPage, ledgerSimulatorControls)
   }
 
-  async signTransactionPage(page, ledgerSimulatorControls: SpeculosDevice): Promise<void> {
+  async signTransactionPage(page, ledgerSimulatorControls?: SpeculosDevice): Promise<void> {
     const signButton = page.getByTestId(selectors.signTransactionButton)
 
     try {
@@ -243,10 +243,9 @@ export class SwapAndBridgePage extends BasePage {
         await expect(signButton).toBeVisible({ timeout: 5000 })
         await expect(signButton).toBeEnabled({ timeout: 5000 })
         await page.getByTestId(selectors.signTransactionButton).click()
+
         if (ledgerSimulatorControls) {
-          await page.waitForTimeout(3000) // waiting for Ledger pop up to appear
-          await ledgerSimulatorControls.pressBothButtons()
-          await ledgerSimulatorControls.confirmTransactionFlow()
+          await ledgerSimulatorControls.signSmartAccountTransaction()
         }
 
         await page.waitForTimeout(5000)
