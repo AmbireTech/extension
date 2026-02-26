@@ -244,11 +244,10 @@ class LedgerController implements ExternalSignerController {
   }
 
   /**
-   * Note: we added this method because the loggerFactory prop
-   * in the ContextModuleBuilder in no longer optional,
-   * and throws an error if not provided, but we want to avoid
-   * logging in production, so we create a logger that
-   * does nothing in production and logs in development.
+   * 1) loggerFactory param was optional in older versions of the Ledger DMK
+   * 2) In the latest version it's optional again but if we don't provide it,
+   * for the physical Ledger device does not work and it throws an error.
+   * 3) TODO: Check-back with Ledger sometime in future, this should not be required based on what we investigated.
    */
   #createContextLogger = (tag: string) => {
     if (isProd) {
