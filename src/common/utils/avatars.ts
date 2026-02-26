@@ -26,8 +26,6 @@ const getAvatarColors = (avatarType: AvatarType, address: string): AvatarColors 
       return FALLBACK_COLORS
     }
 
-    console.log('Debug: colors extracted from Jazzicon SVG:', colors) // Debug log
-
     return [colors[1]!, colors[2]!, colors[3]!]
   }
 
