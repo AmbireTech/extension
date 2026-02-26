@@ -36,7 +36,7 @@ function channelToColorMatrix(srcChannel: 0 | 1 | 2, tr: number, tg: number, tb:
   return `${row(tr)} ${row(tg)} ${row(tb)} 0 0 0 1 0`
 }
 
-export function OverviewBackground({ address, maxHeight }: { address: string; maxHeight: number }) {
+export function OverviewBackground({ address }: { address: string }) {
   const { state } = useControllerState({ id: 'WalletStateController' })
   const colors = getAvatarColors(state.avatarType, address)
 
@@ -61,7 +61,6 @@ export function OverviewBackground({ address, maxHeight }: { address: string; ma
       style={[
         StyleSheet.absoluteFill,
         {
-          height: maxHeight,
           backgroundColor: '#000000',
           borderRadius: BORDER_RADIUS_PRIMARY,
           overflow: 'hidden'

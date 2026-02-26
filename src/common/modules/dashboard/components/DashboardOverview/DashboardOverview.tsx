@@ -112,7 +112,7 @@ const DashboardOverview: FC<Props> = ({
           })
         }}
       >
-        <OverviewBackground address={account?.addr || ''} maxHeight={OVERVIEW_CONTENT_MAX_HEIGHT} />
+        <OverviewBackground address={account?.addr || ''} />
         <View style={{ zIndex: 2 }}>
           <DashboardHeader />
           <Animated.View
