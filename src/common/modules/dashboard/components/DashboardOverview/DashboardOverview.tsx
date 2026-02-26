@@ -17,9 +17,9 @@ import spacings, { SPACING, SPACING_MD, SPACING_TY, SPACING_XL } from '@common/s
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
-import backgroundImage from './background.png'
 import BalanceAffectingErrors from './BalanceAffectingErrors'
 import GasTankButton from './GasTankButton'
+import { OverviewBackground } from './OverviewBackground'
 import RefreshIcon from './RefreshIcon'
 import RewardsButton from './RewardsButton'
 import getStyles from './styles'
@@ -69,7 +69,6 @@ const DashboardOverview: FC<Props> = ({
     isLoadingTakingTooLong,
     networksWithErrors
   } = useBalanceAffectingErrors()
-
   const totalPortfolioAmount = useMemo(() => portfolio?.totalBalance || 0, [portfolio])
 
   const [totalPortfolioAmountIntegerFormattedPart, totalPortfolioAmountDecimalFormattedPart] =
@@ -113,12 +112,7 @@ const DashboardOverview: FC<Props> = ({
           })
         }}
       >
-        {/* TODO: Style based on selected account; Add overlay in the extension */}
-        <Image
-          source={typeof backgroundImage === 'number' ? backgroundImage : { uri: backgroundImage }}
-          resizeMode="cover"
-          style={[StyleSheet.absoluteFill, { height: OVERVIEW_CONTENT_MAX_HEIGHT }]}
-        />
+        <OverviewBackground address={account?.addr || ''} maxHeight={OVERVIEW_CONTENT_MAX_HEIGHT} />
         <View style={{ zIndex: 2 }}>
           <DashboardHeader />
           <Animated.View
