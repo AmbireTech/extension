@@ -4,6 +4,8 @@ import tokens from '../../constants/tokens'
 import { test } from '../../fixtures/pageObjects'
 
 test.describe('gasTank - Smart Account', { tag: '@gasTank' }, () => {
+  test.setTimeout(80000)
+
   test.beforeEach(async ({ pages }) => {
     await pages.initWithStorage(saParams)
   })

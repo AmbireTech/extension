@@ -1,10 +1,8 @@
 import { StyleSheet, ViewStyle } from 'react-native'
 
-import { isWeb } from '@common/config/env'
-import spacings, { DEVICE_HEIGHT, SPACING, SPACING_MD } from '@common/styles/spacings'
+import spacings, { DEVICE_HEIGHT } from '@common/styles/spacings'
 import { ThemeProps } from '@common/styles/themeConfig'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
-import { TAB_CONTENT_WIDTH } from '@web/constants/spacings'
 
 interface Style {
   bottomSheet: ViewStyle
@@ -21,13 +19,12 @@ const getStyles = (theme: ThemeProps) =>
     bottomSheet: {
       borderTopStartRadius: BORDER_RADIUS_PRIMARY,
       borderTopEndRadius: BORDER_RADIUS_PRIMARY,
-      ...spacings.pvMd,
-      paddingHorizontal: isWeb ? SPACING_MD : SPACING
+      ...spacings.pvMd
     },
     modal: {
       borderBottomEndRadius: BORDER_RADIUS_PRIMARY,
       borderBottomStartRadius: BORDER_RADIUS_PRIMARY,
-      maxWidth: TAB_CONTENT_WIDTH,
+      maxWidth: 540,
       width: '100%',
       margin: 'auto'
     },
@@ -35,7 +32,7 @@ const getStyles = (theme: ThemeProps) =>
       width: 60,
       height: 3,
       borderRadius: 4,
-      backgroundColor: theme.secondaryBorder,
+      backgroundColor: theme.neutral600,
       top: 10
     },
     backDrop: {

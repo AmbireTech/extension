@@ -4,12 +4,12 @@ import { useTranslation } from 'react-i18next'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import CopyIcon from '@common/assets/svg/CopyIcon'
 import Text from '@common/components/Text'
+import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { setStringAsync } from '@common/utils/clipboard'
-import useHover, { AnimatedPressable } from '@web/hooks/useHover'
 
 interface Props {
   address: string

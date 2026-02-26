@@ -1,3 +1,6 @@
+import React, { FC, useCallback } from 'react'
+import { Pressable } from 'react-native'
+
 import OpenIcon from '@common/assets/svg/OpenIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import Text from '@common/components/Text'
@@ -5,9 +8,7 @@ import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { openInTab } from '@web/extension-services/background/webapi/tab'
-import React, { FC, useCallback } from 'react'
-import { Pressable } from 'react-native'
+import { openInTab } from '@common/utils/links'
 
 type CompletedProps = {
   title: string

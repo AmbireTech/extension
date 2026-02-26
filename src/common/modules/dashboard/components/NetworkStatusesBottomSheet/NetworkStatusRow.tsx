@@ -121,7 +121,7 @@ const NetworkStatusRow: FC<{
       ]}
     >
       {/* Network data */}
-      <View style={[{ flex: 2 }, flexbox.directionRow, flexbox.alignCenter]}>
+      <View style={[{ flex: 1.75 }, flexbox.directionRow, flexbox.alignCenter]}>
         <NetworkIcon
           id={networkKey}
           size={32}

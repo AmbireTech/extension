@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 
 import OverachieverBanner from '@legends/components/OverachieverBanner'
 import V1AccountBanner from '@legends/components/V1AccountBanner'
-import usePortfolioControllerState from '@legends/hooks/usePortfolioControllerState/usePortfolioControllerState'
+import usePortfolio from '@legends/hooks/usePortfolio'
 
 import walletCoin from './assets/wallet-coin.png'
 import styles from './Home.module.scss'
@@ -29,7 +29,7 @@ const Home = () => {
     if (node) setWidgetEl(node)
   }, [])
 
-  const { walletTokenInfo, isLoadingWalletTokenInfo } = usePortfolioControllerState()
+  const { walletTokenInfo, isLoadingWalletTokenInfo } = usePortfolio()
   const stakedWallet = walletTokenInfo && walletTokenInfo.percentageStakedWallet
 
   const marketCapFormatted = useMemo(() => {

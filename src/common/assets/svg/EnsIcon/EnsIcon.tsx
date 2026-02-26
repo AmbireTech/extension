@@ -13,7 +13,7 @@ const EnsIcon: React.FC<Props> = ({ width = 24, height = 24, isActive, color, ..
   return (
     <Svg width={width} height={height} viewBox="0 0 24 24" {...rest}>
       <G transform="translate(-1641 -298)">
-        <G transform="translate(1642.2 298)" opacity={isActive ? '1' : '0.25'}>
+        <G transform="translate(1642.2 298)" opacity={isActive ? '1' : '0.5'}>
           <Path
             d="M6531.259,9923.334a2.887,2.887,0,0,0-.946,1.037h0a4.784,4.784,0,0,0-.044,4.046h0c.238.509.827,1.51.827,1.51l6.808-11.219Z"
             transform="translate(-6527.496 -9918.708)"

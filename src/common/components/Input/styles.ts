@@ -9,7 +9,6 @@ import flexbox from '@common/styles/utils/flexbox'
 
 export interface Style {
   inputContainer: ViewStyle
-  borderWrapper: ViewStyle
   inputWrapper: ViewStyle
   input: TextStyle
   nativeInput: TextStyle
@@ -33,12 +32,6 @@ const getStyles = (theme: ThemeProps) =>
       ...spacings.mbSm,
       zIndex: 10
     },
-    borderWrapper: {
-      borderWidth: 2,
-      borderRadius: 8,
-      borderColor: 'transparent',
-      ...common.hidden
-    },
     inputWrapper: {
       ...flexbox.directionRow,
       borderWidth: 1,
@@ -51,7 +44,7 @@ const getStyles = (theme: ThemeProps) =>
       ...flexbox.flex1,
       height: INPUT_HEIGHT,
       borderWidth: 0,
-      ...spacings.ph
+      ...spacings.phSm
     },
     nativeInput: {
       height: '100%',

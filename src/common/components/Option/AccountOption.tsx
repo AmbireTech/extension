@@ -1,7 +1,6 @@
 import { View } from 'react-native'
 
 import { Account } from '@ambire-common/interfaces/account'
-import { isSmartAccount } from '@ambire-common/libs/account/account'
 import AccountAddress from '@common/components/AccountAddress'
 import Avatar from '@common/components/Avatar'
 import Text from '@common/components/Text'
@@ -21,7 +20,7 @@ const AccountOption = ({ acc }: { acc: Account }) => {
         address={acc.addr}
         size={32}
         style={spacings.prTy}
-        isSmart={isSmartAccount(acc)}
+        smartAccountType={(acc.creation && 'Ambire') || (acc.safeCreation && 'Safe')}
       />
       <View style={flexbox.flex1}>
         <Text fontSize={14} weight="medium" style={{ lineHeight: 20 }} numberOfLines={1}>

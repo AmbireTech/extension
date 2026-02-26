@@ -14,15 +14,15 @@ import InfoIcon from '@common/assets/svg/InfoIcon'
 import OpenIcon from '@common/assets/svg/OpenIcon'
 import Text, { Props as TextProps } from '@common/components/Text'
 import Tooltip from '@common/components/Tooltip'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { setStringAsync } from '@common/utils/clipboard'
+import { openInTab } from '@common/utils/links'
+import { getUiType } from '@common/utils/uiType'
 import { isExtension } from '@web/constants/browserapi'
-import { openInTab } from '@web/extension-services/background/webapi/tab'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
-import { getUiType } from '@web/utils/uiType'
 
 import Option from './BaseAddressOption'
 
@@ -31,6 +31,7 @@ interface Props extends TextProps {
   chainId?: bigint
   hideLinks?: boolean
   verification?: BlacklistedStatus
+  isDisplayingPlainAddress?: boolean
 }
 
 const { isRequestWindow } = getUiType()
@@ -41,6 +42,7 @@ const BaseAddress: FC<Props> = ({
   chainId,
   hideLinks = false,
   verification,
+  isDisplayingPlainAddress,
   ...rest
 }) => {
   const { t } = useTranslation()
@@ -48,7 +50,9 @@ const BaseAddress: FC<Props> = ({
   const { addToast } = useToast()
   const { benzinNetworks } = useBenzinNetworksContext()
   // Standalone Benzin doesn't have access to controllers
-  const { networks } = useNetworksControllerState()
+  const {
+    state: { networks }
+  } = useController('NetworksController')
 
   const actualNetworks = networks ?? benzinNetworks
   const network = actualNetworks?.find((n) => n.chainId === chainId)
@@ -97,8 +101,8 @@ const BaseAddress: FC<Props> = ({
   return (
     <View style={[flexbox.alignCenter, flexbox.directionRow, flexbox.flex1]}>
       <Text
+        weight={isDisplayingPlainAddress ? 'mono_regular' : 'medium'}
         fontSize={14}
-        weight="medium"
         appearance={verification === 'BLACKLISTED' ? 'errorText' : 'primaryText'}
         selectable
         {...rest}
@@ -137,6 +141,7 @@ const BaseAddress: FC<Props> = ({
         /> */}
         <Option
           title={t('Copy Address')}
+          isAddress
           text={shortenAddress(address, 15)}
           renderIcon={() => <CopyIcon color={theme.secondaryText} width={16} height={16} />}
           onPress={handleCopyAddress}

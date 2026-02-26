@@ -5,11 +5,11 @@ import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import UpArrowIcon from '@common/assets/svg/UpArrowIcon'
 import Text from '@common/components/Text'
+import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
-import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
 
 import getStyles from './styles'
 
@@ -22,7 +22,7 @@ interface Props {
   children?: React.ReactNode
   testID?: string
   disabled?: boolean
-  status?: 'default' | 'expanded' | 'collapsed'
+  status?: 'default' | 'expanded' | 'collapsed' | 'none'
   icons?: { key: string; component: React.FC<any> }[]
 }
 
@@ -40,10 +40,10 @@ const Option = ({
 }: Props) => {
   const { theme, styles, themeType } = useTheme(getStyles)
   const [bindAnim, animStyle, isHovered] = useCustomHover({
-    property: 'borderColor',
+    property: 'backgroundColor',
     values: {
       from: theme.primaryBackground,
-      to: themeType === THEME_TYPES.DARK ? (theme.linkText as string) : theme.primary
+      to: theme.secondaryBackground
     }
   })
 
@@ -54,6 +54,9 @@ const Option = ({
         styles.container,
         withBottomSpacing && spacings.mb,
         animStyle,
+        status === 'expanded' && {
+          backgroundColor: theme.secondaryBackground
+        },
         disabled && { opacity: 0.5 }
       ]}
       onPress={onPress}
@@ -65,7 +68,7 @@ const Option = ({
         <View style={styles.iconWrapper}>
           <Icon
             color={
-              isHovered && themeType === THEME_TYPES.LIGHT ? theme.iconPrimary2 : theme.iconPrimary
+              isHovered && themeType === THEME_TYPES.LIGHT ? theme.primaryAccent : theme.iconPrimary
             }
             {...iconProps}
           />

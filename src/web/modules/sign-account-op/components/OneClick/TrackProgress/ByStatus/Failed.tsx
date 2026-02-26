@@ -6,11 +6,12 @@ import { Hex } from '@ambire-common/interfaces/hex'
 import RetryIcon from '@common/assets/svg/RetryIcon'
 import AlertVertical from '@common/components/AlertVertical'
 import Text from '@common/components/Text'
+import useController from '@common/hooks/useController'
+import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
+import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
 
 type FailedProps = {
   title: string
@@ -26,12 +27,12 @@ type FailedProps = {
 const Failed: FC<FailedProps> = ({ title, errorMessage, handleClose, toToken, amount }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { dispatch } = useBackgroundService()
+  const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
   const [bindAnim, animStyle] = useCustomHover({
     property: 'backgroundColor',
     values: {
-      from: `${theme.primary as string}14`,
-      to: theme.primary20
+      from: hexToRgba(theme.primaryAccent, 0.08),
+      to: hexToRgba(theme.primaryAccent, 0.2)
     }
   })
 
@@ -53,17 +54,20 @@ const Failed: FC<FailedProps> = ({ title, errorMessage, handleClose, toToken, am
                 ...animStyle
               }}
               onPress={() => {
-                dispatch({
-                  type: 'SWAP_AND_BRIDGE_CONTROLLER_UPDATE_FORM',
+                swapAndBridgeDispatch({
+                  type: 'method',
                   params: {
-                    formValues: {
-                      toSelectedTokenAddr: toToken?.address,
-                      toChainId: BigInt(toToken?.chainId),
-                      fromAmount: amount
-                    },
-                    updateProps: {
-                      shouldIncrementFromAmountUpdateCounter: true
-                    }
+                    method: 'updateForm',
+                    args: [
+                      {
+                        toSelectedTokenAddr: toToken?.address,
+                        toChainId: BigInt(toToken?.chainId),
+                        fromAmount: amount
+                      },
+                      {
+                        shouldIncrementFromAmountUpdateCounter: true
+                      }
+                    ]
                   }
                 })
                 if (handleClose) handleClose()

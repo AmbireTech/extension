@@ -1,6 +1,6 @@
 import { engine } from '@web/constants/browserapi'
 
-export const POPUP_WIDTH = 600
+export const POPUP_WIDTH = 480
 export const TAB_CONTENT_WIDTH = 990
 export const TAB_WIDE_CONTENT_WIDTH = 1320
 

@@ -1,6 +1,6 @@
 import { randomBytes } from 'ethers'
 import React, { memo, useMemo } from 'react'
-import { Image, ScrollView, View } from 'react-native'
+import { Image, ScrollView, View, ViewStyle } from 'react-native'
 
 // @ts-ignore
 import meshGradientLarge from '@benzin/assets/images/mesh-gradient-large.png'
@@ -13,6 +13,7 @@ import useBenzin from '@benzin/screens/BenzinScreen/hooks/useBenzin'
 import OpenIcon from '@common/assets/svg/OpenIcon'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
+import useControllerStore from '@common/hooks/useControllerStore'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import spacings from '@common/styles/spacings'
@@ -25,6 +26,7 @@ import getStyles from './styles'
 const Benzin = ({ state }: { state: ReturnType<typeof useBenzin> }) => {
   const { styles } = useTheme(getStyles)
   const { maxWidthSize } = useWindowSize()
+  const { isStoreReady } = useControllerStore()
 
   const summary = useMemo(() => {
     const calls = state?.stepsState?.calls
@@ -33,7 +35,7 @@ const Benzin = ({ state }: { state: ReturnType<typeof useBenzin> }) => {
     return calls.map((call, i) => (
       <TransactionSummary
         key={call.data + randomBytes(6)}
-        style={i !== calls.length! - 1 ? spacings.mbSm : {}}
+        style={i !== calls.length! - 1 ? (spacings.mbSm as ViewStyle) : {}}
         call={call}
         chainId={state.network!.chainId}
         rightIcon={
@@ -44,14 +46,14 @@ const Benzin = ({ state }: { state: ReturnType<typeof useBenzin> }) => {
         }
         onRightIconPress={state?.handleOpenExplorer}
         size={IS_MOBILE_UP_BENZIN_BREAKPOINT ? 'lg' : 'sm'}
-        isHistory
+        type="benzin"
       />
     ))
     // Prevents unnecessary re-renders of the humanizer
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state?.handleOpenExplorer, state?.network?.chainId, state?.stepsState?.calls?.length])
 
-  if (state && !state?.isInitialized)
+  if ((state && !state?.isInitialized) || !isStoreReady)
     return (
       <View style={[spacings.pv, spacings.ph, flexbox.center, flexbox.flex1]}>
         <Spinner />

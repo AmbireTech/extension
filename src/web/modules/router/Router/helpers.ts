@@ -5,7 +5,7 @@ import { ITransferController } from '@ambire-common/interfaces/transfer'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
 import { AUTH_STATUS } from '@common/modules/auth/constants/authStatus'
 import { ROUTES } from '@common/modules/router/constants/common'
-import { getUiType } from '@web/utils/uiType'
+import { getUiType } from '@common/utils/uiType'
 
 const { isRequestWindow } = getUiType()
 

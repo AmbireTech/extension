@@ -1,3 +1,7 @@
+import React from 'react'
+import { useTranslation } from 'react-i18next'
+import { Pressable, View } from 'react-native'
+
 import { SwapAndBridgeRoute } from '@ambire-common/interfaces/swapAndBridge'
 import { FeePaymentOption } from '@ambire-common/libs/estimate/interfaces'
 import InfoIcon from '@common/assets/svg/InfoIcon'
@@ -9,10 +13,8 @@ import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
-import { openInTab } from '@web/extension-services/background/webapi/tab'
-import React from 'react'
-import { useTranslation } from 'react-i18next'
-import { Pressable, View } from 'react-native'
+import { openInTab } from '@common/utils/links'
+
 import getStyles from '../styles'
 import PayOption from './PayOption'
 

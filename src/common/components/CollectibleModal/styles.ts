@@ -2,7 +2,7 @@ import { ImageStyle, StyleSheet, ViewStyle } from 'react-native'
 
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
-import { getUiType } from '@web/utils/uiType'
+import { getUiType } from '@common/utils/uiType'
 
 interface Style {
   modal: ViewStyle
@@ -12,7 +12,7 @@ interface Style {
 
 const { isTab } = getUiType()
 
-export const COLLECTIBLE_IMAGE_SIZE = isTab ? 400 : 300
+export const COLLECTIBLE_IMAGE_SIZE = 300
 
 const getStyles = () =>
   StyleSheet.create<Style>({

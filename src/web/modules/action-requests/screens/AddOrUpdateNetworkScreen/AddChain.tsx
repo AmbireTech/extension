@@ -14,15 +14,15 @@ import useTheme from '@common/hooks/useTheme'
 import { SPACING, SPACING_LG, SPACING_MD } from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
-import HeaderAccountAndNetworkInfo from '@web/components/HeaderAccountAndNetworkInfo'
 import ManifestImage from '@web/components/ManifestImage'
 import NetworkAvailableFeatures from '@web/components/NetworkAvailableFeatures'
 import NetworkDetails from '@web/components/NetworkDetails'
 import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
 import useDappInfo from '@web/hooks/useDappInfo'
 import useResponsiveActionWindow from '@web/hooks/useResponsiveActionWindow'
+import ActionFooter from '@web/modules/action-requests/components/ActionFooter'
+import ActionHeader from '@web/modules/action-requests/components/ActionHeader'
 
-import ActionFooter from '../../components/ActionFooter'
 import getStyles from './styles'
 
 type AddChainProps = {
@@ -64,16 +64,8 @@ const AddChain = ({
   return (
     <TabLayoutContainer
       width="full"
-      header={
-        <HeaderAccountAndNetworkInfo
-          backgroundColor={
-            themeType === THEME_TYPES.DARK
-              ? (theme.tertiaryBackground as string)
-              : (theme.primaryBackground as string)
-          }
-        />
-      }
-      footer={
+      header={<ActionHeader />}
+      renderDirectChildren={() => (
         <ActionFooter
           onReject={handleDenyButtonPress}
           onResolve={handlePrimaryButtonPress}
@@ -88,8 +80,7 @@ const AddChain = ({
             actionButtonPressedRef.current
           }
         />
-      }
-      backgroundColor={theme.quinaryBackground}
+      )}
     >
       <TabLayoutWrapperMainContent
         style={{
@@ -207,10 +198,7 @@ const AddChain = ({
                   nativeAssetName={networkDetails.nativeAssetName}
                   explorerUrl={networkDetails.explorerUrl || '-'}
                   style={{
-                    backgroundColor:
-                      themeType === THEME_TYPES.DARK
-                        ? theme.secondaryBackground
-                        : theme.primaryBackground
+                    backgroundColor: theme.secondaryBackground
                   }}
                   responsiveSizeMultiplier={responsiveSizeMultiplier}
                   type="vertical"

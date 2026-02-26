@@ -1,8 +1,8 @@
 import { ImageStyle, StyleSheet, ViewProps, ViewStyle } from 'react-native'
 
 import { BOTTOM_SHEET_Z_INDEX } from '@common/components/BottomSheet/styles'
-import spacings, { SPACING_MI, SPACING_TY } from '@common/styles/spacings'
-import { THEME_TYPES, ThemeProps, ThemeType } from '@common/styles/themeConfig'
+import spacings, { SPACING_MI } from '@common/styles/spacings'
+import { ThemeProps, ThemeType } from '@common/styles/themeConfig'
 import common, { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -18,9 +18,6 @@ interface Style {
   mdMenuOption: ViewStyle
   sheetMenuOption: ViewStyle
   optionIcon: ImageStyle
-  searchBorderWrapperStyle: ViewStyle
-  topSearchInputWrapperStyle: ViewStyle
-  bottomSearchInputWrapperStyle: ViewStyle
 }
 
 export const DEFAULT_SELECT_SIZE = 'md'
@@ -37,38 +34,30 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       ...spacings.mbSm
     },
     selectBorderWrapper: {
-      borderWidth: 2,
       borderRadius: 8,
-      borderColor: 'transparent',
       ...common.hidden
     },
     select: {
       width: '100%',
       ...common.borderRadiusPrimary,
-      backgroundColor:
-        themeType === THEME_TYPES.DARK ? theme.primaryBackground : theme.secondaryBackground,
-      borderWidth: themeType === THEME_TYPES.DARK ? 0 : 1,
+      backgroundColor: theme.primaryBackground,
       ...common.hidden,
-      borderColor: 'transparent',
       ...flexbox.alignCenter,
       ...flexbox.directionRow
     },
     smSelect: {
       height: SELECT_SIZE_TO_HEIGHT.sm,
-      ...spacings.phTy
+      ...spacings.phSm
     },
     mdSelect: {
       height: SELECT_SIZE_TO_HEIGHT.md,
       ...spacings.ph
     },
     menuContainer: {
-      backgroundColor:
-        themeType === THEME_TYPES.DARK ? theme.secondaryBackground : theme.primaryBackground,
+      backgroundColor: theme.primaryBackground,
       ...spacings.mvMi,
       ...common.borderRadiusPrimary,
       overflow: 'hidden',
-      borderWidth: themeType === THEME_TYPES.DARK ? 0 : 1,
-      borderColor: theme.secondaryBorder,
       ...common.shadowSecondary,
       position: 'absolute',
       maxHeight: MAX_MENU_HEIGHT,
@@ -81,9 +70,7 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
     },
     sheetMenuOption: {
       marginBottom: SPACING_MI / 2,
-      borderRadius: BORDER_RADIUS_PRIMARY,
-      borderWidth: 1,
-      borderColor: 'transparent'
+      borderRadius: BORDER_RADIUS_PRIMARY
     },
     smMenuOption: {
       height: SELECT_SIZE_TO_HEIGHT.sm,
@@ -98,27 +85,6 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       height: 30,
       borderRadius: BORDER_RADIUS_PRIMARY,
       ...(spacings.mrTy as ImageStyle) // TODO: spacings has type mismatch with ImageStyle
-    },
-    searchBorderWrapperStyle: {
-      borderWidth: 0,
-      borderRadius: 0
-    },
-    topSearchInputWrapperStyle: {
-      borderWidth: 0,
-      borderTopWidth: 1,
-      borderBottomWidth: 0,
-      borderRadius: 0,
-      borderColor: themeType === THEME_TYPES.DARK ? theme.primaryBorder : theme.secondaryBorder,
-      backgroundColor:
-        themeType === THEME_TYPES.DARK ? theme.tertiaryBackground : theme.secondaryBackground
-    },
-    bottomSearchInputWrapperStyle: {
-      borderWidth: 0,
-      borderBottomWidth: 1,
-      borderRadius: 0,
-      borderColor: themeType === THEME_TYPES.DARK ? theme.primaryBorder : theme.secondaryBorder,
-      backgroundColor:
-        themeType === THEME_TYPES.DARK ? theme.tertiaryBackground : theme.secondaryBackground
     }
   })
 

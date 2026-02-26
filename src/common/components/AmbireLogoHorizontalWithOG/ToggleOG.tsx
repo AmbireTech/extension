@@ -2,25 +2,39 @@ import React, { useCallback, useState } from 'react'
 import { Pressable } from 'react-native'
 import { SvgProps } from 'react-native-svg'
 
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useInviteControllerState from '@web/hooks/useInviteControllerState'
+import AmbireLogoHorizontalMonochrome from '@common/assets/svg/AmbireLogoHorizontalMonochrome'
+import useController from '@common/hooks/useController'
 
-import AmbireLogoHorizontal from '../AmbireLogoHorizontal/AmbireLogoHorizontal'
-import AmbireLogoHorizontalOG from './AmbireLogoHorizontalOG'
 import styles from './styles'
 
 const PRESS_THRESHOLD = 7
 
 const ToggleOG: React.FC<SvgProps> = ({ ...rest }) => {
-  const { dispatch } = useBackgroundService()
-  const { isOG } = useInviteControllerState()
+  const {
+    state: { isOG },
+    dispatch: inviteDispatch
+  } = useController('InviteController')
   const [, setPressCount] = useState(0)
 
   const toggleOG = useCallback(() => {
-    dispatch({
-      type: isOG ? 'INVITE_CONTROLLER_REVOKE_OG' : 'INVITE_CONTROLLER_BECOME_OG'
-    })
-  }, [dispatch, isOG])
+    if (isOG) {
+      inviteDispatch({
+        type: 'method',
+        params: {
+          method: 'becomeOG',
+          args: []
+        }
+      })
+    } else {
+      inviteDispatch({
+        type: 'method',
+        params: {
+          method: 'revokeOG',
+          args: []
+        }
+      })
+    }
+  }, [inviteDispatch, isOG])
 
   const handlePress = useCallback(() => {
     setPressCount((prevCount) => {
@@ -36,7 +50,7 @@ const ToggleOG: React.FC<SvgProps> = ({ ...rest }) => {
 
   return (
     <Pressable style={styles.pressable} onPress={handlePress}>
-      {isOG ? <AmbireLogoHorizontalOG {...rest} /> : <AmbireLogoHorizontal {...rest} />}
+      <AmbireLogoHorizontalMonochrome {...rest} isOG={isOG} />
     </Pressable>
   )
 }

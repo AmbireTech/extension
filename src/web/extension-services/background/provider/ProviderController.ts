@@ -2,7 +2,7 @@
 import 'reflect-metadata'
 
 import { ethErrors } from 'eth-rpc-errors'
-import { EthersError, getAddress, isAddress, toBeHex, TransactionReceipt } from 'ethers'
+import { getAddress, isAddress } from 'ethers'
 import cloneDeep from 'lodash/cloneDeep'
 import { nanoid } from 'nanoid'
 
@@ -18,20 +18,17 @@ import {
 import { getBaseAccount } from '@ambire-common/libs/account/getBaseAccount'
 import {
   AccountOpIdentifiedBy,
-  fetchTxnId,
   isIdentifiedByMultipleTxn
 } from '@ambire-common/libs/accountOp/submittedAccountOp'
+import { AccountOpStatus } from '@ambire-common/libs/accountOp/types'
 import { networkChainIdToHex } from '@ambire-common/libs/networks/networks'
-import { Bundler } from '@ambire-common/services/bundlers/bundler'
-import { getBundlerByName, getDefaultBundler } from '@ambire-common/services/bundlers/getBundler'
-import { getRpcProvider } from '@ambire-common/services/provider'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import { APP_VERSION } from '@common/config/env'
+import { openInTab } from '@common/utils/links'
 import { SAFE_RPC_METHODS } from '@web/constants/common'
 import { notificationManager } from '@web/extension-services/background/webapi/notification'
 
-import { createTab } from '../webapi/tab'
 import { RequestRes, Web3WalletPermission } from './types'
 
 type ProviderRequest = DappProviderRequest & { requestRes: RequestRes }
@@ -412,12 +409,7 @@ export class ProviderController {
       }
 
       const accout = this.mainCtrl.accounts.accounts.find((acc) => acc.addr === accountAddr)!
-      const baseAccount = getBaseAccount(
-        accout,
-        accountState,
-        this.mainCtrl.keystore.keys.filter((key) => accout.associatedKeys.includes(key.addr)),
-        network
-      )
+      const baseAccount = getBaseAccount(accout, accountState, network)
       const isSmart = baseAccount.getAtomicStatus() !== 'unsupported'
 
       capabilities[networkChainIdToHex(network.chainId)] = {
@@ -430,6 +422,7 @@ export class ProviderController {
         paymasterService: {
           supported:
             isSmart &&
+            !accout.safeCreation &&
             // enabled: obvious, it means we're operaring with 4337
             // hasBundlerSupport means it might not be 4337 but we support it
             // our default may be the relayer but we will broadcast an userOp
@@ -496,20 +489,29 @@ export class ProviderController {
       : undefined
     const version = getVersion(accOp)
 
-    const txnIdData = await fetchTxnId(identifiedBy, network, this.mainCtrl.callRelayer)
-    if (txnIdData.status === 'rejected') {
+    if (!accOp) throw ethErrors.rpc.invalidParams('invalid identifier passed')
+
+    if (
+      accOp.status === AccountOpStatus.Rejected ||
+      accOp.status === AccountOpStatus.UnknownButPastNonce ||
+      accOp.status === AccountOpStatus.BroadcastButStuck
+    ) {
       return {
         status: getFailureStatus(version)
       }
     }
-    if (txnIdData.status !== 'success') {
+
+    if (
+      !accOp.status ||
+      accOp.status === AccountOpStatus.BroadcastedButNotConfirmed ||
+      accOp.status === AccountOpStatus.Pending ||
+      !accOp.txnId
+    ) {
       return {
         status: getPendingStatus(version)
       }
     }
 
-    const isMultipleTxn = isIdentifiedByMultipleTxn(identifiedBy)
-    const txnId = txnIdData.txnId as string
     const provider = this.mainCtrl.providers.providers[network.chainId.toString()]
 
     // check to satisfy the TS; should never happen
@@ -519,78 +521,51 @@ export class ProviderController {
       )
     }
 
-    const isUserOp = identifiedBy.type === 'UserOperation'
-    const bundler = bundlerName ? getBundlerByName(bundlerName) : getDefaultBundler(network)
-
-    if (isUserOp) {
-      const userOpReceipt = await bundler
-        .getReceipt(identifiedBy.identifier, network)
-        .catch((error) => {
-          // eslint-disable-next-line no-console
-          console.error(error)
-          return null
-        })
-      if (!userOpReceipt) {
-        return {
-          status: getPendingStatus(version)
-        }
-      }
-
-      const txnStatus = Bundler.getReceiptSuccess(userOpReceipt)
-      const status = txnStatus === 1n ? '0x1' : '0x0'
+    if (identifiedBy.type === 'UserOperation') {
       return {
         version,
         id: identifiedBy,
-        atomic: !isMultipleTxn,
+        atomic: true,
         status: getSuccessStatus(version),
         receipts: [
           {
-            logs: userOpReceipt.logs,
-            status,
+            logs: [],
+            status: accOp.status === AccountOpStatus.Success ? '0x1' : '0x0',
             chainId: networkChainIdToHex(network.chainId),
-            blockHash: userOpReceipt.receipt.blockHash,
-            blockNumber: userOpReceipt.receipt.blockNumber,
-            gasUsed: userOpReceipt.receipt.gasUsed,
-            transactionHash: userOpReceipt.receipt.transactionHash
+            blockHash: accOp.blockHash,
+            gasUsed: accOp.gasUsed,
+            blockNumber: accOp.blockNumber,
+            transactionHash: accOp.txnId
           }
         ]
       }
     }
 
     const receipts = []
+    const isMultipleTxn = isIdentifiedByMultipleTxn(identifiedBy)
     if (!isMultipleTxn) {
-      const txnReceipt = await provider.getTransactionReceipt(txnId).catch((error) => {
-        // eslint-disable-next-line no-console
-        console.error(error)
-        return null
+      receipts.push({
+        logs: [],
+        status: accOp.status === AccountOpStatus.Success ? '0x1' : '0x0',
+        chainId: networkChainIdToHex(network.chainId),
+        blockHash: accOp.blockHash,
+        gasUsed: accOp.gasUsed,
+        blockNumber: accOp.blockNumber,
+        transactionHash: accOp.txnId
       })
-      if (!txnReceipt) {
-        return {
-          status: getPendingStatus(version)
-        }
-      }
-
-      receipts.push(txnReceipt)
     } else {
-      const txnIds = identifiedBy.identifier.split('-')
-      const txnReceipts = await Promise.all(
-        txnIds.map((oneTxnId) =>
-          provider.getTransactionReceipt(oneTxnId).catch((error) => {
-            // eslint-disable-next-line no-console
-            console.error(error)
-            return null
-          })
-        )
-      )
-      const foundTxnReceipts = txnReceipts.filter((r) => r)
-
-      if (!foundTxnReceipts.length || foundTxnReceipts.length < txnIds.length) {
-        return {
-          status: getPendingStatus(version)
-        }
+      for (let i = 0; i < accOp.calls.length; i++) {
+        const call = accOp.calls[i]!
+        receipts.push({
+          logs: [],
+          status: call.status === AccountOpStatus.Success ? '0x1' : '0x0',
+          chainId: networkChainIdToHex(network.chainId),
+          blockHash: call.blockHash,
+          gasUsed: call.gasUsed,
+          blockNumber: call.blockNumber,
+          transactionHash: call.txnId
+        })
       }
-
-      receipts.push(...foundTxnReceipts)
     }
 
     return {
@@ -598,20 +573,7 @@ export class ProviderController {
       id: identifiedBy,
       atomic: !isMultipleTxn,
       status: getSuccessStatus(version),
-      receipts: receipts.map((receipt) => {
-        const txnReceipt = receipt as unknown as TransactionReceipt
-        const txnStatus = toBeHex(txnReceipt.status as number, 1)
-        const status = txnStatus === '0x01' || txnStatus === '0x1' ? '0x1' : '0x0'
-        return {
-          logs: txnReceipt.logs,
-          status,
-          chainId: networkChainIdToHex(network.chainId),
-          blockHash: txnReceipt.blockHash,
-          blockNumber: toBeHex(txnReceipt.blockNumber as number),
-          gasUsed: toBeHex(txnReceipt.gasUsed),
-          transactionHash: txnReceipt.hash
-        }
-      })
+      receipts
     }
   }
 
@@ -668,7 +630,7 @@ export class ProviderController {
       identifiedBy
     })}`
 
-    await createTab(link)
+    await openInTab({ url: link })
   }
 
   @Reflect.metadata('ACTION_REQUEST', [

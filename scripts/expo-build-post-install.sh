@@ -6,8 +6,8 @@
 # npx expo prebuild (if needed), and pod install.
 
 # Copies the JS file for the web3 dapp injection mechanism
-if [[ "$EAS_BUILD_PLATFORM" == "android" ]]; then
-  cp -rf ./src/mobile/modules/web3/services/webview-inpage/EthereumProvider.js ./android/app/src/main/assets
-elif [[ "$EAS_BUILD_PLATFORM" == "ios" ]]; then
-  cp ./src/mobile/modules/web3/services/webview-inpage/EthereumProvider.js ios
-fi
+# if [[ "$EAS_BUILD_PLATFORM" == "android" ]]; then
+#   cp -rf ./src/mobile/modules/web3/services/webview-inpage/EthereumProvider.js ./android/app/src/main/assets
+# elif [[ "$EAS_BUILD_PLATFORM" == "ios" ]]; then
+#   cp ./src/mobile/modules/web3/services/webview-inpage/EthereumProvider.js ios
+# fi

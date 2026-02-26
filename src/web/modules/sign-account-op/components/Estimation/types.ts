@@ -24,6 +24,7 @@ type Props = {
     title: string
   }
   serviceFee?: SwapAndBridgeRoute['serviceFee']
+  withTitle?: boolean
 }
 
 export type { FeeOption, Props }

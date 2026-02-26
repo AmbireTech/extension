@@ -14,7 +14,7 @@ const checkIsConnected = (isConnected: boolean | null): ConnectionStates => {
   return isConnected ? ConnectionStates.CONNECTED : ConnectionStates.NOT_CONNECTED
 }
 
-const NetInfoProvider: React.FC = ({ children }) => {
+const NetInfoProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isConnected } = RnUseNetInfo()
 
   const connectionState = checkIsConnected(isConnected)

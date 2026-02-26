@@ -23,9 +23,9 @@ const Row: FC<Props> = ({ rowKey, value, tooltip, suffix }) => {
     <View style={[flexbox.directionRow, flexbox.justifySpaceBetween, spacings.mbMi]}>
       <Text fontSize={14}>{rowKey}: </Text>
       <Text
-        fontSize={14}
+        fontSize={12}
         selectable
-        weight="semiBold"
+        weight="medium"
         style={{
           // @ts-ignore missing in the types, but React Native Web supports it
           wordBreak: 'break-all',

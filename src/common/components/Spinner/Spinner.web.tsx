@@ -3,7 +3,7 @@ import React, { useMemo } from 'react'
 
 import SpinnerAnimation from './spinner-animation.json'
 import BlackSpinnerAnimation from './spinner-black-animation.json'
-import Info2SpinnerAnimation from './spinner-info2-animation.json'
+import InfoSpinnerAnimation from './spinner-info-animation.json'
 import WhiteSpinnerAnimation from './spinner-white-animation.json'
 
 const Spinner = ({
@@ -11,12 +11,12 @@ const Spinner = ({
   variant = 'gradient'
 }: {
   style: any
-  variant?: 'gradient' | 'white' | 'info2' | 'black'
+  variant?: 'gradient' | 'white' | 'info' | 'black'
 }) => {
   const animation = useMemo(() => {
     if (variant === 'white') return WhiteSpinnerAnimation
     if (variant === 'black') return BlackSpinnerAnimation
-    if (variant === 'info2') return Info2SpinnerAnimation
+    if (variant === 'info') return InfoSpinnerAnimation
 
     return SpinnerAnimation
   }, [variant])

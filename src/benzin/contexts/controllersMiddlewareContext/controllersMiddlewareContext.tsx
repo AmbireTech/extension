@@ -1,0 +1,117 @@
+import { EventEmitter as Emitter } from 'events'
+/* eslint-disable @typescript-eslint/no-floating-promises */
+import React, { useCallback, useContext, useEffect, useMemo, useRef } from 'react'
+
+import { networks } from '@ambire-common/consts/networks'
+import { ContractNamesController } from '@ambire-common/controllers/contractNames/contractNames'
+import { DomainsController } from '@ambire-common/controllers/domains/domains'
+import { EventEmitterRegistryController } from '@ambire-common/controllers/eventEmitterRegistry/eventEmitterRegistry'
+import { ProvidersController } from '@ambire-common/controllers/providers/providers'
+import { StorageController } from '@ambire-common/controllers/storage/storage'
+import { ExplorerBaseControllersMappingType } from '@benzin/constants/controllersMapping'
+import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext'
+import { ControllerStoreContext } from '@common/contexts/controllerStoreContext'
+import eventBus from '@common/services/event/eventBus'
+import { storage } from '@common/services/storage'
+import { Action, MethodAction } from '@common/types/actions'
+
+export const ControllersMiddlewareProvider: React.FC<{
+  children: React.ReactNode
+}> = ({ children }) => {
+  const { controllerStore, debounceControllerUpdates } = useContext(ControllerStoreContext)
+
+  useEffect(() => {
+    controllerStore.init(
+      Object.keys(controllers.current) as (keyof ExplorerBaseControllersMappingType)[],
+      (allCtrls: any) => {
+        allCtrls.forEach((ctrlName: any) => {
+          controllerStore.update(ctrlName, (controllers.current as any)[ctrlName])
+        })
+      }
+    )
+  }, [controllerStore])
+
+  const eventEmitterRegistry = useRef<EventEmitterRegistryController>(
+    new EventEmitterRegistryController(() => {
+      eventEmitterRegistry.current.values().forEach((ctrl) => {
+        const hasOnUpdateInitialized = ctrl.onUpdateIds.includes('background')
+        if (!hasOnUpdateInitialized) {
+          ctrl.onUpdate(async (forceEmit) => {
+            debounceControllerUpdates(ctrl.name, ctrl, forceEmit)
+          }, 'background')
+        }
+      })
+
+      //
+      // Add onError listeners
+      //
+
+      eventEmitterRegistry.current.values().forEach((ctrl) => {
+        const hasOnErrorInitialized = ctrl.onErrorIds.includes('background')
+
+        if (!hasOnErrorInitialized) {
+          ctrl.onError(() => {
+            eventBus.emit('error', { errors: ctrl.emittedErrors, controller: ctrl.name })
+            // TODO: sentry
+            // captureBackgroundExceptionFromControllerError(error, ctrl.name)
+          }, 'background')
+        }
+      })
+    })
+  )
+
+  const controllers = useRef<ExplorerBaseControllersMappingType>(
+    (() => {
+      const ctrls: ExplorerBaseControllersMappingType = {} as ExplorerBaseControllersMappingType
+      ctrls.StorageController = new StorageController(storage)
+      ctrls.ProvidersController = new ProvidersController({
+        eventEmitterRegistry: eventEmitterRegistry.current,
+        storage: ctrls.StorageController,
+        getNetworks: () => networks,
+        sendUiMessage: (params) => {
+          eventBus.emit('receiveOneTimeData', params)
+        }
+      })
+
+      ctrls.DomainsController = new DomainsController({
+        eventEmitterRegistry: eventEmitterRegistry.current,
+        providers: ctrls.ProvidersController.providers
+      })
+
+      ctrls.ContractNamesController = new ContractNamesController({
+        eventEmitterRegistry: eventEmitterRegistry.current,
+        fetch: window.fetch.bind(window) as any
+      })
+
+      return ctrls
+    })()
+  )
+
+  const dispatch = useCallback((action: MethodAction | Action) => {
+    if (action.type === 'method') {
+      const { ctrlName, method, args } = action.params
+
+      let targetCtrl: any = Object.values(controllers.current).find(
+        (ctrl) => ctrl.name === ctrlName
+      )
+      if (!targetCtrl) {
+        console.error(`handleAction: Controller ${ctrlName.toString()} not found`)
+        return
+      }
+
+      if (targetCtrl && typeof targetCtrl[method] === 'function') {
+        targetCtrl[method](...args)
+      }
+
+      return
+    }
+
+    //TODO: handle common actions if any for the benzin app
+  }, [])
+
+  return (
+    <ControllersMiddlewareContext.Provider value={useMemo(() => ({ dispatch }), [dispatch])}>
+      {children}
+    </ControllersMiddlewareContext.Provider>
+  )
+}

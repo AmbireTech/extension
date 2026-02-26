@@ -10,6 +10,7 @@ import {
 } from '@ambire-common/interfaces/account'
 import { IAccountPickerController } from '@ambire-common/interfaces/accountPicker'
 import WarningFilledIcon from '@common/assets/svg/WarningFilledIcon'
+import WarningIcon from '@common/assets/svg/WarningIcon'
 import Alert from '@common/components/Alert'
 import Badge from '@common/components/Badge'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
@@ -18,13 +19,11 @@ import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
-import useAccountPickerControllerState from '@web/hooks/useAccountPickerControllerState'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
+import text from '@common/styles/utils/text'
 import Account from '@web/modules/account-picker/components/Account'
 import AnimatedDownArrow from '@web/modules/account-picker/components/AccountsOnPageList/AnimatedDownArrow/AnimatedDownArrow'
 import AccountsRetrieveError from '@web/modules/account-picker/components/AccountsRetrieveError'
@@ -54,13 +53,13 @@ const AccountsOnPageList = ({
   children
 }: Props) => {
   const { t } = useTranslation()
-  const { dispatch } = useBackgroundService()
-  const { allNetworks } = useNetworksControllerState()
-  const accountPickerState = useAccountPickerControllerState()
+  const { networks: allNetworks } = useController('NetworksController').state
+  const { state: accountPickerState, dispatch: accountPickerDispatch } =
+    useController('AccountPickerController')
   const [hasReachedBottom, setHasReachedBottom] = useState<null | boolean>(null)
   const [containerHeight, setContainerHeight] = useState(0)
   const [contentHeight, setContentHeight] = useState(0)
-  const { styles, theme, themeType } = useTheme(getStyles)
+  const { styles, theme } = useTheme(getStyles)
 
   const slots = useMemo(() => {
     return groupBy(
@@ -86,27 +85,33 @@ const AccountsOnPageList = ({
 
   const handleSelectAccount = useCallback(
     (account: AccountInterface) => {
-      dispatch({
-        type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_SELECT_ACCOUNT',
-        params: { account }
+      accountPickerDispatch({
+        type: 'method',
+        params: { method: 'selectAccount', args: [account] }
       })
     },
-    [dispatch]
+    [accountPickerDispatch]
   )
 
   const handleDeselectAccount = useCallback(
     (account: AccountInterface) => {
-      dispatch({
-        type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_DESELECT_ACCOUNT',
-        params: { account }
+      accountPickerDispatch({
+        type: 'method',
+        params: { method: 'deselectAccount', args: [account] }
       })
     },
-    [dispatch]
+    [accountPickerDispatch]
   )
 
   const handleRetryFindingLinkedAccounts = useCallback(() => {
-    dispatch({ type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_FIND_AND_SET_LINKED_ACCOUNTS' })
-  }, [dispatch])
+    accountPickerDispatch({
+      type: 'method',
+      params: {
+        method: 'findAndSetLinkedAccounts',
+        args: []
+      }
+    })
+  }, [accountPickerDispatch])
 
   const getType = useCallback((acc: any) => {
     if (!acc.account.creation) return 'basic'
@@ -188,8 +193,12 @@ const AccountsOnPageList = ({
       !Object.keys(slots).length ||
       !containerHeight ||
       !contentHeight
-    )
+    ) {
+      if (hasReachedBottom) return
+
+      setHasReachedBottom(contentHeight === containerHeight)
       return
+    }
 
     const isScrollNotVisible = contentHeight <= containerHeight
 
@@ -215,7 +224,7 @@ const AccountsOnPageList = ({
   if (!state.isInitialized) return null
 
   return (
-    <View style={flexbox.flex1} nativeID="account-picker-page-list">
+    <View style={[spacings.ptTy, flexbox.flex1]} nativeID="account-picker-page-list">
       <View style={flexbox.flex1}>
         {!!networkNamesWithAccountStateError.length && (
           <Alert
@@ -227,7 +236,12 @@ const AccountsOnPageList = ({
           />
         )}
         <ScrollableWrapper
-          style={!isImportingFromPrivateKey && spacings.mbLg}
+          style={[
+            !isImportingFromPrivateKey && spacings.mbLg,
+            {
+              maxHeight: 480
+            }
+          ]}
           contentContainerStyle={{
             flexGrow: 1
           }}
@@ -255,7 +269,7 @@ const AccountsOnPageList = ({
             </View>
           ) : (
             <>
-              <View style={[spacings.ph, spacings.pbLg]}>
+              <View style={[spacings.phSm, spacings.pbLg]}>
                 {Object.keys(slots).map((key, i) => {
                   return (
                     <View key={key}>
@@ -270,21 +284,9 @@ const AccountsOnPageList = ({
                 })}
               </View>
               {!!Object.keys(slots).length && (
-                <View
-                  style={[
-                    styles.smartAccountWrapper,
-                    {
-                      borderWidth: themeType === THEME_TYPES.DARK ? 0 : 1,
-                      // @ts-ignore
-                      background:
-                        themeType === THEME_TYPES.DARK
-                          ? 'linear-gradient(81deg, #AD8FFF33 0%, #39F7EF33 100%)'
-                          : 'linear-gradient(81deg, #F7F8FC 0%, #F1E8FF 100%)'
-                    }
-                  ]}
-                >
+                <View style={styles.smartAccountWrapper}>
                   <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbSm]}>
-                    <Text fontSize={16} weight="medium" style={spacings.mrMd}>
+                    <Text fontSize={16} weight="medium" style={text.center}>
                       {t('Smart accounts')}
                       {/* TODO: Add an info icon here with a tooltip */}
                     </Text>
@@ -313,19 +315,13 @@ const AccountsOnPageList = ({
                             tooltipText="Linked smart accounts are accounts that were not created with a given key originally, but this key was authorized for that given account on any supported network."
                           />
 
-                          <WarningFilledIcon
+                          <WarningIcon
+                            color={theme.warning300}
                             dataSet={createGlobalTooltipDataSet({
                               id: 'linked-accounts-warning',
-                              border: `1px solid ${theme.warningDecorative as any}`,
                               style: {
-                                backgroundColor:
-                                  themeType === THEME_TYPES.DARK
-                                    ? theme.warningDecorative
-                                    : (theme.warningBackground as any),
-                                color:
-                                  themeType === THEME_TYPES.DARK
-                                    ? theme.primaryBackground
-                                    : (theme.warningText as any)
+                                backgroundColor: theme.warningBackground as string,
+                                color: theme.warningText as string
                               },
                               content: t('Do not add linked accounts you are not aware of!')
                             })}
@@ -366,7 +362,7 @@ const AccountsOnPageList = ({
         </ScrollableWrapper>
         <AnimatedDownArrow isVisible={shouldDisplayAnimatedDownArrow} />
       </View>
-      <View style={[flexbox.directionRow, flexbox.justifySpaceBetween, flexbox.alignCenter]}>
+      <View style={[flexbox.alignEnd, spacings.mbMd]}>
         {!isImportingFromPrivateKey && (
           <Pagination
             page={state.page}
@@ -376,8 +372,8 @@ const AccountsOnPageList = ({
             hideLastPage
           />
         )}
-        {children}
       </View>
+      {children}
     </View>
   )
 }

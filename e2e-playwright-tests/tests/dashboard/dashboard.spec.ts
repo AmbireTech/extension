@@ -5,7 +5,9 @@ import { test } from 'fixtures/pageObjects'
 
 import { expect } from '@playwright/test'
 
-test.describe('dashboard', () => {
+test.describe('dashboard', { tag: '@dashboard' }, () => {
+  test.setTimeout(60000)
+
   test.beforeEach(async ({ pages }) => {
     await pages.initWithStorage(saParams)
   })
@@ -53,7 +55,7 @@ test.describe('dashboard', () => {
     const clBtc = tokens.clbtc.base
 
     await test.step('search Tokens by network - Base', async () => {
-      await pages.dashboard.search('Base', 'tokens')
+      await pages.dashboard.searchByNetworkOnTab('Base', 'tokens')
     })
 
     await test.step('assert search result', async () => {
@@ -72,7 +74,7 @@ test.describe('dashboard', () => {
     const usdcPolygon = tokens.usdc.polygon
 
     await test.step('search Tokens by token name - USDC', async () => {
-      await pages.dashboard.search('USDC', 'tokens')
+      await pages.dashboard.searchByMagnifyingGlassIcon('USDC')
     })
 
     await test.step('assert search result', async () => {
@@ -91,7 +93,7 @@ test.describe('dashboard', () => {
     const clBtc = tokens.clbtc.base
 
     await test.step('select Base network via dropdown', async () => {
-      await pages.dashboard.searchByNetworkDropdown('Base', 'tokens')
+      await pages.dashboard.searchByMagnifyingGlassIcon('Base')
     })
 
     await test.step('assert search result', async () => {
@@ -105,7 +107,7 @@ test.describe('dashboard', () => {
 
   test('Search for non existing Token returns appropriate message', async ({ pages }) => {
     await test.step('search for non existing Token name - Test', async () => {
-      await pages.dashboard.search('Test', 'tokens')
+      await pages.dashboard.searchByMagnifyingGlassIcon('Test')
     })
 
     await test.step('assert no search result', async () => {
@@ -119,7 +121,7 @@ test.describe('dashboard', () => {
     })
 
     await test.step('search NFTs by network - Ethereum', async () => {
-      await pages.dashboard.search('Ethereum', 'collectibles')
+      await pages.dashboard.searchByMagnifyingGlassIcon('Ethereum')
     })
 
     await test.step('assert search result are visible', async () => {
@@ -140,7 +142,7 @@ test.describe('dashboard', () => {
     })
 
     await test.step('search by NFT name - Ambire Rewards', async () => {
-      await pages.dashboard.search('Ambire Rewards', 'collectibles')
+      await pages.dashboard.searchByMagnifyingGlassIcon('Ambire Rewards')
     })
 
     await test.step('assert search result', async () => {
@@ -154,7 +156,7 @@ test.describe('dashboard', () => {
     })
 
     await test.step('select Base network via dropdown', async () => {
-      await pages.dashboard.searchByNetworkDropdown('Ethereum', 'collectibles')
+      await pages.dashboard.searchByNetworkOnTab('Ethereum', 'collectibles')
     })
 
     await test.step('assert search result', async () => {
@@ -175,7 +177,7 @@ test.describe('dashboard', () => {
     })
 
     await test.step('search by NFT name - Test', async () => {
-      await pages.dashboard.search('Test', 'collectibles')
+      await pages.dashboard.searchByMagnifyingGlassIcon('Test')
     })
 
     await test.step('assert no search result', async () => {
@@ -208,7 +210,7 @@ test.describe('dashboard', () => {
     })
 
     await test.step('search Protocol by name - Test', async () => {
-      await pages.dashboard.search('Test', 'defi')
+      await pages.dashboard.searchByMagnifyingGlassIcon('Test')
     })
 
     await test.step('assert no search result', async () => {

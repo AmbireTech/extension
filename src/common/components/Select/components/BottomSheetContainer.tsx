@@ -5,7 +5,7 @@ import { useModalize } from 'react-native-modalize'
 import BottomSheet from '@common/components/BottomSheet'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import { getUiType } from '@web/utils/uiType'
+import { getUiType } from '@common/utils/uiType'
 
 import { RenderSelectedOptionParams } from '../types'
 

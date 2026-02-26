@@ -14,13 +14,12 @@ import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
 import usePrevious from '@common/hooks/usePrevious'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useEmailVaultControllerState from '@web/hooks/useEmailVaultControllerState'
 
 import EmailConfirmation from '../EmailConfirmation'
 
@@ -37,8 +36,7 @@ const EmailForm = () => {
     defaultValues: { email: '' }
   })
 
-  const { dispatch } = useBackgroundService()
-  const emailVault = useEmailVaultControllerState()
+  const { state: emailVault, dispatch: evDispatch } = useController('EmailVaultController')
   const {
     ref: confirmationModalRef,
     open: openConfirmationModal,
@@ -76,16 +74,25 @@ const EmailForm = () => {
   }, [formEmail, email, isWaitingConfirmation, setValue])
 
   const handleSendRecoveryEmail = useCallback(async () => {
-    dispatch({
-      type: 'EMAIL_VAULT_CONTROLLER_HANDLE_MAGIC_LINK_KEY',
-      params: { email: formEmail, flow: 'recovery' }
+    evDispatch({
+      type: 'method',
+      params: {
+        method: 'handleMagicLinkKey',
+        args: [formEmail, undefined, 'recovery']
+      }
     })
-  }, [formEmail, dispatch])
+  }, [formEmail, evDispatch])
 
   const handleCancelLoginAttempt = useCallback(() => {
-    dispatch({ type: 'EMAIL_VAULT_CONTROLLER_CANCEL_CONFIRMATION' })
+    evDispatch({
+      type: 'method',
+      params: {
+        method: 'cancelEmailConfirmation',
+        args: []
+      }
+    })
     closeConfirmationModal()
-  }, [dispatch, closeConfirmationModal])
+  }, [evDispatch, closeConfirmationModal])
 
   return (
     <>
@@ -102,7 +109,7 @@ const EmailForm = () => {
           )}
         </Text>
         <Banner
-          type="info2"
+          type="info"
           style={spacings.mbMd}
           title={t('Recovery works only if you have already enabled it in settings.')}
           titleFontSize={14}

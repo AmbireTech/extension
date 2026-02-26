@@ -18,10 +18,12 @@ const getStyles = (theme: ThemeProps) =>
       overflow: 'hidden'
     },
     smartAccountWrapper: {
-      ...common.borderRadiusPrimary,
-      ...spacings.ph,
-      ...spacings.pv,
-      borderColor: `${String(theme.primary)}14`
+      borderRadius: 28,
+      ...spacings.ptMd,
+      ...spacings.phSm,
+      ...spacings.pbSm,
+      borderWidth: 1,
+      borderColor: theme.primaryAccent
     }
   })
 

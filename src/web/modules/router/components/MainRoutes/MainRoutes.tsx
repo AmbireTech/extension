@@ -5,7 +5,6 @@ import { Route, Routes, useLocation } from 'react-router-dom'
 import NoConnectionScreen from '@common/modules/no-connection/screens/NoConnectionScreen'
 import routesConfig from '@common/modules/router/config/routesConfig'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
-import { SignAccountOpControllerStateProvider } from '@web/contexts/signAccountOpControllerStateContext'
 import AccountPersonalizeScreen from '@web/modules/account-personalize/screens/AccountPersonalizeScreen'
 import AccountPickerScreen from '@web/modules/account-picker/screens/AccountPickerScreen'
 import AccountSelectScreen from '@web/modules/account-select/screens/AccountSelectScreen'
@@ -26,6 +25,7 @@ import ImportExistingAccountSelectorScreen from '@web/modules/auth/screens/Impor
 import ImportSmartAccountJsonScreen from '@web/modules/auth/screens/ImportSmartAccountJson'
 import OnboardingCompletedScreen from '@web/modules/auth/screens/OnboardingCompletedScreen'
 import PrivateKeyImportScreen from '@web/modules/auth/screens/PrivateKeyImportScreen'
+import SafeImportScreen from '@web/modules/auth/screens/SafeImportScreen'
 import SeedPhraseImportScreen from '@web/modules/auth/screens/SeedPhraseImportScreen'
 import DappCatalogScreen from '@web/modules/dapp-catalog/screens/DappCatalogScreen'
 import ExtensionRewardsScreen from '@web/modules/extension-rewards/screens/ExtensionRewardsScreen'
@@ -100,6 +100,8 @@ const MainRoutes = () => {
           />
           <Route path={WEB_ROUTES.ledgerConnect} element={<LedgerConnectScreen />} />
 
+          <Route path={WEB_ROUTES.safeImport} element={<SafeImportScreen />} />
+
           <Route path={WEB_ROUTES.importPrivateKey} element={<PrivateKeyImportScreen />} />
           <Route path={WEB_ROUTES.importSeedPhrase} element={<SeedPhraseImportScreen />} />
           <Route
@@ -163,14 +165,7 @@ const MainRoutes = () => {
         <Route element={<AuthenticatedRoute />}>
           <Route path={WEB_ROUTES.transfer} element={<TransferScreen />} />
           <Route path={WEB_ROUTES.topUpGasTank} element={<TransferScreen isTopUpScreen />} />
-          <Route
-            path={WEB_ROUTES.signAccountOp}
-            element={
-              <SignAccountOpControllerStateProvider>
-                <SignAccountOpScreen />
-              </SignAccountOpControllerStateProvider>
-            }
-          />
+          <Route path={WEB_ROUTES.signAccountOp} element={<SignAccountOpScreen />} />
           <Route path={WEB_ROUTES.swapAndBridge} element={<SwapAndBridgeScreen />} />
           <Route path={WEB_ROUTES.signMessage} element={<SignMessageScreen />} />
           <Route path={WEB_ROUTES.benzin} element={<BenzinScreen />} />

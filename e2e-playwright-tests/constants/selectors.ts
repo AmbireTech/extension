@@ -43,6 +43,7 @@ const selectors = {
     smartAccountPicker: 'add-account-' // need add index 5
   },
   dashboard: {
+    appsButton: 'dashboard-button-apps',
     tokensTabButton: 'tokens-defi',
     noTokensText: 'no-tokens-text',
     tokenTitleText: '[data-testid^="token-balance-"]',
@@ -64,21 +65,21 @@ const selectors = {
     confirmedTransactionPill: '//div[contains(text(),"Confirmed")]', // TODO: chage once we have id on FE
     fuelGasTankTransactionPill: '//div[contains(text(),"Fuel gas tank with")]', // TODO: chage once we have id on FE,
     grantApprovalText: '//div[contains(text(),"Grant approval")]', // TODO: change once we have id on FE,
-    networksDropdown: 'networks-dropdown',
     magnifyingGlassIcon: 'search-glass-icon',
+    tokensNetworksDropdownButton: 'networks-dropdown-tokens',
+    nftNetworkDropdownButton: 'networks-dropdown-collectibles',
+    defiNetworkDropdownButton: 'networks-dropdown-defi',
+    activityNetworkDropdownButton: 'networks-dropdown-activity',
     tokenBalance: '[data-testid^="token-balance"]',
     networkBase: '//div[text()="Base"]',
     nftTitle: 'collection-item',
     nftsTitle: '[data-testid^="collection-item"]',
-    searchForNetwork: 'search-for-network-field',
     hideTokenButton: 'hide-token-button',
     yesHideItButton: 'yes-hide-it-text',
     hideTokenModalTitle: 'hide-token-modal-title',
     hideTokenModalDescription: 'hide-token-modal-description',
     rewardsButton: 'dashboard-button-rewards',
-    projecteedRewardsWalletAssetRewardsButton: 'projected-rewards-asset-button',
     rewardsForClaimingButton: 'marketing-banner-button',
-    backRewardsButton: '//div[contains(text(),"Back")]',
     rewardsLink: '//div[contains(text(),"Ambire Rewards")]',
     projectedRewardsClaimButton: 'projected-rewards-claim-button'
   },
@@ -96,7 +97,10 @@ const selectors = {
     hiddenTokenName: 'hidden-token-name', // works for custom tokens section
     hiddenTokenNetwork: 'hidden-token-network', // works for custom tokens section
     unhideTokenButton: 'unhide-button',
-    youDontHaveInfoText: 'you-dont-have-any-text', // there can be multiple on same page
+    youDontHaveInfoText: 'you-dont-have-any-text', // there can be multiple on same page,
+    manageAccountTreeDotsButton: 'account', // on accounts page, has multiple sam IDs,
+    removeAccountButton: '//div[contains(text(),"Remove account")]',
+    confirmRemoveAccountButton: 'confirm-remove-account-button',
     customTokens: {
       addCustomTokenButton: 'add-custom-token-button',
       addTokenModalTitle: 'add-token-modal-title-text',
@@ -124,7 +128,7 @@ const selectors = {
     feeSpeedFast: 'option-fast',
     feeSpeedApe: 'option-ape',
     feeGasTankInDollars: '//span[contains(text(),"Gas Tank")]/../../../div[contains(text(),"$")]', // returning e.g. "<$0.01"
-    feeTokenInDollars: '//span[contains(text(),"")]/../../div[contains(text(),"$")]',
+    feeTokenInDollars: '//div[contains(text(),"<$")]',
     confirmingYourTransactionText: 'confirming-your',
     explorer: {
       txnSignedStep: 'signed-step',
@@ -163,6 +167,32 @@ const selectors = {
     rewardsPoolPage: '//span[contains(text(),"Rewards Pool")]',
     walletPage: '//span[contains(text(),"WALLET")]',
     faqPage: '//span[contains(text(),"FAQ")]'
+  },
+  sigtool: {
+    connectWalletButton: '.button-connect',
+    metamaskOption: 'div[class*="wallet-button-container"] >> text=MetaMask',
+    connectionSuccessfulText: '//div[contains(text(),"Connection Successful")]',
+    humanMessageTextbox: '.messageInputHeader',
+    signButton: '.actionContainer > button > span',
+    messageSignatureTitle: '.signatureResult-title',
+    autoLoginSwitch: 'label > input[type="checkbox"] ~ div',
+    signRequestForEVMText: '//div[contains(text(), "SigTool for EVM")]',
+    deceptiveAppError: '//span[contains(text(),"Deceptive")]',
+    deceptiveAppErrorDescription: '//div[contains(text(),"The app")]',
+    signInSiweButton: '//div[contains(text(),"Sign in")]',
+    error: '#error',
+    dappWrapper: 'dapp-wrapper',
+    sigToolIconButton: 'manage-dapp-dropdown',
+    sigToolNetworkEth: '//div[contains(text(), "Ethereum")]',
+    sigToolNetworkBase: '//div[contains(text(), "Base")]',
+    disconnectButton: '//div[contains(text(), "Disconnect")]'
+  },
+  swapAndBridge: {
+    fromTokenDropdown: 'from-token-select',
+    receiveTokenDropdown: 'to-token-select',
+    oneInchSwapRoute: '//div[contains(text(), "1Inch")]',
+    kyberSwapRoute: '//div[contains(text(), "Kyberswap")]',
+    sushiSwapRoute: 'div:has-text("SushiSwap Aggregator")' // no route
   },
   account: 'account',
   importMethodTrezor: 'import-method-trezor',
@@ -248,11 +278,10 @@ const selectors = {
   privateKeyWarningCheckbox1: 'private-key-warning-checkbox-1',
   privateKeyWarningCheckbox2: 'private-key-warning-checkbox-2',
   nativeTokenBaseDashboard: 'token-0x0000000000000000000000000000000000000000-8453',
-  bannerButtonOpen: 'banner-button-open',
+  bannerButtonOpen: 'dashboard-info-banner',
   bannerButtonReject: 'banner-button-reject',
   confettiModalActionButton: 'confetti-modal-action-button',
   refreshButton: 'refresh-button',
-  dashboardGasTankButton: 'dashboard-gas-tank-button',
   dashboardGasTankBalance: 'dashboard-gas-tank-balance',
   createSmartAccountGasTankModalButton: 'create-smart-account-gas-tank-modal-button',
   recieveNetworkBase: 'option-8453',
@@ -263,15 +292,12 @@ const selectors = {
   maxAvailableAmount: 'max-available-amount',
   searchInput: 'search-input',
   // Swap & Bridge selectors
-  sendTokenSab: 'from-token-select',
-  receiveTokenSab: 'to-token-select',
   selectRouteButton: 'select-route',
   routeLoadingTextSab: 'route-loading-text-sab',
   fromAmountInputSab: 'from-amount-input-sab',
   switchTokensTooltipSab: 'switch-tokens-condition-tooltip-sab',
   switchCurrencySab: 'switch-currency-sab',
   routePrioritySab: 'route-priority-sab',
-  sushiSwapRoute: 'div:has-text("SushiSwap Aggregator")',
   highPriceImpactSab: '//div[contains(text(), "Very high price impact")]', // TODO: change with ID when we add it
   highSlippageModal: '//div[contains(text(), "higher slippage")]', // TODO: change with ID when we add it
   settingsAddNetworkManually: 'add-network-manually',

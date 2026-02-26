@@ -1,75 +1,49 @@
-import React, { FC, ReactNode } from 'react'
-import { TouchableOpacity, View, ViewStyle } from 'react-native'
+import React, { FC } from 'react'
+import { View, ViewStyle } from 'react-native'
 
-import CloseIcon from '@common/assets/svg/CloseIcon'
-import AmbireLogoHorizontal from '@common/components/AmbireLogoHorizontal'
-import { PanelBackButton } from '@common/components/Panel/Panel'
-import Text from '@common/components/Text'
+import Header from '@common/modules/header/components/Header'
 import spacings from '@common/styles/spacings'
-import flexbox from '@common/styles/utils/flexbox'
-
-import getStyles from './styles'
 
 interface Props {
-  hideLeftSideContainer?: boolean
-  hideRightSideContainer?: boolean
   handleClose?: () => void
-  withBackButton?: boolean
-  title?: string
-  titleSuffix?: ReactNode
+  title?: React.ReactNode
   style?: ViewStyle
   hasAmbireLogo?: boolean
+  children?: React.ReactNode
 }
 
-const ModalHeader: FC<Props> = ({
-  hideLeftSideContainer = false,
-  hideRightSideContainer = false,
-  handleClose,
-  withBackButton = true,
-  title,
-  titleSuffix,
-  style,
-  hasAmbireLogo = false
-}) => {
-  const styles = getStyles()
+const ModalHeader: FC<Props> = ({ handleClose, title, style, children }) => {
+  const withSideContainers = !!handleClose || !!children
 
   return (
-    <View style={[styles.modalHeader, style]}>
-      {!hideLeftSideContainer && (
-        <View style={styles.sideContainer}>
-          {!!handleClose && withBackButton && (
-            <View style={styles.backButton}>
-              <PanelBackButton onPress={handleClose} />
-            </View>
+    <Header.Wrapper
+      containerStyle={{ ...spacings.ptTy, ...spacings.pb0, ...spacings.ph0 }}
+      style={{ ...spacings.mbLg, ...style, minHeight: 28 }}
+    >
+      {withSideContainers && (
+        <Header.Container side="left">
+          {handleClose && (
+            <Header.BackButton onGoBackPress={handleClose} forceBack displayIn="always" />
           )}
-        </View>
+        </Header.Container>
       )}
-      {!!title && (
-        <Text fontSize={20} weight="medium" style={!!titleSuffix && spacings.mrSm}>
-          {title}
-        </Text>
-      )}
-      {titleSuffix}
-      {!hideRightSideContainer && (
-        <View
-          style={[
-            styles.rightSideContainer,
-            ...[
-              hasAmbireLogo && !!handleClose && !withBackButton
-                ? flexbox.justifySpaceBetween
-                : flexbox.justifyEnd
-            ]
-          ]}
-        >
-          {hasAmbireLogo && <AmbireLogoHorizontal />}
-          {!!handleClose && !withBackButton && (
-            <TouchableOpacity onPress={handleClose}>
-              <CloseIcon />
-            </TouchableOpacity>
-          )}
-        </View>
-      )}
-    </View>
+      {/* We are making the title absolute to be able to fit different sized elements on the right
+      without changing the flexbox layout to make it fit every possible combination */}
+      <View
+        style={{
+          position: 'absolute',
+          width: '100%',
+          left: 0,
+          height: '100%',
+          justifyContent: 'center',
+          alignItems: 'center',
+          pointerEvents: 'none'
+        }}
+      >
+        <Header.Title>{title}</Header.Title>
+      </View>
+      {withSideContainers && <Header.Container side="right">{children}</Header.Container>}
+    </Header.Wrapper>
   )
 }
 

@@ -1,16 +1,36 @@
-import React, { FC } from 'react'
-import { Path, Svg, SvgProps } from 'react-native-svg'
+import React from 'react'
+import { ColorValue } from 'react-native'
+import Svg, { G, Path, Rect, SvgProps } from 'react-native-svg'
 
 import useTheme from '@common/hooks/useTheme'
 
-const CheckIcon2: FC<SvgProps> = ({ width = 64, height = 64, ...rest }) => {
+const CheckIcon2: React.FC<
+  SvgProps & {
+    checkColor?: ColorValue
+  }
+> = ({ width = 18, height = 18, checkColor, color, ...props }) => {
   const { theme } = useTheme()
   return (
-    <Svg width={width} height={height} viewBox="0 0 64 64" {...rest}>
-      <Path
-        fill={theme.successDecorative}
-        d="m18.88 25.925-4.48 4.48 14.4 14.4 32-32-4.475-4.48L28.8 35.68Zm38.72 6.08a25.491 25.491 0 1 1-18.559-24.64L44 2.405a29.766 29.766 0 0 0-12-2.4 32 32 0 1 0 32 32Z"
+    <Svg width={width} height={height} viewBox="0 0 18 18" {...props}>
+      <Rect
+        width="18"
+        height="18"
+        rx="9"
+        transform="translate(18 18) rotate(180)"
+        fill={color || theme.successDecorative}
       />
+      <G transform="translate(2.954 4.189)">
+        <Path
+          d="M.964,11.679A.964.964,0,0,1,0,10.714V.964a.964.964,0,0,1,1.929,0v9.75A.964.964,0,0,1,.964,11.679Z"
+          transform="translate(11.44 0) rotate(45)"
+          fill={checkColor || theme.primaryBackground}
+        />
+        <Path
+          d="M.964,6.429A.964.964,0,0,1,0,5.464V.964a.964.964,0,0,1,1.929,0v4.5A.964.964,0,0,1,.964,6.429Z"
+          transform="translate(0 5.076) rotate(-45)"
+          fill={checkColor || theme.primaryBackground}
+        />
+      </G>
     </Svg>
   )
 }

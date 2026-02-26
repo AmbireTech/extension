@@ -12,7 +12,7 @@ import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
-import { createTab } from '@web/extension-services/background/webapi/tab'
+import { openInTab } from '@common/utils/links'
 
 import getStyles from './styles'
 
@@ -26,13 +26,14 @@ type Props = {
 const CoingeckoConfirmedBadge = ({ text, address, network, containerStyle }: Props) => {
   const { styles } = useTheme(getStyles)
   const { addToast } = useToast()
+  const { theme } = useTheme()
   const { t } = useTranslation()
   const [coinGeckoTokenSlug, setCoinGeckoTokenSlug] = useState('')
   const [isTokenInfoLoading, setIsTokenInfoLoading] = useState(false)
 
   const onCoingeckoBadgePress = useCallback(async () => {
     try {
-      await createTab(getCoinGeckoTokenUrl(coinGeckoTokenSlug))
+      await openInTab({ url: getCoinGeckoTokenUrl(coinGeckoTokenSlug) })
     } catch {
       addToast(t('Could not open token info'), { type: 'error' })
     }
@@ -65,11 +66,11 @@ const CoingeckoConfirmedBadge = ({ text, address, network, containerStyle }: Pro
 
   return (
     <Pressable style={[styles.container, containerStyle]} onPress={onCoingeckoBadgePress}>
-      <Text weight="medium" fontSize={10} color="#8DC63F" style={spacings.mrMi}>
+      <Text weight="medium" fontSize={10} color={theme.success400} style={spacings.mrMi}>
         {text}
       </Text>
-      <SuccessIcon color="#8DC63F" width={20} height={20} withCirc={false} />
-      <CoingeckoIcon />
+      <SuccessIcon color={theme.success400} width={20} height={20} withCirc={false} />
+      <CoingeckoIcon width={20} height={20} />
     </Pressable>
   )
 }

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-floating-promises */
 import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
+import { Action, MethodAction } from '@common/types/actions'
 import { browser } from '@web/constants/browserapi'
-import { Action as ActionType } from '@web/extension-services/background/actions'
 
 export type Port = chrome.runtime.Port & { id: string; name: 'popup' | 'tab' | 'request-window' }
 
@@ -11,20 +11,20 @@ export type MessageMeta = { windowId?: number; [key: string]: any }
 
 export type SendType = <TMessageType extends MessageType>(
   type: MessageType,
-  message: TMessageType extends '> background' ? ActionType : PortMessageType,
+  message: TMessageType extends '> background' ? MethodAction | Action : PortMessageType,
   meta?: MessageMeta
 ) => void
 
 export type SendPortType = <TMessageType extends MessageType>(
   port: Port,
   type: MessageType,
-  message: TMessageType extends '> background' ? ActionType : PortMessageType,
+  message: TMessageType extends '> background' ? MethodAction | Action : PortMessageType,
   meta?: MessageMeta
 ) => void
 
 type ListenCallbackType = <TMessageType extends MessageType>(
   type: MessageType,
-  message: TMessageType extends '> background' ? ActionType : PortMessageType,
+  message: TMessageType extends '> background' ? MethodAction | Action : PortMessageType,
   meta?: MessageMeta
 ) => Promise<any> | void
 
@@ -56,19 +56,8 @@ export class PortMessenger {
   }
 
   addOrUpdatePort(port: Port, onPortAddOrUpdate: (port: Port) => void) {
-    const index = this.ports.findIndex((p) => p.id === port.id)
-
-    if (index >= 0) {
-      const oldPort = this.ports[index]
-      this.#removePort(oldPort)
-      oldPort.disconnect()
-
-      this.ports[index] = port
-    } else {
-      this.ports.push(port)
-    }
-
-    this.sendToPort(port, '> ui', { method: 'portReady', params: {} })
+    this.ports = this.ports.filter((p) => p.id !== port.id)
+    this.ports.push(port)
     onPortAddOrUpdate(port)
   }
 

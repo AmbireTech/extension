@@ -1815,6 +1815,42 @@
       "code": "TS7053",
       "count": 1,
       "message": "Element implicitly has an 'any' type because expression of type '`is${string}`' can't be used to index type 'UiTypeCheck'."
+    },
+    "bb52b19b4610e264dbe65f39fd09a5d0994f9780": {
+      "file": "node_modules/viem/node_modules/ox/core/AbiParameters.ts",
+      "code": "TS2322",
+      "count": 1,
+      "message": "Type 'string' is not assignable to type '`0x${string}`'."
+    },
+    "d1eef087f7274730f6577ad7c57ef0c8130d08f7": {
+      "file": "node_modules/viem/node_modules/ox/core/Secp256k1.ts",
+      "code": "TS2345",
+      "count": 1,
+      "message": "Argument of type '{ prefix: number; x: bigint; y: bigint; } | { prefix: number; x: bigint; y?: undefined; } | undefined' is not assignable to parameter of type '{ prefix: number; x: bigint; y: bigint; } | { prefix: number; x: bigint; y?: undefined; }'."
+    },
+    "73bdcd59700acbda1b3eab25e0a1b5402840ce65": {
+      "file": "node_modules/viem/node_modules/ox/tempo/KeyAuthorization.ts",
+      "code": "TS2345",
+      "count": 1,
+      "message": "Argument of type 'BaseTuple | readonly [chainId: `0x${string}`, keyType: `0x${string}`, keyId: string, expiry: `0x${string}`] | readonly [chainId: `0x${string}`, keyType: `0x${string}`, keyId: string, expiry: `0x${string}`, limits: readonly [token: string, limit: `0x${string}`][]]' is not assignable to parameter of type 'RecursiveArray<`0x${string}`>'."
+    },
+    "21dfb8ac75cf23906e5bd1ddf213965592052e69": {
+      "file": "node_modules/viem/node_modules/ox/tempo/SignatureEnvelope.ts",
+      "code": "TS2345",
+      "count": 1,
+      "message": "Argument of type 'string' is not assignable to parameter of type '`0x${string}`'."
+    },
+    "0437a4fb715917cf0a5a9eadf98c94fc02299cc3": {
+      "file": "node_modules/viem/node_modules/ox/tempo/TokenId.ts",
+      "code": "TS2345",
+      "count": 1,
+      "message": "Argument of type 'string' is not assignable to parameter of type '`0x${string}`'."
+    },
+    "cde7caa24d6b0c6136ce6c02fbdde1b704eec5a7": {
+      "file": "node_modules/viem/node_modules/ox/tempo/TxEnvelopeTempo.ts",
+      "code": "TS2345",
+      "count": 1,
+      "message": "Argument of type 'readonly [`0x${string}`, `0x${string}`, `0x${string}`, `0x${string}`, string[][], readonly [address: string, storageKeys: readonly `0x${string}`[]][], `0x${string}`, `0x${string}`, `0x${string}`, `0x${string}`, string, string | Tuple, readonly (readonly [chainId: `0x${string}`, address: `0x${string}`, nonce: `0x${string}`])[]]' is not assignable to parameter of type 'RecursiveArray<`0x${string}`>'."
     }
   }
 }

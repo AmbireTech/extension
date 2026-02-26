@@ -3,7 +3,7 @@ import { StyleSheet, ViewStyle } from 'react-native'
 import spacings, { SPACING_MD } from '@common/styles/spacings'
 import { THEME_TYPES, ThemeProps, ThemeType } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
-import { getUiType } from '@web/utils/uiType'
+import { getUiType } from '@common/utils/uiType'
 
 interface Style {
   contentContainer: ViewStyle
@@ -29,8 +29,7 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       ...flexbox.flex1,
       maxHeight: 80,
       ...spacings.ph3Xl,
-      backgroundColor:
-        themeType === THEME_TYPES.DARK ? theme.tertiaryBackground : theme.primaryBackground,
+      backgroundColor: theme.secondaryBackground,
       shadowColor: themeType === THEME_TYPES.DARK ? '#00000052' : '#B8BDE080',
       shadowOffset: { width: 0, height: -2 },
       shadowRadius: 4,

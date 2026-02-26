@@ -4,25 +4,26 @@ import { useTranslation } from 'react-i18next'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import Button from '@common/components/Button'
 import ControlOption from '@common/components/ControlOption'
+import useController from '@common/hooks/useController'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useProvidersControllerState from '@web/hooks/useProvidersControllerState'
 
 const BatchingControlOption = () => {
-  const { dispatch } = useBackgroundService()
   const { t } = useTranslation()
   const { theme } = useTheme()
   const {
-    state: { isBatchingEnabled, statuses }
-  } = useProvidersControllerState()
+    state: { isBatchingEnabled, statuses },
+    dispatch: providersDispatch
+  } = useController('ProvidersController')
   const isLoading = statuses.toggleBatching === 'LOADING'
 
   const handleToggleBatching = useCallback(() => {
-    dispatch({
-      type: 'PROVIDERS_CONTROLLER_TOGGLE_BATCHING'
+    providersDispatch({
+      type: 'method',
+      params: { method: 'toggleBatching', args: [] }
     })
-  }, [dispatch])
+  }, [providersDispatch])
 
   const buttonText = useMemo(() => {
     if (isLoading) {

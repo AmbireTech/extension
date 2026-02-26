@@ -25,7 +25,7 @@ const getStyles = (theme: ThemeProps) =>
       ...flexbox.alignCenter
     },
     tokenInfo: {
-      ...spacings.plTy,
+      ...spacings.mh,
       ...flexbox.flex1
     },
     balance: {
@@ -43,10 +43,9 @@ const getStyles = (theme: ThemeProps) =>
       ...flexbox.directionRow
     },
     actionsContainer: {
-      ...spacings.ph,
-      ...spacings.pv,
-      backgroundColor: theme.primaryBackground,
-      ...common.borderRadiusPrimary,
+      ...flexbox.flex1,
+      ...spacings.phSm,
+      ...spacings.pvSm,
       ...flexbox.directionRow,
       ...flexbox.wrap
     },

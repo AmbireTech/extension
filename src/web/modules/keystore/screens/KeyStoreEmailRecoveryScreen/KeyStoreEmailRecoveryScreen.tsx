@@ -2,16 +2,16 @@ import React, { useCallback, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import Panel from '@common/components/Panel'
+import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import usePrevious from '@common/hooks/usePrevious'
 import useTheme from '@common/hooks/useTheme'
-import Header from '@common/modules/header/components/Header'
+import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Header'
 import { ROUTES } from '@common/modules/router/constants/common'
 import {
   TabLayoutContainer,
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import useEmailVaultControllerState from '@web/hooks/useEmailVaultControllerState'
 import EmailForm from '@web/modules/keystore/components/EmailForm'
 
 const KeyStoreEmailRecoveryScreen = () => {
@@ -19,7 +19,7 @@ const KeyStoreEmailRecoveryScreen = () => {
 
   const { theme } = useTheme()
   const { navigate } = useNavigation()
-  const emailVault = useEmailVaultControllerState()
+  const emailVault = useController('EmailVaultController').state
   const prevHasConfirmedRecoveryEmail = usePrevious(emailVault.hasConfirmedRecoveryEmail)
 
   useEffect(() => {
@@ -33,10 +33,7 @@ const KeyStoreEmailRecoveryScreen = () => {
   }, [navigate])
 
   return (
-    <TabLayoutContainer
-      backgroundColor={theme.secondaryBackground}
-      header={<Header mode="custom-inner-content" withAmbireLogo />}
-    >
+    <TabLayoutContainer backgroundColor={theme.secondaryBackground} header={<HeaderWithLogoOnly />}>
       <TabLayoutWrapperMainContent withScroll={false}>
         <Panel
           type="onboarding"

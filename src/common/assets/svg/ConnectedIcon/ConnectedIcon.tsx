@@ -1,75 +1,19 @@
 import React from 'react'
-import Svg, { Circle, G, Path, SvgProps } from 'react-native-svg'
+import Svg, { Path, SvgProps } from 'react-native-svg'
 
 import useTheme from '@common/hooks/useTheme'
 
-const ConnectedIcon: React.FC<SvgProps> = ({ width = 20, height = 20, color, ...rest }) => {
+const ConnectedIcon: React.FC<SvgProps> = ({ width = 24, height = 24, color, ...rest }) => {
   const { theme } = useTheme()
   return (
-    <Svg width={width} height={height} viewBox="0 0 20 20" {...rest}>
-      <Circle cx="10" cy="10" r="10" fill="rgba(1,134,73,0.08)" opacity="0" />
-      <G transform="translate(-2.166 -2.166)">
-        <G transform="translate(9.88 4.166)">
-          <Path
-            d="M29.714,17.506,24,11.792l1.714-1.714a4.041,4.041,0,1,1,5.714,5.714Z"
-            transform="translate(-24 -7.221)"
-            fill="none"
-            stroke={color || theme.successDecorative}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="1.5"
-          />
-          <Path
-            d="M37,8.857,39.857,6"
-            transform="translate(-29.572 -6)"
-            fill="none"
-            stroke={color || theme.successDecorative}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="1.5"
-          />
-        </G>
-        <G transform="translate(4.167 8.738)">
-          <Path
-            d="M11.792,24l5.714,5.714-1.714,1.714a4.041,4.041,0,1,1-5.714-5.714Z"
-            transform="translate(-7.221 -22.857)"
-            fill="none"
-            stroke={color || theme.successDecorative}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="1.5"
-          />
-          <Path
-            d="M6,39.857,8.857,37"
-            transform="translate(-6 -28.429)"
-            fill="none"
-            stroke={color || theme.successDecorative}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="1.5"
-          />
-          <Path
-            d="M18.286,22,16,24.286"
-            transform="translate(-10.286 -22)"
-            fill="none"
-            stroke={color || theme.successDecorative}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="1.5"
-            opacity="0"
-          />
-          <Path
-            d="M24.286,28,22,30.286"
-            transform="translate(-12.858 -24.572)"
-            fill="none"
-            stroke={color || theme.successDecorative}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="1.5"
-            opacity="0"
-          />
-        </G>
-      </G>
+    <Svg width={width} height={height} viewBox="0 0 20 20" {...rest} fill="none">
+      <Path
+        stroke={color || theme.iconPrimary}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.5"
+        d="M14.521 10.607 9.393 5.479l1.538-1.538a3.626 3.626 0 1 1 5.128 5.128l-1.538 1.538ZM16.327 3.673 18 2M5.482 9.391l5.128 5.128-1.538 1.539a3.627 3.627 0 1 1-5.128-5.128l1.538-1.539ZM2 17.999l1.679-1.68M8.607 8.315l-1.48 1.479M11.687 11.389l-1.482 1.482"
+      />
     </Svg>
   )
 }

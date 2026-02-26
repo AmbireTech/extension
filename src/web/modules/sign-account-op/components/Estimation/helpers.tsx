@@ -1,5 +1,3 @@
-import { formatUnits } from 'ethers'
-
 import { getFeeSpeedIdentifier } from '@ambire-common/controllers/signAccountOp/helper'
 import { FeeSpeed } from '@ambire-common/controllers/signAccountOp/signAccountOp'
 import { ISignAccountOpController } from '@ambire-common/interfaces/signAccountOp'
@@ -8,23 +6,14 @@ import { FeePaymentOption } from '@ambire-common/libs/estimate/interfaces'
 import { ZERO_ADDRESS } from '@ambire-common/services/socket/constants'
 
 import PayOption from './components/PayOption'
-import { NO_FEE_OPTIONS } from './consts'
-import { FeeOption } from './types'
 
 const sortBasedOnUSDValue = (a: FeePaymentOption, b: FeePaymentOption) => {
   if (!a || !b) return 0
 
   const aPrice = a.token?.priceIn?.[0]?.price
   const bPrice = b.token?.priceIn?.[0]?.price
-
-  if (!aPrice || !bPrice) return 0
-  const aBalance = formatUnits(a.availableAmount, a.token.decimals)
-  const bBalance = formatUnits(b.availableAmount, b.token.decimals)
-  const aValue = parseFloat(aBalance) * aPrice
-  const bValue = parseFloat(bBalance) * bPrice
-
-  if (aValue > bValue) return -1
-  if (aValue < bValue) return 1
+  if (aPrice && !bPrice) return -1
+  if (!aPrice && bPrice) return 1
   return 0
 }
 
@@ -88,6 +77,11 @@ const mapFeeOptions = (
   if (!speedCoverage.includes(FeeSpeed.Slow)) {
     if (!feeOption.token.priceIn.length) {
       disabledReason = 'No price data'
+    } else if (
+      feeOption.paidBy === signAccountOpState.account.addr &&
+      signAccountOpState.account.safeCreation
+    ) {
+      disabledReason = 'Coming soon'
     } else {
       disabledReason = 'Insufficient amount'
     }

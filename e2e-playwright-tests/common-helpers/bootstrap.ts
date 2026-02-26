@@ -27,7 +27,10 @@ const playwrightArgs = [
   '--disable-software-rasterizer',
   '--disable-accelerated-2d-canvas',
   '--disable-gl-drawing-for-tests',
-  '--use-gl=swiftshader'
+  '--use-gl=swiftshader',
+  '--ip-address-space-overrides=127.0.0.1:0=public',
+  '--disable-features=LocalNetworkAccessChecks',
+  '--disable-features=BlockInsecurePrivateNetworkRequests'
 ]
 
 async function initBrowser(namespace: string): Promise<{

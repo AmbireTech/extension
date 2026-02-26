@@ -3,9 +3,8 @@ import React, { FC, useEffect, useMemo } from 'react'
 import BaseAddress from '@common/components/HumanizerAddress/components/BaseAddress'
 import Spinner from '@common/components/Spinner'
 import { Props as TextProps } from '@common/components/Text'
+import useController from '@common/hooks/useController'
 import useReverseLookup from '@common/hooks/useReverseLookup'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useContractNamesControllerState from '@web/hooks/useContractNamesController/useContractNamesController'
 
 interface Props extends TextProps {
   address: string
@@ -14,8 +13,10 @@ interface Props extends TextProps {
 
 const AddressName: FC<Props> = ({ address, chainId, ...rest }) => {
   const { ens, isLoading } = useReverseLookup({ address })
-  const { contractNames } = useContractNamesControllerState()
-  const { dispatch } = useBackgroundService()
+  const {
+    state: { contractNames },
+    dispatch: contractNamesDispatch
+  } = useController('ContractNamesController')
 
   const contract = useMemo(() => {
     return contractNames[address]
@@ -28,16 +29,19 @@ const AddressName: FC<Props> = ({ address, chainId, ...rest }) => {
   useEffect(() => {
     if (contractName) return
 
-    dispatch({
-      type: 'CONTRACT_NAMES_CONTROLLER_GET_NAME',
-      params: { address, chainId }
+    contractNamesDispatch({
+      type: 'method',
+      params: {
+        method: 'getName',
+        args: [address, chainId]
+      }
     })
-  }, [dispatch, address, chainId, contractName])
+  }, [contractNamesDispatch, address, chainId, contractName])
 
   if (isLoading) return <Spinner style={{ width: 16, height: 16 }} />
 
   return (
-    <BaseAddress address={address} {...rest}>
+    <BaseAddress address={address} isDisplayingPlainAddress={!ens && !contractName} {...rest}>
       {ens || contractName || address}
     </BaseAddress>
   )

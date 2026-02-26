@@ -39,7 +39,7 @@ body,
 
 /* Sets specific size for the extension popup, otherwise, it shrinks to fit the content */
 .body-extension-popup {
-  width: 600px;
+  width: 480px;
   height: 600px;
 }
 
@@ -78,5 +78,7 @@ input {
 
 .button-icon g,
 .button-icon path {
-  transition: fill 200ms ease-in-out, stroke 200ms ease-in-out;
+  transition:
+    fill 200ms ease-in-out,
+    stroke 200ms ease-in-out;
 }

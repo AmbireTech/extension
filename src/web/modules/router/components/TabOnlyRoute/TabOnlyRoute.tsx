@@ -1,18 +1,18 @@
 import React, { useEffect } from 'react'
 import { Outlet } from 'react-router-dom'
 
+import useController from '@common/hooks/useController'
 import useRoute from '@common/hooks/useRoute'
+import { getUiType } from '@common/utils/uiType'
 import { isExtension } from '@web/constants/browserapi'
 import { openInternalPageInTab } from '@web/extension-services/background/webapi/tab'
-import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
-import { getUiType } from '@web/utils/uiType'
 
 const { isTab } = getUiType()
 
 const TabOnlyRoute = () => {
   const isRequestWindow = getUiType().isRequestWindow
   const { path, search, params } = useRoute()
-  const { currentUserRequest, requestWindow } = useRequestsControllerState()
+  const { currentUserRequest, requestWindow } = useController('RequestsController').state
 
   // if the current window is request-window and there is a request don't open
   // the route in tab because the dApp that requests the request
