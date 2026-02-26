@@ -22,3 +22,6 @@ declare module '@ledgerhq/device-management-kit' {
 declare module '@ledgerhq/device-transport-kit-web-hid' {
   export * from '@ledgerhq/device-transport-kit-web-hid/lib/types'
 }
+declare module '@ledgerhq/device-transport-kit-speculos' {
+  export * from '@ledgerhq/device-transport-kit-speculos/lib/types'
+}
