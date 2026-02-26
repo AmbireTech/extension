@@ -16,23 +16,22 @@ import FooterGlassView from '@common/components/FooterGlassView/FooterGlassView'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { openInTab } from '@common/utils/links'
+import { getUiType } from '@common/utils/uiType'
 import {
   TabLayoutContainer,
   tabLayoutWidths
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import { DISCORD_URL, TELEGRAM_URL, TWITTER_URL } from '@web/constants/social'
-import { openInTab } from '@web/extension-services/background/webapi/tab'
 import SettingsLink from '@web/modules/settings/components/SettingsLink'
 import { SETTINGS_LINKS } from '@web/modules/settings/components/Sidebar/Sidebar'
 import commonWebStyles from '@web/styles/utils/common'
-import { getUiType } from '@web/utils/uiType'
 
 import getStyles from './styles'
 
@@ -73,11 +72,9 @@ const NavMenu = () => {
   const { navigate } = useNavigation()
   const { theme } = useTheme(getStyles)
   const { hasPasswordSecret } = useController('KeystoreController').state
-  const { dispatch } = useControllersMiddleware()
+  const { dispatch: mainDispatch } = useController('MainController')
   const handleLockAmbire = () => {
-    dispatch({
-      type: 'MAIN_CONTROLLER_LOCK'
-    })
+    mainDispatch({ type: 'method', params: { method: 'lock', args: [] } })
   }
 
   useEffect(() => {

@@ -5,12 +5,10 @@ import { Animated, NativeScrollEvent, NativeSyntheticEvent, View } from 'react-n
 import { useSearchParams } from 'react-router-dom'
 
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import usePrevious from '@common/hooks/usePrevious'
 import useRoute from '@common/hooks/useRoute'
-import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { getUiType } from '@web/utils/uiType'
+import { getUiType } from '@common/utils/uiType'
 
 import Activity from '../Activity'
 import Collections from '../Collections'
@@ -38,7 +36,7 @@ const DashboardPages = ({ onScroll, isSearchHidden, animatedOverviewHeight }: Pr
   const {
     state: { networks }
   } = useController('NetworksController')
-  const { dispatch } = useControllersMiddleware()
+  const { dispatch: activityDispatch } = useController('ActivityController')
 
   const [openTab, setOpenTab] = useState(() => {
     const params = new URLSearchParams(route?.search)
@@ -90,12 +88,15 @@ const DashboardPages = ({ onScroll, isSearchHidden, animatedOverviewHeight }: Pr
       // Remove session - this will be triggered only when navigation to another screen internally in the extension.
       // The session removal when the window is forcefully closed is handled
       // in the port.onDisconnect callback in the background.
-      dispatch({ type: 'MAIN_CONTROLLER_ACTIVITY_RESET_ACC_OPS_FILTERS', params: { sessionId } })
+      activityDispatch({
+        type: 'method',
+        params: { method: 'resetAccountsOpsFilters', args: [sessionId] }
+      })
     }
     // setSearchParams must not be in the dependency array
     // as it changes on call and kills the session prematurely
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dispatch, sessionId])
+  }, [activityDispatch, sessionId])
 
   return (
     <View style={flexbox.flex1}>

@@ -3,7 +3,7 @@ import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { Account } from '@ambire-common/interfaces/account'
-import { isAmbireV1LinkedAccount, isSmartAccount } from '@ambire-common/libs/account/account'
+import { isAmbireV1LinkedAccount } from '@ambire-common/libs/account/account'
 import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
 import PrivateKeyExport from '@common/components/ExportKey/PrivateKeyExport'
@@ -11,15 +11,14 @@ import SmartAccountExport from '@common/components/ExportKey/SmartAccountExport'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useExtraEntropy from '@common/hooks/useExtraEntropy'
 import usePrevious from '@common/hooks/usePrevious'
+import eventBus from '@common/services/event/eventBus'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
-import eventBus from '@web/extension-services/event/eventBus'
+import { getUiType } from '@common/utils/uiType'
 import PasswordConfirmation from '@web/modules/settings/components/PasswordConfirmation'
-import { getUiType } from '@web/utils/uiType'
 
 import { PanelBackButton, PanelTitle } from '../Panel/Panel'
 
@@ -35,8 +34,7 @@ const ExportKey = ({
   onBackButtonPress: () => void
 }) => {
   const { t } = useTranslation()
-  const { dispatch } = useControllersMiddleware()
-  const keystoreState = useController('KeystoreController').state
+  const { state: keystoreState, dispatch: keystoreDispatch } = useController('KeystoreController')
   const [privateKey, setPrivateKey] = useState<string | null>(null)
   const [salt, setSalt] = useState<string | null>(null)
   const [iv, setIv] = useState<string | null>(null)
@@ -58,7 +56,7 @@ const ExportKey = ({
   }, [blurred, prevBlurred])
 
   const isExportingV2SA =
-    isSmartAccount(account) && !isAmbireV1LinkedAccount(account?.creation?.factoryAddr)
+    !!account.creation && !isAmbireV1LinkedAccount(account?.creation?.factoryAddr)
 
   const key = useMemo(
     () => keystoreState.keys.find((aKey) => aKey.addr === keyAddr),
@@ -86,14 +84,20 @@ const ExportKey = ({
   const { getExtraEntropy } = useExtraEntropy()
   const onPasswordConfirmed = (password: string) => {
     if (isExportingV2SA) {
-      dispatch({
-        type: 'KEYSTORE_CONTROLLER_SEND_ENCRYPTED_PRIVATE_KEY_TO_UI',
-        params: { keyAddr, secret: password, entropy: getExtraEntropy() }
+      keystoreDispatch({
+        type: 'method',
+        params: {
+          method: 'sendPasswordEncryptedPrivateKeyToUi',
+          args: [keyAddr, password, getExtraEntropy()]
+        }
       })
     } else {
-      dispatch({
-        type: 'KEYSTORE_CONTROLLER_SEND_PRIVATE_KEY_TO_UI',
-        params: { keyAddr }
+      keystoreDispatch({
+        type: 'method',
+        params: {
+          method: 'sendPrivateKeyToUi',
+          args: [keyAddr]
+        }
       })
     }
 

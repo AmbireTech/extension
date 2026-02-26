@@ -15,7 +15,7 @@ import DashboardPageScrollContainer from '@common/modules/dashboard/components/D
 import TabsAndSearch from '@common/modules/dashboard/components/TabsAndSearch'
 import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tab/Tab'
 import { tokenOrCollectionSearch } from '@common/utils/search'
-import { getUiType } from '@web/utils/uiType'
+import { getUiType } from '@common/utils/uiType'
 
 import SearchAndCurrentApp from '../SearchAndCurrentApp'
 import Collection from './Collection'

@@ -14,6 +14,7 @@ import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
+import eventBus from '@common/services/event/eventBus'
 import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -22,7 +23,6 @@ import {
   TabLayoutContainer,
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import eventBus from '@web/extension-services/event/eventBus'
 
 const CreateSeedPhraseWriteScreen = () => {
   const { goToNextRoute, goToPrevRoute } = useOnboardingNavigation()
@@ -30,16 +30,25 @@ const CreateSeedPhraseWriteScreen = () => {
   const { theme } = useTheme()
   const { addToast } = useToast()
   const { dispatch } = useControllersMiddleware()
-  const { hasTempSeed } = useController('KeystoreController').state
+  const {
+    state: { hasTempSeed },
+    dispatch: keystoreDispatch
+  } = useController('KeystoreController')
   const [tempSeed, setTempSeed] = useState<KeystoreSeed | null>(null)
   const { initParams, subType } = useController('AccountPickerController').state
   const [submitButtonPressed, setSubmitButtonPressed] = useState(false)
 
   useEffect(() => {
     if (!tempSeed && hasTempSeed) {
-      dispatch({ type: 'KEYSTORE_CONTROLLER_SEND_TEMP_SEED_TO_UI' })
+      keystoreDispatch({
+        type: 'method',
+        params: {
+          method: 'sendTempSeedToUi',
+          args: []
+        }
+      })
     }
-  }, [dispatch, tempSeed, hasTempSeed])
+  }, [keystoreDispatch, tempSeed, hasTempSeed])
 
   useEffect(() => {
     const onReceiveOneTimeData = (data: any) => {

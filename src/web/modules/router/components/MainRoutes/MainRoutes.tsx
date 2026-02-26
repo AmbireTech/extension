@@ -25,6 +25,7 @@ import ImportExistingAccountSelectorScreen from '@web/modules/auth/screens/Impor
 import ImportSmartAccountJsonScreen from '@web/modules/auth/screens/ImportSmartAccountJson'
 import OnboardingCompletedScreen from '@web/modules/auth/screens/OnboardingCompletedScreen'
 import PrivateKeyImportScreen from '@web/modules/auth/screens/PrivateKeyImportScreen'
+import SafeImportScreen from '@web/modules/auth/screens/SafeImportScreen'
 import SeedPhraseImportScreen from '@web/modules/auth/screens/SeedPhraseImportScreen'
 import DappCatalogScreen from '@web/modules/dapp-catalog/screens/DappCatalogScreen'
 import ExtensionRewardsScreen from '@web/modules/extension-rewards/screens/ExtensionRewardsScreen'
@@ -98,6 +99,8 @@ const MainRoutes = () => {
             element={<ImportExistingAccountSelectorScreen />}
           />
           <Route path={WEB_ROUTES.ledgerConnect} element={<LedgerConnectScreen />} />
+
+          <Route path={WEB_ROUTES.safeImport} element={<SafeImportScreen />} />
 
           <Route path={WEB_ROUTES.importPrivateKey} element={<PrivateKeyImportScreen />} />
           <Route path={WEB_ROUTES.importSeedPhrase} element={<SeedPhraseImportScreen />} />

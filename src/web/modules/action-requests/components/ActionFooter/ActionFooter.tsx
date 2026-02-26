@@ -20,6 +20,7 @@ type Props = {
   resolveButtonTestID?: string
   /** Optional custom node to replace the default resolve button */
   resolveNode?: React.ReactNode
+  informationalNode?: React.ReactNode
 }
 
 const ActionFooter = ({
@@ -31,7 +32,8 @@ const ActionFooter = ({
   resolveType = 'primary',
   rejectButtonTestID,
   resolveButtonTestID,
-  resolveNode
+  resolveNode,
+  informationalNode
 }: Props) => {
   const { t } = useTranslation()
 
@@ -40,21 +42,24 @@ const ActionFooter = ({
 
   return (
     <View style={[flexbox.alignCenter, spacings.pb]}>
-      <GlassView style={{ borderRadius: 28 }} cssStyle={{ borderRadius: 28 }}>
+      <GlassView borderRadius={28}>
         <View style={[flexbox.directionRow, spacings.phSm, spacings.pvSm]}>
-          {showReject && (
-            <View style={[flexbox.flex1, spacings.mrLg]}>
-              <Button
-                text={rejectButtonText || t('Reject')}
-                type="danger"
-                hasBottomSpacing={false}
-                size="large"
-                onPress={onReject}
-                testID={rejectButtonTestID}
-                style={flexbox.alignSelfStart}
-              />
-            </View>
-          )}
+          <View style={flexbox.flex1}>
+            {showReject && (
+              <View style={[flexbox.flex1, spacings.mrLg]}>
+                <Button
+                  text={rejectButtonText || t('Reject')}
+                  type="danger"
+                  hasBottomSpacing={false}
+                  size="large"
+                  onPress={onReject}
+                  testID={rejectButtonTestID}
+                  style={flexbox.alignSelfStart}
+                />
+              </View>
+            )}
+            {informationalNode}
+          </View>
           <ActionsPagination />
           {resolveNode || (
             <View style={flexbox.flex1}>

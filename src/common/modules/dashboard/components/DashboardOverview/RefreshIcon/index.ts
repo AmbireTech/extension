@@ -1,3 +1,3 @@
-import RefreshIcon from './RefreshIcon.web'
+import RefreshIcon from './RefreshIcon'
 
 export default RefreshIcon

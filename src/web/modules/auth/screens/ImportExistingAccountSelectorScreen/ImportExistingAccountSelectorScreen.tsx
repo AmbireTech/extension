@@ -15,6 +15,7 @@ import Panel from '@common/components/Panel'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
+import { AnimatedPressable, useMultiHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
@@ -28,7 +29,6 @@ import {
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import { isSafari } from '@web/constants/browserapi'
-import { AnimatedPressable, useCustomHover, useMultiHover } from '@web/hooks/useHover'
 
 import getStyles from './styles'
 
@@ -121,6 +121,13 @@ const ImportExistingAccountSelectorScreen = () => {
         },
         icon: LatticeWithBorderIcon
       },
+      // {
+      //   title: 'Safe',
+      //   onPress: () => {
+      //     goToNextRoute(WEB_ROUTES.safeImport)
+      //   },
+      //   icon: SafeIcon
+      // },
       {
         title: 'JSON backup file',
         onPress: () => {

@@ -11,7 +11,7 @@ import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY, hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import { createTab } from '@web/extension-services/background/webapi/tab'
+import { openInTab } from '@common/utils/links'
 
 export type RouteItemType = {
   icon: any
@@ -53,7 +53,7 @@ const RouteItem: FC<Props> = ({ routeItem, index, routeItemsLength }) => {
 
         if (routeItem.isExternal && routeItem.route) {
           try {
-            await createTab(routeItem.route)
+            await openInTab({ url: routeItem.route })
           } catch {
             addToast(t('Failed to open new tab.'), { type: 'error' })
           }
@@ -67,14 +67,13 @@ const RouteItem: FC<Props> = ({ routeItem, index, routeItemsLength }) => {
       {({ hovered }: any) => (
         <>
           <GlassView
-            tintColor1={hovered ? '#fff' : 'rgba(255, 255, 255, 0.12)'}
-            tintColor2={hovered ? '#fff' : 'rgba(255, 255, 255, 0.12)'}
+            tintColor1={hovered ? '#fff' : undefined}
+            tintColor2={hovered ? '#fff' : undefined}
             blurAmount={20}
-            shineColor="rgba(255, 255, 255, 0.2)"
+            shineColor="#aaaaaa"
             testID={routeItem.testID}
             cssStyle={{
               marginBottom: 4,
-              borderRadius: BORDER_RADIUS_PRIMARY,
               height: ITEM_HEIGHT,
               overflow: 'hidden',
               width: routeItem.route === WEB_ROUTES.swapAndBridge ? 88 : ITEM_HEIGHT

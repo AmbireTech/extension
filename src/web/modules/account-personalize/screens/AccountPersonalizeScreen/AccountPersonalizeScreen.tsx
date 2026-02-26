@@ -13,22 +13,21 @@ import SuccessAnimation from '@common/components/SuccessAnimation'
 import Text from '@common/components/Text'
 import { Trans, useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
+import AccountPersonalizeCard from '@common/modules/account-personalize/components/AccountPersonalizeCard'
+import AccountsLoadingAnimation from '@common/modules/account-personalize/components/AccountsLoadingAnimation'
+import AccountsLoadingDotsAnimation from '@common/modules/account-personalize/components/AccountsLoadingDotsAnimation'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
+import { openInTab } from '@common/utils/links'
 import {
   TabLayoutContainer,
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import { createTab } from '@web/extension-services/background/webapi/tab'
-import AccountPersonalizeCard from '@web/modules/account-personalize/components/AccountPersonalizeCard'
-import AccountsLoadingAnimation from '@web/modules/account-personalize/components/AccountsLoadingAnimation'
-import AccountsLoadingDotsAnimation from '@web/modules/account-personalize/components/AccountsLoadingDotsAnimation'
 import PinExtension from '@web/modules/auth/components/PinExtension'
 
 import getStyles from './styles'
@@ -40,9 +39,12 @@ const AccountPersonalizeScreen = () => {
   const { goToNextRoute, goToPrevRoute, setAccountsToPersonalize, accountsToPersonalize } =
     useOnboardingNavigation()
   const { theme } = useTheme(getStyles)
-  const { dispatch } = useControllersMiddleware()
-  const accountPickerState = useController('AccountPickerController').state
-  const { statuses, accounts } = useController('AccountsController').state
+  const { state: accountPickerState, dispatch: accountPickerDispatch } =
+    useController('AccountPickerController')
+  const {
+    state: { statuses, accounts },
+    dispatch: accountsDispatch
+  } = useController('AccountsController')
   const { isSetupComplete } = useController('WalletStateController').state
   const { addToast } = useToast()
   const initPassed = useRef(false)
@@ -64,14 +66,20 @@ const AccountPersonalizeScreen = () => {
     if (accountPickerState.isInitialized) return
     if (initPassed.current && !completed) return
 
-    dispatch({ type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT' })
+    accountPickerDispatch({
+      type: 'method',
+      params: {
+        method: 'init',
+        args: []
+      }
+    })
     if (!isLoading) setIsLoading(true)
     if (completed) setCompleted(false)
     if (accountsToPersonalize.length) setAccountsToPersonalize([])
     initPassed.current = true
   }, [
     isLoading,
-    dispatch,
+    accountPickerDispatch,
     accountPickerState.isInitialized,
     accountPickerState.initParams,
     completed,
@@ -213,9 +221,15 @@ const AccountPersonalizeScreen = () => {
   // prevents showing accounts to personalize from prev sessions
   useEffect(() => {
     if (newlyAddedAccounts.length && accountPickerState.isInitialized) {
-      dispatch({ type: 'ACCOUNTS_CONTROLLER_RESET_ACCOUNTS_NEWLY_ADDED_STATE' })
+      accountsDispatch({
+        type: 'method',
+        params: {
+          method: 'resetAccountsNewlyAddedState',
+          args: []
+        }
+      })
     }
-  }, [newlyAddedAccounts.length, accountPickerState.isInitialized, dispatch])
+  }, [newlyAddedAccounts.length, accountPickerState.isInitialized, accountsDispatch])
 
   useEffect(() => {
     setValue('accounts', accountsToPersonalize)
@@ -226,12 +240,15 @@ const AccountPersonalizeScreen = () => {
   const handleSave = useCallback(
     (data?: { accounts: Account[] }) => {
       const newAccounts = data?.accounts || getValues('accounts')
-      dispatch({
-        type: 'ACCOUNTS_CONTROLLER_UPDATE_ACCOUNT_PREFERENCES',
-        params: newAccounts.map((a) => ({ addr: a.addr, preferences: a.preferences }))
+      accountsDispatch({
+        type: 'method',
+        params: {
+          method: 'updateAccountPreferences',
+          args: [newAccounts.map((a) => ({ addr: a.addr, preferences: a.preferences }))]
+        }
       })
     },
-    [dispatch, getValues]
+    [accountsDispatch, getValues]
   )
 
   useEffect(() => {
@@ -244,18 +261,30 @@ const AccountPersonalizeScreen = () => {
 
   const handleComplete = useCallback(async () => {
     await handleSubmit(handleSave)()
-    dispatch({ type: 'ACCOUNTS_CONTROLLER_RESET_ACCOUNTS_NEWLY_ADDED_STATE' })
+    accountsDispatch({
+      type: 'method',
+      params: {
+        method: 'resetAccountsNewlyAddedState',
+        args: []
+      }
+    })
     if (isSetupComplete) {
       initPassed.current = false
-      dispatch({ type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_RESET' })
+      accountPickerDispatch({
+        type: 'method',
+        params: {
+          method: 'reset',
+          args: []
+        }
+      })
     } else {
       setCompleted(true)
     }
-  }, [isSetupComplete, dispatch, handleSave, handleSubmit])
+  }, [isSetupComplete, accountsDispatch, accountPickerDispatch, handleSave, handleSubmit])
 
   const handleContactSupport = useCallback(async () => {
     try {
-      await createTab('https://help.ambire.com/hc/en-us/requests/new')
+      await openInTab({ url: 'https://help.ambire.com/hc/en-us/requests/new' })
     } catch {
       addToast("Couldn't open link", { type: 'error' })
     }

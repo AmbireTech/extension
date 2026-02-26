@@ -19,19 +19,18 @@ import GlassView from '@common/components/GlassView'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
+import useHasGasTank from '@common/hooks/useHasGasTank'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
+import { storage } from '@common/services/storage'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { openInTab } from '@common/utils/links'
+import { getTokenId } from '@common/utils/token'
 import { RELAYER_URL } from '@env'
-import storage from '@web/extension-services/background/webapi/storage'
-import { createTab } from '@web/extension-services/background/webapi/tab'
-import useHasGasTank from '@web/hooks/useHasGasTank'
-import { getTokenId } from '@web/utils/token'
 
 import TokenDetailsButton from './Button'
 import HideTokenModal from './HideTokenModal'
@@ -58,7 +57,7 @@ const TokenDetails = ({
     'SwapAndBridgeController',
     (state) => state.supportedChainIds
   )
-  const { dispatch } = useControllersMiddleware()
+  const { dispatch: portfolioDispatch } = useController('PortfolioController')
   const { state: networks } = useController('NetworksController', (state) => state.networks)
   const [coinGeckoTokenSlug, setCoinGeckoTokenSlug] = useState('')
   const [isTokenInfoLoading, setIsTokenInfoLoading] = useState(false)
@@ -200,7 +199,7 @@ const TokenDetails = ({
         },
         isDisabled: !canToToppedUp || !hasGasTank,
         tooltipText: !hasGasTank
-          ? t('Not available for hardware wallets yet.')
+          ? t(`Not available for ${account?.safeCreation ? 'safe' : 'hardware'} wallets, yet.`)
           : !canToToppedUp
             ? t(
                 'This token is not eligible for filling up the Gas Tank. Please select a supported token instead.'
@@ -234,7 +233,7 @@ const TokenDetails = ({
           }
 
           try {
-            await createTab(getCoinGeckoTokenUrl(coinGeckoTokenSlug))
+            await openInTab({ url: getCoinGeckoTokenUrl(coinGeckoTokenSlug) })
             handleClose()
           } catch {
             addToast(t('Could not open token info'), { type: 'error' })
@@ -258,6 +257,7 @@ const TokenDetails = ({
       addToast,
       token,
       handleClose,
+      account?.safeCreation,
       network,
       shouldDisableSwapAndBridge,
       isNetworkNotSupportedForSwapAndBridge,
@@ -309,17 +309,21 @@ const TokenDetails = ({
 
   const hideToken = useCallback(() => {
     if (!token) return
-    dispatch({
-      type: 'PORTFOLIO_CONTROLLER_TOGGLE_HIDE_TOKEN',
+    portfolioDispatch({
+      type: 'method',
       params: {
-        token: {
-          address: token.address,
-          chainId: token.chainId
-        },
-        shouldUpdatePortfolio: true
+        method: 'toggleHideToken',
+        args: [
+          {
+            address: token.address,
+            chainId: token.chainId
+          },
+          account?.addr,
+          true
+        ]
       }
     })
-  }, [dispatch, token])
+  }, [portfolioDispatch, token, account?.addr])
 
   const handleHideTokenFromButton = useCallback(async () => {
     if (doNotDisplayHideTokenModal) hideToken()
@@ -422,7 +426,7 @@ const TokenDetails = ({
         )}
       </View>
 
-      <GlassView style={{ borderRadius: 28 }} cssStyle={{ borderRadius: 28 }}>
+      <GlassView borderRadius={28}>
         <View style={styles.actionsContainer}>
           {actions.map((action) => (
             <TokenDetailsButton

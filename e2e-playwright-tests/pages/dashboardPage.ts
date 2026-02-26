@@ -170,24 +170,67 @@ export class DashboardPage extends BasePage {
     )
   }
 
-  async search(searchInput: string, tabName: Tabs) {
-    // click on magnifying glass icon
-    await this.click(`${selectors.dashboard.magnifyingGlassIcon}-${tabName}`)
+  // TODO: works only for base now
+  async changeSigToolNetwork() {
+    // open apps page
+    await this.click(selectors.dashboard.appsButton)
+
+    // enter search phrase
+    await this.entertext(selectors.searchInput, 'SigTool')
+    await this.page.waitForTimeout(2000) // wait for search result
+
+    // make icon for dapp manage visible
+    await this.page.getByTestId(selectors.sigtool.dappWrapper).hover()
+    await this.page.mouse.down()
+    await this.page.waitForTimeout(1000)
+    // change network
+    await this.click(selectors.sigtool.sigToolIconButton)
+    await this.page.locator(selectors.sigtool.sigToolNetworkEth).first().click()
+    await this.page.locator(selectors.sigtool.sigToolNetworkBase).click()
+  }
+
+  async disconnectFromSigToolDapp() {
+    // open apps page
+    await this.click(selectors.dashboard.appsButton)
+
+    // enter search phrase
+    await this.entertext(selectors.searchInput, 'SigTool')
+    await this.page.waitForTimeout(2000) // wait for search result
+
+    // make icon for dapp manage visible
+    await this.page.getByTestId(selectors.sigtool.dappWrapper).hover()
+    await this.page.mouse.down()
+    await this.page.waitForTimeout(1000)
+
+    // disconnect
+    await this.click(selectors.sigtool.sigToolIconButton)
+    await this.page.locator(selectors.sigtool.disconnectButton).click()
+  }
+
+  async searchByNetworkOnTab(searchInput: string, tabName: Tabs) {
+    // map selectors by tab
+    const networkDropdownByTab: Record<Tabs, string> = {
+      tokens: selectors.dashboard.tokensNetworksDropdownButton,
+      collectibles: selectors.dashboard.nftNetworkDropdownButton,
+      defi: selectors.dashboard.defiNetworkDropdownButton,
+      activity: selectors.dashboard.activityNetworkDropdownButton
+    }
+
+    // open networks pagek
+    await this.click(networkDropdownByTab[tabName])
 
     // enter search phrase
     await this.entertext(selectors.searchInput, searchInput)
-  }
-
-  async searchByNetworkDropdown(searchInput: string, tabName: Tabs) {
-    // open dropdown
-    await this.click(`${selectors.dashboard.networksDropdown}-${tabName}`)
-
-    // search network
-    await this.entertext(selectors.dashboard.searchForNetwork, searchInput)
 
     // click on searched network
     const networkSelector = this.page.locator(`//div[text()="${searchInput}"]`)
     await networkSelector.click()
+  }
+
+  // TODO: change when we have test ids
+  async searchByMagnifyingGlassIcon(searchInput: string) {
+    await this.page.locator('.liquidGlass').last().click()
+    await this.page.locator('input').fill(searchInput)
   }
 
   async checkOpenTicketPage() {
@@ -202,7 +245,7 @@ export class DashboardPage extends BasePage {
     const selector = this.page.getByTestId(selectors.dashboard.openTicketLink)
     const newTab = await this.handleNewPage(selector)
 
-    expect(newTab.url()).toContain('help.ambire.com/hc/en-us')
+    expect(newTab.url()).toContain('https://help.ambire.com/en')
   }
 
   async checkRewardsPageRedirection(selector: string) {
@@ -215,8 +258,5 @@ export class DashboardPage extends BasePage {
     expect(newTab.url()).toContain('https://rewards.ambire.com/')
 
     await newTab.close()
-
-    // return to dashboard
-    await this.page.locator(selectors.dashboard.backRewardsButton).click()
   }
 }

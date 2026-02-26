@@ -12,11 +12,11 @@ import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
 import { FONT_FAMILIES } from '@common/hooks/useFonts'
 import useTheme from '@common/hooks/useTheme'
+import MaxAmount from '@common/modules/swap-and-bridge/components/MaxAmount'
 import spacings from '@common/styles/spacings'
 import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { ItemPanel } from '@web/components/TransactionsScreen'
-import MaxAmount from '@web/modules/swap-and-bridge/components/MaxAmount'
 
 import getStyles from './styles'
 

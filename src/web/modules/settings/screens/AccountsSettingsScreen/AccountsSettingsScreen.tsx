@@ -15,7 +15,7 @@ import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableW
 import Search from '@common/components/Search'
 import Text from '@common/components/Text'
 import useAccountsList from '@common/hooks/useAccountsList'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
+import useController from '@common/hooks/useController'
 import useElementSize from '@common/hooks/useElementSize'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
@@ -37,7 +37,8 @@ const AccountsSettingsScreen = () => {
   const accountsContainerRef = useRef(null)
   const { minElementWidthSize, maxElementWidthSize } = useElementSize(accountsContainerRef)
   const { setCurrentSettingsPage } = useContext(SettingsRoutesContext)
-  const { dispatch } = useControllersMiddleware()
+  const { dispatch: accountsDispatch } = useController('AccountsController')
+  const { dispatch: mainDispatch } = useController('MainController')
   const { themeType, theme } = useTheme()
   const {
     ref: sheetRefExportImportKey,
@@ -80,14 +81,17 @@ const AccountsSettingsScreen = () => {
         const updated = [...prev]
         const [moved] = updated.splice(fromIndex, 1)
         updated.splice(toIndex, 0, moved!)
-        dispatch({
-          type: 'ACCOUNTS_CONTROLLER_REORDER_ACCOUNTS',
-          params: { fromIndex, toIndex }
+        accountsDispatch({
+          type: 'method',
+          params: {
+            method: 'reorderAccounts',
+            args: [{ fromIndex, toIndex }]
+          }
         })
         return updated
       })
     },
-    [dispatch]
+    [accountsDispatch]
   )
 
   useEffect(() => {
@@ -122,12 +126,16 @@ const AccountsSettingsScreen = () => {
 
   const removeAccount = useCallback(() => {
     if (!accountToRemove) return
-    dispatch({
-      type: 'MAIN_CONTROLLER_REMOVE_ACCOUNT',
-      params: { accountAddr: accountToRemove.addr }
+
+    mainDispatch({
+      type: 'method',
+      params: {
+        method: 'removeAccount',
+        args: [accountToRemove.addr]
+      }
     })
     closeRemoveAccount()
-  }, [accountToRemove, dispatch, closeRemoveAccount])
+  }, [accountToRemove, mainDispatch, closeRemoveAccount])
 
   const renderItem = useCallback(
     (
@@ -199,7 +207,7 @@ const AccountsSettingsScreen = () => {
             text={t('Add account')}
             type="primary"
             size="smaller"
-            textStyle={{ fontSize: 12, marginTop: 2 }}
+            textStyle={{ fontSize: 12 }}
             style={[spacings.phSm, { height: 40 }]}
             hasBottomSpacing={false}
             onPress={openBottomSheet as any}
@@ -280,6 +288,7 @@ const AccountsSettingsScreen = () => {
         </View>
         <View style={flexbox.alignCenter}>
           <Button
+            testID="confirm-remove-account-button"
             type="danger"
             style={spacings.mtTy}
             text={t('Remove account')}

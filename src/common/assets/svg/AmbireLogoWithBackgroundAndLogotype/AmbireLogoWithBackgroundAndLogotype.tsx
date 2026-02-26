@@ -1,18 +1,19 @@
 import React, { FC } from 'react'
-import Svg, { Defs, G, LinearGradient, Mask, Path, Stop, SvgProps } from 'react-native-svg'
+import Svg, { Defs, G, LinearGradient, Mask, Path, Rect, Stop, SvgProps } from 'react-native-svg'
 
 import useTheme from '@common/hooks/useTheme'
 
 const AmbireLogoWithBackgroundAndLogotype: FC<SvgProps> = ({
   width = 80,
   height = 100,
+  color,
   ...rest
 }) => {
   const { theme } = useTheme()
   return (
     <Svg fill="none" width={width} height={height} {...rest} viewBox="0 0 80 100">
       <Mask
-        id="a"
+        id="ambire-logo-with-bg-and-logotype"
         width="80"
         height="80"
         x="0"
@@ -20,9 +21,9 @@ const AmbireLogoWithBackgroundAndLogotype: FC<SvgProps> = ({
         maskUnits="userSpaceOnUse"
         style={{ maskType: 'alpha' }}
       >
-        <rect width="80" height="80" fill="#EFB0B0" rx="16" />
+        <Rect width="80" height="80" fill="#EFB0B0" rx="16" />
       </Mask>
-      <G mask="url(#a)">
+      <G mask="url(#ambire-logo-with-bg-and-logotype)">
         <Path fill="#6000FF" d="M0 0h80v80H0z" />
         <Path
           fill="#D6D6DA"
@@ -51,7 +52,7 @@ const AmbireLogoWithBackgroundAndLogotype: FC<SvgProps> = ({
         />
       </G>
       <Path
-        fill={theme.primaryText}
+        fill={color || theme.primaryText}
         fillRule="evenodd"
         d="M14.04 99.999h-2.45l-1.323-2.684H4.28l-1.324 2.684H0L6.044 88h2.52L14.623 100h-.585Zm-6.767-8.74-1.797 3.62h3.58l-1.784-3.62Zm11.132 8.74h-2.273V88h2.722l4.797 7.176L28.406 88h2.707V100H28.49v-7.71l-3.787 5.797h-2.148l-3.803-5.73V100h-.348v-.001Zm24.032 0h-8.002V88h7.776c1.157 0 2.101.295 2.763.84.342.281.617.645.8 1.061.185.417.273.874.259 1.335.01.498-.1.992-.319 1.432-.219.44-.54.814-.932 1.084.396.193.75.471 1.04.817a3.08 3.08 0 0 1 .677 2.002c0 1.083-.382 1.951-1.11 2.55-.69.568-1.687.877-2.953.877l.001.001Zm.536-9.318c-.245-.206-.629-.312-1.137-.312h-4.688v2.372h4.703c.393.025.782-.096 1.102-.341.117-.108.21-.243.271-.395.062-.152.09-.316.083-.482a1.077 1.077 0 0 0-.073-.463 1.01 1.01 0 0 0-.26-.38l-.001.001Zm.327 4.798c-.281-.233-.714-.352-1.27-.352h-4.882v2.502h4.928c.573 0 .987-.113 1.248-.326.122-.108.218-.245.28-.4a1.12 1.12 0 0 0 .078-.493 1.18 1.18 0 0 0-.086-.515 1.11 1.11 0 0 0-.296-.416Zm8.148 4.52h-2.407V88h2.757V100h-.35Zm6.08 0H55.12V88h7.28c1.315 0 2.344.36 3.056 1.017.74.683 1.127 1.67 1.127 2.893 0 1.108-.346 2.023-1 2.688a3.819 3.819 0 0 1-2.016 1.03L67.363 100h-3.52l-3.564-4.13h-2.401V100h-.349l-.002-.001Zm5.888-9.163c-.29-.256-.746-.387-1.362-.387h-4.176v2.969h4.176c.605 0 1.062-.134 1.357-.39.272-.238.415-.603.415-1.086 0-.495-.138-.867-.409-1.106h-.001ZM79.651 100H69.26V88h10.635v2.45h-7.924v2.213h7.082v2.433H71.97v2.453H80V100h-.349Z"
         clipRule="evenodd"

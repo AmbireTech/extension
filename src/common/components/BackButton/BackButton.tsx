@@ -5,11 +5,11 @@ import { ViewStyle } from 'react-native'
 import LeftArrowIcon from '@common/assets/svg/LeftArrowIcon'
 import Button from '@common/components/Button'
 import Text from '@common/components/Text'
+import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useHover, { AnimatedPressable } from '@web/hooks/useHover'
 
 interface Props {
   onPress?: () => void

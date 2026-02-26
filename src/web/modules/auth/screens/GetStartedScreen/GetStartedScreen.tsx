@@ -2,25 +2,20 @@ import React, { useCallback, useEffect } from 'react'
 import { TouchableOpacity, View } from 'react-native'
 
 import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
-import AmbireLogo from '@common/assets/svg/AmbireLogo'
 import AmbireLogoWithBackgroundAndLogotype from '@common/assets/svg/AmbireLogoWithBackgroundAndLogotype'
 import ImportAccountIcon from '@common/assets/svg/ImportAccountIcon'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
-import ViewModeIcon from '@common/assets/svg/ViewModeIcon'
 import ViewOnlyIcon from '@common/assets/svg/ViewOnlyIcon'
 import Button from '@common/components/Button'
 import Panel from '@common/components/Panel'
-import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import { AUTH_STATUS } from '@common/modules/auth/constants/authStatus'
 import useAuth from '@common/modules/auth/hooks/useAuth'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
-import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Header'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -41,15 +36,20 @@ const GetStartedScreen = () => {
   const { goToNextRoute } = useOnboardingNavigation()
 
   const { authStatus } = useAuth()
-  const { dispatch } = useControllersMiddleware()
 
-  const state = useController('WalletStateController').state
+  const { state, dispatch: walletStateDispatch } = useController('WalletStateController')
 
   const resetIsSetupCompleteIfNeeded = useCallback(() => {
     if (authStatus === AUTH_STATUS.NOT_AUTHENTICATED && !state.isPinned && state.isSetupComplete) {
-      dispatch({ type: 'SET_IS_SETUP_COMPLETE', params: { isSetupComplete: false } })
+      walletStateDispatch({
+        type: 'method',
+        params: {
+          method: 'setIsSetupComplete',
+          args: [false]
+        }
+      })
     }
-  }, [authStatus, dispatch, state.isPinned, state.isSetupComplete])
+  }, [authStatus, walletStateDispatch, state.isPinned, state.isSetupComplete])
 
   useEffect(() => {
     if (authStatus === AUTH_STATUS.AUTHENTICATED) {

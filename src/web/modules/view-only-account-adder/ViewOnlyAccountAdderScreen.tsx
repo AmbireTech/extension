@@ -12,7 +12,7 @@ import Button from '@common/components/Button'
 import Panel from '@common/components/Panel'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
+import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
@@ -21,7 +21,6 @@ import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
-import useHover, { AnimatedPressable } from '@web/hooks/useHover'
 
 import AddressField from './AddressField'
 
@@ -49,8 +48,7 @@ const DEFAULT_ADDRESS_FIELD_VALUE = {
 }
 
 const ViewOnlyScreen = () => {
-  const { dispatch } = useControllersMiddleware()
-  const accountsState = useController('AccountsController').state
+  const { state: accountsState, dispatch: accountsDispatch } = useController('AccountsController')
   const { t } = useTranslation()
   const { addToast } = useToast()
   const { navigate } = useNavigation()
@@ -134,9 +132,12 @@ const ViewOnlyScreen = () => {
 
     try {
       setIsLoading(true)
-      dispatch({
-        type: 'MAIN_CONTROLLER_ADD_VIEW_ONLY_ACCOUNTS',
-        params: { accounts: accountsToAdd }
+      accountsDispatch({
+        type: 'method',
+        params: {
+          method: 'addAccounts',
+          args: [accountsToAdd]
+        }
       })
       goToNextRoute()
     } catch (e: any) {
@@ -157,7 +158,7 @@ const ViewOnlyScreen = () => {
     accounts,
     navigate,
     accountsState.accounts,
-    dispatch,
+    accountsDispatch,
     goToNextRoute,
     addToast,
     t
