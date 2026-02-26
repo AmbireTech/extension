@@ -19,6 +19,26 @@ const AssetReplacePlugin = require('./plugins/AssetReplacePlugin')
 const createReflectMetadataShimPlugin = require('./lavamoat/shims/reflect-metadata-shim-plugin')
 const createSetImmediateShimPlugin = require('./lavamoat/shims/setimmediate-shim-plugin')
 const createConsoleWarnShimPlugin = require('./lavamoat/shims/console-warn-shim-plugin')
+const createLavamoatUnsafeLayerPlugin = require('./lavamoat/plugins/lavamoat-unsafe-layer-plugin')
+
+// Entries that run outside LavaMoat protection.
+//
+// Important: this list controls TWO mechanisms that must stay aligned:
+// 1) runtimeConfigurationPerChunk_experimental -> returns { mode: 'null_unsafe' } for these names
+//    so no LavaMoat runtime is injected in those chunks.
+// 2) createLavamoatUnsafeLayerPlugin(...) -> marks the same entries with layer 'unsafe'
+//    and applies LavaMoat.exclude so their modules are not wrapped in Compartments.
+//
+// If only (1) is enabled, runtime code is removed but wrapped modules may remain, which can cause
+// runtime failures due to missing LavaMoat bootstrapping symbols.
+const LAVAMOAT_UNSAFE_ENTRIES = new Set([
+  'rootTheme',
+  'ambire-inpage',
+  'ethereum-inpage',
+  'content-script',
+  'content-script-ambire-injection',
+  'content-script-ethereum-injection'
+])
 
 const isWebkit = process.env.WEB_ENGINE?.startsWith('webkit')
 const isGecko = process.env.WEB_ENGINE === 'gecko'
@@ -381,13 +401,17 @@ module.exports = async function (env, argv) {
               // avoid CodeGenerationError issues. Re-enable once policy.json is stable
               // to catch policy violations early.
               runChecks: process.env.LAVAMOAT_GENERATE_POLICY !== 'true',
-              // The background and main UI entry run under full LavaMoat
-              // enforcement (Compartment-based isolation + policy checks).
-              // rootTheme, inpage и content-script entries use the unlocked runtime
-              // (a simple passthrough without Compartments), because they run in
-              // webpage contexts and are much more sensitive to compatibility issues.
-              unlockedChunksUnsafe:
-                /^(rootTheme|ambire-inpage|ethereum-inpage|content-script|content-script-ambire-injection|content-script-ethereum-injection)$/,
+              // Per-chunk LavaMoat mode:
+              // - null_unsafe for entries listed in LAVAMOAT_UNSAFE_ENTRIES
+              //   (no LavaMoat runtime injected in that chunk)
+              // - safe for all other chunks
+              //   (Compartment runtime + policy enforcement; lockdown where inlineLockdown matches)
+              runtimeConfigurationPerChunk_experimental: (chunk) => {
+                if (chunk.name && LAVAMOAT_UNSAFE_ENTRIES.has(chunk.name)) {
+                  return { mode: 'null_unsafe' }
+                }
+                return { mode: 'safe' }
+              },
               // Diagnostics verbosity (0-2):
               //   0: Minimal logging (recommended for normal builds)
               //   1: Moderate logging (useful for debugging policy issues)
@@ -441,6 +465,13 @@ module.exports = async function (env, argv) {
       test: /\.cjs$/,
       type: 'javascript/auto'
     })
+
+    // Register unsafe-layer plugin only in production (same environment as LavaMoatPlugin).
+    // The plugin adds a rule and assigns layer='unsafe' for LAVAMOAT_UNSAFE_ENTRIES.
+    // This must stay in sync with runtimeConfigurationPerChunk_experimental above.
+    if (config.mode === 'production') {
+      config.plugins.push(createLavamoatUnsafeLayerPlugin(LAVAMOAT_UNSAFE_ENTRIES))
+    }
 
     if (isWebkit) {
       // This plugin enables code-splitting support for the service worker, allowing it to import chunks dynamically.
