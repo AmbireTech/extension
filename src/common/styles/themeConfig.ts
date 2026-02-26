@@ -12,31 +12,19 @@ const ThemeColors = {
   primaryBackground: NEUTRAL_PRIMITIVES.neutral300,
   secondaryBackground: NEUTRAL_PRIMITIVES.neutral100,
   tertiaryBackground: NEUTRAL_PRIMITIVES.neutral400,
-  /**
-   * @deprecated
-   */
-  secondaryBackgroundInverted: NEUTRAL_PRIMITIVES.neutral700,
-  /**
-   * @deprecated
-   */
-  quaternaryBackground: NEUTRAL_PRIMITIVES.neutral400,
-  /**
-   * @deprecated
-   */
-  primaryBackgroundInverted: NEUTRAL_PRIMITIVES.neutral900,
   // --- Text tokens ---
   primaryText: NEUTRAL_PRIMITIVES.neutral900,
-  secondaryText: NEUTRAL_PRIMITIVES.neutral600,
-  tertiaryText: NEUTRAL_PRIMITIVES.neutral500,
+  secondaryText: NEUTRAL_PRIMITIVES.neutral700,
+  tertiaryText: NEUTRAL_PRIMITIVES.neutral600,
   // --- Border tokens ---
   primaryBorder: NEUTRAL_PRIMITIVES.neutral100,
   secondaryBorder: NEUTRAL_PRIMITIVES.neutral300,
   // --- Icon tokens ---
-  iconPrimary: NEUTRAL_PRIMITIVES.neutral500,
+  iconPrimary: NEUTRAL_PRIMITIVES.neutral700,
   /**
    * @deprecated
    */
-  iconSecondary: NEUTRAL_PRIMITIVES.neutral500,
+  iconSecondary: NEUTRAL_PRIMITIVES.neutral700,
   // --- Accent tokens ---
   /**
    * @deprecated - please use primaryAccent

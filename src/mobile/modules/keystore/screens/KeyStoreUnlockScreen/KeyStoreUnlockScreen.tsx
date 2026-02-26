@@ -130,7 +130,7 @@ const KeyStoreUnlockScreen = () => {
               <LockIcon width={24} height={24} color="#fff" style={spacings.mlTy} />
             </View>
             <AmbireLogoWithBackgroundAndLogotype color="#fff" style={spacings.mbXl} />
-            <Text weight="medium" color={theme.neutral500} style={text.center}>
+            <Text weight="medium" appearance="tertiaryText" style={text.center}>
               {t('Easy and secure self-custody for the\nEthereum ecosystem')}
             </Text>
           </View>
