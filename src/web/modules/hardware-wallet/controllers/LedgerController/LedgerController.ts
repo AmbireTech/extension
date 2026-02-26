@@ -243,6 +243,13 @@ class LedgerController implements ExternalSignerController {
     }
   }
 
+  /**
+   * Note: we added this method because the loggerFactory prop
+   * in the ContextModuleBuilder in no longer optional,
+   * and throws an error if not provided, but we want to avoid
+   * logging in production, so we create a logger that
+   * does nothing in production and logs in development.
+   */
   #createContextLogger = (tag: string) => {
     if (isProd) {
       return {
