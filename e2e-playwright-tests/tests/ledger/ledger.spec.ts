@@ -102,7 +102,9 @@ test.describe('ledger SA with storage', () => {
 
   test('should batch multiple transfer transactions', async ({ pages }) => {
     const ledgerSimulatorControls = new SpeculosDevice({ baseUrl: LEDGER_SIMULATIUON_URL })
-    await ledgerSimulatorControls.enableBlindSigning()
+    // It should be enabled only when running the exact test with (test.only) locally,
+    // Otherwise, the simulator will not be able to sign blind transactions.
+    // await ledgerSimulatorControls.enableBlindSigning()
 
     await runBatchTransferFlow({
       pages,

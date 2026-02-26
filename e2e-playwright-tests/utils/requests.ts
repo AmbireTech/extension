@@ -3,7 +3,9 @@ function categorizeRequests(requests: string[]) {
     'https://api.github.com/repos/MetaMask/eth-phishing-detect/contents/src/config.json?ref=main',
     'https://api.github.com/repos/phantom/blocklist/contents/blocklist.yaml?ref=master',
     'https://raw.githubusercontent.com/phantom/blocklist/master/blocklist.yaml',
-    'https://raw.githubusercontent.com/MetaMask/eth-phishing-detect/main/src/config.json'
+    'https://raw.githubusercontent.com/MetaMask/eth-phishing-detect/main/src/config.json',
+    'http://localhost:5000/apdu',
+    'http://localhost:5000/events'
   ]
   const thirdPartyHostsAllowList = [
     // Bundles

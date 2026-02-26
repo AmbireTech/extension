@@ -1,12 +1,31 @@
 import { LedgerSimulatorClient } from './client'
 import { Button, ButtonAction, SpeculosClientOptions, SpeculosEvent } from './types'
 
+export const LEDGER_ETH_SCREENS = {
+  SELECTOR: {
+    VERIFY: 'Verify selector',
+    CONFIRM: 'Confirm selector'
+  },
+  PARAMETER: {
+    VERIFY: 'Verify parameter',
+    CONFIRM: 'Confirm parameter'
+  },
+  REVIEW: 'Review',
+  ACCEPT: 'Accept',
+  SIGN: 'Sign',
+  BOTH_BUTTONS: 'both buttons'
+} as const
+
 // resource: https://petstore.swagger.io/?url=https://raw.githubusercontent.com/LedgerHQ/speculos/master/speculos/api/static/swagger/swagger.json#/default/get_events
 export class SpeculosDevice {
   private client: LedgerSimulatorClient
 
   constructor(options: SpeculosClientOptions) {
     this.client = new LedgerSimulatorClient(options)
+  }
+
+  async wait(timeInMs: number) {
+    return new Promise((resolve) => setTimeout(resolve, timeInMs))
   }
 
   pressButton(button: Button, action: ButtonAction = 'press-and-release') {
@@ -76,22 +95,31 @@ export class SpeculosDevice {
    * then press both to confirm.
    */
   async confirmTransactionFlow() {
-    await this.waitForText('Review')
+    await this.resetEvents()
 
-    // Navigate forward screens
-    for (let i = 0; i < 10; i++) {
-      const events = await this.getEvents()
-      const text = JSON.stringify(events)
+    const start = Date.now()
+    const timeout = 20000
 
-      if (text.includes('Accept') || text.includes('Sign')) {
-        break
+    while (Date.now() - start < timeout) {
+      const { events } = await this.getEvents()
+
+      const currentText = events
+        .map((e) => e.text)
+        .filter(Boolean)
+        .join(' ')
+
+      console.log('Current screen:', currentText)
+
+      if (currentText.includes('Accept') || currentText.includes('Sign')) {
+        await this.pressBothButtons()
+        return
       }
 
       await this.pressRightButton()
-      await new Promise((r) => setTimeout(r, 400))
+      await this.wait(400)
     }
 
-    await this.pressBothButtons()
+    throw new Error('Timeout waiting for Accept/Sign screen')
   }
 
   /**
@@ -148,32 +176,30 @@ export class SpeculosDevice {
    * It navigates through the transaction confirmation flow and confirms the transaction on the Ledger device.
    * Make sure to enable Blind signing in the Ledger settings before using this method, otherwise the transaction won't be signed.
    */
-
   async signTransaction() {
-    await this.waitForText('Verify selector')
-    await this.nextUntilText('Confirm selector')
+    await this.waitForText(LEDGER_ETH_SCREENS.SELECTOR.VERIFY)
+    await this.nextUntilText(LEDGER_ETH_SCREENS.SELECTOR.CONFIRM)
     await this.pressBothButtons()
 
-    await this.waitForText('Verify selector')
-    await this.nextUntilText('Confirm parameter')
+    await this.waitForText(LEDGER_ETH_SCREENS.PARAMETER.VERIFY)
+    await this.nextUntilText(LEDGER_ETH_SCREENS.PARAMETER.CONFIRM)
     await this.pressBothButtons()
 
-    await this.waitForText('Verify parameter')
+    await this.waitForText(LEDGER_ETH_SCREENS.PARAMETER.VERIFY)
     await this.pressRightButton()
     await this.pressRightButton()
 
-    await this.waitForText('Confirm parameter')
+    await this.waitForText(LEDGER_ETH_SCREENS.PARAMETER.CONFIRM)
     await this.pressBothButtons()
 
-    await this.waitForText('both buttons')
-    await this.pressBothButtons()
-
-    await this.confirmTransactionFlow()
+    await this.signSmartAccountTransaction()
   }
 
   async signSmartAccountTransaction() {
-    await this.waitForText('both buttons')
+    await this.waitForText(LEDGER_ETH_SCREENS.BOTH_BUTTONS)
     await this.pressBothButtons()
+
+    await this.waitForText(LEDGER_ETH_SCREENS.REVIEW)
     await this.confirmTransactionFlow()
   }
 }
