@@ -5,16 +5,17 @@ import { Pressable, View } from 'react-native'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
+import DappIcon from '@common/modules/dapp-catalog/components/DappIcon'
+import ManageApp from '@common/modules/dapp-catalog/components/ManageApp'
 import spacings, { SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import DappIcon from '@web/modules/dapp-catalog/components/DappIcon'
-import ManageApp from '@web/modules/dapp-catalog/components/ManageApp'
 
 const CurrentApp = () => {
   const { theme } = useTheme()
   const { t } = useTranslation()
   const { currentDapp, isLoadingCurrentDapp } = useController('DappsController')
   const [isManageAppExpanded, setIsManageAppExpanded] = useState(false)
+  const [isNetworkSelectorExpanded, setIsNetworkSelectorExpanded] = useState(false)
   const isBlacklisted = currentDapp?.blacklisted === 'BLACKLISTED'
   const pressableRef = useRef<View>(null)
 
@@ -29,6 +30,8 @@ const CurrentApp = () => {
         isOpen={isManageAppExpanded}
         setIsOpen={setIsManageAppExpanded}
         parentRef={pressableRef}
+        isNetworkSelectorExpanded={isNetworkSelectorExpanded}
+        setIsNetworkSelectorExpanded={setIsNetworkSelectorExpanded}
       />
       <Pressable
         style={{
@@ -59,6 +62,7 @@ const CurrentApp = () => {
         disabled={!currentDapp || !currentDapp.isConnected}
         onPress={() => {
           setIsManageAppExpanded((prev) => !prev)
+          setIsNetworkSelectorExpanded(false)
         }}
       >
         <DappIcon dapp={currentDapp} withNetworkIcon />

@@ -1,73 +1,48 @@
-import React, { FC, useCallback, useEffect, useRef } from 'react'
-import { Animated, Pressable, View } from 'react-native'
+import React, { FC, useCallback } from 'react'
+import { Pressable, View } from 'react-native'
 
 import OpenIcon from '@common/assets/svg/OpenIcon'
-import SuccessIcon from '@common/assets/svg/SuccessIcon'
+import SuccessAnimation from '@common/components/SuccessAnimation'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { openInTab } from '@web/extension-services/background/webapi/tab'
+import { openInTab } from '@common/utils/links'
 
 type CompletedProps = {
   title: string
   titleSecondary: string
   openExplorerText: string
   explorerLink?: string
+  beforeLinkOpenHandler?: Function
 }
 
 const Completed: FC<CompletedProps> = ({
   title,
   titleSecondary,
   openExplorerText,
-  explorerLink
+  explorerLink,
+  beforeLinkOpenHandler
 }) => {
   const { addToast } = useToast()
   const { theme } = useTheme()
-  const scaleAnim = useRef(new Animated.Value(0)).current
-
-  useEffect(() => {
-    Animated.spring(scaleAnim, {
-      toValue: 1,
-      useNativeDriver: true,
-      tension: 50,
-      friction: 7
-    }).start()
-  }, [scaleAnim])
 
   const handleOpenExplorer = useCallback(async () => {
     if (!explorerLink) return
+
+    if (beforeLinkOpenHandler) await beforeLinkOpenHandler()
+
     try {
       await openInTab({ url: explorerLink })
     } catch {
       addToast('Error opening explorer', { type: 'error' })
     }
-  }, [addToast, explorerLink])
+  }, [addToast, explorerLink, beforeLinkOpenHandler])
 
   return (
     <View style={flexbox.alignCenter}>
-      <View
-        style={{
-          ...flexbox.center,
-          ...spacings.mbSm,
-          width: 72,
-          height: 72
-        }}
-      >
-        <Animated.View
-          style={{
-            ...flexbox.center,
-            width: 72,
-            height: 72,
-            borderRadius: 36,
-            backgroundColor: theme.successBackground,
-            transform: [{ scale: scaleAnim }]
-          }}
-        >
-          <SuccessIcon width={48} height={48} color={theme.success400} />
-        </Animated.View>
-      </View>
+      <SuccessAnimation style={spacings.mbSm} />
       <Text fontSize={20} weight="medium" style={spacings.mbTy} testID="txn-status">
         {title}
       </Text>

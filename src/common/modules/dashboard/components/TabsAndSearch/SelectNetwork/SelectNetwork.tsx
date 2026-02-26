@@ -7,14 +7,14 @@ import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
+import { AnimatedPressable, DURATIONS, useMultiHover } from '@common/hooks/useHover'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tab/Tab'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { AnimatedPressable, DURATIONS, useMultiHover } from '@web/hooks/useHover'
-import { getUiType } from '@web/utils/uiType'
+import { getUiType } from '@common/utils/uiType'
 
 import getStyles from './styles'
 
@@ -42,18 +42,12 @@ const SelectNetwork = ({ currentTab }: Props) => {
   const { theme } = useTheme()
   const [searchParams] = useSearchParams()
 
-  const [bindNetworkButtonAnim, networkButtonAnimStyle, isHovered] = useMultiHover({
+  const [bindNetworkButtonAnim, networkButtonAnimStyle] = useMultiHover({
     values: [
       {
         property: 'backgroundColor',
         from: theme.secondaryBackground,
         to: theme.tertiaryBackground,
-        duration: DURATIONS.REGULAR
-      },
-      {
-        property: 'borderColor',
-        from: theme.secondaryBorder,
-        to: theme.tertiaryText,
         duration: DURATIONS.REGULAR
       }
     ]
@@ -61,9 +55,6 @@ const SelectNetwork = ({ currentTab }: Props) => {
 
   const filterByNetworkName = useMemo(() => {
     if (!dashboardNetworkFilter) return ''
-
-    if (dashboardNetworkFilter === 'rewards') return t('Ambire Rewards Portfolio')
-    if (dashboardNetworkFilter === 'gasTank') return t('Gas Tank Portfolio')
 
     const network = networks.find((n) => n.chainId.toString() === dashboardNetworkFilter.toString())
 

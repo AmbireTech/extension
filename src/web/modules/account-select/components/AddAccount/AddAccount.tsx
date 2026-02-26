@@ -28,10 +28,12 @@ import ExpandableOptionSection from './ExpandableOptionSection'
 
 const AddAccount = ({
   sheetRef,
-  closeBottomSheet
+  closeBottomSheet,
+  showImportOnly
 }: {
   sheetRef: React.RefObject<any>
   closeBottomSheet: () => void
+  showImportOnly?: boolean
 }) => {
   const { t } = useTranslation()
   const { dispatch } = useControllersMiddleware()
@@ -97,6 +99,13 @@ const AddAccount = ({
         onPress: () => goToNextRoute(WEB_ROUTES.importPrivateKey),
         testID: 'import-private-key'
       },
+      // {
+      //   key: 'import-safe',
+      //   text: t('Safe account'),
+      //   icon: SafeIcon,
+      //   onPress: () => goToNextRoute(WEB_ROUTES.safeImport),
+      //   testID: 'import-safe'
+      // },
       {
         key: 'json-backup-file',
         text: t('JSON backup file'),
@@ -144,13 +153,15 @@ const AddAccount = ({
           testID="add-from-current-recovery-phrase"
           status="none"
         />
-        <Option
-          text={t('Create new recovery phrase')}
-          icon={AddCircularIcon}
-          onPress={() => goToNextRoute(WEB_ROUTES.createSeedPhrasePrepare)}
-          testID="create-new-recovery-phrase"
-          status="none"
-        />
+        {!showImportOnly && (
+          <Option
+            text={t('Create new recovery phrase')}
+            icon={AddCircularIcon}
+            onPress={() => goToNextRoute(WEB_ROUTES.createSeedPhrasePrepare)}
+            testID="create-new-recovery-phrase"
+            status="none"
+          />
+        )}
         <ExpandableOptionSection
           dropdownText={t('Import an account')}
           dropdownIcon={ImportAccountIcon}
@@ -163,19 +174,21 @@ const AddAccount = ({
           dropdownTestID="connect-hardware-wallet"
           options={optionsHW}
         />
-        <Option
-          text={t('Watch an address')}
-          icon={ViewOnlyIcon}
-          onPress={() => goToNextRoute(WEB_ROUTES.viewOnlyAccountAdder)}
-          testID="watch-an-address-button"
-          status="none"
-        />
+        {!showImportOnly && (
+          <Option
+            text={t('Watch an address')}
+            icon={ViewOnlyIcon}
+            onPress={() => goToNextRoute(WEB_ROUTES.viewOnlyAccountAdder)}
+            testID="watch-an-address-button"
+            status="none"
+          />
+        )}
       </View>
       <BottomSheet
         id="seed-phrases-bottom-sheet"
         sheetRef={seedPhraseSheetRef}
         adjustToContentHeight
-        isScrollEnabled={false}
+        isScrollEnabled={true}
         closeBottomSheet={closeSeedPhraseBottomSheet}
       >
         <SavedSeedPhrases handleClose={closeSeedPhraseBottomSheet as any} />

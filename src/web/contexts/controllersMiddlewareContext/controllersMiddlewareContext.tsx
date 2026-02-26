@@ -8,26 +8,25 @@ import { AllControllersMappingType } from '@common/constants/controllersMapping'
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext/controllersMiddlewareContext'
 import { ControllersMiddlewareContextReturnType } from '@common/contexts/controllersMiddlewareContext/types'
 import { ControllerStoreContext } from '@common/contexts/controllerStoreContext'
-import { ControllerHelpersStore } from '@common/contexts/controllerStoreContext/controllerHelpersStore'
 import useIsScreenFocused from '@common/hooks/useIsScreenFocused'
 import useRoute from '@common/hooks/useRoute'
 import useToast from '@common/hooks/useToast'
+import eventBus from '@common/services/event/eventBus'
+import { Action, MethodAction } from '@common/types/actions'
+import { getUiType } from '@common/utils/uiType'
 import { isExtension } from '@web/constants/browserapi'
 import { controllersMapping } from '@web/constants/controllersMapping'
-import { Action } from '@web/extension-services/background/actions'
 import { closeCurrentWindow } from '@web/extension-services/background/webapi/window'
-import eventBus from '@web/extension-services/event/eventBus'
 import { PortMessenger } from '@web/extension-services/messengers'
 import useAutoLockControllerHelpers from '@web/hooks/useAutoLockControllerHelpers'
 import useDappsControllerHelpers from '@web/hooks/useDappsControllerHelpers'
 import useKeystoreControllerHelpers from '@web/hooks/useKeystoreControllerHelpers'
 import useRequestsControllerHelpers from '@web/hooks/useRequestsControllerHelpers'
 import useSelectedAccountControllerHelpers from '@web/hooks/useSelectedAccountControllerHelpers'
-import { getUiType } from '@web/utils/uiType'
 
 let globalDispatch: ControllersMiddlewareContextReturnType['dispatch']
 let pm: PortMessenger
-const actionsBeforeBackgroundReady: Action[] = []
+const actionsBeforeBackgroundReady: (MethodAction | Action)[] = []
 let backgroundReady: boolean = false
 let controllerReady: boolean = false
 let connectPort: () => Promise<void> = () => Promise.resolve()
@@ -119,10 +118,13 @@ if (isExtension) {
 }
 
 if (isExtension) {
-  const ACTIONS_TO_DISPATCH_EVEN_WHEN_HIDDEN = [
-    'INIT_CONTROLLER_STATE',
-    'MAIN_CONTROLLER_ACTIVITY_SET_ACC_OPS_FILTERS',
-    'MAIN_CONTROLLER_ACTIVITY_RESET_ACC_OPS_FILTERS'
+  const ACTION_TYPES_TO_DISPATCH_EVEN_WHEN_HIDDEN = ['INIT_CONTROLLER_STATE']
+
+  const ACTION_METHODS_TO_DISPATCH_EVEN_WHEN_HIDDEN = [
+    'filterAccountsOps',
+    'filterSignedMessages',
+    'resetAccountsOpsFilters',
+    'resetSignedMessagesFilters'
   ]
 
   globalDispatch = (action, windowId?: number) => {
@@ -133,7 +135,12 @@ if (isExtension) {
     // because we can have only one instance of request-window and only one instance for the given action screen
     // (an action screen could not be opened in tab or popup window by design)
     const shouldBlockDispatch = document.hidden && !getUiType().isRequestWindow
-    if (shouldBlockDispatch && !ACTIONS_TO_DISPATCH_EVEN_WHEN_HIDDEN.includes(action.type)) return
+    if (
+      shouldBlockDispatch &&
+      !ACTION_TYPES_TO_DISPATCH_EVEN_WHEN_HIDDEN.includes(action.type) &&
+      !ACTION_METHODS_TO_DISPATCH_EVEN_WHEN_HIDDEN.includes((action as any).params?.method)
+    )
+      return
 
     if (!backgroundReady) {
       actionsBeforeBackgroundReady.push(action)
@@ -155,7 +162,7 @@ export const ControllersMiddlewareProvider: React.FC<{ children: React.ReactNode
   const { controllerStore } = useContext(ControllerStoreContext)
 
   const dispatch = useCallback(
-    (action: Action) => {
+    (action: MethodAction | Action) => {
       globalDispatch(action, windowId)
     },
     [windowId]
@@ -271,12 +278,11 @@ export const ControllersMiddlewareProvider: React.FC<{ children: React.ReactNode
     }
   }, [addToast])
 
-  const [controllerHelpersStore] = useState(() => new ControllerHelpersStore())
-  useDappsControllerHelpers(controllerStore, controllerHelpersStore, dispatch)
-  useAutoLockControllerHelpers(controllerStore, dispatch)
-  useKeystoreControllerHelpers(controllerStore)
-  useRequestsControllerHelpers(controllerStore)
-  useSelectedAccountControllerHelpers(controllerStore)
+  useDappsControllerHelpers(dispatch)
+  useAutoLockControllerHelpers(dispatch)
+  useKeystoreControllerHelpers()
+  useRequestsControllerHelpers()
+  useSelectedAccountControllerHelpers()
 
   return (
     <ControllersMiddlewareContext.Provider value={useMemo(() => ({ dispatch }), [dispatch])}>

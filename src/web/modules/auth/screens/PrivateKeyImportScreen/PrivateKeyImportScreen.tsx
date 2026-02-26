@@ -13,14 +13,13 @@ import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
-import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Header'
+import { storage } from '@common/services/storage'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import {
   TabLayoutContainer,
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import storage from '@web/extension-services/background/webapi/storage'
 
 export const CARD_WIDTH = 400
 
@@ -80,7 +79,7 @@ const PrivateKeyImportScreen = () => {
   }
 
   return (
-    <TabLayoutContainer backgroundColor={theme.secondaryBackground} header={<HeaderWithLogoOnly />}>
+    <TabLayoutContainer backgroundColor={theme.secondaryBackground}>
       <TabLayoutWrapperMainContent>
         <Panel
           type="onboarding"
@@ -108,6 +107,8 @@ const PrivateKeyImportScreen = () => {
                     isValid={!handleValidation(value) && !!value.length}
                     validLabel={t('✅ Valid private key')}
                     secureTextEntry
+                    containerStyle={spacings.mbLg}
+                    backgroundColor={theme.secondaryBackground}
                     error={value.length ? errors?.privateKey?.message : ''}
                     autoCorrect={false}
                     onSubmitEditing={handleFormSubmit}

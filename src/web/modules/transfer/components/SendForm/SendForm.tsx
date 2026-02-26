@@ -10,17 +10,14 @@ import SkeletonLoader from '@common/components/SkeletonLoader'
 import { useTranslation } from '@common/config/localization'
 import useAddressInput from '@common/hooks/useAddressInput'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useGetTokenSelectProps from '@common/hooks/useGetTokenSelectProps'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { getTokenId } from '@common/utils/token'
 import useSimulationError from '@web/modules/portfolio/hooks/SimulationError/useSimulationError'
-import { getTokenId } from '@web/utils/token'
-import { getUiType } from '@web/utils/uiType'
 
 import styles from './styles'
 
-const isTab = getUiType().isTab
 const SendForm = ({
   addressInputState,
   hasGasTank,
@@ -58,9 +55,9 @@ const SendForm = ({
       addressState,
       amount: controllerAmount,
       areDefaultsSet
-    }
+    },
+    dispatch: transferDispatch
   } = useController('TransferController')
-  const { dispatch } = useControllersMiddleware()
   const {
     state: { portfolio }
   } = useController('SelectedAccountController')
@@ -87,31 +84,49 @@ const SendForm = ({
   const handleChangeToken = useCallback(
     (value: string) => {
       const tokenToSelect = tokens.find((tokenRes: TokenResult) => getTokenId(tokenRes) === value)
-      dispatch({
-        type: 'TRANSFER_CONTROLLER_UPDATE_FORM',
-        params: { formValues: { selectedToken: tokenToSelect, amount: '' } }
+      transferDispatch({
+        type: 'method',
+        params: {
+          method: 'update',
+          args: [
+            {
+              selectedToken: tokenToSelect,
+              amount: ''
+            }
+          ]
+        }
       })
     },
-    [tokens, dispatch]
+    [tokens, transferDispatch]
   )
 
   const setMaxAmount = useCallback(() => {
-    dispatch({
-      type: 'TRANSFER_CONTROLLER_UPDATE_FORM',
+    transferDispatch({
+      type: 'method',
       params: {
-        formValues: { shouldSetMaxAmount: true }
+        method: 'update',
+        args: [
+          {
+            shouldSetMaxAmount: true
+          }
+        ]
       }
     })
-  }, [dispatch])
+  }, [transferDispatch])
 
   const switchAmountFieldMode = useCallback(() => {
-    dispatch({
-      type: 'TRANSFER_CONTROLLER_UPDATE_FORM',
+    transferDispatch({
+      type: 'method',
       params: {
-        formValues: { amountFieldMode: amountFieldMode === 'token' ? 'fiat' : 'token' }
+        method: 'update',
+        args: [
+          {
+            amountFieldMode: amountFieldMode === 'token' ? 'fiat' : 'token'
+          }
+        ]
       }
     })
-  }, [amountFieldMode, dispatch])
+  }, [amountFieldMode, transferDispatch])
 
   return (
     <ScrollableWrapper

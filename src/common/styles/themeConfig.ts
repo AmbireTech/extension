@@ -41,8 +41,8 @@ const ThemeColors = {
   /**
    * @deprecated - please use primaryAccent
    */
-  primary: ACCENT_PRIMITIVES.primaryAccent200,
-  primaryAccent: ACCENT_PRIMITIVES.primaryAccent200,
+  primary: ACCENT_PRIMITIVES.primaryAccent300,
+  primaryAccent: ACCENT_PRIMITIVES.primaryAccent300,
   primaryAccentHovered: ACCENT_PRIMITIVES.primaryAccent400,
   secondaryAccent: ACCENT_PRIMITIVES.secondaryAccent500,
   secondaryAccentHovered: ACCENT_PRIMITIVES.secondaryAccent400,

@@ -21,9 +21,9 @@ import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
+import { openInTab } from '@common/utils/links'
 import NetworkAvailableFeatures from '@web/components/NetworkAvailableFeatures'
 import NetworkDetails from '@web/components/NetworkDetails'
-import { openInTab } from '@web/extension-services/background/webapi/tab'
 import { SettingsRoutesContext } from '@web/modules/settings/contexts/SettingsRoutesContext'
 import Network from '@web/modules/settings/screens/NetworksSettingsScreen/Network'
 import NetworkForm from '@web/modules/settings/screens/NetworksSettingsScreen/NetworkForm'
@@ -185,14 +185,7 @@ const NetworksSettings = () => {
           </View>
         </View>
 
-        <View
-          style={[
-            { flex: 2 },
-            maxWidthSize('xl') ? spacings.plXl : spacings.plLg,
-            maxWidthSize('xl') ? spacings.mlXl : spacings.mlLg,
-            { borderLeftWidth: 1, borderColor: theme.secondaryBorder }
-          ]}
-        >
+        <View style={[{ flex: 1.75 }, spacings.mlLg]}>
           <ScrollableWrapper contentContainerStyle={{ flexGrow: 1 }}>
             <View style={spacings.mb}>
               <NetworkDetails
@@ -230,10 +223,7 @@ const NetworksSettings = () => {
           contentContainerStyle: { flex: 1 }
         }}
         containerInnerWrapperStyles={{ flex: 1 }}
-        backgroundColor={
-          themeType === THEME_TYPES.DARK ? 'secondaryBackground' : 'primaryBackground'
-        }
-        style={{ ...spacings.ph0, ...spacings.pv0, overflow: 'hidden' }}
+        style={{ ...spacings.ph0, ...spacings.pv0, overflow: 'hidden', maxWidth: 880 }}
         autoOpen={shouldOpenBottomSheet}
       >
         <NetworkForm onCancel={closeBottomSheet} onSaved={closeBottomSheet} />

@@ -5,19 +5,19 @@ import { SigningStatus } from '@ambire-common/controllers/signAccountOp/signAcco
 import { Key } from '@ambire-common/interfaces/keystore'
 import { AccountOp } from '@ambire-common/libs/accountOp/accountOp'
 import Text from '@common/components/Text'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
+import useController from '@common/hooks/useController'
 import usePrevious from '@common/hooks/usePrevious'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { getUiType } from '@common/utils/uiType'
 import HardwareWalletSigningModal from '@web/modules/hardware-wallet/components/HardwareWalletSigningModal'
-import { getUiType } from '@web/utils/uiType'
 
 const { isPopup } = getUiType()
 
 interface Props {
   signingKeyType?: AccountOp['signingKeyType']
-  feePayerKeyType?: Key['type']
+  feePayerKeyType?: Key['type'] | null
   isSignAndBroadcastInProgress: boolean
   signAccountOpStatusType?: SigningStatus
   shouldSignAuth: {
@@ -39,7 +39,7 @@ const SignAccountOpHardwareWalletSigningModal: React.FC<Props> = ({
   accountOp,
   actionType
 }: Props) => {
-  const { dispatch } = useControllersMiddleware()
+  const { dispatch: requestsCtrlDispatch } = useController('RequestsController')
   const { addToast } = useToast()
 
   const prevTransactionCount = usePrevious<number | null | undefined>(signedTransactionsCount)
@@ -88,15 +88,41 @@ const SignAccountOpHardwareWalletSigningModal: React.FC<Props> = ({
       isPopup &&
       currentlyInvolvedSignOrBroadcastKeyType === 'trezor'
     ) {
+      const idSuffix = actionType === 'swapAndBridge' ? 'swap-and-bridge-sign' : 'transfer-sign'
+
       // If the user needs to sign using a hardware wallet, we need to open the
       // screen in an request window and close the popup
-      dispatch({
-        type: 'OPEN_SIGNING_REQUEST_WINDOW',
-        params: { type: actionType }
+      requestsCtrlDispatch({
+        type: 'method',
+        params: {
+          method: 'addUserRequests',
+          args: [
+            [
+              {
+                id: `${accountOp.accountAddr}-${idSuffix}`,
+                kind: actionType,
+                meta: {
+                  accountAddr: accountOp.accountAddr
+                },
+                dappPromises: []
+              }
+            ],
+            {
+              position: 'last',
+              executionType: 'open-request-window'
+            }
+          ]
+        }
       })
       window.close()
     }
-  }, [actionType, currentlyInvolvedSignOrBroadcastKeyType, dispatch, shouldBeVisible])
+  }, [
+    actionType,
+    currentlyInvolvedSignOrBroadcastKeyType,
+    requestsCtrlDispatch,
+    shouldBeVisible,
+    accountOp.accountAddr
+  ])
 
   if (!currentlyInvolvedSignOrBroadcastKeyType) return null
 

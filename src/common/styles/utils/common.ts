@@ -6,7 +6,6 @@ interface Styles {
   shadowPrimary: ViewStyle
   shadowSecondary: ViewStyle
   shadowTertiary: ViewStyle
-  shadowTertiaryDarkMode: ViewStyle
   borderRadiusPrimary: ViewStyle
   borderRadiusSecondary: ViewStyle
   borderRadiusTertiary: ViewStyle
@@ -41,22 +40,10 @@ const commonStyles: Styles & StyleSheet.NamedStyles<any> = {
     elevation: 7
   },
   shadowTertiary: {
-    shadowColor: '#767DAD4D',
-    shadowOffset: {
-      width: 0,
-      height: 12
-    },
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 1,
     shadowRadius: 24,
-    elevation: 7
-  },
-  shadowTertiaryDarkMode: {
-    shadowColor: '#00000052',
-    shadowOffset: {
-      width: 0,
-      height: 12
-    },
-    shadowRadius: 24,
-    elevation: 7
+    elevation: 12
   },
   borderRadiusPrimary: {
     borderRadius: BORDER_RADIUS_PRIMARY

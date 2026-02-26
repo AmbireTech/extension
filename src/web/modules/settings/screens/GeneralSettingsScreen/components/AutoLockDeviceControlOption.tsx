@@ -5,8 +5,6 @@ import LockWithTimerIcon from '@common/assets/svg/LockWithTimerIcon'
 import ControlOption from '@common/components/ControlOption'
 import Select from '@common/components/Select'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
-import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import {
   AUTO_LOCK_TIMES,
@@ -41,10 +39,11 @@ const AUTO_LOCK_OPTIONS = [
 ]
 
 const AutoLockDeviceControlOption = () => {
-  const { dispatch } = useControllersMiddleware()
   const { t } = useTranslation()
-  const { theme } = useTheme()
-  const { autoLockTime } = useController('AutoLockController').state
+  const {
+    state: { autoLockTime },
+    dispatch: autoLockDispatch
+  } = useController('AutoLockController')
 
   const selectedOption = useMemo(() => {
     return AUTO_LOCK_OPTIONS.find((option) => option.value === autoLockTime) || AUTO_LOCK_OPTIONS[0]
@@ -56,13 +55,16 @@ const AutoLockDeviceControlOption = () => {
       title={t('Auto-lock device')}
       description={t('Set a timer, after which the Ambire Wallet will be automatically locked.')}
       readMoreLink="https://help.ambire.com/hc/en-us/articles/15915341165852"
-      renderIcon={<LockWithTimerIcon color={theme.primaryText} />}
+      renderIcon={<LockWithTimerIcon />}
     >
       <Select
         setValue={(option) => {
-          dispatch({
-            type: 'AUTO_LOCK_CONTROLLER_SET_AUTO_LOCK_TIME',
-            params: option.value as AUTO_LOCK_TIMES
+          autoLockDispatch({
+            type: 'method',
+            params: {
+              method: 'setAutoLockTime',
+              args: [option.value as AUTO_LOCK_TIMES]
+            }
           })
         }}
         withSearch={false}

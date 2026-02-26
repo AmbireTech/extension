@@ -10,10 +10,10 @@ import HumanizedVisualization from '@common/components/HumanizedVisualization'
 import Label from '@common/components/Label'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
+import useController from '@common/hooks/useController'
+import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
-import useHover, { AnimatedPressable } from '@web/hooks/useHover'
 
 import FallbackVisualization from './FallbackVisualization'
 import getStyles from './styles'
@@ -23,12 +23,13 @@ interface Props {
   call: IrCall
   chainId: bigint
   size?: 'sm' | 'md' | 'lg'
-  isHistory?: boolean
+  type?: 'history' | 'benzin' | 'default'
   index?: number
   enableExpand?: boolean
   rightIcon?: React.ReactNode
   onRightIconPress?: () => void
   hideLinks?: boolean
+  hideDeleteIcon?: boolean
 }
 
 export const sizeMultiplier = {
@@ -42,17 +43,18 @@ const TransactionSummary = ({
   call,
   chainId,
   size = 'lg',
-  isHistory,
+  type = 'default',
   index,
   enableExpand = true,
   rightIcon,
   onRightIconPress,
-  hideLinks = false
+  hideLinks = false,
+  hideDeleteIcon
 }: Props) => {
   const textSize = 16 * sizeMultiplier[size]
   const imageSize = 32 * sizeMultiplier[size]
   const { t } = useTranslation()
-  const { dispatch } = useControllersMiddleware()
+  const { dispatch: requestsDispatch } = useController('RequestsController')
   const { styles } = useTheme(getStyles)
   /**
    * It takes some time to remove the call from the controller state, so we optimistically
@@ -83,11 +85,14 @@ const TransactionSummary = ({
     if (!call.id || isCallRemovedOptimistic) return
 
     setIsCallRemovedOptimistic(true)
-    dispatch({
-      type: 'REQUESTS_CONTROLLER_REJECT_CALL_FROM_USER_REQUEST',
-      params: { callId: call.id }
+    requestsDispatch({
+      type: 'method',
+      params: {
+        method: 'rejectCalls',
+        args: [{ callIds: [call.id] }]
+      }
     })
-  }, [isCallRemovedOptimistic, dispatch, call.id])
+  }, [isCallRemovedOptimistic, requestsDispatch, call.id])
 
   useEffect(() => {
     let isMounted = true
@@ -113,11 +118,11 @@ const TransactionSummary = ({
   }, [isCallRemovedOptimistic])
 
   const humanizerWarningLabels = useMemo(() => {
-    if (isHistory) return null
+    if (type !== 'default') return null
     return call.warnings?.map((warning) => {
       return <Label size={size} key={warning.content} text={warning.content} type="warning" />
     })
-  }, [isHistory, call.warnings, size])
+  }, [type, call.warnings, size])
 
   if (isCallRemovedOptimistic) return null
 
@@ -126,13 +131,13 @@ const TransactionSummary = ({
       enableToggleExpand={enableExpand}
       hasArrow={enableExpand}
       style={{
-        ...(call.warnings?.length && !isHistory
+        ...(call.warnings?.length && type === 'default'
           ? { ...styles.warningContainer, ...style }
           : { ...style })
       }}
       contentStyle={{
         paddingHorizontal: SPACING_SM,
-        paddingVertical: !isHistory ? SPACING_TY * sizeMultiplier[size] : 0
+        paddingVertical: type !== 'history' ? SPACING_SM * sizeMultiplier[size] : 0
       }}
       content={
         <>
@@ -143,7 +148,7 @@ const TransactionSummary = ({
               textSize={textSize}
               imageSize={imageSize}
               chainId={chainId}
-              isHistory={isHistory}
+              type={type}
               testID={`recipient-address-${index}`}
               hasPadding={enableExpand}
               hideLinks={hideLinks}
@@ -156,7 +161,7 @@ const TransactionSummary = ({
               hasPadding={enableExpand}
             />
           )}
-          {!!call.id && !isHistory && !rightIcon && (
+          {!!call.id && type === 'default' && !rightIcon && !hideDeleteIcon && (
             <AnimatedPressable
               style={deleteIconAnimStyle}
               onPress={handleRemoveCall}

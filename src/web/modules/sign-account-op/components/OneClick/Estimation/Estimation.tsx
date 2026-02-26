@@ -9,25 +9,25 @@ import {
   SignAccountOpError
 } from '@ambire-common/interfaces/signAccountOp'
 import { SwapAndBridgeRoute } from '@ambire-common/interfaces/swapAndBridge'
+import SuccessIcon from '@common/assets/svg/SuccessIcon'
 import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
-import GlassView from '@common/components/GlassView'
+import FooterGlassView from '@common/components/FooterGlassView'
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
 import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
+import Text from '@common/components/Text'
 import useSign from '@common/hooks/useSign'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
+import { getUiType } from '@common/utils/uiType'
 import Estimation from '@web/modules/sign-account-op/components/Estimation'
+import BundlerWarning from '@web/modules/sign-account-op/components/Estimation/components/bundlerWarning'
 import Modals from '@web/modules/sign-account-op/components/Modals/Modals'
-import SigningKeySelect from '@web/modules/sign-message/components/SignKeySelect'
-import { getUiType } from '@web/utils/uiType'
-
-import BundlerWarning from '../../Estimation/components/bundlerWarning'
-import SafetyChecksBanner from '../../SafetyChecksBanner'
+import SafetyChecksBanner from '@web/modules/sign-account-op/components/SafetyChecksBanner'
+import KeySelect from '@web/modules/sign-message/components/KeySelect'
 
 export type OneClickEstimationProps = {
   closeEstimationModal: () => void
@@ -55,7 +55,7 @@ const OneClickEstimation = ({
   serviceFee
 }: OneClickEstimationProps) => {
   const { t } = useTranslation()
-  const { theme, themeType } = useTheme()
+  const { theme } = useTheme()
 
   const signingErrors = useMemo(() => {
     const signAccountOpErrors = signAccountOpController ? signAccountOpController.errors : []
@@ -74,6 +74,7 @@ const OneClickEstimation = ({
     isSignLoading,
     renderedButNotNecessarilyVisibleModal,
     handleChangeSigningKey,
+    handleSetMultisigSigners,
     onSignButtonClick,
     isSignDisabled,
     warningToPromptBeforeSign,
@@ -122,82 +123,104 @@ const OneClickEstimation = ({
         )}
         {!!signAccountOpController && (
           <View>
-            <SigningKeySelect
-              isVisible={isChooseSignerShown || isChooseFeePayerKeyShown}
+            <KeySelect
               isSigning={isSignLoading || !signAccountOpController.readyToSign}
-              handleClose={() => {
-                setIsChooseSignerShown(false)
-                setIsChooseFeePayerKeyShown(false)
-              }}
+              isChooseSignerShown={isChooseSignerShown}
+              isChooseFeePayerKeyShown={isChooseFeePayerKeyShown}
+              handleSetMultisigSigners={handleSetMultisigSigners}
+              handleChooseKey={
+                isChooseFeePayerKeyShown ? handleChangeFeePayerKeyType : handleChangeSigningKey
+              }
+              account={signAccountOpController.account}
               selectedAccountKeyStoreKeys={
                 isChooseFeePayerKeyShown
                   ? signAccountOpController.feePayerKeyStoreKeys
                   : signAccountOpController.accountKeyStoreKeys
               }
-              handleChooseKey={
-                isChooseFeePayerKeyShown ? handleChangeFeePayerKeyType : handleChangeSigningKey
-              }
-              type={isChooseFeePayerKeyShown ? 'broadcasting' : 'signing'}
-              account={signAccountOpController.account}
+              handleClose={() => {
+                setIsChooseSignerShown(false)
+                setIsChooseFeePayerKeyShown(false)
+              }}
+              signed={signAccountOpController.accountOp.signed || []}
+              threshold={signAccountOpController.threshold}
             />
-            <Estimation
-              updateType={updateType}
-              signAccountOpState={signAccountOpController}
-              disabled={signAccountOpController.status?.type !== SigningStatus.ReadyToSign}
-              hasEstimation={!!hasEstimation}
-              // TODO<oneClickSwap>
-              slowRequest={false}
-              // TODO<oneClickSwap>
-              isViewOnly={isViewOnly}
-              isSponsored={signAccountOpController ? signAccountOpController.isSponsored : false}
-              sponsor={signAccountOpController ? signAccountOpController.sponsor : undefined}
-              serviceFee={serviceFee}
-            />
-            {signingErrors.length > 0 &&
-              (signingErrors.map(({ code }) => code).includes('NO_KEYS_AVAILABLE') ? (
-                <NoKeysToSignAlert style={spacings.mt} />
-              ) : (
-                <Alert title={t(signingErrors[0]!.title)} type="error" style={spacings.mt} />
-              ))}
+            {signAccountOpController?.canBroadcast && (
+              <Estimation
+                updateType={updateType}
+                signAccountOpState={signAccountOpController}
+                disabled={signAccountOpController.status?.type !== SigningStatus.ReadyToSign}
+                hasEstimation={!!hasEstimation}
+                // TODO<oneClickSwap>
+                slowRequest={false}
+                // TODO<oneClickSwap>
+                isViewOnly={isViewOnly}
+                isSponsored={signAccountOpController ? signAccountOpController.isSponsored : false}
+                sponsor={signAccountOpController ? signAccountOpController.sponsor : undefined}
+                serviceFee={serviceFee}
+              />
+            )}
+            {signAccountOpController &&
+              signingErrors.length === 0 &&
+              !signAccountOpController.canBroadcast &&
+              !!signAccountOpController.account.safeCreation && (
+                <View
+                  style={[
+                    flexbox.directionRow,
+                    flexbox.justifyCenter,
+                    flexbox.alignCenter,
+                    spacings.mt
+                  ]}
+                >
+                  <SuccessIcon color={theme.successDecorative} />
+                  <Text fontSize={14} appearance="successText" style={spacings.mlSm}>
+                    {t('Ready to sign and send to Safe global')}
+                  </Text>
+                </View>
+              )}
+            {isViewOnly && (
+              <NoKeysToSignAlert
+                style={spacings.mt}
+                chainId={signAccountOpController?.accountOp?.chainId}
+              />
+            )}
+            {!isViewOnly && signingErrors && signingErrors[0] && (
+              <Alert title={t(signingErrors[0].title)} type="error" style={spacings.mt} />
+            )}
             <BundlerWarning
               signAccountOpState={signAccountOpController}
               bundlerNonceDiscrepancy={bundlerNonceDiscrepancy}
             />
-            <View style={[flexbox.directionRow, flexbox.justifyCenter, spacings.pt]}>
-              <GlassView style={{ borderRadius: 28 }} cssStyle={{ borderRadius: 28 }}>
-                <View style={[flexbox.directionRow, spacings.phSm, spacings.pvSm]}>
-                  <Button
-                    testID="back-button"
-                    type="secondary"
-                    text={t('Back')}
-                    onPress={closeEstimationModal}
-                    hasBottomSpacing={false}
-                    disabled={isSignLoading}
-                    style={{ width: 98, ...spacings.mrLg }}
-                    size="smaller"
-                  />
+            <FooterGlassView size="sm" absolute={false} style={spacings.pt}>
+              <Button
+                testID="back-button"
+                type="secondary"
+                text={t('Back')}
+                onPress={closeEstimationModal}
+                hasBottomSpacing={false}
+                disabled={isSignLoading}
+                style={{ width: 98, ...spacings.mrLg }}
+                size="smaller"
+              />
 
-                  {!!banners && !!banners.length ? (
-                    <HoldToProceedButton
-                      testID="sign-proceed-btn"
-                      text={t('Hold to sign')}
-                      disabled={isSignDisabled || signingErrors.length > 0}
-                      onHoldComplete={onSignButtonClick}
-                      size="smaller"
-                    />
-                  ) : (
-                    <ButtonWithLoader
-                      testID="sign-button"
-                      text={primaryButtonText}
-                      isLoading={isSignLoading}
-                      disabled={isSignDisabled || signingErrors.length > 0}
-                      onPress={onSignButtonClick}
-                      size="smaller"
-                    />
-                  )}
-                </View>
-              </GlassView>
-            </View>
+              {!!banners && !!banners.length ? (
+                <HoldToProceedButton
+                  testID="sign-proceed-btn"
+                  text={t('Hold to sign')}
+                  disabled={isSignDisabled || signingErrors.length > 0}
+                  onHoldComplete={onSignButtonClick}
+                  size="smaller"
+                />
+              ) : (
+                <ButtonWithLoader
+                  testID="sign-button"
+                  text={primaryButtonText}
+                  isLoading={isSignLoading}
+                  disabled={isSignDisabled || signingErrors.length > 0}
+                  onPress={onSignButtonClick}
+                  size="smaller"
+                />
+              )}
+            </FooterGlassView>
           </View>
         )}
       </BottomSheet>

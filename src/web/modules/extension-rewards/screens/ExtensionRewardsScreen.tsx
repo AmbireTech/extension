@@ -9,13 +9,13 @@ import SkeletonLoaderWeb from '@common/components/SkeletonLoader/SkeletonLoader.
 import Text from '@common/components/Text'
 import { APP_VERSION } from '@common/config/env'
 import useController from '@common/hooks/useController'
+import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import HeaderBackButton from '@common/modules/header/components/HeaderBackButton'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
-import { openInTab } from '@web/extension-services/background/webapi/tab'
-import useHover, { AnimatedPressable } from '@web/hooks/useHover'
-import { getUiType } from '@web/utils/uiType'
+import { openInTab } from '@common/utils/links'
+import { getUiType } from '@common/utils/uiType'
 
 import rewardsPageBackground from '../../../assets/images/rewardsPageBackground.png'
 import userBlacklistedIcon from '../../../assets/images/userBlacklisted.png'
@@ -65,7 +65,8 @@ const ExtensionRewardsScreen = () => {
   const [arePastProjectedRewardsScoresLoading, setArePastProjectedRewardsScoresLoading] =
     useState(true)
   const isProjectedRewardsLoading =
-    !portfolio.portfolioState.projectedRewards?.isReady || arePastProjectedRewardsScoresLoading
+    portfolio.portfolioState.projectedRewards?.isReady !== true &&
+    arePastProjectedRewardsScoresLoading
 
   const sections: Stat[] = useMemo(
     () =>

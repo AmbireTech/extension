@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import { humanizeMessage } from '@ambire-common/libs/humanizer'
-import ErrorOutlineIcon from '@common/assets/svg/ErrorOutlineIcon'
+import WarningIcon from '@common/assets/svg/WarningIcon'
 import Alert from '@common/components/Alert'
 import ExpandableCard from '@common/components/ExpandableCard'
 import HumanizedVisualization from '@common/components/HumanizedVisualization'
@@ -30,6 +30,7 @@ interface Props {
   hasReachedBottom: boolean | null
   setHasReachedBottom: Dispatch<SetStateAction<boolean | null>>
   shouldDisplayEIP1271Warning: boolean
+  isSafeNotDeployed: boolean
 }
 
 const Main = ({
@@ -38,7 +39,8 @@ const Main = ({
   handleDismissLedgerConnectModal,
   hasReachedBottom,
   setHasReachedBottom,
-  shouldDisplayEIP1271Warning
+  shouldDisplayEIP1271Warning,
+  isSafeNotDeployed
 }: Props) => {
   const { t } = useTranslation()
   const signMessageState = useController('SignMessageController').state
@@ -113,8 +115,16 @@ const Main = ({
           {shouldDisplayEIP1271Warning && (
             <Alert
               type="error"
+              size="sm"
+              style={spacings.mt}
               title="This app has been flagged to not support Smart Account signatures."
               text="If you encounter issues, please use an EOA account and contact the app to resolve this."
+            />
+          )}
+          {isSafeNotDeployed && (
+            <Alert
+              type="error"
+              title="Safe account not enabled on this network. Please activate it from Safe global"
             />
           )}
         </View>
@@ -148,9 +158,10 @@ const Main = ({
                       marginRight: SPACING_TY * responsiveSizeMultiplier
                     }}
                   >
-                    <ErrorOutlineIcon
+                    <WarningIcon
                       width={24 * responsiveSizeMultiplier}
                       height={24 * responsiveSizeMultiplier}
+                      color={theme.warningText}
                     />
                   </View>
                   <Text fontSize={14 * responsiveSizeMultiplier} appearance="warningText">
@@ -188,9 +199,9 @@ const Main = ({
             })}
           </ExpandableCard>
         </View>
-        {signMessageState.signingKeyType && signMessageState.signingKeyType !== 'internal' && (
+        {signMessageState.signer && signMessageState.signer.key.type !== 'internal' && (
           <HardwareWalletSigningModal
-            keyType={signMessageState.signingKeyType}
+            keyType={signMessageState.signer.key.type}
             isVisible={signStatus === 'LOADING'}
           />
         )}

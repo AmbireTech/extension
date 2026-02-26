@@ -36,13 +36,15 @@ const SavedSeedPhrases = ({ handleClose }: { handleClose: () => void }) => {
       setAddAccountButtonPressed(false)
       goToNextRoute(WEB_ROUTES.accountPersonalize)
     }
-  }, [addAccountButtonPressed, goToNextRoute, dispatch, initParams, subType])
+  }, [addAccountButtonPressed, goToNextRoute, initParams, subType])
 
   const getAccountsForSeed = useCallback(
     (seedId: string) => {
       const keysFromSeed = keys.filter((k) => k.meta.fromSeedId === seedId)
       const keysFromSeedAddr = keysFromSeed.map(({ addr }) => addr)
-      return accounts.filter((a) => a.associatedKeys.some((k) => keysFromSeedAddr.includes(k)))
+      return accounts.filter(
+        (a) => !a.safeCreation && a.associatedKeys.some((k) => keysFromSeedAddr.includes(k))
+      )
     },
     [keys, accounts]
   )
@@ -141,7 +143,13 @@ const SavedSeedPhrases = ({ handleClose }: { handleClose: () => void }) => {
             navigate(WEB_ROUTES.recoveryPhrasesSettings)
           }}
         >
-          <SettingsWheelIcon width={28} height={28} color={theme.iconPrimary} />
+          {({ hovered }: any) => (
+            <SettingsWheelIcon
+              width={28}
+              height={28}
+              color={hovered ? theme.primaryText : theme.iconPrimary}
+            />
+          )}
         </Pressable>
       </ModalHeader>
       <FlatList data={seeds} renderItem={renderItem} keyExtractor={(item) => item.id} />

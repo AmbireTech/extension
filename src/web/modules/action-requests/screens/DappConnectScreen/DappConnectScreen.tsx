@@ -5,9 +5,9 @@ import { View } from 'react-native'
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Header'
+import spacings from '@common/styles/spacings'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import useResponsiveActionWindow from '@web/hooks/useResponsiveActionWindow'
 import ActionFooter from '@web/modules/action-requests/components/ActionFooter'
@@ -19,9 +19,11 @@ import getStyles from './styles'
 // Screen for dApps authorization to connect to extension - will be triggered on dApp connect request
 const DappConnectScreen = () => {
   const { t } = useTranslation()
-  const { theme, styles } = useTheme(getStyles)
-  const { dispatch } = useControllersMiddleware()
-  const { currentUserRequest } = useController('RequestsController').state
+  const { styles } = useTheme(getStyles)
+  const {
+    state: { currentUserRequest },
+    dispatch: requestsDispatch
+  } = useController('RequestsController')
 
   const [isAuthorizing, setIsAuthorizing] = useState(false)
   const { responsiveSizeMultiplier } = useResponsiveActionWindow()
@@ -37,21 +39,27 @@ const DappConnectScreen = () => {
   const handleDenyButtonPress = useCallback(() => {
     if (!userRequest) return
 
-    dispatch({
-      type: 'REQUESTS_CONTROLLER_REJECT_USER_REQUEST',
-      params: { err: t('User rejected the request.'), id: userRequest.id }
+    requestsDispatch({
+      type: 'method',
+      params: {
+        method: 'rejectUserRequests',
+        args: [t('User rejected the request.'), [userRequest.id]]
+      }
     })
-  }, [userRequest, t, dispatch])
+  }, [userRequest, t, requestsDispatch])
 
   const handleAuthorizeButtonPress = useCallback(() => {
     if (!userRequest) return
 
     setIsAuthorizing(true)
-    dispatch({
-      type: 'REQUESTS_CONTROLLER_RESOLVE_USER_REQUEST',
-      params: { data: dappToConnect, id: userRequest.id }
+    requestsDispatch({
+      type: 'method',
+      params: {
+        method: 'resolveUserRequest',
+        args: [dappToConnect, userRequest.id]
+      }
     })
-  }, [userRequest, dappToConnect, dispatch])
+  }, [userRequest, dappToConnect, requestsDispatch])
 
   const shouldHoldToProceed = useMemo(() => {
     return (
@@ -71,9 +79,8 @@ const DappConnectScreen = () => {
   return (
     <TabLayoutContainer
       width="full"
-      backgroundColor={theme.secondaryBackground}
       header={<HeaderWithLogoOnly />}
-      footer={
+      renderDirectChildren={() => (
         <ActionFooter
           onReject={handleDenyButtonPress}
           onResolve={!shouldHoldToProceed ? handleAuthorizeButtonPress : () => {}}
@@ -83,6 +90,7 @@ const DappConnectScreen = () => {
                 testID="dapp-connect-button"
                 onHoldComplete={handleAuthorizeButtonPress}
                 holdDuration={1600}
+                style={{ height: 56 }}
                 text={resolveButtonText}
                 buttonType={((): 'error' | 'warning' => {
                   if (!!dappToConnect && dappToConnect.blacklisted === 'BLACKLISTED') return 'error'
@@ -101,7 +109,8 @@ const DappConnectScreen = () => {
           rejectButtonText={t('Deny')}
           resolveButtonTestID={!shouldHoldToProceed ? 'dapp-connect-button' : undefined}
         />
-      }
+      )}
+      style={spacings.ptXl}
     >
       {!!dappToConnect && (
         <View style={[styles.container]}>

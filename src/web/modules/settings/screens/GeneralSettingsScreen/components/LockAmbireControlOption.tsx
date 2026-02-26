@@ -5,24 +5,19 @@ import LockIcon from '@common/assets/svg/LockIcon'
 import Button from '@common/components/Button'
 import ControlOption from '@common/components/ControlOption'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useNavigation from '@common/hooks/useNavigation'
-import useTheme from '@common/hooks/useTheme'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 
 const LockAmbireControlOption = () => {
-  const { dispatch } = useControllersMiddleware()
   const { t } = useTranslation()
-  const { theme } = useTheme()
   const { navigate } = useNavigation()
   const { hasPasswordSecret } = useController('KeystoreController').state
+  const { dispatch: mainDispatch } = useController('MainController')
 
   const handleLockAmbire = useCallback(() => {
-    dispatch({
-      type: 'MAIN_CONTROLLER_LOCK'
-    })
-  }, [dispatch])
+    mainDispatch({ type: 'method', params: { method: 'lock', args: [] } })
+  }, [mainDispatch])
 
   const handleGoToDevicePasswordSet = useCallback(() => {
     navigate(WEB_ROUTES.devicePasswordSet)
@@ -37,18 +32,19 @@ const LockAmbireControlOption = () => {
           ? t('Lock the Ambire Wallet extension, requiring your password the next time you use it.')
           : t('To lock the Ambire Wallet extension, please create a extension password first.')
       }
-      renderIcon={<LockIcon color={theme.primaryText} />}
+      renderIcon={<LockIcon />}
     >
       <Button
         testID="lock-extension-button"
-        size="small"
+        textStyle={{ fontSize: 12, marginTop: 2 }}
         hasBottomSpacing={false}
-        style={{
-          width: 80
-        }}
+        style={{ width: 92, height: 40 }}
+        childrenPosition="left"
         text={hasPasswordSecret ? t('Lock') : 'Create'}
         onPress={hasPasswordSecret ? handleLockAmbire : handleGoToDevicePasswordSet}
-      />
+      >
+        <LockIcon width={20} height={20} color="#fff" style={spacings.mrMi} />
+      </Button>
     </ControlOption>
   )
 }

@@ -3,12 +3,11 @@ import {
   CRASH_ANALYTICS_ENABLED_STORAGE_KEY,
   CRASH_ANALYTICS_WEB_CONFIG
 } from '@common/config/analytics/CrashAnalytics.web'
+import { storage } from '@common/services/storage'
+import { getUiType } from '@common/utils/uiType'
 import { SENTRY_DSN_BROWSER_EXTENSION } from '@env'
 import * as Sentry from '@sentry/react'
 import { isExtension } from '@web/constants/browserapi'
-import storage from '@web/extension-services/background/webapi/storage'
-
-import { getUiType } from './uiType'
 
 const { uiType } = getUiType()
 

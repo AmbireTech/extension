@@ -6,18 +6,17 @@ import { View } from 'react-native'
 
 import { BIP44_STANDARD_DERIVATION_TEMPLATE } from '@ambire-common/consts/derivation'
 import Button from '@common/components/Button'
+import FatToggle from '@common/components/FatToggle'
 import InputPassword from '@common/components/InputPassword'
 import Panel from '@common/components/Panel'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
 import TextArea from '@common/components/TextArea'
-import Toggle from '@common/components/Toggle'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
-import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Header'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import {
@@ -36,6 +35,7 @@ const SeedPhraseImportScreen = () => {
   const { theme, styles } = useTheme(getStyles)
   const { dispatch } = useControllersMiddleware()
   const { initParams, subType } = useController('AccountPickerController').state
+  const { dispatch: keystoreDispatch } = useController('KeystoreController')
   const {
     watch,
     control,
@@ -78,12 +78,17 @@ const SeedPhraseImportScreen = () => {
     await handleSubmit(({ seed, passphrase }) => {
       const formattedSeed = seed.trim().toLowerCase().replace(/\s+/g, ' ')
       setImportButtonPressed(true)
-      dispatch({
-        type: 'KEYSTORE_CONTROLLER_ADD_TEMP_SEED',
+      keystoreDispatch({
+        type: 'method',
         params: {
-          seed: formattedSeed,
-          seedPassphrase: passphrase || null,
-          hdPathTemplate: BIP44_STANDARD_DERIVATION_TEMPLATE
+          method: 'addTempSeed',
+          args: [
+            {
+              seed: formattedSeed,
+              seedPassphrase: passphrase || null,
+              hdPathTemplate: BIP44_STANDARD_DERIVATION_TEMPLATE
+            }
+          ]
         }
       })
       dispatch({
@@ -91,7 +96,7 @@ const SeedPhraseImportScreen = () => {
         params: { privKeyOrSeed: formattedSeed, seedPassphrase: passphrase || null }
       })
     })()
-  }, [dispatch, handleSubmit])
+  }, [dispatch, keystoreDispatch, handleSubmit])
 
   useEffect(() => {
     if (!getValues('seed')) return
@@ -99,7 +104,7 @@ const SeedPhraseImportScreen = () => {
       setImportButtonPressed(false)
       goToNextRoute()
     }
-  }, [goToNextRoute, dispatch, getValues, initParams, subType, importButtonPressed])
+  }, [goToNextRoute, getValues, initParams, subType, importButtonPressed])
 
   useEffect(() => {
     if (!enablePassphrase) {
@@ -124,7 +129,7 @@ const SeedPhraseImportScreen = () => {
   )
 
   return (
-    <TabLayoutContainer backgroundColor={theme.secondaryBackground} header={<HeaderWithLogoOnly />}>
+    <TabLayoutContainer backgroundColor={theme.secondaryBackground}>
       <TabLayoutWrapperMainContent>
         <Panel
           type="onboarding"
@@ -193,6 +198,7 @@ const SeedPhraseImportScreen = () => {
                         inputWrapperStyle={{
                           position: 'relative',
                           backgroundColor: 'transparent',
+                          borderColor: theme.neutral500,
                           zIndex: 2
                         }}
                         placeholder={t('Write or paste your recovery phrase')}
@@ -210,16 +216,13 @@ const SeedPhraseImportScreen = () => {
                   )
                 }}
               />
-              <Toggle
+              <FatToggle
                 testID="enable-passphrase-toggle"
                 isOn={enablePassphrase}
                 onToggle={() => setEnablePassphrase((prev) => !prev)}
                 label={t('Advanced mode')}
-                labelProps={{
-                  fontSize: 14,
-                  weight: 'regular',
-                  appearance: 'secondaryText'
-                }}
+                width={44}
+                height={22}
                 style={flexbox.alignSelfStart}
               />
               {enablePassphrase ? (
@@ -231,6 +234,7 @@ const SeedPhraseImportScreen = () => {
                       <InputPassword
                         testID="input-passphrase"
                         onBlur={onBlur}
+                        backgroundColor={theme.secondaryBackground}
                         onChangeText={onChange}
                         value={value}
                         placeholder="Recovery phrase passphrase"

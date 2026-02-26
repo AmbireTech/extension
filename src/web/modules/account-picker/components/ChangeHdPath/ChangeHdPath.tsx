@@ -7,7 +7,6 @@ import Button from '@common/components/Button'
 import { SelectValue } from '@common/components/Select/types'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import { FONT_FAMILIES } from '@common/hooks/useFonts'
 import spacings from '@common/styles/spacings'
 
@@ -21,9 +20,10 @@ type Props = {
 const ChangeHdPath: React.FC<Props> = ({ setPage, disabled }) => {
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const { t } = useTranslation()
-  const { dispatch } = useControllersMiddleware()
-  const { hdPathTemplate, accountsLoading, pageError, page } =
-    useController('AccountPickerController').state
+  const {
+    state: { hdPathTemplate, accountsLoading, pageError, page },
+    dispatch: accountPickerDispatch
+  } = useController('AccountPickerController')
 
   const value = useMemo(
     () => DERIVATION_OPTIONS.find((o) => o.value === hdPathTemplate),
@@ -32,12 +32,15 @@ const ChangeHdPath: React.FC<Props> = ({ setPage, disabled }) => {
 
   const handleChangeHdPath = useCallback(
     (s: SelectValue) => {
-      dispatch({
-        type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_SET_HD_PATH_TEMPLATE',
-        params: { hdPathTemplate: s.value as HD_PATH_TEMPLATE_TYPE }
+      accountPickerDispatch({
+        type: 'method',
+        params: {
+          method: 'setHDPathTemplate',
+          args: [{ hdPathTemplate: s.value as HD_PATH_TEMPLATE_TYPE }]
+        }
       })
     },
-    [dispatch]
+    [accountPickerDispatch]
   )
 
   const handleConfirm = useCallback(
@@ -60,9 +63,10 @@ const ChangeHdPath: React.FC<Props> = ({ setPage, disabled }) => {
         hasBottomSpacing={false}
         disabled={disabled}
         text={t('Advanced mode')}
+        childrenPosition="left"
         textStyle={{ fontSize: 14, fontFamily: FONT_FAMILIES.REGULAR }}
       >
-        <SettingsIcon width={16} style={spacings.mlTy} />
+        <SettingsIcon width={20} style={spacings.mrTy} />
       </Button>
 
       <AdvancedModeBottomSheet

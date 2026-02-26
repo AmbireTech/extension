@@ -11,8 +11,9 @@ type BadgeType =
   | 'primaryAccent'
   | 'secondaryAccent'
   | 'new'
+  | 'outline'
 
-type SpecialBadgeType = 'metamask'
+type SpecialBadgeType = 'metamask' | 'safe'
 
 type Props = {
   text: string

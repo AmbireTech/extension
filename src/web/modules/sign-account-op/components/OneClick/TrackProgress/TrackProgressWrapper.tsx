@@ -5,12 +5,12 @@ import { View } from 'react-native'
 import { SwapAndBridgeActiveRoute } from '@ambire-common/interfaces/swapAndBridge'
 import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
+import LayoutWrapper from '@common/components/LayoutWrapper'
 import useTheme from '@common/hooks/useTheme'
 import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Header'
 import spacings, { SPACING } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import LayoutWrapper from '@web/components/LayoutWrapper'
-import { getUiType } from '@web/utils/uiType'
+import { getUiType } from '@common/utils/uiType'
 
 const { isRequestWindow } = getUiType()
 
@@ -51,7 +51,7 @@ const TrackProgressWrapper: FC<TrackProgressProps> = ({
           <View style={{ height: 1, backgroundColor: theme.secondaryBorder, ...spacings.mvLg }} />
         )}
 
-        <FooterGlassView borderRadius={28} style={{ bottom: SPACING }}>
+        <FooterGlassView size="sm" style={{ bottom: SPACING }}>
           <View
             style={[
               routeStatus !== 'failed' ? flexbox.directionRow : flexbox.directionRowReverse,

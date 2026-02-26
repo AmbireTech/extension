@@ -1,13 +1,12 @@
-import { useCallback, useContext, useEffect, useMemo, useSyncExternalStore } from 'react'
+import { useCallback, useContext, useMemo, useState } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 
-import { isDev } from '@common/config/env'
 import { AllControllersMappingType } from '@common/constants/controllersMapping'
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext/controllersMiddlewareContext'
 import { AnyControllerAction } from '@common/contexts/controllersMiddlewareContext/types'
 import { ControllerHelpersMapping } from '@common/contexts/controllerStoreContext/controllerHelpersStore'
-import useControllerStore from '@common/hooks/useControllerStore'
-import eventBus from '@web/extension-services/event/eventBus'
+import useControllerState from '@common/hooks/useControllerState'
+import eventBus from '@common/services/event/eventBus'
 
 type MethodKeys<T> = {
   [K in keyof T]-?: T[K] extends (...args: any[]) => any ? K : never
@@ -94,44 +93,9 @@ export default function useController<
     throw new Error('useController must be used within ControllersMiddlewareProvider')
   }
 
-  const { controllerStore, controllerHelpersStore, subscriptionManager, isStoreReady } =
-    useControllerStore()
+  const [isSubscribed, setIsSubscribed] = useState(false)
+  const { state, helpers } = useControllerState({ id, selector, subscriptionEnabled: isSubscribed })
   const { dispatch: controllersMiddlewareDispatch } = controllersMiddleware
-
-  // Create the error object here to capture the stack trace of the call site (the component using this hook)
-  const missingControllerError = useMemo(() => {
-    return new Error(`A controller with name ${id} does not exist in the controllerStore.`)
-  }, [id])
-
-  useEffect(() => {
-    if (id === 'SignAccountOpController') return
-
-    if (isStoreReady && !Object.keys(controllerStore.getSnapshot(id)).length) {
-      if (isDev) console.warn(missingControllerError)
-    }
-  }, [controllerStore, id, isStoreReady, missingControllerError])
-
-  const state = useSyncExternalStore(
-    useCallback(
-      (cb) => subscriptionManager.subscribe(id, cb, controllerStore, selector),
-      [id, controllerStore, selector, subscriptionManager]
-    ),
-    useCallback(
-      () => subscriptionManager.getSnapshot(id, controllerStore, selector),
-      [id, controllerStore, selector, subscriptionManager]
-    )
-  ) as S
-
-  const helpers = useSyncExternalStore(
-    useCallback(
-      (cb) => subscriptionManager.subscribe(id, cb, controllerHelpersStore),
-      [id, controllerHelpersStore, subscriptionManager]
-    ),
-    useCallback(
-      () => subscriptionManager.getSnapshot(id, controllerHelpersStore),
-      [id, controllerHelpersStore, subscriptionManager]
-    )
-  )
 
   const dispatch = useCallback(
     (action: HookControllerAction<K>) => {
@@ -200,21 +164,26 @@ export default function useController<
     [controllersMiddlewareDispatch, id]
   )
 
-  let stateToReturn: any = state || {}
+  // Memoize the return object so the Proxy is stable
+  const resultObject = useMemo(() => {
+    return {
+      state,
+      ...(helpers || ({} as ControllerHelpersMapping[K])),
+      dispatch,
+      dispatchAndWait
+    } as UseControllerReturn<K, S>
+  }, [state, helpers, dispatch, dispatchAndWait])
 
-  if (id === 'SignAccountOpController' && !selector) {
-    stateToReturn = Object.keys(stateToReturn).length ? stateToReturn : null
-  }
+  return useMemo(() => {
+    return new Proxy(resultObject, {
+      get: (target, prop) => {
+        // If a component tries to access state/helpers and we aren't subscribed yet, toggle it.
+        if ((prop === 'state' || prop === 'helpers' || prop in (helpers || {})) && !isSubscribed) {
+          setIsSubscribed(true)
+        }
 
-  // If selector is present, we return 'state' directly (which is S)
-  if (selector) {
-    stateToReturn = state
-  }
-
-  return {
-    state: stateToReturn,
-    ...(helpers || ({} as ControllerHelpersMapping[K])),
-    dispatch,
-    dispatchAndWait
-  } as UseControllerReturn<K, S>
+        return Reflect.get(target, prop)
+      }
+    })
+  }, [resultObject, isSubscribed, helpers])
 }

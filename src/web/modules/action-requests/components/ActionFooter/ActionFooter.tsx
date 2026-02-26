@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import Button, { Props as ButtonProps } from '@common/components/Button'
+import GlassView from '@common/components/GlassView'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -19,6 +20,7 @@ type Props = {
   resolveButtonTestID?: string
   /** Optional custom node to replace the default resolve button */
   resolveNode?: React.ReactNode
+  informationalNode?: React.ReactNode
 }
 
 const ActionFooter = ({
@@ -30,7 +32,8 @@ const ActionFooter = ({
   resolveType = 'primary',
   rejectButtonTestID,
   resolveButtonTestID,
-  resolveNode
+  resolveNode,
+  informationalNode
 }: Props) => {
   const { t } = useTranslation()
 
@@ -38,36 +41,50 @@ const ActionFooter = ({
   const showReject = useMemo(() => !!onReject, [onReject])
 
   return (
-    <>
-      <View style={flexbox.flex1}>
-        {showReject && (
-          <Button
-            text={rejectButtonText || t('Reject')}
-            type="danger"
-            hasBottomSpacing={false}
-            size="large"
-            onPress={onReject}
-            testID={rejectButtonTestID}
-            style={flexbox.alignSelfStart}
-          />
-        )}
-      </View>
-      <ActionsPagination />
-      {resolveNode || (
-        <View style={flexbox.flex1}>
-          <Button
-            testID={resolveButtonTestID}
-            style={{ ...spacings.phLg, ...flexbox.alignSelfEnd, minWidth: 128 }}
-            size="large"
-            type={resolveType}
-            hasBottomSpacing={false}
-            onPress={handleOnResolve}
-            disabled={resolveDisabled}
-            text={resolveButtonText}
-          />
+    <View style={[flexbox.alignCenter, spacings.pb]}>
+      <GlassView style={{ borderRadius: 28 }} cssStyle={{ borderRadius: 28 }}>
+        <View style={[flexbox.directionRow, spacings.phSm, spacings.pvSm]}>
+          <View style={flexbox.flex1}>
+            {showReject && (
+              <View style={[flexbox.flex1, spacings.mrLg]}>
+                <Button
+                  text={rejectButtonText || t('Reject')}
+                  type="danger"
+                  hasBottomSpacing={false}
+                  size="large"
+                  onPress={onReject}
+                  testID={rejectButtonTestID}
+                  style={flexbox.alignSelfStart}
+                />
+              </View>
+            )}
+            {informationalNode}
+          </View>
+          <ActionsPagination />
+          {resolveNode || (
+            <View style={flexbox.flex1}>
+              <Button
+                testID={resolveButtonTestID}
+                style={{
+                  ...spacings.phLg,
+                  ...flexbox.alignSelfEnd,
+                  minWidth: 128
+                }}
+                textStyle={{
+                  whiteSpace: 'nowrap'
+                }}
+                size="large"
+                type={resolveType}
+                hasBottomSpacing={false}
+                onPress={handleOnResolve}
+                disabled={resolveDisabled}
+                text={resolveButtonText}
+              />
+            </View>
+          )}
         </View>
-      )}
-    </>
+      </GlassView>
+    </View>
   )
 }
 

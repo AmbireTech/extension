@@ -31,12 +31,15 @@ export default function useBanners(): [BannerInterface[], BannerInterface[]] {
 
   const controllerBanners = useMemo(() => {
     return [
-      ...deprecatedSmartAccountBanner,
-      ...requestBanners,
+      ...(deprecatedSmartAccountBanner || []),
+      ...(requestBanners || []),
       ...(isOffline && portfolio.isAllReady ? [OFFLINE_BANNER] : []),
-      ...(isOffline ? [] : [...swapAndBridgeBanners]),
-      ...getCurrentAccountBanners(hasFundedHotAccount ? emailVaultBanners : [], account?.addr),
-      ...extensionUpdateBanner
+      ...(isOffline ? [] : [...(swapAndBridgeBanners || [])]),
+      ...getCurrentAccountBanners(
+        hasFundedHotAccount ? emailVaultBanners || [] : [],
+        account?.addr
+      ),
+      ...(extensionUpdateBanner || [])
     ]
   }, [
     deprecatedSmartAccountBanner,

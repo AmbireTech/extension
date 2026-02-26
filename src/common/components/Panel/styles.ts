@@ -1,7 +1,7 @@
 import { StyleSheet, ViewStyle } from 'react-native'
 
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES, ThemeProps, ThemeType } from '@common/styles/themeConfig'
+import { ThemeProps } from '@common/styles/themeConfig'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -13,7 +13,7 @@ interface Style {
   backBtnWrapper: ViewStyle
 }
 
-const getStyles = (theme: ThemeProps, themeType: ThemeType) => {
+const getStyles = (theme: ThemeProps) => {
   return StyleSheet.create<Style>({
     container: {
       ...common.borderRadiusPrimary,
@@ -23,11 +23,14 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) => {
     onboardingContainer: {
       ...common.borderRadiusSecondary,
       backgroundColor: theme.primaryBackground,
-      ...(themeType === THEME_TYPES.DARK ? common.shadowTertiaryDarkMode : common.shadowTertiary),
+      ...common.shadowTertiary,
+      shadowColor: theme.neutral400,
       ...flexbox.alignSelfCenter,
       minHeight: 486,
       overflow: 'hidden',
-      ...spacings.mbMd
+      ...spacings.mbMd,
+      borderWidth: 1,
+      borderColor: theme.neutral100
     },
     innerContainer: {
       ...flexbox.alignSelfCenter,

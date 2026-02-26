@@ -19,9 +19,10 @@ interface Props {
   style?: ViewStyle
   isTransaction?: boolean
   type?: 'long' | 'short'
+  chainId?: bigint
 }
 
-const NoKeysToSignAlert: FC<Props> = ({ style, isTransaction = true, type = 'long' }) => {
+const NoKeysToSignAlert: FC<Props> = ({ style, isTransaction = true, type = 'long', chainId }) => {
   const {
     state: { account }
   } = useController('SelectedAccountController')
@@ -54,7 +55,9 @@ const NoKeysToSignAlert: FC<Props> = ({ style, isTransaction = true, type = 'lon
             <NoKeysIcon width={18} height={20} color={theme.secondaryText} />
           </View>
           <Text fontSize={14} appearance="errorText" style={spacings.mhSm}>
-            {t(`No keys available to sign this ${isTransaction ? 'transaction' : 'message'}`)}
+            {!!account.safeCreation
+              ? t(`No owners imported to sign this ${isTransaction ? 'transaction' : 'message'}`)
+              : t(`No keys available to sign this ${isTransaction ? 'transaction' : 'message'}`)}
           </Text>
           <Button
             hasBottomSpacing={false}
@@ -68,14 +71,20 @@ const NoKeysToSignAlert: FC<Props> = ({ style, isTransaction = true, type = 'lon
       ) : (
         <Alert
           type="error"
-          title={t(`No keys available to sign this ${isTransaction ? 'transaction' : 'message'}`)}
+          title={
+            !!account.safeCreation
+              ? t(`No owners imported to sign this ${isTransaction ? 'transaction' : 'message'}`)
+              : t(`No keys available to sign this ${isTransaction ? 'transaction' : 'message'}`)
+          }
           text={t(
-            "This account was imported in view-only mode, which means that there isn't an imported key that can sign for this account. \nIf you do have such a key, please re-import the account with it."
+            account.safeCreation
+              ? 'Import your Safe account owners'
+              : "This account was imported in view-only mode, which means that there isn't an imported key that can sign for this account. \nIf you do have such a key, please re-import the account with it."
           )}
           customIcon={() => <NoKeysIcon color={theme.secondaryText} />}
           buttonProps={{
             onPress: () => openBottomSheet(),
-            text: t('Import Key'),
+            text: !!account.safeCreation ? t('Import Owner') : t('Import Key'),
             type: 'error'
           }}
         />
@@ -86,8 +95,9 @@ const NoKeysToSignAlert: FC<Props> = ({ style, isTransaction = true, type = 'lon
         account={account}
         showExportImport
         openAddAccountBottomSheet={openAddAccounts}
+        chainId={chainId}
       />
-      <AddAccount sheetRef={sheetRef} closeBottomSheet={closeBottomSheet} />
+      <AddAccount sheetRef={addAccountsRef} closeBottomSheet={closeAddAccounts} showImportOnly />
     </View>
   )
 }

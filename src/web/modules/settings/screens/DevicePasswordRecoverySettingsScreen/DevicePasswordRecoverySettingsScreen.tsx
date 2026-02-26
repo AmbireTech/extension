@@ -15,24 +15,22 @@ import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings, { SPACING_XL } from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import EmailConfirmation from '@web/modules/keystore/components/EmailConfirmation'
 import { SettingsRoutesContext } from '@web/modules/settings/contexts/SettingsRoutesContext'
 
 const DevicePasswordRecoverySettingsScreen = () => {
-  const ev = useController('EmailVaultController').state
+  const { state: ev, dispatch: evDispatch } = useController('EmailVaultController')
   const keystoreState = useController('KeystoreController').state
   const { t } = useTranslation()
   const { setCurrentSettingsPage } = useContext(SettingsRoutesContext)
   const { navigate } = useNavigation()
-  const { themeType } = useTheme()
+  const { theme } = useTheme()
   const {
     ref: confirmationModalRef,
     open: openConfirmationModal,
@@ -40,8 +38,6 @@ const DevicePasswordRecoverySettingsScreen = () => {
   } = useModalize()
 
   const { ref: successModalRef, open: openSuccessModal, close: closeSuccessModal } = useModalize()
-
-  const { dispatch } = useControllersMiddleware()
 
   const {
     control,
@@ -85,16 +81,27 @@ const DevicePasswordRecoverySettingsScreen = () => {
   }, [ev.statuses.uploadKeyStoreSecret, openSuccessModal])
 
   const handleFormSubmit = useCallback(() => {
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     handleSubmit(async () => {
-      dispatch({ type: 'EMAIL_VAULT_CONTROLLER_UPLOAD_KEYSTORE_SECRET', params: { email } })
+      evDispatch({
+        type: 'method',
+        params: {
+          method: 'uploadKeyStoreSecret',
+          args: [email]
+        }
+      })
     })()
-  }, [handleSubmit, dispatch, email])
+  }, [handleSubmit, evDispatch, email])
 
   const handleCancelLoginAttempt = useCallback(() => {
-    dispatch({
-      type: 'EMAIL_VAULT_CONTROLLER_CANCEL_CONFIRMATION'
+    evDispatch({
+      type: 'method',
+      params: {
+        method: 'cancelEmailConfirmation',
+        args: []
+      }
     })
-  }, [dispatch])
+  }, [evDispatch])
 
   return (
     <>
@@ -142,6 +149,7 @@ const DevicePasswordRecoverySettingsScreen = () => {
               onBlur={onBlur}
               placeholder={t('E-mail')}
               onChangeText={onChange}
+              inputWrapperStyle={{ backgroundColor: theme.tertiaryBackground }}
               onSubmitEditing={handleFormSubmit}
               value={value}
               autoFocus={isWeb}
@@ -183,24 +191,10 @@ const DevicePasswordRecoverySettingsScreen = () => {
           )}
         />
       </View>
-      <BottomSheet
-        id="backup-password-confirmation-modal"
-        sheetRef={confirmationModalRef}
-        style={{ width: 400 }}
-        backgroundColor={
-          themeType === THEME_TYPES.DARK ? 'secondaryBackground' : 'primaryBackground'
-        }
-      >
+      <BottomSheet id="backup-password-confirmation-modal" sheetRef={confirmationModalRef}>
         <EmailConfirmation email={email} handleCancelLoginAttempt={handleCancelLoginAttempt} />
       </BottomSheet>
-      <BottomSheet
-        id="backup-password-success-modal"
-        sheetRef={successModalRef}
-        style={{ width: 400 }}
-        backgroundColor={
-          themeType === THEME_TYPES.DARK ? 'secondaryBackground' : 'primaryBackground'
-        }
-      >
+      <BottomSheet id="backup-password-success-modal" sheetRef={successModalRef}>
         <PanelTitle title={t('Extension password recovery')} style={spacings.mbXl} />
         <KeyStoreIcon style={[flexbox.alignSelfCenter, spacings.mbXl]} />
         <Text fontSize={16} style={[spacings.mbXl, text.center]} appearance="secondaryText">

@@ -1,17 +1,14 @@
-import { useCallback, useEffect, useMemo, useSyncExternalStore } from 'react'
+import { useEffect } from 'react'
 
-import { ControllerStore } from '@common/contexts/controllerStoreContext/controllerStore'
+import useControllerState from '@common/hooks/useControllerState'
 import useNavigation from '@common/hooks/useNavigation'
 import usePrevious from '@common/hooks/usePrevious'
-import { getUiType } from '@web/utils/uiType'
+import { getUiType } from '@common/utils/uiType'
 
-export default function useRequestsControllerHelpers(controllerStore: ControllerStore) {
+export default function useRequestsControllerHelpers() {
   const { navigate } = useNavigation()
 
-  const state = useSyncExternalStore(
-    useCallback((cb) => controllerStore.subscribe('RequestsController', cb), [controllerStore]),
-    useCallback(() => controllerStore.getSnapshot('RequestsController'), [controllerStore])
-  )
+  const { state } = useControllerState({ id: 'RequestsController' })
 
   const prevCurrentUserRequestId = usePrevious(state?.currentUserRequest?.id)
 

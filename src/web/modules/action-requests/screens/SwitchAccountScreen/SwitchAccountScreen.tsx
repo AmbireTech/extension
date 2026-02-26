@@ -8,7 +8,6 @@ import AmbireLogoHorizontal from '@common/components/AmbireLogoHorizontal'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import useWindowSize from '@common/hooks/useWindowSize'
@@ -29,8 +28,12 @@ const SwitchAccountScreen = () => {
   const {
     state: { account }
   } = useController('SelectedAccountController')
-  const { dispatch } = useControllersMiddleware()
-  const { currentUserRequest } = useController('RequestsController').state
+  const { dispatch: mainDispatch } = useController('MainController')
+
+  const {
+    state: { currentUserRequest },
+    dispatch: requestsDispatch
+  } = useController('RequestsController')
   const { accounts } = useController('AccountsController').state
   const [isAuthorizing, setIsAuthorizing] = useState(false)
   const { minHeightSize } = useWindowSize()
@@ -60,11 +63,14 @@ const SwitchAccountScreen = () => {
   const handleDenyButtonPress = useCallback(() => {
     if (!userRequest) return
 
-    dispatch({
-      type: 'REQUESTS_CONTROLLER_REJECT_USER_REQUEST',
-      params: { err: t('User rejected the request.'), id: userRequest.id }
+    requestsDispatch({
+      type: 'method',
+      params: {
+        method: 'rejectUserRequests',
+        args: [t('User rejected the request.'), [userRequest.id]]
+      }
     })
-  }, [userRequest, t, dispatch])
+  }, [userRequest, t, requestsDispatch])
 
   const handleAuthorizeButtonPress = useCallback(() => {
     if (!userRequest) return
@@ -83,11 +89,11 @@ const SwitchAccountScreen = () => {
 
     setIsAuthorizing(true)
 
-    dispatch({
-      type: 'MAIN_CONTROLLER_SELECT_ACCOUNT',
-      params: { accountAddr: nextAccount }
+    mainDispatch({
+      type: 'method',
+      params: { method: 'selectAccount', args: [nextAccount] }
     })
-  }, [addToast, userRequest, dispatch, nextAccount, t])
+  }, [addToast, userRequest, mainDispatch, nextAccount, t])
 
   const responsiveSizeMultiplier = useMemo(() => {
     if (minHeightSize('s')) return 0.85
@@ -100,17 +106,19 @@ const SwitchAccountScreen = () => {
   useEffect(() => {
     if (account?.addr !== nextAccount || !userRequest || !userRequest) return
 
-    dispatch({
-      type: 'REQUESTS_CONTROLLER_RESOLVE_USER_REQUEST',
-      params: { data: null, id: userRequest.id }
+    requestsDispatch({
+      type: 'method',
+      params: {
+        method: 'resolveUserRequest',
+        args: [null, userRequest.id]
+      }
     })
-  }, [account?.addr, userRequest, dispatch, nextAccount])
+  }, [account?.addr, userRequest, requestsDispatch, nextAccount])
 
   return (
     <TabLayoutContainer
       width="full"
-      backgroundColor={theme.secondaryBackground}
-      footer={
+      renderDirectChildren={() => (
         <ActionFooter
           onReject={handleDenyButtonPress}
           onResolve={handleAuthorizeButtonPress}
@@ -119,7 +127,7 @@ const SwitchAccountScreen = () => {
           rejectButtonText={t('Deny')}
           resolveButtonTestID="switch-account-button"
         />
-      }
+      )}
     >
       <View
         style={[

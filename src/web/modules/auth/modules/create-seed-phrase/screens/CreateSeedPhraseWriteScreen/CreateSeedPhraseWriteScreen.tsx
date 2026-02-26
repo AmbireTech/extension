@@ -14,7 +14,7 @@ import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
-import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Header'
+import eventBus from '@common/services/event/eventBus'
 import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -23,7 +23,6 @@ import {
   TabLayoutContainer,
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import eventBus from '@web/extension-services/event/eventBus'
 
 const CreateSeedPhraseWriteScreen = () => {
   const { goToNextRoute, goToPrevRoute } = useOnboardingNavigation()
@@ -31,16 +30,25 @@ const CreateSeedPhraseWriteScreen = () => {
   const { theme } = useTheme()
   const { addToast } = useToast()
   const { dispatch } = useControllersMiddleware()
-  const { hasTempSeed } = useController('KeystoreController').state
+  const {
+    state: { hasTempSeed },
+    dispatch: keystoreDispatch
+  } = useController('KeystoreController')
   const [tempSeed, setTempSeed] = useState<KeystoreSeed | null>(null)
   const { initParams, subType } = useController('AccountPickerController').state
   const [submitButtonPressed, setSubmitButtonPressed] = useState(false)
 
   useEffect(() => {
     if (!tempSeed && hasTempSeed) {
-      dispatch({ type: 'KEYSTORE_CONTROLLER_SEND_TEMP_SEED_TO_UI' })
+      keystoreDispatch({
+        type: 'method',
+        params: {
+          method: 'sendTempSeedToUi',
+          args: []
+        }
+      })
     }
-  }, [dispatch, tempSeed, hasTempSeed])
+  }, [keystoreDispatch, tempSeed, hasTempSeed])
 
   useEffect(() => {
     const onReceiveOneTimeData = (data: any) => {
@@ -92,7 +100,7 @@ const CreateSeedPhraseWriteScreen = () => {
   }, [tempSeed])
 
   return (
-    <TabLayoutContainer backgroundColor={theme.secondaryBackground} header={<HeaderWithLogoOnly />}>
+    <TabLayoutContainer backgroundColor={theme.secondaryBackground}>
       <TabLayoutWrapperMainContent>
         <Panel
           testID="back-up-recovery-phrase-text"
@@ -108,22 +116,18 @@ const CreateSeedPhraseWriteScreen = () => {
         >
           {!!seedArray.length && (
             <>
-              <Text
-                weight="medium"
-                appearance="secondaryText"
-                style={[spacings.mbXl, spacings.phSm, { textAlign: 'center' }]}
-              >
+              <Text weight="medium" appearance="secondaryText" style={spacings.mbMd}>
                 {t('Write down and secure the recovery phrase for your account.')}
               </Text>
 
               <ScrollableWrapper
-                style={flexbox.flex1}
+                style={[{ maxHeight: 204 }, spacings.mbTy]}
                 contentContainerStyle={{
                   ...flexbox.directionRow,
                   ...flexbox.wrap,
                   ...flexbox.justifyCenter,
                   borderWidth: 1,
-                  borderColor: theme.secondaryBorder,
+                  borderColor: theme.neutral500,
                   ...common.borderRadiusPrimary
                 }}
               >
@@ -134,10 +138,9 @@ const CreateSeedPhraseWriteScreen = () => {
                       width: '33.33%',
                       borderRightWidth: (index + 1) % 3 === 0 ? 0 : 1,
                       borderBottomWidth: index < 9 ? 1 : 0,
-                      borderColor: theme.secondaryBorder,
-                      ...spacings.ptMi,
-                      ...spacings.pbMi,
-                      ...spacings.phMi,
+                      borderColor: theme.neutral500,
+                      ...spacings.pvMi,
+                      ...spacings.phTy,
                       ...flexbox.alignCenter,
                       ...flexbox.justifyCenter
                     }}
@@ -169,18 +172,18 @@ const CreateSeedPhraseWriteScreen = () => {
                   flexbox.alignCenter,
                   spacings.ptTy,
                   common.borderRadiusPrimary,
-                  spacings.mbLg
+                  spacings.mbXl
                 ]}
               >
                 <Button
-                  type="ghost"
+                  type="tertiary"
                   text={t('Copy recovery phrase')}
                   hasBottomSpacing={false}
                   size="small"
                   testID="copy-recovery-phrase"
                   onPress={handleCopyToClipboard}
                 >
-                  <CopyIcon style={spacings.mlTy} />
+                  <CopyIcon style={spacings.mlTy} color={theme.iconPrimary} />
                 </Button>
               </View>
               <Button

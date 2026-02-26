@@ -7,13 +7,13 @@ import BatchIcon from '@common/assets/svg/BatchIcon'
 import BatchIconAnimated from '@common/components/BatchIconAnimated'
 import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
+import LayoutWrapper from '@common/components/LayoutWrapper'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import Header from '@common/modules/header/components/Header'
 import spacings, { SPACING_MD } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
-import LayoutWrapper from '@web/components/LayoutWrapper'
 
 type Props = {
   title: string
@@ -77,10 +77,7 @@ const BatchAdded: FC<Props> = ({
           {t('You can add more transactions or\nmanage this batch in the dashboard.')}
         </Text>
 
-        <FooterGlassView
-          borderRadius={28}
-          innerContainerStyle={{ ...spacings.phSm, ...spacings.pvSm }}
-        >
+        <FooterGlassView size="sm">
           <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifySpaceBetween]}>
             <Button
               onPress={onSecondaryButtonPress}

@@ -6,7 +6,7 @@ import { TokenResult } from '@ambire-common/libs/portfolio'
 import Text from '@common/components/Text'
 import spacings from '@common/styles/spacings'
 import text from '@common/styles/utils/text'
-import { getTokenId } from '@web/utils/token'
+import { getTokenId } from '@common/utils/token'
 
 import Skeletons from './Skeletons'
 import Token from './Token/Token'

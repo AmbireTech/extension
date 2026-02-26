@@ -7,11 +7,11 @@ import { isWeb } from '@common/config/env'
 import usePrevious from '@common/hooks/usePrevious'
 import useTheme from '@common/hooks/useTheme'
 import { HEADER_HEIGHT } from '@common/modules/header/components/Header/Header'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING, SPACING_MD, SPACING_SM } from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
+import { getUiType } from '@common/utils/uiType'
 import { Portal } from '@gorhom/portal'
 import useIsScrollable from '@web/hooks/useIsScrollable'
-import { getUiType } from '@web/utils/uiType'
 
 import Backdrop from './Backdrop'
 import getStyles from './styles'
@@ -170,7 +170,11 @@ const BottomSheet: React.FC<Props> = ({
             isModal
               ? { ...styles.modal, ...(autoWidth ? { maxWidth: null, width: 'auto' } : {}) }
               : {},
-            { backgroundColor: theme[backgroundColor] },
+
+            {
+              paddingHorizontal: isWeb ? (isModal ? SPACING_MD : SPACING_SM) : SPACING,
+              backgroundColor: theme[backgroundColor]
+            },
             style
           ]}
           rootStyle={[isPopup && isModal ? spacings.phSm : {}]}

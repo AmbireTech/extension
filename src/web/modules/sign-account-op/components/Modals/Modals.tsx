@@ -9,9 +9,9 @@ import useSign from '@common/hooks/useSign'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import text from '@common/styles/utils/text'
+import { getUiType } from '@common/utils/uiType'
 import LedgerConnectModal from '@web/modules/hardware-wallet/components/LedgerConnectModal'
 import SignAccountOpHardwareWalletSigningModal from '@web/modules/sign-account-op/components/SignAccountOpHardwareWalletSigningModal'
-import { getUiType } from '@web/utils/uiType'
 
 import getStyles from './styles'
 

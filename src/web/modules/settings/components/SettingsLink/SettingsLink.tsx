@@ -5,15 +5,15 @@ import { SvgProps } from 'react-native-svg'
 
 import LeftArrowIcon from '@common/assets/svg/LeftArrowIcon'
 import Text from '@common/components/Text'
+import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
-import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
+import { BORDER_RADIUS_PRIMARY, hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import { createTab } from '@web/extension-services/background/webapi/tab'
-import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
+import { openInTab } from '@common/utils/links'
 
 interface Props {
   label: string
@@ -41,10 +41,9 @@ const SettingsLink: FC<Props> = ({
   const [bindAnim, animStyle, isHovered] = useCustomHover({
     property: 'backgroundColor',
     values: {
-      from: theme.primaryBackground,
-      to: theme.secondaryBackground
-    },
-    forceHoveredStyle: isActive
+      from: isSidebarLink ? hexToRgba(theme.secondaryBackground, 0) : theme.primaryBackground,
+      to: isSidebarLink ? theme.primaryBackground : theme.secondaryBackground
+    }
   })
   const isDisabled = !Object.values(ROUTES).includes(path) && !isExternal
 
@@ -53,7 +52,7 @@ const SettingsLink: FC<Props> = ({
       onPress={async () => {
         if (isExternal) {
           try {
-            await createTab(path)
+            await openInTab({ url: path })
           } catch {
             addToast("Couldn't open link", { type: 'error' })
           }
@@ -69,18 +68,28 @@ const SettingsLink: FC<Props> = ({
         flexbox.alignCenter,
         spacings.phSm,
         spacings.pv,
+        isSidebarLink ? spacings.prLg : {},
         isSidebarLink ? spacings.mbMi : flexbox.flex1,
         {
           borderRadius: BORDER_RADIUS_PRIMARY
         },
         style,
         animStyle,
+        isActive && {
+          backgroundColor: isSidebarLink ? theme.primaryBackground : theme.secondaryBackground
+        },
         isDisabled ? { opacity: 0.6 } : {}
       ]}
       {...bindAnim}
     >
       <View style={flexbox.directionRow}>
-        {Icon ? <Icon width={24} height={24} color={theme.iconPrimary} /> : null}
+        {Icon ? (
+          <Icon
+            width={24}
+            height={24}
+            color={isSidebarLink && isActive ? theme.primaryAccent300 : theme.iconPrimary}
+          />
+        ) : null}
         <Text style={Icon ? spacings.mlSm : {}} weight="medium">
           {t(label)}
         </Text>

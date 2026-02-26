@@ -1,19 +1,20 @@
 import React, { useMemo } from 'react'
 import { View } from 'react-native'
 
+import { SigningStatus } from '@ambire-common/controllers/signAccountOp/signAccountOp'
 import { getCallsCount } from '@ambire-common/utils/userRequest'
 import BatchIcon from '@common/assets/svg/BatchIcon'
-import InfoIcon from '@common/assets/svg/InfoIcon'
+import SuccessIcon from '@common/assets/svg/SuccessIcon'
 import Button from '@common/components/Button'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
+import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
 import ActionsPagination from '@web/modules/action-requests/components/ActionsPagination'
 
 import getStyles from './styles'
@@ -51,7 +52,7 @@ const Footer = ({
   const {
     state: { account }
   } = useController('SelectedAccountController')
-  const { accountOp } = useController('SignAccountOpController').state || {}
+  const { accountOp, status } = useController('SignAccountOpController').state || {}
   const chainId = accountOp?.chainId
 
   const batchCount = useMemo(() => {
@@ -72,13 +73,49 @@ const Footer = ({
     [t]
   )
 
-  const [bindAnim, animStyle] = useCustomHover({
-    property: 'backgroundColor',
-    values: {
-      from: 'transparent',
-      to: theme.quaternaryBackground
-    }
-  })
+  const isMultisigSigned = useMemo(() => {
+    return !!accountOp?.signature
+  }, [accountOp?.signature])
+
+  const batchBtnText = useMemo(() => {
+    if (isMultisigSigned) return t('Sign later')
+    return batchCount > 1
+      ? t('Add to batch ({{batchCount}})', {
+          batchCount
+        })
+      : t('Start a batch')
+  }, [isMultisigSigned, batchCount, t])
+
+  // todo: make this compatible with the new design
+  // if the txns has been queued, display only a success and close options
+  if (status && status.type === SigningStatus.Queued) {
+    return (
+      <View style={[flexbox.directionRow, flexbox.justifyCenter]}>
+        <View style={[flexbox.directionRow, flexbox.flex1, flexbox.alignCenter]}>
+          <SuccessIcon color={theme.successDecorative} />
+          <Text
+            color={theme.successDecorative}
+            style={spacings.mlSm}
+            fontSize={16}
+            appearance="secondaryText"
+            numberOfLines={1}
+          >
+            {t('Sent to Safe global!')}
+          </Text>
+          <ActionsPagination />
+        </View>
+        <Button
+          testID="close-queue-button"
+          type="primary"
+          text={t('Close')}
+          onPress={onAddToCart}
+          hasBottomSpacing={false}
+          style={{ minWidth: 160, ...spacings.ph }}
+          size="large"
+        />
+      </View>
+    )
+  }
 
   return (
     <View style={styles.container}>
@@ -102,37 +139,23 @@ const Footer = ({
           <View style={[flexbox.directionRow, flexbox.alignCenter]}>
             <Button
               testID="queue-and-sign-later-button"
-              type="outline"
-              accentColor={theme.primary}
-              text={
-                batchCount > 1
-                  ? t('Add to batch ({{batchCount}})', {
-                      batchCount
-                    })
-                  : t('Start a batch')
-              }
+              type="secondary"
+              childrenPosition="left"
+              text={batchBtnText}
               onPress={onAddToCart}
               disabled={isAddToCartDisabled}
               hasBottomSpacing={false}
               style={{ minWidth: 160, ...spacings.ph }}
               size="large"
-            >
-              <BatchIcon style={spacings.mlTy} />
-            </Button>
-            <View
-              style={spacings.mlMi}
-              dataSet={createGlobalTooltipDataSet({
-                id: 'start-batch-info-tooltip',
-                content: startBatchingInfo
+              {...(!isMultisigSigned && {
+                tooltipDataSet: createGlobalTooltipDataSet({
+                  id: 'start-batch-info-tooltip',
+                  content: startBatchingInfo
+                })
               })}
             >
-              <AnimatedPressable
-                style={[spacings.phTy, spacings.pvTy, { borderRadius: 50 }, animStyle]}
-                {...bindAnim}
-              >
-                <InfoIcon color={theme.tertiaryText} width={20} height={20} />
-              </AnimatedPressable>
-            </View>
+              {!isMultisigSigned && <BatchIcon style={spacings.mlTy} />}
+            </Button>
           </View>
         )}
         <View
@@ -160,7 +183,7 @@ const Footer = ({
               text={isSignLoading ? inProgressButtonText : buttonText}
               onPress={onSign}
               size="large"
-              style={{ minWidth: 128 }}
+              style={{ minWidth: 128, ...spacings.mlLg }}
             />
           )}
         </View>

@@ -8,13 +8,12 @@ import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
+import { openInTab } from '@common/utils/links'
+import { getUiType } from '@common/utils/uiType'
 import ImageIcon from '@web/assets/svg/ImageIcon'
 import ManifestImage from '@web/components/ManifestImage'
-import { createTab } from '@web/extension-services/background/webapi/tab'
-import { getUiType } from '@web/utils/uiType'
 
 import Row from './Row'
 import getStyles, { COLLECTIBLE_IMAGE_SIZE } from './styles'
@@ -95,7 +94,9 @@ const CollectibleModal = ({
           </Text>
           <Pressable
             style={spacings.mlTy}
-            onPress={() => createTab(`${networkData?.explorerUrl}/nft/${address}/${String(id)}`)}
+            onPress={() =>
+              openInTab({ url: `${networkData?.explorerUrl}/nft/${address}/${String(id)}` })
+            }
           >
             {({ hovered }: any) => (
               <OpenIcon

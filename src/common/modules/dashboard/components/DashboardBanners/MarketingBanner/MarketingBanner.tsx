@@ -4,14 +4,14 @@ import { Image, Pressable, View } from 'react-native'
 import { Banner, MarketingBannerTypes } from '@ambire-common/interfaces/banner'
 import CloseIcon from '@common/assets/svg/CloseIcon'
 import Text from '@common/components/Text'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
+import useController from '@common/hooks/useController'
+import { AnimatedPressable, useMultiHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY, hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import { openInTab } from '@web/extension-services/background/webapi/tab'
-import { AnimatedPressable, useMultiHover } from '@web/hooks/useHover'
-import { getUiType } from '@web/utils/uiType'
+import { openInTab } from '@common/utils/links'
+import { getUiType } from '@common/utils/uiType'
 
 import temporaryImage from './assets/temporary-image.png'
 
@@ -35,7 +35,7 @@ const typeImageMap: {
 
 const MarketingBanner: React.FC<Props> = ({ banner }) => {
   const { isPopup } = getUiType()
-  const { dispatch } = useControllersMiddleware()
+  const { dispatch: bannerDispatch } = useController('BannerController')
   const { theme } = useTheme()
   const { text, title, type: bannerType = 'updates', actions } = banner
   const type = (
@@ -74,7 +74,9 @@ const MarketingBanner: React.FC<Props> = ({ banner }) => {
       {...bindAnim}
     >
       <Image
-        source={{ uri: typeImageMap[type] }}
+        source={
+          typeof typeImageMap[type] === 'number' ? typeImageMap[type] : { uri: typeImageMap[type] }
+        }
         width={64}
         height={64}
         style={{ width: 64, height: 64 }}
@@ -84,9 +86,12 @@ const MarketingBanner: React.FC<Props> = ({ banner }) => {
           <Text weight="medium">{title}</Text>
           <Pressable
             onPress={() => {
-              dispatch({
-                type: 'DISMISS_BANNER',
-                params: { bannerId: banner.id }
+              bannerDispatch({
+                type: 'method',
+                params: {
+                  method: 'dismissBanner',
+                  args: [banner.id]
+                }
               })
             }}
             hitSlop={8}

@@ -8,11 +8,11 @@ import InfoIcon from '@common/assets/svg/InfoIcon'
 import SuccessIcon from '@common/assets/svg/SuccessIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import Text from '@common/components/Text'
+import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
 
 import getStyles from './styles'
 
@@ -95,18 +95,20 @@ const Banner = React.memo(
             </Text>
           )}
         </View>
-        <Pressable
-          onPress={onClosePress}
-          hitSlop={8}
-          style={{
-            width: 24,
-            height: 24,
-            ...flexbox.center
-          }}
-          testID="banner-button-reject"
-        >
-          <CloseIcon color={theme.iconPrimary} strokeWidth="2" width={12} height={12} />
-        </Pressable>
+        {!!onClosePress && (
+          <Pressable
+            onPress={onClosePress}
+            hitSlop={8}
+            style={{
+              width: 24,
+              height: 24,
+              ...flexbox.center
+            }}
+            testID="banner-button-reject"
+          >
+            <CloseIcon color={theme.iconPrimary} strokeWidth="2" width={12} height={12} />
+          </Pressable>
+        )}
         {children}
       </WrapperElement>
     )

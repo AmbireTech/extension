@@ -17,10 +17,10 @@ const getStyles = (theme: ThemeProps) =>
       ...flexbox.directionRow,
       ...spacings.pvTy,
       ...flexbox.flex1,
-      ...spacings.ph,
-      ...spacings.pv,
+      ...spacings.phSm,
+      ...spacings.pvSm,
       width: '100%',
-      height: 52
+      height: 48
     },
     networkIcon: {
       borderRadius: 50,

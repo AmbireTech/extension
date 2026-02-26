@@ -6,13 +6,12 @@ import { Key } from '@ambire-common/interfaces/keystore'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 
 import AccountKeyBanner from '../AccountKeyBanner'
 import AccountKeyIcon from '../AccountKeyIcon/AccountKeyIcon'
 
-export type KeyType = Key['type'] | 'none'
+export type KeyType = Key['type'] | 'none' | 'safe'
 
 const AccountKeyIconOrBanner = ({
   type,
@@ -38,12 +37,17 @@ const AccountKeyIcons = ({
   isExtended: boolean
 }) => {
   const { keys } = useController('KeystoreController').state
-  const { theme, themeType } = useTheme()
+  const { theme } = useTheme()
   const associatedKeys = account?.associatedKeys || []
   const importedKeyTypes = Array.from(
     new Set(keys.filter(({ addr }) => associatedKeys.includes(addr)).map((key) => key.type))
   )
   const hasKeys = React.useMemo(() => importedKeyTypes.length > 0, [importedKeyTypes])
+
+  if (account.safeCreation)
+    return (
+      <AccountKeyIconOrBanner type="safe" isExtended={isExtended} color={theme.primaryBackground} />
+    )
 
   return (
     <View style={[flexbox.directionRow, hasKeys ? spacings.mlTy : spacings.ml0]}>
@@ -64,7 +68,7 @@ const AccountKeyIcons = ({
         })
       ) : (
         <AccountKeyIconOrBanner
-          type="none"
+          type={'none'}
           isExtended={isExtended}
           color={theme.primaryBackground}
         />

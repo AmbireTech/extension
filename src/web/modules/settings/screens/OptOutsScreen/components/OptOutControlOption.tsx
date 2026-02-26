@@ -4,7 +4,6 @@ import { FeatureFlags } from '@ambire-common/consts/featureFlags'
 import ControlOption from '@common/components/ControlOption'
 import FatToggle from '@common/components/FatToggle'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import spacings from '@common/styles/spacings'
 
 interface Opts {
@@ -15,19 +14,21 @@ interface Opts {
 }
 
 const OptOutControlOption = (opts: Opts) => {
-  const { dispatch } = useControllersMiddleware()
-  const { flags } = useController('FeatureFlagsController').state
+  const {
+    state: { flags },
+    dispatch: featureFlagsDispatch
+  } = useController('FeatureFlagsController')
   const { title, description, icon, flag } = opts
 
   const handleToggle = useCallback(() => {
-    dispatch({
-      type: 'FEATURE_FLAGS_CONTROLLER_FLIP_FEATURE',
+    featureFlagsDispatch({
+      type: 'method',
       params: {
-        flag,
-        isEnabled: !flags[flag]
+        method: 'setFeatureFlag',
+        args: [flag, !flags[flag]]
       }
     })
-  }, [dispatch, flags, flag])
+  }, [featureFlagsDispatch, flags, flag])
 
   return (
     <ControlOption style={spacings.mbTy} title={title} description={description} renderIcon={icon}>
