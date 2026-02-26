@@ -53,7 +53,7 @@ const DappIcon: FC<Props> = ({ dapp, withNetworkIcon }) => {
           width: 7,
           height: 7,
           borderRadius: 3,
-          backgroundColor: dapp.isConnected ? theme.successDecorative : theme.neutral500,
+          backgroundColor: dapp.isConnected ? theme.successDecorative : theme.neutral600,
           position: 'absolute',
           top: 0,
           right: 0,

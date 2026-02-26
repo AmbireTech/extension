@@ -31,7 +31,7 @@ const getStyles = (theme: ThemeProps) =>
       borderBottomColor: theme.neutral400
     },
     rpcUrlsContainer: {
-      backgroundColor: theme.tertiaryBackground,
+      backgroundColor: theme.secondaryBackground,
       ...common.borderRadiusPrimary,
       maxHeight: 104,
       ...spacings.mb
@@ -44,7 +44,7 @@ const getStyles = (theme: ThemeProps) =>
     },
     selectRpcItemBorder: {
       borderBottomWidth: 1,
-      borderBottomColor: theme.tertiaryBackground
+      borderBottomColor: theme.secondaryBackground
     },
     radio: {
       width: 16,

@@ -127,7 +127,7 @@ const CreateSeedPhraseWriteScreen = () => {
                   ...flexbox.wrap,
                   ...flexbox.justifyCenter,
                   borderWidth: 1,
-                  borderColor: theme.neutral500,
+                  borderColor: theme.neutral600,
                   ...common.borderRadiusPrimary
                 }}
               >
@@ -138,7 +138,7 @@ const CreateSeedPhraseWriteScreen = () => {
                       width: '33.33%',
                       borderRightWidth: (index + 1) % 3 === 0 ? 0 : 1,
                       borderBottomWidth: index < 9 ? 1 : 0,
-                      borderColor: theme.neutral500,
+                      borderColor: theme.neutral600,
                       ...spacings.pvMi,
                       ...spacings.phTy,
                       ...flexbox.alignCenter,
