@@ -242,7 +242,15 @@ cd e2e-playwright-tests/ledger-emulator
 ```bash
 $LEDGER_EMULATOR_SEED='<LEDGER-SEED-PHRASE>' ./start-emulator.sh
 ```
- **Note:** Ensure that port `5000` is free before starting the emulator.
+**Note:** Make sure port `5000` is available before starting the emulator.
+
+**Note (macOS):** Port `5000` is often occupied by another process.
+
+To free it, run:
+
+```bash
+kill -9 $(lsof -t -i :5000)
+
 
 ### Browser Extensions E2E Tests
 
