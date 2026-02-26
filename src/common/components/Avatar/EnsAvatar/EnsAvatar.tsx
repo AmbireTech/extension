@@ -20,11 +20,12 @@ const EnsAvatar: FC<Props> = ({ avatar, setImageFetchFailed, size, borderRadius 
     try {
       if (avatar.startsWith('data:image/svg+xml;base64,')) {
         const base64 = avatar.split('data:image/svg+xml;base64,')[1]
-        xml = atob(base64)
+
+        xml = atob(base64!)
       } else if (avatar.startsWith('data:image/svg+xml;utf8,')) {
-        xml = decodeURIComponent(avatar.split('data:image/svg+xml;utf8,')[1])
+        xml = decodeURIComponent(avatar.split('data:image/svg+xml;utf8,')[1]!)
       } else if (avatar.startsWith('data:image/svg+xml,')) {
-        xml = decodeURIComponent(avatar.split('data:image/svg+xml,')[1])
+        xml = decodeURIComponent(avatar.split('data:image/svg+xml,')[1]!)
       }
     } catch (e) {
       setImageFetchFailed(true)

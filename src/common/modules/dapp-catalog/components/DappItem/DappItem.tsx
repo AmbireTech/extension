@@ -109,8 +109,8 @@ const DappItem = (dapp: Dapp) => {
             styles.container,
             isFeatured && {
               // @ts-ignore
-              boxShadow: `0 ${isHovered ? 2 : 3}px 0 0 ${String(theme.primaryAccent)}`,
-              borderColor: theme.primaryAccent
+              boxShadow: `0 ${isHovered ? 2 : 3}px 0 0 ${String(theme.primaryAccent200)}`,
+              borderColor: theme.primaryAccent200
             },
             animStyle
           ]}
@@ -248,11 +248,11 @@ const DappItem = (dapp: Dapp) => {
                   <Badge
                     text={t('Featured')}
                     textStyle={{
-                      color: theme.primaryText
+                      color: '#fff'
                     }}
                     style={{
                       ...spacings.mlTy,
-                      backgroundColor: theme.primaryAccent,
+                      backgroundColor: theme.primaryAccent200,
                       borderWidth: 0
                     }}
                   />
