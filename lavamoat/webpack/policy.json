@@ -701,6 +701,12 @@
         "crypto": true
       }
     },
+    "@safe-global/protocol-kit>@peculiar/asn1-schema": {
+      "packages": {
+        "@safe-global/protocol-kit>@peculiar/asn1-schema>asn1js": true,
+        "@safe-global/protocol-kit>@peculiar/asn1-schema>pvtsutils": true
+      }
+    },
     "@raugfer/jazzicon": {
       "packages": {
         "@raugfer/jazzicon>color": true,
@@ -710,20 +716,62 @@
     "react-router-dom>@remix-run/router": {
       "globals": {
         "AbortController": true,
-        "File": true,
+        "DOMException": true,
+        "FormData": true,
         "Headers": true,
         "Request": true,
         "Response": true,
         "URL": true,
         "URLSearchParams": true,
         "console": true,
-        "document": true,
-        "location.assign": true,
-        "location.origin": true,
-        "location.replace": true
+        "document.defaultView": true
       },
       "packages": {
         "node-polyfill-webpack-plugin>console-browserify": true
+      }
+    },
+    "@safe-global/api-kit": {
+      "globals": {
+        "URL": true,
+        "fetch": true
+      },
+      "packages": {
+        "@safe-global/protocol-kit": true,
+        "@safe-global/api-kit>node-fetch": true
+      }
+    },
+    "@safe-global/protocol-kit": {
+      "globals": {
+        "crypto.subtle.exportKey": true,
+        "crypto.subtle.importKey": true,
+        "navigator.credentials": true,
+        "process.env.TEST_NETWORK": true
+      },
+      "meta": {
+        "webpack-optimization": [
+          "Dependency 'viem' reexports from 'ox>abitype' and webpack collapsed that to a direct import."
+        ]
+      },
+      "packages": {
+        "ox>@noble/curves": true,
+        "@safe-global/protocol-kit>@peculiar/asn1-schema": true,
+        "@safe-global/protocol-kit>@safe-global/safe-deployments": true,
+        "@safe-global/protocol-kit>@safe-global/safe-modules-deployments": true,
+        "@safe-global/api-kit>@safe-global/types-kit": true,
+        "ox>abitype": true,
+        "buffer": true,
+        "ts-jest>semver": true,
+        "viem": true
+      }
+    },
+    "@safe-global/protocol-kit>@safe-global/safe-deployments": {
+      "packages": {
+        "ts-jest>semver": true
+      }
+    },
+    "@safe-global/api-kit>@safe-global/types-kit": {
+      "packages": {
+        "ox>abitype": true
       }
     },
     "@metamask/eth-sig-util>@scure/base": {
@@ -914,9 +962,15 @@
       "packages": {
         "secp256k1>elliptic>bn.js": true,
         "buffer": true,
-        "readable-stream>inherits": true,
+        "stream-http>inherits": true,
         "secp256k1>elliptic>minimalistic-assert": true,
         "node-polyfill-webpack-plugin>vm-browserify": true
+      }
+    },
+    "@safe-global/protocol-kit>@peculiar/asn1-schema>asn1js": {
+      "packages": {
+        "@safe-global/protocol-kit>@peculiar/asn1-schema>pvtsutils": true,
+        "@safe-global/protocol-kit>@peculiar/asn1-schema>asn1js>pvutils": true
       }
     },
     "node-polyfill-webpack-plugin>assert": {
@@ -1040,8 +1094,8 @@
         "crypto-browserify>browserify-cipher>browserify-aes>buffer-xor": true,
         "crypto-browserify>create-hash>cipher-base": true,
         "crypto-browserify>browserify-cipher>evp_bytestokey": true,
-        "readable-stream>inherits": true,
-        "crypto-browserify>pbkdf2>safe-buffer": true
+        "stream-http>inherits": true,
+        "react-native-quick-crypto>safe-buffer": true
       }
     },
     "crypto-browserify>browserify-cipher": {
@@ -1055,15 +1109,15 @@
       "packages": {
         "crypto-browserify>create-hash>cipher-base": true,
         "crypto-browserify>browserify-cipher>browserify-des>des.js": true,
-        "readable-stream>inherits": true,
-        "crypto-browserify>pbkdf2>safe-buffer": true
+        "stream-http>inherits": true,
+        "react-native-quick-crypto>safe-buffer": true
       }
     },
     "crypto-browserify>public-encrypt>browserify-rsa": {
       "packages": {
         "crypto-browserify>public-encrypt>browserify-rsa>bn.js": true,
         "crypto-browserify>randombytes": true,
-        "crypto-browserify>pbkdf2>safe-buffer": true
+        "react-native-quick-crypto>safe-buffer": true
       }
     },
     "crypto-browserify>browserify-sign": {
@@ -1073,13 +1127,13 @@
         "crypto-browserify>create-hash": true,
         "crypto-browserify>create-hmac": true,
         "secp256k1>elliptic": true,
-        "readable-stream>inherits": true,
+        "stream-http>inherits": true,
         "crypto-browserify>public-encrypt>parse-asn1": true,
         "crypto-browserify>browserify-sign>readable-stream": true,
-        "crypto-browserify>pbkdf2>safe-buffer": true
+        "react-native-quick-crypto>safe-buffer": true
       }
     },
-    "node-polyfill-webpack-plugin>browserify-zlib": {
+    "browserify-zlib": {
       "globals": {
         "Buffer.alloc": true,
         "process.nextTick": true
@@ -1087,10 +1141,10 @@
       "packages": {
         "node-polyfill-webpack-plugin>assert": true,
         "buffer": true,
-        "node-polyfill-webpack-plugin>browserify-zlib>pako": true,
+        "browserify-zlib>pako": true,
         "process": true,
         "stream-browserify": true,
-        "node-polyfill-webpack-plugin>util": true
+        "util": true
       }
     },
     "gridplus-sdk>bs58check>bs58": {
@@ -1162,8 +1216,8 @@
     },
     "crypto-browserify>create-hash>cipher-base": {
       "packages": {
-        "readable-stream>inherits": true,
-        "crypto-browserify>pbkdf2>safe-buffer": true,
+        "stream-http>inherits": true,
+        "react-native-quick-crypto>safe-buffer": true,
         "stream-browserify": true,
         "string_decoder": true
       }
@@ -1224,7 +1278,7 @@
     "crypto-browserify>create-hash": {
       "packages": {
         "crypto-browserify>create-hash>cipher-base": true,
-        "readable-stream>inherits": true,
+        "stream-http>inherits": true,
         "crypto-browserify>create-hash>md5.js": true,
         "crypto-browserify>pbkdf2>ripemd160": true,
         "crypto-browserify>pbkdf2>sha.js": true
@@ -1234,9 +1288,9 @@
       "packages": {
         "crypto-browserify>create-hash>cipher-base": true,
         "crypto-browserify>create-hash": true,
-        "readable-stream>inherits": true,
+        "stream-http>inherits": true,
         "crypto-browserify>pbkdf2>ripemd160": true,
-        "crypto-browserify>pbkdf2>safe-buffer": true,
+        "react-native-quick-crypto>safe-buffer": true,
         "crypto-browserify>pbkdf2>sha.js": true
       }
     },
@@ -1296,7 +1350,7 @@
     },
     "crypto-browserify>browserify-cipher>browserify-des>des.js": {
       "packages": {
-        "readable-stream>inherits": true,
+        "stream-http>inherits": true,
         "secp256k1>elliptic>minimalistic-assert": true
       }
     },
@@ -1338,7 +1392,7 @@
         "secp256k1>elliptic>brorand": true,
         "gridplus-sdk>hash.js": true,
         "secp256k1>elliptic>hmac-drbg": true,
-        "readable-stream>inherits": true,
+        "stream-http>inherits": true,
         "secp256k1>elliptic>minimalistic-assert": true,
         "secp256k1>elliptic>minimalistic-crypto-utils": true
       }
@@ -1478,7 +1532,7 @@
     "crypto-browserify>browserify-cipher>evp_bytestokey": {
       "packages": {
         "crypto-browserify>create-hash>md5.js": true,
-        "crypto-browserify>pbkdf2>safe-buffer": true
+        "react-native-quick-crypto>safe-buffer": true
       }
     },
     "expo-application": {
@@ -1664,13 +1718,13 @@
       },
       "meta": {
         "webpack-optimization": [
-          "Dependency 'viem' reexports from 'viem>abitype' and webpack collapsed that to a direct import."
+          "Dependency 'viem' reexports from 'ox>abitype' and webpack collapsed that to a direct import."
         ]
       },
       "packages": {
         "gridplus-sdk>@ethereumjs/rlp": true,
         "@metamask/eth-sig-util": true,
-        "viem>abitype": true,
+        "ox>abitype": true,
         "aes-js": true,
         "gridplus-sdk>bech32": true,
         "gridplus-sdk>bignumber.js": true,
@@ -1703,15 +1757,15 @@
     },
     "crypto-browserify>pbkdf2>ripemd160>hash-base": {
       "packages": {
-        "readable-stream>inherits": true,
+        "stream-http>inherits": true,
         "crypto-browserify>pbkdf2>ripemd160>hash-base>readable-stream": true,
-        "crypto-browserify>pbkdf2>safe-buffer": true,
+        "react-native-quick-crypto>safe-buffer": true,
         "crypto-browserify>pbkdf2>to-buffer": true
       }
     },
     "gridplus-sdk>hash.js": {
       "packages": {
-        "readable-stream>inherits": true,
+        "stream-http>inherits": true,
         "secp256k1>elliptic>minimalistic-assert": true
       }
     },
@@ -1737,10 +1791,10 @@
         "react-i18next>html-parse-stringify>void-elements": true
       }
     },
-    "node-polyfill-webpack-plugin>https-browserify": {
+    "https-browserify": {
       "packages": {
-        "node-polyfill-webpack-plugin>stream-http": true,
-        "node-polyfill-webpack-plugin>url": true
+        "stream-http": true,
+        "url": true
       }
     },
     "i18next": {
@@ -1805,7 +1859,7 @@
         "@ledgerhq/context-module>reflect-metadata": true
       }
     },
-    "node-polyfill-webpack-plugin>util>is-arguments": {
+    "react-native-quick-crypto>util>is-arguments": {
       "packages": {
         "@lavamoat/webpack>json-stable-stringify>call-bound": true,
         "eslint-plugin-react>array-includes>is-string>has-tostringtag": true
@@ -1816,7 +1870,7 @@
         "document": true
       }
     },
-    "node-polyfill-webpack-plugin>util>is-generator-function": {
+    "react-native-quick-crypto>util>is-generator-function": {
       "packages": {
         "@lavamoat/webpack>json-stable-stringify>call-bound": true,
         "eslint-plugin-react>array-includes>es-abstract>get-proto": true,
@@ -1838,9 +1892,9 @@
         "eslint-plugin-react>hasown": true
       }
     },
-    "node-polyfill-webpack-plugin>util>is-typed-array": {
+    "react-native-quick-crypto>util>is-typed-array": {
       "packages": {
-        "node-polyfill-webpack-plugin>util>which-typed-array": true
+        "react-native-quick-crypto>util>which-typed-array": true
       }
     },
     "@ledgerhq/device-management-kit>isomorphic-ws": {
@@ -1928,8 +1982,8 @@
     "crypto-browserify>create-hash>md5.js": {
       "packages": {
         "crypto-browserify>pbkdf2>ripemd160>hash-base": true,
-        "readable-stream>inherits": true,
-        "crypto-browserify>pbkdf2>safe-buffer": true
+        "stream-http>inherits": true,
+        "react-native-quick-crypto>safe-buffer": true
       }
     },
     "@metamask/eth-sig-util>@ethereumjs/util>micro-ftch": {
@@ -1943,11 +1997,11 @@
         "process": true
       },
       "packages": {
-        "node-polyfill-webpack-plugin>browserify-zlib": true,
+        "browserify-zlib": true,
         "buffer": true,
-        "node-polyfill-webpack-plugin>https-browserify": true,
+        "https-browserify": true,
         "process": true,
-        "node-polyfill-webpack-plugin>stream-http": true,
+        "stream-http": true,
         "url": true,
         "util": true
       }
@@ -2010,12 +2064,18 @@
       "globals": {
         "TextDecoder": true,
         "TextEncoder": true,
-        "crypto.getRandomValues": true
+        "crypto.getRandomValues": true,
+        "crypto.subtle.exportKey": true,
+        "crypto.subtle.importKey": true,
+        "document.title": true,
+        "location.hostname": true,
+        "location.origin": true,
+        "navigator.credentials": true
       },
       "packages": {
         "viem>@noble/curves": true,
         "@noble/hashes": true,
-        "viem>ox>abitype": true
+        "ox>abitype": true
       }
     },
     "crypto-browserify>public-encrypt>parse-asn1": {
@@ -2024,7 +2084,7 @@
         "crypto-browserify>browserify-cipher>browserify-aes": true,
         "crypto-browserify>browserify-cipher>evp_bytestokey": true,
         "crypto-browserify>pbkdf2": true,
-        "crypto-browserify>pbkdf2>safe-buffer": true
+        "react-native-quick-crypto>safe-buffer": true
       }
     },
     "crypto-browserify>pbkdf2": {
@@ -2039,7 +2099,7 @@
         "crypto-browserify>create-hash": true,
         "process": true,
         "crypto-browserify>pbkdf2>ripemd160": true,
-        "crypto-browserify>pbkdf2>safe-buffer": true,
+        "react-native-quick-crypto>safe-buffer": true,
         "crypto-browserify>pbkdf2>sha.js": true,
         "crypto-browserify>pbkdf2>to-buffer": true
       }
@@ -2070,7 +2130,7 @@
         "crypto-browserify>create-hash": true,
         "crypto-browserify>public-encrypt>parse-asn1": true,
         "crypto-browserify>randombytes": true,
-        "crypto-browserify>pbkdf2>safe-buffer": true
+        "react-native-quick-crypto>safe-buffer": true
       }
     },
     "url>punycode": {
@@ -2083,9 +2143,14 @@
         "define": true
       }
     },
-    "node-polyfill-webpack-plugin>url>punycode": {
+    "@safe-global/protocol-kit>@peculiar/asn1-schema>pvtsutils": {
       "globals": {
-        "define": true
+        "Buffer.from": true,
+        "atob": true,
+        "btoa": true
+      },
+      "packages": {
+        "buffer": true
       }
     },
     "react-native-qrcode-svg>qrcode": {
@@ -2102,11 +2167,6 @@
         "eslint-plugin-react>string.prototype.matchall>side-channel": true
       }
     },
-    "node-polyfill-webpack-plugin>url>qs": {
-      "packages": {
-        "eslint-plugin-react>string.prototype.matchall>side-channel": true
-      }
-    },
     "crypto-browserify>randombytes": {
       "globals": {
         "crypto": true,
@@ -2115,7 +2175,7 @@
       },
       "packages": {
         "process": true,
-        "crypto-browserify>pbkdf2>safe-buffer": true
+        "react-native-quick-crypto>safe-buffer": true
       }
     },
     "crypto-browserify>randomfill": {
@@ -2128,7 +2188,7 @@
       "packages": {
         "process": true,
         "crypto-browserify>randombytes": true,
-        "crypto-browserify>pbkdf2>safe-buffer": true
+        "react-native-quick-crypto>safe-buffer": true
       }
     },
     "react": {
@@ -2291,22 +2351,6 @@
         "expo-linking>invariant": true,
         "react": true,
         "react-native-reanimated": true,
-        "react-native-web": true
-      }
-    },
-    "react-native-keyboard-aware-scroll-view>react-native-iphone-x-helper": {
-      "packages": {
-        "react-native-web": true
-      }
-    },
-    "react-native-keyboard-aware-scroll-view": {
-      "globals": {
-        "setTimeout": true
-      },
-      "packages": {
-        "react-dropzone>prop-types": true,
-        "react": true,
-        "react-native-keyboard-aware-scroll-view>react-native-iphone-x-helper": true,
         "react-native-web": true
       }
     },
@@ -2527,14 +2571,12 @@
         "FormData": true,
         "URL": true,
         "URLSearchParams": true,
+        "__reactRouterVersion": "write",
         "addEventListener": true,
         "confirm": true,
-        "console": true,
         "document": true,
         "history.scrollRestoration": true,
-        "location.host": true,
         "location.href": true,
-        "location.protocol": true,
         "process.env.NODE_ENV": true,
         "removeEventListener": true,
         "scrollTo": true,
@@ -2550,15 +2592,15 @@
       },
       "packages": {
         "react-router-dom>@remix-run/router": true,
-        "node-polyfill-webpack-plugin>console-browserify": true,
         "react": true,
+        "react-dom": true,
         "react-router-dom>react-router": true
       }
     },
     "react-router-dom>react-router": {
       "globals": {
         "console.error": true,
-        "document": true,
+        "console.warn": true,
         "process.env.NODE_ENV": true
       },
       "packages": {
@@ -2610,13 +2652,13 @@
       "packages": {
         "readable-stream>core-util-is": true,
         "events": true,
-        "readable-stream>inherits": true,
+        "stream-http>inherits": true,
         "crypto-browserify>browserify-sign>readable-stream>isarray": true,
         "process": true,
         "@metamask/obs-store>readable-stream>process-nextick-args": true,
         "crypto-browserify>browserify-sign>readable-stream>safe-buffer": true,
         "crypto-browserify>browserify-sign>readable-stream>string_decoder": true,
-        "stream-browserify>readable-stream>util-deprecate": true
+        "stream-http>readable-stream>util-deprecate": true
       }
     },
     "crypto-browserify>pbkdf2>ripemd160>hash-base>readable-stream": {
@@ -2630,13 +2672,13 @@
       "packages": {
         "readable-stream>core-util-is": true,
         "events": true,
-        "readable-stream>inherits": true,
+        "stream-http>inherits": true,
         "crypto-browserify>pbkdf2>ripemd160>hash-base>readable-stream>isarray": true,
         "process": true,
         "@metamask/obs-store>readable-stream>process-nextick-args": true,
         "crypto-browserify>pbkdf2>ripemd160>hash-base>readable-stream>safe-buffer": true,
         "crypto-browserify>pbkdf2>ripemd160>hash-base>readable-stream>string_decoder": true,
-        "stream-browserify>readable-stream>util-deprecate": true
+        "stream-http>readable-stream>util-deprecate": true
       }
     },
     "eth-crypto>ethereumjs-util>ethereum-cryptography>keccak>readable-stream": {
@@ -2648,10 +2690,10 @@
       "packages": {
         "buffer": true,
         "events": true,
-        "readable-stream>inherits": true,
+        "stream-http>inherits": true,
         "process": true,
         "eth-crypto>ethereumjs-util>ethereum-cryptography>keccak>readable-stream>string_decoder": true,
-        "stream-browserify>readable-stream>util-deprecate": true
+        "stream-http>readable-stream>util-deprecate": true
       }
     },
     "stream-browserify>readable-stream": {
@@ -2663,13 +2705,13 @@
       "packages": {
         "buffer": true,
         "events": true,
-        "readable-stream>inherits": true,
+        "stream-http>inherits": true,
         "process": true,
         "stream-browserify>readable-stream>string_decoder": true,
-        "stream-browserify>readable-stream>util-deprecate": true
+        "stream-http>readable-stream>util-deprecate": true
       }
     },
-    "node-polyfill-webpack-plugin>stream-http>readable-stream": {
+    "stream-http>readable-stream": {
       "globals": {
         "process.nextTick": true,
         "process.stderr": true,
@@ -2678,10 +2720,10 @@
       "packages": {
         "buffer": true,
         "events": true,
-        "readable-stream>inherits": true,
+        "stream-http>inherits": true,
         "process": true,
-        "node-polyfill-webpack-plugin>stream-http>readable-stream>string_decoder": true,
-        "stream-browserify>readable-stream>util-deprecate": true
+        "stream-http>readable-stream>string_decoder": true,
+        "stream-http>readable-stream>util-deprecate": true
       }
     },
     "@ledgerhq/context-module>reflect-metadata": {
@@ -2694,7 +2736,7 @@
       "packages": {
         "buffer": true,
         "crypto-browserify>pbkdf2>ripemd160>hash-base": true,
-        "readable-stream>inherits": true
+        "stream-http>inherits": true
       }
     },
     "eth-crypto>ethereumjs-util>rlp": {
@@ -2719,7 +2761,7 @@
         "tslib": true
       }
     },
-    "crypto-browserify>pbkdf2>safe-buffer": {
+    "react-native-quick-crypto>safe-buffer": {
       "packages": {
         "buffer": true
       }
@@ -2833,8 +2875,8 @@
     },
     "crypto-browserify>pbkdf2>sha.js": {
       "packages": {
-        "readable-stream>inherits": true,
-        "crypto-browserify>pbkdf2>safe-buffer": true,
+        "stream-http>inherits": true,
+        "react-native-quick-crypto>safe-buffer": true,
         "crypto-browserify>pbkdf2>to-buffer": true
       }
     },
@@ -2889,11 +2931,11 @@
     "stream-browserify": {
       "packages": {
         "events": true,
-        "readable-stream>inherits": true,
+        "stream-http>inherits": true,
         "stream-browserify>readable-stream": true
       }
     },
-    "node-polyfill-webpack-plugin>stream-http": {
+    "stream-http": {
       "globals": {
         "AbortController": true,
         "Blob": true,
@@ -2912,12 +2954,12 @@
       },
       "packages": {
         "buffer": true,
-        "node-polyfill-webpack-plugin>stream-http>builtin-status-codes": true,
-        "readable-stream>inherits": true,
+        "stream-http>builtin-status-codes": true,
+        "stream-http>inherits": true,
         "process": true,
-        "node-polyfill-webpack-plugin>stream-http>readable-stream": true,
+        "stream-http>readable-stream": true,
         "url": true,
-        "@metamask/obs-store>through2>xtend": true
+        "stream-http>xtend": true
       }
     },
     "string_decoder": {
@@ -2937,17 +2979,17 @@
     },
     "eth-crypto>ethereumjs-util>ethereum-cryptography>keccak>readable-stream>string_decoder": {
       "packages": {
-        "crypto-browserify>pbkdf2>safe-buffer": true
+        "react-native-quick-crypto>safe-buffer": true
       }
     },
     "stream-browserify>readable-stream>string_decoder": {
       "packages": {
-        "crypto-browserify>pbkdf2>safe-buffer": true
+        "react-native-quick-crypto>safe-buffer": true
       }
     },
-    "node-polyfill-webpack-plugin>stream-http>readable-stream>string_decoder": {
+    "stream-http>readable-stream>string_decoder": {
       "packages": {
-        "crypto-browserify>pbkdf2>safe-buffer": true
+        "react-native-quick-crypto>safe-buffer": true
       }
     },
     "react-native-web>styleq": {
@@ -2966,7 +3008,7 @@
     "crypto-browserify>pbkdf2>to-buffer": {
       "packages": {
         "patch-package>json-stable-stringify>isarray": true,
-        "crypto-browserify>pbkdf2>safe-buffer": true,
+        "react-native-quick-crypto>safe-buffer": true,
         "crypto-browserify>pbkdf2>to-buffer>typed-array-buffer": true
       }
     },
@@ -2995,7 +3037,7 @@
       "packages": {
         "@lavamoat/webpack>json-stable-stringify>call-bound": true,
         "eslint-plugin-react>es-iterator-helpers>es-errors": true,
-        "node-polyfill-webpack-plugin>util>is-typed-array": true
+        "react-native-quick-crypto>util>is-typed-array": true
       }
     },
     "url": {
@@ -3008,12 +3050,6 @@
       "packages": {
         "@ledgerhq/device-management-kit>url>punycode": true,
         "@ledgerhq/device-management-kit>url>qs": true
-      }
-    },
-    "node-polyfill-webpack-plugin>url": {
-      "packages": {
-        "node-polyfill-webpack-plugin>url>punycode": true,
-        "node-polyfill-webpack-plugin>url>qs": true
       }
     },
     "util": {
@@ -3029,7 +3065,7 @@
         "process": true
       }
     },
-    "stream-browserify>readable-stream>util-deprecate": {
+    "stream-http>readable-stream>util-deprecate": {
       "globals": {
         "console.trace": true,
         "console.warn": true,
@@ -3048,29 +3084,12 @@
       },
       "packages": {
         "node-polyfill-webpack-plugin>console-browserify": true,
-        "readable-stream>inherits": true,
-        "node-polyfill-webpack-plugin>util>is-arguments": true,
-        "node-polyfill-webpack-plugin>util>is-generator-function": true,
-        "node-polyfill-webpack-plugin>util>is-typed-array": true,
+        "stream-http>inherits": true,
+        "react-native-quick-crypto>util>is-arguments": true,
+        "react-native-quick-crypto>util>is-generator-function": true,
+        "react-native-quick-crypto>util>is-typed-array": true,
         "process": true,
-        "node-polyfill-webpack-plugin>util>which-typed-array": true
-      }
-    },
-    "node-polyfill-webpack-plugin>util": {
-      "globals": {
-        "console.error": true,
-        "console.log": true,
-        "console.trace": true,
-        "process": true
-      },
-      "packages": {
-        "node-polyfill-webpack-plugin>console-browserify": true,
-        "readable-stream>inherits": true,
-        "node-polyfill-webpack-plugin>util>is-arguments": true,
-        "node-polyfill-webpack-plugin>util>is-generator-function": true,
-        "node-polyfill-webpack-plugin>util>is-typed-array": true,
-        "process": true,
-        "node-polyfill-webpack-plugin>util>which-typed-array": true
+        "react-native-quick-crypto>util>which-typed-array": true
       }
     },
     "uuid": {
@@ -3100,16 +3119,18 @@
         "Request": true,
         "TextDecoder": true,
         "TextEncoder": true,
+        "URL": true,
         "atob": true,
         "btoa": true,
         "clearTimeout": true,
         "fetch": true,
+        "queueMicrotask": true,
         "setTimeout": true
       },
       "packages": {
         "viem>@noble/curves": true,
         "@noble/hashes": true,
-        "viem>abitype": true,
+        "ox>abitype": true,
         "viem>ox": true
       }
     },
@@ -3132,7 +3153,7 @@
         "node-polyfill-webpack-plugin>console-browserify": true
       }
     },
-    "node-polyfill-webpack-plugin>util>which-typed-array": {
+    "react-native-quick-crypto>util>which-typed-array": {
       "packages": {
         "eslint-plugin-react>array-includes>es-abstract>available-typed-arrays": true,
         "patch-package>json-stable-stringify>call-bind": true,
