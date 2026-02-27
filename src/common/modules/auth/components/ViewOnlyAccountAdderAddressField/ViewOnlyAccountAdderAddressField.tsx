@@ -30,7 +30,7 @@ interface Props {
   trigger: UseFormTrigger<any>
 }
 
-const AddressField: FC<Props> = ({
+const ViewOnlyAccountAdderAddressField: FC<Props> = ({
   duplicateAccountsIndexes,
   field,
   index,
@@ -180,4 +180,4 @@ const AddressField: FC<Props> = ({
   )
 }
 
-export default AddressField
+export default ViewOnlyAccountAdderAddressField
