@@ -8,7 +8,7 @@ export const baParams = parseEnv(envVariables, 'BA')
 // Smart Account env variables
 export const saParams = parseEnv(envVariables, 'SA')
 // Ledger env variables
-export const ledgerParams = parseEnv(envVariables, 'LEDGER_BA')
+export const ledgerBaParams = parseEnv(envVariables, 'LEDGER_BA')
 // Ledger SA env variables
 export const ledgerSaParams = parseEnv(envVariables, 'LEDGER_SA')
 

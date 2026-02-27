@@ -1,4 +1,4 @@
-import { KEYSTORE_PASS, ledgerParams, ledgerSaParams, SA_ADDRESS } from 'constants/env'
+import { KEYSTORE_PASS, ledgerBaParams, ledgerSaParams, SA_ADDRESS } from 'constants/env'
 import mainConstants from 'constants/mainConstants'
 import selectors from 'constants/selectors'
 import tokens from 'constants/tokens'
@@ -54,7 +54,7 @@ test.describe('ledger without storage', () => {
 
 test.describe('ledger with storage', () => {
   test.beforeEach(async ({ pages }) => {
-    await pages.initWithStorage(ledgerParams)
+    await pages.initWithStorage(ledgerBaParams)
   })
 
   test.afterEach(async ({ context }) => {
