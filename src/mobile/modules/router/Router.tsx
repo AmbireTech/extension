@@ -1,5 +1,6 @@
-import React, { Suspense, useContext } from 'react'
-import { StyleSheet, View } from 'react-native'
+import * as SplashScreen from 'expo-splash-screen'
+import React, { Suspense, useContext, useEffect, useRef } from 'react'
+import { View } from 'react-native'
 import { Navigate, Route, Routes } from 'react-router-native'
 
 import { ControllersStateLoadedContext } from '@common/contexts/controllersStateLoadedContext'
@@ -9,7 +10,6 @@ import { AUTH_STATUS } from '@common/modules/auth/constants/authStatus'
 import useAuth from '@common/modules/auth/hooks/useAuth'
 import { ROUTES } from '@common/modules/router/constants/common'
 import flexbox from '@common/styles/utils/flexbox'
-import Splash from '@mobile/components/Splash'
 import DashboardScreen from '@mobile/modules/dashboard/screens/DashboardScreen'
 import KeyStoreUnlockScreen from '@mobile/modules/keystore/screens/KeyStoreUnlockScreen'
 import AuthenticatedRoute from '@mobile/modules/router/components/AuthenticatedRoute'
@@ -23,15 +23,21 @@ const Router = () => {
   const { authStatus } = useAuth()
   const keystoreState = useController('KeystoreController').state
   const { areControllerStatesLoaded } = useContext(ControllersStateLoadedContext)
+  const splashHidden = useRef(false)
 
-  console.log('Router', {
-    authStatus,
-    areControllerStatesLoaded
-  })
+  const isReady = authStatus !== AUTH_STATUS.LOADING && areControllerStatesLoaded
 
-  // Wait for controllers and auth status
-  if (authStatus === AUTH_STATUS.LOADING || !areControllerStatesLoaded) {
-    return <Splash />
+  useEffect(() => {
+    if (isReady && !splashHidden.current) {
+      splashHidden.current = true
+      SplashScreen.setOptions({ duration: 200, fade: true })
+      SplashScreen.hideAsync().catch(() => {})
+    }
+  }, [isReady])
+
+  // Keep the native splash screen visible until controllers and auth are ready
+  if (!isReady) {
+    return null
   }
 
   // Determine where to navigate initially based on state
@@ -39,10 +45,6 @@ const Router = () => {
     keystoreState,
     authStatus
   })
-
-  // We could add path tracking state here later if needed
-  // For now just route according to standard NativeRouter behaviour
-  // The Navigate below helps direct the user appropriately when they open the app
 
   return (
     <View style={flexbox.flex1}>
@@ -57,7 +59,7 @@ const Router = () => {
         {/* Fallback route to suppress "No routes matched location" warnings when multiple Routes blocks are rendered */}
         <Route path="*" element={null} />
       </Routes>
-      <Suspense fallback={<Splash />}>
+      <Suspense fallback={null}>
         <MainRoutes />
       </Suspense>
     </View>
