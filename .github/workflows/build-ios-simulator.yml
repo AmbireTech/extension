@@ -34,15 +34,11 @@ jobs:
         run: git submodule update
         shell: bash
 
-      - name: Read Ruby version from .ruby-version
-        id: ruby_version
-        run: echo "RUBY_VERSION=$(cat .ruby-version | tr -d ' \n')" >> $GITHUB_OUTPUT
-        shell: bash
-
       - name: Install Ruby (from .ruby-version)
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: ${{ steps.ruby_version.outputs.RUBY_VERSION }}
+          ruby-version: .ruby-version
+          bundler-cache: true
 
       - name: Install Node.js ⚙️
         uses: actions/setup-node@v6
