@@ -75,7 +75,8 @@ const SafeOwners = ({
         {owners.map((o, i) => (
           <SafeKeyWrapper
             key={o.addr}
-            isDisabled={o.hasSigned || !o.isImported}
+            isDisabled={!o.isImported}
+            hasSigned={o.hasSigned}
             style={[
               i === owners.length - 1 && !isWide ? spacings.mb0 : spacings.mbTy,
               isWide && i !== owners.length - 1 ? spacings.mrTy : ''
