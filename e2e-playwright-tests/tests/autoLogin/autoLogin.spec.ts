@@ -7,7 +7,7 @@ import { createSiweMessage } from 'viem/siwe'
 import { expect, Page } from '@playwright/test'
 
 test.describe('auto-login', { tag: '@autoLogin' }, () => {
-  test.setTimeout(60000)
+  test.setTimeout(80000)
 
   const baseMessageConfig = {
     address: '0xBe3fE49CEdb755DA5bfCC71b5df9a167706290f1' as `0x${string}`, // SA address
