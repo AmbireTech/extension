@@ -47,6 +47,7 @@ type Props = AccountKeyType & {
   keyIconColor?: string
   showExportImport?: boolean
   containerStyle?: ViewStyle
+  tooltipContent?: string
 }
 
 const { isPopup } = getUiType()
@@ -66,7 +67,8 @@ const AccountKey: React.FC<Props> = ({
   meta,
   keyIconColor,
   showExportImport = false,
-  onChains
+  onChains,
+  tooltipContent
 }) => {
   const { t } = useTranslation()
   const { theme, themeType } = useTheme()
@@ -143,7 +145,7 @@ const AccountKey: React.FC<Props> = ({
             <View
               dataSet={createGlobalTooltipDataSet({
                 id: `key-${addr}-tooltip`,
-                content: addr
+                content: tooltipContent ?? addr
               })}
             >
               <Text

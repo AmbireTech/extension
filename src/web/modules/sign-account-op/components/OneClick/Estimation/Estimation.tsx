@@ -9,7 +9,7 @@ import {
   SignAccountOpError
 } from '@ambire-common/interfaces/signAccountOp'
 import { SwapAndBridgeRoute } from '@ambire-common/interfaces/swapAndBridge'
-import SuccessIcon from '@common/assets/svg/SuccessIcon'
+import AccountKey from '@common/components/AccountKey'
 import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
@@ -17,7 +17,9 @@ import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoad
 import FooterGlassView from '@common/components/FooterGlassView'
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
 import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
+import SafeKeyWrapper from '@common/components/SafeKeyWrapper'
 import Text from '@common/components/Text'
+import useController from '@common/hooks/useController'
 import useSign from '@common/hooks/useSign'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
@@ -56,6 +58,7 @@ const OneClickEstimation = ({
 }: OneClickEstimationProps) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
+  const { accountStates } = useController('AccountsController').state
 
   const signingErrors = useMemo(() => {
     const signAccountOpErrors = signAccountOpController ? signAccountOpController.errors : []
@@ -94,6 +97,37 @@ const OneClickEstimation = ({
     isOneClickSign: true,
     updateType
   })
+
+  const owners = useMemo(() => {
+    if (!signAccountOpController?.account.safeCreation) return []
+
+    const state =
+      accountStates[signAccountOpController.accountOp.accountAddr]?.[
+        signAccountOpController.accountOp.chainId.toString()
+      ]
+    if (!state) return []
+
+    const signed = signAccountOpController.accountOp.signed || []
+    return state.associatedKeys.map((assKey) => {
+      const newKey = signAccountOpController.accountKeyStoreKeys.find((k) => k.addr === assKey)
+      if (!newKey)
+        return {
+          addr: assKey,
+          type: 'internal' as Key['type'],
+          hasSigned: signed.includes(assKey),
+          isImported: false
+        }
+
+      return { ...newKey, hasSigned: signed.includes(assKey), isImported: true }
+    })
+  }, [
+    signAccountOpController?.account.safeCreation,
+    signAccountOpController?.accountKeyStoreKeys,
+    signAccountOpController?.accountOp.signed,
+    signAccountOpController?.accountOp.accountAddr,
+    signAccountOpController?.accountOp.chainId,
+    accountStates
+  ])
 
   const { banners } = signAccountOpController || {}
   return (
@@ -163,18 +197,45 @@ const OneClickEstimation = ({
               signingErrors.length === 0 &&
               !signAccountOpController.canBroadcast &&
               !!signAccountOpController.account.safeCreation && (
-                <View
-                  style={[
-                    flexbox.directionRow,
-                    flexbox.justifyCenter,
-                    flexbox.alignCenter,
-                    spacings.mt
-                  ]}
-                >
-                  <SuccessIcon color={theme.successDecorative} />
-                  <Text fontSize={14} appearance="successText" style={spacings.mlSm}>
-                    {t('Ready to sign and send to Safe global')}
-                  </Text>
+                <View style={[flexbox.justifyCenter, flexbox.alignCenter, spacings.mt]}>
+                  <View style={[flexbox.directionRow, flexbox.justifyCenter, flexbox.alignCenter]}>
+                    <Text fontSize={16} appearance="primaryText" weight="semiBold">
+                      {t(
+                        `${signAccountOpController.threshold} out of ${owners.length} signatures required:`
+                      )}
+                    </Text>
+                  </View>
+                  <View style={[flexbox.justifyCenter, flexbox.alignCenter, spacings.mt]}>
+                    {owners.map((o, i) => (
+                      <SafeKeyWrapper
+                        key={o.addr}
+                        isDisabled={o.hasSigned || !o.isImported}
+                        style={i === owners.length - 1 ? spacings.mb0 : spacings.mbTy}
+                      >
+                        <AccountKey
+                          addr={o.addr}
+                          type={o.type || 'internal'}
+                          dedicatedToOneSA={false}
+                          isImported
+                          account={signAccountOpController.account}
+                          isLast
+                          keyIconColor={theme.iconPrimary as string}
+                          tooltipContent={
+                            o.hasSigned
+                              ? 'Already signed'
+                              : o.isImported
+                                ? 'Pending to sign'
+                                : 'Not imported'
+                          }
+                          containerStyle={{
+                            borderWidth: 1,
+                            borderColor: 'transparent',
+                            backgroundColor: theme.secondaryBackground
+                          }}
+                        />
+                      </SafeKeyWrapper>
+                    ))}
+                  </View>
                 </View>
               )}
             {isViewOnly && (
