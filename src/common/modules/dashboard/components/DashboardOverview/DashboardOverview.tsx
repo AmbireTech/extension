@@ -58,7 +58,8 @@ const DashboardOverview: FC<Props> = ({
   ).state
 
   const [bindRefreshButtonAnim, refreshButtonAnimStyle] = useHover({
-    preset: 'opacityInverted'
+    preset: 'opacityInverted',
+    duration: 50
   })
   const {
     sheetRef,
