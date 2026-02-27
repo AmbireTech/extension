@@ -1,13 +1,9 @@
-name: Build production iOS app ⚡
+name: Build production iOS simulator app ⚡
 
 on:
   workflow_dispatch: # Manual trigger
   release:
     types: [published] # Triggers on new releases (from any branch)
-  push:
-    # TODO: Temporary trigger for testing iOS builds on feature branches
-    branches:
-      - 'config/mobile-apps-ci-builds'
 
 jobs:
   build-ios-simulator:
