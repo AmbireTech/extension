@@ -77,7 +77,7 @@ const SafeOwners = ({
               isImported
               account={signAccountOpController.account}
               isLast
-              keyIconColor={theme.iconPrimary as string}
+              keyIconColor={theme.neutral600 as string}
               tooltipContent={
                 o.hasSigned ? 'Already signed' : o.isImported ? 'Pending to sign' : 'Not imported'
               }

@@ -92,9 +92,9 @@ const Footer = ({
     return (
       <View style={[flexbox.directionRow, flexbox.justifyCenter]}>
         <View style={[flexbox.directionRow, flexbox.flex1, flexbox.alignCenter]}>
-          <SuccessIcon color={theme.successDecorative} />
+          <SuccessIcon color={theme.success300} />
           <Text
-            color={theme.successDecorative}
+            color={theme.success300}
             style={spacings.mlSm}
             fontSize={16}
             appearance="secondaryText"
