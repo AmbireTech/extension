@@ -12,7 +12,7 @@ const parseEnv = (envVariables: Record<string, string>, prefix: Prefix) => {
     parsedKeystoreUID: envVariables[`${prefix}_KEYSTORE_UID`],
     parsedKeystoreKeys: JSON.parse(envVariables[`${prefix}_KEYS`]),
     parsedKeystoreSecrets: JSON.parse(envVariables[`${prefix}_SECRETS`]),
-    parsedKeystoreSeeds: JSON.parse(envVariables[`${prefix}_SEEDS`]),
+    parsedKeystoreSeeds: JSON.parse(envVariables[`${prefix}_SEEDS`] || '[]'), // TODO: remove || '[]' when all env variables are updated to include SEEDS (even if empty)
     parsedLearnedAssets: JSON.parse(envVariables[`${prefix}_LEARNED_ASSETS`]),
     envSelectedAccount: envVariables[`${prefix}_SELECTED_ACCOUNT`]
   }
