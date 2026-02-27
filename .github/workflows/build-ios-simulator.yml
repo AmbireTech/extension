@@ -53,6 +53,9 @@ jobs:
         run: |
           PODS_VERSION=$(grep 'COCOAPODS:' ios/Podfile.lock | awk '{ print $2 }')
           echo "Using CocoaPods version $PODS_VERSION"
+          # Match local Ruby environment (ffi 1.16.3 + CocoaPods $PODS_VERSION) so that RubyGems
+          # does not try to resolve a newer ffi that requires Ruby >= 3.0 and break the install.
+          gem install ffi -v 1.16.3
           gem install cocoapods -v "$PODS_VERSION"
         shell: bash
 
