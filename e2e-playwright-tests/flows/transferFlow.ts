@@ -122,12 +122,11 @@ export async function runBatchTransferFlow({
     await page.getByTestId(selectors.bannerButtonOpen).first().click()
 
     const actionWindow = await actionWindowPromise
-    // await page.pause() // pause to allow time to open Ledger simulator and see the signing flow
+    await page.waitForTimeout(10000) // wait for the AccountOp details to be displayed on the Ledger simulator
     await actionWindow.getByTestId(selectors.signTransactionButton).click()
 
-    // HERE should navigate through the Ledger signing flow and confirm the transaction on the Ledger device
     if (ledgerSimulatorControls) {
-      // await page.pause() // pause to allow time to open Ledger simulator and see the signing flow
+      await page.waitForTimeout(1000) // wait for the transaction details to be displayed on the Ledger simulator
       await ledgerSimulatorControls.signSmartAccountTransaction()
     }
 

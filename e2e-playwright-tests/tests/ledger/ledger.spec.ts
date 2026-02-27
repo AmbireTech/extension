@@ -100,6 +100,33 @@ test.describe('ledger SA with storage', () => {
     await context.close()
   })
 
+  test('top up Gas Tank with 0.1$ on Base', async ({ pages }) => {
+    const ledgerSimulatorControls = new SpeculosDevice({ baseUrl: LEDGER_EMULATOR_HTTP_URL })
+    // It should be enabled only when running the exact test with (test.only) locally,
+    // Otherwise, the simulator will not be able to sign blind transactions.
+    // await ledgerSimulatorControls.enableBlindSigning()
+
+    const sendToken = tokens.usdc.base
+    const message = 'Top up ready!'
+
+    await test.step('assert no transaction on Activity tab', async () => {
+      await pages.dashboard.checkNoTransactionOnActivityTab()
+    })
+
+    await test.step('top up gas tank', async () => {
+      await pages.gasTank.topUpGasTank(sendToken, '0.01')
+      await pages.transfer.signSlowSpeedTransaction({
+        sendToken,
+        message,
+        ledgerSimulatorControls
+      })
+    })
+
+    await test.step('assert new transaction on Activity tab', async () => {
+      await pages.gasTank.checkSendTransactionOnActivityTab()
+    })
+  })
+
   test('should batch multiple transfer transactions', async ({ pages }) => {
     const ledgerSimulatorControls = new SpeculosDevice({ baseUrl: LEDGER_EMULATOR_HTTP_URL })
     // It should be enabled only when running the exact test with (test.only) locally,
@@ -147,33 +174,6 @@ test.describe('ledger SA with storage', () => {
       bridgeAmount: 0.01,
       assertNoInitialTx: true,
       ledgerSimulatorControls
-    })
-  })
-
-  test('top up Gas Tank with 0.1$ on Base', async ({ pages }) => {
-    const ledgerSimulatorControls = new SpeculosDevice({ baseUrl: LEDGER_EMULATOR_HTTP_URL })
-    // It should be enabled only when running the exact test with (test.only) locally,
-    // Otherwise, the simulator will not be able to sign blind transactions.
-    // await ledgerSimulatorControls.enableBlindSigning()
-
-    const sendToken = tokens.usdc.base
-    const message = 'Top up ready!'
-
-    await test.step('assert no transaction on Activity tab', async () => {
-      await pages.dashboard.checkNoTransactionOnActivityTab()
-    })
-
-    await test.step('top up gas tank', async () => {
-      await pages.gasTank.topUpGasTank(sendToken, '0.01')
-      await pages.transfer.signSlowSpeedTransaction({
-        sendToken,
-        message,
-        ledgerSimulatorControls
-      })
-    })
-
-    await test.step('assert new transaction on Activity tab', async () => {
-      await pages.gasTank.checkSendTransactionOnActivityTab()
     })
   })
 })

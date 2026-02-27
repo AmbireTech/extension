@@ -108,6 +108,7 @@ export class SpeculosDevice {
         .filter(Boolean)
         .join(' ')
 
+      // TODO: only for debugging, remove after --- IGNORE ---
       console.log('Current screen:', currentText)
 
       if (currentText.includes('Accept') || currentText.includes('Sign')) {

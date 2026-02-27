@@ -213,7 +213,7 @@ export class SwapAndBridgePage extends BasePage {
   }
 
   async signTransactionPage(page, ledgerSimulatorControls?: SpeculosDevice): Promise<void> {
-    const signButton = page.getByTestId(selectors.signTransactionButton)
+    const signButton = await page.getByTestId(selectors.signTransactionButton)
 
     try {
       // Select slow speed
@@ -234,7 +234,12 @@ export class SwapAndBridgePage extends BasePage {
       } else {
         await expect(signButton).toBeVisible({ timeout: 5000 })
         await expect(signButton).toBeEnabled({ timeout: 5000 })
-        await page.getByTestId(selectors.signTransactionButton).click()
+
+        // if (ledgerSimulatorControls) {
+        //   await this.page.waitForTimeout(10000)
+        // } // wait for the transaction details to be displayed on the Ledger simulator
+
+        signButton.click()
 
         if (ledgerSimulatorControls) {
           await ledgerSimulatorControls.signSmartAccountTransaction()
