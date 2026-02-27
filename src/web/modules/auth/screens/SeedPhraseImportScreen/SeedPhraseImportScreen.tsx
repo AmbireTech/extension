@@ -198,7 +198,7 @@ const SeedPhraseImportScreen = () => {
                         inputWrapperStyle={{
                           position: 'relative',
                           backgroundColor: 'transparent',
-                          borderColor: theme.neutral500,
+                          borderColor: theme.neutral600,
                           zIndex: 2
                         }}
                         placeholder={t('Write or paste your recovery phrase')}

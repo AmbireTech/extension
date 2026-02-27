@@ -9,6 +9,7 @@ import InputPassword from '@common/components/InputPassword'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
+import useTheme from '@common/hooks/useTheme'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import { TERMS_VERSION } from '@common/modules/terms/components/TermsComponent'
 import { storage } from '@common/services/storage'
@@ -22,6 +23,7 @@ type Props = {
 
 const KeyStoreSetupForm = ({ agreedWithTerms, children }: Props) => {
   const { t } = useTranslation()
+  const { theme } = useTheme()
   const {
     control,
     handleKeystoreSetup,
@@ -48,6 +50,7 @@ const KeyStoreSetupForm = ({ agreedWithTerms, children }: Props) => {
           rules={{ validate: isValidPassword }}
           render={({ field: { onChange, onBlur, value } }) => (
             <InputPassword
+              backgroundColor={theme.secondaryBackground}
               label={t('Password')}
               testID="enter-pass-field"
               onBlur={onBlur}
@@ -73,6 +76,7 @@ const KeyStoreSetupForm = ({ agreedWithTerms, children }: Props) => {
           }}
           render={({ field: { onChange, onBlur, value } }) => (
             <Input
+              backgroundColor={theme.secondaryBackground}
               label={t('Repeat password')}
               testID="repeat-pass-field"
               onBlur={onBlur}

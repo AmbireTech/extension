@@ -64,7 +64,7 @@ const Tab = ({
           <View style={[flexbox.directionRow, style]}>
             <Text
               weight="medium"
-              color={isActive || hovered ? theme.primaryText : theme.neutral500}
+              color={isActive || hovered ? theme.primaryText : theme.tertiaryText}
               fontSize={16}
             >
               {t(tabLabel)}
