@@ -14,9 +14,7 @@ const GlassView: FC<GlassViewProps> = ({
   cssStyle,
   testID,
   tintColor1,
-  borderRadius = BORDER_RADIUS_PRIMARY,
-  tintColor2,
-  shineColor
+  borderRadius = BORDER_RADIUS_PRIMARY
 }) => {
   const { themeType } = useTheme()
 
