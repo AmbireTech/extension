@@ -1,0 +1,111 @@
+name: Build production iOS app ⚡
+
+on:
+  workflow_dispatch: # Manual trigger
+  release:
+    types: [published] # Triggers on new releases (from any branch)
+  push:
+    # TODO: Temporary trigger for testing iOS builds on feature branches
+    branches:
+      - 'config/mobile-apps-ci-builds'
+
+jobs:
+  build-ios-simulator:
+    name: Build iOS simulator .app and upload artifact
+    # NOTE: macos-15 runners are Apple Silicon (arm64)
+    runs-on: macos-15
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+
+    steps:
+      - name: Checkout code 🛎️
+        uses: actions/checkout@v4
+
+      - name: Add SSH key to checkout a private repo
+        uses: webfactory/ssh-agent@v0.5.4
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_KEY }}
+
+      - name: Git submodules init
+        run: git submodule init
+        shell: bash
+
+      - name: Git submodules update
+        run: git submodule update
+        shell: bash
+
+      - name: Read Ruby version from .ruby-version
+        id: ruby_version
+        run: echo "RUBY_VERSION=$(cat .ruby-version | tr -d ' \n')" >> $GITHUB_OUTPUT
+        shell: bash
+
+      - name: Install Ruby (from .ruby-version)
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ steps.ruby_version.outputs.RUBY_VERSION }}
+
+      - name: Install Node.js ⚙️
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: Install CocoaPods (version from Podfile.lock)
+        run: |
+          PODS_VERSION=$(grep 'COCOAPODS:' ios/Podfile.lock | awk '{ print $2 }')
+          echo "Using CocoaPods version $PODS_VERSION"
+          gem install cocoapods -v "$PODS_VERSION"
+        shell: bash
+
+      - name: Install JS dependencies
+        run: yarn setup:ci
+        shell: bash
+
+      - name: Get version from app.json
+        id: version
+        run: echo "VERSION=$(grep '"version"' ./app.json | head -n1 | cut -d':' -f2 | tr -d ' ",')" >> $GITHUB_OUTPUT
+        shell: bash
+
+      - name: Install iOS pods
+        working-directory: ios
+        run: bundle exec pod install
+        shell: bash
+
+      - name: Read Xcode version from .xcode-version
+        id: xcode_version
+        run: echo "XCODE_VERSION=$(cat .xcode-version | tr -d ' \n')" >> $GITHUB_OUTPUT
+        shell: bash
+
+      - name: Select Xcode version
+        uses: actions/setup-xcode@v1
+        with:
+          xcode-version: ${{ steps.xcode_version.outputs.XCODE_VERSION }}
+
+      - name: Build iOS simulator app (Release)
+        env:
+          # TODO: Add any environment variables needed for the app build.
+          APP_ENV: production
+        run: yarn build:ios:simulator
+        shell: bash
+
+      # TODO: Signing / distribution setup for device / App Store builds will be added later.
+
+      - name: Package iOS simulator .app
+        run: |
+          BUILD_DIR="ios/build/Build/Products/Release-iphonesimulator"
+          APP_NAME="Ambire.app"
+          OUTPUT_ZIP="ambire-ios-simulator-v${{ steps.version.outputs.VERSION }}.zip"
+
+          if [ ! -d "$BUILD_DIR/$APP_NAME" ]; then
+            echo "Expected app bundle not found at $BUILD_DIR/$APP_NAME"
+            ls -R "$BUILD_DIR" || true
+            exit 1
+          fi
+
+          zip -r "$OUTPUT_ZIP" "$BUILD_DIR/$APP_NAME"
+        shell: bash
+
+      - name: Upload iOS simulator build 📦
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambire-ios-v${{ steps.version.outputs.VERSION }}
+          path: ambire-ios-simulator-v${{ steps.version.outputs.VERSION }}.zip
