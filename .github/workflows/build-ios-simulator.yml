@@ -90,11 +90,14 @@ jobs:
             exit 1
           fi
 
-          zip -r "$OUTPUT_ZIP" "$BUILD_DIR/$APP_NAME"
+          # Zip with .app at root (no nested ios/build/... paths)
+          ZIP_PATH="$(pwd)/$OUTPUT_ZIP"
+          cd "$BUILD_DIR"
+          zip -r "$ZIP_PATH" "$APP_NAME"
         shell: bash
 
       - name: Upload iOS simulator build 📦
         uses: actions/upload-artifact@v4
         with:
-          name: ambire-ios-v${{ steps.version.outputs.VERSION }}
+          name: ambire-ios-v${{ steps.version.outputs.VERSION }}-simulator
           path: ambire-ios-simulator-v${{ steps.version.outputs.VERSION }}.zip
