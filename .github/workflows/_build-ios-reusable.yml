@@ -1,0 +1,203 @@
+name: Reusable iOS Build
+
+on:
+  workflow_call:
+    inputs:
+      build_command:
+        description: Yarn command used to build iOS artifact
+        required: true
+        type: string
+      artifact_suffix:
+        description: Suffix appended to uploaded artifact name
+        required: true
+        type: string
+      package_mode:
+        description: Packaging mode (simulator or production)
+        required: true
+        type: string
+      enable_signing:
+        description: Whether code signing and provisioning profile setup is required
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  build-ios:
+    name: Build iOS artifact and upload
+    # NOTE: macos-15 runners are Apple Silicon (arm64)
+    runs-on: macos-15
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+
+    steps:
+      - name: Checkout code 🛎️
+        uses: actions/checkout@v4
+
+      - name: Add SSH key to checkout a private repo
+        uses: webfactory/ssh-agent@v0.5.4
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_KEY }}
+
+      - name: Git submodules init
+        run: git submodule init
+        shell: bash
+
+      - name: Git submodules update
+        run: git submodule update
+        shell: bash
+
+      - name: Install Ruby (from .ruby-version)
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: .ruby-version
+          bundler-cache: true
+
+      - name: Install Node.js ⚙️
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+
+      - name: Install JS dependencies
+        run: yarn setup:ci
+        shell: bash
+
+      - name: Get version from app.json
+        id: version
+        run: echo "VERSION=$(grep '"version"' ./app.json | head -n1 | cut -d':' -f2 | tr -d ' ",')" >> $GITHUB_OUTPUT
+        shell: bash
+
+      - name: Install iOS pods
+        working-directory: ios
+        run: bundle exec pod install
+        shell: bash
+
+      - name: Read Xcode version from .xcode-version
+        id: xcode_version
+        run: echo "XCODE_VERSION=$(cat .xcode-version | tr -d ' \n')" >> $GITHUB_OUTPUT
+        shell: bash
+
+      - name: Select Xcode version
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: ${{ steps.xcode_version.outputs.XCODE_VERSION }}
+
+      - name: Import Apple certificate
+        if: inputs.enable_signing
+        env:
+          IOS_DISTRIBUTION_CERT_BASE64: ${{ secrets.IOS_DISTRIBUTION_CERT_BASE64 }}
+          IOS_CERT_PASSWORD: ${{ secrets.IOS_CERT_PASSWORD }}
+          IOS_KEYCHAIN_PASSWORD: ${{ secrets.IOS_KEYCHAIN_PASSWORD }}
+        run: |
+          set -euo pipefail
+          KEYCHAIN_PATH="$RUNNER_TEMP/build.keychain-db"
+          CERT_PATH="$RUNNER_TEMP/certificate.p12"
+
+          if [[ -z "${IOS_DISTRIBUTION_CERT_BASE64:-}" || -z "${IOS_CERT_PASSWORD:-}" || -z "${IOS_KEYCHAIN_PASSWORD:-}" ]]; then
+            echo "Signing secrets are missing. Required: IOS_DISTRIBUTION_CERT_BASE64, IOS_CERT_PASSWORD, IOS_KEYCHAIN_PASSWORD"
+            exit 1
+          fi
+
+          (echo -n "$IOS_DISTRIBUTION_CERT_BASE64" | base64 --decode > "$CERT_PATH") || \
+          (echo -n "$IOS_DISTRIBUTION_CERT_BASE64" | base64 -D > "$CERT_PATH")
+
+          security create-keychain -p "$IOS_KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$IOS_KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security import "$CERT_PATH" -k "$KEYCHAIN_PATH" -P "$IOS_CERT_PASSWORD" -T /usr/bin/codesign -T /usr/bin/security
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$IOS_KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security list-keychains -d user -s "$KEYCHAIN_PATH"
+        shell: bash
+
+      - name: Install provisioning profile
+        if: inputs.enable_signing
+        env:
+          IOS_PROVISIONING_PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${IOS_PROVISIONING_PROFILE_BASE64:-}" ]]; then
+            echo "Missing IOS_PROVISIONING_PROFILE_BASE64 secret"
+            exit 1
+          fi
+
+          PROFILE_DIR="$HOME/Library/MobileDevice/Provisioning Profiles"
+          RAW_PROFILE_PATH="$RUNNER_TEMP/profile.mobileprovision"
+          PROFILE_PLIST_PATH="$RUNNER_TEMP/profile.plist"
+          mkdir -p "$PROFILE_DIR"
+
+          (echo -n "$IOS_PROVISIONING_PROFILE_BASE64" | base64 --decode > "$RAW_PROFILE_PATH") || \
+          (echo -n "$IOS_PROVISIONING_PROFILE_BASE64" | base64 -D > "$RAW_PROFILE_PATH")
+
+          security cms -D -i "$RAW_PROFILE_PATH" > "$PROFILE_PLIST_PATH"
+          PROFILE_UUID=$(/usr/libexec/PlistBuddy -c 'Print :UUID' "$PROFILE_PLIST_PATH")
+          cp "$RAW_PROFILE_PATH" "$PROFILE_DIR/$PROFILE_UUID.mobileprovision"
+        shell: bash
+
+      - name: Build iOS app
+        env:
+          RELAYER_URL: ${{ vars.RELAYER_URL }}
+          VELCRO_URL: ${{ vars.VELCRO_URL }}
+          REACT_APP_PIMLICO_API_KEY: ${{ vars.REACT_APP_PIMLICO_API_KEY }}
+          REACT_APP_ETHERSPOT_API_KEY: ${{ vars.REACT_APP_ETHERSPOT_API_KEY }}
+          REACT_APP_CANDIDE_API_KEY: ${{ vars.REACT_APP_CANDIDE_API_KEY }}
+          NFT_CDN_URL: ${{ vars.NFT_CDN_URL }}
+          LEGENDS_NFT_ADDRESS: ${{ vars.LEGENDS_NFT_ADDRESS }}
+          LI_FI_API_KEY: ${{ vars.LI_FI_API_KEY }}
+          BUNGEE_API_KEY: ${{ vars.BUNGEE_API_KEY }}
+        run: ${{ inputs.build_command }}
+        shell: bash
+
+      - name: Package iOS simulator .app
+        if: inputs.package_mode == 'simulator'
+        run: |
+          set -euo pipefail
+          BUILD_DIR="ios/build/Build/Products/Release-iphonesimulator"
+          APP_NAME="Ambire.app"
+          OUTPUT_ZIP="ambire-ios-simulator-v${{ steps.version.outputs.VERSION }}.zip"
+
+          if [ ! -d "$BUILD_DIR/$APP_NAME" ]; then
+            echo "Expected app bundle not found at $BUILD_DIR/$APP_NAME"
+            ls -R "$BUILD_DIR" || true
+            exit 1
+          fi
+
+          ZIP_PATH="$(pwd)/$OUTPUT_ZIP"
+          cd "$BUILD_DIR"
+          zip -r "$ZIP_PATH" "$APP_NAME"
+          echo "PACKAGE_PATH=$ZIP_PATH" >> $GITHUB_ENV
+        shell: bash
+
+      - name: Package iOS production .ipa
+        if: inputs.package_mode == 'production'
+        run: |
+          set -euo pipefail
+          IPA_PATH=$(find ios/build/ipa -maxdepth 1 -type f -name '*.ipa' | head -n1)
+          OUTPUT_ZIP="ambire-ios-v${{ steps.version.outputs.VERSION }}.zip"
+
+          if [ -z "$IPA_PATH" ]; then
+            echo "Expected .ipa not found in ios/build/ipa"
+            ls -R ios/build || true
+            exit 1
+          fi
+
+          ZIP_PATH="$(pwd)/$OUTPUT_ZIP"
+          TEMP_DIR="$RUNNER_TEMP/ios-ipa-package"
+          rm -rf "$TEMP_DIR"
+          mkdir -p "$TEMP_DIR"
+          cp "$IPA_PATH" "$TEMP_DIR/Ambire.ipa"
+          cd "$TEMP_DIR"
+          zip -r "$ZIP_PATH" "Ambire.ipa"
+          echo "PACKAGE_PATH=$ZIP_PATH" >> $GITHUB_ENV
+        shell: bash
+
+      - name: Upload iOS build 📦
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambire-ios-v${{ steps.version.outputs.VERSION }}-${{ inputs.artifact_suffix }}
+          path: ${{ env.PACKAGE_PATH }}
+
+      - name: Cleanup signing keychain
+        if: always() && inputs.enable_signing
+        run: |
+          KEYCHAIN_PATH="$RUNNER_TEMP/build.keychain-db"
+          security delete-keychain "$KEYCHAIN_PATH" || true
+        shell: bash
