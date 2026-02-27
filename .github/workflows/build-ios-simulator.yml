@@ -67,8 +67,15 @@ jobs:
 
       - name: Build iOS simulator app (Release)
         env:
-          # TODO: Add any environment variables needed for the app build.
-          APP_ENV: production
+          RELAYER_URL: ${{ vars.RELAYER_URL }}
+          VELCRO_URL: ${{ vars.VELCRO_URL }}
+          REACT_APP_PIMLICO_API_KEY: ${{ vars.REACT_APP_PIMLICO_API_KEY }}
+          REACT_APP_ETHERSPOT_API_KEY: ${{ vars.REACT_APP_ETHERSPOT_API_KEY }}
+          REACT_APP_CANDIDE_API_KEY: ${{ vars.REACT_APP_CANDIDE_API_KEY }}
+          NFT_CDN_URL: ${{ vars.NFT_CDN_URL }}
+          LEGENDS_NFT_ADDRESS: ${{ vars.LEGENDS_NFT_ADDRESS }}
+          LI_FI_API_KEY: ${{ vars.LI_FI_API_KEY }}
+          BUNGEE_API_KEY: ${{ vars.BUNGEE_API_KEY }}
         run: yarn build:ios:simulator
         shell: bash
 
