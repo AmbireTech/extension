@@ -132,7 +132,7 @@ const RouteInfo: FC<Props> = ({
 
                           <Tooltip
                             content={t(
-                              'Ambire charges a small convenience fee on some transactions to support ongoing development and operations. This transaction is exempt from that fee.'
+                              'All collected fees are allocated to $WALLET buybacks. This transaction is exempt from that fee.'
                             )}
                             id="no-convenience-fee"
                           />

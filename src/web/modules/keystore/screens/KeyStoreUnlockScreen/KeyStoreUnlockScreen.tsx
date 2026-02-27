@@ -15,7 +15,7 @@ import useController from '@common/hooks/useController'
 import useDisableNavigatingBack from '@common/hooks/useDisableNavigatingBack'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
-import backgroundImage from '@common/modules/dashboard/components/DashboardOverview/background.png'
+import backgroundImage from '@common/modules/keystore/images/background.png'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
@@ -133,7 +133,7 @@ const KeyStoreUnlockScreen = () => {
             <LockIcon width={24} height={24} color="#fff" style={spacings.mlTy} />
           </View>
           <AmbireLogoWithBackgroundAndLogotype color="#fff" style={spacings.mbXl} />
-          <Text weight="medium" color="#50555D" style={text.center}>
+          <Text weight="medium" color="#B9BFC9" style={text.center}>
             {t('Easy and secure self-custody for the\nEthereum ecosystem')}
           </Text>
         </View>
