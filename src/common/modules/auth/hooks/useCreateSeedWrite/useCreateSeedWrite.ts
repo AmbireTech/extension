@@ -4,12 +4,15 @@ import { KeystoreSeed } from '@ambire-common/interfaces/keystore'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
+import useIsRouteActive from '@common/hooks/useIsRouteActive'
 import useToast from '@common/hooks/useToast'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
+import { ROUTES } from '@common/modules/router/constants/common'
 import eventBus from '@common/services/event/eventBus'
 import { setStringAsync } from '@common/utils/clipboard'
 
 export default function useCreateSeedWrite() {
+  const isFocused = useIsRouteActive(ROUTES.createSeedPhraseWrite)
   const { goToNextRoute } = useOnboardingNavigation()
   const { t } = useTranslation()
   const { addToast } = useToast()
@@ -23,14 +26,16 @@ export default function useCreateSeedWrite() {
   const [submitButtonPressed, setSubmitButtonPressed] = useState(false)
 
   useEffect(() => {
-    keystoreDispatch({
-      type: 'method',
-      params: {
-        method: 'sendTempSeedToUi',
-        args: []
-      }
-    })
-  }, [keystoreDispatch])
+    if (isFocused && !tempSeed && hasTempSeed) {
+      keystoreDispatch({
+        type: 'method',
+        params: {
+          method: 'sendTempSeedToUi',
+          args: []
+        }
+      })
+    }
+  }, [keystoreDispatch, isFocused, tempSeed, hasTempSeed])
 
   useEffect(() => {
     const onReceiveOneTimeData = (data: any) => {
