@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
+import { View } from 'react-native'
 
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import { safeTokenAmountAndNumberMultiplication } from '@ambire-common/utils/numbers/formatters'
@@ -10,6 +11,7 @@ import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
+import flexbox from '@common/styles/utils/flexbox'
 
 import RewardsButtonWrapper from './RewardsButtonWrapper'
 
@@ -38,7 +40,7 @@ const RewardsButton = () => {
   }, [portfolio.tokens])
 
   const totalFormatted = useMemo(() => {
-    return formatDecimals(total, 'value')
+    return `+$${formatDecimals(total, 'noDecimal')}`
   }, [total])
 
   if (!portfolio.isReadyToVisualize) {
@@ -48,15 +50,27 @@ const RewardsButton = () => {
   return (
     <RewardsButtonWrapper onPress={() => navigate(WEB_ROUTES.rewards)}>
       <RewardsCircularIcon width={14} height={14} />
-      <Text color="#D7FF00" fontSize={12} style={spacings.mhMi} weight="medium">
-        +{totalFormatted}
-      </Text>
-      <Text appearance="secondaryText" fontSize={10} style={spacings.mrMi} weight="medium">
-        {t('from')}
-      </Text>
-      <Text color="#D7FF00" fontSize={10} weight="medium">
-        Rewards
-      </Text>
+      <View style={[flexbox.directionRow, flexbox.justifyCenter, flexbox.alignEnd]}>
+        <Text
+          color="#D7FF00"
+          fontSize={12}
+          style={{ ...spacings.mhMi, lineHeight: 16 }}
+          weight="number_medium"
+        >
+          {totalFormatted}
+        </Text>
+        <Text
+          fontSize={10}
+          color="#fff"
+          style={{ ...spacings.mrMi, lineHeight: 15 }}
+          weight="medium"
+        >
+          {t('from')}
+        </Text>
+        <Text color="#D7FF00" fontSize={10} weight="medium" style={{ lineHeight: 15 }}>
+          Rewards
+        </Text>
+      </View>
     </RewardsButtonWrapper>
   )
 }
