@@ -52,7 +52,7 @@ export class SpeculosDevice {
     await this.client.delete('/events')
   }
 
-  async waitForText(text: string, timeout = 10000) {
+  async waitForText(text: string, timeout = 100000) {
     const start = Date.now()
 
     while (Date.now() - start < timeout) {
@@ -70,7 +70,7 @@ export class SpeculosDevice {
     throw new Error(`Timeout waiting for text: ${text}`)
   }
 
-  async nextUntilText(text: string, timeout = 10000) {
+  async nextUntilText(text: string, timeout = 100000) {
     const start = Date.now()
 
     while (Date.now() - start < timeout) {

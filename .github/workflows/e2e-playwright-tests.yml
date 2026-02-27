@@ -58,7 +58,27 @@ jobs:
       # Enables Playwright to intercept network requests initiated by Service Workers.
       # We use it to mock or block background requests that can't be intercepted via page.route().
       PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS: '1'
-      IS_LEDGER_EMULATOR: 'true'
+      IS_LEDGER_EMULATOR: ${{ vars.IS_LEDGER_EMULATOR }}
+
+      LEDGER_BA_SELECTED_ACCOUNT: ${{ vars.LEDGER_BA_SELECTED_ACCOUNT }}
+      LEDGER_BA_ACCOUNTS: ${{ vars.LEDGER_BA_ACCOUNTS }}
+      LEDGER_BA_KEYSTORE_UID: ${{ vars.LEDGER_BA_KEYSTORE_UID }}
+      LEDGER_BA_KEYS: ${{ vars.LEDGER_BA_KEYS }}
+      LEDGER_BA_SECRETS: ${{ secrets.LEDGER_BA_SECRETS }}
+      LEDGER_BA_SEEDS: ${{ secrets.LEDGER_BA_SEEDS }}
+      LEDGER_BA_LEARNED_ASSETS: ${{ vars.LEDGER_BA_LEARNED_ASSETS }}
+
+      LEDGER_SA_SELECTED_ACCOUNT: ${{ vars.LEDGER_SA_SELECTED_ACCOUNT }}
+      LEDGER_SA_ACCOUNTS: ${{ vars.LEDGER_SA_ACCOUNTS }}
+      LEDGER_SA_KEYSTORE_UID: ${{ vars.LEDGER_SA_KEYSTORE_UID }}
+      LEDGER_SA_KEYS: ${{ vars.LEDGER_SA_KEYS }}
+      LEDGER_SA_SECRETS: ${{ secrets.LEDGER_SA_SECRETS }}
+      LEDGER_SA_SEEDS: ${{ secrets.LEDGER_SA_SEEDS }}
+      LEDGER_SA_LEARNED_ASSETS: ${{ vars.LEDGER_SA_LEARNED_ASSETS }}
+
+      LEDGER_EMULATOR_HTTP_URL: ${{ vars.LEDGER_EMULATOR_HTTP_URL }}
+      LEDGER_EMULATOR_SEED: ${{ secrets.LEDGER_EMULATOR_SEED }}
+
 
     steps:
       - name: Checkout full Git history

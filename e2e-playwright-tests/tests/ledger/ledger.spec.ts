@@ -10,7 +10,7 @@ import { expect } from '@playwright/test'
 
 import { SpeculosDevice } from '../../libs/speculos-device/device'
 
-const LEDGER_SIMULATIUON_URL = process.env.SPECULOS_HTTP_URL || 'http://127.0.0.1:5000'
+const LEDGER_EMULATOR_HTTP_URL = process.env.LEDGER_EMULATOR_HTTP_URL
 
 test.describe.configure({ mode: 'serial' })
 
@@ -66,14 +66,14 @@ test.describe('ledger with storage', () => {
   })
 
   test('should sign plain message', async ({ pages }) => {
-    const ledgerSimulatorControls = new SpeculosDevice({ baseUrl: LEDGER_SIMULATIUON_URL })
+    const ledgerSimulatorControls = new SpeculosDevice({ baseUrl: LEDGER_EMULATOR_HTTP_URL })
     const message = 'Hello, Ambire!'
 
     await pages.signMessage.signMessage(message, 'plain', ledgerSimulatorControls)
   })
 
   test('should send a transaction and pay with native token', async ({ pages }) => {
-    const ledgerSimulatorControls = new SpeculosDevice({ baseUrl: LEDGER_SIMULATIUON_URL })
+    const ledgerSimulatorControls = new SpeculosDevice({ baseUrl: LEDGER_EMULATOR_HTTP_URL })
 
     // Enable blind signing in Ledger settings, otherwise the transaction won't be signed
     await ledgerSimulatorControls.enableBlindSigning()
@@ -101,7 +101,7 @@ test.describe('ledger SA with storage', () => {
   })
 
   test('should batch multiple transfer transactions', async ({ pages }) => {
-    const ledgerSimulatorControls = new SpeculosDevice({ baseUrl: LEDGER_SIMULATIUON_URL })
+    const ledgerSimulatorControls = new SpeculosDevice({ baseUrl: LEDGER_EMULATOR_HTTP_URL })
     // It should be enabled only when running the exact test with (test.only) locally,
     // Otherwise, the simulator will not be able to sign blind transactions.
     // await ledgerSimulatorControls.enableBlindSigning()
@@ -117,7 +117,7 @@ test.describe('ledger SA with storage', () => {
   test('should "proceed" Swap from the Pending Route component with a Smart Account', async ({
     pages
   }) => {
-    const ledgerSimulatorControls = new SpeculosDevice({ baseUrl: LEDGER_SIMULATIUON_URL })
+    const ledgerSimulatorControls = new SpeculosDevice({ baseUrl: LEDGER_EMULATOR_HTTP_URL })
     // It should be enabled only when running the exact test with (test.only) locally,
     // Otherwise, the simulator will not be able to sign blind transactions.
     // await ledgerSimulatorControls.enableBlindSigning()
@@ -135,7 +135,7 @@ test.describe('ledger SA with storage', () => {
   test('should "proceed" Bridge from the Pending Route component with a Smart Account', async ({
     pages
   }) => {
-    const ledgerSimulatorControls = new SpeculosDevice({ baseUrl: LEDGER_SIMULATIUON_URL })
+    const ledgerSimulatorControls = new SpeculosDevice({ baseUrl: LEDGER_EMULATOR_HTTP_URL })
     // It should be enabled only when running the exact test with (test.only) locally,
     // Otherwise, the simulator will not be able to sign blind transactions.
     // await ledgerSimulatorControls.enableBlindSigning()
@@ -151,7 +151,7 @@ test.describe('ledger SA with storage', () => {
   })
 
   test('top up Gas Tank with 0.1$ on Base', async ({ pages }) => {
-    const ledgerSimulatorControls = new SpeculosDevice({ baseUrl: LEDGER_SIMULATIUON_URL })
+    const ledgerSimulatorControls = new SpeculosDevice({ baseUrl: LEDGER_EMULATOR_HTTP_URL })
     // It should be enabled only when running the exact test with (test.only) locally,
     // Otherwise, the simulator will not be able to sign blind transactions.
     // await ledgerSimulatorControls.enableBlindSigning()
