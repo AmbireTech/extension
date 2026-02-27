@@ -232,9 +232,9 @@ const SignAccountOpScreen = () => {
                   signAccountOpState?.errors.length === 0 &&
                   !signAccountOpState.canBroadcast &&
                   !!signAccountOpState.account.safeCreation && (
-                    <View style={spacings.mb}>
+                    <ScrollView style={[{ maxHeight: 160 }, spacings.mb]}>
                       <SafeOwners signAccountOpController={signAccountOpState} />
-                    </View>
+                    </ScrollView>
                   )}
 
                 <Footer

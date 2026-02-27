@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { View } from 'react-native'
+import { ScrollView, View } from 'react-native'
 
 import { SigningStatus } from '@ambire-common/controllers/signAccountOp/signAccountOp'
 import { Key } from '@ambire-common/interfaces/keystore'
@@ -159,7 +159,9 @@ const OneClickEstimation = ({
               signingErrors.length === 0 &&
               !signAccountOpController.canBroadcast &&
               !!signAccountOpController.account.safeCreation && (
-                <SafeOwners signAccountOpController={signAccountOpController} />
+                <ScrollView style={[{ maxHeight: 240 }]}>
+                  <SafeOwners signAccountOpController={signAccountOpController} />
+                </ScrollView>
               )}
             {isViewOnly && (
               <NoKeysToSignAlert

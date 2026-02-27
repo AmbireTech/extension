@@ -55,7 +55,7 @@ const SafeOwners = ({
   if (!signAccountOpController) return null
 
   return (
-    <View style={[flexbox.justifyCenter, flexbox.alignCenter, spacings.mt]}>
+    <View style={[flexbox.justifyCenter, flexbox.alignCenter, spacings.mtTy]}>
       <View style={[flexbox.directionRow, flexbox.justifyCenter, flexbox.alignCenter]}>
         <Text fontSize={16} appearance="primaryText" weight="semiBold">
           {t(`${signAccountOpController.threshold} out of ${owners.length} signatures required:`)}
