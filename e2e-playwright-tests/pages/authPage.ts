@@ -217,6 +217,7 @@ export class AuthPage extends BasePage {
     await this.setExtensionPassword()
     await this.expectButtonEnabled(selectors.getStarted.addMoreAccountsButton)
     await this.click(selectors.getStarted.addMoreAccountsButton)
+    await this.page.waitForTimeout(3000)
     await this.selectHDPath(selectors.getStarted.hdPathLegerLive)
     await this.page.locator(locators.smartAccountPicker).click()
     // await this.click(selectors.getStarted.smartAccountPicker, 5) // TODO: not working
@@ -228,6 +229,7 @@ export class AuthPage extends BasePage {
     // add another acc
     await this.expectButtonEnabled(selectors.getStarted.addMoreAccountsButton)
     await this.click(selectors.getStarted.addMoreAccountsButton)
+    await this.page.waitForTimeout(3000)
     await this.selectHDPath(selectors.getStarted.hdPathLegerLive)
     await this.page.locator(locators.smartAccountPicker).click()
     // await this.click(selectors.getStarted.smartAccountPicker, 5) // TODO: not working

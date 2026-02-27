@@ -179,14 +179,29 @@ export class DashboardPage extends BasePage {
     await this.entertext(selectors.searchInput, 'SigTool')
     await this.page.waitForTimeout(2000) // wait for search result
 
-    // make icon for dapp manage visible
-    await this.page.getByTestId(selectors.sigtool.dappWrapper).hover()
-    await this.page.mouse.down()
+    const wrapper = this.page.getByTestId(selectors.sigtool.dappWrapper)
+    const button = this.page.getByTestId(selectors.sigtool.sigToolIconButton)
+    const ethNetwork = this.page.locator(selectors.sigtool.sigToolNetworkEth)
+    const baseNetwork = this.page.locator(selectors.sigtool.sigToolNetworkBase)
+
+    // define element box
+    const box = await wrapper.boundingBox()
+
+    // move mouse to the center of the elem
+    await this.page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
     await this.page.waitForTimeout(1000)
-    // change network
-    await this.click(selectors.sigtool.sigToolIconButton)
-    await this.page.locator(selectors.sigtool.sigToolNetworkEth).first().click()
-    await this.page.locator(selectors.sigtool.sigToolNetworkBase).click()
+    // move mouse outside of the element
+    await this.page.mouse.move(box.x + box.width + 50, box.y + box.height + 50)
+    await this.page.waitForTimeout(1000)
+    // return mouse to the center of the element
+    await this.page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
+    await button.waitFor({ state: 'visible' })
+    await button.waitFor({ state: 'attached' })
+    await button.click()
+
+    // choose network
+    await ethNetwork.first().click()
+    await baseNetwork.click()
   }
 
   async disconnectFromSigToolDapp() {
@@ -197,14 +212,27 @@ export class DashboardPage extends BasePage {
     await this.entertext(selectors.searchInput, 'SigTool')
     await this.page.waitForTimeout(2000) // wait for search result
 
-    // make icon for dapp manage visible
-    await this.page.getByTestId(selectors.sigtool.dappWrapper).hover()
-    await this.page.mouse.down()
+    const wrapper = this.page.getByTestId(selectors.sigtool.dappWrapper)
+    const button = this.page.getByTestId(selectors.sigtool.sigToolIconButton)
+    const disconnect = this.page.locator(selectors.sigtool.disconnectButton)
+
+    // define element box
+    const box = await wrapper.boundingBox()
+
+    // move mouse to the center of the elem
+    await this.page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
     await this.page.waitForTimeout(1000)
+    // move mouse outside of the element
+    await this.page.mouse.move(box.x + box.width + 50, box.y + box.height + 50)
+    await this.page.waitForTimeout(1000)
+    // return mouse to the center of the element
+    await this.page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
+    await button.waitFor({ state: 'visible' })
+    await button.waitFor({ state: 'attached' })
+    await button.click()
 
     // disconnect
-    await this.click(selectors.sigtool.sigToolIconButton)
-    await this.page.locator(selectors.sigtool.disconnectButton).click()
+    await disconnect.click()
   }
 
   async searchByNetworkOnTab(searchInput: string, tabName: Tabs) {
