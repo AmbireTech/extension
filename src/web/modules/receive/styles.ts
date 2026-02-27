@@ -28,11 +28,11 @@ const { isTab } = getUiType()
 const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
   StyleSheet.create<Style>({
     content: {
-      backgroundColor:
-        themeType === THEME_TYPES.DARK ? theme.secondaryBackground : theme.primaryBackground,
+      backgroundColor: themeType === THEME_TYPES.DARK ? '#1b1d20' : theme.primaryBackground,
       shadowColor: theme.neutral400,
       ...common.shadowTertiary,
       width: '100%',
+      height: '100%',
       maxWidth: 600
     },
     qrCodeContainer: { ...flexbox.alignCenter, ...spacings.mvTy },
@@ -57,18 +57,17 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       borderBottomWidth: 0,
       borderColor: theme.neutral100
     },
-    supportedNetworksTitle: { ...spacings.mbSm, ...text.center, ...spacings.mtXl },
+    supportedNetworksTitle: { ...spacings.mbSm, ...text.center, ...spacings.mt },
     supportedNetworks: {
       flexDirection: 'row',
       flexWrap: 'wrap',
       justifyContent: 'center',
       maxWidth: 500,
-
       ...spacings.mbTy
     },
     supportedNetwork: {
       ...flexbox.center,
-      ...spacings.mhTy,
+      ...spacings.mhMi,
       ...spacings.mvMi,
       borderRadius: 32,
       borderWidth: 1,
@@ -81,9 +80,10 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       ...spacings.pvSm,
       ...spacings.mbSm,
       ...common.borderRadiusPrimary,
-      backgroundColor: themeType === THEME_TYPES.DARK ? theme.primaryBackground : theme.neutral100
+      backgroundColor: themeType === THEME_TYPES.DARK ? '#2C2F33' : theme.neutral100
     },
     seeMoreWrapper: {
+      ...flexbox.directionRow,
       ...flexbox.center,
       ...spacings.mbSm
     },

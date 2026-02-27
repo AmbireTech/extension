@@ -1,39 +1,45 @@
 import React, { FC, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { View } from 'react-native'
+import { Animated, View } from 'react-native'
 import QRCode from 'react-native-qrcode-svg'
 import { useLocation } from 'react-router-native'
 
 import { getIsViewOnly } from '@ambire-common/utils/accounts'
+import DiagonalRightArrowIcon from '@common/assets/svg/DiagonalRightArrowIcon/DiagonalRightArrowIcon'
 import AccountAddress from '@common/components/AccountAddress'
 import Alert from '@common/components/Alert'
 import Avatar from '@common/components/Avatar/Avatar'
 import DomainBadge from '@common/components/Avatar/DomainBadge'
 import BackButton from '@common/components/BackButton'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
+import LayoutWrapper from '@common/components/LayoutWrapper'
 import NetworkIcon from '@common/components/NetworkIcon'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
+import { AnimatedPressable, useMultiHover } from '@common/hooks/useHover'
 import useReverseLookup from '@common/hooks/useReverseLookup'
 import useTheme from '@common/hooks/useTheme'
 import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
+import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 
 import getStyles from './styles'
 
 const ReceiveScreen: FC = () => {
   const location = useLocation()
-  const { address } = location.state
+  const { address } = location?.state || {}
 
   const {
     state: { account: stateAccount }
   } = useController('SelectedAccountController')
 
-  const account = address ? { addr: address } : stateAccount
+  const {
+    state: { accounts }
+  } = useController('AccountsController')
+  const account = (address && accounts.find((acc) => acc.addr === address)) || stateAccount
   const { isLoading: isDomainResolving, ens } = useReverseLookup({
     address: address || account?.addr || ''
   })
@@ -50,28 +56,42 @@ const ReceiveScreen: FC = () => {
   const MAX_VISIBLE_NETWORKS = 10
   const [showAllNetworks, setShowAllNetworks] = useState(false)
 
+  const [bindAnim, animStyle] = useMultiHover({
+    values: [
+      {
+        property: 'backgroundColor',
+        from: hexToRgba(theme.secondaryBackground, 0),
+        to: theme.secondaryBackground
+      },
+      {
+        property: 'translateX',
+        from: 0,
+        to: showAllNetworks ? -2 : 2
+      },
+      {
+        property: 'translateY',
+        from: 0,
+        to: 2
+      }
+    ]
+  })
   const hasMoreNetworks = networks.length > MAX_VISIBLE_NETWORKS
 
   const alwaysVisible = networks.slice(0, MAX_VISIBLE_NETWORKS)
   const extraNetworks = networks.slice(MAX_VISIBLE_NETWORKS)
 
   return (
-    <TabLayoutContainer
-      header={<HeaderWithTitle />}
-      footer={<BackButton />}
-      hideFooterInPopup
-      withHorizontalPadding={false}
-      width="full"
-    >
+    <LayoutWrapper>
+      <HeaderWithTitle />
+
       <ScrollableWrapper>
         <View
           style={[
             flexbox.flex1,
             flexbox.center,
-
             {
               backgroundColor:
-                themeType === THEME_TYPES.DARK ? theme.primaryBackground : theme.secondaryBackground
+                themeType === THEME_TYPES.DARK ? '#1b1d20' : theme.secondaryBackground
             }
           ]}
         >
@@ -140,7 +160,7 @@ const ReceiveScreen: FC = () => {
             <View style={styles.supportedNetworksContainer}>
               <Text
                 weight="regular"
-                appearance="tertiaryText"
+                color={theme.neutral700}
                 fontSize={14}
                 style={styles.supportedNetworksTitle}
               >
@@ -184,20 +204,43 @@ const ReceiveScreen: FC = () => {
               </View>
 
               {hasMoreNetworks && (
-                <View style={styles.seeMoreWrapper}>
-                  <Text
-                    appearance="tertiaryText"
-                    onPress={() => setShowAllNetworks((prev) => !prev)}
-                  >
+                <AnimatedPressable
+                  style={styles.seeMoreWrapper}
+                  onPress={() => setShowAllNetworks((prev) => !prev)}
+                  {...bindAnim}
+                >
+                  <Text color={theme.neutral700} fontSize={14}>
                     {showAllNetworks ? t('View less') : t('View more')}
                   </Text>
-                </View>
+
+                  <Animated.View
+                    style={{
+                      transform: [
+                        {
+                          translateX: animStyle.translateX as any
+                        },
+                        {
+                          translateY: animStyle.translateY as any
+                        }
+                      ]
+                    }}
+                  >
+                    <DiagonalRightArrowIcon
+                      color="#808EA2"
+                      height={20}
+                      width={20}
+                      style={{
+                        transform: [{ rotate: showAllNetworks ? '90deg' : '0deg' }]
+                      }}
+                    />
+                  </Animated.View>
+                </AnimatedPressable>
               )}
             </View>
           </View>
         </View>
       </ScrollableWrapper>
-    </TabLayoutContainer>
+    </LayoutWrapper>
   )
 }
 
