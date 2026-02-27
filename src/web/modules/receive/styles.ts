@@ -30,7 +30,6 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
     content: {
       backgroundColor:
         themeType === THEME_TYPES.DARK ? theme.secondaryBackground : theme.primaryBackground,
-      ...common.borderRadiusSecondary,
       shadowColor: theme.neutral400,
       ...common.shadowTertiary,
       width: '100%',
@@ -51,13 +50,20 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       marginHorizontal: 'auto',
       marginBottom: isTab ? SPACING_XL : SPACING_MD
     },
-    supportedNetworksContainer: { ...flexbox.alignCenter, ...spacings.mb },
-    supportedNetworksTitle: { ...spacings.mbSm, ...text.center },
+    supportedNetworksContainer: {
+      ...flexbox.alignCenter,
+      ...spacings.mb,
+      borderTopWidth: 1,
+      borderBottomWidth: 0,
+      borderColor: theme.neutral100
+    },
+    supportedNetworksTitle: { ...spacings.mbSm, ...text.center, ...spacings.mtXl },
     supportedNetworks: {
       flexDirection: 'row',
       flexWrap: 'wrap',
       justifyContent: 'center',
       maxWidth: 500,
+
       ...spacings.mbTy
     },
     supportedNetwork: {
@@ -75,8 +81,7 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       ...spacings.pvSm,
       ...spacings.mbSm,
       ...common.borderRadiusPrimary,
-      backgroundColor:
-        themeType === THEME_TYPES.DARK ? theme.primaryBackground : theme.secondaryBackground
+      backgroundColor: themeType === THEME_TYPES.DARK ? theme.primaryBackground : theme.neutral100
     },
     seeMoreWrapper: {
       ...flexbox.center,

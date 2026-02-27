@@ -2,6 +2,7 @@ import React, { FC, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 import QRCode from 'react-native-qrcode-svg'
+import { useLocation } from 'react-router-native'
 
 import { getIsViewOnly } from '@ambire-common/utils/accounts'
 import AccountAddress from '@common/components/AccountAddress'
@@ -25,10 +26,17 @@ import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWr
 import getStyles from './styles'
 
 const ReceiveScreen: FC = () => {
+  const location = useLocation()
+  const { address } = location.state
+
   const {
-    state: { account }
+    state: { account: stateAccount }
   } = useController('SelectedAccountController')
-  const { isLoading: isDomainResolving, ens } = useReverseLookup({ address: account?.addr || '' })
+
+  const account = address ? { addr: address } : stateAccount
+  const { isLoading: isDomainResolving, ens } = useReverseLookup({
+    address: address || account?.addr || ''
+  })
   const { networks } = useController('NetworksController').state
   const { keys } = useController('KeystoreController').state
   const { t } = useTranslation()
@@ -60,8 +68,6 @@ const ReceiveScreen: FC = () => {
           style={[
             flexbox.flex1,
             flexbox.center,
-            spacings.pbSm,
-            spacings.ph,
 
             {
               backgroundColor:
@@ -111,7 +117,7 @@ const ReceiveScreen: FC = () => {
                   ens={ens}
                   address={account?.addr || ''}
                   plainAddressMaxLength={42}
-                  fontSize={16}
+                  fontSize={14}
                 />
               </View>
             </View>
@@ -138,7 +144,7 @@ const ReceiveScreen: FC = () => {
                 fontSize={14}
                 style={styles.supportedNetworksTitle}
               >
-                {t('Supported networks:')}
+                {t('Following networks supported on this address:')}
               </Text>
               <View style={styles.supportedNetworks}>
                 {alwaysVisible.map(({ chainId, name }: any) => (
@@ -179,7 +185,10 @@ const ReceiveScreen: FC = () => {
 
               {hasMoreNetworks && (
                 <View style={styles.seeMoreWrapper}>
-                  <Text appearance="linkText" onPress={() => setShowAllNetworks((prev) => !prev)}>
+                  <Text
+                    appearance="tertiaryText"
+                    onPress={() => setShowAllNetworks((prev) => !prev)}
+                  >
                     {showAllNetworks ? t('View less') : t('View more')}
                   </Text>
                 </View>

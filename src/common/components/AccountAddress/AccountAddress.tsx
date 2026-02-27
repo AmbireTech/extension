@@ -1,11 +1,15 @@
-import React, { FC } from 'react'
+import React, { FC, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View, ViewStyle } from 'react-native'
 
+import ReceiveIcon from '@common/assets/svg/ReceiveIcon'
 import PlainAddress from '@common/components/AccountAddress/PlainAddress'
 import PlainAddressWithCopy from '@common/components/AccountAddress/PlainAddressWithCopy'
 import Text from '@common/components/Text'
+import useHover, { AnimatedPressable } from '@common/hooks/useHover/useHover'
+import useNavigation from '@common/hooks/useNavigation'
 import useReverseLookup from '@common/hooks/useReverseLookup'
+import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -15,6 +19,7 @@ interface Props extends ReturnType<typeof useReverseLookup> {
   withCopy?: boolean
   fontSize?: number
   containerStyle?: ViewStyle
+  withReceive?: boolean
 }
 
 const AccountAddress: FC<Props> = ({
@@ -24,9 +29,19 @@ const AccountAddress: FC<Props> = ({
   plainAddressMaxLength = 42,
   withCopy = true,
   fontSize = 12,
-  containerStyle = {}
+  containerStyle = {},
+  withReceive = false
 }) => {
   const { t } = useTranslation()
+  const { navigate } = useNavigation()
+
+  const [bindAnim, animStyle] = useHover({
+    preset: 'opacityInverted'
+  })
+
+  const handleReceive = useCallback(async () => {
+    await navigate(WEB_ROUTES.receive, { state: { address: address } })
+  }, [navigate, address])
 
   return (
     <View style={[flexbox.flex1, { paddingVertical: 3 }, containerStyle]} testID="address">
@@ -42,35 +57,55 @@ const AccountAddress: FC<Props> = ({
             </Text>
           )}
           {withCopy ? (
-            <PlainAddressWithCopy
-              maxLength={18}
-              address={address}
-              style={spacings.mlMi}
-              fontSize={fontSize}
-            />
+            <>
+              <PlainAddressWithCopy
+                maxLength={18}
+                address={address}
+                style={spacings.mlMi}
+                fontSize={fontSize}
+                withReceive={withReceive}
+              />
+            </>
           ) : (
-            <PlainAddress
-              maxLength={18}
-              address={address}
-              style={spacings.mlMi}
-              fontSize={fontSize}
-            />
+            <>
+              <PlainAddress
+                maxLength={18}
+                address={address}
+                style={spacings.mlMi}
+                fontSize={fontSize}
+              />
+              {withReceive && (
+                <AnimatedPressable onPress={handleReceive} style={animStyle} {...bindAnim}>
+                  <ReceiveIcon width={fontSize + 8} height={fontSize + 8} style={spacings.mlMi} />
+                </AnimatedPressable>
+              )}
+            </>
           )}
         </View>
       ) : withCopy ? (
-        <PlainAddressWithCopy
-          maxLength={plainAddressMaxLength}
-          address={address}
-          hideParentheses
-          fontSize={fontSize}
-        />
+        <>
+          <PlainAddressWithCopy
+            maxLength={plainAddressMaxLength}
+            address={address}
+            hideParentheses
+            fontSize={fontSize}
+            withReceive={withReceive}
+          />
+        </>
       ) : (
-        <PlainAddress
-          maxLength={plainAddressMaxLength}
-          address={address}
-          hideParentheses
-          fontSize={fontSize}
-        />
+        <>
+          <PlainAddress
+            maxLength={plainAddressMaxLength}
+            address={address}
+            hideParentheses
+            fontSize={fontSize}
+          />
+          {withReceive && (
+            <AnimatedPressable onPress={handleReceive} style={animStyle} {...bindAnim}>
+              <ReceiveIcon width={fontSize + 8} height={fontSize + 8} style={spacings.mlMi} />
+            </AnimatedPressable>
+          )}
+        </>
       )}
     </View>
   )
