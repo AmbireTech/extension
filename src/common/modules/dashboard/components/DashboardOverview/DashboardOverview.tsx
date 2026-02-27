@@ -1,5 +1,5 @@
 import React, { FC, useCallback, useMemo, useState } from 'react'
-import { Animated, Image, Platform, Pressable, StyleSheet, View } from 'react-native'
+import { Animated, Platform, Pressable, View } from 'react-native'
 
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import SkeletonLoader from '@common/components/SkeletonLoader'
@@ -11,7 +11,7 @@ import DashboardHeader from '@common/modules/dashboard/components/DashboardHeade
 import Routes from '@common/modules/dashboard/components/Routes'
 import useBalanceAffectingErrors from '@common/modules/dashboard/hooks/useBalanceAffectingErrors'
 import useBanners from '@common/modules/dashboard/hooks/useBanners'
-import spacings, { SPACING, SPACING_MD, SPACING_TY, SPACING_XL } from '@common/styles/spacings'
+import spacings, { SPACING, SPACING_TY, SPACING_XL } from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { isExtension } from '@web/constants/browserapi'
@@ -24,7 +24,7 @@ import RewardsButton from './RewardsButton'
 import getStyles from './styles'
 
 const THRESHOLD_AMOUNT_TO_HIDE_BALANCE_DECIMALS = 10000
-export const OVERVIEW_CONTENT_MAX_HEIGHT = 280
+export const OVERVIEW_CONTENT_MAX_HEIGHT = 162
 
 interface Props {
   openGasTankModal?: () => void
@@ -38,7 +38,7 @@ interface Props {
 
 // We create a reusable height constant for both the Balance amount height and the Balance skeleton.
 // We want both components to have the same height; otherwise, clicking on the RefreshIcon causes a layout shift.
-const BALANCE_HEIGHT = 42
+const BALANCE_HEIGHT = 40
 
 const DashboardOverview: FC<Props> = ({
   openGasTankModal,
@@ -100,7 +100,7 @@ const DashboardOverview: FC<Props> = ({
           {
             paddingBottom: animatedOverviewHeight.interpolate({
               inputRange: [0, OVERVIEW_CONTENT_MAX_HEIGHT],
-              outputRange: [SPACING_TY, SPACING_MD],
+              outputRange: [SPACING_TY, SPACING],
               extrapolate: 'clamp'
             }),
             overflow: 'hidden'
@@ -128,7 +128,7 @@ const DashboardOverview: FC<Props> = ({
               overflow: 'hidden'
             }}
           >
-            <View style={[spacings.mbLg, flexbox.alignCenter]}>
+            <View style={[spacings.mb, flexbox.alignCenter]}>
               <Pressable
                 style={[
                   flexbox.directionRow,
@@ -158,7 +158,7 @@ const DashboardOverview: FC<Props> = ({
                     >
                       <Text>
                         <Text
-                          fontSize={36}
+                          fontSize={30}
                           shouldScale={false}
                           weight="number_bold"
                           // Line height should be constant based on font size, not on parent height
@@ -174,7 +174,7 @@ const DashboardOverview: FC<Props> = ({
                         </Text>
                         {totalPortfolioAmount < THRESHOLD_AMOUNT_TO_HIDE_BALANCE_DECIMALS && (
                           <Text
-                            fontSize={24}
+                            fontSize={20}
                             shouldScale={false}
                             weight="number_bold"
                             color={
