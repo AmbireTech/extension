@@ -9,7 +9,7 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 type Props = {
-  text: string
+  text: string | React.ReactNode
   renderIcon: () => React.ReactNode
   onPress: () => void
   tooltipText?: string
@@ -65,7 +65,7 @@ const OverviewButton = ({
         dataSet={
           tooltipText
             ? createGlobalTooltipDataSet({
-                id: text.toLowerCase().replace(/\s/g, '-'),
+                id: tooltipText.toLowerCase().replace(/\s/g, '-'),
                 content: tooltipText
               })
             : {}

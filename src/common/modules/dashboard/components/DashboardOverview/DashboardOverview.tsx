@@ -158,7 +158,7 @@ const DashboardOverview: FC<Props> = ({
                     >
                       <Text>
                         <Text
-                          fontSize={30}
+                          fontSize={32}
                           shouldScale={false}
                           weight="number_bold"
                           // Line height should be constant based on font size, not on parent height
