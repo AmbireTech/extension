@@ -8,6 +8,7 @@ import { SelectValue } from '@common/components/Select/types'
 type FeeOption = Pick<SelectValue, 'value' | 'label' | 'disabled'> &
   Pick<FeePaymentOption, 'paidBy'> & {
     token: TokenResult | null
+    paidByAccountLabel?: string
   }
 
 type Props = {

@@ -99,6 +99,7 @@ const Estimation = ({
   const { dispatch: signAccountOpDispatch } = useController('SignAccountOpController')
   const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
   const { dispatch: transferDispatch } = useController('TransferController')
+  const { state } = useController('AddressBookController')
   const { t } = useTranslation()
   const { theme } = useTheme(getStyles)
 
@@ -112,8 +113,8 @@ const Estimation = ({
     return signAccountOpState.estimation.availableFeeOptions
       .filter((feeOption) => feeOption.paidBy === signAccountOpState.accountOp.accountAddr)
       .sort((a: FeePaymentOption, b: FeePaymentOption) => sortFeeOptions(a, b, signAccountOpState))
-      .map((feeOption) => mapFeeOptions(feeOption, signAccountOpState))
-  }, [hasEstimation, signAccountOpState])
+      .map((feeOption) => mapFeeOptions(feeOption, signAccountOpState, state.contacts))
+  }, [hasEstimation, signAccountOpState, state.contacts])
 
   const payOptionsPaidByEOA = useMemo(() => {
     if (!signAccountOpState?.estimation.availableFeeOptions.length || !hasEstimation) return []
@@ -121,8 +122,8 @@ const Estimation = ({
     return signAccountOpState.estimation.availableFeeOptions
       .filter((feeOption) => feeOption.paidBy !== signAccountOpState.accountOp.accountAddr)
       .sort((a: FeePaymentOption, b: FeePaymentOption) => sortFeeOptions(a, b, signAccountOpState))
-      .map((feeOption) => mapFeeOptions(feeOption, signAccountOpState))
-  }, [hasEstimation, signAccountOpState])
+      .map((feeOption) => mapFeeOptions(feeOption, signAccountOpState, state.contacts))
+  }, [hasEstimation, signAccountOpState, state.contacts])
 
   const [selectedFeeOption, setSelectedFeeOption] = useState<SelectValue['value'] | null>(null)
 
@@ -209,10 +210,12 @@ const Estimation = ({
     if (!hasEstimation || !signAccountOpState) return
 
     if (!payValue && signAccountOpState.selectedOption) {
-      setFeeOption(mapFeeOptions(signAccountOpState.selectedOption, signAccountOpState), true)
+      setFeeOption(
+        mapFeeOptions(signAccountOpState.selectedOption, signAccountOpState, state.contacts),
+        true
+      )
     }
-  }, [payValue, setFeeOption, hasEstimation, signAccountOpState])
-
+  }, [payValue, setFeeOption, hasEstimation, signAccountOpState, state.contacts])
   const feeSpeeds = useMemo(() => {
     if (!signAccountOpState?.selectedOption) return []
 
@@ -375,16 +378,17 @@ const Estimation = ({
 
     if (!nativeFeeOption) return
 
-    const mappedFeeOption = mapFeeOptions(nativeFeeOption, signAccountOpState)
+    const mappedFeeOption = mapFeeOptions(nativeFeeOption, signAccountOpState, state.contacts)
     mappedFeeOption.label = (
       <PayOption
         amount={BigInt(serviceFee.amount)}
         amountUsd={serviceFee.amountUSD}
         feeOption={nativeFeeOption}
+        paidByAccountLabel={mappedFeeOption.paidByAccountLabel}
       />
     )
     return mappedFeeOption
-  }, [hasEstimation, signAccountOpState, serviceFee, nativeFeeOption])
+  }, [serviceFee, signAccountOpState, hasEstimation, nativeFeeOption, state.contacts])
 
   const v1warning = useMemo(() => {
     return signAccountOpState?.warnings.find((w) => w.id === 'v1Acc')
@@ -494,7 +498,6 @@ const Estimation = ({
           (!payOptionsPaidByUsOrGasTank.length && !payOptionsPaidByEOA.length) ||
           !signAccountOpState.selectedOption
         }
-        extraSearchProps={{}}
         selectStyle={{ backgroundColor: theme.secondaryBackground }}
         defaultValue={payValue ?? undefined}
         withSearch={!!payOptionsPaidByUsOrGasTank.length || !!payOptionsPaidByEOA.length}
