@@ -232,7 +232,9 @@ const SignAccountOpScreen = () => {
                   signAccountOpState?.errors.length === 0 &&
                   !signAccountOpState.canBroadcast &&
                   !!signAccountOpState.account.safeCreation && (
-                    <SafeOwners signAccountOpController={signAccountOpState} isWide />
+                    <View style={spacings.mb}>
+                      <SafeOwners signAccountOpController={signAccountOpState} />
+                    </View>
                   )}
 
                 <Footer

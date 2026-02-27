@@ -159,7 +159,7 @@ const AccountKey: React.FC<Props> = ({
                   dedicatedToOneSA && { letterSpacing: -0.2 }
                 ]}
               >
-                {dedicatedToOneSA ? t('(dedicated key)') : label ? `(${shortAddr})` : shortAddr}
+                {dedicatedToOneSA ? t('(dedicated key)') : label ? `${label}` : shortAddr}
               </Text>
             </View>
             {!!showCopyAddr && (

@@ -13,11 +13,9 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 const SafeOwners = ({
-  signAccountOpController,
-  isWide
+  signAccountOpController
 }: {
   signAccountOpController: ISignAccountOpController | null
-  isWide?: boolean
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
@@ -63,27 +61,17 @@ const SafeOwners = ({
           {t(`${signAccountOpController.threshold} out of ${owners.length} signatures required:`)}
         </Text>
       </View>
-      <View
-        style={[
-          flexbox.justifyCenter,
-          flexbox.alignCenter,
-          spacings.mt,
-          isWide ? spacings.mbSm : '',
-          isWide ? flexbox.directionRow : ''
-        ]}
-      >
+      <View style={[flexbox.justifyCenter, flexbox.alignCenter, spacings.mt, { width: '100%' }]}>
         {owners.map((o, i) => (
           <SafeKeyWrapper
             key={o.addr}
             isDisabled={!o.isImported}
             hasSigned={o.hasSigned}
-            style={[
-              i === owners.length - 1 && !isWide ? spacings.mb0 : spacings.mbTy,
-              isWide && i !== owners.length - 1 ? spacings.mrTy : ''
-            ]}
+            style={[i === owners.length - 1 ? spacings.mb0 : spacings.mbTy, { width: '100%' }]}
           >
             <AccountKey
               addr={o.addr}
+              label={o.addr}
               type={o.type || 'internal'}
               dedicatedToOneSA={false}
               isImported
