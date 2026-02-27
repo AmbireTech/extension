@@ -5,7 +5,10 @@ import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
 
 const asyncStorageInstance: MMKV = createMMKV({ id: 'asyncStorage' })
 const syncStorageInstance: MMKV = createMMKV({ id: 'syncStorage' })
+// NOTE: for testing while settings are still not implemented
 // syncStorageInstance.set('fallbackSelectedThemeType', 'light')
+// syncStorageInstance.set('fallbackSelectedThemeType', 'dark')
+
 const syncSessionStorageInstance: MMKV = createMMKV({ id: 'syncSessionStorage' })
 // Clearing it on initialization ensures it starts empty when the app is launched.
 syncSessionStorageInstance.clearAll()
