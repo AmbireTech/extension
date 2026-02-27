@@ -30,7 +30,7 @@ export const MobileLayoutContainer = ({
   children,
   renderDirectChildren,
   style,
-  withHorizontalPadding = true
+  withHorizontalPadding = false
 }: MobileLayoutContainerProps) => {
   const { theme, styles } = useTheme(getStyles)
   const insets = useSafeAreaInsets()
@@ -87,7 +87,6 @@ export const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainCon
 }: MobileLayoutWrapperMainContentProps) => {
   const { styles } = useTheme(getStyles)
   const { isOnboardingRoute } = useOnboardingNavigation()
-  const { minHeightSize } = useWindowSize()
 
   if (withScroll && !isOnboardingRoute) {
     return (
