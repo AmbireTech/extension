@@ -4,13 +4,14 @@ import { useTranslation } from 'react-i18next'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import { safeTokenAmountAndNumberMultiplication } from '@ambire-common/utils/numbers/formatters'
 import RewardsCircularIcon from '@common/assets/svg/RewardsCircularIcon/RewardsCircularIcon'
+import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 
-import OverviewButton from './OverviewButton'
+import RewardsButtonWrapper from './RewardsButtonWrapper'
 
 const RewardsButton = () => {
   const {
@@ -40,25 +41,23 @@ const RewardsButton = () => {
     return formatDecimals(total, 'value')
   }, [total])
 
+  if (!portfolio.isReadyToVisualize) {
+    return <SkeletonLoader lowOpacity width={80} height={26} borderRadius={12} />
+  }
+
   return (
-    <OverviewButton
-      text={
-        <>
-          <Text color="#D7FF00" fontSize={12} style={spacings.mrMi} weight="medium">
-            +{totalFormatted}
-          </Text>
-          <Text appearance="secondaryText" fontSize={10} style={spacings.mrMi} weight="medium">
-            {t('from')}
-          </Text>
-          <Text color="#D7FF00" fontSize={10} weight="medium">
-            Rewards
-          </Text>
-        </>
-      }
-      isLoading={!portfolio.isReadyToVisualize}
-      renderIcon={() => <RewardsCircularIcon width={14} height={14} />}
-      onPress={() => navigate(WEB_ROUTES.rewards)}
-    />
+    <RewardsButtonWrapper onPress={() => navigate(WEB_ROUTES.rewards)}>
+      <RewardsCircularIcon width={14} height={14} />
+      <Text color="#D7FF00" fontSize={12} style={spacings.mhMi} weight="medium">
+        +{totalFormatted}
+      </Text>
+      <Text appearance="secondaryText" fontSize={10} style={spacings.mrMi} weight="medium">
+        {t('from')}
+      </Text>
+      <Text color="#D7FF00" fontSize={10} weight="medium">
+        Rewards
+      </Text>
+    </RewardsButtonWrapper>
   )
 }
 
