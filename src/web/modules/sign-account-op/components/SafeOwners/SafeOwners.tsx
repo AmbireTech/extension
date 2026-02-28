@@ -1,7 +1,8 @@
 import React, { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { View } from 'react-native'
+import { ColorValue, View } from 'react-native'
 
+import { SigningStatus } from '@ambire-common/controllers/signAccountOp/signAccountOp'
 import { Key } from '@ambire-common/interfaces/keystore'
 import { ISignAccountOpController } from '@ambire-common/interfaces/signAccountOp'
 import AccountKey from '@common/components/AccountKey'
@@ -13,9 +14,11 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 const SafeOwners = ({
-  signAccountOpController
+  signAccountOpController,
+  backgroundColor = '#fff'
 }: {
   signAccountOpController: ISignAccountOpController | null
+  backgroundColor?: ColorValue
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
@@ -67,6 +70,7 @@ const SafeOwners = ({
             key={o.addr}
             isDisabled={!o.isImported}
             hasSigned={o.hasSigned}
+            isQueued={signAccountOpController.status?.type === SigningStatus.Queued}
             style={[i === owners.length - 1 ? spacings.mb0 : spacings.mbTy, { width: '100%' }]}
           >
             <AccountKey
@@ -78,13 +82,11 @@ const SafeOwners = ({
               account={signAccountOpController.account}
               isLast
               keyIconColor={theme.neutral600 as string}
-              tooltipContent={
-                o.hasSigned ? 'Already signed' : o.isImported ? 'Pending to sign' : 'Not imported'
-              }
+              tooltipContent={o.hasSigned ? 'Signed' : o.isImported ? 'Pending' : 'Not imported'}
               containerStyle={{
                 borderWidth: 1,
                 borderColor: 'transparent',
-                backgroundColor: theme.secondaryBackground
+                backgroundColor
               }}
             />
           </SafeKeyWrapper>

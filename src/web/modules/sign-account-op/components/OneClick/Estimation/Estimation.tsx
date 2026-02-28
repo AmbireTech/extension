@@ -17,6 +17,7 @@ import FooterGlassView from '@common/components/FooterGlassView'
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
 import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
 import useSign from '@common/hooks/useSign'
+import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { getUiType } from '@common/utils/uiType'
 import Estimation from '@web/modules/sign-account-op/components/Estimation'
@@ -52,6 +53,7 @@ const OneClickEstimation = ({
   serviceFee
 }: OneClickEstimationProps) => {
   const { t } = useTranslation()
+  const { theme } = useTheme()
 
   const signingErrors = useMemo(() => {
     const signAccountOpErrors = signAccountOpController ? signAccountOpController.errors : []
@@ -160,7 +162,10 @@ const OneClickEstimation = ({
               !signAccountOpController.canBroadcast &&
               !!signAccountOpController.account.safeCreation && (
                 <ScrollView style={[{ maxHeight: 240 }]}>
-                  <SafeOwners signAccountOpController={signAccountOpController} />
+                  <SafeOwners
+                    signAccountOpController={signAccountOpController}
+                    backgroundColor={theme.secondaryBackground}
+                  />
                 </ScrollView>
               )}
             {isViewOnly && (

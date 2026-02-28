@@ -6,6 +6,7 @@ import NoEntryIcon from '@common/assets/svg/NoEntryIcon/NoEntryIcon'
 import useTheme from '@common/hooks/useTheme'
 import { default as flexbox } from '@common/styles/utils/flexbox'
 
+import Spinner from '../Spinner'
 import getStyles from './styles'
 
 interface Props {
@@ -13,9 +14,10 @@ interface Props {
   style?: ViewProps['style']
   isDisabled?: boolean
   hasSigned?: boolean
+  isQueued?: boolean
 }
 
-const SafeKeyWrapper = ({ children, style, isDisabled, hasSigned }: Props) => {
+const SafeKeyWrapper = ({ children, style, isDisabled, hasSigned, isQueued }: Props) => {
   const { theme, styles } = useTheme(getStyles)
 
   return (
@@ -32,7 +34,12 @@ const SafeKeyWrapper = ({ children, style, isDisabled, hasSigned }: Props) => {
           height={18}
         />
       )}
-      {isDisabled && !hasSigned && <NoEntryIcon width={17} height={17} style={styles.icon} />}
+      {!isQueued && isDisabled && !hasSigned && (
+        <NoEntryIcon width={17} height={17} style={styles.icon} />
+      )}
+      {isQueued && isDisabled && !hasSigned && (
+        <Spinner style={{ width: 17, height: 17, ...styles.icon }} />
+      )}
     </View>
   )
 }
