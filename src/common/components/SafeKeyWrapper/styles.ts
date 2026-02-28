@@ -3,16 +3,16 @@ import { StyleSheet, ViewStyle } from 'react-native'
 import { ThemeProps } from '@common/styles/themeConfig'
 
 interface Style {
-  warningsModal: ViewStyle
+  icon: ViewStyle
 }
 
 const getStyles = (theme: ThemeProps) =>
   StyleSheet.create<Style>({
-    warningsModal: {
-      backgroundColor: theme.primaryBackground,
-      paddingHorizontal: 0,
-      paddingVertical: 0,
-      overflow: 'hidden'
+    icon: {
+      position: 'absolute',
+      right: 10,
+      top: 16,
+      zIndex: 1
     }
   })
 

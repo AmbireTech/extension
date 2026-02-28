@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { View } from 'react-native'
+import { ScrollView, View } from 'react-native'
 
 import { SigningStatus } from '@ambire-common/controllers/signAccountOp/signAccountOp'
 import { Key } from '@ambire-common/interfaces/keystore'
@@ -9,7 +9,6 @@ import {
   SignAccountOpError
 } from '@ambire-common/interfaces/signAccountOp'
 import { SwapAndBridgeRoute } from '@ambire-common/interfaces/swapAndBridge'
-import SuccessIcon from '@common/assets/svg/SuccessIcon'
 import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
@@ -17,15 +16,14 @@ import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoad
 import FooterGlassView from '@common/components/FooterGlassView'
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
 import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
-import Text from '@common/components/Text'
 import useSign from '@common/hooks/useSign'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@common/utils/uiType'
 import Estimation from '@web/modules/sign-account-op/components/Estimation'
 import BundlerWarning from '@web/modules/sign-account-op/components/Estimation/components/bundlerWarning'
 import Modals from '@web/modules/sign-account-op/components/Modals/Modals'
+import SafeOwners from '@web/modules/sign-account-op/components/SafeOwners'
 import SafetyChecksBanner from '@web/modules/sign-account-op/components/SafetyChecksBanner'
 import KeySelect from '@web/modules/sign-message/components/KeySelect'
 
@@ -163,19 +161,12 @@ const OneClickEstimation = ({
               signingErrors.length === 0 &&
               !signAccountOpController.canBroadcast &&
               !!signAccountOpController.account.safeCreation && (
-                <View
-                  style={[
-                    flexbox.directionRow,
-                    flexbox.justifyCenter,
-                    flexbox.alignCenter,
-                    spacings.mt
-                  ]}
-                >
-                  <SuccessIcon color={theme.successDecorative} />
-                  <Text fontSize={14} appearance="successText" style={spacings.mlSm}>
-                    {t('Ready to sign and send to Safe global')}
-                  </Text>
-                </View>
+                <ScrollView style={[{ maxHeight: 240 }]}>
+                  <SafeOwners
+                    signAccountOpController={signAccountOpController}
+                    backgroundColor={theme.secondaryBackground}
+                  />
+                </ScrollView>
               )}
             {isViewOnly && (
               <NoKeysToSignAlert
