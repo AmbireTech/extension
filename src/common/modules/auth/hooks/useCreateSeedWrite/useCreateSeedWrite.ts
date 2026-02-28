@@ -3,7 +3,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { KeystoreSeed } from '@ambire-common/interfaces/keystore'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useIsRouteActive from '@common/hooks/useIsRouteActive'
 import useToast from '@common/hooks/useToast'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
@@ -16,11 +15,11 @@ export default function useCreateSeedWrite() {
   const { goToNextRoute } = useOnboardingNavigation()
   const { t } = useTranslation()
   const { addToast } = useToast()
-  const { dispatch } = useControllersMiddleware()
   const {
     state: { hasTempSeed },
     dispatch: keystoreDispatch
   } = useController('KeystoreController')
+  const { dispatch: mainDispatch } = useController('MainController')
   const [tempSeed, setTempSeed] = useState<KeystoreSeed | null>(null)
   const { initParams, subType } = useController('AccountPickerController').state
   const [submitButtonPressed, setSubmitButtonPressed] = useState(false)
@@ -53,11 +52,14 @@ export default function useCreateSeedWrite() {
     if (!tempSeed) return
 
     setSubmitButtonPressed(true)
-    dispatch({
-      type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_PRIVATE_KEY_OR_SEED_PHRASE',
-      params: { privKeyOrSeed: tempSeed.seed, hdPathTemplate: tempSeed.hdPathTemplate }
+    mainDispatch({
+      type: 'method',
+      params: {
+        method: 'accountPickerSetInitParamsFromPrivateKeyOrSeedPhrase',
+        args: [{ privKeyOrSeed: tempSeed.seed, seedPassphrase: tempSeed.seedPassphrase }]
+      }
     })
-  }, [dispatch, tempSeed])
+  }, [mainDispatch, tempSeed])
 
   useEffect(() => {
     if (!tempSeed) return
@@ -65,7 +67,7 @@ export default function useCreateSeedWrite() {
       setSubmitButtonPressed(false)
       goToNextRoute()
     }
-  }, [goToNextRoute, dispatch, tempSeed, initParams, submitButtonPressed, subType])
+  }, [goToNextRoute, tempSeed, initParams, submitButtonPressed, subType])
 
   const handleCopyToClipboard = useCallback(async () => {
     try {
