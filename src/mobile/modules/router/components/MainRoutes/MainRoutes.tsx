@@ -11,10 +11,10 @@ import ImportExistingAccountSelectorScreen from '@mobile/modules/auth/screens/Im
 import ImportSmartAccountJsonScreen from '@mobile/modules/auth/screens/ImportSmartAccountJson'
 import PrivateKeyImportScreen from '@mobile/modules/auth/screens/PrivateKeyImportScreen'
 import SeedPhraseImportScreen from '@mobile/modules/auth/screens/SeedPhraseImportScreen'
+import ViewOnlyAccountAdderScreen from '@mobile/modules/auth/screens/ViewOnlyAccountAdderScreen'
 import LedgerConnectScreen from '@mobile/modules/hardware-wallet/screens/LedgerConnectScreen'
 import KeyStoreSetupScreen from '@mobile/modules/keystore/screens/KeyStoreSetupScreen'
 import KeystoreUnlockedRoute from '@mobile/modules/router/components/KeystoreUnlockedRoute'
-import ViewOnlyAccountAdderScreen from '@mobile/modules/view-only-account-adder/ViewOnlyAccountAdderScreen'
 
 const MainRoutes = () => {
   return (

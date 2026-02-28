@@ -2,9 +2,9 @@ import React, { ReactNode } from 'react'
 import { ColorValue, View, ViewStyle } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
+import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import ScrollableWrapper, { WrapperProps } from '@common/components/ScrollableWrapper'
 import useTheme from '@common/hooks/useTheme'
-import useWindowSize from '@common/hooks/useWindowSize'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -76,6 +76,11 @@ interface MobileLayoutWrapperMainContentProps extends WrapperProps {
   children: ReactNode
   withScroll?: boolean
   wrapperRef?: any
+  withBackButton?: boolean
+  onBackButtonPress?: () => void
+  title?: string
+  step?: number
+  totalSteps?: number
 }
 
 export const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainContentProps> = ({
@@ -83,10 +88,32 @@ export const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainCon
   wrapperRef,
   contentContainerStyle = {},
   withScroll = true,
+  withBackButton = false,
+  onBackButtonPress = () => {},
+  title,
+  step = 0,
+  totalSteps = 2,
   ...rest
 }: MobileLayoutWrapperMainContentProps) => {
-  const { styles } = useTheme(getStyles)
+  const { styles, theme } = useTheme(getStyles)
   const { isOnboardingRoute } = useOnboardingNavigation()
+
+  const renderProgress = () => (
+    <View style={[styles.progressContainer]}>
+      {[...Array(totalSteps)].map((_, index) => (
+        <View
+          key={`step-${index.toString()}`}
+          style={[
+            styles.progress,
+            index > 0 ? spacings.mlMi : undefined,
+            {
+              backgroundColor: index < step ? theme.successDecorative : theme.tertiaryBackground
+            }
+          ]}
+        />
+      ))}
+    </View>
+  )
 
   if (withScroll && !isOnboardingRoute) {
     return (
@@ -96,6 +123,14 @@ export const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainCon
         wrapperRef={wrapperRef}
         {...rest}
       >
+        {step > 0 && renderProgress()}
+        {(!!title || !!withBackButton) && (
+          <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mb2Xl]}>
+            {!!withBackButton && <PanelBackButton onPress={onBackButtonPress} />}
+            {!!title && <PanelTitle title={title} size={18} />}
+            {!!withBackButton && <View style={{ width: 20 }} />}
+          </View>
+        )}
         {children}
       </ScrollableWrapper>
     )
@@ -103,6 +138,14 @@ export const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainCon
 
   return (
     <View ref={wrapperRef} style={[styles.contentContainer, contentContainerStyle]}>
+      {step > 0 && renderProgress()}
+      {(!!title || !!withBackButton) && (
+        <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mb2Xl]}>
+          {!!withBackButton && <PanelBackButton onPress={onBackButtonPress} />}
+          {!!title && <PanelTitle title={title} size={18} />}
+          {!!withBackButton && <View style={{ width: 20 }} />}
+        </View>
+      )}
       {children}
     </View>
   )

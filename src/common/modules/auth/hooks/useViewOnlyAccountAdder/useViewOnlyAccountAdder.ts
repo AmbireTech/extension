@@ -1,15 +1,11 @@
 import { getAddress } from 'ethers'
-import React, { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useFieldArray, useForm } from 'react-hook-form'
-import { ScrollView, View } from 'react-native'
 
 import { AddressState } from '@ambire-common/interfaces/domains'
 import { getDefaultAccountPreferences } from '@ambire-common/libs/account/account'
 import { normalizeIdentityResponse } from '@ambire-common/libs/accountPicker/accountPicker'
 import { getAddressFromAddressState } from '@ambire-common/utils/domains'
-import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
-import Button from '@common/components/Button'
-import Panel from '@common/components/Panel'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
@@ -17,14 +13,6 @@ import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import { ROUTES } from '@common/modules/router/constants/common'
-import spacings from '@common/styles/spacings'
-import flexbox from '@common/styles/utils/flexbox'
-import {
-  MobileLayoutContainer,
-  MobileLayoutWrapperMainContent
-} from '@mobile/components/MobileLayoutWrapper'
-
-import AddressField from './AddressField'
 
 const getDuplicateAccountIndexes = (accounts: AddressState[]) => {
   const accountAddresses = accounts.map((addressState) => {
@@ -49,7 +37,7 @@ const DEFAULT_ADDRESS_FIELD_VALUE = {
   isDomainResolving: false
 }
 
-const ViewOnlyScreen = () => {
+export default function useViewOnlyAccountAdder() {
   const { state: accountsState, dispatch: accountsDispatch } = useController('AccountsController')
   const { t } = useTranslation()
   const { addToast } = useToast()
@@ -172,69 +160,21 @@ const ViewOnlyScreen = () => {
     return isLoading ? t('Importing...') : t('Import')
   }, [isEveryAccountImported, isLoading, t])
 
-  return (
-    <MobileLayoutContainer backgroundColor={theme.secondaryBackground}>
-      <MobileLayoutWrapperMainContent>
-        <Panel
-          type="onboarding"
-          spacingsSize="small"
-          withBackButton
-          onBackButtonPress={goToPrevRoute}
-          title={t('Import a view-only address')}
-          step={1}
-          totalSteps={2}
-        >
-          <View style={[flexbox.justifySpaceBetween, flexbox.flex1]}>
-            <ScrollView style={spacings.mbLg}>
-              <View>
-                {fields.map((field, index) => (
-                  <AddressField
-                    duplicateAccountsIndexes={duplicateAccountsIndexes}
-                    key={field.id}
-                    control={control}
-                    index={index}
-                    remove={remove}
-                    isLoading={isLoading || isSubmitting}
-                    handleSubmit={handleSubmit(handleFormSubmit)}
-                    disabled={disabled}
-                    field={field}
-                    watch={watch}
-                    setValue={setValue}
-                    trigger={trigger}
-                  />
-                ))}
-                <Button
-                  type="outline"
-                  testID="add-one-more-address"
-                  disabled={isSubmitting}
-                  style={{ height: 40 }}
-                  size="tiny"
-                  onPress={() => append({ ...DEFAULT_ADDRESS_FIELD_VALUE })}
-                  childrenPosition="left"
-                  text={t('Add another address')}
-                >
-                  <AddCircularIcon
-                    width={20}
-                    height={20}
-                    color={theme.primaryText}
-                    style={spacings.mrMi}
-                  />
-                </Button>
-              </View>
-            </ScrollView>
-            <Button
-              testID="view-only-button-import"
-              size="large"
-              disabled={disabled}
-              hasBottomSpacing={false}
-              text={buttonText}
-              onPress={handleSubmit(handleFormSubmit)}
-            />
-          </View>
-        </Panel>
-      </MobileLayoutWrapperMainContent>
-    </MobileLayoutContainer>
-  )
+  return {
+    control,
+    watch,
+    setValue,
+    handleSubmit,
+    trigger,
+    fields,
+    append,
+    remove,
+    disabled,
+    buttonText,
+    handleFormSubmit,
+    isLoading,
+    isSubmitting,
+    duplicateAccountsIndexes,
+    DEFAULT_ADDRESS_FIELD_VALUE
+  }
 }
-
-export default React.memo(ViewOnlyScreen)
