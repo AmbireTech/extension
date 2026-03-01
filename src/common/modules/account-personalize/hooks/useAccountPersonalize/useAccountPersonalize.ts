@@ -107,22 +107,54 @@ export default function useAccountPersonalize() {
     isLoadingRef.current = isLoading
   }, [isLoading])
 
+  const accountPickerShouldAddAutomaticallyRef = useRef(
+    accountPickerState.initParams?.shouldAddNextAccountAutomatically
+  )
+  useEffect(() => {
+    accountPickerShouldAddAutomaticallyRef.current =
+      accountPickerState.initParams?.shouldAddNextAccountAutomatically
+  }, [accountPickerState.initParams?.shouldAddNextAccountAutomatically])
+
   useEffect(() => {
     // We reference the latest values via refs. Accessing state directly inside this
     // async effect could read outdated values, since state updates are not guaranteed
     // to sync during the async wait loops.
-    const getShouldStopLoadingBasedOnLatestState = () =>
-      !!accountPickerInitializedRef.current ||
-      (accountsToPersonalizeRef.current && accountsToPersonalizeRef.current.length > 0) ||
-      (newlyAddedAccountsRef.current && newlyAddedAccountsRef.current.length > 0)
+    const getShouldStopLoadingBasedOnLatestState = () => {
+      const hasAccounts =
+        (accountsToPersonalizeRef.current && accountsToPersonalizeRef.current.length > 0) ||
+        (newlyAddedAccountsRef.current && newlyAddedAccountsRef.current.length > 0)
+
+      const isInitialized = !!accountPickerInitializedRef.current
+      const shouldAddAutomatically = accountPickerShouldAddAutomaticallyRef.current ?? true
+
+      if (isInitialized) {
+        // If we expect the controller to automatically add an account,
+        // we shouldn't stop loading until the account is actually in state.
+        if (shouldAddAutomatically) {
+          return hasAccounts
+        }
+        return true
+      }
+
+      return hasAccounts
+    }
 
     // We reference the latest values via refs. Accessing state directly inside this
     // async effect could read outdated values, since state updates are not guaranteed
     // to sync during the async wait loops.
-    const getShouldComplete = () =>
-      !accountPickerInitializedRef.current &&
-      (accountsToPersonalizeRef.current?.length ?? 0) === 0 &&
-      (newlyAddedAccountsRef.current?.length ?? 0) === 0
+    const getShouldComplete = () => {
+      const isInitialized = !!accountPickerInitializedRef.current
+      const hasAccounts =
+        (accountsToPersonalizeRef.current && accountsToPersonalizeRef.current.length > 0) ||
+        (newlyAddedAccountsRef.current && newlyAddedAccountsRef.current.length > 0)
+      const shouldAddAutomatically = accountPickerShouldAddAutomaticallyRef.current ?? true
+
+      if (!isInitialized && shouldAddAutomatically) {
+        return false // don't complete yet, we're waiting for auto-add
+      }
+
+      return !isInitialized && !hasAccounts
+    }
 
     let resolved = false
 
@@ -165,7 +197,7 @@ export default function useAccountPersonalize() {
 
   // the hook inits the list with accountsToPersonalize
   useEffect(() => {
-    if (isLoading || accountsToPersonalize.length) return
+    if (accountsToPersonalize.length) return
 
     let state: Account[] = []
     if (accountPickerState.isInitialized) {
@@ -179,11 +211,22 @@ export default function useAccountPersonalize() {
     if (state.length) {
       setAccountsToPersonalize(state)
     } else {
+      if (isLoading) return
+
+      const shouldAddAutomatically =
+        accountPickerState.initParams?.shouldAddNextAccountAutomatically ?? true
+
+      // If we expect the controller to automatically add an account, we
+      // shouldn't redirect simply because the account isn't in state yet.
+      // A yield to the UI might happen between selectNextAccount and addAccounts.
+      if (accountPickerState.isInitialized && shouldAddAutomatically) return
+
       goToNextRoute()
     }
   }, [
     isLoading,
     accountPickerState.isInitialized,
+    accountPickerState.initParams?.shouldAddNextAccountAutomatically,
     accountPickerState.addedAccountsFromCurrentSession,
     accountsToPersonalize.length,
     newlyAddedAccounts,
@@ -271,6 +314,7 @@ export default function useAccountPersonalize() {
     control,
     accounts,
     accountPickerState,
+    accountsToPersonalize,
     handleSave,
     handleComplete,
     handleContactSupport

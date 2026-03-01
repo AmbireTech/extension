@@ -26,7 +26,7 @@ import getStyles from './styles'
 
 const AccountPersonalizeScreen = () => {
   const { t } = useTranslation()
-  const { goToNextRoute, goToPrevRoute, accountsToPersonalize } = useOnboardingNavigation()
+  const { goToNextRoute, goToPrevRoute } = useOnboardingNavigation()
   const { theme } = useTheme(getStyles)
 
   const {
@@ -36,6 +36,7 @@ const AccountPersonalizeScreen = () => {
     control,
     accountPickerState,
     accounts,
+    accountsToPersonalize,
     handleSave,
     handleComplete,
     handleContactSupport
@@ -50,7 +51,7 @@ const AccountPersonalizeScreen = () => {
       >
         {isLoading && !accountPickerState.pageError ? (
           <View style={[flexbox.alignCenter]}>
-            <View style={spacings.mbXl}>
+            <View style={spacings.mbLg}>
               <AccountsLoadingAnimation />
             </View>
             <Text fontSize={20} weight="semiBold" style={[text.center, spacings.mbSm]}>
@@ -83,9 +84,7 @@ const AccountPersonalizeScreen = () => {
           </View>
         ) : (
           <>
-            <SuccessAnimation
-              style={{ ...spacings.mb2Xl, ...flexbox.alignSelfCenter, ...spacings.mt }}
-            />
+            <SuccessAnimation style={{ ...spacings.mbLg, ...flexbox.alignSelfCenter }} />
             <Text
               testID="added-successfully-text"
               weight="medium"

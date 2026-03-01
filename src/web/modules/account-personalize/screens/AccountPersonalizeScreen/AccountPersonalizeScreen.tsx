@@ -31,7 +31,7 @@ export const CARD_WIDTH = 400
 
 const AccountPersonalizeScreen = () => {
   const { t } = useTranslation()
-  const { goToNextRoute, goToPrevRoute, accountsToPersonalize } = useOnboardingNavigation()
+  const { goToNextRoute, goToPrevRoute } = useOnboardingNavigation()
   const { theme } = useTheme(getStyles)
 
   const {
@@ -40,6 +40,7 @@ const AccountPersonalizeScreen = () => {
     fields,
     control,
     accountPickerState,
+    accountsToPersonalize,
     accounts,
     handleSave,
     handleComplete,
