@@ -1,12 +1,9 @@
-import { nanoid } from 'nanoid'
-import React, { RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { BackHandler, ScrollView, View, ViewStyle } from 'react-native'
-import { Modalize, ModalizeProps } from 'react-native-modalize'
+import React, { RefObject } from 'react'
+import { ScrollView, View } from 'react-native'
+import { Modalize } from 'react-native-modalize'
 
 import { isWeb } from '@common/config/env'
-import usePrevious from '@common/hooks/usePrevious'
 import useTheme from '@common/hooks/useTheme'
-import { HEADER_HEIGHT } from '@common/modules/header/components/Header/Header'
 import spacings, { SPACING, SPACING_MD, SPACING_SM } from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import { getUiType } from '@common/utils/uiType'
@@ -15,65 +12,38 @@ import useIsScrollable from '@web/hooks/useIsScrollable'
 
 import Backdrop from './Backdrop'
 import getStyles from './styles'
-
-interface Props {
-  id?: string
-  sheetRef: React.RefObject<Modalize>
-  scrollViewRef?: React.RefObject<ScrollView>
-  closeBottomSheet?: (dest?: 'alwaysOpen' | 'default' | undefined) => void
-  onBackdropPress?: () => void
-  onClosed?: () => void
-  onOpen?: () => void
-  children?: React.ReactNode
-  // Preferences
-  type?: 'modal' | 'bottom-sheet'
-  adjustToContentHeight?: boolean
-  style?: ViewStyle
-  containerInnerWrapperStyles?: ViewStyle
-  flatListProps?: ModalizeProps['flatListProps']
-  scrollViewProps?: ModalizeProps['scrollViewProps']
-  backgroundColor?: 'primaryBackground' | 'secondaryBackground'
-  autoWidth?: boolean
-  autoOpen?: boolean
-  shouldBeClosableOnDrag?: boolean
-  customZIndex?: number
-  isScrollEnabled?: boolean
-  withBackdropBlur?: boolean
-}
+import { BottomSheetProps } from './types'
+import useBottomSheetInternal from './useBottomSheetInternal'
 
 const ANIMATION_DURATION: number = 250
 
 const { isPopup } = getUiType()
 
-const BottomSheet: React.FC<Props> = ({
-  id: _id,
-  type: _type,
-  sheetRef,
-  scrollViewRef: externalScrollViewRef,
-  children,
-  closeBottomSheet = () => {},
-  adjustToContentHeight = true,
-  style = {},
-  containerInnerWrapperStyles = {},
-  onClosed,
-  onOpen,
-  onBackdropPress,
-  flatListProps,
-  scrollViewProps,
-  backgroundColor = 'primaryBackground',
-  autoWidth = false,
-  autoOpen = false,
-  shouldBeClosableOnDrag = true,
-  withBackdropBlur,
-  customZIndex,
-  isScrollEnabled = true
-}) => {
-  const type = _type || (isPopup ? 'bottom-sheet' : 'modal')
-  const isModal = type === 'modal'
+const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
+  const {
+    id: _id,
+    type: _type,
+    scrollViewRef: externalScrollViewRef,
+    children,
+    closeBottomSheet = () => {},
+    adjustToContentHeight = true,
+    style = {},
+    containerInnerWrapperStyles = {},
+    onClosed,
+    onOpen,
+    onBackdropPress,
+    flatListProps,
+    scrollViewProps,
+    backgroundColor = 'primaryBackground',
+    autoWidth = false,
+    shouldBeClosableOnDrag = true,
+    withBackdropBlur,
+    customZIndex,
+    isScrollEnabled = true
+  } = props
+
   const { styles, theme } = useTheme(getStyles)
-  const [isOpen, setIsOpen] = useState(false)
-  const prevIsOpen = usePrevious(isOpen)
-  const [isBackdropVisible, setIsBackdropVisible] = useState(false)
+
   const {
     isScrollable,
     checkIsScrollable,
@@ -81,60 +51,16 @@ const BottomSheet: React.FC<Props> = ({
   } = useIsScrollable()
   const scrollViewRef = externalScrollViewRef || internalScrollViewRef
 
-  // Ensures ID is unique per component to avoid duplicates when multiple bottom sheets are rendered
-  const id = useMemo(() => `${_id || 'bottom-sheet'}-${nanoid(6)}`, [_id])
-
-  const autoOpened: React.MutableRefObject<boolean> = useRef(false)
-  const setRef = useCallback(
-    (node: HTMLElement | null) => {
-      // @ts-ignore
-      // eslint-disable-next-line no-param-reassign
-      sheetRef.current = node
-      // check if component is mounted and if should autoOpen
-      if (autoOpen && sheetRef.current && !autoOpened.current) {
-        sheetRef.current.open()
-        autoOpened.current = !autoOpened.current // ensure that the bottom sheet auto-opens only once
-      }
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [autoOpen]
-  )
-
-  useEffect(() => {
-    if (prevIsOpen && !isOpen) {
-      setTimeout(() => {
-        // Delays the backdrop unmounting because of the closing animation duration
-        setIsBackdropVisible(false)
-      }, ANIMATION_DURATION)
-    }
-  }, [isOpen, prevIsOpen])
-
-  // Hook up the back button (or action) to close the bottom sheet
-  useEffect(() => {
-    if (!isOpen) return
-
-    const backAction = () => {
-      if (isOpen) {
-        closeBottomSheet()
-        // Returning true prevents execution of the default native back handling
-        return true
-      }
-
-      return false
-    }
-
-    const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction)
-
-    return () => backHandler.remove()
-  }, [closeBottomSheet, isOpen])
-
-  const modalTopOffset = useMemo(() => {
-    if (isPopup && isModal) return 0
-    if (isWeb) return HEADER_HEIGHT - 20
-
-    return HEADER_HEIGHT + 10
-  }, [isModal])
-
+  const {
+    modalTopOffset,
+    setRef,
+    isModal,
+    isOpen,
+    setIsOpen,
+    isBackdropVisible,
+    setIsBackdropVisible,
+    id
+  } = useBottomSheetInternal(props)
   return (
     <Portal hostName="global">
       {/* Wrapping the content in a View with a stable `key` prevents Portal */}
@@ -187,7 +113,7 @@ const BottomSheet: React.FC<Props> = ({
               : {}
           ]}
           handlePosition="inside"
-          useNativeDriver={!isWeb}
+          useNativeDriver={false}
           avoidKeyboardLikeIOS
           modalTopOffset={modalTopOffset}
           threshold={90}
