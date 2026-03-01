@@ -55,6 +55,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     setIsBackdropVisible,
     id
   } = useBottomSheetInternal(props)
+
   return (
     <Portal hostName="global">
       {/* Wrapping the content in a View with a stable `key` prevents Portal */}
