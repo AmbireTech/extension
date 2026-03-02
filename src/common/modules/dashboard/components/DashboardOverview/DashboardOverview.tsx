@@ -138,6 +138,7 @@ const DashboardOverview: FC<Props> = ({
                 ]}
                 onHoverIn={() => setIsBalanceHovered(true)}
                 onHoverOut={() => setIsBalanceHovered(false)}
+                hitSlop={8}
               >
                 {/* Placeholder matching the refresh button size to keep the balance centered */}
                 <View style={{ width: 28, height: 28 }} />
@@ -150,45 +151,38 @@ const DashboardOverview: FC<Props> = ({
                       borderRadius={8}
                     />
                   ) : (
-                    <Pressable
-                      onPress={onIconPress}
-                      disabled={!warningMessage || isLoadingTakingTooLong || isOffline}
-                      testID="full-balance"
-                      style={[flexbox.directionRow, flexbox.alignCenter]}
-                    >
-                      <Text>
+                    <Text testID="full-balance">
+                      <Text
+                        fontSize={32}
+                        shouldScale={false}
+                        weight="number_bold"
+                        // Line height should be constant based on font size, not on parent height
+                        style={Platform.OS !== 'web' ? { lineHeight: 36 } : { lineHeight: 28 }}
+                        color={
+                          networksWithErrors.length || isOffline
+                            ? theme.warningDecorative2
+                            : '#FFFFFF'
+                        }
+                        testID="total-portfolio-amount-integer"
+                      >
+                        {totalPortfolioAmountIntegerFormattedPart}
+                      </Text>
+                      {totalPortfolioAmount < THRESHOLD_AMOUNT_TO_HIDE_BALANCE_DECIMALS && (
                         <Text
-                          fontSize={32}
+                          fontSize={20}
                           shouldScale={false}
                           weight="number_bold"
-                          // Line height should be constant based on font size, not on parent height
-                          style={Platform.OS !== 'web' ? { lineHeight: 36 } : { lineHeight: 28 }}
                           color={
                             networksWithErrors.length || isOffline
                               ? theme.warningDecorative2
                               : '#FFFFFF'
                           }
-                          testID="total-portfolio-amount-integer"
                         >
-                          {totalPortfolioAmountIntegerFormattedPart}
+                          {t('.')}
+                          {totalPortfolioAmountDecimalFormattedPart}
                         </Text>
-                        {totalPortfolioAmount < THRESHOLD_AMOUNT_TO_HIDE_BALANCE_DECIMALS && (
-                          <Text
-                            fontSize={20}
-                            shouldScale={false}
-                            weight="number_bold"
-                            color={
-                              networksWithErrors.length || isOffline
-                                ? theme.warningDecorative2
-                                : '#FFFFFF'
-                            }
-                          >
-                            {t('.')}
-                            {totalPortfolioAmountDecimalFormattedPart}
-                          </Text>
-                        )}
-                      </Text>
-                    </Pressable>
+                      )}
+                    </Text>
                   )}
                 </View>
                 <Pressable
@@ -201,7 +195,8 @@ const DashboardOverview: FC<Props> = ({
                   disabled={!portfolio.isAllReady || portfolio.isReloading}
                   testID="refresh-button"
                   onHoverIn={() => setIsBalanceHovered(true)}
-                  onHoverOut={() => setIsBalanceHovered(false)}
+                  // Increase clickable area using prop
+                  hitSlop={10}
                 >
                   <RefreshIcon
                     spin={!portfolio.isAllReady || portfolio.isReloading}
