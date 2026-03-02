@@ -143,7 +143,7 @@ export const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainCon
         <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mb2Xl]}>
           {!!withBackButton && <PanelBackButton onPress={onBackButtonPress} />}
           {!!title && <PanelTitle title={title} size={18} />}
-          {!!withBackButton && <View style={{ width: 20 }} />}
+          {!!withBackButton && <View style={{ width: 28 }} />}
         </View>
       )}
       {children}

@@ -21,25 +21,33 @@ const TermsComponent = () => {
         {t('Effective starting 26 November 2021')}
       </Text>
       <Text selectable style={styles.text}>
-        <Text selectable style={styles.text}>
-          {t('Ambire Wallet is an open-source non-custodial cryptocurrency wallet:')}
-        </Text>
-        <ul style={{ paddingLeft: SPACING_SM, margin: 0 }}>
-          <li>
+        {t('Ambire Wallet is an open-source non-custodial cryptocurrency wallet:')}
+      </Text>
+      <View style={{ paddingLeft: SPACING_SM, margin: 0 }}>
+        <View style={[flexbox.directionRow, spacings.mbSm]}>
+          <Text selectable style={[styles.text, { marginRight: SPACING_SM }]}>
+            •
+          </Text>
+          <Text selectable style={[styles.text, flexbox.flex1]}>
             open-source: the software is provided &quot;as is&quot;, without warranty of any kind,
             express or implied, including but not limited to the warranties of merchantability,
             fitness for a particular purpose and noninfringement
-          </li>
-          <li>
+          </Text>
+        </View>
+        <View style={[flexbox.directionRow]}>
+          <Text selectable style={[styles.text, { marginRight: SPACING_SM }]}>
+            •
+          </Text>
+          <Text selectable style={[styles.text, flexbox.flex1]}>
             non-custodial: it is designed such that each user account is solely controlled by
             whoever holds the associated private keys. In other words, the end user retains full
             custody (possession) of their crypto funds at all times. As such, loss of funds is
             possible if the end user loses control over their private keys, for example but not
             limited to: losing their passphrase, losing access to their JSON backup, etc. The end
             user is solely responsible for the control over their private keys.
-          </li>
-        </ul>
-      </Text>
+          </Text>
+        </View>
+      </View>
       <Text selectable style={styles.text}>
         {t(
           'Those characteristics, combined with the decentralized nature of blockchain technologies such as Ethereum, mean that no single party is able to freeze, repossess or in any other way control the funds and actions of end users.'
