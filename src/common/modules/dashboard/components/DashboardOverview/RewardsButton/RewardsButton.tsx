@@ -50,7 +50,10 @@ const RewardsButton = () => {
   return (
     <RewardsButtonWrapper onPress={() => navigate(WEB_ROUTES.rewards)}>
       <RewardsCircularIcon width={14} height={14} />
-      <View style={[flexbox.directionRow, flexbox.justifyCenter, flexbox.alignEnd]}>
+      <View
+        style={[flexbox.directionRow, flexbox.justifyCenter, flexbox.alignEnd]}
+        testID="dashboard-button-rewards"
+      >
         <Text
           color="#D7FF00"
           fontSize={12}
