@@ -197,8 +197,6 @@ export default function useAccountPersonalize() {
 
   // the hook inits the list with accountsToPersonalize
   useEffect(() => {
-    if (accountsToPersonalize.length) return
-
     let state: Account[] = []
     if (accountPickerState.isInitialized) {
       state = accountPickerState.addedAccountsFromCurrentSession
@@ -209,8 +207,19 @@ export default function useAccountPersonalize() {
     }
 
     if (state.length) {
-      setAccountsToPersonalize(state)
+      const hasNewAccounts = state.some(
+        (st) => !accountsToPersonalize.find((acc) => acc.addr === st.addr)
+      )
+
+      if (!accountsToPersonalize.length || hasNewAccounts) {
+        // Merge to keep customized preferences (like labels) for existing accounts
+        const merged = state.map(
+          (st) => accountsToPersonalize.find((acc) => acc.addr === st.addr) || st
+        )
+        setAccountsToPersonalize(merged)
+      }
     } else {
+      if (accountsToPersonalize.length) return
       if (isLoading) return
 
       const shouldAddAutomatically =
@@ -228,7 +237,7 @@ export default function useAccountPersonalize() {
     accountPickerState.isInitialized,
     accountPickerState.initParams?.shouldAddNextAccountAutomatically,
     accountPickerState.addedAccountsFromCurrentSession,
-    accountsToPersonalize.length,
+    accountsToPersonalize,
     newlyAddedAccounts,
     statuses.addAccounts,
     setAccountsToPersonalize,

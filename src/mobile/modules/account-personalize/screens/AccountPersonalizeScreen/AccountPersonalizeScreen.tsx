@@ -51,9 +51,11 @@ const AccountPersonalizeScreen = () => {
         title={
           accountPickerState.pageError
             ? t('Accounts')
-            : accountsToPersonalize.length
-              ? t('Added successfully')
-              : t('No new accounts added')
+            : !isLoading
+              ? accountsToPersonalize.length
+                ? t('Added successfully')
+                : t('No new accounts added')
+              : undefined
         }
       >
         {isLoading && !accountPickerState.pageError ? (
