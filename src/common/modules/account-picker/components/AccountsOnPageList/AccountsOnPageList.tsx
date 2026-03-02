@@ -1,7 +1,7 @@
 import { uniqBy } from 'lodash'
 import groupBy from 'lodash/groupBy'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { NativeScrollEvent, View } from 'react-native'
+import { NativeScrollEvent, Platform, View } from 'react-native'
 
 import {
   Account as AccountInterface,
@@ -9,7 +9,6 @@ import {
   ImportStatus
 } from '@ambire-common/interfaces/account'
 import { IAccountPickerController } from '@ambire-common/interfaces/accountPicker'
-import WarningFilledIcon from '@common/assets/svg/WarningFilledIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import Alert from '@common/components/Alert'
 import Badge from '@common/components/Badge'
@@ -21,12 +20,12 @@ import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
+import Account from '@common/modules/account-picker/components/Account'
+import AnimatedDownArrow from '@common/modules/account-picker/components/AccountsOnPageList/AnimatedDownArrow/AnimatedDownArrow'
+import AccountsRetrieveError from '@common/modules/account-picker/components/AccountsRetrieveError'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
-import Account from '@web/modules/account-picker/components/Account'
-import AnimatedDownArrow from '@web/modules/account-picker/components/AccountsOnPageList/AnimatedDownArrow/AnimatedDownArrow'
-import AccountsRetrieveError from '@web/modules/account-picker/components/AccountsRetrieveError'
 
 import getStyles from './styles'
 
@@ -43,6 +42,8 @@ type Props = {
   lookingForLinkedAccounts: boolean
   children?: any
 }
+
+const isMobile = Platform.OS === 'ios' || Platform.OS === 'android'
 
 const AccountsOnPageList = ({
   state,
@@ -237,14 +238,12 @@ const AccountsOnPageList = ({
         )}
         <ScrollableWrapper
           style={[
-            !isImportingFromPrivateKey && spacings.mbLg,
+            isMobile ? spacings.mbMd : spacings.mbLg,
             {
-              maxHeight: 480
+              maxHeight: isMobile ? undefined : 480
             }
           ]}
-          contentContainerStyle={{
-            flexGrow: 1
-          }}
+          contentContainerStyle={{ flexGrow: 1 }}
           onScroll={(e) => {
             if (isCloseToBottom(e.nativeEvent) && setHasReachedBottom) setHasReachedBottom(true)
           }}
@@ -269,7 +268,7 @@ const AccountsOnPageList = ({
             </View>
           ) : (
             <>
-              <View style={[spacings.phSm, spacings.pbLg]}>
+              <View style={[!isMobile && spacings.phSm, isMobile ? spacings.pbMd : spacings.pbLg]}>
                 {Object.keys(slots).map((key, i) => {
                   return (
                     <View key={key}>
@@ -284,9 +283,9 @@ const AccountsOnPageList = ({
                 })}
               </View>
               {!!Object.keys(slots).length && (
-                <View style={styles.smartAccountWrapper}>
+                <View style={[styles.smartAccountWrapper, isMobile && spacings.ptSm]}>
                   <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbSm]}>
-                    <Text fontSize={16} weight="medium" style={text.center}>
+                    <Text fontSize={16} weight="medium" style={[text.center, spacings.mrTy]}>
                       {t('Smart accounts')}
                       {/* TODO: Add an info icon here with a tooltip */}
                     </Text>
@@ -299,13 +298,15 @@ const AccountsOnPageList = ({
                     >
                       {lookingForLinkedAccounts && (
                         <View style={[flexbox.alignCenter, flexbox.directionRow]}>
-                          <Spinner style={{ width: 16, height: 16 }} />
-                          <Text appearance="primary" style={[spacings.mlTy]} fontSize={14}>
-                            {t('Looking for linked smart accounts')}
+                          <Spinner
+                            style={{ width: isMobile ? 14 : 16, height: isMobile ? 14 : 16 }}
+                          />
+                          <Text appearance="primary" style={[spacings.mlTy]} fontSize={12}>
+                            {t(`Looking for linked ${!isMobile ? 'smart ' : ''}accounts`)}
                           </Text>
                         </View>
                       )}
-                      {!lookingForLinkedAccounts && hasLinkedAccounts && (
+                      {!isMobile && !lookingForLinkedAccounts && hasLinkedAccounts && (
                         <View style={[flexbox.directionRow, flexbox.alignCenter]}>
                           <Badge
                             type="info"
@@ -330,6 +331,22 @@ const AccountsOnPageList = ({
                       )}
                     </View>
                   </View>
+
+                  {isMobile && !lookingForLinkedAccounts && hasLinkedAccounts && (
+                    <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mb]}>
+                      <Badge
+                        type="info"
+                        size="md"
+                        withRightSpacing
+                        text={`Linked Smart Account (found on page ${state.page})`}
+                        tooltipText={
+                          isMobile
+                            ? undefined
+                            : 'Linked smart accounts are accounts that were not created with a given key originally, but this key was authorized for that given account on any supported network.'
+                        }
+                      />
+                    </View>
+                  )}
 
                   {Object.keys(slots).map((key, i) => {
                     return (
@@ -357,22 +374,45 @@ const AccountsOnPageList = ({
                   )}
                 </View>
               )}
+              {isMobile && (
+                <View
+                  style={[
+                    flexbox.flex1,
+                    flexbox.justifyEnd,
+                    flexbox.alignCenter,
+                    spacings.mtLg,
+                    spacings.mbTy
+                  ]}
+                >
+                  {!isImportingFromPrivateKey && (
+                    <Pagination
+                      page={state.page}
+                      maxPages={1000}
+                      setPage={setPage}
+                      isDisabled={state.accountsLoading}
+                      hideLastPage
+                    />
+                  )}
+                </View>
+              )}
             </>
           )}
         </ScrollableWrapper>
         <AnimatedDownArrow isVisible={shouldDisplayAnimatedDownArrow} />
       </View>
-      <View style={[flexbox.alignEnd, spacings.mbMd]}>
-        {!isImportingFromPrivateKey && (
-          <Pagination
-            page={state.page}
-            maxPages={1000}
-            setPage={setPage}
-            isDisabled={state.accountsLoading}
-            hideLastPage
-          />
-        )}
-      </View>
+      {!isMobile && (
+        <View style={[flexbox.alignEnd, spacings.mbMd]}>
+          {!isImportingFromPrivateKey && (
+            <Pagination
+              page={state.page}
+              maxPages={1000}
+              setPage={setPage}
+              isDisabled={state.accountsLoading}
+              hideLastPage
+            />
+          )}
+        </View>
+      )}
       {children}
     </View>
   )

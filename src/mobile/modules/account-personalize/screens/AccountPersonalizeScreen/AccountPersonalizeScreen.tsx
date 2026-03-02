@@ -6,6 +6,7 @@ import Alert from '@common/components/Alert'
 import Button from '@common/components/Button'
 import SuccessAnimation from '@common/components/SuccessAnimation'
 import Text from '@common/components/Text'
+import { isWeb } from '@common/config/env'
 import { Trans, useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import AccountPersonalizeCard from '@common/modules/account-personalize/components/AccountPersonalizeCard'
@@ -14,7 +15,7 @@ import AccountsLoadingDotsAnimation from '@common/modules/account-personalize/co
 import useAccountPersonalize from '@common/modules/account-personalize/hooks/useAccountPersonalize'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import {
@@ -47,7 +48,13 @@ const AccountPersonalizeScreen = () => {
       <MobileLayoutWrapperMainContent
         withBackButton
         onBackButtonPress={goToPrevRoute}
-        title={accountPickerState.pageError ? t('Accounts') : undefined}
+        title={
+          accountPickerState.pageError
+            ? t('Accounts')
+            : accountsToPersonalize.length
+              ? t('Added successfully')
+              : t('No new accounts added')
+        }
       >
         {isLoading && !accountPickerState.pageError ? (
           <View style={[flexbox.alignCenter]}>
@@ -84,15 +91,9 @@ const AccountPersonalizeScreen = () => {
           </View>
         ) : (
           <>
-            <SuccessAnimation style={{ ...spacings.mbLg, ...flexbox.alignSelfCenter }} />
-            <Text
-              testID="added-successfully-text"
-              weight="medium"
-              fontSize={20}
-              style={{ alignSelf: 'center', ...spacings.mbXl }}
-            >
-              {accountsToPersonalize.length ? t('Added successfully') : t('No new accounts added')}
-            </Text>
+            <SuccessAnimation
+              style={{ ...spacings.mbXl, marginTop: -SPACING_TY, ...flexbox.alignSelfCenter }}
+            />
             <ScrollView style={spacings.mbLg}>
               {accountsToPersonalize.map((acc, index) => (
                 <AccountPersonalizeCard
@@ -135,7 +136,7 @@ const AccountPersonalizeScreen = () => {
                 style={{
                   ...spacings.phMi,
                   ...spacings.mtSm,
-                  height: 40
+                  height: isWeb ? 40 : 44
                 }}
                 size="tiny"
                 hasBottomSpacing={false}
