@@ -24,6 +24,7 @@ on:
 jobs:
   build-ios:
     name: Build iOS artifact and upload
+    environment: extension-production
     # NOTE: macos-15 runners are Apple Silicon (arm64)
     runs-on: macos-15
     concurrency:
