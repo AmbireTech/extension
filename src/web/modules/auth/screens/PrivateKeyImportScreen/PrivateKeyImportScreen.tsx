@@ -10,7 +10,6 @@ import Panel from '@common/components/Panel'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import { storage } from '@common/services/storage'
@@ -37,8 +36,8 @@ const PrivateKeyImportScreen = () => {
   const { t } = useTranslation()
 
   const { theme } = useTheme()
-  const { dispatch } = useControllersMiddleware()
   const { initParams, subType } = useController('AccountPickerController').state
+  const { dispatch: mainDispatch } = useController('MainController')
   const [agreedToBackupWarning, setAgreedToBackupWarning] = useState(false)
   const [importButtonPressed, setImportButtonPressed] = useState(false)
 
@@ -51,12 +50,15 @@ const PrivateKeyImportScreen = () => {
       const noPrefixPrivateKey =
         trimmedPrivateKey.slice(0, 2) === '0x' ? trimmedPrivateKey.slice(2) : trimmedPrivateKey
 
-      dispatch({
-        type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_PRIVATE_KEY_OR_SEED_PHRASE',
-        params: { privKeyOrSeed: noPrefixPrivateKey }
+      mainDispatch({
+        type: 'method',
+        params: {
+          method: 'accountPickerSetInitParamsFromPrivateKeyOrSeedPhrase',
+          args: [{ privKeyOrSeed: noPrefixPrivateKey }]
+        }
       })
     })()
-  }, [dispatch, handleSubmit])
+  }, [mainDispatch, handleSubmit])
 
   useEffect(() => {
     if (!getValues('privateKey')) return
@@ -64,7 +66,7 @@ const PrivateKeyImportScreen = () => {
       setImportButtonPressed(false)
       goToNextRoute()
     }
-  }, [goToNextRoute, dispatch, getValues, initParams, importButtonPressed, subType])
+  }, [goToNextRoute, getValues, initParams, importButtonPressed, subType])
 
   const handleValidation = (value: string) => {
     const trimmedValue = value.trim()

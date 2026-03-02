@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 
-const useIsScreenFocused = () => {
+const useIsAppFocused = () => {
   const [isFocused, setIsFocused] = useState(true)
 
   useEffect(() => {
@@ -24,4 +24,4 @@ const useIsScreenFocused = () => {
   return isFocused
 }
 
-export default useIsScreenFocused
+export default useIsAppFocused
