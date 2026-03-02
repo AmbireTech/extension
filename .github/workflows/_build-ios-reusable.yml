@@ -86,25 +86,27 @@ jobs:
         env:
           IOS_DISTRIBUTION_CERT_BASE64: ${{ secrets.IOS_DISTRIBUTION_CERT_BASE64 }}
           IOS_CERT_PASSWORD: ${{ secrets.IOS_CERT_PASSWORD }}
-          IOS_KEYCHAIN_PASSWORD: ${{ secrets.IOS_KEYCHAIN_PASSWORD }}
         run: |
           set -euo pipefail
           KEYCHAIN_PATH="$RUNNER_TEMP/build.keychain-db"
           CERT_PATH="$RUNNER_TEMP/certificate.p12"
+          # Temporary random password for the ephemeral keychain; never logged or persisted.
+          # Keychain is deleted in the cleanup step, so it's fine it only lives in memory.
+          KEYCHAIN_PASSWORD="$(openssl rand -hex 16)"
 
-          if [[ -z "${IOS_DISTRIBUTION_CERT_BASE64:-}" || -z "${IOS_CERT_PASSWORD:-}" || -z "${IOS_KEYCHAIN_PASSWORD:-}" ]]; then
-            echo "Signing secrets are missing. Required: IOS_DISTRIBUTION_CERT_BASE64, IOS_CERT_PASSWORD, IOS_KEYCHAIN_PASSWORD"
+          if [[ -z "${IOS_DISTRIBUTION_CERT_BASE64:-}" || -z "${IOS_CERT_PASSWORD:-}" ]]; then
+            echo "Signing secrets are missing. Required: IOS_DISTRIBUTION_CERT_BASE64, IOS_CERT_PASSWORD"
             exit 1
           fi
 
           (echo -n "$IOS_DISTRIBUTION_CERT_BASE64" | base64 --decode > "$CERT_PATH") || \
           (echo -n "$IOS_DISTRIBUTION_CERT_BASE64" | base64 -D > "$CERT_PATH")
 
-          security create-keychain -p "$IOS_KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
           security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
-          security unlock-keychain -p "$IOS_KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
           security import "$CERT_PATH" -k "$KEYCHAIN_PATH" -P "$IOS_CERT_PASSWORD" -T /usr/bin/codesign -T /usr/bin/security
-          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$IOS_KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
           security list-keychains -d user -s "$KEYCHAIN_PATH"
         shell: bash
 
