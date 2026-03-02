@@ -29,7 +29,7 @@
 }
 
 .rewards-button-wrapper:hover {
-  animation: rewards-border-spin 5s linear infinite;
+  animation: rewards-border-spin 3s linear infinite;
   box-shadow: 0 0 12px 4px rgba(215, 255, 0, 0.18);
 }
 
