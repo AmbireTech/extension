@@ -7,13 +7,13 @@
 	<key>signingStyle</key>
 	<string>manual</string>
 	<key>signingCertificate</key>
-	<string>Ambire Tech Ltd</string>
+	<string>Apple Distribution: Ambire Tech Ltd</string>
 	<key>provisioningProfiles</key>
 	<dict>
 		<key>com.ambire.app.wallet</key>
-		<string>Ambire App Store</string>
+		<string>Ambire iOS App Distribution</string>
 	</dict>
 	<key>destination</key>
-	<string>upload</string>
+	<string>export</string>
 </dict>
 </plist>
