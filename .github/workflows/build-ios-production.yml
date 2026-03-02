@@ -4,6 +4,10 @@ on:
   workflow_dispatch: # Manual trigger
   release:
     types: [published] # Triggers on new releases (from any branch)
+  # TODO: Temporary, while testing iOS signing, run this on every commit to config/ci-ios-with-signing.
+  push:
+    branches:
+      - config/ci-ios-with-signing
 
 jobs:
   build-ios-production:
