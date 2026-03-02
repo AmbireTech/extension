@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { memo, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
@@ -68,11 +68,11 @@ const RewardsButton = () => {
           {t('from')}
         </Text>
         <Text color="#D7FF00" fontSize={10} weight="medium" style={{ lineHeight: 15 }}>
-          Rewards
+          {t('Rewards')}
         </Text>
       </View>
     </RewardsButtonWrapper>
   )
 }
 
-export default RewardsButton
+export default memo(RewardsButton)

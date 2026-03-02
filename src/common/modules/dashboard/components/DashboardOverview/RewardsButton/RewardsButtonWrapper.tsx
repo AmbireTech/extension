@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { memo } from 'react'
 import { Pressable } from 'react-native'
 
 import spacings from '@common/styles/spacings'
@@ -30,4 +30,4 @@ const RewardsButtonWrapper = ({
   )
 }
 
-export default RewardsButtonWrapper
+export default memo(RewardsButtonWrapper)

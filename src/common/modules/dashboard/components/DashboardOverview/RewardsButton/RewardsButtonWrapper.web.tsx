@@ -1,6 +1,6 @@
 import './RewardsButtonWrapper.css'
 
-import React from 'react'
+import React, { memo } from 'react'
 
 const RewardsButtonWrapper = ({
   children,
@@ -16,4 +16,4 @@ const RewardsButtonWrapper = ({
   )
 }
 
-export default RewardsButtonWrapper
+export default memo(RewardsButtonWrapper)
