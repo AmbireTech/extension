@@ -129,7 +129,6 @@ const MultipleSignersSelect = ({
             handleSetMultisigSigners(selectedSigners)
             handleClose()
           }}
-          style={spacings.ml0}
           size="small"
         />
       </View>

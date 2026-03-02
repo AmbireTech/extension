@@ -1,3 +1,4 @@
+import { Contacts } from '@ambire-common/controllers/addressBook/addressBook'
 import { getFeeSpeedIdentifier } from '@ambire-common/controllers/signAccountOp/helper'
 import { FeeSpeed } from '@ambire-common/controllers/signAccountOp/signAccountOp'
 import { ISignAccountOpController } from '@ambire-common/interfaces/signAccountOp'
@@ -55,7 +56,8 @@ const sortFeeOptions = (
 
 const mapFeeOptions = (
   feeOption: FeePaymentOption,
-  signAccountOpState: ISignAccountOpController
+  signAccountOpState: ISignAccountOpController,
+  addressBookContacts: Contacts
 ) => {
   let disabledReason: string | undefined
   let disabledTextAppearance: 'errorText' | 'infoText' | undefined
@@ -105,6 +107,12 @@ const mapFeeOptions = (
     disabledTextAppearance = 'infoText'
   }
 
+  const paidByAccountLabel = feeOption.paidBy
+    ? addressBookContacts.find(
+        (contact) => contact.address.toLowerCase() === feeOption.paidBy.toLowerCase()
+      )?.name
+    : undefined
+
   return {
     value:
       feeOption.paidBy +
@@ -118,8 +126,13 @@ const mapFeeOptions = (
         feeOption={feeOption}
         disabledReason={disabledReason}
         disabledTextAppearance={disabledTextAppearance}
+        paidByAccountLabel={paidByAccountLabel}
       />
     ),
+    extraSearchProps: {
+      paidByAccountLabel
+    },
+    paidByAccountLabel,
     paidBy: feeOption.paidBy,
     token: feeOption.token,
     disabled: !!disabledReason,

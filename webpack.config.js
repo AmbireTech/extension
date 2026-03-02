@@ -251,7 +251,7 @@ module.exports = async function (env, argv) {
   }
 
   if (config.mode === 'production') {
-    config.output.assetModuleFilename = '[name].[ext]'
+    config.output.assetModuleFilename = '[name]-[hash:8][ext]'
     config.output.filename = '[name].js'
     config.output.chunkFilename = '[id].js'
   }

@@ -14,6 +14,7 @@ import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
+import useToast from '@common/hooks/useToast'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import RouteStepsPreview from '@common/modules/swap-and-bridge/components/RouteStepsPreview'
 import spacings from '@common/styles/spacings'
@@ -25,6 +26,7 @@ import getStyles from './styles'
 
 const ActiveRouteCard = ({ activeRoute }: { activeRoute: SwapAndBridgeActiveRoute }) => {
   const { styles, theme } = useTheme(getStyles)
+  const { addToast } = useToast()
   const { t } = useTranslation()
   const { dispatch: mainDispatch } = useController('MainController')
   const { navigate } = useNavigation()
@@ -89,13 +91,19 @@ const ActiveRouteCard = ({ activeRoute }: { activeRoute: SwapAndBridgeActiveRout
   const refunded = useMemo(() => {
     if (!steps || steps.length === 0) return null
     const firstStep = steps[0]
+
+    if (!firstStep) return null
+
     if (steps.length === 1) {
       return {
         amount: firstStep.fromAmount,
         asset: firstStep.fromAsset
       }
     }
+
     const lastCompletedStep = steps[1]
+    if (!lastCompletedStep) return null
+
     return {
       amount: firstStep.toAmount,
       asset: lastCompletedStep.fromAsset
@@ -219,18 +227,26 @@ const ActiveRouteCard = ({ activeRoute }: { activeRoute: SwapAndBridgeActiveRout
               {activeRoute.route && steps?.length && (
                 <Button
                   onPress={() => {
+                    const firstStep = steps[0]
+                    const lastStep = steps[steps.length - 1]
+
+                    if (!firstStep || !lastStep) {
+                      addToast('Failed to retry the route, missing route steps', { type: 'error' })
+                      return
+                    }
+
                     navigate(WEB_ROUTES.swapAndBridge, {
                       state: {
                         preselectedFromToken: {
-                          address: steps[0].fromAsset.address,
-                          chainId: BigInt(steps[0].fromAsset.chainId)
+                          address: firstStep.fromAsset.address,
+                          chainId: BigInt(firstStep.fromAsset.chainId)
                         },
                         preselectedToToken: {
-                          address: steps[steps.length - 1].toAsset.address,
-                          chainId: BigInt(steps[steps.length - 1].toAsset.chainId)
+                          address: lastStep.toAsset.address,
+                          chainId: BigInt(lastStep.toAsset.chainId)
                         },
                         fromAmount: formatDecimals(
-                          Number(formatUnits(steps[0].fromAmount, steps[0].fromAsset.decimals)),
+                          Number(formatUnits(firstStep.fromAmount, firstStep.fromAsset.decimals)),
                           'precise'
                         ),
                         activeRouteIdToDelete: activeRoute.activeRouteId

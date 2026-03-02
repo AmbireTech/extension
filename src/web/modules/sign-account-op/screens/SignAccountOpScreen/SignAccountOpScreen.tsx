@@ -13,7 +13,7 @@ import useSign from '@common/hooks/useSign'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
-import { BORDER_RADIUS_PRIMARY, hexToRgba } from '@common/styles/utils/common'
+import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import SmallNotificationWindowWrapper from '@web/components/SmallNotificationWindowWrapper'
 import {
@@ -32,6 +32,7 @@ import Simulation from '@web/modules/sign-account-op/components/Simulation'
 import KeySelect from '@web/modules/sign-message/components/KeySelect'
 
 import ErrorInformation from '../../components/ErrorInformation'
+import SafeOwners from '../../components/SafeOwners'
 import Gradient from './Gradient'
 import getStyles from './styles'
 
@@ -225,6 +226,16 @@ const SignAccountOpScreen = () => {
                     />
                   </View>
                 ) : null}
+
+                {!isViewOnly &&
+                  signAccountOpState &&
+                  signAccountOpState?.errors.length === 0 &&
+                  !signAccountOpState.canBroadcast &&
+                  !!signAccountOpState.account.safeCreation && (
+                    <ScrollView style={[{ maxHeight: 160 }, spacings.mb]}>
+                      <SafeOwners signAccountOpController={signAccountOpState} />
+                    </ScrollView>
+                  )}
 
                 <Footer
                   onReject={handleRejectAccountOp}

@@ -160,13 +160,13 @@ export class SwapAndBridgePage extends BasePage {
     await this.openSwapAndBridge()
     await this.selectSendToken(sendToken)
 
-    await this.page.waitForTimeout(1000)
+    await this.page.waitForTimeout(2000)
 
     await this.click(selectors.swapAndBridge.receiveTokenDropdown)
-    await this.page.getByTestId(selectors.searchInput).fill(receiveToken.symbol, { timeout: 3000 })
+    await this.page.getByTestId(selectors.searchInput).fill(receiveToken.symbol, { timeout: 5000 })
     await this.page.getByText('Not found. Try with token').isVisible()
 
-    await this.page.locator(SELECTORS.searchInput).fill(receiveToken.address, { timeout: 3000 })
+    await this.page.locator(SELECTORS.searchInput).fill(receiveToken.address, { timeout: 5000 })
 
     const tokenLocator = this.page
       .getByTestId(selectors.bottomSheet)
@@ -259,7 +259,7 @@ export class SwapAndBridgePage extends BasePage {
     const [usdOldAmount, currency] = await this.getUSDTextContent()
     expect(currency).toBe('$')
     const oldAmount = await this.getAmount(selectors.fromAmountInputSab)
-    await this.page.waitForTimeout(500)
+    await this.page.waitForTimeout(1000)
     await this.click(selectors.flipIcon)
 
     const [usdNewAmount, newCurrency] = await this.getUSDTextContent()
@@ -269,7 +269,7 @@ export class SwapAndBridgePage extends BasePage {
     expect(newCurrency).toBe(sendToken.symbol)
 
     // Wait and flip back
-    await this.page.waitForTimeout(500)
+    await this.page.waitForTimeout(1000)
     await this.click(selectors.flipIcon)
 
     const [usdSecondAmount, secondCurrency] = await this.getUSDTextContent()
@@ -282,7 +282,9 @@ export class SwapAndBridgePage extends BasePage {
   }
 
   async getUSDTextContent(): Promise<[number, string]> {
-    const content = await this.page.getByTestId(selectors.switchCurrencySab).innerText()
+    const content = await this.page
+      .getByTestId(selectors.switchCurrencySab)
+      .innerText({ timeout: 5000 })
 
     let currency: string | null = null
     let amount: string | null = null

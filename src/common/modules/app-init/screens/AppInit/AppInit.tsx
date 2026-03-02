@@ -2,7 +2,6 @@ import React from 'react'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { NativeRouter } from 'react-router-native'
 
-import WithGlassViewSupport from '@common/components/GlassView/WithGlassViewSupport'
 import { ControllerStoreProvider } from '@common/contexts/controllerStoreContext'
 import { KeyboardProvider } from '@common/contexts/keyboardContext'
 import { NetInfoProvider } from '@common/contexts/netInfoContext'
@@ -36,10 +35,8 @@ const AppInit = () => {
                         <NetInfoProvider>
                           <AuthProvider>
                             <OnboardingNavigationProvider>
-                              <WithGlassViewSupport>
-                                <AppRouter />
-                                <PortalHost name="global" />
-                              </WithGlassViewSupport>
+                              <AppRouter />
+                              <PortalHost name="global" />
                             </OnboardingNavigationProvider>
                           </AuthProvider>
                         </NetInfoProvider>
