@@ -1,0 +1,3 @@
+import ViewOnlyAccountAdderAddressField from './ViewOnlyAccountAdderAddressField'
+
+export default ViewOnlyAccountAdderAddressField

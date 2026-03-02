@@ -47,6 +47,8 @@ type Props = AccountKeyType & {
   keyIconColor?: string
   showExportImport?: boolean
   containerStyle?: ViewStyle
+  tooltipContent?: string
+  itemHeight?: number
 }
 
 const { isPopup } = getUiType()
@@ -66,7 +68,9 @@ const AccountKey: React.FC<Props> = ({
   meta,
   keyIconColor,
   showExportImport = false,
-  onChains
+  onChains,
+  tooltipContent,
+  itemHeight = 48
 }) => {
   const { t } = useTranslation()
   const { theme, themeType } = useTheme()
@@ -122,7 +126,7 @@ const AccountKey: React.FC<Props> = ({
           flexbox.justifySpaceBetween,
           flexbox.alignCenter,
           flexbox.flex1,
-          { minHeight: 48 },
+          { minHeight: itemHeight },
           style
         ]}
       >
@@ -143,7 +147,7 @@ const AccountKey: React.FC<Props> = ({
             <View
               dataSet={createGlobalTooltipDataSet({
                 id: `key-${addr}-tooltip`,
-                content: addr
+                content: tooltipContent ?? addr
               })}
             >
               <Text
@@ -157,7 +161,7 @@ const AccountKey: React.FC<Props> = ({
                   dedicatedToOneSA && { letterSpacing: -0.2 }
                 ]}
               >
-                {dedicatedToOneSA ? t('(dedicated key)') : label ? `(${shortAddr})` : shortAddr}
+                {dedicatedToOneSA ? t('(dedicated key)') : label ? `${label}` : shortAddr}
               </Text>
             </View>
             {!!showCopyAddr && (

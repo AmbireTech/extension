@@ -9,7 +9,6 @@ interface Style {
 const styles = StyleSheet.create<Style>({
   container: {
     ...flexbox.directionRow,
-    ...flexbox.alignCenter,
     marginHorizontal: -5
   }
 })

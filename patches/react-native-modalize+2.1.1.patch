@@ -1,0 +1,78 @@
+# This patch fixes a gesture conflict in react-native-modalize where scrolling up 
+# (especially with elastic bounce) would trigger the modal's close gesture. 
+# This is mainly because the package was originally written for Reanimated v1 
+# but the app is using v2, causing inconsistencies in beginScrollY tracking. 
+# It ensures beginScrollY remains >= 0 to prevent unintended modal closures 
+# during internal content scrolling.
+diff --git a/node_modules/react-native-modalize/lib/index.js b/node_modules/react-native-modalize/lib/index.js
+index 5d5edac..b144d09 100644
+--- a/node_modules/react-native-modalize/lib/index.js
++++ b/node_modules/react-native-modalize/lib/index.js
+@@ -316,11 +316,11 @@ onOpen, onOpened, onClose, onClosed, onBackButtonPress, onPositionChange, onOver
+         const { timing } = closeAnimationConfig;
+         const { velocityY, translationY } = nativeEvent;
+         const negativeReverseScroll = modalPosition === 'top' &&
+-            beginScrollYValue >= (snapPoint ? 0 : SCROLL_THRESHOLD) &&
++            Math.max(0, beginScrollY._value) >= (snapPoint ? 0 : SCROLL_THRESHOLD) &&
+             translationY < 0;
+-        const thresholdProps = translationY > threshold && beginScrollYValue === 0;
++        const thresholdProps = translationY > threshold && Math.max(0, beginScrollY._value) === 0;
+         const closeThreshold = velocity
+-            ? (beginScrollYValue <= 20 && velocityY >= velocity) || thresholdProps
++            ? (Math.max(0, beginScrollY._value) <= 20 && velocityY >= velocity) || thresholdProps
+             : thresholdProps;
+         let enableBouncesValue = true;
+         // We make sure to reset the value if we are dragging from the children
+@@ -334,8 +334,8 @@ onOpen, onOpened, onClose, onClosed, onBackButtonPress, onPositionChange, onOver
+         if (nativeEvent.oldState === react_native_gesture_handler_1.State.BEGAN) {
+             setCancelClose(false);
+             if (!closeSnapPointStraightEnabled && snapPoint
+-                ? beginScrollYValue > 0
+-                : beginScrollYValue > 0 || negativeReverseScroll) {
++                ? Math.max(0, beginScrollY._value) > 0
++                : Math.max(0, beginScrollY._value) > 0 || negativeReverseScroll) {
+                 setCancelClose(true);
+                 translateY.setValue(0);
+                 dragY.setValue(0);
+@@ -353,10 +353,10 @@ onOpen, onOpened, onClose, onClosed, onBackButtonPress, onPositionChange, onOver
+         setEnableBounces(devices_1.isAndroid
+             ? false
+             : alwaysOpen
+-                ? beginScrollYValue > 0 || translationY < 0
++                ? Math.max(0, beginScrollY._value) > 0 || translationY < 0
+                 : enableBouncesValue);
+         if (nativeEvent.oldState === react_native_gesture_handler_1.State.ACTIVE) {
+-            const toValue = translationY - beginScrollYValue;
++            const toValue = translationY - Math.max(0, beginScrollY._value);
+             let destSnapPoint = 0;
+             if (snapPoint || alwaysOpen) {
+                 const endOffsetY = lastSnap + toValue + dragToss * velocityY;
+@@ -389,7 +389,7 @@ onOpen, onOpened, onClose, onClosed, onBackButtonPress, onPositionChange, onOver
+                         }
+                     }
+                     // For alwaysOpen props
+-                    if (distFromSnap < diffPoint && alwaysOpen && beginScrollYValue <= 0) {
++                    if (distFromSnap < diffPoint && alwaysOpen && Math.max(0, beginScrollY._value) <= 0) {
+                         destSnapPoint = (modalHeightValue || 0) - alwaysOpen;
+                         willCloseModalize = false;
+                     }
+@@ -422,7 +422,7 @@ onOpen, onOpened, onClose, onClosed, onBackButtonPress, onPositionChange, onOver
+                 toValue: destSnapPoint,
+                 useNativeDriver: USE_NATIVE_DRIVER,
+             }).start();
+-            if (beginScrollYValue <= 0) {
++            if (Math.max(0, beginScrollY._value) <= 0) {
+                 const modalPositionValue = destSnapPoint <= 0 ? 'top' : 'initial';
+                 if (panGestureAnimatedValue) {
+                     react_native_1.Animated.timing(panGestureAnimatedValue, {
+@@ -536,6 +536,10 @@ onOpen, onOpened, onClose, onClosed, onBackButtonPress, onPositionChange, onOver
+                 useNativeDriver: USE_NATIVE_DRIVER,
+                 listener: onScrollBeginDrag,
+             }),
++            onScroll: react_native_1.Animated.event([{ nativeEvent: { contentOffset: { y: beginScrollY } } }], {
++                useNativeDriver: USE_NATIVE_DRIVER,
++                listener: passedOnProps === null || passedOnProps === void 0 ? void 0 : passedOnProps.onScroll,
++            }),
+             scrollEventThrottle,
+             onLayout: handleContentLayout,
+             scrollEnabled,

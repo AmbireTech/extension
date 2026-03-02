@@ -37,7 +37,7 @@ const HoldToProceedButton: FC<Props> = ({
   const isCurrentlyHoldingRef = useRef(false)
 
   const colorTypes = {
-    primary: theme.primary,
+    primary: theme.primaryAccent100,
     error: theme.errorText,
     warning: theme.warningText
   }
