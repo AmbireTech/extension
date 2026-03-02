@@ -18,6 +18,7 @@ import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { isExtension } from '@web/constants/browserapi'
 import TransactionSummary from '@web/modules/sign-account-op/components/TransactionSummary'
 
 import { IS_MOBILE_UP_BENZIN_BREAKPOINT } from '../../styles'
@@ -61,7 +62,7 @@ const Benzin = ({
 
   const backgroundSource = useMemo(() => {
     if (maxWidthSize(1920)) return gradient2560
-    if (maxWidthSize(1560)) return gradient1920
+    if (maxWidthSize(1560) || isExtension) return gradient1920
     if (maxWidthSize(780)) return gradient1560
 
     return gradient780

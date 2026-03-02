@@ -52,7 +52,7 @@ const BenzinScreen = () => {
 
   return (
     <Benzin state={state}>
-      <FooterGlassView>
+      <FooterGlassView glassViewProps={{ blurAmount: 60 }}>
         {!!state?.handleOpenExplorer && (
           <OpenExplorerButton handleOpenExplorer={state.handleOpenExplorer} />
         )}
