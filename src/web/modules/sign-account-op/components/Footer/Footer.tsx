@@ -4,12 +4,10 @@ import { View } from 'react-native'
 import { SigningStatus } from '@ambire-common/controllers/signAccountOp/signAccountOp'
 import { getCallsCount } from '@ambire-common/utils/userRequest'
 import BatchIcon from '@common/assets/svg/BatchIcon'
-import SuccessIcon from '@common/assets/svg/SuccessIcon'
 import Button from '@common/components/Button'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
-import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
@@ -90,20 +88,7 @@ const Footer = ({
   // if the txns has been queued, display only a success and close options
   if (status && status.type === SigningStatus.Queued) {
     return (
-      <View style={[flexbox.directionRow, flexbox.justifyCenter]}>
-        <View style={[flexbox.directionRow, flexbox.flex1, flexbox.alignCenter]}>
-          <SuccessIcon color={theme.successDecorative} />
-          <Text
-            color={theme.successDecorative}
-            style={spacings.mlSm}
-            fontSize={16}
-            appearance="secondaryText"
-            numberOfLines={1}
-          >
-            {t('Sent to Safe global!')}
-          </Text>
-          <ActionsPagination />
-        </View>
+      <View style={[flexbox.directionRow, flexbox.justifyEnd]}>
         <Button
           testID="close-queue-button"
           type="primary"
@@ -136,27 +121,25 @@ const Footer = ({
         style={[flexbox.directionRow, !isAddToCartDisplayed && flexbox.flex1, flexbox.justifyEnd]}
       >
         {isAddToCartDisplayed && (
-          <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-            <Button
-              testID="queue-and-sign-later-button"
-              type="secondary"
-              childrenPosition="left"
-              text={batchBtnText}
-              onPress={onAddToCart}
-              disabled={isAddToCartDisabled}
-              hasBottomSpacing={false}
-              style={{ minWidth: 160, ...spacings.ph }}
-              size="large"
-              {...(!isMultisigSigned && {
-                tooltipDataSet: createGlobalTooltipDataSet({
-                  id: 'start-batch-info-tooltip',
-                  content: startBatchingInfo
-                })
-              })}
-            >
-              {!isMultisigSigned && <BatchIcon style={spacings.mlTy} />}
-            </Button>
-          </View>
+          <Button
+            testID="queue-and-sign-later-button"
+            type="secondary"
+            childrenPosition="left"
+            text={batchBtnText}
+            onPress={onAddToCart}
+            disabled={isAddToCartDisabled}
+            hasBottomSpacing={false}
+            style={{ minWidth: 160, ...spacings.ph, ...spacings.mrLg }}
+            size="large"
+            {...(!isMultisigSigned && {
+              tooltipDataSet: createGlobalTooltipDataSet({
+                id: 'start-batch-info-tooltip',
+                content: startBatchingInfo
+              })
+            })}
+          >
+            {!isMultisigSigned && <BatchIcon style={spacings.mlTy} />}
+          </Button>
         )}
         <View
           dataSet={createGlobalTooltipDataSet({
@@ -183,7 +166,7 @@ const Footer = ({
               text={isSignLoading ? inProgressButtonText : buttonText}
               onPress={onSign}
               size="large"
-              style={{ minWidth: 128, ...spacings.mlLg }}
+              style={{ minWidth: 128 }}
             />
           )}
         </View>
