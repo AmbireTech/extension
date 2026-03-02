@@ -24,9 +24,10 @@ const DashboardHeader = () => {
   const {
     state: { account }
   } = useController('SelectedAccountController')
-  const [bindBurgerAnim, burgerAnimStyle] = useHover({ preset: 'opacityInverted' })
+  const [bindBurgerAnim, burgerAnimStyle] = useHover({ preset: 'opacityInverted', duration: 50 })
   const [bindNetworkStatusesAnim, networkStatusesAnimStyle] = useHover({
-    preset: 'opacityInverted'
+    preset: 'opacityInverted',
+    duration: 50
   })
   const { navigate } = useNavigation()
 

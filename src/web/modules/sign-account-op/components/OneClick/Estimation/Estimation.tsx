@@ -155,6 +155,7 @@ const OneClickEstimation = ({
                 isSponsored={signAccountOpController ? signAccountOpController.isSponsored : false}
                 sponsor={signAccountOpController ? signAccountOpController.sponsor : undefined}
                 serviceFee={serviceFee}
+                isOneClick
               />
             )}
             {signAccountOpController &&

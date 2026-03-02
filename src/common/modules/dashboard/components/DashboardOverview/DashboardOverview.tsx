@@ -1,5 +1,5 @@
 import React, { FC, useCallback, useMemo, useState } from 'react'
-import { Animated, Image, Platform, Pressable, StyleSheet, View } from 'react-native'
+import { Animated, Platform, Pressable, View } from 'react-native'
 
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import SkeletonLoader from '@common/components/SkeletonLoader'
@@ -11,7 +11,7 @@ import DashboardHeader from '@common/modules/dashboard/components/DashboardHeade
 import Routes from '@common/modules/dashboard/components/Routes'
 import useBalanceAffectingErrors from '@common/modules/dashboard/hooks/useBalanceAffectingErrors'
 import useBanners from '@common/modules/dashboard/hooks/useBanners'
-import spacings, { SPACING, SPACING_MD, SPACING_TY, SPACING_XL } from '@common/styles/spacings'
+import spacings, { SPACING, SPACING_TY, SPACING_XL } from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { isExtension } from '@web/constants/browserapi'
@@ -24,7 +24,7 @@ import RewardsButton from './RewardsButton'
 import getStyles from './styles'
 
 const THRESHOLD_AMOUNT_TO_HIDE_BALANCE_DECIMALS = 10000
-export const OVERVIEW_CONTENT_MAX_HEIGHT = 280
+export const OVERVIEW_CONTENT_MAX_HEIGHT = 162
 
 interface Props {
   openGasTankModal?: () => void
@@ -38,7 +38,7 @@ interface Props {
 
 // We create a reusable height constant for both the Balance amount height and the Balance skeleton.
 // We want both components to have the same height; otherwise, clicking on the RefreshIcon causes a layout shift.
-const BALANCE_HEIGHT = 42
+const BALANCE_HEIGHT = 40
 
 const DashboardOverview: FC<Props> = ({
   openGasTankModal,
@@ -91,7 +91,7 @@ const DashboardOverview: FC<Props> = ({
   }, [dashboardNetworkFilter, mainDispatch])
 
   return (
-    <View style={[spacings.phSm, banners.length ? spacings.mbTy : spacings.mb]}>
+    <View style={[spacings.phSm, banners.length ? {} : spacings.mbTy]}>
       <Animated.View
         style={[
           common.borderRadiusPrimary,
@@ -100,7 +100,7 @@ const DashboardOverview: FC<Props> = ({
           {
             paddingBottom: animatedOverviewHeight.interpolate({
               inputRange: [0, OVERVIEW_CONTENT_MAX_HEIGHT],
-              outputRange: [SPACING_TY, SPACING_MD],
+              outputRange: [SPACING_TY, SPACING],
               extrapolate: 'clamp'
             }),
             overflow: 'hidden'
@@ -128,7 +128,7 @@ const DashboardOverview: FC<Props> = ({
               overflow: 'hidden'
             }}
           >
-            <View style={[spacings.mbLg, flexbox.alignCenter]}>
+            <View style={[spacings.mb, flexbox.alignCenter]}>
               <Pressable
                 style={[
                   flexbox.directionRow,
@@ -138,6 +138,7 @@ const DashboardOverview: FC<Props> = ({
                 ]}
                 onHoverIn={() => setIsBalanceHovered(true)}
                 onHoverOut={() => setIsBalanceHovered(false)}
+                hitSlop={8}
               >
                 {/* Placeholder matching the refresh button size to keep the balance centered */}
                 <View style={{ width: 28, height: 28 }} />
@@ -150,45 +151,38 @@ const DashboardOverview: FC<Props> = ({
                       borderRadius={8}
                     />
                   ) : (
-                    <Pressable
-                      onPress={onIconPress}
-                      disabled={!warningMessage || isLoadingTakingTooLong || isOffline}
-                      testID="full-balance"
-                      style={[flexbox.directionRow, flexbox.alignCenter]}
-                    >
-                      <Text>
+                    <Text testID="full-balance">
+                      <Text
+                        fontSize={32}
+                        shouldScale={false}
+                        weight="number_bold"
+                        // Line height should be constant based on font size, not on parent height
+                        style={Platform.OS !== 'web' ? { lineHeight: 36 } : { lineHeight: 28 }}
+                        color={
+                          networksWithErrors.length || isOffline
+                            ? theme.warningDecorative2
+                            : '#FFFFFF'
+                        }
+                        testID="total-portfolio-amount-integer"
+                      >
+                        {totalPortfolioAmountIntegerFormattedPart}
+                      </Text>
+                      {totalPortfolioAmount < THRESHOLD_AMOUNT_TO_HIDE_BALANCE_DECIMALS && (
                         <Text
-                          fontSize={36}
+                          fontSize={20}
                           shouldScale={false}
                           weight="number_bold"
-                          // Line height should be constant based on font size, not on parent height
-                          style={Platform.OS !== 'web' ? { lineHeight: 36 } : { lineHeight: 28 }}
                           color={
                             networksWithErrors.length || isOffline
                               ? theme.warningDecorative2
                               : '#FFFFFF'
                           }
-                          testID="total-portfolio-amount-integer"
                         >
-                          {totalPortfolioAmountIntegerFormattedPart}
+                          {t('.')}
+                          {totalPortfolioAmountDecimalFormattedPart}
                         </Text>
-                        {totalPortfolioAmount < THRESHOLD_AMOUNT_TO_HIDE_BALANCE_DECIMALS && (
-                          <Text
-                            fontSize={24}
-                            shouldScale={false}
-                            weight="number_bold"
-                            color={
-                              networksWithErrors.length || isOffline
-                                ? theme.warningDecorative2
-                                : '#FFFFFF'
-                            }
-                          >
-                            {t('.')}
-                            {totalPortfolioAmountDecimalFormattedPart}
-                          </Text>
-                        )}
-                      </Text>
-                    </Pressable>
+                      )}
+                    </Text>
                   )}
                 </View>
                 <Pressable
@@ -201,7 +195,8 @@ const DashboardOverview: FC<Props> = ({
                   disabled={!portfolio.isAllReady || portfolio.isReloading}
                   testID="refresh-button"
                   onHoverIn={() => setIsBalanceHovered(true)}
-                  onHoverOut={() => setIsBalanceHovered(false)}
+                  // Increase clickable area using prop
+                  hitSlop={10}
                 >
                   <RefreshIcon
                     spin={!portfolio.isAllReady || portfolio.isReloading}

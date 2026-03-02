@@ -94,7 +94,8 @@ const Estimation = ({
   updateType,
   slowRequest,
   bundlerNonceDiscrepancy,
-  serviceFee
+  serviceFee,
+  isOneClick
 }: Props) => {
   const { dispatch: signAccountOpDispatch } = useController('SignAccountOpController')
   const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
@@ -433,7 +434,9 @@ const Estimation = ({
   if (isSponsored) {
     return (
       <>
-        {(!serviceFee || !paidByNativeValue || !nativeFeeOption) && <Sponsored sponsor={sponsor} />}
+        {(!serviceFee || !paidByNativeValue || !nativeFeeOption) && (
+          <Sponsored sponsor={sponsor} isOneClick={isOneClick} />
+        )}
         <ServiceFee
           serviceFee={serviceFee}
           paidByNativeValue={paidByNativeValue}

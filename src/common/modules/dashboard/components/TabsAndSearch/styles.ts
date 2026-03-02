@@ -14,7 +14,7 @@ const getStyles = () =>
       ...flexbox.directionRow,
       ...flexbox.justifySpaceBetween,
       ...flexbox.alignCenter,
-      ...spacings.mb,
+      ...spacings.mbTy,
       zIndex: 1
     }
   })

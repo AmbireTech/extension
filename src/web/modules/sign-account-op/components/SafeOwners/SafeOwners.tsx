@@ -83,6 +83,7 @@ const SafeOwners = ({
               isLast
               keyIconColor={theme.neutral600 as string}
               tooltipContent={o.hasSigned ? 'Signed' : o.isImported ? 'Pending' : 'Not imported'}
+              itemHeight={38}
               containerStyle={{
                 borderWidth: 1,
                 borderColor: 'transparent',

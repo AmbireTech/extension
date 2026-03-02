@@ -26,6 +26,7 @@ type Props = {
   }
   serviceFee?: SwapAndBridgeRoute['serviceFee']
   withTitle?: boolean
+  isOneClick?: boolean
 }
 
 export type { FeeOption, Props }
