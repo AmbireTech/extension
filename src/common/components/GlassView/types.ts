@@ -11,6 +11,12 @@ type GlassViewProps = {
   shineColor?: string
   blurAmount?: number
   borderRadius?: number
+  /**
+   * SVG filters produce a much better effect but have a tendency to cause
+   * visual glitches when rendered above optimized images. Setting this to true will
+   * fallback to a css blur which is less visually impressive but more stable.
+   */
+  isSimpleBlur?: boolean
 }
 
 export type { GlassViewProps }

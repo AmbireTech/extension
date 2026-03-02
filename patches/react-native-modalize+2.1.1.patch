@@ -1,3 +1,9 @@
+# This patch fixes a gesture conflict in react-native-modalize where scrolling up 
+# (especially with elastic bounce) would trigger the modal's close gesture. 
+# This is mainly because the package was originally written for Reanimated v1 
+# but the app is using v2, causing inconsistencies in beginScrollY tracking. 
+# It ensures beginScrollY remains >= 0 to prevent unintended modal closures 
+# during internal content scrolling.
 diff --git a/node_modules/react-native-modalize/lib/index.js b/node_modules/react-native-modalize/lib/index.js
 index 5d5edac..b144d09 100644
 --- a/node_modules/react-native-modalize/lib/index.js
