@@ -2,7 +2,6 @@ import React, { FC, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Animated, View } from 'react-native'
 import QRCode from 'react-native-qrcode-svg'
-import { useLocation } from 'react-router-native'
 
 import { getIsViewOnly } from '@ambire-common/utils/accounts'
 import DiagonalRightArrowIcon from '@common/assets/svg/DiagonalRightArrowIcon/DiagonalRightArrowIcon'
@@ -18,6 +17,7 @@ import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
 import { AnimatedPressable, useMultiHover } from '@common/hooks/useHover'
 import useReverseLookup from '@common/hooks/useReverseLookup'
+import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
 import spacings from '@common/styles/spacings'
@@ -27,8 +27,8 @@ import flexbox from '@common/styles/utils/flexbox'
 import getStyles from './styles'
 
 const ReceiveScreen: FC = () => {
-  const location = useLocation()
-  const { address } = location?.state || {}
+  const { state } = useRoute()
+  const { address } = state || {}
 
   const {
     state: { account: stateAccount }
