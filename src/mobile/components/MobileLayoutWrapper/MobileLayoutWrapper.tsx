@@ -127,7 +127,7 @@ export const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainCon
         wrapperRef={wrapperRef}
         {...rest}
       >
-        {step > 0 ? renderProgress() : <View style={{ height: 38 }} />}
+        {step > 0 ? renderProgress() : <View style={{ height: 28 }} />}
         {(!!title || !!withBackButton) && (
           <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mb2Xl]}>
             {!!withBackButton && <PanelBackButton onPress={onBackButtonPress} />}
@@ -147,7 +147,7 @@ export const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainCon
         <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbXl]}>
           {!!withBackButton && <PanelBackButton onPress={onBackButtonPress} />}
           {!!title && <PanelTitle title={title} size={18} />}
-          {!!withBackButton && <View style={{ width: 38 }} />}
+          {!!withBackButton && <View style={{ width: 28 }} />}
         </View>
       )}
       {children}
