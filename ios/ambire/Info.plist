@@ -28,7 +28,7 @@
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
-          <string>com.ambire.app.wallet</string>
+          <string>ambire</string>
         </array>
       </dict>
     </array>
