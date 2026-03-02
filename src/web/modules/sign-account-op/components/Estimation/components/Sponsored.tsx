@@ -17,22 +17,24 @@ const Sponsored = ({ sponsor }: { sponsor?: Sponsor }) => {
   const { theme } = useTheme()
 
   return (
-    <View style={[flexbox.alignCenter, spacings.pvXl]}>
+    <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.pt]}>
       <ManifestImage
         uri={sponsor?.icon || currentUserRequest?.dappPromises?.[0]?.session.icon || ''}
         size={64}
         isRound
-        containerStyle={{ backgroundColor: theme.secondaryBackground, ...spacings.mbTy }}
+        containerStyle={{ backgroundColor: theme.secondaryBackground }}
         fallback={() => <ManifestFallbackIcon width={48} height={48} />}
       />
-      <Text fontSize={20} weight="semiBold" style={spacings.mbTy}>
-        {sponsor?.name ||
-          currentUserRequest?.dappPromises?.[0]?.session.name ||
-          "The App you're connected to"}
-      </Text>
-      <Text weight="medium" appearance="secondaryText">
-        {t('is sponsoring this transaction')}
-      </Text>
+      <View style={[spacings.ml]}>
+        <Text fontSize={20} weight="semiBold" style={spacings.mbTy}>
+          {sponsor?.name ||
+            currentUserRequest?.dappPromises?.[0]?.session.name ||
+            "The App you're connected to"}
+        </Text>
+        <Text weight="medium" appearance="secondaryText">
+          {t('is sponsoring this transaction')}
+        </Text>
+      </View>
     </View>
   )
 }
