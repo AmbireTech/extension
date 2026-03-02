@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { AppState, AppStateStatus } from 'react-native'
 
-const useIsScreenFocused = () => {
+const useIsAppFocused = () => {
   const [isFocused, setIsFocused] = useState<boolean>(AppState.currentState === 'active')
 
   useEffect(() => {
@@ -19,4 +19,4 @@ const useIsScreenFocused = () => {
   return isFocused
 }
 
-export default useIsScreenFocused
+export default useIsAppFocused

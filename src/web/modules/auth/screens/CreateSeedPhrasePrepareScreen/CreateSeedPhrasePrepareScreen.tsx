@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React from 'react'
 import { Pressable, View } from 'react-native'
 
 import Button from '@common/components/Button'
@@ -7,11 +7,9 @@ import Panel from '@common/components/Panel'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
-import useController from '@common/hooks/useController'
-import useExtraEntropy from '@common/hooks/useExtraEntropy'
 import useTheme from '@common/hooks/useTheme'
+import useCreateSeedPrepare from '@common/modules/auth/hooks/useCreateSeedPrepare'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
-import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -21,61 +19,12 @@ import {
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 
-const CHECKBOXES = [
-  {
-    id: 0,
-    label: 'Your recovery phrase is private. Keep it safe and never share it.'
-  },
-  {
-    id: 1,
-    label: 'If your recovery phrase is at risk, so is your account.'
-  },
-  {
-    id: 2,
-    label: 'Use your recovery phrase only to access or recover your wallet.'
-  }
-]
-
 const CreateSeedPhrasePrepareScreen = () => {
-  const { goToNextRoute, goToPrevRoute } = useOnboardingNavigation()
+  const { handleSubmit, handleCheckboxPress, checkboxesState, allCheckboxesChecked, CHECKBOXES } =
+    useCreateSeedPrepare()
+  const { goToPrevRoute } = useOnboardingNavigation()
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const [checkboxesState, setCheckboxesState] = useState([false, false, false])
-  const allCheckboxesChecked = checkboxesState.every((checkbox) => checkbox)
-
-  const { dispatch: keystoreDispatch } = useController('KeystoreController')
-
-  const { getExtraEntropy } = useExtraEntropy()
-
-  useEffect(() => {
-    keystoreDispatch({
-      type: 'method',
-      params: {
-        method: 'sendTempSeedToUi',
-        args: []
-      }
-    })
-  }, [keystoreDispatch])
-
-  const handleSubmit = useCallback(() => {
-    keystoreDispatch({
-      type: 'method',
-      params: {
-        method: 'generateTempSeed',
-        args: [{ extraEntropy: getExtraEntropy() }]
-      }
-    })
-
-    goToNextRoute(WEB_ROUTES.createSeedPhraseWrite)
-  }, [getExtraEntropy, goToNextRoute, keystoreDispatch])
-
-  const handleCheckboxPress = (id: number) => {
-    setCheckboxesState((prevState) => {
-      const newState = [...prevState]
-      newState[id] = !prevState[id]
-      return newState
-    })
-  }
 
   return (
     <TabLayoutContainer backgroundColor={theme.secondaryBackground}>

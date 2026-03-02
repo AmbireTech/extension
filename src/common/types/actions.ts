@@ -50,14 +50,6 @@ type MainControllerAccountPickerInitTrezorAction = {
 type MainControllerAccountPickerInitLatticeAction = {
   type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LATTICE'
 }
-type MainControllerAccountPickerInitPrivateKeyOrSeedPhraseAction = {
-  type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_PRIVATE_KEY_OR_SEED_PHRASE'
-  params: {
-    privKeyOrSeed: string
-    seedPassphrase?: string | null
-    hdPathTemplate?: HD_PATH_TEMPLATE_TYPE
-  }
-}
 type MainControllerAccountPickerInitFromSavedSeedPhraseAction = {
   type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_FROM_SAVED_SEED_PHRASE'
   params: { id: string }
@@ -115,7 +107,6 @@ export type Action =
   | MainControllerAccountPickerInitLatticeAction
   | MainControllerAccountPickerInitTrezorAction
   | MainControllerAccountPickerInitLedgerAction
-  | MainControllerAccountPickerInitPrivateKeyOrSeedPhraseAction
   | MainControllerAccountPickerInitFromSavedSeedPhraseAction
   | HandshakeAction
   | ResetAccountAddingOnPageErrorAction
