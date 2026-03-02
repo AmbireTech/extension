@@ -135,13 +135,16 @@ const Benzin = ({
             summary={summary}
             delegation={state?.stepsState?.delegation}
           />
-          {!children && (
+          {!children ? (
             <Buttons
               handleCopyText={handleCopyText}
               handleOpenExplorer={handleOpenExplorer}
               showCopyBtn={showCopyBtn}
               showOpenExplorerBtn={showOpenExplorerBtn}
             />
+          ) : (
+            // Leave enough space for the absolutely positioned buttons
+            <View style={{ marginBottom: 80 }} />
           )}
         </View>
       </ScrollView>

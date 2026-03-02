@@ -14,6 +14,7 @@ import FooterGlassView from '@common/components/FooterGlassView'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 
 const BenzinScreen = () => {
@@ -22,7 +23,7 @@ const BenzinScreen = () => {
     state: { currentUserRequest, visibleUserRequests },
     dispatch: requestsDispatch
   } = useController('RequestsController')
-  const { theme, themeType } = useTheme()
+  const { themeType } = useTheme()
 
   const userRequest = useMemo(
     () => (currentUserRequest?.kind === 'benzin' ? currentUserRequest : undefined),
@@ -52,7 +53,7 @@ const BenzinScreen = () => {
 
   return (
     <Benzin state={state}>
-      <FooterGlassView glassViewProps={{ blurAmount: 60 }}>
+      <FooterGlassView glassViewProps={{ isSimpleBlur: true }}>
         {!!state?.handleOpenExplorer && (
           <OpenExplorerButton handleOpenExplorer={state.handleOpenExplorer} />
         )}

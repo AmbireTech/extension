@@ -72,6 +72,7 @@ const Buttons: FC<Props> = ({
   return (
     <FooterGlassView
       absolute={false}
+      style={spacings.mb}
       innerContainerStyle={{
         flexDirection: maxWidthSize('s') ? 'row' : 'column'
       }}

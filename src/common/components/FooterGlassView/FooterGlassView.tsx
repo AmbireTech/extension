@@ -47,11 +47,7 @@ const FooterGlassView: FC<{
         ...style
       }}
     >
-      <GlassView
-        borderRadius={Number(params[size].borderRadius)}
-        cssStyle={{ borderRadius: params[size].borderRadius as number }}
-        {...glassViewProps}
-      >
+      <GlassView borderRadius={Number(params[size].borderRadius)} {...glassViewProps}>
         <View
           style={[
             flexbox.directionRow,
