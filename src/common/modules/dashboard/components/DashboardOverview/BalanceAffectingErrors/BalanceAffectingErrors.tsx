@@ -34,7 +34,7 @@ const BalanceAffectingErrors: FC<Props> = ({
   isLoadingTakingTooLong
 }) => {
   const { t } = useTranslation()
-  const { theme, themeType } = useTheme()
+  const { theme } = useTheme()
   const {
     state: { balanceAffectingErrors, portfolio }
   } = useController('SelectedAccountController')
@@ -59,7 +59,7 @@ const BalanceAffectingErrors: FC<Props> = ({
     return (
       <WarningIcon
         color={theme.warningDecorative2}
-        style={spacings.mlTy}
+        style={spacings.mrTy}
         dataSet={createGlobalTooltipDataSet({
           id: 'balance-affecting-error',
           content: warningMessage

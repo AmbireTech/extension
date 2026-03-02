@@ -1,5 +1,5 @@
-import React, { useCallback, useContext, useEffect, useMemo } from 'react'
-import { Pressable, View } from 'react-native'
+import React, { useCallback, useMemo } from 'react'
+import { Platform, Pressable, View } from 'react-native'
 
 import {
   Account as AccountInterface,
@@ -18,30 +18,25 @@ import Label from '@common/components/Label'
 import NetworkIcon from '@common/components/NetworkIcon'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
-import Toggle from '@common/components/Toggle'
 import { useTranslation } from '@common/config/localization'
 import useReverseLookup from '@common/hooks/useReverseLookup'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import useWindowSize from '@common/hooks/useWindowSize'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import common, { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { setStringAsync } from '@common/utils/clipboard'
-import {
-  AccountPickerIntroStepsContext,
-  SmartAccountIntroId
-} from '@web/modules/account-picker/contexts/accountPickerIntroStepsContext'
 
 import getStyles from './styles'
+
+const isMobile = Platform.OS === 'ios' || Platform.OS === 'android'
 
 const Account = ({
   account,
   type,
   unused,
   withBottomSpacing = true,
-  shouldAddIntroStepsIds,
   isSelected,
   onSelect,
   onDeselect,
@@ -56,7 +51,6 @@ const Account = ({
   unused: boolean
   isSelected: boolean
   withBottomSpacing: boolean
-  shouldAddIntroStepsIds?: boolean
   onSelect: (account: AccountInterface) => void
   onDeselect: (account: AccountInterface) => void
   isDisabled?: boolean
@@ -69,7 +63,6 @@ const Account = ({
   const domainName = ens
   const { t } = useTranslation()
   const { styles, theme, themeType } = useTheme(getStyles)
-  const { setShowIntroSteps } = useContext(AccountPickerIntroStepsContext)
   const { minWidthSize, maxWidthSize } = useWindowSize()
   const { addToast } = useToast()
   const isAccountImported = importStatus !== ImportStatus.NotImported
@@ -98,10 +91,6 @@ const Account = ({
     }
     return shortenAddress(account.addr, 16)
   }, [account.addr, domainName, maxWidthSize, minWidthSize])
-
-  useEffect(() => {
-    if (shouldAddIntroStepsIds) setShowIntroSteps(true)
-  }, [shouldAddIntroStepsIds, setShowIntroSteps])
 
   const handleCopyAddress = useCallback(() => {
     setStringAsync(account.addr)
@@ -158,18 +147,20 @@ const Account = ({
                   >
                     {account.preferences.label}
                   </Text>
-                  <Text
-                    fontSize={14}
-                    appearance="secondaryText"
-                    style={spacings.mrMi}
-                    dataSet={createGlobalTooltipDataSet({
-                      id: account.addr,
-                      content: account.addr
-                    })}
-                    weight="mono_regular"
-                  >
-                    ({shortenAddress(account.addr, 16)})
-                  </Text>
+                  {(!isMobile || !account.preferences.label) && (
+                    <Text
+                      fontSize={14}
+                      appearance="secondaryText"
+                      style={spacings.mrMi}
+                      dataSet={createGlobalTooltipDataSet({
+                        id: account.addr,
+                        content: account.addr
+                      })}
+                      weight="mono_regular"
+                    >
+                      ({shortenAddress(account.addr, 16)})
+                    </Text>
+                  )}
                 </>
               ) : (
                 <>
@@ -196,7 +187,7 @@ const Account = ({
                 </>
               )}
 
-              {(minWidthSize('l') || isAccountImported || domainName) && (
+              {!isMobile && (minWidthSize('l') || isAccountImported || domainName) && (
                 <Pressable onPress={handleCopyAddress}>
                   <CopyIcon width={14} height={14} />
                 </Pressable>
@@ -205,11 +196,7 @@ const Account = ({
             {displayTypePill && (
               <>
                 {type === 'smart' && (
-                  <BadgeWithPreset
-                    style={spacings.mrMi}
-                    preset="smart-account"
-                    {...(shouldAddIntroStepsIds && { nativeID: SmartAccountIntroId })}
-                  />
+                  <BadgeWithPreset style={spacings.mrMi} preset="smart-account" />
                 )}
 
                 {type === 'linked' && (
@@ -224,7 +211,17 @@ const Account = ({
             )}
           </View>
           <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-            {shouldShowUsedOnNetworks && (
+            {shouldShowUsedOnNetworks && isMobile && (
+              <Badge
+                style={{
+                  borderWidth: 1,
+                  borderColor: theme.successDecorative
+                }}
+                type="success"
+                text={t('used')}
+              />
+            )}
+            {shouldShowUsedOnNetworks && !isMobile && (
               <View style={[flexbox.directionRow, flexbox.alignCenter]}>
                 <Text fontSize={12} weight="regular">
                   {t('used on ')}

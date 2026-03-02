@@ -199,7 +199,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - QuickCrypto (1.0.13):
+  - QuickCrypto (1.0.15):
     - hermes-engine
     - NitroModules
     - RCTRequired
@@ -2562,7 +2562,7 @@ SPEC CHECKSUMS:
   MultiplatformBleAdapter: 5a6a897b006764392f9cef785e4360f54fb9477d
   NitroMmkv: 8a41b343ffcd651bfb1ec9d50a8c15f488b37aae
   NitroModules: 475e9212530136851c48d04f458b0d33d4d21da1
-  QuickCrypto: 064a54d050d4b49b995c63b48e4f4582d71adc9d
+  QuickCrypto: 15f794b9dc68b4390da13aa713602d1c4f38efb4
   RCTDeprecation: 943572d4be82d480a48f4884f670135ae30bf990
   RCTRequired: 8f3cfc90cc25cf6e420ddb3e7caaaabc57df6043
   RCTTypeSafety: 16a4144ca3f959583ab019b57d5633df10b5e97c

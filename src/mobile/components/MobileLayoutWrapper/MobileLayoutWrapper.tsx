@@ -78,6 +78,8 @@ interface MobileLayoutWrapperMainContentProps extends WrapperProps {
   wrapperRef?: any
   withBackButton?: boolean
   onBackButtonPress?: () => void
+  rightIcon?: ReactNode
+  onRightIconPress?: () => void
   title?: string
   step?: number
   totalSteps?: number
@@ -90,6 +92,8 @@ export const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainCon
   withScroll = true,
   withBackButton = false,
   onBackButtonPress = () => {},
+  rightIcon,
+  onRightIconPress = () => {},
   title,
   step = 0,
   totalSteps = 2,
@@ -123,12 +127,12 @@ export const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainCon
         wrapperRef={wrapperRef}
         {...rest}
       >
-        {step > 0 && renderProgress()}
+        {step > 0 ? renderProgress() : <View style={{ height: 38 }} />}
         {(!!title || !!withBackButton) && (
           <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mb2Xl]}>
             {!!withBackButton && <PanelBackButton onPress={onBackButtonPress} />}
             {!!title && <PanelTitle title={title} size={18} />}
-            {!!withBackButton && <View style={{ width: 20 }} />}
+            {!!withBackButton && <View style={[{ width: 28 }, flexbox.alignEnd]}>{rightIcon}</View>}
           </View>
         )}
         {children}
@@ -138,12 +142,12 @@ export const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainCon
 
   return (
     <View ref={wrapperRef} style={[styles.contentContainer, contentContainerStyle]}>
-      {step > 0 && renderProgress()}
+      {step > 0 ? renderProgress() : <View style={{ height: 28 }} />}
       {(!!title || !!withBackButton) && (
-        <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mb2Xl]}>
+        <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbXl]}>
           {!!withBackButton && <PanelBackButton onPress={onBackButtonPress} />}
           {!!title && <PanelTitle title={title} size={18} />}
-          {!!withBackButton && <View style={{ width: 20 }} />}
+          {!!withBackButton && <View style={{ width: 38 }} />}
         </View>
       )}
       {children}

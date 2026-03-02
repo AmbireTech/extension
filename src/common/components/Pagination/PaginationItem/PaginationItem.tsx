@@ -37,7 +37,7 @@ const PaginationItem: FC<Props> = ({ number, setPage, isActive, isDisabled }) =>
         ...spacings.mhMi,
         ...flexbox.center,
         minWidth: 24,
-        height: '100%',
+        height: 21,
         borderColor,
         opacity: isDisabled ? 0.4 : 1
       }}
