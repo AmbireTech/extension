@@ -1,4 +1,4 @@
-name: Reusable iOS Build
+name: The reusable (common) iOS build steps
 
 on:
   workflow_call:
