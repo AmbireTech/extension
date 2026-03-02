@@ -2,10 +2,10 @@ import { randomBytes } from 'ethers'
 import React, { memo, useMemo } from 'react'
 import { Image, ScrollView, View, ViewStyle } from 'react-native'
 
-// @ts-ignore
-import meshGradientLarge from '@benzin/assets/images/mesh-gradient-large.png'
-// @ts-ignore
-import meshGradient from '@benzin/assets/images/mesh-gradient.png'
+import gradient1560 from '@benzin/assets/images/gradient-1560.png'
+import gradient1920 from '@benzin/assets/images/gradient-1920.png'
+import gradient2560 from '@benzin/assets/images/gradient-2560.png'
+import gradient780 from '@benzin/assets/images/gradient-780.png'
 import Buttons from '@benzin/screens/BenzinScreen/components/Buttons'
 import Header from '@benzin/screens/BenzinScreen/components/Header'
 import Steps from '@benzin/screens/BenzinScreen/components/Steps'
@@ -23,7 +23,13 @@ import TransactionSummary from '@web/modules/sign-account-op/components/Transact
 import { IS_MOBILE_UP_BENZIN_BREAKPOINT } from '../../styles'
 import getStyles from './styles'
 
-const Benzin = ({ state }: { state: ReturnType<typeof useBenzin> }) => {
+const Benzin = ({
+  state,
+  children
+}: {
+  state: ReturnType<typeof useBenzin>
+  children?: React.ReactNode
+}) => {
   const { styles } = useTheme(getStyles)
   const { maxWidthSize } = useWindowSize()
   const { isStoreReady } = useControllerStore()
@@ -52,6 +58,14 @@ const Benzin = ({ state }: { state: ReturnType<typeof useBenzin> }) => {
     // Prevents unnecessary re-renders of the humanizer
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state?.handleOpenExplorer, state?.network?.chainId, state?.stepsState?.calls?.length])
+
+  const backgroundSource = useMemo(() => {
+    if (maxWidthSize(1920)) return gradient2560
+    if (maxWidthSize(1560)) return gradient1920
+    if (maxWidthSize(780)) return gradient1560
+
+    return gradient780
+  }, [maxWidthSize])
 
   if ((state && !state?.isInitialized) || !isStoreReady)
     return (
@@ -100,7 +114,6 @@ const Benzin = ({ state }: { state: ReturnType<typeof useBenzin> }) => {
     txnId,
     userOpHash,
     stepsState,
-    isRenderedInternally,
     handleCopyText,
     handleOpenExplorer,
     showCopyBtn,
@@ -109,11 +122,7 @@ const Benzin = ({ state }: { state: ReturnType<typeof useBenzin> }) => {
 
   return (
     <View style={flexbox.flex1}>
-      <Image
-        style={styles.backgroundImage}
-        source={maxWidthSize('xl') ? (meshGradientLarge as any) : (meshGradient as any)}
-        resizeMode="cover"
-      />
+      <Image style={styles.backgroundImage} source={{ uri: backgroundSource }} resizeMode="cover" />
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.content}>
           <Header activeStep={activeStep} network={network} />
@@ -125,7 +134,7 @@ const Benzin = ({ state }: { state: ReturnType<typeof useBenzin> }) => {
             summary={summary}
             delegation={state?.stepsState?.delegation}
           />
-          {!isRenderedInternally && (
+          {!children && (
             <Buttons
               handleCopyText={handleCopyText}
               handleOpenExplorer={handleOpenExplorer}
@@ -135,6 +144,7 @@ const Benzin = ({ state }: { state: ReturnType<typeof useBenzin> }) => {
           )}
         </View>
       </ScrollView>
+      {children}
     </View>
   )
 }
