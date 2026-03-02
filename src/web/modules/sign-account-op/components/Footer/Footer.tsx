@@ -1,17 +1,21 @@
 import React, { useMemo } from 'react'
 import { View } from 'react-native'
+import { useModalize } from 'react-native-modalize'
 
 import { SigningStatus } from '@ambire-common/controllers/signAccountOp/signAccountOp'
 import { getCallsCount } from '@ambire-common/utils/userRequest'
 import BatchIcon from '@common/assets/svg/BatchIcon'
+import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
+import DualChoiceWarningModal from '@common/components/DualChoiceWarningModal'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import ActionsPagination from '@web/modules/action-requests/components/ActionsPagination'
 
@@ -45,7 +49,7 @@ const Footer = ({
   shouldHoldToProceed
 }: Props) => {
   const { t } = useTranslation()
-  const { styles, theme } = useTheme(getStyles)
+  const { styles, themeType } = useTheme(getStyles)
   const { userRequests } = useController('RequestsController').state
   const {
     state: { account }
@@ -84,11 +88,25 @@ const Footer = ({
       : t('Start a batch')
   }, [isMultisigSigned, batchCount, t])
 
+  const { ref: sheetRef, open: openModal, close: closeModal } = useModalize()
+
   // todo: make this compatible with the new design
   // if the txns has been queued, display only a success and close options
   if (status && status.type === SigningStatus.Queued) {
     return (
-      <View style={[flexbox.directionRow, flexbox.justifyEnd]}>
+      <View style={styles.container}>
+        <Button
+          testID="transaction-button-reject"
+          type="danger"
+          text={t('Cancel')}
+          onPress={() => {
+            openModal()
+          }}
+          hasBottomSpacing={false}
+          size="large"
+          style={{ width: 98 }}
+        />
+        <ActionsPagination />
         <Button
           testID="close-queue-button"
           type="primary"
@@ -98,6 +116,28 @@ const Footer = ({
           style={{ minWidth: 160, ...spacings.ph }}
           size="large"
         />
+        <BottomSheet
+          id="confirm-cancel"
+          type="modal"
+          sheetRef={sheetRef}
+          backgroundColor={
+            themeType === THEME_TYPES.DARK ? 'secondaryBackground' : 'primaryBackground'
+          }
+          closeBottomSheet={closeModal}
+          onBackdropPress={closeModal}
+        >
+          <DualChoiceWarningModal
+            title={t('Cancel transaction')}
+            description={t(
+              'You are about to cancel an already signed transcation. It will no longer be visible in Ambire.'
+            )}
+            primaryButtonText={t('Proceed')}
+            secondaryButtonText={t('Return')}
+            onPrimaryButtonPress={onReject}
+            onSecondaryButtonPress={closeModal}
+            type="error"
+          />
+        </BottomSheet>
       </View>
     )
   }
