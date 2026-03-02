@@ -146,6 +146,7 @@ jobs:
           LEGENDS_NFT_ADDRESS: ${{ vars.LEGENDS_NFT_ADDRESS }}
           LI_FI_API_KEY: ${{ vars.LI_FI_API_KEY }}
           BUNGEE_API_KEY: ${{ vars.BUNGEE_API_KEY }}
+          SAFE_API: ${{ vars.SAFE_API }}
         run: ${{ inputs.build_command }}
         shell: bash
 
