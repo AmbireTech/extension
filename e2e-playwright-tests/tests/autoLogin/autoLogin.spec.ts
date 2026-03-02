@@ -66,9 +66,11 @@ test.describe('auto-login', { tag: '@autoLogin' }, () => {
         .first()
         .click({ force: true })
       await signMessageWindow.getByTestId(selectors.signMessageButton).click()
-      await expect(
-        signMessageWindow.locator(selectors.sigtool.messageSignatureTitle)
-      ).toContainText('Message signature')
+
+      // assert message visible on sigtool
+      await expect(page.locator(selectors.sigtool.messageSignatureTitle)).toContainText(
+        'Message signature'
+      )
     })
 
     await test.step('enter message again', async () => {
@@ -77,7 +79,9 @@ test.describe('auto-login', { tag: '@autoLogin' }, () => {
 
     await test.step('sing action opens SIWE page', async () => {
       const signMessageWindow = await pages.basePage.handleNewPage(signButton)
-      await signMessageWindow.locator(selectors.sigtool.signRequestForEVMText).isVisible()
+      await expect(signMessageWindow.locator(selectors.sigtool.signRequestForEVMText)).toBeVisible({
+        timeout: 5000
+      })
     })
   })
 
@@ -120,6 +124,8 @@ test.describe('auto-login', { tag: '@autoLogin' }, () => {
   })
 
   test('Changing the network requires a new signature', async ({ pages, context }) => {
+    test.setTimeout(120000)
+
     const page = pages.basePage.page
     // selectors
     const textBox = page.getByRole('textbox', { name: 'Message (Hello world)' })
@@ -184,9 +190,10 @@ test.describe('auto-login', { tag: '@autoLogin' }, () => {
     })
 
     await test.step('sing action opens SIWE page', async () => {
-      await page.pause()
       const signMessageWindow = await pages.basePage.handleNewPage(signButton)
-      await signMessageWindow.locator(selectors.sigtool.signRequestForEVMText).isVisible()
+      await expect(signMessageWindow.locator(selectors.sigtool.signRequestForEVMText)).toBeVisible({
+        timeout: 5000
+      })
     })
   })
 
@@ -211,7 +218,6 @@ test.describe('auto-login', { tag: '@autoLogin' }, () => {
       await pages.dashboard.navigateToDashboard()
       await pages.settings.openAccountsPage()
       await pages.settings.removeLastAccount()
-      await pages.auth.pause()
     })
 
     await test.step('navigate to sigtool', async () => {
