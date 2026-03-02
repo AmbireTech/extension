@@ -150,7 +150,6 @@ PODS:
     - ReactNativeDependencies
     - Yoga
   - MMKVCore (2.2.4)
-  - MultiplatformBleAdapter (0.1.9)
   - NitroMmkv (4.1.2):
     - hermes-engine
     - MMKVCore (= 2.2.4)
@@ -1503,9 +1502,6 @@ PODS:
     - React-RCTFBReactNativeSpec
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
-  - react-native-ble-plx (2.0.3):
-    - MultiplatformBleAdapter (= 0.1.9)
-    - React-Core
   - react-native-get-random-values (1.11.0):
     - React-Core
   - react-native-netinfo (12.0.1):
@@ -2256,7 +2252,6 @@ DEPENDENCIES:
   - React-logger (from `../node_modules/react-native/ReactCommon/logger`)
   - React-Mapbuffer (from `../node_modules/react-native/ReactCommon`)
   - React-microtasksnativemodule (from `../node_modules/react-native/ReactCommon/react/nativemodule/microtasks`)
-  - react-native-ble-plx (from `../node_modules/react-native-ble-plx`)
   - react-native-get-random-values (from `../node_modules/react-native-get-random-values`)
   - "react-native-netinfo (from `../node_modules/@react-native-community/netinfo`)"
   - react-native-quick-base64 (from `../node_modules/react-native-quick-base64`)
@@ -2302,7 +2297,6 @@ DEPENDENCIES:
 SPEC REPOS:
   trunk:
     - MMKVCore
-    - MultiplatformBleAdapter
     - ReachabilitySwift
 
 EXTERNAL SOURCES:
@@ -2441,8 +2435,6 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon"
   React-microtasksnativemodule:
     :path: "../node_modules/react-native/ReactCommon/react/nativemodule/microtasks"
-  react-native-ble-plx:
-    :path: "../node_modules/react-native-ble-plx"
   react-native-get-random-values:
     :path: "../node_modules/react-native-get-random-values"
   react-native-netinfo:
@@ -2559,7 +2551,6 @@ SPEC CHECKSUMS:
   lottie-ios: a881093fab623c467d3bce374367755c272bdd59
   lottie-react-native: 8e5dd0e51847600666057d2c9b95815ac9fdb165
   MMKVCore: f2dd4c9befea04277a55e84e7812f930537993df
-  MultiplatformBleAdapter: 5a6a897b006764392f9cef785e4360f54fb9477d
   NitroMmkv: c9fd61d98afd00a6e4e1656a415c28f7be0fd74e
   NitroModules: 97978583f36f88f7a348d5bf986d94bc4b340d0a
   QuickCrypto: 5be317197a34e100f9d104067c2df067b39181d0
@@ -2597,7 +2588,6 @@ SPEC CHECKSUMS:
   React-logger: 50fdb9a8236da90c0b1072da5c32ee03aeb5bf28
   React-Mapbuffer: 9050ee10c19f4f7fca8963d0211b2854d624973e
   React-microtasksnativemodule: f775db9e991c6f3b8ccbc02bfcde22770f96e23b
-  react-native-ble-plx: 2dd8780ee8d34c60399aaa897249ed1860ebef10
   react-native-get-random-values: d16467cf726c618e9c7a8c3c39c31faa2244bbba
   react-native-netinfo: 7e0b1936e928fa8ddb60da9e572a33767db7805f
   react-native-quick-base64: 6568199bb2ac8e72ecdfdc73a230fbc5c1d3aac4
