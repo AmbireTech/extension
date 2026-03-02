@@ -147,7 +147,7 @@ const Account = ({
                   >
                     {account.preferences.label}
                   </Text>
-                  {isMobile && !account.preferences.label && (
+                  {(!isMobile || !account.preferences.label) && (
                     <Text
                       fontSize={14}
                       appearance="secondaryText"
