@@ -1,4 +1,4 @@
-import React, { FC, useCallback } from 'react'
+import React, { FC, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View, ViewStyle } from 'react-native'
 
@@ -43,6 +43,16 @@ const AccountAddress: FC<Props> = ({
     await navigate(WEB_ROUTES.receive, { state: { address: address } })
   }, [navigate, address])
 
+  const receiveButton = useMemo(
+    () =>
+      withReceive ? (
+        <AnimatedPressable onPress={handleReceive} style={animStyle} {...bindAnim}>
+          <ReceiveIcon width={fontSize + 8} height={fontSize + 8} style={spacings.mlMi} />
+        </AnimatedPressable>
+      ) : null,
+    [withReceive, handleReceive, animStyle, bindAnim, fontSize]
+  )
+
   return (
     <View style={[flexbox.flex1, { paddingVertical: 3 }, containerStyle]} testID="address">
       {ens || isLoading ? (
@@ -63,8 +73,9 @@ const AccountAddress: FC<Props> = ({
                 address={address}
                 style={spacings.mlMi}
                 fontSize={fontSize}
-                withReceive={withReceive}
-              />
+              >
+                {receiveButton}
+              </PlainAddressWithCopy>
             </>
           ) : (
             <>
@@ -74,11 +85,7 @@ const AccountAddress: FC<Props> = ({
                 style={spacings.mlMi}
                 fontSize={fontSize}
               />
-              {withReceive && (
-                <AnimatedPressable onPress={handleReceive} style={animStyle} {...bindAnim}>
-                  <ReceiveIcon width={fontSize + 8} height={fontSize + 8} style={spacings.mlMi} />
-                </AnimatedPressable>
-              )}
+              {receiveButton}
             </>
           )}
         </View>
@@ -89,8 +96,9 @@ const AccountAddress: FC<Props> = ({
             address={address}
             hideParentheses
             fontSize={fontSize}
-            withReceive={withReceive}
-          />
+          >
+            {receiveButton}
+          </PlainAddressWithCopy>
         </>
       ) : (
         <>
@@ -100,11 +108,7 @@ const AccountAddress: FC<Props> = ({
             hideParentheses
             fontSize={fontSize}
           />
-          {withReceive && (
-            <AnimatedPressable onPress={handleReceive} style={animStyle} {...bindAnim}>
-              <ReceiveIcon width={fontSize + 8} height={fontSize + 8} style={spacings.mlMi} />
-            </AnimatedPressable>
-          )}
+          {receiveButton}
         </>
       )}
     </View>

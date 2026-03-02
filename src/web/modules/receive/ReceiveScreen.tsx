@@ -10,7 +10,6 @@ import AccountAddress from '@common/components/AccountAddress'
 import Alert from '@common/components/Alert'
 import Avatar from '@common/components/Avatar/Avatar'
 import DomainBadge from '@common/components/Avatar/DomainBadge'
-import BackButton from '@common/components/BackButton'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import LayoutWrapper from '@common/components/LayoutWrapper'
 import NetworkIcon from '@common/components/NetworkIcon'
@@ -22,7 +21,6 @@ import useReverseLookup from '@common/hooks/useReverseLookup'
 import useTheme from '@common/hooks/useTheme'
 import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -84,160 +82,145 @@ const ReceiveScreen: FC = () => {
     <LayoutWrapper>
       <HeaderWithTitle />
 
-      <ScrollableWrapper>
-        <View
-          style={[
-            flexbox.flex1,
-            flexbox.center,
-            {
-              backgroundColor:
-                themeType === THEME_TYPES.DARK ? '#1b1d20' : theme.secondaryBackground
-            }
-          ]}
-        >
-          <View style={styles.content}>
-            <View style={spacings.mtSm} />
-            <View style={[spacings.mtMd, flexbox.alignCenter]}>
-              <Avatar
-                size={40}
-                pfp={pfp}
-                address={account?.addr || ''}
-                smartAccountType={
-                  (account?.creation && 'Ambire') || (account?.safeCreation && 'Safe')
-                }
-                style={spacings.pr0}
+      <ScrollableWrapper showsVerticalScrollIndicator={false}>
+        <View style={[spacings.ptLg, spacings.mb, flexbox.alignCenter]}>
+          <Avatar
+            size={40}
+            pfp={pfp}
+            address={account?.addr || ''}
+            smartAccountType={(account?.creation && 'Ambire') || (account?.safeCreation && 'Safe')}
+            style={spacings.pr0}
+          />
+          <Text weight="semiBold" fontSize={14} style={spacings.mtMi}>
+            {label}
+          </Text>
+        </View>
+        <View style={styles.qrCodeContainer}>
+          {!!account && !qrCodeError && (
+            <View style={styles.qrCode}>
+              <QRCode
+                value={account.addr}
+                size={140}
+                quietZone={10}
+                backgroundColor={styles.qrCode.backgroundColor as string}
+                getRef={qrCodeRef}
+                onError={() => setQrCodeError(t('Failed to load QR code!') as string)}
               />
-              <Text weight="semiBold" fontSize={14} style={spacings.mtMi}>
-                {label}
-              </Text>
             </View>
-            <View style={styles.qrCodeContainer}>
-              {!!account && !qrCodeError && (
-                <View style={styles.qrCode}>
-                  <QRCode
-                    value={account.addr}
-                    size={156}
-                    quietZone={10}
-                    getRef={qrCodeRef}
-                    onError={() => setQrCodeError(t('Failed to load QR code!') as string)}
-                  />
-                </View>
-              )}
-              {!!qrCodeError && (
-                <Text appearance="errorText" weight="medium">
-                  {t('Failed to display QR code.')}
-                </Text>
-              )}
-            </View>
-            <View style={[styles.accountAddressWrapper]}>
-              <View style={[flexbox.directionRow, flexbox.center]}>
-                <DomainBadge ens={ens} />
-                <AccountAddress
-                  isLoading={isDomainResolving}
-                  ens={ens}
-                  address={account?.addr || ''}
-                  plainAddressMaxLength={42}
-                  fontSize={14}
+          )}
+          {!!qrCodeError && (
+            <Text appearance="errorText" weight="medium">
+              {t('Failed to display QR code.')}
+            </Text>
+          )}
+        </View>
+        <View style={[styles.accountAddressWrapper]}>
+          <View style={[flexbox.directionRow, flexbox.center]}>
+            <DomainBadge ens={ens} />
+            <AccountAddress
+              isLoading={isDomainResolving}
+              ens={ens}
+              address={account?.addr || ''}
+              plainAddressMaxLength={42}
+              fontSize={14}
+            />
+          </View>
+        </View>
+        {isViewOnly ? (
+          <View
+            style={[
+              spacings.mbSm,
+              {
+                maxWidth: 400,
+                marginHorizontal: 'auto'
+              }
+            ]}
+          >
+            <Alert size="sm" type="warning" title={t('The account is view-only.')} />
+          </View>
+        ) : (
+          <View style={spacings.mb2Xl} />
+        )}
+
+        <View style={styles.supportedNetworksContainer}>
+          <Text
+            weight="regular"
+            color={theme.neutral700}
+            fontSize={14}
+            style={styles.supportedNetworksTitle}
+          >
+            {t('Following networks supported on this address:')}
+          </Text>
+          <View style={styles.supportedNetworks}>
+            {alwaysVisible.map(({ chainId, name }: any) => (
+              <View key={chainId.toString()} style={styles.supportedNetwork}>
+                <NetworkIcon
+                  id={chainId.toString()}
+                  size={32}
+                  scale={1}
+                  dataSet={createGlobalTooltipDataSet({
+                    id: `network-icon-${chainId.toString()}`,
+                    content: name
+                  })}
                 />
               </View>
-            </View>
-            {isViewOnly ? (
+            ))}
+
+            {extraNetworks.map(({ chainId, name }: any) => (
               <View
+                key={chainId.toString()}
                 style={[
-                  spacings.mbSm,
-                  {
-                    maxWidth: 400,
-                    marginHorizontal: 'auto'
-                  }
+                  styles.supportedNetwork,
+                  styles.extraNetwork,
+                  showAllNetworks && styles.extraNetworkVisible
                 ]}
               >
-                <Alert type="warning" title={t('Selected account is view only.')} />
+                <NetworkIcon
+                  id={chainId.toString()}
+                  size={32}
+                  scale={1}
+                  dataSet={createGlobalTooltipDataSet({
+                    id: `network-icon-${chainId.toString()}`,
+                    content: name
+                  })}
+                />
               </View>
-            ) : (
-              <View style={spacings.mb2Xl} />
-            )}
-
-            <View style={styles.supportedNetworksContainer}>
-              <Text
-                weight="regular"
-                color={theme.neutral700}
-                fontSize={14}
-                style={styles.supportedNetworksTitle}
-              >
-                {t('Following networks supported on this address:')}
-              </Text>
-              <View style={styles.supportedNetworks}>
-                {alwaysVisible.map(({ chainId, name }: any) => (
-                  <View key={chainId.toString()} style={styles.supportedNetwork}>
-                    <NetworkIcon
-                      id={chainId.toString()}
-                      size={32}
-                      scale={1}
-                      dataSet={createGlobalTooltipDataSet({
-                        id: `network-icon-${chainId.toString()}`,
-                        content: name
-                      })}
-                    />
-                  </View>
-                ))}
-
-                {extraNetworks.map(({ chainId, name }: any) => (
-                  <View
-                    key={chainId.toString()}
-                    style={[
-                      styles.supportedNetwork,
-                      styles.extraNetwork,
-                      showAllNetworks && styles.extraNetworkVisible
-                    ]}
-                  >
-                    <NetworkIcon
-                      id={chainId.toString()}
-                      size={32}
-                      scale={1}
-                      dataSet={createGlobalTooltipDataSet({
-                        id: `network-icon-${chainId.toString()}`,
-                        content: name
-                      })}
-                    />
-                  </View>
-                ))}
-              </View>
-
-              {hasMoreNetworks && (
-                <AnimatedPressable
-                  style={styles.seeMoreWrapper}
-                  onPress={() => setShowAllNetworks((prev) => !prev)}
-                  {...bindAnim}
-                >
-                  <Text color={theme.neutral700} fontSize={14}>
-                    {showAllNetworks ? t('View less') : t('View more')}
-                  </Text>
-
-                  <Animated.View
-                    style={{
-                      transform: [
-                        {
-                          translateX: animStyle.translateX as any
-                        },
-                        {
-                          translateY: animStyle.translateY as any
-                        }
-                      ]
-                    }}
-                  >
-                    <DiagonalRightArrowIcon
-                      color="#808EA2"
-                      height={20}
-                      width={20}
-                      style={{
-                        transform: [{ rotate: showAllNetworks ? '90deg' : '0deg' }]
-                      }}
-                    />
-                  </Animated.View>
-                </AnimatedPressable>
-              )}
-            </View>
+            ))}
           </View>
+
+          {hasMoreNetworks && (
+            <AnimatedPressable
+              style={styles.seeMoreWrapper}
+              onPress={() => setShowAllNetworks((prev) => !prev)}
+              {...bindAnim}
+            >
+              <Text color={theme.neutral700} fontSize={14}>
+                {showAllNetworks ? t('View less') : t('View more')}
+              </Text>
+
+              <Animated.View
+                style={{
+                  transform: [
+                    {
+                      translateX: animStyle.translateX as any
+                    },
+                    {
+                      translateY: animStyle.translateY as any
+                    }
+                  ]
+                }}
+              >
+                <DiagonalRightArrowIcon
+                  color="#808EA2"
+                  height={20}
+                  width={20}
+                  style={{
+                    transform: [{ rotate: showAllNetworks ? '90deg' : '0deg' }]
+                  }}
+                />
+              </Animated.View>
+            </AnimatedPressable>
+          )}
         </View>
       </ScrollableWrapper>
     </LayoutWrapper>

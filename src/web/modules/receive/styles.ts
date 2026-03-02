@@ -27,17 +27,12 @@ const { isTab } = getUiType()
 
 const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
   StyleSheet.create<Style>({
-    content: {
-      backgroundColor: themeType === THEME_TYPES.DARK ? '#1b1d20' : theme.primaryBackground,
-      shadowColor: theme.neutral400,
-      ...common.shadowTertiary,
-      width: '100%',
-      height: '100%',
-      maxWidth: 600
-    },
-    qrCodeContainer: { ...flexbox.alignCenter, ...spacings.mvTy },
+    qrCodeContainer: { ...flexbox.alignCenter, ...spacings.mb },
     qrCode: {
+      ...spacings.phTy,
+      ...spacings.pvTy,
       ...common.borderRadiusPrimary,
+      backgroundColor: themeType === THEME_TYPES.DARK ? '#fff' : theme.secondaryBackground,
       overflow: 'hidden'
     },
     accountAddress: {
@@ -80,12 +75,11 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       ...spacings.pvSm,
       ...spacings.mbSm,
       ...common.borderRadiusPrimary,
-      backgroundColor: themeType === THEME_TYPES.DARK ? '#2C2F33' : theme.neutral100
+      backgroundColor: theme.secondaryBackground
     },
     seeMoreWrapper: {
       ...flexbox.directionRow,
-      ...flexbox.center,
-      ...spacings.mbSm
+      ...flexbox.center
     },
     extraNetwork: {
       opacity: 0,
