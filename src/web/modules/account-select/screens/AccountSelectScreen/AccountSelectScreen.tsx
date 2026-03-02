@@ -90,6 +90,7 @@ const AccountSelectScreen = () => {
         account={acc}
         withSettings={false}
         options={{ markSelected: true }}
+        withReceive
       />
     )
   }

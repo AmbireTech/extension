@@ -48,6 +48,7 @@ type Props = AccountKeyType & {
   showExportImport?: boolean
   containerStyle?: ViewStyle
   tooltipContent?: string
+  itemHeight?: number
 }
 
 const { isPopup } = getUiType()
@@ -68,7 +69,8 @@ const AccountKey: React.FC<Props> = ({
   keyIconColor,
   showExportImport = false,
   onChains,
-  tooltipContent
+  tooltipContent,
+  itemHeight = 48
 }) => {
   const { t } = useTranslation()
   const { theme, themeType } = useTheme()
@@ -124,7 +126,7 @@ const AccountKey: React.FC<Props> = ({
           flexbox.justifySpaceBetween,
           flexbox.alignCenter,
           flexbox.flex1,
-          { minHeight: 48 },
+          { minHeight: itemHeight },
           style
         ]}
       >
