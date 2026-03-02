@@ -11,7 +11,7 @@ const getStyles = (theme: ThemeProps) =>
     icon: {
       position: 'absolute',
       right: 10,
-      top: 16,
+      top: 11,
       zIndex: 1
     }
   })
