@@ -10,12 +10,9 @@ import {
   View,
   ViewStyle
 } from 'react-native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { isWeb } from '@common/config/env'
-import { TAB_BAR_HEIGHT } from '@common/constants/router'
 import useTheme from '@common/hooks/useTheme'
-import spacings from '@common/styles/spacings'
 
 import DraggableFlatList from './DraggableFlatList'
 import createStyles from './styles'
@@ -31,7 +28,6 @@ export enum WRAPPER_TYPES {
 
 type BaseProps = {
   type?: WRAPPER_TYPES
-  hasBottomTabNav?: boolean
   wrapperRef?: any
   extraHeight?: number
   style?: StyleProp<ViewStyle>
@@ -65,7 +61,6 @@ const ScrollableWrapper = ({
   type = WRAPPER_TYPES.SCROLL_VIEW,
   keyboardShouldPersistTaps,
   keyboardDismissMode,
-  hasBottomTabNav: _hasBottomTabNav,
   extraHeight,
   wrapperRef,
   onDragEnd,
@@ -75,20 +70,10 @@ const ScrollableWrapper = ({
   ...rest
 }: WrapperProps) => {
   const { styles } = useTheme(createStyles)
-  const insets = useSafeAreaInsets()
-
-  const horizontalSpacing = isWeb ? spacings.ph0 : spacings.ph
-  const hasBottomTabNav = isWeb ? false : _hasBottomTabNav
-
-  const scrollableWrapperStyles = [
-    styles.wrapper,
-    horizontalSpacing,
-    ...(Array.isArray(style) ? style : [style])
-  ]
+  const scrollableWrapperStyles = [styles.wrapper, ...(Array.isArray(style) ? style : [style])]
 
   const scrollableWrapperContentContainerStyles: StyleProp<ViewStyle> = [
     styles.contentContainerStyle,
-    !!hasBottomTabNav && { paddingBottom: TAB_BAR_HEIGHT + insets.bottom },
     ...(Array.isArray(contentContainerStyle) ? contentContainerStyle : [contentContainerStyle]),
     isWeb ? ({ overflowY: 'auto' } as any) : null
   ]

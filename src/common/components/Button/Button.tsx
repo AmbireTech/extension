@@ -6,7 +6,7 @@ import { AnimatedPressable, useCustomHover, useMultiHover } from '@common/hooks/
 import { AnimatedText } from '@common/hooks/useHover/useHover'
 import { AnimationValues } from '@common/hooks/useHover/useMultiHover'
 import useTheme from '@common/hooks/useTheme'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_MI, SPACING_TY } from '@common/styles/spacings'
 import common, { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import useOnEnterKeyPress from '@web/hooks/useOnEnterKeyPress'
@@ -485,18 +485,6 @@ const Button = ({
           rest?.onPressOut && rest.onPressOut(e)
         }}
       >
-        {!!tooltipDataSet && (
-          <InfoIcon
-            width={16}
-            height={16}
-            style={{
-              position: 'absolute',
-              right: 0,
-              top: 0
-            }}
-            dataSet={tooltipDataSet}
-          />
-        )}
         {childrenPosition === 'left' && (
           <Animated.View
             style={[
@@ -523,6 +511,17 @@ const Button = ({
           >
             {text}
           </AnimatedText>
+        )}
+        {!!tooltipDataSet && (
+          <InfoIcon
+            width={16}
+            height={16}
+            style={{
+              ...flexbox.alignSelfStart,
+              ...spacings.mlMi
+            }}
+            dataSet={tooltipDataSet}
+          />
         )}
 
         {childrenPosition === 'right' && (

@@ -37,14 +37,16 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
   const { isPopup } = getUiType()
   const { account } = useController('SelectedAccountController').state
   const [bindAddressAnim, addressAnimStyle] = useHover({
-    preset: 'opacityInverted'
+    preset: 'opacityInverted',
+    duration: 50
   })
   const [bindAccountBtnAnim, accountBtnAnimStyle] = useCustomHover({
     property: 'left',
     values: {
       from: 0,
       to: 2
-    }
+    },
+    duration: 50
   })
 
   if (!account) return null

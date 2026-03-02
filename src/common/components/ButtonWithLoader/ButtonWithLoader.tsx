@@ -1,7 +1,6 @@
 import React, { FC } from 'react'
 import { ViewStyle } from 'react-native'
 
-import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 
 import Button, { Props as CommonButtonProps } from '../Button/Button'
@@ -13,14 +12,11 @@ type Props = Omit<CommonButtonProps, 'style' | 'children' | 'childrenPosition'> 
 }
 
 const ButtonWithLoader: FC<Props> = ({ style, isLoading, ...rest }) => {
-  const { themeType } = useTheme()
-
   return (
     <Button
       style={[
         {
-          minWidth: 104,
-          ...spacings.mlSm
+          minWidth: 104
         },
         isLoading ? spacings.pr0 : {},
         style

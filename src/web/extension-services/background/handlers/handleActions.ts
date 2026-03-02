@@ -83,12 +83,6 @@ export const handleActions = async (
     case 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LATTICE': {
       return await mainCtrl.handleAccountPickerInitLattice(LatticeKeyIterator)
     }
-    case 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_PRIVATE_KEY_OR_SEED_PHRASE': {
-      const hdPathTemplate = BIP44_STANDARD_DERIVATION_TEMPLATE
-      const keyIterator = new KeyIterator(params.privKeyOrSeed, params.seedPassphrase)
-      await mainCtrl.accountPicker.setInitParams({ keyIterator, hdPathTemplate })
-      break
-    }
     case 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_FROM_SAVED_SEED_PHRASE': {
       const keystoreSavedSeed = await mainCtrl.keystore.getSavedSeed(params.id)
       if (!keystoreSavedSeed) return
