@@ -154,9 +154,9 @@ const AccountKeys: FC<Props> = ({
         style={[!!withAlert && spacings.mb, flexbox.flex1]}
         contentContainerStyle={{ flexGrow: 1 }}
       >
-        {accountKeys.map(({ type, addr, label, isImported, meta, dedicatedToOneSA }, index) => {
+        {accountKeys.map(({ type, addr, isImported, meta, dedicatedToOneSA }, index) => {
           const isLast = index === accountKeys.length - 1
-          const accountKeyProps = { label, addr, type, isLast, isImported }
+          const accountKeyProps = { addr, type, isLast, isImported }
 
           return (
             <AccountKey

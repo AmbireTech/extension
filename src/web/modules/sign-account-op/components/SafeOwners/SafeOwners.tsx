@@ -34,18 +34,24 @@ const SafeOwners = ({
     if (!state) return []
 
     const signed = signAccountOpController.accountOp.signed || []
-    return state.associatedKeys.map((assKey) => {
-      const newKey = signAccountOpController.accountKeyStoreKeys.find((k) => k.addr === assKey)
-      if (!newKey)
-        return {
-          addr: assKey,
-          type: 'internal' as Key['type'],
-          hasSigned: signed.includes(assKey),
-          isImported: false
-        }
+    return state.associatedKeys
+      .map((assKey) => {
+        const newKey = signAccountOpController.accountKeyStoreKeys.find((k) => k.addr === assKey)
+        if (!newKey)
+          return {
+            addr: assKey,
+            type: 'internal' as Key['type'],
+            hasSigned: signed.includes(assKey),
+            isImported: false
+          }
 
-      return { ...newKey, hasSigned: signed.includes(assKey), isImported: true }
-    })
+        return { ...newKey, hasSigned: signed.includes(assKey), isImported: true }
+      })
+      .sort((a, b) => {
+        if (a.isImported && !b.isImported) return -1
+        if (!a.isImported && b.isImported) return 1
+        return 0
+      })
   }, [
     signAccountOpController?.account.safeCreation,
     signAccountOpController?.accountKeyStoreKeys,
