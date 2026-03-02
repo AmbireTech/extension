@@ -62,8 +62,8 @@ const Benzin = ({
 
   const backgroundSource = useMemo(() => {
     if (maxWidthSize(1920)) return gradient2560
-    if (maxWidthSize(1560) || isExtension) return gradient1920
-    if (maxWidthSize(780)) return gradient1560
+    if (maxWidthSize(1560)) return gradient1920
+    if (maxWidthSize(780) || isExtension) return gradient1560
 
     return gradient780
   }, [maxWidthSize])
