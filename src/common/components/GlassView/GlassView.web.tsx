@@ -8,8 +8,8 @@ import { THEME_TYPES } from '@common/styles/themeConfig'
 import { BORDER_RADIUS_PRIMARY, hexToRgba } from '@common/styles/utils/common'
 import { engine } from '@web/constants/browserapi'
 
+import { GlassViewProps } from './GlassView'
 import { generateSpecularMap, getDisplacementFilter } from './helpers.web'
-import { GlassViewProps } from './types'
 
 const GlassView: React.FC<GlassViewProps & ViewProps> = ({
   children,
