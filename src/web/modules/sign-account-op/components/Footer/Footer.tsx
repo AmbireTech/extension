@@ -98,7 +98,7 @@ const Footer = ({
         <Button
           testID="transaction-button-reject"
           type="danger"
-          text={t('Cancel')}
+          text={t('Hide')}
           onPress={() => {
             openModal()
           }}
