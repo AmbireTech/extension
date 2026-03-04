@@ -170,7 +170,8 @@ const useAddressInput = ({
   const RHFValidate = useCallback(() => {
     // Disable the form if the resolved data is for another field value
     // e.g., the user just changed the input
-    if (fieldValue !== resolvingForFieldValue.current) return false
+    if (resolvingForFieldValue.current && fieldValue !== resolvingForFieldValue.current)
+      return false
 
     // Disable the form if the address is resolving
     if (validation.id === 'resolving_domain') {
