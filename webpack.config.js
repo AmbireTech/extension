@@ -20,6 +20,7 @@ const createReflectMetadataShimPlugin = require('./lavamoat/shims/reflect-metada
 const createSetImmediateShimPlugin = require('./lavamoat/shims/setimmediate-shim-plugin')
 const createConsoleWarnShimPlugin = require('./lavamoat/shims/console-warn-shim-plugin')
 const createLavamoatUnsafeLayerPlugin = require('./lavamoat/plugins/lavamoat-unsafe-layer-plugin')
+const LavamoatIgnoredModulesVerifyPlugin = require('./lavamoat/plugins/lavamoat-ignored-modules-verify-plugin')
 
 // Entries that run outside LavaMoat protection.
 //
@@ -419,6 +420,11 @@ module.exports = async function (env, argv) {
               // Set to 0 to avoid error logging conflicts with Expo's progress bar.
               diagnosticsVerbosity: process.env.LAVAMOAT_GENERATE_POLICY === 'true' ? 1 : 0
             }),
+            // Verify that any modules LavaMoat is forced to ignore at runtime
+            // are either fully tree-shaken or otherwise empty placeholders.
+            // The plugin appends a short ✅/❌ status and explanation to the
+            // original LavaMoat warning message.
+            new LavamoatIgnoredModulesVerifyPlugin(),
             // Inject reflect-metadata between SES repair and harden in background.js.
             // See createReflectMetadataShimPlugin() comments above.
             // Only needed when LavaMoatPlugin is active (production builds).
