@@ -123,6 +123,15 @@ export class SpeculosDevice {
     throw new Error('Timeout waiting for Accept/Sign screen')
   }
 
+  private async getCurrentScreenText() {
+    const { events } = await this.getEvents()
+
+    return events
+      .map((e) => e.text)
+      .filter(Boolean)
+      .join(' ')
+  }
+
   /**
    * Enables Blind Signing in the Ethereum Ledger app.
    *
@@ -146,6 +155,14 @@ export class SpeculosDevice {
     // enable Blind signing
     // NOTE: THIS SHOULD BE ENABLED FOR TESTING SIGNING TRANSACTIONS WITH LEDGER, OTHERWISE TRANSACTIONS WON'T BE SIGNED
     await this.waitForText('Blind signing')
+
+    const screen = await this.getCurrentScreenText()
+
+    // If already enabled return
+    if (screen.includes('Enabled')) {
+      return
+    }
+
     await this.pressBothButtons()
 
     // Display nonce in transaction

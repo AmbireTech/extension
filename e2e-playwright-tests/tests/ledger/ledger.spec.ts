@@ -11,7 +11,7 @@ import { expect } from '@playwright/test'
 import { SpeculosDevice } from '../../libs/speculos-device/device'
 
 const LEDGER_EMULATOR_HTTP_URL = process.env.LEDGER_EMULATOR_HTTP_URL
-test.describe.configure({ mode: 'serial' })
+// test.describe.configure({ mode: 'serial' })
 
 test.describe('ledger', { tag: '@ledgerTests' }, () => {
   test.setTimeout(600000)
@@ -119,7 +119,7 @@ test.describe('ledger', { tag: '@ledgerTests' }, () => {
 
       // It should be enabled only when running the exact test with (test.only) locally,
       // Otherwise, the simulator will not be able to sign blind transactions.
-      // await ledgerSimulatorControls.enableBlindSigning()
+      await ledgerSimulatorControls.enableBlindSigning()
 
       const sendToken = tokens.usdc.base
       const message = 'Top up ready!'
@@ -151,7 +151,7 @@ test.describe('ledger', { tag: '@ledgerTests' }, () => {
 
       // It should be enabled only when running the exact test with (test.only) locally,
       // Otherwise, the simulator will not be able to sign blind transactions.
-      // await ledgerSimulatorControls.enableBlindSigning()
+      await ledgerSimulatorControls.enableBlindSigning()
 
       const sendToken = tokens.usdc.base
       const recipientAddress = SA_ADDRESS
@@ -179,7 +179,7 @@ test.describe('ledger', { tag: '@ledgerTests' }, () => {
 
       // It should be enabled only when running the exact test with (test.only) locally,
       // Otherwise, the simulator will not be able to sign blind transactions.
-      // await ledgerSimulatorControls.enableBlindSigning()
+      await ledgerSimulatorControls.enableBlindSigning()
 
       const fromToken = tokens.usdc.base
       const toToken = tokens.wallet.base
@@ -210,7 +210,7 @@ test.describe('ledger', { tag: '@ledgerTests' }, () => {
 
       // It should be enabled only when running the exact test with (test.only) locally,
       // Otherwise, the simulator will not be able to sign blind transactions.
-      // await ledgerSimulatorControls.enableBlindSigning()
+      await ledgerSimulatorControls.enableBlindSigning()
 
       const sendToken = tokens.usdc.base
       const receiveToken = tokens.usdc.optimism

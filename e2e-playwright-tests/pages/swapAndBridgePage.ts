@@ -251,7 +251,9 @@ export class SwapAndBridgePage extends BasePage {
         await page.locator(selectors.closeTransactionProgressPopUpButton).click()
       }
     } catch (error) {
-      console.warn("⚠️ The 'Sign' button is not clickable, but it should be.")
+      console.warn(
+        `⚠️ The 'Sign' button is not clickable, but it should be. ERROR: ${error.message || error}`
+      )
     }
   }
 
