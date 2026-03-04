@@ -9,7 +9,6 @@ import AccountKey, { AccountKeyType } from '@common/components/AccountKey/Accoun
 import Alert from '@common/components/Alert'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
@@ -35,7 +34,6 @@ const AccountKeys: FC<Props> = ({
   const { state: accounstState, dispatch: accountsDispatch } = useController('AccountsController')
   const { networks } = useController('NetworksController').state
   const { keys } = useController('KeystoreController').state
-  const { dispatch } = useControllersMiddleware()
   const accountStateCheckedForRef = React.useRef<string | null>(null)
 
   const accountState = useMemo(() => {

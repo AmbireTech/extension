@@ -796,12 +796,6 @@
       "count": 3,
       "message": "Type 'ViewStyle | TextStyle | ImageStyle | undefined' is not assignable to type 'ViewStyle | TextStyle | ImageStyle'."
     },
-    "b64ea2792ad762ca0624597a2bb314d461ca7940": {
-      "file": "src/common/components/RequireLocation/RequireLocation.tsx",
-      "code": "TS2345",
-      "count": 1,
-      "message": "Argument of type 'Permission | undefined' is not assignable to parameter of type 'Permission'."
-    },
     "27a6b1bddfac06c31882089da2f8dbea8ef93908": {
       "file": "src/common/components/ScrollableWrapper/DraggableFlatList/DraggableItem.tsx",
       "code": "TS2769",

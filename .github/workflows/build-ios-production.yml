@@ -1,0 +1,17 @@
+name: Build production iOS app ⚡
+
+on:
+  workflow_dispatch: # Manual trigger
+  release:
+    types: [published] # Triggers on new releases (from any branch)
+
+jobs:
+  build-ios-production:
+    name: Build iOS production .ipa and upload artifact
+    uses: ./.github/workflows/_build-ios.yml
+    with:
+      build_command: yarn build:ios:production
+      artifact_suffix: production
+      package_mode: production
+      enable_signing: true
+    secrets: inherit
