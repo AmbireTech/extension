@@ -82,7 +82,6 @@
     "@fortawesome/free-brands-svg-icons": "6.6.0",
     "@fortawesome/free-solid-svg-icons": "6.6.0",
     "@fortawesome/react-fontawesome": "0.2.2",
-    "@gnosis.pm/safe-apps-sdk": "6.2.0",
     "@gorhom/portal": "1.0.14",
     "@ledgerhq/context-module": "1.14.0",
     "@ledgerhq/device-management-kit": "1.0.1",

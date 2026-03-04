@@ -1,4 +1,4 @@
-import { ReactNode } from 'react'
+import { FC, ReactNode } from 'react'
 import { TextProps, ViewStyle } from 'react-native'
 
 export type ToggleProps = {
@@ -10,7 +10,10 @@ export type ToggleProps = {
   disabled?: boolean
   testID?: string
   labelProps?: TextProps
-  toggleStyle?: React.CSSProperties | ViewStyle
-  trackStyle?: React.CSSProperties | ViewStyle
+  toggleStyle?: ViewStyle
+  trackStyle?: ViewStyle
   children?: ReactNode
 }
+
+declare const Toggle: FC<ToggleProps>
+export default Toggle

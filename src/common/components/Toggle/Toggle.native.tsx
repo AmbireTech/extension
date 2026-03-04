@@ -8,7 +8,7 @@ import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { hexToRgba } from '@common/styles/utils/common'
 
-import { ToggleProps } from './types'
+import { ToggleProps } from './Toggle'
 
 interface Props extends Omit<ToggleProps, 'toggleStyle' | 'trackStyle'> {
   labelProps?: TextProps

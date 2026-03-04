@@ -10,8 +10,8 @@ import { getUiType } from '@common/utils/uiType'
 import { Portal } from '@gorhom/portal'
 
 import Backdrop from './Backdrop'
+import { BottomSheetProps } from './BottomSheet'
 import getStyles from './styles'
-import { BottomSheetProps } from './types'
 import useBottomSheetInternal from './useBottomSheetInternal'
 
 const ANIMATION_DURATION: number = 250
