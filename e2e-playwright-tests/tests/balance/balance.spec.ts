@@ -72,6 +72,7 @@ test.describe('LEDGER Smart Account - Tokens balance check', { tag: '@balanceChe
 
   test('check balance of test tokens', async ({ pages }) => {
     const THRESHOLDS: Threshold[] = [
+      ['gas-token', 0.5],
       // These tokens are used to pay fees in transactions, so we need more funds here:
       [tokens.usdc.base, 1]
     ]
