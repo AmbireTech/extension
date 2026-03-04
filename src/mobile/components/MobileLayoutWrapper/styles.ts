@@ -17,8 +17,7 @@ interface Style {
 const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
   StyleSheet.create<Style>({
     contentContainer: {
-      height: '100%',
-      ...spacings.phSm,
+      // ...spacings.phSm,
       ...spacings.pbSm,
       ...flexbox.flex1
     },

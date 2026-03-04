@@ -6,7 +6,7 @@ import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import ScrollableWrapper, { WrapperProps } from '@common/components/ScrollableWrapper'
 import useTheme from '@common/hooks/useTheme'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING, SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 import getStyles from './styles'
@@ -121,13 +121,12 @@ export const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainCon
 
   if (withScroll && !isOnboardingRoute) {
     return (
-      <ScrollableWrapper
-        contentContainerStyle={[styles.contentContainer, contentContainerStyle]}
-        showsVerticalScrollIndicator={false}
-        wrapperRef={wrapperRef}
-        {...rest}
-      >
-        {step > 0 ? renderProgress() : <View style={{ height: 28 }} />}
+      <View style={[flexbox.flex1, spacings.phSm]}>
+        {step > 0 ? (
+          renderProgress()
+        ) : (
+          <View style={{ height: isOnboardingRoute ? 28 : SPACING_SM }} />
+        )}
         {(!!title || !!withBackButton) && (
           <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mb2Xl]}>
             {!!withBackButton && <PanelBackButton onPress={onBackButtonPress} />}
@@ -135,14 +134,24 @@ export const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainCon
             {!!withBackButton && <View style={[{ width: 28 }, flexbox.alignEnd]}>{rightIcon}</View>}
           </View>
         )}
-        {children}
-      </ScrollableWrapper>
+        <ScrollableWrapper
+          contentContainerStyle={[styles.contentContainer, contentContainerStyle]}
+          wrapperRef={wrapperRef}
+          {...rest}
+        >
+          {children}
+        </ScrollableWrapper>
+      </View>
     )
   }
 
   return (
     <View ref={wrapperRef} style={[styles.contentContainer, contentContainerStyle]}>
-      {step > 0 ? renderProgress() : <View style={{ height: 28 }} />}
+      {step > 0 ? (
+        renderProgress()
+      ) : (
+        <View style={{ height: isOnboardingRoute ? 28 : SPACING_SM }} />
+      )}
       {(!!title || !!withBackButton) && (
         <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbXl]}>
           {!!withBackButton && <PanelBackButton onPress={onBackButtonPress} />}

@@ -1,103 +1,51 @@
-import React, { useCallback, useEffect, useMemo } from 'react'
-import { Controller, useForm } from 'react-hook-form'
+import React from 'react'
+import { Controller } from 'react-hook-form'
 import { Image, View } from 'react-native'
 
 import { isValidPassword } from '@ambire-common/services/validations'
 import AmbireLogoWithBackgroundAndLogotype from '@common/assets/svg/AmbireLogoWithBackgroundAndLogotype'
 import LockIcon from '@common/assets/svg/LockIcon'
 import Button from '@common/components/Button'
+import FatToggle from '@common/components/FatToggle'
 import InputPassword from '@common/components/InputPassword'
 import Text from '@common/components/Text'
-import { isDev, isTesting, isWeb } from '@common/config/env'
+import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
-import useDisableNavigatingBack from '@common/hooks/useDisableNavigatingBack'
-import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
+import useKeyStoreUnlock from '@common/modules/keystore/hooks/useKeyStoreUnlock'
 import backgroundImage from '@common/modules/keystore/images/background.png'
+import alert from '@common/services/alert'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
-import { DEFAULT_KEYSTORE_PASSWORD_DEV } from '@env'
-import { MobileLayoutContainer } from '@mobile/components/MobileLayoutWrapper'
-
-import getStyles from './styles'
+import {
+  MobileLayoutContainer,
+  MobileLayoutWrapperMainContent
+} from '@mobile/components/MobileLayoutWrapper'
 
 const KeyStoreUnlockScreen = () => {
+  const { control, handleSubmit, errors, passwordFieldError, disableSubmit, handleUnlock } =
+    useKeyStoreUnlock()
   const { t } = useTranslation()
-  const { styles } = useTheme(getStyles)
-  const { navigate } = useNavigation()
+
   const { hasKeystoreRecovery } = useController('EmailVaultController').state
+
   const {
-    state: { isUnlocked, statuses, errorMessage },
+    state: { statuses, errorMessage },
     dispatch: keystoreDispatch
   } = useController('KeystoreController')
-  const { requestWindow } = useController('RequestsController').state
   const { theme } = useTheme()
-  const {
-    control,
-    handleSubmit,
-    watch,
-    setError,
-    formState: { errors }
-  } = useForm({
-    mode: 'all',
-    defaultValues: {
-      password: isDev && !isTesting ? (DEFAULT_KEYSTORE_PASSWORD_DEV ?? '') : ''
-    }
-  })
-
-  useDisableNavigatingBack()
-
-  const passwordFieldValue = watch('password')
-
-  useEffect(() => {
-    if (errorMessage) setError('password', { message: errorMessage })
-  }, [errorMessage, setError])
-
-  useEffect(() => {
-    if (isUnlocked) navigate('/')
-  }, [navigate, isUnlocked])
-
-  const disableSubmit = useMemo(
-    () => statuses.unlockWithSecret !== 'INITIAL' || !!errorMessage,
-    [statuses.unlockWithSecret, errorMessage]
-  )
-
-  const passwordFieldError = useMemo(() => {
-    if (!errors.password) return undefined
-
-    if (passwordFieldValue.length < 8) {
-      return t('Please fill in at least 8 characters for password.')
-    }
-
-    return errors.password.message || t('Invalid password')
-  }, [errors.password, passwordFieldValue.length, t])
-
-  const handleUnlock = useCallback(
-    ({ password }: { password: string }) => {
-      if (disableSubmit) return
-
-      keystoreDispatch({
-        type: 'method',
-        params: {
-          method: 'unlockWithSecret',
-          args: ['password', password]
-        }
-      })
-    },
-    [disableSubmit, keystoreDispatch]
-  )
 
   return (
-    <MobileLayoutContainer style={styles.panel}>
-      <View style={flexbox.flex1}>
+    <MobileLayoutContainer>
+      <MobileLayoutWrapperMainContent>
         <View
           style={{
             height: 324,
             width: '100%',
-            marginBottom: 56
+            ...spacings.mbSm
           }}
         >
           <View
@@ -135,7 +83,24 @@ const KeyStoreUnlockScreen = () => {
             </Text>
           </View>
         </View>
-        <View style={styles.container}>
+        <View
+          style={[
+            flexbox.directionRow,
+            flexbox.alignCenter,
+            flexbox.justifySpaceBetween,
+            spacings.mbSm
+          ]}
+        >
+          <Text appearance="secondaryText">Hide balances</Text>
+          <FatToggle
+            isOn={false}
+            onToggle={() => alert('Coming soon!')}
+            width={44}
+            height={22}
+            style={spacings.mr0}
+          />
+        </View>
+        <View style={[flexbox.flex1, flexbox.justifyCenter]}>
           <Controller
             control={control}
             render={({ field: { onChange, onBlur, value } }) => (
@@ -170,30 +135,23 @@ const KeyStoreUnlockScreen = () => {
           <Button
             testID="button-unlock"
             disabled={disableSubmit}
-            style={{ width: '100%', marginBottom: 0 }}
+            hasBottomSpacing={false}
             text={statuses.unlockWithSecret === 'LOADING' ? t('Unlocking...') : t('Unlock')}
             onPress={handleSubmit((data) => handleUnlock(data))}
           />
 
-          {/* {hasKeystoreRecovery && (
-          <TouchableOpacity
-            onPress={() =>
-              openInternalPageInTab({
-                route: ROUTES.keyStoreEmailRecovery,
-                shouldCloseCurrentWindow: !getUiType().isTab,
-                windowId: requestWindow?.windowProps?.createdFromWindowId
-              })
-            }
-            style={spacings.mtXl}
-            hitSlop={FOOTER_BUTTON_HIT_SLOP}
-          >
-            <Text weight="medium" appearance="secondaryText" fontSize={14} underline>
-              {t('Forgot extension password?')}
-            </Text>
-          </TouchableOpacity>
-        )} */}
+          {!!hasKeystoreRecovery && (
+            <Button
+              text={t('Forgot extension password?')}
+              type="ghost2"
+              hasBottomSpacing={false}
+              onPress={() => alert('Coming soon!')}
+              style={spacings.mtSm}
+              textStyle={{ textDecorationLine: 'underline' }}
+            />
+          )}
         </View>
-      </View>
+      </MobileLayoutWrapperMainContent>
     </MobileLayoutContainer>
   )
 }
