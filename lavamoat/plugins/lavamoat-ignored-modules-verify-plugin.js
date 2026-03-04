@@ -27,9 +27,25 @@ function getAllJsFiles(dir) {
 
 function isIdEmptyInCode(code, id) {
   const idPattern = `${id}:`
-  if (!code.includes(idPattern)) return true
-  const re = new RegExp(`${id}:\\(\\)=>\\{\\}`, 'g')
-  return re.test(code)
+  const idx = code.indexOf(idPattern)
+  if (idx === -1) return true
+
+  // Handle classic minified form: 823646:()=>{}
+  const directRe = new RegExp(`${id}:\\(\\)=>\\{\\}`, 'g')
+  if (directRe.test(code)) return true
+
+  // Handle webpack's "(ignored)" stub modules, e.g.:
+  //
+  // /***/ 824654:
+  // /***/ (() => {
+  // /* (ignored) */
+  // /***/ }),
+  //
+  // We treat these as effectively empty as well.
+  const window = code.slice(idx, idx + 400)
+  if (window.includes('/* (ignored) */')) return true
+
+  return false
 }
 
 class LavamoatIgnoredModulesVerifyPlugin {
