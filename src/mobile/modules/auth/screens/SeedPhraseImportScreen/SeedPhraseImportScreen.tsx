@@ -96,7 +96,6 @@ const SeedPhraseImportScreen = () => {
                 return (
                   <View style={styles.textAreaWrapper}>
                     {styledOverlay}
-                    {words.length}
                     <TextArea
                       testID="enter-seed-phrase-field"
                       value={value}
