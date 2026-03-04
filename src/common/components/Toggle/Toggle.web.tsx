@@ -32,6 +32,7 @@ const Toggle: React.FC<ToggleProps> = ({
         alignItems: 'center',
         display: 'flex',
         cursor: 'pointer',
+        flexShrink: 0,
         opacity: disabled ? 0.4 : 1
       }}
     >

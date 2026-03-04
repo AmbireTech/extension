@@ -22,7 +22,9 @@ const Toggle = ({ isOn, onToggle, label, style, disabled, trackStyle, toggleStyl
   const { theme } = useTheme()
 
   return (
-    <View style={[spacings.mrSm, flexbox.alignCenter, flexbox.directionRow, style]}>
+    <View
+      style={[spacings.mrSm, flexbox.alignCenter, flexbox.directionRow, { flexShrink: 0 }, style]}
+    >
       <ToggleSwitch
         isOn={isOn}
         disabled={disabled}
