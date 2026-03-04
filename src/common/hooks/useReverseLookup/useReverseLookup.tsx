@@ -16,7 +16,6 @@ const useReverseLookup = ({ address }: Props) => {
   } = useController('DomainsController')
   const isLoading = loadingAddresses.includes(checksummedAddress)
   const addressInDomains = domains[checksummedAddress]
-
   useEffect(() => {
     if (!checksummedAddress || addressInDomains || isLoading) return
 

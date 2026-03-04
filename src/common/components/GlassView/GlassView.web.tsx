@@ -8,8 +8,8 @@ import { THEME_TYPES } from '@common/styles/themeConfig'
 import { BORDER_RADIUS_PRIMARY, hexToRgba } from '@common/styles/utils/common'
 import { engine } from '@web/constants/browserapi'
 
+import { GlassViewProps } from './GlassView'
 import { generateSpecularMap, getDisplacementFilter } from './helpers.web'
-import { GlassViewProps } from './types'
 
 const GlassView: React.FC<GlassViewProps & ViewProps> = ({
   children,
@@ -19,7 +19,8 @@ const GlassView: React.FC<GlassViewProps & ViewProps> = ({
   tintColor2,
   shineColor,
   borderRadius = BORDER_RADIUS_PRIMARY,
-  blurAmount = 4
+  blurAmount = 4,
+  isSimpleBlur = false
 }) => {
   const { themeType } = useTheme()
   const divRef = useRef<HTMLDivElement>(null)
@@ -37,7 +38,7 @@ const GlassView: React.FC<GlassViewProps & ViewProps> = ({
     // SVG blurs are supported only in Webkit browsers
     // This filter represents the "liquid glass" part of the effect.
     backdropFilter:
-      engine !== 'webkit'
+      engine !== 'webkit' || isSimpleBlur
         ? `blur(${blurAmount}px)`
         : `blur(${blurAmount / 2}px) url('${getDisplacementFilter({
             height: divRef.current?.offsetHeight || 100,

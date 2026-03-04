@@ -6,7 +6,6 @@ import { SwapAndBridgeRoute } from '@ambire-common/interfaces/swapAndBridge'
 import { FeePaymentOption } from '@ambire-common/libs/estimate/interfaces'
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import Select from '@common/components/Select'
-import { SelectValue } from '@common/components/Select/types'
 import Text from '@common/components/Text'
 import Tooltip from '@common/components/Tooltip'
 import useTheme from '@common/hooks/useTheme'
@@ -16,6 +15,7 @@ import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@common/utils/links'
 
 import getStyles from '../styles'
+import { FeeOption } from '../types'
 import PayOption from './PayOption'
 
 const ServiceFee = ({
@@ -24,7 +24,7 @@ const ServiceFee = ({
   serviceFee
 }: {
   nativeFeeOption?: FeePaymentOption
-  paidByNativeValue?: SelectValue | null
+  paidByNativeValue?: FeeOption | null
   serviceFee?: SwapAndBridgeRoute['serviceFee']
 }) => {
   const { t } = useTranslation()
@@ -43,7 +43,7 @@ const ServiceFee = ({
           <View>
             <Text fontSize={14} appearance="secondaryText" style={spacings.mbMi}>
               {t(
-                `The selected bridge provider demands an additional service fee, paid out in ${paidByNativeValue.token.symbol}. `
+                `The selected bridge provider demands an additional service fee, paid out in ${paidByNativeValue.token?.symbol || 'Unknown token'}. `
               )}
               <Pressable
                 onPress={() => {
@@ -74,6 +74,7 @@ const ServiceFee = ({
               amount={BigInt(serviceFee.amount)}
               amountUsd={serviceFee.amountUSD}
               feeOption={nativeFeeOption}
+              paidByAccountLabel={paidByNativeValue.paidByAccountLabel}
             />
           </View>
         )}

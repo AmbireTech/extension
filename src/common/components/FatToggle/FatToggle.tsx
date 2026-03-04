@@ -21,12 +21,12 @@ const FatToggle: React.FC<
         ...(props.trackStyle as ViewStyle) // TODO: Figure out the mismatch between types
       }}
       toggleStyle={{
-        top: 2,
+        top: isWeb ? 2 : -2,
         width: height - 4,
         height: height - 4,
         transform: isWeb
           ? ((props.isOn ? `translateX(${width / 2}px)` : 'translateX(2px)') as any)
-          : [{ translateX: props.isOn ? width / 2 : 2 }],
+          : [{ translateX: props.isOn ? width / 2 - 4 : -2 }],
         ...(props.toggleStyle as ViewStyle)
       }}
     />

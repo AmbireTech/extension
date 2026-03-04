@@ -69,7 +69,6 @@ const SigningKeySelect = ({
                     addr={key.addr}
                     type={key.type}
                     dedicatedToOneSA={key.dedicatedToOneSA}
-                    label={key.label || `Key ${i + 1}`}
                     isImported={isImported}
                     account={account}
                     keyIconColor={theme.iconPrimary as string}

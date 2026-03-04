@@ -1,15 +1,19 @@
 import React, { useCallback, useMemo } from 'react'
+import { ViewStyle } from 'react-native'
 
 import { Account } from '@ambire-common/interfaces/account'
 import { SelectedAccountPortfolio } from '@ambire-common/interfaces/selectedAccount'
 import GasTankIcon from '@common/assets/svg/GasTankIcon'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
+import SkeletonLoader from '@common/components/SkeletonLoader'
+import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useHasGasTank from '@common/hooks/useHasGasTank'
+import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import spacings from '@common/styles/spacings'
+import flexbox from '@common/styles/utils/flexbox'
 import { getGasTankTokenDetails } from '@common/utils/getGasTankTokenDetails'
-
-import OverviewButton from './OverviewButton'
 
 interface Props {
   onPress: () => void
@@ -19,6 +23,7 @@ interface Props {
 
 const GasTankButton = ({ onPress, portfolio, account }: Props) => {
   const { t } = useTranslation()
+  const [bindBtnAnim, btnAnimStyle] = useHover({ preset: 'opacityInverted' })
   const { hasGasTank, isViewOnly } = useHasGasTank({ account })
 
   const {
@@ -62,7 +67,7 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
     return ''
   }, [buttonState, totalBalanceGasTankDetails.balanceUSDFormatted, isViewOnly, t])
 
-  const tooltip = useMemo(() => {
+  const tooltipText = useMemo(() => {
     if (buttonState === 'soon') {
       if (!!account?.safeCreation) return t('Not available for safe wallets, yet.')
       return t('Not available for hardware wallets, yet.')
@@ -75,19 +80,51 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
     return ''
   }, [buttonState, account?.safeCreation, t])
 
+  if (!portfolio.isReadyToVisualize) {
+    return <SkeletonLoader lowOpacity width={80} height={26} borderRadius={12} />
+  }
+
   return (
-    <OverviewButton
+    <AnimatedPressable
       onPress={handleOnPress}
-      renderIcon={() => <GasTankIcon width={14} height={14} color="#FFFFFF" />}
-      text={text}
-      tooltipText={tooltip}
+      disabled={disabled}
+      // @ts-ignore
+      style={{
+        ...flexbox.directionRow,
+        ...flexbox.center,
+        ...spacings.phSm,
+        ...spacings.mrMi,
+        ...btnAnimStyle,
+        ...(!!tooltipText && ({ cursor: 'default' } as unknown as ViewStyle)),
+        borderColor: '#FFFFFF1F',
+        borderRadius: 12,
+        borderWidth: 1,
+        backgroundColor: '#000000',
+        height: 26
+      }}
+      {...bindBtnAnim}
       testID={
         buttonState === 'balance' ? 'dashboard-gas-tank-balance' : 'dashboard-gas-tank-button'
       }
-      disabled={disabled}
-      isLoading={!portfolio.isReadyToVisualize}
-      style={spacings.mrMi}
-    />
+    >
+      <GasTankIcon width={14} height={14} color="#FFFFFF" />
+      <Text
+        style={spacings.mlMi}
+        dataSet={
+          tooltipText
+            ? createGlobalTooltipDataSet({
+                id: tooltipText.toLowerCase().replace(/\s/g, '-'),
+                content: tooltipText
+              })
+            : {}
+        }
+        color="#FFFFFF"
+        weight="number_medium"
+        fontSize={12}
+      >
+        {text}
+      </Text>
+    </AnimatedPressable>
   )
 }
 

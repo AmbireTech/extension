@@ -1,0 +1,17 @@
+name: Build production iOS simulator app ⚡
+
+on:
+  workflow_dispatch: # Manual trigger
+  release:
+    types: [published] # Triggers on new releases (from any branch)
+
+jobs:
+  build-ios-simulator:
+    name: Build iOS simulator .app and upload artifact
+    uses: ./.github/workflows/_build-ios.yml
+    with:
+      build_command: yarn build:ios:simulator
+      artifact_suffix: simulator
+      package_mode: simulator
+      enable_signing: false
+    secrets: inherit

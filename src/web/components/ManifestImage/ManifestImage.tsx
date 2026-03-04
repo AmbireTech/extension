@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react'
-import { Image, ImageStyle, View, ViewStyle } from 'react-native'
+import { Image, ImageStyle, StyleProp, View, ViewStyle } from 'react-native'
 
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import { SkeletonLoaderProps } from '@common/components/SkeletonLoader/types'
@@ -14,7 +14,7 @@ type Props = {
   size: ViewStyle['width']
   isRound?: boolean
   iconScale?: number
-  containerStyle?: ViewStyle
+  containerStyle?: StyleProp<ViewStyle>
   imageStyle?: ImageStyle
   skeletonAppearance?: SkeletonLoaderProps['appearance']
 }

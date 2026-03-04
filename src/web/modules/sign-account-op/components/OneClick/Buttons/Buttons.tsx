@@ -96,41 +96,40 @@ const Buttons: FC<Props> = ({
   return (
     <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifyEnd]}>
       {!isRequestWindow && (
-        <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mrLg]}>
-          <View
-            dataSet={createGlobalTooltipDataSet({
-              id: 'batch-btn-tooltip',
-              content: batchDisabledReason
+        <View
+          dataSet={createGlobalTooltipDataSet({
+            id: 'batch-btn-tooltip',
+            content: batchDisabledReason
+          })}
+          style={spacings.mrLg}
+        >
+          <Button
+            hasBottomSpacing={false}
+            text={
+              callsCount > 0 && !batchDisabledReason
+                ? t('Add to batch ({{count}})', {
+                    count: callsCount
+                  })
+                : t('Start a batch')
+            }
+            size="smaller"
+            disabled={startBatchingDisabled}
+            type="secondary"
+            tooltipDataSet={createGlobalTooltipDataSet({
+              id: 'start-batch-info-tooltip',
+              content: startBatchingInfo
             })}
-          >
-            <Button
-              hasBottomSpacing={false}
-              text={
-                callsCount > 0 && !batchDisabledReason
-                  ? t('Add to batch ({{count}})', {
-                      count: callsCount
-                    })
-                  : t('Start a batch')
-              }
-              size="smaller"
-              disabled={startBatchingDisabled}
-              type="secondary"
-              tooltipDataSet={createGlobalTooltipDataSet({
-                id: 'start-batch-info-tooltip',
-                content: startBatchingInfo
-              })}
-              childrenPosition="left"
-              style={{ minWidth: 160, ...spacings.phMd }}
-              onPress={() => {
-                if (isLocalStateOutOfSync) return
+            childrenPosition="left"
+            style={{ minWidth: 160, ...spacings.phMd }}
+            onPress={() => {
+              if (isLocalStateOutOfSync) return
 
-                handleSubmitForm(false)
-              }}
-              testID="batch-btn"
-            >
-              <BatchIcon style={spacings.mrMi} />
-            </Button>
-          </View>
+              handleSubmitForm(false)
+            }}
+            testID="batch-btn"
+          >
+            <BatchIcon style={spacings.mrMi} />
+          </Button>
         </View>
       )}
       <View

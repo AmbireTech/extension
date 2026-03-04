@@ -8,7 +8,7 @@ import { AllControllersMappingType } from '@common/constants/controllersMapping'
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext/controllersMiddlewareContext'
 import { ControllersMiddlewareContextReturnType } from '@common/contexts/controllersMiddlewareContext/types'
 import { ControllerStoreContext } from '@common/contexts/controllerStoreContext'
-import useIsScreenFocused from '@common/hooks/useIsScreenFocused'
+import useIsAppFocused from '@common/hooks/useIsAppFocused'
 import useRoute from '@common/hooks/useRoute'
 import useToast from '@common/hooks/useToast'
 import eventBus from '@common/services/event/eventBus'
@@ -156,7 +156,7 @@ export const ControllersMiddlewareProvider: React.FC<{ children: React.ReactNode
   const { addToast } = useToast()
   const route = useRoute()
   const timer = useRef<NodeJS.Timeout>(null)
-  const isFocused = useIsScreenFocused()
+  const isFocused = useIsAppFocused()
   const [windowId, setWindowId] = useState<number | undefined>()
   const hasConnectedToTheBackground = useRef(false)
   const { controllerStore } = useContext(ControllerStoreContext)

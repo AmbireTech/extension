@@ -25,7 +25,7 @@ import SettingsPageHeader from '@web/modules/settings/components/SettingsPageHea
 
 import AddContactFormModal from '../AddContactFormModal'
 
-const ContactWrapper = ({ children }: { children: React.ReactNode }) => {
+export const ContactWrapper = ({ children }: { children: React.ReactNode }) => {
   const { theme } = useTheme()
 
   return (

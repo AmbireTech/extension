@@ -10,7 +10,7 @@ const Spinner = ({
   style,
   variant = 'gradient'
 }: {
-  style: any
+  style?: any
   variant?: 'gradient' | 'white' | 'info' | 'black'
 }) => {
   const animation = useMemo(() => {

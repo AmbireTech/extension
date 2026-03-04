@@ -1,11 +1,10 @@
 import React, { FC, useEffect, useMemo, useRef } from 'react'
 import { Animated, FlatList, FlatListProps, ViewStyle } from 'react-native'
 
-import { isWeb } from '@common/config/env'
-import { OVERVIEW_CONTENT_MAX_HEIGHT } from '@common/modules/dashboard/screens/DashboardScreen'
 import spacings from '@common/styles/spacings'
 
 import useBanners from '../../hooks/useBanners'
+import { OVERVIEW_CONTENT_MAX_HEIGHT } from '../DashboardOverview/DashboardOverview'
 import { TabType } from '../TabsAndSearch/Tabs/Tab/Tab'
 
 interface Props extends FlatListProps<any> {

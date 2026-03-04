@@ -36,7 +36,6 @@ const getParams = (search?: string) => {
     txnId: params.get('txnId') ?? null,
     userOpHash: params.get('userOpHash') ?? null,
     relayerId: params.get('relayerId') ?? null,
-    isRenderedInternally: typeof params.get('isInternal') === 'string',
     chainId: params.get('chainId'),
     bundler: params.get('bundler') ?? null
   }
@@ -45,9 +44,7 @@ const getParams = (search?: string) => {
 const useBenzin = ({ onOpenExplorer, extensionAccOp }: Props = {}) => {
   const { addToast } = useToast()
   const route = useRoute()
-  const { txnId, userOpHash, relayerId, isRenderedInternally, chainId, bundler } = getParams(
-    route?.search
-  )
+  const { txnId, userOpHash, relayerId, chainId, bundler } = getParams(route?.search)
 
   const {
     state: { networks }
@@ -186,7 +183,6 @@ const useBenzin = ({ onOpenExplorer, extensionAccOp }: Props = {}) => {
     network,
     txnId: stepsState.txnId,
     userOpHash,
-    isRenderedInternally,
     bigintChainId,
     showCopyBtn,
     showOpenExplorerBtn,

@@ -17,6 +17,7 @@ interface Props {
   style?: ViewStyle
   hideParentheses?: boolean
   fontSize?: number
+  children?: React.ReactNode
 }
 
 const PlainAddressWithCopy: FC<Props> = ({
@@ -24,7 +25,8 @@ const PlainAddressWithCopy: FC<Props> = ({
   address,
   style,
   hideParentheses,
-  fontSize = 12
+  fontSize = 12,
+  children
 }) => {
   const { t } = useTranslation()
   const { addToast } = useToast()
@@ -54,6 +56,7 @@ const PlainAddressWithCopy: FC<Props> = ({
       <AnimatedPressable onPress={handleCopy} style={animStyle} {...bindAnim}>
         <CopyIcon width={fontSize + 8} height={fontSize + 8} color={theme.secondaryText} />
       </AnimatedPressable>
+      {children}
     </View>
   )
 }

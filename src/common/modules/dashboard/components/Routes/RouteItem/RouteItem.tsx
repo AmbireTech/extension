@@ -5,11 +5,9 @@ import GlassView from '@common/components/GlassView'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useNavigation from '@common/hooks/useNavigation'
-import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
-import { BORDER_RADIUS_PRIMARY, hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@common/utils/links'
 
@@ -31,11 +29,10 @@ interface Props {
   routeItemsLength: number
 }
 
-const ITEM_HEIGHT = 52
-const ICON_SIZE = 28
+const ITEM_HEIGHT = 40
+const ICON_SIZE = 24
 
 const RouteItem: FC<Props> = ({ routeItem, index, routeItemsLength }) => {
-  const { theme, themeType } = useTheme()
   const { t } = useTranslation()
   const { navigate } = useNavigation()
   const { addToast } = useToast()
@@ -76,7 +73,7 @@ const RouteItem: FC<Props> = ({ routeItem, index, routeItemsLength }) => {
               marginBottom: 4,
               height: ITEM_HEIGHT,
               overflow: 'hidden',
-              width: routeItem.route === WEB_ROUTES.swapAndBridge ? 88 : ITEM_HEIGHT
+              width: routeItem.route === WEB_ROUTES.swapAndBridge ? 88 : 48
             }}
           >
             <View style={[flexbox.center, flexbox.alignCenter, flexbox.flex1]}>

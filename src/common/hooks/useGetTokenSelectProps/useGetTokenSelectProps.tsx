@@ -1,5 +1,5 @@
 import { ZeroAddress } from 'ethers'
-import React from 'react'
+import React, { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
@@ -221,6 +221,8 @@ const useGetTokenSelectProps = ({
       </View>
     )
 
+    const networkName = network?.name || (tokenInPortfolio?.flags.onGasTank ? 'Gas Tank' : '')
+
     const isNameDifferentThanSymbol = name.toLowerCase() !== symbol.toLowerCase()
     const label = getIsToTokenTypeGuard(currentToken) ? (
       <>
@@ -254,15 +256,21 @@ const useGetTokenSelectProps = ({
       </>
     ) : (
       <>
-        <Text
-          numberOfLines={1}
-          dataSet={{ tooltipId: tooltipIdNotSupported }}
-          style={flexbox.flex1}
-        >
-          <Text fontSize={16} weight="semiBold">
+        <View style={[flexbox.directionRow, flexbox.flex1, flexbox.alignEnd]}>
+          <Text
+            fontSize={16}
+            weight="semiBold"
+            numberOfLines={1}
+            dataSet={{ tooltipId: tooltipIdNotSupported }}
+          >
             {symbol}
           </Text>
-        </Text>
+          {networkName && !isSelected ? (
+            <Text fontSize={14} weight="medium" appearance="secondaryText" style={spacings.mlTy}>
+              {` on ${networkName}`}
+            </Text>
+          ) : null}
+        </View>
         {!isSelected && formattedBalancesLabel}
         {!isTokenNetworkSupported && (
           <NotSupportedNetworkTooltip tooltipId={tooltipIdNotSupported} network={network} />

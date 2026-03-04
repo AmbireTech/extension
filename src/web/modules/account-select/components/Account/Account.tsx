@@ -34,7 +34,8 @@ const Account = ({
   options = {
     withOptionsButton: false
   },
-  containerStyle
+  containerStyle,
+  withReceive = false
 }: {
   account: AccountInterface
   onSelect?: (addr: string) => void
@@ -52,6 +53,7 @@ const Account = ({
     setAccountToRemove?: React.Dispatch<React.SetStateAction<AccountInterface | null>>
   }
   containerStyle?: ViewStyle
+  withReceive?: boolean
 }) => {
   const { addr, preferences } = account
   const { t } = useTranslation()
@@ -220,6 +222,7 @@ const Account = ({
               ens={ens}
               address={addr}
               plainAddressMaxLength={maxAccountAddrLength}
+              withReceive={withReceive}
             />
           </View>
         </View>

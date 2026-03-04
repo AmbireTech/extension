@@ -40,7 +40,7 @@ const getStyles = (theme: ThemeProps) =>
       borderColor: theme.secondaryBorder
     },
     nextCircle: {
-      borderColor: theme.successDecorative
+      borderColor: theme.success400
     },
     title: {
       ...spacings.mrMi,

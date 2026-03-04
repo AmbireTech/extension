@@ -24,11 +24,13 @@ const PayOption = ({
   amountUsd,
   disabledReason,
   disabledTextAppearance = 'errorText',
-  amount
+  amount,
+  paidByAccountLabel
 }: {
   feeOption: FeePaymentOption
   amountUsd: string
   amount: bigint
+  paidByAccountLabel: string | undefined
   disabledReason?: string
   disabledTextAppearance?: 'errorText' | 'infoText'
 }) => {
@@ -67,10 +69,6 @@ const PayOption = ({
   }, [signAccountOpState])
 
   const isPaidByAnotherAccount = feeOption.paidBy !== account?.addr
-
-  const paidByLabel = useMemo(() => {
-    return paidByAccountData?.preferences.label
-  }, [paidByAccountData?.preferences.label])
 
   if (!paidByAccountData) return null
 
@@ -150,7 +148,7 @@ const PayOption = ({
               displayTypeBadge={false}
             />
             <Text fontSize={12} weight="semiBold" numberOfLines={1}>
-              {paidByLabel}
+              {paidByAccountLabel}
             </Text>
           </View>
           <Text fontSize={10} weight="medium">

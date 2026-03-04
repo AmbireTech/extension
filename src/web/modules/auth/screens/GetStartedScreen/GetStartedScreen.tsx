@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react'
+import React from 'react'
 import { TouchableOpacity, View } from 'react-native'
 
 import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
@@ -10,13 +10,10 @@ import Button from '@common/components/Button'
 import Panel from '@common/components/Panel'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
-import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
-import { AUTH_STATUS } from '@common/modules/auth/constants/authStatus'
-import useAuth from '@common/modules/auth/hooks/useAuth'
-import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
-import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
+import useGetStarted from '@common/modules/auth/hooks/useGetStarted'
+import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
@@ -33,49 +30,7 @@ const GetStartedScreen = () => {
   const { theme } = useTheme(getStyles)
   const { t } = useTranslation()
   const { navigate } = useNavigation()
-  const { goToNextRoute } = useOnboardingNavigation()
-
-  const { authStatus } = useAuth()
-
-  const { state, dispatch: walletStateDispatch } = useController('WalletStateController')
-
-  const resetIsSetupCompleteIfNeeded = useCallback(() => {
-    if (authStatus === AUTH_STATUS.NOT_AUTHENTICATED && !state.isPinned && state.isSetupComplete) {
-      walletStateDispatch({
-        type: 'method',
-        params: {
-          method: 'setIsSetupComplete',
-          args: [false]
-        }
-      })
-    }
-  }, [authStatus, walletStateDispatch, state.isPinned, state.isSetupComplete])
-
-  useEffect(() => {
-    if (authStatus === AUTH_STATUS.AUTHENTICATED) {
-      navigate(ROUTES.dashboard)
-      return
-    }
-
-    resetIsSetupCompleteIfNeeded()
-  }, [authStatus, navigate, resetIsSetupCompleteIfNeeded])
-
-  const handleAuthButtonPress = useCallback(
-    async (flow: 'create-new-account' | 'import-existing-account' | 'view-only') => {
-      if (flow === 'create-new-account') {
-        goToNextRoute(WEB_ROUTES.createSeedPhrasePrepare)
-        return
-      }
-      if (flow === 'import-existing-account') {
-        goToNextRoute(WEB_ROUTES.importExistingAccount)
-        return
-      }
-      if (flow === 'view-only') {
-        goToNextRoute(WEB_ROUTES.viewOnlyAccountAdder)
-      }
-    },
-    [goToNextRoute]
-  )
+  const { handleAuthButtonPress } = useGetStarted()
 
   return (
     <TabLayoutContainer backgroundColor={theme.secondaryBackground}>

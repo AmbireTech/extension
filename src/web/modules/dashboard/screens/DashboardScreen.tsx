@@ -4,19 +4,17 @@ import { useModalize } from 'react-native-modalize'
 
 import GasTankModal from '@common/components/GasTankModal'
 import LayoutWrapper from '@common/components/LayoutWrapper'
-import { isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useDebounce from '@common/hooks/useDebounce'
 import useTheme from '@common/hooks/useTheme'
 import DashboardOverview from '@common/modules/dashboard/components/DashboardOverview'
+import { OVERVIEW_CONTENT_MAX_HEIGHT } from '@common/modules/dashboard/components/DashboardOverview/DashboardOverview'
 import DashboardPages from '@common/modules/dashboard/components/DashboardPages'
 import PendingActionWindowModal from '@common/modules/dashboard/components/PendingActionWindowModal'
 import getStyles from '@common/modules/dashboard/screens/styles'
 import { getUiType } from '@common/utils/uiType'
 
 const { isPopup } = getUiType()
-
-export const OVERVIEW_CONTENT_MAX_HEIGHT = 280
 
 const DashboardScreen = () => {
   const { styles } = useTheme(getStyles)
@@ -55,7 +53,7 @@ const DashboardScreen = () => {
       // This is done, because hiding the overview will subtract the height of the overview from the height of the
       // scroll view, thus a shorter scroll container may no longer be scrollable after hiding the overview
       // and if that happens, the user will not be able to scroll up to expand the overview again.
-      const scrollDownThreshold = dashboardOverviewSize.height / 2
+      const scrollDownThreshold = dashboardOverviewSize.height
       // scrollUpThreshold must be a constant value and not dependent on the height of the overview,
       // because the height will change as the overview animates from small to large.
       const scrollUpThreshold = 200

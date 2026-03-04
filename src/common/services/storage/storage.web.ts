@@ -54,7 +54,7 @@ const extensionAsyncStorage: Storage = { get, set, remove }
 const asyncStorage: Storage = isExtension ? extensionAsyncStorage : commonAsyncStorage
 
 const syncStorage = {
-  get: (key: string, defaultValue: any): any => {
+  get: (key: string, defaultValue?: any): any => {
     return localStorage.getItem(key) ?? defaultValue
   },
   set: (key: string, value: any) => {
@@ -66,7 +66,7 @@ const syncStorage = {
 }
 
 const syncSessionStorage = {
-  get: (key: string, defaultValue: any): any => {
+  get: (key: string, defaultValue?: any): any => {
     return sessionStorage.getItem(key) ?? defaultValue
   },
   set: (key: string, value: any) => {

@@ -215,6 +215,7 @@ export class AuthPage extends BasePage {
     await this.click(selectors.getStarted.createRecoveryPhraseButton)
     await this.verifyRecoveryPhraseScreen()
     await this.setExtensionPassword()
+    await this.page.waitForTimeout(1000)
     await this.expectButtonEnabled(selectors.getStarted.addMoreAccountsButton)
     await this.click(selectors.getStarted.addMoreAccountsButton)
     await this.page.waitForTimeout(3000)

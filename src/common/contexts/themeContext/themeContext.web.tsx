@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo } from 'react'
 import { useColorScheme } from 'react-native'
 
+import { isBenzin } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import { DEFAULT_THEME } from '@common/styles/theme/types'
 import ThemeColors, { THEME_TYPES, ThemeProps, ThemeType } from '@common/styles/themeConfig'
@@ -26,6 +27,11 @@ const ThemeProvider: React.FC<{
   }, [selectedThemeType])
 
   const themeType = useMemo(() => {
+    // Otherwise themeType will be null
+    if (isBenzin) {
+      return THEME_TYPES.LIGHT
+    }
+
     const type =
       forceThemeType ?? selectedThemeType ?? localStorage.getItem('fallbackSelectedThemeType')
 
