@@ -14,7 +14,6 @@ import Text from '@common/components/Text'
 import TextArea from '@common/components/TextArea'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import spacings from '@common/styles/spacings'
@@ -33,9 +32,9 @@ const SeedPhraseImportScreen = () => {
   const { t } = useTranslation()
 
   const { theme, styles } = useTheme(getStyles)
-  const { dispatch } = useControllersMiddleware()
   const { initParams, subType } = useController('AccountPickerController').state
   const { dispatch: keystoreDispatch } = useController('KeystoreController')
+  const { dispatch: mainDispatch } = useController('MainController')
   const {
     watch,
     control,
@@ -91,12 +90,15 @@ const SeedPhraseImportScreen = () => {
           ]
         }
       })
-      dispatch({
-        type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_PRIVATE_KEY_OR_SEED_PHRASE',
-        params: { privKeyOrSeed: formattedSeed, seedPassphrase: passphrase || null }
+      mainDispatch({
+        type: 'method',
+        params: {
+          method: 'accountPickerSetInitParamsFromPrivateKeyOrSeedPhrase',
+          args: [{ privKeyOrSeed: formattedSeed, seedPassphrase: passphrase || null }]
+        }
       })
     })()
-  }, [dispatch, keystoreDispatch, handleSubmit])
+  }, [mainDispatch, keystoreDispatch, handleSubmit])
 
   useEffect(() => {
     if (!getValues('seed')) return
@@ -198,7 +200,7 @@ const SeedPhraseImportScreen = () => {
                         inputWrapperStyle={{
                           position: 'relative',
                           backgroundColor: 'transparent',
-                          borderColor: theme.neutral500,
+                          borderColor: theme.neutral600,
                           zIndex: 2
                         }}
                         placeholder={t('Write or paste your recovery phrase')}

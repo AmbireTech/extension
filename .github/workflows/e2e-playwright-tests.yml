@@ -30,6 +30,7 @@ jobs:
       VELCRO_URL: ${{ vars.VELCRO_URL }}
       LI_FI_API_KEY: ${{ vars.LI_FI_API_KEY }}
       BUNGEE_API_KEY: ${{ vars.BUNGEE_API_KEY }}
+      SAFE_API_KEY: ${{ vars.SAFE_API_KEY }}
       REACT_APP_PIMLICO_API_KEY: ${{ vars.REACT_APP_PIMLICO_API_KEY }}
       REACT_APP_ETHERSPOT_API_KEY: ${{ vars.REACT_APP_ETHERSPOT_API_KEY }}
       REACT_APP_CANDIDE_API_KEY: ${{ vars.REACT_APP_CANDIDE_API_KEY }}
@@ -58,6 +59,7 @@ jobs:
       # Enables Playwright to intercept network requests initiated by Service Workers.
       # We use it to mock or block background requests that can't be intercepted via page.route().
       PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS: '1'
+      IS_LEDGER_EMULATOR: 'true'
 
     steps:
       - name: Checkout full Git history
@@ -97,6 +99,24 @@ jobs:
         run: |
           docker pull ghcr.io/trezor/trezor-user-env
           docker compose -f ./docker-compose-mac.yml up --force-recreate -d
+
+      - name: Start ledger emulator
+        working-directory: ./e2e-playwright-tests/ledger-emulator
+        run: |
+          ./start-emulator.sh
+      # This is a temporary solution of installing the dependencies here.
+      # Once we've migrated to yarn in the e2e tests,
+      # we can remove this step and install the dependencies
+      # from the package.json file in the e2e-playwright-tests directory of the project.
+      - name: Check ledger emulator connection
+        working-directory: ./e2e-playwright-tests/ledger-emulator
+        run: |
+          npm -g i ts-node
+          npm i \
+           @ledgerhq/hw-transport-node-speculos@6.28.0  \
+           @ledgerhq/hw-app-eth@7.3.2 \
+            ethers@6.14.1
+          ts-node ledger-emulator-health-check.ts
 
       - name: Install e2e test dependencies
         working-directory: ./e2e-playwright-tests

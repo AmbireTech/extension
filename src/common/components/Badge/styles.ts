@@ -32,7 +32,7 @@ const getStyles = (theme: ThemeProps) =>
     },
     outlineBadge: {
       borderWidth: 1,
-      borderColor: theme.neutral500
+      borderColor: theme.neutral600
     }
   })
 

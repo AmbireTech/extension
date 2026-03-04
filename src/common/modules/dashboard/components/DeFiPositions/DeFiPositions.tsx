@@ -91,7 +91,7 @@ const DeFiPositions: FC<Props> = ({
           args: [sessionId]
         }
       })
-      setSearchParams((prev) => {
+      setSearchParams((prev: any) => {
         prev.set('sessionId', sessionId)
         return prev
       })

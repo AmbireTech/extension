@@ -42,11 +42,8 @@ const SearchAndCurrentApp = ({ control, displayCurrentApp = false, isHidden }: P
       }}
     >
       <GlassView
-        style={{
-          borderRadius: 28
-        }}
+        borderRadius={28}
         cssStyle={{
-          borderRadius: 28,
           pointerEvents: 'all'
         }}
       >

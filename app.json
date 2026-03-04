@@ -15,6 +15,20 @@
   "android": {
     "package": "com.ambire.wallet"
   },
+  "plugins": [
+    [
+      "expo-splash-screen",
+      {
+        "backgroundColor": "#FFFFFF",
+        "image": "./src/mobile/assets/splash-icon.png",
+        "dark": {
+          "image": "./src/mobile/assets/splash-icon-dark.png",
+          "backgroundColor": "#1B1D20"
+        },
+        "imageWidth": 80
+      }
+    ]
+  ],
   "extra": {
     "eas": {
       "projectId": "e6f855d0-5ac3-40e0-8127-740906e7a593"

@@ -6,7 +6,6 @@ import AmbireLogo from '@common/assets/svg/AmbireLogo'
 import BottomSheet from '@common/components/BottomSheet'
 import Checkbox from '@common/components/Checkbox'
 import DualChoiceModal from '@common/components/DualChoiceModal'
-import Panel from '@common/components/Panel'
 import Text from '@common/components/Text'
 import { Trans, useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
@@ -25,7 +24,7 @@ const KeyStoreSetupScreen = () => {
   const { t } = useTranslation()
 
   const { goToPrevRoute } = useOnboardingNavigation()
-  const { theme, themeType } = useTheme()
+  const { theme } = useTheme()
   const [agreedWithTerms, setAgreedWithTerms] = useState(true)
   const { ref: termsModalRef, open: openTermsModal, close: closeTermsModal } = useModalize()
   const animation = useRef(new Animated.Value(0)).current
@@ -39,43 +38,39 @@ const KeyStoreSetupScreen = () => {
   }, [animation])
 
   return (
-    <MobileLayoutContainer backgroundColor={theme.secondaryBackground}>
-      <MobileLayoutWrapperMainContent withScroll={false}>
-        <Panel
-          type="onboarding"
-          title={t('Set app password')}
-          spacingsSize="small"
-          withBackButton
-          onBackButtonPress={goToPrevRoute}
-          step={2}
-          totalSteps={2}
-        >
-          <Text weight="medium" appearance="secondaryText" style={spacings.mbXl}>
-            {t('Used to access your local wallet and encrypt your data.')}
-          </Text>
+    <MobileLayoutContainer>
+      <MobileLayoutWrapperMainContent
+        withBackButton
+        onBackButtonPress={goToPrevRoute}
+        title={t('Set app password')}
+        step={2}
+        totalSteps={2}
+      >
+        <Text weight="medium" appearance="secondaryText" style={spacings.mbXl}>
+          {t('Used to access your local wallet and encrypt your data.')}
+        </Text>
 
-          <KeyStoreSetupForm agreedWithTerms={agreedWithTerms}>
-            <Checkbox
-              testID="keystore-setup-checkbox"
-              value={agreedWithTerms}
-              onValueChange={setAgreedWithTerms}
-              style={[spacings.ptXl, spacings.mbTy]}
-              label={
-                <Trans>
-                  <Text fontSize={12} appearance="secondaryText">
-                    I agree to the{' '}
+        <KeyStoreSetupForm agreedWithTerms={agreedWithTerms}>
+          <Checkbox
+            testID="keystore-setup-checkbox"
+            value={agreedWithTerms}
+            onValueChange={setAgreedWithTerms}
+            style={[spacings.ptXl, spacings.mbTy]}
+            label={
+              <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+                <Text fontSize={12} appearance="secondaryText">
+                  I agree to the{' '}
+                </Text>
+                <TouchableOpacity testID="terms-of-service-btn" onPress={() => openTermsModal()}>
+                  <Text fontSize={12} color={theme.linkText}>
+                    Terms of Service
                   </Text>
-                  <TouchableOpacity testID="terms-of-service-btn" onPress={() => openTermsModal()}>
-                    <Text fontSize={12} color={theme.linkText}>
-                      Terms of Service
-                    </Text>
-                  </TouchableOpacity>
-                  .
-                </Trans>
-              }
-            />
-          </KeyStoreSetupForm>
-        </Panel>
+                </TouchableOpacity>
+                <Text>.</Text>
+              </View>
+            }
+          />
+        </KeyStoreSetupForm>
       </MobileLayoutWrapperMainContent>
       <BottomSheet
         id="terms-modal"

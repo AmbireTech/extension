@@ -117,7 +117,9 @@ const Input = ({
       borderColor: 'transparent'
     },
     isValid ? { borderColor: theme.successDecorative } : {},
-    isFocused ? { backgroundColor: theme.tertiaryBackground } : {},
+    isFocused
+      ? { backgroundColor: theme.tertiaryBackground, borderColor: theme.primaryBorder }
+      : {},
     error ? { borderColor: theme.errorDecorative } : {},
     info ? { borderColor: theme.warningText } : {},
     disabled ? styles.disabled : {},

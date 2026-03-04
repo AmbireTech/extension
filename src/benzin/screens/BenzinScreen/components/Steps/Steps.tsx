@@ -135,7 +135,7 @@ const Steps: FC<Props> = ({ activeStep, txnId, userOpHash, stepsState, summary, 
           style={{ zIndex: 1 }}
         />
       )}
-      <View style={IS_MOBILE_UP_BENZIN_BREAKPOINT ? spacings.mb3Xl : spacings.mbXl}>
+      <View style={IS_MOBILE_UP_BENZIN_BREAKPOINT ? spacings.mb2Xl : spacings.mbXl}>
         <Step
           title="Signed"
           stepName="signed"

@@ -1,7 +1,6 @@
 import React, { ReactNode } from 'react'
 import { ColorValue, TouchableOpacity, View, ViewProps } from 'react-native'
 
-import CheckIcon from '@common/assets/svg/CheckIcon'
 import CheckIcon2 from '@common/assets/svg/CheckIcon2'
 import Text, { Props as TextProps } from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'

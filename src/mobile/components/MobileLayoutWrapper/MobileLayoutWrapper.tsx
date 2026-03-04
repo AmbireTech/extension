@@ -2,9 +2,9 @@ import React, { ReactNode } from 'react'
 import { ColorValue, View, ViewStyle } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
+import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import ScrollableWrapper, { WrapperProps } from '@common/components/ScrollableWrapper'
 import useTheme from '@common/hooks/useTheme'
-import useWindowSize from '@common/hooks/useWindowSize'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -30,7 +30,7 @@ export const MobileLayoutContainer = ({
   children,
   renderDirectChildren,
   style,
-  withHorizontalPadding = true
+  withHorizontalPadding = false
 }: MobileLayoutContainerProps) => {
   const { theme, styles } = useTheme(getStyles)
   const insets = useSafeAreaInsets()
@@ -76,6 +76,13 @@ interface MobileLayoutWrapperMainContentProps extends WrapperProps {
   children: ReactNode
   withScroll?: boolean
   wrapperRef?: any
+  withBackButton?: boolean
+  onBackButtonPress?: () => void
+  rightIcon?: ReactNode
+  onRightIconPress?: () => void
+  title?: string
+  step?: number
+  totalSteps?: number
 }
 
 export const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainContentProps> = ({
@@ -83,11 +90,34 @@ export const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainCon
   wrapperRef,
   contentContainerStyle = {},
   withScroll = true,
+  withBackButton = false,
+  onBackButtonPress = () => {},
+  rightIcon,
+  onRightIconPress = () => {},
+  title,
+  step = 0,
+  totalSteps = 2,
   ...rest
 }: MobileLayoutWrapperMainContentProps) => {
-  const { styles } = useTheme(getStyles)
+  const { styles, theme } = useTheme(getStyles)
   const { isOnboardingRoute } = useOnboardingNavigation()
-  const { minHeightSize } = useWindowSize()
+
+  const renderProgress = () => (
+    <View style={[styles.progressContainer]}>
+      {[...Array(totalSteps)].map((_, index) => (
+        <View
+          key={`step-${index.toString()}`}
+          style={[
+            styles.progress,
+            index > 0 ? spacings.mlMi : undefined,
+            {
+              backgroundColor: index < step ? theme.successDecorative : theme.tertiaryBackground
+            }
+          ]}
+        />
+      ))}
+    </View>
+  )
 
   if (withScroll && !isOnboardingRoute) {
     return (
@@ -97,6 +127,14 @@ export const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainCon
         wrapperRef={wrapperRef}
         {...rest}
       >
+        {step > 0 ? renderProgress() : <View style={{ height: 28 }} />}
+        {(!!title || !!withBackButton) && (
+          <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mb2Xl]}>
+            {!!withBackButton && <PanelBackButton onPress={onBackButtonPress} />}
+            {!!title && <PanelTitle title={title} size={18} />}
+            {!!withBackButton && <View style={[{ width: 28 }, flexbox.alignEnd]}>{rightIcon}</View>}
+          </View>
+        )}
         {children}
       </ScrollableWrapper>
     )
@@ -104,6 +142,14 @@ export const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainCon
 
   return (
     <View ref={wrapperRef} style={[styles.contentContainer, contentContainerStyle]}>
+      {step > 0 ? renderProgress() : <View style={{ height: 28 }} />}
+      {(!!title || !!withBackButton) && (
+        <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbXl]}>
+          {!!withBackButton && <PanelBackButton onPress={onBackButtonPress} />}
+          {!!title && <PanelTitle title={title} size={18} />}
+          {!!withBackButton && <View style={{ width: 28 }} />}
+        </View>
+      )}
       {children}
     </View>
   )

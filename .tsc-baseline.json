@@ -1660,12 +1660,6 @@
       "count": 1,
       "message": "Object is possibly 'undefined'."
     },
-    "64d5bb7f37743ec9989f466d85d6974962b7224e": {
-      "file": "src/web/modules/sign-account-op/components/CustomFee/CustomFee.tsx",
-      "code": "TS2307",
-      "count": 1,
-      "message": "Cannot find module '@web/modules/sign-account-op/components/FeeWrapper' or its corresponding type declarations."
-    },
     "49c0448283c4d97bc8ff47c130eb2ed2c40c4771": {
       "file": "src/web/modules/sign-account-op/components/Estimation/Estimation.tsx",
       "code": "TS18048",
