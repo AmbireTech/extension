@@ -1,0 +1,68 @@
+name: Ambire Explorer - Build and Deploy 🔥
+env:
+  APP_ENV: production
+
+on:
+  push:
+    branches:
+      - benzin-prod
+permissions:
+  contents: write
+jobs:
+  build:
+    environment: benzin
+    name: Ambire Explorer - Build and Deploy
+    runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+    steps:
+      - name: Add SSH key to chekout a private repo
+        uses: webfactory/ssh-agent@v0.5.4
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_KEY }}
+
+      - name: Checkout code 🛎️
+        uses: actions/checkout@v4
+
+      - name: Git submodules init
+        run: git submodule init
+        shell: bash
+
+      - name: Git submodules update
+        run: git submodule update
+        shell: bash
+
+      - name: Install Node.js ⚙️
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: Install Dependencies
+        run: yarn setup:ci
+        shell: bash
+
+      - name: Build project 🛠️
+        env:
+          REACT_APP_PIMLICO_API_KEY: ${{ vars.REACT_APP_PIMLICO_API_KEY }}
+          REACT_APP_ETHERSPOT_API_KEY: ${{ vars.REACT_APP_ETHERSPOT_API_KEY }}
+          REACT_APP_CANDIDE_API_KEY: ${{ vars.REACT_APP_CANDIDE_API_KEY }}
+          RELAYER_URL: ${{ vars.RELAYER_URL }}
+        run: yarn build:web:benzin
+
+      - name: Setup SSH agent
+        uses: webfactory/ssh-agent@v0.5.4
+        with:
+          ssh-private-key: ${{ secrets.BENZIN_DEPLOY_KEY }}
+
+      - name: Deploy to Ambire Explorer Repo gh-pages 🚀🌕
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git clone git@github.com:AmbireTech/benzin-prod-gh-pages.git benzin-prod-gh-pages
+          cd benzin-prod-gh-pages
+          git checkout gh-pages
+          cp -R ../build/benzin-prod/* .
+          date > deployDate
+          git add .
+          git commit -m "Automated deploy from ambire-app"
+          git push origin gh-pages --force
