@@ -159,6 +159,10 @@ jobs:
         working-directory: ./e2e-playwright-tests
         run: npm run balance:test
 
+      - name: Run Ledger tests
+        working-directory: ./e2e-playwright-tests
+        run: npm run ledger:tests
+
       - name: Run Playwright tests
         working-directory: ./e2e-playwright-tests
         run: npm run test

@@ -11,21 +11,21 @@ import { expect } from '@playwright/test'
 import { SpeculosDevice } from '../../libs/speculos-device/device'
 
 const LEDGER_EMULATOR_HTTP_URL = process.env.LEDGER_EMULATOR_HTTP_URL
-
 test.describe.configure({ mode: 'serial' })
 
-test.describe('ledger without storage', () => {
-  test.beforeEach(async ({ pages }) => {
-    await pages.initWithoutStorage()
-  })
+test.describe('ledger', { tag: '@ledgerTests' }, () => {
+  test.setTimeout(600000)
 
   test.afterEach(async ({ context }) => {
     await context.close()
   })
 
-  test('should successfully authenticate using Ledger and import existing accounts', async ({
-    pages
-  }) => {
+  // Without storage tests
+  test('ledger without storage - import account', async ({ pages }) => {
+    await test.step('init without storage', async () => {
+      await pages.initWithoutStorage()
+    })
+
     const page = pages.auth.page
 
     await test.step('start importing existing Ledger accounts in our Onboarding flow', async () => {
@@ -50,71 +50,83 @@ test.describe('ledger without storage', () => {
       await expect(page.getByText(mainConstants.addresses.ledgerAccount1)).toBeVisible()
     })
   })
-})
 
-test.describe('ledger with storage', () => {
-  test.beforeEach(async ({ pages }) => {
-    await pages.initWithStorage(ledgerBaParams)
-  })
+  // Basic Account with storage tests
+  test('ledger BA - should have balance on the dashboard', async ({ pages }) => {
+    await test.step('init BA storage', async () => {
+      await pages.initWithStorage(ledgerBaParams)
+    })
 
-  test.afterEach(async ({ context }) => {
-    await context.close()
-  })
-
-  test('should have balance on the dashboard', async ({ pages }) => {
-    await pages.dashboard.checkBalanceInAccount()
-  })
-
-  test('should sign plain message', async ({ pages }) => {
-    const ledgerSimulatorControls = new SpeculosDevice({ baseUrl: LEDGER_EMULATOR_HTTP_URL })
-    const message = 'Hello, Ambire!'
-
-    await pages.signMessage.signMessage(message, 'plain', ledgerSimulatorControls)
-  })
-
-  test('should send a transaction and pay with native token', async ({ pages }) => {
-    const ledgerSimulatorControls = new SpeculosDevice({ baseUrl: LEDGER_EMULATOR_HTTP_URL })
-
-    // Enable blind signing in Ledger settings, otherwise the transaction won't be signed
-    await ledgerSimulatorControls.enableBlindSigning()
-
-    await runSimpleTransferFlow({
-      pages,
-      sendToken: tokens.usdc.optimism,
-      recipientAddress: SA_ADDRESS,
-      feeToken: tokens.eth.optimism,
-      payWithGasTank: false,
-      message: 'Transfer done!',
-      assertNoInitialTx: true,
-      ledgerSimulatorControls
+    await test.step('check balance in account', async () => {
+      await pages.dashboard.checkBalanceInAccount()
     })
   })
-})
 
-test.describe('ledger SA with storage', () => {
-  test.beforeEach(async ({ pages }) => {
-    await pages.initWithStorage(ledgerSaParams)
+  test('ledger BA - sign message', async ({ pages }) => {
+    await test.step('init BA storage', async () => {
+      await pages.initWithStorage(ledgerBaParams)
+    })
+
+    await test.step('sign message', async () => {
+      const ledgerSimulatorControls = new SpeculosDevice({ baseUrl: LEDGER_EMULATOR_HTTP_URL })
+      const message = 'Hello, Ambire!'
+
+      await pages.signMessage.signMessage(message, 'plain', ledgerSimulatorControls)
+    })
   })
 
-  test.afterEach(async ({ context }) => {
-    await context.close()
+  test('ledger BA - send transaction with native token', async ({ pages }) => {
+    await test.step('init BA storage', async () => {
+      await pages.initWithStorage(ledgerBaParams)
+    })
+
+    await test.step('send transaction and pay with native token', async () => {
+      const ledgerSimulatorControls = new SpeculosDevice({ baseUrl: LEDGER_EMULATOR_HTTP_URL })
+
+      // Enable blind signing in Ledger settings, otherwise the transaction won't be signed
+      // It should only once for all tests, but enabling it in each test
+      // to make sure it's enabled when running tests separately with test.only
+      await ledgerSimulatorControls.enableBlindSigning()
+
+      const sendToken = tokens.usdc.optimism
+      const feeToken = tokens.eth.optimism
+      const recipientAddress = SA_ADDRESS
+      const message = 'Transfer done!'
+
+      await runSimpleTransferFlow({
+        pages,
+        sendToken,
+        recipientAddress,
+        feeToken,
+        payWithGasTank: false,
+        message,
+        assertNoInitialTx: true,
+        ledgerSimulatorControls
+      })
+    })
   })
 
-  test('top up Gas Tank with 0.1$ on Base', async ({ pages }) => {
-    const ledgerSimulatorControls = new SpeculosDevice({ baseUrl: LEDGER_EMULATOR_HTTP_URL })
-    // It should be enabled only when running the exact test with (test.only) locally,
-    // Otherwise, the simulator will not be able to sign blind transactions.
-    // await ledgerSimulatorControls.enableBlindSigning()
-
-    const sendToken = tokens.usdc.base
-    const message = 'Top up ready!'
-
-    await test.step('assert no transaction on Activity tab', async () => {
-      await pages.dashboard.checkNoTransactionOnActivityTab()
+  // Smart Account with storage tests
+  test('ledger SA - top up Gas Tank with 0.01$ on Base', async ({ pages }) => {
+    await test.step('init SA storage', async () => {
+      await pages.initWithStorage(ledgerSaParams)
     })
 
     await test.step('top up gas tank', async () => {
-      await pages.gasTank.topUpGasTank(sendToken, '0.01')
+      const ledgerSimulatorControls = new SpeculosDevice({
+        baseUrl: LEDGER_EMULATOR_HTTP_URL
+      })
+
+      // It should be enabled only when running the exact test with (test.only) locally,
+      // Otherwise, the simulator will not be able to sign blind transactions.
+      // await ledgerSimulatorControls.enableBlindSigning()
+
+      const sendToken = tokens.usdc.base
+      const message = 'Top up ready!'
+      const topUpAmount = '0.01'
+
+      await pages.gasTank.topUpGasTank(sendToken, topUpAmount)
+
       await pages.transfer.signSlowSpeedTransaction({
         sendToken,
         message,
@@ -122,58 +134,96 @@ test.describe('ledger SA with storage', () => {
       })
     })
 
-    await test.step('assert new transaction on Activity tab', async () => {
+    await test.step('assert transaction visible', async () => {
       await pages.gasTank.checkSendTransactionOnActivityTab()
     })
   })
 
-  test('should batch multiple transfer transactions', async ({ pages }) => {
-    const ledgerSimulatorControls = new SpeculosDevice({ baseUrl: LEDGER_EMULATOR_HTTP_URL })
-    // It should be enabled only when running the exact test with (test.only) locally,
-    // Otherwise, the simulator will not be able to sign blind transactions.
-    // await ledgerSimulatorControls.enableBlindSigning()
+  test('ledger SA - should batch multiple transfer transactions', async ({ pages }) => {
+    await test.step('init SA storage', async () => {
+      await pages.initWithStorage(ledgerSaParams)
+    })
 
-    await runBatchTransferFlow({
-      pages,
-      sendToken: tokens.usdc.base,
-      recipientAddress: SA_ADDRESS,
-      ledgerSimulatorControls
+    await test.step('batch multiple transfer transactions', async () => {
+      const ledgerSimulatorControls = new SpeculosDevice({
+        baseUrl: LEDGER_EMULATOR_HTTP_URL
+      })
+
+      // It should be enabled only when running the exact test with (test.only) locally,
+      // Otherwise, the simulator will not be able to sign blind transactions.
+      // await ledgerSimulatorControls.enableBlindSigning()
+
+      const sendToken = tokens.usdc.base
+      const recipientAddress = SA_ADDRESS
+
+      await runBatchTransferFlow({
+        pages,
+        sendToken,
+        recipientAddress,
+        ledgerSimulatorControls
+      })
     })
   })
 
-  test('should "proceed" Swap from the Pending Route component with a Smart Account', async ({
+  test('ledger SA - should "proceed" Swap from the Pending Route component with a Smart Account', async ({
     pages
   }) => {
-    const ledgerSimulatorControls = new SpeculosDevice({ baseUrl: LEDGER_EMULATOR_HTTP_URL })
-    // It should be enabled only when running the exact test with (test.only) locally,
-    // Otherwise, the simulator will not be able to sign blind transactions.
-    // await ledgerSimulatorControls.enableBlindSigning()
+    await test.step('init SA storage', async () => {
+      await pages.initWithStorage(ledgerSaParams)
+    })
 
-    await runSwapProceedFlow({
-      pages,
-      fromToken: tokens.usdc.base,
-      toToken: tokens.wallet.base,
-      sendAmount: 0.01,
-      assertNoInitialTx: true,
-      ledgerSimulatorControls
+    await test.step('proceed Swap from the Pending Route component with a Smart Account', async () => {
+      const ledgerSimulatorControls = new SpeculosDevice({
+        baseUrl: LEDGER_EMULATOR_HTTP_URL
+      })
+
+      // It should be enabled only when running the exact test with (test.only) locally,
+      // Otherwise, the simulator will not be able to sign blind transactions.
+      // await ledgerSimulatorControls.enableBlindSigning()
+
+      const fromToken = tokens.usdc.base
+      const toToken = tokens.wallet.base
+      const sendAmount = 0.01
+
+      await runSwapProceedFlow({
+        pages,
+        fromToken,
+        toToken,
+        sendAmount,
+        assertNoInitialTx: true,
+        ledgerSimulatorControls
+      })
     })
   })
 
-  test('should "proceed" Bridge from the Pending Route component with a Smart Account', async ({
+  test('ledger SA - should "proceed" Bridge from the Pending Route component with a Smart Account', async ({
     pages
   }) => {
-    const ledgerSimulatorControls = new SpeculosDevice({ baseUrl: LEDGER_EMULATOR_HTTP_URL })
-    // It should be enabled only when running the exact test with (test.only) locally,
-    // Otherwise, the simulator will not be able to sign blind transactions.
-    // await ledgerSimulatorControls.enableBlindSigning()
+    await test.step('init SA storage', async () => {
+      await pages.initWithStorage(ledgerSaParams)
+    })
 
-    await runSwapFlow({
-      pages,
-      sendToken: tokens.usdc.base,
-      receiveToken: tokens.usdc.optimism,
-      bridgeAmount: 0.01,
-      assertNoInitialTx: true,
-      ledgerSimulatorControls
+    await test.step('proceed Bridge from the Pending Route component with a Smart Account', async () => {
+      const ledgerSimulatorControls = new SpeculosDevice({
+        baseUrl: LEDGER_EMULATOR_HTTP_URL
+      })
+
+      // It should be enabled only when running the exact test with (test.only) locally,
+      // Otherwise, the simulator will not be able to sign blind transactions.
+      // await ledgerSimulatorControls.enableBlindSigning()
+
+      const sendToken = tokens.usdc.base
+      const receiveToken = tokens.usdc.optimism
+      const bridgeAmount = 0.01
+
+      await runSwapFlow({
+        pages,
+        sendToken,
+        receiveToken,
+        bridgeAmount,
+        assertNoInitialTx: true,
+        ledgerSimulatorControls
+      })
     })
   })
 })
