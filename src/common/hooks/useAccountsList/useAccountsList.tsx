@@ -82,10 +82,7 @@ const useAccountsList = ({
     (account) => account.addr === selectedAccount?.addr
   )
 
-  const keyExtractor = useCallback(
-    (account: AccountType, index: number) => `${account.addr}-${index}`,
-    []
-  )
+  const keyExtractor = useCallback((account: AccountType) => account.addr, [])
 
   const getItemLayout = useCallback(
     (_: any, index: number) => ({
