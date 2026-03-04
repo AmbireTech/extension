@@ -587,6 +587,21 @@
         "@ledgerhq/device-management-kit>xstate": true
       }
     },
+    "@ledgerhq/device-transport-kit-speculos": {
+      "globals": {
+        "AbortController": true,
+        "TextDecoder": true,
+        "clearInterval": true,
+        "fetch": true,
+        "setInterval": true
+      },
+      "packages": {
+        "@ledgerhq/device-management-kit": true,
+        "@ledgerhq/context-module>axios": true,
+        "purify-ts": true,
+        "rxjs": true
+      }
+    },
     "@ledgerhq/device-transport-kit-web-hid": {
       "globals": {
         "AbortController": true,
@@ -1814,38 +1829,6 @@
         "react-native-web>inline-style-prefixer>css-in-js-utils": true
       }
     },
-    "intro.js": {
-      "globals": {
-        "Element": true,
-        "SVGElement": true,
-        "SuppressedError": true,
-        "clearTimeout": true,
-        "document": true,
-        "event": true,
-        "getComputedStyle": true,
-        "innerHeight": true,
-        "innerWidth": true,
-        "jQuery": true,
-        "pageXOffset": true,
-        "pageYOffset": true,
-        "screen.width": true,
-        "scrollBy": true,
-        "setTimeout": true
-      }
-    },
-    "intro.js-react": {
-      "globals": {
-        "Element": true,
-        "document.querySelector": true,
-        "setTimeout": true
-      },
-      "packages": {
-        "intro.js": true,
-        "react-dropzone>prop-types": true,
-        "react": true,
-        "react-dom": true
-      }
-    },
     "expo-linking>invariant": {
       "globals": {
         "process.env.NODE_ENV": true
@@ -2209,15 +2192,11 @@
         "AbortController": true,
         "ErrorEvent": true,
         "FormData": true,
-        "Headers": true,
-        "MessageChannel": true,
-        "ReadableStream": true,
-        "TextEncoder": true,
         "__REACT_DEVTOOLS_GLOBAL_HOOK__": true,
         "addEventListener": true,
         "clearTimeout": true,
         "clipboardData": true,
-        "console": true,
+        "console.error": true,
         "dispatchEvent": true,
         "document": true,
         "event": true,
