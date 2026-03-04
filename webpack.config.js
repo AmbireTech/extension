@@ -472,6 +472,21 @@ module.exports = async function (env, argv) {
       type: 'javascript/auto'
     })
 
+    // Allow @expo-google-fonts assets (TTF/WOFF/etc) to be emitted explicitly instead of
+    // relying on Webpack's "ambient" asset behavior. LavaMoat treats ambient assets from
+    // node_modules (type === 'asset/resource' with no loaders) as suspicious and blocks
+    // them with a "silently emitted to the dist directory" warning. By declaring a
+    // dedicated asset rule for these fonts and using type: 'asset', we:
+    //   - keep them under explicit build control (they are no longer "ambient" assets)
+    //   - avoid the LavaMoat ambient-asset guard for these known-safe font files
+    //   - still reuse the global assetModuleFilename ('[name]-[hash:8][ext]'), so
+    //     filenames like GeistMono_100Thin-a5a6a661.ttf remain unchanged.
+    config.module.rules.push({
+      test: /\.(ttf|otf|eot|woff2?)$/i,
+      include: /node_modules\/@expo-google-fonts\//,
+      type: 'asset'
+    })
+
     // Register unsafe-layer plugin only in production (same environment as LavaMoatPlugin).
     // The plugin adds a rule and assigns layer='unsafe' for LAVAMOAT_UNSAFE_ENTRIES.
     // This must stay in sync with runtimeConfigurationPerChunk_experimental above.
