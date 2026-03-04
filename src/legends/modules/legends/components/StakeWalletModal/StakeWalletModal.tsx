@@ -9,13 +9,13 @@ import {
   parseUnits,
   WeiPerEther
 } from 'ethers'
-import LottieView from 'lottie-react'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 
 import { STK_WALLET, WALLET_STAKING_ADDR, WALLET_TOKEN } from '@ambire-common/consts/addresses'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import WarningIcon from '@common/assets/svg/WarningIcon'
+import LottieView from '@common/components/LottieView/LottieView.web'
 import { RELAYER_URL } from '@env'
 import HumanReadableError from '@legends/classes/HumanReadableError'
 import background from '@legends/common/assets/images/background.png'
@@ -392,9 +392,9 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
     if (!onchainData?.lockedShares) {
       return onchainData?.stkWalletBalance
         ? {
-          text: 'Unstake',
-          action: inputAmount ? displayWarningOrUnstake : undefined
-        }
+            text: 'Unstake',
+            action: inputAmount ? displayWarningOrUnstake : undefined
+          }
         : { text: 'No $WALLET staked to withdraw' }
     }
 
@@ -529,7 +529,7 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
                     {
                       formatToken(
                         ((firstToCollect?.shares || 0n) * (onchainData?.shareValue || 0n)) /
-                        WeiPerEther
+                          WeiPerEther
                       ).token
                     }{' '}
                     $WALLET
@@ -550,7 +550,7 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
                       {
                         formatToken(
                           ((onchainData?.lockedShares || 0n) * (onchainData?.shareValue || 0n)) /
-                          WeiPerEther
+                            WeiPerEther
                         ).token
                       }{' '}
                       $WALLET tokens will be available to withdraw in up to one month
@@ -627,9 +627,9 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
                     }
                     style={
                       isLoadingLogs ||
-                        isLoadingOnchainData ||
-                        isSigning ||
-                        (activeTab === 'unstake' && !!onchainData?.lockedShares)
+                      isLoadingOnchainData ||
+                      isSigning ||
+                      (activeTab === 'unstake' && !!onchainData?.lockedShares)
                         ? { pointerEvents: 'none' }
                         : {}
                     }
@@ -643,8 +643,9 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
             </div>
           </div>
           <div
-            className={`${styles.lockPeriodInfo} ${activeTab === 'unstake' && styles.visibleLockPeriodInfo
-              }`}
+            className={`${styles.lockPeriodInfo} ${
+              activeTab === 'unstake' && styles.visibleLockPeriodInfo
+            }`}
           >
             {onchainData?.lockedShares
               ? 'You will be able to withdraw and unstake more as soon as the locking period has ended.'
