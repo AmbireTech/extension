@@ -122,7 +122,7 @@ const CustomHDPathBottomSheet: FC<Props> = ({
           </Text>
         )}
       </View>
-      <View style={[spacings.mb2Xl]}>
+      <View style={[spacings.mbXl]}>
         <Text fontSize={16} weight="medium" style={[spacings.mbTy]}>
           {t('Enter a page number to jump to')}:
         </Text>
