@@ -1,8 +1,7 @@
 import React from 'react'
 import { ViewStyle } from 'react-native'
 
-import Toggle from '@common/components/Toggle'
-import { ToggleProps } from '@common/components/Toggle/types'
+import Toggle, { ToggleProps } from '@common/components/Toggle/Toggle'
 import { isWeb } from '@common/config/env'
 
 const FatToggle: React.FC<

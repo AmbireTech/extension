@@ -28,7 +28,6 @@ const SafeKeyWrapper = ({ children, style, isDisabled, hasSigned, isQueued }: Pr
       {(!isDisabled || hasSigned) && (
         <CheckIcon
           color={hasSigned ? theme.success300 : theme.secondaryText}
-          checkColor={theme.neutral600}
           style={styles.icon}
           width={18}
           height={18}

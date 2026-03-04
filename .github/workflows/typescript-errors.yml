@@ -20,7 +20,6 @@ concurrency:
 jobs:
   typescript-errors:
     runs-on: ubuntu-latest
-    environment: typescript-check
 
     steps:
       - name: Checkout full Git history

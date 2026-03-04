@@ -11,7 +11,6 @@ permissions:
   contents: write
 jobs:
   build:
-    environment: public-update
     name: Update the public repo "main" branch with the latest from this repo "main" branch
     runs-on: ubuntu-latest
     concurrency:
