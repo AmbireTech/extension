@@ -34,8 +34,8 @@ export class GasTankPage extends BasePage {
 
   async signAndValidate() {
     // Proceed
-    await this.expectButtonEnabled(selectors.proceedBtn)
-    await this.click(selectors.proceedBtn)
+    await this.expectButtonEnabled(selectors.transaction.proceedBtn)
+    await this.click(selectors.transaction.proceedBtn)
 
     // Sign & Broadcast
     await this.click(selectors.signButton)

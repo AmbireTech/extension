@@ -135,7 +135,10 @@ const selectors = {
       txnProgressStep: 'txn-progress-step',
       txnConfirmedStep: 'finalized-rows',
       recepientAddressBlock: 'recipient-address-undefined'
-    }
+    },
+    amountField: 'amount-field',
+    proceedBtn: 'proceed-btn',
+    transactionError: '//span[contains(text(),"Error")]' // e.g. snackbar when relayer is down
   },
   // TODO: update selectors wiyh testID
   ambireRewards: {
@@ -274,7 +277,6 @@ const selectors = {
   feeApe: 'option-ape',
   transactionButtonReject: 'transaction-button-reject',
   totalPortfolioAmountInteger: 'total-portfolio-amount-integer',
-  proceedBtn: 'proceed-btn',
   privateKeyWarningCheckbox1: 'private-key-warning-checkbox-1',
   privateKeyWarningCheckbox2: 'private-key-warning-checkbox-2',
   nativeTokenBaseDashboard: 'token-0x0000000000000000000000000000000000000000-8453',
