@@ -124,7 +124,7 @@ const BaseTokenItem = ({
 
       <View style={flexboxStyles.flex1}>
         <View style={[flexboxStyles.directionRow, flexboxStyles.flex1]}>
-          <View style={[spacings.mrMi, flexboxStyles.justifyCenter]}>
+          <View style={[spacings.mrTy, flexboxStyles.justifyCenter]}>
             {rewardsStyle ? (
               <Image source={rewardsImage as any} style={{ width: 40, height: 40 }} />
             ) : (
