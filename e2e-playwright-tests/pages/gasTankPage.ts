@@ -28,7 +28,7 @@ export class GasTankPage extends BasePage {
 
     // Amount
     await this.page.waitForTimeout(1000) // script misses input due to modal animation sometimes
-    const amountField = this.page.getByTestId(selectors.amountField)
+    const amountField = this.page.getByTestId(selectors.transaction.amountField)
     await amountField.fill(amount)
   }
 

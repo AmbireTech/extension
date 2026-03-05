@@ -22,7 +22,7 @@ const config: PlaywrightTestConfig = {
   use: {
     viewport: { width: 1920, height: 1080 },
     baseURL: process.env.APP_URL || '',
-    headless: false,
+    headless: true,
     trace: 'on-first-retry',
     /**
      * We are starting the extension with `chromium.launchPersistentContext`,

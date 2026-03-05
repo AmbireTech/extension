@@ -24,7 +24,7 @@ export class TransferPage extends BasePage {
     await this.clickOnMenuToken(token)
     // Amount
     await this.page.waitForTimeout(2000) // script misses input due to modal animation sometimes
-    await this.entertext(selectors.amountField, '0.001')
+    await this.entertext(selectors.transaction.amountField, '0.001')
   }
 
   async fillRecipient(address: string) {

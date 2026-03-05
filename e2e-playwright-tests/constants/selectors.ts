@@ -43,6 +43,7 @@ const selectors = {
     smartAccountPicker: 'add-account-' // need add index 5
   },
   dashboard: {
+    dashboardGasTankBalance: 'dashboard-gas-tank-balance',
     appsButton: 'dashboard-button-apps',
     tokensTabButton: 'tokens-defi',
     noTokensText: 'no-tokens-text',
@@ -136,6 +137,7 @@ const selectors = {
       txnConfirmedStep: 'finalized-rows',
       recepientAddressBlock: 'recipient-address-undefined'
     },
+    backButton: 'back-button',
     amountField: 'amount-field',
     proceedBtn: 'proceed-btn',
     transactionError: '//span[contains(text(),"Error")]' // e.g. snackbar when relayer is down
@@ -260,7 +262,6 @@ const selectors = {
   addressBookMyWalletContactDyn: 'address-book-my-wallet-contact',
   continueAnywayCheckboxSaB: 'checkbox',
   continueAnywayButton: '//div[contains(text(),"Continue anyway")]',
-  amountField: 'amount-field',
   transferButtonConfirm: 'transfer-button-confirm',
   addAccountField: 'add-account-field',
   importExistingSeedBtn: 'import-existing-seed-btn',

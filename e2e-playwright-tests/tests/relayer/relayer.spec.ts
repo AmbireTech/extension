@@ -1,4 +1,4 @@
-import { baParams, SA_ADDRESS, saParams } from 'constants/env'
+import { baParams } from 'constants/env'
 import selectors from 'constants/selectors'
 import tokens from 'constants/tokens'
 import { test } from 'fixtures/pageObjects'
@@ -10,59 +10,25 @@ import { expect } from '@playwright/test'
  * @description mock relayer is down
  */
 
-// export const test = base.extend<{
-//   relayerDown: void
-// }>({
-//   relayerDown: async ({ context }, use) => {
-//     await context.route('**/relayer.ambire.com/**', async (route) => {
-//       console.log('MOCK RELAYER DOWN - Blocking relayer request: ', route.request().url())
-//       await route.abort('failed')
-//     })
-
-//     // await context.route('**/relayer.ambire.com/**', (route) =>
-//     //   route.fulfill({
-//     //     status: 500,
-//     //     contentType: 'application/json',
-//     //     body: JSON.stringify({ error: 'Relayer unavailable' })
-//     //   })
-//     // )
-
-//     await use()
-
-//     await context.unroute('**/relayer.ambire.com/**')
-//   }
-// })
-
-// export const test = base.extend<{ relayerDown: { active: true } }>({
-//   relayerDown: async ({ context }, use) => {
-//     await context.route('**/relayer.ambire.com/**', (route) => {
-//       console.log('Relayer intercept hit:', route.request().url())
-//       route.abort('failed')
-//     })
-//     await use({ active: true }) // pass a value to the test
-//     // await context.unroute('**/relayer.ambire.com/**')
-//   }
-// })
-
 test.describe('Mock Relayer down', { tag: '@relayer' }, () => {
   test.setTimeout(60000)
 
   test.beforeEach(async ({ pages }) => {
-    await pages.initWithStorage(saParams)
+    await pages.initWithStorage(baParams)
   })
 
   test.afterEach(async ({ context }) => {
     await context.close()
   })
 
-  test('top up gas tank when relayer is down', async ({ pages }) => {
-    const sendTokenBase = tokens.usdc.base
+  test('top up gas tank works only when paying gas with Native token', async ({ pages }) => {
+    const sendTokenUsdcOp = tokens.usdc.optimism
+    const feeTokenEthOp = tokens.eth.optimism
     const errorMessage =
       'The transaction cannot be broadcast because of a Paymaster Error.\nPlease try again or contact Ambire support for assistance.'
 
     await test.step('block relayer route', async () => {
       await pages.stability.blockRoute('**/relayer.ambire.com/**')
-      await pages.basePage.pause()
     })
 
     await test.step('assert no transaction on Activity tab', async () => {
@@ -80,6 +46,10 @@ test.describe('Mock Relayer down', { tag: '@relayer' }, () => {
       // Proceed
       await pages.basePage.expectButtonEnabled(selectors.transaction.proceedBtn)
       await pages.basePage.longPressButton(selectors.transaction.proceedBtn, 5)
+
+      // approve the high impact modal if appears
+      await pages.basePage.handlePriceWarningModals()
+
       // Sign & Broadcast
       await pages.basePage.expectButtonEnabled(selectors.signButton)
       await pages.basePage.click(selectors.signButton)
@@ -89,11 +59,55 @@ test.describe('Mock Relayer down', { tag: '@relayer' }, () => {
       await expect(pages.basePage.page.locator(selectors.transaction.transactionError)).toHaveText(
         errorMessage
       )
+
+      // close modal
+      await pages.basePage.click(selectors.transaction.backButton)
+    })
+
+    await test.step('set token to USDC on OP', async () => {
+      await pages.auth.pause()
+
+      await pages.basePage.clickOnMenuToken(sendTokenUsdcOp)
+      await pages.basePage.page.getByTestId(selectors.flipIcon).click()
+
+      // Switching to dollars takes a few milliseconds for the controller to update,
+      // and if the amount is filled at the same time, sometimes the amount is not set in the UI or in the controller.
+      await pages.basePage.page.waitForTimeout(1000)
+
+      // Amount
+      await pages.basePage.entertext(selectors.transaction.amountField, '0.0001')
+      // const amountField = this.page.getByTestId(selectors.transaction.amountField)
+      // await amountField.fill(amount)
+    })
+
+    await test.step('set to pay fee with ETH Native token', async () => {
+      // Proceed
+      await pages.auth.pause()
+      await pages.basePage.expectButtonEnabled(selectors.transaction.proceedBtn)
+      await pages.basePage.longPressButton(selectors.transaction.proceedBtn, 1)
+
+      // approve the high impact modal if appears
+      await pages.basePage.handlePriceWarningModals()
+
+      // select fee token
+      console.log(feeTokenEthOp)
+      await pages.basePage.selectFeeToken(baParams.envSelectedAccount, feeTokenEthOp, false)
+
+      // Sign & Broadcast
+      await pages.basePage.expectButtonEnabled(selectors.signButton)
+      await pages.basePage.click(selectors.signButton)
+      await pages.basePage.isVisible(selectors.transaction.confirmingYourTransactionText)
+
+      // Close page
+      await pages.basePage.click(selectors.closeProgressModalButton)
+    })
+
+    await test.step('assert new transaction on Activity tab', async () => {
+      await pages.gasTank.checkSendTransactionOnActivityTab()
     })
 
     await test.step('pay gas with native should succeed even if relayer is down', async () => {
       // await pages.auth.pause()
-
       // await runSimpleTransferFlow({
       //   pages,
       //   sendToken: tokens.wallet.arbitrum,
