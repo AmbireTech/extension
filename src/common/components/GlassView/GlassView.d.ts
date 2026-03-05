@@ -1,7 +1,7 @@
 import React from 'react'
 import { ViewStyle } from 'react-native'
 
-type GlassViewProps = {
+export type GlassViewProps = {
   children: React.ReactNode
   testID?: string
   cssStyle?: React.CSSProperties
@@ -19,4 +19,5 @@ type GlassViewProps = {
   isSimpleBlur?: boolean
 }
 
-export type { GlassViewProps }
+declare const GlassView: React.FC<GlassViewProps>
+export default GlassView

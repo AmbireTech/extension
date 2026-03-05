@@ -9,7 +9,7 @@ import { HEADER_HEIGHT } from '@common/modules/header/components/Header/Header'
 import { SPACING_SM } from '@common/styles/spacings'
 import { getUiType } from '@common/utils/uiType'
 
-import { BottomSheetProps } from './types'
+import { BottomSheetProps } from './BottomSheet'
 
 const ANIMATION_DURATION: number = 250
 

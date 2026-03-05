@@ -98,7 +98,7 @@ const Footer = ({
         <Button
           testID="transaction-button-reject"
           type="danger"
-          text={t('Cancel')}
+          text={t('Hide')}
           onPress={() => {
             openModal()
           }}
@@ -117,7 +117,7 @@ const Footer = ({
           size="large"
         />
         <BottomSheet
-          id="confirm-cancel"
+          id="confirm-hide"
           type="modal"
           sheetRef={sheetRef}
           backgroundColor={
@@ -127,9 +127,9 @@ const Footer = ({
           onBackdropPress={closeModal}
         >
           <DualChoiceWarningModal
-            title={t('Cancel transaction')}
+            title={t('Hide transaction')}
             description={t(
-              'You are about to cancel an already signed transcation. It will no longer be visible in Ambire.'
+              'You are about to hide an already signed transcation. It will no longer be visible in Ambire.'
             )}
             primaryButtonText={t('Proceed')}
             secondaryButtonText={t('Return')}
