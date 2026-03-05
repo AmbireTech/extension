@@ -94,7 +94,7 @@ export const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainCon
   children,
   wrapperRef,
   contentContainerStyle = {},
-  withScroll = true,
+  withScroll = false,
   keyboardAwareScrollViewProps = {},
   withBackButton = false,
   onBackButtonPress = () => {},
