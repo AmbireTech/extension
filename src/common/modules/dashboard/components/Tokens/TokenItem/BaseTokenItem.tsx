@@ -180,7 +180,7 @@ const BaseTokenItem = ({
               {extraActions}
             </View>
           </View>
-          <View style={flexboxStyles.alignEnd}>
+          <View style={[flexboxStyles.alignEnd, flexboxStyles.justifyCenter]}>
             <Text
               selectable
               fontSize={15}

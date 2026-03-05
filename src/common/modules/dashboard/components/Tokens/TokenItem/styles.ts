@@ -13,7 +13,7 @@ const getStyles = () =>
       display: 'flex',
       ...flexbox.directionRow,
       ...flexbox.justifySpaceBetween,
-      ...spacings.pvMi,
+      paddingVertical: 6,
       ...spacings.phTy
     }
   })
