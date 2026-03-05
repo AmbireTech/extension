@@ -55,6 +55,7 @@ const BaseTokenItem = ({
   )
 
   const { state: networks } = useController('NetworksController', (state) => state.networks)
+  const { dispatch: requestsDispatch } = useController('RequestsController')
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
 
@@ -204,7 +205,19 @@ const BaseTokenItem = ({
         </View>
 
         {isPending && (
-          <View style={[{ marginLeft: SPACING_2XL + SPACING_TY }, spacings.mtSm]}>
+          <AnimatedPressable
+            onPress={() => {
+              if (!simulatedAccountOp) return
+              requestsDispatch({
+                type: 'method',
+                params: {
+                  method: 'setCurrentUserRequestById',
+                  args: [`${simulatedAccountOp.accountAddr}-${simulatedAccountOp.chainId}`]
+                }
+              })
+            }}
+            style={[{ marginLeft: SPACING_2XL + SPACING_TY, cursor: 'pointer' }, spacings.mtSm]}
+          >
             <View>
               {!!pendingToBeSigned && !!pendingToBeSignedFormatted && (
                 <PendingBadge
@@ -248,7 +261,7 @@ const BaseTokenItem = ({
                 {balanceLatestFormatted} {t('(Onchain)')}
               </Text>
             </View>
-          </View>
+          </AnimatedPressable>
         )}
       </View>
     </AnimatedPressable>
