@@ -44,10 +44,18 @@ const FooterGlassView: FC<{
         width: '100%',
         ...flexbox.center,
         zIndex: 3,
+        pointerEvents: 'none',
         ...style
       }}
     >
-      <GlassView borderRadius={Number(params[size].borderRadius)} {...glassViewProps}>
+      <GlassView
+        {...glassViewProps}
+        borderRadius={Number(params[size].borderRadius)}
+        cssStyle={{
+          pointerEvents: 'all',
+          ...(glassViewProps?.cssStyle || {})
+        }}
+      >
         <View
           style={[
             flexbox.directionRow,
