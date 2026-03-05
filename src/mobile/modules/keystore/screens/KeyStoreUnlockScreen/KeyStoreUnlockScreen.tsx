@@ -1,6 +1,11 @@
 import React from 'react'
 import { Controller } from 'react-hook-form'
 import { Image, View } from 'react-native'
+import {
+  KeyboardAvoidingView,
+  useReanimatedKeyboardAnimation
+} from 'react-native-keyboard-controller'
+import Animated, { useAnimatedStyle } from 'react-native-reanimated'
 
 import { isValidPassword } from '@ambire-common/services/validations'
 import AmbireLogoWithBackgroundAndLogotype from '@common/assets/svg/AmbireLogoWithBackgroundAndLogotype'
@@ -31,7 +36,10 @@ const KeyStoreUnlockScreen = () => {
   const { t } = useTranslation()
 
   const { hasKeystoreRecovery } = useController('EmailVaultController').state
-
+  const { progress } = useReanimatedKeyboardAnimation()
+  const spacerStyle = useAnimatedStyle(() => ({
+    flex: 1 - progress.value
+  }))
   const {
     state: { statuses, errorMessage },
     dispatch: keystoreDispatch
@@ -40,67 +48,68 @@ const KeyStoreUnlockScreen = () => {
 
   return (
     <MobileLayoutContainer>
-      <MobileLayoutWrapperMainContent>
-        <View
-          style={{
-            height: 324,
-            width: '100%',
-            ...spacings.mbSm
-          }}
+      <MobileLayoutWrapperMainContent withScroll={false}>
+        <KeyboardAvoidingView
+          behavior="position"
+          // keyboardVerticalOffset={-50}
+          style={flexbox.flex1}
+          contentContainerStyle={flexbox.flex1}
         >
-          <View
-            style={{
-              width: '100%',
-              height: '100%',
-              borderRadius: BORDER_RADIUS_PRIMARY,
-              overflow: 'hidden',
-              ...flexbox.center
-            }}
-          >
-            <Image
-              source={
-                typeof backgroundImage === 'number' ? backgroundImage : { uri: backgroundImage }
-              }
-              style={{
-                width: '100%',
-                height: '100%',
-                position: 'absolute',
-                objectFit: 'fill',
-                top: 0,
-                left: 0,
-                zIndex: -1
-              }}
-            />
-            <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mb3Xl]}>
-              <Text fontSize={20} weight="semiBold" color="#fff" appearance="primaryText">
-                {t('Welcome Back')}
-              </Text>
-              <LockIcon width={24} height={24} color="#fff" style={spacings.mlTy} />
+          <KeyboardAvoidingView behavior="height">
+            <View style={{ height: 324, ...spacings.mbSm }}>
+              <View
+                style={{
+                  height: '100%',
+                  borderRadius: BORDER_RADIUS_PRIMARY,
+                  overflow: 'hidden',
+                  ...flexbox.center
+                }}
+              >
+                <Image
+                  source={
+                    typeof backgroundImage === 'number' ? backgroundImage : { uri: backgroundImage }
+                  }
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    position: 'absolute',
+                    objectFit: 'fill',
+                    top: 0,
+                    left: 0,
+                    zIndex: -1
+                  }}
+                />
+                <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mb3Xl]}>
+                  <Text fontSize={20} weight="semiBold" color="#fff" appearance="primaryText">
+                    {t('Welcome Back')}
+                  </Text>
+                  <LockIcon width={24} height={24} color="#fff" style={spacings.mlTy} />
+                </View>
+                <AmbireLogoWithBackgroundAndLogotype color="#fff" style={spacings.mbXl} />
+                <Text weight="medium" color="#B9BFC9" style={text.center}>
+                  {t('Easy and secure self-custody for the\nEthereum ecosystem')}
+                </Text>
+              </View>
             </View>
-            <AmbireLogoWithBackgroundAndLogotype color="#fff" style={spacings.mbXl} />
-            <Text weight="medium" color="#B9BFC9" style={text.center}>
-              {t('Easy and secure self-custody for the\nEthereum ecosystem')}
-            </Text>
+          </KeyboardAvoidingView>
+          <View
+            style={[
+              flexbox.directionRow,
+              flexbox.alignCenter,
+              flexbox.justifySpaceBetween,
+              spacings.mbSm
+            ]}
+          >
+            <Text appearance="secondaryText">Hide balances</Text>
+            <FatToggle
+              isOn={false}
+              onToggle={() => alert('Coming soon!')}
+              width={44}
+              height={22}
+              style={spacings.mr0}
+            />
           </View>
-        </View>
-        <View
-          style={[
-            flexbox.directionRow,
-            flexbox.alignCenter,
-            flexbox.justifySpaceBetween,
-            spacings.mbSm
-          ]}
-        >
-          <Text appearance="secondaryText">Hide balances</Text>
-          <FatToggle
-            isOn={false}
-            onToggle={() => alert('Coming soon!')}
-            width={44}
-            height={22}
-            style={spacings.mr0}
-          />
-        </View>
-        <View style={[flexbox.flex1, flexbox.justifyCenter]}>
+          <Animated.View style={spacerStyle} />
           <Controller
             control={control}
             render={({ field: { onChange, onBlur, value } }) => (
@@ -139,7 +148,7 @@ const KeyStoreUnlockScreen = () => {
             text={statuses.unlockWithSecret === 'LOADING' ? t('Unlocking...') : t('Unlock')}
             onPress={handleSubmit((data) => handleUnlock(data))}
           />
-
+          <Animated.View style={spacerStyle} />
           {!!hasKeystoreRecovery && (
             <Button
               text={t('Forgot extension password?')}
@@ -150,7 +159,7 @@ const KeyStoreUnlockScreen = () => {
               textStyle={{ textDecorationLine: 'underline' }}
             />
           )}
-        </View>
+        </KeyboardAvoidingView>
       </MobileLayoutWrapperMainContent>
     </MobileLayoutContainer>
   )

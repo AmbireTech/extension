@@ -135,7 +135,7 @@ export const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainCon
           </View>
         )}
         <ScrollableWrapper
-          contentContainerStyle={[styles.contentContainer, contentContainerStyle]}
+          contentContainerStyle={[styles.contentContainer, spacings.ph0, contentContainerStyle]}
           wrapperRef={wrapperRef}
           {...rest}
         >

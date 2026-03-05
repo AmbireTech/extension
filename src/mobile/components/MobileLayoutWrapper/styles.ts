@@ -17,7 +17,7 @@ interface Style {
 const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
   StyleSheet.create<Style>({
     contentContainer: {
-      // ...spacings.phSm,
+      ...spacings.phSm,
       ...spacings.pbSm,
       ...flexbox.flex1
     },
