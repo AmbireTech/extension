@@ -1,12 +1,16 @@
 import React, { ReactNode } from 'react'
 import { ColorValue, View, ViewStyle } from 'react-native'
+import {
+  KeyboardAwareScrollView,
+  KeyboardAwareScrollViewProps
+} from 'react-native-keyboard-controller'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
-import ScrollableWrapper, { WrapperProps } from '@common/components/ScrollableWrapper'
+import { WrapperProps } from '@common/components/ScrollableWrapper'
 import useTheme from '@common/hooks/useTheme'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
-import spacings, { SPACING, SPACING_SM } from '@common/styles/spacings'
+import spacings, { SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 import getStyles from './styles'
@@ -77,6 +81,7 @@ interface MobileLayoutWrapperMainContentProps extends WrapperProps {
   withScroll?: boolean
   wrapperRef?: any
   withBackButton?: boolean
+  keyboardAwareScrollViewProps?: KeyboardAwareScrollViewProps
   onBackButtonPress?: () => void
   rightIcon?: ReactNode
   onRightIconPress?: () => void
@@ -90,6 +95,7 @@ export const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainCon
   wrapperRef,
   contentContainerStyle = {},
   withScroll = true,
+  keyboardAwareScrollViewProps = {},
   withBackButton = false,
   onBackButtonPress = () => {},
   rightIcon,
@@ -119,7 +125,7 @@ export const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainCon
     </View>
   )
 
-  if (withScroll && !isOnboardingRoute) {
+  if (withScroll) {
     return (
       <View style={[flexbox.flex1, spacings.phSm]}>
         {step > 0 ? (
@@ -134,19 +140,24 @@ export const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainCon
             {!!withBackButton && <View style={[{ width: 28 }, flexbox.alignEnd]}>{rightIcon}</View>}
           </View>
         )}
-        <ScrollableWrapper
-          contentContainerStyle={[styles.contentContainer, spacings.ph0, contentContainerStyle]}
-          wrapperRef={wrapperRef}
+        <KeyboardAwareScrollView
+          ref={wrapperRef}
+          style={flexbox.flex1}
+          contentContainerStyle={[{ flexGrow: 1 }, spacings.pbSm, contentContainerStyle]}
+          {...keyboardAwareScrollViewProps}
           {...rest}
         >
           {children}
-        </ScrollableWrapper>
+        </KeyboardAwareScrollView>
       </View>
     )
   }
 
   return (
-    <View ref={wrapperRef} style={[styles.contentContainer, contentContainerStyle]}>
+    <View
+      ref={wrapperRef}
+      style={[flexbox.flex1, spacings.phSm, spacings.pbSm, contentContainerStyle]}
+    >
       {step > 0 ? (
         renderProgress()
       ) : (
