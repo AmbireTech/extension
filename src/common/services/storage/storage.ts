@@ -4,7 +4,7 @@ import { Storage } from '@ambire-common/interfaces/storage'
 import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
 
 const asyncStorageInstance: MMKV = createMMKV({ id: 'asyncStorage' })
-// asyncStorageInstance.clearAll()
+asyncStorageInstance.clearAll()
 const syncStorageInstance: MMKV = createMMKV({ id: 'syncStorage' })
 // NOTE: for testing while settings are still not implemented
 // syncStorageInstance.set('fallbackSelectedThemeType', 'light')
