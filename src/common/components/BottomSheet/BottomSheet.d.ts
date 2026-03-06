@@ -1,3 +1,4 @@
+import React from 'react'
 import { ScrollView, ViewStyle } from 'react-native'
 import { Modalize, ModalizeProps } from 'react-native-modalize'
 
@@ -25,3 +26,6 @@ export interface BottomSheetProps {
   isScrollEnabled?: boolean
   withBackdropBlur?: boolean
 }
+
+declare const BottomSheet: React.FC<BottomSheetProps>
+export default BottomSheet

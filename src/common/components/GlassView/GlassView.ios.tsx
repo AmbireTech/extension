@@ -6,7 +6,7 @@ import useTheme from '@common/hooks/useTheme'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import { BORDER_RADIUS_PRIMARY, hexToRgba } from '@common/styles/utils/common'
 
-import { GlassViewProps } from './types'
+import { GlassViewProps } from './GlassView'
 
 const GlassView: FC<GlassViewProps> = ({
   children,

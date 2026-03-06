@@ -4,7 +4,7 @@ import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import { hexToRgba } from '@common/styles/utils/common'
 
-import { ToggleProps } from './types'
+import { ToggleProps } from './Toggle'
 
 const Toggle: React.FC<ToggleProps> = ({
   id,

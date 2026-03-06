@@ -1,9 +1,9 @@
-import LottieView from 'lottie-react'
 import React, { useCallback, useEffect } from 'react'
 import { View } from 'react-native'
 
 import KeyStoreIcon from '@common/assets/svg/KeyStoreIcon'
 import Button from '@common/components/Button'
+import LottieView from '@common/components/LottieView'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'

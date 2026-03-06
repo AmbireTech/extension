@@ -7,6 +7,7 @@ on:
       - main
       - 'release/*'
   pull_request:
+    types: ['opened', 'ready_for_review', 'synchronize']
     branches:
       - v2
       - main
@@ -19,8 +20,10 @@ concurrency:
 
 jobs:
   typescript-errors:
+    # Prevent running this workflow for PRs that are not ready for review
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false 
+
     runs-on: ubuntu-latest
-    environment: typescript-check
 
     steps:
       - name: Checkout full Git history

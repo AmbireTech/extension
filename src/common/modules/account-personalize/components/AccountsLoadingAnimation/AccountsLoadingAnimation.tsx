@@ -1,5 +1,6 @@
-import LottieView from 'lottie-react'
 import React from 'react'
+
+import LottieView from '@common/components/LottieView'
 
 import animation from './accounts-loading-animation.json'
 
