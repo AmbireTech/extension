@@ -145,6 +145,7 @@ export const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainCon
           style={flexbox.flex1}
           contentContainerStyle={[{ flexGrow: 1 }, spacings.pbSm, contentContainerStyle]}
           bottomOffset={100}
+          keyboardShouldPersistTaps="handled"
           {...keyboardAwareScrollViewProps}
           {...rest}
         >
