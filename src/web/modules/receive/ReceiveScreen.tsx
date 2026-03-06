@@ -1,4 +1,4 @@
-import React, { FC, useRef, useState } from 'react'
+import React, { FC, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Animated, View } from 'react-native'
 import QRCode from 'react-native-qrcode-svg'
@@ -29,30 +29,72 @@ import getStyles from './styles'
 const ReceiveScreen: FC = () => {
   const { state } = useRoute()
   const { address } = state || {}
+  const accountStateCheckedForRef = React.useRef<string | null>(null)
 
   const {
     state: { account: stateAccount }
   } = useController('SelectedAccountController')
 
   const {
-    state: { accounts }
+    state: { accounts, accountStates },
+    dispatch: accountsDispatch
   } = useController('AccountsController')
-  const account = (address && accounts.find((acc) => acc.addr === address)) || stateAccount
+
+  const account = useMemo(() => {
+    if (address) {
+      const foundAcc = accounts.find((acc) => acc.addr === address)
+      if (foundAcc) return foundAcc
+    }
+
+    return stateAccount
+  }, [accounts, address, stateAccount])
+
   const { isLoading: isDomainResolving, ens } = useReverseLookup({
-    address: address || account?.addr || ''
+    address: account?.addr || ''
   })
   const { networks } = useController('NetworksController').state
   const { keys } = useController('KeystoreController').state
   const { t } = useTranslation()
-  const { styles, themeType, theme } = useTheme(getStyles)
+  const { styles, theme } = useTheme(getStyles)
   const qrCodeRef: any = useRef(null)
   const [qrCodeError, setQrCodeError] = useState<string | boolean | null>(null)
-  const isViewOnly = getIsViewOnly(keys, account?.associatedKeys || [])
+
+  useEffect(() => {
+    // fetch the account state for this account if not fetched
+    const checkedForThisAcc = accountStateCheckedForRef.current === account?.addr
+    if (checkedForThisAcc || !account || !account.safeCreation || !!accountStates[account.addr])
+      return
+
+    accountStateCheckedForRef.current = account.addr
+
+    accountsDispatch({
+      type: 'method',
+      params: {
+        method: 'updateAccountState',
+        args: [account.addr, 'latest']
+      }
+    })
+  }, [account, accountStates, accountsDispatch])
+
+  const isViewOnly = useMemo(() => {
+    return !account?.safeCreation && getIsViewOnly(keys, account?.associatedKeys || [])
+  }, [account, keys])
 
   const { label, pfp } = account?.preferences || { label: '', pfp: '' }
 
   const MAX_VISIBLE_NETWORKS = 10
   const [showAllNetworks, setShowAllNetworks] = useState(false)
+
+  const supportedNetworks = useMemo(() => {
+    if (!account || !account.safeCreation) return networks
+    if (!accountStates[account.addr]) return []
+
+    return networks.filter((n) => {
+      const networkAccState = accountStates[account.addr]?.[n.chainId.toString()]
+      if (!networkAccState) return true
+      return networkAccState.isDeployed
+    })
+  }, [account, accountStates, networks])
 
   const [bindAnim, animStyle] = useMultiHover({
     values: [
@@ -73,10 +115,18 @@ const ReceiveScreen: FC = () => {
       }
     ]
   })
-  const hasMoreNetworks = networks.length > MAX_VISIBLE_NETWORKS
 
-  const alwaysVisible = networks.slice(0, MAX_VISIBLE_NETWORKS)
-  const extraNetworks = networks.slice(MAX_VISIBLE_NETWORKS)
+  const hasMoreNetworks = useMemo(() => {
+    return networks.length > MAX_VISIBLE_NETWORKS
+  }, [networks.length])
+
+  const alwaysVisible = useMemo(() => {
+    return supportedNetworks.slice(0, MAX_VISIBLE_NETWORKS)
+  }, [supportedNetworks])
+
+  const extraNetworks = useMemo(() => {
+    return supportedNetworks.slice(MAX_VISIBLE_NETWORKS)
+  }, [supportedNetworks])
 
   return (
     <LayoutWrapper>
