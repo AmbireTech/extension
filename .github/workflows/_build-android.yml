@@ -1,0 +1,132 @@
+# Reusable Android build steps (APK or AAB).
+# Call from build-android-apk.yml / build-android-aab.yml with appropriate inputs.
+
+name: The reusable (common) Android build steps
+
+on:
+  workflow_call:
+    inputs:
+      build_command:
+        description: Yarn command used to build Android artifact
+        required: true
+        type: string
+      artifact_suffix:
+        description: Suffix appended to uploaded artifact name
+        required: true
+        type: string
+      package_mode:
+        description: Packaging mode (apk or aab)
+        required: true
+        type: string
+
+jobs:
+  build-android:
+    name: Build Android artifact and upload
+    environment: extension-production
+    runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+
+    steps:
+      - name: Checkout code 🛎️
+        uses: actions/checkout@v4
+
+      - name: Add SSH key to checkout a private repo
+        uses: webfactory/ssh-agent@v0.5.4
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_KEY }}
+
+      - name: Git submodules init
+        run: git submodules init
+        shell: bash
+
+      - name: Git submodules update
+        run: git submodules update
+        shell: bash
+
+      - name: Install Node.js ⚙️
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+
+      - name: Install JS dependencies
+        run: yarn setup:ci
+        shell: bash
+
+      - name: Get version from app.json
+        id: version
+        run: echo "VERSION=$(grep '"version"' ./app.json | head -n1 | cut -d':' -f2 | tr -d ' ",')" >> $GITHUB_OUTPUT
+        shell: bash
+
+      - name: Set up JDK (from .java-version)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version-file: .java-version
+          cache: gradle
+
+      # Configure Gradle caching and build optimizations for CI.
+      # This speeds up builds by caching Gradle dependencies and wrapper files
+      # between workflow runs.
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v5
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK packages
+        run: |
+          sdkmanager "platforms;android-34" "build-tools;34.0.0" "ndk;26.1.10909125" "cmake;3.22.1"
+        shell: bash
+
+      - name: Build Android app
+        env:
+          RELAYER_URL: ${{ vars.RELAYER_URL }}
+          VELCRO_URL: ${{ vars.VELCRO_URL }}
+          REACT_APP_PIMLICO_API_KEY: ${{ vars.REACT_APP_PIMLICO_API_KEY }}
+          REACT_APP_ETHERSPOT_API_KEY: ${{ vars.REACT_APP_ETHERSPOT_API_KEY }}
+          REACT_APP_CANDIDE_API_KEY: ${{ vars.REACT_APP_CANDIDE_API_KEY }}
+          REACT_APP_GELATO_API_KEY: ${{ vars.REACT_APP_GELATO_API_KEY }}
+          NFT_CDN_URL: ${{ vars.NFT_CDN_URL }}
+          LEGENDS_NFT_ADDRESS: ${{ vars.LEGENDS_NFT_ADDRESS }}
+          LI_FI_API_KEY: ${{ vars.LI_FI_API_KEY }}
+          BUNGEE_API_KEY: ${{ vars.BUNGEE_API_KEY }}
+          SAFE_API: ${{ vars.SAFE_API }}
+        run: ${{ inputs.build_command }}
+        shell: bash
+
+      - name: Package Android APK
+        if: inputs.package_mode == 'apk'
+        run: |
+          set -euo pipefail
+          APK_DIR="android/app/build/outputs/apk/release"
+          OUTPUT_ZIP="ambire-android-v${{ steps.version.outputs.VERSION }}-apk.zip"
+
+          if [ ! -d "$APK_DIR" ]; then
+            echo "Expected APK output dir not found at $APK_DIR"
+            ls -R android/app/build/outputs || true
+            exit 1
+          fi
+
+          APK_PATH=$(find "$APK_DIR" -maxdepth 1 -type f -name '*.apk' | head -n1)
+          if [ -z "$APK_PATH" ]; then
+            echo "No .apk found in $APK_DIR"
+            ls -la "$APK_DIR" || true
+            exit 1
+          fi
+
+          ZIP_PATH="$(pwd)/$OUTPUT_ZIP"
+          TEMP_DIR="$RUNNER_TEMP/android-apk-package"
+          rm -rf "$TEMP_DIR"
+          mkdir -p "$TEMP_DIR"
+          cp "$APK_PATH" "$TEMP_DIR/Ambire.apk"
+          cd "$TEMP_DIR"
+          zip -r "$ZIP_PATH" "Ambire.apk"
+          echo "PACKAGE_PATH=$ZIP_PATH" >> $GITHUB_ENV
+        shell: bash
+
+      - name: Upload Android build 📦
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambire-android-v${{ steps.version.outputs.VERSION }}-${{ inputs.artifact_suffix }}
+          path: ${{ env.PACKAGE_PATH }}

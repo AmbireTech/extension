@@ -1,0 +1,16 @@
+name: Build production Android APK ⚡
+
+on:
+  workflow_dispatch: # Manual trigger
+  release:
+    types: [published] # Triggers on new releases (from any branch)
+
+jobs:
+  build-android-apk:
+    name: Build Android APK and upload artifact
+    uses: ./.github/workflows/_build-android.yml
+    with:
+      build_command: yarn build:android:production:apk
+      artifact_suffix: apk
+      package_mode: apk
+    secrets: inherit
