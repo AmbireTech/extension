@@ -5,12 +5,11 @@ import { View } from 'react-native'
 import { Hex } from '@ambire-common/interfaces/hex'
 import { Network } from '@ambire-common/interfaces/network'
 import useController from '@common/hooks/useController'
+import PendingTransactionsSkeleton from '@common/modules/sign-account-op/components/PendingTransactions/PendingTransactionsSkeleton'
+import SafetyChecksBanner from '@common/modules/sign-account-op/components/SafetyChecksBanner'
+import TransactionSummary from '@common/modules/sign-account-op/components/TransactionSummary'
 import spacings from '@common/styles/spacings'
 import DelegationHumanization from '@web/components/DelegationHumanization'
-import TransactionSummary from '@web/modules/sign-account-op/components/TransactionSummary'
-
-import SafetyChecksBanner from '../SafetyChecksBanner'
-import PendingTransactionsSkeleton from './PendingTransactionsSkeleton'
 
 interface Props {
   network?: Network

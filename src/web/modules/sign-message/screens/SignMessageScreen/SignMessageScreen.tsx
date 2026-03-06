@@ -29,7 +29,7 @@ import ActionFooter from '@web/modules/action-requests/components/ActionFooter'
 import ActionHeader from '@web/modules/action-requests/components/ActionHeader'
 import useLedger from '@web/modules/hardware-wallet/hooks/useLedger'
 
-import KeySelect from '../../components/KeySelect'
+import KeySelect from '../../../../../common/modules/sign-message/components/KeySelect'
 import Main from './Contents/main'
 import SignInWithEthereum from './Contents/signInWithEthereum'
 

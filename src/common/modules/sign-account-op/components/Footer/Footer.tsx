@@ -14,10 +14,10 @@ import HoldToProceedButton from '@common/components/HoldToProceedButton'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
+import ActionsPagination from '@common/modules/action-requests/components/ActionsPagination'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
-import ActionsPagination from '@web/modules/action-requests/components/ActionsPagination'
 
 import getStyles from './styles'
 

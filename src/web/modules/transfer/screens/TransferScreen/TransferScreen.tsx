@@ -23,8 +23,19 @@ import useController from '@common/hooks/useController'
 import useHasGasTank from '@common/hooks/useHasGasTank'
 import useNavigation from '@common/hooks/useNavigation'
 import useSyncedState from '@common/hooks/useSyncedState'
+import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
+import useWindowSize from '@common/hooks/useWindowSize'
+import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
+import BatchAdded from '@common/modules/sign-account-op/components/OneClick/BatchModal/BatchAdded'
+import Buttons from '@common/modules/sign-account-op/components/OneClick/Buttons'
+import Estimation from '@common/modules/sign-account-op/components/OneClick/Estimation'
+import SafeSigned from '@common/modules/sign-account-op/components/OneClick/SafeSigned'
+import TrackProgress from '@common/modules/sign-account-op/components/OneClick/TrackProgress'
+import Completed from '@common/modules/sign-account-op/components/OneClick/TrackProgress/ByStatus/Completed'
+import Failed from '@common/modules/sign-account-op/components/OneClick/TrackProgress/ByStatus/Failed'
+import InProgress from '@common/modules/sign-account-op/components/OneClick/TrackProgress/ByStatus/InProgress'
 import useTrackAccountOp from '@common/modules/sign-account-op/hooks/OneClick/useTrackAccountOp'
 import GasTankInfoModal from '@common/modules/transfer/components/GasTankInfoModal'
 import SendForm from '@common/modules/transfer/components/SendForm/SendForm'
@@ -32,20 +43,16 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@common/utils/links'
 import { getUiType } from '@common/utils/uiType'
+import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
+import { getTabLayoutPadding } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import { Content, Wrapper } from '@web/components/TransactionsScreen'
-import BatchAdded from '@web/modules/sign-account-op/components/OneClick/BatchModal/BatchAdded'
-import Buttons from '@web/modules/sign-account-op/components/OneClick/Buttons'
-import Estimation from '@web/modules/sign-account-op/components/OneClick/Estimation'
-import SafeSigned from '@web/modules/sign-account-op/components/OneClick/SafeSigned'
-import TrackProgress from '@web/modules/sign-account-op/components/OneClick/TrackProgress'
-import Completed from '@web/modules/sign-account-op/components/OneClick/TrackProgress/ByStatus/Completed'
-import Failed from '@web/modules/sign-account-op/components/OneClick/TrackProgress/ByStatus/Failed'
-import InProgress from '@web/modules/sign-account-op/components/OneClick/TrackProgress/ByStatus/InProgress'
+import Modals from '@web/modules/sign-account-op/components/Modals'
 
 const { isRequestWindow } = getUiType()
 
 const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   const { addToast } = useToast()
+  const { theme } = useTheme()
   const { state: transferState, dispatch: transferDispatch } = useController('TransferController')
   const { dispatch: requestsDispatch } = useController('RequestsController')
   const { dispatch: mainDispatch } = useController('MainController')
@@ -122,6 +129,9 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     },
     forceUpdateOnChangeList: [transferState.programmaticUpdateCounter]
   })
+
+  const { maxWidthSize } = useWindowSize()
+  const paddingHorizontalStyle = useMemo(() => getTabLayoutPadding(maxWidthSize), [maxWidthSize])
 
   const isLocalStateOutOfSync =
     controllerAmountFieldValue !== amountFieldValue ||
@@ -628,11 +638,32 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
 
   if (displayedView === 'safe-signed') {
     return (
-      <SafeSigned
-        title={isTopUp ? t('Top Up Gas Tank') : t('Send')}
-        primaryButtonText={t('Open dashboard')}
-        onPrimaryButtonPress={onBatchAddedPrimaryButtonPress}
-      />
+      <TabLayoutContainer
+        backgroundColor={theme.primaryBackground}
+        header={
+          <HeaderWithTitle
+            displayBackButtonIn="never"
+            title={isTopUp ? t('Top Up Gas Tank') : t('Send')}
+          />
+        }
+        withHorizontalPadding={false}
+        footer={null}
+        style={{ ...flexbox.alignEnd, ...spacings.pb }}
+      >
+        <TabLayoutWrapperMainContent
+          contentContainerStyle={{
+            ...spacings.pv0,
+            ...paddingHorizontalStyle,
+            ...flexbox.flex1
+          }}
+          withScroll={false}
+        >
+          <SafeSigned
+            primaryButtonText={t('Open dashboard')}
+            onPrimaryButtonPress={onBatchAddedPrimaryButtonPress}
+          />
+        </TabLayoutWrapperMainContent>
+      </TabLayoutContainer>
     )
   }
 
@@ -721,6 +752,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
         handleUpdateStatus={handleUpdateStatus}
         hasProceeded={hasProceeded}
         signAccountOpController={signAccountOpController}
+        Modals={Modals}
       />
     </Wrapper>
   )

@@ -2,9 +2,8 @@ import React from 'react'
 
 import { Account } from '@ambire-common/interfaces/account'
 import { Key } from '@ambire-common/interfaces/keystore'
-
-import MultipleSignersSelect from '../SafeSignersSelect'
-import SigningKeySelect from '../SignKeySelect'
+import MultipleSignersSelect from '@common/modules/sign-message/components/SafeSignersSelect'
+import SigningKeySelect from '@common/modules/sign-message/components/SignKeySelect'
 
 const KeySelect = ({
   isChooseSignerShown,

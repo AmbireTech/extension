@@ -9,7 +9,7 @@ import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoad
 import Checkbox from '@common/components/Checkbox'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
-import spacings, { SPACING_LG } from '@common/styles/spacings'
+import { SPACING_LG } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { Portal } from '@gorhom/portal'
 

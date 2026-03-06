@@ -13,9 +13,9 @@ import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
+import FallbackVisualization from '@common/modules/sign-account-op/components/TransactionSummary/FallbackVisualization'
 import { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 
-import FallbackVisualization from './FallbackVisualization'
 import getStyles from './styles'
 
 interface Props {

@@ -18,14 +18,14 @@ import HoldToProceedButton from '@common/components/HoldToProceedButton'
 import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
 import useSign from '@common/hooks/useSign'
 import useTheme from '@common/hooks/useTheme'
+import Estimation from '@common/modules/sign-account-op/components/Estimation'
+import BundlerWarning from '@common/modules/sign-account-op/components/Estimation/components/bundlerWarning'
+import SafeOwners from '@common/modules/sign-account-op/components/SafeOwners'
+import SafetyChecksBanner from '@common/modules/sign-account-op/components/SafetyChecksBanner'
+import { ModalsProps } from '@common/modules/sign-account-op/types/modals'
+import KeySelect from '@common/modules/sign-message/components/KeySelect'
 import spacings from '@common/styles/spacings'
 import { getUiType } from '@common/utils/uiType'
-import Estimation from '@web/modules/sign-account-op/components/Estimation'
-import BundlerWarning from '@web/modules/sign-account-op/components/Estimation/components/bundlerWarning'
-import Modals from '@web/modules/sign-account-op/components/Modals/Modals'
-import SafeOwners from '@web/modules/sign-account-op/components/SafeOwners'
-import SafetyChecksBanner from '@web/modules/sign-account-op/components/SafetyChecksBanner'
-import KeySelect from '@web/modules/sign-message/components/KeySelect'
 
 export type OneClickEstimationProps = {
   closeEstimationModal: () => void
@@ -37,6 +37,7 @@ export type OneClickEstimationProps = {
   hasProceeded: boolean
   updateType: 'Swap&Bridge' | 'Transfer&TopUp'
   serviceFee?: SwapAndBridgeRoute['serviceFee']
+  Modals: React.ComponentType<ModalsProps>
 }
 
 const { isRequestWindow, isTab } = getUiType()
@@ -50,7 +51,8 @@ const OneClickEstimation = ({
   hasProceeded,
   errors,
   updateType,
-  serviceFee
+  serviceFee,
+  Modals
 }: OneClickEstimationProps) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
