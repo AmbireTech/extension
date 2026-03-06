@@ -31,7 +31,13 @@ type Row = {
 
 const Label = memo(({ label }: { label: string }) => {
   return (
-    <Text weight="medium" fontSize={14} appearance="secondaryText">
+    <Text
+      weight="medium"
+      fontSize={14}
+      appearance="secondaryText"
+      numberOfLines={1}
+      ellipsizeMode="tail"
+    >
       {label}
     </Text>
   )
@@ -42,12 +48,14 @@ const Row = memo(
     label,
     value,
     id,
-    isLast
+    isLast,
+    chainId
   }: Row & {
     isLast: boolean
+    chainId: bigint
   }) => {
     const networks = useController('NetworksController', (state) => state.networks).state
-    const networkData = id === 'chain' ? networks.find((net) => net.chainId === value) : null
+    const networkData = networks.find((net) => net.chainId === chainId)
     const [bindOpenAnim, openAnimStyle] = useHover({ preset: 'opacityInverted' })
 
     const valueFormatted = useMemo(() => {
@@ -75,7 +83,7 @@ const Row = memo(
                 {...bindOpenAnim}
                 style={[openAnimStyle, spacings.mlTy]}
                 onPress={async () => {
-                  await openInTab({ url: `${networkData?.explorerUrl}address/${value}` })
+                  await openInTab({ url: `${networkData?.explorerUrl}/address/${value}` })
                 }}
               >
                 <OpenIcon width={20} height={20} />
@@ -142,7 +150,12 @@ const TokenData: FC<Props> = ({ token }) => {
         ]}
       >
         {rows.map((row, index) => (
-          <Row key={row.id || row.label} {...row} isLast={index === rows.length - 1} />
+          <Row
+            key={row.id || row.label}
+            {...row}
+            isLast={index === rows.length - 1}
+            chainId={token.chainId}
+          />
         ))}
       </View>
       {!!token.meta?.website && (
@@ -150,7 +163,6 @@ const TokenData: FC<Props> = ({ token }) => {
           style={{
             ...flexbox.directionRow,
             ...flexbox.alignCenter,
-            ...flexbox.justifySpaceBetween,
             ...spacings.phSm,
             ...spacings.mbTy,
             backgroundColor: theme.secondaryBackground,
@@ -161,7 +173,15 @@ const TokenData: FC<Props> = ({ token }) => {
           <Text fontSize={14} weight="medium" appearance="secondaryText">
             {t('Website')}
           </Text>
-          <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+          <View
+            style={[
+              flexbox.directionRow,
+              flexbox.alignCenter,
+              flexbox.flex1,
+              flexbox.justifyEnd,
+              spacings.mlXl
+            ]}
+          >
             <Label label={token.meta.website} />
             <AnimatedPressable
               {...bindOpenAnim}
