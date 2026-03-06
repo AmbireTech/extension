@@ -11,3 +11,13 @@ index 4caf868..ad0f363 100644
  
      // Annex B: Additional Properties of the Date.prototype Object
      getYear: fn,
+@@ -5419,2 +5419,4 @@
+     get: fn,
++    getOrInsert: fn,
++    getOrInsertComputed: fn,
+     has: fn,
+@@ -5489,2 +5489,4 @@
+     get: fn,
++    getOrInsert: fn,
++    getOrInsertComputed: fn,
+     has: fn,
