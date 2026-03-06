@@ -25,6 +25,9 @@ import useNavigation from '@common/hooks/useNavigation'
 import useSyncedState from '@common/hooks/useSyncedState'
 import useToast from '@common/hooks/useToast'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
+import useTrackAccountOp from '@common/modules/sign-account-op/hooks/OneClick/useTrackAccountOp'
+import GasTankInfoModal from '@common/modules/transfer/components/GasTankInfoModal'
+import SendForm from '@common/modules/transfer/components/SendForm/SendForm'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@common/utils/links'
@@ -38,9 +41,6 @@ import TrackProgress from '@web/modules/sign-account-op/components/OneClick/Trac
 import Completed from '@web/modules/sign-account-op/components/OneClick/TrackProgress/ByStatus/Completed'
 import Failed from '@web/modules/sign-account-op/components/OneClick/TrackProgress/ByStatus/Failed'
 import InProgress from '@web/modules/sign-account-op/components/OneClick/TrackProgress/ByStatus/InProgress'
-import useTrackAccountOp from '@web/modules/sign-account-op/hooks/OneClick/useTrackAccountOp'
-import GasTankInfoModal from '@web/modules/transfer/components/GasTankInfoModal'
-import SendForm from '@web/modules/transfer/components/SendForm/SendForm'
 
 const { isRequestWindow } = getUiType()
 
