@@ -22,6 +22,26 @@ if (typeof window === 'undefined') {
   global.window = global
 }
 
+if (typeof location === 'undefined') {
+  global.location = {
+    href: '',
+    pathname: '/',
+    search: '',
+    hash: '',
+    origin: '',
+    protocol: 'https:',
+    hostname: 'localhost'
+  }
+}
+
+if (typeof document === 'undefined') {
+  global.document = {
+    location: global.location
+  }
+}
+
 // Event listener shims for mobile app compatibility for cetain common files between web and mobile
 window.addEventListener = window.addEventListener || (() => {})
 window.removeEventListener = window.removeEventListener || (() => {})
+document.addEventListener = document.addEventListener || (() => {})
+document.removeEventListener = document.removeEventListener || (() => {})

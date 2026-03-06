@@ -2,21 +2,15 @@ import React, { useCallback } from 'react'
 import { View } from 'react-native'
 
 import { TokenResult } from '@ambire-common/libs/portfolio'
-import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import Recipient from '@common/components/Recipient'
-import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import SendToken from '@common/components/SendToken'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import { useTranslation } from '@common/config/localization'
 import useAddressInput from '@common/hooks/useAddressInput'
 import useController from '@common/hooks/useController'
 import useGetTokenSelectProps from '@common/hooks/useGetTokenSelectProps'
-import spacings from '@common/styles/spacings'
-import flexbox from '@common/styles/utils/flexbox'
 import { getTokenId } from '@common/utils/token'
 import useSimulationError from '@web/modules/portfolio/hooks/SimulationError/useSimulationError'
-
-import styles from './styles'
 
 const SendForm = ({
   addressInputState,
@@ -28,8 +22,7 @@ const SendForm = ({
   amountFieldValue,
   setAmountFieldValue,
   addressStateFieldValue,
-  setAddressStateFieldValue,
-  handleGoBack
+  setAddressStateFieldValue
 }: {
   addressInputState: ReturnType<typeof useAddressInput>
   hasGasTank: boolean
@@ -41,7 +34,6 @@ const SendForm = ({
   setAmountFieldValue: (value: string) => void
   addressStateFieldValue: string
   setAddressStateFieldValue: (value: string) => void
-  handleGoBack: () => void
 }) => {
   const { validation } = addressInputState
   const {
@@ -129,15 +121,7 @@ const SendForm = ({
   }, [amountFieldMode, transferDispatch])
 
   return (
-    <ScrollableWrapper
-      style={flexbox.flex1}
-      contentContainerStyle={[flexbox.flex1, isTopUp ? styles.topUpContainer : {}]}
-    >
-      <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mb]}>
-        <PanelBackButton onPress={handleGoBack} style={spacings.mrSm} />
-        <PanelTitle title={isTopUp ? t('Top up Gas Tank') : t('Send')} />
-        <View style={{ width: 40 }} />
-      </View>
+    <>
       <View>
         {!isTopUp && (
           <Recipient
@@ -181,7 +165,7 @@ const SendForm = ({
           simulationFailed={!!simulationError}
         />
       )}
-    </ScrollableWrapper>
+    </>
   )
 }
 
