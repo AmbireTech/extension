@@ -121,7 +121,7 @@ const getAndFormatTokenDetails = (
     isRewards,
     isVesting,
     isProjectedRewards,
-    change24hFormatted: ` ${(usdMarketData?.change24h || 0) >= 0 ? '+' : ''}${(usdMarketData?.change24h || 0).toFixed(2)}%`,
+    change24hFormatted: `${(usdMarketData?.change24h || 0) >= 0 ? '+' : ''}${(usdMarketData?.change24h || 0).toFixed(2)}%`,
     ...usdMarketData,
     ...pendingAmountsFormatted
   }

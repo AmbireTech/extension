@@ -384,6 +384,7 @@ const TokenDetailsScreen = () => {
                   fontSize={14}
                   weight="number_medium"
                   appearance={change24h >= 0 ? 'successText' : 'errorText'}
+                  style={spacings.mlMi}
                 >
                   {change24hFormatted}
                 </Text>

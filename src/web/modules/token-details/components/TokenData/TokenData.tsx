@@ -12,6 +12,7 @@ import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
 import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
+import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -79,15 +80,17 @@ const Row = memo(
           <Label label={valueFormatted} />
           {id === 'address' && (
             <>
-              <AnimatedPressable
-                {...bindOpenAnim}
-                style={[openAnimStyle, spacings.mlTy]}
-                onPress={async () => {
-                  await openInTab({ url: `${networkData?.explorerUrl}/address/${value}` })
-                }}
-              >
-                <OpenIcon width={20} height={20} />
-              </AnimatedPressable>
+              {!!networkData?.explorerUrl && (
+                <AnimatedPressable
+                  {...bindOpenAnim}
+                  style={[openAnimStyle, spacings.mlTy]}
+                  onPress={async () => {
+                    await openInTab({ url: `${networkData.explorerUrl}/address/${value}` })
+                  }}
+                >
+                  <OpenIcon width={20} height={20} />
+                </AnimatedPressable>
+              )}
               <CopyText iconSize={20} text={value.toString()} style={spacings.mlMi} />
             </>
           )}
