@@ -80,6 +80,8 @@ const BaseTokenItem = ({
     balanceUSDFormatted,
     isPending: hasPendingBadges,
     pendingBalance,
+    change24h,
+    change24hFormatted,
     pendingBalanceFormatted,
     pendingBalanceUSDFormatted,
     pendingToBeSigned,
@@ -189,17 +191,32 @@ const BaseTokenItem = ({
             >
               {isPending ? pendingBalanceUSDFormatted : balanceUSDFormatted}
             </Text>
-            <Text
-              style={{
-                lineHeight: 18
-              }}
-              selectable
-              fontSize={13}
-              appearance="secondaryText"
-              weight="number_medium"
-            >
-              {priceUSDFormatted}
-            </Text>
+            <View style={[flexboxStyles.directionRow, flexboxStyles.alignCenter]}>
+              <Text
+                style={{
+                  lineHeight: 15
+                }}
+                selectable
+                fontSize={13}
+                appearance="secondaryText"
+                weight="number_medium"
+              >
+                {priceUSDFormatted}
+              </Text>
+              {typeof change24h === 'number' && (
+                <Text
+                  fontSize={13}
+                  style={{
+                    lineHeight: 15,
+                    ...spacings.mlMi
+                  }}
+                  weight="number_medium"
+                  appearance={change24h >= 0 ? 'successText' : 'errorText'}
+                >
+                  {change24hFormatted}
+                </Text>
+              )}
+            </View>
           </View>
         </View>
 
