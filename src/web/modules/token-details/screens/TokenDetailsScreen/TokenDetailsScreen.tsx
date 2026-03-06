@@ -57,7 +57,10 @@ const TokenDetailsScreen = () => {
     'SwapAndBridgeController',
     (state) => state.supportedChainIds
   )
-  const { dispatch: portfolioDispatch } = useController('PortfolioController')
+  const {
+    dispatch: portfolioDispatch,
+    state: { tokenPreferences }
+  } = useController('PortfolioController')
   const { state: networks } = useController('NetworksController', (state) => state.networks)
   const [doNotDisplayHideTokenModal, setDoNotDisplayHideTokenModal] = useState(false)
   const [gasTankAssets, setGasTankAssets] = useState<{ chainId: number; address: string }[] | null>(
@@ -74,6 +77,9 @@ const TokenDetailsScreen = () => {
     [networks, token?.chainId]
   )
 
+  const isHidden = tokenPreferences.find(
+    (tp) => tp.chainId === token?.chainId && tp.address === token?.address
+  )?.isHidden
   // if the token is a gas tank token, all actions except
   // top up and maybe token info should be disabled
   const isGasTankToken = !!token?.flags.onGasTank
@@ -264,8 +270,8 @@ const TokenDetailsScreen = () => {
         tooltipText: isGasTankOrRewardsToken
           ? t('Hiding is not available for Gas Tank or Reward tokens.')
           : undefined,
-        text: token?.flags.isHidden ? t('Unhide') : t('Hide'),
-        icon: token?.flags.isHidden ? VisibilityIcon : InvisibilityIcon,
+        text: isHidden ? t('Unhide') : t('Hide'),
+        icon: isHidden ? VisibilityIcon : InvisibilityIcon,
         // @TODO: Handle unhide and make the UX good
         onPress: handleHideTokenFromButton
       }
@@ -282,7 +288,7 @@ const TokenDetailsScreen = () => {
       hasGasTank,
       account?.safeCreation,
       gasTankAssetsError,
-      token?.flags.isHidden,
+      isHidden,
       handleHideTokenFromButton,
       navigate,
       gasTankAssets,
