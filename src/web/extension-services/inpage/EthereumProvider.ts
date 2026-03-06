@@ -145,7 +145,9 @@ async function getDappName() {
 }
 
 export class EthereumProvider extends EventEmitter {
-  #pushEventHandlers: PushEventHandlers
+  #pushEventHandlers?: PushEventHandlers
+
+  #connectionInitialized = false
 
   #requestPromise = new ReadyPromise(2)
 
@@ -207,7 +209,8 @@ export class EthereumProvider extends EventEmitter {
 
   constructor(
     forwardRpcRequests?: (url: string, method: any, params: any) => Promise<any>,
-    getFoundRpcUrls?: () => string[]
+    getFoundRpcUrls?: () => string[],
+    options?: { deferInitialization?: boolean }
   ) {
     super()
 
@@ -217,20 +220,27 @@ export class EthereumProvider extends EventEmitter {
     this.#getFoundRpcUrls = getFoundRpcUrls
 
     this.setMaxListeners(100)
-    this.initialize()
     this.shimLegacy()
+    this.#providerId = Date.now()
+
+    if (!options?.deferInitialization) {
+      this.#initConnection()
+    }
+  }
+
+  #initConnection = () => {
+    if (this.#connectionInitialized) return
+    this.#connectionInitialized = true
+
     this.#pushEventHandlers = new PushEventHandlers(this)
+    this.initialize()
     this.#backgroundMessenger.reply(
       globalIsAmbireNext ? 'broadcast-next' : 'broadcast',
       this.#handleBackgroundMessage
     )
-    this.#providerId = Date.now()
   }
 
   initialize = async () => {
-    if (isCrossOriginFrame() || isTooDeepFrameInTheFrameHierarchy()) return
-    document.addEventListener('visibilitychange', this.#requestPromiseCheckVisibility)
-
     const id = this.#requestId++
     domReadyCall(async () => {
       const params = {
@@ -261,12 +271,12 @@ export class EthereumProvider extends EventEmitter {
       this.chainId = chainId
       this.networkVersion = networkVersion
       this.emit('connect', { chainId })
-      this.#pushEventHandlers.chainChanged({
+      this.#pushEventHandlers?.chainChanged({
         chain: chainId,
         networkVersion
       })
 
-      this.#pushEventHandlers.accountsChanged(accounts)
+      this.#pushEventHandlers?.accountsChanged(accounts)
     } catch {
       //
     } finally {
@@ -285,8 +295,6 @@ export class EthereumProvider extends EventEmitter {
   }
 
   #handleBackgroundMessage = async ({ event, data }: any) => {
-    if (isCrossOriginFrame() || isTooDeepFrameInTheFrameHierarchy()) return
-
     if (event === 'tabCheckin') {
       const id = this.#requestId++
       const params = {
@@ -316,15 +324,15 @@ export class EthereumProvider extends EventEmitter {
         this.chainId = chainId
         this.networkVersion = networkVersion
         this.emit('connect', { chainId })
-        this.#pushEventHandlers.chainChanged({ chain: chainId, networkVersion })
-        this.#pushEventHandlers.accountsChanged(accounts)
+        this.#pushEventHandlers?.chainChanged({ chain: chainId, networkVersion })
+        this.#pushEventHandlers?.accountsChanged(accounts)
       } catch (error: any) {
         // eslint-disable-next-line no-console
         console.error(error)
       }
     }
 
-    if ((this.#pushEventHandlers as any)[event]) {
+    if (this.#pushEventHandlers && (this.#pushEventHandlers as any)[event]) {
       return (this.#pushEventHandlers as any)[event](data)
     }
 
@@ -337,6 +345,7 @@ export class EthereumProvider extends EventEmitter {
 
   // TODO: support multi request!
   request = async (data) => {
+    this.#initConnection()
     return this.#dedupePromise.call(data.method, () => this._request(data))
   }
 
@@ -447,11 +456,13 @@ export class EthereumProvider extends EventEmitter {
   }
 
   requestInternalMethods = (data) => {
+    this.#initConnection()
     return this.#dedupePromise.call(data.method, () => this._request(data))
   }
 
   // shim to MetaMask legacy api
   sendAsync = (payload, callback) => {
+    this.#initConnection()
     if (Array.isArray(payload)) {
       return Promise.all(
         payload.map(
@@ -472,6 +483,7 @@ export class EthereumProvider extends EventEmitter {
   }
 
   send = (payload, callback?) => {
+    this.#initConnection()
     if (typeof payload === 'string' && (!callback || Array.isArray(callback))) {
       // send(method, params? = [])
       return this.request({
@@ -517,12 +529,18 @@ export class EthereumProvider extends EventEmitter {
 
     // eslint-disable-next-line @typescript-eslint/naming-convention, no-restricted-syntax
     for (const [_method, method] of legacyMethods) {
-      this[_method] = () => this.request({ method })
+      ;(this as any)[_method] = () => this.request({ method })
     }
   }
 
   on = (event: string | symbol, handler: (...args: any[]) => void) => {
+    this.#initConnection()
     return super.on(event, handler)
+  }
+
+  once = (event: string | symbol, handler: (...args: any[]) => void) => {
+    this.#initConnection()
+    return super.once(event, handler)
   }
 
   setLogLevel = (nextLogLevel: LOG_LEVELS) => {
