@@ -46,7 +46,7 @@ const foundDappRpcUrls: string[] = []
 let isDapp = false
 
 ;(function () {
-  if (isCrossOriginFrame() || isTooDeepFrameInTheFrameHierarchy()) return
+  if (isTooDeepFrameInTheFrameHierarchy() || isCrossOriginFrame()) return
 
   const originalFetch = window.fetch.bind(window)
 
@@ -158,7 +158,9 @@ export async function forwardRpcRequests(url: string, method: any, params: any) 
   return responseJson.result
 }
 
-const provider = new EthereumProvider(forwardRpcRequests, () => foundDappRpcUrls)
+const provider = new EthereumProvider(forwardRpcRequests, () => foundDappRpcUrls, {
+  deferInitialization: isCrossOriginFrame()
+})
 const ambireProvider = new Proxy(provider, {
   deleteProperty: (target, prop) => {
     if (typeof prop === 'string' && ['on', 'isAmbire', 'isMetaMask'].includes(prop)) {
