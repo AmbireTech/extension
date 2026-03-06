@@ -95,7 +95,6 @@
     "@raugfer/jazzicon": "1.0.6",
     "@react-native-community/netinfo": "12.0.1",
     "@safe-global/api-kit": "4.0.1",
-    "@safe-global/protocol-kit": "6.1.2",
     "@sentry/browser": "10.37.0",
     "@sentry/react": "10.37.0",
     "@tradle/react-native-http": "2.0.1",

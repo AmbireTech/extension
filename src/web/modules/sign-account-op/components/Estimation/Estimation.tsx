@@ -476,7 +476,10 @@ const Estimation = ({
             // @ts-ignore
             setValue={onFeeSelect}
             options={feeSpeedOptions}
-            selectStyle={{ height: 40, backgroundColor: theme.secondaryBackground }}
+            selectStyle={{
+              height: 40,
+              backgroundColor: isOneClick ? theme.secondaryBackground : theme.primaryBackground
+            }}
             menuOptionHeight={40}
             // Display a wider menu if the fee token price is unavailable
             // as the native amount takes up more space
@@ -501,7 +504,10 @@ const Estimation = ({
           (!payOptionsPaidByUsOrGasTank.length && !payOptionsPaidByEOA.length) ||
           !signAccountOpState.selectedOption
         }
-        selectStyle={{ backgroundColor: theme.secondaryBackground }}
+        selectStyle={{
+          backgroundColor: isOneClick ? theme.secondaryBackground : theme.primaryBackground,
+          ...spacings.phSm
+        }}
         defaultValue={payValue ?? undefined}
         withSearch={!!payOptionsPaidByUsOrGasTank.length || !!payOptionsPaidByEOA.length}
         stickySectionHeadersEnabled
