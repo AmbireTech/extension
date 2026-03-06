@@ -40,10 +40,7 @@ const KeyStoreUnlockScreen = () => {
 
   return (
     <MobileLayoutContainer>
-      <MobileLayoutWrapperMainContent
-        withScroll
-        keyboardAwareScrollViewProps={{ bottomOffset: 100 }}
-      >
+      <MobileLayoutWrapperMainContent withScroll>
         <View style={{ height: 324, ...spacings.mbSm }}>
           <View
             style={{

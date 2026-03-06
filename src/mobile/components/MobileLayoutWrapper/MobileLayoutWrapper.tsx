@@ -134,7 +134,7 @@ export const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainCon
           <View style={{ height: isOnboardingRoute ? 28 : SPACING_SM }} />
         )}
         {(!!title || !!withBackButton) && (
-          <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mb2Xl]}>
+          <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbXl]}>
             {!!withBackButton && <PanelBackButton onPress={onBackButtonPress} />}
             {!!title && <PanelTitle title={title} size={18} />}
             {!!withBackButton && <View style={[{ width: 28 }, flexbox.alignEnd]}>{rightIcon}</View>}
@@ -144,6 +144,7 @@ export const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainCon
           ref={wrapperRef}
           style={flexbox.flex1}
           contentContainerStyle={[{ flexGrow: 1 }, spacings.pbSm, contentContainerStyle]}
+          bottomOffset={100}
           {...keyboardAwareScrollViewProps}
           {...rest}
         >
