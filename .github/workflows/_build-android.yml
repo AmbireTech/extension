@@ -36,12 +36,12 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.DEPLOY_KEY }}
 
-      - name: Git submodules init
-        run: git submodules init
+      - name: Git submodule init
+        run: git submodule init
         shell: bash
 
-      - name: Git submodules update
-        run: git submodules update
+      - name: Git submodule update
+        run: git submodule update
         shell: bash
 
       - name: Install Node.js ⚙️
