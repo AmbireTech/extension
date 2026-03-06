@@ -67,7 +67,10 @@ const TrackProgressWrapper: FC<TrackProgressProps> = ({
                 type={routeStatus !== 'failed' ? 'secondary' : 'primary'}
                 text={secondaryButtonText}
                 testID="track-progress-secondary-button"
-                style={{ ...spacings.mrLg, minWidth: 144 }}
+                style={{
+                  ...(routeStatus !== 'failed' ? spacings.mrLg : spacings.mlLg),
+                  minWidth: 144
+                }}
               />
             ) : (
               <View />
