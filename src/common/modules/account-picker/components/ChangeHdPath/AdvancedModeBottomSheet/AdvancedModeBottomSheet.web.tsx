@@ -2,9 +2,7 @@ import React, { FC, useCallback, useEffect } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { Pressable, View } from 'react-native'
-import { Modalize } from 'react-native-modalize'
 
-import { DerivationOption } from '@ambire-common/consts/derivation'
 import CloseIcon from '@common/assets/svg/CloseIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
@@ -16,20 +14,7 @@ import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
-type FormData = {
-  startIndex: string
-  selectedOption: SelectValue
-}
-
-type Props = {
-  sheetRef: React.RefObject<Modalize>
-  closeBottomSheet: () => void
-  onConfirm: (hdPath: SelectValue, startIndex: number) => void
-  disabled?: boolean
-  page?: number
-  options: DerivationOption[]
-  value: SelectValue
-}
+import { FormData, Props } from './types'
 
 const CustomHDPathBottomSheet: FC<Props> = ({
   sheetRef,
