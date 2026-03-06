@@ -42,9 +42,11 @@ const KeyStoreSetupForm = ({ agreedWithTerms, children }: Props) => {
     await handleKeystoreSetup()
   }, [handleKeystoreSetup])
 
+  const Wrapper = isWeb ? ScrollableWrapper : View
+
   return (
     <>
-      <ScrollableWrapper>
+      <Wrapper>
         <Controller
           control={control}
           rules={{ validate: isValidPassword }}
@@ -94,7 +96,7 @@ const KeyStoreSetupForm = ({ agreedWithTerms, children }: Props) => {
           name="confirmPassword"
         />
         {children}
-      </ScrollableWrapper>
+      </Wrapper>
       <View style={spacings.pt}>
         <Button
           testID="create-keystore-pass-btn"

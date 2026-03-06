@@ -1,6 +1,7 @@
 import React from 'react'
 import { Controller } from 'react-hook-form'
 import { Image, View } from 'react-native'
+import Animated from 'react-native-reanimated'
 
 import { isValidPassword } from '@ambire-common/services/validations'
 import AmbireLogoWithBackgroundAndLogotype from '@common/assets/svg/AmbireLogoWithBackgroundAndLogotype'
@@ -31,7 +32,6 @@ const KeyStoreUnlockScreen = () => {
   const { t } = useTranslation()
 
   const { hasKeystoreRecovery } = useController('EmailVaultController').state
-
   const {
     state: { statuses, errorMessage },
     dispatch: keystoreDispatch
@@ -40,17 +40,10 @@ const KeyStoreUnlockScreen = () => {
 
   return (
     <MobileLayoutContainer>
-      <MobileLayoutWrapperMainContent>
-        <View
-          style={{
-            height: 324,
-            width: '100%',
-            ...spacings.mbSm
-          }}
-        >
+      <MobileLayoutWrapperMainContent withScroll>
+        <View style={{ height: 324, ...spacings.mbSm }}>
           <View
             style={{
-              width: '100%',
               height: '100%',
               borderRadius: BORDER_RADIUS_PRIMARY,
               overflow: 'hidden',
@@ -83,6 +76,7 @@ const KeyStoreUnlockScreen = () => {
             </Text>
           </View>
         </View>
+
         <View
           style={[
             flexbox.directionRow,
@@ -100,57 +94,56 @@ const KeyStoreUnlockScreen = () => {
             style={spacings.mr0}
           />
         </View>
-        <View style={[flexbox.flex1, flexbox.justifyCenter]}>
-          <Controller
-            control={control}
-            render={({ field: { onChange, onBlur, value } }) => (
-              <InputPassword
-                testID="passphrase-field"
-                onBlur={onBlur}
-                placeholder={t('Enter your password')}
-                autoFocus={isWeb}
-                inputStyle={{ height: 54 }} // 56-2px border
-                inputWrapperStyle={{ backgroundColor: theme.secondaryBackground, height: 56 }}
-                onChangeText={(val: string) => {
-                  onChange(val)
-                  if (errorMessage) {
-                    keystoreDispatch({
-                      type: 'method',
-                      params: {
-                        method: 'resetErrorState',
-                        args: []
-                      }
-                    })
-                  }
-                }}
-                isValid={!errors.password && isValidPassword(value)}
-                value={value}
-                onSubmitEditing={handleSubmit((data) => handleUnlock(data))}
-                error={passwordFieldError}
-                containerStyle={{ ...spacings.mb, width: '100%' }}
-              />
-            )}
-            name="password"
-          />
-          <Button
-            testID="button-unlock"
-            disabled={disableSubmit}
-            hasBottomSpacing={false}
-            text={statuses.unlockWithSecret === 'LOADING' ? t('Unlocking...') : t('Unlock')}
-            onPress={handleSubmit((data) => handleUnlock(data))}
-          />
-
-          {!!hasKeystoreRecovery && (
-            <Button
-              text={t('Forgot extension password?')}
-              type="ghost2"
-              hasBottomSpacing={false}
-              onPress={() => alert('Coming soon!')}
-              style={spacings.mtSm}
-              textStyle={{ textDecorationLine: 'underline' }}
+        <Animated.View style={flexbox.flex1} />
+        <Controller
+          control={control}
+          render={({ field: { onChange, onBlur, value } }) => (
+            <InputPassword
+              testID="passphrase-field"
+              onBlur={onBlur}
+              placeholder={t('Enter your password')}
+              autoFocus={isWeb}
+              inputStyle={{ height: 54 }} // 56-2px border
+              inputWrapperStyle={{ backgroundColor: theme.secondaryBackground, height: 56 }}
+              onChangeText={(val: string) => {
+                onChange(val)
+                if (errorMessage) {
+                  keystoreDispatch({
+                    type: 'method',
+                    params: {
+                      method: 'resetErrorState',
+                      args: []
+                    }
+                  })
+                }
+              }}
+              isValid={!errors.password && isValidPassword(value)}
+              value={value}
+              onSubmitEditing={handleSubmit((data) => handleUnlock(data))}
+              error={passwordFieldError}
+              containerStyle={{ ...spacings.mb, width: '100%' }}
             />
           )}
-        </View>
+          name="password"
+        />
+        <Button
+          testID="button-unlock"
+          disabled={disableSubmit}
+          hasBottomSpacing={false}
+          text={statuses.unlockWithSecret === 'LOADING' ? t('Unlocking...') : t('Unlock')}
+          onPress={handleSubmit((data) => handleUnlock(data))}
+        />
+        <Animated.View style={flexbox.flex1} />
+        {!!hasKeystoreRecovery && (
+          <Button
+            text={t('Forgot extension password?')}
+            type="ghost2"
+            hasBottomSpacing={false}
+            onPress={() => alert('Coming soon!')}
+            style={spacings.mtSm}
+            textStyle={{ textDecorationLine: 'underline' }}
+          />
+        )}
       </MobileLayoutWrapperMainContent>
     </MobileLayoutContainer>
   )
