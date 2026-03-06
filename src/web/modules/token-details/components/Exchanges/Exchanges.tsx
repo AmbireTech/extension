@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Image, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
+import { ExchangeInfo } from '@ambire-common/libs/portfolio/interfaces'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
@@ -35,19 +36,23 @@ const Exchanges: FC<Props> = ({ exchanges }) => {
   })
 
   const exchangesWithData = useMemo(() => {
-    return exchanges
-      .slice(0, 3)
-      .map((exchange) => {
-        const exchangeInfo = exchangeData ? exchangeData[exchange] : null
+    return (
+      exchanges
+        // Map before slice to ensure we have data for the exchanges we render
+        .map((exchange) => {
+          const exchangeInfo = exchangeData ? exchangeData[exchange] : null
 
-        if (!exchangeInfo) return null
+          if (!exchangeInfo) return null
 
-        return {
-          name: exchangeInfo.name,
-          icon: exchangeInfo.image
-        }
-      })
-      .filter((exchange): exchange is { name: string; icon: string } => exchange !== null)
+          return {
+            name: exchangeInfo.name,
+            image: exchangeInfo.image,
+            url: exchangeInfo.url
+          }
+        })
+        .filter((exchange): exchange is ExchangeInfo => exchange !== null)
+        .slice(0, 3)
+    )
   }, [exchangeData, exchanges])
 
   if (exchanges.length === 0) return null
@@ -86,7 +91,7 @@ const Exchanges: FC<Props> = ({ exchanges }) => {
               }}
             >
               <Image
-                source={{ uri: exchange.icon }}
+                source={{ uri: exchange.image }}
                 style={{ width: 16, height: 16, borderRadius: 8 }}
               />
             </View>
@@ -94,7 +99,11 @@ const Exchanges: FC<Props> = ({ exchanges }) => {
           <RightArrowIcon />
         </View>
       </AnimatedPressable>
-      <ExchangesBottomSheet open={open} close={close} exchanges={exchanges} sheetRef={sheetRef} />
+      <ExchangesBottomSheet
+        handleClose={close}
+        exchangesToRender={exchangesWithData}
+        sheetRef={sheetRef}
+      />
     </>
   )
 }
