@@ -122,7 +122,7 @@ const BaseTokenItem = ({
     >
       <View style={flexboxStyles.flex1}>
         <View style={[flexboxStyles.directionRow, flexboxStyles.flex1]}>
-          <View style={[spacings.mr, flexboxStyles.justifyCenter]}>
+          <View style={[spacings.mrTy, flexboxStyles.justifyCenter]}>
             {rewardsStyle ? (
               <Image source={rewardsImage as any} style={{ width: 40, height: 40 }} />
             ) : (
@@ -153,15 +153,16 @@ const BaseTokenItem = ({
                 <Text
                   selectable
                   color={textColor}
-                  fontSize={16}
+                  fontSize={15}
                   weight="semiBold"
                   numberOfLines={1}
+                  style={{ lineHeight: 20 }}
                 >
                   {symbol}
                 </Text>
                 <Text
                   selectable
-                  fontSize={14}
+                  fontSize={13}
                   weight="number_medium"
                   numberOfLines={1}
                   dataSet={createGlobalTooltipDataSet({
@@ -178,10 +179,10 @@ const BaseTokenItem = ({
               {extraActions}
             </View>
           </View>
-          <View style={flexboxStyles.alignEnd}>
+          <View style={[flexboxStyles.alignEnd, flexboxStyles.justifyCenter]}>
             <Text
               selectable
-              fontSize={16}
+              fontSize={15}
               weight="number_bold"
               color={textColor}
               style={{ lineHeight: 20 }}
@@ -193,7 +194,7 @@ const BaseTokenItem = ({
                 lineHeight: 18
               }}
               selectable
-              fontSize={14}
+              fontSize={13}
               appearance="secondaryText"
               weight="number_medium"
             >

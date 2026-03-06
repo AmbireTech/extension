@@ -230,7 +230,7 @@ const useGetTokenSelectProps = ({
           dataSet={tooltipIdNotSupported ? { tooltipId: tooltipIdNotSupported } : undefined}
           style={flexbox.flex1}
         >
-          <Text numberOfLines={1}>
+          <Text numberOfLines={1} style={{ lineHeight: 20 }}>
             <Text fontSize={16} weight="medium" numberOfLines={1}>
               {symbol}{' '}
             </Text>
@@ -256,20 +256,34 @@ const useGetTokenSelectProps = ({
       </>
     ) : (
       <>
-        <View style={[flexbox.directionRow, flexbox.flex1, flexbox.alignEnd]}>
+        <View
+          style={[
+            flexbox.flex1,
+            !isSelected && flexbox.directionRow,
+            !isSelected && flexbox.alignEnd
+          ]}
+        >
           <Text
             fontSize={16}
             weight="semiBold"
+            style={{ lineHeight: 20 }}
             numberOfLines={1}
             dataSet={{ tooltipId: tooltipIdNotSupported }}
           >
             {symbol}
           </Text>
-          {networkName && !isSelected ? (
-            <Text fontSize={14} weight="medium" appearance="secondaryText" style={spacings.mlTy}>
-              {` on ${networkName}`}
+          {!!networkName && (
+            <Text
+              fontSize={isSelected ? 12 : 14}
+              weight={isSelected ? 'regular' : 'medium'}
+              appearance="secondaryText"
+              ellipsizeMode="tail"
+              numberOfLines={1}
+              style={!isSelected && spacings.mlTy}
+            >
+              {`${isSelected ? '' : ' '}on ${networkName}`}
             </Text>
-          ) : null}
+          )}
         </View>
         {!isSelected && formattedBalancesLabel}
         {!isTokenNetworkSupported && (
