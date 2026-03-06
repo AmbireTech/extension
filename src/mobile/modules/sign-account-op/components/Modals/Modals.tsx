@@ -8,10 +8,6 @@ import SignAccountOpHardwareWalletSigningModal from '@common/modules/sign-accoun
 import { ModalsProps } from '@common/modules/sign-account-op/types/modals'
 import spacings from '@common/styles/spacings'
 import text from '@common/styles/utils/text'
-import { getUiType } from '@common/utils/uiType'
-import LedgerConnectModal from '@web/modules/hardware-wallet/components/LedgerConnectModal'
-
-const { isTab } = getUiType()
 
 const Modals: FC<ModalsProps> = ({
   renderedButNotNecessarilyVisibleModal,
@@ -42,7 +38,6 @@ const Modals: FC<ModalsProps> = ({
         id="warning-modal"
         closeBottomSheet={!slowPaymasterRequest ? dismissWarning : undefined}
         sheetRef={warningModalRef}
-        type={isTab ? 'modal' : 'bottom-sheet'}
         withBackdropBlur={false}
         shouldBeClosableOnDrag={false}
         autoOpen={autoOpen === 'warnings'}
@@ -82,13 +77,8 @@ const Modals: FC<ModalsProps> = ({
   }
 
   if (renderedButNotNecessarilyVisibleModal === 'ledger-connect') {
-    return (
-      <LedgerConnectModal
-        isVisible={shouldDisplayLedgerConnectModal}
-        handleClose={handleDismissLedgerConnectModal}
-        displayOptionToAuthorize={false}
-      />
-    )
+    // TODO: impl ledger connect modal
+    return null
   }
 
   if (renderedButNotNecessarilyVisibleModal === 'hw-sign' && signAccountOpState) {

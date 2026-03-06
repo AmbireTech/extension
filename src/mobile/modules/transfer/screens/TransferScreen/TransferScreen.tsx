@@ -15,8 +15,6 @@ import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
 import { getAddressFromAddressState } from '@ambire-common/utils/domains'
 import { getCallsCount } from '@ambire-common/utils/userRequest'
 import Alert from '@common/components/Alert'
-import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
-import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
@@ -25,10 +23,7 @@ import useController from '@common/hooks/useController'
 import useHasGasTank from '@common/hooks/useHasGasTank'
 import useNavigation from '@common/hooks/useNavigation'
 import useSyncedState from '@common/hooks/useSyncedState'
-import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
-import useWindowSize from '@common/hooks/useWindowSize'
-import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import BatchAdded from '@common/modules/sign-account-op/components/OneClick/BatchModal/BatchAdded'
 import Buttons from '@common/modules/sign-account-op/components/OneClick/Buttons'
@@ -45,16 +40,16 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@common/utils/links'
 import { getUiType } from '@common/utils/uiType'
-import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
-import { getTabLayoutPadding } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import { Content, Wrapper } from '@web/components/TransactionsScreen'
-import Modals from '@web/modules/sign-account-op/components/Modals'
+import {
+  MobileLayoutContainer,
+  MobileLayoutWrapperMainContent
+} from '@mobile/components/MobileLayoutWrapper'
+import Modals from '@mobile/modules/sign-account-op/components/Modals'
 
 const { isRequestWindow } = getUiType()
 
 const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   const { addToast } = useToast()
-  const { theme } = useTheme()
   const { state: transferState, dispatch: transferDispatch } = useController('TransferController')
   const { dispatch: requestsDispatch } = useController('RequestsController')
   const { dispatch: mainDispatch } = useController('MainController')
@@ -86,7 +81,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     }
   }, [amountInFiat])
 
-  const { navigate } = useNavigation()
+  const { navigate, goBack } = useNavigation()
   const { t } = useTranslation()
   const { visibleUserRequests } = useController('RequestsController').state
   const {
@@ -131,9 +126,6 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     },
     forceUpdateOnChangeList: [transferState.programmaticUpdateCounter]
   })
-
-  const { maxWidthSize } = useWindowSize()
-  const paddingHorizontalStyle = useMemo(() => getTabLayoutPadding(maxWidthSize), [maxWidthSize])
 
   const isLocalStateOutOfSync =
     controllerAmountFieldValue !== amountFieldValue ||
@@ -640,66 +632,44 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
 
   if (displayedView === 'safe-signed') {
     return (
-      <TabLayoutContainer
-        backgroundColor={theme.primaryBackground}
-        header={
-          <HeaderWithTitle
-            displayBackButtonIn="never"
-            title={isTopUp ? t('Top Up Gas Tank') : t('Send')}
-          />
-        }
-        withHorizontalPadding={false}
-        footer={null}
-        style={{ ...flexbox.alignEnd, ...spacings.pb }}
-      >
-        <TabLayoutWrapperMainContent
-          contentContainerStyle={{
-            ...spacings.pv0,
-            ...paddingHorizontalStyle,
-            ...flexbox.flex1
-          }}
-          withScroll={false}
+      <MobileLayoutContainer>
+        <MobileLayoutWrapperMainContent
+          withBackButton
+          onBackButtonPress={goBack}
+          title={isTopUp ? t('Top Up Gas Tank') : t('Send')}
         >
           <SafeSigned
             primaryButtonText={t('Open dashboard')}
             onPrimaryButtonPress={onBatchAddedPrimaryButtonPress}
           />
-        </TabLayoutWrapperMainContent>
-      </TabLayoutContainer>
+        </MobileLayoutWrapperMainContent>
+      </MobileLayoutContainer>
     )
   }
 
   return (
-    <Wrapper>
-      <Content buttons={buttons}>
+    <MobileLayoutContainer>
+      <MobileLayoutWrapperMainContent
+        withBackButton
+        onBackButtonPress={handleGoBackPress}
+        title={isTopUp ? t('Top Up Gas Tank') : t('Send')}
+        withScroll
+      >
         {transferState?.isInitialized ? (
           <View>
-            <ScrollableWrapper
-              style={flexbox.flex1}
-              contentContainerStyle={[
-                flexbox.flex1,
-                isTopUp ? { maxWidth: '100%', width: '100%' } : {}
-              ]}
-            >
-              <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mb]}>
-                <PanelBackButton onPress={handleGoBackPress} style={spacings.mrSm} />
-                <PanelTitle title={isTopUp ? t('Top up Gas Tank') : t('Send')} />
-                <View style={{ width: 40 }} />
-              </View>
-              <SendForm
-                addressInputState={addressInputState}
-                hasGasTank={hasGasTank}
-                amountErrorMessage={validationFormMsgs.amount.message || ''}
-                isRecipientAddressUnknown={isRecipientAddressUnknown}
-                isRecipientHumanizerKnownTokenOrSmartContract={
-                  isRecipientHumanizerKnownTokenOrSmartContract
-                }
-                amountFieldValue={amountFieldValue}
-                setAmountFieldValue={setAmountFieldValue}
-                addressStateFieldValue={addressStateFieldValue}
-                setAddressStateFieldValue={setAddressStateFieldValue}
-              />
-            </ScrollableWrapper>
+            <SendForm
+              addressInputState={addressInputState}
+              hasGasTank={hasGasTank}
+              amountErrorMessage={validationFormMsgs.amount.message || ''}
+              isRecipientAddressUnknown={isRecipientAddressUnknown}
+              isRecipientHumanizerKnownTokenOrSmartContract={
+                isRecipientHumanizerKnownTokenOrSmartContract
+              }
+              amountFieldValue={amountFieldValue}
+              setAmountFieldValue={setAmountFieldValue}
+              addressStateFieldValue={addressStateFieldValue}
+              setAddressStateFieldValue={setAddressStateFieldValue}
+            />
             {isTopUp && !hasGasTank && (
               <View style={spacings.ptLg}>
                 <Alert
@@ -749,26 +719,28 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
             style={{ marginLeft: 'auto', marginRight: 'auto' }}
           />
         )}
-      </Content>
-      <GasTankInfoModal
-        id="gas-tank-info"
-        sheetRef={gasTankSheetRef}
-        closeBottomSheet={closeGasTankInfoBottomSheet}
-        onPrimaryButtonPress={closeGasTankInfoBottomSheet}
-        portfolio={portfolio}
-        account={account}
-      />
-      <Estimation
-        updateType="Transfer&TopUp"
-        estimationModalRef={estimationModalRef}
-        closeEstimationModal={closeEstimationModalAndDispatch}
-        updateController={updateController}
-        handleUpdateStatus={handleUpdateStatus}
-        hasProceeded={hasProceeded}
-        signAccountOpController={signAccountOpController}
-        Modals={Modals}
-      />
-    </Wrapper>
+        <View style={flexbox.flex1} />
+        {buttons}
+        <GasTankInfoModal
+          id="gas-tank-info"
+          sheetRef={gasTankSheetRef}
+          closeBottomSheet={closeGasTankInfoBottomSheet}
+          onPrimaryButtonPress={closeGasTankInfoBottomSheet}
+          portfolio={portfolio}
+          account={account}
+        />
+        <Estimation
+          updateType="Transfer&TopUp"
+          estimationModalRef={estimationModalRef}
+          closeEstimationModal={closeEstimationModalAndDispatch}
+          updateController={updateController}
+          handleUpdateStatus={handleUpdateStatus}
+          hasProceeded={hasProceeded}
+          signAccountOpController={signAccountOpController}
+          Modals={Modals}
+        />
+      </MobileLayoutWrapperMainContent>
+    </MobileLayoutContainer>
   )
 }
 

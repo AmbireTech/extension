@@ -7,7 +7,7 @@ import GlassView from '@common/components/GlassView'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
-import ActionsPagination from '../ActionsPagination'
+import ActionsPagination from '../../../../../common/modules/action-requests/components/ActionsPagination'
 
 type Props = {
   onReject?: () => void
