@@ -10,10 +10,6 @@ import DedupePromise from '@web/extension-services/inpage/services/dedupePromise
 import PushEventHandlers from '@web/extension-services/inpage/services/pushEventsHandlers'
 import ReadyPromise from '@web/extension-services/inpage/services/readyPromise'
 import { initializeMessenger } from '@web/extension-services/messengers/initializeMessenger'
-import {
-  isCrossOriginFrame,
-  isTooDeepFrameInTheFrameHierarchy
-} from '@web/extension-services/utils/frames'
 import logger, { LOG_LEVELS, logInfoWithPrefix, logWarnWithPrefix } from '@web/utils/logger'
 
 export interface StateProvider {
@@ -226,6 +222,18 @@ export class EthereumProvider extends EventEmitter {
     if (!options?.deferInitialization) {
       this.#initConnection()
     }
+
+    return new Proxy(this, {
+      get: (target, prop, receiver) => {
+        // If the dApp accesses functional methods used for interaction,
+        // trigger connection initialization just-in-time. This optimization is
+        // needed for the pages with many nested iframes.
+        target.#initConnection()
+
+        const value = Reflect.get(target, prop, receiver)
+        return typeof value === 'function' ? value.bind(target) : value
+      }
+    })
   }
 
   #initConnection = () => {
@@ -345,7 +353,6 @@ export class EthereumProvider extends EventEmitter {
 
   // TODO: support multi request!
   request = async (data) => {
-    this.#initConnection()
     return this.#dedupePromise.call(data.method, () => this._request(data))
   }
 
@@ -456,13 +463,11 @@ export class EthereumProvider extends EventEmitter {
   }
 
   requestInternalMethods = (data) => {
-    this.#initConnection()
     return this.#dedupePromise.call(data.method, () => this._request(data))
   }
 
   // shim to MetaMask legacy api
   sendAsync = (payload, callback) => {
-    this.#initConnection()
     if (Array.isArray(payload)) {
       return Promise.all(
         payload.map(
@@ -483,7 +488,6 @@ export class EthereumProvider extends EventEmitter {
   }
 
   send = (payload, callback?) => {
-    this.#initConnection()
     if (typeof payload === 'string' && (!callback || Array.isArray(callback))) {
       // send(method, params? = [])
       return this.request({
@@ -534,12 +538,10 @@ export class EthereumProvider extends EventEmitter {
   }
 
   on = (event: string | symbol, handler: (...args: any[]) => void) => {
-    this.#initConnection()
     return super.on(event, handler)
   }
 
   once = (event: string | symbol, handler: (...args: any[]) => void) => {
-    this.#initConnection()
     return super.once(event, handler)
   }
 
