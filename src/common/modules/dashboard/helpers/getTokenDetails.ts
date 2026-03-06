@@ -59,6 +59,7 @@ const getAndFormatTokenDetails = (
   {
     flags: { rewardsType },
     chainId,
+    marketDataIn,
     priceIn,
     latestAmount,
     pendingAmount,
@@ -84,6 +85,9 @@ const getAndFormatTokenDetails = (
   const priceUSD = priceIn.find(
     ({ baseCurrency }: { baseCurrency: string }) => baseCurrency.toLowerCase() === 'usd'
   )?.price
+  const usdMarketData = marketDataIn.find(
+    ({ baseCurrency }: { baseCurrency: string }) => baseCurrency.toLowerCase() === 'usd'
+  )
   const balanceUSD = priceUSD
     ? Number(safeTokenAmountAndNumberMultiplication(amountish, decimals, priceUSD))
     : undefined
@@ -117,6 +121,8 @@ const getAndFormatTokenDetails = (
     isRewards,
     isVesting,
     isProjectedRewards,
+    change24hFormatted: ` ${(usdMarketData?.change24h || 0) >= 0 ? '+' : ''}${(usdMarketData?.change24h || 0).toFixed(2)}%`,
+    ...usdMarketData,
     ...pendingAmountsFormatted
   }
 }

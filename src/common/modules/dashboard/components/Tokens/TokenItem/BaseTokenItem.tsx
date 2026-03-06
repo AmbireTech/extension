@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react'
 import { Image, View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import { TokenResult } from '@ambire-common/libs/portfolio'
 import { FormatType } from '@ambire-common/utils/formatDecimals/formatDecimals'
@@ -8,21 +7,21 @@ import { FormatType } from '@ambire-common/utils/formatDecimals/formatDecimals'
 import rewardsImage from '@common/assets/images/AmbireLogoLikeCoin.png'
 import BatchIcon from '@common/assets/svg/BatchIcon'
 import PendingToBeConfirmedIcon from '@common/assets/svg/PendingToBeConfirmedIcon'
-import BottomSheet from '@common/components/BottomSheet'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
+import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
+import { ROUTES } from '@common/modules/router/constants/common'
 import spacings, { SPACING_2XL, SPACING_TY } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexboxStyles from '@common/styles/utils/flexbox'
 import { getTokenId } from '@common/utils/token'
 
-import TokenDetails from '../TokenDetails'
 import PendingBadge from './PendingBadge'
 import getStyles from './styles'
 
@@ -42,7 +41,6 @@ const BaseTokenItem = ({
   token,
   extraActions,
   rewardsStyle,
-  label,
   borderRadius,
   decimalRulesType = 'amount',
   hasBottomSpacing = false,
@@ -57,8 +55,8 @@ const BaseTokenItem = ({
   const { state: networks } = useController('NetworksController', (state) => state.networks)
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
+  const { navigate } = useNavigation()
 
-  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const [bindAnim, animStyle, isHovered] = useCustomHover({
     property: 'backgroundColor',
     values: { from: theme.primaryBackground, to: theme.secondaryBackground }
@@ -100,7 +98,15 @@ const BaseTokenItem = ({
   return (
     <AnimatedPressable
       testID={wrapperTestID || undefined}
-      onPress={() => (rewardsStyle && onPress ? onPress() : openBottomSheet())}
+      onPress={() =>
+        rewardsStyle && onPress
+          ? onPress()
+          : navigate(ROUTES.tokenDetails, {
+              state: {
+                tokenId
+              }
+            })
+      }
       style={[
         styles.container,
         {
@@ -114,14 +120,6 @@ const BaseTokenItem = ({
       ]}
       {...bindAnim}
     >
-      <BottomSheet
-        id={`token-details-${address}`}
-        sheetRef={sheetRef}
-        closeBottomSheet={closeBottomSheet}
-      >
-        <TokenDetails token={token} handleClose={closeBottomSheet} />
-      </BottomSheet>
-
       <View style={flexboxStyles.flex1}>
         <View style={[flexboxStyles.directionRow, flexboxStyles.flex1]}>
           <View style={[spacings.mr, flexboxStyles.justifyCenter]}>
@@ -135,8 +133,9 @@ const BaseTokenItem = ({
                 onGasTank={onGasTank}
                 containerHeight={40}
                 containerWidth={40}
-                width={28}
-                height={28}
+                width={32}
+                height={32}
+                networkSize={16}
               />
             )}
           </View>

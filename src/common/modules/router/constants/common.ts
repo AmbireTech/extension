@@ -15,7 +15,8 @@ const COMMON_ROUTES = {
   accountPicker: 'account-picker',
   onboardingCompleted: 'wallet-setup-completed',
   viewOnlyAccountAdder: 'view-only-account-adder',
-  safeImport: 'safe-import'
+  safeImport: 'safe-import',
+  tokenDetails: 'token-details'
 }
 
 const MOBILE_ROUTES = {
