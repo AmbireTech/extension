@@ -137,7 +137,9 @@ export const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainCon
           <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbXl]}>
             {!!withBackButton && <PanelBackButton onPress={onBackButtonPress} />}
             {!!title && <PanelTitle title={title} size={18} />}
-            {!!withBackButton && <View style={[{ width: 28 }, flexbox.alignEnd]}>{rightIcon}</View>}
+            {!!withBackButton && (
+              <View style={[{ width: 28 }, flexbox.alignCenter]}>{rightIcon}</View>
+            )}
           </View>
         )}
         <KeyboardAwareScrollView
@@ -170,7 +172,9 @@ export const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainCon
         <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbXl]}>
           {!!withBackButton && <PanelBackButton onPress={onBackButtonPress} />}
           {!!title && <PanelTitle title={title} size={18} />}
-          {!!withBackButton && <View style={{ width: 28 }} />}
+          {!!withBackButton && (
+            <View style={[{ width: 28 }, flexbox.alignCenter]}>{rightIcon}</View>
+          )}
         </View>
       )}
       {children}
