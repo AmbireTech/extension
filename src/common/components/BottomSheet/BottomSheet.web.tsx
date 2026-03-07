@@ -38,6 +38,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     autoWidth = false,
     shouldBeClosableOnDrag = true,
     withBackdropBlur,
+    customRenderer,
     customZIndex,
     isScrollEnabled = true
   } = props
@@ -117,7 +118,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
           avoidKeyboardLikeIOS
           modalTopOffset={modalTopOffset}
           threshold={90}
-          adjustToContentHeight={adjustToContentHeight}
+          adjustToContentHeight={customRenderer ? false : adjustToContentHeight}
           disableScrollIfPossible={false}
           withOverlay={false}
           onBackButtonPress={() => true}
@@ -159,8 +160,23 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
           }}
           onClose={() => setIsOpen(false)}
           onClosed={() => !!onClosed && onClosed()}
+          customRenderer={
+            customRenderer ? (
+              <View
+                testID={isOpen ? 'bottom-sheet' : undefined}
+                style={[
+                  isScrollEnabled && isScrollable ? spacings.prTy : {},
+                  common.fullWidth,
+                  { flex: 1 },
+                  containerInnerWrapperStyles
+                ]}
+              >
+                {customRenderer}
+              </View>
+            ) : undefined
+          }
         >
-          {!flatListProps && (
+          {!flatListProps && !customRenderer && (
             <View
               testID={isOpen ? 'bottom-sheet' : undefined}
               style={[

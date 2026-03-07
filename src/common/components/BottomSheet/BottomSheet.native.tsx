@@ -33,13 +33,15 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     onOpen,
     onBackdropPress,
     flatListProps,
+    sectionListProps,
     scrollViewProps,
     backgroundColor = 'primaryBackground',
     autoWidth = false,
     shouldBeClosableOnDrag = true,
     withBackdropBlur,
     customZIndex,
-    isScrollEnabled = true
+    isScrollEnabled = true,
+    customRenderer
   } = props
 
   const { styles, theme } = useTheme(getStyles)
@@ -115,12 +117,12 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
           avoidKeyboardLikeIOS
           modalTopOffset={modalTopOffset}
           threshold={90}
-          adjustToContentHeight={adjustToContentHeight}
+          adjustToContentHeight={customRenderer ? false : adjustToContentHeight}
           disableScrollIfPossible={false}
           withOverlay={false}
           onBackButtonPress={() => true}
           panGestureEnabled={shouldBeClosableOnDrag}
-          {...(!flatListProps
+          {...(!flatListProps && !sectionListProps
             ? {
                 scrollViewProps: {
                   bounces: false,
@@ -143,6 +145,15 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
                 }
               }
             : {})}
+          {...(sectionListProps
+            ? {
+                sectionListProps: {
+                  bounces: false,
+                  keyboardShouldPersistTaps: 'handled',
+                  ...(sectionListProps || {})
+                }
+              }
+            : {})}
           openAnimationConfig={{
             timing: { duration: ANIMATION_DURATION, delay: 0 }
           }}
@@ -156,8 +167,22 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
           }}
           onClose={() => setIsOpen(false)}
           onClosed={() => !!onClosed && onClosed()}
+          customRenderer={
+            customRenderer ? (
+              <View
+                testID={isOpen ? 'bottom-sheet' : undefined}
+                style={[
+                  common.fullWidth,
+                  { flex: 1, marginBottom: bottom },
+                  containerInnerWrapperStyles
+                ]}
+              >
+                {customRenderer}
+              </View>
+            ) : undefined
+          }
         >
-          {!flatListProps && (
+          {!flatListProps && !sectionListProps && !customRenderer && (
             <View
               testID={isOpen ? 'bottom-sheet' : undefined}
               style={[common.fullWidth, { marginBottom: bottom }, containerInnerWrapperStyles]}

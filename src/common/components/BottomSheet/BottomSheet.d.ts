@@ -17,7 +17,9 @@ export interface BottomSheetProps {
   style?: ViewStyle
   containerInnerWrapperStyles?: ViewStyle
   flatListProps?: ModalizeProps['flatListProps']
+  sectionListProps?: ModalizeProps['sectionListProps']
   scrollViewProps?: ModalizeProps['scrollViewProps']
+  customRenderer?: ModalizeProps['customRenderer']
   backgroundColor?: 'primaryBackground' | 'secondaryBackground'
   autoWidth?: boolean
   autoOpen?: boolean

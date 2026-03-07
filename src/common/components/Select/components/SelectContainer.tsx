@@ -1,12 +1,13 @@
 /* eslint-disable react/prop-types */
 import React, { FC, useCallback, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { TextInput, View } from 'react-native'
+import { SectionList, TextInput, View } from 'react-native'
 
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Search from '@common/components/Search'
 import BottomSheetHeader from '@common/components/Select/components/BottomSheetHeader'
 import Text from '@common/components/Text'
+import { isMobile } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -20,7 +21,9 @@ import SelectedMenuOption from './SelectedMenuOption'
 
 type Props = CommonSelectProps &
   ReturnType<typeof useSelectInternal> & {
-    children: React.ReactNode
+    children?: React.ReactNode
+    listRef?: any
+    sectionListProps?: any
   }
 
 const SelectContainer: FC<Props> = ({
@@ -49,10 +52,12 @@ const SelectContainer: FC<Props> = ({
   control,
   children,
   size = DEFAULT_SELECT_SIZE,
-  mode = 'select',
+  mode = isMobile ? 'bottomSheet' : 'select',
   testID,
   renderSelectedOption,
-  setIsMenuOpen
+  setIsMenuOpen,
+  listRef,
+  sectionListProps
 }) => {
   const { t } = useTranslation()
   const { styles } = useTheme(getStyles)
@@ -125,7 +130,7 @@ const SelectContainer: FC<Props> = ({
                 }}
               />
             )}
-            {children}
+            {sectionListProps ? <SectionList {...sectionListProps} /> : children}
             {!!withSearch && menuProps.position === 'top' && (
               <Search
                 placeholder={searchPlaceholder || t('Search...')}
@@ -146,6 +151,8 @@ const SelectContainer: FC<Props> = ({
           isMenuOpen={isMenuOpen}
           setIsMenuOpen={setIsMenuOpen}
           toggleMenu={toggleMenu}
+          contentRef={listRef}
+          sectionListProps={sectionListProps}
         >
           <View style={[spacings.phSm, spacings.ptLg]}>
             <ModalHeader title={bottomSheetTitle} handleClose={toggleMenu} />

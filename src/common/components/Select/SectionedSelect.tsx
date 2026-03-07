@@ -53,26 +53,26 @@ const SectionedSelect = ({
       menuProps={{ ...selectData.menuProps, ...(props.menuProps || {}) }}
       id={testID}
       testID={testID}
-    >
-      <SectionList
-        ref={listRef}
-        sections={filteredData as SectionedSelectProps['sections']}
-        renderItem={renderItem as any}
-        onLayout={handleLayout}
-        renderSectionHeader={renderSectionHeader}
-        keyExtractor={keyExtractor}
-        initialNumToRender={15}
-        windowSize={10}
-        maxToRenderPerBatch={20}
-        SectionSeparatorComponent={SectionSeparatorComponent}
-        removeClippedSubviews
-        getItemLayout={getItemLayout as any}
-        ListEmptyComponent={<EmptyListPlaceholder placeholderText={emptyListPlaceholderText} />}
-        stickySectionHeadersEnabled={stickySectionHeadersEnabled}
-        onScroll={handleScroll}
-        scrollEventThrottle={16}
-      />
-    </SelectContainer>
+      listRef={listRef}
+      sectionListProps={{
+        ref: listRef,
+        sections: filteredData as SectionedSelectProps['sections'],
+        renderItem: renderItem as any,
+        onLayout: handleLayout,
+        renderSectionHeader: renderSectionHeader,
+        keyExtractor: keyExtractor,
+        initialNumToRender: 15,
+        windowSize: 10,
+        maxToRenderPerBatch: 20,
+        SectionSeparatorComponent: SectionSeparatorComponent,
+        removeClippedSubviews: true,
+        getItemLayout: getItemLayout as any,
+        ListEmptyComponent: <EmptyListPlaceholder placeholderText={emptyListPlaceholderText} />,
+        stickySectionHeadersEnabled: stickySectionHeadersEnabled,
+        onScroll: handleScroll,
+        scrollEventThrottle: 16
+      }}
+    />
   )
 }
 
