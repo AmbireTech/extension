@@ -5,6 +5,7 @@ import AccountData from '@common/components/AccountData'
 import AccountDataDetailed from '@common/components/AccountDataDetailed'
 import AmbireLogoHorizontalWithOG from '@common/components/AmbireLogoHorizontalWithOG'
 import Text from '@common/components/Text'
+import { isMobile } from '@common/config/env'
 import { titleChangeEventStream } from '@common/hooks/useNavigation'
 import useRoute from '@common/hooks/useRoute'
 import useWindowSize from '@common/hooks/useWindowSize'
@@ -62,7 +63,7 @@ const Wrapper = ({
 const Title = ({ children }: { children: React.ReactNode }) => {
   return (
     <Text
-      fontSize={20}
+      fontSize={isMobile ? 18 : 20}
       weight="medium"
       style={[
         {

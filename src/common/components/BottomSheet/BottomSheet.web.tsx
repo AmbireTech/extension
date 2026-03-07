@@ -32,7 +32,9 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     onClosed,
     onOpen,
     onBackdropPress,
+    HeaderComponent,
     flatListProps,
+    sectionListProps,
     scrollViewProps,
     backgroundColor = 'primaryBackground',
     autoWidth = false,
@@ -118,12 +120,13 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
           avoidKeyboardLikeIOS
           modalTopOffset={modalTopOffset}
           threshold={90}
+          HeaderComponent={HeaderComponent}
           adjustToContentHeight={customRenderer ? false : adjustToContentHeight}
           disableScrollIfPossible={false}
           withOverlay={false}
           onBackButtonPress={() => true}
           panGestureEnabled={shouldBeClosableOnDrag}
-          {...(!flatListProps
+          {...(!flatListProps && !sectionListProps
             ? {
                 scrollViewProps: {
                   bounces: false,
@@ -143,6 +146,15 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
                   bounces: false,
                   keyboardShouldPersistTaps: 'handled',
                   ...(flatListProps || {})
+                }
+              }
+            : {})}
+          {...(sectionListProps
+            ? {
+                sectionListProps: {
+                  bounces: false,
+                  keyboardShouldPersistTaps: 'handled',
+                  ...(sectionListProps || {})
                 }
               }
             : {})}
@@ -176,7 +188,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
             ) : undefined
           }
         >
-          {!flatListProps && !customRenderer && (
+          {!flatListProps && !sectionListProps && !customRenderer && (
             <View
               testID={isOpen ? 'bottom-sheet' : undefined}
               style={[

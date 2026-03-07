@@ -32,6 +32,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     onClosed,
     onOpen,
     onBackdropPress,
+    HeaderComponent,
     flatListProps,
     sectionListProps,
     scrollViewProps,
@@ -117,6 +118,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
           avoidKeyboardLikeIOS
           modalTopOffset={modalTopOffset}
           threshold={90}
+          HeaderComponent={HeaderComponent}
           adjustToContentHeight={customRenderer ? false : adjustToContentHeight}
           disableScrollIfPossible={false}
           withOverlay={false}
