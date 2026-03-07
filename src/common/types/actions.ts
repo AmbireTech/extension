@@ -41,6 +41,11 @@ type UpdateNavigationUrl = {
   params: { url: string; route?: string; searchParams?: { [key: string]: string } }
 }
 
+type UpdateUiViewRoute = {
+  type: 'UPDATE_UI_VIEW_ROUTE'
+  params: { id: string; route?: string; searchParams?: { [key: string]: string } }
+}
+
 type MainControllerAccountPickerInitLedgerAction = {
   type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LEDGER'
 }
@@ -103,6 +108,7 @@ type OpenExtensionPopupAction = {
 
 export type Action =
   | UpdateNavigationUrl
+  | UpdateUiViewRoute
   | InitControllerStateAction
   | MainControllerAccountPickerInitLatticeAction
   | MainControllerAccountPickerInitTrezorAction
