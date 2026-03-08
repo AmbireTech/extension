@@ -235,9 +235,14 @@ const SignAccountOpScreen = () => {
                   !!signAccountOpState.account.safeCreation && (
                     <ScrollView style={[{ maxHeight: 140 }, spacings.mb]}>
                       <SafeOwners
-                        signAccountOpController={signAccountOpState}
+                        account={signAccountOpState.account}
                         onSign={handleChangeSigningKey}
                         isSignLoading={isSignLoading}
+                        signingKeyAddr={signAccountOpState.accountOp.signingKeyAddr}
+                        chainId={signAccountOpState.accountOp.chainId.toString()}
+                        signed={signAccountOpState.accountOp.signed || []}
+                        importedKeys={signAccountOpState.accountKeyStoreKeys}
+                        threshold={signAccountOpState.threshold}
                       />
                     </ScrollView>
                   )}

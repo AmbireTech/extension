@@ -2,9 +2,8 @@ import React, { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ColorValue, View } from 'react-native'
 
-import { SigningStatus } from '@ambire-common/controllers/signAccountOp/signAccountOp'
+import { Account } from '@ambire-common/interfaces/account'
 import { Key } from '@ambire-common/interfaces/keystore'
-import { ISignAccountOpController } from '@ambire-common/interfaces/signAccountOp'
 import AccountKey from '@common/components/AccountKey'
 import SafeKeyWrapper from '@common/components/SafeKeyWrapper'
 import Text from '@common/components/Text'
@@ -14,33 +13,37 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 const SafeOwners = ({
-  signAccountOpController,
+  account,
   backgroundColor = '#fff',
   onSign,
-  isSignLoading
+  isSignLoading,
+  signingKeyAddr,
+  chainId,
+  signed = [],
+  importedKeys,
+  threshold
 }: {
-  signAccountOpController: ISignAccountOpController | null
+  account: Account
   backgroundColor?: ColorValue
   onSign?: (signingKeyAddr: Key['addr'], _chosenSigningKeyType: Key['type']) => void
   isSignLoading: boolean
+  signingKeyAddr: string | null
+  chainId: string
+  signed: string[]
+  importedKeys: Key[]
+  threshold: number
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { accountStates } = useController('AccountsController').state
 
   const owners = useMemo(() => {
-    if (!signAccountOpController?.account.safeCreation) return []
-
-    const state =
-      accountStates[signAccountOpController.accountOp.accountAddr]?.[
-        signAccountOpController.accountOp.chainId.toString()
-      ]
+    const state = accountStates[account.addr]?.[chainId]
     if (!state) return []
 
-    const signed = signAccountOpController.accountOp.signed || []
     return state.associatedKeys
       .map((assKey) => {
-        const newKey = signAccountOpController.accountKeyStoreKeys.find((k) => k.addr === assKey)
+        const newKey = importedKeys.find((k) => k.addr === assKey)
         if (!newKey)
           return {
             addr: assKey,
@@ -56,22 +59,17 @@ const SafeOwners = ({
         if (!a.isImported && b.isImported) return 1
         return 0
       })
-  }, [
-    signAccountOpController?.account.safeCreation,
-    signAccountOpController?.accountKeyStoreKeys,
-    signAccountOpController?.accountOp.signed,
-    signAccountOpController?.accountOp.accountAddr,
-    signAccountOpController?.accountOp.chainId,
-    accountStates
-  ])
+  }, [importedKeys, account.addr, chainId, accountStates, signed])
 
-  if (!signAccountOpController) return null
+  const hasOneFromAllSigned = useMemo(() => {
+    return !!owners.find((o) => o.hasSigned)
+  }, [owners])
 
   return (
     <View style={[flexbox.justifyCenter, flexbox.alignCenter, spacings.mtTy]}>
       <View style={[flexbox.directionRow, flexbox.justifyCenter, flexbox.alignCenter]}>
         <Text fontSize={16} appearance="primaryText" weight="semiBold">
-          {t(`${signAccountOpController.threshold} out of ${owners.length} signatures required:`)}
+          {t(`${threshold} out of ${owners.length} signatures required:`)}
         </Text>
       </View>
       <View style={[flexbox.justifyCenter, flexbox.alignCenter, spacings.mt, { width: '100%' }]}>
@@ -82,12 +80,10 @@ const SafeOwners = ({
             hasSigned={o.hasSigned}
             addr={o.addr}
             type={o.type}
-            isQueued={signAccountOpController.status?.type === SigningStatus.Queued}
+            isQueued={hasOneFromAllSigned}
             style={[i === owners.length - 1 ? spacings.mb0 : spacings.mbTy, { width: '100%' }]}
             onSign={onSign}
-            isSignLoading={
-              isSignLoading && signAccountOpController.accountOp.signingKeyAddr === o.addr
-            }
+            isSignLoading={isSignLoading && signingKeyAddr === o.addr}
           >
             <AccountKey
               addr={o.addr}
@@ -95,7 +91,7 @@ const SafeOwners = ({
               type={o.type || 'internal'}
               dedicatedToOneSA={false}
               isImported
-              account={signAccountOpController.account}
+              account={account}
               isLast
               keyIconColor={theme.neutral600 as string}
               tooltipContent={o.hasSigned ? 'Signed' : o.isImported ? 'Pending' : 'Not imported'}
