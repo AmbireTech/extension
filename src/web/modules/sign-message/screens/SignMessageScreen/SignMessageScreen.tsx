@@ -362,9 +362,6 @@ const SignMessageScreen = () => {
           handleClose={() => setIsChooseSignerShown(false)}
           selectedAccountKeyStoreKeys={selectedAccountKeyStoreKeys}
           account={account}
-          signed={[]} // todo
-          threshold={threshold}
-          handleSetMultisigSigners={handleSign}
         />
         {view === 'reinitializing' && (
           <View style={[StyleSheet.absoluteFill, flexbox.center]}>

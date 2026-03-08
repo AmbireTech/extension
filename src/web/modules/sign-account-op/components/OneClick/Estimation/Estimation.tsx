@@ -72,7 +72,6 @@ const OneClickEstimation = ({
     isSignLoading,
     renderedButNotNecessarilyVisibleModal,
     handleChangeSigningKey,
-    handleSetMultisigSigners,
     onSignButtonClick,
     isSignDisabled,
     warningToPromptBeforeSign,
@@ -125,7 +124,6 @@ const OneClickEstimation = ({
               isSigning={isSignLoading || !signAccountOpController.readyToSign}
               isChooseSignerShown={isChooseSignerShown}
               isChooseFeePayerKeyShown={isChooseFeePayerKeyShown}
-              handleSetMultisigSigners={handleSetMultisigSigners}
               handleChooseKey={
                 isChooseFeePayerKeyShown ? handleChangeFeePayerKeyType : handleChangeSigningKey
               }
@@ -139,8 +137,6 @@ const OneClickEstimation = ({
                 setIsChooseSignerShown(false)
                 setIsChooseFeePayerKeyShown(false)
               }}
-              signed={signAccountOpController.accountOp.signed || []}
-              threshold={signAccountOpController.threshold}
             />
             {signAccountOpController?.canBroadcast && (
               <Estimation

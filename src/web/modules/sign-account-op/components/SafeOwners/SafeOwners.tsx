@@ -15,10 +15,14 @@ import flexbox from '@common/styles/utils/flexbox'
 
 const SafeOwners = ({
   signAccountOpController,
-  backgroundColor = '#fff'
+  backgroundColor = '#fff',
+  onSign,
+  isSignLoading
 }: {
   signAccountOpController: ISignAccountOpController | null
   backgroundColor?: ColorValue
+  onSign?: (signingKeyAddr: Key['addr'], _chosenSigningKeyType: Key['type']) => void
+  isSignLoading: boolean
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
@@ -76,8 +80,14 @@ const SafeOwners = ({
             key={o.addr}
             isDisabled={!o.isImported}
             hasSigned={o.hasSigned}
+            addr={o.addr}
+            type={o.type}
             isQueued={signAccountOpController.status?.type === SigningStatus.Queued}
             style={[i === owners.length - 1 ? spacings.mb0 : spacings.mbTy, { width: '100%' }]}
+            onSign={onSign}
+            isSignLoading={
+              isSignLoading && signAccountOpController.accountOp.signingKeyAddr === o.addr
+            }
           >
             <AccountKey
               addr={o.addr}
