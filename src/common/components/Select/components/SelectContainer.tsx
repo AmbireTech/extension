@@ -1,5 +1,5 @@
 /* eslint-disable react/prop-types */
-import React, { FC, useCallback, useEffect, useRef } from 'react'
+import React, { FC, ReactNode, useCallback, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   FlatList,
@@ -18,7 +18,7 @@ import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 
 import getStyles, { DEFAULT_SELECT_SIZE } from '../styles'
-import { CommonSelectProps } from '../types'
+import { CommonSelectProps, RenderSelectedOptionParams } from '../types'
 import useSelectInternal from '../useSelectInternal'
 import BottomSheetContainer from './BottomSheetContainer'
 import MenuContainer from './MenuContainer'
@@ -30,6 +30,7 @@ type Props = CommonSelectProps &
     listRef?: React.Ref<any>
     sectionListProps?: SectionListProps<any, any> & { ref?: React.Ref<any> }
     flatListProps?: FlatListProps<any> & { ref?: React.Ref<any> }
+    renderHeaderChildren?: ({}: RenderSelectedOptionParams) => ReactNode
   }
 
 const SelectContainer: FC<Props> = ({
@@ -64,7 +65,8 @@ const SelectContainer: FC<Props> = ({
   setIsMenuOpen,
   listRef,
   sectionListProps,
-  flatListProps
+  flatListProps,
+  renderHeaderChildren
 }) => {
   const { t } = useTranslation()
   const { styles } = useTheme(getStyles)
@@ -170,6 +172,7 @@ const SelectContainer: FC<Props> = ({
           HeaderComponent={
             <View>
               <ModalHeader title={bottomSheetTitle} handleClose={toggleMenu} />
+              {renderHeaderChildren?.({ toggleMenu, setIsMenuOpen, isMenuOpen, selectRef })}
               {!!withSearch && (
                 <Search
                   placeholder={searchPlaceholder || t('Search...')}

@@ -24,6 +24,7 @@ import {
 } from '@common/components/Select/types'
 import Text from '@common/components/Text'
 import TitleAndIcon from '@common/components/TitleAndIcon'
+import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useNavigation from '@common/hooks/useNavigation'
@@ -55,7 +56,7 @@ const ADDRESS_BOOK_VISIBLE_VALIDATION: Validation = {
 }
 
 const SelectedMenuOption: React.FC<{
-  selectRef: React.RefObject<any>
+  selectRef?: React.RefObject<any>
   validation: Validation
   isMenuOpen: boolean
   ensAddress: string
@@ -66,6 +67,7 @@ const SelectedMenuOption: React.FC<{
   setIsMenuOpen: (isMenuOpen: boolean) => void
   filteredContacts: Contact[]
   renderConfirmAddress?: () => React.ReactNode
+  type?: 'input' | 'selected-menu-option'
 }> = ({
   selectRef,
   filteredContacts,
@@ -77,9 +79,11 @@ const SelectedMenuOption: React.FC<{
   setAddress,
   disabled,
   setIsMenuOpen,
-  renderConfirmAddress
+  renderConfirmAddress,
+  type = 'selected-menu-option'
 }) => {
   const [isFocused, setIsFocused] = useState(false)
+  const { theme } = useTheme()
   const prevFilteredContactsLength = usePrevious(filteredContacts.length)
 
   const isValidAddress = useMemo(
@@ -89,6 +93,8 @@ const SelectedMenuOption: React.FC<{
   const prevIsValidAddress = usePrevious(isValidAddress)
 
   useEffect(() => {
+    if (type === 'input') return
+
     if (isMenuOpen && !filteredContacts.length && !!isFocused) {
       setIsMenuOpen(false)
     }
@@ -112,26 +118,34 @@ const SelectedMenuOption: React.FC<{
   return (
     <AddressInput
       inputBorderWrapperRef={selectRef}
-      validation={isMenuOpen ? ADDRESS_BOOK_VISIBLE_VALIDATION : validation}
+      validation={
+        isMenuOpen && type === 'selected-menu-option' ? ADDRESS_BOOK_VISIBLE_VALIDATION : validation
+      }
       containerStyle={styles.inputContainer}
       ensAddress={ensAddress}
       isRecipientDomainResolving={isRecipientDomainResolving}
       value={address}
-      withDetails
+      withDetails={type === 'selected-menu-option'}
       onChangeText={setAddress}
       disabled={disabled}
-      renderConfirmAddress={renderConfirmAddress}
+      renderConfirmAddress={type === 'input' ? undefined : renderConfirmAddress}
       onFocus={() => {
         setIsFocused(true)
+        if (type === 'input') return
+
         if (filteredContacts.length) {
           setIsMenuOpen(true)
         }
       }}
       onBlur={() => {
+        if (type === 'input') return
+
         setIsFocused(false)
       }}
       onClearButtonPress={() => setIsMenuOpen(true)}
-      button={address ? undefined : isMenuOpen ? <UpArrowIcon /> : <DownArrowIcon />}
+      button={
+        type === 'input' || address ? undefined : isMenuOpen ? <UpArrowIcon /> : <DownArrowIcon />
+      }
       buttonProps={{
         onPress: () => {
           if (!address || filteredContacts.length) {
@@ -139,6 +153,7 @@ const SelectedMenuOption: React.FC<{
           }
         }
       }}
+      inputWrapperStyle={type === 'input' ? { backgroundColor: theme.neutral400 } : undefined}
       buttonStyle={{ ...spacings.pv0, ...spacings.ph, ...spacings.mr0, ...spacings.ml0 }}
     />
   )
@@ -215,7 +230,7 @@ const Recipient: React.FC<Props> = ({
 
   const walletAccountsSourcedContactOptions = useMemo(
     () =>
-      filteredContacts
+      (isMobile ? contacts : filteredContacts)
         .filter((contact) => contact.isWalletAccount)
         .map((contact, index) => ({
           value: contact.address,
@@ -239,7 +254,7 @@ const Recipient: React.FC<Props> = ({
 
   const manuallyAddedContactOptions = useMemo(
     () =>
-      filteredContacts
+      (isMobile ? contacts : filteredContacts)
         .filter((contact) => !contact.isWalletAccount)
         .map((contact) => ({
           value: contact.address,
@@ -374,6 +389,32 @@ const Recipient: React.FC<Props> = ({
         emptyListPlaceholderText={t('No contacts found')}
         menuPosition="bottom"
         bottomSheetTitle={t('Add recipient')}
+        renderHeaderChildren={({ toggleMenu, isMenuOpen, selectRef }) => (
+          <SelectedMenuOption
+            type="input"
+            selectRef={selectRef}
+            setIsMenuOpen={toggleMenu}
+            filteredContacts={filteredContacts}
+            isMenuOpen={isMenuOpen}
+            validation={validation}
+            ensAddress={ensAddress}
+            isRecipientDomainResolving={isRecipientDomainResolving}
+            address={address}
+            setAddress={setAddress}
+            disabled={disabled}
+            renderConfirmAddress={() => (
+              <AddToAddressBook
+                isRecipientHumanizerKnownTokenOrSmartContract={
+                  isRecipientHumanizerKnownTokenOrSmartContract
+                }
+                isRecipientAddressUnknown={isRecipientAddressUnknown}
+                isRecipientAddressSameAsSender={actualAddress === account?.addr}
+                addressValidationMsg={addressValidationMsg}
+                onAddToAddressBookPress={openBottomSheet}
+              />
+            )}
+          />
+        )}
         containerStyle={spacings.mb0}
       />
 
