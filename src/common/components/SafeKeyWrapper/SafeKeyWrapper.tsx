@@ -57,7 +57,7 @@ const SafeKeyWrapper = ({
         />
       )}
       {!isQueued && isDisabled && !hasSigned && (
-        <NoEntryIcon width={17} height={17} style={styles.icon} />
+        <NoEntryIcon width={18} height={18} style={styles.icon} />
       )}
       {isQueued && isDisabled && !hasSigned && (
         <Spinner style={{ width: 17, height: 17, ...styles.icon }} />
