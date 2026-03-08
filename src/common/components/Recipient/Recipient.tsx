@@ -1,6 +1,7 @@
 import Fuse from 'fuse.js'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Pressable } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { Contact } from '@ambire-common/controllers/addressBook/addressBook'
@@ -115,7 +116,9 @@ const SelectedMenuOption: React.FC<{
     isValidAddress
   ])
 
-  return (
+  const isButtonMode = type === 'selected-menu-option' && isMobile
+
+  const content = (
     <AddressInput
       inputBorderWrapperRef={selectRef}
       validation={
@@ -128,6 +131,8 @@ const SelectedMenuOption: React.FC<{
       withDetails={type === 'selected-menu-option'}
       onChangeText={setAddress}
       disabled={disabled}
+      editable={!isButtonMode}
+      pointerEvents={isButtonMode ? 'none' : 'auto'}
       renderConfirmAddress={type === 'input' ? undefined : renderConfirmAddress}
       onFocus={() => {
         setIsFocused(true)
@@ -156,6 +161,12 @@ const SelectedMenuOption: React.FC<{
       inputWrapperStyle={type === 'input' ? { backgroundColor: theme.neutral400 } : undefined}
       buttonStyle={{ ...spacings.pv0, ...spacings.ph, ...spacings.mr0, ...spacings.ml0 }}
     />
+  )
+
+  return isButtonMode ? (
+    <Pressable onPress={() => setIsMenuOpen(true)}>{content}</Pressable>
+  ) : (
+    content
   )
 }
 
