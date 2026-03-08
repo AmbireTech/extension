@@ -373,6 +373,7 @@ const Recipient: React.FC<Props> = ({
         renderSelectedOption={renderSelectedOption}
         emptyListPlaceholderText={t('No contacts found')}
         menuPosition="bottom"
+        bottomSheetTitle={t('Add recipient')}
         containerStyle={spacings.mb0}
       />
 

@@ -133,7 +133,7 @@ const AddressBookContact: FC<Props> = ({
           smartAccountType={smartAccountType}
           displayTypeBadge={displayTypeBadge}
         />
-        <View>
+        <View style={{ flex: 1 }}>
           {isEditable ? (
             <Editable
               fontSize={fontSize}

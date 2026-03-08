@@ -3,9 +3,8 @@ import { ScrollView, View } from 'react-native'
 import { Modalize } from 'react-native-modalize'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import { isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
-import spacings, { SPACING, SPACING_MD, SPACING_SM } from '@common/styles/spacings'
+import spacings, { SPACING_SM } from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import { getUiType } from '@common/utils/uiType'
 import { Portal } from '@gorhom/portal'
@@ -99,12 +98,12 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
               : {},
 
             {
-              paddingHorizontal: isWeb ? (isModal ? SPACING_MD : SPACING_SM) : SPACING_SM,
+              paddingHorizontal: SPACING_SM,
               backgroundColor: theme[backgroundColor]
             },
             style
           ]}
-          rootStyle={[isPopup && isModal ? spacings.phSm : {}]}
+          rootStyle={[isModal && spacings.phSm]}
           handleStyle={[
             styles.dragger,
             isModal
@@ -134,6 +133,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
                     nestedScrollEnabled: true,
                     contentContainerStyle: { flex: 1 }
                   }),
+                  style: { marginBottom: bottom + SPACING_SM },
                   ...(scrollViewProps || {})
                 }
               }
@@ -143,6 +143,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
                 flatListProps: {
                   bounces: false,
                   keyboardShouldPersistTaps: 'handled',
+                  style: { marginBottom: bottom + SPACING_SM },
                   ...(flatListProps || {})
                 }
               }
@@ -152,6 +153,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
                 sectionListProps: {
                   bounces: false,
                   keyboardShouldPersistTaps: 'handled',
+                  style: { marginBottom: bottom + SPACING_SM },
                   ...(sectionListProps || {})
                 }
               }
@@ -173,11 +175,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
             customRenderer ? (
               <View
                 testID={isOpen ? 'bottom-sheet' : undefined}
-                style={[
-                  common.fullWidth,
-                  { flex: 1, marginBottom: bottom },
-                  containerInnerWrapperStyles
-                ]}
+                style={[common.fullWidth, containerInnerWrapperStyles]}
               >
                 {customRenderer}
               </View>
@@ -187,7 +185,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
           {!flatListProps && !sectionListProps && !customRenderer && (
             <View
               testID={isOpen ? 'bottom-sheet' : undefined}
-              style={[common.fullWidth, { marginBottom: bottom }, containerInnerWrapperStyles]}
+              style={[common.fullWidth, containerInnerWrapperStyles]}
             >
               {children}
             </View>
