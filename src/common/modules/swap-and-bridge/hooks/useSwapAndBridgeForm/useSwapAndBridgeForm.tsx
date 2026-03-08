@@ -384,7 +384,7 @@ const useSwapAndBridgeForm = () => {
       // open the estimation modal on one click method;
       // build/add a swap user request on batch
       if (isOneClickMode) {
-        if (networkUserRequests.length > 0) {
+        if (!!account?.safeCreation || networkUserRequests.length > 0) {
           requestsDispatch({
             type: 'method',
             params: {
@@ -429,7 +429,8 @@ const useSwapAndBridgeForm = () => {
       openPriceImpactModal,
       quote,
       networkUserRequests,
-      fromSelectedToken
+      fromSelectedToken,
+      account?.safeCreation
     ]
   )
 
