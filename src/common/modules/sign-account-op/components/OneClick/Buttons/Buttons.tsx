@@ -10,6 +10,7 @@ import Button from '@common/components/Button'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
+import { isMobile, isWeb } from '@common/config/env'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@common/utils/uiType'
@@ -94,14 +95,20 @@ const Buttons: FC<Props> = ({
   }, [proceedBtnText, callsCount, t])
 
   return (
-    <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifyEnd]}>
+    <View
+      style={[
+        isWeb ? flexbox.directionRow : { flexDirection: 'column-reverse' },
+        isWeb && flexbox.alignCenter,
+        flexbox.justifyEnd
+      ]}
+    >
       {!isRequestWindow && (
         <View
           dataSet={createGlobalTooltipDataSet({
             id: 'batch-btn-tooltip',
             content: batchDisabledReason
           })}
-          style={spacings.mrLg}
+          style={isWeb && spacings.mrLg}
         >
           <Button
             hasBottomSpacing={false}
@@ -112,7 +119,7 @@ const Buttons: FC<Props> = ({
                   })
                 : t('Start a batch')
             }
-            size="smaller"
+            size={isWeb ? 'smaller' : 'regular'}
             disabled={startBatchingDisabled}
             type="secondary"
             tooltipDataSet={createGlobalTooltipDataSet({
@@ -120,7 +127,7 @@ const Buttons: FC<Props> = ({
               content: startBatchingInfo
             })}
             childrenPosition="left"
-            style={{ minWidth: 160, ...spacings.phMd }}
+            style={isWeb ? { minWidth: 160, ...spacings.phMd } : {}}
             onPress={() => {
               if (isLocalStateOutOfSync) return
 
@@ -137,6 +144,7 @@ const Buttons: FC<Props> = ({
           id: 'proceed-btn-tooltip',
           content: oneClickDisabledReason
         })}
+        style={isMobile && spacings.mbSm}
       >
         {shouldHoldToProceed ? (
           <HoldToProceedButton
@@ -160,7 +168,7 @@ const Buttons: FC<Props> = ({
 
               handleSubmitForm(true)
             }}
-            size="smaller"
+            size={isWeb ? 'smaller' : 'regular'}
             testID="proceed-btn"
           />
         )}
