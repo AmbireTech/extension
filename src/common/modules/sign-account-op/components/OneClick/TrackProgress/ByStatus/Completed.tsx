@@ -11,6 +11,7 @@ import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@common/utils/links'
 
 type CompletedProps = {
+  isLoading?: boolean
   title: string
   titleSecondary: string
   openExplorerText: string
@@ -19,6 +20,7 @@ type CompletedProps = {
 }
 
 const Completed: FC<CompletedProps> = ({
+  isLoading,
   title,
   titleSecondary,
   openExplorerText,
@@ -42,7 +44,7 @@ const Completed: FC<CompletedProps> = ({
 
   return (
     <View style={flexbox.alignCenter}>
-      <SuccessAnimation style={spacings.mbSm} />
+      <SuccessAnimation style={spacings.mbSm} isLoading={isLoading} />
       <Text fontSize={20} weight="medium" style={spacings.mbTy} testID="txn-status">
         {title}
       </Text>
@@ -62,8 +64,10 @@ const Completed: FC<CompletedProps> = ({
             {
               backgroundColor: theme.primaryAccent100,
               borderRadius: 64
-            }
+            },
+            isLoading && { opacity: 0 }
           ]}
+          disabled={isLoading}
         >
           <Text
             weight="medium"

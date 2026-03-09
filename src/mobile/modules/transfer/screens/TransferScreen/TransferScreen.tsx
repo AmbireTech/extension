@@ -557,6 +557,8 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   }
 
   if (displayedView === 'track') {
+    const isLoading = submittedAccountOp?.status === AccountOpStatus.BroadcastedButNotConfirmed
+
     return (
       <TrackProgress
         onPrimaryButtonPress={navigateOut}
@@ -571,23 +573,28 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
           })
         }}
       >
-        {submittedAccountOp?.status === AccountOpStatus.BroadcastedButNotConfirmed && (
-          <InProgress title={isTopUp ? t('Confirming your top-up') : t('Confirming your transfer')}>
-            <Text fontSize={16} weight="medium" appearance="secondaryText">
-              {t('Almost there!')}
-            </Text>
-          </InProgress>
-        )}
         {(submittedAccountOp?.status === AccountOpStatus.Success ||
-          submittedAccountOp?.status === AccountOpStatus.UnknownButPastNonce) && (
+          submittedAccountOp?.status === AccountOpStatus.UnknownButPastNonce ||
+          isLoading) && (
           <Completed
-            title={isTopUp ? t('Top up ready!') : t('Transfer done!')}
+            isLoading={isLoading}
+            title={
+              isLoading
+                ? isTopUp
+                  ? t('Confirming your top-up')
+                  : t('Confirming your transfer')
+                : isTopUp
+                  ? t('Top up ready!')
+                  : t('Transfer done!')
+            }
             titleSecondary={
-              isTopUp
-                ? t('You can now use your gas tank')
-                : t('{{symbol}} delivered!', {
-                    symbol: latestBroadcastedToken?.symbol || 'Token'
-                  })
+              isLoading
+                ? t('Almost there!')
+                : isTopUp
+                  ? t('You can now use your gas tank')
+                  : t('{{symbol}} delivered!', {
+                      symbol: latestBroadcastedToken?.symbol || 'Token'
+                    })
             }
             explorerLink={explorerLink}
             openExplorerText="View Transfer"
