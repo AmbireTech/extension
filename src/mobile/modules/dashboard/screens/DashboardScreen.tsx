@@ -72,6 +72,9 @@ const DashboardScreen = () => {
     [animatedOverviewHeight, dashboardOverviewSize.height, lastOffsetY, scrollUpStartedAt]
   )
 
+  const { state } = useController('RequestsController')
+  console.log(state)
+
   if (!account) return null
 
   return (

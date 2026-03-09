@@ -6,7 +6,6 @@ import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
 interface Style {
-  contentContainer: ViewStyle
   informationCircle: ViewStyle
   footerContainer: ViewStyle
   footer: ViewStyle
@@ -16,11 +15,6 @@ interface Style {
 
 const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
   StyleSheet.create<Style>({
-    contentContainer: {
-      // ...spacings.phSm,
-      ...spacings.pbSm,
-      ...flexbox.flex1
-    },
     informationCircle: {
       ...flexbox.alignSelfCenter,
       ...spacings.pbLg
