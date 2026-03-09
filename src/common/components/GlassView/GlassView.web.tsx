@@ -10,11 +10,9 @@ import { engine } from '@web/constants/browserapi'
 
 import { GlassViewProps } from './GlassView'
 import {
-  buildFilterId,
   generateSpecularMap,
+  getCachedDisplacementFilter,
   getCachedSpecularMap,
-  getOrInjectDisplacementFilter,
-  releaseDisplacementFilter,
   setCachedSpecularMap
 } from './helpers.web'
 
@@ -32,25 +30,16 @@ const GlassView: React.FC<GlassViewProps & ViewProps> = ({
   const { themeType } = useTheme()
   const divRef = useRef<HTMLDivElement>(null)
   const [specularDataUrl, setSpecularDataUrl] = useState<string | null>(null)
-  const [filterId, setFilterId] = useState<string | null>(null)
-  const filterIdRef = useRef<string | null>(null)
+  const [displacementDataUrl, setDisplacementDataUrl] = useState<string | null>(null)
 
   const shineBase = shineColor || (themeType === THEME_TYPES.LIGHT ? '#ffffff' : '#96A1B1')
 
-  // Release the filter on unmount.
-  useEffect(
-    () => () => {
-      if (filterIdRef.current) releaseDisplacementFilter(filterIdRef.current)
-    },
-    []
-  )
-
   const backdropFilter = useMemo(() => {
-    if (engine !== 'webkit' || isSimpleBlur || !filterId) return `blur(${blurAmount}px)`
+    if (engine !== 'webkit' || isSimpleBlur || !displacementDataUrl) return `blur(${blurAmount}px)`
     const brightness = themeType === THEME_TYPES.DARK ? 1.1 : 1
     const saturate = themeType === THEME_TYPES.DARK ? 1.5 : 1
-    return `blur(${blurAmount / 2}px) url(#${filterId}) blur(${blurAmount}px) brightness(${brightness}) saturate(${saturate})`
-  }, [blurAmount, filterId, isSimpleBlur, themeType])
+    return `blur(${blurAmount / 2}px) url('${displacementDataUrl}') blur(${blurAmount}px) brightness(${brightness}) saturate(${saturate})`
+  }, [blurAmount, displacementDataUrl, isSimpleBlur, themeType])
 
   const customProperties = useMemo(
     () =>
@@ -89,24 +78,12 @@ const GlassView: React.FC<GlassViewProps & ViewProps> = ({
       chromaticAberration: 3
     })
 
-    // Inject (or reuse) a correctly-sized filter.
-    const updateFilter = (w: number, h: number) => {
+    const updateDisplacement = (w: number, h: number) => {
       if (engine !== 'webkit' || isSimpleBlur) {
-        if (filterIdRef.current) {
-          releaseDisplacementFilter(filterIdRef.current)
-          filterIdRef.current = null
-          setFilterId(null)
-        }
+        setDisplacementDataUrl(null)
         return
       }
-      const opts = buildDisplaceOpts(w, h)
-      const newId = buildFilterId(opts)
-      if (newId !== filterIdRef.current) {
-        if (filterIdRef.current) releaseDisplacementFilter(filterIdRef.current)
-        getOrInjectDisplacementFilter(opts)
-        filterIdRef.current = newId
-        setFilterId(newId)
-      }
+      setDisplacementDataUrl(getCachedDisplacementFilter(buildDisplaceOpts(w, h)))
     }
 
     // Calculate or get cached first
@@ -122,11 +99,11 @@ const GlassView: React.FC<GlassViewProps & ViewProps> = ({
         setCachedSpecularMap(opts0, dataUrl)
         setSpecularDataUrl(dataUrl)
       }
-      updateFilter(w0, h0)
+      updateDisplacement(w0, h0)
     }
 
     const scheduleResize = (w: number, h: number) => {
-      updateFilter(w, h)
+      updateDisplacement(w, h)
 
       const opts = buildSpecularOpts(w, h)
       const cached = getCachedSpecularMap(opts)

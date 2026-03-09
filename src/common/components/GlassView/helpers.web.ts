@@ -26,51 +26,14 @@ export function setCachedSpecularMap(opts: SpecularMapOptions, dataUrl: string):
 }
 
 // ---------------------------------------------------------------------------
-// Shared DOM SVG filter registry
-// Filters are injected once into a hidden <svg> in <head> and referenced by
-// id (e.g. url(#glass-displace-r12-d2-s100-ca3)). The browser compiles each
-// filter graph once and shares it across all elements using the same id.
-// Ref-counted so the node is removed when the last consumer unmounts.
+// Displacement filter data URL cache.
+// Same SVG structure as the original — cached by rounded dimensions + params
+// so the string is only built once per unique configuration per session.
 // ---------------------------------------------------------------------------
 
-const injectedFilters = new Map<string, number>()
-let sharedSvgEl: SVGSVGElement | null = null
+const displacementCache = new Map<string, string>()
 
-function getSharedSvg(): SVGSVGElement {
-  if (sharedSvgEl && sharedSvgEl.isConnected) return sharedSvgEl
-  sharedSvgEl = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
-  sharedSvgEl.setAttribute('aria-hidden', 'true')
-  Object.assign(sharedSvgEl.style, {
-    position: 'absolute',
-    width: '0',
-    height: '0',
-    overflow: 'hidden',
-    pointerEvents: 'none'
-  })
-  document.head.appendChild(sharedSvgEl)
-  return sharedSvgEl
-}
-
-export function getOrInjectDisplacementFilter(opts: DisplacementOptions): string {
-  const id = buildFilterId(opts)
-  const refCount = injectedFilters.get(id) ?? 0
-  if (refCount === 0) injectFilter(id, opts)
-  injectedFilters.set(id, refCount + 1)
-  return `url(#${id})`
-}
-
-export function releaseDisplacementFilter(filterId: string): void {
-  const refCount = injectedFilters.get(filterId) ?? 0
-  if (refCount <= 1) {
-    injectedFilters.delete(filterId)
-    const node = sharedSvgEl?.getElementById(filterId)
-    node?.parentElement?.removeChild(node)
-  } else {
-    injectedFilters.set(filterId, refCount - 1)
-  }
-}
-
-export function buildFilterId({
+function buildDisplacementKey({
   width,
   height,
   radius,
@@ -78,78 +41,45 @@ export function buildFilterId({
   strength = 100,
   chromaticAberration = 0
 }: DisplacementOptions): string {
-  // Round to nearest pixel — sub-pixel layout differences share the same filter.
-  return `glass-displace-w${Math.round(width)}-h${Math.round(height)}-r${radius}-d${depth}-s${strength}-ca${chromaticAberration}`
+  return `${Math.round(width)}_${Math.round(height)}_${radius}_${depth}_${strength}_${chromaticAberration}`
 }
 
-function injectFilter(id: string, opts: DisplacementOptions): void {
-  const { radius, depth, strength = 100, chromaticAberration = 0 } = opts
-  const width = Math.round(opts.width)
-  const height = Math.round(opts.height)
-  const svg = getSharedSvg()
-  const ns = 'http://www.w3.org/2000/svg'
+export function getCachedDisplacementFilter(opts: DisplacementOptions): string {
+  const key = buildDisplacementKey(opts)
+  const cached = displacementCache.get(key)
+  if (cached) return cached
+  const url = buildDisplacementFilterUrl(opts)
+  displacementCache.set(key, url)
+  return url
+}
 
-  const filter = document.createElementNS(ns, 'filter')
-  filter.setAttribute('id', id)
-  filter.setAttribute('x', '0')
-  filter.setAttribute('y', '0')
-  filter.setAttribute('width', String(width))
-  filter.setAttribute('height', String(height))
-  filter.setAttribute('colorInterpolationFilters', 'sRGB')
-  filter.setAttribute('filterUnits', 'userSpaceOnUse')
-
-  const dmDataUrl = getDisplacementMap({ height, width, radius, depth })
-
-  const makeDisplace = (scale: number, result: string) => {
-    const fe = document.createElementNS(ns, 'feDisplacementMap')
-    fe.setAttribute('in', 'SourceGraphic')
-    fe.setAttribute('in2', 'displacementMap')
-    fe.setAttribute('scale', String(scale))
-    fe.setAttribute('xChannelSelector', 'R')
-    fe.setAttribute('yChannelSelector', 'G')
-    fe.setAttribute('result', result)
-    return fe
-  }
-
-  const makeColorMatrix = (inResult: string, channel: 'R' | 'G' | 'B', result: string) => {
-    const fe = document.createElementNS(ns, 'feColorMatrix')
-    fe.setAttribute('in', inResult)
-    fe.setAttribute('type', 'matrix')
-    const r = channel === 'R' ? 1 : 0
-    const g = channel === 'G' ? 1 : 0
-    const b = channel === 'B' ? 1 : 0
-    fe.setAttribute('values', `${r} 0 0 0 0  0 ${g} 0 0 0  0 0 ${b} 0 0  0 0 0 1 0`)
-    fe.setAttribute('result', result)
-    return fe
-  }
-
-  const feImage = document.createElementNS(ns, 'feImage')
-  feImage.setAttribute('x', '0')
-  feImage.setAttribute('y', '0')
-  feImage.setAttribute('width', String(width))
-  feImage.setAttribute('height', String(height))
-  feImage.setAttribute('preserveAspectRatio', 'none')
-  feImage.setAttribute('href', dmDataUrl)
-  feImage.setAttribute('result', 'displacementMap')
-
-  const dispR = makeDisplace(strength + chromaticAberration * 2, 'dispR')
-  const matR = makeColorMatrix('dispR', 'R', 'displacedR')
-  const dispG = makeDisplace(strength + chromaticAberration, 'dispG')
-  const matG = makeColorMatrix('dispG', 'G', 'displacedG')
-  const dispB = makeDisplace(strength, 'dispB')
-  const matB = makeColorMatrix('dispB', 'B', 'displacedB')
-
-  const blendRG = document.createElementNS(ns, 'feBlend')
-  blendRG.setAttribute('in', 'displacedR')
-  blendRG.setAttribute('in2', 'displacedG')
-  blendRG.setAttribute('mode', 'screen')
-
-  const blendB = document.createElementNS(ns, 'feBlend')
-  blendB.setAttribute('in2', 'displacedB')
-  blendB.setAttribute('mode', 'screen')
-
-  filter.append(feImage, dispR, matR, dispG, matG, dispB, matB, blendRG, blendB)
-  svg.appendChild(filter)
+function buildDisplacementFilterUrl({
+  height,
+  width,
+  radius,
+  depth,
+  strength = 100,
+  chromaticAberration = 0
+}: DisplacementOptions): string {
+  const dm = getDisplacementMap({ height, width, radius, depth })
+  return (
+    'data:image/svg+xml;utf8,' +
+    encodeURIComponent(
+      `<svg height="${height}" width="${width}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">` +
+        `<defs><filter id="displace" colorInterpolationFilters="sRGB">` +
+        `<feImage x="0" y="0" height="${height}" width="${width}" href="${dm}" result="displacementMap"/>` +
+        `<feDisplacementMap transformOrigin="center" in="SourceGraphic" in2="displacementMap" scale="${strength + chromaticAberration * 2}" xChannelSelector="R" yChannelSelector="G"/>` +
+        `<feColorMatrix type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="displacedR"/>` +
+        `<feDisplacementMap transformOrigin="center" in="SourceGraphic" in2="displacementMap" scale="${strength + chromaticAberration}" xChannelSelector="R" yChannelSelector="G"/>` +
+        `<feColorMatrix type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" result="displacedG"/>` +
+        `<feDisplacementMap transformOrigin="center" in="SourceGraphic" in2="displacementMap" scale="${strength}" xChannelSelector="R" yChannelSelector="G"/>` +
+        `<feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" result="displacedB"/>` +
+        `<feBlend in="displacedR" in2="displacedG" mode="screen"/>` +
+        `<feBlend in2="displacedB" mode="screen"/>` +
+        `</filter></defs></svg>`
+    ) +
+    '#displace'
+  )
 }
 
 export type DisplacementOptions = {
