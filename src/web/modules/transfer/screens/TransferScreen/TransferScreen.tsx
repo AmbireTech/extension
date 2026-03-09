@@ -468,7 +468,6 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
           isRecipientAddressViewOnly
         }
         onRecipientAddressUnknownAgree={onRecipientAddressUnknownAgree}
-        isSafe={!!account?.safeCreation}
       />
     )
   }, [
@@ -484,8 +483,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     isRecipientAddressFirstTimeSend,
     isRecipientAddressViewOnly,
     onRecipientAddressUnknownAgree,
-    addTransaction,
-    account?.safeCreation
+    addTransaction
   ])
 
   const handleGoBackPress = useCallback(() => {

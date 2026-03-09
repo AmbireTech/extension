@@ -200,7 +200,6 @@ const SwapAndBridgeScreen = () => {
         isBridge={isBridge}
         networkUserRequests={networkUserRequests}
         isLocalStateOutOfSync={isLocalStateOutOfSync}
-        isSafe={!!account?.safeCreation}
       />
     )
   }, [
@@ -211,8 +210,7 @@ const SwapAndBridgeScreen = () => {
     isBridge,
     networkUserRequests,
     isLocalStateOutOfSync,
-    shouldDisableAddToBatch,
-    account?.safeCreation
+    shouldDisableAddToBatch
   ])
 
   if (!sessionIds.includes(sessionId)) {
