@@ -59,6 +59,7 @@ import TransactionHistorySettingsScreen from '@web/modules/settings/screens/Tran
 import SignAccountOpScreen from '@web/modules/sign-account-op/screens/SignAccountOpScreen'
 import SignMessageScreen from '@web/modules/sign-message/screens/SignMessageScreen'
 import SwapAndBridgeScreen from '@web/modules/swap-and-bridge/screens/SwapAndBridgeScreen'
+import TokenDetailsScreen from '@web/modules/token-details/screens/TokenDetailsScreen'
 import TransferScreen from '@web/modules/transfer/screens/TransferScreen'
 
 const MainRoutes = () => {
@@ -182,6 +183,7 @@ const MainRoutes = () => {
           <Route path={WEB_ROUTES.decryptRequest} element={<DecryptRequestScreen />} />
 
           <Route path={WEB_ROUTES.menu} element={<NavMenu />} />
+          <Route path={WEB_ROUTES.tokenDetails} element={<TokenDetailsScreen />} />
           <Route path={WEB_ROUTES.accountSelect} element={<AccountSelectScreen />} />
           <Route path={WEB_ROUTES.receive} element={<ReceiveScreen />} />
           <Route path={WEB_ROUTES.apps} element={<DappCatalogScreen />} />

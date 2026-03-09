@@ -268,7 +268,7 @@ const WatchTokenRequestScreen = () => {
   const tokenDetails = useMemo(() => {
     const token = portfolioToken || temporaryToken
 
-    return token && token?.flags && getAndFormatTokenDetails(token as TokenResult, networks)
+    return token && token?.flags && getAndFormatTokenDetails(token, networks)
   }, [temporaryToken, portfolioToken, networks])
 
   if (networkWithFailedRPC && networkWithFailedRPC?.length > 0 && !!temporaryToken) {

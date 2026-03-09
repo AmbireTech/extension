@@ -4,47 +4,45 @@ import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
-import { getCoinGeckoTokenApiUrl, getCoinGeckoTokenUrl } from '@ambire-common/consts/coingecko'
 import { TokenResult } from '@ambire-common/libs/portfolio'
 import { getTokenAmount } from '@ambire-common/libs/portfolio/helpers'
 import { getIsNetworkSupported } from '@ambire-common/libs/swapAndBridge/swapAndBridge'
-import InfoIcon from '@common/assets/svg/InfoIcon'
 import InvisibilityIcon from '@common/assets/svg/InvisibilityIcon'
 import SendIcon from '@common/assets/svg/SendIcon'
 import SwapAndBridgeIcon from '@common/assets/svg/SwapAndBridgeIcon'
 import TopUpIcon from '@common/assets/svg/TopUpIcon'
-import ModalHeader from '@common/components/BottomSheet/ModalHeader'
-import Button from '@common/components/Button'
-import GlassView from '@common/components/GlassView'
+import VisibilityIcon from '@common/assets/svg/VisibilityIcon'
+import FooterGlassView from '@common/components/FooterGlassView'
+import LayoutWrapper from '@common/components/LayoutWrapper'
+import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
 import useController from '@common/hooks/useController'
 import useHasGasTank from '@common/hooks/useHasGasTank'
 import useNavigation from '@common/hooks/useNavigation'
+import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
+import Header from '@common/modules/header/components/Header/Header'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import { storage } from '@common/services/storage'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { openInTab } from '@common/utils/links'
 import { getTokenId } from '@common/utils/token'
 import { RELAYER_URL } from '@env'
+import TokenDetailsButton from '@web/modules/token-details/components/Button'
+import Exchanges from '@web/modules/token-details/components/Exchanges'
+import HideTokenModal from '@web/modules/token-details/components/HideTokenModal'
+import TokenData from '@web/modules/token-details/components/TokenData'
+import TokenDetailsTransactionHistory from '@web/modules/token-details/components/TransactionHistory'
 
-import TokenDetailsButton from './Button'
-import HideTokenModal from './HideTokenModal'
 import getStyles from './styles'
 
-const TokenDetails = ({
-  token,
-  handleClose
-}: {
-  token: TokenResult | null
-  handleClose: () => void
-}) => {
+const TokenDetailsScreen = () => {
   const { styles, theme } = useTheme(getStyles)
   const { navigate } = useNavigation()
+  const { state } = useRoute()
   const {
     ref: hideTokenModalRef,
     open: openHideTokenModal,
@@ -52,25 +50,36 @@ const TokenDetails = ({
   } = useModalize()
   const { addToast } = useToast()
   const { t } = useTranslation()
-  const { state: account } = useController('SelectedAccountController', (state) => state.account)
+  const {
+    state: { account, portfolio }
+  } = useController('SelectedAccountController')
   const { state: supportedChainIds } = useController(
     'SwapAndBridgeController',
     (state) => state.supportedChainIds
   )
-  const { dispatch: portfolioDispatch } = useController('PortfolioController')
+  const {
+    dispatch: portfolioDispatch,
+    state: { tokenPreferences }
+  } = useController('PortfolioController')
   const { state: networks } = useController('NetworksController', (state) => state.networks)
-  const [coinGeckoTokenSlug, setCoinGeckoTokenSlug] = useState('')
-  const [isTokenInfoLoading, setIsTokenInfoLoading] = useState(false)
   const [doNotDisplayHideTokenModal, setDoNotDisplayHideTokenModal] = useState(false)
   const [gasTankAssets, setGasTankAssets] = useState<{ chainId: number; address: string }[] | null>(
     null
   )
+  const token = useMemo(() => {
+    if (!state?.tokenId) return null
+    return portfolio.tokens.find((t) => getTokenId(t) === state.tokenId)
+  }, [portfolio, state?.tokenId])
+
   const [gasTankAssetsError, setGasTankAssetsError] = useState<string | null>(null)
   const network = useMemo(
     () => networks.find((n) => n.chainId === token?.chainId),
     [networks, token?.chainId]
   )
 
+  const isHidden = tokenPreferences.find(
+    (tp) => tp.chainId === token?.chainId && tp.address === token?.address
+  )?.isHidden
   // if the token is a gas tank token, all actions except
   // top up and maybe token info should be disabled
   const isGasTankToken = !!token?.flags.onGasTank
@@ -78,7 +87,6 @@ const TokenDetails = ({
   const isGasTankOrRewardsToken = isGasTankToken || isRewardsToken
   const isAmountZero = token && getTokenAmount(token) === 0n
   const canToToppedUp = token?.flags.canTopUpGasTank
-  const tokenId = token ? getTokenId(token) : ''
   const isNetworkNotSupportedForSwapAndBridge = !getIsNetworkSupported(supportedChainIds, network)
   const shouldDisableSwapAndBridge =
     isNetworkNotSupportedForSwapAndBridge || isGasTankOrRewardsToken || isAmountZero
@@ -120,6 +128,41 @@ const TokenDetails = ({
         setGasTankAssets(null)
       })
   }, [t])
+
+  const hideToken = useCallback(() => {
+    if (!token) return
+    portfolioDispatch({
+      type: 'method',
+      params: {
+        method: 'toggleHideToken',
+        args: [
+          {
+            address: token.address,
+            chainId: token.chainId
+          },
+          account?.addr,
+          true
+        ]
+      }
+    })
+  }, [portfolioDispatch, token, account?.addr])
+
+  const handleHideTokenFromButton = useCallback(async () => {
+    if (doNotDisplayHideTokenModal) hideToken()
+    else openHideTokenModal()
+  }, [hideToken, openHideTokenModal, doNotDisplayHideTokenModal])
+
+  const handleHideTokenFromModal = useCallback(
+    async (doNotShowModalAnymore: boolean) => {
+      storage
+        .set('doNotShowAgainModalHideToken', doNotShowModalAnymore)
+        .catch(() => console.error('Failed to record value for doNotShowAgainModalHideToken'))
+      setDoNotDisplayHideTokenModal(doNotShowModalAnymore)
+      hideToken()
+      closeHideTokenModal()
+    },
+    [hideToken, closeHideTokenModal]
+  )
 
   const actions = useMemo(
     () => [
@@ -221,152 +264,88 @@ const TokenDetails = ({
       //   strokeWidth: 1
       // },
       {
-        id: 'info',
-        text: t('Token Info'),
-        icon: InfoIcon,
-        onPress: async () => {
-          if (!coinGeckoTokenSlug || !token || !networks.length) return
-
-          if (!network) {
-            addToast(t('Network not found'), { type: 'error' })
-            return
-          }
-
-          try {
-            await openInTab({ url: getCoinGeckoTokenUrl(coinGeckoTokenSlug) })
-            handleClose()
-          } catch {
-            addToast(t('Could not open token info'), { type: 'error' })
-          }
-        },
-        isDisabled: !coinGeckoTokenSlug,
-        tooltipText:
-          !coinGeckoTokenSlug && !isTokenInfoLoading
-            ? t('No data found for this token on CoinGecko.')
-            : undefined
+        id: 'hide-unhide',
+        testID: 'hide-token-button',
+        isDisabled: isGasTankOrRewardsToken,
+        tooltipText: isGasTankOrRewardsToken
+          ? t('Hiding is not available for Gas Tank or Reward tokens.')
+          : undefined,
+        text: isHidden ? t('Unhide') : t('Hide'),
+        icon: isHidden ? VisibilityIcon : InvisibilityIcon,
+        // @TODO: Handle unhide and make the UX good
+        onPress: handleHideTokenFromButton
       }
     ],
     [
       t,
       isGasTankOrRewardsToken,
       isAmountZero,
-      canToToppedUp,
-      coinGeckoTokenSlug,
-      navigate,
-      networks,
-      addToast,
-      token,
-      handleClose,
-      account?.safeCreation,
-      network,
+      unavailableBecauseGasTankOrRewardsTokenTooltipText,
       shouldDisableSwapAndBridge,
       isNetworkNotSupportedForSwapAndBridge,
-      unavailableBecauseGasTankOrRewardsTokenTooltipText,
-      isTokenInfoLoading,
+      network?.name,
+      canToToppedUp,
       hasGasTank,
+      account?.safeCreation,
+      gasTankAssetsError,
+      isHidden,
+      handleHideTokenFromButton,
+      navigate,
       gasTankAssets,
-      gasTankAssetsError
+      addToast
     ]
   )
-  useEffect(() => {
-    if (!token?.address || !token?.chainId || !networks.length) return
-
-    setIsTokenInfoLoading(true)
-
-    if (!network) {
-      addToast(t('Network not found'), { type: 'error' })
-      setIsTokenInfoLoading(false)
-      return
-    }
-
-    const tokenAddr = token.address
-    const geckoChainId = network.platformId
-    const geckoNativeCoinId = network.nativeAssetId
-    const tokenInfoUrl = getCoinGeckoTokenApiUrl({ tokenAddr, geckoChainId, geckoNativeCoinId })
-    fetch(tokenInfoUrl)
-      .then((response) => response.json())
-      .then((result) => setCoinGeckoTokenSlug(result.web_slug))
-      .finally(() => setIsTokenInfoLoading(false))
-  }, [t, token?.address, token?.chainId, networks, addToast, network])
 
   if (!token) return null
 
   const {
     flags: { onGasTank },
     chainId,
-    symbol,
-    address
+    address,
+    symbol
   } = token
 
   const {
     priceUSDFormatted,
     balanceUSDFormatted,
+    change24h,
+    change24hFormatted,
     isRewards,
     isVesting,
-    isProjectedRewards,
     balanceFormatted
   } = getAndFormatTokenDetails(token, networks)
 
-  const hideToken = useCallback(() => {
-    if (!token) return
-    portfolioDispatch({
-      type: 'method',
-      params: {
-        method: 'toggleHideToken',
-        args: [
-          {
-            address: token.address,
-            chainId: token.chainId
-          },
-          account?.addr,
-          true
-        ]
-      }
-    })
-  }, [portfolioDispatch, token, account?.addr])
-
-  const handleHideTokenFromButton = useCallback(async () => {
-    if (doNotDisplayHideTokenModal) hideToken()
-    else openHideTokenModal()
-  }, [hideToken, openHideTokenModal, doNotDisplayHideTokenModal])
-
-  const handleHideTokenFromModal = useCallback(
-    async (doNotShowModalAnymore: boolean) => {
-      storage
-        .set('doNotShowAgainModalHideToken', doNotShowModalAnymore)
-        .catch(() => console.error('Failed to record value for doNotShowAgainModalHideToken'))
-      setDoNotDisplayHideTokenModal(doNotShowModalAnymore)
-      hideToken()
-      closeHideTokenModal()
-      handleClose()
-    },
-    [hideToken, closeHideTokenModal, handleClose]
-  )
   return (
-    <View>
-      <ModalHeader title={t('Token information')} handleClose={handleClose} />
-      <HideTokenModal
-        modalRef={hideTokenModalRef}
-        handleClose={closeHideTokenModal}
-        handleHideToken={handleHideTokenFromModal}
-      />
-      <View style={styles.tokenInfoAndIcon}>
-        <TokenIcon
-          containerHeight={40}
-          containerWidth={40}
-          width={36}
-          height={36}
-          networkSize={14}
-          withContainer
-          address={address}
-          onGasTank={onGasTank}
-          chainId={chainId}
+    <LayoutWrapper>
+      <Header.Wrapper containerStyle={spacings.pbMd}>
+        <Header.BackButton />
+        <Header.Logo />
+      </Header.Wrapper>
+      <ScrollableWrapper
+        // The bottom padding is because of the footer, to make sure the content is not hidden behind it.
+        contentContainerStyle={[flexbox.flex1, spacings.phSm, { paddingBottom: 124 }]}
+      >
+        <HideTokenModal
+          modalRef={hideTokenModalRef}
+          handleClose={closeHideTokenModal}
+          handleHideToken={handleHideTokenFromModal}
         />
-        <View style={styles.tokenInfo}>
-          <View style={styles.tokenSymbolAndNetwork}>
-            <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbMi]}>
+        <View style={styles.tokenInfoAndIcon}>
+          <TokenIcon
+            containerHeight={40}
+            containerWidth={40}
+            width={32}
+            height={32}
+            networkSize={16}
+            withContainer
+            address={address}
+            onGasTank={onGasTank}
+            chainId={chainId}
+          />
+          <View style={styles.tokenInfo}>
+            <View style={[flexbox.directionRow, flexbox.alignCenter]}>
               <Text selectable weight="semiBold" style={spacings.mrSm}>
-                {balanceFormatted} {symbol}
+                {symbol}
               </Text>
               <Text fontSize={12} weight="medium">
                 {isRewards && t('Claimable rewards')}
@@ -375,74 +354,61 @@ const TokenDetails = ({
                 {isVesting && t('Claimable early supporters vesting')}
               </Text>
             </View>
+            <Text fontSize={14} appearance="secondaryText" weight="medium">
+              {balanceFormatted}
+            </Text>
+            {!!onGasTank && (
+              <View style={styles.balance}>
+                <Text
+                  style={spacings.mtMi}
+                  color={theme.errorDecorative}
+                  fontSize={12}
+                  weight="number_regular"
+                  numberOfLines={1}
+                >
+                  (This token is a gas tank one and therefore actions are limited)
+                </Text>
+              </View>
+            )}
           </View>
-          <View style={styles.balance}>
+          <View style={flexbox.alignEnd}>
+            <Text fontSize={20} weight="number_bold">
+              {balanceUSDFormatted}
+            </Text>
             <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-              <Text
-                selectable
-                style={spacings.mrTy}
-                fontSize={14}
-                weight="number_medium"
-                appearance="secondaryText"
-              >
-                {balanceUSDFormatted}
+              <Text fontSize={14} weight="number_medium" appearance="secondaryText">
+                {priceUSDFormatted}
               </Text>
-              <Text selectable fontSize={14} weight="number_medium" appearance="secondaryText">
-                (1 ${symbol} ≈ {priceUSDFormatted})
-              </Text>
+              {typeof change24h === 'number' && (
+                <Text
+                  fontSize={14}
+                  weight="number_medium"
+                  appearance={change24h >= 0 ? 'successText' : 'errorText'}
+                  style={spacings.mlMi}
+                >
+                  {change24hFormatted}
+                </Text>
+              )}
             </View>
           </View>
-          {!!onGasTank && (
-            <View style={styles.balance}>
-              <Text
-                style={spacings.mtMi}
-                color={theme.errorDecorative}
-                fontSize={12}
-                weight="number_regular"
-                numberOfLines={1}
-              >
-                (This token is a gas tank one and therefore actions are limited)
-              </Text>
-            </View>
-          )}
         </View>
-        {!onGasTank && !isRewards && !isVesting && !isProjectedRewards && (
-          <Button
-            type="tertiary"
-            onPress={handleHideTokenFromButton}
-            testID="hide-token-button"
-            text={t('Hide token')}
-            size="smaller"
-            style={{ height: 40, borderRadius: 20 }}
-            childrenPosition="left"
-          >
-            <InvisibilityIcon
-              width={20}
-              height={20}
-              color={theme.iconPrimary}
-              style={spacings.mrMi}
-            />
-          </Button>
-        )}
-      </View>
-
-      <GlassView borderRadius={28}>
-        <View style={styles.actionsContainer}>
-          {actions.map((action) => (
-            <TokenDetailsButton
-              key={action.id}
-              {...action}
-              isDisabled={!!action.isDisabled}
-              token={token}
-              isTokenInfoLoading={isTokenInfoLoading}
-              handleClose={handleClose}
-              iconWidth={action.iconWidth}
-            />
-          ))}
-        </View>
-      </GlassView>
-    </View>
+        <TokenData token={token} />
+        <Exchanges exchanges={token.meta?.exchanges || []} />
+        <TokenDetailsTransactionHistory />
+      </ScrollableWrapper>
+      <FooterGlassView size="sm">
+        {actions.map((action) => (
+          <TokenDetailsButton
+            key={action.id}
+            {...action}
+            isDisabled={!!action.isDisabled}
+            token={token}
+            iconWidth={action.iconWidth}
+          />
+        ))}
+      </FooterGlassView>
+    </LayoutWrapper>
   )
 }
 
-export default React.memo(TokenDetails)
+export default React.memo(TokenDetailsScreen)
