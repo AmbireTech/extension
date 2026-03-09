@@ -52,7 +52,7 @@ const createAnimation = (): Animation => ({
 
 const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
   const { isPopup } = getUiType()
-  const { styles, theme, themeType } = useTheme(getStyles)
+  const { styles, theme } = useTheme(getStyles)
   const { addToast } = useToast()
   const { t } = useTranslation()
   const { navigate } = useNavigation()
@@ -63,7 +63,7 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
 
   // Note: total balance Gas Tank details
   const { token, balanceFormatted } = useMemo(
-    () => getGasTankTokenDetails(portfolio, account, networks, 'amount'),
+    () => getGasTankTokenDetails(portfolio, account, networks),
     [account, networks, portfolio]
   )
 
