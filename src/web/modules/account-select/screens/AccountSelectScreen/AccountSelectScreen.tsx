@@ -135,7 +135,7 @@ const AccountSelectScreen = () => {
           keyExtractor={keyExtractor}
           ListEmptyComponent={<Text>{t('No accounts found')}</Text>}
         />
-        <FooterGlassView>
+        <FooterGlassView isSimpleBlur={false}>
           <Button
             testID="button-add-account"
             text={t('Add account')}

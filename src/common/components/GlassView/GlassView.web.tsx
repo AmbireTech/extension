@@ -27,7 +27,7 @@ const GlassView: React.FC<GlassViewProps & ViewProps> = ({
   shineColor,
   borderRadius = BORDER_RADIUS_PRIMARY,
   blurAmount = 4,
-  isSimpleBlur = false
+  isSimpleBlur = true
 }) => {
   const { themeType } = useTheme()
   const divRef = useRef<HTMLDivElement>(null)
