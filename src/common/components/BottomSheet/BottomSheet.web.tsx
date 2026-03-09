@@ -1,5 +1,5 @@
 import React, { RefObject } from 'react'
-import { ScrollView, View } from 'react-native'
+import { ScrollView, SectionList, View } from 'react-native'
 import { Modalize } from 'react-native-modalize'
 
 import { isWeb } from '@common/config/env'
@@ -149,15 +149,6 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
                 }
               }
             : {})}
-          {...(sectionListProps
-            ? {
-                sectionListProps: {
-                  bounces: false,
-                  keyboardShouldPersistTaps: 'handled',
-                  ...(sectionListProps || {})
-                }
-              }
-            : {})}
           openAnimationConfig={{
             timing: { duration: ANIMATION_DURATION, delay: 0 }
           }}
@@ -188,18 +179,32 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
             ) : undefined
           }
         >
-          {!flatListProps && !sectionListProps && !customRenderer && (
-            <View
-              testID={isOpen ? 'bottom-sheet' : undefined}
-              style={[
-                isScrollEnabled && isScrollable ? spacings.prTy : {},
-                common.fullWidth,
-                containerInnerWrapperStyles
-              ]}
-            >
-              {children}
-            </View>
-          )}
+          {(() => {
+            if (flatListProps || customRenderer) return null
+
+            if (sectionListProps) {
+              return (
+                <SectionList
+                  bounces={false}
+                  keyboardShouldPersistTaps="handled"
+                  {...(sectionListProps as any)}
+                />
+              )
+            }
+
+            return (
+              <View
+                testID={isOpen ? 'bottom-sheet' : undefined}
+                style={[
+                  isScrollEnabled && isScrollable ? spacings.prTy : {},
+                  common.fullWidth,
+                  containerInnerWrapperStyles
+                ]}
+              >
+                {children}
+              </View>
+            )
+          })()}
         </Modalize>
       </View>
     </Portal>

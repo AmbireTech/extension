@@ -167,10 +167,7 @@ const SelectContainer: FC<Props> = ({
           setIsMenuOpen={setIsMenuOpen}
           toggleMenu={toggleMenu}
           contentRef={listRef}
-          // There is some issue on web and the sectionListProps
-          // rendered directly in the bottom sheet crash the extension
-          // so we need to pass the SectinList as a child to the bottom sheet
-          sectionListProps={isMobile ? sectionListProps : undefined}
+          sectionListProps={sectionListProps}
           flatListProps={flatListProps}
           HeaderComponent={
             <View>
@@ -188,7 +185,7 @@ const SelectContainer: FC<Props> = ({
             </View>
           }
         >
-          {!isMobile && sectionListProps ? <SectionList {...sectionListProps} /> : children}
+          {children}
         </BottomSheetContainer>
       )}
     </View>
