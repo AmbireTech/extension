@@ -28,7 +28,6 @@ import useSimulationError from '@web/modules/portfolio/hooks/SimulationError/use
 import BatchAdded from '@web/modules/sign-account-op/components/OneClick/BatchModal/BatchAdded'
 import Buttons from '@web/modules/sign-account-op/components/OneClick/Buttons'
 import Estimation from '@web/modules/sign-account-op/components/OneClick/Estimation'
-import SafeSigned from '@web/modules/sign-account-op/components/OneClick/SafeSigned'
 
 const { isRequestWindow } = getUiType()
 
@@ -248,16 +247,6 @@ const SwapAndBridgeScreen = () => {
         secondaryButtonText={t('Add more')}
         onPrimaryButtonPress={onBatchAddedPrimaryButtonPress}
         onSecondaryButtonPress={onBatchAddedSecondaryButtonPress}
-      />
-    )
-  }
-
-  if (displayedView === 'safe-signed') {
-    return (
-      <SafeSigned
-        title={t('Swap & Bridge')}
-        primaryButtonText={t('Open dashboard')}
-        onPrimaryButtonPress={onBatchAddedPrimaryButtonPress}
       />
     )
   }
