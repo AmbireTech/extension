@@ -51,7 +51,7 @@ const Completed: FC<CompletedProps> = ({
       <Text weight="medium" appearance="secondaryText" style={spacings.mbXl}>
         {titleSecondary}
       </Text>
-      {!!explorerLink && (
+      {(!!explorerLink || isLoading) && (
         <Pressable
           onPress={handleOpenExplorer}
           style={[
@@ -88,4 +88,4 @@ const Completed: FC<CompletedProps> = ({
   )
 }
 
-export default Completed
+export default React.memo(Completed)
