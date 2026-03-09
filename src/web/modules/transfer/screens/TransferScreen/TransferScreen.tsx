@@ -33,7 +33,6 @@ import { Content, Wrapper } from '@web/components/TransactionsScreen'
 import BatchAdded from '@web/modules/sign-account-op/components/OneClick/BatchModal/BatchAdded'
 import Buttons from '@web/modules/sign-account-op/components/OneClick/Buttons'
 import Estimation from '@web/modules/sign-account-op/components/OneClick/Estimation'
-import SafeSigned from '@web/modules/sign-account-op/components/OneClick/SafeSigned'
 import TrackProgress from '@web/modules/sign-account-op/components/OneClick/TrackProgress'
 import Completed from '@web/modules/sign-account-op/components/OneClick/TrackProgress/ByStatus/Completed'
 import Failed from '@web/modules/sign-account-op/components/OneClick/TrackProgress/ByStatus/Failed'
@@ -95,7 +94,6 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   const recipientMenuClosedAutomatically = useRef(false)
 
   const [showAddedToBatch, setShowAddedToBatch] = useState(false)
-  const [showSafeSigned, setShowSafeSigned] = useState(false)
   const [latestBatchedNetwork, setLatestBatchedNetwork] = useState<bigint | undefined>()
 
   const controllerAmountFieldValue = amountFieldMode === 'token' ? controllerAmount : amountInFiat
@@ -204,37 +202,17 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     }
   }, [latestBroadcastedAccountOp?.accountAddr, latestBroadcastedAccountOp?.chainId, sessionHandler])
 
-  useEffect(() => {
-    if (showSafeSigned) return
-    if (
-      signAccountOpController &&
-      signAccountOpController.account.safeCreation &&
-      signAccountOpController.status?.type === SigningStatus.Queued
-    ) {
-      setShowSafeSigned(true)
-      mainDispatch({
-        type: 'method',
-        params: {
-          method: 'fetchSafeTxns',
-          args: [[signAccountOpController.accountOp.chainId]]
-        }
-      })
-    }
-  }, [showSafeSigned, signAccountOpController, mainDispatch])
-
-  const displayedView: 'transfer' | 'batch' | 'track' | 'safe-signed' | 'loading' = useMemo(() => {
+  const displayedView: 'transfer' | 'batch' | 'track' | 'loading' = useMemo(() => {
     // If the screen type doesn't match the controller state, we show a loading state
     // This avoids showing the wrong screen for a brief moment0
     if (!!isTopUpScreen !== !!isTopUp) return 'loading'
-
-    if (showSafeSigned) return 'safe-signed'
 
     if (showAddedToBatch) return 'batch'
 
     if (latestBroadcastedAccountOp) return 'track'
 
     return 'transfer'
-  }, [isTopUp, showSafeSigned, isTopUpScreen, latestBroadcastedAccountOp, showAddedToBatch])
+  }, [isTopUp, isTopUpScreen, latestBroadcastedAccountOp, showAddedToBatch])
 
   const {
     ref: estimationModalRef,
@@ -383,7 +361,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
         // Proceed in OneClick txn
         if (executionType === 'open-request-window') {
           // one click mode opens signAccountOp if more than 1 req in batch
-          if (networkUserRequests.length > 0) {
+          if (!!account?.safeCreation || networkUserRequests.length > 0) {
             requestsDispatch({
               type: 'method',
               params: {
@@ -453,7 +431,8 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
       addressState,
       resetTransferForm,
       networkUserRequests.length,
-      openEstimationModalAndDispatch
+      openEstimationModalAndDispatch,
+      account?.safeCreation
     ]
   )
 
@@ -622,16 +601,6 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
         secondaryButtonText={t('Add more')}
         onPrimaryButtonPress={onBatchAddedPrimaryButtonPress}
         onSecondaryButtonPress={onBatchAddedSecondaryButtonPress}
-      />
-    )
-  }
-
-  if (displayedView === 'safe-signed') {
-    return (
-      <SafeSigned
-        title={isTopUp ? t('Top Up Gas Tank') : t('Send')}
-        primaryButtonText={t('Open dashboard')}
-        onPrimaryButtonPress={onBatchAddedPrimaryButtonPress}
       />
     )
   }

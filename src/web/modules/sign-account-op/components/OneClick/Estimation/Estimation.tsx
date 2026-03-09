@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ScrollView, View } from 'react-native'
+import { View } from 'react-native'
 
 import { SigningStatus } from '@ambire-common/controllers/signAccountOp/signAccountOp'
 import { Key } from '@ambire-common/interfaces/keystore'
@@ -23,7 +23,6 @@ import { getUiType } from '@common/utils/uiType'
 import Estimation from '@web/modules/sign-account-op/components/Estimation'
 import BundlerWarning from '@web/modules/sign-account-op/components/Estimation/components/bundlerWarning'
 import Modals from '@web/modules/sign-account-op/components/Modals/Modals'
-import SafeOwners from '@web/modules/sign-account-op/components/SafeOwners'
 import SafetyChecksBanner from '@web/modules/sign-account-op/components/SafetyChecksBanner'
 import KeySelect from '@web/modules/sign-message/components/KeySelect'
 
@@ -72,7 +71,6 @@ const OneClickEstimation = ({
     isSignLoading,
     renderedButNotNecessarilyVisibleModal,
     handleChangeSigningKey,
-    handleSetMultisigSigners,
     onSignButtonClick,
     isSignDisabled,
     warningToPromptBeforeSign,
@@ -125,7 +123,6 @@ const OneClickEstimation = ({
               isSigning={isSignLoading || !signAccountOpController.readyToSign}
               isChooseSignerShown={isChooseSignerShown}
               isChooseFeePayerKeyShown={isChooseFeePayerKeyShown}
-              handleSetMultisigSigners={handleSetMultisigSigners}
               handleChooseKey={
                 isChooseFeePayerKeyShown ? handleChangeFeePayerKeyType : handleChangeSigningKey
               }
@@ -139,8 +136,6 @@ const OneClickEstimation = ({
                 setIsChooseSignerShown(false)
                 setIsChooseFeePayerKeyShown(false)
               }}
-              signed={signAccountOpController.accountOp.signed || []}
-              threshold={signAccountOpController.threshold}
             />
             {signAccountOpController?.canBroadcast && (
               <Estimation
@@ -158,17 +153,6 @@ const OneClickEstimation = ({
                 isOneClick
               />
             )}
-            {signAccountOpController &&
-              signingErrors.length === 0 &&
-              !signAccountOpController.canBroadcast &&
-              !!signAccountOpController.account.safeCreation && (
-                <ScrollView style={[{ maxHeight: 240 }]}>
-                  <SafeOwners
-                    signAccountOpController={signAccountOpController}
-                    backgroundColor={theme.secondaryBackground}
-                  />
-                </ScrollView>
-              )}
             {isViewOnly && (
               <NoKeysToSignAlert
                 style={spacings.mt}
