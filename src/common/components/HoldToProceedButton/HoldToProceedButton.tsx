@@ -1,12 +1,12 @@
 import React, { FC, useCallback, useEffect, useRef, useState } from 'react'
-import { Animated, PanResponder, ViewStyle } from 'react-native'
+import { Animated, PanResponder, StyleProp, ViewStyle } from 'react-native'
 
 import Button, { Props as CommonButtonProps } from '@common/components/Button'
 import useTheme from '@common/hooks/useTheme'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 
 type Props = Omit<CommonButtonProps, 'style' | 'children' | 'childrenPosition' | 'onPress'> & {
-  style?: ViewStyle
+  style?: StyleProp<ViewStyle>
   onHoldComplete: () => void
   holdDuration?: number // in milliseconds
   holdText?: string

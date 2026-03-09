@@ -1,9 +1,9 @@
 import React from 'react'
+import { KeyboardProvider } from 'react-native-keyboard-controller'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { NativeRouter } from 'react-router-native'
 
 import { ControllerStoreProvider } from '@common/contexts/controllerStoreContext'
-import { KeyboardProvider } from '@common/contexts/keyboardContext'
 import { NetInfoProvider } from '@common/contexts/netInfoContext'
 import { ThemeProvider } from '@common/contexts/themeContext'
 import { ToastProvider } from '@common/contexts/toastContext'

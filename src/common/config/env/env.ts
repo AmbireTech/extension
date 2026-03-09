@@ -49,6 +49,7 @@ export const RUNTIME_VERSION = Updates.runtimeVersion || 'N/A'
 // export const EXPO_SDK = Constants?.manifest?.sdkVersion || 'N/A'
 export const EXPO_SDK = 'N/A'
 
+export const isMobile = Platform.OS === 'ios' || Platform.OS === 'android'
 export const isiOS = Platform.OS === 'ios'
 export const isAndroid = Platform.OS === 'android'
 export const isWeb = Platform.OS === 'web'
