@@ -16,6 +16,7 @@ import Select, { SectionedSelect } from '@common/components/Select'
 import { SelectValue } from '@common/components/Select/types'
 import Text from '@common/components/Text'
 import TitleAndIcon from '@common/components/TitleAndIcon'
+import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import BundlerWarning from '@common/modules/sign-account-op/components/Estimation/components/bundlerWarning'
@@ -464,7 +465,8 @@ const Estimation = ({
           flexbox.directionRow,
           flexbox.alignCenter,
           flexbox.justifySpaceBetween,
-          spacings.mbSm
+          spacings.mbSm,
+          isMobile && spacings.ptSm
         ]}
       >
         <Text fontSize={20} weight="medium">

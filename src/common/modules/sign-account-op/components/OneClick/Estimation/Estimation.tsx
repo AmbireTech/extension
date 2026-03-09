@@ -16,6 +16,7 @@ import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoad
 import FooterGlassView from '@common/components/FooterGlassView'
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
 import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
+import { isMobile } from '@common/config/env'
 import useSign from '@common/hooks/useSign'
 import useTheme from '@common/hooks/useTheme'
 import Estimation from '@common/modules/sign-account-op/components/Estimation'
@@ -94,8 +95,11 @@ const OneClickEstimation = ({
     isOneClickSign: true,
     updateType
   })
-
+  console.log('estimation-modal', signAccountOpController)
   const { banners } = signAccountOpController || {}
+
+  const ButtonsWrapper = isMobile ? View : FooterGlassView
+
   return (
     <>
       <BottomSheet
@@ -105,9 +109,10 @@ const OneClickEstimation = ({
         // NOTE: This must be lower than SigningKeySelect's z-index
         customZIndex={5}
         style={spacings.pb}
+        closeBottomSheet={closeEstimationModal}
         autoOpen={hasProceeded || (isRequestWindow && !!signAccountOpController)}
-        isScrollEnabled={false}
-        shouldBeClosableOnDrag={false}
+        // isScrollEnabled={false}
+        shouldBeClosableOnDrag={isMobile}
       >
         {!!banners && !!banners.length && (
           <View style={spacings.mbTy}>
@@ -184,17 +189,23 @@ const OneClickEstimation = ({
               signAccountOpState={signAccountOpController}
               bundlerNonceDiscrepancy={bundlerNonceDiscrepancy}
             />
-            <FooterGlassView size="sm" absolute={false} style={spacings.pt}>
-              <Button
-                testID="back-button"
-                type="secondary"
-                text={t('Back')}
-                onPress={closeEstimationModal}
-                hasBottomSpacing={false}
-                disabled={isSignLoading}
-                style={{ width: 98, ...spacings.mrLg }}
-                size="smaller"
-              />
+            <ButtonsWrapper
+              size="sm"
+              absolute={false}
+              style={isMobile ? spacings.ptLg : spacings.pt}
+            >
+              {!isMobile && (
+                <Button
+                  testID="back-button"
+                  type="secondary"
+                  text={t('Back')}
+                  onPress={closeEstimationModal}
+                  hasBottomSpacing={false}
+                  disabled={isSignLoading}
+                  style={{ width: 98, ...spacings.mrLg }}
+                  size="smaller"
+                />
+              )}
 
               {!!banners && !!banners.length ? (
                 <HoldToProceedButton
@@ -202,7 +213,7 @@ const OneClickEstimation = ({
                   text={t('Hold to sign')}
                   disabled={isSignDisabled || signingErrors.length > 0}
                   onHoldComplete={onSignButtonClick}
-                  size="smaller"
+                  size={isMobile ? 'regular' : 'smaller'}
                 />
               ) : (
                 <ButtonWithLoader
@@ -211,10 +222,10 @@ const OneClickEstimation = ({
                   isLoading={isSignLoading}
                   disabled={isSignDisabled || signingErrors.length > 0}
                   onPress={onSignButtonClick}
-                  size="smaller"
+                  size={isMobile ? 'regular' : 'smaller'}
                 />
               )}
-            </FooterGlassView>
+            </ButtonsWrapper>
           </View>
         )}
       </BottomSheet>

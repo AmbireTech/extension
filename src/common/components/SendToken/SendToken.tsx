@@ -107,7 +107,7 @@ const SendToken: FC<Props> = ({
       >
         <ItemPanel
           style={{
-            borderRadius: 0,
+            borderRadius: 13,
             ...spacings.pv,
             ...spacings.prMd,
             ...(validateFromAmount?.message ? styles.containerWarning : {})
