@@ -70,10 +70,6 @@ const GlassView: React.FC<GlassViewProps & ViewProps> = ({
     const el = divRef.current
     if (!el) return
 
-    let idleHandle: ReturnType<typeof requestIdleCallback> | null = null
-    let timeoutHandle: ReturnType<typeof setTimeout> | null = null
-    let cancelled = false
-
     const buildSpecularOpts = (w: number, h: number) => ({
       width: w,
       height: h,
@@ -129,11 +125,7 @@ const GlassView: React.FC<GlassViewProps & ViewProps> = ({
       updateFilter(w0, h0)
     }
 
-    // Update on resize
     const scheduleResize = (w: number, h: number) => {
-      if (idleHandle !== null) cancelIdleCallback(idleHandle)
-      if (timeoutHandle !== null) clearTimeout(timeoutHandle)
-
       updateFilter(w, h)
 
       const opts = buildSpecularOpts(w, h)
@@ -143,18 +135,9 @@ const GlassView: React.FC<GlassViewProps & ViewProps> = ({
         return
       }
 
-      const run = () => {
-        if (cancelled) return
-        const dataUrl = generateSpecularMap(opts)
-        setCachedSpecularMap(opts, dataUrl)
-        setSpecularDataUrl(dataUrl)
-      }
-
-      if (typeof requestIdleCallback !== 'undefined') {
-        idleHandle = requestIdleCallback(run, { timeout: 500 })
-      } else {
-        timeoutHandle = setTimeout(run, 0)
-      }
+      const dataUrl = generateSpecularMap(opts)
+      setCachedSpecularMap(opts, dataUrl)
+      setSpecularDataUrl(dataUrl)
     }
 
     const observer = new ResizeObserver((entries) => {
@@ -166,10 +149,7 @@ const GlassView: React.FC<GlassViewProps & ViewProps> = ({
     observer.observe(el)
 
     return () => {
-      cancelled = true
       observer.disconnect()
-      if (idleHandle !== null) cancelIdleCallback(idleHandle)
-      if (timeoutHandle !== null) clearTimeout(timeoutHandle)
     }
   }, [borderRadius, themeType, shineBase, shineColor, isSimpleBlur])
 
