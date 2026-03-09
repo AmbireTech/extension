@@ -92,8 +92,9 @@ android {
         applicationId 'com.ambire.wallet'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "5.39.0"
+        versionCode 54
+        // This is planned to be in sync with app.json 's "version" two components, e.g. 5.39
+        versionName "6.0"
 
         buildConfigField "String", "REACT_NATIVE_RELEASE_LEVEL", "\"${findProperty('reactNativeReleaseLevel') ?: 'stable'}\""
     }
