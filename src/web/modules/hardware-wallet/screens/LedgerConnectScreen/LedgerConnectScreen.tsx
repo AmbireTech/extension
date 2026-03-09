@@ -1,7 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { View } from 'react-native'
 
-import LedgerLetterIcon from '@common/assets/svg/LedgerLetterIcon'
 import LedgerLetterIconFilled from '@common/assets/svg/LedgerLetterIconFilled'
 import Button from '@common/components/Button'
 import Panel from '@common/components/Panel'
@@ -13,10 +11,8 @@ import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
-import useWindowSize from '@common/hooks/useWindowSize'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import spacings from '@common/styles/spacings'
-import flexbox from '@common/styles/utils/flexbox'
 import {
   TabLayoutContainer,
   TabLayoutWrapperMainContent
@@ -39,7 +35,6 @@ const LedgerConnectScreen = () => {
   const { initParams, type } = useController('AccountPickerController').state
   const [authorizeButtonPressed, setAuthorizeButtonPressed] = useState(false)
   const route = useRoute()
-  const { minHeightSize } = useWindowSize()
 
   const onPressNext = async () => {
     try {

@@ -28,12 +28,10 @@ import useSyncedState from '@common/hooks/useSyncedState'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import useWindowSize from '@common/hooks/useWindowSize'
-import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import BatchAdded from '@common/modules/sign-account-op/components/OneClick/BatchModal/BatchAdded'
 import Buttons from '@common/modules/sign-account-op/components/OneClick/Buttons'
 import Estimation from '@common/modules/sign-account-op/components/OneClick/Estimation'
-import SafeSigned from '@common/modules/sign-account-op/components/OneClick/SafeSigned'
 import TrackProgress from '@common/modules/sign-account-op/components/OneClick/TrackProgress'
 import Completed from '@common/modules/sign-account-op/components/OneClick/TrackProgress/ByStatus/Completed'
 import Failed from '@common/modules/sign-account-op/components/OneClick/TrackProgress/ByStatus/Failed'
@@ -45,7 +43,6 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@common/utils/links'
 import { getUiType } from '@common/utils/uiType'
-import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
 import { getTabLayoutPadding } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import { Content, Wrapper } from '@web/components/TransactionsScreen'
 import Modals from '@web/modules/sign-account-op/components/Modals'
@@ -104,7 +101,6 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   const recipientMenuClosedAutomatically = useRef(false)
 
   const [showAddedToBatch, setShowAddedToBatch] = useState(false)
-  const [showSafeSigned, setShowSafeSigned] = useState(false)
   const [latestBatchedNetwork, setLatestBatchedNetwork] = useState<bigint | undefined>()
 
   const controllerAmountFieldValue = amountFieldMode === 'token' ? controllerAmount : amountInFiat
@@ -216,37 +212,17 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     }
   }, [latestBroadcastedAccountOp?.accountAddr, latestBroadcastedAccountOp?.chainId, sessionHandler])
 
-  useEffect(() => {
-    if (showSafeSigned) return
-    if (
-      signAccountOpController &&
-      signAccountOpController.account.safeCreation &&
-      signAccountOpController.status?.type === SigningStatus.Queued
-    ) {
-      setShowSafeSigned(true)
-      mainDispatch({
-        type: 'method',
-        params: {
-          method: 'fetchSafeTxns',
-          args: [[signAccountOpController.accountOp.chainId]]
-        }
-      })
-    }
-  }, [showSafeSigned, signAccountOpController, mainDispatch])
-
-  const displayedView: 'transfer' | 'batch' | 'track' | 'safe-signed' | 'loading' = useMemo(() => {
+  const displayedView: 'transfer' | 'batch' | 'track' | 'loading' = useMemo(() => {
     // If the screen type doesn't match the controller state, we show a loading state
     // This avoids showing the wrong screen for a brief moment0
     if (!!isTopUpScreen !== !!isTopUp) return 'loading'
-
-    if (showSafeSigned) return 'safe-signed'
 
     if (showAddedToBatch) return 'batch'
 
     if (latestBroadcastedAccountOp) return 'track'
 
     return 'transfer'
-  }, [isTopUp, showSafeSigned, isTopUpScreen, latestBroadcastedAccountOp, showAddedToBatch])
+  }, [isTopUp, isTopUpScreen, latestBroadcastedAccountOp, showAddedToBatch])
 
   const {
     ref: estimationModalRef,
@@ -395,7 +371,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
         // Proceed in OneClick txn
         if (executionType === 'open-request-window') {
           // one click mode opens signAccountOp if more than 1 req in batch
-          if (networkUserRequests.length > 0) {
+          if (!!account?.safeCreation || networkUserRequests.length > 0) {
             requestsDispatch({
               type: 'method',
               params: {
@@ -465,7 +441,8 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
       addressState,
       resetTransferForm,
       networkUserRequests.length,
-      openEstimationModalAndDispatch
+      openEstimationModalAndDispatch,
+      account?.safeCreation
     ]
   )
 
@@ -501,6 +478,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
           isRecipientAddressViewOnly
         }
         onRecipientAddressUnknownAgree={onRecipientAddressUnknownAgree}
+        isSafe={!!account?.safeCreation}
       />
     )
   }, [
@@ -516,7 +494,8 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     isRecipientAddressFirstTimeSend,
     isRecipientAddressViewOnly,
     onRecipientAddressUnknownAgree,
-    addTransaction
+    addTransaction,
+    account?.safeCreation
   ])
 
   const handleGoBackPress = useCallback(() => {
@@ -635,37 +614,6 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
         onPrimaryButtonPress={onBatchAddedPrimaryButtonPress}
         onSecondaryButtonPress={onBatchAddedSecondaryButtonPress}
       />
-    )
-  }
-
-  if (displayedView === 'safe-signed') {
-    return (
-      <TabLayoutContainer
-        backgroundColor={theme.primaryBackground}
-        header={
-          <HeaderWithTitle
-            displayBackButtonIn="never"
-            title={isTopUp ? t('Top Up Gas Tank') : t('Send')}
-          />
-        }
-        withHorizontalPadding={false}
-        footer={null}
-        style={{ ...flexbox.alignEnd, ...spacings.pb }}
-      >
-        <TabLayoutWrapperMainContent
-          contentContainerStyle={{
-            ...spacings.pv0,
-            ...paddingHorizontalStyle,
-            ...flexbox.flex1
-          }}
-          withScroll={false}
-        >
-          <SafeSigned
-            primaryButtonText={t('Open dashboard')}
-            onPrimaryButtonPress={onBatchAddedPrimaryButtonPress}
-          />
-        </TabLayoutWrapperMainContent>
-      </TabLayoutContainer>
     )
   }
 

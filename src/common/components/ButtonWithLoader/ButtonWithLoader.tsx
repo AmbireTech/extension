@@ -1,5 +1,5 @@
 import React, { FC } from 'react'
-import { ViewStyle } from 'react-native'
+import { StyleProp, ViewStyle } from 'react-native'
 
 import spacings from '@common/styles/spacings'
 
@@ -7,7 +7,7 @@ import Button, { Props as CommonButtonProps } from '../Button/Button'
 import Spinner from '../Spinner'
 
 type Props = Omit<CommonButtonProps, 'style' | 'children' | 'childrenPosition'> & {
-  style?: ViewStyle
+  style?: StyleProp<ViewStyle>
   isLoading?: boolean
 }
 
