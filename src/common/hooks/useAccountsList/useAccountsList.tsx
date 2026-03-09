@@ -7,6 +7,8 @@ import { Account as AccountType } from '@ambire-common/interfaces/account'
 import { isSmartAccount } from '@ambire-common/libs/account/account'
 import useController from '@common/hooks/useController'
 
+const ITEM_HEIGHT = 68
+
 const useAccountsList = ({
   flatlistRef
 }: {
@@ -83,8 +85,6 @@ const useAccountsList = ({
   )
 
   const keyExtractor = useCallback((account: AccountType) => account.addr, [])
-
-  const ITEM_HEIGHT = 68
 
   const getItemLayout = useCallback(
     (_: any, index: number) => ({

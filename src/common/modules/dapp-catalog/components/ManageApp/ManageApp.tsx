@@ -4,6 +4,7 @@ import { Animated, Dimensions, View, ViewStyle } from 'react-native'
 import { Dapp } from '@ambire-common/interfaces/dapp'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
+import usePrevious from '@common/hooks/usePrevious'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
@@ -76,6 +77,8 @@ const ManageApp = ({
   const [isPositioned, setIsPositioned] = useState(false)
   const scaleAnim = useRef(new Animated.Value(0)).current
   const opacityAnim = useRef(new Animated.Value(0)).current
+  const prevIsOpen = usePrevious(isOpen)
+  const [isVisible, setIsVisible] = useState(isOpen)
 
   const applyPosition = useCallback(
     (
@@ -172,8 +175,26 @@ const ManageApp = ({
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [menuEl, parentRef, setIsOpen])
 
-  // Don't render until the menu is open to avoid performance issues
-  if (!isOpen) return null
+  // Drive the mount/unmount lifecycle with animated open and close transitions.
+  useEffect(() => {
+    if (isOpen && !prevIsOpen) {
+      // Reset both animations before mounting so every open plays from scratch.
+      scaleAnim.setValue(0)
+      opacityAnim.setValue(0)
+      setIsPositioned(false)
+      setIsVisible(true)
+    } else if (!isOpen && prevIsOpen) {
+      // Animate out, then unmount.
+      Animated.parallel([
+        Animated.timing(scaleAnim, { toValue: 0, duration: 150, useNativeDriver: !isWeb }),
+        Animated.timing(opacityAnim, { toValue: 0, duration: 150, useNativeDriver: !isWeb })
+      ]).start(({ finished }) => {
+        if (finished) setIsVisible(false)
+      })
+    }
+  }, [isOpen, scaleAnim, opacityAnim, prevIsOpen])
+
+  if (!isVisible) return null
 
   return (
     <Portal hostName="global">
@@ -203,7 +224,7 @@ const ManageApp = ({
           transformOrigin: `${position.isAbove ? 'bottom' : 'top'} ${position.isAlignedRight ? 'right' : 'left'}`,
           minWidth: 216,
           // Hide until positioned to avoid a flash at {left: 0}.
-          ...(!isPositioned ? { opacity: 0 } : opacityAnim),
+          opacity: isPositioned ? opacityAnim : 0,
           ...spacings.phTy,
           ...spacings.pvTy,
           backgroundColor: theme.secondaryBackground,

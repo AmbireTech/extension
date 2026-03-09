@@ -1,6 +1,6 @@
 import './GlassView.css'
 
-import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import React, { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { ViewProps } from 'react-native'
 
 import useTheme from '@common/hooks/useTheme'

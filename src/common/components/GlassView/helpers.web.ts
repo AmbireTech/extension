@@ -6,6 +6,7 @@ import { hexToRgba } from '@common/styles/utils/common'
 // ---------------------------------------------------------------------------
 
 const MAX_SPECULAR_CACHE = 20
+const MAX_DISPLACEMENT_CACHE = 20
 const specularCache = new Map<string, string>()
 
 function buildSpecularKey(opts: SpecularMapOptions): string {
@@ -48,6 +49,11 @@ export function getCachedDisplacementFilter(opts: DisplacementOptions): string {
   const key = buildDisplacementKey(opts)
   const cached = displacementCache.get(key)
   if (cached) return cached
+
+  if (displacementCache.size >= MAX_DISPLACEMENT_CACHE) {
+    displacementCache.delete(displacementCache.keys().next().value!)
+  }
+
   const url = buildDisplacementFilterUrl(opts)
   displacementCache.set(key, url)
   return url

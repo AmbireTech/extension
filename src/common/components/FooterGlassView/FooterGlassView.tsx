@@ -52,7 +52,7 @@ const FooterGlassView: FC<{
     >
       <GlassView
         {...glassViewProps}
-        isSimpleBlur={isSimpleBlur}
+        isSimpleBlur={isSimpleBlur ?? glassViewProps.isSimpleBlur}
         borderRadius={Number(params[size].borderRadius)}
         cssStyle={{
           pointerEvents: 'all',
