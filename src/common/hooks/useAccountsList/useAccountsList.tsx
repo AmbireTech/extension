@@ -84,18 +84,18 @@ const useAccountsList = ({
 
   const keyExtractor = useCallback((account: AccountType) => account.addr, [])
 
+  const ITEM_HEIGHT = 68
+
   const getItemLayout = useCallback(
     (_: any, index: number) => ({
-      length: 68,
-      offset: 68 * index,
+      length: ITEM_HEIGHT,
+      offset: ITEM_HEIGHT * index,
       index
     }),
-    []
+    [ITEM_HEIGHT]
   )
 
-  // Scrolls to the selected account in the FlatList
-  // It's complexity comes from the fact that the FlatList is not mounted when the component is first rendered
-  // and so are the accounts.
+  // Scrolls to the selected account in the FlatList.
   const scrollToSelectedAccount = useCallback(
     (attempt: number = 0) => {
       const MAX_ATTEMPTS = 3
@@ -103,30 +103,26 @@ const useAccountsList = ({
         clearTimeout(timeoutRef.current)
         timeoutRef.current = null
       }
-      if (attempt > MAX_ATTEMPTS) {
-        // Display the accounts after reaching MAX_ATTEMPTS
+
+      if (attempt > MAX_ATTEMPTS || !accounts.length || selectedAccountIndex === -1) {
         setShouldDisplayAccounts(true)
         return
       }
-      if (
-        accounts.length &&
-        selectedAccountIndex !== -1 &&
-        flatlistRef?.current &&
-        !shouldDisplayAccounts
-      ) {
-        try {
-          flatlistRef.current.scrollToIndex({
-            animated: false,
-            index: selectedAccountIndex
-          })
-          setShouldDisplayAccounts(true)
-        } catch (error) {
-          console.warn(`Failed to scroll to the selected account. Attempt ${attempt}`, error)
-          timeoutRef.current = setTimeout(() => scrollToSelectedAccount(attempt + 1), 100)
-        }
+
+      if (flatlistRef?.current && !shouldDisplayAccounts) {
+        // Uses scrollToOffset (instead of scrollToIndex) so that FlatList does NOT need to
+        // pre-render every item between 0 and selectedAccountIndex
+        flatlistRef.current.scrollToOffset({
+          animated: false,
+          offset: selectedAccountIndex * ITEM_HEIGHT
+        })
+        setShouldDisplayAccounts(true)
+      } else if (!shouldDisplayAccounts) {
+        // Retry
+        timeoutRef.current = setTimeout(() => scrollToSelectedAccount(attempt + 1), 100)
       }
     },
-    [accounts.length, flatlistRef, shouldDisplayAccounts, selectedAccountIndex]
+    [ITEM_HEIGHT, accounts.length, flatlistRef, shouldDisplayAccounts, selectedAccountIndex]
   )
 
   useEffect(() => {

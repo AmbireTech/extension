@@ -1,5 +1,87 @@
 import { hexToRgba } from '@common/styles/utils/common'
 
+// ---------------------------------------------------------------------------
+// Specular map cache
+// Key: dimensions + visual params.
+// ---------------------------------------------------------------------------
+
+const MAX_SPECULAR_CACHE = 20
+const specularCache = new Map<string, string>()
+
+function buildSpecularKey(opts: SpecularMapOptions): string {
+  const w = Math.round(opts.width / 4) * 4
+  const h = Math.round(opts.height / 4) * 4
+  return `${w}_${h}_${opts.radius}_${opts.bezelWidth ?? opts.radius}_${opts.lightAngleDeg ?? 45}_${opts.strength ?? 1}_${opts.tintHex ?? '#ffffff'}`
+}
+
+export function getCachedSpecularMap(opts: SpecularMapOptions): string | undefined {
+  return specularCache.get(buildSpecularKey(opts))
+}
+
+export function setCachedSpecularMap(opts: SpecularMapOptions, dataUrl: string): void {
+  if (specularCache.size >= MAX_SPECULAR_CACHE) {
+    specularCache.delete(specularCache.keys().next().value!)
+  }
+  specularCache.set(buildSpecularKey(opts), dataUrl)
+}
+
+// ---------------------------------------------------------------------------
+// Displacement filter data URL cache.
+// Same SVG structure as the original — cached by rounded dimensions + params
+// so the string is only built once per unique configuration per session.
+// ---------------------------------------------------------------------------
+
+const displacementCache = new Map<string, string>()
+
+function buildDisplacementKey({
+  width,
+  height,
+  radius,
+  depth,
+  strength = 100,
+  chromaticAberration = 0
+}: DisplacementOptions): string {
+  return `${Math.round(width)}_${Math.round(height)}_${radius}_${depth}_${strength}_${chromaticAberration}`
+}
+
+export function getCachedDisplacementFilter(opts: DisplacementOptions): string {
+  const key = buildDisplacementKey(opts)
+  const cached = displacementCache.get(key)
+  if (cached) return cached
+  const url = buildDisplacementFilterUrl(opts)
+  displacementCache.set(key, url)
+  return url
+}
+
+function buildDisplacementFilterUrl({
+  height,
+  width,
+  radius,
+  depth,
+  strength = 100,
+  chromaticAberration = 0
+}: DisplacementOptions): string {
+  const dm = getDisplacementMap({ height, width, radius, depth })
+  return (
+    'data:image/svg+xml;utf8,' +
+    encodeURIComponent(
+      `<svg height="${height}" width="${width}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">` +
+        `<defs><filter id="displace" colorInterpolationFilters="sRGB">` +
+        `<feImage x="0" y="0" height="${height}" width="${width}" href="${dm}" result="displacementMap"/>` +
+        `<feDisplacementMap transformOrigin="center" in="SourceGraphic" in2="displacementMap" scale="${strength + chromaticAberration * 2}" xChannelSelector="R" yChannelSelector="G"/>` +
+        `<feColorMatrix type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="displacedR"/>` +
+        `<feDisplacementMap transformOrigin="center" in="SourceGraphic" in2="displacementMap" scale="${strength + chromaticAberration}" xChannelSelector="R" yChannelSelector="G"/>` +
+        `<feColorMatrix type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" result="displacedG"/>` +
+        `<feDisplacementMap transformOrigin="center" in="SourceGraphic" in2="displacementMap" scale="${strength}" xChannelSelector="R" yChannelSelector="G"/>` +
+        `<feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" result="displacedB"/>` +
+        `<feBlend in="displacedR" in2="displacedG" mode="screen"/>` +
+        `<feBlend in2="displacedB" mode="screen"/>` +
+        `</filter></defs></svg>`
+    ) +
+    '#displace'
+  )
+}
+
 export type DisplacementOptions = {
   height: number
   width: number
@@ -235,74 +317,3 @@ export const getDisplacementMap = ({
       />
     </g>
 </svg>`)
-
-export const getDisplacementFilter = ({
-  height,
-  width,
-  radius,
-  depth,
-  strength = 100,
-  chromaticAberration = 0
-}: DisplacementOptions) =>
-  'data:image/svg+xml;utf8,' +
-  encodeURIComponent(`<svg height="${height}" width="${width}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-        <filter id="displace" colorInterpolationFilters="sRGB">
-            <feImage x="0" y="0" height="${height}" width="${width}" href="${getDisplacementMap({
-              height,
-              width,
-              radius,
-              depth
-            })}" result="displacementMap" />
-            <feDisplacementMap
-                transformOrigin="center"
-                in="SourceGraphic"
-                in2="displacementMap"
-                scale="${strength + chromaticAberration * 2}"
-                xChannelSelector="R"
-                yChannelSelector="G"
-            />
-            <feColorMatrix
-            type="matrix"
-            values="1 0 0 0 0
-                    0 0 0 0 0
-                    0 0 0 0 0
-                    0 0 0 1 0"
-            result="displacedR"
-                    />
-            <feDisplacementMap
-                in="SourceGraphic"
-                in2="displacementMap"
-                scale="${strength + chromaticAberration}"
-                xChannelSelector="R"
-                yChannelSelector="G"
-            />
-            <feColorMatrix
-            type="matrix"
-            values="0 0 0 0 0
-                    0 1 0 0 0
-                    0 0 0 0 0
-                    0 0 0 1 0"
-            result="displacedG"
-                    />
-            <feDisplacementMap
-                    in="SourceGraphic"
-                    in2="displacementMap"
-                    scale="${strength}"
-                    xChannelSelector="R"
-                    yChannelSelector="G"
-                />
-                <feColorMatrix
-                type="matrix"
-                values="0 0 0 0 0
-                        0 0 0 0 0
-                        0 0 1 0 0
-                        0 0 0 1 0"
-                result="displacedB"
-                        />
-              <feBlend in="displacedR" in2="displacedG" mode="screen"/>
-              <feBlend in2="displacedB" mode="screen"/>
-        </filter>
-    </defs>
-</svg>`) +
-  '#displace'

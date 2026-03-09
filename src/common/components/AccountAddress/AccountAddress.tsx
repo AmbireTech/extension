@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useMemo } from 'react'
+import React, { FC, memo, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View, ViewStyle } from 'react-native'
 
@@ -22,6 +22,23 @@ interface Props extends ReturnType<typeof useReverseLookup> {
   withReceive?: boolean
 }
 
+const ReceiveButton = memo(({ address, fontSize }: { address: string; fontSize: number }) => {
+  const [bindAnim, animStyle] = useHover({
+    preset: 'opacityInverted'
+  })
+  const { navigate } = useNavigation()
+
+  const handleReceive = useCallback(async () => {
+    navigate(WEB_ROUTES.receive, { state: { address } })
+  }, [navigate, address])
+
+  return (
+    <AnimatedPressable onPress={handleReceive} style={animStyle} {...bindAnim}>
+      <ReceiveIcon width={fontSize + 8} height={fontSize + 8} style={spacings.mlMi} />
+    </AnimatedPressable>
+  )
+})
+
 const AccountAddress: FC<Props> = ({
   isLoading,
   ens,
@@ -33,25 +50,6 @@ const AccountAddress: FC<Props> = ({
   withReceive = false
 }) => {
   const { t } = useTranslation()
-  const { navigate } = useNavigation()
-
-  const [bindAnim, animStyle] = useHover({
-    preset: 'opacityInverted'
-  })
-
-  const handleReceive = useCallback(async () => {
-    await navigate(WEB_ROUTES.receive, { state: { address: address } })
-  }, [navigate, address])
-
-  const receiveButton = useMemo(
-    () =>
-      withReceive ? (
-        <AnimatedPressable onPress={handleReceive} style={animStyle} {...bindAnim}>
-          <ReceiveIcon width={fontSize + 8} height={fontSize + 8} style={spacings.mlMi} />
-        </AnimatedPressable>
-      ) : null,
-    [withReceive, handleReceive, animStyle, bindAnim, fontSize]
-  )
 
   return (
     <View style={[flexbox.flex1, { paddingVertical: 3 }, containerStyle]} testID="address">
@@ -74,7 +72,7 @@ const AccountAddress: FC<Props> = ({
                 style={spacings.mlMi}
                 fontSize={fontSize}
               >
-                {receiveButton}
+                {withReceive && <ReceiveButton address={address} fontSize={fontSize} />}
               </PlainAddressWithCopy>
             </>
           ) : (
@@ -85,7 +83,7 @@ const AccountAddress: FC<Props> = ({
                 style={spacings.mlMi}
                 fontSize={fontSize}
               />
-              {receiveButton}
+              {withReceive && <ReceiveButton address={address} fontSize={fontSize} />}
             </>
           )}
         </View>
@@ -97,7 +95,7 @@ const AccountAddress: FC<Props> = ({
             hideParentheses
             fontSize={fontSize}
           >
-            {receiveButton}
+            {withReceive && <ReceiveButton address={address} fontSize={fontSize} />}
           </PlainAddressWithCopy>
         </>
       ) : (
@@ -108,11 +106,11 @@ const AccountAddress: FC<Props> = ({
             hideParentheses
             fontSize={fontSize}
           />
-          {receiveButton}
+          {withReceive && <ReceiveButton address={address} fontSize={fontSize} />}
         </>
       )}
     </View>
   )
 }
 
-export default React.memo(AccountAddress)
+export default memo(AccountAddress)
