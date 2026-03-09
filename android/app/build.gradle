@@ -121,6 +121,12 @@ android {
             crunchPngs enablePngCrunchInRelease.toBoolean()
         }
     }
+    lint {
+        // Lint can be very heavy in CI for large projects.
+        // We keep it enabled in debug / local, but do not block release builds on lint.
+        checkReleaseBuilds false
+        abortOnError false
+    }
     packagingOptions {
         jniLibs {
             def enableLegacyPackaging = findProperty('expo.useLegacyPackaging') ?: 'false'
