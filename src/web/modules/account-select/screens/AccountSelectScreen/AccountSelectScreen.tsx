@@ -127,9 +127,6 @@ const AccountSelectScreen = () => {
               opacity: shouldDisplayAccounts ? 1 : 0
             }
           ]}
-          // Make sure the selected account is rendered to be able to scroll to it and avoid issues with FlatList virtualization.
-          initialNumToRender={selectedAccountIndex + 1}
-          maxToRenderPerBatch={selectedAccountIndex + 1}
           contentContainerStyle={{ paddingBottom: 88 }}
           wrapperRef={flatlistRef}
           data={accounts}
