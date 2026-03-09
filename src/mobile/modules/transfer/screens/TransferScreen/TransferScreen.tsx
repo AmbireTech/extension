@@ -10,9 +10,7 @@ import Text from '@common/components/Text'
 import useNavigation from '@common/hooks/useNavigation'
 import useToast from '@common/hooks/useToast'
 import BatchAdded from '@common/modules/sign-account-op/components/OneClick/BatchModal/BatchAdded'
-import Buttons from '@common/modules/sign-account-op/components/OneClick/Buttons'
 import Estimation from '@common/modules/sign-account-op/components/OneClick/Estimation'
-import SafeSigned from '@common/modules/sign-account-op/components/OneClick/SafeSigned'
 import TrackProgress from '@common/modules/sign-account-op/components/OneClick/TrackProgress'
 import Completed from '@common/modules/sign-account-op/components/OneClick/TrackProgress/ByStatus/Completed'
 import Failed from '@common/modules/sign-account-op/components/OneClick/TrackProgress/ByStatus/Failed'
@@ -154,23 +152,6 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
         onPrimaryButtonPress={onBatchAddedPrimaryButtonPress}
         onSecondaryButtonPress={onBatchAddedSecondaryButtonPress}
       />
-    )
-  }
-
-  if (displayedView === 'safe-signed') {
-    return (
-      <MobileLayoutContainer>
-        <MobileLayoutWrapperMainContent
-          withBackButton
-          onBackButtonPress={goBack}
-          title={isTopUp ? t('Top Up Gas Tank') : t('Send')}
-        >
-          <SafeSigned
-            primaryButtonText={t('Open dashboard')}
-            onPrimaryButtonPress={onBatchAddedPrimaryButtonPress}
-          />
-        </MobileLayoutWrapperMainContent>
-      </MobileLayoutContainer>
     )
   }
 

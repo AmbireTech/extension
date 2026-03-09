@@ -9,13 +9,9 @@ import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
-import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
-import useWindowSize from '@common/hooks/useWindowSize'
-import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
 import BatchAdded from '@common/modules/sign-account-op/components/OneClick/BatchModal/BatchAdded'
 import Estimation from '@common/modules/sign-account-op/components/OneClick/Estimation'
-import SafeSigned from '@common/modules/sign-account-op/components/OneClick/SafeSigned'
 import TrackProgress from '@common/modules/sign-account-op/components/OneClick/TrackProgress'
 import Completed from '@common/modules/sign-account-op/components/OneClick/TrackProgress/ByStatus/Completed'
 import Failed from '@common/modules/sign-account-op/components/OneClick/TrackProgress/ByStatus/Failed'
@@ -25,16 +21,11 @@ import useTransfer from '@common/modules/transfer/hooks/useTransfer'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@common/utils/links'
-import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
-import { getTabLayoutPadding } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import { Content, Wrapper } from '@web/components/TransactionsScreen'
 import Modals from '@web/modules/sign-account-op/components/Modals'
 
 const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
-  const { maxWidthSize } = useWindowSize()
-  const paddingHorizontalStyle = useMemo(() => getTabLayoutPadding(maxWidthSize), [maxWidthSize])
   const { addToast } = useToast()
-  const { theme } = useTheme()
   const { t } = useTranslation()
 
   const {
@@ -158,37 +149,6 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
         onPrimaryButtonPress={onBatchAddedPrimaryButtonPress}
         onSecondaryButtonPress={onBatchAddedSecondaryButtonPress}
       />
-    )
-  }
-
-  if (displayedView === 'safe-signed') {
-    return (
-      <TabLayoutContainer
-        backgroundColor={theme.primaryBackground}
-        header={
-          <HeaderWithTitle
-            displayBackButtonIn="never"
-            title={isTopUp ? t('Top Up Gas Tank') : t('Send')}
-          />
-        }
-        withHorizontalPadding={false}
-        footer={null}
-        style={{ ...flexbox.alignEnd, ...spacings.pb }}
-      >
-        <TabLayoutWrapperMainContent
-          contentContainerStyle={{
-            ...spacings.pv0,
-            ...paddingHorizontalStyle,
-            ...flexbox.flex1
-          }}
-          withScroll={false}
-        >
-          <SafeSigned
-            primaryButtonText={t('Open dashboard')}
-            onPrimaryButtonPress={onBatchAddedPrimaryButtonPress}
-          />
-        </TabLayoutWrapperMainContent>
-      </TabLayoutContainer>
     )
   }
 

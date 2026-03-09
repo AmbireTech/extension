@@ -130,7 +130,6 @@ const Buttons: FC<Props> = ({
             style={isWeb ? { minWidth: 160, ...spacings.phMd } : {}}
             onPress={() => {
               if (isLocalStateOutOfSync) return
-
               handleSubmitForm(false)
             }}
             testID="batch-btn"

@@ -2,7 +2,6 @@ import React, { useMemo } from 'react'
 import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
-import { SigningStatus } from '@ambire-common/controllers/signAccountOp/signAccountOp'
 import { getCallsCount } from '@ambire-common/utils/userRequest'
 import BatchIcon from '@common/assets/svg/BatchIcon'
 import BottomSheet from '@common/components/BottomSheet'
@@ -54,7 +53,7 @@ const Footer = ({
   const {
     state: { account }
   } = useController('SelectedAccountController')
-  const { accountOp, status } = useController('SignAccountOpController').state || {}
+  const { accountOp, status, canBroadcast } = useController('SignAccountOpController').state || {}
   const chainId = accountOp?.chainId
 
   const batchCount = useMemo(() => {
@@ -90,58 +89,6 @@ const Footer = ({
 
   const { ref: sheetRef, open: openModal, close: closeModal } = useModalize()
 
-  // todo: make this compatible with the new design
-  // if the txns has been queued, display only a success and close options
-  if (status && status.type === SigningStatus.Queued) {
-    return (
-      <View style={styles.container}>
-        <Button
-          testID="transaction-button-reject"
-          type="danger"
-          text={t('Hide')}
-          onPress={() => {
-            openModal()
-          }}
-          hasBottomSpacing={false}
-          size="large"
-          style={{ width: 98 }}
-        />
-        <ActionsPagination />
-        <Button
-          testID="close-queue-button"
-          type="primary"
-          text={t('Close')}
-          onPress={onAddToCart}
-          hasBottomSpacing={false}
-          style={{ minWidth: 160, ...spacings.ph }}
-          size="large"
-        />
-        <BottomSheet
-          id="confirm-hide"
-          type="modal"
-          sheetRef={sheetRef}
-          backgroundColor={
-            themeType === THEME_TYPES.DARK ? 'secondaryBackground' : 'primaryBackground'
-          }
-          closeBottomSheet={closeModal}
-          onBackdropPress={closeModal}
-        >
-          <DualChoiceWarningModal
-            title={t('Hide transaction')}
-            description={t(
-              'You are about to hide an already signed transcation. It will no longer be visible in Ambire.'
-            )}
-            primaryButtonText={t('Proceed')}
-            secondaryButtonText={t('Return')}
-            onPrimaryButtonPress={onReject}
-            onSecondaryButtonPress={closeModal}
-            type="error"
-          />
-        </BottomSheet>
-      </View>
-    )
-  }
-
   return (
     <View style={styles.container}>
       <View style={[!isAddToCartDisplayed && flexbox.flex1, flexbox.alignStart]}>
@@ -149,7 +96,13 @@ const Footer = ({
           testID="transaction-button-reject"
           type="danger"
           text={t('Reject')}
-          onPress={onReject}
+          onPress={() => {
+            if (isMultisigSigned) {
+              openModal()
+            } else {
+              onReject()
+            }
+          }}
           hasBottomSpacing={false}
           size="large"
           disabled={isSignLoading}
@@ -169,7 +122,7 @@ const Footer = ({
             onPress={onAddToCart}
             disabled={isAddToCartDisabled}
             hasBottomSpacing={false}
-            style={{ minWidth: 160, ...spacings.ph, ...spacings.mrLg }}
+            style={{ minWidth: 160, ...spacings.ph }}
             size="large"
             {...(!isMultisigSigned && {
               tooltipDataSet: createGlobalTooltipDataSet({
@@ -188,16 +141,17 @@ const Footer = ({
             content: buttonTooltipText
           })}
         >
-          {shouldHoldToProceed ? (
+          {shouldHoldToProceed && (
             <HoldToProceedButton
               text={t('Hold to sign')}
               disabled={isSignDisabled}
               onHoldComplete={onSign}
               testID="proceed-btn"
-              style={{ minWidth: 128 }}
+              style={[{ minWidth: 128 }, spacings.mlLg]}
               size="large"
             />
-          ) : (
+          )}
+          {!shouldHoldToProceed && canBroadcast && (
             <ButtonWithLoader
               testID="transaction-button-sign"
               type="primary"
@@ -206,9 +160,31 @@ const Footer = ({
               text={isSignLoading ? inProgressButtonText : buttonText}
               onPress={onSign}
               size="large"
-              style={{ minWidth: 128 }}
+              style={[{ minWidth: 128 }, spacings.mlLg]}
             />
           )}
+          <BottomSheet
+            id="confirm-hide"
+            type="modal"
+            sheetRef={sheetRef}
+            backgroundColor={
+              themeType === THEME_TYPES.DARK ? 'secondaryBackground' : 'primaryBackground'
+            }
+            closeBottomSheet={closeModal}
+            onBackdropPress={closeModal}
+          >
+            <DualChoiceWarningModal
+              title={t('Are you sure?')}
+              description={t(
+                'You are about to reject an already signed transcation. It will no longer be visible in Ambire.'
+              )}
+              primaryButtonText={t('Proceed')}
+              secondaryButtonText={t('Return')}
+              onPrimaryButtonPress={onReject}
+              onSecondaryButtonPress={closeModal}
+              type="error"
+            />
+          </BottomSheet>
         </View>
       </View>
     </View>

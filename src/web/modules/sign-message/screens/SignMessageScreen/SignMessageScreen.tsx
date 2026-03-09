@@ -11,19 +11,15 @@ import {
   EIP_1271_NOT_SUPPORTED_BY,
   toPersonalSignHex
 } from '@ambire-common/libs/signMessage/signMessage'
-import SuccessIcon from '@common/assets/svg/SuccessIcon'
 import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
 import Spinner from '@common/components/Spinner'
-import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
-import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import SmallNotificationWindowWrapper from '@web/components/SmallNotificationWindowWrapper'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import { closeCurrentWindow } from '@web/extension-services/background/webapi/window'
 import useDappInfo from '@web/hooks/useDappInfo/useDappInfo'
 import ActionFooter from '@web/modules/action-requests/components/ActionFooter'
 import ActionHeader from '@web/modules/action-requests/components/ActionHeader'
@@ -32,6 +28,7 @@ import useLedger from '@web/modules/hardware-wallet/hooks/useLedger'
 import KeySelect from '../../../../../common/modules/sign-message/components/KeySelect'
 import Main from './Contents/main'
 import SignInWithEthereum from './Contents/signInWithEthereum'
+import SafeFooter from './SafeFooter'
 
 const SignMessageScreen = () => {
   const { t } = useTranslation()
@@ -93,8 +90,8 @@ const SignMessageScreen = () => {
   )
 
   const isViewOnly = useMemo(
-    () => selectedAccountKeyStoreKeys.length === 0,
-    [selectedAccountKeyStoreKeys.length]
+    () => !account?.safeCreation && selectedAccountKeyStoreKeys.length === 0,
+    [account?.safeCreation, selectedAccountKeyStoreKeys.length]
   )
   const humanizedMessage = useMemo(() => {
     if (!signMessageState?.messageToSign) return
@@ -176,12 +173,8 @@ const SignMessageScreen = () => {
     (signers?: { addr: Key['addr']; type: Key['type'] }[]) => {
       // Has more than one key, should first choose the key to sign with
       const hasChosenSigningKey = signers && signers.length
-      const hasMultipleKeysNotInternal =
-        !selectedAccountKeyStoreKeys.find((k) => k.type === 'internal') &&
-        selectedAccountKeyStoreKeys.length > 1
-      const isSafeWithoutDefaultSigners =
-        !!account?.safeCreation && !signMessageState.signers?.length
-      if (!hasChosenSigningKey && (hasMultipleKeysNotInternal || isSafeWithoutDefaultSigners)) {
+      console.log('the signers', signers)
+      if (!hasChosenSigningKey) {
         return setIsChooseSignerShown(true)
       }
 
@@ -207,15 +200,7 @@ const SignMessageScreen = () => {
         params: { signers: chosenSigners }
       })
     },
-    [
-      selectedAccountKeyStoreKeys,
-      isLedgerConnected,
-      dispatch,
-      addToast,
-      t,
-      signMessageState.signers,
-      account?.safeCreation
-    ]
+    [isLedgerConnected, dispatch, addToast, t, signMessageState.signers]
   )
 
   const setSigner = useCallback(
@@ -229,21 +214,12 @@ const SignMessageScreen = () => {
     [handleSign]
   )
 
-  const setSignerOrClose = useCallback(
-    (chosenSigningKeyAddr?: Key['addr'], chosenSigningKeyType?: Key['type']) => {
-      // safe accounts may sign the message partially only,
-      // meaning a success message will be displayed and the user will be
-      // prompt to close the action window by himself
-      if (signMessageState.status === SignMessageStatus.Partial) {
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        closeCurrentWindow()
-        return
-      }
+  const signWithDefaultSigner = useCallback(() => {
+    const key = selectedAccountKeyStoreKeys?.[0]
+    if (!key) return
 
-      setSigner(chosenSigningKeyAddr, chosenSigningKeyType)
-    },
-    [setSigner, signMessageState.status]
-  )
+    setSigner(key.addr, key.type)
+  }, [selectedAccountKeyStoreKeys, setSigner])
 
   const resolveButtonText = useMemo(() => {
     if (signMessageState.status === SignMessageStatus.Partial) return 'Close'
@@ -306,53 +282,54 @@ const SignMessageScreen = () => {
       <TabLayoutContainer
         width="full"
         header={<ActionHeader />}
-        renderDirectChildren={() => (
-          <ActionFooter
-            onReject={
-              signMessageState.status !== SignMessageStatus.Partial ? handleReject : undefined
-            }
-            onResolve={setSignerOrClose}
-            resolveButtonText={resolveButtonText}
-            resolveDisabled={
-              signStatus === 'LOADING' ||
-              isScrollToBottomForced ||
-              isViewOnly ||
-              humanizationHasBlockingWarnings ||
-              isSafeNotDeployed
-            }
-            resolveButtonTestID="button-sign"
-            rejectButtonText="Reject"
-            {...(isViewOnly
-              ? {
-                  resolveNode: (
-                    <View style={[{ flex: 3 }, flexbox.directionRow, flexbox.justifyEnd]}>
-                      <NoKeysToSignAlert
-                        type="short"
-                        isTransaction={false}
-                        chainId={signMessageState.network?.chainId}
-                      />
-                    </View>
-                  )
-                }
-              : {})}
-            informationalNode={
-              signMessageState.status === SignMessageStatus.Partial ? (
-                <View style={[flexbox.directionRow, flexbox.flex1, flexbox.alignCenter]}>
-                  <SuccessIcon color={theme.successDecorative} />
-                  <Text
-                    color={theme.successDecorative}
-                    style={spacings.mlSm}
-                    fontSize={16}
-                    appearance="secondaryText"
-                    numberOfLines={1}
-                  >
-                    {t('Waiting for signatures')}
-                  </Text>
-                </View>
-              ) : null
-            }
-          />
-        )}
+        renderDirectChildren={() => {
+          if (account.safeCreation) {
+            return (
+              <SafeFooter
+                account={account}
+                isSignLoading={signStatus === 'LOADING'}
+                onSign={setSigner}
+                chainId={userRequest.meta.chainId.toString()}
+                signed={signMessageState.signed || []}
+                importedKeys={selectedAccountKeyStoreKeys}
+                threshold={threshold}
+                // the first signer from the array is the current one
+                signingKeyAddr={signMessageState.signers?.[0]?.addr || ''}
+                onReject={handleReject}
+              />
+            )
+          }
+
+          return (
+            <ActionFooter
+              onReject={handleReject}
+              onResolve={signWithDefaultSigner}
+              resolveButtonText={resolveButtonText}
+              resolveDisabled={
+                signStatus === 'LOADING' ||
+                isScrollToBottomForced ||
+                isViewOnly ||
+                humanizationHasBlockingWarnings ||
+                isSafeNotDeployed
+              }
+              resolveButtonTestID="button-sign"
+              rejectButtonText="Reject"
+              {...(isViewOnly
+                ? {
+                    resolveNode: (
+                      <View style={[{ flex: 3 }, flexbox.directionRow, flexbox.justifyEnd]}>
+                        <NoKeysToSignAlert
+                          type="short"
+                          isTransaction={false}
+                          chainId={signMessageState.network?.chainId}
+                        />
+                      </View>
+                    )
+                  }
+                : {})}
+            />
+          )
+        }}
       >
         <KeySelect
           isSigning={signStatus === 'LOADING'}
@@ -362,9 +339,6 @@ const SignMessageScreen = () => {
           handleClose={() => setIsChooseSignerShown(false)}
           selectedAccountKeyStoreKeys={selectedAccountKeyStoreKeys}
           account={account}
-          signed={[]} // todo
-          threshold={threshold}
-          handleSetMultisigSigners={handleSign}
         />
         {view === 'reinitializing' && (
           <View style={[StyleSheet.absoluteFill, flexbox.center]}>
