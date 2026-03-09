@@ -101,7 +101,7 @@ const AccountAddress: FC<Props> = ({
           </PlainAddressWithCopy>
         </>
       ) : (
-        <>
+        <View style={[flexbox.directionRow]}>
           <PlainAddress
             maxLength={plainAddressMaxLength}
             address={address}
@@ -109,7 +109,7 @@ const AccountAddress: FC<Props> = ({
             fontSize={fontSize}
           />
           {receiveButton}
-        </>
+        </View>
       )}
     </View>
   )

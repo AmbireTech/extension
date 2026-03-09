@@ -245,8 +245,9 @@ const Input = ({
             {' '}
           </Text>
         )}
-        {renderConfirmAddress && renderConfirmAddress()}
+        {!!renderConfirmAddress && isWeb && renderConfirmAddress()}
       </View>
+      {!!renderConfirmAddress && !isWeb && renderConfirmAddress()}
     </View>
   )
 }

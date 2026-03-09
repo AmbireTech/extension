@@ -1,6 +1,7 @@
 import { ImageStyle, StyleSheet, ViewProps, ViewStyle } from 'react-native'
 
 import { BOTTOM_SHEET_Z_INDEX } from '@common/components/BottomSheet/styles'
+import { isMobile } from '@common/config/env'
 import spacings, { SPACING_MI } from '@common/styles/spacings'
 import { ThemeProps, ThemeType } from '@common/styles/themeConfig'
 import common, { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
@@ -66,7 +67,8 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
     },
     menuOption: {
       ...flexbox.directionRow,
-      ...flexbox.alignCenter
+      ...flexbox.alignCenter,
+      ...(isMobile ? spacings.mvMi : {})
     },
     sheetMenuOption: {
       marginBottom: SPACING_MI / 2,

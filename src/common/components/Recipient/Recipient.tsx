@@ -133,7 +133,7 @@ const SelectedMenuOption: React.FC<{
       disabled={disabled}
       editable={!isButtonMode}
       pointerEvents={isButtonMode ? 'none' : 'auto'}
-      renderConfirmAddress={type === 'input' ? undefined : renderConfirmAddress}
+      renderConfirmAddress={renderConfirmAddress}
       onFocus={() => {
         setIsFocused(true)
         if (type === 'input') return
@@ -380,12 +380,7 @@ const Recipient: React.FC<Props> = ({
 
   return (
     <ItemPanel style={{ ...spacings.pbTy, ...spacings.mbTy }}>
-      <Text
-        appearance="secondaryText"
-        fontSize={14}
-        weight="medium"
-        style={[spacings.mbSm, spacings.mlTy]}
-      >
+      <Text appearance="secondaryText" fontSize={14} weight="medium" style={[spacings.mbSm]}>
         {t('Add recipient')}
       </Text>
       <SectionedSelect
@@ -413,17 +408,6 @@ const Recipient: React.FC<Props> = ({
             address={address}
             setAddress={setAddress}
             disabled={disabled}
-            renderConfirmAddress={() => (
-              <AddToAddressBook
-                isRecipientHumanizerKnownTokenOrSmartContract={
-                  isRecipientHumanizerKnownTokenOrSmartContract
-                }
-                isRecipientAddressUnknown={isRecipientAddressUnknown}
-                isRecipientAddressSameAsSender={actualAddress === account?.addr}
-                addressValidationMsg={addressValidationMsg}
-                onAddToAddressBookPress={openBottomSheet}
-              />
-            )}
           />
         )}
         containerStyle={spacings.mb0}

@@ -27,6 +27,7 @@ interface Props {
   name?: string
   isManageable?: boolean
   isEditable?: boolean
+  withCopy?: boolean
   onPress?: () => void
   style?: ViewStyle
   testID?: string
@@ -40,6 +41,7 @@ const AddressBookContact: FC<Props> = ({
   name,
   isManageable,
   isEditable,
+  withCopy = true,
   onPress,
   testID,
   style = {},
@@ -163,6 +165,7 @@ const AddressBookContact: FC<Props> = ({
               ens={ens}
               address={address}
               containerStyle={{ paddingVertical: 0 }}
+              withCopy={withCopy}
             />
           </View>
         </View>
