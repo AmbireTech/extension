@@ -20,8 +20,8 @@ const getStyles = (theme: ThemeProps) =>
   StyleSheet.create<Style>({
     tokenInfoAndIcon: {
       ...flexbox.directionRow,
-      ...spacings.mb,
-      ...flexbox.flex1,
+      ...spacings.pvTy,
+      ...spacings.mbMd,
       ...flexbox.alignCenter
     },
     tokenInfo: {

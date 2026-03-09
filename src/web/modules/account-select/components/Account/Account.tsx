@@ -134,23 +134,18 @@ const Account = ({
     [keys]
   )
 
-  const add7702option = useMemo(() => {
-    return canBecomeSmarter(account, getAccKeys(account))
-  }, [account, getAccKeys])
+  const submenu = useMemo(() => {
+    if (!options.withOptionsButton) return []
 
-  const submenuOptions = useMemo(
-    () => [
+    const add7702Option = canBecomeSmarter(account, getAccKeys(account))
+    const submenuOptions = [
       { label: account.safeCreation ? 'Manage owners' : 'Manage keys', value: 'keys' },
       { label: 'Remove account', value: 'remove', style: { color: theme.errorDecorative } }
-    ],
-    [theme.errorDecorative, account.safeCreation]
-  )
+    ]
+    const submenuOptions7702 = [{ label: 'Smart settings', value: 'toSmarter' }]
 
-  const submenuOptions7702 = useMemo(() => ({ label: 'Smart settings', value: 'toSmarter' }), [])
-
-  const submenu = useMemo(() => {
-    return add7702option ? [submenuOptions7702, ...submenuOptions] : submenuOptions
-  }, [add7702option, submenuOptions, submenuOptions7702])
+    return add7702Option ? [...submenuOptions7702, ...submenuOptions] : submenuOptions
+  }, [account, getAccKeys, options.withOptionsButton, theme.errorDecorative])
 
   return (
     <AnimatedPressable

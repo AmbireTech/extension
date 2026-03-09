@@ -60,7 +60,7 @@ const HideTokenModal = ({
           }
         ]}
       >
-        <Button text={t('Cancel')} type="secondary" onPress={handleClose} />
+        <Button text={t('Cancel')} type="tertiary" onPress={handleClose} />
         <Button
           testID="yes-hide-it-text"
           type="primary"
