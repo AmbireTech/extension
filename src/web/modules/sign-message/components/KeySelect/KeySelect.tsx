@@ -3,7 +3,6 @@ import React from 'react'
 import { Account } from '@ambire-common/interfaces/account'
 import { Key } from '@ambire-common/interfaces/keystore'
 
-import MultipleSignersSelect from '../SafeSignersSelect'
 import SigningKeySelect from '../SignKeySelect'
 
 const KeySelect = ({
@@ -11,23 +10,17 @@ const KeySelect = ({
   isChooseFeePayerKeyShown,
   isSigning,
   handleClose,
-  handleSetMultisigSigners,
   handleChooseKey,
   account,
-  selectedAccountKeyStoreKeys,
-  signed,
-  threshold
+  selectedAccountKeyStoreKeys
 }: {
   isChooseSignerShown: boolean
   isChooseFeePayerKeyShown: boolean
   isSigning: boolean
   handleClose: () => void
-  handleSetMultisigSigners: (signers: { addr: Key['addr']; type: Key['type'] }[]) => void
   handleChooseKey: (keyAddr: Key['addr'], keyType: Key['type']) => void
   account: Account
   selectedAccountKeyStoreKeys: Key[]
-  signed: string[]
-  threshold: number
 }) => {
   return (
     <>
@@ -40,18 +33,6 @@ const KeySelect = ({
         type={isChooseFeePayerKeyShown ? 'broadcasting' : 'signing'}
         account={account}
       />
-      {!!account.safeCreation ? (
-        <MultipleSignersSelect
-          isVisible={isChooseSignerShown}
-          isSigning={isSigning}
-          handleSetMultisigSigners={handleSetMultisigSigners}
-          handleClose={handleClose}
-          account={account}
-          selectedAccountKeyStoreKeys={selectedAccountKeyStoreKeys}
-          signed={signed}
-          threshold={threshold}
-        />
-      ) : null}
     </>
   )
 }

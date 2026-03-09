@@ -84,7 +84,7 @@ const AccountKey: React.FC<Props> = ({
   const [bindCopyIconAnim, copyIconAnimStyle] = useHover({
     preset: 'opacityInverted'
   })
-  const fontSize = isPopup ? 14 : 16
+  const fontSize = isPopup ? 13 : 16
   const isKeyAmbireV1 = addr === AMBIRE_V1_QUICK_ACC_MANAGER
   const canExportOrImportKey = showExportImport && !isKeyAmbireV1
   const [isShowingDetails, setIsShowingDetails] = useState<boolean>(false)

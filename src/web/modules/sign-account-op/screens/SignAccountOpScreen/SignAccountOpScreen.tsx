@@ -107,11 +107,12 @@ const SignAccountOpScreen = () => {
     bundlerNonceDiscrepancy,
     primaryButtonText,
     shouldHoldToProceed,
-    handleSetMultisigSigners
+    disabledReason
   } = useSign({
     handleUpdateStatus,
     signAccountOpState,
-    handleUpdate: updateController
+    handleUpdate: updateController,
+    hasReachedBottom
   })
 
   const accountOpRequest = useMemo(() => {
@@ -233,7 +234,16 @@ const SignAccountOpScreen = () => {
                   !signAccountOpState.canBroadcast &&
                   !!signAccountOpState.account.safeCreation && (
                     <ScrollView style={[{ maxHeight: 140 }, spacings.mb]}>
-                      <SafeOwners signAccountOpController={signAccountOpState} />
+                      <SafeOwners
+                        account={signAccountOpState.account}
+                        onSign={handleChangeSigningKey}
+                        isSignLoading={isSignLoading}
+                        signingKeyAddr={signAccountOpState.accountOp.signingKeyAddr}
+                        chainId={signAccountOpState.accountOp.chainId.toString()}
+                        signed={signAccountOpState.accountOp.signed || []}
+                        importedKeys={signAccountOpState.accountKeyStoreKeys}
+                        threshold={signAccountOpState.threshold}
+                      />
                     </ScrollView>
                   )}
 
@@ -247,20 +257,12 @@ const SignAccountOpScreen = () => {
                   }
                   isSignLoading={isSignLoading}
                   isSignDisabled={isSignDisabled || !hasReachedBottom}
-                  buttonTooltipText={
-                    typeof hasReachedBottom === 'boolean' && !hasReachedBottom
-                      ? t('Scroll to the bottom of the transaction overview to sign.')
-                      : undefined
-                  }
+                  buttonTooltipText={disabledReason}
                   // Allow view only accounts or if no funds for gas to add to cart even if the txn is not ready to sign
                   // because they can't sign it anyway
                   isAddToCartDisabled={isAddToCartDisabled}
                   onSign={onSignButtonClick}
-                  inProgressButtonText={
-                    signAccountOpState?.status?.type === SigningStatus.WaitingForPaymaster
-                      ? t('Sending...')
-                      : t('Signing...')
-                  }
+                  inProgressButtonText={primaryButtonText}
                   buttonText={primaryButtonText}
                   shouldHoldToProceed={shouldHoldToProceed}
                 />
@@ -274,7 +276,6 @@ const SignAccountOpScreen = () => {
             isSigning={isSignLoading || !signAccountOpState.readyToSign}
             isChooseSignerShown={isChooseSignerShown}
             isChooseFeePayerKeyShown={isChooseFeePayerKeyShown}
-            handleSetMultisigSigners={handleSetMultisigSigners}
             handleChooseKey={
               isChooseFeePayerKeyShown ? handleChangeFeePayerKeyType : handleChangeSigningKey
             }
@@ -288,8 +289,6 @@ const SignAccountOpScreen = () => {
               setIsChooseSignerShown(false)
               setIsChooseFeePayerKeyShown(false)
             }}
-            signed={signAccountOpState.accountOp.signed || []}
-            threshold={signAccountOpState.threshold}
           />
         )}
         <TabLayoutWrapperMainContent withScroll={false}>
