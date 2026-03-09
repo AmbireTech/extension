@@ -93,7 +93,7 @@ const GlassView: React.FC<GlassViewProps & ViewProps> = ({
       chromaticAberration: 3
     })
 
-    // Inject (or reuse) a correctly-sized filter. Cheap: Map lookup or one DOM mutation.
+    // Inject (or reuse) a correctly-sized filter.
     const updateFilter = (w: number, h: number) => {
       if (engine !== 'webkit' || isSimpleBlur) {
         if (filterIdRef.current) {
@@ -113,8 +113,7 @@ const GlassView: React.FC<GlassViewProps & ViewProps> = ({
       }
     }
 
-    // Phase 1 — synchronous so specular and filter are present in the same
-    // painted frame as the element.
+    // Calculate or get cached first
     const w0 = el.offsetWidth
     const h0 = el.offsetHeight
     if (w0 && h0) {
@@ -130,8 +129,7 @@ const GlassView: React.FC<GlassViewProps & ViewProps> = ({
       updateFilter(w0, h0)
     }
 
-    // Phase 2 — deferred on resize since the specular is already visible.
-    // Filter update is synchronous since it's cheap (Map lookup or DOM node).
+    // Update on resize
     const scheduleResize = (w: number, h: number) => {
       if (idleHandle !== null) cancelIdleCallback(idleHandle)
       if (timeoutHandle !== null) clearTimeout(timeoutHandle)
