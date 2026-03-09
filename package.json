@@ -22,6 +22,7 @@
     "build:ios:export": "xcodebuild -exportArchive -archivePath ios/build/Ambire.xcarchive -exportPath ios/build/ipa -exportOptionsPlist ios/ExportOptions.plist",
     "build:ios:production": "yarn build:ios:archive && yarn build:ios:export",
     "build:android:production:apk": "cd android && APP_ENV=production ./gradlew assembleRelease",
+    "build:android:production:aab": "cd android && APP_ENV=production ./gradlew bundleRelease",
     "build:web:webkit": "rm -rf ./build/webkit-prod && APP_ENV=production WEB_ENGINE=webkit WEBPACK_BUILD_OUTPUT_PATH=webkit-prod expo export:web",
     "build:web:next:webkit": "AMBIRE_NEXT=true yarn build:web:webkit",
     "build:web:safari": "./scripts/safari-prod-build.sh",

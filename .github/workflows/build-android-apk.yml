@@ -4,10 +4,6 @@ on:
   workflow_dispatch: # Manual trigger
   release:
     types: [published] # Triggers on new releases (from any branch)
-  push:
-    # TODO: Temporary trigger for testing Android builds on feature branches
-    branches:
-      - 'config/android-ci'
 
 jobs:
   build-android-apk:

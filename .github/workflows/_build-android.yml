@@ -18,6 +18,11 @@ on:
         description: Packaging mode (apk or aab)
         required: true
         type: string
+      enable_signing:
+        description: Whether Play Store signing (release keystore) is required
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   build-android:
@@ -71,6 +76,32 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v5
 
+      - name: Prepare Android signing config
+        if: inputs.enable_signing
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_ALIAS_PASSWORD: ${{ secrets.ANDROID_KEY_ALIAS_PASSWORD }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${ANDROID_KEYSTORE_BASE64:-}" || -z "${ANDROID_KEYSTORE_PASSWORD:-}" || -z "${ANDROID_KEY_ALIAS:-}" || -z "${ANDROID_KEY_ALIAS_PASSWORD:-}" ]]; then
+            echo "Android signing secrets are missing. Required: ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_ALIAS_PASSWORD"
+            exit 1
+          fi
+
+          KEYSTORE_PATH="$RUNNER_TEMP/android-release.keystore"
+          (echo -n "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE_PATH") || \
+          (echo -n "$ANDROID_KEYSTORE_BASE64" | base64 -D > "$KEYSTORE_PATH")
+
+          mkdir -p "$HOME/.gradle"
+          {
+            echo "MYAPP_UPLOAD_STORE_FILE=$KEYSTORE_PATH"
+            echo "MYAPP_UPLOAD_STORE_PASSWORD=$ANDROID_KEYSTORE_PASSWORD"
+            echo "MYAPP_UPLOAD_KEY_ALIAS=$ANDROID_KEY_ALIAS"
+            echo "MYAPP_UPLOAD_KEY_PASSWORD=$ANDROID_KEY_ALIAS_PASSWORD"
+          } >> "$HOME/.gradle/gradle.properties"
+
       - name: Build Android app
         env:
           RELAYER_URL: ${{ vars.RELAYER_URL }}
@@ -121,6 +152,36 @@ jobs:
           cp "$APK_PATH" "$TEMP_DIR/Ambire.apk"
           cd "$TEMP_DIR"
           zip -r "$ZIP_PATH" "Ambire.apk"
+          echo "PACKAGE_PATH=$ZIP_PATH" >> $GITHUB_ENV
+        shell: bash
+
+      - name: Package Android AAB
+        if: inputs.package_mode == 'aab'
+        run: |
+          set -euo pipefail
+          BUNDLE_DIR="android/app/build/outputs/bundle/release"
+          OUTPUT_ZIP="ambire-android-v${{ steps.version.outputs.VERSION }}-aab.zip"
+
+          if [ ! -d "$BUNDLE_DIR" ]; then
+            echo "Expected bundle output dir not found at $BUNDLE_DIR"
+            ls -R android/app/build/outputs || true
+            exit 1
+          fi
+
+          AAB_PATH=$(find "$BUNDLE_DIR" -maxdepth 1 -type f -name '*.aab' | head -n1)
+          if [ -z "$AAB_PATH" ]; then
+            echo "No .aab found in $BUNDLE_DIR"
+            ls -la "$BUNDLE_DIR" || true
+            exit 1
+          fi
+
+          ZIP_PATH="$(pwd)/$OUTPUT_ZIP"
+          TEMP_DIR="$RUNNER_TEMP/android-aab-package"
+          rm -rf "$TEMP_DIR"
+          mkdir -p "$TEMP_DIR"
+          cp "$AAB_PATH" "$TEMP_DIR/Ambire.aab"
+          cd "$TEMP_DIR"
+          zip -r "$ZIP_PATH" "Ambire.aab"
           echo "PACKAGE_PATH=$ZIP_PATH" >> $GITHUB_ENV
         shell: bash
 
