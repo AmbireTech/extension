@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { Animated, Dimensions, View, ViewStyle } from 'react-native'
 
 import { Dapp } from '@ambire-common/interfaces/dapp'
@@ -61,131 +61,124 @@ const ManageApp = ({
   setIsNetworkSelectorExpanded: React.Dispatch<React.SetStateAction<boolean>>
 }) => {
   const { theme } = useTheme()
-  const menuRef = useRef<View>(null)
+  // menuEl holds the portal node. A callback ref is used instead of useRef
+  // because @gorhom/portal renders into a separate React tree — the node is
+  // attached in a later render cycle, so a state update is needed to re-run
+  // the positioning effect once the element actually exists in the DOM.
+  const [menuEl, setMenuEl] = useState<View | null>(null)
   const [position, setPosition] = useState<{
     top?: number
     bottom?: number
     left: number
     isAbove: boolean
     isAlignedRight: boolean
-  }>({
-    left: 0,
-    isAbove: false,
-    isAlignedRight: false
-  })
-  const [menuSize, setMenuSize] = useState({ width: 0, height: 0 })
+  }>({ left: 0, isAbove: false, isAlignedRight: false })
+  const [isPositioned, setIsPositioned] = useState(false)
   const scaleAnim = useRef(new Animated.Value(0)).current
   const opacityAnim = useRef(new Animated.Value(0)).current
 
-  // Measure menu size once it's rendered
-  useLayoutEffect(() => {
-    if (menuRef.current && isOpen) {
-      menuRef.current.measure((x, y, width, height) => {
-        setMenuSize({ width, height })
-      })
-    }
-  }, [isOpen])
-
-  // Calculate position with viewport boundary detection
-  useLayoutEffect(() => {
-    if (!parentRef.current || !isOpen) return
-
-    parentRef.current.measure((x, y, width, height, pageX, pageY) => {
-      const { width: screenWidth, height: screenHeight } = Dimensions.get('window')
+  const applyPosition = useCallback(
+    (
+      pageX: number,
+      pageY: number,
+      width: number,
+      height: number,
+      menuWidth: number,
+      menuHeight: number
+    ) => {
+      const screenWidth = isWeb ? window.innerWidth : Dimensions.get('window').width
+      const screenHeight = isWeb ? window.innerHeight : Dimensions.get('window').height
       const GAP = 16
       const NETWORK_SELECTOR_MAX_HEIGHT = 320
-      const maxMenuHeight = menuSize.height + NETWORK_SELECTOR_MAX_HEIGHT
 
       const spaceAbove = pageY
       const spaceBelow = screenHeight - (pageY + height)
-
-      // Determine vertical position (prefer above if there's space)
-      const hasSpaceAbove = menuSize.height > 0 && spaceAbove >= maxMenuHeight + GAP
-      const hasSpaceBelow = spaceBelow >= menuSize.height + GAP
+      const hasSpaceAbove =
+        menuHeight > 0 && spaceAbove >= menuHeight + NETWORK_SELECTOR_MAX_HEIGHT + GAP
+      const hasSpaceBelow = spaceBelow >= menuHeight + GAP
       const positionAbove = hasSpaceAbove || (!hasSpaceBelow && spaceAbove >= spaceBelow)
 
       const verticalPos = positionAbove
         ? { bottom: screenHeight - pageY + GAP }
         : { top: pageY + height + GAP }
 
-      // Determine horizontal position
       let left = pageX
       let alignedRight = false
-
-      if (menuSize.width > 0 && left + menuSize.width > screenWidth) {
-        left = pageX + width - menuSize.width
+      if (menuWidth > 0 && left + menuWidth > screenWidth) {
+        left = pageX + width - menuWidth
         alignedRight = true
       }
 
-      left = Math.max(GAP, left)
+      setPosition({
+        ...verticalPos,
+        left: Math.max(GAP, left),
+        isAbove: positionAbove,
+        isAlignedRight: alignedRight
+      })
+      setIsPositioned(true)
+    },
+    []
+  )
 
-      setPosition({ ...verticalPos, left, isAbove: positionAbove, isAlignedRight: alignedRight })
-    })
-  }, [isOpen, parentRef, menuSize])
-
+  // Runs after the portal node is confirmed mounted (menuEl is set).
   useEffect(() => {
-    if (isOpen) {
-      Animated.parallel([
-        Animated.spring(scaleAnim, {
-          toValue: 1,
-          useNativeDriver: true,
-          tension: 100,
-          friction: 10
-        }),
-        Animated.timing(opacityAnim, {
-          toValue: 1,
-          duration: 200,
-          useNativeDriver: true
-        })
-      ]).start()
-    } else {
-      Animated.parallel([
-        Animated.timing(scaleAnim, {
-          toValue: 0,
-          duration: 150,
-          useNativeDriver: true
-        }),
-        Animated.timing(opacityAnim, {
-          toValue: 0,
-          duration: 150,
-          useNativeDriver: true
-        })
-      ]).start()
-    }
-  }, [isOpen, scaleAnim, opacityAnim])
+    if (!menuEl || !parentRef.current) return
 
-  // Close the menu when clicking outside
+    if (isWeb) {
+      const parentRect = (parentRef.current as unknown as HTMLElement).getBoundingClientRect()
+      const el = menuEl as unknown as HTMLElement
+      // offsetWidth/offsetHeight ignore CSS transforms — correct even at scale(0).
+      applyPosition(
+        parentRect.left,
+        parentRect.top,
+        parentRect.width,
+        parentRect.height,
+        el.offsetWidth,
+        el.offsetHeight
+      )
+    } else {
+      parentRef.current.measure((x, y, width, height, pageX, pageY) => {
+        ;(menuEl as View).measure((_mx, _my, menuWidth, menuHeight) => {
+          applyPosition(pageX, pageY, width, height, menuWidth, menuHeight)
+        })
+      })
+    }
+  }, [menuEl, parentRef, applyPosition])
+
+  // Start open animation only after position is known.
+  useEffect(() => {
+    if (!isPositioned) return
+    Animated.parallel([
+      Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true, tension: 100, friction: 10 }),
+      Animated.timing(opacityAnim, { toValue: 1, duration: 200, useNativeDriver: true })
+    ]).start()
+  }, [isPositioned, scaleAnim, opacityAnim])
+
+  // Close when clicking outside
   useEffect(() => {
     if (!isWeb) return
-
     const handleClickOutside = (event: MouseEvent) => {
       if (
-        menuRef.current &&
+        menuEl &&
         // @ts-ignore
-        !menuRef.current.contains(event.target as Node) &&
+        !menuEl.contains(event.target as Node) &&
         // @ts-ignore
-        (!parentRef || !parentRef.current?.contains(event.target as Node))
+        !parentRef.current?.contains(event.target as Node)
       ) {
         setIsOpen(false)
       }
     }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [menuEl, parentRef, setIsOpen])
 
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside)
-    } else {
-      document.removeEventListener('mousedown', handleClickOutside)
-    }
-
-    return () => {
-      if (!isWeb) return
-
-      document.removeEventListener('mousedown', handleClickOutside)
-    }
-  }, [isOpen, parentRef, setIsOpen])
+  // Don't render until the menu is open to avoid performance issues
+  if (!isOpen) return null
 
   return (
     <Portal hostName="global">
       <Animated.View
+        ref={setMenuEl as any}
         style={{
           position: 'absolute',
           top: position.top,
@@ -209,14 +202,14 @@ const ManageApp = ({
           ],
           transformOrigin: `${position.isAbove ? 'bottom' : 'top'} ${position.isAlignedRight ? 'right' : 'left'}`,
           minWidth: 216,
-          opacity: opacityAnim,
+          // Hide until positioned to avoid a flash at {left: 0}.
+          ...(!isPositioned ? { opacity: 0 } : opacityAnim),
           ...spacings.phTy,
           ...spacings.pvTy,
           backgroundColor: theme.secondaryBackground,
           borderRadius: BORDER_RADIUS_PRIMARY,
           ...style
         }}
-        ref={menuRef}
       >
         <NetworkSelector
           dapp={dapp}
