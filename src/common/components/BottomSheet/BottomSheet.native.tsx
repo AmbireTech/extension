@@ -1,6 +1,11 @@
 import React, { RefObject } from 'react'
-import { ScrollView, View } from 'react-native'
+import { ScrollView, useWindowDimensions, View } from 'react-native'
+import {
+  useReanimatedFocusedInput,
+  useReanimatedKeyboardAnimation
+} from 'react-native-keyboard-controller'
 import { Modalize } from 'react-native-modalize'
+import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import useTheme from '@common/hooks/useTheme'
@@ -15,8 +20,6 @@ import getStyles from './styles'
 import useBottomSheetInternal from './useBottomSheetInternal'
 
 const ANIMATION_DURATION: number = 250
-
-const { isPopup } = getUiType()
 
 const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
   const {
@@ -46,8 +49,10 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
 
   const { styles, theme } = useTheme(getStyles)
   const { bottom } = useSafeAreaInsets()
-
-  const scrollViewRef = externalScrollViewRef
+  const { height: keyboardHeight } = useReanimatedKeyboardAnimation()
+  const { input } = useReanimatedFocusedInput()
+  const { height: windowHeight } = useWindowDimensions()
+  const currentTranslateY = useSharedValue(0)
 
   const {
     modalTopOffset,
@@ -60,15 +65,44 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     id
   } = useBottomSheetInternal(props)
 
+  const keyboardOffsetStyle = useAnimatedStyle(() => {
+    const kbHeight = Math.abs(keyboardHeight.value)
+    if (kbHeight === 0) {
+      currentTranslateY.value = 0
+      return { transform: [{ translateY: 0 }] }
+    }
+
+    let shift = kbHeight
+
+    if (input.value) {
+      const restingY = input.value.layout.absoluteY - currentTranslateY.value
+      const inputBottomY = restingY + input.value.layout.height
+      const keyboardTopY = windowHeight - kbHeight
+      const requiredShift = inputBottomY + 24 - keyboardTopY
+      const maxShift = Math.max(0, restingY - modalTopOffset - 24)
+
+      if (requiredShift > 0) {
+        shift = Math.min(kbHeight, requiredShift, maxShift)
+      } else {
+        shift = 0
+      }
+    }
+
+    currentTranslateY.value = -shift
+    return { transform: [{ translateY: -shift }] }
+  })
+
+  const scrollViewRef = externalScrollViewRef
+
   return (
     <Portal hostName="global">
-      {/* Wrapping the content in a View with a stable `key` prevents Portal */}
-      {/* from losing track of its subtree during React reconciliation and re-renders. */}
-      {/* Without this, the backdrop stays, but Modalize could disappear */}
-      {/* without even triggering `onClose` or (this) component unmount */}
-      <View
+      <Animated.View
         key={`portal-host-${id}`}
-        style={[styles.portalHost, customZIndex ? { zIndex: customZIndex } : {}]}
+        style={[
+          styles.portalHost,
+          customZIndex ? { zIndex: customZIndex } : {},
+          keyboardOffsetStyle
+        ]}
         pointerEvents="box-none"
       >
         {!!isBackdropVisible && (
@@ -114,7 +148,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
           ]}
           handlePosition="inside"
           useNativeDriver={false}
-          avoidKeyboardLikeIOS
+          avoidKeyboardLikeIOS={false}
           modalTopOffset={modalTopOffset}
           threshold={90}
           HeaderComponent={HeaderComponent}
@@ -191,7 +225,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
             </View>
           )}
         </Modalize>
-      </View>
+      </Animated.View>
     </Portal>
   )
 }
