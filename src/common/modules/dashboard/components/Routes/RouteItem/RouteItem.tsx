@@ -66,7 +66,7 @@ const RouteItem: FC<Props> = ({ routeItem, index, routeItemsLength }) => {
           <GlassView
             tintColor1={hovered ? '#fff' : undefined}
             tintColor2={hovered ? '#fff' : undefined}
-            blurAmount={20}
+            isSimpleBlur
             shineColor="#aaaaaa"
             testID={routeItem.testID}
             cssStyle={{
