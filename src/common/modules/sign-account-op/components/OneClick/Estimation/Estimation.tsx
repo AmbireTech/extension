@@ -91,7 +91,6 @@ const OneClickEstimation = ({
     isOneClickSign: true,
     updateType
   })
-  console.log('estimation-modal', signAccountOpController)
   const { banners } = signAccountOpController || {}
 
   const ButtonsWrapper = isMobile ? View : FooterGlassView
