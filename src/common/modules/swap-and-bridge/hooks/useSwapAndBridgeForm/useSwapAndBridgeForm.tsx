@@ -45,7 +45,6 @@ const useSwapAndBridgeForm = () => {
   } = useController('SwapAndBridgeController').state
   const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
   const { dispatch: requestsDispatch, state: requestsState } = useController('RequestsController')
-  const { dispatch: mainDispatch } = useController('MainController')
   const { userRequests } = requestsState
   const {
     state: { account, portfolio }
