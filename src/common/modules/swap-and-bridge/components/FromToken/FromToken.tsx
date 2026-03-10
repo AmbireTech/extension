@@ -111,7 +111,7 @@ const FromToken: FC<Props> = ({
       simulationFailed={simulationFailed}
     />
   ) : (
-    <SkeletonLoader width="100%" height={156} />
+    <SkeletonLoader width="100%" height={161} />
   )
 }
 
