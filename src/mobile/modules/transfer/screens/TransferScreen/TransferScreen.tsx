@@ -7,7 +7,6 @@ import Alert from '@common/components/Alert'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
-import useNavigation from '@common/hooks/useNavigation'
 import useToast from '@common/hooks/useToast'
 import BatchAdded from '@common/modules/sign-account-op/components/OneClick/BatchModal/BatchAdded'
 import Estimation from '@common/modules/sign-account-op/components/OneClick/Estimation'
@@ -28,7 +27,6 @@ import Modals from '@mobile/modules/sign-account-op/components/Modals'
 
 const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   const { addToast } = useToast()
-  const { goBack } = useNavigation()
   const { t } = useTranslation()
 
   const {

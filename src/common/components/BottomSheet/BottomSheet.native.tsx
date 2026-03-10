@@ -165,7 +165,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
                   ...(!isScrollEnabled && {
                     scrollEnabled: false,
                     nestedScrollEnabled: true,
-                    contentContainerStyle: { flex: 1 }
+                    contentContainerStyle: { flexGrow: 1 }
                   }),
                   style: { marginBottom: bottom + SPACING_SM },
                   ...(scrollViewProps || {})

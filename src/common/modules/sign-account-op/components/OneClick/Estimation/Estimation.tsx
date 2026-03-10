@@ -18,7 +18,6 @@ import HoldToProceedButton from '@common/components/HoldToProceedButton'
 import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
 import { isMobile } from '@common/config/env'
 import useSign from '@common/hooks/useSign'
-import useTheme from '@common/hooks/useTheme'
 import Estimation from '@common/modules/sign-account-op/components/Estimation'
 import BundlerWarning from '@common/modules/sign-account-op/components/Estimation/components/bundlerWarning'
 import SafetyChecksBanner from '@common/modules/sign-account-op/components/SafetyChecksBanner'
@@ -55,7 +54,6 @@ const OneClickEstimation = ({
   Modals
 }: OneClickEstimationProps) => {
   const { t } = useTranslation()
-  const { theme } = useTheme()
 
   const signingErrors = useMemo(() => {
     const signAccountOpErrors = signAccountOpController ? signAccountOpController.errors : []
