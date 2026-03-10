@@ -21,6 +21,7 @@ import InProgress from '@common/modules/sign-account-op/components/OneClick/Trac
 import Refunded from '@common/modules/sign-account-op/components/OneClick/TrackProgress/ByStatus/Refunded'
 import useTrackAccountOp from '@common/modules/sign-account-op/hooks/OneClick/useTrackAccountOp'
 import spacings from '@common/styles/spacings'
+import { THEME_TYPES } from '@common/styles/theme/types'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import formatTime from '@common/utils/formatTime'
@@ -37,7 +38,7 @@ type Props = {
 
 const TrackProgress: FC<Props> = ({ activeRoute, handleClose }) => {
   const { t } = useTranslation()
-  const { theme } = useTheme()
+  const { theme, themeType } = useTheme()
   const { navigate } = useNavigation()
   const { activeRoutes } = useController('SwapAndBridgeController').state
   const { dispatch: requestsDispatch } = useController('RequestsController')
@@ -144,48 +145,75 @@ const TrackProgress: FC<Props> = ({ activeRoute, handleClose }) => {
       {lastCompletedRoute?.routeStatus === 'in-progress' && (
         <InProgress title={t('Confirming your trade')}>
           {!!fromAsset && !!toAsset && (
-            <View
-              style={[
-                flexbox.directionRow,
-                flexbox.justifySpaceBetween,
-                { alignItems: 'baseline' },
-                spacings.mbLg
-              ]}
-            >
-              <RouteStepsToken
-                wrapperStyle={{
-                  width: 'auto'
-                }}
-                uri={fromAsset.icon}
-                chainId={BigInt(fromAsset.chainId)}
-                address={fromAsset.address}
-                symbol={fromAsset.symbol}
-                amount={
-                  lastCompletedRoute?.route?.fromAmount
-                    ? formatDecimals(
-                        Number(
-                          formatUnits(lastCompletedRoute.route?.fromAmount, fromAsset.decimals)
-                        ),
-                        'amount'
-                      )
-                    : ''
-                }
-              />
-              <View style={[flexbox.alignCenter, flexbox.justifyCenter]}>
+            <>
+              <View
+                style={[
+                  flexbox.directionRow,
+                  flexbox.justifySpaceBetween,
+                  {
+                    alignItems: 'baseline',
+                    position: 'relative'
+                  },
+                  spacings.mbLg
+                ]}
+              >
+                <RouteStepsToken
+                  uri={fromAsset.icon}
+                  chainId={BigInt(fromAsset.chainId)}
+                  address={fromAsset.address}
+                  symbol={fromAsset.symbol}
+                  amount={
+                    lastCompletedRoute?.route?.fromAmount
+                      ? formatDecimals(
+                          Number(
+                            formatUnits(lastCompletedRoute.route?.fromAmount, fromAsset.decimals)
+                          ),
+                          'amount'
+                        )
+                      : ''
+                  }
+                />
                 <View
-                  style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: 16,
-                    backgroundColor: theme.secondaryBackground,
-                    ...flexbox.alignCenter,
-                    ...flexbox.justifyCenter,
-                    ...spacings.mhLg,
-                    ...spacings.mb2Xl
-                  }}
+                  style={[
+                    flexbox.alignCenter,
+                    flexbox.justifyCenter,
+                    { width: 8, position: 'relative', zIndex: 100 }
+                  ]}
                 >
-                  <RightArrowIcon />
+                  <View
+                    style={{
+                      borderRadius: 100,
+                      backgroundColor: theme.secondaryBackground,
+                      borderWidth: 4,
+                      borderColor: themeType === THEME_TYPES.LIGHT ? '#fff' : theme.backdrop,
+                      ...flexbox.alignCenter,
+                      ...flexbox.justifyCenter,
+                      width: 36,
+                      height: 36,
+                      position: 'absolute',
+                      zIndex: 100
+                    }}
+                  >
+                    <RightArrowIcon color="#808EA2" />
+                  </View>
                 </View>
+                <RouteStepsToken
+                  uri={toAsset.icon}
+                  chainId={BigInt(toAsset.chainId)}
+                  address={toAsset.address}
+                  symbol={toAsset.symbol}
+                  isLast
+                  amount={
+                    lastCompletedRoute.route?.toAmount
+                      ? formatDecimals(
+                          Number(formatUnits(lastCompletedRoute.route?.toAmount, toAsset.decimals)),
+                          'amount'
+                        )
+                      : ''
+                  }
+                />
+              </View>
+              <View>
                 {!!lastCompletedRoute.route?.serviceTime && (
                   <Text
                     fontSize={12}
@@ -202,25 +230,7 @@ const TrackProgress: FC<Props> = ({ activeRoute, handleClose }) => {
                   </Text>
                 )}
               </View>
-              <RouteStepsToken
-                wrapperStyle={{
-                  width: 'auto'
-                }}
-                uri={toAsset.icon}
-                chainId={BigInt(toAsset.chainId)}
-                address={toAsset.address}
-                symbol={toAsset.symbol}
-                isLast
-                amount={
-                  lastCompletedRoute.route?.toAmount
-                    ? formatDecimals(
-                        Number(formatUnits(lastCompletedRoute.route?.toAmount, toAsset.decimals)),
-                        'amount'
-                      )
-                    : ''
-                }
-              />
-            </View>
+            </>
           )}
         </InProgress>
       )}

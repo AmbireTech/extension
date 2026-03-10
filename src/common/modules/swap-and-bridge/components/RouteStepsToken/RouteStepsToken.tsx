@@ -4,6 +4,9 @@ import { View, ViewStyle } from 'react-native'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
+import useTheme from '@common/hooks/useTheme'
+import { THEME_TYPES } from '@common/styles/themeConfig'
+import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 
 import styles from './styles'
 
@@ -28,12 +31,17 @@ const RouteStepsToken: React.FC<Props> = ({
   amountInUsd,
   wrapperStyle
 }) => {
+  const { theme, themeType } = useTheme()
+
   return (
     <View
       style={[
         styles.tokenWrapper,
         wrapperStyle,
-        { alignItems: isLast ? 'flex-end' : 'flex-start' }
+        {
+          backgroundColor: themeType === THEME_TYPES.LIGHT ? theme.neutral100 : theme.backdrop,
+          borderRadius: BORDER_RADIUS_PRIMARY
+        }
       ]}
     >
       <View style={styles.tokenContainer}>
@@ -48,12 +56,7 @@ const RouteStepsToken: React.FC<Props> = ({
         />
       </View>
 
-      <View
-        style={[
-          styles.textContainer,
-          { alignItems: amount.length > 5 ? (isLast ? 'flex-end' : 'flex-start') : 'center' }
-        ]}
-      >
+      <View style={[styles.textContainer]}>
         <Text fontSize={14} weight="medium" style={styles.text}>
           {amount ? `${amount} ` : ''}
           {symbol}
