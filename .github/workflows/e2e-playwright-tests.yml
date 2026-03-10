@@ -61,8 +61,7 @@ jobs:
       # We use it to mock or block background requests that can't be intercepted via page.route().
       PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS: '1'
       IS_LEDGER_EMULATOR: 'true'
-      GELATO_API_KEY: ${{ secrets.REACT_APP_GELATO_API_KEY }}
-
+      
     steps:
       - name: Checkout full Git history
         uses: actions/checkout@v4
