@@ -60,10 +60,6 @@ const SafeOwners = ({
       })
   }, [importedKeys, account.addr, chainId, accountStates, signed])
 
-  const hasOneFromAllSigned = useMemo(() => {
-    return !!owners.find((o) => o.hasSigned)
-  }, [owners])
-
   return (
     <View style={[flexbox.justifyCenter, flexbox.alignCenter, spacings.mtTy]}>
       <View style={[flexbox.directionRow, flexbox.justifyCenter, flexbox.alignCenter]}>
@@ -79,7 +75,6 @@ const SafeOwners = ({
             hasSigned={o.hasSigned}
             addr={o.addr}
             type={o.type}
-            isQueued={hasOneFromAllSigned}
             style={[i === owners.length - 1 ? spacings.mb0 : spacings.mbTy, { width: '100%' }]}
             onSign={onSign}
             isSignLoading={isSignLoading && signingKeyAddr === o.addr}

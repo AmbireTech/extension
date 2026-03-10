@@ -10,6 +10,7 @@ import SpinnerWeb from '@common/components/Spinner/Spinner.web'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { closeCurrentWindow } from '@web/extension-services/background/webapi/window'
+import ActionsPagination from '@web/modules/action-requests/components/ActionsPagination'
 import SafeOwners from '@web/modules/sign-account-op/components/SafeOwners'
 
 const SafeFooter = ({
@@ -64,6 +65,7 @@ const SafeFooter = ({
                 onPress={onReject}
                 style={[{ maxWidth: 'auto' }]}
               />
+              <ActionsPagination />
               <View style={[flexbox.directionRow, flexbox.alignCenter]}>
                 <Button
                   size="large"
@@ -72,7 +74,7 @@ const SafeFooter = ({
                   onPress={() => closeCurrentWindow()}
                   text={'Sign later'}
                   disabled={signed.length === 0}
-                  style={[{ maxWidth: 'auto' }, spacings.ml]}
+                  style={[{ maxWidth: 'auto' }]}
                 />
                 <Button
                   size="large"
