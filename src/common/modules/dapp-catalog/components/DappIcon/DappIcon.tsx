@@ -9,6 +9,8 @@ import useTheme from '@common/hooks/useTheme'
 import flexbox from '@common/styles/utils/flexbox'
 import ManifestImage from '@web/components/ManifestImage'
 
+import NotConnected from './NotConnected'
+
 type Props = {
   dapp: Dapp
   withNetworkIcon?: boolean
@@ -48,20 +50,32 @@ const DappIcon: FC<Props> = ({ dapp, withNetworkIcon }) => {
 
   return (
     <View>
-      <View
-        style={{
-          width: 7,
-          height: 7,
-          borderRadius: 3,
-          backgroundColor: dapp.isConnected ? theme.successDecorative : theme.neutral600,
-          position: 'absolute',
-          top: 0,
-          right: 0,
-          zIndex: 2,
-          borderWidth: 1,
-          borderColor: !isBlacklisted ? theme.neutral900 : theme.errorBackground
-        }}
-      />
+      {dapp.isConnected ? (
+        <View
+          style={{
+            width: 8,
+            height: 8,
+            borderRadius: 3,
+            backgroundColor: !isBlacklisted ? theme.successDecorative : theme.errorDecorative,
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            zIndex: 2,
+            borderWidth: 1,
+            borderColor: !isBlacklisted ? theme.primaryBackground : theme.errorBackground
+          }}
+        />
+      ) : (
+        <NotConnected
+          style={{
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            zIndex: 2
+          }}
+          isBlacklisted={isBlacklisted}
+        />
+      )}
       {dapp.isConnected && withNetworkIcon && (
         <View
           style={{
@@ -74,7 +88,12 @@ const DappIcon: FC<Props> = ({ dapp, withNetworkIcon }) => {
           <NetworkIcon id={dapp.chainId.toString()} size={12} scale={0.8} />
         </View>
       )}
-      <ManifestImage uri={dapp.icon || ''} size={24} fallback={fallbackIcon} />
+      <ManifestImage
+        skeletonAppearance="primaryBackground"
+        uri={dapp.icon || ''}
+        size={24}
+        fallback={fallbackIcon}
+      />
     </View>
   )
 }
