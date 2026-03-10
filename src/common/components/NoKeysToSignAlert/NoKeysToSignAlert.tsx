@@ -60,7 +60,7 @@ const NoKeysToSignAlert: FC<Props> = ({ style, isTransaction = true, type = 'lon
           <Button
             hasBottomSpacing={false}
             size="small"
-            type="danger"
+            type="dangerFilled"
             textStyle={{ fontSize: 12 }}
             onPress={() => openBottomSheet()}
             text={t('Check')}
