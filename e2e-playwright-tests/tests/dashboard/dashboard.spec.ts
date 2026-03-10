@@ -231,6 +231,7 @@ test.describe('dashboard', { tag: '@dashboard' }, () => {
     await test.step('open hide wallet modal', async () => {
       await pages.dashboard.click(`token-balance-${wallet.address}.${wallet.chainId}`)
       await pages.dashboard.click(selectors.dashboard.hideTokenButton)
+      await pages.auth.pause()
     })
 
     await test.step('assert hide token modal text and confirm hide token', async () => {
@@ -244,6 +245,12 @@ test.describe('dashboard', { tag: '@dashboard' }, () => {
       )
 
       await pages.basePage.click(selectors.dashboard.yesHideItButton)
+
+      // return to dashboard
+      // TODO: change selector when we add I
+      await pages.basePage.page
+        .locator('//*[@id="root"]/div/div/div[1]/div/div/div[1]/div/div')
+        .click()
     })
 
     await test.step('assert WALLET token not visible on Dashboard', async () => {
