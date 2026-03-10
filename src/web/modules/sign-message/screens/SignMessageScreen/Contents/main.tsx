@@ -43,7 +43,8 @@ const Main = ({
   isSafeNotDeployed
 }: Props) => {
   const { t } = useTranslation()
-  const signMessageState = useController('SignMessageController').state
+  const { state: signMessageState, dispatch: signMessageDispatch } =
+    useController('SignMessageController')
   const signStatus = signMessageState.statuses.sign
   const { styles, theme, themeType } = useTheme(getStyles)
   const { responsiveSizeMultiplier } = useResponsiveActionWindow()
@@ -203,6 +204,15 @@ const Main = ({
           <HardwareWalletSigningModal
             keyType={signMessageState.signer.key.type}
             isVisible={signStatus === 'LOADING'}
+            cancelReq={() => {
+              signMessageDispatch({
+                type: 'method',
+                params: {
+                  method: 'cancelSignReq',
+                  args: []
+                }
+              })
+            }}
           />
         )}
         {shouldDisplayLedgerConnectModal && (
