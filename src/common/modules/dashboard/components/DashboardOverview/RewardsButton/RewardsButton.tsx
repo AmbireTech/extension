@@ -44,7 +44,9 @@ const RewardsButton = () => {
   }, [total])
 
   if (!portfolio.isReadyToVisualize) {
-    return <SkeletonLoader lowOpacity width={80} height={26} borderRadius={12} />
+    return (
+      <SkeletonLoader lowOpacity width={80} height={26} borderRadius={12} style={spacings.mlMi} />
+    )
   }
 
   return (

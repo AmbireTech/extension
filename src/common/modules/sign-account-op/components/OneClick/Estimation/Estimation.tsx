@@ -173,6 +173,7 @@ const OneClickEstimation = ({
             <ButtonsWrapper
               size="sm"
               absolute={false}
+              isSimpleBlur={false}
               style={isMobile ? spacings.ptLg : spacings.pt}
             >
               {!isMobile && (

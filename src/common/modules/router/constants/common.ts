@@ -17,7 +17,8 @@ const COMMON_ROUTES = {
   viewOnlyAccountAdder: 'view-only-account-adder',
   safeImport: 'safe-import',
   transfer: 'transfer',
-  topUpGasTank: 'top-up-gas-tank'
+  topUpGasTank: 'top-up-gas-tank',
+  tokenDetails: 'token-details'
 }
 
 const MOBILE_ROUTES = {

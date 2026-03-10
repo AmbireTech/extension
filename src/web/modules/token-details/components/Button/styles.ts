@@ -11,11 +11,9 @@ interface Style {
 const getStyles = () =>
   StyleSheet.create<Style>({
     action: {
-      width: '25%',
-      maxWidth: '25%',
+      width: 104,
       ...flexbox.alignCenter,
       ...flexbox.justifyCenter,
-      ...spacings.phMi,
       ...common.borderRadiusPrimary
     }
   })

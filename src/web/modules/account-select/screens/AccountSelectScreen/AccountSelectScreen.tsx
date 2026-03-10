@@ -50,9 +50,14 @@ const extractTriggerAddAccountSheetParam = (search: string | undefined): boolean
 const AccountSelectScreen = () => {
   const { styles } = useTheme(getStyles)
   const flatlistRef = useRef(null)
-  const { accounts, control, keyExtractor, getItemLayout, shouldDisplayAccounts } = useAccountsList(
-    { flatlistRef }
-  )
+  const {
+    accounts,
+    control,
+    keyExtractor,
+    getItemLayout,
+    selectedAccountIndex,
+    shouldDisplayAccounts
+  } = useAccountsList({ flatlistRef })
   const { search: routeParams } = useRoute()
   const { navigate } = useNavigation()
   const {
@@ -122,12 +127,6 @@ const AccountSelectScreen = () => {
               opacity: shouldDisplayAccounts ? 1 : 0
             }
           ]}
-          // Make all elements render to be able to scroll to the selected account,
-          // even if it's at the end of the list, before the accounts are displayed.
-          // This is needed because the FlatList doesn't allow to scroll to an index
-          // that is not rendered.
-          initialNumToRender={accounts.length}
-          maxToRenderPerBatch={accounts.length}
           contentContainerStyle={{ paddingBottom: 88 }}
           wrapperRef={flatlistRef}
           data={accounts}
@@ -136,7 +135,7 @@ const AccountSelectScreen = () => {
           keyExtractor={keyExtractor}
           ListEmptyComponent={<Text>{t('No accounts found')}</Text>}
         />
-        <FooterGlassView>
+        <FooterGlassView isSimpleBlur={false}>
           <Button
             testID="button-add-account"
             text={t('Add account')}
