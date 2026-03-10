@@ -27,6 +27,7 @@ interface Props {
   signedTransactionsCount?: number | null
   accountOp: AccountOp
   actionType?: 'swapAndBridge' | 'transfer'
+  cancelReq?: () => void
 }
 
 const SignAccountOpHardwareWalletSigningModal: React.FC<Props> = ({
@@ -37,7 +38,8 @@ const SignAccountOpHardwareWalletSigningModal: React.FC<Props> = ({
   shouldSignAuth,
   signedTransactionsCount,
   accountOp,
-  actionType
+  actionType,
+  cancelReq
 }: Props) => {
   const { dispatch: requestsCtrlDispatch } = useController('RequestsController')
   const { addToast } = useToast()
@@ -130,6 +132,7 @@ const SignAccountOpHardwareWalletSigningModal: React.FC<Props> = ({
     <HardwareWalletSigningModal
       isVisible={shouldBeVisible}
       keyType={currentlyInvolvedSignOrBroadcastKeyType as 'trezor' | 'ledger' | 'lattice'}
+      cancelReq={cancelReq}
     >
       {typeof signedTransactionsCount === 'number' ? (
         <View style={[flexbox.alignCenter, flexbox.justifyCenter, spacings.ptLg]}>

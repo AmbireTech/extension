@@ -60,6 +60,7 @@
     "@dnd-kit/sortable": "10.0.0",
     "@dnd-kit/utilities": "3.2.2",
     "@ensdomains/eth-ens-namehash": "2.0.15",
+    "@ensdomains/ethers-patch-v6": "0.0.4",
     "@ethereumjs/rlp": "5.0.2",
     "@ethersproject/providers": "5.5.2",
     "@ethersproject/shims": "5.7.0",
